@@ -1,0 +1,30 @@
+# Whist Host Service and Mandelboxes
+
+This subfolder contains code for Whist's host service to start, configure, and shutdown mandelboxes.
+
+## Passing information from host service to mandelboxes
+
+There are a few ways information is passed from host service to mandelboxes. Information can be passed via a file, environmental variable, or both.
+
+### Writing resource mapping to file
+
+First way is to use the `writeResourceMappingToFile` function defined in [mandelbox_params.go](https://github.com/fractal/fractal/blob/dev/host-service/mandelbox/mandelbox_params.go#L73).
+
+The file with data will be written in the `WHIST_MAPPINGS_DIR` directory and can be accessed by the mandelbox. Scripts where the mandelbox accesses these files include [fractal-startup.sh](https://github.com/fractal/fractal/blob/dev/mandelboxes/base/startup/fractal-startup.sh) and [run-fractal-server.sh](https://github.com/fractal/fractal/blob/dev/mandelboxes/base/main/run-fractal-server.sh#L13).
+
+### Passing environmental variable
+
+Environmental variables can be passed to the docker container via [env configs](https://github.com/fractal/fractal/blob/dev/host-service/host-service.go#L233).These environmental variables can be accessed [entrypoint.sh](https://github.com/fractal/fractal/blob/dev/mandelboxes/base/startup/entrypoint.sh), [run-fractal-server.sh](https://github.com/fractal/fractal/blob/dev/mandelboxes/base/main/run-fractal-server.sh#L13) and on the mandelbox.
+
+### Private directory
+
+Occasionally, sensitive information needs to be save on the mandelbox and keeping the values in a file or environmental variable is not ideal. The information can be stored in `/usr/share/fractal/private/` directory with strict permissions and accessed later by a user with the correct perms. 
+
+As a reference, aes_key is stored into a private file in [entrypoint.sh](https://github.com/fractal/fractal/blob/dev/mandelboxes/base/startup/entrypoint.sh#L14) and later accessed in [run-fractal-server.sh](https://github.com/fractal/fractal/blob/dev/mandelboxes/base/main/run-fractal-server.sh#L11).
+
+
+#### Misc
+
+An alternative to resource mapping is to mount data onto the mandelbox as seen in [host-service.go](https://github.com/fractal/fractal/blob/dev/host-service/host-service.go#L564).
+
+Another important fact to note is `fractal-startup.sh` will wait until a `.ready` file is created which is created in [host-service.go](https://github.com/fractal/fractal/blob/dev/host-service/host-service.go#L728) using the mandelbox function [MarkReady](https://github.com/fractal/fractal/blob/dev/host-service/mandelbox/mandelbox_params.go#L50).
