@@ -75,8 +75,12 @@ int32_t multithreaded_send_audio(void* opaque) {
     LOG_INFO("Created audio device!");
     start_audio_device(audio_device);
     AudioEncoder* audio_encoder = create_audio_encoder(AUDIO_BITRATE, audio_device->sample_rate);
-    int res;
+    if (!audio_encoder) {
+      LOG_ERROR("Failed to create audio encoder...");
+      return -1;
+    }
 
+    int res;
     // Tell the client what audio frequency we're using
     sample_rate = audio_device->sample_rate;
     LOG_INFO("Audio Frequency: %d", audio_device->sample_rate);
