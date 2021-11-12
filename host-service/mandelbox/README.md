@@ -22,7 +22,7 @@ Occasionally, sensitive information needs to be saved on the mandelbox and keepi
 
 As a reference, aes_key is stored into a private file in [entrypoint.sh](https://github.com/fractal/fractal/blob/dev/mandelboxes/base/startup/entrypoint.sh#L14) and later accessed in [run-fractal-server.sh](https://github.com/fractal/fractal/blob/dev/mandelboxes/base/main/run-fractal-server.sh#L11).
 
-#### Misc
+#### Miscellaneous
 
 An alternative to resource mapping is to mount data onto the mandelbox as seen in [host-service.go](https://github.com/fractal/fractal/blob/dev/host-service/host-service.go#L564).
 
