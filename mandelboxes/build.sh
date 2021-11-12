@@ -59,7 +59,7 @@ if [[ ! -z "$cmake_build_type_opt" ]]; then
 fi
 
 # Build the FractalClient app if we are building the development/client mandelbox. Otherwise, build the FractalServer
-if [[ "${python_args[0]}" == "development/client" ]]; then
+if [[ "${python_args[0]}" ~= "development/client" ]]; then
   echo "Building $cmake_build_type FractalClient..."
   ../protocol/build_protocol_targets.sh --cmakebuildtype=$cmake_build_type FractalClient
   ./helper_scripts/copy_protocol_build.sh base/build-assets/build-temp FractalClient
