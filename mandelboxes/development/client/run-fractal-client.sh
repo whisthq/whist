@@ -5,66 +5,70 @@
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-# FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
-#PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
-#SERVER_IP_ADDRESS_FILENAME=/usr/share/fractal/private/server_ip
-#SERVER_PORT_32262_FILENAME=/usr/share/fractal/private/port32262_filename
-#SERVER_PORT_32263_FILENAME=/usr/share/fractal/private/port32263_filename
-#SERVER_PORT_32273_FILENAME=/usr/share/fractal/private/port32273_filename
-
+#FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
+JSON_TRANSPORT_FILE=config.json
 PROTOCOL_LOG_FILENAME=/usr/share/fractal/client.log
+SERVER_IP_ADDRESS=127.0.0.1
+SERVER_PORT_32262=""
+SERVER_PORT_32263=""
+SERVER_PORT_32273=""
+SERVER_AES_KEY=""
 
 # Create list of command-line arguments to pass to the Whist protocol client
 OPTIONS=""
 
-# # Parse the server IP address, and add it to the options
-# if [ -f "$SERVER_IP_ADDRESS_FILENAME" ]; then
-#   export SERVER_IP_ADDRESS=$(cat $SERVER_IP_ADDRESS_FILENAME)
-# else
-#   export SERVER_IP_ADDRESS="127.0.0.1"
-# fi
-OPTIONS="$OPTIONS $SERVER_IP_ADDRESS"
+#Sample JSON: {"perf_client_server_ip": "35.170.79.124", "perf_client_server_port_32262": 40618, "perf_client_server_port_32263": 31680, "perf_client_server_port_32273": 5923, "perf_client_server_aes_key": "70512c062ff1101f253be70e4cac81bc"}
+FRACTAL_JSON_FILE=/fractal/resourceMappings/config.json
+if [[ -f $FRACTAL_JSON_FILE ]]; then
+  if [ "$( jq 'has("perf_client_server_ip")' < $FRACTAL_JSON_FILE )" == "true"  ]; then
+    SERVER_IP_ADDRESS="$(jq '.perf_client_server_ip' < $FRACTAL_JSON_FILE)"
+    # Remove potential quotation marks
+    SERVER_IP_ADDRESS=$(echo $SERVER_IP_ADDRESS | tr -d '"')
+    # Add server IP address to options
+    OPTIONS="$OPTIONS $SERVER_IP_ADDRESS"
+  fi
+  if [ "$( jq 'has("perf_client_server_port_32262")' < $FRACTAL_JSON_FILE )" == "true"  ]; then
+    SERVER_PORT_32262="$(jq '.perf_client_server_port_32262' < $FRACTAL_JSON_FILE)"
+    # Remove potential quotation marks
+    SERVER_PORT_32262=$(echo $SERVER_PORT_32262 | tr -d '"')
+    # Add server port 32262 address to options
+    OPTIONS="$OPTIONS -p32262:$SERVER_PORT_32262"
+  else
+    echo "Server port 32262 not found in JSON data!"
+    exit 1
+  fi
+  if [ "$( jq 'has("perf_client_server_port_32263")' < $FRACTAL_JSON_FILE )" == "true"  ]; then
+    SERVER_PORT_32263="$(jq '.perf_client_server_port_32263' < $FRACTAL_JSON_FILE)"
+    # Remove potential quotation marks
+    SERVER_PORT_32263=$(echo $SERVER_PORT_32263 | tr -d '"')
+    # Add server port 32263 address to options
+    OPTIONS="$OPTIONS.32263:$SERVER_PORT_32263"
+  else
+    echo "Server port 32263 not found in JSON data!"
+    exit 1
+  fi
+  if [ "$( jq 'has("perf_client_server_port_32273")' < $FRACTAL_JSON_FILE )" == "true"  ]; then
+    SERVER_PORT_32273="$(jq '.perf_client_server_port_32273' < $FRACTAL_JSON_FILE)"
+    # Remove potential quotation marks
+    SERVER_PORT_32273=$(echo $SERVER_PORT_32273 | tr -d '"')
+    # Add server port 32273 address to options
+    OPTIONS="$OPTIONS.32273:$SERVER_PORT_32273"
+  else
+    echo "Server port 32273 not found in JSON data!"
+    exit 1
+  fi
+  if [ "$( jq 'has("perf_client_server_aes_key")' < $FRACTAL_JSON_FILE )" == "true"  ]; then
+    SERVER_AES_KEY="$(jq '.perf_client_server_aes_key' < $FRACTAL_JSON_FILE)"
+    # Remove potential quotation marks
+    SERVER_AES_KEY=$(echo $SERVER_AES_KEY | tr -d '"')
+    # Add server AES key address to options
+    OPTIONS="$OPTIONS -k $FRACTAL_AES_KEY"
+  else
+    echo "Server AES key not found in JSON data!"
+    exit 1
+  fi
+fi
 
-# Parse the port 32262 on the server mandelbox
-# if [ -f "$SERVER_PORT_32262_FILENAME" ]; then
-#   export SERVER_PORT_32262=$(cat $SERVER_PORT_32262_FILENAME)
-# else
-#   export SERVER_PORT_32262="32262"
-# fi
-OPTIONS="$OPTIONS -p32262:$SERVER_PORT_32262"
-
-# Parse the port 32263 on the server mandelbox
-# if [ -f "$SERVER_PORT_32263_FILENAME" ]; then
-#   export SERVER_PORT_32263=$(cat $SERVER_PORT_32263_FILENAME)
-# else
-#   export SERVER_PORT_32263="32263"
-# fi
-OPTIONS="$OPTIONS.32263:$SERVER_PORT_32263"
-
-# Parse the port 32273 on the server mandelbox
-# if [ -f "$SERVER_PORT_32273_FILENAME" ]; then
-#   export SERVER_PORT_32273=$(cat $SERVER_PORT_32273_FILENAME)
-# else
-#   export SERVER_PORT_32273="32273"
-# fi
-OPTIONS="$OPTIONS.32273:$SERVER_PORT_32273"
-
-# Send in AES private key, if set
-# if [ -f "$PRIVATE_KEY_FILENAME" ]; then
-#   export FRACTAL_AES_KEY=$(cat $PRIVATE_KEY_FILENAME)
-#   OPTIONS="$OPTIONS -k=$FRACTAL_AES_KEY"
-# fi
-OPTIONS="$OPTIONS -k $FRACTAL_AES_KEY"
-
-# This function is called whenever the script exits, whether that is because we
-# reach the end of this file (because either FractalServer or the Whist
-# application died), or there was an error somewhere else in the script.
-function cleanup {
-  echo "cleanup() called! Shutting down the mandelbox..."
-
-  # Make sure we shutdown the mandelbox when this script exits
-  sudo shutdown now
-}
 
 # The point of the named pipe redirection is so that $! will give us the PID of FractalServer, not of tee.
 /usr/share/fractal/FractalClient $OPTIONS > >(tee $PROTOCOL_LOG_FILENAME) &
@@ -79,5 +83,6 @@ echo "FractalClient exited with code $?"
 echo "FractalClient PID: $fractal_client_pid"
 echo "Remaining job PIDs: $(jobs -p)"
 
+# TODO: remove this after done with debugging
 while true; do sleep 1000; done
 # TODO: We now pass control over to `cleanup`, since we've reached the end of the script.
