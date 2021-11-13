@@ -41,12 +41,12 @@ void reset_bitrate_stat_members(RingBuffer* ring_buffer) {
     ring_buffer->num_frames_rendered = 0;
 }
 
-RingBuffer* init_ring_buffer(FrameDataType type, int ring_buffer_size) {
+RingBuffer* init_ring_buffer(FractalPacketType type, int ring_buffer_size, NackPacketFn nack_packet) {
     /*
         Initialize the ring buffer; malloc space for all the frames and set their IDs to -1.
 
         Arguments:
-            type (FrameDataType): audio or video
+            type (FractalPacketType): audio or video
             ring_buffer_size (int): Desired size of the ring buffer. If the size exceeds
        MAX_RING_BUFFER_SIZE, no ring buffer is returned.
 
@@ -66,11 +66,12 @@ RingBuffer* init_ring_buffer(FrameDataType type, int ring_buffer_size) {
     ring_buffer->type = type;
     ring_buffer->ring_buffer_size = ring_buffer_size;
     ring_buffer->receiving_frames = safe_malloc(ring_buffer_size * sizeof(FrameData));
+    ring_buffer->nack_packet = nack_packet;
     if (!ring_buffer->receiving_frames) {
         return NULL;
     }
     ring_buffer->largest_num_packets =
-        ring_buffer->type == FRAME_VIDEO ? MAX_VIDEO_PACKETS : MAX_AUDIO_PACKETS;
+        ring_buffer->type == PACKET_VIDEO ? MAX_VIDEO_PACKETS : MAX_AUDIO_PACKETS;
     // allocate data for frames
     for (int i = 0; i < ring_buffer_size; i++) {
         FrameData* frame_data = &ring_buffer->receiving_frames[i];
@@ -83,7 +84,7 @@ RingBuffer* init_ring_buffer(FrameDataType type, int ring_buffer_size) {
 
     // determine largest frame size
     ring_buffer->largest_frame_size =
-        ring_buffer->type == FRAME_VIDEO ? LARGEST_VIDEOFRAME_SIZE : LARGEST_AUDIOFRAME_SIZE;
+        ring_buffer->type == PACKET_VIDEO ? LARGEST_VIDEOFRAME_SIZE : LARGEST_AUDIOFRAME_SIZE;
 
     ring_buffer->frame_buffer_allocator = create_block_allocator(ring_buffer->largest_frame_size);
     ring_buffer->currently_rendering_id = -1;
@@ -311,21 +312,11 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
 }
 
 void nack_single_packet(RingBuffer* ring_buffer, int id, int index) {
-    /*
-        Nack the packet at ID id and index index.
-
-        Arguments:
-            ring_buffer (RingBuffer*): the ring buffer waiting for the packet
-            id (int): Frame ID of the packet
-            index (int): index of the packet
-            */
     ring_buffer->num_packets_nacked++;
-    FractalClientMessage fcmsg = {0};
-    fcmsg.type = ring_buffer->type == FRAME_AUDIO ? MESSAGE_AUDIO_NACK : MESSAGE_VIDEO_NACK;
-
-    fcmsg.simple_nack.id = id;
-    fcmsg.simple_nack.index = index;
-    send_fcmsg(&fcmsg);
+    // If a nacking function was passed in, use it
+    if (ring_buffer->nack_packet) {
+        ring_buffer->nack_packet(ring_buffer->type, id, index);
+    }
 }
 
 void nack_bitarray_packets(RingBuffer* ring_buffer, int id, int start_index, BitArray* bit_arr) {
@@ -341,23 +332,14 @@ void nack_bitarray_packets(RingBuffer* ring_buffer, int id, int start_index, Bit
 
     LOG_INFO("NACKing with bit array for Packets with ID %d, Starting Index %d", id, start_index);
     FractalClientMessage fcmsg = {0};
-    if (ring_buffer->type == FRAME_AUDIO) {
-        fcmsg.type = MESSAGE_AUDIO_BITARRAY_NACK;
-        fcmsg.bitarray_audio_nack.id = id;
-        fcmsg.bitarray_audio_nack.index = start_index;
-        memset(fcmsg.bitarray_audio_nack.ba_raw, 0, BITS_TO_CHARS(bit_arr->numBits));
-        memcpy(fcmsg.bitarray_audio_nack.ba_raw, bit_array_get_bits(bit_arr),
-               BITS_TO_CHARS(bit_arr->numBits));
-        fcmsg.bitarray_audio_nack.numBits = bit_arr->numBits;
-    } else {
-        fcmsg.type = MESSAGE_VIDEO_BITARRAY_NACK;
-        fcmsg.bitarray_video_nack.id = id;
-        fcmsg.bitarray_video_nack.index = start_index;
-        memset(fcmsg.bitarray_audio_nack.ba_raw, 0, BITS_TO_CHARS(bit_arr->numBits));
-        memcpy(fcmsg.bitarray_video_nack.ba_raw, bit_array_get_bits(bit_arr),
-               BITS_TO_CHARS(bit_arr->numBits));
-        fcmsg.bitarray_video_nack.numBits = bit_arr->numBits;
-    }
+    fcmsg.type = MESSAGE_BITARRAY_NACK;
+    fcmsg.bitarray_nack.type = ring_buffer->type;
+    fcmsg.bitarray_nack.id = id;
+    fcmsg.bitarray_nack.index = start_index;
+    memset(fcmsg.bitarray_nack.ba_raw, 0, BITS_TO_CHARS(bit_arr->numBits));
+    memcpy(fcmsg.bitarray_nack.ba_raw, bit_array_get_bits(bit_arr),
+            BITS_TO_CHARS(bit_arr->numBits));
+    fcmsg.bitarray_nack.numBits = bit_arr->numBits;
 
     for (unsigned int i = 0; i < bit_arr->numBits; i++) {
         if (bit_array_test_bit(bit_arr, i)) {
@@ -365,7 +347,7 @@ void nack_bitarray_packets(RingBuffer* ring_buffer, int id, int start_index, Bit
         }
     }
 
-    send_fcmsg(&fcmsg);
+    // send_fcmsg(&fcmsg);
 }
 
 // The max number of times we can nack a packet: limited to 2 times right now so that we don't get

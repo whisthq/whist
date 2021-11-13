@@ -12,7 +12,6 @@ add_executable(FractalClient
         handle_server_message.c
         video.c
         sdlscreeninfo.c
-        ringbuffer.c
         sync_packets.c
         bitrate.c
         )

@@ -20,6 +20,7 @@ Includes
 */
 
 #include <fractal/network/network.h>
+#include <fractal/network/ringbuffer.h>
 
 #define MAX_INIT_CONNECTION_ATTEMPTS (6)
 #define MAX_RECONNECTION_ATTEMPTS (10)
@@ -121,5 +122,14 @@ int update_mouse_motion();
  * @brief                          Sends message to server with output dimensions and DPI.
  */
 void send_message_dimensions();
+
+/**
+ * @brief                          Nack handler for the ring buffer
+ * 
+ * @param frame_type               The packet type
+ * @param id                       The ID of the packet
+ * @param index                    The index of the packet
+ */
+void nack_packet(FractalPacketType frame_type, int id, int index);
 
 #endif  // CLIENT_UTILS_H

@@ -7,11 +7,14 @@ set(PROTOCOL_TEST_BINARY FractalProtocolTest)
 
 # Client-only files, since macOS is only supported client-sides
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    add_executable(${PROTOCOL_TEST_BINARY} ProtocolTest.cpp
+    add_executable(${PROTOCOL_TEST_BINARY}
+        protocol_test.cpp
+
         # Files needed for Whist Lib unit tests
         ../fractal/utils/aes.c
         ../fractal/utils/png.c
         ../fractal/utils/avpacket_buffer.c
+        ../fractal/network/ringbuffer.c
 
         # Files needed for Client unit tests
         ../client/audio.c
@@ -22,13 +25,13 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../client/handle_server_message.c
         ../client/video.c
         ../client/sdlscreeninfo.c
-        ../client/ringbuffer.c
         ../client/sync_packets.c
         ../client/bitrate.c
     )
 # Server & Client files, for Windows/Linux (supported on both client and server)
 else()
-    add_executable(${PROTOCOL_TEST_BINARY} ProtocolTest.cpp
+    add_executable(${PROTOCOL_TEST_BINARY}
+        protocol_test.cpp
         # Files needed for Server unit tests
         ../server/client.c
         ../server/video.c
@@ -41,6 +44,7 @@ else()
         ../fractal/utils/aes.c
         ../fractal/utils/png.c
         ../fractal/utils/avpacket_buffer.c
+        ../fractal/network/ringbuffer.c
 
         # Files needed for Client unit tests
         ../client/audio.c
@@ -51,7 +55,6 @@ else()
         ../client/handle_server_message.c
         ../client/video.c
         ../client/sdlscreeninfo.c
-        ../client/ringbuffer.c
         ../client/sync_packets.c
         ../client/bitrate.c
 )

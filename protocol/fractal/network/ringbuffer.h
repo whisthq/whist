@@ -14,16 +14,6 @@ packet, call nack_single_packet.
 */
 
 #include <fractal/core/fractal.h>
-#include "network.h"
-#include <fractal/core/fractal_frame.h>
-
-/**
- * @brief 	Audio/video types for ring buffers and frames
- */
-typedef enum FrameDataType {
-    FRAME_AUDIO,
-    FRAME_VIDEO,
-} FrameDataType;
 
 /**
  * @brief FrameData struct containing content and metadata of encoded frames.
@@ -32,7 +22,7 @@ typedef enum FrameDataType {
  * holding the concatenated UDP packets.
  */
 typedef struct FrameData {
-    FrameDataType type;
+    FractalPacketType type;
     int num_packets;
     int id;
     int packets_received;
@@ -52,6 +42,9 @@ typedef struct FrameData {
     clock frame_creation_timer;
 } FrameData;
 
+// Handler that gets called when the ring buffer wants to nack for a packet
+typedef void (*NackPacketFn)(FractalPacketType frame_type, int id, int index);
+
 /**
  * @brief	RingBuffer struct for abstracting away frame reconstruction and frame retrieval.
  * @details This is used by client/audio.c and client/video.c to keep track of frames as the client
@@ -61,9 +54,10 @@ typedef struct FrameData {
 typedef struct RingBuffer {
     int ring_buffer_size;
     FrameData* receiving_frames;
-    FrameDataType type;
+    FractalPacketType type;
     int largest_frame_size;
     int largest_num_packets;
+    NackPacketFn nack_packet;
 
     BlockAllocator* frame_buffer_allocator;  // unused if audio
 
@@ -97,7 +91,7 @@ typedef struct RingBuffer {
  * @returns A pointer to the newly created ring buffer. All frames in the new ring buffer have ID
  * -1.
  */
-RingBuffer* init_ring_buffer(FrameDataType type, int ring_buffer_size);
+RingBuffer* init_ring_buffer(FractalPacketType type, int ring_buffer_size, NackPacketFn nack_packet);
 
 /**
  * @brief Retrives the frame at the given ID in the ring buffer.

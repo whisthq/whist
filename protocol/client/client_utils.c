@@ -728,3 +728,20 @@ void send_message_dimensions() {
              fcmsg.dimensions.height, fcmsg.dimensions.dpi, fcmsg.dimensions.codec_type);
     send_fcmsg(&fcmsg);
 }
+
+void nack_packet(FractalPacketType frame_type, int id, int index) {
+    /*
+        Nack the packet at ID id and index index.
+
+        Arguments:
+            frame_type (FractalPacketType): the packet type
+            id (int): Frame ID of the packet
+            index (int): index of the packet
+            */
+    FractalClientMessage fcmsg = {0};
+    fcmsg.type = MESSAGE_NACK;
+    fcmsg.simple_nack.type = frame_type;
+    fcmsg.simple_nack.id = id;
+    fcmsg.simple_nack.index = index;
+    send_fcmsg(&fcmsg);
+}
