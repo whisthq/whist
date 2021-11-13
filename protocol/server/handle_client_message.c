@@ -182,15 +182,17 @@ static int handle_streaming_toggle_message(FractalClientMessage *fcmsg) {
     */
 
     if (fcmsg->type == MESSAGE_STOP_STREAMING) {
-        LOG_INFO("MSG RECEIVED TO STOP STREAMING");
+        LOG_INFO("Received message to stop streaming");
         stop_streaming = true;
     } else if (fcmsg->type == MESSAGE_START_STREAMING && stop_streaming == true) {
         // Extra check that `stop_streaming == true` is to ignore erroneous extra
         // MESSAGE_START_STREAMING messages
-        LOG_INFO("MSG RECEIVED TO START STREAMING AGAIN");
+        LOG_INFO("Received message to start streaming again.");
         stop_streaming = false;
         wants_iframe = true;
     } else {
+        LOG_WARNING("Received streaming message to %s streaming, but we're already in that state!",
+                    stop_streaming ? "stop" : "start");
         return -1;
     }
     return 0;
