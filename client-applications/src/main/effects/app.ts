@@ -19,7 +19,6 @@ import {
   createPaymentWindow,
   createBugTypeform,
   createOnboardingTypeform,
-  closeAllWindows,
 } from "@app/utils/windows"
 import { createTray, createMenu } from "@app/utils/tray"
 import { fromTrigger } from "@app/utils/flows"

@@ -14,7 +14,6 @@ import { logBase } from "@app/utils/logging"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
 import { WindowHashProtocol } from "@app/utils/constants"
 import { createProtocolWindow } from "@app/utils/windows"
-import { persistGet } from "@app/utils/persist"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
 import { protocolStreamInfo, protocolStreamKill } from "@app/utils/protocol"
 import TRIGGER from "@app/utils/triggers"
@@ -28,8 +27,6 @@ let rebootNotification: Notification | undefined
 // Keeps track of how often we show warnings
 let warningWindowOpen = false
 let warningLastShown = 0
-// Keeps track of if we've already asked them to fill out the exit survey
-let exitSurveyShown = false
 
 // Immediately initialize the protocol invisibly since it can take time to warm up
 createProtocolWindow().catch((err) => Sentry.captureException(err))
