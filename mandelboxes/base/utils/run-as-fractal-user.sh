@@ -2,7 +2,7 @@
 
 set -Eeuo pipefail
 
-# Set environment variable if unset
+# The environment variables below need to be defined for runuser to successfully run
 if [[ -z ${WHIST_INITIAL_USER_COOKIES_FILE+x} ]]; then
   export WHIST_INITIAL_USER_COOKIES_FILE=""
 fi
