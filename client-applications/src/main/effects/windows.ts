@@ -13,7 +13,7 @@ import { destroyTray } from "@app/utils/tray"
 import { logBase } from "@app/utils/logging"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
 import { WindowHashProtocol } from "@app/utils/constants"
-import { createProtocolWindow, createExitTypeform } from "@app/utils/windows"
+import { createProtocolWindow } from "@app/utils/windows"
 import { persistGet } from "@app/utils/persist"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
 import { protocolStreamInfo, protocolStreamKill } from "@app/utils/protocol"
@@ -83,16 +83,6 @@ allWindowsClosed
     ]) => {
       // If they didn't crash out and didn't fill out the exit survey, show it to them
       if (
-        persistGet("exitTypeformSubmitted", "data") === undefined &&
-        !mandelboxFailure &&
-        !args.crashed &&
-        !exitSurveyShown &&
-        args.hash === WindowHashProtocol
-      ) {
-        createExitTypeform()
-        exitSurveyShown = true
-        // If all windows were successfully closed, quit
-      } else if (
         args.hash !== WindowHashProtocol ||
         (args.hash === WindowHashProtocol && !args.crashed)
       ) {
