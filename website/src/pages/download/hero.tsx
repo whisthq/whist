@@ -10,7 +10,7 @@ import { ScreenSize } from "@app/shared/constants/screenSizes"
 import { withContext } from "@app/shared/utils/context"
 import { config } from "@app/shared/constants/config"
 
-const CALENDLY_URL = "https://calendly.com/whist-ming/onboarding?month=2021-11"
+const CALENDLY_URL = "https://calendly.com/whist-ming/onboarding"
 
 const AllowDownloads = () => {
   /*
