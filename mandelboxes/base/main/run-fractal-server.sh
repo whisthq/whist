@@ -75,10 +75,12 @@ fi
 
 if [ -f "$WHIST_INITIAL_USER_COOKIES_FILE" ]; then
   # Imports user cookies if file exists
-  /usr/share/fractal/run-as-fractal-user.sh "python3 /usr/bin/import_custom_cookies.py"
+  /usr/share/fractal/run-as-fractal-user.sh "python3 /usr/share/fractal/import_custom_cookies.py"
+  # Remove temporary file containing the user's intial cookies
   rm $WHIST_INITIAL_USER_COOKIES_FILE
 fi
 
+# Clean up traces of temporary cookie file
 unset WHIST_INITIAL_USER_COOKIES_FILE
 
 # Start the application that this mandelbox runs.
