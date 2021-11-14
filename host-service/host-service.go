@@ -584,7 +584,6 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			"SETFCAP",
 			// NOTE THAT CAP_SYS_NICE IS NOT ENABLED BY DEFAULT BY DOCKER --- THIS IS OUR DOING
 			"SYS_NICE",
-			"IPC_LOCK",
 		}),
 		ShmSize: 2147483648,
 		Tmpfs:   tmpfs,
