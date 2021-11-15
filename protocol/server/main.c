@@ -274,12 +274,6 @@ int main(int argc, char* argv[]) {
         LOG_FATAL("Failed to create input device for playback.");
     }
 
-#ifdef _WIN32
-    if (!init_desktop(input_device, "winlogonpassword")) {
-        LOG_FATAL("Could not winlogon!");
-    }
-#endif
-
     if (init_client() != 0) {
         LOG_FATAL("Failed to initialize client object.");
     }

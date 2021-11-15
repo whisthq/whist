@@ -28,10 +28,6 @@ Includes
 #include "handle_client_message.h"
 #include "network.h"
 
-#ifdef _WIN32
-#include <fractal/utils/windows_utils.h>
-#endif
-
 extern Client client;
 
 extern volatile int max_bitrate;
@@ -151,10 +147,6 @@ static int handle_user_input_message(FractalClientMessage *fcmsg) {
     if (input_device) {
         if (!replay_user_input(input_device, fcmsg)) {
             LOG_WARNING("Failed to replay input!");
-#ifdef _WIN32
-            // TODO: Ensure that any password can be used here
-            init_desktop(input_device, "password1234567.");
-#endif
         }
     }
 
