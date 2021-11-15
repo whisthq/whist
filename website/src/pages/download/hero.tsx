@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState } from "react"
 import { FaApple, FaWindows } from "react-icons/fa"
 import { Link } from "react-scroll"
 
@@ -9,8 +9,7 @@ import {
 import { ScreenSize } from "@app/shared/constants/screenSizes"
 import { withContext } from "@app/shared/utils/context"
 import { config } from "@app/shared/constants/config"
-
-const CALENDLY_URL = "https://calendly.com/whist-ming/onboarding"
+import Widget from "@app/pages/download/widget"
 
 const AllowDownloads = () => {
   /*
@@ -103,9 +102,12 @@ const DontAllowDownloads = () => {
         Arguments:
             none
     */
+  const [open, setOpen] = useState(false)
+
   return (
     <div className="mb-24 text-center pt-36">
       <div className="px-0 md:px-12">
+        <Widget open={open} setOpen={setOpen} />
         <div className="text-6xl md:text-7xl tracking-wide leading-snug text-gray dark:text-gray-300 mb-4">
           Try the <span className="text-mint">alpha release</span>
         </div>
@@ -118,13 +120,12 @@ const DontAllowDownloads = () => {
           time to get started!
         </div>
         <div>
-          <a href={CALENDLY_URL} target="_blank" rel="noreferrer">
-            <FractalButton
-              className="mt-12 mx-2"
-              contents={"Reserve an onboarding session"}
-              state={FractalButtonState.DEFAULT}
-            />
-          </a>
+          <FractalButton
+            className="mt-12 mx-2"
+            contents={"Reserve an onboarding session"}
+            state={FractalButtonState.DEFAULT}
+            onClick={() => setOpen(true)}
+          />
         </div>
       </div>
     </div>
