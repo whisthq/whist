@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"bytes"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -113,9 +112,7 @@ func CompressTarLz4(dir string) ([]byte, error) {
 	// 1. Create a tar of the directory
 	// 2. Compress the tar into a lz4 file
 	lz4Writer := lz4.NewWriter(buf)
-	defer lz4Writer.Close()
 	tarWriter := tar.NewWriter(lz4Writer)
-	defer tarWriter.Close()
 
 	// Walk the directory and add all files to the tar
 	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
@@ -174,57 +171,10 @@ func CompressTarLz4(dir string) ([]byte, error) {
 		return nil, utils.MakeError("error tarring directory: %v", err)
 	}
 
+	// Close writers manually instead of defer to ensure that all
+	// contents are written to buffer before returning.
+	tarWriter.Close()
+	lz4Writer.Close()
+
 	return buf.Bytes(), nil
-}
-
-// ValidateDirectoryContents checks if all directories and files in the
-// old directory are present in the new directory and have the same contents.
-func ValidateDirectoryContents(oldDir, newDir string) error {
-	return filepath.Walk(oldDir, func(filePath string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		relativePath, err := filepath.Rel(oldDir, filePath)
-		if err != nil {
-			return utils.MakeError("error getting relative path for %s: %v", filePath, err)
-		}
-
-		newFilePath := filepath.Join(newDir, relativePath)
-		matchingFile, err := os.Open(newFilePath)
-		if err != nil {
-			return utils.MakeError("error opening matching file %s: %v", newFilePath, err)
-		}
-		defer matchingFile.Close()
-
-		matchingFileInfo, err := matchingFile.Stat()
-		if err != nil {
-			return utils.MakeError("error reading stat for file: %s: %v", newFilePath, err)
-		}
-
-		// If one is a directory, both should be
-		if info.IsDir() {
-			if !matchingFileInfo.IsDir() {
-				return utils.MakeError("expected %s to be a directory", newFilePath)
-			}
-		} else {
-			testFileContents, err := ioutil.ReadFile(filePath)
-			if err != nil {
-				return utils.MakeError("error reading test file %s: %v", filePath, err)
-			}
-
-			matchingFileBuf := bytes.NewBuffer(nil)
-			_, err = matchingFileBuf.ReadFrom(matchingFile)
-			if err != nil {
-				return utils.MakeError("error reading matching file %s: %v", newFilePath, err)
-			}
-
-			// Check contents match
-			if string(testFileContents) != string(matchingFileBuf.Bytes()) {
-				return utils.MakeError("file contents don't match for file %s: '%s' vs '%s'", filePath, testFileContents, matchingFileBuf.Bytes())
-			}
-		}
-
-		return nil
-	})
 }
