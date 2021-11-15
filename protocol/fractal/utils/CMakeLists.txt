@@ -13,9 +13,7 @@ add_library(fractalUtils STATIC
         threads.c
         )
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    target_sources(fractalUtils PRIVATE windows_utils.c windows_utils.h)
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         target_sources(fractalUtils PRIVATE mac_utils.c mac_utils.h)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         target_sources(fractalUtils PRIVATE x11_window_info.c x11_window_info.h)
