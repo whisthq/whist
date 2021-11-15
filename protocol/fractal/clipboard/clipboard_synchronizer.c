@@ -51,8 +51,6 @@ Defines
 ============================
 */
 
-// #define MS_IN_SECOND 1000
-
 ClipboardActivity current_clipboard_activity;
 ClipboardData* active_clipboard_buffer = NULL;
 int clipboard_written_bytes = 0;
