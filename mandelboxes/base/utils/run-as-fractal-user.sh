@@ -2,16 +2,6 @@
 
 set -Eeuo pipefail
 
-# The environment variables below need to be defined for runuser to successfully run
-if [[ -z ${WHIST_INITIAL_USER_COOKIES_FILE+x} ]]; then
-  export WHIST_INITIAL_USER_COOKIES_FILE=""
-fi
-
-if [[ -z ${WHIST_COOKIE_UPLOAD_TARGET+x} ]]; then
-  export WHIST_COOKIE_UPLOAD_TARGET=""
-fi
-
-
 # Things running outside run_as_fractal are run as root.
 # Running with login means that we lose all environment variables, so we need to pass them in manually.
 
@@ -62,7 +52,7 @@ export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
 # in order to automatically adjust the timezone at the lower layers
 export TZ=$DESIRED_TIMEZONE 
 
-exec runuser --login fractal --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,WHIST_INITIAL_USER_COOKIES_FILE,WHIST_COOKIE_UPLOAD_TARGET -c \
+exec runuser --login fractal --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION -c \
   'DISPLAY=:10 \
     LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
     LOCAL=yes \
