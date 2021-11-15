@@ -6,6 +6,7 @@ import time
 import argparse
 import boto3
 import paramiko
+import subprocess
 
 from testing_helpers import (
     create_ec2_instance,
@@ -89,8 +90,19 @@ if __name__ == "__main__":
             available = False
     print(f"SSH is available on the EC2 instance: {instance_ip[0]['public']}")
 
+    # Obtain current branch
+    subprocess = subprocess.Popen("git branch", shell=True, stdout=subprocess.PIPE)
+    subprocess_stdout = subprocess.stdout.readlines()
+
+    branch_name=""
+    for line in subprocess_stdout:
+        converted_line = line.decode('utf-8').strip()
+        if "*" in converted_line:
+            branch_name = converted_line[2:]
+            break
+
     # Retrieve fractal/fractal monorepo on the instance
-    command="git clone https://" + github_token + "@github.com/fractal/fractal.git ~/fractal"
+    command="git clone -b " + branch_name + " https://" + github_token + "@github.com/fractal/fractal.git ~/fractal > ~/github_log.log"
     stdin, stdout, stderr = ssh_client.exec_command(command=command)
 
     exit_status = stdout.channel.recv_exit_status()          # Blocking call
@@ -101,7 +113,8 @@ if __name__ == "__main__":
 
     # Set up the server/client
     # 1- run host-setup
-    command = "cd ~/fractal/host-setup && ./setup_host.sh --localdevelopment"
+    print ("Running the host setup on the instance ...")
+    command = "cd ~/fractal/host-setup && ./setup_host.sh --localdevelopment > ~/host_setup.log"
     stdin, stdout, stderr = ssh_client.exec_command(command=command)
 
     exit_status = stdout.channel.recv_exit_status()          # Blocking call
@@ -111,8 +124,8 @@ if __name__ == "__main__":
         print("Error", exit_status)
 
     # 2- reboot and wait for it to come back up
+    print("Rebooting the EC2 instance (required after running the host setup)...")
     ssh_client.exec_command(command="sudo reboot")
-    print("Rebooting the EC2 instance (required after running the host setup)")
 
     reboot_complete = False
     while not reboot_complete:
@@ -126,14 +139,15 @@ if __name__ == "__main__":
     print("EC2 instance reboot complete!")
 
     # 3- build and run host-service
-    command = "cd ~/fractal/host-service && make run"
+    print ("Starting the host service on the EC2 instance...")
+    command = "cd ~/fractal/host-service && make run > ~/host_service.log"
     ssh_client.exec_command(command=command)
-    print ("Starting the host service on the EC2 instance")
 
     time.sleep(5)
 
     # 4- Build the protocol server
-    command="cd ~/fractal/mandelboxes && ./build.sh browsers/chrome --perf"
+    print("Building the protocol server in PERF mode ...")
+    command="cd ~/fractal/mandelboxes && ./build.sh browsers/chrome --perf > ~/protocol_server_build.log"
 
     stdin, stdout, stderr = ssh_client.exec_command(command=command)
     exit_status = stdout.channel.recv_exit_status()          # Blocking call
