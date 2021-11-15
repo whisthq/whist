@@ -41,7 +41,8 @@ void reset_bitrate_stat_members(RingBuffer* ring_buffer) {
     ring_buffer->num_frames_rendered = 0;
 }
 
-RingBuffer* init_ring_buffer(FractalPacketType type, int ring_buffer_size, NackPacketFn nack_packet) {
+RingBuffer* init_ring_buffer(FractalPacketType type, int ring_buffer_size,
+                             NackPacketFn nack_packet) {
     /*
         Initialize the ring buffer; malloc space for all the frames and set their IDs to -1.
 
@@ -338,7 +339,7 @@ void nack_bitarray_packets(RingBuffer* ring_buffer, int id, int start_index, Bit
     fcmsg.bitarray_nack.index = start_index;
     memset(fcmsg.bitarray_nack.ba_raw, 0, BITS_TO_CHARS(bit_arr->numBits));
     memcpy(fcmsg.bitarray_nack.ba_raw, bit_array_get_bits(bit_arr),
-            BITS_TO_CHARS(bit_arr->numBits));
+           BITS_TO_CHARS(bit_arr->numBits));
     fcmsg.bitarray_nack.numBits = bit_arr->numBits;
 
     for (unsigned int i = 0; i < bit_arr->numBits; i++) {

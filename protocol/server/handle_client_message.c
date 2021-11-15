@@ -374,8 +374,7 @@ static int handle_nack_message(FractalClientMessage *fcmsg) {
         memcpy(bit_array_get_bits(bit_arr), fcmsg->bitarray_nack.ba_raw,
                BITS_TO_CHARS(fcmsg->bitarray_nack.numBits));
 
-        for (int i = fcmsg->bitarray_nack.index; i < fcmsg->bitarray_nack.numBits;
-             i++) {
+        for (int i = fcmsg->bitarray_nack.index; i < fcmsg->bitarray_nack.numBits; i++) {
             if (bit_array_test_bit(bit_arr, i)) {
                 udp_nack(&client.udp_context, fcmsg->type, fcmsg->bitarray_nack.id, i);
             }

@@ -88,10 +88,14 @@ typedef struct RingBuffer {
  *
  * @param ring_buffer_size The desired size of the ring buffer
  *
+ * @param nack_packet A lambda function that will be called when the ring buffer wants to nack.
+ *                    NULL will disable nacking.
+ *
  * @returns A pointer to the newly created ring buffer. All frames in the new ring buffer have ID
  * -1.
  */
-RingBuffer* init_ring_buffer(FractalPacketType type, int ring_buffer_size, NackPacketFn nack_packet);
+RingBuffer* init_ring_buffer(FractalPacketType type, int ring_buffer_size,
+                             NackPacketFn nack_packet);
 
 /**
  * @brief Retrives the frame at the given ID in the ring buffer.

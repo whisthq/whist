@@ -125,7 +125,7 @@ void send_message_dimensions();
 
 /**
  * @brief                          Nack handler for the ring buffer
- * 
+ *
  * @param frame_type               The packet type
  * @param id                       The ID of the packet
  * @param index                    The index of the packet
