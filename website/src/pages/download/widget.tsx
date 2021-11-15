@@ -15,7 +15,6 @@ const Contents = () => {
     return (
       <>
         <Typeform id="NtcwaVHR" onSubmit={onSubmitTypeform} />
-        {/* <Calendly url={CALENDLY_URL} /> */}
       </>
     )
   } else {
