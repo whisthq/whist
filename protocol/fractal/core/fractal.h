@@ -1,10 +1,6 @@
 #ifndef FRACTAL_H
 #define FRACTAL_H
 
-#ifdef _WIN32
-#define _CRT_SECURE_NO_WARNINGS
-#endif
-
 /**
  * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file fractal.h
@@ -17,6 +13,15 @@
 Includes
 ============================
 */
+
+#ifdef _WIN32
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+// In order to use accept4 we have to allow non-standard extensions
+#if !defined(_GNU_SOURCE) && defined(__linux__)
+#define _GNU_SOURCE
+#endif
 
 #include <stdbool.h>
 #include <stdint.h>
