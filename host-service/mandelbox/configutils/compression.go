@@ -4,7 +4,9 @@ import (
 	"archive/tar"
 	"bytes"
 	"io"
+	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -14,18 +16,22 @@ import (
 )
 
 // ExtractTarLz4 extracts a tar.lz4 file in memory to the specified directory.
-func ExtractTarLz4(file []byte, dir string) error {
+// Returns the total number of bytes extracted or an error.
+func ExtractTarLz4(file []byte, dir string) (int64, error) {
 	// Create the destination directory if it doesn't exist.
 	_, err := os.Stat(dir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			if err := os.MkdirAll(dir, 0755); err != nil {
-				return utils.MakeError("failed to create directory %s: %v", dir, err)
+				return 0, utils.MakeError("failed to create directory %s: %v", dir, err)
 			}
 		} else {
-			return utils.MakeError("failed to stat directory %s: %v", dir, err)
+			return 0, utils.MakeError("failed to stat directory %s: %v", dir, err)
 		}
 	}
+
+	// Track the total number of bytes extracted
+	var totalBytes int64
 
 	// Extracting the tar.lz4 file involves:
 	// 1. Decompress the the lz4 file into a tar
@@ -43,7 +49,7 @@ func ExtractTarLz4(file []byte, dir string) error {
 		case err == io.EOF:
 			break
 		case err != nil:
-			return utils.MakeError("error reading tar file: %v", err)
+			return totalBytes, utils.MakeError("error reading tar file: %v", err)
 		}
 
 		// Not certain why this case happens, but causes segfaults if removed
@@ -57,7 +63,7 @@ func ExtractTarLz4(file []byte, dir string) error {
 		// to avoid the zip slip vulnerability
 		// See: https://snyk.io/research/zip-slip-vulnerability
 		if !strings.HasPrefix(path, dir) {
-			return utils.MakeError("destination path %s is illegal", path)
+			return totalBytes, utils.MakeError("destination path %s is illegal", path)
 		}
 
 		info := header.FileInfo()
@@ -65,7 +71,7 @@ func ExtractTarLz4(file []byte, dir string) error {
 		// Create directory if it doesn't exist, otherwise go next
 		if info.IsDir() {
 			if err = os.MkdirAll(path, info.Mode()); err != nil {
-				return utils.MakeError("error creating directory: %v", err)
+				return totalBytes, utils.MakeError("error creating directory: %v", err)
 			}
 			continue
 		}
@@ -73,13 +79,16 @@ func ExtractTarLz4(file []byte, dir string) error {
 		// Create file and copy contents
 		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
 		if err != nil {
-			return utils.MakeError("error opening file: %v", err)
+			return totalBytes, utils.MakeError("error opening file: %v", err)
 		}
 
-		if _, err := io.Copy(file, tarReader); err != nil {
+		numBytes, err := io.Copy(file, tarReader)
+		if err != nil {
 			file.Close()
-			return utils.MakeError("error copying data to file: %v", err)
+			return totalBytes, utils.MakeError("error copying data to file: %v", err)
 		}
+
+		totalBytes += numBytes
 
 		// Manually close file instead of defer otherwise files are only
 		// closed when ALL files are done unpacking
@@ -88,7 +97,7 @@ func ExtractTarLz4(file []byte, dir string) error {
 		}
 	}
 
-	return nil
+	return totalBytes, nil
 }
 
 // CompressTarLz4 takes a directory and compresses it into a tar.lz4 file in memory.
@@ -177,4 +186,100 @@ func CompressTarLz4(dir string) ([]byte, error) {
 	lz4Writer.Close()
 
 	return buf.Bytes(), nil
+}
+
+// SetupTestDir fills the specified directory with some test files.
+func SetupTestDir(testDir string) error {
+	// Write some directories with text files
+	for i := 0; i < 300; i++ {
+		tempDir := path.Join(testDir, utils.Sprintf("dir%d", i))
+		if err := os.Mkdir(tempDir, 0777); err != nil {
+			return utils.MakeError("failed to create temp dir %s: %v", tempDir, err)
+		}
+
+		for j := 0; j < 3; j++ {
+			filePath := path.Join(tempDir, utils.Sprintf("file-%d.txt", j))
+			fileContents := utils.Sprintf("This is file %d in directory %d.", j, i)
+			err := os.WriteFile(filePath, []byte(fileContents), 0777)
+			if err != nil {
+				return utils.MakeError("failed to write to file %s: %v", filePath, err)
+			}
+		}
+	}
+
+	// Write a nested directory with files inside
+	nestedDir := path.Join(testDir, "dir10", "nested")
+	if err := os.Mkdir(nestedDir, 0777); err != nil {
+		return utils.MakeError("failed to create nested dir %s: %v", nestedDir, err)
+	}
+	nestedFile := path.Join(nestedDir, "nested-file.txt")
+	fileContents := utils.Sprintf("This is a nested file.")
+	err := os.WriteFile(nestedFile, []byte(fileContents), 0777)
+	if err != nil {
+		return utils.MakeError("failed to write to file %s: %v", nestedFile, err)
+	}
+
+	// Write some files not in a directory
+	for i := 0; i < 5; i++ {
+		filePath := path.Join(testDir, utils.Sprintf("file-%d.txt", i))
+		fileContents := utils.Sprintf("This is file %d in directory %s.", i, "none")
+		err := os.WriteFile(filePath, []byte(fileContents), 0777)
+		if err != nil {
+			return utils.MakeError("failed to write to file %s: %v", filePath, err)
+		}
+	}
+
+	return nil
+}
+
+// ValidateDirectoryContents checks if all directories and files in the
+// old directory are present in the new directory and have the same contents.
+func ValidateDirectoryContents(oldDir, newDir string) error {
+	return filepath.Walk(oldDir, func(filePath string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		relativePath, err := filepath.Rel(oldDir, filePath)
+		if err != nil {
+			return utils.MakeError("error getting relative path for %s: %v", filePath, err)
+		}
+
+		newFilePath := filepath.Join(newDir, relativePath)
+		matchingFile, err := os.Open(newFilePath)
+		if err != nil {
+			return utils.MakeError("error opening matching file %s: %v", newFilePath, err)
+		}
+		defer matchingFile.Close()
+
+		matchingFileInfo, err := matchingFile.Stat()
+		if err != nil {
+			return utils.MakeError("error reading stat for file: %s: %v", newFilePath, err)
+		}
+
+		// If one is a directory, both should be
+		if info.IsDir() {
+			if !matchingFileInfo.IsDir() {
+				return utils.MakeError("expected %s to be a directory", newFilePath)
+			}
+		} else {
+			testFileContents, err := ioutil.ReadFile(filePath)
+			if err != nil {
+				return utils.MakeError("error reading test file %s: %v", filePath, err)
+			}
+
+			matchingFileBuf := bytes.NewBuffer(nil)
+			_, err = matchingFileBuf.ReadFrom(matchingFile)
+			if err != nil {
+				return utils.MakeError("error reading matching file %s: %v", newFilePath, err)
+			}
+
+			// Check contents match
+			if string(testFileContents) != string(matchingFileBuf.Bytes()) {
+				return utils.MakeError("file contents don't match for file %s: '%s' vs '%s'", filePath, testFileContents, matchingFileBuf.Bytes())
+			}
+		}
+
+		return nil
+	})
 }
