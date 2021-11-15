@@ -56,7 +56,8 @@ typedef struct ClipboardActivity {
     FractalThread active_clipboard_action_thread;
     FractalClipboardActionType clipboard_action_type;
     FractalMutex clipboard_action_mutex;
-    FractalSemaphore next_update_semaphore;
+    FractalSemaphore chunk_transfer_semaphore;
+    FractalSemaphore transfer_thread_setup_semaphore;
     bool action_completed; // whether the push to clipboard or pull of all chunks is completed
 } ClipboardActivity;
 
