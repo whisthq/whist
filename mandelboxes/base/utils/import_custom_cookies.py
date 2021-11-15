@@ -7,6 +7,7 @@ import pyaes
 from pbkdf2 import PBKDF2
 import subprocess
 
+USER_CONFIG_PATH = "/fractal/userConfigs/"
 
 def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
     """
@@ -17,7 +18,7 @@ def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
     Return:
         str: the path to cookies
     """
-    user_config_path = "/fractal/userConfigs/"
+    global USER_CONFIG_PATH
 
     if sys.platform.startswith("linux"):
         linux_cookies = []
@@ -25,22 +26,22 @@ def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
             linux_cookies.append(custom_cookie_file_path)
         elif browser_name == "chrome":
             linux_cookies = [
-                user_config_path + "google-chrome/Default/Cookies",
-                user_config_path + "google-chrome-beta/Default/Cookies",
+                USER_CONFIG_PATH + "google-chrome/Default/Cookies",
+                USER_CONFIG_PATH + "google-chrome-beta/Default/Cookies",
             ]
         elif browser_name == "chromium":
-            linux_cookies = [user_config_path + "chromium/Default/Cookies"]
+            linux_cookies = [USER_CONFIG_PATH + "chromium/Default/Cookies"]
         elif browser_name == "opera":
-            linux_cookies = [user_config_path + "opera/Cookies"]
+            linux_cookies = [USER_CONFIG_PATH + "opera/Cookies"]
         elif browser_name == "edge":
             linux_cookies = [
-                user_config_path + "microsoft-edge/Default/Cookies",
-                user_config_path + "microsoft-edge-dev/Default/Cookies",
+                USER_CONFIG_PATH + "microsoft-edge/Default/Cookies",
+                USER_CONFIG_PATH + "microsoft-edge-dev/Default/Cookies",
             ]
         elif browser_name == "brave":
             linux_cookies = [
-                user_config_path + "BraveSoftware/Brave-Browser/Default/Cookies",
-                user_config_path + "BraveSoftware/Brave-Browser-Beta/Default/Cookies",
+                USER_CONFIG_PATH + "BraveSoftware/Brave-Browser/Default/Cookies",
+                USER_CONFIG_PATH + "BraveSoftware/Brave-Browser-Beta/Default/Cookies",
             ]
         else:
             raise browser_cookie3.BrowserCookieError(
@@ -196,6 +197,13 @@ def set_browser_cookies(target_browser_name, cookie_full_path, target_cookie_fil
             subprocess.run(["echo", f"Cookie failed to import with the integrity error: {err}"])
 
     con.close()
+
+    # Remove singleton cookie file if exist
+    global USER_CONFIG_PATH
+    if target_browser_name == "chrome":
+        singleton_cookie_file = USER_CONFIG_PATH + "google-chrome/SingletonCookie"
+        if os.path.exists(singleton_cookie_file):
+            os.remove(singleton_cookie_file)
 
 
 if __name__ == "__main__":
