@@ -17,6 +17,7 @@ def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
     Return:
         str: the path to cookies
     """
+    user_config_path = "/fractal/userConfig/"
 
     if sys.platform.startswith("linux"):
         linux_cookies = []
@@ -24,22 +25,22 @@ def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
             linux_cookies.append(custom_cookie_file_path)
         elif browser_name == "chrome":
             linux_cookies = [
-                "~/.config/google-chrome/Default/Cookies",
-                "~/.config/google-chrome-beta/Default/Cookies",
+                user_config_path + "google-chrome/Default/Cookies",
+                user_config_path + "google-chrome-beta/Default/Cookies",
             ]
         elif browser_name == "chromium":
-            linux_cookies = ["~/.config/chromium/Default/Cookies"]
+            linux_cookies = [user_config_path + "chromium/Default/Cookies"]
         elif browser_name == "opera":
-            linux_cookies = ["~/.config/opera/Cookies"]
+            linux_cookies = [user_config_path + "opera/Cookies"]
         elif browser_name == "edge":
             linux_cookies = [
-                "~/.config/microsoft-edge/Default/Cookies",
-                "~/.config/microsoft-edge-dev/Default/Cookies",
+                user_config_path + "microsoft-edge/Default/Cookies",
+                user_config_path + "microsoft-edge-dev/Default/Cookies",
             ]
         elif browser_name == "brave":
             linux_cookies = [
-                "~/.config/BraveSoftware/Brave-Browser/Default/Cookies",
-                "~/.config/BraveSoftware/Brave-Browser-Beta/Default/Cookies",
+                user_config_path + "BraveSoftware/Brave-Browser/Default/Cookies",
+                user_config_path + "BraveSoftware/Brave-Browser-Beta/Default/Cookies",
             ]
         else:
             raise browser_cookie3.BrowserCookieError(
