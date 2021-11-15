@@ -17,7 +17,7 @@ def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
     Return:
         str: the path to cookies
     """
-    user_config_path = "/fractal/userConfig/"
+    user_config_path = "/fractal/userConfigs/"
 
     if sys.platform.startswith("linux"):
         linux_cookies = []
