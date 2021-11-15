@@ -23,7 +23,6 @@ import {
   WindowHashAuth,
   WindowHashSignout,
   WindowHashPayment,
-  WindowHashExitTypeform,
   WindowHashProtocol,
   WindowHashOnboardingTypeform,
   WindowHashBugTypeform,
@@ -303,22 +302,6 @@ export const createSignoutWindow = () => {
     hash: WindowHashSignout,
   })
 }
-
-export const createExitTypeform = () =>
-  createWindow({
-    options: {
-      ...base,
-      ...width.lg,
-      ...height.md,
-      skipTaskbar: true,
-      alwaysOnTop: true,
-      frame: false,
-      minimizable: false,
-      titleBarStyle: "hidden",
-      transparent: true,
-    } as BrowserWindowConstructorOptions,
-    hash: WindowHashExitTypeform,
-  })
 
 export const createOnboardingTypeform = () =>
   createWindow({

@@ -40,7 +40,6 @@ export default {
   signupAction: "signupAction",
   relaunchAction: "relaunchAction",
   clearCacheAction: "clearCacheAction",
-  exitTypeformSubmitted: "exitTypeformSubmitted",
   onboardingTypeformSubmitted: "onboardingTypeformSubmitted",
 
   // Tray triggers

@@ -17,10 +17,8 @@ import {
   createSignoutWindow,
   relaunch,
   createPaymentWindow,
-  createExitTypeform,
   createBugTypeform,
   createOnboardingTypeform,
-  closeAllWindows,
 } from "@app/utils/windows"
 import { createTray, createMenu } from "@app/utils/tray"
 import { fromTrigger } from "@app/utils/flows"
@@ -109,10 +107,6 @@ withAppReady(fromTrigger("showSignoutWindow")).subscribe(() => {
   createSignoutWindow()
 })
 
-withAppReady(fromTrigger("trayFeedbackAction")).subscribe(() => {
-  createExitTypeform()
-})
-
 withAppReady(fromTrigger("trayBugAction")).subscribe(() => {
   createBugTypeform()
 })
@@ -144,11 +138,6 @@ withAppReady(fromTrigger("checkPaymentFlowFailure")).subscribe(
     }).catch((err) => Sentry.captureException(err))
   }
 )
-
-withAppReady(fromTrigger("exitTypeformSubmitted")).subscribe(() => {
-  persist("exitTypeformSubmitted", true, "data")
-  closeAllWindows()
-})
 
 withAppReady(fromTrigger("onboardingTypeformSubmitted")).subscribe(() => {
   persist("onboardingTypeformSubmitted", true, "data")

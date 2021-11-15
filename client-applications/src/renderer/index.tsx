@@ -15,7 +15,6 @@ import Update from "@app/renderer/pages/update"
 
 import {
   WindowHashSignout,
-  WindowHashExitTypeform,
   WindowHashBugTypeform,
   WindowHashOnboardingTypeform,
   WindowHashLoading,
@@ -59,11 +58,6 @@ const RootComponent = () => {
       trigger: { name: TRIGGER.clearCacheAction, payload: { clearConfig } },
     })
 
-  const handleExitTypeform = () =>
-    setMainState({
-      trigger: { name: TRIGGER.exitTypeformSubmitted, payload: undefined },
-    })
-
   const handleOnboardingTypeform = () =>
     setMainState({
       trigger: {
@@ -89,18 +83,6 @@ const RootComponent = () => {
   if (show === WindowHashSignout) return <Signout onClick={handleSignout} />
   if (show === WindowHashLoading) return <Loading />
   if (show === WindowHashUpdate) return <Update />
-  if (show === WindowHashExitTypeform)
-    return (
-      <Typeform
-        onSubmit={handleExitTypeform}
-        id={
-          (mainState.appEnvironment ?? "prod") === "prod"
-            ? "Yfs4GkeN"
-            : "nRa1zGFa"
-        }
-        email={mainState.userEmail}
-      />
-    )
   if (show === WindowHashOnboardingTypeform) {
     return (
       <Typeform
