@@ -29,8 +29,8 @@ def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str) ->
     kwargs = {
         "ImageId": instance_AMI,
         "InstanceType": instance_type,  # should be g4dn.2xlarge for testing the server protocol
-        "MaxCount": 2,
-        "MinCount": 2,
+        "MaxCount": 1,
+        "MinCount": 1,
         "TagSpecifications": [
             {
                 "ResourceType": "instance",
