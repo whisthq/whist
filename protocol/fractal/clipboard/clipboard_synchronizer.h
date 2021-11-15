@@ -38,8 +38,8 @@ Includes
 
 typedef enum FractalClipboardActionType {
     CLIPBOARD_ACTION_NONE = 0,
-    CLIPBOARD_ACTION_PUSH = 1, // push onto local clipboard
-    CLIPBOARD_ACTION_PULL = 2, // pull from local clipboard
+    CLIPBOARD_ACTION_PUSH = 1,  // push onto local clipboard
+    CLIPBOARD_ACTION_PULL = 2,  // pull from local clipboard
 } FractalClipboardActionType;
 
 typedef struct ClipboardActivity {
@@ -52,7 +52,7 @@ typedef struct ClipboardActivity {
     FractalMutex clipboard_action_mutex;
     FractalSemaphore chunk_transfer_semaphore;
     FractalSemaphore transfer_thread_setup_semaphore;
-    bool action_completed; // whether the push to clipboard or pull of all chunks is completed
+    bool action_completed;  // whether the push to clipboard or pull of all chunks is completed
 } ClipboardActivity;
 
 /*

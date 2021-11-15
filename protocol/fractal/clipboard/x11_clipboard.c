@@ -243,7 +243,8 @@ ClipboardData* unsafe_get_os_clipboard() {
     // Free the previous dynamic buffer (shouldn't be necessary)
     if (db != NULL) {
         LOG_ERROR(
-            "Called unsafe_get_os_clipboard, but the caller hasn't called unsafe_free_clipboard_buffer yet!");
+            "Called unsafe_get_os_clipboard, but the caller hasn't called "
+            "unsafe_free_clipboard_buffer yet!");
         free_dynamic_buffer(db);
         db = NULL;
     }

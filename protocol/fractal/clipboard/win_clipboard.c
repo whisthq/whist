@@ -51,7 +51,7 @@ char* get_os_clipboard_directory() {
     */
 
     static char buf[PATH_MAXLEN + 1];
-    wcstombs(buf, lget_clipboard_directory(), sizeof(buf));
+    wcstombs(buf, lget_os_clipboard_directory(), sizeof(buf));
     return buf;
 }
 char* set_os_clipboard_directory() {
