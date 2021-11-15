@@ -15,6 +15,7 @@ const Contents = () => {
     return (
       <>
         <Typeform id="NtcwaVHR" onSubmit={onSubmitTypeform} />
+        {/* <Calendly url={CALENDLY_URL} /> */}
       </>
     )
   } else {
@@ -39,7 +40,7 @@ const Widget = (props: { open: boolean; setOpen: (open: boolean) => void }) => {
         open={props.open}
         onClose={() => props.setOpen(false)}
       >
-        <div className="flex items-end justify-center min-h-screen text-center sm:block sm:p-0">
+        <div className="flex items-end justify-center text-center sm:block sm:p-0 h-full">
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -68,7 +69,7 @@ const Widget = (props: { open: boolean; setOpen: (open: boolean) => void }) => {
             leaveFrom="opacity-100 translate-y-0 sm:scale-100"
             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            <div className="inline-block align-center overflow-hidden transform transition-all sm:align-middle w-screen h-screen">
+            <div className="inline-block align-center overflow-hidden transform transition-all sm:align-middle w-10/12 h-5/6">
               <Contents />
             </div>
           </Transition.Child>

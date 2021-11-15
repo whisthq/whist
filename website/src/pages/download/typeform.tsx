@@ -15,7 +15,7 @@ const Typeform = (props: { id: string; onSubmit: () => void }) => {
     )
   } else {
     return (
-      <div className="relative w-screen h-screen bg-gray-900">
+      <div className="relative bg-gray-900">
         <div className="flex justify-center items-center m-auto pt-72">
           <div className="mt-12 animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue"></div>
         </div>
