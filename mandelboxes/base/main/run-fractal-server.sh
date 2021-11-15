@@ -75,7 +75,7 @@ fi
 
 if [ -f "$WHIST_INITIAL_USER_COOKIES_FILE" ]; then
   # Imports user cookies if file exists
-  /usr/share/fractal/run-as-fractal-user.sh "python3 /usr/share/fractal/import_custom_cookies.py"
+  python3 /usr/share/fractal/import_custom_cookies.py
   # Remove temporary file containing the user's intial cookies
   rm $WHIST_INITIAL_USER_COOKIES_FILE
 fi
