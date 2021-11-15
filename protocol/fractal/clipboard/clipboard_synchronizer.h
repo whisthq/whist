@@ -9,29 +9,23 @@
 Usage
 ============================
 
-initClipboardSynchronizer("76.106.92.11");
+init_clipboard_synchronizer("76.106.92.11");
 
-ClipboardData server_clipboard;
+ClipboardData received_clipboard_chunk;
 
-// Will set the client clipboard to that data
-ClipboardSynchronizerSetClipboard(&server_clipboard);
+// Will push this chunk onto our clipboard
+push_clipboard_chunk(&received_clipboard_chunk);
 
-// Will likely return true because it's waiting on server_clipboard to be set
-LOG_INFO("Is Synchronizing? %d", isClipboardSynchronizing());
+ClipboardData* our_chunk_to_send = pull_clipboard_chunk();
 
-// Wait for clipboard to be done synchronizing
-while(isClipboardSynchronizing());
-
-ClipboardData* client_clipboard = ClipboardSynchronizerGetNewClipboard();
-
-if (client_clipboard) {
-  // We have a new clipboard, this should be sent to the server
-  Send(client_clipboard);
+if (our_chunk_to_send) {
+  // We have a new clipboard chunk, this should be sent to the server
+  Send(our_chunk_to_send);
 } else {
   // There is no new clipboard
 }
 
-destroyClipboardSynchronizer();
+destroy_clipboard_synchronizer();
 */
 
 /*
