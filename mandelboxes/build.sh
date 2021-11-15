@@ -23,6 +23,9 @@ for arg in "$@"; do
     --prod|-p)
       mode=prod
       ;;
+    --perf|-P)
+      cmake_build_type_opt=Perf
+      ;;
     --release-protocol)
       cmake_build_type_opt=Release
       ;;
@@ -31,10 +34,6 @@ for arg in "$@"; do
       ;;
     --debug-protocol)
       cmake_build_type_opt=Debug
-      ;;
-    *)
-    --perf|-P)
-      cmake_build_type_opt=Perf
       ;;
     *)
       python_args+=("$arg")
