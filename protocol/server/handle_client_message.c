@@ -28,10 +28,6 @@ Includes
 #include "handle_client_message.h"
 #include "network.h"
 
-#ifdef _WIN32
-#include <fractal/utils/windows_utils.h>
-#endif
-
 extern Client client;
 
 extern volatile int max_bitrate;
