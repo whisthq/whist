@@ -51,7 +51,7 @@ def attempt_connecting(ssh_command, timeout, log_file_handle, pexpect_prompt, ma
         if result_index == 0:
             print("\tSSH connection refused by host (retry {}/{})".format(retries, max_retries))
             child.kill(0)
-            time.sleep(5)
+            time.sleep(10)
         elif result_index == 1 or result_index == 2:
             if result_index == 1:
                 child.sendline("yes")
@@ -91,7 +91,7 @@ if __name__ == "__main__":
         instance_type=instance_type, instance_AMI=instance_AMI, key_name=ssh_key_name
     )
     # Give a little time for the instance to be recognized in AWS
-    time.sleep(10)
+    time.sleep(5)
 
     # Wait for the instance to be running
     wait_for_instance_to_start_or_stop(instance_id, stopping=False)
@@ -102,17 +102,19 @@ if __name__ == "__main__":
     username = "ubuntu"
     print("Created instance AWS instance with hostname: {}!".format(hostname))
     
-    logging_file = open("ssh_connect.txt", "w")
+    host_service_log = open("host_service_logging_file.txt", "w")
+    server_log = open("server_log.txt", "w")
+    client_log = open("client_log.txt", "w")
     private_ip = instance_ip[0]["private"]
     pexpect_prompt = "{}@ip-{}:".format(username, private_ip.replace('.','-'))
 
 
     # Initiate the SSH connections with the instance
-    print("Initiating SSH connection with the AWS instance...")
+    print("Initiating 1° SSH connection with the AWS instance...")
     # Hang until the connection is established (give up after 10 mins)
     cmd = "ssh {}@{} -i {}".format(username, hostname, ssh_key_path)
     
-    child = attempt_connecting(cmd, 600, logging_file, pexpect_prompt, 5)
+    hs_process = attempt_connecting(cmd, 600, host_service_log, pexpect_prompt, 5)
 
     # Obtain current branch
     subprocess = subprocess.Popen("git branch", shell=True, stdout=subprocess.PIPE)
@@ -129,80 +131,62 @@ if __name__ == "__main__":
 
     # Retrieve fractal/fractal monorepo on the instance
     command="git clone -b " + branch_name + " https://" + github_token + "@github.com/fractal/fractal.git | tee ~/github_log.log"
-    child.sendline(command)
-    child.expect(pexpect_prompt)
+    hs_process.sendline(command)
+    hs_process.expect(pexpect_prompt)
     print ("Finished downloading fractal/fractal on EC2 instance")
 
     # Set up the server/client
     # 1- run host-setup
     print ("Running the host setup on the instance ...")
     command = "cd ~/fractal/host-setup && ./setup_host.sh --localdevelopment | tee ~/host_setup.log"
-    child.sendline(command)
-    child.expect(pexpect_prompt)
+    hs_process.sendline(command)
+    hs_process.expect(pexpect_prompt)
     print ("Finished running the host setup script on the EC2 instance")
     
     # 2- reboot and wait for it to come back up
     print("Rebooting the EC2 instance (required after running the host setup)...")
-    child.sendline("sudo reboot")
-    child.kill(0)
-
+    hs_process.sendline("sudo reboot")
+    hs_process.kill(0)
     time.sleep(5)
-    child = pexpect.spawn(cmd)
-    child.logfile = logging_file
-    
-    #s.login(hostname, username=username, ssh_key=ssh_key_path, login_timeout=600)
+    hs_process = attempt_connecting(cmd, 600, host_service_log, pexpect_prompt, 5)
     print("Reboot complete")
+
+
+    # 3- build and run host-service
+    print ("Starting the host service on the EC2 instance...")
+    command = "cd ~/fractal/host-service && make run | tee ~/host_service.log"
+    hs_process.sendline(command)
+    hs_process.expect("Entering event loop...")
+    print("Host service is ready!")
+
+    # 4- Build the protocol server
+    
+    # Initiate the SSH connections with the instance
+    print("Initiating 2° SSH connection with the AWS instance...")
+    # Hang until the connection is established (give up after 10 mins)
+    server_process = attempt_connecting(cmd, 600, server_log, pexpect_prompt, 5)
+    
+    print("Building the server mandelbox in PERF mode ...")
+    command="cd ~/fractal/mandelboxes && ./build.sh browsers/chrome --perf | tee ~/server_mandelbox_build.log"
+    server_process.sendline(command)
+    server_process.expect(pexpect_prompt)
+    print ("Finished building the browsers/chrome (server) mandelbox on the EC2 instance")
+    
+
+    # 5- Run the protocol server, and retrieve the connection configs
+    command = "cd ~/fractal/mandelboxes && ./run.sh browsers/chrome | tee ~/server_mandelbox_run.log"
+    server_process.sendline(command)
+    server_process.expect("")
+    server_docker_id=stdout.readlines()[-1].strip()
+    print("Fractal Server started on EC2 instance, on Docker container {}!".format(server_docker_id))
+
     
     child.kill(0)
-
-
     logging_file.close()
 
     
 
-    # reboot_complete = False
-    # while not reboot_complete:
-    #     reboot_complete = True
-    #     try:
-    #         ssh_client.connect(
-    #             hostname=instance_ip[0]["public"], username="ubuntu", pkey=ssh_key
-    #         )
-    #     except:
-    #         reboot_complete = False
-    # print("EC2 instance reboot complete!")
-
-    # # 3- build and run host-service
-    # print ("Starting the host service on the EC2 instance...")
-    # command = "cd ~/fractal/host-service && make run | tee ~/host_service.log"
-    # _, stdout, _ = ssh_client.exec_command(command=command)
-
-    # for line in iter(stdout.readline, ""):
-    #     print(line, end="")
-    #     if "Entering event loop..." in line:
-    #         break
-    # print("Host service is ready!")
-
-    # # 4- Build the protocol server
-    # print("Building the server mandelbox in PERF mode ...")
-    # command="cd ~/fractal/mandelboxes && ./build.sh browsers/chrome --perf | tee ~/server_mandelbox_build.log"
-
-    # stdin, stdout, stderr = ssh_client.exec_command(command=command)
-    # for line in iter(stdout.readline, ""):
-    #     print(line, end="")
-    # exit_status = stdout.channel.recv_exit_status()          # Blocking call
-    # if exit_status == 0:
-    #     print ("Finished building the browsers/chrome (server) mandelbox on the EC2 instance")
-    # else:
-    #     print("Error", exit_status)
-
-    # # 5- Run the protocol server, and retrieve the connection configs
-    # command = "cd ~/fractal/mandelboxes && ./run.sh browsers/chrome | tee ~/server_mandelbox_run.log"
-    # _, stdout, _ = ssh_client.exec_command(command=command)
-    # for line in iter(stdout.readline, ""):
-    #     print(line, end="")
-    # time.sleep(5)
-    # server_docker_id=stdout.readlines()[-1].strip()
-    # print("Fractal Server started on EC2 instance, on Docker container {}!".format(server_docker_id))
+    
     
     
 
