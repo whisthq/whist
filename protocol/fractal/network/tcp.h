@@ -22,7 +22,7 @@ tcp_context->read_packet(...);
 To free a packet:
 tcp_context->free_packet(...);
  */
-#include "network.h"
+#include <fractal/core/fractal.h>
 
 /**
  * @brief                           Creates a tcp network context and initializes a TCP connection

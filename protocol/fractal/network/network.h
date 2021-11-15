@@ -107,7 +107,6 @@ Includes
 #include <sys/socket.h>
 #endif
 
-#include <fractal/core/fractal.h>
 #include <fractal/network/throttle.h>
 
 /*
@@ -171,6 +170,9 @@ typedef enum {
     PACKET_VIDEO,
     PACKET_MESSAGE,
 } FractalPacketType;
+
+#include <fractal/core/fractal.h>
+
 // Used for buffers whose key is a packet_type
 #define NUM_PACKET_TYPES 3
 
