@@ -7,12 +7,12 @@
 Usage
 ============================
 
-GET_CLIPBOARD and SET_CLIPBOARD will return strings representing directories
-important for getting and setting file clipboards. When GetClipboard() is called
-and it returns a CLIPBOARD_FILES type, then GET_CLIPBOARD will be filled with
-symlinks to the clipboard files. When SetClipboard(cb) is called and is given a
+GET_OS_CLIPBOARD and SET_OS_CLIPBOARD will return strings representing directories
+important for getting and setting file clipboards. When get_os_clipboard() is called
+and it returns a CLIPBOARD_FILES type, then GET_OS_CLIPBOARD will be filled with
+symlinks to the clipboard files. When set_os_clipboard(cb) is called and is given a
 clipboard with a CLIPBOARD_FILES type, then the clipboard will be set to
-whatever files are in the SET_CLIPBOARD directory.
+whatever files are in the SET_OS_CLIPBOARD directory.
 */
 
 /*
@@ -63,7 +63,7 @@ Private Functions
 
 bool start_tracking_clipboard_updates();
 bool clipboard_has_target(Atom property_atom, Atom target_atom);
-DynamicBuffer* get_clipboard_data(Atom property_atom, int header_size);
+DynamicBuffer* get_os_clipboard_data(Atom property_atom, int header_size);
 
 /*
 ============================
@@ -89,7 +89,7 @@ void unsafe_destroy_clipboard() {
     }
 }
 
-DynamicBuffer* get_clipboard_picture() {
+DynamicBuffer* get_os_clipboard_picture() {
     /*
         Get an image from the Linux OS clipboard
         NOTE: Assume that clipboard stores pictures in png format when getting
@@ -104,7 +104,7 @@ DynamicBuffer* get_clipboard_picture() {
     // is PNG
     if (clipboard_has_target(property_atom, target_atom)) {
         DynamicBuffer* db = NULL;
-        if ((db = get_clipboard_data(property_atom, 0)) == NULL) {
+        if ((db = get_os_clipboard_data(property_atom, 0)) == NULL) {
             LOG_WARNING("Failed to get clipboard data");
             return NULL;
         }
@@ -117,7 +117,7 @@ DynamicBuffer* get_clipboard_picture() {
     return NULL;
 }
 
-DynamicBuffer* get_clipboard_string() {
+DynamicBuffer* get_os_clipboard_string() {
     /*
         Get a string from the Linux OS clipboard
 
@@ -130,7 +130,7 @@ DynamicBuffer* get_clipboard_string() {
 
     if (clipboard_has_target(property_atom, target_atom)) {
         DynamicBuffer* db = NULL;
-        if ((db = get_clipboard_data(property_atom, 0)) == NULL) {
+        if ((db = get_os_clipboard_data(property_atom, 0)) == NULL) {
             LOG_WARNING("Failed to get clipboard data");
             return NULL;
         }
@@ -143,7 +143,7 @@ DynamicBuffer* get_clipboard_string() {
     return NULL;
 }
 
-DynamicBuffer* get_clipboard_files() {
+DynamicBuffer* get_os_clipboard_files() {
     /*
         Get files from the Linux OS clipboard
 
@@ -156,7 +156,7 @@ DynamicBuffer* get_clipboard_files() {
 
     if (clipboard_has_target(property_atom, target_atom)) {
         DynamicBuffer* db = NULL;
-        if ((db = get_clipboard_data(property_atom, 0)) == NULL) {
+        if ((db = get_os_clipboard_data(property_atom, 0)) == NULL) {
             LOG_WARNING("Failed to get clipboard data");
             return NULL;
         }
@@ -172,9 +172,9 @@ DynamicBuffer* get_clipboard_files() {
         cb->size++;
 
         char command[100] = "rm -rf ";
-        strcat(command, GET_CLIPBOARD);
+        strcat(command, GET_OS_CLIPBOARD);
         system(command);
-        mkdir(GET_CLIPBOARD, 0777);
+        mkdir(GET_OS_CLIPBOARD, 0777);
 
         char* file = strtok(cb->data, "\n\r");
         if (file != NULL) {
@@ -185,7 +185,7 @@ DynamicBuffer* get_clipboard_files() {
             char file_prefix[] = "file://";
             if (memcmp(file, file_prefix, sizeof(file_prefix) - 1) == 0) {
                 char final_filename[1000] = "";
-                strcat(final_filename, GET_CLIPBOARD);
+                strcat(final_filename, GET_OS_CLIPBOARD);
                 strcat(final_filename, "/");
                 strcat(final_filename, basename(file));
                 LOG_INFO("NAME: %s %s %s", final_filename, file, basename(file));
@@ -207,17 +207,17 @@ DynamicBuffer* get_clipboard_files() {
 
 static DynamicBuffer* db = NULL;
 
-void unsafe_free_clipboard(ClipboardData* cb) {
+void unsafe_free_clipboard_buffer(ClipboardData* cb) {
     /*
         Free clipboard buffer memory
 
         Arguments:
-            cb (ClipboardData*): clipboard data to be freed
+            cb (ClipboardData*): clipboard buffer data to be freed
     */
 
     if (cb->type != CLIPBOARD_NONE) {
         if (db == NULL) {
-            LOG_ERROR("Called unsafe_free_clipboard, but there's nothing to free!");
+            LOG_ERROR("Called unsafe_free_clipboard_buffer, but there's nothing to free!");
         } else {
             free_dynamic_buffer(db);
             db = NULL;
@@ -231,7 +231,7 @@ void unsafe_free_clipboard(ClipboardData* cb) {
     }
 }
 
-ClipboardData* unsafe_get_clipboard() {
+ClipboardData* unsafe_get_os_clipboard() {
     /*
         Get and return the current contents of the Linux clipboard
 
@@ -243,21 +243,21 @@ ClipboardData* unsafe_get_clipboard() {
     // Free the previous dynamic buffer (shouldn't be necessary)
     if (db != NULL) {
         LOG_ERROR(
-            "Called unsafe_get_clipboard, but the caller hasn't called unsafe_free_clipboard yet!");
+            "Called unsafe_get_os_clipboard, but the caller hasn't called unsafe_free_clipboard_buffer yet!");
         free_dynamic_buffer(db);
         db = NULL;
     }
 
     // Try to get a string/picture/files clipboard object (Stored in db's buf)
     if (db == NULL) {
-        db = get_clipboard_string();
+        db = get_os_clipboard_string();
     }
     if (db == NULL) {
-        db = get_clipboard_picture();
+        db = get_os_clipboard_picture();
     }
     if (db == NULL) {
         // Not implementing clipboard files right now
-        // db = get_clipboard_files();
+        // db = get_os_clipboard_files();
     }
 
     if (db == NULL) {
@@ -267,15 +267,15 @@ ClipboardData* unsafe_get_clipboard() {
         cb_none.size = 0;
         return &cb_none;
     } else {
-        // We expect that the user of GetClipboard
+        // We expect that the user of get_os_clipboard
         // will safe_malloc and memcpy his own version if he wants to
         // save multiple clipboards
-        // Otherwise, we will free on the next call to get_clipboard
+        // Otherwise, we will free on the next call to get_os_clipboard
         return (ClipboardData*)db->buf;
     }
 }
 
-void unsafe_set_clipboard(ClipboardData* cb) {
+void unsafe_set_os_clipboard(ClipboardData* cb) {
     /*
         Set the Linux OS clipboard to contain the data from `cb`
 
@@ -287,17 +287,10 @@ void unsafe_set_clipboard(ClipboardData* cb) {
     static FILE* inp = NULL;
 
     //
-    // cb is expected to be something that was once returned by GetClipboard
+    // cb is expected to be something that was once returned by get_os_clipboard
     // If it's text or an image, simply set the data and type to the current
     // clipboard so that the clipboard acts just like it did when the previous
-    // GetClipboard was called
-    //
-    // If cb->type == CLIPBOARD_FILES, then we take all of the files and folers
-    // in
-    // "./set_clipboard" and set them to be our clipboard. These files and
-    // folders should not be symlinks, simply assume that they will never be
-    // symlinks
-    //
+    // get_os_clipboard was called
 
     if (cb->type == CLIPBOARD_TEXT) {
         LOG_INFO("Setting clipboard to text!");
@@ -354,7 +347,7 @@ bool start_tracking_clipboard_updates() {
     return true;
 }
 
-bool unsafe_has_clipboard_updated() {
+bool unsafe_has_os_clipboard_updated() {
     /*
         Whether the clipboard has updated since this function was last called
         or since start_tracking_clipboard_updates was last called.
@@ -424,9 +417,9 @@ bool clipboard_has_target(Atom property_atom, Atom target_atom) {
     }
 }
 
-DynamicBuffer* get_clipboard_data(Atom property_atom, int header_size) {
+DynamicBuffer* get_os_clipboard_data(Atom property_atom, int header_size) {
     /*
-        Get the data from the clipboard, as type `property_atom`
+        Get the data from the Linux clipboard, as type `property_atom`
 
         Arguments:
             property_atom (Atom): type of data to be retrieved from OS clipboard

@@ -210,7 +210,7 @@ int push_clipboard_thread_function(void* opaque) {
     if (current_clipboard_activity.clipboard_action_type == CLIPBOARD_ACTION_PUSH) {
         if (active_clipboard_buffer) {
             LOG_INFO("Setting OS clipboard");
-            set_clipboard(active_clipboard_buffer);
+            set_os_clipboard(active_clipboard_buffer);
         }
     }
 
@@ -239,7 +239,7 @@ int pull_clipboard_thread_function(void* opaque) {
         Return:
             (int): 0 on success
 
-        NOTE: this thread should only be created when `has_clipboard_updated`
+        NOTE: this thread should only be created when `has_os_clipboard_updated`
             evaluates to true
     */
 
@@ -249,14 +249,14 @@ int pull_clipboard_thread_function(void* opaque) {
     current_clipboard_activity.clipboard_action_type = CLIPBOARD_ACTION_PULL;
 
     // When thread is created, pull the clipboard
-    active_clipboard_buffer = get_clipboard();
+    active_clipboard_buffer = get_os_clipboard();
 
     // Wait for all chunks to be pulled from clipboard buffer
     transfer_clipboard_wait_loop(CLIPBOARD_ACTION_PULL);
 
-    // After calling `get_clipboard()`, we call `free_clipboard()`
+    // After calling `get_os_clipboard()`, we call `free_clipboard_buffer()`
     if (active_clipboard_buffer) {
-        free_clipboard(active_clipboard_buffer);
+        free_clipboard_buffer(active_clipboard_buffer);
     }
     active_clipboard_buffer = NULL;
 
@@ -334,7 +334,7 @@ ClipboardData* pull_clipboard_chunk() {
     fractal_lock_mutex(current_clipboard_activity.clipboard_action_mutex);
 
     // If clipboard has updated, start new transfer
-    if (has_clipboard_updated()) {
+    if (has_os_clipboard_updated()) {
         start_clipboard_transfer(CLIPBOARD_ACTION_PULL);
         // Wait for thread to be set up before continuing to pull first chunk from buffer
         fractal_wait_semaphore(current_clipboard_activity.transfer_thread_setup_semaphore);
