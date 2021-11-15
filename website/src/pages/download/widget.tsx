@@ -4,7 +4,7 @@ import { Dialog, Transition } from "@headlessui/react"
 import Calendly from "@app/pages/download/calendly"
 import Typeform from "@app/pages/download/typeform"
 
-const CALENDLY_URL = "https://calendly.com/whist-ming/onboarding"
+const CALENDLY_URL = "https://calendly.com/whisthq/onboarding"
 
 const Contents = () => {
   const [showCalendly, setShowCalendly] = useState(false)
