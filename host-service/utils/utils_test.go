@@ -10,6 +10,8 @@ import (
 )
 
 func TestPlaceholderUUIDs(t *testing.T) {
+	// Test the placeholder UUID functions, only verify that they correspond
+	// to the predefined warmup and test UUIDs.
 	testMap := []struct {
 		key       string
 		want, got string
@@ -26,10 +28,12 @@ func TestPlaceholderUUIDs(t *testing.T) {
 }
 
 func TestWaitWithDebugPrints(t *testing.T) {
+	// Use a waitgroup and random go routines to test WaitWithDebugPrints
 	wg := sync.WaitGroup{}
 	timeout := 1 * time.Second
 	level := 2
 
+	// Use go routines with random duration
 	for i := 1; i <= 5; i++ {
 		wg.Add(1)
 
@@ -40,19 +44,22 @@ func TestWaitWithDebugPrints(t *testing.T) {
 		}()
 	}
 	WaitWithDebugPrints(&wg, timeout, level)
+
+	// Check if the wait group finished successfully
 	wg.Wait()
 }
 
 func TestWaitForFileCreation(t *testing.T) {
-	testDir := path.Join(TempDir, "testBase")
+	testDir := path.Join("/", "home", "boss", TempDir, "testBase")
 
+	// Setup the test directory to write the test file
 	err := setupTestDirs(testDir)
 	defer cleanupTestDirs()
-
 	if err != nil {
 		t.Errorf("Failed to setup test directory: %v", err)
 	}
 
+	// Make a go routine that waits for the test file to be created
 	waitErrorChan := make(chan error)
 	go func() {
 		t.Logf("Testing wait for file creation on path: %v", testDir)
@@ -60,17 +67,22 @@ func TestWaitForFileCreation(t *testing.T) {
 		waitErrorChan <- err
 	}()
 
+	// Make another go routine that writes the test file
 	writeErrorChan := make(chan error)
 	go func() {
+		// Sleep to give some time to the file watcher to start
+		time.Sleep(5 * time.Second)
 		err := writeTestFile(testDir)
 		writeErrorChan <- err
 	}()
 
+	// Check if WaitForFileCreation finished without any errors
 	err = <-waitErrorChan
 	if err != nil {
 		t.Errorf("Error waiting for file creation: %v", err)
 	}
 
+	// Check if writeTestFile finished without any errors
 	err = <-writeErrorChan
 	if err != nil {
 		t.Errorf("Error writing file: %v", err)
@@ -78,6 +90,7 @@ func TestWaitForFileCreation(t *testing.T) {
 }
 
 func TestSliceUtils(t *testing.T) {
+	// Test all of the functions on the `slices.go` utils file
 	testSlice := []interface{}{"test-item-1", "test-item-2", "test-item-3"}
 
 	// Test slice utils with existing element
@@ -90,7 +103,7 @@ func TestSliceUtils(t *testing.T) {
 	sliceRemoveNew := SliceRemove(testSlice, "test-item-4")
 	removedNewElementFromSlice := len(testSlice) != len(sliceRemoveNew)
 
-	testMap := []struct {
+	sliceTests := []struct {
 		key       string
 		want, got bool
 	}{
@@ -100,8 +113,10 @@ func TestSliceUtils(t *testing.T) {
 		{"Slice remove new element", false, removedNewElementFromSlice},
 	}
 
-	for _, test := range testMap {
+	for _, test := range sliceTests {
 		testname := Sprintf("%v,%v,%v", test.key, test.want, test.got)
+
+		// Run slice subtests
 		t.Run(testname, func(t *testing.T) {
 			if test.got != test.want {
 				t.Errorf("expected request key %s to be %v, got %v", test.key, test.got, test.want)
@@ -109,12 +124,6 @@ func TestSliceUtils(t *testing.T) {
 		})
 	}
 
-}
-
-func TestStringUtils(t *testing.T) {
-	rand.Seed(2)
-	hex := RandHex(16)
-	t.Log(hex)
 }
 
 // setupTestDirs creates a sample user config with some nested directories
@@ -127,6 +136,7 @@ func setupTestDirs(testDir string) error {
 	return nil
 }
 
+// writeTestFile creates a test file on the given directory.
 func writeTestFile(testDir string) error {
 	filePath := path.Join(testDir, Sprintf("test-file.txt"))
 	fileContents := Sprintf("This is test-file with path %s", filePath)
