@@ -58,6 +58,7 @@ def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
             directory = os.path.dirname(path)
             if not os.path.exists(directory):
                 os.makedirs(directory)
+                os.chmod(directory, 0o777)
 
             connection = sqlite3.connect(path)
             cursor = connection.cursor()
@@ -70,6 +71,7 @@ def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
             )
             connection.commit()
             connection.close()
+            os.chmod(path, 0o777)
 
         return path
 
