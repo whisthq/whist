@@ -50,7 +50,7 @@ func TestWaitWithDebugPrints(t *testing.T) {
 }
 
 func TestWaitForFileCreation(t *testing.T) {
-	testDir := path.Join("/", "home", "boss", TempDir, "testBase")
+	testDir := path.Join(TempDir, "testBase")
 
 	// Setup the test directory to write the test file
 	err := setupTestDirs(testDir)
