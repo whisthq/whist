@@ -1,7 +1,9 @@
 package mandelbox
 
 import (
+	"bytes"
 	"context"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -85,13 +87,6 @@ func TestUserConfigIntegration(t *testing.T) {
 	}
 }
 
-// cleanupTestDirs removes the created directories created by the integration
-// test. This allows the test to be runnable multiple times without
-// creation errors.
-func cleanupTestDirs() error {
-	return os.RemoveAll(utils.FractalDir)
-}
-
 // TestUserInitialBrowserWrite checks if the browser data is properly created by
 // calling the write function and comparing results with a manually generated cookie file
 func TestUserInitialBrowserWrite(t *testing.T) {
@@ -104,7 +99,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 		userID:                "user_config_test_user",
 		configEncryptionToken: "testEncryptionToken",
 	}
-	
+
 	testCookie1 := "{'creation_utc': 13280861983875934, 'host_key': 'test_host_key_1.com'}"
 	testCookie2 := "{'creation_utc': 4228086198342934, 'host_key': 'test_host_key_2.com'}"
 	cookieJSON := "[" + testCookie1 + "," + testCookie2 + "]"
@@ -119,9 +114,9 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	filePath := path.Join(unpackedConfigDir, "tempt-cookies")
 
 	err := os.WriteFile(filePath, []byte(cookieJSON), 0777)
-	
+
 	testFileContents, err := ioutil.ReadFile(filePath)
-	
+
 	if err != nil {
 		t.Fatalf("error reading test file %s: %v", filePath, err)
 	}
@@ -146,4 +141,11 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	}
 
 	os.RemoveAll(unpackedConfigDir)
+}
+
+// cleanupTestDirs removes the created directories created by the integration
+// test. This allows the test to be runnable multiple times without
+// creation errors.
+func cleanupTestDirs() error {
+	return os.RemoveAll(utils.FractalDir)
 }
