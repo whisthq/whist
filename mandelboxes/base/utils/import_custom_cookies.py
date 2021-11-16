@@ -1,8 +1,6 @@
 import os
 import json
 import sys
-import pwd
-import grp
 import browser_cookie3
 import sqlite3
 import pyaes
@@ -57,15 +55,11 @@ def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
         if not path:
             path = os.path.expanduser(linux_cookies[0])
 
-            # Set permission groups
-            uid = pwd.getpwnam("fractal").pw_uid
-            gid = grp.getgrnam("fractal").gr_gid
-
             # Create directories if it does not exist
             directory = os.path.dirname(path)
             if not os.path.exists(directory):
                 os.makedirs(directory)
-                os.chmod(directory, uid, gid)
+                os.chmod(directory, 0o777)
 
             connection = sqlite3.connect(path)
             cursor = connection.cursor()
@@ -78,7 +72,7 @@ def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
             )
             connection.commit()
             connection.close()
-            os.chmod(path, uid, gid)
+            os.chmod(path, 0o777)
 
         return path
 
