@@ -9,6 +9,7 @@ import subprocess
 
 USER_CONFIG_PATH = "/fractal/userConfigs/"
 
+
 def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
     """
     Gets or create file containing all cookies
