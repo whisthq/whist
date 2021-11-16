@@ -61,7 +61,6 @@ def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
             uid = pwd.getpwnam("fractal").pw_uid
             gid = grp.getgrnam("fractal").gr_gid
 
-
             # Create directories if it does not exist
             directory = os.path.dirname(path)
             if not os.path.exists(directory):
