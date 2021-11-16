@@ -1,17 +1,12 @@
 package subscriptions
 
 import (
-	// 	"context"
-	// 	"encoding/json"
-	// 	"net/http"
 	"context"
 	"encoding/json"
 	"net"
 	"net/http"
 	"testing"
 	"time"
-
-	// 	"time"
 
 	"github.com/fractal/fractal/host-service/utils"
 	graphql "github.com/hasura/go-graphql-client"
