@@ -69,23 +69,41 @@ func TestUserConfigIntegration(t *testing.T) {
 	}
 	testMandelboxData.rwlock.Unlock()
 
-	// Delete the user config directory so it can be recreated
-	os.RemoveAll(unpackedConfigPath)
+	t.Run("valid token", func(t *testing.T) {
+		// Delete the user config directory so it can be recreated
+		os.RemoveAll(unpackedConfigPath)
 
-	if err := testMandelboxData.DownloadUserConfigs(); err != nil {
-		t.Fatalf("error populating configs: %v", err)
-	}
+		if err := testMandelboxData.DownloadUserConfigs(); err != nil {
+			t.Fatalf("error populating configs: %v", err)
+		}
 
-	if err := testMandelboxData.DecryptUserConfigs(); err != nil {
-		t.Fatalf("error decrypting configs: %v", err)
-	}
+		if err := testMandelboxData.DecryptUserConfigs(); err != nil {
+			t.Fatalf("error decrypting configs: %v", err)
+		}
 
-	// Verify that all files in original directory are still there and correct
-	destinationPath := path.Join(unpackedConfigPath, "testBase")
-	err = configutils.ValidateDirectoryContents(sourceDir, destinationPath)
-	if err != nil {
-		t.Fatalf("error validating directory contents: %v", err)
-	}
+		// Verify that all files in original directory are still there and correct
+		destinationPath := path.Join(unpackedConfigPath, "testBase")
+		err = configutils.ValidateDirectoryContents(sourceDir, destinationPath)
+		if err != nil {
+			t.Fatalf("error validating directory contents: %v", err)
+		}
+	})
+
+	t.Run("invalid token", func(t *testing.T) {
+		// Delete the user config directory so it can be recreated
+		os.RemoveAll(unpackedConfigPath)
+
+		// Change token to be invalid
+		testMandelboxData.configEncryptionToken = "invalidToken"
+
+		if err := testMandelboxData.DownloadUserConfigs(); err != nil {
+			t.Fatalf("error populating configs: %v", err)
+		}
+
+		if err := testMandelboxData.DecryptUserConfigs(); err == nil {
+			t.Fatalf("expected error decrypting configs but got nil")
+		}
+	})
 }
 
 // TestUserInitialBrowserWrite checks if the browser data is properly created by
