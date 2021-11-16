@@ -81,7 +81,8 @@ func TestUserConfigIntegration(t *testing.T) {
 	}
 
 	// Verify that all files in original directory are still there and correct
-	err = configutils.ValidateDirectoryContents(sourceDir, unpackedConfigPath)
+	destinationPath := path.Join(unpackedConfigPath, "testBase")
+	err = configutils.ValidateDirectoryContents(sourceDir, destinationPath)
 	if err != nil {
 		t.Fatalf("error validating directory contents: %v", err)
 	}
