@@ -72,6 +72,7 @@ RUN su - fractal -c "mkdir -p /home/fractal/.config/google-chrome"
 RUN su - fractal -c "touch /home/fractal/.config/google-chrome/'First Run'"
 
 # Install Whist wrapper script to run Google Chrome into /usr/bin
+ENV WHIST_COOKIE_UPLOAD_TARGET="chrome"
 COPY start-chrome.sh /usr/bin/start-chrome
 RUN chmod +x /usr/bin/start-chrome
 RUN ln -sf /usr/bin/start-chrome /usr/bin/fractal-application

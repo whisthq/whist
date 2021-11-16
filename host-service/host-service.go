@@ -514,6 +514,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		image = utils.Sprintf("ghcr.io/fractal/%s/%s:current-build", metadata.GetAppEnvironmentLowercase(), AppName)
 	}
 
+	
 	// We now create the underlying docker container for this mandelbox.
 	exposedPorts := make(dockernat.PortSet)
 	exposedPorts[dockernat.Port("32262/tcp")] = struct{}{}
@@ -526,6 +527,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"),
 		"NVIDIA_DRIVER_CAPABILITIES=all",
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
+		utils.Sprintf("WHIST_INITIAL_USER_COOKIES_FILE=%v%v", utils.UserInitialCookiesDir, utils.UserInitialCookiesFile),
 	}
 	config := dockercontainer.Config{
 		ExposedPorts: exposedPorts,
@@ -718,11 +720,29 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		}
 	}
 
+	// Write user initial browser data at the same time as writeJSONData.
+	// This is done separately since both functions are independent of each other and we can save time.
+	userInitialBrowserDataDownloadComplete := make(chan bool)
+	go func() {
+		logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
+
+		err := mandelbox.WriteUserInitialBrowserData(req.Cookies)
+		userInitialBrowserDataDownloadComplete <- true
+		if err != nil {
+			logger.Warningf("Error writing user initial browser data for mandelbox %s: %v", mandelboxSubscription.ID, err)
+			return
+		}
+
+		logger.Infof("SpinUpMandelbox(): Successfully wrote user initial browser data for mandelbox %s", mandelboxSubscription.ID)
+	}()
+
 	// Write the config.json file with the data received from JSON transport
 	err = mandelbox.WriteJSONData()
 	if err != nil {
 		logger.Errorf("Error writing config.json file for protocol: %v", err)
 	}
+
+	<- userInitialBrowserDataDownloadComplete
 
 	// Unblocks fractal-startup.sh to start symlink loaded user configs
 	err = mandelbox.MarkReady()
@@ -1157,7 +1177,6 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					go handleJSONTransportRequest(serverevent, transportRequestMap, transportMapLock)
 					go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, &subscriptionEvent, transportRequestMap, transportMapLock)
 				}
-
 			default:
 				if serverevent != nil {
 					err := utils.MakeError("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)

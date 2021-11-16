@@ -182,3 +182,59 @@ func setupTestDirs(mandelbox *mandelboxData) error {
 func cleanupTestDirs(c *mandelboxData) error {
 	return os.RemoveAll(utils.FractalDir)
 }
+
+// TestUserInitialBrowserWrite checks if the browser data is properly created by
+// calling the write function and comparing results with a manually generated cookie file
+func TestUserInitialBrowserWrite(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	testMandelboxData := mandelboxData{
+		ctx:                   ctx,
+		cancel:                cancel,
+		ID:                    mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
+		appName:               "testApp",
+		userID:                "user_config_test_user",
+		configEncryptionToken: "testEncryptionToken",
+	}
+	
+	testCookie1 := "{'creation_utc': 13280861983875934, 'host_key': 'test_host_key_1.com'}"
+	testCookie2 := "{'creation_utc': 4228086198342934, 'host_key': 'test_host_key_2.com'}"
+	cookieJSON := "[" + testCookie1 + "," + testCookie2 + "]"
+
+	if err := testMandelboxData.WriteUserInitialBrowserData(cookieJSON); err != nil {
+		t.Fatalf("error writing user initial browser data: %v", err)
+	}
+
+	// store the cookies in a temporary file
+	unpackedConfigDir := path.Join(testMandelboxData.getUserConfigDir(), testMandelboxData.getUnpackedConfigsDirectoryName())
+
+	filePath := path.Join(unpackedConfigDir, "tempt-cookies")
+
+	err := os.WriteFile(filePath, []byte(cookieJSON), 0777)
+	
+	testFileContents, err := ioutil.ReadFile(filePath)
+	
+	if err != nil {
+		t.Fatalf("error reading test file %s: %v", filePath, err)
+	}
+
+	// Get cookie file path
+	cookieFilePath := path.Join(unpackedConfigDir, utils.UserInitialCookiesFile)
+
+	matchingFile, err := os.Open(cookieFilePath)
+	if err != nil {
+		t.Fatalf("error opening matching file %s: %v", cookieFilePath, err)
+	}
+
+	matchingFileBuf := bytes.NewBuffer(nil)
+	_, err = matchingFileBuf.ReadFrom(matchingFile)
+	if err != nil {
+		t.Fatalf("error reading matching file %s: %v", cookieFilePath, err)
+	}
+
+	// Check contents match
+	if string(testFileContents) != string(matchingFileBuf.Bytes()) {
+		t.Errorf("file contents don't match for file %s: '%s' vs '%s'", filePath, testFileContents, matchingFileBuf.Bytes())
+	}
+
+	os.RemoveAll(unpackedConfigDir)
+}
