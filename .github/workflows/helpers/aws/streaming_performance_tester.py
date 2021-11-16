@@ -8,6 +8,7 @@ import boto3
 import paramiko
 import subprocess
 import pexpect
+import json
 
 from testing_helpers import (
     create_ec2_instance,
@@ -41,6 +42,20 @@ parser.add_argument(
     required=True,
 )
 
+parser.add_argument(
+    "--testing_url",
+    help="The URL to visit for testing",
+    type=str,
+    default="https://youtu.be/GUyXW3Sxzqo",
+)
+
+parser.add_argument(
+    "--testing_time",
+    help="The length of the perf test in seconds",
+    type=int,
+    default=60,
+)
+
 args = parser.parse_args()
 
 
@@ -56,7 +71,7 @@ def attempt_ssh_connection(ssh_command, timeout, log_file_handle, pexpect_prompt
             if result_index == 1:
                 child.sendline("yes")
                 child.expect(pexpect_prompt)
-            print(f"SSH connection established with EC2 instance: {instance_ip[0]['public']}")
+            print(f"SSH connection established with EC2 instance!")
             return child
         elif result_index >= 3:
             print("SSH connection timed out!")
@@ -73,27 +88,6 @@ def reboot_instance(ssh_process, connection_ssh_cmd, timeout, log_file_handle, p
     return ssh_process
     print("Reboot complete")
 
-# def attempt_host_setup(ssh_process, host_setup_cmd, ssh_connect_cmd, timeout, log_file_handle, pexpect_prompt, max_hs_retries, max_ssh_retries):
-#     for retries in range(max_hs_retries):
-#         ssh_process.sendline(host_setup_cmd)
-#         result_index = ssh_process.expect(['E: Unable to acquire the dpkg frontend lock', pexpect_prompt, pexpect.EOF, pexpect.TIMEOUT])
-#         if result_index == 0:
-#             print("\tHost setup failed due to dpkg lock contention (retry {}/{})".format(retries, max_hs_retries))
-#             # If we already retried, reboot first
-#             if retries > 0:
-#                 ssh_process = reboot_instance(ssh_process, ssh_connect_cmd, timeout, log_file_handle, pexpect_prompt, max_ssh_retries)
-#             time.sleep(10)
-#         elif result_index == 1:
-#             return ssh_process
-#         elif result_index >= 2:
-#             print("SSH connection timed out!")
-#             ssh_process.kill(0)
-#             exit()
-    
-#     print("Host setup failed {} times. Giving up now.".format(max_hs_retries))
-#     ssh_process.kill(0)
-#     exit()
-
 # This main loop creates two AWS EC2 instances, one client, one server, and sets up
 # a protocol streaming test between them
 if __name__ == "__main__":
@@ -103,6 +97,10 @@ if __name__ == "__main__":
         args.ssh_key_path
     )  # This is likely /Users/[username]/.ssh/id_rsa if you're on macOS and installed to the system location
     github_token = args.github_token # The PAT allowing us to fetch code from GitHub
+
+    # Experiment parameters
+    testing_url = args.testing_url
+    testing_time = args.testing_time
 
     # Load the SSH key
     if not os.path.isfile(ssh_key_path):
@@ -128,22 +126,26 @@ if __name__ == "__main__":
     # Get the IP address of the instance
     instance_ip = get_instance_ip(instance_id)
     hostname = instance_ip[0]["public"]
-    username = "ubuntu"
+    #hostname = "18.206.15.57"
+    #username = "ubuntu"
     print("Created instance AWS instance with hostname: {}!".format(hostname))
     
     host_service_log = open("host_service_logging_file.txt", "w")
     server_log = open("server_log.txt", "w")
     client_log = open("client_log.txt", "w")
+    log_grabber_log = open("log_grabber_log.txt", "w")
     private_ip = instance_ip[0]["private"]
-    pexpect_prompt = "{}@ip-{}:".format(username, private_ip.replace('.','-'))
+    
+    pexpect_prompt = "{}@ip-".format(username)
+    aws_timeout=1200 # 10 mins is not enough to build the base mandelbox, so we'll go ahead with 20 mins to be safe
 
 
     # Initiate the SSH connections with the instance
     print("Initiating 1° SSH connection with the AWS instance...")
-    # Hang until the connection is established (give up after 10 mins)
+    # Hang until the connection is established (give up after 20 mins)
     cmd = "ssh {}@{} -i {}".format(username, hostname, ssh_key_path)
     
-    hs_process = attempt_ssh_connection(cmd, 600, host_service_log, pexpect_prompt, 5)
+    hs_process = attempt_ssh_connection(cmd, aws_timeout, host_service_log, pexpect_prompt, 5)
 
     # Obtain current branch
     subprocess = subprocess.Popen("git branch", shell=True, stdout=subprocess.PIPE)
@@ -168,7 +170,7 @@ if __name__ == "__main__":
     # E: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 2392 (apt-get)
     # E: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), is another process using it?
     # See also here: https://github.com/ray-project/ray/blob/master/doc/examples/lm/lm-cluster.yaml
-    dpkg_commands = ["sudo kill -9 `sudo lsof /var/lib/dpkg/lock-frontend | awk '{print $2}' | tail -n 1`", "sudo pkill -9 apt-get || true", "sudo pkill -9 dpkg || true", "sudo dpkg --configure -a"]
+    dpkg_commands = ["sudo pkill -9 `sudo lsof /var/lib/dpkg/lock-frontend | awk '{print $2}' | tail -n 1`", "sudo pkill -9 apt-get || true", "sudo pkill -9 dpkg || true", "sudo dpkg --configure -a"]
     for command in dpkg_commands:
         hs_process.sendline(command)
         hs_process.expect(pexpect_prompt)
@@ -177,19 +179,19 @@ if __name__ == "__main__":
     # 1- run host-setup
     print ("Running the host setup on the instance ...")
     command = "cd ~/fractal/host-setup && ./setup_host.sh --localdevelopment | tee ~/host_setup.log"
-    #hs_process = attempt_host_setup(hs_process, command, cmd, 600, host_service_log, pexpect_prompt, 5, 5)
+    #hs_process = attempt_host_setup(hs_process, command, cmd, aws_timeout, host_service_log, pexpect_prompt, 5, 5)
     hs_process.sendline(command)
     hs_process.expect(pexpect_prompt)
     print ("Finished running the host setup script on the EC2 instance")
 
     # 2- reboot and wait for it to come back up
     print("Rebooting the EC2 instance (required after running the host setup)...")
-    hs_process = reboot_instance(hs_process, cmd, 600, host_service_log, pexpect_prompt, 5)
+    hs_process = reboot_instance(hs_process, cmd, aws_timeout, host_service_log, pexpect_prompt, 5)
 
 
     # 3- build and run host-service
     print ("Starting the host service on the EC2 instance...")
-    command = "cd ~/fractal/host-service && make run | tee ~/host_service.log"
+    command = "sudo rm -rf /fractal && cd ~/fractal/host-service && make run | tee ~/host_service.log"
     hs_process.sendline(command)
     hs_process.expect("Entering event loop...")
     print("Host service is ready!")
@@ -199,7 +201,7 @@ if __name__ == "__main__":
     # Initiate the SSH connections with the instance
     print("Initiating 2° SSH connection with the AWS instance...")
     # Hang until the connection is established (give up after 10 mins)
-    server_process = attempt_ssh_connection(cmd, 600, server_log, pexpect_prompt, 5)
+    server_process = attempt_ssh_connection(cmd, aws_timeout, server_log, pexpect_prompt, 5)
     
     print("Building the server mandelbox in PERF mode ...")
     command="cd ~/fractal/mandelboxes && ./build.sh browsers/chrome --perf | tee ~/server_mandelbox_build.log"
@@ -212,78 +214,125 @@ if __name__ == "__main__":
     command = "cd ~/fractal/mandelboxes && ./run.sh browsers/chrome | tee ~/server_mandelbox_run.log"
     server_process.sendline(command)
     server_process.expect(":/#")
-    server_docker_id=server_process.before.strip()[-1]
+    server_mandelbox_output = server_process.before.decode('utf-8').strip().split("\n")
+    server_docker_id=server_mandelbox_output[-2].replace("\n","").replace("\r","").replace(" ","")
     print("Fractal Server started on EC2 instance, on Docker container {}!".format(server_docker_id))
 
-    
-    child.kill(0)
-    logging_file.close()
+    # Retrieve connection configs from server
+    json_data = {}
+    for line in server_mandelbox_output:
+        if "linux/macos" in line:
+            config_vals = line.strip().split()
+            server_addr = config_vals[2]
+            port_mappings = config_vals[3]
+            #Remove leading '-p' chars
+            port_mappings = port_mappings[2:].split(".")
+            port_32262 = port_mappings[0].split(":")[1]
+            port_32263 = port_mappings[1].split(":")[1]
+            port_32273 = port_mappings[2].split(":")[1]
+            aes_key = config_vals[5]
+            json_data["perf_client_server_ip"] = server_addr
+            json_data["perf_client_server_port_32262"] = port_32262
+            json_data["perf_client_server_port_32263"] = port_32263
+            json_data["perf_client_server_port_32273"] = port_32273
+            json_data["perf_client_server_aes_key"] = aes_key
 
-    
+    # 6- Build the dev client
 
-    
-    
-    
+    # Initiate the SSH connections with the instance
+    print("Initiating 3° SSH connection with the AWS instance...")
+    # Hang until the connection is established (give up after 20 mins)
+    client_process = attempt_ssh_connection(cmd, aws_timeout, client_log, pexpect_prompt, 5)
 
-    # # Retrieve connection configs from server
-    # json_data = {}
-    # for line in iter(stdout.readline, ""):
-    #     print(line, end="")
-    #     if "linux/macos" in line:
-    #         config_vals = line.strip().split()
-    #         server_addr = config_vals[2]
-    #         port_mappings = config_vals[3]
-    #         #Remove leading '-p' chars
-    #         port_mappings = port_mappings[2:].split(".")
-    #         port_32262 = port_mappings[0].split(":")[1]
-    #         port_32263 = port_mappings[1].split(":")[1]
-    #         port_32273 = port_mappings[2].split(":")[1]
-    #         aes_key = config_vals[5]
-    #         json_data["perf_client_server_ip"] = server_addr
-    #         json_data["perf_client_server_port_32262"] = port_32262
-    #         json_data["perf_client_server_port_32263"] = port_32263
-    #         json_data["perf_client_server_port_32273"] = port_32273
-    #         json_data["perf_client_server_aes_key"] = aes_key
-
-    # # 6- Build the dev client
-    # command="cd ~/fractal/mandelboxes && ./build.sh development/client --perf"
-    # stdin, stdout, stderr = ssh_client.exec_command(command=command)
-    # exit_status = stdout.channel.recv_exit_status()          # Blocking call
-    # if exit_status == 0:
-    #     print ("Finished building the fractal dev client container")
-    # else:
-    #     print("Error", exit_status)
-
-    # # 7- Run the protocol client
-    # command="cd ~/fractal/mandelboxes && ./run.sh development/client --json-data='{}'".format(json.dumps(json_data))
-    # ssh_client.exec_command(command=command)
-    # stdin, stdout, stderr = ssh_client.exec_command(command=command)
-    # time.sleep(5)
-    # client_docker_id=stdout.readlines()[-1].strip()
-    # print("Fractal client started on EC2 instance, on Docker container {}!".format(client_docker_id))
+    # Edit the run-fractal-client.sh to make the client quit after the experiment is over
+    print("Setting the experiment duration to {}s...".format(testing_time))
+    command="sed -i 's/timeout 240s/timeout {}s/g' ~/fractal/mandelboxes/development/client/run-fractal-client.sh".format(testing_time)
+    client_process.sendline(command)
+    client_process.expect(pexpect_prompt)
     
-    # # Wait 4 minutes to generate enough data
-    # time.sleep(240)  # 240 seconds = 4 minutes
+    print("Building the dev client mandelbox in PERF mode ...")
+    command="cd ~/fractal/mandelboxes && ./build.sh development/client --perf | tee ~/client_mandelbox_build.log"
+    client_process.sendline(command)
+    client_process.expect(pexpect_prompt)
+    print ("Finished building the dev client mandelbox on the EC2 instance")
+
+    # 7- Run the protocol client
+    print("Running the dev client mandelbox, and connecting to the server!")
+    command="cd ~/fractal/mandelboxes && ./run.sh development/client --json-data='{}'".format(json.dumps(json_data))
+    client_process.sendline(command)
+    client_process.expect(":/#")
+    client_mandelbox_output = client_process.before.decode('utf-8').strip().split("\n")
+    client_docker_id=client_mandelbox_output[-2].replace("\n","").replace("\r","").replace(" ","")
+    print("Fractal dev client started on EC2 instance, on Docker container {}!".format(client_docker_id))
+
+    # Wait 4 minutes to generate enough data
+    time.sleep(testing_time)  # 120 seconds = 2 minutes
     
-    # # 8- Extract the client/server perf logs from the two docker containers
-    # command="mkdir ~/perf_logs && docker cp {}:/usr/share/fractal/client.log ~/perf_logs".format(client_docker_id)
-    # ssh_client.exec_command(command=command)
-    # command="docker cp {}:/usr/share/fractal/*.log ~/perf_logs".format(server_docker_id)
-    # ssh_client.exec_command(command=command)
+    # Initiate the SSH connections with the instance
+    print("Initiating 4° SSH connection with the AWS instance...")
+    # Hang until the connection is established
+    log_grabber_process = attempt_ssh_connection(cmd, aws_timeout, log_grabber_log, pexpect_prompt, 5)
 
-    # # TODO
-    # # Here we will want to read the .logd file and retrieve all of the info we want. We could display it as
-    # # a comment on the PR using Neil's Slack bot automator (see webserver DB migration, which does this) or
-    # # eventually, run this nightly and put it up on Logz.io
+    # 8- Extract the client/server perf logs from the two docker containers
+    command="rm -rf ~/perf_logs; mkdir -p ~/perf_logs/client mkdir -p ~/perf_logs/server"
+    log_grabber_process.sendline(command)
+    log_grabber_process.expect(pexpect_prompt)
     
-    # # Close SSH connection. No need to clean up the instance (e.g. stopping the host service, stopping/removing the docker containers) because we will terminate the instance.
-    # ssh_client.close()
+    client_logfiles = ["/usr/share/fractal/client.log", "/usr/share/fractal/display.log"]
+    for client_file_path in client_logfiles:
+        command = "docker cp {}:{} ~/perf_logs/client/".format(client_docker_id, client_file_path)
+        log_grabber_process.sendline(command)
+        log_grabber_process.expect(pexpect_prompt)
 
-    # # Terminating the instance and waiting for them to shutdown
-    # print(f"Testing complete, terminating EC2 instance")
-    # boto3.client("ec2").terminate_instances(InstanceIds=[instance_id])
+    server_logfiles = ["/usr/share/fractal/server.log", "/usr/share/fractal/teleport.log", "/usr/share/fractal/display.log"]
+    for server_file_path in server_logfiles:
+        command = "docker cp {}:{} ~/perf_logs/server/".format(server_docker_id, server_file_path)
+        log_grabber_process.sendline(command)
+        log_grabber_process.expect(pexpect_prompt)
 
-    # # Wait for the instance to be terminated
-    # wait_for_instance_to_start_or_stop(instance_id, stopping=True)
-    # print("Instance successfully terminated, goodbye")
-    # print("Done")
+    command = "exit"
+    log_grabber_process.sendline(command)
+    log_grabber_process.expect(["\$", "%"])
+
+    # Copy over all the logs from the AWS machine
+    command = "scp -i {} -r {}@{}:~/perf_logs perf_logs".format(ssh_key_path, username, hostname)
+    local_process = pexpect.spawn(command, timeout=aws_timeout, logfile=log_grabber_log.buffer)
+    local_process.sendline(command)
+    local_process.expect(["\$", "%"])
+
+    # Exit the server/client mandelboxes
+    server_process.sendline("exit")
+    server_process.expect(pexpect_prompt)
+    client_process.sendline("exit")
+    client_process.expect(pexpect_prompt)
+
+    # Delete all Docker containers
+    command = "docker stop $(docker ps -aq) && docker rm $(docker ps -aq)"
+    server_process.sendline(command)
+    server_process.expect(pexpect_prompt)
+
+    # Terminate the host service
+    hs_process.sendcontrol('c')
+    
+    # Terminate all pexpect processes 
+    hs_process.kill(0)
+    server_process.kill(0)
+    client_process.kill(0)
+    log_grabber_process.kill(0)
+    local_process.kill(0)
+
+    # Close all log files
+    host_service_log.close()
+    server_log.close()
+    client_log.close()
+    log_grabber_log.close()
+
+
+    # Terminating the instance and waiting for them to shutdown
+    print(f"Testing complete, terminating EC2 instance")
+    boto3.client("ec2").terminate_instances(InstanceIds=[instance_id])
+
+    # Wait for the instance to be terminated
+    wait_for_instance_to_start_or_stop(instance_id, stopping=True)
+    print("Instance successfully terminated, goodbye")
+    print("Done")
