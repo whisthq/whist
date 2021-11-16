@@ -42,10 +42,6 @@ git clone https://github.com/fractal/fractal.git # via HTTPS, type password on e
 cd ~/fractal/host-setup
 ./setup_host.sh --localdevelopment
 
-# build the Whist protocol server
-cd ~/fractal/protocol/
-./build.sh FractalServer
-
 # build the Whist base container image
 cd ~/fractal/mandelboxes
 ./build.sh base
