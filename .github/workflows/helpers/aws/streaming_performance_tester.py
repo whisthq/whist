@@ -19,7 +19,7 @@ from testing_helpers import (
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 DESCRIPTION = """
-This script will spin up 2 EC2 instances (one g4dn.2xlarge server, one t3.large client),
+This script will spin a g4dn.2xlarge EC2 instance with two docker containers
 and run a protocol streaming performance test between the two of them. 
 """
 
@@ -44,7 +44,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 
-def attempt_connecting(ssh_command, timeout, log_file_handle, pexpect_prompt, max_retries):
+def attempt_ssh_connection(ssh_command, timeout, log_file_handle, pexpect_prompt, max_retries):
     for retries in range(max_retries):
         child = pexpect.spawn(ssh_command, timeout=timeout, logfile=log_file_handle.buffer)
         result_index = child.expect (['Connection refused', 'Are you sure you want to continue connecting (yes/no/[fingerprint])?', pexpect_prompt, pexpect.EOF, pexpect.TIMEOUT])
@@ -64,6 +64,35 @@ def attempt_connecting(ssh_command, timeout, log_file_handle, pexpect_prompt, ma
             exit()
     print("SSH connection refused by host {} times. Giving up now.".format(max_retries))
     exit()
+
+def reboot_instance(ssh_process, connection_ssh_cmd, timeout, log_file_handle, pexpect_prompt, retries):
+    ssh_process.sendline("sudo reboot")
+    ssh_process.kill(0)
+    time.sleep(5)
+    ssh_process = attempt_ssh_connection(connection_ssh_cmd, timeout, log_file_handle, pexpect_prompt, retries)
+    return ssh_process
+    print("Reboot complete")
+
+# def attempt_host_setup(ssh_process, host_setup_cmd, ssh_connect_cmd, timeout, log_file_handle, pexpect_prompt, max_hs_retries, max_ssh_retries):
+#     for retries in range(max_hs_retries):
+#         ssh_process.sendline(host_setup_cmd)
+#         result_index = ssh_process.expect(['E: Unable to acquire the dpkg frontend lock', pexpect_prompt, pexpect.EOF, pexpect.TIMEOUT])
+#         if result_index == 0:
+#             print("\tHost setup failed due to dpkg lock contention (retry {}/{})".format(retries, max_hs_retries))
+#             # If we already retried, reboot first
+#             if retries > 0:
+#                 ssh_process = reboot_instance(ssh_process, ssh_connect_cmd, timeout, log_file_handle, pexpect_prompt, max_ssh_retries)
+#             time.sleep(10)
+#         elif result_index == 1:
+#             return ssh_process
+#         elif result_index >= 2:
+#             print("SSH connection timed out!")
+#             ssh_process.kill(0)
+#             exit()
+    
+#     print("Host setup failed {} times. Giving up now.".format(max_hs_retries))
+#     ssh_process.kill(0)
+#     exit()
 
 # This main loop creates two AWS EC2 instances, one client, one server, and sets up
 # a protocol streaming test between them
@@ -114,7 +143,7 @@ if __name__ == "__main__":
     # Hang until the connection is established (give up after 10 mins)
     cmd = "ssh {}@{} -i {}".format(username, hostname, ssh_key_path)
     
-    hs_process = attempt_connecting(cmd, 600, host_service_log, pexpect_prompt, 5)
+    hs_process = attempt_ssh_connection(cmd, 600, host_service_log, pexpect_prompt, 5)
 
     # Obtain current branch
     subprocess = subprocess.Popen("git branch", shell=True, stdout=subprocess.PIPE)
@@ -135,25 +164,27 @@ if __name__ == "__main__":
     hs_process.expect(pexpect_prompt)
     print ("Finished downloading fractal/fractal on EC2 instance")
 
+    ## Prevent dpkg locking issues such as the following one:
+    # E: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 2392 (apt-get)
+    # E: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), is another process using it?
+    # See also here: https://github.com/ray-project/ray/blob/master/doc/examples/lm/lm-cluster.yaml
+    dpkg_commands = ["sudo kill -9 `sudo lsof /var/lib/dpkg/lock-frontend | awk '{print $2}' | tail -n 1`", "sudo pkill -9 apt-get || true", "sudo pkill -9 dpkg || true", "sudo dpkg --configure -a"]
+    for command in dpkg_commands:
+        hs_process.sendline(command)
+        hs_process.expect(pexpect_prompt)
+
     # Set up the server/client
     # 1- run host-setup
     print ("Running the host setup on the instance ...")
     command = "cd ~/fractal/host-setup && ./setup_host.sh --localdevelopment | tee ~/host_setup.log"
+    #hs_process = attempt_host_setup(hs_process, command, cmd, 600, host_service_log, pexpect_prompt, 5, 5)
     hs_process.sendline(command)
     hs_process.expect(pexpect_prompt)
     print ("Finished running the host setup script on the EC2 instance")
 
-    # TODO: handle occasional host-setup error by waiting 10s, retrying, if still not working, reboot and repeat.
-    # E: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 2392 (apt-get)
-    # E: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), is another process using it?
-
     # 2- reboot and wait for it to come back up
     print("Rebooting the EC2 instance (required after running the host setup)...")
-    hs_process.sendline("sudo reboot")
-    hs_process.kill(0)
-    time.sleep(5)
-    hs_process = attempt_connecting(cmd, 600, host_service_log, pexpect_prompt, 5)
-    print("Reboot complete")
+    hs_process = reboot_instance(hs_process, cmd, 600, host_service_log, pexpect_prompt, 5)
 
 
     # 3- build and run host-service
@@ -168,7 +199,7 @@ if __name__ == "__main__":
     # Initiate the SSH connections with the instance
     print("Initiating 2° SSH connection with the AWS instance...")
     # Hang until the connection is established (give up after 10 mins)
-    server_process = attempt_connecting(cmd, 600, server_log, pexpect_prompt, 5)
+    server_process = attempt_ssh_connection(cmd, 600, server_log, pexpect_prompt, 5)
     
     print("Building the server mandelbox in PERF mode ...")
     command="cd ~/fractal/mandelboxes && ./build.sh browsers/chrome --perf | tee ~/server_mandelbox_build.log"
