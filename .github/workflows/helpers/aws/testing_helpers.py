@@ -11,10 +11,9 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
 # Define boto3 client with a specific region
-boto3client = boto3.client("ec2", region_name="us-east-1")
+boto3client = boto3.client('ec2', region_name='us-east-1')
 
-
-def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str) -> str:
+def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str, disk_size: int) -> str:
     """
     Creates an AWS EC2 instance of a specific instance type and AMI
 
@@ -22,11 +21,24 @@ def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str) ->
         instance_type (str): The type of instance to create (i.e. g4dn.2xlarge)
         instance_AMI (str): The AMI to use for the instance (i.e. ami-0b9c9d7f7f8b8f8b9)
         key_name (str): The name of the AWS key to use for connecting to the instance
+        disk_size (int): The size (in GB) of the additional EBS disk volume to attach
 
     Returns:
         instance_id (str): The ID of the created instance
     """
+
     kwargs = {
+        "BlockDeviceMappings":[
+            {
+                'DeviceName': '/dev/sda1',
+                'Ebs': {
+
+                    'DeleteOnTermination': True,
+                    'VolumeSize': disk_size,
+                    'VolumeType': 'gp2'
+                },
+            },
+        ],
         "ImageId": instance_AMI,
         "InstanceType": instance_type,  # should be g4dn.2xlarge for testing the server protocol
         "MaxCount": 1,
@@ -50,8 +62,11 @@ def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str) ->
     # Create the EC2 instance
     resp = boto3client.run_instances(**kwargs)
     instance_id = resp["Instances"][0]["InstanceId"]
-    print(f"Created EC2 instance with id: {instance_id}")
+    print(f"Created EC2 instance with id: {instance_id}, type={instance_type}, ami={instance_AMI}, key_name={key_name}, disk_size={disk_size}")
+
     return instance_id
+
+    
 
 
 def wait_for_instance_to_start_or_stop(instance_id: str, stopping: bool = False) -> None:

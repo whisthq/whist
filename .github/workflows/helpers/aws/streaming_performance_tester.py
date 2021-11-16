@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
     # Create our EC2 instance
     instance_id = create_ec2_instance(
-        instance_type=instance_type, instance_AMI=instance_AMI, key_name=ssh_key_name
+        instance_type=instance_type, instance_AMI=instance_AMI, key_name=ssh_key_name, disk_size=64
     )
     # Give a little time for the instance to be recognized in AWS
     time.sleep(5)
@@ -142,7 +142,11 @@ if __name__ == "__main__":
     hs_process.sendline(command)
     hs_process.expect(pexpect_prompt)
     print ("Finished running the host setup script on the EC2 instance")
-    
+
+    # TODO: handle occasional host-setup error by waiting 10s, retrying, if still not working, reboot and repeat.
+    # E: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 2392 (apt-get)
+    # E: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), is another process using it?
+
     # 2- reboot and wait for it to come back up
     print("Rebooting the EC2 instance (required after running the host setup)...")
     hs_process.sendline("sudo reboot")
