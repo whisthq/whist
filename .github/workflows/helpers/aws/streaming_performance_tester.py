@@ -211,8 +211,8 @@ if __name__ == "__main__":
     # 5- Run the protocol server, and retrieve the connection configs
     command = "cd ~/fractal/mandelboxes && ./run.sh browsers/chrome | tee ~/server_mandelbox_run.log"
     server_process.sendline(command)
-    server_process.expect("")
-    server_docker_id=stdout.readlines()[-1].strip()
+    server_process.expect(":/#")
+    server_docker_id=server_process.before.strip()[-1]
     print("Fractal Server started on EC2 instance, on Docker container {}!".format(server_docker_id))
 
     
