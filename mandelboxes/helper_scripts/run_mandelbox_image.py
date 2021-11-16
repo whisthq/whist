@@ -94,10 +94,9 @@ def ensure_root_privileges():
 
 def get_public_ipv4_addr():
     if local_host_service:
-        respobj = requests.get(url="https://ipinfo.io")
-        response = respobj.json()
+        respobj = requests.get(url="https://checkip.amazonaws.com")
         respobj.raise_for_status()
-        return response["ip"]
+        return respobj.text.strip()
     else:
         return args.host_address
 
