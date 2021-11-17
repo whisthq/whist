@@ -28,7 +28,7 @@ on:
 
 jobs:
   fractal-build-and-publish-documentation:
-    name: Build & Publish Host Service Documentation to fractal/docs
+    name: Build & Publish Whist Internal Documentation to fractal/docs
     runs-on: ubuntu-20.04
     concurrency: fractal-build-and-publish-documentation-${{ github.ref }}
     env:
