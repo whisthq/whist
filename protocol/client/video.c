@@ -20,7 +20,9 @@ Includes
 
 #include "video.h"
 #include "sdl_utils.h"
-#include "ringbuffer.h"
+#include <fractal/network/network.h>
+#include <fractal/network/ringbuffer.h>
+#include <fractal/core/fractal_frame.h>
 
 #include <stdio.h>
 
@@ -32,6 +34,7 @@ Includes
 #include "native_window_utils.h"
 #include "network.h"
 #include "bitrate.h"
+#include "client_utils.h"
 
 #define USE_HARDWARE true
 #define NO_NACKS_DURING_IFRAME false
@@ -745,7 +748,7 @@ void init_video() {
     initialized_video_renderer = false;
     memset(&video_context, 0, sizeof(video_context));
     render_mutex = safe_SDL_CreateMutex();
-    video_ring_buffer = init_ring_buffer(FRAME_VIDEO, RECV_FRAMES_BUFFER_SIZE);
+    video_ring_buffer = init_ring_buffer(PACKET_VIDEO, RECV_FRAMES_BUFFER_SIZE, nack_packet);
     initialized_video_buffer = true;
 }
 

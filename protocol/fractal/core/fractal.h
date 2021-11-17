@@ -1,10 +1,6 @@
 #ifndef FRACTAL_H
 #define FRACTAL_H
 
-#ifdef _WIN32
-#define _CRT_SECURE_NO_WARNINGS
-#endif
-
 /**
  * Copyright 2021 Fractal Computers, Inc., dba Whist
  * @file fractal.h
@@ -17,6 +13,15 @@
 Includes
 ============================
 */
+
+#ifdef _WIN32
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+// In order to use accept4 we have to allow non-standard extensions
+#if !defined(_GNU_SOURCE) && defined(__linux__)
+#define _GNU_SOURCE
+#endif
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -111,7 +116,6 @@ Defines
 #define INPUT_DRIVER UINPUT_INPUT_DRIVER
 #define USING_NVIDIA_CAPTURE false
 #define USING_NVIDIA_ENCODE true
-#define USING_SHM true
 
 #endif
 
@@ -574,14 +578,12 @@ typedef enum FractalClientMessageType {
     MESSAGE_TCP_PING = 109,
     MESSAGE_DIMENSIONS = 110,  ///< `dimensions.width` int and `dimensions.height`
                                ///< int is valid in FractClientMessage
-    MESSAGE_VIDEO_NACK = 111,
-    MESSAGE_VIDEO_BITARRAY_NACK = 112,
-    MESSAGE_AUDIO_NACK = 113,
-    MESSAGE_AUDIO_BITARRAY_NACK = 114,
-    CMESSAGE_CLIPBOARD = 115,
-    MESSAGE_IFRAME_REQUEST = 116,
-    MESSAGE_DISCOVERY_REQUEST = 117,
-    MESSAGE_TCP_RECOVERY = 118,
+    MESSAGE_NACK = 111,
+    MESSAGE_BITARRAY_NACK = 112,
+    CMESSAGE_CLIPBOARD = 113,
+    MESSAGE_IFRAME_REQUEST = 114,
+    MESSAGE_DISCOVERY_REQUEST = 115,
+    MESSAGE_TCP_RECOVERY = 116,
 
     CMESSAGE_QUIT = 999,
 } FractalClientMessageType;
@@ -649,27 +651,21 @@ typedef struct FractalClientMessage {
             CodecType codec_type;
         } dimensions;
 
-        // MESSAGE_VIDEO_NACK or MESSAGE_AUDIO_NACK
+        // MESSAGE_NACK
         struct {
+            FractalPacketType type;
             int id;
             int index;
         } simple_nack;
 
-        // MESSAGE_VIDEO_BITARRAY_NACK
+        // MESSAGE_BITARRAY_NACK
         struct {
+            FractalPacketType type;
             int id;
             int index;
             int numBits;
-            unsigned char ba_raw[BITS_TO_CHARS(MAX_VIDEO_PACKETS)];
-        } bitarray_video_nack;
-
-        // MESSAGE_AUDIO_BITARRAY_NACK
-        struct {
-            int id;
-            int index;
-            int numBits;
-            unsigned char ba_raw[BITS_TO_CHARS(MAX_AUDIO_PACKETS)];
-        } bitarray_audio_nack;
+            unsigned char ba_raw[BITS_TO_CHARS(max(MAX_VIDEO_PACKETS, MAX_AUDIO_PACKETS))];
+        } bitarray_nack;
 
         // MESSAGE_KEYBOARD_STATE
         FractalKeyboardState keyboard_state;

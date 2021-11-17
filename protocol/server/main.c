@@ -274,12 +274,6 @@ int main(int argc, char* argv[]) {
         LOG_FATAL("Failed to create input device for playback.");
     }
 
-#ifdef _WIN32
-    if (!init_desktop(input_device, "winlogonpassword")) {
-        LOG_FATAL("Could not winlogon!");
-    }
-#endif
-
     if (init_client() != 0) {
         LOG_FATAL("Failed to initialize client object.");
     }
@@ -425,7 +419,7 @@ int main(int argc, char* argv[]) {
                     FractalServerMessage* fsmsg = safe_malloc(fsmsg_size);
                     memset(fsmsg, 0, sizeof(*fsmsg));
                     fsmsg->type = SMESSAGE_OPEN_URI;
-                    memcpy(&fsmsg->requested_uri, handled_uri, sizeof(handled_uri));
+                    memcpy(&fsmsg->requested_uri, handled_uri, bytes + 1);
                     if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fsmsg, (int)fsmsg_size) <
                         0) {
                         LOG_WARNING("Failed to broadcast open URI message.");

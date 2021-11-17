@@ -28,10 +28,6 @@ Includes
 #include "handle_client_message.h"
 #include "network.h"
 
-#ifdef _WIN32
-#include <fractal/utils/windows_utils.h>
-#endif
-
 extern Client client;
 
 extern volatile int max_bitrate;
@@ -63,8 +59,7 @@ static int handle_ping_message(FractalClientMessage *fcmsg);
 static int handle_tcp_ping_message(FractalClientMessage *fcmsg);
 static int handle_dimensions_message(FractalClientMessage *fcmsg);
 static int handle_clipboard_message(FractalClientMessage *fcmsg);
-static int handle_audio_nack_message(FractalClientMessage *fcmsg);
-static int handle_video_nack_message(FractalClientMessage *fcmsg);
+static int handle_nack_message(FractalClientMessage *fcmsg);
 static int handle_iframe_request_message(FractalClientMessage *fcmsg);
 static int handle_quit_message(FractalClientMessage *fcmsg);
 static int handle_init_message(FractalClientMessage *fcmsg);
@@ -113,12 +108,9 @@ int handle_client_message(FractalClientMessage *fcmsg) {
             return handle_dimensions_message(fcmsg);
         case CMESSAGE_CLIPBOARD:
             return handle_clipboard_message(fcmsg);
-        case MESSAGE_AUDIO_NACK:
-        case MESSAGE_AUDIO_BITARRAY_NACK:
-            return handle_audio_nack_message(fcmsg);
-        case MESSAGE_VIDEO_NACK:
-        case MESSAGE_VIDEO_BITARRAY_NACK:
-            return handle_video_nack_message(fcmsg);
+        case MESSAGE_NACK:
+        case MESSAGE_BITARRAY_NACK:
+            return handle_nack_message(fcmsg);
         case MESSAGE_IFRAME_REQUEST:
             return handle_iframe_request_message(fcmsg);
         case CMESSAGE_QUIT:
@@ -155,10 +147,6 @@ static int handle_user_input_message(FractalClientMessage *fcmsg) {
     if (input_device) {
         if (!replay_user_input(input_device, fcmsg)) {
             LOG_WARNING("Failed to replay input!");
-#ifdef _WIN32
-            // TODO: Ensure that any password can be used here
-            init_desktop(input_device, "password1234567.");
-#endif
         }
     }
 
@@ -357,51 +345,7 @@ static int handle_clipboard_message(FractalClientMessage *fcmsg) {
     return 0;
 }
 
-static void handle_nack_single_audio_packet(int packet_id, int packet_index) {
-    // LOG_INFO("Audio NACK requested for: ID %d Index %d",
-    // packet_id, packet_index);
-    udp_nack(&client.udp_context, PACKET_AUDIO, packet_id, packet_index);
-}
-
-static int handle_audio_nack_message(FractalClientMessage *fcmsg) {
-    /*
-        Handle a audio nack message and relay the packet
-
-        Arguments:
-            fcmsg (FractalClientMessage*): message package from client
-
-        Returns:
-            (int): Returns -1 on failure, 0 on success
-    */
-
-    if (fcmsg->type == MESSAGE_AUDIO_NACK) {
-        handle_nack_single_audio_packet(fcmsg->simple_nack.id, fcmsg->simple_nack.index);
-    } else {
-        // fcmsg->type == MESSAGE_AUDIO_BITARRAY_NACK
-        BitArray *bit_arr = bit_array_create(fcmsg->bitarray_audio_nack.numBits);
-        bit_array_clear_all(bit_arr);
-
-        memcpy(bit_array_get_bits(bit_arr), fcmsg->bitarray_audio_nack.ba_raw,
-               BITS_TO_CHARS(fcmsg->bitarray_audio_nack.numBits));
-
-        for (int i = fcmsg->bitarray_audio_nack.index; i < fcmsg->bitarray_audio_nack.numBits;
-             i++) {
-            if (bit_array_test_bit(bit_arr, i)) {
-                handle_nack_single_audio_packet(fcmsg->bitarray_audio_nack.id, i);
-            }
-        }
-        bit_array_free(bit_arr);
-    }
-    return 0;
-}
-
-static void handle_nack_single_video_packet(int packet_id, int packet_index) {
-    // LOG_INFO("Video NACK requested for: ID %d Index %d",
-    // fcmsg->nack_data.simple_nack.id, fcmsg->nack_data.simple_nack.index);
-    udp_nack(&client.udp_context, PACKET_VIDEO, packet_id, packet_index);
-}
-
-static int handle_video_nack_message(FractalClientMessage *fcmsg) {
+static int handle_nack_message(FractalClientMessage *fcmsg) {
     /*
         Handle a video nack message and relay the packet
 
@@ -412,20 +356,19 @@ static int handle_video_nack_message(FractalClientMessage *fcmsg) {
             (int): Returns -1 on failure, 0 on success
     */
 
-    if (fcmsg->type == MESSAGE_VIDEO_NACK) {
-        handle_nack_single_video_packet(fcmsg->simple_nack.id, fcmsg->simple_nack.index);
+    if (fcmsg->type == MESSAGE_NACK) {
+        udp_nack(&client.udp_context, fcmsg->type, fcmsg->simple_nack.id, fcmsg->simple_nack.index);
     } else {
         // fcmsg->type == MESSAGE_VIDEO_BITARRAY_NACK
-        BitArray *bit_arr = bit_array_create(fcmsg->bitarray_video_nack.numBits);
+        BitArray *bit_arr = bit_array_create(fcmsg->bitarray_nack.numBits);
         bit_array_clear_all(bit_arr);
 
-        memcpy(bit_array_get_bits(bit_arr), fcmsg->bitarray_video_nack.ba_raw,
-               BITS_TO_CHARS(fcmsg->bitarray_video_nack.numBits));
+        memcpy(bit_array_get_bits(bit_arr), fcmsg->bitarray_nack.ba_raw,
+               BITS_TO_CHARS(fcmsg->bitarray_nack.numBits));
 
-        for (int i = fcmsg->bitarray_video_nack.index; i < fcmsg->bitarray_video_nack.numBits;
-             i++) {
+        for (int i = fcmsg->bitarray_nack.index; i < fcmsg->bitarray_nack.numBits; i++) {
             if (bit_array_test_bit(bit_arr, i)) {
-                handle_nack_single_video_packet(fcmsg->bitarray_video_nack.id, i);
+                udp_nack(&client.udp_context, fcmsg->type, fcmsg->bitarray_nack.id, i);
             }
         }
         bit_array_free(bit_arr);

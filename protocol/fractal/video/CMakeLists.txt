@@ -1,30 +1,27 @@
 add_library(fractalVideo STATIC
-        screencapture.h
-        videodecode.c
-        videodecode.h
+        codec/decode.c
         )
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_sources(fractalVideo PRIVATE linuxcapture.c linuxcapture.h)
-    target_sources(fractalVideo PRIVATE x11capture.c x11capture.h)
-    target_sources(fractalVideo PRIVATE nvidiacapture.c nvidiacapture.h)
-    target_sources(fractalVideo PRIVATE nvidia_encode.c nvidia_encode.h)
-    target_sources(fractalVideo PRIVATE nvidiatransfercapture.c nvidiatransfercapture.h)
-    target_sources(fractalVideo PRIVATE nvidia-linux/NvFBCUtils.c nvidia-linux/NvFBCUtils.h nvidia-linux/NvFBC.h)
-    target_sources(fractalVideo PRIVATE cudacontext.c cudacontext.h)
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    if(CMAKE_CUDA_COMPILER)
-        target_sources(fractalVideo PRIVATE dxgicudatransfercapture.cu)
-        set_property(TARGET fractalVideo PROPERTY CUDA_ARCHITECTURES OFF)
-    endif()
-    target_sources(fractalVideo PRIVATE dxgicudatransfercapture.h)
-    target_sources(fractalVideo PRIVATE dxgicapture.c dxgicapture.h)
-endif()
-
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    target_sources(fractalVideo PRIVATE transfercapture.c transfercapture.h)
-    target_sources(fractalVideo PRIVATE videoencode.c videoencode.h)
-    target_sources(fractalVideo PRIVATE ffmpeg_encode.c ffmpeg_encode.h)
+    target_sources(fractalVideo PRIVATE
+        transfercapture.c
+        codec/encode.c
+        codec/ffmpeg_encode.c
+    )
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        target_sources(fractalVideo PRIVATE
+            capture/linuxcapture.c
+            capture/x11capture.c
+            capture/nvidiacapture.c
+            codec/nvidia_encode.c
+            nvidia-linux/NvFBCUtils.c
+            cudacontext.c
+        )
+    else()
+        target_sources(fractalVideo PRIVATE
+            capture/windowscapture.c
+        )
+    endif()
 endif()
 
 set_property(TARGET fractalVideo PROPERTY

@@ -100,6 +100,9 @@ type Mandelbox interface {
 	// Backup the user configs to S3
 	BackupUserConfigs() error
 
+	// WriteUserInitialBrowserData writes file(s) containing the user initial browser data
+	WriteUserInitialBrowserData(string) error
+
 	// GetContext provides the context corresponding to this specific mandelbox.
 	GetContext() context.Context
 	// Close cancels the mandelbox-specific context, triggering the cleanup of

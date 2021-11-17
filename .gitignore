@@ -1,21 +1,21 @@
 
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# Dependencies
 /node_modules
 /.pnp
 .pnp.js
 
-# VS Code
+# VSCode
 .vscode/
 
-# testing
+# Codecov
 /coverage
 
-# production
+# Production
 /build
 
-# dynamically generated css
+# Dynamically generated css
 /public/css/tailwind.css
 
 # Python
@@ -24,7 +24,7 @@ __pycache__
 scripts/__pycache__
 scripts/.ipynb_checkpoints
 
-# misc
+# Misc
 .env
 .DS_Store
 .env.local
@@ -33,17 +33,19 @@ scripts/.ipynb_checkpoints
 .env.production.local
 .eslintcache
 
-# package manager
+# Package manager
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# tags
+# Tags
 **/TAGS
 **/tags
 
 # GitHub Codespaces
 /.venv
 
+
+# Protocol
 *.txt
 perf_logs

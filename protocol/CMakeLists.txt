@@ -103,11 +103,11 @@ if(CHECK_CI)
     message(STATUS "Automatically enabling checks for the CI environment")
     cmake_dependent_option(RUN_CPPCHECK "Run cppcheck" ON "NOT ${CMAKE_SYSTEM_NAME} MATCHES Windows" OFF)
     cmake_dependent_option(GENERATE_COVERAGE "Generate code coverage with lcov" ON "NOT ${CMAKE_SYSTEM_NAME} MATCHES Windows" OFF)
-    cmake_dependent_option(UPLOAD_COVERAGE "Upload code coveraget to Codecov" ON "${GENERATE_COVERAGE}" OFF)
+    cmake_dependent_option(UPLOAD_COVERAGE "Upload code coverage to Codecov" ON "${GENERATE_COVERAGE}" OFF)
 else()
     cmake_dependent_option(RUN_CPPCHECK "Run cppcheck" OFF "NOT ${CMAKE_SYSTEM_NAME} MATCHES Windows" OFF)
     cmake_dependent_option(GENERATE_COVERAGE "Generate code coverage with lcov" OFF "NOT ${CMAKE_SYSTEM_NAME} MATCHES Windows" OFF)
-    cmake_dependent_option(UPLOAD_COVERAGE "Upload code coveraget to Codecov" OFF "${GENERATE_COVERAGE}" OFF)
+    cmake_dependent_option(UPLOAD_COVERAGE "Upload code coverage to Codecov" OFF "${GENERATE_COVERAGE}" OFF)
 endif()
 
 # We configure coverage here, since we don't want this flag to be passed to gtest.

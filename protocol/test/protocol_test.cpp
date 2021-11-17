@@ -21,6 +21,10 @@ Includes
 ============================
 */
 
+#ifdef _WIN32
+#define _CRT_SECURE_NO_WARNINGS  // stupid Windows warnings
+#endif
+
 #include <iostream>
 #include <fstream>
 #include <algorithm>
@@ -30,9 +34,9 @@ Includes
 
 extern "C" {
 #include "client/client_utils.h"
-#include "client/ringbuffer.h"
 #include "fractal/utils/color.h"
 #include <fractal/core/fractal.h>
+#include <fractal/network/ringbuffer.h>
 #include <fcntl.h>
 
 #ifndef __APPLE__
@@ -194,7 +198,7 @@ Client Tests
 // Tests that an initialized ring buffer is correct size and has
 // frame IDs initialized to -1
 TEST(ProtocolTest, InitRingBuffer) {
-    RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, NUM_AUDIO_TEST_FRAMES);
+    RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, NUM_AUDIO_TEST_FRAMES, NULL);
 
     EXPECT_EQ(rb->ring_buffer_size, NUM_AUDIO_TEST_FRAMES);
     for (int frame_num = 0; frame_num < NUM_AUDIO_TEST_FRAMES; frame_num++)
@@ -205,7 +209,7 @@ TEST(ProtocolTest, InitRingBuffer) {
 
 // Tests that an initialized ring buffer with a bad size returns NULL
 TEST_F(CaptureStdoutTest, InitRingBufferBadSize) {
-    RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, MAX_RING_BUFFER_SIZE + 1);
+    RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, MAX_RING_BUFFER_SIZE + 1, NULL);
     EXPECT_TRUE(rb == NULL);
     check_stdout_line(LOG_ERROR_MATCHER);
 }
@@ -214,7 +218,7 @@ TEST_F(CaptureStdoutTest, InitRingBufferBadSize) {
 TEST_F(CaptureStdoutTest, AddingPacketsToRingBuffer) {
     // initialize ringbuffer
     const size_t num_packets = 1;
-    RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, num_packets);
+    RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, num_packets, NULL);
 
     // setup packets to add to ringbuffer
     FractalPacket pkt1 = {0};
@@ -250,7 +254,7 @@ TEST_F(CaptureStdoutTest, AddingPacketsToRingBuffer) {
 TEST(ProtocolTest, ResetRingBufferFrame) {
     // initialize ringbuffer
     const size_t num_packets = 1;
-    RingBuffer* rb = init_ring_buffer(FRAME_VIDEO, num_packets);
+    RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, num_packets, NULL);
 
     // fill ringbuffer
     FractalPacket pkt1;

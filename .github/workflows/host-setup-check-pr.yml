@@ -21,17 +21,17 @@ jobs:
     name: Building
     runs-on: ubuntu-20.04
     env:
-      aws_new_ami_source_region: us-east-1 # The AWS region our new AMI gets built in, our initial AWS supported region
+      aws_new_ami_source_region: us-east-2 # The AWS region our new AMI gets built in, our initial AWS supported region
       aws_new_ami_instance_type: g4dn.xlarge # The AWS EC2 instance type our new AMI gets built on (must be the EC2 instance type we run in production)
-      aws_new_ami_vpc_id: vpc-34aded4e # The ID of the Whist-created VPC the EC2 instance building the AMI is part of
-      aws_source_ami_id: ami-0885b1f6bd170450c # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
+      aws_new_ami_vpc_id: vpc-7c847317 # The ID of the Whist-created VPC the EC2 instance building the AMI is part of
+      aws_source_ami_id: ami-0a91cd140a1fc148a # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
 
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
 
       - name: Set up Python 3.10.0
-        uses: actions/setup-python@v2.2.2
+        uses: actions/setup-python@v2.3.0
         with:
           python-version: "3.10.0"
 
@@ -56,7 +56,7 @@ jobs:
       - name: Build Go Project
         working-directory: host-service
         env:
-          HEROKU_USER: ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+          HEROKU_USER: developers@tryfractal.com
           HEROKU_APIKEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
         run: make build
 

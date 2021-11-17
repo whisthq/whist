@@ -3,32 +3,21 @@ package mandelbox // import "github.com/fractal/fractal/host-service/mandelbox"
 // This file provides functions that manage user configs, including fetching, uploading, and encrypting them.
 
 import (
-	"archive/tar"
 	"bytes"
-	"context"
-	"crypto/aes"
-	"crypto/cipher"
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
-	"io"
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
-	"strings"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
 	logger "github.com/fractal/fractal/host-service/fractallogger"
+	"github.com/fractal/fractal/host-service/mandelbox/configutils"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
-	"github.com/pierrec/lz4/v4"
-	"golang.org/x/crypto/pbkdf2"
 )
 
 const (
@@ -55,21 +44,14 @@ func (mandelbox *mandelboxData) DownloadUserConfigs() error {
 
 	logger.Infof("Starting S3 config download for mandelbox %s", mandelbox.ID)
 
-	cfg, err := config.LoadDefaultConfig(context.Background())
+	s3Client, err := configutils.NewS3Client("us-east-1")
 	if err != nil {
-		return utils.MakeError("failed to load aws config: %v", err)
+		return utils.MakeError("failed to create s3 client: %v", err)
 	}
 
-	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.Region = "us-east-1"
-	})
-	downloader := manager.NewDownloader(s3Client)
-	logger.Infof("Fetching head object for bucket: %s, key: %s", userConfigS3Bucket, s3ConfigKey)
 	// Fetch the HeadObject first to see how much memory we need to allocate
-	headObject, err := s3Client.HeadObject(context.Background(), &s3.HeadObjectInput{
-		Bucket: aws.String(userConfigS3Bucket),
-		Key:    aws.String(s3ConfigKey),
-	})
+	logger.Infof("Fetching head object for bucket: %s, key: %s", userConfigS3Bucket, s3ConfigKey)
+	headObject, err := configutils.GetHeadObject(s3Client, userConfigS3Bucket, s3ConfigKey)
 
 	var apiErr smithy.APIError
 	if err != nil {
@@ -90,10 +72,7 @@ func (mandelbox *mandelboxData) DownloadUserConfigs() error {
 	// Download file into a pre-allocated in-memory buffer
 	// This should be okay as we don't expect configs to be very large
 	mandelbox.configBuffer = manager.NewWriteAtBuffer(make([]byte, headObject.ContentLength))
-	numBytes, err := downloader.Download(context.Background(), mandelbox.configBuffer, &s3.GetObjectInput{
-		Bucket: aws.String(userConfigS3Bucket),
-		Key:    aws.String(s3ConfigKey),
-	})
+	numBytes, err := configutils.DownloadObjectToBuffer(s3Client, userConfigS3Bucket, s3ConfigKey, mandelbox.configBuffer)
 
 	var noSuchKeyErr *types.NoSuchKey
 	if err != nil {
@@ -113,7 +92,6 @@ func (mandelbox *mandelboxData) DownloadUserConfigs() error {
 // DecryptUserConfigs decrypts and unpacks the previously downloaded
 // s3 config using the encryption token received through JSON transport.
 func (mandelbox *mandelboxData) DecryptUserConfigs() error {
-
 	if len(mandelbox.configEncryptionToken) == 0 {
 		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", mandelbox.ID)
 	}
@@ -128,15 +106,9 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 
 	// Decrypt the downloaded archive directly from memory
 	encryptedFile := mandelbox.configBuffer.Bytes()
-	salt, data, err := getSaltAndDataFromOpenSSLEncryptedFile(encryptedFile)
+	decryptedData, err := configutils.DecryptAES256GCM(string(mandelbox.configEncryptionToken), encryptedFile)
 	if err != nil {
-		return utils.MakeError("failed to get salt and data from encrypted file: %v", err)
-	}
-
-	key, iv := getKeyAndIVFromPassAndSalt([]byte(mandelbox.GetConfigEncryptionToken()), salt)
-	err = decryptAES256CBC(key, iv, data)
-	if err != nil {
-		return utils.MakeError("failed to decrypt user config: %v", err)
+		return utils.MakeError("Failed to decrypt user configs: %v", err)
 	}
 
 	logger.Infof("Finished decrypting user config for mandelbox %s", mandelbox.ID)
@@ -165,72 +137,13 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 		cmd.Run()
 	}()
 
-	// Unpacking the decrypted data involves:
-	// 1. Decompress the the lz4 file into a tar
-	// 2. Untar the config to the target directory
-	dataReader := bytes.NewReader(data)
-	lz4Reader := lz4.NewReader(dataReader)
-	tarReader := tar.NewReader(lz4Reader)
-
-	// Track total size of files in the tar
-	totalFileSize := int64(0)
-
-	for {
-		// Read the header for the next file in the tar
-		header, err := tarReader.Next()
-
-		// If we reach EOF, that means we are done untaring
-		switch {
-		case err == io.EOF:
-			break
-		case err != nil:
-			return utils.MakeError("error reading tar file: %v", err)
-		}
-
-		// Not certain why this case happens, but causes segfaults if removed
-		if header == nil {
-			break
-		}
-
-		path := filepath.Join(unpackedConfigDir, header.Name)
-		info := header.FileInfo()
-
-		// Create directory if it doesn't exist, otherwise go next
-		if info.IsDir() {
-			if err = os.MkdirAll(path, info.Mode()); err != nil {
-				return utils.MakeError("error creating directory: %v", err)
-			}
-			continue
-		}
-
-		// Create file and copy contents
-		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
-		if err != nil {
-			return utils.MakeError("error opening file: %v", err)
-		}
-
-		numBytesWritten, err := io.Copy(file, tarReader)
-		if err != nil {
-			file.Close()
-			return utils.MakeError("error copying data to file: %v", err)
-		}
-
-		// Add written bytes to total size
-		totalFileSize += numBytesWritten
-
-		// Manually close file instead of defer otherwise files are only
-		// closed when ALL files are done unpacking
-		if err := file.Close(); err != nil {
-			logger.Warningf("Failed to close file %s: %v", path, err)
-		}
-	}
-
+	totalFileSize, err := configutils.ExtractTarLz4(decryptedData, unpackedConfigDir)
 	logger.Infof("Untarred config to: %s, total size was %d bytes", unpackedConfigDir, totalFileSize)
 
 	return nil
 }
 
-// backupUserConfigs compresses, encrypts, and then uploads user config files to S3.
+// BackupUserConfigs compresses, encrypts, and then uploads user config files to S3.
 // Requires `mandelbox.rwlock` to be locked.
 func (mandelbox *mandelboxData) BackupUserConfigs() error {
 	if len(mandelbox.userID) == 0 {
@@ -243,72 +156,80 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 	}
 
 	configDir := mandelbox.getUserConfigDir()
-	encTarPath := path.Join(configDir, mandelbox.getEncryptedArchiveFilename())
-	decTarPath := path.Join(configDir, mandelbox.getDecryptedArchiveFilename())
 	unpackedConfigPath := path.Join(configDir, mandelbox.getUnpackedConfigsDirectoryName())
 
-	tarConfigCmd := exec.Command(
-		"/usr/bin/tar", "-I", "lz4", "-C", unpackedConfigPath, "-cf", decTarPath,
-		".")
-	tarConfigOutput, err := tarConfigCmd.CombinedOutput()
-	// tar is only fatal when exit status is 2 -
-	//    exit status 1 just means that some files have changed while tarring,
-	//    which is an ignorable error
-	if err != nil && !strings.Contains(string(tarConfigOutput), "file changed") {
-		return utils.MakeError("Could not tar config directory: %s. Output: %s", err, tarConfigOutput)
+	// Compress the user configs into a tar.lz4 file
+	compressedConfig, err := configutils.CompressTarLz4(unpackedConfigPath)
+	if err != nil {
+		return utils.MakeError("Failed to compress user configs: %v", err)
 	}
-	logger.Infof("Tar config directory output: %s", tarConfigOutput)
 
-	// At this point, config archive must exist: encrypt app config
+	// Encrypt the compressed config
 	logger.Infof("Using (hashed) encryption token %s for mandelbox %s", getTokenHash(string(mandelbox.configEncryptionToken)), mandelbox.ID)
-	encryptConfigCmd := exec.Command(
-		"/usr/bin/openssl", "aes-256-cbc", "-e",
-		"-in", decTarPath,
-		"-out", encTarPath,
-		"-pass", "pass:"+string(mandelbox.configEncryptionToken), "-pbkdf2")
-	encryptConfigOutput, err := encryptConfigCmd.CombinedOutput()
+	encryptedConfig, err := configutils.EncryptAES256GCM(string(mandelbox.configEncryptionToken), compressedConfig)
 	if err != nil {
-		// If the config could not be encrypted, don't upload
-		return utils.MakeError("Could not encrypt config: %s. Output: %s", err, encryptConfigOutput)
+		return utils.MakeError("Failed to encrypt user configs: %v", err)
 	}
-	logger.Infof("Encrypted config to %s", encTarPath)
+	encryptedConfigBuffer := bytes.NewBuffer(encryptedConfig)
 
-	cfg, err := config.LoadDefaultConfig(context.Background())
+	// Upload encrypted config to S3
+	s3Client, err := configutils.NewS3Client("us-east-1")
 	if err != nil {
-		return utils.MakeError("failed to load aws config: %v", err)
+		return utils.MakeError("error creating s3 client: %v", err)
 	}
 
-	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.Region = "us-east-1"
-	})
-	uploader := manager.NewUploader(s3Client)
-
-	encryptedConfig, err := os.Open(encTarPath)
-	if err != nil {
-		return utils.MakeError("failed to open encrypted config: %v", err)
-	}
-	defer encryptedConfig.Close()
-
-	// Find size of config we are uploading to S3
-	fileInfo, err := encryptedConfig.Stat()
-	if err != nil {
-		// We don't want to stop uploading configs because we can't get file stats
-		logger.Warningf("error opening file stats for encrypted user config: %s", encTarPath)
-	} else {
-		// Log encrypted user config size before S3 upload
-		logger.Infof("%s is %d bytes", encTarPath, fileInfo.Size())
-	}
-
-	uploadResult, err := uploader.Upload(context.Background(), &s3.PutObjectInput{
-		Bucket: aws.String(userConfigS3Bucket),
-		Key:    aws.String(mandelbox.getS3ConfigKeyWithoutLocking()),
-		Body:   encryptedConfig,
-	})
+	uploadResult, err := configutils.UploadFileToBucket(s3Client, userConfigS3Bucket, mandelbox.getS3ConfigKeyWithoutLocking(), encryptedConfigBuffer)
 	if err != nil {
 		return utils.MakeError("error uploading encrypted config to s3: %v", err)
 	}
 
 	logger.Infof("Saved user config for mandelbox %s, version %s", mandelbox.ID, *uploadResult.VersionID)
+
+	return nil
+}
+
+// WriteUserInitialBrowserData writes the user's initial browser data to file(s)
+// received through JSON transport for later use in the mandelbox
+func (mandelbox *mandelboxData) WriteUserInitialBrowserData(cookieJSON string) error {
+	// Avoid doing work for empty string/array string
+	if len(cookieJSON) <= 2 {
+		return utils.MakeError("Not writing to file as user initial browser data is empty.")
+	}
+
+	// The initial browser cookies will use the same directory as the user config
+	// Make directories for user configs if not exists
+	configDir := mandelbox.getUserConfigDir()
+	if _, err := os.Stat(configDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(configDir, 0777); err != nil {
+			return utils.MakeError("Could not make dir %s. Error: %s", configDir, err)
+		}
+		defer func() {
+			cmd := exec.Command("chown", "-R", "ubuntu", configDir)
+			cmd.Run()
+			cmd = exec.Command("chmod", "-R", "777", configDir)
+			cmd.Run()
+		}()
+	}
+
+	unpackedConfigDir := path.Join(configDir, mandelbox.getUnpackedConfigsDirectoryName())
+	if _, err := os.Stat(unpackedConfigDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(unpackedConfigDir, 0777); err != nil {
+			return utils.MakeError("Could not make dir %s. Error: %s", unpackedConfigDir, err)
+		}
+	}
+
+	// Begin writing user initial browser data
+	cookieFilePath := path.Join(unpackedConfigDir, utils.UserInitialCookiesFile)
+
+	cookieFile, err := os.OpenFile(cookieFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0777)
+	if err != nil {
+		return utils.MakeError("Could not make file %s. Error: %s", cookieFilePath, err)
+	}
+
+	// We want to pass the entire JSON string into the file
+	cookieFile.WriteString(cookieJSON)
+
+	logger.Infof("Finished storing user initial browser data.")
 
 	return nil
 }
@@ -327,7 +248,7 @@ func (mandelbox *mandelboxData) WriteJSONData() error {
 
 // SetupUserConfigDirs creates the user config directories on the host.
 func (mandelbox *mandelboxData) SetupUserConfigDirs() error {
-	logger.Infof("Creating user config directories...")
+	logger.Infof("Creating user config directories for mandelbox %s", mandelbox.ID)
 
 	configDir := mandelbox.getUserConfigDir()
 	if err := os.MkdirAll(configDir, 0777); err != nil {
@@ -389,93 +310,4 @@ func (mandelbox *mandelboxData) getUnpackedConfigsDirectoryName() string {
 func getTokenHash(token string) string {
 	hash := sha256.Sum256([]byte(token))
 	return base64.StdEncoding.EncodeToString(hash[:])
-}
-
-// getSaltAndDataFromOpenSSLEncryptedFile takes OpenSSL encrypted data
-// and returns the salt used to encrypt and the encrypted data itself.
-func getSaltAndDataFromOpenSSLEncryptedFile(file []byte) (salt, data []byte, err error) {
-	if len(file) < aes.BlockSize {
-		return nil, nil, utils.MakeError("file is too short to have been encrypted by openssl")
-	}
-
-	// All OpenSSL encrypted files that use a salt have a 16-byte header
-	// The first 8 bytes are the string "Salted__"
-	// The next 8 bytes are the salt itself
-	// See: https://security.stackexchange.com/questions/29106/openssl-recover-key-and-iv-by-passphrase
-	saltHeader := file[:aes.BlockSize]
-	byteHeaderLength := len([]byte(opensslSaltHeader))
-	if string(saltHeader[:byteHeaderLength]) != opensslSaltHeader {
-		return nil, nil, utils.MakeError("file does not appear to have been encrypted by openssl: wrong salt header")
-	}
-
-	salt = saltHeader[byteHeaderLength:]
-	data = file[aes.BlockSize:]
-
-	return
-}
-
-// getKeyAndIVFromPassAndSalt uses pbkdf2 to generate a key, IV pair
-// given a known password and salt.
-func getKeyAndIVFromPassAndSalt(password, salt []byte) (key, iv []byte) {
-	derivedKey := pbkdf2.Key(password, salt, pbkdf2Iterations, aes256KeyLength+aes256IVLength, sha256.New)
-
-	// First 32 bytes of the derived key are the key and the next 16 bytes are the IV
-	key = derivedKey[:aes256KeyLength]
-	iv = derivedKey[aes256KeyLength : aes256KeyLength+aes256IVLength]
-
-	return
-}
-
-// decryptAES256CBC takes a key, IV, and AES-256 CBC encrypted data and decrypts
-// the data in place.
-// Based on example code from: https://golang.org/src/crypto/cipher/example_test.go.
-func decryptAES256CBC(key, iv, data []byte) error {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return utils.MakeError("could not create aes cipher block: %v", err)
-	}
-
-	// Validate that encrypted data follows the correct format
-	// This is because CBC encryption always works in whole blocks
-	if len(data)%aes.BlockSize != 0 {
-		return utils.MakeError("given data is not a multiple of the block size")
-	}
-
-	mode := cipher.NewCBCDecrypter(block, iv)
-	mode.CryptBlocks(data, data)
-
-	// Remove PKCS7 padding
-	data, err = unpadPKCS7(data)
-	if err != nil {
-		return utils.MakeError("could not remove PKCS7 padding: %v", err)
-	}
-
-	return nil
-}
-
-// unpadPKCS7 takes AES-256 CBC decrypted data and undoes
-// the PKCS#7 padding that was applied before encryption.
-// See: https://en.wikipedia.org/wiki/Padding_(cryptography)#PKCS#5_and_PKCS#7
-func unpadPKCS7(data []byte) ([]byte, error) {
-	if len(data) < 1 {
-		return nil, utils.MakeError("no data to unpad")
-	}
-
-	// The last byte of the data will always be the number of bytes to unpad
-	padLength := int(data[len(data)-1])
-
-	// Validate the padding length is valid
-	if padLength > len(data) || padLength > aes.BlockSize || padLength < 1 {
-		return nil, utils.MakeError("invalid padding length of %d is longer than data size (%d), AES block length (%d), or less than one", padLength, len(data), aes.BlockSize)
-	}
-
-	// Validate each byte of the padding to check correctness
-	for _, v := range data[len(data)-padLength:] {
-		if int(v) != padLength {
-			return nil, utils.MakeError("invalid padding byte %d, expected %d", v, padLength)
-		}
-	}
-
-	// Return data minus padding
-	return data[:len(data)-padLength], nil
 }

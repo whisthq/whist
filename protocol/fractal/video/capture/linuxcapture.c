@@ -9,8 +9,8 @@ Usage
 We first try to create a capture device that uses Nvidia's FBC SDK for capturing frames. This
 capture device must be paired with an Nvidia encoder. If those fail, we fall back to using X11's API
 to create a capture device, which captures on the CPU, and encode using FFmpeg instead. See
-videoencode.h for more details on encoding. The type of capture device currently in use is indicated
-in active_capture_device.
+codec/encode.h for more details on encoding. The type of capture device currently in use is
+indicated in active_capture_device.
 */
 
 /*
@@ -18,7 +18,7 @@ in active_capture_device.
 Includes
 ============================
 */
-#include "linuxcapture.h"
+#include "capture.h"
 #include "x11capture.h"
 #include "nvidiacapture.h"
 
@@ -54,10 +54,6 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
             (int): 0 on exit
     */
     CaptureDevice* device = (CaptureDevice*)opaque;
-    /*
-    CUcontext nvidia_manager_cuda_context = NULL;
-    cuda_init(&nvidia_manager_cuda_context);
-    */
 
     while (true) {
         fractal_wait_semaphore(device->nvidia_device_semaphore);
@@ -289,14 +285,6 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
     device->active_capture_device = X11_DEVICE;
     device->x11_capture_device = create_x11_capture_device(width, height, dpi);
     if (device->x11_capture_device) {
-#if !USING_SHM
-        device->x11_capture_device->image = NULL;
-        if (capture_screen(device) < 0) {
-            LOG_ERROR("Failed to call capture_screen for the first frame!");
-            destroy_capture_device(device);
-            return -1;
-        }
-#endif
         return 0;
     } else {
         LOG_ERROR("Failed to create X11 capture device!");

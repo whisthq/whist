@@ -203,64 +203,6 @@ FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, 
         return NULL;
     }
 
-#if defined(_WIN32)
-// windows currently supports hw resize
-#define N_FILTERS_NVENC 3
-    // source -> scale_cuda -> sink
-    const AVFilter *filters[N_FILTERS_NVENC] = {0};
-    filters[0] = avfilter_get_by_name("buffer");
-    filters[1] = avfilter_get_by_name("scale_cuda");
-    filters[2] = avfilter_get_by_name("buffersink");
-
-    for (int i = 0; i < N_FILTERS_NVENC; ++i) {
-        if (!filters[i]) {
-            LOG_WARNING("Could not find filter %d in the list!", i);
-            destroy_ffmpeg_encoder(encoder);
-            return NULL;
-        }
-    }
-
-    AVFilterContext *filter_contexts[N_FILTERS_NVENC] = {0};
-
-    // source buffer
-    filter_contexts[0] = avfilter_graph_alloc_filter(encoder->filter_graph, filters[0], "src");
-    AVBufferSrcParameters *avbsp = av_buffersrc_parameters_alloc();
-    avbsp->width = encoder->in_width;
-    avbsp->height = encoder->in_height;
-    avbsp->format = hw_format;
-    avbsp->frame_rate = (AVRational){FPS, 1};
-    avbsp->time_base = (AVRational){1, FPS};
-    avbsp->hw_frames_ctx = encoder->context->hw_frames_ctx;
-    av_buffersrc_parameters_set(filter_contexts[0], avbsp);
-    if (avfilter_init_str(filter_contexts[0], NULL) < 0) {
-        LOG_WARNING("Unable to initialize buffer source");
-        destroy_ffmpeg_encoder(encoder);
-        return NULL;
-    }
-    av_free(avbsp);
-    encoder->filter_graph_source = filter_contexts[0];
-
-    // scale_cuda
-    filter_contexts[1] =
-        avfilter_graph_alloc_filter(encoder->filter_graph, filters[1], "scale_cuda");
-    char options_string[60] = "";
-    snprintf(options_string, 60, "w=%d:h=%d", encoder->out_width, encoder->out_height);
-    if (avfilter_init_str(filter_contexts[1], options_string) < 0) {
-        LOG_WARNING("Unable to initialize scale filter");
-        destroy_ffmpeg_encoder(encoder);
-        return NULL;
-    }
-
-    // sink buffer
-    if (avfilter_graph_create_filter(&filter_contexts[2], filters[2], "sink", NULL, NULL,
-                                     encoder->filter_graph) < 0) {
-        LOG_WARNING("Unable to initialize buffer sink");
-        destroy_ffmpeg_encoder(encoder);
-        return NULL;
-    }
-    encoder->filter_graph_sink = filter_contexts[2];
-#else
-// linux currently doesn't support hw resize
 #define N_FILTERS_NVENC 2
     // source -> sink
     const AVFilter *filters[N_FILTERS_NVENC] = {0};
@@ -302,7 +244,6 @@ FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, 
         return NULL;
     }
     encoder->filter_graph_sink = filter_contexts[1];
-#endif
 
     // connect the filters in a simple line
     for (int i = 0; i < N_FILTERS_NVENC - 1; ++i) {

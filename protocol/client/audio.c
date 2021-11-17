@@ -20,7 +20,9 @@ Includes
 
 #include "audio.h"
 #include "network.h"
-#include "ringbuffer.h"
+#include <fractal/network/network.h>
+#include <fractal/network/ringbuffer.h>
+#include <fractal/core/fractal_frame.h>
 
 extern bool has_video_rendered_yet;
 
@@ -361,7 +363,7 @@ void init_audio() {
         Initialize the audio device
     */
     LOG_INFO("Initializing audio system");
-    audio_ring_buffer = init_ring_buffer(FRAME_AUDIO, MAX_NUM_AUDIO_FRAMES);
+    audio_ring_buffer = init_ring_buffer(PACKET_AUDIO, MAX_NUM_AUDIO_FRAMES, nack_packet);
 
     // Set audio to be reinit'ed
     audio_refresh = true;

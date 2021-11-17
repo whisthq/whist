@@ -44,10 +44,6 @@ Includes
 #include "audio.h"
 
 #ifdef _WIN32
-#include <fractal/utils/windows_utils.h>
-#endif
-
-#ifdef _WIN32
 #pragma comment(lib, "ws2_32.lib")
 #endif
 // Linux shouldn't have this

@@ -36,17 +36,13 @@ Includes
 #endif
 
 #include <fractal/video/transfercapture.h>
-#include <fractal/video/screencapture.h>
-#include <fractal/video/videoencode.h>
+#include <fractal/video/capture/capture.h>
+#include <fractal/video/codec/encode.h>
 #include <fractal/utils/avpacket_buffer.h>
 #include <fractal/logging/log_statistic.h>
 #include "client.h"
 #include "network.h"
 #include "video.h"
-
-#ifdef _WIN32
-#include <fractal/utils/windows_utils.h>
-#endif
 
 #ifdef _WIN32
 #pragma comment(lib, "ws2_32.lib")
@@ -81,8 +77,6 @@ static int encoder_factory_client_w;
 static int encoder_factory_client_h;
 static int encoder_factory_bitrate;
 static CodecType encoder_factory_codec_type;
-
-static bool transfer_context_active;
 
 /*
 ============================
@@ -244,8 +238,6 @@ void send_populated_frames(clock* statistics_timer, clock* server_frame_timer,
  */
 void retry_capture_screen(CaptureDevice* device, VideoEncoder* encoder) {
     LOG_WARNING("Failed to capture screen");
-    transfer_context_active = false;
-    close_transfer_context(device, encoder);
     // The Nvidia Encoder must be wrapped in the lifetime of the capture device
     if (encoder != NULL && encoder->active_encoder == NVIDIA_ENCODER) {
         multithreaded_destroy_encoder(encoder);
@@ -278,11 +270,6 @@ void update_current_device(clock* statistics_timer, CaptureDevice* device, Video
 
     // If a device already exists, we should reconfigure or destroy it
     if (device != NULL) {
-        if (transfer_context_active) {
-            close_transfer_context(device, encoder);
-            transfer_context_active = false;
-        }
-
         if (reconfigure_capture_device(device, true_width, true_height, client_dpi)) {
             // Reconfigured the capture device!
             // No need to recreate it, the device has now been updated
@@ -371,10 +358,6 @@ VideoEncoder* do_update_encoder(VideoEncoder* encoder, CaptureDevice* device) {
                 // Once encoder_finished, we'll destroy the old one that we've been using,
                 // and replace it with the result of multithreaded_encoder_factory
                 if (encoder) {
-                    if (transfer_context_active) {
-                        close_transfer_context(device, encoder);
-                        transfer_context_active = false;
-                    }
                     FractalThread encoder_destroy_thread = fractal_create_thread(
                         multithreaded_destroy_encoder, "multithreaded_destroy_encoder", encoder);
                     fractal_detach_thread(encoder_destroy_thread);
@@ -408,10 +391,6 @@ VideoEncoder* do_update_encoder(VideoEncoder* encoder, CaptureDevice* device) {
             // it
             // For now, we'll just always destroy the encoder right here
             if (encoder != NULL && encoder->active_encoder == NVIDIA_ENCODER) {
-                if (transfer_context_active) {
-                    close_transfer_context(device, encoder);
-                    transfer_context_active = false;
-                }
                 destroy_video_encoder(encoder);
                 encoder = NULL;
             }
@@ -470,7 +449,6 @@ int32_t multithreaded_send_video(void* opaque) {
 
     pending_encoder = false;
     encoder_finished = false;
-    transfer_context_active = false;
 
     add_thread_to_client_active_dependents();
 
@@ -557,11 +535,6 @@ int32_t multithreaded_send_video(void* opaque) {
         if (accumulated_frames < 0) {
             retry_capture_screen(device, encoder);
             continue;
-        }
-
-        if (!transfer_context_active) {
-            start_transfer_context(device, encoder);
-            transfer_context_active = true;
         }
 
         clock server_frame_timer;

@@ -541,7 +541,7 @@ int create_tcp_server_context_stun(SocketContextData* context, int port, int rec
     stun_request.type = POST_INFO;
     stun_request.entry.public_port = htons((unsigned short)port);
 
-    if (send(context->socket, &stun_request, sizeof(stun_request), 0) < 0) {
+    if (send(context->socket, (const char*)&stun_request, sizeof(stun_request), 0) < 0) {
         LOG_WARNING("Could not send STUN request to connected STUN server!");
         closesocket(context->socket);
         return -1;
@@ -724,7 +724,7 @@ int create_tcp_client_context_stun(SocketContextData* context, char* destination
     stun_request.entry.ip = inet_addr(destination);
     stun_request.entry.public_port = htons((unsigned short)port);
 
-    if (send(context->socket, &stun_request, sizeof(stun_request), 0) < 0) {
+    if (send(context->socket, (const char*)&stun_request, sizeof(stun_request), 0) < 0) {
         LOG_WARNING("Could not send STUN request to connected STUN server!");
         closesocket(context->socket);
         return -1;

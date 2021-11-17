@@ -2,7 +2,9 @@ add_library(fractalNetwork STATIC
         network.c
         udp.c
         tcp.c
-        throttle.c)
+        throttle.c
+        ringbuffer.c
+    )
 
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(fractalNetwork curl)

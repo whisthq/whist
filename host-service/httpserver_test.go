@@ -31,6 +31,7 @@ func TestSpinUpHandler(t *testing.T) {
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		JSONData:              "test_json_data",
+		Cookies:               "[{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}]",
 		resultChan:            make(chan requestResult),
 	}
 
@@ -125,6 +126,7 @@ func TestHttpServerIntegration(t *testing.T) {
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		JSONData:              "test_json_data",
+		Cookies:               "[{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}]",
 		resultChan:            make(chan requestResult),
 	}
 	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
