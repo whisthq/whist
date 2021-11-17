@@ -35,6 +35,7 @@ from flask import Blueprint, current_app
 from app.helpers.aws.aws_instance_post import (
     try_scale_down_if_necessary_all_regions,
     check_and_handle_lingering_instances,
+    check_and_handle_instances_with_old_commit_hash,
 )
 from app.helpers.ami.ami_upgrade import create_ami_buffer, swapover_amis
 
