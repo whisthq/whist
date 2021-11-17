@@ -44,8 +44,9 @@ export default flow(
           ip: c.ip,
           configToken: t.configToken,
           accessToken: t.accessToken,
-          cookies: d,
+          isNewConfigToken: t.isNewConfigToken,
           mandelboxID: c.mandelboxID,
+          cookies: d,
           jsonData: JSON.stringify({
             dark_mode: nativeTheme.shouldUseDarkColors,
             desired_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,

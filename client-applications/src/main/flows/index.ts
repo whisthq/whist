@@ -17,6 +17,7 @@ import {
   refreshToken,
   userEmail,
   configToken,
+  isNewConfigToken,
 } from "@app/utils/state"
 import { ONBOARDED } from "@app/constants/store"
 
@@ -69,6 +70,7 @@ const launchTrigger = fromSignal(
   combineLatest({
     accessToken,
     configToken,
+    isNewConfigToken,
     importCookiesFrom: fromTrigger(WhistTrigger.onboarded).pipe(
       startWith(undefined),
       map((payload) => payload?.importCookiesFrom)

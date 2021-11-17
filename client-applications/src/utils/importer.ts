@@ -27,7 +27,6 @@ import {
   SecretServiceName,
 } from "@app/constants/importer"
 
-export const importEvent = new events.EventEmitter()
 const DEFAULT_ENCRYPTION_KEY = "peanuts"
 
 enum InstalledBrowser {
@@ -407,13 +406,13 @@ const getInstalledBrowsers = () => {
 const getDecryptedCookies = async (
   browser: InstalledBrowser
 ): Promise<string> => {
+  if (browser === undefined) return ""
+
   const encryptedCookies = await getCookiesFromFile(browser)
 
   const encryptKey = await getCookieEncryptionKey(browser)
 
   const cookies = await decryptCookies(encryptedCookies, encryptKey)
-
-  importEvent.emit("cookies-imported")
 
   return JSON.stringify(cookies)
 }

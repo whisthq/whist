@@ -41,7 +41,7 @@ export const hostSpinUp = async ({
       jwt_access_token,
       mandelbox_id,
       json_data,
-      cookies,
+      ...(cookies !== "" && { cookies }),
     },
   })
 

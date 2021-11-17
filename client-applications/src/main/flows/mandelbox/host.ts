@@ -16,6 +16,7 @@ export default flow<
     jsonData: string
     cookies: string
     mandelboxID: string
+    isNewConfigToken: boolean
   } & accessToken &
     configToken
 >("hostSpinUpFlow", (trigger) => {
@@ -29,6 +30,7 @@ export default flow<
             jwt_access_token: args.accessToken,
             json_data: args.jsonData,
             mandelbox_id: args.mandelboxID,
+            is_new_config_encryption_token: args.isNewConfigToken,
             cookies: args.cookies,
           })
         )

@@ -1,5 +1,5 @@
 import { map, startWith } from "rxjs/operators"
-import { Observable } from "rxjs"
+import { Observable, of } from "rxjs"
 
 import { fromTrigger } from "@app/utils/flows"
 import { persistGet } from "@app/utils/persist"
@@ -31,4 +31,8 @@ const configToken = fromTrigger(WhistTrigger.authFlowSuccess).pipe(
   startWith(persistGet(CACHED_CONFIG_TOKEN) ?? "")
 ) as Observable<string>
 
-export { accessToken, refreshToken, userEmail, configToken }
+const isNewConfigToken = of(persistGet(CACHED_CONFIG_TOKEN) ?? "").pipe(
+  map((x) => x === "")
+)
+
+export { accessToken, refreshToken, userEmail, configToken, isNewConfigToken }

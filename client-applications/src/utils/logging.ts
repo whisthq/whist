@@ -125,13 +125,7 @@ export const logBase = (
   let dataClone = cloneDeep(data)
   dataClone = mapValuesDeep(dataClone, (v: object | any[], k: string) => {
     if (["configToken", "config_encryption_token", "cookies"].includes(k)) {
-      if ((k ?? "") === "") return "[Empty String]"
-
-      const dataAsString = k.toString()
-      return `${dataAsString.slice(
-        0,
-        Math.min(10, dataAsString.length)
-      )} **********`
+      return "***********"
     }
     return v
   })
