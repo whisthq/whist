@@ -204,13 +204,14 @@ if __name__ == "__main__":
         "sudo kill -9 `sudo lsof /var/lib/apt/lists/lock | awk '{print $2}' | tail -n 1`",
         "sudo kill -9 `sudo lsof /var/lib/dpkg/lock | awk '{print $2}' | tail -n 1`",
         "sudo killall apt apt-get",
+        "sudo pkill -9 apt",
         "sudo pkill -9 apt-get",
         "sudo pkill -9 dpkg",
+        "sudo rm /var/lib/apt/lists/lock; sudo rm /var/lib/apt/lists/lock-frontend; sudo rm /var/cache/apt/archives/lock; sudo rm /var/lib/dpkg/lock",
         "sudo dpkg --configure -a",
     ]
     for command in dpkg_commands:
         hs_process.sendline(command)
-
         hs_process.expect(pexpect_prompt)
         hs_process.expect(pexpect_prompt)
 
@@ -220,8 +221,19 @@ if __name__ == "__main__":
     command = "cd ~/fractal/host-setup && ./setup_host.sh --localdevelopment | tee ~/host_setup.log"
     # hs_process = attempt_host_setup(hs_process, command, cmd, aws_timeout, host_service_log, pexpect_prompt, 5, 5)
     hs_process.sendline(command)
+    result = hs_process.expect([pexpect_prompt, "E: Could not get lock"])
     hs_process.expect(pexpect_prompt)
-    hs_process.expect(pexpect_prompt)
+
+    if result == 1:
+        # If still getting lock issues, no alternative but to reboot
+        print("Running into severe locking issues, rebooting the instance!")
+        hs_process = reboot_instance(
+            hs_process, cmd, aws_timeout, host_service_log, pexpect_prompt, 5
+        )
+        hs_process.sendline(command)
+        hs_process.expect(pexpect_prompt)
+        hs_process.expect(pexpect_prompt)
+
     print("Finished running the host setup script on the EC2 instance")
 
     # 2- reboot and wait for it to come back up
