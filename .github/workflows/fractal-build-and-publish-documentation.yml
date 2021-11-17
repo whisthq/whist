@@ -30,7 +30,7 @@ jobs:
   fractal-build-and-publish-documentation:
     name: Build & Publish Whist Internal Documentation to fractal/docs
     runs-on: ubuntu-20.04
-    concurrency: fractal-build-and-publish-documentation-${{ github.ref }}
+    concurrency: fractal-build-and-publish-documentation
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
