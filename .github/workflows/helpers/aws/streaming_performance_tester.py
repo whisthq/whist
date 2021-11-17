@@ -201,11 +201,12 @@ if __name__ == "__main__":
     # See also here: https://github.com/ray-project/ray/blob/master/doc/examples/lm/lm-cluster.yaml
     dpkg_commands = [
         "sudo kill -9 `sudo lsof /var/lib/dpkg/lock-frontend | awk '{print $2}' | tail -n 1`",
+        "sudo kill -9 `sudo lsof /var/lib/apt/lists/lock | awk '{print $2}' | tail -n 1`",
+        "sudo kill -9 `sudo lsof /var/lib/dpkg/lock | awk '{print $2}' | tail -n 1`",
         "sudo pkill -9 apt",
         "sudo pkill -9 apt-get",
         "sudo pkill -9 dpkg",
-        "sudo rm /var/lib/dpkg/lock",
-        "sudo dpkg --configure -a"
+        "sudo dpkg --configure -a",
     ]
     for command in dpkg_commands:
         hs_process.sendline(command)
@@ -364,9 +365,7 @@ if __name__ == "__main__":
     log_grabber_process.expect(["\$", "%"])
 
     # Copy over all the logs from the AWS machine
-    command = "sudo rm -rf ./perf_logs; scp -i {} -r {}@{}:~/perf_logs .".format(
-        ssh_key_path, username, hostname
-    )
+    command = "scp -i {} -r {}@{}:~/perf_logs .".format(ssh_key_path, username, hostname)
     local_process = pexpect.spawn(command, timeout=aws_timeout, logfile=log_grabber_log.buffer)
     local_process.expect(["\$", "%"])
 
