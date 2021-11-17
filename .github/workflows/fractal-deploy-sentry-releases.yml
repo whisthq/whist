@@ -22,8 +22,8 @@ jobs:
     name: "Deploy Sentry Release for: ${{ matrix.project.name }}"
     runs-on: ubuntu-20.04
     outputs:
-      sentry-deploy-environment: ${{ steps.detect-environment.outputs.sentry-deploy-environment }}
-      slack-webhook: ${{ steps.detect-environment.outputs.slack-webhook }}
+      sentry_deploy_environment: ${{ steps.detect-environment.outputs.sentry_deploy_environment }}
+      slack_webhook: ${{ steps.detect-environment.outputs.slack_webhook }}
 
     strategy:
       matrix:
@@ -67,8 +67,8 @@ jobs:
           fi
 
           echo "Sentry environment is set to: $SENTRY_DEPLOY_ENVIRONMENT"
-          echo "::set-output name=sentry-deploy-environment::$SENTRY_DEPLOY_ENVIRONMENT"
-          echo "::set-output name=slack-webhook::$SLACK_WEBHOOK"
+          echo "::set-output name=sentry_deploy_environment::$SENTRY_DEPLOY_ENVIRONMENT"
+          echo "::set-output name=slack_webhook::$SLACK_WEBHOOK"
 
       - name: Create New Sentry Release
         run: |
@@ -82,7 +82,7 @@ jobs:
           sentry-cli releases finalize $SENTRY_RELEASE
 
           # Create new deploy for this Sentry release
-          sentry-cli releases deploys $SENTRY_RELEASE new -e ${{ steps.detect-environment.outputs.sentry-deploy-environment }}
+          sentry-cli releases deploys $SENTRY_RELEASE new -e ${{ steps.detect-environment.outputs.sentry_deploy_environment }}
 
       - name: Notify Slack on Failure
         if: failure()
@@ -90,8 +90,8 @@ jobs:
         run: |
           from notifications.slack_bot import slack_post
 
-          SLACK_WEBHOOK = "${{ steps.detect-environment.outputs.slack-webhook }}"
-          SLACK_CHANNEL = "#alerts-${{ steps.detect-environment.outputs.sentry-deploy-environment }}"
+          SLACK_WEBHOOK = "${{ steps.detect-environment.outputs.slack_webhook }}"
+          SLACK_CHANNEL = "#alerts-${{ steps.detect-environment.outputs.sentry_deploy_environment }}"
           BODY = f"@releases :rotating_light: Failed to deploy `$SENTRY_PROJECT` Sentry release on branch: `${{ steps.detect-environment.outputs.sentry-deploy-environment }}`, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
@@ -114,8 +114,8 @@ jobs:
         run: |
           from notifications.slack_bot import slack_post
 
-          SLACK_WEBHOOK = "${{ needs.fractal-deploy-sentry-releases-main.outputs.slack-webhook }}"
-          SLACK_CHANNEL = "#alerts-${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}"
+          SLACK_WEBHOOK = "${{ needs.fractal-deploy-sentry-releases-main.outputs.slack_webhook }}"
+          SLACK_CHANNEL = "#alerts-${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry_deploy_environment }}"
           TITLE = ":sentry: Sentry Releases Deployed :sentry:"
           BODY = f"Sentry Releases for Whist Sentry Projects `webserver`, `protocol`, `host-service`, and `client-applications` deployed to Sentry on branch: `${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
