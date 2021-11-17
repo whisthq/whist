@@ -63,7 +63,7 @@ build: checkCI
 		-X 'github.com/fractal/fractal/host-service/metadata.gitCommit=$(GIT_COMMIT)'\
 		-X 'github.com/fractal/fractal/host-service/metadata/heroku.email=$(HEROKU_USER)'\
 		-X 'github.com/fractal/fractal/host-service/metadata/heroku.apiKey=$(HEROKU_APIKEY)'\
-		-X 'github.com/fractal/fractal/h"/fractal/"ost-service/metadata/heroku.appNameOverride=$(HEROKU_APP_NAME_OVERRIDE)'\
+		-X 'github.com/fractal/fractal/host-service/metadata/heroku.appNameOverride=$(HEROKU_APP_NAME_OVERRIDE)'\
 		" -o $(BUILD_FOLDER)/$(BINARY_NAME) .
 
 upload: build
