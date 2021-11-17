@@ -535,6 +535,7 @@ def test_lingering_instances(
 def test_old_commit_hash_instances(
     monkeypatch: MonkeyPatch,
     bulk_instance: Callable[..., InstanceInfo],
+    current_commit_hash: str,
     region_name: str,
 ) -> None:
     """
@@ -551,6 +552,7 @@ def test_old_commit_hash_instances(
     bulk_instance(
         instance_name="active_instance",
         aws_ami_id="test-AMI",
+        commit_hash=current_commit_hash,
         location=region_name,
         last_updated_utc_unix_ms=time() * 1000,
         creation_time_utc_unix_ms=time() * 1000,
@@ -558,6 +560,7 @@ def test_old_commit_hash_instances(
     bulk_instance(
         instance_name="active_starting_instance",
         aws_ami_id="test-AMI",
+        commit_hash=current_commit_hash,
         location=region_name,
         status=MandelboxHostState.PRE_CONNECTION.value,
         last_updated_utc_unix_ms=((time() - 121) * 1000),
@@ -566,6 +569,7 @@ def test_old_commit_hash_instances(
     bulk_instance(
         instance_name="host_service_unrepsonsive_instance",
         aws_ami_id="test-AMI",
+        commit_hash=current_commit_hash,
         location=region_name,
         status=MandelboxHostState.HOST_SERVICE_UNRESPONSIVE.value,
         last_updated_utc_unix_ms=((time() - 18000001) * 1000),
