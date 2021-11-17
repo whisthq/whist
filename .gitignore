@@ -46,3 +46,4 @@ yarn-error.log*
 /.venv
 
 *.txt
+perf_logs
