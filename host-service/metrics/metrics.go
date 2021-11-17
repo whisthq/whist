@@ -6,7 +6,6 @@ package metrics // import "github.com/fractal/fractal/host-service/metrics"
 
 import (
 	"math/rand"
-	"os"
 	"sync"
 	"time"
 
@@ -121,7 +120,6 @@ type RuntimeMetrics struct {
 }
 
 func init() {
-	os.Setenv("CI", "true")
 	if !metadata.IsRunningInCI() {
 		err := startCollectionGoroutine(30 * time.Second)
 		if err != nil {
