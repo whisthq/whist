@@ -105,7 +105,9 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
     # docker build argument, we can control which dockerfiles copy the
     # protcool!
     build_asset_package = "default"
-    if (protocol_copy_mode == "dev" or protocol_copy_mode == "perf") and img_path in target_image_paths:
+    if (
+        protocol_copy_mode == "dev" or protocol_copy_mode == "perf"
+    ) and img_path in target_image_paths:
         build_asset_package = "protocol"
     if protocol_copy_mode == "prod" and root_image:
         build_asset_package = "protocol"
