@@ -52,7 +52,7 @@ jobs:
       - name: Set Git Repository URL to Enable sentry-cli Automatic Commit Tagging
         run: git remote set-url origin https://github.com/fractal/fractal
 
-      - name: Set deploy environment Based on Git Branch
+      - name: Set Deploy Environment Based on Git Branch
         id: detect-environment
         run: |
           if [ "${GITHUB_REF##*/}" == "prod" ]; then
