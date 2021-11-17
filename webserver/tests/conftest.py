@@ -153,7 +153,7 @@ def bulk_instance() -> Generator[
             aws_instance_type=kwargs.get("aws_instance_type", "test_type"),
             last_updated_utc_unix_ms=kwargs.get("last_updated_utc_unix_ms", 10),
             status=kwargs.get("status", "ACTIVE"),
-            commit_hash=CLIENT_COMMIT_HASH_FOR_TESTING,
+            commit_hash=kwargs.get("commit_hash", CLIENT_COMMIT_HASH_FOR_TESTING),
         )
 
         db.session.add(new_instance)
