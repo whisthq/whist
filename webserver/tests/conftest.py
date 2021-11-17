@@ -234,9 +234,9 @@ def current_commit_hash() -> str:
     Returns a current commit hash
     """
     commit_hash = (
-        RegionToAmi.query.filter(RegionToAmi.ami_active == "true").first().client_commit_hash
+        RegionToAmi.query.filter(ami_active=True).one_or_none().client_commit_hash
     )
-    return commit_hash if isinstance(commit_hash, str) else ""
+    return str(commit_hash) if commit_hash else ""
 
 
 @pytest.fixture
