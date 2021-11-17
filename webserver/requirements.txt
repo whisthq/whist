@@ -1,5 +1,5 @@
 blinker==1.4
-boto3==1.19.2
+boto3==1.20.7
 click==8.0.1
 cryptography==3.4.7
 Flask==2.0.1
