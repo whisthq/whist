@@ -24,6 +24,7 @@ jobs:
   # whist-server pipeline in a one-off dyno:
   #  * flask compute scale-down-instances
   #  * flask compute prune-lingering-instances
+  #  * flask compute clean-old-commit-hash-instances
   webserver-clean-up-instances-matrix:
     name: Create Job Matrix
     runs-on: ubuntu-20.04
@@ -58,7 +59,7 @@ jobs:
           import os
 
           apps = filter(lambda app: "-ci-" not in app, os.environ["APPS"].split(","))
-          commands = ["flask compute prune-lingering-instances", "flask compute scale-down-instances"]
+          commands = ["flask compute prune-lingering-instances", "flask compute scale-down-instances", "flask compute clean-old-commit-hash-instances"]
           lookup = {"whist-prod-server": "prod", "whist-staging-server": "staging"}
           include = [{"app": a, "command": c, "environment": lookup.get(a, "dev")} for a in apps for c in commands]
           matrix = {"include": include}
@@ -69,6 +70,7 @@ jobs:
   # pipeline in a one-off dyno:
   #  * flask compute scale-down-instances
   #  * flask compute prune-lingering-instances
+  #  * flask compute clean-old-commit-hash-instances
   webserver-clean-up-instances:
     name: Clean up Compute Instances
     needs: webserver-clean-up-instances-matrix
