@@ -52,7 +52,7 @@ const navigation = {
     },
     {
       name: "LinkedIn",
-      href: "https://www.linkedin.com/company/fractal/",
+      href: "https://www.linkedin.com/company/whisthq/",
       icon: FaLinkedinIn,
     },
     {
