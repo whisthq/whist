@@ -9,7 +9,7 @@ import fs from "fs"
 import path from "path"
 import util from "util"
 import * as Amplitude from "@amplitude/node"
-import cloneDeep from "lodash/clonedeep"
+import cloneDeep from "lodash.clonedeep"
 import mapValuesDeep from "deepdash/mapValuesDeep"
 
 import config, {
@@ -126,7 +126,12 @@ export const logBase = (
   dataClone = mapValuesDeep(dataClone, (v: object | any[], k: string) => {
     if (["configToken", "config_encryption_token", "cookies"].includes(k)) {
       if ((k ?? "") === "") return "[Empty String]"
-      return `${k.slice(0, Math.min(5, k.length))} **********`
+
+      const dataAsString = k.toString()
+      return `${dataAsString.slice(
+        0,
+        Math.min(10, dataAsString.length)
+      )} **********`
     }
     return v
   })
