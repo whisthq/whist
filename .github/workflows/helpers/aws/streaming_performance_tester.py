@@ -364,11 +364,10 @@ if __name__ == "__main__":
     log_grabber_process.expect(["\$", "%"])
 
     # Copy over all the logs from the AWS machine
-    command = "rm -rf perf_logs; scp -i {} -r {}@{}:~/perf_logs .".format(
+    command = "sudo rm -rf ./perf_logs; scp -i {} -r {}@{}:~/perf_logs .".format(
         ssh_key_path, username, hostname
     )
     local_process = pexpect.spawn(command, timeout=aws_timeout, logfile=log_grabber_log.buffer)
-    local_process.sendline(command)
     local_process.expect(["\$", "%"])
 
     # Exit the server/client mandelboxes
