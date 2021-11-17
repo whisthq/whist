@@ -1,11 +1,10 @@
-import { merge, Observable, zip, from } from "rxjs"
-import { map, switchMap, share } from "rxjs/operators"
+import { merge, Observable, zip } from "rxjs"
+import { map } from "rxjs/operators"
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
 import { nativeTheme } from "electron"
 import { persistGet } from "@app/utils/persist"
-import { getDecryptedCookies, InstalledBrowser } from "@app/utils/importer"
 import { RESTORE_LAST_SESSION } from "@app/constants/store"
 import { getInitialKeyRepeat, getKeyRepeat } from "@app/utils/keyRepeat"
 
@@ -16,7 +15,7 @@ export default flow(
       accessToken: string
       configToken: string
       isNewConfigToken: boolean
-      importCookiesFrom: string | undefined
+      cookies: string
     }>
   ) => {
     const create = mandelboxCreateFlow(
@@ -31,22 +30,15 @@ export default flow(
     const initialKeyRepeat = getInitialKeyRepeat()
     const keyRepeat = getKeyRepeat()
 
-    const decrypted = trigger.pipe(
-      switchMap((t) =>
-        from(getDecryptedCookies(t.importCookiesFrom as InstalledBrowser))
-      ),
-      share() // If you don't share, this observable will fire many times (once for each subscriber of the flow)
-    )
-
     const host = hostSpinUpFlow(
-      zip([trigger, create.success, decrypted]).pipe(
-        map(([t, c, d]) => ({
+      zip([trigger, create.success]).pipe(
+        map(([t, c]) => ({
           ip: c.ip,
           configToken: t.configToken,
           accessToken: t.accessToken,
           isNewConfigToken: t.isNewConfigToken,
           mandelboxID: c.mandelboxID,
-          cookies: d,
+          cookies: t.cookies,
           jsonData: JSON.stringify({
             dark_mode: nativeTheme.shouldUseDarkColors,
             desired_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,

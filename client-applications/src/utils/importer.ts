@@ -1,5 +1,4 @@
 import pickBy from "lodash.pickby"
-import events from "events"
 import keytar from "keytar"
 import dbus from "dbus-next"
 import fs from "fs"
@@ -405,8 +404,8 @@ const getInstalledBrowsers = () => {
 
 const getDecryptedCookies = async (
   browser: InstalledBrowser
-): Promise<string> => {
-  if (browser === undefined) return ""
+): Promise<string | undefined> => {
+  if (browser === undefined) return undefined
 
   const encryptedCookies = await getCookiesFromFile(browser)
 

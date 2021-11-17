@@ -1,5 +1,5 @@
-import { merge, of, combineLatest, zip } from "rxjs"
-import { map, take, filter, startWith, share } from "rxjs/operators"
+import { merge, of, combineLatest, zip, from } from "rxjs"
+import { map, take, filter, switchMap, share, mapTo } from "rxjs/operators"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
 
@@ -20,6 +20,7 @@ import {
   isNewConfigToken,
 } from "@app/utils/state"
 import { ONBOARDED } from "@app/constants/store"
+import { getDecryptedCookies, InstalledBrowser } from "@app/utils/importer"
 
 // Autoupdate flow
 const update = autoUpdateFlow(fromTrigger(WhistTrigger.updateAvailable))
@@ -65,16 +66,28 @@ const refreshAfterPaying = authRefreshFlow(
   )
 )
 
+// If importCookiesFrom is not empty, run the cookie import function
+const importCookies = fromTrigger(WhistTrigger.onboarded).pipe(
+  switchMap((t) =>
+    from(getDecryptedCookies(t?.importCookiesFrom as InstalledBrowser))
+  ),
+  share() // If you don't share, this observable will fire many times (once for each subscriber of the flow)
+)
+
+const dontImportCookies = of(persistGet(ONBOARDED) as boolean).pipe(
+  take(1),
+  filter((onboarded: boolean) => onboarded),
+  mapTo(undefined),
+  share()
+)
+
 // Observable that fires when Fractal is ready to be launched
 const launchTrigger = fromSignal(
   combineLatest({
     accessToken,
     configToken,
     isNewConfigToken,
-    importCookiesFrom: fromTrigger(WhistTrigger.onboarded).pipe(
-      startWith(undefined),
-      map((payload) => payload?.importCookiesFrom)
-    ),
+    cookies: merge(importCookies, dontImportCookies),
   }).pipe(
     map((x: object) => ({
       ...x,
