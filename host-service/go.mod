@@ -3,14 +3,14 @@ module github.com/fractal/fractal/host-service
 go 1.17
 
 require (
-	github.com/MicahParks/keyfunc v0.9.0
+	github.com/MicahParks/keyfunc v0.10.0
 	github.com/NVIDIA/go-nvml v0.11.1-0
-	github.com/aws/aws-sdk-go-v2 v1.10.0
-	github.com/aws/aws-sdk-go-v2/config v1.9.0
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.6.0
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.20.0
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.17.0
-	github.com/aws/smithy-go v1.8.1
+	github.com/aws/aws-sdk-go-v2 v1.11.0
+	github.com/aws/aws-sdk-go-v2/config v1.10.1
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.7.1
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.22.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.19.0
+	github.com/aws/smithy-go v1.9.0
 	github.com/bgentry/heroku-go v0.0.0-20150810151148-ee4032d686ae
 	github.com/docker/docker v20.10.10+incompatible
 	github.com/docker/go-connections v0.4.0
@@ -34,7 +34,7 @@ require (
 	github.com/containerd/containerd v1.5.7 // indirect
 	github.com/go-errors/errors v1.4.0 // indirect
 	github.com/google/uuid v1.3.0
-	github.com/hasura/go-graphql-client v0.4.0
+	github.com/hasura/go-graphql-client v0.5.0
 	github.com/onsi/ginkgo v1.16.3 // indirect
 	github.com/onsi/gomega v1.13.0 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
@@ -51,14 +51,17 @@ require (
 
 require (
 	github.com/StackExchange/wmi v1.2.0 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.5.0 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.7.0 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.2.5 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.4.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.4.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.8.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.5.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.8.0 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.0.0 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.6.1 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.8.0 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.0 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.0.0 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.5.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.5.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.9.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.6.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.10.0 // indirect
 	github.com/beeker1121/goque v2.1.0+incompatible // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/go-ole/go-ole v1.2.5 // indirect
