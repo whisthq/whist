@@ -92,6 +92,9 @@ def attempt_ssh_connection(ssh_command, timeout, log_file_handle, pexpect_prompt
 def reboot_instance(
     ssh_process, connection_ssh_cmd, timeout, log_file_handle, pexpect_prompt, retries
 ):
+    ssh_process.sendline(" ")
+    ssh_process.expect(pexpect_prompt)
+    ssh_process.expect(pexpect_prompt)
     ssh_process.sendline("sudo reboot")
     ssh_process.kill(0)
     time.sleep(5)
