@@ -6,8 +6,9 @@
 name: "Webserver: Cloud Infrastructure Monitoring"
 on:
   schedule:
-    - cron: "12 13 * * 1-5" # runs at 09:18 (EST/New York) each weekday
-    - cron: "12 18 * * 1-5" # runs at 14:18 (EST/New York) each weekday
+    - cron: "12 13 * * 1-5" # runs at 08:18 +/- a few minutes (EST/New York) each weekday
+    - cron: "12 18 * * 1-5" # runs at 13:18 +/- a few minutes (EST/New York) each weekday
+    - cron: "12 22 * * 1-5" # runs at 17:18 +/- a few minutes (EST/New York) each weekday
   workflow_dispatch:
 
 jobs:
