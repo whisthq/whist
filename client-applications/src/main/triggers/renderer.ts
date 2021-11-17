@@ -2,7 +2,7 @@ import { Observable } from "rxjs"
 import { filter, map, pluck } from "rxjs/operators"
 
 import { createTrigger, fromTrigger } from "@app/utils/flows"
-import TRIGGER from "@app/utils/triggers"
+import { WhistTrigger } from "@app/constants/triggers"
 
 const filterByName = (
   observable: Observable<{ name: string; payload: any }>,
@@ -16,15 +16,18 @@ const filterByName = (
   )
 
 ;[
-  TRIGGER.relaunchAction, // Fires when "Continue" button is clicked on error window popup
-  TRIGGER.clearCacheAction, // Fires when "Signout" button is clicked on signout window popup
-  TRIGGER.showSignoutWindow, // Fires when "Signout" button is clicked on error window popup
-  TRIGGER.showPaymentWindow, // Fires when "Open Payment Information" button is clicked on error window popup
-  TRIGGER.onboardingTypeformSubmitted,
-  TRIGGER.emitIPC,
+  WhistTrigger.relaunchAction, // Fires when "Continue" button is clicked on error window popup
+  WhistTrigger.clearCacheAction, // Fires when "Signout" button is clicked on signout window popup
+  WhistTrigger.showSignoutWindow, // Fires when "Signout" button is clicked on error window popup
+  WhistTrigger.showPaymentWindow, // Fires when "Open Payment Information" button is clicked on error window popup
+  WhistTrigger.onboarded,
+  WhistTrigger.emitIPC,
 ].forEach((trigger: string) => {
   createTrigger(
     trigger,
-    filterByName(fromTrigger("eventIPC").pipe(pluck("trigger")), trigger)
+    filterByName(
+      fromTrigger(WhistTrigger.eventIPC).pipe(pluck("trigger")),
+      trigger
+    )
   )
 })

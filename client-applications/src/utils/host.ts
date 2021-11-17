@@ -6,7 +6,7 @@
 
 import { AsyncReturnType } from "@app/@types/state"
 import { hostPut } from "@app/utils/api"
-import { HostServicePort } from "@app/utils/constants"
+import { HostServicePort } from "@app/constants/mandelbox"
 
 // This file directly interacts with data returned from the webserver, which
 // has keys labelled in Python's snake_case format. We want to be able to pass
@@ -23,6 +23,7 @@ export const hostSpinUp = async ({
   jwt_access_token,
   mandelbox_id,
   json_data,
+  cookies,
 }: {
   ip: string
   config_encryption_token: string
@@ -30,27 +31,19 @@ export const hostSpinUp = async ({
   jwt_access_token: string
   mandelbox_id: string
   json_data: string
+  cookies: string | undefined
 }) =>
   hostPut(`https://${ip}:${HostServicePort}`)({
     endpoint: "/json_transport",
     body: {
       config_encryption_token,
-      is_new_config_encryption_token,
+      is_new_config_encryption_token: is_new_config_encryption_token ?? false,
       jwt_access_token,
       mandelbox_id,
       json_data,
+      ...((cookies ?? "") !== "" && { cookies }),
     },
-  }) as {
-    status: number
-    json?: {
-      result?: {
-        port_32262: number
-        port_32263: number
-        port_32273: number
-        aes_key: string
-      }
-    }
-  }
+  })
 
 export type HostSpinUpResponse = AsyncReturnType<typeof hostSpinUp>
 

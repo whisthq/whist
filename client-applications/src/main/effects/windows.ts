@@ -8,15 +8,24 @@ import {
 } from "rxjs/operators"
 import { interval, of } from "rxjs"
 import Sentry from "@sentry/electron"
+import isEmpty from "lodash.isempty"
+import pickBy from "lodash.pickby"
 
 import { destroyTray } from "@app/utils/tray"
 import { logBase } from "@app/utils/logging"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
-import { WindowHashProtocol } from "@app/utils/constants"
-import { createProtocolWindow } from "@app/utils/windows"
+import { WindowHashProtocol } from "@app/constants/windows"
+import { createProtocolWindow, createAuthWindow } from "@app/utils/windows"
+import { persistGet } from "@app/utils/persist"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
 import { protocolStreamInfo, protocolStreamKill } from "@app/utils/protocol"
-import TRIGGER from "@app/utils/triggers"
+import { WhistTrigger } from "@app/constants/triggers"
+import {
+  CACHED_ACCESS_TOKEN,
+  CACHED_CONFIG_TOKEN,
+  CACHED_REFRESH_TOKEN,
+  CACHED_USER_EMAIL,
+} from "@app/constants/store"
 
 // Keeps track of how many times we've tried to relaunch the protocol
 const MAX_RETRIES = 3
@@ -31,7 +40,7 @@ let warningLastShown = 0
 // Immediately initialize the protocol invisibly since it can take time to warm up
 createProtocolWindow().catch((err) => Sentry.captureException(err))
 
-fromTrigger("appReady").subscribe(() => {
+fromTrigger(WhistTrigger.appReady).subscribe(() => {
   internetNotification = internetWarning()
   rebootNotification = rebootWarning()
 })
@@ -43,7 +52,7 @@ const quit = () => {
   app.quit()
 }
 
-const allWindowsClosed = fromTrigger("windowInfo").pipe(
+const allWindowsClosed = fromTrigger(WhistTrigger.windowInfo).pipe(
   filter(
     (args: {
       crashed: boolean
@@ -54,28 +63,27 @@ const allWindowsClosed = fromTrigger("windowInfo").pipe(
   )
 )
 
-fromTrigger("windowsAllClosed").subscribe((evt: IpcMainEvent) => {
+fromTrigger(WhistTrigger.windowsAllClosed).subscribe((evt: IpcMainEvent) => {
   evt?.preventDefault()
 })
 
 allWindowsClosed
   .pipe(
-    withLatestFrom(fromTrigger("mandelboxFlowSuccess").pipe(startWith({}))),
     withLatestFrom(
-      fromTrigger("mandelboxFlowFailure").pipe(mapTo(true), startWith(false))
+      fromTrigger(WhistTrigger.mandelboxFlowFailure).pipe(
+        mapTo(true),
+        startWith(false)
+      )
     )
   )
   .subscribe(
-    ([[args, info], mandelboxFailure]: [
-      [
-        {
-          crashed: boolean
-          numberWindowsRemaining: number
-          hash: string
-          event: string
-        },
-        any
-      ],
+    ([args, mandelboxFailure]: [
+      {
+        crashed: boolean
+        numberWindowsRemaining: number
+        hash: string
+        event: string
+      },
       boolean
     ]) => {
       // If they didn't crash out and didn't fill out the exit survey, show it to them
@@ -84,31 +92,50 @@ allWindowsClosed
         (args.hash === WindowHashProtocol && !args.crashed)
       ) {
         quit()
-        // If the protocol crashed out, try to reconnect
-      } else if (
-        args.hash === WindowHashProtocol &&
-        args.crashed &&
-        args.event === "close" &&
-        protocolLaunchRetries < MAX_RETRIES
-      ) {
-        protocolLaunchRetries = protocolLaunchRetries + 1
-        createProtocolWindow()
-          .then(() => {
-            protocolStreamInfo(info)
-            rebootNotification?.show()
-            setTimeout(() => {
-              rebootNotification?.close()
-            }, 6000)
-          })
-          .catch((err) => Sentry.captureException(err))
-        // If we've already tried several times to reconnect, just show the protocol error window
-      } else {
-        createTrigger(TRIGGER.protocolError, of(undefined))
       }
     }
   )
 
-fromTrigger("networkUnstable")
+fromTrigger(WhistTrigger.windowInfo)
+  .pipe(
+    withLatestFrom(
+      fromTrigger(WhistTrigger.mandelboxFlowSuccess).pipe(startWith({}))
+    )
+  )
+  .subscribe(
+    ([args, info]: [
+      {
+        hash: string
+        crashed: boolean
+        event: string
+      },
+      any
+    ]) => {
+      if (
+        args.hash === WindowHashProtocol &&
+        args.crashed &&
+        args.event === "close"
+      ) {
+        if (protocolLaunchRetries < MAX_RETRIES) {
+          protocolLaunchRetries = protocolLaunchRetries + 1
+          createProtocolWindow()
+            .then(() => {
+              protocolStreamInfo(info)
+              rebootNotification?.show()
+              setTimeout(() => {
+                rebootNotification?.close()
+              }, 6000)
+            })
+            .catch((err) => Sentry.captureException(err))
+        } else {
+          // If we've already tried several times to reconnect, just show the protocol error window
+          createTrigger(WhistTrigger.protocolError, of(undefined))
+        }
+      }
+    }
+  )
+
+fromTrigger(WhistTrigger.networkUnstable)
   .pipe(throttle(() => interval(1000))) // Throttle to 1s so we don't flood the main thread
   .subscribe((unstable: boolean) => {
     // Don't show the warning more than once per minute
@@ -126,3 +153,17 @@ fromTrigger("networkUnstable")
       warningWindowOpen = false
     }
   })
+
+fromTrigger(WhistTrigger.appReady).subscribe(() => {
+  const authCache = {
+    accessToken: (persistGet(CACHED_ACCESS_TOKEN) ?? "") as string,
+    refreshToken: (persistGet(CACHED_REFRESH_TOKEN) ?? "") as string,
+    userEmail: (persistGet(CACHED_USER_EMAIL) ?? "") as string,
+    configToken: (persistGet(CACHED_CONFIG_TOKEN) ?? "") as string,
+  }
+
+  if (!isEmpty(pickBy(authCache, (x) => x === ""))) {
+    app?.dock?.show()
+    createAuthWindow()
+  }
+})

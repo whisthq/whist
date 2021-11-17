@@ -4,7 +4,7 @@ import * as Sentry from "@sentry/electron"
 
 import config from "@app/config/environment"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
-import { LOG_INTERVAL_IN_MINUTES, SENTRY_DSN } from "@app/utils/constants"
+import { HEARTBEAT_INTERVAL_IN_MINUTES, SENTRY_DSN } from "@app/constants/app"
 
 // Initialize and report Sentry errors in prod
 if (appEnvironment === FractalEnvironments.PRODUCTION) {
@@ -15,6 +15,6 @@ if (appEnvironment === FractalEnvironments.PRODUCTION) {
   })
 }
 
-interval(LOG_INTERVAL_IN_MINUTES * 60 * 1000).subscribe(() => {
+interval(HEARTBEAT_INTERVAL_IN_MINUTES * 60 * 1000).subscribe(() => {
   logBase("heartbeat", {})
 })

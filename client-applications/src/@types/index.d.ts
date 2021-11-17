@@ -31,4 +31,4 @@ declare module "*.css" {
   export = classNames
 }
 
-declare module "deepdash/omitDeep"
+declare module "deepdash/mapValuesDeep"

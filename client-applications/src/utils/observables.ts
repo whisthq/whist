@@ -18,6 +18,7 @@ import { map, mapTo, switchMap, take } from "rxjs/operators"
 import toPairs from "lodash.topairs"
 
 import { fromTrigger } from "@app/utils/flows"
+import { WhistTrigger } from "@app/constants/triggers"
 
 export const loadingFrom = (
   /*
@@ -111,4 +112,4 @@ export const fromSignal = (obs: Observable<any>, signal: Observable<any>) =>
   combineLatest(obs, signal.pipe(take(1))).pipe(map(([x]) => x))
 
 export const withAppReady = (obs: Observable<any>) =>
-  fromSignal(obs, fromTrigger("appReady"))
+  fromSignal(obs, fromTrigger(WhistTrigger.appReady))

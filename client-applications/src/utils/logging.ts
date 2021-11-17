@@ -9,15 +9,17 @@ import fs from "fs"
 import path from "path"
 import util from "util"
 import * as Amplitude from "@amplitude/node"
-import omitDeep from "deepdash/omitDeep"
+import cloneDeep from "lodash.clonedeep"
+import mapValuesDeep from "deepdash/mapValuesDeep"
 
 import config, {
   loggingBaseFilePath,
   loggingFiles,
 } from "@app/config/environment"
 import { persistGet } from "@app/utils/persist"
-import { sessionID } from "@app/utils/constants"
+import { sessionID } from "@app/constants/app"
 import { createLogger } from "logzio-nodejs"
+import { CACHED_USER_EMAIL } from "@app/constants/store"
 
 app.setPath("userData", loggingBaseFilePath)
 
@@ -120,15 +122,25 @@ export const logBase = (
   */
 
   // Don't log the config token to Amplitude to protect user privacy
-  data = omitDeep(data, "configToken", { onMatch: { skipChildren: true } })
-  data = omitDeep(data, "config_encryption_token", {
-    onMatch: { skipChildren: true },
+  let dataClone = cloneDeep(data)
+  dataClone = mapValuesDeep(dataClone, (v: object | any[], k: string) => {
+    if (["configToken", "config_encryption_token", "cookies"].includes(k)) {
+      return "***********"
+    }
+    return v
   })
 
-  const userEmail = persistGet("userEmail") ?? ""
-  localLog(title, data, level ?? LogLevel.DEBUG, userEmail as string, msElapsed)
+  const userEmail = persistGet(CACHED_USER_EMAIL) ?? ""
+  localLog(
+    title,
+    dataClone,
+    level ?? LogLevel.DEBUG,
+    userEmail as string,
+    msElapsed
+  )
 
-  if (app.isPackaged) amplitudeLog(title, data, userEmail as string, msElapsed)
+  if (app.isPackaged)
+    amplitudeLog(title, dataClone, userEmail as string, msElapsed)
 }
 
 export const protocolToLogz = (line: string) => {

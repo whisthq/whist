@@ -4,7 +4,7 @@
  * @brief This file defines all the triggers recognized by the main thread.
  */
 
-export default {
+const WhistTrigger = {
   // App triggers
   appReady: "appReady",
   windowInfo: "windowInfo",
@@ -26,6 +26,9 @@ export default {
   updateChecking: "updateChecking",
   downloadProgress: "downloadProgress",
 
+  // Importer triggers
+  cookiesImported: "cookiesImported",
+
   // IPC triggers
   eventIPC: "eventIPC",
   emitIPC: "emitIPC",
@@ -40,14 +43,12 @@ export default {
   signupAction: "signupAction",
   relaunchAction: "relaunchAction",
   clearCacheAction: "clearCacheAction",
-  onboardingTypeformSubmitted: "onboardingTypeformSubmitted",
 
   // Tray triggers
   showSignoutWindow: "showSignoutWindow",
   trayRegionAction: "trayRegionAction",
   trayFeedbackAction: "trayFeedbackAction",
   trayBugAction: "trayBugAction",
-  trayAutolaunchAction: "trayAutolaunchAction",
   trayRestoreSessionAction: "trayRestoreSessionAction",
   showPaymentWindow: "showPaymentWindow",
 
@@ -68,3 +69,5 @@ export default {
   // Protocol triggers
   protocolError: "protocolError",
 }
+
+export { WhistTrigger }

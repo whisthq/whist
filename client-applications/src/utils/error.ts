@@ -4,8 +4,6 @@
  * @brief This file contains various error messages.
  */
 
-import { allowPayments } from "@app/utils/constants"
-
 export const NO_PAYMENT_ERROR = "NO_PAYMENT_ERROR"
 export const UNAUTHORIZED_ERROR = "UNAUTHORIZED_ERROR"
 export const PROTOCOL_ERROR = "PROTOCOL_ERROR"
@@ -19,9 +17,7 @@ export const SLEEP_ERROR = "SLEEP_ERROR"
 export const fractalError = {
   [NO_PAYMENT_ERROR]: {
     title: "Your free trial has expired!",
-    text: allowPayments
-      ? "To continue receiving access to Whist, please sign up for a paid plan."
-      : "To continue receiving access to Whist, please contact support@whist.com",
+    text: "To continue receiving access to Whist, please sign up for a paid plan.",
   },
   [UNAUTHORIZED_ERROR]: {
     title: "There was an error authenticating you with Whist.",

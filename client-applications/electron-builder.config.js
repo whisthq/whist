@@ -23,6 +23,8 @@ const bundleConfig = {
 
   asar: true,
 
+  buildDependenciesFromSource: true,
+
   directories: {
     buildResources: "build",
     output: "release",

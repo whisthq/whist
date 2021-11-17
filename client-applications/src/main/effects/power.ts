@@ -1,48 +1,18 @@
-import AutoLaunch from "auto-launch"
-import path from "path"
-import { app } from "electron"
-import Sentry from "@sentry/electron"
-
 import { fromTrigger } from "@app/utils/flows"
-import config from "@app/config/environment"
-import { persist, persistGet } from "@app/utils/persist"
 import { protocolStreamKill } from "@app/utils/protocol"
 import { createErrorWindow, relaunch } from "@app/utils/windows"
-import { WindowHashSleep } from "@app/utils/constants"
+import { WindowHashSleep } from "@app/constants/windows"
 import { fromSignal } from "@app/utils/observables"
+import { WhistTrigger } from "@app/constants/triggers"
 
-const fractalAutoLaunch = new AutoLaunch({
-  name: config.title,
-  path: path.join(app.getPath("exe"), "../../../"),
+fromSignal(
+  fromTrigger(WhistTrigger.powerSuspend),
+  fromTrigger(WhistTrigger.appReady)
+).subscribe(() => {
+  createErrorWindow(WindowHashSleep)
+  protocolStreamKill()
 })
 
-/* eslint-disable @typescript-eslint/no-floating-promises */
-fromTrigger("appReady").subscribe(() => {
-  fractalAutoLaunch
-    .isEnabled()
-    .then((enabled: boolean) => {
-      if (!enabled && persistGet("autoLaunch", "data") === undefined) {
-        fractalAutoLaunch.enable()
-        persist("autoLaunch", true, "data")
-      }
-    })
-    .catch((err: any) => Sentry.captureException(err))
-})
-
-fromTrigger("trayAutolaunchAction").subscribe(() => {
-  const autolaunch = <boolean>persistGet("autoLaunch", "data")
-  persist("autoLaunch", !autolaunch, "data")
-
-  autolaunch ? fractalAutoLaunch.disable() : fractalAutoLaunch.enable()
-})
-
-fromSignal(fromTrigger("powerSuspend"), fromTrigger("appReady")).subscribe(
-  () => {
-    createErrorWindow(WindowHashSleep)
-    protocolStreamKill()
-  }
-)
-
-fromTrigger("powerResume").subscribe(() => {
+fromTrigger(WhistTrigger.powerResume).subscribe(() => {
   relaunch()
 })

@@ -8,9 +8,9 @@ import { powerMonitor } from "electron"
 import { fromEvent } from "rxjs"
 
 import { createTrigger } from "@app/utils/flows"
-import TRIGGER from "@app/utils/triggers"
+import { WhistTrigger } from "@app/constants/triggers"
 
 // Fires when your computer wakes up
-createTrigger(TRIGGER.powerResume, fromEvent(powerMonitor, "resume"))
+createTrigger(WhistTrigger.powerResume, fromEvent(powerMonitor, "resume"))
 // Fires when your computer goes to sleep
-createTrigger(TRIGGER.powerSuspend, fromEvent(powerMonitor, "suspend"))
+createTrigger(WhistTrigger.powerSuspend, fromEvent(powerMonitor, "suspend"))

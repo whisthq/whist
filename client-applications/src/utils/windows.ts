@@ -18,17 +18,18 @@ import {
   authInfoCallbackRequest,
   paymentPortalRequest,
   paymentPortalParse,
+  accessToken,
 } from "@fractal/core-ts"
 import {
   WindowHashAuth,
   WindowHashSignout,
   WindowHashPayment,
   WindowHashProtocol,
-  WindowHashOnboardingTypeform,
+  WindowHashOnboarding,
   WindowHashBugTypeform,
   WindowHashSpeedtest,
   WindowHashUpdate,
-} from "@app/utils/constants"
+} from "@app/constants/windows"
 import {
   protocolLaunch,
   protocolStreamKill,
@@ -226,14 +227,8 @@ export const createAuthWindow = () => {
   return win
 }
 
-export const createPaymentWindow = async ({
-  accessToken,
-  refreshToken,
-}: {
-  accessToken: string
-  refreshToken: string
-}) => {
-  const response = await paymentPortalRequest({ accessToken })
+export const createPaymentWindow = async (accessToken: accessToken) => {
+  const response = await paymentPortalRequest(accessToken)
   const { paymentPortalURL } = paymentPortalParse(response)
 
   const win = createWindow({
@@ -261,10 +256,7 @@ export const createPaymentWindow = async ({
       url === "http://localhost/callback/payment?success=true"
     ) {
       // if it’s from the customer portal or a successful checkout
-      stripeEvent.emit("stripe-auth-refresh", {
-        accessToken,
-        refreshToken,
-      })
+      stripeEvent.emit("stripe-auth-refresh")
     } else if (url === "http://localhost/callback/payment?success=false") {
       stripeEvent.emit("stripe-payment-error")
     }
@@ -303,20 +295,18 @@ export const createSignoutWindow = () => {
   })
 }
 
-export const createOnboardingTypeform = () =>
+export const createOnboardingWindow = () =>
   createWindow({
     options: {
       ...base,
       ...width.lg,
       ...height.md,
       skipTaskbar: true,
-      alwaysOnTop: true,
-      minimizable: false,
       frame: false,
       titleBarStyle: "hidden",
-      transparent: true,
+      backgroundColor: "#182129",
     } as BrowserWindowConstructorOptions,
-    hash: WindowHashOnboardingTypeform,
+    hash: WindowHashOnboarding,
     closeElectronWindows: true,
   })
 
@@ -331,7 +321,7 @@ export const createBugTypeform = () =>
       minimizable: false,
       frame: false,
       titleBarStyle: "hidden",
-      transparent: true,
+      backgroundColor: "#182129",
     } as BrowserWindowConstructorOptions,
     hash: WindowHashBugTypeform,
     closeElectronWindows: false,

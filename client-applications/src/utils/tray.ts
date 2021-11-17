@@ -10,10 +10,11 @@ import { Menu, Tray, nativeImage } from "electron"
 
 import { trayIconPath } from "@app/config/files"
 import { AWSRegion } from "@app/@types/aws"
-import { defaultAllowedRegions, allowPayments } from "@app/utils/constants"
+import { defaultAllowedRegions } from "@app/constants/mandelbox"
 import { MenuItem } from "electron/main"
-import { persistGet } from "./persist"
 import { createSpeedtestWindow } from "@app/utils/windows"
+import { persistGet } from "@app/utils/persist"
+import { RESTORE_LAST_SESSION } from "@app/constants/store"
 
 // We create the tray here so that it persists throughout the application
 let tray: Tray | null = null
@@ -63,16 +64,13 @@ const regionMenu = new MenuItem({
 const accountMenu = new MenuItem({
   label: "Account",
   submenu: [
-    ...(allowPayments
-      ? [
-          {
-            label: "Billing Information",
-            click: () => {
-              trayEvent.emit("payment")
-            },
-          },
-        ]
-      : []),
+    {
+      label: "Billing Information",
+      click: () => {
+        trayEvent.emit("payment")
+      },
+    },
+
     {
       label: "Sign Out",
       click: () => {
@@ -86,17 +84,9 @@ const settingsMenu = new MenuItem({
   label: "Settings",
   submenu: [
     {
-      label: "Automatically launch on computer start",
-      type: "checkbox",
-      checked: <boolean>persistGet("autoLaunch", "data") ?? false,
-      click: () => {
-        trayEvent.emit("auto-launch")
-      },
-    },
-    {
       label: "Restore the last browser session",
       type: "checkbox",
-      checked: <boolean>persistGet("RestoreLastBrowserSession", "data") ?? true,
+      checked: <boolean>persistGet(RESTORE_LAST_SESSION) ?? true,
       click: () => {
         trayEvent.emit("restore-last-browser-session")
       },

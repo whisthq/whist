@@ -10,10 +10,11 @@ import {
   updateDownloadedNotification,
 } from "@app/utils/notification"
 import { fromSignal } from "@app/utils/observables"
+import { WhistTrigger } from "@app/constants/triggers"
 
 // Apply autoupdate config
-fromTrigger("appReady")
-  .pipe(take(1), takeUntil(fromTrigger("updateChecking")))
+fromTrigger(WhistTrigger.appReady)
+  .pipe(take(1), takeUntil(fromTrigger(WhistTrigger.updateChecking)))
   .subscribe(() => {
     // We want to manually control when we download the update via autoUpdater.quitAndInstall(),
     // so we need to set autoDownload = false
@@ -42,17 +43,20 @@ fromTrigger("appReady")
       .catch((err) => Sentry.captureException(err))
   })
 
-fromTrigger("updateAvailable").subscribe(() => {
+fromTrigger(WhistTrigger.updateAvailable).subscribe(() => {
   updateAvailableNotification()?.show()
 })
 
 fromSignal(
-  fromTrigger("updateDownloaded"),
-  merge(fromTrigger("mandelboxFlowFailure"), fromTrigger("protocolError"))
+  fromTrigger(WhistTrigger.updateDownloaded),
+  merge(
+    fromTrigger(WhistTrigger.mandelboxFlowFailure),
+    fromTrigger(WhistTrigger.protocolError)
+  )
 ).subscribe(() => {
   autoUpdater.quitAndInstall()
 })
 
-fromTrigger("updateDownloaded").subscribe(() => {
+fromTrigger(WhistTrigger.updateDownloaded).subscribe(() => {
   updateDownloadedNotification()?.show()
 })

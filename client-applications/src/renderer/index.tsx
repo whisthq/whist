@@ -4,23 +4,22 @@
  * @brief This file is the entry point of the renderer thread and acts as a router.
  */
 
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import ReactDOM from "react-dom"
 
 import { OneButtonError, TwoButtonError } from "@app/renderer/pages/error"
 import Signout from "@app/renderer/pages/signout"
 import Typeform from "@app/renderer/pages/typeform"
-import Loading from "@app/renderer/pages/loading"
+import Importer from "@app/renderer/pages/importer"
 import Update from "@app/renderer/pages/update"
 
 import {
   WindowHashSignout,
   WindowHashBugTypeform,
-  WindowHashOnboardingTypeform,
-  WindowHashLoading,
   WindowHashUpdate,
-  allowPayments,
-} from "@app/utils/constants"
+  WindowHashImporter,
+  WindowHashOnboarding,
+} from "@app/constants/windows"
 import {
   fractalError,
   NO_PAYMENT_ERROR,
@@ -29,7 +28,7 @@ import {
   NAVIGATION_ERROR,
 } from "@app/utils/error"
 import { useMainState } from "@app/utils/ipc"
-import TRIGGER from "@app/utils/triggers"
+import { WhistTrigger } from "@app/constants/triggers"
 
 // Electron has no way to pass data to a newly launched browser
 // window. To avoid having to maintain multiple .html files for
@@ -37,57 +36,72 @@ import TRIGGER from "@app/utils/triggers"
 // thread as a query parameter to determine which component
 // should be rendered.
 
-// If no query parameter match is found, we default to a
-// generic navigation error window.
-const show = window.location.search.split("show=")[1]
-
 const RootComponent = () => {
+  const [show, setShow] = useState(window.location.search.split("show=")[1])
   const [mainState, setMainState] = useMainState()
   const relaunch = () =>
     setMainState({
-      trigger: { name: TRIGGER.relaunchAction, payload: undefined },
+      trigger: { name: WhistTrigger.relaunchAction, payload: undefined },
     })
 
   const showPaymentWindow = () =>
     setMainState({
-      trigger: { name: TRIGGER.showPaymentWindow, payload: undefined },
+      trigger: { name: WhistTrigger.showPaymentWindow, payload: undefined },
     })
 
   const handleSignout = (clearConfig: boolean) =>
     setMainState({
-      trigger: { name: TRIGGER.clearCacheAction, payload: { clearConfig } },
-    })
-
-  const handleOnboardingTypeform = () =>
-    setMainState({
       trigger: {
-        name: TRIGGER.onboardingTypeformSubmitted,
-        payload: undefined,
+        name: WhistTrigger.clearCacheAction,
+        payload: { clearConfig },
       },
     })
 
+  const handleOnboardingTypeform = () => setShow(WindowHashImporter)
+
   const showSignoutWindow = () =>
     setMainState({
-      trigger: { name: TRIGGER.showSignoutWindow, payload: undefined },
+      trigger: { name: WhistTrigger.showSignoutWindow, payload: undefined },
     })
+
+  const handleImporterSubmit = (browser: string | undefined) => {
+    setMainState({
+      trigger: {
+        name: WhistTrigger.onboarded,
+        payload: { importCookiesFrom: browser },
+      },
+    })
+  }
 
   useEffect(() => {
     // We need to ask the main thread to re-emit the current StateIPC because
     // useMainState() only subscribes to state updates after the function is
     // called
     setMainState({
-      trigger: { name: TRIGGER.emitIPC, payload: undefined },
+      trigger: { name: WhistTrigger.emitIPC, payload: undefined },
     })
   }, [])
 
   if (show === WindowHashSignout) return <Signout onClick={handleSignout} />
-  if (show === WindowHashLoading) return <Loading />
   if (show === WindowHashUpdate) return <Update />
-  if (show === WindowHashOnboardingTypeform) {
+  if (show === WindowHashImporter)
+    return (
+      <Importer
+        browsers={mainState.browsers ?? []}
+        onSubmit={(browser: string | undefined) =>
+          handleImporterSubmit(browser)
+        }
+      />
+    )
+  if (show === WindowHashOnboarding) {
     return (
       <Typeform
         onSubmit={handleOnboardingTypeform}
-        id="Oi21wwbg"
+        id={
+          (mainState.appEnvironment ?? "prod") === "prod"
+            ? "Oi21wwbg"
+            : "cJcK0C8q"
+        }
         email={mainState.userEmail}
       />
     )
@@ -96,7 +110,7 @@ const RootComponent = () => {
     return (
       <Typeform onSubmit={() => {}} id="VMWBFgGc" email={mainState.userEmail} />
     )
-  if (show === NO_PAYMENT_ERROR && allowPayments)
+  if (show === NO_PAYMENT_ERROR)
     return (
       <TwoButtonError
         title={fractalError[show].title}
