@@ -55,7 +55,7 @@ func init() {
 	var err error // don't want to shadow jwks accidentally
 
 	jwks, err = keyfunc.Get(config.getJwksURL(), keyfunc.Options{
-		RefreshInterval: &refreshInterval,
+		RefreshInterval: refreshInterval,
 		RefreshErrorHandler: func(err error) {
 			logger.Errorf("Error refreshing JWKs: %s", err)
 		},
