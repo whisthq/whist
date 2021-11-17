@@ -191,7 +191,6 @@ void reap_active_clipboard_action_thread() {
         NOTE: must be called with `current_clipboard_activity.clipboard_action_mutex` held
     */
 
-    LOG_INFO("Reaping current clipboard action thread");
     // It is safe to pass NULL to `fractal_detach_thread`, so we don't need to check
     fractal_detach_thread(current_clipboard_activity.active_clipboard_action_thread);
     current_clipboard_activity.active_clipboard_action_thread = NULL;
