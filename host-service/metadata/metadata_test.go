@@ -1,10 +1,11 @@
 package metadata
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/fractal/fractal/host-service/utils"
 )
 
 var environmentTests = []struct {
@@ -21,7 +22,7 @@ var environmentTests = []struct {
 
 func TestGetAppEnvironment(t *testing.T) {
 	for _, tt := range environmentTests {
-		testname := fmt.Sprintf("%s,%s", tt.environmentVar, tt.want)
+		testname := utils.Sprintf("%s,%s", tt.environmentVar, tt.want)
 		t.Run(testname, func(t *testing.T) {
 
 			// Set the APP_ENV environment variable to the test environment
@@ -38,7 +39,7 @@ func TestIsLocalEnv(t *testing.T) {
 	for _, tt := range environmentTests {
 		want := tt.want == EnvLocalDev || tt.want == EnvLocalDevWithDB
 
-		testname := fmt.Sprintf("%s,%v", tt.environmentVar, want)
+		testname := utils.Sprintf("%s,%v", tt.environmentVar, want)
 		t.Run(testname, func(t *testing.T) {
 
 			// Set the APP_ENV environment variable to the test environment
@@ -55,7 +56,7 @@ func TestIsLocalEnvWithoutDB(t *testing.T) {
 	for _, tt := range environmentTests {
 		want := tt.want == EnvLocalDev
 
-		testname := fmt.Sprintf("%s,%v", tt.environmentVar, want)
+		testname := utils.Sprintf("%s,%v", tt.environmentVar, want)
 		t.Run(testname, func(t *testing.T) {
 
 			// Set the APP_ENV environment variable to the test environment
@@ -83,7 +84,7 @@ func TestGetAppEnvironmentLowercase(t *testing.T) {
 	}
 
 	for _, tt := range environmentTests {
-		testname := fmt.Sprintf("%s,%s", tt.environmentVar, tt.want)
+		testname := utils.Sprintf("%s,%s", tt.environmentVar, tt.want)
 		t.Run(testname, func(t *testing.T) {
 
 			// Set the APP_ENV environment variable to the test environment
@@ -116,7 +117,7 @@ func TestIsRunningInCI(t *testing.T) {
 	}
 
 	for _, tt := range CITests {
-		testname := fmt.Sprintf("%s,%v", tt.environmentVar, tt.want)
+		testname := utils.Sprintf("%s,%v", tt.environmentVar, tt.want)
 		t.Run(testname, func(t *testing.T) {
 
 			// Set the CI environment variable to the test environment
