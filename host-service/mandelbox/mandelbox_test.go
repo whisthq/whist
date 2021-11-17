@@ -10,8 +10,87 @@ import (
 )
 
 func TestNewMandelbox(t *testing.T) {
-	ctx := context.Background()
-	routineTracker := sync.WaitGroup{}
+	mandelbox, cancel := createTestMandelbox()
+	defer cancel()
 
-	New(ctx, &routineTracker, types.MandelboxID(utils.PlaceholderTestUUID()))
+	// Check if the mandelbox resource dir was created
+	err := verifyResourceMappingFileCreation("")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Verify that the fuse mounts are correct
+	mandelboxMappings := mandelbox.(*mandelboxData).otherDeviceMappings
+	deviceMappings := mandelboxMappings[0]
+
+	if (deviceMappings.PathOnHost != "/dev/fuse") ||
+		(deviceMappings.PathInContainer != "/dev/fuse") ||
+		(deviceMappings.CgroupPermissions != "rwm") {
+		t.Errorf("Error mounting /dev/fuse filesystem: %v", err)
+	}
+}
+
+func TestRegisterCreation(t *testing.T) {
+	testUUID := utils.PlaceholderTestUUID().String()
+
+	var registerTests = []struct {
+		testName      string
+		dockerID      string
+		want          types.DockerID
+		expectedError bool
+	}{
+		{"registerCreation with valid DockerID", testUUID, types.DockerID(testUUID), false},
+		{"registerCreation with empty DockerID", "", types.DockerID(""), true},
+	}
+
+	for _, tt := range registerTests {
+		t.Run(tt.testName, func(t *testing.T) {
+			mandelbox, cancel := createTestMandelbox()
+			defer cancel()
+
+			err := mandelbox.RegisterCreation(types.DockerID(tt.dockerID))
+			got := mandelbox.GetDockerID()
+			gotErr := err != nil
+
+			if (gotErr != tt.expectedError) || (got != tt.want) {
+				t.Errorf("got %s, want %s", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSetAppName(t *testing.T) {
+	var registerTests = []struct {
+		testName      string
+		want          types.AppName
+		expectedError bool
+	}{
+		{"setAppName with valid name", types.AppName("test-app-name"), false},
+		{"setAppName with empty name", types.AppName(""), true},
+	}
+
+	for _, tt := range registerTests {
+		t.Run(tt.testName, func(t *testing.T) {
+			mandelbox, cancel := createTestMandelbox()
+			defer cancel()
+
+			err := mandelbox.SetAppName(tt.want)
+			got := mandelbox.GetAppName()
+			gotErr := err != nil
+
+			if (gotErr != tt.expectedError) || (got != tt.want) {
+				t.Errorf("got %s, want %s", got, tt.want)
+			}
+		})
+	}
+}
+
+// setTestMandelbox is a utility function to create a test mandelbox
+func createTestMandelbox() (Mandelbox, context.CancelFunc) {
+	ctx, cancel := context.WithCancel(context.Background())
+	routineTracker := sync.WaitGroup{}
+	mandelbox := New(ctx, &routineTracker, types.MandelboxID(utils.PlaceholderTestUUID()))
+
+	return mandelbox, cancel
 }
