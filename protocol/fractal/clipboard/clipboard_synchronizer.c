@@ -270,6 +270,7 @@ int push_clipboard_thread_function(void* opaque) {
 
     fractal_unlock_mutex(current_clipboard_activity.clipboard_action_mutex);
 
+    // Free the allocated clipboard buffer
     deallocate_region(clipboard_buffer);
 
     return 0;
@@ -302,6 +303,7 @@ int pull_clipboard_thread_function(void* opaque) {
     // Let the pull thread know that it is safe to continue while the
     //     clipboard is being pulled
     fractal_post_semaphore(current_clipboard_activity.thread_setup_semaphore);
+
     // When thread is created, pull the clipboard
     ClipboardData* clipboard_buffer = get_os_clipboard();
 
@@ -336,7 +338,6 @@ int pull_clipboard_thread_function(void* opaque) {
 
     fractal_unlock_mutex(current_clipboard_activity.clipboard_action_mutex);
 
-    // Handle the allocated clipboard buffer
     // After calling `get_os_clipboard()`, we call `free_clipboard_buffer()`
     free_clipboard_buffer(clipboard_buffer);
 
