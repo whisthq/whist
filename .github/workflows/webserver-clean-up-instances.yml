@@ -113,7 +113,7 @@ jobs:
         run: |
           from notifications.slack_bot import slack_post
 
-          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
           SLACK_CHANNEL = "#alerts-prod"
           BODY = f"@releases :rotating_light: Failed to scale down user EC2 instances, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
