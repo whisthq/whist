@@ -131,11 +131,11 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
-# Download xorgproto source
+# Download xorgproto source (xf86-input-libinput dependency)
 RUN wget -qO - https://www.x.org/archive/individual/proto/xorgproto-2021.5.tar.bz2 \
     | tar xj
 
-# Configure and build inputproto
+# Configure and build xorgproto
 RUN cd xorgproto-2021.5 \
     && autoreconf -vif \
     && ./configure \
