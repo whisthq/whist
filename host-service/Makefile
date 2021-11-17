@@ -52,6 +52,9 @@ build: checkCI
 	touch $(CURDIR)/dbdriver/queries/temp.sql.go
 	find $(CURDIR)/dbdriver/queries -type f -name "*.sql.go" | xargs rm
 
+	docker system prune -f
+	sudo rm -rf /fractal/
+
 # GOFLAGS fixes go.sum issue with lz4 package
 # Detailed at: https://github.com/golang/go/issues/44129#issuecomment-788810473
 	GOFLAGS=-mod=mod $(GOCMD) generate ./...
@@ -60,7 +63,7 @@ build: checkCI
 		-X 'github.com/fractal/fractal/host-service/metadata.gitCommit=$(GIT_COMMIT)'\
 		-X 'github.com/fractal/fractal/host-service/metadata/heroku.email=$(HEROKU_USER)'\
 		-X 'github.com/fractal/fractal/host-service/metadata/heroku.apiKey=$(HEROKU_APIKEY)'\
-		-X 'github.com/fractal/fractal/host-service/metadata/heroku.appNameOverride=$(HEROKU_APP_NAME_OVERRIDE)'\
+		-X 'github.com/fractal/fractal/h"/fractal/"ost-service/metadata/heroku.appNameOverride=$(HEROKU_APP_NAME_OVERRIDE)'\
 		" -o $(BUILD_FOLDER)/$(BINARY_NAME) .
 
 upload: build
@@ -108,6 +111,8 @@ check: clean build vet format lint test docs
 clean:
 	$(GOCMD) clean -modcache
 	rm -rf $(BUILD_FOLDER)
+	docker system prune -f
+	sudo rm -rf /fractal/
 
 run: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with local dev (debug) configuration...)
