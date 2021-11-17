@@ -401,9 +401,9 @@ if __name__ == "__main__":
 
     # Terminating the instance and waiting for them to shutdown
     print(f"Testing complete, terminating EC2 instance")
-    boto3.client("ec2").terminate_instances(InstanceIds=[instance_id])
+    #boto3.client("ec2").terminate_instances(InstanceIds=[instance_id])
 
     # Wait for the instance to be terminated
-    wait_for_instance_to_start_or_stop(instance_id, stopping=True)
+    #wait_for_instance_to_start_or_stop(instance_id, stopping=True)
     print("Instance successfully terminated, goodbye")
     print("Done")
