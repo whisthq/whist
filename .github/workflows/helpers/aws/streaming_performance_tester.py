@@ -203,7 +203,7 @@ if __name__ == "__main__":
         "sudo kill -9 `sudo lsof /var/lib/dpkg/lock-frontend | awk '{print $2}' | tail -n 1`",
         "sudo kill -9 `sudo lsof /var/lib/apt/lists/lock | awk '{print $2}' | tail -n 1`",
         "sudo kill -9 `sudo lsof /var/lib/dpkg/lock | awk '{print $2}' | tail -n 1`",
-        "sudo pkill -9 apt",
+        "sudo killall apt apt-get",
         "sudo pkill -9 apt-get",
         "sudo pkill -9 dpkg",
         "sudo dpkg --configure -a",
