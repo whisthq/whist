@@ -62,7 +62,7 @@ jobs:
       - name: Check Go project
         working-directory: host-service
         env:
-          HEROKU_USER: ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+          HEROKU_USER: developers@tryfractal.com
           HEROKU_APIKEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |

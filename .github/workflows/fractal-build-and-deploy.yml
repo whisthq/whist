@@ -484,7 +484,7 @@ jobs:
       - name: Build Host Service
         working-directory: host-service
         env:
-          HEROKU_USER: ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+          HEROKU_USER: developers@tryfractal.com
           HEROKU_APIKEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
         run: make build
 
@@ -650,10 +650,10 @@ jobs:
         run: |
           cat > ~/.netrc << EOF
           machine api.heroku.com
-            login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+            login developers@tryfractal.com
             password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
           machine git.heroku.com
-            login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+            login developers@tryfractal.com
             password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
           EOF
 
