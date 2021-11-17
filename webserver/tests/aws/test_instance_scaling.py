@@ -531,6 +531,7 @@ def test_lingering_instances(
         instance_no_associated_mandelbox.instance_name,
     }
 
+
 def test_old_commit_hash_instances(
     monkeypatch: MonkeyPatch,
     bulk_instance: Callable[..., InstanceInfo],
@@ -590,7 +591,6 @@ def test_old_commit_hash_instances(
     assert call_set == {
         instances_with_old_commit_hash.instance_name,
     }
-
 
 
 def test_buffer_wrong_region() -> None:
