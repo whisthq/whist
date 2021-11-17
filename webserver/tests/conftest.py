@@ -233,9 +233,7 @@ def current_commit_hash() -> str:
     """
     Returns a current commit hash
     """
-    commit_hash = (
-        RegionToAmi.query.filter(ami_active=True).one_or_none().client_commit_hash
-    )
+    commit_hash = RegionToAmi.query.filter(ami_active=True).one_or_none().client_commit_hash
     return str(commit_hash) if commit_hash else ""
 
 
