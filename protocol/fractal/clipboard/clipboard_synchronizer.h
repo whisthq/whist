@@ -9,7 +9,7 @@
 Usage
 ============================
 
-init_clipboard_synchronizer("76.106.92.11");
+init_clipboard_synchronizer(true);
 
 ClipboardData received_clipboard_chunk;
 
@@ -43,16 +43,22 @@ typedef enum FractalClipboardActionType {
 } FractalClipboardActionType;
 
 typedef struct ClipboardActivity {
+    // is_initialized will only go from true to false when
+    //    there are active actions, so no mutex needed to
+    //    protect
     bool is_initialized;
-    // active_clipboard_action_thread is valid as long as
-    //    clipboard_action_type is not CLIPBOARD_ACTION_NONE
-    // (FractalThread can also evaluate to NULL)
-    FractalThread active_clipboard_action_thread;
+
+    // Protected by clipboard_action_mutex:
     FractalClipboardActionType clipboard_action_type;
+    FractalThread active_clipboard_action_thread;
+    bool* aborting_ptr; // whether the current thread is being aborted
+    bool* complete_ptr; // whether the action has been completed
+    ClipboardData** clipboard_buffer_ptr;
+    int pulled_bytes; // only relevant for PULL actions
+
     FractalMutex clipboard_action_mutex;
-    FractalSemaphore chunk_transfer_semaphore;
-    FractalSemaphore transfer_thread_setup_semaphore;
-    bool action_completed;  // whether the push to clipboard or pull of all chunks is completed
+    FractalCondition continue_action_condvar;
+    FractalSemaphore thread_setup_semaphore;
 } ClipboardActivity;
 
 /*
@@ -60,14 +66,6 @@ typedef struct ClipboardActivity {
 Public Functions
 ============================
 */
-
-/**
- * @brief                          Initialize the clipboard synchronizer
- *
- * @returns                        True if clipboard is synchronizing, false otherwise
- *
- */
-bool is_clipboard_synchronizing();
 
 /**
  * @brief                          Initialize the clipboard synchronizer
@@ -88,9 +86,8 @@ void init_clipboard_synchronizer(bool is_client);
 ClipboardData* pull_clipboard_chunk();
 
 /**
- * @brief                          When called, return the current clipboard chunk
- *                                 if a new clipboard activity has registered, or
- *                                 if the recently updated clipboard is being read.
+ * @brief                          When called, push the given chunk onto the active
+ *                                 clipboard buffer
  *
  * @param cb_chunk                 Pointer to the clipboard chunk to push
  *

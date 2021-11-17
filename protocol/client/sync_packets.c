@@ -307,11 +307,9 @@ int multithreaded_sync_tcp_packets(void* opaque) {
             send_fcmsg(fcmsg);
             deallocate_region(fcmsg);
             deallocate_region(clipboard_chunk);
-        }
 
-        if (is_clipboard_synchronizing()) {
-            // We want to continue pumping read_packet or get_next_clipboard_chunk
-            // until we're done synchronizing.
+            // We want to continue pumping read_packet or pull_clipboard_chunk
+            // until we pull a NULL chunk
             continue;
         }
 
