@@ -1,11 +1,11 @@
 # workflows/fractal-build-and-publish-documentation.yml
 #
-# Fractal: Build & Publish Documentation
+# Whist: Build & Publish Documentation
 # Build and conditionally deploy fractal/fractal monorepo documentation. Although this
 # workflow is triggered by both pull requests and pushes, the steps that deploy
 # the built documentation only run when the triggering event is a push.
 
-name: "Fractal: Build & Publish Documentation"
+name: "Whist: Build & Publish Documentation"
 
 on:
   pull_request:
