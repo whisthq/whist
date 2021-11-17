@@ -201,9 +201,11 @@ if __name__ == "__main__":
     # See also here: https://github.com/ray-project/ray/blob/master/doc/examples/lm/lm-cluster.yaml
     dpkg_commands = [
         "sudo kill -9 `sudo lsof /var/lib/dpkg/lock-frontend | awk '{print $2}' | tail -n 1`",
-        "sudo pkill -9 apt-get || true",
-        "sudo pkill -9 dpkg || true",
-        "sudo dpkg --configure -a",
+        "sudo pkill -9 apt",
+        "sudo pkill -9 apt-get",
+        "sudo pkill -9 dpkg",
+        "sudo rm /var/lib/dpkg/lock",
+        "sudo dpkg --configure -a"
     ]
     for command in dpkg_commands:
         hs_process.sendline(command)
