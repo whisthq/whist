@@ -503,3 +503,33 @@ def check_and_handle_lingering_instances() -> None:
         instance_info = InstanceInfo.query.with_for_update().get(instance_name)
         whist_logger.info(f"Instance {instance_name} was lingering and is being drained")
         drain_instance(instance_info)
+
+
+def check_and_handle_instances_with_old_commit_hash() -> None:
+    """
+    Drain all instances assoicated with old commit hash
+    Returns:
+        None
+    """
+    # Normally instances with inactive ami are set to draining when swapiover_amis is invoked
+    # but in the case where it does fail we want to be sure to clean up the mess
+    # All active ami must have the same commit hash
+    current_commit_hash = (
+        RegionToAmi.query.distinct(RegionToAmi.client_commit_hash)
+        .filter(RegionToAmi.ami_active == "true")
+        .first()
+        .client_commit_hash
+    )
+
+    instances_with_old_commit_hash = InstanceInfo.query.filter(
+        InstanceInfo.commit_hash != current_commit_hash,
+        InstanceInfo.status == "ACTIVE",
+
+    ).all()
+
+    for instance in instances_with_old_commit_hash:
+        set_local_lock_timeout(5)
+        fractal_logger.info(
+            f"Instance {instance.instance_name} is associated with an old commit hash and is being drained"
+        )
+        drain_instance(instance)
