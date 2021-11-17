@@ -331,6 +331,7 @@ if __name__ == "__main__":
     log_grabber_process = attempt_ssh_connection(
         cmd, aws_timeout, log_grabber_log, pexpect_prompt, 5
     )
+    log_grabber_process.expect(pexpect_prompt)
 
     # 8- Extract the client/server perf logs from the two docker containers
     command = "rm -rf ~/perf_logs; mkdir -p ~/perf_logs/client mkdir -p ~/perf_logs/server"
@@ -343,6 +344,7 @@ if __name__ == "__main__":
         command = "docker cp {}:{} ~/perf_logs/client/".format(client_docker_id, client_file_path)
         log_grabber_process.sendline(command)
         log_grabber_process.expect(pexpect_prompt)
+        log_grabber_process.expect(pexpect_prompt)
 
     server_logfiles = [
         "/usr/share/fractal/server.log",
@@ -352,6 +354,7 @@ if __name__ == "__main__":
     for server_file_path in server_logfiles:
         command = "docker cp {}:{} ~/perf_logs/server/".format(server_docker_id, server_file_path)
         log_grabber_process.sendline(command)
+        log_grabber_process.expect(pexpect_prompt)
         log_grabber_process.expect(pexpect_prompt)
 
     command = "exit"
@@ -367,12 +370,15 @@ if __name__ == "__main__":
     # Exit the server/client mandelboxes
     server_process.sendline("exit")
     server_process.expect(pexpect_prompt)
+    server_process.expect(pexpect_prompt)
     client_process.sendline("exit")
+    client_process.expect(pexpect_prompt)
     client_process.expect(pexpect_prompt)
 
     # Delete all Docker containers
     command = "docker stop $(docker ps -aq) && docker rm $(docker ps -aq)"
     server_process.sendline(command)
+    server_process.expect(pexpect_prompt)
     server_process.expect(pexpect_prompt)
 
     # Terminate the host service
