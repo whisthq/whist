@@ -39,4 +39,4 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
         run: |
           heroku --version
-          heroku ci:run --pipeline ${{ secrets.HEROKU_PIPE_LINE_NAME }}
+          heroku ci:run --pipeline whist-server
