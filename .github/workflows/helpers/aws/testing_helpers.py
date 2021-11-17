@@ -11,9 +11,12 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
 # Define boto3 client with a specific region
-boto3client = boto3.client('ec2', region_name='us-east-1')
+boto3client = boto3.client("ec2", region_name="us-east-1")
 
-def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str, disk_size: int) -> str:
+
+def create_ec2_instance(
+    instance_type: str, instance_AMI: str, key_name: str, disk_size: int
+) -> str:
     """
     Creates an AWS EC2 instance of a specific instance type and AMI
 
@@ -28,15 +31,10 @@ def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str, di
     """
 
     kwargs = {
-        "BlockDeviceMappings":[
+        "BlockDeviceMappings": [
             {
-                'DeviceName': '/dev/sda1',
-                'Ebs': {
-
-                    'DeleteOnTermination': True,
-                    'VolumeSize': disk_size,
-                    'VolumeType': 'gp2'
-                },
+                "DeviceName": "/dev/sda1",
+                "Ebs": {"DeleteOnTermination": True, "VolumeSize": disk_size, "VolumeType": "gp2"},
             },
         ],
         "ImageId": instance_AMI,
@@ -62,11 +60,11 @@ def create_ec2_instance(instance_type: str, instance_AMI: str, key_name: str, di
     # Create the EC2 instance
     resp = boto3client.run_instances(**kwargs)
     instance_id = resp["Instances"][0]["InstanceId"]
-    print(f"Created EC2 instance with id: {instance_id}, type={instance_type}, ami={instance_AMI}, key_name={key_name}, disk_size={disk_size}")
+    print(
+        f"Created EC2 instance with id: {instance_id}, type={instance_type}, ami={instance_AMI}, key_name={key_name}, disk_size={disk_size}"
+    )
 
     return instance_id
-
-    
 
 
 def wait_for_instance_to_start_or_stop(instance_id: str, stopping: bool = False) -> None:
