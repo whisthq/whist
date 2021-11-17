@@ -516,7 +516,7 @@ def check_and_handle_instances_with_old_commit_hash() -> None:
     # All active ami must have the same commit hash
     current_commit_hash = (
         RegionToAmi.query.distinct(RegionToAmi.client_commit_hash)
-        .filter(RegionToAmi.ami_active == "true")
+        .filter_by(ami_active=True)
         .first()
         .client_commit_hash
     )
