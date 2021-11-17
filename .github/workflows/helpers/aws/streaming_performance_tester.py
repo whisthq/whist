@@ -127,7 +127,7 @@ if __name__ == "__main__":
     instance_ip = get_instance_ip(instance_id)
     hostname = instance_ip[0]["public"]
     #hostname = "18.206.15.57"
-    #username = "ubuntu"
+    username = "ubuntu"
     print("Created instance AWS instance with hostname: {}!".format(hostname))
     
     host_service_log = open("host_service_logging_file.txt", "w")
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     log_grabber_log = open("log_grabber_log.txt", "w")
     private_ip = instance_ip[0]["private"]
     
-    pexpect_prompt = "{}@ip-".format(username)
+    pexpect_prompt = "{}@ip-{}".format(username, private_ip.replace(".","-"))
     aws_timeout=1200 # 10 mins is not enough to build the base mandelbox, so we'll go ahead with 20 mins to be safe
 
 
@@ -146,6 +146,7 @@ if __name__ == "__main__":
     cmd = "ssh {}@{} -i {}".format(username, hostname, ssh_key_path)
     
     hs_process = attempt_ssh_connection(cmd, aws_timeout, host_service_log, pexpect_prompt, 5)
+    hs_process.expect(pexpect_prompt)
 
     # Obtain current branch
     subprocess = subprocess.Popen("git branch", shell=True, stdout=subprocess.PIPE)
@@ -164,15 +165,18 @@ if __name__ == "__main__":
     command="git clone -b " + branch_name + " https://" + github_token + "@github.com/fractal/fractal.git | tee ~/github_log.log"
     hs_process.sendline(command)
     hs_process.expect(pexpect_prompt)
+    hs_process.expect(pexpect_prompt)
     print ("Finished downloading fractal/fractal on EC2 instance")
 
     ## Prevent dpkg locking issues such as the following one:
     # E: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 2392 (apt-get)
     # E: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), is another process using it?
     # See also here: https://github.com/ray-project/ray/blob/master/doc/examples/lm/lm-cluster.yaml
-    dpkg_commands = ["sudo pkill -9 `sudo lsof /var/lib/dpkg/lock-frontend | awk '{print $2}' | tail -n 1`", "sudo pkill -9 apt-get || true", "sudo pkill -9 dpkg || true", "sudo dpkg --configure -a"]
+    dpkg_commands = ["sudo kill -9 `sudo lsof /var/lib/dpkg/lock-frontend | awk '{print $2}' | tail -n 1`", "sudo pkill -9 apt-get || true", "sudo pkill -9 dpkg || true", "sudo dpkg --configure -a"]
     for command in dpkg_commands:
         hs_process.sendline(command)
+        
+        hs_process.expect(pexpect_prompt)
         hs_process.expect(pexpect_prompt)
 
     # Set up the server/client
@@ -181,6 +185,7 @@ if __name__ == "__main__":
     command = "cd ~/fractal/host-setup && ./setup_host.sh --localdevelopment | tee ~/host_setup.log"
     #hs_process = attempt_host_setup(hs_process, command, cmd, aws_timeout, host_service_log, pexpect_prompt, 5, 5)
     hs_process.sendline(command)
+    hs_process.expect(pexpect_prompt)
     hs_process.expect(pexpect_prompt)
     print ("Finished running the host setup script on the EC2 instance")
 
@@ -206,6 +211,7 @@ if __name__ == "__main__":
     print("Building the server mandelbox in PERF mode ...")
     command="cd ~/fractal/mandelboxes && ./build.sh browsers/chrome --perf | tee ~/server_mandelbox_build.log"
     server_process.sendline(command)
+    server_process.expect(pexpect_prompt)
     server_process.expect(pexpect_prompt)
     print ("Finished building the browsers/chrome (server) mandelbox on the EC2 instance")
     
@@ -236,6 +242,7 @@ if __name__ == "__main__":
             json_data["perf_client_server_port_32263"] = port_32263
             json_data["perf_client_server_port_32273"] = port_32273
             json_data["perf_client_server_aes_key"] = aes_key
+            json_data["initial_url"] = testing_url
 
     # 6- Build the dev client
 
@@ -249,10 +256,13 @@ if __name__ == "__main__":
     command="sed -i 's/timeout 240s/timeout {}s/g' ~/fractal/mandelboxes/development/client/run-fractal-client.sh".format(testing_time)
     client_process.sendline(command)
     client_process.expect(pexpect_prompt)
+    client_process.expect(pexpect_prompt)
+
     
     print("Building the dev client mandelbox in PERF mode ...")
     command="cd ~/fractal/mandelboxes && ./build.sh development/client --perf | tee ~/client_mandelbox_build.log"
     client_process.sendline(command)
+    client_process.expect(pexpect_prompt)
     client_process.expect(pexpect_prompt)
     print ("Finished building the dev client mandelbox on the EC2 instance")
 
@@ -276,6 +286,7 @@ if __name__ == "__main__":
     # 8- Extract the client/server perf logs from the two docker containers
     command="rm -rf ~/perf_logs; mkdir -p ~/perf_logs/client mkdir -p ~/perf_logs/server"
     log_grabber_process.sendline(command)
+    log_grabber_process.expect(pexpect_prompt)
     log_grabber_process.expect(pexpect_prompt)
     
     client_logfiles = ["/usr/share/fractal/client.log", "/usr/share/fractal/display.log"]
