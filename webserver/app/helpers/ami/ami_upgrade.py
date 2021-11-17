@@ -241,20 +241,6 @@ def swapover_amis(new_amis_str: List[str]) -> None:
     for current_active_ami in current_active_amis:
         region_current_active_ami_map[current_active_ami.region_name] = current_active_ami
 
-    current_running_instances = fetch_current_running_instances(new_amis_str)
-    for active_instance in current_running_instances:
-        # At this point, we should still have the lock that we grabbed when we
-        # invoked the `fetch_current_running_instances` function. Using this
-        # lock, we mark the instances as DRAINING to prevent a mandelbox from
-        # being assigned to the instances.
-        whist_logger.info(f"Draining instance {active_instance.instance_name} in database only!")
-        active_instance.status = MandelboxHostState.DRAINING
-    db.session.commit()
-
-    for active_instance in current_running_instances:
-        # At this point, the instance is marked as DRAINING in the database.
-        drain_instance(active_instance)
-
     for new_ami in new_amis:
         new_ami.protected_from_scale_down = False
         new_ami.ami_active = True
@@ -264,4 +250,9 @@ def swapover_amis(new_amis_str: List[str]) -> None:
 
     db.session.commit()
 
-    whist_logger.info("Finished performing AMI upgrade.")
+    current_running_instances = fetch_current_running_instances(new_amis_str)
+    for active_instance in current_running_instances:
+        # At this point, the instance is marked as DRAINING in the database.
+        drain_instance(active_instance)
+
+    fractal_logger.info("Finished performing AMI upgrade.")
