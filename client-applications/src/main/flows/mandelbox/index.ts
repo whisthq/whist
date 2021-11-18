@@ -55,8 +55,8 @@ export default flow(
                 key_repeat: parseInt(keyRepeat),
               }),
             ...(initialUrl !== "" && {
-                initial_url: initialUrl,
-              }),
+              initial_url: initialUrl,
+            }),
           }), // Data to send through the JSON transport
         }))
       )
