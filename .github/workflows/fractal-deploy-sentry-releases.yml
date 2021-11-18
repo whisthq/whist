@@ -22,8 +22,7 @@ jobs:
     name: "Deploy Sentry Release for: ${{ matrix.project.name }}"
     runs-on: ubuntu-20.04
     outputs:
-      sentry_deploy_environment: ${{ steps.detect-environment.outputs.sentry_deploy_environment }}
-      slack_webhook: ${{ steps.detect-environment.outputs.slack_webhook }}
+      sentry-deploy-environment: ${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}
 
     strategy:
       matrix:
@@ -52,26 +51,22 @@ jobs:
       - name: Set Git Repository URL to Enable sentry-cli Automatic Commit Tagging
         run: git remote set-url origin https://github.com/fractal/fractal
 
-      - name: Set Deploy Environment Based on Git Branch
-        id: detect-environment
+      - name: Set SENTRY_DEPLOY_ENVIRONMENT Based on Git Branch
+        id: detect-sentry-environment
         run: |
           if [ "${GITHUB_REF##*/}" == "prod" ]; then
               SENTRY_DEPLOY_ENVIRONMENT=prod
-              SLACK_WEBHOOK=${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}
           elif [ "${GITHUB_REF##*/}" == "staging" ]; then
               SENTRY_DEPLOY_ENVIRONMENT=staging
-              SLACK_WEBHOOK=${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}
           else
               SENTRY_DEPLOY_ENVIRONMENT=dev
-              SLACK_WEBHOOK=${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}
           fi
-
           echo "Sentry environment is set to: $SENTRY_DEPLOY_ENVIRONMENT"
-            echo "Slack is set to: $SLACK_WEBHOOK"
-          echo "::set-output name=sentry_deploy_environment::$SENTRY_DEPLOY_ENVIRONMENT"
-          echo "::set-output name=slack_webhook::$SLACK_WEBHOOK"
+          echo "::set-output name=sentry-deploy-environment::$SENTRY_DEPLOY_ENVIRONMENT"
 
       - name: Create New Sentry Release
+        env:
+          SENTRY_DEPLOY_ENVIRONMENT: ${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}
         run: |
           # Install Sentry CLI
           curl -sL https://sentry.io/get-cli/ | bash
@@ -83,18 +78,23 @@ jobs:
           sentry-cli releases finalize $SENTRY_RELEASE
 
           # Create new deploy for this Sentry release
-          sentry-cli releases deploys $SENTRY_RELEASE new -e ${{ steps.detect-environment.outputs.sentry_deploy_environment }}
+          sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
 
       - name: Notify Slack on Failure
         if: failure()
         shell: python3 {0}
         run: |
+          # Retrieve Slack webhook
+          if "prod" in "${GITHUB_REF##*/}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
+          elif "staging" in "${GITHUB_REF##*/}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
+          else:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
+
           from notifications.slack_bot import slack_post
-
-          SLACK_WEBHOOK = "${{ steps.detect-environment.outputs.slack_webhook }}"
-          SLACK_CHANNEL = "#alerts-${{ steps.detect-environment.outputs.sentry_deploy_environment }}"
-          BODY = f"@releases :rotating_light: Failed to deploy `$SENTRY_PROJECT` Sentry release on branch: `${{ steps.detect-environment.outputs.sentry-deploy-environment }}`, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
+          SLACK_CHANNEL = "#alerts-${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}"
+          BODY = f"@releases :rotating_light: Failed to deploy `$SENTRY_PROJECT` Sentry release on branch: `${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}`, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   notify-slack:
@@ -113,11 +113,16 @@ jobs:
       - name: Notify Slack on Success
         shell: python3 {0}
         run: |
-          from notifications.slack_bot import slack_post
+          # Retrieve Slack webhook
+          if "prod" in "${GITHUB_REF##*/}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
+          elif "staging" in "${GITHUB_REF##*/}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
+          else:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
 
-          SLACK_WEBHOOK = "${{ needs.fractal-deploy-sentry-releases-main.outputs.slack_webhook }}"
-          SLACK_CHANNEL = "#alerts-${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry_deploy_environment }}"
+          from notifications.slack_bot import slack_post
+          SLACK_CHANNEL = "#alerts-${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}"
           TITLE = ":sentry: Sentry Releases Deployed :sentry:"
           BODY = f"Sentry Releases for Whist Sentry Projects `webserver`, `protocol`, `host-service`, and `client-applications` deployed to Sentry on branch: `${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
-
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
