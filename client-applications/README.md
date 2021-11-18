@@ -28,7 +28,7 @@ We use `yarn` as the package manager for this project. All of the commands requi
 
 2. Make sure you have `yarn` installed on your computer. You can install it [here](https://classic.yarnpkg.com/en/docs/install/#mac-stable).
 
-3. `cd` into the `desktop` folder.
+3. Make sure you have `docker` installed on your computer. You can install it from [here](https://docs.docker.com/get-docker/).
 
 4. Run `yarn` to install all dependencies on your local machine. If dependency issues occur, try running `rm -rf node_modules/` and then `yarn` again.
 
