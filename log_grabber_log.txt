@@ -1,0 +1,36 @@
+Welcome to Ubuntu 20.04.3 LTS (GNU/Linux 5.4.0-1029-aws x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/advantage
+
+  System information as of Thu Nov 18 17:28:43 UTC 2021
+
+  System load:  2.97               Processes:                348
+  Usage of /:   26.4% of 61.98GB   Users logged in:          1
+  Memory usage: 7%                 IPv4 address for docker0: 172.17.0.1
+  Swap usage:   0%                 IPv4 address for ens5:    172.31.76.93
+
+  => There are 5 zombie processes.
+
+
+32 updates can be applied immediately.
+9 of these updates are standard security updates.
+To see these additional updates run: apt list --upgradable
+
+
+Last login: Thu Nov 18 17:27:23 2021 from 65.246.174.98
+]0;ubuntu@ip-172-31-76-93: ~[01;32mubuntu@ip-172-31-76-93[00m:[01;34m~[00m$ rm -rf ~/perf_logs; mkdir -p ~/perf_logs/client mkdir -p ~/perf_logs/server
+rm -rf ~/perf_logs; mkdir -p ~/perf_logs/client mkdir -p ~/perf_logs/server
+]0;ubuntu@ip-172-31-76-93: ~[01;32mubuntu@ip-172-31-76-93[00m:[01;34m~[00m$ docker cp 324c95c93ed1e2fca8be22883468170923fa515579f13c021cc5a369586fb249:/usr/share/fractal/client.log ~/perf_logs/client/
+docker cp 324c95c93ed1e2fca8be22883468170923fa515579f13c021cc5a369586fb249:/usr/share/fractal/client.log ~/perf_logs/client/
+]0;ubuntu@ip-172-31-76-93: ~[01;32mubuntu@ip-172-31-76-93[00m:[01;34m~[00m$ docker cp 324c95c93ed1e2fca8be22883468170923fa515579f13c021cc5a369586fb249:/usr/share/fractal/display.log ~/perf_logs/client/
+docker cp 324c95c93ed1e2fca8be22883468170923fa515579f13c021cc5a369586fb249:/usr/share/fractal/display.log ~/perf_logs/client/
+]0;ubuntu@ip-172-31-76-93: ~[01;32mubuntu@ip-172-31-76-93[00m:[01;34m~[00m$ docker cp 6685ef0766eca2cfbaff8e2d56dfbe095b2fb8f9b4defedb6a3cf5e1ff14339f:/usr/share/fractal/server.log ~/perf_logs/server/
+docker cp 6685ef0766eca2cfbaff8e2d56dfbe095b2fb8f9b4defedb6a3cf5e1ff14339f:/usr/share/fractal/server.log ~/perf_logs/server/
+]0;ubuntu@ip-172-31-76-93: ~[01;32mubuntu@ip-172-31-76-93[00m:[01;34m~[00m$ docker cp 6685ef0766eca2cfbaff8e2d56dfbe095b2fb8f9b4defedb6a3cf5e1ff14339f:/usr/share/fractal/teleport.log ~/perf_logs/server/
+docker cp 6685ef0766eca2cfbaff8e2d56dfbe095b2fb8f9b4defedb6a3cf5e1ff14339f:/usr/share/fractal/teleport.log ~/perf_logs/server/
+]0;ubuntu@ip-172-31-76-93: ~[01;32mubuntu@ip-172-31-76-93[00m:[01;34m~[00m$ docker cp 6685ef0766eca2cfbaff8e2d56dfbe095b2fb8f9b4defedb6a3cf5e1ff14339f:/usr/share/fractal/display.log ~/perf_logs/server/
+docker cp 6685ef0766eca2cfbaff8e2d56dfbe095b2fb8f9b4defedb6a3cf5e1ff14339f:/usr/share/fractal/display.log ~/perf_logs/server/
+]0;ubuntu@ip-172-31-76-93: ~[01;32mubuntu@ip-172-31-76-93[00m:[01;34m~[00m$ exit
+client.log                                      0%    0     0.0KB/s   --:-- ETA

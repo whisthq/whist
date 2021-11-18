@@ -1,0 +1,732 @@
+Welcome to Ubuntu 20.04.3 LTS (GNU/Linux 5.4.0-1029-aws x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/advantage
+
+  System information as of Thu Nov 18 17:27:23 UTC 2021
+
+  System load:  2.62               Processes:                304
+  Usage of /:   26.1% of 61.98GB   Users logged in:          1
+  Memory usage: 5%                 IPv4 address for docker0: 172.17.0.1
+  Swap usage:   0%                 IPv4 address for ens5:    172.31.76.93
+
+
+32 updates can be applied immediately.
+9 of these updates are standard security updates.
+To see these additional updates run: apt list --upgradable
+
+
+Last login: Thu Nov 18 17:16:24 2021 from 65.246.174.98
+]0;ubuntu@ip-172-31-76-93: ~[01;32mubuntu@ip-172-31-76-93[00m:[01;34m~[00m$ sed -i 's/timeout 240s/timeout 60s/g' ~/fractal/mandelboxes/development/client/run-fractal-client.sh
+sed -i 's/timeout 240s/timeout 60s/g' ~/fractal/mandelboxes/development/client/run-fractal-client.sh
+]0;ubuntu@ip-172-31-76-93: ~[01;32mubuntu@ip-172-31-76-93[00m:[01;34m~[00m$ cd ~/fractal/mandelboxes && ./build.sh development/client --perf | tee ~/client_mandelbox_build.log
+cd ~/fractal/mandelboxes && ./build.sh development/client --perf | tee ~/client_mandelbox_build.log
+Building Perf FractalClient...
+[1A[1B[0G[?25l[+] Building 0.0s (0/1)                                                         
+[?25h[1A[0G[?25l[+] Building 0.1s (3/3)                                                         
+[34m => [internal] load build definition from Dockerfile                       0.0s
+[0m[34m => => transferring dockerfile: 38B                                        0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/library/ubuntu:20.04            0.1s
+[0m[?25h[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 0.2s (25/25) FINISHED                                              
+[34m => [internal] load build definition from Dockerfile                       0.0s
+[0m[34m => => transferring dockerfile: 38B                                        0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/library/ubuntu:20.04            0.1s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 54B                                           0.0s
+[0m[34m => [ 1/20] FROM docker.io/library/ubuntu:20.04@sha256:626ffe58f6e7566e00  0.0s
+[0m[34m => CACHED [ 2/20] RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list        0.0s
+[0m[34m => CACHED [ 3/20] RUN echo 'debconf debconf/frontend select Noninteracti  0.0s
+[0m[34m => CACHED [ 4/20] RUN apt-get update && apt-get install --allow-downgrad  0.0s
+[0m[34m => CACHED [ 5/20] RUN apt-get update && apt-get install --allow-downgrad  0.0s
+[0m[34m => CACHED [ 6/20] RUN APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1     wget -q  0.0s
+[0m[34m => CACHED [ 7/20] RUN apt-add-repository 'deb https://apt.kitware.com/ub  0.0s
+[0m[34m => CACHED [ 8/20] RUN apt-get update     && apt-get autoremove -y     &&  0.0s
+[0m[34m => CACHED [ 9/20] RUN dpkg --configure -a && apt-get install --allow-dow  0.0s
+[0m[34m => CACHED [10/20] RUN apt-get update && apt-get install --allow-downgrad  0.0s
+[0m[34m => CACHED [11/20] RUN apt-get update && apt-get install --allow-downgrad  0.0s
+[0m[34m => CACHED [12/20] RUN echo "Set disable_coredump false" >> /etc/sudo.con  0.0s
+[0m[34m => CACHED [13/20] COPY setup-linux-build-environment.sh /                 0.0s
+[0m[34m => CACHED [14/20] RUN apt-get update     && ./setup-linux-build-environm  0.0s
+[0m[34m => CACHED [15/20] RUN mkdir /clang-tidy     && wget -q -O - https://rele  0.0s
+[0m[34m => CACHED [16/20] RUN groupadd fractal                                    0.0s
+[0m[34m => CACHED [17/20] RUN useradd -lou 1000 -g fractal fractal-builder        0.0s
+[0m[34m => CACHED [18/20] RUN usermod -aG sudo fractal-builder                    0.0s
+[0m[34m => CACHED [19/20] RUN echo "fractal-builder:password" | chpasswd          0.0s
+[0m[34m => CACHED [20/20] WORKDIR /workdir                                        0.0s
+[0m[34m => exporting to image                                                     0.0s
+[0m[34m => => exporting layers                                                    0.0s
+[0m[34m => => writing image sha256:9eeb667bbe940fb18d7d51f0a661d72cbf9ea5b5edba4  0.0s
+[0m[34m => => naming to docker.io/fractal/protocol-builder                        0.0s
+[0m[?25h-- Detecting clang-format - found: /usr/bin/clang-format
+-- Exporting compile commands for clang-tidy - done
+-- Downloading Whist Protocol binaries from AWS S3
+-- Downloading Whist Protocol binaries from AWS S3 - Completed
+-- Looking for FFmpeg lib: swresample
+-- Looking for FFmpeg lib: avcodec
+-- Looking for FFmpeg lib: avdevice
+-- Looking for FFmpeg lib: avfilter
+-- Looking for FFmpeg lib: avformat
+-- Looking for FFmpeg lib: swscale
+-- Looking for FFmpeg lib: avutil
+-- Looking for FFmpeg lib: postproc
+-- Found X11: /usr/include  found components: Xfixes 
+-- Found X11: /usr/include  found components: Xfixes Xdamage Xext Xtst 
+-- Downloading test assets from AWS S3
+Completed 2.4 KiB/1.2 MiB (44.0 KiB/s) with 2 file(s) remainingdownload: s3://fractal-test-assets/protocol-test-assets/image.png to test/assets/image.png
+Completed 2.4 KiB/1.2 MiB (44.0 KiB/s) with 1 file(s) remainingCompleted 258.4 KiB/1.2 MiB (944.8 KiB/s) with 1 file(s) remainingCompleted 514.4 KiB/1.2 MiB (1.8 MiB/s) with 1 file(s) remaining  Completed 770.4 KiB/1.2 MiB (2.6 MiB/s) with 1 file(s) remaining  Completed 1.0 MiB/1.2 MiB (3.4 MiB/s) with 1 file(s) remaining    Completed 1.2 MiB/1.2 MiB (4.2 MiB/s) with 1 file(s) remaining    download: s3://fractal-test-assets/protocol-test-assets/image.bmp to test/assets/image.bmp
+-- Downloading test assets from AWS S3 - Completed
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /workdir/protocol/build-docker
+[  7%] Built target fractalAudio
+[ 14%] Built target fractalClipboard
+[ 25%] Built target fractalNetwork
+[ 45%] Built target fractalVideo
+[ 52%] Built target fractalLogging
+[ 52%] Built target git_revision
+[ 70%] Built target fractalUtils
+[ 78%] Built target fractalCore
+Scanning dependencies of target FractalClient
+[ 80%] Building C object client/CMakeFiles/FractalClient.dir/client_utils.c.o
+[ 80%] Building C object client/CMakeFiles/FractalClient.dir/main.c.o
+[ 81%] Building C object client/CMakeFiles/FractalClient.dir/sdl_event_handler.c.o
+[ 83%] Building C object client/CMakeFiles/FractalClient.dir/sdl_utils.c.o
+[ 85%] Building C object client/CMakeFiles/FractalClient.dir/network.c.o
+[ 89%] Building C object client/CMakeFiles/FractalClient.dir/audio.c.o
+[ 89%] Building C object client/CMakeFiles/FractalClient.dir/video.c.o
+[ 90%] Building C object client/CMakeFiles/FractalClient.dir/handle_server_message.c.o
+[ 92%] Building C object client/CMakeFiles/FractalClient.dir/sdlscreeninfo.c.o
+[ 94%] Building C object client/CMakeFiles/FractalClient.dir/sync_packets.c.o
+[ 96%] Building C object client/CMakeFiles/FractalClient.dir/bitrate.c.o
+[ 98%] Building C object client/CMakeFiles/FractalClient.dir/native_window_utils_x11.c.o
+[100%] Linking C executable build64/FractalClient
+[100%] Built target FractalClient
+Fetching nvidia driver installer...
+Bundling build assets...
+[1A[1B[0G[?25l[+] Building 0.0s (0/1)                                                         
+[?25h[1A[0G[?25l[+] Building 0.1s (4/4)                                                         
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 42B                                        0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:default    0.0s
+[0m[34m => [internal] load metadata for docker.io/library/ubuntu:20.04            0.1s
+[0m[?25h[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 0.3s (136/137)                                                     
+[34m => CACHED [fractal-teleport-fuse 7/7] RUN cd /fractal-teleport-fuse/src   0.0s
+[0m[34m => CACHED [fractal-base  88/107] COPY --from=fractal-teleport-fuse /frac  0.0s
+[0m[34m => CACHED [fractal-base  89/107] COPY teleport/run-fractal-teleport.sh /  0.0s
+[0m[34m => CACHED [fractal-base  90/107] RUN chmod +x /usr/bin/run-fractal-telep  0.0s
+[0m[34m => CACHED [fractal-base  91/107] RUN apt-get update && apt-get install -  0.0s
+[0m[34m => CACHED [fractal-base  92/107] RUN mkdir -p /opt/teleport               0.0s
+[0m[34m => CACHED [fractal-base  93/107] COPY teleport/uri-handler/fractal-telep  0.0s
+[0m[34m => CACHED [fractal-base  94/107] RUN chmod +x /opt/teleport/uri-handler   0.0s
+[0m[34m => CACHED [fractal-base  95/107] RUN ln -sf /opt/teleport/uri-handler /u  0.0s
+[0m[34m => CACHED [fractal-base  96/107] COPY --from=build-assets setup-linux-bu  0.0s
+[0m[34m => CACHED [fractal-base  97/107] RUN /usr/share/fractal/setup-linux-buil  0.0s
+[0m[34m => CACHED [fractal-base  98/107] RUN rm /usr/share/fractal/setup-linux-b  0.0s
+[0m[34m => CACHED [fractal-base  99/107] RUN mkdir /usr/share/fractal/bin         0.0s
+[0m[34m => CACHED [fractal-base 100/107] RUN ln -sf /usr/share/fractal/bin/Fract  0.0s
+[0m[34m => CACHED [fractal-base 101/107] COPY main/run-fractal-server.sh /usr/sh  0.0s
+[0m[34m => CACHED [fractal-base 102/107] RUN chmod +x /usr/share/fractal/run-fra  0.0s
+[0m[34m => CACHED [fractal-base 103/107] COPY main/fractal-main.service /etc/sys  0.0s
+[0m[34m => CACHED [fractal-base 104/107] RUN systemctl enable fractal-main        0.0s
+[0m[34m => CACHED [fractal-base 105/107] RUN chgrp root /etc/systemd/system/frac  0.0s
+[0m[34m => CACHED [fractal-base 106/107] COPY --from=build-assets protocol/* /us  0.0s
+[0m => exporting to image                                                     0.1s
+[34m => => exporting layers                                                    0.0s
+[0m[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 0.3s (137/137) FINISHED                                            
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 42B                                        0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:default    0.0s
+[0m[34m => [internal] load metadata for docker.io/library/ubuntu:20.04            0.1s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:default         0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 2.26kB                                        0.0s
+[0m[34m => [fractal-teleport-fuse 1/7] FROM docker.io/library/ubuntu:20.04@sha25  0.0s
+[0m[34m => CACHED [fractal-teleport-fuse 2/7] RUN sed -i 's/# deb/deb/g' /etc/ap  0.0s
+[0m[34m => CACHED [fractal-teleport-fuse 3/7] RUN apt-get update     && apt-get   0.0s
+[0m[34m => CACHED [fractal-base   4/107] RUN apt-get update && apt-get install -  0.0s
+[0m[34m => CACHED [fractal-base   5/107] WORKDIR /lib/systemd/system/sysinit.tar  0.0s
+[0m[34m => CACHED [fractal-base   6/107] RUN ls | grep -v systemd-tmpfiles-setup  0.0s
+[0m[34m => CACHED [fractal-base   7/107] RUN rm -f /lib/systemd/system/multi-use  0.0s
+[0m[34m => CACHED [fractal-base   8/107] RUN systemctl mask plymouth              0.0s
+[0m[34m => CACHED [fractal-base   9/107] RUN systemctl mask systemd-hostnamed     0.0s
+[0m[34m => CACHED [fractal-base  10/107] RUN systemctl mask acpid                 0.0s
+[0m[34m => CACHED [fractal-base  11/107] RUN systemctl mask NetworkManager-wait-  0.0s
+[0m[34m => CACHED [fractal-base  12/107] RUN systemctl disable sshd               0.0s
+[0m[34m => CACHED [fractal-base  13/107] RUN sed -i "/^ProtectHostname=yes$/d" /  0.0s
+[0m[34m => CACHED [fractal-base  14/107] RUN sed -i "/^ProtectHostname=yes$/d" /  0.0s
+[0m[34m => CACHED [fractal-base  15/107] RUN sed -i "/^ProtectHostname=yes$/d" /  0.0s
+[0m[34m => CACHED [libinput-build  4/10] RUN apt-get update && apt-get install -  0.0s
+[0m[34m => CACHED [libinput-build  5/10] COPY input/libinput/patch/hi-res-scroll  0.0s
+[0m[34m => CACHED [libinput-build  6/10] RUN wget -qO - https://freedesktop.org/  0.0s
+[0m[34m => CACHED [libinput-build  7/10] RUN meson libinput-1.15.5 build     --p  0.0s
+[0m[34m => CACHED [libinput-build  8/10] RUN mkdir /libinput-fractal     && DEST  0.0s
+[0m[34m => CACHED [libinput-build  9/10] COPY input/libinput/debian/control /lib  0.0s
+[0m[34m => CACHED [libinput-build 10/10] RUN dpkg-deb --build libinput-fractal    0.0s
+[0m[34m => CACHED [fractal-base  16/107] COPY --from=libinput-build /libinput-fr  0.0s
+[0m[34m => CACHED [xf86-input-libinput-build  4/11] COPY --from=libinput-build l  0.0s
+[0m[34m => CACHED [xf86-input-libinput-build  5/11] RUN apt-get update && apt-ge  0.0s
+[0m[34m => CACHED [xf86-input-libinput-build  6/11] COPY input/xf86-input-libinp  0.0s
+[0m[34m => CACHED [xf86-input-libinput-build  7/11] RUN wget -qO - https://xorg.  0.0s
+[0m[34m => CACHED [xf86-input-libinput-build  8/11] RUN cd xf86-input-libinput-0  0.0s
+[0m[34m => CACHED [xf86-input-libinput-build  9/11] RUN mkdir /xf86-input-libinp  0.0s
+[0m[34m => CACHED [xf86-input-libinput-build 10/11] COPY input/xf86-input-libinp  0.0s
+[0m[34m => CACHED [xf86-input-libinput-build 11/11] RUN dpkg-deb --build xf86-in  0.0s
+[0m[34m => CACHED [fractal-base  17/107] COPY --from=xf86-input-libinput-build /  0.0s
+[0m[34m => CACHED [fractal-base  18/107] RUN apt-get update && apt-get install -  0.0s
+[0m[34m => CACHED [fractal-base  19/107] RUN apt-get update && apt-get install -  0.0s
+[0m[34m => CACHED [fractal-base  20/107] COPY input/Xmodmap /root/.Xmodmap        0.0s
+[0m[34m => CACHED [fractal-base  21/107] RUN apt-get update && apt-get install -  0.0s
+[0m[34m => CACHED [fractal-base  22/107] RUN apt-get update && apt-get install -  0.0s
+[0m[34m => CACHED [fractal-base  23/107] RUN apt-get update && apt-get install -  0.0s
+[0m[34m => CACHED [fractal-base  24/107] RUN useradd --create-home fractal     &  0.0s
+[0m[34m => CACHED [fractal-base  25/107] RUN echo "Set disable_coredump false" >  0.0s
+[0m[34m => CACHED [fractal-base  26/107] RUN chown -vR fractal:fractal /home/fra  0.0s
+[0m[34m => CACHED [fractal-base  27/107] RUN chown root:root /run/user            0.0s
+[0m[34m => CACHED [fractal-base  28/107] RUN mkdir -p /usr/share/fractal/private  0.0s
+[0m[34m => CACHED [fractal-base  29/107] RUN chgrp root -R /usr/share/fractal     0.0s
+[0m[34m => CACHED [fractal-base  30/107] RUN chown root:root /usr/share/fractal   0.0s
+[0m[34m => CACHED [fractal-base  31/107] RUN chmod 600 -R /usr/share/fractal      0.0s
+[0m[34m => CACHED [fractal-base  32/107] COPY utils/run-as-fractal-user.sh /usr/  0.0s
+[0m[34m => CACHED [fractal-base  33/107] RUN chmod +x /usr/share/fractal/run-as-  0.0s
+[0m[34m => CACHED [fractal-base  34/107] RUN apt-get update && apt-get install -  0.0s
+[0m[34m => CACHED [nvidia-grid-driver 4/8] RUN apt-get update && apt-get install  0.0s
+[0m[34m => CACHED [nvidia-grid-driver 5/8] COPY --from=build-assets nvidia-drive  0.0s
+[0m[34m => CACHED [nvidia-grid-driver 6/8] RUN chmod +x nvidia-driver-installer.  0.0s
+[0m[34m => CACHED [nvidia-grid-driver 7/8] RUN mkdir /dist /ignore &&     cd NVI  0.0s
+[0m[34m => CACHED [nvidia-grid-driver 8/8] RUN mkdir /dist/etc &&     cp -r /etc  0.0s
+[0m[34m => CACHED [fractal-base  35/107] COPY --from=nvidia-grid-driver /dist /   0.0s
+[0m[34m => CACHED [fractal-base  36/107] RUN apt-get update && apt-get install -  0.0s
+[0m[34m => CACHED [fractal-base  37/107] RUN apt-get update && apt-get install -  0.0s
+[0m[34m => CACHED [fractal-base  38/107] COPY display/fractal-display.conf /usr/  0.0s
+[0m[34m => CACHED [fractal-base  39/107] COPY display/fractal-update-xorg-conf.s  0.0s
+[0m[34m => CACHED [fractal-base  40/107] COPY display/update-xorg-conf.sh /usr/s  0.0s
+[0m[34m => CACHED [fractal-base  41/107] RUN chmod +x /usr/share/fractal/update-  0.0s
+[0m[34m => CACHED [fractal-base  42/107] RUN systemctl enable fractal-update-xor  0.0s
+[0m[34m => CACHED [fractal-base  43/107] RUN wget -q https://github.com/altdeskt  0.0s
+[0m[34m => CACHED [fractal-base  44/107] COPY display/fractal-display-config.env  0.0s
+[0m[34m => CACHED [fractal-base  45/107] COPY display/xinitrc /root/.xinitrc      0.0s
+[0m[34m => CACHED [fractal-base  46/107] COPY display/fractal-display.service /e  0.0s
+[0m[34m => CACHED [fractal-base  47/107] COPY display/fractal-display.sh /usr/sh  0.0s
+[0m[34m => CACHED [fractal-base  48/107] RUN chmod +x /usr/share/fractal/fractal  0.0s
+[0m[34m => CACHED [fractal-base  49/107] RUN systemctl enable fractal-display     0.0s
+[0m[34m => CACHED [fractal-base  50/107] COPY display/update-fractal-dpi.sh /usr  0.0s
+[0m[34m => CACHED [fractal-base  51/107] RUN chmod +x /usr/share/fractal/update-  0.0s
+[0m[34m => CACHED [fractal-base  52/107] RUN apt-get update && apt-get install -  0.0s
+[0m[34m => CACHED [fractal-base  53/107] RUN wget -qO font-sans.zip https://font  0.0s
+[0m[34m => CACHED [fractal-base  54/107] RUN apt-get update && apt-get install -  0.0s
+[0m[34m => CACHED [fractal-base  55/107] RUN wget -qO /usr/local/share/fonts/Twe  0.0s
+[0m[34m => CACHED [fractal-base  56/107] COPY --chown=fractal display/theme/font  0.0s
+[0m[34m => CACHED [fractal-base  57/107] RUN git clone https://github.com/vincel  0.0s
+[0m[34m => CACHED [fractal-base  58/107] RUN git clone https://github.com/vincel  0.0s
+[0m[34m => CACHED [fractal-base  59/107] COPY display/theme/gtk-3-settings.ini /  0.0s
+[0m[34m => CACHED [fractal-base  60/107] COPY display/theme/gtkrc-2.0 /root/.gtk  0.0s
+[0m[34m => CACHED [fractal-base  61/107] COPY --chown=fractal display/theme/gtkr  0.0s
+[0m[34m => CACHED [fractal-base  62/107] COPY display/theme/qt4-settings.conf /r  0.0s
+[0m[34m => CACHED [fractal-base  63/107] COPY --chown=fractal display/theme/qt4-  0.0s
+[0m[34m => CACHED [fractal-base  64/107] COPY display/theme/awesome-rc.lua /home  0.0s
+[0m[34m => CACHED [fractal-base  65/107] RUN apt-get update && apt-get install -  0.0s
+[0m[34m => CACHED [fractal-base  66/107] RUN apt-get update && apt-get install -  0.0s
+[0m[34m => CACHED [fractal-base  67/107] RUN adduser root pulse-access     && ad  0.0s
+[0m[34m => CACHED [fractal-base  68/107] RUN rm /etc/systemd/user/default.target  0.0s
+[0m[34m => CACHED [fractal-base  69/107] RUN systemctl mask pulseaudio            0.0s
+[0m[34m => CACHED [fractal-base  70/107] RUN chmod -x /usr/bin/start-pulseaudio-  0.0s
+[0m[34m => CACHED [fractal-base  71/107] COPY audio/pulse-client.conf /etc/pulse  0.0s
+[0m[34m => CACHED [fractal-base  72/107] COPY audio/fractal-audio.service /etc/s  0.0s
+[0m[34m => CACHED [fractal-base  73/107] RUN systemctl enable fractal-audio       0.0s
+[0m[34m => CACHED [fractal-base  74/107] COPY startup/app-config-map.json /usr/s  0.0s
+[0m[34m => CACHED [fractal-base  75/107] RUN apt-get update && apt-get install -  0.0s
+[0m[34m => CACHED [fractal-base  76/107] COPY utils/import_custom_cookies.py /us  0.0s
+[0m[34m => CACHED [fractal-base  77/107] COPY startup/fractal-startup.sh /usr/sh  0.0s
+[0m[34m => CACHED [fractal-base  78/107] RUN chmod +x /usr/share/fractal/fractal  0.0s
+[0m[34m => CACHED [fractal-base  79/107] COPY startup/fractal-startup.service /e  0.0s
+[0m[34m => CACHED [fractal-base  80/107] RUN systemctl enable fractal-startup     0.0s
+[0m[34m => CACHED [fractal-base  81/107] COPY startup/entrypoint.sh /usr/share/f  0.0s
+[0m[34m => CACHED [fractal-base  82/107] RUN chmod +x /usr/share/fractal/entrypo  0.0s
+[0m[34m => CACHED [fractal-base  83/107] RUN apt-get update && apt-get install -  0.0s
+[0m[34m => CACHED [fractal-base  84/107] RUN ln -sf "$(which xeyes)" /usr/bin/fr  0.0s
+[0m[34m => CACHED [fractal-base  85/107] COPY main/run-fractal-application.sh /u  0.0s
+[0m[34m => CACHED [fractal-base  86/107] RUN chmod 0555 /usr/bin/run-fractal-app  0.0s
+[0m[34m => CACHED [fractal-base  87/107] RUN apt-get update && apt-get install -  0.0s
+[0m[34m => CACHED [fractal-teleport-fuse 4/7] RUN apt-get update && apt-get inst  0.0s
+[0m[34m => CACHED [fractal-teleport-fuse 5/7] RUN mkdir -p /fractal-teleport-fus  0.0s
+[0m[34m => CACHED [fractal-teleport-fuse 6/7] COPY teleport/teleport-fuse /fract  0.0s
+[0m[34m => CACHED [fractal-teleport-fuse 7/7] RUN cd /fractal-teleport-fuse/src   0.0s
+[0m[34m => CACHED [fractal-base  88/107] COPY --from=fractal-teleport-fuse /frac  0.0s
+[0m[34m => CACHED [fractal-base  89/107] COPY teleport/run-fractal-teleport.sh /  0.0s
+[0m[34m => CACHED [fractal-base  90/107] RUN chmod +x /usr/bin/run-fractal-telep  0.0s
+[0m[34m => CACHED [fractal-base  91/107] RUN apt-get update && apt-get install -  0.0s
+[0m[34m => CACHED [fractal-base  92/107] RUN mkdir -p /opt/teleport               0.0s
+[0m[34m => CACHED [fractal-base  93/107] COPY teleport/uri-handler/fractal-telep  0.0s
+[0m[34m => CACHED [fractal-base  94/107] RUN chmod +x /opt/teleport/uri-handler   0.0s
+[0m[34m => CACHED [fractal-base  95/107] RUN ln -sf /opt/teleport/uri-handler /u  0.0s
+[0m[34m => CACHED [fractal-base  96/107] COPY --from=build-assets setup-linux-bu  0.0s
+[0m[34m => CACHED [fractal-base  97/107] RUN /usr/share/fractal/setup-linux-buil  0.0s
+[0m[34m => CACHED [fractal-base  98/107] RUN rm /usr/share/fractal/setup-linux-b  0.0s
+[0m[34m => CACHED [fractal-base  99/107] RUN mkdir /usr/share/fractal/bin         0.0s
+[0m[34m => CACHED [fractal-base 100/107] RUN ln -sf /usr/share/fractal/bin/Fract  0.0s
+[0m[34m => CACHED [fractal-base 101/107] COPY main/run-fractal-server.sh /usr/sh  0.0s
+[0m[34m => CACHED [fractal-base 102/107] RUN chmod +x /usr/share/fractal/run-fra  0.0s
+[0m[34m => CACHED [fractal-base 103/107] COPY main/fractal-main.service /etc/sys  0.0s
+[0m[34m => CACHED [fractal-base 104/107] RUN systemctl enable fractal-main        0.0s
+[0m[34m => CACHED [fractal-base 105/107] RUN chgrp root /etc/systemd/system/frac  0.0s
+[0m[34m => CACHED [fractal-base 106/107] COPY --from=build-assets protocol/* /us  0.0s
+[0m[34m => exporting to image                                                     0.1s
+[0m[34m => => exporting layers                                                    0.0s
+[0m[34m => => writing image sha256:19af61f4a536571996e193f1a9453be07f96f2062aa57  0.0s
+[0m[34m => => naming to docker.io/fractal/base:current-build                      0.0s
+[0m[?25h[1A[1B[0G[?25l[+] Building 0.0s (0/1)                                                         
+[?25h[1A[0G[?25l[+] Building 0.1s (6/14)                                                        
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m => [internal] load build context                                          0.0s
+ => => transferring context: 40B                                           0.0s
+ => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.0s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 0.3s (7/14)                                                        
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.2s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 0.4s (7/14)                                                        
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.3s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 0.6s (7/14)                                                        
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 0.7s (8/14)                                                        
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.1s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 0.9s (8/14)                                                        
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.3s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 1.0s (8/14)                                                        
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.4s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 1.2s (8/14)                                                        
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.6s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 1.3s (9/14)                                                        
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m[34m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.6s
+[0m => [fractal-development-client 4/8] COPY run-fractal-client.sh /usr/shar  0.1s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 1.5s (10/14)                                                       
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m[34m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.6s
+[0m[34m => [fractal-development-client 4/8] COPY run-fractal-client.sh /usr/shar  0.1s
+[0m => [fractal-development-client 5/8] RUN chmod +x /usr/share/fractal/run-  0.1s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 1.6s (10/14)                                                       
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m[34m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.6s
+[0m[34m => [fractal-development-client 4/8] COPY run-fractal-client.sh /usr/shar  0.1s
+[0m => [fractal-development-client 5/8] RUN chmod +x /usr/share/fractal/run-  0.3s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 1.8s (10/14)                                                       
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m[34m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.6s
+[0m[34m => [fractal-development-client 4/8] COPY run-fractal-client.sh /usr/shar  0.1s
+[0m => [fractal-development-client 5/8] RUN chmod +x /usr/share/fractal/run-  0.4s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 1.9s (10/14)                                                       
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m[34m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.6s
+[0m[34m => [fractal-development-client 4/8] COPY run-fractal-client.sh /usr/shar  0.1s
+[0m => [fractal-development-client 5/8] RUN chmod +x /usr/share/fractal/run-  0.6s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 2.0s (11/14)                                                       
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m[34m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.6s
+[0m[34m => [fractal-development-client 4/8] COPY run-fractal-client.sh /usr/shar  0.1s
+[0m[34m => [fractal-development-client 5/8] RUN chmod +x /usr/share/fractal/run-  0.7s
+[0m[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 2.2s (12/14)                                                       
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m[34m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.6s
+[0m[34m => [fractal-development-client 4/8] COPY run-fractal-client.sh /usr/shar  0.1s
+[0m[34m => [fractal-development-client 5/8] RUN chmod +x /usr/share/fractal/run-  0.7s
+[0m[34m => [fractal-development-client 6/8] COPY fractal-main.service /etc/syste  0.1s
+[0m[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 2.3s (12/14)                                                       
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m[34m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.6s
+[0m[34m => [fractal-development-client 4/8] COPY run-fractal-client.sh /usr/shar  0.1s
+[0m[34m => [fractal-development-client 5/8] RUN chmod +x /usr/share/fractal/run-  0.7s
+[0m[34m => [fractal-development-client 6/8] COPY fractal-main.service /etc/syste  0.1s
+[0m => [fractal-development-client 7/8] RUN systemctl enable fractal-main     0.1s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 2.5s (12/14)                                                       
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m[34m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.6s
+[0m[34m => [fractal-development-client 4/8] COPY run-fractal-client.sh /usr/shar  0.1s
+[0m[34m => [fractal-development-client 5/8] RUN chmod +x /usr/share/fractal/run-  0.7s
+[0m[34m => [fractal-development-client 6/8] COPY fractal-main.service /etc/syste  0.1s
+[0m => [fractal-development-client 7/8] RUN systemctl enable fractal-main     0.3s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 2.6s (12/14)                                                       
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m[34m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.6s
+[0m[34m => [fractal-development-client 4/8] COPY run-fractal-client.sh /usr/shar  0.1s
+[0m[34m => [fractal-development-client 5/8] RUN chmod +x /usr/share/fractal/run-  0.7s
+[0m[34m => [fractal-development-client 6/8] COPY fractal-main.service /etc/syste  0.1s
+[0m => [fractal-development-client 7/8] RUN systemctl enable fractal-main     0.4s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 2.8s (12/14)                                                       
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m[34m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.6s
+[0m[34m => [fractal-development-client 4/8] COPY run-fractal-client.sh /usr/shar  0.1s
+[0m[34m => [fractal-development-client 5/8] RUN chmod +x /usr/share/fractal/run-  0.7s
+[0m[34m => [fractal-development-client 6/8] COPY fractal-main.service /etc/syste  0.1s
+[0m => [fractal-development-client 7/8] RUN systemctl enable fractal-main     0.6s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 2.9s (13/14)                                                       
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m[34m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.6s
+[0m[34m => [fractal-development-client 4/8] COPY run-fractal-client.sh /usr/shar  0.1s
+[0m[34m => [fractal-development-client 5/8] RUN chmod +x /usr/share/fractal/run-  0.7s
+[0m[34m => [fractal-development-client 6/8] COPY fractal-main.service /etc/syste  0.1s
+[0m[34m => [fractal-development-client 7/8] RUN systemctl enable fractal-main     0.7s
+[0m => [fractal-development-client 8/8] COPY --from=build-assets protocol/*   0.0s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 3.0s (13/14)                                                       
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m[34m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.6s
+[0m[34m => [fractal-development-client 4/8] COPY run-fractal-client.sh /usr/shar  0.1s
+[0m[34m => [fractal-development-client 5/8] RUN chmod +x /usr/share/fractal/run-  0.7s
+[0m[34m => [fractal-development-client 6/8] COPY fractal-main.service /etc/syste  0.1s
+[0m[34m => [fractal-development-client 7/8] RUN systemctl enable fractal-main     0.7s
+[0m => [fractal-development-client 8/8] COPY --from=build-assets protocol/*   0.2s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 3.2s (13/14)                                                       
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m[34m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.6s
+[0m[34m => [fractal-development-client 4/8] COPY run-fractal-client.sh /usr/shar  0.1s
+[0m[34m => [fractal-development-client 5/8] RUN chmod +x /usr/share/fractal/run-  0.7s
+[0m[34m => [fractal-development-client 6/8] COPY fractal-main.service /etc/syste  0.1s
+[0m[34m => [fractal-development-client 7/8] RUN systemctl enable fractal-main     0.7s
+[0m => [fractal-development-client 8/8] COPY --from=build-assets protocol/*   0.3s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 3.3s (14/15)                                                       
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m[34m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.6s
+[0m[34m => [fractal-development-client 4/8] COPY run-fractal-client.sh /usr/shar  0.1s
+[0m[34m => [fractal-development-client 5/8] RUN chmod +x /usr/share/fractal/run-  0.7s
+[0m[34m => [fractal-development-client 6/8] COPY fractal-main.service /etc/syste  0.1s
+[0m[34m => [fractal-development-client 7/8] RUN systemctl enable fractal-main     0.7s
+[0m[34m => [fractal-development-client 8/8] COPY --from=build-assets protocol/*   0.3s
+[0m => exporting to image                                                     0.1s
+ => => exporting layers                                                    0.1s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 3.5s (14/15)                                                       
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m[34m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.6s
+[0m[34m => [fractal-development-client 4/8] COPY run-fractal-client.sh /usr/shar  0.1s
+[0m[34m => [fractal-development-client 5/8] RUN chmod +x /usr/share/fractal/run-  0.7s
+[0m[34m => [fractal-development-client 6/8] COPY fractal-main.service /etc/syste  0.1s
+[0m[34m => [fractal-development-client 7/8] RUN systemctl enable fractal-main     0.7s
+[0m[34m => [fractal-development-client 8/8] COPY --from=build-assets protocol/*   0.3s
+[0m => exporting to image                                                     0.3s
+ => => exporting layers                                                    0.3s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 3.6s (14/15)                                                       
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m[34m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.6s
+[0m[34m => [fractal-development-client 4/8] COPY run-fractal-client.sh /usr/shar  0.1s
+[0m[34m => [fractal-development-client 5/8] RUN chmod +x /usr/share/fractal/run-  0.7s
+[0m[34m => [fractal-development-client 6/8] COPY fractal-main.service /etc/syste  0.1s
+[0m[34m => [fractal-development-client 7/8] RUN systemctl enable fractal-main     0.7s
+[0m[34m => [fractal-development-client 8/8] COPY --from=build-assets protocol/*   0.3s
+[0m => exporting to image                                                     0.4s
+ => => exporting layers                                                    0.4s
+[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 3.8s (14/15)                                                       
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m[34m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.6s
+[0m[34m => [fractal-development-client 4/8] COPY run-fractal-client.sh /usr/shar  0.1s
+[0m[34m => [fractal-development-client 5/8] RUN chmod +x /usr/share/fractal/run-  0.7s
+[0m[34m => [fractal-development-client 6/8] COPY fractal-main.service /etc/syste  0.1s
+[0m[34m => [fractal-development-client 7/8] RUN systemctl enable fractal-main     0.7s
+[0m[34m => [fractal-development-client 8/8] COPY --from=build-assets protocol/*   0.3s
+[0m => exporting to image                                                     0.6s
+[34m => => exporting layers                                                    0.5s
+[0m[?25h[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[1A[0G[?25l[+] Building 3.9s (15/15) FINISHED                                              
+[34m => [internal] load build definition from Dockerfile.20                    0.0s
+[0m[34m => => transferring dockerfile: 918B                                       0.0s
+[0m[34m => [internal] load .dockerignore                                          0.0s
+[0m[34m => => transferring context: 2B                                            0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/base:current-build      0.0s
+[0m[34m => [internal] load metadata for docker.io/fractal/build-assets:protocol   0.0s
+[0m[34m => CACHED [fractal-development-client 1/8] FROM docker.io/fractal/base:c  0.0s
+[0m[34m => [build-assets 1/1] FROM docker.io/fractal/build-assets:protocol        0.0s
+[0m[34m => [internal] load build context                                          0.0s
+[0m[34m => => transferring context: 4.19kB                                        0.0s
+[0m[34m => [fractal-development-client 2/8] RUN ln -sf /usr/share/fractal/bin/Fr  0.5s
+[0m[34m => [fractal-development-client 3/8] RUN rm /usr/share/fractal/run-fracta  0.6s
+[0m[34m => [fractal-development-client 4/8] COPY run-fractal-client.sh /usr/shar  0.1s
+[0m[34m => [fractal-development-client 5/8] RUN chmod +x /usr/share/fractal/run-  0.7s
+[0m[34m => [fractal-development-client 6/8] COPY fractal-main.service /etc/syste  0.1s
+[0m[34m => [fractal-development-client 7/8] RUN systemctl enable fractal-main     0.7s
+[0m[34m => [fractal-development-client 8/8] COPY --from=build-assets protocol/*   0.3s
+[0m[34m => exporting to image                                                     0.7s
+[0m[34m => => exporting layers                                                    0.5s
+[0m[34m => => writing image sha256:d9919fc9a44ea03fa9d37d43b4ce60c11ee1f84ccec19  0.0s
+[0m[34m => => naming to docker.io/fractal/development/client:current-build        0.0s
+[0m[?25hBuilding base...
+Built base
+Building development/client...
+Built development/client
+All images built successfully!
+]0;ubuntu@ip-172-31-76-93: ~/fractal/mandelboxes[01;32mubuntu@ip-172-31-76-93[00m:[01;34m~/fractal/mandelboxes[00m$ cd ~/fractal/mandelboxes && ./run.sh development/client --json-data='{"perf_client_server_ip": "3.236.143.226", "perf_client_server_port_32262": "26160", "perf_client_server_port_32263": "48509", "perf_client_server_port_32273": "10165", "perf_client_server_aes_key": "d8d70368de12f32f9d2ae1026bdd6a8f", "initial_url": "https://youtu.be/GUyXW3Sxzqo"}'
+cd ~/fractal/mandelboxes && ./run.sh development/client --json-data='{"perf_client_server_ip": "3.236.143.226", "perf_client_server_port_32262": "26160", "perf_client_server_port_32263": "48509", "perf_client_server_port_32273": "10165", "perf_client_server_aes_key": "d8d70368de12f32f9d2ae1026bdd6a8f", "initial_url": "https://youtu.be/GUyXW3Sxzqo"}'
+Sending SpinUpMandelbox request to host service!
+Response from host service: {'result': {'port_32262': 4376, 'port_32263': 10172, 'port_32273': 26507, 'aes_key': '3bdfeeac9c0231db16013d07c8e7fc8b'}}
+Name of resulting mandelbox:
+fractal-development-client-current-build-a0ab9c53-b27c-4a76-b2eb-b0aa7924abc6
+Docker ID of resulting mandelbox:
+324c95c93ed1e2fca8be22883468170923fa515579f13c021cc5a369586fb249
+]0;root@324c95c93ed1: /root@324c95c93ed1:/# exit
+exit
+exit
+]0;ubuntu@ip-172-31-76-93: ~/fractal/mandelboxes[01;32mubuntu@ip-172-31-76-93[00m:[01;34m~/fractal/mandelboxes[00m$ 

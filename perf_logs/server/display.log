@@ -1,0 +1,298 @@
+[   731.991] 
+X.Org X Server 1.20.11
+X Protocol Version 11, Revision 0
+[   731.991] Build Operating System: linux Ubuntu
+[   731.991] Current Operating System: Linux 6685ef0766ec 5.4.0-1029-aws #30-Ubuntu SMP Tue Oct 20 10:06:38 UTC 2020 x86_64
+[   731.991] Kernel command line: BOOT_IMAGE=/boot/vmlinuz-5.4.0-1029-aws root=PARTUUID=da63a61e-01 ro console=tty1 console=ttyS0 nvme_core.io_timeout=4294967295 panic=-1
+[   731.991] Build Date: 06 July 2021  10:17:51AM
+[   731.991] xorg-server 2:1.20.11-1ubuntu1~20.04.2 (For technical support please see http://www.ubuntu.com/support) 
+[   731.991] Current version of pixman: 0.38.4
+[   731.991] 	Before reporting problems, check http://wiki.x.org
+	to make sure that you have the latest version.
+[   731.991] Markers: (--) probed, (**) from config file, (==) default setting,
+	(++) from command line, (!!) notice, (II) informational,
+	(WW) warning, (EE) error, (NI) not implemented, (??) unknown.
+[   731.991] (++) Log file: "/usr/share/fractal/display.log", Time: Thu Nov 18 17:27:23 2021
+[   731.991] (++) Using config file: "/usr/share/X11/xorg.conf.d/01-fractal-display.conf"
+[   731.991] (==) Using system config directory "/usr/share/X11/xorg.conf.d"
+[   731.991] (==) ServerLayout "Layout0"
+[   731.991] (**) |-->Screen "Screen0" (0)
+[   731.991] (**) |   |-->Monitor "Monitor0"
+[   731.991] (**) |   |-->Device "Device0"
+[   731.991] (**) |   |-->GPUDevice "Device0"
+[   731.991] (**) Option "AutoAddDevices" "true"
+[   731.991] (**) Option "AutoEnableDevices" "true"
+[   731.991] (**) Automatically adding devices
+[   731.991] (**) Automatically enabling devices
+[   731.991] (==) Automatically adding GPU devices
+[   731.991] (==) Automatically binding GPU devices
+[   731.992] (==) Max clients allowed: 256, resource mask: 0x1fffff
+[   731.992] (WW) The directory "/usr/share/fonts/X11/misc" does not exist.
+[   731.992] 	Entry deleted from font path.
+[   731.992] (WW) The directory "/usr/share/fonts/X11/cyrillic" does not exist.
+[   731.992] 	Entry deleted from font path.
+[   731.992] (WW) The directory "/usr/share/fonts/X11/100dpi/" does not exist.
+[   731.992] 	Entry deleted from font path.
+[   731.992] (WW) The directory "/usr/share/fonts/X11/75dpi/" does not exist.
+[   731.992] 	Entry deleted from font path.
+[   731.992] (WW) The directory "/usr/share/fonts/X11/Type1" does not exist.
+[   731.992] 	Entry deleted from font path.
+[   731.992] (WW) The directory "/usr/share/fonts/X11/100dpi" does not exist.
+[   731.992] 	Entry deleted from font path.
+[   731.992] (WW) The directory "/usr/share/fonts/X11/75dpi" does not exist.
+[   731.992] 	Entry deleted from font path.
+[   731.992] (==) FontPath set to:
+	built-ins
+[   731.992] (==) ModulePath set to "/usr/lib/xorg/modules"
+[   731.992] (II) The server relies on udev to provide the list of input devices.
+	If no devices become available, reconfigure udev or disable AutoAddDevices.
+[   731.992] (II) Loader magic: 0x555a61709020
+[   731.992] (II) Module ABI versions:
+[   731.992] 	X.Org ANSI C Emulation: 0.4
+[   731.992] 	X.Org Video Driver: 24.1
+[   731.992] 	X.Org XInput driver : 24.1
+[   731.992] 	X.Org Server Extension : 10.0
+[   731.992] (++) using VT number 10
+
+[   731.992] (II) systemd-logind: logind integration requires -keeptty and -keeptty was not provided, disabling logind integration
+[   731.992] (II) xfree86: Adding drm device (/dev/dri/card0)
+[   731.994] (--) PCI:*(0@0:3:0) 1d0f:1111:0000:0000 rev 0, Mem @ 0xfe400000/4194304, BIOS @ 0x????????/131072
+[   731.994] (--) PCI: (0@0:30:0) 10de:1eb8:10de:12a2 rev 161, Mem @ 0xfd000000/16777216, 0x840000000/268435456, 0x850000000/33554432
+[   731.994] (II) LoadModule: "glx"
+[   731.994] (II) Loading /usr/lib/xorg/modules/extensions/libglx.so
+[   731.995] (II) Module glx: vendor="X.Org Foundation"
+[   731.995] 	compiled for 1.20.11, module version = 1.0.0
+[   731.995] 	ABI class: X.Org Server Extension, version 10.0
+[   731.995] (II) LoadModule: "nvidia"
+[   731.995] (II) Loading /usr/lib/xorg/modules/drivers/nvidia_drv.so
+[   731.995] (II) Module nvidia: vendor="NVIDIA Corporation"
+[   731.995] 	compiled for 1.6.99.901, module version = 1.0.0
+[   731.996] 	Module class: X.Org Video Driver
+[   731.996] (II) NVIDIA dlloader X Driver  470.63.01  Tue Aug  3 20:37:27 UTC 2021
+[   731.996] (II) NVIDIA Unified Driver for all Supported NVIDIA GPUs
+[   732.094] xf86EnableIOPorts: failed to set IOPL for I/O (Operation not permitted)
+[   732.094] (II) Loading sub module "fb"
+[   732.094] (II) LoadModule: "fb"
+[   732.095] (II) Loading /usr/lib/xorg/modules/libfb.so
+[   732.095] (II) Module fb: vendor="X.Org Foundation"
+[   732.095] 	compiled for 1.20.11, module version = 1.0.0
+[   732.095] 	ABI class: X.Org ANSI C Emulation, version 0.4
+[   732.095] (II) Loading sub module "wfb"
+[   732.095] (II) LoadModule: "wfb"
+[   732.095] (II) Loading /usr/lib/xorg/modules/libwfb.so
+[   732.095] (II) Module wfb: vendor="X.Org Foundation"
+[   732.095] 	compiled for 1.20.11, module version = 1.0.0
+[   732.095] 	ABI class: X.Org ANSI C Emulation, version 0.4
+[   732.095] (II) Loading sub module "ramdac"
+[   732.095] (II) LoadModule: "ramdac"
+[   732.095] (II) Module "ramdac" already built-in
+[   732.095] (WW) VGA arbiter: cannot open kernel arbiter, no multi-card support
+[   732.095] (II) NVIDIA(0): Creating default Display subsection in Screen section
+	"Screen0" for depth/fbbpp 24/32
+[   732.095] (**) NVIDIA(0): Depth 24, (--) framebuffer bpp 32
+[   732.095] (==) NVIDIA(0): RGB weight 888
+[   732.095] (==) NVIDIA(0): Default visual is TrueColor
+[   732.095] (==) NVIDIA(0): Using gamma correction (1.0, 1.0, 1.0)
+[   732.095] (**) NVIDIA(0): Option "AllowEmptyInitialConfiguration" "True"
+[   732.096] (**) NVIDIA(0): Enabling 2D acceleration
+[   732.096] (II) Loading sub module "glxserver_nvidia"
+[   732.096] (II) LoadModule: "glxserver_nvidia"
+[   732.096] (II) Loading /usr/lib/xorg/modules/extensions/libglxserver_nvidia.so
+[   732.132] (II) Module glxserver_nvidia: vendor="NVIDIA Corporation"
+[   732.133] 	compiled for 1.6.99.901, module version = 1.0.0
+[   732.133] 	Module class: X.Org Server Extension
+[   732.133] (II) NVIDIA GLX Module  470.63.01  Tue Aug  3 20:35:52 UTC 2021
+[   732.134] (II) NVIDIA: The X server supports PRIME Render Offload.
+[   732.134] (--) NVIDIA(0): Valid display device(s) on GPU-0 at PCI:0:30:0
+[   732.134] (--) NVIDIA(0):     DFP-0
+[   732.134] (--) NVIDIA(0):     DFP-1
+[   732.134] (--) NVIDIA(0):     DFP-2
+[   732.134] (--) NVIDIA(0):     DFP-3
+[   732.134] (WW) NVIDIA: No DRM device: No direct render devices found.
+[   732.135] (II) NVIDIA(0): NVIDIA GPU Tesla T4 (TU104GL-A) at PCI:0:30:0 (GPU-0)
+[   732.135] (--) NVIDIA(0): Memory: 15728640 kBytes
+[   732.135] (--) NVIDIA(0): VideoBIOS: 90.04.96.00.02
+[   732.135] (II) NVIDIA(0): Detected PCI Express Link width: 16X
+[   732.136] (--) NVIDIA(GPU-0): NVIDIA VGX (DFP-0): connected
+[   732.136] (--) NVIDIA(GPU-0): NVIDIA VGX (DFP-0): External TMDS
+[   732.136] (WW) NVIDIA(GPU-0): Mode (15360 x 8640) larger than per-head max resolution
+[   732.136] (WW) NVIDIA(GPU-0):     supported (7680 x 4320)
+[   732.136] (WW) NVIDIA(GPU-0): Mode (15360 x 8640) larger than per-head max resolution
+[   732.136] (WW) NVIDIA(GPU-0):     supported (7680 x 4320)
+[   732.137] (==) NVIDIA(0): 
+[   732.137] (==) NVIDIA(0): No modes were requested; the default mode "nvidia-auto-select"
+[   732.137] (==) NVIDIA(0):     will be used as the requested mode.
+[   732.137] (==) NVIDIA(0): 
+[   732.137] (II) NVIDIA(0): Validated MetaModes:
+[   732.137] (II) NVIDIA(0):     "DFP-0:nvidia-auto-select"
+[   732.137] (II) NVIDIA(0): Virtual screen size determined to be 2560 x 1600
+[   732.139] (--) NVIDIA(0): DPI set to (92, 101); computed from "UseEdidDpi" X config
+[   732.139] (--) NVIDIA(0):     option
+[   732.139] (II) NVIDIA: Reserving 24576.00 MB of virtual memory for indirect memory
+[   732.139] (II) NVIDIA:     access.
+[   732.143] (II) NVIDIA(0): ACPI: failed to connect to the ACPI event daemon; the daemon
+[   732.143] (II) NVIDIA(0):     may not be running or the "AcpidSocketPath" X
+[   732.143] (II) NVIDIA(0):     configuration option may not be set correctly.  When the
+[   732.143] (II) NVIDIA(0):     ACPI event daemon is available, the NVIDIA X driver will
+[   732.143] (II) NVIDIA(0):     try to use it to receive ACPI event notifications.  For
+[   732.143] (II) NVIDIA(0):     details, please see the "ConnectToAcpid" and
+[   732.143] (II) NVIDIA(0):     "AcpidSocketPath" X configuration options in Appendix B: X
+[   732.143] (II) NVIDIA(0):     Config Options in the README.
+[   732.170] (II) NVIDIA(0): Setting mode "DFP-0:nvidia-auto-select"
+[   732.183] (==) NVIDIA(0): Disabling shared memory pixmaps
+[   732.183] (==) NVIDIA(0): Backing store enabled
+[   732.183] (==) NVIDIA(0): Silken mouse enabled
+[   732.183] (**) NVIDIA(0): DPMS enabled
+[   732.183] (II) Loading sub module "dri2"
+[   732.183] (II) LoadModule: "dri2"
+[   732.183] (II) Module "dri2" already built-in
+[   732.183] (II) NVIDIA(0): [DRI2] Setup complete
+[   732.183] (II) NVIDIA(0): [DRI2]   VDPAU driver: nvidia
+[   732.183] (II) Initializing extension Generic Event Extension
+[   732.184] (II) Initializing extension SHAPE
+[   732.184] (II) Initializing extension MIT-SHM
+[   732.184] (II) Initializing extension XInputExtension
+[   732.184] (II) Initializing extension XTEST
+[   732.184] (II) Initializing extension BIG-REQUESTS
+[   732.184] (II) Initializing extension SYNC
+[   732.184] (II) Initializing extension XKEYBOARD
+[   732.184] (II) Initializing extension XC-MISC
+[   732.184] (II) Initializing extension SECURITY
+[   732.184] (II) Initializing extension XFIXES
+[   732.184] (II) Initializing extension RENDER
+[   732.185] (II) Initializing extension RANDR
+[   732.185] (II) Initializing extension COMPOSITE
+[   732.185] (II) Initializing extension DAMAGE
+[   732.185] (II) Initializing extension MIT-SCREEN-SAVER
+[   732.185] (II) Initializing extension DOUBLE-BUFFER
+[   732.185] (II) Initializing extension RECORD
+[   732.185] (II) Initializing extension DPMS
+[   732.185] (II) Initializing extension Present
+[   732.185] (II) Initializing extension DRI3
+[   732.185] (II) Initializing extension X-Resource
+[   732.185] (II) Initializing extension XVideo
+[   732.186] (II) Initializing extension XVideo-MotionCompensation
+[   732.186] (II) Initializing extension SELinux
+[   732.186] (II) SELinux: Disabled on system
+[   732.186] (II) Initializing extension GLX
+[   732.186] (II) Initializing extension GLX
+[   732.186] (II) Indirect GLX disabled.
+[   732.186] (II) GLX: Another vendor is already registered for screen 0
+[   732.186] (II) Initializing extension XFree86-VidModeExtension
+[   732.186] (II) Initializing extension XFree86-DGA
+[   732.186] (II) Initializing extension XFree86-DRI
+[   732.186] (II) Initializing extension DRI2
+[   732.186] (II) Initializing extension NV-GLX
+[   732.186] (II) Initializing extension NV-CONTROL
+[   732.186] (II) Initializing extension XINERAMA
+[   732.230] (II) config/udev: Adding input device Power Button (/dev/input/event0)
+[   732.230] (**) Power Button: Applying InputClass "libinput keyboard catchall"
+[   732.230] (II) LoadModule: "libinput"
+[   732.230] (II) Loading /usr/lib/xorg/modules/input/libinput_drv.so
+[   732.231] (II) Module libinput: vendor="X.Org Foundation"
+[   732.231] 	compiled for 1.20.11, module version = 0.29.0
+[   732.231] 	Module class: X.Org XInput Driver
+[   732.231] 	ABI class: X.Org XInput driver, version 24.1
+[   732.231] (II) Using input driver 'libinput' for 'Power Button'
+[   732.231] (**) Power Button: always reports core events
+[   732.231] (**) Option "Device" "/dev/input/event0"
+[   732.231] (**) Option "_source" "server/udev"
+[   732.231] (EE) client bug: Invalid path /dev/input/event0
+[   732.231] (EE) libinput: Power Button: Failed to create a device for /dev/input/event0
+[   732.231] (EE) PreInit returned 2 for "Power Button"
+[   732.231] (II) UnloadModule: "libinput"
+[   732.232] (II) config/udev: Adding input device Sleep Button (/dev/input/event1)
+[   732.232] (**) Sleep Button: Applying InputClass "libinput keyboard catchall"
+[   732.232] (II) Using input driver 'libinput' for 'Sleep Button'
+[   732.232] (**) Sleep Button: always reports core events
+[   732.232] (**) Option "Device" "/dev/input/event1"
+[   732.232] (**) Option "_source" "server/udev"
+[   732.232] (EE) client bug: Invalid path /dev/input/event1
+[   732.232] (EE) libinput: Sleep Button: Failed to create a device for /dev/input/event1
+[   732.232] (EE) PreInit returned 2 for "Sleep Button"
+[   732.232] (II) UnloadModule: "libinput"
+[   732.232] (II) config/udev: Adding input device AT Translated Set 2 keyboard (/dev/input/event2)
+[   732.232] (**) AT Translated Set 2 keyboard: Applying InputClass "libinput keyboard catchall"
+[   732.232] (II) Using input driver 'libinput' for 'AT Translated Set 2 keyboard'
+[   732.232] (**) AT Translated Set 2 keyboard: always reports core events
+[   732.232] (**) Option "Device" "/dev/input/event2"
+[   732.232] (**) Option "_source" "server/udev"
+[   732.232] (EE) client bug: Invalid path /dev/input/event2
+[   732.232] (EE) libinput: AT Translated Set 2 keyboard: Failed to create a device for /dev/input/event2
+[   732.232] (EE) PreInit returned 2 for "AT Translated Set 2 keyboard"
+[   732.232] (II) UnloadModule: "libinput"
+[   732.233] (II) config/udev: Adding input device Whist Virtual Absolute Input (/dev/input/event3)
+[   732.233] (**) Whist Virtual Absolute Input: Applying InputClass "libinput pointer catchall"
+[   732.233] (II) Using input driver 'libinput' for 'Whist Virtual Absolute Input'
+[   732.233] (**) Whist Virtual Absolute Input: always reports core events
+[   732.233] (**) Option "Device" "/dev/input/event3"
+[   732.233] (**) Option "_source" "server/udev"
+[   732.234] (II) event3  - Whist Virtual Absolute Input: is tagged by udev as: Mouse
+[   732.234] (II) event3  - Whist Virtual Absolute Input: device is a pointer
+[   732.234] (II) event3  - Whist Virtual Absolute Input: device removed
+[   732.305] (**) Option "config_info" "udev:/sys/devices/virtual/input/input4/event3"
+[   732.305] (II) XINPUT: Adding extended input device "Whist Virtual Absolute Input" (type: MOUSE, id 6)
+[   732.305] (**) Option "AccelerationScheme" "none"
+[   732.305] (**) Whist Virtual Absolute Input: (accel) selected scheme none/0
+[   732.305] (**) Whist Virtual Absolute Input: (accel) acceleration factor: 2.000
+[   732.305] (**) Whist Virtual Absolute Input: (accel) acceleration threshold: 4
+[   732.305] (II) event3  - Whist Virtual Absolute Input: is tagged by udev as: Mouse
+[   732.305] (II) event3  - Whist Virtual Absolute Input: device is a pointer
+[   732.306] (II) config/udev: Adding input device Whist Virtual Absolute Input (/dev/input/mouse0)
+[   732.306] (II) No input driver specified, ignoring this device.
+[   732.306] (II) This device may have been added with another device file.
+[   732.306] (II) config/udev: Adding input device Whist Virtual Relative Input (/dev/input/event4)
+[   732.306] (**) Whist Virtual Relative Input: Applying InputClass "libinput pointer catchall"
+[   732.306] (II) Using input driver 'libinput' for 'Whist Virtual Relative Input'
+[   732.306] (**) Whist Virtual Relative Input: always reports core events
+[   732.306] (**) Option "Device" "/dev/input/event4"
+[   732.306] (**) Option "_source" "server/udev"
+[   732.306] (II) event4  - Whist Virtual Relative Input: is tagged by udev as: Mouse
+[   732.307] (II) event4  - Whist Virtual Relative Input: device is a pointer
+[   732.307] (II) event4  - Whist Virtual Relative Input: device removed
+[   732.361] (**) Option "config_info" "udev:/sys/devices/virtual/input/input5/event4"
+[   732.361] (II) XINPUT: Adding extended input device "Whist Virtual Relative Input" (type: MOUSE, id 7)
+[   732.361] (**) Option "AccelerationScheme" "none"
+[   732.361] (**) Whist Virtual Relative Input: (accel) selected scheme none/0
+[   732.361] (**) Whist Virtual Relative Input: (accel) acceleration factor: 2.000
+[   732.361] (**) Whist Virtual Relative Input: (accel) acceleration threshold: 4
+[   732.361] (II) event4  - Whist Virtual Relative Input: is tagged by udev as: Mouse
+[   732.361] (II) event4  - Whist Virtual Relative Input: device is a pointer
+[   732.362] (II) config/udev: Adding input device Whist Virtual Relative Input (/dev/input/mouse1)
+[   732.362] (II) No input driver specified, ignoring this device.
+[   732.362] (II) This device may have been added with another device file.
+[   732.362] (II) config/udev: Adding input device Whist Virtual Keyboard (/dev/input/event5)
+[   732.362] (**) Whist Virtual Keyboard: Applying InputClass "libinput pointer catchall"
+[   732.362] (**) Whist Virtual Keyboard: Applying InputClass "libinput keyboard catchall"
+[   732.362] (II) Using input driver 'libinput' for 'Whist Virtual Keyboard'
+[   732.362] (**) Whist Virtual Keyboard: always reports core events
+[   732.362] (**) Option "Device" "/dev/input/event5"
+[   732.362] (**) Option "_source" "server/udev"
+[   732.363] (II) event5  - Whist Virtual Keyboard: is tagged by udev as: Keyboard Mouse
+[   732.363] (II) event5  - Whist Virtual Keyboard: device is a pointer
+[   732.363] (II) event5  - Whist Virtual Keyboard: device is a keyboard
+[   732.363] (II) event5  - Whist Virtual Keyboard: device removed
+[   732.397] (II) libinput: Whist Virtual Keyboard: needs a virtual subdevice
+[   732.397] (**) Option "config_info" "udev:/sys/devices/virtual/input/input6/event5"
+[   732.397] (II) XINPUT: Adding extended input device "Whist Virtual Keyboard" (type: MOUSE, id 8)
+[   732.397] (**) Option "AccelerationScheme" "none"
+[   732.397] (**) Whist Virtual Keyboard: (accel) selected scheme none/0
+[   732.397] (**) Whist Virtual Keyboard: (accel) acceleration factor: 2.000
+[   732.397] (**) Whist Virtual Keyboard: (accel) acceleration threshold: 4
+[   732.397] (II) event5  - Whist Virtual Keyboard: is tagged by udev as: Keyboard Mouse
+[   732.397] (II) event5  - Whist Virtual Keyboard: device is a pointer
+[   732.397] (II) event5  - Whist Virtual Keyboard: device is a keyboard
+[   732.401] (**) Whist Virtual Keyboard: Applying InputClass "libinput pointer catchall"
+[   732.401] (**) Whist Virtual Keyboard: Applying InputClass "libinput keyboard catchall"
+[   732.401] (II) Using input driver 'libinput' for 'Whist Virtual Keyboard'
+[   732.401] (**) Whist Virtual Keyboard: always reports core events
+[   732.401] (**) Option "Device" "/dev/input/event5"
+[   732.401] (**) Option "_source" "_driver/libinput"
+[   732.401] (II) libinput: Whist Virtual Keyboard: is a virtual subdevice
+[   732.401] (**) Option "config_info" "udev:/sys/devices/virtual/input/input6/event5"
+[   732.401] (II) XINPUT: Adding extended input device "Whist Virtual Keyboard" (type: KEYBOARD, id 9)
+[   753.988] (II) NVIDIA(0): Setting mode "NULL"
+[   754.021] (II) NVIDIA(0): Setting mode "DVI-D-0: Whist-2880x1524 @2880x1524 +0+0 {ViewPortIn=2880x1524, ViewPortOut=2880x1524+0+0}"
+[   754.364] (II) NVIDIA(0): Setting mode "NULL"
+[   754.369] (II) NVIDIA(0): Setting mode "DVI-D-0: Whist-1280x800 @1280x800 +0+0 {ViewPortIn=1280x800, ViewPortOut=1280x800+0+0}"
+[   754.779] (II) NVIDIA(0): Setting mode "DVI-D-0: Whist-2560x1600 @2560x1600 +0+0 {ViewPortIn=2560x1600, ViewPortOut=2560x1600+0+0}"
