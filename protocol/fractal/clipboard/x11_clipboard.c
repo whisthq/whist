@@ -114,7 +114,7 @@ ClipboardData* get_os_clipboard_picture() {
             return NULL;
         }
         // ((ClipboardData*)db->buf)->type = CLIPBOARD_IMAGE;
-        ((ClipboardData*)cb->buf)->type = CLIPBOARD_IMAGE;
+        cb->type = CLIPBOARD_IMAGE;
         // return db;
         return cb;
     }
@@ -139,14 +139,14 @@ ClipboardData* get_os_clipboard_string() {
 
     if (clipboard_has_target(property_atom, target_atom)) {
         // DynamicBuffer* db = NULL;
-        ClipboardData* db = NULL;
+        ClipboardData* cb = NULL;
         // if ((db = get_os_clipboard_data(property_atom, 0)) == NULL) {
         if ((cb = get_os_clipboard_data(property_atom, 0)) == NULL) {
             LOG_WARNING("Failed to get clipboard data");
             return NULL;
         }
         // ((ClipboardData*)db->buf)->type = CLIPBOARD_TEXT;
-        ((ClipboardData*)cb->buf)->type = CLIPBOARD_TEXT;
+        cb->type = CLIPBOARD_TEXT;
         // return db;
         return cb;
     }
