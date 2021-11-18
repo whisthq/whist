@@ -77,3 +77,8 @@ func Free(tty TTY) {
 func randomTTYInAllowedRange() TTY {
 	return TTY(minAllowedTTY + rand.Intn(maxAllowedTTY-minAllowedTTY))
 }
+
+// Helper function to determine whether a given tty is in the allowed range, or not
+func isInAllowedRange(p uint8) bool {
+	return p >= minAllowedTTY && p < maxAllowedTTY
+}
