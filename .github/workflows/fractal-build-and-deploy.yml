@@ -215,13 +215,13 @@ jobs:
           target="${{ steps.set-deploy-environment.outputs.environment }}"
 
           case "$ref" in
-              *prod|*staging|*dev)
-                  # Get the short branch name for dev, staging, and
-                  # prod by stripping away any leading characters. For
-                  # example, "/refs/heads/dev" becomes "dev".
-                  branch="${ref##*/}" ;;
-              *)
-                  branch="$ref" ;;
+            *prod|*staging|*dev)
+              # Get the short branch name for dev, staging, and
+              # prod by stripping away any leading characters. For
+              # example, "/refs/heads/dev" becomes "dev".
+              branch="${ref##*/}" ;;
+            *)
+                branch="$ref" ;;
           esac
 
           # We are only allowed to deploy a branch to its corresponding
@@ -231,18 +231,18 @@ jobs:
           deployable="$([ "$branch" != "$target" ] || echo "1")"
 
           if [ "${{ github.event_name }}" = "push" ]; then
-              # If the workflow was triggered by a push event, the
-              # dry-run input is not available. We can assert that the
-              # push event was triggered on either dev, staging, or
-              # prod, and then set the dry run flag to false.
-              [[ "$branch" =~ dev|staging|prod ]]
-              dry_run="false"
+            # If the workflow was triggered by a push event, the
+            # dry-run input is not available. We can assert that the
+            # push event was triggered on either dev, staging, or
+            # prod, and then set the dry run flag to false.
+            [[ "$branch" =~ dev|staging|prod ]]
+            dry_run="false"
           else
-              dry_run="${{ github.event.inputs.dry-run }}"
+            dry_run="${{ github.event.inputs.dry-run }}"
 
-              # If we're trying to perform a real deployment, but the
-              # current configuration is not deployable, abort.
-              test "$deployable" -o "$dry_run" != "false"
+            # If we're trying to perform a real deployment, but the
+            # current configuration is not deployable, abort.
+            test "$deployable" -o "$dry_run" != "false"
           fi
 
           # Publish the job outputs iff this is not a dry run and
@@ -564,18 +564,18 @@ jobs:
           data["source_ami"] = "${{ env.aws_source_ami_id }}"
 
           if data["git_branch"] == "prod":
-                data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_PROD }}"
+            data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_PROD }}"
           elif data["git_branch"] == "staging":
-                data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_STAGING }}"
+            data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_STAGING }}"
           elif data["git_branch"] == "dev":
-                data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_DEV }}"
+            data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_DEV }}"
 
           # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
           # defined as a string of comma-separated values (no spaces) as required by Packer.
           if data["git_branch"] == "prod":
-                data["destination_regions"] = ["us-east-2", "us-west-1", "us-west-2", "ca-central-1"]
+            data["destination_regions"] = ["us-east-2", "us-west-1", "us-west-2", "ca-central-1"]
           else:
-                data["destination_regions"] = ["us-west-1"]
+            data["destination_regions"] = ["us-west-1"]
           fp = open("packer_vars.json", "w")
           json.dump(data, fp)
           fp.close()
@@ -703,13 +703,13 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
         run: |
           if [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == dev ]]; then
-              HEROKU_APP_NAME=whist-dev-server
+            HEROKU_APP_NAME=whist-dev-server
           elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == staging ]]; then
-              HEROKU_APP_NAME=whist-staging-server
+            HEROKU_APP_NAME=whist-staging-server
           elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == prod ]]; then
-              HEROKU_APP_NAME=whist-prod-server
+            HEROKU_APP_NAME=whist-prod-server
           else
-              echo 'Error: Invalid branch' && false
+            echo 'Error: Invalid branch' && false
           fi
           echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
 
@@ -732,8 +732,7 @@ jobs:
         env:
           HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
         shell: bash --noprofile --norc -eo pipefail {0}
-        run: |
-          webserver/atomic_deployment.sh $HEROKU_APP_NAME '${{ steps.db-diff.outputs.code }}' '${{ steps.db-diff.outputs.diff }}'
+        run: webserver/atomic_deployment.sh $HEROKU_APP_NAME '${{ steps.db-diff.outputs.code }}' '${{ steps.db-diff.outputs.diff }}'
 
       - name: Notify Slack on Database Migration Performed
         shell: python3 {0}
@@ -851,13 +850,13 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
         run: |
           if [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == dev ]]; then
-              HEROKU_APP_NAME=whist-dev-server
+            HEROKU_APP_NAME=whist-dev-server
           elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == staging ]]; then
-              HEROKU_APP_NAME=whist-staging-server
+            HEROKU_APP_NAME=whist-staging-server
           elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == prod ]]; then
-              HEROKU_APP_NAME=whist-prod-server
+            HEROKU_APP_NAME=whist-prod-server
           else
-              echo 'Error: Invalid branch' && false
+            echo 'Error: Invalid branch' && false
           fi
           echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
           DATABASE_URL=$(heroku config:get DATABASE_URL --app=$HEROKU_APP_NAME)
@@ -1462,11 +1461,11 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
         run: |
           if [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == dev ]]; then
-              HEROKU_APP_NAME=whist-dev-server
+            HEROKU_APP_NAME=whist-dev-server
           elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == staging ]]; then
-              HEROKU_APP_NAME=whist-staging-server
+            HEROKU_APP_NAME=whist-staging-server
           elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == prod ]]; then
-              HEROKU_APP_NAME=whist-prod-server
+            HEROKU_APP_NAME=whist-prod-server
           else
               echo 'Error: Invalid branch' && false
           fi
