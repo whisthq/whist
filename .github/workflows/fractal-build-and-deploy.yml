@@ -258,9 +258,9 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          if "prod" in "${{ steps.set-deploy-environment.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          elif "staging" in "${{ steps.set-deploy-environment.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
@@ -331,9 +331,9 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          if "prod" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          elif "staging" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
@@ -387,9 +387,9 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          if "prod" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          elif "staging" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
@@ -405,9 +405,9 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          if "prod" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          elif "staging" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
@@ -635,9 +635,9 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          if "prod" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          elif "staging" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
@@ -653,9 +653,9 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          if "prod" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          elif "staging" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
@@ -748,9 +748,9 @@ jobs:
             sys.exit(0)
 
           # Retrieve Slack webhook
-          if "prod" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          if "prod" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          elif "staging" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
@@ -765,9 +765,9 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          if "prod" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          elif "staging" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
@@ -785,9 +785,9 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          if "prod" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          elif "staging" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
@@ -903,9 +903,9 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          if "prod" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          elif "staging" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
@@ -922,9 +922,9 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          if "prod" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          elif "staging" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
@@ -1377,10 +1377,10 @@ jobs:
         if: needs.client-applications-publish-build-x64-s3.result == 'success' && needs.client-applications-publish-build-arm64-s3.result == 'success'
         run: |
           # Retrieve Slack webhook
-          if "prod" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          if "prod" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
             WEBSITE_URL = "https://whist.com"
-          elif "staging" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          elif "staging" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
             WEBSITE_URL = "https://staging.whist.com"
           else:
@@ -1398,9 +1398,9 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          if "prod" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          elif "staging" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
@@ -1507,9 +1507,9 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          if "prod" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          elif "staging" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
@@ -1526,9 +1526,9 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          if "prod" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          elif "staging" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
@@ -1587,9 +1587,9 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          if "prod" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          elif "staging" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
@@ -1605,9 +1605,9 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          if "prod" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in ${{ needs.fractal-publish-build-config.outputs.branch }}:
+          elif "staging" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
