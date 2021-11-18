@@ -16,9 +16,13 @@ let results = {
   downloadMbps: 0,
   progress: 0,
 }
+let emitted = false
 
 // Handles download measurements
-const handleDownloadMeasurements = (results: any, iterations: number) => {
+const handleDownloadMeasurements = (
+  results: { jitter: number; downloadMbps: number; progress: number },
+  iterations: number
+) => {
   return (measurement: any) => {
     if (measurement.Source === "client") {
       results.downloadMbps = Math.round(measurement.Data.MeanClientMbps)
@@ -44,7 +48,10 @@ const handleDownloadMeasurements = (results: any, iterations: number) => {
 
 const networkAnalysisEvent = new events.EventEmitter()
 const testComplete = (success: boolean) => {
-  networkAnalysisEvent.emit("finished", success ? results : undefined)
+  if (!emitted) {
+    networkAnalysisEvent.emit("finished", success ? results : undefined)
+    emitted = true
+  }
 }
 
 // Callbacks to pass into download speed test

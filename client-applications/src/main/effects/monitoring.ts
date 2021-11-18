@@ -4,7 +4,7 @@ import { interval } from "rxjs"
 
 import config from "@app/config/environment"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
-import { HEARTBEAT_INTERVAL_IN_MINUTES, SENTRY_DSN } from "@app/utils/constants"
+import { HEARTBEAT_INTERVAL_IN_MINUTES, SENTRY_DSN } from "@app/constants/app"
 import { networkAnalyze } from "@app/utils/networkAnalysis"
 
 // Initialize and report Sentry errors in prod
