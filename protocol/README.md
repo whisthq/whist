@@ -333,13 +333,10 @@ type in: `python3 logs-to-text.py <<sesion_id>>` where `<<session_id>>` is the i
 
 This will output two files:
 
-1. `<<session_id>>-client.txt`: These are the sorted logs for the client from that session_id
-2. `<<session_id>>-server.txt`: These are the sorted logs for the server from that session_id
+1. `<<session_id>>-client-<<account>>.txt`: These are the sorted logs for the client from that session_id
+2. `<<session_id>>-server-<<account>>.txt`: These are the sorted logs for the server from that session_id
 
-You will need an logz.io API key to use this. Please contact Phil to get this or to get an admin account so you can generate your own.
-After this, set an environment variable "LOGZ_IO_API_KEY" to your API key via:
-
-`export LOGZ_IO_API_KEY=<<your api key>>`
+Where `<<account>>` is a logz_io account (prod, dev, staging, base).
 
 Note: logz.io currently only retains logs for 5 days, as of 10/29/2021. That said, this will only return the logs from 5 days ago. If this changes,
 please modify the `RETENTION_PERIOD_DAYS` constant in the top of `logs-to-text.py` to reflect this change.
