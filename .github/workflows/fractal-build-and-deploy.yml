@@ -1389,7 +1389,7 @@ jobs:
           from notifications.slack_bot import slack_post
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           TITLE = ":electron: Windows & macOS Applications Deployed :electron:"
-          BODY = f"Windows & macOS Applications deployed via upload to AWS S3 on branch: `{BRANCH_NAME}` - You can download them from {WEBSITE_URL} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"Windows & macOS Applications deployed via upload to AWS S3 on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}` - You can download them from {WEBSITE_URL} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
       - name: Notify Slack on Publishing Client Applications Error
@@ -1406,7 +1406,7 @@ jobs:
 
           from notifications.slack_bot import slack_post
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
-          BODY = "@releases :rotating_light: Deployment failed: could not deploy Windows/macOS Electron applications in `client-applications-publish-build-x64-s3` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "@releases :rotating_light: Deployment failed: could not deploy Windows/macOS Electron applications in `client-applications-publish-build-[x64/arm64]-s3` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   #######################################################################################
