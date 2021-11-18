@@ -63,7 +63,6 @@ Private Functions
 
 bool start_tracking_clipboard_updates();
 bool clipboard_has_target(Atom property_atom, Atom target_atom);
-// DynamicBuffer* get_os_clipboard_data(Atom property_atom, int header_size);
 ClipboardData* get_os_clipboard_data(Atom property_atom, int header_size);
 
 /*
@@ -90,14 +89,12 @@ void unsafe_destroy_clipboard() {
     }
 }
 
-// DynamicBuffer* get_os_clipboard_picture() {
 ClipboardData* get_os_clipboard_picture() {
     /*
         Get an image from the Linux OS clipboard
         NOTE: Assume that clipboard stores pictures in png format when getting
 
         Returns:
-            //(DynamicBuffer*): clipboard data buffer into which image is loaded
             (ClipboardData*): clipboard data buffer into which image is loaded
     */
 
@@ -106,16 +103,12 @@ ClipboardData* get_os_clipboard_picture() {
 
     // is PNG
     if (clipboard_has_target(property_atom, target_atom)) {
-        // DynamicBuffer* db = NULL;
         ClipboardData* cb = NULL;
-        // if ((db = get_os_clipboard_data(property_atom, 0)) == NULL) {
         if ((cb = get_os_clipboard_data(property_atom, 0)) == NULL) {
             LOG_WARNING("Failed to get clipboard data");
             return NULL;
         }
-        // ((ClipboardData*)db->buf)->type = CLIPBOARD_IMAGE;
         cb->type = CLIPBOARD_IMAGE;
-        // return db;
         return cb;
     }
 
@@ -124,13 +117,11 @@ ClipboardData* get_os_clipboard_picture() {
     return NULL;
 }
 
-// DynamicBuffer* get_os_clipboard_string() {
 ClipboardData* get_os_clipboard_string() {
     /*
         Get a string from the Linux OS clipboard
 
         Returns:
-            //(DynamicBuffer*): clipboard data buffer into which string is loaded
             (ClipboardData*): clipboard data buffer into which string is loaded
     */
 
@@ -138,16 +129,12 @@ ClipboardData* get_os_clipboard_string() {
          property_atom = XInternAtom(display, "XSEL_DATA", False);
 
     if (clipboard_has_target(property_atom, target_atom)) {
-        // DynamicBuffer* db = NULL;
         ClipboardData* cb = NULL;
-        // if ((db = get_os_clipboard_data(property_atom, 0)) == NULL) {
         if ((cb = get_os_clipboard_data(property_atom, 0)) == NULL) {
             LOG_WARNING("Failed to get clipboard data");
             return NULL;
         }
-        // ((ClipboardData*)db->buf)->type = CLIPBOARD_TEXT;
         cb->type = CLIPBOARD_TEXT;
-        // return db;
         return cb;
     }
 
@@ -156,13 +143,11 @@ ClipboardData* get_os_clipboard_string() {
     return NULL;
 }
 
-// DynamicBuffer* get_os_clipboard_files() {
 ClipboardData* get_os_clipboard_files() {
     /*
         Get files from the Linux OS clipboard
 
         Returns:
-            //(DynamicBuffer*): clipboard data buffer into which files are loaded
             (ClipboardData*): clipboard data buffer into which files are loaded
     */
 
@@ -170,19 +155,13 @@ ClipboardData* get_os_clipboard_files() {
     Atom property_atom = XInternAtom(display, "XSEL_DATA", False);
 
     if (clipboard_has_target(property_atom, target_atom)) {
-        // DynamicBuffer* db = NULL;
         ClipboardData* cb = NULL;
-        // if ((db = get_os_clipboard_data(property_atom, 0)) == NULL) {
         if ((cb = get_os_clipboard_data(property_atom, 0)) == NULL) {
             LOG_WARNING("Failed to get clipboard data");
             return NULL;
         }
 
-        // ClipboardData* cb = (ClipboardData*)db->buf;
-
         // Increase size by 1 for the null terminator
-        // resize_dynamic_buffer(db, sizeof(ClipboardData) + cb->size + 1);
-        // cb = (ClipboardData*)db->buf;
         cb = realloc_region(cb, sizeof(ClipboardData) + cb->size + 1);
 
         // Add null terminator
@@ -216,15 +195,12 @@ ClipboardData* get_os_clipboard_files() {
 
         cb->type = CLIPBOARD_FILES;
         cb->size = 0;
-        // return db;
         return cb;
     } else {  // request failed, e.g. owner can't convert to the target format
         LOG_WARNING("Can't convert clipboard to target format");
         return NULL;
     }
 }
-
-// static DynamicBuffer* db = NULL;
 
 void unsafe_free_clipboard_buffer(ClipboardData* cb) {
     /*
@@ -234,21 +210,7 @@ void unsafe_free_clipboard_buffer(ClipboardData* cb) {
             cb (ClipboardData*): clipboard buffer data to be freed
     */
 
-    // if (cb->type != CLIPBOARD_NONE) {
-    //     if (db == NULL) {
-    //         LOG_ERROR("Called unsafe_free_clipboard_buffer, but there's nothing to free!");
-    //     } else {
-    //         free_dynamic_buffer(db);
-    //         db = NULL;
-    //     }
-    // } else {
-    //     if (db != NULL) {
-    //         LOG_ERROR("cb->type is CLIPBOARD_NONE, but DynamicBuffer is still allocated?");
-    //         free_dynamic_buffer(db);
-    //         db = NULL;
-    //     }
-    // }
-    if (cb){
+    if (cb) {
         deallocate_region(cb);
     }
 }
@@ -262,18 +224,9 @@ ClipboardData* unsafe_get_os_clipboard() {
                 from the Linux OS clipboard
     */
 
-    // Free the previous dynamic buffer (shouldn't be necessary)
-    // if (db != NULL) {
-    //     LOG_ERROR(
-    //         "Called unsafe_get_os_clipboard, but the caller hasn't called "
-    //         "unsafe_free_clipboard_buffer yet!");
-    //     free_dynamic_buffer(db);
-    //     db = NULL;
-    // }
-
     ClipboardData* cb = NULL;
 
-    // Try to get a string/picture/files clipboard object (Stored in db's buf)
+    // Try to get a string/picture/files clipboard object
     if (cb == NULL) {
         cb = get_os_clipboard_string();
     }
@@ -291,14 +244,9 @@ ClipboardData* unsafe_get_os_clipboard() {
         cb_none.type = CLIPBOARD_NONE;
         cb_none.size = 0;
         return &cb_none;
-    } else {
-        // We expect that the user of get_os_clipboard
-        // will safe_malloc and memcpy his own version if he wants to
-        // save multiple clipboards
-        // Otherwise, we will free on the next call to get_os_clipboard
-        // return (ClipboardData*)db->buf;
-        return cb;
     }
+
+    return cb;
 }
 
 void unsafe_set_os_clipboard(ClipboardData* cb) {
@@ -443,7 +391,6 @@ bool clipboard_has_target(Atom property_atom, Atom target_atom) {
     }
 }
 
-// DynamicBuffer* get_os_clipboard_data(Atom property_atom, int header_size) {
 ClipboardData* get_os_clipboard_data(Atom property_atom, int header_size) {
     /*
         Get the data from the Linux clipboard, as type `property_atom`
@@ -453,7 +400,6 @@ ClipboardData* get_os_clipboard_data(Atom property_atom, int header_size) {
             header_size (int): how many bytes of header to skip over in the OS clipboard
 
         Returns:
-            //(DynamicBuffer*): the clipboard data buffer loaded with the OS clipboard data
             (ClipboardData*): the clipboard data buffer loaded with the OS clipboard data
     */
 
@@ -462,10 +408,6 @@ ClipboardData* get_os_clipboard_data(Atom property_atom, int header_size) {
     long unsigned ressize, restail;
     char* result;
 
-    // DynamicBuffer* db = init_dynamic_buffer(true);
-    // resize_dynamic_buffer(db, sizeof(ClipboardData));
-
-    // ClipboardData* cb = (ClipboardData*)db->buf;
     ClipboardData* cb = allocate_region(sizeof(ClipboardData));
 
     XGetWindowProperty(display, window, property_atom, 0, LONG_MAX / 4, True, AnyPropertyType,
@@ -500,10 +442,8 @@ ClipboardData* get_os_clipboard_data(Atom property_atom, int header_size) {
             }
 
             if (!bad_clipboard) {
-                // Resize the dynamic buffer to that it can fit the new data
-                // resize_dynamic_buffer(db, sizeof(ClipboardData) + cb->size + src_size);
+                // Resize the buffer to that it can fit the new data
                 cb = realloc_region(cb, sizeof(ClipboardData) + cb->size + src_size);
-                // cb = (ClipboardData*)db->buf;
 
                 // Copy the data over and update the size
                 memcpy(cb->data + cb->size, src_data, src_size);
@@ -520,9 +460,7 @@ ClipboardData* get_os_clipboard_data(Atom property_atom, int header_size) {
             src_size -= header_size;
         }
 
-        // Resize the dynamic buffer to that it can fit the new data
-        // resize_dynamic_buffer(db, sizeof(ClipboardData) + cb->size + src_size);
-        // cb = (ClipboardData*)db->buf;
+        // Resize the buffer to that it can fit the new data
         cb = realloc_region(cb, sizeof(ClipboardData) + cb->size + src_size);
 
         // Copy the data over and update the size
@@ -534,11 +472,9 @@ ClipboardData* get_os_clipboard_data(Atom property_atom, int header_size) {
 
     if (bad_clipboard) {
         LOG_WARNING("Clipboard too large!");
-        // free_dynamic_buffer(db);
         deallocate_region(cb);
         return NULL;
     }
 
-    // return db;
     return cb;
 }
