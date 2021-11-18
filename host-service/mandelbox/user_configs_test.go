@@ -63,11 +63,11 @@ func TestUserConfigIntegration(t *testing.T) {
 		t.Fatalf("error copying test directories: %v, output: %s", err, output)
 	}
 
-	testMandelboxData.Lock()
+	testMandelboxData.rwlock.Lock()
 	if err := testMandelboxData.BackupUserConfigs(); err != nil {
 		t.Fatalf("error backing up configs: %v", err)
 	}
-	testMandelboxData.Unlock()
+	testMandelboxData.rwlock.Unlock()
 
 	t.Run("valid token", func(t *testing.T) {
 		// Delete the user config directory so it can be recreated
