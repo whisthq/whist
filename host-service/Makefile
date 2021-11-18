@@ -72,7 +72,7 @@ format:
 
 lint: build
 	(cd ~ && $(GOCMD) install honnef.co/go/tools/cmd/staticcheck@latest)
-	$(GOCMD) list ./... | grep -v /agent/ | xargs staticcheck -set_exit_status
+	$(GOCMD) list ./... | xargs staticcheck
 
 vet: build
 	$(GOCMD) list ./... | grep -v /agent/ | xargs $(GOCMD) vet
