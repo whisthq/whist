@@ -4,11 +4,6 @@ import (
 	"testing"
 )
 
-const (
-	increment = 22
-	decrement = 1
-)
-
 func TestAllocateAndFreeTTYIntegration(t *testing.T) {
 	testTTY, err := Allocate()
 	// Attempt to allocate TTY
@@ -115,13 +110,13 @@ func TestNotAllowedRangeMaxExclusive(t *testing.T) {
 
 func TestNotAllowedRangeOutsideMinMax(t *testing.T) {
 	// Anything greater than maxAllowedTTY should not be in the allowed range
-	moreThanMaxAllowedTTY := uint8(maxAllowedTTY + increment)
+	moreThanMaxAllowedTTY := uint8(maxAllowedTTY + 1)
 	if isInAllowedRange(moreThanMaxAllowedTTY) {
 		t.Fatalf("error checking in allowed range TTY as value more than exclusive max was allowed: %v", moreThanMaxAllowedTTY)
 	}
 
 	// MinAllowedTTY is the lowest bound and anything below should return false
-	lessThanMinAllowedTTY := uint8(minAllowedTTY - decrement)
+	lessThanMinAllowedTTY := uint8(minAllowedTTY - 1)
 	if isInAllowedRange(lessThanMinAllowedTTY) {
 		t.Fatalf("error checking in allowed range TTY as value less than inclusive was allowed: %v", lessThanMinAllowedTTY)
 	}
