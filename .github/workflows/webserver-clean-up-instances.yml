@@ -119,7 +119,7 @@ jobs:
             SLACK_CHANNEL = "#alerts-prod"
           elif "staging" in "${{ matrix.app }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-            slack_channel = "#alerts-staging"
+            SLACK_CHANNEL = "#alerts-staging"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
             SLACK_CHANNEL = "#alerts-dev"
