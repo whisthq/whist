@@ -158,7 +158,11 @@ Defines
 
 // The FEC Ratio to use on all packets
 // (Only used for testing phase of FEC)
+// This refers to the percentage of packets that will be FEC packets
 #define FEC_PACKET_RATIO 0.0
+// Maximum allowed FEC ratio. Used for allocation of static buffers
+// Don't let this get too close to 1, e.g. 0.99, or memory usage will explode
+#define MAX_FEC_RATIO 0.7
 
 #define ACK_REFRESH_MS 50
 

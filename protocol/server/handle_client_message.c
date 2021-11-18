@@ -211,19 +211,28 @@ static int handle_bitrate_message(whist_server_state *state, WhistClientMessage 
     LOG_INFO("MSG RECEIVED FOR MBPS: %f/%f/%f", wcmsg->bitrate_data.bitrate / 1024.0 / 1024.0,
              wcmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0,
              wcmsg->bitrate_data.fec_packet_ratio);
-    // Clamp the bitrates, preferring to clamp at MAX
-    wcmsg->bitrate_data.bitrate =
-        min(max(wcmsg->bitrate_data.bitrate, MINIMUM_BITRATE), MAXIMUM_BITRATE);
-    wcmsg->bitrate_data.burst_bitrate =
+
+    // Clamp the bitrates & fec ratio, preferring to clamp at MAX
+    int avg_bitrate = min(max(wcmsg->bitrate_data.bitrate, MINIMUM_BITRATE), MAXIMUM_BITRATE);
+    int burst_bitrate =
         min(max(wcmsg->bitrate_data.burst_bitrate, MINIMUM_BURST_BITRATE), MAXIMUM_BURST_BITRATE);
-    LOG_INFO("Clamped to %f/%f", wcmsg->bitrate_data.bitrate / 1024.0 / 1024.0,
-             wcmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0);
-    // Set the new bitrate data (for the video encoder)
-    state->max_bitrate = wcmsg->bitrate_data.bitrate;
+    double fec_packet_ratio = min(max(wcmsg->bitrate_data.fec_packet_ratio, 0.0), MAX_FEC_RATIO);
+    // Log an error if clamping was necessary
+    if (avg_bitrate != wcmsg->bitrate_data.bitrate ||
+        burst_bitrate != wcmsg->bitrate_data.burst_bitrate ||
+        fec_packet_ratio != wcmsg->bitrate_data.fec_packet_ratio) {
+        LOG_ERROR("Bitrate MSG forcefully clamped to %f/%f/%f!",
+                  wcmsg->bitrate_data.bitrate / 1024.0 / 1024.0,
+                  wcmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0,
+                  wcmsg->bitrate_data.fec_packet_ratio);
+    }
+
+    // Set the new video encoding bitrate,
+    // using only the bandwidth that isn't reserved for FEC packets
+    state->max_bitrate = avg_bitrate * (1.0 - fec_packet_ratio);
 
     // Update the UDP Context's burst bitrate and fec ratio
-    udp_update_bitrate_settings(&state->client.udp_context, wcmsg->bitrate_data.burst_bitrate,
-                                wcmsg->bitrate_data.fec_packet_ratio);
+    udp_update_bitrate_settings(&state->client.udp_context, burst_bitrate, fec_packet_ratio);
 
     // Update the encoder using the new bitrate
     state->update_encoder = true;
