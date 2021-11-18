@@ -42,10 +42,7 @@ export default flow(
     }
 
     // Get URL from command line
-    let initialUrl = ""
-    if (process.argv.length >= 2) {
-      initialUrl = app.process.argv[1]
-    }
+    const initialUrl = process.env.INITIAL_URL
 
     const host = hostSpinUpFlow(
       zip([trigger, create.success]).pipe(
