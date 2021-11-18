@@ -46,6 +46,7 @@ if (require.main === module) {
       type: "string",
       requiresArg: true,
       demandOption: false,
+      default: "",
     })
     .help().argv
   start(
