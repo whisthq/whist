@@ -100,6 +100,7 @@ bool clipboard_action_is_active(FractalClipboardActionType check_action_type) {
         !*(current_clipboard_activity.aborting_ptr) &&
         current_clipboard_activity.complete_ptr != NULL &&
         !*(current_clipboard_activity.complete_ptr) &&
+        current_clipboard_activity.clipboard_buffer_ptr != NULL &&
         *(current_clipboard_activity.clipboard_buffer_ptr) != NULL
     ) {
         return true;
