@@ -67,6 +67,7 @@ jobs:
           fi
 
           echo "Sentry environment is set to: $SENTRY_DEPLOY_ENVIRONMENT"
+            echo "Slack is set to: $SLACK_WEBHOOK"
           echo "::set-output name=sentry_deploy_environment::$SENTRY_DEPLOY_ENVIRONMENT"
           echo "::set-output name=slack_webhook::$SLACK_WEBHOOK"
 
