@@ -52,7 +52,7 @@ func ExtractTarLz4(file []byte, dir string) (int64, error) {
 			return totalBytes, utils.MakeError("error reading tar header: %v", err)
 		}
 
-		// Not certain why this case happens, but causes segfaults if removed
+		// This really should not happen
 		if header == nil {
 			break
 		}
