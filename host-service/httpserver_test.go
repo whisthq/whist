@@ -13,10 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fractal/fractal/host-service/auth"
 	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/utils"
-	"github.com/golang-jwt/jwt/v4"
 )
 
 type JSONTransportResult struct {
@@ -235,70 +233,4 @@ func generateTestJSONTransportRequest(requestBody JSONTransportRequest) (*http.R
 	}
 
 	return httpRequest, nil
-}
-
-// generateTestDrainRequest creates an HTTP POST request for /drain_and_shutdown
-func generateTestDrainRequest() (*http.Request, error) {
-	claims := auth.FractalClaims{
-		Audience: auth.Audience{"test"},
-		Scopes:   auth.Scopes{"backend"},
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte("test"))
-	if err != nil {
-		return nil, utils.MakeError("error signing test token: %v", err)
-	}
-
-	testRequest := map[string]interface{}{
-		"auth_secret": tokenString,
-	}
-	jsonData, err := json.Marshal(testRequest)
-	if err != nil {
-		return nil, utils.MakeError("error marshalling json: %v", err)
-	}
-
-	httpRequest, err := http.NewRequest(http.MethodPost,
-		utils.Sprintf("https://localhost:%d/drain_and_shutdown", PortToListen),
-		bytes.NewBuffer(jsonData),
-	)
-	if err != nil {
-		return nil, utils.MakeError("error creating post request: %v", err)
-	}
-
-	return httpRequest, nil
-}
-
-// mockAuthenticateRequest pretends to be the authenticateAndParseRequest function
-// but skips JWT signature verification steps to allow for unit testing
-// without real Auth0 tokens
-func mockAuthenticateRequest(w http.ResponseWriter, r *http.Request, s ServerRequest, authorizeAsBackend bool) (err error) {
-	// Get body of request
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Malformed body", http.StatusBadRequest)
-		return utils.MakeError("Error getting body from request on %s to URL %s: %s", r.Host, r.URL, err)
-	}
-
-	// Extract only the auth_secret field from a raw JSON unmarshalling that
-	// delays as much decoding as possible
-	var rawmap map[string]*json.RawMessage
-	err = json.Unmarshal(body, &rawmap)
-	if err != nil {
-		http.Error(w, "Malformed body", http.StatusBadRequest)
-		return utils.MakeError("Error raw-unmarshalling JSON body sent on %s to URL %s: %s", r.Host, r.URL, err)
-	}
-
-	// Skip the authentication steps for mock
-
-	// Now, actually do the unmarshalling into the right object type
-	err = json.Unmarshal(body, s)
-	if err != nil {
-		http.Error(w, "Malformed body", http.StatusBadRequest)
-		return utils.MakeError("Could not fully unmarshal the body of a request sent on %s to URL %s: %s", r.Host, r.URL, err)
-	}
-
-	// Set up the result channel
-	s.createResultChan()
-
-	return nil
 }

@@ -133,6 +133,9 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	filePath := path.Join(unpackedConfigDir, "tempt-cookies")
 
 	err := os.WriteFile(filePath, []byte(cookieJSON), 0777)
+	if err != nil {
+		t.Fatalf("error writing cookie file: %v", err)
+	}
 
 	testFileContents, err := ioutil.ReadFile(filePath)
 
@@ -155,7 +158,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	}
 
 	// Check contents match
-	if string(testFileContents) != string(matchingFileBuf.Bytes()) {
+	if string(testFileContents) != matchingFileBuf.String() {
 		t.Errorf("file contents don't match for file %s: '%s' vs '%s'", filePath, testFileContents, matchingFileBuf.Bytes())
 	}
 

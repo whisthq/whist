@@ -52,13 +52,13 @@ func (sender *logzioSender) send(payload string, msgType logzioMessageType) {
 	})
 
 	if err != nil {
-		log.Printf(utils.ColorRed(utils.Sprintf("Couldn't marshal payload for logz.io. Error: %s", err)))
+		log.Print(utils.ColorRed(utils.Sprintf("Couldn't marshal payload for logz.io. Error: %s", err)))
 		return
 	}
 
 	err = (*logzio.LogzioSender)(sender).Send(msg)
 	if err != nil {
-		log.Printf(utils.ColorRed(utils.Sprintf("Couldn't send payload to logz.io. Error: %s", err)))
+		log.Print(utils.ColorRed(utils.Sprintf("Couldn't send payload to logz.io. Error: %s", err)))
 		return
 	}
 }

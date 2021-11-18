@@ -514,7 +514,6 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		image = utils.Sprintf("ghcr.io/fractal/%s/%s:current-build", metadata.GetAppEnvironmentLowercase(), AppName)
 	}
 
-	
 	// We now create the underlying docker container for this mandelbox.
 	exposedPorts := make(dockernat.PortSet)
 	exposedPorts[dockernat.Port("32262/tcp")] = struct{}{}
@@ -742,7 +741,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logger.Errorf("Error writing config.json file for protocol: %v", err)
 	}
 
-	<- userInitialBrowserDataDownloadComplete
+	<-userInitialBrowserDataDownloadComplete
 
 	// Unblocks fractal-startup.sh to start symlink loaded user configs
 	err = mandelbox.MarkReady()
@@ -1141,7 +1140,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 		// in this package, and the low-level authentication, parsing, etc. of
 		// requests in `httpserver`.
 		case serverevent := <-httpServerEvents:
-			switch serverevent.(type) {
+			switch serverevent := serverevent.(type) {
 			// TODO: actually handle panics in these goroutines
 			case *JSONTransportRequest:
 				if !metadata.IsLocalEnvWithoutDB() {
@@ -1151,7 +1150,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					// If running on a local environment, disable any pubsub logic. We have to create a subscription request
 					// that mocks the Hasura subscription event. Doing this avoids the need of setting up a Hasura server and
 					// postgres database on the development instance.
-					jsonReq := serverevent.(*JSONTransportRequest)
+					jsonReq := serverevent
 
 					userID, err := metadata.GetUserID()
 					if err != nil {
@@ -1186,11 +1185,11 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			}
 
 		case subscriptionEvent := <-subscriptionEvents:
-			switch subscriptionEvent.(type) {
+			switch subscriptionEvent := subscriptionEvent.(type) {
 			// TODO: actually handle panics in these goroutines
 			case *subscriptions.MandelboxInfoEvent:
 				go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient,
-					subscriptionEvent.(*subscriptions.MandelboxInfoEvent), transportRequestMap, transportMapLock)
+					subscriptionEvent, transportRequestMap, transportMapLock)
 
 			case *subscriptions.InstanceStatusEvent:
 				// Don't do this in a separate goroutine, since there's no reason to.

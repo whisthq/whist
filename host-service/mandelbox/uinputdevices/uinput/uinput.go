@@ -99,7 +99,7 @@ func validateDevicePath(path string) error {
 }
 
 func validateUinputName(name []byte) error {
-	if name == nil || len(name) == 0 {
+	if len(name) == 0 {
 		return errors.New("device name may not be empty")
 	}
 	if len(name) > uinputMaxNameSize {
