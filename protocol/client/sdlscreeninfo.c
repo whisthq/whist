@@ -38,31 +38,31 @@ int get_window_virtual_height(SDL_Window *window) {
     return h;
 }
 
-int get_virtual_screen_width() {
+int get_virtual_screen_width(SDL_Window *window) {
     SDL_DisplayMode dm;
     //    int res = SDL_GetCurrentDisplayMode(0, &DM);
-    int res = SDL_GetDesktopDisplayMode(0, &dm);
+    int res = SDL_GetDesktopDisplayMode(SDL_GetWindowDisplayIndex(window), &dm);
     if (res) LOG_WARNING("SDL_GetCurrentDisplayMode failed: %s", SDL_GetError());
     return dm.w;
 }
 
-int get_virtual_screen_height() {
+int get_virtual_screen_height(SDL_Window *window) {
     SDL_DisplayMode dm;
     //    int res = SDL_GetCurrentDisplayMode(0, &DM);
-    int res = SDL_GetDesktopDisplayMode(0, &dm);
+    int res = SDL_GetDesktopDisplayMode(SDL_GetWindowDisplayIndex(window), &dm);
     if (res) LOG_WARNING("SDL_GetCurrentDisplayMode failed: %s", SDL_GetError());
     return dm.h;
 }
 
 int get_pixel_screen_width(SDL_Window *window) {
-    int w = (int)(1.0 * get_virtual_screen_width() * get_window_pixel_width(window) /
+    int w = (int)(1.0 * get_virtual_screen_width(window) * get_window_pixel_width(window) /
                       get_window_virtual_width(window) +
                   0.5);
     return w;
 }
 
 int get_pixel_screen_height(SDL_Window *window) {
-    int h = (int)(1.0 * get_virtual_screen_height() * get_window_pixel_height(window) /
+    int h = (int)(1.0 * get_virtual_screen_height(window) * get_window_pixel_height(window) /
                       get_window_virtual_height(window) +
                   0.5);
     return h;
