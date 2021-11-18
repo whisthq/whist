@@ -125,7 +125,7 @@ func TestNotAllowedRangeOutsideMinMax(t *testing.T) {
 func TestAllowedRangeMaxMinusOne(t *testing.T) {
 	// MaxAllowedTTY is exclusive meaning that one less is allowed
 	oneLessThanMaxAllowedTTY := uint8(maxAllowedTTY - 1)
-	if !isInAllowedRange(minAllowedTTY) {
+	if !isInAllowedRange(oneLessThanMaxAllowedTTY) {
 		t.Fatalf("error checking in allowed range TTY as one less than exclusive max was not allowed: %v", oneLessThanMaxAllowedTTY)
 	}
 }
