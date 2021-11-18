@@ -24,7 +24,7 @@ Includes
 #include <fractal/core/fractal.h>
 #include <fractal/utils/clock.h>
 #include <fractal/logging/logging.h>
-#include <fractal/utils/x11_window_info.h>
+#include <fractal/utils/window_info.h>
 #include "client_utils.h"
 #include "audio.h"
 #include "network.h"

@@ -69,22 +69,6 @@ int client_parse_args(int argc, char* argv[]);
 int read_piped_arguments(bool* keep_waiting);
 
 /**
- * @brief                          Initialize the Windows socket library
- *                                 (Does not do anything for non-Windows)
- *
- * @returns                        Returns -1 on failure, 0 on success
- */
-int init_socket_library(void);
-
-/**
- * @brief                          Destroy the Windows socket library
- *                                 (Does not do anything for non-Windows)
- *
- * @returns                        Returns -1 on failure, 0 on success
- */
-int destroy_socket_library(void);
-
-/**
  * @brief                          Init any allocated memory for parsed args
  *
  * @returns                        Returns -1 on failure, 0 on success

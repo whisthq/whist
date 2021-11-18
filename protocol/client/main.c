@@ -304,10 +304,6 @@ int main(int argc, char* argv[]) {
     srand(rand() * (unsigned int)time(NULL) + rand());
     uid = rand();
 
-    if (init_socket_library() != 0) {
-        LOG_FATAL("Failed to initialize socket library.");
-    }
-
     LOG_INFO("Client protocol started.");
 
     // Initialize the error monitor, and tell it we are the client.
@@ -404,7 +400,6 @@ int main(int argc, char* argv[]) {
         if (!window) {
             window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename);
             if (!window) {
-                destroy_socket_library();
                 LOG_FATAL("Failed to initialize SDL");
             }
         }
@@ -585,7 +580,6 @@ int main(int argc, char* argv[]) {
     // Destroy any resources being used by the client
     LOG_INFO("Closing Client...");
     destroy_sdl((SDL_Window*)window);
-    destroy_socket_library();
     free_parsed_args();
     destroy_logger();
 

@@ -130,48 +130,40 @@ void handle_fractal_client_message(whist_server_state* state, FractalClientMessa
     }
 }
 
-void get_fractal_client_messages(whist_server_state* state, bool get_tcp, bool get_udp) {
-    /*
-        Gets all pending Whist TCP and/or UDP messages
-
-        Arguments:
-            get_tcp (bool): true if we want to get TCP, false otherwise
-            get_udp (bool): true if we want to get UDP, false otherwise
-    */
-
+// Gets all pending Whist UDP messages
+void get_fractal_udp_client_messages(whist_server_state* state) {
     if (!state->client.is_active) {
         return;
     }
 
-    // Get packet(s)!
-    if (get_udp) {
-        FractalClientMessage* fcmsg = NULL;
-        FractalClientMessage local_fcmsg;
-        size_t fcmsg_size;
+    FractalClientMessage fcmsg;
+    size_t fcmsg_size;
 
-        // If received a UDP message
-        if (try_get_next_message_udp(&state->client, &local_fcmsg, &fcmsg_size) == 0 &&
-            fcmsg_size != 0) {
-            fcmsg = &local_fcmsg;
-            handle_fractal_client_message(state, fcmsg);
-        }
+    // If received a UDP message
+    if (try_get_next_message_udp(&state->client, &fcmsg, &fcmsg_size) == 0 && fcmsg_size != 0) {
+        handle_fractal_client_message(state, &fcmsg);
+    }
+}
+
+// Gets all pending Whist TCP messages
+void get_fractal_tcp_client_messages(whist_server_state* state) {
+    if (!state->client.is_active) {
+        return;
     }
 
-    if (get_tcp) {
-        read_lock(&state->client.tcp_rwlock);
-        FractalPacket* tcp_packet = NULL;
-        // If received a TCP message
-        if (try_get_next_message_tcp(&state->client, &tcp_packet) == 0 && tcp_packet != NULL) {
-            FractalClientMessage* fcmsg = (FractalClientMessage*)tcp_packet->data;
-            LOG_INFO("TCP Packet type: %d", fcmsg->type);
-            handle_fractal_client_message(state, fcmsg);
-        }
-        // Free the tcp packet if we received one
-        if (tcp_packet) {
-            free_packet(&state->client.tcp_context, tcp_packet);
-        }
-        read_unlock(&state->client.tcp_rwlock);
+    read_lock(&state->client.tcp_rwlock);
+
+    FractalPacket* tcp_packet = NULL;
+    try_get_next_message_tcp(&state->client, &tcp_packet);
+    // If we get a TCP client message, handle it
+    if (tcp_packet) {
+        FractalClientMessage* fcmsg = (FractalClientMessage*)tcp_packet->data;
+        LOG_INFO("TCP Packet type: %d", fcmsg->type);
+        handle_fractal_client_message(state, fcmsg);
+        free_packet(&state->client.tcp_context, tcp_packet);
     }
+
+    read_unlock(&state->client.tcp_rwlock);
 }
 
 int multithreaded_sync_tcp_packets(void* opaque) {
@@ -197,7 +189,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         update_client_active_status(&state->client, &assuming_client_active);
 
         // RECEIVE TCP PACKET HANDLER
-        get_fractal_client_messages(state, true, false);
+        get_fractal_tcp_client_messages(state);
 
         // SEND TCP PACKET HANDLERS:
 
@@ -257,6 +249,8 @@ int main(int argc, char* argv[]) {
     whist_server_config config;
 
     fractal_init_multithreading();
+
+    init_networking();
     init_logger();
     init_statistic_logger();
 
@@ -276,8 +270,6 @@ int main(int argc, char* argv[]) {
     // Initialize the error monitor, and tell it we are the server.
     error_monitor_initialize(false);
 
-    init_networking();
-
 #if defined(_WIN32)
     // set Windows DPI
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
@@ -287,14 +279,6 @@ int main(int argc, char* argv[]) {
     server_state.connection_id = rand();
 
     LOG_INFO("Whist server revision %s", fractal_git_revision());
-
-// initialize the windows socket library if this is a windows client
-#ifdef _WIN32
-    WSADATA wsa;
-    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-        LOG_FATAL("Failed to initialize Winsock with error code: %d.", WSAGetLastError());
-    }
-#endif
 
     server_state.input_device = create_input_device();
     if (!server_state.input_device) {
@@ -336,9 +320,7 @@ int main(int argc, char* argv[]) {
 
     LOG_INFO("Receiving packets...");
 
-#ifdef __linux__
-    init_x11_window_info_getter();
-#endif
+    init_window_info_getter();
 
     clock ack_timer;
     start_timer(&ack_timer);
@@ -364,7 +346,7 @@ int main(int argc, char* argv[]) {
         }
 
         // Get UDP messages
-        get_fractal_client_messages(&server_state, false, true);
+        get_fractal_udp_client_messages(&server_state);
 
         if (get_timer(ack_timer) > 5) {
             if (get_using_stun()) {
@@ -376,10 +358,7 @@ int main(int argc, char* argv[]) {
             start_timer(&ack_timer);
         }
 
-        // only poll for window name and if it's full-screen if
-        // we're running on a Linux server, as Windows window title is not implemented
-#ifdef __linux__
-        if (get_timer(window_fullscreen_timer) > 0.1) {
+        if (get_timer(window_fullscreen_timer) > 50.0 / MS_IN_SECOND) {
             // This is the cached fullscreen state. We only send state change events
             // to the client if the fullscreen value has changed.
             static bool cur_fullscreen = false;
@@ -390,52 +369,46 @@ int main(int argc, char* argv[]) {
                 } else {
                     LOG_INFO("Window is no longer fullscreen. Broadcasting fullscreen message.");
                 }
-                FractalServerMessage* fsmsg = safe_malloc(sizeof(FractalServerMessage));
-                memset(fsmsg, 0, sizeof(FractalServerMessage));
-                fsmsg->type = SMESSAGE_FULLSCREEN;
-                fsmsg->fullscreen = (int)fullscreen;
-                if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, (uint8_t*)fsmsg,
-                                         sizeof(FractalServerMessage)) < 0) {
-                    LOG_ERROR("Failed to broadcast fullscreen message.");
-                } else {
+                FractalServerMessage fsmsg = {0};
+                fsmsg.type = SMESSAGE_FULLSCREEN;
+                fsmsg.fullscreen = (int)fullscreen;
+                if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, &fsmsg,
+                                         sizeof(FractalServerMessage)) == 0) {
                     LOG_INFO("Sent fullscreen message!");
                     cur_fullscreen = fullscreen;
+                } else {
+                    LOG_ERROR("Failed to broadcast fullscreen message.");
                 }
-                free(fsmsg);
             }
             start_timer(&window_fullscreen_timer);
         }
 
-        if (get_timer(window_name_timer) > 0.1) {  // poll window name every 100ms
-            char name[WINDOW_NAME_MAXLEN + 1];
-            if (get_focused_window_name(name) == 0) {
-                if (server_state.client_joined_after_window_name_broadcast ||
-                    (assuming_client_active && strcmp(name, cur_window_name) != 0)) {
-                    LOG_INFO("Window title changed. Broadcasting window title message.");
-                    size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(name);
-                    FractalServerMessage* fsmsg_response = safe_malloc(fsmsg_size);
-                    memset(fsmsg_response, 0, sizeof(*fsmsg_response));
-                    fsmsg_response->type = SMESSAGE_WINDOW_TITLE;
-                    memcpy(&fsmsg_response->window_title, name, sizeof(name));
-                    if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE,
-                                             (uint8_t*)fsmsg_response, (int)fsmsg_size) < 0) {
-                        LOG_WARNING("Failed to broadcast window title message.");
-                    } else {
-                        LOG_INFO("Sent window title message!");
-                        safe_strncpy(cur_window_name, name, sizeof(cur_window_name));
-                        server_state.client_joined_after_window_name_broadcast = false;
-                    }
-                    free(fsmsg_response);
+        if (get_timer(window_name_timer) > 50.0 / MS_IN_SECOND) {
+            char* name = NULL;
+            bool new_window_name = get_focused_window_name(&name);
+            if (name != NULL && (server_state.client_joined_after_window_name_broadcast ||
+                                 (assuming_client_active && new_window_name))) {
+                LOG_INFO("%sBroadcasting window title message.",
+                         new_window_name ? "Window title changed. " : "");
+                static char fsmsg_buf[sizeof(FractalServerMessage) + WINDOW_NAME_MAXLEN + 1];
+                FractalServerMessage* fsmsg = (void*)fsmsg_buf;
+                fsmsg->type = SMESSAGE_WINDOW_TITLE;
+                strncpy(fsmsg->window_title, name, WINDOW_NAME_MAXLEN + 1);
+                if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, (uint8_t*)fsmsg,
+                                         sizeof(FractalServerMessage) + strlen(name) + 1) == 0) {
+                    LOG_INFO("Sent window title message!");
+                    server_state.client_joined_after_window_name_broadcast = false;
+                } else {
+                    LOG_WARNING("Failed to broadcast window title message.");
                 }
             }
             start_timer(&window_name_timer);
         }
-#endif
 
 #ifndef _WIN32
 #define URI_HANDLER_FILE "/home/fractal/.teleport/handled-uri"
 #define HANDLED_URI_MAXLEN 4096
-        if (get_timer(uri_handler_timer) > 0.1) {
+        if (get_timer(uri_handler_timer) > 50.0 / MS_IN_SECOND) {
             if (!access(URI_HANDLER_FILE, R_OK)) {
                 // If the handler file exists, read it and delete the file
                 int fd = open(URI_HANDLER_FILE, O_RDONLY);
@@ -468,9 +441,7 @@ int main(int argc, char* argv[]) {
 
     destroy_input_device(server_state.input_device);
 
-#ifdef __linux__
-    destroy_x11_window_info_getter();
-#endif
+    destroy_window_info_getter();
 
     fractal_wait_thread(send_video_thread, NULL);
     fractal_wait_thread(send_audio_thread, NULL);
@@ -483,10 +454,6 @@ int main(int argc, char* argv[]) {
     if (quit_client(&server_state.client) != 0) {
         LOG_ERROR("Failed to quit clients.");
     }
-
-#ifdef _WIN32
-    WSACleanup();
-#endif
 
     LOG_INFO("Protocol has shutdown gracefully");
 

@@ -1,19 +1,24 @@
-#ifndef WINDOW_NAME_H
-#define WINDOW_NAME_H
+#ifndef WINDOW_INFO_H
+#define WINDOW_INFO_H
 /**
  * Copyright 2021 Whist Technologies, Inc.
- * @file x11_window_info.h
+ * @file window_info.h
  * @brief This file contains all the code for getting the name of a window.
+
 ============================
 Usage
 ============================
 
-init_x11_window_info_getter();
+init_window_info_getter();
 
 char name[WINDOW_NAME_MAXLEN + 1];
 get_focused_window_name(name);
 
-destroy_x11_window_info_getter();
+destroy_window_info_getter();
+
+// Note that this library is not thread-safe,
+// there must only be one window_info_getter live at any one time
+
 */
 
 /*
@@ -42,25 +47,25 @@ Public Functions
 */
 
 /**
- * @brief                          Initialize variables required to get window names.
+ * @brief                          Initialize window info getter
  *
  */
-void init_x11_window_info_getter();
+void init_window_info_getter();
 
 /**
  * @brief                          Get the name of the focused window.
  *
- * @param name_return              Address to write name. Should have at least WINDOW_NAME_MAXLEN +
- *                                 1 bytes available.
+ * @param name_return              Address to write window title name to.
  *
- * @returns                        0 on success, any other int on failure.
+ * @returns                        true if the window name is new,
+ *                                 false if the window name is the same or on failure
  */
-int get_focused_window_name(char* name_return);
+bool get_focused_window_name(char** name_return);
 
 /**
  * @brief                          Query whether the focused window is fullscreen or not.
  *
- * @returns                        0 if not fullscreen, 1 if fullscreen.
+ * @returns                        false if not fullscreen, true if fullscreen.
  *
  * @note                           By "fullscreen", we mean that the window is rendering directly
  *                                 to the screen, not through the window manager. Examples include
@@ -69,9 +74,9 @@ int get_focused_window_name(char* name_return);
 bool is_focused_window_fullscreen();
 
 /**
- * @brief                          Destroy variables that were initialized.
+ * @brief                          Destroy window info getter
  *
  */
-void destroy_x11_window_info_getter();
+void destroy_window_info_getter();
 
-#endif  // WINDOW_NAME_H
+#endif  // WINDOW_INFO_H
