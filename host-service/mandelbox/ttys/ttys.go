@@ -66,8 +66,8 @@ func Free(tty TTY) {
 	ttymapLock.Lock()
 	defer ttymapLock.Unlock()
 
-	v := ttymap[tty]
-	if v != reserved {
+	v, exists := ttymap[tty]
+	if exists && v != reserved {
 		delete(ttymap, tty)
 		logger.Infof("TTY: freed tty %v", tty)
 	}
