@@ -23,7 +23,7 @@ const navigation = {
   ],
   resources: [
     { name: "Join our Discord", href: "https://discord.com/invite/HjPpDGvEeA" },
-    { name: "Blog", href: "https://fractal.medium.com" },
+    { name: "Blog", href: "https://whisthq.medium.com" },
     { name: "Support", href: "/contact" },
     {
       name: "Careers",
@@ -42,7 +42,7 @@ const navigation = {
     },
     {
       name: "Medium",
-      href: "https://fractal.medium.com/",
+      href: "https://whisthq.medium.com/",
       icon: FaMediumM,
     },
     {
