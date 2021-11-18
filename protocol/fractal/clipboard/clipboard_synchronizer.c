@@ -504,14 +504,6 @@ ClipboardData* pull_clipboard_chunk() {
 
         NOTE: this should typically be called in a loop of `while not NULL`,
               or similar to get all the chunks in the OS clipboard
-        NOTE 2: this function should only be called from one thread. We have
-              designed it this way to avoid acquiring
-              `current_clipboard_activity.clipboard_action_mutex` repeatedly
-              when the OS clipboard hasn't been updated. If there is a change
-              to be made that requires this function to be able to be called
-              from multiple threads, move the mutex lock call marked by the
-              comment starting "NOTE 2:" to above the `has_os_clipboard_updated()`
-              condition.
     */
 
     if (!current_clipboard_activity.is_initialized) {
@@ -519,35 +511,19 @@ ClipboardData* pull_clipboard_chunk() {
         return NULL;
     }
 
+    // A bit unfortunate that we have to lock this mutex with every call to `pull_clipboard_chunk`,
+    //     especially since not every call to this function yields a chunk and it is called
+    //     repeatedly in a loop, but it's the best we can do for now.
+    fractal_lock_mutex(current_clipboard_activity.clipboard_action_mutex);
+
     // If clipboard has updated, start new transfer
-    // We don't want to wait around for `start_clipboard_transfer` to finish on this
-    //     function call because we would hang the thread
     if (has_os_clipboard_updated()) {
-        // NOTE 2: MOVE THIS LOCK UP IF CHANGING THIS FUNCTION'S CALL DESIGN
-        // We can lock inside here instead of outside `has_os_clipboard_updated()`
-        //     because we guarantee that `pull_clipboard_chunk()` is only called
-        //     from one thread. This reduces the number of unnecessary mutex
-        //     locks performed.
-        fractal_lock_mutex(current_clipboard_activity.clipboard_action_mutex);
         start_clipboard_transfer(CLIPBOARD_ACTION_PULL);
         fractal_unlock_mutex(current_clipboard_activity.clipboard_action_mutex);
         return NULL;
     }
 
     // If we're not actively pulling from clipboard, then return immediately
-    if (!clipboard_action_is_active(CLIPBOARD_ACTION_PULL)) {
-        return NULL;
-    }
-
-    fractal_lock_mutex(current_clipboard_activity.clipboard_action_mutex);
-
-    // If we're not actively pulling from clipboard, then return immediately
-    //     We have to check twice: once before the mutex lock and once after
-    //     because we are trying to reduce the number of mutex locks that
-    //     are executed when checking whether there are chunks to pull from
-    //     the clipboard. To avoid a larger number of unnecessary mutex locks,
-    //     we have the check before the mutex is locked. To prevent race
-    //     conditions, we have the same check after the mutex is locked.
     if (!clipboard_action_is_active(CLIPBOARD_ACTION_PULL)) {
         fractal_unlock_mutex(current_clipboard_activity.clipboard_action_mutex);
         return NULL;
