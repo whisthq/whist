@@ -47,12 +47,8 @@ if [[ -f $FRACTAL_JSON_FILE ]]; then
   fi
   if [ "$( jq 'has("initial_url")' < $FRACTAL_JSON_FILE )" == "true"  ]; then
     RECEIVED_URL="$(jq '.initial_url' < $FRACTAL_JSON_FILE)"
-    # Checking for valid URL. https://stackoverflow.com/questions/3183444/check-for-valid-link-url
-    regex='(https?|ftp|file)://[-A-Za-z0-9\+&@#/%?=~_|!:,.;]*[-A-Za-z0-9\+&@#/%=~_|]'
-    if [[ $RECEIVED_URL =~ $regex ]]; then
-      # Remove potential quotation marks
-      INITIAL_URL=$(echo $RECEIVED_URL | tr -d '"')
-    fi
+    # Remove potential quotation marks
+    INITIAL_URL=$(echo $RECEIVED_URL | tr -d '"')
   fi
 fi
 
