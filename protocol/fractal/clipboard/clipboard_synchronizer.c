@@ -536,6 +536,19 @@ ClipboardData* pull_clipboard_chunk() {
 
     // If we're not actively pulling from clipboard, then return immediately
     if (!clipboard_action_is_active(CLIPBOARD_ACTION_PULL)) {
+        return NULL;
+    }
+
+    fractal_lock_mutex(current_clipboard_activity.clipboard_action_mutex);
+
+    // If we're not actively pulling from clipboard, then return immediately
+    //     We have to check twice: once before the mutex lock and once after
+    //     because we are trying to reduce the number of mutex locks that
+    //     are executed when checking whether there are chunks to pull from
+    //     the clipboard. To avoid a larger number of unnecessary mutex locks,
+    //     we have the check before the mutex is locked. To prevent race
+    //     conditions, we have the same check after the mutex is locked.
+    if (!clipboard_action_is_active(CLIPBOARD_ACTION_PULL)) {
         fractal_unlock_mutex(current_clipboard_activity.clipboard_action_mutex);
         return NULL;
     }
