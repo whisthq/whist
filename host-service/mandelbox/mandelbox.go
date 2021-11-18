@@ -46,6 +46,14 @@ type Mandelbox interface {
 	AssignGPU() error
 	GetGPU() gpus.Index
 
+	// Lock the mandelbox for writing
+	Lock()
+	Unlock()
+
+	// Lock the mandelbox for reading
+	RLock()
+	RUnlock()
+
 	// RegisterCreation is used to tell us the mapping between Docker IDs
 	// and MandelboxIDs (which are used to track mandelboxes before they
 	// are actually started, and therefore assigned a Docker runtime ID).
@@ -154,8 +162,8 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		untrackMandelbox(mandelbox)
 		logger.Infof("Successfully untracked mandelbox %s", mandelbox.ID)
 
-		mandelbox.rwlock.Lock()
-		defer mandelbox.rwlock.Unlock()
+		mandelbox.Lock()
+		defer mandelbox.Unlock()
 
 		// Free port bindings
 		portbindings.Free(mandelbox.portBindings)
@@ -245,63 +253,68 @@ type mandelboxData struct {
 	portBindings []portbindings.PortBinding
 }
 
-// We do not lock here because the mandelboxID NEVER changes.
+// Lock locks the mandelbox mutex for writing.
+func (mandelbox *mandelboxData) Lock() {
+	mandelbox.rwlock.Lock()
+}
+
+// Unlock unlocks the mandelbox mutex for writing.
+func (mandelbox *mandelboxData) Unlock() {
+	mandelbox.rwlock.Unlock()
+}
+
+// RLock locks the mandelbox mutex for reading.
+func (mandelbox *mandelboxData) RLock() {
+	mandelbox.rwlock.RLock()
+}
+
+// RUnlock unlocks the mandelbox mutex for reading.
+func (mandelbox *mandelboxData) RUnlock() {
+	mandelbox.rwlock.RUnlock()
+}
+
+// GetID returns the mandelbox ID.
 func (mandelbox *mandelboxData) GetID() types.MandelboxID {
 	return mandelbox.ID
 }
 
+// AssignToUser assigns the mandelbox to the given user.
 func (mandelbox *mandelboxData) AssignToUser(u types.UserID) {
-	mandelbox.rwlock.Lock()
-	defer mandelbox.rwlock.Unlock()
 	mandelbox.userID = u
 }
 
+// GetUserID returns the ID of the user assigned to the mandelbox.
 func (mandelbox *mandelboxData) GetUserID() types.UserID {
-	mandelbox.rwlock.RLock()
-	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.userID
 }
 
+// GetConfigEncryptionToken returns the config encryption token.
 func (mandelbox *mandelboxData) GetConfigEncryptionToken() types.ConfigEncryptionToken {
-	mandelbox.rwlock.RLock()
-	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.configEncryptionToken
 }
 
+// SetConfigEncryptionToken sets the config encryption token.
 func (mandelbox *mandelboxData) SetConfigEncryptionToken(token types.ConfigEncryptionToken) {
-	mandelbox.rwlock.Lock()
-	defer mandelbox.rwlock.Unlock()
 	mandelbox.configEncryptionToken = token
 }
 
 func (mandelbox *mandelboxData) GetClientAppAccessToken() types.ClientAppAccessToken {
-	mandelbox.rwlock.RLock()
-	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.clientAppAccessToken
 }
 
 func (mandelbox *mandelboxData) SetClientAppAccessToken(token types.ClientAppAccessToken) {
-	mandelbox.rwlock.Lock()
-	defer mandelbox.rwlock.Unlock()
 	mandelbox.clientAppAccessToken = token
 }
 
 func (mandelbox *mandelboxData) GetJSONData() string {
-	mandelbox.rwlock.RLock()
-	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.JSONData
 }
 
 func (mandelbox *mandelboxData) SetJSONData(JSONData string) {
-	mandelbox.rwlock.RLock()
-	defer mandelbox.rwlock.RUnlock()
-
 	mandelbox.JSONData = JSONData
 }
 
 func (mandelbox *mandelboxData) GetHostPort(mandelboxPort uint16, protocol portbindings.TransportProtocol) (uint16, error) {
-	// Don't lock ourselves, since `c.GetPortBindings()` will lock for us.
-
 	binds := mandelbox.GetPortBindings()
 	for _, b := range binds {
 		if b.Protocol == protocol && b.MandelboxPort == mandelboxPort {
@@ -313,14 +326,10 @@ func (mandelbox *mandelboxData) GetHostPort(mandelboxPort uint16, protocol portb
 }
 
 func (mandelbox *mandelboxData) GetIdentifyingHostPort() (uint16, error) {
-	// Don't lock ourselves, since `c.GetHostPort()` will lock for us.
 	return mandelbox.GetHostPort(32262, portbindings.TransportProtocolTCP)
 }
 
 func (mandelbox *mandelboxData) AssignGPU() error {
-	mandelbox.rwlock.Lock()
-	defer mandelbox.rwlock.Unlock()
-
 	gpu, err := gpus.Allocate(mandelbox.ID)
 	if err != nil {
 		return err
@@ -331,16 +340,10 @@ func (mandelbox *mandelboxData) AssignGPU() error {
 }
 
 func (mandelbox *mandelboxData) GetGPU() gpus.Index {
-	mandelbox.rwlock.RLock()
-	defer mandelbox.rwlock.RUnlock()
-
 	return mandelbox.gpuIndex
 }
 
 func (mandelbox *mandelboxData) InitializeTTY() error {
-	mandelbox.rwlock.Lock()
-	defer mandelbox.rwlock.Unlock()
-
 	tty, err := ttys.Allocate()
 	if err != nil {
 		return err
@@ -351,16 +354,10 @@ func (mandelbox *mandelboxData) InitializeTTY() error {
 }
 
 func (mandelbox *mandelboxData) GetTTY() ttys.TTY {
-	mandelbox.rwlock.RLock()
-	defer mandelbox.rwlock.RUnlock()
-
 	return mandelbox.tty
 }
 
 func (mandelbox *mandelboxData) RegisterCreation(d types.DockerID) error {
-	mandelbox.rwlock.Lock()
-	defer mandelbox.rwlock.Unlock()
-
 	if len(d) == 0 {
 		return utils.MakeError("RegisterCreation: can't register mandelbox %s with empty docker ID", mandelbox.ID)
 	}
@@ -370,9 +367,6 @@ func (mandelbox *mandelboxData) RegisterCreation(d types.DockerID) error {
 }
 
 func (mandelbox *mandelboxData) SetAppName(name types.AppName) error {
-	mandelbox.rwlock.Lock()
-	defer mandelbox.rwlock.Unlock()
-
 	if len(name) == 0 {
 		return utils.MakeError("SetAppName: can't set mandelbox app name to empty for mandelboxID: %s", mandelbox.ID)
 	}
@@ -382,14 +376,10 @@ func (mandelbox *mandelboxData) SetAppName(name types.AppName) error {
 }
 
 func (mandelbox *mandelboxData) GetDockerID() types.DockerID {
-	mandelbox.rwlock.RLock()
-	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.dockerID
 }
 
 func (mandelbox *mandelboxData) GetAppName() types.AppName {
-	mandelbox.rwlock.RLock()
-	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.appName
 }
 
@@ -399,22 +389,18 @@ func (mandelbox *mandelboxData) AssignPortBindings(desired []portbindings.PortBi
 		return err
 	}
 
-	mandelbox.rwlock.Lock()
-	defer mandelbox.rwlock.Unlock()
+	mandelbox.Lock()
+	defer mandelbox.Unlock()
 
 	mandelbox.portBindings = result
 	return nil
 }
 
 func (mandelbox *mandelboxData) GetPortBindings() []portbindings.PortBinding {
-	mandelbox.rwlock.RLock()
-	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.portBindings
 }
 
 func (mandelbox *mandelboxData) GetDeviceMappings() []dockercontainer.DeviceMapping {
-	mandelbox.rwlock.RLock()
-	defer mandelbox.rwlock.RUnlock()
 	return append(mandelbox.uinputDeviceMappings, mandelbox.otherDeviceMappings...)
 }
 
@@ -424,10 +410,11 @@ func (mandelbox *mandelboxData) InitializeUinputDevices(goroutineTracker *sync.W
 		return utils.MakeError("Couldn't allocate uinput devices: %s", err)
 	}
 
-	mandelbox.rwlock.Lock()
+	mandelbox.Lock()
+	defer mandelbox.Unlock()
+
 	mandelbox.uinputDevices = devices
 	mandelbox.uinputDeviceMappings = mappings
-	defer mandelbox.rwlock.Unlock()
 
 	goroutineTracker.Add(1)
 	go func() {

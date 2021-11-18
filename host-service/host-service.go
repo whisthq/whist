@@ -204,6 +204,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 			if err := mandelbox.InitializeUinputDevices(goroutineTracker); err != nil {
 				return utils.MakeError("Error initializing uinput devices: %s", err)
 			}
+
 			devices = mandelbox.GetDeviceMappings()
 			return nil
 		})
