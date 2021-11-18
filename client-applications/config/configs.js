@@ -17,7 +17,6 @@ const {
   protocolName,
   protocolFolder,
   loggingFiles,
-  userDataFolderNames,
   buildRoot,
 } = require("./paths")
 
@@ -144,7 +143,6 @@ module.exports = {
   iconName,
   configs,
   loggingFiles,
-  userDataFolderNames,
   FractalNodeEnvironments,
   FractalEnvironments,
   FractalWebservers,

@@ -55,7 +55,7 @@ const cmdMainCompile = esbuildCommand.join(" ")
 // Every time we run Electron, we want to first compile the main process files.
 // This command will be called by a Snowpack hook, and Snowpack will take care
 // of compiling the renderer process files.
-const cmdElectron = [cmdMainCompile, "&&", "electron build/dist/main"].join(" ")
+const cmdElectron = [cmdMainCompile, "&&", "electron ."].join(" ")
 
 // Snowpack only supplies "hot-reload" for the renderer process, so we use
 // nodemon as a "hot-reload" for the main process. We give it some folders to

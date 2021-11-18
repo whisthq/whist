@@ -2,39 +2,43 @@
   Clears electron user data cache
 
   To be called via:
-  $ yarn cache:clear -- [all|dev|prod]
+  $ yarn cache:clear --[dev|staging|prod|all]
 */
 
 const path = require("path")
 const { app } = require("electron")
 const fs = require("fs-extra")
-const { userDataFolderNames } = require("../config/configs")
 
 const clearAppData = (_env, ...args) => {
-  let foldersToDelete
+  let folderToDelete
 
   switch (args[0]) {
-    case "--all":
-      foldersToDelete = Object.values(userDataFolderNames)
+    case "--dev":
+      folderToDelete = "dev"
+      break
+    case "--staging":
+      folderToDelete = "staging"
       break
     case "--prod":
-      foldersToDelete = [userDataFolderNames.production]
+      folderToDelete = "prod"
       break
-    case "--dev":
-      foldersToDelete = [userDataFolderNames.development]
+    case "--all":
+      folderToDelete = "."
       break
   }
 
-  if (!foldersToDelete) {
-    console.log("Must specify a flag: --[all|dev|prod]")
+  if (!folderToDelete) {
+    console.log("Must specify a flag: --[dev|staging|prod|all]")
     app.exit()
   }
 
-  foldersToDelete.forEach((folder) => {
-    const appPath = path.join(app.getPath("appData"), folder)
-    console.log("Clearing", appPath)
-    fs.rmdirSync(appPath, { recursive: true })
-  })
+  const appPath = path.join(
+    app.getPath("appData"),
+    require("../package.json").productName,
+    folderToDelete
+  )
+  console.log(`Deleting ${appPath}`)
+  fs.rmdirSync(appPath, { recursive: true })
 
   app.exit()
 }
