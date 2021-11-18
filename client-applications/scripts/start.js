@@ -40,10 +40,18 @@ if (require.main === module) {
       description: "If true, use 127.0.0.1:7730 instead of the dev server",
       type: "boolean",
     })
+    .option("initial-url", {
+      description: "The URL to open upon Whist browser startup",
+      alias: ["U"],
+      type: "string",
+      requiresArg: true,
+      demandOption: false,
+    })
     .help().argv
   start(
     {
       SHOW_PROTOCOL_LOGS: argv.showProtocolLogs,
+      INITIAL_URL: argv.initialUrl,
       DEVELOPMENT_ENV: argv.useLocalServer ? "local" : "dev",
     },
     argv.config
