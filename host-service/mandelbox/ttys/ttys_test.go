@@ -9,6 +9,96 @@ const (
 	decrement = 1
 )
 
+func TestAllocateAndFreeTTYIntegration(t *testing.T) {
+	testTTY, err := Allocate()
+	// Attempt to allocate TTY
+	if  err != nil {
+		t.Fatalf("error initializing TTY with err: %v", err)
+	}
+
+	// check if TTY is within the range
+	if !isInAllowedRange(uint8(testTTY)) {
+		t.Fatalf("error range for test TTY as the result was not allowed: %v", testTTY)
+	}
+
+	if ttymap[testTTY] != inUse {
+		t.Fatalf("error ttymap stored TTY %v with value: %v", testTTY, ttymap[testTTY])
+	}
+
+	// Free and check allocated mandelbox TTY
+	Free(testTTY)
+
+	if _, exists := ttymap[testTTY]; exists {
+		t.Fatalf("error freeing TTY as mandelbox TTY still exists: %v", testTTY)
+	}
+}
+
+
+func TestAllocateWithNoFreeTTY(t *testing.T) {
+	// Fill out the entire map
+	for allowedTTY := minAllowedTTY; allowedTTY < maxAllowedTTY; allowedTTY++ {
+		ttymap[TTY(allowedTTY)] = inUse
+	}
+
+	// This will create an inUse entry
+	testTTY, err := Allocate()
+	if err != nil {
+		t.Fatalf("error allocating TTY with err: %v and tty: %v", err, testTTY)
+	}
+
+	// Free entire map
+	for allowedTTY := minAllowedTTY; allowedTTY < maxAllowedTTY; allowedTTY++ {
+		Free(TTY(allowedTTY))
+	}
+
+}
+
+func TestFreeReservedTTY(t *testing.T) {
+	// Add a reserved tty entry to ttymap
+	ttymapLock.Lock()
+	testTTY := randomTTYInAllowedRange()
+	ttymap[testTTY] = reserved
+	ttymapLock.Unlock()
+
+	mapSizeBeforeFree := len(ttymap)
+
+	// attempt to remove reserved tty
+	Free(testTTY)
+
+	// Free should not have removed tty
+	if mapSizeAfterFree := len(ttymap); mapSizeBeforeFree != mapSizeAfterFree {
+		t.Fatalf("error ttymap expected size to be %v after free but is %v", mapSizeBeforeFree, mapSizeAfterFree)
+	}
+
+	// TTY should still exist
+	if _, exists := ttymap[testTTY]; !exists {
+		t.Fatalf("error test TTY does not exists after free: %v", testTTY)
+	}
+}
+
+func TestFreeInUseTTY(t *testing.T) {
+	// Add an inUse tty entry to ttymap
+	ttymapLock.Lock()
+	testTTY := randomTTYInAllowedRange()
+	ttymap[testTTY] = inUse
+	ttymapLock.Unlock()
+
+	mapSizeBeforeFree := len(ttymap)
+
+	// attempt to remove inUse tty
+	Free(testTTY)
+
+	// Free should have removed only one tty
+	if mapSizeAfterFree := len(ttymap); mapSizeBeforeFree - 1 != mapSizeAfterFree {
+		t.Fatalf("error ttymap expected size to be %v after free but is %v", mapSizeBeforeFree - 1, mapSizeAfterFree)
+	}
+
+	// TTY should not exist
+	if _, exists := ttymap[testTTY]; exists {
+		t.Fatalf("error test TTY exists after free: %v", testTTY)
+	}
+}
+
 func TestAllowedRangeMinInclusive(t *testing.T) {
 	// MinAllowedTTY is inclusive and should be in the range
 	if !isInAllowedRange(minAllowedTTY) {
