@@ -50,7 +50,7 @@ export const protocolLaunch = async () => {
   const protocolParameters = {
     ...(app.isPackaged &&
       appEnvironment !== FractalEnvironments.LOCAL && {
-        environment: config.sentryEnv,
+        environment: config.deployEnv,
       }),
   }
 

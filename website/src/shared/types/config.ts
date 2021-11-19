@@ -1,4 +1,4 @@
-export interface FractalConfig {
+export interface WhistConfig {
   keys: {
     GOOGLE_ANALYTICS_TRACKING_CODES: string[]
   }
@@ -10,8 +10,8 @@ export interface FractalConfig {
   }
 }
 
-export interface FractalEnvironment {
-  development: FractalConfig
-  staging: FractalConfig
-  production: FractalConfig
+export interface WhistEnvironment {
+  dev: WhistConfig
+  staging: WhistConfig
+  prod: WhistConfig
 }

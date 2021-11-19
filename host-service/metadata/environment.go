@@ -29,11 +29,11 @@ type AppEnvironment string
 // understanding how any consumers of GetAppEnvironment() and
 // GetAppEnvironmentLowercase() are using them!
 const (
-	EnvLocalDevWithDB AppEnvironment = "LOCALDEVWITHDB"
-	EnvLocalDev       AppEnvironment = "LOCALDEV"
-	EnvDev            AppEnvironment = "DEV"
-	EnvStaging        AppEnvironment = "STAGING"
-	EnvProd           AppEnvironment = "PROD"
+	EnvLocalDevWithDB AppEnvironment = "localdevwithdb"
+	EnvLocalDev       AppEnvironment = "localdev"
+	EnvDev            AppEnvironment = "dev"
+	EnvStaging        AppEnvironment = "staging"
+	EnvProd           AppEnvironment = "prod"
 )
 
 // GetAppEnvironment returns the AppEnvironment of the current instance.

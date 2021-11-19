@@ -1,16 +1,16 @@
 /* eslint-disable */
 import React from "react"
 import type {
-  FractalEnvironment,
-  FractalConfig,
+  WhistEnvironment,
+  WhistConfig,
 } from "@app/shared/types/config"
 
-const environment: FractalEnvironment = {
-  development: {
+const environment: WhistEnvironment = {
+  dev: {
     keys: {
       GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
     },
-    sentry_env: "development",
+    sentry_env: "dev",
     client_download_urls: {
       macOS_x64: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg",
       macOS_arm64: "https://fractal-chromium-macos-arm64-dev.s3.amazonaws.com/Whist.dmg",
@@ -30,11 +30,11 @@ const environment: FractalEnvironment = {
         "https://fractal-chromium-windows-staging.s3.amazonaws.com/Whist.exe",
     },
   },
-  production: {
+  prod: {
     keys: {
       GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
     },
-    sentry_env: "production",
+    sentry_env: "prod",
     client_download_urls: {
       macOS_x64: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Whist.dmg",
       macOS_arm64: "https://fractal-chromium-macos-arm64-prod.s3.amazonaws.com/Whist.dmg",
@@ -44,11 +44,11 @@ const environment: FractalEnvironment = {
   },
 }
 
-export const config: FractalConfig = (() => {
+export const config: WhistConfig = (() => {
   if (import.meta.env.MODE !== "development")
     return environment[
-      import.meta.env.FRACTAL_ENVIRONMENT as keyof FractalEnvironment
+      import.meta.env.WHIST_ENVIRONMENT as keyof WhistEnvironment
     ]
 
-  return environment.development
+  return environment.dev
 })()

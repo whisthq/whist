@@ -10,7 +10,7 @@ import { HEARTBEAT_INTERVAL_IN_MINUTES, SENTRY_DSN } from "@app/constants/app"
 if (appEnvironment === FractalEnvironments.PRODUCTION) {
   Sentry.init({
     dsn: SENTRY_DSN,
-    environment: config.sentryEnv,
+    environment: config.deployEnv,
     release: `client-applications@${config.keys.COMMIT_SHA as string}`,
   })
 }

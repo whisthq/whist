@@ -55,7 +55,6 @@ jobs:
       branch: ${{ steps.set-deploy-environment.outputs.environment }}
       jobs: ${{ steps.detect-jobs.outputs.jobs }}
       publish: ${{ steps.detect-publish.outputs.publish }}
-      sentry_environment: ${{ steps.set-sentry-environment.outputs.sentry_environment }}
       webserver_url: ${{ steps.set-webserver-url.outputs.webserver_url }}
       auth0-domain: ${{ steps.set-deploy-environment.outputs.auth0-domain }}
       auth0-client-id: ${{ steps.set-deploy-environment.outputs.auth0-client-id }}
@@ -81,24 +80,6 @@ jobs:
           # case, the branch specified by the target input should be
           # deployed.
           ref: ${{ github.event.inputs.target || github.ref }}
-
-      - name: Set Sentry environment based on Git Branch
-        id: set-sentry-environment
-        run: |
-          # Grab the name of the deployment environment from set-deploy-environment
-          BRANCH_NAME=${{ steps.set-deploy-environment.outputs.environment }}
-
-          if [ "$BRANCH_NAME" == "prod" ]; then
-            SENTRY_ENVIRONMENT=production
-          elif [ "$BRANCH_NAME" == "staging" ]; then
-            SENTRY_ENVIRONMENT=staging
-          elif [ "$BRANCH_NAME" == "dev" ]; then
-            SENTRY_ENVIRONMENT=development
-          else
-            SENTRY_ENVIRONMENT=""
-          fi
-          echo "sentry_environment is set to: $SENTRY_ENVIRONMENT"
-          echo "::set-output name=sentry_environment::$SENTRY_ENVIRONMENT"
 
       - name: Set webserver URL based on Git Branch (prod, staging, dev)
         id: set-webserver-url

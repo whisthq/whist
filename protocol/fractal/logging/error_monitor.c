@@ -97,7 +97,7 @@ void error_monitor_set_environment(char *environment) {
 
         Arguments:
             environment (char*): The environment to set: should be one of
-                development/staging/production.
+                dev/staging/prod.
 
         Returns:
             None
@@ -111,12 +111,12 @@ void error_monitor_set_environment(char *environment) {
         return;
     }
 
-    if (strcmp(environment, "production") == 0 || strcmp(environment, "staging") == 0 ||
-        strcmp(environment, "development") == 0) {
+    if (strcmp(environment, "prod") == 0 || strcmp(environment, "staging") == 0 ||
+        strcmp(environment, "dev") == 0) {
         safe_strncpy(error_monitor_environment, environment, sizeof(error_monitor_environment));
         error_monitor_environment_set = true;
-    } else if (strcmp(environment, "LOCALDEV") == 0) {
-        LOG_INFO("On local development - will not initialize sentry!");
+    } else if (strcmp(environment, "localdev") == 0 || strcmp(environment, "localdevwithdb") == 0) {
+        LOG_INFO("On local development -- will not initialize error monitor.");
     } else {
         LOG_WARNING("Invalid environment %s set! Ignoring it.", environment);
     }
