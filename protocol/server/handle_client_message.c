@@ -118,7 +118,7 @@ int handle_client_message(FractalClientMessage *fcmsg) {
         case MESSAGE_DISCOVERY_REQUEST:
             return handle_init_message(fcmsg);
         default:
-            LOG_WARNING(
+            LOG_ERROR(
                 "Unknown FractalClientMessage Received. "
                 "(Type: %d)",
                 fcmsg->type);
@@ -147,6 +147,7 @@ static int handle_user_input_message(FractalClientMessage *fcmsg) {
     if (input_device) {
         if (!replay_user_input(input_device, fcmsg)) {
             LOG_WARNING("Failed to replay input!");
+            return -1;
         }
     }
 
@@ -253,16 +254,14 @@ static int handle_ping_message(FractalClientMessage *fcmsg) {
     FractalServerMessage fsmsg_response = {0};
     fsmsg_response.type = MESSAGE_PONG;
     fsmsg_response.ping_id = fcmsg->ping_id;
-    int ret = 0;
 
     if (send_packet(&client.udp_context, PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
-                    sizeof(fsmsg_response), 1) < 0,
-        false) {
+                    sizeof(fsmsg_response), 1) < 0) {
         LOG_WARNING("Could not send Ping");
-        ret = -1;
+        return -1;
     }
 
-    return ret;
+    return 0;
 }
 
 static int handle_tcp_ping_message(FractalClientMessage *fcmsg) {
@@ -285,15 +284,14 @@ static int handle_tcp_ping_message(FractalClientMessage *fcmsg) {
     FractalServerMessage fsmsg_response = {0};
     fsmsg_response.type = MESSAGE_TCP_PONG;
     fsmsg_response.ping_id = fcmsg->ping_id;
-    int ret = 0;
 
     if (send_packet(&(client.tcp_context), PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
                     sizeof(fsmsg_response), -1) < 0) {
         LOG_WARNING("Could not send TCP Ping to client");
-        ret = -1;
+        return -1;
     }
 
-    return ret;
+    return 0;
 }
 
 static int handle_dimensions_message(FractalClientMessage *fcmsg) {
@@ -390,14 +388,8 @@ static int handle_iframe_request_message(FractalClientMessage *fcmsg) {
     */
 
     LOG_INFO("Request for i-frame found: Creating iframe");
-    if (fcmsg->reinitialize_encoder) {
-        // Wants to completely reinitialize the encoder
-        update_encoder = true;
-        wants_iframe = true;
-    } else {
-        // Wants only an iframe
-        wants_iframe = true;
-    }
+    // Mark as wanting an iframe
+    wants_iframe = true;
     return 0;
 }
 
