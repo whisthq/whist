@@ -22,7 +22,7 @@ jobs:
     name: "Deploy Sentry Release for: ${{ matrix.project.name }}"
     runs-on: ubuntu-20.04
     outputs:
-      sentry-deploy-environment: ${{ steps.set-deploy-environment.outputs.environment }}
+      sentry-deploy-environment: ${{ steps.set-deploy-environment.outputs.branch }}
 
     strategy:
       matrix:
@@ -36,8 +36,8 @@ jobs:
           - name: Client Applications (macOS, Windows, Linux Ubuntu)
             sentry-project: client-applications
     env:
-      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       SENTRY_ORG: whist
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       SENTRY_PROJECT: ${{ matrix.project.sentry-project }}
 
     steps:
@@ -59,7 +59,7 @@ jobs:
 
       - name: Create New Sentry Release
         env:
-          SENTRY_DEPLOY_ENVIRONMENT: ${{ steps.set-deploy-environment.outputs.environment }}
+          SENTRY_DEPLOY_ENVIRONMENT: ${{ steps.set-deploy-environment.outputs.branch }}
         run: |
           # Install Sentry CLI
           curl -sL https://sentry.io/get-cli/ | bash
@@ -107,9 +107,9 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in "${{ steps.set-deploy-environment.outputs.branch }}":
+          if "prod" in "${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ steps.set-deploy-environment.outputs.branch }}":
+          elif "staging" in "${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
