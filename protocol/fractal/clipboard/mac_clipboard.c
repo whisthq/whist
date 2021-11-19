@@ -7,12 +7,12 @@
 Usage
 ============================
 
-GET_CLIPBOARD and SET_CLIPBOARD will return strings representing directories
-important for getting and setting file clipboards. When GetClipboard() is called
-and it returns a CLIPBOARD_FILES type, then GET_CLIPBOARD will be filled with
-symlinks to the clipboard files. When SetClipboard(cb) is called and is given a
+GET_OS_CLIPBOARD and SET_OS_CLIPBOARD will return strings representing directories
+important for getting and setting file clipboards. When get_os_clipboard() is called
+and it returns a CLIPBOARD_FILES type, then GET_OS_CLIPBOARD will be filled with
+symlinks to the clipboard files. When set_os_clipboard(cb) is called and is given a
 clipboard with a CLIPBOARD_FILES type, then the clipboard will be set to
-whatever files are in the SET_CLIPBOARD directory.
+whatever files are in the SET_OS_CLIPBOARD directory.
 */
 
 /*
@@ -45,7 +45,7 @@ void unsafe_init_clipboard(){};
 
 void unsafe_destroy_clipboard(){};
 
-bool unsafe_has_clipboard_updated() {
+bool unsafe_has_os_clipboard_updated() {
     /*
         Check if the Mac clipboard has updated
 
@@ -71,18 +71,18 @@ bool unsafe_has_clipboard_updated() {
     return has_updated;
 }
 
-void unsafe_free_clipboard(ClipboardData* cb) {
+void unsafe_free_clipboard_buffer(ClipboardData* cb) {
     /*
-        Free the clipboard memory
+        Free the clipboard buffer memory
 
         Arguments:
-            cb (ClipboardData*): the clipboard to be freed
+            cb (ClipboardData*): the clipboard buffer to be freed
     */
 
     deallocate_region(cb);
 }
 
-ClipboardData* unsafe_get_clipboard() {
+ClipboardData* unsafe_get_os_clipboard() {
     /*
         Get and return the current contents of the Mac clipboard
 
@@ -101,7 +101,7 @@ ClipboardData* unsafe_get_clipboard() {
     // true
     if (clipboard_has_files) {
         LOG_INFO("Getting files from clipboard");
-        LOG_WARNING("GetClipboard: FILE CLIPBOARD NOT BEING IMPLEMENTED");
+        LOG_WARNING("get_os_clipboard: FILE CLIPBOARD NOT BEING IMPLEMENTED");
         return cb;
 
         // allocate memory for filenames and paths
@@ -124,19 +124,19 @@ ClipboardData* unsafe_get_clipboard() {
         cb->size = 0;
 
         // delete clipboard directory and all its files
-        if (dir_exists(GET_CLIPBOARD) > 0) {
-            mac_rm_rf(GET_CLIPBOARD);
+        if (dir_exists(GET_OS_CLIPBOARD) > 0) {
+            mac_rm_rf(GET_OS_CLIPBOARD);
         }
 
         // make new clipboard directory
-        mkdir(GET_CLIPBOARD, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        mkdir(GET_OS_CLIPBOARD, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
         // make symlinks for all files in clipboard and store in directory
         for (size_t i = 0; i < MAX_URLS; i++) {
             // if there are no more file URLs in clipboard, exit loop
             if (*filenames[i]->fullPath != '\0') {
                 char symlink_name[PATH_MAXLEN + 1] = "";
-                strcat(symlink_name, GET_CLIPBOARD);
+                strcat(symlink_name, GET_OS_CLIPBOARD);
                 strcat(symlink_name, "/");
                 strcat(symlink_name, filenames[i]->filename);
                 symlink(filenames[i]->fullPath, symlink_name);
@@ -184,7 +184,7 @@ ClipboardData* unsafe_get_clipboard() {
     return cb;
 }
 
-void unsafe_set_clipboard(ClipboardData* cb) {
+void unsafe_set_os_clipboard(ClipboardData* cb) {
     /*
         Set the Mac OS clipboard to contain the data from `cb`
 

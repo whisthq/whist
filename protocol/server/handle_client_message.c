@@ -338,10 +338,7 @@ static int handle_clipboard_message(FractalClientMessage *fcmsg) {
 
     // Update clipboard with message
     LOG_INFO("Received Clipboard Data! %d", fcmsg->clipboard.type);
-    if (!clipboard_synchronizer_set_clipboard_chunk(&fcmsg->clipboard)) {
-        LOG_ERROR("Failed to set local clipboard from client message.");
-        return -1;
-    }
+    push_clipboard_chunk(&fcmsg->clipboard);
     return 0;
 }
 

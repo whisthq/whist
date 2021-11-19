@@ -7,14 +7,14 @@
 Usage
 ============================
 
-GET_CLIPBOARD and SET_CLIPBOARD will return strings representing directories
-important for getting and setting file clipboards. When GetClipboard() is called
-and it returns a CLIPBOARD_FILES type, then GET_CLIPBOARD will be filled with
-symlinks to the clipboard files. When SetClipboard(cb) is called and is given a
+GET_OS_CLIPBOARD and SET_OS_CLIPBOARD will return strings representing directories
+important for getting and setting file clipboards. When get_os_clipboard() is called
+and it returns a CLIPBOARD_FILES type, then GET_OS_CLIPBOARD will be filled with
+symlinks to the clipboard files. When set_os_clipboard(cb) is called and is given a
 clipboard with a CLIPBOARD_FILES type, then the clipboard will be set to
-whatever files are in the SET_CLIPBOARD directory.
+whatever files are in the SET_OS_CLIPBOARD directory.
 
-LGET_CLIPBOARD and LSET_CLIPBOARD are the wide-character versions of these
+LGET_OS_CLIPBOARD and LSET_OS_CLIPBOARD are the wide-character versions of these
 strings, for use on windows OS's
 */
 
@@ -42,7 +42,7 @@ Private Function Implementations
 ============================
 */
 
-char* get_clipboard_directory() {
+char* get_os_clipboard_directory() {
     /*
         Get the directory of the get clipboard cache
 
@@ -51,10 +51,10 @@ char* get_clipboard_directory() {
     */
 
     static char buf[PATH_MAXLEN + 1];
-    wcstombs(buf, lget_clipboard_directory(), sizeof(buf));
+    wcstombs(buf, lget_os_clipboard_directory(), sizeof(buf));
     return buf;
 }
-char* set_clipboard_directory() {
+char* set_os_clipboard_directory() {
     /*
         Get the directory of the set clipboard cache
 
@@ -63,7 +63,7 @@ char* set_clipboard_directory() {
     */
 
     static char buf[PATH_MAXLEN + 1];
-    wcstombs(buf, lset_clipboard_directory(), sizeof(buf));
+    wcstombs(buf, lset_os_clipboard_directory(), sizeof(buf));
     return buf;
 }
 
@@ -73,8 +73,8 @@ void unsafe_init_clipboard() {
         get clipboard and set clipboard caches
     */
 
-    get_clipboard_directory();
-    set_clipboard_directory();
+    get_os_clipboard_directory();
+    set_os_clipboard_directory();
 }
 
 void unsafe_destroy_clipboard() {}
@@ -112,9 +112,9 @@ WCHAR* lclipboard_directory() {
     return directory;
 }
 
-WCHAR* lget_clipboard_directory() {
+WCHAR* lget_os_clipboard_directory() {
     /*
-        Get the get clipboard cache directory
+        Get the get OS clipboard cache directory
 
         Returns:
             (WCHAR*): the get clipboard cache directory
@@ -123,7 +123,7 @@ WCHAR* lget_clipboard_directory() {
     static WCHAR path[PATH_MAXLEN + 1];
     WCHAR* cb_dir = lclipboard_directory();
     wcscpy(path, cb_dir);
-    PathAppendW(path, L"get_clipboard");
+    PathAppendW(path, L"get_os_clipboard");
     if (!PathFileExistsW(path)) {
         if (!CreateDirectoryW(path, NULL)) {
             LOG_ERROR("Could not create directory: %S (Error %d)", path, GetLastError());
@@ -133,9 +133,9 @@ WCHAR* lget_clipboard_directory() {
     return path;
 }
 
-WCHAR* lset_clipboard_directory() {
+WCHAR* lset_os_clipboard_directory() {
     /*
-        Get the set clipboard cache directory
+        Get the set OS clipboard cache directory
 
         Returns:
             (WCHAR*): the set clipboard cache directory
@@ -144,7 +144,7 @@ WCHAR* lset_clipboard_directory() {
     static WCHAR path[PATH_MAXLEN + 1];
     WCHAR* cb_dir = lclipboard_directory();
     wcscpy(path, cb_dir);
-    PathAppendW(path, L"set_clipboard");
+    PathAppendW(path, L"set_os_clipboard");
     if (!PathFileExistsW(path)) {
         if (!CreateDirectoryW(path, NULL)) {
             LOG_ERROR("Could not create directory: %S (Error %d)", path, GetLastError());
@@ -249,7 +249,7 @@ bool create_junction(WCHAR* sz_junction, WCHAR* sz_path) {
 
 static int last_clipboard_sequence_number = -1;
 
-bool unsafe_has_clipboard_updated() {
+bool unsafe_has_os_clipboard_updated() {
     /*
         Whether the Windows OS clipboard has updated
 
@@ -270,17 +270,17 @@ bool unsafe_has_clipboard_updated() {
     return has_updated;
 }
 
-void unsafe_free_clipboard(ClipboardData* cb) {
+void unsafe_free_clipboard_buffer(ClipboardData* cb) {
     /*
-        Free the clipboard memory
+        Free the clipboard buffer memory
 
         Arguments:
-            cb (ClipboardData*): the clipboard to be freed
+            cb (ClipboardData*): the clipboard buffer to be freed
     */
     deallocate_region(cb);
 }
 
-ClipboardData* unsafe_get_clipboard() {
+ClipboardData* unsafe_get_os_clipboard() {
     /*
         Get and return the current contents of the Windows clipboard
 
@@ -450,7 +450,7 @@ HGLOBAL get_global_alloc(void* buf, int len, bool null_char) {
     return h_mem;
 }
 
-void unsafe_set_clipboard(ClipboardData* cb) {
+void unsafe_set_os_clipboard(ClipboardData* cb) {
     /*
         Set the Windows clipboard to contain the data from `cb`
 
