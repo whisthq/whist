@@ -538,7 +538,7 @@ void unix_crash_handler(int sig) {
     fprintf(stdout, "\nError: signal %d:%s\n", sig, strsignal(sig));
     print_stacktrace();
     // We reset the signal handler to default to allow Sentry to handle the crash without
-    //     getting stuck in an infinite loop of crash handling
+    //     getting stuck in an infinite loop of crash signal handling
     signal(sig, SIG_DFL);
     // If we exit, then the program doesn't crash and Sentry does not receive the event
     // _exit(-1);
