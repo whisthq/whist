@@ -9,29 +9,23 @@
 Usage
 ============================
 
-initClipboardSynchronizer("76.106.92.11");
+init_clipboard_synchronizer(true);
 
-ClipboardData server_clipboard;
+ClipboardData received_clipboard_chunk;
 
-// Will set the client clipboard to that data
-ClipboardSynchronizerSetClipboard(&server_clipboard);
+// Will push this chunk onto our clipboard
+push_clipboard_chunk(&received_clipboard_chunk);
 
-// Will likely return true because it's waiting on server_clipboard to be set
-LOG_INFO("Is Synchronizing? %d", isClipboardSynchronizing());
+ClipboardData* our_chunk_to_send = pull_clipboard_chunk();
 
-// Wait for clipboard to be done synchronizing
-while(isClipboardSynchronizing());
-
-ClipboardData* client_clipboard = ClipboardSynchronizerGetNewClipboard();
-
-if (client_clipboard) {
-  // We have a new clipboard, this should be sent to the server
-  Send(client_clipboard);
+if (our_chunk_to_send) {
+  // We have a new clipboard chunk, this should be sent to the server
+  Send(our_chunk_to_send);
 } else {
   // There is no new clipboard
 }
 
-destroyClipboardSynchronizer();
+destroy_clipboard_synchronizer();
 */
 
 /*
@@ -42,6 +36,31 @@ Includes
 
 #include "clipboard.h"
 
+typedef enum FractalClipboardActionType {
+    CLIPBOARD_ACTION_NONE = 0,
+    CLIPBOARD_ACTION_PUSH = 1,  // push onto local clipboard
+    CLIPBOARD_ACTION_PULL = 2,  // pull from local clipboard
+} FractalClipboardActionType;
+
+typedef struct ClipboardActivity {
+    // is_initialized will only go from true to false when
+    //    there are active actions, so no mutex needed to
+    //    protect
+    bool is_initialized;
+
+    // Protected by clipboard_action_mutex:
+    FractalClipboardActionType clipboard_action_type;
+    FractalThread active_clipboard_action_thread;
+    bool* aborting_ptr;  // whether the current thread is being aborted
+    bool* complete_ptr;  // whether the action has been completed
+    ClipboardData** clipboard_buffer_ptr;
+    int pulled_bytes;  // only relevant for PULL actions
+
+    FractalMutex clipboard_action_mutex;
+    FractalCondition continue_action_condvar;
+    FractalSemaphore thread_setup_semaphore;
+} ClipboardActivity;
+
 /*
 ============================
 Public Functions
@@ -49,7 +68,7 @@ Public Functions
 */
 
 /**
- * @brief                          Initialize the Update Clipboard Helper
+ * @brief                          Initialize the clipboard synchronizer
  *
  * @param is_client                Whether the caller is the client or the server
  *
@@ -57,36 +76,23 @@ Public Functions
 void init_clipboard_synchronizer(bool is_client);
 
 /**
- * @brief                          Set the clipboard to a given clipboard data
+ * @brief                          When called, return the current clipboard chunk
+ *                                 if a new clipboard activity has registered, or
+ *                                 if the recently updated clipboard is being read.
  *
- * @param cb_chunk                 The clipboard data chunk to update the
- *                                 clipboard with
+ * @returns                        Pointer to the latest clipboard chunk
  *
- * @returns                        true on success, false on failure
  */
-bool clipboard_synchronizer_set_clipboard_chunk(ClipboardData* cb_chunk);
+ClipboardData* pull_clipboard_chunk();
 
 /**
- * @brief                          Check if the clipboard is in the midst of
- *                                 being updated
+ * @brief                          When called, push the given chunk onto the active
+ *                                 clipboard buffer
  *
- * @returns                        True if the clipboard is currently
- *                                 busy being updated. This will be true
- *                                 for a some period of time after
- *                                 updateSetClipboard
- */
-bool is_clipboard_synchronizing();
-
-/**
- * @brief                          Get a new clipboard, if any
+ * @param cb_chunk                 Pointer to the clipboard chunk to push
  *
- * @returns                        A pointer to new clipboard data chunk
- *                                 that should be sent to the server.
- *                                 NULL if the clipboard has not been
- *                                 updated since the last call to the
- *                                 clipboard
  */
-ClipboardData* clipboard_synchronizer_get_next_clipboard_chunk();
+void push_clipboard_chunk(ClipboardData* cb_chunk);
 
 /**
  * @brief                          Cleanup the clipboard synchronizer

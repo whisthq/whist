@@ -47,12 +47,8 @@ if [[ -f $FRACTAL_JSON_FILE ]]; then
   fi
   if [ "$( jq 'has("initial_url")' < $FRACTAL_JSON_FILE )" == "true"  ]; then
     RECEIVED_URL="$(jq '.initial_url' < $FRACTAL_JSON_FILE)"
-    # Checking for valid URL. https://stackoverflow.com/questions/3183444/check-for-valid-link-url
-    regex='(https?|ftp|file)://[-A-Za-z0-9\+&@#/%?=~_|!:,.;]*[-A-Za-z0-9\+&@#/%=~_|]'
-    if [[ $RECEIVED_URL =~ $regex ]]; then
-      # Remove potential quotation marks
-      INITIAL_URL=$(echo $RECEIVED_URL | tr -d '"')
-    fi
+    # Remove potential quotation marks
+    INITIAL_URL=$(echo $RECEIVED_URL | tr -d '"')
   fi
 fi
 
@@ -60,7 +56,7 @@ export DARK_MODE=$DARK_MODE
 export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
 # Setting the TZ environment variable (https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html)
 # in order to automatically adjust the timezone at the lower layers
-export TZ=$DESIRED_TIMEZONE 
+export TZ=$DESIRED_TIMEZONE
 export INITIAL_URL=$INITIAL_URL
 
 exec runuser --login fractal --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,INITIAL_URL -c \

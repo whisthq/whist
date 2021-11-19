@@ -166,15 +166,13 @@ Custom types
  * @brief                          Data packet description
  */
 typedef enum {
-    PACKET_AUDIO,
-    PACKET_VIDEO,
-    PACKET_MESSAGE,
+    PACKET_AUDIO = 0,
+    PACKET_VIDEO = 1,
+    PACKET_MESSAGE = 2,
+    NUM_PACKET_TYPES = 3,
 } FractalPacketType;
 
 #include <fractal/core/fractal.h>
-
-// Used for buffers whose key is a packet_type
-#define NUM_PACKET_TYPES 3
 
 /**
  * @brief                          Packet of data to be sent over a

@@ -8,7 +8,7 @@ import { Observable, ReplaySubject } from "rxjs"
 import { filter, share, map, take } from "rxjs/operators"
 import { withMocking } from "@app/testing"
 import { logBase, LogLevel } from "@app/utils/logging"
-import TRIGGER from "@app/utils/triggers"
+import { WhistTrigger } from "@app/constants/triggers"
 
 import mapValues from "lodash.mapvalues"
 
@@ -63,6 +63,7 @@ export const flow = <T>(
     let triggerPayload: object | undefined = {}
 
     trigger.pipe(take(1)).subscribe((x?: any) => {
+      logBase(`Flow ${name} started`, x)
       startTime = Date.now() // Get the timestamp of when the flow started running
       triggerPayload = x // Save the trigger payload for logging down below
     })
@@ -127,7 +128,7 @@ export const fromTrigger = (name: string): Observable<any> => {
       Observable
   */
 
-  if (!Object.values(TRIGGER).includes(name))
+  if (!Object.values(WhistTrigger).includes(name))
     throw new Error(`Trigger ${name} does not exist`)
 
   return TriggerChannel.pipe(

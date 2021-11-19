@@ -24,12 +24,6 @@ const (
 	userConfigS3Bucket = "fractal-user-app-configs"
 	aes256KeyLength    = 32
 	aes256IVLength     = 16
-
-	// This is the default iteration value used by openssl -pbkdf2 flag
-	pbkdf2Iterations = 10000
-
-	// This is openssl's "magic" salt header value
-	opensslSaltHeader = "Salted__"
 )
 
 // DownloadUserConfigs downloads user configs from S3 and saves them to an in-memory buffer.
@@ -138,6 +132,10 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 	}()
 
 	totalFileSize, err := configutils.ExtractTarLz4(decryptedData, unpackedConfigDir)
+	if err != nil {
+		logger.Errorf("Error extracting tar lz4 file: %v", err)
+	}
+
 	logger.Infof("Untarred config to: %s, total size was %d bytes", unpackedConfigDir, totalFileSize)
 
 	return nil
@@ -292,12 +290,6 @@ func (mandelbox *mandelboxData) getS3ConfigKeyWithoutLocking() string {
 // getEncryptedArchiveFilename returns the name of the encrypted user config file.
 func (mandelbox *mandelboxData) getEncryptedArchiveFilename() string {
 	return "fractal-app-config.tar.lz4.enc"
-}
-
-// getDecryptedArchiveFilename returns the name of the
-// decrypted (but still compressed) user config file.
-func (mandelbox *mandelboxData) getDecryptedArchiveFilename() string {
-	return "fractal-app-config.tar.lz4"
 }
 
 // getUnpackedConfigsDirectoryName returns the name of the

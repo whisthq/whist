@@ -197,7 +197,7 @@ func removeStaleMandelboxesGoroutine(globalCtx context.Context) {
 			}
 			return
 
-		case _ = <-timerChan:
+		case <-timerChan:
 			if err := removeStaleMandelboxes(10*time.Second, 90*time.Second); err != nil {
 				logger.Error(err)
 			}

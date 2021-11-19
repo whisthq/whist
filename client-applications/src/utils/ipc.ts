@@ -9,7 +9,7 @@
 import { useEffect, useState } from "react"
 import { IpcRendererEvent, BrowserWindow } from "electron"
 import { StateIPC } from "@app/@types/state"
-import { StateChannel } from "@app/utils/constants"
+import { StateChannel } from "@app/constants/ipc"
 
 // This function should only be called from the renderer process. It's a React
 // hook that simplifies our IPC coordination with the main process.

@@ -11,33 +11,22 @@
 
 import { app } from "electron"
 import Store from "electron-store"
-import events from "events"
 import { loggingBaseFilePath } from "@app/config/environment"
 
 app.setPath("userData", loggingBaseFilePath)
 
 export const store = new Store({ watch: true })
-export const persisted = new events.EventEmitter()
 
-interface Cache {
-  [k: string]: string | boolean
+const persistSet = (key: string, value: string | boolean) => {
+  store.set(key, value)
 }
 
-type CacheName = "auth" | "data"
+const persistGet = (key: string) => store.get(key)
 
-const persistedAuth = store.get("auth") as Cache
-
-const persist = (key: string, value: string | boolean, cache?: CacheName) => {
-  store.set(`${cache ?? "auth"}.${key}`, value)
-}
-
-const persistClear = (keys: Array<keyof Cache>, cache: CacheName) => {
+const persistClear = (keys: string[]) => {
   keys.forEach((key) => {
-    store.delete(`${cache as string}.${key as string}`)
+    store.delete(key)
   })
 }
 
-const persistGet = (key: keyof Cache, cache?: CacheName) =>
-  (store.get(cache ?? "auth") as Cache)?.[key]
-
-export { Cache, persist, persistedAuth, persistClear, persistGet }
+export { persistSet, persistClear, persistGet }

@@ -2,14 +2,15 @@ import { merge } from "rxjs"
 import toPairs from "lodash.topairs"
 
 import { fromTrigger } from "@app/utils/flows"
-import { persist } from "@app/utils/persist"
+import { persistSet } from "@app/utils/persist"
+import { WhistTrigger } from "@app/constants/triggers"
 
 // On a successful auth, store the auth credentials in Electron store
 // so the user is remembered
 merge(
-  fromTrigger("authFlowSuccess"),
-  fromTrigger("authRefreshSuccess"),
-  fromTrigger("configFlowSuccess")
+  fromTrigger(WhistTrigger.authFlowSuccess),
+  fromTrigger(WhistTrigger.authRefreshSuccess),
+  fromTrigger(WhistTrigger.configFlowSuccess)
 ).subscribe(
   (args: {
     userEmail?: string
@@ -18,7 +19,7 @@ merge(
     configToken?: string
   }) => {
     toPairs(args).forEach(([key, value]) => {
-      if (value !== undefined) persist(key, value)
+      if (value !== undefined) persistSet(`auth.${key}`, value)
     })
   }
 )

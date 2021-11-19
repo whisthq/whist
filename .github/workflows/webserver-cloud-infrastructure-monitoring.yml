@@ -6,8 +6,9 @@
 name: "Webserver: Cloud Infrastructure Monitoring"
 on:
   schedule:
-    - cron: "12 13 * * 1-5" # runs at 09:18 (EST/New York) each weekday
-    - cron: "12 18 * * 1-5" # runs at 14:18 (EST/New York) each weekday
+    - cron: "12 13 * * 1-5" # runs at 08:18 +/- a few minutes (EST/New York) each weekday
+    - cron: "12 18 * * 1-5" # runs at 13:18 +/- a few minutes (EST/New York) each weekday
+    - cron: "12 22 * * 1-5" # runs at 17:18 +/- a few minutes (EST/New York) each weekday
   workflow_dispatch:
 
 jobs:
@@ -46,7 +47,7 @@ jobs:
           from notifications.slack_bot import slack_post
           from aws.resource_helpers import num_aws_instances
 
-          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
           SLACK_CHANNEL = "#alerts-dev"
           BODY = "*Number of Instances:*"
 
@@ -130,7 +131,7 @@ jobs:
           resources = flag_instances("${{ matrix.aws-region }}")
 
           if resources:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
             SLACK_CHANNEL = "#alerts-dev"
             BODY = "Old *Instances* in _${{ matrix.aws-region }}_:\n%s" % resources
             slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
@@ -169,7 +170,7 @@ jobs:
           hanging_instances = list(filter(is_not_registed_in_db, instances))
 
           if hanging_instances:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
             SLACK_CHANNEL = "#alerts-dev"
 
             # Format message
@@ -194,7 +195,7 @@ jobs:
           prod_instances = get_host_service_unresponsive_instances(os.environ['DATABASE_PROD_URL'], "${{ matrix.aws-region }}")
 
           if dev_instances or staging_instances or prod_instances:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
             SLACK_CHANNEL = "#alerts-dev"
 
             stages = {'dev': dev_instances, 'staging': staging_instances, 'prod': prod_instances}
@@ -223,7 +224,7 @@ jobs:
           prod_instances = get_lingering_instances(os.environ['DATABASE_PROD_URL'], "${{ matrix.aws-region }}")
 
           if dev_instances or staging_instances or prod_instances:
-            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
             SLACK_CHANNEL = "#alerts-dev"
 
             stages = {'dev': dev_instances, 'staging': staging_instances, 'prod': prod_instances}
@@ -318,7 +319,7 @@ jobs:
         run: |
           from notifications.slack_bot import slack_post
 
-          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
           SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
           BODY = "@releases :rotating_light: Failed to clean lingering Packer Instances and AMI Snapshots in `webserver-cleanup-lingering-packer-builders-and-ami-resources` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
@@ -347,7 +348,7 @@ jobs:
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
-          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
           SLACK_CHANNEL = "#alerts-dev"
           BODY = ":rotating_light: @releases Cloud Infrastructure Monitoring Workflow Failed, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)

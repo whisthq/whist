@@ -7,15 +7,14 @@ import { fromEvent } from "rxjs"
 
 import { trayEvent } from "@app/utils/tray"
 import { createTrigger } from "@app/utils/flows"
-import TRIGGER from "@app/utils/triggers"
+import { WhistTrigger } from "@app/constants/triggers"
 
-createTrigger(TRIGGER.showPaymentWindow, fromEvent(trayEvent, "payment"))
-createTrigger(TRIGGER.showSignoutWindow, fromEvent(trayEvent, "signout"))
-createTrigger(TRIGGER.trayFeedbackAction, fromEvent(trayEvent, "feedback"))
-createTrigger(TRIGGER.trayRegionAction, fromEvent(trayEvent, "region"))
-createTrigger(TRIGGER.trayBugAction, fromEvent(trayEvent, "bug"))
-createTrigger(TRIGGER.trayAutolaunchAction, fromEvent(trayEvent, "auto-launch"))
+createTrigger(WhistTrigger.showPaymentWindow, fromEvent(trayEvent, "payment"))
+createTrigger(WhistTrigger.showSignoutWindow, fromEvent(trayEvent, "signout"))
+createTrigger(WhistTrigger.trayFeedbackAction, fromEvent(trayEvent, "feedback"))
+createTrigger(WhistTrigger.trayRegionAction, fromEvent(trayEvent, "region"))
+createTrigger(WhistTrigger.trayBugAction, fromEvent(trayEvent, "bug"))
 createTrigger(
-  TRIGGER.trayRestoreSessionAction,
+  WhistTrigger.trayRestoreSessionAction,
   fromEvent(trayEvent, "restore-last-browser-session")
 )

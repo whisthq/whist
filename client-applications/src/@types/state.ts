@@ -8,4 +8,5 @@ export interface StateIPC {
   trigger: Trigger // Renderer triggers like button clicks
   appEnvironment: string // dev, staging, prod
   updateInfo: string // emitted by autoUpdater
+  browsers: string[]
 }

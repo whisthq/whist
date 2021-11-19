@@ -211,10 +211,7 @@ static int handle_clipboard_message(FractalServerMessage *fsmsg, size_t fsmsg_si
     }
     LOG_INFO("Received %d byte clipboard message from server!", fsmsg_size);
     // Known to run in less than ~100 assembly instructions
-    if (!clipboard_synchronizer_set_clipboard_chunk(&fsmsg->clipboard)) {
-        LOG_ERROR("Failed to set local clipboard from server message.");
-        return -1;
-    }
+    push_clipboard_chunk(&fsmsg->clipboard);
     return 0;
 }
 

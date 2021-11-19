@@ -22,6 +22,5 @@ export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
 export TZ=$TZ
 export INITIAL_URL=$INITIAL_URL
 
-
 # Start the application that this mandelbox runs
 exec fractal-application

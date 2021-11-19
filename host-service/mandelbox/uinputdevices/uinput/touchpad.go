@@ -77,7 +77,7 @@ func (vTouch vTouchPad) MoveTo(x int32, y int32) error {
 func (vTouch vTouchPad) MouseButtonClick(buttonCode int) error {
 	err := sendBtnEvent(vTouch.deviceFile, []int{buttonCode}, btnStatePressed)
 	if err != nil {
-		return fmt.Errorf("Failed to issue the 0x%x mouse button event: %v", buttonCode, err)
+		return fmt.Errorf("failed to issue the 0x%x mouse button event: %v", buttonCode, err)
 	}
 
 	return sendBtnEvent(vTouch.deviceFile, []int{buttonCode}, btnStateReleased)
@@ -142,6 +142,10 @@ func createTouchPad(path string, name []byte, minX int32, maxX int32, minY int32
 	}
 
 	err = ioctl(deviceFile, uiSetPropBit, inputPropPointer)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed during ioctl: %v", err)
+	}
 
 	var absMin [absSize]int32
 	absMin[absX] = minX

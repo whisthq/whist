@@ -40,6 +40,10 @@ const esbuildCommand = [
   "--outdir=build/dist/main",
   "--external:electron",
   "--external:@sentry/electron",
+  "--external:x11",
+  "--external:node:path",
+  "--external:keytar",
+  "--external:knex",
 ]
 // We minify our output to make this less convenient for snooping users.
 if (process.env.NODE_ENV === "production") {
@@ -51,7 +55,7 @@ const cmdMainCompile = esbuildCommand.join(" ")
 // Every time we run Electron, we want to first compile the main process files.
 // This command will be called by a Snowpack hook, and Snowpack will take care
 // of compiling the renderer process files.
-const cmdElectron = [cmdMainCompile, "&&", "electron build/dist/main"].join(" ")
+const cmdElectron = [cmdMainCompile, "&&", "electron ."].join(" ")
 
 // Snowpack only supplies "hot-reload" for the renderer process, so we use
 // nodemon as a "hot-reload" for the main process. We give it some folders to
@@ -158,6 +162,9 @@ module.exports = {
       "events",
       "punycode",
       "querystring",
+      "keytar",
+      "x11",
+      "node:path",
     ],
     // We ask Snowpack to polyfill and NodeJS APIs that it can, so that we can
     // still make some use of the NodeJS standard library. It cannot polyfill

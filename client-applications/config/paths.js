@@ -26,7 +26,7 @@ const getProtocolFolder = () => {
       return path.join(app.getAppPath(), "../..", "protocol-build/client")
     }
   } else {
-    return path.join(app.getAppPath(), "../../..", "protocol-build/client")
+    return path.resolve("protocol-build/client")
   }
 }
 
@@ -44,16 +44,9 @@ const buildRoot = app.isPackaged
   ? path.join(app.getAppPath(), "build")
   : path.resolve("public")
 
-// Cache/persistence folder name
-const userDataFolderNames = {
-  development: "Electron",
-  production: "fractal",
-}
-
 module.exports = {
   protocolName,
   protocolFolder,
   loggingFiles,
-  userDataFolderNames,
   buildRoot,
 }

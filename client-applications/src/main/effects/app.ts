@@ -7,47 +7,33 @@
 import { app, session } from "electron"
 import { autoUpdater } from "electron-updater"
 import { take } from "rxjs/operators"
-import isEmpty from "lodash.isempty"
-import pickBy from "lodash.pickby"
 import Sentry from "@sentry/electron"
 
 import { AWSRegion } from "@app/@types/aws"
 import {
-  createAuthWindow,
   createSignoutWindow,
   relaunch,
   createPaymentWindow,
   createBugTypeform,
-  createOnboardingTypeform,
+  createOnboardingWindow,
 } from "@app/utils/windows"
 import { createTray, createMenu } from "@app/utils/tray"
 import { fromTrigger } from "@app/utils/flows"
-import {
-  persist,
-  persistGet,
-  persistClear,
-  store,
-  persistedAuth,
-} from "@app/utils/persist"
+import { persistGet, persistClear, persistSet, store } from "@app/utils/persist"
 import { withAppReady } from "@app/utils/observables"
 import { startupNotification } from "@app/utils/notification"
+import { accessToken } from "@fractal/core-ts"
+import {
+  ONBOARDED,
+  CACHED_USER_EMAIL,
+  CACHED_ACCESS_TOKEN,
+  CACHED_REFRESH_TOKEN,
+  CACHED_CONFIG_TOKEN,
+} from "@app/constants/store"
+import { WhistTrigger } from "@app/constants/triggers"
 
-fromTrigger("appReady").subscribe(() => {
+fromTrigger(WhistTrigger.appReady).subscribe(() => {
   createTray(createMenu(false))
-})
-
-fromTrigger("appReady").subscribe(() => {
-  const authCache = {
-    accessToken: (persistedAuth?.accessToken ?? "") as string,
-    refreshToken: (persistedAuth?.refreshToken ?? "") as string,
-    userEmail: (persistedAuth?.userEmail ?? "") as string,
-    configToken: (persistedAuth?.configToken ?? "") as string,
-  }
-
-  if (!isEmpty(pickBy(authCache, (x) => x === ""))) {
-    app?.dock?.show()
-    createAuthWindow()
-  }
 })
 
 // If we have have successfully authorized, close the existing windows.
@@ -55,7 +41,7 @@ fromTrigger("appReady").subscribe(() => {
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-withAppReady(fromTrigger("configFlowSuccess")).subscribe(
+withAppReady(fromTrigger(WhistTrigger.configFlowSuccess)).subscribe(
   (x: { userEmail: string }) => {
     // Show notification
     startupNotification()?.show()
@@ -65,7 +51,7 @@ withAppReady(fromTrigger("configFlowSuccess")).subscribe(
 )
 
 // If an update is available, show the update window and download the update
-fromTrigger("updateAvailable")
+fromTrigger(WhistTrigger.updateAvailable)
   .pipe(take(1))
   .subscribe(() => {
     autoUpdater.downloadUpdate().catch((err) => Sentry.captureException(err))
@@ -73,15 +59,12 @@ fromTrigger("updateAvailable")
 
 // On signout or relaunch, clear the cache (so the user can log in again) and restart
 // the app
-fromTrigger("clearCacheAction").subscribe(
+fromTrigger(WhistTrigger.clearCacheAction).subscribe(
   (payload: { clearConfig: boolean }) => {
-    persistClear(
-      [
-        ...["accessToken", "refreshToken", "userEmail"],
-        ...(payload.clearConfig ? ["configToken"] : []),
-      ],
-      "auth"
-    )
+    persistClear([
+      ...[CACHED_USER_EMAIL, CACHED_ACCESS_TOKEN, CACHED_REFRESH_TOKEN],
+      ...(payload.clearConfig ? [CACHED_CONFIG_TOKEN] : []),
+    ])
     // Clear the Auth0 cache. In window.ts, we tell Auth0 to store session info in
     // a partition called "auth0", so we clear the "auth0" partition here
     session
@@ -95,55 +78,55 @@ fromTrigger("clearCacheAction").subscribe(
 
 // If an admin selects a region, relaunch the app with the selected region passed
 // into argv so it can be read by flows/index.ts
-fromTrigger("trayRegionAction").subscribe((region: AWSRegion) => {
+fromTrigger(WhistTrigger.trayRegionAction).subscribe((region: AWSRegion) => {
   relaunch({ args: process.argv.slice(1).concat([region]) })
 })
 
-fromTrigger("relaunchAction").subscribe(() => {
+fromTrigger(WhistTrigger.relaunchAction).subscribe(() => {
   relaunch()
 })
 
-withAppReady(fromTrigger("showSignoutWindow")).subscribe(() => {
+withAppReady(fromTrigger(WhistTrigger.showSignoutWindow)).subscribe(() => {
   createSignoutWindow()
 })
 
-withAppReady(fromTrigger("trayBugAction")).subscribe(() => {
+withAppReady(fromTrigger(WhistTrigger.trayBugAction)).subscribe(() => {
   createBugTypeform()
 })
 
-withAppReady(fromTrigger("authFlowSuccess"))
+withAppReady(fromTrigger(WhistTrigger.authFlowSuccess))
   .pipe(take(1))
   .subscribe(() => {
-    const onboarded =
-      (persistGet("onboardingTypeformSubmitted", "data") as boolean) ?? false
-    if (!onboarded) createOnboardingTypeform()
+    const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
+    if (!onboarded) createOnboardingWindow()
   })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-withAppReady(fromTrigger("showPaymentWindow")).subscribe(() => {
+withAppReady(fromTrigger(WhistTrigger.showPaymentWindow)).subscribe(() => {
   const accessToken = (store.get("auth.accessToken") ?? "") as string
-  const refreshToken = (store.get("auth.refreshToken") ?? "") as string
   createPaymentWindow({
     accessToken,
-    refreshToken,
   }).catch((err) => Sentry.captureException(err))
 })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-withAppReady(fromTrigger("checkPaymentFlowFailure")).subscribe(
-  ({ accessToken, refreshToken }) => {
+withAppReady(fromTrigger(WhistTrigger.checkPaymentFlowFailure)).subscribe(
+  ({ accessToken }: accessToken) => {
     createPaymentWindow({
       accessToken,
-      refreshToken,
     }).catch((err) => Sentry.captureException(err))
   }
 )
 
-withAppReady(fromTrigger("onboardingTypeformSubmitted")).subscribe(() => {
-  persist("onboardingTypeformSubmitted", true, "data")
+withAppReady(fromTrigger(WhistTrigger.onboarded)).subscribe(() => {
+  persistSet(ONBOARDED, true)
 })
 
-fromTrigger("appReady").subscribe(() => {
+fromTrigger(WhistTrigger.onboarded).subscribe(() => {
+  persistSet(ONBOARDED, true)
+})
+
+fromTrigger(WhistTrigger.appReady).subscribe(() => {
   app.requestSingleInstanceLock()
 
   app.on("second-instance", (e) => {

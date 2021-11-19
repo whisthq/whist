@@ -19,7 +19,7 @@ import {
 import { mandelboxRequest, mandelboxCreateSuccess } from "@app/utils/mandelbox"
 import { sortRegionByProximity } from "@app/utils/region"
 import { fork, flow } from "@app/utils/flows"
-import { defaultAllowedRegions } from "@app/utils/constants"
+import { defaultAllowedRegions } from "@app/constants/mandelbox"
 import { AWSRegion } from "@app/@types/aws"
 
 export default flow<{

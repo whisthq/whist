@@ -16,6 +16,7 @@ typedef SDL_mutex* FractalMutex;
 typedef SDL_cond* FractalCondition;
 typedef SDL_sem* FractalSemaphore;
 typedef SDL_Thread* FractalThread;
+typedef SDL_threadID FractalThreadID;
 typedef int (*FractalThreadFunction)(void*);
 typedef enum FractalThreadPriority {
     FRACTAL_THREAD_PRIORITY_LOW = SDL_THREAD_PRIORITY_LOW,
@@ -28,6 +29,7 @@ void fractal_init_multithreading();
 
 FractalThread fractal_create_thread(FractalThreadFunction thread_function, char* thread_name,
                                     void* data);
+FractalThreadID fractal_get_thread_id(FractalThread thread);
 void fractal_detach_thread(FractalThread thread);
 void fractal_wait_thread(FractalThread thread, int* ret);
 void fractal_set_thread_priority(FractalThreadPriority priority);

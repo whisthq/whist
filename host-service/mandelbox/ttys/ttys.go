@@ -66,8 +66,8 @@ func Free(tty TTY) {
 	ttymapLock.Lock()
 	defer ttymapLock.Unlock()
 
-	v, _ := ttymap[tty]
-	if v != reserved {
+	v, exists := ttymap[tty]
+	if exists && v != reserved {
 		delete(ttymap, tty)
 		logger.Infof("TTY: freed tty %v", tty)
 	}
@@ -79,6 +79,6 @@ func randomTTYInAllowedRange() TTY {
 }
 
 // Helper function to determine whether a given tty is in the allowed range, or not
-func isInAllowedRange(p uint16) bool {
+func isInAllowedRange(p uint8) bool {
 	return p >= minAllowedTTY && p < maxAllowedTTY
 }

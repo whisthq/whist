@@ -37,7 +37,6 @@ func WaitWithDebugPrints(wg *sync.WaitGroup, timeout time.Duration, debugLevel i
 
 			case <-timer.C:
 				printDebug()
-				timer = time.NewTimer(timeout)
 			}
 		}
 	}()

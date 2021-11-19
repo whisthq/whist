@@ -1,5 +1,5 @@
-import { merge, Observable, of } from "rxjs"
-import { map, take, filter } from "rxjs/operators"
+import { merge, of, combineLatest, zip, from } from "rxjs"
+import { map, take, filter, switchMap, share, mapTo } from "rxjs/operators"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
 
@@ -7,77 +7,98 @@ import authFlow, { authRefreshFlow } from "@app/main/flows/auth"
 import checkPaymentFlow from "@app/main/flows/payment"
 import mandelboxFlow from "@app/main/flows/mandelbox"
 import autoUpdateFlow from "@app/main/flows/autoupdate"
-import configFlow from "@app/main/flows/config"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
 import { fromSignal } from "@app/utils/observables"
 import { getRegionFromArgv } from "@app/utils/region"
-import { AWSRegion } from "@app/@types/aws"
-import { persistedAuth, persistGet } from "@app/utils/persist"
-import TRIGGER from "@app/utils/triggers"
+import { persistGet } from "@app/utils/persist"
+import { WhistTrigger } from "@app/constants/triggers"
+import {
+  accessToken,
+  refreshToken,
+  userEmail,
+  configToken,
+  isNewConfigToken,
+} from "@app/utils/state"
+import { ONBOARDED } from "@app/constants/store"
+import { getDecryptedCookies, InstalledBrowser } from "@app/utils/importer"
 
 // Autoupdate flow
-const update = autoUpdateFlow(fromTrigger("updateAvailable"))
+const update = autoUpdateFlow(fromTrigger(WhistTrigger.updateAvailable))
 
-// Auth flow
-const authCache = {
-  accessToken: (persistedAuth?.accessToken ?? "") as string,
-  refreshToken: (persistedAuth?.refreshToken ?? "") as string,
-  userEmail: (persistedAuth?.userEmail ?? "") as string,
-  configToken: (persistedAuth?.configToken ?? "") as string,
-}
-
-if (isEmpty(pickBy(authCache, (x) => x === ""))) {
-  const auth = authFlow(of(authCache))
-  createTrigger(TRIGGER.authFlowSuccess, auth.success)
-  createTrigger(TRIGGER.authFlowFailure, auth.failure)
-} else {
-  const auth = authFlow(fromTrigger("authInfo"))
-  createTrigger(TRIGGER.authFlowSuccess, auth.success)
-  createTrigger(TRIGGER.authFlowFailure, auth.failure)
-}
+const auth = authFlow(
+  merge(
+    fromTrigger(WhistTrigger.authInfo),
+    combineLatest({
+      accessToken,
+      refreshToken,
+      userEmail,
+      configToken,
+    }).pipe(
+      take(1),
+      filter((auth) => isEmpty(pickBy(auth, (x) => x === "")))
+    )
+  )
+)
 
 const onboarded = fromSignal(
   merge(
-    of(persistGet("onboardingTypeformSubmitted", "data")).pipe(
-      filter((onboarded) => onboarded as boolean)
-    ),
-    fromTrigger("onboardingTypeformSubmitted")
+    fromTrigger(WhistTrigger.onboarded),
+    zip(
+      of(persistGet(ONBOARDED)).pipe(
+        filter((onboarded) => onboarded as boolean)
+      )
+    )
   ),
-  fromTrigger(TRIGGER.authFlowSuccess)
+  fromTrigger(WhistTrigger.authFlowSuccess)
 )
 
 // Unpack the access token to see if their payment is valid
 const checkPayment = checkPaymentFlow(
-  fromSignal(fromTrigger(TRIGGER.authFlowSuccess), onboarded)
+  fromSignal(combineLatest({ accessToken }), onboarded)
 )
 
 // If the payment is invalid, they'll be redirect to the Stripe window. After that they'll
 // get new auth credentials
 const refreshAfterPaying = authRefreshFlow(
-  fromTrigger(TRIGGER.stripeAuthRefresh)
-)
-
-// If the payment is valid, get or generate the config token
-const config = configFlow(
-  merge(
-    fromTrigger(TRIGGER.checkPaymentFlowSuccess),
-    refreshAfterPaying.success
+  fromSignal(
+    combineLatest({ refreshToken }),
+    fromTrigger(WhistTrigger.stripeAuthRefresh)
   )
 )
 
-// Observable that fires when Whist is ready to be launched
-const launchTrigger = fromTrigger(TRIGGER.configFlowSuccess).pipe(
-  map((x: object) => ({
-    ...x, // { accessToken, configToken, isNewConfigToken }
-    region: getRegionFromArgv(process.argv), // AWS region, if admins want to control the region
-  })),
-  take(1)
-) as Observable<{
-  accessToken: string
-  configToken: string
-  isNewConfigToken: boolean
-  region?: AWSRegion
-}>
+// If importCookiesFrom is not empty, run the cookie import function
+const importCookies = fromTrigger(WhistTrigger.onboarded).pipe(
+  switchMap((t) =>
+    from(getDecryptedCookies(t?.importCookiesFrom as InstalledBrowser))
+  ),
+  share() // If you don't share, this observable will fire many times (once for each subscriber of the flow)
+)
+
+const dontImportCookies = of(persistGet(ONBOARDED) as boolean).pipe(
+  take(1),
+  filter((onboarded: boolean) => onboarded),
+  mapTo(undefined),
+  share()
+)
+
+// Observable that fires when Fractal is ready to be launched
+const launchTrigger = fromSignal(
+  combineLatest({
+    accessToken,
+    configToken,
+    isNewConfigToken,
+    cookies: merge(importCookies, dontImportCookies),
+  }).pipe(
+    map((x: object) => ({
+      ...x,
+      region: getRegionFromArgv(process.argv),
+    }))
+  ),
+  merge(
+    fromTrigger(WhistTrigger.checkPaymentFlowSuccess),
+    refreshAfterPaying.success
+  )
+).pipe(take(1), share())
 
 // Mandelbox creation flow
 const mandelbox = mandelboxFlow(launchTrigger)
@@ -85,18 +106,19 @@ const mandelbox = mandelboxFlow(launchTrigger)
 // After the mandelbox flow is done, run the refresh flow so the tokens are being refreshed
 // every time but don't impede startup time
 const refreshAtEnd = authRefreshFlow(
-  fromSignal(launchTrigger, mandelbox.success)
+  fromSignal(combineLatest({ refreshToken }), mandelbox.success)
 )
 
-createTrigger(TRIGGER.updateDownloaded, update.downloaded)
-createTrigger(TRIGGER.downloadProgress, update.progress)
+createTrigger(WhistTrigger.authFlowSuccess, auth.success)
+createTrigger(WhistTrigger.authFlowFailure, auth.failure)
 
-createTrigger(TRIGGER.authRefreshSuccess, refreshAtEnd.success)
+createTrigger(WhistTrigger.updateDownloaded, update.downloaded)
+createTrigger(WhistTrigger.downloadProgress, update.progress)
 
-createTrigger(TRIGGER.checkPaymentFlowSuccess, checkPayment.success)
-createTrigger(TRIGGER.checkPaymentFlowFailure, checkPayment.failure)
+createTrigger(WhistTrigger.authRefreshSuccess, refreshAtEnd.success)
 
-createTrigger(TRIGGER.mandelboxFlowSuccess, mandelbox.success)
-createTrigger(TRIGGER.mandelboxFlowFailure, mandelbox.failure)
+createTrigger(WhistTrigger.checkPaymentFlowSuccess, checkPayment.success)
+createTrigger(WhistTrigger.checkPaymentFlowFailure, checkPayment.failure)
 
-createTrigger(TRIGGER.configFlowSuccess, config.success)
+createTrigger(WhistTrigger.mandelboxFlowSuccess, mandelbox.success)
+createTrigger(WhistTrigger.mandelboxFlowFailure, mandelbox.failure)

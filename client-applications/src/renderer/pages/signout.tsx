@@ -25,7 +25,7 @@ const Signout = (props: { onClick: (clearConfig: boolean) => void }) => {
   return (
     <div
       className={classNames(
-        "flex flex-col h-screen items-center bg-black",
+        "flex flex-col h-screen items-center bg-gray-800",
         "justify-center font-body text-center px-12"
       )}
     >
@@ -51,7 +51,7 @@ const Signout = (props: { onClick: (clearConfig: boolean) => void }) => {
           type="checkbox"
           checked={clearConfig}
           onChange={handleCheck}
-          className="mt-1 bg-black bg-opacity-80"
+          className="mt-1 bg-gray-800"
         />
         <div className="ml-3">
           Also permanently erase all my browsing data (history, cookies, etc.)

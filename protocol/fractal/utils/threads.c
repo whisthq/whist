@@ -21,6 +21,11 @@ FractalThread fractal_create_thread(FractalThreadFunction thread_function, char 
     return ret;
 }
 
+FractalThreadID fractal_get_thread_id(FractalThread thread) {
+    // `thread` == NULL returns the current thread ID
+    return SDL_GetThreadID(thread);
+}
+
 void fractal_detach_thread(FractalThread thread) { SDL_DetachThread(thread); }
 
 void fractal_wait_thread(FractalThread thread, int *ret) { SDL_WaitThread(thread, ret); }
