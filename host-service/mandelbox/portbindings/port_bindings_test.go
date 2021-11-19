@@ -245,6 +245,75 @@ func TestFreeSingleReservedPort(t *testing.T) {
 
 }
 
+func TestReservePortAvailable(t *testing.T) {
+	testDesiredBind := PortBinding{
+		Protocol: TransportProtocolTCP,
+		HostPort: randomPortInAllowedRange(),
+	}
+
+	portMapsLock.Lock()
+	defer portMapsLock.Unlock()
+
+	mapToUse, err := getProtocolSpecificHostPortMap(testDesiredBind.Protocol)
+	if err != nil {
+		t.Fatalf("error getting tcp port map: %v", err)
+	}
+
+	// Check if port exists
+	if _, exists := (*mapToUse)[testDesiredBind.HostPort]; exists {
+		t.Fatalf("error getting free port to reserve")
+	}
+
+	Reserve(testDesiredBind.HostPort, testDesiredBind.Protocol)
+
+	// Check if port exists
+	if status, exists := (*mapToUse)[testDesiredBind.HostPort]; !exists && status == reserved {
+		t.Fatalf("error reserving free port")
+	}
+
+	freeSinglePort(testDesiredBind)
+}
+
+func TestReservePortNotAvailable(t *testing.T) {
+	testDesiredBind := PortBinding{
+		Protocol: TransportProtocolTCP,
+		HostPort: randomPortInAllowedRange(),
+	}
+
+	portMapsLock.Lock()
+	defer portMapsLock.Unlock()
+
+	mapToUse, err := getProtocolSpecificHostPortMap(testDesiredBind.Protocol)
+	if err != nil {
+		t.Fatalf("error getting tcp port map: %v", err)
+	}
+
+	// Add new port to host port map
+	(*mapToUse)[testDesiredBind.HostPort] = inUse
+
+	Reserve(testDesiredBind.HostPort, testDesiredBind.Protocol)
+
+	// Port should maintain the original status
+	if status, exists := (*mapToUse)[testDesiredBind.HostPort]; !exists || status != inUse {
+		t.Fatalf("error reserving port inUse modified host port map. Expected (%v,%v) but got (%v,%v)", true, inUse, exists, status)
+	}
+
+	freeSinglePort(testDesiredBind)
+}
+
+func TestReservePortInvalidProtocol(t *testing.T) {
+	testDesiredBind := PortBinding{
+		Protocol: TransportProtocol("testInvalidProtocol"),
+		HostPort: randomPortInAllowedRange(),
+	}
+
+	portMapsLock.Lock()
+	defer portMapsLock.Unlock()
+
+	// Reserve should fail silently as protocol is invalid
+	Reserve(testDesiredBind.HostPort, testDesiredBind.Protocol)
+}
+
 func TestAllowedRangeMinInclusive(t *testing.T) {
 	// MinAllowedPort is inclusive and should be in the range
 	if !isInAllowedRange(MinAllowedPort) {
