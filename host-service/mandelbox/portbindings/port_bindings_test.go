@@ -99,6 +99,9 @@ func TestAllocateAndFreeSinglePort(t *testing.T) {
 	}
 
 	mapToUse, err := getProtocolSpecificHostPortMap(updatedPortBind.Protocol)
+	if err != nil {
+		t.Fatalf("error getting host port map.  Error: %v", err)
+	}
 
 	mapSizeBeforeFree := len(*mapToUse)
 	freeSinglePort(updatedPortBind)
@@ -124,6 +127,10 @@ func TestAllocateSinglePortAnyFullHostPortMap(t *testing.T) {
 	defer portMapsLock.Unlock()
 	
 	mapToUse, err := getProtocolSpecificHostPortMap(testDesiredBind.Protocol)
+	if err != nil {
+		t.Fatalf("error getting host port map.  Error: %v", err)
+	}
+	
 	for port := MinAllowedPort; port < MaxAllowedPort; port++ {
 		(*mapToUse)[uint16(port)] = inUse
 	}
@@ -180,6 +187,10 @@ func TestAllocateAndFreeSinglePortAny(t *testing.T) {
 
 	// Check size of table to confirm port have been freed
 	mapToUse, err := getProtocolSpecificHostPortMap(updatedPortBind.Protocol)
+	if err != nil {
+		t.Fatalf("error getting host port map.  Error: %v", err)
+	}
+	
 	mapSizeBeforeFree := len(*mapToUse)
 	freeSinglePort(updatedPortBind)
 	mapSizeAfterFree := len(*mapToUse)
