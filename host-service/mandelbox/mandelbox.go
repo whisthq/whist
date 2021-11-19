@@ -100,6 +100,9 @@ type Mandelbox interface {
 	// Backup the user configs to S3
 	BackupUserConfigs() error
 
+	GetConfigBuffer() *manager.WriteAtBuffer
+	SetConfigBuffer(*manager.WriteAtBuffer)
+
 	// WriteUserInitialBrowserData writes file(s) containing the user initial browser data
 	WriteUserInitialBrowserData(string, string) error
 
@@ -154,24 +157,27 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		untrackMandelbox(mandelbox)
 		logger.Infof("Successfully untracked mandelbox %s", mandelbox.ID)
 
-		mandelbox.rwlock.Lock()
-		defer mandelbox.rwlock.Unlock()
-
 		// Free port bindings
 		portbindings.Free(mandelbox.portBindings)
+		mandelbox.rwlock.Lock()
 		mandelbox.portBindings = nil
+		mandelbox.rwlock.Unlock()
 		logger.Infof("Successfully freed port bindings for mandelbox %s", mandelbox.ID)
 
 		// Free uinput devices
+		mandelbox.rwlock.Lock()
 		mandelbox.uinputDevices.Close()
 		mandelbox.uinputDevices = nil
 		mandelbox.uinputDeviceMappings = []dockercontainer.DeviceMapping{}
+		mandelbox.rwlock.Unlock()
 		logger.Infof("Successfully freed uinput devices for mandelbox %s", mandelbox.ID)
 
 		// Free TTY
 		ttys.Free(mandelbox.tty)
 		logger.Infof("Successfully freed TTY %v for mandelbox %s", mandelbox.tty, mandelbox.ID)
+		mandelbox.rwlock.Lock()
 		mandelbox.tty = 0
+		mandelbox.rwlock.Unlock()
 
 		// CI does not have GPUs
 		if !metadata.IsRunningInCI() {
@@ -473,7 +479,22 @@ func (mandelbox *mandelboxData) GetContext() context.Context {
 	return mandelbox.ctx
 }
 
-// Close cancels the context for the mandelbox, causing it to shutdown.
+// GetConfigBuffer returns the buffer where user config downloads are stored.
+func (mandelbox *mandelboxData) GetConfigBuffer() *manager.WriteAtBuffer {
+	mandelbox.rwlock.RLock()
+	defer mandelbox.rwlock.RUnlock()
+	return mandelbox.configBuffer
+}
+
+// SetWriteAtBuffer sets the buffer where user config downloads are stored.
+func (mandelbox *mandelboxData) SetConfigBuffer(buffer *manager.WriteAtBuffer) {
+	mandelbox.rwlock.Lock()
+	defer mandelbox.rwlock.Unlock()
+	mandelbox.configBuffer = buffer
+}
+
+// Close cancels the context for the mandelbox, causing it to shutdown
+// and clean up all its resources.
 func (mandelbox *mandelboxData) Close() {
 	// Cancel context, triggering the freeing up of all resources, including
 	// tracked by goroutines (like cloud storage directories)
