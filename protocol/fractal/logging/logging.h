@@ -53,6 +53,7 @@ Defines
 #define NO_LOG 0x00
 #define ERROR_LEVEL 0x01
 #define WARNING_LEVEL 0x02
+#define METRIC_LEVEL 0x03
 #define INFO_LEVEL 0x04
 #define DEBUG_LEVEL 0x05
 
@@ -66,9 +67,10 @@ Defines
 
 #define NEWLINE "\n"
 // Cast to const chars so that comparison against XYZ_TAG is defined
-extern const char *debug_tag, *info_tag, *warning_tag, *error_tag, *fatal_error_tag;
+extern const char *debug_tag, *info_tag, *metric_tag, *warning_tag, *error_tag, *fatal_error_tag;
 #define DEBUG_TAG debug_tag
 #define INFO_TAG info_tag
+#define METRIC_TAG metric_tag
 #define WARNING_TAG warning_tag
 #define ERROR_TAG error_tag
 #define FATAL_ERROR_TAG fatal_error_tag
@@ -86,6 +88,17 @@ extern const char *debug_tag, *info_tag, *warning_tag, *error_tag, *fatal_error_
     internal_logging_printf(INFO_TAG, LOG_FMT message NEWLINE, LOG_ARGS(INFO_TAG), ##__VA_ARGS__)
 #else
 #define LOG_INFO(message, ...)
+#endif
+
+// LOG_METRIC refers to one or more key-value pairs in JSON format. Useful for monitoring
+// performance metrics. Note that keys should be within double quotes, for JSON parsing to work.
+// For example :
+// LOG_METRIC("\"Latency\" : %d", latency);
+#if LOG_LEVEL >= METRIC_LEVEL
+#define LOG_METRIC(message, ...) \
+    internal_logging_printf(METRIC_TAG, "{ " message " }" NEWLINE, ##__VA_ARGS__)
+#else
+#define LOG_METRIC(message, ...)
 #endif
 
 // LOG_WARNING refers to something going wrong, but it's unknown whether or not it's the code or the

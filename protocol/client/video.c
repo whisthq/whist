@@ -683,6 +683,8 @@ void calculate_statistics() {
         stats.num_rendered_frames_per_second =
             video_ring_buffer->num_frames_rendered / STATISTICS_SECONDS;
 
+        LOG_METRIC("\"rendered_fps\" : %d, \"skipped_fps\" : %d",
+                   stats.num_rendered_frames_per_second, stats.num_skipped_frames_per_second);
         new_bitrates = calculate_new_bitrate(stats);
         if (new_bitrates.bitrate != client_max_bitrate ||
             new_bitrates.burst_bitrate != max_burst_bitrate) {

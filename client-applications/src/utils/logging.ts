@@ -145,6 +145,21 @@ export const logBase = (
 
 export const protocolToLogz = (line: string) => {
   // This function will push to logz.io on each log line received from the protocol
+
+  // If a line starts with {, then we check if it is in JSON format. If yes, we post
+  // the JSON data directly to logz.io. Useful for reporting metrics to ELK stack.
+  if (line.startsWith("{ ")) {
+    try {
+      const output = JSON.parse(line)
+      output.level = "METRIC"
+      output.session_id = sessionID
+      output.component = "clientapp"
+      logzio.log(output)
+      return
+    } catch (err) {
+      // Let it follow a normal flow in case of any JSON.parse error
+    }
+  }
   const match = line.match(/^[\d:.]*\s*\|\s*(?<level>\w+)\s*\|/)
   const level = match?.groups?.level ?? "INFO"
 
