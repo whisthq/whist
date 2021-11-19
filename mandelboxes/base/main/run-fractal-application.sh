@@ -20,7 +20,7 @@ export DARK_MODE=$DARK_MODE
 export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
 #TZ variable automatically adjusts the timezone (https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html)
 export TZ=$TZ
-
+export INITIAL_URL=$INITIAL_URL
 
 # Start the application that this mandelbox runs
 exec fractal-application

@@ -30,6 +30,9 @@ export default flow(
     const initialKeyRepeat = getInitialKeyRepeat()
     const keyRepeat = getKeyRepeat()
 
+    // Get URL from command line
+    const initialUrl = process.env.INITIAL_URL
+
     const host = hostSpinUpFlow(
       zip([trigger, create.success]).pipe(
         map(([t, c]) => ({
@@ -51,6 +54,9 @@ export default flow(
               !isNaN(parseInt(keyRepeat)) && {
                 key_repeat: parseInt(keyRepeat),
               }),
+            ...(initialUrl !== "" && {
+              initial_url: initialUrl,
+            }),
           }), // Data to send through the JSON transport
         }))
       )
