@@ -346,8 +346,8 @@ int main(int argc, char* argv[]) {
                     }
                     case SDL_WINDOWEVENT: {
                         if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-                            output_width = get_window_pixel_width((SDL_Window*)window);
-                            output_height = get_window_pixel_height((SDL_Window*)window);
+                            output_width = min(get_window_pixel_width((SDL_Window*)window), get_pixel_screen_width((SDL_Window*)window));
+                            output_height = min(get_window_pixel_height((SDL_Window*)window), get_pixel_screen_height((SDL_Window *)window));
                         }
                         break;
                     }
