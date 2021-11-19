@@ -130,7 +130,7 @@ func TestAllowedRangeMaxMinusOne(t *testing.T) {
 	}
 }
 
-func TestRandomTTYInAllowRange(t *testing.T) {
+func TestRandomTTYInAllowedRange(t *testing.T) {
 	// The random TTY should always be in the range
 	randomTTY := uint8(randomTTYInAllowedRange())
 	if !isInAllowedRange(randomTTY) {
