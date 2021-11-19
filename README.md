@@ -1,6 +1,6 @@
 # Whist Application Streaming
 
-[![Whist: Build & Deploy](https://github.com/fractal/fractal/actions/workflows/fractal-build-and-deploy.yml/badge.svg)](https://github.com/fractal/fractal/actions/workflows/fractal-build-and-deploy.yml) [![codecov](https://codecov.io/gh/fractal/fractal/branch/dev/graph/badge.svg?token=QB0c3c2NBj)](https://codecov.io/gh/fractal/fractal)
+[![Whist: Build & Deploy](https://github.com/fractal/fractal/actions/workflows/fractal-build-and-deploy.yml/badge.svg)](https://github.com/fractal/fractal/actions/workflows/fractal-build-and-deploy.yml) [![codecov](https://codecov.io/gh/fractal/fractal/branch/dev/graph/badge.svg?token=QB0c3c2NBj)](https://codecov.io/gh/fractal/fractal) [![Netlify Status](https://api.netlify.com/api/v1/badges/f65a863e-37d0-4407-babd-09b2b4802661/deploy-status)](https://app.netlify.com/sites/whist-prod/deploys)
 
 This repository contains the end-to-end code for the Whist Application Streaming product, following a [Monorepo](https://en.wikipedia.org/wiki/Monorepo) structure.
 
