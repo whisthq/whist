@@ -541,7 +541,6 @@ void unix_crash_handler(int sig) {
     //     getting stuck in an infinite loop of crash signal handling
     signal(sig, SIG_DFL);
     // If we exit, then the program doesn't crash and Sentry does not receive the event
-    // _exit(-1);
 }
 #endif
 
