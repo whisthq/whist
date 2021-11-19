@@ -26,10 +26,10 @@ parser.add_argument(
 )
 parser.add_argument(
     "--mode",
-    choices=["dev", "prod"],
+    choices=["dev", "prod", "perf"],
     help=(
         "This flag controls when the protocol gets copied into the mandelbox. "
-        "In dev mode, the protocol is copied at the end of each target mandelbox image. "
+        "In dev and perf mode, the protocol is copied at the end of each target mandelbox image. "
         "In prod mode, the protocol is only copied at the end of the base image and "
         "inherited by child images. If --all is passed in, this flag is ignored and "
         "prod mode is automatically set."
@@ -105,7 +105,7 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
     # docker build argument, we can control which dockerfiles copy the
     # protcool!
     build_asset_package = "default"
-    if protocol_copy_mode == "dev" and img_path in target_image_paths:
+    if protocol_copy_mode in ("dev", "perf") and img_path in target_image_paths:
         build_asset_package = "protocol"
     if protocol_copy_mode == "prod" and root_image:
         build_asset_package = "protocol"

@@ -34,7 +34,7 @@ COPY pg_hba.conf /etc/postgresql/13/main/pg_hba.conf
 COPY . /root
 
 # Install Python dependencies.
-RUN pip install -r /root/requirements.txt
+RUN pip3 install -r /root/requirements.txt
 
 # Our entrypoint will be a series of commands that will start the database
 # server, create databases for the diff process, and then run our Python

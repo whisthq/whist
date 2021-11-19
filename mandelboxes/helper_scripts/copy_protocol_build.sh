@@ -15,13 +15,19 @@ mkdir -p "$destdir/protocol"
 
 # Copy protocol build into build-temp
 SOURCE_DIR="../protocol"
-BUILD_DIR="../protocol/build-docker/server/build64"
+BUILD_DIR=""
 
-# Verify that the WhistServer is there
-cp "$BUILD_DIR"/WhistServer "$destdir/protocol"
+if [[ "${2:-WhistServer}" == "WhistServer" ]]; then
+	BUILD_DIR="../protocol/build-docker/server/build64"
+else
+	BUILD_DIR="../protocol/build-docker/client/build64"
+fi
+
+# Verify that the WhistServer/WhistClient is there
+cp -r "$BUILD_DIR"/${2} "$destdir/protocol"
 
 # Copy all of the accompanying files
-cp "$BUILD_DIR"/* "$destdir/protocol"
+cp -r "$BUILD_DIR"/* "$destdir/protocol"
 
 # Copy dependencies script
 cp "$SOURCE_DIR/setup-linux-build-environment.sh" "$destdir"

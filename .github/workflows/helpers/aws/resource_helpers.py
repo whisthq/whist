@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 from datetime import date, datetime, timedelta, timezone
-from logging import Filter
 import os
 import sys
 import boto3

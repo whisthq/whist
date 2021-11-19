@@ -1,0 +1,22 @@
+# See stage 0 of the base dockerfile for an explanation of this build stage.
+ARG BuildAssetPackage "protocol"
+FROM fractal/build-assets:$BuildAssetPackage as build-assets
+FROM fractal/base:current-build as fractal-development-client
+
+
+
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
+# FractalClient symbolic link
+RUN ln -sf /usr/share/fractal/bin/FractalClient /usr/share/fractal/FractalClient
+
+# Replace startup scripts
+RUN rm /usr/share/fractal/run-fractal-server.sh
+COPY run-fractal-client.sh /usr/share/fractal/run-fractal-client.sh
+RUN chmod +x /usr/share/fractal/run-fractal-client.sh
+COPY fractal-main.service /etc/systemd/system
+RUN systemctl enable fractal-main
+
+# Install Whist Protocol binaries and helper files (if necessary)
+COPY --from=build-assets protocol/* /usr/share/fractal/bin/

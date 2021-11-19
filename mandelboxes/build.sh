@@ -23,6 +23,9 @@ for arg in "$@"; do
     --prod|-p)
       mode=prod
       ;;
+    --perf|-P)
+      mode=perf
+      ;;
     --release-protocol)
       cmake_build_type_opt=Release
       ;;
@@ -51,15 +54,25 @@ rm -rf base/build-assets/build-temp && mkdir base/build-assets/build-temp
 # Build and copy the protocol
 if [[ "$mode" == "dev" ]]; then
   cmake_build_type=Debug
+elif [[ "$mode" == "perf" ]]; then
+  cmake_build_type=Perf
 else
   cmake_build_type=Release
 fi
 if [[ ! -z "$cmake_build_type_opt" ]]; then
   cmake_build_type=$cmake_build_type_opt
 fi
-echo "Building $cmake_build_type WhistServer..."
-../protocol/build_protocol_targets.sh --cmakebuildtype=$cmake_build_type WhistServer
-./helper_scripts/copy_protocol_build.sh base/build-assets/build-temp
+
+# Build the FractalClient app if we are building the development/client mandelbox. Otherwise, build the FractalServer
+if [[ "${python_args[0]}" == "development/client" ]]; then
+  echo "Building $cmake_build_type WhistClient..."
+  ../protocol/build_protocol_targets.sh --cmakebuildtype=$cmake_build_type WhistClient
+  ./helper_scripts/copy_protocol_build.sh base/build-assets/build-temp WhistClient
+else
+  echo "Building $cmake_build_type WhistServer..."
+  ../protocol/build_protocol_targets.sh --cmakebuildtype=$cmake_build_type WhistServer
+  ./helper_scripts/copy_protocol_build.sh base/build-assets/build-temp WhistServer
+fi
 
 # Copy the Nvidia driver installer
 echo "Fetching Nvidia driver installer..."
