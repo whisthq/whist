@@ -248,7 +248,7 @@ static int handle_ping_message(FractalClientMessage *fcmsg) {
     LOG_INFO("Ping Received - Ping ID %d", fcmsg->ping_id);
 
     // Update ping timer
-    start_timer(&(client.last_ping));
+    start_timer(&client.last_ping);
 
     // Send pong reply
     FractalServerMessage fsmsg_response = {0};
@@ -257,7 +257,7 @@ static int handle_ping_message(FractalClientMessage *fcmsg) {
 
     if (send_packet(&client.udp_context, PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
                     sizeof(fsmsg_response), 1) < 0) {
-        LOG_WARNING("Could not send Ping");
+        LOG_WARNING("Failed to send UDP pong");
         return -1;
     }
 
@@ -278,16 +278,16 @@ static int handle_tcp_ping_message(FractalClientMessage *fcmsg) {
     LOG_INFO("TCP Ping Received - TCP Ping ID %d", fcmsg->ping_id);
 
     // Update ping timer
-    start_timer(&(client.last_ping));
+    start_timer(&client.last_ping);
 
     // Send pong reply
     FractalServerMessage fsmsg_response = {0};
     fsmsg_response.type = MESSAGE_TCP_PONG;
     fsmsg_response.ping_id = fcmsg->ping_id;
 
-    if (send_packet(&(client.tcp_context), PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
+    if (send_packet(&client.tcp_context, PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
                     sizeof(fsmsg_response), -1) < 0) {
-        LOG_WARNING("Could not send TCP Ping to client");
+        LOG_WARNING("Failed to send TCP pong");
         return -1;
     }
 
