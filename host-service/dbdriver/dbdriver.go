@@ -6,9 +6,9 @@ import (
 
 	"github.com/jackc/pgx/v4/pgxpool"
 
-	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
+	logger "github.com/fractal/fractal/host-service/whistlogger"
 )
 
 // `enabled` is a flag denoting whether the functions in this package should do

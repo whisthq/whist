@@ -19,7 +19,7 @@ from app.utils.stripe.payments import (
     payment_required,
     PaymentRequired,
 )
-from tests.client import FractalAPITestClient
+from tests.client import WhistAPITestClient
 from tests.patches import function
 
 
@@ -32,7 +32,7 @@ def app() -> Flask:
     """
 
     _app = Flask(__name__)
-    _app.test_client_class = FractalAPITestClient
+    _app.test_client_class = WhistAPITestClient
     _app.config["JWT_SECRET_KEY"] = "secret"
     _app.config["STRIPE_CUSTOMER_ID_CLAIM"] = "https://api.fractal.co/stripe_customer_id"
     _app.config["STRIPE_SUBSCRIPTION_STATUS_CLAIM"] = "https://api.fractal.co/subscription_status"
@@ -175,7 +175,7 @@ def test_check_payment_valid(monkeypatch: pytest.MonkeyPatch, subscription_statu
     [[{}, HTTPStatus.OK], [{"raises": PaymentRequired}, HTTPStatus.PAYMENT_REQUIRED]],
 )
 def test_payment_required(
-    client: FractalAPITestClient,
+    client: WhistAPITestClient,
     make_user: Callable[..., str],
     mock_kwargs: Dict[str, PaymentRequired],
     monkeypatch: pytest.MonkeyPatch,
@@ -205,7 +205,7 @@ def test_payment_required(
     [[False, HTTPStatus.PAYMENT_REQUIRED], [True, HTTPStatus.OK]],
 )
 def test_payment_required_token(
-    client: FractalAPITestClient,
+    client: WhistAPITestClient,
     admin: bool,
     make_user: Callable[..., str],
     status_code: HTTPStatus,

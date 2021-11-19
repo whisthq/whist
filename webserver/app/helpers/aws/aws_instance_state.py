@@ -5,7 +5,7 @@ from app.database.models.cloud import (
     InstanceInfo,
 )
 
-from app.utils.general.logs import fractal_logger
+from app.utils.general.logs import whist_logger
 from app.constants.mandelbox_host_states import MandelboxHostState
 
 MAX_POLL_TIME = 900  # seconds
@@ -29,7 +29,7 @@ def _poll(instance_name: str) -> bool:
 
     for i in range(MAX_POLL_ITERATIONS):
         if instance.status != str(MandelboxHostState.ACTIVE.value):
-            fractal_logger.warning(
+            whist_logger.warning(
                 f"{instance.instance_name} deployment in progress. {i}/{MAX_POLL_ITERATIONS}"
             )
             time.sleep(POLL_SLEEP_INTERVAL)

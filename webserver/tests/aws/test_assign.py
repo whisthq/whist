@@ -10,27 +10,27 @@ import pytest
 from app.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
 from app.constants.env_names import DEVELOPMENT, PRODUCTION
 from app.database.models.cloud import InstanceInfo
-from tests.client import FractalAPITestClient
+from tests.client import WhistAPITestClient
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
 from tests.helpers.utils import get_allowed_region_names
 
 
 @pytest.mark.usefixtures("authorized")
-def test_bad_app(client: FractalAPITestClient) -> None:
+def test_bad_app(client: WhistAPITestClient) -> None:
     response = client.post("/mandelbox/assign", json=dict(app="Bad App"))
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 @pytest.mark.usefixtures("authorized")
-def test_no_app(client: FractalAPITestClient) -> None:
+def test_no_app(client: WhistAPITestClient) -> None:
     response = client.post("/mandelbox/assign", json={})
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 @pytest.mark.usefixtures("authorized")
-def test_no_region(client: FractalAPITestClient) -> None:
+def test_no_region(client: WhistAPITestClient) -> None:
     response = client.post("/mandelbox/assign", json=dict(app="VSCode"))
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
@@ -38,7 +38,7 @@ def test_no_region(client: FractalAPITestClient) -> None:
 
 @pytest.mark.usefixtures("authorized")
 def test_assign(
-    client: FractalAPITestClient,
+    client: WhistAPITestClient,
     bulk_instance: Callable[..., InstanceInfo],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -66,7 +66,7 @@ def test_assign(
 @pytest.mark.skip(reason="We currently ignore user activity.")
 @pytest.mark.usefixtures("authorized")
 def test_assign_active(
-    client: FractalAPITestClient,
+    client: WhistAPITestClient,
     bulk_instance: Callable[..., InstanceInfo],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -96,7 +96,7 @@ def test_assign_active(
 @pytest.mark.usefixtures("authorized")
 def test_client_commit_hash_local_dev_override_fail(
     app: Flask,  # pylint: disable=unused-argument
-    client: FractalAPITestClient,
+    client: WhistAPITestClient,
     bulk_instance: Callable[..., InstanceInfo],
     override_environment: Callable[[str], None],
 ) -> None:
@@ -122,7 +122,7 @@ def test_client_commit_hash_local_dev_override_fail(
 @pytest.mark.usefixtures("authorized")
 def test_client_commit_hash_local_dev_override_success(
     app: Flask,  # pylint: disable=unused-argument
-    client: FractalAPITestClient,
+    client: WhistAPITestClient,
     bulk_instance: Callable[..., InstanceInfo],
     override_environment: Callable[[str], None],
 ) -> None:
@@ -157,7 +157,7 @@ def test_client_commit_hash_local_dev_override_success(
 )
 def test_payment(
     admin: bool,  # pylint: disable=unused-argument
-    client: FractalAPITestClient,
+    client: WhistAPITestClient,
     make_user: Callable[..., str],
     monkeypatch: pytest.MonkeyPatch,  # pylint: disable=unused-argument
     status_code: HTTPStatus,

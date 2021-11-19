@@ -13,7 +13,7 @@ from flask_jwt_extended.default_callbacks import default_unauthorized_callback
 from jwt import PyJWKClient
 from sqlalchemy.ext.declarative import DeferredReflection
 
-from app.utils.general.logs import fractal_logger
+from app.utils.general.logs import whist_logger
 from app.config import CONFIG_MATRIX
 from app.utils.flask.sentry import init_and_ensure_sentry_connection
 from app.utils.metrics.flask_view import register_flask_view_metrics_monitor
@@ -70,10 +70,10 @@ def create_app(testing: bool = False) -> Flask:
     location = "deployment" if ("DYNO" in os.environ or "GHA_FLASK_CLI" in os.environ) else "local"
     config_factory = getattr(getattr(CONFIG_MATRIX, location), action)
     config = config_factory()
-    fractal_logger.info("config_table = {}".format(config.config_table))
+    whist_logger.info("config_table = {}".format(config.config_table))
 
     app.config.from_object(config)
-    fractal_logger.info("environment = {}".format(app.config["ENVIRONMENT"]))
+    whist_logger.info("environment = {}".format(app.config["ENVIRONMENT"]))
 
     # Only set up a connection to a Sentry event ingestion endpoint in production and staging.
     if app.config["ENVIRONMENT"] in (env_names.PRODUCTION, env_names.STAGING):

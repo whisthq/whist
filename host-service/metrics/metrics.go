@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
+	logger "github.com/fractal/fractal/host-service/whistlogger"
 
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 

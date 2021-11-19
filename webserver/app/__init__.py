@@ -8,7 +8,7 @@ from functools import wraps
 
 from flask import current_app, request
 
-from app.utils.general.logs import fractal_logger
+from app.utils.general.logs import whist_logger
 
 from .config import _callback_webserver_hostname
 from .utils.flask.factory import jwtManager
@@ -43,7 +43,7 @@ def parse_request(view_func: _F) -> _F:
             else:
                 body = {}
         except:
-            fractal_logger.error("Failed to parse request", exc_info=True)
+            whist_logger.error("Failed to parse request", exc_info=True)
             body = {}
 
         kwargs["body"] = body
@@ -53,7 +53,7 @@ def parse_request(view_func: _F) -> _F:
         if request.method == "GET":
             kwargs["username"] = request.args.get("username")
 
-        fractal_logger.debug(f"it took {time()*1000 - start_time} ms to parse this request")
+        whist_logger.debug(f"it took {time()*1000 - start_time} ms to parse this request")
 
         return view_func(*args, **kwargs)
 
@@ -73,7 +73,7 @@ def log_request(view_func: _F) -> _F:
         try:
             # Check the log level before performing expensive computation (like stringifying the
             # body) to avoid wasted computation if it won't be logged.
-            if fractal_logger.isEnabledFor(logging.INFO):
+            if whist_logger.isEnabledFor(logging.INFO):
                 silence = False
 
                 for endpoint in current_app.config["SILENCED_ENDPOINTS"]:
@@ -93,18 +93,18 @@ def log_request(view_func: _F) -> _F:
                                 if "password" not in k and "key" not in k
                             }
                         )
-                    fractal_logger.info(
+                    whist_logger.info(
                         f"{request.method} request at {request.url}. Body: {safe_body}"
                     )
         except:
-            fractal_logger.error("Failed to log request", exc_info=True)
-        fractal_logger.debug(f"It took {time()*1000 - start_time} ms to log this request.")
+            whist_logger.error("Failed to log request", exc_info=True)
+        whist_logger.debug(f"It took {time()*1000 - start_time} ms to log this request.")
         return view_func(*args, **kwargs)
 
     return cast(_F, wrapper)
 
 
-def fractal_pre_process(view_func: _F) -> _F:
+def whist_pre_process(view_func: _F) -> _F:
     """
     Decorator bundling other decorators that should be set on all endpoints.
 

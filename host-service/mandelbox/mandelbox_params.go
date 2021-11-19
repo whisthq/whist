@@ -3,7 +3,7 @@ package mandelbox // import "github.com/fractal/fractal/host-service/mandelbox"
 import (
 	"os"
 
-	logger "github.com/fractal/fractal/host-service/fractallogger"
+	logger "github.com/fractal/fractal/host-service/whistlogger"
 
 	"github.com/fractal/fractal/host-service/utils"
 )

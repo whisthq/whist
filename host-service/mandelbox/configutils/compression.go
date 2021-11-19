@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/utils"
+	logger "github.com/fractal/fractal/host-service/whistlogger"
 	"github.com/pierrec/lz4/v4"
 )
 

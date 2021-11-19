@@ -1,4 +1,4 @@
-package fractallogger // import "github.com/fractal/fractal/host-service/fractallogger"
+package whistlogger // import "github.com/fractal/fractal/host-service/whistlogger"
 
 import (
 	"os"

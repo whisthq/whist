@@ -3,7 +3,7 @@ import time
 
 import flask
 
-from app.utils.general.logs import fractal_logger
+from app.utils.general.logs import whist_logger
 from app.utils.metrics import monotonic_duration_ms
 from app.utils.metrics.flask_app import app_record_metrics
 import app.utils.metrics.keys as mkey
@@ -47,7 +47,7 @@ def _after_request_metrics(response: flask.Response) -> flask.Response:
             },
         )
     except Exception as e:
-        fractal_logger.error(e)
+        whist_logger.error(e)
 
     return response
 

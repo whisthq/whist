@@ -9,13 +9,13 @@ from flask_pydantic import validate
 from typing import Any, Tuple
 from app.utils.mandelbox.validation import MandelboxAssignBody
 
-from app import fractal_pre_process
+from app import whist_pre_process
 from app.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
 from app.constants.env_names import DEVELOPMENT, LOCAL
 from app.helpers.aws.aws_instance_post import do_scale_up_if_necessary
 from app.helpers.aws.aws_mandelbox_assign_post import is_user_active
 from app.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
-from app.utils.general.logs import fractal_logger
+from app.utils.general.logs import whist_logger
 from app.utils.metrics.flask_app import app_record_metrics
 from app.helpers.aws.aws_instance_post import find_instance, find_enabled_regions
 from app.database.models.cloud import db, InstanceInfo, MandelboxInfo, RegionToAmi
@@ -27,7 +27,7 @@ aws_mandelbox_bp = Blueprint("aws_mandelbox_bp", __name__)
 
 @aws_mandelbox_bp.route("/mandelbox/assign", methods=("POST",))
 @limiter.limit(RATE_LIMIT_PER_MINUTE)  # type: ignore
-@fractal_pre_process
+@whist_pre_process
 @jwt_required()  # type: ignore
 @payment_required
 @validate()  # type: ignore
@@ -38,7 +38,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
 
     if care_about_active and is_user_active(username):
         # If the user already has a mandelbox running, don't start up a new one
-        fractal_logger.debug(f"Returning 503 to user {username} because they are already active.")
+        whist_logger.debug(f"Returning 503 to user {username} because they are already active.")
         return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
 
     # Of the regions provided in the request, filter out the ones that are not active
@@ -47,7 +47,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
     allowed_regions = [r for r in body.regions if r in enabled_regions]
 
     if not allowed_regions:
-        fractal_logger.error(
+        whist_logger.error(
             f"None of the request regions {body.regions} are enabled, enabled regions are {enabled_regions}"
         )
         return (
@@ -74,7 +74,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
         client_commit_hash = body.client_commit_hash
 
     # Begin finding an instance
-    fractal_logger.debug(
+    whist_logger.debug(
         f"Trying to find instance for user {username} in region {region},\
         with commit hash {client_commit_hash}."
     )
@@ -83,10 +83,10 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
 
     # How long did it take to find an instance?
     time_to_find_instance = time_when_instance_found - start_time
-    fractal_logger.debug(f"It took {time_to_find_instance} ms to find an instance.")
+    whist_logger.debug(f"It took {time_to_find_instance} ms to find an instance.")
 
     if MandelboxAssignError.contains(instance_or_error):
-        fractal_logger.info(
+        whist_logger.info(
             f"No instance found in region {region}\
               with client_commit_hash: {client_commit_hash} because {instance_or_error}"
         )
@@ -98,7 +98,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
                 {"region_name": body.regions[0], "client_commit_hash": client_commit_hash}
             )
             if ami is None:
-                fractal_logger.debug(
+                whist_logger.debug(
                     f"No AMI found for region: {region}, commit hash: {client_commit_hash}"
                 )
             else:
@@ -110,7 +110,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
                     },
                 )
                 scaling_thread.start()
-        fractal_logger.debug(
+        whist_logger.debug(
             f"Returning 503 to user {username} because we didn't find an instance for them."
         )
         return (
@@ -135,7 +135,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
     time_when_container_created = time.time() * 1000
     # How long did it take to create a new container row?
     time_to_create_row = time_when_container_created - time_when_instance_found
-    fractal_logger.debug(f"It took {time_to_create_row} ms to create a container row")
+    whist_logger.debug(f"It took {time_to_create_row} ms to create a container row")
     if not current_app.testing:
         # If we're not testing, we want to scale new instances in the background.
         # Specifically, we want to scale in the region/AMI pair where we know
@@ -156,7 +156,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
         scaling_thread.start()
     # How long did the request take?
     total_request_time = time.time() * 1000 - start_time
-    fractal_logger.debug(f"In total, this request took {total_request_time} ms to fulfill")
+    whist_logger.debug(f"In total, this request took {total_request_time} ms to fulfill")
     app_record_metrics(
         metrics={
             "web.time_to_find_instance": time_to_find_instance,

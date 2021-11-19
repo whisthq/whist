@@ -5,10 +5,10 @@ import (
 	"math/rand"
 	"time"
 
-	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/metadata/aws"
 	"github.com/fractal/fractal/host-service/metrics"
 	"github.com/fractal/fractal/host-service/utils"
+	logger "github.com/fractal/fractal/host-service/whistlogger"
 
 	"github.com/fractal/fractal/host-service/dbdriver/queries"
 )

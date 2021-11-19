@@ -1,7 +1,7 @@
 package subscriptions
 
 import (
-	logger "github.com/fractal/fractal/host-service/fractallogger"
+	logger "github.com/fractal/fractal/host-service/whistlogger"
 	graphql "github.com/hasura/go-graphql-client"
 )
 

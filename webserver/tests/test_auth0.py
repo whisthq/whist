@@ -7,13 +7,13 @@ from flask_jwt_extended import create_access_token, JWTManager
 
 from app.utils.general.limiter import limiter
 from app.utils.auth.auth0 import has_scope, scope_required, ScopeError
-from tests.client import FractalAPITestClient
+from tests.client import WhistAPITestClient
 
 
 @pytest.fixture(name="app")
 def fixture_app() -> Flask:
     app = Flask(__name__)
-    app.test_client_class = FractalAPITestClient
+    app.test_client_class = WhistAPITestClient
     app.config["JWT_SECRET_KEY"] = "secret"
 
     JWTManager(app)
@@ -47,7 +47,7 @@ def test_has_no_scope(app: Flask) -> None:
 )
 def test_scope_required(
     app: Flask,
-    client: FractalAPITestClient,
+    client: WhistAPITestClient,
     login_kwargs: Dict[str, str],
     make_user: Callable[..., str],
     status_code: int,

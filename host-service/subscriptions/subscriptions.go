@@ -10,9 +10,9 @@ import (
 	"encoding/json"
 	"sync"
 
-	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
+	logger "github.com/fractal/fractal/host-service/whistlogger"
 	graphql "github.com/hasura/go-graphql-client" // We use hasura's own graphql client for Go
 )
 

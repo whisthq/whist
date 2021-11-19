@@ -16,9 +16,9 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/fractal/fractal/host-service/dbdriver"
-	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
+	logger "github.com/fractal/fractal/host-service/whistlogger"
 
 	"github.com/fractal/fractal/host-service/mandelbox/gpus"
 	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
