@@ -70,7 +70,7 @@ int server_parse_args(int argc, char* argv[]) {
         "  -i, --identifier=ID           Pass in the unique identifier for this\n"
         "                                  server as a hexadecimal string\n"
         "  -e, --environment=ENV         The environment the protocol is running in,\n"
-        "                                  e.g production, staging, development. Default: none\n"
+        "                                  e.g prod, staging, dev. Default: none\n"
         "  -t, --timeout=TIME            Tell the server to give up after TIME seconds. If TIME\n"
         "                                  is -1, disable auto exit completely. Default: 60\n"
         // special options should be indented further to the left

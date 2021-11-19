@@ -9,7 +9,7 @@
 Usage
 ============================
 The error monitor needs to have an environment configured before it can be
-started up. This environment should be development/staging/production, and is
+started up. This environment should be dev/staging/prod, and is
 passed in as a command-line parameter. Once the value is known, we may call
 `error_monitor_set_environment()` to configure it.
 
@@ -56,7 +56,7 @@ Public Functions
  *                                 provided environment.
  *
  * @param environment              The environment to set: should be one of
- *                                 development/staging/production.
+ *                                 dev/staging/prod.
  *
  * @note                           This should only be called before calling
  *                                 `error_monitor_initialize()`.

@@ -88,17 +88,13 @@ jobs:
           # Grab the name of the deployment environment from set-deploy-environment
           BRANCH_NAME=${{ steps.set-deploy-environment.outputs.environment }}
 
-          if [ "$BRANCH_NAME" == "prod" ]; then
-            SENTRY_ENVIRONMENT=production
-          elif [ "$BRANCH_NAME" == "staging" ]; then
-            SENTRY_ENVIRONMENT=staging
-          elif [ "$BRANCH_NAME" == "dev" ]; then
-            SENTRY_ENVIRONMENT=development
+          if [ "$BRANCH_NAME" =~ "(dev|staging|prod)" ]; then
+            SENTRY_ENV="$BRANCH_NAME"
           else
-            SENTRY_ENVIRONMENT=""
+            SENTRY_ENV=""
           fi
-          echo "sentry_environment is set to: $SENTRY_ENVIRONMENT"
-          echo "::set-output name=sentry_environment::$SENTRY_ENVIRONMENT"
+          echo "sentry_environment is set to: $SENTRY_ENV"
+          echo "::set-output name=sentry_environment::$SENTRY_ENV"
 
       - name: Set webserver URL based on Git Branch (prod, staging, dev)
         id: set-webserver-url
