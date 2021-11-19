@@ -175,7 +175,7 @@ func mockServer(t *testing.T, message string) int {
 		}
 	})
 
-	// Start the server on a go routine to avoid blocking
+	// Start the server on a goroutine to avoid blocking
 	// Use the portchan to return the port it is running on.
 	portchan := make(chan int)
 	go func(portchan chan int) {

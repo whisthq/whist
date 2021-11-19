@@ -17,7 +17,7 @@ func TestPlaceholderUUIDs(t *testing.T) {
 		want, got string
 	}{
 		{"Warmup UUID", "11111111-1111-1111-1111-111111111111", PlaceholderWarmupUUID().String()},
-		{"Warmup UUID", "22222222-2222-2222-2222-222222222222", PlaceholderTestUUID().String()},
+		{"Test UUID", "22222222-2222-2222-2222-222222222222", PlaceholderTestUUID().String()},
 	}
 
 	for _, value := range testMap {
@@ -28,12 +28,12 @@ func TestPlaceholderUUIDs(t *testing.T) {
 }
 
 func TestWaitWithDebugPrints(t *testing.T) {
-	// Use a waitgroup and random go routines to test WaitWithDebugPrints
+	// Use a waitgroup and random goroutines to test WaitWithDebugPrints
 	wg := sync.WaitGroup{}
 	timeout := 1 * time.Second
 	level := 2
 
-	// Use go routines with random duration
+	// Use goroutines with random duration
 	for i := 1; i <= 5; i++ {
 		wg.Add(1)
 
@@ -59,7 +59,7 @@ func TestWaitForFileCreation(t *testing.T) {
 		t.Fatalf("Failed to setup test directory: %v", err)
 	}
 
-	// Make a go routine that waits for the test file to be created
+	// Make a goroutine that waits for the test file to be created
 	waitErrorChan := make(chan error)
 	go func() {
 		t.Logf("Testing wait for file creation on path: %v", testDir)
@@ -67,7 +67,7 @@ func TestWaitForFileCreation(t *testing.T) {
 		waitErrorChan <- err
 	}()
 
-	// Make another go routine that writes the test file
+	// Make another goroutine that writes the test file
 	writeErrorChan := make(chan error)
 	go func() {
 		// Sleep to give some time to the file watcher to start

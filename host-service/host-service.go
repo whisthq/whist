@@ -1144,7 +1144,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			// TODO: actually handle panics in these goroutines
 			case *JSONTransportRequest:
 				if !metadata.IsLocalEnvWithoutDB() {
-					// Handle JSON transport validation on a separate go routine
+					// Handle JSON transport validation on a separate goroutine
 					go handleJSONTransportRequest(serverevent, transportRequestMap, transportMapLock)
 				} else {
 					// If running on a local environment, disable any pubsub logic. We have to create a subscription request
@@ -1172,7 +1172,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 						MandelboxInfo: []subscriptions.Mandelbox{mandelbox},
 					}
 
-					// Launch both the JSON transport handler and the SpinUpMandelbox go routines.
+					// Launch both the JSON transport handler and the SpinUpMandelbox goroutines.
 					go handleJSONTransportRequest(serverevent, transportRequestMap, transportMapLock)
 					go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, &subscriptionEvent, transportRequestMap, transportMapLock)
 				}
