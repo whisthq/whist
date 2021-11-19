@@ -22,7 +22,7 @@ jobs:
     name: "Deploy Sentry Release for: ${{ matrix.project.name }}"
     runs-on: ubuntu-20.04
     outputs:
-      sentry-deploy-environment: ${{ steps.set-deploy-environment.outputs.branch }}
+      sentry-deploy-environment: ${{ steps.set-deploy-environment.outputs.environment }}
 
     strategy:
       matrix:
@@ -59,7 +59,7 @@ jobs:
 
       - name: Create New Sentry Release
         env:
-          SENTRY_DEPLOY_ENVIRONMENT: ${{ steps.set-deploy-environment.outputs.branch }}
+          SENTRY_DEPLOY_ENVIRONMENT: ${{ steps.set-deploy-environment.outputs.environment }}
         run: |
           # Install Sentry CLI
           curl -sL https://sentry.io/get-cli/ | bash
@@ -78,16 +78,16 @@ jobs:
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
-          if "prod" in "${{ steps.set-deploy-environment.outputs.branch }}":
+          if "prod" in "${{ steps.set-deploy-environment.outputs.environment }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          elif "staging" in "${{ steps.set-deploy-environment.outputs.branch }}":
+          elif "staging" in "${{ steps.set-deploy-environment.outputs.environment }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
 
           from notifications.slack_bot import slack_post
-          SLACK_CHANNEL = "#alerts-${{ steps.set-deploy-environment.outputs.branch }}"
-          BODY = f"@releases :rotating_light: Failed to deploy `$SENTRY_PROJECT` Sentry release on branch: `${{ steps.set-deploy-environment.outputs.branch }}`, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          SLACK_CHANNEL = "#alerts-${{ steps.set-deploy-environment.outputs.environment }}"
+          BODY = f"@releases :rotating_light: Failed to deploy `$SENTRY_PROJECT` Sentry release on branch: `${{ steps.set-deploy-environment.outputs.environment }}`, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   notify-slack:
