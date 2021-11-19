@@ -88,13 +88,17 @@ def attempt_ssh_connection(ssh_command, timeout, log_file_handle, pexpect_prompt
     print("SSH connection refused by host {} times. Giving up now.".format(max_retries))
     exit()
 
+def wait_until_cmd_done(ssh_proc, pexpect_prompt):
+    # On a SSH connection, the prompt is printed two times (because of some obscure reason related to encoding and/or color printing on terminal)
+    ssh_proc.expect(pexpect_prompt)
+    ssh_proc.expect(pexpect_prompt)
+
 
 def reboot_instance(
     ssh_process, connection_ssh_cmd, timeout, log_file_handle, pexpect_prompt, retries
 ):
     ssh_process.sendline(" ")
-    ssh_process.expect(pexpect_prompt)
-    ssh_process.expect(pexpect_prompt)
+    wait_until_cmd_done(ssh_process, pexpect_prompt)
     ssh_process.sendline("sudo reboot")
     ssh_process.kill(0)
     time.sleep(5)
@@ -194,8 +198,7 @@ if __name__ == "__main__":
         + "@github.com/fractal/fractal.git | tee ~/github_log.log"
     )
     hs_process.sendline(command)
-    hs_process.expect(pexpect_prompt)
-    hs_process.expect(pexpect_prompt)
+    wait_until_cmd_done(hs_process, pexpect_prompt)
     print("Finished downloading fractal/fractal on EC2 instance")
 
     ## Prevent dpkg locking issues such as the following one:
@@ -215,8 +218,7 @@ if __name__ == "__main__":
     ]
     for command in dpkg_commands:
         hs_process.sendline(command)
-        hs_process.expect(pexpect_prompt)
-        hs_process.expect(pexpect_prompt)
+        wait_until_cmd_done(hs_process, pexpect_prompt)
 
     # Set up the server/client
     # 1- run host-setup
@@ -234,8 +236,7 @@ if __name__ == "__main__":
             hs_process, cmd, aws_timeout, host_service_log, pexpect_prompt, 5
         )
         hs_process.sendline(command)
-        hs_process.expect(pexpect_prompt)
-        hs_process.expect(pexpect_prompt)
+        wait_until_cmd_done(hs_process, pexpect_prompt)
 
     print("Finished running the host setup script on the EC2 instance")
 
@@ -262,8 +263,7 @@ if __name__ == "__main__":
     print("Building the server mandelbox in PERF mode ...")
     command = "cd ~/fractal/mandelboxes && ./build.sh browsers/chrome --perf | tee ~/server_mandelbox_build.log"
     server_process.sendline(command)
-    server_process.expect(pexpect_prompt)
-    server_process.expect(pexpect_prompt)
+    wait_until_cmd_done(server_process, pexpect_prompt)
     print("Finished building the browsers/chrome (server) mandelbox on the EC2 instance")
 
     # 5- Run the protocol server, and retrieve the connection configs
@@ -313,14 +313,12 @@ if __name__ == "__main__":
         testing_time
     )
     client_process.sendline(command)
-    client_process.expect(pexpect_prompt)
-    client_process.expect(pexpect_prompt)
+    wait_until_cmd_done(client_process, pexpect_prompt)
 
     print("Building the dev client mandelbox in PERF mode ...")
     command = "cd ~/fractal/mandelboxes && ./build.sh development/client --perf | tee ~/client_mandelbox_build.log"
     client_process.sendline(command)
-    client_process.expect(pexpect_prompt)
-    client_process.expect(pexpect_prompt)
+    wait_until_cmd_done(client_process, pexpect_prompt)
     print("Finished building the dev client mandelbox on the EC2 instance")
 
     # 7- Run the protocol client
@@ -354,15 +352,13 @@ if __name__ == "__main__":
     # 8- Extract the client/server perf logs from the two docker containers
     command = "rm -rf ~/perf_logs; mkdir -p ~/perf_logs/client mkdir -p ~/perf_logs/server"
     log_grabber_process.sendline(command)
-    log_grabber_process.expect(pexpect_prompt)
-    log_grabber_process.expect(pexpect_prompt)
+    wait_until_cmd_done(log_grabber_process, pexpect_prompt)
 
     client_logfiles = ["/usr/share/fractal/client.log", "/usr/share/fractal/display.log"]
     for client_file_path in client_logfiles:
         command = "docker cp {}:{} ~/perf_logs/client/".format(client_docker_id, client_file_path)
         log_grabber_process.sendline(command)
-        log_grabber_process.expect(pexpect_prompt)
-        log_grabber_process.expect(pexpect_prompt)
+        wait_until_cmd_done(log_grabber_process, pexpect_prompt)
 
     server_logfiles = [
         "/usr/share/fractal/server.log",
@@ -372,8 +368,7 @@ if __name__ == "__main__":
     for server_file_path in server_logfiles:
         command = "docker cp {}:{} ~/perf_logs/server/".format(server_docker_id, server_file_path)
         log_grabber_process.sendline(command)
-        log_grabber_process.expect(pexpect_prompt)
-        log_grabber_process.expect(pexpect_prompt)
+        wait_until_cmd_done(log_grabber_process, pexpect_prompt)
 
     command = "exit"
     log_grabber_process.sendline(command)
@@ -386,17 +381,14 @@ if __name__ == "__main__":
 
     # Exit the server/client mandelboxes
     server_process.sendline("exit")
-    server_process.expect(pexpect_prompt)
-    server_process.expect(pexpect_prompt)
+    wait_until_cmd_done(server_process, pexpect_prompt)
     client_process.sendline("exit")
-    client_process.expect(pexpect_prompt)
-    client_process.expect(pexpect_prompt)
+    wait_until_cmd_done(client_process, pexpect_prompt)
 
     # Delete all Docker containers
     command = "docker stop $(docker ps -aq) && docker rm $(docker ps -aq)"
     server_process.sendline(command)
-    server_process.expect(pexpect_prompt)
-    server_process.expect(pexpect_prompt)
+    wait_until_cmd_done(server_process, pexpect_prompt)
 
     # Terminate the host service
     hs_process.sendcontrol("c")
