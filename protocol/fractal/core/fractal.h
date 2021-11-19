@@ -671,6 +671,7 @@ typedef struct FractalClientMessage {
         FractalKeyboardState keyboard_state;
 
         // MESSAGE_IFRAME_REQUEST
+        // TODO: Remove this boolean
         bool reinitialize_encoder;
     };
 

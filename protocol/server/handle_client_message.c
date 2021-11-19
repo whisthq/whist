@@ -118,7 +118,7 @@ int handle_client_message(FractalClientMessage *fcmsg) {
         case MESSAGE_DISCOVERY_REQUEST:
             return handle_init_message(fcmsg);
         default:
-            LOG_WARNING(
+            LOG_ERROR(
                 "Unknown FractalClientMessage Received. "
                 "(Type: %d)",
                 fcmsg->type);
@@ -147,6 +147,7 @@ static int handle_user_input_message(FractalClientMessage *fcmsg) {
     if (input_device) {
         if (!replay_user_input(input_device, fcmsg)) {
             LOG_WARNING("Failed to replay input!");
+            return -1;
         }
     }
 
@@ -182,15 +183,17 @@ static int handle_streaming_toggle_message(FractalClientMessage *fcmsg) {
     */
 
     if (fcmsg->type == MESSAGE_STOP_STREAMING) {
-        LOG_INFO("MSG RECEIVED TO STOP STREAMING");
+        LOG_INFO("Received message to stop streaming");
         stop_streaming = true;
     } else if (fcmsg->type == MESSAGE_START_STREAMING && stop_streaming == true) {
         // Extra check that `stop_streaming == true` is to ignore erroneous extra
         // MESSAGE_START_STREAMING messages
-        LOG_INFO("MSG RECEIVED TO START STREAMING AGAIN");
+        LOG_INFO("Received message to start streaming again.");
         stop_streaming = false;
         wants_iframe = true;
     } else {
+        LOG_WARNING("Received streaming message to %s streaming, but we're already in that state!",
+                    stop_streaming ? "stop" : "start");
         return -1;
     }
     return 0;
@@ -245,22 +248,20 @@ static int handle_ping_message(FractalClientMessage *fcmsg) {
     LOG_INFO("Ping Received - Ping ID %d", fcmsg->ping_id);
 
     // Update ping timer
-    start_timer(&(client.last_ping));
+    start_timer(&client.last_ping);
 
     // Send pong reply
     FractalServerMessage fsmsg_response = {0};
     fsmsg_response.type = MESSAGE_PONG;
     fsmsg_response.ping_id = fcmsg->ping_id;
-    int ret = 0;
 
     if (send_packet(&client.udp_context, PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
-                    sizeof(fsmsg_response), 1) < 0,
-        false) {
-        LOG_WARNING("Could not send Ping");
-        ret = -1;
+                    sizeof(fsmsg_response), 1) < 0) {
+        LOG_WARNING("Failed to send UDP pong");
+        return -1;
     }
 
-    return ret;
+    return 0;
 }
 
 static int handle_tcp_ping_message(FractalClientMessage *fcmsg) {
@@ -277,21 +278,20 @@ static int handle_tcp_ping_message(FractalClientMessage *fcmsg) {
     LOG_INFO("TCP Ping Received - TCP Ping ID %d", fcmsg->ping_id);
 
     // Update ping timer
-    start_timer(&(client.last_ping));
+    start_timer(&client.last_ping);
 
     // Send pong reply
     FractalServerMessage fsmsg_response = {0};
     fsmsg_response.type = MESSAGE_TCP_PONG;
     fsmsg_response.ping_id = fcmsg->ping_id;
-    int ret = 0;
 
-    if (send_packet(&(client.tcp_context), PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
+    if (send_packet(&client.tcp_context, PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
                     sizeof(fsmsg_response), -1) < 0) {
-        LOG_WARNING("Could not send TCP Ping to client");
-        ret = -1;
+        LOG_WARNING("Failed to send TCP pong");
+        return -1;
     }
 
-    return ret;
+    return 0;
 }
 
 static int handle_dimensions_message(FractalClientMessage *fcmsg) {
@@ -388,14 +388,8 @@ static int handle_iframe_request_message(FractalClientMessage *fcmsg) {
     */
 
     LOG_INFO("Request for i-frame found: Creating iframe");
-    if (fcmsg->reinitialize_encoder) {
-        // Wants to completely reinitialize the encoder
-        update_encoder = true;
-        wants_iframe = true;
-    } else {
-        // Wants only an iframe
-        wants_iframe = true;
-    }
+    // Mark as wanting an iframe
+    wants_iframe = true;
     return 0;
 }
 
