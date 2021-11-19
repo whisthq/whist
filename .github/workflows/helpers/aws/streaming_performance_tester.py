@@ -43,6 +43,13 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--use-existing-instance",
+    help="The public IP of the existing instance to use for the test. If left empty, a clean instance will be generated instead.",
+    type=string,
+    default="",
+)
+
+parser.add_argument(
     "--testing_url",
     help="The URL to visit for testing",
     type=str,
@@ -53,7 +60,7 @@ parser.add_argument(
     "--testing_time",
     help="The length of the perf test in seconds",
     type=int,
-    default=126, # Length of the video in link above is 2mins, 6seconds
+    default=126,  # Length of the video in link above is 2mins, 6seconds
 )
 
 args = parser.parse_args()
@@ -87,6 +94,7 @@ def attempt_ssh_connection(ssh_command, timeout, log_file_handle, pexpect_prompt
             exit()
     print("SSH connection refused by host {} times. Giving up now.".format(max_retries))
     exit()
+
 
 def wait_until_cmd_done(ssh_proc, pexpect_prompt):
     # On a SSH connection, the prompt is printed two times (because of some obscure reason related to encoding and/or color printing on terminal)
@@ -128,30 +136,43 @@ if __name__ == "__main__":
         print("SSH key file {} does not exist".format(ssh_key_path))
         exit()
 
-    # Define the AWS machine variables
-    instance_AMI = "ami-0885b1f6bd170450c"  # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
-    instance_type = "g4dn.2xlarge"  # The type of instance we want to create
+    # Connect to existing instance or create a new one
+    instance_id = args.use_existing_instance
+    if instance_id != "":
+        result = start_instance(instance_id)
+        if result is True:
+            # Wait for the instance to be running
+            wait_for_instance_to_start_or_stop(instance_id, stopping=False)
+        else:
+            instance_id = ""
 
-    print(
-        "Creating AWS EC2 instance of size: {} and with AMI: {}...".format(
-            instance_type, instance_AMI
+    if instance_id == "":
+        # Define the AWS machine variables
+        instance_AMI = "ami-0885b1f6bd170450c"  # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
+        instance_type = "g4dn.2xlarge"  # The type of instance we want to create
+
+        print(
+            "Creating AWS EC2 instance of size: {} and with AMI: {}...".format(
+                instance_type, instance_AMI
+            )
         )
-    )
 
-    # Create our EC2 instance
-    instance_id = create_ec2_instance(
-        instance_type=instance_type, instance_AMI=instance_AMI, key_name=ssh_key_name, disk_size=64
-    )
-    # Give a little time for the instance to be recognized in AWS
-    time.sleep(5)
+        # Create our EC2 instance
+        instance_id = create_ec2_instance(
+            instance_type=instance_type,
+            instance_AMI=instance_AMI,
+            key_name=ssh_key_name,
+            disk_size=64,
+        )
+        # Give a little time for the instance to be recognized in AWS
+        time.sleep(5)
 
-    # Wait for the instance to be running
-    wait_for_instance_to_start_or_stop(instance_id, stopping=False)
+        # Wait for the instance to be running
+        wait_for_instance_to_start_or_stop(instance_id, stopping=False)
 
     # Get the IP address of the instance
     instance_ip = get_instance_ip(instance_id)
     hostname = instance_ip[0]["public"]
-    # hostname = "18.206.15.57"
     username = "ubuntu"
     print("Created instance AWS instance with hostname: {}!".format(hostname))
 
@@ -191,7 +212,7 @@ if __name__ == "__main__":
 
     # Retrieve fractal/fractal monorepo on the instance
     command = (
-        "git clone -b "
+        "git rm -rf fractal; git clone -b "
         + branch_name
         + " https://"
         + github_token
@@ -231,7 +252,9 @@ if __name__ == "__main__":
 
     if result == 1:
         # If still getting lock issues, no alternative but to reboot
-        print("Running into severe locking issues, rebooting the instance!")
+        print(
+            "Running into severe locking issues (happens frequently), rebooting the instance and trying again!"
+        )
         hs_process = reboot_instance(
             hs_process, cmd, aws_timeout, host_service_log, pexpect_prompt, 5
         )
@@ -406,9 +429,18 @@ if __name__ == "__main__":
     client_log.close()
     log_grabber_log.close()
 
-    # Terminating the instance and waiting for them to shutdown
-    print(f"Testing complete, terminating EC2 instance")
-    boto3.client("ec2").terminate_instances(InstanceIds=[instance_id])
+    should_terminate = True
+    if instance_id == args.use_existing_instance:
+        # Stopping the instance and waiting for it to shutdown
+        print(f"Testing complete, stopping EC2 instance")
+        result = stop_instance(instance_id)
+        if result is True:
+            should_terminate = False
+
+    if should_terminate:
+        # Terminating the instance and waiting for them to shutdown
+        print(f"Testing complete, terminating EC2 instance")
+        boto3.client("ec2").terminate_instances(InstanceIds=[instance_id])
 
     # Wait for the instance to be terminated
     wait_for_instance_to_start_or_stop(instance_id, stopping=True)

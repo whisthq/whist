@@ -67,6 +67,42 @@ def create_ec2_instance(
     return instance_id
 
 
+def start_instance(instance_id: str) -> bool:
+    """
+    Attempt to turn on an existing EC2 instance. Return a bool indicating whether the operation succeeded.
+
+    Args:
+        instance_id (str): The ID of the instance to start
+    Returns:
+        success (bool): indicates whether the start succeeded.
+    """
+    try:
+        response = boto3client.start_instances(InstanceIds=[instance_id], DryRun=False)
+        print(response)
+    except ClientError as e:
+        print("Could not start instance. Caught error: ", e)
+        return False
+    return True
+
+
+def stop_instance(instance_id: str) -> bool:
+    """
+    Attempt to turn off an existing EC2 instance. Return a bool indicating whether the operation succeeded.
+
+    Args:
+        instance_id (str): The ID of the instance to stop
+    Returns:
+        success (bool): indicates whether the start succeeded.
+    """
+    try:
+        response = boto3client.stop_instances(InstanceIds=[instance_id], DryRun=False)
+        print(response)
+    except ClientError as e:
+        print("Could not stop instance. Caught error: ", e)
+        return False
+    return True
+
+
 def wait_for_instance_to_start_or_stop(instance_id: str, stopping: bool = False) -> None:
     """
     Hangs until an EC2 instance is reported as running or as stopped. Could be nice to make
