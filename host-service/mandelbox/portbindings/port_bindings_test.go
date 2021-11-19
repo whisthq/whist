@@ -6,6 +6,92 @@ import (
 )
 
 
+
+
+func TestAllocateAndFreeSinglePortAny(t *testing.T) {
+	// Creating a desired binding with host-port being set to 0
+	testDesiredBind := PortBinding{
+		MandelboxPort: uint16(22),
+		Protocol: TransportProtocolTCP,
+		HostPort: uint16(0),
+		BindIP: "test_ip",
+	}
+
+	// Generate new PortBind with same fields and new HostPort
+	updatedPortBind, err := allocateSinglePort(testDesiredBind)
+	if err != nil {
+		t.Fatalf("error allocating a single port with hostPort set to 0. Error: %v", err)
+	}
+
+	if updatedPortBind == (PortBinding{}) {
+		t.Fatalf("error allocating a single port with hostPort set to 0. Given empty PortBinding")
+	}
+
+	// HostPort should have a random port
+	if updatedPortBind.HostPort == uint16(0) {
+		t.Fatalf("error allocating a single port with hostPort set to 0. Received update PortBinding with hostPort set to 0")
+	}
+
+	// The random hostPort should be valid
+	if !isInAllowedRange(updatedPortBind.HostPort) {
+		t.Fatalf("error checking in allowed range for random host port: %v", updatedPortBind.HostPort)
+	}
+
+	// All other fields but HostPort should be the same
+	if updatedPortBind.Protocol != testDesiredBind.Protocol || updatedPortBind.MandelboxPort != testDesiredBind.MandelboxPort || updatedPortBind.BindIP != testDesiredBind.BindIP {
+		t.Fatalf("error allocating a single port with hostPort set to 0. One or more fields of %v did not match %v", updatedPortBind, testDesiredBind)
+	}
+
+	mapToUse, err := getProtocolSpecificHostPortMap(updatedPortBind.Protocol)
+	mapSizeBeforeFree := len(*mapToUse)
+	freeSinglePort(updatedPortBind)
+	mapSizeAfterFree := len(*mapToUse)
+	if mapSizeBeforeFree - 1 != mapSizeAfterFree {
+		t.Fatalf("error freeing single non-existent port. Expected map size to be %v but got %v", mapSizeAfterFree, mapSizeBeforeFree)
+	}
+}
+
+func TestFreeSinglePortNonexistent(t *testing.T) {
+	testDesiredBind := PortBinding{
+		Protocol: TransportProtocolTCP,
+		HostPort: MinAllowedPort,
+	}
+	// Freeing a port that has not been assigned
+	mapToUse, err := getProtocolSpecificHostPortMap(TransportProtocolTCP)
+	if err != nil {
+		t.Fatalf("error getting host port map.  Error: %v", err)
+	}
+
+	mapSizeBeforeFree := len(*mapToUse)
+	freeSinglePort(testDesiredBind)
+	mapSizeAfterFree := len(*mapToUse)
+	if mapSizeBeforeFree != mapSizeAfterFree {
+		t.Fatalf("error freeing single non-existent port. Expected map size to be %v but got %v", mapSizeAfterFree, mapSizeBeforeFree)
+	}
+}
+
+func TestFreeSingleReservedPort(t *testing.T) {
+	// Set a port to reserved
+	mapToUse, err := getProtocolSpecificHostPortMap(TransportProtocolTCP)
+	if err != nil {
+		t.Fatalf("error getting host port map.  Error: %v", err)
+	}
+
+	randomPort := randomPortInAllowedRange()
+	testDesiredBind := PortBinding{
+		Protocol: TransportProtocolTCP,
+		HostPort: randomPort,
+	}
+
+	(*mapToUse)[randomPort] = reserved
+	mapSizeBeforeFree := len(*mapToUse)
+	freeSinglePort(testDesiredBind)
+	mapSizeAfterFree := len(*mapToUse)
+	if mapSizeBeforeFree != mapSizeAfterFree {
+		t.Fatalf("error freeing single reserved port. Expected map size to be %v but got %v", mapSizeAfterFree, mapSizeBeforeFree)
+	}
+}
+
 func TestAllowedRangeMinInclusive(t *testing.T) {
 	// MinAllowedPort is inclusive and should be in the range
 	if !isInAllowedRange(MinAllowedPort) {
