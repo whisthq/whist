@@ -129,6 +129,6 @@ endif
 
 rundev: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with dev configuration...)
-	sudo env "PATH=$(PATH)" APP_ENV=development USE_PROD_LOGGING=0 $(BUILD_FOLDER)/$(BINARY_NAME)
+	sudo env "PATH=$(PATH)" APP_ENV=dev USE_PROD_LOGGING=0 $(BUILD_FOLDER)/$(BINARY_NAME)
 
 .PHONY: build clean run rundev format lint vet check
