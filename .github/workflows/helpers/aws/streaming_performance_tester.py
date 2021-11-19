@@ -46,14 +46,14 @@ parser.add_argument(
     "--testing_url",
     help="The URL to visit for testing",
     type=str,
-    default="https://youtu.be/GUyXW3Sxzqo",
+    default="https://fractal-test-assets.s3.amazonaws.com/SpaceX+Launches+4K+Demo.mp4",
 )
 
 parser.add_argument(
     "--testing_time",
     help="The length of the perf test in seconds",
     type=int,
-    default=60,
+    default=126, # Length of the video in link above is 2mins, 6seconds
 )
 
 args = parser.parse_args()
