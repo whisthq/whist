@@ -57,6 +57,7 @@ void init_backtrace_handler();
 // TAG Strings
 const char* debug_tag = "DEBUG";
 const char* info_tag = "INFO";
+const char* metric_tag = "METRIC";
 const char* warning_tag = "WARNING";
 const char* error_tag = "ERROR";
 const char* fatal_error_tag = "FATAL_ERROR";
