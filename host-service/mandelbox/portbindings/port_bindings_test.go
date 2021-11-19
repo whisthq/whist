@@ -1,7 +1,6 @@
 package portbindings
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -365,11 +364,9 @@ func TestGetProtocolSpecificHostPortMapUDP(t *testing.T) {
 		t.Fatalf("error getting udp port map: %v", err)
 	}
 	
-	// Confirm return type is protocolSpecificHostPortMap
-	udpPortMapType := fmt.Sprintf("%T", udpPortMap)
-	expectedPortMapType := "*portbindings.protocolSpecificHostPortMap"
-	if udpPortMapType != expectedPortMapType {
-		t.Fatalf("error getting protocol specific host port maps. Expected: %v but received: %v", expectedPortMapType, udpPortMapType)
+	// Confirm returudpPortMapn type is protocolSpecificHostPortMap
+	if _, ok := interface{}(udpPortMap).(*protocolSpecificHostPortMap); !ok {
+		t.Fatalf("error getting protocol specific host port maps")
 	}
 }
 
@@ -381,10 +378,8 @@ func TestGetProtocolSpecificHostPortMapTCP(t *testing.T) {
 	}
 	
 	// Confirm return type is protocolSpecificHostPortMap
-	tcpPortMapType := fmt.Sprintf("%T", tcpPortMap)
-	expectedPortMapType := "*portbindings.protocolSpecificHostPortMap"
-	if tcpPortMapType != expectedPortMapType {
-		t.Fatalf("error getting protocol specific host port maps. Expected: %v but received: %v", expectedPortMapType, tcpPortMapType)
+	if _, ok := interface{}(tcpPortMap).(*protocolSpecificHostPortMap); !ok {
+		t.Fatalf("error getting protocol specific host port maps")
 	}
 }
 
