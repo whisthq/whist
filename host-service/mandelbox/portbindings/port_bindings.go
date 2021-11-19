@@ -95,15 +95,17 @@ func allocateSinglePort(desiredBind PortBinding) (PortBinding, error) {
 	}
 
 	// Gotta allocate a port ourselves
-	var randomPort uint16
+	var randomPort uint16 = 0
 	maxTries := 100
 	for numTries := 0; numTries < maxTries; numTries++ {
-		randomPort = randomPortInAllowedRange()
-		if _, exists := (*mapToUse)[randomPort]; !exists {
+		temporaryPort := randomPortInAllowedRange()
+		if _, exists := (*mapToUse)[temporaryPort]; !exists {
+			// Assign randomPort if available
+			randomPort = temporaryPort
 			break
 		}
 	}
-	if randomPort == 0 {
+	if randomPort == uint16(0) {
 		return PortBinding{}, utils.MakeError("Tried %v times to allocate a host port for mandelbox port %v/%v. Breaking out to avoid spinning for too long.", maxTries, desiredBind.HostPort, desiredBind.Protocol)
 	}
 
