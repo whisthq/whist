@@ -59,7 +59,7 @@ jobs:
 
       - name: Create New Sentry Release
         env:
-          SENTRY_DEPLOY_ENVIRONMENT: ${{ steps.set-deploy-environment.outputs.environment }}
+          SENTRY_DEPLOY_ENVIRONMENT: ${{ steps.set-deploy-environment.outputs.environment }} || dev # Default to dev if ran from feature branch
         run: |
           # Install Sentry CLI
           curl -sL https://sentry.io/get-cli/ | bash
