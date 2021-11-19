@@ -240,10 +240,7 @@ type mandelboxData struct {
 	// might have (dark mode, location, etc.)
 	JSONData string
 
-	// We use these to download an decrypt the user configs
-	// from s3.
-	unpackedConfigDir string
-	configBuffer      *manager.WriteAtBuffer
+	configBuffer *manager.WriteAtBuffer
 
 	portBindings []portbindings.PortBinding
 }

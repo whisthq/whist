@@ -71,8 +71,8 @@ format:
 	goimports -l -w $$(find $(CURDIR) -name "*.go" | grep --invert-match ".sql.go" | xargs)
 
 lint: build
-	(cd ~ && $(GOCMD) install golang.org/x/lint/golint@latest)
-	$(GOCMD) list ./... | grep -v /agent/ | xargs golint -set_exit_status
+	(cd ~ && $(GOCMD) install honnef.co/go/tools/cmd/staticcheck@latest)
+	$(GOCMD) list ./... | xargs staticcheck
 
 vet: build
 	$(GOCMD) list ./... | grep -v /agent/ | xargs $(GOCMD) vet

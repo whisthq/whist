@@ -117,10 +117,10 @@ func (vRel vMouse) MoveDown(pixel int32) error {
 // values will cause a move towards the upper left corner.
 func (vRel vMouse) Move(x, y int32) error {
 	if err := sendRelEvent(vRel.deviceFile, relX, x); err != nil {
-		return fmt.Errorf("Failed to move pointer along x axis: %v", err)
+		return fmt.Errorf("failed to move pointer along x axis: %v", err)
 	}
 	if err := sendRelEvent(vRel.deviceFile, relY, y); err != nil {
-		return fmt.Errorf("Failed to move pointer along y axis: %v", err)
+		return fmt.Errorf("failed to move pointer along y axis: %v", err)
 	}
 	return nil
 }
@@ -129,7 +129,7 @@ func (vRel vMouse) Move(x, y int32) error {
 func (vRel vMouse) MouseButtonClick(buttonCode int) error {
 	err := sendBtnEvent(vRel.deviceFile, []int{buttonCode}, btnStatePressed)
 	if err != nil {
-		return fmt.Errorf("Failed to issue the 0x%x mouse button event: %v", buttonCode, err)
+		return fmt.Errorf("failed to issue the 0x%x mouse button event: %v", buttonCode, err)
 	}
 
 	return sendBtnEvent(vRel.deviceFile, []int{buttonCode}, btnStateReleased)

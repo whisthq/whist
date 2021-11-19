@@ -88,7 +88,7 @@ func Info(format string, v ...interface{}) {
 // Error logs an error and sends it to Sentry.
 func Error(err error) {
 	errstr := fmt.Sprintf("ERROR: %s", err)
-	log.Printf(utils.ColorRed(errstr))
+	log.Print(utils.ColorRed(errstr))
 	if logzioTransport != nil {
 		logzioTransport.send(errstr, logzioTypeError)
 	}
@@ -101,7 +101,7 @@ func Error(err error) {
 // Sentry.
 func Warning(err error) {
 	str := fmt.Sprintf("WARNING: %s", err)
-	log.Printf(utils.ColorRed(str))
+	log.Print(utils.ColorRed(str))
 	if logzioTransport != nil {
 		logzioTransport.send(str, logzioTypeWarning)
 	}

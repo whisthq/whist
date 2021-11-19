@@ -45,14 +45,14 @@ func ExtractTarLz4(file []byte, dir string) (int64, error) {
 		header, err := tarReader.Next()
 
 		// If we reach EOF, that means we are done untaring
-		switch {
-		case err == io.EOF:
-			break
-		case err != nil:
-			return totalBytes, utils.MakeError("error reading tar file: %v", err)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return totalBytes, utils.MakeError("error reading tar header: %v", err)
 		}
 
-		// Not certain why this case happens, but causes segfaults if removed
+		// This really should not happen
 		if header == nil {
 			break
 		}
@@ -275,7 +275,7 @@ func ValidateDirectoryContents(oldDir, newDir string) error {
 			}
 
 			// Check contents match
-			if string(testFileContents) != string(matchingFileBuf.Bytes()) {
+			if string(testFileContents) != matchingFileBuf.String() {
 				return utils.MakeError("file contents don't match for file %s: '%s' vs '%s'", filePath, testFileContents, matchingFileBuf.Bytes())
 			}
 		}
