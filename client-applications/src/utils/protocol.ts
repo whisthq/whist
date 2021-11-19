@@ -50,8 +50,8 @@ export const protocolLaunch = async () => {
   const protocolParameters = {
     ...(app.isPackaged &&
       appEnvironment !== FractalEnvironments.LOCAL && {
-        environment: config.sentryEnv,
-      }),
+      environment: config.deployEnv,
+    }),
   }
 
   const protocolArguments = [
@@ -86,12 +86,12 @@ export const protocolLaunch = async () => {
     // animation PNG files.
     ...(app.isPackaged &&
       process.platform === "darwin" && {
-        cwd: path.join(protocolFolder, ".."),
-      }),
+      cwd: path.join(protocolFolder, ".."),
+    }),
     ...(app.isPackaged &&
       process.platform !== "darwin" && {
-        cwd: path.join(protocolFolder, "../.."),
-      }),
+      cwd: path.join(protocolFolder, "../.."),
+    }),
   })
 
   // Pipe to protocol.log
@@ -150,8 +150,7 @@ export const protocolStreamInfo = (info: {
   if (childProcess === undefined) return
   writeStream(
     childProcess,
-    `ports?${serializePorts(info.mandelboxPorts)}\nprivate-key?${
-      info.mandelboxSecret
+    `ports?${serializePorts(info.mandelboxPorts)}\nprivate-key?${info.mandelboxSecret
     }\nip?${info.mandelboxIP}\nfinished?0\n`
   )
 }
