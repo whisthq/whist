@@ -370,6 +370,8 @@ int create_udp_server_context(void* raw_context, int port, int recvfrom_timeout_
     }
 
     set_timeout(context->socket, stun_timeout_ms);
+    set_tos(context->socket, TOS_DSCP_EXPEDITED_FORWARDING);
+
     // Server connection protocol
 
     // Bind the server port to the advertized public port
@@ -423,6 +425,7 @@ int create_udp_server_context_stun(SocketContextData* context, int port, int rec
     }
 
     set_timeout(context->socket, stun_timeout_ms);
+    set_tos(context->socket, TOS_DSCP_EXPEDITED_FORWARDING);
 
     // Server connection protocol
 
