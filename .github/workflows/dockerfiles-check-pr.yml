@@ -2,7 +2,7 @@
 #
 # Dockerfiles: Check PR
 # Check PRs that touch Dockerfiles for Dockerfile linting with Hadolint.
-# Note: This does not consider mandelboxes; for those see container-images-check-pr.yml.
+# Note: This does not consider mandelboxes; for those see mandelboxes-check-pr.yml.
 #       Instead, this lints our miscellaneous Dockerfiles for development, config, and deployment.
 
 name: "Dockerfiles: Check PR"
@@ -17,7 +17,7 @@ on:
 jobs:
   # Linting
   # Checks for formatting and Dockerfile standards using Hadolint.
-  container-images-lint-dockerfiles:
+  dockerfiles-lint-dockerfiles:
     name: Linting
     runs-on: ubuntu-20.04
     container: hadolint/hadolint:v1.23.0 # This version should be updated periodically to use latest Hadolint rules
