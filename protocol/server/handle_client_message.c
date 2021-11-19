@@ -357,7 +357,8 @@ static int handle_nack_message(FractalClientMessage *fcmsg) {
     */
 
     if (fcmsg->type == MESSAGE_NACK) {
-        udp_nack(&client.udp_context, fcmsg->type, fcmsg->simple_nack.id, fcmsg->simple_nack.index);
+        udp_nack(&client.udp_context, fcmsg->simple_nack.type, fcmsg->simple_nack.id,
+                 fcmsg->simple_nack.index);
     } else {
         // fcmsg->type == MESSAGE_VIDEO_BITARRAY_NACK
         BitArray *bit_arr = bit_array_create(fcmsg->bitarray_nack.numBits);
@@ -368,7 +369,8 @@ static int handle_nack_message(FractalClientMessage *fcmsg) {
 
         for (int i = fcmsg->bitarray_nack.index; i < fcmsg->bitarray_nack.numBits; i++) {
             if (bit_array_test_bit(bit_arr, i)) {
-                udp_nack(&client.udp_context, fcmsg->type, fcmsg->bitarray_nack.id, i);
+                udp_nack(&client.udp_context, fcmsg->bitarray_nack.type, fcmsg->bitarray_nack.id,
+                         i);
             }
         }
         bit_array_free(bit_arr);
