@@ -4,6 +4,129 @@ import (
 	"testing"
 )
 
+func TestAllocateZeroPorts(t *testing.T) {
+	// Give zero portBinds
+	ports, err := Allocate([]PortBinding{})
+	
+	if err != nil {
+		t.Fatalf("error allocating an empty array of port binds. Error: %v", err)
+	}
+
+	if numOfPorts := len(ports); numOfPorts != 0 {
+		t.Fatalf("error allocating an empty array of port binds. Expected %v ports but got %v", 0, numOfPorts)
+	}
+}
+
+func TestAllocateAllOrNone(t *testing.T) {
+	// Have valid and invalid PortBindings
+	testValidPortBinding := PortBinding{
+		MandelboxPort: uint16(22),
+		Protocol: TransportProtocolTCP,
+		HostPort: uint16(0),
+		BindIP: "test_ip",
+	}
+
+	testValidPortBinding2 := PortBinding{
+		MandelboxPort: uint16(22),
+		Protocol: TransportProtocolTCP,
+		HostPort: uint16(MinAllowedPort),
+		BindIP: "test_ip",
+	}
+
+	testInvalidPortBinding := PortBinding{
+		MandelboxPort: uint16(22),
+		Protocol: TransportProtocolTCP,
+		HostPort: uint16(MinAllowedPort-1),
+		BindIP: "test_ip",
+	}
+
+	// Allocate should cause an error as one of the ports are invalid
+	ports, err := Allocate([]PortBinding{testValidPortBinding, testValidPortBinding2, testInvalidPortBinding})	
+
+	if err == nil {
+		t.Fatalf("error allocating an array of port binds with invalid bindings. Expected err but got nil")
+	}
+
+	// Confirm none of the ports are allocated
+	if numOfPorts := len(ports); numOfPorts != 0 {
+		t.Fatalf("error allocating an array of port binds with invalid bindings. Expected %v ports but got %v", 0, numOfPorts)
+	}
+}
+
+func TestAllocateAndFree(t *testing.T) {
+	// Create two valid port bindings
+	testValidPortBinding := PortBinding{
+		MandelboxPort: uint16(22),
+		Protocol: TransportProtocolTCP,
+		HostPort: uint16(0),
+		BindIP: "test_ip",
+	}
+
+	testValidPortBinding2 := PortBinding{
+		MandelboxPort: uint16(22),
+		Protocol: TransportProtocolTCP,
+		HostPort: uint16(MinAllowedPort),
+		BindIP: "test_ip",
+	}
+
+	portBindings := []PortBinding{testValidPortBinding, testValidPortBinding2}
+	numOfPortBindings := len(portBindings)
+
+	//  Allocate should get 2 valid ports
+	ports, err := Allocate(portBindings)
+		
+	if err != nil {
+		t.Fatalf("error allocating an array of port binds. Error: %v", err)
+	}
+
+	if numOfPortsReceived := len(ports); numOfPortsReceived != numOfPortBindings {
+		t.Fatalf("error allocating an array of port binds. Expected %v ports but got %v", numOfPortBindings, numOfPortsReceived)
+	}
+
+	mapToUse, err := getProtocolSpecificHostPortMap(testValidPortBinding.Protocol)
+	if err != nil {
+		t.Fatalf("error getting host port map.  Error: %v", err)
+	}
+
+	portMapsLock.Lock()
+	mapSizeBeforeFree := len(*mapToUse)
+	portMapsLock.Unlock()
+
+	// Free allocated ports
+	Free(ports)
+
+	portMapsLock.Lock()
+	defer portMapsLock.Unlock()
+	mapSizeAfterFree := len(*mapToUse)
+
+	// Confirm that the number of Free'd ports are as expected
+	if mapSizeBeforeFree - numOfPortBindings != mapSizeAfterFree {
+		t.Fatalf("error freeing empty list of port bindings. Expected %v since nothing should be freed but got %v", mapSizeBeforeFree, mapSizeAfterFree)
+	}
+}
+
+func TestFreeEmptyPortBinds(t *testing.T) {
+	mapToUse, err := getProtocolSpecificHostPortMap(TransportProtocolTCP)
+	if err != nil {
+		t.Fatalf("error getting host port map.  Error: %v", err)
+	}
+
+	portMapsLock.Lock()
+	mapSizeBeforeFree := len(*mapToUse)
+	portMapsLock.Unlock()
+
+	// Free checks if an empty binding is returned
+	Free([]PortBinding{})
+
+	portMapsLock.Lock()
+	defer portMapsLock.Unlock()
+	mapSizeAfterFree := len(*mapToUse)
+
+	// Host port map size should not be affected
+	if mapSizeBeforeFree != mapSizeAfterFree {
+		t.Fatalf("error freeing empty list of port bindings. Expected %v since nothing should be freed but got %v", mapSizeBeforeFree, mapSizeAfterFree)
+	}
+}
 
 func TestAllocateSinglePortNotFree(t *testing.T) {
 	// Creating a desired binding with host-port being set to 0
@@ -42,15 +165,17 @@ func TestAllocateSinglePortNotAllowed(t *testing.T) {
 		BindIP: "test_ip",
 	}
 
+	portMapsLock.Lock()
+	defer portMapsLock.Unlock()
+
 	// Allocate single port will check if hostPort is within allowed range
 	_, err := allocateSinglePort(testDesiredBind)
 	if err == nil {
 		t.Fatalf("error allocating a single port with a hostPort not in allowed range. Expected an err but got nil")
 	}
-
 }
 
-func TestAllocateSInglePortInvalidProtocol(t *testing.T) {
+func TestAllocateSinglePortInvalidProtocol(t *testing.T) {
 	// Creating a desired binding with an invalid protocol 
 	testDesiredBind := PortBinding{
 		MandelboxPort: uint16(22),
@@ -58,6 +183,9 @@ func TestAllocateSInglePortInvalidProtocol(t *testing.T) {
 		HostPort: MinAllowedPort,
 		BindIP: "test_ip",
 	}
+
+	portMapsLock.Lock()
+	defer portMapsLock.Unlock()
 
 	// Allocate single port checks if protocol has a valid host port map
 	_, err := allocateSinglePort(testDesiredBind)
@@ -228,7 +356,6 @@ func TestFreeSingleReservedPort(t *testing.T) {
 	portMapsLock.Lock()
 	defer portMapsLock.Unlock()
 
-	// Set a port to reserved
 	mapToUse, err := getProtocolSpecificHostPortMap(TransportProtocolTCP)
 	if err != nil {
 		t.Fatalf("error getting host port map.  Error: %v", err)
@@ -240,12 +367,14 @@ func TestFreeSingleReservedPort(t *testing.T) {
 		HostPort: randomPort,
 	}
 
+	// Set the random port to reserved
 	Reserve(testDesiredBind.HostPort, testDesiredBind.Protocol)
 
 	mapSizeBeforeFree := len(*mapToUse)
 	freeSinglePort(testDesiredBind)
 	mapSizeAfterFree := len(*mapToUse)
 
+	// Reserved port will not be freed
 	if mapSizeBeforeFree != mapSizeAfterFree {
 		t.Fatalf("error freeing single reserved port. Expected map size to be %v but got %v", mapSizeAfterFree, mapSizeBeforeFree)
 	}
@@ -276,11 +405,12 @@ func TestReservePortAvailable(t *testing.T) {
 
 	Reserve(testDesiredBind.HostPort, testDesiredBind.Protocol)
 
-	// Check if port exists
-	if status, exists := (*mapToUse)[testDesiredBind.HostPort]; !exists && status == reserved {
+	// Check if port exists and set to reserved
+	if status, exists := (*mapToUse)[testDesiredBind.HostPort]; !exists || status != reserved {
 		t.Fatalf("error reserving free port")
 	}
 
+	(*mapToUse)[testDesiredBind.HostPort] = inUse
 	freeSinglePort(testDesiredBind)
 }
 
@@ -301,9 +431,9 @@ func TestReservePortNotAvailable(t *testing.T) {
 	// Add new port to host port map
 	(*mapToUse)[testDesiredBind.HostPort] = inUse
 
+	// Port should maintain the original status
 	Reserve(testDesiredBind.HostPort, testDesiredBind.Protocol)
 
-	// Port should maintain the original status
 	if status, exists := (*mapToUse)[testDesiredBind.HostPort]; !exists || status != inUse {
 		t.Fatalf("error reserving port inUse modified host port map. Expected (%v,%v) but got (%v,%v)", true, inUse, exists, status)
 	}
