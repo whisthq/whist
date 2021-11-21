@@ -531,6 +531,7 @@ def test_lingering_instances(
         instance_no_associated_mandelbox.instance_name,
     }
 
+
 def test_get_current_commit_hash() -> None:
     """
     Tests if the current commit hash obtained is not empty
