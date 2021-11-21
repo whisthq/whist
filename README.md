@@ -76,7 +76,7 @@ To avoid pushing code that does not follow our coding guidelines, we recommend y
 
 #### `prod` is for Releases only; `staging` is "almost `prod`"
 
-At Whist, we maintain a `prod` branch for releases only, and auto-tag every commit on `prod` with a release tag [[TODO]](https://github.com/fractal/fractal/issues/1139).
+At Whist, we maintain a `prod` branch for releases only, and auto-tag every commit on `prod` with a release tag [[TODO]](https://github.com/fractal/whist/issues/1139).
 
 We also maintain a `staging` branch for release candidates. Therefore, `staging` will always be ahead of `prod`, except after a production release, when they will be even.
 

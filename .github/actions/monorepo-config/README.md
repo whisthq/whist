@@ -57,7 +57,7 @@ The inputs to the Python program include a "config" path (config folder in monor
 ```json
 {
   "PROTOCOL_FILE_NAME": {
-    "macos": "_Fractal",
+    "macos": "_Whist",
     "win32": "Whist.exe",
     "linux": "Whist"
   }
@@ -68,7 +68,7 @@ The inputs to the Python program include a "config" path (config folder in monor
 
 ```json
 {
-  "PROTOCOL_FILE_NAME": "_Fractal"
+  "PROTOCOL_FILE_NAME": "_Whist"
 }
 ```
 

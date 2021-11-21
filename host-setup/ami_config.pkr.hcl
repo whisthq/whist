@@ -78,7 +78,7 @@ variable "vpc_id" {
   default = ""
 }
 
-source "amazon-ebs" "Fractal_AWS_AMI_Builder" {
+source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   access_key           = "${var.access_key}"
   ami_description      = "Whist-optimized Ubuntu 20.04 AWS Machine Image."
   ami_name             = "${var.ami_name}"
@@ -121,7 +121,7 @@ source "amazon-ebs" "Fractal_AWS_AMI_Builder" {
 }
 
 build {
-  sources = ["source.amazon-ebs.Fractal_AWS_AMI_Builder"]
+  sources = ["source.amazon-ebs.Whist_AWS_AMI_Builder"]
 
   provisioner "shell" {
     inline = ["while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done"]

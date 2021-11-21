@@ -3,8 +3,8 @@ import { Link } from "react-scroll"
 
 import LaptopMan from "@app/assets/graphics/laptopMan.svg"
 import {
-  FractalButton,
-  FractalButtonState,
+  WhistButton,
+  WhistButtonState,
 } from "@app/shared/components/button"
 
 const Hero = () => (
@@ -21,10 +21,10 @@ const Hero = () => (
             virtualization technology
           </p>
           <Link to="details" spy={true} smooth={true}>
-            <FractalButton
+            <WhistButton
               className="mt-8 mb-4"
               contents="Learn More"
-              state={FractalButtonState.DEFAULT}
+              state={WhistButtonState.DEFAULT}
             />
           </Link>
         </div>

@@ -9,7 +9,7 @@ license = "UNLICENSED"
 readme = "README.md"
 python = "^3.9"
 homepage = "https://whist.com"
-repository = "https://github.com/fractal/fractal"
+repository = "https://github.com/fractal/whist"
 documentation = "https://docs.whist.com"
 
 keywords = ["packaging", "dependency", "pyproject.toml"]
