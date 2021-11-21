@@ -229,15 +229,6 @@ def region_name() -> Optional[str]:
 
 
 @pytest.fixture
-def current_commit_hash() -> str:
-    """
-    Returns a current commit hash
-    """
-    commit_hash = RegionToAmi.query.filter_by(ami_active=True).first().client_commit_hash
-    return str(commit_hash) if commit_hash else ""
-
-
-@pytest.fixture
 def override_environment(
     app: Flask,  # pylint: disable=redefined-outer-name
 ) -> Generator[Callable[[Any], None], None, None]:
