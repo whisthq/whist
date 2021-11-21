@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file network.c
  * @brief This file contains server-specific wrappers to low-level network
  *        functions.

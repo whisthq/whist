@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file cudacontext.c
  * @brief This file contains the code to create a CUDA context
 ============================

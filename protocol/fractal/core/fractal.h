@@ -1,8 +1,8 @@
-#ifndef FRACTAL_H
-#define FRACTAL_H
+#ifndef WHIST_H
+#define WHIST_H
 
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file fractal.h
  * @brief This file contains the core of Whist custom structs and definitions
  *        used throughout.
@@ -175,10 +175,10 @@ Defines
 // MAXLENs are the max length of the string they represent, _without_ the null character.
 // Therefore, whenever arrays are created or length of the string is compared, we should be
 // comparing to *MAXLEN + 1
-#define FRACTAL_IDENTIFIER_MAXLEN 31
+#define WHIST_IDENTIFIER_MAXLEN 31
 // this maxlen is the determined Whist environment max length (the upper bound on all flags passed
 // into the protocol)
-#define FRACTAL_ARGS_MAXLEN 255
+#define WHIST_ARGS_MAXLEN 255
 
 /*
 ============================
@@ -511,10 +511,10 @@ typedef enum FractalMultigestureType {
  * @details An enum of OS types
  */
 typedef enum FractalOSType {
-    FRACTAL_UNKNOWN_OS = 0,
-    FRACTAL_WINDOWS = 1,
-    FRACTAL_APPLE = 2,
-    FRACTAL_LINUX = 3,
+    WHIST_UNKNOWN_OS = 0,
+    WHIST_WINDOWS = 1,
+    WHIST_APPLE = 2,
+    WHIST_LINUX = 3,
 } FractalOSType;
 
 /**
@@ -537,7 +537,7 @@ typedef struct FractalMultigestureMessage {
  */
 typedef struct FractalDiscoveryRequestMessage {
     int user_id;
-    char user_email[FRACTAL_ARGS_MAXLEN + 1];
+    char user_email[WHIST_ARGS_MAXLEN + 1];
     FractalOSType os;
 } FractalDiscoveryRequestMessage;
 
@@ -593,9 +593,9 @@ typedef enum FractalClientMessageType {
  * @details So the parent process of the protocol can receive the exit code.
  */
 typedef enum FractalExitCode {
-    FRACTAL_EXIT_SUCCESS = 0,
-    FRACTAL_EXIT_FAILURE = 1,
-    FRACTAL_EXIT_CLI = 2
+    WHIST_EXIT_SUCCESS = 0,
+    WHIST_EXIT_FAILURE = 1,
+    WHIST_EXIT_CLI = 2
 } FractalExitCode;
 
 typedef struct {
@@ -936,4 +936,4 @@ char* fractal_git_revision();
 
 #include "fractal_frame.h"
 
-#endif  // FRACTAL_H
+#endif  // WHIST_H

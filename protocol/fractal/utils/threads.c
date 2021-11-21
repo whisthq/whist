@@ -36,7 +36,7 @@ void fractal_set_thread_priority(FractalThreadPriority priority) {
 #ifdef __linux__
     // Use the highest possible priority for _REALTIME
     // (SCHED_RR being higher than any possible nice value, which is SCHED_OTHER)
-    if (priority == FRACTAL_THREAD_PRIORITY_REALTIME) {
+    if (priority == WHIST_THREAD_PRIORITY_REALTIME) {
         char err[1024];
         // Get the identifier for the thread that called this function
         pthread_t this_thread = pthread_self();
@@ -49,14 +49,14 @@ void fractal_set_thread_priority(FractalThreadPriority priority) {
             // Try _HIGH instead of _REALTIME on logged error
             strerror_r(errno, err, sizeof(err));
             LOG_ERROR("Failure calling sched_get_priority_max(): %s", err);
-            fractal_set_thread_priority(FRACTAL_THREAD_PRIORITY_HIGH);
+            fractal_set_thread_priority(WHIST_THREAD_PRIORITY_HIGH);
             return;
         }
         // Set the priority to the maximum possible priority
         if (pthread_setschedparam(this_thread, SCHED_RR, &params) != 0) {
             // Try _HIGH instead of _REALTIME on logged error
             LOG_ERROR("Failure calling pthread_setschedparam()");
-            fractal_set_thread_priority(FRACTAL_THREAD_PRIORITY_HIGH);
+            fractal_set_thread_priority(WHIST_THREAD_PRIORITY_HIGH);
             return;
         }
         return;
@@ -66,10 +66,10 @@ void fractal_set_thread_priority(FractalThreadPriority priority) {
     // we can set any thread priority on any operating system
     if (SDL_SetThreadPriority((SDL_ThreadPriority)priority) < 0) {
         LOG_ERROR("Failure setting thread priority: %s", SDL_GetError());
-        if (priority == FRACTAL_THREAD_PRIORITY_REALTIME) {
+        if (priority == WHIST_THREAD_PRIORITY_REALTIME) {
             // REALTIME requires sudo/admin on unix/windows.
             // So, if we fail to set the REALTIME priority, we should at least try _HIGH
-            fractal_set_thread_priority(FRACTAL_THREAD_PRIORITY_HIGH);
+            fractal_set_thread_priority(WHIST_THREAD_PRIORITY_HIGH);
         }
     }
 }

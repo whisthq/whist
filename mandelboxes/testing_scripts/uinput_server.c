@@ -8,7 +8,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-#define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                         \
+#define _WHIST_IOCTL_TRY(FD, PARAMS...)                                         \
     if (ioctl(FD, PARAMS) == -1) {                                                \
         char buf[1024];                                                           \
         /* strerror_r should not fail here since ioctl returned -1 */             \
@@ -353,45 +353,45 @@ int main() {
     }
 
     // register keyboard events
-    _FRACTAL_IOCTL_TRY(fd_keyboard, UI_SET_EVBIT, EV_KEY);
+    _WHIST_IOCTL_TRY(fd_keyboard, UI_SET_EVBIT, EV_KEY);
     int kcode;
     for (int i = 0; i < NUM_KEYCODES; ++i) {
         if ((kcode = GetLinuxKeyCode(i))) {
-            _FRACTAL_IOCTL_TRY(fd_keyboard, UI_SET_KEYBIT, kcode);
+            _WHIST_IOCTL_TRY(fd_keyboard, UI_SET_KEYBIT, kcode);
         }
     }
 
     // register relative mouse events
-    _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_EVBIT, EV_KEY);
-    _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_KEYBIT, BTN_LEFT);
-    _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_KEYBIT, BTN_RIGHT);
-    _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_KEYBIT, BTN_MIDDLE);
-    _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_KEYBIT, BTN_3);
-    _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_KEYBIT, BTN_4);
+    _WHIST_IOCTL_TRY(fd_relmouse, UI_SET_EVBIT, EV_KEY);
+    _WHIST_IOCTL_TRY(fd_relmouse, UI_SET_KEYBIT, BTN_LEFT);
+    _WHIST_IOCTL_TRY(fd_relmouse, UI_SET_KEYBIT, BTN_RIGHT);
+    _WHIST_IOCTL_TRY(fd_relmouse, UI_SET_KEYBIT, BTN_MIDDLE);
+    _WHIST_IOCTL_TRY(fd_relmouse, UI_SET_KEYBIT, BTN_3);
+    _WHIST_IOCTL_TRY(fd_relmouse, UI_SET_KEYBIT, BTN_4);
 
-    _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_EVBIT, EV_REL);
-    _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_X);
-    _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_Y);
-    _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_WHEEL);
-    _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_HWHEEL);
+    _WHIST_IOCTL_TRY(fd_relmouse, UI_SET_EVBIT, EV_REL);
+    _WHIST_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_X);
+    _WHIST_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_Y);
+    _WHIST_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_WHEEL);
+    _WHIST_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_HWHEEL);
     // these aren't yet supported by xorg input drivers
     /*
-    _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_WHEEL_HI_RES);
-    _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_HWHEEL_HI_RES);
+    _WHIST_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_WHEEL_HI_RES);
+    _WHIST_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_HWHEEL_HI_RES);
     */
 
     // register absolute mouse events
 
-    _FRACTAL_IOCTL_TRY(fd_absmouse, UI_SET_EVBIT, EV_KEY);
-    _FRACTAL_IOCTL_TRY(fd_absmouse, UI_SET_KEYBIT, BTN_TOUCH);
-    _FRACTAL_IOCTL_TRY(fd_absmouse, UI_SET_KEYBIT, BTN_TOOL_PEN);
-    _FRACTAL_IOCTL_TRY(fd_absmouse, UI_SET_KEYBIT, BTN_STYLUS);
+    _WHIST_IOCTL_TRY(fd_absmouse, UI_SET_EVBIT, EV_KEY);
+    _WHIST_IOCTL_TRY(fd_absmouse, UI_SET_KEYBIT, BTN_TOUCH);
+    _WHIST_IOCTL_TRY(fd_absmouse, UI_SET_KEYBIT, BTN_TOOL_PEN);
+    _WHIST_IOCTL_TRY(fd_absmouse, UI_SET_KEYBIT, BTN_STYLUS);
 
-    _FRACTAL_IOCTL_TRY(fd_absmouse, UI_SET_EVBIT, EV_ABS);
-    _FRACTAL_IOCTL_TRY(fd_absmouse, UI_SET_ABSBIT, ABS_X);
-    _FRACTAL_IOCTL_TRY(fd_absmouse, UI_SET_ABSBIT, ABS_Y);
+    _WHIST_IOCTL_TRY(fd_absmouse, UI_SET_EVBIT, EV_ABS);
+    _WHIST_IOCTL_TRY(fd_absmouse, UI_SET_ABSBIT, ABS_X);
+    _WHIST_IOCTL_TRY(fd_absmouse, UI_SET_ABSBIT, ABS_Y);
 
-    _FRACTAL_IOCTL_TRY(fd_absmouse, UI_SET_PROPBIT, INPUT_PROP_POINTER);
+    _WHIST_IOCTL_TRY(fd_absmouse, UI_SET_PROPBIT, INPUT_PROP_POINTER);
 
     // config devices
 
@@ -404,36 +404,36 @@ int main() {
 
     usetup.id.product = 0x1122;
     strcpy(usetup.name, "Whist Virtual Keyboard");
-    _FRACTAL_IOCTL_TRY(fd_keyboard, UI_DEV_SETUP, &usetup);
+    _WHIST_IOCTL_TRY(fd_keyboard, UI_DEV_SETUP, &usetup);
 
     // relative mouse config
 
     usetup.id.product = 0x1123;
     strcpy(usetup.name, "Whist Virtual Relative Input");
-    _FRACTAL_IOCTL_TRY(fd_relmouse, UI_DEV_SETUP, &usetup);
+    _WHIST_IOCTL_TRY(fd_relmouse, UI_DEV_SETUP, &usetup);
 
     // absolute mouse config
 
     usetup.id.product = 0x1124;
     strcpy(usetup.name, "Whist Virtual Absolute Input");
-    _FRACTAL_IOCTL_TRY(fd_absmouse, UI_DEV_SETUP, &usetup);
+    _WHIST_IOCTL_TRY(fd_absmouse, UI_DEV_SETUP, &usetup);
 
     struct uinput_abs_setup axis_setup = {0};
     axis_setup.absinfo.resolution = 1;
 
     axis_setup.code = ABS_X;
     axis_setup.absinfo.maximum = UINPUT_MOUSE_COORDINATE_RANGE;
-    _FRACTAL_IOCTL_TRY(fd_absmouse, UI_ABS_SETUP, &axis_setup);
+    _WHIST_IOCTL_TRY(fd_absmouse, UI_ABS_SETUP, &axis_setup);
 
     axis_setup.code = ABS_Y;
     axis_setup.absinfo.maximum = UINPUT_MOUSE_COORDINATE_RANGE;
-    _FRACTAL_IOCTL_TRY(fd_absmouse, UI_ABS_SETUP, &axis_setup);
+    _WHIST_IOCTL_TRY(fd_absmouse, UI_ABS_SETUP, &axis_setup);
 
     // create devices
 
-    _FRACTAL_IOCTL_TRY(fd_absmouse, UI_DEV_CREATE);
-    _FRACTAL_IOCTL_TRY(fd_relmouse, UI_DEV_CREATE);
-    _FRACTAL_IOCTL_TRY(fd_keyboard, UI_DEV_CREATE);
+    _WHIST_IOCTL_TRY(fd_absmouse, UI_DEV_CREATE);
+    _WHIST_IOCTL_TRY(fd_relmouse, UI_DEV_CREATE);
+    _WHIST_IOCTL_TRY(fd_keyboard, UI_DEV_CREATE);
     LOG_INFO("Created input devices!");
     LOG_INFO("ABSMOUSE FD: %d", fd_absmouse);
     LOG_INFO("RELMOUSE FD: %d", fd_relmouse);

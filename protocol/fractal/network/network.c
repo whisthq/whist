@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file network.c
  * @brief This file contains all code that interacts directly with sockets
  *        under-the-hood.
@@ -184,19 +184,19 @@ void set_timeout(SOCKET socket, int timeout_ms) {
             "able to recover if a packet is never received");
         unsigned long mode = 0;
 
-        if (FRACTAL_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
+        if (WHIST_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
             LOG_FATAL("Failed to make socket blocking.");
         }
 
     } else if (timeout_ms == 0) {
         unsigned long mode = 1;
-        if (FRACTAL_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
+        if (WHIST_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
             LOG_FATAL("Failed to make socket return immediately.");
         }
     } else {
         // Set to blocking when setting a timeout
         unsigned long mode = 0;
-        if (FRACTAL_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
+        if (WHIST_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
             LOG_FATAL("Failed to make socket blocking.");
         }
 

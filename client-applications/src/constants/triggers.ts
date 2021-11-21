@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file auth.ts
  * @brief This file defines all the triggers recognized by the main thread.
  */

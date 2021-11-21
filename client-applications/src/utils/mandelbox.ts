@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file mandelbox.ts
  * @brief This file contains utility functions interacting with the webserver to create mandelboxes.
  */

@@ -20,7 +20,7 @@ docker_id="${output##*$'\n'}"
 
 # This flag skips executing bash and automatically killing the docker container.
 # Primarily used for benchmarking.
-if [[ ! -v FRACTAL_SKIP_EXEC_BASH ]]
+if [[ ! -v WHIST_SKIP_EXEC_BASH ]]
 then
   # Start bash in the mandelbox.
   docker exec -it "$docker_id" /bin/bash || true

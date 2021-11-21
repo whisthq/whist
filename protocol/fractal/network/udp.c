@@ -81,8 +81,8 @@ FractalPacket* udp_read_packet(void* raw_context, bool should_recv) {
         if (encrypted_len < 0) {
             int error = get_last_network_error();
             switch (error) {
-                case FRACTAL_ETIMEDOUT:
-                case FRACTAL_EWOULDBLOCK:
+                case WHIST_ETIMEDOUT:
+                case WHIST_EWOULDBLOCK:
                     // Break on expected network errors
                     break;
                 default:
@@ -465,8 +465,8 @@ int create_udp_server_context_stun(SocketContextData* context, int port, int rec
         // If we haven't spent too much time waiting, and our previous 100ms
         // poll failed, then send another STUN update
         if (get_timer(recv_timer) * MS_IN_SECOND < stun_timeout_ms &&
-            (get_last_network_error() == FRACTAL_ETIMEDOUT ||
-             get_last_network_error() == FRACTAL_EAGAIN)) {
+            (get_last_network_error() == WHIST_ETIMEDOUT ||
+             get_last_network_error() == WHIST_EAGAIN)) {
             if (sendto(context->socket, (const char*)&stun_request, sizeof(stun_request), 0,
                        (struct sockaddr*)&stun_addr, sizeof(stun_addr)) < 0) {
                 LOG_WARNING("Could not send message to STUN %d\n", get_last_network_error());

@@ -1,5 +1,5 @@
-#ifndef FRACTAL_NETWORK_THROTTLE_H
-#define FRACTAL_NETWORK_THROTTLE_H
+#ifndef WHIST_NETWORK_THROTTLE_H
+#define WHIST_NETWORK_THROTTLE_H
 
 #ifndef _WIN32
 #include <sys/types.h>
@@ -41,4 +41,4 @@ void network_throttler_set_burst_bitrate(NetworkThrottleContext* ctx, int burst_
  */
 void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t bytes);
 
-#endif  // FRACTAL_NETWORK_THROTTLE_H
+#endif  // WHIST_NETWORK_THROTTLE_H

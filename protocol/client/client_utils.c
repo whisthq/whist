@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file client_utils.c
  * @brief This file contains helper functions for FractalClient
 ============================
@@ -53,8 +53,8 @@ extern volatile int client_max_bitrate;
 volatile bool update_bitrate = false;
 
 // This variables should stay as arrays - we call sizeof() on them
-char user_email[FRACTAL_ARGS_MAXLEN + 1];
-char icon_png_filename[FRACTAL_ARGS_MAXLEN + 1];
+char user_email[WHIST_ARGS_MAXLEN + 1];
+char icon_png_filename[WHIST_ARGS_MAXLEN + 1];
 
 extern bool skip_taskbar;
 
@@ -81,8 +81,8 @@ const struct option client_cmd_options[] = {
     {"loading", required_argument, NULL, 'l'},
     {"skip-taskbar", no_argument, NULL, 's'},
     // these are standard for POSIX programs
-    {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
-    {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
+    {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
+    {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
     // end with NULL-termination
     {0, 0, 0, 0}};
 const char *usage;
@@ -333,20 +333,20 @@ int client_parse_args(int argc, char *argv[]) {
 
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, client_cmd_options, NULL);
-        if (opt != -1 && optarg && strlen(optarg) > FRACTAL_ARGS_MAXLEN) {
+        if (opt != -1 && optarg && strlen(optarg) > WHIST_ARGS_MAXLEN) {
             printf("Option passed into %c is too long! Length of %zd when max is %d\n", opt,
-                   strlen(optarg), FRACTAL_ARGS_MAXLEN);
+                   strlen(optarg), WHIST_ARGS_MAXLEN);
             return -1;
         }
 
         // For arguments that are not `help` and `version`, evaluate option
         //    and argument via `evaluate_arg`
         switch (opt) {
-            case FRACTAL_GETOPT_HELP_CHAR: {  // help
+            case WHIST_GETOPT_HELP_CHAR: {  // help
                 printf("%s", usage_details);
                 return 1;
             }
-            case FRACTAL_GETOPT_VERSION_CHAR: {  // version
+            case WHIST_GETOPT_VERSION_CHAR: {  // version
                 printf("Whist client revision %s\n", fractal_git_revision());
                 return 1;
             }
@@ -647,11 +647,11 @@ int prepare_init_to_server(FractalDiscoveryRequestMessage *fcmsg, char *email) {
 
     // Let the server know what OS we are
 #ifdef _WIN32
-    fcmsg->os = FRACTAL_WINDOWS;
+    fcmsg->os = WHIST_WINDOWS;
 #elif defined(__APPLE__)
-    fcmsg->os = FRACTAL_APPLE;
+    fcmsg->os = WHIST_APPLE;
 #else
-    fcmsg->os = FRACTAL_LINUX;
+    fcmsg->os = WHIST_LINUX;
 #endif
 
     return 0;

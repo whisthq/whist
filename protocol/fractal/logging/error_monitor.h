@@ -1,7 +1,7 @@
 #ifndef ERROR_MONITOR_H
 #define ERROR_MONITOR_H
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file error_monitor.h
  * @brief This file contains the functions to configure and report breadcrumbs
  *        and error events to tools such as Sentry.

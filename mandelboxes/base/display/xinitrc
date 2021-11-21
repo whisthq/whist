@@ -7,7 +7,7 @@ echo "xinitrc PID: $xinitrc_pid"
 # This script starts the AwesomeWM window manager inside the mandelbox
 # and starts the mandelbox's application (i.e. Google Chrome)
 
-RUN_AS_FRACTAL=/usr/share/fractal/run-as-fractal-user.sh
+RUN_AS_WHIST=/usr/share/fractal/run-as-fractal-user.sh
 
 # Install keymappings
 xmodmap /root/.Xmodmap
@@ -16,11 +16,11 @@ xmodmap /root/.Xmodmap
 
 # Start playerctl to respond to media keys
 echo "Starting 'playerctl daemon' in the background..."
-$RUN_AS_FRACTAL "playerctl daemon" &
+$RUN_AS_WHIST "playerctl daemon" &
 
 # Start the AwesomeWM window manager
 echo "Starting AwesomeWM in the background..."
-$RUN_AS_FRACTAL "awesome" &
+$RUN_AS_WHIST "awesome" &
 # Gets the PID of the backgrounded AwesomeWM process
 awesome_pid=$!
 echo "AwesomeWM started as PID $awesome_pid..."
@@ -30,7 +30,7 @@ echo "AwesomeWM started as PID $awesome_pid..."
 
 # Start the XSettings daemon to make DPI changes responsive
 echo "Starting 'xsettingsd' in the background..."
-$RUN_AS_FRACTAL "xsettingsd" &
+$RUN_AS_WHIST "xsettingsd" &
 echo "xsettingsd background PID: $!"
 
 # Let everyone know that xinit is initialized

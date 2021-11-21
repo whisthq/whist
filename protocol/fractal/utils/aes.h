@@ -1,7 +1,7 @@
 #ifndef AES_H
 #define AES_H
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file aes.h
  * @brief This file contains all code that interacts directly with packets
  *        encryption (using AES encryption).

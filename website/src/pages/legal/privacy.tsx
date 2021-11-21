@@ -32,7 +32,7 @@ const Privacy = () => {
         </div>
 
         <p>
-          Thank you for choosing to be part of our community at Fractal
+          Thank you for choosing to be part of our community at Whist
           Computers, Inc., doing business as Whist (“Whist”, “we”, “us”, or
           “our”). When you visit our website,{" "}
           <a href="https://www.whist.com">www.whist.com</a>, and use our
@@ -646,7 +646,7 @@ const Privacy = () => {
           to:
         </p>
         <p>
-          Fractal Computers, Inc., dba Whist <br />
+          Whist Technologies, Inc. <br />
           33 Irving Pl <br />
           New York, NY 10003 <br />
           United States <br />

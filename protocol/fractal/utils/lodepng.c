@@ -45,8 +45,8 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
                                    requires too much casts*/
 #pragma warning( \
     disable : 4996) /*VS does not like fopen, but fopen_s is not standard C so unusable here*/
-#pragma warning(disable : 4334) /* FRACTAL: bit shift warning */
-#pragma warning(disable : 4267) /* FRACTAL: size_t to unsigned conversion */
+#pragma warning(disable : 4334) /* WHIST: bit shift warning */
+#pragma warning(disable : 4267) /* WHIST: size_t to unsigned conversion */
 #endif                          /*_MSC_VER */
 
 const char* LODEPNG_VERSION_STRING = "20201017";

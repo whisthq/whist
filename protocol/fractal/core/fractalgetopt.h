@@ -17,14 +17,14 @@
    write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.  */
 
-#ifndef FRACTAL_GETOPT_H
+#ifndef WHIST_GETOPT_H
 
 // standard for POSIX programs
-#define FRACTAL_GETOPT_HELP_CHAR (CHAR_MIN - 2)
-#define FRACTAL_GETOPT_VERSION_CHAR (CHAR_MIN - 3)
+#define WHIST_GETOPT_HELP_CHAR (CHAR_MIN - 2)
+#define WHIST_GETOPT_VERSION_CHAR (CHAR_MIN - 3)
 
 #ifndef __need_getopt
-#define FRACTAL_GETOPT_H 1
+#define WHIST_GETOPT_H 1
 #endif
 
 #ifdef __cplusplus

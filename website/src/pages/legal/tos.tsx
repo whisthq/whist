@@ -33,7 +33,7 @@ const TermsOfService = () => {
         </div>
         <div>
           <p>
-            PLEASE READ THESE TERMS OF SERVICE (COLLECTIVELY WITH FRACTAL'S
+            PLEASE READ THESE TERMS OF SERVICE (COLLECTIVELY WITH WHIST'S
             PRIVACY POLICY{" "}
             <a href="https://www.whist.com/privacy">www.whist.com/privacy</a>{" "}
             AND{" "}
@@ -42,9 +42,9 @@ const TermsOfService = () => {
             </a>
             , THE "TERMS OF SERVICE ") FULLY AND CAREFULLY BEFORE USING{" "}
             <a href="https://www.whist.com">WWW.whist.com</a> (THE "SITE"), ANY
-            DESKTOP OR MOBILE APPLICATIONS PROVIDED BY FRACTAL (THE
+            DESKTOP OR MOBILE APPLICATIONS PROVIDED BY WHIST (THE
             "APPLICATIONS") AND THE CLOUD COMPUTING SERVICES, FEATURES, CONTENT
-            OR APPLICATIONS OFFERED BY FRACTAL COMPUTERS, INC. ("FRACTAL," "WE,"
+            OR APPLICATIONS OFFERED BY WHIST COMPUTERS, INC. ("WHIST," "WE,"
             "US," OR "OUR") (TOGETHER WITH THE SITE AND THE APPLICATIONS, THE
             "SERVICES"). THESE TERMS OF SERVICE SET FORTH THE LEGALLY BINDING
             TERMS AND CONDITIONS FOR YOUR USE OF THE SITE, THE APPLICATIONS AND
@@ -184,8 +184,8 @@ const TermsOfService = () => {
           <p>
             Given the nature of cloud-based personal computing, your inputs
             (keystrokes, mouse/touchpad movements, etc.) are sent from the User
-            Device to Fractal’s data center infrastructure, where Cloud
-            Applications are hosted. The servers in Fractal’s data center
+            Device to Whist’s data center infrastructure, where Cloud
+            Applications are hosted. The servers in Whist’s data center
             infrastructure interpret these signals on your Cloud Applications,
             which allows for the Whist applications to display the Cloud
             Applications. All communications between your User Device and your
@@ -356,8 +356,8 @@ const TermsOfService = () => {
           </p>
           <p style={{ fontWeight: "bold", fontSize: 20 }}>Internet Access</p>
           <p>
-            Use of Fractal’s Services requires a working Internet connection,
-            which is not included in our Services. The quality of Fractal’s
+            Use of Whist’s Services requires a working Internet connection,
+            which is not included in our Services. The quality of Whist’s
             Services will depend on the quality of the User’s Internet
             connection, in terms of bandwidth, stability, ping, and a variety of
             other factors dependent on the properties of the Internet
@@ -385,7 +385,7 @@ const TermsOfService = () => {
             Applications, etc.
           </p>
           <p>
-            Without limiting the above, you will not use Fractal’s Services for
+            Without limiting the above, you will not use Whist’s Services for
             any of the following:
           </p>
           <ul>
@@ -429,7 +429,7 @@ const TermsOfService = () => {
             </li>
             <li>
               Mining cryptocurrencies, any related activities, or using
-              Fractal’s computing power to break encryption keys;
+              Whist’s computing power to break encryption keys;
             </li>
             <li>
               Sending unwanted messages, promotions or advertising, or spam, or
@@ -457,7 +457,7 @@ const TermsOfService = () => {
               Deleting from the Service or the Software any legal notices,
               disclaimers, or proprietary notices such as copyright or trademark
               notices, or using or modifying any logo or other content of the
-              Websites without Fractal’s prior written consent;
+              Websites without Whist’s prior written consent;
             </li>
             <li>
               Printing, copying or reverse engineering any code or Whist
@@ -672,7 +672,7 @@ const TermsOfService = () => {
             send a DMCA Notice to the Designated Agent identified below:
           </p>
           <p>
-            Fractal Computers, Inc., dba Whist <br />
+            Whist Technologies, Inc. <br />
             33 Irving Pl <br />
             New York, NY 10003 <br />
             <a href="mailto:support@whist.com">support@whist.com</a> <br />
@@ -689,26 +689,26 @@ const TermsOfService = () => {
             IS" AND “AS AVAILABLE” BASIS.
           </p>
           <p>
-            TO THE FULLEST EXTENT PERMITTED BY LAW, (A) FRACTAL MAKES NO
+            TO THE FULLEST EXTENT PERMITTED BY LAW, (A) WHIST MAKES NO
             WARRANTIES, EXPRESS OR IMPLIED, WITH RESPECT TO THE SERVICES; (B)
-            FRACTAL DISCLAIMS ANY REPRESENTATIONS AND WARRANTIES, INCLUDING
+            WHIST DISCLAIMS ANY REPRESENTATIONS AND WARRANTIES, INCLUDING
             WITHOUT LIMITATION AS TO MERCHANTABILITY, FITNESS FOR A PARTICULAR
             PURPOSE AND NON-INFRINGEMENT; AND (C) EXCEPT FOR ANY LIABILITY FOR
             FRAUD, FRAUDULENT MISREPRESENTATION OR GROSS NEGLIGENCE, IN NO EVENT
-            SHALL FRACTAL OR ITS AFFILIATES BE LIABLE TO YOU OR ANY THIRD-PARTY
+            SHALL WHIST OR ITS AFFILIATES BE LIABLE TO YOU OR ANY THIRD-PARTY
             FOR (1) ANY INDIRECT, SPECIAL, PUNITIVE, INCIDENTAL, EXEMPLARY OR
             CONSEQUENTIAL DAMAGES, OR (2) ANY LOSS OF USE, DATA, BUSINESS,
             GOODWILL, OR PROFITS, OR THE LOSS OF USER CONTENT, OR (3) ANY DAMAGE
             TO USER’S HARDWARE OR SOFTWARE, EVEN, IN EACH CASE, IN CIRCUMSTANCES
-            WHERE FRACTAL WAS WARNED OF THE POSSIBILITY OF SUCH DAMAGES.
+            WHERE WHIST WAS WARNED OF THE POSSIBILITY OF SUCH DAMAGES.
           </p>
           <p>
             IN ADDITION, OTHER THAN FOR THE TYPES OF LIABILITY WE CANNOT LIMIT
-            BY LAW, FRACTAL AND ITS AFFILIATES’ LIABILITY FOR ALL CLAIMS
+            BY LAW, WHIST AND ITS AFFILIATES’ LIABILITY FOR ALL CLAIMS
             RELATING TO ANY SERVICE WILL BE CAPPED AT THE HIGHER OF $100 OR THE
-            AMOUNTS PAID BY YOU TO FRACTAL FOR THE SERVICE CONCERNED, DURING THE
+            AMOUNTS PAID BY YOU TO WHIST FOR THE SERVICE CONCERNED, DURING THE
             SIX MONTHS PRECEDING THE EVENT GIVING RISE TO THE CLAIM. FINALLY,
-            YOU WILL DEFEND, INDEMNIFY AND HOLD FRACTAL, ITS AFFILIATES, AND ITS
+            YOU WILL DEFEND, INDEMNIFY AND HOLD WHIST, ITS AFFILIATES, AND ITS
             AND THEIR DIRECTORS, OFFICERS AND EMPLOYEES HARMLESS FROM ANY CLAIM,
             COST, LIABILITY, LOSS OR SETTLEMENT INCURRED IN CONNECTION WITH A
             THIRD-PARTY CLAIM ARISING OUT OF OR IN CONNECTION WITH A VIOLATION
@@ -729,7 +729,7 @@ const TermsOfService = () => {
           <p style={{ fontWeight: "bold", fontSize: 20 }}>Notices</p>
           <p>
             Unless otherwise stated in these Terms, when the User seeks to
-            contact Whist, the user should do so through Fractal’s website.
+            contact Whist, the user should do so through Whist’s website.
           </p>
           <p>
             Whist may contact the User by any useful means, including by email
@@ -745,7 +745,7 @@ const TermsOfService = () => {
             Terms create no third-party beneficiary rights.
           </p>
           <p>
-            Fractal’s failure to enforce a provision of these Terms shall not be
+            Whist’s failure to enforce a provision of these Terms shall not be
             deemed a waiver of its right to do so in the future. If a provision
             of these Terms is found to be unenforceable, the remaining
             provisions of these Terms will remain in full effect and an

@@ -1,5 +1,5 @@
-#ifndef FRACTAL_FRAME_H
-#define FRACTAL_FRAME_H
+#ifndef WHIST_FRAME_H
+#define WHIST_FRAME_H
 
 #include "fractal.h"
 #include <fractal/cursor/cursor.h>

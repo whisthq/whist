@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file input.c
  * @brief This file defines general input-processing functions and toggles
  *        between Windows and Linux servers.
@@ -34,7 +34,7 @@ Defines
 #define KeyDown(input_device, fractal_keycode) emit_key_event(input_device, fractal_keycode, 1)
 
 unsigned int last_input_fcmsg_id = 0;
-FractalOSType input_os_type = FRACTAL_UNKNOWN_OS;
+FractalOSType input_os_type = WHIST_UNKNOWN_OS;
 
 /*
 ============================

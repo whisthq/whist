@@ -8,9 +8,9 @@
 set -Eeuo pipefail
 
 # Retrieve mandelbox parameters
-FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
+WHIST_MAPPINGS_DIR=/fractal/resourceMappings
 GPU_INDEX_FILENAME=gpu_index
-GPU_INDEX=$(cat $FRACTAL_MAPPINGS_DIR/$GPU_INDEX_FILENAME)
+GPU_INDEX=$(cat $WHIST_MAPPINGS_DIR/$GPU_INDEX_FILENAME)
 
 echo "Using GPU Index ${GPU_INDEX}"
 

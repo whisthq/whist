@@ -7,12 +7,12 @@
 set -Eeuo pipefail
 
 # Begin wait loop to get TTY number and port mapping from Whist Host Service
-FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
+WHIST_MAPPINGS_DIR=/fractal/resourceMappings
 USER_CONFIGS_DIR=/fractal/userConfigs
 APP_CONFIG_MAP_FILENAME=/usr/share/fractal/app-config-map.json
 
 # Wait for TTY and port mapping files and user config to exist
-until [ -f $FRACTAL_MAPPINGS_DIR/.ready ]
+until [ -f $WHIST_MAPPINGS_DIR/.ready ]
 do
   sleep 0.1
 done
@@ -49,7 +49,7 @@ done
 find $USER_CONFIGS_DIR -xtype l -delete
 
 # Register TTY once it was assigned via writing to a file by Whist Host Service
-ASSIGNED_TTY=$(cat $FRACTAL_MAPPINGS_DIR/tty)
+ASSIGNED_TTY=$(cat $WHIST_MAPPINGS_DIR/tty)
 
 # Create a TTY within the mandelbox so we don't have to hook it up to one of the host's.
 # Also, create the device /dev/dri/card0 which is needed for GPU acceleration. Note that
@@ -65,5 +65,5 @@ sudo chmod 0600 -R /var/log/fractal/
 
 # This installs fractal service
 echo "Start Pam Systemd Process for User fractal"
-export FRACTAL_UID=`id -u fractal`
-systemctl start user@$FRACTAL_UID
+export WHIST_UID=`id -u fractal`
+systemctl start user@$WHIST_UID

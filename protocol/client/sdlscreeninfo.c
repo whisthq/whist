@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file sdlscreeninfo.c
  * @brief This file contains SDL screen info code, used to retrive information
  *        about SDL Windows.

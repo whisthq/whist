@@ -1,7 +1,7 @@
 #ifndef SERVER_VIDEO_H
 #define SERVER_VIDEO_H
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file video.h
  * @brief This file contains all code that interacts directly with processing
  *        video on the server.

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file auth.ts
  * @brief This file contains utility functions to create Electron windows. This file manages
  * creation of renderer process windows. It is called from the main process, and passes all

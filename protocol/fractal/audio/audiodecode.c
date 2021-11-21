@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file audiodecode.c
  * @brief This file contains the code to decode AAC-encoded audio using FFmpeg.
 ============================

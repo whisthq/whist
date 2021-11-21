@@ -1,5 +1,5 @@
-#ifndef FRACTAL_THREADS_H
-#define FRACTAL_THREADS_H
+#ifndef WHIST_THREADS_H
+#define WHIST_THREADS_H
 
 // So that SDL sees symbols such as memcpy
 #ifdef _WIN32
@@ -19,10 +19,10 @@ typedef SDL_Thread* FractalThread;
 typedef SDL_threadID FractalThreadID;
 typedef int (*FractalThreadFunction)(void*);
 typedef enum FractalThreadPriority {
-    FRACTAL_THREAD_PRIORITY_LOW = SDL_THREAD_PRIORITY_LOW,
-    FRACTAL_THREAD_PRIORITY_NORMAL = SDL_THREAD_PRIORITY_NORMAL,
-    FRACTAL_THREAD_PRIORITY_HIGH = SDL_THREAD_PRIORITY_HIGH,
-    FRACTAL_THREAD_PRIORITY_REALTIME = SDL_THREAD_PRIORITY_TIME_CRITICAL
+    WHIST_THREAD_PRIORITY_LOW = SDL_THREAD_PRIORITY_LOW,
+    WHIST_THREAD_PRIORITY_NORMAL = SDL_THREAD_PRIORITY_NORMAL,
+    WHIST_THREAD_PRIORITY_HIGH = SDL_THREAD_PRIORITY_HIGH,
+    WHIST_THREAD_PRIORITY_REALTIME = SDL_THREAD_PRIORITY_TIME_CRITICAL
 } FractalThreadPriority;
 
 void fractal_init_multithreading();
@@ -53,4 +53,4 @@ void fractal_post_semaphore(FractalSemaphore semaphore);
 void fractal_wait_semaphore(FractalSemaphore semaphore);
 void fractal_destroy_semaphore(FractalSemaphore semaphore);
 
-#endif  // FRACTAL_THREADS_H
+#endif  // WHIST_THREADS_H

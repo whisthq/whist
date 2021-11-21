@@ -81,7 +81,7 @@ const dontImportCookies = of(persistGet(ONBOARDED) as boolean).pipe(
   share()
 )
 
-// Observable that fires when Fractal is ready to be launched
+// Observable that fires when Whist is ready to be launched
 const launchTrigger = fromSignal(
   combineLatest({
     accessToken,

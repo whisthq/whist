@@ -1,7 +1,7 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file network.h
  * @brief This file contains all code that interacts directly with sockets
  *        under-the-hood.
@@ -116,23 +116,23 @@ Defines
 */
 
 #if defined(_WIN32)
-#define FRACTAL_ETIMEDOUT WSAETIMEDOUT
-#define FRACTAL_EWOULDBLOCK WSAEWOULDBLOCK
-#define FRACTAL_EAGAIN WSAEWOULDBLOCK
-#define FRACTAL_EINPROGRESS WSAEWOULDBLOCK
+#define WHIST_ETIMEDOUT WSAETIMEDOUT
+#define WHIST_EWOULDBLOCK WSAEWOULDBLOCK
+#define WHIST_EAGAIN WSAEWOULDBLOCK
+#define WHIST_EINPROGRESS WSAEWOULDBLOCK
 #define socklen_t int
-#define FRACTAL_IOCTL_SOCKET ioctlsocket
-#define FRACTAL_CLOSE_SOCKET closesocket
+#define WHIST_IOCTL_SOCKET ioctlsocket
+#define WHIST_CLOSE_SOCKET closesocket
 #else
 #define SOCKET int
 #define INVALID_SOCKET -1
 #define closesocket close
-#define FRACTAL_IOCTL_SOCKET ioctl
-#define FRACTAL_CLOSE_SOCKET close
-#define FRACTAL_ETIMEDOUT ETIMEDOUT
-#define FRACTAL_EWOULDBLOCK EWOULDBLOCK
-#define FRACTAL_EAGAIN EAGAIN
-#define FRACTAL_EINPROGRESS EINPROGRESS
+#define WHIST_IOCTL_SOCKET ioctl
+#define WHIST_CLOSE_SOCKET close
+#define WHIST_ETIMEDOUT ETIMEDOUT
+#define WHIST_EWOULDBLOCK EWOULDBLOCK
+#define WHIST_EAGAIN EAGAIN
+#define WHIST_EINPROGRESS EINPROGRESS
 #endif
 
 #define STUN_IP "0.0.0.0"
@@ -140,7 +140,7 @@ Defines
 
 // Note that both the Windows and Linux versions use 2 as the second argument
 // to indicate shutting down both ends of the socket
-#define FRACTAL_SHUTDOWN_SOCKET(s) shutdown(s, 2)
+#define WHIST_SHUTDOWN_SOCKET(s) shutdown(s, 2)
 
 /*
 ============================

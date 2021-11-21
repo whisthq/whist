@@ -79,7 +79,7 @@ FractalPacket* tcp_read_packet(void* raw_context, bool should_recv) {
 
         if (len < 0) {
             int err = get_last_network_error();
-            if (err == FRACTAL_ETIMEDOUT || err == FRACTAL_EAGAIN) {
+            if (err == WHIST_ETIMEDOUT || err == WHIST_EAGAIN) {
             } else {
                 LOG_WARNING("Network Error %d", err);
             }
@@ -343,7 +343,7 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
     // Observe the paragraph under EINPROGRESS for how to nonblocking connect over TCP
     if ((ret = connect(socket, (struct sockaddr*)(&addr), sizeof(addr))) < 0) {
         // EINPROGRESS is a valid error, anything else is invalid
-        if (get_last_network_error() != FRACTAL_EINPROGRESS) {
+        if (get_last_network_error() != WHIST_EINPROGRESS) {
             LOG_WARNING(
                 "Could not connect() over TCP to server: Returned %d, Error "
                 "Code %d",

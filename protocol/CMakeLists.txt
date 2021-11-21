@@ -37,7 +37,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     # CMAKE_CUDA_COMPILER will be set only if check_language(CUDA) succeeded
     if(CMAKE_CUDA_COMPILER)
         enable_language(CUDA)
-        add_definitions(-DFRACTAL_CUDA_ENABLED)
+        add_definitions(-DWHIST_CUDA_ENABLED)
     endif()
 endif()
 

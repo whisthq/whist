@@ -6,28 +6,28 @@
 set -Eeuo pipefail
 
 # Set/Retrieve Mandelbox parameters
-FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
+WHIST_MAPPINGS_DIR=/fractal/resourceMappings
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
 PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
 SENTRY_ENV_FILENAME=/usr/share/fractal/private/sentry_env
 COOKIE_FILE_FILENAME=/usr/share/fractal/private/user_cookies_file
 USER_UPLOAD_TARGET_FILENAME=/usr/share/fractal/private/user_target
-TIMEOUT_FILENAME=$FRACTAL_MAPPINGS_DIR/timeout
-FRACTAL_APPLICATION_PID_FILE=/home/fractal/fractal-application-pid
+TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/timeout
+WHIST_APPLICATION_PID_FILE=/home/fractal/fractal-application-pid
 PROTOCOL_LOG_FILENAME=/usr/share/fractal/server.log
 TELEPORT_LOG_FILENAME=/usr/share/fractal/teleport.log
 
 
 # Define a string-format identifier for this mandelbox
-IDENTIFIER=$(cat $FRACTAL_MAPPINGS_DIR/$IDENTIFIER_FILENAME)
+IDENTIFIER=$(cat $WHIST_MAPPINGS_DIR/$IDENTIFIER_FILENAME)
 
 # Create list of command-line arguments to pass to the Whist protocol server
 OPTIONS=""
 
 # Send in AES private key, if set
 if [ -f "$PRIVATE_KEY_FILENAME" ]; then
-  export FRACTAL_AES_KEY=$(cat $PRIVATE_KEY_FILENAME)
-  OPTIONS="$OPTIONS --private-key=$FRACTAL_AES_KEY"
+  export WHIST_AES_KEY=$(cat $PRIVATE_KEY_FILENAME)
+  OPTIONS="$OPTIONS --private-key=$WHIST_AES_KEY"
 fi
 
 # Send in Sentry environment, if set
@@ -90,12 +90,12 @@ fractal_application_runuser_pid=$!
 echo "Whist application runuser pid: $fractal_application_runuser_pid"
 
 # Wait for run-fractal-application.sh to write PID to file
-until [ -f "$FRACTAL_APPLICATION_PID_FILE" ]
+until [ -f "$WHIST_APPLICATION_PID_FILE" ]
 do
   sleep 0.1
 done
-fractal_application_pid=$(cat $FRACTAL_APPLICATION_PID_FILE)
-rm $FRACTAL_APPLICATION_PID_FILE
+fractal_application_pid=$(cat $WHIST_APPLICATION_PID_FILE)
+rm $WHIST_APPLICATION_PID_FILE
 
 echo "Whist application pid: $fractal_application_pid"
 
@@ -109,7 +109,7 @@ do
 done
 
 echo "Done sleeping until there are X clients..."
-echo "done" > $FRACTAL_MAPPINGS_DIR/done_sleeping_until_X_clients
+echo "done" > $WHIST_MAPPINGS_DIR/done_sleeping_until_X_clients
 sync # Necessary so that even if the container exits very soon the host service sees the file written.
 
 # Send in identifier

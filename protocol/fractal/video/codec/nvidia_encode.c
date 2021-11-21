@@ -6,8 +6,8 @@
 
 #define LIB_ENCODEAPI_NAME "libnvidia-encode.so.1"
 
-#define FRACTAL_PRESET NV_ENC_PRESET_P2_GUID
-#define FRACTAL_TUNING NV_ENC_TUNING_INFO_LOW_LATENCY
+#define WHIST_PRESET NV_ENC_PRESET_P2_GUID
+#define WHIST_TUNING NV_ENC_TUNING_INFO_LOW_LATENCY
 
 int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType codec,
                              NV_ENC_PRESET_CONFIG* p_preset_config);
@@ -140,8 +140,8 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     NV_ENC_INITIALIZE_PARAMS init_params = {0};
     init_params.version = NV_ENC_INITIALIZE_PARAMS_VER;
     init_params.encodeGUID = get_codec_guid(encoder->codec_type);
-    init_params.presetGUID = FRACTAL_PRESET;
-    init_params.tuningInfo = FRACTAL_TUNING;
+    init_params.presetGUID = WHIST_PRESET;
+    init_params.tuningInfo = WHIST_TUNING;
     init_params.encodeConfig = &preset_config.presetCfg;
     init_params.encodeWidth = out_width;
     init_params.encodeHeight = out_height;
@@ -519,8 +519,8 @@ int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType code
     p_preset_config->presetCfg.version = NV_ENC_CONFIG_VER;
     // fill the preset config with the low latency, high performance config
     status = encoder->p_enc_fn.nvEncGetEncodePresetConfigEx(encoder->internal_nvidia_encoder,
-                                                            get_codec_guid(codec), FRACTAL_PRESET,
-                                                            FRACTAL_TUNING, p_preset_config);
+                                                            get_codec_guid(codec), WHIST_PRESET,
+                                                            WHIST_TUNING, p_preset_config);
     // Check for bad status
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to obtain preset settings, status = %d", status);

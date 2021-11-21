@@ -6,11 +6,11 @@
 set -Eeuo pipefail
 
 # Write the PID to a file
-FRACTAL_APPLICATION_PID_FILE="/home/fractal/fractal-application-pid"
-echo $$ > $FRACTAL_APPLICATION_PID_FILE
+WHIST_APPLICATION_PID_FILE="/home/fractal/fractal-application-pid"
+echo $$ > $WHIST_APPLICATION_PID_FILE
 
 # Wait for the PID file to have been removed
-while [ -f "$FRACTAL_APPLICATION_PID_FILE" ]
+while [ -f "$WHIST_APPLICATION_PID_FILE" ]
 do
   sleep 0.1
 done

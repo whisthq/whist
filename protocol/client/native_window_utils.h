@@ -2,7 +2,7 @@
 #define NATIVE_WINDOW_UTILS_H
 
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file native_window_utils.h
  * @brief This file exposes platform-independent APIs for
  *        native window modifications not handled by SDL.

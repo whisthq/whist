@@ -1,8 +1,8 @@
 
 
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
- * @file ProtocolTest.cpp
+ * Copyright 2021 Whist Technologies, Inc.
+ * @file protocol_test.cpp
  * @brief This file contains all the uni tests for the /protocol codebase code f
 ============================
 Usage

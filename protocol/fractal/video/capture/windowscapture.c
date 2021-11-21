@@ -1,7 +1,7 @@
 /*
  * GPU screen capture on Windows.
  *
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  **/
 #include "capture.h"
 #include <fractal/logging/logging.h>

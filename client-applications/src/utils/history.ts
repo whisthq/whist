@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file history.ts
  * @brief This file contains utility functions for browser history, which is used by the renderer
  * thread to navigate between page routes.
