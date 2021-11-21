@@ -300,9 +300,9 @@ RUN apt-get update \
 # Sentry
 #########################
 
-# Install cURL to fetch sentry-cli
-# Note: We can't use wget as cURL is needed by the script itself
+# Install wget & cURL to fetch sentry-cli (cURL is needed by the script itself)
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    wget \
     libcurl4 \
     curl \
     && apt-get autoremove -y \
@@ -402,7 +402,6 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     xvfb \
     wmctrl \
     ca-certificates \
-    wget \
     gnupg2 \
     libfido2-1 \
     # for `killall` in display/update-fractal-dpi.sh
