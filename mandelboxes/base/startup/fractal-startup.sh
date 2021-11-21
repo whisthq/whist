@@ -3,6 +3,9 @@
 # This script is the first systemd service run after systemd starts up. It retrieves
 # the relevant parameters for the mandelbox and starts the fractal systemd user
 
+# Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
+eval "$(sentry-cli bash-hook)"
+
 # Exit on subcommand errors
 set -Eeuo pipefail
 

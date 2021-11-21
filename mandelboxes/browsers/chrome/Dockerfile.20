@@ -1,8 +1,10 @@
 # See stage 0 of the base dockerfile for an explanation of this build stage.
 ARG BuildAssetPackage "protocol"
 FROM fractal/build-assets:$BuildAssetPackage as build-assets
-
 FROM fractal/base:current-build as fractal-browsers-chrome
+
+# Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
+RUN eval "$(sentry-cli bash-hook)"
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
