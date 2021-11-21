@@ -300,9 +300,10 @@ RUN apt-get update \
 # Sentry
 #########################
 
-# Install wget & cURL to fetch sentry-cli (cURL is needed by the script itself)
+# Install wget, cURL & ca-certificates to fetch sentry-cli (cURL is needed by the script itself)
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     wget \
+    ca-certificates \
     libcurl4 \
     curl \
     && apt-get autoremove -y \
@@ -401,7 +402,6 @@ COPY input/Xmodmap /root/.Xmodmap
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     xvfb \
     wmctrl \
-    ca-certificates \
     gnupg2 \
     libfido2-1 \
     # for `killall` in display/update-fractal-dpi.sh
@@ -465,7 +465,6 @@ RUN chmod 600 -R /usr/share/fractal
 # this after setting /usr/share/fractal to 600)
 COPY utils/run-as-fractal-user.sh /usr/share/fractal/run-as-fractal-user.sh
 RUN chmod +x /usr/share/fractal/run-as-fractal-user.sh
-
 
 #########################
 # Hardware Acceleration
