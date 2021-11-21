@@ -179,7 +179,6 @@ ENV container docker
 ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 
-
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 
 RUN apt-get update \
@@ -301,16 +300,15 @@ RUN apt-get update \
 # Sentry
 #########################
 
-# Install cURL to download sentry-cli
+# Install wget to fetch sentry-cli
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
-    libcurl4 \
-    curl \
+    wget \
     && apt-get autoremove -y \
     && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*    
+    && rm -rf /tmp/* /var/tmp/*
 
 # We install the Sentry CLI and set the DSN so that we can report Bash errors to Sentry
-RUN curl -sL https://sentry.io/get-cli/ | bash
+RUN wget -qO - https://sentry.io/get-cli/ | bash
 ENV SENTRY_DSN https://6765c9aeb9c449a599ca6242829799b8@o400459.ingest.sentry.io/6073955
 
 # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
@@ -402,7 +400,6 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     xvfb \
     wmctrl \
     ca-certificates \
-    wget \
     gnupg2 \
     libfido2-1 \
     # for `killall` in display/update-fractal-dpi.sh
@@ -411,8 +408,10 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     lsb-release \
     ufw \
     libxcb-dri3-0 \
+    libcurl4 \
     git \
     sudo \
+    curl \
     jq \
     && apt-get autoremove -y \
     && apt-get clean \
@@ -523,7 +522,7 @@ RUN systemctl enable fractal-update-xorg-conf
 # Install playerctl for media keys support. We install playerctl straight from
 # Github releases because as usual the Ubuntu package is horribly out of date
 # (and in particular don't support daemon mode).
-RUN wget -q https://github.com/altdesktop/playerctl/releases/download/v2.3.1/playerctl-2.3.1_amd64.deb \
+RUN wget -qO https://github.com/altdesktop/playerctl/releases/download/v2.3.1/playerctl-2.3.1_amd64.deb \
     && dpkg -i ./playerctl-2.3.1_amd64.deb \
     && rm ./playerctl-2.3.1_amd64.deb
 
