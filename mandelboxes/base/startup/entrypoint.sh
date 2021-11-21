@@ -5,8 +5,6 @@
 # the Whist mandelbox to use. It then starts systemd, which starts all of the
 # Whist system services (.service files), starting Whist inside the mandelbox.
 
-sentry-cli send-event -m "Something happened"
-
 
 # Exit on subcommand errors
 set -Eeuo pipefail
