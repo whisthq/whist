@@ -5,8 +5,18 @@
 # the Whist mandelbox to use. It then starts systemd, which starts all of the
 # Whist system services (.service files), starting Whist inside the mandelbox.
 
+sentry-cli send-event -m "Something happened"
+
+
 # Exit on subcommand errors
 set -Eeuo pipefail
+
+
+# test sentrry error catching, this var doesn't exist
+echo "doing something wrong now .."
+echo "$foo"
+
+
 
 # If WHIST_AES_KEY is set, then create file
 if [ -n "${WHIST_AES_KEY+1}" ]
