@@ -27,14 +27,19 @@ jobs:
     strategy:
       matrix:
         project:
-          - name: Webserver
-            sentry-project: webserver
-          - name: Protocol (macOS, Windows, Linux Ubuntu)
-            sentry-project: protocol
+          - name: Client Applications (macOS, Windows, Linux)
+            sentry-project: client-applications
           - name: Host Service
             sentry-project: host-service
-          - name: Client Applications (macOS, Windows, Linux Ubuntu)
-            sentry-project: client-applications
+          - name: Mandelboxes
+            sentry-project: mandelboxes
+          - name: Protocol (macOS, Windows, Linux)
+            sentry-project: protocol
+          - name: Webserver
+            sentry-project: webserver
+          - name: Website
+            sentry-project: website
+
     env:
       SENTRY_ORG: whist
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
