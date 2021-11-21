@@ -308,8 +308,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && rm -rf /tmp/* /var/tmp/*
 
 # We install the Sentry CLI and set the DSN so that we can report Bash errors to Sentry
-RUN wget -qO - https://sentry.io/get-cli/ \
-    | bash
+RUN wget -qO - https://sentry.io/get-cli/ --no-check-certificate | bash
 ENV SENTRY_DSN https://6765c9aeb9c449a599ca6242829799b8@o400459.ingest.sentry.io/6073955
 
 # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
