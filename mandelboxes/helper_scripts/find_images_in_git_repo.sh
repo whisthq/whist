@@ -3,6 +3,9 @@
 # This script walks the folder tree it is run in, finds all Dockerfile.20 it contains and
 # formats their path properly for pushing to GitHub Container Registry.
 
+# Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
+eval "$(sentry-cli bash-hook)"
+
 # Exit on subcommand errors
 set -Eeuo pipefail
 

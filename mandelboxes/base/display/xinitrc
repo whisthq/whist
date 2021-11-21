@@ -1,3 +1,6 @@
+# Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
+eval "$(sentry-cli bash-hook)"
+
 # Note that we can't set "o" or "pipefail" since xinitrc is run as a non-compatible shell script.
 set -Eeu
 

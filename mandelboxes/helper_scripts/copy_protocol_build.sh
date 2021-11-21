@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Exit on subcommand errors
 set -Eeuo pipefail
 
 # Retrieve source directory of this script
