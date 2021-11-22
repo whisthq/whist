@@ -14,5 +14,6 @@ exec google-chrome \
   --enable-features=VaapiVideoDecoder,Vulkan \
   --disable-smooth-scrolling \
   --disable-font-subpixel-positioning \
+  --disable-system-notifications \
   --flag-switches-end \
   /home/fractal/1080p_60fps.html

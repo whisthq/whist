@@ -26,6 +26,7 @@ flags=(
   --disable-font-subpixel-positioning
   --force-color-profile=display-p3-d65
   --disable-gpu-process-crash-limit
+  --disable-system-notifications
   --no-default-browser-check
 )
 
