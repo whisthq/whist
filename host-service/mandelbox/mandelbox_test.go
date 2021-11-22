@@ -58,7 +58,7 @@ func TestRegisterCreation(t *testing.T) {
 			gotErr := err != nil
 
 			if gotErr != tt.expectedError {
-				t.Errorf("got error %s, expected error %s", got, tt.want)
+				t.Errorf("got error %v, expected error %v", gotErr, tt.expectedError)
 			}
 
 			if got != tt.want {
