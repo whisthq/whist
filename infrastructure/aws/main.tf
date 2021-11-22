@@ -29,14 +29,15 @@ module "s3" {
 
 # Region specific resources
 
+# Below shows how to deploy to two separate regions
 module "us-west-1-infra" {
-  source    = "./regions/us-west-1"
+  source    = "./regions/common"
   region    = "us-west-1"
   vpc-cidrs = var.vpc_cidr
 }
 
 module "us-east-2-infra" {
-  source    = "./regions/us-east-2"
+  source    =  "./regions/common"
   region    = "us-east-2"
   vpc-cidrs = var.vpc_cidr
 }

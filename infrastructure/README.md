@@ -22,7 +22,8 @@ a new S3 bucket for all regions, etc then you will want to add it there.
 Next, in `fractal/infrastructure/aws/regions` defines the infrastructure used in each
 region. The files in this directory will use the infrastructure defined in
 `fractal/infrastructure/aws/infrastructure` to define the infrastructure for
-its own region.
+its own region. All regions as of now have the same infrastructure, so the common
+infrastructure is developed in `common` folder.
 
 Finally, in `fractal/infrastructure/aws/main.tf` we import the region specific modules we defined in `fractal/infrastructure/aws/regions` and the global resources as defined
 in `fractal/infrastructure/aws/infrastructure`, which will encompass our entire
@@ -65,12 +66,23 @@ run `terraform apply`.
 
 ## How do I add a new region?
 
-First, add a new folder `${your new region}` to the `regions` folder.
+If the infrastructure for the new region is the same as `common`, then
+all that is necessary is to define the module with a source as `./regions/common`
+and the `region` parameter being the new region to deploy to.
 
-Second, if this infrastructure is exactly the same as the others, just
-copy each file from the others and paste it in your new region folder.
+An example where one would like to deploy to a region called `blah-1` is shown below:
 
-Lastly, import that module into the top-level `fractal/infrastructure/aws/main.tf`
-file as shown for the other regions.
+```
+module "blah-1-infra" {
+  source    = "./regions/common"
+  region    = "blah-1"
+  vpc-cidrs = var.vpc_cidr
+}
 
-Now, run `terraform apply` to deploy the infrastructure to the new region.
+```
+
+If the infrastructure to the new region is unqiue, you will need to create
+a new folder in the `regions` directory and then instaniate said
+new module in `main.tf` in the infrastructure root directory.
+
+After all of that, run `terraform apply` to deploy the infrastructure to the new region.
