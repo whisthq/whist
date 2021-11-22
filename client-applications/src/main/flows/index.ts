@@ -20,7 +20,7 @@ import {
   isNewConfigToken,
 } from "@app/utils/state"
 import { ONBOARDED } from "@app/constants/store"
-import { getDecryptedCookies, InstalledBrowser } from "@app/utils/importer"
+import { getDecryptedCookies, getBookmarks, InstalledBrowser } from "@app/utils/importer"
 
 // Autoupdate flow
 const update = autoUpdateFlow(fromTrigger(WhistTrigger.updateAvailable))
@@ -74,7 +74,14 @@ const importCookies = fromTrigger(WhistTrigger.onboarded).pipe(
   share() // If you don't share, this observable will fire many times (once for each subscriber of the flow)
 )
 
-const dontImportCookies = of(persistGet(ONBOARDED) as boolean).pipe(
+const importBookmarks = fromTrigger(WhistTrigger.onboarded).pipe(
+  switchMap((t) =>
+    from(getBookmarks(t?.importCookiesFrom as InstalledBrowser))
+  ),
+  share() // If you don't share, this observable will fire many times (once for each subscriber of the flow)
+)
+
+const dontImportBrowserData = of(persistGet(ONBOARDED) as boolean).pipe(
   take(1),
   filter((onboarded: boolean) => onboarded),
   mapTo(undefined),
@@ -87,7 +94,8 @@ const launchTrigger = fromSignal(
     accessToken,
     configToken,
     isNewConfigToken,
-    cookies: merge(importCookies, dontImportCookies),
+    cookies: merge(importCookies, dontImportBrowserData),
+    bookmarks: merge(importBookmarks, dontImportBrowserData),
   }).pipe(
     map((x: object) => ({
       ...x,

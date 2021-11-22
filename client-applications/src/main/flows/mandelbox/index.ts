@@ -16,6 +16,7 @@ export default flow(
       configToken: string
       isNewConfigToken: boolean
       cookies: string
+      bookmarks: string
     }>
   ) => {
     const create = mandelboxCreateFlow(
@@ -42,6 +43,7 @@ export default flow(
           isNewConfigToken: t.isNewConfigToken,
           mandelboxID: c.mandelboxID,
           cookies: t.cookies,
+          bookmarks: t.bookmarks,
           jsonData: JSON.stringify({
             dark_mode: nativeTheme.shouldUseDarkColors,
             desired_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
