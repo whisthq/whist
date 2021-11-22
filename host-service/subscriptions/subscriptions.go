@@ -173,7 +173,7 @@ func Run(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTr
 		Close(client, subscriptionIDs)
 	}()
 
-	// Run the client on a go routine to make sure it closes properly when we are done
+	// Run the client on a goroutine to make sure it closes properly when we are done
 	go client.Run()
 
 	return nil
