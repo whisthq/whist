@@ -12,29 +12,29 @@ var environmentTests = []struct {
 	environmentVar string
 	want           AppEnvironment
 }{
-	{"localdev", "LOCALDEV"},
-	{"LocalDev", "LOCALDEV"},
-	{"LOCALDEV", "LOCALDEV"},
+	{"localdev", "localdev"},
+	{"LocalDev", "localdev"},
+	{"LOCALDEV", "localdev"},
 
-	{"localdevwithdb", "LOCALDEVWITHDB"},
-	{"LocalDevWithDB", "LOCALDEVWITHDB"},
-	{"LOCALDEVWITHDB", "LOCALDEVWITHDB"},
+	{"localdevwithdb", "localdevwithdb"},
+	{"LocalDevWithDB", "localdevwithdb"},
+	{"LOCALDEVWITHDB", "localdevwithdb"},
 
-	{"DEV", "DEV"},
-	{"dev", "DEV"},
-	{"Dev", "DEV"},
+	{"DEV", "dev"},
+	{"dev", "dev"},
+	{"Dev", "dev"},
 
-	{"staging", "STAGING"},
-	{"Staging", "STAGING"},
-	{"STAGING", "STAGING"},
+	{"staging", "staging"},
+	{"Staging", "staging"},
+	{"STAGING", "staging"},
 
-	{"prod", "PROD"},
-	{"Prod", "PROD"},
-	{"PROD", "PROD"},
+	{"prod", "prod"},
+	{"Prod", "prod"},
+	{"PROD", "prod"},
 
-	{"unknown", "LOCALDEV"},
-	{"Random", "LOCALDEV"},
-	{"DEFAULT", "LOCALDEV"},
+	{"unknown", "localdev"},
+	{"Random", "localdev"},
+	{"DEFAULT", "localdev"},
 }
 
 func TestGetAppEnvironment(t *testing.T) {
