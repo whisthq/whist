@@ -53,6 +53,11 @@ extern volatile CodecType output_codec_type;
 extern volatile int output_width;
 extern volatile int output_height;
 
+// Threads
+static SDL_Thread* sync_udp_packets_thread;
+static SDL_Thread* sync_tcp_packets_thread;
+static bool run_sync_packets_threads;
+
 /*
 ============================
 Private Function Implementations
@@ -169,11 +174,6 @@ void update_server_bitrate() {
     line;                           \
     log_double_statistic(name " time (ms)", get_timer(timer) * MS_IN_SECOND);
 
-/*
-============================
-Public Function Implementations
-============================
-*/
 // This function polls for UDP packets from the server
 // NOTE: This contains a very sensitive hotpath,
 // as recvp will potentially receive tens of thousands packets per second.
@@ -319,4 +319,39 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         }
     }
     return 0;
+}
+
+/*
+============================
+Public Function Implementations
+============================
+*/
+
+void init_packet_synchronizers() {
+    /*
+        Initialize the packet synchronizer threads for UDP and TCP.
+    */
+    if (run_sync_packets_threads == true) {
+        LOG_FATAL("Packet synchronizers are already running!");
+    }
+    run_sync_packets_threads = true;
+    sync_udp_packets_thread =
+        SDL_CreateThread(multithreaded_sync_udp_packets, "multithreaded_sync_udp_packets",
+                         &run_sync_packets_threads);
+    sync_tcp_packets_thread =
+        SDL_CreateThread(multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets",
+                         &run_sync_packets_threads);
+}
+
+void destroy_packet_synchronizers() {
+    /*
+        Destroy and wait on the packet synchronizer threads for UDP and TCP.
+    */
+    if (run_sync_packets_threads == false) {
+        LOG_ERROR("Packet synchronizers have not been initialized!");
+        return;
+    }
+    run_sync_packets_threads = false;
+    SDL_WaitThread(sync_tcp_packets_thread, NULL);
+    SDL_WaitThread(sync_udp_packets_thread, NULL);
 }
