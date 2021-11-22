@@ -11,18 +11,18 @@ import crypto from "crypto"
 
 import {
   ALGORITHM_PLAIN,
-  BraveLinuxCookieFiles,
-  BraveOSXCookieFiles,
+  BraveLinuxDefaultDir,
+  BraveOSXDefaultDir,
   BusSecretName,
   BusSecretPath,
-  ChromeLinuxCookieFiles,
-  ChromeOSXCookieFiles,
-  ChromiumLinuxCookieFiles,
-  ChromiumOSXCookieFiles,
-  EdgeLinuxCookieFiles,
-  EdgeOSXCookieFiles,
-  OperaLinuxCookieFiles,
-  OperaOSXCookieFiles,
+  ChromeLinuxDefaultDir,
+  ChromeOSXDefaultDir,
+  ChromiumLinuxDefaultDir,
+  ChromiumOSXDefaultDir,
+  EdgeLinuxDefaultDir,
+  EdgeOSXDefaultDir,
+  OperaLinuxDefaultDir,
+  OperaOSXDefaultDir,
   SecretServiceName,
 } from "@app/constants/importer"
 
@@ -41,24 +41,24 @@ interface Cookie {
   [key: string]: Buffer | string | number
 }
 
-const getCookieFilePath = (browser: InstalledBrowser): string[] => {
+const getBrowserDefaultDirectory = (browser: InstalledBrowser): string[] => {
   switch (process.platform) {
     case "darwin": {
       switch (browser) {
         case InstalledBrowser.CHROME: {
-          return ChromeOSXCookieFiles
+          return ChromeOSXDefaultDir
         }
         case InstalledBrowser.OPERA: {
-          return OperaOSXCookieFiles
+          return OperaOSXDefaultDir
         }
         case InstalledBrowser.EDGE: {
-          return EdgeOSXCookieFiles
+          return EdgeOSXDefaultDir
         }
         case InstalledBrowser.CHROMIUM: {
-          return ChromiumOSXCookieFiles
+          return ChromiumOSXDefaultDir
         }
         case InstalledBrowser.BRAVE: {
-          return BraveOSXCookieFiles
+          return BraveOSXDefaultDir
         }
         default: {
           return []
@@ -68,19 +68,19 @@ const getCookieFilePath = (browser: InstalledBrowser): string[] => {
     case "linux": {
       switch (browser) {
         case InstalledBrowser.CHROME: {
-          return ChromeLinuxCookieFiles
+          return ChromeLinuxDefaultDir
         }
         case InstalledBrowser.OPERA: {
-          return OperaLinuxCookieFiles
+          return OperaLinuxDefaultDir
         }
         case InstalledBrowser.EDGE: {
-          return EdgeLinuxCookieFiles
+          return EdgeLinuxDefaultDir
         }
         case InstalledBrowser.CHROMIUM: {
-          return ChromiumLinuxCookieFiles
+          return ChromiumLinuxDefaultDir
         }
         case InstalledBrowser.BRAVE: {
-          return BraveLinuxCookieFiles
+          return BraveLinuxDefaultDir
         }
         default: {
           return []
@@ -91,6 +91,16 @@ const getCookieFilePath = (browser: InstalledBrowser): string[] => {
       return []
     }
   }
+}
+
+const getCookieFilePath = (browser: InstalledBrowser): string[] => {
+  const browserDirectories = getBrowserDefaultDirectory(browser)
+  return browserDirectories.map(dir => dir + "Cookies")
+}
+
+const getBookmarkFilePath = (browser: InstalledBrowser): string[] => {
+  const browserDirectories = getBrowserDefaultDirectory(browser)
+  return browserDirectories.map(dir => dir + "Bookmarks")
 }
 
 const getOsCryptName = (browser: InstalledBrowser): string => {
@@ -315,6 +325,25 @@ const getCookiesFromFile = async (
   }
 }
 
+const getBookmarksFromFile = (browser: InstalledBrowser): string => {
+  const bookmarkFile = getExpandedBookmarkFilePath(browser)
+
+  try {
+    const bookmarks = fs.readFileSync(bookmarkFile, 'utf8')
+    let bookmarksJSON = JSON.parse(bookmarks)
+
+    // Remove checksum if it exists
+    delete bookmarksJSON.checksum
+
+    return JSON.stringify(bookmarksJSON)
+
+
+  } catch (err) {
+    console.error(err)
+    return ""
+  }
+}
+
 const getExpandedCookieFilePath = (browser: InstalledBrowser): string => {
   switch (process.platform) {
     case "darwin": {
@@ -322,6 +351,21 @@ const getExpandedCookieFilePath = (browser: InstalledBrowser): string => {
     }
     case "linux": {
       return expandPaths(getCookieFilePath(browser), "linux")
+    }
+    default: {
+      throw Error("OS not recognized. Works on OSX or linux.")
+    }
+  }
+}
+
+
+const getExpandedBookmarkFilePath = (browser: InstalledBrowser): string => {
+  switch (process.platform) {
+    case "darwin": {
+      return expandPaths(getBookmarkFilePath(browser), "osx")
+    }
+    case "linux": {
+      return expandPaths(getBookmarkFilePath(browser), "linux")
     }
     default: {
       throw Error("OS not recognized. Works on OSX or linux.")
@@ -416,4 +460,14 @@ const getDecryptedCookies = async (
   return JSON.stringify(cookies)
 }
 
-export { InstalledBrowser, getInstalledBrowsers, getDecryptedCookies }
+const getBookmarks = async (browser: InstalledBrowser): Promise<string|undefined> => {  
+  if (browser === undefined) return undefined
+  
+  let bookmarks = getBookmarksFromFile(browser)
+
+  if (bookmarks.length == 0) return undefined
+
+  return JSON.stringify(bookmarks)
+
+}
+export { InstalledBrowser, getInstalledBrowsers, getDecryptedCookies, getBookmarks }
