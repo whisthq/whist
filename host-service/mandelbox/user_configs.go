@@ -221,13 +221,13 @@ func (mandelbox *mandelboxData) WriteUserInitialBrowserData(cookieJSON string, b
 	// Begin writing user initial browser data
 	cookieFilePath := path.Join(unpackedConfigDir, utils.UserInitialCookiesFile)
 
-	if err := utils.writeToNewFile(cookieFilePath, cookieJSON); err != nil {
+	if err := utils.WriteToNewFile(cookieFilePath, cookieJSON); err != nil {
 		return utils.MakeError("error creating cookies file. Error: %v", err)
 	}
 
 	bookmarkFilePath := path.Join(unpackedConfigDir, utils.UserInitialBookmarkFile)
 
-	if err := utils.writeToNewFile(bookmarkFilePath, bookmarksJSON); err != nil {
+	if err := utils.WriteToNewFile(bookmarkFilePath, bookmarksJSON); err != nil {
 		return utils.MakeError("error creating bookmarks file. Error: %v", err)
 	}
 
