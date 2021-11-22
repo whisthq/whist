@@ -12,6 +12,7 @@ import Signout from "@app/renderer/pages/signout"
 import Typeform from "@app/renderer/pages/typeform"
 import Importer from "@app/renderer/pages/importer"
 import Update from "@app/renderer/pages/update"
+import Network from "@app/renderer/pages/network"
 
 import {
   WindowHashSignout,
@@ -19,6 +20,7 @@ import {
   WindowHashUpdate,
   WindowHashImporter,
   WindowHashOnboarding,
+  WindowHashNetwork,
 } from "@app/constants/windows"
 import {
   fractalError,
@@ -57,7 +59,7 @@ const RootComponent = () => {
       },
     })
 
-  const handleOnboardingTypeform = () => setShow(WindowHashImporter)
+  const handleOnboardingTypeform = () => setShow(WindowHashNetwork)
 
   const showSignoutWindow = () =>
     setMainState({
@@ -93,6 +95,8 @@ const RootComponent = () => {
         }
       />
     )
+  if (show === WindowHashNetwork)
+    return <Network networkInfo={mainState.networkInfo} />
   if (show === WindowHashOnboarding) {
     return (
       <Typeform

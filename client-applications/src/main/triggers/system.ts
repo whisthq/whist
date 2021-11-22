@@ -18,5 +18,5 @@ createTrigger(WhistTrigger.powerSuspend, fromEvent(powerMonitor, "suspend"))
 // Fires when network analysis test is done running
 createTrigger(
   WhistTrigger.networkAnalysis,
-  fromEvent(networkAnalysisEvent, "finished")
+  fromEvent(networkAnalysisEvent, "did-update")
 )
