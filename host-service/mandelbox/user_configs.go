@@ -191,7 +191,8 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 func (mandelbox *mandelboxData) WriteUserInitialBrowserData(cookieJSON string) error {
 	// Avoid doing work for empty string/array string
 	if len(cookieJSON) <= 2 {
-		return utils.MakeError("Not writing to file as user initial browser data is empty.")
+		logger.Infof("Not writing to file as user initial browser data is empty.")
+		return nil
 	}
 
 	// The initial browser cookies will use the same directory as the user config
