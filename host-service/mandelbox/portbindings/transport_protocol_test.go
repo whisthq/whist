@@ -27,11 +27,11 @@ func TestUnmarshalJSONNull(t *testing.T) {
 	err := (&tp).UnmarshalJSON([]byte("null"))
 
 	if tp != TransportProtocolTCP {
-		t.Fatalf("error unmarshalJSON with empty byte list. Expected tp=%v but got %v", TransportProtocolTCP, tp)
+		t.Fatalf("error unmarshalJSON with 'null' byte list. Expected tp=%v but got %v", TransportProtocolTCP, tp)
 	}
 
 	if err != nil {
-		t.Fatalf("error unmarshalJSON with empty byte list. Error: %v", err)
+		t.Fatalf("error unmarshalJSON with 'null' byte list. Error: %v", err)
 	}
 }
 
@@ -42,11 +42,11 @@ func TestUnmarshalJSONTcp(t *testing.T) {
 	err := (&tp).UnmarshalJSON([]byte(`"tcp"`))
 
 	if err != nil {
-		t.Fatalf("error unmarshalJSON with empty byte list. Error: %v", err)
+		t.Fatalf("error unmarshalJSON with 'tcp' byte list. Error: %v", err)
 	}
 
 	if tp != TransportProtocolTCP {
-		t.Fatalf("error unmarshalJSON with empty byte list. Expected tp=%v but got %v", TransportProtocolTCP, tp)
+		t.Fatalf("error unmarshalJSON with 'tcp' byte list. Expected tp=%v but got %v", TransportProtocolTCP, tp)
 	}
 }
 
@@ -56,11 +56,11 @@ func TestUnmarshalJSONUdp(t *testing.T) {
 	err := (&tp).UnmarshalJSON([]byte(`"udp"`))
 
 	if err != nil {
-		t.Fatalf("error unmarshalJSON with empty byte list. Error: %v", err)
+		t.Fatalf("error unmarshalJSON with 'udp' byte list. Error: %v", err)
 	}
 
 	if tp != TransportProtocolUDP {
-		t.Fatalf("error unmarshalJSON with empty byte list. Expected tp=%v but got %v", TransportProtocolTCP, tp)
+		t.Fatalf("error unmarshalJSON with 'udp' byte list. Expected tp=%v but got %v", TransportProtocolTCP, tp)
 	}
 }
 
