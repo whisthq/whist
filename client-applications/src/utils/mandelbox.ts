@@ -61,6 +61,6 @@ export const mandelboxRequest = async (
       regions,
       client_commit_hash: isLocalEnv() ? "local_dev" : COMMIT_SHA,
       session_id: sessionID,
-      user_email: userEmail
+      user_email: userEmail,
     },
   })
