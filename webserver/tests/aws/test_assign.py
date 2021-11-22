@@ -56,6 +56,7 @@ def test_assign(
         "regions": get_allowed_region_names(),
         "client_commit_hash": CLIENT_COMMIT_HASH_FOR_TESTING,
         "session_id": randint(1600000000, 9999999999),
+        "user_email": "user@whist.com",
     }
     response = client.post("/mandelbox/assign", json=args)
 
@@ -113,6 +114,7 @@ def test_client_commit_hash_local_dev_override_fail(
         "regions": region_names,
         "client_commit_hash": CLIENT_COMMIT_HASH_DEV_OVERRIDE,
         "session_id": randint(1600000000, 9999999999),
+        "user_email": "user@whist.com",
     }
     response = client.post("/mandelbox/assign", json=args)
 
@@ -139,6 +141,7 @@ def test_client_commit_hash_local_dev_override_success(
         "regions": region_names,
         "client_commit_hash": CLIENT_COMMIT_HASH_DEV_OVERRIDE,
         "session_id": randint(1600000000, 9999999999),
+        "user_email": "user@whist.com",
     }
     response = client.post("/mandelbox/assign", json=args)
 
@@ -170,6 +173,7 @@ def test_payment(
             "app": "Google Chrome",
             "region": get_allowed_region_names(),
             "session_id": randint(1600000000, 9999999999),
+            "user_email": "user@whist.com",
         },
     )
 
