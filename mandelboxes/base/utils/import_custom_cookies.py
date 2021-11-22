@@ -222,15 +222,15 @@ def set_browser_cookies(target_browser_name, cookie_full_path, target_cookie_fil
             os.remove(singleton_cookie_file)
 
 
-def create_bookmark_file(browser, bookmark_full_path, custom_cookie_file_path=None):
+def create_bookmark_file(browser, temp_bookmark_path, custom_bookmark_file_path=None):
     """
-    This will movie the temporary bookmark file to the correct location
+    Create bookmark file will create and save content to the browser's bookmark file
     """
 
     if sys.platform.startswith("linux"):
         linux_bookmarks = []
-        if custom_cookie_file_path:
-            linux_bookmarks.append(custom_cookie_file_path)
+        if custom_bookmark_file_path:
+            linux_bookmarks.append(custom_bookmark_file_path)
         else:
             linux_bookmarks = [directory + "Bookmarks" for directory in get_browser_default_dir(browser)]
 
@@ -242,8 +242,11 @@ def create_bookmark_file(browser, bookmark_full_path, custom_cookie_file_path=No
             os.makedirs(directory)
             os.chmod(directory, 0o777)
 
-        # Move file from one place to another
-        os.replace(bookmark_full_path, path)
+        with open(temp_bookmark_path, "r") as temp_bookmark_file:
+            bookmarks = temp_bookmark_file.read()
+            with open(path, "w") as browser_bookmark_file:
+                browser_bookmark_file.write(json.loads(bookmarks))
+
 
     else:
         raise browser_cookie3.BrowserCookieError("OS not recognized. Works on Linux.")
@@ -255,8 +258,8 @@ if __name__ == "__main__":
     bookmark_full_path = os.getenv("WHIST_INITIAL_USER_BOOKMARKS_FILE", None)
 
     if browser:
-        if cookie_full_path and os.path.exists(cookie_full_path):
+        if cookie_full_path and len(cookie_full_path) > 0 and os.path.exists(cookie_full_path):
             set_browser_cookies(browser, cookie_full_path)
 
-        if bookmark_full_path and os.path.exists(bookmark_full_path):
+        if bookmark_full_path and len(cookie_full_path) > 0 and os.path.exists(bookmark_full_path):
             create_bookmark_file(browser, bookmark_full_path)
