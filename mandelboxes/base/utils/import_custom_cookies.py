@@ -232,7 +232,7 @@ def create_bookmark_file(browser, bookmark_full_path, custom_cookie_file_path=No
         if custom_cookie_file_path:
             linux_bookmarks.append(custom_cookie_file_path)
         else:
-            linux_bookmarks = [directory + "Bookmarks" for directory in get_browser_default_dir(browser_name)]
+            linux_bookmarks = [directory + "Bookmarks" for directory in get_browser_default_dir(browser)]
 
         path = os.path.expanduser(linux_bookmarks[0])
 
