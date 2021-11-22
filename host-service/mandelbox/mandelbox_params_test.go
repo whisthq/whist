@@ -49,7 +49,7 @@ func TestWriteMandelboxParams(t *testing.T) {
 
 			err = verifyResourceMappingFileCreation(tt)
 			if err != nil {
-				t.Errorf("Error writing file %s: %v", tt, err)
+				t.Errorf("Could not read file %s: %v", tt, err)
 			}
 		})
 	}

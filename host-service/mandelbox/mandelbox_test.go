@@ -24,10 +24,14 @@ func TestNewMandelbox(t *testing.T) {
 	mandelboxMappings := mandelbox.(*mandelboxData).otherDeviceMappings
 	deviceMappings := mandelboxMappings[0]
 
-	if (deviceMappings.PathOnHost != "/dev/fuse") ||
-		(deviceMappings.PathInContainer != "/dev/fuse") ||
-		(deviceMappings.CgroupPermissions != "rwm") {
-		t.Errorf("Error mounting /dev/fuse filesystem: %v", err)
+	if deviceMappings.PathOnHost != "/dev/fuse" {
+		t.Errorf("received incorrect PathOnHost: got %s, expected %s", deviceMappings.PathOnHost, "/dev/fuse")
+	}
+	if deviceMappings.PathInContainer != "/dev/fuse" {
+		t.Errorf("received incorrect PathOnHost: got %s, expected %s", deviceMappings.PathInContainer, "/dev/fuse")
+	}
+	if deviceMappings.CgroupPermissions != "rwm" {
+		t.Errorf("received incorrect PathOnHost: got %s, expected %s", deviceMappings.CgroupPermissions, "rwm")
 	}
 }
 
@@ -53,7 +57,11 @@ func TestRegisterCreation(t *testing.T) {
 			got := mandelbox.GetDockerID()
 			gotErr := err != nil
 
-			if (gotErr != tt.expectedError) || (got != tt.want) {
+			if gotErr != tt.expectedError {
+				t.Errorf("got error %s, expected error %s", got, tt.want)
+			}
+
+			if got != tt.want {
 				t.Errorf("got %s, want %s", got, tt.want)
 			}
 		})
@@ -79,7 +87,11 @@ func TestSetAppName(t *testing.T) {
 			got := mandelbox.GetAppName()
 			gotErr := err != nil
 
-			if (gotErr != tt.expectedError) || (got != tt.want) {
+			if gotErr != tt.expectedError {
+				t.Errorf("got error %s, expected error %s", got, tt.want)
+			}
+
+			if got != tt.want {
 				t.Errorf("got %s, want %s", got, tt.want)
 			}
 		})

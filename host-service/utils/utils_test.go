@@ -13,7 +13,7 @@ func TestPlaceholderUUIDs(t *testing.T) {
 	// Test the placeholder UUID functions, only verify that they correspond
 	// to the predefined warmup and test UUIDs.
 	testMap := []struct {
-		key       string
+		testName  string
 		want, got string
 	}{
 		{"Warmup UUID", "11111111-1111-1111-1111-111111111111", PlaceholderWarmupUUID().String()},
@@ -22,7 +22,7 @@ func TestPlaceholderUUIDs(t *testing.T) {
 
 	for _, value := range testMap {
 		if value.got != value.want {
-			t.Errorf("expected request key %s to be %v, got %v", value.key, value.got, value.want)
+			t.Errorf("expected request testName %s to be %v, got %v", value.testName, value.got, value.want)
 		}
 	}
 }
@@ -124,7 +124,7 @@ func TestSliceUtils(t *testing.T) {
 	removedNewElementFromSlice := len(testSlice) != len(sliceRemoveNew)
 
 	sliceTests := []struct {
-		key       string
+		testName  string
 		want, got bool
 	}{
 		{"Slice contains existing element", true, sliceContainsExisting},
@@ -134,23 +134,22 @@ func TestSliceUtils(t *testing.T) {
 	}
 
 	for _, test := range sliceTests {
-		testname := Sprintf("%v,%v,%v", test.key, test.want, test.got)
+		testname := Sprintf("%v,%v,%v", test.testName, test.want, test.got)
 
 		// Run slice subtests
 		t.Run(testname, func(t *testing.T) {
 			if test.got != test.want {
-				t.Errorf("expected request key %s to be %v, got %v", test.key, test.got, test.want)
+				t.Errorf("expected request testName %s to be %v, got %v", test.testName, test.got, test.want)
 			}
 		})
 	}
 
 }
 
-// setupTestDirs creates a sample user config with some nested directories
-// and files inside.
+// setupTestDirs creates a test directory on the received path
 func setupTestDirs(testDir string) error {
 	if err := os.MkdirAll(testDir, 0777); err != nil {
-		return MakeError("failed to create config dir %s: %v", testDir, err)
+		return MakeError("failed to create test dir %s: %v", testDir, err)
 	}
 
 	return nil

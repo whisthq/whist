@@ -52,6 +52,7 @@ func TestGetAppEnvironment(t *testing.T) {
 		})
 	}
 }
+
 func TestIsLocalEnv(t *testing.T) {
 	for _, tt := range environmentTests {
 		want := tt.want == EnvLocalDev || tt.want == EnvLocalDevWithDB
@@ -69,6 +70,7 @@ func TestIsLocalEnv(t *testing.T) {
 		})
 	}
 }
+
 func TestIsLocalEnvWithoutDB(t *testing.T) {
 	for _, tt := range environmentTests {
 		want := tt.want == EnvLocalDev
