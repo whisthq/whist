@@ -1,7 +1,7 @@
 import re
 
 
-def santize_email(unsafe_email: str) -> str:
+def sanitize_email(unsafe_email: str) -> str:
     """
     Helper function for sanitizing an email
     Args:
