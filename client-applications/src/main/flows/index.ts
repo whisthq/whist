@@ -66,17 +66,17 @@ const refreshAfterPaying = authRefreshFlow(
   )
 )
 
-// If importCookiesFrom is not empty, run the cookie import function
+// If importBrowserDataFrom is not empty, run the cookie import function
 const importCookies = fromTrigger(WhistTrigger.onboarded).pipe(
   switchMap((t) =>
-    from(getDecryptedCookies(t?.importCookiesFrom as InstalledBrowser))
+    from(getDecryptedCookies(t?.importBrowserDataFrom as InstalledBrowser))
   ),
   share() // If you don't share, this observable will fire many times (once for each subscriber of the flow)
 )
 
 const importBookmarks = fromTrigger(WhistTrigger.onboarded).pipe(
   switchMap((t) =>
-    from(getBookmarks(t?.importCookiesFrom as InstalledBrowser))
+    from(getBookmarks(t?.importBrowserDataFrom as InstalledBrowser))
   ),
   share() // If you don't share, this observable will fire many times (once for each subscriber of the flow)
 )
