@@ -20,7 +20,11 @@ import {
   isNewConfigToken,
 } from "@app/utils/state"
 import { ONBOARDED } from "@app/constants/store"
-import { getDecryptedCookies, getBookmarks, InstalledBrowser } from "@app/utils/importer"
+import {
+  getDecryptedCookies,
+  getBookmarks,
+  InstalledBrowser,
+} from "@app/utils/importer"
 
 // Autoupdate flow
 const update = autoUpdateFlow(fromTrigger(WhistTrigger.updateAvailable))

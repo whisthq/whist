@@ -27,8 +27,9 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess)
       fromTrigger(WhistTrigger.onboarded).pipe(
         startWith(undefined),
         map(
-          (payload: undefined | { importBrowserDataFrom: string | undefined }) =>
-            payload?.importBrowserDataFrom
+          (
+            payload: undefined | { importBrowserDataFrom: string | undefined }
+          ) => payload?.importBrowserDataFrom
         )
       )
     )

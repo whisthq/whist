@@ -95,12 +95,12 @@ const getBrowserDefaultDirectory = (browser: InstalledBrowser): string[] => {
 
 const getCookieFilePath = (browser: InstalledBrowser): string[] => {
   const browserDirectories = getBrowserDefaultDirectory(browser)
-  return browserDirectories.map(dir => dir + "Cookies")
+  return browserDirectories.map((dir) => dir + "Cookies")
 }
 
 const getBookmarkFilePath = (browser: InstalledBrowser): string[] => {
   const browserDirectories = getBrowserDefaultDirectory(browser)
-  return browserDirectories.map(dir => dir + "Bookmarks")
+  return browserDirectories.map((dir) => dir + "Bookmarks")
 }
 
 const getOsCryptName = (browser: InstalledBrowser): string => {
@@ -329,15 +329,13 @@ const getBookmarksFromFile = (browser: InstalledBrowser): string => {
   const bookmarkFile = getExpandedBookmarkFilePath(browser)
 
   try {
-    const bookmarks = fs.readFileSync(bookmarkFile, 'utf8')
-    let bookmarksJSON = JSON.parse(bookmarks)
+    const bookmarks = fs.readFileSync(bookmarkFile, "utf8")
+    const bookmarksJSON = JSON.parse(bookmarks)
 
     // Remove checksum if it exists
     delete bookmarksJSON.checksum
 
     return JSON.stringify(bookmarksJSON)
-
-
   } catch (err) {
     console.error(err)
     return ""
@@ -357,7 +355,6 @@ const getExpandedCookieFilePath = (browser: InstalledBrowser): string => {
     }
   }
 }
-
 
 const getExpandedBookmarkFilePath = (browser: InstalledBrowser): string => {
   switch (process.platform) {
@@ -460,14 +457,21 @@ const getDecryptedCookies = async (
   return JSON.stringify(cookies)
 }
 
-const getBookmarks = async (browser: InstalledBrowser): Promise<string|undefined> => {  
+const getBookmarks = async (
+  browser: InstalledBrowser
+): Promise<string | undefined> => {
   if (browser === undefined) return undefined
-  
-  let bookmarks = getBookmarksFromFile(browser)
 
-  if (bookmarks.length == 0) return undefined
+  const bookmarks = getBookmarksFromFile(browser)
+
+  if (bookmarks.length === 0) return undefined
 
   return JSON.stringify(bookmarks)
-
 }
-export { InstalledBrowser, getInstalledBrowsers, getDecryptedCookies, getBookmarks }
+
+export {
+  InstalledBrowser,
+  getInstalledBrowsers,
+  getDecryptedCookies,
+  getBookmarks,
+}
