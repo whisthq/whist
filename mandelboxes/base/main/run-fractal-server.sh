@@ -77,15 +77,21 @@ if [ "$ENV_NAME" != "LOCALDEV" ]; then
   trap cleanup EXIT ERR
 fi
 
+# Imports user browser data if file exists
+python3 /usr/share/fractal/import_user_browser_data.py
+
 if [ -n "${WHIST_INITIAL_USER_COOKIES_FILE+1}" ] && [ -f "$WHIST_INITIAL_USER_COOKIES_FILE" ]; then
-  # Imports user cookies if file exists
-  python3 /usr/share/fractal/import_custom_cookies.py
   # Remove temporary file containing the user's intial cookies
   rm $WHIST_INITIAL_USER_COOKIES_FILE
 fi
 
-# Clean up traces of temporary cookie file
+if [ -n "${WHIST_INITIAL_USER_BOOKMARKS_FILE+1}" ] && [ -f "$WHIST_INITIAL_USER_BOOKMARKS_FILE" ]; then
+  rm $WHIST_INITIAL_USER_BOOKMARKS_FILE
+fi
+
+# Clean up traces of temporary files
 unset WHIST_INITIAL_USER_COOKIES_FILE
+unset WHIST_INITIAL_USER_BOOKMARKS_FILE
 
 # Start the application that this mandelbox runs.
 /usr/share/fractal/run-as-fractal-user.sh "/usr/bin/run-fractal-application.sh" &
