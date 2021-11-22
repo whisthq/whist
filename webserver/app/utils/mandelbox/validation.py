@@ -10,6 +10,7 @@ class MandelboxAssignBody(BaseModel):
     regions: List[str]
     client_commit_hash: str
     session_id: int
+    user_email: str
 
 
 # flask-pydantic ships a decorator called validate().
