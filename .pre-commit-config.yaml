@@ -95,7 +95,7 @@ repos:
 
   # Cmake
   - repo: https://github.com/cmake-lint/cmake-lint
-    rev: v1.4.1
+    rev: f214fecd42cef2aa623742dc9888725bc99d32ba
     hooks:
       - id: cmakelint
 
