@@ -192,6 +192,7 @@ func (mandelbox *mandelboxData) WriteUserInitialBrowserData(cookieJSON string) e
 	// Avoid doing work for empty string/array string
 	if len(cookieJSON) <= 2 {
 		logger.Infof("Not writing to file as user initial browser data is empty.")
+		// the browser data can be empty
 		return nil
 	}
 
