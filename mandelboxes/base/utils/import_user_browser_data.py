@@ -9,6 +9,7 @@ import subprocess
 
 USER_CONFIG_PATH = "/fractal/userConfigs/"
 
+
 def get_browser_default_dir(browser_name):
     """
     Gets browser default profile dir
@@ -45,6 +46,7 @@ def get_browser_default_dir(browser_name):
 
     return browser_default_dir
 
+
 def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
     """
     Gets or create file containing all cookies
@@ -60,7 +62,9 @@ def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
         if custom_cookie_file_path:
             linux_cookies.append(custom_cookie_file_path)
         else:
-            linux_cookies = [directory + "Cookies" for directory in get_browser_default_dir(browser_name)]
+            linux_cookies = [
+                directory + "Cookies" for directory in get_browser_default_dir(browser_name)
+            ]
 
         path = browser_cookie3.expand_paths(linux_cookies, "linux")
 
@@ -222,34 +226,43 @@ def set_browser_cookies(target_browser_name, cookie_full_path, target_cookie_fil
             os.remove(singleton_cookie_file)
 
 
-def create_bookmark_file(browser, temp_bookmark_path, custom_bookmark_file_path=None):
+def create_bookmark_file(target_browser_name, temp_bookmark_path, custom_bookmark_file_path=None):
     """
-    Create bookmark file will create and save content to the browser's bookmark file
+    Create bookmarks file for target browser
+    Args:
+        target_browser_name (str): the name of the browser we will import cookies to
+        temp_bookmark_path (str): path to file containing bookmark json
+        custom_bookmark_file_path (str): [optional] path to target browser bookmark file
     """
+    # This function only supports the targets Brave, Opera, Chrome, and any browser with
+    # the same db columns. Otherwise it will not work and error out.
+    if (
+        target_browser_name != "chrome"
+        and target_browser_name != "brave"
+        and target_browser_name != "opera"
+    ):
+        raise ("Unrecognized browser type. Only works for brave, chrome, and opera.")
 
-    if sys.platform.startswith("linux"):
-        linux_bookmarks = []
-        if custom_bookmark_file_path:
-            linux_bookmarks.append(custom_bookmark_file_path)
-        else:
-            linux_bookmarks = [directory + "Bookmarks" for directory in get_browser_default_dir(browser)]
-
-        path = os.path.expanduser(linux_bookmarks[0])
-
-        # Create directories if it does not exist
-        directory = os.path.dirname(path)
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-            os.chmod(directory, 0o777)
-
-        with open(temp_bookmark_path, "r") as temp_bookmark_file:
-            bookmarks = temp_bookmark_file.read()
-            with open(path, "w") as browser_bookmark_file:
-                browser_bookmark_file.write(json.loads(bookmarks))
-
-
+    bookmarks_paths = []
+    if custom_bookmark_file_path:
+        bookmarks_paths.append(custom_bookmark_file_path)
     else:
-        raise browser_cookie3.BrowserCookieError("OS not recognized. Works on Linux.")
+        bookmarks_paths = [
+            directory + "Bookmarks" for directory in get_browser_default_dir(target_browser_name)
+        ]
+
+    path = os.path.expanduser(bookmarks_paths[0])
+
+    # Create directories if it does not exist
+    directory = os.path.dirname(path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        os.chmod(directory, 0o777)
+
+    with open(temp_bookmark_path, "r") as temp_bookmark_file:
+        bookmarks = temp_bookmark_file.read()
+        with open(path, "w") as browser_bookmark_file:
+            browser_bookmark_file.write(json.loads(bookmarks))
 
 
 if __name__ == "__main__":
@@ -261,5 +274,9 @@ if __name__ == "__main__":
         if cookie_full_path and len(cookie_full_path) > 0 and os.path.exists(cookie_full_path):
             set_browser_cookies(browser, cookie_full_path)
 
-        if bookmark_full_path and len(cookie_full_path) > 0 and os.path.exists(bookmark_full_path):
+        if (
+            bookmark_full_path
+            and len(bookmark_full_path) > 0
+            and os.path.exists(bookmark_full_path)
+        ):
             create_bookmark_file(browser, bookmark_full_path)

@@ -3,7 +3,50 @@ import sqlite3
 import json
 import pytest
 import browser_cookie3
-from ..utils.import_custom_cookies import *
+from ..utils.import_user_browser_data import *
+
+browserDefaultDir = [
+    [
+        "chrome",
+        [
+            "/fractal/userConfigs/google-chrome/Default/",
+            "/fractal/userConfigs/google-chrome-beta/Default/",
+        ],
+    ],
+    [
+        "chromium",
+        [
+            "/fractal/userConfigs/chromium/Default/",
+        ],
+    ],
+    [
+        "opera",
+        [
+            "/fractal/userConfigs/opera/",
+        ],
+    ],
+    [
+        "edge",
+        [
+            "/fractal/userConfigs/microsoft-edge/Default/",
+            "/fractal/userConfigs/microsoft-edge-dev/Default/",
+        ],
+    ],
+    [
+        "brave",
+        [
+            "/fractal/userConfigs/BraveSoftware/Brave-Browser/Default/",
+            "/fractal/userConfigs/BraveSoftware/Brave-Browser-Beta/Default/",
+        ],
+    ],
+]
+
+
+@pytest.mark.parametrize("browser,default_dirs", browserDefaultDir)
+def test_get_browser_default_dir(browser, default_dirs):
+    dirs = get_browser_default_dir(browser)
+    assert len(dirs) == len(default_dirs)
+    assert set(dirs).difference(set(default_dirs)) == set()
 
 
 browserFiles = [
@@ -210,6 +253,39 @@ invalid_target_mandelbox_browsers = ["firefox", "safari"]
 
 
 @pytest.mark.parametrize("target_browser", invalid_target_mandelbox_browsers)
-def test_setting_invalid_target_browsers(target_browser):
+def test_setting_invalid_target_browsers_cookies(target_browser):
     with pytest.raises(Exception):
         set_browser_cookies(target_browser, "")
+
+
+@pytest.mark.parametrize("target_browser", invalid_target_mandelbox_browsers)
+def test_setting_invalid_target_browsers_bookmark(target_browser):
+    with pytest.raises(Exception):
+        create_bookmark_file(target_browser, "")
+
+
+browser_bookmarks = [
+    ["chrome", "~/.config/temp/google-chrome/Default/Bookmark"],
+]
+
+
+@pytest.mark.parametrize("browser,browser_bookmark_path", browser_bookmarks)
+def test_create_bookmark_file(browser, browser_bookmark_path, tmp_path):
+
+    bookmark_content = "test_bookmark_content"
+    # Create file to store bookmarks
+    temp_dir = tmp_path / "sub"
+    temp_dir.mkdir()
+    bookmark_json_path = temp_dir / "bookmark.txt"
+    bookmark_json_path.write_text(json.dumps(bookmark_content))
+
+    # Upload bookmarks
+    create_bookmark_file(browser, bookmark_json_path, browser_bookmark_path)
+
+    # Get bookmarks file to test
+    bookmark_file = get_or_create_cookie_file(browser, browser_bookmark_path)
+
+    with open(bookmark_file) as b_file:
+        assert b_file.read() == bookmark_content
+
+    os.remove(bookmark_file)
