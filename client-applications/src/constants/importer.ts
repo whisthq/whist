@@ -1,33 +1,33 @@
 // File paths for each browser
-export const ChromeLinuxCookieFiles = [
-  "~/.config/google-chrome/Default/Cookies",
-  "~/.config/google-chrome-beta/Default/Cookies",
+export const ChromeLinuxDefaultDir = [
+  "~/.config/google-chrome/Default/",
+  "~/.config/google-chrome-beta/Default/",
 ]
-export const ChromeOSXCookieFiles = [
-  "~/Library/Application Support/Google/Chrome/Default/Cookies",
+export const ChromeOSXDefaultDir = [
+  "~/Library/Application Support/Google/Chrome/Default/",
 ]
-export const ChromiumLinuxCookieFiles = ["~/.config/chromium/Default/Cookies"]
-export const ChromiumOSXCookieFiles = [
-  "~/Library/Application Support/Chromium/Default/Cookies",
+export const ChromiumLinuxDefaultDir = ["~/.config/chromium/Default/"]
+export const ChromiumOSXDefaultDir = [
+  "~/Library/Application Support/Chromium/Default/",
 ]
-export const OperaLinuxCookieFiles = ["~/.config/opera/Cookies"]
-export const OperaOSXCookieFiles = [
-  "~/Library/Application Support/com.operasoftware.Opera/Cookies",
+export const OperaLinuxDefaultDir = ["~/.config/opera/"]
+export const OperaOSXDefaultDir = [
+  "~/Library/Application Support/com.operasoftware.Opera/",
 ]
-export const BraveLinuxCookieFiles = [
-  "~/.config/BraveSoftware/Brave-Browser/Default/Cookies",
-  "~/.config/BraveSoftware/Brave-Browser-Beta/Default/Cookies",
+export const BraveLinuxDefaultDir = [
+  "~/.config/BraveSoftware/Brave-Browser/Default/",
+  "~/.config/BraveSoftware/Brave-Browser-Beta/Default/",
 ]
-export const BraveOSXCookieFiles = [
-  "~/Library/Application Support/BraveSoftware/Brave-Browser/Default/Cookies",
-  "~/Library/Application Support/BraveSoftware/Brave-Browser-Beta/Default/Cookies",
+export const BraveOSXDefaultDir = [
+  "~/Library/Application Support/BraveSoftware/Brave-Browser/Default/",
+  "~/Library/Application Support/BraveSoftware/Brave-Browser-Beta/Default/",
 ]
-export const EdgeLinuxCookieFiles = [
-  "~/.config/microsoft-edge/Default/Cookies",
-  "~/.config/microsoft-edge-dev/Default/Cookies",
+export const EdgeLinuxDefaultDir = [
+  "~/.config/microsoft-edge/Default/",
+  "~/.config/microsoft-edge-dev/Default/",
 ]
-export const EdgeOSXCookieFiles = [
-  "~/Library/Application Support/Microsoft Edge/Default/Cookies",
+export const EdgeOSXDefaultDir = [
+  "~/Library/Application Support/Microsoft Edge/Default/",
 ]
 
 // Linux DBus / Secret Session
