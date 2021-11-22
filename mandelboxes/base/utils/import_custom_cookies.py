@@ -9,6 +9,41 @@ import subprocess
 
 USER_CONFIG_PATH = "/fractal/userConfigs/"
 
+def get_browser_default_dir(browser_name):
+    """
+    Gets browser default profile dir
+    Args:
+        browser_name (str): the name of the browser we want the directory of
+    Return:
+        str: the directories to the browser's default profile
+    """
+    global USER_CONFIG_PATH
+
+    if browser_name == "chrome":
+        browser_default_dir = [
+            USER_CONFIG_PATH + "google-chrome/Default/",
+            USER_CONFIG_PATH + "google-chrome-beta/Default/",
+        ]
+    elif browser_name == "chromium":
+        browser_default_dir = [USER_CONFIG_PATH + "chromium/Default/"]
+    elif browser_name == "opera":
+        browser_default_dir = [USER_CONFIG_PATH + "opera/"]
+    elif browser_name == "edge":
+        browser_default_dir = [
+            USER_CONFIG_PATH + "microsoft-edge/Default/",
+            USER_CONFIG_PATH + "microsoft-edge-dev/Default/",
+        ]
+    elif browser_name == "brave":
+        browser_default_dir = [
+            USER_CONFIG_PATH + "BraveSoftware/Brave-Browser/Default/",
+            USER_CONFIG_PATH + "BraveSoftware/Brave-Browser-Beta/Default/",
+        ]
+    else:
+        raise browser_cookie3.BrowserCookieError(
+            "Browser not recognized. Works on chrome, chromium, opera, edge, and brave."
+        )
+
+    return browser_default_dir
 
 def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
     """
@@ -19,35 +54,13 @@ def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
     Return:
         str: the path to cookies
     """
-    global USER_CONFIG_PATH
 
     if sys.platform.startswith("linux"):
         linux_cookies = []
         if custom_cookie_file_path:
             linux_cookies.append(custom_cookie_file_path)
-        elif browser_name == "chrome":
-            linux_cookies = [
-                USER_CONFIG_PATH + "google-chrome/Default/Cookies",
-                USER_CONFIG_PATH + "google-chrome-beta/Default/Cookies",
-            ]
-        elif browser_name == "chromium":
-            linux_cookies = [USER_CONFIG_PATH + "chromium/Default/Cookies"]
-        elif browser_name == "opera":
-            linux_cookies = [USER_CONFIG_PATH + "opera/Cookies"]
-        elif browser_name == "edge":
-            linux_cookies = [
-                USER_CONFIG_PATH + "microsoft-edge/Default/Cookies",
-                USER_CONFIG_PATH + "microsoft-edge-dev/Default/Cookies",
-            ]
-        elif browser_name == "brave":
-            linux_cookies = [
-                USER_CONFIG_PATH + "BraveSoftware/Brave-Browser/Default/Cookies",
-                USER_CONFIG_PATH + "BraveSoftware/Brave-Browser-Beta/Default/Cookies",
-            ]
         else:
-            raise browser_cookie3.BrowserCookieError(
-                "Browser not recognized. Works on chrome, chromium, opera, edge, and brave."
-            )
+            linux_cookies = [directory + "Cookies" for directory in get_browser_default_dir(browser_name)]
 
         path = browser_cookie3.expand_paths(linux_cookies, "linux")
 
@@ -77,7 +90,7 @@ def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
         return path
 
     else:
-        raise browser_cookie3.BrowserCookieError("OS not recognized. Works on OSX and Linux.")
+        raise browser_cookie3.BrowserCookieError("OS not recognized. Works on Linux.")
 
 
 def encrypt(value):
@@ -209,9 +222,41 @@ def set_browser_cookies(target_browser_name, cookie_full_path, target_cookie_fil
             os.remove(singleton_cookie_file)
 
 
-if __name__ == "__main__":
-    browser = os.getenv("WHIST_COOKIE_UPLOAD_TARGET")
-    cookie_full_path = os.getenv("WHIST_INITIAL_USER_COOKIES_FILE", None)
+def create_bookmark_file(browser, bookmark_full_path, custom_cookie_file_path=None):
+    """
+    This will movie the temporary bookmark file to the correct location
+    """
 
-    if cookie_full_path and os.path.exists(cookie_full_path):
-        set_browser_cookies(browser, cookie_full_path)
+    if sys.platform.startswith("linux"):
+        linux_bookmarks = []
+        if custom_cookie_file_path:
+            linux_bookmarks.append(custom_cookie_file_path)
+        else:
+            linux_bookmarks = [directory + "Bookmarks" for directory in get_browser_default_dir(browser_name)]
+
+        path = os.path.expanduser(linux_bookmarks[0])
+
+        # Create directories if it does not exist
+        directory = os.path.dirname(path)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+            os.chmod(directory, 0o777)
+
+        # Move file from one place to another
+        os.replace(bookmark_full_path, path)
+
+    else:
+        raise browser_cookie3.BrowserCookieError("OS not recognized. Works on Linux.")
+
+
+if __name__ == "__main__":
+    browser = os.getenv("WHIST_COOKIE_UPLOAD_TARGET", None)
+    cookie_full_path = os.getenv("WHIST_INITIAL_USER_COOKIES_FILE", None)
+    bookmark_full_path = os.getenv("WHIST_INITIAL_USER_BOOKMARKS_FILE", None)
+
+    if browser:
+        if cookie_full_path and os.path.exists(cookie_full_path):
+            set_browser_cookies(browser, cookie_full_path)
+
+        if bookmark_full_path and os.path.exists(bookmark_full_path):
+            create_bookmark_file(browser, bookmark_full_path)
