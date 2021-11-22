@@ -651,7 +651,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Set up custom config scripts
-COPY utils/import_custom_cookies.py /usr/share/fractal/import_custom_cookies.py
+COPY utils/import_user_browser_data.py /usr/share/fractal/import_user_browser_data.py
 
 # Set up first systemd service
 COPY startup/fractal-startup.sh /usr/share/fractal
