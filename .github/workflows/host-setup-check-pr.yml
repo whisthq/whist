@@ -56,7 +56,7 @@ jobs:
       - name: Build Go Project
         working-directory: host-service
         env:
-          HEROKU_USER: developers@tryfractal.com
+          HEROKU_USER: developers@whist.com
           HEROKU_APIKEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
         run: make build
 
