@@ -190,12 +190,8 @@ func startCollectionGoroutine(frequency time.Duration) error {
 					logger.Errorf("Error shutting down NVML library.")
 				}
 
-				// Stop timer to avoid leaking a goroutine (not that it matters if we're
-				// shutting down, but still).
-				// (https://golang.org/pkg/time/#Timer.Stop)
-				if !timer.Stop() {
-					<-timer.C
-				}
+				// We potentially leak the goroutine in `timer` here because the leak is tiny and avoiding it is hard (see https://pkg.go.dev/time#Timer.Stop and https://stackoverflow.com/questions/55400661/go-timer-deadlock-on-stop).
+				timer.Stop()
 				return
 
 			case <-timerChan:
