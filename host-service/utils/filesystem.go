@@ -3,6 +3,7 @@ package utils // import "github.com/fractal/fractal/host-service/utils"
 import (
 	"context"
 	"log"
+	"os"
 	"path"
 	"time"
 
@@ -73,10 +74,10 @@ func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Durat
 }
 
 // writeToNewFile creates a file then writes the content
-func writeToNewFile(filePath, content) error {
+func writeToNewFile(filePath string, content string) error {
 	newFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0777)
 	if err != nil {
-		return utils.MakeError("Could not make file %s. Error: %s", filePath, err)
+		return MakeError("Could not make file %s. Error: %s", filePath, err)
 	}
 
 	newFile.WriteString(content)
