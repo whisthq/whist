@@ -28,10 +28,10 @@ func TestNewMandelbox(t *testing.T) {
 		t.Errorf("received incorrect PathOnHost: got %s, expected %s", deviceMappings.PathOnHost, "/dev/fuse")
 	}
 	if deviceMappings.PathInContainer != "/dev/fuse" {
-		t.Errorf("received incorrect PathOnHost: got %s, expected %s", deviceMappings.PathInContainer, "/dev/fuse")
+		t.Errorf("received incorrect PathInContainer: got %s, expected %s", deviceMappings.PathInContainer, "/dev/fuse")
 	}
 	if deviceMappings.CgroupPermissions != "rwm" {
-		t.Errorf("received incorrect PathOnHost: got %s, expected %s", deviceMappings.CgroupPermissions, "rwm")
+		t.Errorf("received incorrect CgroupPermissions: got %s, expected %s", deviceMappings.CgroupPermissions, "rwm")
 	}
 }
 
