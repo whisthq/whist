@@ -526,7 +526,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"),
 		"NVIDIA_DRIVER_CAPABILITIES=all",
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
-		utils.Sprintf("WHIST_INITIAL_USER_COOKIES_FILE=%v%v", utils.UserInitialCookiesDir, utils.UserInitialCookiesFile),
+		utils.Sprintf("WHIST_INITIAL_USER_COOKIES_FILE=%v%v", utils.UserInitialBrowserDir, utils.UserInitialCookiesFile),
+		utils.Sprintf("WHIST_INITIAL_USER_BOOKMARKS_FILE=%v%v", utils.UserInitialBrowserDir, utils.UserInitialBookmarkFile),
 	}
 	config := dockercontainer.Config{
 		ExposedPorts: exposedPorts,
@@ -725,7 +726,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	go func() {
 		logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
 
-		err := mandelbox.WriteUserInitialBrowserData(req.Cookies)
+		//  Pass alongcookies and bookmarks
+		err := mandelbox.WriteUserInitialBrowserData(req.Cookies, req.Bookmarks)
 		userInitialBrowserDataDownloadComplete <- true
 		if err != nil {
 			logger.Warningf("Error writing user initial browser data for mandelbox %s: %v", mandelboxSubscription.ID, err)
