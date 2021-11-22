@@ -12,6 +12,7 @@ import { sessionID } from "@app/constants/app"
 import { AsyncReturnType } from "@app/@types/state"
 import { appEnvironment, FractalEnvironments } from "../../config/configs"
 import config from "@app/config/environment"
+import { userEmail } from "./state"
 
 const COMMIT_SHA = config.keys.COMMIT_SHA
 
@@ -60,5 +61,6 @@ export const mandelboxRequest = async (
       regions,
       client_commit_hash: isLocalEnv() ? "local_dev" : COMMIT_SHA,
       session_id: sessionID,
+      user_email: userEmail
     },
   })
