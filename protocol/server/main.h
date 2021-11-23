@@ -1,7 +1,7 @@
 #ifndef SERVER_MAIN_H
 #define SERVER_MAIN_H
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file main.h
  * @brief This file contains the main code that runs a Whist server on a
  *        Windows or Linux Ubuntu computer.
@@ -67,7 +67,7 @@ char binary_aes_private_key[16];
 char hex_aes_private_key[33];
 
 // This variables should stay as arrays - we call sizeof() on them
-char identifier[FRACTAL_IDENTIFIER_MAXLEN + 1];
+char identifier[WHIST_IDENTIFIER_MAXLEN + 1];
 
 volatile int connection_id;
 volatile bool exiting;

@@ -1,7 +1,7 @@
 /*
  * General Whist helper functions and headers.
  *
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  **/
 
 /*
@@ -323,7 +323,7 @@ void terminate_protocol(FractalExitCode exit_code) {
     LOG_INFO("Terminating Protocol");
     destroy_logger();
 
-    if (exit_code != FRACTAL_EXIT_SUCCESS) {
+    if (exit_code != WHIST_EXIT_SUCCESS) {
         print_stacktrace();
     }
 
@@ -507,7 +507,7 @@ int bit_array_test_bit(const BitArray *const ba, const unsigned int bit) {
     return ((ba->array[BIT_CHAR(bit)] & BIT_IN_CHAR(bit)) != 0);
 }
 
-// Include FRACTAL_GIT_REVISION
+// Include WHIST_GIT_REVISION
 #include <fractal.v>
 // Defines to stringize a macro
 #define xstr(s) str(s)
@@ -520,8 +520,8 @@ char *fractal_git_revision() {
             (char*): git revision as string, or "none" if no git revision found
     */
 
-#ifdef FRACTAL_GIT_REVISION
-    return xstr(FRACTAL_GIT_REVISION);
+#ifdef WHIST_GIT_REVISION
+    return xstr(WHIST_GIT_REVISION);
 #else
     return "none";
 #endif

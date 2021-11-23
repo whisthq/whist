@@ -2,10 +2,7 @@ import React, { useState } from "react"
 import { FaApple, FaWindows } from "react-icons/fa"
 import { Link } from "react-scroll"
 
-import {
-  FractalButton,
-  FractalButtonState,
-} from "@app/shared/components/button"
+import { WhistButton, WhistButtonState } from "@app/shared/components/button"
 import { ScreenSize } from "@app/shared/constants/screenSizes"
 import { withContext } from "@app/shared/utils/context"
 import { config } from "@app/shared/constants/config"
@@ -40,7 +37,7 @@ const AllowDownloads = () => {
             {" "}
             <div className="flex justify-center">
               <a href={config.client_download_urls.macOS_x64} download>
-                <FractalButton
+                <WhistButton
                   className="mt-12 mx-2"
                   contents={
                     <div className="flex">
@@ -48,11 +45,11 @@ const AllowDownloads = () => {
                       macOS (Intel)
                     </div>
                   }
-                  state={FractalButtonState.DEFAULT}
+                  state={WhistButtonState.DEFAULT}
                 />
               </a>
               <a href={config.client_download_urls.macOS_arm64} download>
-                <FractalButton
+                <WhistButton
                   className="mt-12 mx-2"
                   contents={
                     <div className="flex">
@@ -60,10 +57,10 @@ const AllowDownloads = () => {
                       macOS (M1)
                     </div>
                   }
-                  state={FractalButtonState.DEFAULT}
+                  state={WhistButtonState.DEFAULT}
                 />
               </a>
-              <FractalButton
+              <WhistButton
                 className="mt-12 mx-2"
                 contents={
                   <div className="flex">
@@ -71,14 +68,14 @@ const AllowDownloads = () => {
                     Coming Soon
                   </div>
                 }
-                state={FractalButtonState.DISABLED}
+                state={WhistButtonState.DISABLED}
               />
             </div>
           </>
         ) : (
           <div className="flex justify-center">
             {" "}
-            <FractalButton
+            <WhistButton
               className="mt-12 mx-2"
               contents={
                 <div className="flex">
@@ -86,7 +83,7 @@ const AllowDownloads = () => {
                   Mac Only
                 </div>
               }
-              state={FractalButtonState.DISABLED}
+              state={WhistButtonState.DISABLED}
             />
           </div>
         )}
@@ -120,10 +117,10 @@ const DontAllowDownloads = () => {
           time to get started!
         </div>
         <div>
-          <FractalButton
+          <WhistButton
             className="mt-12 mx-2"
             contents={"Reserve an onboarding session"}
-            state={FractalButtonState.DEFAULT}
+            state={WhistButtonState.DEFAULT}
             onClick={() => setOpen(true)}
           />
         </div>

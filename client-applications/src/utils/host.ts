@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file host.ts
  * @brief This file contains utility functions for interacting with the host service.
  */

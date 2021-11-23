@@ -5,7 +5,7 @@ file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/include)
 # of the file actually changes
 add_custom_target(git_revision ALL
         VERBATIM
-        COMMAND ${CMAKE_COMMAND} -E echo_append "#define FRACTAL_GIT_REVISION " > ${CMAKE_BINARY_DIR}/include/fractal.sha.v
+        COMMAND ${CMAKE_COMMAND} -E echo_append "#define WHIST_GIT_REVISION " > ${CMAKE_BINARY_DIR}/include/fractal.sha.v
         COMMAND git rev-parse --short HEAD >> ${CMAKE_BINARY_DIR}/include/fractal.sha.v
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/include/fractal.sha.v ${CMAKE_BINARY_DIR}/include/fractal.v
         )

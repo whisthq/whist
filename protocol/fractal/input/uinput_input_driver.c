@@ -1,7 +1,7 @@
 /*
  * User input processing on Linux Ubuntu.
  *
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  **/
 
 #include "input_driver.h"

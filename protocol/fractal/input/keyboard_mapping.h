@@ -1,5 +1,5 @@
-#ifndef FRACTAL_KEYBOARD_MAPPING_H
-#define FRACTAL_KEYBOARD_MAPPING_H
+#ifndef WHIST_KEYBOARD_MAPPING_H
+#define WHIST_KEYBOARD_MAPPING_H
 
 #include <fractal/core/fractal.h>
 #include "input_driver.h"
@@ -36,4 +36,4 @@ void update_mapped_keyboard_state(InputDevice* input_device, FractalOSType os_ty
 int emit_mapped_key_event(InputDevice* input_device, FractalOSType os_type,
                           FractalKeycode fractal_keycode, int pressed);
 
-#endif  // FRACTAL_KEYBOARD_MAPPING_H
+#endif  // WHIST_KEYBOARD_MAPPING_H

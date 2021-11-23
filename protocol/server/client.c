@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file client.c
  * @brief This file contains the code for interacting with the client buffer.
 

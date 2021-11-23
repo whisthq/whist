@@ -7,7 +7,7 @@ const appDetails = {
   appId:
     "com.fractalcomputers.fractal" +
     (appEnvironment === "prod" ? "" : `-${appEnvironment}`), // Standard Apple appId format: <domain-extension>.<domain>.<company-name>
-  copyright: "Copyright © Fractal Computers, Inc., dba Whist",
+  copyright: "Copyright © Whist Technologies, Inc.",
   productName:
     "Whist" + (appEnvironment === "prod" ? "" : ` (${appEnvironment})`),
 }

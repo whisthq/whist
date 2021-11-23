@@ -8,10 +8,10 @@
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-# If FRACTAL_AES_KEY is set, then create file
-if [ -n "${FRACTAL_AES_KEY+1}" ]
+# If WHIST_AES_KEY is set, then create file
+if [ -n "${WHIST_AES_KEY+1}" ]
 then
-  echo $FRACTAL_AES_KEY > /usr/share/fractal/private/aes_key
+  echo $WHIST_AES_KEY > /usr/share/fractal/private/aes_key
 fi
 
 # If SENTRY_ENV is set, then create file
@@ -22,7 +22,7 @@ fi
 
 # Unset the AWS key to make sure that this environment variable does not
 # leak in any way (probably redundant, but still good practice)
-unset FRACTAL_AES_KEY
+unset WHIST_AES_KEY
 
 # If WHIST_INITIAL_USER_COOKIES_FILE is set, then create file
 if [ -n "${WHIST_INITIAL_USER_COOKIES_FILE+1}" ]

@@ -1,7 +1,7 @@
-#ifndef FRACTAL_TCP_H
-#define FRACTAL_TCP_H
+#ifndef WHIST_TCP_H
+#define WHIST_TCP_H
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file tcp.h
  * @brief This file contains the network interface code for TCP protocol
  *
@@ -53,4 +53,4 @@ bool create_tcp_socket_context(SocketContext* context, char* destination, int po
                                int recvfrom_timeout_s, int connection_timeout_ms, bool using_stun,
                                char* binary_aes_private_key);
 
-#endif  // FRACTAL_TCP_H
+#endif  // WHIST_TCP_H

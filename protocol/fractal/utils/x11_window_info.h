@@ -1,7 +1,7 @@
 #ifndef WINDOW_NAME_H
 #define WINDOW_NAME_H
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file x11_window_info.h
  * @brief This file contains all the code for getting the name of a window.
 ============================

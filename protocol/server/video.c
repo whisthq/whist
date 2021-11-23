@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file video.c
  * @brief This file contains all code that interacts directly with processing
  *        video on the server.
@@ -420,7 +420,7 @@ Public Function Implementations
 
 int32_t multithreaded_send_video(void* opaque) {
     UNUSED(opaque);
-    fractal_set_thread_priority(FRACTAL_THREAD_PRIORITY_REALTIME);
+    fractal_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
     fractal_sleep(500);
 
 #if defined(_WIN32)

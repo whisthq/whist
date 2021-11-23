@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "Whist Webserver"
-copyright = "Fractal Computers, Inc., dba Whist 2021"
+copyright = "Whist Technologies, Inc. 2021"
 author = "Whist"
 
 

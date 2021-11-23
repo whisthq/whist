@@ -1,7 +1,7 @@
-#ifndef FRACTAL_UDP_H
-#define FRACTAL_UDP_H
+#ifndef WHIST_UDP_H
+#define WHIST_UDP_H
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file udp.h
  * @brief This file contains the network interface code for UDP protocol
  *
@@ -88,4 +88,4 @@ void udp_register_nack_buffer(SocketContext* context, FractalPacketType type, in
  */
 int udp_nack(SocketContext* context, FractalPacketType type, int id, int index);
 
-#endif  // FRACTAL_UDP_H
+#endif  // WHIST_UDP_H

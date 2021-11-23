@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file error_monitor.c
  * @brief This file contains the functions to configure and report breadcrumbs
  *        and error events to tools such as Sentry.
@@ -55,7 +55,7 @@ Public Function Implementations
 #define MAX_EVENTS_IN_PERIOD 2
 #define MAX_EVENTS_PERIOD_MS 1000.0
 
-static char error_monitor_environment[FRACTAL_ARGS_MAXLEN + 1];
+static char error_monitor_environment[WHIST_ARGS_MAXLEN + 1];
 static char error_monitor_environment_set = false;
 static bool error_monitor_initialized = false;
 

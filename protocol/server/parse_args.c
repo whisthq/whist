@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file parse_args.c
  * @brief This file contains the code that parses the args for
 the server protocol.
@@ -27,7 +27,7 @@ Includes
 
 extern char binary_aes_private_key[16];
 extern char hex_aes_private_key[33];
-extern char identifier[FRACTAL_IDENTIFIER_MAXLEN + 1];
+extern char identifier[WHIST_IDENTIFIER_MAXLEN + 1];
 extern int begin_time_to_exit;
 
 /*
@@ -42,8 +42,8 @@ const struct option cmd_options[] = {{"private-key", required_argument, NULL, 'k
                                      {"environment", required_argument, NULL, 'e'},
                                      {"timeout", required_argument, NULL, 't'},
                                      // these are standard for POSIX programs
-                                     {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
-                                     {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
+                                     {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
+                                     {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
                                      // end with NULL-termination
                                      {0, 0, 0, 0}};
 
@@ -84,9 +84,9 @@ int server_parse_args(int argc, char* argv[]) {
 
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
-        if (opt != -1 && optarg && strlen(optarg) > FRACTAL_ARGS_MAXLEN) {
+        if (opt != -1 && optarg && strlen(optarg) > WHIST_ARGS_MAXLEN) {
             printf("Option passed into %c is too long! Length of %zd when max is %d\n", opt,
-                   strlen(optarg), FRACTAL_ARGS_MAXLEN);
+                   strlen(optarg), WHIST_ARGS_MAXLEN);
             return -1;
         }
         errno = 0;
@@ -104,7 +104,7 @@ int server_parse_args(int argc, char* argv[]) {
                 printf("Identifier passed in: %s\n", optarg);
                 if (!safe_strncpy(identifier, optarg, sizeof(identifier))) {
                     printf("Identifier passed in is too long! Has length %lu but max is %d.\n",
-                           (unsigned long)strlen(optarg), FRACTAL_IDENTIFIER_MAXLEN);
+                           (unsigned long)strlen(optarg), WHIST_IDENTIFIER_MAXLEN);
                     return -1;
                 }
                 break;
@@ -121,11 +121,11 @@ int server_parse_args(int argc, char* argv[]) {
                 }
                 break;
             }
-            case FRACTAL_GETOPT_HELP_CHAR: {
+            case WHIST_GETOPT_HELP_CHAR: {
                 printf("%s", usage_details);
                 return 1;
             }
-            case FRACTAL_GETOPT_VERSION_CHAR: {
+            case WHIST_GETOPT_VERSION_CHAR: {
                 printf("Whist client revision %s\n", fractal_git_revision());
                 return 1;
             }

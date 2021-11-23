@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file auth.ts
  * @brief This file contains utility functions for managing the MacOS tray, which appears at the
  * top right corner of the screen when the protocol launches.

@@ -11,10 +11,7 @@ import AirtableLogo from "@app/assets/icons/airtableLogo.svg"
 import FigmaLogo from "@app/assets/icons/figmaLogo.svg"
 import GoogleDriveLogo from "@app/assets/icons/googleDriveLogo.svg"
 
-import {
-  FractalButton,
-  FractalButtonState,
-} from "@app/shared/components/button"
+import { WhistButton, WhistButtonState } from "@app/shared/components/button"
 
 export const Hero = () => {
   /*
@@ -66,10 +63,10 @@ export const Hero = () => {
             Whist is a supercharged version of Chrome that runs in the cloud.
           </p>
           <a href="/download#top">
-            <FractalButton
+            <WhistButton
               className="mt-12"
               contents="Download Now"
-              state={FractalButtonState.DEFAULT}
+              state={WhistButtonState.DEFAULT}
             />
           </a>
         </div>

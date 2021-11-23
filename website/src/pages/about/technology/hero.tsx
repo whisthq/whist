@@ -2,10 +2,7 @@ import React from "react"
 import { Link } from "react-scroll"
 
 import LaptopMan from "@app/assets/graphics/laptopMan.svg"
-import {
-  FractalButton,
-  FractalButtonState,
-} from "@app/shared/components/button"
+import { WhistButton, WhistButtonState } from "@app/shared/components/button"
 
 const Hero = () => (
   <div className="pt-10 sm:pt-16 lg:pt-8 lg:pb-14 lg:overflow-hidden">
@@ -21,10 +18,10 @@ const Hero = () => (
             virtualization technology
           </p>
           <Link to="details" spy={true} smooth={true}>
-            <FractalButton
+            <WhistButton
               className="mt-8 mb-4"
               contents="Learn More"
-              state={FractalButtonState.DEFAULT}
+              state={WhistButtonState.DEFAULT}
             />
           </Link>
         </div>

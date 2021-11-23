@@ -1,7 +1,7 @@
 #ifndef ALSACAPTURE_H
 #define ALSACAPTURE_H
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file alsacapture.h
  * @brief This file contains the code to capture audio on Ubuntu using ALSA.
 ============================

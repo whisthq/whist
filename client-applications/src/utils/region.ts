@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file region.ts
  * @brief This file contains utility functions for finding the closest AWS region.
  */

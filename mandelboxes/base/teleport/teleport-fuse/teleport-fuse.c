@@ -321,8 +321,8 @@ static const struct fuse_operations teleport_fuse_oper = {
     .read		= teleport_fuse_read,
 };
 
-#define FRACTAL_TELEPORT_DRAG_DROP_DIRECTORY "/home/fractal/.teleport/drag-drop"
-#define FRACTAL_TELEPORT_FUSE_PID_FILE FRACTAL_TELEPORT_DRAG_DROP_DIRECTORY "/pid"
+#define WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/home/fractal/.teleport/drag-drop"
+#define WHIST_TELEPORT_FUSE_PID_FILE WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/pid"
 
 /**
  * @brief Perform `mkdir -p` on the given path.
@@ -421,7 +421,7 @@ void inotify_handle_new_id(const char *id) {
         transfer_status[current_idx].active = false;
         transfer_status[current_idx].data_ready = false;
         strcpy(transfer_status[current_idx].id, id);
-        snprintf(transfer_status[current_idx].id_path, NAME_MAX + 1, FRACTAL_TELEPORT_DRAG_DROP_DIRECTORY "/downloads/%s", id);
+        snprintf(transfer_status[current_idx].id_path, NAME_MAX + 1, WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/downloads/%s", id);
         transfer_status[current_idx].create_wd = inotify_add_watch(inotify_fd, transfer_status[current_idx].id_path, IN_CREATE);
 
         // Right after creating a watch, we need to manually check for it to avoid race conditions
@@ -455,14 +455,14 @@ void inotify_handle_new_id(const char *id) {
 void* multithreaded_download_watcher(void *opaque) {
     inotify_fd = inotify_init();
 
-    mkpath(FRACTAL_TELEPORT_DRAG_DROP_DIRECTORY "/downloads", 0777);
-    mkpath(FRACTAL_TELEPORT_DRAG_DROP_DIRECTORY "/ready", 0777);
+    mkpath(WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/downloads", 0777);
+    mkpath(WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/ready", 0777);
 
     // watch descriptor for /downloads/[id] directories
-    int id_wd = inotify_add_watch(inotify_fd, FRACTAL_TELEPORT_DRAG_DROP_DIRECTORY "/downloads", IN_CREATE);
+    int id_wd = inotify_add_watch(inotify_fd, WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/downloads", IN_CREATE);
 
     // watch descriptor for /ready/[id] files
-    int ready_wd = inotify_add_watch(inotify_fd, FRACTAL_TELEPORT_DRAG_DROP_DIRECTORY "/ready", IN_CREATE);
+    int ready_wd = inotify_add_watch(inotify_fd, WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/ready", IN_CREATE);
 
     // Right after adding a watch, we need to also manually check for it to appropriately handle any race condition.
 
@@ -477,7 +477,7 @@ void* multithreaded_download_watcher(void *opaque) {
 
     // Handle "new ID" events that may have occurred before the watch
 
-    dirp = opendir(FRACTAL_TELEPORT_DRAG_DROP_DIRECTORY "/downloads");
+    dirp = opendir(WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/downloads");
 
     // Check for any directory children of /downloads and handle them
     struct dirent *dp;
@@ -494,7 +494,7 @@ void* multithreaded_download_watcher(void *opaque) {
 
     // Handle "readyfile" events that may have occurred before the watch
 
-    dirp = opendir(FRACTAL_TELEPORT_DRAG_DROP_DIRECTORY "/ready");
+    dirp = opendir(WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/ready");
 
     // Check for any file children of /ready and handle them
     while (dp = readdir(dirp)) {
@@ -554,8 +554,8 @@ int main(int argc, char *argv[])
     pthread_create(&thread_id, NULL, &multithreaded_download_watcher, NULL);
     pthread_detach(thread_id);
 
-    mkpath(FRACTAL_TELEPORT_DRAG_DROP_DIRECTORY, 0777);
-    FILE *pidfile = fopen(FRACTAL_TELEPORT_FUSE_PID_FILE, "wb");
+    mkpath(WHIST_TELEPORT_DRAG_DROP_DIRECTORY, 0777);
+    FILE *pidfile = fopen(WHIST_TELEPORT_FUSE_PID_FILE, "wb");
     fprintf(pidfile, "%d\n", getpid());
     fclose(pidfile);
 

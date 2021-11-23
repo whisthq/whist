@@ -231,7 +231,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		aesKey := utils.RandHex(16)
 		config := dockercontainer.Config{
 			Env: []string{
-				utils.Sprintf("FRACTAL_AES_KEY=%s", aesKey),
+				utils.Sprintf("WHIST_AES_KEY=%s", aesKey),
 				utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"),
 				"NVIDIA_DRIVER_CAPABILITIES=all",
 			},
@@ -522,7 +522,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	aesKey := utils.RandHex(16)
 	envs := []string{
-		utils.Sprintf("FRACTAL_AES_KEY=%s", aesKey),
+		utils.Sprintf("WHIST_AES_KEY=%s", aesKey),
 		utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"),
 		"NVIDIA_DRIVER_CAPABILITIES=all",
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),

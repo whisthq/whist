@@ -1,7 +1,7 @@
 #ifndef VIDEO_CAPTURE_H
 #define VIDEO_CAPTURE_H
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file capture.h
  * @brief This file defines the proper header for capturing the screen depending
  *        on the local OS.

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file audio.c
  * @brief This file contains all code that interacts directly with processing
  *        audio on the server.
@@ -60,7 +60,7 @@ Public Function Implementations
 
 int32_t multithreaded_send_audio(void* opaque) {
     UNUSED(opaque);
-    fractal_set_thread_priority(FRACTAL_THREAD_PRIORITY_REALTIME);
+    fractal_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
     int id = 1;
 
     AudioDevice* audio_device = create_audio_device();

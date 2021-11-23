@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file main.c
  * @brief This file contains the main code that runs a Whist client on a
  *        Windows, MacOS or Linux Ubuntu computer.
@@ -87,8 +87,8 @@ extern volatile int output_height;
 extern volatile char* program_name;
 extern volatile CodecType output_codec_type;
 extern volatile char* server_ip;
-extern char user_email[FRACTAL_ARGS_MAXLEN + 1];
-extern char icon_png_filename[FRACTAL_ARGS_MAXLEN + 1];
+extern char user_email[WHIST_ARGS_MAXLEN + 1];
+extern char icon_png_filename[WHIST_ARGS_MAXLEN + 1];
 extern bool using_stun;
 
 // given by server protocol during port discovery. tells client the ports to use
@@ -322,7 +322,7 @@ int main(int argc, char* argv[]) {
     LOG_INFO("Whist client revision %s", fractal_git_revision());
 
     client_exiting = false;
-    FractalExitCode exit_code = FRACTAL_EXIT_SUCCESS;
+    FractalExitCode exit_code = WHIST_EXIT_SUCCESS;
 
     // While showing the SDL loading screen, read in any piped arguments
     //    If the arguments are bad, then skip to the destruction phase
@@ -331,7 +331,7 @@ int main(int argc, char* argv[]) {
     SDL_Thread* pipe_arg_thread =
         SDL_CreateThread(multithreaded_read_piped_arguments, "PipeArgThread", &keep_piping);
     if (pipe_arg_thread == NULL) {
-        exit_code = FRACTAL_EXIT_CLI;
+        exit_code = WHIST_EXIT_CLI;
     } else {
         SDL_Event event;
         while (continue_pumping) {
@@ -360,7 +360,7 @@ int main(int argc, char* argv[]) {
         int pipe_arg_ret;
         SDL_WaitThread(pipe_arg_thread, &pipe_arg_ret);
         if (pipe_arg_ret != 0) {
-            exit_code = FRACTAL_EXIT_CLI;
+            exit_code = WHIST_EXIT_CLI;
         }
     }
 
@@ -368,8 +368,8 @@ int main(int argc, char* argv[]) {
     // Try connection `MAX_INIT_CONNECTION_ATTEMPTS` times before
     //  closing and destroying the client.
     int max_connection_attempts = MAX_INIT_CONNECTION_ATTEMPTS;
-    for (try_amount = 0; try_amount < max_connection_attempts && !client_exiting &&
-                         exit_code == FRACTAL_EXIT_SUCCESS;
+    for (try_amount = 0;
+         try_amount < max_connection_attempts && !client_exiting && exit_code == WHIST_EXIT_SUCCESS;
          try_amount++) {
         if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
             client_exiting = true;
@@ -446,7 +446,7 @@ int main(int argc, char* argv[]) {
 
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
-        while (connected && !client_exiting && exit_code == FRACTAL_EXIT_SUCCESS) {
+        while (connected && !client_exiting && exit_code == WHIST_EXIT_SUCCESS) {
             // Check if the window is minimized or occluded. If it is, we can just sleep for a bit
             // and then check again.
             // NOTE: internally within SDL, the window flags are maintained and updated upon
@@ -458,7 +458,7 @@ int main(int argc, char* argv[]) {
                 // else the application will permanently hang
                 if (SDL_WaitEventTimeout(&sdl_msg, 50) && handle_sdl_event(&sdl_msg) != 0) {
                     // unable to handle event
-                    exit_code = FRACTAL_EXIT_FAILURE;
+                    exit_code = WHIST_EXIT_FAILURE;
                     break;
                 }
 
@@ -500,7 +500,7 @@ int main(int argc, char* argv[]) {
 
             if (get_timer(keyboard_sync_timer) * MS_IN_SECOND > 50.0) {
                 if (sync_keyboard_state() != 0) {
-                    exit_code = FRACTAL_EXIT_FAILURE;
+                    exit_code = WHIST_EXIT_FAILURE;
                     break;
                 }
                 start_timer(&keyboard_sync_timer);
@@ -541,7 +541,7 @@ int main(int argc, char* argv[]) {
             // window)
             if (SDL_WaitEventTimeout(&sdl_msg, 50) && handle_sdl_event(&sdl_msg) != 0) {
                 // unable to handle event
-                exit_code = FRACTAL_EXIT_FAILURE;
+                exit_code = WHIST_EXIT_FAILURE;
                 break;
             }
 
@@ -549,7 +549,7 @@ int main(int argc, char* argv[]) {
             // We throttle it down to only update once every 0.5ms
             if (get_timer(mouse_motion_timer) * MS_IN_SECOND > 0.5) {
                 if (update_mouse_motion()) {
-                    exit_code = FRACTAL_EXIT_FAILURE;
+                    exit_code = WHIST_EXIT_FAILURE;
                     break;
                 }
                 start_timer(&mouse_motion_timer);
@@ -557,7 +557,7 @@ int main(int argc, char* argv[]) {
         }
 
         LOG_INFO("Disconnecting...");
-        if (client_exiting || exit_code != FRACTAL_EXIT_SUCCESS ||
+        if (client_exiting || exit_code != WHIST_EXIT_SUCCESS ||
             try_amount + 1 == max_connection_attempts)
             send_server_quit_messages(3);
 
@@ -571,7 +571,7 @@ int main(int argc, char* argv[]) {
         connected = false;
     }
 
-    if (exit_code != FRACTAL_EXIT_SUCCESS) {
+    if (exit_code != WHIST_EXIT_SUCCESS) {
         LOG_ERROR("Failure in main loop!");
     }
 
@@ -598,7 +598,7 @@ int main(int argc, char* argv[]) {
 
     if (try_amount >= 3) {
         // We failed to connect, so return a failure error code
-        return FRACTAL_EXIT_FAILURE;
+        return WHIST_EXIT_FAILURE;
     } else {
         return exit_code;
     }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file protocol.ts
  * @brief This file contains utility functions launching the protocol ChildProcess. This file contains
  * all the code used to interact with the protocol through the client-app. Everything -- launching

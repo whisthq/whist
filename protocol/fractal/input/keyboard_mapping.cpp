@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file input.c
  * @brief This file defines general input-processing functions and toggles
  *        between Windows and Linux servers.
@@ -9,11 +9,11 @@ Usage
 
 // This will emit a mapped keyboard event, using the mapping of
 // the specified OS
-emit_mapped_key_event(input_device, FRACTAL_APPLE, key_code, pressed);
+emit_mapped_key_event(input_device, WHIST_APPLE, key_code, pressed);
 
 // This will synchronize the keyboard via the mapping associated
 // with the specified OS
-update_mapped_keyboard_state(input_device, FRACTAL_APPLE, keyboard_state);
+update_mapped_keyboard_state(input_device, WHIST_APPLE, keyboard_state);
 
 */
 
@@ -157,7 +157,7 @@ extern "C" int emit_mapped_key_event(InputDevice* input_device, FractalOSType os
     }
 
     // Don't map stateful keys, and don't map from non-apple OS's
-    if (key_code == FK_CAPSLOCK || key_code == FK_NUMLOCK || os_type != FRACTAL_APPLE) {
+    if (key_code == FK_CAPSLOCK || key_code == FK_NUMLOCK || os_type != WHIST_APPLE) {
         emit_key_event(input_device, key_code, pressed);
         return 0;
     }
@@ -263,7 +263,7 @@ extern "C" void update_mapped_keyboard_state(InputDevice* input_device, FractalO
     FractalKeycode origin_mapping[KEYCODE_UPPERBOUND] = {FK_UNKNOWN};
     for (int fractal_keycode = 0; fractal_keycode < KEYCODE_UPPERBOUND; ++fractal_keycode) {
         FractalKeycode mapped_key = (FractalKeycode)fractal_keycode;
-        if (os_type == FRACTAL_APPLE && modmap.count(mapped_key)) {
+        if (os_type == WHIST_APPLE && modmap.count(mapped_key)) {
             mapped_key = modmap[mapped_key];
         }
         // If any origin key is pressed, then the modmap'ed key is considered pressed

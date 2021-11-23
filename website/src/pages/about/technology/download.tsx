@@ -1,9 +1,6 @@
 import React from "react"
 
-import {
-  FractalButton,
-  FractalButtonState,
-} from "@app/shared/components/button"
+import { WhistButton, WhistButtonState } from "@app/shared/components/button"
 
 const Download = () => {
   return (
@@ -18,9 +15,9 @@ const Download = () => {
       </div>
       <div className="text-center mt-12">
         <a href="/download#top">
-          <FractalButton
+          <WhistButton
             contents="Download Now"
-            state={FractalButtonState.DEFAULT}
+            state={WhistButtonState.DEFAULT}
           />
         </a>
       </div>

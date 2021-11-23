@@ -1,7 +1,7 @@
 #ifndef LOGGING_H
 #define LOGGING_H
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file logging.h
  * @brief This file contains the logging macros and utils to send Winlogon
  *        status and to send the logs to the webserver.
@@ -125,7 +125,7 @@ extern const char *debug_tag, *info_tag, *metric_tag, *warning_tag, *error_tag, 
 #define LOG_FATAL(message, ...)                                                                  \
     internal_logging_printf(FATAL_ERROR_TAG, LOG_FMT message NEWLINE, LOG_ARGS(FATAL_ERROR_TAG), \
                             ##__VA_ARGS__);                                                      \
-    terminate_protocol(FRACTAL_EXIT_FAILURE)
+    terminate_protocol(WHIST_EXIT_FAILURE)
 
 /*
 ============================

@@ -1,7 +1,7 @@
 #ifndef SYSINFO_H
 #define SYSINFO_H
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file sysinfo.h
  * @brief This file contains all code that logs client hardware specifications.
 ============================

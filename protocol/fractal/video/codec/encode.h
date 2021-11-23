@@ -1,7 +1,7 @@
 #ifndef VIDEO_CODEC_ENCODE_H
 #define VIDEO_CODEC_ENCODE_H
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file encode.h
  * @brief This file contains the code to create and destroy Encoders and use
  *        them to encode captured screens.

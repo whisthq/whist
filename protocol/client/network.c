@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file network.c
  * @brief This file contains client-specific wrappers to low-level network
  *        functions.
@@ -31,7 +31,7 @@ Includes
 #include "audio.h"
 
 // Init information
-extern char user_email[FRACTAL_ARGS_MAXLEN + 1];
+extern char user_email[WHIST_ARGS_MAXLEN + 1];
 
 // Data
 extern volatile char client_binary_aes_private_key[16];

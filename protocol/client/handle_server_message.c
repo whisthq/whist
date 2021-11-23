@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file handle_server_message.c
  * @brief This file contains all the code for client-side processing of messages
  *        received from the server

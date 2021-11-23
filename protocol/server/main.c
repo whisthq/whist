@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file main.c
  * @brief This file contains the main code that runs a Whist server on a
  *        Windows or Linux Ubuntu computer.

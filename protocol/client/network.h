@@ -4,7 +4,7 @@
 #include <fractal/core/fractal.h>
 
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file network.h
  * @brief This file contains client-specific wrappers to low-level network
  *        functions.

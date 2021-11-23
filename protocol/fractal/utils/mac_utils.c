@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
+ * Copyright 2021 Whist Technologies, Inc.
  * @file mac_utils.c
  * @brief This file contains the MacOS helper functions for clipboard functions.
 ============================
