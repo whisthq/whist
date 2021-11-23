@@ -134,8 +134,16 @@ func TestSpinUpMandelbox(t *testing.T) {
 	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
 
 	dockerClient := mockClient{}
-	go handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
-	go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testMandelboxDBEvent, testTransportRequestMap, testmux)
+	goroutineTracker.Add(1)
+	go func() {
+		defer goroutineTracker.Done()
+		handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
+	}()
+	goroutineTracker.Add(1)
+	go func() {
+		defer goroutineTracker.Done()
+		SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testMandelboxDBEvent, testTransportRequestMap, testmux)
+	}()
 
 	goroutineTracker.Wait()
 
@@ -318,8 +326,16 @@ func TestSpinUpWithNewToken(t *testing.T) {
 	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
 
 	dockerClient := mockClient{}
-	go handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
-	go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testMandelboxDBEvent, testTransportRequestMap, testmux)
+	goroutineTracker.Add(1)
+	go func() {
+		defer goroutineTracker.Done()
+		handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
+	}()
+	goroutineTracker.Add(1)
+	go func() {
+		defer goroutineTracker.Done()
+		SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testMandelboxDBEvent, testTransportRequestMap, testmux)
+	}()
 
 	goroutineTracker.Wait()
 	<-testJSONTransportRequest.resultChan

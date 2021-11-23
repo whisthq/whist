@@ -417,7 +417,10 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// config download is a potentially long-running process that other pieces do not
 	// depend on.
 	userConfigDownloadComplete := make(chan bool)
+	goroutineTracker.Add(1)
 	go func() {
+		defer goroutineTracker.Done()
+
 		// User config errors aren't fatal --- we still want to spin up a mandelbox,
 		// and we will just use the provided encryption token to save configs when
 		// the mandelbox dies.
@@ -722,7 +725,9 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// Write user initial browser data at the same time as writeJSONData.
 	// This is done separately since both functions are independent of each other and we can save time.
 	userInitialBrowserDataDownloadComplete := make(chan bool)
+	goroutineTracker.Add(1)
 	go func() {
+		defer goroutineTracker.Done()
 		logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
 
 		err := mandelbox.WriteUserInitialBrowserData(req.Cookies)
@@ -819,14 +824,16 @@ var appArmorProfile string
 // Create and register the AppArmor profile for Docker to use with
 // mandelboxes. These do not persist, so must be done at service
 // startup.
-func initializeAppArmor(globalCancel context.CancelFunc) {
+func initializeAppArmor(globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) {
 	cmd := exec.Command("apparmor_parser", "-Kr")
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		logger.Panicf(globalCancel, "Unable to attach to process 'stdin' pipe. Error: %v", err)
 	}
 
+	goroutineTracker.Add(1)
 	go func() {
+		defer goroutineTracker.Done()
 		defer stdin.Close()
 		io.WriteString(stdin, appArmorProfile)
 	}()
@@ -994,7 +1001,7 @@ func main() {
 	}
 	logger.Infof("Running on instance name: %s", instanceName)
 
-	initializeAppArmor(globalCancel)
+	initializeAppArmor(globalCancel, &goroutineTracker)
 
 	initializeFilesystem(globalCancel)
 
@@ -1040,7 +1047,7 @@ func main() {
 		logger.Errorf("Can't get AWS Instance Name to start database subscriptions. Error: %s", err)
 	}
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
-	go subscriptions.Run(globalCtx, globalCancel, &goroutineTracker, string(instanceName), subscriptionEvents)
+	subscriptions.Run(globalCtx, globalCancel, &goroutineTracker, string(instanceName), subscriptionEvents)
 
 	// Start main event loop. Note that we don't track this goroutine, but
 	// instead control its lifetime with `eventLoopKeepAlive`. This is because it
@@ -1145,7 +1152,11 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			case *JSONTransportRequest:
 				if !metadata.IsLocalEnvWithoutDB() {
 					// Handle JSON transport validation on a separate goroutine
-					go handleJSONTransportRequest(serverevent, transportRequestMap, transportMapLock)
+					goroutineTracker.Add(1)
+					go func() {
+						defer goroutineTracker.Done()
+						handleJSONTransportRequest(serverevent, transportRequestMap, transportMapLock)
+					}()
 				} else {
 					// If running on a local environment, disable any pubsub logic. We have to create a subscription request
 					// that mocks the Hasura subscription event. Doing this avoids the need of setting up a Hasura server and
@@ -1173,8 +1184,16 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					}
 
 					// Launch both the JSON transport handler and the SpinUpMandelbox goroutines.
-					go handleJSONTransportRequest(serverevent, transportRequestMap, transportMapLock)
-					go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, &subscriptionEvent, transportRequestMap, transportMapLock)
+					goroutineTracker.Add(1)
+					go func() {
+						defer goroutineTracker.Done()
+						handleJSONTransportRequest(serverevent, transportRequestMap, transportMapLock)
+					}()
+					goroutineTracker.Add(1)
+					go func() {
+						defer goroutineTracker.Done()
+						SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, &subscriptionEvent, transportRequestMap, transportMapLock)
+					}()
 				}
 			default:
 				if serverevent != nil {
@@ -1188,8 +1207,12 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 			switch subscriptionEvent := subscriptionEvent.(type) {
 			// TODO: actually handle panics in these goroutines
 			case *subscriptions.MandelboxInfoEvent:
-				go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient,
-					subscriptionEvent, transportRequestMap, transportMapLock)
+				goroutineTracker.Add(1)
+				go func() {
+					defer goroutineTracker.Done()
+					SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient,
+						subscriptionEvent, transportRequestMap, transportMapLock)
+				}()
 
 			case *subscriptions.InstanceStatusEvent:
 				// Don't do this in a separate goroutine, since there's no reason to.

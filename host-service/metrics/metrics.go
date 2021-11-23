@@ -166,7 +166,9 @@ func startCollectionGoroutine(frequency time.Duration) error {
 		return utils.MakeError("Errors collecting the first batch of metrics: %v", latestErrors)
 	}
 
-	// Start the metrics collection goroutine
+	// Start the metrics collection goroutine. Note that this is not tracked by
+	// the global goroutineTracker because we want metrics collection to continue
+	// while the rest of the host-service is shutting down.
 	go func() {
 		logger.Infof("Starting metrics collection goroutine.")
 		timerChan := make(chan interface{})
