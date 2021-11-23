@@ -37,7 +37,7 @@ const Update = () => {
           {totalDownloadSize.toString()} MB at {downloadSpeed.toString()} Mbps
         </div>
         <div className="mt-6">
-          <Progress percent={percentageDownloaded} color="blue" />
+          <Progress percent={percentageDownloaded} className="h-2" />
         </div>
       </div>
     </div>

@@ -41,7 +41,7 @@ const Icon = (props: { state: NetworkTestState }) => {
       return (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-12 w-12 text-blue m-auto"
+          className="h-12 w-12 text-mint m-auto"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -123,7 +123,7 @@ const Button = (props: { state: NetworkTestState; onSubmit: () => void }) => {
         <FractalButton
           contents="Continue"
           state={FractalButtonState.DEFAULT}
-          className="px-12 bg-mint text-gray-800"
+          className="w-96 bg-mint text-gray-800"
           onClick={props.onSubmit}
         />
       )
@@ -132,7 +132,7 @@ const Button = (props: { state: NetworkTestState; onSubmit: () => void }) => {
         <FractalButton
           contents="Continue Anyway"
           state={FractalButtonState.DEFAULT}
-          className="px-12 bg-mint text-gray-800"
+          className="px-96 bg-mint text-gray-800"
           onClick={props.onSubmit}
         />
       )
@@ -200,7 +200,7 @@ const Network = (props: {
         <div className="mt-4">
           <Text state={testState} />
         </div>
-        <div className="mt-6">
+        <div className="mt-8">
           <NetworkStats networkInfo={props.networkInfo} />
         </div>
         <div>
@@ -209,7 +209,7 @@ const Network = (props: {
             className="rounded-t-none h-1"
           />
         </div>
-        <div className="mt-8">
+        <div className="mt-6">
           <Button state={testState} onSubmit={props.onSubmit} />
         </div>
       </div>
