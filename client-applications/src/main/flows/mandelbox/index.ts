@@ -17,12 +17,14 @@ export default flow(
       isNewConfigToken: boolean
       cookies: string
       bookmarks: string
+      userEmail: string
     }>
   ) => {
     const create = mandelboxCreateFlow(
       trigger.pipe(
         map((t) => ({
           accessToken: t.accessToken,
+          userEmail: t.userEmail
         }))
       )
     )
@@ -50,12 +52,12 @@ export default flow(
             restore_last_session: persistGet(RESTORE_LAST_SESSION) ?? true,
             ...(initialKeyRepeat !== "" &&
               !isNaN(parseInt(initialKeyRepeat)) && {
-                initial_key_repeat: parseInt(initialKeyRepeat),
-              }),
+              initial_key_repeat: parseInt(initialKeyRepeat),
+            }),
             ...(keyRepeat !== "" &&
               !isNaN(parseInt(keyRepeat)) && {
-                key_repeat: parseInt(keyRepeat),
-              }),
+              key_repeat: parseInt(keyRepeat),
+            }),
             ...(initialUrl !== "" && {
               initial_url: initialUrl,
             }),

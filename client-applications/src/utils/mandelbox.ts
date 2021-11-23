@@ -12,7 +12,6 @@ import { sessionID } from "@app/constants/app"
 import { AsyncReturnType } from "@app/@types/state"
 import { appEnvironment, FractalEnvironments } from "../../config/configs"
 import config from "@app/config/environment"
-import { userEmail } from "./state"
 
 const COMMIT_SHA = config.keys.COMMIT_SHA
 
@@ -52,7 +51,8 @@ export const mandelboxCreateErrorInternal = (
 // Helper functions
 export const mandelboxRequest = async (
   accessToken: string,
-  regions: AWSRegion[]
+  regions: AWSRegion[],
+  userEmail: string
 ) =>
   post({
     endpoint: "/mandelbox/assign",

@@ -24,19 +24,20 @@ import { AWSRegion } from "@app/@types/aws"
 
 export default flow<{
   accessToken: string
+  userEmail: string
 }>("mandelboxCreateFlow", (trigger) => {
   let attempts = 0
 
   const region = fork(
     trigger.pipe(
-      switchMap(({ accessToken }) =>
+      switchMap(({ accessToken, userEmail }) =>
         from(sortRegionByProximity(defaultAllowedRegions)).pipe(
-          withLatestFrom(of(accessToken))
+          withLatestFrom(of(accessToken), of(userEmail))
         )
       ),
-      map(([regions, accessToken]: [AWSRegion[], string]) => {
+      map(([regions, accessToken, userEmail]: [AWSRegion[], string, string]) => {
         if (regions.length === 0) throw new Error()
-        return [regions, accessToken]
+        return [regions, accessToken, userEmail]
       }),
       retryWhen((errors) =>
         errors.pipe(
@@ -59,9 +60,9 @@ export default flow<{
 
   const create = fork(
     region.success.pipe(
-      switchMap(([regions, accessToken]: [AWSRegion[], string]) =>
+      switchMap(([regions, accessToken, userEmail]: [AWSRegion[], string, string]) =>
         regions.length > 0
-          ? from(mandelboxRequest(accessToken, regions))
+          ? from(mandelboxRequest(accessToken, regions, userEmail))
           : of({})
       )
     ),
