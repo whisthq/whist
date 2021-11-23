@@ -12,7 +12,7 @@ for the logs we desire.
 
 In the initial request, we need to provide a header and a body. 
 
-The header will be our "X_API_TOKEN", which is the dev-token API token, and the 
+The header will be our "X_API_TOKEN", which is the `logz-to-text.py-token` API token, and the 
 "Content-Type", which will always be "application/json".
 
 The body will contatin the meat of the request. There are 3 fields we need
@@ -40,7 +40,7 @@ used to determine how many times we need to paginate
 page of results (where the number of logs in each POST is LOGS_PER_PAGE long).
 
 Then, we will paginate with that same SCROLL_ID until the logs recieved is
-equal to the number of logs logz.io has. Note, we do not need to resend the query 
+equal to the number of logs Logz.io has. Note, we do not need to resend the query 
 each time. Only the header and the scroll_id.
 
 """
