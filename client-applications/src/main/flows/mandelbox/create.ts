@@ -35,10 +35,12 @@ export default flow<{
           withLatestFrom(of(accessToken), of(userEmail))
         )
       ),
-      map(([regions, accessToken, userEmail]: [AWSRegion[], string, string]) => {
-        if (regions.length === 0) throw new Error()
-        return [regions, accessToken, userEmail]
-      }),
+      map(
+        ([regions, accessToken, userEmail]: [AWSRegion[], string, string]) => {
+          if (regions.length === 0) throw new Error()
+          return [regions, accessToken, userEmail]
+        }
+      ),
       retryWhen((errors) =>
         errors.pipe(
           delayWhen(() => {
@@ -60,10 +62,11 @@ export default flow<{
 
   const create = fork(
     region.success.pipe(
-      switchMap(([regions, accessToken, userEmail]: [AWSRegion[], string, string]) =>
-        regions.length > 0
-          ? from(mandelboxRequest(accessToken, regions, userEmail))
-          : of({})
+      switchMap(
+        ([regions, accessToken, userEmail]: [AWSRegion[], string, string]) =>
+          regions.length > 0
+            ? from(mandelboxRequest(accessToken, regions, userEmail))
+            : of({})
       )
     ),
     {
