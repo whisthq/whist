@@ -27,7 +27,7 @@ typedef enum FractalThreadPriority {
 
 void fractal_init_multithreading();
 
-FractalThread fractal_create_thread(FractalThreadFunction thread_function, char* thread_name,
+FractalThread fractal_create_thread(FractalThreadFunction thread_function, const char* thread_name,
                                     void* data);
 FractalThreadID fractal_get_thread_id(FractalThread thread);
 void fractal_detach_thread(FractalThread thread);

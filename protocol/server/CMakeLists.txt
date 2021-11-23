@@ -9,6 +9,7 @@ add_executable(FractalServer
         parse_args.c
         main.c
         handle_client_message.c
+        metrics.c
         network.c
         )
 

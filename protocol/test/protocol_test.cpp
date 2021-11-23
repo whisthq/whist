@@ -41,6 +41,7 @@ extern "C" {
 
 #ifndef __APPLE__
 #include "server/main.h"
+#include "server/metrics.h"
 #include "server/parse_args.h"
 #endif
 
@@ -294,6 +295,22 @@ TEST_F(CaptureStdoutTest, ServerParseArgsUsage) {
     EXPECT_EQ(ret_val, 1);
 
     check_stdout_line(::testing::HasSubstr("Usage:"));
+}
+
+// Tests that creates a metric logger thread and verifies all the server side metrics
+TEST_F(CaptureStdoutTest, MetricLoggerTest) {
+    exiting = false;
+    int metric_interval = 2;
+    memset(&metrics, 0, sizeof(metrics));
+    FractalThread metrics_thread =
+        fractal_create_thread(multithreaded_metrics, "multithreaded_metrics", &metric_interval);
+    fractal_sleep(1000);
+    metrics.video.frames_sent = 100;
+    metrics.video.frames_skipped_in_capture = 9;
+    exiting = true;
+    fractal_wait_thread(metrics_thread, NULL);
+    check_stdout_line(
+        ::testing::StrEq("{ \"video_fps_sent\" : 50.0 \"video_fps_skipped_capture\" : 4.5 }"));
 }
 
 #endif

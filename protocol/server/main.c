@@ -18,6 +18,7 @@ Includes
 */
 
 #include "main.h"
+#include "metrics.h"
 
 /*
 ============================
@@ -297,6 +298,9 @@ int main(int argc, char* argv[]) {
     FractalThread send_audio_thread =
         fractal_create_thread(multithreaded_send_audio, "multithreaded_send_audio", NULL);
 
+    int metric_interval = METRIC_REPORTING_INTERVAL;
+    FractalThread metrics_thread =
+        fractal_create_thread(multithreaded_metrics, "multithreaded_metrics", &metric_interval);
     FractalThread manage_clients_thread =
         fractal_create_thread(multithreaded_manage_client, "multithreaded_manage_client", NULL);
 
@@ -447,6 +451,7 @@ int main(int argc, char* argv[]) {
 
     fractal_wait_thread(send_video_thread, NULL);
     fractal_wait_thread(send_audio_thread, NULL);
+    fractal_wait_thread(metrics_thread, NULL);
     fractal_wait_thread(sync_tcp_packets_thread, NULL);
     fractal_wait_thread(manage_clients_thread, NULL);
 

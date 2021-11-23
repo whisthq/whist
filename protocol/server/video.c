@@ -41,6 +41,7 @@ Includes
 #include <fractal/utils/avpacket_buffer.h>
 #include <fractal/logging/log_statistic.h>
 #include "client.h"
+#include "metrics.h"
 #include "network.h"
 #include "video.h"
 
@@ -523,11 +524,12 @@ int32_t multithreaded_send_video(void* opaque) {
             accumulated_frames = capture_screen(device);
             log_double_statistic("Capture screen time (ms)",
                                  get_timer(statistics_timer) * MS_IN_SECOND);
-#if LOG_VIDEO
             if (accumulated_frames > 1) {
+                metrics.video.frames_skipped_in_capture++;
+#if LOG_VIDEO
                 LOG_INFO("Missed Frames! %d frames passed since last capture", accumulated_frames);
-            }
 #endif
+            }
             // LOG_INFO( "CaptureScreen: %d", accumulated_frames );
         }
 
@@ -622,6 +624,7 @@ int32_t multithreaded_send_video(void* opaque) {
                                   encoder->encoded_frame_size);
                         continue;
                     } else {
+                        metrics.video.frames_sent++;
                         send_populated_frames(&statistics_timer, &server_frame_timer, device,
                                               encoder, id);
 

@@ -38,6 +38,7 @@ else()
         ../server/audio.c
         ../server/parse_args.c
         ../server/handle_client_message.c
+        ../server/metrics.c
         ../server/network.c
 
         # Files needed for Whist Lib unit tests
