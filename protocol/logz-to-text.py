@@ -4,11 +4,11 @@
 The file, given a session id parameter, will obtain all the logs present in 
 logz.io for that session id.
 
-This file uses the logz.io SCROLL API, whose documentation is below:
+This file uses the Logz.io SCROLL API, whose documentation is below:
 @see https://docs.logz.io/api/#operation/scroll
 
 Basically, using this API, we can send an initial POST request with a query
-for the logs we desire. 
+for the logs we desire.
 
 In the initial request, we need to provide a header and a body. 
 
@@ -52,36 +52,29 @@ from datetime import datetime, timedelta
 from tqdm import tqdm
 
 
-# API key needed for authentication. User will need to set their API key
-# as an environment variable for security purposes
-# if not os.environ.get("LOGZ_IO_API_KEY"):
-#     raise Exception("Must set environment variable LOGZ_IO_API_KEY.")
-# LOGZ_IO_API_KEY = os.environ["LOGZ_IO_API_KEY"]
-
 # API URL
 LOGZ_IO_SCROLL_URL = "https://api.logz.io/v1/scroll"
 
 # How many logs per pagination we will get
 LOGS_PER_PAGE = 1000
 
-# Number of days logz.io retains the logs
-RETENTION_PERIOD_DAYS = 5
+# Number of days :ogz.io retains the logs
+RETENTION_PERIOD_DAYS = 7
 
-# Account API keys for base server, prod, staging, and dev
-# Named "dev-token" on each account
-# We could make this an AWS Secret and CURL those
+# Account API keys for base, dev, staging, & prod Logz.io servers
+# Named "logz-to-text.py-token" on each account
 ACCOUNT_KEY_PAIRS = {
-    ("base", "66014405-b4c2-4534-9ec5-fcfca4d11ec4"),
-    ("dev", "925537b4-bc73-40cf-adfc-979469c88733"),
-    ("staging", "64e1b49a-ec25-4369-9e5f-15c2a222bc4c"),
-    ("prod", "76df45e8-698b-4e8c-816a-4518a28a966e"),
+    ("base", "f79b29bf-187d-4051-a4c9-f7273fd471fd"),
+    ("dev", "32be01be-1e83-41c8-8997-908d74823173"),
+    ("staging", "23af72c5-04ed-4eaf-9e02-c5ef093fc195"),
+    ("prod", "606a4195-dc8e-439e-967b-cb8413714944"),
 }
 
 # Errors from 'requests' are ugly, let's try to reduce the likely-hood
 # of those errors occuring
 def validate_args(argv):
     if len(argv) != 2:
-        raise Exception("Usage: python3 logs-to-text.py SESSION_ID")
+        raise Exception("Usage: python3 logz-to-text.py SESSION_ID")
 
 
 # Gets a time 'days' days from current time in ElasticSearch timestamp format
@@ -92,7 +85,7 @@ def get_time_from_now_in_days_formatted(days):
     return now[:10] + "T" + now[11:23] + "Z"
 
 
-# Sends the initial request to the POST logz.io scroll API
+# Sends the initial request to the POST Logz.io scroll API
 # to establish the query (in this case, what session_id to look for)
 # and how many results per page (LOGS_PER_PAGE) to return.
 # Furthermore, also used to get the scroll_id that is needed to paginate
@@ -103,7 +96,7 @@ def init_scrolling(headers, query_string):
     # Basically, manually search your query on the logz.io website, then
     # use the inspect feature to see what query the website generates,
     # then copy that query into here.
-    # This is technically for the search API (we are using the scroll API)
+    # This is technically for the search API (we are using the Logz.io scroll API)
     # but the query is the same for both
 
     current_timestamp = get_time_from_now_in_days_formatted(0)
@@ -144,7 +137,7 @@ def init_scrolling(headers, query_string):
     return content["scrollId"], json.loads(content["hits"])["hits"]
 
 
-# Gets the page of logs from a POST request to logz.io scroll API
+# Gets the page of logs from a POST request to Logz.io scroll API
 def get_logs_page(headers, scroll_id):
     paginate_body = {"scroll_id": scroll_id}
 
@@ -222,7 +215,7 @@ def write_logs_to_files(parsed_logs, session_id, account):
 
 
 def scan_account(session_id, account, api_key):
-    # Headers to authorize scroll API in each account
+    # Headers to authorize Logz.io scroll API in each account
     headers = {"X-API-TOKEN": api_key, "Content-Type": "application/json"}
 
     # We need to get the initial scroll_id as described in the docs to
@@ -233,10 +226,11 @@ def scan_account(session_id, account, api_key):
     scroll_id, logs_page = init_scrolling(headers, session_id)
     parse_logs(parsed_logs, logs_page)
 
-    # This continues to paginate, making POST requests to the scroll API
+    # This continues to paginate, making POST requests to the Logz.io scroll API
     # and adds them to the parsed_logs array until there are no more results
     total, logs_page = get_logs_page(headers, scroll_id)
 
+    # Couldn't find logs
     if len(logs_page) == 0:
         print("No logs for {} in {}".format(session_id, account))
         return
@@ -252,8 +246,8 @@ def scan_account(session_id, account, api_key):
     # Sort the logs by date and time
     sort_logs(parsed_logs)
 
-    # Write results- separated by a new line- to  a log file
-    # named "{SESSION_ID}-{client or server}-{prod, dev, staging, or base}.log"
+    # Write results- separated by a new line- to a log file
+    # named "{SESSION_ID}-{client/server}-{base/dev/staging/prod}.log"
     write_logs_to_files(parsed_logs, session_id, account)
 
 
@@ -262,5 +256,6 @@ if __name__ == "__main__":
     validate_args(sys.argv)
     session_id = sys.argv[1]
 
+    # Scan all Logz.io servers for the session_id
     for account, api_key in ACCOUNT_KEY_PAIRS:
         scan_account(session_id, account, api_key)
