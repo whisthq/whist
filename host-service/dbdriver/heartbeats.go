@@ -40,12 +40,7 @@ func heartbeatGoroutine() {
 			// closed or written to (it should not be written to), but either way,
 			// it's time to die.
 
-			// Stop timer to avoid leaking a goroutine (not that it matters if we're
-			// shutting down, but still).
-			// (https://golang.org/pkg/time/#Timer.Stop)
-			if !timer.Stop() {
-				<-timer.C
-			}
+			utils.StopAndDrainTimer(timer)
 			return
 
 		case <-timerChan:

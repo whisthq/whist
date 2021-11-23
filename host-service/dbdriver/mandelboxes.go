@@ -190,11 +190,7 @@ func removeStaleMandelboxesGoroutine(globalCtx context.Context) {
 				logger.Error(err)
 			}
 
-			// Stop timer to avoid leaking a goroutine (not that it matters if we're
-			// shutting down, but still).
-			if !timer.Stop() {
-				<-timer.C
-			}
+			utils.StopAndDrainTimer(timer)
 			return
 
 		case <-timerChan:
