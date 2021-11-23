@@ -47,9 +47,9 @@ const Icon = (props: { state: NetworkTestState }) => {
           stroke="currentColor"
         >
           <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
             d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"
           />
         </svg>
@@ -64,9 +64,9 @@ const Icon = (props: { state: NetworkTestState }) => {
           stroke="currentColor"
         >
           <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
             d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
           />
         </svg>
@@ -75,15 +75,15 @@ const Icon = (props: { state: NetworkTestState }) => {
       return (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-12 w-12 text-orange m-auto"
+          className="h-12 w-12 text-red-500 m-auto"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
         >
           <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
             d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v2m0 4h.01"
           />
         </svg>
@@ -132,7 +132,7 @@ const Button = (props: { state: NetworkTestState; onSubmit: () => void }) => {
         <FractalButton
           contents="Continue Anyway"
           state={FractalButtonState.DEFAULT}
-          className="px-96 bg-mint text-gray-800"
+          className="w-96 bg-mint text-gray-800"
           onClick={props.onSubmit}
         />
       )
@@ -150,14 +150,14 @@ const NetworkStats = (props: {
       name: "Download Speed",
       stat: props.networkInfo?.downloadMbps ?? 0,
       units: "Mbps",
-      required: "50",
+      required: 50,
       operator: "greater",
     },
     {
       name: "Jitter",
       stat: props.networkInfo?.jitter ?? 0,
       units: "ms",
-      required: "10",
+      required: 10,
       operator: "less",
     },
   ]
@@ -165,19 +165,30 @@ const NetworkStats = (props: {
   return (
     <div>
       <dl className="grid grid-cols-1 rounded rounded-b-none bg-gray-900 overflow-hidden divide-gray-800 md:grid-cols-2 md:divide-y-0">
-        {stats.map((item) => (
-          <div key={item.name} className="px-4 py-5 sm:p-6">
-            <dt className="text-base font-normal text-gray-300 text-left">
-              {item.name}
-            </dt>
-            <dd className="mt-1 flex items-baseline">
-              <div className="items-baseline text-2xl font-semibold text-mint justify-between">
-                {item.stat}
-              </div>
-              <div className="text-gray-500 text-xs ml-1">{item.units}</div>
-            </dd>
-          </div>
-        ))}
+        {stats.map((item) => {
+          const warning =
+            item.operator === "greater"
+              ? item.stat < item.required
+              : item.stat > item.required
+          return (
+            <div key={item.name} className="px-4 py-5 sm:p-6">
+              <dt className="text-base font-normal text-gray-300 text-left">
+                {item.name}
+              </dt>
+              <dd className="mt-1 flex items-baseline">
+                <div
+                  className={classNames(
+                    "items-baseline text-2xl font-semibold justify-between",
+                    warning ? "text-red-500" : "text-mint"
+                  )}
+                >
+                  {item.stat}
+                </div>
+                <div className="text-gray-500 text-xs ml-1">{item.units}</div>
+              </dd>
+            </div>
+          )
+        })}
       </dl>
     </div>
   )
@@ -192,6 +203,7 @@ const Network = (props: {
   onSubmit: () => void
 }) => {
   const testState = getNetworkTestState(props.networkInfo)
+  // const testState = NetworkTestState.NETWORK_NOT_GOOD
 
   return (
     <div className="flex flex-col justify-center items-center bg-gray-800 h-screen text-center">
@@ -209,7 +221,7 @@ const Network = (props: {
             className="rounded-t-none h-1"
           />
         </div>
-        <div className="mt-6">
+        <div className="mt-6 h-12">
           <Button state={testState} onSubmit={props.onSubmit} />
         </div>
       </div>
