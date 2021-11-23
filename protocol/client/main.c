@@ -368,8 +368,8 @@ int main(int argc, char* argv[]) {
     // Try connection `MAX_INIT_CONNECTION_ATTEMPTS` times before
     //  closing and destroying the client.
     int max_connection_attempts = MAX_INIT_CONNECTION_ATTEMPTS;
-    for (try_amount = 0; try_amount < max_connection_attempts && !client_exiting &&
-                         exit_code == WHIST_EXIT_SUCCESS;
+    for (try_amount = 0;
+         try_amount < max_connection_attempts && !client_exiting && exit_code == WHIST_EXIT_SUCCESS;
          try_amount++) {
         if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
             client_exiting = true;

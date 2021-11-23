@@ -428,8 +428,8 @@ const TermsOfService = () => {
               component;
             </li>
             <li>
-              Mining cryptocurrencies, any related activities, or using
-              Whist’s computing power to break encryption keys;
+              Mining cryptocurrencies, any related activities, or using Whist’s
+              computing power to break encryption keys;
             </li>
             <li>
               Sending unwanted messages, promotions or advertising, or spam, or
@@ -704,12 +704,12 @@ const TermsOfService = () => {
           </p>
           <p>
             IN ADDITION, OTHER THAN FOR THE TYPES OF LIABILITY WE CANNOT LIMIT
-            BY LAW, WHIST AND ITS AFFILIATES’ LIABILITY FOR ALL CLAIMS
-            RELATING TO ANY SERVICE WILL BE CAPPED AT THE HIGHER OF $100 OR THE
-            AMOUNTS PAID BY YOU TO WHIST FOR THE SERVICE CONCERNED, DURING THE
-            SIX MONTHS PRECEDING THE EVENT GIVING RISE TO THE CLAIM. FINALLY,
-            YOU WILL DEFEND, INDEMNIFY AND HOLD WHIST, ITS AFFILIATES, AND ITS
-            AND THEIR DIRECTORS, OFFICERS AND EMPLOYEES HARMLESS FROM ANY CLAIM,
+            BY LAW, WHIST AND ITS AFFILIATES’ LIABILITY FOR ALL CLAIMS RELATING
+            TO ANY SERVICE WILL BE CAPPED AT THE HIGHER OF $100 OR THE AMOUNTS
+            PAID BY YOU TO WHIST FOR THE SERVICE CONCERNED, DURING THE SIX
+            MONTHS PRECEDING THE EVENT GIVING RISE TO THE CLAIM. FINALLY, YOU
+            WILL DEFEND, INDEMNIFY AND HOLD WHIST, ITS AFFILIATES, AND ITS AND
+            THEIR DIRECTORS, OFFICERS AND EMPLOYEES HARMLESS FROM ANY CLAIM,
             COST, LIABILITY, LOSS OR SETTLEMENT INCURRED IN CONNECTION WITH A
             THIRD-PARTY CLAIM ARISING OUT OF OR IN CONNECTION WITH A VIOLATION
             BY YOU OF ANY OF THESE TERMS.

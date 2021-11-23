@@ -2,10 +2,7 @@ import React from "react"
 import { Link } from "react-scroll"
 
 import LaptopMan from "@app/assets/graphics/laptopMan.svg"
-import {
-  WhistButton,
-  WhistButtonState,
-} from "@app/shared/components/button"
+import { WhistButton, WhistButtonState } from "@app/shared/components/button"
 
 const Hero = () => (
   <div className="pt-10 sm:pt-16 lg:pt-8 lg:pb-14 lg:overflow-hidden">

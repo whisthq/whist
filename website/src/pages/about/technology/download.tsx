@@ -1,9 +1,6 @@
 import React from "react"
 
-import {
-  WhistButton,
-  WhistButtonState,
-} from "@app/shared/components/button"
+import { WhistButton, WhistButtonState } from "@app/shared/components/button"
 
 const Download = () => {
   return (

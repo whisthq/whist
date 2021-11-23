@@ -2,10 +2,7 @@ import React, { useState } from "react"
 import { FaApple, FaWindows } from "react-icons/fa"
 import { Link } from "react-scroll"
 
-import {
-  WhistButton,
-  WhistButtonState,
-} from "@app/shared/components/button"
+import { WhistButton, WhistButtonState } from "@app/shared/components/button"
 import { ScreenSize } from "@app/shared/constants/screenSizes"
 import { withContext } from "@app/shared/utils/context"
 import { config } from "@app/shared/constants/config"
