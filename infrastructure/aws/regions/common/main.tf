@@ -2,8 +2,7 @@ provider "aws" {
   region = var.region
 }
 
-module "netwroking-infra" {
-  source="../../infrastructure/networking"
-  vpc-cidrs=var.vpc-cidrs
+module "networking-infra" {
+  source="../../resources/networking"
   region = var.region
 }
