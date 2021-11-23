@@ -153,14 +153,14 @@ const NetworkStats = (props: {
       name: "Download Speed",
       stat: props.networkInfo?.downloadMbps ?? 0,
       units: "Mbps",
-      required: 50,
+      required: MIN_ACCEPTABLE_DOWNLAOD_MBPS,
       operator: "greater",
     },
     {
       name: "Jitter",
       stat: props.networkInfo?.jitter ?? 0,
       units: "ms",
-      required: 10,
+      required: MAX_ACCEPTABLE_JITTER_MS,
       operator: "less",
     },
   ]
