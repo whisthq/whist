@@ -180,11 +180,9 @@ const WindowBackground = (props: any) => {
   )
 }
 
-const MRoot = memo(RootComponent)
-
 ReactDOM.render(
   <WindowBackground>
-    <MRoot />
+    <RootComponent />
   </WindowBackground>,
   document.getElementById("root")
 )
