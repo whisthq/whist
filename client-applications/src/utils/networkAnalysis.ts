@@ -3,7 +3,7 @@ import events from "events"
 
 // Maximum amount of time we want the download test to take in seconds
 const MILLISECONDS = 1000
-const TEST_DURATION_SECONDS = 10 * MILLISECONDS
+const TEST_DURATION_MILLISECONDS = 10 * MILLISECONDS
 
 // Config taken from @m-lab/ndt7 repo example
 const config = { userAcceptedDataPolicy: true }
@@ -31,7 +31,7 @@ const handleDownloadMeasurements = (
       iterations += 1
       results.progress = Math.ceil(
         (measurement.Data.TCPInfo.ElapsedTime /
-          (TEST_DURATION_SECONDS * 1000)) *
+          (TEST_DURATION_MILLISECONDS * 1000)) *
           100
       )
       const jitterInMs = measurement.Data.TCPInfo.RTTVar / 1000
@@ -62,7 +62,7 @@ const networkAnalyze = () => {
 
   setTimeout(() => {
     networkAnalysisEvent.emit("did-update", { ...results, progress: 100 })
-  }, TEST_DURATION_SECONDS)
+  }, TEST_DURATION_MILLISECONDS)
 }
 
-export { networkAnalysisEvent, networkAnalyze, TEST_DURATION_SECONDS }
+export { networkAnalysisEvent, networkAnalyze, TEST_DURATION_MILLISECONDS }
