@@ -15,7 +15,6 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
-	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/mandelbox"
 	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
 	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
@@ -23,6 +22,7 @@ import (
 	"github.com/fractal/fractal/host-service/metadata/aws"
 	"github.com/fractal/fractal/host-service/subscriptions"
 	"github.com/fractal/fractal/host-service/utils"
+	logger "github.com/fractal/fractal/host-service/whistlogger"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 

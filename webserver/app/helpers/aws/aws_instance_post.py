@@ -16,7 +16,7 @@ from app.database.models.cloud import (
 from app.utils.db.db_utils import set_local_lock_timeout
 from app.utils.aws.base_ec2_client import EC2Client
 from app.utils.general.name_generation import generate_name
-from app.utils.general.logs import fractal_logger
+from app.utils.general.logs import whist_logger
 from app.constants.mandelbox_host_states import MandelboxHostState
 from app.constants.ec2_instance_states import EC2InstanceState
 from app.constants.mandelbox_assign_error_names import MandelboxAssignError
@@ -128,11 +128,11 @@ def terminate_instance(instance: InstanceInfo) -> None:
         ) not in ["shutting-down", "terminated", "stopping", "stopped"]:
             ec2_success = False
     if ec2_success:
-        fractal_logger.info(f"instance {instance.instance_name} | deleting from db")
+        whist_logger.info(f"instance {instance.instance_name} | deleting from db")
         db.session.delete(instance)
         db.session.commit()
     else:
-        fractal_logger.error(
+        whist_logger.error(
             f"instance {instance.instance_name} | termination failed with resp {resp}"
         )
 
@@ -387,7 +387,7 @@ def drain_instance(instance: InstanceInfo) -> None:
         else:
             why = "instance_ip is empty string"
 
-        fractal_logger.info(
+        whist_logger.info(
             f"instance {instance.instance_name} | status {instance.status} |"
             f" terminating instance | reasoning {why}"
         )
@@ -416,15 +416,15 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
     with scale_mutex[f"{region}-{ami}"]:
         num_new = _get_num_new_instances(region, ami)
         instances = InstanceInfo.query.filter_by(location=region, aws_ami_id=ami).all()
-        fractal_logger.info(f"ami {region}/{ami} | instances {len(instances)} | delta {num_new}")
+        whist_logger.info(f"ami {region}/{ami} | instances {len(instances)} | delta {num_new}")
         for instance in instances:
             mandelboxes = MandelboxInfo.query.filter_by(instance_name=instance.instance_name).all()
-            fractal_logger.info(
+            whist_logger.info(
                 f">>> instance {instance.instance_name} | mandelboxes {len(mandelboxes)} | status"
                 f" {instance.status}"
             )
             for mandelbox in mandelboxes:
-                fractal_logger.info(
+                whist_logger.info(
                     f">>> >>> mandelbox {mandelbox.mandelbox_id} | user {mandelbox.user_id} |"
                     f" status {mandelbox.status}"
                 )
@@ -438,7 +438,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 .all()
             )
             if len(available_empty_instances) == 0:
-                fractal_logger.info(
+                whist_logger.info(
                     f"ami {region}/{ami} | there are no avaliable empty instances to scale down"
                 )
                 return
@@ -454,7 +454,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
                 ):
                     db.session.commit()
                     continue
-                fractal_logger.info(f">>> sending drain request to {instance.instance_name}")
+                whist_logger.info(f">>> sending drain request to {instance.instance_name}")
                 drain_instance(instance_info)
 
 
@@ -501,5 +501,5 @@ def check_and_handle_lingering_instances() -> None:
     for instance_name in lingering_instances:
         set_local_lock_timeout(5)
         instance_info = InstanceInfo.query.with_for_update().get(instance_name)
-        fractal_logger.info(f"Instance {instance_name} was lingering and is being drained")
+        whist_logger.info(f"Instance {instance_name} was lingering and is being drained")
         drain_instance(instance_info)

@@ -9,7 +9,7 @@ from http import HTTPStatus
 from flask import Flask
 from flask import abort, jsonify, make_response
 
-from app.utils.general.logs import fractal_logger
+from app.utils.general.logs import whist_logger
 
 # global lock-protected variable indicating whether webserver can process web requests
 _WEB_REQUESTS_ENABLED = True
@@ -32,13 +32,13 @@ def set_web_requests_status(enabled: bool) -> bool:
     )
     if not has_lock:
         # this should not happen and means our lock contention is bad
-        fractal_logger.error(
+        whist_logger.error(
             f"Could not acquire web requests lock. Could not set _WEB_REQUESTS_ENABLED={enabled}."
         )
         return False
     _WEB_REQUESTS_ENABLED = enabled
     _WEB_REQUESTS_LOCK.release()
-    fractal_logger.info(f"_WEB_REQUESTS_ENABLED set to {enabled}")
+    whist_logger.info(f"_WEB_REQUESTS_ENABLED set to {enabled}")
     return True
 
 
@@ -55,7 +55,7 @@ def can_process_requests() -> bool:
     )
     if not has_lock:
         # this should not happen and means our lock contention is bad
-        fractal_logger.error(
+        whist_logger.error(
             "Could not acquire web requests lock. Assuming requests cannot be handled."
         )
         return False

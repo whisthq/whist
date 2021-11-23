@@ -1,7 +1,7 @@
 /*
-Package fractallogger contains the logic for our custom logging system, including sending events to Logz.io and Sentry.
+Package whistlogger contains the logic for our custom logging system, including sending events to Logz.io and Sentry.
 */
-package fractallogger // import "github.com/fractal/fractal/host-service/fractallogger"
+package whistlogger // import "github.com/fractal/fractal/host-service/whistlogger"
 
 import (
 	"context"

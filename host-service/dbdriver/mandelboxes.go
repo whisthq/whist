@@ -9,10 +9,10 @@ import (
 	"github.com/jackc/pgx/v4"
 
 	"github.com/fractal/fractal/host-service/dbdriver/queries"
-	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/metadata/aws"
 	"github.com/fractal/fractal/host-service/utils"
+	logger "github.com/fractal/fractal/host-service/whistlogger"
 )
 
 // This file is concerned with database interactions at the mandelbox-level.

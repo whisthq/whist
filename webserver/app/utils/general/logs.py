@@ -28,7 +28,7 @@ class _ExtraHandler(logging.StreamHandler):
         record.msg = full_msg
 
 
-def _create_fractal_logger() -> logging.Logger:
+def _create_whist_logger() -> logging.Logger:
     """
     Create and configure a logger for fractal's purposes.
     """
@@ -46,17 +46,17 @@ def _create_fractal_logger() -> logging.Logger:
 # pylint: disable=pointless-string-statement
 """
 Usage:
-from app.utils.general.logs import fractal_logger
+from app.utils.general.logs import whist_logger
 
-fractal_logger.<loglevel>(msg)
+whist_logger.<loglevel>(msg)
 
-fractal_logger can handle an extra argument that is a dictionary
+whist_logger can handle an extra argument that is a dictionary
 containing the following supported keys:
 - label
 
 Examples:
-fractal_logger.info("hi")
-fractal_logger.error("oh no")
-fractal_logger.error("oh no", extra={"label": "you done goofed"})
+whist_logger.info("hi")
+whist_logger.error("oh no")
+whist_logger.error("oh no", extra={"label": "you done goofed"})
 """
-fractal_logger = _create_fractal_logger()
+whist_logger = _create_whist_logger()

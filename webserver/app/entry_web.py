@@ -16,7 +16,7 @@ import sys
 
 from app.utils.flask.factory import create_app
 from app.utils.flask.flask_handlers import set_web_requests_status
-from app.utils.general.logs import fractal_logger
+from app.utils.general.logs import whist_logger
 from app.utils.signal_handler.signals import WebSignalHandler
 
 # if testing, TESTING env var should be set. Default is False
@@ -25,11 +25,11 @@ app = create_app(testing=is_testing)
 
 # enable web requests
 if not set_web_requests_status(True):
-    fractal_logger.fatal("Could not enable web requests at startup. Failing out.")
+    whist_logger.fatal("Could not enable web requests at startup. Failing out.")
     sys.exit(1)
 
 # enable the web signal handler. This should work on OSX and Linux.
 if "windows" in platform.platform().lower():
-    fractal_logger.warning("signal handler is not supported on windows. skipping enabling them.")
+    whist_logger.warning("signal handler is not supported on windows. skipping enabling them.")
 else:
     WebSignalHandler()

@@ -7,8 +7,8 @@ import (
 	"math/rand"
 	"sync"
 
-	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/utils"
+	logger "github.com/fractal/fractal/host-service/whistlogger"
 )
 
 // A PortBinding represents a single port that is bound inside a mandelbox to a

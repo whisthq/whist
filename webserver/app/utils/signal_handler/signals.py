@@ -7,7 +7,7 @@ for more details on when this happens and how we are solving it.
 import signal
 from types import FrameType
 
-from app.utils.general.logs import fractal_logger
+from app.utils.general.logs import whist_logger
 from app.utils.flask.flask_handlers import set_web_requests_status
 
 
@@ -37,4 +37,4 @@ class WebSignalHandler:
         """
         # 1. disallow web requests
         if not set_web_requests_status(False):
-            fractal_logger.error("Could not disable web requests after SIGTERM.")
+            whist_logger.error("Could not disable web requests after SIGTERM.")

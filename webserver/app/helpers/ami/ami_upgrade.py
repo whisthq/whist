@@ -6,7 +6,7 @@ from flask import current_app, Flask
 from sqlalchemy import or_, and_
 
 from app.database.models.cloud import db, RegionToAmi, InstanceInfo
-from app.utils.general.logs import fractal_logger
+from app.utils.general.logs import whist_logger
 from app.helpers.aws.aws_instance_post import (
     do_scale_up_if_necessary,
     drain_instance,
@@ -80,7 +80,7 @@ def launch_new_ami_buffer(
         None.
     """
     global region_wise_upgrade_threads
-    fractal_logger.debug(f"launching_instances in {region_name} with ami: {ami_id}")
+    whist_logger.debug(f"launching_instances in {region_name} with ami: {ami_id}")
     with flask_app.app_context():
         force_buffer = flask_app.config["DEFAULT_INSTANCE_BUFFER"]
         new_instance_names = do_scale_up_if_necessary(
@@ -89,7 +89,7 @@ def launch_new_ami_buffer(
         result = False  # Make Pyright stop complaining
         assert len(new_instance_names) > 0  # This should always hold
         for new_instance_name in new_instance_names:
-            fractal_logger.debug(
+            whist_logger.debug(
                 f"Waiting for instance with name: {new_instance_name} to be marked online"
             )
             result = _poll(new_instance_name)
@@ -212,8 +212,8 @@ def create_ami_buffer(
         else:
             instances_created.append(region_and_bool_pair[3])
     if not threads_succeeded:
-        fractal_logger.info(f"Some regions failed to upgrade: {regions_failed}.")
-        fractal_logger.info(f"draining all newly active instances: {instances_created}")
+        whist_logger.info(f"Some regions failed to upgrade: {regions_failed}.")
+        whist_logger.info(f"draining all newly active instances: {instances_created}")
         for instance in instances_created:
             instance = cast(str, instance)
             instanceinfo = InstanceInfo.query.get(instance)
@@ -247,7 +247,7 @@ def swapover_amis(new_amis_str: List[str]) -> None:
         # invoked the `fetch_current_running_instances` function. Using this
         # lock, we mark the instances as DRAINING to prevent a mandelbox from
         # being assigned to the instances.
-        fractal_logger.info(f"Draining instance {active_instance.instance_name} in database only!")
+        whist_logger.info(f"Draining instance {active_instance.instance_name} in database only!")
         active_instance.status = MandelboxHostState.DRAINING
     db.session.commit()
 
@@ -264,4 +264,4 @@ def swapover_amis(new_amis_str: List[str]) -> None:
 
     db.session.commit()
 
-    fractal_logger.info("Finished performing AMI upgrade.")
+    whist_logger.info("Finished performing AMI upgrade.")

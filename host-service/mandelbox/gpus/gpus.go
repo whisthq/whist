@@ -7,10 +7,10 @@ import (
 	"math"
 	"sync"
 
-	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/metrics"
 	"github.com/fractal/fractal/host-service/utils"
+	logger "github.com/fractal/fractal/host-service/whistlogger"
 )
 
 func init() {

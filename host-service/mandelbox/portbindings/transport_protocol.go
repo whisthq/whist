@@ -3,8 +3,8 @@ package portbindings // import "github.com/fractal/fractal/host-service/mandelbo
 import (
 	"strings"
 
-	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/utils"
+	logger "github.com/fractal/fractal/host-service/whistlogger"
 )
 
 // This block contains the two transport protocols (TCP and UDP) that we care

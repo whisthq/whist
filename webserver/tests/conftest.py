@@ -22,9 +22,9 @@ from app.database.models.cloud import (
 )
 from app.utils.flask.flask_handlers import set_web_requests_status
 from app.utils.signal_handler.signals import WebSignalHandler
-from app.utils.general.logs import fractal_logger
+from app.utils.general.logs import whist_logger
 from app.utils.general.limiter import limiter
-from tests.client import FractalAPITestClient
+from tests.client import WhistAPITestClient
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
 from tests.helpers.utils import (
     get_allowed_regions,
@@ -56,21 +56,19 @@ def app() -> Flask:
 
     # TODO: this entire function generally the same as entry_web.py. Can we combine?
     _app = create_app(testing=True)
-    _app.test_client_class = FractalAPITestClient
+    _app.test_client_class = WhistAPITestClient
 
     # Reconfigure Flask-JWT-Extended so it can validate test JWTs
     _app.extensions["flask-jwt-extended"].decode_key_loader(default_decode_key_callback)
 
     # enable web requests
     if not set_web_requests_status(True):
-        fractal_logger.fatal("Could not enable web requests at startup. Failing out.")
+        whist_logger.fatal("Could not enable web requests at startup. Failing out.")
         sys.exit(1)
 
     # enable the web signal handler. This should work on OSX and Linux.
     if "windows" in platform.platform().lower():
-        fractal_logger.warning(
-            "signal handler is not supported on windows. skipping enabling them."
-        )
+        whist_logger.warning("signal handler is not supported on windows. skipping enabling them.")
     else:
         WebSignalHandler()
 
@@ -85,7 +83,7 @@ def _db() -> db:
 
 @pytest.fixture
 def authorized(
-    client: FractalAPITestClient,
+    client: WhistAPITestClient,
     user: str,  # pylint: disable=redefined-outer-name
     monkeypatch: pytest.MonkeyPatch,
 ) -> str:
@@ -266,7 +264,7 @@ def make_user() -> Callable[[], str]:
 
 @pytest.fixture
 def make_authorized_user(
-    client: FractalAPITestClient,
+    client: WhistAPITestClient,
     make_user: Callable[..., str],  # pylint: disable=redefined-outer-name
     monkeypatch: pytest.MonkeyPatch,
 ) -> Callable[..., str]:

@@ -14,10 +14,10 @@ from flask import current_app, Flask
 from app.config import _callback_webserver_hostname
 from app.database.models.cloud import RegionToAmi
 from app.utils.flask.flask_handlers import can_process_requests, set_web_requests_status
-from app.utils.general.logs import fractal_logger
+from app.utils.general.logs import whist_logger
 from app.utils.db.db_utils import set_local_lock_timeout
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
-from tests.client import FractalAPITestClient
+from tests.client import WhistAPITestClient
 
 
 def test_callback_webserver_hostname_localhost() -> None:
@@ -47,7 +47,7 @@ def test_callback_webserver_hostname_localhost_with_port() -> None:
 @pytest.mark.skipif(
     "windows" in platform.platform().lower(), reason="must be running a POSIX compliant OS."
 )
-def test_webserver_sigterm(client: FractalAPITestClient, make_user: Callable[..., str]) -> None:
+def test_webserver_sigterm(client: WhistAPITestClient, make_user: Callable[..., str]) -> None:
     """
     Make sure SIGTERM is properly handled by webserver. After a SIGTERM, all new web requests should
     error out with code RESOURCE_UNAVAILABLE. For more info, see app/signals.py.
@@ -83,7 +83,7 @@ def test_local_lock_timeout(app: Flask, region_name: Optional[str]) -> None:
                 _ = RegionToAmi.query.with_for_update().get(
                     (region_name, CLIENT_COMMIT_HASH_FOR_TESTING)
                 )
-                fractal_logger.info("Got lock and data")
+                whist_logger.info("Got lock and data")
                 time.sleep(hold_time)
             return True
         except OperationalError as op_err:
@@ -94,18 +94,18 @@ def test_local_lock_timeout(app: Flask, region_name: Optional[str]) -> None:
                 raise op_err
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        fractal_logger.info("Starting threads...")
+        whist_logger.info("Starting threads...")
         thread_one = executor.submit(acquire_lock, 5, 10)
         thread_two = executor.submit(acquire_lock, 5, 10)
 
-        fractal_logger.info("Getting thread results...")
+        whist_logger.info("Getting thread results...")
         thread_one_result = thread_one.result()
         thread_two_result = thread_two.result()
 
         if thread_one_result is True and thread_two_result is True:
-            fractal_logger.error("Both threads got the lock! Locking failed.")
+            whist_logger.error("Both threads got the lock! Locking failed.")
             assert False
         elif thread_one_result is False and thread_two_result is False:
-            fractal_logger.error("Neither thread got the lock! Invesigate..")
+            whist_logger.error("Neither thread got the lock! Invesigate..")
             assert False
         # here, only one thread got the lock so this test succeeds

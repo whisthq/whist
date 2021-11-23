@@ -10,12 +10,12 @@ from flask import current_app
 from pytest import MonkeyPatch
 
 from tests.patches import function, Object
-from tests.client import FractalAPITestClient
+from tests.client import WhistAPITestClient
 
 
 @pytest.mark.parametrize("subscription_status", (None, "canceled", "incomplete_expired", "unpaid"))
 def test_payment_portal_no_subscription(
-    client: FractalAPITestClient,
+    client: WhistAPITestClient,
     make_user: Callable[[], str],
     monkeypatch: MonkeyPatch,
     subscription_status: Optional[str],
@@ -50,7 +50,7 @@ def test_payment_portal_no_subscription(
 
 @pytest.mark.parametrize("subscription_status", ("active", "past_due", "incomplete", "trialing"))
 def test_create_billing_portal_unauthorized(
-    client: FractalAPITestClient,
+    client: WhistAPITestClient,
     make_user: Callable[..., str],
     monkeypatch: MonkeyPatch,
     subscription_status: Optional[str],

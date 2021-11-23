@@ -7,8 +7,8 @@ import (
 	"math/rand"
 	"sync"
 
-	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/utils"
+	logger "github.com/fractal/fractal/host-service/whistlogger"
 )
 
 // TTY is defined as a type so that the implementation can change without the

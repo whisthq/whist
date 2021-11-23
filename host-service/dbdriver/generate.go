@@ -9,7 +9,7 @@ package dbdriver // import "github.com/fractal/fractal/host-service/dbdriver"
 import (
 	"math/bits"
 
-	logger "github.com/fractal/fractal/host-service/fractallogger"
+	logger "github.com/fractal/fractal/host-service/whistlogger"
 )
 
 func init() {

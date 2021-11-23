@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/fractal/fractal/host-service/auth"
-	logger "github.com/fractal/fractal/host-service/fractallogger"
 	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
 	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
+	logger "github.com/fractal/fractal/host-service/whistlogger"
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -87,7 +87,7 @@ type JSONTransportRequest struct {
 	MandelboxID           mandelboxtypes.MandelboxID           `json:"mandelbox_id"`                   // MandelboxID, used for the json transport request map
 	IsNewConfigToken      bool                                 `json:"is_new_config_encryption_token"` // Flag indicating we should expect a new config encryption token and to skip config decryption this run
 	JSONData              string                               `json:"json_data"`                      // Arbitrary stringified JSON data to pass to mandelbox
-	Cookies               string                               `json:"cookies,omitempty"`		       // The cookies provided by the client-app
+	Cookies               string                               `json:"cookies,omitempty"`              // The cookies provided by the client-app
 	resultChan            chan requestResult                   // Channel to pass the request result between goroutines
 }
 
