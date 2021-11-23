@@ -60,7 +60,15 @@ const RootComponent = () => {
       },
     })
 
-  const handleOnboardingTypeform = () => setShow(WindowHashNetwork)
+  const handleOnboardingTypeform = () => {
+    setMainState({
+      trigger: {
+        name: WhistTrigger.startNetworkAnalysis,
+        payload: undefined,
+      },
+    })
+    setShow(WindowHashNetwork)
+  }
 
   const showSignoutWindow = () =>
     setMainState({
@@ -75,6 +83,8 @@ const RootComponent = () => {
       },
     })
   }
+
+  const handleNetworkSubmit = () => setShow(WindowHashImporter)
 
   useEffect(() => {
     // We need to ask the main thread to re-emit the current StateIPC because
@@ -97,7 +107,12 @@ const RootComponent = () => {
       />
     )
   if (show === WindowHashNetwork)
-    return <Network networkInfo={mainState.networkInfo} />
+    return (
+      <Network
+        networkInfo={mainState.networkInfo}
+        onSubmit={handleNetworkSubmit}
+      />
+    )
   if (show === WindowHashOnboarding) {
     return (
       <Typeform

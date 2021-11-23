@@ -22,6 +22,7 @@ const filterByName = (
   WhistTrigger.showPaymentWindow, // Fires when "Open Payment Information" button is clicked on error window popup
   WhistTrigger.onboarded,
   WhistTrigger.emitIPC,
+  WhistTrigger.startNetworkAnalysis,
 ].forEach((trigger: string) => {
   createTrigger(
     trigger,

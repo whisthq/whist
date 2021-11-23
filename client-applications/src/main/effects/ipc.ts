@@ -45,7 +45,7 @@ const subscribed = combineLatest(
         map((obj) => JSON.stringify(obj))
       ),
       browsers: of(getInstalledBrowsers()),
-      networkInfo: fromTrigger("networkAnalysis"),
+      networkInfo: fromTrigger(WhistTrigger.networkAnalysisEvent),
     },
     (obs) => concat(of(undefined), obs)
   )
