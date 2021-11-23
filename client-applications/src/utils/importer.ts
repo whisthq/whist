@@ -220,9 +220,7 @@ const expandUser = (text: string): string => {
   })
 }
 
-const expandPaths = (paths: string[], osName: string): string => {
-  osName = osName.toLowerCase()
-
+const expandPaths = (paths: string[]): string => {
   // expand the path of file and remove invalid files
   paths = paths.map(expandUser)
 
@@ -304,7 +302,7 @@ const decryptCookie = async (
 const getCookiesFromFile = async (
   browser: InstalledBrowser
 ): Promise<Cookie[]> => {
-  const cookieFile = getExpandedCookieFilePath(browser)
+  const cookieFile = expandPaths(getCookieFilePath(browser))
 
   try {
     const tempFile = createLocalCopy(cookieFile)
@@ -326,7 +324,7 @@ const getCookiesFromFile = async (
 }
 
 const getBookmarksFromFile = (browser: InstalledBrowser): string => {
-  const bookmarkFile = getExpandedBookmarkFilePath(browser)
+  const bookmarkFile = expandPaths(getBookmarkFilePath(browser))
 
   try {
     const bookmarks = fs.readFileSync(bookmarkFile, "utf8")
@@ -339,34 +337,6 @@ const getBookmarksFromFile = (browser: InstalledBrowser): string => {
   } catch (err) {
     console.error(err)
     return ""
-  }
-}
-
-const getExpandedCookieFilePath = (browser: InstalledBrowser): string => {
-  switch (process.platform) {
-    case "darwin": {
-      return expandPaths(getCookieFilePath(browser), "osx")
-    }
-    case "linux": {
-      return expandPaths(getCookieFilePath(browser), "linux")
-    }
-    default: {
-      throw Error("OS not recognized. Works on OSX or linux.")
-    }
-  }
-}
-
-const getExpandedBookmarkFilePath = (browser: InstalledBrowser): string => {
-  switch (process.platform) {
-    case "darwin": {
-      return expandPaths(getBookmarkFilePath(browser), "osx")
-    }
-    case "linux": {
-      return expandPaths(getBookmarkFilePath(browser), "linux")
-    }
-    default: {
-      throw Error("OS not recognized. Works on OSX or linux.")
-    }
   }
 }
 
@@ -421,7 +391,7 @@ const createLocalCopy = (cookieFile: string): string => {
 }
 
 const isBrowserInstalled = (browser: InstalledBrowser) => {
-  return fs.existsSync(getExpandedCookieFilePath(browser))
+  return fs.existsSync(expandPaths(getCookieFilePath(browser)))
 }
 
 const getInstalledBrowsers = () => {
