@@ -4,11 +4,10 @@ import dbus from "dbus-next"
 import fs from "fs"
 import tmp from "tmp"
 import { homedir } from "os"
-import { dirname } from "path"
+import path, { dirname } from "path"
 // import Database from "better-sqlite3"
 import knex from "knex"
 import crypto from "crypto"
-import path from "path"
 
 import {
   ALGORITHM_PLAIN,
@@ -96,7 +95,7 @@ const getBrowserDefaultDirectory = (browser: InstalledBrowser): string[] => {
 
 const getCookieFilePath = (browser: InstalledBrowser): string[] => {
   const browserDirectories = getBrowserDefaultDirectory(browser)
-  return browserDirectories.map((dir) => path.join(dir,  "Cookies"))
+  return browserDirectories.map((dir) => path.join(dir, "Cookies"))
 }
 
 const getBookmarkFilePath = (browser: InstalledBrowser): string[] => {
