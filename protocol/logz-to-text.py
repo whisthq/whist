@@ -58,7 +58,7 @@ LOGZ_IO_SCROLL_URL = "https://api.logz.io/v1/scroll"
 # How many logs per pagination we will get
 LOGS_PER_PAGE = 1000
 
-# Number of days :ogz.io retains the logs
+# Number of days Logz.io retains the logs
 RETENTION_PERIOD_DAYS = 7
 
 # Account API keys for base, dev, staging, & prod Logz.io servers
