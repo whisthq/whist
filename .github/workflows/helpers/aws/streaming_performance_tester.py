@@ -14,6 +14,8 @@ from testing_helpers import (
     create_ec2_instance,
     wait_for_instance_to_start_or_stop,
     get_instance_ip,
+    start_instance,
+    stop_instance,
 )
 
 # add the current directory to the path no matter where this is called from
@@ -45,7 +47,7 @@ parser.add_argument(
 parser.add_argument(
     "--use-existing-instance",
     help="The public IP of the existing instance to use for the test. If left empty, a clean instance will be generated instead.",
-    type=string,
+    type=str,
     default="",
 )
 
@@ -61,6 +63,14 @@ parser.add_argument(
     help="The length of the perf test in seconds",
     type=int,
     default=126,  # Length of the video in link above is 2mins, 6seconds
+)
+
+parser.add_argument(
+    "--cmake_build_type",
+    help="The cmake build type to use",
+    type=str,
+    choices=['dev', 'prod', 'perf'],
+    default="perf"
 )
 
 args = parser.parse_args()
@@ -212,7 +222,7 @@ if __name__ == "__main__":
 
     # Retrieve fractal/fractal monorepo on the instance
     command = (
-        "git rm -rf fractal; git clone -b "
+        "rm -rf fractal; git clone -b "
         + branch_name
         + " https://"
         + github_token
@@ -240,6 +250,11 @@ if __name__ == "__main__":
     for command in dpkg_commands:
         hs_process.sendline(command)
         wait_until_cmd_done(hs_process, pexpect_prompt)
+
+    # Getting rid of potential duplicates in target packages source config lists
+    command = "awk '!seen[$0]++' /etc/apt/sources.list.d/elastic-7.x.list | sudo tee /etc/apt/sources.list.d/elastic-7.x.list"
+    hs_process.sendline(command)
+    wait_until_cmd_done(hs_process, pexpect_prompt)
 
     # Set up the server/client
     # 1- run host-setup
@@ -284,7 +299,7 @@ if __name__ == "__main__":
     server_process = attempt_ssh_connection(cmd, aws_timeout, server_log, pexpect_prompt, 5)
 
     print("Building the server mandelbox in PERF mode ...")
-    command = "cd ~/fractal/mandelboxes && ./build.sh browsers/chrome --perf | tee ~/server_mandelbox_build.log"
+    command = "cd ~/fractal/mandelboxes && ./build.sh browsers/chrome --{} | tee ~/server_mandelbox_build.log".format(args.cmake_build_type)
     server_process.sendline(command)
     wait_until_cmd_done(server_process, pexpect_prompt)
     print("Finished building the browsers/chrome (server) mandelbox on the EC2 instance")
@@ -338,8 +353,8 @@ if __name__ == "__main__":
     client_process.sendline(command)
     wait_until_cmd_done(client_process, pexpect_prompt)
 
-    print("Building the dev client mandelbox in PERF mode ...")
-    command = "cd ~/fractal/mandelboxes && ./build.sh development/client --perf | tee ~/client_mandelbox_build.log"
+    print("Building the dev client mandelbox in {} mode ...".format(args.cmake_build_type))
+    command = "cd ~/fractal/mandelboxes && ./build.sh development/client --{} | tee ~/client_mandelbox_build.log".format(args.cmake_build_type)
     client_process.sendline(command)
     wait_until_cmd_done(client_process, pexpect_prompt)
     print("Finished building the dev client mandelbox on the EC2 instance")

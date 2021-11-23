@@ -179,6 +179,9 @@ EOF
   wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
   echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-7.x.list
 
+  # remove duplicates
+  awk '!seen[$0]++' /etc/apt/sources.list.d/elastic-7.x.list | sudo tee /etc/apt/sources.list.d/elastic-7.x.list
+
   # Install filebeat via apt
   sudo apt-get update -y
   sudo apt-get install -y filebeat
