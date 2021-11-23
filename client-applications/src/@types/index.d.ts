@@ -32,3 +32,4 @@ declare module "*.css" {
 }
 
 declare module "deepdash/mapValuesDeep"
+declare module "@m-lab/ndt7"

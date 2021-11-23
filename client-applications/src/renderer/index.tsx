@@ -12,6 +12,7 @@ import Signout from "@app/renderer/pages/signout"
 import Typeform from "@app/renderer/pages/typeform"
 import Importer from "@app/renderer/pages/importer"
 import Update from "@app/renderer/pages/update"
+import Network from "@app/renderer/pages/network"
 
 import {
   WindowHashSignout,
@@ -19,6 +20,7 @@ import {
   WindowHashUpdate,
   WindowHashImporter,
   WindowHashOnboarding,
+  WindowHashNetwork,
 } from "@app/constants/windows"
 import {
   fractalError,
@@ -39,6 +41,7 @@ import { WhistTrigger } from "@app/constants/triggers"
 const RootComponent = () => {
   const [show, setShow] = useState(window.location.search.split("show=")[1])
   const [mainState, setMainState] = useMainState()
+
   const relaunch = () =>
     setMainState({
       trigger: { name: WhistTrigger.relaunchAction, payload: undefined },
@@ -57,7 +60,15 @@ const RootComponent = () => {
       },
     })
 
-  const handleOnboardingTypeform = () => setShow(WindowHashImporter)
+  const handleOnboardingTypeform = () => {
+    setMainState({
+      trigger: {
+        name: WhistTrigger.startNetworkAnalysis,
+        payload: undefined,
+      },
+    })
+    setShow(WindowHashNetwork)
+  }
 
   const showSignoutWindow = () =>
     setMainState({
@@ -72,6 +83,8 @@ const RootComponent = () => {
       },
     })
   }
+
+  const handleNetworkSubmit = () => setShow(WindowHashImporter)
 
   useEffect(() => {
     // We need to ask the main thread to re-emit the current StateIPC because
@@ -91,6 +104,13 @@ const RootComponent = () => {
         onSubmit={(browser: string | undefined) =>
           handleImporterSubmit(browser)
         }
+      />
+    )
+  if (show === WindowHashNetwork)
+    return (
+      <Network
+        networkInfo={mainState.networkInfo}
+        onSubmit={handleNetworkSubmit}
       />
     )
   if (show === WindowHashOnboarding) {

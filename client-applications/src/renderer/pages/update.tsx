@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react"
-import { Line } from "rc-progress"
+import { Progress } from "@app/components/html/progress"
 
 import { useMainState } from "@app/utils/ipc"
 
@@ -37,12 +37,7 @@ const Update = () => {
           {totalDownloadSize.toString()} MB at {downloadSpeed.toString()} Mbps
         </div>
         <div className="mt-6">
-          <Line
-            percent={percentageDownloaded}
-            strokeWidth={3}
-            trailWidth={3}
-            strokeColor="#00FFA2"
-          />
+          <Progress percent={percentageDownloaded} className="h-2" />
         </div>
       </div>
     </div>

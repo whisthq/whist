@@ -43,6 +43,7 @@ const WhistTrigger = {
   signupAction: "signupAction",
   relaunchAction: "relaunchAction",
   clearCacheAction: "clearCacheAction",
+  startNetworkAnalysis: "startNetworkAnalysis",
 
   // Tray triggers
   showSignoutWindow: "showSignoutWindow",
@@ -65,6 +66,7 @@ const WhistTrigger = {
   // System triggers (power, Internet)
   powerResume: "powerResume",
   powerSuspend: "powerSuspend",
+  networkAnalysisEvent: "networkAnalysisEvent",
 
   // Protocol triggers
   protocolError: "protocolError",

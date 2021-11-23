@@ -9,4 +9,5 @@ export interface StateIPC {
   appEnvironment: string // dev, staging, prod
   updateInfo: string // emitted by autoUpdater
   browsers: string[]
+  networkInfo: { jitter: number; downloadMbps: number; progress: number }
 }
