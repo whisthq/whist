@@ -16,7 +16,7 @@ from app.helpers.aws.aws_instance_post import do_scale_up_if_necessary
 from app.helpers.aws.aws_mandelbox_assign_post import is_user_active
 from app.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 from app.utils.general.logs import whist_logger
-from app.helpers.general.sanitize import sanitize_email
+from app.utils.general.sanitize import sanitize_email
 from app.utils.metrics.flask_app import app_record_metrics
 from app.helpers.aws.aws_instance_post import find_instance, find_enabled_regions
 from app.database.models.cloud import db, InstanceInfo, MandelboxInfo, RegionToAmi
