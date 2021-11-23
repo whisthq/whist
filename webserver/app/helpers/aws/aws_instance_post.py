@@ -531,7 +531,7 @@ def check_and_handle_instances_with_old_commit_hash() -> None:
 
     for instance in instances_with_old_commit_hash:
         set_local_lock_timeout(5)
-        fractal_logger.info(
+        whist_logger.info(
             f"Instance {instance.instance_name} has an old commit hash and is being drained"
         )
         drain_instance(instance)
