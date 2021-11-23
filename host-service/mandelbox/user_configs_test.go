@@ -3,6 +3,7 @@ package mandelbox
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -183,7 +184,7 @@ func TestUserInitialBrowserWriteEmpty(t *testing.T) {
 	// store the browser configs in a temporary file
 	unpackedConfigDir := path.Join(testMandelboxData.getUserConfigDir(), testMandelboxData.getUnpackedConfigsDirectoryName())
 
-	if _, err := os.Stat(unpackedConfigDir); err != nil && err.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(unpackedConfigDir); err != nil && errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("error writing empty user initial browser data. Expected %v but got %v", os.ErrNotExist, err)
 		os.RemoveAll(unpackedConfigDir)
 	}
