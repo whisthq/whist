@@ -69,8 +69,8 @@ parser.add_argument(
     "--cmake_build_type",
     help="The cmake build type to use",
     type=str,
-    choices=['dev', 'prod', 'perf'],
-    default="perf"
+    choices=["dev", "prod", "perf"],
+    default="perf",
 )
 
 args = parser.parse_args()
@@ -99,9 +99,9 @@ def attempt_ssh_connection(ssh_command, timeout, log_file_handle, pexpect_prompt
             print(f"SSH connection established with EC2 instance!")
             return child
         elif result_index >= 3:
-            print("SSH connection timed out!")
+            print("\tSSH connection timed out (retry {}/{})".format(retries, max_retries))
             child.kill(0)
-            exit()
+            time.sleep(10)
     print("SSH connection refused by host {} times. Giving up now.".format(max_retries))
     exit()
 
@@ -184,7 +184,7 @@ if __name__ == "__main__":
     instance_ip = get_instance_ip(instance_id)
     hostname = instance_ip[0]["public"]
     username = "ubuntu"
-    print("Created instance AWS instance with hostname: {}!".format(hostname))
+    print("Connected to AWS instance with hostname: {}!".format(hostname))
 
     host_service_log = open("host_service_logging_file.txt", "w")
     server_log = open("server_log.txt", "w")
@@ -299,7 +299,9 @@ if __name__ == "__main__":
     server_process = attempt_ssh_connection(cmd, aws_timeout, server_log, pexpect_prompt, 5)
 
     print("Building the server mandelbox in PERF mode ...")
-    command = "cd ~/fractal/mandelboxes && ./build.sh browsers/chrome --{} | tee ~/server_mandelbox_build.log".format(args.cmake_build_type)
+    command = "cd ~/fractal/mandelboxes && ./build.sh browsers/chrome --{} | tee ~/server_mandelbox_build.log".format(
+        args.cmake_build_type
+    )
     server_process.sendline(command)
     wait_until_cmd_done(server_process, pexpect_prompt)
     print("Finished building the browsers/chrome (server) mandelbox on the EC2 instance")
@@ -354,7 +356,9 @@ if __name__ == "__main__":
     wait_until_cmd_done(client_process, pexpect_prompt)
 
     print("Building the dev client mandelbox in {} mode ...".format(args.cmake_build_type))
-    command = "cd ~/fractal/mandelboxes && ./build.sh development/client --{} | tee ~/client_mandelbox_build.log".format(args.cmake_build_type)
+    command = "cd ~/fractal/mandelboxes && ./build.sh development/client --{} | tee ~/client_mandelbox_build.log".format(
+        args.cmake_build_type
+    )
     client_process.sendline(command)
     wait_until_cmd_done(client_process, pexpect_prompt)
     print("Finished building the dev client mandelbox on the EC2 instance")
