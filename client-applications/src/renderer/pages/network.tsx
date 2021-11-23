@@ -4,6 +4,9 @@ import classNames from "classnames"
 import { Progress } from "@app/components/html/progress"
 import { FractalButton, FractalButtonState } from "@app/components/html/button"
 
+const MAX_ACCEPTABLE_JITTER_MS = 20
+const MIN_ACCEPTABLE_DOWNLAOD_MBPS = 50
+
 enum NetworkTestState {
   IN_PROGRESS,
   NETWORK_GOOD,
@@ -26,8 +29,8 @@ const getNetworkTestState = (
   // Network test is finished and the network is good
   if (
     networkInfo.progress >= 100 &&
-    networkInfo.downloadMbps > 50 &&
-    networkInfo.jitter < 20
+    networkInfo.downloadMbps > MIN_ACCEPTABLE_DOWNLAOD_MBPS &&
+    networkInfo.jitter < MAX_ACCEPTABLE_JITTER_MS
   )
     return NetworkTestState.NETWORK_GOOD
 
