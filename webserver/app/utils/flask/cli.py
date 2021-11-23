@@ -123,5 +123,5 @@ def clean() -> None:
     compute capacity than we need at any given time.
     """
 
-    current_app.config["FRACTAL_ACCESS_TOKEN"] = os.environ["FRACTAL_ACCESS_TOKEN"]
+    current_app.config["WHIST_ACCESS_TOKEN"] = os.environ["WHIST_ACCESS_TOKEN"]
     check_and_handle_instances_with_old_commit_hash()
