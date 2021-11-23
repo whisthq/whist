@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { memo, useState } from "react"
 import { Widget } from "@typeform/embed-react"
 
 const Typeform = (props: {
@@ -27,4 +27,6 @@ const Typeform = (props: {
   }
 }
 
-export default Typeform
+// We memoize this component because without it, the embeded typeform URL will reload on every
+// component refresh higher up in the tree
+export default memo(Typeform)

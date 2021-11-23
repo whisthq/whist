@@ -4,7 +4,7 @@
  * @brief This file is the entry point of the renderer thread and acts as a router.
  */
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, memo } from "react"
 import ReactDOM from "react-dom"
 
 import { OneButtonError, TwoButtonError } from "@app/renderer/pages/error"
@@ -41,6 +41,7 @@ import { WhistTrigger } from "@app/constants/triggers"
 const RootComponent = () => {
   const [show, setShow] = useState(window.location.search.split("show=")[1])
   const [mainState, setMainState] = useMainState()
+
   const relaunch = () =>
     setMainState({
       trigger: { name: WhistTrigger.relaunchAction, payload: undefined },
@@ -164,9 +165,11 @@ const WindowBackground = (props: any) => {
   )
 }
 
+const MRoot = memo(RootComponent)
+
 ReactDOM.render(
   <WindowBackground>
-    <RootComponent />
+    <MRoot />
   </WindowBackground>,
   document.getElementById("root")
 )
