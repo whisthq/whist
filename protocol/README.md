@@ -328,18 +328,13 @@ Macro constants will NOT be checked by this script because of the variety of imp
 
 ### Logz.io
 
-We currently use logz.io to store our logs. To get the logs for a session_id, navigate to the `fractal/protocol` directory, then
-type in: `python3 logs-to-text.py <<sesion_id>>` where `<<session_id>>` is the id of the currently running session.
+We currently use Logz.io to store our logs. To get the logs for a session_id, navigate to the `fractal/protocol` directory, then type in: `python3 logz-to-text.py <<sesion_id>>` where `<<session_id>>` is the id of the currently running session.
 
 This will output two files:
 
-1. `<<session_id>>-client.txt`: These are the sorted logs for the client from that session_id
-2. `<<session_id>>-server.txt`: These are the sorted logs for the server from that session_id
+1. `<<session_id>>-client-<<account>>.txt`: These are the sorted logs for the client from that session_id
+2. `<<session_id>>-server-<<account>>.txt`: These are the sorted logs for the server from that session_id
 
-You will need an logz.io API key to use this. Please contact Phil to get this or to get an admin account so you can generate your own.
-After this, set an environment variable "LOGZ_IO_API_KEY" to your API key via:
+Where `<<account>>` is a logz_io account (prod, dev, staging, base).
 
-`export LOGZ_IO_API_KEY=<<your api key>>`
-
-Note: logz.io currently only retains logs for 5 days, as of 10/29/2021. That said, this will only return the logs from 5 days ago. If this changes,
-please modify the `RETENTION_PERIOD_DAYS` constant in the top of `logs-to-text.py` to reflect this change.
+Note: logz.io currently only retains logs for 7 days, as of 10/29/2021. That said, this will only return the logs from 5 days ago. If this changes, please modify the `RETENTION_PERIOD_DAYS` constant in the top of `logz-to-text.py` to reflect this change.
