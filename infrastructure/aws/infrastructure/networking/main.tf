@@ -149,21 +149,24 @@ resource "aws_internet_gateway" "whist-internet-gateways" {
   }
 }
 
-locals {
-  vpc_ids = tolist([for vpc in aws_vpc.whist-vpcs : vpc.default_route_table_id])
-  gw_ids = tolist([for gw in aws_internet_gateway.whist-internet-gateways : gw.id])
-  pairs = zipmap(local.vpc_ids, local.gw_ids)
+locals {  
+  vpc_ids = [for vpc in aws_vpc.whist-vpcs : vpc.default_route_table_id]
+  gw_ids = [for gw in aws_internet_gateway.whist-internet-gateways : gw.id]
 }
 
-# resource "aws_default_route_table" "whist-route-tables" {
-#   for_each = local.pairs # zipmap(local.vpc_ids, local.gw_ids)
-#   default_route_table_id = each.key
+resource "aws_default_route_table" "whist-route-tables" {
+  count = length(local.vpc_ids)
+  default_route_table_id = local.vpc_ids[count.index]
 
-#   route {
-#     cidr_block = "0.0.0.0/0"
-#     gateway_id = each.value
-#   }
-# }
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id =local.gw_ids[count.index]
+  }
+  
+  tags = {
+    Name = format("Route table for VPC: %s", local.vpc_ids[count.index])
+  }
+}
 
 // make the subnets for each environment
 resource "aws_subnet" "whist-subnets" {
