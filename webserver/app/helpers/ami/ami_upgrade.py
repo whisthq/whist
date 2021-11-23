@@ -256,4 +256,4 @@ def swapover_amis(new_amis_str: List[str]) -> None:
         active_instance.status = MandelboxHostState.DRAINING
         drain_instance(active_instance)
 
-    fractal_logger.info("Finished performing AMI upgrade.")
+    whist_logger.info("Finished performing AMI upgrade.")
