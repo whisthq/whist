@@ -515,7 +515,7 @@ def get_current_commit_hash() -> str:
 
 def check_and_handle_instances_with_old_commit_hash() -> None:
     """
-    Drain all instances assoicated with old commit hashes
+    Drain all instances associated with old commit hashes
     Returns:
         None
     """
