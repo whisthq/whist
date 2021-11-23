@@ -125,7 +125,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 
 	bookmarksJSON := "{ 'test_bookmark_content': '1'}"
 
-	if err := testMandelboxData.WriteUserInitialBrowserData(cookieJSON, ""); err != nil {
+	if err := testMandelboxData.WriteUserInitialBrowserData(cookieJSON, bookmarksJSON); err != nil {
 		t.Fatalf("error writing user initial browser data: %v", err)
 	}
 
