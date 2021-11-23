@@ -127,7 +127,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 		JwtAccessToken:        "test_jwt_token",
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		JSONData:              "test_json_data",
-		resultChan:            make(chan requestResult),
+		resultChan:            make(chan requestResult, 1), // buffered so that the ReturnResult call in SpinUpMandelbox below doesn't block forever.
 	}
 
 	testmux := &sync.Mutex{}
