@@ -21,14 +21,10 @@ Includes
 #include <fractal/logging/error_monitor.h>
 #include "parse_args.h"
 #include "network.h"
+#include "main.h"
 
 // i: means --identifier MUST take an argument
 #define OPTION_STRING "k:i:w:e:t:"
-
-extern char binary_aes_private_key[16];
-extern char hex_aes_private_key[33];
-extern char identifier[WHIST_IDENTIFIER_MAXLEN + 1];
-extern int begin_time_to_exit;
 
 /*
 ============================
@@ -53,13 +49,12 @@ Public Function Implementations
 ============================
 */
 
-int server_parse_args(int argc, char* argv[]) {
-    // TODO: replace `server` with argv[0]
+int server_parse_args(whist_server_config* config, int argc, char* argv[]) {
     const char* usage =
-        "Usage: server [OPTION]... IP_ADDRESS\n"
+        "Usage: %s [OPTION]... IP_ADDRESS\n"
         "Try 'server --help' for more information.\n";
     const char* usage_details =
-        "Usage: server [OPTION]... IP_ADDRESS\n"
+        "Usage: %s [OPTION]... IP_ADDRESS\n"
         "\n"
         "All arguments to both long and short options are mandatory.\n"
         // regular options should look nice, with 2-space indenting for multiple lines
@@ -76,9 +71,13 @@ int server_parse_args(int argc, char* argv[]) {
         // special options should be indented further to the left
         "      --help     Display this help and exit\n"
         "      --version  Output version information and exit\n";
-    memcpy((char*)&binary_aes_private_key, DEFAULT_BINARY_PRIVATE_KEY,
-           sizeof(binary_aes_private_key));
-    memcpy((char*)&hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY, sizeof(hex_aes_private_key));
+
+    /* sets some default values */
+    config->begin_time_to_exit = 60;
+    memcpy(config->binary_aes_private_key, DEFAULT_BINARY_PRIVATE_KEY,
+           sizeof(config->binary_aes_private_key));
+    memcpy(config->hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY,
+           sizeof(config->hex_aes_private_key));
 
     int opt;
 
@@ -92,17 +91,17 @@ int server_parse_args(int argc, char* argv[]) {
         errno = 0;
         switch (opt) {
             case 'k': {
-                if (!read_hexadecimal_private_key(optarg, (char*)binary_aes_private_key,
-                                                  (char*)hex_aes_private_key)) {
+                if (!read_hexadecimal_private_key(optarg, config->binary_aes_private_key,
+                                                  config->hex_aes_private_key)) {
                     printf("Invalid hexadecimal string: %s\n", optarg);
-                    printf("%s", usage);
+                    printf(usage, argv[0]);
                     return -1;
                 }
                 break;
             }
             case 'i': {
                 printf("Identifier passed in: %s\n", optarg);
-                if (!safe_strncpy(identifier, optarg, sizeof(identifier))) {
+                if (!safe_strncpy(config->identifier, optarg, sizeof(config->identifier))) {
                     printf("Identifier passed in is too long! Has length %lu but max is %d.\n",
                            (unsigned long)strlen(optarg), WHIST_IDENTIFIER_MAXLEN);
                     return -1;
@@ -115,14 +114,15 @@ int server_parse_args(int argc, char* argv[]) {
             }
             case 't': {
                 printf("Timeout before autoexit passed in: %s\n", optarg);
-                if (sscanf(optarg, "%d", &begin_time_to_exit) != 1 ||
-                    (begin_time_to_exit <= 0 && begin_time_to_exit != -1)) {
+                if (sscanf(optarg, "%d", &config->begin_time_to_exit) != 1 ||
+                    (config->begin_time_to_exit <= 0 && config->begin_time_to_exit != -1)) {
                     printf("Timeout should be a positive integer or -1\n");
                 }
                 break;
             }
+
             case WHIST_GETOPT_HELP_CHAR: {
-                printf("%s", usage_details);
+                printf(usage_details, argv[0]);
                 return 1;
             }
             case WHIST_GETOPT_VERSION_CHAR: {
@@ -132,7 +132,7 @@ int server_parse_args(int argc, char* argv[]) {
             default: {
                 if (opt != -1) {
                     // illegal option
-                    printf("%s", usage);
+                    printf(usage, argv[0]);
                     return -1;
                 }
                 break;
@@ -146,7 +146,7 @@ int server_parse_args(int argc, char* argv[]) {
                 ++optind;
             } else if (optind < argc && !can_accept_nonoption_args) {
                 // incorrect usage
-                printf("%s", usage);
+                printf(usage, argv[0]);
                 return -1;
             } else {
                 // we're done

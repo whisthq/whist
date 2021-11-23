@@ -19,9 +19,13 @@ Public Functions
 ============================
 */
 
+typedef struct _whist_server_config whist_server_config;
+
 /**
  * @brief                          server_parse_args() parses the arguments passed
- *                                 to the call to the server.
+ *                                 on the command line and fill the server_config struct
+ *
+ * @param config				   Server configuration
  *
  * @param argc                     Length of the argv array
  *
@@ -30,6 +34,6 @@ Public Functions
  * @returns                        Returns 0 on success, -1 on invalid args,
  *                                 and 1 on help or version args.
  */
-int server_parse_args(int argc, char* argv[]);
+int server_parse_args(whist_server_config* config, int argc, char* argv[]);
 
 #endif  // SERVER_PARSE_ARGS_H

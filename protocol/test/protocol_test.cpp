@@ -284,13 +284,14 @@ Server Tests
 
 // Testing that good values passed into server_parse_args returns success
 TEST_F(CaptureStdoutTest, ServerParseArgsUsage) {
+    whist_server_config config;
     int argc = 2;
 
     char argv0[] = "./server/build64/FractalServer";
     char argv1[] = "--help";
     char* argv[] = {argv0, argv1, NULL};
 
-    int ret_val = server_parse_args(argc, argv);
+    int ret_val = server_parse_args(&config, argc, argv);
     EXPECT_EQ(ret_val, 1);
 
     check_stdout_line(::testing::HasSubstr("Usage:"));

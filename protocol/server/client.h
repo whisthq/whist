@@ -47,8 +47,6 @@ typedef struct Client {
 
 } Client;
 
-extern Client client;
-
 /*
 ============================
 Public Functions
@@ -60,10 +58,11 @@ Public Functions
  *
  * @details                        Must be called before the client object
  *                                 can be used.
+ * @param client				   the client context to initialize
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int init_client(void);
+int init_client(Client* client);
 
 /**
  * @brief                          De-initializes all clients objects in the
@@ -73,40 +72,46 @@ int init_client(void);
  *                                 before program exit. Does not disconnect any
  *                                 connected clients.
  *
+ * @param client				   the client context to destroy
+ *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int destroy_clients(void);
+int destroy_clients(Client* client);
 
 /**
  * @brief                          Begins deactivating client, but does not clean up
  *                                 its resources yet. Must be called before `quit_client`.
+ *
+ * @param client				   Target client
  */
-int start_quitting_client();
+int start_quitting_client(Client* client);
 
 /**
-* @brief                          Deactivates active client.
-*
-* @details                        Disconnects client. Updates count of active
-*                                 clients. May only be called on an active
-*                                 client. The associated client object is
-*                                 not destroyed and may be made active in the
-*                                 future.
-
-*
-* @returns                        Returns -1 on failure, 0 on success
-*/
-int quit_client();
+ * @brief                          Deactivates active client.
+ *
+ * @details                        Disconnects client. Updates count of active
+ *                                 clients. May only be called on an active
+ *                                 client. The associated client object is
+ *                                 not destroyed and may be made active in the
+ *                                 future.
+ *
+ * @param client				   	  Target client
+ *
+ * @returns                        Returns -1 on failure, 0 on success
+ */
+int quit_client(Client* client);
 
 /**
  * @brief                          Quit client if timed out.
  *
+ * @param client				   Target client
  * @param timeout                  Duration (in seconds) after which a client
  *                                 is deemed timed out if the server has not
  *                                 received a ping from the client.
  *
  * @returns                        Returns -1 on failure, 0 on success.
  */
-int reap_timed_out_client(double timeout);
+int reap_timed_out_client(Client* client, double timeout);
 
 /**
  * @brief                          Add thread to count of those dependent on
@@ -130,11 +135,12 @@ void reset_threads_holding_active_count();
  *                                 thread to stop believing that the client is
  *                                 active, but otherwise will leave the status as is.
  *
+ * @param client				    Target client
  * @param is_thread_assuming_active Pointer to the boolean that the thread is using
  *                                  to indicate whether it believes the client is
  *                                  currently active
  */
-void update_client_active_status(bool* is_thread_assuming_active);
+void update_client_active_status(Client* client, bool* is_thread_assuming_active);
 
 /**
  * @brief                          Whether there remain any threads that are assuming

@@ -26,6 +26,8 @@ Public Functions
 ============================
 */
 
+typedef struct _whist_server_state whist_server_state;
+
 /**
  * @brief                          Handles message received by the server from
  *                                 a client, on the server-side
@@ -35,10 +37,11 @@ Public Functions
  *                                 appropriate in handling message from client.
  *                                 Logs errors.
  *
+ * @param state					   Server's state
  * @param fcmsg                    Message from client
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int handle_client_message(FractalClientMessage *fcmsg);
+int handle_client_message(whist_server_state *state, FractalClientMessage *fcmsg);
 
 #endif  // HANDLE_CLIENT_MESSAGE_H

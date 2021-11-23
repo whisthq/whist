@@ -42,15 +42,12 @@ Includes
 #include "client.h"
 #include "network.h"
 #include "audio.h"
+#include "main.h"
 
 #ifdef _WIN32
 #pragma comment(lib, "ws2_32.lib")
 #endif
 // Linux shouldn't have this
-
-extern volatile bool exiting;
-
-extern int sample_rate;
 
 /*
 ============================
@@ -59,9 +56,10 @@ Public Function Implementations
 */
 
 int32_t multithreaded_send_audio(void* opaque) {
-    UNUSED(opaque);
-    fractal_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
+    whist_server_state* state = (whist_server_state*)opaque;
     int id = 1;
+
+    fractal_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
 
     AudioDevice* audio_device = create_audio_device();
     if (!audio_device) {
@@ -78,15 +76,15 @@ int32_t multithreaded_send_audio(void* opaque) {
 
     int res;
     // Tell the client what audio frequency we're using
-    sample_rate = audio_device->sample_rate;
+    state->sample_rate = audio_device->sample_rate;
     LOG_INFO("Audio Frequency: %d", audio_device->sample_rate);
 
     add_thread_to_client_active_dependents();
 
     // setup
     bool assuming_client_active = false;
-    while (!exiting) {
-        update_client_active_status(&assuming_client_active);
+    while (!state->exiting) {
+        update_client_active_status(&state->client, &assuming_client_active);
 
         // for each available packet
         for (get_next_packet(audio_device); packet_available(audio_device);
@@ -123,7 +121,7 @@ int32_t multithreaded_send_audio(void* opaque) {
                     log_double_statistic("Audio encode time (ms)", get_timer(t) * 1000);
                     if (audio_encoder->encoded_frame_size > (int)MAX_AUDIOFRAME_DATA_SIZE) {
                         LOG_ERROR("Audio data too large: %d", audio_encoder->encoded_frame_size);
-                    } else if (assuming_client_active && client.is_active) {
+                    } else if (assuming_client_active && state->client.is_active) {
                         static char buf[LARGEST_AUDIOFRAME_SIZE];
                         AudioFrame* frame = (AudioFrame*)buf;
                         frame->data_length = audio_encoder->encoded_frame_size;
@@ -131,16 +129,16 @@ int32_t multithreaded_send_audio(void* opaque) {
                         write_avpackets_to_buffer(audio_encoder->num_packets,
                                                   audio_encoder->packets, (void*)frame->data);
 
-                        if (client.is_active) {
-                            send_packet(&client.udp_context, PACKET_AUDIO, frame,
+                        if (state->client.is_active) {
+                            send_packet(&state->client.udp_context, PACKET_AUDIO, frame,
                                         audio_encoder->encoded_frame_size + sizeof(int), id);
                             id++;
                         }
                     }
                 }
 #else
-                if (client.is_active) {
-                    send_packet(&client.udp_context, PACKET_AUDIO, audio_device->buffer,
+                if (state->client.is_active) {
+                    send_packet(&state->client.udp_context, PACKET_AUDIO, audio_device->buffer,
                                 audio_device->buffer_size, id);
                     id++;
                 }

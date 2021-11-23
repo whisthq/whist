@@ -43,6 +43,7 @@ Includes
 #include "client.h"
 #include "network.h"
 #include "video.h"
+#include "main.h"
 
 #ifdef _WIN32
 #pragma comment(lib, "ws2_32.lib")
@@ -53,30 +54,6 @@ Includes
 #define USE_MONITOR 0
 
 #define BITS_IN_BYTE 8.0
-
-extern volatile bool exiting;
-
-extern volatile int max_bitrate;
-volatile int client_width = -1;
-volatile int client_height = -1;
-volatile int client_dpi = -1;
-volatile CodecType client_codec_type = CODEC_TYPE_UNKNOWN;
-volatile bool update_device = true;
-
-extern volatile bool stop_streaming;
-extern volatile bool wants_iframe;
-extern volatile bool update_encoder;
-
-static bool pending_encoder;
-static bool encoder_finished;
-static VideoEncoder* encoder_factory_result = NULL;
-
-static int encoder_factory_server_w;
-static int encoder_factory_server_h;
-static int encoder_factory_client_w;
-static int encoder_factory_client_h;
-static int encoder_factory_bitrate;
-static CodecType encoder_factory_codec_type;
 
 /*
 ============================
@@ -94,14 +71,16 @@ Private Function Implementations
 */
 
 int32_t multithreaded_encoder_factory(void* opaque) {
-    UNUSED(opaque);
-    encoder_factory_result = create_video_encoder(
-        encoder_factory_server_w, encoder_factory_server_h, encoder_factory_client_w,
-        encoder_factory_client_h, encoder_factory_bitrate, encoder_factory_codec_type);
-    if (encoder_factory_result == NULL) {
+    whist_server_state* state = (whist_server_state*)opaque;
+
+    state->encoder_factory_result =
+        create_video_encoder(state->encoder_factory_server_w, state->encoder_factory_server_h,
+                             state->encoder_factory_client_w, state->encoder_factory_client_h,
+                             state->encoder_factory_bitrate, state->encoder_factory_codec_type);
+    if (state->encoder_factory_result == NULL) {
         LOG_FATAL("Could not create an encoder, giving up!");
     }
-    encoder_finished = true;
+    state->encoder_finished = true;
     return 0;
 }
 
@@ -114,6 +93,7 @@ int32_t multithreaded_destroy_encoder(void* opaque) {
 /**
  * @brief                   Creates a new CaptureDevice
  *
+ * @param state				The whist server state
  * @param statistics_timer  Pointer to statistics timer used for logging
  * @param device            CaptureDevice pointer
  * @param rdevice           CaptureDevice pointer
@@ -122,35 +102,36 @@ int32_t multithreaded_destroy_encoder(void* opaque) {
  * @param true_height       True height of client screen
  * @return                  On success, 0. On failure, -1.
  */
-int32_t create_new_device(clock* statistics_timer, CaptureDevice** device, CaptureDevice* rdevice,
-                          VideoEncoder** encoder, uint32_t true_width, uint32_t true_height) {
+int32_t create_new_device(whist_server_state* state, clock* statistics_timer,
+                          CaptureDevice** device, CaptureDevice* rdevice, VideoEncoder** encoder,
+                          uint32_t true_width, uint32_t true_height) {
     start_timer(statistics_timer);
     *device = rdevice;
-    if (create_capture_device(*device, true_width, true_height, client_dpi) < 0) {
+    if (create_capture_device(*device, true_width, true_height, state->client_dpi) < 0) {
         LOG_WARNING("Failed to create capture device");
         *device = NULL;
-        update_device = true;
+        state->update_device = true;
 
         fractal_sleep(100);
         return -1;
     }
 
     LOG_INFO("Created a new Capture Device of dimensions %dx%d with DPI %d", (*device)->width,
-             (*device)->height, client_dpi);
+             (*device)->height, state->client_dpi);
 
     // If an encoder is pending, while capture_device is updating, then we should wait
     // for it to be created
-    while (pending_encoder) {
-        if (encoder_finished) {
-            *encoder = encoder_factory_result;
-            pending_encoder = false;
+    while (state->pending_encoder) {
+        if (state->encoder_finished) {
+            *encoder = state->encoder_factory_result;
+            state->pending_encoder = false;
             break;
         }
         fractal_sleep(1);
     }
 
     // Next, we should update our ffmpeg encoder
-    update_encoder = true;
+    state->update_encoder = true;
 
     log_double_statistic("Create capture device time (ms)",
                          get_timer(*statistics_timer) * MS_IN_SECOND);
@@ -162,14 +143,16 @@ int32_t create_new_device(clock* statistics_timer, CaptureDevice** device, Captu
  * @brief                           Sends the populated video frames to the
  *                                  client
  *
+ * @param state						server state
  * @param statistics_timer          Pointer to statistics timer used for logging
  * @param server_frame_timer        Pointer to server_frame_timer
  * @param device                    CaptureDevice pointer
  * @param encoder                   VideoEncoder pointer
  * @param id                        Pointer to frame id
  */
-void send_populated_frames(clock* statistics_timer, clock* server_frame_timer,
-                           CaptureDevice* device, VideoEncoder* encoder, int id) {
+void send_populated_frames(whist_server_state* state, clock* statistics_timer,
+                           clock* server_frame_timer, CaptureDevice* device, VideoEncoder* encoder,
+                           int id) {
     // transfer the capture of the latest frame from the device to
     // the encoder,
     // This function will try to CUDA/OpenGL optimize the transfer by
@@ -224,8 +207,9 @@ void send_populated_frames(clock* statistics_timer, clock* server_frame_timer,
     start_timer(statistics_timer);
 
     // Send the video frame
-    if (client.is_active) {
-        send_packet(&client.udp_context, PACKET_VIDEO, frame, get_total_frame_size(frame), id);
+    if (state->client.is_active) {
+        send_packet(&state->client.udp_context, PACKET_VIDEO, frame, get_total_frame_size(frame),
+                    id);
     }
 }
 
@@ -233,10 +217,11 @@ void send_populated_frames(clock* statistics_timer, clock* server_frame_timer,
  * @brief           Attempts to capture the screen. Afterwards sets update_device
  *                  to true
  *
+ * @param state		the Whist server state
  * @param device    CaptureDevice pointer
  * @param encoder   VideoEncoder pointer
  */
-void retry_capture_screen(CaptureDevice* device, VideoEncoder* encoder) {
+void retry_capture_screen(whist_server_state* state, CaptureDevice* device, VideoEncoder* encoder) {
     LOG_WARNING("Failed to capture screen");
     // The Nvidia Encoder must be wrapped in the lifetime of the capture device
     if (encoder != NULL && encoder->active_encoder == NVIDIA_ENCODER) {
@@ -245,7 +230,7 @@ void retry_capture_screen(CaptureDevice* device, VideoEncoder* encoder) {
     }
     destroy_capture_device(device);
     device = NULL;
-    update_device = true;
+    state->update_device = true;
 
     fractal_sleep(100);
 }
@@ -254,28 +239,30 @@ void retry_capture_screen(CaptureDevice* device, VideoEncoder* encoder) {
  * @brief                  Updates dimensions of capture device and sets
  *                         update_encoder to true
  *
+ * @param state			   The server state
  * @param statistics_timer Pointer to the timer used for statistics logging
  * @param device           CaptureDevice pointer
  * @param encoder          VideoEncoder pointer
  * @param true_width       True width of client screen
  * @param true_height      True height of client screen
  */
-void update_current_device(clock* statistics_timer, CaptureDevice* device, VideoEncoder* encoder,
-                           uint32_t true_width, uint32_t true_height) {
-    update_device = false;
+void update_current_device(whist_server_state* state, clock* statistics_timer,
+                           CaptureDevice* device, VideoEncoder* encoder, uint32_t true_width,
+                           uint32_t true_height) {
+    state->update_device = false;
     start_timer(statistics_timer);
 
     LOG_INFO("Received an update capture device request to dimensions %dx%d with DPI %d",
-             true_width, true_height, client_dpi);
+             true_width, true_height, state->client_dpi);
 
     // If a device already exists, we should reconfigure or destroy it
     if (device != NULL) {
-        if (reconfigure_capture_device(device, true_width, true_height, client_dpi)) {
+        if (reconfigure_capture_device(device, true_width, true_height, state->client_dpi)) {
             // Reconfigured the capture device!
             // No need to recreate it, the device has now been updated
             LOG_INFO("Successfully reconfigured the capture device");
             // We should also update the encoder since the device has been reconfigured
-            update_encoder = true;
+            state->update_encoder = true;
         } else {
             // Destroying the old capture device so that a new one can be recreated below
             LOG_FATAL(
@@ -296,22 +283,23 @@ void update_current_device(clock* statistics_timer, CaptureDevice* device, Video
 /**
  * @brief                         Sends an empty frame to the client
  *
- * @param id                      Pointer to the frame id
+ * @param state		the Whist server state
+ * @param id        Pointer to the frame id
  */
-void send_empty_frame(int id) {
+void send_empty_frame(whist_server_state* state, int id) {
     // If we don't have a new frame to send, let's just send an empty one
     static char mini_buf[sizeof(VideoFrame)];
     VideoFrame* frame = (VideoFrame*)mini_buf;
     frame->is_empty_frame = true;
     // This signals that the screen hasn't changed, so don't bother rendering
     // this frame and just keep showing the last one.
-    frame->is_window_visible = !stop_streaming;
+    frame->is_window_visible = !state->stop_streaming;
     // We don't need to fill out the rest of the fields of the VideoFrame because
     // is_empty_frame is true, so it will just be ignored by the client.
 
     // Send the empty frame
-    if (client.is_active) {
-        send_packet(&client.udp_context, PACKET_VIDEO, frame, sizeof(VideoFrame), id);
+    if (state->client.is_active) {
+        send_packet(&state->client.udp_context, PACKET_VIDEO, frame, sizeof(VideoFrame), id);
     }
 }
 
@@ -319,15 +307,17 @@ void send_empty_frame(int id) {
  * @brief           Updates the encoder upon request. Note that this function
  *                  _returns_ the updated encoder, due to the encoder factory.
  *
+ * @param state		the Whist server state
  * @param encoder   VideoEncoder pointer
  *
  * @param device    CaptureDevice pointer
  *
  * @returns         The new encoder
  */
-VideoEncoder* do_update_encoder(VideoEncoder* encoder, CaptureDevice* device) {
+VideoEncoder* do_update_encoder(whist_server_state* state, VideoEncoder* encoder,
+                                CaptureDevice* device) {
     // If this is a new update encoder request, log it
-    if (!pending_encoder) {
+    if (!state->pending_encoder) {
         LOG_INFO("Update encoder request received, will update the encoder now!");
     }
 
@@ -335,14 +325,14 @@ VideoEncoder* do_update_encoder(VideoEncoder* encoder, CaptureDevice* device) {
     // handle the update_encoder event
     if (encoder != NULL) {
         // store it to prevent race conditions if bitrate is updated
-        int new_bitrate = max_bitrate;
+        int new_bitrate = state->max_bitrate;
         if (reconfigure_encoder(encoder, device->width, device->height, new_bitrate,
-                                (CodecType)client_codec_type)) {
+                                (CodecType)state->client_codec_type)) {
             // If we could update the encoder in-place, then we're done updating the encoder
             LOG_INFO("Reconfigured Encoder to %dx%d using Bitrate: %d from %f, and Codec %d",
                      device->width, device->height, new_bitrate, new_bitrate / 1024.0 / 1024.0,
-                     client_codec_type);
-            update_encoder = false;
+                     state->client_codec_type);
+            state->update_encoder = false;
         } else {
             // TODO: Make LOG_ERROR after ffmpeg reconfiguration is implemented
             LOG_INFO("Reconfiguration failed! Creating a new encoder!");
@@ -350,11 +340,11 @@ VideoEncoder* do_update_encoder(VideoEncoder* encoder, CaptureDevice* device) {
     }
 
     // If reconfiguration didn't happen, we still need to update the encoder
-    if (update_encoder) {
+    if (state->update_encoder) {
         // Otherwise, this capture device must use an external encoder,
         // so we should start making it in our encoder factory
-        if (pending_encoder) {
-            if (encoder_finished) {
+        if (state->pending_encoder) {
+            if (state->encoder_finished) {
                 // Once encoder_finished, we'll destroy the old one that we've been using,
                 // and replace it with the result of multithreaded_encoder_factory
                 if (encoder) {
@@ -362,26 +352,26 @@ VideoEncoder* do_update_encoder(VideoEncoder* encoder, CaptureDevice* device) {
                         multithreaded_destroy_encoder, "multithreaded_destroy_encoder", encoder);
                     fractal_detach_thread(encoder_destroy_thread);
                 }
-                encoder = encoder_factory_result;
-                pending_encoder = false;
-                update_encoder = false;
+                encoder = state->encoder_factory_result;
+                state->pending_encoder = false;
+                state->update_encoder = false;
             }
         } else {
             // Starting making new encoder. This will set pending_encoder=true, but won't
             // actually update it yet, we'll still use the old one for a bit
-            int new_bitrate = max_bitrate;
+            int new_bitrate = state->max_bitrate;
             LOG_INFO(
                 "Creating a new Encoder of dimensions %dx%d using Bitrate: %d from %f, and "
                 "Codec %d",
                 device->width, device->height, new_bitrate, new_bitrate / 1024.0 / 1024.0,
-                (int)client_codec_type);
-            encoder_finished = false;
-            encoder_factory_server_w = device->width;
-            encoder_factory_server_h = device->height;
-            encoder_factory_client_w = (int)client_width;
-            encoder_factory_client_h = (int)client_height;
-            encoder_factory_codec_type = (CodecType)client_codec_type;
-            encoder_factory_bitrate = new_bitrate;
+                (int)state->client_codec_type);
+            state->encoder_finished = false;
+            state->encoder_factory_server_w = device->width;
+            state->encoder_factory_server_h = device->height;
+            state->encoder_factory_client_w = (int)state->client_width;
+            state->encoder_factory_client_h = (int)state->client_height;
+            state->encoder_factory_codec_type = (CodecType)state->client_codec_type;
+            state->encoder_factory_bitrate = new_bitrate;
 
             // If using nvidia, then we must destroy the existing encoder first
             // We can't have two nvidia encoders active or the 2nd attempt to
@@ -397,15 +387,15 @@ VideoEncoder* do_update_encoder(VideoEncoder* encoder, CaptureDevice* device) {
 
             if (encoder == NULL) {
                 // Run on this thread bc we have to wait for it anyway since encoder == NULL
-                multithreaded_encoder_factory(NULL);
-                encoder = encoder_factory_result;
-                pending_encoder = false;
-                update_encoder = false;
+                multithreaded_encoder_factory(state);
+                encoder = state->encoder_factory_result;
+                state->pending_encoder = false;
+                state->update_encoder = false;
             } else {
                 FractalThread encoder_creator_thread = fractal_create_thread(
-                    multithreaded_encoder_factory, "multithreaded_encoder_factory", NULL);
+                    multithreaded_encoder_factory, "multithreaded_encoder_factory", state);
                 fractal_detach_thread(encoder_creator_thread);
-                pending_encoder = true;
+                state->pending_encoder = true;
             }
         }
     }
@@ -419,8 +409,10 @@ Public Function Implementations
 */
 
 int32_t multithreaded_send_video(void* opaque) {
-    UNUSED(opaque);
+    whist_server_state* state = (whist_server_state*)opaque;
+
     fractal_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
+
     fractal_sleep(500);
 
 #if defined(_WIN32)
@@ -442,21 +434,21 @@ int32_t multithreaded_send_video(void* opaque) {
     clock statistics_timer;
 
     int id = 1;
-    update_device = true;
+    state->update_device = true;
 
     clock last_frame_capture;
     start_timer(&last_frame_capture);
 
-    pending_encoder = false;
-    encoder_finished = false;
+    state->pending_encoder = false;
+    state->encoder_finished = false;
 
     add_thread_to_client_active_dependents();
 
     int consecutive_identical_frames = 0;
 
     bool assuming_client_active = false;
-    while (!exiting) {
-        update_client_active_status(&assuming_client_active);
+    while (!state->exiting) {
+        update_client_active_status(&state->client, &assuming_client_active);
 
         if (!assuming_client_active) {
             fractal_sleep(1);
@@ -465,16 +457,16 @@ int32_t multithreaded_send_video(void* opaque) {
 
         static clock send_video_loop_timer;
         start_timer(&send_video_loop_timer);
-        if (client_width < 0 || client_height < 0 || client_dpi < 0) {
+        if (state->client_width < 0 || state->client_height < 0 || state->client_dpi < 0) {
             // if we've just started, capture at a common width, height, and DPI
             // when a client connects, they'll request a dimension change to the correct dimensions
             // + DPI. The height, width, and DPI all match the default on a 2020 M1 MacBook Pro.
             // A cross-platform default DPI would be 192; width and height depend on things like
             // the Windows Start Bar, the macOS Dock and Menu Bar, and window controls.
-            client_width = 2880;
-            client_height = 1524;
-            client_dpi = 192;
-            client_codec_type = CODEC_TYPE_H264;
+            state->client_width = 2880;
+            state->client_height = 1524;
+            state->client_dpi = 192;
+            state->client_codec_type = CODEC_TYPE_H264;
         }
 
         // Update device with new parameters
@@ -483,26 +475,27 @@ int32_t multithreaded_send_video(void* opaque) {
         // multiple of 2 (see `bRoundFrameSize` in NvFBC.h). By default, the dimensions will be
         // implicitly rounded up, but for some reason it looks better if we explicitly set the
         // size. Also for some reason it actually rounds the width to a multiple of 8.
-        int true_width = client_width + 7 - ((client_width + 7) % 8);
-        int true_height = client_height + 1 - ((client_height + 1) % 2);
+        int true_width = state->client_width + 7 - ((state->client_width + 7) % 8);
+        int true_height = state->client_height + 1 - ((state->client_height + 1) % 2);
 
         // If we got an update device request, we should update the device
-        if (update_device) {
-            update_current_device(&statistics_timer, device, encoder, true_width, true_height);
+        if (state->update_device) {
+            update_current_device(state, &statistics_timer, device, encoder, true_width,
+                                  true_height);
         }
 
         // If no device is set, we need to create one
         if (device == NULL) {
-            if (create_new_device(&statistics_timer, &device, &rdevice, &encoder, true_width,
+            if (create_new_device(state, &statistics_timer, &device, &rdevice, &encoder, true_width,
                                   true_height) < 0) {
                 continue;
             }
         }
 
         // Update encoder with new parameters
-        if (update_encoder) {
+        if (state->update_encoder) {
             start_timer(&statistics_timer);
-            encoder = do_update_encoder(encoder, device);
+            encoder = do_update_encoder(state, encoder, device);
             log_double_statistic("Update encoder time (ms)",
                                  get_timer(statistics_timer) * MS_IN_SECOND);
         }
@@ -518,7 +511,8 @@ int32_t multithreaded_send_video(void* opaque) {
         // Accumulated_frames is equal to how many frames have passed since the
         // last call to CaptureScreen
         int accumulated_frames = 0;
-        if (get_timer(last_frame_capture) > 1.0 / FPS && (!stop_streaming || wants_iframe)) {
+        if (get_timer(last_frame_capture) > 1.0 / FPS &&
+            (!state->stop_streaming || state->wants_iframe)) {
             start_timer(&statistics_timer);
             accumulated_frames = capture_screen(device);
             log_double_statistic("Capture screen time (ms)",
@@ -533,7 +527,7 @@ int32_t multithreaded_send_video(void* opaque) {
 
         // If capture screen failed, we should try again
         if (accumulated_frames < 0) {
-            retry_capture_screen(device, encoder);
+            retry_capture_screen(state, device, encoder);
             continue;
         }
 
@@ -549,15 +543,15 @@ int32_t multithreaded_send_video(void* opaque) {
         // When the encoder is disabled, we only wake the client CPU,
         // DISABLED_ENCODER_FPS times per second, for just a usec at a time.
         bool disable_encoder =
-            consecutive_identical_frames > CONSECUTIVE_IDENTICAL_FRAMES && !wants_iframe;
+            consecutive_identical_frames > CONSECUTIVE_IDENTICAL_FRAMES && !state->wants_iframe;
         // Lower the min_fps to DISABLED_ENCODER_FPS when the encoder is disabled
         int min_fps = disable_encoder ? DISABLED_ENCODER_FPS : MIN_FPS;
 
         // This outer loop potentially runs 10s of thousands of times per second, every ~1usec
 
         // Send a frame if we have a real frame to send, or we need to keep up with min_fps
-        if (client.is_active && (accumulated_frames > 0 || wants_iframe ||
-                                 get_timer(last_frame_capture) > 1.0 / min_fps)) {
+        if (state->client.is_active && (accumulated_frames > 0 || state->wants_iframe ||
+                                        get_timer(last_frame_capture) > 1.0 / min_fps)) {
             // This loop only runs ~1/current_fps times per second, every 16-100ms
             // LOG_INFO("Frame Time: %f\n", get_timer(last_frame_capture));
             start_timer(&last_frame_capture);
@@ -577,7 +571,7 @@ int32_t multithreaded_send_video(void* opaque) {
 
             if (disable_encoder) {
                 // Send an empty frame
-                send_empty_frame(id);
+                send_empty_frame(state, id);
             } else {
                 // transfer the capture of the latest frame from the device to
                 // the encoder,
@@ -587,15 +581,15 @@ int32_t multithreaded_send_video(void* opaque) {
                 if (transfer_capture(device, encoder) != 0) {
                     // if there was a failure
                     LOG_ERROR("transfer_capture failed! Exiting!");
-                    exiting = true;
+                    state->exiting = true;
                     break;
                 }
                 log_double_statistic("Transfer capture time (ms)",
                                      get_timer(statistics_timer) * MS_IN_SECOND);
 
-                if (wants_iframe) {
+                if (state->wants_iframe) {
                     video_encoder_set_iframe(encoder);
-                    wants_iframe = false;
+                    state->wants_iframe = false;
                 }
 
                 start_timer(&statistics_timer);
@@ -604,12 +598,12 @@ int32_t multithreaded_send_video(void* opaque) {
                 if (res < 0) {
                     // bad boy error
                     LOG_ERROR("Error encoding video frame!");
-                    exiting = true;
+                    state->exiting = true;
                     break;
                 } else if (res > 0) {
                     // filter graph is empty
                     LOG_ERROR("video_encoder_encode filter graph failed! Exiting!");
-                    exiting = true;
+                    state->exiting = true;
                     break;
                 }
                 log_double_statistic("Video encode time (ms)",
@@ -622,7 +616,7 @@ int32_t multithreaded_send_video(void* opaque) {
                                   encoder->encoded_frame_size);
                         continue;
                     } else {
-                        send_populated_frames(&statistics_timer, &server_frame_timer, device,
+                        send_populated_frames(state, &statistics_timer, &server_frame_timer, device,
                                               encoder, id);
 
                         log_double_statistic("Video frame send time (ms)",
