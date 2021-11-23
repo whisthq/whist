@@ -532,6 +532,78 @@ def test_lingering_instances(
     }
 
 
+def test_get_current_commit_hash() -> None:
+    """
+    Tests if the current commit hash obtained is not empty
+    """
+    # Compare current commit hash with the first active ami client commit hash
+    assert aws_funcs.get_current_commit_hash() == get_allowed_regions()[0].client_commit_hash
+
+
+def test_old_commit_hash_instances(
+    monkeypatch: MonkeyPatch,
+    bulk_instance: Callable[..., InstanceInfo],
+    region_name: str,
+) -> None:
+    """
+    Tests that old_commit_hash_instances properly drains only those instances that are
+    associated with an old commit hash
+    """
+    call_set = set()
+
+    def _helper(instance: InstanceInfo) -> None:
+        call_set.add(instance.instance_name)
+
+    monkeypatch.setattr(aws_funcs, "drain_instance", _helper)
+
+    bulk_instance(
+        instance_name="active_instance",
+        aws_ami_id="test-AMI",
+        commit_hash=aws_funcs.get_current_commit_hash(),
+        location=region_name,
+        last_updated_utc_unix_ms=time() * 1000,
+        creation_time_utc_unix_ms=time() * 1000,
+    )
+    bulk_instance(
+        instance_name="active_starting_instance",
+        aws_ami_id="test-AMI",
+        commit_hash=aws_funcs.get_current_commit_hash(),
+        location=region_name,
+        status=MandelboxHostState.PRE_CONNECTION.value,
+        last_updated_utc_unix_ms=((time() - 121) * 1000),
+        creation_time_utc_unix_ms=((time() - 121) * 1000),
+    )
+    bulk_instance(
+        instance_name="host_service_unrepsonsive_instance",
+        aws_ami_id="test-AMI",
+        commit_hash=aws_funcs.get_current_commit_hash(),
+        location=region_name,
+        status=MandelboxHostState.HOST_SERVICE_UNRESPONSIVE.value,
+        last_updated_utc_unix_ms=((time() - 18000001) * 1000),
+    )
+    instances_with_old_commit_hash = bulk_instance(
+        instance_name="active_instance_2",
+        aws_ami_id="inactive_ami",
+        commit_hash="old_commit_hash",
+        location=region_name,
+        last_updated_utc_unix_ms=time() * 1000,
+        creation_time_utc_unix_ms=time() * 1000,
+    )
+    bulk_instance(
+        instance_name="draining_instance",
+        aws_ami_id="inactive_ami",
+        commit_hash="old_commit_hash",
+        location=region_name,
+        status=MandelboxHostState.DRAINING.value,
+        last_updated_utc_unix_ms=time() * 1000,
+        creation_time_utc_unix_ms=time() * 1000,
+    )
+    aws_funcs.check_and_handle_instances_with_old_commit_hash()
+    assert call_set == {
+        instances_with_old_commit_hash.instance_name,
+    }
+
+
 def test_buffer_wrong_region() -> None:
     """
     checks that we return -sys.maxsize when we ask about a nonexistent region

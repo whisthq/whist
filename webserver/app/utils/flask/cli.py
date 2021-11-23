@@ -35,6 +35,7 @@ from flask import Blueprint, current_app
 from app.helpers.aws.aws_instance_post import (
     try_scale_down_if_necessary_all_regions,
     check_and_handle_lingering_instances,
+    check_and_handle_instances_with_old_commit_hash,
 )
 from app.helpers.ami.ami_upgrade import create_ami_buffer, swapover_amis
 
@@ -112,3 +113,15 @@ def prune() -> None:
 
     current_app.config["FRACTAL_ACCESS_TOKEN"] = os.environ["FRACTAL_ACCESS_TOKEN"]
     check_and_handle_lingering_instances()
+
+
+@compute_bp.cli.command("clean-old-commit-hash-instances")  # type: ignore
+def clean() -> None:
+    """Identify and drain compute instances with old commit hash.
+
+    Schedule this command to run periodically to ensure that we are not paying for too much more
+    compute capacity than we need at any given time.
+    """
+
+    current_app.config["FRACTAL_ACCESS_TOKEN"] = os.environ["FRACTAL_ACCESS_TOKEN"]
+    check_and_handle_instances_with_old_commit_hash()
