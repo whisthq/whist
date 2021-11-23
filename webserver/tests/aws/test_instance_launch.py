@@ -142,7 +142,7 @@ def test_perform_ami_upgrade(
     by calling the `drain_and_shutdown` endpoint on the host_service.
     """
 
-    monkeypatch.setitem(app.config, "FRACTAL_ACCESS_TOKEN", "dummy-access-token")
+    monkeypatch.setitem(app.config, "WHIST_ACCESS_TOKEN", "dummy-access-token")
 
     launch_new_ami_buffer_calls: List[Dict[str, Any]] = []
 

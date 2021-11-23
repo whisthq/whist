@@ -35,7 +35,7 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 		return utils.MakeError("dbdriver.Initialize() called multiple times!")
 	}
 
-	connStr, err := getFractalDBConnString()
+	connStr, err := getWhistDBConnString()
 	if err != nil {
 		return err
 	}

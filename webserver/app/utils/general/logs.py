@@ -30,7 +30,7 @@ class _ExtraHandler(logging.StreamHandler):
 
 def _create_whist_logger() -> logging.Logger:
     """
-    Create and configure a logger for fractal's purposes.
+    Create and configure a logger for whist's purposes.
     """
     format = "%(asctime)s %(levelname)s [%(filename)s:%(funcName)s#L%(lineno)d]: %(message)s"
     logging.basicConfig(format=format, datefmt="%b %d %H:%M:%S")

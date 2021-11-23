@@ -56,7 +56,7 @@ func TestWriteMandelboxParams(t *testing.T) {
 }
 
 func verifyResourceMappingFileCreation(file string) error {
-	resourceDir := utils.Sprintf("%s%s/mandelboxResourceMappings/", utils.FractalDir, utils.PlaceholderTestUUID())
+	resourceDir := utils.Sprintf("%s%s/mandelboxResourceMappings/", utils.WhistDir, utils.PlaceholderTestUUID())
 	_, err := os.Stat(path.Join(resourceDir, file))
 	return err
 }

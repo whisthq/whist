@@ -62,7 +62,7 @@ def create_buffers(client_commit_hash: str, region_to_ami_id_mapping_str: str) -
         None
     """
 
-    current_app.config["FRACTAL_ACCESS_TOKEN"] = os.environ["FRACTAL_ACCESS_TOKEN"]
+    current_app.config["WHIST_ACCESS_TOKEN"] = os.environ["WHIST_ACCESS_TOKEN"]
     region_to_ami_id_mapping: Dict[str, str] = json.loads(region_to_ami_id_mapping_str)
     new_amis = create_ami_buffer(client_commit_hash, region_to_ami_id_mapping)
 
@@ -83,7 +83,7 @@ def swap_over_buffers(
         None
     """
 
-    current_app.config["FRACTAL_ACCESS_TOKEN"] = os.environ["FRACTAL_ACCESS_TOKEN"]
+    current_app.config["WHIST_ACCESS_TOKEN"] = os.environ["WHIST_ACCESS_TOKEN"]
     new_amis_list: List[str] = json.loads(new_amis)
     swapover_amis(new_amis_list)
 
@@ -98,7 +98,7 @@ def scale_down() -> None:
     compute capacity than we need at any given time.
     """
 
-    current_app.config["FRACTAL_ACCESS_TOKEN"] = os.environ["FRACTAL_ACCESS_TOKEN"]
+    current_app.config["WHIST_ACCESS_TOKEN"] = os.environ["WHIST_ACCESS_TOKEN"]
     try_scale_down_if_necessary_all_regions()
 
 
@@ -110,5 +110,5 @@ def prune() -> None:
     compute capacity than we need at any given time.
     """
 
-    current_app.config["FRACTAL_ACCESS_TOKEN"] = os.environ["FRACTAL_ACCESS_TOKEN"]
+    current_app.config["WHIST_ACCESS_TOKEN"] = os.environ["WHIST_ACCESS_TOKEN"]
     check_and_handle_lingering_instances()

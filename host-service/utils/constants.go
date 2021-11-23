@@ -6,10 +6,10 @@ import "github.com/google/uuid"
 // service. They're used in a lot of packages, so we put them in the least
 // common denominator --- this package.
 const (
-	FractalDir             string = "/fractal/"
-	TempDir                string = FractalDir + "temp/"
-	FractalPrivateDir      string = "/fractalprivate/"
-	UserInitialCookiesDir  string = "/fractal/userConfigs/"
+	WhistDir               string = "/fractal/"
+	TempDir                string = WhistDir + "temp/"
+	WhistPrivateDir        string = "/fractalprivate/"
+	UserInitialCookiesDir  string = WhistDir + "userConfigs/"
 	UserInitialCookiesFile string = "user-initial-cookies"
 )
 

@@ -172,5 +172,5 @@ func writeTestFile(testDir string) error {
 // test. This allows the test to be runnable multiple times without
 // creation errors.
 func cleanupTestDirs() error {
-	return os.RemoveAll(FractalDir)
+	return os.RemoveAll(WhistDir)
 }
