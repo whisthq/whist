@@ -206,7 +206,6 @@ const Network = (props: {
   onSubmit: () => void
 }) => {
   const testState = getNetworkTestState(props.networkInfo)
-  // const testState = NetworkTestState.NETWORK_NOT_GOOD
 
   return (
     <div className="flex flex-col justify-center items-center bg-gray-800 h-screen text-center">
