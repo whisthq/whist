@@ -32,7 +32,7 @@ const Privacy = () => {
         </div>
 
         <p>
-          Thank you for choosing to be part of our community at Whist Computers,
+          Thank you for choosing to be part of our community at Whist Technologies,
           Inc., doing business as Whist (“Whist”, “we”, “us”, or “our”). When
           you visit our website,{" "}
           <a href="https://www.whist.com">www.whist.com</a>, and use our
