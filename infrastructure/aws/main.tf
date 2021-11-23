@@ -16,14 +16,14 @@ provider "aws" {
 # Gloabl resources
 
 module "iam" {
-  source          = "./infrastructure/iam"
+  source          = "./resources/iam"
   region          = "us-east-2" # The region here does not matter. IAM is global
   employee_emails = var.employee_emails
   admin_emails    = var.admin_emails
 }
 
 module "s3" {
-  source = "./infrastructure/buckets"
+  source = "./resources/buckets"
   region = "us-east-2" # The region here does not matter. S3 is in a global namespace
 }
 
