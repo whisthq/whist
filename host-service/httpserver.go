@@ -23,8 +23,8 @@ const (
 	// Our HTTPS server listens on the port "HOST" converted to a telephone
 	// number.
 	PortToListen   uint16 = 4678
-	certPath       string = utils.FractalPrivateDir + "cert.pem"
-	privatekeyPath string = utils.FractalPrivateDir + "key.pem"
+	certPath       string = utils.WhistPrivateDir + "cert.pem"
+	privatekeyPath string = utils.WhistPrivateDir + "key.pem"
 )
 
 func init() {
@@ -144,7 +144,7 @@ func handleJSONTransportRequest(serverevent ServerRequest, transportRequestMap m
 
 	// First we validate the JWT received from the `json_transport` endpoint
 	// Set up auth
-	claims := new(auth.FractalClaims)
+	claims := new(auth.WhistClaims)
 	parser := &jwt.Parser{SkipClaimsValidation: true}
 
 	// Only verify auth in non-local environments

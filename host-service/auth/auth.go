@@ -27,9 +27,9 @@ type Audience []string
 // It is used to store the value of an access token's "scope" claim.
 type Scopes []string
 
-// FractalClaims is a struct type that models the claims that must be present
+// WhistClaims is a struct type that models the claims that must be present
 // in an Auth0-issued Whist access token.
-type FractalClaims struct {
+type WhistClaims struct {
 	jwt.StandardClaims
 
 	// Audience stores the value of the access token's "aud" claim. Inside the
@@ -120,10 +120,10 @@ func (scopes *Scopes) UnmarshalJSON(data []byte) error {
 // Verify parses an raw access token string, verifies the token's signature,
 // ensures that it is valid at the current moment in time, and checks that it
 // was issued by the proper issuer for the proper audience. It returns a
-// pointer to a FractalClaims type containing the values of its claims if all
+// pointer to a WhistClaims type containing the values of its claims if all
 // checks are successful.
-func Verify(tokenString string) (*FractalClaims, error) {
-	claims := new(FractalClaims)
+func Verify(tokenString string) (*WhistClaims, error) {
+	claims := new(WhistClaims)
 	_, err := jwt.ParseWithClaims(tokenString, claims, jwks.Keyfunc)
 
 	if err != nil {
@@ -150,7 +150,7 @@ func Verify(tokenString string) (*FractalClaims, error) {
 // VerifyAudience compares the "aud" claim against cmp. If req is false, this
 // method will return true if the value of the "aud" claim matches cmp or is
 // unset.
-func (claims *FractalClaims) VerifyAudience(cmp string, req bool) bool {
+func (claims *WhistClaims) VerifyAudience(cmp string, req bool) bool {
 	c := &jwt.MapClaims{"aud": []string(claims.Audience)}
 	return c.VerifyAudience(cmp, req)
 }
@@ -158,7 +158,7 @@ func (claims *FractalClaims) VerifyAudience(cmp string, req bool) bool {
 // VerifyScope returns true if claims.Scopes contains the requested scope and
 // false otherwise. This function's name and type signature is inspired by
 // those of the Verify* methods defined on jwt.StandardClaims.
-func (claims *FractalClaims) VerifyScope(scope string) bool {
+func (claims *WhistClaims) VerifyScope(scope string) bool {
 	for _, s := range claims.Scopes {
 		if s == scope {
 			return true

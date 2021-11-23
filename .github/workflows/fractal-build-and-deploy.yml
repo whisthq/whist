@@ -867,7 +867,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
           APP_GIT_BRANCH: ${{ needs.fractal-publish-build-config.outputs.branch }}
           APP_GIT_COMMIT: ${{ github.sha }}
-          FRACTAL_ACCESS_TOKEN: ${{ steps.get-token.outputs.access-token }}
+          WHIST_ACCESS_TOKEN: ${{ steps.get-token.outputs.access-token }}
           # Tell the webserver (factory.py) to consider this dev/stamging/prod rather
           # than a local webserver instance. This allows us to easily use the right
           # config database table to retrieve things like instance type for deployment.
@@ -1478,7 +1478,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
           APP_GIT_BRANCH: ${{ needs.fractal-publish-build-config.outputs.branch }}
           APP_GIT_COMMIT: ${{ github.sha }}
-          FRACTAL_ACCESS_TOKEN: ${{ steps.get-token.outputs.access-token }}
+          WHIST_ACCESS_TOKEN: ${{ steps.get-token.outputs.access-token }}
         shell: bash --noprofile --norc -eo pipefail {0}
         run: flask ami swap_over_buffers '${{ needs.webserver-spin-up-new-buffer.outputs.new_amis_str }}'
 

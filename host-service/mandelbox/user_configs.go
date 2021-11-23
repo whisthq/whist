@@ -274,7 +274,7 @@ func (mandelbox *mandelboxData) cleanUserConfigDir() {
 
 // getUserConfigDir returns the absolute path to the user config directory.
 func (mandelbox *mandelboxData) getUserConfigDir() string {
-	return utils.Sprintf("%s%v/%s", utils.FractalDir, mandelbox.GetID(), "userConfigs")
+	return utils.Sprintf("%s%v/%s", utils.WhistDir, mandelbox.GetID(), "userConfigs")
 }
 
 // getS3ConfigKey returns the S3 key to the encrypted user config file.

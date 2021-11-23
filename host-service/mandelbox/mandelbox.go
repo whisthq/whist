@@ -110,7 +110,7 @@ type Mandelbox interface {
 	Close()
 }
 
-// New creates a new Mandelbox given a parent context and a fractal ID.
+// New creates a new Mandelbox given a parent context and a whist ID.
 func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.MandelboxID) Mandelbox {
 	// We create a context for this mandelbox specifically.
 	ctx, cancel := context.WithCancel(baseCtx)

@@ -214,7 +214,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 	}
 
 	// Check that all resource mapping files were written correctly
-	resourceMappingDir := path.Join(utils.FractalDir, utils.PlaceholderTestUUID().String(), "mandelboxResourceMappings")
+	resourceMappingDir := path.Join(utils.WhistDir, utils.PlaceholderTestUUID().String(), "mandelboxResourceMappings")
 
 	hostPortFile := path.Join(resourceMappingDir, "hostPort_for_my_32262_tcp")
 	hostPortFileContents, err := ioutil.ReadFile(hostPortFile)
@@ -280,7 +280,7 @@ func TestSpinUpWithNewToken(t *testing.T) {
 		t.Fatalf("failed to setup user config directories: %v", err)
 	}
 
-	configDir := utils.Sprintf("%s%v/%s/%s", utils.FractalDir, oldID, "userConfigs", "unpacked_configs")
+	configDir := utils.Sprintf("%s%v/%s/%s", utils.WhistDir, oldID, "userConfigs", "unpacked_configs")
 	fileContents := "This file should never be seen."
 	err = os.WriteFile(path.Join(configDir, "testFile.txt"), []byte(fileContents), 0777)
 	if err != nil {
@@ -326,7 +326,7 @@ func TestSpinUpWithNewToken(t *testing.T) {
 
 	// If decryption was skipped as it should, the unpacked_configs directory should exist
 	// but the test file should not be there.
-	newConfigDir := utils.Sprintf("%s%v/%s/%s", utils.FractalDir, testID, "userConfigs", "unpacked_configs")
+	newConfigDir := utils.Sprintf("%s%v/%s/%s", utils.WhistDir, testID, "userConfigs", "unpacked_configs")
 	_, err = os.Stat(newConfigDir)
 	if err != nil {
 		t.Errorf("unpacked_configs directory does not exist but it should")

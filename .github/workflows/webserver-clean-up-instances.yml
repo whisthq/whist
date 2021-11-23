@@ -107,7 +107,7 @@ jobs:
         # status is nonzero if the file does not exist.
         run: >-
           [ -f "$TOKEN_FILE" ] &&
-              heroku run --exit-code --env=FRACTAL_ACCESS_TOKEN="$(cat "$TOKEN_FILE")" --app=${{ matrix.app }} -- ${{ matrix.command }}
+              heroku run --exit-code --env=WHIST_ACCESS_TOKEN="$(cat "$TOKEN_FILE")" --app=${{ matrix.app }} -- ${{ matrix.command }}
 
       - name: Notify Slack on Failure
         if: failure()

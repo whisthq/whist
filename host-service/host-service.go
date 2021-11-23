@@ -842,28 +842,28 @@ func initializeAppArmor(globalCancel context.CancelFunc) {
 func initializeFilesystem(globalCancel context.CancelFunc) {
 	// check if "/fractal" already exists --- if so, panic, since
 	// we don't know why it's there or if it's valid
-	if _, err := os.Lstat(utils.FractalDir); !os.IsNotExist(err) {
+	if _, err := os.Lstat(utils.WhistDir); !os.IsNotExist(err) {
 		if err == nil {
-			logger.Panicf(globalCancel, "Directory %s already exists!", utils.FractalDir)
+			logger.Panicf(globalCancel, "Directory %s already exists!", utils.WhistDir)
 		} else {
-			logger.Panicf(globalCancel, "Could not make directory %s because of error %v", utils.FractalDir, err)
+			logger.Panicf(globalCancel, "Could not make directory %s because of error %v", utils.WhistDir, err)
 		}
 	}
 
 	// Create the fractal directory and make it non-root user owned so that
 	// non-root users in mandelboxes can access files within (especially user
 	// configs).
-	err := os.MkdirAll(utils.FractalDir, 0777)
+	err := os.MkdirAll(utils.WhistDir, 0777)
 	if err != nil {
-		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", utils.FractalDir, err)
+		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", utils.WhistDir, err)
 	}
-	cmd := exec.Command("chown", "-R", "ubuntu", utils.FractalDir)
+	cmd := exec.Command("chown", "-R", "ubuntu", utils.WhistDir)
 	cmd.Run()
 
 	// Create fractal-private directory
-	err = os.MkdirAll(utils.FractalPrivateDir, 0777)
+	err = os.MkdirAll(utils.WhistPrivateDir, 0777)
 	if err != nil {
-		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", utils.FractalPrivateDir, err)
+		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", utils.WhistPrivateDir, err)
 	}
 
 	// Create fractal temp directory (only let root read and write this, since it
@@ -879,18 +879,18 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 // use for the httpserver, and our temporary directory.
 func uninitializeFilesystem() {
 	logger.Infof("removing all files")
-	err := os.RemoveAll(utils.FractalDir)
+	err := os.RemoveAll(utils.WhistDir)
 	if err != nil {
-		logger.Errorf("Failed to delete directory %s: error: %v\n", utils.FractalDir, err)
+		logger.Errorf("Failed to delete directory %s: error: %v\n", utils.WhistDir, err)
 	} else {
-		logger.Infof("Successfully deleted directory %s\n", utils.FractalDir)
+		logger.Infof("Successfully deleted directory %s\n", utils.WhistDir)
 	}
 
-	err = os.RemoveAll(utils.FractalPrivateDir)
+	err = os.RemoveAll(utils.WhistPrivateDir)
 	if err != nil {
-		logger.Errorf("Failed to delete directory %s: error: %v\n", utils.FractalPrivateDir, err)
+		logger.Errorf("Failed to delete directory %s: error: %v\n", utils.WhistPrivateDir, err)
 	} else {
-		logger.Infof("Successfully deleted directory %s\n", utils.FractalPrivateDir)
+		logger.Infof("Successfully deleted directory %s\n", utils.WhistPrivateDir)
 	}
 
 	err = os.RemoveAll(utils.TempDir)

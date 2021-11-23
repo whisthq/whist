@@ -10,7 +10,7 @@ import (
 
 const localDevDatabaseURL = "user=uap4ch2emueqo9 host=localhost port=9999 dbname=d9rf2k3vd6hvbm"
 
-func getFractalDBConnString() (string, error) {
+func getWhistDBConnString() (string, error) {
 	if metadata.IsLocalEnv() {
 		return localDevDatabaseURL, nil
 	}

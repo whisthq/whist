@@ -75,7 +75,7 @@ def test_scale_down_single_available(
     tests the correct requests, db, and ec2 calls are made.
     """
 
-    monkeypatch.setitem(app.config, "FRACTAL_ACCESS_TOKEN", "dummy-access-token")
+    monkeypatch.setitem(app.config, "WHIST_ACCESS_TOKEN", "dummy-access-token")
 
     post_list: List[Dict[str, Any]] = []
 
@@ -211,7 +211,7 @@ def test_drain_unreachable_does_not_exist(
     monkeypatch.setattr(EC2Client, "stop_instances", _set_state_helper_stop_instances)
     monkeypatch.setattr(EC2Client, "get_instance_states", _get_state_helper)
 
-    app.config["FRACTAL_ACCESS_TOKEN"] = "dummy-access-token"
+    app.config["WHIST_ACCESS_TOKEN"] = "dummy-access-token"
 
     instance = bulk_instance(
         aws_ami_id="test-AMI",
@@ -369,7 +369,7 @@ def test_scale_down_multiple_available(
     Tests that we scale down multiple instances when desired
     """
 
-    monkeypatch.setitem(app.config, "FRACTAL_ACCESS_TOKEN", "dummy-access-token")
+    monkeypatch.setitem(app.config, "WHIST_ACCESS_TOKEN", "dummy-access-token")
 
     desired_num = randint(1, 10)
     instance_list = []
@@ -399,7 +399,7 @@ def test_scale_down_multiple_partial_available(
     Tests that we only scale down inactive instances
     """
 
-    monkeypatch.setitem(app.config, "FRACTAL_ACCESS_TOKEN", "dummy-access-token")
+    monkeypatch.setitem(app.config, "WHIST_ACCESS_TOKEN", "dummy-access-token")
 
     desired_num = randint(2, 10)
     num_inactive = randint(1, desired_num - 1)

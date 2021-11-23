@@ -130,7 +130,7 @@ func TestParseToken(t *testing.T) {
 		// rawToken is an H256-signed JWT whose payload is {"aud": "foo"}
 		const rawToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJmb28ifQ.h44sAymzUhQYXbdOqrCkr7aEf0HkU-wbgWQdQ74Q288"
 
-		claims := new(auth.FractalClaims)
+		claims := new(auth.WhistClaims)
 		parser := new(jwt.Parser)
 		_, _, err := parser.ParseUnverified(rawToken, claims)
 
@@ -152,7 +152,7 @@ func TestParseToken(t *testing.T) {
 		// {"aud": ["hello", "world"]}.
 		const rawToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsiaGVsbG8iLCJ3b3JsZCJdfQ.ckOGyW7IkarMXd8-KxlDXB9LbdFwN06tVqraRXjRRyk"
 
-		claims := new(auth.FractalClaims)
+		claims := new(auth.WhistClaims)
 		parser := new(jwt.Parser)
 		_, _, err := parser.ParseUnverified(rawToken, claims)
 
@@ -171,7 +171,7 @@ func TestVerifyScope(t *testing.T) {
 	t.Run("Empty", func(t *testing.T) {
 		t.Parallel()
 
-		claims := new(auth.FractalClaims)
+		claims := new(auth.WhistClaims)
 
 		if claims.VerifyScope("foo") {
 			t.Fatal("VerifyScope should return false")
@@ -183,7 +183,7 @@ func TestVerifyScope(t *testing.T) {
 	t.Run("Mismatch", func(t *testing.T) {
 		t.Parallel()
 
-		claims := &auth.FractalClaims{
+		claims := &auth.WhistClaims{
 			Scopes: auth.Scopes{"foo", "bar"},
 		}
 
@@ -196,7 +196,7 @@ func TestVerifyScope(t *testing.T) {
 	t.Run("Match", func(t *testing.T) {
 		t.Parallel()
 
-		claims := &auth.FractalClaims{
+		claims := &auth.WhistClaims{
 			Scopes: auth.Scopes{"foo", "bar", "baz"},
 		}
 

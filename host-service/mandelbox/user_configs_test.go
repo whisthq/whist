@@ -32,14 +32,14 @@ func TestUserConfigIntegration(t *testing.T) {
 	}
 
 	// Start with a clean slate
-	os.RemoveAll(utils.FractalDir)
+	os.RemoveAll(utils.WhistDir)
 
 	err := testMandelboxData.SetupUserConfigDirs()
 	if err != nil {
 		t.Fatalf("failed to create user config directories: %v", err)
 	}
 
-	mandelboxDir := path.Join(utils.FractalDir, testMandelboxData.ID.String())
+	mandelboxDir := path.Join(utils.WhistDir, testMandelboxData.ID.String())
 	sourceDir := path.Join(mandelboxDir, "testBase")
 	if err := os.MkdirAll(sourceDir, 0777); err != nil {
 		t.Fatalf("failed to create source directory: %v", err)
@@ -169,5 +169,5 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 // test. This allows the test to be runnable multiple times without
 // creation errors.
 func cleanupTestDirs() error {
-	return os.RemoveAll(utils.FractalDir)
+	return os.RemoveAll(utils.WhistDir)
 }
