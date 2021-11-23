@@ -434,11 +434,7 @@ int main(int argc, char* argv[]) {
         init_clipboard_synchronizer(true);
 
         // Create threads to receive udp/tcp packets and handle them as needed
-        bool run_sync_packets = true;
-        SDL_Thread* sync_udp_packets_thread = SDL_CreateThread(
-            multithreaded_sync_udp_packets, "multithreaded_sync_udp_packets", &run_sync_packets);
-        SDL_Thread* sync_tcp_packets_thread = SDL_CreateThread(
-            multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", &run_sync_packets);
+        init_packet_synchronizers();
 
         start_timer(&window_resize_timer);
         window_resize_mutex = safe_SDL_CreateMutex();
@@ -565,9 +561,7 @@ int main(int argc, char* argv[]) {
             try_amount + 1 == max_connection_attempts)
             send_server_quit_messages(3);
 
-        run_sync_packets = false;
-        SDL_WaitThread(sync_tcp_packets_thread, NULL);
-        SDL_WaitThread(sync_udp_packets_thread, NULL);
+        destroy_packet_synchronizers();
         destroy_clipboard_synchronizer();
         destroy_audio();
         close_connections();

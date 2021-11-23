@@ -270,34 +270,6 @@ TEST(ProtocolTest, ResetRingBufferFrame) {
     EXPECT_EQ(receive_packet(rb, &pkt1), 0);
 }
 
-TEST_F(CaptureStdoutTest, LoggerTest) {
-    init_logger();
-    LOG_DEBUG("This is a debug log!");
-    LOG_INFO("This is an info log!");
-    flush_logs();
-    LOG_WARNING("This is a warning log!");
-    LOG_ERROR("This is an error log!");
-    flush_logs();
-    LOG_INFO("AAA");
-    LOG_INFO("BBB");
-    LOG_INFO("CCC");
-    LOG_INFO("DDD");
-    LOG_INFO("EEE");
-    destroy_logger();
-
-    // Validate stdout, line-by-line
-    check_stdout_line(::testing::HasSubstr("Logging initialized!"));
-    check_stdout_line(LOG_DEBUG_MATCHER);
-    check_stdout_line(LOG_INFO_MATCHER);
-    check_stdout_line(LOG_WARNING_MATCHER);
-    check_stdout_line(LOG_ERROR_MATCHER);
-    check_stdout_line(::testing::EndsWith("AAA"));
-    check_stdout_line(::testing::EndsWith("BBB"));
-    check_stdout_line(::testing::EndsWith("CCC"));
-    check_stdout_line(::testing::EndsWith("DDD"));
-    check_stdout_line(::testing::EndsWith("EEE"));
-}
-
 /*
 ============================
 Server Tests
@@ -331,6 +303,37 @@ TEST_F(CaptureStdoutTest, ServerParseArgsUsage) {
 Whist Library Tests
 ============================
 */
+
+/**
+ * logging/logging.c
+ **/
+TEST_F(CaptureStdoutTest, LoggerTest) {
+    init_logger();
+    LOG_DEBUG("This is a debug log!");
+    LOG_INFO("This is an info log!");
+    flush_logs();
+    LOG_WARNING("This is a warning log!");
+    LOG_ERROR("This is an error log!");
+    flush_logs();
+    LOG_INFO("AAA");
+    LOG_INFO("BBB");
+    LOG_INFO("CCC");
+    LOG_INFO("DDD");
+    LOG_INFO("EEE");
+    destroy_logger();
+
+    // Validate stdout, line-by-line
+    check_stdout_line(::testing::HasSubstr("Logging initialized!"));
+    check_stdout_line(LOG_DEBUG_MATCHER);
+    check_stdout_line(LOG_INFO_MATCHER);
+    check_stdout_line(LOG_WARNING_MATCHER);
+    check_stdout_line(LOG_ERROR_MATCHER);
+    check_stdout_line(::testing::EndsWith("AAA"));
+    check_stdout_line(::testing::EndsWith("BBB"));
+    check_stdout_line(::testing::EndsWith("CCC"));
+    check_stdout_line(::testing::EndsWith("DDD"));
+    check_stdout_line(::testing::EndsWith("EEE"));
+}
 
 // Constants used for testing encryption
 #define DEFAULT_BINARY_PRIVATE_KEY \

@@ -7,9 +7,9 @@
 ============================
 Usage
 ============================
-Use multithreaded_sync_udp_packets to send and receive UDP messages to and from the server, such as
-audio and video packets. Use multithreaded_sync_tcp_packets to send and receive TCP messages, mostly
-clipboard packets.
+Use `init_packet_synchronizers()` to spin up threads for handling UDP messages (video, audio, etc.)
+and TCP messages (clipboard, files, etc.). Use `destroy_packet_synchronizers()` to shut them down
+and wait for them to finish.
 */
 
 /*
@@ -19,16 +19,13 @@ Public Functions
 */
 
 /**
- * @brief                   Receive and send UDP packets from and to the server. Includes bitrate,
- * dimension, nacks, and audio/video packets.
- * @param opaque            A socket context for receiving packets
+ * @brief        Initialize the packet synchronizer threads for UDP and TCP.
  */
-int multithreaded_sync_udp_packets(void* opaque);
+void init_packet_synchronizers();
 
 /**
- * @brief                   Receive and send TCP packets, mostly clipboard
- *
- * @param opaque            Unused - necessary for creating fractal threads.
+ * @brief        Destroy and wait on the packet synchronizer threads for UDP and TCP.
  */
-int multithreaded_sync_tcp_packets(void* opaque);
+void destroy_packet_synchronizers();
+
 #endif
