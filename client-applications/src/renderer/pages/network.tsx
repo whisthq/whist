@@ -111,7 +111,7 @@ const Text = (props: { state: NetworkTestState }) => {
     default:
       return (
         <div className="text-gray-300 font-semibold text-xl">
-          Your Internet may not be strong enough for Whist
+          Your Internet may not be strong enough
         </div>
       )
   }
