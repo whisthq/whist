@@ -10,8 +10,8 @@ const config = { userAcceptedDataPolicy: true }
 
 // The download test emits results over a period of time; create variables
 // to track those results
-let iterations = 0
-let results = {
+const iterations = 0
+const results = {
   jitter: 0,
   downloadMbps: 0,
   progress: 0,

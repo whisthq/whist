@@ -4,7 +4,7 @@
  * @brief This file is the entry point of the renderer thread and acts as a router.
  */
 
-import React, { useEffect, useState, memo } from "react"
+import React, { useEffect, useState } from "react"
 import ReactDOM from "react-dom"
 
 import { OneButtonError, TwoButtonError } from "@app/renderer/pages/error"
