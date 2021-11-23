@@ -22,12 +22,14 @@ const SelectBrowser = (props: {
             id="browser"
             name="browser"
             className="bg-gray-900 font-semibold text-gray-300 outline-none mt-1 block w-full py-2 text-base border-gray-300 sm:text-sm"
-            defaultValue={undefined}
+            defaultValue={props.browsers.length > 0 ? 0 : undefined}
             onChange={(evt: any) => props.onSelect(evt.target.value)}
           >
             <option value={undefined}>None, start from a clean slate</option>
             {props.browsers.map((browser: string, index: number) => (
-              <option key={index}>{browser}</option>
+              <option key={index} value={index}>
+                {browser}
+              </option>
             ))}
           </select>
         </div>
