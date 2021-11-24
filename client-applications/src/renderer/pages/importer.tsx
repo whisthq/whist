@@ -22,12 +22,12 @@ const SelectBrowser = (props: {
             id="browser"
             name="browser"
             className="bg-gray-900 font-semibold text-gray-300 outline-none mt-1 block w-full py-2 text-base border-gray-300 sm:text-sm"
-            defaultValue={props.browsers.length > 0 ? 0 : undefined}
+            defaultValue={props.browsers?.[0]}
             onChange={(evt: any) => props.onSelect(evt.target.value)}
           >
             <option value={undefined}>None, start from a clean slate</option>
             {props.browsers.map((browser: string, index: number) => (
-              <option key={index} value={index}>
+              <option key={index} value={browser}>
                 {browser}
               </option>
             ))}
@@ -43,7 +43,7 @@ const Importer = (props: {
   onSubmit: (browser: string | undefined) => void
 }) => {
   const [browser, setBrowser] = useState<string | undefined>(
-    props.browsers.length > 0 ? props.browsers[0] : undefined
+    props.browsers?.[0]
   )
   const [processing, setProcessing] = useState(false)
 

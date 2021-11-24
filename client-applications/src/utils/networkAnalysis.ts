@@ -3,7 +3,10 @@ import events from "events"
 
 // Maximum amount of time we want the download test to take in seconds
 const MILLISECONDS = 1000
-const TEST_DURATION_MILLISECONDS = 10 * MILLISECONDS
+const TEST_DURATION_MILLISECONDS = 7 * MILLISECONDS
+// Sometimes events can emit out of order so we track the max progress to make sure we're not emitting
+// an earlier event
+let MAX_PROGRESS = 0
 
 // Config taken from @m-lab/ndt7 repo example
 const config = { userAcceptedDataPolicy: true }
@@ -18,6 +21,17 @@ const results = {
 }
 
 const networkAnalysisEvent = new events.EventEmitter()
+
+const emitNetworkAnalysis = (_results: {
+  jitter: number
+  downloadMbps: number
+  progress: number
+}) => {
+  if (_results.progress >= MAX_PROGRESS && MAX_PROGRESS < 100) {
+    networkAnalysisEvent.emit("did-update", _results)
+    MAX_PROGRESS = _results.progress
+  }
+}
 
 // Handles download measurements
 const handleDownloadMeasurements = (
@@ -40,7 +54,7 @@ const handleDownloadMeasurements = (
       )
     }
 
-    networkAnalysisEvent.emit("did-update", results)
+    emitNetworkAnalysis(results)
   }
 }
 
@@ -48,11 +62,11 @@ const handleDownloadMeasurements = (
 const callbacks = {
   downloadMeasurement: handleDownloadMeasurements(results, iterations),
   downloadComplete: () => {
-    networkAnalysisEvent.emit("did-update", { ...results, progress: 100 })
+    emitNetworkAnalysis({ ...results, progress: 100 })
   },
   error: (err: { message: string }) => {
     console.error(err.message)
-    networkAnalysisEvent.emit("did-update", { ...results, progress: 100 })
+    emitNetworkAnalysis({ ...results, progress: 100 })
   },
 }
 
@@ -61,7 +75,7 @@ const networkAnalyze = () => {
   ndt7.downloadTest(config, callbacks, urlPromise)
 
   setTimeout(() => {
-    networkAnalysisEvent.emit("did-update", { ...results, progress: 100 })
+    emitNetworkAnalysis({ ...results, progress: 100 })
   }, TEST_DURATION_MILLISECONDS)
 }
 
