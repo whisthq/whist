@@ -45,6 +45,11 @@ const (
 // allocated for mandelboxes. This needs to be called at program initialization
 // (ideally in an `init` function), before any mandelboxes are started.
 func Reserve(num uint16, protocol TransportProtocol) {
+	if !isInAllowedRange(num) {
+		logger.Errorf("Could not reserve port %v/%s as port is not in allowed range.", num, protocol)
+		return
+	}
+
 	mapToUse, err := getProtocolSpecificHostPortMap(protocol)
 	if err != nil {
 		logger.Errorf("Could not reserve port %v/%s. Err: %s", num, protocol, err)
