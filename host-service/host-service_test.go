@@ -95,6 +95,10 @@ func TestSpinUpMandelbox(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	goroutineTracker := sync.WaitGroup{}
 
+	// Defer the wait first since deferred functions are executed in LIFO order.
+	defer goroutineTracker.Wait()
+	defer cancel()
+
 	var instanceName aws.InstanceName
 	var userID mandelboxtypes.UserID
 	var err error
@@ -249,11 +253,6 @@ func TestSpinUpMandelbox(t *testing.T) {
 	if string(readyFileContents) != ".ready" {
 		t.Errorf("Ready file contains invalid contents: %s", string(readyFileContents))
 	}
-
-	// Wait for the container cleanup goroutine to finish before ending the test
-	// Don't defer these since the stack order of defer makes the call order confusing
-	cancel()
-	goroutineTracker.Wait()
 }
 
 // TestSpinUpWithNewToken tests a mandelbox spinup with the new token flag set
@@ -321,6 +320,10 @@ func TestSpinUpWithNewToken(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	goroutineTracker := sync.WaitGroup{}
 
+	// Defer the wait first since deferred functions are executed in LIFO order.
+	defer goroutineTracker.Wait()
+	defer cancel()
+
 	testmux := &sync.Mutex{}
 	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
 
@@ -341,9 +344,4 @@ func TestSpinUpWithNewToken(t *testing.T) {
 	if err == nil || !os.IsNotExist(err) {
 		t.Errorf("testFile.txt should not exist but it does")
 	}
-
-	// Wait for the container cleanup goroutine to finish before ending the test
-	// Don't defer these since the stack order of defer makes the call order confusing
-	cancel()
-	goroutineTracker.Wait()
 }

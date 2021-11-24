@@ -12,6 +12,10 @@ import (
 func TestNewMandelbox(t *testing.T) {
 	mandelbox, cancel, goroutineTracker := createTestMandelbox()
 
+	// Defer the wait first since deferred functions are executed in LIFO order.
+	defer goroutineTracker.Wait()
+	defer cancel()
+
 	// Check if the mandelbox resource dir was created
 	err := verifyResourceMappingFileCreation("")
 
@@ -32,11 +36,6 @@ func TestNewMandelbox(t *testing.T) {
 	if deviceMappings.CgroupPermissions != "rwm" {
 		t.Errorf("received incorrect CgroupPermissions: got %s, expected %s", deviceMappings.CgroupPermissions, "rwm")
 	}
-
-	// Wait for the container cleanup goroutine to finish before ending the test
-	// Don't defer these since the stack order of defer makes the call order confusing
-	cancel()
-	goroutineTracker.Wait()
 }
 
 func TestRegisterCreation(t *testing.T) {
@@ -56,6 +55,10 @@ func TestRegisterCreation(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			mandelbox, cancel, goroutineTracker := createTestMandelbox()
 
+			// Defer the wait first since deferred functions are executed in LIFO order.
+			defer goroutineTracker.Wait()
+			defer cancel()
+
 			err := mandelbox.RegisterCreation(types.DockerID(tt.dockerID))
 			got := mandelbox.GetDockerID()
 			gotErr := err != nil
@@ -67,10 +70,6 @@ func TestRegisterCreation(t *testing.T) {
 			if got != tt.want {
 				t.Errorf("got %s, want %s", got, tt.want)
 			}
-
-			// Clean up before next iteration runs
-			cancel()
-			goroutineTracker.Wait()
 		})
 	}
 }
@@ -89,6 +88,10 @@ func TestSetAppName(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			mandelbox, cancel, goroutineTracker := createTestMandelbox()
 
+			// Defer the wait first since deferred functions are executed in LIFO order.
+			defer goroutineTracker.Wait()
+			defer cancel()
+
 			err := mandelbox.SetAppName(tt.want)
 			got := mandelbox.GetAppName()
 			gotErr := err != nil
@@ -100,10 +103,6 @@ func TestSetAppName(t *testing.T) {
 			if got != tt.want {
 				t.Errorf("got %s, want %s", got, tt.want)
 			}
-
-			// Clean up before next iteration runs
-			cancel()
-			goroutineTracker.Wait()
 		})
 	}
 }
