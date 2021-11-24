@@ -10,7 +10,10 @@ import (
 )
 
 func TestNewMandelbox(t *testing.T) {
-	mandelbox, cancel := createTestMandelbox()
+	mandelbox, cancel, goroutineTracker := createTestMandelbox()
+
+	// Defer the wait first since deferred functions are executed in LIFO order.
+	defer goroutineTracker.Wait()
 	defer cancel()
 
 	// Check if the mandelbox resource dir was created
@@ -50,7 +53,10 @@ func TestRegisterCreation(t *testing.T) {
 
 	for _, tt := range registerTests {
 		t.Run(tt.testName, func(t *testing.T) {
-			mandelbox, cancel := createTestMandelbox()
+			mandelbox, cancel, goroutineTracker := createTestMandelbox()
+
+			// Defer the wait first since deferred functions are executed in LIFO order.
+			defer goroutineTracker.Wait()
 			defer cancel()
 
 			err := mandelbox.RegisterCreation(types.DockerID(tt.dockerID))
@@ -80,7 +86,10 @@ func TestSetAppName(t *testing.T) {
 
 	for _, tt := range registerTests {
 		t.Run(tt.testName, func(t *testing.T) {
-			mandelbox, cancel := createTestMandelbox()
+			mandelbox, cancel, goroutineTracker := createTestMandelbox()
+
+			// Defer the wait first since deferred functions are executed in LIFO order.
+			defer goroutineTracker.Wait()
 			defer cancel()
 
 			err := mandelbox.SetAppName(tt.want)
@@ -98,11 +107,11 @@ func TestSetAppName(t *testing.T) {
 	}
 }
 
-// setTestMandelbox is a utility function to create a test mandelbox
-func createTestMandelbox() (Mandelbox, context.CancelFunc) {
+// setTestMandelbox is a utility function to create a test mandelbox.
+func createTestMandelbox() (Mandelbox, context.CancelFunc, *sync.WaitGroup) {
 	ctx, cancel := context.WithCancel(context.Background())
 	routineTracker := sync.WaitGroup{}
 	mandelbox := New(ctx, &routineTracker, types.MandelboxID(utils.PlaceholderTestUUID()))
 
-	return mandelbox, cancel
+	return mandelbox, cancel, &routineTracker
 }

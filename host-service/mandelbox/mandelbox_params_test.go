@@ -10,7 +10,10 @@ import (
 )
 
 func TestWriteMandelboxParams(t *testing.T) {
-	mandelbox, cancel := createTestMandelbox()
+	mandelbox, cancel, goroutineTracker := createTestMandelbox()
+
+	// Defer the wait first since deferred functions are executed in LIFO order.
+	defer goroutineTracker.Wait()
 	defer cancel()
 
 	if err := mandelbox.AssignPortBindings([]portbindings.PortBinding{

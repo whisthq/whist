@@ -95,6 +95,11 @@ func TestSpinUpMandelbox(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	goroutineTracker := sync.WaitGroup{}
 
+	// Defer the wait first since deferred functions are executed in LIFO order.
+	defer goroutineTracker.Wait()
+	defer cancelMandelboxContextByID(mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()))
+	defer cancel()
+
 	var instanceName aws.InstanceName
 	var userID mandelboxtypes.UserID
 	var err error
@@ -137,8 +142,6 @@ func TestSpinUpMandelbox(t *testing.T) {
 	go handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
 	go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testMandelboxDBEvent, testTransportRequestMap, testmux)
 
-	goroutineTracker.Wait()
-
 	// Check that response is as expected
 	result := <-testJSONTransportRequest.resultChan
 	if result.Err != nil {
@@ -155,14 +158,19 @@ func TestSpinUpMandelbox(t *testing.T) {
 	}
 
 	// Assert port assignments are valid
-	if spinUpResult.HostPortForTCP32262 < portbindings.MinAllowedPort || spinUpResult.HostPortForTCP32262 >= portbindings.MaxAllowedPort {
-		t.Errorf("HostPortForTCP32262 is invalid: %d", spinUpResult.HostPortForTCP32262)
+	portAssignmentAssertions := []struct {
+		portName     string
+		assignedPort uint16
+	}{
+		{"HostPortForTCP32262", spinUpResult.HostPortForTCP32262},
+		{"HostPortForTCP32273", spinUpResult.HostPortForTCP32273},
+		{"HostPortForUDP32263", spinUpResult.HostPortForUDP32263},
 	}
-	if spinUpResult.HostPortForTCP32273 < portbindings.MinAllowedPort || spinUpResult.HostPortForTCP32273 >= portbindings.MaxAllowedPort {
-		t.Errorf("HostPortForTCP32273 is invalid: %d", spinUpResult.HostPortForTCP32273)
-	}
-	if spinUpResult.HostPortForUDP32263 < portbindings.MinAllowedPort || spinUpResult.HostPortForUDP32263 >= portbindings.MaxAllowedPort {
-		t.Errorf("HostPortForUDP32263 is invalid: %d", spinUpResult.HostPortForUDP32263)
+
+	for _, portAssertion := range portAssignmentAssertions {
+		if portAssertion.assignedPort < portbindings.MinAllowedPort || portAssertion.assignedPort >= portbindings.MaxAllowedPort {
+			t.Errorf("Port assignment for %s is invalid: %d", portAssertion.portName, portAssertion.assignedPort)
+		}
 	}
 
 	// Assert aesKey is valid
@@ -175,42 +183,34 @@ func TestSpinUpMandelbox(t *testing.T) {
 		t.Errorf("Expected container to use image browsers/chrome, got %v", dockerClient.config.Image)
 	}
 
+	// Check ports have been exposed correctly
 	exposedPorts := dockerClient.config.ExposedPorts
-	if _, ok := exposedPorts[nat.Port("32262/tcp")]; !ok {
-		t.Error("Port 32262/tcp is not exposed on docker container.")
-	}
-	if _, ok := exposedPorts[nat.Port("32263/udp")]; !ok {
-		t.Error("Port 32263/udp is not exposed on docker container.")
-	}
-	if _, ok := exposedPorts[nat.Port("32273/tcp")]; !ok {
-		t.Error("Port 32273/tcp is not exposed on docker container.")
+	exposedPortNames := []string{"32262/tcp", "32273/tcp", "32263/udp"}
+	for _, exposedPort := range exposedPortNames {
+		if _, ok := exposedPorts[nat.Port(exposedPort)]; !ok {
+			t.Errorf("Expected port %s to be exposed on docker container, but it wasn't", exposedPort)
+		}
 	}
 
 	// Check that host config port bindings are correct
 	portBindings := dockerClient.hostConfig.PortBindings
-
-	binding32262, ok := portBindings[nat.Port("32262/tcp")]
-	if !ok {
-		t.Error("Port 32262/tcp is not bound.")
-	}
-	if len(binding32262) < 1 || binding32262[0].HostPort != utils.Sprintf("%d", spinUpResult.HostPortForTCP32262) {
-		t.Error("Binding for port 32262 does not match returned result.")
-	}
-
-	binding32263, ok := portBindings[nat.Port("32263/udp")]
-	if !ok {
-		t.Error("Port 32263/udp is not bound.")
-	}
-	if len(binding32263) < 1 || binding32263[0].HostPort != utils.Sprintf("%d", spinUpResult.HostPortForUDP32263) {
-		t.Error("Binding for port 32263 does not match returned result.")
+	portBindingAssertions := []struct {
+		portName     string
+		assignedPort uint16
+	}{
+		{"32262/tcp", spinUpResult.HostPortForTCP32262},
+		{"32273/tcp", spinUpResult.HostPortForTCP32273},
+		{"32263/udp", spinUpResult.HostPortForUDP32263},
 	}
 
-	binding32273, ok := portBindings[nat.Port("32273/tcp")]
-	if !ok {
-		t.Error("Port 32273/tcp is not bound.")
-	}
-	if len(binding32273) < 1 || binding32273[0].HostPort != utils.Sprintf("%d", spinUpResult.HostPortForTCP32273) {
-		t.Error("Binding for port 32273 does not match returned result.")
+	for _, portBindingAssertion := range portBindingAssertions {
+		binding, ok := portBindings[nat.Port(portBindingAssertion.portName)]
+		if !ok {
+			t.Errorf("Expected port %s to be bound, but it wasn't", portBindingAssertion.portName)
+		}
+		if len(binding) < 1 || binding[0].HostPort != strconv.Itoa(int(portBindingAssertion.assignedPort)) {
+			t.Errorf("Expected port %s to be bound to %d, but it wasn't", portBindingAssertion.portName, portBindingAssertion.assignedPort)
+		}
 	}
 
 	// Check that all resource mapping files were written correctly
@@ -287,11 +287,11 @@ func TestSpinUpWithNewToken(t *testing.T) {
 		t.Fatalf("failed to write to test file: %v", err)
 	}
 
-	err = oldMandelboxData.BackupUserConfigs()
-	if err != nil {
-		t.Fatalf("failed to backup user configs: %v", err)
-	}
-	os.RemoveAll(configDir)
+	// Tear down the old container before starting the new one
+	// Cancelling the old context will cause the old user configs to be backed up with the given token
+	oldCancel()
+	cancelMandelboxContextByID(mandelboxtypes.MandelboxID(oldID))
+	oldGoroutineTracker.Wait()
 
 	// Set up a new mandelbox
 	testMandelboxInfo := subscriptions.Mandelbox{
@@ -314,6 +314,11 @@ func TestSpinUpWithNewToken(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	goroutineTracker := sync.WaitGroup{}
 
+	// Defer the wait first since deferred functions are executed in LIFO order.
+	defer goroutineTracker.Wait()
+	defer cancelMandelboxContextByID(mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()))
+	defer cancel()
+
 	testmux := &sync.Mutex{}
 	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
 
@@ -321,7 +326,6 @@ func TestSpinUpWithNewToken(t *testing.T) {
 	go handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
 	go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testMandelboxDBEvent, testTransportRequestMap, testmux)
 
-	goroutineTracker.Wait()
 	<-testJSONTransportRequest.resultChan
 
 	// If decryption was skipped as it should, the unpacked_configs directory should exist
@@ -335,4 +339,15 @@ func TestSpinUpWithNewToken(t *testing.T) {
 	if err == nil || !os.IsNotExist(err) {
 		t.Errorf("testFile.txt should not exist but it does")
 	}
+}
+
+// cancelMandelboxContextByID tries to look up the mandelbox by its ID
+// and cancels the context associated with it.
+func cancelMandelboxContextByID(id mandelboxtypes.MandelboxID) error {
+	mandelbox, err := mandelbox.LookUpByMandelboxID(id)
+	if err != nil {
+		return utils.MakeError("could not cancel mandelbox context: %v", err)
+	}
+	mandelbox.Close()
+	return nil
 }
