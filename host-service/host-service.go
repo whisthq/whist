@@ -394,7 +394,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 
 	// If so, create the mandelbox object.
-	mandelbox := mandelboxData.New(context.Background(), goroutineTracker, mandelboxSubscription.ID)
+	mandelbox := mandelboxData.New(globalCtx, goroutineTracker, mandelboxSubscription.ID)
 	logger.Infof("SpinUpMandelbox(): created Mandelbox object %s", mandelbox.GetID())
 
 	// If the creation of the mandelbox fails, we want to clean up after it. We
