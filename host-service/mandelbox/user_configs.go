@@ -225,7 +225,7 @@ func (mandelbox *mandelboxData) WriteUserInitialBrowserData(cookieJSON string, b
 		return utils.MakeError("error creating cookies file. Error: %v", err)
 	}
 
-	bookmarkFilePath := path.Join(unpackedConfigDir, utils.UserInitialBookmarkFile)
+	bookmarkFilePath := path.Join(unpackedConfigDir, utils.UserInitialBookmarksFile)
 
 	if err := utils.WriteToNewFile(bookmarkFilePath, bookmarksJSON); err != nil {
 		return utils.MakeError("error creating bookmarks file. Error: %v", err)

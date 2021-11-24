@@ -134,7 +134,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 
 	// Get browser data file path
 	cookieFilePath := path.Join(unpackedConfigDir, utils.UserInitialCookiesFile)
-	bookmarkFilePath := path.Join(unpackedConfigDir, utils.UserInitialBookmarkFile)
+	bookmarkFilePath := path.Join(unpackedConfigDir, utils.UserInitialBookmarksFile)
 
 	// Stores the file path and content for each browser data type
 	fileAndContents := [][]string{{cookieFilePath, cookieJSON}, {bookmarkFilePath, bookmarksJSON}}
