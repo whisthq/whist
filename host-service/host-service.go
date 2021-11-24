@@ -726,7 +726,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	go func() {
 		logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
 
-		//  Pass alongcookies and bookmarks
+		//  Pass along cookies and bookmarks
 		err := mandelbox.WriteUserInitialBrowserData(req.Cookies, req.Bookmarks)
 		userInitialBrowserDataDownloadComplete <- true
 		if err != nil {
