@@ -158,14 +158,19 @@ func TestSpinUpMandelbox(t *testing.T) {
 	}
 
 	// Assert port assignments are valid
-	if spinUpResult.HostPortForTCP32262 < portbindings.MinAllowedPort || spinUpResult.HostPortForTCP32262 >= portbindings.MaxAllowedPort {
-		t.Errorf("HostPortForTCP32262 is invalid: %d", spinUpResult.HostPortForTCP32262)
+	portAssignmentAssertions := []struct {
+		portName     string
+		assignedPort uint16
+	}{
+		{"HostPortForTCP32262", spinUpResult.HostPortForTCP32262},
+		{"HostPortForTCP32273", spinUpResult.HostPortForTCP32273},
+		{"HostPortForUDP32263", spinUpResult.HostPortForUDP32263},
 	}
-	if spinUpResult.HostPortForTCP32273 < portbindings.MinAllowedPort || spinUpResult.HostPortForTCP32273 >= portbindings.MaxAllowedPort {
-		t.Errorf("HostPortForTCP32273 is invalid: %d", spinUpResult.HostPortForTCP32273)
-	}
-	if spinUpResult.HostPortForUDP32263 < portbindings.MinAllowedPort || spinUpResult.HostPortForUDP32263 >= portbindings.MaxAllowedPort {
-		t.Errorf("HostPortForUDP32263 is invalid: %d", spinUpResult.HostPortForUDP32263)
+
+	for _, portAssertion := range portAssignmentAssertions {
+		if portAssertion.assignedPort < portbindings.MinAllowedPort || portAssertion.assignedPort >= portbindings.MaxAllowedPort {
+			t.Errorf("Port assignment for %s is invalid: %d", portAssertion.portName, portAssertion.assignedPort)
+		}
 	}
 
 	// Assert aesKey is valid
@@ -178,42 +183,34 @@ func TestSpinUpMandelbox(t *testing.T) {
 		t.Errorf("Expected container to use image browsers/chrome, got %v", dockerClient.config.Image)
 	}
 
+	// Check ports have been exposed correctly
 	exposedPorts := dockerClient.config.ExposedPorts
-	if _, ok := exposedPorts[nat.Port("32262/tcp")]; !ok {
-		t.Error("Port 32262/tcp is not exposed on docker container.")
-	}
-	if _, ok := exposedPorts[nat.Port("32263/udp")]; !ok {
-		t.Error("Port 32263/udp is not exposed on docker container.")
-	}
-	if _, ok := exposedPorts[nat.Port("32273/tcp")]; !ok {
-		t.Error("Port 32273/tcp is not exposed on docker container.")
+	exposedPortNames := []string{"32262/tcp", "32273/tcp", "32263/udp"}
+	for _, exposedPort := range exposedPortNames {
+		if _, ok := exposedPorts[nat.Port(exposedPort)]; !ok {
+			t.Errorf("Expected port %s to be exposed on docker container, but it wasn't", exposedPort)
+		}
 	}
 
 	// Check that host config port bindings are correct
 	portBindings := dockerClient.hostConfig.PortBindings
-
-	binding32262, ok := portBindings[nat.Port("32262/tcp")]
-	if !ok {
-		t.Error("Port 32262/tcp is not bound.")
-	}
-	if len(binding32262) < 1 || binding32262[0].HostPort != utils.Sprintf("%d", spinUpResult.HostPortForTCP32262) {
-		t.Error("Binding for port 32262 does not match returned result.")
-	}
-
-	binding32263, ok := portBindings[nat.Port("32263/udp")]
-	if !ok {
-		t.Error("Port 32263/udp is not bound.")
-	}
-	if len(binding32263) < 1 || binding32263[0].HostPort != utils.Sprintf("%d", spinUpResult.HostPortForUDP32263) {
-		t.Error("Binding for port 32263 does not match returned result.")
+	portBindingAssertions := []struct {
+		portName     string
+		assignedPort uint16
+	}{
+		{"32262/tcp", spinUpResult.HostPortForTCP32262},
+		{"32273/tcp", spinUpResult.HostPortForTCP32273},
+		{"32263/udp", spinUpResult.HostPortForUDP32263},
 	}
 
-	binding32273, ok := portBindings[nat.Port("32273/tcp")]
-	if !ok {
-		t.Error("Port 32273/tcp is not bound.")
-	}
-	if len(binding32273) < 1 || binding32273[0].HostPort != utils.Sprintf("%d", spinUpResult.HostPortForTCP32273) {
-		t.Error("Binding for port 32273 does not match returned result.")
+	for _, portBindingAssertion := range portBindingAssertions {
+		binding, ok := portBindings[nat.Port(portBindingAssertion.portName)]
+		if !ok {
+			t.Errorf("Expected port %s to be bound, but it wasn't", portBindingAssertion.portName)
+		}
+		if len(binding) < 1 || binding[0].HostPort != strconv.Itoa(int(portBindingAssertion.assignedPort)) {
+			t.Errorf("Expected port %s to be bound to %d, but it wasn't", portBindingAssertion.portName, portBindingAssertion.assignedPort)
+		}
 	}
 
 	// Check that all resource mapping files were written correctly
