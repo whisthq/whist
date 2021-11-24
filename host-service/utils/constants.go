@@ -9,7 +9,7 @@ const (
 	WhistDir                 string = "/fractal/"
 	TempDir                  string = WhistDir + "temp/"
 	WhistPrivateDir          string = "/fractalprivate/"
-	UserInitialCookiesDir    string = WhistDir + "userConfigs/"
+	UserInitialBrowserDir    string = WhistDir + "userConfigs/"
 	UserInitialCookiesFile   string = "user-initial-cookies"
 	UserInitialBookmarksFile string = "user-initial-bookmarks"
 )
