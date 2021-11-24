@@ -65,7 +65,8 @@ func TestRegisterCreation(t *testing.T) {
 				t.Errorf("got %s, want %s", got, tt.want)
 			}
 
-			// Clean up before next iteration runs instead of at deferring to the end of the function
+			// Clean up before next iteration runs instead of deferring to
+			// function return to avoid interfering with the next iteration test
 			cancel()
 			goroutineTracker.Wait()
 		})
@@ -98,7 +99,8 @@ func TestSetAppName(t *testing.T) {
 				t.Errorf("got %s, want %s", got, tt.want)
 			}
 
-			// Clean up before next iteration runs instead of at deferring to the end of the function
+			// Clean up before next iteration runs instead of deferring to
+			// function return to avoid interfering with the next iteration test
 			cancel()
 			goroutineTracker.Wait()
 		})
