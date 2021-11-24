@@ -101,7 +101,7 @@ func TestAllocateAndFree(t *testing.T) {
 
 	// Confirm that the number of Free'd ports are as expected
 	if mapSizeBeforeFree - numOfPortBindings != mapSizeAfterFree {
-		t.Fatalf("error freeing %v port bindings. Expected %v since nothing should be freed but got %v", numOfPortBindings, mapSizeBeforeFree, mapSizeAfterFree)
+		t.Fatalf("error freeing %v port bindings. Expected %v since nothing should be freed but got %v", numOfPortBindings, mapSizeBeforeFree - numOfPortBindings, mapSizeAfterFree)
 	}
 }
 
@@ -237,7 +237,7 @@ func TestAllocateAndFreeSinglePort(t *testing.T) {
 
 	// Only one port should be freed
 	if mapSizeBeforeFree - 1 != mapSizeAfterFree {
-		t.Fatalf("error freeing single port. Expected map size to be %v but got %v", mapSizeAfterFree, mapSizeBeforeFree)
+		t.Fatalf("error freeing single port. Expected map size to be %v but got %v", mapSizeBeforeFree - 1, mapSizeAfterFree)
 	}
 }
 
@@ -324,7 +324,7 @@ func TestAllocateAndFreeSinglePortAny(t *testing.T) {
 	mapSizeAfterFree := len(*mapToUse)
 
 	if mapSizeBeforeFree - 1 != mapSizeAfterFree {
-		t.Fatalf("error freeing single port. Expected map size to be %v but got %v", mapSizeAfterFree, mapSizeBeforeFree)
+		t.Fatalf("error freeing single port. Expected map size to be %v but got %v", mapSizeBeforeFree - 1, mapSizeAfterFree)
 	}
 }
 
@@ -348,7 +348,7 @@ func TestFreeSinglePortNonExistent(t *testing.T) {
 	mapSizeAfterFree := len(*mapToUse)
 
 	if mapSizeBeforeFree != mapSizeAfterFree {
-		t.Fatalf("error freeing single non-existent port. Expected map size to be %v but got %v", mapSizeAfterFree, mapSizeBeforeFree)
+		t.Fatalf("error freeing single non-existent port. Expected map size to be %v but got %v", mapSizeBeforeFree, mapSizeAfterFree)
 	}
 }
 
@@ -376,7 +376,7 @@ func TestFreeSingleReservedPort(t *testing.T) {
 
 	// Reserved port will not be freed
 	if mapSizeBeforeFree != mapSizeAfterFree {
-		t.Fatalf("error freeing single reserved port. Expected map size to be %v but got %v", mapSizeAfterFree, mapSizeBeforeFree)
+		t.Fatalf("error freeing single reserved port. Expected map size to be %v but got %v", mapSizeBeforeFree, mapSizeAfterFree)
 	}
 
 	(*mapToUse)[randomPort] = inUse
@@ -452,6 +452,33 @@ func TestReservePortInvalidProtocol(t *testing.T) {
 
 	// Reserve should fail silently as protocol is invalid
 	Reserve(testDesiredBind.HostPort, testDesiredBind.Protocol)
+}
+
+func TestReservePortOutsideAllowedRange(t *testing.T) {
+	testDesiredBind := PortBinding{
+		Protocol: TransportProtocol("testInvalidProtocol"),
+		HostPort: uint16(MinAllowedPort-1),
+	}
+
+	portMapsLock.Lock()
+	defer portMapsLock.Unlock()
+
+	mapToUse, err := getProtocolSpecificHostPortMap(TransportProtocolTCP)
+	if err != nil {
+		t.Fatalf("error getting host port map. Error: %v", err)
+	}
+
+	mapSizeBeforeReserve := len(*mapToUse)
+
+	// Reserve should fail silently as port is invalid
+	Reserve(testDesiredBind.HostPort, testDesiredBind.Protocol)
+
+	mapSizeAfterReserve := len(*mapToUse)
+
+	// Map will not contain the invalid port
+	if mapSizeBeforeReserve != mapSizeAfterReserve {
+		t.Fatalf("error reserving port that is not in allowed range. Expected map size to be %v but got %v", mapSizeBeforeReserve, mapSizeAfterReserve)
+	}
 }
 
 func TestAllowedRangeMinInclusive(t *testing.T) {
