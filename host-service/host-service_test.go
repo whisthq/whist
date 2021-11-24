@@ -95,6 +95,10 @@ func TestSpinUpMandelbox(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	goroutineTracker := sync.WaitGroup{}
 
+	// Finish cleaning up the container before moving on to the next test
+	cancel()
+	goroutineTracker.Wait()
+
 	var instanceName aws.InstanceName
 	var userID mandelboxtypes.UserID
 	var err error
@@ -136,8 +140,6 @@ func TestSpinUpMandelbox(t *testing.T) {
 	dockerClient := mockClient{}
 	go handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
 	go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testMandelboxDBEvent, testTransportRequestMap, testmux)
-
-	goroutineTracker.Wait()
 
 	// Check that response is as expected
 	result := <-testJSONTransportRequest.resultChan
@@ -293,6 +295,10 @@ func TestSpinUpWithNewToken(t *testing.T) {
 	}
 	os.RemoveAll(configDir)
 
+	// Tear down the old container before starting the new one
+	oldCancel()
+	oldGoroutineTracker.Wait()
+
 	// Set up a new mandelbox
 	testMandelboxInfo := subscriptions.Mandelbox{
 		ID:        mandelboxtypes.MandelboxID(testID),
@@ -314,6 +320,10 @@ func TestSpinUpWithNewToken(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	goroutineTracker := sync.WaitGroup{}
 
+	// Wait for the container cleanup goroutine to finish before ending the test
+	defer cancel()
+	defer goroutineTracker.Wait()
+
 	testmux := &sync.Mutex{}
 	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
 
@@ -321,7 +331,6 @@ func TestSpinUpWithNewToken(t *testing.T) {
 	go handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
 	go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testMandelboxDBEvent, testTransportRequestMap, testmux)
 
-	goroutineTracker.Wait()
 	<-testJSONTransportRequest.resultChan
 
 	// If decryption was skipped as it should, the unpacked_configs directory should exist

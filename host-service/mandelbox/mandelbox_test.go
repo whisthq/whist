@@ -10,8 +10,9 @@ import (
 )
 
 func TestNewMandelbox(t *testing.T) {
-	mandelbox, cancel := createTestMandelbox()
+	mandelbox, cancel, goroutineTracker := createTestMandelbox()
 	defer cancel()
+	defer goroutineTracker.Wait()
 
 	// Check if the mandelbox resource dir was created
 	err := verifyResourceMappingFileCreation("")
@@ -50,8 +51,7 @@ func TestRegisterCreation(t *testing.T) {
 
 	for _, tt := range registerTests {
 		t.Run(tt.testName, func(t *testing.T) {
-			mandelbox, cancel := createTestMandelbox()
-			defer cancel()
+			mandelbox, cancel, goroutineTracker := createTestMandelbox()
 
 			err := mandelbox.RegisterCreation(types.DockerID(tt.dockerID))
 			got := mandelbox.GetDockerID()
@@ -64,6 +64,10 @@ func TestRegisterCreation(t *testing.T) {
 			if got != tt.want {
 				t.Errorf("got %s, want %s", got, tt.want)
 			}
+
+			// Clean up before next iteration runs instead of at deferring to the end of the function
+			cancel()
+			goroutineTracker.Wait()
 		})
 	}
 }
@@ -80,8 +84,7 @@ func TestSetAppName(t *testing.T) {
 
 	for _, tt := range registerTests {
 		t.Run(tt.testName, func(t *testing.T) {
-			mandelbox, cancel := createTestMandelbox()
-			defer cancel()
+			mandelbox, cancel, goroutineTracker := createTestMandelbox()
 
 			err := mandelbox.SetAppName(tt.want)
 			got := mandelbox.GetAppName()
@@ -94,15 +97,19 @@ func TestSetAppName(t *testing.T) {
 			if got != tt.want {
 				t.Errorf("got %s, want %s", got, tt.want)
 			}
+
+			// Clean up before next iteration runs instead of at deferring to the end of the function
+			cancel()
+			goroutineTracker.Wait()
 		})
 	}
 }
 
-// setTestMandelbox is a utility function to create a test mandelbox
-func createTestMandelbox() (Mandelbox, context.CancelFunc) {
+// setTestMandelbox is a utility function to create a test mandelbox.
+func createTestMandelbox() (Mandelbox, context.CancelFunc, *sync.WaitGroup) {
 	ctx, cancel := context.WithCancel(context.Background())
 	routineTracker := sync.WaitGroup{}
 	mandelbox := New(ctx, &routineTracker, types.MandelboxID(utils.PlaceholderTestUUID()))
 
-	return mandelbox, cancel
+	return mandelbox, cancel, &routineTracker
 }
