@@ -45,6 +45,7 @@ extern "C" {
 #endif
 
 #include "client/client_utils.h"
+#include <fractal/logging/log_statistic.h>
 #include <fractal/utils/aes.h>
 #include <fractal/utils/png.h>
 #include <fractal/utils/avpacket_buffer.h>
@@ -334,6 +335,48 @@ TEST_F(CaptureStdoutTest, LoggerTest) {
     check_stdout_line(::testing::EndsWith("CCC"));
     check_stdout_line(::testing::EndsWith("DDD"));
     check_stdout_line(::testing::EndsWith("EEE"));
+}
+
+/**
+ * logging/log_statistic.c
+ **/
+TEST_F(CaptureStdoutTest, LogStatistic) {
+    StatisticInfo statistic_info[] = {
+        {"TEST1", true, true, false},
+        {"TEST2", false, false, true},
+        {"TEST3", true, true, false},  // Don't log this. Want to check for "count == 0" condition
+    };
+    init_logger();
+    init_statistic_logger(3, NULL, 2);
+    flush_logs();
+    check_stdout_line(::testing::HasSubstr("Logging initialized!"));
+    check_stdout_line(::testing::HasSubstr("StatisticInfo is NULL"));
+
+    log_double_statistic(0, 10.0);
+    flush_logs();
+    check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
+
+    init_statistic_logger(3, statistic_info, 2);
+    log_double_statistic(3, 10.0);
+    flush_logs();
+    check_stdout_line(::testing::HasSubstr("index is out of bounds"));
+    log_double_statistic(4, 10.0);
+    flush_logs();
+    check_stdout_line(::testing::HasSubstr("index is out of bounds"));
+    log_double_statistic(0, 10.0);
+    log_double_statistic(0, 21.5);
+    log_double_statistic(1, 30.0);
+    log_double_statistic(1, 20.0);
+    fractal_sleep(2010);
+    log_double_statistic(1, 60.0);
+    flush_logs();
+    check_stdout_line(::testing::HasSubstr("\"TEST1\" : 15.75"));
+    check_stdout_line(::testing::HasSubstr("\"MAX_TEST1\" : 21.50"));
+    check_stdout_line(::testing::HasSubstr("\"MIN_TEST1\" : 10.00"));
+    check_stdout_line(::testing::HasSubstr("\"TEST2\" : 55.00"));
+
+    destroy_statistic_logger();
+    destroy_logger();
 }
 
 // Constants used for testing encryption

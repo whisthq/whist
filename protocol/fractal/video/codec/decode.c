@@ -23,6 +23,7 @@ Includes
 */
 #include "decode.h"
 #include <fractal/logging/log_statistic.h>
+#include <client/client_statistic.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -576,7 +577,7 @@ int video_decoder_get_frame(VideoDecoder* decoder) {
     if (decoder->context->hw_frames_ctx) {
         start_timer(&latency_clock);
         res = avcodec_receive_frame(decoder->context, decoder->hw_frame);
-        log_double_statistic("avcodec_receive_frame time in ms", get_timer(latency_clock) * 1000);
+        log_double_statistic(VIDEO_AVCODEC_RECEIVE_TIME, get_timer(latency_clock) * 1000);
         if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
             return 1;
         } else if (res < 0) {
@@ -588,8 +589,7 @@ int video_decoder_get_frame(VideoDecoder* decoder) {
         // On mac, we will use the hardware frame directly
         start_timer(&latency_clock);
         av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
-        log_double_statistic("av_hwframe_transfer_data time in ms",
-                             get_timer(latency_clock) * 1000);
+        log_double_statistic(VIDEO_AV_HWFRAME_TRANSFER_TIME, get_timer(latency_clock) * 1000);
 #endif  // #ifndef __APPLE__
     } else {
         if (decoder->type != DECODE_TYPE_SOFTWARE) {

@@ -49,6 +49,7 @@ Includes
 #include <SDL2/SDL_syswm.h>
 #include <fractal/utils/color.h>
 #include "native_window_utils.h"
+#include "client_statistic.h"
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
@@ -297,7 +298,8 @@ int main(int argc, char* argv[]) {
     }
 
     init_logger();
-    init_statistic_logger();
+    init_client_statistics();
+    init_statistic_logger(CLIENT_NUM_METRICS, client_statistic_info, STATISTICS_FREQUENCY_IN_SEC);
 
     handle_single_icon_launch_client_app(argc, argv);
 
@@ -587,6 +589,7 @@ int main(int argc, char* argv[]) {
     destroy_sdl((SDL_Window*)window);
     destroy_socket_library();
     free_parsed_args();
+    destroy_statistic_logger();
     destroy_logger();
 
     // We must call this after destroying the logger so that all

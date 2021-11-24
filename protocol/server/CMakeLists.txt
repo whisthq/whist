@@ -10,6 +10,7 @@ add_executable(FractalServer
         main.c
         handle_client_message.c
         network.c
+        server_statistic.c
         )
 
 set_target_properties(FractalServer PROPERTIES

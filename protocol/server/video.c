@@ -44,6 +44,7 @@ Includes
 #include "network.h"
 #include "video.h"
 #include "main.h"
+#include "server_statistic.h"
 
 #ifdef _WIN32
 #pragma comment(lib, "ws2_32.lib")
@@ -133,8 +134,7 @@ int32_t create_new_device(whist_server_state* state, clock* statistics_timer,
     // Next, we should update our ffmpeg encoder
     state->update_encoder = true;
 
-    log_double_statistic("Create capture device time (ms)",
-                         get_timer(*statistics_timer) * MS_IN_SECOND);
+    log_double_statistic(VIDEO_CAPTURE_CREATE_TIME, get_timer(*statistics_timer) * MS_IN_SECOND);
 
     return 0;
 }
@@ -178,8 +178,7 @@ void send_populated_frames(whist_server_state* state, clock* statistics_timer,
 
     start_timer(statistics_timer);
     get_current_cursor(current_cursor);
-    log_double_statistic("get_current_cursor time (ms)",
-                         get_timer(*statistics_timer) * MS_IN_SECOND);
+    log_double_statistic(VIDEO_GET_CURSOR_TIME, get_timer(*statistics_timer) * MS_IN_SECOND);
 
     // If the current cursor is the same as the last cursor,
     // just don't send any cursor
@@ -276,8 +275,7 @@ void update_current_device(whist_server_state* state, clock* statistics_timer,
     } else {
         LOG_INFO("No capture device exists yet, creating a new one.");
     }
-    log_double_statistic("Update capture device time (ms)",
-                         get_timer(*statistics_timer) * MS_IN_SECOND);
+    log_double_statistic(VIDEO_CAPTURE_UPDATE_TIME, get_timer(*statistics_timer) * MS_IN_SECOND);
 }
 
 /**
@@ -496,7 +494,7 @@ int32_t multithreaded_send_video(void* opaque) {
         if (state->update_encoder) {
             start_timer(&statistics_timer);
             encoder = do_update_encoder(state, encoder, device);
-            log_double_statistic("Update encoder time (ms)",
+            log_double_statistic(VIDEO_ENCODER_UPDATE_TIME,
                                  get_timer(statistics_timer) * MS_IN_SECOND);
         }
 
@@ -515,13 +513,14 @@ int32_t multithreaded_send_video(void* opaque) {
             (!state->stop_streaming || state->wants_iframe)) {
             start_timer(&statistics_timer);
             accumulated_frames = capture_screen(device);
-            log_double_statistic("Capture screen time (ms)",
+            log_double_statistic(VIDEO_CAPTURE_SCREEN_TIME,
                                  get_timer(statistics_timer) * MS_IN_SECOND);
-#if LOG_VIDEO
             if (accumulated_frames > 1) {
+                log_double_statistic(VIDEO_FPS_SKIPPED_IN_CAPTURE, 1.0);
+#if LOG_VIDEO
                 LOG_INFO("Missed Frames! %d frames passed since last capture", accumulated_frames);
-            }
 #endif
+            }
             // LOG_INFO( "CaptureScreen: %d", accumulated_frames );
         }
 
@@ -584,7 +583,7 @@ int32_t multithreaded_send_video(void* opaque) {
                     state->exiting = true;
                     break;
                 }
-                log_double_statistic("Transfer capture time (ms)",
+                log_double_statistic(VIDEO_CAPTURE_TRANSFER_TIME,
                                      get_timer(statistics_timer) * MS_IN_SECOND);
 
                 if (state->wants_iframe) {
@@ -606,8 +605,7 @@ int32_t multithreaded_send_video(void* opaque) {
                     state->exiting = true;
                     break;
                 }
-                log_double_statistic("Video encode time (ms)",
-                                     get_timer(statistics_timer) * MS_IN_SECOND);
+                log_double_statistic(VIDEO_ENCODE_TIME, get_timer(statistics_timer) * MS_IN_SECOND);
 
                 if (encoder->encoded_frame_size != 0) {
                     if (encoder->encoded_frame_size > (int)MAX_VIDEOFRAME_DATA_SIZE) {
@@ -619,10 +617,11 @@ int32_t multithreaded_send_video(void* opaque) {
                         send_populated_frames(state, &statistics_timer, &server_frame_timer, device,
                                               encoder, id);
 
-                        log_double_statistic("Video frame send time (ms)",
+                        log_double_statistic(VIDEO_FPS_SENT, 1.0);
+                        log_double_statistic(VIDEO_SEND_TIME,
                                              get_timer(statistics_timer) * MS_IN_SECOND);
-                        log_double_statistic("Video frame size", encoder->encoded_frame_size);
-                        log_double_statistic("Video frame processing time (ms)",
+                        log_double_statistic(VIDEO_FRAME_SIZE, encoder->encoded_frame_size);
+                        log_double_statistic(VIDEO_FRAME_PROCESSING_TIME,
                                              get_timer(server_frame_timer) * 1000);
                     }
                 }

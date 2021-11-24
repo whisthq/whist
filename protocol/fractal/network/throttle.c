@@ -3,6 +3,7 @@
 #include <fractal/utils/threads.h>
 #include <fractal/logging/log_statistic.h>
 #include "throttle.h"
+#include <server/server_statistic.h>
 
 // The coin bucket should never fill up more than
 // 5 ms of data at the current burst bitrate.
@@ -169,10 +170,9 @@ void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t 
 
     // Wake up the next waiter in the queue.
     double time = get_timer(start);
-    log_double_statistic("throttled packet delay (ms)", time * MS_IN_SECOND);
-    log_double_statistic("throttled packet delay rate (ms/byte)",
-                         time * MS_IN_SECOND / (double)bytes);
-    log_double_statistic("throttled packet delay loops (count)", (double)loops);
+    log_double_statistic(NETWORK_THROTTLED_PACKET_DELAY, time * MS_IN_SECOND);
+    log_double_statistic(NETWORK_THROTTLED_PACKET_DELAY_RATE, time * MS_IN_SECOND / (double)bytes);
+    log_double_statistic(NETWORK_THROTTLED_PACKET_DELAY_LOOPS, (double)loops);
     ++INTERNAL(ctx)->current_queue_id;
     fractal_lock_mutex(INTERNAL(ctx)->queue_lock);
     fractal_broadcast_cond(INTERNAL(ctx)->queue_cond);

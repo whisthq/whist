@@ -9,11 +9,32 @@
 Usage
 ============================
 
-Call log_double_statistic(key, value) repeatedly within a loop with the same string `key` to store a
-double `val`. If it's been PRINTING_FREQUENCY_IN_SEC, the call will also print some statistics about
-the stored values for each key (up to MAX_DIFFERENT_STATISTICS keys) and flush the data. This can
-also be done manually with print_statistics().
+Call log_double_statistic(index, value) repeatedly within a loop with the metric's index to store a
+double `val`. If it's been STATISTICS_FREQUENCY_IN_SEC, the call will also print some statistics
+about the stored values for each key and flush the data.
 */
+
+#include <stdbool.h>
+#include <stdint.h>
+
+/*
+============================
+Public Constants
+============================
+*/
+#define STATISTICS_FREQUENCY_IN_SEC 10
+
+/*
+============================
+Public Structures
+============================
+*/
+typedef struct {
+    const char *key;
+    bool is_max_needed;
+    bool is_min_needed;
+    bool average_over_time;
+} StatisticInfo;
 
 /*
 ============================
@@ -24,23 +45,22 @@ Public Functions
 /**
  * @brief                          Initialize the statistic logger.
  */
-void init_statistic_logger();
-
-/**
- * @brief                          Print all currently held statistics, and flush the data store.
- */
-void print_statistics();
+void init_statistic_logger(uint32_t num_metrics, StatisticInfo *statistic_info, int interval);
 
 /**
  * @brief                          Note a specific stat value associated with a key. If enough time
  *                                 has passed, also prints all statistics and flushes the data
  *                                 store.
  *
- * @param key                      The string to associate all values of the same statistic with
- *                                 each other. Will also be printed during print_statistics().
+ * @param index                    The predefined index of the metric.
  *
  * @param val                      The double value to store.
  */
-void log_double_statistic(const char* key, double val);
+void log_double_statistic(uint32_t index, double val);
+
+/**
+ * @brief                          Destroy the statistic logger.
+ */
+void destroy_statistic_logger();
 
 #endif  // LOG_STATISTIC_H
