@@ -11,8 +11,6 @@ import (
 
 func TestNewMandelbox(t *testing.T) {
 	mandelbox, cancel, goroutineTracker := createTestMandelbox()
-	defer cancel()
-	defer goroutineTracker.Wait()
 
 	// Check if the mandelbox resource dir was created
 	err := verifyResourceMappingFileCreation("")
@@ -34,6 +32,11 @@ func TestNewMandelbox(t *testing.T) {
 	if deviceMappings.CgroupPermissions != "rwm" {
 		t.Errorf("received incorrect CgroupPermissions: got %s, expected %s", deviceMappings.CgroupPermissions, "rwm")
 	}
+
+	// Wait for the container cleanup goroutine to finish before ending the test
+	// Don't defer these since the stack order of defer makes the call order confusing
+	cancel()
+	goroutineTracker.Wait()
 }
 
 func TestRegisterCreation(t *testing.T) {
@@ -65,8 +68,7 @@ func TestRegisterCreation(t *testing.T) {
 				t.Errorf("got %s, want %s", got, tt.want)
 			}
 
-			// Clean up before next iteration runs instead of deferring to
-			// function return to avoid interfering with the next iteration test
+			// Clean up before next iteration runs
 			cancel()
 			goroutineTracker.Wait()
 		})
@@ -99,8 +101,7 @@ func TestSetAppName(t *testing.T) {
 				t.Errorf("got %s, want %s", got, tt.want)
 			}
 
-			// Clean up before next iteration runs instead of deferring to
-			// function return to avoid interfering with the next iteration test
+			// Clean up before next iteration runs
 			cancel()
 			goroutineTracker.Wait()
 		})

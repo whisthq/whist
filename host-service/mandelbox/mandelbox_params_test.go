@@ -11,8 +11,6 @@ import (
 
 func TestWriteMandelboxParams(t *testing.T) {
 	mandelbox, cancel, goroutineTracker := createTestMandelbox()
-	defer cancel()
-	defer goroutineTracker.Wait()
 
 	if err := mandelbox.AssignPortBindings([]portbindings.PortBinding{
 		{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
@@ -54,6 +52,11 @@ func TestWriteMandelboxParams(t *testing.T) {
 			}
 		})
 	}
+
+	// Wait for the container cleanup goroutine to finish before ending the test
+	// Don't defer these since the stack order of defer makes the call order confusing
+	cancel()
+	goroutineTracker.Wait()
 }
 
 func verifyResourceMappingFileCreation(file string) error {
