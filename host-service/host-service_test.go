@@ -95,9 +95,9 @@ func TestSpinUpMandelbox(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	goroutineTracker := sync.WaitGroup{}
 
-	// Finish cleaning up the container before moving on to the next test
-	cancel()
-	goroutineTracker.Wait()
+	// Wait for the container cleanup goroutine to finish before ending the test
+	defer cancel()
+	defer goroutineTracker.Wait()
 
 	var instanceName aws.InstanceName
 	var userID mandelboxtypes.UserID
