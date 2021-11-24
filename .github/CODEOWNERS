@@ -11,15 +11,15 @@
 # The folders are ordered as follows:
 
 /.github/               @philippemnoel @rpadaki @npip99
-/client-applications/   @mingy98 @rpadaki @philippemnoel
-/config/                @djsavvy @philippemnoel @sardination
+/client-applications/   @mingy98 @rpadaki @mauaraujo
+/config/                @philippemnoel @sardination @rpadaki
 /core-ts/               @mingy98 @owenniles @sardination
-/host-service/          @djsavvy @sardination @rpadaki
+/host-service/          @djsavvy @rpadaki @mauaraujo
 /host-setup/            @rpadaki @djsavvy @philippemnoel
 /mandelboxes/           @djsavvy @rpadaki @philippemnoel
 /microservices/         @owenniles @rpadaki @philippemnoel
 /protocol/              @npip99 @rpadaki @sardination
-/webserver/             @FishmanL @owenniles @djsavvy
+/webserver/             @djsavvy @owenniles @mauaraujo
 /website/               @mingy98 @rpadaki @philippemnoel
 
 # In each subsection folders are ordered first by depth, then alphabetically.
