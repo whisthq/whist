@@ -44,3 +44,15 @@ func LookUpByDockerID(DockerID types.DockerID) (Mandelbox, error) {
 	}
 	return nil, utils.MakeError("Couldn't find Mandelbox with DockerID %s", DockerID)
 }
+
+// LookUpByMandelboxID finds a mandelbox by its Mandelbox ID.
+// This function does not acquire locks on mandelboxes, only the tracker.
+func LookUpByMandelboxID(mandelboxID types.MandelboxID) (Mandelbox, error) {
+	trackerLock.RLock()
+	defer trackerLock.RUnlock()
+
+	if _, ok := tracker[mandelboxID]; ok {
+		return tracker[mandelboxID], nil
+	}
+	return nil, utils.MakeError("Couldn't find Mandelbox with MandelboxID %s", mandelboxID)
+}

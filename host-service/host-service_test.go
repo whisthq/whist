@@ -97,6 +97,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 
 	// Defer the wait first since deferred functions are executed in LIFO order.
 	defer goroutineTracker.Wait()
+	defer cancelMandelboxContextByID(mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()))
 	defer cancel()
 
 	var instanceName aws.InstanceName
@@ -292,6 +293,7 @@ func TestSpinUpWithNewToken(t *testing.T) {
 	// Tear down the old container before starting the new one
 	// Cancelling the old context will cause the old user configs to be backed up with the given token
 	oldCancel()
+	cancelMandelboxContextByID(mandelboxtypes.MandelboxID(oldID))
 	oldGoroutineTracker.Wait()
 
 	// Set up a new mandelbox
@@ -317,6 +319,7 @@ func TestSpinUpWithNewToken(t *testing.T) {
 
 	// Defer the wait first since deferred functions are executed in LIFO order.
 	defer goroutineTracker.Wait()
+	defer cancelMandelboxContextByID(mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()))
 	defer cancel()
 
 	testmux := &sync.Mutex{}
@@ -339,4 +342,15 @@ func TestSpinUpWithNewToken(t *testing.T) {
 	if err == nil || !os.IsNotExist(err) {
 		t.Errorf("testFile.txt should not exist but it does")
 	}
+}
+
+// cancelMandelboxContextByID tries to look up the mandelbox by its ID
+// and cancels the context associated with it.
+func cancelMandelboxContextByID(id mandelboxtypes.MandelboxID) error {
+	mandelbox, err := mandelbox.LookUpByMandelboxID(id)
+	if err != nil {
+		return utils.MakeError("could not cancel mandelbox context: %v", err)
+	}
+	mandelbox.Close()
+	return nil
 }
