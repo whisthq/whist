@@ -17,7 +17,7 @@ fi
 
 # Start Brave
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
-exec brave \
+exec brave-browser \
   --use-gl=desktop \
   --flag-switches-begin \
   --enable-gpu-rasterization \
