@@ -68,7 +68,7 @@ Public Function Implementations
 ============================
 */
 
-int discover_ports(bool *using_stun) {
+int discover_ports(bool *with_stun) {
     /*
         Send a discovery packet to the server to determine which TCP
         and UDP packets are assigned to the client. Must be called
@@ -83,9 +83,9 @@ int discover_ports(bool *using_stun) {
 
     // Create TCP context
     SocketContext context;
-    LOG_INFO("Trying to connect (Using STUN: %s)", *using_stun ? "true" : "false");
+    LOG_INFO("Trying to connect (Using STUN: %s)", *with_stun ? "true" : "false");
     if (!create_tcp_socket_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                                   *using_stun, (char *)client_binary_aes_private_key)) {
+                                   *with_stun, (char *)client_binary_aes_private_key)) {
         /*
                 *using_stun = !*using_stun;
                 LOG_INFO("Trying to connect (Using STUN: %s)", *using_stun ? "true" : "false");
@@ -247,7 +247,7 @@ void receive_tcp_pong(int pong_id) {
     }
 }
 
-int connect_to_server(bool using_stun) {
+int connect_to_server(bool with_stun) {
     /*
         Connect to the server. Must be called after `discover_ports()`.
 
@@ -258,7 +258,7 @@ int connect_to_server(bool using_stun) {
             (int): 0 on success, -1 on failure
     */
 
-    LOG_INFO("using stun is %d", using_stun);
+    LOG_INFO("using stun is %d", with_stun);
     if (udp_port < 0) {
         LOG_ERROR("Trying to connect UDP but port not set.");
         return -1;
@@ -269,14 +269,14 @@ int connect_to_server(bool using_stun) {
     }
 
     if (!create_udp_socket_context(&packet_udp_context, server_ip, udp_port, UDP_CONNECTION_TIMEOUT,
-                                   UDP_CONNECTION_WAIT, using_stun,
+                                   UDP_CONNECTION_WAIT, with_stun,
                                    (char *)client_binary_aes_private_key)) {
         LOG_WARNING("Failed to establish UDP connection from server");
         return -1;
     }
 
     if (!create_tcp_socket_context(&packet_tcp_context, server_ip, tcp_port, TCP_CONNECTION_TIMEOUT,
-                                   TCP_CONNECTION_WAIT, using_stun,
+                                   TCP_CONNECTION_WAIT, with_stun,
                                    (char *)client_binary_aes_private_key)) {
         LOG_WARNING("Failed to establish TCP connection with server.");
         destroy_socket_context(&packet_udp_context);
