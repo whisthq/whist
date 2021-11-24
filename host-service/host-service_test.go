@@ -289,13 +289,8 @@ func TestSpinUpWithNewToken(t *testing.T) {
 		t.Fatalf("failed to write to test file: %v", err)
 	}
 
-	err = oldMandelboxData.BackupUserConfigs()
-	if err != nil {
-		t.Fatalf("failed to backup user configs: %v", err)
-	}
-	os.RemoveAll(configDir)
-
 	// Tear down the old container before starting the new one
+	// Cancelling the old context will cause the old user configs to be backed up with the given token
 	oldCancel()
 	oldGoroutineTracker.Wait()
 
