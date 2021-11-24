@@ -10,8 +10,9 @@ import (
 )
 
 func TestWriteMandelboxParams(t *testing.T) {
-	mandelbox, cancel := createTestMandelbox()
+	mandelbox, cancel, goroutineTracker := createTestMandelbox()
 	defer cancel()
+	defer goroutineTracker.Wait()
 
 	if err := mandelbox.AssignPortBindings([]portbindings.PortBinding{
 		{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
