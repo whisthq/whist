@@ -23,15 +23,13 @@ volatile int threads_holding_active = 0;  // Threads currently assuming client i
 FractalMutex active_holding_write_mutex;  // Protects writes to the above two variables
                                           //     (protecting reads not necessary)
 
-Client client;
-
 /*
 ============================
 Public Functions
 ============================
 */
 
-int init_client(void) {
+int init_client(Client *client) {
     /*
         Initializes the client object.
         Must be called before the client object can be used.
@@ -42,16 +40,16 @@ int init_client(void) {
             (int): -1 on failure, 0 on success
     */
 
-    client.is_active = false;
-    client.udp_port = BASE_UDP_PORT;
-    client.tcp_port = BASE_TCP_PORT;
-    init_rw_lock(&client.tcp_rwlock);
+    client->is_active = false;
+    client->udp_port = BASE_UDP_PORT;
+    client->tcp_port = BASE_TCP_PORT;
+    init_rw_lock(&client->tcp_rwlock);
     active_holding_write_mutex = fractal_create_mutex();
 
     return 0;
 }
 
-int destroy_clients(void) {
+int destroy_clients(Client *client) {
     /*
         De-initializes all clients objects in the client buffer.
         Should be called after initClients() and before program exit.
@@ -63,27 +61,28 @@ int destroy_clients(void) {
             (int): -1 on failure, 0 on success
     */
 
-    destroy_rw_lock(&client.tcp_rwlock);
+    destroy_rw_lock(&client->tcp_rwlock);
     return 0;
 }
 
-int start_quitting_client() {
+int start_quitting_client(Client *client) {
     /*
         Begins deactivating client, but does not clean up its
         resources yet. Must be called before `quit_client`.
     */
 
-    client.is_deactivating = true;
+    client->is_deactivating = true;
     return 0;
 }
 
-int quit_client() {
+int quit_client(Client *client) {
     /*
         Deactivates active client. Disconnects client. Updates count of active
         clients. Only does anything on an active client. The associated client
         object is not destroyed and may be made active in the future.
 
         Arguments:
+            client (Client*): target client
             id (int): Client ID of active client to deactivate
 
         Returns:
@@ -91,24 +90,25 @@ int quit_client() {
     */
 
     // If client is not active, just return
-    if (!client.is_active) {
+    if (!client->is_active) {
         return 0;
     }
 
-    client.is_active = false;
-    if (disconnect_client() != 0) {
+    client->is_active = false;
+    if (disconnect_client(client) != 0) {
         LOG_ERROR("Failed to disconnect client.");
         return -1;
     }
-    client.is_deactivating = false;
+    client->is_deactivating = false;
     return 0;
 }
 
-int reap_timed_out_client(double timeout) {
+int reap_timed_out_client(Client *client, double timeout) {
     /*
         Sets client to quit if timed out.
 
         Arguments:
+            client (Client*): target client
             timeout (double): Duration (in seconds) after which a
                 client is deemed timed out if the server has not received
                 a ping from the client.
@@ -117,9 +117,9 @@ int reap_timed_out_client(double timeout) {
             (int): Returns -1 on failure, 0 on success.
     */
 
-    if (client.is_active && get_timer(client.last_ping) > timeout) {
+    if (client->is_active && get_timer(client->last_ping) > timeout) {
         LOG_INFO("Dropping timed out client");
-        if (start_quitting_client() != 0) {
+        if (start_quitting_client(client) != 0) {
             LOG_ERROR("Failed to start quitting client.");
             return -1;
         }
@@ -127,7 +127,7 @@ int reap_timed_out_client(double timeout) {
     return 0;
 }
 
-void add_thread_to_client_active_dependents() {
+void add_thread_to_client_active_dependents(void) {
     /*
         Add thread to count of those dependent on client being active
     */
@@ -137,7 +137,7 @@ void add_thread_to_client_active_dependents() {
     fractal_unlock_mutex(active_holding_write_mutex);
 }
 
-void remove_thread_from_holding_active_count() {
+void remove_thread_from_holding_active_count(void) {
     /*
         Remove thread from those currently assuming that client is active
     */
@@ -147,7 +147,7 @@ void remove_thread_from_holding_active_count() {
     fractal_unlock_mutex(active_holding_write_mutex);
 }
 
-void reset_threads_holding_active_count() {
+void reset_threads_holding_active_count(Client *client) {
     /*
         Set the thread count regarding a client as active to the full
         dependent thread count again. This is needed when a new client
@@ -159,11 +159,11 @@ void reset_threads_holding_active_count() {
 
     fractal_lock_mutex(active_holding_write_mutex);
     threads_holding_active = threads_needing_active;
-    client.is_deactivating = false;
+    client->is_deactivating = false;
     fractal_unlock_mutex(active_holding_write_mutex);
 }
 
-void update_client_active_status(bool* is_thread_assuming_active) {
+void update_client_active_status(Client *client, bool *is_thread_assuming_active) {
     /*
         Allows a thread to update its status on whether it believes
         the client is active or not. If a client is deactivating,
@@ -178,17 +178,17 @@ void update_client_active_status(bool* is_thread_assuming_active) {
                 is populated with the new value.
     */
 
-    if (client.is_deactivating) {
+    if (client->is_deactivating) {
         if (*is_thread_assuming_active) {
             *is_thread_assuming_active = false;
             remove_thread_from_holding_active_count();
         }
-    } else if (client.is_active && !*is_thread_assuming_active) {
+    } else if (client->is_active && !*is_thread_assuming_active) {
         *is_thread_assuming_active = true;
     }
 }
 
-bool threads_still_holding_active() {
+bool threads_still_holding_active(void) {
     /*
         Whether there remain any threads that are assuming that
         the client is active.

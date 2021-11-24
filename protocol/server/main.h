@@ -21,10 +21,12 @@ Includes
 #if defined(_WIN32)
 #define _CRT_SECURE_NO_WARNINGS
 #endif
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #ifdef _WIN32
 #include <process.h>
 #include <shlwapi.h>
@@ -45,8 +47,6 @@ Includes
 #include <fractal/video/transfercapture.h>
 #include <fractal/logging/log_statistic.h>
 #include "client.h"
-#include "handle_client_message.h"
-#include "parse_args.h"
 #include "network.h"
 #include "video.h"
 #include "audio.h"
@@ -60,28 +60,53 @@ Includes
 #endif
 // Linux shouldn't have this
 
-extern Client client;
+/** @brief whist server configuration parameters */
+struct _whist_server_config {
+    char binary_aes_private_key[16];
+    char hex_aes_private_key[33];
+    char identifier[WHIST_IDENTIFIER_MAXLEN + 1];
+    int begin_time_to_exit;
+};
 
-volatile FractalOSType client_os;
-char binary_aes_private_key[16];
-char hex_aes_private_key[33];
+typedef struct _whist_server_config whist_server_config;
 
-// This variables should stay as arrays - we call sizeof() on them
-char identifier[WHIST_IDENTIFIER_MAXLEN + 1];
+/** @brief internal state of the whist server */
+struct _whist_server_state {
+    whist_server_config* config;
 
-volatile int connection_id;
-volatile bool exiting;
+    volatile int connection_id;
+    volatile FractalOSType client_os;
 
-int sample_rate = -1;
+    volatile bool exiting;
+    volatile bool stop_streaming;
+    volatile bool update_encoder;
+    bool client_joined_after_window_name_broadcast;
+    Client client;
 
-volatile int max_bitrate = STARTING_BITRATE;
-InputDevice* input_device = NULL;
+    int sample_rate;
+    volatile int max_bitrate;
+    volatile bool wants_iframe;
+    InputDevice* input_device;
 
-volatile bool stop_streaming;
-volatile bool wants_iframe;
-volatile bool update_encoder;
+    /* video */
+    volatile int client_width;
+    volatile int client_height;
+    volatile int client_dpi;
+    volatile CodecType client_codec_type;
+    volatile bool update_device;
 
-bool client_joined_after_window_name_broadcast = false;
-// This variable should always be an array - we call sizeof()
+    bool pending_encoder;
+    bool encoder_finished;
+    VideoEncoder* encoder_factory_result;
+
+    int encoder_factory_server_w;
+    int encoder_factory_server_h;
+    int encoder_factory_client_w;
+    int encoder_factory_client_h;
+    int encoder_factory_bitrate;
+    CodecType encoder_factory_codec_type;
+};
+
+typedef struct _whist_server_state whist_server_state;
 
 #endif  // SERVER_MAIN_H

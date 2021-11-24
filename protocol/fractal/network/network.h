@@ -264,7 +264,7 @@ typedef struct {
 } SocketContextData;
 
 /**
- * @brief                       Interface describing the avaliable functions
+ * @brief                       Interface describing the available functions
  *                              and socket context of a network protocol
  *
  */

@@ -356,9 +356,8 @@ InputDevice* create_input_device() {
     safe_strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path) - 1);
 
     if (connect(fd_socket, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-        char buf[1024];
-        strerror_r(errno, buf, 1024);
-        LOG_ERROR("Failed to connect to unix socket: %s", buf);
+        char buf[1024] = {0};
+        LOG_ERROR("Failed to connect to unix socket: %s", strerror_r(errno, buf, 1024));
         return NULL;
     }
 
