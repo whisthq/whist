@@ -25,9 +25,9 @@ To set up your Whist development instance:
 
   - If you want to make connecting to your AWS instance easier, you can export an alias for the command in your `.zshrc`/`.bashrc`, depending on which shell you use, by adding `alias [your-alias]="ssh -i "[path-to-your-keypair.pem" ubuntu@ec2-[your-instance-public-ipv4].compute-1.amazonaws.com".
 
-- Run `sudo apt-get update` to refresh the packager manager, and run `sudo apt-get install awscli git`.
+- Run `sudo apt-get update` to refresh the packager manager, and run `sudo apt-get install awscli git`. **Note that all steps in below need to be run in the ubuntu userspace**.
 
-- If you use GitHub with SSH, set up a new SSH key and add it to Github ([Github instructions](https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh))
+- If you use GitHub with SSH, set up a new SSH key and add it to Github ([GitHub instructions](https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh))
 
 - Set up AWS credentials on your dev machine with `aws configure`. Enter your AWS credentials for the access key and secret key; for the region, use **us-east-1**.
 
@@ -41,6 +41,9 @@ git clone https://github.com/fractal/fractal.git # via HTTPS, type password on e
 # set up the EC2 host for development
 cd ~/fractal/host-setup
 ./setup_host.sh --localdevelopment
+
+# before moving to the next step, make sure to reboot as prompted
+sudo reboot
 
 # build the Whist base container image
 cd ~/fractal/mandelboxes
