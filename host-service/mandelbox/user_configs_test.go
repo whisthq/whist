@@ -3,7 +3,7 @@ package mandelbox
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"errors"
 	"os"
 	"os/exec"
 	"path"
@@ -123,46 +123,70 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	testCookie2 := "{'creation_utc': 4228086198342934, 'host_key': 'test_host_key_2.com'}"
 	cookieJSON := "[" + testCookie1 + "," + testCookie2 + "]"
 
-	if err := testMandelboxData.WriteUserInitialBrowserData(cookieJSON); err != nil {
+	bookmarksJSON := "{ 'test_bookmark_content': '1'}"
+
+	if err := testMandelboxData.WriteUserInitialBrowserData(cookieJSON, bookmarksJSON); err != nil {
 		t.Fatalf("error writing user initial browser data: %v", err)
 	}
 
-	// store the cookies in a temporary file
+	// store the browser configs in a temporary file
 	unpackedConfigDir := path.Join(testMandelboxData.getUserConfigDir(), testMandelboxData.getUnpackedConfigsDirectoryName())
 
-	filePath := path.Join(unpackedConfigDir, "tempt-cookies")
-
-	err := os.WriteFile(filePath, []byte(cookieJSON), 0777)
-	if err != nil {
-		t.Fatalf("error writing cookie file: %v", err)
-	}
-
-	testFileContents, err := ioutil.ReadFile(filePath)
-
-	if err != nil {
-		t.Fatalf("error reading test file %s: %v", filePath, err)
-	}
-
-	// Get cookie file path
+	// Get browser data file path
 	cookieFilePath := path.Join(unpackedConfigDir, utils.UserInitialCookiesFile)
+	bookmarkFilePath := path.Join(unpackedConfigDir, utils.UserInitialBookmarksFile)
 
-	matchingFile, err := os.Open(cookieFilePath)
-	if err != nil {
-		t.Fatalf("error opening matching file %s: %v", cookieFilePath, err)
-	}
+	// Stores the file path and content for each browser data type
+	fileAndContents := [][]string{{cookieFilePath, cookieJSON}, {bookmarkFilePath, bookmarksJSON}}
 
-	matchingFileBuf := bytes.NewBuffer(nil)
-	_, err = matchingFileBuf.ReadFrom(matchingFile)
-	if err != nil {
-		t.Fatalf("error reading matching file %s: %v", cookieFilePath, err)
-	}
+	for _, fileAndContent := range fileAndContents {
+		filePath := fileAndContent[0]
+		testFileContent := fileAndContent[1]
 
-	// Check contents match
-	if string(testFileContents) != matchingFileBuf.String() {
-		t.Errorf("file contents don't match for file %s: '%s' vs '%s'", filePath, testFileContents, matchingFileBuf.Bytes())
+		matchingFile, err := os.Open(filePath)
+		if err != nil {
+			t.Fatalf("error opening matching file %s: %v", filePath, err)
+		}
+
+		matchingFileBuf := bytes.NewBuffer(nil)
+		_, err = matchingFileBuf.ReadFrom(matchingFile)
+		if err != nil {
+			t.Fatalf("error reading matching file %s: %v", filePath, err)
+		}
+
+		// Check contents match
+		if string(testFileContent) != matchingFileBuf.String() {
+			t.Errorf("file contents don't match for file %s: '%s' vs '%s'", filePath, testFileContent, matchingFileBuf.Bytes())
+		}
 	}
 
 	os.RemoveAll(unpackedConfigDir)
+}
+
+// TestUserInitialBrowserWriteEmpty checks if passing empty browser data will result in no files generated
+func TestUserInitialBrowserWriteEmpty(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	testMandelboxData := mandelboxData{
+		ctx:                   ctx,
+		cancel:                cancel,
+		ID:                    mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
+		appName:               "testApp",
+		userID:                "user_config_test_user_empty_browser_datas",
+		configEncryptionToken: "testEncryptionToken",
+	}
+
+	// Empty browser data will not generate any files
+	if err := testMandelboxData.WriteUserInitialBrowserData("", ""); err != nil {
+		t.Fatalf("error writing empty user initial browser data: %v", err)
+	}
+
+	// store the browser configs in a temporary file
+	unpackedConfigDir := path.Join(testMandelboxData.getUserConfigDir(), testMandelboxData.getUnpackedConfigsDirectoryName())
+
+	if _, err := os.Stat(unpackedConfigDir); err == nil || !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("error writing empty user initial browser data. Expected %v but got %v", os.ErrNotExist, err)
+		os.RemoveAll(unpackedConfigDir)
+	}
 }
 
 // cleanupTestDirs removes the created directories created by the integration

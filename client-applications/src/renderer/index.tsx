@@ -79,7 +79,7 @@ const RootComponent = () => {
     setMainState({
       trigger: {
         name: WhistTrigger.onboarded,
-        payload: { importCookiesFrom: browser },
+        payload: { importBrowserDataFrom: browser },
       },
     })
   }

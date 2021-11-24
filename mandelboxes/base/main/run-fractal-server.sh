@@ -11,6 +11,7 @@ IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
 PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
 SENTRY_ENV_FILENAME=/usr/share/fractal/private/sentry_env
 COOKIE_FILE_FILENAME=/usr/share/fractal/private/user_cookies_file
+BOOKMARK_FILE_FILENAME=/usr/share/fractal/private/user_bookmarks_file
 USER_UPLOAD_TARGET_FILENAME=/usr/share/fractal/private/user_target
 TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/timeout
 WHIST_APPLICATION_PID_FILE=/home/fractal/fractal-application-pid
@@ -52,6 +53,9 @@ if [ -f "$USER_UPLOAD_TARGET_FILENAME" ]; then
   export WHIST_COOKIE_UPLOAD_TARGET=$(cat $USER_UPLOAD_TARGET_FILENAME)
 fi
 
+if [ -f "$BOOKMARK_FILE_FILENAME" ]; then
+  export WHIST_INITIAL_USER_BOOKMARKS_FILE=$(cat $BOOKMARK_FILE_FILENAME)
+fi
 
 # We use named pipe redirection for consistency with our FractalServer launch setup
 # &> redirects both stdout and stdin together; shorthand for '> XYZ 2>&1'
@@ -73,15 +77,21 @@ if [ "$ENV_NAME" != "LOCALDEV" ]; then
   trap cleanup EXIT ERR
 fi
 
+# Imports user browser data if file exists
+python3 /usr/share/fractal/import_user_browser_data.py
+
 if [ -n "${WHIST_INITIAL_USER_COOKIES_FILE+1}" ] && [ -f "$WHIST_INITIAL_USER_COOKIES_FILE" ]; then
-  # Imports user cookies if file exists
-  python3 /usr/share/fractal/import_custom_cookies.py
   # Remove temporary file containing the user's intial cookies
   rm $WHIST_INITIAL_USER_COOKIES_FILE
 fi
 
-# Clean up traces of temporary cookie file
+if [ -n "${WHIST_INITIAL_USER_BOOKMARKS_FILE+1}" ] && [ -f "$WHIST_INITIAL_USER_BOOKMARKS_FILE" ]; then
+  rm $WHIST_INITIAL_USER_BOOKMARKS_FILE
+fi
+
+# Clean up traces of temporary files
 unset WHIST_INITIAL_USER_COOKIES_FILE
+unset WHIST_INITIAL_USER_BOOKMARKS_FILE
 
 # Start the application that this mandelbox runs.
 /usr/share/fractal/run-as-fractal-user.sh "/usr/bin/run-fractal-application.sh" &

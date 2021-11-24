@@ -27,14 +27,15 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess)
       fromTrigger(WhistTrigger.onboarded).pipe(
         startWith(undefined),
         map(
-          (payload: undefined | { importCookiesFrom: string | undefined }) =>
-            payload?.importCookiesFrom
+          (
+            payload: undefined | { importBrowserDataFrom: string | undefined }
+          ) => payload?.importBrowserDataFrom
         )
       )
     )
   )
   .subscribe(
-    ([info, importCookiesFrom]: [
+    ([info, importBrowserDataFrom]: [
       {
         mandelboxIP: string
         mandelboxSecret: string
@@ -59,7 +60,7 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess)
             protocolStreamInfo(info)
           }
         },
-        importCookiesFrom !== undefined ? 5000 : 0
+        importBrowserDataFrom !== undefined ? 5000 : 0
       )
     }
   )

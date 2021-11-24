@@ -124,7 +124,14 @@ export const logBase = (
   // Don't log the config token to Amplitude to protect user privacy
   let dataClone = cloneDeep(data)
   dataClone = mapValuesDeep(dataClone, (v: object | any[], k: string) => {
-    if (["configToken", "config_encryption_token", "cookies"].includes(k)) {
+    if (
+      [
+        "configToken",
+        "config_encryption_token",
+        "cookies",
+        "bookmarks",
+      ].includes(k)
+    ) {
       return "***********"
     }
     return v

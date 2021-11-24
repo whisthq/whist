@@ -10,11 +10,11 @@ const SelectBrowser = (props: {
   return (
     <div className="w-full">
       <div className="font-semibold text-2xl text-gray-300">
-        Import your cookies and passwords
+        Import your cookies, bookmarks and passwords
       </div>
       <div className="m-auto mt-2 mb-4 text-gray-400 max-w-xl">
         You will be asked for your computer password twice when we copy your
-        cookies.
+        browser data.
       </div>
       <div className="mt-8">
         <div className="bg-gray-900 px-4 py-2 rounded w-96 m-auto">
@@ -42,7 +42,9 @@ const Importer = (props: {
   browsers: string[]
   onSubmit: (browser: string | undefined) => void
 }) => {
-  const [browser, setBrowser] = useState<string | undefined>(props.browsers.length > 0 ? props.browsers[0] : undefined)
+  const [browser, setBrowser] = useState<string | undefined>(
+    props.browsers.length > 0 ? props.browsers[0] : undefined
+  )
   const [processing, setProcessing] = useState(false)
 
   const onSubmit = (browser: string | undefined) => {

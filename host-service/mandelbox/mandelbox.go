@@ -101,7 +101,7 @@ type Mandelbox interface {
 	BackupUserConfigs() error
 
 	// WriteUserInitialBrowserData writes file(s) containing the user initial browser data
-	WriteUserInitialBrowserData(string) error
+	WriteUserInitialBrowserData(string, string) error
 
 	// GetContext provides the context corresponding to this specific mandelbox.
 	GetContext() context.Context

@@ -36,6 +36,13 @@ then
   echo $WHIST_COOKIE_UPLOAD_TARGET > /usr/share/fractal/private/user_target
 fi
 
+# If WHIST_INITIAL_USER_BOOKMARKS_FILE is set, then create file
+if [ -n "${WHIST_INITIAL_USER_BOOKMARKS_FILE+1}" ]
+then
+  echo $WHIST_INITIAL_USER_BOOKMARKS_FILE > /usr/share/fractal/private/user_bookmarks_file
+fi
+
+unset WHIST_INITIAL_USER_BOOKMARKS_FILE
 unset WHIST_INITIAL_USER_COOKIES_FILE
 
 

@@ -10,6 +10,43 @@ import subprocess
 USER_CONFIG_PATH = "/fractal/userConfigs/"
 
 
+def get_browser_default_dir(browser_name):
+    """
+    Gets browser default profile dir
+    Args:
+        browser_name (str): the name of the browser we want the directory of
+    Return:
+        str: the directories to the browser's default profile
+    """
+    global USER_CONFIG_PATH
+
+    if browser_name == "chrome":
+        browser_default_dir = [
+            USER_CONFIG_PATH + "google-chrome/Default/",
+            USER_CONFIG_PATH + "google-chrome-beta/Default/",
+        ]
+    elif browser_name == "chromium":
+        browser_default_dir = [USER_CONFIG_PATH + "chromium/Default/"]
+    elif browser_name == "opera":
+        browser_default_dir = [USER_CONFIG_PATH + "opera/"]
+    elif browser_name == "edge":
+        browser_default_dir = [
+            USER_CONFIG_PATH + "microsoft-edge/Default/",
+            USER_CONFIG_PATH + "microsoft-edge-dev/Default/",
+        ]
+    elif browser_name == "brave":
+        browser_default_dir = [
+            USER_CONFIG_PATH + "BraveSoftware/Brave-Browser/Default/",
+            USER_CONFIG_PATH + "BraveSoftware/Brave-Browser-Beta/Default/",
+        ]
+    else:
+        raise browser_cookie3.BrowserCookieError(
+            "Browser not recognized. Works on chrome, chromium, opera, edge, and brave."
+        )
+
+    return browser_default_dir
+
+
 def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
     """
     Gets or create file containing all cookies
@@ -19,35 +56,15 @@ def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
     Return:
         str: the path to cookies
     """
-    global USER_CONFIG_PATH
 
     if sys.platform.startswith("linux"):
         linux_cookies = []
         if custom_cookie_file_path:
             linux_cookies.append(custom_cookie_file_path)
-        elif browser_name == "chrome":
-            linux_cookies = [
-                USER_CONFIG_PATH + "google-chrome/Default/Cookies",
-                USER_CONFIG_PATH + "google-chrome-beta/Default/Cookies",
-            ]
-        elif browser_name == "chromium":
-            linux_cookies = [USER_CONFIG_PATH + "chromium/Default/Cookies"]
-        elif browser_name == "opera":
-            linux_cookies = [USER_CONFIG_PATH + "opera/Cookies"]
-        elif browser_name == "edge":
-            linux_cookies = [
-                USER_CONFIG_PATH + "microsoft-edge/Default/Cookies",
-                USER_CONFIG_PATH + "microsoft-edge-dev/Default/Cookies",
-            ]
-        elif browser_name == "brave":
-            linux_cookies = [
-                USER_CONFIG_PATH + "BraveSoftware/Brave-Browser/Default/Cookies",
-                USER_CONFIG_PATH + "BraveSoftware/Brave-Browser-Beta/Default/Cookies",
-            ]
         else:
-            raise browser_cookie3.BrowserCookieError(
-                "Browser not recognized. Works on chrome, chromium, opera, edge, and brave."
-            )
+            linux_cookies = [
+                directory + "Cookies" for directory in get_browser_default_dir(browser_name)
+            ]
 
         path = browser_cookie3.expand_paths(linux_cookies, "linux")
 
@@ -77,7 +94,7 @@ def get_or_create_cookie_file(browser_name, custom_cookie_file_path=None):
         return path
 
     else:
-        raise browser_cookie3.BrowserCookieError("OS not recognized. Works on OSX and Linux.")
+        raise browser_cookie3.BrowserCookieError("OS not recognized. Works on Linux.")
 
 
 def encrypt(value):
@@ -209,9 +226,57 @@ def set_browser_cookies(target_browser_name, cookie_full_path, target_cookie_fil
             os.remove(singleton_cookie_file)
 
 
-if __name__ == "__main__":
-    browser = os.getenv("WHIST_COOKIE_UPLOAD_TARGET")
-    cookie_full_path = os.getenv("WHIST_INITIAL_USER_COOKIES_FILE", None)
+def create_bookmark_file(target_browser_name, temp_bookmark_path, custom_bookmark_file_path=None):
+    """
+    Create bookmarks file for target browser
+    Args:
+        target_browser_name (str): the name of the browser we will import cookies to
+        temp_bookmark_path (str): path to file containing bookmark json
+        custom_bookmark_file_path (str): [optional] path to target browser bookmark file
+    """
+    # This function only supports the targets Brave, Opera, Chrome, and any browser with
+    # the same db columns. Otherwise it will not work and error out.
+    if (
+        target_browser_name != "chrome"
+        and target_browser_name != "brave"
+        and target_browser_name != "opera"
+    ):
+        raise ("Unrecognized browser type. Only works for brave, chrome, and opera.")
 
-    if cookie_full_path and os.path.exists(cookie_full_path):
-        set_browser_cookies(browser, cookie_full_path)
+    bookmarks_paths = []
+    if custom_bookmark_file_path:
+        bookmarks_paths.append(custom_bookmark_file_path)
+    else:
+        bookmarks_paths = [
+            directory + "Bookmarks" for directory in get_browser_default_dir(target_browser_name)
+        ]
+
+    path = os.path.expanduser(bookmarks_paths[0])
+
+    # Create directories if it does not exist
+    directory = os.path.dirname(path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        os.chmod(directory, 0o777)
+
+    with open(temp_bookmark_path, "r") as temp_bookmark_file:
+        bookmarks = temp_bookmark_file.read()
+        with open(path, "w") as browser_bookmark_file:
+            browser_bookmark_file.write(json.loads(bookmarks))
+
+
+if __name__ == "__main__":
+    browser = os.getenv("WHIST_COOKIE_UPLOAD_TARGET", None)
+    cookie_full_path = os.getenv("WHIST_INITIAL_USER_COOKIES_FILE", None)
+    bookmark_full_path = os.getenv("WHIST_INITIAL_USER_BOOKMARKS_FILE", None)
+
+    if browser:
+        if cookie_full_path and len(cookie_full_path) > 0 and os.path.exists(cookie_full_path):
+            set_browser_cookies(browser, cookie_full_path)
+
+        if (
+            bookmark_full_path
+            and len(bookmark_full_path) > 0
+            and os.path.exists(bookmark_full_path)
+        ):
+            create_bookmark_file(browser, bookmark_full_path)

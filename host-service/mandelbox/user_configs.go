@@ -188,9 +188,9 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 
 // WriteUserInitialBrowserData writes the user's initial browser data to file(s)
 // received through JSON transport for later use in the mandelbox
-func (mandelbox *mandelboxData) WriteUserInitialBrowserData(cookieJSON string) error {
+func (mandelbox *mandelboxData) WriteUserInitialBrowserData(cookieJSON string, bookmarksJSON string) error {
 	// Avoid doing work for empty string/array string
-	if len(cookieJSON) <= 2 {
+	if len(cookieJSON) <= 2 && len(bookmarksJSON) <= 2 {
 		logger.Infof("Not writing to file as user initial browser data is empty.")
 		// the browser data can be empty
 		return nil
@@ -221,13 +221,15 @@ func (mandelbox *mandelboxData) WriteUserInitialBrowserData(cookieJSON string) e
 	// Begin writing user initial browser data
 	cookieFilePath := path.Join(unpackedConfigDir, utils.UserInitialCookiesFile)
 
-	cookieFile, err := os.OpenFile(cookieFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0777)
-	if err != nil {
-		return utils.MakeError("Could not make file %s. Error: %s", cookieFilePath, err)
+	if err := utils.WriteToNewFile(cookieFilePath, cookieJSON); err != nil {
+		return utils.MakeError("error creating cookies file. Error: %v", err)
 	}
 
-	// We want to pass the entire JSON string into the file
-	cookieFile.WriteString(cookieJSON)
+	bookmarkFilePath := path.Join(unpackedConfigDir, utils.UserInitialBookmarksFile)
+
+	if err := utils.WriteToNewFile(bookmarkFilePath, bookmarksJSON); err != nil {
+		return utils.MakeError("error creating bookmarks file. Error: %v", err)
+	}
 
 	logger.Infof("Finished storing user initial browser data.")
 

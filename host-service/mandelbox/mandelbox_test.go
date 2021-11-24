@@ -17,7 +17,7 @@ func TestNewMandelbox(t *testing.T) {
 	err := verifyResourceMappingFileCreation("")
 
 	if err != nil {
-		t.Error(err)
+		t.Errorf("error when verifying resource mapping file creation: %v", err)
 	}
 
 	// Verify that the fuse mounts are correct
