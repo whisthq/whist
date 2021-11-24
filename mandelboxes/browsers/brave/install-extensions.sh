@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script defines a general-purpose function to install any Google Chrome extension
+# This script defines a general-purpose function to install any Brave Browser extension
 # by passing in the extension ID and name
 
 # Exit on subcommand errors
@@ -23,6 +23,6 @@ install_brave_extension () {
   echo Added \""$pref_file_path"\" ["$2"]
 }
 
-# Install Chromium Extension
+# Install Brave (Chromium) Extensions
 # format: install_brave_extension [extension string ID] [extension name]
 # i.e.: install_brave_extension "cjpalhdlnbpafiamejdnhcphjbkeiagm" "uBlock Origin"

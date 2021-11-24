@@ -1,4 +1,7 @@
-FROM fractal/base:current-build
+# See stage 0 of the base Dockerfile for an explanation of this build stage.
+ARG BuildAssetPackage "protocol"
+FROM fractal/build-assets:$BuildAssetPackage as build-assets
+FROM fractal/base:current-build as fractal-browsers-brave
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -24,12 +27,12 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 
 # Set default browser
 RUN su - fractal -c \
-    "xdg-mime default brave.desktop text/html \
-    && xdg-mime default brave.desktop x-scheme-handler/http \
-    && xdg-mime default brave.desktop x-scheme-handler/https \
-    && xdg-mime default brave.desktop x-scheme-handler/about"
+    "xdg-mime default brave-browser.desktop text/html \
+    && xdg-mime default brave-browser.desktop x-scheme-handler/http \
+    && xdg-mime default brave-browser.desktop x-scheme-handler/https \
+    && xdg-mime default brave-browser.desktop x-scheme-handler/about"
 
-RUN mkdir -p /etc/opt/chrome/policies/managed \
+RUN mkdir -p /etc/opt/brave/policies/managed \
     && echo {} \
     # Whitelist streamed URI protocols (zoommtg,slack,spotify,discord)
     | jq '.URLWhitelist=["zoommtg://*","slack://*","spotify://*","discord://*"]' \
@@ -39,7 +42,7 @@ RUN mkdir -p /etc/opt/chrome/policies/managed \
     # Disable background apps (to prevent apps like Superhuman from
     # indefinitely blocking mandelbox shutdown).
     | jq '.BackgroundModeEnabled=false' \
-    > /etc/opt/chrome/policies/managed/FractalPolicies.json
+    > /etc/opt/brave/policies/managed/FractalPolicies.json
 
 # Install Brave Browser extensions
 COPY install-extensions.sh /usr/bin/install-extensions.sh
@@ -52,5 +55,9 @@ RUN su - fractal -c "mkdir -p /home/fractal/.config/BraveSoftware"
 RUN su - fractal -c "touch /home/fractal/.config/BraveSoftware/'First Run'"
 
 # Install Whist wrapper script to run Brave Browser into /usr/bin
+ENV WHIST_COOKIE_UPLOAD_TARGET="brave"
 COPY start-brave.sh /usr/bin/start-brave
 RUN chmod +x /usr/bin/start-brave && ln -sf /usr/bin/start-brave /usr/bin/fractal-application
+
+# Install Whist Protocol binaries and helper files (if necessary)
+COPY --from=build-assets protocol/* /usr/share/fractal/bin/

@@ -1,4 +1,4 @@
-# See stage 0 of the base dockerfile for an explanation of this build stage.
+# See stage 0 of the base Dockerfile for an explanation of this build stage.
 ARG BuildAssetPackage "protocol"
 FROM whist/build-assets:$BuildAssetPackage as build-assets
 FROM whist/base:current-build as whist-browsers-chrome
@@ -76,8 +76,7 @@ RUN su - whist -c "touch /home/whist/.config/google-chrome/'First Run'"
 # Install Whist wrapper script to run Google Chrome into /usr/bin
 ENV WHIST_COOKIE_UPLOAD_TARGET="chrome"
 COPY start-chrome.sh /usr/bin/start-chrome
-RUN chmod +x /usr/bin/start-chrome
-RUN ln -sf /usr/bin/start-chrome /usr/bin/whist-application
+RUN chmod +x /usr/bin/start-chrome && ln -sf /usr/bin/start-chrome /usr/bin/whist-application
 
 # Install Whist Protocol binaries and helper files (if necessary)
 COPY --from=build-assets protocol/* /usr/share/whist/bin/

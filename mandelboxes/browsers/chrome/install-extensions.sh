@@ -26,6 +26,6 @@ install_chrome_extension () {
   echo Added \""$pref_file_path"\" ["$2"]
 }
 
-# Install Chromium Extension
+# Install Chrome (Chromium) Extensions
 # format: install_chrome_extension [extension string ID] [extension name]
 # i.e.: install_chrome_extension "cjpalhdlnbpafiamejdnhcphjbkeiagm" "uBlock Origin"
