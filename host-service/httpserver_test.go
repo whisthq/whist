@@ -219,7 +219,7 @@ func TestHttpServerIntegration(t *testing.T) {
 // TestSendRequestResultErr checks if an error result is handled properly
 func TestSendRequestResultErr(t *testing.T) {
 	reqResult := requestResult{
-		Err: utils.MakeError("test error")
+		Err: utils.MakeError("test error"),
 	}
 	res := httptest.NewRecorder()
 
@@ -234,7 +234,7 @@ func TestSendRequestResultErr(t *testing.T) {
 // TestSendRequestResult tests if a valid request resolves successfully
 func TestSendRequestResultErr(t *testing.T) {
 	reqResult := requestResult{
-		Result: "test result"
+		Result: "test result",
 	}
 	res := httptest.NewRecorder()
 
