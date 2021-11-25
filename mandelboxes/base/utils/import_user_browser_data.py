@@ -6,7 +6,6 @@ import sqlite3
 import pyaes
 import subprocess
 from pbkdf2 import PBKDF2
-from sentry_sdk import capture_exception
 
 # Set in the base Dockerfile
 sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"))
@@ -23,6 +22,9 @@ def get_browser_default_dir(browser_name):
         str: the directories to the browser's default profile
     """
     global USER_CONFIG_PATH
+
+    # TODO: REMOVE THIS, JUST TESTING
+    sentry_sdk.capture_message("WEBSERVER SENTRY INITIALIZATION TEST MESSAGE", level="debug")
 
     if browser_name == "chrome":
         browser_default_dir = [
