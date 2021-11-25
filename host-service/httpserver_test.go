@@ -334,7 +334,7 @@ func TestGetAppNameEmpty(t *testing.T) {
 // TestGetAppName will set appName to json request app name
 func TestGetAppName(t *testing.T) {generateTestJSONTransportRequest
 	testJSONTransportRequest := JSONTransportRequest{
-		AppName:		mandelboxtypes.AppName("test_app_name")
+		AppName:		mandelboxtypes.AppName("test_app_name"),
 	}
 
 	mandelboxID := mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())
