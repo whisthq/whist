@@ -38,7 +38,11 @@ export const writeStream = (
   process: ChildProcess | undefined,
   message: string
 ) => {
-  process?.stdin?.write?.(message)
+  try {
+    process?.stdin?.write?.(message)
+  } catch (err) {
+    console.error(err)
+  }
 }
 
 // Spawn the child process with the initial arguments passed in
@@ -148,6 +152,7 @@ export const protocolStreamInfo = (info: {
   }
 }) => {
   if (childProcess === undefined) return
+
   writeStream(
     childProcess,
     `ports?${serializePorts(info.mandelboxPorts)}\nprivate-key?${
@@ -158,7 +163,6 @@ export const protocolStreamInfo = (info: {
 
 export const protocolStreamKill = () => {
   // We send SIGINT just in case
-  childProcess?.kill?.("SIGINT")
   writeStream(childProcess, "kill?0\n")
 }
 
