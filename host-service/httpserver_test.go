@@ -323,6 +323,10 @@ func TestGetAppNameEmpty(t *testing.T) {
 	testmux := &sync.Mutex{}
 	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
 	
+	// Assign JSONTRansportRequest
+	testTransportRequestMap[mandelboxID] = make(chan *JSONTransportRequest, 1)
+	testTransportRequestMap[mandelboxID] <- &JSONTransportRequest{}
+
 	// Should default name to browser/chrome
 	_, appName := getAppName(mandelboxID, testTransportRequestMap, testmux)
 	
