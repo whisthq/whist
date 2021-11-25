@@ -9,7 +9,7 @@ from pbkdf2 import PBKDF2
 from sentry_sdk import capture_exception
 
 # Set in the base Dockerfile
-sentry_sdk.init(dsn=os.getenv('SENTRY_DSN'))
+sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"))
 
 USER_CONFIG_PATH = "/fractal/userConfigs/"
 
