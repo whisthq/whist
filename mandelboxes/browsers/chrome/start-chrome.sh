@@ -61,4 +61,4 @@ flags+=($INITIAL_URL)
 
 # Start Chrome
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
-exec google-chrome "${flags[@]}"
+exec PULSE_SERVER=10.10.10.1 DISPLAY=:0 google-chrome "${flags[@]}"

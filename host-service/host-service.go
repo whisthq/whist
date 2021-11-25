@@ -615,6 +615,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		SecurityOpt: []string{
 			"apparmor:mandelbox-apparmor-profile",
 		},
+		Privileged: true,
 	}
 	mandelboxName := utils.Sprintf("%s-%s", AppName, mandelboxSubscription.ID)
 	re := regexp.MustCompile(`[^a-zA-Z0-9_.-]`)
