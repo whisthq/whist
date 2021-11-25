@@ -639,6 +639,8 @@ RUN systemctl mask pulseaudio
 RUN chmod -x /usr/bin/start-pulseaudio-x11
 
 # Set up service to start pulseaudio
+COPY audio/run-pulseaudio.sh /usr/share/fractal
+RUN chmod +x /usr/share/fractal/run-pulseaudio.sh
 COPY audio/pulse-client.conf /etc/pulse/client.conf
 COPY audio/fractal-audio.service /etc/systemd/system
 RUN systemctl enable fractal-audio
