@@ -257,7 +257,7 @@ func TestProcessJSONDataRequestWrongType(t *testing.T) {
 	processJSONDataRequest(res, req, testChan)
 
 	select {
-		case _ = <-testChan:
+		case <-testChan:
 			t.Fatalf("error processing json data request with wrong request type. Expected test server request chan to be empty")
 		default:
 	}
@@ -273,7 +273,7 @@ func TestProcessJSONDataRequestEmptyBody(t *testing.T) {
 	processJSONDataRequest(res, req, testChan)
 
 	select {
-		case _ = <-testChan:
+		case <-testChan:
 			t.Fatalf("error processing json data request with empty. Expected test server request chan to be empty")
 		default:
 	}
@@ -295,7 +295,7 @@ func TestHandleJSONTransportRequest(t *testing.T) {
 	handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
 
 	select {
-		case _ = <-testTransportRequestMap[testJSONTransportRequest.MandelboxID]:
+		case <-testTransportRequestMap[testJSONTransportRequest.MandelboxID]:
 			return
 		default:
 			t.Fatalf("error handling json transport requests. Expected a request from the request chan")
