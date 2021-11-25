@@ -232,7 +232,7 @@ func TestSendRequestResultErr(t *testing.T) {
 }
 
 // TestSendRequestResult tests if a valid request resolves successfully
-func TestSendRequestResultErr(t *testing.T) {
+func TestSendRequestResult(t *testing.T) {
 	reqResult := requestResult{
 		Result: "test result",
 	}
