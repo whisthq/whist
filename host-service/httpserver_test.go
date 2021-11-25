@@ -257,7 +257,7 @@ func TestProcessJSONDataRequestWrongType(t *testing.T) {
 	processJSONDataRequest(res, req, testChan)
 
 	select {
-		case result := <-testChan:
+		case _ = <-testChan:
 			t.Fatalf("error processing json data request with wrong request type. Expected test server request chan to be empty")
 		default:
 	}
@@ -273,7 +273,7 @@ func TestProcessJSONDataRequestEmptyBody(t *testing.T) {
 	processJSONDataRequest(res, req, testChan)
 
 	select {
-		case result := <-testChan:
+		case _ = <-testChan:
 			t.Fatalf("error processing json data request with empty. Expected test server request chan to be empty")
 		default:
 	}
@@ -295,7 +295,7 @@ func TestHandleJSONTransportRequest(t *testing.T) {
 	handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
 
 	select {
-		case result := <-testTransportRequestMap[req.MandelboxID]:
+		case _ = <-testTransportRequestMap[testJSONTransportRequest.MandelboxID]:
 			return
 		default:
 			t.Fatalf("error handling json transport requests. Expected a request from the request chan")
@@ -324,7 +324,7 @@ func TestGetAppNameEmpty(t *testing.T) {
 	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
 	
 	// Should default name to browser/chrome
-	req, appName := getAppName(mandelboxID, testTransportRequestMap, testmux)
+	_, appName := getAppName(mandelboxID, testTransportRequestMap, testmux)
 	
 	if appName != mandelboxtypes.AppName("browsers/chrome") {
 		t.Fatalf("error getting app name. Expected %v, got %v", mandelboxtypes.AppName("browsers/chrome"), appName)
@@ -333,7 +333,7 @@ func TestGetAppNameEmpty(t *testing.T) {
 }
 
 // TestGetAppName will set appName to json request app name
-func TestGetAppName(t *testing.T) {generateTestJSONTransportRequest
+func TestGetAppName(t *testing.T) {
 	testJSONTransportRequest := JSONTransportRequest{
 		AppName:		mandelboxtypes.AppName("test_app_name"),
 	}
@@ -343,11 +343,11 @@ func TestGetAppName(t *testing.T) {generateTestJSONTransportRequest
 	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
 	
 	// Assign JSONTRansportRequest
-	testTransportRequestMap[MandelboxID] = make(chan *JSONTransportRequest, 1)
-	testTransportRequestMap[MandelboxID] <- testJSONTransportRequest
+	testTransportRequestMap[mandelboxID] = make(chan *JSONTransportRequest, 1)
+	testTransportRequestMap[mandelboxID] <- &testJSONTransportRequest
 
 	// Should be set to test_app_name
-	req, appName := getAppName(mandelboxID, testTransportRequestMap, testmux)
+	_, appName := getAppName(mandelboxID, testTransportRequestMap, testmux)
 	
 	if appName != testJSONTransportRequest.AppName {
 		t.Fatalf("error getting app name. Expected %v, got %v", testJSONTransportRequest.AppName, appName)
@@ -360,7 +360,7 @@ func TestVerifyRequestWrongType(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "test target", nil)
 	
 	// Verify request type will catch request with wrong method and return an error
-	if err := verifyRequestType(res, req, http.PUT); err == nil {
+	if err := verifyRequestType(res, req, http.MethodPut); err == nil {
 		t.Fatal("error verifying request type when the request method does not match. Expected an error, got nil")
 	}
 
