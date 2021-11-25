@@ -224,7 +224,7 @@ func TestSendRequestResultErr(t *testing.T) {
 	res := httptest.NewRecorder()
 
 	// A 406 error should arise
-	reqResult.send(*res)
+	reqResult.send(res)
 
 	if res.Result().StatusCode != http.StatusNotAcceptable {
 		t.Fatalf("error sending request results with error. Expected status code %v, got %v", http.StatusNotAcceptable, res.Result().StatusCode)
@@ -237,9 +237,10 @@ func TestSendRequestResult(t *testing.T) {
 		Result: "test result",
 	}
 	res := httptest.NewRecorder()
+	io.WriteString(res, "test content")
 
 	// A 200 status code should be set
-	reqResult.send(*res)
+	reqResult.send(res)
 
 	if res.Result().StatusCode != http.StatusOK {
 		t.Fatalf("error sending a valid request results. Expected status code %v, got %v", http.StatusOK, res.Result().StatusCode)
