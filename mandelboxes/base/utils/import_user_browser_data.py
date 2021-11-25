@@ -5,6 +5,7 @@ import browser_cookie3
 import sqlite3
 import pyaes
 import subprocess
+import sentry_sdk
 from pbkdf2 import PBKDF2
 
 # Set in the base Dockerfile
