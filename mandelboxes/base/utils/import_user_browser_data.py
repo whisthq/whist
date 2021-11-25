@@ -24,9 +24,6 @@ def get_browser_default_dir(browser_name):
     """
     global USER_CONFIG_PATH
 
-    # TODO: REMOVE THIS, JUST TESTING
-    sentry_sdk.capture_message("WEBSERVER SENTRY INITIALIZATION TEST MESSAGE", level="debug")
-
     if browser_name == "chrome":
         browser_default_dir = [
             USER_CONFIG_PATH + "google-chrome/Default/",
