@@ -250,7 +250,7 @@ func TestSendRequestResult(t *testing.T) {
 // TestProcessJSONDataRequestWrongType checks if the wrong request type fails silently
 func TestProcessJSONDataRequestWrongType(t *testing.T) {
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(httptest.MethodPost)
+	req := httptest.NewRequest(http.MethodPost)
 	testChan := make(chan ServerRequest)
 
 	// With the wrong request type processJSONDataRequest will fail quietly
@@ -266,7 +266,7 @@ func TestProcessJSONDataRequestWrongType(t *testing.T) {
 // TestProcessJSONDataRequestEmptyBody checks if an empty body fails silently
 func TestProcessJSONDataRequestEmptyBody(t *testing.T) {
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(httptest.MethodPut)
+	req := httptest.NewRequest(http.MethodPut)
 	testChan := make(chan ServerRequest)
 
 	// With an empty request body processJSONDataRequest will fail quietly (will not be able to unmarshal)
@@ -357,7 +357,7 @@ func TestGetAppName(t *testing.T) {generateTestJSONTransportRequest
 // TestVerifyRequestWrongType will create a request method that does not match the expected method
 func TestVerifyRequestWrongType(t *testing.T) {
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(httptest.MethodPost)
+	req := httptest.NewRequest(http.MethodPost)
 	
 	// Verify request type will catch request with wrong method and return an error
 	if err := verifyRequestType(res, req, http.PUT); err == nil {
@@ -374,7 +374,7 @@ func TestVerifyRequestTypeNilRequest(t *testing.T) {
 	res := httptest.NewRecorder()
 
 	// Verify request type will catch nil request and return an error
-	if err := verifyRequestType(res, nil, httptest.MethodPut); err == nil {
+	if err := verifyRequestType(res, nil, http.MethodPut); err == nil {
 		t.Fatal("error verifying request type when request is nil. Expected an error, got nil")
 	}
 
