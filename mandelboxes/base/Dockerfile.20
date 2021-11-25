@@ -314,9 +314,6 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 RUN wget -qO - https://sentry.io/get-cli/ --no-check-certificate | bash
 ENV SENTRY_DSN https://6765c9aeb9c449a599ca6242829799b8@o400459.ingest.sentry.io/6073955
 
-# Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
-RUN eval "$(sentry-cli bash-hook)"
-
 #########################
 # Systemd
 #########################
@@ -644,8 +641,6 @@ RUN chmod -x /usr/bin/start-pulseaudio-x11
 # Set up service to start pulseaudio
 COPY audio/pulse-client.conf /etc/pulse/client.conf
 COPY audio/fractal-audio.service /etc/systemd/system
-COPY audio/run-fractal-audio.sh /usr/share/run-fractal-audio.sh
-RUN chmod +x /usr/share/run-fractal-audio.sh
 RUN systemctl enable fractal-audio
 
 #########################
