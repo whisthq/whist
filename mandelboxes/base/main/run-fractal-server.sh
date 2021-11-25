@@ -21,7 +21,6 @@ WHIST_APPLICATION_PID_FILE=/home/fractal/fractal-application-pid
 PROTOCOL_LOG_FILENAME=/usr/share/fractal/server.log
 TELEPORT_LOG_FILENAME=/usr/share/fractal/teleport.log
 
-
 # Define a string-format identifier for this mandelbox
 IDENTIFIER=$(cat $WHIST_MAPPINGS_DIR/$IDENTIFIER_FILENAME)
 

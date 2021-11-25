@@ -657,6 +657,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && pip install --no-cache-dir keyring \
     && pip install --no-cache-dir pyaes \
     && pip install --no-cache-dir pbkdf2 \
+    && pip install --no-cache-dir sentry-sdk \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
