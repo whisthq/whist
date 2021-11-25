@@ -79,7 +79,7 @@ jobs:
 
       - name: Install requirements
         working-directory: mandelboxes
-        run: pip install pytest pyaes pbkdf2 browser_cookie3 sentry_sdk
+        run: pip install pytest pyaes pbkdf2 browser_cookie3
 
       - name: Run tests
         working-directory: mandelboxes/base

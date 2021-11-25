@@ -11,13 +11,6 @@ eval "$(sentry-cli bash-hook)"
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-
-# TODO: REMOVE THIS -- test sentry error catching, this var doesn't exist
-echo "doing something wrong now .."
-echo "$foo"
-
-
-
 # If WHIST_AES_KEY is set, then create file
 if [ -n "${WHIST_AES_KEY+1}" ]
 then
