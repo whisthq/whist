@@ -159,7 +159,7 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 
 		mandelbox.rwlock.Lock()
 
-		// Free port bindingsd
+		// Free port bindings
 		portbindings.Free(mandelbox.portBindings)
 		mandelbox.portBindings = nil
 		logger.Infof("Successfully freed port bindings for mandelbox %s", mandelbox.ID)
@@ -406,6 +406,8 @@ func (mandelbox *mandelboxData) GetDockerID() types.DockerID {
 
 // GetAppName returns the app name for the mandelbox.
 func (mandelbox *mandelboxData) GetAppName() types.AppName {
+	mandelbox.rwlock.RLock()
+	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.appName
 }
 
