@@ -19,6 +19,7 @@ add_library(fractalCore STATIC
         fractalgetopt.c
         fractal_frame.h
         fractal_frame.c
+        fractal_notification.h
         )
 
 # Ensure that fractal.v is updated prior to compiling fractalCore

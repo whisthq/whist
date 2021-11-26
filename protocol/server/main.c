@@ -382,7 +382,7 @@ int main(int argc, char* argv[]) {
         // only poll for window name and if it's full-screen if
         // we're running on a Linux server, as Windows window title is not implemented
 #ifdef __linux__
-            // If we have notifications to process, let's process them
+        // If we have notifications to process, let's process them
         int notifications_available = check_for_notifications();
         if (notifications_available == -1) {
             LOG_FATAL("Notifications cannot be read");

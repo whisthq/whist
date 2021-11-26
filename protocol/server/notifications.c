@@ -96,6 +96,13 @@ int check_for_notifications() {
 }
 
 int process_notifications() {
-    LOG_INFO("NOTIFICATIONS: printing notification");
+    LOG_INFO("NOTIFICATIONS: sending notification");
+    FractalNotification notification = {
+        .title = "Test title",
+        .message = "Test message"
+    };
+    if (client.is_active) {
+        send_packet(&client.udp_context, PACKET_NOTIFICATION, &notification, sizeof(FractalNotification), 0);
+    }
     return 0;
 }
