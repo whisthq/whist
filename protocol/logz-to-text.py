@@ -48,6 +48,8 @@ each time. Only the header and the scroll_id.
 import requests
 import sys
 import json
+import os, os.path
+import errno
 from datetime import datetime, timedelta
 from tqdm import tqdm
 
@@ -198,11 +200,32 @@ def parse_logs(parsed_logs, logs_page):
 # Writes the server and client logs to two separate files
 # File names are SESSION_ID-client.log and SESSION_ID-server.log
 def write_logs_to_files(parsed_logs, session_id, account):
+
     client_logs_file_name = "{}-client-{}.log".format(session_id, account)
     server_logs_file_name = "{}-server-{}.log".format(session_id, account)
 
-    client_file = open(client_logs_file_name, "w")
-    server_file = open(server_logs_file_name, "w")
+    # Get download directory, relative to the protocol directory
+    # If not filled in, then it will default to the protocol folder
+    download_folder = os.getenv("LOGS_DOWNLOAD_FOLDER")
+    # download_folder = download_folder if download_folder is not None else ''
+
+    client_file_path = (
+        os.path.join(download_folder, client_logs_file_name)
+        if download_folder is not None
+        else client_logs_file_name
+    )
+    server_file_path = (
+        os.path.join(download_folder, server_logs_file_name)
+        if download_folder is not None
+        else server_logs_file_name
+    )
+
+    print(client_file_path)
+    print(download_folder)
+
+    # exit()
+    client_file = open(client_file_path, "w")
+    server_file = open(server_file_path, "w")
     for log in parsed_logs:
         if log[0] == "client":
             client_file.write(log[2])
