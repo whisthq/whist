@@ -157,27 +157,23 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 		untrackMandelbox(mandelbox)
 		logger.Infof("Successfully untracked mandelbox %s", mandelbox.ID)
 
-		// Free port bindings
-		portbindings.Free(mandelbox.portBindings)
 		mandelbox.rwlock.Lock()
+
+		// Free port bindingsd
+		portbindings.Free(mandelbox.portBindings)
 		mandelbox.portBindings = nil
-		mandelbox.rwlock.Unlock()
 		logger.Infof("Successfully freed port bindings for mandelbox %s", mandelbox.ID)
 
 		// Free uinput devices
-		mandelbox.rwlock.Lock()
 		mandelbox.uinputDevices.Close()
 		mandelbox.uinputDevices = nil
 		mandelbox.uinputDeviceMappings = []dockercontainer.DeviceMapping{}
-		mandelbox.rwlock.Unlock()
 		logger.Infof("Successfully freed uinput devices for mandelbox %s", mandelbox.ID)
 
 		// Free TTY
 		ttys.Free(mandelbox.tty)
 		logger.Infof("Successfully freed TTY %v for mandelbox %s", mandelbox.tty, mandelbox.ID)
-		mandelbox.rwlock.Lock()
 		mandelbox.tty = 0
-		mandelbox.rwlock.Unlock()
 
 		// CI does not have GPUs
 		if !metadata.IsRunningInCI() {
@@ -187,6 +183,8 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 				logger.Infof("Successfully freed GPU %v for mandelbox %s", mandelbox.gpuIndex, mandelbox.ID)
 			}
 		}
+
+		mandelbox.rwlock.Unlock()
 
 		// Clean resource mappings
 		mandelbox.cleanResourceMappingDir()

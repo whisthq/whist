@@ -53,7 +53,7 @@ func (mandelbox *mandelboxData) DownloadUserConfigs() error {
 		// this means that it's the user's first run and they don't have any settings
 		// stored for this application yet.
 		if errors.As(err, &apiErr) && apiErr.ErrorCode() == "NotFound" {
-			logger.Infof("Could not get head object because config does not exist for user %s", mandelbox.userID)
+			logger.Infof("Could not get head object because config does not exist for user %s", mandelbox.GetUserID())
 			return nil
 		}
 
@@ -71,7 +71,7 @@ func (mandelbox *mandelboxData) DownloadUserConfigs() error {
 	var noSuchKeyErr *types.NoSuchKey
 	if err != nil {
 		if errors.As(err, &noSuchKeyErr) {
-			logger.Infof("Could not download user config because config does not exist for user %s", mandelbox.userID)
+			logger.Infof("Could not download user config because config does not exist for user %s", mandelbox.GetUserID())
 			return nil
 		}
 
@@ -87,11 +87,11 @@ func (mandelbox *mandelboxData) DownloadUserConfigs() error {
 // DecryptUserConfigs decrypts and unpacks the previously downloaded
 // s3 config using the encryption token received through JSON transport.
 func (mandelbox *mandelboxData) DecryptUserConfigs() error {
-	if len(mandelbox.configEncryptionToken) == 0 {
+	if len(mandelbox.GetConfigEncryptionToken()) == 0 {
 		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", mandelbox.ID)
 	}
 
-	if mandelbox.configBuffer == nil {
+	if mandelbox.GetConfigBuffer() == nil {
 		logger.Infof("Not decrypting user configs because the config buffer is empty.")
 		return nil
 	}
@@ -100,8 +100,8 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 	logger.Infof("Using (hashed) decryption token %s for mandelbox %s", getTokenHash(string(mandelbox.GetConfigEncryptionToken())), mandelbox.ID)
 
 	// Decrypt the downloaded archive directly from memory
-	encryptedFile := mandelbox.configBuffer.Bytes()
-	decryptedData, err := configutils.DecryptAES256GCM(string(mandelbox.configEncryptionToken), encryptedFile)
+	encryptedFile := mandelbox.GetConfigBuffer().Bytes()
+	decryptedData, err := configutils.DecryptAES256GCM(string(mandelbox.GetConfigEncryptionToken()), encryptedFile)
 	if err != nil {
 		return utils.MakeError("Failed to decrypt user configs: %v", err)
 	}
