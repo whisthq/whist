@@ -35,7 +35,6 @@ Includes
 #define CHROMIUM_NOTIFICATION_LOG \
     "/fractal/userConfigs/google-chrome/Default//Platform Notifications//000003.log"
     
-extern Client client;
 /**
  * @brief Initializes the connection the notificaiton watcher
  *
@@ -56,6 +55,6 @@ int check_for_notifications();
  *
  * @return 0 on success, -1 on failure
  */
-int process_notifications();
+int process_notifications(Client client);
 
 #endif  // NOTIFICATIONS_H

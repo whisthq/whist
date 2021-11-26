@@ -328,7 +328,7 @@ int check_for_notifications() {
     return 1;
 }
 
-int process_notifications() {
+int process_notifications(Client client) {
     LOG_INFO("NOTIFICATIONS: sending notification");
     FractalNotification notification = {.title = "Test title", .message = "Test message"};
     if (client.is_active) {

@@ -387,7 +387,7 @@ int main(int argc, char* argv[]) {
         if (notifications_available == -1) {
             LOG_FATAL("Notifications cannot be read");
         } else if (notifications_available)
-            process_notifications();
+            process_notifications(server_state.client);
 
         if (get_timer(window_fullscreen_timer) > 0.1) {
             // This is the cached fullscreen state. We only send state change events
