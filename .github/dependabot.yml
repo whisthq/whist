@@ -77,16 +77,14 @@ updates:
   #####################################################
   ################ Client-Applications ################
 
-  # We've disabled all NodeJS Dependabot upgrades for the time being, as they cause a lot of
-  # bugs and are difficult to test
-  # - package-ecosystem: "npm"
-  #   directory: "/client-applications" # looks for package.json and [package-lock/yarn].lock file in this directory
-  #   schedule:
-  #     interval: "monthly" # runs on the first day of each month
-  #   ignore:
-  #     - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-  #       update-types: ["version-update:semver-patch"]
-  #   open-pull-requests-limit: 10
+  - package-ecosystem: "npm"
+    directory: "/client-applications" # looks for package.json and [package-lock/yarn].lock file in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
   #####################################################
   ###################### Config #######################
@@ -112,16 +110,14 @@ updates:
   #####################################################
   ###################### Core-ts ######################
 
-  # We've disabled all NodeJS Dependabot upgrades for the time being, as they cause a lot of
-  # bugs and are difficult to test
-  # - package-ecosystem: "npm"
-  #   directory: "/core-ts" # looks for package.json and [package-lock/yarn].lock file in this directory
-  #   schedule:
-  #     interval: "monthly" # runs on the first day of each month
-  #   ignore:
-  #     - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-  #       update-types: ["version-update:semver-patch"]
-  #   open-pull-requests-limit: 10
+  - package-ecosystem: "npm"
+    directory: "/core-ts" # looks for package.json and [package-lock/yarn].lock file in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
   #####################################################
   #################### Host-Service ###################
@@ -195,16 +191,14 @@ updates:
   #####################################################
   ################### Microservices ###################
 
-  # We've disabled all NodeJS Dependabot upgrades for the time being, as they cause a lot of
-  # bugs and are difficult to test
-  # - package-ecosystem: "npm"
-  #   directory: "/microservices/auth0" # looks for package.json and [package-lock/yarn].lock file in this directory
-  #   schedule:
-  #     interval: "monthly" # runs on the first day of each month
-  #   ignore:
-  #     - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-  #       update-types: ["version-update:semver-patch"]
-  #   open-pull-requests-limit: 10
+  - package-ecosystem: "npm"
+    directory: "/microservices/auth0" # looks for package.json and [package-lock/yarn].lock file in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
   #####################################################
   ###################### Protocol #####################
@@ -251,15 +245,13 @@ updates:
   #####################################################
   ###################### Website ######################
 
-  # We've disabled all NodeJS Dependabot upgrades for the time being, as they cause a lot of
-  # bugs and are difficult to test
-  # - package-ecosystem: "npm"
-  #   directory: "/website" # looks for package.json and [package-lock/yarn].lock file in this directory
-  #   schedule:
-  #     interval: "monthly" # runs on the first day of each month
-  #   ignore:
-  #     - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-  #       update-types: ["version-update:semver-patch"]
-  #   open-pull-requests-limit: 10
+  - package-ecosystem: "npm"
+    directory: "/website" # looks for package.json and [package-lock/yarn].lock file in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
 
   #####################################################
