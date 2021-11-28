@@ -15,7 +15,12 @@ import { loggingBaseFilePath } from "@app/config/environment"
 
 app.setPath("userData", loggingBaseFilePath)
 
-export const store = new Store({ watch: true })
+export const store = new Store({
+  watch: true,
+  // This is caused by some mistakes in a `conf` PR.
+  // We can remove this after https://github.com/sindresorhus/conf/pull/159 is merged.
+  configFileMode: 0o600,
+})
 
 const persistSet = (key: string, value: string | boolean) => {
   store.set(key, value)
