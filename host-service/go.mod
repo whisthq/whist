@@ -26,6 +26,7 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.11
 	github.com/shirou/gopsutil v3.21.10+incompatible
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
+	nhooyr.io/websocket v1.8.7
 )
 
 require (
@@ -87,5 +88,4 @@ require (
 	github.com/tklauser/numcpus v0.3.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
-	nhooyr.io/websocket v1.8.7 // indirect
 )
