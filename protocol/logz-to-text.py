@@ -205,9 +205,8 @@ def write_logs_to_files(parsed_logs, session_id, account):
     server_logs_file_name = "{}-server-{}.log".format(session_id, account)
 
     # Get download directory, relative to the protocol directory
-    # If not filled in, then it will default to the protocol folder
+    # If not filled in, then it will default to the /protocol folder
     download_folder = os.getenv("LOGS_DOWNLOAD_FOLDER")
-    # download_folder = download_folder if download_folder is not None else ''
 
     client_file_path = (
         os.path.join(download_folder, client_logs_file_name)
@@ -220,8 +219,8 @@ def write_logs_to_files(parsed_logs, session_id, account):
         else server_logs_file_name
     )
 
-    print(client_file_path)
-    print(download_folder)
+    # Log folder for transparency
+    print("Download folder: " + download_folder)
 
     # exit()
     client_file = open(client_file_path, "w")
