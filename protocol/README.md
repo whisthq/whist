@@ -337,4 +337,10 @@ This will output two files:
 
 Where `<<account>>` is a logz_io account (prod, dev, staging, base).
 
+In addition, you can choose the download destination via the `LOGS_DOWNLOAD_FOLDER` environment variable.
+This determines the destination folder to download the logs. Importantly, this folder is
+RELATIVE to the protocol folder you are executing the script from.
+
+If this is not set, it will default to downloading the log files to the protocol directory.
+
 Note: logz.io currently only retains logs for 7 days, as of 10/29/2021. That said, this will only return the logs from 5 days ago. If this changes, please modify the `RETENTION_PERIOD_DAYS` constant in the top of `logz-to-text.py` to reflect this change.
