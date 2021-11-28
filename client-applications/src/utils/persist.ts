@@ -17,7 +17,7 @@ app.setPath("userData", loggingBaseFilePath)
 
 export const store = new Store({
   watch: true,
-  // This is caused by some stupidity in a `conf` PR.
+  // This is caused by some mistakes in a `conf` PR.
   // We can remove this after https://github.com/sindresorhus/conf/pull/159 is merged.
   configFileMode: 0o600,
 })
