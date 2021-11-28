@@ -93,7 +93,7 @@
     "electron": "14.0.0",
     "electron-builder": "22.11.7",
     "electron-notarize": "github:fractal/electron-notarize#main",
-    "esbuild": "^0.12.13",
+    "esbuild": "^0.14.0",
     "eslint": "^7.31.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-config-standard": "^16.0.3",
