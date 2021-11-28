@@ -17,7 +17,6 @@ services:
     depends_on:
       - postgres_db
     networks:
-      # docker networks make sure web can find redis
       - primary
     volumes:
       - ..:/app
