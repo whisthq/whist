@@ -11,6 +11,7 @@ In order for this PR to be merged, all of the following items need to be tested 
 
 **Checklist**
 
+- [ ] This promotion is backwards compatible
 - [ ] Whist successfully auto-updates
 - [ ] Whist successfully launches
 - [ ] Whist successfully plays audio
