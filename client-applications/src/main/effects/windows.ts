@@ -163,7 +163,7 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
   }
 
   if (!isEmpty(pickBy(authCache, (x) => x === ""))) {
-    app?.dock?.show()
+    void app?.dock?.show()
     createAuthWindow()
   }
 })
