@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"io"
+	"iotest"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -387,6 +388,100 @@ func TestVerifyRequestTypeNilRequest(t *testing.T) {
 	}
 	
 }
+
+// TestAuthenticateAndParseRequestReadAllErr checks if body read errors are handled properly
+func TestAuthenticateAndParseRequestReadAllErr(t *testing.T) {
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPut, "https://localhost", iotest.ErrReader(errors.New("test error")))
+	s := ServerRequest{}
+
+	// The body will fail to read request body
+	err := authenticateAndParseRequest(res, req, s, true)
+
+	if err == nil {
+		t.Fatalf("error authenticating and parsing request when real all fails. Expected err, got nil")
+	}	
+
+	if res.Result().StatusCode != http.StatusBadRequest {
+		t.Fatalf("error authenticating and parsing request when real all fails. Expected status code %v, got %v", http.StatusBadRequest, res.Result().StatusCode)
+	}
+}
+
+// TestAuthenticateAndParseRequestEmptyBody checks if an empty body will error successfully
+func TestAuthenticateAndParseRequestEmptyBody(t *testing.T) {
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPut, "https://localhost", bytes.NewBuffer("")))
+
+	s := ServerRequest{}
+
+	// The body will fail to marshal and quietly fail
+	err := authenticateAndParseRequest(res, req, s, true)
+
+	if err == nil {
+		t.Fatalf("error authenticating and parsing request with empty body. Expected err, got nil")
+	}	
+
+	if res.Result().StatusCode != http.StatusBadRequest {
+		t.Fatalf("error authenticating and parsing request with empty body. Expected status code %v, got %v", http.StatusBadRequest, res.Result().StatusCode)
+	}
+}
+
+// TestAuthenticateAndParseRequestMissingJWTField checks if missing jwt access token will error successfully
+func TestAuthenticateAndParseRequestMissingJWTField(t *testing.T) {
+	res := httptest.NewRecorder()
+	s := ServerRequest{}
+
+	// generateTestJSONTransportRequest will give a well formatted request
+	testJSONTransportRequest := JSONTransportRequest{
+		JSONData:              "test_json_data",
+	}
+
+	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
+	if err != nil {
+		t.Fatalf("error creating json transport request: %v", err)
+	}
+
+	// The body will fail to marshal and quietly fail
+	err := authenticateAndParseRequest(res, req, s, true)
+
+	if err == nil {
+		t.Fatalf("error authenticating and parsing request with missing jwt access token. Expected err, got nil")
+	}	
+
+	if res.Result().StatusCode != http.StatusUnauthorized {
+		t.Fatalf("error authenticating and parsing request with missing jwt access token. Expected status code %v, got %v", http.StatusUnauthorized, res.Result().StatusCode)
+	}
+}
+
+
+// TestAuthenticateAndParseRequestInvalidJWTField checks if an invalid jwt access token will error successfully
+func TestAuthenticateAndParseRequestInvalidJWTField(t *testing.T) {
+	res := httptest.NewRecorder()
+	s := ServerRequest{}
+
+	// generateTestJSONTransportRequest will give a well formatted request
+	testJSONTransportRequest := JSONTransportRequest{
+		JwtAccessToken:        "test_invalid_jwt_token",
+		JSONData:              "test_json_data",
+	}
+
+	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
+	if err != nil {
+		t.Fatalf("error creating json transport request: %v", err)
+	}
+
+	// The body will fail to marshal and quietly fail
+	err := authenticateAndParseRequest(res, req, s, true)
+
+	if err == nil {
+		t.Fatalf("error authenticating and parsing request with missing jwt access token. Expected err, got nil")
+	}	
+
+	if res.Result().StatusCode != http.StatusUnauthorized {
+		t.Fatalf("error authenticating and parsing request with missing jwt access token. Expected status code %v, got %v", http.StatusUnauthorized, res.Result().StatusCode)
+	}
+}
+
 
 // generateTestJSONTransportRequest takes a request body and creates an
 // HTTP PUT request for /json_transport
