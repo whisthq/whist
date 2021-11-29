@@ -368,6 +368,8 @@ def drain_instance(instance: InstanceInfo) -> None:
     After marking the instance as draining, the host service should react to this
     change and terminate itself.
 
+    If the instance is of NoneType then we will skip draining.
+
     Args:
         instance: The instance to drain
 
@@ -375,7 +377,9 @@ def drain_instance(instance: InstanceInfo) -> None:
         None
 
     """
-    if (
+    if not instance:
+        return
+    elif (
         instance.status == MandelboxHostState.PRE_CONNECTION
         or instance.ip is None
         or str(instance.ip) == ""
