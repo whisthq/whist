@@ -414,7 +414,7 @@ func TestAuthenticateAndParseRequestReadAllErr(t *testing.T) {
 // TestAuthenticateAndParseRequestEmptyBody checks if an empty body will error successfully
 func TestAuthenticateAndParseRequestEmptyBody(t *testing.T) {
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPut, "https://localhost", bytes.NewBuffer(""))
+	req := httptest.NewRequest(http.MethodPut, "https://localhost", bytes.NewReader([]byte{}))
 	testJSONTransportRequest := JSONTransportRequest{
 		resultChan:            make(chan requestResult),
 	}
@@ -447,7 +447,7 @@ func TestAuthenticateAndParseRequestMissingJWTField(t *testing.T) {
 	}
 
 	// The body will fail to marshal and quietly fail
-	err := authenticateAndParseRequest(res, req, &testJSONTransportRequest, true)
+	err = authenticateAndParseRequest(res, req, &testJSONTransportRequest, true)
 
 	if err == nil {
 		t.Fatalf("error authenticating and parsing request with missing jwt access token. Expected err, got nil")
@@ -476,7 +476,7 @@ func TestAuthenticateAndParseRequestInvalidJWTField(t *testing.T) {
 	}
 
 	// The body will fail to marshal and quietly fail
-	err := authenticateAndParseRequest(res, req, &testJSONTransportRequest, true)
+	err = authenticateAndParseRequest(res, req, &testJSONTransportRequest, true)
 
 	if err == nil {
 		t.Fatalf("error authenticating and parsing request with missing jwt access token. Expected err, got nil")
