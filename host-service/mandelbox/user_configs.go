@@ -30,13 +30,13 @@ const (
 func (mandelbox *mandelboxData) DownloadUserConfigs() error {
 	// If userID is not set, then we don't retrieve configs from s3
 	if len(mandelbox.GetUserID()) == 0 {
-		logger.Warningf("User ID is not set for mandelbox %s. Skipping config download.", mandelbox.ID)
+		logger.Warningf("User ID is not set for mandelbox %s. Skipping config download.", mandelbox.GetUserID())
 		return nil
 	}
 
 	s3ConfigKey := mandelbox.getS3ConfigKey()
 
-	logger.Infof("Starting S3 config download for mandelbox %s", mandelbox.ID)
+	logger.Infof("Starting S3 config download for mandelbox %s", mandelbox.GetUserID())
 
 	s3Client, err := configutils.NewS3Client("us-east-1")
 	if err != nil {
@@ -61,7 +61,7 @@ func (mandelbox *mandelboxData) DownloadUserConfigs() error {
 	}
 
 	// Log config version
-	logger.Infof("Using user config version %s for mandelbox %s", *headObject.VersionId, mandelbox.ID)
+	logger.Infof("Using user config version %s for mandelbox %s", *headObject.VersionId, mandelbox.GetUserID())
 
 	// Download file into a pre-allocated in-memory buffer
 	// This should be okay as we don't expect configs to be very large
@@ -79,7 +79,7 @@ func (mandelbox *mandelboxData) DownloadUserConfigs() error {
 	}
 
 	mandelbox.SetConfigBuffer(configBuffer)
-	logger.Infof("Downloaded %d bytes from s3 for mandelbox %s", numBytes, mandelbox.ID)
+	logger.Infof("Downloaded %d bytes from s3 for mandelbox %s", numBytes, mandelbox.GetUserID())
 
 	return nil
 }
@@ -88,7 +88,7 @@ func (mandelbox *mandelboxData) DownloadUserConfigs() error {
 // s3 config using the encryption token received through JSON transport.
 func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 	if len(mandelbox.GetConfigEncryptionToken()) == 0 {
-		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", mandelbox.ID)
+		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", mandelbox.GetUserID())
 	}
 
 	if mandelbox.GetConfigBuffer() == nil {
@@ -96,8 +96,8 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 		return nil
 	}
 
-	logger.Infof("Decrypting user config for mandelbox %s", mandelbox.ID)
-	logger.Infof("Using (hashed) decryption token %s for mandelbox %s", getTokenHash(string(mandelbox.GetConfigEncryptionToken())), mandelbox.ID)
+	logger.Infof("Decrypting user config for mandelbox %s", mandelbox.GetUserID())
+	logger.Infof("Using (hashed) decryption token %s for mandelbox %s", getTokenHash(string(mandelbox.GetConfigEncryptionToken())), mandelbox.GetUserID())
 
 	// Decrypt the downloaded archive directly from memory
 	encryptedFile := mandelbox.GetConfigBuffer().Bytes()
@@ -106,8 +106,8 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 		return utils.MakeError("Failed to decrypt user configs: %v", err)
 	}
 
-	logger.Infof("Finished decrypting user config for mandelbox %s", mandelbox.ID)
-	logger.Infof("Decompressing user config for mandelbox %s", mandelbox.ID)
+	logger.Infof("Finished decrypting user config for mandelbox %s", mandelbox.GetUserID())
+	logger.Infof("Decompressing user config for mandelbox %s", mandelbox.GetUserID())
 
 	// Make directory for user configs
 	configDir := mandelbox.getUserConfigDir()

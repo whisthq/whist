@@ -163,38 +163,38 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 
 		// Mark mandelbox as dying in the database, but only if it's not a warmup
 		if fid != types.MandelboxID(utils.PlaceholderWarmupUUID()) {
-			if err := dbdriver.WriteMandelboxStatus(mandelbox.ID, dbdriver.MandelboxStatusDying); err != nil {
+			if err := dbdriver.WriteMandelboxStatus(mandelbox.GetUserID(), dbdriver.MandelboxStatusDying); err != nil {
 				logger.Error(err)
 			}
 		}
 
 		untrackMandelbox(mandelbox)
-		logger.Infof("Successfully untracked mandelbox %s", mandelbox.ID)
+		logger.Infof("Successfully untracked mandelbox %s", mandelbox.GetUserID())
 
 		mandelbox.rwlock.Lock()
 
 		// Free port bindings
 		portbindings.Free(mandelbox.portBindings)
 		mandelbox.portBindings = nil
-		logger.Infof("Successfully freed port bindings for mandelbox %s", mandelbox.ID)
+		logger.Infof("Successfully freed port bindings for mandelbox %s", mandelbox.GetUserID())
 
 		// Free uinput devices
 		mandelbox.uinputDevices.Close()
 		mandelbox.uinputDevices = nil
 		mandelbox.uinputDeviceMappings = []dockercontainer.DeviceMapping{}
-		logger.Infof("Successfully freed uinput devices for mandelbox %s", mandelbox.ID)
+		logger.Infof("Successfully freed uinput devices for mandelbox %s", mandelbox.GetUserID())
 
 		// Free TTY
 		ttys.Free(mandelbox.tty)
-		logger.Infof("Successfully freed TTY %v for mandelbox %s", mandelbox.tty, mandelbox.ID)
+		logger.Infof("Successfully freed TTY %v for mandelbox %s", mandelbox.tty, mandelbox.GetUserID())
 		mandelbox.tty = 0
 
 		// CI does not have GPUs
 		if !metadata.IsRunningInCI() {
-			if err := gpus.Free(mandelbox.gpuIndex, mandelbox.ID); err != nil {
-				logger.Errorf("Error freeing GPU %v for mandelbox %s: %s", mandelbox.gpuIndex, mandelbox.ID, err)
+			if err := gpus.Free(mandelbox.gpuIndex, mandelbox.GetUserID()); err != nil {
+				logger.Errorf("Error freeing GPU %v for mandelbox %s: %s", mandelbox.gpuIndex, mandelbox.GetUserID(), err)
 			} else {
-				logger.Infof("Successfully freed GPU %v for mandelbox %s", mandelbox.gpuIndex, mandelbox.ID)
+				logger.Infof("Successfully freed GPU %v for mandelbox %s", mandelbox.gpuIndex, mandelbox.GetUserID())
 			}
 		}
 
@@ -202,25 +202,25 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 
 		// Clean resource mappings
 		mandelbox.cleanResourceMappingDir()
-		logger.Infof("Successfully cleaned resource mapping dir for mandelbox %s", mandelbox.ID)
+		logger.Infof("Successfully cleaned resource mapping dir for mandelbox %s", mandelbox.GetUserID())
 
 		// Backup and clean user config directory.
 		err := mandelbox.BackupUserConfigs()
 		if err != nil {
-			logger.Errorf("Error backing up user configs for MandelboxID %s. Error: %s", mandelbox.ID, err)
+			logger.Errorf("Error backing up user configs for MandelboxID %s. Error: %s", mandelbox.GetUserID(), err)
 		} else {
-			logger.Infof("Successfully backed up user configs for MandelboxID %s", mandelbox.ID)
+			logger.Infof("Successfully backed up user configs for MandelboxID %s", mandelbox.GetUserID())
 		}
 		mandelbox.cleanUserConfigDir()
 
 		// Remove mandelbox from the database altogether, once again excluding warmups
 		if fid != types.MandelboxID(utils.PlaceholderWarmupUUID()) {
-			if err := dbdriver.RemoveMandelbox(mandelbox.ID); err != nil {
+			if err := dbdriver.RemoveMandelbox(mandelbox.GetUserID()); err != nil {
 				logger.Error(err)
 			}
 		}
 
-		logger.Infof("Cleaned up after Mandelbox %s", mandelbox.ID)
+		logger.Infof("Cleaned up after Mandelbox %s", mandelbox.GetUserID())
 	}()
 
 	return mandelbox
@@ -345,7 +345,7 @@ func (mandelbox *mandelboxData) GetIdentifyingHostPort() (uint16, error) {
 
 // AssignGPU tries to assign the mandelbox a GPU.
 func (mandelbox *mandelboxData) AssignGPU() error {
-	gpu, err := gpus.Allocate(mandelbox.ID)
+	gpu, err := gpus.Allocate(mandelbox.GetUserID())
 	if err != nil {
 		return err
 	}
@@ -388,7 +388,7 @@ func (mandelbox *mandelboxData) GetTTY() ttys.TTY {
 // RegisterCreation registers a docker container ID to the mandelbox.
 func (mandelbox *mandelboxData) RegisterCreation(d types.DockerID) error {
 	if len(d) == 0 {
-		return utils.MakeError("RegisterCreation: can't register mandelbox %s with empty docker ID", mandelbox.ID)
+		return utils.MakeError("RegisterCreation: can't register mandelbox %s with empty docker ID", mandelbox.GetUserID())
 	}
 
 	mandelbox.rwlock.Lock()
@@ -401,7 +401,7 @@ func (mandelbox *mandelboxData) RegisterCreation(d types.DockerID) error {
 // SetAppName tries to set the app name for the mandelbox.
 func (mandelbox *mandelboxData) SetAppName(name types.AppName) error {
 	if len(name) == 0 {
-		return utils.MakeError("SetAppName: can't set mandelbox app name to empty for mandelboxID: %s", mandelbox.ID)
+		return utils.MakeError("SetAppName: can't set mandelbox app name to empty for mandelboxID: %s", mandelbox.GetUserID())
 	}
 
 	mandelbox.rwlock.Lock()
@@ -470,16 +470,16 @@ func (mandelbox *mandelboxData) InitializeUinputDevices(goroutineTracker *sync.W
 	go func() {
 		defer goroutineTracker.Done()
 
-		err := uinputdevices.SendDeviceFDsOverSocket(mandelbox.ctx, goroutineTracker, devices, utils.TempDir+mandelbox.ID.String()+"/sockets/uinput.sock")
+		err := uinputdevices.SendDeviceFDsOverSocket(mandelbox.ctx, goroutineTracker, devices, utils.TempDir+mandelbox.GetUserID().String()+"/sockets/uinput.sock")
 		if err != nil {
 			placeholderUUID := types.MandelboxID(utils.PlaceholderWarmupUUID())
-			if mandelbox.ID == placeholderUUID && strings.Contains(err.Error(), "use of closed network connection") {
-				logger.Warningf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.ID, err)
+			if mandelbox.GetUserID() == placeholderUUID && strings.Contains(err.Error(), "use of closed network connection") {
+				logger.Warningf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.GetUserID(), err)
 			} else {
-				logger.Errorf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.ID, err)
+				logger.Errorf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.GetUserID(), err)
 			}
 		} else {
-			logger.Infof("SendDeviceFDsOverSocket returned successfully for MandelboxID %s", mandelbox.ID)
+			logger.Infof("SendDeviceFDsOverSocket returned successfully for MandelboxID %s", mandelbox.GetUserID())
 		}
 	}()
 
