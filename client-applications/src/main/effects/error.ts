@@ -17,7 +17,6 @@ import {
   AUTH_ERROR,
   MAINTENANCE_ERROR,
   PROTOCOL_ERROR,
-  COMMIT_HASH_ERROR,
 } from "@app/utils/error"
 import { fromTrigger } from "@app/utils/flows"
 import { withAppReady } from "@app/utils/observables"
@@ -25,9 +24,9 @@ import { WhistTrigger } from "@app/constants/triggers"
 
 // For any failure, close all windows and display error window
 withAppReady(fromTrigger(WhistTrigger.mandelboxFlowFailure)).subscribe((x) => {
-  if (mandelboxCreateErrorCommitHash(x)) {
-    createErrorWindow(COMMIT_HASH_ERROR)
-  } else if (mandelboxCreateErrorNoAccess(x)) {
+  if (mandelboxCreateErrorCommitHash(x)) return
+
+  if (mandelboxCreateErrorNoAccess(x)) {
     createErrorWindow(NO_PAYMENT_ERROR)
   } else if (mandelboxCreateErrorUnauthorized(x)) {
     createErrorWindow(UNAUTHORIZED_ERROR)

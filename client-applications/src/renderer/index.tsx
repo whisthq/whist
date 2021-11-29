@@ -20,7 +20,6 @@ import {
   WindowHashUpdate,
   WindowHashImporter,
   WindowHashOnboarding,
-  WindowHashNetwork,
 } from "@app/constants/windows"
 import {
   fractalError,
