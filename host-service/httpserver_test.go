@@ -6,12 +6,12 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"io"
-	"iotest"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"sync"
 	"testing"
+	"testing/iotest"
 	"time"
 
 	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
