@@ -227,7 +227,9 @@ Notarizing is done in Github CI. In the event you want to notarize locally:
 
 3. Run `xcode-select --install`.
 
-4. Run `yarn package:notarize`.
+4. Download the App Store Connect credentials via `aws s3 cp s3://fractal-dev-secrets/AuthKey_2L3Z7NGYVB.p8 ~/private_keys/AuthKey_2L3Z7NGYVB.p8` (the `private_keys` directory assumes you are on Mac).
+
+5. Run `yarn package:notarize`.
 
 ### Publishing New Versions
 
