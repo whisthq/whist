@@ -114,15 +114,21 @@ const RootComponent = () => {
       />
     )
   if (show === WindowHashOnboarding) {
+    // return (
+    //   <Typeform
+    //     onSubmit={handleOnboardingTypeform}
+    //     id={
+    //       (mainState.appEnvironment ?? "prod") === "prod"
+    //         ? "Oi21wwbg"
+    //         : "cJcK0C8q"
+    //     }
+    //     email={mainState.userEmail}
+    //   />
+    // )
     return (
-      <Typeform
-        onSubmit={handleOnboardingTypeform}
-        id={
-          (mainState.appEnvironment ?? "prod") === "prod"
-            ? "Oi21wwbg"
-            : "cJcK0C8q"
-        }
-        email={mainState.userEmail}
+      <Network
+        networkInfo={mainState.networkInfo}
+        onSubmit={handleNetworkSubmit}
       />
     )
   }

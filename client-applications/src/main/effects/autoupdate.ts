@@ -5,12 +5,11 @@ import Sentry from "@sentry/electron"
 
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import { fromTrigger } from "@app/utils/flows"
-import {
-  updateAvailableNotification,
-  updateDownloadedNotification,
-} from "@app/utils/notification"
+import { updateDownloadedNotification } from "@app/utils/notification"
 import { fromSignal } from "@app/utils/observables"
 import { WhistTrigger } from "@app/constants/triggers"
+import { logBase } from "@app/utils/logging"
+import { createUpdateWindow } from "@app/utils/windows"
 
 // Apply autoupdate config
 fromTrigger(WhistTrigger.appReady)
@@ -44,16 +43,10 @@ fromTrigger(WhistTrigger.appReady)
   })
 
 fromTrigger(WhistTrigger.updateAvailable).subscribe(() => {
-  updateAvailableNotification()?.show()
+  createUpdateWindow()
 })
 
-fromSignal(
-  fromTrigger(WhistTrigger.updateDownloaded),
-  merge(
-    fromTrigger(WhistTrigger.mandelboxFlowFailure),
-    fromTrigger(WhistTrigger.protocolError)
-  )
-).subscribe(() => {
+fromTrigger(WhistTrigger.updateDownloaded).subscribe(() => {
   autoUpdater.quitAndInstall()
 })
 

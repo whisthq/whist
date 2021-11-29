@@ -13,6 +13,7 @@ export const NAVIGATION_ERROR = "NAVIGATION_ERROR"
 export const MAINTENANCE_ERROR = "MAINTENANCE_ERROR"
 export const INTERNET_ERROR = "INTERNET_ERROR"
 export const SLEEP_ERROR = "SLEEP_ERROR"
+export const COMMIT_HASH_ERROR = "COMMIT_HASH_ERROR"
 
 export const fractalError = {
   [NO_PAYMENT_ERROR]: {
@@ -50,6 +51,10 @@ export const fractalError = {
   [SLEEP_ERROR]: {
     title: "Your computer went to sleep.",
     text: "Whist automatically disconnected and should reconnect when your computer wakes up.",
+  },
+  [COMMIT_HASH_ERROR]: {
+    title: "An update is available.",
+    text: "Please allow a few moments as we download the update.",
   },
 } as {
   [key: string]: {
