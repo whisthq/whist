@@ -270,6 +270,7 @@ typedef struct {
  */
 typedef struct {
     // Attributes
+    SOCKET* listen_socket;  // listen socket created in advance, typically only used in server.
     void* context;
 
     // Function table

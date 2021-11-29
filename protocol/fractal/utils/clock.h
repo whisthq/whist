@@ -80,6 +80,11 @@ void start_timer(clock* timer);
 double get_timer(clock timer);
 
 /**
+ * @brief                          Get the current time in ms
+ */
+double get_current_time_ms();
+
+/**
  * @brief                          Create a clock that represents the given
  *                                 timeout in milliseconds
  *

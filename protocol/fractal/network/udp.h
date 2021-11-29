@@ -53,6 +53,16 @@ bool create_udp_socket_context(SocketContext* context, char* destination, int po
                                char* binary_aes_private_key);
 
 /**
+ * @brief Creates a udp listen socket, that can be used in SocketContext
+ *
+ * @param sock                      The socket that will be initialized
+ * @param port                      The port to listen on
+ * @param timeout_ms                The timeout for socket
+ * @return                          0 on success, otherwise failure.
+ */
+int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms);
+
+/**
  * @brief                          Sets the burst bitrate for the given UDP SocketContext
  *
  * @param context                  The SocketContext that we'll be adjusting the burst bitrate for

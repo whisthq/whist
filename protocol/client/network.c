@@ -275,6 +275,8 @@ int connect_to_server(bool with_stun) {
         return -1;
     }
 
+    LOG_INFO("create_udp_socket_context() done, current time = %s", current_time_str());
+
     if (!create_tcp_socket_context(&packet_tcp_context, server_ip, tcp_port, TCP_CONNECTION_TIMEOUT,
                                    TCP_CONNECTION_WAIT, with_stun,
                                    (char *)client_binary_aes_private_key)) {
@@ -282,6 +284,8 @@ int connect_to_server(bool with_stun) {
         destroy_socket_context(&packet_udp_context);
         return -1;
     }
+
+    LOG_INFO("create_tcp_socket_context() done, current time = %s", current_time_str());
 
     return 0;
 }
