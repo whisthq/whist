@@ -100,6 +100,7 @@ const launchTrigger = fromSignal(
     isNewConfigToken,
     cookies: merge(importCookies, dontImportBrowserData),
     bookmarks: merge(importBookmarks, dontImportBrowserData),
+    userEmail,
   }).pipe(
     map((x: object) => ({
       ...x,

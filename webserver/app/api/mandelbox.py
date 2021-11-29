@@ -16,6 +16,7 @@ from app.helpers.aws.aws_instance_post import do_scale_up_if_necessary
 from app.helpers.aws.aws_mandelbox_assign_post import is_user_active
 from app.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 from app.utils.general.logs import whist_logger
+from app.utils.general.sanitize import sanitize_email
 from app.utils.metrics.flask_app import app_record_metrics
 from app.helpers.aws.aws_instance_post import find_instance, find_enabled_regions
 from app.database.models.cloud import db, InstanceInfo, MandelboxInfo, RegionToAmi
@@ -36,9 +37,17 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
     care_about_active = False
     username = get_jwt_identity()
 
+    # Note: we receive the email from the client, so its value should
+    # not be trusted for anything else other than logging since
+    # it can be spoofed. We sanitize the email before using to help mitigate
+    # potential attacks.
+    unsafe_email = sanitize_email(body.user_email)
+
     if care_about_active and is_user_active(username):
         # If the user already has a mandelbox running, don't start up a new one
-        whist_logger.debug(f"Returning 503 to user {username} because they are already active.")
+        whist_logger.debug(
+            f"Returning 503 to user {username} because they are already active. (client reported email {unsafe_email}, this value might not be accurate and is untrusted)"
+        )
         return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
 
     # Of the regions provided in the request, filter out the ones that are not active
@@ -76,7 +85,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
     # Begin finding an instance
     whist_logger.debug(
         f"Trying to find instance for user {username} in region {region},\
-        with commit hash {client_commit_hash}."
+        with commit hash {client_commit_hash}. (client reported email {unsafe_email}, this value might not be accurate and is untrusted)"
     )
     instance_or_error = find_instance(region, client_commit_hash)
     time_when_instance_found = time.time() * 1000
@@ -111,7 +120,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
                 )
                 scaling_thread.start()
         whist_logger.debug(
-            f"Returning 503 to user {username} because we didn't find an instance for them."
+            f"Returning 503 to user {username} because we didn't find an instance for them. (client reported email {unsafe_email}, this value might not be accurate and is untrusted)"
         )
         return (
             jsonify(

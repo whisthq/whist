@@ -51,7 +51,8 @@ export const mandelboxCreateErrorInternal = (
 // Helper functions
 export const mandelboxRequest = async (
   accessToken: string,
-  regions: AWSRegion[]
+  regions: AWSRegion[],
+  userEmail: string
 ) =>
   post({
     endpoint: "/mandelbox/assign",
@@ -60,5 +61,6 @@ export const mandelboxRequest = async (
       regions,
       client_commit_hash: isLocalEnv() ? "local_dev" : COMMIT_SHA,
       session_id: sessionID,
+      user_email: userEmail,
     },
   })

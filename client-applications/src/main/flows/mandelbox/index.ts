@@ -17,12 +17,14 @@ export default flow(
       isNewConfigToken: boolean
       cookies: string
       bookmarks: string
+      userEmail: string
     }>
   ) => {
     const create = mandelboxCreateFlow(
       trigger.pipe(
         map((t) => ({
           accessToken: t.accessToken,
+          userEmail: t.userEmail,
         }))
       )
     )
