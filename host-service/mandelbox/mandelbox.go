@@ -6,6 +6,20 @@ host at any given point.
 
 This package, and its children, are meant to be low-level enough that it can
 be imported by higher-level host service packages.
+
+Note: Many of the methods that access the mandelbox data use a lock, please follow the
+guidelines outlined below when writing code that directly uses the struct fields:
+
+1. Are you accessing a mandelbox struct field directly? If so, lock.
+2. Are you calling a method? If so, do not lock or you may cause a deadlock.
+3. Are you inside a method? If so, assume the lock is unlocked on method entry.
+
+Additionally, consider the following rules:
+
+- All locking should be done when and where the actual data access occurs.
+  This means at the point of accessing the actual struct field
+- No method should assume that the lock is locked before entry
+- Getters and setters should always be used for struct field access when possible
 */
 package mandelbox // import "github.com/fractal/fractal/host-service/mandelbox"
 
@@ -100,6 +114,9 @@ type Mandelbox interface {
 	// Backup the user configs to S3
 	BackupUserConfigs() error
 
+	GetConfigBuffer() *manager.WriteAtBuffer
+	SetConfigBuffer(*manager.WriteAtBuffer)
+
 	// WriteUserInitialBrowserData writes file(s) containing the user initial browser data
 	WriteUserInitialBrowserData(string, string) error
 
@@ -146,63 +163,64 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 
 		// Mark mandelbox as dying in the database, but only if it's not a warmup
 		if fid != types.MandelboxID(utils.PlaceholderWarmupUUID()) {
-			if err := dbdriver.WriteMandelboxStatus(mandelbox.ID, dbdriver.MandelboxStatusDying); err != nil {
+			if err := dbdriver.WriteMandelboxStatus(mandelbox.GetID(), dbdriver.MandelboxStatusDying); err != nil {
 				logger.Error(err)
 			}
 		}
 
 		untrackMandelbox(mandelbox)
-		logger.Infof("Successfully untracked mandelbox %s", mandelbox.ID)
+		logger.Infof("Successfully untracked mandelbox %s", mandelbox.GetID())
 
 		mandelbox.rwlock.Lock()
-		defer mandelbox.rwlock.Unlock()
 
 		// Free port bindings
 		portbindings.Free(mandelbox.portBindings)
 		mandelbox.portBindings = nil
-		logger.Infof("Successfully freed port bindings for mandelbox %s", mandelbox.ID)
+		logger.Infof("Successfully freed port bindings for mandelbox %s", mandelbox.GetID())
 
 		// Free uinput devices
 		mandelbox.uinputDevices.Close()
 		mandelbox.uinputDevices = nil
 		mandelbox.uinputDeviceMappings = []dockercontainer.DeviceMapping{}
-		logger.Infof("Successfully freed uinput devices for mandelbox %s", mandelbox.ID)
+		logger.Infof("Successfully freed uinput devices for mandelbox %s", mandelbox.GetID())
 
 		// Free TTY
 		ttys.Free(mandelbox.tty)
-		logger.Infof("Successfully freed TTY %v for mandelbox %s", mandelbox.tty, mandelbox.ID)
+		logger.Infof("Successfully freed TTY %v for mandelbox %s", mandelbox.tty, mandelbox.GetID())
 		mandelbox.tty = 0
 
 		// CI does not have GPUs
 		if !metadata.IsRunningInCI() {
-			if err := gpus.Free(mandelbox.gpuIndex, mandelbox.ID); err != nil {
-				logger.Errorf("Error freeing GPU %v for mandelbox %s: %s", mandelbox.gpuIndex, mandelbox.ID, err)
+			if err := gpus.Free(mandelbox.gpuIndex, mandelbox.GetID()); err != nil {
+				logger.Errorf("Error freeing GPU %v for mandelbox %s: %s", mandelbox.gpuIndex, mandelbox.GetID(), err)
 			} else {
-				logger.Infof("Successfully freed GPU %v for mandelbox %s", mandelbox.gpuIndex, mandelbox.ID)
+				logger.Infof("Successfully freed GPU %v for mandelbox %s", mandelbox.gpuIndex, mandelbox.GetID())
 			}
 		}
 
+		mandelbox.rwlock.Unlock()
+
 		// Clean resource mappings
 		mandelbox.cleanResourceMappingDir()
-		logger.Infof("Successfully cleaned resource mapping dir for mandelbox %s", mandelbox.ID)
+		logger.Infof("Successfully cleaned resource mapping dir for mandelbox %s", mandelbox.GetID())
 
 		// Backup and clean user config directory.
 		err := mandelbox.BackupUserConfigs()
 		if err != nil {
-			logger.Errorf("Error backing up user configs for MandelboxID %s. Error: %s", mandelbox.ID, err)
+			logger.Errorf("Error backing up user configs for MandelboxID %s. Error: %s", mandelbox.GetID(), err)
 		} else {
-			logger.Infof("Successfully backed up user configs for MandelboxID %s", mandelbox.ID)
+			logger.Infof("Successfully backed up user configs for MandelboxID %s", mandelbox.GetID())
 		}
 		mandelbox.cleanUserConfigDir()
 
 		// Remove mandelbox from the database altogether, once again excluding warmups
 		if fid != types.MandelboxID(utils.PlaceholderWarmupUUID()) {
-			if err := dbdriver.RemoveMandelbox(mandelbox.ID); err != nil {
+			if err := dbdriver.RemoveMandelbox(mandelbox.GetID()); err != nil {
 				logger.Error(err)
 			}
 		}
 
-		logger.Infof("Cleaned up after Mandelbox %s", mandelbox.ID)
+		logger.Infof("Cleaned up after Mandelbox %s", mandelbox.GetID())
 	}()
 
 	return mandelbox
@@ -245,63 +263,71 @@ type mandelboxData struct {
 	portBindings []portbindings.PortBinding
 }
 
-// We do not lock here because the mandelboxID NEVER changes.
+// GetID returns the mandelbox ID.
+// No need to lock this since this should be treated as immutable after creation.
 func (mandelbox *mandelboxData) GetID() types.MandelboxID {
 	return mandelbox.ID
 }
 
+// AssignToUser assigns the mandelbox to the given user.
 func (mandelbox *mandelboxData) AssignToUser(u types.UserID) {
 	mandelbox.rwlock.Lock()
 	defer mandelbox.rwlock.Unlock()
 	mandelbox.userID = u
 }
 
+// GetUserID returns the ID of the user assigned to the mandelbox.
 func (mandelbox *mandelboxData) GetUserID() types.UserID {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.userID
 }
 
+// GetConfigEncryptionToken returns the config encryption token.
 func (mandelbox *mandelboxData) GetConfigEncryptionToken() types.ConfigEncryptionToken {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.configEncryptionToken
 }
 
+// SetConfigEncryptionToken sets the config encryption token.
 func (mandelbox *mandelboxData) SetConfigEncryptionToken(token types.ConfigEncryptionToken) {
 	mandelbox.rwlock.Lock()
 	defer mandelbox.rwlock.Unlock()
 	mandelbox.configEncryptionToken = token
 }
 
+// GetClientAppAccessToken returns the client app access token.
 func (mandelbox *mandelboxData) GetClientAppAccessToken() types.ClientAppAccessToken {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.clientAppAccessToken
 }
 
+// SetClientAppAccessToken sets the client app access token.
 func (mandelbox *mandelboxData) SetClientAppAccessToken(token types.ClientAppAccessToken) {
 	mandelbox.rwlock.Lock()
 	defer mandelbox.rwlock.Unlock()
 	mandelbox.clientAppAccessToken = token
 }
 
+// GetJSONData returns the JSON transport data.
 func (mandelbox *mandelboxData) GetJSONData() string {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.JSONData
 }
 
+// SetJSONData sets the JSON transport data.
 func (mandelbox *mandelboxData) SetJSONData(JSONData string) {
-	mandelbox.rwlock.RLock()
-	defer mandelbox.rwlock.RUnlock()
-
+	mandelbox.rwlock.Lock()
+	defer mandelbox.rwlock.Unlock()
 	mandelbox.JSONData = JSONData
 }
 
+// GetHostPort returns the assigned host port for the given mandelbox
+// port and protocol.
 func (mandelbox *mandelboxData) GetHostPort(mandelboxPort uint16, protocol portbindings.TransportProtocol) (uint16, error) {
-	// Don't lock ourselves, since `c.GetPortBindings()` will lock for us.
-
 	binds := mandelbox.GetPortBindings()
 	for _, b := range binds {
 		if b.Protocol == protocol && b.MandelboxPort == mandelboxPort {
@@ -312,87 +338,94 @@ func (mandelbox *mandelboxData) GetHostPort(mandelboxPort uint16, protocol portb
 	return 0, utils.MakeError("Couldn't GetHostPort(%v, %v) for mandelbox with MandelboxID %s", mandelboxPort, protocol, mandelbox.GetID())
 }
 
+// GetIdentifyingHostPort returns the assigned host port for TCP 32262.
 func (mandelbox *mandelboxData) GetIdentifyingHostPort() (uint16, error) {
-	// Don't lock ourselves, since `c.GetHostPort()` will lock for us.
 	return mandelbox.GetHostPort(32262, portbindings.TransportProtocolTCP)
 }
 
+// AssignGPU tries to assign the mandelbox a GPU.
 func (mandelbox *mandelboxData) AssignGPU() error {
-	mandelbox.rwlock.Lock()
-	defer mandelbox.rwlock.Unlock()
-
-	gpu, err := gpus.Allocate(mandelbox.ID)
+	gpu, err := gpus.Allocate(mandelbox.GetID())
 	if err != nil {
 		return err
 	}
+
+	mandelbox.rwlock.Lock()
+	defer mandelbox.rwlock.Unlock()
 
 	mandelbox.gpuIndex = gpu
 	return nil
 }
 
+// GetGPU returns the assigned GPU index.
 func (mandelbox *mandelboxData) GetGPU() gpus.Index {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
-
 	return mandelbox.gpuIndex
 }
 
+// InitializeTTY tries to assign the mandelbox a TTY.
 func (mandelbox *mandelboxData) InitializeTTY() error {
-	mandelbox.rwlock.Lock()
-	defer mandelbox.rwlock.Unlock()
-
 	tty, err := ttys.Allocate()
 	if err != nil {
 		return err
 	}
 
+	mandelbox.rwlock.Lock()
+	defer mandelbox.rwlock.Unlock()
+
 	mandelbox.tty = tty
 	return nil
 }
 
+// GetTTY returns the assigned TTY.
 func (mandelbox *mandelboxData) GetTTY() ttys.TTY {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
-
 	return mandelbox.tty
 }
 
+// RegisterCreation registers a docker container ID to the mandelbox.
 func (mandelbox *mandelboxData) RegisterCreation(d types.DockerID) error {
+	if len(d) == 0 {
+		return utils.MakeError("RegisterCreation: can't register mandelbox %s with empty docker ID", mandelbox.GetUserID())
+	}
+
 	mandelbox.rwlock.Lock()
 	defer mandelbox.rwlock.Unlock()
-
-	if len(d) == 0 {
-		return utils.MakeError("RegisterCreation: can't register mandelbox %s with empty docker ID", mandelbox.ID)
-	}
 
 	mandelbox.dockerID = d
 	return nil
 }
 
+// SetAppName tries to set the app name for the mandelbox.
 func (mandelbox *mandelboxData) SetAppName(name types.AppName) error {
+	if len(name) == 0 {
+		return utils.MakeError("SetAppName: can't set mandelbox app name to empty for mandelboxID: %s", mandelbox.GetUserID())
+	}
+
 	mandelbox.rwlock.Lock()
 	defer mandelbox.rwlock.Unlock()
-
-	if len(name) == 0 {
-		return utils.MakeError("SetAppName: can't set mandelbox app name to empty for mandelboxID: %s", mandelbox.ID)
-	}
 
 	mandelbox.appName = name
 	return nil
 }
 
+// GetDockerID returns the docker container ID for the mandelbox.
 func (mandelbox *mandelboxData) GetDockerID() types.DockerID {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.dockerID
 }
 
+// GetAppName returns the app name for the mandelbox.
 func (mandelbox *mandelboxData) GetAppName() types.AppName {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.appName
 }
 
+// AssignPortBindings tries to assign the desired port bindings to the mandelbox.
 func (mandelbox *mandelboxData) AssignPortBindings(desired []portbindings.PortBinding) error {
 	result, err := portbindings.Allocate(desired)
 	if err != nil {
@@ -406,18 +439,21 @@ func (mandelbox *mandelboxData) AssignPortBindings(desired []portbindings.PortBi
 	return nil
 }
 
+// GetPortBindings returns the assigned port bindings.
 func (mandelbox *mandelboxData) GetPortBindings() []portbindings.PortBinding {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.portBindings
 }
 
+// GetDeviceMappings returns all device mapping for the mandelbox.
 func (mandelbox *mandelboxData) GetDeviceMappings() []dockercontainer.DeviceMapping {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
 	return append(mandelbox.uinputDeviceMappings, mandelbox.otherDeviceMappings...)
 }
 
+// InitializeUinputDevices tries to assign uinput devices to the mandelbox.
 func (mandelbox *mandelboxData) InitializeUinputDevices(goroutineTracker *sync.WaitGroup) error {
 	devices, mappings, err := uinputdevices.Allocate()
 	if err != nil {
@@ -425,34 +461,54 @@ func (mandelbox *mandelboxData) InitializeUinputDevices(goroutineTracker *sync.W
 	}
 
 	mandelbox.rwlock.Lock()
+	defer mandelbox.rwlock.Unlock()
+
 	mandelbox.uinputDevices = devices
 	mandelbox.uinputDeviceMappings = mappings
-	defer mandelbox.rwlock.Unlock()
 
 	goroutineTracker.Add(1)
 	go func() {
 		defer goroutineTracker.Done()
 
-		err := uinputdevices.SendDeviceFDsOverSocket(mandelbox.ctx, goroutineTracker, devices, utils.TempDir+mandelbox.ID.String()+"/sockets/uinput.sock")
+		err := uinputdevices.SendDeviceFDsOverSocket(mandelbox.ctx, goroutineTracker, devices, utils.TempDir+mandelbox.GetID().String()+"/sockets/uinput.sock")
 		if err != nil {
 			placeholderUUID := types.MandelboxID(utils.PlaceholderWarmupUUID())
-			if mandelbox.ID == placeholderUUID && strings.Contains(err.Error(), "use of closed network connection") {
-				logger.Warningf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.ID, err)
+			if mandelbox.GetID() == placeholderUUID && strings.Contains(err.Error(), "use of closed network connection") {
+				logger.Warningf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.GetID(), err)
 			} else {
-				logger.Errorf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.ID, err)
+				logger.Errorf("SendDeviceFDsOverSocket returned for MandelboxID %s with error: %s", mandelbox.GetID(), err)
 			}
 		} else {
-			logger.Infof("SendDeviceFDsOverSocket returned successfully for MandelboxID %s", mandelbox.ID)
+			logger.Infof("SendDeviceFDsOverSocket returned successfully for MandelboxID %s", mandelbox.GetID())
 		}
 	}()
 
 	return nil
 }
 
+// GetContext returns the context for the mandelbox.
 func (mandelbox *mandelboxData) GetContext() context.Context {
+	mandelbox.rwlock.RLock()
+	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.ctx
 }
 
+// GetConfigBuffer returns the buffer where user config downloads are stored.
+func (mandelbox *mandelboxData) GetConfigBuffer() *manager.WriteAtBuffer {
+	mandelbox.rwlock.RLock()
+	defer mandelbox.rwlock.RUnlock()
+	return mandelbox.configBuffer
+}
+
+// SetConfigBuffer sets the buffer where user config downloads are stored.
+func (mandelbox *mandelboxData) SetConfigBuffer(buffer *manager.WriteAtBuffer) {
+	mandelbox.rwlock.Lock()
+	defer mandelbox.rwlock.Unlock()
+	mandelbox.configBuffer = buffer
+}
+
+// Close cancels the context for the mandelbox, causing it to shutdown
+// and clean up all its resources.
 func (mandelbox *mandelboxData) Close() {
 	// Cancel context, triggering the freeing up of all resources, including
 	// tracked by goroutines (like cloud storage directories)
