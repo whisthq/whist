@@ -1,14 +1,11 @@
 import { autoUpdater } from "electron-updater"
-import { merge } from "rxjs"
 import { take, takeUntil } from "rxjs/operators"
 import Sentry from "@sentry/electron"
 
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import { fromTrigger } from "@app/utils/flows"
 import { updateDownloadedNotification } from "@app/utils/notification"
-import { fromSignal } from "@app/utils/observables"
 import { WhistTrigger } from "@app/constants/triggers"
-import { logBase } from "@app/utils/logging"
 import { createUpdateWindow } from "@app/utils/windows"
 
 // Apply autoupdate config

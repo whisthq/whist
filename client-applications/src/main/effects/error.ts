@@ -3,8 +3,6 @@
  * @file app.ts
  * @brief This file contains subscriptions to error Observables.
  */
-import { withLatestFrom, startWith, mapTo } from "rxjs/operators"
-
 import {
   mandelboxCreateErrorNoAccess,
   mandelboxCreateErrorUnauthorized,
