@@ -378,7 +378,7 @@ def drain_instance(instance: InstanceInfo) -> None:
 
     """
     if not instance:
-        whist_logger.info(f"skipping drain_instance as instance is None")
+        whist_logger.info("skipping drain_instance as instance is None")
         return
     elif (
         instance.status == MandelboxHostState.PRE_CONNECTION
