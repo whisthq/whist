@@ -621,16 +621,16 @@ if __name__ == "__main__":
     # If using two instances, parallelize the host-setup and building of the docker containers to save time
     p1 = multiprocessing.Process(target=server_setup_process, args=[args_dict])
     p2 = multiprocessing.Process(target=client_setup_process, args=[args_dict])
-    # if use_two_instances:
-    #     p1.start()
-    #     p2.start()
-    #     p1.join()
-    #     p2.join()
-    # else:
-    #     p1.start()
-    #     p1.join()
-    #     p2.start()
-    #     p2.join()
+    if use_two_instances:
+        p1.start()
+        p2.start()
+        p1.join()
+        p2.join()
+    else:
+        p1.start()
+        p1.join()
+        p2.start()
+        p2.join()
 
     server_log = open("{}/server_monitoring_log.txt".format(perf_logs_folder_name), "a")
     client_log = open("{}/client_monitoring_log.txt".format(perf_logs_folder_name), "a")
