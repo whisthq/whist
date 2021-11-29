@@ -11,6 +11,7 @@ import pexpect
 import json
 
 from testing_helpers import (
+    get_boto3client,
     create_ec2_instance,
     wait_for_instance_to_start_or_stop,
     get_instance_ip,
@@ -45,8 +46,16 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--region_name",
+    help="The AWS region to use for testing",
+    type=str,
+    choices=["us-east-1", "us-east-2", "us-west-1", "us-west-2"],
+    default="us-east-1",
+)
+
+parser.add_argument(
     "--use-existing-instance",
-    help="The public IP of the existing instance to use for the test. If left empty, a clean instance will be generated instead.",
+    help="The ID of the existing instance to use for the test. If left empty, a clean instance will be generated instead.",
     type=str,
     default="",
 )
@@ -74,6 +83,13 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
+
+# Ubuntu Server Instance IDs for the 4 most popular AWS regions
+instance_AMI_dict = {}
+instance_AMI_dict["us-east-1"] = "ami-0885b1f6bd170450c"
+instance_AMI_dict["us-east-2"] = "ami-0629230e074c580f2"
+instance_AMI_dict["us-west-1"] = "ami-053ac55bdcfe96e85"
+instance_AMI_dict["us-west-2"] = "ami-036d46416a34a611c"
 
 
 def attempt_ssh_connection(ssh_command, timeout, log_file_handle, pexpect_prompt, max_retries):
@@ -127,20 +143,23 @@ def reboot_instance(
     print("Reboot complete")
 
 
-def create_or_start_aws_instance(existing_instance_id, ssh_key_name):
+def create_or_start_aws_instance(boto3client, region_name, existing_instance_id, ssh_key_name):
     # Connect to existing instance or create a new one
 
     # Attempt to start existing instance
     if existing_instance_id != "":
         instance_id = existing_instance_id
-        result = start_instance(instance_id)
+        result = start_instance(boto3client, instance_id)
         if result is True:
             # Wait for the instance to be running
-            wait_for_instance_to_start_or_stop(instance_id, stopping=False)
+            wait_for_instance_to_start_or_stop(boto3client, instance_id, stopping=False)
             return instance_id
 
     # Define the AWS machine variables
-    instance_AMI = "ami-0885b1f6bd170450c"  # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
+
+    instance_AMI = instance_AMI_dict[
+        region_name
+    ]  # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
     instance_type = "g4dn.2xlarge"  # The type of instance we want to create
 
     print(
@@ -151,6 +170,8 @@ def create_or_start_aws_instance(existing_instance_id, ssh_key_name):
 
     # Create our EC2 instance
     instance_id = create_ec2_instance(
+        boto3client=boto3client,
+        region_name=region_name,
         instance_type=instance_type,
         instance_AMI=instance_AMI,
         key_name=ssh_key_name,
@@ -160,15 +181,15 @@ def create_or_start_aws_instance(existing_instance_id, ssh_key_name):
     time.sleep(5)
 
     # Wait for the instance to be running
-    wait_for_instance_to_start_or_stop(instance_id, stopping=False)
+    wait_for_instance_to_start_or_stop(boto3client, instance_id, stopping=False)
 
     return instance_id
 
 
 def clone_whist_repository_on_instance(github_token, pexpect_process, pexpect_prompt):
     # Obtain current branch
-    subprocess = subprocess.Popen("git branch", shell=True, stdout=subprocess.PIPE)
-    subprocess_stdout = subprocess.stdout.readlines()
+    subproc_handle = subprocess.Popen("git branch", shell=True, stdout=subprocess.PIPE)
+    subprocess_stdout = subproc_handle.stdout.readlines()
 
     branch_name = ""
     for line in subprocess_stdout:
@@ -340,9 +361,10 @@ def extract_server_logs_from_instance(
     username,
     server_hostname,
     aws_timeout,
-    logfile,
+    perf_logs_folder_name,
+    log_grabber_log,
 ):
-    command = "rm -rf ~/perf_logs; mkdir -p ~/perf_logs/server"
+    command = "rm -rf ~/perf_logs/server; mkdir -p ~/perf_logs/server"
     pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
@@ -357,9 +379,12 @@ def extract_server_logs_from_instance(
         wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     # Download all the logs from the AWS machine
-    command = "scp -i {} -r {}@{}:~/perf_logs .".format(ssh_key_path, username, server_hostname)
-    local_process = pexpect.spawn(command, timeout=aws_timeout, logfile=logfile.buffer)
-    local_process.expect(["\$", "%"])
+    command = "scp -r -i {} {}@{}:~/perf_logs/server {}".format(
+        ssh_key_path, username, server_hostname, perf_logs_folder_name
+    )
+
+    local_process = pexpect.spawn(command, timeout=aws_timeout, logfile=log_grabber_log.buffer)
+    local_process.expect(["\$", pexpect.EOF])
     local_process.kill(0)
 
 
@@ -369,11 +394,12 @@ def extract_client_logs_from_instance(
     client_docker_id,
     ssh_key_path,
     username,
-    clietn_hostname,
+    client_hostname,
     aws_timeout,
-    logfile,
+    perf_logs_folder_name,
+    log_grabber_log,
 ):
-    command = "rm -rf ~/perf_logs; mkdir -p ~/perf_logs/client"
+    command = "rm -rf ~/perf_logs/client; mkdir -p ~/perf_logs/client"
     log_grabber_process.sendline(command)
     wait_until_cmd_done(log_grabber_process, pexpect_prompt)
 
@@ -384,15 +410,16 @@ def extract_client_logs_from_instance(
         wait_until_cmd_done(log_grabber_process, pexpect_prompt)
 
     # Download all the logs from the AWS machine
-    command = "scp -i {} -r {}@{}:~/perf_logs/client ./perf_logs".format(
-        ssh_key_path, username, clietn_hostname
+    command = "scp -r -i {} {}@{}:~/perf_logs/client {}".format(
+        ssh_key_path, username, client_hostname, perf_logs_folder_name
     )
-    local_process = pexpect.spawn(command, timeout=aws_timeout, logfile=logfile.buffer)
-    local_process.expect(["\$", "%"])
+
+    local_process = pexpect.spawn(command, timeout=aws_timeout, logfile=log_grabber_log.buffer)
+    local_process.expect(["\$", pexpect.EOF])
     local_process.kill(0)
 
 
-def terminate_or_stop_aws_instance(instance_id, should_terminate):
+def terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate):
     if should_terminate:
         # Terminating the instance and waiting for them to shutdown
         print(f"Testing complete, terminating EC2 instance")
@@ -400,13 +427,13 @@ def terminate_or_stop_aws_instance(instance_id, should_terminate):
     else:
         # Stopping the instance and waiting for it to shutdown
         print(f"Testing complete, stopping EC2 instance")
-        result = stop_instance(instance_id)
+        result = stop_instance(boto3client, instance_id)
         if result is False:
             printf("Error while stopping the EC2 instance!")
             return
 
     # Wait for the instance to be terminated
-    wait_for_instance_to_start_or_stop(instance_id, stopping=True)
+    wait_for_instance_to_start_or_stop(boto3client, instance_id, stopping=True)
 
 
 # This main loop creates two AWS EC2 instances, one client, one server, and sets up
@@ -428,10 +455,18 @@ if __name__ == "__main__":
         print("SSH key file {} does not exist".format(ssh_key_path))
         exit()
 
-    instance_id = create_or_start_aws_instance(args.use_existing_instance, ssh_key_name)
+    # Obtain region name
+    region_name = args.region_name
+
+    # Obtain boto3 client
+    boto3client = get_boto3client(region_name)
+
+    instance_id = create_or_start_aws_instance(
+        boto3client, region_name, args.use_existing_instance, ssh_key_name
+    )
 
     # Get the IP address of the instance
-    instance_ip = get_instance_ip(instance_id)
+    instance_ip = get_instance_ip(boto3client, instance_id)
     hostname = instance_ip[0]["public"]
     private_ip = instance_ip[0]["private"]
     print("Connected to AWS instance with hostname: {}!".format(hostname))
@@ -493,6 +528,19 @@ if __name__ == "__main__":
     )
     log_grabber_process.expect(pexpect_prompt)
 
+    # Create folder for logs
+    perf_logs_folder_name = time.strftime("%Y_%m_%d@%H-%M-%S")
+    perf_logs_folder_name = "./perf_logs/{}".format(perf_logs_folder_name)
+    command = "mkdir -p {}/server".format(perf_logs_folder_name)
+    local_process = pexpect.spawn(command, timeout=aws_timeout, logfile=log_grabber_log.buffer)
+    local_process.expect(["\$", "%", pexpect.EOF])
+    local_process.kill(0)
+
+    command = "mkdir -p {}/client".format(perf_logs_folder_name)
+    local_process = pexpect.spawn(command, timeout=aws_timeout, logfile=log_grabber_log.buffer)
+    local_process.expect(["\$", "%", pexpect.EOF])
+    local_process.kill(0)
+
     extract_server_logs_from_instance(
         log_grabber_process,
         pexpect_prompt,
@@ -501,6 +549,7 @@ if __name__ == "__main__":
         username,
         hostname,
         aws_timeout,
+        perf_logs_folder_name,
         log_grabber_log,
     )
     extract_client_logs_from_instance(
@@ -511,6 +560,7 @@ if __name__ == "__main__":
         username,
         hostname,
         aws_timeout,
+        perf_logs_folder_name,
         log_grabber_log,
     )
 
@@ -534,6 +584,7 @@ if __name__ == "__main__":
     server_process.kill(0)
     client_process.kill(0)
     log_grabber_process.kill(0)
+    local_process.kill(0)
 
     # Close all log files
     host_service_log.close()
@@ -542,7 +593,13 @@ if __name__ == "__main__":
     log_grabber_log.close()
 
     # 10 - Terminate or stop AWS instance
-    terminate_or_stop_aws_instance(instance_id, instance_id != args.use_existing_instance)
+    terminate_or_stop_aws_instance(
+        boto3client, instance_id, instance_id != args.use_existing_instance
+    )
+    print(
+        "Instance successfully {}, goodbye".format(
+            "terminated" if instance_id != args.use_existing_instance else "stopped"
+        )
+    )
 
-    print("Instance successfully terminated, goodbye")
     print("Done")

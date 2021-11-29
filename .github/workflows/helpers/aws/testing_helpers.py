@@ -3,19 +3,32 @@
 import sys
 import os
 import time
-import boto3
+import boto3, botocore
 import paramiko
 
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
+# Security groups for the 4 most popular AWS regions
+sec_groups_dict = {}
+sec_groups_dict["us-east-1"] = "container-tester"
+sec_groups_dict["us-east-2"] = "container-tester2"
+sec_groups_dict["us-west-1"] = "container-tester3"
+sec_groups_dict["us-west-2"] = "container-tester4"
 
-# Define boto3 client with a specific region
-boto3client = boto3.client("ec2", region_name="us-east-1")
+
+def get_boto3client(region_name: str) -> botocore.client:
+    # Define boto3 client with a specific region
+    return boto3.client("ec2", region_name=region_name)
 
 
 def create_ec2_instance(
-    instance_type: str, instance_AMI: str, key_name: str, disk_size: int
+    boto3client: botocore.client,
+    region_name: str,
+    instance_type: str,
+    instance_AMI: str,
+    key_name: str,
+    disk_size: int,
 ) -> str:
     """
     Creates an AWS EC2 instance of a specific instance type and AMI
@@ -50,7 +63,7 @@ def create_ec2_instance(
             },
         ],
         "SecurityGroups": [
-            "container-tester",
+            sec_groups_dict[region_name],
         ],
         "InstanceInitiatedShutdownBehavior": "terminate",
         "IamInstanceProfile": {"Name": "auto_scaling_instance_profile"},
@@ -67,7 +80,7 @@ def create_ec2_instance(
     return instance_id
 
 
-def start_instance(instance_id: str) -> bool:
+def start_instance(boto3client: botocore.client, instance_id: str) -> bool:
     """
     Attempt to turn on an existing EC2 instance. Return a bool indicating whether the operation succeeded.
 
@@ -85,7 +98,7 @@ def start_instance(instance_id: str) -> bool:
     return True
 
 
-def stop_instance(instance_id: str) -> bool:
+def stop_instance(boto3client: botocore.client, instance_id: str) -> bool:
     """
     Attempt to turn off an existing EC2 instance. Return a bool indicating whether the operation succeeded.
 
@@ -103,7 +116,9 @@ def stop_instance(instance_id: str) -> bool:
     return True
 
 
-def wait_for_instance_to_start_or_stop(instance_id: str, stopping: bool = False) -> None:
+def wait_for_instance_to_start_or_stop(
+    boto3client: botocore.client, instance_id: str, stopping: bool = False
+) -> None:
     """
     Hangs until an EC2 instance is reported as running or as stopped. Could be nice to make
     it timeout after some time.
@@ -130,7 +145,7 @@ def wait_for_instance_to_start_or_stop(instance_id: str, stopping: bool = False)
     print(f"Instance is{' not' if stopping else ''} running: {instance_id}")
 
 
-def get_instance_ip(instance_id: str) -> str:
+def get_instance_ip(boto3client: botocore.client, instance_id: str) -> str:
     """
     TODO
     """
