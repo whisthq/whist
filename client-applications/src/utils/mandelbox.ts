@@ -28,6 +28,10 @@ export const mandelboxCreateSuccess = (
   response: AsyncReturnType<typeof mandelboxRequest>
 ) => [200, 202].includes(response.status as number)
 
+export const mandelboxCreateErrorCommitHash = (
+  response: AsyncReturnType<typeof mandelboxRequest>
+) => response.json?.error === "COMMIT_HASH_MISMATCH"
+
 export const mandelboxCreateErrorNoAccess = (
   response: AsyncReturnType<typeof mandelboxRequest>
 ) => response.status === 402
@@ -46,7 +50,8 @@ export const mandelboxCreateErrorInternal = (
   (response?.json?.ID ?? "") === "" &&
   !mandelboxCreateErrorNoAccess(response) &&
   !mandelboxCreateErrorUnauthorized(response) &&
-  !mandelboxCreateErrorMaintenance(response)
+  !mandelboxCreateErrorMaintenance(response) &&
+  !mandelboxCreateErrorCommitHash(response)
 
 // Helper functions
 export const mandelboxRequest = async (

@@ -31,6 +31,7 @@ import {
   CACHED_CONFIG_TOKEN,
 } from "@app/constants/store"
 import { WhistTrigger } from "@app/constants/triggers"
+import { networkAnalyze } from "@app/utils/networkAnalysis"
 
 fromTrigger(WhistTrigger.appReady).subscribe(() => {
   createTray(createMenu(false))
@@ -98,7 +99,10 @@ withAppReady(fromTrigger(WhistTrigger.authFlowSuccess))
   .pipe(take(1))
   .subscribe(() => {
     const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
-    if (!onboarded) createOnboardingWindow()
+    if (!onboarded) {
+      networkAnalyze()
+      createOnboardingWindow()
+    }
   })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
