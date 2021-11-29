@@ -6,6 +6,20 @@ host at any given point.
 
 This package, and its children, are meant to be low-level enough that it can
 be imported by higher-level host service packages.
+
+Note: Many of the methods that access the mandelbox data use a lock, please follow the
+guidelines outlined below when writing code that directly uses the struct fields:
+
+1. Are you accessing a mandelbox struct field directly? If so, lock.
+2. Are you calling a method? If so, do not lock or you may cause a deadlock.
+3. Are you inside a method? If so, assume the lock is unlocked on method entry.
+
+Additionally, consider the following rules:
+
+- All locking should be done when and where the actual data access occurs.
+  This means at the point of accessing the actual struct field
+- No method should assume that the lock is locked before entry
+- Getters and setters should always be used for struct field access when possible
 */
 package mandelbox // import "github.com/fractal/fractal/host-service/mandelbox"
 
@@ -343,7 +357,7 @@ func (mandelbox *mandelboxData) AssignGPU() error {
 	return nil
 }
 
-// GetGPUIndex returns the assigned GPU index.
+// GetGPU returns the assigned GPU index.
 func (mandelbox *mandelboxData) GetGPU() gpus.Index {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
@@ -486,7 +500,7 @@ func (mandelbox *mandelboxData) GetConfigBuffer() *manager.WriteAtBuffer {
 	return mandelbox.configBuffer
 }
 
-// SetWriteAtBuffer sets the buffer where user config downloads are stored.
+// SetConfigBuffer sets the buffer where user config downloads are stored.
 func (mandelbox *mandelboxData) SetConfigBuffer(buffer *manager.WriteAtBuffer) {
 	mandelbox.rwlock.Lock()
 	defer mandelbox.rwlock.Unlock()

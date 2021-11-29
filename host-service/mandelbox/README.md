@@ -22,6 +22,20 @@ Occasionally, sensitive information needs to be saved on the mandelbox and keepi
 
 As a reference, aes_key is stored into a private file in [entrypoint.sh](https://github.com/fractal/fractal/blob/dev/mandelboxes/base/startup/entrypoint.sh#L14) and later accessed in [run-fractal-server.sh](https://github.com/fractal/fractal/blob/dev/mandelboxes/base/main/run-fractal-server.sh#L11).
 
+### Writing methods for the mandelbox struct
+
+When writing code that interacts with the mandelbox struct fields, there are some rules and guidelines that should be kept in mind. This is because the mandelbox methods use a lock for accessing the field values, and by writing code that follows the guidelines we can avoid causing unnecessary deadlocks while keeping the concurrent code easy to understand. By doing this, we will have to think less about when to lock and prevent deadlocks from conflicting locking (i.e. by using a locking getter inside a method that already locks). The following steps outline the simple process to write mandelbox code:
+
+1. Are you accessing a mandelbox struct field directly? If so, lock.
+2. Are you calling a method? If so, do not lock or you may cause a deadlock.
+3. Are you inside a method? If so, assume the lock is unlocked on method entry.
+
+Additionally, consider the following rules:
+
+- All locking should be done when and where the actual data access occurs. This means at the point of accessing the actual struct field
+- No method should assume that the lock is locked before entry
+- Getters and setters should always be used for struct field access when possible
+
 #### Miscellaneous
 
 An alternative to resource mapping is to mount data onto the mandelbox as seen in [host-service.go](https://github.com/fractal/fractal/blob/dev/host-service/host-service.go#L564).
