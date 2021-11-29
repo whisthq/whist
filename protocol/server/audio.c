@@ -43,6 +43,7 @@ Includes
 #include "network.h"
 #include "audio.h"
 #include "main.h"
+#include "server_statistic.h"
 
 #ifdef _WIN32
 #pragma comment(lib, "ws2_32.lib")
@@ -118,7 +119,7 @@ int32_t multithreaded_send_audio(void* opaque) {
                         // no data or need more data
                         break;
                     }
-                    log_double_statistic("Audio encode time (ms)", get_timer(t) * 1000);
+                    log_double_statistic(AUDIO_ENCODE_TIME, get_timer(t) * 1000);
                     if (audio_encoder->encoded_frame_size > (int)MAX_AUDIOFRAME_DATA_SIZE) {
                         LOG_ERROR("Audio data too large: %d", audio_encoder->encoded_frame_size);
                     } else if (assuming_client_active && state->client.is_active) {

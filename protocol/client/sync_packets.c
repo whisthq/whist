@@ -26,6 +26,7 @@ Includes
 #include "video.h"
 #include "sync_packets.h"
 #include "client_utils.h"
+#include "client_statistic.h"
 
 // Updater variables
 extern SocketContext packet_udp_context;
@@ -172,7 +173,7 @@ void update_server_bitrate() {
 #define TIME_RUN(line, name, timer) \
     start_timer(&timer);            \
     line;                           \
-    log_double_statistic(name " time (ms)", get_timer(timer) * MS_IN_SECOND);
+    log_double_statistic(name, get_timer(timer) * MS_IN_SECOND);
 
 // This function polls for UDP packets from the server
 // NOTE: This contains a very sensitive hotpath,
@@ -217,9 +218,9 @@ int multithreaded_sync_udp_packets(void* opaque) {
 
         update_server_bitrate();
         update_ping();
-        TIME_RUN(update_video(), "update_video", statistics_timer);
-        TIME_RUN(update_audio(), "update_audio", statistics_timer);
-        TIME_RUN(FractalPacket* packet = read_packet(socket_context, true), "read_packet (udp)",
+        TIME_RUN(update_video(), VIDEO_UPDATE_TIME, statistics_timer);
+        TIME_RUN(update_audio(), AUDIO_UPDATE_TIME, statistics_timer);
+        TIME_RUN(FractalPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_UDP,
                  statistics_timer);
 
         if (!packet) {
@@ -228,17 +229,17 @@ int multithreaded_sync_udp_packets(void* opaque) {
 
         switch (packet->type) {
             case PACKET_VIDEO: {
-                TIME_RUN(receive_video(packet), "receive_video", statistics_timer);
+                TIME_RUN(receive_video(packet), VIDEO_RECEIVE_TIME, statistics_timer);
                 break;
             }
             case PACKET_AUDIO: {
-                TIME_RUN(receive_audio(packet), "receive_audio", statistics_timer);
+                TIME_RUN(receive_audio(packet), AUDIO_RECEIVE_TIME, statistics_timer);
                 break;
             }
             case PACKET_MESSAGE: {
                 TIME_RUN(handle_server_message((FractalServerMessage*)packet->data,
                                                (size_t)packet->payload_size),
-                         "handle_server_message (udp)", statistics_timer);
+                         SERVER_HANDLE_MESSAGE_UDP, statistics_timer);
                 break;
             }
             default:
@@ -284,13 +285,13 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         // Update TCP ping and reconnect TCP if needed (TODO: does that function do too much?)
         update_tcp_ping();
 
-        TIME_RUN(FractalPacket* packet = read_packet(socket_context, true), "read_packet (tcp)",
+        TIME_RUN(FractalPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_TCP,
                  statistics_timer);
 
         if (packet) {
             TIME_RUN(handle_server_message((FractalServerMessage*)packet->data,
                                            (size_t)packet->payload_size),
-                     "handle_server_message (tcp)", statistics_timer);
+                     SERVER_HANDLE_MESSAGE_TCP, statistics_timer);
             free_packet(socket_context, packet);
         }
 

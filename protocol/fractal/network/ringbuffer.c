@@ -228,7 +228,7 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
 
     ring_buffer->num_packets_received++;
 
-    bool overwrote_frame = false;
+    int num_overwritten_frames = 0;
     // This packet is old, because the current resident already contains packets with a newer ID in
     // it
     if (packet->id < frame_data->id) {
@@ -239,7 +239,7 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
         if (frame_data->id != -1) {
             // We can overwrite no matter what, since the currently rendering frame has already been
             // copied to currently_rendering_frame.
-            overwrote_frame = true;
+            num_overwritten_frames = 1;
             if (frame_data->id > ring_buffer->currently_rendering_id) {
                 // We have received a packet which will overwrite a frame that needs to be rendered
                 // in the future. In other words, the ring buffer is full, so we should wipe the
@@ -251,6 +251,7 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
                     "We can't overwrite that frame, since our renderer has only gotten to ID "
                     "%d!",
                     ring_buffer->currently_rendering_id);
+                num_overwritten_frames = packet->id - ring_buffer->currently_rendering_id - 1;
                 reset_ring_buffer(ring_buffer);
             }
         }
@@ -305,11 +306,7 @@ int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
     if (frame_data->packets_received == frame_data->num_packets) {
         ring_buffer->frames_received++;
     }
-    if (overwrote_frame) {
-        return 1;
-    } else {
-        return 0;
-    }
+    return num_overwritten_frames;
 }
 
 void nack_single_packet(RingBuffer* ring_buffer, int id, int index) {

@@ -20,6 +20,8 @@ Includes
 
 #include "audio.h"
 #include "network.h"
+#include "client_statistic.h"
+#include <fractal/logging/log_statistic.h>
 #include <fractal/network/network.h>
 #include <fractal/network/ringbuffer.h>
 #include <fractal/core/fractal_frame.h>
@@ -175,6 +177,9 @@ void catchup_audio() {
         LOG_DEBUG("Catching up audio from ID %d to ID %d", last_played_id,
                   audio_ring_buffer->max_id - 1);
 #endif
+        if (last_played_id != -1)
+            log_double_statistic(AUDIO_FPS_SKIPPED_CATCHUP,
+                                 (double)(audio_ring_buffer->max_id - last_played_id - 1));
         last_played_id = audio_ring_buffer->max_id - 1;
     }
     for (int i = 0; i < MAX_NUM_AUDIO_FRAMES; i++) {
@@ -273,6 +278,7 @@ bool flush_audio(int audio_device_queue) {
     if (audio_device_queue > real_limit) {
         LOG_WARNING("Audio queue full, skipping ID %d (Queued: %d)", next_to_play_id,
                     audio_device_queue);
+        log_double_statistic(AUDIO_FPS_SKIPPED_FLUSH, 1.0);
         flush_next_audio_frame();
         if (!audio_flush_triggered) {
             audio_flush_triggered = true;
@@ -495,6 +501,8 @@ int32_t receive_audio(FractalPacket* packet) {
     if (res < 0) {
         return res;
     } else if (res > 0) {
+        if (audio_ring_buffer->currently_rendering_id != -1)
+            log_double_statistic(AUDIO_FPS_SKIPPED_RECEIVE, (double)res);
         // we overwrote the last frame
         if (last_played_id < packet->id && last_played_id > 0) {
             last_played_id = packet->id - 1;

@@ -35,6 +35,7 @@ Includes
 #include "network.h"
 #include "bitrate.h"
 #include "client_utils.h"
+#include "client_statistic.h"
 
 #define USE_HARDWARE true
 #define NO_NACKS_DURING_IFRAME false
@@ -1020,7 +1021,7 @@ void log_frame_statistics(VideoFrame* frame) {
             start_timer(&time_since_last_frame);
             start_timer(&fps_clock);
         }
-        log_double_statistic("Time between frames (ms)",
+        log_double_statistic(VIDEO_TIME_BETWEEN_FRAMES,
                              get_timer(time_since_last_frame) * MS_IN_SECOND);
         start_timer(&time_since_last_frame);
 
@@ -1110,8 +1111,7 @@ int render_video() {
             return -1;
         }
         int res;
-        log_double_statistic("video_decoder_send_packets time in ms",
-                             get_timer(latency_clock) * 1000);
+        log_double_statistic(VIDEO_DECODE_SEND_PACKET_TIME, get_timer(latency_clock) * 1000);
 
         start_timer(&latency_clock);
         // we should only expect this while loop to run once.
@@ -1121,14 +1121,13 @@ int render_video() {
                 rendering = false;
                 return -1;
             }
-            log_double_statistic("video_decoder_get_frame time in ms",
-                                 get_timer(latency_clock) * 1000);
+            log_double_statistic(VIDEO_DECODE_GET_FRAME_TIME, get_timer(latency_clock) * 1000);
 
             safe_SDL_LockMutex(render_mutex);
 
             start_timer(&latency_clock);
             update_cursor(frame);
-            log_double_statistic("Cursor update time in ms", get_timer(latency_clock) * 1000);
+            log_double_statistic(VIDEO_CURSOR_UPDATE_TIME, get_timer(latency_clock) * 1000);
 
             // determine if we should be rendering at all or not
             bool render_this_frame = can_render && !skip_render;
@@ -1175,8 +1174,7 @@ int render_video() {
                     memset(video_context.data, 0, sizeof(video_context.data));
                 }
                 */
-                log_double_statistic("Write to SDL texture time in ms",
-                                     get_timer(latency_clock) * 1000);
+                log_double_statistic(VIDEO_SDL_WRITE_TIME, get_timer(latency_clock) * 1000);
 
                 // Subsection of texture that should be rendered to screen.
 
@@ -1190,7 +1188,7 @@ int render_video() {
                 declare_user_activity();
                 // This call takes up to 16 ms, and takes 8 ms on average.
                 SDL_RenderPresent(renderer);
-                log_double_statistic("Rendering time in ms", get_timer(latency_clock) * 1000);
+                log_double_statistic(VIDEO_RENDER_TIME, get_timer(latency_clock) * 1000);
             }
 
             safe_SDL_UnlockMutex(render_mutex);

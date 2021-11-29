@@ -28,6 +28,7 @@ Includes
 #include "client.h"
 #include "handle_client_message.h"
 #include "network.h"
+#include "server_statistic.h"
 
 /*
 ============================
@@ -74,7 +75,7 @@ int handle_client_message(whist_server_state *state, FractalClientMessage *fcmsg
         case MESSAGE_MULTIGESTURE:
             start_timer(&temp_clock);
             int r = handle_user_input_message(state, fcmsg);
-            log_double_statistic("handle_user_input_message time (ms)",
+            log_double_statistic(CLIENT_HANDLE_USERINPUT_TIME,
                                  get_timer(temp_clock) * MS_IN_SECOND);
             return r;
         case MESSAGE_KEYBOARD_STATE:

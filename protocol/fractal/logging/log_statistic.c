@@ -8,9 +8,8 @@ Usage
 ============================
 
 Call log_double_statistic(key, value) repeatedly within a loop with the same string `key` to store a
-double `val`. If it's been PRINTING_FREQUENCY_IN_SEC, the call will also print some statistics about
-the stored values for each key (up to MAX_DIFFERENT_STATISTICS keys) and flush the data. This can
-also be done manually with print_statistics().
+double `val`. If it's been STATISTICS_FREQUENCY_IN_SEC, the call will also print some statistics
+about the stored values for each key and flush the data.
 */
 
 /*
@@ -22,10 +21,6 @@ Includes
 #include <fractal/core/fractal.h>
 #include "logging.h"
 #include "log_statistic.h"
-
-#define MAX_DIFFERENT_STATISTICS 64
-#define KEY_MAXLEN 127
-#define PRINTING_FREQUENCY_IN_SEC 10
 
 #define LOG_STATISTICS true
 
@@ -40,14 +35,20 @@ Custom Types
 */
 
 typedef struct StatisticData {
-    char key[KEY_MAXLEN + 1];
     double sum;
     unsigned count;
     double min;
     double max;
 } StatisticData;
 
-static StatisticData all_statistics[MAX_DIFFERENT_STATISTICS];
+typedef struct {
+    StatisticInfo *statistic_info;
+    StatisticData *all_statistics;
+    uint32_t num_metrics;
+    int interval;
+} StatisticContext;
+
+static StatisticContext statistic_context;
 
 /*
 ============================
@@ -65,21 +66,27 @@ Private Function Implementations
 
 void unsafe_print_statistics() {
 #ifdef LOG_STATISTICS
-    if (all_statistics[0].count == 0) {
-        // There are no statistics to print currently
-        fractal_unlock_mutex(log_statistic_mutex);
-        return;
-    }
-
+    StatisticData *all_statistics = statistic_context.all_statistics;
+    StatisticInfo *statistic_info = statistic_context.statistic_info;
     // Flush all stored statistics
-    for (int i = 0; i < MAX_DIFFERENT_STATISTICS && all_statistics[i].count != 0; i++) {
-        LOG_INFO("STATISTIC -- %s: avg %.2f, min %.2f, max %.2f (%u samples)",
-                 all_statistics[i].key, all_statistics[i].sum / all_statistics[i].count,
-                 all_statistics[i].min, all_statistics[i].max, all_statistics[i].count);
+    for (uint32_t i = 0; i < statistic_context.num_metrics; i++) {
+        float avg;
+        if (statistic_info[i].average_over_time) {
+            avg = all_statistics[i].sum / statistic_context.interval;
+        } else {
+            if (all_statistics[i].count == 0) continue;
+            avg = all_statistics[i].sum / all_statistics[i].count;
+        }
+        LOG_METRIC("\"%s\" : %.2f", statistic_info[i].key, avg);
+        if (statistic_info[i].is_max_needed)
+            LOG_METRIC("\"MAX_%s\" : %.2f", statistic_info[i].key, all_statistics[i].max);
+        if (statistic_info[i].is_min_needed)
+            LOG_METRIC("\"MIN_%s\" : %.2f", statistic_info[i].key, all_statistics[i].min);
 
-        all_statistics[i].key[0] = '\0';
         all_statistics[i].sum = 0;
         all_statistics[i].count = 0;
+        all_statistics[i].min = 0;
+        all_statistics[i].max = 0;
     }
 
     start_timer(&print_statistic_clock);
@@ -92,38 +99,45 @@ Public Function Implementations
 ============================
 */
 
-void init_statistic_logger() {
+void init_statistic_logger(uint32_t num_metrics, StatisticInfo *statistic_info, int interval) {
+    if (statistic_info == NULL) {
+        LOG_ERROR("StatisticInfo is NULL");
+        return;
+    }
     log_statistic_mutex = fractal_create_mutex();
+    statistic_context.statistic_info = statistic_info;
+    statistic_context.num_metrics = num_metrics;
+    statistic_context.interval = interval;
+    statistic_context.all_statistics =
+        malloc(num_metrics * sizeof(*statistic_context.all_statistics));
+    if (statistic_context.all_statistics == NULL) {
+        LOG_ERROR("statistic_context.all_statistics malloc failed");
+        return;
+    }
     start_timer(&print_statistic_clock);
-    for (int i = 0; i < MAX_DIFFERENT_STATISTICS; i++) {
-        all_statistics[i].key[0] = '\0';
-        all_statistics[i].sum = 0;
-        all_statistics[i].count = 0;
+    for (uint32_t i = 0; i < num_metrics; i++) {
+        statistic_context.all_statistics[i].sum = 0;
+        statistic_context.all_statistics[i].count = 0;
+        statistic_context.all_statistics[i].max = 0;
+        statistic_context.all_statistics[i].min = 0;
     }
 }
 
-void log_double_statistic(const char* key, double val) {
-    fractal_lock_mutex(log_statistic_mutex);
-    int index = -1;
-    for (int i = 0; i < MAX_DIFFERENT_STATISTICS; i++) {
-        if (all_statistics[i].count == 0) {
-            // This is a new key
-            index = i;
-            safe_strncpy(all_statistics[index].key, key, sizeof(all_statistics[index].key));
-            all_statistics[index].min = val;
-            all_statistics[index].max = val;
-            break;
-        } else if (strcmp(all_statistics[i].key, key) == 0) {
-            // This is an existing key
-            index = i;
-            break;
-        }
-    }
-
-    if (index == -1) {
-        LOG_ERROR("Too many different statistics being logged");
-        fractal_unlock_mutex(log_statistic_mutex);
+void log_double_statistic(uint32_t index, double val) {
+    StatisticData *all_statistics = statistic_context.all_statistics;
+    if (all_statistics == NULL) {
+        LOG_ERROR("all_statistics is NULL");
         return;
+    }
+    if (index >= statistic_context.num_metrics) {
+        LOG_ERROR("index is out of bounds. index = %d, num_metrics = %d", index,
+                  statistic_context.num_metrics);
+        return;
+    }
+    fractal_lock_mutex(log_statistic_mutex);
+    if (all_statistics[index].count == 0) {
+        all_statistics[index].min = val;
+        all_statistics[index].max = val;
     }
 
     all_statistics[index].sum += val;
@@ -134,14 +148,13 @@ void log_double_statistic(const char* key, double val) {
         all_statistics[index].min = val;
     }
 
-    if (get_timer(print_statistic_clock) > PRINTING_FREQUENCY_IN_SEC) {
+    if (get_timer(print_statistic_clock) > statistic_context.interval) {
         unsafe_print_statistics();
     }
     fractal_unlock_mutex(log_statistic_mutex);
 }
 
-void print_statistics() {
-    fractal_lock_mutex(log_statistic_mutex);
-    unsafe_print_statistics();
-    fractal_unlock_mutex(log_statistic_mutex);
+void destroy_statistic_logger() {
+    memset((void *)&statistic_context, 0, sizeof(statistic_context));
+    fractal_destroy_mutex(log_statistic_mutex);
 }

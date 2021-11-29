@@ -20,6 +20,7 @@ Includes
 #include "main.h"
 #include "parse_args.h"
 #include "handle_client_message.h"
+#include "server_statistic.h"
 
 /*
 ============================
@@ -252,7 +253,8 @@ int main(int argc, char* argv[]) {
 
     init_networking();
     init_logger();
-    init_statistic_logger();
+    init_server_statistics();
+    init_statistic_logger(SERVER_NUM_METRICS, server_statistic_info, STATISTICS_FREQUENCY_IN_SEC);
 
     int ret = server_parse_args(&config, argc, argv);
     if (ret == -1) {
@@ -457,6 +459,7 @@ int main(int argc, char* argv[]) {
 
     LOG_INFO("Protocol has shutdown gracefully");
 
+    destroy_statistic_logger();
     destroy_logger();
     error_monitor_shutdown();
     destroy_clients(&server_state.client);
