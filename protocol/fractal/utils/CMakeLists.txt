@@ -2,6 +2,7 @@ add_library(fractalUtils STATIC
         aes.h
         clock.h
         avpacket_buffer.h
+        window_info.h
         aes.c
         clock.c
         avpacket_buffer.c
@@ -16,7 +17,9 @@ add_library(fractalUtils STATIC
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         target_sources(fractalUtils PRIVATE mac_utils.c mac_utils.h)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-        target_sources(fractalUtils PRIVATE x11_window_info.c x11_window_info.h)
+        target_sources(fractalUtils PRIVATE x11_window_info.c)
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        target_sources(fractalUtils PRIVATE windows_window_info.c)
 endif()
 
 set_property(TARGET fractalUtils PROPERTY

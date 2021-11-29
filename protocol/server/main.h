@@ -51,9 +51,7 @@ Includes
 #include "video.h"
 #include "audio.h"
 
-#ifdef __linux__
-#include <fractal/utils/x11_window_info.h>
-#endif
+#include <fractal/utils/window_info.h>
 
 #ifdef _WIN32
 #pragma comment(lib, "ws2_32.lib")

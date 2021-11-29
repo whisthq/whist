@@ -559,40 +559,6 @@ int read_piped_arguments(bool *keep_waiting) {
     return 0;
 }
 
-int init_socket_library(void) {
-    /*
-        Initialize the Windows socket library
-        (Does not do anything for non-Windows)
-
-        Return:
-            (int): 0 on success, -1 on failure
-    */
-
-#ifdef _WIN32
-    WSADATA wsa;
-    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-        LOG_INFO("Failed to initialize Winsock with error code: %d.", WSAGetLastError());
-        return -1;
-    }
-#endif
-    return 0;
-}
-
-int destroy_socket_library(void) {
-    /*
-        Destroy the Windows socket library
-        (Does not do anything for non-Windows)
-
-        Return:
-            (int): 0 on success, -1 on failure
-    */
-
-#ifdef _WIN32
-    WSACleanup();
-#endif
-    return 0;
-}
-
 int alloc_parsed_args(void) {
     /*
         Init any allocated memory for parsed args

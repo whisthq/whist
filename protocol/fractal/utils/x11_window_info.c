@@ -1,53 +1,26 @@
 /**
  * Copyright 2021 Whist Technologies, Inc.
- * @file x11_window_info.h
+ * @file x11_window_info.c
  * @brief This file contains all the code for getting X11-specific window information.
-============================
-Usage
-============================
-
-init_x11_window_info_getter();
-
-char name[WINDOW_NAME_MAXLEN + 1];
-get_focused_window_name(name);
-
-destroy_x11_window_info_getter();
-*/
+ */
 
 #include <fractal/core/fractal.h>
-#include "x11_window_info.h"
+#include "window_info.h"
 #include <locale.h>
-
-#if defined(_WIN32)
-
-// TODO: implement functionality for windows servers
-void init_x11_window_info_getter() {
-    LOG_ERROR("UNIMPLEMENTED: init_x11_window_info_getter on Win32");
-}
-int get_focused_window_name(char* name_return) {
-    LOG_ERROR("UNIMPLEMENTED: get_focused_window_name on Win32");
-    return -1;
-}
-bool is_focused_window_fullscreen() {
-    LOG_ERROR("UNIMPLEMENTED: is_focused_window_fullscreen on Win32");
-    return false;
-}
-void destroy_x11_window_info_getter() {
-    LOG_ERROR("UNIMPLEMENTED: destroy_x11_window_info_getter on Win32");
-}
-
-#elif __linux__
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <stdbool.h>
 
 Display* display;
+char last_window_name[WINDOW_NAME_MAXLEN + 1];
+bool last_window_name_valid;
 
-void init_x11_window_info_getter() {
+void init_window_info_getter() {
     if (display == NULL) {
         display = XOpenDisplay(NULL);
     }
+    last_window_name_valid = false;
 }
 
 Window get_focused_window() {
@@ -56,6 +29,64 @@ Window get_focused_window() {
     int revert;
     XGetInputFocus(display, &w, &revert);
     return w;
+}
+
+bool get_focused_window_name(char** name_return) {
+    /*
+     * Get the name of the focused window.
+     *
+     * Arguments:
+     *     name_return (char**): Location to write char* of window title name.
+     *                           NULL on failure.
+     *
+     *  Return:
+     *      ret (int): true on new window name, false if the same window name or failure
+     */
+
+    Window w = get_focused_window();
+
+    *name_return = NULL;
+
+    if (!w) {
+        // No window is active.
+        return false;
+    }
+
+    // Ask all Whist & library functions to use the locale defined by the environment. This
+    // prevents encoding problems (for example, when it comes to encoding strings in UTF8 format).
+    setlocale(LC_ALL, "");
+
+    // https://gist.github.com/kui/2622504
+    XTextProperty prop;
+    Status s;
+
+    s = XGetWMName(display, w, &prop);
+    if (s) {
+        int count = 0, result;
+        char** list = NULL;
+        result = XmbTextPropertyToTextList(display, &prop, &list, &count);
+        if (!count) {
+            // no window title found
+            return false;
+        }
+        if (result == Success) {
+            static char cur_window_name[WINDOW_NAME_MAXLEN + 1];
+            safe_strncpy(cur_window_name, list[0], WINDOW_NAME_MAXLEN + 1);
+            // trim down any dangling utf8 multi-byte characters
+            trim_utf8_string(cur_window_name);
+            XFreeStringList(list);
+            bool same_string =
+                !last_window_name_valid || strcmp(last_window_name, cur_window_name) == 0;
+            safe_strncpy(last_window_name, cur_window_name, WINDOW_NAME_MAXLEN + 1);
+            *name_return = cur_window_name;
+            return same_string;
+        } else {
+            LOG_ERROR("XmbTextPropertyToTextList failed to convert window name to string");
+        }
+    } else {
+        LOG_ERROR("XGetWMName failed to get the name of the focused window");
+    }
+    return false;
 }
 
 bool is_focused_window_fullscreen() {
@@ -96,62 +127,9 @@ bool is_focused_window_fullscreen() {
     return false;
 }
 
-int get_focused_window_name(char* name_return) {
-    /*
-     * Get the name of the focused window.
-     *
-     * Arguments:
-     *     name_return (char*): Pointer to location to write name. Must have at least
-     *                          WINDOW_NAME_MAXLEN + 1 bytes available.
-     *
-     *  Return:
-     *      ret (int): 0 on success, other integer on failure
-     */
-
-    Window w = get_focused_window();
-
-    if (!w) {
-        // No window is active.
-        return 1;
-    }
-
-    // Ask all Whist & library functions to use the locale defined by the environment. This
-    // prevents encoding problems (for example, when it comes to encoding strings in UTF8 format).
-    setlocale(LC_ALL, "");
-
-    // https://gist.github.com/kui/2622504
-    XTextProperty prop;
-    Status s;
-
-    s = XGetWMName(display, w, &prop);
-    if (s) {
-        int count = 0, result;
-        char** list = NULL;
-        result = XmbTextPropertyToTextList(display, &prop, &list, &count);
-        if (!count) {
-            // no window title found
-            return 1;
-        }
-        if (result == Success) {
-            safe_strncpy(name_return, list[0], WINDOW_NAME_MAXLEN + 1);
-            // trim down any dangling utf8 multi-byte characters
-            trim_utf8_string(name_return);
-            XFreeStringList(list);
-            return 0;
-        } else {
-            LOG_ERROR("XmbTextPropertyToTextList failed to convert window name to string");
-        }
-    } else {
-        LOG_ERROR("XGetWMName failed to get the name of the focused window");
-    }
-    return 1;
-}
-
-void destroy_x11_window_info_getter() {
+void destroy_window_info_getter() {
     if (display != NULL) {
         XCloseDisplay(display);
         display = NULL;
     }
 }
-
-#endif  // __linux__

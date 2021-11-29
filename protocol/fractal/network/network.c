@@ -238,6 +238,15 @@ void init_networking() {
     for (int i = 0; i <= USHRT_MAX; i++) {
         port_mappings[i] = (unsigned short)i;
     }
+
+    // initialize the windows socket library if this is on windows
+#ifdef _WIN32
+    WSADATA wsa;
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
+        LOG_FATAL("Failed to initialize Winsock with error code: %d.", WSAGetLastError());
+    }
+    // We don't call WSACleanup(), but it's not a big deal
+#endif
 }
 
 int get_last_network_error() {
