@@ -410,7 +410,7 @@ func TestAuthenticateAndParseRequestReadAllErr(t *testing.T) {
 // TestAuthenticateAndParseRequestEmptyBody checks if an empty body will error successfully
 func TestAuthenticateAndParseRequestEmptyBody(t *testing.T) {
 	res := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPut, "https://localhost", bytes.NewBuffer("")))
+	req := httptest.NewRequest(http.MethodPut, "https://localhost", bytes.NewBuffer(""))
 
 	s := ServerRequest{}
 
