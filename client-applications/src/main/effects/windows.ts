@@ -33,9 +33,6 @@ let protocolLaunchRetries = 0
 // Notifications
 let internetNotification: Notification | undefined
 let rebootNotification: Notification | undefined
-// Keeps track of how often we show warnings
-let warningWindowOpen = false
-let warningLastShown = 0
 
 // Immediately initialize the protocol invisibly since it can take time to warm up
 createProtocolWindow().catch((err) => Sentry.captureException(err))
@@ -136,22 +133,10 @@ fromTrigger(WhistTrigger.windowInfo)
   )
 
 fromTrigger(WhistTrigger.networkUnstable)
-  .pipe(throttle(() => interval(1000))) // Throttle to 1s so we don't flood the main thread
+  .pipe(throttle(() => interval(30000))) // Throttle to 30s so we don't show too often
   .subscribe((unstable: boolean) => {
-    // Don't show the warning more than once per minute
-    if (
-      !warningWindowOpen &&
-      unstable &&
-      Date.now() / 1000 - warningLastShown > 60
-    ) {
-      warningWindowOpen = true
-      internetNotification?.show()
-      warningLastShown = Date.now() / 1000
-    }
-    if (!unstable && warningWindowOpen) {
-      internetNotification?.close()
-      warningWindowOpen = false
-    }
+    if (unstable) internetNotification?.show()
+    if (!unstable) internetNotification?.close()
   })
 
 fromTrigger(WhistTrigger.appReady).subscribe(() => {
