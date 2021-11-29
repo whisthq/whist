@@ -60,16 +60,6 @@ const RootComponent = () => {
       },
     })
 
-  const handleOnboardingTypeform = () => {
-    setMainState({
-      trigger: {
-        name: WhistTrigger.startNetworkAnalysis,
-        payload: undefined,
-      },
-    })
-    setShow(WindowHashNetwork)
-  }
-
   const showSignoutWindow = () =>
     setMainState({
       trigger: { name: WhistTrigger.showSignoutWindow, payload: undefined },
@@ -106,23 +96,11 @@ const RootComponent = () => {
         }
       />
     )
-  if (show === WindowHashNetwork)
+  if (show === WindowHashOnboarding) {
     return (
       <Network
         networkInfo={mainState.networkInfo}
         onSubmit={handleNetworkSubmit}
-      />
-    )
-  if (show === WindowHashOnboarding) {
-    return (
-      <Typeform
-        onSubmit={handleOnboardingTypeform}
-        id={
-          (mainState.appEnvironment ?? "prod") === "prod"
-            ? "Oi21wwbg"
-            : "cJcK0C8q"
-        }
-        email={mainState.userEmail}
       />
     )
   }
