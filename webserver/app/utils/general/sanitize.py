@@ -11,7 +11,7 @@ def sanitize_email(unsafe_email: str) -> str:
         an empty string if it's invalid
     """
 
-    email_regex = r"\b[A-Za-z0-9._%+-!#$&'*/=?^`{}|~]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
+    email_regex = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
     if re.fullmatch(email_regex, unsafe_email):
         return unsafe_email
     else:
