@@ -52,7 +52,7 @@ func (mandelbox *mandelboxData) MarkReady() error {
 }
 
 func (mandelbox *mandelboxData) getResourceMappingDir() string {
-	return utils.Sprintf("%s%s/mandelboxResourceMappings/", utils.WhistDir, mandelbox.GetUserID())
+	return utils.Sprintf("%s%s/mandelboxResourceMappings/", utils.WhistDir, mandelbox.GetID())
 }
 
 func (mandelbox *mandelboxData) createResourceMappingDir() error {
