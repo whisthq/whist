@@ -9,6 +9,7 @@ import paramiko
 import subprocess
 import pexpect
 import json
+import multiprocessing
 
 from testing_helpers import (
     get_boto3client,
@@ -58,6 +59,14 @@ parser.add_argument(
     help="The ID of the existing instance to use for the test. If left empty, a clean instance will be generated instead.",
     type=str,
     default="",
+)
+
+parser.add_argument(
+    "--use-two-instances",
+    help="Whether to run the client on a separate AWS instance, instead of the same as the server.",
+    type=str,
+    choices=["false", "true"],
+    default="false",
 )
 
 parser.add_argument(
@@ -312,7 +321,6 @@ def run_server_on_instance(pexpect_process):
             json_data["perf_client_server_port_32263"] = port_32263
             json_data["perf_client_server_port_32273"] = port_32273
             json_data["perf_client_server_aes_key"] = aes_key
-            json_data["initial_url"] = testing_url
     return server_docker_id, json_data
 
 
@@ -400,14 +408,14 @@ def extract_client_logs_from_instance(
     log_grabber_log,
 ):
     command = "rm -rf ~/perf_logs/client; mkdir -p ~/perf_logs/client"
-    log_grabber_process.sendline(command)
-    wait_until_cmd_done(log_grabber_process, pexpect_prompt)
+    pexpect_process.sendline(command)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     client_logfiles = ["/usr/share/fractal/client.log", "/usr/share/fractal/display.log"]
     for client_file_path in client_logfiles:
         command = "docker cp {}:{} ~/perf_logs/client/".format(client_docker_id, client_file_path)
-        log_grabber_process.sendline(command)
-        wait_until_cmd_done(log_grabber_process, pexpect_prompt)
+        pexpect_process.sendline(command)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     # Download all the logs from the AWS machine
     command = "scp -r -i {} {}@{}:~/perf_logs/client {}".format(
@@ -423,7 +431,7 @@ def terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate):
     if should_terminate:
         # Terminating the instance and waiting for them to shutdown
         print(f"Testing complete, terminating EC2 instance")
-        boto3.client("ec2").terminate_instances(InstanceIds=[instance_id])
+        boto3client.terminate_instances(InstanceIds=[instance_id])
     else:
         # Stopping the instance and waiting for it to shutdown
         print(f"Testing complete, stopping EC2 instance")
@@ -436,170 +444,313 @@ def terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate):
     wait_for_instance_to_start_or_stop(boto3client, instance_id, stopping=True)
 
 
+def server_setup_process(args_dict):
+    username = args_dict["username"]
+    server_hostname = args_dict["server_hostname"]
+    ssh_key_path = args_dict["ssh_key_path"]
+    aws_timeout = args_dict["aws_timeout"]
+    server_log_filepath = args_dict["server_log_filepath"]
+    pexpect_prompt_server = args_dict["pexpect_prompt_server"]
+    github_token = args_dict["github_token"]
+
+    server_log = open(server_log_filepath, "w")
+
+    # Initiate the SSH connections with the instance
+    print("Initiating the SETUP ssh connection with the server AWS instance...")
+    server_cmd = "ssh {}@{} -i {}".format(username, server_hostname, ssh_key_path)
+    hs_process = attempt_ssh_connection(
+        server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5
+    )
+    hs_process.expect(pexpect_prompt_server)
+
+    clone_whist_repository_on_instance(github_token, hs_process, pexpect_prompt_server)
+    apply_dpkg_locking_fixup(hs_process, pexpect_prompt_server)
+
+    # 1- run host-setup
+    hs_process = run_host_setup_on_instance(
+        hs_process, pexpect_prompt_server, server_cmd, aws_timeout, server_log
+    )
+
+    # 2- reboot and wait for it to come back up
+    print("Rebooting the server EC2 instance (required after running the host setup)...")
+    hs_process = reboot_instance(
+        hs_process, server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5
+    )
+
+    # 3- Build the protocol server
+    build_server_on_instance(hs_process, pexpect_prompt_server)
+
+    hs_process.kill(0)
+
+    server_log.close()
+
+
+def client_setup_process(args_dict):
+    username = args_dict["username"]
+    client_hostname = args_dict["client_hostname"]
+    ssh_key_path = args_dict["ssh_key_path"]
+    aws_timeout = args_dict["aws_timeout"]
+    client_log_filepath = args_dict["client_log_filepath"]
+    pexpect_prompt_client = args_dict["pexpect_prompt_client"]
+    github_token = args_dict["github_token"]
+    use_two_instances = args_dict["use_two_instances"]
+    testing_time = args_dict["testing_time"]
+
+    client_log = open(client_log_filepath, "w")
+
+    client_cmd = "ssh {}@{} -i {}".format(username, client_hostname, ssh_key_path)
+
+    if use_two_instances:
+        # Initiate the SSH connections with the client instance
+        print("Initiating the SETUP ssh connection with the client AWS instance...")
+        hs_process = attempt_ssh_connection(
+            client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
+        )
+        hs_process.expect(pexpect_prompt_client)
+
+        clone_whist_repository_on_instance(github_token, hs_process, pexpect_prompt_client)
+        apply_dpkg_locking_fixup(hs_process, pexpect_prompt_client)
+
+        # 1- run host-setup
+        hs_process = run_host_setup_on_instance(
+            hs_process, pexpect_prompt_client, client_cmd, aws_timeout, client_log
+        )
+
+        # 2- reboot and wait for it to come back up
+        print("Rebooting the server EC2 instance (required after running the host setup)...")
+        hs_process = reboot_instance(
+            hs_process, client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
+        )
+
+        hs_process.kill(0)
+
+    # 6- Build the dev client
+    print("Initiating the BUILD ssh connection with the client AWS instance...")
+    client_pexpect_process = attempt_ssh_connection(
+        client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
+    )
+    build_client_on_instance(client_pexpect_process, pexpect_prompt_client, testing_time)
+    client_pexpect_process.kill(0)
+
+    client_log.close()
+
+
 # This main loop creates two AWS EC2 instances, one client, one server, and sets up
 # a protocol streaming test between them
 if __name__ == "__main__":
     # Retrieve args
     ssh_key_name = args.ssh_key_name  # In CI, this is "protocol_performance_testing_sshkey"
-    ssh_key_path = (
-        args.ssh_key_path
-    )  # This is likely /Users/[username]/.ssh/id_rsa if you're on macOS and installed to the system location
+    ssh_key_path = args.ssh_key_path
     github_token = args.github_token  # The PAT allowing us to fetch code from GitHub
-
-    # Experiment parameters
     testing_url = args.testing_url
     testing_time = args.testing_time
+    region_name = args.region_name
+    use_two_instances = True if args.use_two_instances == "true" else False
 
     # Load the SSH key
     if not os.path.isfile(ssh_key_path):
         print("SSH key file {} does not exist".format(ssh_key_path))
         exit()
 
-    # Obtain region name
-    region_name = args.region_name
-
-    # Obtain boto3 client
+    # Create a boto3 client, create or start the instance(s).
     boto3client = get_boto3client(region_name)
-
-    instance_id = create_or_start_aws_instance(
+    server_instance_id = create_or_start_aws_instance(
         boto3client, region_name, args.use_existing_instance, ssh_key_name
     )
-
-    # Get the IP address of the instance
-    instance_ip = get_instance_ip(boto3client, instance_id)
-    hostname = instance_ip[0]["public"]
-    private_ip = instance_ip[0]["private"]
-    print("Connected to AWS instance with hostname: {}!".format(hostname))
-
-    host_service_log = open("host_service_logging_file.txt", "w")
-    server_log = open("server_log.txt", "w")
-    client_log = open("client_log.txt", "w")
-    log_grabber_log = open("log_grabber_log.txt", "w")
-
-    username = "ubuntu"
-    pexpect_prompt = "{}@ip-{}".format(username, private_ip.replace(".", "-"))
-    aws_timeout = 1200  # 10 mins is not enough to build the base mandelbox, so we'll go ahead with 20 mins to be safe
-
-    # Initiate the SSH connections with the instance
-    print("Initiating 1° SSH connection with the AWS instance...")
-    cmd = "ssh {}@{} -i {}".format(username, hostname, ssh_key_path)
-    hs_process = attempt_ssh_connection(cmd, aws_timeout, host_service_log, pexpect_prompt, 5)
-    hs_process.expect(pexpect_prompt)
-
-    clone_whist_repository_on_instance(github_token, hs_process, pexpect_prompt)
-    apply_dpkg_locking_fixup(hs_process, pexpect_prompt)
-
-    # Set up the server/client
-    # 1- run host-setup
-    hs_process = run_host_setup_on_instance(
-        hs_process, pexpect_prompt, cmd, aws_timeout, host_service_log
+    client_instance_id = (
+        create_or_start_aws_instance(boto3client, region_name, "", ssh_key_name)
+        if use_two_instances
+        else server_instance_id
     )
 
-    # 2- reboot and wait for it to come back up
-    print("Rebooting the EC2 instance (required after running the host setup)...")
-    hs_process = reboot_instance(hs_process, cmd, aws_timeout, host_service_log, pexpect_prompt, 5)
+    # Get the IP address of the instance(s)
+    server_instance_ip = get_instance_ip(boto3client, server_instance_id)
+    server_hostname = server_instance_ip[0]["public"]
+    server_private_ip = server_instance_ip[0]["private"]
+    client_instance_ip = (
+        get_instance_ip(boto3client, client_instance_id)
+        if use_two_instances
+        else server_instance_ip
+    )
+    client_hostname = client_instance_ip[0]["public"]
+    client_private_ip = client_instance_ip[0]["private"]
+    if not use_two_instances:
+        print("Connected to server/client AWS instance with hostname: {}!".format(server_hostname))
+    else:
+        print(
+            "Connected to server AWS instance with hostname: {} and client AWS instance with hostname: {}!".format(
+                server_hostname, client_hostname
+            )
+        )
 
-    # 3- build and run host-service
-    start_host_service_on_instance(hs_process)
+    username = "ubuntu"
+    pexpect_prompt_server = "{}@ip-{}".format(username, server_private_ip.replace(".", "-"))
+    pexpect_prompt_client = (
+        "{}@ip-{}".format(username, client_private_ip.replace(".", "-"))
+        if use_two_instances
+        else pexpect_prompt_server
+    )
+    aws_timeout = 1200  # 10 mins is not enough to build the base mandelbox, so we'll go ahead with 20 mins to be safe
 
-    # 4- Build the protocol server
-    print("Initiating 2° SSH connection with the AWS instance...")
-    server_process = attempt_ssh_connection(cmd, aws_timeout, server_log, pexpect_prompt, 5)
-    build_server_on_instance(server_process, pexpect_prompt)
+    # Create local folder for logs
+    perf_logs_folder_name = time.strftime("%Y_%m_%d@%H-%M-%S")
+    perf_logs_folder_name = "./perf_logs/{}".format(perf_logs_folder_name)
+    command = "mkdir -p {}/server {}/client".format(perf_logs_folder_name, perf_logs_folder_name)
+    local_process = pexpect.spawn(command, timeout=aws_timeout)
+    local_process.expect(["\$", "%", pexpect.EOF])
+    local_process.kill(0)
+
+    server_log_filepath = "{}/server_monitoring_log.txt".format(perf_logs_folder_name)
+    client_log_filepath = "{}/client_monitoring_log.txt".format(perf_logs_folder_name)
+
+    manager = multiprocessing.Manager()
+    args_dict = manager.dict()
+    args_dict["username"] = username
+    args_dict["server_hostname"] = server_hostname
+    args_dict["client_hostname"] = client_hostname
+    args_dict["ssh_key_path"] = ssh_key_path
+    args_dict["aws_timeout"] = aws_timeout
+    args_dict["server_log_filepath"] = server_log_filepath
+    args_dict["client_log_filepath"] = client_log_filepath
+    args_dict["pexpect_prompt_server"] = pexpect_prompt_server
+    args_dict["pexpect_prompt_client"] = pexpect_prompt_client
+    args_dict["github_token"] = github_token
+    args_dict["use_two_instances"] = use_two_instances
+    args_dict["testing_time"] = testing_time
+
+    # If using two instances, parallelize the host-setup and building of the docker containers to save time
+    p1 = multiprocessing.Process(target=server_setup_process, args=[args_dict])
+    p2 = multiprocessing.Process(target=client_setup_process, args=[args_dict])
+    # if use_two_instances:
+    #     p1.start()
+    #     p2.start()
+    #     p1.join()
+    #     p2.join()
+    # else:
+    #     p1.start()
+    #     p1.join()
+    #     p2.start()
+    #     p2.join()
+
+    server_log = open("{}/server_monitoring_log.txt".format(perf_logs_folder_name), "a")
+    client_log = open("{}/client_monitoring_log.txt".format(perf_logs_folder_name), "a")
+    server_cmd = "ssh {}@{} -i {}".format(username, server_hostname, ssh_key_path)
+    client_cmd = "ssh {}@{} -i {}".format(username, client_hostname, ssh_key_path)
+
+    server_hs_process = attempt_ssh_connection(
+        server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5
+    )
+    client_hs_process = (
+        attempt_ssh_connection(client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5)
+        if use_two_instances
+        else server_hs_process
+    )
+
+    # Build and run host-service on server
+    start_host_service_on_instance(server_hs_process)
+
+    if use_two_instances:
+        # Build and run host-service on server
+        start_host_service_on_instance(client_hs_process)
+
+    server_pexpect_process = attempt_ssh_connection(
+        server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5
+    )
+
+    client_pexpect_process = attempt_ssh_connection(
+        client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
+    )
 
     # 5- Run the protocol server, and retrieve the connection configs
-    server_docker_id, json_data = run_server_on_instance(server_process)
+    server_docker_id, json_data = run_server_on_instance(server_pexpect_process)
+    json_data["initial_url"] = testing_url
 
-    # 6- Build the dev client
-    print("Initiating 3° SSH connection with the AWS instance...")
-    client_process = attempt_ssh_connection(cmd, aws_timeout, client_log, pexpect_prompt, 5)
-    build_client_on_instance(client_process, pexpect_prompt, testing_time)
-
-    # 7- Run the dev client
-    client_docker_id = run_client_on_instance(client_process, json_data)
+    # Run the dev client
+    client_docker_id = run_client_on_instance(client_pexpect_process, json_data)
 
     # Wait <testing_time> seconds to generate enough data
     time.sleep(testing_time)
 
-    # 8- Extract the client/server perf logs from the two docker containers
-    print("Initiating 4° SSH connection with the AWS instance...")
-    log_grabber_process = attempt_ssh_connection(
-        cmd, aws_timeout, log_grabber_log, pexpect_prompt, 5
+    # Extract the client/server perf logs from the two docker containers
+    print("Initiating LOG GRABBING ssh connection(s) with the AWS instance(s)...")
+
+    log_grabber_server_process = attempt_ssh_connection(
+        server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5
     )
-    log_grabber_process.expect(pexpect_prompt)
+    log_grabber_server_process.expect(pexpect_prompt_server)
 
-    # Create folder for logs
-    perf_logs_folder_name = time.strftime("%Y_%m_%d@%H-%M-%S")
-    perf_logs_folder_name = "./perf_logs/{}".format(perf_logs_folder_name)
-    command = "mkdir -p {}/server".format(perf_logs_folder_name)
-    local_process = pexpect.spawn(command, timeout=aws_timeout, logfile=log_grabber_log.buffer)
-    local_process.expect(["\$", "%", pexpect.EOF])
-    local_process.kill(0)
-
-    command = "mkdir -p {}/client".format(perf_logs_folder_name)
-    local_process = pexpect.spawn(command, timeout=aws_timeout, logfile=log_grabber_log.buffer)
-    local_process.expect(["\$", "%", pexpect.EOF])
-    local_process.kill(0)
+    log_grabber_client_process = log_grabber_server_process
+    if use_two_instances:
+        log_grabber_client_process = attempt_ssh_connection(
+            client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
+        )
+        log_grabber_client_process.expect(pexpect_prompt_client)
 
     extract_server_logs_from_instance(
-        log_grabber_process,
-        pexpect_prompt,
+        log_grabber_server_process,
+        pexpect_prompt_server,
         server_docker_id,
         ssh_key_path,
         username,
-        hostname,
+        server_hostname,
         aws_timeout,
         perf_logs_folder_name,
-        log_grabber_log,
+        server_log,
     )
     extract_client_logs_from_instance(
-        log_grabber_process,
-        pexpect_prompt,
+        log_grabber_client_process,
+        pexpect_prompt_client,
         client_docker_id,
         ssh_key_path,
         username,
-        hostname,
+        client_hostname,
         aws_timeout,
         perf_logs_folder_name,
-        log_grabber_log,
+        client_log,
     )
 
-    # 9 - Clean up the instances
+    # Clean up the instance(s)
     # Exit the server/client mandelboxes
-    server_process.sendline("exit")
-    wait_until_cmd_done(server_process, pexpect_prompt)
-    client_process.sendline("exit")
-    wait_until_cmd_done(client_process, pexpect_prompt)
+    server_pexpect_process.sendline("exit")
+    wait_until_cmd_done(server_pexpect_process, pexpect_prompt_server)
+    client_pexpect_process.sendline("exit")
+    wait_until_cmd_done(client_pexpect_process, pexpect_prompt_client)
 
     # Delete all Docker containers
+
     command = "docker stop $(docker ps -aq) && docker rm $(docker ps -aq)"
-    server_process.sendline(command)
-    wait_until_cmd_done(server_process, pexpect_prompt)
+    server_pexpect_process.sendline(command)
+    wait_until_cmd_done(server_pexpect_process, pexpect_prompt_server)
+    if use_two_instances:
+        client_pexpect_process.sendline(command)
+        wait_until_cmd_done(client_pexpect_process, pexpect_prompt_client)
 
     # Terminate the host service
-    hs_process.sendcontrol("c")
+    server_hs_process.sendcontrol("c")
+    server_hs_process.kill(0)
+    if use_two_instances:
+        client_hs_process.sendcontrol("c")
+        client_hs_process.kill(0)
 
     # Terminate all pexpect processes
-    hs_process.kill(0)
-    server_process.kill(0)
-    client_process.kill(0)
-    log_grabber_process.kill(0)
-    local_process.kill(0)
+    # hs_process.kill(0)
+    server_pexpect_process.kill(0)
+    client_pexpect_process.kill(0)
+    log_grabber_server_process.kill(0)
+    if use_two_instances:
+        log_grabber_client_process.kill(0)
 
-    # Close all log files
-    host_service_log.close()
+    # Close the log files
     server_log.close()
     client_log.close()
-    log_grabber_log.close()
 
-    # 10 - Terminate or stop AWS instance
+    # Terminate or stop AWS instance(s)
     terminate_or_stop_aws_instance(
-        boto3client, instance_id, instance_id != args.use_existing_instance
+        boto3client, server_instance_id, server_instance_id != args.use_existing_instance
     )
-    print(
-        "Instance successfully {}, goodbye".format(
-            "terminated" if instance_id != args.use_existing_instance else "stopped"
-        )
-    )
+    if use_two_instances:
+        terminate_or_stop_aws_instance(boto3client, client_instance_id, True)
+
+    print("Instance successfully stopped/terminated, goodbye")
 
     print("Done")
