@@ -198,8 +198,11 @@ int32_t multithreaded_renderer(void* opaque) {
     }
 
     while (run_renderer_thread) {
+        LOG_INFO("About to render audio");
         render_audio();
+        LOG_INFO("About to render video");
         render_video();
+        LOG_INFO("Done rendering video");
         SDL_Delay(1);
     }
 

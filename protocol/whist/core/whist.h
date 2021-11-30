@@ -95,9 +95,9 @@ Defines
 #define USING_FFMPEG_IFRAME_FLAG false
 #define ENCRYPTING_PACKETS true
 // Toggle verbose logs
-#define LOG_VIDEO false
-#define LOG_NACKING false
-#define LOG_NETWORKING false
+#define LOG_VIDEO true
+#define LOG_NACKING true
+#define LOG_NETWORKING true
 
 #define WINAPI_INPUT_DRIVER 1
 #define XTEST_INPUT_DRIVER 2
