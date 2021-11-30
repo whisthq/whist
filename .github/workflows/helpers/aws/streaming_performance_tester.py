@@ -50,12 +50,19 @@ parser.add_argument(
     "--region_name",
     help="The AWS region to use for testing",
     type=str,
-    choices=["us-east-1", "us-east-2", "us-west-1", "us-west-2"],
+    choices=["us-east-1", "us-east-2", "us-west-1", "us-west-2", "af-south-1", "ap-east-1", "ap-south-1", "ap-northeast-3", "ap-northeast-2", "ap-southeast-1", "ap-southeast-2", "ap-northeast-1", "ca-central-1", "eu-central-1", "eu-west-1", "eu-west-2", "eu-south-1", "eu-west-3", "eu-north-1", "sa-east-1"],
     default="us-east-1",
 )
 
 parser.add_argument(
-    "--use-existing-instance",
+    "--use-existing-server-instance",
+    help="The ID of the existing instance to use for the test. If left empty, a clean instance will be generated instead.",
+    type=str,
+    default="",
+)
+
+parser.add_argument(
+    "--use-existing-client-instance",
     help="The ID of the existing instance to use for the test. If left empty, a clean instance will be generated instead.",
     type=str,
     default="",
@@ -93,12 +100,28 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-# Ubuntu Server Instance IDs for the 4 most popular AWS regions
+# Ubuntu Server 20 LTS - AMIs for the various AWS regions
 instance_AMI_dict = {}
 instance_AMI_dict["us-east-1"] = "ami-0885b1f6bd170450c"
 instance_AMI_dict["us-east-2"] = "ami-0629230e074c580f2"
 instance_AMI_dict["us-west-1"] = "ami-053ac55bdcfe96e85"
 instance_AMI_dict["us-west-2"] = "ami-036d46416a34a611c"
+instance_AMI_dict["af-south-1"] = "ami-0ff86122fd4ad7208"
+instance_AMI_dict["ap-east-1"] = "ami-0a9c1cc3697104990"
+instance_AMI_dict["ap-south-1"] = "ami-0108d6a82a783b352"
+instance_AMI_dict["ap-northeast-3"] = "ami-0c3904e7363bbc4bc"
+instance_AMI_dict["ap-northeast-2"] = "ami-0f8b8babb98cc66d0"
+instance_AMI_dict["ap-southeast-1"] = "ami-0fed77069cd5a6d6c"
+instance_AMI_dict["ap-southeast-2"] = "ami-0bf8b986de7e3c7ce"
+instance_AMI_dict["ap-northeast-1"] = "ami-036d0684fc96830ca"
+instance_AMI_dict["ca-central-1"] = "ami-0bb84e7329f4fa1f7"
+instance_AMI_dict["eu-central-1"] = "ami-0a49b025fffbbdac6"
+instance_AMI_dict["eu-west-1"] = "ami-08edbb0e85d6a0a07"
+instance_AMI_dict["eu-west-2"] = "ami-0fdf70ed5c34c5f52"
+instance_AMI_dict["eu-south-1"] = "ami-0f8ce9c417115413d"
+instance_AMI_dict["eu-west-3"] = "ami-06d79c60d7454e2af"
+instance_AMI_dict["eu-north-1"] = "ami-0bd9c26722573e69b"
+instance_AMI_dict["sa-east-1"] = "ami-0e66f5495b4efdd0f"
 
 
 def attempt_ssh_connection(ssh_command, timeout, log_file_handle, pexpect_prompt, max_retries):
@@ -555,10 +578,12 @@ if __name__ == "__main__":
     # Create a boto3 client, create or start the instance(s).
     boto3client = get_boto3client(region_name)
     server_instance_id = create_or_start_aws_instance(
-        boto3client, region_name, args.use_existing_instance, ssh_key_name
+        boto3client, region_name, args.use_existing_server_instance, ssh_key_name
     )
     client_instance_id = (
-        create_or_start_aws_instance(boto3client, region_name, "", ssh_key_name)
+        create_or_start_aws_instance(
+            boto3client, region_name, args.use_existing_client_instance, ssh_key_name
+        )
         if use_two_instances
         else server_instance_id
     )
@@ -746,10 +771,12 @@ if __name__ == "__main__":
 
     # Terminate or stop AWS instance(s)
     terminate_or_stop_aws_instance(
-        boto3client, server_instance_id, server_instance_id != args.use_existing_instance
+        boto3client, server_instance_id, server_instance_id != args.use_existing_server_instance
     )
     if use_two_instances:
-        terminate_or_stop_aws_instance(boto3client, client_instance_id, True)
+        terminate_or_stop_aws_instance(
+            boto3client, client_instance_id, client_instance_id != args.use_existing_client_instance
+        )
 
     print("Instance successfully stopped/terminated, goodbye")
 

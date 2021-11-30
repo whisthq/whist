@@ -9,12 +9,6 @@ import paramiko
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
-# Security groups for the 4 most popular AWS regions
-sec_groups_dict = {}
-sec_groups_dict["us-east-1"] = "container-tester"
-sec_groups_dict["us-east-2"] = "container-tester2"
-sec_groups_dict["us-west-1"] = "container-tester3"
-sec_groups_dict["us-west-2"] = "container-tester4"
 
 
 def get_boto3client(region_name: str) -> botocore.client:
@@ -63,7 +57,7 @@ def create_ec2_instance(
             },
         ],
         "SecurityGroups": [
-            sec_groups_dict[region_name],
+            "container-tester",
         ],
         "InstanceInitiatedShutdownBehavior": "terminate",
         "IamInstanceProfile": {"Name": "auto_scaling_instance_profile"},
