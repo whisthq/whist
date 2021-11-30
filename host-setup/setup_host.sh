@@ -324,10 +324,18 @@ deployment_setup_steps() {
   # Here we pre-pull the desired mandelboxes onto the AMI to speed up mandelbox startup.
   ghcr_uri=ghcr.io
   echo "$GH_PAT" | sudo docker login --username "$GH_USERNAME" --password-stdin "$ghcr_uri"
-  pull_image_base="$ghcr_uri/fractal/$GIT_BRANCH/browsers/chrome"
-  pull_image="$pull_image_base:$GIT_HASH"
-  echo "pulling image: $pull_image"
-  sudo docker pull "$pull_image"
+
+  # Chrome
+  pull_image_base_chrome="$ghcr_uri/fractal/$GIT_BRANCH/browsers/chrome"
+  pull_image_chrome="$pull_image_base_chrome:$GIT_HASH"
+  echo "pulling image: $pull_image_chrome"
+  sudo docker pull "$pull_image_chrome"
+
+  # Brave
+  pull_image_base_brave="$ghcr_uri/fractal/$GIT_BRANCH/browsers/brave"
+  pull_image_brave="$pull_image_base_brave:$GIT_HASH"
+  echo "pulling image: $pull_image_brave"
+  sudo docker pull "$pull_image_brave"
 
   # Tag the image as `current-build` for now as well, so the client app can ask
   # for `current-build` without worrying about commit hash mismatches (yet).
