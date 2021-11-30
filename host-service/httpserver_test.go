@@ -338,6 +338,20 @@ func TestGetAppNameEmpty(t *testing.T) {
 	}
 }
 
+// TestGetAppNameNoRequest will time out and return nil request
+func TestGetAppNameNoRequest(t *testing.T) {
+	mandelboxID := mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())
+	testmux := &sync.Mutex{}
+	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
+
+	// Will take 1 minute to resolve and return nil request
+	req, _ := getAppName(mandelboxID, testTransportRequestMap, testmux)
+
+	if req != nil {
+		t.Fatalf("error getting app name with no transport request. Expected nil, got %v", req)
+	}
+}
+
 // TestGetAppName will set appName to json request app name
 func TestGetAppName(t *testing.T) {
 	var appNames = []string{"browsers/chrome", "browsers/brave", "browsers/test"}
