@@ -249,13 +249,13 @@ func TestSendRequestResult(t *testing.T) {
 	}
 }
 
-// TestProcessJSONDataRequestWrongType checks if the wrong request type fails silently
+// TestProcessJSONDataRequestWrongType checks if the wrong request will result in the request not being added to the queue
 func TestProcessJSONDataRequestWrongType(t *testing.T) {
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "https://localhost", nil)
 	testChan := make(chan ServerRequest)
 
-	// With the wrong request type processJSONDataRequest will fail quietly
+	// processJSONDataRequest will return being trying to authenticate and parse request given the wrong request type
 	processJSONDataRequest(res, req, testChan)
 
 	select {
@@ -265,13 +265,13 @@ func TestProcessJSONDataRequestWrongType(t *testing.T) {
 	}
 }
 
-// TestProcessJSONDataRequestEmptyBody checks if an empty body fails silently
+// TestProcessJSONDataRequestEmptyBody checks if an empty body will result in the request not being added to the queue
 func TestProcessJSONDataRequestEmptyBody(t *testing.T) {
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "https://localhost", nil)
 	testChan := make(chan ServerRequest)
 
-	// With an empty request body processJSONDataRequest will fail quietly (will not be able to unmarshal)
+	// processJSONDataRequest will fail to parse request with an empty request body (will not be able to unmarshal)
 	processJSONDataRequest(res, req, testChan)
 
 	select {
@@ -310,7 +310,7 @@ func TestGetJSONTransportRequestChannel(t *testing.T) {
 	testmux := &sync.Mutex{}
 	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
 
-	// Should create a new JSONTransportRequest chan
+	// getJSONTransportRequestChannel will create a new json trasport request channel with the mandelboxID
 	testJsonChan := getJSONTransportRequestChannel(mandelboxID, testTransportRequestMap, testmux)
 
 	if _, ok := interface{}(testJsonChan).(chan *JSONTransportRequest); !ok {
@@ -365,7 +365,7 @@ func TestVerifyRequestWrongType(t *testing.T) {
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "https://localhost", nil)
 	
-	// Verify request type will catch request with wrong method and return an error
+	// verifyRequestType will catch request with wrong method and return an error
 	if err := verifyRequestType(res, req, http.MethodPut); err == nil {
 		t.Fatal("error verifying request type when the request method does not match. Expected an error, got nil")
 	}
@@ -379,7 +379,7 @@ func TestVerifyRequestWrongType(t *testing.T) {
 func TestVerifyRequestTypeNilRequest(t *testing.T) {
 	res := httptest.NewRecorder()
 
-	// Verify request type will catch nil request and return an error
+	// verifyRequestType will catch nil request and return an error
 	if err := verifyRequestType(res, nil, http.MethodPut); err == nil {
 		t.Fatal("error verifying request type when request is nil. Expected an error, got nil")
 	}
@@ -399,7 +399,7 @@ func TestAuthenticateAndParseRequestReadAllErr(t *testing.T) {
 	}
 
 
-	// The body will fail to read request body
+	// authenticateAndParseRequest will get an error trying to read request body and will cause an error
 	err := authenticateAndParseRequest(res, req, &testJSONTransportRequest, true)
 
 	if err == nil {
@@ -419,7 +419,7 @@ func TestAuthenticateAndParseRequestEmptyBody(t *testing.T) {
 		resultChan:            make(chan requestResult),
 	}
 
-	// The body will fail to marshal and quietly fail
+	// authenticateAndParseRequest will be unable to unmarshal an empty body and will cause an error
 	err := authenticateAndParseRequest(res, req, &testJSONTransportRequest, true)
 
 	if err == nil {
@@ -446,7 +446,7 @@ func TestAuthenticateAndParseRequestMissingJWTField(t *testing.T) {
 		t.Fatalf("error creating json transport request: %v", err)
 	}
 
-	// The body will fail to marshal and quietly fail
+	// authenticateAndParseRequest will return an error because jwt_access_token is not set in serverRequest
 	err = authenticateAndParseRequest(res, req, &testJSONTransportRequest, true)
 
 	if err == nil {
@@ -475,7 +475,7 @@ func TestAuthenticateAndParseRequestInvalidJWTField(t *testing.T) {
 		t.Fatalf("error creating json transport request: %v", err)
 	}
 
-	// The body will fail to marshal and quietly fail
+	// authenticateAndParseRequest will return an error because the jwt_access_token is not valid
 	err = authenticateAndParseRequest(res, req, &testJSONTransportRequest, true)
 
 	if err == nil {
