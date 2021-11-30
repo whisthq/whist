@@ -258,7 +258,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 			if string(readyFileContents) != ".ready" {
 				t.Errorf("Ready file contains invalid contents: %s", string(readyFileContents))
 			}
-		}
+		})
 	}
 }
 
