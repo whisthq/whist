@@ -1,6 +1,6 @@
 from app.constants import env_names
 
-PRODUCTION = "prod"
+PRODUCTION = "production"
 STAGING = "staging"
 DEVELOPMENT = "dev"
 
