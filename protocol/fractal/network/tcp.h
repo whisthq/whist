@@ -63,4 +63,3 @@ bool create_tcp_socket_context(SocketContext* context, char* destination, int po
  */
 int create_tcp_listen_socket(SOCKET* sock, int port, int timeout_ms);
 #endif  // WHIST_TCP_H
-

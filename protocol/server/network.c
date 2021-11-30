@@ -101,7 +101,7 @@ int handle_discovery_port_message(whist_server_state *state, SocketContext *cont
                 if (create_udp_listen_socket(&udp_listen, BASE_UDP_PORT, UDP_CONNECTION_WAIT) !=
                     0) {
                     LOG_WARNING("Failed to create base udp listen socket");
-                } else if (do_discovery_handshake(state,context, fcmsg) != 0) {
+                } else if (do_discovery_handshake(state, context, fcmsg) != 0) {
                     LOG_WARNING("Discovery handshake failed.");
                 }
 
