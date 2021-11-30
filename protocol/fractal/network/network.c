@@ -316,7 +316,7 @@ bool handshake_private_key(SocketContextData* context) {
     while ((recv_size =
                 recvfrom(context->socket, (char*)&their_priv_key_data, sizeof(their_priv_key_data),
                          0, (struct sockaddr*)(&context->addr), &slen)) == 0) {
-        if (cnt >= 3)  // we are (very likely) getting a dead loop casued by steam socket closed
+        if (cnt >= 3)  // we are (very likely) getting a dead loop casued by stream socket closed
         {              // the loop should be okay to be removed, just kept for debugging.
             return false;
         }
