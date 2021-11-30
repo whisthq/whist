@@ -259,9 +259,9 @@ func TestProcessJSONDataRequestWrongType(t *testing.T) {
 	processJSONDataRequest(res, req, testChan)
 
 	select {
-		case <-testChan:
-			t.Fatalf("error processing json data request with wrong request type. Expected test server request chan to be empty")
-		default:
+	case <-testChan:
+		t.Fatalf("error processing json data request with wrong request type. Expected test server request chan to be empty")
+	default:
 	}
 }
 
@@ -275,9 +275,9 @@ func TestProcessJSONDataRequestEmptyBody(t *testing.T) {
 	processJSONDataRequest(res, req, testChan)
 
 	select {
-		case <-testChan:
-			t.Fatalf("error processing json data request with empty. Expected test server request chan to be empty")
-		default:
+	case <-testChan:
+		t.Fatalf("error processing json data request with empty. Expected test server request chan to be empty")
+	default:
 	}
 }
 
@@ -297,10 +297,10 @@ func TestHandleJSONTransportRequest(t *testing.T) {
 	handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
 
 	select {
-		case <-testTransportRequestMap[testJSONTransportRequest.MandelboxID]:
-			return
-		default:
-			t.Fatalf("error handling json transport requests. Expected a request from the request chan")
+	case <-testTransportRequestMap[testJSONTransportRequest.MandelboxID]:
+		return
+	default:
+		t.Fatalf("error handling json transport requests. Expected a request from the request chan")
 	}
 }
 
@@ -318,43 +318,41 @@ func TestGetJSONTransportRequestChannel(t *testing.T) {
 	}
 }
 
-
 // TestGetAppNameEmpty will check if default AppName is browser/chrome
 func TestGetAppNameEmpty(t *testing.T) {
 	mandelboxID := mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())
 	testmux := &sync.Mutex{}
 	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
-	
+
 	// Assign JSONTRansportRequest
 	testTransportRequestMap[mandelboxID] = make(chan *JSONTransportRequest, 1)
 	testTransportRequestMap[mandelboxID] <- &JSONTransportRequest{}
 
 	// Should default name to browser/chrome
 	_, appName := getAppName(mandelboxID, testTransportRequestMap, testmux)
-	
+
 	if appName != mandelboxtypes.AppName("browsers/chrome") {
 		t.Fatalf("error getting app name. Expected %v, got %v", mandelboxtypes.AppName("browsers/chrome"), appName)
 	}
-
 }
 
 // TestGetAppName will set appName to json request app name
 func TestGetAppName(t *testing.T) {
 	testJSONTransportRequest := JSONTransportRequest{
-		AppName:		mandelboxtypes.AppName("test_app_name"),
+		AppName: mandelboxtypes.AppName("test_app_name"),
 	}
 
 	mandelboxID := mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())
 	testmux := &sync.Mutex{}
 	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
-	
+
 	// Assign JSONTRansportRequest
 	testTransportRequestMap[mandelboxID] = make(chan *JSONTransportRequest, 1)
 	testTransportRequestMap[mandelboxID] <- &testJSONTransportRequest
 
 	// Should be set to test_app_name
 	_, appName := getAppName(mandelboxID, testTransportRequestMap, testmux)
-	
+
 	if appName != testJSONTransportRequest.AppName {
 		t.Fatalf("error getting app name. Expected %v, got %v", testJSONTransportRequest.AppName, appName)
 	}
@@ -364,7 +362,7 @@ func TestGetAppName(t *testing.T) {
 func TestVerifyRequestWrongType(t *testing.T) {
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "https://localhost", nil)
-	
+
 	// Verify request type will catch request with wrong method and return an error
 	if err := verifyRequestType(res, req, http.MethodPut); err == nil {
 		t.Fatal("error verifying request type when the request method does not match. Expected an error, got nil")
@@ -387,7 +385,6 @@ func TestVerifyRequestTypeNilRequest(t *testing.T) {
 	if res.Result().StatusCode != http.StatusBadRequest {
 		t.Fatalf("error verifying request type when request is nil. Expected status code %v, got %v", http.StatusBadRequest, res.Result().StatusCode)
 	}
-	
 }
 
 // TestAuthenticateAndParseRequestReadAllErr checks if body read errors are handled properly
@@ -395,16 +392,15 @@ func TestAuthenticateAndParseRequestReadAllErr(t *testing.T) {
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "https://localhost", iotest.ErrReader(errors.New("test error")))
 	testJSONTransportRequest := JSONTransportRequest{
-		resultChan:            make(chan requestResult),
+		resultChan: make(chan requestResult),
 	}
-
 
 	// The body will fail to read request body
 	err := authenticateAndParseRequest(res, req, &testJSONTransportRequest, true)
 
 	if err == nil {
 		t.Fatalf("error authenticating and parsing request when real all fails. Expected err, got nil")
-	}	
+	}
 
 	if res.Result().StatusCode != http.StatusBadRequest {
 		t.Fatalf("error authenticating and parsing request when real all fails. Expected status code %v, got %v", http.StatusBadRequest, res.Result().StatusCode)
@@ -416,7 +412,7 @@ func TestAuthenticateAndParseRequestEmptyBody(t *testing.T) {
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "https://localhost", bytes.NewReader([]byte{}))
 	testJSONTransportRequest := JSONTransportRequest{
-		resultChan:            make(chan requestResult),
+		resultChan: make(chan requestResult),
 	}
 
 	// The body will fail to marshal and quietly fail
@@ -424,7 +420,7 @@ func TestAuthenticateAndParseRequestEmptyBody(t *testing.T) {
 
 	if err == nil {
 		t.Fatalf("error authenticating and parsing request with empty body. Expected err, got nil")
-	}	
+	}
 
 	if res.Result().StatusCode != http.StatusBadRequest {
 		t.Fatalf("error authenticating and parsing request with empty body. Expected status code %v, got %v", http.StatusBadRequest, res.Result().StatusCode)
@@ -437,8 +433,8 @@ func TestAuthenticateAndParseRequestMissingJWTField(t *testing.T) {
 
 	// generateTestJSONTransportRequest will give a well formatted request
 	testJSONTransportRequest := JSONTransportRequest{
-		JSONData:              "test_json_data",
-		resultChan:            make(chan requestResult),
+		JSONData:   "test_json_data",
+		resultChan: make(chan requestResult),
 	}
 
 	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
@@ -451,13 +447,12 @@ func TestAuthenticateAndParseRequestMissingJWTField(t *testing.T) {
 
 	if err == nil {
 		t.Fatalf("error authenticating and parsing request with missing jwt access token. Expected err, got nil")
-	}	
+	}
 
 	if res.Result().StatusCode != http.StatusUnauthorized {
 		t.Fatalf("error authenticating and parsing request with missing jwt access token. Expected status code %v, got %v", http.StatusUnauthorized, res.Result().StatusCode)
 	}
 }
-
 
 // TestAuthenticateAndParseRequestInvalidJWTField checks if an invalid jwt access token will error successfully
 func TestAuthenticateAndParseRequestInvalidJWTField(t *testing.T) {
@@ -465,9 +460,9 @@ func TestAuthenticateAndParseRequestInvalidJWTField(t *testing.T) {
 
 	// generateTestJSONTransportRequest will give a well formatted request
 	testJSONTransportRequest := JSONTransportRequest{
-		JwtAccessToken:        "test_invalid_jwt_token",
-		JSONData:              "test_json_data",
-		resultChan:            make(chan requestResult),
+		JwtAccessToken: "test_invalid_jwt_token",
+		JSONData:       "test_json_data",
+		resultChan:     make(chan requestResult),
 	}
 
 	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
@@ -480,13 +475,12 @@ func TestAuthenticateAndParseRequestInvalidJWTField(t *testing.T) {
 
 	if err == nil {
 		t.Fatalf("error authenticating and parsing request with missing jwt access token. Expected err, got nil")
-	}	
+	}
 
 	if res.Result().StatusCode != http.StatusUnauthorized {
 		t.Fatalf("error authenticating and parsing request with missing jwt access token. Expected status code %v, got %v", http.StatusUnauthorized, res.Result().StatusCode)
 	}
 }
-
 
 // generateTestJSONTransportRequest takes a request body and creates an
 // HTTP PUT request for /json_transport
