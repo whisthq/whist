@@ -398,45 +398,6 @@ int create_tcp_server_context(SocketContextData* context, int port, int recvfrom
         return -1;
     }
 
-    int opt;
-
-    // Create TCP socket
-    LOG_INFO("Creating TCP Socket");
-    if ((context->socket = socketp_tcp()) == INVALID_SOCKET) {
-        return -1;
-    }
-
-    set_timeout(context->socket, stun_timeout_ms);
-    // Server connection protocol
-
-    // Reuse addr
-    opt = 1;
-    if (setsockopt(context->socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt)) < 0) {
-        LOG_WARNING("Could not setsockopt SO_REUSEADDR");
-        closesocket(context->socket);
-        return -1;
-    }
-
-    struct sockaddr_in origin_addr;
-    origin_addr.sin_family = AF_INET;
-    origin_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    origin_addr.sin_port = htons((unsigned short)port);
-
-    // Bind to port
-    if (bind(context->socket, (struct sockaddr*)(&origin_addr), sizeof(origin_addr)) < 0) {
-        LOG_WARNING("Failed to bind to port! %d\n", get_last_network_error());
-        closesocket(context->socket);
-        return -1;
-    }
-
-    // Set listen queue
-    LOG_INFO("Waiting for TCP Connection");
-    if (listen(context->socket, 3) < 0) {
-        LOG_WARNING("Could not listen(2)! %d\n", get_last_network_error());
-        closesocket(context->socket);
-        return -1;
-    }
-
     fd_set fd_read, fd_write;
     FD_ZERO(&fd_read);
     FD_ZERO(&fd_write);
@@ -455,7 +416,6 @@ int create_tcp_server_context(SocketContextData* context, int port, int recvfrom
         } else {
             LOG_WARNING("Could not select! %d", get_last_network_error());
         }
-        closesocket(context->socket);
         return -1;
     }
 
@@ -465,12 +425,12 @@ int create_tcp_server_context(SocketContextData* context, int port, int recvfrom
     SOCKET new_socket;
     if ((new_socket = acceptp(context->socket, (struct sockaddr*)(&context->addr), &slen)) ==
         INVALID_SOCKET) {
+        LOG_WARNING("Could not accept! %d", get_last_network_error());
         return -1;
     }
 
     LOG_INFO("PORT: %d", ntohs(context->addr.sin_port));
 
-    closesocket(context->socket);
     context->socket = new_socket;
 
     LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
@@ -645,8 +605,6 @@ int create_tcp_client_context(SocketContextData* context, char* destination, int
     context->addr.sin_port = htons((unsigned short)port);
 
     LOG_INFO("Connecting to server...");
-
-    whist_sleep(200);
 
     // Connect to TCP server
     if (!tcp_connect(context->socket, context->addr, stun_timeout_ms)) {
@@ -849,6 +807,19 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
     memset(context, 0, sizeof(SocketContextData));
     network_context->context = context;
 
+    // if dest is NULL, it means the context will be listening for income connections
+    if (destination == NULL) {
+        if (network_context->listen_socket == NULL) {
+            LOG_ERROR("listen_socket not provided");
+            return false;
+        }
+        /*
+            for tcp, just make a copy of the socket, do not transfer ownership to SocketContextData.
+            when SocketContextData is destoryed, the copied listen_socket should NOT be closed.
+        */
+        context->socket = *network_context->listen_socket;
+    }
+
     // Map Port
     if ((int)((unsigned short)port) != port) {
         LOG_ERROR("Port invalid: %d", port);
@@ -895,4 +866,45 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
     }
 
     return true;
+}
+
+int create_tcp_listen_socket(SOCKET* sock, int port, int timeout_ms) {
+    LOG_INFO("Creating listen TCP Socket");
+    *sock = socketp_tcp();
+    if (*sock == INVALID_SOCKET) {
+        LOG_ERROR("Failed to create TCP listen socket");
+        return -1;
+    }
+
+    set_timeout(*sock, timeout_ms);
+
+    // Reuse addr
+    int opt = 1;
+    if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt)) < 0) {
+        LOG_ERROR("Could not setsockopt SO_REUSEADDR");
+        closesocket(*sock);
+        return -1;
+    }
+
+    struct sockaddr_in origin_addr;
+    origin_addr.sin_family = AF_INET;
+    origin_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    origin_addr.sin_port = htons((unsigned short)port);
+
+    // Bind to port
+    if (bind(*sock, (struct sockaddr*)(&origin_addr), sizeof(origin_addr)) < 0) {
+        LOG_ERROR("Failed to bind to port %d! %d\n", port, get_last_network_error());
+        closesocket(*sock);
+        return -1;
+    }
+
+    // Set listen queue
+    LOG_INFO("Waiting for TCP Connection");
+    if (listen(*sock, 3) < 0) {
+        LOG_ERROR("Could not listen(2)! %d\n", get_last_network_error());
+        closesocket(*sock);
+        return -1;
+    }
+
+    return 0;
 }

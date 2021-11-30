@@ -364,30 +364,6 @@ int create_udp_server_context(void* raw_context, int port, int recvfrom_timeout_
                               int stun_timeout_ms) {
     SocketContextData* context = raw_context;
 
-    // Create UDP socket
-    if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
-        return -1;
-    }
-
-    set_timeout(context->socket, stun_timeout_ms);
-    set_tos(context->socket, TOS_DSCP_EXPEDITED_FORWARDING);
-
-    // Server connection protocol
-
-    // Bind the server port to the advertized public port
-    struct sockaddr_in origin_addr;
-    origin_addr.sin_family = AF_INET;
-    origin_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    origin_addr.sin_port = htons((unsigned short)port);
-
-    if (bind(context->socket, (struct sockaddr*)(&origin_addr), sizeof(origin_addr)) < 0) {
-        LOG_WARNING("Failed to bind to port! %d\n", get_last_network_error());
-        closesocket(context->socket);
-        return -1;
-    }
-
-    LOG_INFO("Waiting for client to connect to %s:%d...\n", "localhost", port);
-
     socklen_t slen = sizeof(context->addr);
     int recv_size;
     if ((recv_size = recvfrom(context->socket, NULL, 0, 0, (struct sockaddr*)(&context->addr),
@@ -564,8 +540,6 @@ int create_udp_client_context(SocketContextData* context, char* destination, int
         return -1;
     }
 
-    whist_sleep(stun_timeout_ms);
-
     if (!handshake_private_key(context)) {
         LOG_WARNING("Could not complete handshake!");
         closesocket(context->socket);
@@ -703,6 +677,20 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     memset(context, 0, sizeof(SocketContextData));
     network_context->context = context;
 
+    // if dest is NULL, it means the context will be listening for income connections
+    if (destination == NULL) {
+        if (network_context->listen_socket == NULL) {
+            LOG_ERROR("listen_socket not provided");
+            return false;
+        }
+        /*
+            for udp, transfer the ownership to SocketContextData.
+            when SocketContextData is destoryed, the transferred listen_socket should be closed.
+        */
+        context->socket = *network_context->listen_socket;
+        *network_context->listen_socket = INVALID_SOCKET;
+    }
+
     // Map Port
     if ((int)((unsigned short)port) != port) {
         LOG_ERROR("Port invalid: %d", port);
@@ -757,4 +745,32 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     } else {
         return false;
     }
+}
+
+int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms) {
+    LOG_INFO("Creating listen UDP Socket");
+    *sock = socketp_udp();
+    if (*sock == INVALID_SOCKET) {
+        LOG_ERROR("Failed to create UDP listen socket");
+        return -1;
+    }
+    set_timeout(*sock, timeout_ms);
+    set_tos(*sock, TOS_DSCP_EXPEDITED_FORWARDING);
+    // Server connection protocol
+
+    // Bind the server port to the advertized public port
+    struct sockaddr_in origin_addr;
+    origin_addr.sin_family = AF_INET;
+    origin_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    origin_addr.sin_port = htons((unsigned short)port);
+
+    if (bind(*sock, (struct sockaddr*)(&origin_addr), sizeof(origin_addr)) < 0) {
+        LOG_ERROR("Failed to bind to port %d! errno=%d\n", port, get_last_network_error());
+        closesocket(*sock);
+        return -1;
+    }
+
+    LOG_INFO("Waiting for client to connect to %s:%d...\n", "localhost", port);
+
+    return 0;
 }

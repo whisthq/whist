@@ -310,13 +310,20 @@ bool handshake_private_key(SocketContextData* context) {
                   get_last_network_error());
         return false;
     }
-    whist_sleep(50);
 
     // Receive, sign, and send back their private key request data
+    int cnt = 0;
     while ((recv_size =
                 recvfrom(context->socket, (char*)&their_priv_key_data, sizeof(their_priv_key_data),
-                         0, (struct sockaddr*)(&context->addr), &slen)) == 0)
-        ;
+                         0, (struct sockaddr*)(&context->addr), &slen)) == 0) {
+        if (cnt >= 3)  // we are (very likely) getting a dead loop casued by stream socket closed
+        {              // the loop should be okay to be removed, just kept for debugging.
+            return false;
+        }
+        cnt++;
+        LOG_INFO("recv_size()==0, cnt=%d", cnt);
+    }
+
     if (recv_size < 0) {
         LOG_WARNING("Did not receive other connection's private key request: %d",
                     get_last_network_error());
@@ -333,7 +340,6 @@ bool handshake_private_key(SocketContextData* context) {
                   get_last_network_error());
         return false;
     }
-    whist_sleep(50);
 
     // Wait for and verify their signed private key request data
     recv_size = recv(context->socket, (char*)&our_signed_priv_key_data,

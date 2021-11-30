@@ -53,4 +53,13 @@ bool create_tcp_socket_context(SocketContext* context, char* destination, int po
                                int recvfrom_timeout_s, int connection_timeout_ms, bool using_stun,
                                char* binary_aes_private_key);
 
+/**
+ * @brief Creates a tcp listen socket, that can be used in SocketContext
+ *
+ * @param sock                      The socket that will be initialized
+ * @param port                      The port to listen on
+ * @param timeout_ms                The timeout for socket
+ * @return                          0 on success, otherwise failure.
+ */
+int create_tcp_listen_socket(SOCKET* sock, int port, int timeout_ms);
 #endif  // WHIST_TCP_H
