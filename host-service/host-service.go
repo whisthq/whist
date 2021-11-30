@@ -156,7 +156,9 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 	// environments.
 	regexes := []string{
 		`whist/browsers/chrome:current-build`,
+		`whist/browsers/brave:current-build`,
 		`ghcr.io/fractal/*/browsers/chrome:current-build`,
+		`ghcr.io/fractal/*/browsers/brave:current-build`,
 		`ghcr.io/fractal/*`,
 		`*whist*`,
 	}
