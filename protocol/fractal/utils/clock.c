@@ -60,16 +60,6 @@ double get_timer(clock timer) {
     return ret;
 }
 
-double get_current_time_ms() {
-    struct timeval t2;
-    gettimeofday(&t2, NULL);
-
-    double elapsed_time = t2.tv_sec * MS_IN_SECOND;  // sec to ms
-    elapsed_time += t2.tv_usec / US_IN_MS;           // us to ms
-
-    return elapsed_time;
-}
-
 clock create_clock(int timeout_ms) {
     clock out;
 #if defined(_WIN32)
