@@ -5,7 +5,7 @@
     "type": "folder"
   },
   {
-    "source": "brave-BraveSoftware",
+    "source": "BraveSoftware",
     "destination": "/home/fractal/.config/BraveSoftware",
     "type": "folder"
   }
