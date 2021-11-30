@@ -290,8 +290,7 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
 
         // END QSV DECODER
 
-    } else if (decoder->type == DECODE_TYPE_HARDWARE ||
-               decoder->type == DECODE_TYPE_HARDWARE_OLDER) {
+    } else if (decoder->type == DECODE_TYPE_HARDWARE || decoder->type == DECODE_TYPE_HARDWARE_OLDER) {
         // BEGIN HARDWARE DECODER
         LOG_INFO("Trying hardware decoder");
         // set the appropriate video decoder format based on PS
@@ -314,11 +313,9 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
 
         // get the appropriate hardware device
         if (decoder->device_type == AV_HWDEVICE_TYPE_NONE) {
-            LOG_WARNING("Device type %s is not supported.",
-                        av_hwdevice_get_type_name(decoder->device_type));
+            LOG_WARNING("Device type %s is not supported.", av_hwdevice_get_type_name(decoder->device_type));
             LOG_WARNING("Available device types:");
-            while ((decoder->device_type = av_hwdevice_iterate_types(decoder->device_type)) !=
-                   AV_HWDEVICE_TYPE_NONE) {
+            while ((decoder->device_type = av_hwdevice_iterate_types(decoder->device_type)) != AV_HWDEVICE_TYPE_NONE) {
                 LOG_WARNING(" %s", av_hwdevice_get_type_name(decoder->device_type));
             }
             LOG_WARNING(" ");
@@ -371,8 +368,8 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
 // Indicate in what order we should try decoding. Software is always last - we prefer hardware
 // acceleration whenever possible.
 #if defined(_WIN32)
-DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_HARDWARE_OLDER,
-                                   DECODE_TYPE_QSV, DECODE_TYPE_SOFTWARE};
+DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_HARDWARE_OLDER, DECODE_TYPE_QSV,
+                                   DECODE_TYPE_SOFTWARE};
 #elif __APPLE__
 DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_SOFTWARE};
 #else  // linux
@@ -414,8 +411,7 @@ static bool try_next_decoder(VideoDecoder* decoder) {
             } else {
                 LOG_INFO("Video decoder: Success!");
                 if (decoder->type == DECODE_TYPE_SOFTWARE) {
-                    LOG_ERROR(
-                        "Video decoder: all hardware decoders failed. Now using software decoder.");
+                    LOG_ERROR("Video decoder: all hardware decoders failed. Now using software decoder.");
                 }
                 return true;
             }

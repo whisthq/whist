@@ -207,12 +207,10 @@ int multithreaded_sync_tcp_packets(void* opaque) {
                 // Build fsmsg
                 memset(fsmsg_response, 0, sizeof(*fsmsg_response));
                 fsmsg_response->type = SMESSAGE_CLIPBOARD;
-                memcpy(&fsmsg_response->clipboard, clipboard_chunk,
-                       sizeof(ClipboardData) + clipboard_chunk->size);
+                memcpy(&fsmsg_response->clipboard, clipboard_chunk, sizeof(ClipboardData) + clipboard_chunk->size);
                 // Send fsmsg
                 if (broadcast_tcp_packet(&state->client, PACKET_MESSAGE, (uint8_t*)fsmsg_response,
-                                         sizeof(FractalServerMessage) + clipboard_chunk->size) <
-                    0) {
+                                         sizeof(FractalServerMessage) + clipboard_chunk->size) < 0) {
                     LOG_WARNING("Failed to broadcast clipboard message.");
                 }
                 // Free fsmsg
@@ -310,11 +308,11 @@ int main(int argc, char* argv[]) {
     FractalThread send_audio_thread =
         fractal_create_thread(multithreaded_send_audio, "multithreaded_send_audio", &server_state);
 
-    FractalThread manage_clients_thread = fractal_create_thread(
-        multithreaded_manage_client, "multithreaded_manage_client", &server_state);
+    FractalThread manage_clients_thread =
+        fractal_create_thread(multithreaded_manage_client, "multithreaded_manage_client", &server_state);
 
-    FractalThread sync_tcp_packets_thread = fractal_create_thread(
-        multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", &server_state);
+    FractalThread sync_tcp_packets_thread =
+        fractal_create_thread(multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", &server_state);
     LOG_INFO("Sending video and audio...");
 
     clock totaltime;
@@ -374,8 +372,8 @@ int main(int argc, char* argv[]) {
                 FractalServerMessage fsmsg = {0};
                 fsmsg.type = SMESSAGE_FULLSCREEN;
                 fsmsg.fullscreen = (int)fullscreen;
-                if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, &fsmsg,
-                                         sizeof(FractalServerMessage)) == 0) {
+                if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, &fsmsg, sizeof(FractalServerMessage)) ==
+                    0) {
                     LOG_INFO("Sent fullscreen message!");
                     cur_fullscreen = fullscreen;
                 } else {
@@ -390,8 +388,7 @@ int main(int argc, char* argv[]) {
             bool new_window_name = get_focused_window_name(&name);
             if (name != NULL && (server_state.client_joined_after_window_name_broadcast ||
                                  (assuming_client_active && new_window_name))) {
-                LOG_INFO("%sBroadcasting window title message.",
-                         new_window_name ? "Window title changed. " : "");
+                LOG_INFO("%sBroadcasting window title message.", new_window_name ? "Window title changed. " : "");
                 static char fsmsg_buf[sizeof(FractalServerMessage) + WINDOW_NAME_MAXLEN + 1];
                 FractalServerMessage* fsmsg = (void*)fsmsg_buf;
                 fsmsg->type = SMESSAGE_WINDOW_TITLE;
@@ -422,8 +419,8 @@ int main(int argc, char* argv[]) {
                     memset(fsmsg, 0, sizeof(*fsmsg));
                     fsmsg->type = SMESSAGE_OPEN_URI;
                     memcpy(&fsmsg->requested_uri, handled_uri, bytes + 1);
-                    if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, (uint8_t*)fsmsg,
-                                             (int)fsmsg_size) < 0) {
+                    if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, (uint8_t*)fsmsg, (int)fsmsg_size) <
+                        0) {
                         LOG_WARNING("Failed to broadcast open URI message.");
                     } else {
                         LOG_INFO("Sent open URI message!");

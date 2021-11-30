@@ -11,8 +11,7 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
     return -1;
 }
 
-bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t height,
-                                uint32_t dpi) {
+bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi) {
     LOG_WARNING("Not implemented for Windows servers!");
     return false;
 }
@@ -27,6 +26,4 @@ int transfer_screen(CaptureDevice* device) {
     return -1;
 }
 
-void destroy_capture_device(CaptureDevice* device) {
-    LOG_WARNING("Not implemented for Windows servers!");
-}
+void destroy_capture_device(CaptureDevice* device) { LOG_WARNING("Not implemented for Windows servers!"); }

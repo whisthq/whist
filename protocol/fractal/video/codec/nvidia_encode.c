@@ -28,8 +28,7 @@ void try_free_frame(NvidiaEncoder* encoder) {
     // If there was a previous frame, we should free it first
     if (encoder->frame != NULL) {
         // Unlock the bitstream
-        status = encoder->p_enc_fn.nvEncUnlockBitstream(encoder->internal_nvidia_encoder,
-                                                        encoder->output_buffer);
+        status = encoder->p_enc_fn.nvEncUnlockBitstream(encoder->internal_nvidia_encoder, encoder->output_buffer);
         if (status != NV_ENC_SUCCESS) {
             // If LOG_ERROR is ever desired here in the future,
             // make sure to still UnmapInputResource before returning -1
@@ -56,8 +55,8 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
         Returns:
             (NvidiaEncoder*): New Nvidia encoder with the correct settings
     */
-    LOG_INFO("Creating encoder of bitrate %d, codec %d, width %d, height %d, cuda_context %x",
-             bitrate, codec, out_width, out_height, cuda_context);
+    LOG_INFO("Creating encoder of bitrate %d, codec %d, width %d, height %d, cuda_context %x", bitrate, codec,
+             out_width, out_height, cuda_context);
     NVENCSTATUS status;
 
     // Initialize the encoder
@@ -119,8 +118,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     encode_session_params.deviceType = NV_ENC_DEVICE_TYPE_CUDA;
     encode_session_params.device = cuda_context;
 
-    status = encoder->p_enc_fn.nvEncOpenEncodeSessionEx(&encode_session_params,
-                                                        &encoder->internal_nvidia_encoder);
+    status = encoder->p_enc_fn.nvEncOpenEncodeSessionEx(&encode_session_params, &encoder->internal_nvidia_encoder);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to open an encoder session, status = %d", status);
         free(encoder);
@@ -154,8 +152,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     // Copy the init params into the encoder for reconfiguration
     encoder->encoder_params = init_params;
 
-    status =
-        encoder->p_enc_fn.nvEncInitializeEncoder(encoder->internal_nvidia_encoder, &init_params);
+    status = encoder->p_enc_fn.nvEncInitializeEncoder(encoder->internal_nvidia_encoder, &init_params);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to initialize the encode session, status = %d", status);
         free(encoder);
@@ -166,8 +163,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     NV_ENC_CREATE_BITSTREAM_BUFFER bitstream_buffer_params = {0};
     bitstream_buffer_params.version = NV_ENC_CREATE_BITSTREAM_BUFFER_VER;
 
-    status = encoder->p_enc_fn.nvEncCreateBitstreamBuffer(encoder->internal_nvidia_encoder,
-                                                          &bitstream_buffer_params);
+    status = encoder->p_enc_fn.nvEncCreateBitstreamBuffer(encoder->internal_nvidia_encoder, &bitstream_buffer_params);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to create a bitstream buffer, status = %d", status);
         return NULL;
@@ -189,12 +185,10 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
             encoder (NvidiaEncoder*): encoder to use
             resource_to_register (RegisteredResource): resource to send into the encoder
     */
-    if (resource_to_register.width != encoder->width ||
-        resource_to_register.height != encoder->height) {
+    if (resource_to_register.width != encoder->width || resource_to_register.height != encoder->height) {
         // reconfigure the encoder
-        if (!nvidia_reconfigure_encoder(encoder, resource_to_register.width,
-                                        resource_to_register.height, encoder->bitrate,
-                                        encoder->codec_type)) {
+        if (!nvidia_reconfigure_encoder(encoder, resource_to_register.width, resource_to_register.height,
+                                        encoder->bitrate, encoder->codec_type)) {
             LOG_ERROR("Reconfigure failed!");
             return -1;
         }
@@ -248,17 +242,15 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
         NV_ENC_LOCK_INPUT_BUFFER lock_params = {0};
         lock_params.version = NV_ENC_LOCK_INPUT_BUFFER_VER;
         lock_params.inputBuffer = encoder->registered_resource.handle;
-        NVENCSTATUS status =
-            encoder->p_enc_fn.nvEncLockInputBuffer(encoder->internal_nvidia_encoder, &lock_params);
+        NVENCSTATUS status = encoder->p_enc_fn.nvEncLockInputBuffer(encoder->internal_nvidia_encoder, &lock_params);
         if (status != NV_ENC_SUCCESS) {
             LOG_ERROR("Failed to lock input buffer, error %d", status);
             return -1;
         }
         encoder->pitch = lock_params.pitch;
 #if LOG_VIDEO
-        LOG_DEBUG("width: %d, height: %d, pitch: %d (lock pitch %d)",
-                  encoder->registered_resource.width, encoder->registered_resource.height,
-                  encoder->registered_resource.pitch, lock_params.pitch);
+        LOG_DEBUG("width: %d, height: %d, pitch: %d (lock pitch %d)", encoder->registered_resource.width,
+                  encoder->registered_resource.height, encoder->registered_resource.pitch, lock_params.pitch);
         LOG_DEBUG("Buffer data ptr: %x, texture pointer: %x", lock_params.bufferDataPtr,
                   encoder->registered_resource.texture_pointer);
 #endif
@@ -266,12 +258,10 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
         // the encoder buffer might have a different pitch, so we have to copy row by row
         for (int i = 0; i < encoder->registered_resource.height; i++) {
             memcpy((char*)lock_params.bufferDataPtr + i * lock_params.pitch,
-                   (char*)encoder->registered_resource.texture_pointer +
-                       i * encoder->registered_resource.pitch,
+                   (char*)encoder->registered_resource.texture_pointer + i * encoder->registered_resource.pitch,
                    min(encoder->registered_resource.pitch, (int)lock_params.pitch));
         }
-        status = encoder->p_enc_fn.nvEncUnlockInputBuffer(encoder->internal_nvidia_encoder,
-                                                          lock_params.inputBuffer);
+        status = encoder->p_enc_fn.nvEncUnlockInputBuffer(encoder->internal_nvidia_encoder, lock_params.inputBuffer);
         if (status != NV_ENC_SUCCESS) {
             LOG_ERROR("Failed to unlock input buffer, error %d", status);
             return -1;
@@ -314,8 +304,7 @@ int register_resource(NvidiaEncoder* encoder, RegisteredResource* resource_to_re
             register_params.resourceToRegister = resource_to_register->texture_pointer;
             register_params.bufferFormat = NV_ENC_BUFFER_FORMAT_NV12;
 
-            int status = encoder->p_enc_fn.nvEncRegisterResource(encoder->internal_nvidia_encoder,
-                                                                 &register_params);
+            int status = encoder->p_enc_fn.nvEncRegisterResource(encoder->internal_nvidia_encoder, &register_params);
             if (status != NV_ENC_SUCCESS) {
                 LOG_ERROR("Failed to register texture, status = %d", status);
                 return -1;
@@ -331,8 +320,7 @@ int register_resource(NvidiaEncoder* encoder, RegisteredResource* resource_to_re
             input_params.height = resource_to_register->height;
             input_params.bufferFmt = NV_ENC_BUFFER_FORMAT_ARGB;
             // input_params.pSysMemBuffer = resource_to_register->texture_pointer;
-            int status = encoder->p_enc_fn.nvEncCreateInputBuffer(encoder->internal_nvidia_encoder,
-                                                                  &input_params);
+            int status = encoder->p_enc_fn.nvEncCreateInputBuffer(encoder->internal_nvidia_encoder, &input_params);
             if (status != NV_ENC_SUCCESS) {
                 LOG_ERROR("Failed to create input buffer, status = %d", status);
                 return -1;
@@ -361,14 +349,14 @@ void unregister_resource(NvidiaEncoder* encoder, RegisteredResource registered_r
         return;
     }
     if (registered_resource.device_type == NVIDIA_DEVICE) {
-        int status = encoder->p_enc_fn.nvEncUnregisterResource(encoder->internal_nvidia_encoder,
-                                                               registered_resource.handle);
+        int status =
+            encoder->p_enc_fn.nvEncUnregisterResource(encoder->internal_nvidia_encoder, registered_resource.handle);
         if (status != NV_ENC_SUCCESS) {
             LOG_ERROR("Failed to unregister resource, status = %d", status);
         }
     } else {
-        int status = encoder->p_enc_fn.nvEncDestroyInputBuffer(encoder->internal_nvidia_encoder,
-                                                               registered_resource.handle);
+        int status =
+            encoder->p_enc_fn.nvEncDestroyInputBuffer(encoder->internal_nvidia_encoder, registered_resource.handle);
         if (status != NV_ENC_SUCCESS) {
             LOG_ERROR("Failed to destroy input buffer, status = %d", status);
         }
@@ -400,8 +388,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
         // only if we've received a CUDA resource
         map_params.version = NV_ENC_MAP_INPUT_RESOURCE_VER;
         map_params.registeredResource = registered_resource.handle;
-        status =
-            encoder->p_enc_fn.nvEncMapInputResource(encoder->internal_nvidia_encoder, &map_params);
+        status = encoder->p_enc_fn.nvEncMapInputResource(encoder->internal_nvidia_encoder, &map_params);
         if (status != NV_ENC_SUCCESS) {
             LOG_ERROR("Failed to map the resource, status = %d\n", status);
             return -1;
@@ -442,8 +429,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
 
     if (registered_resource.device_type == NVIDIA_DEVICE) {
         // Unmap the input buffer
-        status = encoder->p_enc_fn.nvEncUnmapInputResource(encoder->internal_nvidia_encoder,
-                                                           map_params.mappedResource);
+        status = encoder->p_enc_fn.nvEncUnmapInputResource(encoder->internal_nvidia_encoder, map_params.mappedResource);
         if (status != NV_ENC_SUCCESS) {
             // FATAL is chosen over ERROR here to prevent
             // out-of-control runaway memory usage
@@ -518,9 +504,8 @@ int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType code
     p_preset_config->version = NV_ENC_PRESET_CONFIG_VER;
     p_preset_config->presetCfg.version = NV_ENC_CONFIG_VER;
     // fill the preset config with the low latency, high performance config
-    status = encoder->p_enc_fn.nvEncGetEncodePresetConfigEx(encoder->internal_nvidia_encoder,
-                                                            get_codec_guid(codec), WHIST_PRESET,
-                                                            WHIST_TUNING, p_preset_config);
+    status = encoder->p_enc_fn.nvEncGetEncodePresetConfigEx(encoder->internal_nvidia_encoder, get_codec_guid(codec),
+                                                            WHIST_PRESET, WHIST_TUNING, p_preset_config);
     // Check for bad status
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to obtain preset settings, status = %d", status);
@@ -546,8 +531,7 @@ int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType code
     return 0;
 }
 
-bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, int bitrate,
-                                CodecType codec) {
+bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, int bitrate, CodecType codec) {
     /*
         Using Nvidia's Reconfigure API, update encoder bitrate and codec without
        destruction/recreation.
@@ -561,13 +545,11 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, i
             (int): 0 on success, -1 on failure
     */
 
-    LOG_INFO("Reconfiguring encoder to width %d, height %d, bitrate %d, codec %d", width, height,
-             bitrate, codec);
+    LOG_INFO("Reconfiguring encoder to width %d, height %d, bitrate %d, codec %d", width, height, bitrate, codec);
     NVENCSTATUS status;
     // If dimensions or codec type changes,
     // then we need to send an IDR frame
-    bool needs_idr_frame =
-        width != encoder->width || height != encoder->height || codec != encoder->codec_type;
+    bool needs_idr_frame = width != encoder->width || height != encoder->height || codec != encoder->codec_type;
 
     // Create reconfigure params
     NV_ENC_RECONFIGURE_PARAMS reconfigure_params = {0};
@@ -612,8 +594,7 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, i
         reconfigure_params.forceIDR = 0;
     }
     // Set encode_config params, since this is the bitrate and codec stuff we really want to change
-    status = encoder->p_enc_fn.nvEncReconfigureEncoder(encoder->internal_nvidia_encoder,
-                                                       &reconfigure_params);
+    status = encoder->p_enc_fn.nvEncReconfigureEncoder(encoder->internal_nvidia_encoder, &reconfigure_params);
     if (status != NV_ENC_SUCCESS) {
         LOG_ERROR("Failed to reconfigure the encoder, status = %d", status);
         return false;
@@ -676,8 +657,8 @@ void destroy_nvidia_encoder(NvidiaEncoder* encoder) {
 
     if (encoder->output_buffer) {
         LOG_INFO("Destroying bitstream buffer...");
-        status = encoder->p_enc_fn.nvEncDestroyBitstreamBuffer(encoder->internal_nvidia_encoder,
-                                                               encoder->output_buffer);
+        status =
+            encoder->p_enc_fn.nvEncDestroyBitstreamBuffer(encoder->internal_nvidia_encoder, encoder->output_buffer);
         if (status != NV_ENC_SUCCESS) {
             LOG_ERROR("Failed to destroy buffer, status = %d", status);
         }

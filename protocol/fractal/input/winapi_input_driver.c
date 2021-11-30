@@ -313,9 +313,7 @@ int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_key
     return (KEYPRESS_MASK & GetAsyncKeyState(GetWindowsKeyCode(fractal_keycode))) >> 15;
 }
 
-int ignore_key_state(InputDevice* input_device, FractalKeycode fractal_keycode, bool active_pinch) {
-    return 0;
-}
+int ignore_key_state(InputDevice* input_device, FractalKeycode fractal_keycode, bool active_pinch) { return 0; }
 
 int emit_key_event(InputDevice* input_device, FractalKeycode fractal_keycode, int pressed) {
     UNUSED(input_device);
@@ -330,8 +328,7 @@ int emit_key_event(InputDevice* input_device, FractalKeycode fractal_keycode, in
 
     int windows_keycode = GetWindowsKeyCode(fractal_keycode);
 
-    ip.ki.wScan =
-        (WORD)MapVirtualKeyExA(windows_keycode & ~USE_NUMPAD, MAPVK_VK_TO_VSC_EX, keyboard_layout);
+    ip.ki.wScan = (WORD)MapVirtualKeyExA(windows_keycode & ~USE_NUMPAD, MAPVK_VK_TO_VSC_EX, keyboard_layout);
     ip.ki.dwFlags = KEYEVENTF_SCANCODE;
     if (!pressed) {
         ip.ki.dwFlags |= KEYEVENTF_KEYUP;
@@ -344,8 +341,7 @@ int emit_key_event(InputDevice* input_device, FractalKeycode fractal_keycode, in
     int ret = SendInput(1, &ip, sizeof(INPUT));
 
     if (ret != 1) {
-        LOG_WARNING("Failed to send input event for keycode %d, pressed %d!", fractal_keycode,
-                    pressed);
+        LOG_WARNING("Failed to send input event for keycode %d, pressed %d!", fractal_keycode, pressed);
         return -1;
     }
 
@@ -370,8 +366,7 @@ int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int
     int ret = SendInput(1, &ip, sizeof(INPUT));
 
     if (ret != 1) {
-        LOG_WARNING("Failed to send mouse motion event for x %d, y %d, relative %d!", x, y,
-                    relative);
+        LOG_WARNING("Failed to send mouse motion event for x %d, y %d, relative %d!", x, y, relative);
         return -1;
     }
 
@@ -443,8 +438,7 @@ int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button
     int ret = SendInput(1, &ip, sizeof(INPUT));
 
     if (ret != 1) {
-        LOG_WARNING("Failed to send mouse button event for button %d, pressed %d!", button,
-                    pressed);
+        LOG_WARNING("Failed to send mouse button event for button %d, pressed %d!", button, pressed);
         return -1;
     }
 

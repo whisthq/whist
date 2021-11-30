@@ -95,16 +95,14 @@ int handle_window_size_changed(SDL_Event *event) {
     // Let video thread know about the resizing to
     // reinitialize display dimensions
 
-    LOG_INFO("Received resize event for %dx%d, currently %dx%d", event->window.data1,
-             event->window.data2, get_window_pixel_width((SDL_Window *)window),
-             get_window_pixel_height((SDL_Window *)window));
+    LOG_INFO("Received resize event for %dx%d, currently %dx%d", event->window.data1, event->window.data2,
+             get_window_pixel_width((SDL_Window *)window), get_window_pixel_height((SDL_Window *)window));
 
 #ifndef __linux__
     // Try to make pixel width and height conform to certain desirable dimensions
     int current_width = get_window_pixel_width((SDL_Window *)window);
     int current_height = get_window_pixel_height((SDL_Window *)window);
-    int dpi = get_window_pixel_width((SDL_Window *)window) /
-              get_window_virtual_width((SDL_Window *)window);
+    int dpi = get_window_pixel_width((SDL_Window *)window) / get_window_virtual_width((SDL_Window *)window);
 
     // The server will round the dimensions up in order to satisfy the YUV pixel format
     // requirements. Specifically, it will round the width up to a multiple of 8 and the height up
@@ -118,8 +116,7 @@ int handle_window_size_changed(SDL_Event *event) {
     static int tries = 0;  // number of attemps to force window size to be prev_desired_width/height
     if (current_width != desired_width || current_height != desired_height) {
         // Avoid trying to force the window size forever, stop after 4 attempts
-        if (!(prev_desired_width == desired_width && prev_desired_height == desired_height &&
-              tries > 4)) {
+        if (!(prev_desired_width == desired_width && prev_desired_height == desired_height && tries > 4)) {
             if (prev_desired_width == desired_width && prev_desired_height == desired_height) {
                 tries++;
             } else {
@@ -129,8 +126,8 @@ int handle_window_size_changed(SDL_Event *event) {
             }
 
             SDL_SetWindowSize((SDL_Window *)window, desired_width / dpi, desired_height / dpi);
-            LOG_INFO("Forcing a resize from %dx%d to %dx%d", current_width, current_height,
-                     desired_width, desired_height);
+            LOG_INFO("Forcing a resize from %dx%d to %dx%d", current_width, current_height, desired_width,
+                     desired_height);
             current_width = get_window_pixel_width((SDL_Window *)window);
             current_height = get_window_pixel_height((SDL_Window *)window);
 
@@ -159,8 +156,8 @@ int handle_window_size_changed(SDL_Event *event) {
     }
     safe_SDL_UnlockMutex(window_resize_mutex);
 
-    LOG_INFO("Window %d resized to %dx%d (Actual %dx%d)", event->window.windowID,
-             event->window.data1, event->window.data2, output_width, output_height);
+    LOG_INFO("Window %d resized to %dx%d (Actual %dx%d)", event->window.windowID, event->window.data1,
+             event->window.data2, output_width, output_height);
 
     return 0;
 }
@@ -176,8 +173,7 @@ int handle_key_up_down(SDL_Event *event) {
             (int): 0 on success
     */
 
-    FractalKeycode keycode =
-        (FractalKeycode)SDL_GetScancodeFromName(SDL_GetKeyName(event->key.keysym.sym));
+    FractalKeycode keycode = (FractalKeycode)SDL_GetScancodeFromName(SDL_GetKeyName(event->key.keysym.sym));
     bool is_pressed = event->key.type == SDL_KEYDOWN;
 
     // LOG_INFO("Scancode: %d", event->key.keysym.scancode);
@@ -296,13 +292,11 @@ int handle_mouse_wheel(SDL_Event *event) {
         return 0;
     }
 
-    FractalMouseWheelMomentumType momentum_phase =
-        (FractalMouseWheelMomentumType)event->wheel.momentum_phase;
+    FractalMouseWheelMomentumType momentum_phase = (FractalMouseWheelMomentumType)event->wheel.momentum_phase;
 
     if (momentum_phase == MOUSEWHEEL_MOMENTUM_BEGIN) {
         active_momentum_scroll = true;
-    } else if (momentum_phase == MOUSEWHEEL_MOMENTUM_END ||
-               momentum_phase == MOUSEWHEEL_MOMENTUM_NONE) {
+    } else if (momentum_phase == MOUSEWHEEL_MOMENTUM_END || momentum_phase == MOUSEWHEEL_MOMENTUM_NONE) {
         active_momentum_scroll = false;
     }
 

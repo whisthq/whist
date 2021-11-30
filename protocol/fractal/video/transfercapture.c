@@ -25,9 +25,9 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
             LOG_INFO("Switching to other Nvidia encoder!");
             encoder->active_encoder_idx = encoder->active_encoder_idx == 1 ? 0 : 1;
             if (encoder->nvidia_encoders[encoder->active_encoder_idx] == NULL) {
-                encoder->nvidia_encoders[encoder->active_encoder_idx] = create_nvidia_encoder(
-                    old_encoder->bitrate, old_encoder->codec_type, old_encoder->width,
-                    old_encoder->height, *get_video_thread_cuda_context_ptr());
+                encoder->nvidia_encoders[encoder->active_encoder_idx] =
+                    create_nvidia_encoder(old_encoder->bitrate, old_encoder->codec_type, old_encoder->width,
+                                          old_encoder->height, *get_video_thread_cuda_context_ptr());
             }
             video_encoder_set_iframe(encoder);
         }
@@ -38,8 +38,7 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
         resource_to_register.pitch = device->pitch;
         resource_to_register.device_type = device->last_capture_device;
         resource_to_register.texture_pointer = device->frame_data;
-        return nvidia_encoder_frame_intake(encoder->nvidia_encoders[encoder->active_encoder_idx],
-                                           resource_to_register);
+        return nvidia_encoder_frame_intake(encoder->nvidia_encoders[encoder->active_encoder_idx], resource_to_register);
     }
 #endif  // linux
 

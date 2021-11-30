@@ -73,8 +73,7 @@ NvidiaCaptureDevice* create_nvidia_capture_device() {
      * Resolve the 'NvFBCCreateInstance' symbol that will allow us to get
      * the API function pointers.
      */
-    PNVFBCCREATEINSTANCE nv_fbc_create_instance_ptr =
-        (PNVFBCCREATEINSTANCE)dlsym(lib_nvfbc, "NvFBCCreateInstance");
+    PNVFBCCREATEINSTANCE nv_fbc_create_instance_ptr = (PNVFBCCREATEINSTANCE)dlsym(lib_nvfbc, "NvFBCCreateInstance");
     if (nv_fbc_create_instance_ptr == NULL) {
         LOG_ERROR("Unable to resolve symbol 'NvFBCCreateInstance'");
         return NULL;
@@ -117,8 +116,7 @@ NvidiaCaptureDevice* create_nvidia_capture_device() {
 
     status = device->p_fbc_fn.nvFBCGetStatus(device->fbc_handle, &status_params);
     if (status != NVFBC_SUCCESS) {
-        LOG_ERROR("Nvidia Error: %d %s", status,
-                  device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
+        LOG_ERROR("Nvidia Error: %d %s", status, device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         destroy_nvidia_capture_device(device);
         return NULL;
     }
@@ -206,8 +204,7 @@ int nvidia_bind_context(NvidiaCaptureDevice* device) {
     bind_params.dwVersion = NVFBC_BIND_CONTEXT_PARAMS_VER;
     NVFBCSTATUS status = device->p_fbc_fn.nvFBCBindContext(device->fbc_handle, &bind_params);
     if (status != NVFBC_SUCCESS) {
-        LOG_ERROR("Error %d: %s", status,
-                  device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
+        LOG_ERROR("Error %d: %s", status, device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return -1;
     }
     return 0;
@@ -222,8 +219,7 @@ int nvidia_release_context(NvidiaCaptureDevice* device) {
     release_params.dwVersion = NVFBC_RELEASE_CONTEXT_PARAMS_VER;
     NVFBCSTATUS status = device->p_fbc_fn.nvFBCReleaseContext(device->fbc_handle, &release_params);
     if (status != NVFBC_SUCCESS) {
-        LOG_ERROR("Error %d: %s", status,
-                  device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
+        LOG_ERROR("Error %d: %s", status, device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
         return -1;
     }
     return 0;
@@ -340,8 +336,7 @@ void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
     NVFBC_DESTROY_CAPTURE_SESSION_PARAMS destroy_capture_params = {0};
     destroy_capture_params.dwVersion = NVFBC_DESTROY_CAPTURE_SESSION_PARAMS_VER;
 
-    status =
-        device->p_fbc_fn.nvFBCDestroyCaptureSession(device->fbc_handle, &destroy_capture_params);
+    status = device->p_fbc_fn.nvFBCDestroyCaptureSession(device->fbc_handle, &destroy_capture_params);
     if (status != NVFBC_SUCCESS) {
         LOG_ERROR("%s", device->p_fbc_fn.nvFBCGetLastErrorStr(device->fbc_handle));
     }

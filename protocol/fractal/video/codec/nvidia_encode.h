@@ -66,8 +66,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
  *
  * @returns                        true on success, false on failure
  */
-bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int out_width, int out_height, int bitrate,
-                                CodecType codec);
+bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int out_width, int out_height, int bitrate, CodecType codec);
 
 /**
  * @brief                          Put the input data into the nvidia encoder

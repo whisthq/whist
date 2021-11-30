@@ -48,9 +48,8 @@ udp_context->free_packet(...);
  * @return                          The UDP network context on success, NULL
  *                                  on failure
  */
-bool create_udp_socket_context(SocketContext* context, char* destination, int port,
-                               int recvfrom_timeout_s, int connection_timeout_ms, bool using_stun,
-                               char* binary_aes_private_key);
+bool create_udp_socket_context(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
+                               int connection_timeout_ms, bool using_stun, char* binary_aes_private_key);
 
 /**
  * @brief                          Sets the burst bitrate for the given UDP SocketContext
@@ -59,8 +58,7 @@ bool create_udp_socket_context(SocketContext* context, char* destination, int po
  * @param burst_bitrate            The new burst bitrate, in MBPS
  * @param fec_packet_ratio         The percentage of packets that should be FEC
  */
-void udp_update_bitrate_settings(SocketContext* context, int burst_bitrate,
-                                 double fec_packet_ratio);
+void udp_update_bitrate_settings(SocketContext* context, int burst_bitrate, double fec_packet_ratio);
 
 /**
  * @brief                          Registers a nack buffer, so that future nacks can be handled.
@@ -73,8 +71,7 @@ void udp_update_bitrate_settings(SocketContext* context, int burst_bitrate,
  * @param max_payload_size         The largest payload that will be saved in the nack buffer
  * @param num_buffers              The number of buffers that will be stored in the nack buffer
  */
-void udp_register_nack_buffer(SocketContext* context, FractalPacketType type, int max_payload_size,
-                              int num_buffers);
+void udp_register_nack_buffer(SocketContext* context, FractalPacketType type, int max_payload_size, int num_buffers);
 
 /**
  * @brief                          Respond to a nack for a given ID/Index

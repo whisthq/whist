@@ -84,8 +84,8 @@ int discover_ports(bool *with_stun) {
     // Create TCP context
     SocketContext context;
     LOG_INFO("Trying to connect (Using STUN: %s)", *with_stun ? "true" : "false");
-    if (!create_tcp_socket_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                                   *with_stun, (char *)client_binary_aes_private_key)) {
+    if (!create_tcp_socket_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT, *with_stun,
+                                   (char *)client_binary_aes_private_key)) {
         /*
                 *using_stun = !*using_stun;
                 LOG_INFO("Trying to connect (Using STUN: %s)", *using_stun ? "true" : "false");
@@ -130,13 +130,11 @@ int discover_ports(bool *with_stun) {
         return -1;
     }
 
-    if (tcp_packet->payload_size !=
-        sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage)) {
+    if (tcp_packet->payload_size != sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage)) {
         LOG_ERROR(
             "Incorrect discovery reply message size. Expected: %d, Received: "
             "%d",
-            sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage),
-            tcp_packet->payload_size);
+            sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage), tcp_packet->payload_size);
         free_packet(&context, tcp_packet);
         destroy_socket_context(&context);
         return -1;
@@ -153,8 +151,7 @@ int discover_ports(bool *with_stun) {
     LOG_INFO("Received discovery info packet from server!");
 
     // Create and send discovery reply message
-    FractalDiscoveryReplyMessage *reply_msg =
-        (FractalDiscoveryReplyMessage *)fsmsg->discovery_reply;
+    FractalDiscoveryReplyMessage *reply_msg = (FractalDiscoveryReplyMessage *)fsmsg->discovery_reply;
 
     set_audio_frequency(reply_msg->audio_sample_rate);
     udp_port = reply_msg->udp_port;
@@ -269,15 +266,13 @@ int connect_to_server(bool with_stun) {
     }
 
     if (!create_udp_socket_context(&packet_udp_context, server_ip, udp_port, UDP_CONNECTION_TIMEOUT,
-                                   UDP_CONNECTION_WAIT, with_stun,
-                                   (char *)client_binary_aes_private_key)) {
+                                   UDP_CONNECTION_WAIT, with_stun, (char *)client_binary_aes_private_key)) {
         LOG_WARNING("Failed to establish UDP connection from server");
         return -1;
     }
 
     if (!create_tcp_socket_context(&packet_tcp_context, server_ip, tcp_port, TCP_CONNECTION_TIMEOUT,
-                                   TCP_CONNECTION_WAIT, with_stun,
-                                   (char *)client_binary_aes_private_key)) {
+                                   TCP_CONNECTION_WAIT, with_stun, (char *)client_binary_aes_private_key)) {
         LOG_WARNING("Failed to establish TCP connection with server.");
         destroy_socket_context(&packet_udp_context);
         return -1;
@@ -299,14 +294,13 @@ int send_tcp_reconnect_message() {
     fcmsg.type = MESSAGE_TCP_RECOVERY;
 
     SocketContext discovery_context;
-    if (!create_tcp_socket_context(&discovery_context, (char *)server_ip, PORT_DISCOVERY, 1, 300,
-                                   using_stun, (char *)client_binary_aes_private_key)) {
+    if (!create_tcp_socket_context(&discovery_context, (char *)server_ip, PORT_DISCOVERY, 1, 300, using_stun,
+                                   (char *)client_binary_aes_private_key)) {
         LOG_WARNING("Failed to connect to server's discovery port.");
         return -1;
     }
 
-    if (send_packet(&discovery_context, PACKET_MESSAGE, (uint8_t *)&fcmsg, (int)sizeof(fcmsg), -1) <
-        0) {
+    if (send_packet(&discovery_context, PACKET_MESSAGE, (uint8_t *)&fcmsg, (int)sizeof(fcmsg), -1) < 0) {
         LOG_ERROR("Failed to send discovery request message.");
         destroy_socket_context(&discovery_context);
         return -1;
@@ -317,8 +311,8 @@ int send_tcp_reconnect_message() {
     //     close regardless of what caused the socket failure without worrying about
     //     undefined behavior.
     destroy_socket_context(&packet_tcp_context);
-    if (!create_tcp_socket_context(&packet_tcp_context, (char *)server_ip, tcp_port, 1, 1000,
-                                   using_stun, (char *)client_binary_aes_private_key)) {
+    if (!create_tcp_socket_context(&packet_tcp_context, (char *)server_ip, tcp_port, 1, 1000, using_stun,
+                                   (char *)client_binary_aes_private_key)) {
         LOG_WARNING("Failed to connect to server's TCP port.");
         return -1;
     }
@@ -400,7 +394,6 @@ int send_fcmsg(FractalClientMessage *fcmsg) {
         static int sent_packet_id = 0;
         sent_packet_id++;
 
-        return send_packet(&packet_udp_context, PACKET_MESSAGE, fcmsg, get_fcmsg_size(fcmsg),
-                           sent_packet_id);
+        return send_packet(&packet_udp_context, PACKET_MESSAGE, fcmsg, get_fcmsg_size(fcmsg), sent_packet_id);
     }
 }

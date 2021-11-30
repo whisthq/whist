@@ -49,8 +49,7 @@ FractalRGBColor yuv_to_rgb(FractalYUVColor yuv_color) {
     int g_component = lround(1.164 * y_delta - 0.392 * u_delta - 0.813 * v_delta);
     int b_component = lround(1.164 * y_delta + 2.017 * u_delta);
 
-    FractalRGBColor rgb_color = {CLAMP_COLOR(r_component), CLAMP_COLOR(g_component),
-                                 CLAMP_COLOR(b_component)};
+    FractalRGBColor rgb_color = {CLAMP_COLOR(r_component), CLAMP_COLOR(g_component), CLAMP_COLOR(b_component)};
 
     return rgb_color;
 }
@@ -83,7 +82,6 @@ bool color_requires_dark_text(FractalRGBColor rgb_color) {
         Return:
             (bool): True if the color needs dark text, and false if the color needs light text.
     */
-    return ((float)rgb_color.red * 0.2126 + (float)rgb_color.green * 0.7152 +
-                (float)rgb_color.blue * 0.0722 >
+    return ((float)rgb_color.red * 0.2126 + (float)rgb_color.green * 0.7152 + (float)rgb_color.blue * 0.0722 >
             255. * 0.179);
 }

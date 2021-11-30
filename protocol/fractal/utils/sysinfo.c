@@ -52,20 +52,20 @@ void print_os_info() {
     DWORD version_size = sizeof(version);
     DWORD buildlab_size = sizeof(buildlab);
     LSTATUS ret;
-    ret = RegGetValueA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
-                       "ProductName", RRF_RT_ANY, NULL, &product, &product_size);
+    ret = RegGetValueA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ProductName", RRF_RT_ANY,
+                       NULL, &product, &product_size);
     if (ret != ERROR_SUCCESS) {
         LOG_INFO("ERROR: %ll", ret);
         product[0] = '\0';
     }
-    ret = RegGetValueA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
-                       "CurrentVersion", RRF_RT_ANY, NULL, &version, &version_size);
+    ret = RegGetValueA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "CurrentVersion",
+                       RRF_RT_ANY, NULL, &version, &version_size);
     if (ret != ERROR_SUCCESS) {
         LOG_INFO("ERROR: %ll", ret);
         version[0] = '\0';
     }
-    ret = RegGetValueA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
-                       "BuildLab", RRF_RT_ANY, NULL, &buildlab, &buildlab_size);
+    ret = RegGetValueA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "BuildLab", RRF_RT_ANY,
+                       NULL, &buildlab, &buildlab_size);
     if (ret != ERROR_SUCCESS) {
         LOG_INFO("ERROR: %ll", ret);
         buildlab[0] = '\0';
@@ -94,8 +94,7 @@ void print_os_info() {
     char buf[1024];
     struct utsname uts;
     uname(&uts);
-    snprintf(buf, sizeof(buf), "%s %s %s %s %s", uts.machine, uts.sysname, uts.nodename,
-             uts.release, uts.version);
+    snprintf(buf, sizeof(buf), "%s %s %s %s %s", uts.machine, uts.sysname, uts.nodename, uts.release, uts.version);
     LOG_INFO("  OS: %s", buf);
 #else
     snprintf(buf, sizeof(buf), "Other");
@@ -117,8 +116,7 @@ void print_model_info() {
 
         // Get rid of trailing whitespace
         int sz = (int)strlen(make_model);
-        while (sz > 0 && (make_model[sz - 1] == ' ' || make_model[sz - 1] == '\n' ||
-                          make_model[sz - 1] == '\r')) {
+        while (sz > 0 && (make_model[sz - 1] == ' ' || make_model[sz - 1] == '\n' || make_model[sz - 1] == '\r')) {
             sz--;
         }
         make_model[sz] = '\0';
@@ -192,8 +190,7 @@ void print_monitors() {
 
     IDXGIAdapter1* adapter;
     // GET ALL GPUS
-    while (factory->lpVtbl->EnumAdapters1(factory, num_adapters, &adapter) !=
-           DXGI_ERROR_NOT_FOUND) {
+    while (factory->lpVtbl->EnumAdapters1(factory, num_adapters, &adapter) != DXGI_ERROR_NOT_FOUND) {
         if (num_adapters == MAX_NUM_ADAPTERS) {
             LOG_WARNING("Too many adaters!\n");
             break;
@@ -214,13 +211,10 @@ void print_monitors() {
     // GET ALL MONITORS
     for (i = 0; i < num_adapters; i++) {
         IDXGIOutput* output;
-        for (j = 0;
-             adapters[i]->lpVtbl->EnumOutputs(adapters[i], j, &output) != DXGI_ERROR_NOT_FOUND;
-             j++) {
+        for (j = 0; adapters[i]->lpVtbl->EnumOutputs(adapters[i], j, &output) != DXGI_ERROR_NOT_FOUND; j++) {
             DXGI_OUTPUT_DESC output_desc;
             hr = output->lpVtbl->GetDesc(output, &output_desc);
-            LOG_INFO("Found monitor %d on adapter %lu. Monitor %d named %S", j, i, j,
-                     output_desc.DeviceName);
+            LOG_INFO("Found monitor %d on adapter %lu. Monitor %d named %S", j, i, j, output_desc.DeviceName);
 
             HMONITOR h_monitor = output_desc.Monitor;
             MONITORINFOEXW monitor_info;
@@ -257,8 +251,8 @@ void print_monitors() {
             LOG_INFO(
                 "Resolution of %dx%d, Refresh Rate of %d, DPI %d, location "
                 "(%d,%d), orientation %s",
-                dev_mode.dmPelsWidth, dev_mode.dmPelsHeight, dev_mode.dmDisplayFrequency, dpi_x,
-                dev_mode.dmPosition.x, dev_mode.dmPosition.y, orientation);
+                dev_mode.dmPelsWidth, dev_mode.dmPelsHeight, dev_mode.dmDisplayFrequency, dpi_x, dev_mode.dmPosition.x,
+                dev_mode.dmPosition.y, orientation);
         }
     }
 #endif
@@ -348,9 +342,7 @@ void cpu_id(unsigned i, unsigned regs[4]) {
 #ifdef _WIN32
     __cpuid((int*)regs, (int)i);
 #else
-    asm volatile("cpuid"
-                 : "=a"(regs[0]), "=b"(regs[1]), "=c"(regs[2]), "=d"(regs[3])
-                 : "a"(i), "c"(0));
+    asm volatile("cpuid" : "=a"(regs[0]), "=b"(regs[1]), "=c"(regs[2]), "=d"(regs[3]) : "a"(i), "c"(0));
     // ECX is set to zero for CPUID function 4
 #endif
 }

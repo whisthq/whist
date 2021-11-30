@@ -72,16 +72,14 @@ AudioDevice *create_audio_device() {
     res = snd_pcm_hw_params_set_format(audio_device->handle, params, audio_device->sample_format);
 
     if (res < 0) {
-        LOG_WARNING("PCM sample format 'enum _snd_pcm_format %d' unavailable.",
-                    audio_device->sample_format);
+        LOG_WARNING("PCM sample format 'enum _snd_pcm_format %d' unavailable.", audio_device->sample_format);
         FREE_ALL();
         return NULL;
     }
 
     // number of channels
     audio_device->channels = 2;
-    res =
-        snd_pcm_hw_params_set_channels_near(audio_device->handle, params, &audio_device->channels);
+    res = snd_pcm_hw_params_set_channels_near(audio_device->handle, params, &audio_device->channels);
     if (res < 0) {
         LOG_WARNING("PCM cannot set format with num channels: %d", audio_device->channels);
         FREE_ALL();
@@ -106,8 +104,7 @@ AudioDevice *create_audio_device() {
     // set stream rate
     audio_device->sample_rate = 44100;  // Hertz
     int dir = 0;
-    res = snd_pcm_hw_params_set_rate_near(audio_device->handle, params, &audio_device->sample_rate,
-                                          &dir);
+    res = snd_pcm_hw_params_set_rate_near(audio_device->handle, params, &audio_device->sample_rate, &dir);
     if (res < 0) {
         LOG_WARNING("PCM cannot set format with sample rate: %d", audio_device->sample_rate);
         FREE_ALL();
@@ -116,8 +113,7 @@ AudioDevice *create_audio_device() {
 
     // set frames per period
     audio_device->num_frames = 8;
-    res = snd_pcm_hw_params_set_period_size_near(audio_device->handle, params,
-                                                 &audio_device->num_frames, 0);
+    res = snd_pcm_hw_params_set_period_size_near(audio_device->handle, params, &audio_device->num_frames, 0);
 
     if (res < 0) {
         LOG_WARNING("PCM cannot set period: %s", snd_strerror(res));
@@ -125,12 +121,10 @@ AudioDevice *create_audio_device() {
         return NULL;
     }
 
-    audio_device->frame_size =
-        (snd_pcm_format_width(audio_device->sample_format) / 8) * audio_device->channels;
+    audio_device->frame_size = (snd_pcm_format_width(audio_device->sample_format) / 8) * audio_device->channels;
     audio_device->buffer_size = audio_device->num_frames * audio_device->frame_size;
 
-    res = snd_pcm_hw_params_set_buffer_size_near(audio_device->handle, params,
-                                                 &audio_device->buffer_size);
+    res = snd_pcm_hw_params_set_buffer_size_near(audio_device->handle, params, &audio_device->buffer_size);
     if (res < 0) {
         LOG_WARNING("PCM Error setting buffersize: [%s]\n", snd_strerror(res));
         FREE_ALL();

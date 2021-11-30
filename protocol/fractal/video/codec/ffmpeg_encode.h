@@ -32,11 +32,7 @@ Custom Types
  * @brief   Encode type.
  * @details Type of encoding used for video encoding.
  */
-typedef enum FFmpegEncodeType {
-    SOFTWARE_ENCODE = 0,
-    NVENC_ENCODE = 1,
-    QSV_ENCODE = 2
-} FFmpegEncodeType;
+typedef enum FFmpegEncodeType { SOFTWARE_ENCODE = 0, NVENC_ENCODE = 1, QSV_ENCODE = 2 } FFmpegEncodeType;
 
 /**
  * @brief           Struct for handling ffmpeg encoding of video frames. If software encoding, the
@@ -96,12 +92,12 @@ Public Functions
  *
  * @returns                        The newly created encoder
  */
-FFmpegEncoder* create_ffmpeg_encoder(int in_width, int in_height, int out_width, int out_height,
-                                     int bitrate, CodecType codec_type);
+FFmpegEncoder* create_ffmpeg_encoder(int in_width, int in_height, int out_width, int out_height, int bitrate,
+                                     CodecType codec_type);
 
 // Reconfigure the encoder, with the same parameters as in create_ffmpeg_encoder
-bool ffmpeg_reconfigure_encoder(FFmpegEncoder* encoder, int in_width, int in_height, int out_width,
-                                int out_height, int bitrate, CodecType codec_type);
+bool ffmpeg_reconfigure_encoder(FFmpegEncoder* encoder, int in_width, int in_height, int out_width, int out_height,
+                                int bitrate, CodecType codec_type);
 /**
  * @brief                          Put the input data into a software frame, and
  *                                 upload to a hardware frame if applicable.

@@ -196,15 +196,13 @@ void sync_decoder_parameters(VideoFrame* frame) {
         Arguments:
             frame (VideoFrame*): next frame to render
     */
-    if (frame->width != server_width || frame->height != server_height ||
-        frame->codec_type != server_codec_type) {
+    if (frame->width != server_width || frame->height != server_height || frame->codec_type != server_codec_type) {
         if (frame->is_iframe) {
             LOG_INFO(
                 "Updating client rendering to match server's width and "
                 "height and codec! "
                 "From %dx%d, codec %d to %dx%d, codec %d",
-                server_width, server_height, server_codec_type, frame->width, frame->height,
-                frame->codec_type);
+                server_width, server_height, server_codec_type, frame->width, frame->height, frame->codec_type);
             update_decoder_parameters(frame->width, frame->height, frame->codec_type);
         } else {
             LOG_INFO("Wants to change resolution, but not an i-frame!");
@@ -223,8 +221,8 @@ SDL_Rect get_true_render_rect() {
             (SDL_Rect): the subsection of the texture we should actually render to the screen
      */
     int render_width, render_height;
-    if (output_width <= server_width && server_width <= output_width + 8 &&
-        output_height <= server_height && server_height <= output_height + 2) {
+    if (output_width <= server_width && server_width <= output_width + 8 && output_height <= server_height &&
+        server_height <= output_height + 2) {
         render_width = output_width;
         render_height = output_height;
         if (server_width > output_width || server_height > output_height) {
@@ -242,8 +240,8 @@ SDL_Rect get_true_render_rect() {
             last_server_dims = server_width * 100000LL + server_height;
             last_output_dims = output_width * 100000LL + output_height;
             if (!already_sent_message) {
-                LOG_WARNING("Truncating window from %dx%d to %dx%d", server_width, server_height,
-                            output_width, output_height);
+                LOG_WARNING("Truncating window from %dx%d to %dx%d", server_width, server_height, output_width,
+                            output_height);
                 already_sent_message = true;
             }
         }
@@ -280,8 +278,7 @@ bool try_request_iframe_to_catch_up() {
                     "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
                     "and the next frame to render has been alive for %fms. I-Frame is now being "
                     "requested to catch-up.",
-                    video_ring_buffer->max_id,
-                    video_ring_buffer->max_id - video_data.last_rendered_id,
+                    video_ring_buffer->max_id, video_ring_buffer->max_id - video_data.last_rendered_id,
                     get_timer(ctx->frame_creation_timer) * 1000);
             }
             return true;
@@ -321,8 +318,7 @@ void update_cursor(VideoFrame* frame) {
                 // use bitmap data to set cursor
                 SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
                     cursor->bmp, cursor->bmp_width, cursor->bmp_height, sizeof(uint32_t) * 8,
-                    sizeof(uint32_t) * cursor->bmp_width, CURSORIMAGE_R, CURSORIMAGE_G,
-                    CURSORIMAGE_B, CURSORIMAGE_A);
+                    sizeof(uint32_t) * cursor->bmp_width, CURSORIMAGE_R, CURSORIMAGE_G, CURSORIMAGE_B, CURSORIMAGE_A);
 
                 // Use BLENDMODE_NONE to allow for proper cursor blit-resize
                 SDL_SetSurfaceBlendMode(cursor_surface, SDL_BLENDMODE_NONE);
@@ -338,17 +334,15 @@ void update_cursor(VideoFrame* frame) {
                 // Create the scaled cursor surface which takes DPI into account
                 SDL_Surface* scaled_cursor_surface = SDL_CreateRGBSurface(
                     0, cursor->bmp_width * 96 / cursor_dpi, cursor->bmp_height * 96 / cursor_dpi,
-                    cursor_surface->format->BitsPerPixel, cursor_surface->format->Rmask,
-                    cursor_surface->format->Gmask, cursor_surface->format->Bmask,
-                    cursor_surface->format->Amask);
+                    cursor_surface->format->BitsPerPixel, cursor_surface->format->Rmask, cursor_surface->format->Gmask,
+                    cursor_surface->format->Bmask, cursor_surface->format->Amask);
 
                 // Copy the original cursor into the scaled surface
                 SDL_BlitScaled(cursor_surface, NULL, scaled_cursor_surface, NULL);
 
                 // Potentially SDL_SetSurfaceBlendMode here since X11 cursor BMPs are
                 // pre-alpha multplied. Remember to adjust hot_x/y by the DPI scaling.
-                sdl_cursor = SDL_CreateColorCursor(scaled_cursor_surface,
-                                                   cursor->bmp_hot_x * 96 / cursor_dpi,
+                sdl_cursor = SDL_CreateColorCursor(scaled_cursor_surface, cursor->bmp_hot_x * 96 / cursor_dpi,
                                                    cursor->bmp_hot_y * 96 / cursor_dpi);
                 SDL_FreeSurface(cursor_surface);
                 SDL_FreeSurface(scaled_cursor_surface);
@@ -443,8 +437,8 @@ void update_decoder_parameters(int width, int height, CodecType codec_type) {
     LOG_INFO("Updating Width & Height to %dx%d and Codec to %d", width, height, codec_type);
 
     if (video_context.decoder) {
-        SDL_Thread* destroy_decoder_thread = SDL_CreateThread(
-            multithreaded_destroy_decoder, "multithreaded_destroy_decoder", video_context.decoder);
+        SDL_Thread* destroy_decoder_thread =
+            SDL_CreateThread(multithreaded_destroy_decoder, "multithreaded_destroy_decoder", video_context.decoder);
         SDL_DetachThread(destroy_decoder_thread);
         video_context.decoder = NULL;
     }
@@ -572,13 +566,11 @@ void update_sws_context() {
 
     // Rather than scaling the video frame data to the size of the window, we keep its original
     // dimensions so we can truncate it later.
-    av_image_alloc(video_context.data, video_context.linesize, decoder->width, decoder->height,
-                   AV_PIX_FMT_NV12, 32);
+    av_image_alloc(video_context.data, video_context.linesize, decoder->width, decoder->height, AV_PIX_FMT_NV12, 32);
     LOG_INFO("Will be converting pixel format from %s to %s", av_get_pix_fmt_name(sws_input_fmt),
              av_get_pix_fmt_name(AV_PIX_FMT_NV12));
-    video_context.sws =
-        sws_getContext(decoder->width, decoder->height, sws_input_fmt, decoder->width,
-                       decoder->height, AV_PIX_FMT_NV12, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+    video_context.sws = sws_getContext(decoder->width, decoder->height, sws_input_fmt, decoder->width, decoder->height,
+                                       AV_PIX_FMT_NV12, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 }
 
 void update_sws_pixel_format() {
@@ -612,14 +604,12 @@ void finalize_video_context_data() {
     update_sws_pixel_format();
     if (video_context.sws) {
         sws_scale(video_context.sws, (uint8_t const* const*)video_context.decoder->sw_frame->data,
-                  video_context.decoder->sw_frame->linesize, 0, video_context.decoder->height,
-                  video_context.data, video_context.linesize);
+                  video_context.decoder->sw_frame->linesize, 0, video_context.decoder->height, video_context.data,
+                  video_context.linesize);
     } else {
         // we can directly copy the data
-        memcpy(video_context.data, video_context.decoder->sw_frame->data,
-               sizeof(video_context.data));
-        memcpy(video_context.linesize, video_context.decoder->sw_frame->linesize,
-               sizeof(video_context.linesize));
+        memcpy(video_context.data, video_context.decoder->sw_frame->data, sizeof(video_context.data));
+        memcpy(video_context.linesize, video_context.decoder->sw_frame->linesize, sizeof(video_context.linesize));
     }
 }
 
@@ -635,9 +625,8 @@ void replace_texture() {
         video_context.texture = NULL;
     }
     // Create a new texture
-    SDL_Texture* texture =
-        SDL_CreateTexture(video_context.renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STREAMING,
-                          MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
+    SDL_Texture* texture = SDL_CreateTexture(video_context.renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STREAMING,
+                                             MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
     if (!texture) {
         LOG_FATAL("SDL: could not create texture - exiting");
     }
@@ -677,18 +666,14 @@ void calculate_statistics() {
     // Update mbps every STATISTICS_SECONDS seconds
     if (get_timer(t) > STATISTICS_SECONDS) {
         stats.num_nacks_per_second = video_ring_buffer->num_packets_nacked / STATISTICS_SECONDS;
-        stats.num_received_packets_per_second =
-            video_ring_buffer->num_packets_received / STATISTICS_SECONDS;
-        stats.num_skipped_frames_per_second =
-            video_ring_buffer->num_frames_skipped / STATISTICS_SECONDS;
-        stats.num_rendered_frames_per_second =
-            video_ring_buffer->num_frames_rendered / STATISTICS_SECONDS;
+        stats.num_received_packets_per_second = video_ring_buffer->num_packets_received / STATISTICS_SECONDS;
+        stats.num_skipped_frames_per_second = video_ring_buffer->num_frames_skipped / STATISTICS_SECONDS;
+        stats.num_rendered_frames_per_second = video_ring_buffer->num_frames_rendered / STATISTICS_SECONDS;
 
-        LOG_METRIC("\"rendered_fps\" : %d, \"skipped_fps\" : %d",
-                   stats.num_rendered_frames_per_second, stats.num_skipped_frames_per_second);
+        LOG_METRIC("\"rendered_fps\" : %d, \"skipped_fps\" : %d", stats.num_rendered_frames_per_second,
+                   stats.num_skipped_frames_per_second);
         new_bitrates = calculate_new_bitrate(stats);
-        if (new_bitrates.bitrate != client_max_bitrate ||
-            new_bitrates.burst_bitrate != max_burst_bitrate) {
+        if (new_bitrates.bitrate != client_max_bitrate || new_bitrates.burst_bitrate != max_burst_bitrate) {
             client_max_bitrate = max(min(new_bitrates.bitrate, MAXIMUM_BITRATE), MINIMUM_BITRATE);
             max_burst_bitrate = new_bitrates.burst_bitrate;
             update_bitrate = true;
@@ -711,11 +696,9 @@ void skip_to_next_iframe() {
         if (video_data.most_recent_iframe > 0 && video_data.last_rendered_id == -1) {
             video_data.last_rendered_id = video_data.most_recent_iframe - 1;
         } else if (video_data.most_recent_iframe - 1 > video_data.last_rendered_id) {
-            LOG_INFO("Skipping from %d to i-frame %d", video_data.last_rendered_id,
-                     video_data.most_recent_iframe);
-            for (int i =
-                     max(video_data.last_rendered_id + 1,
-                         video_data.most_recent_iframe - video_ring_buffer->frames_received + 1);
+            LOG_INFO("Skipping from %d to i-frame %d", video_data.last_rendered_id, video_data.most_recent_iframe);
+            for (int i = max(video_data.last_rendered_id + 1,
+                             video_data.most_recent_iframe - video_ring_buffer->frames_received + 1);
                  i < video_data.most_recent_iframe; i++) {
                 FrameData* frame_data = get_frame_at_id(video_ring_buffer, i);
                 if (frame_data->id == i) {
@@ -855,8 +838,8 @@ int32_t receive_video(FractalPacket* packet) {
             bool is_iframe = ((VideoFrame*)ctx->frame_buffer)->is_iframe;
 
 #if LOG_VIDEO
-            LOG_INFO("Received Video Frame ID %d (Packets: %d) (Size: %d) %s", ctx->id,
-                     ctx->num_packets, ctx->frame_size, is_iframe ? "(i-frame)" : "");
+            LOG_INFO("Received Video Frame ID %d (Packets: %d) (Size: %d) %s", ctx->id, ctx->num_packets,
+                     ctx->frame_size, is_iframe ? "(i-frame)" : "");
 #endif
 
             // If it's an I-frame, then just skip right to it, if the id is ahead of
@@ -1005,8 +988,7 @@ void log_frame_statistics(VideoFrame* frame) {
 #endif
 
     if ((int)(get_total_frame_size(frame)) != render_context.frame_size) {
-        LOG_INFO("Incorrect Frame Size! %d instead of %d", get_total_frame_size(frame),
-                 render_context.frame_size);
+        LOG_INFO("Incorrect Frame Size! %d instead of %d", get_total_frame_size(frame), render_context.frame_size);
     }
 
 #define FPS_LOG_FREQUENCY_IN_SEC 10
@@ -1021,8 +1003,7 @@ void log_frame_statistics(VideoFrame* frame) {
             start_timer(&time_since_last_frame);
             start_timer(&fps_clock);
         }
-        log_double_statistic(VIDEO_TIME_BETWEEN_FRAMES,
-                             get_timer(time_since_last_frame) * MS_IN_SECOND);
+        log_double_statistic(VIDEO_TIME_BETWEEN_FRAMES, get_timer(time_since_last_frame) * MS_IN_SECOND);
         start_timer(&time_since_last_frame);
 
         number_of_frames++;
@@ -1066,15 +1047,14 @@ int render_video() {
         // want to render this empty frame though. To avoid a MacOS bug where rendering hangs for 1
         // second upon window occlusion, we immediately block rendering when that happens. The
         // server will send an iframe when the window is visible again.
-        if (frame->is_empty_frame ||
-            (SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_OCCLUDED)) {
+        if (frame->is_empty_frame || (SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_OCCLUDED)) {
             // We pretend we just rendered this frame. If we don't do this we'll keep assuming that
             // we're behind on frames and start requesting a bunch of iframes, which forces a
             // render.
             video_data.last_rendered_id = render_context.id;
             rendering = false;
-            if (!frame->is_window_visible && !(SDL_GetWindowFlags((SDL_Window*)window) &
-                                               (SDL_WINDOW_OCCLUDED | SDL_WINDOW_MINIMIZED))) {
+            if (!frame->is_window_visible &&
+                !(SDL_GetWindowFlags((SDL_Window*)window) & (SDL_WINDOW_OCCLUDED | SDL_WINDOW_MINIMIZED))) {
                 // The server thinks the client window is occluded/minimized, but it isn't. So we'll
                 // correct it.
                 // NOTE: Most of the time, this is just because there was a delay between the window
@@ -1104,8 +1084,8 @@ int render_video() {
         sync_decoder_parameters(frame);
 
         start_timer(&latency_clock);
-        if (video_decoder_send_packets(video_context.decoder, get_frame_videodata(frame),
-                                       frame->videodata_length) < 0) {
+        if (video_decoder_send_packets(video_context.decoder, get_frame_videodata(frame), frame->videodata_length) <
+            0) {
             LOG_WARNING("Failed to send packets to the decoder!");
             rendering = false;
             return -1;
@@ -1156,12 +1136,11 @@ int render_video() {
                 // frame into the texture.
 
                 start_timer(&latency_clock);
-                SDL_Rect texture_rect =
-                    new_sdl_rect(0, 0, video_context.decoder->width, video_context.decoder->height);
+                SDL_Rect texture_rect = new_sdl_rect(0, 0, video_context.decoder->width, video_context.decoder->height);
                 // TODO: wrap this in Whist update texture
-                int ret = SDL_UpdateNVTexture(video_context.texture, &texture_rect,
-                                              video_context.data[0], video_context.linesize[0],
-                                              video_context.data[1], video_context.linesize[1]);
+                int ret =
+                    SDL_UpdateNVTexture(video_context.texture, &texture_rect, video_context.data[0],
+                                        video_context.linesize[0], video_context.data[1], video_context.linesize[1]);
                 if (ret == -1) {
                     LOG_ERROR("SDL_UpdateNVTexture failed: %s", SDL_GetError());
                 }
@@ -1194,8 +1173,8 @@ int render_video() {
             safe_SDL_UnlockMutex(render_mutex);
 
 #if LOG_VIDEO
-            LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", render_context.id,
-                      render_context.frame_size, get_timer(render_context.frame_creation_timer));
+            LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", render_context.id, render_context.frame_size,
+                      get_timer(render_context.frame_creation_timer));
 #endif
 
             // Clean up: set global variables and free the frame buffer
@@ -1270,8 +1249,7 @@ void destroy_video() {
 
         if (video_context.decoder) {
             SDL_Thread* destroy_decoder_thread =
-                SDL_CreateThread(multithreaded_destroy_decoder, "multithreaded_destroy_decoder",
-                                 video_context.decoder);
+                SDL_CreateThread(multithreaded_destroy_decoder, "multithreaded_destroy_decoder", video_context.decoder);
             SDL_DetachThread(destroy_decoder_thread);
             video_context.decoder = NULL;
         }

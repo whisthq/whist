@@ -150,12 +150,10 @@ void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t 
         double elapsed_seconds = get_timer(INTERNAL(ctx)->coin_bucket_last_fill);
         start_timer(&INTERNAL(ctx)->coin_bucket_last_fill);
         int burst_bitrate = network_throttler_get_burst_bitrate(ctx);
-        const size_t coin_bucket_max = (size_t)((double)NETWORK_THROTTLER_MAX_COIN_BUCKET_MS /
-                                                MS_IN_SECOND * burst_bitrate / BITS_IN_BYTE);
-        const size_t coin_bucket_update =
-            (size_t)((double)elapsed_seconds * burst_bitrate / BITS_IN_BYTE);
-        INTERNAL(ctx)->coin_bucket =
-            min(INTERNAL(ctx)->coin_bucket + coin_bucket_update, coin_bucket_max);
+        const size_t coin_bucket_max =
+            (size_t)((double)NETWORK_THROTTLER_MAX_COIN_BUCKET_MS / MS_IN_SECOND * burst_bitrate / BITS_IN_BYTE);
+        const size_t coin_bucket_update = (size_t)((double)elapsed_seconds * burst_bitrate / BITS_IN_BYTE);
+        INTERNAL(ctx)->coin_bucket = min(INTERNAL(ctx)->coin_bucket + coin_bucket_update, coin_bucket_max);
 
         // We don't want to block the current thread forever if the packet is larger than
         // the max coin bucket, so cap it as well.

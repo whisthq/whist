@@ -63,8 +63,7 @@ void free_packet(SocketContext* context, FractalPacket* packet) {
     context->free_packet(context->context, packet);
 }
 
-int send_packet(SocketContext* context, FractalPacketType packet_type, void* payload,
-                int payload_size, int packet_id) {
+int send_packet(SocketContext* context, FractalPacketType packet_type, void* payload, int payload_size, int packet_id) {
     if (context->context == NULL) {
         LOG_ERROR("The given SocketContext has not been initialized!");
         return -1;
@@ -125,8 +124,7 @@ bool sign_private_key(PrivateKeyData* priv_key_data, int recv_size, void* privat
  *
  * @returns                        True if the verification succeeds, false if it fails
  */
-bool confirm_private_key(PrivateKeyData* our_priv_key_data,
-                         PrivateKeyData* our_signed_priv_key_data, int recv_size,
+bool confirm_private_key(PrivateKeyData* our_priv_key_data, PrivateKeyData* our_signed_priv_key_data, int recv_size,
                          void* private_key);
 
 /*
@@ -202,8 +200,7 @@ void set_timeout(SOCKET socket, int timeout_ms) {
 
         clock read_timeout = create_clock(timeout_ms);
 
-        if (setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&read_timeout,
-                       sizeof(read_timeout)) < 0) {
+        if (setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&read_timeout, sizeof(read_timeout)) < 0) {
             int err = get_last_network_error();
             LOG_WARNING("Failed to set timeout: %d. Msg: %s\n", err, strerror(err));
 
@@ -306,20 +303,17 @@ bool handshake_private_key(SocketContextData* context) {
     // Generate and send private key request data
     prepare_private_key_request(&our_priv_key_data);
     if (send(context->socket, (const char*)&our_priv_key_data, sizeof(our_priv_key_data), 0) < 0) {
-        LOG_ERROR("send(3) failed! Could not send private key request data! %d",
-                  get_last_network_error());
+        LOG_ERROR("send(3) failed! Could not send private key request data! %d", get_last_network_error());
         return false;
     }
     fractal_sleep(50);
 
     // Receive, sign, and send back their private key request data
-    while ((recv_size =
-                recvfrom(context->socket, (char*)&their_priv_key_data, sizeof(their_priv_key_data),
-                         0, (struct sockaddr*)(&context->addr), &slen)) == 0)
+    while ((recv_size = recvfrom(context->socket, (char*)&their_priv_key_data, sizeof(their_priv_key_data), 0,
+                                 (struct sockaddr*)(&context->addr), &slen)) == 0)
         ;
     if (recv_size < 0) {
-        LOG_WARNING("Did not receive other connection's private key request: %d",
-                    get_last_network_error());
+        LOG_WARNING("Did not receive other connection's private key request: %d", get_last_network_error());
         return false;
     }
     LOG_INFO("Private key request received");
@@ -327,17 +321,14 @@ bool handshake_private_key(SocketContextData* context) {
         LOG_ERROR("signPrivateKey failed!");
         return false;
     }
-    if (send(context->socket, (const char*)&their_priv_key_data, sizeof(their_priv_key_data), 0) <
-        0) {
-        LOG_ERROR("send(3) failed! Could not send signed private key data! %d",
-                  get_last_network_error());
+    if (send(context->socket, (const char*)&their_priv_key_data, sizeof(their_priv_key_data), 0) < 0) {
+        LOG_ERROR("send(3) failed! Could not send signed private key data! %d", get_last_network_error());
         return false;
     }
     fractal_sleep(50);
 
     // Wait for and verify their signed private key request data
-    recv_size = recv(context->socket, (char*)&our_signed_priv_key_data,
-                     sizeof(our_signed_priv_key_data), 0);
+    recv_size = recv(context->socket, (char*)&our_signed_priv_key_data, sizeof(our_signed_priv_key_data), 0);
     if (!confirm_private_key(&our_priv_key_data, &our_signed_priv_key_data, recv_size,
                              context->binary_aes_private_key)) {
         LOG_ERROR("Could not confirmPrivateKey!");
@@ -390,14 +381,12 @@ bool sign_private_key(PrivateKeyData* priv_key_data, int recv_size, void* privat
         hmac(priv_key_data->signature, &sig_data, sizeof(sig_data), private_key);
         return true;
     } else {
-        LOG_ERROR("Recv Size was not equal to PrivateKeyData: %d instead of %d", recv_size,
-                  sizeof(PrivateKeyData));
+        LOG_ERROR("Recv Size was not equal to PrivateKeyData: %d instead of %d", recv_size, sizeof(PrivateKeyData));
         return false;
     }
 }
 
-bool confirm_private_key(PrivateKeyData* our_priv_key_data,
-                         PrivateKeyData* our_signed_priv_key_data, int recv_size,
+bool confirm_private_key(PrivateKeyData* our_priv_key_data, PrivateKeyData* our_signed_priv_key_data, int recv_size,
                          void* private_key) {
     /*
         This will verify the given private key
@@ -420,8 +409,7 @@ bool confirm_private_key(PrivateKeyData* our_priv_key_data,
             SignatureData sig_data;
             memcpy(sig_data.iv, our_signed_priv_key_data->iv, sizeof(our_signed_priv_key_data->iv));
             memcpy(sig_data.private_key, private_key, sizeof(sig_data.private_key));
-            if (!verify_hmac(our_signed_priv_key_data->signature, &sig_data, sizeof(sig_data),
-                             private_key)) {
+            if (!verify_hmac(our_signed_priv_key_data->signature, &sig_data, sizeof(sig_data), private_key)) {
                 LOG_ERROR("Verify HMAC Failed");
                 return false;
             } else {
@@ -429,8 +417,7 @@ bool confirm_private_key(PrivateKeyData* our_priv_key_data,
             }
         }
     } else {
-        LOG_ERROR("Recv Size was not equal to PrivateKeyData: %d instead of %d", recv_size,
-                  sizeof(PrivateKeyData));
+        LOG_ERROR("Recv Size was not equal to PrivateKeyData: %d instead of %d", recv_size, sizeof(PrivateKeyData));
         return false;
     }
 }

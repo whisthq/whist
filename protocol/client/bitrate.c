@@ -157,9 +157,8 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
     //     i.e., we don't want to recalculate bitrate if the video is static and server is sending
     //      zero packets
     if (stats.num_received_packets_per_second + stats.num_nacks_per_second > 0) {
-        int real_throughput =
-            (int)(expected_throughput * (1.0 * stats.num_received_packets_per_second) /
-                  (1.0 * (stats.num_nacks_per_second + stats.num_received_packets_per_second)));
+        int real_throughput = (int)(expected_throughput * (1.0 * stats.num_received_packets_per_second) /
+                                    (1.0 * (stats.num_nacks_per_second + stats.num_received_packets_per_second)));
 
         if (real_throughput == expected_throughput) {
             // If this throughput meets expectations, then increment the met expectation count
@@ -176,8 +175,7 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
                 expected_throughput = (int)(expected_throughput * boost_multiplier);
             }
         } else {
-            if (expected_throughput > latest_successful_throughput &&
-                latest_successful_throughput != -1) {
+            if (expected_throughput > latest_successful_throughput && latest_successful_throughput != -1) {
                 // If the expected throughput that yielded lost packets was higher than the
                 //     last continuously successful throughput, then set the expected
                 //     throughput to the last continuously successful throughput to try it
@@ -186,16 +184,14 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
                 //     our successful throughput for now.
                 expected_throughput = latest_successful_throughput;
                 latest_successful_throughput_threshold =
-                    min(latest_successful_throughput_threshold * meet_expectations_multiplier,
-                        meet_expectations_max);
+                    min(latest_successful_throughput_threshold * meet_expectations_multiplier, meet_expectations_max);
                 meet_throughput_expectations_threshold = latest_successful_throughput_threshold;
             } else {
                 // If the expected throughput that yielded lost packets was lower than the last
                 //     continuously successful throughput, then set the expected throughput to an
                 //     EWMA-calculated new value and reset the threshold for boosting
                 //     the expected throughput after meeting threshold success.
-                expected_throughput =
-                    (int)(alpha * expected_throughput + (1 - alpha) * real_throughput);
+                expected_throughput = (int)(alpha * expected_throughput + (1 - alpha) * real_throughput);
                 meet_throughput_expectations_threshold = meet_expectations_min;
             }
 
@@ -217,8 +213,7 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
     if (stats.num_rendered_frames_per_second + stats.num_skipped_frames_per_second > 0) {
         int current_burst_heuristic =
             (int)(bitrates.burst_bitrate * (1.0 * stats.num_rendered_frames_per_second) /
-                  (1.0 *
-                   (stats.num_skipped_frames_per_second + stats.num_rendered_frames_per_second)));
+                  (1.0 * (stats.num_skipped_frames_per_second + stats.num_rendered_frames_per_second)));
 
         if (current_burst_heuristic == bitrates.burst_bitrate) {
             // If this burst bitrate is the same as the burst bitrate from the last period, then
@@ -247,16 +242,14 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
                 //     burst bitrate for now.
                 bitrates.burst_bitrate = latest_successful_burst;
                 latest_successful_burst_threshold =
-                    min(latest_successful_burst_threshold * meet_expectations_multiplier,
-                        meet_expectations_max);
+                    min(latest_successful_burst_threshold * meet_expectations_multiplier, meet_expectations_max);
                 meet_burst_expectations_threshold = latest_successful_burst_threshold;
             } else {
                 // If the burst bitrate that yielded lost packets was lower than the last
                 //     continuously successful burst bitrate, then set the burst bitrate to an
                 //     EWMA-calculated new value and reset the threshold for boosting
                 //     the burst bitrate after continuous success.
-                bitrates.burst_bitrate =
-                    (int)(alpha * bitrates.burst_bitrate + (1 - alpha) * current_burst_heuristic);
+                bitrates.burst_bitrate = (int)(alpha * bitrates.burst_bitrate + (1 - alpha) * current_burst_heuristic);
                 meet_burst_expectations_threshold = meet_expectations_min;
             }
 

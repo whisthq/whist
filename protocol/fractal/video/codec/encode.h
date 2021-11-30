@@ -82,8 +82,8 @@ Public Functions
  *
  * @returns                        The newly created encoder
  */
-VideoEncoder* create_video_encoder(int in_width, int in_height, int out_width, int out_height,
-                                   int bitrate, CodecType codec_type);
+VideoEncoder* create_video_encoder(int in_width, int in_height, int out_width, int out_height, int bitrate,
+                                   CodecType codec_type);
 
 /**
  * @brief                       Encode a frame. This will call the necessary encoding functions
@@ -108,8 +108,7 @@ int video_encoder_encode(VideoEncoder* encoder);
  * @returns                        true if the encoder was successfully reconfigured,
  *                                 false if no reconfiguration was possible
  */
-bool reconfigure_encoder(VideoEncoder* encoder, int width, int height, int bitrate,
-                         CodecType codec);
+bool reconfigure_encoder(VideoEncoder* encoder, int width, int height, int bitrate, CodecType codec);
 
 /**
  * @brief                          Set the next frame to be an IDR-frame,

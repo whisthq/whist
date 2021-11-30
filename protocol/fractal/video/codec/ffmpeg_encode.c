@@ -30,12 +30,12 @@ Private Functions
 ============================
 */
 bool set_opt(FFmpegEncoder *encoder, char *option, char *value);
-FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, int out_height,
-                                    int bitrate, CodecType codec_type);
-FFmpegEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int out_height,
-                                  int bitrate, CodecType codec_type);
-FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int out_height,
-                                 int bitrate, CodecType codec_type);
+FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, int out_height, int bitrate,
+                                    CodecType codec_type);
+FFmpegEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int out_height, int bitrate,
+                                  CodecType codec_type);
+FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int out_height, int bitrate,
+                                 CodecType codec_type);
 
 /*
 ============================
@@ -62,8 +62,8 @@ bool set_opt(FFmpegEncoder *encoder, char *option, char *value) {
 
 typedef FFmpegEncoder *(*FFmpegEncoderCreator)(int, int, int, int, int, CodecType);
 
-FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, int out_height,
-                                    int bitrate, CodecType codec_type) {
+FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, int out_height, int bitrate,
+                                    CodecType codec_type) {
     /*
         Create an encoder using Nvidia's video encoding alorithms.
 
@@ -106,18 +106,15 @@ FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, 
     encoder->sw_frame->pts = 0;
 
     // set frame size and allocate memory for it
-    int frame_size =
-        av_image_get_buffer_size(in_format, encoder->out_width, encoder->out_height, 1);
+    int frame_size = av_image_get_buffer_size(in_format, encoder->out_width, encoder->out_height, 1);
     encoder->sw_frame_buffer = safe_malloc(frame_size);
 
     // fill picture with empty frame buffer
-    av_image_fill_arrays(encoder->sw_frame->data, encoder->sw_frame->linesize,
-                         (uint8_t *)encoder->sw_frame_buffer, in_format, encoder->out_width,
-                         encoder->out_height, 1);
+    av_image_fill_arrays(encoder->sw_frame->data, encoder->sw_frame->linesize, (uint8_t *)encoder->sw_frame_buffer,
+                         in_format, encoder->out_width, encoder->out_height, 1);
 
     // init hw_device_ctx
-    if (av_hwdevice_ctx_create(&encoder->hw_device_ctx, AV_HWDEVICE_TYPE_CUDA, "CUDA", NULL, 0) <
-        0) {
+    if (av_hwdevice_ctx_create(&encoder->hw_device_ctx, AV_HWDEVICE_TYPE_CUDA, "CUDA", NULL, 0) < 0) {
         LOG_WARNING("Failed to create hardware device context");
         destroy_ffmpeg_encoder(encoder);
         return NULL;
@@ -237,8 +234,7 @@ FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, 
     av_free(avbsp);
     encoder->filter_graph_source = filter_contexts[0];
     // sink buffer
-    if (avfilter_graph_create_filter(&filter_contexts[1], filters[1], "sink", NULL, NULL,
-                                     encoder->filter_graph) < 0) {
+    if (avfilter_graph_create_filter(&filter_contexts[1], filters[1], "sink", NULL, NULL, encoder->filter_graph) < 0) {
         LOG_WARNING("Unable to initialize buffer sink");
         destroy_ffmpeg_encoder(encoder);
         return NULL;
@@ -267,8 +263,8 @@ FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, 
     return encoder;
 }
 
-FFmpegEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int out_height,
-                                  int bitrate, CodecType codec_type) {
+FFmpegEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int out_height, int bitrate,
+                                  CodecType codec_type) {
     /*
         Create a QSV (Intel Quick Sync Video) encoder for Intel hardware encoding.
 
@@ -308,14 +304,12 @@ FFmpegEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, in
     encoder->sw_frame->pts = 0;
 
     // set frame size and allocate memory for it
-    int frame_size =
-        av_image_get_buffer_size(in_format, encoder->out_width, encoder->out_height, 1);
+    int frame_size = av_image_get_buffer_size(in_format, encoder->out_width, encoder->out_height, 1);
     encoder->sw_frame_buffer = safe_malloc(frame_size);
 
     // fill picture with empty frame buffer
-    av_image_fill_arrays(encoder->sw_frame->data, encoder->sw_frame->linesize,
-                         (uint8_t *)encoder->sw_frame_buffer, in_format, encoder->out_width,
-                         encoder->out_height, 1);
+    av_image_fill_arrays(encoder->sw_frame->data, encoder->sw_frame->linesize, (uint8_t *)encoder->sw_frame_buffer,
+                         in_format, encoder->out_width, encoder->out_height, 1);
 
     // init hw_device_ctx
     if (av_hwdevice_ctx_create(&encoder->hw_device_ctx, AV_HWDEVICE_TYPE_QSV, NULL, NULL, 0) < 0) {
@@ -430,8 +424,7 @@ FFmpegEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, in
 
     // scale_qsv (this is not tested yet, but should either just work or be easy
     // to fix on QSV-supporting machines)
-    filter_contexts[1] =
-        avfilter_graph_alloc_filter(encoder->filter_graph, filters[1], "scale_qsv");
+    filter_contexts[1] = avfilter_graph_alloc_filter(encoder->filter_graph, filters[1], "scale_qsv");
     char options_string[60] = "";
     snprintf(options_string, 60, "w=%d:h=%d", encoder->out_width, encoder->out_height);
     if (avfilter_init_str(filter_contexts[1], options_string) < 0) {
@@ -441,8 +434,7 @@ FFmpegEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, in
     }
 
     // sink buffer
-    if (avfilter_graph_create_filter(&filter_contexts[2], filters[2], "sink", NULL, NULL,
-                                     encoder->filter_graph) < 0) {
+    if (avfilter_graph_create_filter(&filter_contexts[2], filters[2], "sink", NULL, NULL, encoder->filter_graph) < 0) {
         LOG_WARNING("Unable to initialize buffer sink");
         destroy_ffmpeg_encoder(encoder);
         return NULL;
@@ -471,8 +463,8 @@ FFmpegEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, in
     return encoder;
 }
 
-FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int out_height,
-                                 int bitrate, CodecType codec_type) {
+FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int out_height, int bitrate,
+                                 CodecType codec_type) {
     /*
         Create an FFmpeg software encoder.
 
@@ -514,14 +506,12 @@ FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int
     encoder->sw_frame->pts = 0;
 
     // set frame size and allocate memory for it
-    int frame_size =
-        av_image_get_buffer_size(out_format, encoder->out_width, encoder->out_height, 1);
+    int frame_size = av_image_get_buffer_size(out_format, encoder->out_width, encoder->out_height, 1);
     encoder->sw_frame_buffer = safe_malloc(frame_size);
 
     // fill picture with empty frame buffer
-    av_image_fill_arrays(encoder->sw_frame->data, encoder->sw_frame->linesize,
-                         (uint8_t *)encoder->sw_frame_buffer, out_format, encoder->out_width,
-                         encoder->out_height, 1);
+    av_image_fill_arrays(encoder->sw_frame->data, encoder->sw_frame->linesize, (uint8_t *)encoder->sw_frame_buffer,
+                         out_format, encoder->out_width, encoder->out_height, 1);
 
     // init resizing and resampling in filter_graph
 
@@ -554,8 +544,7 @@ FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int
     filter_contexts[0] = avfilter_graph_alloc_filter(encoder->filter_graph, filters[0], "src");
     av_opt_set_int(filter_contexts[0], "width", encoder->in_width, AV_OPT_SEARCH_CHILDREN);
     av_opt_set_int(filter_contexts[0], "height", encoder->in_height, AV_OPT_SEARCH_CHILDREN);
-    av_opt_set(filter_contexts[0], "pix_fmt", av_get_pix_fmt_name(in_format),
-               AV_OPT_SEARCH_CHILDREN);
+    av_opt_set(filter_contexts[0], "pix_fmt", av_get_pix_fmt_name(in_format), AV_OPT_SEARCH_CHILDREN);
     av_opt_set_q(filter_contexts[0], "time_base", (AVRational){1, FPS}, AV_OPT_SEARCH_CHILDREN);
     if (avfilter_init_str(filter_contexts[0], NULL) < 0) {
         LOG_WARNING("Unable to initialize buffer source");
@@ -566,8 +555,7 @@ FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int
 
     // format
     filter_contexts[1] = avfilter_graph_alloc_filter(encoder->filter_graph, filters[1], "format");
-    av_opt_set(filter_contexts[1], "pix_fmts", av_get_pix_fmt_name(out_format),
-               AV_OPT_SEARCH_CHILDREN);
+    av_opt_set(filter_contexts[1], "pix_fmts", av_get_pix_fmt_name(out_format), AV_OPT_SEARCH_CHILDREN);
     if (avfilter_init_str(filter_contexts[1], NULL) < 0) {
         LOG_WARNING("Unable to initialize format filter");
         destroy_ffmpeg_encoder(encoder);
@@ -585,8 +573,7 @@ FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int
     }
 
     // sink buffer
-    if (avfilter_graph_create_filter(&filter_contexts[3], filters[3], "sink", NULL, NULL,
-                                     encoder->filter_graph) < 0) {
+    if (avfilter_graph_create_filter(&filter_contexts[3], filters[3], "sink", NULL, NULL, encoder->filter_graph) < 0) {
         LOG_WARNING("Unable to initialize buffer sink");
         destroy_ffmpeg_encoder(encoder);
         return NULL;
@@ -657,8 +644,8 @@ FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int
 Public Function Implementations
 ============================
 */
-FFmpegEncoder *create_ffmpeg_encoder(int in_width, int in_height, int out_width, int out_height,
-                                     int bitrate, CodecType codec_type) {
+FFmpegEncoder *create_ffmpeg_encoder(int in_width, int in_height, int out_width, int out_height, int bitrate,
+                                     CodecType codec_type) {
     /*
         Create an FFmpeg encoder with the specified parameters. First try NVENC hardware encoding,
        then software encoding if that fails.
@@ -678,8 +665,7 @@ FFmpegEncoder *create_ffmpeg_encoder(int in_width, int in_height, int out_width,
     // TODO: Get QSV Encoder Working
     FFmpegEncoderCreator encoder_precedence[] = {create_nvenc_encoder, create_sw_encoder};
     for (unsigned int i = 0; i < sizeof(encoder_precedence) / sizeof(FFmpegEncoderCreator); ++i) {
-        ffmpeg_encoder =
-            encoder_precedence[i](in_width, in_height, out_width, out_height, bitrate, codec_type);
+        ffmpeg_encoder = encoder_precedence[i](in_width, in_height, out_width, out_height, bitrate, codec_type);
 
         if (!ffmpeg_encoder) {
             LOG_WARNING("FFmpeg encoder: Failed, trying next encoder");
@@ -699,11 +685,10 @@ FFmpegEncoder *create_ffmpeg_encoder(int in_width, int in_height, int out_width,
 }
 
 // Reconfigure the encoder, with the same parameters as in create_ffmpeg_encoder
-bool ffmpeg_reconfigure_encoder(FFmpegEncoder *encoder, int in_width, int in_height, int out_width,
-                                int out_height, int bitrate, CodecType codec_type) {
-    if (in_width != encoder->in_width || in_height != encoder->in_height ||
-        out_width != encoder->out_width || out_height != encoder->out_height ||
-        bitrate != encoder->bitrate || codec_type != encoder->codec_type) {
+bool ffmpeg_reconfigure_encoder(FFmpegEncoder *encoder, int in_width, int in_height, int out_width, int out_height,
+                                int bitrate, CodecType codec_type) {
+    if (in_width != encoder->in_width || in_height != encoder->in_height || out_width != encoder->out_width ||
+        out_height != encoder->out_height || bitrate != encoder->bitrate || codec_type != encoder->codec_type) {
         return false;
     } else {
         return true;
@@ -832,8 +817,7 @@ int ffmpeg_encoder_send_frame(FFmpegEncoder *encoder) {
     int res_buffer;
 
     // submit all available frames to the encoder
-    while ((res_buffer = av_buffersink_get_frame(encoder->filter_graph_sink,
-                                                 encoder->filtered_frame)) >= 0) {
+    while ((res_buffer = av_buffersink_get_frame(encoder->filter_graph_sink, encoder->filtered_frame)) >= 0) {
         int res_encoder = avcodec_send_frame(encoder->context, encoder->filtered_frame);
 
         // unref the frame so it may be reused
@@ -845,8 +829,7 @@ int ffmpeg_encoder_send_frame(FFmpegEncoder *encoder) {
         }
     }
     if (res_buffer < 0 && res_buffer != AVERROR(EAGAIN) && res_buffer != AVERROR_EOF) {
-        LOG_WARNING("Error getting frame from the filter graph: %d -- %s", res_buffer,
-                    av_err2str(res_buffer));
+        LOG_WARNING("Error getting frame from the filter graph: %d -- %s", res_buffer, av_err2str(res_buffer));
         return -1;
     }
 

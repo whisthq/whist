@@ -45,51 +45,47 @@ AudioDevice *create_audio_device() {
     }
 
     // get the default render endpoint
-    hr = audio_device->pMMDeviceEnumerator->lpVtbl->GetDefaultAudioEndpoint(
-        audio_device->pMMDeviceEnumerator, eRender, eConsole, &audio_device->device);
+    hr = audio_device->pMMDeviceEnumerator->lpVtbl->GetDefaultAudioEndpoint(audio_device->pMMDeviceEnumerator, eRender,
+                                                                            eConsole, &audio_device->device);
     if (FAILED(hr)) {
         LOG_ERROR("Failed to get default audio endpoint.");
         free(audio_device);
         return NULL;
     }
 
-    hr =
-        audio_device->device->lpVtbl->Activate(audio_device->device, &IID_IAudioClient3, CLSCTX_ALL,
-                                               NULL, (void **)&audio_device->pAudioClient);
+    hr = audio_device->device->lpVtbl->Activate(audio_device->device, &IID_IAudioClient3, CLSCTX_ALL, NULL,
+                                                (void **)&audio_device->pAudioClient);
     if (FAILED(hr)) {
         LOG_ERROR("IMMDevice::Activate(IAudioClient) failed: hr = 0x%08x", hr);
         free(audio_device);
         return NULL;
     }
 
-    hr = audio_device->pAudioClient->lpVtbl->GetDevicePeriod(
-        audio_device->pAudioClient, &audio_device->hnsDefaultDevicePeriod, NULL);
+    hr = audio_device->pAudioClient->lpVtbl->GetDevicePeriod(audio_device->pAudioClient,
+                                                             &audio_device->hnsDefaultDevicePeriod, NULL);
     if (FAILED(hr)) {
         LOG_ERROR("IAudioClient::GetDevicePeriod failed: hr = 0x%08x", hr);
         free(audio_device);
         return NULL;
     }
 
-    hr = audio_device->pAudioClient->lpVtbl->GetMixFormat(audio_device->pAudioClient,
-                                                          &audio_device->pwfx);
+    hr = audio_device->pAudioClient->lpVtbl->GetMixFormat(audio_device->pAudioClient, &audio_device->pwfx);
     if (FAILED(hr)) {
         LOG_ERROR("IAudioClient::GetMixFormat failed: hr = 0x%08x", hr);
         free(audio_device);
         return NULL;
     }
 
-    hr = audio_device->pAudioClient->lpVtbl->Initialize(
-        audio_device->pAudioClient, AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK, 0, 0,
-        audio_device->pwfx, 0);
+    hr = audio_device->pAudioClient->lpVtbl->Initialize(audio_device->pAudioClient, AUDCLNT_SHAREMODE_SHARED,
+                                                        AUDCLNT_STREAMFLAGS_LOOPBACK, 0, 0, audio_device->pwfx, 0);
     if (FAILED(hr)) {
         LOG_ERROR("IAudioClient::Initialize failed: hr = 0x%08x", hr);
         free(audio_device);
         return NULL;
     }
 
-    hr = audio_device->pAudioClient->lpVtbl->GetService(
-        audio_device->pAudioClient, &IID_IAudioCaptureClient,
-        (void **)&audio_device->pAudioCaptureClient);
+    hr = audio_device->pAudioClient->lpVtbl->GetService(audio_device->pAudioClient, &IID_IAudioCaptureClient,
+                                                        (void **)&audio_device->pAudioCaptureClient);
 
     if (FAILED(hr)) {
         LOG_ERROR("IAudioClient::GetService failed: hr = 0x%08x", hr);
@@ -98,8 +94,7 @@ AudioDevice *create_audio_device() {
     }
 
     REFERENCE_TIME minimum_period;
-    hr = audio_device->pAudioClient->lpVtbl->GetDevicePeriod(audio_device->pAudioClient, NULL,
-                                                             &minimum_period);
+    hr = audio_device->pAudioClient->lpVtbl->GetDevicePeriod(audio_device->pAudioClient, NULL, &minimum_period);
     if (FAILED(hr)) {
         LOG_ERROR("IAudioClient::GetDevicePeriod failed: hr = 0x%08x", hr);
         free(audio_device);
@@ -124,12 +119,9 @@ void start_audio_device(AudioDevice *audio_device) {
     audio_device->hWakeUp = CreateWaitableTimer(NULL, FALSE, NULL);
 
     LARGE_INTEGER li_first_fire;
-    li_first_fire.QuadPart =
-        -1 * audio_device->hnsDefaultDevicePeriod / 2;  // negative means relative time
-    LONG l_time_between_fires =
-        (LONG)audio_device->hnsDefaultDevicePeriod / 2 / 10000;  // convert to milliseconds
-    BOOL b_ok = SetWaitableTimer(audio_device->hWakeUp, &li_first_fire, l_time_between_fires, NULL,
-                                 NULL, FALSE);
+    li_first_fire.QuadPart = -1 * audio_device->hnsDefaultDevicePeriod / 2;              // negative means relative time
+    LONG l_time_between_fires = (LONG)audio_device->hnsDefaultDevicePeriod / 2 / 10000;  // convert to milliseconds
+    BOOL b_ok = SetWaitableTimer(audio_device->hWakeUp, &li_first_fire, l_time_between_fires, NULL, NULL, FALSE);
     if (b_ok == 0) {
         LOG_WARNING("Failed to SetWaitableTimer");
         return;
@@ -194,9 +186,9 @@ void get_buffer(AudioDevice *audio_device) {
                 stream
     */
 
-    audio_device->pAudioCaptureClient->lpVtbl->GetBuffer(
-        audio_device->pAudioCaptureClient, &audio_device->buffer, &audio_device->frames_available,
-        &audio_device->dwFlags, NULL, NULL);
+    audio_device->pAudioCaptureClient->lpVtbl->GetBuffer(audio_device->pAudioCaptureClient, &audio_device->buffer,
+                                                         &audio_device->frames_available, &audio_device->dwFlags, NULL,
+                                                         NULL);
     audio_device->buffer_size = audio_device->frames_available * audio_device->pwfx->nBlockAlign;
 }
 

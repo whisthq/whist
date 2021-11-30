@@ -340,8 +340,7 @@ bool unsafe_has_os_clipboard_updated() {
     if (!XFixesQueryExtension(display, &event_base, &error_base)) {
         return false;
     }
-    XFixesSelectSelectionInput(display, DefaultRootWindow(display), clipboard,
-                               XFixesSetSelectionOwnerNotifyMask);
+    XFixesSelectSelectionInput(display, DefaultRootWindow(display), clipboard, XFixesSetSelectionOwnerNotifyMask);
     if (first) {
         first = false;
         if (should_preserve_local_clipboard()) {
@@ -410,8 +409,8 @@ ClipboardData* get_os_clipboard_data(Atom property_atom, int header_size) {
 
     ClipboardData* cb = allocate_region(sizeof(ClipboardData));
 
-    XGetWindowProperty(display, window, property_atom, 0, LONG_MAX / 4, True, AnyPropertyType,
-                       &new_atom, &resbits, &ressize, &restail, (unsigned char**)&result);
+    XGetWindowProperty(display, window, property_atom, 0, LONG_MAX / 4, True, AnyPropertyType, &new_atom, &resbits,
+                       &ressize, &restail, (unsigned char**)&result);
     ressize *= resbits / 8;
 
     cb->size = 0;
@@ -429,9 +428,8 @@ ClipboardData* get_os_clipboard_data(Atom property_atom, int header_size) {
             } while (event.type != PropertyNotify || event.xproperty.atom != property_atom ||
                      event.xproperty.state != PropertyNewValue);
 
-            XGetWindowProperty(display, window, property_atom, 0, LONG_MAX / 4, True,
-                               AnyPropertyType, &new_atom, &resbits, &ressize, &restail,
-                               (unsigned char**)(&result));
+            XGetWindowProperty(display, window, property_atom, 0, LONG_MAX / 4, True, AnyPropertyType, &new_atom,
+                               &resbits, &ressize, &restail, (unsigned char**)(&result));
 
             // Measure size in bytes
             int src_size = ressize * (resbits / 8);

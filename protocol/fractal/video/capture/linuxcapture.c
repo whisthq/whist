@@ -221,13 +221,11 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
         return -1;
     }
     if (width < MIN_SCREEN_WIDTH) {
-        LOG_ERROR("Requested width too small: %d when the minimum is %d! Rounding up.", width,
-                  MIN_SCREEN_WIDTH);
+        LOG_ERROR("Requested width too small: %d when the minimum is %d! Rounding up.", width, MIN_SCREEN_WIDTH);
         width = MIN_SCREEN_WIDTH;
     }
     if (height < MIN_SCREEN_HEIGHT) {
-        LOG_ERROR("Requested height too small: %d when the minimum is %d! Rounding up.", height,
-                  MIN_SCREEN_HEIGHT);
+        LOG_ERROR("Requested height too small: %d when the minimum is %d! Rounding up.", height, MIN_SCREEN_HEIGHT);
         height = MIN_SCREEN_HEIGHT;
     }
     if (width > MAX_SCREEN_WIDTH || height > MAX_SCREEN_HEIGHT) {
@@ -275,8 +273,8 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
               *get_video_thread_cuda_context_ptr());
     // set up semaphore and nvidia manager
     device->nvidia_device_semaphore = fractal_create_semaphore(0);
-    device->nvidia_manager = fractal_create_thread(multithreaded_nvidia_device_manager,
-                                                   "multithreaded_nvidia_manager", device);
+    device->nvidia_manager =
+        fractal_create_thread(multithreaded_nvidia_device_manager, "multithreaded_nvidia_manager", device);
     fractal_post_semaphore(device->nvidia_device_semaphore);
 #endif  // USING_NVIDIA_CAPTURE
 
@@ -369,8 +367,7 @@ int capture_screen(CaptureDevice* device) {
     }
 }
 
-bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t height,
-                                uint32_t dpi) {
+bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi) {
     /*
        Attempt to reconfigure the capture device to the given width, height, and dpi. Resize the
        display. In Nvidia case, we resize the display and signal another thread to create the

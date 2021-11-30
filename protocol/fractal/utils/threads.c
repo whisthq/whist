@@ -12,8 +12,7 @@ void fractal_init_multithreading() {
     SDL_Init(SDL_INIT_VIDEO);
 }
 
-FractalThread fractal_create_thread(FractalThreadFunction thread_function, char *thread_name,
-                                    void *data) {
+FractalThread fractal_create_thread(FractalThreadFunction thread_function, char *thread_name, void *data) {
     FractalThread ret = SDL_CreateThread(thread_function, thread_name, data);
     if (ret == NULL) {
         LOG_FATAL("Failure creating thread: %s", SDL_GetError());

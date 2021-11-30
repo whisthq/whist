@@ -130,11 +130,9 @@ void reinit_audio_device() {
     wanted_spec.silence = 0;
     wanted_spec.samples = SDL_AUDIO_BUFFER_SIZE;
 
-    audio_context.dev =
-        SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &audio_spec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
+    audio_context.dev = SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &audio_spec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
     if (wanted_spec.freq != audio_spec.freq) {
-        LOG_WARNING("Got Frequency %d, But Wanted Frequency %d...", audio_spec.freq,
-                    wanted_spec.freq);
+        LOG_WARNING("Got Frequency %d, But Wanted Frequency %d...", audio_spec.freq, wanted_spec.freq);
     } else {
         LOG_INFO("Using Audio Freqency: %d", audio_spec.freq);
     }
@@ -171,15 +169,12 @@ void catchup_audio() {
 
     // if nothing has played yet, or if we've fallen far behind (because of a disconnect)
     if ((last_played_id == -1 && has_video_rendered_yet && audio_ring_buffer->max_id > 0) ||
-        (last_played_id != -1 &&
-         audio_ring_buffer->max_id - last_played_id > MAX_NUM_AUDIO_FRAMES)) {
+        (last_played_id != -1 && audio_ring_buffer->max_id - last_played_id > MAX_NUM_AUDIO_FRAMES)) {
 #if LOG_AUDIO
-        LOG_DEBUG("Catching up audio from ID %d to ID %d", last_played_id,
-                  audio_ring_buffer->max_id - 1);
+        LOG_DEBUG("Catching up audio from ID %d to ID %d", last_played_id, audio_ring_buffer->max_id - 1);
 #endif
         if (last_played_id != -1)
-            log_double_statistic(AUDIO_FPS_SKIPPED_CATCHUP,
-                                 (double)(audio_ring_buffer->max_id - last_played_id - 1));
+            log_double_statistic(AUDIO_FPS_SKIPPED_CATCHUP, (double)(audio_ring_buffer->max_id - last_played_id - 1));
         last_played_id = audio_ring_buffer->max_id - 1;
     }
     for (int i = 0; i < MAX_NUM_AUDIO_FRAMES; i++) {
@@ -206,8 +201,7 @@ bool is_next_audio_frame_valid() {
     LOG_DEBUG("next_to_play_id: %d, frame data: %d, packets %d/%d", next_to_play_id, frame_data->id,
               frame_data->packets_received, frame_data->num_packets);
 #endif
-    return frame_data->id == next_to_play_id &&
-           frame_data->num_packets == frame_data->packets_received;
+    return frame_data->id == next_to_play_id && frame_data->num_packets == frame_data->packets_received;
 }
 
 bool buffer_audio(int audio_device_queue) {
@@ -229,16 +223,16 @@ bool buffer_audio(int audio_device_queue) {
 
     // If the audio queue is under AUDIO_QUEUE_LOWER_LIMIT, we need to accumulate more in the buffer
     if (!buffering_audio && bytes_until_no_more_audio < AUDIO_QUEUE_LOWER_LIMIT) {
-        LOG_INFO("Audio Queue too low: %d. max_id %d, last_played_id %d. Needs to catch up!",
-                 bytes_until_no_more_audio, audio_ring_buffer->max_id, last_played_id);
+        LOG_INFO("Audio Queue too low: %d. max_id %d, last_played_id %d. Needs to catch up!", bytes_until_no_more_audio,
+                 audio_ring_buffer->max_id, last_played_id);
         buffering_audio = true;
     }
 
     // don't play anything until we have enough audio in the queue
     if (buffering_audio) {
         if (bytes_until_no_more_audio >= TARGET_AUDIO_QUEUE_LIMIT) {
-            LOG_INFO("Done catching up! Audio Queue: %d, max_id %d, last_played_id %d",
-                     bytes_until_no_more_audio, audio_ring_buffer->max_id, last_played_id);
+            LOG_INFO("Done catching up! Audio Queue: %d, max_id %d, last_played_id %d", bytes_until_no_more_audio,
+                     audio_ring_buffer->max_id, last_played_id);
             buffering_audio = false;
         }
     }
@@ -276,8 +270,7 @@ bool flush_audio(int audio_device_queue) {
     int real_limit = audio_flush_triggered ? TARGET_AUDIO_QUEUE_LIMIT : AUDIO_QUEUE_UPPER_LIMIT;
 
     if (audio_device_queue > real_limit) {
-        LOG_WARNING("Audio queue full, skipping ID %d (Queued: %d)", next_to_play_id,
-                    audio_device_queue);
+        LOG_WARNING("Audio queue full, skipping ID %d (Queued: %d)", next_to_play_id, audio_device_queue);
         log_double_statistic(AUDIO_FPS_SKIPPED_FLUSH, 1.0);
         flush_next_audio_frame();
         if (!audio_flush_triggered) {
@@ -329,8 +322,7 @@ int send_next_frame_to_decoder() {
     if (frame == NULL) {
         LOG_FATAL("Fatal Error! A NULL frame was pulled from the render context!");
     }
-    if (audio_decoder_send_packets(audio_context.audio_decoder, frame->data, frame->data_length) <
-        0) {
+    if (audio_decoder_send_packets(audio_context.audio_decoder, frame->data, frame->data_length) < 0) {
         LOG_WARNING("Failed to send packets to decoder!");
         return -1;
     }

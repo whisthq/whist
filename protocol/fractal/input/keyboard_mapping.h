@@ -33,7 +33,7 @@ void update_mapped_keyboard_state(InputDevice* input_device, FractalOSType os_ty
  *
  * @returns                        0 on success, -1 on failure
  */
-int emit_mapped_key_event(InputDevice* input_device, FractalOSType os_type,
-                          FractalKeycode fractal_keycode, int pressed);
+int emit_mapped_key_event(InputDevice* input_device, FractalOSType os_type, FractalKeycode fractal_keycode,
+                          int pressed);
 
 #endif  // WHIST_KEYBOARD_MAPPING_H

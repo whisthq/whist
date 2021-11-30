@@ -95,10 +95,8 @@ bool clipboard_action_is_active(FractalClipboardActionType check_action_type) {
 
     if (current_clipboard_activity.is_initialized &&
         current_clipboard_activity.clipboard_action_type == check_action_type &&
-        current_clipboard_activity.aborting_ptr != NULL &&
-        !*(current_clipboard_activity.aborting_ptr) &&
-        current_clipboard_activity.complete_ptr != NULL &&
-        !*(current_clipboard_activity.complete_ptr) &&
+        current_clipboard_activity.aborting_ptr != NULL && !*(current_clipboard_activity.aborting_ptr) &&
+        current_clipboard_activity.complete_ptr != NULL && !*(current_clipboard_activity.complete_ptr) &&
         current_clipboard_activity.clipboard_buffer_ptr != NULL &&
         *(current_clipboard_activity.clipboard_buffer_ptr) != NULL) {
         return true;
@@ -185,8 +183,8 @@ void finish_active_transfer(bool action_complete) {
             // We have successfully pushed all chunks onto the thread's buffer, so this thread
             //     is queued as the next thread to push its buffer onto the OS clipboard
             if (current_clipboard_activity.clipboard_action_type == CLIPBOARD_ACTION_PUSH) {
-                queued_os_clipboard_setter_thread_id = fractal_get_thread_id(
-                    current_clipboard_activity.active_clipboard_action_thread);
+                queued_os_clipboard_setter_thread_id =
+                    fractal_get_thread_id(current_clipboard_activity.active_clipboard_action_thread);
 
                 // Wake up all threads waiting to set the OS clipboard so they can determine
                 //     whether they should stop waiting and die.
@@ -284,18 +282,15 @@ int push_clipboard_thread_function(void* opaque) {
         // currently
         //     setting the clipboard, we wait until either a different thread has overtaken our spot
         //     in the queue or the currently setting thread has finished setting the OS clipboard.
-        while (fractal_get_thread_id(NULL) == queued_os_clipboard_setter_thread_id &&
-               setting_os_clipboard) {
-            fractal_wait_cond(os_clipboard_setting_condvar,
-                              current_clipboard_activity.clipboard_action_mutex);
+        while (fractal_get_thread_id(NULL) == queued_os_clipboard_setter_thread_id && setting_os_clipboard) {
+            fractal_wait_cond(os_clipboard_setting_condvar, current_clipboard_activity.clipboard_action_mutex);
         }
 
         // If we are still the queued setting thread and the OS clipboard is open to be set,
         //     we mark that the OS clipboard is being set
         // Note that the retrieved thread IDs cannot ever be the same for different active threads
         //     because a thread ID only gets released when the thread dies
-        if (fractal_get_thread_id(NULL) == queued_os_clipboard_setter_thread_id &&
-            !setting_os_clipboard) {
+        if (fractal_get_thread_id(NULL) == queued_os_clipboard_setter_thread_id && !setting_os_clipboard) {
             setting_os_clipboard = true;
             // Since we are the currently queued thread, we can reset the queued thread ID to 0
             queued_os_clipboard_setter_thread_id = 0;
@@ -469,14 +464,12 @@ void push_clipboard_chunk(ClipboardData* cb_chunk) {
     // Add chunk contents onto clipboard buffer and update clipboard size
     *current_clipboard_activity.clipboard_buffer_ptr = realloc_region(
         (*current_clipboard_activity.clipboard_buffer_ptr),
-        sizeof(ClipboardData) + (*current_clipboard_activity.clipboard_buffer_ptr)->size +
-            cb_chunk->size);
+        sizeof(ClipboardData) + (*current_clipboard_activity.clipboard_buffer_ptr)->size + cb_chunk->size);
 
     if (cb_chunk->chunk_type == CLIPBOARD_START) {
         // First chunk needs to memcpy full contents into clipboard buffer because it contains
         //     clipboard detail fields that need to be copied (e.g. size, type)
-        memcpy(*current_clipboard_activity.clipboard_buffer_ptr, cb_chunk,
-               sizeof(ClipboardData) + cb_chunk->size);
+        memcpy(*current_clipboard_activity.clipboard_buffer_ptr, cb_chunk, sizeof(ClipboardData) + cb_chunk->size);
     } else {
         // Remaining chunks need to memcpy just the data buffer into clipboard buffer and also
         //     need to manually increment clipboard size
@@ -533,23 +526,21 @@ ClipboardData* pull_clipboard_chunk() {
 
     LOG_INFO("Pulling next clipboard chunk");
 
-    int chunk_size = min(CHUNK_SIZE, (*current_clipboard_activity.clipboard_buffer_ptr)->size -
-                                         current_clipboard_activity.pulled_bytes);
+    int chunk_size = min(
+        CHUNK_SIZE, (*current_clipboard_activity.clipboard_buffer_ptr)->size - current_clipboard_activity.pulled_bytes);
     ClipboardData* cb_chunk = allocate_region(sizeof(ClipboardData) + chunk_size);
     cb_chunk->size = chunk_size;
     cb_chunk->type = (*current_clipboard_activity.clipboard_buffer_ptr)->type;
 
     // for FINAL, this will just "copy" 0 bytes
     memcpy(cb_chunk->data,
-           (*current_clipboard_activity.clipboard_buffer_ptr)->data +
-               current_clipboard_activity.pulled_bytes,
+           (*current_clipboard_activity.clipboard_buffer_ptr)->data + current_clipboard_activity.pulled_bytes,
            chunk_size);
 
     // based on how many bytes have been written so far, set the chunk type
     if (current_clipboard_activity.pulled_bytes == 0) {
         cb_chunk->chunk_type = CLIPBOARD_START;
-    } else if (current_clipboard_activity.pulled_bytes ==
-               (*current_clipboard_activity.clipboard_buffer_ptr)->size) {
+    } else if (current_clipboard_activity.pulled_bytes == (*current_clipboard_activity.clipboard_buffer_ptr)->size) {
         cb_chunk->chunk_type = CLIPBOARD_FINAL;
         LOG_INFO("Finished pulling chunks from OS clipboard");
         finish_active_transfer(true);

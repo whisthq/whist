@@ -103,8 +103,7 @@ void init_logger() {
     logger_queue_mutex = fractal_create_mutex();
     logger_cache_mutex = fractal_create_mutex();
     logger_semaphore = fractal_create_semaphore(0);
-    mprintf_thread = fractal_create_thread((FractalThreadFunction)multithreaded_printf,
-                                           "MultiThreadedPrintf", NULL);
+    mprintf_thread = fractal_create_thread((FractalThreadFunction)multithreaded_printf, "MultiThreadedPrintf", NULL);
     LOG_INFO("Logging initialized!");
 }
 
@@ -153,8 +152,8 @@ void flush_logs() {
         int cache_size = 0;
         cache_size = logger_queue_size;
         for (int i = 0; i < logger_queue_size; i++) {
-            safe_strncpy((char*)logger_queue_cache[i].buf,
-                         (const char*)logger_queue[logger_queue_index].buf, LOGGER_BUF_SIZE);
+            safe_strncpy((char*)logger_queue_cache[i].buf, (const char*)logger_queue[logger_queue_index].buf,
+                         LOGGER_BUF_SIZE);
             logger_queue_cache[i].tag = logger_queue[logger_queue_index].tag;
             logger_queue[logger_queue_index].buf[0] = '\0';
             logger_queue_index++;
@@ -291,8 +290,7 @@ void mprintf_queue_line(const char* line_fmt, const char* tag, const char* line)
             line (const char*): The (unsanitized) log message itself
     */
 
-    if (logger_queue_size >= LOGGER_QUEUE_SIZE - 1 || tag == NULL || line == NULL ||
-        line_fmt == NULL) {
+    if (logger_queue_size >= LOGGER_QUEUE_SIZE - 1 || tag == NULL || line == NULL || line_fmt == NULL) {
         // If the queue is full, we just drop the log
         return;
     }
@@ -314,8 +312,8 @@ void mprintf_queue_line(const char* line_fmt, const char* tag, const char* line)
         // We ignore `line_fmt` here because indenting make it hard to read
         char old_message[LOGGER_BUF_SIZE];
         memcpy(old_message, dest, LOGGER_BUF_SIZE);
-        int written = snprintf(dest, LOGGER_BUF_SIZE, "Log overwrite!\nOLD | %s\nNEW | %s\n",
-                               old_message, sanitized_line);
+        int written =
+            snprintf(dest, LOGGER_BUF_SIZE, "Log overwrite!\nOLD | %s\nNEW | %s\n", old_message, sanitized_line);
         if (written < 0 || written >= LOGGER_BUF_SIZE) {
             // This should never happen, but just in case...
             dest[LOGGER_BUF_SIZE - 1] = '\0';

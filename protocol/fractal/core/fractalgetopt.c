@@ -105,8 +105,7 @@ int getopt_internal(int nargc, char *const *nargv, const char *ostr) {
          */
         if (optopt == (int)'-') return (-1);
         if (!*place) ++optind;
-        if (opterr && *ostr != ':')
-            printf("%s: illegal option -- %c\n", progname(nargv[0]), optopt);
+        if (opterr && *ostr != ':') printf("%s: illegal option -- %c\n", progname(nargv[0]), optopt);
         return (BADCH);
     }
     if (*++oli != ':') { /* don't need argument */
@@ -160,8 +159,7 @@ getopt2(nargc, nargv, ostr)
  * getopt_long --
  *	Parse argc/argv argument vector.
  */
-int getopt_long(int nargc, char *const *nargv, const char *options,
-                const struct option *long_options, int *index) {
+int getopt_long(int nargc, char *const *nargv, const char *options, const struct option *long_options, int *index) {
     int retval;
 
     _DIAGASSERT(nargv != NULL);
@@ -192,8 +190,7 @@ int getopt_long(int nargc, char *const *nargv, const char *options,
             if (match == -1) match = i;
         }
         if (match != -1) {
-            if (long_options[match].has_arg == required_argument ||
-                long_options[match].has_arg == optional_argument) {
+            if (long_options[match].has_arg == required_argument || long_options[match].has_arg == optional_argument) {
                 if (has_equal)
                     optarg = has_equal;
                 else
@@ -205,13 +202,11 @@ int getopt_long(int nargc, char *const *nargv, const char *options,
                  * indicates no error should be generated
                  */
                 if ((opterr) && (*options != ':'))
-                    printf("%s: option requires an argument -- %s\n", progname(nargv[0]),
-                           current_argv);
+                    printf("%s: option requires an argument -- %s\n", progname(nargv[0]), current_argv);
                 return (BADARG);
             }
         } else { /* No matching argument */
-            if ((opterr) && (*options != ':'))
-                printf("%s: illegal option -- %s\n", progname(nargv[0]), current_argv);
+            if ((opterr) && (*options != ':')) printf("%s: illegal option -- %s\n", progname(nargv[0]), current_argv);
             return (BADCH);
         }
         if (long_options[match].flag) {

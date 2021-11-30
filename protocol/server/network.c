@@ -42,8 +42,7 @@ Private Functions
 ============================
 */
 
-int do_discovery_handshake(whist_server_state *state, SocketContext *context,
-                           FractalClientMessage *fcmsg);
+int do_discovery_handshake(whist_server_state *state, SocketContext *context, FractalClientMessage *fcmsg);
 
 /*
 ============================
@@ -51,8 +50,7 @@ Private Function Implementations
 ============================
 */
 
-int handle_discovery_port_message(whist_server_state *state, SocketContext *context,
-                                  bool *new_client) {
+int handle_discovery_port_message(whist_server_state *state, SocketContext *context, bool *new_client) {
     /*
         Handle a message from the client over received over the discovery port.
 
@@ -108,8 +106,8 @@ int handle_discovery_port_message(whist_server_state *state, SocketContext *cont
 
             write_lock(&state->client.tcp_rwlock);
             destroy_socket_context(&state->client.tcp_context);
-            if (!create_tcp_socket_context(&state->client.tcp_context, NULL, state->client.tcp_port,
-                                           1, TCP_CONNECTION_WAIT, get_using_stun(),
+            if (!create_tcp_socket_context(&state->client.tcp_context, NULL, state->client.tcp_port, 1,
+                                           TCP_CONNECTION_WAIT, get_using_stun(),
                                            socket_context_data->binary_aes_private_key)) {
                 LOG_WARNING("Failed TCP connection with client");
             }
@@ -125,8 +123,7 @@ int handle_discovery_port_message(whist_server_state *state, SocketContext *cont
     return 0;
 }
 
-int do_discovery_handshake(whist_server_state *state, SocketContext *context,
-                           FractalClientMessage *fcmsg) {
+int do_discovery_handshake(whist_server_state *state, SocketContext *context, FractalClientMessage *fcmsg) {
     /*
         Perform a discovery handshake over the discovery port socket context
 
@@ -146,8 +143,7 @@ int do_discovery_handshake(whist_server_state *state, SocketContext *context,
     memset(fsmsg, 0, sizeof(*fsmsg));
     fsmsg->type = MESSAGE_DISCOVERY_REPLY;
 
-    FractalDiscoveryReplyMessage *reply_msg =
-        (FractalDiscoveryReplyMessage *)fsmsg->discovery_reply;
+    FractalDiscoveryReplyMessage *reply_msg = (FractalDiscoveryReplyMessage *)fsmsg->discovery_reply;
 
     reply_msg->udp_port = state->client.udp_port;
     reply_msg->tcp_port = state->client.tcp_port;
@@ -180,18 +176,16 @@ Public Function Implementations
 */
 
 int connect_client(Client *client, bool using_stun, char *binary_aes_private_key_input) {
-    if (!create_udp_socket_context(&client->udp_context, NULL, client->udp_port, 1,
-                                   UDP_CONNECTION_WAIT, using_stun, binary_aes_private_key_input)) {
+    if (!create_udp_socket_context(&client->udp_context, NULL, client->udp_port, 1, UDP_CONNECTION_WAIT, using_stun,
+                                   binary_aes_private_key_input)) {
         LOG_ERROR("Failed UDP connection with client");
         return -1;
     }
-    udp_register_nack_buffer(&client->udp_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE,
-                             VIDEO_NACKBUFFER_SIZE);
-    udp_register_nack_buffer(&client->udp_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE,
-                             AUDIO_NACKBUFFER_SIZE);
+    udp_register_nack_buffer(&client->udp_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE, VIDEO_NACKBUFFER_SIZE);
+    udp_register_nack_buffer(&client->udp_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE, AUDIO_NACKBUFFER_SIZE);
 
-    if (!create_tcp_socket_context(&client->tcp_context, NULL, client->tcp_port, 1,
-                                   TCP_CONNECTION_WAIT, using_stun, binary_aes_private_key_input)) {
+    if (!create_tcp_socket_context(&client->tcp_context, NULL, client->tcp_port, 1, TCP_CONNECTION_WAIT, using_stun,
+                                   binary_aes_private_key_input)) {
         LOG_WARNING("Failed TCP connection with client");
         destroy_socket_context(&client->udp_context);
         return -1;
@@ -220,8 +214,7 @@ int broadcast_ack(Client *client) {
     return ret;
 }
 
-int broadcast_udp_packet(Client *client, FractalPacketType type, void *data, int len,
-                         int packet_id) {
+int broadcast_udp_packet(Client *client, FractalPacketType type, void *data, int len, int packet_id) {
     if (packet_id <= 0) {
         LOG_WARNING("Packet IDs must be positive!");
         return -1;
@@ -375,16 +368,15 @@ int multithreaded_manage_client(void *opaque) {
             // We don't place this in a lock because:
             //  * if the first client connects right on the threshold of begin_time_to_exit, it
             //  doesn't matter if we disconnect
-            if (!disable_timeout && (first_client_connected || (get_timer(first_client_timer) >
-                                                                config->begin_time_to_exit))) {
+            if (!disable_timeout &&
+                (first_client_connected || (get_timer(first_client_timer) > config->begin_time_to_exit))) {
                 state->exiting = true;
             }
         }
 
         // Even without multiclient, we need this for TCP recovery over the discovery port
-        if (!create_tcp_socket_context(&discovery_context, NULL, PORT_DISCOVERY, 1,
-                                       TCP_CONNECTION_WAIT, get_using_stun(),
-                                       config->binary_aes_private_key)) {
+        if (!create_tcp_socket_context(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
+                                       get_using_stun(), config->binary_aes_private_key)) {
             continue;
         }
 

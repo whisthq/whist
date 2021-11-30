@@ -120,8 +120,7 @@ void clipboard_set_string(const char *str) {
 
     // clear clipboard and then set string data
     [[NSPasteboard generalPasteboard] clearContents];
-    [[NSPasteboard generalPasteboard] setString:[NSString stringWithUTF8String:str]
-                                        forType:NSPasteboardTypeString];
+    [[NSPasteboard generalPasteboard] setString:[NSString stringWithUTF8String:str] forType:NSPasteboardTypeString];
     return;
 }
 
@@ -135,8 +134,7 @@ void clipboard_get_image(OSXImage *clipboard_image) {
     */
 
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-    NSBitmapImageRep *rep =
-        (NSBitmapImageRep *)[NSBitmapImageRep imageRepWithPasteboard:pasteboard];
+    NSBitmapImageRep *rep = (NSBitmapImageRep *)[NSBitmapImageRep imageRepWithPasteboard:pasteboard];
     NSDictionary *properties = [NSDictionary dictionary];
 
     if (rep) {
@@ -168,8 +166,7 @@ void clipboard_set_image(char *img, int len) {
 
     // clear clipboard and then set image data
     [[NSPasteboard generalPasteboard] clearContents];
-    [[NSPasteboard generalPasteboard] setData:[image TIFFRepresentation]
-                                      forType:NSPasteboardTypeTIFF];
+    [[NSPasteboard generalPasteboard] setData:[image TIFFRepresentation] forType:NSPasteboardTypeTIFF];
     return;
 }
 
@@ -183,9 +180,8 @@ bool check_clipboard_has_files() {
 
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSArray *class_array = [NSArray arrayWithObject:[NSURL class]];
-    NSDictionary *options =
-        [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES]
-                                    forKey:NSPasteboardURLReadingFileURLsOnlyKey];
+    NSDictionary *options = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES]
+                                                        forKey:NSPasteboardURLReadingFileURLsOnlyKey];
     return [pasteboard canReadObjectForClasses:class_array options:options];
 }
 
@@ -202,9 +198,8 @@ void clipboard_get_files(OSXFilenames *filenames[]) {
     NSArray *class_array = [NSArray arrayWithObject:[NSURL class]];
 
     // only file URLs
-    NSDictionary *options =
-        [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES]
-                                    forKey:NSPasteboardURLReadingFileURLsOnlyKey];
+    NSDictionary *options = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES]
+                                                        forKey:NSPasteboardURLReadingFileURLsOnlyKey];
 
     if ([pasteboard canReadObjectForClasses:class_array options:options]) {
         NSArray *file_urls = [pasteboard readObjectsForClasses:class_array options:options];
@@ -212,10 +207,8 @@ void clipboard_get_files(OSXFilenames *filenames[]) {
             // TODO(anton) if it is possible that a file path can be longer than PATH_MAXLEN+1, then
             // we may want to check the return value of safe_strncpy to see if the file path was
             // truncated
-            safe_strncpy(filenames[i]->fullPath, [file_urls[i] fileSystemRepresentation],
-                         PATH_MAXLEN + 1);
-            safe_strncpy(filenames[i]->filename, [[file_urls[i] lastPathComponent] UTF8String],
-                         PATH_MAXLEN + 1);
+            safe_strncpy(filenames[i]->fullPath, [file_urls[i] fileSystemRepresentation], PATH_MAXLEN + 1);
+            safe_strncpy(filenames[i]->filename, [[file_urls[i] lastPathComponent] UTF8String], PATH_MAXLEN + 1);
         }
     } else {
         LOG_ERROR("Can't get Mac Clipboard Files data.");

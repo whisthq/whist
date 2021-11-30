@@ -95,14 +95,12 @@ int set_native_window_color(SDL_Window *window, FractalRGBColor color) {
     }
 
     // RGBA; in this case, alpha is just 1.0.
-    const CGFloat components[4] = {(float)color.red / 255., (float)color.green / 255.,
-                                   (float)color.blue / 255., 1.0};
+    const CGFloat components[4] = {(float)color.red / 255., (float)color.green / 255., (float)color.blue / 255., 1.0};
 
     // Use color space for current monitor for perfect color matching
-    [native_window
-        setBackgroundColor:[NSColor colorWithColorSpace:[[native_window screen] colorSpace]
-                                             components:&components[0]
-                                                  count:4]];
+    [native_window setBackgroundColor:[NSColor colorWithColorSpace:[[native_window screen] colorSpace]
+                                                        components:&components[0]
+                                                             count:4]];
     return 0;
 }
 
@@ -123,17 +121,14 @@ int get_native_window_dpi(SDL_Window *window) {
     return (int)(96 * scale_factor);
 }
 
-FractalYUVColor get_frame_color(uint8_t *y_data, uint8_t *u_data, uint8_t *v_data,
-                                bool using_hardware) {
+FractalYUVColor get_frame_color(uint8_t *y_data, uint8_t *u_data, uint8_t *v_data, bool using_hardware) {
     FractalYUVColor yuv_color = {0};
     if (using_hardware) {
         if (y_data) {
             CVPixelBufferRef frame_data = (CVPixelBufferRef)y_data;
             CVPixelBufferLockBaseAddress(frame_data, kCVPixelBufferLock_ReadOnly);
-            uint8_t *luma_base_address =
-                (uint8_t *)CVPixelBufferGetBaseAddressOfPlane(frame_data, 0);
-            uint8_t *chroma_base_address =
-                (uint8_t *)CVPixelBufferGetBaseAddressOfPlane(frame_data, 1);
+            uint8_t *luma_base_address = (uint8_t *)CVPixelBufferGetBaseAddressOfPlane(frame_data, 0);
+            uint8_t *chroma_base_address = (uint8_t *)CVPixelBufferGetBaseAddressOfPlane(frame_data, 1);
             yuv_color.y = luma_base_address[0];
             yuv_color.u = chroma_base_address[0];
             yuv_color.v = chroma_base_address[1];
@@ -196,9 +191,8 @@ void declare_user_activity() {
 
         // Declare user activity to MacOS
         if (!assertion_set) {
-            IOReturn result =
-                IOPMAssertionCreateWithName(kIOPMAssertionTypeNoDisplaySleep, kIOPMAssertionLevelOn,
-                                            CFSTR("FractalNewFrameActivity"), &power_assertion_id);
+            IOReturn result = IOPMAssertionCreateWithName(kIOPMAssertionTypeNoDisplaySleep, kIOPMAssertionLevelOn,
+                                                          CFSTR("FractalNewFrameActivity"), &power_assertion_id);
             // Immediatelly calling IOPMAssertionRelease here,
             // Doesn't seem to fully reset the screensaver timer
             // Instead, we need to call IOPMAssertionRelease a minute later

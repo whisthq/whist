@@ -42,8 +42,8 @@ typedef struct CaptureDevice {
 
 #ifdef __linux__
     CaptureDeviceType active_capture_device;  // the device currently used for capturing
-    CaptureDeviceType last_capture_device;  // the device used for the last capture, so we can pick
-                                            // the right encoder
+    CaptureDeviceType last_capture_device;    // the device used for the last capture, so we can pick
+                                              // the right encoder
     bool pending_destruction;
     FractalThread nvidia_manager;
     FractalSemaphore nvidia_device_semaphore;
@@ -87,8 +87,7 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
  *
  * @returns                        0 if succeeded, else -1
  */
-bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t height,
-                                uint32_t dpi);
+bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi);
 
 /**
  * @brief                          Capture a bitmap snapshot of the screen

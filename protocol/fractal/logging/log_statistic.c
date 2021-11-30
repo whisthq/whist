@@ -108,8 +108,7 @@ void init_statistic_logger(uint32_t num_metrics, StatisticInfo *statistic_info, 
     statistic_context.statistic_info = statistic_info;
     statistic_context.num_metrics = num_metrics;
     statistic_context.interval = interval;
-    statistic_context.all_statistics =
-        malloc(num_metrics * sizeof(*statistic_context.all_statistics));
+    statistic_context.all_statistics = malloc(num_metrics * sizeof(*statistic_context.all_statistics));
     if (statistic_context.all_statistics == NULL) {
         LOG_ERROR("statistic_context.all_statistics malloc failed");
         return;
@@ -130,8 +129,7 @@ void log_double_statistic(uint32_t index, double val) {
         return;
     }
     if (index >= statistic_context.num_metrics) {
-        LOG_ERROR("index is out of bounds. index = %d, num_metrics = %d", index,
-                  statistic_context.num_metrics);
+        LOG_ERROR("index is out of bounds. index = %d, num_metrics = %d", index, statistic_context.num_metrics);
         return;
     }
     fractal_lock_mutex(log_statistic_mutex);

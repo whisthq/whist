@@ -71,11 +71,10 @@ FractalPacket* tcp_read_packet(void* raw_context, bool should_recv) {
     int len = TCP_SEGMENT_SIZE;
     while (should_recv && len == TCP_SEGMENT_SIZE) {
         // Make the tcp buffer larger if needed
-        resize_dynamic_buffer(encrypted_tcp_packet_buffer,
-                              context->reading_packet_len + TCP_SEGMENT_SIZE);
+        resize_dynamic_buffer(encrypted_tcp_packet_buffer, context->reading_packet_len + TCP_SEGMENT_SIZE);
         // Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE
-        len = recv(context->socket, encrypted_tcp_packet_buffer->buf + context->reading_packet_len,
-                   TCP_SEGMENT_SIZE, 0);
+        len =
+            recv(context->socket, encrypted_tcp_packet_buffer->buf + context->reading_packet_len, TCP_SEGMENT_SIZE, 0);
 
         if (len < 0) {
             int err = get_last_network_error();
@@ -105,15 +104,13 @@ FractalPacket* tcp_read_packet(void* raw_context, bool should_recv) {
             int decrypted_len;
             if (ENCRYPTING_PACKETS) {
                 // Decrypt the packet
-                decrypted_len = decrypt_packet_n(
-                    (FractalPacket*)(encrypted_tcp_packet_buffer->buf + sizeof(int)), target_len,
-                    decrypted_packet_buffer, target_len,
-                    (unsigned char*)context->binary_aes_private_key);
+                decrypted_len = decrypt_packet_n((FractalPacket*)(encrypted_tcp_packet_buffer->buf + sizeof(int)),
+                                                 target_len, decrypted_packet_buffer, target_len,
+                                                 (unsigned char*)context->binary_aes_private_key);
             } else {
                 // The decrypted packet is just the original packet, during dev mode
                 decrypted_len = target_len;
-                memcpy(decrypted_packet_buffer, (encrypted_tcp_packet_buffer->buf + sizeof(int)),
-                       target_len);
+                memcpy(decrypted_packet_buffer, (encrypted_tcp_packet_buffer->buf + sizeof(int)), target_len);
             }
 #if LOG_NETWORKING
             LOG_INFO("Received a FractalPacket of size %d over TCP", decrypted_len);
@@ -123,8 +120,7 @@ FractalPacket* tcp_read_packet(void* raw_context, bool should_recv) {
             // continue
             int start_next_bytes = sizeof(int) + target_len;
             for (unsigned long i = start_next_bytes; i < sizeof(int) + actual_len; i++) {
-                encrypted_tcp_packet_buffer->buf[i - start_next_bytes] =
-                    encrypted_tcp_packet_buffer->buf[i];
+                encrypted_tcp_packet_buffer->buf[i - start_next_bytes] = encrypted_tcp_packet_buffer->buf[i];
             }
             context->reading_packet_len = actual_len - target_len;
 
@@ -149,9 +145,7 @@ FractalPacket* tcp_read_packet(void* raw_context, bool should_recv) {
     return NULL;
 }
 
-void tcp_free_packet(void* raw_context, FractalPacket* tcp_packet) {
-    deallocate_region(tcp_packet);
-}
+void tcp_free_packet(void* raw_context, FractalPacket* tcp_packet) { deallocate_region(tcp_packet); }
 
 int tcp_send_constructed_packet(void* raw_context, FractalPacket* packet, size_t packet_size) {
     SocketContextData* context = raw_context;
@@ -161,8 +155,7 @@ int tcp_send_constructed_packet(void* raw_context, FractalPacket* packet, size_t
 
     // Encrypt the packet using aes encryption, offset by 1 byte
     int unencrypted_len = get_packet_size(packet);
-    int encrypted_len = encrypt_packet(packet, unencrypted_len,
-                                       (FractalPacket*)(sizeof(int) + encrypted_packet_buffer),
+    int encrypted_len = encrypt_packet(packet, unencrypted_len, (FractalPacket*)(sizeof(int) + encrypted_packet_buffer),
                                        (unsigned char*)context->binary_aes_private_key);
 
     // If we shouldn't be encrypted, then unencrypt the packet
@@ -391,8 +384,7 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
     return true;
 }
 
-int create_tcp_server_context(SocketContextData* context, int port, int recvfrom_timeout_ms,
-                              int stun_timeout_ms) {
+int create_tcp_server_context(SocketContextData* context, int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -448,8 +440,7 @@ int create_tcp_server_context(SocketContextData* context, int port, int recvfrom
     tv.tv_usec = (stun_timeout_ms % MS_IN_SECOND) * 1000;
 
     int ret;
-    if ((ret = select((int)context->socket + 1, &fd_read, &fd_write, NULL,
-                      stun_timeout_ms > 0 ? &tv : NULL)) <= 0) {
+    if ((ret = select((int)context->socket + 1, &fd_read, &fd_write, NULL, stun_timeout_ms > 0 ? &tv : NULL)) <= 0) {
         if (ret == 0) {
             LOG_INFO("No TCP Connection Retrieved, ending TCP connection attempt.");
         } else {
@@ -463,8 +454,7 @@ int create_tcp_server_context(SocketContextData* context, int port, int recvfrom
     LOG_INFO("Accepting TCP Connection");
     socklen_t slen = sizeof(context->addr);
     SOCKET new_socket;
-    if ((new_socket = acceptp(context->socket, (struct sockaddr*)(&context->addr), &slen)) ==
-        INVALID_SOCKET) {
+    if ((new_socket = acceptp(context->socket, (struct sockaddr*)(&context->addr), &slen)) == INVALID_SOCKET) {
         return -1;
     }
 
@@ -473,16 +463,14 @@ int create_tcp_server_context(SocketContextData* context, int port, int recvfrom
     closesocket(context->socket);
     context->socket = new_socket;
 
-    LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
-             ntohs(context->addr.sin_port));
+    LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
     set_timeout(context->socket, recvfrom_timeout_ms);
 
     return 0;
 }
 
-int create_tcp_server_context_stun(SocketContextData* context, int port, int recvfrom_timeout_ms,
-                                   int stun_timeout_ms) {
+int create_tcp_server_context_stun(SocketContextData* context, int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -556,8 +544,8 @@ int create_tcp_server_context_stun(SocketContextData* context, int port, int rec
 
     while (recv_size < (int)sizeof(entry) && get_timer(t) < stun_timeout_ms) {
         int single_recv_size;
-        if ((single_recv_size = recv(context->socket, ((char*)&entry) + recv_size,
-                                     max(0, (int)sizeof(entry) - recv_size), 0)) < 0) {
+        if ((single_recv_size =
+                 recv(context->socket, ((char*)&entry) + recv_size, max(0, (int)sizeof(entry) - recv_size), 0)) < 0) {
             LOG_WARNING("Did not receive STUN response %d\n", get_last_network_error());
             closesocket(context->socket);
             return -1;
@@ -613,14 +601,13 @@ int create_tcp_server_context_stun(SocketContextData* context, int port, int rec
     }
 
     context->addr = client_addr;
-    LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
-             ntohs(context->addr.sin_port));
+    LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
     set_timeout(context->socket, recvfrom_timeout_ms);
     return 0;
 }
 
-int create_tcp_client_context(SocketContextData* context, char* destination, int port,
-                              int recvfrom_timeout_ms, int stun_timeout_ms) {
+int create_tcp_client_context(SocketContextData* context, char* destination, int port, int recvfrom_timeout_ms,
+                              int stun_timeout_ms) {
     UNUSED(stun_timeout_ms);
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
@@ -661,8 +648,8 @@ int create_tcp_client_context(SocketContextData* context, char* destination, int
     return 0;
 }
 
-int create_tcp_client_context_stun(SocketContextData* context, char* destination, int port,
-                                   int recvfrom_timeout_ms, int stun_timeout_ms) {
+int create_tcp_client_context_stun(SocketContextData* context, char* destination, int port, int recvfrom_timeout_ms,
+                                   int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -739,8 +726,8 @@ int create_tcp_client_context_stun(SocketContextData* context, char* destination
 
     while (recv_size < (int)sizeof(entry) && get_timer(t) < stun_timeout_ms) {
         int single_recv_size;
-        if ((single_recv_size = recv(context->socket, ((char*)&entry) + recv_size,
-                                     max(0, (int)sizeof(entry) - recv_size), 0)) < 0) {
+        if ((single_recv_size =
+                 recv(context->socket, ((char*)&entry) + recv_size, max(0, (int)sizeof(entry) - recv_size), 0)) < 0) {
             LOG_WARNING("Did not receive STUN response %d\n", get_last_network_error());
             closesocket(context->socket);
             return -1;
@@ -752,8 +739,7 @@ int create_tcp_client_context_stun(SocketContextData* context, char* destination
         LOG_WARNING("STUN Response of wrong size! %d", recv_size);
         closesocket(context->socket);
         return -1;
-    } else if (entry.ip != stun_request.entry.ip ||
-               entry.public_port != stun_request.entry.public_port) {
+    } else if (entry.ip != stun_request.entry.ip || entry.public_port != stun_request.entry.public_port) {
         LOG_WARNING("STUN Response IP and/or Public Port is incorrect!");
         closesocket(context->socket);
         return -1;
@@ -763,8 +749,7 @@ int create_tcp_client_context_stun(SocketContextData* context, char* destination
         return -1;
     } else {
         LOG_WARNING("Received STUN response! Public %d is mapped to private %d\n",
-                    ntohs((unsigned short)entry.public_port),
-                    ntohs((unsigned short)entry.private_port));
+                    ntohs((unsigned short)entry.public_port), ntohs((unsigned short)entry.private_port));
         context->addr.sin_family = AF_INET;
         context->addr.sin_addr.s_addr = entry.ip;
         context->addr.sin_port = entry.private_port;
@@ -818,9 +803,8 @@ Public Function Implementations
 ============================
 */
 
-bool create_tcp_socket_context(SocketContext* network_context, char* destination, int port,
-                               int recvfrom_timeout_ms, int connection_timeout_ms, bool using_stun,
-                               char* binary_aes_private_key) {
+bool create_tcp_socket_context(SocketContext* network_context, char* destination, int port, int recvfrom_timeout_ms,
+                               int connection_timeout_ms, bool using_stun, char* binary_aes_private_key) {
     /*
         Create a TCP socket context
 
@@ -858,8 +842,7 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
     // Initialize data
     context->timeout = recvfrom_timeout_ms;
     context->mutex = fractal_create_mutex();
-    memcpy(context->binary_aes_private_key, binary_aes_private_key,
-           sizeof(context->binary_aes_private_key));
+    memcpy(context->binary_aes_private_key, binary_aes_private_key, sizeof(context->binary_aes_private_key));
     context->reading_packet_len = 0;
     context->encrypted_tcp_packet_buffer = init_dynamic_buffer(true);
     resize_dynamic_buffer(context->encrypted_tcp_packet_buffer, 0);
@@ -869,18 +852,15 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
 
     if (using_stun) {
         if (destination == NULL)
-            ret = create_tcp_server_context_stun(context, port, recvfrom_timeout_ms,
-                                                 connection_timeout_ms);
+            ret = create_tcp_server_context_stun(context, port, recvfrom_timeout_ms, connection_timeout_ms);
         else
-            ret = create_tcp_client_context_stun(context, destination, port, recvfrom_timeout_ms,
-                                                 connection_timeout_ms);
+            ret =
+                create_tcp_client_context_stun(context, destination, port, recvfrom_timeout_ms, connection_timeout_ms);
     } else {
         if (destination == NULL)
-            ret = create_tcp_server_context(context, port, recvfrom_timeout_ms,
-                                            connection_timeout_ms);
+            ret = create_tcp_server_context(context, port, recvfrom_timeout_ms, connection_timeout_ms);
         else
-            ret = create_tcp_client_context(context, destination, port, recvfrom_timeout_ms,
-                                            connection_timeout_ms);
+            ret = create_tcp_client_context(context, destination, port, recvfrom_timeout_ms, connection_timeout_ms);
     }
 
     if (ret == -1) {

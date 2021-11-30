@@ -49,8 +49,7 @@ tcp_context->free_packet(...);
  * @returns                         The TCP network context on success, NULL
  *                                  on failure
  */
-bool create_tcp_socket_context(SocketContext* context, char* destination, int port,
-                               int recvfrom_timeout_s, int connection_timeout_ms, bool using_stun,
-                               char* binary_aes_private_key);
+bool create_tcp_socket_context(SocketContext* context, char* destination, int port, int recvfrom_timeout_s,
+                               int connection_timeout_ms, bool using_stun, char* binary_aes_private_key);
 
 #endif  // WHIST_TCP_H

@@ -41,10 +41,7 @@ Custom Types
  * @brief   Cursor state.
  * @details State of the cursor on the rendered screen.
  */
-typedef enum FractalCursorState {
-    CURSOR_STATE_HIDDEN = 0,
-    CURSOR_STATE_VISIBLE = 1
-} FractalCursorState;
+typedef enum FractalCursorState { CURSOR_STATE_HIDDEN = 0, CURSOR_STATE_VISIBLE = 1 } FractalCursorState;
 
 /**
  * @brief   Cursor ID.

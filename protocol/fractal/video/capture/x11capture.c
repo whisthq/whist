@@ -97,8 +97,7 @@ X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uin
     return device;
 }
 
-bool reconfigure_x11_capture_device(X11CaptureDevice* device, uint32_t width, uint32_t height,
-                                    uint32_t dpi) {
+bool reconfigure_x11_capture_device(X11CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi) {
     if (device->image) {
         XFree(device->image);
         device->image = NULL;
@@ -112,21 +111,20 @@ bool reconfigure_x11_capture_device(X11CaptureDevice* device, uint32_t width, ui
     }
     Screen* screen = window_attributes.screen;
 
-    device->image =
-        XShmCreateImage(device->display,
-                        DefaultVisualOfScreen(screen),  // DefaultVisual(device->display, 0), // Use
-                                                        // a correct visual. Omitted for brevity
-                        DefaultDepthOfScreen(screen),   // 24,   // Determine correct depth from
-                                                        // the visual. Omitted for brevity
-                        ZPixmap, NULL, &device->segment, device->width, device->height);
+    device->image = XShmCreateImage(device->display,
+                                    DefaultVisualOfScreen(screen),  // DefaultVisual(device->display, 0), // Use
+                                                                    // a correct visual. Omitted for brevity
+                                    DefaultDepthOfScreen(screen),   // 24,   // Determine correct depth from
+                                                                    // the visual. Omitted for brevity
+                                    ZPixmap, NULL, &device->segment, device->width, device->height);
 
     if (device->image == NULL) {
         LOG_ERROR("Could not XShmCreateImage!");
         return false;
     }
 
-    device->segment.shmid = shmget(
-        IPC_PRIVATE, device->image->bytes_per_line * device->image->height, IPC_CREAT | 0777);
+    device->segment.shmid =
+        shmget(IPC_PRIVATE, device->image->bytes_per_line * device->image->height, IPC_CREAT | 0777);
 
     device->segment.shmaddr = device->image->data = shmat(device->segment.shmid, 0, 0);
     device->segment.readOnly = False;
@@ -153,8 +151,7 @@ int x11_capture_screen(X11CaptureDevice* device) {
             (int): 0 on success, -1 on failure
     */
     if (!device) {
-        LOG_ERROR(
-            "Tried to call x11_capture_screen with a NULL X11CaptureDevice! We shouldn't do this!");
+        LOG_ERROR("Tried to call x11_capture_screen with a NULL X11CaptureDevice! We shouldn't do this!");
         return -1;
     }
 
@@ -183,8 +180,7 @@ int x11_capture_screen(X11CaptureDevice* device) {
         if (!XGetWindowAttributes(device->display, device->root, &window_attributes)) {
             LOG_ERROR("Couldn't get window width and height!");
             accumulated_frames = -1;
-        } else if (device->width != window_attributes.width ||
-                   device->height != window_attributes.height) {
+        } else if (device->width != window_attributes.width || device->height != window_attributes.height) {
             LOG_ERROR("Wrong width/height!");
             accumulated_frames = -1;
         } else {
@@ -199,8 +195,7 @@ int x11_capture_screen(X11CaptureDevice* device) {
                 // get the color
                 XColor c;
                 c.pixel = XGetPixel(device->image, 0, 0);
-                XQueryColor(device->display,
-                            DefaultColormap(device->display, XDefaultScreen(device->display)), &c);
+                XQueryColor(device->display, DefaultColormap(device->display, XDefaultScreen(device->display)), &c);
                 device->corner_color.red = c.red / 256;
                 device->corner_color.green = c.green / 256;
                 device->corner_color.blue = c.blue / 256;

@@ -106,13 +106,11 @@ void error_monitor_set_environment(char *environment) {
             `error_monitor_initialize()`.
     */
     if (error_monitor_initialized) {
-        LOG_WARNING("Attempting to set the environment to %s after starting the error monitor!",
-                    environment);
+        LOG_WARNING("Attempting to set the environment to %s after starting the error monitor!", environment);
         return;
     }
 
-    if (strcmp(environment, "prod") == 0 || strcmp(environment, "staging") == 0 ||
-        strcmp(environment, "dev") == 0) {
+    if (strcmp(environment, "prod") == 0 || strcmp(environment, "staging") == 0 || strcmp(environment, "dev") == 0) {
         safe_strncpy(error_monitor_environment, environment, sizeof(error_monitor_environment));
         error_monitor_environment_set = true;
     } else if (strcmp(environment, "localdev") == 0 || strcmp(environment, "localdevwithdb") == 0) {
@@ -337,8 +335,7 @@ void error_monitor_log_error(const char *message) {
 #if USING_SENTRY
     // If too many errors have been sent in a period, then don't send this error.
     if (!check_error_monitor_backoff()) return;
-    sentry_value_t event =
-        sentry_value_new_message_event(SENTRY_LEVEL_ERROR, "protocol-errors", message);
+    sentry_value_t event = sentry_value_new_message_event(SENTRY_LEVEL_ERROR, "protocol-errors", message);
     // Sentry doesn't document it, but this will free error.
     sentry_capture_event(event);
 #endif

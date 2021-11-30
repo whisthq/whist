@@ -37,8 +37,7 @@ typedef struct {
 
 // Set of modifiers, for detecting if a key is a modifier
 // CTRL = control, SHIFT = shift, ALT = alt/option, GUI = windows/command
-set<FractalKeycode> modifiers = {FK_LCTRL, FK_LSHIFT, FK_LALT, FK_LGUI,
-                                 FK_RCTRL, FK_RSHIFT, FK_RALT, FK_RGUI};
+set<FractalKeycode> modifiers = {FK_LCTRL, FK_LSHIFT, FK_LALT, FK_LGUI, FK_RCTRL, FK_RSHIFT, FK_RALT, FK_RGUI};
 
 // Will hash vectors so that we can make an hmap out of them
 struct VectorHasher {
@@ -125,8 +124,7 @@ hmap<vector<FractalKeycode>, vector<FractalKeycode>, VectorHasher> keyboard_mapp
 
 auto key_sorter = [](const FractalKeycode& a, const FractalKeycode& b) -> bool {
     // In ascending order, with a massive weight on being a modifier
-    return (int)a + KEYCODE_UPPERBOUND * modifiers.count(a) <
-           (int)b + KEYCODE_UPPERBOUND * modifiers.count(b);
+    return (int)a + KEYCODE_UPPERBOUND * modifiers.count(a) < (int)b + KEYCODE_UPPERBOUND * modifiers.count(b);
 };
 
 void init_keyboard_mapping() {
@@ -148,8 +146,8 @@ bool holding_keymap = false;
 vector<FractalKeycode> currently_pressed;
 vector<FractalKeycode> new_key_combination;
 
-extern "C" int emit_mapped_key_event(InputDevice* input_device, FractalOSType os_type,
-                                     FractalKeycode key_code, int pressed) {
+extern "C" int emit_mapped_key_event(InputDevice* input_device, FractalOSType os_type, FractalKeycode key_code,
+                                     int pressed) {
     // Initialize keyboard mapping if it hasn't been already
     if (!initialized) {
         init_keyboard_mapping();
@@ -267,8 +265,8 @@ extern "C" void update_mapped_keyboard_state(InputDevice* input_device, FractalO
             mapped_key = modmap[mapped_key];
         }
         // If any origin key is pressed, then the modmap'ed key is considered pressed
-        mapped_keys[mapped_key] |= fractal_keycode < keyboard_state.num_keycodes &&
-                                   (bool)keyboard_state.state[fractal_keycode];
+        mapped_keys[mapped_key] |=
+            fractal_keycode < keyboard_state.num_keycodes && (bool)keyboard_state.state[fractal_keycode];
         if (mapped_keys[mapped_key]) {
             LOG_INFO("Syncing with %d pressed! From %d origin!", mapped_key, fractal_keycode);
         }
@@ -281,23 +279,18 @@ extern "C" void update_mapped_keyboard_state(InputDevice* input_device, FractalO
         if (origin_mapping[fractal_keycode] == FK_UNKNOWN) {
             continue;
         }
-        if (ignore_key_state(input_device, (FractalKeycode)fractal_keycode,
-                             keyboard_state.active_pinch)) {
+        if (ignore_key_state(input_device, (FractalKeycode)fractal_keycode, keyboard_state.active_pinch)) {
             continue;
         }
-        int is_pressed =
-            holding_keymap
-                ? (int)std::count(currently_pressed.begin(), currently_pressed.end(),
-                                  (FractalKeycode)fractal_keycode)
-                : (int)get_keyboard_key_state(input_device, (FractalKeycode)fractal_keycode);
+        int is_pressed = holding_keymap ? (int)std::count(currently_pressed.begin(), currently_pressed.end(),
+                                                          (FractalKeycode)fractal_keycode)
+                                        : (int)get_keyboard_key_state(input_device, (FractalKeycode)fractal_keycode);
         if (!mapped_keys[fractal_keycode] && is_pressed) {
-            LOG_INFO("Discrepancy found at %d (%d), unpressing!", fractal_keycode,
-                     origin_mapping[fractal_keycode]);
+            LOG_INFO("Discrepancy found at %d (%d), unpressing!", fractal_keycode, origin_mapping[fractal_keycode]);
             // Reverse map the key, since emit_mapped_key_event will remap it
             emit_mapped_key_event(input_device, os_type, origin_mapping[fractal_keycode], 0);
         } else if (mapped_keys[fractal_keycode] && !is_pressed) {
-            LOG_INFO("Discrepancy found at %d (%d), pressing!", fractal_keycode,
-                     origin_mapping[fractal_keycode]);
+            LOG_INFO("Discrepancy found at %d (%d), pressing!", fractal_keycode, origin_mapping[fractal_keycode]);
             // Reverse map the key, since emit_mapped_key_event will remap it
             emit_mapped_key_event(input_device, os_type, origin_mapping[fractal_keycode], 1);
 
@@ -311,8 +304,7 @@ extern "C" void update_mapped_keyboard_state(InputDevice* input_device, FractalO
     }
 
     if (!!server_caps_lock != !!keyboard_state.caps_lock) {
-        LOG_INFO("Caps lock out of sync, updating! From %s to %s\n",
-                 server_caps_lock ? "caps" : "no caps",
+        LOG_INFO("Caps lock out of sync, updating! From %s to %s\n", server_caps_lock ? "caps" : "no caps",
                  keyboard_state.caps_lock ? "caps" : "no caps");
         if (client_caps_lock_holding) {
             // Release and repress
@@ -326,8 +318,7 @@ extern "C" void update_mapped_keyboard_state(InputDevice* input_device, FractalO
     }
 
     if (!!server_num_lock != !!keyboard_state.num_lock) {
-        LOG_INFO("Num lock out of sync, updating! From %s to %s\n",
-                 server_num_lock ? "num lock" : "no num lock",
+        LOG_INFO("Num lock out of sync, updating! From %s to %s\n", server_num_lock ? "num lock" : "no num lock",
                  keyboard_state.num_lock ? "num lock" : "no num lock");
         if (client_num_lock_holding) {
             // Release and repress

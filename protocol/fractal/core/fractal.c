@@ -54,8 +54,7 @@ void print_system_info() {
         Print the system info of the computer
     */
 
-    FractalThread sysinfo_thread =
-        fractal_create_thread(multithreaded_print_system_info, "print_system_info", NULL);
+    FractalThread sysinfo_thread = fractal_create_thread(multithreaded_print_system_info, "print_system_info", NULL);
     fractal_detach_thread(sysinfo_thread);
 }
 
@@ -139,8 +138,7 @@ int runcmd(const char *cmdline, char **response) {
 
     memcpy(cmd_buf, cmdline, strlen((const char *)cmdline) + 1);
 
-    if (CreateProcessA(NULL, (LPSTR)cmd_buf, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si,
-                       &pi)) {
+    if (CreateProcessA(NULL, (LPSTR)cmd_buf, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
     } else {
         LOG_ERROR("CreateProcessA failed!");
         if (response) {
@@ -252,8 +250,7 @@ int runcmd(const char *cmdline, char **response) {
 #endif
 }
 
-bool read_hexadecimal_private_key(char *hex_string, char *binary_private_key,
-                                  char *hex_private_key) {
+bool read_hexadecimal_private_key(char *hex_string, char *binary_private_key, char *hex_private_key) {
     /*
         Reads a 16-byte hexadecimal string and copies it into private_key
 
@@ -282,8 +279,7 @@ bool read_hexadecimal_private_key(char *hex_string, char *binary_private_key,
         sscanf(&hex_string[2 * i], "%2hhx", &(binary_private_key[i]));
     }
 
-    snprintf(hex_private_key, 33, "%08X%08X%08X%08X",
-             (unsigned int)htonl(*((uint32_t *)(binary_private_key))),
+    snprintf(hex_private_key, 33, "%08X%08X%08X%08X", (unsigned int)htonl(*((uint32_t *)(binary_private_key))),
              (unsigned int)htonl(*((uint32_t *)(binary_private_key + 4))),
              (unsigned int)htonl(*((uint32_t *)(binary_private_key + 8))),
              (unsigned int)htonl(*((uint32_t *)(binary_private_key + 12))));

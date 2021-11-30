@@ -329,9 +329,7 @@ int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_key
     }
 }
 
-int ignore_key_state(InputDevice* input_device, FractalKeycode fractal_keycode, bool active_pinch) {
-    return 0;
-}
+int ignore_key_state(InputDevice* input_device, FractalKeycode fractal_keycode, bool active_pinch) { return 0; }
 
 int emit_key_event(InputDevice* input_device, FractalKeycode fractal_keycode, int pressed) {
     XLockDisplay(input_device->display);

@@ -241,8 +241,7 @@ void handle_single_icon_launch_client_app(int argc, char* argv[]) {
             int path_read_size = GetModuleFileNameA(NULL, client_app_path, max_protocol_path_len);
             if (path_read_size > 0 && path_read_size < max_protocol_path_len) {
 #elif __APPLE__
-            uint32_t max_protocol_path_len =
-                (uint32_t)(APP_PATH_MAXLEN + 1 - relative_client_app_path_len - 1);
+            uint32_t max_protocol_path_len = (uint32_t)(APP_PATH_MAXLEN + 1 - relative_client_app_path_len - 1);
             // Get the path of the current executable
             if (_NSGetExecutablePath(client_app_path, &max_protocol_path_len) == 0) {
 #endif
@@ -326,8 +325,7 @@ int main(int argc, char* argv[]) {
     //    If the arguments are bad, then skip to the destruction phase
     continue_pumping = true;
     bool keep_piping = true;
-    SDL_Thread* pipe_arg_thread =
-        SDL_CreateThread(multithreaded_read_piped_arguments, "PipeArgThread", &keep_piping);
+    SDL_Thread* pipe_arg_thread = SDL_CreateThread(multithreaded_read_piped_arguments, "PipeArgThread", &keep_piping);
     if (pipe_arg_thread == NULL) {
         exit_code = WHIST_EXIT_CLI;
     } else {
@@ -366,8 +364,7 @@ int main(int argc, char* argv[]) {
     // Try connection `MAX_INIT_CONNECTION_ATTEMPTS` times before
     //  closing and destroying the client.
     int max_connection_attempts = MAX_INIT_CONNECTION_ATTEMPTS;
-    for (try_amount = 0;
-         try_amount < max_connection_attempts && !client_exiting && exit_code == WHIST_EXIT_SUCCESS;
+    for (try_amount = 0; try_amount < max_connection_attempts && !client_exiting && exit_code == WHIST_EXIT_SUCCESS;
          try_amount++) {
         if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
             client_exiting = true;
@@ -449,8 +446,7 @@ int main(int argc, char* argv[]) {
             // NOTE: internally within SDL, the window flags are maintained and updated upon
             // catching a window event, and `SDL_GetWindowFlags()` simply returns those stored
             // flags, so this is an efficient call
-            if (SDL_GetWindowFlags((SDL_Window*)window) &
-                (SDL_WINDOW_OCCLUDED | SDL_WINDOW_MINIMIZED)) {
+            if (SDL_GetWindowFlags((SDL_Window*)window) & (SDL_WINDOW_OCCLUDED | SDL_WINDOW_MINIMIZED)) {
                 // Even though the window is minized/occluded, we still need to handle SDL events or
                 // else the application will permanently hang
                 if (SDL_WaitEventTimeout(&sdl_msg, 50) && handle_sdl_event(&sdl_msg) != 0) {
@@ -490,8 +486,7 @@ int main(int argc, char* argv[]) {
             }
 
             if (native_window_color_update && native_window_color) {
-                set_native_window_color((SDL_Window*)window,
-                                        *(FractalRGBColor*)native_window_color);
+                set_native_window_color((SDL_Window*)window, *(FractalRGBColor*)native_window_color);
                 native_window_color_update = false;
             }
 
@@ -505,13 +500,11 @@ int main(int argc, char* argv[]) {
 
             // Check if window resize message should be sent to server
             if (pending_resize_message &&
-                get_timer(window_resize_timer) >=
-                    WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {
+                get_timer(window_resize_timer) >= WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {
                 safe_SDL_LockMutex(window_resize_mutex);
                 if (pending_resize_message &&
                     get_timer(window_resize_timer) >=
-                        WINDOW_RESIZE_MESSAGE_INTERVAL /
-                            (float)MS_IN_SECOND) {  // double checked locking
+                        WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {  // double checked locking
                     pending_resize_message = false;
                     send_message_dimensions();
                     start_timer(&window_resize_timer);
@@ -554,8 +547,7 @@ int main(int argc, char* argv[]) {
         }
 
         LOG_INFO("Disconnecting...");
-        if (client_exiting || exit_code != WHIST_EXIT_SUCCESS ||
-            try_amount + 1 == max_connection_attempts)
+        if (client_exiting || exit_code != WHIST_EXIT_SUCCESS || try_amount + 1 == max_connection_attempts)
             send_server_quit_messages(3);
 
         destroy_packet_synchronizers();

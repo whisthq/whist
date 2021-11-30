@@ -55,15 +55,14 @@ int get_virtual_screen_height() {
 }
 
 int get_pixel_screen_width(SDL_Window *window) {
-    int w = (int)(1.0 * get_virtual_screen_width() * get_window_pixel_width(window) /
-                      get_window_virtual_width(window) +
+    int w = (int)(1.0 * get_virtual_screen_width() * get_window_pixel_width(window) / get_window_virtual_width(window) +
                   0.5);
     return w;
 }
 
 int get_pixel_screen_height(SDL_Window *window) {
-    int h = (int)(1.0 * get_virtual_screen_height() * get_window_pixel_height(window) /
-                      get_window_virtual_height(window) +
-                  0.5);
+    int h =
+        (int)(1.0 * get_virtual_screen_height() * get_window_pixel_height(window) / get_window_virtual_height(window) +
+              0.5);
     return h;
 }

@@ -66,21 +66,12 @@ Custom types
 /**
  * @brief                          The type of data that a clipboard might be
  */
-typedef enum ClipboardType {
-    CLIPBOARD_NONE,
-    CLIPBOARD_TEXT,
-    CLIPBOARD_IMAGE,
-    CLIPBOARD_FILES
-} ClipboardType;
+typedef enum ClipboardType { CLIPBOARD_NONE, CLIPBOARD_TEXT, CLIPBOARD_IMAGE, CLIPBOARD_FILES } ClipboardType;
 
 /**
  * @brief                          The type of the clipboard chunk being sent
  */
-typedef enum ClipboardChunkType {
-    CLIPBOARD_START,
-    CLIPBOARD_MIDDLE,
-    CLIPBOARD_FINAL
-} ClipboardChunkType;
+typedef enum ClipboardChunkType { CLIPBOARD_START, CLIPBOARD_MIDDLE, CLIPBOARD_FINAL } ClipboardChunkType;
 
 /**
  * @brief                          A packet of data referring to and containing

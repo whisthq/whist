@@ -75,8 +75,7 @@ bool get_focused_window_name(char** name_return) {
             // trim down any dangling utf8 multi-byte characters
             trim_utf8_string(cur_window_name);
             XFreeStringList(list);
-            bool same_string =
-                !last_window_name_valid || strcmp(last_window_name, cur_window_name) == 0;
+            bool same_string = !last_window_name_valid || strcmp(last_window_name, cur_window_name) == 0;
             safe_strncpy(last_window_name, cur_window_name, WINDOW_NAME_MAXLEN + 1);
             *name_return = cur_window_name;
             return same_string;
@@ -114,8 +113,8 @@ bool is_focused_window_fullscreen() {
     int format;
     unsigned long num_items, bytes_after;
     uint8_t* data = NULL;
-    int res = XGetWindowProperty(display, w, state, 0, ~0L, False, AnyPropertyType, &actual_type,
-                                 &format, &num_items, &bytes_after, &data);
+    int res = XGetWindowProperty(display, w, state, 0, ~0L, False, AnyPropertyType, &actual_type, &format, &num_items,
+                                 &bytes_after, &data);
     if (res == Success && data) {
         Atom windowprop = ((Atom*)data)[0];
         if (windowprop == fullscreen) {

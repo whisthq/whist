@@ -72,14 +72,12 @@ int bmp_to_png(char* bmp, int bmp_size, char** png, int* png_size) {
     // Bits per pixel
     uint16_t bits_per_pixel = *((uint16_t*)(&bmp[28]));
     if (bits_per_pixel != 24 && bits_per_pixel != 32) {
-        LOG_ERROR("BMP pixel width must be 3 bytes or 4 bytes, got %d bits instead",
-                  bits_per_pixel);
+        LOG_ERROR("BMP pixel width must be 3 bytes or 4 bytes, got %d bits instead", bits_per_pixel);
         return -1;
     }
     // Compression (0 for none)
     if (*((uint32_t*)(&bmp[30])) != 0) {
-        LOG_ERROR("BMP must be uncompressed BI_RGB data: %d found instead",
-                  *((uint32_t*)(&bmp[30])));
+        LOG_ERROR("BMP must be uncompressed BI_RGB data: %d found instead", *((uint32_t*)(&bmp[30])));
         return -1;
     }
     // Size of the pixel data array
@@ -108,15 +106,14 @@ int bmp_to_png(char* bmp, int bmp_size, char** png, int* png_size) {
     }
     // Require that data_size is uncompressed raw data
     if (scanline_bytes * h != data_size) {
-        LOG_WARNING("BMP scanline * h <> BMP header data size mismatch %d * %d != %d",
-                    scanline_bytes, h, data_size);
+        LOG_WARNING("BMP scanline * h <> BMP header data size mismatch %d * %d != %d", scanline_bytes, h, data_size);
         return -1;
     }
 
     // Verify file_size against pixel_offset and data_size
     if (file_size < pixel_offset + data_size) {
-        LOG_ERROR("BMP file_size is too small to fit PIXEL_OFFSET + DATA_SIZE, %d < %d + %d",
-                  file_size, pixel_offset, data_size);
+        LOG_ERROR("BMP file_size is too small to fit PIXEL_OFFSET + DATA_SIZE, %d < %d + %d", file_size, pixel_offset,
+                  data_size);
     }
 
     // Check that the actual bmp buffer is the expected file size

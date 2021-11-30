@@ -42,17 +42,15 @@ FractalPacket* udp_read_packet(void* raw_context, bool should_recv) {
 
     // Wait to receive packet over TCP, until timing out
     FractalPacket encrypted_packet;
-    int encrypted_len =
-        recv(context->socket, (char*)&encrypted_packet, sizeof(encrypted_packet), 0);
+    int encrypted_len = recv(context->socket, (char*)&encrypted_packet, sizeof(encrypted_packet), 0);
 
     // If the packet was successfully received, then decrypt it
     if (encrypted_len > 0) {
         int decrypted_len;
         if (ENCRYPTING_PACKETS) {
             // Decrypt the packet
-            decrypted_len =
-                decrypt_packet(&encrypted_packet, encrypted_len, &context->decrypted_packet,
-                               (unsigned char*)context->binary_aes_private_key);
+            decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &context->decrypted_packet,
+                                           (unsigned char*)context->binary_aes_private_key);
         } else {
             // The decrypted packet is just the original packet, during dev mode
             decrypted_len = encrypted_len;
@@ -68,8 +66,7 @@ FractalPacket* udp_read_packet(void* raw_context, bool should_recv) {
             if (encrypted_len == sizeof(StunEntry)) {
                 StunEntry* e;
                 e = (void*)&encrypted_packet;
-                LOG_INFO("Maybe a map from public %d to private %d?", ntohs(e->private_port),
-                         ntohs(e->private_port));
+                LOG_INFO("Maybe a map from public %d to private %d?", ntohs(e->private_port), ntohs(e->private_port));
             }
             LOG_WARNING("Failed to decrypt packet");
             return NULL;
@@ -167,8 +164,7 @@ int udp_send_constructed_packet(void* raw_context, FractalPacket* packet, size_t
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payload,
-                    int payload_size, int packet_id) {
+int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payload, int payload_size, int packet_id) {
     SocketContextData* context = raw_context;
     if (context == NULL) {
         LOG_ERROR("SocketContextData is NULL");
@@ -184,14 +180,12 @@ int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payl
         return -1;
     }
     if (context->nack_buffers[type_index] != NULL) {
-        nack_buffer =
-            context->nack_buffers[type_index][packet_id % context->nack_num_buffers[type_index]];
+        nack_buffer = context->nack_buffers[type_index][packet_id % context->nack_num_buffers[type_index]];
     }
 
     // Calculate number of packets needed to send the payload, rounding up.
-    int num_indices = payload_size == 0 ? 1
-                                        : (int)(payload_size / MAX_PAYLOAD_SIZE +
-                                                (payload_size % MAX_PAYLOAD_SIZE == 0 ? 0 : 1));
+    int num_indices =
+        payload_size == 0 ? 1 : (int)(payload_size / MAX_PAYLOAD_SIZE + (payload_size % MAX_PAYLOAD_SIZE == 0 ? 0 : 1));
 
     // If nack buffer can't hold a packet that large,
     // Or there's no nack buffer but it's a packet that must be split,
@@ -232,8 +226,7 @@ int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payl
     return 0;
 }
 
-void udp_update_bitrate_settings(SocketContext* socket_context, int burst_bitrate,
-                                 double fec_packet_ratio) {
+void udp_update_bitrate_settings(SocketContext* socket_context, int burst_bitrate, double fec_packet_ratio) {
     SocketContextData* context = socket_context->context;
 
     if (context->network_throttler == NULL) {
@@ -249,8 +242,8 @@ void udp_update_bitrate_settings(SocketContext* socket_context, int burst_bitrat
     network_throttler_set_burst_bitrate(context->network_throttler, burst_bitrate);
 }
 
-void udp_register_nack_buffer(SocketContext* socket_context, FractalPacketType type,
-                              int max_payload_size, int num_buffers) {
+void udp_register_nack_buffer(SocketContext* socket_context, FractalPacketType type, int max_payload_size,
+                              int num_buffers) {
     SocketContextData* context = socket_context->context;
 
     int type_index = (int)type;
@@ -283,8 +276,7 @@ void udp_register_nack_buffer(SocketContext* socket_context, FractalPacketType t
     }
 }
 
-int udp_nack(SocketContext* socket_context, FractalPacketType type, int packet_id,
-             int packet_index) {
+int udp_nack(SocketContext* socket_context, FractalPacketType type, int packet_id, int packet_index) {
     SocketContextData* context = socket_context->context;
 
     int type_index = (int)type;
@@ -297,15 +289,13 @@ int udp_nack(SocketContext* socket_context, FractalPacketType type, int packet_i
         return -1;
     }
     if (packet_index >= context->nack_buffer_max_indices[type_index]) {
-        LOG_ERROR("Nacked Index %d is >= num indices %d!", packet_index,
-                  context->nack_buffer_max_indices[type_index]);
+        LOG_ERROR("Nacked Index %d is >= num indices %d!", packet_index, context->nack_buffer_max_indices[type_index]);
         return -1;
     }
 
     fractal_lock_mutex(context->nack_mutex[type_index]);
     FractalPacket* packet =
-        &context->nack_buffers[type_index][packet_id % context->nack_num_buffers[type_index]]
-                              [packet_index];
+        &context->nack_buffers[type_index][packet_id % context->nack_num_buffers[type_index]][packet_index];
 
     int ret;
     if (packet->id == packet_id) {
@@ -360,8 +350,7 @@ Private Function Implementations
 ============================
 */
 
-int create_udp_server_context(void* raw_context, int port, int recvfrom_timeout_ms,
-                              int stun_timeout_ms) {
+int create_udp_server_context(void* raw_context, int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
     SocketContextData* context = raw_context;
 
     // Create UDP socket
@@ -390,8 +379,7 @@ int create_udp_server_context(void* raw_context, int port, int recvfrom_timeout_
 
     socklen_t slen = sizeof(context->addr);
     int recv_size;
-    if ((recv_size = recvfrom(context->socket, NULL, 0, 0, (struct sockaddr*)(&context->addr),
-                              &slen)) != 0) {
+    if ((recv_size = recvfrom(context->socket, NULL, 0, 0, (struct sockaddr*)(&context->addr), &slen)) != 0) {
         LOG_WARNING("Failed to receive ack! %d %d", recv_size, get_last_network_error());
         closesocket(context->socket);
         return -1;
@@ -409,16 +397,14 @@ int create_udp_server_context(void* raw_context, int port, int recvfrom_timeout_
         return -1;
     }
 
-    LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
-             ntohs(context->addr.sin_port));
+    LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
     set_timeout(context->socket, recvfrom_timeout_ms);
 
     return 0;
 }
 
-int create_udp_server_context_stun(SocketContextData* context, int port, int recvfrom_timeout_ms,
-                                   int stun_timeout_ms) {
+int create_udp_server_context_stun(SocketContextData* context, int port, int recvfrom_timeout_ms, int stun_timeout_ms) {
     // Create UDP socket
     if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
         return -1;
@@ -440,8 +426,8 @@ int create_udp_server_context_stun(SocketContextData* context, int port, int rec
     stun_request.entry.public_port = htons((unsigned short)port);
 
     LOG_INFO("Sending stun entry to STUN...");
-    if (sendto(context->socket, (const char*)&stun_request, sizeof(stun_request), 0,
-               (struct sockaddr*)&stun_addr, sizeof(stun_addr)) < 0) {
+    if (sendto(context->socket, (const char*)&stun_request, sizeof(stun_request), 0, (struct sockaddr*)&stun_addr,
+               sizeof(stun_addr)) < 0) {
         LOG_WARNING("Could not send message to STUN %d\n", get_last_network_error());
         closesocket(context->socket);
         return -1;
@@ -460,13 +446,12 @@ int create_udp_server_context_stun(SocketContextData* context, int port, int rec
     socklen_t slen = sizeof(context->addr);
     StunEntry entry = {0};
     int recv_size;
-    while ((recv_size = recvfrom(context->socket, (char*)&entry, sizeof(entry), 0,
-                                 (struct sockaddr*)(&context->addr), &slen)) < 0) {
+    while ((recv_size = recvfrom(context->socket, (char*)&entry, sizeof(entry), 0, (struct sockaddr*)(&context->addr),
+                                 &slen)) < 0) {
         // If we haven't spent too much time waiting, and our previous 100ms
         // poll failed, then send another STUN update
         if (get_timer(recv_timer) * MS_IN_SECOND < stun_timeout_ms &&
-            (get_last_network_error() == WHIST_ETIMEDOUT ||
-             get_last_network_error() == WHIST_EAGAIN)) {
+            (get_last_network_error() == WHIST_ETIMEDOUT || get_last_network_error() == WHIST_EAGAIN)) {
             if (sendto(context->socket, (const char*)&stun_request, sizeof(stun_request), 0,
                        (struct sockaddr*)&stun_addr, sizeof(stun_addr)) < 0) {
                 LOG_WARNING("Could not send message to STUN %d\n", get_last_network_error());
@@ -493,8 +478,8 @@ int create_udp_server_context_stun(SocketContextData* context, int port, int rec
     context->addr.sin_addr.s_addr = entry.ip;
     context->addr.sin_port = entry.private_port;
 
-    LOG_INFO("Received STUN response, client connection desired from %s:%d\n",
-             inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
+    LOG_INFO("Received STUN response, client connection desired from %s:%d\n", inet_ntoa(context->addr.sin_addr),
+             ntohs(context->addr.sin_port));
 
     if (connect(context->socket, (struct sockaddr*)&context->addr, sizeof(context->addr)) == -1) {
         LOG_WARNING("Failed to connect()!");
@@ -524,20 +509,18 @@ int create_udp_server_context_stun(SocketContextData* context, int port, int rec
             inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
         context->addr.sin_addr.s_addr = entry.ip;
         context->addr.sin_port = entry.private_port;
-        LOG_WARNING("Should have been %s:%d!\n", inet_ntoa(context->addr.sin_addr),
-                    ntohs(context->addr.sin_port));
+        LOG_WARNING("Should have been %s:%d!\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
         closesocket(context->socket);
         return -1;
     }
 
-    LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
-             ntohs(context->addr.sin_port));
+    LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
     return 0;
 }
 
-int create_udp_client_context(SocketContextData* context, char* destination, int port,
-                              int recvfrom_timeout_ms, int stun_timeout_ms) {
+int create_udp_client_context(SocketContextData* context, char* destination, int port, int recvfrom_timeout_ms,
+                              int stun_timeout_ms) {
     // Create UDP socket
     if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
         return -1;
@@ -572,16 +555,16 @@ int create_udp_client_context(SocketContextData* context, char* destination, int
         return -1;
     }
 
-    LOG_INFO("Connected to server on %s:%d! (Private %d)\n", inet_ntoa(context->addr.sin_addr),
-             port, ntohs(context->addr.sin_port));
+    LOG_INFO("Connected to server on %s:%d! (Private %d)\n", inet_ntoa(context->addr.sin_addr), port,
+             ntohs(context->addr.sin_port));
 
     set_timeout(context->socket, recvfrom_timeout_ms);
 
     return 0;
 }
 
-int create_udp_client_context_stun(SocketContextData* context, char* destination, int port,
-                                   int recvfrom_timeout_ms, int stun_timeout_ms) {
+int create_udp_client_context_stun(SocketContextData* context, char* destination, int port, int recvfrom_timeout_ms,
+                                   int stun_timeout_ms) {
     // Create UDP socket
     if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
         return -1;
@@ -602,8 +585,8 @@ int create_udp_client_context_stun(SocketContextData* context, char* destination
     stun_request.entry.public_port = htons((unsigned short)port);
 
     LOG_INFO("Sending info request to STUN...");
-    if (sendto(context->socket, (const char*)&stun_request, sizeof(stun_request), 0,
-               (struct sockaddr*)&stun_addr, sizeof(stun_addr)) < 0) {
+    if (sendto(context->socket, (const char*)&stun_request, sizeof(stun_request), 0, (struct sockaddr*)&stun_addr,
+               sizeof(stun_addr)) < 0) {
         LOG_WARNING("Could not send message to STUN %d\n", get_last_network_error());
         closesocket(context->socket);
         return -1;
@@ -621,8 +604,7 @@ int create_udp_client_context_stun(SocketContextData* context, char* destination
         LOG_WARNING("STUN Response of wrong size! %d", recv_size);
         closesocket(context->socket);
         return -1;
-    } else if (entry.ip != stun_request.entry.ip ||
-               entry.public_port != stun_request.entry.public_port) {
+    } else if (entry.ip != stun_request.entry.ip || entry.public_port != stun_request.entry.public_port) {
         LOG_WARNING("STUN Response IP and/or Public Port is incorrect!");
         closesocket(context->socket);
         return -1;
@@ -632,8 +614,7 @@ int create_udp_client_context_stun(SocketContextData* context, char* destination
         return -1;
     } else {
         LOG_WARNING("Received STUN response! Public %d is mapped to private %d\n",
-                    ntohs((unsigned short)entry.public_port),
-                    ntohs((unsigned short)entry.private_port));
+                    ntohs((unsigned short)entry.public_port), ntohs((unsigned short)entry.private_port));
         context->addr.sin_family = AF_INET;
         context->addr.sin_addr.s_addr = entry.ip;
         context->addr.sin_port = entry.private_port;
@@ -659,8 +640,8 @@ int create_udp_client_context_stun(SocketContextData* context, char* destination
         return -1;
     }
 
-    LOG_INFO("Connected to server on %s:%d! (Private %d)\n", inet_ntoa(context->addr.sin_addr),
-             port, ntohs(context->addr.sin_port));
+    LOG_INFO("Connected to server on %s:%d! (Private %d)\n", inet_ntoa(context->addr.sin_addr), port,
+             ntohs(context->addr.sin_port));
     set_timeout(context->socket, recvfrom_timeout_ms);
 
     return 0;
@@ -672,9 +653,8 @@ Public Function Implementations
 ============================
 */
 
-bool create_udp_socket_context(SocketContext* network_context, char* destination, int port,
-                               int recvfrom_timeout_ms, int connection_timeout_ms, bool using_stun,
-                               char* binary_aes_private_key) {
+bool create_udp_socket_context(SocketContext* network_context, char* destination, int port, int recvfrom_timeout_ms,
+                               int connection_timeout_ms, bool using_stun, char* binary_aes_private_key) {
     /*
         Create a UDP socket context
 
@@ -711,8 +691,7 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
 
     context->timeout = recvfrom_timeout_ms;
     context->mutex = fractal_create_mutex();
-    memcpy(context->binary_aes_private_key, binary_aes_private_key,
-           sizeof(context->binary_aes_private_key));
+    memcpy(context->binary_aes_private_key, binary_aes_private_key, sizeof(context->binary_aes_private_key));
 
     if (destination == NULL) {
         // On the server, we create a network throttler to limit the
@@ -727,18 +706,15 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     int ret;
     if (using_stun) {
         if (destination == NULL)
-            ret = create_udp_server_context_stun(context, port, recvfrom_timeout_ms,
-                                                 connection_timeout_ms);
+            ret = create_udp_server_context_stun(context, port, recvfrom_timeout_ms, connection_timeout_ms);
         else
-            ret = create_udp_client_context_stun(context, destination, port, recvfrom_timeout_ms,
-                                                 connection_timeout_ms);
+            ret =
+                create_udp_client_context_stun(context, destination, port, recvfrom_timeout_ms, connection_timeout_ms);
     } else {
         if (destination == NULL)
-            ret = create_udp_server_context(context, port, recvfrom_timeout_ms,
-                                            connection_timeout_ms);
+            ret = create_udp_server_context(context, port, recvfrom_timeout_ms, connection_timeout_ms);
         else
-            ret = create_udp_client_context(context, destination, port, recvfrom_timeout_ms,
-                                            connection_timeout_ms);
+            ret = create_udp_client_context(context, destination, port, recvfrom_timeout_ms, connection_timeout_ms);
     }
 
     if (ret == 0) {
@@ -747,8 +723,7 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
         // this is set to stop the kernel from buffering too much, thereby
         // getting the data to us faster for lower latency
         int a = 65535;
-        if (setsockopt(context->socket, SOL_SOCKET, SO_RCVBUF, (const char*)&a, sizeof(int)) ==
-            -1) {
+        if (setsockopt(context->socket, SOL_SOCKET, SO_RCVBUF, (const char*)&a, sizeof(int)) == -1) {
             LOG_ERROR("Error setting socket opts: %d", get_last_network_error());
             closesocket(context->socket);
             return false;

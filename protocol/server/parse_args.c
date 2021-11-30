@@ -74,18 +74,16 @@ int server_parse_args(whist_server_config* config, int argc, char* argv[]) {
 
     /* sets some default values */
     config->begin_time_to_exit = 60;
-    memcpy(config->binary_aes_private_key, DEFAULT_BINARY_PRIVATE_KEY,
-           sizeof(config->binary_aes_private_key));
-    memcpy(config->hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY,
-           sizeof(config->hex_aes_private_key));
+    memcpy(config->binary_aes_private_key, DEFAULT_BINARY_PRIVATE_KEY, sizeof(config->binary_aes_private_key));
+    memcpy(config->hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY, sizeof(config->hex_aes_private_key));
 
     int opt;
 
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
         if (opt != -1 && optarg && strlen(optarg) > WHIST_ARGS_MAXLEN) {
-            printf("Option passed into %c is too long! Length of %zd when max is %d\n", opt,
-                   strlen(optarg), WHIST_ARGS_MAXLEN);
+            printf("Option passed into %c is too long! Length of %zd when max is %d\n", opt, strlen(optarg),
+                   WHIST_ARGS_MAXLEN);
             return -1;
         }
         errno = 0;

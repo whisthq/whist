@@ -103,30 +103,26 @@ bool replay_user_input(InputDevice* input_device, FractalClientMessage* fcmsg) {
     int ret = 0;
     switch (fcmsg->type) {
         case MESSAGE_KEYBOARD:
-            ret = emit_mapped_key_event(input_device, input_os_type, fcmsg->keyboard.code,
-                                        fcmsg->keyboard.pressed);
+            ret = emit_mapped_key_event(input_device, input_os_type, fcmsg->keyboard.code, fcmsg->keyboard.pressed);
             break;
         case MESSAGE_MOUSE_MOTION:
             ret = emit_mouse_motion_event(input_device, fcmsg->mouseMotion.x, fcmsg->mouseMotion.y,
                                           fcmsg->mouseMotion.relative);
             break;
         case MESSAGE_MOUSE_BUTTON:
-            ret = emit_mouse_button_event(input_device, fcmsg->mouseButton.button,
-                                          fcmsg->mouseButton.pressed);
+            ret = emit_mouse_button_event(input_device, fcmsg->mouseButton.button, fcmsg->mouseButton.pressed);
             break;
         case MESSAGE_MOUSE_WHEEL:
 #if INPUT_DRIVER == UINPUT_INPUT_DRIVER
-            ret = emit_high_res_mouse_wheel_event(input_device, fcmsg->mouseWheel.precise_x,
-                                                  fcmsg->mouseWheel.precise_y);
+            ret =
+                emit_high_res_mouse_wheel_event(input_device, fcmsg->mouseWheel.precise_x, fcmsg->mouseWheel.precise_y);
 #else
-            ret = emit_low_res_mouse_wheel_event(input_device, fcmsg->mouseWheel.x,
-                                                 fcmsg->mouseWheel.y);
+            ret = emit_low_res_mouse_wheel_event(input_device, fcmsg->mouseWheel.x, fcmsg->mouseWheel.y);
 #endif  // INPUT_DRIVER
             break;
         case MESSAGE_MULTIGESTURE:
-            ret = emit_multigesture_event(
-                input_device, fcmsg->multigesture.d_theta, fcmsg->multigesture.d_dist,
-                fcmsg->multigesture.gesture_type, fcmsg->multigesture.active_gesture);
+            ret = emit_multigesture_event(input_device, fcmsg->multigesture.d_theta, fcmsg->multigesture.d_dist,
+                                          fcmsg->multigesture.gesture_type, fcmsg->multigesture.active_gesture);
             break;
         default:
             LOG_ERROR("Unknown message type! %d", fcmsg->type);

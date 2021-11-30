@@ -63,8 +63,7 @@ AudioEncoder* create_audio_encoder(int bit_rate, int sample_rate) {
     encoder->context->sample_fmt = encoder->codec->sample_fmts[0];
     encoder->context->sample_rate = sample_rate;
     encoder->context->channel_layout = AV_CH_LAYOUT_STEREO;
-    encoder->context->channels =
-        av_get_channel_layout_nb_channels(encoder->context->channel_layout);
+    encoder->context->channels = av_get_channel_layout_nb_channels(encoder->context->channel_layout);
     encoder->context->bit_rate = bit_rate;
 
     if (avcodec_open2(encoder->context, encoder->codec, NULL) < 0) {
@@ -92,9 +91,8 @@ AudioEncoder* create_audio_encoder(int bit_rate, int sample_rate) {
 
     // initialize the AVAudioFifo as an empty FIFO
 
-    encoder->audio_fifo =
-        av_audio_fifo_alloc(encoder->frame->format,
-                            av_get_channel_layout_nb_channels(encoder->frame->channel_layout), 1);
+    encoder->audio_fifo = av_audio_fifo_alloc(encoder->frame->format,
+                                              av_get_channel_layout_nb_channels(encoder->frame->channel_layout), 1);
     if (!encoder->audio_fifo) {
         LOG_WARNING("Could not allocate AVAudioFifo.");
         destroy_audio_encoder(encoder);
@@ -103,12 +101,12 @@ AudioEncoder* create_audio_encoder(int bit_rate, int sample_rate) {
 
     // setup the SwrContext for resampling alsa audio into the FDK-AAC format (16-bit audio)
 
-    encoder->swr_context = swr_alloc_set_opts(
-        NULL, encoder->frame->channel_layout, encoder->frame->format, encoder->context->sample_rate,
-        AV_CH_LAYOUT_STEREO,  // should get layout from alsa
-        AV_SAMPLE_FMT_FLT,    // should get format from alsa, which uses SND_PCM_FORMAT_FLOAT_LE
-        sample_rate,          // should use same sample rate as alsa, though this just
-        0, NULL);             //       might not work if not same sample size throughout
+    encoder->swr_context =
+        swr_alloc_set_opts(NULL, encoder->frame->channel_layout, encoder->frame->format, encoder->context->sample_rate,
+                           AV_CH_LAYOUT_STEREO,  // should get layout from alsa
+                           AV_SAMPLE_FMT_FLT,    // should get format from alsa, which uses SND_PCM_FORMAT_FLOAT_LE
+                           sample_rate,          // should use same sample rate as alsa, though this just
+                           0, NULL);             //       might not work if not same sample size throughout
     if (!encoder->swr_context) {
         LOG_WARNING("Could not initialize SwrContext.");
         destroy_audio_encoder(encoder);
@@ -146,8 +144,7 @@ void audio_encoder_fifo_intake(AudioEncoder* encoder, uint8_t* data, int len) {
         return;
     }
 
-    if (av_samples_alloc(converted_data, NULL,
-                         av_get_channel_layout_nb_channels(encoder->frame->channel_layout), len,
+    if (av_samples_alloc(converted_data, NULL, av_get_channel_layout_nb_channels(encoder->frame->channel_layout), len,
                          encoder->frame->format, 0) < 0) {
         LOG_WARNING("Could not allocate converted samples channel arrays.");
         return;
@@ -160,8 +157,7 @@ void audio_encoder_fifo_intake(AudioEncoder* encoder, uint8_t* data, int len) {
     }
 
     // reallocate fifo
-    if (av_audio_fifo_realloc(encoder->audio_fifo, av_audio_fifo_size(encoder->audio_fifo) + len) <
-        0) {
+    if (av_audio_fifo_realloc(encoder->audio_fifo, av_audio_fifo_size(encoder->audio_fifo) + len) < 0) {
         LOG_WARNING("Could not reallocate AVAudioFifo.");
         return;
     }
@@ -217,13 +213,11 @@ int audio_encoder_encode_frame(AudioEncoder* encoder) {
     // our previous calls to av_packet_unref are unnecessary.
     encoder->encoded_frame_size = sizeof(int);
     encoder->num_packets = 0;
-    while ((res = audio_encoder_receive_packet(encoder, &encoder->packets[encoder->num_packets])) ==
-           0) {
+    while ((res = audio_encoder_receive_packet(encoder, &encoder->packets[encoder->num_packets])) == 0) {
         encoder->encoded_frame_size += sizeof(int) + encoder->packets[encoder->num_packets].size;
         encoder->num_packets++;
         if (encoder->num_packets == MAX_NUM_AUDIO_PACKETS) {
-            LOG_ERROR("Audio encoder encoded into too many packets: reached %d",
-                      encoder->num_packets);
+            LOG_ERROR("Audio encoder encoded into too many packets: reached %d", encoder->num_packets);
             return -1;
         }
     }

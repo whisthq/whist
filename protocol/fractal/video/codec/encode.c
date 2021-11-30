@@ -96,8 +96,8 @@ int transfer_ffmpeg_data(VideoEncoder *encoder) {
 
     // receive packets until we receive a nonzero code (indicating either an encoding error, or that
     // all packets have been received).
-    while ((res = ffmpeg_encoder_receive_packet(encoder->ffmpeg_encoder,
-                                                &encoder->packets[encoder->num_packets])) == 0) {
+    while ((res = ffmpeg_encoder_receive_packet(encoder->ffmpeg_encoder, &encoder->packets[encoder->num_packets])) ==
+           0) {
         encoder->encoded_frame_size += 4 + encoder->packets[encoder->num_packets].size;
         encoder->num_packets++;
         if (encoder->num_packets == MAX_ENCODER_PACKETS) {
@@ -122,8 +122,8 @@ Public Function Implementations
 ============================
 */
 
-VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, int out_height,
-                                   int bitrate, CodecType codec_type) {
+VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, int out_height, int bitrate,
+                                   CodecType codec_type) {
     /*
        Create a video encoder with the specified parameters. Try Nvidia first if available, and fall
        back to FFmpeg if not.
@@ -160,8 +160,8 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
 #else
     LOG_INFO("Creating nvidia encoder...");
     // find next nonempty entry in nvidia_encoders
-    encoder->nvidia_encoders[0] = create_nvidia_encoder(bitrate, codec_type, out_width, out_height,
-                                                        *get_video_thread_cuda_context_ptr());
+    encoder->nvidia_encoders[0] =
+        create_nvidia_encoder(bitrate, codec_type, out_width, out_height, *get_video_thread_cuda_context_ptr());
     if (!encoder->nvidia_encoders[0]) {
         LOG_ERROR("Failed to create nvidia encoder!");
         encoder->active_encoder = FFMPEG_ENCODER;
@@ -179,8 +179,7 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
 #endif  // USING_NVIDIA_ENCODE
 
     LOG_INFO("Creating ffmpeg encoder...");
-    encoder->ffmpeg_encoder =
-        create_ffmpeg_encoder(in_width, in_height, out_width, out_height, bitrate, codec_type);
+    encoder->ffmpeg_encoder = create_ffmpeg_encoder(in_width, in_height, out_width, out_height, bitrate, codec_type);
     if (!encoder->ffmpeg_encoder) {
         LOG_ERROR("FFmpeg encoder creation failed!");
         return NULL;
@@ -226,8 +225,7 @@ int video_encoder_encode(VideoEncoder *encoder) {
     }
 }
 
-bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitrate,
-                         CodecType codec) {
+bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitrate, CodecType codec) {
     /*
         Attempt to reconfigure the encoder to use the specified width, height, bitrate, and codec.
        Unavailable on FFmpeg, but possible on Nvidia.
@@ -253,8 +251,8 @@ bool reconfigure_encoder(VideoEncoder *encoder, int width, int height, int bitra
 #ifdef __linux__
         // NOTE: nvidia reconfiguration is currently disabled because it breaks CUDA resource
         // registration somehow.
-        return nvidia_reconfigure_encoder(encoder->nvidia_encoders[encoder->active_encoder_idx],
-                                          width, height, bitrate, codec);
+        return nvidia_reconfigure_encoder(encoder->nvidia_encoders[encoder->active_encoder_idx], width, height, bitrate,
+                                          codec);
 #else
         LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
 #endif

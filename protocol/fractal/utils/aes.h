@@ -113,9 +113,8 @@ int decrypt_packet(FractalPacket* encrypted_packet, int packet_len, FractalPacke
  * @returns                        Will return -1 on failure, else will return the
  *                                 length of the decrypted packets
  */
-int decrypt_packet_n(FractalPacket* encrypted_packet, int packet_len,
-                     FractalPacket* plaintext_packet, int plaintext_len,
-                     unsigned char* private_key);
+int decrypt_packet_n(FractalPacket* encrypted_packet, int packet_len, FractalPacket* plaintext_packet,
+                     int plaintext_len, unsigned char* private_key);
 
 /**
  * @brief                          Encrypt plaintext data

@@ -88,8 +88,7 @@ int32_t multithreaded_send_audio(void* opaque) {
         update_client_active_status(&state->client, &assuming_client_active);
 
         // for each available packet
-        for (get_next_packet(audio_device); packet_available(audio_device);
-             get_next_packet(audio_device)) {
+        for (get_next_packet(audio_device); packet_available(audio_device); get_next_packet(audio_device)) {
             get_buffer(audio_device);
 
             if (audio_device->buffer_size > 10000) {
@@ -99,12 +98,10 @@ int32_t multithreaded_send_audio(void* opaque) {
 
                 // add samples to encoder fifo
 
-                audio_encoder_fifo_intake(audio_encoder, audio_device->buffer,
-                                          audio_device->frames_available);
+                audio_encoder_fifo_intake(audio_encoder, audio_device->buffer, audio_device->frames_available);
 
                 // while fifo has enough samples for an aac frame, handle it
-                while (av_audio_fifo_size(audio_encoder->audio_fifo) >=
-                       audio_encoder->context->frame_size) {
+                while (av_audio_fifo_size(audio_encoder->audio_fifo) >= audio_encoder->context->frame_size) {
                     // create and encode a frame
 
                     clock t;
@@ -127,8 +124,8 @@ int32_t multithreaded_send_audio(void* opaque) {
                         AudioFrame* frame = (AudioFrame*)buf;
                         frame->data_length = audio_encoder->encoded_frame_size;
 
-                        write_avpackets_to_buffer(audio_encoder->num_packets,
-                                                  audio_encoder->packets, (void*)frame->data);
+                        write_avpackets_to_buffer(audio_encoder->num_packets, audio_encoder->packets,
+                                                  (void*)frame->data);
 
                         if (state->client.is_active) {
                             send_packet(&state->client.udp_context, PACKET_AUDIO, frame,

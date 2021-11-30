@@ -25,6 +25,4 @@ bool get_focused_window_name(char** name_return) {
     return ret;
 }
 bool is_focused_window_fullscreen() { return false; }
-void destroy_window_info_getter() {
-    LOG_ERROR("UNIMPLEMENTED: destroy_x11_window_info_getter on Win32");
-}
+void destroy_window_info_getter() { LOG_ERROR("UNIMPLEMENTED: destroy_x11_window_info_getter on Win32"); }

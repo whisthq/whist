@@ -95,8 +95,7 @@ extern const char *debug_tag, *info_tag, *metric_tag, *warning_tag, *error_tag, 
 // For example :
 // LOG_METRIC("\"Latency\" : %d", latency);
 #if LOG_LEVEL >= METRIC_LEVEL
-#define LOG_METRIC(message, ...) \
-    internal_logging_printf(METRIC_TAG, "{ " message " }" NEWLINE, ##__VA_ARGS__)
+#define LOG_METRIC(message, ...) internal_logging_printf(METRIC_TAG, "{ " message " }" NEWLINE, ##__VA_ARGS__)
 #else
 #define LOG_METRIC(message, ...)
 #endif
@@ -104,9 +103,8 @@ extern const char *debug_tag, *info_tag, *metric_tag, *warning_tag, *error_tag, 
 // LOG_WARNING refers to something going wrong, but it's unknown whether or not it's the code or the
 // host's configuration (i.e. no audio device etc)
 #if LOG_LEVEL >= WARNING_LEVEL
-#define LOG_WARNING(message, ...)                                                        \
-    internal_logging_printf(WARNING_TAG, LOG_FMT message NEWLINE, LOG_ARGS(WARNING_TAG), \
-                            ##__VA_ARGS__);
+#define LOG_WARNING(message, ...) \
+    internal_logging_printf(WARNING_TAG, LOG_FMT message NEWLINE, LOG_ARGS(WARNING_TAG), ##__VA_ARGS__);
 #else
 #define LOG_WARNING(message, ...)
 #endif
@@ -122,9 +120,8 @@ extern const char *debug_tag, *info_tag, *metric_tag, *warning_tag, *error_tag, 
 
 // LOG_FATAL implies that the protocol cannot recover from this error, something might be
 // wrong with our code (Or e.g. the host is out of RAM etc)
-#define LOG_FATAL(message, ...)                                                                  \
-    internal_logging_printf(FATAL_ERROR_TAG, LOG_FMT message NEWLINE, LOG_ARGS(FATAL_ERROR_TAG), \
-                            ##__VA_ARGS__);                                                      \
+#define LOG_FATAL(message, ...)                                                                                  \
+    internal_logging_printf(FATAL_ERROR_TAG, LOG_FMT message NEWLINE, LOG_ARGS(FATAL_ERROR_TAG), ##__VA_ARGS__); \
     terminate_protocol(WHIST_EXIT_FAILURE)
 
 /*

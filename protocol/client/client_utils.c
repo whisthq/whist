@@ -66,25 +66,24 @@ volatile SDL_Window *window;
 extern unsigned short port_mappings[USHRT_MAX + 1];
 
 volatile bool using_piped_arguments;
-const struct option client_cmd_options[] = {
-    {"width", required_argument, NULL, 'w'},
-    {"height", required_argument, NULL, 'h'},
-    {"bitrate", required_argument, NULL, 'b'},
-    {"codec", required_argument, NULL, 'c'},
-    {"private-key", required_argument, NULL, 'k'},
-    {"user", required_argument, NULL, 'u'},
-    {"environment", required_argument, NULL, 'e'},
-    {"icon", required_argument, NULL, 'i'},
-    {"ports", required_argument, NULL, 'p'},
-    {"name", required_argument, NULL, 'n'},
-    {"read-pipe", no_argument, NULL, 'r'},
-    {"loading", required_argument, NULL, 'l'},
-    {"skip-taskbar", no_argument, NULL, 's'},
-    // these are standard for POSIX programs
-    {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
-    {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
-    // end with NULL-termination
-    {0, 0, 0, 0}};
+const struct option client_cmd_options[] = {{"width", required_argument, NULL, 'w'},
+                                            {"height", required_argument, NULL, 'h'},
+                                            {"bitrate", required_argument, NULL, 'b'},
+                                            {"codec", required_argument, NULL, 'c'},
+                                            {"private-key", required_argument, NULL, 'k'},
+                                            {"user", required_argument, NULL, 'u'},
+                                            {"environment", required_argument, NULL, 'e'},
+                                            {"icon", required_argument, NULL, 'i'},
+                                            {"ports", required_argument, NULL, 'p'},
+                                            {"name", required_argument, NULL, 'n'},
+                                            {"read-pipe", no_argument, NULL, 'r'},
+                                            {"loading", required_argument, NULL, 'l'},
+                                            {"skip-taskbar", no_argument, NULL, 's'},
+                                            // these are standard for POSIX programs
+                                            {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
+                                            {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
+                                            // end with NULL-termination
+                                            {0, 0, 0, 0}};
 const char *usage;
 
 #define INCOMING_MAXLEN 127
@@ -209,12 +208,10 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
             const char *str = eval_optarg;
             while (c == separator) {
                 int bytes_read;
-                int args_read =
-                    sscanf(str, "%hu:%hu%c%n", &origin_port, &destination_port, &c, &bytes_read);
+                int args_read = sscanf(str, "%hu:%hu%c%n", &origin_port, &destination_port, &c, &bytes_read);
                 // If we read port arguments, then map them
                 if (args_read >= 2) {
-                    LOG_INFO("Mapping port: origin=%hu, destination=%hu", origin_port,
-                             destination_port);
+                    LOG_INFO("Mapping port: origin=%hu, destination=%hu", origin_port, destination_port);
                     port_mappings[origin_port] = destination_port;
                 } else {
                     char invalid_s[13];
@@ -316,10 +313,8 @@ int client_parse_args(int argc, char *argv[]) {
         "      --version  Output version information and exit\n";
 
     // Initialize private key to default
-    memcpy((char *)&client_binary_aes_private_key, DEFAULT_BINARY_PRIVATE_KEY,
-           sizeof(client_binary_aes_private_key));
-    memcpy((char *)&client_hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY,
-           sizeof(client_hex_aes_private_key));
+    memcpy((char *)&client_binary_aes_private_key, DEFAULT_BINARY_PRIVATE_KEY, sizeof(client_binary_aes_private_key));
+    memcpy((char *)&client_hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY, sizeof(client_hex_aes_private_key));
 
     // default user email
     safe_strncpy(user_email, "None", sizeof(user_email));
@@ -334,8 +329,8 @@ int client_parse_args(int argc, char *argv[]) {
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, client_cmd_options, NULL);
         if (opt != -1 && optarg && strlen(optarg) > WHIST_ARGS_MAXLEN) {
-            printf("Option passed into %c is too long! Length of %zd when max is %d\n", opt,
-                   strlen(optarg), WHIST_ARGS_MAXLEN);
+            printf("Option passed into %c is too long! Length of %zd when max is %d\n", opt, strlen(optarg),
+                   WHIST_ARGS_MAXLEN);
             return -1;
         }
 
@@ -459,9 +454,8 @@ int read_piped_arguments(bool *keep_waiting) {
             // Causes some funky behavior if the line being read in is longer than 128 characters
             // because
             //   it splits into two and processes as two different pieces
-            if (!keep_reading ||
-                (total_stored_chars > 0 && ((incoming[total_stored_chars - 1] == '\n') ||
-                                            total_stored_chars == INCOMING_MAXLEN))) {
+            if (!keep_reading || (total_stored_chars > 0 && ((incoming[total_stored_chars - 1] == '\n') ||
+                                                             total_stored_chars == INCOMING_MAXLEN))) {
                 finished_line = true;
                 total_stored_chars = 0;
             } else {
@@ -488,8 +482,7 @@ int read_piped_arguments(bool *keep_waiting) {
 
             if (arg_value) {
                 arg_value[strcspn(arg_value, "\n")] = 0;  // removes trailing newline, if exists
-                arg_value[strcspn(arg_value, "\r")] =
-                    0;  // removes trailing carriage return, if exists
+                arg_value[strcspn(arg_value, "\r")] = 0;  // removes trailing carriage return, if exists
             }
 
             arg_name[strcspn(arg_name, "\n")] = 0;  // removes trailing newline, if exists
@@ -509,8 +502,7 @@ int read_piped_arguments(bool *keep_waiting) {
             if (opt_index >= 0) {
                 // Evaluate the passed argument, if a valid opt
                 if (evaluate_arg(client_cmd_options[opt_index].val, arg_value) < 0) {
-                    LOG_ERROR("Piped arg %s with value %s wasn't accepted", arg_name,
-                              arg_value ? arg_value : "NULL");
+                    LOG_ERROR("Piped arg %s with value %s wasn't accepted", arg_name, arg_value ? arg_value : "NULL");
                     return -1;
                 }
             } else if (strlen(arg_name) == 2 && !strncmp(arg_name, "ip", strlen(arg_name))) {
@@ -551,8 +543,7 @@ int read_piped_arguments(bool *keep_waiting) {
     }
 
     if (*keep_waiting && strlen((char *)server_ip) == 0) {
-        LOG_ERROR(
-            "Need IP: if not passed in directly, IP must be passed in via pipe with arg name `ip`");
+        LOG_ERROR("Need IP: if not passed in directly, IP must be passed in via pipe with arg name `ip`");
         return -1;
     }
 

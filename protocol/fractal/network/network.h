@@ -230,8 +230,7 @@ typedef enum { ASK_INFO, POST_INFO } StunRequestType;
  */
 typedef enum FractalTOSValue {
     TOS_DSCP_STANDARD_FORWARDING = 0x00,  //<<< Standard Forwarding (Default)
-    TOS_DSCP_EXPEDITED_FORWARDING =
-        0xb8  //<<< Expedited Forwarding (High Priority, for Video/Audio)
+    TOS_DSCP_EXPEDITED_FORWARDING = 0xb8  //<<< Expedited Forwarding (High Priority, for Video/Audio)
 } FractalTOSValue;
 
 typedef struct {
@@ -341,8 +340,7 @@ void free_packet(SocketContext* context, FractalPacket* packet);
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int send_packet(SocketContext* context, FractalPacketType packet_type, void* payload,
-                int payload_size, int packet_id);
+int send_packet(SocketContext* context, FractalPacketType packet_type, void* payload, int payload_size, int packet_id);
 
 /**
  * @brief                          Destroys an allocated and initialized SocketContext

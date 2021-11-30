@@ -135,8 +135,7 @@ Defines
 #define MAXIMUM_BURST_BITRATE 200000000
 #define MINIMUM_BURST_BITRATE 4000000
 #define STARTING_BURST_BITRATE_RAW 100000000
-#define STARTING_BURST_BITRATE \
-    (min(max(STARTING_BURST_BITRATE_RAW, MINIMUM_BURST_BITRATE), MAXIMUM_BURST_BITRATE))
+#define STARTING_BURST_BITRATE (min(max(STARTING_BURST_BITRATE_RAW, MINIMUM_BURST_BITRATE), MAXIMUM_BURST_BITRATE))
 
 // The FEC Ratio to use on all packets
 // (Only used for testing phase of FEC)
@@ -166,8 +165,7 @@ Defines
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
 
-#define DEFAULT_BINARY_PRIVATE_KEY \
-    "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
+#define DEFAULT_BINARY_PRIVATE_KEY "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
 #define DEFAULT_HEX_PRIVATE_KEY "ED5EF33CD728D17DB8064581428D19EF"
 
 #define MOUSE_SCALING_FACTOR 100000
@@ -592,11 +590,7 @@ typedef enum FractalClientMessageType {
  * @brief   Integer exit code.
  * @details So the parent process of the protocol can receive the exit code.
  */
-typedef enum FractalExitCode {
-    WHIST_EXIT_SUCCESS = 0,
-    WHIST_EXIT_FAILURE = 1,
-    WHIST_EXIT_CLI = 2
-} FractalExitCode;
+typedef enum FractalExitCode { WHIST_EXIT_SUCCESS = 0, WHIST_EXIT_FAILURE = 1, WHIST_EXIT_CLI = 2 } FractalExitCode;
 
 typedef struct {
     short num_keycodes;
@@ -784,8 +778,7 @@ char* get_ip();
  * @returns                        True if hex_string was a 16-byte hexadecimal
  *                                 value, otherwise false
  */
-bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
-                                  char* hex_private_key);
+bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key, char* hex_private_key);
 
 /**
  * @brief                          Calculate the size of a FractalClientMessage

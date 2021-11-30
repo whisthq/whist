@@ -68,8 +68,7 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
 
     decoder->context->sample_rate = sample_rate;
     decoder->context->channel_layout = AV_CH_LAYOUT_STEREO;
-    decoder->context->channels =
-        av_get_channel_layout_nb_channels(decoder->context->channel_layout);
+    decoder->context->channels = av_get_channel_layout_nb_channels(decoder->context->channel_layout);
 
     if (avcodec_open2(decoder->context, decoder->codec, NULL) < 0) {
         LOG_WARNING("Could not open AVCodec.");
@@ -84,10 +83,10 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
     // 32-bit audio to SDL.
 
     LOG_DEBUG("Decoder sample format: %s", av_get_sample_fmt_name(decoder->context->sample_fmt));
-    decoder->swr_context = swr_alloc_set_opts(
-        NULL, AV_CH_LAYOUT_STEREO, OUTPUT_FMT, sample_rate, decoder->context->channel_layout,
-        decoder->context->sample_fmt, decoder->context->sample_rate, 0,
-        NULL);  //       might not work if not same sample size throughout
+    decoder->swr_context =
+        swr_alloc_set_opts(NULL, AV_CH_LAYOUT_STEREO, OUTPUT_FMT, sample_rate, decoder->context->channel_layout,
+                           decoder->context->sample_fmt, decoder->context->sample_rate, 0,
+                           NULL);  //       might not work if not same sample size throughout
 
     if (!decoder->swr_context) {
         LOG_WARNING("Could not initialize SwrContext.");
@@ -149,8 +148,7 @@ void audio_decoder_packet_readout(AudioDecoder *decoder, uint8_t *data) {
     int len = decoder->frame->nb_samples;
 
     // convert
-    if (swr_convert(decoder->swr_context, data_out, len,
-                    (const uint8_t **)decoder->frame->extended_data, len) < 0) {
+    if (swr_convert(decoder->swr_context, data_out, len, (const uint8_t **)decoder->frame->extended_data, len) < 0) {
         LOG_WARNING("Could not convert samples to output format.");
     }
 }

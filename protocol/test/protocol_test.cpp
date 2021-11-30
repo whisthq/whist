@@ -91,8 +91,7 @@ class CaptureStdoutTest : public ::testing::Test {
         old_stdout = safe_dup(STDOUT_FILENO);
         safe_mkdir(TEST_OUTPUT_DIRNAME);
         std::string filename = std::string(TEST_OUTPUT_DIRNAME) + "/" +
-                               ::testing::UnitTest::GetInstance()->current_test_info()->name() +
-                               ".log";
+                               ::testing::UnitTest::GetInstance()->current_test_info()->name() + ".log";
         fd = safe_open(filename.c_str(), O_WRONLY | O_CREAT);
         EXPECT_GE(fd, 0);
         fflush(stdout);
@@ -109,8 +108,7 @@ class CaptureStdoutTest : public ::testing::Test {
         safe_dup2(old_stdout, STDOUT_FILENO);
         safe_close(fd);
         std::ifstream file(std::string(TEST_OUTPUT_DIRNAME) + "/" +
-                           ::testing::UnitTest::GetInstance()->current_test_info()->name() +
-                           ".log");
+                           ::testing::UnitTest::GetInstance()->current_test_info()->name() + ".log");
 
         for (::testing::Matcher<std::string> matcher : line_matchers) {
             std::string line;
@@ -380,8 +378,7 @@ TEST_F(CaptureStdoutTest, LogStatistic) {
 }
 
 // Constants used for testing encryption
-#define DEFAULT_BINARY_PRIVATE_KEY \
-    "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
+#define DEFAULT_BINARY_PRIVATE_KEY "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
 #define SECOND_BINARY_PRIVATE_KEY "\xED\xED\xED\xED\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\xED\xED"
 
 /**
@@ -468,14 +465,14 @@ TEST(ProtocolTest, EncryptAndDecrypt) {
     int original_len = PACKET_HEADER_SIZE + original_packet.payload_size;
 
     FractalPacket encrypted_packet;
-    int encrypted_len = encrypt_packet(&original_packet, original_len, &encrypted_packet,
-                                       (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
+    int encrypted_len =
+        encrypt_packet(&original_packet, original_len, &encrypted_packet, (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
 
     // decrypt packet
     FractalPacket decrypted_packet;
 
-    int decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
-                                       (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
+    int decrypted_len =
+        decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet, (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
 
     // compare original and decrypted packet
     EXPECT_EQ(decrypted_len, original_len);
@@ -507,14 +504,14 @@ TEST_F(CaptureStdoutTest, BadDecrypt) {
     int original_len = PACKET_HEADER_SIZE + original_packet.payload_size;
 
     FractalPacket encrypted_packet;
-    int encrypted_len = encrypt_packet(&original_packet, original_len, &encrypted_packet,
-                                       (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
+    int encrypted_len =
+        encrypt_packet(&original_packet, original_len, &encrypted_packet, (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
 
     // decrypt packet with differing key
     FractalPacket decrypted_packet;
 
-    int decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
-                                       (unsigned char*)SECOND_BINARY_PRIVATE_KEY);
+    int decrypted_len =
+        decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet, (unsigned char*)SECOND_BINARY_PRIVATE_KEY);
 
     EXPECT_EQ(decrypted_len, -1);
 
@@ -635,8 +632,7 @@ TEST(ProtocolTest, PacketsToBuffer) {
 
 TEST(ProtocolTest, BitArrayMemCpyTest) {
     // A bunch of prime numbers + {10,100,200,250,299,300}
-    std::vector<int> bitarray_sizes{1,  2,  3,  5,  7,  10, 11,  13,  17,  19, 23,
-                                    29, 31, 37, 41, 47, 53, 100, 250, 299, 300};
+    std::vector<int> bitarray_sizes{1, 2, 3, 5, 7, 10, 11, 13, 17, 19, 23, 29, 31, 37, 41, 47, 53, 100, 250, 299, 300};
 
     for (auto test_size : bitarray_sizes) {
         BitArray* bit_arr = bit_array_create(test_size);
@@ -695,12 +691,11 @@ TEST(ProtocolTest, Utf8Truncation) {
     // is fixed correctly.
 
     // UTF-8 string:
-    char buf[] = {'\xe2', '\x88', '\xae', '\x20', '\x45', '\xe2', '\x8b', '\x85', '\x64',
-                  '\x61', '\x20', '\x3d', '\x20', '\x51', '\x2c', '\x20', '\x20', '\x6e',
-                  '\x20', '\xe2', '\x86', '\x92', '\x20', '\xe2', '\x88', '\x9e', '\x2c',
-                  '\x20', '\xf0', '\x90', '\x8d', '\x88', '\xe2', '\x88', '\x91', '\x20',
-                  '\x66', '\x28', '\x69', '\x29', '\x20', '\x3d', '\x20', '\xe2', '\x88',
-                  '\x8f', '\x20', '\x67', '\x28', '\x69', '\x29', '\0'};
+    char buf[] = {'\xe2', '\x88', '\xae', '\x20', '\x45', '\xe2', '\x8b', '\x85', '\x64', '\x61', '\x20',
+                  '\x3d', '\x20', '\x51', '\x2c', '\x20', '\x20', '\x6e', '\x20', '\xe2', '\x86', '\x92',
+                  '\x20', '\xe2', '\x88', '\x9e', '\x2c', '\x20', '\xf0', '\x90', '\x8d', '\x88', '\xe2',
+                  '\x88', '\x91', '\x20', '\x66', '\x28', '\x69', '\x29', '\x20', '\x3d', '\x20', '\xe2',
+                  '\x88', '\x8f', '\x20', '\x67', '\x28', '\x69', '\x29', '\0'};
 
     // truncation boundaries that need to be trimmed
     const int bad_utf8_tests[] = {2, 3, 30, 31, 32};

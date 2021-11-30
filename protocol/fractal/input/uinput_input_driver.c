@@ -370,8 +370,7 @@ InputDevice* create_input_device() {
             n);
         return NULL;
     }
-    LOG_INFO("Uinput input driver received %d file descriptors: %d, %d, %d", n, fds[0], fds[1],
-             fds[2]);
+    LOG_INFO("Uinput input driver received %d file descriptors: %d, %d, %d", n, fds[0], fds[1], fds[2]);
 
     InputDevice* input_device = safe_malloc(sizeof(InputDevice));
     input_device->fd_absmouse = fds[0];
@@ -480,12 +479,10 @@ int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int
         emit_input_event(input_device->fd_relmouse, EV_REL, REL_Y, y);
         emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
     } else {
-        emit_input_event(
-            input_device->fd_absmouse, EV_ABS, ABS_X,
-            (int)(x * (int32_t)UINPUT_MOUSE_COORDINATE_RANGE / (int32_t)MOUSE_SCALING_FACTOR));
-        emit_input_event(
-            input_device->fd_absmouse, EV_ABS, ABS_Y,
-            (int)(y * (int32_t)UINPUT_MOUSE_COORDINATE_RANGE / (int32_t)MOUSE_SCALING_FACTOR));
+        emit_input_event(input_device->fd_absmouse, EV_ABS, ABS_X,
+                         (int)(x * (int32_t)UINPUT_MOUSE_COORDINATE_RANGE / (int32_t)MOUSE_SCALING_FACTOR));
+        emit_input_event(input_device->fd_absmouse, EV_ABS, ABS_Y,
+                         (int)(y * (int32_t)UINPUT_MOUSE_COORDINATE_RANGE / (int32_t)MOUSE_SCALING_FACTOR));
         emit_input_event(input_device->fd_absmouse, EV_KEY, BTN_TOOL_PEN, 1);
         emit_input_event(input_device->fd_absmouse, EV_SYN, SYN_REPORT, 0);
         input_device->mouse_has_moved = true;
@@ -512,8 +509,7 @@ int emit_low_res_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t
 
 int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y) {
     emit_input_event(input_device->fd_relmouse, EV_REL, REL_WHEEL_HI_RES, y * LIBINPUT_WHEEL_DELTA);
-    emit_input_event(input_device->fd_relmouse, EV_REL, REL_HWHEEL_HI_RES,
-                     x * LIBINPUT_WHEEL_DELTA);
+    emit_input_event(input_device->fd_relmouse, EV_REL, REL_HWHEEL_HI_RES, x * LIBINPUT_WHEEL_DELTA);
     emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
     return 0;
 }

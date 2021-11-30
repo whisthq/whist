@@ -82,8 +82,7 @@ void set_window_icon_from_png(SDL_Window* sdl_window, char* filename) {
     free_sdl_rgb_surface(icon_surface);
 }
 
-SDL_Window* init_sdl(int target_output_width, int target_output_height, char* name,
-                     char* icon_filename) {
+SDL_Window* init_sdl(int target_output_width, int target_output_height, char* name, char* icon_filename) {
     /*
         Attaches the current thread to the specified current input client
 
@@ -106,8 +105,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
 
 #if defined(_WIN32) && CAPTURE_SPECIAL_WINDOWS_KEYS
     // Hook onto windows keyboard to intercept windows special key combinations
-    g_hKeyboardHook =
-        SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, GetModuleHandle(NULL), 0);
+    g_hKeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, GetModuleHandle(NULL), 0);
 #endif
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
@@ -141,15 +139,13 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         hide_native_window_taskbar();
     }
 
-    const uint32_t window_flags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL |
-                                  SDL_WINDOW_RESIZABLE | (maximized ? SDL_WINDOW_MAXIMIZED : 0) |
-                                  (skip_taskbar ? SDL_WINDOW_SKIP_TASKBAR : 0);
+    const uint32_t window_flags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE |
+                                  (maximized ? SDL_WINDOW_MAXIMIZED : 0) | (skip_taskbar ? SDL_WINDOW_SKIP_TASKBAR : 0);
 
     // Simulate fullscreen with borderless always on top, so that it can still
     // be used with multiple monitors
-    sdl_window = SDL_CreateWindow((name == NULL ? "Whist" : name), SDL_WINDOWPOS_CENTERED,
-                                  SDL_WINDOWPOS_CENTERED, target_output_width, target_output_height,
-                                  window_flags);
+    sdl_window = SDL_CreateWindow((name == NULL ? "Whist" : name), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                                  target_output_width, target_output_height, window_flags);
     if (!sdl_window) {
         LOG_ERROR("SDL: could not create window - exiting: %s", SDL_GetError());
         return NULL;
@@ -329,9 +325,8 @@ SDL_Surface* sdl_surface_from_png_file(char* filename) {
     }
 
     // buffer pointer, width, height, bits per pixel, bytes per row, R/G/B/A masks
-    SDL_Surface* surface =
-        SDL_CreateRGBSurfaceFrom(image, w, h, sizeof(uint32_t) * 8, sizeof(uint32_t) * w,
-                                 RGBA_MASK_R, RGBA_MASK_G, RGBA_MASK_B, RGBA_MASK_A);
+    SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(image, w, h, sizeof(uint32_t) * 8, sizeof(uint32_t) * w,
+                                                    RGBA_MASK_R, RGBA_MASK_G, RGBA_MASK_B, RGBA_MASK_A);
 
     if (surface == NULL) {
         LOG_ERROR("Failed to load SDL surface from file '%s': %s", filename, SDL_GetError());

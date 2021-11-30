@@ -75,8 +75,7 @@ int handle_client_message(whist_server_state *state, FractalClientMessage *fcmsg
         case MESSAGE_MULTIGESTURE:
             start_timer(&temp_clock);
             int r = handle_user_input_message(state, fcmsg);
-            log_double_statistic(CLIENT_HANDLE_USERINPUT_TIME,
-                                 get_timer(temp_clock) * MS_IN_SECOND);
+            log_double_statistic(CLIENT_HANDLE_USERINPUT_TIME, get_timer(temp_clock) * MS_IN_SECOND);
             return r;
         case MESSAGE_KEYBOARD_STATE:
             return handle_keyboard_state_message(state, fcmsg);
@@ -198,11 +197,9 @@ static int handle_bitrate_message(whist_server_state *state, FractalClientMessag
     */
 
     LOG_INFO("MSG RECEIVED FOR MBPS: %f/%f/%f", fcmsg->bitrate_data.bitrate / 1024.0 / 1024.0,
-             fcmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0,
-             fcmsg->bitrate_data.fec_packet_ratio);
+             fcmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0, fcmsg->bitrate_data.fec_packet_ratio);
     // Clamp the bitrates, preferring to clamp at MAX
-    fcmsg->bitrate_data.bitrate =
-        min(max(fcmsg->bitrate_data.bitrate, MINIMUM_BITRATE), MAXIMUM_BITRATE);
+    fcmsg->bitrate_data.bitrate = min(max(fcmsg->bitrate_data.bitrate, MINIMUM_BITRATE), MAXIMUM_BITRATE);
     fcmsg->bitrate_data.burst_bitrate =
         min(max(fcmsg->bitrate_data.burst_bitrate, MINIMUM_BURST_BITRATE), MAXIMUM_BURST_BITRATE);
     LOG_INFO("Clamped to %f/%f", fcmsg->bitrate_data.bitrate / 1024.0 / 1024.0,
@@ -240,8 +237,7 @@ static int handle_ping_message(Client *client, FractalClientMessage *fcmsg) {
     fsmsg_response.type = MESSAGE_PONG;
     fsmsg_response.ping_id = fcmsg->ping_id;
 
-    if (send_packet(&client->udp_context, PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
-                    sizeof(fsmsg_response), 1) < 0) {
+    if (send_packet(&client->udp_context, PACKET_MESSAGE, (uint8_t *)&fsmsg_response, sizeof(fsmsg_response), 1) < 0) {
         LOG_WARNING("Failed to send UDP pong");
         return -1;
     }
@@ -270,8 +266,7 @@ static int handle_tcp_ping_message(Client *client, FractalClientMessage *fcmsg) 
     fsmsg_response.type = MESSAGE_TCP_PONG;
     fsmsg_response.ping_id = fcmsg->ping_id;
 
-    if (send_packet(&client->tcp_context, PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
-                    sizeof(fsmsg_response), -1) < 0) {
+    if (send_packet(&client->tcp_context, PACKET_MESSAGE, (uint8_t *)&fsmsg_response, sizeof(fsmsg_response), -1) < 0) {
         LOG_WARNING("Failed to send TCP pong");
         return -1;
     }
@@ -291,13 +286,10 @@ static int handle_dimensions_message(whist_server_state *state, FractalClientMes
     */
 
     // Update knowledge of client monitor dimensions
-    LOG_INFO("Request to use codec %d / dimensions %dx%d / dpi %d received",
-             fcmsg->dimensions.codec_type, fcmsg->dimensions.width, fcmsg->dimensions.height,
-             fcmsg->dimensions.dpi);
-    if (state->client_width != fcmsg->dimensions.width ||
-        state->client_height != fcmsg->dimensions.height ||
-        state->client_codec_type != fcmsg->dimensions.codec_type ||
-        state->client_dpi != fcmsg->dimensions.dpi) {
+    LOG_INFO("Request to use codec %d / dimensions %dx%d / dpi %d received", fcmsg->dimensions.codec_type,
+             fcmsg->dimensions.width, fcmsg->dimensions.height, fcmsg->dimensions.dpi);
+    if (state->client_width != fcmsg->dimensions.width || state->client_height != fcmsg->dimensions.height ||
+        state->client_codec_type != fcmsg->dimensions.codec_type || state->client_dpi != fcmsg->dimensions.dpi) {
         state->client_width = fcmsg->dimensions.width;
         state->client_height = fcmsg->dimensions.height;
         state->client_codec_type = fcmsg->dimensions.codec_type;
@@ -341,20 +333,17 @@ static int handle_nack_message(Client *client, FractalClientMessage *fcmsg) {
     */
 
     if (fcmsg->type == MESSAGE_NACK) {
-        udp_nack(&client->udp_context, fcmsg->simple_nack.type, fcmsg->simple_nack.id,
-                 fcmsg->simple_nack.index);
+        udp_nack(&client->udp_context, fcmsg->simple_nack.type, fcmsg->simple_nack.id, fcmsg->simple_nack.index);
     } else {
         // fcmsg->type == MESSAGE_VIDEO_BITARRAY_NACK
         BitArray *bit_arr = bit_array_create(fcmsg->bitarray_nack.numBits);
         bit_array_clear_all(bit_arr);
 
-        memcpy(bit_array_get_bits(bit_arr), fcmsg->bitarray_nack.ba_raw,
-               BITS_TO_CHARS(fcmsg->bitarray_nack.numBits));
+        memcpy(bit_array_get_bits(bit_arr), fcmsg->bitarray_nack.ba_raw, BITS_TO_CHARS(fcmsg->bitarray_nack.numBits));
 
         for (int i = fcmsg->bitarray_nack.index; i < fcmsg->bitarray_nack.numBits; i++) {
             if (bit_array_test_bit(bit_arr, i)) {
-                udp_nack(&client->udp_context, fcmsg->bitarray_nack.type, fcmsg->bitarray_nack.id,
-                         i);
+                udp_nack(&client->udp_context, fcmsg->bitarray_nack.type, fcmsg->bitarray_nack.id, i);
             }
         }
         bit_array_free(bit_arr);

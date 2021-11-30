@@ -71,8 +71,7 @@ void gen_iv(void* iv) {
 
 int hmac(void* hash, void* buf, int len, void* key) {
     int hash_len;
-    HMAC(EVP_sha256(), key, 16, (const unsigned char*)buf, len, (unsigned char*)hash,
-         (unsigned int*)&hash_len);
+    HMAC(EVP_sha256(), key, 16, (const unsigned char*)buf, len, (unsigned char*)hash, (unsigned int*)&hash_len);
     if (hash_len != 32) {
         LOG_WARNING("Incorrect hash length!");
         return -1;
@@ -91,9 +90,8 @@ bool verify_hmac(void* hash, void* buf, int len, void* key) {
     return true;
 }
 
-#define CRYPTO_HEADER_LEN                                                          \
-    (sizeof(((FractalPacket*)0)->hash) + sizeof(((FractalPacket*)0)->cipher_len) + \
-     sizeof(((FractalPacket*)0)->iv))
+#define CRYPTO_HEADER_LEN \
+    (sizeof(((FractalPacket*)0)->hash) + sizeof(((FractalPacket*)0)->cipher_len) + sizeof(((FractalPacket*)0)->iv))
 
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
@@ -139,16 +137,14 @@ int decrypt_packet(FractalPacket* encrypted_packet, int packet_len, FractalPacke
     return decrypt_len;
 }
 
-int decrypt_packet_n(FractalPacket* encrypted_packet, int packet_len,
-                     FractalPacket* plaintext_packet, int plaintext_len,
-                     unsigned char* private_key) {
+int decrypt_packet_n(FractalPacket* encrypted_packet, int packet_len, FractalPacket* plaintext_packet,
+                     int plaintext_len, unsigned char* private_key) {
     if ((unsigned long)packet_len < PACKET_HEADER_SIZE) {
         LOG_WARNING("Packet is too small (%d bytes) for metadata!", packet_len);
         return -1;
     }
 
-    if (!verify_hmac(encrypted_packet->hash,
-                     (char*)encrypted_packet + sizeof(encrypted_packet->hash),
+    if (!verify_hmac(encrypted_packet->hash, (char*)encrypted_packet + sizeof(encrypted_packet->hash),
                      packet_len - sizeof(encrypted_packet->hash), private_key)) {
         LOG_WARNING("Incorrect hmac!");
         return -1;
@@ -157,9 +153,8 @@ int decrypt_packet_n(FractalPacket* encrypted_packet, int packet_len,
     char* cipher_buf = (char*)encrypted_packet + CRYPTO_HEADER_LEN;
     char* plaintext_buf = (char*)plaintext_packet + CRYPTO_HEADER_LEN;
 
-    int decrypt_len =
-        aes_decrypt((unsigned char*)cipher_buf, encrypted_packet->cipher_len, private_key,
-                    (unsigned char*)encrypted_packet->iv, (unsigned char*)plaintext_buf);
+    int decrypt_len = aes_decrypt((unsigned char*)cipher_buf, encrypted_packet->cipher_len, private_key,
+                                  (unsigned char*)encrypted_packet->iv, (unsigned char*)plaintext_buf);
     decrypt_len += CRYPTO_HEADER_LEN;
 
     int expected_len = get_packet_size(plaintext_packet);
@@ -197,8 +192,7 @@ int aes_encrypt(void* plaintext, int plaintext_len, void* key, void* iv, void* c
     ciphertext_len = len;
 
     // Finish encryption (Might add a few bytes)
-    if (1 != EVP_EncryptFinal_ex(ctx, (unsigned char*)ciphertext + ciphertext_len, &len))
-        handle_errors();
+    if (1 != EVP_EncryptFinal_ex(ctx, (unsigned char*)ciphertext + ciphertext_len, &len)) handle_errors();
     ciphertext_len += len;
 
     // Free the context

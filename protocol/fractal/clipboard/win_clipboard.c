@@ -91,8 +91,8 @@ WCHAR* lclipboard_directory() {
     if (directory == NULL) {
         static WCHAR sz_path[PATH_MAXLEN + 1];
         WCHAR* path;
-        if (SUCCEEDED(SHGetKnownFolderPath(&FOLDERID_ProgramData,
-                                           CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, 0, &path))) {
+        if (SUCCEEDED(
+                SHGetKnownFolderPath(&FOLDERID_ProgramData, CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, 0, &path))) {
             wcscpy(sz_path, path);
             CoTaskMemFree(path);
             PathAppendW(sz_path, L"FractalCache");
@@ -233,8 +233,7 @@ bool create_junction(WCHAR* sz_junction, WCHAR* sz_path) {
 
     DWORD dw_ret;
     if (!DeviceIoControl(h_dir, FSCTL_SET_REPARSE_POINT, reparse_buffer,
-                         reparse_buffer->ReparseDataLength + REPARSE_MOUNTPOINT_HEADER_SIZE, NULL,
-                         0, &dw_ret, NULL)) {
+                         reparse_buffer->ReparseDataLength + REPARSE_MOUNTPOINT_HEADER_SIZE, NULL, 0, &dw_ret, NULL)) {
         CloseHandle(h_dir);
         RemoveDirectoryW(sz_junction);
 
@@ -328,8 +327,7 @@ ClipboardData* unsafe_get_os_clipboard() {
                     // Don't forget to release the lock after you are done.
                     GlobalUnlock(hglb);
                 } else {
-                    LOG_WARNING("GlobalLock failed! (Type: %d) (Error: %d)", cf_types[i],
-                                GetLastError());
+                    LOG_WARNING("GlobalLock failed! (Type: %d) (Error: %d)", cf_types[i], GetLastError());
                 }
             }
         }

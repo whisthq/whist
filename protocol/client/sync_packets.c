@@ -162,10 +162,8 @@ void update_server_bitrate() {
         fcmsg.bitrate_data.bitrate = client_max_bitrate;
         fcmsg.bitrate_data.burst_bitrate = max_burst_bitrate;
         fcmsg.bitrate_data.fec_packet_ratio = FEC_PACKET_RATIO;
-        LOG_INFO("Asking for server MBPS to be %f/%f/%f",
-                 fcmsg.bitrate_data.bitrate / 1024.0 / 1024.0,
-                 fcmsg.bitrate_data.burst_bitrate / 1024.0 / 1024.0,
-                 fcmsg.bitrate_data.fec_packet_ratio);
+        LOG_INFO("Asking for server MBPS to be %f/%f/%f", fcmsg.bitrate_data.bitrate / 1024.0 / 1024.0,
+                 fcmsg.bitrate_data.burst_bitrate / 1024.0 / 1024.0, fcmsg.bitrate_data.fec_packet_ratio);
         send_fcmsg(&fcmsg);
     }
 }
@@ -204,8 +202,7 @@ int multithreaded_sync_udp_packets(void* opaque) {
     start_timer(&last_ack);
 
     // Initialize dimensions prior to update_video and receive_video calls
-    if (server_width != output_width || server_height != output_height ||
-        server_codec_type != output_codec_type) {
+    if (server_width != output_width || server_height != output_height || server_codec_type != output_codec_type) {
         send_message_dimensions();
     }
 
@@ -220,8 +217,7 @@ int multithreaded_sync_udp_packets(void* opaque) {
         update_ping();
         TIME_RUN(update_video(), VIDEO_UPDATE_TIME, statistics_timer);
         TIME_RUN(update_audio(), AUDIO_UPDATE_TIME, statistics_timer);
-        TIME_RUN(FractalPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_UDP,
-                 statistics_timer);
+        TIME_RUN(FractalPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_UDP, statistics_timer);
 
         if (!packet) {
             continue;
@@ -237,8 +233,7 @@ int multithreaded_sync_udp_packets(void* opaque) {
                 break;
             }
             case PACKET_MESSAGE: {
-                TIME_RUN(handle_server_message((FractalServerMessage*)packet->data,
-                                               (size_t)packet->payload_size),
+                TIME_RUN(handle_server_message((FractalServerMessage*)packet->data, (size_t)packet->payload_size),
                          SERVER_HANDLE_MESSAGE_UDP, statistics_timer);
                 break;
             }
@@ -285,26 +280,23 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         // Update TCP ping and reconnect TCP if needed (TODO: does that function do too much?)
         update_tcp_ping();
 
-        TIME_RUN(FractalPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_TCP,
-                 statistics_timer);
+        TIME_RUN(FractalPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_TCP, statistics_timer);
 
         if (packet) {
-            TIME_RUN(handle_server_message((FractalServerMessage*)packet->data,
-                                           (size_t)packet->payload_size),
+            TIME_RUN(handle_server_message((FractalServerMessage*)packet->data, (size_t)packet->payload_size),
                      SERVER_HANDLE_MESSAGE_TCP, statistics_timer);
             free_packet(socket_context, packet);
         }
 
         ClipboardData* clipboard_chunk = pull_clipboard_chunk();
         if (clipboard_chunk) {
-            FractalClientMessage* fcmsg = allocate_region(
-                sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard_chunk->size);
+            FractalClientMessage* fcmsg =
+                allocate_region(sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard_chunk->size);
 
             // Init header to 0 to prevent sending uninitialized packets over the network
             memset(fcmsg, 0, sizeof(FractalClientMessage));
             fcmsg->type = CMESSAGE_CLIPBOARD;
-            memcpy(&fcmsg->clipboard, clipboard_chunk,
-                   sizeof(ClipboardData) + clipboard_chunk->size);
+            memcpy(&fcmsg->clipboard, clipboard_chunk, sizeof(ClipboardData) + clipboard_chunk->size);
             send_fcmsg(fcmsg);
             deallocate_region(fcmsg);
             deallocate_region(clipboard_chunk);
@@ -337,11 +329,9 @@ void init_packet_synchronizers() {
     }
     run_sync_packets_threads = true;
     sync_udp_packets_thread =
-        SDL_CreateThread(multithreaded_sync_udp_packets, "multithreaded_sync_udp_packets",
-                         &run_sync_packets_threads);
+        SDL_CreateThread(multithreaded_sync_udp_packets, "multithreaded_sync_udp_packets", &run_sync_packets_threads);
     sync_tcp_packets_thread =
-        SDL_CreateThread(multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets",
-                         &run_sync_packets_threads);
+        SDL_CreateThread(multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", &run_sync_packets_threads);
 }
 
 void destroy_packet_synchronizers() {
