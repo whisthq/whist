@@ -244,6 +244,10 @@ static void whist_server_state_init(whist_server_state* state, whist_server_conf
     state->client_dpi = -1;
     state->client_codec_type = CODEC_TYPE_UNKNOWN;
     state->update_device = true;
+
+    state->discovery_listen = INVALID_SOCKET;
+    state->tcp_listen = INVALID_SOCKET;
+    state->udp_listen = INVALID_SOCKET;
 }
 
 int main(int argc, char* argv[]) {

@@ -36,11 +36,6 @@ int begin_time_to_exit = 60;
 
 int last_input_id = -1;
 
-/* long term listen sockets */
-SOCKET discovery_listen;
-SOCKET tcp_listen;
-SOCKET udp_listen = INVALID_SOCKET;
-
 /*
 ============================
 Private Functions
@@ -93,13 +88,13 @@ int handle_discovery_port_message(whist_server_state *state, SocketContext *cont
             if (!state->client.is_active) {
                 state->client.user_id = user_id;
 
-                if (udp_listen != INVALID_SOCKET) {
-                    closesocket(udp_listen);  // close and reopen later to clear packets in the
-                                              // system buffer
-                    udp_listen = INVALID_SOCKET;
+                if (state->udp_listen != INVALID_SOCKET) {
+                    closesocket(state->udp_listen);  // close and reopen later to clear packets in
+                                                     // the system buffer
+                    state->udp_listen = INVALID_SOCKET;
                 }
-                if (create_udp_listen_socket(&udp_listen, BASE_UDP_PORT, UDP_CONNECTION_WAIT) !=
-                    0) {
+                if (create_udp_listen_socket(&state->udp_listen, BASE_UDP_PORT,
+                                             UDP_CONNECTION_WAIT) != 0) {
                     LOG_WARNING("Failed to create base udp listen socket");
                 } else if (do_discovery_handshake(state, context, fcmsg) != 0) {
                     LOG_WARNING("Discovery handshake failed.");
@@ -120,7 +115,7 @@ int handle_discovery_port_message(whist_server_state *state, SocketContext *cont
             SocketContextData *socket_context_data = (SocketContextData *)context->context;
             write_lock(&state->client.tcp_rwlock);
             destroy_socket_context(&state->client.tcp_context);
-            state->client.tcp_context.listen_socket = &tcp_listen;
+            state->client.tcp_context.listen_socket = &state->tcp_listen;
             if (!create_tcp_socket_context(&state->client.tcp_context, NULL, state->client.tcp_port,
                                            1, TCP_CONNECTION_WAIT, get_using_stun(),
                                            socket_context_data->binary_aes_private_key)) {
@@ -351,11 +346,12 @@ int multithreaded_manage_client(void *opaque) {
     clock last_ping_check;
     start_timer(&last_ping_check);
 
-    if (create_tcp_listen_socket(&discovery_listen, PORT_DISCOVERY, TCP_CONNECTION_WAIT) != 0) {
+    if (create_tcp_listen_socket(&state->discovery_listen, PORT_DISCOVERY, TCP_CONNECTION_WAIT) !=
+        0) {
         LOG_WARNING("Failed to create discovery tcp listen socket");
         state->exiting = true;
     }
-    if (create_tcp_listen_socket(&tcp_listen, BASE_TCP_PORT, TCP_CONNECTION_WAIT) != 0) {
+    if (create_tcp_listen_socket(&state->tcp_listen, BASE_TCP_PORT, TCP_CONNECTION_WAIT) != 0) {
         LOG_WARNING("Failed to create base tcp listen socket");
         state->exiting = true;
     }
@@ -402,7 +398,7 @@ int multithreaded_manage_client(void *opaque) {
                 state->exiting = true;
             }
         }
-        discovery_context.listen_socket = &discovery_listen;
+        discovery_context.listen_socket = &state->discovery_listen;
         // Even without multiclient, we need this for TCP recovery over the discovery port
         if (!create_tcp_socket_context(&discovery_context, NULL, PORT_DISCOVERY, 1,
                                        TCP_CONNECTION_WAIT, get_using_stun(),
@@ -428,8 +424,8 @@ int multithreaded_manage_client(void *opaque) {
             continue;
         }
 
-        state->client.tcp_context.listen_socket = &tcp_listen;
-        state->client.udp_context.listen_socket = &udp_listen;
+        state->client.tcp_context.listen_socket = &state->tcp_listen;
+        state->client.udp_context.listen_socket = &state->udp_listen;
         // Client is not in use so we don't need to worry about anyone else
         // touching it
         if (connect_client(&state->client, get_using_stun(), config->binary_aes_private_key) != 0) {
