@@ -50,15 +50,15 @@ typedef struct ClipboardActivity {
 
     // Protected by clipboard_action_mutex:
     FractalClipboardActionType clipboard_action_type;
-    FractalThread active_clipboard_action_thread;
+    WhistThread active_clipboard_action_thread;
     bool* aborting_ptr;  // whether the current thread is being aborted
     bool* complete_ptr;  // whether the action has been completed
     ClipboardData** clipboard_buffer_ptr;
     int pulled_bytes;  // only relevant for PULL actions
 
-    FractalMutex clipboard_action_mutex;
-    FractalCondition continue_action_condvar;
-    FractalSemaphore thread_setup_semaphore;
+    WhistMutex clipboard_action_mutex;
+    WhistCondition continue_action_condvar;
+    WhistSemaphore thread_setup_semaphore;
 } ClipboardActivity;
 
 /*

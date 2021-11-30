@@ -310,7 +310,7 @@ Whist Library Tests
  * logging/logging.c
  **/
 TEST_F(CaptureStdoutTest, LoggerTest) {
-    init_logger();
+    whist_init_logger();
     LOG_DEBUG("This is a debug log!");
     LOG_INFO("This is an info log!");
     flush_logs();
@@ -346,8 +346,8 @@ TEST_F(CaptureStdoutTest, LogStatistic) {
         {"TEST2", false, false, true},
         {"TEST3", true, true, false},  // Don't log this. Want to check for "count == 0" condition
     };
-    init_logger();
-    init_statistic_logger(3, NULL, 2);
+    whist_init_logger();
+    whist_init_statistic_logger(3, NULL, 2);
     flush_logs();
     check_stdout_line(::testing::HasSubstr("Logging initialized!"));
     check_stdout_line(::testing::HasSubstr("StatisticInfo is NULL"));
@@ -356,7 +356,7 @@ TEST_F(CaptureStdoutTest, LogStatistic) {
     flush_logs();
     check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
 
-    init_statistic_logger(3, statistic_info, 2);
+    whist_init_statistic_logger(3, statistic_info, 2);
     log_double_statistic(3, 10.0);
     flush_logs();
     check_stdout_line(::testing::HasSubstr("index is out of bounds"));
@@ -367,7 +367,7 @@ TEST_F(CaptureStdoutTest, LogStatistic) {
     log_double_statistic(0, 21.5);
     log_double_statistic(1, 30.0);
     log_double_statistic(1, 20.0);
-    fractal_sleep(2010);
+    whist_sleep(2010);
     log_double_statistic(1, 60.0);
     flush_logs();
     check_stdout_line(::testing::HasSubstr("\"TEST1\" : 15.75"));
@@ -428,13 +428,13 @@ TEST(ProtocolTest, TimersTest) {
     // is broken, but not necessarily if both are broken.
     // clock timer;
     // start_timer(&timer);
-    // fractal_sleep(25);
+    // whist_sleep(25);
     // double elapsed = get_timer(timer);
     // EXPECT_GE(elapsed, 0.025);
     // EXPECT_LE(elapsed, 0.035);
 
     // start_timer(&timer);
-    // fractal_sleep(100);
+    // whist_sleep(100);
     // elapsed = get_timer(timer);
     // EXPECT_GE(elapsed, 0.100);
     // EXPECT_LE(elapsed, 0.110);

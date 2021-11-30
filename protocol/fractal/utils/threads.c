@@ -6,31 +6,31 @@
 #include <pthread.h>
 #endif
 
-void fractal_init_multithreading() {
+void whist_init_multithreading() {
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     SDL_SetHint(SDL_HINT_THREAD_FORCE_REALTIME_TIME_CRITICAL, "1");
     SDL_Init(SDL_INIT_VIDEO);
 }
 
-FractalThread fractal_create_thread(FractalThreadFunction thread_function, char *thread_name,
-                                    void *data) {
-    FractalThread ret = SDL_CreateThread(thread_function, thread_name, data);
+WhistThread whist_create_thread(WhistThreadFunction thread_function, char *thread_name,
+                                void *data) {
+    WhistThread ret = SDL_CreateThread(thread_function, thread_name, data);
     if (ret == NULL) {
         LOG_FATAL("Failure creating thread: %s", SDL_GetError());
     }
     return ret;
 }
 
-FractalThreadID fractal_get_thread_id(FractalThread thread) {
+WhistThreadID whist_get_thread_id(WhistThread thread) {
     // `thread` == NULL returns the current thread ID
     return SDL_GetThreadID(thread);
 }
 
-void fractal_detach_thread(FractalThread thread) { SDL_DetachThread(thread); }
+void whist_detach_thread(WhistThread thread) { SDL_DetachThread(thread); }
 
-void fractal_wait_thread(FractalThread thread, int *ret) { SDL_WaitThread(thread, ret); }
+void whist_wait_thread(WhistThread thread, int *ret) { SDL_WaitThread(thread, ret); }
 
-void fractal_set_thread_priority(FractalThreadPriority priority) {
+void whist_set_thread_priority(FractalThreadPriority priority) {
     // Add in special case handling when trying to set specifically REALTIME on Linux,
     // As this leads to increased performance
 #ifdef __linux__
@@ -49,14 +49,14 @@ void fractal_set_thread_priority(FractalThreadPriority priority) {
             // Try _HIGH instead of _REALTIME on logged error
             strerror_r(errno, err, sizeof(err));
             LOG_ERROR("Failure calling sched_get_priority_max(): %s", err);
-            fractal_set_thread_priority(WHIST_THREAD_PRIORITY_HIGH);
+            whist_set_thread_priority(WHIST_THREAD_PRIORITY_HIGH);
             return;
         }
         // Set the priority to the maximum possible priority
         if (pthread_setschedparam(this_thread, SCHED_RR, &params) != 0) {
             // Try _HIGH instead of _REALTIME on logged error
             LOG_ERROR("Failure calling pthread_setschedparam()");
-            fractal_set_thread_priority(WHIST_THREAD_PRIORITY_HIGH);
+            whist_set_thread_priority(WHIST_THREAD_PRIORITY_HIGH);
             return;
         }
         return;
@@ -69,37 +69,37 @@ void fractal_set_thread_priority(FractalThreadPriority priority) {
         if (priority == WHIST_THREAD_PRIORITY_REALTIME) {
             // REALTIME requires sudo/admin on unix/windows.
             // So, if we fail to set the REALTIME priority, we should at least try _HIGH
-            fractal_set_thread_priority(WHIST_THREAD_PRIORITY_HIGH);
+            whist_set_thread_priority(WHIST_THREAD_PRIORITY_HIGH);
         }
     }
 }
 
-void fractal_sleep(uint32_t ms) { SDL_Delay(ms); }
+void whist_sleep(uint32_t ms) { SDL_Delay(ms); }
 
-void fractal_usleep(uint32_t us) {
+void whist_usleep(uint32_t us) {
 #ifdef _WIN32
     // Not sure if this is implemented on Windows, so just fall back to SDL_Delay.
-    fractal_sleep(us / 1000);
+    whist_sleep(us / 1000);
 #else
     usleep(us);
 #endif  // _WIN32
 }
 
-FractalMutex fractal_create_mutex() {
-    FractalMutex ret = SDL_CreateMutex();
+WhistMutex whist_create_mutex() {
+    WhistMutex ret = SDL_CreateMutex();
     if (ret == NULL) {
         LOG_FATAL("Failure creating mutex: %s", SDL_GetError());
     }
     return ret;
 }
 
-void fractal_lock_mutex(FractalMutex mutex) {
+void whist_lock_mutex(WhistMutex mutex) {
     if (SDL_LockMutex(mutex) < 0) {
         LOG_FATAL("Failure locking mutex: %s", SDL_GetError());
     }
 }
 
-int fractal_try_lock_mutex(FractalMutex mutex) {
+int whist_try_lock_mutex(WhistMutex mutex) {
     int status = SDL_TryLockMutex(mutex);
     if (status == 0 || status == SDL_MUTEX_TIMEDOUT) {
         return status;
@@ -108,54 +108,54 @@ int fractal_try_lock_mutex(FractalMutex mutex) {
     }
 }
 
-void fractal_unlock_mutex(FractalMutex mutex) {
+void whist_unlock_mutex(WhistMutex mutex) {
     if (SDL_UnlockMutex(mutex) < 0) {
         LOG_FATAL("Failure unlocking mutex: %s", SDL_GetError());
     }
 }
 
-void fractal_destroy_mutex(FractalMutex mutex) { SDL_DestroyMutex(mutex); }
+void whist_destroy_mutex(WhistMutex mutex) { SDL_DestroyMutex(mutex); }
 
-FractalCondition fractal_create_cond() {
-    FractalCondition ret = SDL_CreateCond();
+WhistCondition whist_create_cond() {
+    WhistCondition ret = SDL_CreateCond();
     if (ret == NULL) {
         LOG_FATAL("Failure creating condition variable: %s", SDL_GetError());
     }
     return ret;
 }
 
-void fractal_wait_cond(FractalCondition cond, FractalMutex mutex) {
+void whist_wait_cond(WhistCondition cond, WhistMutex mutex) {
     if (SDL_CondWait(cond, mutex) < 0) {
         LOG_FATAL("Failure waiting on condition variable: %s", SDL_GetError());
     }
 }
 
-void fractal_broadcast_cond(FractalCondition cond) {
+void whist_broadcast_cond(WhistCondition cond) {
     if (SDL_CondBroadcast(cond) < 0) {
         LOG_FATAL("Failure broadcasting condition variable: %s", SDL_GetError());
     }
 }
 
-void fractal_destroy_cond(FractalCondition cond) { SDL_DestroyCond(cond); }
+void whist_destroy_cond(WhistCondition cond) { SDL_DestroyCond(cond); }
 
-FractalSemaphore fractal_create_semaphore(uint32_t initial_value) {
-    FractalSemaphore ret = SDL_CreateSemaphore(initial_value);
+WhistSemaphore whist_create_semaphore(uint32_t initial_value) {
+    WhistSemaphore ret = SDL_CreateSemaphore(initial_value);
     if (ret == NULL) {
         LOG_FATAL("Failure creating semaphore: %s", SDL_GetError());
     }
     return ret;
 }
 
-void fractal_post_semaphore(FractalSemaphore semaphore) {
+void whist_post_semaphore(WhistSemaphore semaphore) {
     if (SDL_SemPost(semaphore) < 0) {
         LOG_FATAL("Failure posting semaphore: %s", SDL_GetError());
     }
 }
 
-void fractal_wait_semaphore(FractalSemaphore semaphore) {
+void whist_wait_semaphore(WhistSemaphore semaphore) {
     if (SDL_SemWait(semaphore) < 0) {
         LOG_FATAL("Failure waiting on semaphore: %s", SDL_GetError());
     }
 }
 
-void fractal_destroy_semaphore(FractalSemaphore semaphore) { SDL_DestroySemaphore(semaphore); }
+void whist_destroy_semaphore(WhistSemaphore semaphore) { SDL_DestroySemaphore(semaphore); }

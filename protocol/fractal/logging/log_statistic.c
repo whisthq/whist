@@ -24,7 +24,7 @@ Includes
 
 #define LOG_STATISTICS true
 
-static FractalMutex log_statistic_mutex;
+static WhistMutex log_statistic_mutex;
 
 static clock print_statistic_clock;
 
@@ -99,12 +99,13 @@ Public Function Implementations
 ============================
 */
 
-void init_statistic_logger(uint32_t num_metrics, StatisticInfo *statistic_info, int interval) {
+void whist_init_statistic_logger(uint32_t num_metrics, StatisticInfo *statistic_info,
+                                 int interval) {
     if (statistic_info == NULL) {
         LOG_ERROR("StatisticInfo is NULL");
         return;
     }
-    log_statistic_mutex = fractal_create_mutex();
+    log_statistic_mutex = whist_create_mutex();
     statistic_context.statistic_info = statistic_info;
     statistic_context.num_metrics = num_metrics;
     statistic_context.interval = interval;
@@ -134,7 +135,7 @@ void log_double_statistic(uint32_t index, double val) {
                   statistic_context.num_metrics);
         return;
     }
-    fractal_lock_mutex(log_statistic_mutex);
+    whist_lock_mutex(log_statistic_mutex);
     if (all_statistics[index].count == 0) {
         all_statistics[index].min = val;
         all_statistics[index].max = val;
@@ -151,10 +152,10 @@ void log_double_statistic(uint32_t index, double val) {
     if (get_timer(print_statistic_clock) > statistic_context.interval) {
         unsafe_print_statistics();
     }
-    fractal_unlock_mutex(log_statistic_mutex);
+    whist_unlock_mutex(log_statistic_mutex);
 }
 
 void destroy_statistic_logger() {
     memset((void *)&statistic_context, 0, sizeof(statistic_context));
-    fractal_destroy_mutex(log_statistic_mutex);
+    whist_destroy_mutex(log_statistic_mutex);
 }

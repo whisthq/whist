@@ -93,7 +93,7 @@ const char *clipboard_get_string() {
         clock wait_for_contents_timer;
         start_timer(&wait_for_contents_timer);
         while ([objects_to_paste count] == 0 && get_timer(wait_for_contents_timer) < 2) {
-            fractal_sleep(1);
+            whist_sleep(1);
             objects_to_paste = [pasteboard readObjectsForClasses:class_array options:options];
         }
 

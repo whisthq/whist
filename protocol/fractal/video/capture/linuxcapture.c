@@ -56,7 +56,7 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
     CaptureDevice* device = (CaptureDevice*)opaque;
 
     while (true) {
-        fractal_wait_semaphore(device->nvidia_device_semaphore);
+        whist_wait_semaphore(device->nvidia_device_semaphore);
         if (device->pending_destruction) {
             break;
         }
@@ -70,7 +70,7 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
         while (device->nvidia_capture_device == NULL) {
             LOG_INFO("Creating nvidia capture device...");
             device->nvidia_capture_device = create_nvidia_capture_device();
-            fractal_sleep(500);
+            whist_sleep(500);
         }
         LOG_INFO("Created nvidia capture device!");
         LOG_DEBUG("device handle: %d", device->nvidia_capture_device->fbc_handle);
@@ -274,10 +274,10 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
     LOG_DEBUG("Nvidia context: %x, Video context: %x", *get_nvidia_thread_cuda_context_ptr(),
               *get_video_thread_cuda_context_ptr());
     // set up semaphore and nvidia manager
-    device->nvidia_device_semaphore = fractal_create_semaphore(0);
-    device->nvidia_manager = fractal_create_thread(multithreaded_nvidia_device_manager,
-                                                   "multithreaded_nvidia_manager", device);
-    fractal_post_semaphore(device->nvidia_device_semaphore);
+    device->nvidia_device_semaphore = whist_create_semaphore(0);
+    device->nvidia_manager = whist_create_thread(multithreaded_nvidia_device_manager,
+                                                 "multithreaded_nvidia_manager", device);
+    whist_post_semaphore(device->nvidia_device_semaphore);
 #endif  // USING_NVIDIA_CAPTURE
 
     // Create the X11 capture device; when the nvidia manager thread finishes creation, active
@@ -396,7 +396,7 @@ bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t 
         destroy_nvidia_capture_device(device->nvidia_capture_device);
         device->nvidia_capture_device = NULL;
         device->active_capture_device = X11_DEVICE;
-        fractal_post_semaphore(device->nvidia_device_semaphore);
+        whist_post_semaphore(device->nvidia_device_semaphore);
     }
 #endif  // USING_NVIDIA_CAPTURE
     return reconfigure_x11_capture_device(device->x11_capture_device, width, height, dpi);
@@ -416,9 +416,9 @@ void destroy_capture_device(CaptureDevice* device) {
 #if USING_NVIDIA_CAPTURE
     // tell the nvidia thread to stop
     device->pending_destruction = true;
-    fractal_post_semaphore(device->nvidia_device_semaphore);
+    whist_post_semaphore(device->nvidia_device_semaphore);
     // wait for the nvidia thread to terminate
-    fractal_wait_thread(device->nvidia_manager, NULL);
+    whist_wait_thread(device->nvidia_manager, NULL);
     // now we can destroy the capture device
     if (device->nvidia_capture_device) {
         destroy_nvidia_capture_device(device->nvidia_capture_device);

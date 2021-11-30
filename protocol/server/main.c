@@ -28,7 +28,7 @@ Globals
 ============================
 */
 
-static FractalMutex packet_mutex;
+static WhistMutex packet_mutex;
 
 // only implemented for Linux servers currently
 #ifdef __linux__
@@ -249,12 +249,13 @@ static void whist_server_state_init(whist_server_state* state, whist_server_conf
 int main(int argc, char* argv[]) {
     whist_server_config config;
 
-    fractal_init_multithreading();
+    whist_init_multithreading();
 
-    init_networking();
-    init_logger();
-    init_server_statistics();
-    init_statistic_logger(SERVER_NUM_METRICS, server_statistic_info, STATISTICS_FREQUENCY_IN_SEC);
+    whist_init_networking();
+    whist_init_logger();
+    whist_init_server_statistics();
+    whist_init_statistic_logger(SERVER_NUM_METRICS, server_statistic_info,
+                                STATISTICS_FREQUENCY_IN_SEC);
 
     int ret = server_parse_args(&config, argc, argv);
     if (ret == -1) {
@@ -270,7 +271,7 @@ int main(int argc, char* argv[]) {
     LOG_INFO("Server protocol started.");
 
     // Initialize the error monitor, and tell it we are the server.
-    error_monitor_initialize(false);
+    whist_error_monitor_initialize(false);
 
 #if defined(_WIN32)
     // set Windows DPI
@@ -305,15 +306,15 @@ int main(int argc, char* argv[]) {
     server_state.update_encoder = false;
     server_state.exiting = false;
 
-    FractalThread send_video_thread =
-        fractal_create_thread(multithreaded_send_video, "multithreaded_send_video", &server_state);
-    FractalThread send_audio_thread =
-        fractal_create_thread(multithreaded_send_audio, "multithreaded_send_audio", &server_state);
+    WhistThread send_video_thread =
+        whist_create_thread(multithreaded_send_video, "multithreaded_send_video", &server_state);
+    WhistThread send_audio_thread =
+        whist_create_thread(multithreaded_send_audio, "multithreaded_send_audio", &server_state);
 
-    FractalThread manage_clients_thread = fractal_create_thread(
+    WhistThread manage_clients_thread = whist_create_thread(
         multithreaded_manage_client, "multithreaded_manage_client", &server_state);
 
-    FractalThread sync_tcp_packets_thread = fractal_create_thread(
+    WhistThread sync_tcp_packets_thread = whist_create_thread(
         multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", &server_state);
     LOG_INFO("Sending video and audio...");
 
@@ -446,12 +447,12 @@ int main(int argc, char* argv[]) {
 
     destroy_window_info_getter();
 
-    fractal_wait_thread(send_video_thread, NULL);
-    fractal_wait_thread(send_audio_thread, NULL);
-    fractal_wait_thread(sync_tcp_packets_thread, NULL);
-    fractal_wait_thread(manage_clients_thread, NULL);
+    whist_wait_thread(send_video_thread, NULL);
+    whist_wait_thread(send_audio_thread, NULL);
+    whist_wait_thread(sync_tcp_packets_thread, NULL);
+    whist_wait_thread(manage_clients_thread, NULL);
 
-    fractal_destroy_mutex(packet_mutex);
+    whist_destroy_mutex(packet_mutex);
 
     // This is safe to call here because all other threads have been waited and destroyed
     if (quit_client(&server_state.client) != 0) {

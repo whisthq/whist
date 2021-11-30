@@ -163,7 +163,7 @@ int user_activity_deactivator(void *unique) {
 
     while (true) {
         // Only wake up once every 30 seconds, resolution doesn't matter that much here
-        fractal_sleep(30 * 1000);
+        whist_sleep(30 * 1000);
         safe_SDL_LockMutex(last_user_activity_timer_mutex);
         if (get_timer(last_user_activity_timer) > SCREENSAVER_TIMEOUT_SECONDS && assertion_set) {
             IOReturn result = IOPMAssertionRelease(power_assertion_id);
@@ -182,7 +182,7 @@ void declare_user_activity() {
     if (!last_user_activity_timer_mutex) {
         last_user_activity_timer_mutex = safe_SDL_CreateMutex();
         start_timer(&last_user_activity_timer);
-        fractal_create_thread(user_activity_deactivator, "user_activity_deactivator", NULL);
+        whist_create_thread(user_activity_deactivator, "user_activity_deactivator", NULL);
     }
 
     // Static bool because we'll only accept one failure,

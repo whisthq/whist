@@ -290,7 +290,7 @@ ClipboardData* unsafe_get_os_clipboard() {
     */
 
     // We have to wait a bit after hasClipboardUpdated, before the clipboard actually updates
-    fractal_sleep(15);
+    whist_sleep(15);
 
     ClipboardData* cb = allocate_region(sizeof(ClipboardData));
 

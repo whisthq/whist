@@ -244,7 +244,7 @@ typedef struct {
     SOCKET socket;
     struct sockaddr_in addr;
     int ack;
-    FractalMutex mutex;
+    WhistMutex mutex;
     char binary_aes_private_key[16];
     // Used for reading TCP packets
     int reading_packet_len;
@@ -257,7 +257,7 @@ typedef struct {
     // Nack Buffer Data
     FractalPacket** nack_buffers[NUM_PACKET_TYPES];
     // This mutex will protect the data in nack_buffers
-    FractalMutex nack_mutex[NUM_PACKET_TYPES];
+    WhistMutex nack_mutex[NUM_PACKET_TYPES];
     int nack_num_buffers[NUM_PACKET_TYPES];
     int nack_buffer_max_indices[NUM_PACKET_TYPES];
     int nack_buffer_max_payload_size[NUM_PACKET_TYPES];
@@ -361,7 +361,7 @@ Public Functions
  * @brief                          Initialize networking system
  *                                 Must be called before calling any other function in this file
  */
-void init_networking();
+void whist_init_networking();
 
 /**
  * @brief                          Get the most recent network error.

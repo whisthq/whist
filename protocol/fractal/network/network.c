@@ -230,7 +230,7 @@ void set_tos(SOCKET socket, FractalTOSValue tos) {
     }
 }
 
-void init_networking() {
+void whist_init_networking() {
     /*
         Initialize default port mappings (i.e. the identity)
     */
@@ -310,7 +310,7 @@ bool handshake_private_key(SocketContextData* context) {
                   get_last_network_error());
         return false;
     }
-    fractal_sleep(50);
+    whist_sleep(50);
 
     // Receive, sign, and send back their private key request data
     while ((recv_size =
@@ -333,7 +333,7 @@ bool handshake_private_key(SocketContextData* context) {
                   get_last_network_error());
         return false;
     }
-    fractal_sleep(50);
+    whist_sleep(50);
 
     // Wait for and verify their signed private key request data
     recv_size = recv(context->socket, (char*)&our_signed_priv_key_data,

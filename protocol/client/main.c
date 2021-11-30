@@ -284,7 +284,7 @@ int main(int argc, char* argv[]) {
 
     // init_networking needs to be called before `client_parse_args` because it modifies
     //     `port_mappings`
-    init_networking();
+    whist_init_networking();
 
     int ret = client_parse_args(argc, argv);
     if (ret == -1) {
@@ -297,9 +297,10 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    init_logger();
+    whist_init_logger();
     init_client_statistics();
-    init_statistic_logger(CLIENT_NUM_METRICS, client_statistic_info, STATISTICS_FREQUENCY_IN_SEC);
+    whist_init_statistic_logger(CLIENT_NUM_METRICS, client_statistic_info,
+                                STATISTICS_FREQUENCY_IN_SEC);
 
     handle_single_icon_launch_client_app(argc, argv);
 
@@ -309,7 +310,7 @@ int main(int argc, char* argv[]) {
     LOG_INFO("Client protocol started.");
 
     // Initialize the error monitor, and tell it we are the client.
-    error_monitor_initialize(true);
+    whist_error_monitor_initialize(true);
 
     // Set error monitor username based on email from parsed arguments.
     error_monitor_set_username(user_email);
@@ -461,7 +462,7 @@ int main(int argc, char* argv[]) {
 
                 // This 50ms sleep is an arbitrary length that seems not to have noticeable latency
                 // effects while still reducing CPU strain while the window is minimized
-                fractal_sleep(50);
+                whist_sleep(50);
                 continue;
             }
             // Check if window title should be updated

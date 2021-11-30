@@ -134,7 +134,7 @@ int udp_send_constructed_packet(void* raw_context, FractalPacket* packet, size_t
 
     // If sending fails because of no buffer space available on the system, retry a few times.
     for (int i = 0; i < RETRIES_ON_BUFFER_FULL; i++) {
-        fractal_lock_mutex(context->mutex);
+        whist_lock_mutex(context->mutex);
         int ret;
 #if LOG_NETWORKING
         LOG_INFO("Sending a FractalPacket of size %d over UDP", packet_size);
@@ -146,7 +146,7 @@ int udp_send_constructed_packet(void* raw_context, FractalPacket* packet, size_t
             // Send unencrypted during dev mode
             ret = send(context->socket, (const char*)packet, (int)packet_size, 0);
         }
-        fractal_unlock_mutex(context->mutex);
+        whist_unlock_mutex(context->mutex);
         if (ret < 0) {
             int error = get_last_network_error();
             if (error == ENOBUFS) {
@@ -208,7 +208,7 @@ int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payl
     for (int packet_index = 0; packet_index < num_indices; packet_index++) {
         if (nack_buffer) {
             // Lock on a per-loop basis to not starve nack() calls
-            fractal_lock_mutex(context->nack_mutex[type_index]);
+            whist_lock_mutex(context->nack_mutex[type_index]);
         }
         FractalPacket local_packet;
         // Construct the packet, potentially into the nack buffer
@@ -225,7 +225,7 @@ int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payl
         // ignoring the return code since maybe a subset of the packets were sent
         udp_send_constructed_packet(context, packet, get_packet_size(packet));
         if (nack_buffer) {
-            fractal_unlock_mutex(context->nack_mutex[type_index]);
+            whist_unlock_mutex(context->nack_mutex[type_index]);
         }
     }
 
@@ -266,7 +266,7 @@ void udp_register_nack_buffer(SocketContext* socket_context, FractalPacketType t
     int max_num_ids = max_payload_size / MAX_PAYLOAD_SIZE + 2;
 
     context->nack_buffers[type_index] = malloc(sizeof(FractalPacket*) * num_buffers);
-    context->nack_mutex[type_index] = fractal_create_mutex();
+    context->nack_mutex[type_index] = whist_create_mutex();
     context->nack_num_buffers[type_index] = num_buffers;
     context->nack_buffer_max_payload_size[type_index] = max_payload_size;
     context->nack_buffer_max_indices[type_index] = max_num_ids;
@@ -302,7 +302,7 @@ int udp_nack(SocketContext* socket_context, FractalPacketType type, int packet_i
         return -1;
     }
 
-    fractal_lock_mutex(context->nack_mutex[type_index]);
+    whist_lock_mutex(context->nack_mutex[type_index]);
     FractalPacket* packet =
         &context->nack_buffers[type_index][packet_id % context->nack_num_buffers[type_index]]
                               [packet_index];
@@ -324,7 +324,7 @@ int udp_nack(SocketContext* socket_context, FractalPacketType type, int packet_i
         ret = -1;
     }
 
-    fractal_unlock_mutex(context->nack_mutex[type_index]);
+    whist_unlock_mutex(context->nack_mutex[type_index]);
     return ret;
 }
 
@@ -350,7 +350,7 @@ void udp_destroy_socket_context(void* raw_context) {
     if (context->network_throttler != NULL) {
         network_throttler_destroy(context->network_throttler);
     }
-    fractal_destroy_mutex(context->mutex);
+    whist_destroy_mutex(context->mutex);
     free(context);
 }
 
@@ -507,7 +507,7 @@ int create_udp_server_context_stun(SocketContextData* context, int port, int rec
         LOG_ERROR("send(4) failed! Could not open up port! %d", get_last_network_error());
         return false;
     }
-    fractal_sleep(150);
+    whist_sleep(150);
 
     if (!handshake_private_key(context)) {
         LOG_WARNING("Could not complete handshake!");
@@ -564,7 +564,7 @@ int create_udp_client_context(SocketContextData* context, char* destination, int
         return -1;
     }
 
-    fractal_sleep(stun_timeout_ms);
+    whist_sleep(stun_timeout_ms);
 
     if (!handshake_private_key(context)) {
         LOG_WARNING("Could not complete handshake!");
@@ -651,7 +651,7 @@ int create_udp_client_context_stun(SocketContextData* context, char* destination
         LOG_ERROR("send(4) failed! Could not open up port! %d", get_last_network_error());
         return false;
     }
-    fractal_sleep(150);
+    whist_sleep(150);
 
     if (!handshake_private_key(context)) {
         LOG_WARNING("Could not complete handshake!");
@@ -710,7 +710,7 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     port = port_mappings[port];
 
     context->timeout = recvfrom_timeout_ms;
-    context->mutex = fractal_create_mutex();
+    context->mutex = whist_create_mutex();
     memcpy(context->binary_aes_private_key, binary_aes_private_key,
            sizeof(context->binary_aes_private_key));
 

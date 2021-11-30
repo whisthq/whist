@@ -237,7 +237,7 @@ void tcp_destroy_socket_context(void* raw_context) {
     SocketContextData* context = raw_context;
 
     closesocket(context->socket);
-    fractal_destroy_mutex(context->mutex);
+    whist_destroy_mutex(context->mutex);
     free_dynamic_buffer(context->encrypted_tcp_packet_buffer);
     free(context);
 }
@@ -646,7 +646,7 @@ int create_tcp_client_context(SocketContextData* context, char* destination, int
 
     LOG_INFO("Connecting to server...");
 
-    fractal_sleep(200);
+    whist_sleep(200);
 
     // Connect to TCP server
     if (!tcp_connect(context->socket, context->addr, stun_timeout_ms)) {
@@ -857,7 +857,7 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
 
     // Initialize data
     context->timeout = recvfrom_timeout_ms;
-    context->mutex = fractal_create_mutex();
+    context->mutex = whist_create_mutex();
     memcpy(context->binary_aes_private_key, binary_aes_private_key,
            sizeof(context->binary_aes_private_key));
     context->reading_packet_len = 0;
