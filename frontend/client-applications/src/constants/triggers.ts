@@ -10,6 +10,7 @@ const WhistTrigger = {
   windowInfo: "windowInfo",
   windowsAllClosed: "windowsAllClosed",
   networkUnstable: "networkUnstable",
+  reactivated: "reactivated", // When all windows are closed and the user clicks the dock icon
 
   // Auth triggers
   authInfo: "authInfo",

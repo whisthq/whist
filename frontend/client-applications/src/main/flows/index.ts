@@ -118,9 +118,10 @@ const launchTrigger = fromSignal(
   ),
   merge(
     fromTrigger(WhistTrigger.checkPaymentFlowSuccess),
-    refreshAfterPaying.success
+    refreshAfterPaying.success,
+    fromTrigger(WhistTrigger.reactivated)
   )
-).pipe(take(1), share())
+).pipe(share())
 
 // Mandelbox creation flow
 const mandelbox = mandelboxFlow(launchTrigger)
