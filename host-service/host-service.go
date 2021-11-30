@@ -378,6 +378,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
 		logger.Error(err)
+		metrics.Add("ErrorRate", 1)
 	}
 
 	// mandelboxSubscription is the pubsub event received from Hasura.
