@@ -12,6 +12,10 @@ class MandelboxAssignError(str, Enum):
     COULD_NOT_LOCK_INSTANCE = "COULD_NOT_LOCK_INSTANCE"
     # No instance was found e.g. a capacity issue
     NO_INSTANCE_AVAILABLE = "NO_INSTANCE_AVAILABLE"
+    # The requested region(s) have not been enabled
+    REGION_NOT_ENABLED = "REGION_NOT_ENABLED"
+    # User is already conneceted to a mandelbox, possibly on another device
+    USER_ALREADY_ACTIVE = "USER_ALREADY_ACTIVE"
     # We should not have reached this point, there is a logic error
     UNDEFINED = "UNDEFINED"
 

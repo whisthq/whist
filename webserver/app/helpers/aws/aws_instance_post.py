@@ -22,8 +22,8 @@ from app.constants.ec2_instance_states import EC2InstanceState
 from app.constants.mandelbox_assign_error_names import MandelboxAssignError
 
 bundled_region = {
-    "us-east-1": ["us-east-2"],
-    "us-east-2": ["us-east-1"],
+    "us-east-1": ["us-east-2", "ca-central-1"],
+    "us-east-2": ["us-east-1", "ca-central-1"],
     "us-west-1": ["us-west-2"],
     "us-west-2": ["us-west-1"],
     "ca-central-1": ["us-east-1"],
