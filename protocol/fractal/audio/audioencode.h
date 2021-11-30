@@ -45,26 +45,26 @@ Custom Types
  *
  */
 typedef struct AudioEncoder {
-    const AVCodec* codec;
-    AVCodecContext* context;
-    AVFrame* frame;
-    AVAudioFifo* audio_fifo;
+  const AVCodec* codec;
+  AVCodecContext* context;
+  AVFrame* frame;
+  AVAudioFifo* audio_fifo;
 
-    int num_packets;
-    AVPacket packets[MAX_NUM_AUDIO_PACKETS];
+  int num_packets;
+  AVPacket packets[MAX_NUM_AUDIO_PACKETS];
 
-    SwrContext* swr_context;
-    int frame_count;
-    int encoded_frame_size;
+  SwrContext* swr_context;
+  int frame_count;
+  int encoded_frame_size;
 } AudioEncoder;
 
 /**
  * @brief                          Encoded audio struct (unused)
  */
 typedef struct EncodedAudio {
-    int pts;
-    int size;
-    uint8_t data[10];
+  int pts;
+  int size;
+  uint8_t data[10];
 } EncodedAudio;
 
 /*

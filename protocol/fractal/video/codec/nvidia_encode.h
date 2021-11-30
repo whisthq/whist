@@ -9,36 +9,36 @@
 #define RESOURCE_CACHE_SIZE 4
 
 typedef struct {
-    NV_ENC_REGISTERED_PTR handle;
-    CaptureDeviceType device_type;
-    int width;
-    int height;
-    int pitch;
-    void* texture_pointer;
+  NV_ENC_REGISTERED_PTR handle;
+  CaptureDeviceType device_type;
+  int width;
+  int height;
+  int pitch;
+  void* texture_pointer;
 } RegisteredResource;
 
 typedef struct {
-    NV_ENCODE_API_FUNCTION_LIST p_enc_fn;
-    void* internal_nvidia_encoder;
-    NV_ENC_INITIALIZE_PARAMS encoder_params;
+  NV_ENCODE_API_FUNCTION_LIST p_enc_fn;
+  void* internal_nvidia_encoder;
+  NV_ENC_INITIALIZE_PARAMS encoder_params;
 
-    RegisteredResource resource_cache[RESOURCE_CACHE_SIZE];
-    RegisteredResource registered_resource;
+  RegisteredResource resource_cache[RESOURCE_CACHE_SIZE];
+  RegisteredResource registered_resource;
 
-    NV_ENC_OUTPUT_PTR output_buffer;
-    NV_ENC_BUFFER_FORMAT buffer_fmt;
-    CUcontext cuda_context;
-    CodecType codec_type;
-    int bitrate;
-    uint32_t frame_idx;
-    int width;
-    int height;
-    int pitch;
-    bool wants_iframe;
-    // Output
-    void* frame;
-    unsigned int frame_size;
-    bool is_iframe;
+  NV_ENC_OUTPUT_PTR output_buffer;
+  NV_ENC_BUFFER_FORMAT buffer_fmt;
+  CUcontext cuda_context;
+  CodecType codec_type;
+  int bitrate;
+  uint32_t frame_idx;
+  int width;
+  int height;
+  int pitch;
+  bool wants_iframe;
+  // Output
+  void* frame;
+  unsigned int frame_size;
+  bool is_iframe;
 } NvidiaEncoder;
 
 /**

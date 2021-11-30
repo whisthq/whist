@@ -28,10 +28,10 @@ void* safe_realloc(void* buffer, size_t new_size);
  * @details Memory buffer used to store any allocated data.
  */
 typedef struct {
-    size_t size;
-    size_t capacity;
-    bool use_memory_regions;
-    char* buf;
+  size_t size;
+  size_t capacity;
+  bool use_memory_regions;
+  char* buf;
 } DynamicBuffer;
 
 /**

@@ -33,27 +33,27 @@ Custom Types
 */
 
 typedef struct CaptureDevice {
-    int width;
-    int height;
-    int pitch;
-    void* frame_data;
-    FractalRGBColor corner_color;
-    void* internal;
+  int width;
+  int height;
+  int pitch;
+  void* frame_data;
+  FractalRGBColor corner_color;
+  void* internal;
 
 #ifdef __linux__
-    CaptureDeviceType active_capture_device;  // the device currently used for capturing
-    CaptureDeviceType last_capture_device;  // the device used for the last capture, so we can pick
+  CaptureDeviceType active_capture_device;  // the device currently used for capturing
+  CaptureDeviceType last_capture_device;    // the device used for the last capture, so we can pick
                                             // the right encoder
-    bool pending_destruction;
-    WhistThread nvidia_manager;
-    WhistSemaphore nvidia_device_semaphore;
-    bool nvidia_context_is_stale;
-    // Shared X11 state
-    Display* display;
-    Window root;
-    // Underlying X11/Nvidia capture devices
-    NvidiaCaptureDevice* nvidia_capture_device;
-    X11CaptureDevice* x11_capture_device;
+  bool pending_destruction;
+  WhistThread nvidia_manager;
+  WhistSemaphore nvidia_device_semaphore;
+  bool nvidia_context_is_stale;
+  // Shared X11 state
+  Display* display;
+  Window root;
+  // Underlying X11/Nvidia capture devices
+  NvidiaCaptureDevice* nvidia_capture_device;
+  X11CaptureDevice* x11_capture_device;
 #endif
 } CaptureDevice;
 

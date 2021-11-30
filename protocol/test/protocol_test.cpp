@@ -75,79 +75,77 @@ Test Fixtures
 #endif
 
 class CaptureStdoutTest : public ::testing::Test {
+  /*
+      This class is a test fixture which redirects stdout to a file
+      for the duration of the test. The file is then read and compared
+      to registered expected output matchers on a line-by-line basis.
+  */
+ protected:
+  void SetUp() override {
     /*
-        This class is a test fixture which redirects stdout to a file
-        for the duration of the test. The file is then read and compared
-        to registered expected output matchers on a line-by-line basis.
+        This function captures the output of stdout to a file for the current
+        test. The file is named after the test name, and is located in the
+        test/test_output directory. The file is overwritten if it already
+        exists.
     */
-   protected:
-    void SetUp() override {
-        /*
-            This function captures the output of stdout to a file for the current
-            test. The file is named after the test name, and is located in the
-            test/test_output directory. The file is overwritten if it already
-            exists.
-        */
-        old_stdout = safe_dup(STDOUT_FILENO);
-        safe_mkdir(TEST_OUTPUT_DIRNAME);
-        std::string filename = std::string(TEST_OUTPUT_DIRNAME) + "/" +
-                               ::testing::UnitTest::GetInstance()->current_test_info()->name() +
-                               ".log";
-        fd = safe_open(filename.c_str(), O_WRONLY | O_CREAT);
-        EXPECT_GE(fd, 0);
-        fflush(stdout);
-        safe_dup2(fd, STDOUT_FILENO);
+    old_stdout = safe_dup(STDOUT_FILENO);
+    safe_mkdir(TEST_OUTPUT_DIRNAME);
+    std::string filename = std::string(TEST_OUTPUT_DIRNAME) + "/" +
+                           ::testing::UnitTest::GetInstance()->current_test_info()->name() + ".log";
+    fd = safe_open(filename.c_str(), O_WRONLY | O_CREAT);
+    EXPECT_GE(fd, 0);
+    fflush(stdout);
+    safe_dup2(fd, STDOUT_FILENO);
+  }
+
+  void TearDown() override {
+    /*
+        This function releases the output of stdout captured by the `SetUp()`
+        function. We then open the file and read it line by line, comparing
+        the output to matchers we have registerd with `check_stdout_line()`.
+    */
+    fflush(stdout);
+    safe_dup2(old_stdout, STDOUT_FILENO);
+    safe_close(fd);
+    std::ifstream file(std::string(TEST_OUTPUT_DIRNAME) + "/" +
+                       ::testing::UnitTest::GetInstance()->current_test_info()->name() + ".log");
+
+    for (::testing::Matcher<std::string> matcher : line_matchers) {
+      std::string line;
+      std::getline(file, line);
+      EXPECT_THAT(line, matcher);
     }
 
-    void TearDown() override {
-        /*
-            This function releases the output of stdout captured by the `SetUp()`
-            function. We then open the file and read it line by line, comparing
-            the output to matchers we have registerd with `check_stdout_line()`.
-        */
-        fflush(stdout);
-        safe_dup2(old_stdout, STDOUT_FILENO);
-        safe_close(fd);
-        std::ifstream file(std::string(TEST_OUTPUT_DIRNAME) + "/" +
-                           ::testing::UnitTest::GetInstance()->current_test_info()->name() +
-                           ".log");
+    file.close();
+  }
 
-        for (::testing::Matcher<std::string> matcher : line_matchers) {
-            std::string line;
-            std::getline(file, line);
-            EXPECT_THAT(line, matcher);
-        }
+  void check_stdout_line(::testing::Matcher<std::string> matcher) {
+    /*
+        This function registers a matcher to be used to compare the output
+        of the current test to the expected output. For example, if we want
+        to check that the output contains the string "hello", we can do so
+        by calling `check_stdout_line(::testing::HasSubstr("hello"))`. If we
+        then want to verify that the next line of output contains the string
+        "world", we then call `check_stdout_line(::testing::HasSubstr("world"))`.
 
-        file.close();
-    }
+        The matcher is added to a vector of matchers, which is used to
+        compare the output line-by-line. To add multiple matchers for a
+        single line, we can use `::testing::AllOf()` or `::testing::AnyOf()`
+        to combine multiple matchers into a single matcher.
 
-    void check_stdout_line(::testing::Matcher<std::string> matcher) {
-        /*
-            This function registers a matcher to be used to compare the output
-            of the current test to the expected output. For example, if we want
-            to check that the output contains the string "hello", we can do so
-            by calling `check_stdout_line(::testing::HasSubstr("hello"))`. If we
-            then want to verify that the next line of output contains the string
-            "world", we then call `check_stdout_line(::testing::HasSubstr("world"))`.
+        Note that the matchers are not checked until the `TearDown()` function
+        is called.
 
-            The matcher is added to a vector of matchers, which is used to
-            compare the output line-by-line. To add multiple matchers for a
-            single line, we can use `::testing::AllOf()` or `::testing::AnyOf()`
-            to combine multiple matchers into a single matcher.
+        Arguments:
+            matcher (::testing::Matcher<std::string>): The matcher to use
+                to compare the output line.
+    */
+    line_matchers.push_back(matcher);
+  }
 
-            Note that the matchers are not checked until the `TearDown()` function
-            is called.
-
-            Arguments:
-                matcher (::testing::Matcher<std::string>): The matcher to use
-                    to compare the output line.
-        */
-        line_matchers.push_back(matcher);
-    }
-
-    int old_stdout;
-    int fd;
-    std::vector<::testing::Matcher<std::string>> line_matchers;
+  int old_stdout;
+  int fd;
+  std::vector<::testing::Matcher<std::string>> line_matchers;
 };
 
 /*
@@ -170,16 +168,16 @@ Example Test
 
 // Example of a test using a function from the client module
 TEST_F(CaptureStdoutTest, ClientParseArgsEmpty) {
-    int argc = 1;
+  int argc = 1;
 
-    char argv0[] = "./client/build64/FractalClient";
-    char* argv[] = {argv0, NULL};
+  char argv0[] = "./client/build64/FractalClient";
+  char* argv[] = {argv0, NULL};
 
-    int ret_val = client_parse_args(argc, argv);
-    EXPECT_EQ(ret_val, -1);
+  int ret_val = client_parse_args(argc, argv);
+  EXPECT_EQ(ret_val, -1);
 
-    check_stdout_line(::testing::StartsWith("Usage:"));
-    check_stdout_line(::testing::HasSubstr("--help"));
+  check_stdout_line(::testing::StartsWith("Usage:"));
+  check_stdout_line(::testing::HasSubstr("--help"));
 }
 
 /*
@@ -199,76 +197,76 @@ Client Tests
 // Tests that an initialized ring buffer is correct size and has
 // frame IDs initialized to -1
 TEST(ProtocolTest, InitRingBuffer) {
-    RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, NUM_AUDIO_TEST_FRAMES, NULL);
+  RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, NUM_AUDIO_TEST_FRAMES, NULL);
 
-    EXPECT_EQ(rb->ring_buffer_size, NUM_AUDIO_TEST_FRAMES);
-    for (int frame_num = 0; frame_num < NUM_AUDIO_TEST_FRAMES; frame_num++)
-        EXPECT_EQ(rb->receiving_frames[frame_num].id, -1);
+  EXPECT_EQ(rb->ring_buffer_size, NUM_AUDIO_TEST_FRAMES);
+  for (int frame_num = 0; frame_num < NUM_AUDIO_TEST_FRAMES; frame_num++)
+    EXPECT_EQ(rb->receiving_frames[frame_num].id, -1);
 
-    destroy_ring_buffer(rb);
+  destroy_ring_buffer(rb);
 }
 
 // Tests that an initialized ring buffer with a bad size returns NULL
 TEST_F(CaptureStdoutTest, InitRingBufferBadSize) {
-    RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, MAX_RING_BUFFER_SIZE + 1, NULL);
-    EXPECT_TRUE(rb == NULL);
-    check_stdout_line(LOG_ERROR_MATCHER);
+  RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, MAX_RING_BUFFER_SIZE + 1, NULL);
+  EXPECT_TRUE(rb == NULL);
+  check_stdout_line(LOG_ERROR_MATCHER);
 }
 
 // Tests adding packets into ringbuffer
 TEST_F(CaptureStdoutTest, AddingPacketsToRingBuffer) {
-    // initialize ringbuffer
-    const size_t num_packets = 1;
-    RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, num_packets, NULL);
+  // initialize ringbuffer
+  const size_t num_packets = 1;
+  RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, num_packets, NULL);
 
-    // setup packets to add to ringbuffer
-    FractalPacket pkt1 = {0};
-    pkt1.type = PACKET_VIDEO;
-    pkt1.id = 0;
-    pkt1.index = 0;
-    pkt1.is_a_nack = false;
+  // setup packets to add to ringbuffer
+  FractalPacket pkt1 = {0};
+  pkt1.type = PACKET_VIDEO;
+  pkt1.id = 0;
+  pkt1.index = 0;
+  pkt1.is_a_nack = false;
 
-    FractalPacket pkt2 = {0};
-    pkt2.type = PACKET_VIDEO;
-    pkt2.id = 1;
-    pkt2.index = 0;
-    pkt2.is_a_nack = false;
+  FractalPacket pkt2 = {0};
+  pkt2.type = PACKET_VIDEO;
+  pkt2.id = 1;
+  pkt2.index = 0;
+  pkt2.is_a_nack = false;
 
-    // checks that everything goes well when adding to an empty ringbuffer
-    EXPECT_EQ(receive_packet(rb, &pkt1), 0);
-    EXPECT_EQ(get_frame_at_id(rb, pkt1.id)->id, pkt1.id);
+  // checks that everything goes well when adding to an empty ringbuffer
+  EXPECT_EQ(receive_packet(rb, &pkt1), 0);
+  EXPECT_EQ(get_frame_at_id(rb, pkt1.id)->id, pkt1.id);
 
-    // checks that 1 is returned when overwriting a valid frame
-    EXPECT_EQ(receive_packet(rb, &pkt2), 1);
-    EXPECT_EQ(get_frame_at_id(rb, pkt2.id)->id, pkt2.id);
+  // checks that 1 is returned when overwriting a valid frame
+  EXPECT_EQ(receive_packet(rb, &pkt2), 1);
+  EXPECT_EQ(get_frame_at_id(rb, pkt2.id)->id, pkt2.id);
 
-    // check that -1 is returned when we get a duplicate
-    EXPECT_EQ(receive_packet(rb, &pkt2), -1);
+  // check that -1 is returned when we get a duplicate
+  EXPECT_EQ(receive_packet(rb, &pkt2), -1);
 
-    destroy_ring_buffer(rb);
+  destroy_ring_buffer(rb);
 
-    // For now we use the CaptureStdoutTest fixture to simply suppress stdout;
-    // eventually we should validate output.
+  // For now we use the CaptureStdoutTest fixture to simply suppress stdout;
+  // eventually we should validate output.
 }
 
 // Test that resetting the ringbuffer resets the values
 TEST(ProtocolTest, ResetRingBufferFrame) {
-    // initialize ringbuffer
-    const size_t num_packets = 1;
-    RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, num_packets, NULL);
+  // initialize ringbuffer
+  const size_t num_packets = 1;
+  RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, num_packets, NULL);
 
-    // fill ringbuffer
-    FractalPacket pkt1;
-    pkt1.type = PACKET_VIDEO;
-    pkt1.id = 0;
-    pkt1.index = 0;
-    pkt1.is_a_nack = false;
-    pkt1.payload_size = 0;
+  // fill ringbuffer
+  FractalPacket pkt1;
+  pkt1.type = PACKET_VIDEO;
+  pkt1.id = 0;
+  pkt1.index = 0;
+  pkt1.is_a_nack = false;
+  pkt1.payload_size = 0;
 
-    receive_packet(rb, &pkt1);
-    reset_frame(rb, get_frame_at_id(rb, pkt1.id));
+  receive_packet(rb, &pkt1);
+  reset_frame(rb, get_frame_at_id(rb, pkt1.id));
 
-    EXPECT_EQ(receive_packet(rb, &pkt1), 0);
+  EXPECT_EQ(receive_packet(rb, &pkt1), 0);
 }
 
 /*
@@ -285,17 +283,17 @@ Server Tests
 
 // Testing that good values passed into server_parse_args returns success
 TEST_F(CaptureStdoutTest, ServerParseArgsUsage) {
-    whist_server_config config;
-    int argc = 2;
+  whist_server_config config;
+  int argc = 2;
 
-    char argv0[] = "./server/build64/FractalServer";
-    char argv1[] = "--help";
-    char* argv[] = {argv0, argv1, NULL};
+  char argv0[] = "./server/build64/FractalServer";
+  char argv1[] = "--help";
+  char* argv[] = {argv0, argv1, NULL};
 
-    int ret_val = server_parse_args(&config, argc, argv);
-    EXPECT_EQ(ret_val, 1);
+  int ret_val = server_parse_args(&config, argc, argv);
+  EXPECT_EQ(ret_val, 1);
 
-    check_stdout_line(::testing::HasSubstr("Usage:"));
+  check_stdout_line(::testing::HasSubstr("Usage:"));
 }
 
 #endif
@@ -310,78 +308,78 @@ Whist Library Tests
  * logging/logging.c
  **/
 TEST_F(CaptureStdoutTest, LoggerTest) {
-    whist_init_logger();
-    LOG_DEBUG("This is a debug log!");
-    LOG_INFO("This is an info log!");
-    flush_logs();
-    LOG_WARNING("This is a warning log!");
-    LOG_ERROR("This is an error log!");
-    flush_logs();
-    LOG_INFO("AAA");
-    LOG_INFO("BBB");
-    LOG_INFO("CCC");
-    LOG_INFO("DDD");
-    LOG_INFO("EEE");
-    destroy_logger();
+  whist_init_logger();
+  LOG_DEBUG("This is a debug log!");
+  LOG_INFO("This is an info log!");
+  flush_logs();
+  LOG_WARNING("This is a warning log!");
+  LOG_ERROR("This is an error log!");
+  flush_logs();
+  LOG_INFO("AAA");
+  LOG_INFO("BBB");
+  LOG_INFO("CCC");
+  LOG_INFO("DDD");
+  LOG_INFO("EEE");
+  destroy_logger();
 
-    // Validate stdout, line-by-line
-    check_stdout_line(::testing::HasSubstr("Logging initialized!"));
-    check_stdout_line(LOG_DEBUG_MATCHER);
-    check_stdout_line(LOG_INFO_MATCHER);
-    check_stdout_line(LOG_WARNING_MATCHER);
-    check_stdout_line(LOG_ERROR_MATCHER);
-    check_stdout_line(::testing::EndsWith("AAA"));
-    check_stdout_line(::testing::EndsWith("BBB"));
-    check_stdout_line(::testing::EndsWith("CCC"));
-    check_stdout_line(::testing::EndsWith("DDD"));
-    check_stdout_line(::testing::EndsWith("EEE"));
+  // Validate stdout, line-by-line
+  check_stdout_line(::testing::HasSubstr("Logging initialized!"));
+  check_stdout_line(LOG_DEBUG_MATCHER);
+  check_stdout_line(LOG_INFO_MATCHER);
+  check_stdout_line(LOG_WARNING_MATCHER);
+  check_stdout_line(LOG_ERROR_MATCHER);
+  check_stdout_line(::testing::EndsWith("AAA"));
+  check_stdout_line(::testing::EndsWith("BBB"));
+  check_stdout_line(::testing::EndsWith("CCC"));
+  check_stdout_line(::testing::EndsWith("DDD"));
+  check_stdout_line(::testing::EndsWith("EEE"));
 }
 
 /**
  * logging/log_statistic.c
  **/
 TEST_F(CaptureStdoutTest, LogStatistic) {
-    StatisticInfo statistic_info[] = {
-        {"TEST1", true, true, false},
-        {"TEST2", false, false, true},
-        {"TEST3", true, true, false},  // Don't log this. Want to check for "count == 0" condition
-    };
-    whist_init_logger();
-    whist_init_statistic_logger(3, NULL, 2);
-    flush_logs();
-    check_stdout_line(::testing::HasSubstr("Logging initialized!"));
-    check_stdout_line(::testing::HasSubstr("StatisticInfo is NULL"));
+  StatisticInfo statistic_info[] = {
+    {"TEST1", true, true, false},
+    {"TEST2", false, false, true},
+    {"TEST3", true, true, false},  // Don't log this. Want to check for "count == 0" condition
+  };
+  whist_init_logger();
+  whist_init_statistic_logger(3, NULL, 2);
+  flush_logs();
+  check_stdout_line(::testing::HasSubstr("Logging initialized!"));
+  check_stdout_line(::testing::HasSubstr("StatisticInfo is NULL"));
 
-    log_double_statistic(0, 10.0);
-    flush_logs();
-    check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
+  log_double_statistic(0, 10.0);
+  flush_logs();
+  check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
 
-    whist_init_statistic_logger(3, statistic_info, 2);
-    log_double_statistic(3, 10.0);
-    flush_logs();
-    check_stdout_line(::testing::HasSubstr("index is out of bounds"));
-    log_double_statistic(4, 10.0);
-    flush_logs();
-    check_stdout_line(::testing::HasSubstr("index is out of bounds"));
-    log_double_statistic(0, 10.0);
-    log_double_statistic(0, 21.5);
-    log_double_statistic(1, 30.0);
-    log_double_statistic(1, 20.0);
-    whist_sleep(2010);
-    log_double_statistic(1, 60.0);
-    flush_logs();
-    check_stdout_line(::testing::HasSubstr("\"TEST1\" : 15.75"));
-    check_stdout_line(::testing::HasSubstr("\"MAX_TEST1\" : 21.50"));
-    check_stdout_line(::testing::HasSubstr("\"MIN_TEST1\" : 10.00"));
-    check_stdout_line(::testing::HasSubstr("\"TEST2\" : 55.00"));
+  whist_init_statistic_logger(3, statistic_info, 2);
+  log_double_statistic(3, 10.0);
+  flush_logs();
+  check_stdout_line(::testing::HasSubstr("index is out of bounds"));
+  log_double_statistic(4, 10.0);
+  flush_logs();
+  check_stdout_line(::testing::HasSubstr("index is out of bounds"));
+  log_double_statistic(0, 10.0);
+  log_double_statistic(0, 21.5);
+  log_double_statistic(1, 30.0);
+  log_double_statistic(1, 20.0);
+  whist_sleep(2010);
+  log_double_statistic(1, 60.0);
+  flush_logs();
+  check_stdout_line(::testing::HasSubstr("\"TEST1\" : 15.75"));
+  check_stdout_line(::testing::HasSubstr("\"MAX_TEST1\" : 21.50"));
+  check_stdout_line(::testing::HasSubstr("\"MIN_TEST1\" : 10.00"));
+  check_stdout_line(::testing::HasSubstr("\"TEST2\" : 55.00"));
 
-    destroy_statistic_logger();
-    destroy_logger();
+  destroy_statistic_logger();
+  destroy_logger();
 }
 
 // Constants used for testing encryption
 #define DEFAULT_BINARY_PRIVATE_KEY \
-    "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
+  "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
 #define SECOND_BINARY_PRIVATE_KEY "\xED\xED\xED\xED\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\xED\xED"
 
 /**
@@ -389,31 +387,31 @@ TEST_F(CaptureStdoutTest, LogStatistic) {
  **/
 
 TEST(ProtocolTest, FractalColorTest) {
-    FractalRGBColor cyan = {0, 255, 255};
-    FractalRGBColor magenta = {255, 0, 255};
-    FractalRGBColor dark_gray = {25, 25, 25};
-    FractalRGBColor light_gray = {150, 150, 150};
-    FractalRGBColor fractal_purple_rgb = {79, 53, 222};
-    FractalYUVColor fractal_purple_yuv = {85, 198, 127};
+  FractalRGBColor cyan = {0, 255, 255};
+  FractalRGBColor magenta = {255, 0, 255};
+  FractalRGBColor dark_gray = {25, 25, 25};
+  FractalRGBColor light_gray = {150, 150, 150};
+  FractalRGBColor fractal_purple_rgb = {79, 53, 222};
+  FractalYUVColor fractal_purple_yuv = {85, 198, 127};
 
-    // equality works
-    EXPECT_EQ(rgb_compare(cyan, cyan), 0);
-    EXPECT_EQ(rgb_compare(magenta, magenta), 0);
+  // equality works
+  EXPECT_EQ(rgb_compare(cyan, cyan), 0);
+  EXPECT_EQ(rgb_compare(magenta, magenta), 0);
 
-    // inequality works
-    EXPECT_EQ(rgb_compare(cyan, magenta), 1);
-    EXPECT_EQ(rgb_compare(magenta, cyan), 1);
+  // inequality works
+  EXPECT_EQ(rgb_compare(cyan, magenta), 1);
+  EXPECT_EQ(rgb_compare(magenta, cyan), 1);
 
-    // dark color wants light text
-    EXPECT_FALSE(color_requires_dark_text(dark_gray));
+  // dark color wants light text
+  EXPECT_FALSE(color_requires_dark_text(dark_gray));
 
-    // light color wants dark text
-    EXPECT_TRUE(color_requires_dark_text(light_gray));
+  // light color wants dark text
+  EXPECT_TRUE(color_requires_dark_text(light_gray));
 
-    // yuv conversion works (with some fuzz)
-    EXPECT_NEAR(yuv_to_rgb(fractal_purple_yuv).red, fractal_purple_rgb.red, 2);
-    EXPECT_NEAR(yuv_to_rgb(fractal_purple_yuv).green, fractal_purple_rgb.green, 2);
-    EXPECT_NEAR(yuv_to_rgb(fractal_purple_yuv).blue, fractal_purple_rgb.blue, 2);
+  // yuv conversion works (with some fuzz)
+  EXPECT_NEAR(yuv_to_rgb(fractal_purple_yuv).red, fractal_purple_rgb.red, 2);
+  EXPECT_NEAR(yuv_to_rgb(fractal_purple_yuv).green, fractal_purple_rgb.green, 2);
+  EXPECT_NEAR(yuv_to_rgb(fractal_purple_yuv).blue, fractal_purple_rgb.blue, 2);
 }
 
 /**
@@ -421,23 +419,23 @@ TEST(ProtocolTest, FractalColorTest) {
  **/
 
 TEST(ProtocolTest, TimersTest) {
-    // Note: This test is currently a no-op, as the GitHub Actions runner is too slow for
-    // sleep/timer to work properly. Uncomment the code to run it locally.
+  // Note: This test is currently a no-op, as the GitHub Actions runner is too slow for
+  // sleep/timer to work properly. Uncomment the code to run it locally.
 
-    // Note that this test will detect if either the timer or the sleep function
-    // is broken, but not necessarily if both are broken.
-    // clock timer;
-    // start_timer(&timer);
-    // whist_sleep(25);
-    // double elapsed = get_timer(timer);
-    // EXPECT_GE(elapsed, 0.025);
-    // EXPECT_LE(elapsed, 0.035);
+  // Note that this test will detect if either the timer or the sleep function
+  // is broken, but not necessarily if both are broken.
+  // clock timer;
+  // start_timer(&timer);
+  // whist_sleep(25);
+  // double elapsed = get_timer(timer);
+  // EXPECT_GE(elapsed, 0.025);
+  // EXPECT_LE(elapsed, 0.035);
 
-    // start_timer(&timer);
-    // whist_sleep(100);
-    // elapsed = get_timer(timer);
-    // EXPECT_GE(elapsed, 0.100);
-    // EXPECT_LE(elapsed, 0.110);
+  // start_timer(&timer);
+  // whist_sleep(100);
+  // elapsed = get_timer(timer);
+  // EXPECT_GE(elapsed, 0.100);
+  // EXPECT_LE(elapsed, 0.110);
 }
 
 /**
@@ -447,78 +445,78 @@ TEST(ProtocolTest, TimersTest) {
 // This test makes a packet, encrypts it, decrypts it, and confirms the latter is
 // the original packet
 TEST(ProtocolTest, EncryptAndDecrypt) {
-    const char* data = "testing...testing";
-    size_t len = strlen(data);
+  const char* data = "testing...testing";
+  size_t len = strlen(data);
 
-    // Construct test packet
-    FractalPacket original_packet;
+  // Construct test packet
+  FractalPacket original_packet;
 
-    // Contruct packet metadata
-    original_packet.id = -1;
-    original_packet.type = PACKET_MESSAGE;
-    original_packet.index = 0;
-    original_packet.payload_size = (int)len;
-    original_packet.num_indices = 1;
-    original_packet.is_a_nack = false;
+  // Contruct packet metadata
+  original_packet.id = -1;
+  original_packet.type = PACKET_MESSAGE;
+  original_packet.index = 0;
+  original_packet.payload_size = (int)len;
+  original_packet.num_indices = 1;
+  original_packet.is_a_nack = false;
 
-    // Copy packet data
-    memcpy(original_packet.data, data, len);
+  // Copy packet data
+  memcpy(original_packet.data, data, len);
 
-    // Encrypt the packet using aes encryption
-    int original_len = PACKET_HEADER_SIZE + original_packet.payload_size;
+  // Encrypt the packet using aes encryption
+  int original_len = PACKET_HEADER_SIZE + original_packet.payload_size;
 
-    FractalPacket encrypted_packet;
-    int encrypted_len = encrypt_packet(&original_packet, original_len, &encrypted_packet,
-                                       (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
+  FractalPacket encrypted_packet;
+  int encrypted_len = encrypt_packet(&original_packet, original_len, &encrypted_packet,
+                                     (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
 
-    // decrypt packet
-    FractalPacket decrypted_packet;
+  // decrypt packet
+  FractalPacket decrypted_packet;
 
-    int decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
-                                       (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
+  int decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
+                                     (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
 
-    // compare original and decrypted packet
-    EXPECT_EQ(decrypted_len, original_len);
-    EXPECT_EQ(decrypted_packet.payload_size, len);
-    EXPECT_EQ(strncmp((char*)decrypted_packet.data, (char*)original_packet.data, len), 0);
+  // compare original and decrypted packet
+  EXPECT_EQ(decrypted_len, original_len);
+  EXPECT_EQ(decrypted_packet.payload_size, len);
+  EXPECT_EQ(strncmp((char*)decrypted_packet.data, (char*)original_packet.data, len), 0);
 }
 
 // This test encrypts a packet with one key, then attempts to decrypt it with a differing
 // key, confirms that it returns -1
 TEST_F(CaptureStdoutTest, BadDecrypt) {
-    const char* data = "testing...testing";
-    size_t len = strlen(data);
+  const char* data = "testing...testing";
+  size_t len = strlen(data);
 
-    // Construct test packet
-    FractalPacket original_packet;
+  // Construct test packet
+  FractalPacket original_packet;
 
-    // Contruct packet metadata
-    original_packet.id = -1;
-    original_packet.type = PACKET_MESSAGE;
-    original_packet.index = 0;
-    original_packet.payload_size = (int)len;
-    original_packet.num_indices = 1;
-    original_packet.is_a_nack = false;
+  // Contruct packet metadata
+  original_packet.id = -1;
+  original_packet.type = PACKET_MESSAGE;
+  original_packet.index = 0;
+  original_packet.payload_size = (int)len;
+  original_packet.num_indices = 1;
+  original_packet.is_a_nack = false;
 
-    // Copy packet data
-    memcpy(original_packet.data, data, len);
+  // Copy packet data
+  memcpy(original_packet.data, data, len);
 
-    // Encrypt the packet using aes encryption
-    int original_len = PACKET_HEADER_SIZE + original_packet.payload_size;
+  // Encrypt the packet using aes encryption
+  int original_len = PACKET_HEADER_SIZE + original_packet.payload_size;
 
-    FractalPacket encrypted_packet;
-    int encrypted_len = encrypt_packet(&original_packet, original_len, &encrypted_packet,
-                                       (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
+  FractalPacket encrypted_packet;
+  int encrypted_len = encrypt_packet(&original_packet, original_len, &encrypted_packet,
+                                     (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
 
-    // decrypt packet with differing key
-    FractalPacket decrypted_packet;
+  // decrypt packet with differing key
+  FractalPacket decrypted_packet;
 
-    int decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
-                                       (unsigned char*)SECOND_BINARY_PRIVATE_KEY);
+  int decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
+                                     (unsigned char*)SECOND_BINARY_PRIVATE_KEY);
 
-    EXPECT_EQ(decrypted_len, -1);
+  EXPECT_EQ(decrypted_len, -1);
 
-    check_stdout_line(LOG_WARNING_MATCHER);
+  check_stdout_line(LOG_WARNING_MATCHER);
 }
 
 /**
@@ -534,34 +532,34 @@ TEST_F(CaptureStdoutTest, BadDecrypt) {
 // (including FFmpeg) may produce different results (lossiness,
 // different interpolation, etc.).
 TEST(ProtocolTest, PngToBmpToPng) {
-    // Read in PNG
-    std::ifstream png_image("assets/image.png", std::ios::binary);
+  // Read in PNG
+  std::ifstream png_image("assets/image.png", std::ios::binary);
 
-    // copies all data into buffer
-    std::vector<unsigned char> png_vec(std::istreambuf_iterator<char>(png_image), {});
-    int png_buffer_size = (int)png_vec.size();
-    char* png_buffer = (char*)&png_vec[0];
+  // copies all data into buffer
+  std::vector<unsigned char> png_vec(std::istreambuf_iterator<char>(png_image), {});
+  int png_buffer_size = (int)png_vec.size();
+  char* png_buffer = (char*)&png_vec[0];
 
-    // Convert to BMP
-    char* bmp_buffer;
-    int bmp_buffer_size;
-    ASSERT_FALSE(png_to_bmp(png_buffer, png_buffer_size, &bmp_buffer, &bmp_buffer_size));
+  // Convert to BMP
+  char* bmp_buffer;
+  int bmp_buffer_size;
+  ASSERT_FALSE(png_to_bmp(png_buffer, png_buffer_size, &bmp_buffer, &bmp_buffer_size));
 
-    // Convert back to PNG
-    char* new_png_buffer;
-    int new_png_buffer_size;
-    ASSERT_FALSE(bmp_to_png(bmp_buffer, bmp_buffer_size, &new_png_buffer, &new_png_buffer_size));
+  // Convert back to PNG
+  char* new_png_buffer;
+  int new_png_buffer_size;
+  ASSERT_FALSE(bmp_to_png(bmp_buffer, bmp_buffer_size, &new_png_buffer, &new_png_buffer_size));
 
-    free_bmp(bmp_buffer);
+  free_bmp(bmp_buffer);
 
-    // compare for equality
-    EXPECT_EQ(png_buffer_size, new_png_buffer_size);
-    for (int i = 0; i < png_buffer_size; i++) {
-        EXPECT_EQ(png_buffer[i], new_png_buffer[i]);
-    }
+  // compare for equality
+  EXPECT_EQ(png_buffer_size, new_png_buffer_size);
+  for (int i = 0; i < png_buffer_size; i++) {
+    EXPECT_EQ(png_buffer[i], new_png_buffer[i]);
+  }
 
-    free_png(new_png_buffer);
-    png_image.close();
+  free_png(new_png_buffer);
+  png_image.close();
 }
 
 // Tests that by converting a PNG to a BMP then converting that back
@@ -570,119 +568,119 @@ TEST(ProtocolTest, PngToBmpToPng) {
 // now-optional paramters for x/y pixel resolutions are set to 0.
 // `ffmpeg -i input-image.{ext} output.bmp` will generate such a BMP.
 TEST(ProtocolTest, BmpToPngToBmp) {
-    // Read in PNG
-    std::ifstream bmp_image("assets/image.bmp", std::ios::binary);
+  // Read in PNG
+  std::ifstream bmp_image("assets/image.bmp", std::ios::binary);
 
-    // copies all data into buffer
-    std::vector<unsigned char> bmp_vec(std::istreambuf_iterator<char>(bmp_image), {});
-    int bmp_buffer_size = (int)bmp_vec.size();
-    char* bmp_buffer = (char*)&bmp_vec[0];
+  // copies all data into buffer
+  std::vector<unsigned char> bmp_vec(std::istreambuf_iterator<char>(bmp_image), {});
+  int bmp_buffer_size = (int)bmp_vec.size();
+  char* bmp_buffer = (char*)&bmp_vec[0];
 
-    // Convert to PNG
-    char* png_buffer;
-    int png_buffer_size;
-    ASSERT_FALSE(bmp_to_png(bmp_buffer, bmp_buffer_size, &png_buffer, &png_buffer_size));
+  // Convert to PNG
+  char* png_buffer;
+  int png_buffer_size;
+  ASSERT_FALSE(bmp_to_png(bmp_buffer, bmp_buffer_size, &png_buffer, &png_buffer_size));
 
-    // Convert back to BMP
-    char* new_bmp_buffer;
-    int new_bmp_buffer_size;
-    ASSERT_FALSE(png_to_bmp(png_buffer, png_buffer_size, &new_bmp_buffer, &new_bmp_buffer_size));
+  // Convert back to BMP
+  char* new_bmp_buffer;
+  int new_bmp_buffer_size;
+  ASSERT_FALSE(png_to_bmp(png_buffer, png_buffer_size, &new_bmp_buffer, &new_bmp_buffer_size));
 
-    free_png(png_buffer);
+  free_png(png_buffer);
 
-    // compare for equality
-    EXPECT_EQ(bmp_buffer_size, new_bmp_buffer_size);
-    for (int i = 0; i < bmp_buffer_size; i++) {
-        EXPECT_EQ(bmp_buffer[i], new_bmp_buffer[i]);
-    }
+  // compare for equality
+  EXPECT_EQ(bmp_buffer_size, new_bmp_buffer_size);
+  for (int i = 0; i < bmp_buffer_size; i++) {
+    EXPECT_EQ(bmp_buffer[i], new_bmp_buffer[i]);
+  }
 
-    free_bmp(new_bmp_buffer);
-    bmp_image.close();
+  free_bmp(new_bmp_buffer);
+  bmp_image.close();
 }
 #endif
 
 // Adds AVPackets to an buffer via write_packets_to_buffer and
 // confirms that buffer structure is correct
 TEST(ProtocolTest, PacketsToBuffer) {
-    // Make some dummy packets
+  // Make some dummy packets
 
-    const char* data1 = "testing...testing";
+  const char* data1 = "testing...testing";
 
-    AVPacket avpkt1;
-    avpkt1.buf = NULL;
-    avpkt1.pts = AV_NOPTS_VALUE;
-    avpkt1.dts = AV_NOPTS_VALUE;
-    avpkt1.data = (uint8_t*)data1;
-    avpkt1.size = (int)strlen(data1);
-    avpkt1.stream_index = 0;
-    avpkt1.side_data = NULL;
-    avpkt1.side_data_elems = 0;
-    avpkt1.duration = 0;
-    avpkt1.pos = -1;
+  AVPacket avpkt1;
+  avpkt1.buf = NULL;
+  avpkt1.pts = AV_NOPTS_VALUE;
+  avpkt1.dts = AV_NOPTS_VALUE;
+  avpkt1.data = (uint8_t*)data1;
+  avpkt1.size = (int)strlen(data1);
+  avpkt1.stream_index = 0;
+  avpkt1.side_data = NULL;
+  avpkt1.side_data_elems = 0;
+  avpkt1.duration = 0;
+  avpkt1.pos = -1;
 
-    // add them to AVPacket array
-    AVPacket* packets = &avpkt1;
+  // add them to AVPacket array
+  AVPacket* packets = &avpkt1;
 
-    // create buffer and add them to a buffer
-    int buffer[28];
-    write_avpackets_to_buffer(1, packets, buffer);
+  // create buffer and add them to a buffer
+  int buffer[28];
+  write_avpackets_to_buffer(1, packets, buffer);
 
-    // Confirm buffer creation was successful
-    EXPECT_EQ(*buffer, 1);
-    EXPECT_EQ(*(buffer + 1), (int)strlen(data1));
-    EXPECT_EQ(strncmp((char*)(buffer + 2), data1, strlen(data1)), 0);
+  // Confirm buffer creation was successful
+  EXPECT_EQ(*buffer, 1);
+  EXPECT_EQ(*(buffer + 1), (int)strlen(data1));
+  EXPECT_EQ(strncmp((char*)(buffer + 2), data1, strlen(data1)), 0);
 }
 
 TEST(ProtocolTest, BitArrayMemCpyTest) {
-    // A bunch of prime numbers + {10,100,200,250,299,300}
-    std::vector<int> bitarray_sizes{1,  2,  3,  5,  7,  10, 11,  13,  17,  19, 23,
-                                    29, 31, 37, 41, 47, 53, 100, 250, 299, 300};
+  // A bunch of prime numbers + {10,100,200,250,299,300}
+  std::vector<int> bitarray_sizes{1,  2,  3,  5,  7,  10, 11,  13,  17,  19, 23,
+                                  29, 31, 37, 41, 47, 53, 100, 250, 299, 300};
 
-    for (auto test_size : bitarray_sizes) {
-        BitArray* bit_arr = bit_array_create(test_size);
-        EXPECT_TRUE(bit_arr);
+  for (auto test_size : bitarray_sizes) {
+    BitArray* bit_arr = bit_array_create(test_size);
+    EXPECT_TRUE(bit_arr);
 
-        bit_array_clear_all(bit_arr);
-        for (int i = 0; i < test_size; i++) {
-            EXPECT_EQ(bit_array_test_bit(bit_arr, i), 0);
-        }
-
-        std::vector<bool> bits_arr_check;
-
-        for (int i = 0; i < test_size; i++) {
-            int coin_toss = rand() % 2;
-            EXPECT_TRUE(coin_toss == 0 || coin_toss == 1);
-            if (coin_toss) {
-                bits_arr_check.push_back(true);
-                bit_array_set_bit(bit_arr, i);
-            } else {
-                bits_arr_check.push_back(false);
-            }
-        }
-
-        unsigned char ba_raw[BITS_TO_CHARS(MAX_RING_BUFFER_SIZE)];
-        memcpy(ba_raw, bit_array_get_bits(bit_arr), BITS_TO_CHARS(test_size));
-        bit_array_free(bit_arr);
-
-        BitArray* bit_arr_recovered = bit_array_create(test_size);
-        EXPECT_TRUE(bit_arr_recovered);
-
-        EXPECT_TRUE(bit_arr_recovered->array);
-        EXPECT_TRUE(bit_arr_recovered->array != NULL);
-        EXPECT_TRUE(ba_raw);
-        EXPECT_TRUE(ba_raw != NULL);
-        memcpy(bit_array_get_bits(bit_arr_recovered), ba_raw, BITS_TO_CHARS(test_size));
-
-        for (int i = 0; i < test_size; i++) {
-            if (bits_arr_check[i]) {
-                EXPECT_GE(bit_array_test_bit(bit_arr_recovered, i), 1);
-            } else {
-                EXPECT_EQ(bit_array_test_bit(bit_arr_recovered, i), 0);
-            }
-        }
-
-        bit_array_free(bit_arr_recovered);
+    bit_array_clear_all(bit_arr);
+    for (int i = 0; i < test_size; i++) {
+      EXPECT_EQ(bit_array_test_bit(bit_arr, i), 0);
     }
+
+    std::vector<bool> bits_arr_check;
+
+    for (int i = 0; i < test_size; i++) {
+      int coin_toss = rand() % 2;
+      EXPECT_TRUE(coin_toss == 0 || coin_toss == 1);
+      if (coin_toss) {
+        bits_arr_check.push_back(true);
+        bit_array_set_bit(bit_arr, i);
+      } else {
+        bits_arr_check.push_back(false);
+      }
+    }
+
+    unsigned char ba_raw[BITS_TO_CHARS(MAX_RING_BUFFER_SIZE)];
+    memcpy(ba_raw, bit_array_get_bits(bit_arr), BITS_TO_CHARS(test_size));
+    bit_array_free(bit_arr);
+
+    BitArray* bit_arr_recovered = bit_array_create(test_size);
+    EXPECT_TRUE(bit_arr_recovered);
+
+    EXPECT_TRUE(bit_arr_recovered->array);
+    EXPECT_TRUE(bit_arr_recovered->array != NULL);
+    EXPECT_TRUE(ba_raw);
+    EXPECT_TRUE(ba_raw != NULL);
+    memcpy(bit_array_get_bits(bit_arr_recovered), ba_raw, BITS_TO_CHARS(test_size));
+
+    for (int i = 0; i < test_size; i++) {
+      if (bits_arr_check[i]) {
+        EXPECT_GE(bit_array_test_bit(bit_arr_recovered, i), 1);
+      } else {
+        EXPECT_EQ(bit_array_test_bit(bit_arr_recovered, i), 0);
+      }
+    }
+
+    bit_array_free(bit_arr_recovered);
+  }
 }
 
 #ifndef _WIN32
@@ -691,43 +689,43 @@ TEST(ProtocolTest, BitArrayMemCpyTest) {
 // in our CI. See the implementation of `trim_utf8_string` for a bit
 // more context.
 TEST(ProtocolTest, Utf8Truncation) {
-    // Test that a string with a UTF-8 character that is truncated
-    // is fixed correctly.
+  // Test that a string with a UTF-8 character that is truncated
+  // is fixed correctly.
 
-    // UTF-8 string:
-    char buf[] = {'\xe2', '\x88', '\xae', '\x20', '\x45', '\xe2', '\x8b', '\x85', '\x64',
-                  '\x61', '\x20', '\x3d', '\x20', '\x51', '\x2c', '\x20', '\x20', '\x6e',
-                  '\x20', '\xe2', '\x86', '\x92', '\x20', '\xe2', '\x88', '\x9e', '\x2c',
-                  '\x20', '\xf0', '\x90', '\x8d', '\x88', '\xe2', '\x88', '\x91', '\x20',
-                  '\x66', '\x28', '\x69', '\x29', '\x20', '\x3d', '\x20', '\xe2', '\x88',
-                  '\x8f', '\x20', '\x67', '\x28', '\x69', '\x29', '\0'};
+  // UTF-8 string:
+  char buf[] = {'\xe2', '\x88', '\xae', '\x20', '\x45', '\xe2', '\x8b', '\x85', '\x64',
+                '\x61', '\x20', '\x3d', '\x20', '\x51', '\x2c', '\x20', '\x20', '\x6e',
+                '\x20', '\xe2', '\x86', '\x92', '\x20', '\xe2', '\x88', '\x9e', '\x2c',
+                '\x20', '\xf0', '\x90', '\x8d', '\x88', '\xe2', '\x88', '\x91', '\x20',
+                '\x66', '\x28', '\x69', '\x29', '\x20', '\x3d', '\x20', '\xe2', '\x88',
+                '\x8f', '\x20', '\x67', '\x28', '\x69', '\x29', '\0'};
 
-    // truncation boundaries that need to be trimmed
-    const int bad_utf8_tests[] = {2, 3, 30, 31, 32};
-    // truncation boundaries that are at legal positions
-    const int good_utf8_tests[] = {4, 29, 33, 42, 50, 100};
+  // truncation boundaries that need to be trimmed
+  const int bad_utf8_tests[] = {2, 3, 30, 31, 32};
+  // truncation boundaries that are at legal positions
+  const int good_utf8_tests[] = {4, 29, 33, 42, 50, 100};
 
-    for (auto test : bad_utf8_tests) {
-        char* truncated_buf = (char*)malloc(test);
-        char* fixed_buf = (char*)malloc(test);
-        safe_strncpy(truncated_buf, buf, test);
-        safe_strncpy(fixed_buf, buf, test);
-        trim_utf8_string(fixed_buf);
-        EXPECT_TRUE(strncmp(truncated_buf, fixed_buf, test));
-        free(fixed_buf);
-        free(truncated_buf);
-    }
-    for (auto test : good_utf8_tests) {
-        char* truncated_buf = (char*)malloc(test);
-        char* fixed_buf = (char*)malloc(test);
-        safe_strncpy(truncated_buf, buf, test);
-        safe_strncpy(truncated_buf, buf, test);
-        safe_strncpy(fixed_buf, buf, test);
-        trim_utf8_string(fixed_buf);
-        EXPECT_FALSE(strncmp(truncated_buf, fixed_buf, test));
-        free(fixed_buf);
-        free(truncated_buf);
-    }
+  for (auto test : bad_utf8_tests) {
+    char* truncated_buf = (char*)malloc(test);
+    char* fixed_buf = (char*)malloc(test);
+    safe_strncpy(truncated_buf, buf, test);
+    safe_strncpy(fixed_buf, buf, test);
+    trim_utf8_string(fixed_buf);
+    EXPECT_TRUE(strncmp(truncated_buf, fixed_buf, test));
+    free(fixed_buf);
+    free(truncated_buf);
+  }
+  for (auto test : good_utf8_tests) {
+    char* truncated_buf = (char*)malloc(test);
+    char* fixed_buf = (char*)malloc(test);
+    safe_strncpy(truncated_buf, buf, test);
+    safe_strncpy(truncated_buf, buf, test);
+    safe_strncpy(fixed_buf, buf, test);
+    trim_utf8_string(fixed_buf);
+    EXPECT_FALSE(strncmp(truncated_buf, fixed_buf, test));
+    free(fixed_buf);
+    free(truncated_buf);
+  }
 }
 #endif  // _WIN32
 
@@ -738,6 +736,6 @@ Run Tests
 */
 
 int main(int argc, char** argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

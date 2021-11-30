@@ -86,15 +86,15 @@ extern int optopt;
 
 struct option {
 #if defined __STDC__ && __STDC__
-    const char *name;
+  const char *name;
 #else
-    char *name;
+  char *name;
 #endif
-    /* has_arg can't be an enum because some compilers complain about
-       type mismatches in all the code that assumes it is an int.  */
-    int has_arg;
-    int *flag;
-    int val;
+  /* has_arg can't be an enum because some compilers complain about
+     type mismatches in all the code that assumes it is an int.  */
+  int has_arg;
+  int *flag;
+  int val;
 };
 
 /* Names for the values of the `has_arg' field of `struct option'.  */

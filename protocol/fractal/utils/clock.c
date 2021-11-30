@@ -28,71 +28,71 @@ int get_utc_offset();
 
 void start_timer(clock* timer) {
 #if defined(_WIN32)
-    QueryPerformanceCounter(timer);
+  QueryPerformanceCounter(timer);
 #else
-    // start timer
-    gettimeofday(timer, NULL);
+  // start timer
+  gettimeofday(timer, NULL);
 #endif
 }
 
 double get_timer(clock timer) {
 #if defined(_WIN32)
-    LARGE_INTEGER end;
-    LARGE_INTEGER frequency;
-    QueryPerformanceFrequency(&frequency);
-    QueryPerformanceCounter(&end);
-    double ret = (double)(end.QuadPart - timer.QuadPart) / frequency.QuadPart;
+  LARGE_INTEGER end;
+  LARGE_INTEGER frequency;
+  QueryPerformanceFrequency(&frequency);
+  QueryPerformanceCounter(&end);
+  double ret = (double)(end.QuadPart - timer.QuadPart) / frequency.QuadPart;
 #else
-    // stop timer
-    struct timeval t2;
-    gettimeofday(&t2, NULL);
+  // stop timer
+  struct timeval t2;
+  gettimeofday(&t2, NULL);
 
-    // compute and print the elapsed time in millisec
-    double elapsed_time = (t2.tv_sec - timer.tv_sec) * MS_IN_SECOND;  // sec to ms
-    elapsed_time += (t2.tv_usec - timer.tv_usec) / US_IN_MS;          // us to ms
+  // compute and print the elapsed time in millisec
+  double elapsed_time = (t2.tv_sec - timer.tv_sec) * MS_IN_SECOND;  // sec to ms
+  elapsed_time += (t2.tv_usec - timer.tv_usec) / US_IN_MS;          // us to ms
 
-    // LOG_INFO("elapsed time in ms is: %f\n", elapsedTime);
+  // LOG_INFO("elapsed time in ms is: %f\n", elapsedTime);
 
-    // standard var to return and convert to seconds since it gets converted to
-    // ms in function call
-    double ret = elapsed_time / MS_IN_SECOND;
+  // standard var to return and convert to seconds since it gets converted to
+  // ms in function call
+  double ret = elapsed_time / MS_IN_SECOND;
 #endif
-    return ret;
+  return ret;
 }
 
 clock create_clock(int timeout_ms) {
-    clock out;
+  clock out;
 #if defined(_WIN32)
-    out.QuadPart = timeout_ms;
+  out.QuadPart = timeout_ms;
 #else
-    out.tv_sec = timeout_ms / (double)MS_IN_SECOND;
-    out.tv_usec = (timeout_ms % 1000) * 1000;
+  out.tv_sec = timeout_ms / (double)MS_IN_SECOND;
+  out.tv_usec = (timeout_ms % 1000) * 1000;
 #endif
-    return out;
+  return out;
 }
 
 char* current_time_str() {
-    static char buffer[64];
-    //    time_t rawtime;
-    //
-    //    time(&rawtime);
-    //    timeinfo = localtime(&rawtime);
+  static char buffer[64];
+  //    time_t rawtime;
+  //
+  //    time(&rawtime);
+  //    timeinfo = localtime(&rawtime);
 #if defined(_WIN32)
-    SYSTEMTIME time_now;
-    GetSystemTime(&time_now);
-    snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i.%06li", time_now.wHour, time_now.wMinute,
-             time_now.wSecond, (long)time_now.wMilliseconds);
+  SYSTEMTIME time_now;
+  GetSystemTime(&time_now);
+  snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i.%06li", time_now.wHour, time_now.wMinute,
+           time_now.wSecond, (long)time_now.wMilliseconds);
 #else
-    struct tm* time_str_tm;
-    struct timeval time_now;
-    gettimeofday(&time_now, NULL);
+  struct tm* time_str_tm;
+  struct timeval time_now;
+  gettimeofday(&time_now, NULL);
 
-    time_str_tm = gmtime(&time_now.tv_sec);
-    snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i.%06li", time_str_tm->tm_hour,
-             time_str_tm->tm_min, time_str_tm->tm_sec, (long)time_now.tv_usec);
+  time_str_tm = gmtime(&time_now.tv_sec);
+  snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i.%06li", time_str_tm->tm_hour,
+           time_str_tm->tm_min, time_str_tm->tm_sec, (long)time_now.tv_usec);
 #endif
 
-    //    strftime(buffer, 64, "%Y-%m-%d %H:%M:%S", timeinfo);
+  //    strftime(buffer, 64, "%Y-%m-%d %H:%M:%S", timeinfo);
 
-    return buffer;
+  return buffer;
 }

@@ -68,69 +68,69 @@ Private Function Implementations
  *   NVFBC_TRUE in case of success, NVFBC_FALSE otherwise.
  */
 static NVFBC_BOOL cuda_load_library(void* lib_cuda) {
-    lib_cuda = dlopen(LIB_CUDA_NAME, RTLD_NOW);
-    if (lib_cuda == NULL) {
-        LOG_ERROR("Unable to open '%s'\n", LIB_CUDA_NAME);
-        return NVFBC_FALSE;
-    }
+  lib_cuda = dlopen(LIB_CUDA_NAME, RTLD_NOW);
+  if (lib_cuda == NULL) {
+    LOG_ERROR("Unable to open '%s'\n", LIB_CUDA_NAME);
+    return NVFBC_FALSE;
+  }
 
-    cu_init_ptr = (CUINITPROC)dlsym(lib_cuda, "cuInit");
-    if (cu_init_ptr == NULL) {
-        LOG_ERROR("Unable to resolve symbol 'cuInit'\n");
-        return NVFBC_FALSE;
-    }
+  cu_init_ptr = (CUINITPROC)dlsym(lib_cuda, "cuInit");
+  if (cu_init_ptr == NULL) {
+    LOG_ERROR("Unable to resolve symbol 'cuInit'\n");
+    return NVFBC_FALSE;
+  }
 
-    cu_device_get_ptr = (CUDEVICEGETPROC)dlsym(lib_cuda, "cuDeviceGet");
-    if (cu_device_get_ptr == NULL) {
-        LOG_ERROR("Unable to resolve symbol 'cuDeviceGet'\n");
-        return NVFBC_FALSE;
-    }
+  cu_device_get_ptr = (CUDEVICEGETPROC)dlsym(lib_cuda, "cuDeviceGet");
+  if (cu_device_get_ptr == NULL) {
+    LOG_ERROR("Unable to resolve symbol 'cuDeviceGet'\n");
+    return NVFBC_FALSE;
+  }
 
-    cu_ctx_create_v2_ptr = (CUCTXCREATEV2PROC)dlsym(lib_cuda, "cuCtxCreate_v2");
-    if (cu_ctx_create_v2_ptr == NULL) {
-        LOG_ERROR("Unable to resolve symbol 'cuCtxCreate_v2'\n");
-        return NVFBC_FALSE;
-    }
+  cu_ctx_create_v2_ptr = (CUCTXCREATEV2PROC)dlsym(lib_cuda, "cuCtxCreate_v2");
+  if (cu_ctx_create_v2_ptr == NULL) {
+    LOG_ERROR("Unable to resolve symbol 'cuCtxCreate_v2'\n");
+    return NVFBC_FALSE;
+  }
 
-    cu_ctx_destroy_v2_ptr = (CUCTXDESTROYV2PROC)dlsym(lib_cuda, "cuCtxDestroy_v2");
-    if (cu_ctx_destroy_v2_ptr == NULL) {
-        LOG_ERROR("Unable to resolve symbol 'cuCtxDestroy_v2'\n");
-        return NVFBC_FALSE;
-    }
+  cu_ctx_destroy_v2_ptr = (CUCTXDESTROYV2PROC)dlsym(lib_cuda, "cuCtxDestroy_v2");
+  if (cu_ctx_destroy_v2_ptr == NULL) {
+    LOG_ERROR("Unable to resolve symbol 'cuCtxDestroy_v2'\n");
+    return NVFBC_FALSE;
+  }
 
-    cu_memcpy_dtoh_v2_ptr = (CUMEMCPYDTOHV2PROC)dlsym(lib_cuda, "cuMemcpyDtoH_v2");
-    if (cu_memcpy_dtoh_v2_ptr == NULL) {
-        LOG_ERROR("Unable to resolve symbol 'cuMemcpyDtoH_v2'\n");
-        return NVFBC_FALSE;
-    }
+  cu_memcpy_dtoh_v2_ptr = (CUMEMCPYDTOHV2PROC)dlsym(lib_cuda, "cuMemcpyDtoH_v2");
+  if (cu_memcpy_dtoh_v2_ptr == NULL) {
+    LOG_ERROR("Unable to resolve symbol 'cuMemcpyDtoH_v2'\n");
+    return NVFBC_FALSE;
+  }
 
-    cu_ctx_set_current_ptr = (CUCTXSETCURRENTPROC)dlsym(lib_cuda, "cuCtxSetCurrent");
-    if (cu_ctx_set_current_ptr == NULL) {
-        LOG_ERROR("Unable to resolve symbol 'cuCtxSetCurrent'\n");
-        return NVFBC_FALSE;
-    }
+  cu_ctx_set_current_ptr = (CUCTXSETCURRENTPROC)dlsym(lib_cuda, "cuCtxSetCurrent");
+  if (cu_ctx_set_current_ptr == NULL) {
+    LOG_ERROR("Unable to resolve symbol 'cuCtxSetCurrent'\n");
+    return NVFBC_FALSE;
+  }
 
-    cu_ctx_get_current_ptr = (CUCTXGETCURRENTPROC)dlsym(lib_cuda, "cuCtxGetCurrent");
-    if (cu_ctx_get_current_ptr == NULL) {
-        LOG_ERROR("Unable to resolve symbol 'cuCtxGetCurrent'\n");
-        return NVFBC_FALSE;
-    }
-    cu_ctx_pop_current_ptr = (CUCTXPOPCURRENTPROC)dlsym(lib_cuda, "cuCtxPopCurrent");
-    if (cu_ctx_pop_current_ptr == NULL) {
-        LOG_ERROR("Unable to resolve symbol 'cuCtxPopCurrent'\n");
-        return NVFBC_FALSE;
-    }
-    cu_ctx_push_current_ptr = (CUCTXPUSHCURRENTPROC)dlsym(lib_cuda, "cuCtxPushCurrent");
-    if (cu_ctx_push_current_ptr == NULL) {
-        LOG_ERROR("Unable to resolve symbol 'cuCtxPushCurrent'\n");
-        return NVFBC_FALSE;
-    }
-    cu_ctx_synchronize_ptr = (CUCTXSYNCHRONIZEPROC)dlsym(lib_cuda, "cuCtxSynchronize");
-    if (cu_ctx_synchronize_ptr == NULL) {
-        LOG_ERROR("Unable to resolve symbol 'cuCtxSychronizeCurrent'\n");
-        return NVFBC_FALSE;
-    }
-    return NVFBC_TRUE;
+  cu_ctx_get_current_ptr = (CUCTXGETCURRENTPROC)dlsym(lib_cuda, "cuCtxGetCurrent");
+  if (cu_ctx_get_current_ptr == NULL) {
+    LOG_ERROR("Unable to resolve symbol 'cuCtxGetCurrent'\n");
+    return NVFBC_FALSE;
+  }
+  cu_ctx_pop_current_ptr = (CUCTXPOPCURRENTPROC)dlsym(lib_cuda, "cuCtxPopCurrent");
+  if (cu_ctx_pop_current_ptr == NULL) {
+    LOG_ERROR("Unable to resolve symbol 'cuCtxPopCurrent'\n");
+    return NVFBC_FALSE;
+  }
+  cu_ctx_push_current_ptr = (CUCTXPUSHCURRENTPROC)dlsym(lib_cuda, "cuCtxPushCurrent");
+  if (cu_ctx_push_current_ptr == NULL) {
+    LOG_ERROR("Unable to resolve symbol 'cuCtxPushCurrent'\n");
+    return NVFBC_FALSE;
+  }
+  cu_ctx_synchronize_ptr = (CUCTXSYNCHRONIZEPROC)dlsym(lib_cuda, "cuCtxSynchronize");
+  if (cu_ctx_synchronize_ptr == NULL) {
+    LOG_ERROR("Unable to resolve symbol 'cuCtxSychronizeCurrent'\n");
+    return NVFBC_FALSE;
+  }
+  return NVFBC_TRUE;
 }
 
 /*
@@ -140,12 +140,12 @@ Public Function Implementations
 */
 
 NVFBC_BOOL cuda_destroy(CUcontext cuda_context) {
-    CUresult cu_res = cu_ctx_destroy_v2_ptr(cuda_context);
-    if (cu_res != CUDA_SUCCESS) {
-        LOG_ERROR("Unable to destroy CUDA context (result: %d)\n", cu_res);
-        return NVFBC_FALSE;
-    }
-    return NVFBC_TRUE;
+  CUresult cu_res = cu_ctx_destroy_v2_ptr(cuda_context);
+  if (cu_res != CUDA_SUCCESS) {
+    LOG_ERROR("Unable to destroy CUDA context (result: %d)\n", cu_res);
+    return NVFBC_FALSE;
+  }
+  return NVFBC_TRUE;
 }
 
 /**
@@ -155,59 +155,59 @@ NVFBC_BOOL cuda_destroy(CUcontext cuda_context) {
  *   NVFBC_TRUE in case of success, NVFBC_FALSE otherwise.
  */
 NVFBC_BOOL cuda_init(CUcontext* cuda_context) {
-    void* lib_cuda = NULL;
-    if (*cuda_context) {
-        LOG_DEBUG("Cuda context already exists! Doing nothing.");
-        return NVFBC_TRUE;
-    }
-    CUresult cu_res;
-    CUdevice cu_dev;
-    if (!cuda_initialized) {
-        if (cuda_load_library(lib_cuda) != NVFBC_TRUE) {
-            LOG_ERROR("Failed to load CUDA library!");
-            return NVFBC_FALSE;
-        }
-
-        cu_res = cu_init_ptr(0);
-        if (cu_res != CUDA_SUCCESS) {
-            LOG_ERROR("Unable to initialize CUDA (result: %d)\n", cu_res);
-            return NVFBC_FALSE;
-        }
-        cuda_initialized = true;
-    }
-
-    cu_res = cu_device_get_ptr(&cu_dev, 0);
-    if (cu_res != CUDA_SUCCESS) {
-        LOG_ERROR("Unable to get CUDA device (result: %d)\n", cu_res);
-        return NVFBC_FALSE;
-    }
-
-    cu_res = cu_ctx_create_v2_ptr(cuda_context, CU_CTX_SCHED_AUTO, cu_dev);
-    if (cu_res != CUDA_SUCCESS) {
-        LOG_ERROR("Unable to create CUDA context (result: %d)\n", cu_res);
-        return NVFBC_FALSE;
-    }
-
+  void* lib_cuda = NULL;
+  if (*cuda_context) {
+    LOG_DEBUG("Cuda context already exists! Doing nothing.");
     return NVFBC_TRUE;
+  }
+  CUresult cu_res;
+  CUdevice cu_dev;
+  if (!cuda_initialized) {
+    if (cuda_load_library(lib_cuda) != NVFBC_TRUE) {
+      LOG_ERROR("Failed to load CUDA library!");
+      return NVFBC_FALSE;
+    }
+
+    cu_res = cu_init_ptr(0);
+    if (cu_res != CUDA_SUCCESS) {
+      LOG_ERROR("Unable to initialize CUDA (result: %d)\n", cu_res);
+      return NVFBC_FALSE;
+    }
+    cuda_initialized = true;
+  }
+
+  cu_res = cu_device_get_ptr(&cu_dev, 0);
+  if (cu_res != CUDA_SUCCESS) {
+    LOG_ERROR("Unable to get CUDA device (result: %d)\n", cu_res);
+    return NVFBC_FALSE;
+  }
+
+  cu_res = cu_ctx_create_v2_ptr(cuda_context, CU_CTX_SCHED_AUTO, cu_dev);
+  if (cu_res != CUDA_SUCCESS) {
+    LOG_ERROR("Unable to create CUDA context (result: %d)\n", cu_res);
+    return NVFBC_FALSE;
+  }
+
+  return NVFBC_TRUE;
 }
 
 CUcontext* get_video_thread_cuda_context_ptr() {
-    /*
-        Return a pointer to the CUDA context that will be used next by the video thread.
+  /*
+      Return a pointer to the CUDA context that will be used next by the video thread.
 
-        Returns:
-            (CUcontext*): pointer to the video thread CUDA context
-    */
+      Returns:
+          (CUcontext*): pointer to the video thread CUDA context
+  */
 
-    return &video_thread_cuda_context;
+  return &video_thread_cuda_context;
 }
 
 CUcontext* get_nvidia_thread_cuda_context_ptr() {
-    /*
-        Return a pointer to the CUDA context that will be used next by the nvidia thread.
+  /*
+      Return a pointer to the CUDA context that will be used next by the nvidia thread.
 
-        Returns:
-            (CUcontext*): pointer to the nvidia thread CUDA context
-    */
-    return &nvidia_thread_cuda_context;
+      Returns:
+          (CUcontext*): pointer to the nvidia thread CUDA context
+  */
+  return &nvidia_thread_cuda_context;
 }

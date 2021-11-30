@@ -51,22 +51,22 @@ DEFINE_GUID(IID_IAudioCaptureClient, 0xc8adbd64, 0xe71e, 0x48a0, 0xa4, 0xde, 0x1
  * @brief                          Audio capture device features
  */
 typedef struct AudioDevice {
-    IMMDevice* device;
-    IMMDeviceEnumerator* pMMDeviceEnumerator;
-    IAudioClient3* pAudioClient;
-    REFERENCE_TIME hnsDefaultDevicePeriod;
-    WAVEFORMATEX* pwfx;
-    IAudioCaptureClient* pAudioCaptureClient;
-    HANDLE hWakeUp;
-    BYTE* buffer;
-    LONG buffer_size;
-    UINT32 nNumFramesToRead;
-    UINT32 frames_available;
-    DWORD dwWaitResult;
-    DWORD dwFlags;
-    UINT32 sample_rate;
-    UINT32 nNextPacketSize;
-    HRESULT hNextPacketResult;
+  IMMDevice* device;
+  IMMDeviceEnumerator* pMMDeviceEnumerator;
+  IAudioClient3* pAudioClient;
+  REFERENCE_TIME hnsDefaultDevicePeriod;
+  WAVEFORMATEX* pwfx;
+  IAudioCaptureClient* pAudioCaptureClient;
+  HANDLE hWakeUp;
+  BYTE* buffer;
+  LONG buffer_size;
+  UINT32 nNumFramesToRead;
+  UINT32 frames_available;
+  DWORD dwWaitResult;
+  DWORD dwFlags;
+  UINT32 sample_rate;
+  UINT32 nNextPacketSize;
+  HRESULT hNextPacketResult;
 } AudioDevice;
 
 #endif  // WASAPICAPTURE_H

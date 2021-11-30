@@ -27,16 +27,16 @@ Custom Types
 */
 
 typedef struct BitrateStatistics {
-    int num_nacks_per_second;
-    int num_received_packets_per_second;
-    int num_skipped_frames_per_second;
-    int num_rendered_frames_per_second;
-    int throughput_per_second;
+  int num_nacks_per_second;
+  int num_received_packets_per_second;
+  int num_skipped_frames_per_second;
+  int num_rendered_frames_per_second;
+  int throughput_per_second;
 } BitrateStatistics;
 
 typedef struct Bitrates {
-    int bitrate;
-    int burst_bitrate;
+  int bitrate;
+  int burst_bitrate;
 } Bitrates;
 
 typedef Bitrates (*BitrateCalculator)(BitrateStatistics);

@@ -22,24 +22,24 @@ packet, call nack_single_packet.
  * holding the concatenated UDP packets.
  */
 typedef struct FrameData {
-    FractalPacketType type;
-    int num_packets;
-    int id;
-    int packets_received;
-    int frame_size;
-    bool* received_indices;
-    char* frame_buffer;
+  FractalPacketType type;
+  int num_packets;
+  int id;
+  int packets_received;
+  int frame_size;
+  bool* received_indices;
+  char* frame_buffer;
 
-    // Nack logic
+  // Nack logic
 
-    // Whether or not we're in "recovery mode"
-    bool recovery_mode;
-    int* nacked_indices;
-    int num_times_nacked;
-    int last_nacked_index;
-    clock last_nacked_timer;
-    clock last_nonnack_packet_timer;
-    clock frame_creation_timer;
+  // Whether or not we're in "recovery mode"
+  bool recovery_mode;
+  int* nacked_indices;
+  int num_times_nacked;
+  int last_nacked_index;
+  clock last_nacked_timer;
+  clock last_nonnack_packet_timer;
+  clock frame_creation_timer;
 } FrameData;
 
 // Handler that gets called when the ring buffer wants to nack for a packet
@@ -52,33 +52,33 @@ typedef void (*NackPacketFn)(FractalPacketType frame_type, int id, int index);
  * packets.
  */
 typedef struct RingBuffer {
-    int ring_buffer_size;
-    FrameData* receiving_frames;
-    FractalPacketType type;
-    int largest_frame_size;
-    int largest_num_packets;
-    NackPacketFn nack_packet;
+  int ring_buffer_size;
+  FrameData* receiving_frames;
+  FractalPacketType type;
+  int largest_frame_size;
+  int largest_num_packets;
+  NackPacketFn nack_packet;
 
-    BlockAllocator* frame_buffer_allocator;  // unused if audio
+  BlockAllocator* frame_buffer_allocator;  // unused if audio
 
-    int currently_rendering_id;
-    FrameData currently_rendering_frame;
+  int currently_rendering_id;
+  FrameData currently_rendering_frame;
 
-    // *** START FOR BITRATE STAT CALCULATIONS ***
-    int num_packets_nacked;
-    int num_packets_received;
-    int num_frames_skipped;
-    int num_frames_rendered;
-    // *** DONE FOR BITRATE STAT CALCULATIONS ***
-    int frames_received;
-    int max_id;
+  // *** START FOR BITRATE STAT CALCULATIONS ***
+  int num_packets_nacked;
+  int num_packets_received;
+  int num_frames_skipped;
+  int num_frames_rendered;
+  // *** DONE FOR BITRATE STAT CALCULATIONS ***
+  int frames_received;
+  int max_id;
 
-    // Nack variables
+  // Nack variables
 
-    // The next ID that should be rendered, marks
-    // the lowest packet ID we're interested in nacking about
-    int last_rendered_id;
-    int last_missing_frame_nack;
+  // The next ID that should be rendered, marks
+  // the lowest packet ID we're interested in nacking about
+  int last_rendered_id;
+  int last_missing_frame_nack;
 } RingBuffer;
 
 /**

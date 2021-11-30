@@ -57,101 +57,101 @@ Public Function Implementations
 */
 
 int32_t multithreaded_send_audio(void* opaque) {
-    whist_server_state* state = (whist_server_state*)opaque;
-    int id = 1;
+  whist_server_state* state = (whist_server_state*)opaque;
+  int id = 1;
 
-    whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
+  whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
 
-    AudioDevice* audio_device = create_audio_device();
-    if (!audio_device) {
-        LOG_ERROR("Failed to create audio device...");
-        return -1;
-    }
-    LOG_INFO("Created audio device!");
-    start_audio_device(audio_device);
-    AudioEncoder* audio_encoder = create_audio_encoder(AUDIO_BITRATE, audio_device->sample_rate);
-    if (!audio_encoder) {
-        LOG_ERROR("Failed to create audio encoder...");
-        return -1;
-    }
+  AudioDevice* audio_device = create_audio_device();
+  if (!audio_device) {
+    LOG_ERROR("Failed to create audio device...");
+    return -1;
+  }
+  LOG_INFO("Created audio device!");
+  start_audio_device(audio_device);
+  AudioEncoder* audio_encoder = create_audio_encoder(AUDIO_BITRATE, audio_device->sample_rate);
+  if (!audio_encoder) {
+    LOG_ERROR("Failed to create audio encoder...");
+    return -1;
+  }
 
-    int res;
-    // Tell the client what audio frequency we're using
-    state->sample_rate = audio_device->sample_rate;
-    LOG_INFO("Audio Frequency: %d", audio_device->sample_rate);
+  int res;
+  // Tell the client what audio frequency we're using
+  state->sample_rate = audio_device->sample_rate;
+  LOG_INFO("Audio Frequency: %d", audio_device->sample_rate);
 
-    add_thread_to_client_active_dependents();
+  add_thread_to_client_active_dependents();
 
-    // setup
-    bool assuming_client_active = false;
-    while (!state->exiting) {
-        update_client_active_status(&state->client, &assuming_client_active);
+  // setup
+  bool assuming_client_active = false;
+  while (!state->exiting) {
+    update_client_active_status(&state->client, &assuming_client_active);
 
-        // for each available packet
-        for (get_next_packet(audio_device); packet_available(audio_device);
-             get_next_packet(audio_device)) {
-            get_buffer(audio_device);
+    // for each available packet
+    for (get_next_packet(audio_device); packet_available(audio_device);
+         get_next_packet(audio_device)) {
+      get_buffer(audio_device);
 
-            if (audio_device->buffer_size > 10000) {
-                LOG_WARNING("Audio buffer size too large!");
-            } else if (audio_device->buffer_size > 0) {
+      if (audio_device->buffer_size > 10000) {
+        LOG_WARNING("Audio buffer size too large!");
+      } else if (audio_device->buffer_size > 0) {
 #if USING_AUDIO_ENCODE_DECODE
 
-                // add samples to encoder fifo
+        // add samples to encoder fifo
 
-                audio_encoder_fifo_intake(audio_encoder, audio_device->buffer,
-                                          audio_device->frames_available);
+        audio_encoder_fifo_intake(audio_encoder, audio_device->buffer,
+                                  audio_device->frames_available);
 
-                // while fifo has enough samples for an aac frame, handle it
-                while (av_audio_fifo_size(audio_encoder->audio_fifo) >=
-                       audio_encoder->context->frame_size) {
-                    // create and encode a frame
+        // while fifo has enough samples for an aac frame, handle it
+        while (av_audio_fifo_size(audio_encoder->audio_fifo) >=
+               audio_encoder->context->frame_size) {
+          // create and encode a frame
 
-                    clock t;
-                    start_timer(&t);
-                    res = audio_encoder_encode_frame(audio_encoder);
+          clock t;
+          start_timer(&t);
+          res = audio_encoder_encode_frame(audio_encoder);
 
-                    if (res < 0) {
-                        // bad boy error
-                        LOG_WARNING("error encoding packet");
-                        continue;
-                    } else if (res > 0) {
-                        // no data or need more data
-                        break;
-                    }
-                    log_double_statistic(AUDIO_ENCODE_TIME, get_timer(t) * 1000);
-                    if (audio_encoder->encoded_frame_size > (int)MAX_AUDIOFRAME_DATA_SIZE) {
-                        LOG_ERROR("Audio data too large: %d", audio_encoder->encoded_frame_size);
-                    } else if (assuming_client_active && state->client.is_active) {
-                        static char buf[LARGEST_AUDIOFRAME_SIZE];
-                        AudioFrame* frame = (AudioFrame*)buf;
-                        frame->data_length = audio_encoder->encoded_frame_size;
+          if (res < 0) {
+            // bad boy error
+            LOG_WARNING("error encoding packet");
+            continue;
+          } else if (res > 0) {
+            // no data or need more data
+            break;
+          }
+          log_double_statistic(AUDIO_ENCODE_TIME, get_timer(t) * 1000);
+          if (audio_encoder->encoded_frame_size > (int)MAX_AUDIOFRAME_DATA_SIZE) {
+            LOG_ERROR("Audio data too large: %d", audio_encoder->encoded_frame_size);
+          } else if (assuming_client_active && state->client.is_active) {
+            static char buf[LARGEST_AUDIOFRAME_SIZE];
+            AudioFrame* frame = (AudioFrame*)buf;
+            frame->data_length = audio_encoder->encoded_frame_size;
 
-                        write_avpackets_to_buffer(audio_encoder->num_packets,
-                                                  audio_encoder->packets, (void*)frame->data);
+            write_avpackets_to_buffer(audio_encoder->num_packets, audio_encoder->packets,
+                                      (void*)frame->data);
 
-                        if (state->client.is_active) {
-                            send_packet(&state->client.udp_context, PACKET_AUDIO, frame,
-                                        audio_encoder->encoded_frame_size + sizeof(int), id);
-                            id++;
-                        }
-                    }
-                }
-#else
-                if (state->client.is_active) {
-                    send_packet(&state->client.udp_context, PACKET_AUDIO, audio_device->buffer,
-                                audio_device->buffer_size, id);
-                    id++;
-                }
-#endif
+            if (state->client.is_active) {
+              send_packet(&state->client.udp_context, PACKET_AUDIO, frame,
+                          audio_encoder->encoded_frame_size + sizeof(int), id);
+              id++;
             }
-
-            release_buffer(audio_device);
+          }
         }
-        wait_timer(audio_device);
-    }
+#else
+        if (state->client.is_active) {
+          send_packet(&state->client.udp_context, PACKET_AUDIO, audio_device->buffer,
+                      audio_device->buffer_size, id);
+          id++;
+        }
+#endif
+      }
 
-    // destroy_audio_encoder(audio_encoder);
-    destroy_audio_device(audio_device);
-    return 0;
+      release_buffer(audio_device);
+    }
+    wait_timer(audio_device);
+  }
+
+  // destroy_audio_encoder(audio_encoder);
+  destroy_audio_device(audio_device);
+  return 0;
 }

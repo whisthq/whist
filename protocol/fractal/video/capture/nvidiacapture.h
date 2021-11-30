@@ -35,16 +35,16 @@ Custom Types
  * stored on.
  */
 typedef struct {
-    // Width and height of the capture session
-    int width;
-    int height;
+  // Width and height of the capture session
+  int width;
+  int height;
 
-    // The gpu texture of the most recently captured frame
-    void* p_gpu_texture;
+  // The gpu texture of the most recently captured frame
+  void* p_gpu_texture;
 
-    // Internal Nvidia API structs
-    NVFBC_SESSION_HANDLE fbc_handle;
-    NVFBC_API_FUNCTION_LIST p_fbc_fn;
+  // Internal Nvidia API structs
+  NVFBC_SESSION_HANDLE fbc_handle;
+  NVFBC_API_FUNCTION_LIST p_fbc_fn;
 } NvidiaCaptureDevice;
 
 /*

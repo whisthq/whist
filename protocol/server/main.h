@@ -60,49 +60,49 @@ Includes
 
 /** @brief whist server configuration parameters */
 struct _whist_server_config {
-    char binary_aes_private_key[16];
-    char hex_aes_private_key[33];
-    char identifier[WHIST_IDENTIFIER_MAXLEN + 1];
-    int begin_time_to_exit;
+  char binary_aes_private_key[16];
+  char hex_aes_private_key[33];
+  char identifier[WHIST_IDENTIFIER_MAXLEN + 1];
+  int begin_time_to_exit;
 };
 
 typedef struct _whist_server_config whist_server_config;
 
 /** @brief internal state of the whist server */
 struct _whist_server_state {
-    whist_server_config* config;
+  whist_server_config* config;
 
-    volatile int connection_id;
-    volatile FractalOSType client_os;
+  volatile int connection_id;
+  volatile FractalOSType client_os;
 
-    volatile bool exiting;
-    volatile bool stop_streaming;
-    volatile bool update_encoder;
-    bool client_joined_after_window_name_broadcast;
-    Client client;
+  volatile bool exiting;
+  volatile bool stop_streaming;
+  volatile bool update_encoder;
+  bool client_joined_after_window_name_broadcast;
+  Client client;
 
-    int sample_rate;
-    volatile int max_bitrate;
-    volatile bool wants_iframe;
-    InputDevice* input_device;
+  int sample_rate;
+  volatile int max_bitrate;
+  volatile bool wants_iframe;
+  InputDevice* input_device;
 
-    /* video */
-    volatile int client_width;
-    volatile int client_height;
-    volatile int client_dpi;
-    volatile CodecType client_codec_type;
-    volatile bool update_device;
+  /* video */
+  volatile int client_width;
+  volatile int client_height;
+  volatile int client_dpi;
+  volatile CodecType client_codec_type;
+  volatile bool update_device;
 
-    bool pending_encoder;
-    bool encoder_finished;
-    VideoEncoder* encoder_factory_result;
+  bool pending_encoder;
+  bool encoder_finished;
+  VideoEncoder* encoder_factory_result;
 
-    int encoder_factory_server_w;
-    int encoder_factory_server_h;
-    int encoder_factory_client_w;
-    int encoder_factory_client_h;
-    int encoder_factory_bitrate;
-    CodecType encoder_factory_codec_type;
+  int encoder_factory_server_w;
+  int encoder_factory_server_h;
+  int encoder_factory_client_w;
+  int encoder_factory_client_h;
+  int encoder_factory_bitrate;
+  CodecType encoder_factory_codec_type;
 };
 
 typedef struct _whist_server_state whist_server_state;

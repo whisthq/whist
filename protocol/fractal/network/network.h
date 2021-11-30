@@ -166,10 +166,10 @@ Custom types
  * @brief                          Data packet description
  */
 typedef enum {
-    PACKET_AUDIO = 0,
-    PACKET_VIDEO = 1,
-    PACKET_MESSAGE = 2,
-    NUM_PACKET_TYPES = 3,
+  PACKET_AUDIO = 0,
+  PACKET_VIDEO = 1,
+  PACKET_MESSAGE = 2,
+  NUM_PACKET_TYPES = 3,
 } FractalPacketType;
 
 #include <fractal/core/fractal.h>
@@ -179,31 +179,31 @@ typedef enum {
  *                                 SocketContextData
  */
 typedef struct {
-    char hash[16];  // Hash of the rest of the packet
-    // hash[16] is a signature for everything below this line
+  char hash[16];  // Hash of the rest of the packet
+  // hash[16] is a signature for everything below this line
 
-    // Encrypted packet data
-    int cipher_len;  // The length of the encrypted segment
-    char iv[16];     // One-time pad for encrypted data
+  // Encrypted packet data
+  int cipher_len;  // The length of the encrypted segment
+  char iv[16];     // One-time pad for encrypted data
 
-    // Everything below this line gets encrypted
+  // Everything below this line gets encrypted
 
-    // Metadata
-    FractalPacketType type;  // Video, Audio, or Message
-    int id;                  // Unique identifier (Two packets with the same type and id, from
-                             // the same IP, will be the same)
-    short index;             // Handle separation of large datagrams
-    short num_indices;       // The total datagram consists of data packets with
-                             // indices from 0 to payload_size - 1
-    int payload_size;        // size of data[] that is of interest
-    bool is_a_nack;          // True if this is a replay'ed packet
+  // Metadata
+  FractalPacketType type;  // Video, Audio, or Message
+  int id;                  // Unique identifier (Two packets with the same type and id, from
+                           // the same IP, will be the same)
+  short index;             // Handle separation of large datagrams
+  short num_indices;       // The total datagram consists of data packets with
+                           // indices from 0 to payload_size - 1
+  int payload_size;        // size of data[] that is of interest
+  bool is_a_nack;          // True if this is a replay'ed packet
 
-    // Data
-    uint8_t data[MAX_PAYLOAD_SIZE];  // data at the end of the struct, with invalid
-                                     // bytes beyond payload_size / cipher_len
-    uint8_t overflow[16];            // The maximum cipher_len is MAX_PAYLOAD_SIZE + 16,
-                                     // as the encrypted packet might be slightly larger
-                                     // than the unencrypted packet
+  // Data
+  uint8_t data[MAX_PAYLOAD_SIZE];  // data at the end of the struct, with invalid
+                                   // bytes beyond payload_size / cipher_len
+  uint8_t overflow[16];            // The maximum cipher_len is MAX_PAYLOAD_SIZE + 16,
+                                   // as the encrypted packet might be slightly larger
+                                   // than the unencrypted packet
 } FractalPacket;
 
 #define MAX_PACKET_SIZE (sizeof(FractalPacket))
@@ -213,9 +213,9 @@ typedef struct {
 //                  = PACKET_HEADER_SIZE + cipher_len (If Encrypted)
 
 typedef struct {
-    unsigned int ip;
-    unsigned short private_port;
-    unsigned short public_port;
+  unsigned int ip;
+  unsigned short private_port;
+  unsigned short public_port;
 } StunEntry;
 
 typedef enum { ASK_INFO, POST_INFO } StunRequestType;
@@ -229,38 +229,37 @@ typedef enum { ASK_INFO, POST_INFO } StunRequestType;
  *                           for their corresponding TOS values.
  */
 typedef enum FractalTOSValue {
-    TOS_DSCP_STANDARD_FORWARDING = 0x00,  //<<< Standard Forwarding (Default)
-    TOS_DSCP_EXPEDITED_FORWARDING =
-        0xb8  //<<< Expedited Forwarding (High Priority, for Video/Audio)
+  TOS_DSCP_STANDARD_FORWARDING = 0x00,  //<<< Standard Forwarding (Default)
+  TOS_DSCP_EXPEDITED_FORWARDING = 0xb8  //<<< Expedited Forwarding (High Priority, for Video/Audio)
 } FractalTOSValue;
 
 typedef struct {
-    StunRequestType type;
-    StunEntry entry;
+  StunRequestType type;
+  StunEntry entry;
 } StunRequest;
 
 typedef struct {
-    int timeout;
-    SOCKET socket;
-    struct sockaddr_in addr;
-    int ack;
-    WhistMutex mutex;
-    char binary_aes_private_key[16];
-    // Used for reading TCP packets
-    int reading_packet_len;
-    DynamicBuffer* encrypted_tcp_packet_buffer;
-    NetworkThrottleContext* network_throttler;
-    int burst_bitrate;
-    double fec_packet_ratio;
-    bool decrypted_packet_used;
-    FractalPacket decrypted_packet;
-    // Nack Buffer Data
-    FractalPacket** nack_buffers[NUM_PACKET_TYPES];
-    // This mutex will protect the data in nack_buffers
-    WhistMutex nack_mutex[NUM_PACKET_TYPES];
-    int nack_num_buffers[NUM_PACKET_TYPES];
-    int nack_buffer_max_indices[NUM_PACKET_TYPES];
-    int nack_buffer_max_payload_size[NUM_PACKET_TYPES];
+  int timeout;
+  SOCKET socket;
+  struct sockaddr_in addr;
+  int ack;
+  WhistMutex mutex;
+  char binary_aes_private_key[16];
+  // Used for reading TCP packets
+  int reading_packet_len;
+  DynamicBuffer* encrypted_tcp_packet_buffer;
+  NetworkThrottleContext* network_throttler;
+  int burst_bitrate;
+  double fec_packet_ratio;
+  bool decrypted_packet_used;
+  FractalPacket decrypted_packet;
+  // Nack Buffer Data
+  FractalPacket** nack_buffers[NUM_PACKET_TYPES];
+  // This mutex will protect the data in nack_buffers
+  WhistMutex nack_mutex[NUM_PACKET_TYPES];
+  int nack_num_buffers[NUM_PACKET_TYPES];
+  int nack_buffer_max_indices[NUM_PACKET_TYPES];
+  int nack_buffer_max_payload_size[NUM_PACKET_TYPES];
 } SocketContextData;
 
 /**
@@ -269,15 +268,15 @@ typedef struct {
  *
  */
 typedef struct {
-    // Attributes
-    void* context;
+  // Attributes
+  void* context;
 
-    // Function table
-    int (*ack)(void* context);
-    FractalPacket* (*read_packet)(void* context, bool should_recv);
-    void (*free_packet)(void* context, FractalPacket* packet);
-    int (*send_packet)(void* context, FractalPacketType type, void* data, int len, int id);
-    void (*destroy_socket_context)(void* context);
+  // Function table
+  int (*ack)(void* context);
+  FractalPacket* (*read_packet)(void* context, bool should_recv);
+  void (*free_packet)(void* context, FractalPacket* packet);
+  int (*send_packet)(void* context, FractalPacketType type, void* data, int len, int id);
+  void (*destroy_socket_context)(void* context);
 } SocketContext;
 
 /*

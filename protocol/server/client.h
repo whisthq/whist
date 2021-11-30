@@ -27,23 +27,23 @@ Custom types
 */
 
 typedef struct Client {
-    /* ACTIVE */
-    bool is_active;        // "protected" by `is_deactivating`
-    bool is_deactivating;  // whether a client is in the process of deactivating
+  /* ACTIVE */
+  bool is_active;        // "protected" by `is_deactivating`
+  bool is_deactivating;  // whether a client is in the process of deactivating
 
-    /* USER INFO */
-    int user_id;  // not lock protected
+  /* USER INFO */
+  int user_id;  // not lock protected
 
-    /* NETWORK */
-    SocketContext udp_context;  // "protected" by global `is_deactivating`
-    SocketContext tcp_context;  // "protected" by global `is_deactivating`
-    int udp_port;               // "protected" by global `is_deactivating`
-    int tcp_port;               // "protected" by global `is_deactivating`
-    RWLock tcp_rwlock;          // protects tcp_context for synchrony-sensitive sends and recvs
+  /* NETWORK */
+  SocketContext udp_context;  // "protected" by global `is_deactivating`
+  SocketContext tcp_context;  // "protected" by global `is_deactivating`
+  int udp_port;               // "protected" by global `is_deactivating`
+  int tcp_port;               // "protected" by global `is_deactivating`
+  RWLock tcp_rwlock;          // protects tcp_context for synchrony-sensitive sends and recvs
 
-    /* PING */
-    clock last_ping;      // not lock protected
-    clock last_tcp_ping;  // not lock protected
+  /* PING */
+  clock last_ping;      // not lock protected
+  clock last_tcp_ping;  // not lock protected
 
 } Client;
 

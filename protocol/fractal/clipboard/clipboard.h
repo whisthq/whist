@@ -67,19 +67,19 @@ Custom types
  * @brief                          The type of data that a clipboard might be
  */
 typedef enum ClipboardType {
-    CLIPBOARD_NONE,
-    CLIPBOARD_TEXT,
-    CLIPBOARD_IMAGE,
-    CLIPBOARD_FILES
+  CLIPBOARD_NONE,
+  CLIPBOARD_TEXT,
+  CLIPBOARD_IMAGE,
+  CLIPBOARD_FILES
 } ClipboardType;
 
 /**
  * @brief                          The type of the clipboard chunk being sent
  */
 typedef enum ClipboardChunkType {
-    CLIPBOARD_START,
-    CLIPBOARD_MIDDLE,
-    CLIPBOARD_FINAL
+  CLIPBOARD_START,
+  CLIPBOARD_MIDDLE,
+  CLIPBOARD_FINAL
 } ClipboardChunkType;
 
 /**
@@ -87,18 +87,18 @@ typedef enum ClipboardChunkType {
  *                                 the information of a clipboard
  */
 typedef struct ClipboardData {
-    int size;                       // Number of bytes for the clipboard data
-    ClipboardType type;             // The type of data for the clipboard
-    ClipboardChunkType chunk_type;  // Whether this is a first, middle or last chunk
-    char data[0];                   // The data that stores the clipboard information
+  int size;                       // Number of bytes for the clipboard data
+  ClipboardType type;             // The type of data for the clipboard
+  ClipboardChunkType chunk_type;  // Whether this is a first, middle or last chunk
+  char data[0];                   // The data that stores the clipboard information
 } ClipboardData;
 
 /**
  * @brief                          Clipboard file data packet description
  */
 typedef struct ClipboardFiles {
-    int size;
-    char* files[];
+  int size;
+  char* files[];
 } ClipboardFiles;
 
 /*

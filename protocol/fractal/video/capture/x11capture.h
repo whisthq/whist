@@ -39,19 +39,19 @@ Custom Types
  * frame_data.
  */
 typedef struct X11CaptureDevice {
-    Display* display;
-    XImage* image;
-    XShmSegmentInfo segment;
-    Window root;
-    int counter;
-    int width;
-    int height;
-    int pitch;
-    char* frame_data;
-    Damage damage;
-    int event;
-    bool first;
-    FractalRGBColor corner_color;
+  Display* display;
+  XImage* image;
+  XShmSegmentInfo segment;
+  Window root;
+  int counter;
+  int width;
+  int height;
+  int pitch;
+  char* frame_data;
+  Damage damage;
+  int event;
+  bool first;
+  FractalRGBColor corner_color;
 } X11CaptureDevice;
 
 /*

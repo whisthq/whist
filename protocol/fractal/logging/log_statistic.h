@@ -30,10 +30,10 @@ Public Structures
 ============================
 */
 typedef struct {
-    const char *key;
-    bool is_max_needed;
-    bool is_min_needed;
-    bool average_over_time;
+  const char *key;
+  bool is_max_needed;
+  bool is_min_needed;
+  bool average_over_time;
 } StatisticInfo;
 
 /*

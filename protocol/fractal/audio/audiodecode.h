@@ -52,12 +52,12 @@ Custom Types
  *              system output format in out_buffer.
  */
 typedef struct AudioDecoder {
-    const AVCodec* codec;
-    AVCodecContext* context;
-    AVFrame* frame;
-    SwrContext* swr_context;
-    AVPacket packets[MAX_ENCODED_AUDIO_PACKETS];
-    uint8_t* out_buffer;
+  const AVCodec* codec;
+  AVCodecContext* context;
+  AVFrame* frame;
+  SwrContext* swr_context;
+  AVPacket packets[MAX_ENCODED_AUDIO_PACKETS];
+  uint8_t* out_buffer;
 } AudioDecoder;
 
 /*

@@ -42,8 +42,8 @@ Custom Types
  * @details State of the cursor on the rendered screen.
  */
 typedef enum FractalCursorState {
-    CURSOR_STATE_HIDDEN = 0,
-    CURSOR_STATE_VISIBLE = 1
+  CURSOR_STATE_HIDDEN = 0,
+  CURSOR_STATE_VISIBLE = 1
 } FractalCursorState;
 
 /**
@@ -51,19 +51,19 @@ typedef enum FractalCursorState {
  * @details The type of the cursor showing up on the screen.
  */
 typedef enum FractalCursorID {
-    WHIST_CURSOR_ARROW,
-    WHIST_CURSOR_IBEAM,
-    WHIST_CURSOR_WAIT,
-    WHIST_CURSOR_CROSSHAIR,
-    WHIST_CURSOR_WAITARROW,
-    WHIST_CURSOR_SIZENWSE,
-    WHIST_CURSOR_SIZENESW,
-    WHIST_CURSOR_SIZEWE,
-    WHIST_CURSOR_SIZENS,
-    WHIST_CURSOR_SIZEALL,
-    WHIST_CURSOR_NO,
-    WHIST_CURSOR_HAND,
-    INVALID
+  WHIST_CURSOR_ARROW,
+  WHIST_CURSOR_IBEAM,
+  WHIST_CURSOR_WAIT,
+  WHIST_CURSOR_CROSSHAIR,
+  WHIST_CURSOR_WAITARROW,
+  WHIST_CURSOR_SIZENWSE,
+  WHIST_CURSOR_SIZENESW,
+  WHIST_CURSOR_SIZEWE,
+  WHIST_CURSOR_SIZENS,
+  WHIST_CURSOR_SIZEALL,
+  WHIST_CURSOR_NO,
+  WHIST_CURSOR_HAND,
+  INVALID
 } FractalCursorID;
 
 /**
@@ -71,14 +71,14 @@ typedef enum FractalCursorID {
  * @details The image used for the rendered cursor.
  */
 typedef struct FractalCursorImage {
-    FractalCursorID cursor_id;
-    FractalCursorState cursor_state;
-    bool using_bmp;
-    unsigned short bmp_width;
-    unsigned short bmp_height;
-    unsigned short bmp_hot_x;
-    unsigned short bmp_hot_y;
-    uint32_t bmp[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT];
+  FractalCursorID cursor_id;
+  FractalCursorState cursor_state;
+  bool using_bmp;
+  unsigned short bmp_width;
+  unsigned short bmp_height;
+  unsigned short bmp_hot_x;
+  unsigned short bmp_hot_y;
+  uint32_t bmp[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT];
 } FractalCursorImage;
 
 /*

@@ -24,14 +24,14 @@ Custom Types
 */
 
 typedef struct InputDevice {
-    int fd_absmouse;
-    int fd_relmouse;
-    int fd_keyboard;
-    int keyboard_state[KEYCODE_UPPERBOUND];
-    bool caps_lock;
-    bool num_lock;
-    // Internal
-    bool mouse_has_moved;
+  int fd_absmouse;
+  int fd_relmouse;
+  int fd_keyboard;
+  int keyboard_state[KEYCODE_UPPERBOUND];
+  bool caps_lock;
+  bool num_lock;
+  // Internal
+  bool mouse_has_moved;
 } InputDevice;
 
 #endif  // UINPUT_INPUT_DRIVER_H

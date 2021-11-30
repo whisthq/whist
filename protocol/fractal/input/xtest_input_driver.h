@@ -26,11 +26,11 @@ Custom Types
 */
 
 typedef struct InputDevice {
-    Display* display;
-    Window root;
-    int keyboard_state[KEYCODE_UPPERBOUND];
-    bool caps_lock;
-    bool num_lock;
+  Display* display;
+  Window root;
+  int keyboard_state[KEYCODE_UPPERBOUND];
+  bool caps_lock;
+  bool num_lock;
 } InputDevice;
 
 #endif  // XTEST_INPUT_DRIVER_H

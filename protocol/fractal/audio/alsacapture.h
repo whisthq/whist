@@ -39,16 +39,16 @@ Custom Types
  * @brief                          Audio capture device features
  */
 typedef struct AudioDevice {
-    snd_pcm_t* handle;
-    snd_pcm_uframes_t num_frames;
-    unsigned long frames_available;
-    unsigned long buffer_size;
-    unsigned long frame_size;
-    unsigned int channels;
-    unsigned int sample_rate;
-    enum _snd_pcm_format sample_format;  // NOLINT
-    uint8_t* buffer;
-    int dummy_state;
+  snd_pcm_t* handle;
+  snd_pcm_uframes_t num_frames;
+  unsigned long frames_available;
+  unsigned long buffer_size;
+  unsigned long frame_size;
+  unsigned int channels;
+  unsigned int sample_rate;
+  enum _snd_pcm_format sample_format;  // NOLINT
+  uint8_t* buffer;
+  int dummy_state;
 } AudioDevice;
 
 #endif  // ALSA_CAPTURE_H

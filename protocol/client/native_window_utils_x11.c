@@ -27,44 +27,44 @@ Includes
 void hide_native_window_taskbar() { LOG_INFO("Not implemented on X11."); }
 
 int set_native_window_color(SDL_Window* window, FractalRGBColor color) {
-    LOG_INFO("Not implemented on X11.");
-    return 0;
+  LOG_INFO("Not implemented on X11.");
+  return 0;
 }
 
 void init_native_window_options(SDL_Window* window) { return; }
 
 int get_native_window_dpi(SDL_Window* window) {
-    /*
-        Get the DPI for the display of the provided window.
+  /*
+      Get the DPI for the display of the provided window.
 
-        Arguments:
-            window (SDL_Window*):       SDL window whose DPI to retrieve.
+      Arguments:
+          window (SDL_Window*):       SDL window whose DPI to retrieve.
 
-        Returns:
-            (int): The DPI as an int, with 96 as a base.
-    */
+      Returns:
+          (int): The DPI as an int, with 96 as a base.
+  */
 
-    // We just fall back to the SDL implementation here.
-    int display_index = SDL_GetWindowDisplayIndex(window);
-    float dpi;
-    SDL_GetDisplayDPI(display_index, NULL, &dpi, NULL);
-    return (int)dpi;
+  // We just fall back to the SDL implementation here.
+  int display_index = SDL_GetWindowDisplayIndex(window);
+  float dpi;
+  SDL_GetDisplayDPI(display_index, NULL, &dpi, NULL);
+  return (int)dpi;
 }
 
 FractalYUVColor get_frame_color(uint8_t* y_data, uint8_t* u_data, uint8_t* v_data,
                                 bool using_hardware) {
-    UNUSED(using_hardware);
-    FractalYUVColor yuv_color = {0};
-    if (y_data && u_data && v_data) {
-        yuv_color.y = y_data[0];
-        yuv_color.u = u_data[0];
-        yuv_color.v = v_data[0];
-    }
-    return yuv_color;
+  UNUSED(using_hardware);
+  FractalYUVColor yuv_color = {0};
+  if (y_data && u_data && v_data) {
+    yuv_color.y = y_data[0];
+    yuv_color.u = u_data[0];
+    yuv_color.v = v_data[0];
+  }
+  return yuv_color;
 }
 
 void declare_user_activity() {
-    // TODO: Implement actual wake-up code
-    // For now, we'll just disable the screensaver
-    SDL_DisableScreenSaver();
+  // TODO: Implement actual wake-up code
+  // For now, we'll just disable the screensaver
+  SDL_DisableScreenSaver();
 }

@@ -41,13 +41,13 @@ Custom Types
 */
 
 typedef struct OSXImage {
-    int size;
-    unsigned char* data;
+  int size;
+  unsigned char* data;
 } OSXImage;
 
 typedef struct OSXFilenames {
-    char* fullPath;
-    char* filename;
+  char* fullPath;
+  char* filename;
 } OSXFilenames;
 
 /*

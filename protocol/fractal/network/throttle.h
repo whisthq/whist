@@ -7,7 +7,7 @@
 #endif  // _WIN32
 
 typedef struct NetworkThrottleContext {
-    void* internal;
+  void* internal;
 } NetworkThrottleContext;
 
 /**

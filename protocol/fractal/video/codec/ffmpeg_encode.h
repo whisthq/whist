@@ -33,9 +33,9 @@ Custom Types
  * @details Type of encoding used for video encoding.
  */
 typedef enum FFmpegEncodeType {
-    SOFTWARE_ENCODE = 0,
-    NVENC_ENCODE = 1,
-    QSV_ENCODE = 2
+  SOFTWARE_ENCODE = 0,
+  NVENC_ENCODE = 1,
+  QSV_ENCODE = 2
 } FFmpegEncodeType;
 
 /**
@@ -46,32 +46,32 @@ typedef enum FFmpegEncodeType {
  *
  */
 typedef struct FFmpegEncoder {
-    // FFmpeg members to encode and scale video
-    const AVCodec* codec;
-    AVCodecContext* context;
-    AVFilterGraph* filter_graph;
-    AVFilterContext* filter_graph_source;
-    AVFilterContext* filter_graph_sink;
-    AVBufferRef* hw_device_ctx;
-    int frames_since_last_iframe;
-    bool wants_iframe;
+  // FFmpeg members to encode and scale video
+  const AVCodec* codec;
+  AVCodecContext* context;
+  AVFilterGraph* filter_graph;
+  AVFilterContext* filter_graph_source;
+  AVFilterContext* filter_graph_sink;
+  AVBufferRef* hw_device_ctx;
+  int frames_since_last_iframe;
+  bool wants_iframe;
 
-    // frame metadata + data
-    CodecType codec_type;
-    int bitrate;
-    int in_width, in_height;
-    int out_width, out_height;
-    int gop_size;
-    bool is_iframe;
-    void* sw_frame_buffer;
-    int encoded_frame_size;  /// <size of encoded frame in bytes
+  // frame metadata + data
+  CodecType codec_type;
+  int bitrate;
+  int in_width, in_height;
+  int out_width, out_height;
+  int gop_size;
+  bool is_iframe;
+  void* sw_frame_buffer;
+  int encoded_frame_size;  /// <size of encoded frame in bytes
 
-    // The type of encoder being used (nvenc/qsv/software/etc)
-    FFmpegEncodeType type;
-    // Various AVFrame's to be used for encoding
-    AVFrame* hw_frame;
-    AVFrame* sw_frame;
-    AVFrame* filtered_frame;
+  // The type of encoder being used (nvenc/qsv/software/etc)
+  FFmpegEncodeType type;
+  // Various AVFrame's to be used for encoding
+  AVFrame* hw_frame;
+  AVFrame* sw_frame;
+  AVFrame* filtered_frame;
 } FFmpegEncoder;
 
 /*

@@ -41,9 +41,9 @@ Custom Types
 /// @brief RGB Color.
 /// @details Red, green, and blue are in [0,255].
 typedef struct FractalRGBColor {
-    uint8_t red;    //<<< Red component
-    uint8_t green;  //<<< Green component
-    uint8_t blue;   //<<< Blue component
+  uint8_t red;    //<<< Red component
+  uint8_t green;  //<<< Green component
+  uint8_t blue;   //<<< Blue component
 } FractalRGBColor;
 
 /// @brief YUV Color.
@@ -51,9 +51,9 @@ typedef struct FractalRGBColor {
 ///          YUV420p data. Y' is luma, U is blue-projected chrominance, and
 ///          V is red-projected chrominance.
 typedef struct FractalYUVColor {
-    uint8_t y;  //<<< Y component
-    uint8_t u;  //<<< U component
-    uint8_t v;  //<<< V component
+  uint8_t y;  //<<< Y component
+  uint8_t u;  //<<< U component
+  uint8_t v;  //<<< V component
 } FractalYUVColor;
 
 /*

@@ -43,20 +43,20 @@ typedef enum VideoEncoderType { NVIDIA_ENCODER, FFMPEG_ENCODER } VideoEncoderTyp
  * using the Nvidia encoder, and fall back to the FFmpeg encoder if that fails.
  */
 typedef struct VideoEncoder {
-    int active_encoder_idx;
-    VideoEncoderType active_encoder;
-    // packet metadata + data
-    int num_packets;
-    AVPacket packets[MAX_ENCODER_PACKETS];
+  int active_encoder_idx;
+  VideoEncoderType active_encoder;
+  // packet metadata + data
+  int num_packets;
+  AVPacket packets[MAX_ENCODER_PACKETS];
 
-    // frame metadata + data
-    int in_width, in_height;
-    int out_width, out_height;
-    bool is_iframe;
-    int encoded_frame_size;  /// <size of encoded frame in bytes
-    CodecType codec_type;
-    NvidiaEncoder* nvidia_encoders[NUM_ENCODERS];
-    FFmpegEncoder* ffmpeg_encoder;
+  // frame metadata + data
+  int in_width, in_height;
+  int out_width, out_height;
+  bool is_iframe;
+  int encoded_frame_size;  /// <size of encoded frame in bytes
+  CodecType codec_type;
+  NvidiaEncoder* nvidia_encoders[NUM_ENCODERS];
+  FFmpegEncoder* ffmpeg_encoder;
 } VideoEncoder;
 
 /*

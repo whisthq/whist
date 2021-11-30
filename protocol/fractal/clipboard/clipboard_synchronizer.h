@@ -37,28 +37,28 @@ Includes
 #include "clipboard.h"
 
 typedef enum FractalClipboardActionType {
-    CLIPBOARD_ACTION_NONE = 0,
-    CLIPBOARD_ACTION_PUSH = 1,  // push onto local clipboard
-    CLIPBOARD_ACTION_PULL = 2,  // pull from local clipboard
+  CLIPBOARD_ACTION_NONE = 0,
+  CLIPBOARD_ACTION_PUSH = 1,  // push onto local clipboard
+  CLIPBOARD_ACTION_PULL = 2,  // pull from local clipboard
 } FractalClipboardActionType;
 
 typedef struct ClipboardActivity {
-    // is_initialized will only go from true to false when
-    //    there are active actions, so no mutex needed to
-    //    protect
-    bool is_initialized;
+  // is_initialized will only go from true to false when
+  //    there are active actions, so no mutex needed to
+  //    protect
+  bool is_initialized;
 
-    // Protected by clipboard_action_mutex:
-    FractalClipboardActionType clipboard_action_type;
-    WhistThread active_clipboard_action_thread;
-    bool* aborting_ptr;  // whether the current thread is being aborted
-    bool* complete_ptr;  // whether the action has been completed
-    ClipboardData** clipboard_buffer_ptr;
-    int pulled_bytes;  // only relevant for PULL actions
+  // Protected by clipboard_action_mutex:
+  FractalClipboardActionType clipboard_action_type;
+  WhistThread active_clipboard_action_thread;
+  bool* aborting_ptr;  // whether the current thread is being aborted
+  bool* complete_ptr;  // whether the action has been completed
+  ClipboardData** clipboard_buffer_ptr;
+  int pulled_bytes;  // only relevant for PULL actions
 
-    WhistMutex clipboard_action_mutex;
-    WhistCondition continue_action_condvar;
-    WhistSemaphore thread_setup_semaphore;
+  WhistMutex clipboard_action_mutex;
+  WhistCondition continue_action_condvar;
+  WhistSemaphore thread_setup_semaphore;
 } ClipboardActivity;
 
 /*

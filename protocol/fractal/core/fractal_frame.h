@@ -13,24 +13,24 @@
  *              - The new cursor image if the cursor has just changed
  */
 typedef struct VideoFrame {
-    int width;
-    int height;
-    CodecType codec_type;
-    bool is_iframe;
+  int width;
+  int height;
+  CodecType codec_type;
+  bool is_iframe;
 
-    bool has_cursor;
-    bool is_empty_frame;     // indicates whether this frame is identical to the one last sent
-    bool is_window_visible;  // indicates whether the client app is visible. If the client realizes
-                             // the server is wrong, it can correct it
-    int videodata_length;
-    FractalRGBColor corner_color;
+  bool has_cursor;
+  bool is_empty_frame;     // indicates whether this frame is identical to the one last sent
+  bool is_window_visible;  // indicates whether the client app is visible. If the client realizes
+                           // the server is wrong, it can correct it
+  int videodata_length;
+  FractalRGBColor corner_color;
 
-    unsigned char data[];
+  unsigned char data[];
 } VideoFrame;
 
 typedef struct AudioFrame {
-    int data_length;
-    unsigned char data[];
+  int data_length;
+  unsigned char data[];
 } AudioFrame;
 
 // The maximum possible valid size of a VideoFrame*

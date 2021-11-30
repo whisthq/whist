@@ -39,11 +39,11 @@ Custom Types
  *
  */
 typedef enum DecodeType {
-    DECODE_TYPE_NONE = 0,
-    DECODE_TYPE_SOFTWARE = 1,
-    DECODE_TYPE_HARDWARE = 2,
-    DECODE_TYPE_QSV = 3,
-    DECODE_TYPE_HARDWARE_OLDER = 4,
+  DECODE_TYPE_NONE = 0,
+  DECODE_TYPE_SOFTWARE = 1,
+  DECODE_TYPE_HARDWARE = 2,
+  DECODE_TYPE_QSV = 3,
+  DECODE_TYPE_HARDWARE_OLDER = 4,
 } DecodeType;
 
 /**
@@ -53,19 +53,19 @@ typedef enum DecodeType {
  *
  */
 typedef struct VideoDecoder {
-    int width;
-    int height;
-    bool can_use_hardware;
-    const AVCodec* codec;
-    AVCodecContext* context;
-    AVFrame* sw_frame;
-    AVFrame* hw_frame;
-    AVBufferRef* ref;
-    AVPacket packets[MAX_ENCODED_VIDEO_PACKETS];
-    enum AVPixelFormat match_fmt;
-    DecodeType type;
-    CodecType codec_type;
-    enum AVHWDeviceType device_type;
+  int width;
+  int height;
+  bool can_use_hardware;
+  const AVCodec* codec;
+  AVCodecContext* context;
+  AVFrame* sw_frame;
+  AVFrame* hw_frame;
+  AVBufferRef* ref;
+  AVPacket packets[MAX_ENCODED_VIDEO_PACKETS];
+  enum AVPixelFormat match_fmt;
+  DecodeType type;
+  CodecType codec_type;
+  enum AVHWDeviceType device_type;
 } VideoDecoder;
 
 /*

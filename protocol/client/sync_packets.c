@@ -66,114 +66,113 @@ Private Function Implementations
 */
 
 void update_ping() {
-    /*
-       Check if we should send more pings, disconnect, etc. If no valid pong has been received for
-       600ms, we mark that as a ping failure. If we successfully received a pong and it has been
-       500ms since the last ping, we send the next ping. Otherwise, if we haven't yet received a
-       pong and it has been 210 ms, resend the ping.
-    */
+  /*
+     Check if we should send more pings, disconnect, etc. If no valid pong has been received for
+     600ms, we mark that as a ping failure. If we successfully received a pong and it has been
+     500ms since the last ping, we send the next ping. Otherwise, if we haven't yet received a
+     pong and it has been 210 ms, resend the ping.
+  */
 
-    static clock last_new_ping_timer;
-    static bool timer_initialized = false;
-    if (!timer_initialized) {
-        start_timer(&last_new_ping_timer);
-        timer_initialized = true;
-    }
+  static clock last_new_ping_timer;
+  static bool timer_initialized = false;
+  if (!timer_initialized) {
+    start_timer(&last_new_ping_timer);
+    timer_initialized = true;
+  }
 
-    // If it's been 1 second since the last ping, we should warn
-    if (get_timer(last_ping_timer) > 1.0) {
-        LOG_WARNING("No ping sent or pong received in over a second");
-    }
+  // If it's been 1 second since the last ping, we should warn
+  if (get_timer(last_ping_timer) > 1.0) {
+    LOG_WARNING("No ping sent or pong received in over a second");
+  }
 
-    // If we're waiting for a ping, and it's been 600ms, then that ping will be
-    // noted as failed
-    if (last_ping_id != last_pong_id && get_timer(last_new_ping_timer) > 0.6) {
-        LOG_WARNING("Ping received no response: %d", last_ping_id);
-        // Keep track of failures, and exit if too many failures
-        last_pong_id = last_ping_id;
-        ++ping_failures;
-        if (ping_failures == 3) {
-            // we make this a LOG_WARNING so it doesn't clog up Sentry, as this
-            // error happens periodically but we have recovery systems in place
-            // for streaming interruption/connection loss
-            LOG_WARNING("Server disconnected: 3 consecutive ping failures.");
-            connected = false;
-        }
+  // If we're waiting for a ping, and it's been 600ms, then that ping will be
+  // noted as failed
+  if (last_ping_id != last_pong_id && get_timer(last_new_ping_timer) > 0.6) {
+    LOG_WARNING("Ping received no response: %d", last_ping_id);
+    // Keep track of failures, and exit if too many failures
+    last_pong_id = last_ping_id;
+    ++ping_failures;
+    if (ping_failures == 3) {
+      // we make this a LOG_WARNING so it doesn't clog up Sentry, as this
+      // error happens periodically but we have recovery systems in place
+      // for streaming interruption/connection loss
+      LOG_WARNING("Server disconnected: 3 consecutive ping failures.");
+      connected = false;
     }
+  }
 
-    // if we've received the last ping, send another
-    if (last_ping_id == last_pong_id && get_timer(last_ping_timer) > 0.5) {
-        send_ping(last_ping_id + 1);
-        start_timer(&last_new_ping_timer);
-    }
+  // if we've received the last ping, send another
+  if (last_ping_id == last_pong_id && get_timer(last_ping_timer) > 0.5) {
+    send_ping(last_ping_id + 1);
+    start_timer(&last_new_ping_timer);
+  }
 
-    // if we haven't received the last ping, send the same ping
-    if (last_ping_id != last_pong_id && get_timer(last_ping_timer) > 0.21) {
-        send_ping(last_ping_id);
-    }
+  // if we haven't received the last ping, send the same ping
+  if (last_ping_id != last_pong_id && get_timer(last_ping_timer) > 0.21) {
+    send_ping(last_ping_id);
+  }
 }
 
 void update_tcp_ping() {
-    /*
-       If no valid TCP pong has been received or sending a TCP ping is failing, then
-       send a TCP reconnection request to the server. This is agnostic of whether
-       the lost connection was caused by the client or the server.
-    */
+  /*
+     If no valid TCP pong has been received or sending a TCP ping is failing, then
+     send a TCP reconnection request to the server. This is agnostic of whether
+     the lost connection was caused by the client or the server.
+  */
 
-    static clock last_new_ping_timer;
-    static bool timer_initialized = false;
-    if (!timer_initialized) {
-        start_timer(&last_new_ping_timer);
-        timer_initialized = true;
+  static clock last_new_ping_timer;
+  static bool timer_initialized = false;
+  if (!timer_initialized) {
+    start_timer(&last_new_ping_timer);
+    timer_initialized = true;
+  }
+
+  // If it's been 4 seconds since the last ping, we should warn
+  if (get_timer(last_tcp_ping_timer) > 4.0) {
+    LOG_WARNING("No TCP ping sent or pong received in over a second");
+  }
+
+  // If we're waiting for a ping, and it's been 1s, then that ping will be
+  // noted as failed
+  if (last_tcp_ping_id != last_tcp_pong_id && get_timer(last_new_ping_timer) > 1.0) {
+    LOG_WARNING("TCP ping received no response: %d", last_tcp_ping_id);
+
+    // Only if we successfully recover the TCP connection should we continue
+    //     as if the ping was successful.
+    if (send_tcp_reconnect_message() == 0) {
+      last_tcp_pong_id = last_tcp_ping_id;
     }
+  }
 
-    // If it's been 4 seconds since the last ping, we should warn
-    if (get_timer(last_tcp_ping_timer) > 4.0) {
-        LOG_WARNING("No TCP ping sent or pong received in over a second");
-    }
-
-    // If we're waiting for a ping, and it's been 1s, then that ping will be
-    // noted as failed
-    if (last_tcp_ping_id != last_tcp_pong_id && get_timer(last_new_ping_timer) > 1.0) {
-        LOG_WARNING("TCP ping received no response: %d", last_tcp_ping_id);
-
-        // Only if we successfully recover the TCP connection should we continue
-        //     as if the ping was successful.
-        if (send_tcp_reconnect_message() == 0) {
-            last_tcp_pong_id = last_tcp_ping_id;
-        }
-    }
-
-    // if we've received the last ping, send another
-    if (last_tcp_ping_id == last_tcp_pong_id && get_timer(last_tcp_ping_timer) > 2.0) {
-        send_tcp_ping(last_tcp_ping_id + 1);
-        start_timer(&last_new_ping_timer);
-    }
+  // if we've received the last ping, send another
+  if (last_tcp_ping_id == last_tcp_pong_id && get_timer(last_tcp_ping_timer) > 2.0) {
+    send_tcp_ping(last_tcp_ping_id + 1);
+    start_timer(&last_new_ping_timer);
+  }
 }
 
 void update_server_bitrate() {
-    /*
-        Tell the server to update the bitrate of its video if needed.
-    */
-    if (update_bitrate) {
-        update_bitrate = false;
-        FractalClientMessage fcmsg = {0};
-        fcmsg.type = MESSAGE_MBPS;
-        fcmsg.bitrate_data.bitrate = client_max_bitrate;
-        fcmsg.bitrate_data.burst_bitrate = max_burst_bitrate;
-        fcmsg.bitrate_data.fec_packet_ratio = FEC_PACKET_RATIO;
-        LOG_INFO("Asking for server MBPS to be %f/%f/%f",
-                 fcmsg.bitrate_data.bitrate / 1024.0 / 1024.0,
-                 fcmsg.bitrate_data.burst_bitrate / 1024.0 / 1024.0,
-                 fcmsg.bitrate_data.fec_packet_ratio);
-        send_fcmsg(&fcmsg);
-    }
+  /*
+      Tell the server to update the bitrate of its video if needed.
+  */
+  if (update_bitrate) {
+    update_bitrate = false;
+    FractalClientMessage fcmsg = {0};
+    fcmsg.type = MESSAGE_MBPS;
+    fcmsg.bitrate_data.bitrate = client_max_bitrate;
+    fcmsg.bitrate_data.burst_bitrate = max_burst_bitrate;
+    fcmsg.bitrate_data.fec_packet_ratio = FEC_PACKET_RATIO;
+    LOG_INFO("Asking for server MBPS to be %f/%f/%f", fcmsg.bitrate_data.bitrate / 1024.0 / 1024.0,
+             fcmsg.bitrate_data.burst_bitrate / 1024.0 / 1024.0,
+             fcmsg.bitrate_data.fec_packet_ratio);
+    send_fcmsg(&fcmsg);
+  }
 }
 
 #define TIME_RUN(line, name, timer) \
-    start_timer(&timer);            \
-    line;                           \
-    log_double_statistic(name, get_timer(timer) * MS_IN_SECOND);
+  start_timer(&timer);              \
+  line;                             \
+  log_double_statistic(name, get_timer(timer) * MS_IN_SECOND);
 
 // This function polls for UDP packets from the server
 // NOTE: This contains a very sensitive hotpath,
@@ -186,140 +185,139 @@ void update_server_bitrate() {
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
 int multithreaded_sync_udp_packets(void* opaque) {
-    /*
-        Send, receive, and process UDP packets - dimension messages, bitrate messages, nack
-       messages, pings, audio and video packets.
-    */
-    bool* run_sync_packets = (bool*)opaque;
-    SocketContext* socket_context = &packet_udp_context;
+  /*
+      Send, receive, and process UDP packets - dimension messages, bitrate messages, nack
+     messages, pings, audio and video packets.
+  */
+  bool* run_sync_packets = (bool*)opaque;
+  SocketContext* socket_context = &packet_udp_context;
 
-    // we initialize latency here because on macOS, latency would not initialize properly in
-    // its global declaration. We start at 25ms before the first ping.
-    latency = 25.0 / 1000.0;
-    last_ping_id = 0;
-    ping_failures = 0;
+  // we initialize latency here because on macOS, latency would not initialize properly in
+  // its global declaration. We start at 25ms before the first ping.
+  latency = 25.0 / 1000.0;
+  last_ping_id = 0;
+  ping_failures = 0;
 
-    clock last_ack;
-    clock statistics_timer;
-    start_timer(&last_ack);
+  clock last_ack;
+  clock statistics_timer;
+  start_timer(&last_ack);
 
-    // Initialize dimensions prior to update_video and receive_video calls
-    if (server_width != output_width || server_height != output_height ||
-        server_codec_type != output_codec_type) {
-        send_message_dimensions();
+  // Initialize dimensions prior to update_video and receive_video calls
+  if (server_width != output_width || server_height != output_height ||
+      server_codec_type != output_codec_type) {
+    send_message_dimensions();
+  }
+
+  while (*run_sync_packets) {
+    // Ack the connection every 5 seconds
+    if (get_timer(last_ack) > 5.0) {
+      ack(socket_context);
+      start_timer(&last_ack);
     }
 
-    while (*run_sync_packets) {
-        // Ack the connection every 5 seconds
-        if (get_timer(last_ack) > 5.0) {
-            ack(socket_context);
-            start_timer(&last_ack);
-        }
+    update_server_bitrate();
+    update_ping();
+    TIME_RUN(update_video(), VIDEO_UPDATE_TIME, statistics_timer);
+    TIME_RUN(update_audio(), AUDIO_UPDATE_TIME, statistics_timer);
+    TIME_RUN(FractalPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_UDP,
+             statistics_timer);
 
-        update_server_bitrate();
-        update_ping();
-        TIME_RUN(update_video(), VIDEO_UPDATE_TIME, statistics_timer);
-        TIME_RUN(update_audio(), AUDIO_UPDATE_TIME, statistics_timer);
-        TIME_RUN(FractalPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_UDP,
-                 statistics_timer);
-
-        if (!packet) {
-            continue;
-        }
-
-        switch (packet->type) {
-            case PACKET_VIDEO: {
-                TIME_RUN(receive_video(packet), VIDEO_RECEIVE_TIME, statistics_timer);
-                break;
-            }
-            case PACKET_AUDIO: {
-                TIME_RUN(receive_audio(packet), AUDIO_RECEIVE_TIME, statistics_timer);
-                break;
-            }
-            case PACKET_MESSAGE: {
-                TIME_RUN(handle_server_message((FractalServerMessage*)packet->data,
-                                               (size_t)packet->payload_size),
-                         SERVER_HANDLE_MESSAGE_UDP, statistics_timer);
-                break;
-            }
-            default:
-                LOG_ERROR("Unknown packet type: %d", packet->type);
-                break;
-        }
-        free_packet(socket_context, packet);
+    if (!packet) {
+      continue;
     }
-    return 0;
+
+    switch (packet->type) {
+      case PACKET_VIDEO: {
+        TIME_RUN(receive_video(packet), VIDEO_RECEIVE_TIME, statistics_timer);
+        break;
+      }
+      case PACKET_AUDIO: {
+        TIME_RUN(receive_audio(packet), AUDIO_RECEIVE_TIME, statistics_timer);
+        break;
+      }
+      case PACKET_MESSAGE: {
+        TIME_RUN(
+          handle_server_message((FractalServerMessage*)packet->data, (size_t)packet->payload_size),
+          SERVER_HANDLE_MESSAGE_UDP, statistics_timer);
+        break;
+      }
+      default:
+        LOG_ERROR("Unknown packet type: %d", packet->type);
+        break;
+    }
+    free_packet(socket_context, packet);
+  }
+  return 0;
 }
 
 int multithreaded_sync_tcp_packets(void* opaque) {
-    /*
-        Thread to send and receive all TCP packets (clipboard and file)
+  /*
+      Thread to send and receive all TCP packets (clipboard and file)
 
-        Arguments:
-            opaque (void*): any arg to be passed to thread
+      Arguments:
+          opaque (void*): any arg to be passed to thread
 
-        Return:
-            (int): 0 on success
-    */
+      Return:
+          (int): 0 on success
+  */
 
-    bool* run_sync_packets = (bool*)opaque;
-    SocketContext* socket_context = &packet_tcp_context;
+  bool* run_sync_packets = (bool*)opaque;
+  SocketContext* socket_context = &packet_tcp_context;
 
-    last_tcp_ping_id = 0;
+  last_tcp_ping_id = 0;
 
-    clock last_ack;
-    clock statistics_timer;
-    start_timer(&last_ack);
+  clock last_ack;
+  clock statistics_timer;
+  start_timer(&last_ack);
 
-    while (*run_sync_packets) {
-        // Ack the connection every 50 ms
-        if (get_timer(last_ack) > 0.05) {
-            int ret = ack(socket_context);
-            if (ret != 0) {
-                LOG_WARNING("Lost TCP Connection (Error: %d)", get_last_network_error());
-                send_tcp_reconnect_message();
-            }
-            start_timer(&last_ack);
-        }
-
-        // Update TCP ping and reconnect TCP if needed (TODO: does that function do too much?)
-        update_tcp_ping();
-
-        TIME_RUN(FractalPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_TCP,
-                 statistics_timer);
-
-        if (packet) {
-            TIME_RUN(handle_server_message((FractalServerMessage*)packet->data,
-                                           (size_t)packet->payload_size),
-                     SERVER_HANDLE_MESSAGE_TCP, statistics_timer);
-            free_packet(socket_context, packet);
-        }
-
-        ClipboardData* clipboard_chunk = pull_clipboard_chunk();
-        if (clipboard_chunk) {
-            FractalClientMessage* fcmsg = allocate_region(
-                sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard_chunk->size);
-
-            // Init header to 0 to prevent sending uninitialized packets over the network
-            memset(fcmsg, 0, sizeof(FractalClientMessage));
-            fcmsg->type = CMESSAGE_CLIPBOARD;
-            memcpy(&fcmsg->clipboard, clipboard_chunk,
-                   sizeof(ClipboardData) + clipboard_chunk->size);
-            send_fcmsg(fcmsg);
-            deallocate_region(fcmsg);
-            deallocate_region(clipboard_chunk);
-
-            // We want to continue pumping read_packet or pull_clipboard_chunk
-            // until we pull a NULL chunk
-            continue;
-        }
-
-        // Sleep to target one loop every 25 ms.
-        if (get_timer(last_ack) * MS_IN_SECOND < 25.0) {
-            whist_sleep(max(1, (int)(25.0 - get_timer(last_ack) * MS_IN_SECOND)));
-        }
+  while (*run_sync_packets) {
+    // Ack the connection every 50 ms
+    if (get_timer(last_ack) > 0.05) {
+      int ret = ack(socket_context);
+      if (ret != 0) {
+        LOG_WARNING("Lost TCP Connection (Error: %d)", get_last_network_error());
+        send_tcp_reconnect_message();
+      }
+      start_timer(&last_ack);
     }
-    return 0;
+
+    // Update TCP ping and reconnect TCP if needed (TODO: does that function do too much?)
+    update_tcp_ping();
+
+    TIME_RUN(FractalPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_TCP,
+             statistics_timer);
+
+    if (packet) {
+      TIME_RUN(
+        handle_server_message((FractalServerMessage*)packet->data, (size_t)packet->payload_size),
+        SERVER_HANDLE_MESSAGE_TCP, statistics_timer);
+      free_packet(socket_context, packet);
+    }
+
+    ClipboardData* clipboard_chunk = pull_clipboard_chunk();
+    if (clipboard_chunk) {
+      FractalClientMessage* fcmsg = allocate_region(sizeof(FractalClientMessage) +
+                                                    sizeof(ClipboardData) + clipboard_chunk->size);
+
+      // Init header to 0 to prevent sending uninitialized packets over the network
+      memset(fcmsg, 0, sizeof(FractalClientMessage));
+      fcmsg->type = CMESSAGE_CLIPBOARD;
+      memcpy(&fcmsg->clipboard, clipboard_chunk, sizeof(ClipboardData) + clipboard_chunk->size);
+      send_fcmsg(fcmsg);
+      deallocate_region(fcmsg);
+      deallocate_region(clipboard_chunk);
+
+      // We want to continue pumping read_packet or pull_clipboard_chunk
+      // until we pull a NULL chunk
+      continue;
+    }
+
+    // Sleep to target one loop every 25 ms.
+    if (get_timer(last_ack) * MS_IN_SECOND < 25.0) {
+      whist_sleep(max(1, (int)(25.0 - get_timer(last_ack) * MS_IN_SECOND)));
+    }
+  }
+  return 0;
 }
 
 /*
@@ -329,30 +327,28 @@ Public Function Implementations
 */
 
 void init_packet_synchronizers() {
-    /*
-        Initialize the packet synchronizer threads for UDP and TCP.
-    */
-    if (run_sync_packets_threads == true) {
-        LOG_FATAL("Packet synchronizers are already running!");
-    }
-    run_sync_packets_threads = true;
-    sync_udp_packets_thread =
-        SDL_CreateThread(multithreaded_sync_udp_packets, "multithreaded_sync_udp_packets",
-                         &run_sync_packets_threads);
-    sync_tcp_packets_thread =
-        SDL_CreateThread(multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets",
-                         &run_sync_packets_threads);
+  /*
+      Initialize the packet synchronizer threads for UDP and TCP.
+  */
+  if (run_sync_packets_threads == true) {
+    LOG_FATAL("Packet synchronizers are already running!");
+  }
+  run_sync_packets_threads = true;
+  sync_udp_packets_thread = SDL_CreateThread(
+    multithreaded_sync_udp_packets, "multithreaded_sync_udp_packets", &run_sync_packets_threads);
+  sync_tcp_packets_thread = SDL_CreateThread(
+    multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", &run_sync_packets_threads);
 }
 
 void destroy_packet_synchronizers() {
-    /*
-        Destroy and wait on the packet synchronizer threads for UDP and TCP.
-    */
-    if (run_sync_packets_threads == false) {
-        LOG_ERROR("Packet synchronizers have not been initialized!");
-        return;
-    }
-    run_sync_packets_threads = false;
-    SDL_WaitThread(sync_tcp_packets_thread, NULL);
-    SDL_WaitThread(sync_udp_packets_thread, NULL);
+  /*
+      Destroy and wait on the packet synchronizer threads for UDP and TCP.
+  */
+  if (run_sync_packets_threads == false) {
+    LOG_ERROR("Packet synchronizers have not been initialized!");
+    return;
+  }
+  run_sync_packets_threads = false;
+  SDL_WaitThread(sync_tcp_packets_thread, NULL);
+  SDL_WaitThread(sync_udp_packets_thread, NULL);
 }
