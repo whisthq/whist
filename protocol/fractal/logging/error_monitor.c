@@ -186,7 +186,7 @@ void error_monitor_set_connection_id(int id) {
 #endif
 }
 
-void error_monitor_initialize(bool is_client) {
+void whist_error_monitor_initialize(bool is_client) {
     /*
         Initializes the error monitor.
 

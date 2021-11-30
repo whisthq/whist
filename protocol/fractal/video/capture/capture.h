@@ -45,8 +45,8 @@ typedef struct CaptureDevice {
     CaptureDeviceType last_capture_device;  // the device used for the last capture, so we can pick
                                             // the right encoder
     bool pending_destruction;
-    FractalThread nvidia_manager;
-    FractalSemaphore nvidia_device_semaphore;
+    WhistThread nvidia_manager;
+    WhistSemaphore nvidia_device_semaphore;
     bool nvidia_context_is_stale;
     // Shared X11 state
     Display* display;

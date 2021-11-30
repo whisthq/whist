@@ -69,7 +69,7 @@ int handle_discovery_port_message(whist_server_state *state, SocketContext *cont
     start_timer(&timer);
     do {
         tcp_packet = read_packet(context, true);
-        fractal_sleep(5);
+        whist_sleep(5);
     } while (tcp_packet == NULL && get_timer(timer) < CLIENT_PING_TIMEOUT_SEC);
     // Exit on null tcp packet, otherwise analyze the resulting FractalClientMessage
     if (tcp_packet == NULL) {
@@ -341,7 +341,7 @@ int multithreaded_manage_client(void *opaque) {
     while (!state->exiting) {
         if (state->sample_rate == -1) {
             // If audio hasn't initialized yet, let's wait a bit.
-            fractal_sleep(25);
+            whist_sleep(25);
             continue;
         }
 

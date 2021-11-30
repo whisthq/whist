@@ -316,7 +316,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
 
         // Sleep to target one loop every 25 ms.
         if (get_timer(last_ack) * MS_IN_SECOND < 25.0) {
-            fractal_sleep(max(1, (int)(25.0 - get_timer(last_ack) * MS_IN_SECOND)));
+            whist_sleep(max(1, (int)(25.0 - get_timer(last_ack) * MS_IN_SECOND)));
         }
     }
     return 0;

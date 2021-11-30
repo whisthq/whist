@@ -143,7 +143,7 @@ void print_stacktrace();
  * @brief                          Initialize the logger.
  *
  */
-void init_logger();
+void whist_init_logger();
 
 /**
  * @brief                          Log the given format string

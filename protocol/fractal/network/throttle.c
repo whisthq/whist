@@ -13,8 +13,8 @@
 typedef struct NetworkThrottleContextInternal {
     size_t coin_bucket;             //<<< The coin bucket for the current burst bitrate.
     int burst_bitrate;              //<<< The current burst bitrate.
-    FractalMutex queue_lock;        //<<< The lock to protect the queue.
-    FractalCondition queue_cond;    //<<< The condition variable which regulates the queue.
+    WhistMutex queue_lock;          //<<< The lock to protect the queue.
+    WhistCondition queue_cond;      //<<< The condition variable which regulates the queue.
     clock coin_bucket_last_fill;    //<<< The timer for the coin bucket's last fill.
     unsigned int next_queue_id;     //<<< The next queue id to use.
     unsigned int current_queue_id;  //<<< The currently-processed queue id.
@@ -34,8 +34,8 @@ NetworkThrottleContext* network_throttler_create() {
     ctx->internal = malloc(sizeof(NetworkThrottleContextInternal));
     INTERNAL(ctx)->coin_bucket = 0;
     INTERNAL(ctx)->burst_bitrate = STARTING_BURST_BITRATE;
-    INTERNAL(ctx)->queue_lock = fractal_create_mutex();
-    INTERNAL(ctx)->queue_cond = fractal_create_cond();
+    INTERNAL(ctx)->queue_lock = whist_create_mutex();
+    INTERNAL(ctx)->queue_cond = whist_create_cond();
     INTERNAL(ctx)->next_queue_id = 0;
     INTERNAL(ctx)->current_queue_id = 0;
     INTERNAL(ctx)->destroying = false;
@@ -61,7 +61,7 @@ void network_throttler_destroy(NetworkThrottleContext* ctx) {
 
     while (INTERNAL(ctx)->current_queue_id != INTERNAL(ctx)->next_queue_id) {
         // Wait until the packet queue is empty
-        fractal_sleep(10);
+        whist_sleep(10);
     }
 
     LOG_INFO("Destroying and freeing network throttler %p", ctx);
@@ -74,8 +74,8 @@ void network_throttler_destroy(NetworkThrottleContext* ctx) {
     // moment, but for now we just assume that the caller is
     // smart about that.
 
-    fractal_destroy_mutex(INTERNAL(ctx)->queue_lock);
-    fractal_destroy_cond(INTERNAL(ctx)->queue_cond);
+    whist_destroy_mutex(INTERNAL(ctx)->queue_lock);
+    whist_destroy_cond(INTERNAL(ctx)->queue_cond);
     free(ctx->internal);
     free(ctx);
 }
@@ -125,12 +125,12 @@ void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t 
     */
     if (!ctx || INTERNAL(ctx)->burst_bitrate <= 0 || INTERNAL(ctx)->destroying) return;
 
-    fractal_lock_mutex(INTERNAL(ctx)->queue_lock);
+    whist_lock_mutex(INTERNAL(ctx)->queue_lock);
     unsigned int queue_id = INTERNAL(ctx)->next_queue_id++;
     while (queue_id > INTERNAL(ctx)->current_queue_id) {
-        fractal_wait_cond(INTERNAL(ctx)->queue_cond, INTERNAL(ctx)->queue_lock);
+        whist_wait_cond(INTERNAL(ctx)->queue_cond, INTERNAL(ctx)->queue_lock);
     }
-    fractal_unlock_mutex(INTERNAL(ctx)->queue_lock);
+    whist_unlock_mutex(INTERNAL(ctx)->queue_lock);
 
     // Now we have the guarantee that this is the next quued packet.
     // This thread now assumes the responsiblity of adding to the
@@ -165,7 +165,7 @@ void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t 
             break;
         }
 
-        fractal_usleep(50);
+        whist_usleep(50);
     }
 
     // Wake up the next waiter in the queue.
@@ -174,7 +174,7 @@ void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t 
     log_double_statistic(NETWORK_THROTTLED_PACKET_DELAY_RATE, time * MS_IN_SECOND / (double)bytes);
     log_double_statistic(NETWORK_THROTTLED_PACKET_DELAY_LOOPS, (double)loops);
     ++INTERNAL(ctx)->current_queue_id;
-    fractal_lock_mutex(INTERNAL(ctx)->queue_lock);
-    fractal_broadcast_cond(INTERNAL(ctx)->queue_cond);
-    fractal_unlock_mutex(INTERNAL(ctx)->queue_lock);
+    whist_lock_mutex(INTERNAL(ctx)->queue_lock);
+    whist_broadcast_cond(INTERNAL(ctx)->queue_cond);
+    whist_unlock_mutex(INTERNAL(ctx)->queue_lock);
 }

@@ -96,7 +96,7 @@ void error_monitor_set_connection_id(int id);
  * @note                           This will do nothing if the environment
  *                                 has not already been set.
  */
-void error_monitor_initialize(bool is_client);
+void whist_error_monitor_initialize(bool is_client);
 
 /**
  * @brief                          Shuts down the error monitor.

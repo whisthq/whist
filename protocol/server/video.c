@@ -113,7 +113,7 @@ int32_t create_new_device(whist_server_state* state, clock* statistics_timer,
         *device = NULL;
         state->update_device = true;
 
-        fractal_sleep(100);
+        whist_sleep(100);
         return -1;
     }
 
@@ -128,7 +128,7 @@ int32_t create_new_device(whist_server_state* state, clock* statistics_timer,
             state->pending_encoder = false;
             break;
         }
-        fractal_sleep(1);
+        whist_sleep(1);
     }
 
     // Next, we should update our ffmpeg encoder
@@ -231,7 +231,7 @@ void retry_capture_screen(whist_server_state* state, CaptureDevice* device, Vide
     device = NULL;
     state->update_device = true;
 
-    fractal_sleep(100);
+    whist_sleep(100);
 }
 
 /**
@@ -346,9 +346,9 @@ VideoEncoder* do_update_encoder(whist_server_state* state, VideoEncoder* encoder
                 // Once encoder_finished, we'll destroy the old one that we've been using,
                 // and replace it with the result of multithreaded_encoder_factory
                 if (encoder) {
-                    FractalThread encoder_destroy_thread = fractal_create_thread(
+                    WhistThread encoder_destroy_thread = whist_create_thread(
                         multithreaded_destroy_encoder, "multithreaded_destroy_encoder", encoder);
-                    fractal_detach_thread(encoder_destroy_thread);
+                    whist_detach_thread(encoder_destroy_thread);
                 }
                 encoder = state->encoder_factory_result;
                 state->pending_encoder = false;
@@ -390,9 +390,9 @@ VideoEncoder* do_update_encoder(whist_server_state* state, VideoEncoder* encoder
                 state->pending_encoder = false;
                 state->update_encoder = false;
             } else {
-                FractalThread encoder_creator_thread = fractal_create_thread(
+                WhistThread encoder_creator_thread = whist_create_thread(
                     multithreaded_encoder_factory, "multithreaded_encoder_factory", state);
-                fractal_detach_thread(encoder_creator_thread);
+                whist_detach_thread(encoder_creator_thread);
                 state->pending_encoder = true;
             }
         }
@@ -409,9 +409,9 @@ Public Function Implementations
 int32_t multithreaded_send_video(void* opaque) {
     whist_server_state* state = (whist_server_state*)opaque;
 
-    fractal_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
+    whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
 
-    fractal_sleep(500);
+    whist_sleep(500);
 
 #if defined(_WIN32)
     // set Windows DPI
@@ -449,7 +449,7 @@ int32_t multithreaded_send_video(void* opaque) {
         update_client_active_status(&state->client, &assuming_client_active);
 
         if (!assuming_client_active) {
-            fractal_sleep(1);
+            whist_sleep(1);
             continue;
         }
 

@@ -20,7 +20,7 @@ Includes
 
 volatile int threads_needing_active = 0;  // Threads dependent on client being active
 volatile int threads_holding_active = 0;  // Threads currently assuming client is active
-FractalMutex active_holding_write_mutex;  // Protects writes to the above two variables
+WhistMutex active_holding_write_mutex;    // Protects writes to the above two variables
                                           //     (protecting reads not necessary)
 
 /*
@@ -44,7 +44,7 @@ int init_client(Client *client) {
     client->udp_port = BASE_UDP_PORT;
     client->tcp_port = BASE_TCP_PORT;
     init_rw_lock(&client->tcp_rwlock);
-    active_holding_write_mutex = fractal_create_mutex();
+    active_holding_write_mutex = whist_create_mutex();
 
     return 0;
 }
@@ -132,9 +132,9 @@ void add_thread_to_client_active_dependents(void) {
         Add thread to count of those dependent on client being active
     */
 
-    fractal_lock_mutex(active_holding_write_mutex);
+    whist_lock_mutex(active_holding_write_mutex);
     threads_needing_active++;
-    fractal_unlock_mutex(active_holding_write_mutex);
+    whist_unlock_mutex(active_holding_write_mutex);
 }
 
 void remove_thread_from_holding_active_count(void) {
@@ -142,9 +142,9 @@ void remove_thread_from_holding_active_count(void) {
         Remove thread from those currently assuming that client is active
     */
 
-    fractal_lock_mutex(active_holding_write_mutex);
+    whist_lock_mutex(active_holding_write_mutex);
     threads_holding_active--;
-    fractal_unlock_mutex(active_holding_write_mutex);
+    whist_unlock_mutex(active_holding_write_mutex);
 }
 
 void reset_threads_holding_active_count(Client *client) {
@@ -157,10 +157,10 @@ void reset_threads_holding_active_count(Client *client) {
         NOTE: Should only be called from `multithreaded_manage_client`
     */
 
-    fractal_lock_mutex(active_holding_write_mutex);
+    whist_lock_mutex(active_holding_write_mutex);
     threads_holding_active = threads_needing_active;
     client->is_deactivating = false;
-    fractal_unlock_mutex(active_holding_write_mutex);
+    whist_unlock_mutex(active_holding_write_mutex);
 }
 
 void update_client_active_status(Client *client, bool *is_thread_assuming_active) {

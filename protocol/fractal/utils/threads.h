@@ -12,12 +12,12 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_thread.h>
 
-typedef SDL_mutex* FractalMutex;
-typedef SDL_cond* FractalCondition;
-typedef SDL_sem* FractalSemaphore;
-typedef SDL_Thread* FractalThread;
-typedef SDL_threadID FractalThreadID;
-typedef int (*FractalThreadFunction)(void*);
+typedef SDL_mutex* WhistMutex;
+typedef SDL_cond* WhistCondition;
+typedef SDL_sem* WhistSemaphore;
+typedef SDL_Thread* WhistThread;
+typedef SDL_threadID WhistThreadID;
+typedef int (*WhistThreadFunction)(void*);
 typedef enum FractalThreadPriority {
     WHIST_THREAD_PRIORITY_LOW = SDL_THREAD_PRIORITY_LOW,
     WHIST_THREAD_PRIORITY_NORMAL = SDL_THREAD_PRIORITY_NORMAL,
@@ -25,32 +25,31 @@ typedef enum FractalThreadPriority {
     WHIST_THREAD_PRIORITY_REALTIME = SDL_THREAD_PRIORITY_TIME_CRITICAL
 } FractalThreadPriority;
 
-void fractal_init_multithreading();
+void whist_init_multithreading();
 
-FractalThread fractal_create_thread(FractalThreadFunction thread_function, char* thread_name,
-                                    void* data);
-FractalThreadID fractal_get_thread_id(FractalThread thread);
-void fractal_detach_thread(FractalThread thread);
-void fractal_wait_thread(FractalThread thread, int* ret);
-void fractal_set_thread_priority(FractalThreadPriority priority);
+WhistThread whist_create_thread(WhistThreadFunction thread_function, char* thread_name, void* data);
+WhistThreadID whist_get_thread_id(WhistThread thread);
+void whist_detach_thread(WhistThread thread);
+void whist_wait_thread(WhistThread thread, int* ret);
+void whist_set_thread_priority(FractalThreadPriority priority);
 
-void fractal_sleep(uint32_t ms);
-void fractal_usleep(uint32_t us);
+void whist_sleep(uint32_t ms);
+void whist_usleep(uint32_t us);
 
-FractalMutex fractal_create_mutex();
-void fractal_lock_mutex(FractalMutex mutex);
-int fractal_try_lock_mutex(FractalMutex mutex);
-void fractal_unlock_mutex(FractalMutex mutex);
-void fractal_destroy_mutex(FractalMutex mutex);
+WhistMutex whist_create_mutex();
+void whist_lock_mutex(WhistMutex mutex);
+int whist_try_lock_mutex(WhistMutex mutex);
+void whist_unlock_mutex(WhistMutex mutex);
+void whist_destroy_mutex(WhistMutex mutex);
 
-FractalCondition fractal_create_cond();
-void fractal_wait_cond(FractalCondition cond, FractalMutex mutex);
-void fractal_broadcast_cond(FractalCondition cond);
-void fractal_destroy_cond(FractalCondition cond);
+WhistCondition whist_create_cond();
+void whist_wait_cond(WhistCondition cond, WhistMutex mutex);
+void whist_broadcast_cond(WhistCondition cond);
+void whist_destroy_cond(WhistCondition cond);
 
-FractalSemaphore fractal_create_semaphore(uint32_t initial_value);
-void fractal_post_semaphore(FractalSemaphore semaphore);
-void fractal_wait_semaphore(FractalSemaphore semaphore);
-void fractal_destroy_semaphore(FractalSemaphore semaphore);
+WhistSemaphore whist_create_semaphore(uint32_t initial_value);
+void whist_post_semaphore(WhistSemaphore semaphore);
+void whist_wait_semaphore(WhistSemaphore semaphore);
+void whist_destroy_semaphore(WhistSemaphore semaphore);
 
 #endif  // WHIST_THREADS_H

@@ -54,9 +54,9 @@ void print_system_info() {
         Print the system info of the computer
     */
 
-    FractalThread sysinfo_thread =
-        fractal_create_thread(multithreaded_print_system_info, "print_system_info", NULL);
-    fractal_detach_thread(sysinfo_thread);
+    WhistThread sysinfo_thread =
+        whist_create_thread(multithreaded_print_system_info, "print_system_info", NULL);
+    whist_detach_thread(sysinfo_thread);
 }
 
 int runcmd(const char *cmdline, char **response) {

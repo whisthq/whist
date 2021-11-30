@@ -45,7 +45,7 @@ Public Functions
 /**
  * @brief                          Initialize the statistic logger.
  */
-void init_statistic_logger(uint32_t num_metrics, StatisticInfo *statistic_info, int interval);
+void whist_init_statistic_logger(uint32_t num_metrics, StatisticInfo *statistic_info, int interval);
 
 /**
  * @brief                          Note a specific stat value associated with a key. If enough time

@@ -28,7 +28,7 @@ Includes
 #include <fractal/core/fractal.h>
 
 // A Mutex to ensure unsafe commands don't overlap
-FractalMutex clipboard_mutex;
+WhistMutex clipboard_mutex;
 // Whether to send the local clipboard contents on startup
 bool preserve_local_clipboard = false;
 // Whether to skip the synchronization for the next clipboard update
@@ -73,7 +73,7 @@ void init_clipboard(bool is_client) {
     // If the caller is the client, then the clipboard state
     //     should be preserved for the shared clipboard state.
     preserve_local_clipboard = is_client;
-    clipboard_mutex = fractal_create_mutex();
+    clipboard_mutex = whist_create_mutex();
     unsafe_init_clipboard();
 }
 
@@ -108,9 +108,9 @@ ClipboardData* get_os_clipboard() {
         return NULL;
     }
 
-    fractal_lock_mutex(clipboard_mutex);
+    whist_lock_mutex(clipboard_mutex);
     ClipboardData* cb = unsafe_get_os_clipboard();
-    fractal_unlock_mutex(clipboard_mutex);
+    whist_unlock_mutex(clipboard_mutex);
     return cb;
 }
 
@@ -128,13 +128,13 @@ void set_os_clipboard(ClipboardData* cb) {
         return;
     }
 
-    fractal_lock_mutex(clipboard_mutex);
+    whist_lock_mutex(clipboard_mutex);
     unsafe_set_os_clipboard(cb);
     // Can't clear out update from filling clipboard here
     //     because X11 might not send the event fast enough, causing
     //     a send-back. We set this flag instead.
     skip_next_has_updated = true;
-    fractal_unlock_mutex(clipboard_mutex);
+    whist_unlock_mutex(clipboard_mutex);
 }
 
 void free_clipboard_buffer(ClipboardData* cb) {
@@ -150,9 +150,9 @@ void free_clipboard_buffer(ClipboardData* cb) {
         return;
     }
 
-    fractal_lock_mutex(clipboard_mutex);
+    whist_lock_mutex(clipboard_mutex);
     unsafe_free_clipboard_buffer(cb);
-    fractal_unlock_mutex(clipboard_mutex);
+    whist_unlock_mutex(clipboard_mutex);
 }
 
 bool has_os_clipboard_updated() {
@@ -168,7 +168,7 @@ bool has_os_clipboard_updated() {
         return false;
     }
 
-    if (fractal_try_lock_mutex(clipboard_mutex) == 0) {
+    if (whist_try_lock_mutex(clipboard_mutex) == 0) {
         bool has_os_clipboard_updated = unsafe_has_os_clipboard_updated();
         // After setting, we don't want to propagate the next update
         //     because it will just play back the set
@@ -176,7 +176,7 @@ bool has_os_clipboard_updated() {
             has_os_clipboard_updated = false;
             skip_next_has_updated = false;
         }
-        fractal_unlock_mutex(clipboard_mutex);
+        whist_unlock_mutex(clipboard_mutex);
         return has_os_clipboard_updated;
     } else {
         return false;
@@ -193,10 +193,10 @@ void destroy_clipboard() {
         return;
     }
 
-    fractal_lock_mutex(clipboard_mutex);
+    whist_lock_mutex(clipboard_mutex);
     unsafe_destroy_clipboard();
-    fractal_unlock_mutex(clipboard_mutex);
+    whist_unlock_mutex(clipboard_mutex);
 
-    fractal_destroy_mutex(clipboard_mutex);
+    whist_destroy_mutex(clipboard_mutex);
     clipboard_mutex = NULL;
 }

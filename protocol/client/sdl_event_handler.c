@@ -421,7 +421,7 @@ int handle_sdl_event(SDL_Event *event) {
             else if (event->window.event == SDL_WINDOWEVENT_OCCLUDED) {
                 FractalClientMessage fcmsg = {0};
                 fcmsg.type = MESSAGE_STOP_STREAMING;
-                fractal_sleep(100);
+                whist_sleep(100);
                 send_fcmsg(&fcmsg);
             } else if (event->window.event == SDL_WINDOWEVENT_UNOCCLUDED) {
                 FractalClientMessage fcmsg = {0};
