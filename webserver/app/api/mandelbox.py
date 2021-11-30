@@ -12,6 +12,7 @@ from app.utils.mandelbox.validation import MandelboxAssignBody
 from app import whist_pre_process
 from app.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
 from app.constants.env_names import DEVELOPMENT, LOCAL
+from app.constants.mandelbox_assign_error_names import MandelboxAssignError
 from app.helpers.aws.aws_instance_post import do_scale_up_if_necessary
 from app.helpers.aws.aws_mandelbox_assign_post import is_user_active
 from app.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
@@ -48,7 +49,16 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
         whist_logger.debug(
             f"Returning 503 to user {username} because they are already active. (client reported email {unsafe_email}, this value might not be accurate and is untrusted)"
         )
-        return jsonify({"ip": "None", "mandelbox_id": "None"}), HTTPStatus.SERVICE_UNAVAILABLE
+        return (
+            jsonify(
+                {
+                    "ip": "None",
+                    "mandelbox_id": "None",
+                    "error": MandelboxAssignError.USER_ALREADY_ACTIVE,
+                }
+            ),
+            HTTPStatus.SERVICE_UNAVAILABLE,
+        )
 
     # Of the regions provided in the request, filter out the ones that are not active
     enabled_regions = find_enabled_regions()
@@ -60,7 +70,13 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
             f"None of the request regions {body.regions} are enabled, enabled regions are {enabled_regions}"
         )
         return (
-            jsonify({"ip": "None", "mandelbox_id": "None", "region": "None"}),
+            jsonify(
+                {
+                    "ip": "None",
+                    "mandelbox_id": "None",
+                    "error": MandelboxAssignError.REGION_NOT_ENABLED,
+                }
+            ),
             HTTPStatus.SERVICE_UNAVAILABLE,
         )
 
@@ -123,9 +139,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
             f"Returning 503 to user {username} because we didn't find an instance for them. (client reported email {unsafe_email}, this value might not be accurate and is untrusted)"
         )
         return (
-            jsonify(
-                {"ip": "None", "mandelbox_id": "None", "region": region, "error": instance_or_error}
-            ),
+            jsonify({"ip": "None", "mandelbox_id": "None", "error": instance_or_error}),
             HTTPStatus.SERVICE_UNAVAILABLE,
         )
 
