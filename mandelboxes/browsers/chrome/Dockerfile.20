@@ -46,6 +46,9 @@ RUN su - fractal -c \
     && xdg-mime default google-chrome.desktop x-scheme-handler/https \
     && xdg-mime default google-chrome.desktop x-scheme-handler/about"
 
+# Configure Chrome Policies
+# For details regarding the options, see:
+# https://gist.github.com/meets2tarun/2161e544f4c458c2f07641cafbdd186d
 RUN mkdir -p /etc/opt/chrome/policies/managed \
     && echo {} \
     # Whitelist streamed URI protocols (zoommtg,slack.spotify,discord)
