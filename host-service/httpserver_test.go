@@ -5,12 +5,14 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"sync"
 	"testing"
+	"testing/iotest"
 	"time"
 
 	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
@@ -216,6 +218,270 @@ func TestHttpServerIntegration(t *testing.T) {
 	globalCancel()
 	goroutineTracker.Wait()
 	t.Log("server goroutine ended")
+}
+
+// TestSendRequestResultErr checks if an error result is handled properly
+func TestSendRequestResultErr(t *testing.T) {
+	reqResult := requestResult{
+		Err: utils.MakeError("test error"),
+	}
+	res := httptest.NewRecorder()
+
+	// A 406 error should arise
+	reqResult.send(res)
+
+	if res.Result().StatusCode != http.StatusNotAcceptable {
+		t.Fatalf("error sending request results with error. Expected status code %v, got %v", http.StatusNotAcceptable, res.Result().StatusCode)
+	}
+}
+
+// TestSendRequestResult tests if a valid request resolves successfully
+func TestSendRequestResult(t *testing.T) {
+	reqResult := requestResult{
+		Result: "test result",
+	}
+	res := httptest.NewRecorder()
+	io.WriteString(res, "test content")
+
+	// A 200 status code should be set
+	reqResult.send(res)
+
+	if res.Result().StatusCode != http.StatusOK {
+		t.Fatalf("error sending a valid request results. Expected status code %v, got %v", http.StatusOK, res.Result().StatusCode)
+	}
+}
+
+// TestProcessJSONDataRequestWrongType checks if the wrong request will result in the request not being added to the queue
+func TestProcessJSONDataRequestWrongType(t *testing.T) {
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "https://localhost", nil)
+	testChan := make(chan ServerRequest)
+
+	// processJSONDataRequest will return being trying to authenticate and parse request given the wrong request type
+	processJSONDataRequest(res, req, testChan)
+
+	select {
+	case <-testChan:
+		t.Fatalf("error processing json data request with wrong request type. Expected test server request chan to be empty")
+	default:
+	}
+}
+
+// TestProcessJSONDataRequestEmptyBody checks if an empty body will result in the request not being added to the queue
+func TestProcessJSONDataRequestEmptyBody(t *testing.T) {
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPut, "https://localhost", nil)
+	testChan := make(chan ServerRequest)
+
+	// processJSONDataRequest will fail to parse request with an empty request body (will not be able to unmarshal)
+	processJSONDataRequest(res, req, testChan)
+
+	select {
+	case <-testChan:
+		t.Fatalf("error processing json data request with empty. Expected test server request chan to be empty")
+	default:
+	}
+}
+
+// TestHandleJSONTransportRequest checks if valid fields will successfully send json transport request
+func TestHandleJSONTransportRequest(t *testing.T) {
+	testJSONTransportRequest := JSONTransportRequest{
+		ConfigEncryptionToken: "testToken1234",
+		JwtAccessToken:        "test_jwt_token",
+		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
+		JSONData:              "test_json_data",
+		resultChan:            make(chan requestResult),
+	}
+
+	testmux := &sync.Mutex{}
+	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
+
+	handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
+
+	select {
+	case <-testTransportRequestMap[testJSONTransportRequest.MandelboxID]:
+		return
+	default:
+		t.Fatalf("error handling json transport requests. Expected a request from the request chan")
+	}
+}
+
+// TestGetJSONTransportRequestChannel checks if JSON transport request is created for the mandelboxID
+func TestGetJSONTransportRequestChannel(t *testing.T) {
+	mandelboxID := mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())
+	testmux := &sync.Mutex{}
+	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
+
+	// getJSONTransportRequestChannel will create a new json trasport request channel with the mandelboxID
+	testJsonChan := getJSONTransportRequestChannel(mandelboxID, testTransportRequestMap, testmux)
+
+	if _, ok := interface{}(testJsonChan).(chan *JSONTransportRequest); !ok {
+		t.Fatalf("error getting json transport request channel")
+	}
+}
+
+// TestGetAppNameEmpty will check if default AppName is browser/chrome
+func TestGetAppNameEmpty(t *testing.T) {
+	mandelboxID := mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())
+	testmux := &sync.Mutex{}
+	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
+
+	// Assign JSONTRansportRequest
+	testTransportRequestMap[mandelboxID] = make(chan *JSONTransportRequest, 1)
+	testTransportRequestMap[mandelboxID] <- &JSONTransportRequest{}
+
+	// Should default name to browser/chrome
+	_, appName := getAppName(mandelboxID, testTransportRequestMap, testmux)
+
+	if appName != mandelboxtypes.AppName("browsers/chrome") {
+		t.Fatalf("error getting app name. Expected %v, got %v", mandelboxtypes.AppName("browsers/chrome"), appName)
+	}
+}
+
+// TestGetAppName will set appName to json request app name
+func TestGetAppName(t *testing.T) {
+	testJSONTransportRequest := JSONTransportRequest{
+		AppName: mandelboxtypes.AppName("test_app_name"),
+	}
+
+	mandelboxID := mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())
+	testmux := &sync.Mutex{}
+	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
+
+	// Assign JSONTRansportRequest
+	testTransportRequestMap[mandelboxID] = make(chan *JSONTransportRequest, 1)
+	testTransportRequestMap[mandelboxID] <- &testJSONTransportRequest
+
+	// Should be set to test_app_name
+	_, appName := getAppName(mandelboxID, testTransportRequestMap, testmux)
+
+	if appName != testJSONTransportRequest.AppName {
+		t.Fatalf("error getting app name. Expected %v, got %v", testJSONTransportRequest.AppName, appName)
+	}
+}
+
+// TestVerifyRequestWrongType will create a request method that does not match the expected method
+func TestVerifyRequestWrongType(t *testing.T) {
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "https://localhost", nil)
+	
+	// verifyRequestType will catch request with wrong method and return an error
+	if err := verifyRequestType(res, req, http.MethodPut); err == nil {
+		t.Fatal("error verifying request type when the request method does not match. Expected an error, got nil")
+	}
+
+	if res.Result().StatusCode != http.StatusBadRequest {
+		t.Fatalf("error verifying request type when the request method does not match. Expected status code %v, got %v", http.StatusBadRequest, res.Result().StatusCode)
+	}
+}
+
+// TestVerifyRequestTypeNilRequest checks if nil requests are handled properly
+func TestVerifyRequestTypeNilRequest(t *testing.T) {
+	res := httptest.NewRecorder()
+
+	// verifyRequestType will catch nil request and return an error
+	if err := verifyRequestType(res, nil, http.MethodPut); err == nil {
+		t.Fatal("error verifying request type when request is nil. Expected an error, got nil")
+	}
+
+	if res.Result().StatusCode != http.StatusBadRequest {
+		t.Fatalf("error verifying request type when request is nil. Expected status code %v, got %v", http.StatusBadRequest, res.Result().StatusCode)
+	}
+}
+
+// TestAuthenticateAndParseRequestReadAllErr checks if body read errors are handled properly
+func TestAuthenticateAndParseRequestReadAllErr(t *testing.T) {
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPut, "https://localhost", iotest.ErrReader(errors.New("test error")))
+	testJSONTransportRequest := JSONTransportRequest{
+		resultChan: make(chan requestResult),
+	}
+
+	// authenticateAndParseRequest will get an error trying to read request body and will cause an error
+	err := authenticateAndParseRequest(res, req, &testJSONTransportRequest, true)
+
+	if err == nil {
+		t.Fatalf("error authenticating and parsing request when real all fails. Expected err, got nil")
+	}
+
+	if res.Result().StatusCode != http.StatusBadRequest {
+		t.Fatalf("error authenticating and parsing request when real all fails. Expected status code %v, got %v", http.StatusBadRequest, res.Result().StatusCode)
+	}
+}
+
+// TestAuthenticateAndParseRequestEmptyBody checks if an empty body will error successfully
+func TestAuthenticateAndParseRequestEmptyBody(t *testing.T) {
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPut, "https://localhost", bytes.NewReader([]byte{}))
+	testJSONTransportRequest := JSONTransportRequest{
+		resultChan: make(chan requestResult),
+	}
+
+	// authenticateAndParseRequest will be unable to unmarshal an empty body and will cause an error
+	err := authenticateAndParseRequest(res, req, &testJSONTransportRequest, true)
+
+	if err == nil {
+		t.Fatalf("error authenticating and parsing request with empty body. Expected err, got nil")
+	}
+
+	if res.Result().StatusCode != http.StatusBadRequest {
+		t.Fatalf("error authenticating and parsing request with empty body. Expected status code %v, got %v", http.StatusBadRequest, res.Result().StatusCode)
+	}
+}
+
+// TestAuthenticateAndParseRequestMissingJWTField checks if missing jwt access token will error successfully
+func TestAuthenticateAndParseRequestMissingJWTField(t *testing.T) {
+	res := httptest.NewRecorder()
+
+	// generateTestJSONTransportRequest will give a well formatted request
+	testJSONTransportRequest := JSONTransportRequest{
+		JSONData:   "test_json_data",
+		resultChan: make(chan requestResult),
+	}
+
+	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
+	if err != nil {
+		t.Fatalf("error creating json transport request: %v", err)
+	}
+
+	// authenticateAndParseRequest will return an error because jwt_access_token is not set in serverRequest
+	err = authenticateAndParseRequest(res, req, &testJSONTransportRequest, true)
+
+	if err == nil {
+		t.Fatalf("error authenticating and parsing request with missing jwt access token. Expected err, got nil")
+	}
+
+	if res.Result().StatusCode != http.StatusUnauthorized {
+		t.Fatalf("error authenticating and parsing request with missing jwt access token. Expected status code %v, got %v", http.StatusUnauthorized, res.Result().StatusCode)
+	}
+}
+
+// TestAuthenticateAndParseRequestInvalidJWTField checks if an invalid jwt access token will error successfully
+func TestAuthenticateAndParseRequestInvalidJWTField(t *testing.T) {
+	res := httptest.NewRecorder()
+
+	// generateTestJSONTransportRequest will give a well formatted request
+	testJSONTransportRequest := JSONTransportRequest{
+		JwtAccessToken: "test_invalid_jwt_token",
+		JSONData:       "test_json_data",
+		resultChan:     make(chan requestResult),
+	}
+
+	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
+	if err != nil {
+		t.Fatalf("error creating json transport request: %v", err)
+	}
+
+	// authenticateAndParseRequest will return an error because the jwt_access_token is not valid
+	err = authenticateAndParseRequest(res, req, &testJSONTransportRequest, true)
+
+	if err == nil {
+		t.Fatalf("error authenticating and parsing request with missing jwt access token. Expected err, got nil")
+	}
+
+	if res.Result().StatusCode != http.StatusUnauthorized {
+		t.Fatalf("error authenticating and parsing request with missing jwt access token. Expected status code %v, got %v", http.StatusUnauthorized, res.Result().StatusCode)
+	}
 }
 
 // generateTestJSONTransportRequest takes a request body and creates an

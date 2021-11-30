@@ -224,6 +224,15 @@ func getAppName(mandelboxID mandelboxtypes.MandelboxID, transportRequestMap map[
 
 // Function to verify the type (method) of a request
 func verifyRequestType(w http.ResponseWriter, r *http.Request, method string) error {
+	if r == nil {
+		err := utils.MakeError("Received a nil request expecting to be type %s", method)
+		logger.Error(err)
+
+		http.Error(w, utils.Sprintf("Bad request. Expected %s, got nil", method), http.StatusBadRequest)
+
+		return err
+	}
+
 	if r.Method != method {
 		err := utils.MakeError("Received a request on %s to URL %s of type %s, but it should have been type %s", r.Host, r.URL, r.Method, method)
 		logger.Error(err)
