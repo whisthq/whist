@@ -751,7 +751,7 @@ int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms) {
     LOG_INFO("Creating listen UDP Socket");
     *sock = socketp_udp();
     if (*sock == INVALID_SOCKET) {
-        LOG_WARNING("Failed to create UDP listen socket");
+        LOG_ERROR("Failed to create UDP listen socket");
         return -1;
     }
     set_timeout(*sock, timeout_ms);

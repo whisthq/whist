@@ -872,7 +872,7 @@ int create_tcp_listen_socket(SOCKET* sock, int port, int timeout_ms) {
     LOG_INFO("Creating listen TCP Socket");
     *sock = socketp_tcp();
     if (*sock == INVALID_SOCKET) {
-        LOG_WARNING("Failed to create TCP listen socket");
+        LOG_ERROR("Failed to create TCP listen socket");
         return -1;
     }
 
@@ -881,7 +881,7 @@ int create_tcp_listen_socket(SOCKET* sock, int port, int timeout_ms) {
     // Reuse addr
     int opt = 1;
     if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt)) < 0) {
-        LOG_WARNING("Could not setsockopt SO_REUSEADDR");
+        LOG_ERROR("Could not setsockopt SO_REUSEADDR");
         closesocket(*sock);
         return -1;
     }
@@ -901,7 +901,7 @@ int create_tcp_listen_socket(SOCKET* sock, int port, int timeout_ms) {
     // Set listen queue
     LOG_INFO("Waiting for TCP Connection");
     if (listen(*sock, 3) < 0) {
-        LOG_WARNING("Could not listen(2)! %d\n", get_last_network_error());
+        LOG_ERROR("Could not listen(2)! %d\n", get_last_network_error());
         closesocket(*sock);
         return -1;
     }
