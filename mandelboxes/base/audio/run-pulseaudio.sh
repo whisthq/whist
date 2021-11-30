@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script launches the a PulseAudio server associated with the Whist display
+# This script launches a PulseAudio server associated with the Whist display
 
 # # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
 eval "$(sentry-cli bash-hook)"

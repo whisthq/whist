@@ -397,7 +397,7 @@ int main(int argc, char* argv[]) {
                 fsmsg->type = SMESSAGE_WINDOW_TITLE;
                 strncpy(fsmsg->window_title, name, WINDOW_NAME_MAXLEN + 1);
                 if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, (uint8_t*)fsmsg,
-                                         sizeof(FractalServerMessage) + strlen(name) + 1) == 0) {
+                                         (int)(sizeof(FractalServerMessage) + strlen(name) + 1)) == 0) {
                     LOG_INFO("Sent window title message!");
                     server_state.client_joined_after_window_name_broadcast = false;
                 } else {
