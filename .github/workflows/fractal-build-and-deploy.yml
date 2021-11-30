@@ -133,6 +133,7 @@ jobs:
           job_dependencies[client-applications-publish-build-arm64-s3]="protocol client-applications core-ts"
           job_dependencies[webserver-swap-active-amis]="webserver host-setup host-service protocol mandelboxes"
           job_dependencies[microservices-deploy-auth0-rules]="microservices"
+          job_dependencies[website-publish-to-netlify]="website"
 
           # The jobs `fractal-publish-build-config`, `fractal-build-monorepo-config`,
           # `client-applications-retrieve-version-number`, `client-applications-update-version-number`,
@@ -1517,6 +1518,56 @@ jobs:
           WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
           BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to swap over active AMIs, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
+  #######################################################################################
+  #######################################################################################
+
+  # Deploy the Whist website to Netlify
+  # Triggers a deploy via the Netlify build hooks
+  # Runs if there are code changes to the `/website` directory
+  website-publish-to-netlify:
+    name: "Deploy Whist Website to Netlify"
+    runs-on: ubuntu-20.04
+    needs: [fractal-publish-build-config, fractal-build-monorepo-config]
+    if: contains(needs.fractal-publish-build-config.outputs.jobs, '|website-publish-to-netlify|') && eeds.fractal-publish-build-config.outputs.publish == 'true'
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Trigger Netlify Build & Notify Slack
+        shell: python3 {0}
+        run: |
+          # Retrieve Slack & Netlify webhooks
+          if "prod" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
+
+
+
+
+
+            NETLIFY_WEBHOOK = 
+          elif "staging" in "${{ needs.fractal-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
+            NETLIFY_WEBHOOK =
+          else:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
+            NETLIFY_WEBHOOK =
+
+          # Trigger Netlify build
+          
+
+
+          from notifications.slack_bot import slack_post
+          SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
+          TITLE = ":github: Whist GitHub Release Completed :github:"
+          BODY = "Deployment of Whist Version `v${{ needs.client-applications-retrieve-version-number.outputs.release_version }}` on branch `${{ needs.fractal-publish-build-config.outputs.branch }}` completed - See the generated GitHub Release here: https://github.com/fractal/fractal/releases/tag/v${{ needs.client-applications-retrieve-version-number.outputs.release_version }} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
+
+
+
+
+
+
 
   #######################################################################################
   #######################################################################################
