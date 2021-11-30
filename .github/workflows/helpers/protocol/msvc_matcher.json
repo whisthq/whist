@@ -7,8 +7,8 @@
           "regexp": "^(.*)\\((\\d+)\\)\\s*:\\s*(?:fatal\\s*)?(error|warning)\\s+(?:.*)?([\\d]{4}):(\\s+.*)$",
           "file": 1,
           "line": 2,
-          "code": 4,
-          "severity": 3,
+          "column": 3,
+          "severity": 4,
           "message": 5
         }
       ]

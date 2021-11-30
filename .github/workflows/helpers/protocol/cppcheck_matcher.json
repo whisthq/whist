@@ -4,9 +4,10 @@
       "owner": "cppcheck",
       "pattern": [
         {
-          "regexp": "^(cppcheck):(.*):([0-9]+):(?:(?:fatal)?(warning|error)):(.*)$",
-          "file": 2,
-          "line": 3,
+          "regexp": "^((?:.(?!include|lib|docs|sentry-native|share|nvidia-linux|fractalgetopt\\.[ch]|lodepng\\.[ch]))*):(\\d+):(\\d*):?\\s+(warning|error):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
           "severity": 4,
           "message": 5
         }
