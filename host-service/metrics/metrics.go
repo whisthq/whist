@@ -386,7 +386,11 @@ func collectOnce() (RuntimeMetrics, []error) {
 	newMetrics.FailedRequests = exportedVars["FailedRequests"]
 	newMetrics.CleanedStaleMandelboxes = exportedVars["CleanedStaleMandelboxes"]
 	newMetrics.ErrorRate = exportedVars["ErrorRate"]
-	newMetrics.AverageRequestTime = exportedVars["newMetrics.AverageRequestTime"] / exportedVars["SuccessfulRequests"]
+
+	requests := exportedVars["SuccessfulRequests"]
+	if requests > 0 {
+		newMetrics.AverageRequestTime = exportedVars["AverageRequestTime"] / requests
+	}
 
 	exportedMu.Unlock()
 
