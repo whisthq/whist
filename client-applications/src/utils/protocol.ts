@@ -13,6 +13,7 @@ import { spawn, ChildProcess } from "child_process"
 import config, { loggingFiles } from "@app/config/environment"
 import { electronLogPath, protocolToLogz } from "@app/utils/logging"
 import { appEnvironment, FractalEnvironments } from "../../config/configs"
+import logRotate from "log-rotate"
 
 const NACK_LOOKBACK_PERIOD_IN_MS = 1500 // Number of milliseconds to look back when measuring # of nacks
 const MAX_NACKS_ALLOWED = 6 // Maximum # of nacks allowed before we decide the network is unstable
@@ -23,6 +24,12 @@ export let childProcess: ChildProcess | undefined
 let lastNackTime = Date.now() / 1000
 // Track how many nacks there were
 let numberOfRecentNacks = 0
+// Initialize log rotation
+logRotate(
+  path.join(electronLogPath, loggingFiles.protocol),
+  { count: 4 },
+  (err: any) => console.error(err)
+)
 
 const { protocolName, protocolFolder } = config
 

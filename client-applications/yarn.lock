@@ -4672,6 +4672,11 @@ lodash@^4.17.10, lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.21:
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
   integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
 
+log-rotate@^0.2.8:
+  version "0.2.8"
+  resolved "https://registry.yarnpkg.com/log-rotate/-/log-rotate-0.2.8.tgz#1003c89ece53b5fe8a28dbc4d70bcada9d61b8c5"
+  integrity sha512-r9I3eKh2EH+jjbg+tqvACtBjmCdyyyKQsElVF+a/tYCQDOmHQxTvlDEB6GFn2UAZcsF13LTV814bhXspWMu96g==
+
 logzio-nodejs@^2.0.2:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/logzio-nodejs/-/logzio-nodejs-2.0.3.tgz#f3b3844864b744ea904a092e0133d85c4644713a"

@@ -64,6 +64,7 @@
     "lodash.pickby": "^4.6.0",
     "lodash.set": "^4.3.2",
     "lodash.topairs": "^4.3.0",
+    "log-rotate": "^0.2.8",
     "logzio-nodejs": "^2.0.2",
     "node-fetch": "^2.6.6",
     "os": "^0.1.2",
