@@ -3,8 +3,13 @@ ARG BuildAssetPackage "protocol"
 FROM fractal/build-assets:$BuildAssetPackage as build-assets
 FROM fractal/browsers/chrome:current-build as fractal-dev-benchmark
 
-# Copies the video file, html file to enable looping, and the benchmark start-chrome
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
+# Retrieve the video file
 RUN curl https://fractal-test-assets.s3.amazonaws.com/bbb-1080p-75.mp4 -o /home/fractal/bbb-1080p.mp4
+
+# Copy the HTML file (to enable looping) and the benchmark start-chrome.sh script
 COPY 1080p_60fps.html /home/fractal/1080p_60fps.html
 COPY start-chrome.sh /usr/bin/start-chrome
 RUN chmod +x /usr/bin/start-chrome

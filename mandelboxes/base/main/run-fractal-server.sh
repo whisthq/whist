@@ -2,6 +2,9 @@
 
 # This script starts the Whist protocol server and the Whist application.
 
+# Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
+eval "$(sentry-cli bash-hook)"
+
 # Exit on subcommand errors
 set -Eeuo pipefail
 
@@ -17,7 +20,6 @@ TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/timeout
 WHIST_APPLICATION_PID_FILE=/home/fractal/fractal-application-pid
 PROTOCOL_LOG_FILENAME=/usr/share/fractal/server.log
 TELEPORT_LOG_FILENAME=/usr/share/fractal/teleport.log
-
 
 # Define a string-format identifier for this mandelbox
 IDENTIFIER=$(cat $WHIST_MAPPINGS_DIR/$IDENTIFIER_FILENAME)

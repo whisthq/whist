@@ -5,6 +5,7 @@ import pytest
 import browser_cookie3
 from ..utils.import_user_browser_data import *
 
+
 browserDefaultDir = [
     [
         "chrome",

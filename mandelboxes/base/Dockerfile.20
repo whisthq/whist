@@ -179,7 +179,6 @@ ENV container docker
 ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 
-
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 
 RUN apt-get update \
@@ -297,6 +296,23 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
+#########################
+# Sentry
+#########################
+
+# Install wget, cURL & ca-certificates to fetch sentry-cli (cURL is needed by the script itself)
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    wget \
+    ca-certificates \
+    libcurl4 \
+    curl \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# We install the Sentry CLI and set the DSN so that we can report Bash errors to Sentry
+RUN wget -qO - https://sentry.io/get-cli/ --no-check-certificate | bash
+ENV SENTRY_DSN https://6765c9aeb9c449a599ca6242829799b8@o400459.ingest.sentry.io/6073955
 
 #########################
 # Systemd
@@ -373,7 +389,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
-
 COPY input/Xmodmap /root/.Xmodmap
 
 #########################
@@ -384,8 +399,6 @@ COPY input/Xmodmap /root/.Xmodmap
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     xvfb \
     wmctrl \
-    ca-certificates \
-    wget \
     gnupg2 \
     libfido2-1 \
     # for `killall` in display/update-fractal-dpi.sh
@@ -394,10 +407,8 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     lsb-release \
     ufw \
     libxcb-dri3-0 \
-    libcurl4 \
     git \
     sudo \
-    curl \
     jq \
     && apt-get autoremove -y \
     && apt-get clean \
@@ -451,7 +462,6 @@ RUN chmod 600 -R /usr/share/fractal
 # this after setting /usr/share/fractal to 600)
 COPY utils/run-as-fractal-user.sh /usr/share/fractal/run-as-fractal-user.sh
 RUN chmod +x /usr/share/fractal/run-as-fractal-user.sh
-
 
 #########################
 # Hardware Acceleration
@@ -629,6 +639,8 @@ RUN systemctl mask pulseaudio
 RUN chmod -x /usr/bin/start-pulseaudio-x11
 
 # Set up service to start pulseaudio
+COPY audio/run-pulseaudio.sh /usr/share/fractal
+RUN chmod +x /usr/share/fractal/run-pulseaudio.sh
 COPY audio/pulse-client.conf /etc/pulse/client.conf
 COPY audio/fractal-audio.service /etc/systemd/system
 RUN systemctl enable fractal-audio
@@ -647,6 +659,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && pip install --no-cache-dir keyring \
     && pip install --no-cache-dir pyaes \
     && pip install --no-cache-dir pbkdf2 \
+    && pip install --no-cache-dir sentry-sdk \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

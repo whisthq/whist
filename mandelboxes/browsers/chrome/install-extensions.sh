@@ -3,6 +3,9 @@
 # This script defines a general-purpose function to install any Google Chrome extension
 # by passing in the extension ID and name
 
+# Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
+eval "$(sentry-cli bash-hook)"
+
 # Exit on subcommand errors
 set -Eeuo pipefail
 

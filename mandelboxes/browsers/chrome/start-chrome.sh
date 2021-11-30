@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
+eval "$(sentry-cli bash-hook)"
+
 # Exit on subcommand errors
 set -Eeuo pipefail
 
@@ -46,7 +49,6 @@ flags+=(--flag-switches-end)
 # empty, Chrome will open the url as an additional tab at start time. The other tabs will be restored depending
 # on the user settings.
 flags+=($INITIAL_URL)
-
 
 # Start Chrome
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features

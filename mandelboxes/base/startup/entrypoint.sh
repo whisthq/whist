@@ -5,6 +5,9 @@
 # the Whist mandelbox to use. It then starts systemd, which starts all of the
 # Whist system services (.service files), starting Whist inside the mandelbox.
 
+# Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
+eval "$(sentry-cli bash-hook)"
+
 # Exit on subcommand errors
 set -Eeuo pipefail
 
