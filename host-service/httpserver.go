@@ -228,8 +228,15 @@ func getAppName(mandelboxID mandelboxtypes.MandelboxID, transportRequestMap map[
 			AppName = req.AppName
 		}
 	} else {
-		// If not on a local environment, we default to using the `browsers/chrome` image.
-		AppName = mandelboxtypes.AppName("browsers/chrome")
+		// set the appName to brave/chrome
+		switch string(appName) {
+			case "browsers/chrome":
+				AppName = mandelboxtypes.AppName("browsers/chrome")
+			case "browsers/brave":
+				AppName = mandelboxtypes.AppName("browsers/brave")
+			default:
+				AppName = mandelboxtypes.AppName("browsers/chrome")
+		}
 	}
 	return req, AppName
 }
