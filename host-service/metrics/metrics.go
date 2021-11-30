@@ -201,8 +201,7 @@ func startCollectionGoroutine(frequency time.Duration) error {
 				latestMetrics, latestErrors = newMetrics, errs
 				latestLock.Unlock()
 
-				// TODO: re-enable this once we can send metrics to logz but not print to standard output
-				// logger.Infof("Collected latest metrics: %+v", newMetrics)
+				logger.Infof("Collected latest metrics: %+v", newMetrics)
 				if len(latestErrors) != 0 {
 					logger.Errorf("Errors collecting latest metrics: %v", latestErrors)
 				}

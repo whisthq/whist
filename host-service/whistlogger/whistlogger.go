@@ -4,14 +4,19 @@ Package whistlogger contains the logic for our custom logging system, including 
 package whistlogger // import "github.com/fractal/fractal/host-service/whistlogger"
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
 	"runtime/debug"
 	"time"
 
+	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
 )
+
+// whistBuffer is the buffer to replace stdout.
+var whistBuffer bytes.Buffer
 
 func init() {
 	// Set some options for the Go logging package.
@@ -52,6 +57,13 @@ func init() {
 		// entire service.
 		Errorf("Failed to initialize LogzIO! Error: %s", err)
 	}
+
+	// Disable output to stdout when running on a nonn local environment.
+	if !metadata.IsLocalEnv() {
+		// Set the output of the `log` package to the whistBuffer. This captures
+		// any output to avoid clogging stdout and only send it to Logz and Sentry.
+		log.SetOutput(&whistBuffer)
+	}
 }
 
 // Close flushes all production logging (i.e. Sentry and Logzio).
@@ -61,6 +73,9 @@ func Close() {
 	FlushSentry()
 	Info("Flushing Logzio...")
 	stopAndDrainLogzio()
+
+	// Clear the logs buffer
+	whistBuffer.Reset()
 }
 
 // Print logs an interface + timestamp, but does not send it to Sentry.
