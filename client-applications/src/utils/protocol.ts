@@ -24,6 +24,12 @@ export let childProcess: ChildProcess | undefined
 let lastNackTime = Date.now() / 1000
 // Track how many nacks there were
 let numberOfRecentNacks = 0
+// Initialize log rotation
+logRotate(
+  path.join(electronLogPath, loggingFiles.protocol),
+  { count: 4 },
+  (err: any) => console.error(err)
+)
 
 const { protocolName, protocolFolder } = config
 
@@ -72,8 +78,6 @@ export const protocolLaunch = async () => {
   const protocolLogFile = fs.createWriteStream(
     path.join(electronLogPath, loggingFiles.protocol)
   )
-
-  logRotate(protocolLogFile, { count: 4 }, (err: any) => console.error(err))
 
   // In order to pipe a child process to this stream, we must wait until an underlying file
   // descriptor is created. This corresponds to the "open" event in the stream.
