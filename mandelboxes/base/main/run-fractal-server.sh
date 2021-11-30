@@ -74,7 +74,7 @@ function cleanup {
 }
 
 export ENV_NAME=$(cat $SENTRY_ENV_FILENAME)
-if [ "$ENV_NAME" != "LOCALDEV" ]; then
+if [ "$ENV_NAME" != "localdev" ]; then
   # Make sure `cleanup` gets called on script exit in all environments except localdev.
   trap cleanup EXIT ERR
 fi
