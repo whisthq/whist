@@ -126,7 +126,7 @@ type RuntimeMetrics struct {
 	// HTTP server
 
 	// AverageRequestTime measures the average time of processing an http request.
-	AverageRequestTime int64
+	AverageRequestTime string
 
 	// SuccessfulRequests count the number of corretly hanled http requests.
 	SuccessfulRequests int64
@@ -389,7 +389,8 @@ func collectOnce() (RuntimeMetrics, []error) {
 
 	requests := exportedVars["SuccessfulRequests"]
 	if requests > 0 {
-		newMetrics.AverageRequestTime = exportedVars["AverageRequestTime"] / requests
+		average := utils.Sprintf("%v ms", exportedVars["AverageRequestTime"]/requests)
+		newMetrics.AverageRequestTime = average
 	}
 
 	exportedMu.Unlock()

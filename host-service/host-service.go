@@ -711,6 +711,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		err = mandelbox.DecryptUserConfigs()
 		if err != nil {
 			logger.Errorf("Error decrypting user configs for mandelbox %s: %v", mandelboxSubscription.ID, err)
+			metrics.Add("ErrorRate", 1)
 		}
 	} else {
 		// We still want to setup the directories so the new configs can be populated.
@@ -718,6 +719,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		err = mandelbox.SetupUserConfigDirs()
 		if err != nil {
 			logger.Errorf("Error setting up user config directories for mandelbox %s: %v", mandelboxSubscription.ID, err)
+			metrics.Add("ErrorRate", 1)
 		}
 	}
 
@@ -742,6 +744,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	err = mandelbox.WriteJSONData()
 	if err != nil {
 		logger.Errorf("Error writing config.json file for protocol: %v", err)
+		metrics.Add("ErrorRate", 1)
 	}
 
 	<-userInitialBrowserDataDownloadComplete
@@ -807,6 +810,7 @@ func mandelboxDieHandler(id string, transportRequestMap map[mandelboxtypes.Mande
 
 	if err != nil {
 		logger.Errorf("Failed to gracefully stop mandelbox docker container.")
+		metrics.Add("ErrorRate", 1)
 	}
 
 	mandelbox.Close()
@@ -885,6 +889,7 @@ func uninitializeFilesystem() {
 	err := os.RemoveAll(utils.WhistDir)
 	if err != nil {
 		logger.Errorf("Failed to delete directory %s: error: %v\n", utils.WhistDir, err)
+		metrics.Add("ErrorRate", 1)
 	} else {
 		logger.Infof("Successfully deleted directory %s\n", utils.WhistDir)
 	}
@@ -892,6 +897,7 @@ func uninitializeFilesystem() {
 	err = os.RemoveAll(utils.WhistPrivateDir)
 	if err != nil {
 		logger.Errorf("Failed to delete directory %s: error: %v\n", utils.WhistPrivateDir, err)
+		metrics.Add("ErrorRate", 1)
 	} else {
 		logger.Infof("Successfully deleted directory %s\n", utils.WhistPrivateDir)
 	}
@@ -899,6 +905,7 @@ func uninitializeFilesystem() {
 	err = os.RemoveAll(utils.TempDir)
 	if err != nil {
 		logger.Errorf("Failed to delete directory %s: error: %v\n", utils.TempDir, err)
+		metrics.Add("ErrorRate", 1)
 	} else {
 		logger.Infof("Successfully deleted directory %s\n", utils.TempDir)
 	}
@@ -971,6 +978,7 @@ func main() {
 					logger.Infof("Shutdown command returned 'signal: terminated' error. Ignoring it.")
 				} else {
 					logger.Errorf("Couldn't shut down instance: %s", err)
+					metrics.Add("ErrorRate", 1)
 				}
 			}
 		}
@@ -1041,6 +1049,7 @@ func main() {
 	instanceName, err = aws.GetInstanceName()
 	if err != nil {
 		logger.Errorf("Can't get AWS Instance Name to start database subscriptions. Error: %s", err)
+		metrics.Add("ErrorRate", 1)
 	}
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
 	go subscriptions.Run(globalCtx, globalCancel, &goroutineTracker, string(instanceName), subscriptionEvents)
@@ -1158,11 +1167,13 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					userID, err := metadata.GetUserID()
 					if err != nil {
 						logger.Errorf("Error getting userID, %v", err)
+						metrics.Add("ErrorRate", 1)
 					}
 
 					instanceName, err := aws.GetInstanceName()
 					if err != nil {
 						logger.Errorf("Error getting instance name from AWS, %v", err)
+						metrics.Add("ErrorRate", 1)
 					}
 					// Create a mandelbox object as would be received from a Hasura subscription.
 					mandelbox := subscriptions.Mandelbox{
