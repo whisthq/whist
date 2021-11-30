@@ -340,23 +340,27 @@ func TestGetAppNameEmpty(t *testing.T) {
 
 // TestGetAppName will set appName to json request app name
 func TestGetAppName(t *testing.T) {
-	testJSONTransportRequest := JSONTransportRequest{
-		AppName: mandelboxtypes.AppName("test_app_name"),
-	}
+	var appNames = []string{"browsers/chrome", "browsers/brave", "browsers/test"}
 
-	mandelboxID := mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())
-	testmux := &sync.Mutex{}
-	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
+	for _, appName := range appNames {
+		testJSONTransportRequest := JSONTransportRequest{
+			AppName: mandelboxtypes.AppName(appName),
+		}
 
-	// Assign JSONTRansportRequest
-	testTransportRequestMap[mandelboxID] = make(chan *JSONTransportRequest, 1)
-	testTransportRequestMap[mandelboxID] <- &testJSONTransportRequest
+		mandelboxID := mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())
+		testmux := &sync.Mutex{}
+		testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
 
-	// Should be set to test_app_name
-	_, appName := getAppName(mandelboxID, testTransportRequestMap, testmux)
+		// Assign JSONTRansportRequest
+		testTransportRequestMap[mandelboxID] = make(chan *JSONTransportRequest, 1)
+		testTransportRequestMap[mandelboxID] <- &testJSONTransportRequest
 
-	if appName != testJSONTransportRequest.AppName {
-		t.Fatalf("error getting app name. Expected %v, got %v", testJSONTransportRequest.AppName, appName)
+		// getAppName should get an appName that matches AppName in testJSONTransportRequest
+		_, mandelboxAppName := getAppName(mandelboxID, testTransportRequestMap, testmux)
+
+		if mandelboxAppName != testJSONTransportRequest.AppName {
+			t.Fatalf("error getting app name. Expected %v, got %v", testJSONTransportRequest.AppName, appName)
+		}
 	}
 }
 
