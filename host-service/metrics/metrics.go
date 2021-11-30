@@ -22,6 +22,11 @@ import (
 	"github.com/shirou/gopsutil/mem"
 )
 
+var (
+	exportedVars map[string]int64
+	exportedMu   sync.Mutex
+)
+
 // A RuntimeMetrics groups together several pieces of useful information about
 // the underlying host.
 type RuntimeMetrics struct {
@@ -117,6 +122,28 @@ type RuntimeMetrics struct {
 	// collected. This can be used by callers of `GetLatest` to determine how
 	// out-of-date the stats are.
 	TimeStamp time.Time
+
+	// HTTP server
+
+	// AverageRequestTime measures the average time of processing an http request.
+	AverageRequestTime int64
+
+	// SuccessfulRequests count the number of corretly hanled http requests.
+	SuccessfulRequests int64
+
+	// FailedRequests indicates the number of requests that have failed.
+	FailedRequests int64
+
+	// Mandelboxes
+
+	// CleanedStaleMandelboxes measures the number of mandelboxes cleaned by the
+	// CleanUpStaleMandelboxes goroutine.
+	CleanedStaleMandelboxes int64
+
+	// Errors
+
+	// Number of errors in the host service.
+	ErrorRate int64
 }
 
 func init() {
@@ -129,6 +156,17 @@ func init() {
 	} else {
 		logger.Info("Skipping metrics collection in CI")
 	}
+
+	// Initialize exported variables map
+	exportedMu.Lock()
+	exportedVars = map[string]int64{
+		"AverageRequestTime":      0,
+		"SuccessfulRequests":      0,
+		"FailedRequests":          0,
+		"CleanedStaleMandelboxes": 0,
+		"ErrorRate":               0,
+	}
+	exportedMu.Unlock()
 }
 
 // As long as this channel is blocking, we should keep collecting metrics. As
@@ -341,6 +379,17 @@ func collectOnce() (RuntimeMetrics, []error) {
 	}
 	newMetrics.TimeStamp = time.Now().UTC()
 
+	// Pull exported variables metrics
+	exportedMu.Lock()
+
+	newMetrics.SuccessfulRequests = exportedVars["SuccessfulRequests"]
+	newMetrics.FailedRequests = exportedVars["FailedRequests"]
+	newMetrics.CleanedStaleMandelboxes = exportedVars["CleanedStaleMandelboxes"]
+	newMetrics.ErrorRate = exportedVars["ErrorRate"]
+	newMetrics.AverageRequestTime = exportedVars["newMetrics.AverageRequestTime"] / exportedVars["SuccessfulRequests"]
+
+	exportedMu.Unlock()
+
 	return newMetrics, errs
 }
 
@@ -364,4 +413,11 @@ func Close() {
 	latestErrors = []error{
 		utils.MakeError("Metrics-collection goroutine has been stopped."),
 	}
+}
+
+func Add(metric string, delta int64) {
+	exportedMu.Lock()
+	defer exportedMu.Unlock()
+
+	exportedVars[metric] += delta
 }

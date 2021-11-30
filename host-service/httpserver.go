@@ -13,6 +13,7 @@ import (
 	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
 	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/metadata"
+	"github.com/fractal/fractal/host-service/metrics"
 	"github.com/fractal/fractal/host-service/utils"
 	logger "github.com/fractal/fractal/host-service/whistlogger"
 	"github.com/golang-jwt/jwt/v4"
@@ -118,8 +119,12 @@ func (s *JSONTransportRequest) createResultChan() {
 // processJSONDataRequest processes an HTTP request to receive data
 // directly from the client app. It is handled in host-service.go
 func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
+	// Start timer to measure average time processing http requests.
+	start := time.Now()
+
 	// Verify that it is an PUT request
 	if verifyRequestType(w, r, http.MethodPut) != nil {
+		metrics.Add("FailedRequests", 1)
 		return
 	}
 
@@ -127,6 +132,7 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 	var reqdata JSONTransportRequest
 	if err := authenticateAndParseRequest(w, r, &reqdata, !metadata.IsLocalEnv()); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
+		metrics.Add("FailedRequests", 1)
 		return
 	}
 
@@ -135,6 +141,11 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 	res := <-reqdata.resultChan
 
 	res.send(w)
+
+	// Measure elapsed milliseconds and send to metrics.
+	elapsed := time.Since(start)
+	metrics.Add("SuccessfulRequests", 1)
+	metrics.Add("AverageRequestTime", elapsed.Milliseconds())
 }
 
 // handleJSONTransportRequest handles any incoming JSON transport requests. First it validates the JWT, then it verifies if
