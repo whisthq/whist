@@ -390,8 +390,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// Req is only nil if getting the jsonTransportRequest timed out 
 	if req == nil {
 		// Clean up the mandelbox if request is nil as the the time out limit is reached.
-		mandelboxDieHandler(string(dockerID), transportRequestMap, transportMapLock, dockerClient)
-		logAndReturnError("Timed out waiting for config encryption token.")
+		logAndReturnError("Timed out waiting for app name.")
 		return
 	}
 
