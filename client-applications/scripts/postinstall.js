@@ -70,6 +70,7 @@ const postInstall = (_env, ..._args) => {
   )
 
   // Recompile node native modules
+  console.log("Recompiling node modules for your computer...")
   execCommand("electron-builder install-app-deps")
 }
 

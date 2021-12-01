@@ -3,6 +3,9 @@
  * @file app.ts
  * @brief This file contains subscriptions to error Observables.
  */
+import { merge } from "rxjs"
+import { mapTo, withLatestFrom } from "rxjs/operators"
+
 import {
   mandelboxCreateErrorNoAccess,
   mandelboxCreateErrorUnauthorized,
@@ -23,21 +26,29 @@ import { withAppReady } from "@app/utils/observables"
 import { WhistTrigger } from "@app/constants/triggers"
 
 // For any failure, close all windows and display error window
-withAppReady(fromTrigger(WhistTrigger.mandelboxFlowFailure)).subscribe((x) => {
-  console.log("Failure!", x?.json?.error)
-  if (mandelboxCreateErrorNoAccess(x)) {
-    createErrorWindow(NO_PAYMENT_ERROR)
-  } else if (mandelboxCreateErrorUnauthorized(x)) {
-    createErrorWindow(UNAUTHORIZED_ERROR)
-  } else if (mandelboxCreateErrorMaintenance(x)) {
-    createErrorWindow(MAINTENANCE_ERROR)
-  } else if (mandelboxCreateErrorUnavailable(x)) {
-    if (x?.json?.error === "COMMIT_HASH_MISMATCH") return
-    createErrorWindow(x?.json?.error ?? MANDELBOX_INTERNAL_ERROR)
-  } else {
-    createErrorWindow(MANDELBOX_INTERNAL_ERROR)
-  }
-})
+withAppReady(fromTrigger(WhistTrigger.mandelboxFlowFailure))
+  .pipe(
+    withLatestFrom(
+      merge(
+        fromTrigger(WhistTrigger.updateAvailable).pipe(mapTo(true)),
+        fromTrigger(WhistTrigger.updateNotAvailable).pipe(mapTo(false))
+      )
+    )
+  )
+  .subscribe(([x, updateAvailable]) => {
+    if (mandelboxCreateErrorNoAccess(x)) {
+      createErrorWindow(NO_PAYMENT_ERROR)
+    } else if (mandelboxCreateErrorUnauthorized(x)) {
+      createErrorWindow(UNAUTHORIZED_ERROR)
+    } else if (mandelboxCreateErrorMaintenance(x)) {
+      createErrorWindow(MAINTENANCE_ERROR)
+    } else if (mandelboxCreateErrorUnavailable(x)) {
+      if (x?.json?.error === "COMMIT_HASH_MISMATCH" && updateAvailable) return
+      createErrorWindow(x?.json?.error ?? MANDELBOX_INTERNAL_ERROR)
+    } else {
+      createErrorWindow(MANDELBOX_INTERNAL_ERROR)
+    }
+  })
 
 withAppReady(fromTrigger(WhistTrigger.authFlowFailure)).subscribe(() => {
   createErrorWindow(AUTH_ERROR)
