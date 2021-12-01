@@ -23,7 +23,7 @@ for arg in "$@"; do
     --prod|-p)
       mode=prod
       ;;
-    --metrics|-;)
+    --metrics|-M)
       mode=metrics
       ;;
     --release-protocol)
