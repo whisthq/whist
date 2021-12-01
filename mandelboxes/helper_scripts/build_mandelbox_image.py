@@ -29,10 +29,10 @@ parser.add_argument(
     choices=["dev", "prod", "metrics"],
     help=(
         "This flag controls when the protocol gets copied into the mandelbox. "
-        "In dev and metrics mode, the protocol is copied at the end of each target mandelbox image. "
-        "In prod mode, the protocol is only copied at the end of the base image and "
-        "inherited by child images. If --all is passed in, this flag is ignored and "
-        "prod mode is automatically set."
+        "In dev and metrics mode, the protocol is copied at the end of each target "
+        "mandelbox image. In prod mode, the protocol is only copied at the end of "
+        "the base image and inherited by child images. If --all is passed in, this "
+        "flag is ignored and prod mode is automatically set."
     ),
     required=True,
 )
