@@ -949,7 +949,6 @@ int init_video_renderer() {
     replace_texture();
     pending_texture_update = false;
 
-
     pending_sws_update = false;
     sws_input_fmt = AV_PIX_FMT_NONE;
     video_context.sws = NULL;
@@ -969,14 +968,12 @@ int init_video_renderer() {
     // Initialize resize event handling, must call SDL_DelEventWatch later
     SDL_AddEventWatch(resizing_event_watcher, (SDL_Window*)window);
 
-
     // Init loading animation variables
     video_data.loading_index = 0;
     start_timer(&video_data.last_loading_frame_timer);
     // Present first frame of loading animation
     loading_sdl(renderer, video_data.loading_index);
     video_data.loading_index++;
-
 
     // Mark as initialized and return
     initialized_video_renderer = true;
@@ -1069,11 +1066,13 @@ int render_video() {
         // want to render this empty frame though. To avoid a MacOS bug where rendering hangs for 1
         // second upon window occlusion, we immediately block rendering when that happens. The
         // server will send an iframe when the window is visible again.
-        
-        // Whenever we are building the client to run on a virtualized environment that does not use a physical display, we need to to prevent the logic below from blocking the rendering, as the window will oftentimes be marked as occluded automatically.
+
+        // Whenever we are building the client to run on a virtualized environment that does not use
+        // a physical display, we need to to prevent the logic below from blocking the rendering, as
+        // the window will oftentimes be marked as occluded automatically.
         if (frame->is_empty_frame ||
-            ((SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_OCCLUDED) && RENDERING_IN_VIRTUAL_ENVIRONMENT==1)
-            ) {
+            ((SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_OCCLUDED) &&
+             RENDERING_IN_VIRTUAL_ENVIRONMENT == 1)) {
             // We pretend we just rendered this frame. If we don't do this we'll keep assuming that
             // we're behind on frames and start requesting a bunch of iframes, which forces a
             // render.

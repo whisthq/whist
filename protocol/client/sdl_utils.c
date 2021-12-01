@@ -196,7 +196,6 @@ SDL_Renderer* init_renderer(SDL_Window* sdl_window) {
     flags |= SDL_RENDERER_PRESENTVSYNC;
 #endif
     return SDL_CreateRenderer(sdl_window, -1, flags);
-    
 }
 
 void destroy_sdl(SDL_Window* window_param) {
