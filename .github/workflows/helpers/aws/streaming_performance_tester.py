@@ -536,15 +536,15 @@ def server_setup_process(args_dict):
     apply_dpkg_locking_fixup(hs_process, pexpect_prompt_server)
 
     # 1- run host-setup
-    # hs_process = run_host_setup_on_instance(
-    #     hs_process, pexpect_prompt_server, server_cmd, aws_timeout, server_log
-    # )
+    hs_process = run_host_setup_on_instance(
+        hs_process, pexpect_prompt_server, server_cmd, aws_timeout, server_log
+    )
 
-    # # 2- reboot and wait for it to come back up
-    # print("Rebooting the server EC2 instance (required after running the host setup)...")
-    # hs_process = reboot_instance(
-    #     hs_process, server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5
-    # )
+    # 2- reboot and wait for it to come back up
+    print("Rebooting the server EC2 instance (required after running the host setup)...")
+    hs_process = reboot_instance(
+        hs_process, server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5
+    )
 
     # 3- Build the protocol server
     build_server_on_instance(hs_process, pexpect_prompt_server)
