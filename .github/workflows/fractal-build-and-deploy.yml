@@ -417,7 +417,7 @@ jobs:
     if: contains(needs.fractal-publish-build-config.outputs.jobs, '|mandelboxes-and-amis-publish-ghcr-and-aws|')
 
     env:
-      aws_new_ami_source_region: eu-north-1 # The AWS region our new AMI gets built in, we pick a region that's not very used to avoid "unsufficient capacity" issues
+      aws_new_ami_source_region: eu-north-1 # The AWS region our new AMI gets built in, we pick a region that's not very used to avoid "insufficient capacity" issues
       aws_new_ami_instance_type: g4dn.xlarge # The AWS EC2 instance type our new AMI gets built on
       aws_new_ami_vpc_id: vpc-e0935889 # The ID of the Whist-created VPC the EC2 instance building the AMI is part of
       aws_source_ami_id: ami-0bd9c26722573e69b # The base AWS-provided AMI we build our AMI from (AWS Ubuntu Server 20.04 LTS) associated with the aws_new_ami_source_region
