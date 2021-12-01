@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.11.1
 	github.com/aws/aws-sdk-go-v2/config v1.10.2
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.7.2
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.23.0
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.24.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.19.1
 	github.com/aws/smithy-go v1.9.0
 	github.com/bgentry/heroku-go v0.0.0-20150810151148-ee4032d686ae
