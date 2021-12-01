@@ -417,10 +417,10 @@ jobs:
     if: contains(needs.fractal-publish-build-config.outputs.jobs, '|mandelboxes-and-amis-publish-ghcr-and-aws|')
 
     env:
-      aws_new_ami_source_region: us-east-2 # The AWS region our new AMI gets built in, our initial AWS supported region
+      aws_new_ami_source_region: eu-north-1 # The AWS region our new AMI gets built in, we pick a region that's not very used to avoid "unsufficient capacity" issues
       aws_new_ami_instance_type: g4dn.xlarge # The AWS EC2 instance type our new AMI gets built on
-      aws_new_ami_vpc_id: vpc-7c847317 # The ID of the Whist-created VPC the EC2 instance building the AMI is part of
-      aws_source_ami_id: ami-0a91cd140a1fc148a # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
+      aws_new_ami_vpc_id: vpc-e0935889 # The ID of the Whist-created VPC the EC2 instance building the AMI is part of
+      aws_source_ami_id: ami-0bd9c26722573e69b # The base AWS-provided AMI we build our AMI from (AWS Ubuntu Server 20.04 LTS) associated with the aws_new_ami_source_region
 
     steps:
       - name: Checkout Git Repository
@@ -551,12 +551,9 @@ jobs:
           elif data["git_branch"] == "dev":
             data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_DEV }}"
 
-          # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
+          # The regions our new AMI gets cloned to (All AWS regions)
           # defined as a string of comma-separated values (no spaces) as required by Packer.
-          if data["git_branch"] == "prod":
-            data["destination_regions"] = ["us-east-2", "us-west-1", "us-west-2", "ca-central-1"]
-          else:
-            data["destination_regions"] = ["us-west-1"]
+          data["destination_regions"] = ["us-east-1", "us-east-2", "us-west-1", "us-west-2", "ca-central-1", "eu-central-1, "eu-west-1", "eu-west-2, "eu-west-3", "eu-south-1", "eu-north-1", "sa-east-1", "me-south-1", "af-south-1", "ap-east-1", "ap-south-1", "ap-northeast-1", "ap-northeast-2", "ap-northeast-3", "ap-southeast-1", "ap-southeast-2"]
           fp = open("packer_vars.json", "w")
           json.dump(data, fp)
           fp.close()
