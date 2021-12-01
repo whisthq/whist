@@ -10,7 +10,6 @@ import paramiko
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
-
 def get_boto3client(region_name: str) -> botocore.client:
     # Define boto3 client with a specific region
     return boto3.client("ec2", region_name=region_name)
