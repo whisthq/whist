@@ -30,7 +30,7 @@
     "eslint-plugin-promise": "^5.1.0",
     "fetch-mock": "^9.11.0",
     "install": "^0.13.0",
-    "jest": "^27.3.1",
+    "jest": "^27.4.3",
     "jest-fetch-mock": "^3.0.3",
     "nodemon": "^2.0.13",
     "prettier": "^2.5.0",
