@@ -8,6 +8,7 @@ import (
 	"path"
 	"testing"
 
+	mandelboxData "github.com/fractal/fractal/host-service/mandelbox"
 	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/utils"
 )

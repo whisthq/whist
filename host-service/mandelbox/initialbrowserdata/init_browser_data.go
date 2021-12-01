@@ -6,6 +6,7 @@ import (
 	"path"
 
 	"github.com/fractal/fractal/host-service/utils"
+	mandelboxData "github.com/fractal/fractal/host-service/mandelbox"
 	logger "github.com/fractal/fractal/host-service/whistlogger"
 )
 
