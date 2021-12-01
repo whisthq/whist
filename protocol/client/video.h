@@ -86,6 +86,6 @@ void destroy_video();
  * @param is_resizing              Boolean indicating whether or not the SDL
  *                                 window is being resized
  */
-void set_video_active_resizing(bool is_resizing);
+void trigger_video_resize();
 
 #endif  // CLIENT_VIDEO_H

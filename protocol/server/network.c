@@ -261,7 +261,7 @@ int try_get_next_message_tcp(Client *client, WhistPacket **p_tcp_packet) {
 
     // Check if 20ms has passed since last TCP recvp, since each TCP recvp read takes 8ms
     bool should_recvp = false;
-    if (!has_read || get_timer(last_tcp_read) * 1000.0 > 20.0) {
+    if (!has_read || get_timer(last_tcp_read) * MS_IN_SECOND > 20.0) {
         should_recvp = true;
         start_timer(&last_tcp_read);
         has_read = true;

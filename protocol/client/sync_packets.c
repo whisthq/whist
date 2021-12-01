@@ -170,11 +170,11 @@ void update_server_bitrate() {
     }
 }
 
-#define TIME_RUN(line, name, timer) \
-    start_timer(&timer);            \
-    line;                           \
-    log_double_statistic(name, get_timer(timer) * MS_IN_SECOND);
-
+/*
+============================
+Public Function Implementations
+============================
+*/
 // This function polls for UDP packets from the server
 // NOTE: This contains a very sensitive hotpath,
 // as recvp will potentially receive tens of thousands packets per second.
@@ -195,7 +195,7 @@ int multithreaded_sync_udp_packets(void* opaque) {
 
     // we initialize latency here because on macOS, latency would not initialize properly in
     // its global declaration. We start at 25ms before the first ping.
-    latency = 25.0 / 1000.0;
+    latency = 25.0 / MS_IN_SECOND;
     last_ping_id = 0;
     ping_failures = 0;
 

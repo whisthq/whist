@@ -163,7 +163,7 @@ int user_activity_deactivator(void *unique) {
 
     while (true) {
         // Only wake up once every 30 seconds, resolution doesn't matter that much here
-        whist_sleep(30 * 1000);
+        whist_sleep(30 * MS_IN_SECOND);
         safe_SDL_LockMutex(last_user_activity_timer_mutex);
         if (get_timer(last_user_activity_timer) > SCREENSAVER_TIMEOUT_SECONDS && assertion_set) {
             IOReturn result = IOPMAssertionRelease(power_assertion_id);
