@@ -30,11 +30,6 @@ Globals
 
 static WhistMutex packet_mutex;
 
-// only implemented for Linux servers currently
-#ifdef __linux__
-static char cur_window_name[WINDOW_NAME_MAXLEN + 1] = {0};
-#endif
-
 // This variable should always be an array - we call sizeof()
 
 whist_server_state server_state;

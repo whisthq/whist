@@ -78,8 +78,9 @@ bool get_focused_window_name(char** name_return) {
             bool same_string =
                 !last_window_name_valid || strcmp(last_window_name, cur_window_name) == 0;
             safe_strncpy(last_window_name, cur_window_name, WINDOW_NAME_MAXLEN + 1);
+            last_window_name_valid = true;
             *name_return = cur_window_name;
-            return same_string;
+            return !same_string;
         } else {
             LOG_ERROR("XmbTextPropertyToTextList failed to convert window name to string");
         }
