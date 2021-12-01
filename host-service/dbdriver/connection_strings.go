@@ -1,9 +1,9 @@
-package dbdriver // import "github.com/whisthq/whist/host-service/dbdriver"
+package dbdriver // import "github.com/fractal/whist/core-go/dbdriver"
 
 import (
-	"github.com/whisthq/whist/host-service/metadata"
-	"github.com/whisthq/whist/host-service/metadata/heroku"
-	"github.com/whisthq/whist/host-service/utils"
+	"github.com/fractal/whist/core-go/metadata"
+	"github.com/fractal/whist/core-go/metadata/heroku"
+	"github.com/fractal/whist/core-go/utils"
 )
 
 // Whist database connection strings

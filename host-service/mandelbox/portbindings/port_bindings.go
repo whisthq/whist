@@ -1,14 +1,14 @@
 /*
 Package portbindings provides the abstraction of port bindings between mandelboxes and the host. It also provides the abstraction of a transport protocol in a fashion similar to Docker.
 */
-package portbindings // import "github.com/whisthq/whist/host-service/mandelbox/portbindings"
+package portbindings // import "github.com/fractal/whist/core-go/mandelbox/portbindings"
 
 import (
 	"math/rand"
 	"sync"
 
-	"github.com/whisthq/whist/host-service/utils"
-	logger "github.com/whisthq/whist/host-service/whistlogger"
+	"github.com/fractal/whist/core-go/utils"
+	logger "github.com/fractal/whist/core-go/whistlogger"
 )
 
 // A PortBinding represents a single port that is bound inside a mandelbox to a
@@ -209,7 +209,7 @@ func isInAllowedRange(p uint16) bool {
 	return p >= MinAllowedPort && p < MaxAllowedPort
 }
 
-// Helper function to check that a `whisthqtypes.PortBinding` is valid (i.e.
+// Helper function to check that a `fractaltypes.PortBinding` is valid (i.e.
 // either "tcp" or "udp"), and return a pointer to the correct map to
 // read/modify (i.e. either `tcpPorts` or `udpPorts`).
 func getProtocolSpecificHostPortMap(protocol TransportProtocol) (*protocolSpecificHostPortMap, error) {

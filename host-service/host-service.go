@@ -29,7 +29,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -44,17 +43,17 @@ import (
 	// to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
 
-	logger "github.com/whisthq/whist/host-service/whistlogger"
+	logger "github.com/fractal/whist/core-go/whistlogger"
 
-	"github.com/whisthq/whist/host-service/dbdriver"
-	mandelboxData "github.com/whisthq/whist/host-service/mandelbox"
-	"github.com/whisthq/whist/host-service/mandelbox/portbindings"
-	mandelboxtypes "github.com/whisthq/whist/host-service/mandelbox/types"
-	"github.com/whisthq/whist/host-service/metadata"
-	"github.com/whisthq/whist/host-service/metadata/aws"
-	"github.com/whisthq/whist/host-service/metrics"
-	"github.com/whisthq/whist/host-service/subscriptions"
-	"github.com/whisthq/whist/host-service/utils"
+	"github.com/fractal/whist/core-go/dbdriver"
+	mandelboxData "github.com/fractal/whist/core-go/mandelbox"
+	"github.com/fractal/whist/core-go/mandelbox/portbindings"
+	mandelboxtypes "github.com/fractal/whist/core-go/mandelbox/types"
+	"github.com/fractal/whist/core-go/metadata"
+	"github.com/fractal/whist/core-go/metadata/aws"
+	"github.com/fractal/whist/core-go/metrics"
+	"github.com/fractal/whist/core-go/subscriptions"
+	"github.com/fractal/whist/core-go/utils"
 
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
@@ -156,12 +155,12 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 	// dev/staging/prod ones, so we can use the same regex list in all
 	// environments.
 	regexes := []string{
-		`whisthq/browsers/chrome:current-build`,
-		`whisthq/browsers/brave:current-build`,
-		`ghcr.io/whisthq/.*/browsers/chrome:current-build`,
-		`ghcr.io/whisthq/.*/browsers/brave:current-build`,
-		`ghcr.io/whisthq/.*`,
-		`.*whisthq.*`,
+		`fractal/browsers/chrome:current-build`,
+		`fractal/browsers/brave:current-build`,
+		`ghcr.io/fractal/*/browsers/chrome:current-build`,
+		`ghcr.io/fractal/*/browsers/brave:current-build`,
+		`ghcr.io/fractal/*`,
+		`*fractal*`,
 	}
 
 	image := dockerImageFromRegexes(globalCtx, client, regexes)
@@ -525,7 +524,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 		image = dockerImageFromRegexes(globalCtx, dockerClient, regexes)
 	} else {
-		image = utils.Sprintf("ghcr.io/whisthq/%s/%s:current-build", metadata.GetAppEnvironmentLowercase(), AppName)
+		image = utils.Sprintf("ghcr.io/fractal/%s/%s:current-build", metadata.GetAppEnvironmentLowercase(), AppName)
 	}
 
 	// We now create the underlying docker container for this mandelbox.
@@ -540,8 +539,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"),
 		"NVIDIA_DRIVER_CAPABILITIES=all",
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
-		utils.Sprintf("WHIST_INITIAL_USER_COOKIES_FILE=%v%v", mandelboxData.UserInitialBrowserDir, mandelboxData.UserInitialCookiesFile),
-		utils.Sprintf("WHIST_INITIAL_USER_BOOKMARKS_FILE=%v%v", mandelboxData.UserInitialBrowserDir, mandelboxData.UserInitialBookmarksFile),
+		utils.Sprintf("WHIST_INITIAL_USER_COOKIES_FILE=%v%v", utils.UserInitialBrowserDir, utils.UserInitialCookiesFile),
+		utils.Sprintf("WHIST_INITIAL_USER_BOOKMARKS_FILE=%v%v", utils.UserInitialBrowserDir, utils.UserInitialBookmarksFile),
 	}
 	config := dockercontainer.Config{
 		ExposedPorts: exposedPorts,
@@ -726,14 +725,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	go func() {
 		logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
 
-		// Create browser data
-		userInitialBrowserData := mandelboxData.BrowserData {
-			CookiesJSON: req.Cookies,
-			BookmarksJSON: req.Bookmarks,
-		}
-
-		destDir := path.Join(mandelbox.GetUserConfigDir(), mandelboxData.GetUnpackedConfigsDirectoryName())
-		err := mandelboxData.WriteUserInitialBrowserData(userInitialBrowserData, destDir)
+		//  Pass along cookies and bookmarks
+		err := mandelbox.WriteUserInitialBrowserData(req.Cookies, req.Bookmarks)
 		userInitialBrowserDataDownloadComplete <- true
 		if err != nil {
 			logger.Warningf("Error writing user initial browser data for mandelbox %s: %v", mandelboxSubscription.ID, err)
@@ -1056,7 +1049,33 @@ func main() {
 		metrics.Increment("ErrorRate")
 	}
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
-	go subscriptions.Run(globalCtx, globalCancel, &goroutineTracker, string(instanceName), subscriptionEvents)
+
+	subscriptions.InitializeWhistHasuraClient()
+	if err != nil {
+		// Error creating the hasura client
+		logger.Errorf("Error starting Hasura client: %v", err)
+		return err
+	}
+
+	hostSubscriptions := map[GraphQLQuery]map[string]interface{} {
+		subscriptions.InstanceStatusSubscription: map[string]interface{} {
+			"variables": map[string]interface{} {
+				"instanceName": instanceName,
+				"status": "DRAINING",
+			}
+			"result": subscriptions.InstanceEvent
+			"handler": subscriptions.InstanceStatusHandler
+		},
+		subscriptions.MandelboxInfoSubscription: map[string]interface{} {
+			"variables": map[string]interface{} {
+				"instanceName": instanceName,
+				"status": "ALLOCATED",
+			}
+			"result": subscriptions.MandelboxEvent
+			"handler": subscriptions.MandelboxInfoHandler
+		}
+	}
+	go subscriptions.Run(globalCtx, &goroutineTracker, subscriptionIDs)
 
 	// Start main event loop. Note that we don't track this goroutine, but
 	// instead control its lifetime with `eventLoopKeepAlive`. This is because it

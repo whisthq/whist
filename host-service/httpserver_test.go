@@ -15,8 +15,8 @@ import (
 	"testing/iotest"
 	"time"
 
-	mandelboxtypes "github.com/whisthq/whist/host-service/mandelbox/types"
-	"github.com/whisthq/whist/host-service/utils"
+	mandelboxtypes "github.com/fractal/whist/core-go/mandelbox/types"
+	"github.com/fractal/whist/core-go/utils"
 )
 
 type JSONTransportResult struct {

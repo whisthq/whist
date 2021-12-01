@@ -3,14 +3,14 @@
 // types around to other packages that `mandelbox` itself might depend
 // on.
 //
-package types // import "github.com/whisthq/whist/host-service/mandelbox/types"
+package types // import "github.com/fractal/whist/core-go/mandelbox/types"
 
 import (
 	"encoding/json"
 	"strings"
 
+	"github.com/fractal/whist/core-go/utils"
 	"github.com/google/uuid"
-	"github.com/whisthq/whist/host-service/utils"
 )
 
 // We define special types for the following string types for all the benefits
@@ -38,12 +38,6 @@ type ConfigEncryptionToken string
 
 // ClientAppAccessToken is defined as its own type for similar reasons.
 type ClientAppAccessToken string
-
-// Cookies is defined as its own type for similar reasons.
-type Cookies string
-
-// Bookmarks is defined as its own type for similar reasons.
-type Bookmarks string
 
 // String is a utility function to return the string representation of a MandelboxID.
 func (mandelboxID MandelboxID) String() string {

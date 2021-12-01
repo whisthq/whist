@@ -9,14 +9,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fractal/whist/core-go/auth"
+	"github.com/fractal/whist/core-go/mandelbox/portbindings"
+	mandelboxtypes "github.com/fractal/whist/core-go/mandelbox/types"
+	"github.com/fractal/whist/core-go/metadata"
+	"github.com/fractal/whist/core-go/metrics"
+	"github.com/fractal/whist/core-go/utils"
+	logger "github.com/fractal/whist/core-go/whistlogger"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/whisthq/whist/host-service/auth"
-	"github.com/whisthq/whist/host-service/mandelbox/portbindings"
-	mandelboxtypes "github.com/whisthq/whist/host-service/mandelbox/types"
-	"github.com/whisthq/whist/host-service/metadata"
-	"github.com/whisthq/whist/host-service/metrics"
-	"github.com/whisthq/whist/host-service/utils"
-	logger "github.com/whisthq/whist/host-service/whistlogger"
 )
 
 // Constants for use in setting up the HTTPS server
@@ -89,8 +89,8 @@ type JSONTransportRequest struct {
 	MandelboxID           mandelboxtypes.MandelboxID           `json:"mandelbox_id"`                   // MandelboxID, used for the json transport request map
 	IsNewConfigToken      bool                                 `json:"is_new_config_encryption_token"` // Flag indicating we should expect a new config encryption token and to skip config decryption this run
 	JSONData              string                               `json:"json_data"`                      // Arbitrary stringified JSON data to pass to mandelbox
-	Cookies               mandelboxtypes.Cookies               `json:"cookies,omitempty"`              // The cookies provided by the client-app
-	Bookmarks             mandelboxtypes.Bookmarks             `json:"bookmarks,omitempty"`            // Bookmarks provided by the client-app
+	Cookies               string                               `json:"cookies,omitempty"`              // The cookies provided by the client-app
+	Bookmarks             string                               `json:"bookmarks,omitempty"`            // Bookmarks provided by the client-app
 	resultChan            chan requestResult                   // Channel to pass the request result between goroutines
 }
 

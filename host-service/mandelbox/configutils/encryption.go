@@ -1,4 +1,4 @@
-package configutils // import "github.com/whisthq/whist/host-service/mandelbox/configutils"
+package configutils // import "github.com/fractal/whist/core-go/mandelbox/configutils"
 
 import (
 	"crypto/aes"
@@ -6,7 +6,7 @@ import (
 	"crypto/rand"
 	"io"
 
-	"github.com/whisthq/whist/host-service/utils"
+	"github.com/fractal/whist/core-go/utils"
 	"golang.org/x/crypto/argon2"
 )
 

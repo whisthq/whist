@@ -1,11 +1,11 @@
-package mandelbox // import "github.com/whisthq/whist/host-service/mandelbox"
+package mandelbox // import "github.com/fractal/whist/core-go/mandelbox"
 
 import (
 	"os"
 
-	logger "github.com/whisthq/whist/host-service/whistlogger"
+	logger "github.com/fractal/whist/core-go/whistlogger"
 
-	"github.com/whisthq/whist/host-service/utils"
+	"github.com/fractal/whist/core-go/utils"
 )
 
 func (mandelbox *mandelboxData) WriteMandelboxParams() error {
