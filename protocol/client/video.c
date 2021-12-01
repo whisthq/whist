@@ -685,6 +685,8 @@ void update_video() {
         calculate_statistics();
     }
 
+    skip_to_next_iframe();
+
     if (video_data.last_rendered_id >= 0) {
         int next_render_id = video_data.last_rendered_id + 1;
         FrameData* ctx = get_frame_at_id(video_ring_buffer, next_render_id);
