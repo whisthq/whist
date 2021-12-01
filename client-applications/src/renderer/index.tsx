@@ -27,7 +27,7 @@ import {
   UNAUTHORIZED_ERROR,
   AUTH_ERROR,
   NAVIGATION_ERROR,
-} from "@app/utils/error"
+} from "@app/constants/error"
 import { useMainState } from "@app/utils/ipc"
 import { WhistTrigger } from "@app/constants/triggers"
 

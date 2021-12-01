@@ -12,7 +12,6 @@
   "main": "build/dist/main/index.js",
   "homepage": "https://whist.com",
   "scripts": {
-    "prestart": "electron-builder install-app-deps",
     "start": "node ./scripts/start.js",
     "start:lite": "node ./scripts/start-lite.js",
     "package:local": "node ./scripts/package-local.js",
@@ -22,7 +21,6 @@
     "lint:check": "node ./scripts/lint.js",
     "lint:fix": "node ./scripts/lint.js --fix",
     "cache:clear": "electron ./scripts/clearAppData.js",
-    "pretest:manual": "electron-builder install-app-deps",
     "test:manual": "node ./scripts/testManual.js"
   },
   "dependencies": {
