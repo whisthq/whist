@@ -132,7 +132,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 				MandelboxInfo: []subscriptions.Mandelbox{testMandelboxInfo},
 			}
 			testJSONTransportRequest := JSONTransportRequest{
-				AppName:               browserImage,
+				AppName:               mandelboxtypes.AppName(browserImage),
 				ConfigEncryptionToken: "testToken1234",
 				JwtAccessToken:        "test_jwt_token",
 				MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
