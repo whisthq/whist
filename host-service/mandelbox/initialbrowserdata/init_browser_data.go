@@ -7,19 +7,13 @@ import (
 
 	"github.com/fractal/fractal/host-service/utils"
 	mandelboxData "github.com/fractal/fractal/host-service/mandelbox"
+	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
 	logger "github.com/fractal/fractal/host-service/whistlogger"
 )
 
-type BrowserData struct {
-	// CookieJSON is the user's cookie sqlite3 file in a string format
-	CookiesJSON 	string
-	// BookmarkJSON is the user's bookmark json file
-	BookmarksJSON 	string
-}
-
 // WriteUserInitialBrowserData writes the user's initial browser data to file(s)
 // received through JSON transport for later use in the mandelbox
-func (mandelbox *mandelboxData) WriteUserInitialBrowserData(initialBrowserData BrowserData) error {
+func (mandelbox *mandelboxData) WriteUserInitialBrowserData(initialBrowserData mandelboxtypes.BrowserData) error {
 
 	cookieJSON := initialBrowserData.CookiesJSON
 	bookmarksJSON := initialBrowserData.BookmarksJSON

@@ -33,7 +33,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	bookmarksJSON := "{ 'test_bookmark_content': '1'}"
 
 	// Create browser data
-	userInitialBrowserData := BrowserData{
+	userInitialBrowserData := mandelboxtypes.BrowserData{
 		CookieJSON: cookieJSON
 		BookmarkJSON: bookmarksJSON
 	}
@@ -88,7 +88,7 @@ func TestUserInitialBrowserWriteEmpty(t *testing.T) {
 	}
 
 	// Empty browser data will not generate any files
-	if err := testMandelboxData.WriteUserInitialBrowserData(BrowserData{}); err != nil {
+	if err := testMandelboxData.WriteUserInitialBrowserData(mandelboxtypes.BrowserData{}); err != nil {
 		t.Fatalf("error writing empty user initial browser data: %v", err)
 	}
 
