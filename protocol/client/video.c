@@ -1072,7 +1072,7 @@ int render_video() {
         // the window will oftentimes be marked as occluded automatically.
         if (frame->is_empty_frame ||
             ((SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_OCCLUDED) &&
-             RENDERING_IN_VIRTUAL_ENVIRONMENT == 1)) {
+             RENDERING_IN_VIRTUAL_ENVIRONMENT == 0)) {
             // We pretend we just rendered this frame. If we don't do this we'll keep assuming that
             // we're behind on frames and start requesting a bunch of iframes, which forces a
             // render.
