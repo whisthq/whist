@@ -1,4 +1,4 @@
-package mandelbox
+package initialbrowserdata
 
 import (
 	"bytes"
