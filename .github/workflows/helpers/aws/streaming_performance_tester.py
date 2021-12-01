@@ -50,7 +50,28 @@ parser.add_argument(
     "--region_name",
     help="The AWS region to use for testing",
     type=str,
-    choices=["us-east-1", "us-east-2", "us-west-1", "us-west-2", "af-south-1", "ap-east-1", "ap-south-1", "ap-northeast-3", "ap-northeast-2", "ap-southeast-1", "ap-southeast-2", "ap-northeast-1", "ca-central-1", "eu-central-1", "eu-west-1", "eu-west-2", "eu-south-1", "eu-west-3", "eu-north-1", "sa-east-1"],
+    choices=[
+        "us-east-1",
+        "us-east-2",
+        "us-west-1",
+        "us-west-2",
+        "af-south-1",
+        "ap-east-1",
+        "ap-south-1",
+        "ap-northeast-3",
+        "ap-northeast-2",
+        "ap-southeast-1",
+        "ap-southeast-2",
+        "ap-northeast-1",
+        "ca-central-1",
+        "eu-central-1",
+        "eu-west-1",
+        "eu-west-2",
+        "eu-south-1",
+        "eu-west-3",
+        "eu-north-1",
+        "sa-east-1",
+    ],
     default="us-east-1",
 )
 
@@ -403,6 +424,17 @@ def extract_server_logs_from_instance(
         "/usr/share/fractal/server.log",
         "/usr/share/fractal/teleport.log",
         "/usr/share/fractal/display.log",
+        # Var Logs!
+        "/var/log/fractal/audio-err.log",
+        "/var/log/fractal/audio-out.log",
+        "/var/log/fractal/display-err.log",
+        "/var/log/fractal/display-out.log",
+        "/var/log/fractal/entry-err.log",
+        "/var/log/fractal/entry-out.log",
+        "/var/log/fractal/update_xorg_conf-err.log",
+        "/var/log/fractal/update_xorg_conf-out.log",
+        "/var/log/fractal/protocol-err.log",
+        "/var/log/fractal/protocol-out.log",
     ]
     for server_file_path in server_logfiles:
         command = "docker cp {}:{} ~/perf_logs/server/".format(server_docker_id, server_file_path)
@@ -434,7 +466,21 @@ def extract_client_logs_from_instance(
     pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
-    client_logfiles = ["/usr/share/fractal/client.log", "/usr/share/fractal/display.log"]
+    client_logfiles = [
+        "/usr/share/fractal/client.log",
+        "/usr/share/fractal/display.log",
+        # Var Logs!
+        "/var/log/fractal/audio-err.log",
+        "/var/log/fractal/audio-out.log",
+        "/var/log/fractal/display-err.log",
+        "/var/log/fractal/display-out.log",
+        "/var/log/fractal/entry-err.log",
+        "/var/log/fractal/entry-out.log",
+        "/var/log/fractal/update_xorg_conf-err.log",
+        "/var/log/fractal/update_xorg_conf-out.log",
+        "/var/log/fractal/protocol-err.log",
+        "/var/log/fractal/protocol-out.log",
+    ]
     for client_file_path in client_logfiles:
         command = "docker cp {}:{} ~/perf_logs/client/".format(client_docker_id, client_file_path)
         pexpect_process.sendline(command)
