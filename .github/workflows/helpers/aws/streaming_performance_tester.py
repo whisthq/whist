@@ -106,7 +106,7 @@ parser.add_argument(
 
 parser.add_argument(
     "--testing_time",
-    help="The length of the perf test in seconds",
+    help="The length of the performance test in seconds",
     type=int,
     default=126,  # Length of the video in link above is 2mins, 6seconds
 )
@@ -115,8 +115,8 @@ parser.add_argument(
     "--cmake_build_type",
     help="The cmake build type to use",
     type=str,
-    choices=["dev", "prod", "perf"],
-    default="perf",
+    choices=["dev", "prod", "metrics"],
+    default="metrics",
 )
 
 args = parser.parse_args()
@@ -360,11 +360,11 @@ def run_server_on_instance(pexpect_process):
             port_32263 = port_mappings[1].split(":")[1]
             port_32273 = port_mappings[2].split(":")[1]
             aes_key = config_vals[5]
-            json_data["perf_client_server_ip"] = server_addr
-            json_data["perf_client_server_port_32262"] = port_32262
-            json_data["perf_client_server_port_32263"] = port_32263
-            json_data["perf_client_server_port_32273"] = port_32273
-            json_data["perf_client_server_aes_key"] = aes_key
+            json_data["dev_client_server_ip"] = server_addr
+            json_data["dev_client_server_port_32262"] = port_32262
+            json_data["dev_client_server_port_32263"] = port_32263
+            json_data["dev_client_server_port_32273"] = port_32273
+            json_data["dev_client_server_aes_key"] = aes_key
     return server_docker_id, json_data
 
 

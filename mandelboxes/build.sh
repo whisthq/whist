@@ -23,8 +23,8 @@ for arg in "$@"; do
     --prod|-p)
       mode=prod
       ;;
-    --perf|-P)
-      mode=perf
+    --metrics|-;)
+      mode=metrics
       ;;
     --release-protocol)
       cmake_build_type_opt=Release
@@ -54,8 +54,8 @@ rm -rf base/build-assets/build-temp && mkdir base/build-assets/build-temp
 # Build and copy the protocol
 if [[ "$mode" == "dev" ]]; then
   cmake_build_type=Debug
-elif [[ "$mode" == "perf" ]]; then
-  cmake_build_type=Perf
+elif [[ "$mode" == "metrics" ]]; then
+  cmake_build_type=Metrics
 else
   cmake_build_type=Release
 fi
