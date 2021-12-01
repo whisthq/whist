@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	graphql "github.com/hasura/go-graphql-client"
@@ -89,30 +90,14 @@ func TestInstanceStatusHandler(t *testing.T) {
 		"status":        graphql.String("DRAINING"),
 	}
 
-	// Create different tests for the instance status handler,
-	// verify if it returns the appropiate response
-	var instanceTests = []struct {
-		testName string
-		event    InstanceEvent
-		want     bool
-	}{
-		{"Empty event", InstanceEvent{InstanceInfo: []Instance{}}, false},
-		{"Wrong status event", InstanceEvent{
-			InstanceInfo: []Instance{
-				{InstanceName: "test-instance-name", Status: "PRE_CONNECTION"},
-			},
-		}, false},
-		{"Correct status event", InstanceEvent{
-			InstanceInfo: []Instance{
-				{InstanceName: "test-instance-name", Status: "DRAINING"},
-			},
-		}, true},
-	}
+	// Start a mock socket server and Hasura client
+	t.Log("Starting mock server and Hasura client...")
+	port := mockServer(t, message)
+	client := initClient(t, port)
 
-	for _, tt := range instanceTests {
-		testname := tt.testName
-		t.Run(testname, func(t *testing.T) {
-			got := InstanceStatusHandler(tt.event, variables)
+	// Subscribe to the instance status event
+	subscriptionEvents := make(chan SubscriptionEvent, 100)
+	id, err := instanceStatusHandler("test-instance-name", "DRAINING", client, subscriptionEvents)
 
 			if got != tt.want {
 				t.Errorf("got %v, want %v", got, tt.want)
@@ -126,30 +111,13 @@ func TestMandelboxAllocatedHandler(t *testing.T) {
 		"status":        graphql.String("ALLOCATED"),
 	}
 
-	// Create different tests for the mandelbox allocated handler,
-	// verify if it returns the appropiate response
-	var mandelboxTests = []struct {
-		testName string
-		event    MandelboxEvent
-		want     bool
-	}{
-		{"Empty event", MandelboxEvent{MandelboxInfo: []Mandelbox{}}, false},
-		{"Wrong instance name event", MandelboxEvent{
-			MandelboxInfo: []Mandelbox{
-				{InstanceName: "test-instance-name-2", Status: "EXITED"},
-			},
-		}, false},
-		{"Correct status event", MandelboxEvent{
-			MandelboxInfo: []Mandelbox{
-				{InstanceName: "test-instance-name", Status: "ALLOCATED"},
-			},
-		}, true},
-	}
+	// Run the Hasura client and subscription
+	t.Log("Running Hasura subscriptions...")
+	go client.Run()
 
-	for _, tt := range mandelboxTests {
-		testname := tt.testName
-		t.Run(testname, func(t *testing.T) {
-			got := MandelboxAllocatedHandler(tt.event, variables)
+	// Verify that the subscription result is sent to the appropiate channel
+	subscriptionEvent := <-subscriptionEvents
+	instanceStatusEvent := subscriptionEvent.(*InstanceEvent)
 
 			if got != tt.want {
 				t.Errorf("got %v, want %v", got, tt.want)
@@ -163,47 +131,12 @@ func TestMandelboxStatusHandler(t *testing.T) {
 		"status": graphql.String("ALLOCATED"),
 	}
 
-	// Create different tests for the mandelbox status handler,
-	// verify if it returns the appropiate response
-	var mandelboxTests = []struct {
-		testName string
-		event    MandelboxEvent
-		want     bool
+	testMap := []struct {
+		key       string
+		want, got string
 	}{
-		{"Empty event", MandelboxEvent{MandelboxInfo: []Mandelbox{}}, false},
-		{"Wrong status event", MandelboxEvent{
-			MandelboxInfo: []Mandelbox{
-				{Status: "EXITED"},
-			},
-		}, false},
-		{"Correct status event", MandelboxEvent{
-			MandelboxInfo: []Mandelbox{
-				{Status: "ALLOCATED"},
-			},
-		}, true},
-	}
-
-	for _, tt := range mandelboxTests {
-		testname := tt.testName
-		t.Run(testname, func(t *testing.T) {
-			got := MandelboxStatusHandler(tt.event, variables)
-
-			if got != tt.want {
-				t.Errorf("got %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestSetupHostSubscriptions(t *testing.T) {
-	instanceName := "test-instance-name"
-	whistClient := &mockWhistClient{}
-
-	// Create the host service specific subscriptions
-	SetupHostSubscriptions(instanceName, whistClient)
-
-	if whistClient.Subscriptions == nil {
-		t.Errorf("Got nil subscriptions")
+		{"InstanceName", "test-instance-name", gotInstance.InstanceName},
+		{"Status", "DRAINING", gotInstance.Status},
 	}
 
 	if len(whistClient.Subscriptions) != 2 {
@@ -229,26 +162,28 @@ func TestSetupHostSubscriptions(t *testing.T) {
 	}
 }
 
-func TestSetupScalingSubscriptions(t *testing.T) {
-	whistClient := &mockWhistClient{}
+func TestMandelboxInfoHandler(t *testing.T) {
+	// Create a mock Hasura data event as would be received from the database
+	message := `{"data": {"cloud_mandelbox_info": [{"instance_name": "test-instance-name","mandelbox_id":` +
+		`"22222222-2222-2222-2222-222222222222","session_id": "1636666188732","user_id": "test-user-id","status": "ALLOCATED"}]}}`
 
-	// Create the scaling service specific subscriptions
-	SetupScalingSubscriptions(whistClient)
+	// Start a mock socket server and Hasura client
+	t.Log("Starting mock server and Hasura client...")
+	port := mockServer(t, message)
+	client := initClient(t, port)
 
-	if whistClient.Subscriptions == nil {
-		t.Errorf("Got nil subscriptions")
-	}
-
-	if len(whistClient.Subscriptions) != 2 {
-		t.Errorf("Expected subscriptions lenght to be 2, got: %v", len(whistClient.Subscriptions))
-	}
+	// Subscribe to the mandelbox allocation event
+	subscriptionEvents := make(chan SubscriptionEvent, 100)
+	id, err := mandelboxInfoHandler("test-instance-name", "ALLOCATED", client, subscriptionEvents)
 
 	// Create a fake variables map that matches the host subscriptions variable map
 	var variables = map[string]interface{}{
 		"status": graphql.String("ALLOCATED"),
 	}
 
-	// Verify that the "variables" maps are deep equal for the first subscription
+	// Run the Hasura client and subscription
+	t.Log("Running Hasura subscriptions...")
+	go client.Run()
 
 	if !reflect.DeepEqual(variables, whistClient.Subscriptions[0].Variables) {
 		t.Errorf("Expected variable map to be %v, got: %v", whistClient.Subscriptions[0].Variables, variables)

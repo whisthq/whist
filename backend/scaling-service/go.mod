@@ -1,3 +1,3 @@
-module github.com/fractal/whist/scaling-service
+module github.com/fractal/fractal/scaling-service
 
 go 1.17
