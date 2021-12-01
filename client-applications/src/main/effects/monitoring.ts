@@ -1,7 +1,6 @@
 import { logBase } from "@app/utils/logging"
 import * as Sentry from "@sentry/electron"
 import { interval } from "rxjs"
-import { withLatestFrom, filter } from "rxjs/operators"
 
 import config from "@app/config/environment"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
@@ -23,11 +22,6 @@ fromTrigger(WhistTrigger.startNetworkAnalysis).subscribe(() => {
   networkAnalyze()
 })
 
-interval(HEARTBEAT_INTERVAL_IN_MINUTES * 60 * 1000)
-  .pipe(
-    withLatestFrom(fromTrigger(WhistTrigger.windowInfo)),
-    filter(([, args]) => args.numberWindowsRemaining > 0)
-  )
-  .subscribe(() => {
-    logBase("heartbeat", {})
-  })
+interval(HEARTBEAT_INTERVAL_IN_MINUTES * 60 * 1000).subscribe(() => {
+  logBase("heartbeat", {})
+})
