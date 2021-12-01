@@ -247,11 +247,12 @@
   dependencies:
     "@types/lodash.difference" "^4.5.6"
     "@types/lodash.identity" "^3.0.6"
+    "@types/node-fetch" "^2.5.12"
     browser-or-node "^1.3.0"
     jwt-decode "^3.1.2"
     lodash.difference "^4.5.0"
     lodash.identity "^3.0.0"
-    node-fetch "^2.6.1"
+    node-fetch "^2.6.6"
 
 "@gar/promisify@^1.0.1":
   version "1.1.2"
@@ -611,18 +612,18 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-1.1.2.tgz#ccb91445360179a04e7fe6aff78c00ffc1eeaf82"
   integrity sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==
 
-"@typeform/embed-react@^1.1.3":
-  version "1.1.5"
-  resolved "https://registry.yarnpkg.com/@typeform/embed-react/-/embed-react-1.1.5.tgz#4509c433a606890b68ee7301192a12ae0281ac81"
-  integrity sha512-8eDVSKXSJrlmFtxEXlCgMI6KI3+23g1JCb9gYF/aW0dzMP5KW9vMOsN5YUUQD/SvUTq7iCrfeacIZ0Krm2EiAg==
+"@typeform/embed-react@^1.2.1":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@typeform/embed-react/-/embed-react-1.2.1.tgz#c2220a470d273c7b80cbd002992dc963d4608e82"
+  integrity sha512-GupPvmNpH6tJlTMxG03/3nbdN3H08Ul4WrfyB4+NQosRZR+jNNkkpAWkOEwi2pTYHByMS55JAbpRunFW+e7W+w==
   dependencies:
-    "@typeform/embed" "^1.23.1"
+    "@typeform/embed" "^1.24.0"
     fast-deep-equal "^3.1.3"
 
-"@typeform/embed@^1.23.1":
-  version "1.23.1"
-  resolved "https://registry.yarnpkg.com/@typeform/embed/-/embed-1.23.1.tgz#912995af31368c2f16e21e37b0b24be732c23884"
-  integrity sha512-jYDXgRl7GsvIa7dUyNr+kyDh1F2wt8j70J888ALndAjOyr3fUTS9ePSRiKhFEaGT7e4ZvKXcU9BWNpp5mdH5gg==
+"@typeform/embed@^1.24.0":
+  version "1.24.1"
+  resolved "https://registry.yarnpkg.com/@typeform/embed/-/embed-1.24.1.tgz#feb37164f0cb0ce51e348dd0a1389a993e2f011a"
+  integrity sha512-a0VE/kl0XOm1/L5NBD8TpxXEqmB2sriAPBGbmn/Y8zVuVJHJpMYoVReFCYxPDWgj7kV0OYkRHll9or0rOMBIvA==
 
 "@types/cacheable-request@^6.0.1":
   version "6.0.2"
@@ -696,6 +697,14 @@
   version "4.14.177"
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.177.tgz#f70c0d19c30fab101cad46b52be60363c43c4578"
   integrity sha512-0fDwydE2clKe9MNfvXHBHF9WEahRuj+msTuQqOmAApNORFvhMYZKNGGJdCzuhheVjMps/ti0Ak/iJPACMaevvw==
+
+"@types/node-fetch@^2.5.12":
+  version "2.5.12"
+  resolved "https://registry.yarnpkg.com/@types/node-fetch/-/node-fetch-2.5.12.tgz#8a6f779b1d4e60b7a57fb6fd48d84fb545b9cc66"
+  integrity sha512-MKgC4dlq4kKNa/mYrwpKfzQMB5X3ee5U6fSprkKpToBqBmX4nFZL9cW5jl6sWn+xpRJ7ypWh2yyqqr8UUCstSw==
+  dependencies:
+    "@types/node" "*"
+    form-data "^3.0.0"
 
 "@types/node@*", "@types/node@^16.4.3":
   version "16.11.10"
@@ -1425,7 +1434,7 @@ color@^4.0.1:
     color-convert "^2.0.1"
     color-string "^1.7.4"
 
-combined-stream@^1.0.6, combined-stream@~1.0.6:
+combined-stream@^1.0.6, combined-stream@^1.0.8, combined-stream@~1.0.6:
   version "1.0.8"
   resolved "https://registry.yarnpkg.com/combined-stream/-/combined-stream-1.0.8.tgz#c3d45a8b34fd730631a110a8a2520682b31d5a7f"
   integrity sha512-FQN4MRfuJeHf7cBbBMJFXhKSDq+2kAArBlmRBvcvFE5BB1HZKXtSFASDhdlz9zOYwxh8lDdnvmMOe/+5cdoEdg==
@@ -2274,6 +2283,15 @@ forever-agent@~0.6.1:
   version "0.6.1"
   resolved "https://registry.yarnpkg.com/forever-agent/-/forever-agent-0.6.1.tgz#fbc71f0c41adeb37f96c577ad1ed42d8fdacca91"
   integrity sha1-+8cfDEGt6zf5bFd60e1C2P2sypE=
+
+form-data@^3.0.0:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/form-data/-/form-data-3.0.1.tgz#ebd53791b78356a99af9a300d4282c4d5eb9755f"
+  integrity sha512-RHkBKtLWUVwd7SqRIvCZMEvAMoGUp0XU+seQiZejj0COz3RI3hWP4sCv3gZWWLjJTd7rGwcsF5eKZGii0r/hbg==
+  dependencies:
+    asynckit "^0.4.0"
+    combined-stream "^1.0.8"
+    mime-types "^2.1.12"
 
 form-data@~2.3.2:
   version "2.3.3"
@@ -3465,7 +3483,7 @@ node-emoji@^1.11.0:
   dependencies:
     lodash "^4.17.21"
 
-node-fetch@^2.6.1:
+node-fetch@^2.6.6:
   version "2.6.6"
   resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.6.tgz#1751a7c01834e8e1697758732e9efb6eeadfaf89"
   integrity sha512-Z8/6vRlTUChSdIgMa51jxQ4lrw/Jy5SOW10ObaA47/RElsAN2c5Pn8bTgFGWn/ibwzXTE8qwr1Yzx28vsecXEA==
