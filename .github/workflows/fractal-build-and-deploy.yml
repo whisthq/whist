@@ -347,7 +347,7 @@ jobs:
         run: ./notifications/setup_notifications.sh
 
       - name: Install Node.js 16
-        uses: actions/setup-node@v2.4.0
+        uses: actions/setup-node@v2.5.0
         with:
           node-version: "16"
 
@@ -1085,7 +1085,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install Node.js 16
-        uses: actions/setup-node@v2.4.0
+        uses: actions/setup-node@v2.5.0
         with:
           node-version: "16"
 
@@ -1222,7 +1222,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install Node.js 16
-        uses: actions/setup-node@v2.4.0
+        uses: actions/setup-node@v2.5.0
         with:
           node-version: "16"
           architecture: "arm64"
