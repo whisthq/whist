@@ -27,7 +27,7 @@ import {
   UNAUTHORIZED_ERROR,
   AUTH_ERROR,
   NAVIGATION_ERROR,
-} from "@app/utils/error"
+} from "@app/constants/error"
 import { useMainState } from "@app/utils/ipc"
 import { WhistTrigger } from "@app/constants/triggers"
 
@@ -153,7 +153,9 @@ const RootComponent = () => {
 // TODO: actually pass version number through IPC.
 const WindowBackground = (props: any) => {
   return (
-    <div className="relative w-full h-full bg-opacity-0">{props.children}</div>
+    <div className="relative w-full h-full bg-opacity-0 select-none">
+      {props.children}
+    </div>
   )
 }
 

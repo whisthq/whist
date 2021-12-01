@@ -5,7 +5,7 @@ const mandelboxCreateError: MockSchema = {
   mandelboxFlow: (trigger) => ({
     failure: trigger.pipe(
       delay(2000),
-      mapTo({ req: { json: { ID: "" } } }),
+      mapTo({ json: { ID: "", error: "COMMIT_HASH_MISMATCH" }, status: 503 }),
       tap(() => console.log("MOCKED MANDELBOX CREATE FAILURE"))
     ),
   }),

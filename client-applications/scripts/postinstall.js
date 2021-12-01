@@ -68,6 +68,10 @@ const postInstall = (_env, ..._args) => {
     "new WebSocket(url, 'net.measurementlab.ndt.v7')",
     "new WebSocket(url, 'net.measurementlab.ndt.v7', { rejectUnauthorized: false })"
   )
+
+  // Recompile node native modules
+  console.log("Recompiling node modules for your computer...")
+  execCommand("electron-builder install-app-deps")
 }
 
 module.exports = postInstall

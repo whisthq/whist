@@ -16,7 +16,7 @@ const helpers = require("./build-package-helpers")
 const isEmpty = require("lodash.isempty")
 const path = require("path")
 const { readdirSync } = require("fs")
-const start = require("./start")
+const start = require("./start-lite")
 
 const testManual = (_env, ...args) => {
   const schemaNames = args.reduce((result, value) => {
