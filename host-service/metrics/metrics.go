@@ -125,10 +125,10 @@ type RuntimeMetrics struct {
 
 	// HTTP server
 
-	// AverageRequestTime measures the average time of processing an http request.
+	// AverageRequestTime measures the average time processing an http request.
 	AverageRequestTime string
 
-	// SuccessfulRequests count the number of corretly hanled http requests.
+	// SuccessfulRequests counts the number of successfully handled http requests.
 	SuccessfulRequests int64
 
 	// FailedRequests indicates the number of requests that have failed.
