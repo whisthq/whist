@@ -810,7 +810,6 @@ void update_video() {
                 skip_render = false;
             }
             // Render out current_render_id
-            LOG_INFO("WE DO SET RENDERING TO TRUE!");
             rendering = true;
         }
     }
@@ -915,7 +914,6 @@ int init_video_renderer() {
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
     SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
 
-    LOG_INFO("a");
 // SDL guidelines say that renderer functions should be done on the main thread,
 //      but our implementation requires that the renderer is made in this thread
 //      for non-MacOS
@@ -926,23 +924,15 @@ int init_video_renderer() {
 #endif
 
     // Show a black screen initially before anything else
-    LOG_INFO("b0");
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    LOG_INFO("b");
     SDL_RenderClear(renderer);
-    LOG_INFO("b1");
     SDL_RenderPresent(renderer);
-    LOG_INFO("b2");
-
-    LOG_INFO("c");
 
     video_context.renderer = renderer;
     if (!renderer) {
         LOG_WARNING("SDL: could not create renderer - exiting: %s", SDL_GetError());
         return -1;
     }
-
-    LOG_INFO("d");
 
     // mbps that currently works
     working_mbps = STARTING_BITRATE;
@@ -959,7 +949,6 @@ int init_video_renderer() {
     replace_texture();
     pending_texture_update = false;
 
-    LOG_INFO("e");
 
     pending_sws_update = false;
     sws_input_fmt = AV_PIX_FMT_NONE;
@@ -980,7 +969,6 @@ int init_video_renderer() {
     // Initialize resize event handling, must call SDL_DelEventWatch later
     SDL_AddEventWatch(resizing_event_watcher, (SDL_Window*)window);
 
-    LOG_INFO("f");
 
     // Init loading animation variables
     video_data.loading_index = 0;
@@ -989,7 +977,6 @@ int init_video_renderer() {
     loading_sdl(renderer, video_data.loading_index);
     video_data.loading_index++;
 
-    LOG_INFO("g");
 
     // Mark as initialized and return
     initialized_video_renderer = true;
@@ -1076,16 +1063,17 @@ int render_video() {
 
     SDL_Renderer* renderer = video_context.renderer;
 
-    LOG_INFO("Rendering is now %d", rendering);
-
     if (rendering) {
         // If the frame hasn't changed since the last one (or we've minimized or are occluded), the
         // server will just send an empty frame to keep this thread alive. We don't
         // want to render this empty frame though. To avoid a MacOS bug where rendering hangs for 1
         // second upon window occlusion, we immediately block rendering when that happens. The
         // server will send an iframe when the window is visible again.
-        if (frame->is_empty_frame) {
-            LOG_INFO("Is an empty frame");
+        
+        // Whenever we are building the client to run on a virtualized environment that does not use a physical display, we need to to prevent the logic below from blocking the rendering, as the window will oftentimes be marked as occluded automatically.
+        if (frame->is_empty_frame ||
+            ((SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_OCCLUDED) && RENDERING_IN_VIRTUAL_ENVIRONMENT==1)
+            ) {
             // We pretend we just rendered this frame. If we don't do this we'll keep assuming that
             // we're behind on frames and start requesting a bunch of iframes, which forces a
             // render.
@@ -1109,7 +1097,6 @@ int render_video() {
 
         safe_SDL_LockMutex(render_mutex);
 
-        LOG_INFO("1");
         if (pending_resize_render) {
             // User is in the middle of resizing the window
             // retain server width/height if user is resizing the window
@@ -1120,8 +1107,6 @@ int render_video() {
         safe_SDL_UnlockMutex(render_mutex);
 
         log_frame_statistics(frame);
-
-        LOG_INFO("2");
 
         sync_decoder_parameters(frame);
 

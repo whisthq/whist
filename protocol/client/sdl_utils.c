@@ -195,14 +195,8 @@ SDL_Renderer* init_renderer(SDL_Window* sdl_window) {
 #if VSYNC_ON
     flags |= SDL_RENDERER_PRESENTVSYNC;
 #endif
-    SDL_Renderer* toreturn = SDL_CreateRenderer(sdl_window, -1, flags);
-    if (!toreturn){
-        LOG_ERROR("SDL create renderer error %s", SDL_GetError());
-    }
-    LOG_INFO("Left init_renderer!!");
-    LOG_WARNING("Left init_renderer!!");
-    LOG_ERROR("Left init_renderer!!");
-    return toreturn;
+    return SDL_CreateRenderer(sdl_window, -1, flags);
+    
 }
 
 void destroy_sdl(SDL_Window* window_param) {
