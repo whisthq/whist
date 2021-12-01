@@ -125,6 +125,7 @@ typedef struct RenderMetadata {
 typedef struct SDLVideoContext {
     SDL_Renderer* renderer;
     SDL_Texture* texture;
+    struct SwsContext* sws;
 
     VideoDecoder* decoder;
     RWLock decoder_lock;
@@ -201,6 +202,59 @@ void sync_decoder_parameters(VideoFrame* frame) {
             LOG_INFO("Wants to change resolution, but not an i-frame!");
         }
     }
+}
+
+bool update_sws_context(Uint8** data, int* linesize) {
+    /*
+        Create an SWS context as needed to perform pixel format
+        conversions, destroying any existing context first. If no
+        context is needed, return false. If the existing context is
+        still valid, return true. This function also updates the
+        data and linesize arrays by properly allocating/maintaining
+        an av_image to house the converted data.
+
+        Arguments:
+            data (Uint8**): pointer to the data array to be filled in
+            linesize (int*): pointer to the linesize array to be filled in
+        Returns:
+            bool: true if a context must be used, false otherwise
+    */
+
+    VideoDecoder* decoder = video_context.decoder;
+    enum AVPixelFormat input_format = decoder->sw_frame->format;
+    static enum AVPixelFormat cached_format = AV_PIX_FMT_NONE;
+    static int cached_width = 0;
+    static int cached_height = 0;
+
+    if (input_format == cached_format && decoder->width == cached_width &&
+        decoder->height == cached_height) {
+        // No update is needed
+        return true;
+    }
+
+    // No matter what, we now should destroy the old context
+    if (video_context.sws) {
+        av_freep(&data[0]);
+        sws_freeContext(video_context.sws);
+        video_context.sws = NULL;
+    }
+
+    cached_format = input_format;
+    cached_width = decoder->width;
+    cached_height = decoder->height;
+
+    if (input_format == AV_PIX_FMT_NV12) {
+        // NV12 requires no pixel format conversion; we can just
+        // pass to the renderer!
+        return false;
+    }
+
+    // We need to create a new context
+    video_context.sws =
+        sws_getContext(decoder->width, decoder->height, input_format, decoder->width,
+                       decoder->height, AV_PIX_FMT_NV12, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+    av_image_alloc(data, linesize, decoder->width, decoder->height, AV_PIX_FMT_NV12, 32);
+    return true;
 }
 
 bool try_request_iframe_to_catch_up() {
@@ -835,6 +889,7 @@ int init_video_renderer() {
     // the texture once and render sub-rectangles of it.
     replace_texture();
 
+    video_context.sws = NULL;
     client_max_bitrate = STARTING_BITRATE;
     video_data.target_mbps = STARTING_BITRATE;
     video_data.pending_ctx = NULL;
@@ -914,8 +969,10 @@ int render_video() {
         // Stop loading animation once rendering occurs
         video_data.loading_index = -1;
 
-        Uint8* data[4];
-        int linesize[4];
+        // make these static so that we don't need to keep
+        // reallocating the av_picture for the SWS case
+        static Uint8* data[4];
+        static int linesize[4];
 
         // we should only expect this while loop to run once.
         int res;
@@ -929,9 +986,13 @@ int render_video() {
             got_frame = true;
 
             if (video_context.decoder->context->hw_frames_ctx) {
-                // if hardware, just pass the pointer along
                 data[0] = data[1] = video_context.decoder->hw_frame->data[3];
                 linesize[0] = linesize[1] = video_context.decoder->width;
+            } else if (update_sws_context(data, linesize)) {
+                sws_scale(video_context.sws,
+                          (uint8_t const* const*)video_context.decoder->sw_frame->data,
+                          video_context.decoder->sw_frame->linesize, 0,
+                          video_context.decoder->height, data, linesize);
             } else {
                 memcpy(data, video_context.decoder->sw_frame->data, sizeof(data));
                 memcpy(linesize, video_context.decoder->sw_frame->linesize, sizeof(linesize));
