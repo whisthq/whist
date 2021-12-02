@@ -18,10 +18,10 @@ Includes
 */
 
 #include "sdl_utils.h"
-#include <fractal/utils/png.h>
-#include <fractal/utils/lodepng.h>
+#include <whist/utils/png.h>
+#include <whist/utils/lodepng.h>
 
-#include <fractal/utils/color.h>
+#include <whist/utils/color.h>
 #include "native_window_utils.h"
 
 extern volatile int output_width;

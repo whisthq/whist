@@ -20,16 +20,16 @@ Includes
 
 #include "video.h"
 #include "sdl_utils.h"
-#include <fractal/network/network.h>
-#include <fractal/network/ringbuffer.h>
-#include <fractal/core/whist_frame.h>
+#include <whist/network/network.h>
+#include <whist/network/ringbuffer.h>
+#include <whist/core/whist_frame.h>
 
 #include <stdio.h>
 
 #include <SDL2/SDL.h>
-#include <fractal/utils/color.h>
-#include <fractal/utils/png.h>
-#include <fractal/logging/log_statistic.h>
+#include <whist/utils/color.h>
+#include <whist/utils/png.h>
+#include <whist/logging/log_statistic.h>
 #include "sdlscreeninfo.h"
 #include "native_window_utils.h"
 #include "network.h"

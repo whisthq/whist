@@ -14,7 +14,7 @@ Includes
 ============================
 */
 
-#include <fractal/utils/rwlock.h>
+#include <whist/utils/rwlock.h>
 #include "client.h"
 #include "network.h"
 

@@ -59,9 +59,9 @@ USER=$(whoami)
 docker build . \
   --build-arg uid=$(id -u ${USER}) \
   -f Dockerfile \
-  -t fractal/protocol-builder
+  -t whist/protocol-builder
 
-DOCKER_USER="fractal-builder"
+DOCKER_USER="whist-builder"
 
 # We mount .aws directory so that awscli in download-binaries.sh works
 MOUNT_AWS=""
@@ -77,16 +77,16 @@ else
   DOCKER_IT_FLAG=""
 fi
 
-# We also mount entire ./fractal directory so that git works for git revision
+# We also mount entire ./whist directory so that git works for git revision
 docker run \
   --rm \
   $DOCKER_IT_FLAG \
   --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION --env AWS_DEFAULT_OUTPUT --env GITHUB_SHA --env CODECOV_TOKEN \
   --mount type=bind,source=$(cd ..; pwd),destination=/workdir \
   $MOUNT_AWS \
-  --name fractal-protocol-builder-$(date +"%s") \
+  --name whist-protocol-builder-$(date +"%s") \
   --user "$DOCKER_USER" \
-  fractal/protocol-builder \
+  whist/protocol-builder \
   bash -c "\
     cd protocol &&                                      \
     mkdir -p build-docker &&                            \

@@ -18,7 +18,7 @@ Includes
 ============================
 */
 
-#include <fractal/core/whist.h>
+#include <whist/core/whist.h>
 
 /*
 ============================

@@ -30,13 +30,13 @@ Includes
 
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
-#include <fractal/core/whist.h>
-#include <fractal/network/network.h>
-#include <fractal/utils/aes.h>
-#include <fractal/utils/clock.h>
-#include <fractal/logging/logging.h>
-#include <fractal/logging/log_statistic.h>
-#include <fractal/logging/error_monitor.h>
+#include <whist/core/whist.h>
+#include <whist/network/network.h>
+#include <whist/utils/aes.h>
+#include <whist/utils/clock.h>
+#include <whist/logging/logging.h>
+#include <whist/logging/log_statistic.h>
+#include <whist/logging/error_monitor.h>
 #include "sdlscreeninfo.h"
 #include "audio.h"
 #include "client_utils.h"
@@ -47,13 +47,13 @@ Includes
 #include "video.h"
 #include "sync_packets.h"
 #include <SDL2/SDL_syswm.h>
-#include <fractal/utils/color.h>
+#include <whist/utils/color.h>
 #include "native_window_utils.h"
 #include "client_statistic.h"
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
-#include <fractal/utils/mac_utils.h>
+#include <whist/utils/mac_utils.h>
 #endif  // __APPLE__
 
 // N.B.: Please don't put globals here, since main.c won't be included when the testing suite is

@@ -20,9 +20,9 @@ Includes
 ============================
 */
 
-#include <fractal/audio/audiodecode.h>
-#include <fractal/core/whist.h>
-#include <fractal/network/network.h>
+#include <whist/audio/audiodecode.h>
+#include <whist/core/whist.h>
+#include <whist/network/network.h>
 #include "client_utils.h"
 
 /*

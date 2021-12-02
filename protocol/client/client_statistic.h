@@ -5,7 +5,7 @@
  * @file client_statistic.h
  * @brief This file lists all the client-side metrics that needs to be logged
  */
-#include <fractal/logging/log_statistic.h>
+#include <whist/logging/log_statistic.h>
 
 /*
 ============================

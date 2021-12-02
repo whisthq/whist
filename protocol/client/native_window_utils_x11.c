@@ -20,7 +20,7 @@ Includes
 */
 
 #include "native_window_utils.h"
-#include <fractal/logging/logging.h>
+#include <whist/logging/logging.h>
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL_syswm.h>
 

@@ -21,10 +21,10 @@ Includes
 #include "audio.h"
 #include "network.h"
 #include "client_statistic.h"
-#include <fractal/logging/log_statistic.h>
-#include <fractal/network/network.h>
-#include <fractal/network/ringbuffer.h>
-#include <fractal/core/whist_frame.h>
+#include <whist/logging/log_statistic.h>
+#include <whist/network/network.h>
+#include <whist/network/ringbuffer.h>
+#include <whist/core/whist_frame.h>
 
 extern bool has_video_rendered_yet;
 

@@ -19,8 +19,8 @@ Includes
 ============================
 */
 
-#include <fractal/network/network.h>
-#include <fractal/network/ringbuffer.h>
+#include <whist/network/network.h>
+#include <whist/network/ringbuffer.h>
 
 #define MAX_INIT_CONNECTION_ATTEMPTS (6)
 #define MAX_RECONNECTION_ATTEMPTS (10)

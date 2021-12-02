@@ -16,11 +16,11 @@ Includes
 ============================
 */
 
-#include <fractal/core/whist.h>
-#include <fractal/network/network.h>
-#include <fractal/input/input.h>
-#include <fractal/logging/error_monitor.h>
-#include <fractal/utils/aes.h>
+#include <whist/core/whist.h>
+#include <whist/network/network.h>
+#include <whist/input/input.h>
+#include <whist/logging/error_monitor.h>
+#include <whist/utils/aes.h>
 #include <stdio.h>
 
 #include "network.h"

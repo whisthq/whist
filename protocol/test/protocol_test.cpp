@@ -34,9 +34,9 @@ Includes
 
 extern "C" {
 #include "client/client_utils.h"
-#include "fractal/utils/color.h"
-#include <fractal/core/whist.h>
-#include <fractal/network/ringbuffer.h>
+#include "whist/utils/color.h"
+#include <whist/core/whist.h>
+#include <whist/network/ringbuffer.h>
 #include <fcntl.h>
 
 #ifndef __APPLE__
@@ -45,10 +45,10 @@ extern "C" {
 #endif
 
 #include "client/client_utils.h"
-#include <fractal/logging/log_statistic.h>
-#include <fractal/utils/aes.h>
-#include <fractal/utils/png.h>
-#include <fractal/utils/avpacket_buffer.h>
+#include <whist/logging/log_statistic.h>
+#include <whist/utils/aes.h>
+#include <whist/utils/png.h>
+#include <whist/utils/avpacket_buffer.h>
 }
 
 /*

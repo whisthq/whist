@@ -15,11 +15,11 @@ clipboard packets.
 Includes
 ============================
 */
-#include <fractal/core/whist.h>
-#include <fractal/utils/clock.h>
-#include <fractal/network/network.h>
-#include <fractal/logging/log_statistic.h>
-#include <fractal/logging/logging.h>
+#include <whist/core/whist.h>
+#include <whist/utils/clock.h>
+#include <whist/network/network.h>
+#include <whist/logging/log_statistic.h>
+#include <whist/logging/logging.h>
 #include "handle_server_message.h"
 #include "network.h"
 #include "audio.h"

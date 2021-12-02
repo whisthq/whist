@@ -40,18 +40,18 @@ Includes
 #endif
 #include <time.h>
 
-#include <fractal/core/whistgetopt.h>
-#include <fractal/core/whist.h>
-#include <fractal/input/input.h>
-#include <fractal/logging/error_monitor.h>
-#include <fractal/video/transfercapture.h>
-#include <fractal/logging/log_statistic.h>
+#include <whist/core/whistgetopt.h>
+#include <whist/core/whist.h>
+#include <whist/input/input.h>
+#include <whist/logging/error_monitor.h>
+#include <whist/video/transfercapture.h>
+#include <whist/logging/log_statistic.h>
 #include "client.h"
 #include "network.h"
 #include "video.h"
 #include "audio.h"
 
-#include <fractal/utils/window_info.h>
+#include <whist/utils/window_info.h>
 
 #ifdef _WIN32
 #pragma comment(lib, "ws2_32.lib")

@@ -18,7 +18,7 @@ trigged an SDL event must be triggered in sdl_event_handler.c
 Includes
 ============================
 */
-#include <fractal/core/whist.h>
+#include <whist/core/whist.h>
 
 /*
 ============================

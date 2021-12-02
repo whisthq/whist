@@ -23,7 +23,7 @@ Includes
 */
 
 #include <SDL2/SDL.h>
-#include <fractal/utils/color.h>
+#include <whist/utils/color.h>
 
 /*
 ============================

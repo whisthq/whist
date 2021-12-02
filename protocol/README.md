@@ -16,17 +16,17 @@ This folder builds a client to receive a server stream via Whist. It supports Wi
 
 In order to give the user their low-latency high-FPS experience, the protocol executes the following processes in order from top-to-bottom:
 
-- `create_capture_device` from either `./fractal/video/dxgicapture.c` or `./fractal/video/x11capture.c` is called, the former is for Windows and the latter is for Linux. Then, `capture_screen` is called in `./server/main.c` to capture the screen.
+- `create_capture_device` from either `./whist/video/dxgicapture.c` or `./whist/video/x11capture.c` is called, the former is for Windows and the latter is for Linux. Then, `capture_screen` is called in `./server/main.c` to capture the screen.
 - `encoder_t` from `videoencode.c` will be used to encode the screenshot using h264, if needed. If Nvidia Capture SDK is being used (`USING_GPU_CAPTURE == true` and on linux), then the image will already be encoded upon capture, and this is not necessary.
-- A `Frame*` is created and the members of the `Frame` struct is filled in, see `./server/main.c` for the code and `./fractal/core/whist.h` for the `Frame` struct.
+- A `Frame*` is created and the members of the `Frame` struct is filled in, see `./server/main.c` for the code and `./whist/core/whist.h` for the `Frame` struct.
 - `broadcast_udp_packet_from_payload` from `./server/network.c`is called with the `Frame*` passed in. This will break-up the `Frame*` into hundreds of individual network packets.
 - On the client, these packets are received in `./client/main.c` and passed into `receive_video` in `./client/video.c`.
 - `receive_video` will receive video packets and will save them in a buffer (packet 17 will be stored at `buffer + PACKET_SIZE*(17-1)`, so that the packets go into their correct slot until the entire `Frame*` is recreated). `video.c` keeps track of the ID of the most recently rendered frame, ie ID 247. Once all of the packets of ID 248 are received, it will take the pointer to the beginning of the buffer and then render it. Each packet will contain the number of packets for the `Frame*`, so once one is received, the client will know when all of them have been received.
-- Once a `Frame*` has been accumulated, `render_screen` in `./server/video.c` will trigger, and `video_decoder_decode` from `./fractal/video/videodecode.c` will be called. Any cursor image will be rendered on-top, along with `sws_scale`'ing if the frame is not the same resolution as the client. Peruse `render_screen` for further details.
+- Once a `Frame*` has been accumulated, `render_screen` in `./server/video.c` will trigger, and `video_decoder_decode` from `./whist/video/videodecode.c` will be called. Any cursor image will be rendered on-top, along with `sws_scale`'ing if the frame is not the same resolution as the client. Peruse `render_screen` for further details.
 - Finally, `SDL_RenderPresent` will be called, rendering the Frame.
 - If no packet from the expected ID is received within a couple hundred milliseconds, or if a subset of packets have been received and it's been a couple hundred milliseconds since the last seen packet, then the `./client/video.c`protocol will send a `nack()` to the server in order to get a copy of the presumably dropped or missed packet. The server keeps the last couple `Frame*`'s in a buffer in order to respond to `nack()`'s.
 
-The same process is used for audio capture, encoding, decoding, and playing. See `send_audio` of `./server/main.c`, `./fractal/audio/audio{capture,encode,decode}.c`, and `receive_audio` of `./client/audio.c`
+The same process is used for audio capture, encoding, decoding, and playing. See `send_audio` of `./server/main.c`, `./whist/audio/audio{capture,encode,decode}.c`, and `receive_audio` of `./client/audio.c`
 
 Throughout the life of the protocol, various messages will be send to and from the client and server. For example, if the client and server are of different resolution, the image will appear stretched, so to fix this the client will send a message to server to ask the server to change resolutions to match the client.
 
@@ -34,7 +34,7 @@ Throughout the life of the protocol, various messages will be send to and from t
 - To send a message from server to client, create a `WhistServerMessage` and call `broadcast_tcp_packet` or `broadcast_udp_packet`. See `./server/main.c` for usage.
 - To handle a server message on the client, see `./client/handle_server_message.c`
 - To handle a client message on the server, see `./server/handle_client_message.c`
-- See `./fractal/core/whist.h` for struct definitions.
+- See `./whist/core/whist.h` for struct definitions.
 
 Of course, input must also be sent from client to server. This is handled in the form of SDL Events, which are retrieved in `./client/main.c` and handled in `sdl_event_handler.c`. These generally take the form of `fcmsg`'s sent from client to server, over `UDP` for speed. We don't handle packet dropping, however, so sometimes the capslock and numlock will go out-of-sync. We use `sync_keyboard_state` to fix this, resyncing stateful keys every 50ms with an `fcmsg`. This additionally handles the initial sync by-default.
 
@@ -60,7 +60,7 @@ In an ideal world, we'd use the NVIDIA Capture SDK with the NVIDIA encoder. Howe
 │   ├── sdl_utils.c <- Set window icon, resize handler
 │   ├── sdlscreeninfo.c <- Get monitor/window width/height functions
 │   └── video.c <- Handle and render video packets
-├── fractal
+├── whist
 │   ├── audio
 │   │   ├── alsacapture.c <- Capture Linux audio
 │   │   ├── audiodecode.c <- AAC Decode Audio
@@ -248,7 +248,7 @@ GCC only supports one type of build at a time, so if you are currently building 
 
 ### Further documentation
 
-We also use Doxygen in this repository. The Doxy file is `docs/Doxyfile`. To generate it, you should first install `doxygen`, and then run `doxygen Doxyfile`. This will generate the docs and put them in `docs/html` and `docs/latex`. You can view the html docs by opening the index.html page with a web browser. We keep the docs `.gitignore`d to avoid clutter on the repository. They are also published at `docs.whist.com`, but updating the documentation with CI is still a [TODO](https://github.com/fractal/fractal/issues/1976).
+We also use Doxygen in this repository. The Doxy file is `docs/Doxyfile`. To generate it, you should first install `doxygen`, and then run `doxygen Doxyfile`. This will generate the docs and put them in `docs/html` and `docs/latex`. You can view the html docs by opening the index.html page with a web browser. We keep the docs `.gitignore`d to avoid clutter on the repository. They are also published at `docs.whist.com`.
 
 ## CI & CD
 
@@ -298,7 +298,7 @@ If using vim, VSCode, or Visual Studio, please set this up in your editor to for
 
 We have [pre-commit hooks](https://pre-commit.com/) with clang-format support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for clang-format.
 
-We also have a custom build target in the CMake 'clang-format' which will run with this style over all `.c` and `.h` files in `server/`, `client/`, and `fractal/`. You can call it by running `make clang-format`.
+We also have a custom build target in the CMake 'clang-format' which will run with this style over all `.c` and `.h` files in `server/`, `client/`, and `whist/`. You can call it by running `make clang-format`.
 
 ### clang-tidy
 
@@ -328,7 +328,7 @@ Macro constants will NOT be checked by this script because of the variety of imp
 
 ### Logz.io
 
-We currently use Logz.io to store our logs. To get the logs for a session_id, navigate to the `fractal/protocol` directory, then type in: `python3 logz-to-text.py <<sesion_id>>` where `<<session_id>>` is the id of the currently running session.
+We currently use Logz.io to store our logs. To get the logs for a session_id, navigate to the `whist/protocol` directory, then type in: `python3 logz-to-text.py <<sesion_id>>` where `<<session_id>>` is the id of the currently running session.
 
 This will output two files:
 

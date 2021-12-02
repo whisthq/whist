@@ -35,11 +35,11 @@ Includes
 #include <unistd.h>
 #endif
 
-#include <fractal/video/transfercapture.h>
-#include <fractal/video/capture/capture.h>
-#include <fractal/video/codec/encode.h>
-#include <fractal/utils/avpacket_buffer.h>
-#include <fractal/logging/log_statistic.h>
+#include <whist/video/transfercapture.h>
+#include <whist/video/capture/capture.h>
+#include <whist/video/codec/encode.h>
+#include <whist/utils/avpacket_buffer.h>
+#include <whist/logging/log_statistic.h>
 #include "client.h"
 #include "network.h"
 #include "video.h"

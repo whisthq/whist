@@ -16,14 +16,14 @@ Includes
 ============================
 */
 
-#include <fractal/core/whist.h>
+#include <whist/core/whist.h>
 
-#include <fractal/input/input.h>
-#include <fractal/network/network.h>
-#include <fractal/utils/clock.h>
-#include <fractal/logging/logging.h>
-#include <fractal/logging/log_statistic.h>
-#include <fractal/logging/error_monitor.h>
+#include <whist/input/input.h>
+#include <whist/network/network.h>
+#include <whist/utils/clock.h>
+#include <whist/logging/logging.h>
+#include <whist/logging/log_statistic.h>
+#include <whist/logging/error_monitor.h>
 #include "main.h"
 #include "client.h"
 #include "handle_client_message.h"

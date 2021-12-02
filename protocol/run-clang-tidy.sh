@@ -42,7 +42,7 @@ esac
 
 # array of all folders to be checked and modified
 declare -a includeFolders=(
-  "fractal"
+  "whist"
   "client"
   "server"
 )

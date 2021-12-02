@@ -16,9 +16,9 @@ Includes
 ============================
 */
 
-#include <fractal/core/whist.h>
-#include <fractal/core/whistgetopt.h>
-#include <fractal/logging/error_monitor.h>
+#include <whist/core/whist.h>
+#include <whist/core/whistgetopt.h>
+#include <whist/logging/error_monitor.h>
 #include "parse_args.h"
 #include "network.h"
 #include "main.h"

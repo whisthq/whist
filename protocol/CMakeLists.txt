@@ -149,8 +149,8 @@ if(RUN_CPPCHECK)
                 "-j 8" # Run in 8 threads
                 "--error-exitcode=1" # Propagate cppcheck errors to cmake
                 "--suppress=shiftTooManyBitsSigned"
-                "--suppress=*:${CMAKE_SOURCE_DIR}/fractal/clipboard/clipboard_osx.m" # suppress all warnings for clipboard_osx.m since cppcheck isn't supported on Objective-C
-                "--suppress=*:${CMAKE_SOURCE_DIR}/fractal/utils/lodepng.*" # suppress all lodepng warnings, since this is an external library that we should not touch
+                "--suppress=*:${CMAKE_SOURCE_DIR}/whist/clipboard/clipboard_osx.m" # suppress all warnings for clipboard_osx.m since cppcheck isn't supported on Objective-C
+                "--suppress=*:${CMAKE_SOURCE_DIR}/whist/utils/lodepng.*" # suppress all lodepng warnings, since this is an external library that we should not touch
                 "--inline-suppr" # Allow cppcheck-suppress comments in code
                 )
     else()
@@ -334,7 +334,7 @@ include_directories(SYSTEM ${CMAKE_BINARY_DIR}/include)
 include_directories(SYSTEM ${CMAKE_BINARY_DIR}/include/ffmpeg)
 
 # Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
-add_subdirectory(fractal)
+add_subdirectory(whist)
 
 # Set variables to be used by the CMakeLists in the subdirectories
 set(PLATFORM_INDEPENDENT_LIBS   whistCore

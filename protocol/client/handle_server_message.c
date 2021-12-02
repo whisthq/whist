@@ -21,10 +21,10 @@ Includes
 
 #include <stddef.h>
 
-#include <fractal/core/whist.h>
-#include <fractal/utils/clock.h>
-#include <fractal/logging/logging.h>
-#include <fractal/utils/window_info.h>
+#include <whist/core/whist.h>
+#include <whist/utils/clock.h>
+#include <whist/logging/logging.h>
+#include <whist/utils/window_info.h>
 #include "client_utils.h"
 #include "audio.h"
 #include "network.h"
