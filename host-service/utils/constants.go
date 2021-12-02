@@ -6,7 +6,7 @@ import "github.com/google/uuid"
 // service. They're used in a lot of packages, so we put them in the least
 // common denominator --- this package.
 const (
-	WhistDir                 string = "/fractal/"
+	WhistDir                 string = "/whist/"
 	TempDir                  string = WhistDir + "temp/"
 	WhistPrivateDir          string = "/whist/"
 	UserInitialBrowserDir    string = WhistDir + "userConfigs/"

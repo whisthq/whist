@@ -155,10 +155,10 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 	// dev/staging/prod ones, so we can use the same regex list in all
 	// environments.
 	regexes := []string{
-		`fractal/browsers/chrome:current-build`,
+		`whist/browsers/chrome:current-build`,
 		`ghcr.io/fractal/*/browsers/chrome:current-build`,
 		`ghcr.io/fractal/*`,
-		`*fractal*`,
+		`*whist*`,
 	}
 
 	image := dockerImageFromRegexes(globalCtx, client, regexes)
@@ -250,11 +250,11 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		hostConfig := dockercontainer.HostConfig{
 			Binds: []string{
 				"/sys/fs/cgroup:/sys/fs/cgroup:ro",
-				utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings", containerName),
+				utils.Sprintf("/whist/%s/mandelboxResourceMappings:/whist/resourceMappings", containerName),
 				utils.Sprintf("%s%v/sockets:/tmp/sockets", utils.TempDir, mandelbox.GetID()),
 				utils.Sprintf("%slogs/%v/host-service-warmup-%d:/var/log/whist", utils.TempDir, mandelbox.GetID(), iter),
 				"/run/udev/data:/run/udev/data:ro",
-				utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", containerName),
+				utils.Sprintf("/whist/%s/userConfigs/unpacked_configs:/whist/userConfigs:rshared", containerName),
 			},
 			CapDrop: strslice.StrSlice{"ALL"},
 			CapAdd: strslice.StrSlice([]string{
@@ -333,11 +333,11 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 			return utils.MakeError("Error marking mandelbox as ready: %s", err)
 		}
 
-		logger.Infof("Waiting for fractal application to warm up...")
-		if err = utils.WaitForFileCreation(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/", containerName), "done_sleeping_until_X_clients", time.Minute*5); err != nil {
-			return utils.MakeError("Error warming up fractal application: %s", err)
+		logger.Infof("Waiting for whist application to warm up...")
+		if err = utils.WaitForFileCreation(utils.Sprintf("/whist/%s/mandelboxResourceMappings/", containerName), "done_sleeping_until_X_clients", time.Minute*5); err != nil {
+			return utils.MakeError("Error warming up whist application: %s", err)
 		}
-		logger.Infof("Finished waiting for fractal application to warm up.")
+		logger.Infof("Finished waiting for whist application to warm up.")
 
 		time.Sleep(5 * time.Second)
 
@@ -560,11 +560,11 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	hostConfig := dockercontainer.HostConfig{
 		Binds: []string{
 			"/sys/fs/cgroup:/sys/fs/cgroup:ro",
-			utils.Sprintf("/fractal/%s/mandelboxResourceMappings:/fractal/resourceMappings", mandelbox.GetID()),
+			utils.Sprintf("/whist/%s/mandelboxResourceMappings:/whist/resourceMappings", mandelbox.GetID()),
 			utils.Sprintf("%s%s/sockets:/tmp/sockets", utils.TempDir, mandelbox.GetID()),
 			utils.Sprintf("%slogs/%s/%s:/var/log/whist", utils.TempDir, mandelbox.GetID(), mandelboxSubscription.SessionID),
 			"/run/udev/data:/run/udev/data:ro",
-			utils.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", mandelbox.GetID()),
+			utils.Sprintf("/whist/%s/userConfigs/unpacked_configs:/whist/userConfigs:rshared", mandelbox.GetID()),
 		},
 		PortBindings: natPortBindings,
 		CapDrop:      strslice.StrSlice{"ALL"},
@@ -754,14 +754,14 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s as ready", mandelboxSubscription.ID)
 
-	// Don't wait for fractal application to start up in local environment
+	// Don't wait for whist application to start up in local environment
 	if !metadata.IsLocalEnv() {
-		logger.Infof("SpinUpMandelbox(): Waiting for mandelbox %s fractal application to start up...", mandelboxSubscription.ID)
-		if err = utils.WaitForFileCreation(utils.Sprintf("/fractal/%s/mandelboxResourceMappings/", mandelboxSubscription.ID), "done_sleeping_until_X_clients", time.Second*20); err != nil {
-			logAndReturnError("Error warming up fractal application: %s", err)
+		logger.Infof("SpinUpMandelbox(): Waiting for mandelbox %s whist application to start up...", mandelboxSubscription.ID)
+		if err = utils.WaitForFileCreation(utils.Sprintf("/whist/%s/mandelboxResourceMappings/", mandelboxSubscription.ID), "done_sleeping_until_X_clients", time.Second*20); err != nil {
+			logAndReturnError("Error warming up whist application: %s", err)
 			return
 		}
-		logger.Infof("SpinUpMandelbox(): Finished waiting for mandelbox %s fractal application to start up", mandelboxSubscription.ID)
+		logger.Infof("SpinUpMandelbox(): Finished waiting for mandelbox %s whist application to start up", mandelboxSubscription.ID)
 	}
 
 	err = dbdriver.WriteMandelboxStatus(mandelboxSubscription.ID, dbdriver.MandelboxStatusRunning)
@@ -843,7 +843,7 @@ func initializeAppArmor(globalCancel context.CancelFunc) {
 // Create the directory used to store the mandelbox resource allocations
 // (e.g. TTYs) on disk
 func initializeFilesystem(globalCancel context.CancelFunc) {
-	// check if "/fractal" already exists --- if so, panic, since
+	// check if "/whist" already exists --- if so, panic, since
 	// we don't know why it's there or if it's valid
 	if _, err := os.Lstat(utils.WhistDir); !os.IsNotExist(err) {
 		if err == nil {
@@ -853,7 +853,7 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 		}
 	}
 
-	// Create the fractal directory and make it non-root user owned so that
+	// Create the whist directory and make it non-root user owned so that
 	// non-root users in mandelboxes can access files within (especially user
 	// configs).
 	err := os.MkdirAll(utils.WhistDir, 0777)
@@ -863,13 +863,13 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	cmd := exec.Command("chown", "-R", "ubuntu", utils.WhistDir)
 	cmd.Run()
 
-	// Create fractal-private directory
+	// Create whist-private directory
 	err = os.MkdirAll(utils.WhistPrivateDir, 0777)
 	if err != nil {
 		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", utils.WhistPrivateDir, err)
 	}
 
-	// Create fractal temp directory (only let root read and write this, since it
+	// Create whist temp directory (only let root read and write this, since it
 	// contains logs and uinput sockets).
 	err = os.MkdirAll(utils.TempDir, 0600)
 	if err != nil {

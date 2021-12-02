@@ -12,7 +12,7 @@ const agent = new https.Agent({
   rejectUnauthorized: false,
 })
 
-// TODO: I don't think fractalBackoff() actually works as it's supposed to.
+// TODO: I don't think whistBackoff() actually works as it's supposed to.
 // Here's a way we can fix: https://www.npmjs.com/package/fetch-retry
 
 /*

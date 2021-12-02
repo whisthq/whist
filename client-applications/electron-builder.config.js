@@ -33,10 +33,10 @@ const bundleConfig = {
   // The files we must wrap into our packaged application.
   files: ["build/", "node_modules/", "package.json"],
   // We cannot bundle the protocol binaries -- they must remain separate.
-  // This registers the fractal:// URL protocol in the bundle installer.
+  // This registers the whist:// URL protocol in the bundle installer.
   protocols: {
-    name: "fractal-protocol",
-    schemes: ["fractal"],
+    name: "whist-protocol",
+    schemes: ["whist"],
   },
 
   extraFiles: ["loading/"],

@@ -409,7 +409,7 @@ int main(int argc, char* argv[]) {
         }
 
 #ifndef _WIN32
-#define URI_HANDLER_FILE "/home/fractal/.teleport/handled-uri"
+#define URI_HANDLER_FILE "/home/whist/.teleport/handled-uri"
 #define HANDLED_URI_MAXLEN 4096
         if (get_timer(uri_handler_timer) > 50.0 / MS_IN_SECOND) {
             if (!access(URI_HANDLER_FILE, R_OK)) {

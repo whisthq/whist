@@ -319,7 +319,7 @@ deployment_setup_steps() {
   # Here we pre-pull the desired mandelboxes onto the AMI to speed up mandelbox startup.
   ghcr_uri=ghcr.io
   echo "$GH_PAT" | sudo docker login --username "$GH_USERNAME" --password-stdin "$ghcr_uri"
-  pull_image_base="$ghcr_uri/fractal/$GIT_BRANCH/browsers/chrome"
+  pull_image_base="$ghcr_uri/whist/$GIT_BRANCH/browsers/chrome"
   pull_image="$pull_image_base:$GIT_HASH"
   echo "pulling image: $pull_image"
   sudo docker pull "$pull_image"
