@@ -4,8 +4,8 @@
     "AUTH0_BASE_PATH": "src",
     "AUTH0_ALLOW_DELETE": false,
     "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
-        "FRACTAL_ELECTRON_APP_CALLBACK": ["http://localhost/callback"],
-        "FRACTAL_AUTHENTICATION_API": "https://api.fractal.co"
+        "WHIST_ELECTRON_APP_CALLBACK": ["http://localhost/callback"],
+        "WHIST_AUTHENTICATION_API": "https://api.fractal.co"
     },
     "EXCLUDED_PROPS": {
         "clients": ["client_secret"]

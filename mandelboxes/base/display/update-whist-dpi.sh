@@ -14,23 +14,23 @@ set -Eeuo pipefail
 # 96 is a reasonable default, but Macbooks these days
 # default to 192, so this is a hack until JSON transport
 # is ready!
-FRACTAL_DPI=${1:-192}
-FRACTAL_DPI_CACHE_FILE=/usr/share/fractal/dpi.cache
+WHIST_DPI=${1:-192}
+WHIST_DPI_CACHE_FILE=/usr/share/fractal/dpi.cache
 
 # Don't do anything if the DPI didn't change!
-if [[ -f "$FRACTAL_DPI_CACHE_FILE" ]]; then
-    CACHED_DPI=$(cat $FRACTAL_DPI_CACHE_FILE)
-    [[ "$FRACTAL_DPI" == "$CACHED_DPI" ]] && exit
+if [[ -f "$WHIST_DPI_CACHE_FILE" ]]; then
+    CACHED_DPI=$(cat $WHIST_DPI_CACHE_FILE)
+    [[ "$WHIST_DPI" == "$CACHED_DPI" ]] && exit
 fi
 
 # https://unix.stackexchange.com/a/640599
-echo "Xft.dpi: $FRACTAL_DPI" | xrdb -merge
+echo "Xft.dpi: $WHIST_DPI" | xrdb -merge
 cat << EOF > /home/fractal/.xsettingsd
-Xft/DPI $((1024*$FRACTAL_DPI))
-Gtk/CursorThemeSize $((24*$FRACTAL_DPI/96))
+Xft/DPI $((1024*$WHIST_DPI))
+Gtk/CursorThemeSize $((24*$WHIST_DPI/96))
 EOF
 
-echo $FRACTAL_DPI > $FRACTAL_DPI_CACHE_FILE
+echo $WHIST_DPI > $WHIST_DPI_CACHE_FILE
 
 # Succeed even if these are not yet running, as we have successfully pre-initialized them
 killall -HUP xsettingsd awesome || true
