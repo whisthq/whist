@@ -51,7 +51,7 @@ typedef struct X11CaptureDevice {
     Damage damage;
     int event;
     bool first;
-    FractalRGBColor corner_color;
+    WhistRGBColor corner_color;
 } X11CaptureDevice;
 
 /*

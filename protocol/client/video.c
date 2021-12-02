@@ -57,13 +57,13 @@ extern volatile int output_height;
 extern volatile CodecType output_codec_type;
 extern volatile double latency;
 
-volatile FractalRGBColor* native_window_color = NULL;
+volatile WhistRGBColor* native_window_color = NULL;
 volatile bool native_window_color_update = false;
 
 // START VIDEO VARIABLES
-volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
+volatile WhistCursorState cursor_state = CURSOR_STATE_VISIBLE;
 volatile SDL_Cursor* sdl_cursor = NULL;
-volatile FractalCursorID last_cursor = (FractalCursorID)SDL_SYSTEM_CURSOR_ARROW;
+volatile WhistCursorID last_cursor = (WhistCursorID)SDL_SYSTEM_CURSOR_ARROW;
 volatile bool pending_sws_update = false;
 volatile bool pending_texture_update = false;
 volatile bool pending_resize_render = false;
@@ -180,7 +180,7 @@ void sync_decoder_parameters(VideoFrame* frame);
 // returns true if we're trying to get an iframe
 bool try_request_iframe_to_catch_up();
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-void update_window_titlebar_color(FractalRGBColor color);
+void update_window_titlebar_color(WhistRGBColor color);
 #endif
 /*
 ============================
@@ -310,10 +310,10 @@ void update_cursor(VideoFrame* frame) {
       cursor ID to tell SDL which cursor to render.
      */
     // Set cursor to frame's desired cursor type
-    FractalCursorImage* cursor = get_frame_cursor_image(frame);
+    WhistCursorImage* cursor = get_frame_cursor_image(frame);
     // Only update the cursor, if a cursor image is even embedded in the frame at all.
     if (cursor) {
-        if ((FractalCursorID)cursor->cursor_id != last_cursor || cursor->using_bmp) {
+        if ((WhistCursorID)cursor->cursor_id != last_cursor || cursor->using_bmp) {
             if (sdl_cursor) {
                 SDL_FreeCursor((SDL_Cursor*)sdl_cursor);
             }
@@ -358,7 +358,7 @@ void update_cursor(VideoFrame* frame) {
             }
             SDL_SetCursor((SDL_Cursor*)sdl_cursor);
 
-            last_cursor = (FractalCursorID)cursor->cursor_id;
+            last_cursor = (WhistCursorID)cursor->cursor_id;
         }
 
         if (cursor->cursor_state != cursor_state) {
@@ -388,11 +388,11 @@ SDL_Rect new_sdl_rect(int x, int y, int w, int h) {
     return new_rect;
 }
 
-void update_window_titlebar_color(FractalRGBColor color) {
+void update_window_titlebar_color(WhistRGBColor color) {
     /*
       Update window titlebar color using the colors of the new frame
      */
-    FractalRGBColor* current_color = (FractalRGBColor*)native_window_color;
+    WhistRGBColor* current_color = (WhistRGBColor*)native_window_color;
     if (current_color != NULL) {
         if (current_color->red != color.red || current_color->green != color.green ||
             current_color->blue != color.blue) {
@@ -400,14 +400,14 @@ void update_window_titlebar_color(FractalRGBColor color) {
             free(current_color);
 
             // make the new color and signal that we're ready to update
-            FractalRGBColor* new_native_window_color = safe_malloc(sizeof(FractalRGBColor));
+            WhistRGBColor* new_native_window_color = safe_malloc(sizeof(WhistRGBColor));
             *new_native_window_color = color;
             native_window_color = new_native_window_color;
             native_window_color_update = true;
         }
     } else {
         // make the new color and signal that we're ready to update
-        FractalRGBColor* new_native_window_color = safe_malloc(sizeof(FractalRGBColor));
+        WhistRGBColor* new_native_window_color = safe_malloc(sizeof(WhistRGBColor));
         *new_native_window_color = color;
         native_window_color = new_native_window_color;
         native_window_color_update = true;
@@ -530,7 +530,7 @@ bool request_iframe() {
 
     // Only request an iframe once every `IFRAME_REQUEST_INTERVAL_MS` ms
     if (get_timer(video_data.last_iframe_request_timer) > IFRAME_REQUEST_INTERVAL_MS / 1000.0) {
-        FractalClientMessage fcmsg = {0};
+        WhistClientMessage fcmsg = {0};
         fcmsg.type = MESSAGE_IFRAME_REQUEST;
         // This should give us a full IDR frame,
         // which includes PPS/SPS data
@@ -1079,7 +1079,7 @@ int render_video() {
                 // correct it.
                 // NOTE: Most of the time, this is just because there was a delay between the window
                 // losing visibility and the server reacting.
-                FractalClientMessage fcmsg = {0};
+                WhistClientMessage fcmsg = {0};
                 fcmsg.type = MESSAGE_START_STREAMING;
                 send_fcmsg(&fcmsg);
             }
@@ -1254,7 +1254,7 @@ void destroy_video() {
 #endif
 
         if (native_window_color) {
-            free((FractalRGBColor*)native_window_color);
+            free((WhistRGBColor*)native_window_color);
             native_window_color = NULL;
         }
 

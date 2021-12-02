@@ -329,7 +329,7 @@ void nack_bitarray_packets(RingBuffer* ring_buffer, int id, int start_index, Bit
             */
 
     LOG_INFO("NACKing with bit array for Packets with ID %d, Starting Index %d", id, start_index);
-    FractalClientMessage fcmsg = {0};
+    WhistClientMessage fcmsg = {0};
     fcmsg.type = MESSAGE_BITARRAY_NACK;
     fcmsg.bitarray_nack.type = ring_buffer->type;
     fcmsg.bitarray_nack.id = id;

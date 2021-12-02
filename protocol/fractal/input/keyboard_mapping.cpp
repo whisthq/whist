@@ -37,12 +37,12 @@ typedef struct {
 
 // Set of modifiers, for detecting if a key is a modifier
 // CTRL = control, SHIFT = shift, ALT = alt/option, GUI = windows/command
-set<FractalKeycode> modifiers = {FK_LCTRL, FK_LSHIFT, FK_LALT, FK_LGUI,
+set<WhistKeycode> modifiers = {FK_LCTRL, FK_LSHIFT, FK_LALT, FK_LGUI,
                                  FK_RCTRL, FK_RSHIFT, FK_RALT, FK_RGUI};
 
 // Will hash vectors so that we can make an hmap out of them
 struct VectorHasher {
-    int operator()(const vector<FractalKeycode>& v) const {
+    int operator()(const vector<WhistKeycode>& v) const {
         int hash = (int)v.size();
         for (auto& i : v) {
             hash ^= i + 0x9e3779b9 + (hash << 6) + (hash >> 2);
@@ -52,7 +52,7 @@ struct VectorHasher {
 };
 
 // The modmap that occurs before the full keyboard mapping
-hmap<FractalKeycode, FractalKeycode> modmap = {
+hmap<WhistKeycode, WhistKeycode> modmap = {
     // Swap gui and ctrl
     {FK_LGUI, FK_LCTRL},
     {FK_LCTRL, FK_LGUI},
@@ -64,7 +64,7 @@ hmap<FractalKeycode, FractalKeycode> modmap = {
 
 // The full keyboard mapping
 // Note that the mapping is applied after modmap -- e.g. GUI and CTRL are already switched!
-hmap<vector<FractalKeycode>, vector<FractalKeycode>, VectorHasher> keyboard_mappings = {
+hmap<vector<WhistKeycode>, vector<WhistKeycode>, VectorHasher> keyboard_mappings = {
     // { {FK_LCTRL, FK_COMMA}, {FK_} },
     // Access history with ctrl+y
     {
@@ -123,7 +123,7 @@ hmap<vector<FractalKeycode>, vector<FractalKeycode>, VectorHasher> keyboard_mapp
     },
 };
 
-auto key_sorter = [](const FractalKeycode& a, const FractalKeycode& b) -> bool {
+auto key_sorter = [](const WhistKeycode& a, const WhistKeycode& b) -> bool {
     // In ascending order, with a massive weight on being a modifier
     return (int)a + KEYCODE_UPPERBOUND * modifiers.count(a) <
            (int)b + KEYCODE_UPPERBOUND * modifiers.count(b);
@@ -132,9 +132,9 @@ auto key_sorter = [](const FractalKeycode& a, const FractalKeycode& b) -> bool {
 void init_keyboard_mapping() {
     // Sort the keyboard mappings in a way that can be compared to later,
     // Particularly, with modifiers at the end of the array
-    hmap<vector<FractalKeycode>, vector<FractalKeycode>, VectorHasher> new_keyboard_map;
+    hmap<vector<WhistKeycode>, vector<WhistKeycode>, VectorHasher> new_keyboard_map;
     for (const auto& kv : keyboard_mappings) {
-        vector<FractalKeycode> key = kv.first;
+        vector<WhistKeycode> key = kv.first;
         sort(key.begin(), key.end(), key_sorter);
         new_keyboard_map[key] = kv.second;
     }
@@ -145,11 +145,11 @@ bool initialized = false;
 
 // Global state, when a keymap is being held
 bool holding_keymap = false;
-vector<FractalKeycode> currently_pressed;
-vector<FractalKeycode> new_key_combination;
+vector<WhistKeycode> currently_pressed;
+vector<WhistKeycode> new_key_combination;
 
-extern "C" int emit_mapped_key_event(InputDevice* input_device, FractalOSType os_type,
-                                     FractalKeycode key_code, int pressed) {
+extern "C" int emit_mapped_key_event(InputDevice* input_device, WhistOSType os_type,
+                                     WhistKeycode key_code, int pressed) {
     // Initialize keyboard mapping if it hasn't been already
     if (!initialized) {
         init_keyboard_mapping();
@@ -176,13 +176,13 @@ extern "C" int emit_mapped_key_event(InputDevice* input_device, FractalOSType os
 
             // Release the keys in the new key combination, modifiers last
             reverse(new_key_combination.begin(), new_key_combination.end());
-            for (FractalKeycode key : new_key_combination) {
+            for (WhistKeycode key : new_key_combination) {
                 emit_key_event(input_device, key, 0);
             }
 
             // Press the original keys, modifiers first
             reverse(currently_pressed.begin(), currently_pressed.end());
-            for (FractalKeycode key : currently_pressed) {
+            for (WhistKeycode key : currently_pressed) {
                 if (pressed == 0 && key == key_code) {
                     // But we shouldn't press the key that we just decided to release
                     continue;
@@ -211,7 +211,7 @@ extern "C" int emit_mapped_key_event(InputDevice* input_device, FractalOSType os
     // Get the current keyboard combination being pressed
     currently_pressed.clear();  // Start with an empty array
     for (int i = 0; i < KEYCODE_UPPERBOUND; i++) {
-        FractalKeycode i_key = (FractalKeycode)i;
+        WhistKeycode i_key = (WhistKeycode)i;
         if (i_key != key_code && get_keyboard_key_state(input_device, i_key) == 1) {
             currently_pressed.push_back(i_key);
         }
@@ -226,12 +226,12 @@ extern "C" int emit_mapped_key_event(InputDevice* input_device, FractalOSType os
         new_key_combination = keyboard_mappings[currently_pressed];
 
         // Release the original keys, modifiers last
-        for (FractalKeycode key : currently_pressed) {
+        for (WhistKeycode key : currently_pressed) {
             emit_key_event(input_device, key, 0);
         }
 
         // Press the keys in the new key combination, modifiers first
-        for (FractalKeycode key : new_key_combination) {
+        for (WhistKeycode key : new_key_combination) {
             emit_key_event(input_device, key, 1);
         }
 
@@ -250,8 +250,8 @@ extern "C" int emit_mapped_key_event(InputDevice* input_device, FractalOSType os
     return 0;
 }
 
-extern "C" void update_mapped_keyboard_state(InputDevice* input_device, FractalOSType os_type,
-                                             FractalKeyboardState keyboard_state) {
+extern "C" void update_mapped_keyboard_state(InputDevice* input_device, WhistOSType os_type,
+                                             WhistKeyboardState keyboard_state) {
     bool server_caps_lock = get_keyboard_modifier_state(input_device, FK_CAPSLOCK);
     bool server_num_lock = get_keyboard_modifier_state(input_device, FK_NUMLOCK);
 
@@ -260,9 +260,9 @@ extern "C" void update_mapped_keyboard_state(InputDevice* input_device, FractalO
 
     // Modmap all keycode values
     bool mapped_keys[KEYCODE_UPPERBOUND] = {0};
-    FractalKeycode origin_mapping[KEYCODE_UPPERBOUND] = {FK_UNKNOWN};
+    WhistKeycode origin_mapping[KEYCODE_UPPERBOUND] = {FK_UNKNOWN};
     for (int fractal_keycode = 0; fractal_keycode < KEYCODE_UPPERBOUND; ++fractal_keycode) {
-        FractalKeycode mapped_key = (FractalKeycode)fractal_keycode;
+        WhistKeycode mapped_key = (WhistKeycode)fractal_keycode;
         if (os_type == WHIST_APPLE && modmap.count(mapped_key)) {
             mapped_key = modmap[mapped_key];
         }
@@ -273,7 +273,7 @@ extern "C" void update_mapped_keyboard_state(InputDevice* input_device, FractalO
             LOG_INFO("Syncing with %d pressed! From %d origin!", mapped_key, fractal_keycode);
         }
         // Remember which origin key that refers to
-        origin_mapping[mapped_key] = (FractalKeycode)fractal_keycode;
+        origin_mapping[mapped_key] = (WhistKeycode)fractal_keycode;
     }
 
     for (int fractal_keycode = 0; fractal_keycode < KEYCODE_UPPERBOUND; ++fractal_keycode) {
@@ -281,15 +281,15 @@ extern "C" void update_mapped_keyboard_state(InputDevice* input_device, FractalO
         if (origin_mapping[fractal_keycode] == FK_UNKNOWN) {
             continue;
         }
-        if (ignore_key_state(input_device, (FractalKeycode)fractal_keycode,
+        if (ignore_key_state(input_device, (WhistKeycode)fractal_keycode,
                              keyboard_state.active_pinch)) {
             continue;
         }
         int is_pressed =
             holding_keymap
                 ? (int)std::count(currently_pressed.begin(), currently_pressed.end(),
-                                  (FractalKeycode)fractal_keycode)
-                : (int)get_keyboard_key_state(input_device, (FractalKeycode)fractal_keycode);
+                                  (WhistKeycode)fractal_keycode)
+                : (int)get_keyboard_key_state(input_device, (WhistKeycode)fractal_keycode);
         if (!mapped_keys[fractal_keycode] && is_pressed) {
             LOG_INFO("Discrepancy found at %d (%d), unpressing!", fractal_keycode,
                      origin_mapping[fractal_keycode]);

@@ -23,7 +23,7 @@ typedef struct VideoFrame {
     bool is_window_visible;  // indicates whether the client app is visible. If the client realizes
                              // the server is wrong, it can correct it
     int videodata_length;
-    FractalRGBColor corner_color;
+    WhistRGBColor corner_color;
 
     unsigned char data[];
 } VideoFrame;
@@ -42,7 +42,7 @@ typedef struct AudioFrame {
 #define LARGEST_AUDIOFRAME_SIZE 9000
 
 // The maximum frame size, excluding the embedded videodata
-#define MAX_VIDEOFRAME_METADATA_SIZE (sizeof(VideoFrame) + sizeof(FractalCursorImage))
+#define MAX_VIDEOFRAME_METADATA_SIZE (sizeof(VideoFrame) + sizeof(WhistCursorImage))
 
 // The maximum allowed videodata size that can be embedded in a VideoFrame*
 // Setting frame->videodata_length to anything larger than this is invalid and will cause bugs
@@ -60,21 +60,21 @@ typedef struct AudioFrame {
  *
  * @param frame                    The frame who's data buffer should be written to
  *
- * @param cursor                   The FractalCursorImage who's cursor data should be embedded in
+ * @param cursor                   The WhistCursorImage who's cursor data should be embedded in
  *                                 the given frame. Pass NULL to embed no cursor whatsoever.
  *                                 Default of a 0'ed VideoFrame* is already a NULL cursor.
  */
-void set_frame_cursor_image(VideoFrame* frame, FractalCursorImage* cursor);
+void set_frame_cursor_image(VideoFrame* frame, WhistCursorImage* cursor);
 
 /**
- * @brief                          Get a pointer to the FractalCursorImage inside of the VideoFrame*
+ * @brief                          Get a pointer to the WhistCursorImage inside of the VideoFrame*
  *
  * @param frame                    The VideoFrame who's data buffer is being used
  *
- * @returns                        A pointer to the internal FractalCursorImage. May return NULL if
+ * @returns                        A pointer to the internal WhistCursorImage. May return NULL if
  *                                 no cursor was embedded.
  */
-FractalCursorImage* get_frame_cursor_image(VideoFrame* frame);
+WhistCursorImage* get_frame_cursor_image(VideoFrame* frame);
 
 /**
  * @brief                          Get a pointer to the videodata inside of the VideoFrame*

@@ -34,7 +34,7 @@ Defines
 #define KeyDown(input_device, fractal_keycode) emit_key_event(input_device, fractal_keycode, 1)
 
 unsigned int last_input_fcmsg_id = 0;
-FractalOSType input_os_type = WHIST_UNKNOWN_OS;
+WhistOSType input_os_type = WHIST_UNKNOWN_OS;
 
 /*
 ============================
@@ -42,7 +42,7 @@ Public Function Implementations
 ============================
 */
 
-void reset_input(FractalOSType os_type) {
+void reset_input(WhistOSType os_type) {
     /*
         Initialize the input system.
         NOTE: Should be used prior to every new client connection
@@ -53,19 +53,19 @@ void reset_input(FractalOSType os_type) {
     last_input_fcmsg_id = 0;
 }
 
-void update_keyboard_state(InputDevice* input_device, FractalClientMessage* fcmsg) {
+void update_keyboard_state(InputDevice* input_device, WhistClientMessage* fcmsg) {
     /*
         Updates the keyboard state on the server to match the client's
 
         Arguments:
             input_device (InputDevice*): The initialized input device struct defining
                 mouse and keyboard states for the user
-            fcmsg (FractalClientMessage*): The Whist message packet, defining one
+            fcmsg (WhistClientMessage*): The Whist message packet, defining one
                 keyboard event, to update the keyboard state
     */
 
     if (fcmsg->id <= last_input_fcmsg_id) {
-        // Ignore Old FractalClientMessage
+        // Ignore Old WhistClientMessage
         return;
     }
     last_input_fcmsg_id = fcmsg->id;
@@ -80,14 +80,14 @@ void update_keyboard_state(InputDevice* input_device, FractalClientMessage* fcms
     update_mapped_keyboard_state(input_device, input_os_type, fcmsg->keyboard_state);
 }
 
-bool replay_user_input(InputDevice* input_device, FractalClientMessage* fcmsg) {
+bool replay_user_input(InputDevice* input_device, WhistClientMessage* fcmsg) {
     /*
         Replayed a received user action on a server, by sending it to the OS
 
         Arguments:
             input_device (InputDevice*): The initialized input device struct defining
                 mouse and keyboard states for the user
-            fcmsg (FractalClientMessage*): The Whist message packet, defining one user
+            fcmsg (WhistClientMessage*): The Whist message packet, defining one user
                 action event, to replay on the computer
 
         Returns:
@@ -95,7 +95,7 @@ bool replay_user_input(InputDevice* input_device, FractalClientMessage* fcmsg) {
     */
 
     if (fcmsg->id <= last_input_fcmsg_id) {
-        // Ignore Old FractalClientMessage
+        // Ignore Old WhistClientMessage
         return true;
     }
     last_input_fcmsg_id = fcmsg->id;
@@ -140,14 +140,14 @@ bool replay_user_input(InputDevice* input_device, FractalClientMessage* fcmsg) {
     return true;
 }
 
-size_t input_keycodes(InputDevice* input_device, FractalKeycode* keycodes, size_t count) {
+size_t input_keycodes(InputDevice* input_device, WhistKeycode* keycodes, size_t count) {
     /*
         Updates the keyboard state on the server to match the client's
 
         Arguments:
             input_device (InputDevice*): The initialized input device struct defining
                 mouse and keyboard states for the user
-            keycodes (FractalKeycode*): A pointer to an array of keycodes to sequentially
+            keycodes (WhistKeycode*): A pointer to an array of keycodes to sequentially
                 input
             count (size_t): The number of keycodes to read from `keycodes`
 

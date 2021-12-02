@@ -288,7 +288,7 @@ TEST_F(CaptureStdoutTest, ServerParseArgsUsage) {
     whist_server_config config;
     int argc = 2;
 
-    char argv0[] = "./server/build64/FractalServer";
+    char argv0[] = "./server/build64/WhistServer";
     char argv1[] = "--help";
     char* argv[] = {argv0, argv1, NULL};
 
@@ -388,13 +388,13 @@ TEST_F(CaptureStdoutTest, LogStatistic) {
  * utils/color.c
  **/
 
-TEST(ProtocolTest, FractalColorTest) {
-    FractalRGBColor cyan = {0, 255, 255};
-    FractalRGBColor magenta = {255, 0, 255};
-    FractalRGBColor dark_gray = {25, 25, 25};
-    FractalRGBColor light_gray = {150, 150, 150};
-    FractalRGBColor fractal_purple_rgb = {79, 53, 222};
-    FractalYUVColor fractal_purple_yuv = {85, 198, 127};
+TEST(ProtocolTest, WhistColorTest) {
+    WhistRGBColor cyan = {0, 255, 255};
+    WhistRGBColor magenta = {255, 0, 255};
+    WhistRGBColor dark_gray = {25, 25, 25};
+    WhistRGBColor light_gray = {150, 150, 150};
+    WhistRGBColor fractal_purple_rgb = {79, 53, 222};
+    WhistYUVColor fractal_purple_yuv = {85, 198, 127};
 
     // equality works
     EXPECT_EQ(rgb_compare(cyan, cyan), 0);

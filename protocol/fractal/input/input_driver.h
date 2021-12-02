@@ -10,7 +10,7 @@ Usage
 
 Create an input device by calling `CreateInputDevice()`. Now, you may use this device to query
 keyboard state, or to emit mouse button, mouse motion, scroll, and keyboard events. These methods
-are used, for example, in input.c, to build `FractalClientMessage` handlers and to generate keyboard
+are used, for example, in input.c, to build `WhistClientMessage` handlers and to generate keyboard
 input from an arbitrary string.
 */
 
@@ -68,7 +68,7 @@ void destroy_input_device(InputDevice* input_device);
  * @returns                        1 if the queried modifier is active,
  *                                 0 if inactive, and -1 on error
  */
-int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode fractal_keycode);
+int get_keyboard_modifier_state(InputDevice* input_device, WhistKeycode fractal_keycode);
 
 /**
  * @brief                          Get the pressed/unpressed state of a
@@ -81,7 +81,7 @@ int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode fracta
  * @returns                        1 if the queried key is pressed,
  *                                 0 if unpressed, and -1 on error
  */
-int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_keycode);
+int get_keyboard_key_state(InputDevice* input_device, WhistKeycode fractal_keycode);
 
 /**
  * @brief                          Determine whether to ignore the client key state
@@ -95,7 +95,7 @@ int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_key
  * @returns                        1 if we ignore the client key state,
  *                                 0 if we take the client key state
  */
-int ignore_key_state(InputDevice* input_device, FractalKeycode fractal_keycode, bool active_pinch);
+int ignore_key_state(InputDevice* input_device, WhistKeycode fractal_keycode, bool active_pinch);
 
 /**
  * @brief                          Emit a keyboard press/unpress event
@@ -108,7 +108,7 @@ int ignore_key_state(InputDevice* input_device, FractalKeycode fractal_keycode, 
  *
  * @returns                        0 on success, -1 on failure
  */
-int emit_key_event(InputDevice* input_device, FractalKeycode fractal_keycode, int pressed);
+int emit_key_event(InputDevice* input_device, WhistKeycode fractal_keycode, int pressed);
 
 /**
  * @brief                          Emit a relative/absolute mouse motion event
@@ -142,7 +142,7 @@ int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int
  *
  * @returns                        0 on success, -1 on failure
  */
-int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button, int pressed);
+int emit_mouse_button_event(InputDevice* input_device, WhistMouseButton button, int pressed);
 
 /**
  * @brief                          Emit a low-resolution vertical or horizontal mouse
@@ -188,6 +188,6 @@ int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y)
  * @returns                        0 on success, -1 on failure
  */
 int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist,
-                            FractalMultigestureType gesture_type, bool active_gesture);
+                            WhistMultigestureType gesture_type, bool active_gesture);
 
 #endif  // INPUT_DRIVER_H

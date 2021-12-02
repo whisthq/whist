@@ -68,8 +68,8 @@ Private Functions
 ============================
 */
 
-bool clipboard_action_is_active(FractalClipboardActionType check_action_type);
-bool start_clipboard_transfer(FractalClipboardActionType new_clipboard_action_type);
+bool clipboard_action_is_active(WhistClipboardActionType check_action_type);
+bool start_clipboard_transfer(WhistClipboardActionType new_clipboard_action_type);
 void finish_active_transfer(bool action_complete);
 
 /*** Thread Functions ***/
@@ -82,13 +82,13 @@ Private Function Implementations
 ============================
 */
 
-bool clipboard_action_is_active(FractalClipboardActionType check_action_type) {
+bool clipboard_action_is_active(WhistClipboardActionType check_action_type) {
     /*
         Check whether there is an action of type `clipboard_action_type`
         currently active
 
         Arguments:
-            clipboard_action_type (FractalClipboardActionType): the action type to check for
+            clipboard_action_type (WhistClipboardActionType): the action type to check for
 
         NOTE: must be called with `current_clipboard_activity.clipboard_action_mutex` held
     */
@@ -107,12 +107,12 @@ bool clipboard_action_is_active(FractalClipboardActionType check_action_type) {
     return false;
 }
 
-bool start_clipboard_transfer(FractalClipboardActionType new_clipboard_action_type) {
+bool start_clipboard_transfer(WhistClipboardActionType new_clipboard_action_type) {
     /*
         Create the thread for the active clipboard transfer (push or pull).
 
         Arguments:
-            new_clipboard_action_type (FractalClipboardActionType):
+            new_clipboard_action_type (WhistClipboardActionType):
                 the new transfer type (PUSH or PULL)
 
         Returns:

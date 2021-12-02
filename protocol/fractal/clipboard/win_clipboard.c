@@ -95,7 +95,7 @@ WCHAR* lclipboard_directory() {
                                            CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, 0, &path))) {
             wcscpy(sz_path, path);
             CoTaskMemFree(path);
-            PathAppendW(sz_path, L"FractalCache");
+            PathAppendW(sz_path, L"WhistCache");
             if (!PathFileExistsW(sz_path)) {
                 if (!CreateDirectoryW(sz_path, NULL)) {
                     LOG_ERROR("Could not create directory: %S (Error %d)", sz_path, GetLastError());

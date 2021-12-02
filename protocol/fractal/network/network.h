@@ -228,11 +228,11 @@ typedef enum { ASK_INFO, POST_INFO } StunRequestType;
  *                           for DiffServ (DSCP) values, and https://www.tucny.com/Home/dscp-tos
  *                           for their corresponding TOS values.
  */
-typedef enum FractalTOSValue {
+typedef enum WhistTOSValue {
     TOS_DSCP_STANDARD_FORWARDING = 0x00,  //<<< Standard Forwarding (Default)
     TOS_DSCP_EXPEDITED_FORWARDING =
         0xb8  //<<< Expedited Forwarding (High Priority, for Video/Audio)
-} FractalTOSValue;
+} WhistTOSValue;
 
 typedef struct {
     StunRequestType type;
@@ -406,7 +406,7 @@ void set_timeout(SOCKET socket, int timeout_ms);
  * @param tos                      The TOS value to set. This should correspond to a
  *                                 DSCP value (see https://www.tucny.com/Home/dscp-tos)
  */
-void set_tos(SOCKET socket, FractalTOSValue tos);
+void set_tos(SOCKET socket, WhistTOSValue tos);
 
 /**
  * @brief                          Perform a UDP socket() syscall and set fds to

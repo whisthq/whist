@@ -37,7 +37,7 @@ typedef struct CaptureDevice {
     int height;
     int pitch;
     void* frame_data;
-    FractalRGBColor corner_color;
+    WhistRGBColor corner_color;
     void* internal;
 
 #ifdef __linux__

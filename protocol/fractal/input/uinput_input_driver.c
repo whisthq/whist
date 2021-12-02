@@ -290,7 +290,7 @@ const int linux_keycodes[KEYCODE_UPPERBOUND] = {
 
 // Whist only supports these 5 mouse buttons.
 const int linux_mouse_buttons[6] = {
-    0,           // 0 -> no FractalMouseButton
+    0,           // 0 -> no WhistMouseButton
     BTN_LEFT,    // 1 -> Left Button
     BTN_MIDDLE,  // 2 -> Middle Button
     BTN_RIGHT,   // 3 -> Right Button
@@ -418,7 +418,7 @@ void emit_input_event(int fd, int type, int code, int val) {
     write(fd, &ie, sizeof(ie));
 }
 
-int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode fractal_keycode) {
+int get_keyboard_modifier_state(InputDevice* input_device, WhistKeycode fractal_keycode) {
     switch (fractal_keycode) {
         case FK_CAPSLOCK:
             return input_device->caps_lock;
@@ -430,7 +430,7 @@ int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode fracta
     }
 }
 
-int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_keycode) {
+int get_keyboard_key_state(InputDevice* input_device, WhistKeycode fractal_keycode) {
     if ((int)fractal_keycode >= KEYCODE_UPPERBOUND) {
         return 0;
     } else {
@@ -438,13 +438,13 @@ int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_key
     }
 }
 
-int ignore_key_state(InputDevice* input_device, FractalKeycode fractal_keycode, bool active_pinch) {
+int ignore_key_state(InputDevice* input_device, WhistKeycode fractal_keycode, bool active_pinch) {
     /*
         Determine whether to ignore the client key state
 
         Argument:
             input_device (InputDevice*): The initialized input device to query
-            fractal_keycode (FractalKeycode): The Whist keycode to query
+            fractal_keycode (WhistKeycode): The Whist keycode to query
             active_pinch (bool): Whether the client has an active pinch gesture
 
         Returns:
@@ -459,7 +459,7 @@ int ignore_key_state(InputDevice* input_device, FractalKeycode fractal_keycode, 
     return 0;
 }
 
-int emit_key_event(InputDevice* input_device, FractalKeycode fractal_keycode, int pressed) {
+int emit_key_event(InputDevice* input_device, WhistKeycode fractal_keycode, int pressed) {
     emit_input_event(input_device->fd_keyboard, EV_KEY, GetLinuxKeyCode(fractal_keycode), pressed);
     emit_input_event(input_device->fd_keyboard, EV_SYN, SYN_REPORT, 0);
     input_device->keyboard_state[fractal_keycode] = pressed;
@@ -493,7 +493,7 @@ int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int
     return 0;
 }
 
-int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button, int pressed) {
+int emit_mouse_button_event(InputDevice* input_device, WhistMouseButton button, int pressed) {
     emit_input_event(input_device->fd_relmouse, EV_KEY, GetLinuxMouseButton(button), pressed);
     emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
     return 0;
@@ -519,7 +519,7 @@ int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y)
 }
 
 int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist,
-                            FractalMultigestureType gesture_type, bool active_gesture) {
+                            WhistMultigestureType gesture_type, bool active_gesture) {
     /*
         Emit a trackpad multigesture event. Only handles pinch events
         for now by holding the LCTRL key and scrolling.
@@ -528,7 +528,7 @@ int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_di
             input_device (InputDevice*): The initialized input device to write
             d_theta (float): How much the fingers rotated during this motion
             d_dist (float): How much the fingers pinched during this motion
-            gesture_type (FractalMultigestureType): The gesture type (rotate, pinch open, pinch
+            gesture_type (WhistMultigestureType): The gesture type (rotate, pinch open, pinch
                 close)
             active_gesture (bool): Whether this event happened mid-multigesture
 

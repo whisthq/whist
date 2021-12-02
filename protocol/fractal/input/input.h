@@ -37,7 +37,7 @@ Public Functions
  *
  * @param os_type                  The OS type to use for keyboard mapping
  */
-void reset_input(FractalOSType os_type);
+void reset_input(WhistOSType os_type);
 
 /**
  * @brief                          Replayed a received user action on a server,
@@ -52,7 +52,7 @@ void reset_input(FractalOSType os_type);
  * @returns                        True if it replayed the event, False
  *                                 otherwise
  */
-bool replay_user_input(InputDevice* input_device, FractalClientMessage* fcmsg);
+bool replay_user_input(InputDevice* input_device, WhistClientMessage* fcmsg);
 
 /**
  * @brief                          Updates the keyboard state on the server to
@@ -64,7 +64,7 @@ bool replay_user_input(InputDevice* input_device, FractalClientMessage* fcmsg);
  * @param fcmsg                     The Whist message packet, defining one
  *                                 keyboard event, to update the keyboard state
  */
-void update_keyboard_state(InputDevice* input_device, FractalClientMessage* fcmsg);
+void update_keyboard_state(InputDevice* input_device, WhistClientMessage* fcmsg);
 
 /**
  * @brief                          Updates the keyboard state on the server to
@@ -81,6 +81,6 @@ void update_keyboard_state(InputDevice* input_device, FractalClientMessage* fcms
  * @returns                        The number of keycodes successfully inputted from
  *                                 the array
  */
-size_t input_keycodes(InputDevice* input_device, FractalKeycode* keycodes, size_t count);
+size_t input_keycodes(InputDevice* input_device, WhistKeycode* keycodes, size_t count);
 
 #endif  // INPUT_H

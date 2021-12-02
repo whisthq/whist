@@ -233,7 +233,7 @@ typedef enum CaptureDeviceType { NVIDIA_DEVICE, X11_DEVICE } CaptureDeviceType;
  * @brief   Keycodes.
  * @details Different accepted keycodes from client input.
  */
-typedef enum FractalKeycode {
+typedef enum WhistKeycode {
     FK_UNKNOWN = 0,        ///< 0
     FK_A = 4,              ///< 4
     FK_B = 5,              ///< 5
@@ -356,7 +356,7 @@ typedef enum FractalKeycode {
     FK_AUDIOPLAY = 261,    ///< 261
     FK_AUDIOMUTE = 262,    ///< 262
     FK_MEDIASELECT = 263,  ///< 263
-} FractalKeycode;
+} WhistKeycode;
 // An (exclusive) upper bound on any keycode
 #define KEYCODE_UPPERBOUND 265
 
@@ -365,7 +365,7 @@ typedef enum FractalKeycode {
  * @details Codes for when keyboard input is modified. These values may be
  *          bitwise OR'd together.
  */
-typedef enum FractalKeymod {
+typedef enum WhistKeymod {
     MOD_NONE = 0x0000,    ///< No modifier key active.
     MOD_LSHIFT = 0x0001,  ///< `LEFT SHIFT` is currently active.
     MOD_RSHIFT = 0x0002,  ///< `RIGHT SHIFT` is currently active.
@@ -375,26 +375,26 @@ typedef enum FractalKeymod {
     MOD_RALT = 0x0200,    ///< `RIGHT ALT` is currently active.
     MOD_NUM = 0x1000,     ///< `NUMLOCK` is currently active.
     MOD_CAPS = 0x2000,    ///< `CAPSLOCK` is currently active.
-} FractalKeymod;
+} WhistKeymod;
 
 /**
  * @brief   Mouse button.
  * @details Codes for encoding mouse actions.
  */
-typedef enum FractalMouseButton {
+typedef enum WhistMouseButton {
     MOUSE_L = 1,       ///< Left mouse button.
     MOUSE_MIDDLE = 2,  ///< Middle mouse button.
     MOUSE_R = 3,       ///< Right mouse button.
     MOUSE_X1 = 4,      ///< Extra mouse button 1.
     MOUSE_X2 = 5,      ///< Extra mouse button 2.
     MOUSE_MAKE_32 = 0x7FFFFFFF,
-} FractalMouseButton;
+} WhistMouseButton;
 
 /**
  * @brief   Cursor properties.
  * @details Track important information on cursor.
  */
-typedef struct FractalCursor {
+typedef struct WhistCursor {
     uint32_t size;       ///< Size in bytes of the cursor image buffer.
     uint32_t positionX;  ///< When leaving relative mode, the horizontal position
                          ///< in screen coordinates where the cursor reappears.
@@ -416,7 +416,7 @@ typedef struct FractalCursor {
                          ///< submit mouse motion in relative distances rather than
                          ///< absolute screen coordinates.
     uint8_t __pad[1];
-} FractalCursor;
+} WhistCursor;
 
 /**
  * @brief   Interaction mode.
@@ -428,59 +428,59 @@ typedef enum InteractionMode { CONTROL = 1, SPECTATE = 2, EXCLUSIVE_CONTROL = 3 
  * @brief   Keyboard message.
  * @details Messages related to keyboard usage.
  */
-typedef struct FractalKeyboardMessage {
-    FractalKeycode code;  ///< Keyboard input.
-    FractalKeymod mod;    ///< Stateful modifier keys applied to keyboard input.
+typedef struct WhistKeyboardMessage {
+    WhistKeycode code;  ///< Keyboard input.
+    WhistKeymod mod;    ///< Stateful modifier keys applied to keyboard input.
     bool pressed;         ///< `true` if pressed, `false` if released.
     uint8_t __pad[3];
-} FractalKeyboardMessage;
+} WhistKeyboardMessage;
 
 /**
  * @brief   Mouse button message.
  * @details Message from mouse button.
  */
-typedef struct FractalMouseButtonMessage {
-    FractalMouseButton button;  ///< Mouse button.
+typedef struct WhistMouseButtonMessage {
+    WhistMouseButton button;  ///< Mouse button.
     bool pressed;               ///< `true` if clicked, `false` if released.
     uint8_t __pad[3];
-} FractalMouseButtonMessage;
+} WhistMouseButtonMessage;
 
 /**
  * @brief   Scroll momentum type.
  * @details The type of scroll momentum.
  */
-typedef enum FractalMouseWheelMomentumType {
+typedef enum WhistMouseWheelMomentumType {
     MOUSEWHEEL_MOMENTUM_NONE = 0,
     MOUSEWHEEL_MOMENTUM_BEGIN = 1,
     MOUSEWHEEL_MOMENTUM_ACTIVE = 2,
     MOUSEWHEEL_MOMENTUM_END = 3,
-} FractalMouseWheelMomentumType;
+} WhistMouseWheelMomentumType;
 
 /**
  * @brief   Mouse wheel message.
  * @details Message from mouse wheel.
  */
-typedef struct FractalMouseWheelMessage {
+typedef struct WhistMouseWheelMessage {
     int32_t x;        ///< Horizontal delta of mouse wheel rotation. Negative values
                       ///< scroll left. Only used for Windows server.
     int32_t y;        ///< Vertical delta of mouse wheel rotation. Negative values
                       ///< scroll up. Only used for Windows server.
     float precise_x;  ///< Horizontal floating delta of mouse wheel/trackpad scrolling.
     float precise_y;  ///< Vertical floating delta of mouse wheel/trackpad scrolling.
-} FractalMouseWheelMessage;
+} WhistMouseWheelMessage;
 
 /**
  * @brief   Mouse motion message.
- * @details Member of FractalMessage. Mouse motion can be sent in either
+ * @details Member of WhistMessage. Mouse motion can be sent in either
  *          relative or absolute mode via the `relative` member. Absolute mode treats
  *          the `x` and `y` values as the exact destination for where the cursor will
  *          appear. These values are sent from the client in device screen coordinates
  *          and are translated in accordance with the values set via
- *          FractalClientSetDimensions. Relative mode `x` and `y` values are not
- *          affected by FractalClientSetDimensions and move the cursor with a signed
+ *          WhistClientSetDimensions. Relative mode `x` and `y` values are not
+ *          affected by WhistClientSetDimensions and move the cursor with a signed
  *          delta value from its previous location.
  */
-typedef struct FractalMouseMotionMessage {
+typedef struct WhistMouseMotionMessage {
     int32_t x;      ///< The absolute horizontal screen coordinate of the cursor  if
                     ///< `relative` is `false`, or the delta (can be negative) if
                     ///< `relative` is `true`.
@@ -492,81 +492,81 @@ typedef struct FractalMouseMotionMessage {
     int x_nonrel;
     int y_nonrel;
     uint8_t __pad[3];
-} FractalMouseMotionMessage;
+} WhistMouseMotionMessage;
 
 /**
  * @brief   Multigesture type.
  * @details The type of multigesture.
  */
-typedef enum FractalMultigestureType {
+typedef enum WhistMultigestureType {
     MULTIGESTURE_NONE = 0,
     MULTIGESTURE_PINCH_OPEN = 1,
     MULTIGESTURE_PINCH_CLOSE = 2,
     MULTIGESTURE_ROTATE = 3,
     MULTIGESTURE_CANCEL = 4,
-} FractalMultigestureType;
+} WhistMultigestureType;
 
 /**
  * @brief   OS type
  * @details An enum of OS types
  */
-typedef enum FractalOSType {
+typedef enum WhistOSType {
     WHIST_UNKNOWN_OS = 0,
     WHIST_WINDOWS = 1,
     WHIST_APPLE = 2,
     WHIST_LINUX = 3,
-} FractalOSType;
+} WhistOSType;
 
 /**
  * @brief   Multigesture message.
  * @details Message from multigesture event on touchpad.
  */
-typedef struct FractalMultigestureMessage {
+typedef struct WhistMultigestureMessage {
     float d_theta;                         ///< The amount the fingers rotated.
     float d_dist;                          ///< The amount the fingers pinched.
     float x;                               ///< Normalized gesture x-axis center.
     float y;                               ///< Normalized gesture y-axis center.
     uint16_t num_fingers;                  ///< Number of fingers used in the gesture.
     bool active_gesture;                   ///< Whether this multigesture is already active.
-    FractalMultigestureType gesture_type;  ///< Multigesture type
-} FractalMultigestureMessage;
+    WhistMultigestureType gesture_type;  ///< Multigesture type
+} WhistMultigestureMessage;
 
 /**
  * @brief   Discovery request message.
  * @details Discovery packet to be sent from client to server.
  */
-typedef struct FractalDiscoveryRequestMessage {
+typedef struct WhistDiscoveryRequestMessage {
     int user_id;
     char user_email[WHIST_ARGS_MAXLEN + 1];
-    FractalOSType os;
-} FractalDiscoveryRequestMessage;
+    WhistOSType os;
+} WhistDiscoveryRequestMessage;
 
 /**
  * @brief   Discovery reply message.
- * @details Message sent by server in response to a FractalDiscoveryRequestMessage.
+ * @details Message sent by server in response to a WhistDiscoveryRequestMessage.
  */
-typedef struct FractalDiscoveryReplyMessage {
+typedef struct WhistDiscoveryReplyMessage {
     int udp_port;
     int tcp_port;
     int connection_id;
     int audio_sample_rate;
-} FractalDiscoveryReplyMessage;
+} WhistDiscoveryReplyMessage;
 
 /**
  * @brief   Client message type.
  * @details Each message will have a specified type to indicate what information
  *          the packet is carrying between client and server.
  */
-typedef enum FractalClientMessageType {
+typedef enum WhistClientMessageType {
     CMESSAGE_NONE = 0,     ///< No Message
-    MESSAGE_KEYBOARD = 1,  ///< `keyboard` FractalKeyboardMessage is valid in
+    MESSAGE_KEYBOARD = 1,  ///< `keyboard` WhistKeyboardMessage is valid in
                            ///< FractClientMessage.
     MESSAGE_KEYBOARD_STATE = 2,
-    MESSAGE_MOUSE_BUTTON = 3,  ///< `mouseButton` FractalMouseButtonMessage is
+    MESSAGE_MOUSE_BUTTON = 3,  ///< `mouseButton` WhistMouseButtonMessage is
                                ///< valid in FractClientMessage.
-    MESSAGE_MOUSE_WHEEL = 4,   ///< `mouseWheel` FractalMouseWheelMessage is
+    MESSAGE_MOUSE_WHEEL = 4,   ///< `mouseWheel` WhistMouseWheelMessage is
                                ///< valid in FractClientMessage.
-    MESSAGE_MOUSE_MOTION = 5,  ///< `mouseMotion` FractalMouseMotionMessage is
+    MESSAGE_MOUSE_MOTION = 5,  ///< `mouseMotion` WhistMouseMotionMessage is
 
     MESSAGE_MULTIGESTURE = 6,       ///< Gesture Event
     MESSAGE_RELEASE = 7,            ///< Message instructing the host to release all input
@@ -586,17 +586,17 @@ typedef enum FractalClientMessageType {
     MESSAGE_TCP_RECOVERY = 116,
 
     CMESSAGE_QUIT = 999,
-} FractalClientMessageType;
+} WhistClientMessageType;
 
 /**
  * @brief   Integer exit code.
  * @details So the parent process of the protocol can receive the exit code.
  */
-typedef enum FractalExitCode {
+typedef enum WhistExitCode {
     WHIST_EXIT_SUCCESS = 0,
     WHIST_EXIT_FAILURE = 1,
     WHIST_EXIT_CLI = 2
-} FractalExitCode;
+} WhistExitCode;
 
 typedef struct {
     short num_keycodes;
@@ -604,7 +604,7 @@ typedef struct {
     bool num_lock;
     char state[KEYCODE_UPPERBOUND];
     bool active_pinch;
-} FractalKeyboardState;
+} WhistKeyboardState;
 
 /* position of bit within character */
 #define BIT_CHAR(bit) ((bit) / CHAR_BIT)
@@ -620,18 +620,18 @@ typedef struct {
  * @brief   Client message.
  * @details Message from a Whist client to a Whist server.
  */
-typedef struct FractalClientMessage {
-    FractalClientMessageType type;  ///< Input message type.
+typedef struct WhistClientMessage {
+    WhistClientMessageType type;  ///< Input message type.
     unsigned int id;
     union {
-        FractalKeyboardMessage keyboard;                  ///< Keyboard message.
-        FractalMouseButtonMessage mouseButton;            ///< Mouse button message.
-        FractalMouseWheelMessage mouseWheel;              ///< Mouse wheel message.
-        FractalMouseMotionMessage mouseMotion;            ///< Mouse motion message.
-        FractalDiscoveryRequestMessage discoveryRequest;  ///< Discovery request message.
+        WhistKeyboardMessage keyboard;                  ///< Keyboard message.
+        WhistMouseButtonMessage mouseButton;            ///< Mouse button message.
+        WhistMouseWheelMessage mouseWheel;              ///< Mouse wheel message.
+        WhistMouseMotionMessage mouseMotion;            ///< Mouse motion message.
+        WhistDiscoveryRequestMessage discoveryRequest;  ///< Discovery request message.
 
         // MESSAGE_MULTIGESTURE
-        FractalMultigestureMessage multigesture;  ///< Multigesture message.
+        WhistMultigestureMessage multigesture;  ///< Multigesture message.
 
         // MESSAGE_MBPS
         struct {
@@ -668,7 +668,7 @@ typedef struct FractalClientMessage {
         } bitarray_nack;
 
         // MESSAGE_KEYBOARD_STATE
-        FractalKeyboardState keyboard_state;
+        WhistKeyboardState keyboard_state;
 
         // MESSAGE_IFRAME_REQUEST
         // TODO: Remove this boolean
@@ -681,13 +681,13 @@ typedef struct FractalClientMessage {
         // CMESSAGE_CLIPBOARD
         ClipboardData clipboard;
     };
-} FractalClientMessage;
+} WhistClientMessage;
 
 /**
  * @brief   Server message type.
  * @details Type of message being sent from a Whist server to a Whist client.
  */
-typedef enum FractalServerMessageType {
+typedef enum WhistServerMessageType {
     SMESSAGE_NONE = 0,  ///< No Message
     MESSAGE_PONG = 1,
     MESSAGE_TCP_PONG = 2,
@@ -698,14 +698,14 @@ typedef enum FractalServerMessageType {
     SMESSAGE_OPEN_URI = 7,
     SMESSAGE_FULLSCREEN = 8,
     SMESSAGE_QUIT = 100,
-} FractalServerMessageType;
+} WhistServerMessageType;
 
 /**
  * @brief   Server message.
  * @details Message from a Whist server to a Whist client.
  */
-typedef struct FractalServerMessage {
-    FractalServerMessageType type;  ///< Input message type.
+typedef struct WhistServerMessage {
+    WhistServerMessageType type;  ///< Input message type.
     union {
         int ping_id;
         int frequency;
@@ -718,15 +718,15 @@ typedef struct FractalServerMessage {
         char init_msg[0];
         char requested_uri[0];
     };
-} FractalServerMessage;
+} WhistServerMessage;
 
 /* @brief   Packet destination. (unused)
  * @details Host and port of a message destination.
  */
-typedef struct FractalDestination {
+typedef struct WhistDestination {
     int host;
     int port;
-} FractalDestination;
+} WhistDestination;
 
 /* @brief   Bit array object.
  * @details Number of bits in the bitarray and bitarray in unsigned char format.
@@ -788,19 +788,19 @@ bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
                                   char* hex_private_key);
 
 /**
- * @brief                          Calculate the size of a FractalClientMessage
+ * @brief                          Calculate the size of a WhistClientMessage
  *                                 struct
  *
  * @param fcmsg                     The Whist Client Message to find the size
  *
  * @returns                        The size of the Whist Client Message struct
  */
-int get_fcmsg_size(FractalClientMessage* fcmsg);
+int get_fcmsg_size(WhistClientMessage* fcmsg);
 
 /**
  * @brief                          Terminates the protocol
  */
-NORETURN void terminate_protocol(FractalExitCode exit_code);
+NORETURN void terminate_protocol(WhistExitCode exit_code);
 
 /**
  * @brief                          Safely copy a string from source to destination.

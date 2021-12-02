@@ -157,7 +157,7 @@ void update_server_bitrate() {
     */
     if (update_bitrate) {
         update_bitrate = false;
-        FractalClientMessage fcmsg = {0};
+        WhistClientMessage fcmsg = {0};
         fcmsg.type = MESSAGE_MBPS;
         fcmsg.bitrate_data.bitrate = client_max_bitrate;
         fcmsg.bitrate_data.burst_bitrate = max_burst_bitrate;
@@ -237,7 +237,7 @@ int multithreaded_sync_udp_packets(void* opaque) {
                 break;
             }
             case PACKET_MESSAGE: {
-                TIME_RUN(handle_server_message((FractalServerMessage*)packet->data,
+                TIME_RUN(handle_server_message((WhistServerMessage*)packet->data,
                                                (size_t)packet->payload_size),
                          SERVER_HANDLE_MESSAGE_UDP, statistics_timer);
                 break;
@@ -289,7 +289,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
                  statistics_timer);
 
         if (packet) {
-            TIME_RUN(handle_server_message((FractalServerMessage*)packet->data,
+            TIME_RUN(handle_server_message((WhistServerMessage*)packet->data,
                                            (size_t)packet->payload_size),
                      SERVER_HANDLE_MESSAGE_TCP, statistics_timer);
             free_packet(socket_context, packet);
@@ -297,11 +297,11 @@ int multithreaded_sync_tcp_packets(void* opaque) {
 
         ClipboardData* clipboard_chunk = pull_clipboard_chunk();
         if (clipboard_chunk) {
-            FractalClientMessage* fcmsg = allocate_region(
-                sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard_chunk->size);
+            WhistClientMessage* fcmsg = allocate_region(
+                sizeof(WhistClientMessage) + sizeof(ClipboardData) + clipboard_chunk->size);
 
             // Init header to 0 to prevent sending uninitialized packets over the network
-            memset(fcmsg, 0, sizeof(FractalClientMessage));
+            memset(fcmsg, 0, sizeof(WhistClientMessage));
             fcmsg->type = CMESSAGE_CLIPBOARD;
             memcpy(&fcmsg->clipboard, clipboard_chunk,
                    sizeof(ClipboardData) + clipboard_chunk->size);

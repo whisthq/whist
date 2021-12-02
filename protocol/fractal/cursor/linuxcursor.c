@@ -95,7 +95,7 @@ void init_cursors() {
 }
 
 /**
- * @brief Matches the cursor image from the screen to a FractalCursorID
+ * @brief Matches the cursor image from the screen to a WhistCursorID
  *
  * TODO: (abecohen) X11 cursor fonts are overridden by the running application.
  * In this case, chrome will override the cursor library and use its own. If
@@ -103,10 +103,10 @@ void init_cursors() {
  * we may be able to just match the cursor via the name parameter in cursor_image.
  *
  * @param cursor_image the cursor image from XFixesGetCursorImage
- * @return FractalCursorID, INVALID when no matching FractalCursorID found
+ * @return WhistCursorID, INVALID when no matching WhistCursorID found
  */
-FractalCursorID get_cursor_id(XFixesCursorImage* cursor_image) {
-    FractalCursorID id = INVALID;
+WhistCursorID get_cursor_id(XFixesCursorImage* cursor_image) {
+    WhistCursorID id = INVALID;
 
     // Need to multiply the size by 4, as the width*height describes
     // number of pixels, which are 32 bit, so 4 bytes each.
@@ -179,15 +179,15 @@ FractalCursorID get_cursor_id(XFixesCursorImage* cursor_image) {
     return id;
 }
 
-void get_current_cursor(FractalCursorImage* image) {
+void get_current_cursor(WhistCursorImage* image) {
     /*
         Returns the current cursor image
 
         Returns:
-            (FractalCursorImage): Current FractalCursorImage
+            (WhistCursorImage): Current WhistCursorImage
     */
 
-    memset(image, 0, sizeof(FractalCursorImage));
+    memset(image, 0, sizeof(WhistCursorImage));
     image->cursor_id = WHIST_CURSOR_ARROW;
     image->cursor_state = CURSOR_STATE_VISIBLE;
     if (disp) {

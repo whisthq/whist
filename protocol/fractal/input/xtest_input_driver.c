@@ -309,7 +309,7 @@ void destroy_input_device(InputDevice* input_device) {
     return;
 }
 
-int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode fractal_keycode) {
+int get_keyboard_modifier_state(InputDevice* input_device, WhistKeycode fractal_keycode) {
     switch (fractal_keycode) {
         case FK_CAPSLOCK:
             return input_device->caps_lock;
@@ -321,7 +321,7 @@ int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode fracta
     }
 }
 
-int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_keycode) {
+int get_keyboard_key_state(InputDevice* input_device, WhistKeycode fractal_keycode) {
     if ((int)fractal_keycode >= KEYCODE_UPPERBOUND) {
         return 0;
     } else {
@@ -329,11 +329,11 @@ int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_key
     }
 }
 
-int ignore_key_state(InputDevice* input_device, FractalKeycode fractal_keycode, bool active_pinch) {
+int ignore_key_state(InputDevice* input_device, WhistKeycode fractal_keycode, bool active_pinch) {
     return 0;
 }
 
-int emit_key_event(InputDevice* input_device, FractalKeycode fractal_keycode, int pressed) {
+int emit_key_event(InputDevice* input_device, WhistKeycode fractal_keycode, int pressed) {
     XLockDisplay(input_device->display);
     KeyCode kcode = XKeysymToKeycode(input_device->display, GetX11KeySym(fractal_keycode));
     if (!kcode) {
@@ -370,7 +370,7 @@ int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int
     return 0;
 }
 
-int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button, int pressed) {
+int emit_mouse_button_event(InputDevice* input_device, WhistMouseButton button, int pressed) {
     XLockDisplay(input_device->display);
     XTestFakeButtonEvent(input_device->display, button, pressed, CurrentTime);
     XSync(input_device->display, false);
@@ -414,7 +414,7 @@ int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y)
 }
 
 int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist,
-                            FractalMultigestureType gesture_type, bool active_gesture) {
+                            WhistMultigestureType gesture_type, bool active_gesture) {
     UNUSED(input_device);
     UNUSED(d_theta);
     UNUSED(d_dist);

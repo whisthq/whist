@@ -71,14 +71,14 @@ void init_native_window_options(SDL_Window *window) {
     [native_window setTitleVisibility:NSWindowTitleHidden];
 }
 
-int set_native_window_color(SDL_Window *window, FractalRGBColor color) {
+int set_native_window_color(SDL_Window *window, WhistRGBColor color) {
     /*
         Set the color of the titlebar of the native macOS window, and the corresponding
         titlebar text color.
 
         Arguments:
             window (SDL_Window*):       SDL window wrapper for the NSWindow whose titlebar to modify
-            color (FractalRGBColor):    The RGB color to use when setting the titlebar color
+            color (WhistRGBColor):    The RGB color to use when setting the titlebar color
 
         Returns:
             (int): 0 on success, -1 on failure.
@@ -123,9 +123,9 @@ int get_native_window_dpi(SDL_Window *window) {
     return (int)(96 * scale_factor);
 }
 
-FractalYUVColor get_frame_color(uint8_t *y_data, uint8_t *u_data, uint8_t *v_data,
+WhistYUVColor get_frame_color(uint8_t *y_data, uint8_t *u_data, uint8_t *v_data,
                                 bool using_hardware) {
-    FractalYUVColor yuv_color = {0};
+    WhistYUVColor yuv_color = {0};
     if (using_hardware) {
         if (y_data) {
             CVPixelBufferRef frame_data = (CVPixelBufferRef)y_data;
@@ -198,7 +198,7 @@ void declare_user_activity() {
         if (!assertion_set) {
             IOReturn result =
                 IOPMAssertionCreateWithName(kIOPMAssertionTypeNoDisplaySleep, kIOPMAssertionLevelOn,
-                                            CFSTR("FractalNewFrameActivity"), &power_assertion_id);
+                                            CFSTR("WhistNewFrameActivity"), &power_assertion_id);
             // Immediatelly calling IOPMAssertionRelease here,
             // Doesn't seem to fully reset the screensaver timer
             // Instead, we need to call IOPMAssertionRelease a minute later

@@ -1,7 +1,7 @@
 /**
  * Copyright 2021 Whist Technologies, Inc.
  * @file client_utils.c
- * @brief This file contains helper functions for FractalClient
+ * @brief This file contains helper functions for WhistClient
 ============================
 Usage
 ============================
@@ -591,13 +591,13 @@ int free_parsed_args(void) {
     return 0;
 }
 
-int prepare_init_to_server(FractalDiscoveryRequestMessage *fcmsg, char *email) {
+int prepare_init_to_server(WhistDiscoveryRequestMessage *fcmsg, char *email) {
     /*
         Prepare for initial request to server by setting
         user email and time data
 
         Arguments:
-            fcmsg (FractalDiscoveryRequestMessage*): pointer to the discovery
+            fcmsg (WhistDiscoveryRequestMessage*): pointer to the discovery
                 request message packet to be sent to the server
             email (char*): user email
 
@@ -663,7 +663,7 @@ int update_mouse_motion() {
         }
 
         // Send new mouse locations to server
-        FractalClientMessage fcmsg = {0};
+        WhistClientMessage fcmsg = {0};
         fcmsg.type = MESSAGE_MOUSE_MOTION;
         fcmsg.mouseMotion.relative = mouse_state.is_relative;
         fcmsg.mouseMotion.x = x;
@@ -684,7 +684,7 @@ int update_mouse_motion() {
 void send_message_dimensions() {
     // Let the server know the new dimensions so that it
     // can change native dimensions for monitor
-    FractalClientMessage fcmsg = {0};
+    WhistClientMessage fcmsg = {0};
     fcmsg.type = MESSAGE_DIMENSIONS;
     fcmsg.dimensions.width = output_width;
     fcmsg.dimensions.height = output_height;
@@ -704,7 +704,7 @@ void nack_packet(WhistPacketType frame_type, int id, int index) {
             id (int): Frame ID of the packet
             index (int): index of the packet
             */
-    FractalClientMessage fcmsg = {0};
+    WhistClientMessage fcmsg = {0};
     fcmsg.type = MESSAGE_NACK;
     fcmsg.simple_nack.type = frame_type;
     fcmsg.simple_nack.id = id;

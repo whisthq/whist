@@ -19,7 +19,7 @@ from the color.
 Testing
 ============================
 
-The functionality provided by this file is tested in `test/ClientTest.cpp`, in `FractalColorTest`.
+The functionality provided by this file is tested in `test/ClientTest.cpp`, in `WhistColorTest`.
 */
 
 /*
@@ -40,21 +40,21 @@ Custom Types
 
 /// @brief RGB Color.
 /// @details Red, green, and blue are in [0,255].
-typedef struct FractalRGBColor {
+typedef struct WhistRGBColor {
     uint8_t red;    //<<< Red component
     uint8_t green;  //<<< Green component
     uint8_t blue;   //<<< Blue component
-} FractalRGBColor;
+} WhistRGBColor;
 
 /// @brief YUV Color.
 /// @details Y', U, and V are in [0,255], and correspond to the values in
 ///          YUV420p data. Y' is luma, U is blue-projected chrominance, and
 ///          V is red-projected chrominance.
-typedef struct FractalYUVColor {
+typedef struct WhistYUVColor {
     uint8_t y;  //<<< Y component
     uint8_t u;  //<<< U component
     uint8_t v;  //<<< V component
-} FractalYUVColor;
+} WhistYUVColor;
 
 /*
 ============================
@@ -70,7 +70,7 @@ Public Functions
  * @returns                        A filled struct with the converted color, or black {0} on
  *                                 failure.
  */
-FractalRGBColor yuv_to_rgb(FractalYUVColor yuv_color);
+WhistRGBColor yuv_to_rgb(WhistYUVColor yuv_color);
 
 /**
  * @brief                          Compare two RGB colors for equality
@@ -81,7 +81,7 @@ FractalRGBColor yuv_to_rgb(FractalYUVColor yuv_color);
  *
  * @returns                        0 if the colors are equal, else 1
  */
-int rgb_compare(FractalRGBColor lhs, FractalRGBColor rhs);
+int rgb_compare(WhistRGBColor lhs, WhistRGBColor rhs);
 
 /**
  * @brief                          Figure out whether a given background color needs foreground text
@@ -93,6 +93,6 @@ int rgb_compare(FractalRGBColor lhs, FractalRGBColor rhs);
  * @returns                        True if the color needs dark text, and false if the color needs
  *                                 light text.
  */
-bool color_requires_dark_text(FractalRGBColor rgb_color);
+bool color_requires_dark_text(WhistRGBColor rgb_color);
 
 #endif  // COLOR_H

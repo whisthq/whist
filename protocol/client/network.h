@@ -72,13 +72,13 @@ int close_connections(void);
 int send_server_quit_messages(int num_messages);
 
 /**
- * @brief                          Send a FractalMessage from client to server
+ * @brief                          Send a WhistMessage from client to server
  *
- * @param fcmsg                     FractalMessage struct to send as packet
+ * @param fcmsg                     WhistMessage struct to send as packet
  *
  * @returns                        0 if succeeded, else -1
  */
-int send_fcmsg(FractalClientMessage* fcmsg);
+int send_fcmsg(WhistClientMessage* fcmsg);
 
 /**
  * @brief                           Send a ping with ID ping_id to the server

@@ -41,16 +41,16 @@ Custom Types
  * @brief   Cursor state.
  * @details State of the cursor on the rendered screen.
  */
-typedef enum FractalCursorState {
+typedef enum WhistCursorState {
     CURSOR_STATE_HIDDEN = 0,
     CURSOR_STATE_VISIBLE = 1
-} FractalCursorState;
+} WhistCursorState;
 
 /**
  * @brief   Cursor ID.
  * @details The type of the cursor showing up on the screen.
  */
-typedef enum FractalCursorID {
+typedef enum WhistCursorID {
     WHIST_CURSOR_ARROW,
     WHIST_CURSOR_IBEAM,
     WHIST_CURSOR_WAIT,
@@ -64,22 +64,22 @@ typedef enum FractalCursorID {
     WHIST_CURSOR_NO,
     WHIST_CURSOR_HAND,
     INVALID
-} FractalCursorID;
+} WhistCursorID;
 
 /**
  * @brief   Cursor image.
  * @details The image used for the rendered cursor.
  */
-typedef struct FractalCursorImage {
-    FractalCursorID cursor_id;
-    FractalCursorState cursor_state;
+typedef struct WhistCursorImage {
+    WhistCursorID cursor_id;
+    WhistCursorState cursor_state;
     bool using_bmp;
     unsigned short bmp_width;
     unsigned short bmp_height;
     unsigned short bmp_hot_x;
     unsigned short bmp_hot_y;
     uint32_t bmp[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT];
-} FractalCursorImage;
+} WhistCursorImage;
 
 /*
 ============================
@@ -95,8 +95,8 @@ void init_cursors();
 /**
  * @brief                          Returns the current cursor image
  *
- * @param image                    FractalCursorImage buffer to write to
+ * @param image                    WhistCursorImage buffer to write to
  */
-void get_current_cursor(FractalCursorImage* image);
+void get_current_cursor(WhistCursorImage* image);
 
 #endif  // CURSOR_H

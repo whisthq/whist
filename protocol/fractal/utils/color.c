@@ -30,15 +30,15 @@ Public Function Implementations
 
 #define CLAMP_COLOR(x) (uint8_t)(((x) < 0) ? 0 : (((x) > 255) ? 255 : (x)))
 
-FractalRGBColor yuv_to_rgb(FractalYUVColor yuv_color) {
+WhistRGBColor yuv_to_rgb(WhistYUVColor yuv_color) {
     /*
         Convert a color from YUV to RGB.
 
         Arguments:
-            yuv_color (FractalYUVColor): YUV color to convert to RGB
+            yuv_color (WhistYUVColor): YUV color to convert to RGB
 
         Return:
-            rgb_color (FractalRGBColor): The converted color, or black {0} on failure.
+            rgb_color (WhistRGBColor): The converted color, or black {0} on failure.
     */
 
     float y_delta = (float)(yuv_color.y - 16);
@@ -49,19 +49,19 @@ FractalRGBColor yuv_to_rgb(FractalYUVColor yuv_color) {
     int g_component = lround(1.164 * y_delta - 0.392 * u_delta - 0.813 * v_delta);
     int b_component = lround(1.164 * y_delta + 2.017 * u_delta);
 
-    FractalRGBColor rgb_color = {CLAMP_COLOR(r_component), CLAMP_COLOR(g_component),
+    WhistRGBColor rgb_color = {CLAMP_COLOR(r_component), CLAMP_COLOR(g_component),
                                  CLAMP_COLOR(b_component)};
 
     return rgb_color;
 }
 
-int rgb_compare(FractalRGBColor lhs, FractalRGBColor rhs) {
+int rgb_compare(WhistRGBColor lhs, WhistRGBColor rhs) {
     /*
         Compare two RGB colors for equality.
 
         Arguments:
-            lhs (FractalRGBColor): The first color for comparison
-            rhs (FractalRGBColor): The second color for comparison
+            lhs (WhistRGBColor): The first color for comparison
+            rhs (WhistRGBColor): The second color for comparison
 
         Return:
             (int): 0 if the colors are equal, else 1.
@@ -72,13 +72,13 @@ int rgb_compare(FractalRGBColor lhs, FractalRGBColor rhs) {
     return 1;
 }
 
-bool color_requires_dark_text(FractalRGBColor rgb_color) {
+bool color_requires_dark_text(WhistRGBColor rgb_color) {
     /*
         Figure out whether a given background color needs foreground text to be dark
         or light, according to https://stackoverflow.com/a/3943023.
 
         Arguments:
-            rgb_color (FractalRGBColor): RGB background color
+            rgb_color (WhistRGBColor): RGB background color
 
         Return:
             (bool): True if the color needs dark text, and false if the color needs light text.

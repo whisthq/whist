@@ -100,7 +100,7 @@ int discover_ports(bool *with_stun) {
     }
 
     // Create and send discovery request packet
-    FractalClientMessage fcmsg = {0};
+    WhistClientMessage fcmsg = {0};
     fcmsg.type = MESSAGE_DISCOVERY_REQUEST;
     fcmsg.discoveryRequest.user_id = uid;
 
@@ -123,7 +123,7 @@ int discover_ports(bool *with_stun) {
     } while (tcp_packet == NULL && get_timer(timer) < 5.0);
 
     // If no tcp packet was found, just return -1
-    // Otherwise, parse the tcp packet's FractalDiscoveryReplyMessage
+    // Otherwise, parse the tcp packet's WhistDiscoveryReplyMessage
     if (tcp_packet == NULL) {
         LOG_WARNING("Did not receive discovery packet from server.");
         destroy_socket_context(&context);
@@ -131,18 +131,18 @@ int discover_ports(bool *with_stun) {
     }
 
     if (tcp_packet->payload_size !=
-        sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage)) {
+        sizeof(WhistServerMessage) + sizeof(WhistDiscoveryReplyMessage)) {
         LOG_ERROR(
             "Incorrect discovery reply message size. Expected: %d, Received: "
             "%d",
-            sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage),
+            sizeof(WhistServerMessage) + sizeof(WhistDiscoveryReplyMessage),
             tcp_packet->payload_size);
         free_packet(&context, tcp_packet);
         destroy_socket_context(&context);
         return -1;
     }
 
-    FractalServerMessage *fsmsg = (FractalServerMessage *)tcp_packet->data;
+    WhistServerMessage *fsmsg = (WhistServerMessage *)tcp_packet->data;
     if (fsmsg->type != MESSAGE_DISCOVERY_REPLY) {
         LOG_ERROR("Message not of discovery reply type (Type: %d)", fsmsg->type);
         free_packet(&context, tcp_packet);
@@ -153,8 +153,8 @@ int discover_ports(bool *with_stun) {
     LOG_INFO("Received discovery info packet from server!");
 
     // Create and send discovery reply message
-    FractalDiscoveryReplyMessage *reply_msg =
-        (FractalDiscoveryReplyMessage *)fsmsg->discovery_reply;
+    WhistDiscoveryReplyMessage *reply_msg =
+        (WhistDiscoveryReplyMessage *)fsmsg->discovery_reply;
 
     set_audio_frequency(reply_msg->audio_sample_rate);
     udp_port = reply_msg->udp_port;
@@ -176,7 +176,7 @@ void send_ping(int ping_id) {
         Arguments:
             ping_id (int): Ping ID to send to the server
     */
-    FractalClientMessage fcmsg = {0};
+    WhistClientMessage fcmsg = {0};
     fcmsg.type = MESSAGE_PING;
     fcmsg.ping_id = ping_id;
 
@@ -196,7 +196,7 @@ void send_tcp_ping(int ping_id) {
             ping_id (int): Ping ID to send to the server
     */
 
-    FractalClientMessage fcmsg = {0};
+    WhistClientMessage fcmsg = {0};
     fcmsg.type = MESSAGE_TCP_PING;
     fcmsg.ping_id = ping_id;
 
@@ -299,7 +299,7 @@ int send_tcp_reconnect_message() {
             0 on success, -1 on failure
     */
 
-    FractalClientMessage fcmsg;
+    WhistClientMessage fcmsg;
     fcmsg.type = MESSAGE_TCP_RECOVERY;
 
     SocketContext discovery_context;
@@ -355,7 +355,7 @@ int send_server_quit_messages(int num_messages) {
             (int): 0 on success, -1 on failure
     */
 
-    FractalClientMessage fcmsg = {0};
+    WhistClientMessage fcmsg = {0};
     fcmsg.type = CMESSAGE_QUIT;
     int retval = 0;
     for (; num_messages > 0; num_messages--) {
@@ -370,16 +370,16 @@ int send_server_quit_messages(int num_messages) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int send_fcmsg(FractalClientMessage *fcmsg) {
+int send_fcmsg(WhistClientMessage *fcmsg) {
     /*
         We send large fcmsg's over TCP. At the moment, this is only CLIPBOARD;
-        Currently, sending FractalClientMessage packets over UDP that require multiple
+        Currently, sending WhistClientMessage packets over UDP that require multiple
         sub-packets to send is not supported (if low latency large
-        FractalClientMessage packets are needed, then this will have to be
+        WhistClientMessage packets are needed, then this will have to be
         implemented)
 
         Arguments:
-            fcmsg (FractalClientMessage*): pointer to FractalClientMessage to be send
+            fcmsg (WhistClientMessage*): pointer to WhistClientMessage to be send
 
         Return:
             (int): 0 on success, -1 on failure

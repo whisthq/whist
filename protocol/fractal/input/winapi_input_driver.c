@@ -303,21 +303,21 @@ void destroy_input_device(InputDevice* input_device) {
 #define GetWindowsKeyCode(fractal_keycode) windows_keycodes[fractal_keycode]
 #define KEYPRESS_MASK 0x8000
 
-int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode fractal_keycode) {
+int get_keyboard_modifier_state(InputDevice* input_device, WhistKeycode fractal_keycode) {
     UNUSED(input_device);
     return 1 & GetKeyState(GetWindowsKeyCode(fractal_keycode));
 }
 
-int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_keycode) {
+int get_keyboard_key_state(InputDevice* input_device, WhistKeycode fractal_keycode) {
     UNUSED(input_device);
     return (KEYPRESS_MASK & GetAsyncKeyState(GetWindowsKeyCode(fractal_keycode))) >> 15;
 }
 
-int ignore_key_state(InputDevice* input_device, FractalKeycode fractal_keycode, bool active_pinch) {
+int ignore_key_state(InputDevice* input_device, WhistKeycode fractal_keycode, bool active_pinch) {
     return 0;
 }
 
-int emit_key_event(InputDevice* input_device, FractalKeycode fractal_keycode, int pressed) {
+int emit_key_event(InputDevice* input_device, WhistKeycode fractal_keycode, int pressed) {
     UNUSED(input_device);
 
     INPUT ip;
@@ -378,7 +378,7 @@ int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int
     return 0;
 }
 
-int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button, int pressed) {
+int emit_mouse_button_event(InputDevice* input_device, WhistMouseButton button, int pressed) {
     UNUSED(input_device);
 
     INPUT ip;
@@ -491,7 +491,7 @@ int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y)
 }
 
 int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist,
-                            FractalMultigestureType gesture_type, bool active_gesture) {
+                            WhistMultigestureType gesture_type, bool active_gesture) {
     UNUSED(input_device);
     UNUSED(d_theta);
     UNUSED(d_dist);
@@ -502,10 +502,10 @@ int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_di
     return -1;
 }
 
-void enter_win_string(enum FractalKeycode* keycodes, int len) {
+void enter_win_string(enum WhistKeycode* keycodes, int len) {
     // get screen width and height for mouse cursor
     int i, index = 0;
-    enum FractalKeycode keycode;
+    enum WhistKeycode keycode;
     INPUT event[200];
 
     for (i = 0; i < len; i++) {

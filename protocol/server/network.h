@@ -103,7 +103,7 @@ int try_get_next_message_tcp(Client *client, WhistPacket **p_tcp_packet);
  * @returns                        Returns -1 on error, 0 otherwise. Not
  *                                 finding an available message is not an error.
  */
-int try_get_next_message_udp(Client *client, FractalClientMessage *fcmsg, size_t *fcmsg_size);
+int try_get_next_message_udp(Client *client, WhistClientMessage *fcmsg, size_t *fcmsg_size);
 
 /**
  * @brief                          Establishes UDP and TCP connection to client.

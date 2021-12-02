@@ -27,7 +27,7 @@ Custom Types
 ============================
 */
 
-typedef struct FractalCursorTypes {
+typedef struct WhistCursorTypes {
     HCURSOR CursorAppStarting;
     HCURSOR CursorArrow;
     HCURSOR CursorCross;
@@ -44,10 +44,10 @@ typedef struct FractalCursorTypes {
     HCURSOR CursorSizeWE;
     HCURSOR CursorUpArrow;
     HCURSOR CursorWait;
-} FractalCursorTypes;
+} WhistCursorTypes;
 
-struct FractalCursorTypes l_types = {0};
-struct FractalCursorTypes* types = &l_types;
+struct WhistCursorTypes l_types = {0};
+struct WhistCursorTypes* types = &l_types;
 
 /*
 ============================
@@ -55,7 +55,7 @@ Private Functions
 ============================
 */
 
-FractalCursorImage get_cursor_image(PCURSORINFO pci);
+WhistCursorImage get_cursor_image(PCURSORINFO pci);
 
 void load_cursors();
 
@@ -88,7 +88,7 @@ void load_cursors() {
     types->CursorWait = LoadCursor(NULL, IDC_WAIT);
 }
 
-FractalCursorImage get_cursor_image(PCURSORINFO pci) {
+WhistCursorImage get_cursor_image(PCURSORINFO pci) {
     /*
         Get the corresponding cursor image for by cursor type
 
@@ -96,12 +96,12 @@ FractalCursorImage get_cursor_image(PCURSORINFO pci) {
             pci (PCURSORINFO): Windows cursor info
 
         Returns:
-            (FractalCursorImage): the corresponding FractalCursorImage
+            (WhistCursorImage): the corresponding WhistCursorImage
                 for the `pci` cursor type
     */
 
     HCURSOR cursor = pci->hCursor;
-    FractalCursorImage image = {0};
+    WhistCursorImage image = {0};
 
     if (cursor == types->CursorArrow) {
         image.cursor_id = WHIST_CURSOR_ARROW;
@@ -146,12 +146,12 @@ void init_cursors() {
     load_cursors();
 }
 
-void get_current_cursor(FractalCursorImage* image) {
+void get_current_cursor(WhistCursorImage* image) {
     /*
         Returns the current cursor image
 
         Returns:
-            (FractalCursorImage): Current FractalCursorImage
+            (WhistCursorImage): Current WhistCursorImage
     */
 
     CURSORINFO pci;

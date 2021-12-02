@@ -30,7 +30,7 @@ void whist_detach_thread(WhistThread thread) { SDL_DetachThread(thread); }
 
 void whist_wait_thread(WhistThread thread, int *ret) { SDL_WaitThread(thread, ret); }
 
-void whist_set_thread_priority(FractalThreadPriority priority) {
+void whist_set_thread_priority(WhistThreadPriority priority) {
     // Add in special case handling when trying to set specifically REALTIME on Linux,
     // As this leads to increased performance
 #ifdef __linux__

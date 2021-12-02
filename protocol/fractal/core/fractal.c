@@ -291,12 +291,12 @@ bool read_hexadecimal_private_key(char *hex_string, char *binary_private_key,
     return true;
 }
 
-int get_fcmsg_size(FractalClientMessage *fcmsg) {
+int get_fcmsg_size(WhistClientMessage *fcmsg) {
     /*
-        Calculate the size of a FractalClientMessage struct
+        Calculate the size of a WhistClientMessage struct
 
         Arguments:
-            fcmsg (FractalClientMessage*): The Whist Client Message to find the size
+            fcmsg (WhistClientMessage*): The Whist Client Message to find the size
 
         Returns:
             (int): The size of the Whist Client Message struct
@@ -315,7 +315,7 @@ int get_fcmsg_size(FractalClientMessage *fcmsg) {
     }
 }
 
-void terminate_protocol(FractalExitCode exit_code) {
+void terminate_protocol(WhistExitCode exit_code) {
     /*
         Terminates the protocol
     */

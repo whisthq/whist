@@ -36,18 +36,18 @@ Private Functions
 ============================
 */
 
-static int handle_user_input_message(whist_server_state *state, FractalClientMessage *fcmsg);
-static int handle_keyboard_state_message(whist_server_state *state, FractalClientMessage *fcmsg);
-static int handle_streaming_toggle_message(whist_server_state *state, FractalClientMessage *fcmsg);
-static int handle_bitrate_message(whist_server_state *state, FractalClientMessage *fcmsg);
-static int handle_ping_message(Client *client, FractalClientMessage *fcmsg);
-static int handle_tcp_ping_message(Client *client, FractalClientMessage *fcmsg);
-static int handle_dimensions_message(whist_server_state *state, FractalClientMessage *fcmsg);
-static int handle_clipboard_message(FractalClientMessage *fcmsg);
-static int handle_nack_message(Client *client, FractalClientMessage *fcmsg);
-static int handle_iframe_request_message(whist_server_state *state, FractalClientMessage *fcmsg);
-static int handle_quit_message(whist_server_state *state, FractalClientMessage *fcmsg);
-static int handle_init_message(whist_server_state *state, FractalClientMessage *fcmsg);
+static int handle_user_input_message(whist_server_state *state, WhistClientMessage *fcmsg);
+static int handle_keyboard_state_message(whist_server_state *state, WhistClientMessage *fcmsg);
+static int handle_streaming_toggle_message(whist_server_state *state, WhistClientMessage *fcmsg);
+static int handle_bitrate_message(whist_server_state *state, WhistClientMessage *fcmsg);
+static int handle_ping_message(Client *client, WhistClientMessage *fcmsg);
+static int handle_tcp_ping_message(Client *client, WhistClientMessage *fcmsg);
+static int handle_dimensions_message(whist_server_state *state, WhistClientMessage *fcmsg);
+static int handle_clipboard_message(WhistClientMessage *fcmsg);
+static int handle_nack_message(Client *client, WhistClientMessage *fcmsg);
+static int handle_iframe_request_message(whist_server_state *state, WhistClientMessage *fcmsg);
+static int handle_quit_message(whist_server_state *state, WhistClientMessage *fcmsg);
+static int handle_init_message(whist_server_state *state, WhistClientMessage *fcmsg);
 
 /*
 ============================
@@ -55,12 +55,12 @@ Public Function Implementations
 ============================
 */
 
-int handle_client_message(whist_server_state *state, FractalClientMessage *fcmsg) {
+int handle_client_message(whist_server_state *state, WhistClientMessage *fcmsg) {
     /*
         Handle message from the client.
 
         Arguments:
-            fcmsg (FractalClientMessage*): message package from client
+            fcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
@@ -104,7 +104,7 @@ int handle_client_message(whist_server_state *state, FractalClientMessage *fcmsg
             return handle_init_message(state, fcmsg);
         default:
             LOG_ERROR(
-                "Unknown FractalClientMessage Received. "
+                "Unknown WhistClientMessage Received. "
                 "(Type: %d)",
                 fcmsg->type);
             return -1;
@@ -117,12 +117,12 @@ Private Function Implementations
 ============================
 */
 
-static int handle_user_input_message(whist_server_state *state, FractalClientMessage *fcmsg) {
+static int handle_user_input_message(whist_server_state *state, WhistClientMessage *fcmsg) {
     /*
         Handle a user input message.
 
         Arguments:
-            fcmsg (FractalClientMessage*): message package from client
+            fcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
@@ -140,13 +140,13 @@ static int handle_user_input_message(whist_server_state *state, FractalClientMes
 }
 
 // TODO: Unix version missing
-static int handle_keyboard_state_message(whist_server_state *state, FractalClientMessage *fcmsg) {
+static int handle_keyboard_state_message(whist_server_state *state, WhistClientMessage *fcmsg) {
     /*
         Handle a user keyboard state change message. Synchronize client and
         server keyboard state
 
         Arguments:
-            fcmsg (FractalClientMessage*): message package from client
+            fcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
@@ -156,12 +156,12 @@ static int handle_keyboard_state_message(whist_server_state *state, FractalClien
     return 0;
 }
 
-static int handle_streaming_toggle_message(whist_server_state *state, FractalClientMessage *fcmsg) {
+static int handle_streaming_toggle_message(whist_server_state *state, WhistClientMessage *fcmsg) {
     /*
         Stop encoding and sending frames if the client requests it to save resources
 
         Arguments:
-            fcmsg (FractalClientMessage*): message package from client
+            fcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
@@ -184,14 +184,14 @@ static int handle_streaming_toggle_message(whist_server_state *state, FractalCli
     return 0;
 }
 
-static int handle_bitrate_message(whist_server_state *state, FractalClientMessage *fcmsg) {
+static int handle_bitrate_message(whist_server_state *state, WhistClientMessage *fcmsg) {
     /*
         Handle a user bitrate change message and update MBPS.
 
         NOTE: idk how to handle this
 
         Arguments:
-            fcmsg (FractalClientMessage*): message package from client
+            fcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
@@ -219,12 +219,12 @@ static int handle_bitrate_message(whist_server_state *state, FractalClientMessag
     return 0;
 }
 
-static int handle_ping_message(Client *client, FractalClientMessage *fcmsg) {
+static int handle_ping_message(Client *client, WhistClientMessage *fcmsg) {
     /*
         Handle a client ping (alive) message.
 
         Arguments:
-            fcmsg (FractalClientMessage*): message package from client
+            fcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
@@ -236,7 +236,7 @@ static int handle_ping_message(Client *client, FractalClientMessage *fcmsg) {
     start_timer(&client->last_ping);
 
     // Send pong reply
-    FractalServerMessage fsmsg_response = {0};
+    WhistServerMessage fsmsg_response = {0};
     fsmsg_response.type = MESSAGE_PONG;
     fsmsg_response.ping_id = fcmsg->ping_id;
 
@@ -249,12 +249,12 @@ static int handle_ping_message(Client *client, FractalClientMessage *fcmsg) {
     return 0;
 }
 
-static int handle_tcp_ping_message(Client *client, FractalClientMessage *fcmsg) {
+static int handle_tcp_ping_message(Client *client, WhistClientMessage *fcmsg) {
     /*
         Handle a client TCP ping message.
 
         Arguments:
-            fcmsg (FractalClientMessage*): message package from client
+            fcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
@@ -266,7 +266,7 @@ static int handle_tcp_ping_message(Client *client, FractalClientMessage *fcmsg) 
     start_timer(&client->last_ping);
 
     // Send pong reply
-    FractalServerMessage fsmsg_response = {0};
+    WhistServerMessage fsmsg_response = {0};
     fsmsg_response.type = MESSAGE_TCP_PONG;
     fsmsg_response.ping_id = fcmsg->ping_id;
 
@@ -279,12 +279,12 @@ static int handle_tcp_ping_message(Client *client, FractalClientMessage *fcmsg) 
     return 0;
 }
 
-static int handle_dimensions_message(whist_server_state *state, FractalClientMessage *fcmsg) {
+static int handle_dimensions_message(whist_server_state *state, WhistClientMessage *fcmsg) {
     /*
         Handle a user dimensions change message.
 
         Arguments:
-            fcmsg (FractalClientMessage*): message package from client
+            fcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
@@ -312,12 +312,12 @@ static int handle_dimensions_message(whist_server_state *state, FractalClientMes
     return 0;
 }
 
-static int handle_clipboard_message(FractalClientMessage *fcmsg) {
+static int handle_clipboard_message(WhistClientMessage *fcmsg) {
     /*
         Handle a clipboard copy message.
 
         Arguments:
-            fcmsg (FractalClientMessage*): message package from client
+            fcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
@@ -329,12 +329,12 @@ static int handle_clipboard_message(FractalClientMessage *fcmsg) {
     return 0;
 }
 
-static int handle_nack_message(Client *client, FractalClientMessage *fcmsg) {
+static int handle_nack_message(Client *client, WhistClientMessage *fcmsg) {
     /*
         Handle a video nack message and relay the packet
 
         Arguments:
-            fcmsg (FractalClientMessage*): message package from client
+            fcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
@@ -363,12 +363,12 @@ static int handle_nack_message(Client *client, FractalClientMessage *fcmsg) {
     return 0;
 }
 
-static int handle_iframe_request_message(whist_server_state *state, FractalClientMessage *fcmsg) {
+static int handle_iframe_request_message(whist_server_state *state, WhistClientMessage *fcmsg) {
     /*
         Handle an IFrame request message
 
         Arguments:
-            fcmsg (FractalClientMessage*): message package from client
+            fcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
@@ -380,12 +380,12 @@ static int handle_iframe_request_message(whist_server_state *state, FractalClien
     return 0;
 }
 
-static int handle_quit_message(whist_server_state *state, FractalClientMessage *fcmsg) {
+static int handle_quit_message(whist_server_state *state, WhistClientMessage *fcmsg) {
     /*
         Handle a user quit message
 
         Arguments:
-            fcmsg (FractalClientMessage*): message package from client
+            fcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
@@ -400,12 +400,12 @@ static int handle_quit_message(whist_server_state *state, FractalClientMessage *
     return 0;
 }
 
-static int handle_init_message(whist_server_state *state, FractalClientMessage *cfcmsg) {
+static int handle_init_message(whist_server_state *state, WhistClientMessage *cfcmsg) {
     /*
         Handle a user init message
 
         Arguments:
-            fcmsg (FractalClientMessage*): message package from client
+            fcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
@@ -413,7 +413,7 @@ static int handle_init_message(whist_server_state *state, FractalClientMessage *
 
     LOG_INFO("Receiving a message time packet");
 
-    FractalDiscoveryRequestMessage fcmsg = cfcmsg->discoveryRequest;
+    WhistDiscoveryRequestMessage fcmsg = cfcmsg->discoveryRequest;
 
     state->client_os = fcmsg.os;
 

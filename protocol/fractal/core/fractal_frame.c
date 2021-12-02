@@ -1,12 +1,12 @@
 #include "fractal_frame.h"
 
-void set_frame_cursor_image(VideoFrame* frame, FractalCursorImage* cursor) {
+void set_frame_cursor_image(VideoFrame* frame, WhistCursorImage* cursor) {
     /*
         Sets the fractal frame's cursor image
 
         Arguments:
             frame (Frame*): The frame who's data buffer should be written to
-            cursor (FractalCursorImage*): The FractalCursorImage who's cursor data
+            cursor (WhistCursorImage*): The WhistCursorImage who's cursor data
                 should be embedded in the given frame. Pass NULL to embed no cursor
                 whatsoever. Default of a 0'ed VideoFrame* is already a NULL cursor.
     */
@@ -15,24 +15,24 @@ void set_frame_cursor_image(VideoFrame* frame, FractalCursorImage* cursor) {
         frame->has_cursor = false;
     } else {
         frame->has_cursor = true;
-        memcpy(frame->data, cursor, sizeof(FractalCursorImage));
+        memcpy(frame->data, cursor, sizeof(WhistCursorImage));
     }
 }
 
-FractalCursorImage* get_frame_cursor_image(VideoFrame* frame) {
+WhistCursorImage* get_frame_cursor_image(VideoFrame* frame) {
     /*
-        Get a pointer to the FractalCursorImage inside of the VideoFrame*
+        Get a pointer to the WhistCursorImage inside of the VideoFrame*
 
         Arguments:
             frame (Frame*): The VideoFrame who's data buffer is being used
 
         Returns:
-            (FractalCursorImage*): A pointer to the internal FractalCursorImage.
+            (WhistCursorImage*): A pointer to the internal WhistCursorImage.
                 May return NULL if no cursor was embedded.
     */
 
     if (frame->has_cursor) {
-        return (FractalCursorImage*)frame->data;
+        return (WhistCursorImage*)frame->data;
     } else {
         return NULL;
     }
@@ -57,7 +57,7 @@ unsigned char* get_frame_videodata(VideoFrame* frame) {
 
     unsigned char* ret = frame->data;
     if (frame->has_cursor) {
-        ret += sizeof(FractalCursorImage);
+        ret += sizeof(WhistCursorImage);
     }
     return ret;
 }
@@ -76,7 +76,7 @@ int get_total_frame_size(VideoFrame* frame) {
 
     int ret = frame->videodata_length;
     if (frame->has_cursor) {
-        ret += sizeof(FractalCursorImage);
+        ret += sizeof(WhistCursorImage);
     }
     return sizeof(VideoFrame) + ret;
 }

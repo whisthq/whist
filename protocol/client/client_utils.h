@@ -92,7 +92,7 @@ int free_parsed_args(void);
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int prepare_init_to_server(FractalDiscoveryRequestMessage* fcmsg, char* email);
+int prepare_init_to_server(WhistDiscoveryRequestMessage* fcmsg, char* email);
 
 /**
  * @brief                          Update mouse location if the mouse state has

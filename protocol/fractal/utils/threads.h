@@ -18,12 +18,12 @@ typedef SDL_sem* WhistSemaphore;
 typedef SDL_Thread* WhistThread;
 typedef SDL_threadID WhistThreadID;
 typedef int (*WhistThreadFunction)(void*);
-typedef enum FractalThreadPriority {
+typedef enum WhistThreadPriority {
     WHIST_THREAD_PRIORITY_LOW = SDL_THREAD_PRIORITY_LOW,
     WHIST_THREAD_PRIORITY_NORMAL = SDL_THREAD_PRIORITY_NORMAL,
     WHIST_THREAD_PRIORITY_HIGH = SDL_THREAD_PRIORITY_HIGH,
     WHIST_THREAD_PRIORITY_REALTIME = SDL_THREAD_PRIORITY_TIME_CRITICAL
-} FractalThreadPriority;
+} WhistThreadPriority;
 
 void whist_init_multithreading();
 
@@ -31,7 +31,7 @@ WhistThread whist_create_thread(WhistThreadFunction thread_function, char* threa
 WhistThreadID whist_get_thread_id(WhistThread thread);
 void whist_detach_thread(WhistThread thread);
 void whist_wait_thread(WhistThread thread, int* ret);
-void whist_set_thread_priority(FractalThreadPriority priority);
+void whist_set_thread_priority(WhistThreadPriority priority);
 
 void whist_sleep(uint32_t ms);
 void whist_usleep(uint32_t us);

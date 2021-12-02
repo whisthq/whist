@@ -73,7 +73,7 @@ struct _whist_server_state {
     whist_server_config* config;
 
     volatile int connection_id;
-    volatile FractalOSType client_os;
+    volatile WhistOSType client_os;
 
     volatile bool exiting;
     volatile bool stop_streaming;
