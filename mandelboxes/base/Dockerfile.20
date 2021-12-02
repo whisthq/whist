@@ -76,14 +76,14 @@ RUN meson libinput-1.19.2 build \
     && ninja -C build
 
 # Install libinput to package folder
-RUN mkdir /libinput-fractal \
-    && DESTDIR=/libinput-fractal ninja -C build install
+RUN mkdir /libinput-whist \
+    && DESTDIR=/libinput-whist ninja -C build install
 
 # Setup debian package information
-COPY input/libinput/debian/control /libinput-fractal/DEBIAN/control
+COPY input/libinput/debian/control /libinput-whist/DEBIAN/control
 
 # Build debian package
-RUN dpkg-deb --build libinput-fractal
+RUN dpkg-deb --build libinput-whist
 
 ################ STAGE 2: xf86-input-libinput-build ################
 # - Install build dependencies as per the documentation
@@ -111,7 +111,7 @@ RUN apt-get update \
     && rm -rf /tmp/* /var/tmp/*
 
 # Copy libinput package
-COPY --from=libinput-build libinput-fractal.deb /
+COPY --from=libinput-build libinput-whist.deb /
 
 # Install build dependencies
 # This includes our build of libinput
@@ -126,7 +126,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     autoconf \
     libtool \
     bzip2 \
-    ./libinput-fractal.deb \
+    ./libinput-whist.deb \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
@@ -155,15 +155,15 @@ RUN cd xf86-input-libinput-1.2.0 \
     && make -j
 
 # Install xf86-input-libinput to package folder
-RUN mkdir /xf86-input-libinput-fractal \
+RUN mkdir /xf86-input-libinput-whist \
     && cd xf86-input-libinput-1.2.0 \
-    && make DESTDIR=/xf86-input-libinput-fractal install
+    && make DESTDIR=/xf86-input-libinput-whist install
 
 # Setup debian package information
-COPY input/xf86-input-libinput/debian/control /xf86-input-libinput-fractal/DEBIAN/control
+COPY input/xf86-input-libinput/debian/control /xf86-input-libinput-whist/DEBIAN/control
 
 # Build debian package
-RUN dpkg-deb --build xf86-input-libinput-fractal
+RUN dpkg-deb --build xf86-input-libinput-whist
 
 ################ STAGE 3: nvidia-grid-driver ################
 # - Copy and unpack the nvidia grid driver installer
@@ -367,13 +367,13 @@ ENV init /sbin/init
 # upstream packages such as libinput10 and libinput-bin
 
 # Copy libinput and xf86-input-libinput
-COPY --from=libinput-build /libinput-fractal.deb /deb/libinput-fractal.deb
-COPY --from=xf86-input-libinput-build /xf86-input-libinput-fractal.deb deb/xf86-input-libinput-fractal.deb
+COPY --from=libinput-build /libinput-whist.deb /deb/libinput-whist.deb
+COPY --from=xf86-input-libinput-build /xf86-input-libinput-whist.deb deb/xf86-input-libinput-whist.deb
 
 # Install libinput and xf86-input-libinput
 RUN apt-get update && apt-get install --no-install-recommends -y \
-    ./deb/libinput-fractal.deb \
-    ./deb/xf86-input-libinput-fractal.deb \
+    ./deb/libinput-whist.deb \
+    ./deb/xf86-input-libinput-whist.deb \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/* /deb

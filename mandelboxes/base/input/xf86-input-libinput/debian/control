@@ -1,9 +1,9 @@
-Package: xf86-input-libinput-fractal
+Package: xf86-input-libinput-whist
 Version: 0.29.0-2
 Section: x11
 Priority: optional
 Architecture: all
-Depends: libinput-fractal
+Depends: libinput-whist
 Provides: xserver-xorg-input-libinput (= 9.99.9)
 Maintainer: Whist (developers@whist.com)
 Description: Whist provides our own, patched

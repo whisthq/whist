@@ -1,4 +1,4 @@
-Package: libinput-fractal
+Package: libinput-whist
 Version: 1.15.5-1
 Section: x11
 Priority: optional
