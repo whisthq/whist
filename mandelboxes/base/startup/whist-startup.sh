@@ -12,7 +12,7 @@ set -Eeuo pipefail
 # Begin wait loop to get TTY number and port mapping from Whist Host Service
 WHIST_MAPPINGS_DIR=/fractal/resourceMappings
 USER_CONFIGS_DIR=/fractal/userConfigs
-APP_CONFIG_MAP_FILENAME=/usr/share/fractal/app-config-map.json
+APP_CONFIG_MAP_FILENAME=/usr/share/whist/app-config-map.json
 
 # Wait for TTY and port mapping files and user config to exist
 until [ -f $WHIST_MAPPINGS_DIR/.ready ]
@@ -63,8 +63,8 @@ sudo mknod -m 620 /dev/tty10 c 4 $ASSIGNED_TTY
 sudo mkdir /dev/dri
 sudo mknod -m 660 /dev/dri/card0 c 226 0
 
-# Set `/var/log/fractal` to be root-accessible only
-sudo chmod 0600 -R /var/log/fractal/
+# Set `/var/log/whist` to be root-accessible only
+sudo chmod 0600 -R /var/log/whist/
 
 # This installs whist service
 echo "Start Pam Systemd Process for User whist"

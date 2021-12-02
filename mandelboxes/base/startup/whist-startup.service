@@ -4,9 +4,9 @@ Description=Whist Entrypoint
 
 [Service]
 Type=oneshot
-ExecStart=/usr/share/fractal/whist-startup.sh
-StandardOutput=file:/var/log/fractal/entry-out.log
-StandardError=file:/var/log/fractal/entry-err.log
+ExecStart=/usr/share/whist/whist-startup.sh
+StandardOutput=file:/var/log/whist/entry-out.log
+StandardError=file:/var/log/whist/entry-err.log
 
 [Install]
 WantedBy=multi-user.target

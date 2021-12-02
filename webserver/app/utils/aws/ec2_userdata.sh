@@ -25,7 +25,7 @@ After=docker.service
 Restart=no
 User=root
 Type=exec
-EnvironmentFile=/usr/share/fractal/app_env.env
+EnvironmentFile=/usr/share/whist/app_env.env
 ExecStart=/home/ubuntu/host-service
 
 [Install]

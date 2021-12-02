@@ -23,7 +23,7 @@ sleep 3s
 # Get the time
 sleep 10s
 containers=$(docker container ls --quiet | head -n 1)
-docker cp $containers:/usr/share/fractal/server.log /tmp/server.log
+docker cp $containers:/usr/share/whist/server.log /tmp/server.log
 cat /tmp/server.log | grep "Time between" | tr -s ' ' | cut -d' ' -f 17 | sed 's/.$//' | tail -n 5 | jq -s add/length
 
 # Kill the containers

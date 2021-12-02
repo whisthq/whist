@@ -68,7 +68,7 @@ cd ~/fractal/mandelboxes
 
 - If you want to build a specific browser along with base run `./build.sh browsers/<name>` (ie chrome) instead of `./build.sh base`
 
-- Once the docker container opens, if you would like to view Whist's server logs, run `tail -F /usr/share/fractal/server.log`
+- Once the docker container opens, if you would like to view Whist's server logs, run `tail -F /usr/share/whist/server.log`
 
 ## Setting Up an AMI
 

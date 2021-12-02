@@ -451,17 +451,17 @@ RUN chown -vR whist:whist /home/whist
 RUN chown root:root /run/user
 
 # Create fractal Directory and Subdirectories in /usr/share
-RUN mkdir -p /usr/share/fractal/private
+RUN mkdir -p /usr/share/whist/private
 
-# Set /usr/share/fractal to root-only
-RUN chgrp root -R /usr/share/fractal
-RUN chown root:root /usr/share/fractal
-RUN chmod 600 -R /usr/share/fractal
+# Set /usr/share/whist to root-only
+RUN chgrp root -R /usr/share/whist
+RUN chown root:root /usr/share/whist
+RUN chmod 600 -R /usr/share/whist
 
 # Set up script to run a program as user `whist` (make sure to do
-# this after setting /usr/share/fractal to 600)
-COPY utils/run-as-whist-user.sh /usr/share/fractal/run-as-whist-user.sh
-RUN chmod +x /usr/share/fractal/run-as-whist-user.sh
+# this after setting /usr/share/whist to 600)
+COPY utils/run-as-whist-user.sh /usr/share/whist/run-as-whist-user.sh
+RUN chmod +x /usr/share/whist/run-as-whist-user.sh
 
 #########################
 # Hardware Acceleration
@@ -511,8 +511,8 @@ COPY display/whist-display.conf /usr/share/X11/xorg.conf.d/01-whist-display.conf
 
 # Set up Whist service that starts before X to fix the Nvidia GPU bus ID and device paths
 COPY display/whist-update-xorg-conf.service /etc/systemd/system/
-COPY display/update-xorg-conf.sh /usr/share/fractal/
-RUN chmod +x /usr/share/fractal/update-xorg-conf.sh
+COPY display/update-xorg-conf.sh /usr/share/whist/
+RUN chmod +x /usr/share/whist/update-xorg-conf.sh
 RUN systemctl enable whist-update-xorg-conf
 
 # Install playerctl for media keys support. We install playerctl straight from
@@ -523,16 +523,16 @@ RUN wget -q https://github.com/altdesktop/playerctl/releases/download/v2.3.1/pla
     && rm ./playerctl-2.3.1_amd64.deb
 
 # Set up Whist service to launch X11 display
-COPY display/whist-display-config.env /usr/share/fractal
+COPY display/whist-display-config.env /usr/share/whist
 COPY display/xinitrc /root/.xinitrc
 COPY display/whist-display.service /etc/systemd/system
-COPY display/whist-display.sh /usr/share/fractal/whist-display.sh
-RUN chmod +x /usr/share/fractal/whist-display.sh
+COPY display/whist-display.sh /usr/share/whist/whist-display.sh
+RUN chmod +x /usr/share/whist/whist-display.sh
 RUN systemctl enable whist-display
 
 # Set up script to update display DPI on-the-fly
-COPY display/update-whist-dpi.sh /usr/share/fractal/update-whist-dpi.sh
-RUN chmod +x /usr/share/fractal/update-whist-dpi.sh
+COPY display/update-whist-dpi.sh /usr/share/whist/update-whist-dpi.sh
+RUN chmod +x /usr/share/whist/update-whist-dpi.sh
 
 # Set display environment variable
 ENV DISPLAY :10
@@ -639,8 +639,8 @@ RUN systemctl mask pulseaudio
 RUN chmod -x /usr/bin/start-pulseaudio-x11
 
 # Set up service to start pulseaudio
-COPY audio/run-pulseaudio.sh /usr/share/fractal
-RUN chmod +x /usr/share/fractal/run-pulseaudio.sh
+COPY audio/run-pulseaudio.sh /usr/share/whist
+RUN chmod +x /usr/share/whist/run-pulseaudio.sh
 COPY audio/pulse-client.conf /etc/pulse/client.conf
 COPY audio/whist-audio.service /etc/systemd/system
 RUN systemctl enable whist-audio
@@ -650,7 +650,7 @@ RUN systemctl enable whist-audio
 #########################
 
 # Set up user config map for mandelbox startup
-COPY startup/app-config-map.json /usr/share/fractal/app-config-map.json
+COPY startup/app-config-map.json /usr/share/whist/app-config-map.json
 
 # Install Dependencies for Cookie Import
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -664,18 +664,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Set up custom config scripts
-COPY utils/import_user_browser_data.py /usr/share/fractal/import_user_browser_data.py
+COPY utils/import_user_browser_data.py /usr/share/whist/import_user_browser_data.py
 
 # Set up first systemd service
-COPY startup/whist-startup.sh /usr/share/fractal
-RUN chmod +x /usr/share/fractal/whist-startup.sh
+COPY startup/whist-startup.sh /usr/share/whist
+RUN chmod +x /usr/share/whist/whist-startup.sh
 COPY startup/whist-startup.service /etc/systemd/system
 RUN systemctl enable whist-startup
 
 # Set up the entrypoint for the mandelbox (which starts systemd)
-COPY startup/entrypoint.sh /usr/share/fractal/entrypoint.sh
-RUN chmod +x /usr/share/fractal/entrypoint.sh
-CMD ["/usr/share/fractal/entrypoint.sh"]
+COPY startup/entrypoint.sh /usr/share/whist/entrypoint.sh
+RUN chmod +x /usr/share/whist/entrypoint.sh
+CMD ["/usr/share/whist/entrypoint.sh"]
 
 #########################
 # Main
@@ -747,21 +747,21 @@ RUN ln -sf /opt/teleport/uri-handler /usr/bin/xdg-open
 # Set up the Whist server protocol
 
 # Install protocol dependencies
-COPY --from=build-assets setup-linux-build-environment.sh /usr/share/fractal/setup-linux-build-environment.sh
-RUN /usr/share/fractal/setup-linux-build-environment.sh \
+COPY --from=build-assets setup-linux-build-environment.sh /usr/share/whist/setup-linux-build-environment.sh
+RUN /usr/share/whist/setup-linux-build-environment.sh \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
-RUN rm /usr/share/fractal/setup-linux-build-environment.sh
+RUN rm /usr/share/whist/setup-linux-build-environment.sh
 
 # Set up Whist Protocol symlink
-RUN mkdir /usr/share/fractal/bin
-RUN ln -sf /usr/share/fractal/bin/WhistServer /usr/share/fractal/WhistServer
+RUN mkdir /usr/share/whist/bin
+RUN ln -sf /usr/share/whist/bin/WhistServer /usr/share/whist/WhistServer
 
 # Set up the service which launches both the server protocol and the application
 
-COPY main/run-whist-server.sh /usr/share/fractal/run-whist-server.sh
-RUN chmod +x /usr/share/fractal/run-whist-server.sh
+COPY main/run-whist-server.sh /usr/share/whist/run-whist-server.sh
+RUN chmod +x /usr/share/whist/run-whist-server.sh
 COPY main/whist-main.service /etc/systemd/system
 RUN systemctl enable whist-main
 
@@ -776,7 +776,7 @@ RUN chgrp root /etc/systemd/system/whist* \
 
 
 # Install Whist Protocol binaries and helper files
-# We do this last and symlink `/usr/share/fractal/bin` earlier
+# We do this last and symlink `/usr/share/whist/bin` earlier
 # to make it easier to modify the protocol and rebuild the base
 # Dockerfile without needing to redo many steps
-COPY --from=build-assets protocol/* /usr/share/fractal/bin/
+COPY --from=build-assets protocol/* /usr/share/whist/bin/

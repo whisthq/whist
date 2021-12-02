@@ -14,13 +14,13 @@ set -Eeuo pipefail
 # If WHIST_AES_KEY is set, then create file
 if [ -n "${WHIST_AES_KEY+1}" ]
 then
-  echo $WHIST_AES_KEY > /usr/share/fractal/private/aes_key
+  echo $WHIST_AES_KEY > /usr/share/whist/private/aes_key
 fi
 
 # If SENTRY_ENV is set, then create file
 if [ -n "${SENTRY_ENV+1}" ]
 then
-  echo $SENTRY_ENV > /usr/share/fractal/private/sentry_env
+  echo $SENTRY_ENV > /usr/share/whist/private/sentry_env
 fi
 
 # Unset the AWS key to make sure that this environment variable does not
@@ -30,19 +30,19 @@ unset WHIST_AES_KEY
 # If WHIST_INITIAL_USER_COOKIES_FILE is set, then create file
 if [ -n "${WHIST_INITIAL_USER_COOKIES_FILE+1}" ]
 then
-  echo $WHIST_INITIAL_USER_COOKIES_FILE > /usr/share/fractal/private/user_cookies_file
+  echo $WHIST_INITIAL_USER_COOKIES_FILE > /usr/share/whist/private/user_cookies_file
 fi
 
 # If WHIST_COOKIE_UPLOAD_TARGET is set, then create file
 if [ -n "${WHIST_COOKIE_UPLOAD_TARGET+1}" ]
 then
-  echo $WHIST_COOKIE_UPLOAD_TARGET > /usr/share/fractal/private/user_target
+  echo $WHIST_COOKIE_UPLOAD_TARGET > /usr/share/whist/private/user_target
 fi
 
 # If WHIST_INITIAL_USER_BOOKMARKS_FILE is set, then create file
 if [ -n "${WHIST_INITIAL_USER_BOOKMARKS_FILE+1}" ]
 then
-  echo $WHIST_INITIAL_USER_BOOKMARKS_FILE > /usr/share/fractal/private/user_bookmarks_file
+  echo $WHIST_INITIAL_USER_BOOKMARKS_FILE > /usr/share/whist/private/user_bookmarks_file
 fi
 
 unset WHIST_INITIAL_USER_BOOKMARKS_FILE

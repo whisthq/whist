@@ -90,7 +90,7 @@ Some pieces of state, such as the user's authentication token, are stored in the
 
 Similarly, logs from the client app will be stored in `logs/client.log` and logs from the protocol will be stored in `logs/protocol.log` within the application data folder.
 
-On the server-side, logs are located in the `/usr/share/fractal/` folder within the Mandelbox that services the client-app. To access them, after having connected to the dev instances' `host-service` by following the procedure from the section above, find the container ID of the mandelbox that was created to service the client-app, then run `docker exec -it <container ID> /bin/bash`. You will now have a shell instance connected to the container. You can then use your editor of choice (`nano`, `vim`, etc...) or `less`/`tail` to check the logs.
+On the server-side, logs are located in the `/usr/share/whist/` folder within the Mandelbox that services the client-app. To access them, after having connected to the dev instances' `host-service` by following the procedure from the section above, find the container ID of the mandelbox that was created to service the client-app, then run `docker exec -it <container ID> /bin/bash`. You will now have a shell instance connected to the container. You can then use your editor of choice (`nano`, `vim`, etc...) or `less`/`tail` to check the logs.
 
 ## Client Application Source Code
 

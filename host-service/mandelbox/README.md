@@ -18,7 +18,7 @@ Environment variables can be passed to the docker container via [env configs](ht
 
 ### Private directory
 
-Occasionally, sensitive information needs to be saved on the mandelbox and keeping the values in a file or environment variable is not ideal. The information can be stored in `/usr/share/fractal/private/` directory with strict permissions and accessed later by a user with the correct permissions.
+Occasionally, sensitive information needs to be saved on the mandelbox and keeping the values in a file or environment variable is not ideal. The information can be stored in `/usr/share/whist/private/` directory with strict permissions and accessed later by a user with the correct permissions.
 
 As a reference, aes_key is stored into a private file in [entrypoint.sh](https://github.com/fractal/fractal/blob/dev/mandelboxes/base/startup/entrypoint.sh#L14) and later accessed in [run-whist-server.sh](https://github.com/fractal/fractal/blob/dev/mandelboxes/base/main/run-whist-server.sh#L11).
 

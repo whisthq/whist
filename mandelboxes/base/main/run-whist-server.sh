@@ -11,15 +11,15 @@ set -Eeuo pipefail
 # Set/Retrieve Mandelbox parameters
 WHIST_MAPPINGS_DIR=/fractal/resourceMappings
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
-PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
-SENTRY_ENV_FILENAME=/usr/share/fractal/private/sentry_env
-COOKIE_FILE_FILENAME=/usr/share/fractal/private/user_cookies_file
-BOOKMARK_FILE_FILENAME=/usr/share/fractal/private/user_bookmarks_file
-USER_UPLOAD_TARGET_FILENAME=/usr/share/fractal/private/user_target
+PRIVATE_KEY_FILENAME=/usr/share/whist/private/aes_key
+SENTRY_ENV_FILENAME=/usr/share/whist/private/sentry_env
+COOKIE_FILE_FILENAME=/usr/share/whist/private/user_cookies_file
+BOOKMARK_FILE_FILENAME=/usr/share/whist/private/user_bookmarks_file
+USER_UPLOAD_TARGET_FILENAME=/usr/share/whist/private/user_target
 TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/timeout
 WHIST_APPLICATION_PID_FILE=/home/whist/whist-application-pid
-PROTOCOL_LOG_FILENAME=/usr/share/fractal/server.log
-TELEPORT_LOG_FILENAME=/usr/share/fractal/teleport.log
+PROTOCOL_LOG_FILENAME=/usr/share/whist/server.log
+TELEPORT_LOG_FILENAME=/usr/share/whist/teleport.log
 
 # Define a string-format identifier for this mandelbox
 IDENTIFIER=$(cat $WHIST_MAPPINGS_DIR/$IDENTIFIER_FILENAME)
@@ -61,7 +61,7 @@ fi
 
 # We use named pipe redirection for consistency with our WhistServer launch setup
 # &> redirects both stdout and stdin together; shorthand for '> XYZ 2>&1'
-/usr/share/fractal/run-as-whist-user.sh "/usr/bin/run-whist-teleport.sh" &> >(tee $TELEPORT_LOG_FILENAME) &
+/usr/share/whist/run-as-whist-user.sh "/usr/bin/run-whist-teleport.sh" &> >(tee $TELEPORT_LOG_FILENAME) &
 
 # This function is called whenever the script exits, whether that is because we
 # reach the end of this file (because either WhistServer or the Whist
@@ -80,7 +80,7 @@ if [ "$ENV_NAME" != "localdev" ]; then
 fi
 
 # Imports user browser data if file exists
-python3 /usr/share/fractal/import_user_browser_data.py
+python3 /usr/share/whist/import_user_browser_data.py
 
 if [ -n "${WHIST_INITIAL_USER_COOKIES_FILE+1}" ] && [ -f "$WHIST_INITIAL_USER_COOKIES_FILE" ]; then
   # Remove temporary file containing the user's intial cookies
@@ -96,7 +96,7 @@ unset WHIST_INITIAL_USER_COOKIES_FILE
 unset WHIST_INITIAL_USER_BOOKMARKS_FILE
 
 # Start the application that this mandelbox runs.
-/usr/share/fractal/run-as-whist-user.sh "/usr/bin/run-whist-application.sh" &
+/usr/share/whist/run-as-whist-user.sh "/usr/bin/run-whist-application.sh" &
 fractal_application_runuser_pid=$!
 
 echo "Whist application runuser pid: $fractal_application_runuser_pid"
@@ -128,7 +128,7 @@ sync # Necessary so that even if the container exits very soon the host service 
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
 # The point of the named pipe redirection is so that $! will give us the PID of WhistServer, not of tee.
-/usr/share/fractal/WhistServer $OPTIONS > >(tee $PROTOCOL_LOG_FILENAME) &
+/usr/share/whist/WhistServer $OPTIONS > >(tee $PROTOCOL_LOG_FILENAME) &
 fractal_server_pid=$!
 
 # Wait for either whist-application or WhistServer to exit (both backgrounded processes).

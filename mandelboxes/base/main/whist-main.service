@@ -5,13 +5,13 @@ After=whist-display.service whist-audio.service
 Requires=whist-display.service whist-audio.service
 
 [Service]
-WorkingDirectory=/usr/share/fractal
+WorkingDirectory=/usr/share/whist
 Type=exec
 Environment=DISPLAY=:10
 Environment=XAUTHORITY=/home/whist/.Xauthority
-ExecStart=/usr/share/fractal/run-whist-server.sh
-StandardOutput=file:/var/log/fractal/protocol-out.log
-StandardError=file:/var/log/fractal/protocol-err.log
+ExecStart=/usr/share/whist/run-whist-server.sh
+StandardOutput=file:/var/log/whist/protocol-out.log
+StandardError=file:/var/log/whist/protocol-err.log
 
 [Install]
 WantedBy=default.target

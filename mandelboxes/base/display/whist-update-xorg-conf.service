@@ -7,13 +7,13 @@ Before=display-manager.service multi-user.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/share/fractal/update-xorg-conf.sh
+ExecStart=/usr/share/whist/update-xorg-conf.sh
 RemainAfterExit=true
 StandardOutput=journal+console
 StandardError=journal+console
 SyslogIdentifier=update-xorg-conf
-StandardOutput=file:/var/log/fractal/update_xorg_conf-out.log
-StandardError=file:/var/log/fractal/update_xorg_conf-err.log
+StandardOutput=file:/var/log/whist/update_xorg_conf-out.log
+StandardError=file:/var/log/whist/update_xorg_conf-err.log
 
 [Install]
 WantedBy=multi-user.target

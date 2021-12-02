@@ -15,4 +15,4 @@ COPY start-chrome.sh /usr/bin/start-chrome
 RUN chmod +x /usr/bin/start-chrome
 
 # Install Whist Protocol binaries and helper files (if necessary)
-COPY --from=build-assets protocol/* /usr/share/fractal/bin/
+COPY --from=build-assets protocol/* /usr/share/whist/bin/

@@ -7,11 +7,11 @@ Requires=whist-startup.service
 [Service]
 User=root
 Type=forking
-EnvironmentFile=/usr/share/fractal/whist-display-config.env
-ExecStart=/usr/share/fractal/whist-display.sh
-StandardOutput=file:/var/log/fractal/display-out.log
-StandardError=file:/var/log/fractal/display-err.log
-PIDFile=/usr/share/fractal/xinit-pid
+EnvironmentFile=/usr/share/whist/whist-display-config.env
+ExecStart=/usr/share/whist/whist-display.sh
+StandardOutput=file:/var/log/whist/display-out.log
+StandardError=file:/var/log/whist/display-err.log
+PIDFile=/usr/share/whist/xinit-pid
 
 [Install]
 WantedBy=multi-user.target

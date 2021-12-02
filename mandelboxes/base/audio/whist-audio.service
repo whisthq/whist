@@ -9,9 +9,9 @@ User=root
 Type=exec
 Environment=DISPLAY=:10
 Environment=XAUTHORITY=/home/whist/.Xauthority
-ExecStart=/usr/share/fractal/run-pulseaudio.sh
-StandardOutput=file:/var/log/fractal/audio-out.log
-StandardError=file:/var/log/fractal/audio-err.log
+ExecStart=/usr/share/whist/run-pulseaudio.sh
+StandardOutput=file:/var/log/whist/audio-out.log
+StandardError=file:/var/log/whist/audio-err.log
 
 [Install]
 WantedBy=multi-user.target
