@@ -75,7 +75,7 @@ func (r requestResult) send(w http.ResponseWriter) {
 	w.WriteHeader(status)
 	if err != nil {
 		logger.Errorf("Error marshalling a %v HTTP Response body: %s", status, err)
-		metrics.Add("ErrorRate", 1)
+		metrics.Increment("ErrorRate")
 	}
 	_, _ = w.Write(buf)
 }
@@ -125,7 +125,7 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 
 	// Verify that it is an PUT request
 	if verifyRequestType(w, r, http.MethodPut) != nil {
-		metrics.Add("FailedRequests", 1)
+		metrics.Increment("FailedRequests")
 		return
 	}
 
@@ -133,8 +133,8 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 	var reqdata JSONTransportRequest
 	if err := authenticateAndParseRequest(w, r, &reqdata, !metadata.IsLocalEnv()); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
-		metrics.Add("FailedRequests", 1)
-		metrics.Add("ErrorRate", 1)
+		metrics.Increment("FailedRequests")
+		metrics.Increment("ErrorRate")
 		return
 	}
 
@@ -146,7 +146,7 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 
 	// Measure elapsed milliseconds and send to metrics.
 	elapsed := time.Since(start)
-	metrics.Add("SuccessfulRequests", 1)
+	metrics.Increment("SuccessfulRequests")
 	metrics.Add("AverageRequestTime", elapsed.Milliseconds())
 }
 
@@ -169,7 +169,7 @@ func handleJSONTransportRequest(serverevent ServerRequest, transportRequestMap m
 		// sub (subject) claim.
 		if _, _, err := parser.ParseUnverified(string(req.JwtAccessToken), claims); err != nil {
 			logger.Errorf("There was a problem while parsing the access token for the second time: %s", err)
-			metrics.Add("ErrorRate", 1)
+			metrics.Increment("ErrorRate")
 			return
 		}
 	}

@@ -23,8 +23,8 @@ import (
 )
 
 var (
-	exportedVars map[string]int64
-	exportedMu   sync.Mutex
+	counters     map[string]int64
+	countersLock sync.Mutex
 )
 
 // A RuntimeMetrics groups together several pieces of useful information about
@@ -158,15 +158,15 @@ func init() {
 	}
 
 	// Initialize exported variables map
-	exportedMu.Lock()
-	exportedVars = map[string]int64{
+	countersLock.Lock()
+	counters = map[string]int64{
 		"AverageRequestTime":      0,
 		"SuccessfulRequests":      0,
 		"FailedRequests":          0,
 		"CleanedStaleMandelboxes": 0,
 		"ErrorRate":               0,
 	}
-	exportedMu.Unlock()
+	countersLock.Unlock()
 }
 
 // As long as this channel is blocking, we should keep collecting metrics. As
@@ -380,20 +380,20 @@ func collectOnce() (RuntimeMetrics, []error) {
 	newMetrics.TimeStamp = time.Now().UTC()
 
 	// Pull exported variables metrics
-	exportedMu.Lock()
+	countersLock.Lock()
 
-	newMetrics.SuccessfulRequests = exportedVars["SuccessfulRequests"]
-	newMetrics.FailedRequests = exportedVars["FailedRequests"]
-	newMetrics.CleanedStaleMandelboxes = exportedVars["CleanedStaleMandelboxes"]
-	newMetrics.ErrorRate = exportedVars["ErrorRate"]
+	newMetrics.SuccessfulRequests = counters["SuccessfulRequests"]
+	newMetrics.FailedRequests = counters["FailedRequests"]
+	newMetrics.CleanedStaleMandelboxes = counters["CleanedStaleMandelboxes"]
+	newMetrics.ErrorRate = counters["ErrorRate"]
 
-	requests := exportedVars["SuccessfulRequests"]
+	requests := counters["SuccessfulRequests"]
 	if requests > 0 {
-		average := utils.Sprintf("%v ms", exportedVars["AverageRequestTime"]/requests)
+		average := utils.Sprintf("%v ms", counters["AverageRequestTime"]/requests)
 		newMetrics.AverageRequestTime = average
 	}
 
-	exportedMu.Unlock()
+	countersLock.Unlock()
 
 	return newMetrics, errs
 }
@@ -421,8 +421,15 @@ func Close() {
 }
 
 func Add(metric string, delta int64) {
-	exportedMu.Lock()
-	defer exportedMu.Unlock()
+	countersLock.Lock()
+	defer countersLock.Unlock()
 
-	exportedVars[metric] += delta
+	counters[metric] += delta
+}
+
+func Increment(metric string) {
+	countersLock.Lock()
+	defer countersLock.Unlock()
+
+	counters[metric] += 1
 }
