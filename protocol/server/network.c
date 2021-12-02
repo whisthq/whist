@@ -16,11 +16,11 @@ Includes
 ============================
 */
 
-#include <fractal/core/fractal.h>
-#include <fractal/network/network.h>
-#include <fractal/input/input.h>
-#include <fractal/logging/error_monitor.h>
-#include <fractal/utils/aes.h>
+#include <whist/core/whist.h>
+#include <whist/network/network.h>
+#include <whist/input/input.h>
+#include <whist/logging/error_monitor.h>
+#include <whist/utils/aes.h>
 #include <stdio.h>
 
 #include "network.h"
@@ -43,7 +43,7 @@ Private Functions
 */
 
 int do_discovery_handshake(whist_server_state *state, SocketContext *context,
-                           FractalClientMessage *fcmsg);
+                           WhistClientMessage *fcmsg);
 
 /*
 ============================
@@ -64,21 +64,21 @@ int handle_discovery_port_message(whist_server_state *state, SocketContext *cont
             (int): 0 on success, -1 on failure
     */
 
-    FractalPacket *tcp_packet;
+    WhistPacket *tcp_packet;
     clock timer;
     start_timer(&timer);
     do {
         tcp_packet = read_packet(context, true);
         whist_sleep(5);
     } while (tcp_packet == NULL && get_timer(timer) < CLIENT_PING_TIMEOUT_SEC);
-    // Exit on null tcp packet, otherwise analyze the resulting FractalClientMessage
+    // Exit on null tcp packet, otherwise analyze the resulting WhistClientMessage
     if (tcp_packet == NULL) {
         LOG_WARNING("Did not receive request over discovery port from client.");
         destroy_socket_context(context);
         return -1;
     }
 
-    FractalClientMessage *fcmsg = (FractalClientMessage *)tcp_packet->data;
+    WhistClientMessage *fcmsg = (WhistClientMessage *)tcp_packet->data;
     *new_client = false;
 
     switch (fcmsg->type) {
@@ -134,13 +134,13 @@ int handle_discovery_port_message(whist_server_state *state, SocketContext *cont
 }
 
 int do_discovery_handshake(whist_server_state *state, SocketContext *context,
-                           FractalClientMessage *fcmsg) {
+                           WhistClientMessage *fcmsg) {
     /*
         Perform a discovery handshake over the discovery port socket context
 
         Arguments:
             context (SocketContext*): the socket context for the discovery port
-            fcmsg (FractalClientMessage*): discovery message sent from client
+            fcmsg (WhistClientMessage*): discovery message sent from client
 
         Returns:
             (int): 0 on success, -1 on failure
@@ -148,14 +148,13 @@ int do_discovery_handshake(whist_server_state *state, SocketContext *context,
 
     handle_client_message(state, fcmsg);
 
-    size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage);
+    size_t fsmsg_size = sizeof(WhistServerMessage) + sizeof(WhistDiscoveryReplyMessage);
 
-    FractalServerMessage *fsmsg = safe_malloc(fsmsg_size);
+    WhistServerMessage *fsmsg = safe_malloc(fsmsg_size);
     memset(fsmsg, 0, sizeof(*fsmsg));
     fsmsg->type = MESSAGE_DISCOVERY_REPLY;
 
-    FractalDiscoveryReplyMessage *reply_msg =
-        (FractalDiscoveryReplyMessage *)fsmsg->discovery_reply;
+    WhistDiscoveryReplyMessage *reply_msg = (WhistDiscoveryReplyMessage *)fsmsg->discovery_reply;
 
     reply_msg->udp_port = state->client.udp_port;
     reply_msg->tcp_port = state->client.tcp_port;
@@ -228,8 +227,7 @@ int broadcast_ack(Client *client) {
     return ret;
 }
 
-int broadcast_udp_packet(Client *client, FractalPacketType type, void *data, int len,
-                         int packet_id) {
+int broadcast_udp_packet(Client *client, WhistPacketType type, void *data, int len, int packet_id) {
     if (packet_id <= 0) {
         LOG_WARNING("Packet IDs must be positive!");
         return -1;
@@ -244,7 +242,7 @@ int broadcast_udp_packet(Client *client, FractalPacketType type, void *data, int
     return 0;
 }
 
-int broadcast_tcp_packet(Client *client, FractalPacketType type, void *data, int len) {
+int broadcast_tcp_packet(Client *client, WhistPacketType type, void *data, int len) {
     if (client->is_active) {
         read_lock(&client->tcp_rwlock);
         if (send_packet(&(client->tcp_context), type, (uint8_t *)data, len, -1) < 0) {
@@ -258,7 +256,7 @@ int broadcast_tcp_packet(Client *client, FractalPacketType type, void *data, int
 
 clock last_tcp_read;
 bool has_read = false;
-int try_get_next_message_tcp(Client *client, FractalPacket **p_tcp_packet) {
+int try_get_next_message_tcp(Client *client, WhistPacket **p_tcp_packet) {
     *p_tcp_packet = NULL;
 
     // Check if 20ms has passed since last TCP recvp, since each TCP recvp read takes 8ms
@@ -269,7 +267,7 @@ int try_get_next_message_tcp(Client *client, FractalPacket **p_tcp_packet) {
         has_read = true;
     }
 
-    FractalPacket *tcp_packet = read_packet(&client->tcp_context, should_recvp);
+    WhistPacket *tcp_packet = read_packet(&client->tcp_context, should_recvp);
     if (tcp_packet) {
         LOG_INFO("Received TCP Packet: Size %d", tcp_packet->payload_size);
         *p_tcp_packet = tcp_packet;
@@ -277,12 +275,12 @@ int try_get_next_message_tcp(Client *client, FractalPacket **p_tcp_packet) {
     return 0;
 }
 
-int try_get_next_message_udp(Client *client, FractalClientMessage *fcmsg, size_t *fcmsg_size) {
+int try_get_next_message_udp(Client *client, WhistClientMessage *fcmsg, size_t *fcmsg_size) {
     *fcmsg_size = 0;
 
     memset(fcmsg, 0, sizeof(*fcmsg));
 
-    FractalPacket *packet = read_packet(&(client->udp_context), true);
+    WhistPacket *packet = read_packet(&(client->udp_context), true);
     if (packet) {
         memcpy(fcmsg, packet->data, max(sizeof(*fcmsg), (size_t)packet->payload_size));
         if (packet->payload_size != get_fcmsg_size(fcmsg)) {

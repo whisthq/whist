@@ -12,19 +12,19 @@ The syntax for workflows is documented in the [GitHub Docs](https://docs.github.
 
 Since GitHub does not yet allow us to sort our workflow files into directories, we must name them in a clear and consistent manner. In particular, we name our workflows as `[subproject]-[verb]-[noun].yml`.
 
-For example, a workflow for the `webserver` project which clears protocol logs is named `webserver-clear-protocol-logs.yml`, whereas a meta workflow (one which operates on workflows and PRs themselves) which labels pull requests is named `meta-label-pull-requests.yml`. Workflows that belong to the whole repo -- for example, for pushing Sentry releases, are instead written `fractal-deploy-sentry-releases.yml`.
+For example, a workflow for the `webserver` project which clears protocol logs is named `webserver-clear-protocol-logs.yml`, whereas a meta workflow (one which operates on workflows and PRs themselves) which labels pull requests is named `meta-label-pull-requests.yml`. Workflows that belong to the whole repo -- for example, for pushing Sentry releases, are instead written `whist-deploy-sentry-releases.yml`.
 
 ### Headers
 
 Our workflow files start with a simple comment header with a description of the workflow in complete sentences.
 
-For example, this is the header and beginning of `fractal-deploy-sentry-releases.yml`:
+For example, this is the header and beginning of `whist-deploy-sentry-releases.yml`:
 
 ```yaml
-# workflows/fractal-push-sentry-releases.yml
+# workflows/whist-push-sentry-releases.yml
 #
 # Whist: Push Sentry Release
-# Automatically push a new Sentry release for each of the fractal/fractal projects.
+# Automatically push a new Sentry release for each of the fractal/whist projects.
 
 name: "Whist: Push Sentry Releases"
 ```
@@ -33,7 +33,7 @@ Note that in addition to the filename, we entitle our workflow with `Project Nam
 
 ### Jobs
 
-Many of our workflows have a single job, whereas some of our more complex workflows (for example, `fractal-publish-build.yml`) will contain multiple jobs triggered by the same event.
+Many of our workflows have a single job, whereas some of our more complex workflows (for example, `whist-publish-build.yml`) will contain multiple jobs triggered by the same event.
 
 It will be important as we scale for our jobs to be named uniquely so that we can programatically listen for specific jobs. The simplest way to achieve this is to enforce the following naming scheme: jobs will be named as `[subproject]-[verb]-[noun]-[jobname].yml`. Note that for single-project YAML files, this should match `[filename]-[jobname].yml`.
 
@@ -48,7 +48,7 @@ jobs:
 
 Notice that we also include a `Title Case`, plaintext name for the job, in addition to the tag `protocol-linting-main`.
 
-For more complex workflows, we should be specific both in the programmatic identifier and the plaintext job name. For example, here is the start of the job description for pushing the Host Service to an AWS S3 bucket in `fractal-publish-build.yml`:
+For more complex workflows, we should be specific both in the programmatic identifier and the plaintext job name. For example, here is the start of the job description for pushing the Host Service to an AWS S3 bucket in `whist-publish-build.yml`:
 
 ```yaml
 jobs:

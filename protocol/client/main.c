@@ -30,13 +30,13 @@ Includes
 
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
-#include <fractal/core/fractal.h>
-#include <fractal/network/network.h>
-#include <fractal/utils/aes.h>
-#include <fractal/utils/clock.h>
-#include <fractal/logging/logging.h>
-#include <fractal/logging/log_statistic.h>
-#include <fractal/logging/error_monitor.h>
+#include <whist/core/whist.h>
+#include <whist/network/network.h>
+#include <whist/utils/aes.h>
+#include <whist/utils/clock.h>
+#include <whist/logging/logging.h>
+#include <whist/logging/log_statistic.h>
+#include <whist/logging/error_monitor.h>
 #include "sdlscreeninfo.h"
 #include "audio.h"
 #include "client_utils.h"
@@ -47,13 +47,13 @@ Includes
 #include "video.h"
 #include "sync_packets.h"
 #include <SDL2/SDL_syswm.h>
-#include <fractal/utils/color.h>
+#include <whist/utils/color.h>
 #include "native_window_utils.h"
 #include "client_statistic.h"
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
-#include <fractal/utils/mac_utils.h>
+#include <whist/utils/mac_utils.h>
 #endif  // __APPLE__
 
 // N.B.: Please don't put globals here, since main.c won't be included when the testing suite is
@@ -78,7 +78,7 @@ extern volatile bool should_update_window_title;
 volatile bool is_timing_latency;
 extern volatile double latency;
 
-extern volatile FractalRGBColor* native_window_color;
+extern volatile WhistRGBColor* native_window_color;
 extern volatile bool native_window_color_update;
 extern volatile bool fullscreen_trigger;
 extern volatile bool fullscreen_value;
@@ -133,7 +133,7 @@ int sync_keyboard_state(void) {
     */
 
     // Set keyboard state initialized to null
-    FractalClientMessage fcmsg = {0};
+    WhistClientMessage fcmsg = {0};
 
     fcmsg.type = MESSAGE_KEYBOARD_STATE;
 
@@ -226,9 +226,9 @@ void handle_single_icon_launch_client_app(int argc, char* argv[]) {
 
 #elif __APPLE__
         // This executable is located at
-        //    Whist.app/Contents/MacOS/FractalClient
-        // We want to reference client app at Whist.app/Contents/MacOS/FractalLauncher
-        const char* relative_client_app_path = "/FractalLauncher";
+        //    Whist.app/Contents/MacOS/WhistClient
+        // We want to reference client app at Whist.app/Contents/MacOS/WhistLauncher
+        const char* relative_client_app_path = "/WhistLauncher";
         char dir_split_char = '/';
         int protocol_path_len;
 #endif
@@ -318,10 +318,10 @@ int main(int argc, char* argv[]) {
     SDL_Thread* renderer_thread = NULL;
 
     print_system_info();
-    LOG_INFO("Whist client revision %s", fractal_git_revision());
+    LOG_INFO("Whist client revision %s", whist_git_revision());
 
     client_exiting = false;
-    FractalExitCode exit_code = WHIST_EXIT_SUCCESS;
+    WhistExitCode exit_code = WHIST_EXIT_SUCCESS;
 
     // While showing the SDL loading screen, read in any piped arguments
     //    If the arguments are bad, then skip to the destruction phase
@@ -501,8 +501,7 @@ int main(int argc, char* argv[]) {
             }
 
             if (native_window_color_update && native_window_color) {
-                set_native_window_color((SDL_Window*)window,
-                                        *(FractalRGBColor*)native_window_color);
+                set_native_window_color((SDL_Window*)window, *(WhistRGBColor*)native_window_color);
                 native_window_color_update = false;
             }
 

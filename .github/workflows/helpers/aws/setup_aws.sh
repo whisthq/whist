@@ -8,7 +8,7 @@ set -Eeuo pipefail
 # https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-# Working directory is fractal/.github/workflows/helpers
+# Working directory is whist/.github/workflows/helpers
 cd "$DIR/.."
 
 # Create a temporary folder, and copy the aws modules to that folder.

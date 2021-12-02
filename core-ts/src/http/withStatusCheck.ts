@@ -1,4 +1,4 @@
-import { ServerDecorator, FractalHTTPCode } from "../types/api"
+import { ServerDecorator, WhistHTTPCode } from "../types/api"
 
 /*
  * Validates the status code of a ServerResponse.
@@ -12,8 +12,8 @@ import { ServerDecorator, FractalHTTPCode } from "../types/api"
 export const withStatusCheck: ServerDecorator = async (fn, req) => {
   const result = await fn(req)
   const { response } = result
-  return response?.status === FractalHTTPCode.SUCCESS ||
-    response?.status === FractalHTTPCode.ACCEPTED
+  return response?.status === WhistHTTPCode.SUCCESS ||
+    response?.status === WhistHTTPCode.ACCEPTED
     ? result
     : { ...result, error: "Failure Status: " + response?.status }
 }

@@ -18,7 +18,7 @@ Includes
 ============================
 */
 
-#include <fractal/core/fractal.h>
+#include <whist/core/whist.h>
 
 /*
 ============================
@@ -42,6 +42,6 @@ typedef struct _whist_server_state whist_server_state;
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int handle_client_message(whist_server_state *state, FractalClientMessage *fcmsg);
+int handle_client_message(whist_server_state *state, WhistClientMessage *fcmsg);
 
 #endif  // HANDLE_CLIENT_MESSAGE_H

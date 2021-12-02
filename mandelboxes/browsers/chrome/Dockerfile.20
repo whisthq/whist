@@ -1,7 +1,7 @@
 # See stage 0 of the base dockerfile for an explanation of this build stage.
 ARG BuildAssetPackage "protocol"
-FROM fractal/build-assets:$BuildAssetPackage as build-assets
-FROM fractal/base:current-build as fractal-browsers-chrome
+FROM whist/build-assets:$BuildAssetPackage as build-assets
+FROM whist/base:current-build as whist-browsers-chrome
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -40,7 +40,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Set default browser
-RUN su - fractal -c \
+RUN su - whist -c \
     "xdg-mime default google-chrome.desktop text/html \
     && xdg-mime default google-chrome.desktop x-scheme-handler/http \
     && xdg-mime default google-chrome.desktop x-scheme-handler/https \
@@ -61,23 +61,23 @@ RUN mkdir -p /etc/opt/chrome/policies/managed \
     | jq '.BackgroundModeEnabled=false' \
     # Disable the file selection dialog to hide the mandelbox filesystem
     | jq '.AllowFileSelectionDialogs=false' \
-    > /etc/opt/chrome/policies/managed/FractalPolicies.json
+    > /etc/opt/chrome/policies/managed/WhistPolicies.json
 
 # Install Google Chrome extensions
 COPY install-extensions.sh /usr/bin/install-extensions.sh
 RUN chmod +x /usr/bin/install-extensions.sh && /usr/bin/install-extensions.sh
 
 # Create default config paths
-RUN su - fractal -c "mkdir -p /home/fractal/.config/google-chrome"
+RUN su - whist -c "mkdir -p /home/whist/.config/google-chrome"
 
 # Don't show first run popup
-RUN su - fractal -c "touch /home/fractal/.config/google-chrome/'First Run'"
+RUN su - whist -c "touch /home/whist/.config/google-chrome/'First Run'"
 
 # Install Whist wrapper script to run Google Chrome into /usr/bin
 ENV WHIST_COOKIE_UPLOAD_TARGET="chrome"
 COPY start-chrome.sh /usr/bin/start-chrome
 RUN chmod +x /usr/bin/start-chrome
-RUN ln -sf /usr/bin/start-chrome /usr/bin/fractal-application
+RUN ln -sf /usr/bin/start-chrome /usr/bin/whist-application
 
 # Install Whist Protocol binaries and helper files (if necessary)
-COPY --from=build-assets protocol/* /usr/share/fractal/bin/
+COPY --from=build-assets protocol/* /usr/share/whist/bin/

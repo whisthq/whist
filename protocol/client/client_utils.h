@@ -19,8 +19,8 @@ Includes
 ============================
 */
 
-#include <fractal/network/network.h>
-#include <fractal/network/ringbuffer.h>
+#include <whist/network/network.h>
+#include <whist/network/ringbuffer.h>
 
 #define MAX_INIT_CONNECTION_ATTEMPTS (6)
 #define MAX_RECONNECTION_ATTEMPTS (10)
@@ -92,7 +92,7 @@ int free_parsed_args(void);
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int prepare_init_to_server(FractalDiscoveryRequestMessage* fcmsg, char* email);
+int prepare_init_to_server(WhistDiscoveryRequestMessage* fcmsg, char* email);
 
 /**
  * @brief                          Update mouse location if the mouse state has
@@ -114,6 +114,6 @@ void send_message_dimensions();
  * @param id                       The ID of the packet
  * @param index                    The index of the packet
  */
-void nack_packet(FractalPacketType frame_type, int id, int index);
+void nack_packet(WhistPacketType frame_type, int id, int index);
 
 #endif  // CLIENT_UTILS_H

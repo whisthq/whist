@@ -1,0 +1,17 @@
+# Starts the display configured for Whist, runs as root
+[Unit]
+Description=Whist Display
+After=whist-startup.service
+Requires=whist-startup.service
+
+[Service]
+User=root
+Type=forking
+EnvironmentFile=/usr/share/whist/whist-display-config.env
+ExecStart=/usr/share/whist/whist-display.sh
+StandardOutput=file:/var/log/whist/display-out.log
+StandardError=file:/var/log/whist/display-err.log
+PIDFile=/usr/share/whist/xinit-pid
+
+[Install]
+WantedBy=multi-user.target

@@ -66,7 +66,7 @@ def get_dependency_from_image(img_path):  # returns dep_path
     # Open Dockerfile for the image path
     with open(img_path + "/Dockerfile.20", encoding="utf-8") as file:
         # Regex match the Dockerfile dependency, with a capture group on the dependency name
-        regex = re.compile("^[ ]*FROM[ ]+fractal/([^:]*):current-build")
+        regex = re.compile("^[ ]*FROM[ ]+whist/([^:]*):current-build")
         for line in file:
             result = regex.search(line)
             if result:
@@ -117,7 +117,7 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
         f"{img_path}/Dockerfile.20",
         img_path,
         "-t",
-        f"fractal/{img_path}:current-build",
+        f"whist/{img_path}:current-build",
         "--build-arg",
         f"BuildAssetPackage={build_asset_package}",
     ]

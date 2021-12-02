@@ -16,9 +16,9 @@ Includes
 ============================
 */
 
-#include <fractal/core/fractal.h>
-#include <fractal/utils/clock.h>
-#include <fractal/utils/rwlock.h>
+#include <whist/core/whist.h>
+#include <whist/utils/clock.h>
+#include <whist/utils/rwlock.h>
 
 /*
 ============================

@@ -10,34 +10,34 @@ browserDefaultDir = [
     [
         "chrome",
         [
-            "/fractal/userConfigs/google-chrome/Default/",
-            "/fractal/userConfigs/google-chrome-beta/Default/",
+            "/whist/userConfigs/google-chrome/Default/",
+            "/whist/userConfigs/google-chrome-beta/Default/",
         ],
     ],
     [
         "chromium",
         [
-            "/fractal/userConfigs/chromium/Default/",
+            "/whist/userConfigs/chromium/Default/",
         ],
     ],
     [
         "opera",
         [
-            "/fractal/userConfigs/opera/",
+            "/whist/userConfigs/opera/",
         ],
     ],
     [
         "edge",
         [
-            "/fractal/userConfigs/microsoft-edge/Default/",
-            "/fractal/userConfigs/microsoft-edge-dev/Default/",
+            "/whist/userConfigs/microsoft-edge/Default/",
+            "/whist/userConfigs/microsoft-edge-dev/Default/",
         ],
     ],
     [
         "brave",
         [
-            "/fractal/userConfigs/BraveSoftware/Brave-Browser/Default/",
-            "/fractal/userConfigs/BraveSoftware/Brave-Browser-Beta/Default/",
+            "/whist/userConfigs/BraveSoftware/Brave-Browser/Default/",
+            "/whist/userConfigs/BraveSoftware/Brave-Browser-Beta/Default/",
         ],
     ],
 ]

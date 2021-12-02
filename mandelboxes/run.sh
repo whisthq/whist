@@ -10,12 +10,12 @@ set -Eeuo pipefail
 # Retrieve relative subfolder path
 # https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-# Working directory is fractal/mandelboxes/
+# Working directory is whist/mandelboxes/
 cd "$DIR"
 
-# We add the `fractal/` prefix and `:current-build` tag to the image name, then
+# We add the `whist/` prefix and `:current-build` tag to the image name, then
 # call `run_mandelbox_image.sh` with that image name and any other arguments
 # provided.
 app_path=${1%/}
-image=fractal/$app_path:current-build
+image=whist/$app_path:current-build
 ./helper_scripts/run_mandelbox_image.sh "$image" "${@:2}"

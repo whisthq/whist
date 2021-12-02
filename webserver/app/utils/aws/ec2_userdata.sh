@@ -7,7 +7,7 @@ echo "Whist EC2 userdata started"
 
 cd /home/ubuntu
 
-# The Host Service gets built in the `fractal-build-and-deploy.yml` workflow and
+# The Host Service gets built in the `whist-build-and-deploy.yml` workflow and
 # uploaded from this Git repository to the AMI during Packer via ami_config.json
 # Here, we write the systemd unit file for the Whist Host Service.
 # Note that we do not restart the host service. This is because if the host
@@ -25,7 +25,7 @@ After=docker.service
 Restart=no
 User=root
 Type=exec
-EnvironmentFile=/usr/share/fractal/app_env.env
+EnvironmentFile=/usr/share/whist/app_env.env
 ExecStart=/home/ubuntu/host-service
 
 [Install]

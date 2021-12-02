@@ -34,9 +34,9 @@ Includes
 
 extern "C" {
 #include "client/client_utils.h"
-#include "fractal/utils/color.h"
-#include <fractal/core/fractal.h>
-#include <fractal/network/ringbuffer.h>
+#include "whist/utils/color.h"
+#include <whist/core/whist.h>
+#include <whist/network/ringbuffer.h>
 #include <fcntl.h>
 
 #ifndef __APPLE__
@@ -45,10 +45,10 @@ extern "C" {
 #endif
 
 #include "client/client_utils.h"
-#include <fractal/logging/log_statistic.h>
-#include <fractal/utils/aes.h>
-#include <fractal/utils/png.h>
-#include <fractal/utils/avpacket_buffer.h>
+#include <whist/logging/log_statistic.h>
+#include <whist/utils/aes.h>
+#include <whist/utils/png.h>
+#include <whist/utils/avpacket_buffer.h>
 }
 
 /*
@@ -172,7 +172,7 @@ Example Test
 TEST_F(CaptureStdoutTest, ClientParseArgsEmpty) {
     int argc = 1;
 
-    char argv0[] = "./client/build64/FractalClient";
+    char argv0[] = "./client/build64/WhistClient";
     char* argv[] = {argv0, NULL};
 
     int ret_val = client_parse_args(argc, argv);
@@ -222,13 +222,13 @@ TEST_F(CaptureStdoutTest, AddingPacketsToRingBuffer) {
     RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, num_packets, NULL);
 
     // setup packets to add to ringbuffer
-    FractalPacket pkt1 = {0};
+    WhistPacket pkt1 = {0};
     pkt1.type = PACKET_VIDEO;
     pkt1.id = 0;
     pkt1.index = 0;
     pkt1.is_a_nack = false;
 
-    FractalPacket pkt2 = {0};
+    WhistPacket pkt2 = {0};
     pkt2.type = PACKET_VIDEO;
     pkt2.id = 1;
     pkt2.index = 0;
@@ -258,7 +258,7 @@ TEST(ProtocolTest, ResetRingBufferFrame) {
     RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, num_packets, NULL);
 
     // fill ringbuffer
-    FractalPacket pkt1;
+    WhistPacket pkt1;
     pkt1.type = PACKET_VIDEO;
     pkt1.id = 0;
     pkt1.index = 0;
@@ -288,7 +288,7 @@ TEST_F(CaptureStdoutTest, ServerParseArgsUsage) {
     whist_server_config config;
     int argc = 2;
 
-    char argv0[] = "./server/build64/FractalServer";
+    char argv0[] = "./server/build64/WhistServer";
     char argv1[] = "--help";
     char* argv[] = {argv0, argv1, NULL};
 
@@ -388,13 +388,13 @@ TEST_F(CaptureStdoutTest, LogStatistic) {
  * utils/color.c
  **/
 
-TEST(ProtocolTest, FractalColorTest) {
-    FractalRGBColor cyan = {0, 255, 255};
-    FractalRGBColor magenta = {255, 0, 255};
-    FractalRGBColor dark_gray = {25, 25, 25};
-    FractalRGBColor light_gray = {150, 150, 150};
-    FractalRGBColor fractal_purple_rgb = {79, 53, 222};
-    FractalYUVColor fractal_purple_yuv = {85, 198, 127};
+TEST(ProtocolTest, WhistColorTest) {
+    WhistRGBColor cyan = {0, 255, 255};
+    WhistRGBColor magenta = {255, 0, 255};
+    WhistRGBColor dark_gray = {25, 25, 25};
+    WhistRGBColor light_gray = {150, 150, 150};
+    WhistRGBColor whist_purple_rgb = {79, 53, 222};
+    WhistYUVColor whist_purple_yuv = {85, 198, 127};
 
     // equality works
     EXPECT_EQ(rgb_compare(cyan, cyan), 0);
@@ -411,9 +411,9 @@ TEST(ProtocolTest, FractalColorTest) {
     EXPECT_TRUE(color_requires_dark_text(light_gray));
 
     // yuv conversion works (with some fuzz)
-    EXPECT_NEAR(yuv_to_rgb(fractal_purple_yuv).red, fractal_purple_rgb.red, 2);
-    EXPECT_NEAR(yuv_to_rgb(fractal_purple_yuv).green, fractal_purple_rgb.green, 2);
-    EXPECT_NEAR(yuv_to_rgb(fractal_purple_yuv).blue, fractal_purple_rgb.blue, 2);
+    EXPECT_NEAR(yuv_to_rgb(whist_purple_yuv).red, whist_purple_rgb.red, 2);
+    EXPECT_NEAR(yuv_to_rgb(whist_purple_yuv).green, whist_purple_rgb.green, 2);
+    EXPECT_NEAR(yuv_to_rgb(whist_purple_yuv).blue, whist_purple_rgb.blue, 2);
 }
 
 /**
@@ -451,7 +451,7 @@ TEST(ProtocolTest, EncryptAndDecrypt) {
     size_t len = strlen(data);
 
     // Construct test packet
-    FractalPacket original_packet;
+    WhistPacket original_packet;
 
     // Contruct packet metadata
     original_packet.id = -1;
@@ -467,12 +467,12 @@ TEST(ProtocolTest, EncryptAndDecrypt) {
     // Encrypt the packet using aes encryption
     int original_len = PACKET_HEADER_SIZE + original_packet.payload_size;
 
-    FractalPacket encrypted_packet;
+    WhistPacket encrypted_packet;
     int encrypted_len = encrypt_packet(&original_packet, original_len, &encrypted_packet,
                                        (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
 
     // decrypt packet
-    FractalPacket decrypted_packet;
+    WhistPacket decrypted_packet;
 
     int decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
                                        (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
@@ -490,7 +490,7 @@ TEST_F(CaptureStdoutTest, BadDecrypt) {
     size_t len = strlen(data);
 
     // Construct test packet
-    FractalPacket original_packet;
+    WhistPacket original_packet;
 
     // Contruct packet metadata
     original_packet.id = -1;
@@ -506,12 +506,12 @@ TEST_F(CaptureStdoutTest, BadDecrypt) {
     // Encrypt the packet using aes encryption
     int original_len = PACKET_HEADER_SIZE + original_packet.payload_size;
 
-    FractalPacket encrypted_packet;
+    WhistPacket encrypted_packet;
     int encrypted_len = encrypt_packet(&original_packet, original_len, &encrypted_packet,
                                        (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
 
     // decrypt packet with differing key
-    FractalPacket decrypted_packet;
+    WhistPacket decrypted_packet;
 
     int decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
                                        (unsigned char*)SECOND_BINARY_PRIVATE_KEY);

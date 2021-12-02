@@ -21,10 +21,10 @@ Includes
 #include "audio.h"
 #include "network.h"
 #include "client_statistic.h"
-#include <fractal/logging/log_statistic.h>
-#include <fractal/network/network.h>
-#include <fractal/network/ringbuffer.h>
-#include <fractal/core/fractal_frame.h>
+#include <whist/logging/log_statistic.h>
+#include <whist/network/network.h>
+#include <whist/network/ringbuffer.h>
+#include <whist/core/whist_frame.h>
 
 extern bool has_video_rendered_yet;
 
@@ -477,7 +477,7 @@ void update_audio() {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int32_t receive_audio(FractalPacket* packet) {
+int32_t receive_audio(WhistPacket* packet) {
     /*
         This function will store an audio packet in its internal buffer, to be played on later
         calls to update_audio. A buffer is needed so that the audio comes out smoothly. We delay the
@@ -485,7 +485,7 @@ int32_t receive_audio(FractalPacket* packet) {
         the buffer is empty, the speakers will make a "pop" noise.
 
         Arguments:
-            packet (FractalPacket*): FractalPacket wrapped audio data.
+            packet (WhistPacket*): WhistPacket wrapped audio data.
 
         Return:
             ret (int): 0 on success, -1 on failure

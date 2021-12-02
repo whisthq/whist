@@ -6,7 +6,7 @@ set -Eeuo pipefail
 # https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-# Working directory is fractal/mandelboxes/
+# Working directory is whist/mandelboxes/
 cd "$DIR"
 
 # In dev mode, we copy the protocol at the last step of each target mandelbox image, to speed up development time, and
@@ -57,8 +57,8 @@ fi
 if [[ ! -z "$cmake_build_type_opt" ]]; then
   cmake_build_type=$cmake_build_type_opt
 fi
-echo "Building $cmake_build_type FractalServer..."
-../protocol/build_protocol_targets.sh --cmakebuildtype=$cmake_build_type FractalServer
+echo "Building $cmake_build_type WhistServer..."
+../protocol/build_protocol_targets.sh --cmakebuildtype=$cmake_build_type WhistServer
 ./helper_scripts/copy_protocol_build.sh base/build-assets/build-temp
 
 # Copy the Nvidia driver installer
@@ -69,12 +69,12 @@ mv nvidia-driver-installer.run base/build-assets/build-temp/nvidia-driver
 
 # Bundle these build assets into a cached Docker image
 echo "Bundling build assets..."
-docker build -t fractal/build-assets:default -f base/build-assets/Dockerfile.20 --target default base/build-assets -q > /dev/null
-docker build -t fractal/build-assets:protocol -f base/build-assets/Dockerfile.20 --target protocol base/build-assets -q > /dev/null
+docker build -t whist/build-assets:default -f base/build-assets/Dockerfile.20 --target default base/build-assets -q > /dev/null
+docker build -t whist/build-assets:protocol -f base/build-assets/Dockerfile.20 --target protocol base/build-assets -q > /dev/null
 
 # Now, our Dockerfiles can copy over these files using
-# COPY --from=fractal/build-assets:default most of the time,
-# and fractal/build-assets:protocol when they determine that
+# COPY --from=whist/build-assets:default most of the time,
+# and whist/build-assets:protocol when they determine that
 # they want to copy the protocol based on the mode.
 
 python3 ./helper_scripts/build_mandelbox_image.py "${python_args[@]}" --mode="$mode"

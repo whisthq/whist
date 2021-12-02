@@ -10,7 +10,7 @@ Usage
 ============================
 
 initVideo() gets called before any video packet can be received. The video
-packets are received as standard FractalPackets by ReceiveVideo(FractalPacket*
+packets are received as standard WhistPackets by ReceiveVideo(WhistPacket*
 packet), before being saved in a proper video frame format.
 */
 
@@ -20,10 +20,10 @@ Includes
 ============================
 */
 
-#include <fractal/core/fractal.h>
-#include <fractal/network/network.h>
-#include <fractal/video/codec/decode.h>
-#include <fractal/utils/avpacket_buffer.h>
+#include <whist/core/whist.h>
+#include <whist/network/network.h>
+#include <whist/video/codec/decode.h>
+#include <whist/utils/avpacket_buffer.h>
 
 /*
 ============================
@@ -45,7 +45,7 @@ void init_video();
  * @returns                        Return -1 if failed to receive packet into
  *                                 video frame, else 0
  */
-int32_t receive_video(FractalPacket* packet);
+int32_t receive_video(WhistPacket* packet);
 
 /**
  * @brief                          Calculate statistics about bitrate, I-Frame,

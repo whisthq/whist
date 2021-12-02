@@ -21,7 +21,7 @@ Includes
 
 #include <stddef.h>
 
-#include <fractal/core/fractal.h>
+#include <whist/core/whist.h>
 
 /*
 ============================
@@ -43,6 +43,6 @@ Public Functions
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int handle_server_message(FractalServerMessage *fsmsg, size_t fsmsg_size);
+int handle_server_message(WhistServerMessage *fsmsg, size_t fsmsg_size);
 
 #endif  // SERVER_MESSAGE_HANDLER_H

@@ -15,11 +15,11 @@ clipboard packets.
 Includes
 ============================
 */
-#include <fractal/core/fractal.h>
-#include <fractal/utils/clock.h>
-#include <fractal/network/network.h>
-#include <fractal/logging/log_statistic.h>
-#include <fractal/logging/logging.h>
+#include <whist/core/whist.h>
+#include <whist/utils/clock.h>
+#include <whist/network/network.h>
+#include <whist/logging/log_statistic.h>
+#include <whist/logging/logging.h>
 #include "handle_server_message.h"
 #include "network.h"
 #include "audio.h"
@@ -157,7 +157,7 @@ void update_server_bitrate() {
     */
     if (update_bitrate) {
         update_bitrate = false;
-        FractalClientMessage fcmsg = {0};
+        WhistClientMessage fcmsg = {0};
         fcmsg.type = MESSAGE_MBPS;
         fcmsg.bitrate_data.bitrate = client_max_bitrate;
         fcmsg.bitrate_data.burst_bitrate = max_burst_bitrate;
@@ -220,7 +220,7 @@ int multithreaded_sync_udp_packets(void* opaque) {
         update_ping();
         TIME_RUN(update_video(), VIDEO_UPDATE_TIME, statistics_timer);
         TIME_RUN(update_audio(), AUDIO_UPDATE_TIME, statistics_timer);
-        TIME_RUN(FractalPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_UDP,
+        TIME_RUN(WhistPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_UDP,
                  statistics_timer);
 
         if (!packet) {
@@ -237,7 +237,7 @@ int multithreaded_sync_udp_packets(void* opaque) {
                 break;
             }
             case PACKET_MESSAGE: {
-                TIME_RUN(handle_server_message((FractalServerMessage*)packet->data,
+                TIME_RUN(handle_server_message((WhistServerMessage*)packet->data,
                                                (size_t)packet->payload_size),
                          SERVER_HANDLE_MESSAGE_UDP, statistics_timer);
                 break;
@@ -285,11 +285,11 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         // Update TCP ping and reconnect TCP if needed (TODO: does that function do too much?)
         update_tcp_ping();
 
-        TIME_RUN(FractalPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_TCP,
+        TIME_RUN(WhistPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_TCP,
                  statistics_timer);
 
         if (packet) {
-            TIME_RUN(handle_server_message((FractalServerMessage*)packet->data,
+            TIME_RUN(handle_server_message((WhistServerMessage*)packet->data,
                                            (size_t)packet->payload_size),
                      SERVER_HANDLE_MESSAGE_TCP, statistics_timer);
             free_packet(socket_context, packet);
@@ -297,11 +297,11 @@ int multithreaded_sync_tcp_packets(void* opaque) {
 
         ClipboardData* clipboard_chunk = pull_clipboard_chunk();
         if (clipboard_chunk) {
-            FractalClientMessage* fcmsg = allocate_region(
-                sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard_chunk->size);
+            WhistClientMessage* fcmsg = allocate_region(
+                sizeof(WhistClientMessage) + sizeof(ClipboardData) + clipboard_chunk->size);
 
             // Init header to 0 to prevent sending uninitialized packets over the network
-            memset(fcmsg, 0, sizeof(FractalClientMessage));
+            memset(fcmsg, 0, sizeof(WhistClientMessage));
             fcmsg->type = CMESSAGE_CLIPBOARD;
             memcpy(&fcmsg->clipboard, clipboard_chunk,
                    sizeof(ClipboardData) + clipboard_chunk->size);

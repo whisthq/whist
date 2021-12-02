@@ -163,7 +163,7 @@ EOF
   echo "Installing Uinput Config Files..."
   echo "================================================"
 
-  sudo cp fractal-input.rules /etc/udev/rules.d/90-fractal-input.rules
+  sudo cp whist-input.rules /etc/udev/rules.d/90-whist-input.rules
 
   echo "================================================"
   echo "Installing monitoring services.."
@@ -312,7 +312,7 @@ deployment_setup_steps() {
   # Also remove ECS directory, in case this is running on an ECS-optimized AMI
   sudo rm -f /var/lib/ecs/data/*
 
-  # The Host Service gets built in the `fractal-build-and-deploy.yml` workflow and
+  # The Host Service gets built in the `whist-build-and-deploy.yml` workflow and
   # uploaded from this Git repository to the AMI during Packer via ami_config.pkr.hcl
   # It gets enabled in ec2_userdata.sh
 

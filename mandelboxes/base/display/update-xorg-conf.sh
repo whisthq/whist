@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script updates the X11 config file in /etc/X11/xorg.conf.d/01-fractal-display.conf
+# This script updates the X11 config file in /etc/X11/xorg.conf.d/01-whist-display.conf
 # to use the correct Nvidia bus ID and the correct uinput devices for absolute/relative
 # mouse input and keyboard input.
 
@@ -11,14 +11,14 @@ eval "$(sentry-cli bash-hook)"
 set -Eeuo pipefail
 
 # Retrieve mandelbox parameters
-WHIST_MAPPINGS_DIR=/fractal/resourceMappings
+WHIST_MAPPINGS_DIR=/whist/resourceMappings
 GPU_INDEX_FILENAME=gpu_index
 GPU_INDEX=$(cat $WHIST_MAPPINGS_DIR/$GPU_INDEX_FILENAME)
 
 echo "Using GPU Index ${GPU_INDEX}"
 
 # Retrieve the Whist NVIDIA display config
-XCONFIG="/usr/share/X11/xorg.conf.d/01-fractal-display.conf"
+XCONFIG="/usr/share/X11/xorg.conf.d/01-whist-display.conf"
 if [ ! -f ${XCONFIG} ]; then
   echo "Xconfig at location ${XCONFIG} not found (or is not a file)"
   exit 1

@@ -1,6 +1,6 @@
 import { Response } from "node-fetch"
 
-export class FractalAPI {
+export class WhistAPI {
   static TOKEN = {
     REFRESH: "/token/refresh",
     VALIDATE: "/token/validate",
@@ -19,7 +19,7 @@ export class FractalAPI {
   }
 }
 
-export enum FractalHTTPCode {
+export enum WhistHTTPCode {
   SUCCESS = 200,
   ACCEPTED = 202,
   PARTIAL_CONTENT = 206,
@@ -35,14 +35,14 @@ export enum FractalHTTPCode {
   INTERNAL_SERVER_ERROR = 500,
 }
 
-export enum FractalHTTPRequest {
+export enum WhistHTTPRequest {
   POST = "POST",
   GET = "GET",
   PUT = "PUT",
   DELETE = "DELETE",
 }
 
-export enum FractalHTTPContent {
+export enum WhistHTTPContent {
   JSON = "application/json",
   TEXT = "application/text",
 }

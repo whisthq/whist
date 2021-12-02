@@ -3,20 +3,20 @@
   This file contains the constants used for configuring the client application and build and runtime.
 */
 
-const FractalEnvironments = {
+const WhistEnvironments = {
   LOCAL: "local",
   DEVELOPMENT: "dev",
   STAGING: "staging",
   PRODUCTION: "prod",
 }
 
-const FractalNodeEnvironments = {
+const WhistNodeEnvironments = {
   DEVELOPMENT: "development",
   PRODUCTION: "production",
 }
 
 // Webserver URLs
-const FractalWebservers = {
+const WhistWebservers = {
   local: "https://dev-server.whist.com",
   dev: "https://dev-server.whist.com",
   staging: "https://staging-server.whist.com",
@@ -24,7 +24,7 @@ const FractalWebservers = {
 }
 
 module.exports = {
-  FractalNodeEnvironments,
-  FractalEnvironments,
-  FractalWebservers,
+  WhistNodeEnvironments,
+  WhistEnvironments,
+  WhistWebservers,
 }

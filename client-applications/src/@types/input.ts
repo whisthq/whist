@@ -1,4 +1,4 @@
-export enum FractalKey {
+export enum WhistKey {
   ARROW_LEFT = "ArrowLeft",
   ARROW_RIGHT = "ArrowRight",
   ARROW_DOWN = "ArrowDown",
@@ -7,4 +7,4 @@ export enum FractalKey {
   ESCAPE = "Escape",
 }
 
-export default FractalKey
+export default WhistKey

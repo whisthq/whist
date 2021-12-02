@@ -6,51 +6,6 @@ It's important to note that development in this repository works a little differ
 
 If you have `core-ts` as a dependency in another `fractal` repository, you should "pin" your dependency version. This means your `package.json` dependencies should contain `@fractal/core-ts: 1.0.1`, not `@fractal/core-ts: ^1.0.1`. Install a specific version with `yarn add @fractal/core-ts@1.0.1`, after following the authentication instructions below.
 
-## Installation
-
-##### 1. Authenticate your GitHub account through `npm`
-
-To authenticate with GitHub packages, you need a [GitHub personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token). These are meant to be generated per use, so you likely need to make a new one in your GitHub Profile > Settings > Developer Settings. Keep the page open after you generate it, as you won't be able to see the token again when you leave.
-
-You can authenticate your user account in your terminal with the `npm login` command in the example below. You'll be prompted one at a time for your credentials.
-
-    # Paste this command into your terminal.
-    npm login --scope=@fractal --registry=https://npm.pkg.github.com
-
-    > Username: USERNAME (github username)
-    > Password: TOKEN    (personal access token)
-    > Email:    EMAIL    (@whist.com email)
-
-It's also possible to create a per-user `~.npmrc` file that contains your token. However, to avoid storing authentication tokens in plain text, use the method above to enter your credentials. More about authenticating with GitHub packages at [this link](https://docs.github.com/en/packages/guides/configuring-npm-for-use-with-github-packages#authenticating-to-github-packages).
-
-##### 2. Add the Whist GitHub registry to your project's `.npmrc`
-
-If you don't already have a `.npmrc` in the root of your project, create one. You only need to add this line:
-
-    @fractal:registry=https://npm.pkg.github.com
-
-This adds a new npm "registry", which is a place that `npm` will check for packages during `npm install`. Make sure you commit this `.npmrc` to version control. This will make `@fractal/*` packages available for installation. If you already have an `.npmrc` in your project, you might need a slightly different syntax to add more than one registry. See [these docs](https://docs.github.com/en/packages/guides/configuring-npm-for-use-with-github-packages#publishing-multiple-packages-to-the-same-repository) for info.
-
-Now you're ready to install `@fractal` npm packages! They work exactly the same as any other `npm` package. Remember to install a specific version number. To install `fractal/core-ts` (replacing the version number with latest):
-
-    npm install @fractal/core-ts@1.0.1  --save-exact
-
-    or
-
-    yarn add @fractal/core-ts@1.0.1 --exact
-
-## Install a branch for development
-
-A slightly different process is required to install a specific branch of `core-ts`. Trying to install `@fractal/core-ts` with the `@` prefix will always try and pull the latest "released" package. This should be done when you want to use the stable release of the library. If you need an unreleased feature or are working on `core-ts`, you may want to install from a specific branch or commit. You need to do this using npm's git protocol.
-
-The easiest way is just to `npm install fractal/core-ts`, without the `@` prefix. The `@` symbol signifies to `npm` that you're installing a "package", which is pre-built and published in an npm registry. Without `@`, `npm` recognizes the command as `npm install github-username/repo-name`, and you can install from a specfic branch or commit with the `#`separator. This means the full command to install a branch of `core-ts` is:
-
-```bash
-npm install fractal/core-ts#branch-or-commit
-```
-
-Sometimes, this can lead to installation difficulties that you may not be used to. When installing with the git protocol, `npm` needs to do some bundling of the source files that is usually done for you when installing a released package, and you may run into some errors if your system isn't set up for this. A known problem (and solution) involving `xcode` installation on MacOS is discussed in [this blog post](https://medium.com/@mrjohnkilonzi/how-to-resolve-no-xcode-or-clt-version-detected-d0cf2b10a750) and [this documentation](https://github.com/nodejs/node-gyp/blob/master/macOS_Catalina.md) from NodeJS.
-
 ## Development Workflow
 
 One of the goals of `core-ts` is to extract out common code in the Whist website and Whist client application. Those code bases are run in a browser environment and setup with Hot Module Reloading, making it easy to save a file and see how your changes work.

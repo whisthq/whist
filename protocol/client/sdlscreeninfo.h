@@ -20,7 +20,7 @@ Includes
 ============================
 */
 
-#include <fractal/core/fractal.h>
+#include <whist/core/whist.h>
 
 /*
 ============================

@@ -4,58 +4,6 @@ At Whist, we use the term "mandelbox" to refer to what is essentially an applica
 
 This repository contains the code for "mandelbox-izing" the various applications that Whist streams. The base Dockerfile running the Whist protocol is under the `/base/` subfolder, and is used as a starter image for the application Dockerfiles which are in each of their respective application-type subfolders. This base image runs **Ubuntu 20.04** and installs everything needed to interface with the drivers and the Whist protocol.
 
-## File Structure
-
-A tree structure is provided below:
-
-```
-./mandelboxes
-├── base
-│   ├── Dockerfile.20 <- Base mandelbox image on which all of our application images depend
-│   ├── config
-│   │   ├── 01-fractal-nvidia.conf <- Configuration file for a Nvidia GPU-powered virtual display
-│   │   ├── 02-fractal-dummy.conf <- Configuration file for a software-powered virtual display
-│   │   ├── Xmodmap <- Configuration file for keystroke mappings on Linux Ubuntu
-│   │   ├── app-config-map.json <- Map for applications settings configuration location on Ubuntu
-│   │   ├── awesome-rc.lua <- Configuration file for our AwesomeWM window manager
-│   │   ├── fractal-display-config.env <- Environment variables for the Whist virtual displays
-│   │   ├── gtk-3-settings.ini <- Configuration file for GTK-basedapplications
-│   │   ├── pulse-client.conf <- Configuration file for our PulseAudio server
-│   │   ├── qt4-settings.conf <- Configuration file for QT4-based applications
-│   │   └── systemd-logind-override-ubuntu20.conf <- Custom configuration for hostnames
-│   ├── scripts
-│   │   ├── docker-entrypoint.sh <- First script run within a mandelbox, to start systemd
-│   │   ├── entry.sh <- Script to start the `fractal` systemd user within a mandelbox
-│   │   ├── run-fractal-server.sh <- Script to start the Whist server protocol
-│   │   ├── update-xorg-conf.sh <- Script to update the X Server to use the Nvidia GPU and uinput node
-│   │   └── xinitrc <- Script to start the window manager and Whist application
-│   └── services
-│       ├── fractal-audio.service <- Systemd service to start a PulseAudio server
-│       ├── fractal-display.service <- Systemd service to start the Whist virtual display
-│       ├── fractal-entrypoint.service <- Systemd service to start the Whist systemd user
-│       ├── fractal-protocol.service <- Systemd service to start the Whist server protocol
-│       └── fractal-update-xorg-conf.service <- Systemd service to update the X Server to the Whist configuration
-├── browsers
-│   └── chrome
-│       ├── Dockerfile.20 <- Mandelbox image for Google Chrome
-│       ├── install-extensions.sh <- Helper script to install Chromium extensions onto Chrome
-│       └── start-chrome.sh <- Helper script to start Chrome with specific flags
-├── build_mandelbox_image.sh <- Helper script to build a specific mandelbox image
-├── helper_scripts
-│   ├── build_mandelbox_image.py <- Helper script to build a/many mandelbox image(s)
-│   ├── copy_protocol_build.sh <- Helper script to copy the compiled Whist server protocol between folders
-│   ├── find_images_in_git_repo.sh <- Helper script to find all Dockerfiles in this folder tree
-│   └── run_mandelbox_image.sh <- Helper script to run a mandelbox image
-│   └── run_mandelbox_image.py <- Helper script to run a mandelbox image
-├── push_mandelbox_image.sh <- Helper script to push a built mandelbox image to GHCR
-├── run_local_mandelbox_image.sh <- Helper script to run a locally-built mandelbox image
-├── run_remote_mandelbox_image.sh <- Helper script to fetch and run a mandelbox image stored on GHCR
-└── testing_scripts
-    ├── connection_tester.py <- Helper script to test UDP/TCP connectivity between a Whist protocol server in a mandelbox and a client
-    ├── uinput_server.c <- Helper script to set up a Linux uinput server in a mandelbox
-    └── uinput_tester.py <- Helper script to test sending uinput events to a uinput server in a mandelbox
-```
-
 ## Development
 
 To contribute to enhancing all the mandelbox images Whist uses, you should contribute to the base Dockerfile under `/base/`, unless your changes are application-specific, in which case you should contribute to the relevant Dockerfile for the application in question. We strive to make mandelbox images as lean as possible to optimize for concurrency and reduce the realm of security attacks possible.
@@ -71,7 +19,7 @@ After cloning the repo, set up your EC2 instance with the setup script from the 
 This will begin installing all dependencies and configurations required to run our mandelbox images on an AWS EC2 host. After the setup scripts run, you must `sudo reboot` for Docker to work properly. After rebooting, you may finally build the protocol and the base image by running:
 
 ```bash
-../protocol/build_protocol_targets.sh FractalServer && ./build_mandelbox_image.sh base && ./run_local_mandelbox_image.sh base
+../protocol/build_protocol_targets.sh WhistServer && ./build_mandelbox_image.sh base && ./run_local_mandelbox_image.sh base
 ```
 
 ⚠️ If the command above errors due a failure to build the base container image, try running `docker system prune -af` first (see paragraph below for more context on the issue).
@@ -81,7 +29,7 @@ This will begin installing all dependencies and configurations required to run o
 To build the server protocol for use in a mandelbox image (for example with the `--update-protocol` parameter to `run_mandelbox_image.sh`), run:
 
 ```bash
-../protocol/build_protocol_targets.sh FractalServer
+../protocol/build_protocol_targets.sh WhistServer
 ```
 
 To build a specific application's mandelbox image, run:
@@ -90,7 +38,7 @@ To build a specific application's mandelbox image, run:
 ./build.sh APP
 ```
 
-This takes a single argument, `APP`, which is the path to the target folder whose application mandelbox you wish to build. For example, the base mandelbox is built with `./build_mandelbox_image.sh base` and the Chrome mandelbox is built with `./build_mandelbox_image.sh browsers/chrome`, since the relevant Dockerfile is `browsers/chrome/Dockerfile.20`. This script names the built image as `fractal/$APP`, with a tag of `current-build`.
+This takes a single argument, `APP`, which is the path to the target folder whose application mandelbox you wish to build. For example, the base mandelbox is built with `./build_mandelbox_image.sh base` and the Chrome mandelbox is built with `./build_mandelbox_image.sh browsers/chrome`, since the relevant Dockerfile is `browsers/chrome/Dockerfile.20`. This script names the built image as `whist/$APP`, with a tag of `current-build`.
 
 You first need to build the protocol and then build the base image before you can finally build a specific application image.
 
@@ -118,8 +66,6 @@ There are some other options available to control properties of the resulting ma
 ### Connecting to Images
 
 If you want to save your configs between sessions, then pass in a user ID and config encryption token. In case you don't want the server protocol to auto-shutdown after 60 seconds, you can set the timeout with another argument. As mentioned above, pass in `--help` to one of the mandelbox image-running scripts to see all the available options.
-
-Currently, it is important to wait 5-10 seconds after making the cURL request before connecting to the mandelbox via `./FractalClient -w [width] -h [height] [ec2-ip-address]`. This is due to a race condition between the `fractal-audio.service` and the protocol audio capturing code: (See issue [#360](https://github.com/fractal/fractal/issues/360)).
 
 ## Publishing
 

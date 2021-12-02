@@ -10,8 +10,8 @@ import path from "path"
 import events from "events"
 import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
 import config from "@app/config/environment"
-import { FractalEnvironments } from "../../config/configs"
-import { FractalCallbackUrls } from "@app/config/urls"
+import { WhistEnvironments } from "../../config/configs"
+import { WhistCallbackUrls } from "@app/config/urls"
 import {
   authPortalURL,
   authInfoParse,
@@ -121,7 +121,7 @@ export const closeAllWindows = (windows?: BrowserWindow[]) => {
 
 export const getWindowTitle = () => {
   const { deployEnv } = config
-  if (deployEnv === FractalEnvironments.PRODUCTION) {
+  if (deployEnv === WhistEnvironments.PRODUCTION) {
     return "Whist"
   }
   return `Whist (${deployEnv})`
@@ -212,7 +212,7 @@ export const createAuthWindow = () => {
   } = win.webContents
 
   const filter = {
-    urls: [FractalCallbackUrls.authCallBack],
+    urls: [WhistCallbackUrls.authCallBack],
   }
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -248,7 +248,7 @@ export const createPaymentWindow = async (accessToken: accessToken) => {
   } = win.webContents
 
   const filter = {
-    urls: [FractalCallbackUrls.paymentCallBack],
+    urls: [WhistCallbackUrls.paymentCallBack],
   }
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   webRequest.onBeforeRequest(filter, async ({ url }) => {

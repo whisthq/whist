@@ -298,7 +298,7 @@ const int linux_keycodes[NUM_KEYCODES] = {
 };
 
 const int linux_mouse_buttons[6] = {
-    0,           // 0 -> no FractalMouseButton
+    0,           // 0 -> no WhistMouseButton
     BTN_LEFT,    // 1 -> Left Button
     BTN_MIDDLE,  // 2 -> Middle Button
     BTN_RIGHT,   // 3 -> Right Button

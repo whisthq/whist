@@ -25,7 +25,7 @@ pages:
     html: ./pages/login.html
 resourceServers:
   - name: Whist API
-    identifier: "##FRACTAL_AUTHENTICATION_API##"
+    identifier: "##WHIST_AUTHENTICATION_API##"
     allow_offline_access: true
     enforce_policies: true
     scopes:
@@ -42,7 +42,7 @@ clients:
   - name: Whist
     allowed_clients: []
     app_type: native
-    callbacks: @@FRACTAL_ELECTRON_APP_CALLBACK@@
+    callbacks: @@WHIST_ELECTRON_APP_CALLBACK@@
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
@@ -255,7 +255,7 @@ emailTemplates:
     syntax: liquid
 clientGrants:
   - client_id: Webserver
-    audience: "##FRACTAL_AUTHENTICATION_API##"
+    audience: "##WHIST_AUTHENTICATION_API##"
     scope:
       - backend
 guardianFactors:
@@ -288,7 +288,7 @@ roles:
     description: A Whist developer
     permissions:
       - permission_name: admin
-        resource_server_identifier: "##FRACTAL_AUTHENTICATION_API##"
+        resource_server_identifier: "##WHIST_AUTHENTICATION_API##"
 branding:
   colors:
     page_background: "#ffffff"

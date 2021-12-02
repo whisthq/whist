@@ -90,11 +90,11 @@ RUN mkdir /clang-tidy \
     && wget -q -O - https://releases.llvm.org/6.0.1/clang+llvm-6.0.1-x86_64-linux-gnu-ubuntu-16.04.tar.xz | tar -xJ -C /clang-tidy \
     && ln -sf "/clang-tidy/clang+llvm-6.0.1-x86_64-linux-gnu-ubuntu-16.04/bin/clang-tidy" "/usr/bin/clang-tidy"
 
-# Create fractal Linux user for building the protocol
-RUN groupadd fractal
-RUN useradd -lou ${uid} -g fractal fractal-builder
-RUN usermod -aG sudo fractal-builder
-RUN echo "fractal-builder:password" | chpasswd
+# Create whist Linux user for building the protocol
+RUN groupadd whist
+RUN useradd -lou ${uid} -g whist whist-builder
+RUN usermod -aG sudo whist-builder
+RUN echo "whist-builder:password" | chpasswd
 
 # Specify workdir for building the protocol
 WORKDIR /workdir

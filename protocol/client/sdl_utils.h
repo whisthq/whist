@@ -19,7 +19,7 @@ Includes
 ============================
 */
 
-#include <fractal/core/fractal.h>
+#include <whist/core/whist.h>
 #include "sdlscreeninfo.h"
 #include "video.h"
 

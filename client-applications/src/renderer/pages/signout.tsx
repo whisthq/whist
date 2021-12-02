@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 
-import { FractalButton, FractalButtonState } from "@app/components/html/button"
+import { WhistButton, WhistButtonState } from "@app/components/html/button"
 import classNames from "classnames"
 
 const Signout = (props: { onClick: (clearConfig: boolean) => void }) => {
@@ -38,10 +38,10 @@ const Signout = (props: { onClick: (clearConfig: boolean) => void }) => {
       </div>
       <div className="w-full">
         <div>
-          <FractalButton
+          <WhistButton
             contents="Sign Out"
             className="mt-8 px-12 mx-aut0 py-3 bg-mint text-black"
-            state={FractalButtonState.DEFAULT}
+            state={WhistButtonState.DEFAULT}
             onClick={handleSignout}
           />
         </div>

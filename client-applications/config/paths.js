@@ -12,7 +12,7 @@ const getProtocolName = () => {
   if (process.platform === "win32") {
     return "Whist.exe"
   } else if (process.platform === "darwin") {
-    return "WhistClient"
+    return "_Whist"
   } else {
     return "Whist"
   }

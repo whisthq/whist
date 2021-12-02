@@ -1,0 +1,19 @@
+# Updates Nvidia BUSID and device paths in /usr/share/X11/xorg.conf.d/01-whist-display.conf before X starts, runs as root
+[Unit]
+Description=Update X11 Config
+DefaultDependencies=yes
+After=syslog.target
+Before=display-manager.service multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/share/whist/update-xorg-conf.sh
+RemainAfterExit=true
+StandardOutput=journal+console
+StandardError=journal+console
+SyslogIdentifier=update-xorg-conf
+StandardOutput=file:/var/log/whist/update_xorg_conf-out.log
+StandardError=file:/var/log/whist/update_xorg_conf-err.log
+
+[Install]
+WantedBy=multi-user.target

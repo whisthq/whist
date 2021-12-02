@@ -7,7 +7,7 @@ echo "xinitrc PID: $xinitrc_pid"
 # This script starts the AwesomeWM window manager inside the mandelbox
 # and starts the mandelbox's application (i.e. Google Chrome)
 
-RUN_AS_WHIST=/usr/share/fractal/run-as-fractal-user.sh
+RUN_AS_WHIST=/usr/share/whist/run-as-whist-user.sh
 
 # Install keymappings
 xmodmap /root/.Xmodmap
@@ -26,7 +26,7 @@ awesome_pid=$!
 echo "AwesomeWM started as PID $awesome_pid..."
 
 # Set the DPI to a default value of 96 and initialize the relevant files
-/usr/share/fractal/update-fractal-dpi.sh
+/usr/share/whist/update-whist-dpi.sh
 
 # Start the XSettings daemon to make DPI changes responsive
 echo "Starting 'xsettingsd' in the background..."
@@ -34,7 +34,7 @@ $RUN_AS_WHIST "xsettingsd" &
 echo "xsettingsd background PID: $!"
 
 # Let everyone know that xinit is initialized
-echo "$xinitrc_pid" > /usr/share/fractal/xinit-pid
+echo "$xinitrc_pid" > /usr/share/whist/xinit-pid
 
 # Wait for AwesomeWM process
 # Note: this never finishes, but leaves the X server open indefinitely

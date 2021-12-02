@@ -35,10 +35,10 @@ Includes
 #include <unistd.h>
 #endif
 
-#include <fractal/audio/audiocapture.h>
-#include <fractal/audio/audioencode.h>
-#include <fractal/logging/log_statistic.h>
-#include <fractal/utils/avpacket_buffer.h>
+#include <whist/audio/audiocapture.h>
+#include <whist/audio/audioencode.h>
+#include <whist/logging/log_statistic.h>
+#include <whist/utils/avpacket_buffer.h>
 #include "client.h"
 #include "network.h"
 #include "audio.h"

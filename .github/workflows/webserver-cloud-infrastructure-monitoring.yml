@@ -300,11 +300,11 @@ jobs:
       # This deletes all but the currently active deployment AMIs and the past 10 deployment AMIs,
       # in case we need to revert back
       - name: Delete All AMIs Older Than 1 Month
-        run: amicleaner --full-report --keep-previous 10 --force-delete --mapping-key name --mapping-values fractal-ami
+        run: amicleaner --full-report --keep-previous 10 --force-delete --mapping-key name --mapping-values whist-ami
 
       # This deletes all the test AMIs, from `host-setup-check-pr.yml`, since we don't need to keep any of them
       - name: Delete All AMIs Older Than 1 Month
-        run: amicleaner --full-report --keep-previous 0 --force-delete --mapping-key name --mapping-values fractal-test-ami
+        run: amicleaner --full-report --keep-previous 0 --force-delete --mapping-key name --mapping-values whist-test-ami
 
       # Orphaned EBS volumes are EBS volumes which are not attached to any EC2 instance, for
       # example if an EC2 instance gets terminated but the EBS volume doesn't get deleted
@@ -320,7 +320,7 @@ jobs:
           from notifications.slack_bot import slack_post
 
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-          SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
+          SLACK_CHANNEL = "#alerts-dev"
           BODY = "@releases :rotating_light: Failed to clean lingering Packer Instances and AMI Snapshots in `webserver-cleanup-lingering-packer-builders-and-ami-resources` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)

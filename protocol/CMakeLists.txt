@@ -26,7 +26,7 @@ include(CheckLanguage)
 include(FetchContent)
 include(CMakeDependentOption)
 
-project(FractalProtocol LANGUAGES C CXX)
+project(WhistProtocol LANGUAGES C CXX)
 
 if(CMAKE_CONFIGURATION_TYPES)
     message(FATAL_ERROR "Detected multi-configuration generator! This CMake file does not support multi-configuration generators.")
@@ -149,8 +149,8 @@ if(RUN_CPPCHECK)
                 "-j 8" # Run in 8 threads
                 "--error-exitcode=1" # Propagate cppcheck errors to cmake
                 "--suppress=shiftTooManyBitsSigned"
-                "--suppress=*:${CMAKE_SOURCE_DIR}/fractal/clipboard/clipboard_osx.m" # suppress all warnings for clipboard_osx.m since cppcheck isn't supported on Objective-C
-                "--suppress=*:${CMAKE_SOURCE_DIR}/fractal/utils/lodepng.*" # suppress all lodepng warnings, since this is an external library that we should not touch
+                "--suppress=*:${CMAKE_SOURCE_DIR}/whist/clipboard/clipboard_osx.m" # suppress all warnings for clipboard_osx.m since cppcheck isn't supported on Objective-C
+                "--suppress=*:${CMAKE_SOURCE_DIR}/whist/utils/lodepng.*" # suppress all lodepng warnings, since this is an external library that we should not touch
                 "--inline-suppr" # Allow cppcheck-suppress comments in code
                 )
     else()
@@ -328,22 +328,22 @@ endif()
 
 # Tell CMake where to look for includes
 # Use SYSTEM flag to not get warnings from their files
-include_directories(${CMAKE_SOURCE_DIR}) # For #include <fractal/**> semantics
+include_directories(${CMAKE_SOURCE_DIR}) # For #include <whist/**> semantics
 include_directories(SYSTEM include)
 include_directories(SYSTEM ${CMAKE_BINARY_DIR}/include)
 include_directories(SYSTEM ${CMAKE_BINARY_DIR}/include/ffmpeg)
 
 # Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
-add_subdirectory(fractal)
+add_subdirectory(whist)
 
 # Set variables to be used by the CMakeLists in the subdirectories
-set(PLATFORM_INDEPENDENT_LIBS   fractalCore
-    fractalAudio
-    fractalVideo
-    fractalClipboard
-    fractalNetwork
-    fractalLogging
-    fractalUtils
+set(PLATFORM_INDEPENDENT_LIBS   whistCore
+    whistAudio
+    whistVideo
+    whistClipboard
+    whistNetwork
+    whistLogging
+    whistUtils
     ${STATIC_SDL2}
     ${LIB_SENTRY}
 )
@@ -421,17 +421,17 @@ set(WINDOWS_SPECIFIC_CLIENT_LIBS
 
 add_subdirectory(client)
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile on MacOS
-    set(SERV "FractalServer")
+    set(SERV "WhistServer")
     set(PLATFORM_INDEPENDENT_SERVER_LIBS
-        fractalCore
-        fractalAudio
-        fractalVideo
-        fractalClipboard
-        fractalCursor
-        fractalInput
-        fractalNetwork
-        fractalLogging
-        fractalUtils
+        whistCore
+        whistAudio
+        whistVideo
+        whistClipboard
+        whistCursor
+        whistInput
+        whistNetwork
+        whistLogging
+        whistUtils
         ${STATIC_SDL2}
         ${LIB_SENTRY}
         ${LIBMFX}
@@ -460,7 +460,7 @@ else()
     add_custom_target(clang-tidy
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMAND ${BASH} ${CMAKE_SOURCE_DIR}/run-clang-tidy.sh -c
-        DEPENDS FractalClient ${SERV})
+        DEPENDS WhistClient ${SERV})
 endif()
 
 # Documentation target

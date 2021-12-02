@@ -16,9 +16,9 @@ Includes
 ============================
 */
 
-#include <fractal/core/fractal.h>
-#include <fractal/core/fractalgetopt.h>
-#include <fractal/logging/error_monitor.h>
+#include <whist/core/whist.h>
+#include <whist/core/whistgetopt.h>
+#include <whist/logging/error_monitor.h>
 #include "parse_args.h"
 #include "network.h"
 #include "main.h"
@@ -126,7 +126,7 @@ int server_parse_args(whist_server_config* config, int argc, char* argv[]) {
                 return 1;
             }
             case WHIST_GETOPT_VERSION_CHAR: {
-                printf("Whist client revision %s\n", fractal_git_revision());
+                printf("Whist client revision %s\n", whist_git_revision());
                 return 1;
             }
             default: {

@@ -9,7 +9,7 @@ import fetch from "node-fetch"
 import { AWSRegion } from "@app/@types/aws"
 import { logBase } from "@app/utils/logging"
 
-const fractalPingTime = async (host: string, numberPings: number) => {
+const whistPingTime = async (host: string, numberPings: number) => {
   /*
     Description:
         Measures the average ping time (in ms) to ping a host (IP address or URL)
@@ -48,7 +48,7 @@ const pingLoop = (regions: AWSRegion[]) => {
     const randomHash = Math.floor(Math.random() * Math.pow(2, 52)).toString(36)
     const endpoint = `/does-not-exist?cache-break=${randomHash}`
     pingResultPromises.push(
-      fractalPingTime(
+      whistPingTime(
         `http://dynamodb.${region}.amazonaws.com${endpoint}`,
         3
       ).then((pingTime) => {

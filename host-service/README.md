@@ -108,8 +108,6 @@ The easiest way to check that your code is ready for review (i.e. is linted, vet
 
 The Whist host service gets built into our AMIs during deployment.
 
-For testing, you can also use the `upload` target in the makefile, which builds a host service and pushes it to the `fractal-host-service` s3 bucket with value equal to the branch name that `make upload` was run from.
-
 ## Getting to know the codebase
 
 The best way to learn about the codebase without worrying about implementation details is to browse the [Host Service Documentation](https://docs.whist.com/host-service/). Once you've gotten a high-level overview of the codebase, take a look at the Makefile to understand it, and then start reading through the codebase and writing some code yourself! If something seems confusing to you, feel free to reach out to @djsavvy, and once you figure it out, make a PR to comment it in the code!

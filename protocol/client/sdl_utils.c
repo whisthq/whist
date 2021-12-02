@@ -18,10 +18,10 @@ Includes
 */
 
 #include "sdl_utils.h"
-#include <fractal/utils/png.h>
-#include <fractal/utils/lodepng.h>
+#include <whist/utils/png.h>
+#include <whist/utils/lodepng.h>
 
-#include <fractal/utils/color.h>
+#include <whist/utils/color.h>
 #include "native_window_utils.h"
 
 extern volatile int output_width;
@@ -170,7 +170,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         set_window_icon_from_png(sdl_window, icon_filename);
     }
 
-    const FractalRGBColor white = {255, 255, 255};
+    const WhistRGBColor white = {255, 255, 255};
     set_native_window_color(sdl_window, white);
 
     SDL_Event cur_event;

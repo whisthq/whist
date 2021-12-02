@@ -138,7 +138,7 @@ build {
   }
 
   provisioner "shell" {
-    inline = ["sudo mkdir -p /usr/share/fractal", "sudo mv /home/ubuntu/host-setup/app_env.env /usr/share/fractal/app_env.env"]
+    inline = ["sudo mkdir -p /usr/share/whist", "sudo mv /home/ubuntu/host-setup/app_env.env /usr/share/whist/app_env.env"]
   }
 
   provisioner "file" {

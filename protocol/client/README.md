@@ -17,7 +17,7 @@ The option flags are as follows:
   -s, --spectate                launch the protocol as a spectator
   -c, --codec=CODEC             launch the protocol using the codec
                                   specified: h264 (default) or h265
-  -u, --user                    Tell fractal the users email, optional defaults to None"
+  -u, --user                    Tell whist the users email, optional defaults to None"
   -e, --environment             The environment the protocol is running
                                 in. e.g prod, staging, dev. This is used
                                 for Sentry. Optional defaults to dev
@@ -28,11 +28,11 @@ The option flags are as follows:
 To test if a build of the client runs (by calling the dummy IP address `0.0.0.0`), call:
 
 ```bash
-./fclient 0.0.0.0 --width 800 --height 600
+./wclient 0.0.0.0 --width 800 --height 600
 ```
 
 and check the terminal output.
 
-To run the client to connect to a server, first start a host server instance by following the instructions in the `README` in the `host-setup` folder. Once you have the Whist Host Service running on the server, as well as a Whist container image (e.g. `base`), follow the instruction listed in the printout in the _host_ terminal that's running the docker container to connect. Open a terminal window on the _client_ machine, and run `fclient` followed by the IP address of your Whist protocol server, plus some additional flags, according to the instructions on the host terminal printout. You can also add any of the flags from the list above, if desired.
+To run the client to connect to a server, first start a host server instance by following the instructions in the `README` in the `host-setup` folder. Once you have the Whist Host Service running on the server, as well as a Whist container image (e.g. `base`), follow the instruction listed in the printout in the _host_ terminal that's running the docker container to connect. Open a terminal window on the _client_ machine, and run `wclient` followed by the IP address of your Whist protocol server, plus some additional flags, according to the instructions on the host terminal printout. You can also add any of the flags from the list above, if desired.
 
-Once a connection has been established with the server, a new window should open on your client machine, and you should see an animated Whist logo before the Whist application (e.g. Base or Fractalized Chrome) starts.
+Once a connection has been established with the server, a new window should open on your client machine, and you should see an animated Whist logo before the Whist application (e.g. Base or Google Chrome) starts.

@@ -19,7 +19,7 @@ Includes
 
 #include "sdl_event_handler.h"
 
-#include <fractal/logging/logging.h>
+#include <whist/logging/logging.h>
 #include "sdlscreeninfo.h"
 #include "sdl_utils.h"
 #include "audio.h"
@@ -176,8 +176,8 @@ int handle_key_up_down(SDL_Event *event) {
             (int): 0 on success
     */
 
-    FractalKeycode keycode =
-        (FractalKeycode)SDL_GetScancodeFromName(SDL_GetKeyName(event->key.keysym.sym));
+    WhistKeycode keycode =
+        (WhistKeycode)SDL_GetScancodeFromName(SDL_GetKeyName(event->key.keysym.sym));
     bool is_pressed = event->key.type == SDL_KEYDOWN;
 
     // LOG_INFO("Scancode: %d", event->key.keysym.scancode);
@@ -207,7 +207,7 @@ int handle_key_up_down(SDL_Event *event) {
         client_exiting = true;
     }
 
-    FractalClientMessage fcmsg = {0};
+    WhistClientMessage fcmsg = {0};
     fcmsg.type = MESSAGE_KEYBOARD;
     fcmsg.keyboard.code = keycode;
     fcmsg.keyboard.pressed = is_pressed;
@@ -267,7 +267,7 @@ int handle_mouse_button_up_down(SDL_Event *event) {
             (int): 0 on success
     */
 
-    FractalClientMessage fcmsg = {0};
+    WhistClientMessage fcmsg = {0};
     fcmsg.type = MESSAGE_MOUSE_BUTTON;
     // Record if left / right / middle button
     fcmsg.mouseButton.button = event->button.button;
@@ -296,8 +296,8 @@ int handle_mouse_wheel(SDL_Event *event) {
         return 0;
     }
 
-    FractalMouseWheelMomentumType momentum_phase =
-        (FractalMouseWheelMomentumType)event->wheel.momentum_phase;
+    WhistMouseWheelMomentumType momentum_phase =
+        (WhistMouseWheelMomentumType)event->wheel.momentum_phase;
 
     if (momentum_phase == MOUSEWHEEL_MOMENTUM_BEGIN) {
         active_momentum_scroll = true;
@@ -311,7 +311,7 @@ int handle_mouse_wheel(SDL_Event *event) {
         return 0;
     }
 
-    FractalClientMessage fcmsg = {0};
+    WhistClientMessage fcmsg = {0};
     fcmsg.type = MESSAGE_MOUSE_WHEEL;
     fcmsg.mouseWheel.x = event->wheel.x;
     fcmsg.mouseWheel.y = event->wheel.y;
@@ -333,14 +333,14 @@ int handle_pinch(SDL_Event *event) {
             (int): 0 on success
     */
 
-    FractalClientMessage fcmsg = {0};
+    WhistClientMessage fcmsg = {0};
     fcmsg.type = MESSAGE_MULTIGESTURE;
-    fcmsg.multigesture = (FractalMultigestureMessage){.d_theta = 0,
-                                                      .d_dist = event->pinch.scroll_amount,
-                                                      .x = 0,
-                                                      .y = 0,
-                                                      .num_fingers = 2,
-                                                      .active_gesture = active_pinch};
+    fcmsg.multigesture = (WhistMultigestureMessage){.d_theta = 0,
+                                                    .d_dist = event->pinch.scroll_amount,
+                                                    .x = 0,
+                                                    .y = 0,
+                                                    .num_fingers = 2,
+                                                    .active_gesture = active_pinch};
 
     fcmsg.multigesture.gesture_type = MULTIGESTURE_NONE;
     if (event->pinch.magnification < 0) {
@@ -361,14 +361,14 @@ int handle_pinch(SDL_Event *event) {
 }
 
 int handle_multi_gesture(SDL_Event *event) {
-    FractalClientMessage fcmsg = {0};
+    WhistClientMessage fcmsg = {0};
     fcmsg.type = MESSAGE_MULTIGESTURE;
-    fcmsg.multigesture = (FractalMultigestureMessage){.d_theta = event->mgesture.dTheta,
-                                                      .d_dist = event->mgesture.dDist,
-                                                      .x = event->mgesture.x,
-                                                      .y = event->mgesture.y,
-                                                      .num_fingers = event->mgesture.numFingers,
-                                                      .gesture_type = MULTIGESTURE_NONE};
+    fcmsg.multigesture = (WhistMultigestureMessage){.d_theta = event->mgesture.dTheta,
+                                                    .d_dist = event->mgesture.dDist,
+                                                    .x = event->mgesture.x,
+                                                    .y = event->mgesture.y,
+                                                    .num_fingers = event->mgesture.numFingers,
+                                                    .gesture_type = MULTIGESTURE_NONE};
     send_fcmsg(&fcmsg);
 
     return 0;
@@ -419,22 +419,22 @@ int handle_sdl_event(SDL_Event *event) {
             }
 #ifdef __APPLE__
             else if (event->window.event == SDL_WINDOWEVENT_OCCLUDED) {
-                FractalClientMessage fcmsg = {0};
+                WhistClientMessage fcmsg = {0};
                 fcmsg.type = MESSAGE_STOP_STREAMING;
                 whist_sleep(100);
                 send_fcmsg(&fcmsg);
             } else if (event->window.event == SDL_WINDOWEVENT_UNOCCLUDED) {
-                FractalClientMessage fcmsg = {0};
+                WhistClientMessage fcmsg = {0};
                 fcmsg.type = MESSAGE_START_STREAMING;
                 send_fcmsg(&fcmsg);
             }
 #else
             else if (event->window.event == SDL_WINDOWEVENT_MINIMIZED) {
-                FractalClientMessage fcmsg = {0};
+                WhistClientMessage fcmsg = {0};
                 fcmsg.type = MESSAGE_STOP_STREAMING;
                 send_fcmsg(&fcmsg);
             } else if (event->window.event == SDL_WINDOWEVENT_RESTORED) {
-                FractalClientMessage fcmsg = {0};
+                WhistClientMessage fcmsg = {0};
                 fcmsg.type = MESSAGE_START_STREAMING;
                 send_fcmsg(&fcmsg);
             }
@@ -486,7 +486,7 @@ int handle_sdl_event(SDL_Event *event) {
             break;
         }
         case SDL_QUIT: {
-            LOG_INFO("The user triggered a Quit event! FractalClient is now Quitting...");
+            LOG_INFO("The user triggered a Quit event! WhistClient is now Quitting...");
             client_exiting = true;
             break;
         }

@@ -67,11 +67,11 @@ void graceful_exit(whist_server_state* state) {
     // POSSIBLY below locks are not necessary if we're quitting everything and dying anyway?
 
     // Broadcast client quit message
-    FractalServerMessage fsmsg_response = {0};
+    WhistServerMessage fsmsg_response = {0};
     fsmsg_response.type = SMESSAGE_QUIT;
     if (state->client.is_active) {
         if (broadcast_udp_packet(&state->client, PACKET_MESSAGE, (uint8_t*)&fsmsg_response,
-                                 sizeof(FractalServerMessage), 1) != 0) {
+                                 sizeof(WhistServerMessage), 1) != 0) {
             LOG_WARNING("Could not send Quit Message");
         }
     }
@@ -112,12 +112,12 @@ void sig_handler(int sig_num) {
 }
 #endif
 
-void handle_fractal_client_message(whist_server_state* state, FractalClientMessage* fcmsg) {
+void handle_whist_client_message(whist_server_state* state, WhistClientMessage* fcmsg) {
     /*
         Handles a Whist client message
 
         Arguments:
-            fcmsg (FractalClientMessage*): the client message being handled
+            fcmsg (WhistClientMessage*): the client message being handled
             id (int): the client ID
     */
 
@@ -127,35 +127,35 @@ void handle_fractal_client_message(whist_server_state* state, FractalClientMessa
 }
 
 // Gets all pending Whist UDP messages
-void get_fractal_udp_client_messages(whist_server_state* state) {
+void get_whist_udp_client_messages(whist_server_state* state) {
     if (!state->client.is_active) {
         return;
     }
 
-    FractalClientMessage fcmsg;
+    WhistClientMessage fcmsg;
     size_t fcmsg_size;
 
     // If received a UDP message
     if (try_get_next_message_udp(&state->client, &fcmsg, &fcmsg_size) == 0 && fcmsg_size != 0) {
-        handle_fractal_client_message(state, &fcmsg);
+        handle_whist_client_message(state, &fcmsg);
     }
 }
 
 // Gets all pending Whist TCP messages
-void get_fractal_tcp_client_messages(whist_server_state* state) {
+void get_whist_tcp_client_messages(whist_server_state* state) {
     if (!state->client.is_active) {
         return;
     }
 
     read_lock(&state->client.tcp_rwlock);
 
-    FractalPacket* tcp_packet = NULL;
+    WhistPacket* tcp_packet = NULL;
     try_get_next_message_tcp(&state->client, &tcp_packet);
     // If we get a TCP client message, handle it
     if (tcp_packet) {
-        FractalClientMessage* fcmsg = (FractalClientMessage*)tcp_packet->data;
+        WhistClientMessage* fcmsg = (WhistClientMessage*)tcp_packet->data;
         LOG_INFO("TCP Packet type: %d", fcmsg->type);
-        handle_fractal_client_message(state, fcmsg);
+        handle_whist_client_message(state, fcmsg);
         free_packet(&state->client.tcp_context, tcp_packet);
     }
 
@@ -185,7 +185,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         update_client_active_status(&state->client, &assuming_client_active);
 
         // RECEIVE TCP PACKET HANDLER
-        get_fractal_tcp_client_messages(state);
+        get_whist_tcp_client_messages(state);
 
         // SEND TCP PACKET HANDLERS:
 
@@ -197,8 +197,8 @@ int multithreaded_sync_tcp_packets(void* opaque) {
             if (assuming_client_active) {
                 LOG_INFO("Received clipboard trigger. Broadcasting clipboard message.");
                 // Alloc fsmsg
-                FractalServerMessage* fsmsg_response =
-                    allocate_region(sizeof(FractalServerMessage) + clipboard_chunk->size);
+                WhistServerMessage* fsmsg_response =
+                    allocate_region(sizeof(WhistServerMessage) + clipboard_chunk->size);
                 // Build fsmsg
                 memset(fsmsg_response, 0, sizeof(*fsmsg_response));
                 fsmsg_response->type = SMESSAGE_CLIPBOARD;
@@ -206,8 +206,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
                        sizeof(ClipboardData) + clipboard_chunk->size);
                 // Send fsmsg
                 if (broadcast_tcp_packet(&state->client, PACKET_MESSAGE, (uint8_t*)fsmsg_response,
-                                         sizeof(FractalServerMessage) + clipboard_chunk->size) <
-                    0) {
+                                         sizeof(WhistServerMessage) + clipboard_chunk->size) < 0) {
                     LOG_WARNING("Failed to broadcast clipboard message.");
                 }
                 // Free fsmsg
@@ -280,7 +279,7 @@ int main(int argc, char* argv[]) {
     srand((unsigned int)time(NULL));
     server_state.connection_id = rand();
 
-    LOG_INFO("Whist server revision %s", fractal_git_revision());
+    LOG_INFO("Whist server revision %s", whist_git_revision());
 
     server_state.input_device = create_input_device();
     if (!server_state.input_device) {
@@ -348,7 +347,7 @@ int main(int argc, char* argv[]) {
         }
 
         // Get UDP messages
-        get_fractal_udp_client_messages(&server_state);
+        get_whist_udp_client_messages(&server_state);
 
         if (get_timer(ack_timer) > 5) {
             if (get_using_stun()) {
@@ -371,11 +370,11 @@ int main(int argc, char* argv[]) {
                 } else {
                     LOG_INFO("Window is no longer fullscreen. Broadcasting fullscreen message.");
                 }
-                FractalServerMessage fsmsg = {0};
+                WhistServerMessage fsmsg = {0};
                 fsmsg.type = SMESSAGE_FULLSCREEN;
                 fsmsg.fullscreen = (int)fullscreen;
                 if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, &fsmsg,
-                                         sizeof(FractalServerMessage)) == 0) {
+                                         sizeof(WhistServerMessage)) == 0) {
                     LOG_INFO("Sent fullscreen message!");
                     cur_fullscreen = fullscreen;
                 } else {
@@ -392,12 +391,12 @@ int main(int argc, char* argv[]) {
                                  (assuming_client_active && new_window_name))) {
                 LOG_INFO("%sBroadcasting window title message.",
                          new_window_name ? "Window title changed. " : "");
-                static char fsmsg_buf[sizeof(FractalServerMessage) + WINDOW_NAME_MAXLEN + 1];
-                FractalServerMessage* fsmsg = (void*)fsmsg_buf;
+                static char fsmsg_buf[sizeof(WhistServerMessage) + WINDOW_NAME_MAXLEN + 1];
+                WhistServerMessage* fsmsg = (void*)fsmsg_buf;
                 fsmsg->type = SMESSAGE_WINDOW_TITLE;
                 strncpy(fsmsg->window_title, name, WINDOW_NAME_MAXLEN + 1);
                 if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, (uint8_t*)fsmsg,
-                                         (int)(sizeof(FractalServerMessage) + strlen(name) + 1)) ==
+                                         (int)(sizeof(WhistServerMessage) + strlen(name) + 1)) ==
                     0) {
                     LOG_INFO("Sent window title message!");
                     server_state.client_joined_after_window_name_broadcast = false;
@@ -409,7 +408,7 @@ int main(int argc, char* argv[]) {
         }
 
 #ifndef _WIN32
-#define URI_HANDLER_FILE "/home/fractal/.teleport/handled-uri"
+#define URI_HANDLER_FILE "/home/whist/.teleport/handled-uri"
 #define HANDLED_URI_MAXLEN 4096
         if (get_timer(uri_handler_timer) > 50.0 / MS_IN_SECOND) {
             if (!access(URI_HANDLER_FILE, R_OK)) {
@@ -418,8 +417,8 @@ int main(int argc, char* argv[]) {
                 char handled_uri[HANDLED_URI_MAXLEN + 1] = {0};
                 ssize_t bytes = read(fd, &handled_uri, HANDLED_URI_MAXLEN);
                 if (bytes > 0) {
-                    size_t fsmsg_size = sizeof(FractalServerMessage) + bytes + 1;
-                    FractalServerMessage* fsmsg = safe_malloc(fsmsg_size);
+                    size_t fsmsg_size = sizeof(WhistServerMessage) + bytes + 1;
+                    WhistServerMessage* fsmsg = safe_malloc(fsmsg_size);
                     memset(fsmsg, 0, sizeof(*fsmsg));
                     fsmsg->type = SMESSAGE_OPEN_URI;
                     memcpy(&fsmsg->requested_uri, handled_uri, bytes + 1);

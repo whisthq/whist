@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-export type FractalConfig = {
+export type WhistConfig = {
   url: {
     WEBSERVER_URL: string | undefined
     FRONTEND_URL: string | undefined
@@ -16,14 +16,14 @@ export type FractalConfig = {
   }
 }
 
-export type FractalEnvironment = {
-  LOCAL: FractalConfig
-  DEVELOPMENT: FractalConfig
-  STAGING: FractalConfig
-  PRODUCTION: FractalConfig
+export type WhistEnvironment = {
+  LOCAL: WhistConfig
+  DEVELOPMENT: WhistConfig
+  STAGING: WhistConfig
+  PRODUCTION: WhistConfig
 }
 
-export enum FractalNodeEnvironment {
+export enum WhistNodeEnvironment {
   DEVELOPMENT = "development",
   PRODUCTION = "production",
 }

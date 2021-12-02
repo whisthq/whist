@@ -10,7 +10,7 @@
 # to copy the protocol as early as possible to share
 # layers between images.
 ARG BuildAssetPackage "protocol"
-FROM fractal/build-assets:$BuildAssetPackage as build-assets
+FROM whist/build-assets:$BuildAssetPackage as build-assets
 
 ################ STAGE 1: libinput-build ################
 # - Install build dependencies as per the documentation
@@ -76,14 +76,14 @@ RUN meson libinput-1.19.2 build \
     && ninja -C build
 
 # Install libinput to package folder
-RUN mkdir /libinput-fractal \
-    && DESTDIR=/libinput-fractal ninja -C build install
+RUN mkdir /libinput-whist \
+    && DESTDIR=/libinput-whist ninja -C build install
 
 # Setup debian package information
-COPY input/libinput/debian/control /libinput-fractal/DEBIAN/control
+COPY input/libinput/debian/control /libinput-whist/DEBIAN/control
 
 # Build debian package
-RUN dpkg-deb --build libinput-fractal
+RUN dpkg-deb --build libinput-whist
 
 ################ STAGE 2: xf86-input-libinput-build ################
 # - Install build dependencies as per the documentation
@@ -111,7 +111,7 @@ RUN apt-get update \
     && rm -rf /tmp/* /var/tmp/*
 
 # Copy libinput package
-COPY --from=libinput-build libinput-fractal.deb /
+COPY --from=libinput-build libinput-whist.deb /
 
 # Install build dependencies
 # This includes our build of libinput
@@ -126,7 +126,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     autoconf \
     libtool \
     bzip2 \
-    ./libinput-fractal.deb \
+    ./libinput-whist.deb \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
@@ -155,15 +155,15 @@ RUN cd xf86-input-libinput-1.2.0 \
     && make -j
 
 # Install xf86-input-libinput to package folder
-RUN mkdir /xf86-input-libinput-fractal \
+RUN mkdir /xf86-input-libinput-whist \
     && cd xf86-input-libinput-1.2.0 \
-    && make DESTDIR=/xf86-input-libinput-fractal install
+    && make DESTDIR=/xf86-input-libinput-whist install
 
 # Setup debian package information
-COPY input/xf86-input-libinput/debian/control /xf86-input-libinput-fractal/DEBIAN/control
+COPY input/xf86-input-libinput/debian/control /xf86-input-libinput-whist/DEBIAN/control
 
 # Build debian package
-RUN dpkg-deb --build xf86-input-libinput-fractal
+RUN dpkg-deb --build xf86-input-libinput-whist
 
 ################ STAGE 3: nvidia-grid-driver ################
 # - Copy and unpack the nvidia grid driver installer
@@ -227,12 +227,12 @@ RUN mkdir /dist /ignore && \
 RUN mkdir /dist/etc && \
     cp -r /etc/{vulkan,nvidia,OpenCL} /dist/etc
 
-################ STAGE 4: fractal-teleport-fuse  ################
+################ STAGE 4: whist-teleport-fuse  ################
 # - Copy and build the FUSE service to handle teleport drag-drop
 #   events
 # EXPOSES the teleport fuse service
 #################################################################
-FROM ubuntu:20.04 as fractal-teleport-fuse
+FROM ubuntu:20.04 as whist-teleport-fuse
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -259,28 +259,28 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /fractal-teleport-fuse/{src,build}
+RUN mkdir -p /whist-teleport-fuse/{src,build}
 
-COPY teleport/teleport-fuse /fractal-teleport-fuse/src
+COPY teleport/teleport-fuse /whist-teleport-fuse/src
 
 # hadolint ignore=SC2046
-RUN cd /fractal-teleport-fuse/src \
+RUN cd /whist-teleport-fuse/src \
     && gcc -Wall -D _GNU_SOURCE unshare.c -o unshare.o -c \
-    && gcc -Wall unshare.o teleport-fuse.c $(pkg-config fuse3 --cflags --libs) -o ../build/fractal-teleport-fuse
+    && gcc -Wall unshare.o teleport-fuse.c $(pkg-config fuse3 --cflags --libs) -o ../build/whist-teleport-fuse
 
-################ STAGE 5: fractal-base ######################
+################ STAGE 5: whist-base ######################
 # - Copy and install libinput from libinput-build
 # - Copy and install xf86-input-libinput from
 #   xf86-input-libinput-build
 # - Copy grid driver installation from
 #   nvidia-grid-driver
 # - Copy and install teleport FUSE service from
-#   fractal-teleport-fuse
+#   whist-teleport-fuse
 # - Install and configure all necessary components for
 #   our base mandelbox image
-# EXPOSES all of fractal-base as the final image
+# EXPOSES all of whist-base as the final image
 #############################################################
-FROM ubuntu:20.04 as fractal-base
+FROM ubuntu:20.04 as whist-base
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -367,13 +367,13 @@ ENV init /sbin/init
 # upstream packages such as libinput10 and libinput-bin
 
 # Copy libinput and xf86-input-libinput
-COPY --from=libinput-build /libinput-fractal.deb /deb/libinput-fractal.deb
-COPY --from=xf86-input-libinput-build /xf86-input-libinput-fractal.deb deb/xf86-input-libinput-fractal.deb
+COPY --from=libinput-build /libinput-whist.deb /deb/libinput-whist.deb
+COPY --from=xf86-input-libinput-build /xf86-input-libinput-whist.deb deb/xf86-input-libinput-whist.deb
 
 # Install libinput and xf86-input-libinput
 RUN apt-get update && apt-get install --no-install-recommends -y \
-    ./deb/libinput-fractal.deb \
-    ./deb/xf86-input-libinput-fractal.deb \
+    ./deb/libinput-whist.deb \
+    ./deb/xf86-input-libinput-whist.deb \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/* /deb
@@ -401,7 +401,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     wmctrl \
     gnupg2 \
     libfido2-1 \
-    # for `killall` in display/update-fractal-dpi.sh
+    # for `killall` in display/update-whist-dpi.sh
     psmisc \
     libgbm1 \
     lsb-release \
@@ -435,10 +435,10 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # Permissions
 #########################
 
-# Create fractal user with dynamic, random password and do NOT add to sudo group
-RUN useradd --create-home fractal \
+# Create whist user with dynamic, random password and do NOT add to sudo group
+RUN useradd --create-home whist \
     && password=$(tr -dc 'A-Za-z0-9!"#$%&\()*+,-./;<=>?@[\]^_`{|}~' </dev/urandom | head -c 32  ; echo) \
-    && echo fractal:"${password}" | chpasswd
+    && echo whist:"${password}" | chpasswd
 
 # Workaround for sudo bug in Docker: https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
@@ -447,21 +447,21 @@ RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 VOLUME [ "/sys/fs/cgroup" ]
 
 # Set appropriate user permissions
-RUN chown -vR fractal:fractal /home/fractal
+RUN chown -vR whist:whist /home/whist
 RUN chown root:root /run/user
 
-# Create fractal Directory and Subdirectories in /usr/share
-RUN mkdir -p /usr/share/fractal/private
+# Create whist Directory and Subdirectories in /usr/share
+RUN mkdir -p /usr/share/whist/private
 
-# Set /usr/share/fractal to root-only
-RUN chgrp root -R /usr/share/fractal
-RUN chown root:root /usr/share/fractal
-RUN chmod 600 -R /usr/share/fractal
+# Set /usr/share/whist to root-only
+RUN chgrp root -R /usr/share/whist
+RUN chown root:root /usr/share/whist
+RUN chmod 600 -R /usr/share/whist
 
-# Set up script to run a program as user `fractal` (make sure to do
-# this after setting /usr/share/fractal to 600)
-COPY utils/run-as-fractal-user.sh /usr/share/fractal/run-as-fractal-user.sh
-RUN chmod +x /usr/share/fractal/run-as-fractal-user.sh
+# Set up script to run a program as user `whist` (make sure to do
+# this after setting /usr/share/whist to 600)
+COPY utils/run-as-whist-user.sh /usr/share/whist/run-as-whist-user.sh
+RUN chmod +x /usr/share/whist/run-as-whist-user.sh
 
 #########################
 # Hardware Acceleration
@@ -507,13 +507,13 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /tmp/* /var/tmp/*
 
 # Copy configuration for X11 display
-COPY display/fractal-display.conf /usr/share/X11/xorg.conf.d/01-fractal-display.conf
+COPY display/whist-display.conf /usr/share/X11/xorg.conf.d/01-whist-display.conf
 
 # Set up Whist service that starts before X to fix the Nvidia GPU bus ID and device paths
-COPY display/fractal-update-xorg-conf.service /etc/systemd/system/
-COPY display/update-xorg-conf.sh /usr/share/fractal/
-RUN chmod +x /usr/share/fractal/update-xorg-conf.sh
-RUN systemctl enable fractal-update-xorg-conf
+COPY display/whist-update-xorg-conf.service /etc/systemd/system/
+COPY display/update-xorg-conf.sh /usr/share/whist/
+RUN chmod +x /usr/share/whist/update-xorg-conf.sh
+RUN systemctl enable whist-update-xorg-conf
 
 # Install playerctl for media keys support. We install playerctl straight from
 # Github releases because as usual the Ubuntu package is horribly out of date
@@ -523,16 +523,16 @@ RUN wget -q https://github.com/altdesktop/playerctl/releases/download/v2.3.1/pla
     && rm ./playerctl-2.3.1_amd64.deb
 
 # Set up Whist service to launch X11 display
-COPY display/fractal-display-config.env /usr/share/fractal
+COPY display/whist-display-config.env /usr/share/whist
 COPY display/xinitrc /root/.xinitrc
-COPY display/fractal-display.service /etc/systemd/system
-COPY display/fractal-display.sh /usr/share/fractal/fractal-display.sh
-RUN chmod +x /usr/share/fractal/fractal-display.sh
-RUN systemctl enable fractal-display
+COPY display/whist-display.service /etc/systemd/system
+COPY display/whist-display.sh /usr/share/whist/whist-display.sh
+RUN chmod +x /usr/share/whist/whist-display.sh
+RUN systemctl enable whist-display
 
 # Set up script to update display DPI on-the-fly
-COPY display/update-fractal-dpi.sh /usr/share/fractal/update-fractal-dpi.sh
-RUN chmod +x /usr/share/fractal/update-fractal-dpi.sh
+COPY display/update-whist-dpi.sh /usr/share/whist/update-whist-dpi.sh
+RUN chmod +x /usr/share/whist/update-whist-dpi.sh
 
 # Set display environment variable
 ENV DISPLAY :10
@@ -585,17 +585,17 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 RUN wget -qO /usr/local/share/fonts/TwemojiMozilla.ttf https://github.com/mozilla/twemoji-colr/releases/download/v0.5.1/TwemojiMozilla.ttf
 
 # Set up fontconfig to use our nice fots
-COPY --chown=fractal display/theme/fonts.conf /home/fractal/.config/fontconfig/fonts.conf
+COPY --chown=whist display/theme/fonts.conf /home/whist/.config/fontconfig/fonts.conf
 
 # Set up window manager running on X server, with GTK/QT theming
 RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors
 RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git && cd WhiteSur-icon-theme && /bin/bash install.sh && rm -rf /WhiteSur-icon-theme
 COPY display/theme/gtk-3-settings.ini /etc/gtk-3.0/settings.ini
 COPY display/theme/gtkrc-2.0 /root/.gtkrc-2.0
-COPY --chown=fractal display/theme/gtkrc-2.0 /home/fractal/.gtkrc-2.0
+COPY --chown=whist display/theme/gtkrc-2.0 /home/whist/.gtkrc-2.0
 COPY display/theme/qt4-settings.conf /root/.config/Trolltech.conf
-COPY --chown=fractal display/theme/qt4-settings.conf /home/fractal/.config/Trolltech.conf
-COPY display/theme/awesome-rc.lua /home/fractal/.config/awesome/rc.lua
+COPY --chown=whist display/theme/qt4-settings.conf /home/whist/.config/Trolltech.conf
+COPY display/theme/awesome-rc.lua /home/whist/.config/awesome/rc.lua
 
 #########################
 # Audio
@@ -631,7 +631,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 # Give access to Pulse Audio virtual sound card
 RUN adduser root pulse-access \
-    && adduser fractal pulse-access
+    && adduser whist pulse-access
 
 # Prevent Pulse Audio from running as user (breaking sound for non-root users)
 RUN rm /etc/systemd/user/default.target.wants/pulseaudio.service
@@ -639,18 +639,18 @@ RUN systemctl mask pulseaudio
 RUN chmod -x /usr/bin/start-pulseaudio-x11
 
 # Set up service to start pulseaudio
-COPY audio/run-pulseaudio.sh /usr/share/fractal
-RUN chmod +x /usr/share/fractal/run-pulseaudio.sh
+COPY audio/run-pulseaudio.sh /usr/share/whist
+RUN chmod +x /usr/share/whist/run-pulseaudio.sh
 COPY audio/pulse-client.conf /etc/pulse/client.conf
-COPY audio/fractal-audio.service /etc/systemd/system
-RUN systemctl enable fractal-audio
+COPY audio/whist-audio.service /etc/systemd/system
+RUN systemctl enable whist-audio
 
 #########################
 # Startup
 #########################
 
 # Set up user config map for mandelbox startup
-COPY startup/app-config-map.json /usr/share/fractal/app-config-map.json
+COPY startup/app-config-map.json /usr/share/whist/app-config-map.json
 
 # Install Dependencies for Cookie Import
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -664,18 +664,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Set up custom config scripts
-COPY utils/import_user_browser_data.py /usr/share/fractal/import_user_browser_data.py
+COPY utils/import_user_browser_data.py /usr/share/whist/import_user_browser_data.py
 
 # Set up first systemd service
-COPY startup/fractal-startup.sh /usr/share/fractal
-RUN chmod +x /usr/share/fractal/fractal-startup.sh
-COPY startup/fractal-startup.service /etc/systemd/system
-RUN systemctl enable fractal-startup
+COPY startup/whist-startup.sh /usr/share/whist
+RUN chmod +x /usr/share/whist/whist-startup.sh
+COPY startup/whist-startup.service /etc/systemd/system
+RUN systemctl enable whist-startup
 
 # Set up the entrypoint for the mandelbox (which starts systemd)
-COPY startup/entrypoint.sh /usr/share/fractal/entrypoint.sh
-RUN chmod +x /usr/share/fractal/entrypoint.sh
-CMD ["/usr/share/fractal/entrypoint.sh"]
+COPY startup/entrypoint.sh /usr/share/whist/entrypoint.sh
+RUN chmod +x /usr/share/whist/entrypoint.sh
+CMD ["/usr/share/whist/entrypoint.sh"]
 
 #########################
 # Main
@@ -707,11 +707,11 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && rm -rf /tmp/* /var/tmp/*
 
 # Set up the default Whist application symlink
-RUN ln -sf "$(which xeyes)" /usr/bin/fractal-application
+RUN ln -sf "$(which xeyes)" /usr/bin/whist-application
 
-# Set up script to launch `fractal-application` as the `fractal` user
-COPY main/run-fractal-application.sh /usr/bin/run-fractal-application.sh
-RUN chmod 0555 /usr/bin/run-fractal-application.sh
+# Set up script to launch `whist-application` as the `whist` user
+COPY main/run-whist-application.sh /usr/bin/run-whist-application.sh
+RUN chmod 0555 /usr/bin/run-whist-application.sh
 
 # Set up the teleport FUSE service
 
@@ -722,11 +722,11 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
-COPY --from=fractal-teleport-fuse /fractal-teleport-fuse/build/fractal-teleport-fuse /usr/bin/fractal-teleport-fuse
+COPY --from=whist-teleport-fuse /whist-teleport-fuse/build/whist-teleport-fuse /usr/bin/whist-teleport-fuse
 
 # Set up script to launch teleport functionality
-COPY teleport/run-fractal-teleport.sh /usr/bin/run-fractal-teleport.sh
-RUN chmod +x /usr/bin/run-fractal-teleport.sh
+COPY teleport/run-whist-teleport.sh /usr/bin/run-whist-teleport.sh
+RUN chmod +x /usr/bin/run-whist-teleport.sh
 
 # Set up the teleport URI handler
 
@@ -737,46 +737,46 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
-# Install fractal-teleport-uri-handler.desktop to capture URI protocols like zoommtg://*
-# See fractal-teleport-uri-handler.desktop for a list of currently-supported protocols.
+# Install whist-teleport-uri-handler.desktop to capture URI protocols like zoommtg://*
+# See whist-teleport-uri-handler.desktop for a list of currently-supported protocols.
 RUN mkdir -p /opt/teleport
-COPY teleport/uri-handler/fractal-teleport-uri-handler.sh /opt/teleport/uri-handler
+COPY teleport/uri-handler/whist-teleport-uri-handler.sh /opt/teleport/uri-handler
 RUN chmod +x /opt/teleport/uri-handler
 RUN ln -sf /opt/teleport/uri-handler /usr/bin/xdg-open
 
 # Set up the Whist server protocol
 
 # Install protocol dependencies
-COPY --from=build-assets setup-linux-build-environment.sh /usr/share/fractal/setup-linux-build-environment.sh
-RUN /usr/share/fractal/setup-linux-build-environment.sh \
+COPY --from=build-assets setup-linux-build-environment.sh /usr/share/whist/setup-linux-build-environment.sh
+RUN /usr/share/whist/setup-linux-build-environment.sh \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
-RUN rm /usr/share/fractal/setup-linux-build-environment.sh
+RUN rm /usr/share/whist/setup-linux-build-environment.sh
 
 # Set up Whist Protocol symlink
-RUN mkdir /usr/share/fractal/bin
-RUN ln -sf /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
+RUN mkdir /usr/share/whist/bin
+RUN ln -sf /usr/share/whist/bin/WhistServer /usr/share/whist/WhistServer
 
 # Set up the service which launches both the server protocol and the application
 
-COPY main/run-fractal-server.sh /usr/share/fractal/run-fractal-server.sh
-RUN chmod +x /usr/share/fractal/run-fractal-server.sh
-COPY main/fractal-main.service /etc/systemd/system
-RUN systemctl enable fractal-main
+COPY main/run-whist-server.sh /usr/share/whist/run-whist-server.sh
+RUN chmod +x /usr/share/whist/run-whist-server.sh
+COPY main/whist-main.service /etc/systemd/system
+RUN systemctl enable whist-main
 
 #########################
 # Cleanup
 #########################
 
-# Set our fractal systemd files to be root-visible only
-RUN chgrp root /etc/systemd/system/fractal* \
-    && chown root:root /etc/systemd/system/fractal* \
-    && chmod 600 /etc/systemd/system/fractal*
+# Set our whist systemd files to be root-visible only
+RUN chgrp root /etc/systemd/system/whist* \
+    && chown root:root /etc/systemd/system/whist* \
+    && chmod 600 /etc/systemd/system/whist*
 
 
 # Install Whist Protocol binaries and helper files
-# We do this last and symlink `/usr/share/fractal/bin` earlier
+# We do this last and symlink `/usr/share/whist/bin` earlier
 # to make it easier to modify the protocol and rebuild the base
 # Dockerfile without needing to redo many steps
-COPY --from=build-assets protocol/* /usr/share/fractal/bin/
+COPY --from=build-assets protocol/* /usr/share/whist/bin/

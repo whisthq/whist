@@ -1,9 +1,9 @@
 # #[[
-################## FractalProtocolTest ##################
+################## WhistProtocolTest ##################
 #]]
 
 # Create the executable
-set(PROTOCOL_TEST_BINARY FractalProtocolTest)
+set(PROTOCOL_TEST_BINARY WhistProtocolTest)
 
 # Client-only files, since macOS is only supported client-sides
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -11,10 +11,10 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         protocol_test.cpp
 
         # Files needed for Whist Lib unit tests
-        ../fractal/utils/aes.c
-        ../fractal/utils/png.c
-        ../fractal/utils/avpacket_buffer.c
-        ../fractal/network/ringbuffer.c
+        ../whist/utils/aes.c
+        ../whist/utils/png.c
+        ../whist/utils/avpacket_buffer.c
+        ../whist/network/ringbuffer.c
 
         # Files needed for Client unit tests
         ../client/audio.c
@@ -41,10 +41,10 @@ else()
         ../server/network.c
 
         # Files needed for Whist Lib unit tests
-        ../fractal/utils/aes.c
-        ../fractal/utils/png.c
-        ../fractal/utils/avpacket_buffer.c
-        ../fractal/network/ringbuffer.c
+        ../whist/utils/aes.c
+        ../whist/utils/png.c
+        ../whist/utils/avpacket_buffer.c
+        ../whist/network/ringbuffer.c
 
         # Files needed for Client unit tests
         ../client/audio.c
@@ -160,7 +160,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
         ../client/native_window_utils_windows.c
     )
-    target_link_libraries(${PROTOCOL_TEST_BINARY} fractalInput ${LIBMFX})
+    target_link_libraries(${PROTOCOL_TEST_BINARY} whistInput ${LIBMFX})
 
     set_property(TARGET ${PROTOCOL_TEST_BINARY} PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"

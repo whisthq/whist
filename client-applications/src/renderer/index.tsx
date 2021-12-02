@@ -22,7 +22,7 @@ import {
   WindowHashOnboarding,
 } from "@app/constants/windows"
 import {
-  fractalError,
+  whistError,
   NO_PAYMENT_ERROR,
   UNAUTHORIZED_ERROR,
   AUTH_ERROR,
@@ -110,8 +110,8 @@ const RootComponent = () => {
   if (show === NO_PAYMENT_ERROR)
     return (
       <TwoButtonError
-        title={fractalError[show].title}
-        text={fractalError[show].text}
+        title={whistError[show].title}
+        text={whistError[show].text}
         primaryButtonText="Update Payment"
         secondaryButtonText="Sign Out"
         onPrimaryClick={showPaymentWindow}
@@ -121,17 +121,17 @@ const RootComponent = () => {
   if ([UNAUTHORIZED_ERROR, AUTH_ERROR, NAVIGATION_ERROR].includes(show))
     return (
       <OneButtonError
-        title={fractalError[show].title}
-        text={fractalError[show].text}
+        title={whistError[show].title}
+        text={whistError[show].text}
         primaryButtonText="Sign Out"
         onPrimaryClick={showSignoutWindow}
       />
     )
-  if (Object.keys(fractalError).includes(show))
+  if (Object.keys(whistError).includes(show))
     return (
       <TwoButtonError
-        title={fractalError[show].title}
-        text={fractalError[show].text}
+        title={whistError[show].title}
+        text={whistError[show].text}
         primaryButtonText="Try Again"
         secondaryButtonText="Sign Out"
         onPrimaryClick={relaunch}
@@ -140,8 +140,8 @@ const RootComponent = () => {
     )
   return (
     <TwoButtonError
-      title={fractalError.NAVIGATION_ERROR.title}
-      text={fractalError.NAVIGATION_ERROR.text}
+      title={whistError.NAVIGATION_ERROR.title}
+      text={whistError.NAVIGATION_ERROR.text}
       primaryButtonText="Try Again"
       secondaryButtonText="Sign Out"
       onPrimaryClick={relaunch}

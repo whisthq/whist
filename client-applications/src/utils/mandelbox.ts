@@ -10,13 +10,13 @@ import { post } from "@app/utils/api"
 import { AWSRegion } from "@app/@types/aws"
 import { sessionID } from "@app/constants/app"
 import { AsyncReturnType } from "@app/@types/state"
-import { appEnvironment, FractalEnvironments } from "../../config/configs"
+import { appEnvironment, WhistEnvironments } from "../../config/configs"
 import config from "@app/config/environment"
 
 const COMMIT_SHA = config.keys.COMMIT_SHA
 
 const isLocalEnv = () => {
-  const isLocal = appEnvironment === FractalEnvironments.LOCAL
+  const isLocal = appEnvironment === WhistEnvironments.LOCAL
   if (!isLocal && (isEmpty(COMMIT_SHA) || COMMIT_SHA === undefined)) {
     console.log("COMMIT_SHA is empty when appEnvironment is not LOCAL!")
     console.log("No COMMIT_SHA may create issues communicating with server.")

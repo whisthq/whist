@@ -35,11 +35,11 @@ Includes
 #include <unistd.h>
 #endif
 
-#include <fractal/video/transfercapture.h>
-#include <fractal/video/capture/capture.h>
-#include <fractal/video/codec/encode.h>
-#include <fractal/utils/avpacket_buffer.h>
-#include <fractal/logging/log_statistic.h>
+#include <whist/video/transfercapture.h>
+#include <whist/video/capture/capture.h>
+#include <whist/video/codec/encode.h>
+#include <whist/utils/avpacket_buffer.h>
+#include <whist/logging/log_statistic.h>
 #include "client.h"
 #include "network.h"
 #include "video.h"
@@ -169,12 +169,12 @@ void send_populated_frames(whist_server_state* state, clock* statistics_timer,
     frame->is_window_visible = true;
     frame->corner_color = device->corner_color;
 
-    static FractalCursorImage cursor_cache[2];
+    static WhistCursorImage cursor_cache[2];
     static int last_cursor_id = 0;
     int current_cursor_id = (last_cursor_id + 1) % 2;
 
-    FractalCursorImage* last_cursor = &cursor_cache[last_cursor_id];
-    FractalCursorImage* current_cursor = &cursor_cache[current_cursor_id];
+    WhistCursorImage* last_cursor = &cursor_cache[last_cursor_id];
+    WhistCursorImage* current_cursor = &cursor_cache[current_cursor_id];
 
     start_timer(statistics_timer);
     get_current_cursor(current_cursor);
@@ -182,7 +182,7 @@ void send_populated_frames(whist_server_state* state, clock* statistics_timer,
 
     // If the current cursor is the same as the last cursor,
     // just don't send any cursor
-    if (memcmp(last_cursor, current_cursor, sizeof(FractalCursorImage)) == 0) {
+    if (memcmp(last_cursor, current_cursor, sizeof(WhistCursorImage)) == 0) {
         set_frame_cursor_image(frame, NULL);
     } else {
         set_frame_cursor_image(frame, current_cursor);

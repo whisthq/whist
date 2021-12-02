@@ -1,0 +1,12 @@
+# Starts Whist by starting Whist systemd services, runs as root
+[Unit]
+Description=Whist Entrypoint
+
+[Service]
+Type=oneshot
+ExecStart=/usr/share/whist/whist-startup.sh
+StandardOutput=file:/var/log/whist/entry-out.log
+StandardError=file:/var/log/whist/entry-err.log
+
+[Install]
+WantedBy=multi-user.target

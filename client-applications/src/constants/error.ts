@@ -18,7 +18,7 @@ export const NAVIGATION_ERROR = "NAVIGATION_ERROR"
 export const MAINTENANCE_ERROR = "MAINTENANCE_ERROR"
 export const INTERNET_ERROR = "INTERNET_ERROR"
 
-export const fractalError = {
+export const whistError = {
   [NO_PAYMENT_ERROR]: {
     title: "Your free trial has expired!",
     text: "To continue receiving access to Whist, please sign up for a paid plan.",
