@@ -12,7 +12,7 @@ import fs from "fs"
 import { spawn, ChildProcess } from "child_process"
 import config, { loggingFiles } from "@app/config/environment"
 import { electronLogPath, protocolToLogz } from "@app/utils/logging"
-import { appEnvironment, FractalEnvironments } from "../../config/configs"
+import { appEnvironment, WhistEnvironments } from "../../config/configs"
 import logRotate from "log-rotate"
 
 const NACK_LOOKBACK_PERIOD_IN_MS = 1500 // Number of milliseconds to look back when measuring # of nacks
@@ -60,7 +60,7 @@ export const protocolLaunch = async () => {
   // We send the environment so that the protocol can init sentry if necessary
   const protocolParameters = {
     ...(app.isPackaged &&
-      appEnvironment !== FractalEnvironments.LOCAL && {
+      appEnvironment !== WhistEnvironments.LOCAL && {
         environment: config.deployEnv,
       }),
   }

@@ -26,7 +26,7 @@ include(CheckLanguage)
 include(FetchContent)
 include(CMakeDependentOption)
 
-project(FractalProtocol LANGUAGES C CXX)
+project(WhistProtocol LANGUAGES C CXX)
 
 if(CMAKE_CONFIGURATION_TYPES)
     message(FATAL_ERROR "Detected multi-configuration generator! This CMake file does not support multi-configuration generators.")
@@ -421,7 +421,7 @@ set(WINDOWS_SPECIFIC_CLIENT_LIBS
 
 add_subdirectory(client)
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile on MacOS
-    set(SERV "FractalServer")
+    set(SERV "WhistServer")
     set(PLATFORM_INDEPENDENT_SERVER_LIBS
         fractalCore
         fractalAudio
@@ -460,7 +460,7 @@ else()
     add_custom_target(clang-tidy
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMAND ${BASH} ${CMAKE_SOURCE_DIR}/run-clang-tidy.sh -c
-        DEPENDS FractalClient ${SERV})
+        DEPENDS WhistClient ${SERV})
 endif()
 
 # Documentation target

@@ -3,7 +3,7 @@
   This file exports the variables used at build time
 */
 
-const { FractalEnvironments } = require("./constants")
+const { WhistEnvironments } = require("./constants")
 const envOverrides = require("./envOverrides")
 const assert = require("assert").strict
 
@@ -12,20 +12,20 @@ if (!process.env.CONFIG) {
   process.env.CONFIG = envOverrides.CONFIG
 }
 
-const { appEnvironment = FractalEnvironments.LOCAL } = envOverrides
+const { appEnvironment = WhistEnvironments.LOCAL } = envOverrides
 
 // Make sure we have a valid appEnvironment
 assert(
-  appEnvironment === FractalEnvironments.LOCAL ||
-    appEnvironment === FractalEnvironments.DEVELOPMENT ||
-    appEnvironment === FractalEnvironments.STAGING ||
-    appEnvironment === FractalEnvironments.PRODUCTION
+  appEnvironment === WhistEnvironments.LOCAL ||
+    appEnvironment === WhistEnvironments.DEVELOPMENT ||
+    appEnvironment === WhistEnvironments.STAGING ||
+    appEnvironment === WhistEnvironments.PRODUCTION
 )
 
 // Icon name
 const iconName =
-  appEnvironment === FractalEnvironments.PRODUCTION ||
-  appEnvironment === FractalEnvironments.LOCAL
+  appEnvironment === WhistEnvironments.PRODUCTION ||
+  appEnvironment === WhistEnvironments.LOCAL
     ? "icon"
     : `icon_${appEnvironment}`
 

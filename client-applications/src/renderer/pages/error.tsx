@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 
-import { FractalButton, FractalButtonState } from "@app/components/html/button"
+import { WhistButton, WhistButtonState } from "@app/components/html/button"
 import classNames from "classnames"
 
 const BaseError = (props: { title: string; text: string }) => {
@@ -50,13 +50,13 @@ export const OneButtonError = (props: {
     >
       <BaseError title={props.title} text={props.text} />
       <div className="mt-4 mb-10 w-full text-center text-black">
-        <FractalButton
+        <WhistButton
           contents={props.primaryButtonText}
           className="px-12 mx-auto bg-mint py-3"
           state={
             processing
-              ? FractalButtonState.PROCESSING
-              : FractalButtonState.DEFAULT
+              ? WhistButtonState.PROCESSING
+              : WhistButtonState.DEFAULT
           }
           onClick={onClick}
         />
@@ -98,13 +98,13 @@ export const TwoButtonError = (props: {
     >
       <BaseError title={props.title} text={props.text} />
       <div className="mt-3 mb-1 w-full text-center">
-        <FractalButton
+        <WhistButton
           contents={props.primaryButtonText}
           className="px-12 mx-auto py-3 bg-mint text-black"
           state={
             processing
-              ? FractalButtonState.PROCESSING
-              : FractalButtonState.DEFAULT
+              ? WhistButtonState.PROCESSING
+              : WhistButtonState.DEFAULT
           }
           onClick={onClick}
         />

@@ -100,7 +100,7 @@ module.exports = {
     }
 
     execCommand(
-      `cmake --build ${cmakeBuildDir} -j --target FractalClient`,
+      `cmake --build ${cmakeBuildDir} -j --target WhistClient`,
       "../protocol"
     )
 
@@ -114,7 +114,7 @@ module.exports = {
     )
 
     const ext = process.platform === "win32" ? ".exe" : ""
-    const oldExecutable = "FractalClient"
+    const oldExecutable = "WhistClient"
     const newExecutable =
       process.platform === "darwin" ? "WhistClient" : "Whist"
 

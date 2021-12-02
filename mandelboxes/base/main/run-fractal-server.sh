@@ -59,12 +59,12 @@ if [ -f "$BOOKMARK_FILE_FILENAME" ]; then
   export WHIST_INITIAL_USER_BOOKMARKS_FILE=$(cat $BOOKMARK_FILE_FILENAME)
 fi
 
-# We use named pipe redirection for consistency with our FractalServer launch setup
+# We use named pipe redirection for consistency with our WhistServer launch setup
 # &> redirects both stdout and stdin together; shorthand for '> XYZ 2>&1'
 /usr/share/fractal/run-as-fractal-user.sh "/usr/bin/run-fractal-teleport.sh" &> >(tee $TELEPORT_LOG_FILENAME) &
 
 # This function is called whenever the script exits, whether that is because we
-# reach the end of this file (because either FractalServer or the Whist
+# reach the end of this file (because either WhistServer or the Whist
 # application died), or there was an error somewhere else in the script.
 function cleanup {
   echo "cleanup() called! Shutting down the mandelbox..."
@@ -113,7 +113,7 @@ echo "Whist application pid: $fractal_application_pid"
 
 echo "Now sleeping until there are X clients..."
 
-# Wait until the application has created its display before launching FractalServer.
+# Wait until the application has created its display before launching WhistServer.
 #    This prevents a black no input window from appearing when a user connects.
 until [ $(xlsclients -display :10 | wc -l) != 0 ]
 do
@@ -127,28 +127,28 @@ sync # Necessary so that even if the container exits very soon the host service 
 # Send in identifier
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
-# The point of the named pipe redirection is so that $! will give us the PID of FractalServer, not of tee.
-/usr/share/fractal/FractalServer $OPTIONS > >(tee $PROTOCOL_LOG_FILENAME) &
+# The point of the named pipe redirection is so that $! will give us the PID of WhistServer, not of tee.
+/usr/share/fractal/WhistServer $OPTIONS > >(tee $PROTOCOL_LOG_FILENAME) &
 fractal_server_pid=$!
 
-# Wait for either fractal-application or FractalServer to exit (both backgrounded processes).
+# Wait for either fractal-application or WhistServer to exit (both backgrounded processes).
 
 # TODO: once our mandelboxes have bash 5.1 we will be able to deduce _which_
 # application exited with the `-p` flag to `wait`.
 wait -n
-echo "Either FractalServer or fractal-application exited with code $?"
-echo "FractalServer PID: $fractal_server_pid"
+echo "Either WhistServer or fractal-application exited with code $?"
+echo "WhistServer PID: $fractal_server_pid"
 echo "runuser fractal-application PID: $fractal_application_runuser_pid"
 echo "fractal-application PID: $fractal_application_pid"
 echo "Remaining job PIDs: $(jobs -p)"
 
-# Kill whatever is still running of FractalServer and fractal-application, with SIGTERM.
+# Kill whatever is still running of WhistServer and fractal-application, with SIGTERM.
 kill $fractal_application_pid ||:
 kill $fractal_server_pid ||:
 
 # Wait for fractal-application to finish terminating, ignoring exit code (since
 wait $fractal_application_runuser_pid ||:
 
-echo "Both fractal-application and FractalServer have exited."
+echo "Both fractal-application and WhistServer have exited."
 
 # We now pass control over to `cleanup`, since we've reached the end of the script.

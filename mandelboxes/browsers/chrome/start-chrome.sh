@@ -11,7 +11,7 @@ set -Eeuo pipefail
 # browser for the first time each session. You can think of this as effectively moving the locking mechansim
 # out of the backed-up Chrome config folder and into a location that will not persist when the instance dies.
 GOOGLE_CHROME_SINGLETON_LOCK=/home/fractal/.config/google-chrome/SingletonLock
-WHIST_CHROME_SINGLETON_LOCK=/home/fractal/.config/FractalChromeSingletonLock
+WHIST_CHROME_SINGLETON_LOCK=/home/fractal/.config/WhistChromeSingletonLock
 
 if [[ ! -f $WHIST_CHROME_SINGLETON_LOCK ]]; then
     touch $WHIST_CHROME_SINGLETON_LOCK

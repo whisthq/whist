@@ -1,9 +1,9 @@
 # #[[
-################## FractalProtocolTest ##################
+################## WhistProtocolTest ##################
 #]]
 
 # Create the executable
-set(PROTOCOL_TEST_BINARY FractalProtocolTest)
+set(PROTOCOL_TEST_BINARY WhistProtocolTest)
 
 # Client-only files, since macOS is only supported client-sides
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

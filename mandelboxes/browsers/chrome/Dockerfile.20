@@ -61,7 +61,7 @@ RUN mkdir -p /etc/opt/chrome/policies/managed \
     | jq '.BackgroundModeEnabled=false' \
     # Disable the file selection dialog to hide the mandelbox filesystem
     | jq '.AllowFileSelectionDialogs=false' \
-    > /etc/opt/chrome/policies/managed/FractalPolicies.json
+    > /etc/opt/chrome/policies/managed/WhistPolicies.json
 
 # Install Google Chrome extensions
 COPY install-extensions.sh /usr/bin/install-extensions.sh

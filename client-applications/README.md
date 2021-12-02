@@ -69,7 +69,7 @@ To debug, you can take a look at the client and server logs as described in the 
 
 In order to test the interaction between the client app and the server, you may want to spin up the host-service on a dev instance, and connect to it. To do that, you can follow this procedure.
 
-- On your AWS instance, build the protocol (if needed) with `cd ~/fractal/protocol && ./build_protocol_targets.sh FractalServer` and the Chrome mandelbox with `cd ~/fractal/mandelboxes && ./build_mandelbox_image.sh browsers/chrome`. Then, run the host-service with cd `~/fractal/host-service && make run`.
+- On your AWS instance, build the protocol (if needed) with `cd ~/fractal/protocol && ./build_protocol_targets.sh WhistServer` and the Chrome mandelbox with `cd ~/fractal/mandelboxes && ./build_mandelbox_image.sh browsers/chrome`. Then, run the host-service with cd `~/fractal/host-service && make run`.
   - N.B.: You should not run the Chrome mandelbox instance with the `run_local_mandelbox_image.sh` script!!
   - If you run into any issues getting the `host-service` to run, make sure to stop and remove any Docker containers that are running and delete the /fractal folder with `sudo rm -rf /fractal/`.
 - On your computer, after initializing yarn by running `yarn`, set the `TESTING_LOCALDEV_HOST_IP` environment variable to the public IP of the AWS instance. Then, from the `client-applications` folder, call `yarn test:manual localdevHost`. If you get errors, try removing the `node_modules` folder and the `yarn.lock` file with `rm -rf node_modules yarn.lock` and then re-initialize with `yarn`.
@@ -221,7 +221,7 @@ Before you can package the MacOS application it needs to be notarized. The appli
 
 Notarizing is done in Github CI. In the event you want to notarize locally:
 
-1. Download the Whist Apple Developer Certificate via `aws s3 cp s3://fractal-dev-secrets/fractal-apple-codesigning-certificate.p12 fractal-apple-codesigning-certificate.p12` and import it to your **System** keychain. The file is encrypted and the password is `Fractalcomputers!`.
+1. Download the Whist Apple Developer Certificate via `aws s3 cp s3://fractal-dev-secrets/fractal-apple-codesigning-certificate.p12 fractal-apple-codesigning-certificate.p12` and import it to your **System** keychain. The file is encrypted and the password is `Whistcomputers!`.
 
 2. Make sure you have the latest version of Xcode and have opened it at least once. We recommend downloading Xcode from the App Store, and ensuring that you have the MacOSX SDK at `/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk`.
 

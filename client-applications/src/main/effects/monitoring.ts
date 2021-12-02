@@ -3,14 +3,14 @@ import * as Sentry from "@sentry/electron"
 import { interval } from "rxjs"
 
 import config from "@app/config/environment"
-import { appEnvironment, FractalEnvironments } from "../../../config/configs"
+import { appEnvironment, WhistEnvironments } from "../../../config/configs"
 import { HEARTBEAT_INTERVAL_IN_MINUTES, SENTRY_DSN } from "@app/constants/app"
 import { networkAnalyze } from "@app/utils/networkAnalysis"
 import { fromTrigger } from "@app/utils/flows"
 import { WhistTrigger } from "@app/constants/triggers"
 
 // Initialize and report Sentry errors in prod
-if (appEnvironment === FractalEnvironments.PRODUCTION) {
+if (appEnvironment === WhistEnvironments.PRODUCTION) {
   Sentry.init({
     dsn: SENTRY_DSN,
     environment: config.deployEnv,

@@ -1,8 +1,8 @@
 #[[
-################## FractalServer ##################
+################## WhistServer ##################
 ]]
 
-add_executable(FractalServer
+add_executable(WhistServer
         client.c
         video.c
         audio.c
@@ -13,22 +13,22 @@ add_executable(FractalServer
         server_statistic.c
         )
 
-set_target_properties(FractalServer PROPERTIES
+set_target_properties(WhistServer PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/server/build${arch}
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/server/build${arch})
 
 # copy the Sentry shared library and crashpad handler to the build folder
 # after the build
 add_custom_command(
-        TARGET FractalServer POST_BUILD
+        TARGET WhistServer POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_BINARY_DIR}/lib/64/sentry/${CMAKE_SYSTEM_NAME}/
-        $<TARGET_FILE_DIR:FractalServer>)
+        $<TARGET_FILE_DIR:WhistServer>)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin"
 OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     add_custom_command(
-            TARGET FractalServer POST_BUILD
+            TARGET WhistServer POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/server/fserver
             ${CMAKE_BINARY_DIR})
@@ -36,26 +36,26 @@ endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(
-            TARGET FractalServer POST_BUILD
+            TARGET WhistServer POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/server/fserver.bat
             ${CMAKE_BINARY_DIR})
 endif()
 
 add_custom_command(
-    TARGET FractalServer POST_BUILD
+    TARGET WhistServer POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_BINARY_DIR}/lib/64/ffmpeg/${CMAKE_SYSTEM_NAME}/
-    $<TARGET_FILE_DIR:FractalServer>)
+    $<TARGET_FILE_DIR:WhistServer>)
 
 # OpenSSL/libcrypto --- on Windows, we need to copy the DLL into the right
 # location to prevent a crash.
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(
-            TARGET FractalServer POST_BUILD
+            TARGET WhistServer POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_BINARY_DIR}/lib/64/openssl/Windows/libcrypto-1_1-x64.dll
-            $<TARGET_FILE_DIR:FractalServer>)
+            $<TARGET_FILE_DIR:WhistServer>)
 endif()
 
 # Print out compile flags in verbose mode of CMake
@@ -65,8 +65,8 @@ message(VERBOSE "c debug flags ${CMAKE_C_FLAGS_DEBUG}")
 
 # FFMPEG, Threading and Dynamic linking libs
 foreach(LIB ${FFMPEG_LIBS_PATHS})
-    message(VERBOSE "linking lib for FractalServer: ${LIB}")
-    target_link_libraries(FractalServer ${LIB})
+    message(VERBOSE "linking lib for WhistServer: ${LIB}")
+    target_link_libraries(WhistServer ${LIB})
 endforeach()
 
 # Threading and Dynamic link for linux/macosx only
@@ -74,7 +74,7 @@ endforeach()
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 #    set(THREADS_PREFER_PTHREAD_FLAG ON)
 #    find_package(Threads REQUIRED)
-    target_link_libraries(FractalServer
+    target_link_libraries(WhistServer
 #       Threads::Threads
         ${CMAKE_DL_LIBS}
         )
@@ -85,7 +85,7 @@ endif()
 ################## Linking platform independent libs ##################
 ]]
 
-target_link_libraries(FractalServer
+target_link_libraries(WhistServer
     ${PLATFORM_INDEPENDENT_SERVER_LIBS}
     )
 
@@ -112,7 +112,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         message(FATAL_ERROR "Library X11_Xext_LIB was not found!")
     endif()
 
-    target_link_libraries(FractalServer
+    target_link_libraries(WhistServer
             ${X11_LIBRARIES}
             ${X11_Xfixes_LIB}
             ${X11_Xdamage_LIB}
@@ -135,12 +135,12 @@ if(${WIN32})
 
     #sets the MSVC runtime library as multithreaded and adds debug symbols if is a debug build
     #see https://cmake.org/cmake/help/v3.15/variable/CMAKE_MSVC_RUNTIME_LIBRARY.html#variable:CMAKE_MSVC_RUNTIME_LIBRARY
-    set_property(TARGET FractalServer PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    set_property(TARGET WhistServer PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
     if(CMAKE_CUDA_COMPILER)
-        set_property(TARGET FractalServer PROPERTY CUDA_ARCHITECTURES OFF)
+        set_property(TARGET WhistServer PROPERTY CUDA_ARCHITECTURES OFF)
     endif()
 
     # Link to system libs
-    target_link_libraries(FractalServer ${WINDOWS_SPECIFIC_SERVER_LIBS})
+    target_link_libraries(WhistServer ${WINDOWS_SPECIFIC_SERVER_LIBS})
 endif()

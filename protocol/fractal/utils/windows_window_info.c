@@ -1,7 +1,7 @@
 /**
- * Copyright 2021 Fractal Computers, Inc., dba Whist
- * @file x11_window_info.c
- * @brief This file contains all the code for getting X11-specific window information.
+ * Copyright 2021 Whist Technologies, Inc.
+ * @file windows_window_info.c
+ * @brief This file contains all the code for getting Windows-specific window information.
  */
 
 #include <fractal/core/fractal.h>

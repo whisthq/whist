@@ -5,7 +5,7 @@ import classNames from "classnames"
     Prop declarations
 */
 
-export enum FractalButtonState {
+export enum WhistButtonState {
   DEFAULT,
   DISABLED,
   PROCESSING,
@@ -18,8 +18,8 @@ interface BaseButtonProps {
   disabled?: boolean
 }
 
-interface FractalButtonProps extends BaseButtonProps {
-  state: FractalButtonState
+interface WhistButtonProps extends BaseButtonProps {
+  state: WhistButtonState
 }
 
 /*
@@ -50,8 +50,8 @@ const BaseButton: FC<BaseButtonProps> = (props: BaseButtonProps) => (
   </button>
 )
 
-export const FractalButton: FC<FractalButtonProps> = (
-  props: FractalButtonProps
+export const WhistButton: FC<WhistButtonProps> = (
+  props: WhistButtonProps
 ): JSX.Element => {
   /*
         Description:
@@ -61,7 +61,7 @@ export const FractalButton: FC<FractalButtonProps> = (
             onClick(() = void): Callback function for button click
             className(string): Optional additional Tailwind styling
             disabled(boolean): If true, button cannot be clicked
-            state(FractalButtonType): Button state (defaults to FractalButtonState.DEFAULT)
+            state(WhistButtonType): Button state (defaults to WhistButtonState.DEFAULT)
     */
 
   const { state, ...baseButtonProps } = props
@@ -79,14 +79,14 @@ export const FractalButton: FC<FractalButtonProps> = (
   )
 
   switch (state) {
-    case FractalButtonState.DISABLED: {
+    case WhistButtonState.DISABLED: {
       const disabledButtonProps = Object.assign(baseButtonProps, {
         className: disabledClassName,
         onClick: doNothing,
       })
       return <BaseButton {...disabledButtonProps} />
     }
-    case FractalButtonState.PROCESSING: {
+    case WhistButtonState.PROCESSING: {
       const processingButtonProps = Object.assign(baseButtonProps, {
         className: disabledClassName,
         contents: (

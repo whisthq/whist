@@ -756,7 +756,7 @@ RUN rm /usr/share/fractal/setup-linux-build-environment.sh
 
 # Set up Whist Protocol symlink
 RUN mkdir /usr/share/fractal/bin
-RUN ln -sf /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
+RUN ln -sf /usr/share/fractal/bin/WhistServer /usr/share/fractal/WhistServer
 
 # Set up the service which launches both the server protocol and the application
 

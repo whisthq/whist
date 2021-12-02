@@ -32,7 +32,7 @@ const getBuildOptions = () => {
   }
 }
 
-const getFractalEnv = () => {
+const getWhistEnv = () => {
   // Return environment variables to bake into our application as a dictionary;
   // these can be imported via `import.meta.env`.
   return {
@@ -67,7 +67,7 @@ module.exports = {
   buildOptions: getBuildOptions(),
 
   // This controls environment variables which can be used in the app via `import.meta.env`
-  env: getFractalEnv(),
+  env: getWhistEnv(),
 
   // This points all routes to our single-page app rooted at index.html
   routes: [{ match: "routes", src: ".*", dest: "/index.html" }],

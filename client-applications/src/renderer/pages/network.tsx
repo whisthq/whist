@@ -2,7 +2,7 @@ import React from "react"
 import classNames from "classnames"
 
 import { Progress } from "@app/components/html/progress"
-import { FractalButton, FractalButtonState } from "@app/components/html/button"
+import { WhistButton, WhistButtonState } from "@app/components/html/button"
 
 const MAX_ACCEPTABLE_JITTER_MS = 20
 const MIN_ACCEPTABLE_DOWNLAOD_MBPS = 50
@@ -123,18 +123,18 @@ const Button = (props: { state: NetworkTestState; onSubmit: () => void }) => {
       return <></>
     case NetworkTestState.NETWORK_GOOD:
       return (
-        <FractalButton
+        <WhistButton
           contents="Continue"
-          state={FractalButtonState.DEFAULT}
+          state={WhistButtonState.DEFAULT}
           className="w-96 bg-mint text-gray-800"
           onClick={props.onSubmit}
         />
       )
     default:
       return (
-        <FractalButton
+        <WhistButton
           contents="Continue Anyway"
-          state={FractalButtonState.DEFAULT}
+          state={WhistButtonState.DEFAULT}
           className="w-96 bg-mint text-gray-800"
           onClick={props.onSubmit}
         />

@@ -31,7 +31,7 @@ The same process is used for audio capture, encoding, decoding, and playing. See
 Throughout the life of the protocol, various messages will be send to and from the client and server. For example, if the client and server are of different resolution, the image will appear stretched, so to fix this the client will send a message to server to ask the server to change resolutions to match the client.
 
 - To send a message from client to server, call `send_fcmsg`. See `./client/main.c` for usage.
-- To send a message from server to client, create a `FractalServerMessage` and call `broadcast_tcp_packet` or `broadcast_udp_packet`. See `./server/main.c` for usage.
+- To send a message from server to client, create a `WhistServerMessage` and call `broadcast_tcp_packet` or `broadcast_udp_packet`. See `./server/main.c` for usage.
 - To handle a server message on the client, see `./client/handle_server_message.c`
 - To handle a client message on the server, see `./server/handle_client_message.c`
 - See `./fractal/core/fractal.h` for struct definitions.
@@ -221,7 +221,7 @@ For a useful workflow for server development on Linux, see the [server-specific 
 
 The sentry-native SDK gets automatically built by our CMake build system.
 
-To start the protocol with a given Sentry configuration, use the `-e` argument, for instance with `.\FractalClient.exe -e prod <IP>`. See the output of `FractalClient.exe --help` for more details.
+To start the protocol with a given Sentry configuration, use the `-e` argument, for instance with `.\WhistClient.exe -e prod <IP>`. See the output of `WhistClient.exe --help` for more details.
 
 ### Tips for Specific Tools
 
@@ -231,19 +231,19 @@ We use CMake to build. If you are using VS code, VS or Clion, this is pretty eas
 
 Currently, we use the same compiler flags for Debug and Release because we distribute binaries with debug flags, to better troubleshoot errors and bugs.
 
-The build target for client is "FractalClient" and the server is "FractalServer".
+The build target for client is "WhistClient" and the server is "WhistServer".
 
 #### MacOS CLI
 
-You can simply run `cmake .` from the root folder, `/protocol/`, which will generate the makefiles. You can then run `make FractalClient` from the root folder, or cd into `/client` and run `make` to compile the MacOS client. The client will be in `/protocol/client/build64`.
+You can simply run `cmake .` from the root folder, `/protocol/`, which will generate the makefiles. You can then run `make WhistClient` from the root folder, or cd into `/client` and run `make` to compile the MacOS client. The client will be in `/protocol/client/build64`.
 
 #### Linux CLI
 
 A helpful TUI for configuring the build is `ccmake`. To use it, run `ccmake .` in the root of the protocol repo. You will initially see a blank screen because no cache has been built yet. Hit `c` to configure. This will populate the cache and show you a page with various settings. The setting you will likely care about is `CMAKE_BUILD_TYPE` which is one of `Debug` or `Release`.
 
-Next hit `c` again to reconfigure with your possibly new settings, then hit `g` to generate the makefile. This makefile has all of the build targets, including `FractalClient`, `FractalServer` and all of our libraries. It also includes CMake targets to clean, edit, and rebuild the cache.
+Next hit `c` again to reconfigure with your possibly new settings, then hit `g` to generate the makefile. This makefile has all of the build targets, including `WhistClient`, `WhistServer` and all of our libraries. It also includes CMake targets to clean, edit, and rebuild the cache.
 
-Only running `make` defaults to building FractalClient and FractalServer if you set both of these to ON in your configuration.
+Only running `make` defaults to building WhistClient and WhistServer if you set both of these to ON in your configuration.
 GCC only supports one type of build at a time, so if you are currently building Release, but want to build Debug, you need to edit the cache and regenerate the makefile.
 
 ### Further documentation
@@ -271,7 +271,7 @@ section. If you have not done that, do so before running `make -j`.
 
 Next, run `cd test`. Now:
 
-To run the unit tests for the protocol, run `./FractalProtocolTest`
+To run the unit tests for the protocol, run `./WhistProtocolTest`
 
 ### Continuous Integration
 

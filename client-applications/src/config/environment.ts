@@ -4,24 +4,24 @@ import path from "path"
 import {
   appEnvironment,
   configs,
-  FractalEnvironments,
-  FractalNodeEnvironments,
+  WhistEnvironments,
+  WhistNodeEnvironments,
 } from "../../config/configs"
 
 const getDevelopmentConfig = () => {
   const devEnv = process.env.DEVELOPMENT_ENV as string
   switch (devEnv) {
-    case FractalEnvironments.LOCAL:
+    case WhistEnvironments.LOCAL:
       return configs.LOCAL
-    case FractalEnvironments.DEVELOPMENT:
+    case WhistEnvironments.DEVELOPMENT:
       return configs.DEVELOPMENT
-    case FractalEnvironments.STAGING:
+    case WhistEnvironments.STAGING:
       return configs.STAGING
-    case FractalEnvironments.PRODUCTION:
+    case WhistEnvironments.PRODUCTION:
       return configs.PRODUCTION
     default:
       console.warn(
-        `Got an unrecognized DEVELOPMENT_ENV: ${devEnv}. Defaulting to ${FractalEnvironments.DEVELOPMENT}`
+        `Got an unrecognized DEVELOPMENT_ENV: ${devEnv}. Defaulting to ${WhistEnvironments.DEVELOPMENT}`
       )
       return configs.DEVELOPMENT
   }
@@ -33,13 +33,13 @@ const getProductionConfig = () => {
   }
 
   switch (appEnvironment) {
-    case FractalEnvironments.LOCAL:
+    case WhistEnvironments.LOCAL:
       return configs.LOCAL
-    case FractalEnvironments.DEVELOPMENT:
+    case WhistEnvironments.DEVELOPMENT:
       return configs.DEVELOPMENT
-    case FractalEnvironments.STAGING:
+    case WhistEnvironments.STAGING:
       return configs.STAGING
-    case FractalEnvironments.PRODUCTION:
+    case WhistEnvironments.PRODUCTION:
       return configs.PRODUCTION
     default:
       return configs.DEVELOPMENT
@@ -47,7 +47,7 @@ const getProductionConfig = () => {
 }
 
 export const config =
-  process.env.NODE_ENV === FractalNodeEnvironments.DEVELOPMENT
+  process.env.NODE_ENV === WhistNodeEnvironments.DEVELOPMENT
     ? getDevelopmentConfig()
     : getProductionConfig()
 
@@ -57,7 +57,7 @@ const appPath = app.getPath("userData")
 export const loggingBaseFilePath = path.join(appPath, deployEnv)
 
 // Re-exporting
-export { FractalEnvironments } from "../../config/constants"
+export { WhistEnvironments } from "../../config/constants"
 export { loggingFiles } from "../../config/paths"
 
 export default config

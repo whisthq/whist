@@ -57,8 +57,8 @@ fi
 if [[ ! -z "$cmake_build_type_opt" ]]; then
   cmake_build_type=$cmake_build_type_opt
 fi
-echo "Building $cmake_build_type FractalServer..."
-../protocol/build_protocol_targets.sh --cmakebuildtype=$cmake_build_type FractalServer
+echo "Building $cmake_build_type WhistServer..."
+../protocol/build_protocol_targets.sh --cmakebuildtype=$cmake_build_type WhistServer
 ./helper_scripts/copy_protocol_build.sh base/build-assets/build-temp
 
 # Copy the Nvidia driver installer

@@ -71,7 +71,7 @@ After cloning the repo, set up your EC2 instance with the setup script from the 
 This will begin installing all dependencies and configurations required to run our mandelbox images on an AWS EC2 host. After the setup scripts run, you must `sudo reboot` for Docker to work properly. After rebooting, you may finally build the protocol and the base image by running:
 
 ```bash
-../protocol/build_protocol_targets.sh FractalServer && ./build_mandelbox_image.sh base && ./run_local_mandelbox_image.sh base
+../protocol/build_protocol_targets.sh WhistServer && ./build_mandelbox_image.sh base && ./run_local_mandelbox_image.sh base
 ```
 
 ⚠️ If the command above errors due a failure to build the base container image, try running `docker system prune -af` first (see paragraph below for more context on the issue).
@@ -81,7 +81,7 @@ This will begin installing all dependencies and configurations required to run o
 To build the server protocol for use in a mandelbox image (for example with the `--update-protocol` parameter to `run_mandelbox_image.sh`), run:
 
 ```bash
-../protocol/build_protocol_targets.sh FractalServer
+../protocol/build_protocol_targets.sh WhistServer
 ```
 
 To build a specific application's mandelbox image, run:
@@ -119,7 +119,7 @@ There are some other options available to control properties of the resulting ma
 
 If you want to save your configs between sessions, then pass in a user ID and config encryption token. In case you don't want the server protocol to auto-shutdown after 60 seconds, you can set the timeout with another argument. As mentioned above, pass in `--help` to one of the mandelbox image-running scripts to see all the available options.
 
-Currently, it is important to wait 5-10 seconds after making the cURL request before connecting to the mandelbox via `./FractalClient -w [width] -h [height] [ec2-ip-address]`. This is due to a race condition between the `fractal-audio.service` and the protocol audio capturing code: (See issue [#360](https://github.com/fractal/fractal/issues/360)).
+Currently, it is important to wait 5-10 seconds after making the cURL request before connecting to the mandelbox via `./WhistClient -w [width] -h [height] [ec2-ip-address]`. This is due to a race condition between the `fractal-audio.service` and the protocol audio capturing code: (See issue [#360](https://github.com/fractal/fractal/issues/360)).
 
 ## Publishing
 

@@ -172,7 +172,7 @@ Example Test
 TEST_F(CaptureStdoutTest, ClientParseArgsEmpty) {
     int argc = 1;
 
-    char argv0[] = "./client/build64/FractalClient";
+    char argv0[] = "./client/build64/WhistClient";
     char* argv[] = {argv0, NULL};
 
     int ret_val = client_parse_args(argc, argv);

@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 import classNames from "classnames"
 
-import { FractalButton, FractalButtonState } from "@app/components/html/button"
+import { WhistButton, WhistButtonState } from "@app/components/html/button"
 
 const SelectBrowser = (props: {
   browsers: string[]
@@ -68,13 +68,13 @@ const Importer = (props: {
         onSelect={(browser: string) => onSelect(browser)}
       />
       <div>
-        <FractalButton
+        <WhistButton
           contents="Continue"
           className="mt-4 px-12 w-96 mx-auto py-2 text-gray-300 hover:text-black"
           state={
             processing
-              ? FractalButtonState.PROCESSING
-              : FractalButtonState.DEFAULT
+              ? WhistButtonState.PROCESSING
+              : WhistButtonState.DEFAULT
           }
           onClick={() => onSubmit(browser)}
         />
