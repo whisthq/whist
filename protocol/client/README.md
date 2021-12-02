@@ -17,7 +17,7 @@ The option flags are as follows:
   -s, --spectate                launch the protocol as a spectator
   -c, --codec=CODEC             launch the protocol using the codec
                                   specified: h264 (default) or h265
-  -u, --user                    Tell fractal the users email, optional defaults to None"
+  -u, --user                    Tell whist the users email, optional defaults to None"
   -e, --environment             The environment the protocol is running
                                 in. e.g prod, staging, dev. This is used
                                 for Sentry. Optional defaults to dev

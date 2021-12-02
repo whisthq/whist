@@ -1,4 +1,4 @@
-add_library(fractalLogging STATIC
+add_library(whistLogging STATIC
         logging.h
         log_statistic.h
         error_monitor.h
@@ -7,7 +7,7 @@ add_library(fractalLogging STATIC
         error_monitor.c
         )
 
-set_property(TARGET fractalLogging PROPERTY
+set_property(TARGET whistLogging PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-target_link_libraries(fractalLogging ${STATIC_SDL2} ${CMAKE_DL_LIBS})
+target_link_libraries(whistLogging ${STATIC_SDL2} ${CMAKE_DL_LIBS})

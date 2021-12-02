@@ -337,13 +337,13 @@ include_directories(SYSTEM ${CMAKE_BINARY_DIR}/include/ffmpeg)
 add_subdirectory(fractal)
 
 # Set variables to be used by the CMakeLists in the subdirectories
-set(PLATFORM_INDEPENDENT_LIBS   fractalCore
-    fractalAudio
-    fractalVideo
-    fractalClipboard
-    fractalNetwork
-    fractalLogging
-    fractalUtils
+set(PLATFORM_INDEPENDENT_LIBS   whistCore
+    whistAudio
+    whistVideo
+    whistClipboard
+    whistNetwork
+    whistLogging
+    whistUtils
     ${STATIC_SDL2}
     ${LIB_SENTRY}
 )
@@ -423,15 +423,15 @@ add_subdirectory(client)
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile on MacOS
     set(SERV "WhistServer")
     set(PLATFORM_INDEPENDENT_SERVER_LIBS
-        fractalCore
-        fractalAudio
-        fractalVideo
-        fractalClipboard
-        fractalCursor
-        fractalInput
-        fractalNetwork
-        fractalLogging
-        fractalUtils
+        whistCore
+        whistAudio
+        whistVideo
+        whistClipboard
+        whistCursor
+        whistInput
+        whistNetwork
+        whistLogging
+        whistUtils
         ${STATIC_SDL2}
         ${LIB_SENTRY}
         ${LIBMFX}

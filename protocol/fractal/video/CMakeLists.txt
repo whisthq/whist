@@ -1,15 +1,15 @@
-add_library(fractalVideo STATIC
+add_library(whistVideo STATIC
         codec/decode.c
         )
 
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    target_sources(fractalVideo PRIVATE
+    target_sources(whistVideo PRIVATE
         transfercapture.c
         codec/encode.c
         codec/ffmpeg_encode.c
     )
     if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-        target_sources(fractalVideo PRIVATE
+        target_sources(whistVideo PRIVATE
             capture/linuxcapture.c
             capture/x11capture.c
             capture/nvidiacapture.c
@@ -18,13 +18,13 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
             cudacontext.c
         )
     else()
-        target_sources(fractalVideo PRIVATE
+        target_sources(whistVideo PRIVATE
             capture/windowscapture.c
         )
     endif()
 endif()
 
-set_property(TARGET fractalVideo PROPERTY
+set_property(TARGET whistVideo PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-target_link_libraries(fractalVideo ${CMAKE_DL_LIBS})
+target_link_libraries(whistVideo ${CMAKE_DL_LIBS})

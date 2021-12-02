@@ -1,5 +1,5 @@
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    add_library(fractalInput STATIC
+    add_library(whistInput STATIC
                 input.c
                 input.h
                 input_driver.h
@@ -8,16 +8,16 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
               )
 
     if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-        target_sources(fractalInput PRIVATE
+        target_sources(whistInput PRIVATE
                 xtest_input_driver.c
                 xtest_input_driver.h
                 uinput_input_driver.c
                 uinput_input_driver.h)
     elseif(${WIN32})
-        target_sources(fractalInput PRIVATE
+        target_sources(whistInput PRIVATE
             winapi_input_driver.c
             winapi_input_driver.h)
-        set_property(TARGET fractalInput PROPERTY
+        set_property(TARGET whistInput PROPERTY
                 MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     endif()
 endif()

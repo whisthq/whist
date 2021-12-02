@@ -1,4 +1,4 @@
-add_library(fractalUtils STATIC
+add_library(whistUtils STATIC
         aes.h
         clock.h
         avpacket_buffer.h
@@ -15,14 +15,14 @@ add_library(fractalUtils STATIC
         )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        target_sources(fractalUtils PRIVATE mac_utils.c mac_utils.h)
+        target_sources(whistUtils PRIVATE mac_utils.c mac_utils.h)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-        target_sources(fractalUtils PRIVATE x11_window_info.c)
+        target_sources(whistUtils PRIVATE x11_window_info.c)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-        target_sources(fractalUtils PRIVATE windows_window_info.c)
+        target_sources(whistUtils PRIVATE windows_window_info.c)
 endif()
 
-set_property(TARGET fractalUtils PROPERTY
+set_property(TARGET whistUtils PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-target_link_libraries(fractalUtils ${STATIC_SDL2} ${CMAKE_DL_LIBS})
+target_link_libraries(whistUtils ${STATIC_SDL2} ${CMAKE_DL_LIBS})

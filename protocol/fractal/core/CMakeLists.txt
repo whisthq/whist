@@ -10,7 +10,7 @@ add_custom_target(git_revision ALL
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/include/fractal.sha.v ${CMAKE_BINARY_DIR}/include/fractal.v
         )
 
-add_library(fractalCore STATIC
+add_library(whistCore STATIC
         fractal_memory.h
         fractal_memory.c
         fractal.h
@@ -21,8 +21,8 @@ add_library(fractalCore STATIC
         fractal_frame.c
         )
 
-# Ensure that fractal.v is updated prior to compiling fractalCore
-add_dependencies(fractalCore git_revision)
+# Ensure that fractal.v is updated prior to compiling whistCore
+add_dependencies(whistCore git_revision)
 
-set_property(TARGET fractalCore PROPERTY
+set_property(TARGET whistCore PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
