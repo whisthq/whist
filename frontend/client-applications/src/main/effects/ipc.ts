@@ -34,8 +34,7 @@ const subscribed = combineLatest(
     {
       userEmail: merge(
         fromTrigger(WhistTrigger.authFlowSuccess),
-        fromTrigger(WhistTrigger.authRefreshSuccess),
-        fromTrigger(WhistTrigger.configFlowSuccess)
+        fromTrigger(WhistTrigger.authRefreshSuccess)
       ).pipe(
         filter((args: { userEmail?: string }) => args.userEmail !== undefined),
         map((args: { userEmail?: string }) => args.userEmail as string)

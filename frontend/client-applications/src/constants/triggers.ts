@@ -61,7 +61,6 @@ const WhistTrigger = {
   authRefreshSuccess: "authRefreshSuccess",
   checkPaymentFlowSuccess: "checkPaymentFlowSuccess",
   checkPaymentFlowFailure: "checkPaymentFlowFailure",
-  configFlowSuccess: "configFlowSuccess",
 
   // System triggers (power, Internet)
   powerResume: "powerResume",

@@ -9,8 +9,7 @@ import { WhistTrigger } from "@app/constants/triggers"
 // so the user is remembered
 merge(
   fromTrigger(WhistTrigger.authFlowSuccess),
-  fromTrigger(WhistTrigger.authRefreshSuccess),
-  fromTrigger(WhistTrigger.configFlowSuccess)
+  fromTrigger(WhistTrigger.authRefreshSuccess)
 ).subscribe(
   (args: {
     userEmail?: string
