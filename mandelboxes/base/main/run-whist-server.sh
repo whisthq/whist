@@ -61,7 +61,7 @@ fi
 
 # We use named pipe redirection for consistency with our WhistServer launch setup
 # &> redirects both stdout and stdin together; shorthand for '> XYZ 2>&1'
-/usr/share/fractal/run-as-fractal-user.sh "/usr/bin/run-fractal-teleport.sh" &> >(tee $TELEPORT_LOG_FILENAME) &
+/usr/share/fractal/run-as-whist-user.sh "/usr/bin/run-whist-teleport.sh" &> >(tee $TELEPORT_LOG_FILENAME) &
 
 # This function is called whenever the script exits, whether that is because we
 # reach the end of this file (because either WhistServer or the Whist
@@ -96,7 +96,7 @@ unset WHIST_INITIAL_USER_COOKIES_FILE
 unset WHIST_INITIAL_USER_BOOKMARKS_FILE
 
 # Start the application that this mandelbox runs.
-/usr/share/fractal/run-as-fractal-user.sh "/usr/bin/run-fractal-application.sh" &
+/usr/share/fractal/run-as-whist-user.sh "/usr/bin/run-fractal-application.sh" &
 fractal_application_runuser_pid=$!
 
 echo "Whist application runuser pid: $fractal_application_runuser_pid"

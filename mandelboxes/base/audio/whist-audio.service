@@ -1,8 +1,8 @@
 # Activates PulseAudio with correct settings for Whist, runs as root
 [Unit]
 Description=Whist Audio
-After=fractal-display.service network.target
-Requires=fractal-display.service
+After=whist-display.service network.target
+Requires=whist-display.service
 
 [Service]
 User=root

@@ -11,4 +11,4 @@ eval "$(sentry-cli bash-hook)"
 set -Eeuo pipefail
 
 mkdir -p /home/fractal/.teleport/drag-drop/fuse
-exec /usr/bin/fractal-teleport-fuse /home/fractal/.teleport/drag-drop/fuse -f
+exec /usr/bin/whist-teleport-fuse /home/fractal/.teleport/drag-drop/fuse -f

@@ -18,7 +18,7 @@ A tree structure is provided below:
 │   │   ├── Xmodmap <- Configuration file for keystroke mappings on Linux Ubuntu
 │   │   ├── app-config-map.json <- Map for applications settings configuration location on Ubuntu
 │   │   ├── awesome-rc.lua <- Configuration file for our AwesomeWM window manager
-│   │   ├── fractal-display-config.env <- Environment variables for the Whist virtual displays
+│   │   ├── whist-display-config.env <- Environment variables for the Whist virtual displays
 │   │   ├── gtk-3-settings.ini <- Configuration file for GTK-basedapplications
 │   │   ├── pulse-client.conf <- Configuration file for our PulseAudio server
 │   │   ├── qt4-settings.conf <- Configuration file for QT4-based applications
@@ -26,15 +26,15 @@ A tree structure is provided below:
 │   ├── scripts
 │   │   ├── docker-entrypoint.sh <- First script run within a mandelbox, to start systemd
 │   │   ├── entry.sh <- Script to start the `fractal` systemd user within a mandelbox
-│   │   ├── run-fractal-server.sh <- Script to start the Whist server protocol
+│   │   ├── run-whist-server.sh <- Script to start the Whist server protocol
 │   │   ├── update-xorg-conf.sh <- Script to update the X Server to use the Nvidia GPU and uinput node
 │   │   └── xinitrc <- Script to start the window manager and Whist application
 │   └── services
-│       ├── fractal-audio.service <- Systemd service to start a PulseAudio server
-│       ├── fractal-display.service <- Systemd service to start the Whist virtual display
+│       ├── whist-audio.service <- Systemd service to start a PulseAudio server
+│       ├── whist-display.service <- Systemd service to start the Whist virtual display
 │       ├── fractal-entrypoint.service <- Systemd service to start the Whist systemd user
 │       ├── fractal-protocol.service <- Systemd service to start the Whist server protocol
-│       └── fractal-update-xorg-conf.service <- Systemd service to update the X Server to the Whist configuration
+│       └── whist-update-xorg-conf.service <- Systemd service to update the X Server to the Whist configuration
 ├── browsers
 │   └── chrome
 │       ├── Dockerfile.20 <- Mandelbox image for Google Chrome
@@ -119,7 +119,7 @@ There are some other options available to control properties of the resulting ma
 
 If you want to save your configs between sessions, then pass in a user ID and config encryption token. In case you don't want the server protocol to auto-shutdown after 60 seconds, you can set the timeout with another argument. As mentioned above, pass in `--help` to one of the mandelbox image-running scripts to see all the available options.
 
-Currently, it is important to wait 5-10 seconds after making the cURL request before connecting to the mandelbox via `./WhistClient -w [width] -h [height] [ec2-ip-address]`. This is due to a race condition between the `fractal-audio.service` and the protocol audio capturing code: (See issue [#360](https://github.com/fractal/fractal/issues/360)).
+Currently, it is important to wait 5-10 seconds after making the cURL request before connecting to the mandelbox via `./WhistClient -w [width] -h [height] [ec2-ip-address]`. This is due to a race condition between the `whist-audio.service` and the protocol audio capturing code: (See issue [#360](https://github.com/fractal/fractal/issues/360)).
 
 ## Publishing
 

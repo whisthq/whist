@@ -227,12 +227,12 @@ RUN mkdir /dist /ignore && \
 RUN mkdir /dist/etc && \
     cp -r /etc/{vulkan,nvidia,OpenCL} /dist/etc
 
-################ STAGE 4: fractal-teleport-fuse  ################
+################ STAGE 4: whist-teleport-fuse  ################
 # - Copy and build the FUSE service to handle teleport drag-drop
 #   events
 # EXPOSES the teleport fuse service
 #################################################################
-FROM ubuntu:20.04 as fractal-teleport-fuse
+FROM ubuntu:20.04 as whist-teleport-fuse
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -259,14 +259,14 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /fractal-teleport-fuse/{src,build}
+RUN mkdir -p /whist-teleport-fuse/{src,build}
 
-COPY teleport/teleport-fuse /fractal-teleport-fuse/src
+COPY teleport/teleport-fuse /whist-teleport-fuse/src
 
 # hadolint ignore=SC2046
-RUN cd /fractal-teleport-fuse/src \
+RUN cd /whist-teleport-fuse/src \
     && gcc -Wall -D _GNU_SOURCE unshare.c -o unshare.o -c \
-    && gcc -Wall unshare.o teleport-fuse.c $(pkg-config fuse3 --cflags --libs) -o ../build/fractal-teleport-fuse
+    && gcc -Wall unshare.o teleport-fuse.c $(pkg-config fuse3 --cflags --libs) -o ../build/whist-teleport-fuse
 
 ################ STAGE 5: fractal-base ######################
 # - Copy and install libinput from libinput-build
@@ -275,7 +275,7 @@ RUN cd /fractal-teleport-fuse/src \
 # - Copy grid driver installation from
 #   nvidia-grid-driver
 # - Copy and install teleport FUSE service from
-#   fractal-teleport-fuse
+#   whist-teleport-fuse
 # - Install and configure all necessary components for
 #   our base mandelbox image
 # EXPOSES all of fractal-base as the final image
@@ -460,8 +460,8 @@ RUN chmod 600 -R /usr/share/fractal
 
 # Set up script to run a program as user `fractal` (make sure to do
 # this after setting /usr/share/fractal to 600)
-COPY utils/run-as-fractal-user.sh /usr/share/fractal/run-as-fractal-user.sh
-RUN chmod +x /usr/share/fractal/run-as-fractal-user.sh
+COPY utils/run-as-whist-user.sh /usr/share/fractal/run-as-whist-user.sh
+RUN chmod +x /usr/share/fractal/run-as-whist-user.sh
 
 #########################
 # Hardware Acceleration
@@ -507,13 +507,13 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /tmp/* /var/tmp/*
 
 # Copy configuration for X11 display
-COPY display/fractal-display.conf /usr/share/X11/xorg.conf.d/01-fractal-display.conf
+COPY display/whist-display.conf /usr/share/X11/xorg.conf.d/01-whist-display.conf
 
 # Set up Whist service that starts before X to fix the Nvidia GPU bus ID and device paths
-COPY display/fractal-update-xorg-conf.service /etc/systemd/system/
+COPY display/whist-update-xorg-conf.service /etc/systemd/system/
 COPY display/update-xorg-conf.sh /usr/share/fractal/
 RUN chmod +x /usr/share/fractal/update-xorg-conf.sh
-RUN systemctl enable fractal-update-xorg-conf
+RUN systemctl enable whist-update-xorg-conf
 
 # Install playerctl for media keys support. We install playerctl straight from
 # Github releases because as usual the Ubuntu package is horribly out of date
@@ -523,12 +523,12 @@ RUN wget -q https://github.com/altdesktop/playerctl/releases/download/v2.3.1/pla
     && rm ./playerctl-2.3.1_amd64.deb
 
 # Set up Whist service to launch X11 display
-COPY display/fractal-display-config.env /usr/share/fractal
+COPY display/whist-display-config.env /usr/share/fractal
 COPY display/xinitrc /root/.xinitrc
-COPY display/fractal-display.service /etc/systemd/system
-COPY display/fractal-display.sh /usr/share/fractal/fractal-display.sh
-RUN chmod +x /usr/share/fractal/fractal-display.sh
-RUN systemctl enable fractal-display
+COPY display/whist-display.service /etc/systemd/system
+COPY display/whist-display.sh /usr/share/fractal/whist-display.sh
+RUN chmod +x /usr/share/fractal/whist-display.sh
+RUN systemctl enable whist-display
 
 # Set up script to update display DPI on-the-fly
 COPY display/update-fractal-dpi.sh /usr/share/fractal/update-fractal-dpi.sh
@@ -642,8 +642,8 @@ RUN chmod -x /usr/bin/start-pulseaudio-x11
 COPY audio/run-pulseaudio.sh /usr/share/fractal
 RUN chmod +x /usr/share/fractal/run-pulseaudio.sh
 COPY audio/pulse-client.conf /etc/pulse/client.conf
-COPY audio/fractal-audio.service /etc/systemd/system
-RUN systemctl enable fractal-audio
+COPY audio/whist-audio.service /etc/systemd/system
+RUN systemctl enable whist-audio
 
 #########################
 # Startup
@@ -667,10 +667,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY utils/import_user_browser_data.py /usr/share/fractal/import_user_browser_data.py
 
 # Set up first systemd service
-COPY startup/fractal-startup.sh /usr/share/fractal
-RUN chmod +x /usr/share/fractal/fractal-startup.sh
-COPY startup/fractal-startup.service /etc/systemd/system
-RUN systemctl enable fractal-startup
+COPY startup/whist-startup.sh /usr/share/fractal
+RUN chmod +x /usr/share/fractal/whist-startup.sh
+COPY startup/whist-startup.service /etc/systemd/system
+RUN systemctl enable whist-startup
 
 # Set up the entrypoint for the mandelbox (which starts systemd)
 COPY startup/entrypoint.sh /usr/share/fractal/entrypoint.sh
@@ -710,8 +710,8 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 RUN ln -sf "$(which xeyes)" /usr/bin/fractal-application
 
 # Set up script to launch `fractal-application` as the `fractal` user
-COPY main/run-fractal-application.sh /usr/bin/run-fractal-application.sh
-RUN chmod 0555 /usr/bin/run-fractal-application.sh
+COPY main/run-whist-application.sh /usr/bin/run-whist-application.sh
+RUN chmod 0555 /usr/bin/run-whist-application.sh
 
 # Set up the teleport FUSE service
 
@@ -722,11 +722,11 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
-COPY --from=fractal-teleport-fuse /fractal-teleport-fuse/build/fractal-teleport-fuse /usr/bin/fractal-teleport-fuse
+COPY --from=whist-teleport-fuse /whist-teleport-fuse/build/whist-teleport-fuse /usr/bin/whist-teleport-fuse
 
 # Set up script to launch teleport functionality
-COPY teleport/run-fractal-teleport.sh /usr/bin/run-fractal-teleport.sh
-RUN chmod +x /usr/bin/run-fractal-teleport.sh
+COPY teleport/run-whist-teleport.sh /usr/bin/run-whist-teleport.sh
+RUN chmod +x /usr/bin/run-whist-teleport.sh
 
 # Set up the teleport URI handler
 
@@ -737,10 +737,10 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
-# Install fractal-teleport-uri-handler.desktop to capture URI protocols like zoommtg://*
-# See fractal-teleport-uri-handler.desktop for a list of currently-supported protocols.
+# Install whist-teleport-uri-handler.desktop to capture URI protocols like zoommtg://*
+# See whist-teleport-uri-handler.desktop for a list of currently-supported protocols.
 RUN mkdir -p /opt/teleport
-COPY teleport/uri-handler/fractal-teleport-uri-handler.sh /opt/teleport/uri-handler
+COPY teleport/uri-handler/whist-teleport-uri-handler.sh /opt/teleport/uri-handler
 RUN chmod +x /opt/teleport/uri-handler
 RUN ln -sf /opt/teleport/uri-handler /usr/bin/xdg-open
 
@@ -760,10 +760,10 @@ RUN ln -sf /usr/share/fractal/bin/WhistServer /usr/share/fractal/WhistServer
 
 # Set up the service which launches both the server protocol and the application
 
-COPY main/run-fractal-server.sh /usr/share/fractal/run-fractal-server.sh
-RUN chmod +x /usr/share/fractal/run-fractal-server.sh
-COPY main/fractal-main.service /etc/systemd/system
-RUN systemctl enable fractal-main
+COPY main/run-whist-server.sh /usr/share/fractal/run-whist-server.sh
+RUN chmod +x /usr/share/fractal/run-whist-server.sh
+COPY main/whist-main.service /etc/systemd/system
+RUN systemctl enable whist-main
 
 #########################
 # Cleanup

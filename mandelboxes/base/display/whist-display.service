@@ -1,8 +1,8 @@
 # Starts the display configured for Whist, runs as root
 [Unit]
 Description=Whist Display
-After=fractal-startup.service
-Requires=fractal-startup.service
+After=whist-startup.service
+Requires=whist-startup.service
 
 [Service]
 User=root

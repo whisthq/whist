@@ -7,7 +7,7 @@ echo "xinitrc PID: $xinitrc_pid"
 # This script starts the AwesomeWM window manager inside the mandelbox
 # and starts the mandelbox's application (i.e. Google Chrome)
 
-RUN_AS_WHIST=/usr/share/fractal/run-as-fractal-user.sh
+RUN_AS_WHIST=/usr/share/fractal/run-as-whist-user.sh
 
 # Install keymappings
 xmodmap /root/.Xmodmap

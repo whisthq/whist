@@ -1,15 +1,15 @@
 # Starts the Whist server protocol and the symlinked application. Runs as root.
 [Unit]
 Description=Whist Protocol
-After=fractal-display.service fractal-audio.service
-Requires=fractal-display.service fractal-audio.service
+After=whist-display.service whist-audio.service
+Requires=whist-display.service whist-audio.service
 
 [Service]
 WorkingDirectory=/usr/share/fractal
 Type=exec
 Environment=DISPLAY=:10
 Environment=XAUTHORITY=/home/fractal/.Xauthority
-ExecStart=/usr/share/fractal/run-fractal-server.sh
+ExecStart=/usr/share/fractal/run-whist-server.sh
 StandardOutput=file:/var/log/fractal/protocol-out.log
 StandardError=file:/var/log/fractal/protocol-err.log
 
