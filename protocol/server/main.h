@@ -40,7 +40,7 @@ Includes
 #endif
 #include <time.h>
 
-#include <fractal/core/fractalgetopt.h>
+#include <fractal/core/whistgetopt.h>
 #include <fractal/core/fractal.h>
 #include <fractal/input/input.h>
 #include <fractal/logging/error_monitor.h>

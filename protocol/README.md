@@ -75,7 +75,7 @@ In an ideal world, we'd use the NVIDIA Capture SDK with the NVIDIA encoder. Howe
 │   │   └── x11_clipboard.c <- Linux implementation of {get,set}_clipboard
 │   ├── core
 │   │   ├── fractal.c <- Various helpers
-│   │   └── fractalgetopt.c <- Cross-platform getopt
+│   │   └── whistgetopt.c <- Cross-platform getopt
 │   ├── cursor
 │   │   ├── linuxcursor.c <- get_current_cursor for Linux
 │   │   └── windowscursor.c <- get_current_cursor for Windows
@@ -117,7 +117,7 @@ In an ideal world, we'd use the NVIDIA Capture SDK with the NVIDIA encoder. Howe
 |    ├── network.c <- Networking code for multiclient
 └── test
     ├── images <- images for unit testing
-    └── ProtocolTest.cpp <- tests code in fractal module
+    └── protocol_test.cpp <- tests code in fractal module
 ```
 
 The above files are fairly static. If you add or remove a file, or change what a file does, please update this directory so we can keep track of it all!
@@ -263,7 +263,7 @@ To see the warnings in context go to the Actions tab, click on your PR/push that
 #### Unit Testing
 
 The protocol currently uses gtest to create and execute unit tests for the `protocol` repository.
-To add tests for the `protocol` module, add tests to the `ProtocolTest.cpp` file in the test folder.
+To add tests for the `protocol` module, add tests to the `protocol_test.cpp` file in the test folder.
 
 To run all unit tests, recompile the protocol by going into the `protocol/build` directory and
 running `make -j`. This is assuming you have already ran `cmake -S .. -B .` from the Building the Protocol

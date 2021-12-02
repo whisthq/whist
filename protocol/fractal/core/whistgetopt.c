@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#include "fractalgetopt.h"
+#include "whistgetopt.h"
 #include <fractal/core/fractal.h>  // For logging
 
 #include <assert.h>

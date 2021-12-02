@@ -31,7 +31,7 @@ Includes
 #include "native_window_utils.h"
 #include <fractal/logging/logging.h>
 #include <fractal/logging/error_monitor.h>
-#include <fractal/core/fractalgetopt.h>
+#include <fractal/core/whistgetopt.h>
 
 // Taken from main.c
 volatile int server_width = -1;

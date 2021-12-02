@@ -15,8 +15,8 @@ add_library(fractalCore STATIC
         fractal_memory.c
         fractal.h
         fractal.c
-        fractalgetopt.h
-        fractalgetopt.c
+        whistgetopt.h
+        whistgetopt.c
         fractal_frame.h
         fractal_frame.c
         )
