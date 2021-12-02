@@ -8,12 +8,12 @@ name: "Client Applications: Check PR"
 on:
   pull_request:
     paths:
-      - "client-applications/**"
-      - "core-ts/**"
+      - "frontend/client-applications/**"
+      - "frontend/core-ts/**"
       - ".github/workflows/client-applications-check-pr.yml"
       - ".github/workflows/core-ts-check-pr.yml"
-      - "!client-applications/README.md"
-      - "!core-ts/README.md"
+      - "!frontend/client-applications/README.md"
+      - "!frontend/core-ts/README.md"
   workflow_dispatch:
 
 jobs:
@@ -93,7 +93,7 @@ jobs:
           node-version: "16"
 
       - name: Run yarn install
-        working-directory: client-applications
+        working-directory: frontend/client-applications
         run: |
           # We need to increase the timeout to deal with GHA's weak VMs.
           yarn config set network-timeout 600000
@@ -101,7 +101,7 @@ jobs:
           yarn install
 
       - name: Check if Code Follows ESLint Standards
-        working-directory: client-applications
+        working-directory: frontend/client-applications
         run: yarn run lint:check
 
   #######################################################################################
@@ -173,7 +173,7 @@ jobs:
 
       - name: Build the Windows Electron Application
         if: false && runner.os == 'Windows'
-        working-directory: client-applications
+        working-directory: frontend/client-applications
         env:
           CONFIG: ${{ needs.build-monorepo-config.outputs.win32 }}
           AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
@@ -208,7 +208,7 @@ jobs:
 
       - name: Build the macOS Electron Application
         if: runner.os == 'macOS'
-        working-directory: client-applications
+        working-directory: frontend/client-applications
         env:
           CONFIG: ${{ needs.build-monorepo-config.outputs.macos }}
           AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
@@ -297,7 +297,7 @@ jobs:
       # M1 runner, and run `sudo xcode-select -r`
 
       - name: Build the macOS Electron Application
-        working-directory: client-applications
+        working-directory: frontend/client-applications
         env:
           CONFIG: ${{ needs.build-monorepo-config.outputs.macos }}
           AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}

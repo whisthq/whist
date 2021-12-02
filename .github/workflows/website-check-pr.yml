@@ -8,11 +8,11 @@ name: "Website: Check PR"
 on:
   pull_request:
     paths:
-      - "website/**"
-      - "!website/README.md"
+      - "frontend/website/**"
+      - "!frontend/website/README.md"
       - ".github/workflows/website-check-pr.yml"
-      - "core-ts/**"
-      - "!core-ts/README.md"
+      - "frontend/core-ts/**"
+      - "!frontend/core-ts/README.md"
       - ".github/workflows/core-ts-check-pr.yml"
   workflow_dispatch:
 
@@ -37,9 +37,9 @@ jobs:
           node-version: "16"
 
       - name: Run yarn install
-        working-directory: website
+        working-directory: frontend/website
         run: yarn install
 
       - name: Check if code follows ESLint standards
-        working-directory: website
+        working-directory: frontend/website
         run: yarn run lint:check

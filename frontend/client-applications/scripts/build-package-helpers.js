@@ -48,13 +48,17 @@ const configOS = () => {
 
 const configImageTag = "fractal/config"
 
+const gitRepoRoot = "../.."
+const configDirectory = path.join(gitRepoRoot, "config")
+const protocolDirectory = path.join(gitRepoRoot, "protocol")
+
 module.exports = {
   buildConfigContainer: () => {
     // Build the docker image from fractal/config/Dockerfile
     // When the --quiet flag is used, then the stdout of docker build
     // will be the sha256 hash of the image.
     console.log(`Building ${configImageTag} Docker image`)
-    const build = `docker build --tag ${configImageTag} ../config`
+    const build = `docker build --tag ${configImageTag} ${configDirectory}`
     execSync(build, { encoding: "utf-8", stdio: "pipe" }).trim()
   },
   getConfig: (params = {}) => {
@@ -79,7 +83,7 @@ module.exports = {
   buildAndCopyProtocol: () => {
     console.log("Building the protocol...")
     const cmakeBuildDir = "build-clientapp"
-    fs.mkdirSync(path.join("../protocol", cmakeBuildDir), {
+    fs.mkdirSync(path.join(protocolDirectory, cmakeBuildDir), {
       recursive: true,
     })
 
@@ -92,16 +96,16 @@ module.exports = {
       )
         pathArray.shift()
       const path = pathArray.join(";")
-      execCommand(`cmake -S . -B ${cmakeBuildDir} -G Ninja`, "../protocol", {
+      execCommand(`cmake -S . -B ${cmakeBuildDir} -G Ninja`, protocolDirectory, {
         Path: path,
       })
     } else {
-      execCommand(`cmake -S . -B ${cmakeBuildDir}`, "../protocol")
+      execCommand(`cmake -S . -B ${cmakeBuildDir}`, protocolDirectory)
     }
 
     execCommand(
       `cmake --build ${cmakeBuildDir} -j --target WhistClient`,
-      "../protocol"
+      protocolDirectory
     )
 
     console.log("Copying over the built protocol...")
@@ -109,18 +113,20 @@ module.exports = {
     const protocolBuildDir = path.join("protocol-build", "client")
     rimrafSync("protocol-build")
     fse.copySync(
-      path.join("../protocol", cmakeBuildDir, "client/build64"),
+      path.join(protocolDirectory, cmakeBuildDir, "client/build64"),
       protocolBuildDir
     )
 
     const ext = process.platform === "win32" ? ".exe" : ""
     const oldExecutable = "WhistClient"
-    const newExecutable = process.platform === "darwin" ? "_Whist" : "Whist"
+    const newExecutable = process.platform === "darwin" ? "WhistClient" : "Whist"
 
-    fse.moveSync(
-      path.join(protocolBuildDir, `${oldExecutable}${ext}`),
-      path.join(protocolBuildDir, `${newExecutable}${ext}`)
-    )
+    if (oldExecutable !== newExecutable) {
+      fse.moveSync(
+        path.join(protocolBuildDir, `${oldExecutable}${ext}`),
+        path.join(protocolBuildDir, `${newExecutable}${ext}`)
+      )
+    }
 
     rimrafSync("./loading")
     fse.moveSync(
@@ -165,8 +171,7 @@ module.exports = {
   electronBuild: () => {
     console.log("Running 'electron-builder build'...")
     execCommand(
-      `electron-builder build --config electron-builder.config.js --publish never ${
-        (process.env.MACOS_ARCH ?? "") === "arm64" ? "--arm64" : ""
+      `electron-builder build --config electron-builder.config.js --publish never ${(process.env.MACOS_ARCH ?? "") === "arm64" ? "--arm64" : ""
       }`,
       "."
     )
@@ -178,8 +183,7 @@ module.exports = {
       `Running 'electron-builder publish' and uploading to S3 bucket ${bucket}...`
     )
     execCommand(
-      `electron-builder build --config electron-builder.config.js --publish always ${
-        (process.env.MACOS_ARCH ?? "") === "arm64" ? "--arm64" : ""
+      `electron-builder build --config electron-builder.config.js --publish always ${(process.env.MACOS_ARCH ?? "") === "arm64" ? "--arm64" : ""
       }`,
       ".",
       { S3_BUCKET: bucket }

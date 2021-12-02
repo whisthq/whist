@@ -2,21 +2,21 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
-/.pnp
+node_modules
+.pnp
 .pnp.js
 
 # VS Code
 .vscode/
 
 # testing
-/coverage
+coverage
 
 # production
-/build
+build
 
 # dynamically generated css
-/public/css/tailwind.css
+public/css/tailwind.css
 
 # Python
 __pycache__
@@ -43,4 +43,4 @@ yarn-error.log*
 **/tags
 
 # GitHub Codespaces
-/.venv
+.venv

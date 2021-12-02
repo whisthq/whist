@@ -78,7 +78,7 @@ updates:
   ################ Client-Applications ################
 
   - package-ecosystem: "npm"
-    directory: "/client-applications" # looks for package.json and [package-lock/yarn].lock file in this directory
+    directory: "/frontend/client-applications" # looks for package.json and [package-lock/yarn].lock file in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
     ignore:
@@ -111,7 +111,7 @@ updates:
   ###################### Core-ts ######################
 
   - package-ecosystem: "npm"
-    directory: "/core-ts" # looks for package.json and [package-lock/yarn].lock file in this directory
+    directory: "/frontend/core-ts" # looks for package.json and [package-lock/yarn].lock file in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
     ignore:
@@ -246,7 +246,7 @@ updates:
   ###################### Website ######################
 
   - package-ecosystem: "npm"
-    directory: "/website" # looks for package.json and [package-lock/yarn].lock file in this directory
+    directory: "/frontend/website" # looks for package.json and [package-lock/yarn].lock file in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
     ignore:
