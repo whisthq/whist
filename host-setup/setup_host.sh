@@ -163,7 +163,7 @@ EOF
   echo "Installing Uinput Config Files..."
   echo "================================================"
 
-  sudo cp fractal-input.rules /etc/udev/rules.d/90-fractal-input.rules
+  sudo cp .rules /etc/udev/rules.d/90-.rules
 
   echo "================================================"
   echo "Installing monitoring services.."

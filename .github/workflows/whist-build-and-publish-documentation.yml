@@ -1,4 +1,4 @@
-# workflows/fractal-build-and-publish-documentation.yml
+# workflows/whist-build-and-publish-documentation.yml
 #
 # Whist: Build & Publish Documentation
 # Build and conditionally deploy fractal/fractal monorepo documentation. Although this
@@ -12,7 +12,7 @@ on:
     branches:
       - dev
     paths:
-      - ".github/workflows/fractal-build-and-publish-documentation.yml"
+      - ".github/workflows/whist-build-and-publish-documentation.yml"
       - "host-service/**"
       - "protocol/**"
       - "webserver/**"
@@ -20,17 +20,17 @@ on:
     branches:
       - dev
     paths:
-      - ".github/workflows/fractal-build-and-publish-documentation.yml"
+      - ".github/workflows/whist-build-and-publish-documentation.yml"
       - "host-service/**"
       - "protocol/**"
       - "webserver/**"
   workflow_dispatch:
 
 jobs:
-  fractal-build-and-publish-documentation:
+  whist-build-and-publish-documentation:
     name: Build & Publish Whist Internal Documentation to fractal/docs
     runs-on: ubuntu-20.04
-    concurrency: fractal-build-and-publish-documentation
+    concurrency: whist-build-and-publish-documentation
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
