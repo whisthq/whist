@@ -347,7 +347,7 @@ int client_parse_args(int argc, char *argv[]) {
                 return 1;
             }
             case WHIST_GETOPT_VERSION_CHAR: {  // version
-                printf("Whist client revision %s\n", fractal_git_revision());
+                printf("Whist client revision %s\n", whist_git_revision());
                 return 1;
             }
             default: {

@@ -26,7 +26,7 @@ awesome_pid=$!
 echo "AwesomeWM started as PID $awesome_pid..."
 
 # Set the DPI to a default value of 96 and initialize the relevant files
-/usr/share/fractal/update-fractal-dpi.sh
+/usr/share/fractal/update-whist-dpi.sh
 
 # Start the XSettings daemon to make DPI changes responsive
 echo "Starting 'xsettingsd' in the background..."

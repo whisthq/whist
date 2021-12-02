@@ -112,7 +112,7 @@ void sig_handler(int sig_num) {
 }
 #endif
 
-void handle_fractal_client_message(whist_server_state* state, WhistClientMessage* fcmsg) {
+void handle_whist_client_message(whist_server_state* state, WhistClientMessage* fcmsg) {
     /*
         Handles a Whist client message
 
@@ -127,7 +127,7 @@ void handle_fractal_client_message(whist_server_state* state, WhistClientMessage
 }
 
 // Gets all pending Whist UDP messages
-void get_fractal_udp_client_messages(whist_server_state* state) {
+void get_whist_udp_client_messages(whist_server_state* state) {
     if (!state->client.is_active) {
         return;
     }
@@ -137,12 +137,12 @@ void get_fractal_udp_client_messages(whist_server_state* state) {
 
     // If received a UDP message
     if (try_get_next_message_udp(&state->client, &fcmsg, &fcmsg_size) == 0 && fcmsg_size != 0) {
-        handle_fractal_client_message(state, &fcmsg);
+        handle_whist_client_message(state, &fcmsg);
     }
 }
 
 // Gets all pending Whist TCP messages
-void get_fractal_tcp_client_messages(whist_server_state* state) {
+void get_whist_tcp_client_messages(whist_server_state* state) {
     if (!state->client.is_active) {
         return;
     }
@@ -155,7 +155,7 @@ void get_fractal_tcp_client_messages(whist_server_state* state) {
     if (tcp_packet) {
         WhistClientMessage* fcmsg = (WhistClientMessage*)tcp_packet->data;
         LOG_INFO("TCP Packet type: %d", fcmsg->type);
-        handle_fractal_client_message(state, fcmsg);
+        handle_whist_client_message(state, fcmsg);
         free_packet(&state->client.tcp_context, tcp_packet);
     }
 
@@ -185,7 +185,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         update_client_active_status(&state->client, &assuming_client_active);
 
         // RECEIVE TCP PACKET HANDLER
-        get_fractal_tcp_client_messages(state);
+        get_whist_tcp_client_messages(state);
 
         // SEND TCP PACKET HANDLERS:
 
@@ -280,7 +280,7 @@ int main(int argc, char* argv[]) {
     srand((unsigned int)time(NULL));
     server_state.connection_id = rand();
 
-    LOG_INFO("Whist server revision %s", fractal_git_revision());
+    LOG_INFO("Whist server revision %s", whist_git_revision());
 
     server_state.input_device = create_input_device();
     if (!server_state.input_device) {
@@ -348,7 +348,7 @@ int main(int argc, char* argv[]) {
         }
 
         // Get UDP messages
-        get_fractal_udp_client_messages(&server_state);
+        get_whist_udp_client_messages(&server_state);
 
         if (get_timer(ack_timer) > 5) {
             if (get_using_stun()) {

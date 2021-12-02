@@ -182,7 +182,7 @@ void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_t heigh
     // manager refreshes to use the new DPI.
     static uint32_t last_set_dpi = 96;
     if (dpi != last_set_dpi) {
-        snprintf(cmd, sizeof(cmd), "/usr/share/fractal/update-fractal-dpi.sh %d", dpi);
+        snprintf(cmd, sizeof(cmd), "/usr/share/fractal/update-whist-dpi.sh %d", dpi);
         runcmd(cmd, NULL);
         last_set_dpi = dpi;
     }

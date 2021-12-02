@@ -318,7 +318,7 @@ int main(int argc, char* argv[]) {
     SDL_Thread* renderer_thread = NULL;
 
     print_system_info();
-    LOG_INFO("Whist client revision %s", fractal_git_revision());
+    LOG_INFO("Whist client revision %s", whist_git_revision());
 
     client_exiting = false;
     WhistExitCode exit_code = WHIST_EXIT_SUCCESS;

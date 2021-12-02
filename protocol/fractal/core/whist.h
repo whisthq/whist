@@ -932,7 +932,7 @@ int bit_array_test_bit(const BitArray* const ba, const unsigned int bit);
  *
  * @returns                        The git commit
  */
-char* fractal_git_revision();
+char* whist_git_revision();
 
 #include "whist_frame.h"
 

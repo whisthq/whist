@@ -218,9 +218,9 @@ void whist_error_monitor_initialize(bool is_client) {
     // the callers (client app and mandelboxes).
     sentry_options_set_dsn(options, SENTRY_DSN);
 
-    // Set the release name: of the form fractal-protocol@[git hash].
+    // Set the release name: of the form protocol@[git hash].
     char release[200];
-    snprintf(release, sizeof(release), "fractal-protocol@%s", fractal_git_revision());
+    snprintf(release, sizeof(release), "protocol@%s", whist_git_revision());
     sentry_options_set_release(options, release);
 
     // Set the environment that was set by error_monitor_set_environment();

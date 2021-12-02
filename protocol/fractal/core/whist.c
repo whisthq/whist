@@ -512,7 +512,7 @@ int bit_array_test_bit(const BitArray *const ba, const unsigned int bit) {
 // Defines to stringize a macro
 #define xstr(s) str(s)
 #define str(s) #s
-char *fractal_git_revision() {
+char *whist_git_revision() {
     /*
         Returns git revision if found
 

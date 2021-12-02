@@ -401,7 +401,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     wmctrl \
     gnupg2 \
     libfido2-1 \
-    # for `killall` in display/update-fractal-dpi.sh
+    # for `killall` in display/update-whist-dpi.sh
     psmisc \
     libgbm1 \
     lsb-release \
@@ -531,8 +531,8 @@ RUN chmod +x /usr/share/fractal/whist-display.sh
 RUN systemctl enable whist-display
 
 # Set up script to update display DPI on-the-fly
-COPY display/update-fractal-dpi.sh /usr/share/fractal/update-fractal-dpi.sh
-RUN chmod +x /usr/share/fractal/update-fractal-dpi.sh
+COPY display/update-whist-dpi.sh /usr/share/fractal/update-whist-dpi.sh
+RUN chmod +x /usr/share/fractal/update-whist-dpi.sh
 
 # Set display environment variable
 ENV DISPLAY :10

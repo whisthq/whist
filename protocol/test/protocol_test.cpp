@@ -393,8 +393,8 @@ TEST(ProtocolTest, WhistColorTest) {
     WhistRGBColor magenta = {255, 0, 255};
     WhistRGBColor dark_gray = {25, 25, 25};
     WhistRGBColor light_gray = {150, 150, 150};
-    WhistRGBColor fractal_purple_rgb = {79, 53, 222};
-    WhistYUVColor fractal_purple_yuv = {85, 198, 127};
+    WhistRGBColor whist_purple_rgb = {79, 53, 222};
+    WhistYUVColor whist_purple_yuv = {85, 198, 127};
 
     // equality works
     EXPECT_EQ(rgb_compare(cyan, cyan), 0);
@@ -411,9 +411,9 @@ TEST(ProtocolTest, WhistColorTest) {
     EXPECT_TRUE(color_requires_dark_text(light_gray));
 
     // yuv conversion works (with some fuzz)
-    EXPECT_NEAR(yuv_to_rgb(fractal_purple_yuv).red, fractal_purple_rgb.red, 2);
-    EXPECT_NEAR(yuv_to_rgb(fractal_purple_yuv).green, fractal_purple_rgb.green, 2);
-    EXPECT_NEAR(yuv_to_rgb(fractal_purple_yuv).blue, fractal_purple_rgb.blue, 2);
+    EXPECT_NEAR(yuv_to_rgb(whist_purple_yuv).red, whist_purple_rgb.red, 2);
+    EXPECT_NEAR(yuv_to_rgb(whist_purple_yuv).green, whist_purple_rgb.green, 2);
+    EXPECT_NEAR(yuv_to_rgb(whist_purple_yuv).blue, whist_purple_rgb.blue, 2);
 }
 
 /**
