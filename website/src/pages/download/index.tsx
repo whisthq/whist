@@ -5,7 +5,6 @@ import { useLocation } from "react-router"
 import Header from "@app/shared/components/header"
 import Footer from "@app/shared/components/footer"
 import Hero from "@app/pages/download/hero"
-import Requirements from "@app/pages/download/requirements"
 
 const padded = "pb-20 px-12 max-w-screen-2xl m-auto overflow-x-hidden dark"
 
@@ -20,16 +19,13 @@ const Download = () => {
 
   return (
     <>
-      <div className={classNames(padded, "bg-blue-darkest")} id="top">
+      <div className={classNames(padded, "bg-blue-darkest h-screen")} id="top">
         <Header />
         <Hero
           allowDownloads={
             (location.search.split("show=")?.[1] ?? "") === "download"
           }
         />
-      </div>
-      <div className={classNames(padded, "bg-blue-darker")}>
-        <Requirements />
       </div>
       <Footer />
     </>

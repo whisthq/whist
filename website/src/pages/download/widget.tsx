@@ -1,30 +1,7 @@
-import React, { Fragment, useRef, useState } from "react"
+import React, { Fragment, useRef } from "react"
 import { Dialog, Transition } from "@headlessui/react"
 
-import Calendly from "@app/pages/download/calendly"
 import Typeform from "@app/pages/download/typeform"
-
-const CALENDLY_URL = "https://calendly.com/whisthq/onboarding"
-
-const Contents = () => {
-  const [showCalendly, setShowCalendly] = useState(false)
-
-  const onSubmitTypeform = () => setShowCalendly(true)
-
-  if (!showCalendly) {
-    return (
-      <>
-        <Typeform id="NtcwaVHR" onSubmit={onSubmitTypeform} />
-      </>
-    )
-  } else {
-    return (
-      <>
-        <Calendly url={CALENDLY_URL} />
-      </>
-    )
-  }
-}
 
 const Widget = (props: { open: boolean; setOpen: (open: boolean) => void }) => {
   const cancelButtonRef = useRef(null)
@@ -69,7 +46,7 @@ const Widget = (props: { open: boolean; setOpen: (open: boolean) => void }) => {
             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
             <div className="inline-block align-center overflow-hidden transform transition-all sm:align-middle w-10/12 h-5/6">
-              <Contents />
+              <Typeform id="NtcwaVHR" />
             </div>
           </Transition.Child>
         </div>
