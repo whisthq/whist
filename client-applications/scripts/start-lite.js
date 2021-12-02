@@ -23,7 +23,7 @@ if (require.main === module) {
   const argv = yargs(process.argv.slice(2))
     .version(false) // necessary to prevent mis-parsing of the `--version` arg we pass in
     .option("config", {
-      description: "The JSON object output from fractal/config",
+      description: "The JSON object output from whist/config",
       type: "string",
     })
     .option("show-protocol-logs", {
