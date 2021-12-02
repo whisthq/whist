@@ -6,6 +6,9 @@ the host-service can be notified instantly of any change in the database
 package subscriptions // import "github.com/fractal/fractal/core-go/subscriptions"
 
 import (
+	"context"
+	"sync"
+
 	"github.com/fractal/fractal/core-go/metadata"
 	// We use hasura's own graphql client for Go
 )
@@ -68,8 +71,8 @@ func MandelboxStatusHandler(event SubscriptionEvent, variables map[string]interf
 	return mandelbox.Status == variables["status"]
 }
 
-func SetupHostSubscriptions(instanceName string) []HasuraSubscription {
-	return []HasuraSubscription{
+func SetupHostSubscriptions(instanceName string, whistClient *WhistClient) {
+	whistClient.Subscriptions = []HasuraSubscription{
 		{
 			Query: InstanceStatusSubscription,
 			Variables: map[string]interface{}{
@@ -91,8 +94,8 @@ func SetupHostSubscriptions(instanceName string) []HasuraSubscription {
 	}
 }
 
-func SetupScalingSubscriptions() []HasuraSubscription {
-	return []HasuraSubscription{
+func SetupScalingSubscriptions(whistClient *WhistClient) {
+	whistClient.Subscriptions = []HasuraSubscription{
 		{
 			Query: MandelboxStatusSubscription,
 			Variables: map[string]interface{}{
@@ -112,21 +115,39 @@ func SetupScalingSubscriptions() []HasuraSubscription {
 	}
 }
 
-func StartSubscriptions(subscriptions []HasuraSubscription, subscriptionEvents chan SubscriptionEvent) ([]string, error) {
+func Start(whistClient *WhistClient, globalCtx context.Context, goroutineTracker sync.WaitGroup, subscriptionEvents chan SubscriptionEvent) error {
 	// Slice to hold subscription IDs, necessary to properly unsubscribe when we are done.
 	var subscriptionIDs []string
 
-	for _, subscriptionParams := range subscriptions {
+	// Initialize subscription client
+	whistClient.Initialize()
+
+	// Start goroutine that shuts down the client if the global context gets
+	// cancelled.
+	goroutineTracker.Add(1)
+	go func() {
+		defer goroutineTracker.Done()
+
+		// Listen for global context cancellation
+		<-globalCtx.Done()
+		whistClient.Close(whistClient.SubscriptionIDs)
+	}()
+
+	for _, subscriptionParams := range whistClient.Subscriptions {
 		query := subscriptionParams.Query
 		variables := subscriptionParams.Variables
 		result := subscriptionParams.Result
 		handler := subscriptionParams.Handler
 
-		id, err := Subscribe(query, variables, result, handler, subscriptionEvents)
+		id, err := whistClient.Subscribe(query, variables, result, handler, subscriptionEvents)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		subscriptionIDs = append(subscriptionIDs, id)
 	}
-	return subscriptionIDs, nil
+
+	whistClient.SubscriptionIDs = subscriptionIDs
+	whistClient.Run(&goroutineTracker)
+
+	return nil
 }

@@ -1050,32 +1050,12 @@ func main() {
 	}
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
 
-	subscriptions.InitializeWhistHasuraClient()
+	var whistClient *subscriptions.WhistHasuraClient
+	subscriptions.SetupHostSubscriptions(&whistClient, instanceName)
+	subscriptions.Start(&whistClient, globalCtx, &goroutineTracker, subscriptionEvents)
 	if err != nil {
-		// Error creating the hasura client
-		logger.Errorf("Error starting Hasura client: %v", err)
-		return err
+		logger.Errorf("Failed to start database subscriptions. Error: %s", err)
 	}
-
-	hostSubscriptions := map[GraphQLQuery]map[string]interface{} {
-		subscriptions.InstanceStatusSubscription: map[string]interface{} {
-			"variables": map[string]interface{} {
-				"instanceName": instanceName,
-				"status": "DRAINING",
-			}
-			"result": subscriptions.InstanceEvent
-			"handler": subscriptions.InstanceStatusHandler
-		},
-		subscriptions.MandelboxInfoSubscription: map[string]interface{} {
-			"variables": map[string]interface{} {
-				"instanceName": instanceName,
-				"status": "ALLOCATED",
-			}
-			"result": subscriptions.MandelboxEvent
-			"handler": subscriptions.MandelboxInfoHandler
-		}
-	}
-	go subscriptions.Run(globalCtx, &goroutineTracker, subscriptionIDs)
 
 	// Start main event loop. Note that we don't track this goroutine, but
 	// instead control its lifetime with `eventLoopKeepAlive`. This is because it

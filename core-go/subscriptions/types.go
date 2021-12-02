@@ -26,8 +26,10 @@ type Mandelbox struct {
 	Status       string                     `json:"status"`
 }
 
+// handlerfn is used to send subscription handlers to the Subscribe function.
 type handlerfn func(SubscriptionEvent, map[string]interface{}) bool
 
+// HasuraSubscription holds the graphql query and parameters to start the subscription.
 type HasuraSubscription struct {
 	Query     GraphQLQuery
 	Variables map[string]interface{}
