@@ -17,7 +17,7 @@ COOKIE_FILE_FILENAME=/usr/share/fractal/private/user_cookies_file
 BOOKMARK_FILE_FILENAME=/usr/share/fractal/private/user_bookmarks_file
 USER_UPLOAD_TARGET_FILENAME=/usr/share/fractal/private/user_target
 TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/timeout
-WHIST_APPLICATION_PID_FILE=/home/whist/fractal-application-pid
+WHIST_APPLICATION_PID_FILE=/home/whist/whist-application-pid
 PROTOCOL_LOG_FILENAME=/usr/share/fractal/server.log
 TELEPORT_LOG_FILENAME=/usr/share/fractal/teleport.log
 
@@ -96,7 +96,7 @@ unset WHIST_INITIAL_USER_COOKIES_FILE
 unset WHIST_INITIAL_USER_BOOKMARKS_FILE
 
 # Start the application that this mandelbox runs.
-/usr/share/fractal/run-as-whist-user.sh "/usr/bin/run-fractal-application.sh" &
+/usr/share/fractal/run-as-whist-user.sh "/usr/bin/run-whist-application.sh" &
 fractal_application_runuser_pid=$!
 
 echo "Whist application runuser pid: $fractal_application_runuser_pid"
@@ -131,24 +131,24 @@ OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 /usr/share/fractal/WhistServer $OPTIONS > >(tee $PROTOCOL_LOG_FILENAME) &
 fractal_server_pid=$!
 
-# Wait for either fractal-application or WhistServer to exit (both backgrounded processes).
+# Wait for either whist-application or WhistServer to exit (both backgrounded processes).
 
 # TODO: once our mandelboxes have bash 5.1 we will be able to deduce _which_
 # application exited with the `-p` flag to `wait`.
 wait -n
-echo "Either WhistServer or fractal-application exited with code $?"
+echo "Either WhistServer or whist-application exited with code $?"
 echo "WhistServer PID: $fractal_server_pid"
-echo "runuser fractal-application PID: $fractal_application_runuser_pid"
-echo "fractal-application PID: $fractal_application_pid"
+echo "runuser whist-application PID: $fractal_application_runuser_pid"
+echo "whist-application PID: $fractal_application_pid"
 echo "Remaining job PIDs: $(jobs -p)"
 
-# Kill whatever is still running of WhistServer and fractal-application, with SIGTERM.
+# Kill whatever is still running of WhistServer and whist-application, with SIGTERM.
 kill $fractal_application_pid ||:
 kill $fractal_server_pid ||:
 
-# Wait for fractal-application to finish terminating, ignoring exit code (since
+# Wait for whist-application to finish terminating, ignoring exit code (since
 wait $fractal_application_runuser_pid ||:
 
-echo "Both fractal-application and WhistServer have exited."
+echo "Both whist-application and WhistServer have exited."
 
 # We now pass control over to `cleanup`, since we've reached the end of the script.

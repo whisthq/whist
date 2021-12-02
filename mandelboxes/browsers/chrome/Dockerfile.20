@@ -77,7 +77,7 @@ RUN su - whist -c "touch /home/whist/.config/google-chrome/'First Run'"
 ENV WHIST_COOKIE_UPLOAD_TARGET="chrome"
 COPY start-chrome.sh /usr/bin/start-chrome
 RUN chmod +x /usr/bin/start-chrome
-RUN ln -sf /usr/bin/start-chrome /usr/bin/fractal-application
+RUN ln -sf /usr/bin/start-chrome /usr/bin/whist-application
 
 # Install Whist Protocol binaries and helper files (if necessary)
 COPY --from=build-assets protocol/* /usr/share/fractal/bin/

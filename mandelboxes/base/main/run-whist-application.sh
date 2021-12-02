@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script starts the symlinked fractal-application as the whist user.
+# This script starts the symlinked whist-application as the whist user.
 
 # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
 eval "$(sentry-cli bash-hook)"
@@ -9,7 +9,7 @@ eval "$(sentry-cli bash-hook)"
 set -Eeuo pipefail
 
 # Write the PID to a file
-WHIST_APPLICATION_PID_FILE="/home/whist/fractal-application-pid"
+WHIST_APPLICATION_PID_FILE="/home/whist/whist-application-pid"
 echo $$ > $WHIST_APPLICATION_PID_FILE
 
 # Wait for the PID file to have been removed
@@ -26,4 +26,4 @@ export TZ=$TZ
 export INITIAL_URL=$INITIAL_URL
 
 # Start the application that this mandelbox runs
-exec fractal-application
+exec whist-application

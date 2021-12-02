@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && rm -rf /tmp/* /var/tmp/*
 
 # Set up the xterm Whist application symlink
-RUN ln -sf "$(which xterm)" /usr/bin/fractal-application
+RUN ln -sf "$(which xterm)" /usr/bin/whist-application
 
 # Install Whist Protocol binaries and helper files (if necessary)
 COPY --from=build-assets protocol/* /usr/share/fractal/bin/
