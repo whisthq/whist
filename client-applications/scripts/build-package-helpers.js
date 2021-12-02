@@ -115,8 +115,7 @@ module.exports = {
 
     const ext = process.platform === "win32" ? ".exe" : ""
     const oldExecutable = "WhistClient"
-    const newExecutable =
-      process.platform === "darwin" ? "_Whist" : "Whist"
+    const newExecutable = process.platform === "darwin" ? "_Whist" : "Whist"
 
     fse.moveSync(
       path.join(protocolBuildDir, `${oldExecutable}${ext}`),
