@@ -24,7 +24,7 @@ CLIENT_PERSISTENCE_FOLDER_NAME:
 CLIENT_LOG_FOLDERNAME: "logs"
 
 PROTOCOL_FILE_NAME:
-  macos: "WhistClient"
+  macos: "_Whist"
   win32: "Whist.exe"
   linux: "Whist"
 
