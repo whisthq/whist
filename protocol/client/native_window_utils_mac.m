@@ -24,7 +24,7 @@ Includes
 #include <Cocoa/Cocoa.h>
 #include <IOKit/pwr_mgt/IOPMLib.h>
 #include <VideoToolbox/VideoToolbox.h>
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 #include "sdl_utils.h"
 
 /*

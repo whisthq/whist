@@ -18,7 +18,7 @@ Includes
 ============================
 */
 
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 #include "logging.h"
 #include "log_statistic.h"
 

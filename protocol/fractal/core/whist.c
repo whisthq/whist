@@ -10,7 +10,7 @@ Includes
 ============================
 */
 
-#include "fractal.h"  // header file for this protocol, includes winsock
+#include "whist.h"  // header file for this protocol, includes winsock
 #include <fractal/logging/logging.h>
 
 #include <ctype.h>

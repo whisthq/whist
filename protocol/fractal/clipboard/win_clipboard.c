@@ -26,7 +26,7 @@ Includes
 
 #ifdef _WIN32
 
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 #include "../utils/png.h"
 #include "clipboard.h"
 

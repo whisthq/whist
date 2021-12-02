@@ -20,7 +20,7 @@ Includes
 */
 #include "../nvidia-linux/NvFBCUtils.h"
 #include "../nvidia-linux/nvEncodeAPI.h"
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 #include "../cudacontext.h"
 
 /*

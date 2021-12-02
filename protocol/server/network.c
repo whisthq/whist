@@ -16,7 +16,7 @@ Includes
 ============================
 */
 
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 #include <fractal/network/network.h>
 #include <fractal/input/input.h>
 #include <fractal/logging/error_monitor.h>

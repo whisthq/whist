@@ -1,7 +1,7 @@
 #ifndef WHIST_KEYBOARD_MAPPING_H
 #define WHIST_KEYBOARD_MAPPING_H
 
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 #include "input_driver.h"
 
 typedef char KeyboardMapping;

@@ -20,7 +20,7 @@ Includes
 ============================
 */
 
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 #include <fractal/network/network.h>
 #include <fractal/video/codec/decode.h>
 #include <fractal/utils/avpacket_buffer.h>

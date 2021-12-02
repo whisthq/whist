@@ -11,14 +11,14 @@ add_custom_target(git_revision ALL
         )
 
 add_library(whistCore STATIC
-        fractal_memory.h
-        fractal_memory.c
-        fractal.h
-        fractal.c
+        whist_memory.h
+        whist_memory.c
+        whist.h
+        whist.c
         whistgetopt.h
         whistgetopt.c
-        fractal_frame.h
-        fractal_frame.c
+        whist_frame.h
+        whist_frame.c
         )
 
 # Ensure that fractal.v is updated prior to compiling whistCore

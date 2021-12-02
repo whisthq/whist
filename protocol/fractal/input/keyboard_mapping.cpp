@@ -26,7 +26,7 @@ using namespace std;
 #define hmap unordered_map
 
 extern "C" {
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 #include "keyboard_mapping.h"
 #include "input_driver.h"
 #include "input.h"

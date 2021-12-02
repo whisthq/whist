@@ -20,7 +20,7 @@ Includes
 
 #include "nvidia-linux/NvFBCUtils.h"
 #include "nvidia-linux/cuda_drvapi_dynlink_cuda.h"
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 
 typedef CUresult (*CUCTXSETCURRENTPROC)(CUcontext ctx);
 extern CUCTXSETCURRENTPROC cu_ctx_set_current_ptr;

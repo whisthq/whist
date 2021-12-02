@@ -21,7 +21,7 @@ Includes
 
 #include <stddef.h>
 
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 #include <fractal/utils/clock.h>
 #include <fractal/logging/logging.h>
 #include <fractal/utils/window_info.h>

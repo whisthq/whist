@@ -22,7 +22,7 @@ Includes
 ============================
 */
 
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 #include "nvidia_encode.h"
 #include "ffmpeg_encode.h"
 

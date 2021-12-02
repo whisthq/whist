@@ -34,7 +34,7 @@ Includes
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 #include "clipboard.h"
 #include "../utils/png.h"
 

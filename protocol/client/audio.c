@@ -24,7 +24,7 @@ Includes
 #include <fractal/logging/log_statistic.h>
 #include <fractal/network/network.h>
 #include <fractal/network/ringbuffer.h>
-#include <fractal/core/fractal_frame.h>
+#include <fractal/core/whist_frame.h>
 
 extern bool has_video_rendered_yet;
 

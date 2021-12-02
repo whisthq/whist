@@ -1,7 +1,7 @@
 #ifndef CLIENT_NETWORK_H
 #define CLIENT_NETWORK_H
 
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 
 /**
  * Copyright 2021 Whist Technologies, Inc.

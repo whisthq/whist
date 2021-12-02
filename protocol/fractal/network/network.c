@@ -11,7 +11,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 
 #include <stdio.h>
 #include <fcntl.h>

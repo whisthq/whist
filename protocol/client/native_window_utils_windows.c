@@ -21,7 +21,7 @@ Includes
 
 // Easy way to import all of our Windows dependencies
 // Note that this must be imported first for SDL to link properly.
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 
 #include <SDL2/SDL_syswm.h>
 #include "native_window_utils.h"

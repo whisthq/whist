@@ -25,7 +25,7 @@ Includes
 */
 
 #include "clipboard.h"
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 
 // A Mutex to ensure unsafe commands don't overlap
 WhistMutex clipboard_mutex;

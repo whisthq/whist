@@ -1,6 +1,6 @@
 /**
  * Copyright 2021 Whist Technologies, Inc.
- * @file fractal_memory.h
+ * @file whist_memory.h
  * @brief This file contains custom memory handling for Whist.
  */
 
@@ -65,7 +65,7 @@ void resize_dynamic_buffer(DynamicBuffer* db, size_t new_size);
 void free_dynamic_buffer(DynamicBuffer* db);
 
 // Dummy typedef for block allocator since only pointers are used anyway
-// See fractal.c for the real BlockAllocator struct
+// See whist.c for the real BlockAllocator struct
 typedef char BlockAllocator;
 
 /**

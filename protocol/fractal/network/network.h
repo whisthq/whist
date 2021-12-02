@@ -172,7 +172,7 @@ typedef enum {
     NUM_PACKET_TYPES = 3,
 } WhistPacketType;
 
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 
 /**
  * @brief                          Packet of data to be sent over a

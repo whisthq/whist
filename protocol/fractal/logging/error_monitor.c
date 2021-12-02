@@ -42,7 +42,7 @@ Includes
 */
 
 #include <sentry/sentry.h>
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 #include "error_monitor.h"
 
 /*

@@ -1,4 +1,4 @@
-#include "fractal_frame.h"
+#include "whist_frame.h"
 
 void set_frame_cursor_image(VideoFrame* frame, WhistCursorImage* cursor) {
     /*

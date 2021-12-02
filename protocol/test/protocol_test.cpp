@@ -35,7 +35,7 @@ Includes
 extern "C" {
 #include "client/client_utils.h"
 #include "fractal/utils/color.h"
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 #include <fractal/network/ringbuffer.h>
 #include <fcntl.h>
 

@@ -31,7 +31,7 @@
 #include <sys/time.h>
 
 #include "NvFBCUtils.h"
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 
 #define BITMAP_ROW_SIZE(width) (((width * Bpp) + 3) & ~3)
 #define BITMAP_INDEX(x, y, rowSize) ((y * rowSize) + (x * Bpp))

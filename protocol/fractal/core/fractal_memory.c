@@ -1,6 +1,6 @@
 /**
  * Copyright 2021 Whist Technologies, Inc.
- * @file fractal_memory.c
+ * @file whist_memory.c
  * @brief This file contains custom memory handling for Whist.
 
 ============================
@@ -17,7 +17,7 @@ Includes
 ============================
 */
 
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 
 /*
 ============================

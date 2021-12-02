@@ -22,7 +22,7 @@ udp_context->read_packet(...);
 To free a packet:
 udp_context->free_packet(...);
  */
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 
 /**
  * @brief Creates a udp network context and initializes a UDP connection

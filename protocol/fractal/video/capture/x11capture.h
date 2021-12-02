@@ -25,7 +25,7 @@ Includes
 #include <X11/extensions/Xdamage.h>
 #include <stdbool.h>
 
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 #include <fractal/utils/color.h>
 
 /*

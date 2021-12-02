@@ -13,7 +13,7 @@ receive_packet to process the packet and modify or create ring buffer entries as
 packet, call nack_single_packet.
 */
 
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 
 /**
  * @brief FrameData struct containing content and metadata of encoded frames.

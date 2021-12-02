@@ -3,7 +3,7 @@
 
 /**
  * Copyright 2021 Whist Technologies, Inc.
- * @file fractal.h
+ * @file whist.h
  * @brief This file contains the core of Whist custom structs and definitions
  *        used throughout.
  */
@@ -62,7 +62,7 @@ Includes
 #include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
 
-#include <fractal/core/fractal_memory.h>
+#include <fractal/core/whist_memory.h>
 #include <fractal/utils/threads.h>
 #include <fractal/clipboard/clipboard_synchronizer.h>
 #include <fractal/utils/color.h>
@@ -934,6 +934,6 @@ int bit_array_test_bit(const BitArray* const ba, const unsigned int bit);
  */
 char* fractal_git_revision();
 
-#include "fractal_frame.h"
+#include "whist_frame.h"
 
 #endif  // WHIST_H

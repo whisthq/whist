@@ -22,7 +22,7 @@ Includes
 #include "sdl_utils.h"
 #include <fractal/network/network.h>
 #include <fractal/network/ringbuffer.h>
-#include <fractal/core/fractal_frame.h>
+#include <fractal/core/whist_frame.h>
 
 #include <stdio.h>
 

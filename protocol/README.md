@@ -18,7 +18,7 @@ In order to give the user their low-latency high-FPS experience, the protocol ex
 
 - `create_capture_device` from either `./fractal/video/dxgicapture.c` or `./fractal/video/x11capture.c` is called, the former is for Windows and the latter is for Linux. Then, `capture_screen` is called in `./server/main.c` to capture the screen.
 - `encoder_t` from `videoencode.c` will be used to encode the screenshot using h264, if needed. If Nvidia Capture SDK is being used (`USING_GPU_CAPTURE == true` and on linux), then the image will already be encoded upon capture, and this is not necessary.
-- A `Frame*` is created and the members of the `Frame` struct is filled in, see `./server/main.c` for the code and `./fractal/core/fractal.h` for the `Frame` struct.
+- A `Frame*` is created and the members of the `Frame` struct is filled in, see `./server/main.c` for the code and `./fractal/core/whist.h` for the `Frame` struct.
 - `broadcast_udp_packet_from_payload` from `./server/network.c`is called with the `Frame*` passed in. This will break-up the `Frame*` into hundreds of individual network packets.
 - On the client, these packets are received in `./client/main.c` and passed into `receive_video` in `./client/video.c`.
 - `receive_video` will receive video packets and will save them in a buffer (packet 17 will be stored at `buffer + PACKET_SIZE*(17-1)`, so that the packets go into their correct slot until the entire `Frame*` is recreated). `video.c` keeps track of the ID of the most recently rendered frame, ie ID 247. Once all of the packets of ID 248 are received, it will take the pointer to the beginning of the buffer and then render it. Each packet will contain the number of packets for the `Frame*`, so once one is received, the client will know when all of them have been received.
@@ -34,7 +34,7 @@ Throughout the life of the protocol, various messages will be send to and from t
 - To send a message from server to client, create a `WhistServerMessage` and call `broadcast_tcp_packet` or `broadcast_udp_packet`. See `./server/main.c` for usage.
 - To handle a server message on the client, see `./client/handle_server_message.c`
 - To handle a client message on the server, see `./server/handle_client_message.c`
-- See `./fractal/core/fractal.h` for struct definitions.
+- See `./fractal/core/whist.h` for struct definitions.
 
 Of course, input must also be sent from client to server. This is handled in the form of SDL Events, which are retrieved in `./client/main.c` and handled in `sdl_event_handler.c`. These generally take the form of `fcmsg`'s sent from client to server, over `UDP` for speed. We don't handle packet dropping, however, so sometimes the capslock and numlock will go out-of-sync. We use `sync_keyboard_state` to fix this, resyncing stateful keys every 50ms with an `fcmsg`. This additionally handles the initial sync by-default.
 
@@ -74,7 +74,7 @@ In an ideal world, we'd use the NVIDIA Capture SDK with the NVIDIA encoder. Howe
 │   │   ├── win_clipboard.c <- Windows implementation of {get,set}_clipboard
 │   │   └── x11_clipboard.c <- Linux implementation of {get,set}_clipboard
 │   ├── core
-│   │   ├── fractal.c <- Various helpers
+│   │   ├── whist.c <- Various helpers
 │   │   └── whistgetopt.c <- Cross-platform getopt
 │   ├── cursor
 │   │   ├── linuxcursor.c <- get_current_cursor for Linux

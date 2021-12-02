@@ -18,7 +18,7 @@ Includes
 ============================
 */
 
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 #include <fractal/utils/color.h>
 #ifdef __linux__
 #include <X11/Xlib.h>

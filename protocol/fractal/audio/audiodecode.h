@@ -28,7 +28,7 @@ audio_decoder_packet_readout.
 #include <libswresample/swresample.h>
 #include <libswscale/swscale.h>
 
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 #include <fractal/utils/avpacket_buffer.h>
 
 /*

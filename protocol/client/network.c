@@ -24,7 +24,7 @@ Includes
 
 #include "network.h"
 
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 #include <fractal/logging/error_monitor.h>
 #include "network.h"
 #include "client_utils.h"

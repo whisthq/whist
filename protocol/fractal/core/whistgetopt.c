@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 #include "whistgetopt.h"
-#include <fractal/core/fractal.h>  // For logging
+#include <fractal/core/whist.h>  // For logging
 
 #include <assert.h>
 #include <errno.h>

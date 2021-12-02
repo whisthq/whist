@@ -4,7 +4,7 @@
  * @brief This file contains all the code for getting Windows-specific window information.
  */
 
-#include <fractal/core/fractal.h>
+#include <fractal/core/whist.h>
 #include "window_info.h"
 #include <locale.h>
 
