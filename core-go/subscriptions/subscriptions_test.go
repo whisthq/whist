@@ -2,194 +2,207 @@ package subscriptions
 
 import (
 	"context"
-	"encoding/json"
-	"net"
-	"net/http"
+	"reflect"
+	"sync"
 	"testing"
-	"time"
 
-	"github.com/fractal/fractal/core-go/utils"
-	graphql "github.com/hasura/go-graphql-client"
-	"nhooyr.io/websocket"
-	"nhooyr.io/websocket/wsjson"
+	"github.com/fractal/fractal/core-go/metadata/aws"
 )
 
+type mockWhistClient struct {
+	Params          HasuraParams
+	Subscriptions   []HasuraSubscription
+	SubscriptionIDs []string
+}
+
+func (cl *mockWhistClient) Initialize()                          {}
+func (cl *mockWhistClient) Run(goroutineTracker *sync.WaitGroup) {}
+
+func (cl *mockWhistClient) Subscribe(query GraphQLQuery, variables map[string]interface{}, result SubscriptionEvent,
+	conditionFn handlerfn, subscriptionEvents chan SubscriptionEvent) (string, error) {
+	return "", nil
+}
+
+func (cl *mockWhistClient) Close(subscriptionIDs []string) error {
+	return nil
+}
+
 func TestInstanceStatusHandler(t *testing.T) {
-	// Create a mock Hasura data event as would be received from the database
-	message := `{"data": {"cloud_instance_info": [{"instance_name": "test-instance-name","status": "DRAINING"}]}}`
-
-	// Start a mock socket server and Hasura client
-	t.Log("Starting mock server and Hasura client...")
-	port := mockServer(t, message)
-	client := initClient(t, port)
-
-	// Subscribe to the instance status event
-	subscriptionEvents := make(chan SubscriptionEvent, 100)
-	id, err := instanceStatusHandler("test-instance-name", "DRAINING", client, subscriptionEvents)
-
-	t.Logf("Testing subscription with id: %v", id)
-	if err != nil {
-		t.Errorf("Error running instanceStatusHandler: %v", err)
+	var variables = map[string]interface{}{
+		"instanceName": "test-instance-name",
+		"status":       "DRAINING",
 	}
 
-	// Run the Hasura client and subscription
-	t.Log("Running Hasura subscriptions...")
-	go client.Run()
-
-	// Verify that the subscription result is sent to the appropiate channel
-	subscriptionEvent := <-subscriptionEvents
-	instanceStatusEvent := subscriptionEvent.(*InstanceEvent)
-
-	gotInstance := instanceStatusEvent.InstanceInfo[0]
-
-	testMap := []struct {
-		key       string
-		want, got string
+	var instanceTests = []struct {
+		testName string
+		event    InstanceEvent
+		want     bool
 	}{
-		{"InstanceName", "test-instance-name", gotInstance.InstanceName},
-		{"Status", "DRAINING", gotInstance.Status},
+		{"Empty event", InstanceEvent{InstanceInfo: []Instance{}}, false},
+		{"Wrong status event", InstanceEvent{
+			InstanceInfo: []Instance{
+				{InstanceName: "test-instance-name", Status: "PRE_CONNECTION"},
+			},
+		}, false},
+		{"Correct status event", InstanceEvent{
+			InstanceInfo: []Instance{
+				{InstanceName: "test-instance-name", Status: "DRAINING"},
+			},
+		}, true},
 	}
 
-	// Verify that we got the expected values
-	for _, value := range testMap {
-		if value.got != value.want {
-			t.Errorf("expected request key %s to be %v, got %v", value.key, value.got, value.want)
-		}
-	}
+	for _, tt := range instanceTests {
+		testname := tt.testName
+		t.Run(testname, func(t *testing.T) {
+			got := InstanceStatusHandler(tt.event, variables)
 
-}
-
-func TestMandelboxInfoHandler(t *testing.T) {
-	// Create a mock Hasura data event as would be received from the database
-	message := `{"data": {"cloud_mandelbox_info": [{"instance_name": "test-instance-name","mandelbox_id":` +
-		`"22222222-2222-2222-2222-222222222222","session_id": "1636666188732","user_id": "test-user-id","status": "ALLOCATED"}]}}`
-
-	// Start a mock socket server and Hasura client
-	t.Log("Starting mock server and Hasura client...")
-	port := mockServer(t, message)
-	client := initClient(t, port)
-
-	// Subscribe to the mandelbox allocation event
-	subscriptionEvents := make(chan SubscriptionEvent, 100)
-	id, err := mandelboxInfoHandler("test-instance-name", "ALLOCATED", client, subscriptionEvents)
-
-	t.Logf("Testing subscription with id: %v", id)
-	if err != nil {
-		t.Errorf("Error running instanceStatusHandler: %v", err)
-	}
-
-	// Run the Hasura client and subscription
-	t.Log("Running Hasura subscriptions...")
-	go client.Run()
-
-	// Verify that the subscription result is sent to the appropiate channel
-	subscriptionEvent := <-subscriptionEvents
-	instanceStatusEvent := subscriptionEvent.(*MandelboxEvent)
-
-	gotInstance := instanceStatusEvent.MandelboxInfo[0]
-
-	testMap := []struct {
-		key       string
-		want, got string
-	}{
-		{"InstanceName", "test-instance-name", gotInstance.InstanceName},
-		{"MandelboxID", utils.PlaceholderTestUUID().String(), gotInstance.ID.String()},
-		{"SessionID", "1636666188732", string(gotInstance.SessionID)},
-		{"UserID", "test-user-id", string(gotInstance.UserID)},
-	}
-
-	// Verify that we got the expected values
-	for _, value := range testMap {
-		if value.got != value.want {
-			t.Errorf("expected request key %s to be %v, got %v", value.key, value.got, value.want)
-		}
-	}
-}
-
-// initClient initializes a test Hasura client that behaves exactly like the one use on the production code
-func initClient(t *testing.T, port int) *graphql.SubscriptionClient {
-	client := graphql.NewSubscriptionClient(utils.Sprintf("http://localhost:%v", port)).WithLog(t.Log).
-		WithoutLogTypes(graphql.GQL_CONNECTION_KEEP_ALIVE).
-		OnError(func(sc *graphql.SubscriptionClient, err error) error {
-			t.Errorf("Error received from Hasura client: %v", err)
-			return err
-		})
-	return client
-}
-
-// For testing the subscriptions, we need to create a mock socket server that
-// is able to communicate with the Hasura client as if it were the Hasura server.
-func mockServer(t *testing.T, message string) int {
-	mockserver := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Accept handshake from client
-		c, err := websocket.Accept(w, r, nil)
-		if err != nil {
-			t.Logf("Error accepting handshake from client: %v", err)
-		}
-		defer c.Close(websocket.StatusInternalError, "closing mock socket server")
-
-		ctx, cancel := context.WithCancel(r.Context())
-		defer cancel()
-
-		// Create ticker to receive messages from the client
-		time := time.NewTicker(time.Second)
-		defer time.Stop()
-
-		for {
-			// Server loop
-			select {
-			case <-ctx.Done():
-				t.Log("Closing mock server due to context cancelled...")
-				c.Close(websocket.StatusNormalClosure, "")
-				return
-			case <-time.C:
-				// Read message from client
-				var v interface{}
-				err = wsjson.Read(ctx, c, &v)
-
-				if err != nil {
-					t.Log("received nil message on server")
-					break
-				}
-
-				operation := v.(map[string]interface{})
-				// If the message matches the `start` operation
-				// it means the client successfully started the
-				// subscription.
-				if operation["type"] == "start" {
-					t.Log("Client successfully subscribed")
-					jsonMessage := json.RawMessage(message)
-
-					// Create a mock message to send to the client
-					// We send the "database event" as a raw json message
-					operationMessage := graphql.OperationMessage{
-						ID:      operation["id"].(string),
-						Type:    graphql.GQL_DATA,
-						Payload: jsonMessage,
-					}
-					// Write the message once and cancel the context
-					wsjson.Write(ctx, c, operationMessage)
-					cancel()
-				}
+			if got != tt.want {
+				t.Errorf("got %v, want %v", got, tt.want)
 			}
-		}
-	})
+		})
+	}
+}
+func TestMandelboxAllocatedHandler(t *testing.T) {
+	var variables = map[string]interface{}{
+		"instanceName": "test-instance-name",
+		"status":       "ALLOCATED",
+	}
 
-	// Start the server on a goroutine to avoid blocking
-	// Use the portchan to return the port it is running on.
-	portchan := make(chan int)
-	go func(portchan chan int) {
-		// We use random available ports to ensure the server always starts.,
-		listener, err := net.Listen("tcp", ":0")
-		if err != nil {
-			panic(err)
-		}
+	var mandelboxTests = []struct {
+		testName string
+		event    MandelboxEvent
+		want     bool
+	}{
+		{"Empty event", MandelboxEvent{MandelboxInfo: []Mandelbox{}}, false},
+		{"Wrong instance name event", MandelboxEvent{
+			MandelboxInfo: []Mandelbox{
+				{InstanceName: "test-instance-name-2", Status: "EXITED"},
+			},
+		}, false},
+		{"Correct status event", MandelboxEvent{
+			MandelboxInfo: []Mandelbox{
+				{InstanceName: "test-instance-name", Status: "ALLOCATED"},
+			},
+		}, true},
+	}
 
-		port := listener.Addr().(*net.TCPAddr).Port
-		t.Log("Using port:", port)
-		portchan <- port
-		t.Error(http.Serve(listener, mockserver))
-	}(portchan)
+	for _, tt := range mandelboxTests {
+		testname := tt.testName
+		t.Run(testname, func(t *testing.T) {
+			got := MandelboxAllocatedHandler(tt.event, variables)
 
-	return <-portchan
+			if got != tt.want {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+func TestMandelboxStatusHandler(t *testing.T) {
+	var variables = map[string]interface{}{
+		"status": "ALLOCATED",
+	}
+
+	var mandelboxTests = []struct {
+		testName string
+		event    MandelboxEvent
+		want     bool
+	}{
+		{"Empty event", MandelboxEvent{MandelboxInfo: []Mandelbox{}}, false},
+		{"Wrong status event", MandelboxEvent{
+			MandelboxInfo: []Mandelbox{
+				{Status: "EXITED"},
+			},
+		}, false},
+		{"Correct status event", MandelboxEvent{
+			MandelboxInfo: []Mandelbox{
+				{Status: "ALLOCATED"},
+			},
+		}, true},
+	}
+
+	for _, tt := range mandelboxTests {
+		testname := tt.testName
+		t.Run(testname, func(t *testing.T) {
+			got := MandelboxStatusHandler(tt.event, variables)
+
+			if got != tt.want {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInitializeWhistHasuraClientOnLocalEnv(t *testing.T) {
+	whistClient := mockWhistClient{}
+	err := InitializeWhistHasuraClient(&whistClient)
+
+	if err != nil {
+		t.Errorf("Expected err to be nil, got: %v", err)
+	}
+}
+
+func TestSetupHostSubscriptions(t *testing.T) {
+	instanceName := "test-instance-name"
+	whistClient := WhistClient{}
+
+	SetupHostSubscriptions(aws.InstanceName(instanceName), &whistClient)
+
+	if whistClient.Subscriptions == nil {
+		t.Errorf("Got nil subscriptions")
+	}
+
+	if len(whistClient.Subscriptions) != 2 {
+		t.Errorf("Expected subscriptions lenght to be 2, got: %v", len(whistClient.Subscriptions))
+	}
+
+	var variables = map[string]interface{}{
+		"instanceName": instanceName,
+		"status":       "DRAINING",
+	}
+
+	if !reflect.DeepEqual(whistClient.Subscriptions[0].Variables, variables) {
+		t.Errorf("Expected variable map to be %v, got: %v", whistClient.Subscriptions[0].Variables, variables)
+	}
+
+	variables["status"] = "ALLOCATED"
+
+	if !reflect.DeepEqual(whistClient.Subscriptions[1].Variables, variables) {
+		t.Errorf("Expected variable map to be %v, got: %v", whistClient.Subscriptions[1].Variables, variables)
+	}
+}
+
+func TestSetupScalingSubscriptions(t *testing.T) {
+	whistClient := WhistClient{}
+
+	SetupScalingSubscriptions(&whistClient)
+
+	if whistClient.Subscriptions == nil {
+		t.Errorf("Got nil subscriptions")
+	}
+
+	if len(whistClient.Subscriptions) != 2 {
+		t.Errorf("Expected subscriptions lenght to be 2, got: %v", len(whistClient.Subscriptions))
+	}
+
+	var variables = map[string]interface{}{
+		"status": "ALLOCATED",
+	}
+
+	if !reflect.DeepEqual(whistClient.Subscriptions[0].Variables, variables) {
+		t.Errorf("Expected variable map to be %v, got: %v", whistClient.Subscriptions[0].Variables, variables)
+	}
+
+	variables["status"] = "EXITED"
+
+	if !reflect.DeepEqual(whistClient.Subscriptions[1].Variables, variables) {
+		t.Errorf("Expected variable map to be %v, got: %v", whistClient.Subscriptions[1].Variables, variables)
+	}
+}
+func TestStart(t *testing.T) {
+	whistClient := WhistClient{}
+	ctx := context.Background()
+	tracker := sync.WaitGroup{}
+	subscriptionEvents := make(chan SubscriptionEvent)
+
+	Start(&whistClient, ctx, &tracker, subscriptionEvents)
 }

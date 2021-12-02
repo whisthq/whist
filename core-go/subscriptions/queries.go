@@ -2,12 +2,14 @@ package subscriptions // import "github.com/fractal/whist/core-go/subscriptions"
 
 import graphql "github.com/hasura/go-graphql-client"
 
+// GraphQLQuery is a custom empty interface to
+// represent the graphql queries described in this file.
 type GraphQLQuery interface{}
 
 // InstanceStatusSubscription defines the event when
 // the provided instance $instance_name
 // changes to the provided status $status in the database
-var InstanceStatusSubscription struct {
+var InstanceStatusQuery struct {
 	CloudInstanceInfo struct {
 		InstanceName graphql.String `graphql:"instance_name"`
 		Status       graphql.String `graphql:"status"`
@@ -16,7 +18,7 @@ var InstanceStatusSubscription struct {
 
 // MandelboxInfoSubscription defines the event when
 // a mandelbox is assigned to the provided $instance_name
-var MandelboxInfoSubscription struct {
+var MandelboxAllocatedQuery struct {
 	CloudMandelboxInfo struct {
 		InstanceName graphql.String `graphql:"instance_name"`
 		MandelboxID  graphql.String `graphql:"mandelbox_id"`
@@ -28,7 +30,7 @@ var MandelboxInfoSubscription struct {
 
 // MandelboxInfoSubscription defines the event when
 // a mandelbox's status changes.
-var MandelboxStatusSubscription struct {
+var MandelboxStatusQuery struct {
 	CloudMandelboxInfo struct {
 		InstanceName graphql.String `graphql:"instance_name"`
 		MandelboxID  graphql.String `graphql:"mandelbox_id"`

@@ -9,29 +9,9 @@ import (
 	"context"
 	"sync"
 
-	"github.com/fractal/fractal/core-go/metadata"
 	"github.com/fractal/fractal/core-go/metadata/aws"
 	// We use hasura's own graphql client for Go
 )
-
-// `enabled` is a flag denoting whether the functions in this package should do
-// anything, or simply be no-ops. This is necessary, since we want the subscription
-// operations to be meaningful in environments where we can expect the database
-// guarantees to hold (e.g. `metadata.EnvLocalDevWithDB` or `metadata.EnvDev`)
-// but no-ops in other environments.
-var enabled = (metadata.GetAppEnvironment() != metadata.EnvLocalDev)
-
-// InstanceStatusEvent is the event received from the subscription to any
-// instance status changes.
-type InstanceEvent struct {
-	InstanceInfo []Instance `json:"cloud_instance_info"`
-}
-
-// MandelboxInfoEvent is the event received from the subscription to any
-// instance status changes.
-type MandelboxEvent struct {
-	MandelboxInfo []Mandelbox `json:"cloud_mandelbox_info"`
-}
 
 // InstanceStatusHandler handles events from the hasura subscription which
 // detects changes on instance instanceName to the given status in the database.
@@ -46,9 +26,9 @@ func InstanceStatusHandler(event SubscriptionEvent, variables map[string]interfa
 	return (instance.InstanceName == variables["instanceName"]) && (instance.Status == variables["status"])
 }
 
-// MandelboxInfoHandler handles events from the hasura subscription which
+// MandelboxAllocatedHandler handles events from the hasura subscription which
 // detects changes on instance instanceName to the given status in the database.
-func MandelboxInfoHandler(event SubscriptionEvent, variables map[string]interface{}) bool {
+func MandelboxAllocatedHandler(event SubscriptionEvent, variables map[string]interface{}) bool {
 	result := event.(MandelboxEvent)
 
 	var mandelbox Mandelbox
@@ -72,10 +52,13 @@ func MandelboxStatusHandler(event SubscriptionEvent, variables map[string]interf
 	return mandelbox.Status == variables["status"]
 }
 
-func SetupHostSubscriptions(instanceName aws.InstanceName, whistClient *WhistClient) {
-	whistClient.Subscriptions = []HasuraSubscription{
+// SetupHostSubscriptions creates a slice of HasuraSubscriptions to start the client. This
+// function is specific for the subscriptions used on the host service.
+func SetupHostSubscriptions(instanceName aws.InstanceName, whistClient WhistHasuraClient) {
+	client := whistClient.(*WhistClient)
+	client.Subscriptions = []HasuraSubscription{
 		{
-			Query: InstanceStatusSubscription,
+			Query: InstanceStatusQuery,
 			Variables: map[string]interface{}{
 				"instanceName": instanceName,
 				"status":       "DRAINING",
@@ -84,44 +67,51 @@ func SetupHostSubscriptions(instanceName aws.InstanceName, whistClient *WhistCli
 			Handler: InstanceStatusHandler,
 		},
 		{
-			Query: MandelboxInfoSubscription,
+			Query: MandelboxAllocatedQuery,
 			Variables: map[string]interface{}{
 				"instanceName": instanceName,
 				"status":       "ALLOCATED",
 			},
 			Result:  MandelboxEvent{},
-			Handler: MandelboxInfoHandler,
+			Handler: MandelboxAllocatedHandler,
 		},
 	}
 }
 
-func SetupScalingSubscriptions(whistClient *WhistClient) {
-	whistClient.Subscriptions = []HasuraSubscription{
+// SetupScalingSubscriptions creates a slice of HasuraSubscriptions to start the client. This
+// function is specific for the subscriptions used on the scaling service.
+func SetupScalingSubscriptions(whistClient WhistHasuraClient) {
+	client := whistClient.(*WhistClient)
+	client.Subscriptions = []HasuraSubscription{
 		{
-			Query: MandelboxStatusSubscription,
+			Query: MandelboxStatusQuery,
 			Variables: map[string]interface{}{
 				"status": "ALLOCATED",
 			},
 			Result:  MandelboxEvent{},
-			Handler: MandelboxInfoHandler,
+			Handler: MandelboxAllocatedHandler,
 		},
 		{
-			Query: MandelboxStatusSubscription,
+			Query: MandelboxStatusQuery,
 			Variables: map[string]interface{}{
 				"status": "EXITED",
 			},
 			Result:  MandelboxEvent{},
-			Handler: MandelboxInfoHandler,
+			Handler: MandelboxAllocatedHandler,
 		},
 	}
 }
 
-func Start(whistClient *WhistClient, globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan SubscriptionEvent) error {
+// Start is the main function in the subscriptions package. It initializes a client, sets up the received subscriptions,
+// and starts a goroutine for the client. It also has a goroutine to close the client and subscriptions when the global
+// context gets cancelled.
+func Start(whistClient WhistHasuraClient, globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan SubscriptionEvent) error {
 	// Slice to hold subscription IDs, necessary to properly unsubscribe when we are done.
 	var subscriptionIDs []string
 
 	// Initialize subscription client
-	whistClient.Initialize()
+	client := whistClient.(*WhistClient)
+	client.Initialize()
 
 	// Start goroutine that shuts down the client if the global context gets
 	// cancelled.
@@ -131,10 +121,11 @@ func Start(whistClient *WhistClient, globalCtx context.Context, goroutineTracker
 
 		// Listen for global context cancellation
 		<-globalCtx.Done()
-		whistClient.Close(whistClient.SubscriptionIDs)
+		whistClient.Close(client.SubscriptionIDs)
 	}()
 
-	for _, subscriptionParams := range whistClient.Subscriptions {
+	// Send subscriptions to the client
+	for _, subscriptionParams := range client.Subscriptions {
 		query := subscriptionParams.Query
 		variables := subscriptionParams.Variables
 		result := subscriptionParams.Result
@@ -147,8 +138,9 @@ func Start(whistClient *WhistClient, globalCtx context.Context, goroutineTracker
 		subscriptionIDs = append(subscriptionIDs, id)
 	}
 
-	whistClient.SubscriptionIDs = subscriptionIDs
-	whistClient.Run(goroutineTracker)
+	// Run the client
+	client.SubscriptionIDs = subscriptionIDs
+	client.Run(goroutineTracker)
 
 	return nil
 }

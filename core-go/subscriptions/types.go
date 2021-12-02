@@ -30,6 +30,7 @@ type Mandelbox struct {
 type handlerfn func(SubscriptionEvent, map[string]interface{}) bool
 
 // HasuraSubscription holds the graphql query and parameters to start the subscription.
+// It represents a generic subscription.
 type HasuraSubscription struct {
 	Query     GraphQLQuery
 	Variables map[string]interface{}
@@ -37,17 +38,17 @@ type HasuraSubscription struct {
 	Handler   handlerfn
 }
 
-// InstanceInfoResult is a struct used to hold results for any
+// InstanceResult is a struct used to hold results for any
 // subscription to the "instance_info" table. The CloudInstanceInfo
 // interface represents the table `instance_info` from the `cloud` schema on the database.
-type InstanceInfoResult struct {
+type InstanceResult struct {
 	CloudInstanceInfo interface{} `json:"cloud_instance_info"`
 }
 
-// MandelboxInfoResult is a struct used to hold results for any
+// MandelboxResult is a struct used to hold results for any
 // subscription to the "mandelbox_info" table. The CloudMandelboxInfo
 // interface represents the table `mandelbox_info` from the `cloud` schema on the database.
-type MandelboxInfoResult struct {
+type MandelboxResult struct {
 	CloudMandelboxInfo interface{} `json:"cloud_mandelbox_info"`
 }
 
@@ -55,3 +56,15 @@ type MandelboxInfoResult struct {
 // subscriptions. We define a custom (empty) interface to make the
 // main select on `host-service.go` cleaner.
 type SubscriptionEvent interface{}
+
+// InstanceEvent represents an occurred event on the
+// `cloud.instance_info` database table.
+type InstanceEvent struct {
+	InstanceInfo []Instance `json:"cloud_instance_info"`
+}
+
+// MandelboxInfoEvent represents an occurred event on the
+// `cloud.mandelbox_info` database table.
+type MandelboxEvent struct {
+	MandelboxInfo []Mandelbox `json:"cloud_mandelbox_info"`
+}

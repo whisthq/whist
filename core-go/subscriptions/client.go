@@ -10,13 +10,24 @@ import (
 	graphql "github.com/hasura/go-graphql-client"
 )
 
+// `enabled` is a flag denoting whether the functions in this package should do
+// anything, or simply be no-ops. This is necessary, since we want the subscription
+// operations to be meaningful in environments where we can expect the database
+// guarantees to hold (e.g. `metadata.EnvLocalDevWithDB` or `metadata.EnvDev`)
+// but no-ops in other environments.
+var enabled = (metadata.GetAppEnvironment() != metadata.EnvLocalDev)
+
+// WhistHasuraClient is an interface used to abstract the interactions with
+// the official Hasura client.
 type WhistHasuraClient interface {
 	Initialize()
-	Subscribe()
-	Run()
-	Close()
+	Subscribe(GraphQLQuery, map[string]interface{}, SubscriptionEvent, handlerfn, chan SubscriptionEvent) (string, error)
+	Run(*sync.WaitGroup)
+	Close([]string) error
 }
 
+// WhistClient implements WhistHasuraClient and is exposed to be used
+// by any other service that need to interact with the Hasura client.
 type WhistClient struct {
 	Hasura          *graphql.SubscriptionClient
 	Params          HasuraParams
@@ -24,11 +35,12 @@ type WhistClient struct {
 	SubscriptionIDs []string
 }
 
-func (whistClient *WhistClient) Initialize() {
-	whistClient.Hasura = graphql.NewSubscriptionClient(whistClient.Params.URL).
+// Initialize creates the client.
+func (wc *WhistClient) Initialize() {
+	wc.Hasura = graphql.NewSubscriptionClient(wc.Params.URL).
 		WithConnectionParams(map[string]interface{}{
 			"headers": map[string]string{
-				"x-hasura-admin-secret": whistClient.Params.AccessKey,
+				"x-hasura-admin-secret": wc.Params.AccessKey,
 			},
 		}).WithLog(logger.Print).
 		WithoutLogTypes(graphql.GQL_CONNECTION_KEEP_ALIVE).
@@ -38,9 +50,11 @@ func (whistClient *WhistClient) Initialize() {
 		})
 }
 
-func (whistClient *WhistClient) Subscribe(query GraphQLQuery, variables map[string]interface{}, result SubscriptionEvent, conditionFn handlerfn, subscriptionEvents chan SubscriptionEvent) (string, error) {
+// Subscribe creates the subscriptions according to the received queries and conditions.
+// It passes results through the received channel if the received `conditionFn` is true.
+func (wc *WhistClient) Subscribe(query GraphQLQuery, variables map[string]interface{}, result SubscriptionEvent, conditionFn handlerfn, subscriptionEvents chan SubscriptionEvent) (string, error) {
 	// This subscriptions fires when the running instance status changes to draining on the database
-	id, err := whistClient.Hasura.Subscribe(query, variables, func(data *json.RawMessage, err error) error {
+	id, err := wc.Hasura.Subscribe(query, variables, func(data *json.RawMessage, err error) error {
 		if err != nil {
 			return utils.MakeError("error receiving subscription event from Hasura: %v", err)
 		}
@@ -64,26 +78,27 @@ func (whistClient *WhistClient) Subscribe(query GraphQLQuery, variables map[stri
 	return id, nil
 }
 
-// Run is responsible for starting the subscription client.
-func (whistClient *WhistClient) Run(goroutineTracker *sync.WaitGroup) {
+// Run is responsible for starting the subscription client and adding it
+// to the routine tracker.
+func (wc *WhistClient) Run(goroutineTracker *sync.WaitGroup) {
 	// Run the client on a goroutine to make sure it closes properly when we are done
 	goroutineTracker.Add(1)
 	go func() {
-		whistClient.Hasura.Run()
+		wc.Hasura.Run()
 		goroutineTracker.Done()
 	}()
 }
 
 // Close manages all the logic to unsubscribe to every subscription and close the connection
 // to the Hasura server correctly.
-func (whistClient *WhistClient) Close(subscriptionIDs []string) error {
+func (wc *WhistClient) Close(subscriptionIDs []string) error {
 	// We have to ensure we unsubscribe to every subscription
 	// before closing the client, otherwise it will result in a deadlock!
 	logger.Infof("Closing Hasura subscriptions...")
 	for _, id := range subscriptionIDs {
 		// This is safe to do because the Unsubscribe method
 		// acquires a lock when closing the connection.
-		err := whistClient.Hasura.Unsubscribe(id)
+		err := wc.Hasura.Unsubscribe(id)
 
 		if err != nil {
 			logger.Errorf("Failed to unsubscribe from:%v, %v", id, err)
@@ -94,7 +109,7 @@ func (whistClient *WhistClient) Close(subscriptionIDs []string) error {
 	// Once we have successfully unsubscribed, close the connection to the
 	// Hasura server.
 	logger.Infof("Closing connection to Hasura server...")
-	err := whistClient.Hasura.Close()
+	err := wc.Hasura.Close()
 	if err != nil {
 		// Only use a warning instead of an error because failure to close the
 		// Hasura server is not fatal, as we have already started the host service
@@ -106,21 +121,24 @@ func (whistClient *WhistClient) Close(subscriptionIDs []string) error {
 	return nil
 }
 
-func InitializeWhistHasuraClient(whistClient *WhistClient) error {
+// InitializeWhistHasuraClient is responsible of obtaining the parameters
+// and creating the Hasura client with said parameters.
+func InitializeWhistHasuraClient(whistClient WhistHasuraClient) error {
 	if !enabled {
 		logger.Infof("Running in app environment %s so not enabling Hasura code.", metadata.GetAppEnvironment())
 		return nil
 	}
 	logger.Infof("Setting up Hasura subscriptions...")
 
+	client := whistClient.(*WhistClient)
 	params, err := getWhistHasuraParams()
 	if err != nil {
 		// Error obtaining the connection parameters, we stop and don't setup the client
 		return utils.MakeError("error creating hasura client: %v", err)
 	}
 
-	whistClient.Params = params
-	whistClient.Initialize()
+	client.Params = params
+	client.Initialize()
 
 	return err
 }
