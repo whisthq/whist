@@ -83,7 +83,8 @@ updates:
       interval: "monthly" # runs on the first day of each month
     ignore:
       - dependency-name: "*" # ignore all minor & micro/patch updates for all dependencies
-        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+        update-types:
+          ["version-update:semver-minor", "version-update:semver-patch"]
     open-pull-requests-limit: 10
 
   #####################################################
@@ -116,7 +117,8 @@ updates:
       interval: "monthly" # runs on the first day of each month
     ignore:
       - dependency-name: "*" # ignore all minor & micro/patch updates for all dependencies
-        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+        update-types:
+          ["version-update:semver-minor", "version-update:semver-patch"]
     open-pull-requests-limit: 10
 
   #####################################################
@@ -197,7 +199,8 @@ updates:
       interval: "monthly" # runs on the first day of each month
     ignore:
       - dependency-name: "*" # ignore all minor & micro/patch updates for all dependencies
-        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+        update-types:
+          ["version-update:semver-minor", "version-update:semver-patch"]
     open-pull-requests-limit: 10
 
   #####################################################
@@ -251,7 +254,8 @@ updates:
       interval: "monthly" # runs on the first day of each month
     ignore:
       - dependency-name: "*" # ignore all minor & micro/patch updates for all dependencies
-        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+        update-types:
+          ["version-update:semver-minor", "version-update:semver-patch"]
     open-pull-requests-limit: 10
 
   #####################################################

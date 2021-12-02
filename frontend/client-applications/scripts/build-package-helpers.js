@@ -96,9 +96,13 @@ module.exports = {
       )
         pathArray.shift()
       const path = pathArray.join(";")
-      execCommand(`cmake -S . -B ${cmakeBuildDir} -G Ninja`, protocolDirectory, {
-        Path: path,
-      })
+      execCommand(
+        `cmake -S . -B ${cmakeBuildDir} -G Ninja`,
+        protocolDirectory,
+        {
+          Path: path,
+        }
+      )
     } else {
       execCommand(`cmake -S . -B ${cmakeBuildDir}`, protocolDirectory)
     }
@@ -119,7 +123,8 @@ module.exports = {
 
     const ext = process.platform === "win32" ? ".exe" : ""
     const oldExecutable = "WhistClient"
-    const newExecutable = process.platform === "darwin" ? "WhistClient" : "Whist"
+    const newExecutable =
+      process.platform === "darwin" ? "WhistClient" : "Whist"
 
     if (oldExecutable !== newExecutable) {
       fse.moveSync(
@@ -171,7 +176,8 @@ module.exports = {
   electronBuild: () => {
     console.log("Running 'electron-builder build'...")
     execCommand(
-      `electron-builder build --config electron-builder.config.js --publish never ${(process.env.MACOS_ARCH ?? "") === "arm64" ? "--arm64" : ""
+      `electron-builder build --config electron-builder.config.js --publish never ${
+        (process.env.MACOS_ARCH ?? "") === "arm64" ? "--arm64" : ""
       }`,
       "."
     )
@@ -183,7 +189,8 @@ module.exports = {
       `Running 'electron-builder publish' and uploading to S3 bucket ${bucket}...`
     )
     execCommand(
-      `electron-builder build --config electron-builder.config.js --publish always ${(process.env.MACOS_ARCH ?? "") === "arm64" ? "--arm64" : ""
+      `electron-builder build --config electron-builder.config.js --publish always ${
+        (process.env.MACOS_ARCH ?? "") === "arm64" ? "--arm64" : ""
       }`,
       ".",
       { S3_BUCKET: bucket }
