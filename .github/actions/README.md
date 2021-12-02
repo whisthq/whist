@@ -111,7 +111,7 @@ An important part of this job is managing how arguments get passed to our Python
 1. The path to the `config` folder.
 2. An object of "secrets", which is passed through the `--secrets` flag. In the `actions.yml` file above, this is the `secrets` object that our Action receives as one of its `inputs`.
 
-With a working directory of `fractal`, we might call this:
+With a working directory of `whist`, we might call this:
 
 ```bash
 python .github/actions/monorepo-config/main.py config \
@@ -141,7 +141,7 @@ It's a very simple `Dockerfile`, but there's a hidden layer of complexity that c
 
 ### Paths in the COPY steps
 
-Here's the tricky part about GitHub Actions... they pull a fast one on you right before the `ENTRYPOINT`. For the first three instructions above (`COPY`, `RUN`, `COPY`), your working directory is same folder as your Dockerfile (here, it's the `monorepo-config` folder). But on `ENTRYPOINT`, your working directory becomes the repository root (which for us is the `fractal` monorepo folder, which contains the `config` folder).
+Here's the tricky part about GitHub Actions... they pull a fast one on you right before the `ENTRYPOINT`. For the first three instructions above (`COPY`, `RUN`, `COPY`), your working directory is same folder as your Dockerfile (here, it's the `monorepo-config` folder). But on `ENTRYPOINT`, your working directory becomes the repository root (which for us is the `whist` monorepo folder, which contains the `config` folder).
 
 Our `Dockerfile` is defensive against this behavior. Notice that we're referring to _relative_ paths (like `.` and `./requirements.txt`) as the "source" for the `COPY` directives, because we know we at _build time_ that we're in our Dockerfile's working directory. We refer to _absolute_ paths as the "destination", because we can't be sure exactly at _run time_ where our working directory will be.
 
@@ -149,7 +149,7 @@ Don't hesitate to read and write absolute file paths in your Action container. Y
 
 ### Paths in the ENTRYPOINT step
 
-In the example above, the `ENTRYPOINT` runs the `main.py` script, and passes it an argument: `config`. That's referring to the `config` folder in the root of the monorepo (`fractal/config`), and you'll notice that we're referencing it as a relative path. `ENTRYPOINT` executes at _run time_, not at _build time_. At _run time_, our working directory becomes the root of our git repository, and we can refer to `config` as a relative path.
+In the example above, the `ENTRYPOINT` runs the `main.py` script, and passes it an argument: `config`. That's referring to the `config` folder in the root of the monorepo (`whist/config`), and you'll notice that we're referencing it as a relative path. `ENTRYPOINT` executes at _run time_, not at _build time_. At _run time_, our working directory becomes the root of our git repository, and we can refer to `config` as a relative path.
 
 Don't try and get around this by setting `WORKDIR` in your Dockerfile. GitHub explicitly warns against that [in their docs](https://docs.github.com/en/actions/creating-actions/dockerfile-support-for-github-actions#workdir). If you need to reference the full path of the `ENTRYPOINT` working directory, GitHub makes that available in the `GITHUB_WORKSPACE` environment variable.
 
@@ -171,13 +171,13 @@ python .github/actions/monorepo-config/main.py "config" \
 # When building to run locally, you should give your image a tag.
 # You'll need to reference it when you run a container
 docker build \
-       --tag  fractal/actions/monorepo-config \
+       --tag  whist/actions/monorepo-config \
        --file .github/actions/monorepo-config/Dockerfile
 
 # If you need to debug your image build, it can help to have a
 # more verbose output.
 docker build \
-       --tag      fractal/actions/monorepo-config \
+       --tag      whist/actions/monorepo-config \
        --progress "plain" \
        --no-cache
 
@@ -189,7 +189,7 @@ docker run \
        --volume   $(pwd):/root \
        --workdir  "/root" \
        --env      INPUT_SECRETS='{"test": "secret"}' \
-       fractal/actions/monorepo-config
+       whist/actions/monorepo-config
 
 # It's often useful to run the container with a different entrypoint, like
 # a bash shell. Sometimes you need to have a look around and see what's going
@@ -202,7 +202,7 @@ docker run \
        --volume      $(pwd):/root \
        --workdir     "/root" \
        --env         INPUT_SECRETS='{"test": "secret"}' \
-       fractal/actions/monorepo-config
+       whist/actions/monorepo-config
 
 # Every so often, you'll still want to run your Action inside GitHub's CI.
 # You can set a "workflow_dispatch" trigger on your workflow to manually run it.
@@ -220,7 +220,7 @@ git commit -a -m 'testing the workflow' \
 && git push -u \
 && gh workflow run \
       monorepo-config-test.yml \
-      --repo fractal/fractal \
+      --repo whist/whist \
 && gh run view --web
 ```
 

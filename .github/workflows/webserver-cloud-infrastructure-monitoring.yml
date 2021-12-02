@@ -320,7 +320,7 @@ jobs:
           from notifications.slack_bot import slack_post
 
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-          SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.branch }}"
+          SLACK_CHANNEL = "#alerts-dev"
           BODY = "@releases :rotating_light: Failed to clean lingering Packer Instances and AMI Snapshots in `webserver-cleanup-lingering-packer-builders-and-ami-resources` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)

@@ -44,7 +44,7 @@ def slack_post(
         "channel": channel,
         "username": slack_username,
         "icon_emoji": ":fractal:",
-        "link_names": 1,  # this makes @channel, @fractal_employee work
+        "link_names": 1,  # this makes @channel, @whist_employee work
         "type": "mrkdwn",
         "text": body,
     }

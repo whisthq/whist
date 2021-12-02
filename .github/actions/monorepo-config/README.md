@@ -4,22 +4,22 @@ This folder contains the code for the GitHub Action for the monorepo configurati
 
 # How to run locally
 
-Run all commands with the monorepo root (`fractal/`) as the working directory.
+Run all commands with the monorepo root (`whist/`) as the working directory.
 
 ```bash
 docker build \
-  --tag fractal/monorepo-config \
+  --tag whist/monorepo-config \
   .github/actions/monorepo-config
 
 docker run \
   # remove the container after running
   --rm \
-  # set the working directory to the current folder (fractal root)
+  # set the working directory to the current folder (whist root)
   --workdir $(pwd) \
   # mount as volume, allows you to work interactively with the container
   --volume $(pwd):$(pwd) \
   # reference the image that we tagged in the build step
-  fractal/monorepo-config \
+  whist/monorepo-config \
   # the remaining arguments are passed to the Python program
   # run --help to see the options and documentation.
   --help
@@ -78,7 +78,7 @@ This allows you to pass only the necessary configuration values in your applicat
 
 The Dockerfile for this program is small, but it's carefully constructed to allow for a consistent development environment that matches the GitHub Actions runtime.
 
-It's important to know that in GitHub, the Docker "build-time" commands will be run from a working directory relative to the Dockerfile (this folder). At "run-time" (the `ENTRYPOINT` step), the working directory will change to the monorepo root (`fractal/`). It's best to run commands with a working directory as the monorepo root during development.
+It's important to know that in GitHub, the Docker "build-time" commands will be run from a working directory relative to the Dockerfile (this folder). At "run-time" (the `ENTRYPOINT` step), the working directory will change to the monorepo root (`whist/`). It's best to run commands with a working directory as the monorepo root during development.
 
 To run tests or enter a shell inside the container, override the `--entrypoint` flag to `docker run`. Example:
 
@@ -89,7 +89,7 @@ docker run \
     --workdir $(pwd) \
     --volume $(pwd):$(pwd) \
     --entrypoint pytest \
-    fractal/monorepo-config \
+    whist/monorepo-config \
     .github/actions/monorepo-config
 
 # run tests and reload on change
@@ -100,7 +100,7 @@ docker run \
     --workdir $(pwd) \
     --volume $(pwd):$(pwd) \
     --entrypoint pytest-watch \
-    fractal/monorepo-config \
+    whist/monorepo-config \
     .github/actions/monorepo-config
     --exitfirst \
     --failed-first \

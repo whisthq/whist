@@ -1,7 +1,7 @@
 # workflows/whist-build-and-publish-documentation.yml
 #
 # Whist: Build & Publish Documentation
-# Build and conditionally deploy fractal/fractal monorepo documentation. Although this
+# Build and conditionally deploy fractal/whist monorepo documentation. Although this
 # workflow is triggered by both pull requests and pushes, the steps that deploy
 # the built documentation only run when the triggering event is a push.
 

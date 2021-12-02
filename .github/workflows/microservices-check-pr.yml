@@ -18,7 +18,7 @@ on:
 
 jobs:
   # Check that our Whist Authentication API authentication is valid for all our environments dev/staging/prod
-  microservices-auth0-verify-fractal-api-auth:
+  microservices-auth0-verify-whist-api-auth:
     name: "Auth0: Verify Whist API Authentication for ${{ matrix.environment.name }}"
     runs-on: ubuntu-20.04
 

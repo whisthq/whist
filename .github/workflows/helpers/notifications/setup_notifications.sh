@@ -14,7 +14,7 @@ INSTALL_DEPS=${1-"false"}
 # https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-# Working directory is fractal/.github/workflows/helpers
+# Working directory is whist/.github/workflows/helpers
 cd "$DIR/.."
 
 # Install the Python dependencies only if the invoker requests them
