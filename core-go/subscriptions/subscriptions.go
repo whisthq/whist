@@ -148,7 +148,7 @@ func Start(whistClient *WhistClient, globalCtx context.Context, goroutineTracker
 	}
 
 	whistClient.SubscriptionIDs = subscriptionIDs
-	whistClient.Run(&goroutineTracker)
+	whistClient.Run(goroutineTracker)
 
 	return nil
 }
