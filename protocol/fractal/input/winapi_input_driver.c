@@ -300,24 +300,24 @@ void destroy_input_device(InputDevice* input_device) {
     return;
 }
 
-#define GetWindowsKeyCode(fractal_keycode) windows_keycodes[fractal_keycode]
+#define GetWindowsKeyCode(whist_keycode) windows_keycodes[whist_keycode]
 #define KEYPRESS_MASK 0x8000
 
-int get_keyboard_modifier_state(InputDevice* input_device, WhistKeycode fractal_keycode) {
+int get_keyboard_modifier_state(InputDevice* input_device, WhistKeycode whist_keycode) {
     UNUSED(input_device);
-    return 1 & GetKeyState(GetWindowsKeyCode(fractal_keycode));
+    return 1 & GetKeyState(GetWindowsKeyCode(whist_keycode));
 }
 
-int get_keyboard_key_state(InputDevice* input_device, WhistKeycode fractal_keycode) {
+int get_keyboard_key_state(InputDevice* input_device, WhistKeycode whist_keycode) {
     UNUSED(input_device);
-    return (KEYPRESS_MASK & GetAsyncKeyState(GetWindowsKeyCode(fractal_keycode))) >> 15;
+    return (KEYPRESS_MASK & GetAsyncKeyState(GetWindowsKeyCode(whist_keycode))) >> 15;
 }
 
-int ignore_key_state(InputDevice* input_device, WhistKeycode fractal_keycode, bool active_pinch) {
+int ignore_key_state(InputDevice* input_device, WhistKeycode whist_keycode, bool active_pinch) {
     return 0;
 }
 
-int emit_key_event(InputDevice* input_device, WhistKeycode fractal_keycode, int pressed) {
+int emit_key_event(InputDevice* input_device, WhistKeycode whist_keycode, int pressed) {
     UNUSED(input_device);
 
     INPUT ip;
@@ -328,7 +328,7 @@ int emit_key_event(InputDevice* input_device, WhistKeycode fractal_keycode, int 
 
     HKL keyboard_layout = GetKeyboardLayout(0);
 
-    int windows_keycode = GetWindowsKeyCode(fractal_keycode);
+    int windows_keycode = GetWindowsKeyCode(whist_keycode);
 
     ip.ki.wScan =
         (WORD)MapVirtualKeyExA(windows_keycode & ~USE_NUMPAD, MAPVK_VK_TO_VSC_EX, keyboard_layout);
@@ -344,7 +344,7 @@ int emit_key_event(InputDevice* input_device, WhistKeycode fractal_keycode, int 
     int ret = SendInput(1, &ip, sizeof(INPUT));
 
     if (ret != 1) {
-        LOG_WARNING("Failed to send input event for keycode %d, pressed %d!", fractal_keycode,
+        LOG_WARNING("Failed to send input event for keycode %d, pressed %d!", whist_keycode,
                     pressed);
         return -1;
     }

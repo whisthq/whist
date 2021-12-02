@@ -56,7 +56,7 @@ typedef struct AudioFrame {
 #define MAX_AUDIOFRAME_DATA_SIZE (LARGEST_AUDIOFRAME_SIZE - MAX_AUDIOFRAME_METADATA_SIZE)
 
 /**
- * @brief                          Sets the fractal frame's cursor image
+ * @brief                          Sets the whist frame's cursor image
  *
  * @param frame                    The frame who's data buffer should be written to
  *

@@ -2,7 +2,7 @@
 
 void set_frame_cursor_image(VideoFrame* frame, WhistCursorImage* cursor) {
     /*
-        Sets the fractal frame's cursor image
+        Sets the whist frame's cursor image
 
         Arguments:
             frame (Frame*): The frame who's data buffer should be written to

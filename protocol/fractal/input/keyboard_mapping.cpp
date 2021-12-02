@@ -261,50 +261,50 @@ extern "C" void update_mapped_keyboard_state(InputDevice* input_device, WhistOST
     // Modmap all keycode values
     bool mapped_keys[KEYCODE_UPPERBOUND] = {0};
     WhistKeycode origin_mapping[KEYCODE_UPPERBOUND] = {FK_UNKNOWN};
-    for (int fractal_keycode = 0; fractal_keycode < KEYCODE_UPPERBOUND; ++fractal_keycode) {
-        WhistKeycode mapped_key = (WhistKeycode)fractal_keycode;
+    for (int whist_keycode = 0; whist_keycode < KEYCODE_UPPERBOUND; ++whist_keycode) {
+        WhistKeycode mapped_key = (WhistKeycode)whist_keycode;
         if (os_type == WHIST_APPLE && modmap.count(mapped_key)) {
             mapped_key = modmap[mapped_key];
         }
         // If any origin key is pressed, then the modmap'ed key is considered pressed
-        mapped_keys[mapped_key] |= fractal_keycode < keyboard_state.num_keycodes &&
-                                   (bool)keyboard_state.state[fractal_keycode];
+        mapped_keys[mapped_key] |= whist_keycode < keyboard_state.num_keycodes &&
+                                   (bool)keyboard_state.state[whist_keycode];
         if (mapped_keys[mapped_key]) {
-            LOG_INFO("Syncing with %d pressed! From %d origin!", mapped_key, fractal_keycode);
+            LOG_INFO("Syncing with %d pressed! From %d origin!", mapped_key, whist_keycode);
         }
         // Remember which origin key that refers to
-        origin_mapping[mapped_key] = (WhistKeycode)fractal_keycode;
+        origin_mapping[mapped_key] = (WhistKeycode)whist_keycode;
     }
 
-    for (int fractal_keycode = 0; fractal_keycode < KEYCODE_UPPERBOUND; ++fractal_keycode) {
+    for (int whist_keycode = 0; whist_keycode < KEYCODE_UPPERBOUND; ++whist_keycode) {
         // If no origin key maps to this keycode, we can skip this entry
-        if (origin_mapping[fractal_keycode] == FK_UNKNOWN) {
+        if (origin_mapping[whist_keycode] == FK_UNKNOWN) {
             continue;
         }
-        if (ignore_key_state(input_device, (WhistKeycode)fractal_keycode,
+        if (ignore_key_state(input_device, (WhistKeycode)whist_keycode,
                              keyboard_state.active_pinch)) {
             continue;
         }
         int is_pressed =
             holding_keymap
                 ? (int)std::count(currently_pressed.begin(), currently_pressed.end(),
-                                  (WhistKeycode)fractal_keycode)
-                : (int)get_keyboard_key_state(input_device, (WhistKeycode)fractal_keycode);
-        if (!mapped_keys[fractal_keycode] && is_pressed) {
-            LOG_INFO("Discrepancy found at %d (%d), unpressing!", fractal_keycode,
-                     origin_mapping[fractal_keycode]);
+                                  (WhistKeycode)whist_keycode)
+                : (int)get_keyboard_key_state(input_device, (WhistKeycode)whist_keycode);
+        if (!mapped_keys[whist_keycode] && is_pressed) {
+            LOG_INFO("Discrepancy found at %d (%d), unpressing!", whist_keycode,
+                     origin_mapping[whist_keycode]);
             // Reverse map the key, since emit_mapped_key_event will remap it
-            emit_mapped_key_event(input_device, os_type, origin_mapping[fractal_keycode], 0);
-        } else if (mapped_keys[fractal_keycode] && !is_pressed) {
-            LOG_INFO("Discrepancy found at %d (%d), pressing!", fractal_keycode,
-                     origin_mapping[fractal_keycode]);
+            emit_mapped_key_event(input_device, os_type, origin_mapping[whist_keycode], 0);
+        } else if (mapped_keys[whist_keycode] && !is_pressed) {
+            LOG_INFO("Discrepancy found at %d (%d), pressing!", whist_keycode,
+                     origin_mapping[whist_keycode]);
             // Reverse map the key, since emit_mapped_key_event will remap it
-            emit_mapped_key_event(input_device, os_type, origin_mapping[fractal_keycode], 1);
+            emit_mapped_key_event(input_device, os_type, origin_mapping[whist_keycode], 1);
 
-            if (fractal_keycode == FK_CAPSLOCK) {
+            if (whist_keycode == FK_CAPSLOCK) {
                 server_caps_lock = !server_caps_lock;
             }
-            if (fractal_keycode == FK_NUMLOCK) {
+            if (whist_keycode == FK_NUMLOCK) {
                 server_num_lock = !server_num_lock;
             }
         }

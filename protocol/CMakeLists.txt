@@ -328,7 +328,7 @@ endif()
 
 # Tell CMake where to look for includes
 # Use SYSTEM flag to not get warnings from their files
-include_directories(${CMAKE_SOURCE_DIR}) # For #include <fractal/**> semantics
+include_directories(${CMAKE_SOURCE_DIR}) # For #include <whist/**> semantics
 include_directories(SYSTEM include)
 include_directories(SYSTEM ${CMAKE_BINARY_DIR}/include)
 include_directories(SYSTEM ${CMAKE_BINARY_DIR}/include/ffmpeg)

@@ -12,7 +12,7 @@
 
 // @brief Linux keycodes for replaying Whist user inputs on server
 // @details index is Whist keycode, value is Linux keycode
-#define GetX11KeySym(fractal_keycode) x11_keysyms[fractal_keycode]
+#define GetX11KeySym(whist_keycode) x11_keysyms[whist_keycode]
 const int x11_keysyms[KEYCODE_UPPERBOUND] = {
     0,                        // Whist keycodes start at index 4
     0,                        // Whist keycodes start at index 4
@@ -309,8 +309,8 @@ void destroy_input_device(InputDevice* input_device) {
     return;
 }
 
-int get_keyboard_modifier_state(InputDevice* input_device, WhistKeycode fractal_keycode) {
-    switch (fractal_keycode) {
+int get_keyboard_modifier_state(InputDevice* input_device, WhistKeycode whist_keycode) {
+    switch (whist_keycode) {
         case FK_CAPSLOCK:
             return input_device->caps_lock;
         case FK_NUMLOCK:
@@ -321,21 +321,21 @@ int get_keyboard_modifier_state(InputDevice* input_device, WhistKeycode fractal_
     }
 }
 
-int get_keyboard_key_state(InputDevice* input_device, WhistKeycode fractal_keycode) {
-    if ((int)fractal_keycode >= KEYCODE_UPPERBOUND) {
+int get_keyboard_key_state(InputDevice* input_device, WhistKeycode whist_keycode) {
+    if ((int)whist_keycode >= KEYCODE_UPPERBOUND) {
         return 0;
     } else {
-        return input_device->keyboard_state[fractal_keycode];
+        return input_device->keyboard_state[whist_keycode];
     }
 }
 
-int ignore_key_state(InputDevice* input_device, WhistKeycode fractal_keycode, bool active_pinch) {
+int ignore_key_state(InputDevice* input_device, WhistKeycode whist_keycode, bool active_pinch) {
     return 0;
 }
 
-int emit_key_event(InputDevice* input_device, WhistKeycode fractal_keycode, int pressed) {
+int emit_key_event(InputDevice* input_device, WhistKeycode whist_keycode, int pressed) {
     XLockDisplay(input_device->display);
-    KeyCode kcode = XKeysymToKeycode(input_device->display, GetX11KeySym(fractal_keycode));
+    KeyCode kcode = XKeysymToKeycode(input_device->display, GetX11KeySym(whist_keycode));
     if (!kcode) {
         return -1;
     }
@@ -344,12 +344,12 @@ int emit_key_event(InputDevice* input_device, WhistKeycode fractal_keycode, int 
 
     XUnlockDisplay(input_device->display);
 
-    input_device->keyboard_state[fractal_keycode] = pressed;
+    input_device->keyboard_state[whist_keycode] = pressed;
 
-    if (fractal_keycode == FK_CAPSLOCK && pressed) {
+    if (whist_keycode == FK_CAPSLOCK && pressed) {
         input_device->caps_lock = !input_device->caps_lock;
     }
-    if (fractal_keycode == FK_NUMLOCK && pressed) {
+    if (whist_keycode == FK_NUMLOCK && pressed) {
         input_device->num_lock = !input_device->num_lock;
     }
     return 0;

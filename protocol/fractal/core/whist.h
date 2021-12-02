@@ -928,7 +928,7 @@ int bit_array_test_bit(const BitArray* const ba, const unsigned int bit);
 
 /**
  * @brief                          Returns a short string representing the current git commit
- *                                 of fractal at the time of compilation
+ *                                 of whist at the time of compilation
  *
  * @returns                        The git commit
  */

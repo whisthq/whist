@@ -30,8 +30,8 @@ Defines
 ============================
 */
 
-#define KeyUp(input_device, fractal_keycode) emit_key_event(input_device, fractal_keycode, 0)
-#define KeyDown(input_device, fractal_keycode) emit_key_event(input_device, fractal_keycode, 1)
+#define KeyUp(input_device, whist_keycode) emit_key_event(input_device, whist_keycode, 0)
+#define KeyDown(input_device, whist_keycode) emit_key_event(input_device, whist_keycode, 1)
 
 unsigned int last_input_fcmsg_id = 0;
 WhistOSType input_os_type = WHIST_UNKNOWN_OS;

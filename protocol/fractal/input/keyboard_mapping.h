@@ -27,13 +27,13 @@ void update_mapped_keyboard_state(InputDevice* input_device, WhistOSType os_type
  *
  * @param os_type                  The origin OS to use for deciding keymaps
  *
- * @param fractal_keycode          The Whist keycode to modify
+ * @param whist_keycode          The Whist keycode to modify
  *
  * @param pressed                  1 for a key press, 0 for a key unpress
  *
  * @returns                        0 on success, -1 on failure
  */
 int emit_mapped_key_event(InputDevice* input_device, WhistOSType os_type,
-                          WhistKeycode fractal_keycode, int pressed);
+                          WhistKeycode whist_keycode, int pressed);
 
 #endif  // WHIST_KEYBOARD_MAPPING_H

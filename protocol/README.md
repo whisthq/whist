@@ -117,7 +117,7 @@ In an ideal world, we'd use the NVIDIA Capture SDK with the NVIDIA encoder. Howe
 |    ├── network.c <- Networking code for multiclient
 └── test
     ├── images <- images for unit testing
-    └── protocol_test.cpp <- tests code in fractal module
+    └── protocol_test.cpp <- tests code in whist/ module
 ```
 
 The above files are fairly static. If you add or remove a file, or change what a file does, please update this directory so we can keep track of it all!

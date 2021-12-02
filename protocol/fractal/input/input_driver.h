@@ -62,13 +62,13 @@ void destroy_input_device(InputDevice* input_device);
  *
  * @param input_device             The initialized input device to query
  *
- * @param fractal_keycode          The Whist keycode of the modifier to
+ * @param whist_keycode          The Whist keycode of the modifier to
  *                                 query (`FK_CAPSLOCK` or `FK_NUMLOCK`)
  *
  * @returns                        1 if the queried modifier is active,
  *                                 0 if inactive, and -1 on error
  */
-int get_keyboard_modifier_state(InputDevice* input_device, WhistKeycode fractal_keycode);
+int get_keyboard_modifier_state(InputDevice* input_device, WhistKeycode whist_keycode);
 
 /**
  * @brief                          Get the pressed/unpressed state of a
@@ -76,39 +76,39 @@ int get_keyboard_modifier_state(InputDevice* input_device, WhistKeycode fractal_
  *
  * @param input_device             The initialized input device to query
  *
- * @param fractal_keycode          The Whist keycode to query
+ * @param whist_keycode          The Whist keycode to query
  *
  * @returns                        1 if the queried key is pressed,
  *                                 0 if unpressed, and -1 on error
  */
-int get_keyboard_key_state(InputDevice* input_device, WhistKeycode fractal_keycode);
+int get_keyboard_key_state(InputDevice* input_device, WhistKeycode whist_keycode);
 
 /**
  * @brief                          Determine whether to ignore the client key state
  *
  * @param input_device             The initialized input device to query
  *
- * @param fractal_keycode          The Whist keycode to query
+ * @param whist_keycode          The Whist keycode to query
  *
  * @param active_pinch             Whether the client has an active pinch gesture
  *
  * @returns                        1 if we ignore the client key state,
  *                                 0 if we take the client key state
  */
-int ignore_key_state(InputDevice* input_device, WhistKeycode fractal_keycode, bool active_pinch);
+int ignore_key_state(InputDevice* input_device, WhistKeycode whist_keycode, bool active_pinch);
 
 /**
  * @brief                          Emit a keyboard press/unpress event
  *
  * @param input_device             The initialized input device to write
  *
- * @param fractal_keycode              The Whist keycode to modify
+ * @param whist_keycode              The Whist keycode to modify
  *
  * @param pressed                  1 for a key press, 0 for a key unpress
  *
  * @returns                        0 on success, -1 on failure
  */
-int emit_key_event(InputDevice* input_device, WhistKeycode fractal_keycode, int pressed);
+int emit_key_event(InputDevice* input_device, WhistKeycode whist_keycode, int pressed);
 
 /**
  * @brief                          Emit a relative/absolute mouse motion event
