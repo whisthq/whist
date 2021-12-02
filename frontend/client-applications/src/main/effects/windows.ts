@@ -6,7 +6,7 @@ import {
   throttle,
   filter,
 } from "rxjs/operators"
-import { interval, of, merge } from "rxjs"
+import { interval, of } from "rxjs"
 import Sentry from "@sentry/electron"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
@@ -15,11 +15,7 @@ import { destroyTray } from "@app/utils/tray"
 import { logBase } from "@app/utils/logging"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
 import { WindowHashProtocol } from "@app/constants/windows"
-import {
-  createProtocolWindow,
-  createAuthWindow,
-  createNetworkWindow,
-} from "@app/utils/windows"
+import { createProtocolWindow, createAuthWindow } from "@app/utils/windows"
 import { persistGet } from "@app/utils/persist"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
 import { protocolStreamInfo, protocolStreamKill } from "@app/utils/protocol"
@@ -30,8 +26,6 @@ import {
   CACHED_REFRESH_TOKEN,
   CACHED_USER_EMAIL,
 } from "@app/constants/store"
-import { withAppReady } from "@app/utils/observables"
-import { networkAnalyze } from "@app/utils/networkAnalysis"
 
 // Keeps track of how many times we've tried to relaunch the protocol
 const MAX_RETRIES = 3
@@ -157,14 +151,4 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
     void app?.dock?.show()
     createAuthWindow()
   }
-})
-
-withAppReady(
-  merge(
-    fromTrigger(WhistTrigger.checkPaymentFlowSuccess),
-    fromTrigger(WhistTrigger.stripeAuthRefresh)
-  )
-).subscribe(() => {
-  networkAnalyze()
-  createNetworkWindow()
 })
