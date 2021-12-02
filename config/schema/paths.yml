@@ -17,9 +17,9 @@ PROTOCOL_LOG_FILE_NAME: "protocol.log"
 
 CLIENT_PERSISTENCE_FOLDER_NAME:
   local: "Electron"
-  dev: "fractal"
-  staging: "fractal"
-  prod: "fractal"
+  dev: "whist"
+  staging: "whist"
+  prod: "whist"
 
 CLIENT_LOG_FOLDERNAME: "logs"
 

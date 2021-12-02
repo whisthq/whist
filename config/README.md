@@ -6,39 +6,39 @@ This folder contains common configuration values that can be re-used across our 
 
 The whole config process is containerized, so you'll need Docker installed. The commands below assume a working directory of `config`, which is the same folder as this README.
 
-First, build the image with the tag `fractal/config`.
+First, build the image with the tag `whist/config`.
 
 ```bash
-docker build --tag fractal/config .
+docker build --tag whist/config .
 ```
 
 Then, run the configuration builder. You should expect to see the config map printed to stdout as a large JSON object.
 
 ```bash
-docker run fractal/config
+docker run whist/config
 ```
 
 Any additional arguments will be passed on to the Python CLI for the configuration builder.
 
 ```bash
 # View CLI documentation and options.
-docker run fractal/config --help
+docker run whist/config --help
 
 # Flatten config to use macos + dev values.
-docker run fractal/config --os macos --deploy dev
+docker run whist/config --os macos --deploy dev
 ```
 
 You can override the `--entrypoint` to inspect the container or to run tests.
 
 ```bash
 # Enter into a bash shell.
-docker run -it --entrypoint /bin/bash fractal/config
+docker run -it --entrypoint /bin/bash whist/config
 
 # Run tests using pytest.
 # Note that the config folder is copied over to /root inside the container.
 # We pass to "pytest" the path of the /root/build folder as an argument.
 # Docker syntax requires entrypoint arguments to follow the image name.
-docker run --entrypoint pytest fractal/config /root/build
+docker run --entrypoint pytest whist/config /root/build
 ```
 
 ## How config works
@@ -73,7 +73,7 @@ This allows you to pass only the necessary configuration values in your applicat
 
 ## Example program run
 
-For GitHub Actions reasons, it's good to get in the habit of running this program (and any Actions program) from the root folder of the monorepo. We'll run from the `fractal` folder like this:
+For GitHub Actions reasons, it's good to get in the habit of running this program (and any Actions program) from the root folder of the monorepo. We'll run from the `whist` folder like this:
 
 ```bash
 python .github/actions/monorepo-config/main.py \
@@ -98,7 +98,7 @@ Depending on the data in the YAML files, this might output JSON like you see bel
   "CLIENT_DOWNLOAD": "https://fractal-chromium-macos-dev.s3.amazonaws.com/Whist.dmg",
   "CLIENT_LOG_FILE_NAME": "client.log",
   "CLIENT_LOG_FOLDERNAME": "logs",
-  "CLIENT_PERSISTENCE_FOLDER_NAME": "fractal",
+  "CLIENT_PERSISTENCE_FOLDER_NAME": "whist",
   "ENV": "dev",
   "EXECUTABLE_NAME": "Whist (development)",
   "FRONTEND": "dev.whist.com",

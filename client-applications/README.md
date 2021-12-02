@@ -81,9 +81,9 @@ If errors/crashes occur, the best thing to do is to check the client-side and se
 
 Application data are written and stored on the client-side in the following locations:
 
-- On macOS, look in `~/Library/Application\ Support/{Electron,fractal}/{dev,staging,prod}`
-- On Linux, look in `~/.config/{Electron,fractal}/{dev,staging,prod}`
-- On Windows, look in `%APPDATA%\{Electron,fractal}\{dev,staging,prod}`. Note that `%APPDATA%` usually corresponds to `C:\Users\<user>\AppData\Roaming`.
+- On macOS, look in `~/Library/Application\ Support/{Electron,whist}/{dev,staging,prod}`
+- On Linux, look in `~/.config/{Whist}/{dev,staging,prod}`
+- On Windows, look in `%APPDATA%\{Electron,whist}\{dev,staging,prod}`. Note that `%APPDATA%` usually corresponds to `C:\Users\<user>\AppData\Roaming`.
   The unpackaged app will have `Electron` in the path while the packaged app will have `fractal`. You can clear these files to re-trigger behavior, such as a re-running the login flow, by deleting them via `yarn cache:clear`.
 
 Some pieces of state, such as the user's authentication token, are stored in the file system and persist between app launches. This state is persisted in the file `config.json`.
