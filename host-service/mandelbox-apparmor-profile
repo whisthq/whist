@@ -4,7 +4,7 @@
 #
 # Copyright 2021 Whist Technologies, Inc.
 #
-# This profile was generated according to fractal/mandelbox-utils:apparmor-dump-profile
+# This profile was generated according to whist/mandelbox-utils:apparmor-dump-profile
 # to match the docker-default profile, and then modified as follows:
 # - Stop denying the `mount` syscall to enable FUSE filesystems in containers
 #
