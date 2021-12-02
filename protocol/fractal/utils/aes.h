@@ -79,7 +79,7 @@ bool verify_hmac(void* signature, void* buf, int len, void* key);
  *
  * @returns                        Will return the encrypted packet length
  */
-int encrypt_packet(FractalPacket* plaintext_packet, int packet_len, FractalPacket* encrypted_packet,
+int encrypt_packet(WhistPacket* plaintext_packet, int packet_len, WhistPacket* encrypted_packet,
                    unsigned char* private_key);
 
 /**
@@ -96,7 +96,7 @@ int encrypt_packet(FractalPacket* plaintext_packet, int packet_len, FractalPacke
  * @returns                        Will return -1 on failure, else will return the
  *                                 length of the decrypted packets
  */
-int decrypt_packet(FractalPacket* encrypted_packet, int packet_len, FractalPacket* plaintext_packet,
+int decrypt_packet(WhistPacket* encrypted_packet, int packet_len, WhistPacket* plaintext_packet,
                    unsigned char* private_key);
 
 /**
@@ -113,8 +113,8 @@ int decrypt_packet(FractalPacket* encrypted_packet, int packet_len, FractalPacke
  * @returns                        Will return -1 on failure, else will return the
  *                                 length of the decrypted packets
  */
-int decrypt_packet_n(FractalPacket* encrypted_packet, int packet_len,
-                     FractalPacket* plaintext_packet, int plaintext_len,
+int decrypt_packet_n(WhistPacket* encrypted_packet, int packet_len,
+                     WhistPacket* plaintext_packet, int plaintext_len,
                      unsigned char* private_key);
 
 /**

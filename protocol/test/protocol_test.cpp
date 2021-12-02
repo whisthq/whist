@@ -222,13 +222,13 @@ TEST_F(CaptureStdoutTest, AddingPacketsToRingBuffer) {
     RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, num_packets, NULL);
 
     // setup packets to add to ringbuffer
-    FractalPacket pkt1 = {0};
+    WhistPacket pkt1 = {0};
     pkt1.type = PACKET_VIDEO;
     pkt1.id = 0;
     pkt1.index = 0;
     pkt1.is_a_nack = false;
 
-    FractalPacket pkt2 = {0};
+    WhistPacket pkt2 = {0};
     pkt2.type = PACKET_VIDEO;
     pkt2.id = 1;
     pkt2.index = 0;
@@ -258,7 +258,7 @@ TEST(ProtocolTest, ResetRingBufferFrame) {
     RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, num_packets, NULL);
 
     // fill ringbuffer
-    FractalPacket pkt1;
+    WhistPacket pkt1;
     pkt1.type = PACKET_VIDEO;
     pkt1.id = 0;
     pkt1.index = 0;
@@ -451,7 +451,7 @@ TEST(ProtocolTest, EncryptAndDecrypt) {
     size_t len = strlen(data);
 
     // Construct test packet
-    FractalPacket original_packet;
+    WhistPacket original_packet;
 
     // Contruct packet metadata
     original_packet.id = -1;
@@ -467,12 +467,12 @@ TEST(ProtocolTest, EncryptAndDecrypt) {
     // Encrypt the packet using aes encryption
     int original_len = PACKET_HEADER_SIZE + original_packet.payload_size;
 
-    FractalPacket encrypted_packet;
+    WhistPacket encrypted_packet;
     int encrypted_len = encrypt_packet(&original_packet, original_len, &encrypted_packet,
                                        (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
 
     // decrypt packet
-    FractalPacket decrypted_packet;
+    WhistPacket decrypted_packet;
 
     int decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
                                        (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
@@ -490,7 +490,7 @@ TEST_F(CaptureStdoutTest, BadDecrypt) {
     size_t len = strlen(data);
 
     // Construct test packet
-    FractalPacket original_packet;
+    WhistPacket original_packet;
 
     // Contruct packet metadata
     original_packet.id = -1;
@@ -506,12 +506,12 @@ TEST_F(CaptureStdoutTest, BadDecrypt) {
     // Encrypt the packet using aes encryption
     int original_len = PACKET_HEADER_SIZE + original_packet.payload_size;
 
-    FractalPacket encrypted_packet;
+    WhistPacket encrypted_packet;
     int encrypted_len = encrypt_packet(&original_packet, original_len, &encrypted_packet,
                                        (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
 
     // decrypt packet with differing key
-    FractalPacket decrypted_packet;
+    WhistPacket decrypted_packet;
 
     int decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
                                        (unsigned char*)SECOND_BINARY_PRIVATE_KEY);

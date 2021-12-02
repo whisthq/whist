@@ -34,11 +34,11 @@ Public Functions
 int broadcast_ack(Client *client);
 
 /**
- * @brief                          Sends a FractalPacket and accompanying
- *                                 FractalPacketType to all active clients,
+ * @brief                          Sends a WhistPacket and accompanying
+ *                                 WhistPacketType to all active clients,
  *                                 over UDP.
  * @param client				   The destination client
- * @param type                     The FractalPacketType, either VIDEO, AUDIO,
+ * @param type                     The WhistPacketType, either VIDEO, AUDIO,
  *                                 or MESSAGE
  * @param data                     A pointer to the data to be sent
  * @param len                      The number of bytes to send
@@ -46,23 +46,23 @@ int broadcast_ack(Client *client);
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int broadcast_udp_packet(Client *client, FractalPacketType type, void *data, int len,
+int broadcast_udp_packet(Client *client, WhistPacketType type, void *data, int len,
                          int packet_id);
 
 /**
- * @brief                          Sends a FractalPacket and accompanying
- *                                 FractalPacketType to all active clients,
+ * @brief                          Sends a WhistPacket and accompanying
+ *                                 WhistPacketType to all active clients,
  *                                 over TCP.
  *
  * @param client				   The target client
- * @param type                     The FractalPacketType, either VIDEO, AUDIO,
+ * @param type                     The WhistPacketType, either VIDEO, AUDIO,
  *                                 or MESSAGE
  * @param data                     A pointer to the data to be sent
  * @param len                      The nubmer of bytes to send
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int broadcast_tcp_packet(Client *client, FractalPacketType type, void *data, int len);
+int broadcast_tcp_packet(Client *client, WhistPacketType type, void *data, int len);
 
 /**
  * @brief                          Tries to read in next available TCP message
@@ -80,7 +80,7 @@ int broadcast_tcp_packet(Client *client, FractalPacketType type, void *data, int
  * @returns                        Returns -1 on error, 0 otherwise. Not
  *                                 finding an available message is not an error.
  */
-int try_get_next_message_tcp(Client *client, FractalPacket **p_tcp_packet);
+int try_get_next_message_tcp(Client *client, WhistPacket **p_tcp_packet);
 
 /**
  * @brief                          Tries to read in next available UDP message

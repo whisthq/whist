@@ -114,7 +114,7 @@ int discover_ports(bool *with_stun) {
     LOG_INFO("Sent discovery packet");
 
     // Receive discovery packets from server
-    FractalPacket *tcp_packet = NULL;
+    WhistPacket *tcp_packet = NULL;
     clock timer;
     start_timer(&timer);
     do {

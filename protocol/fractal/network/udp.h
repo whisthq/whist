@@ -79,11 +79,11 @@ void udp_update_bitrate_settings(SocketContext* context, int burst_bitrate,
  *                                 NOTE: This function is not thread-safe on SocketContext
  *
  * @param context                  The SocketContext that will have a nack buffer
- * @param type                     The FractalPacketType that this nack buffer will be used for
+ * @param type                     The WhistPacketType that this nack buffer will be used for
  * @param max_payload_size         The largest payload that will be saved in the nack buffer
  * @param num_buffers              The number of buffers that will be stored in the nack buffer
  */
-void udp_register_nack_buffer(SocketContext* context, FractalPacketType type, int max_payload_size,
+void udp_register_nack_buffer(SocketContext* context, WhistPacketType type, int max_payload_size,
                               int num_buffers);
 
 /**
@@ -91,11 +91,11 @@ void udp_register_nack_buffer(SocketContext* context, FractalPacketType type, in
  *                                 NOTE: This function is thread-safe with send_packet
  *
  * @param context                  The SocketContext to nack from
- * @param type                     The FractalPacketType of the nack'ed packet
+ * @param type                     The WhistPacketType of the nack'ed packet
  * @param id                       The ID of the nack'ed packet
  * @param index                    The index of the nack'ed packet
- *                                 (The UDP packet index into the larger FractalPacket)
+ *                                 (The UDP packet index into the larger WhistPacket)
  */
-int udp_nack(SocketContext* context, FractalPacketType type, int id, int index);
+int udp_nack(SocketContext* context, WhistPacketType type, int id, int index);
 
 #endif  // WHIST_UDP_H

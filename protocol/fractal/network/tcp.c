@@ -60,7 +60,7 @@ int tcp_ack(void* raw_context) {
     return send(context->socket, NULL, 0, 0);
 }
 
-FractalPacket* tcp_read_packet(void* raw_context, bool should_recv) {
+WhistPacket* tcp_read_packet(void* raw_context, bool should_recv) {
     SocketContextData* context = raw_context;
 
     // The dynamically sized buffer to read into
@@ -101,12 +101,12 @@ FractalPacket* tcp_read_packet(void* raw_context, bool should_recv) {
         // If the target len is valid, and actual len > target len, then we're
         // good to go
         if (target_len >= 0 && actual_len >= target_len) {
-            FractalPacket* decrypted_packet_buffer = allocate_region(target_len);
+            WhistPacket* decrypted_packet_buffer = allocate_region(target_len);
             int decrypted_len;
             if (ENCRYPTING_PACKETS) {
                 // Decrypt the packet
                 decrypted_len = decrypt_packet_n(
-                    (FractalPacket*)(encrypted_tcp_packet_buffer->buf + sizeof(int)), target_len,
+                    (WhistPacket*)(encrypted_tcp_packet_buffer->buf + sizeof(int)), target_len,
                     decrypted_packet_buffer, target_len,
                     (unsigned char*)context->binary_aes_private_key);
             } else {
@@ -116,7 +116,7 @@ FractalPacket* tcp_read_packet(void* raw_context, bool should_recv) {
                        target_len);
             }
 #if LOG_NETWORKING
-            LOG_INFO("Received a FractalPacket of size %d over TCP", decrypted_len);
+            LOG_INFO("Received a WhistPacket of size %d over TCP", decrypted_len);
 #endif
 
             // Move the rest of the read bytes to the beginning of the buffer to
@@ -149,11 +149,11 @@ FractalPacket* tcp_read_packet(void* raw_context, bool should_recv) {
     return NULL;
 }
 
-void tcp_free_packet(void* raw_context, FractalPacket* tcp_packet) {
+void tcp_free_packet(void* raw_context, WhistPacket* tcp_packet) {
     deallocate_region(tcp_packet);
 }
 
-int tcp_send_constructed_packet(void* raw_context, FractalPacket* packet, size_t packet_size) {
+int tcp_send_constructed_packet(void* raw_context, WhistPacket* packet, size_t packet_size) {
     SocketContextData* context = raw_context;
 
     // Allocate a buffer for the encrypted packet
@@ -162,7 +162,7 @@ int tcp_send_constructed_packet(void* raw_context, FractalPacket* packet, size_t
     // Encrypt the packet using aes encryption, offset by 1 byte
     int unencrypted_len = get_packet_size(packet);
     int encrypted_len = encrypt_packet(packet, unencrypted_len,
-                                       (FractalPacket*)(sizeof(int) + encrypted_packet_buffer),
+                                       (WhistPacket*)(sizeof(int) + encrypted_packet_buffer),
                                        (unsigned char*)context->binary_aes_private_key);
 
     // If we shouldn't be encrypted, then unencrypt the packet
@@ -179,7 +179,7 @@ int tcp_send_constructed_packet(void* raw_context, FractalPacket* packet, size_t
 
     //#if LOG_NETWORKING
     // This is useful enough to print, even outside of LOG_NETWORKING GUARDS
-    LOG_INFO("Sending a FractalPacket of size %d over TCP", unencrypted_len);
+    LOG_INFO("Sending a WhistPacket of size %d over TCP", unencrypted_len);
     //#endif
 
     // Send the packet
@@ -200,7 +200,7 @@ int tcp_send_constructed_packet(void* raw_context, FractalPacket* packet, size_t
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int tcp_send_packet(void* raw_context, FractalPacketType type, void* data, int len, int id) {
+int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, int len, int id) {
     SocketContextData* context = raw_context;
 
     if (id != -1) {
@@ -209,8 +209,8 @@ int tcp_send_packet(void* raw_context, FractalPacketType type, void* data, int l
 
     // Use our block allocator
     // This function fragments the heap too much to use malloc here
-    int packet_size = sizeof(FractalPacket) + len;
-    FractalPacket* packet = allocate_region(packet_size);
+    int packet_size = sizeof(WhistPacket) + len;
+    WhistPacket* packet = allocate_region(packet_size);
 
     // Contruct packet metadata
     packet->id = id;

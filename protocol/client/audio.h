@@ -50,7 +50,7 @@ void enable_audio_refresh();
 void set_audio_frequency(int new_audio_frequency);
 
 /**
- * @brief                          Receives a FractalPacket into an audio
+ * @brief                          Receives a WhistPacket into an audio
  *                                 packet, and check if NACKing is necessary
  *
  * @param packet                   Packet of data that gets received over a
@@ -59,7 +59,7 @@ void set_audio_frequency(int new_audio_frequency);
  * @returns                        Returns -1 if received an incorrect packet,
  *                                 else 0
  */
-int32_t receive_audio(FractalPacket* packet);
+int32_t receive_audio(WhistPacket* packet);
 
 /**
  * @brief                          Update the audio parameters to new parameters

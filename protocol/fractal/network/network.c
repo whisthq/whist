@@ -47,7 +47,7 @@ int ack(SocketContext* context) {
     return context->ack(context->context);
 }
 
-FractalPacket* read_packet(SocketContext* context, bool should_recv) {
+WhistPacket* read_packet(SocketContext* context, bool should_recv) {
     if (context->context == NULL) {
         LOG_ERROR("The given SocketContext has not been initialized!");
         return NULL;
@@ -55,7 +55,7 @@ FractalPacket* read_packet(SocketContext* context, bool should_recv) {
     return context->read_packet(context->context, should_recv);
 }
 
-void free_packet(SocketContext* context, FractalPacket* packet) {
+void free_packet(SocketContext* context, WhistPacket* packet) {
     if (context->context == NULL) {
         LOG_ERROR("The given SocketContext has not been initialized!");
         return;
@@ -63,7 +63,7 @@ void free_packet(SocketContext* context, FractalPacket* packet) {
     context->free_packet(context->context, packet);
 }
 
-int send_packet(SocketContext* context, FractalPacketType packet_type, void* payload,
+int send_packet(SocketContext* context, WhistPacketType packet_type, void* payload,
                 int payload_size, int packet_id) {
     if (context->context == NULL) {
         LOG_ERROR("The given SocketContext has not been initialized!");
@@ -265,12 +265,12 @@ int get_last_network_error() {
 #endif
 }
 
-int get_packet_size(FractalPacket* packet) {
+int get_packet_size(WhistPacket* packet) {
     /*
-        Get the size of a FractalPacket
+        Get the size of a WhistPacket
 
         Arguments:
-            packet (FractalPacket*): The packet to get the size of.
+            packet (WhistPacket*): The packet to get the size of.
 
         Returns:
             (int): The size of the packet, or -1 on error.

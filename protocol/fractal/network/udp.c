@@ -27,7 +27,7 @@ int udp_ack(void* raw_context) {
     return send(context->socket, NULL, 0, 0);
 }
 
-FractalPacket* udp_read_packet(void* raw_context, bool should_recv) {
+WhistPacket* udp_read_packet(void* raw_context, bool should_recv) {
     SocketContextData* context = raw_context;
 
     if (should_recv == false) {
@@ -41,7 +41,7 @@ FractalPacket* udp_read_packet(void* raw_context, bool should_recv) {
     }
 
     // Wait to receive packet over TCP, until timing out
-    FractalPacket encrypted_packet;
+    WhistPacket encrypted_packet;
     int encrypted_len =
         recv(context->socket, (char*)&encrypted_packet, sizeof(encrypted_packet), 0);
 
@@ -59,7 +59,7 @@ FractalPacket* udp_read_packet(void* raw_context, bool should_recv) {
             memcpy(&context->decrypted_packet, &encrypted_packet, encrypted_len);
         }
 #if LOG_NETWORKING
-        LOG_INFO("Received a FractalPacket of size %d over UDP", decrypted_len);
+        LOG_INFO("Received a WhistPacket of size %d over UDP", decrypted_len);
 #endif
 
         // If there was an issue decrypting it, post warning and then
@@ -96,7 +96,7 @@ FractalPacket* udp_read_packet(void* raw_context, bool should_recv) {
     }
 }
 
-void udp_free_packet(void* raw_context, FractalPacket* udp_packet) {
+void udp_free_packet(void* raw_context, WhistPacket* udp_packet) {
     SocketContextData* context = raw_context;
 
     if (!context->decrypted_packet_used) {
@@ -114,7 +114,7 @@ void udp_free_packet(void* raw_context, FractalPacket* udp_packet) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int udp_send_constructed_packet(void* raw_context, FractalPacket* packet, size_t packet_size) {
+int udp_send_constructed_packet(void* raw_context, WhistPacket* packet, size_t packet_size) {
     SocketContextData* context = raw_context;
     if (context == NULL) {
         LOG_ERROR("SocketContextData is NULL");
@@ -127,7 +127,7 @@ int udp_send_constructed_packet(void* raw_context, FractalPacket* packet, size_t
         return -1;
     }
 
-    FractalPacket encrypted_packet;
+    WhistPacket encrypted_packet;
     size_t encrypted_len = (size_t)encrypt_packet(packet, (int)packet_size, &encrypted_packet,
                                                   (unsigned char*)context->binary_aes_private_key);
     network_throttler_wait_byte_allocation(context->network_throttler, (size_t)encrypted_len);
@@ -137,7 +137,7 @@ int udp_send_constructed_packet(void* raw_context, FractalPacket* packet, size_t
         whist_lock_mutex(context->mutex);
         int ret;
 #if LOG_NETWORKING
-        LOG_INFO("Sending a FractalPacket of size %d over UDP", packet_size);
+        LOG_INFO("Sending a WhistPacket of size %d over UDP", packet_size);
 #endif
         if (ENCRYPTING_PACKETS) {
             // Send encrypted during normal usage
@@ -167,7 +167,7 @@ int udp_send_constructed_packet(void* raw_context, FractalPacket* packet, size_t
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payload,
+int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payload,
                     int payload_size, int packet_id) {
     SocketContextData* context = raw_context;
     if (context == NULL) {
@@ -176,7 +176,7 @@ int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payl
     }
 
     // Get the nack_buffer, if there is one for this type of packet
-    FractalPacket* nack_buffer = NULL;
+    WhistPacket* nack_buffer = NULL;
 
     int type_index = (int)packet_type;
     if (type_index >= NUM_PACKET_TYPES) {
@@ -210,9 +210,9 @@ int udp_send_packet(void* raw_context, FractalPacketType packet_type, void* payl
             // Lock on a per-loop basis to not starve nack() calls
             whist_lock_mutex(context->nack_mutex[type_index]);
         }
-        FractalPacket local_packet;
+        WhistPacket local_packet;
         // Construct the packet, potentially into the nack buffer
-        FractalPacket* packet = nack_buffer ? &nack_buffer[packet_index] : &local_packet;
+        WhistPacket* packet = nack_buffer ? &nack_buffer[packet_index] : &local_packet;
         packet->type = packet_type;
         packet->payload_size = (int)min(payload_size - current_position, MAX_PAYLOAD_SIZE);
         packet->index = (short)packet_index;
@@ -249,7 +249,7 @@ void udp_update_bitrate_settings(SocketContext* socket_context, int burst_bitrat
     network_throttler_set_burst_bitrate(context->network_throttler, burst_bitrate);
 }
 
-void udp_register_nack_buffer(SocketContext* socket_context, FractalPacketType type,
+void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType type,
                               int max_payload_size, int num_buffers) {
     SocketContextData* context = socket_context->context;
 
@@ -265,7 +265,7 @@ void udp_register_nack_buffer(SocketContext* socket_context, FractalPacketType t
 
     int max_num_ids = max_payload_size / MAX_PAYLOAD_SIZE + 2;
 
-    context->nack_buffers[type_index] = malloc(sizeof(FractalPacket*) * num_buffers);
+    context->nack_buffers[type_index] = malloc(sizeof(WhistPacket*) * num_buffers);
     context->nack_mutex[type_index] = whist_create_mutex();
     context->nack_num_buffers[type_index] = num_buffers;
     context->nack_buffer_max_payload_size[type_index] = max_payload_size;
@@ -273,8 +273,8 @@ void udp_register_nack_buffer(SocketContext* socket_context, FractalPacketType t
 
     // Allocate each nack buffer, based on num_buffers
     for (int i = 0; i < num_buffers; i++) {
-        // Allocate a buffer of max_num_ids FractalPacket's
-        context->nack_buffers[type_index][i] = allocate_region(sizeof(FractalPacket) * max_num_ids);
+        // Allocate a buffer of max_num_ids WhistPacket's
+        context->nack_buffers[type_index][i] = allocate_region(sizeof(WhistPacket) * max_num_ids);
         // Set just the ID, but don't memset the entire region to 0,
         // Or you'll make the kernel allocate all of the memory
         for (int j = 0; j < max_num_ids; j++) {
@@ -283,7 +283,7 @@ void udp_register_nack_buffer(SocketContext* socket_context, FractalPacketType t
     }
 }
 
-int udp_nack(SocketContext* socket_context, FractalPacketType type, int packet_id,
+int udp_nack(SocketContext* socket_context, WhistPacketType type, int packet_id,
              int packet_index) {
     SocketContextData* context = socket_context->context;
 
@@ -303,7 +303,7 @@ int udp_nack(SocketContext* socket_context, FractalPacketType type, int packet_i
     }
 
     whist_lock_mutex(context->nack_mutex[type_index]);
-    FractalPacket* packet =
+    WhistPacket* packet =
         &context->nack_buffers[type_index][packet_id % context->nack_num_buffers[type_index]]
                               [packet_index];
 

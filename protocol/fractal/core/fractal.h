@@ -653,14 +653,14 @@ typedef struct FractalClientMessage {
 
         // MESSAGE_NACK
         struct {
-            FractalPacketType type;
+            WhistPacketType type;
             int id;
             int index;
         } simple_nack;
 
         // MESSAGE_BITARRAY_NACK
         struct {
-            FractalPacketType type;
+            WhistPacketType type;
             int id;
             int index;
             int numBits;

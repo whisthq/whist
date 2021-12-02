@@ -17,26 +17,26 @@ SocketContextData: This type represents a socket.
    - If there is belief that a packet wasn't sent, you can call ReplayPacket to
      send a packet twice
 
-FractalPacket: This type represents a packet of information
+WhistPacket: This type represents a packet of information
    - Unique packets of a given type will be given unique IDs. IDs are expected
      to be increasing monotonically, with a gap implying that a packet was lost
-   - FractalPackets that were thought to have been sent may not arrive, and
-     FractalPackets may arrive out-of-order, in the case of UDP. This will not
+   - WhistPackets that were thought to have been sent may not arrive, and
+     WhistPackets may arrive out-of-order, in the case of UDP. This will not
      be the case for TCP, however TCP sockets may lose connection if there is a
      problem.
    - A given block of data will, during transmission, be split up into packets
      with the same type and ID, but indicies ranging from 0 to num_indices - 1
    - A missing index implies that a packet was lost
-   - A FractalPacket is only guaranteed to have data information from 0 to
+   - A WhistPacket is only guaranteed to have data information from 0 to
      payload_size - 1 data[] occurs at the end of the packet, so extra bytes may
      in-fact point to invalid memory to save space and bandwidth
-   - A FractalPacket may be sent twice in the case of packet recovery, but any
-     two FractalPackets found that are of the same type and ID will be expected
+   - A WhistPacket may be sent twice in the case of packet recovery, but any
+     two WhistPackets found that are of the same type and ID will be expected
      to have the same data (To be specific, the Client should never legally send
      two distinct packets with same ID/Type, and neither should the Server, but
 if the Client and Server happen to both make a PACKET_MESSAGE packet with ID 1
      they can be different)
-   - To reconstruct the original datagram from a sequence of FractalPackets,
+   - To reconstruct the original datagram from a sequence of WhistPackets,
      concatenated the data[] streams (From 0 to payload_size - 1) for each index
      from 0 to num_indices - 1
 
@@ -50,7 +50,7 @@ create_tcp_socket_context(&context, "10.0.0.5", 5055, 500, 250);
 char* msg = "Hello this is a message!";
 send_packet(&context, PACKET_MESSAGE, msg, strlen(msg) + 1);
 
-FractalPacket* packet = NULL;
+WhistPacket* packet = NULL;
 while(packet == NULL) {
     packet = read_packet(&context);
 }
@@ -68,7 +68,7 @@ Server
 SocketContext context;
 creaqte_tcp_socket_context(&context, NULL, 5055, 500, 250);
 
-FractalPacket* packet = NULL;
+WhistPacket* packet = NULL;
 while(packet == NULL) {
     packet = read_packet(&context);
 }
@@ -170,7 +170,7 @@ typedef enum {
     PACKET_VIDEO = 1,
     PACKET_MESSAGE = 2,
     NUM_PACKET_TYPES = 3,
-} FractalPacketType;
+} WhistPacketType;
 
 #include <fractal/core/fractal.h>
 
@@ -189,7 +189,7 @@ typedef struct {
     // Everything below this line gets encrypted
 
     // Metadata
-    FractalPacketType type;  // Video, Audio, or Message
+    WhistPacketType type;  // Video, Audio, or Message
     int id;                  // Unique identifier (Two packets with the same type and id, from
                              // the same IP, will be the same)
     short index;             // Handle separation of large datagrams
@@ -204,11 +204,11 @@ typedef struct {
     uint8_t overflow[16];            // The maximum cipher_len is MAX_PAYLOAD_SIZE + 16,
                                      // as the encrypted packet might be slightly larger
                                      // than the unencrypted packet
-} FractalPacket;
+} WhistPacket;
 
-#define MAX_PACKET_SIZE (sizeof(FractalPacket))
-#define PACKET_HEADER_SIZE (sizeof(FractalPacket) - MAX_PAYLOAD_SIZE - 16)
-// Real packet size = PACKET_HEADER_SIZE + FractalPacket.payload_size (If
+#define MAX_PACKET_SIZE (sizeof(WhistPacket))
+#define PACKET_HEADER_SIZE (sizeof(WhistPacket) - MAX_PAYLOAD_SIZE - 16)
+// Real packet size = PACKET_HEADER_SIZE + WhistPacket.payload_size (If
 // Unencrypted)
 //                  = PACKET_HEADER_SIZE + cipher_len (If Encrypted)
 
@@ -253,9 +253,9 @@ typedef struct {
     int burst_bitrate;
     double fec_packet_ratio;
     bool decrypted_packet_used;
-    FractalPacket decrypted_packet;
+    WhistPacket decrypted_packet;
     // Nack Buffer Data
-    FractalPacket** nack_buffers[NUM_PACKET_TYPES];
+    WhistPacket** nack_buffers[NUM_PACKET_TYPES];
     // This mutex will protect the data in nack_buffers
     WhistMutex nack_mutex[NUM_PACKET_TYPES];
     int nack_num_buffers[NUM_PACKET_TYPES];
@@ -275,9 +275,9 @@ typedef struct {
 
     // Function table
     int (*ack)(void* context);
-    FractalPacket* (*read_packet)(void* context, bool should_recv);
-    void (*free_packet)(void* context, FractalPacket* packet);
-    int (*send_packet)(void* context, FractalPacketType type, void* data, int len, int id);
+    WhistPacket* (*read_packet)(void* context, bool should_recv);
+    void (*free_packet)(void* context, WhistPacket* packet);
+    int (*send_packet)(void* context, WhistPacketType type, void* data, int len, int id);
     void (*destroy_socket_context)(void* context);
 } SocketContext;
 
@@ -303,7 +303,7 @@ SocketContext Interface
 int ack(SocketContext* context);
 
 /**
- * @brief                          Receive a FractalPacket from a SocketContext,
+ * @brief                          Receive a WhistPacket from a SocketContext,
  *                                 if any such packet exists
  *
  * @param context                  The socket context
@@ -312,28 +312,28 @@ int ack(SocketContext* context);
  *                                 If true, this function will call recv from the socket,
  *                                 but that might take a while in the case of TCP.
  *
- * @returns                        A pointer to the FractalPacket on success,
+ * @returns                        A pointer to the WhistPacket on success,
  *                                 NULL on failure
  */
-FractalPacket* read_packet(SocketContext* context, bool should_recv);
+WhistPacket* read_packet(SocketContext* context, bool should_recv);
 
 /**
- * @brief                          Frees a FractalPacket created by read_packet
+ * @brief                          Frees a WhistPacket created by read_packet
  *
  * @param context                  The socket context that created the packet
- * @param packet                   The FractalPacket to free
+ * @param packet                   The WhistPacket to free
  */
-void free_packet(SocketContext* context, FractalPacket* packet);
+void free_packet(SocketContext* context, WhistPacket* packet);
 
 /**
- * @brief                          Given a FractalPacket's type, payload, payload_len, and id,
- *                                 This function will send the FractalPacket over the network.
+ * @brief                          Given a WhistPacket's type, payload, payload_len, and id,
+ *                                 This function will send the WhistPacket over the network.
  *                                 There is no restriction on the size of this packet,
  *                                 it will be fragmented if necessary.
  *                                 TODO: Fragment over UDP
  *
  * @param context                  The socket context
- * @param packet_type              The FractalPacketType, either VIDEO, AUDIO,
+ * @param packet_type              The WhistPacketType, either VIDEO, AUDIO,
  *                                 or MESSAGE
  * @param payload                  A pointer to the payload that is to be sent
  * @param payload_size             The size of the payload
@@ -342,7 +342,7 @@ void free_packet(SocketContext* context, FractalPacket* packet);
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
-int send_packet(SocketContext* context, FractalPacketType packet_type, void* payload,
+int send_packet(SocketContext* context, WhistPacketType packet_type, void* payload,
                 int payload_size, int packet_id);
 
 /**
@@ -374,13 +374,13 @@ void whist_init_networking();
 int get_last_network_error();
 
 /**
- * @brief                          Get the size of a FractalPacket
+ * @brief                          Get the size of a WhistPacket
  *
  * @param packet                   The packet to get the size of
  *
  * @returns                        The size of the packet, or -1 on error
  */
-int get_packet_size(FractalPacket* packet);
+int get_packet_size(WhistPacket* packet);
 
 /**
  * @brief                          This will set `socket` to have timeout

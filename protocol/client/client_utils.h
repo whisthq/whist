@@ -114,6 +114,6 @@ void send_message_dimensions();
  * @param id                       The ID of the packet
  * @param index                    The index of the packet
  */
-void nack_packet(FractalPacketType frame_type, int id, int index);
+void nack_packet(WhistPacketType frame_type, int id, int index);
 
 #endif  // CLIENT_UTILS_H

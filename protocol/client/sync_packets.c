@@ -220,7 +220,7 @@ int multithreaded_sync_udp_packets(void* opaque) {
         update_ping();
         TIME_RUN(update_video(), VIDEO_UPDATE_TIME, statistics_timer);
         TIME_RUN(update_audio(), AUDIO_UPDATE_TIME, statistics_timer);
-        TIME_RUN(FractalPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_UDP,
+        TIME_RUN(WhistPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_UDP,
                  statistics_timer);
 
         if (!packet) {
@@ -285,7 +285,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         // Update TCP ping and reconnect TCP if needed (TODO: does that function do too much?)
         update_tcp_ping();
 
-        TIME_RUN(FractalPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_TCP,
+        TIME_RUN(WhistPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_TCP,
                  statistics_timer);
 
         if (packet) {

@@ -695,12 +695,12 @@ void send_message_dimensions() {
     send_fcmsg(&fcmsg);
 }
 
-void nack_packet(FractalPacketType frame_type, int id, int index) {
+void nack_packet(WhistPacketType frame_type, int id, int index) {
     /*
         Nack the packet at ID id and index index.
 
         Arguments:
-            frame_type (FractalPacketType): the packet type
+            frame_type (WhistPacketType): the packet type
             id (int): Frame ID of the packet
             index (int): index of the packet
             */

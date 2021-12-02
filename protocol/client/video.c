@@ -8,7 +8,7 @@ Usage
 ============================
 
 initVideo() gets called before any video packet can be received. The video
-packets are received as standard FractalPackets by ReceiveVideo(FractalPacket*
+packets are received as standard WhistPackets by ReceiveVideo(WhistPacket*
 packet), before being saved in a proper video frame format.
 */
 
@@ -824,12 +824,12 @@ void update_video() {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int32_t receive_video(FractalPacket* packet) {
+int32_t receive_video(WhistPacket* packet) {
     /*
         Receive video packet
 
         Arguments:
-            packet (FractalPacket*): Packet received from the server, which gets
+            packet (WhistPacket*): Packet received from the server, which gets
                 sorted as video packet with proper parameters
 
         Returns:

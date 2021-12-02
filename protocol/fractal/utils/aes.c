@@ -92,13 +92,13 @@ bool verify_hmac(void* hash, void* buf, int len, void* key) {
 }
 
 #define CRYPTO_HEADER_LEN                                                          \
-    (sizeof(((FractalPacket*)0)->hash) + sizeof(((FractalPacket*)0)->cipher_len) + \
-     sizeof(((FractalPacket*)0)->iv))
+    (sizeof(((WhistPacket*)0)->hash) + sizeof(((WhistPacket*)0)->cipher_len) + \
+     sizeof(((WhistPacket*)0)->iv))
 
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int encrypt_packet(FractalPacket* plaintext_packet, int packet_len, FractalPacket* encrypted_packet,
+int encrypt_packet(WhistPacket* plaintext_packet, int packet_len, WhistPacket* encrypted_packet,
                    unsigned char* private_key) {
     char* plaintext_buf = (char*)plaintext_packet + CRYPTO_HEADER_LEN;
     int plaintext_buf_len = packet_len - CRYPTO_HEADER_LEN;
@@ -128,7 +128,7 @@ int encrypt_packet(FractalPacket* plaintext_packet, int packet_len, FractalPacke
     return cipher_packet_len;
 }
 
-int decrypt_packet(FractalPacket* encrypted_packet, int packet_len, FractalPacket* plaintext_packet,
+int decrypt_packet(WhistPacket* encrypted_packet, int packet_len, WhistPacket* plaintext_packet,
                    unsigned char* private_key) {
     if ((unsigned long)packet_len > MAX_PACKET_SIZE) {
         LOG_WARNING("Encrypted version of Packet is too large!");
@@ -139,8 +139,8 @@ int decrypt_packet(FractalPacket* encrypted_packet, int packet_len, FractalPacke
     return decrypt_len;
 }
 
-int decrypt_packet_n(FractalPacket* encrypted_packet, int packet_len,
-                     FractalPacket* plaintext_packet, int plaintext_len,
+int decrypt_packet_n(WhistPacket* encrypted_packet, int packet_len,
+                     WhistPacket* plaintext_packet, int plaintext_len,
                      unsigned char* private_key) {
     if ((unsigned long)packet_len < PACKET_HEADER_SIZE) {
         LOG_WARNING("Packet is too small (%d bytes) for metadata!", packet_len);

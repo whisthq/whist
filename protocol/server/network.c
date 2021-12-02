@@ -64,7 +64,7 @@ int handle_discovery_port_message(whist_server_state *state, SocketContext *cont
             (int): 0 on success, -1 on failure
     */
 
-    FractalPacket *tcp_packet;
+    WhistPacket *tcp_packet;
     clock timer;
     start_timer(&timer);
     do {
@@ -228,7 +228,7 @@ int broadcast_ack(Client *client) {
     return ret;
 }
 
-int broadcast_udp_packet(Client *client, FractalPacketType type, void *data, int len,
+int broadcast_udp_packet(Client *client, WhistPacketType type, void *data, int len,
                          int packet_id) {
     if (packet_id <= 0) {
         LOG_WARNING("Packet IDs must be positive!");
@@ -244,7 +244,7 @@ int broadcast_udp_packet(Client *client, FractalPacketType type, void *data, int
     return 0;
 }
 
-int broadcast_tcp_packet(Client *client, FractalPacketType type, void *data, int len) {
+int broadcast_tcp_packet(Client *client, WhistPacketType type, void *data, int len) {
     if (client->is_active) {
         read_lock(&client->tcp_rwlock);
         if (send_packet(&(client->tcp_context), type, (uint8_t *)data, len, -1) < 0) {
@@ -258,7 +258,7 @@ int broadcast_tcp_packet(Client *client, FractalPacketType type, void *data, int
 
 clock last_tcp_read;
 bool has_read = false;
-int try_get_next_message_tcp(Client *client, FractalPacket **p_tcp_packet) {
+int try_get_next_message_tcp(Client *client, WhistPacket **p_tcp_packet) {
     *p_tcp_packet = NULL;
 
     // Check if 20ms has passed since last TCP recvp, since each TCP recvp read takes 8ms
@@ -269,7 +269,7 @@ int try_get_next_message_tcp(Client *client, FractalPacket **p_tcp_packet) {
         has_read = true;
     }
 
-    FractalPacket *tcp_packet = read_packet(&client->tcp_context, should_recvp);
+    WhistPacket *tcp_packet = read_packet(&client->tcp_context, should_recvp);
     if (tcp_packet) {
         LOG_INFO("Received TCP Packet: Size %d", tcp_packet->payload_size);
         *p_tcp_packet = tcp_packet;
@@ -282,7 +282,7 @@ int try_get_next_message_udp(Client *client, FractalClientMessage *fcmsg, size_t
 
     memset(fcmsg, 0, sizeof(*fcmsg));
 
-    FractalPacket *packet = read_packet(&(client->udp_context), true);
+    WhistPacket *packet = read_packet(&(client->udp_context), true);
     if (packet) {
         memcpy(fcmsg, packet->data, max(sizeof(*fcmsg), (size_t)packet->payload_size));
         if (packet->payload_size != get_fcmsg_size(fcmsg)) {

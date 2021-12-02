@@ -41,13 +41,13 @@ void reset_bitrate_stat_members(RingBuffer* ring_buffer) {
     ring_buffer->num_frames_rendered = 0;
 }
 
-RingBuffer* init_ring_buffer(FractalPacketType type, int ring_buffer_size,
+RingBuffer* init_ring_buffer(WhistPacketType type, int ring_buffer_size,
                              NackPacketFn nack_packet) {
     /*
         Initialize the ring buffer; malloc space for all the frames and set their IDs to -1.
 
         Arguments:
-            type (FractalPacketType): audio or video
+            type (WhistPacketType): audio or video
             ring_buffer_size (int): Desired size of the ring buffer. If the size exceeds
        MAX_RING_BUFFER_SIZE, no ring buffer is returned.
 
@@ -210,16 +210,16 @@ void set_rendering(RingBuffer* ring_buffer, int id) {
     reset_frame(ring_buffer, current_frame);
 }
 
-int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet) {
+int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
     /*
-        Process a FractalPacket and add it to the ring buffer. If the packet belongs to an existing
+        Process a WhistPacket and add it to the ring buffer. If the packet belongs to an existing
         frame, copy its data into the frame; if it belongs to a new frame, initialize the frame and
         copy data. Nack for missing packets (of the packet's frame) and missing frames (before the
         current frame).
 
         Arguments:
             ring_buffer (RingBuffer*): ring buffer to place the packet in
-            packet (FractalPacket*): UDP packet for either audio or video
+            packet (WhistPacket*): UDP packet for either audio or video
 
         Returns:
             (int): 1 if we overwrote a valid frame, 0 on success, -1 on failure

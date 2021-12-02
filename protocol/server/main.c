@@ -149,7 +149,7 @@ void get_fractal_tcp_client_messages(whist_server_state* state) {
 
     read_lock(&state->client.tcp_rwlock);
 
-    FractalPacket* tcp_packet = NULL;
+    WhistPacket* tcp_packet = NULL;
     try_get_next_message_tcp(&state->client, &tcp_packet);
     // If we get a TCP client message, handle it
     if (tcp_packet) {

@@ -22,7 +22,7 @@ packet, call nack_single_packet.
  * holding the concatenated UDP packets.
  */
 typedef struct FrameData {
-    FractalPacketType type;
+    WhistPacketType type;
     int num_packets;
     int id;
     int packets_received;
@@ -43,7 +43,7 @@ typedef struct FrameData {
 } FrameData;
 
 // Handler that gets called when the ring buffer wants to nack for a packet
-typedef void (*NackPacketFn)(FractalPacketType frame_type, int id, int index);
+typedef void (*NackPacketFn)(WhistPacketType frame_type, int id, int index);
 
 /**
  * @brief	RingBuffer struct for abstracting away frame reconstruction and frame retrieval.
@@ -54,7 +54,7 @@ typedef void (*NackPacketFn)(FractalPacketType frame_type, int id, int index);
 typedef struct RingBuffer {
     int ring_buffer_size;
     FrameData* receiving_frames;
-    FractalPacketType type;
+    WhistPacketType type;
     int largest_frame_size;
     int largest_num_packets;
     NackPacketFn nack_packet;
@@ -94,7 +94,7 @@ typedef struct RingBuffer {
  * @returns A pointer to the newly created ring buffer. All frames in the new ring buffer have ID
  * -1.
  */
-RingBuffer* init_ring_buffer(FractalPacketType type, int ring_buffer_size,
+RingBuffer* init_ring_buffer(WhistPacketType type, int ring_buffer_size,
                              NackPacketFn nack_packet);
 
 /**
@@ -118,7 +118,7 @@ FrameData* get_frame_at_id(RingBuffer* ring_buffer, int id);
  *
  * @returns 0 on success, -1 on failure
  */
-int receive_packet(RingBuffer* ring_buffer, FractalPacket* packet);
+int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet);
 
 /**
  * @brief Free the ring buffer and all its constituent frames.
