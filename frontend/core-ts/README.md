@@ -40,7 +40,7 @@ const _ = (async () => {
 
 ##### 3. Link your local core-ts repos to other projects
 
-The best kind of testing is using `core-ts` in working projects. If you're working on `core-ts/http`, you might want to import your functions into `fractal/website` so you can make sure they work in a real environment. You don't want to have to commit and publish for every change, however, so we use `yarn link`. This command will create symlinks in `fractal/website`, pointing the corresponding `import` statements to your local `core-ts` repo.
+The best kind of testing is using `core-ts` in working projects. If you're working on `core-ts/http`, you might want to import your functions into `frontend/website` so you can make sure they work in a real environment. You don't want to have to commit and publish for every change, however, so we use `yarn link`. This command will create symlinks in `frontend/website`, pointing the corresponding `import` statements to your local `core-ts` repo.
 
 There's a few things that have to happen to make this work. First of all, you can't `link` your source TypeScript files. You have to link the JavaScript output from TypeScript compilation. Our `package.json` has a script set up to automatically compile your `.ts` files every time you change them: `yarn tsc-watch`. This will place the compiled `.js` files in `core-ts/dist`.
 
@@ -48,15 +48,15 @@ Make sure to keep the `yarn tsc-watch` process running, so that anytime you chan
 
 After you run `yarn tsc-watch` for the first time, you need to `cd` into the new `dist` folder in `core-ts` (same level as `src`). Here, run `yarn link` in your terminal. It's important that you do this in your `dist` folder and not one level up, or else `npm link` will be linking your `.ts` source code instead of the compiled `.js` output.
 
-Now, you need to navigate over to `fractal/website` (or wherever you're linking to). Where we'd usually run `yarn add @fractal/core-ts`, we're going to run `yarn link @fractal/core-ts`. This will create a symlink, so that when `fractal/website` calls `import { ... } from @fractal/core-ts/...`, it will import the latest changes for your local `@fractal/core-ts`.
+Now, you need to navigate over to `frontend/website` (or wherever you're linking to). Where we'd usually run `yarn add @fractal/core-ts`, we're going to run `yarn link @fractal/core-ts`. This will create a symlink, so that when `frontend/website` calls `import { ... } from @fractal/core-ts/...`, it will import the latest changes for your local `@fractal/core-ts`.
 
 If that sounded confusing, that's because it is. Here's a recap of the steps:
 
 1. In your local `@fractal/core-ts`, run `yarn tsc-watch`. Leave this process running in an open terminal.
 2. Still in `@fractal/core-ts`, `cd dist` to navigate to the new `dist` folder. Run `yarn link`.
-3. Navigate to `fractal/website` (or wherever you'd like to import `core-ts`), and run `yarn link @fractal/core-ts`.
+3. Navigate to `frontend/website` (or wherever you'd like to import `core-ts`), and run `yarn link @fractal/core-ts`.
 
-If all goes well, `import @fractal/core-ts` will work in `fractal/website` just like any other `npm` module. It will even trigger a hot reload of the `fractal/website` development server every time you change your local `@fractal/core-ts`.
+If all goes well, `import @fractal/core-ts` will work in `frontend/website` just like any other `npm` module. It will even trigger a hot reload of the `frontend/website` development server every time you change your local `@fractal/core-ts`.
 
 ## Development
 
@@ -66,7 +66,7 @@ Regardless of how you develop for this library, your additions should be properl
 
 ## Publishing
 
-This project is not published to any **npm** registry, but is rather built and imported directly into other projects (i.e. `/client-applications`) thanks to our monorepo project structure. For an example of how to import `core-ts` into your project, see `/client-applications/package.json`.
+This project is not published to any **npm** registry, but is rather built and imported directly into other projects (i.e. `frontend/client-applications`) thanks to our monorepo project structure. For an example of how to import `core-ts` into your project, see `frontend//client-applications/package.json`.
 
 ## Style
 

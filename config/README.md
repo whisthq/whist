@@ -54,7 +54,7 @@ The schema files can use nested keys to define "profiles". These profiles are us
 ```json
 {
   "PROTOCOL_FILE_NAME": {
-    "macos": "_Whist",
+    "macos": "WhistClient",
     "win32": "Whist.exe",
     "linux": "Whist"
   }
@@ -65,7 +65,7 @@ The schema files can use nested keys to define "profiles". These profiles are us
 
 ```json
 {
-  "PROTOCOL_FILE_NAME": "_Whist"
+  "PROTOCOL_FILE_NAME": "WhistClient"
 }
 ```
 
@@ -104,7 +104,7 @@ Depending on the data in the YAML files, this might output JSON like you see bel
   "FRONTEND": "dev.whist.com",
   "ICON_FILE_NAME": "icon_dev",
   "NODEJS": "development",
-  "PROTOCOL_FILE_NAME": "_Whist",
+  "PROTOCOL_FILE_NAME": "WhistClient",
   "PROTOCOL_FOLDER_PATH": "../../MacOS",
   "PROTOCOL_LOG_FILE_NAME": "protocol.log",
   "WEBSERVER": "https://dev-server.whist.com"

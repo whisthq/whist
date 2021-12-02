@@ -38,7 +38,7 @@ There are two ways of running development mandelboxes on the host service. The f
 #### Connecting the client application to your development instance
 
 1. Start your instance, ssh into it and go to `~/fractal/host-service`, then run `make run` and wait for the event loop to start. Take note of your dev instance ip address.
-2. On your local machine, go to `fractal/client-applications` and run the command
+2. On your local machine, go to `frontend/client-applications` and run the command
    `TESTING_LOCALDEV_HOST_IP=<your instance ip> yarn test:manual localdevHost`. You can also export the `TESTING_LOCALDEV_HOST_IP` env var first and then run `yarn test:manual localdevHost`.
 3. The client should open up a Chrome window.
 

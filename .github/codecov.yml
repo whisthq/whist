@@ -74,5 +74,5 @@ flags:
     carryforward: true
   core-ts:
     paths:
-      - core-ts/
+      - frontend/core-ts/
     carryforward: true

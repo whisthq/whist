@@ -1128,7 +1128,7 @@ jobs:
 
       # Bump the package version in package.json using jq
       - name: Update Package Version
-        working-directory: client-applications
+        working-directory: frontend/client-applications
         shell: bash --noprofile --norc -eo pipefail {0}
         run: |
           mv package.json packageOld.json
@@ -1139,7 +1139,7 @@ jobs:
       # (builds the branch that it is run on automatically, so prod if running on push to prod)
       - name: Publish the Windows Electron Application
         if: false && runner.os == 'Windows'
-        working-directory: client-applications
+        working-directory: frontend/client-applications
         env:
           AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
           AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
@@ -1160,7 +1160,7 @@ jobs:
       # (builds the branch that it is run on automatically, so prod if running on push to prod)
       - name: Publish the MacOS Electron Application
         if: runner.os == 'macOS'
-        working-directory: client-applications
+        working-directory: frontend/client-applications
         env:
           AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
           AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
@@ -1257,7 +1257,7 @@ jobs:
 
       # Bump the package version in package.json using jq
       - name: Update Package Version
-        working-directory: client-applications
+        working-directory: frontend/client-applications
         run: |
           mv package.json packageOld.json
           # String substitution works here because of the GitHub Actions double-curly-brace variable "pre-processor" notation
@@ -1266,7 +1266,7 @@ jobs:
 
       # (builds the branch that it is run on automatically, so prod if running on push to prod)
       - name: Publish the MacOS Electron Application
-        working-directory: client-applications
+        working-directory: frontend/client-applications
         env:
           AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
           AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}

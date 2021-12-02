@@ -11,13 +11,13 @@ on:
     branches:
       - dev
     paths:
-      - "core-ts/**"
-      - "!core-ts/README.md"
+      - "frontend/core-ts/**"
+      - "!frontend/core-ts/README.md"
       - ".github/workflows/core-ts-check-pr.yml"
   pull_request:
     paths:
-      - "core-ts/**"
-      - "!core-ts/README.md"
+      - "frontend/core-ts/**"
+      - "!frontend/core-ts/README.md"
       - ".github/workflows/core-ts-check-pr.yml"
   workflow_dispatch:
 
@@ -36,11 +36,11 @@ jobs:
           node-version: "16"
 
       - name: Run yarn install
-        working-directory: core-ts
+        working-directory: frontend/core-ts
         run: yarn install
 
       - name: Check if Code Follows ESLint Standards
-        working-directory: core-ts
+        working-directory: frontend/core-ts
         run: yarn run lint:check
 
   test:
@@ -65,11 +65,11 @@ jobs:
           node-version: "16"
 
       - name: Run yarn install
-        working-directory: core-ts
+        working-directory: frontend/core-ts
         run: yarn install
 
       - name: Run core-ts test suite
-        working-directory: core-ts
+        working-directory: frontend/core-ts
         env:
           CONFIG: ${{ steps.config.outputs.config }}
         run: yarn run test:ci
@@ -78,6 +78,6 @@ jobs:
         uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: core-ts/coverage/clover.xml
+          files: frontend/core-ts/coverage/clover.xml
           flags: core-ts
           fail_ci_if_error: true # optional (default = false)
