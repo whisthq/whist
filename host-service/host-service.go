@@ -377,7 +377,7 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 
 // SpinUpMandelbox is the request used to create a mandelbox on this host.
 func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient,
-	sub *subscriptions.MandelboxInfoEvent, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
+	sub *subscriptions.MandelboxEvent, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
 
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
@@ -1050,8 +1050,8 @@ func main() {
 	}
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
 
-	var whistClient *subscriptions.WhistHasuraClient
-	subscriptions.SetupHostSubscriptions(&whistClient, instanceName)
+	var whistClient subscriptions.WhistClient
+	subscriptions.SetupHostSubscriptions(instanceName, &whistClient)
 	subscriptions.Start(&whistClient, globalCtx, &goroutineTracker, subscriptionEvents)
 	if err != nil {
 		logger.Errorf("Failed to start database subscriptions. Error: %s", err)
@@ -1185,7 +1185,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 						SessionID:    "1234",
 						UserID:       userID,
 					}
-					subscriptionEvent := subscriptions.MandelboxInfoEvent{
+					subscriptionEvent := subscriptions.MandelboxEvent{
 						MandelboxInfo: []subscriptions.Mandelbox{mandelbox},
 					}
 
@@ -1204,11 +1204,11 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 		case subscriptionEvent := <-subscriptionEvents:
 			switch subscriptionEvent := subscriptionEvent.(type) {
 			// TODO: actually handle panics in these goroutines
-			case *subscriptions.MandelboxInfoEvent:
+			case *subscriptions.MandelboxEvent:
 				go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient,
 					subscriptionEvent, transportRequestMap, transportMapLock)
 
-			case *subscriptions.InstanceStatusEvent:
+			case *subscriptions.InstanceEvent:
 				// Don't do this in a separate goroutine, since there's no reason to.
 				drainAndShutdown(globalCtx, globalCancel, goroutineTracker)
 

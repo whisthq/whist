@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/fractal/fractal/core-go/metadata"
+	"github.com/fractal/fractal/core-go/metadata/aws"
 	// We use hasura's own graphql client for Go
 )
 
@@ -71,7 +72,7 @@ func MandelboxStatusHandler(event SubscriptionEvent, variables map[string]interf
 	return mandelbox.Status == variables["status"]
 }
 
-func SetupHostSubscriptions(instanceName string, whistClient *WhistClient) {
+func SetupHostSubscriptions(instanceName aws.InstanceName, whistClient *WhistClient) {
 	whistClient.Subscriptions = []HasuraSubscription{
 		{
 			Query: InstanceStatusSubscription,
@@ -115,7 +116,7 @@ func SetupScalingSubscriptions(whistClient *WhistClient) {
 	}
 }
 
-func Start(whistClient *WhistClient, globalCtx context.Context, goroutineTracker sync.WaitGroup, subscriptionEvents chan SubscriptionEvent) error {
+func Start(whistClient *WhistClient, globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan SubscriptionEvent) error {
 	// Slice to hold subscription IDs, necessary to properly unsubscribe when we are done.
 	var subscriptionIDs []string
 
