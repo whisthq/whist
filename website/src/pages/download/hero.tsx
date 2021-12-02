@@ -109,17 +109,14 @@ const DontAllowDownloads = () => {
           Try the <span className="text-mint">alpha release</span>
         </div>
         <div className="text-md md:text-lg text-gray tracking-wide dark:text-gray-400 max-w-xl m-auto">
-          If you meet the{" "}
-          <Link to="requirements" spy={true} smooth={true}>
-            <span className="text-mint cursor-pointer">requirements below</span>
-          </Link>{" "}
-          then we would love for you to try Whist. Please reserve an onboarding
-          time to get started!
+          Please fill out the survey below to see if you meet the requirements
+          to download Whist. You will receive a download link at the end of the
+          survey.
         </div>
         <div>
           <WhistButton
             className="mt-12 mx-2"
-            contents={"Reserve an onboarding session"}
+            contents={"Start Survey"}
             state={WhistButtonState.DEFAULT}
             onClick={() => setOpen(true)}
           />
