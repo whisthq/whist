@@ -17,7 +17,7 @@ COOKIE_FILE_FILENAME=/usr/share/fractal/private/user_cookies_file
 BOOKMARK_FILE_FILENAME=/usr/share/fractal/private/user_bookmarks_file
 USER_UPLOAD_TARGET_FILENAME=/usr/share/fractal/private/user_target
 TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/timeout
-WHIST_APPLICATION_PID_FILE=/home/fractal/fractal-application-pid
+WHIST_APPLICATION_PID_FILE=/home/whist/fractal-application-pid
 PROTOCOL_LOG_FILENAME=/usr/share/fractal/server.log
 TELEPORT_LOG_FILENAME=/usr/share/fractal/teleport.log
 
@@ -101,7 +101,7 @@ fractal_application_runuser_pid=$!
 
 echo "Whist application runuser pid: $fractal_application_runuser_pid"
 
-# Wait for run-fractal-application.sh to write PID to file
+# Wait for run-whist-application.sh to write PID to file
 until [ -f "$WHIST_APPLICATION_PID_FILE" ]
 do
   sleep 0.1

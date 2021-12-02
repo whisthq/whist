@@ -10,8 +10,8 @@ set -Eeuo pipefail
 # as this prevents Chrome from running forevermore! Hence, we should remove this file when we launch the
 # browser for the first time each session. You can think of this as effectively moving the locking mechansim
 # out of the backed-up Chrome config folder and into a location that will not persist when the instance dies.
-GOOGLE_CHROME_SINGLETON_LOCK=/home/fractal/.config/google-chrome/SingletonLock
-WHIST_CHROME_SINGLETON_LOCK=/home/fractal/.config/WhistChromeSingletonLock
+GOOGLE_CHROME_SINGLETON_LOCK=/home/whist/.config/google-chrome/SingletonLock
+WHIST_CHROME_SINGLETON_LOCK=/home/whist/.config/WhistChromeSingletonLock
 
 if [[ ! -f $WHIST_CHROME_SINGLETON_LOCK ]]; then
     touch $WHIST_CHROME_SINGLETON_LOCK

@@ -40,7 +40,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Set default browser
-RUN su - fractal -c \
+RUN su - whist -c \
     "xdg-mime default google-chrome.desktop text/html \
     && xdg-mime default google-chrome.desktop x-scheme-handler/http \
     && xdg-mime default google-chrome.desktop x-scheme-handler/https \
@@ -68,10 +68,10 @@ COPY install-extensions.sh /usr/bin/install-extensions.sh
 RUN chmod +x /usr/bin/install-extensions.sh && /usr/bin/install-extensions.sh
 
 # Create default config paths
-RUN su - fractal -c "mkdir -p /home/fractal/.config/google-chrome"
+RUN su - whist -c "mkdir -p /home/whist/.config/google-chrome"
 
 # Don't show first run popup
-RUN su - fractal -c "touch /home/fractal/.config/google-chrome/'First Run'"
+RUN su - whist -c "touch /home/whist/.config/google-chrome/'First Run'"
 
 # Install Whist wrapper script to run Google Chrome into /usr/bin
 ENV WHIST_COOKIE_UPLOAD_TARGET="chrome"

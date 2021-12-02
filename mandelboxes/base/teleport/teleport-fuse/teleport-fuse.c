@@ -23,7 +23,7 @@
 
 typedef struct FileTransferContext {
     char id[NAME_MAX + 1];          // Every file transfer will have a unique ID, which we store here as a string.
-    char id_path[NAME_MAX + 1];     // `/home/fractal/.teleport/drag-drop/downloads/[ID]`. We must keep this allocated for the inotify thread to work.
+    char id_path[NAME_MAX + 1];     // `/home/whist/.teleport/drag-drop/downloads/[ID]`. We must keep this allocated for the inotify thread to work.
     bool data_ready;                // `true` if the protocol has finished dumping the file, else `false`.
     bool active;                    // `true` if the protocol has started dumping the file, else `false`.
     char filename[NAME_MAX + 1];    // The name of the file that the protocol is dumping.
@@ -321,7 +321,7 @@ static const struct fuse_operations teleport_fuse_oper = {
     .read		= teleport_fuse_read,
 };
 
-#define WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/home/fractal/.teleport/drag-drop"
+#define WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/home/whist/.teleport/drag-drop"
 #define WHIST_TELEPORT_FUSE_PID_FILE WHIST_TELEPORT_DRAG_DROP_DIRECTORY "/pid"
 
 /**
@@ -441,12 +441,12 @@ void inotify_handle_new_id(const char *id) {
     }
 }
 
-// Updates the global state of `transfer_status` according to folders and files written in `/home/fractal/.teleport/drag-drop/downloads`.
+// Updates the global state of `transfer_status` according to folders and files written in `/home/whist/.teleport/drag-drop/downloads`.
 
 /**
  * @brief                  Update the global state of `transfer_status` according
  *                         to folders and files written in the directory
- *                          `/home/fractal/.teleport/drag-drop/downloads`.
+ *                          `/home/whist/.teleport/drag-drop/downloads`.
  *
  * @param opaque           Unused. Simply exists to match the `pthread_create` signature.
  *

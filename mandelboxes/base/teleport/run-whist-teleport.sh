@@ -10,5 +10,5 @@ eval "$(sentry-cli bash-hook)"
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-mkdir -p /home/fractal/.teleport/drag-drop/fuse
-exec /usr/bin/whist-teleport-fuse /home/fractal/.teleport/drag-drop/fuse -f
+mkdir -p /home/whist/.teleport/drag-drop/fuse
+exec /usr/bin/whist-teleport-fuse /home/whist/.teleport/drag-drop/fuse -f

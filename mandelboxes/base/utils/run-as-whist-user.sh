@@ -6,7 +6,7 @@ eval "$(sentry-cli bash-hook)"
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-# Things running outside run_as_fractal are run as root.
+# Things running outside run_as_whist are run as root.
 # Running with login means that we lose all environment variables, so we need to pass them in manually.
 
 # default values for the JSON transport settings from the client
@@ -63,7 +63,7 @@ export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
 export TZ=$DESIRED_TIMEZONE
 export INITIAL_URL=$INITIAL_URL
 
-exec runuser --login fractal --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,INITIAL_URL -c \
+exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,INITIAL_URL -c \
   'DISPLAY=:10 \
     LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
     LOCAL=yes \

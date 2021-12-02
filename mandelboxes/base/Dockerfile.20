@@ -435,10 +435,10 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # Permissions
 #########################
 
-# Create fractal user with dynamic, random password and do NOT add to sudo group
-RUN useradd --create-home fractal \
+# Create whist user with dynamic, random password and do NOT add to sudo group
+RUN useradd --create-home whist \
     && password=$(tr -dc 'A-Za-z0-9!"#$%&\()*+,-./;<=>?@[\]^_`{|}~' </dev/urandom | head -c 32  ; echo) \
-    && echo fractal:"${password}" | chpasswd
+    && echo whist:"${password}" | chpasswd
 
 # Workaround for sudo bug in Docker: https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
@@ -447,7 +447,7 @@ RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 VOLUME [ "/sys/fs/cgroup" ]
 
 # Set appropriate user permissions
-RUN chown -vR fractal:fractal /home/fractal
+RUN chown -vR whist:whist /home/whist
 RUN chown root:root /run/user
 
 # Create fractal Directory and Subdirectories in /usr/share
@@ -458,7 +458,7 @@ RUN chgrp root -R /usr/share/fractal
 RUN chown root:root /usr/share/fractal
 RUN chmod 600 -R /usr/share/fractal
 
-# Set up script to run a program as user `fractal` (make sure to do
+# Set up script to run a program as user `whist` (make sure to do
 # this after setting /usr/share/fractal to 600)
 COPY utils/run-as-whist-user.sh /usr/share/fractal/run-as-whist-user.sh
 RUN chmod +x /usr/share/fractal/run-as-whist-user.sh
@@ -585,17 +585,17 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 RUN wget -qO /usr/local/share/fonts/TwemojiMozilla.ttf https://github.com/mozilla/twemoji-colr/releases/download/v0.5.1/TwemojiMozilla.ttf
 
 # Set up fontconfig to use our nice fots
-COPY --chown=fractal display/theme/fonts.conf /home/fractal/.config/fontconfig/fonts.conf
+COPY --chown=whist display/theme/fonts.conf /home/whist/.config/fontconfig/fonts.conf
 
 # Set up window manager running on X server, with GTK/QT theming
 RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors
 RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git && cd WhiteSur-icon-theme && /bin/bash install.sh && rm -rf /WhiteSur-icon-theme
 COPY display/theme/gtk-3-settings.ini /etc/gtk-3.0/settings.ini
 COPY display/theme/gtkrc-2.0 /root/.gtkrc-2.0
-COPY --chown=fractal display/theme/gtkrc-2.0 /home/fractal/.gtkrc-2.0
+COPY --chown=whist display/theme/gtkrc-2.0 /home/whist/.gtkrc-2.0
 COPY display/theme/qt4-settings.conf /root/.config/Trolltech.conf
-COPY --chown=fractal display/theme/qt4-settings.conf /home/fractal/.config/Trolltech.conf
-COPY display/theme/awesome-rc.lua /home/fractal/.config/awesome/rc.lua
+COPY --chown=whist display/theme/qt4-settings.conf /home/whist/.config/Trolltech.conf
+COPY display/theme/awesome-rc.lua /home/whist/.config/awesome/rc.lua
 
 #########################
 # Audio
@@ -631,7 +631,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 # Give access to Pulse Audio virtual sound card
 RUN adduser root pulse-access \
-    && adduser fractal pulse-access
+    && adduser whist pulse-access
 
 # Prevent Pulse Audio from running as user (breaking sound for non-root users)
 RUN rm /etc/systemd/user/default.target.wants/pulseaudio.service
@@ -770,9 +770,9 @@ RUN systemctl enable whist-main
 #########################
 
 # Set our fractal systemd files to be root-visible only
-RUN chgrp root /etc/systemd/system/fractal* \
-    && chown root:root /etc/systemd/system/fractal* \
-    && chmod 600 /etc/systemd/system/fractal*
+RUN chgrp root /etc/systemd/system/whist* \
+    && chown root:root /etc/systemd/system/whist* \
+    && chmod 600 /etc/systemd/system/whist*
 
 
 # Install Whist Protocol binaries and helper files

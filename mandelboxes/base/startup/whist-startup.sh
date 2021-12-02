@@ -45,7 +45,7 @@ for row in $(cat $APP_CONFIG_MAP_FILENAME | jq -rc '.[]'); do
   # Remove the original configs and symlink the new ones to the original locations
   rm -rf $DEST_CONFIG_PATH
   ln -sfnT $SOURCE_CONFIG_PATH $DEST_CONFIG_PATH
-  chown -R fractal $SOURCE_CONFIG_PATH
+  chown -R whist $SOURCE_CONFIG_PATH
 done
 
 # Delete broken symlinks from config
@@ -66,7 +66,7 @@ sudo mknod -m 660 /dev/dri/card0 c 226 0
 # Set `/var/log/fractal` to be root-accessible only
 sudo chmod 0600 -R /var/log/fractal/
 
-# This installs fractal service
-echo "Start Pam Systemd Process for User fractal"
-export WHIST_UID=`id -u fractal`
+# This installs whist service
+echo "Start Pam Systemd Process for User whist"
+export WHIST_UID=`id -u whist`
 systemctl start user@$WHIST_UID

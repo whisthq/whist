@@ -1,7 +1,7 @@
 [
   {
     "source": "google-chrome",
-    "destination": "/home/fractal/.config/google-chrome",
+    "destination": "/home/whist/.config/google-chrome",
     "type": "folder"
   }
 ]
