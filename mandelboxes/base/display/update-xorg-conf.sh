@@ -11,7 +11,7 @@ eval "$(sentry-cli bash-hook)"
 set -Eeuo pipefail
 
 # Retrieve mandelbox parameters
-WHIST_MAPPINGS_DIR=/fractal/resourceMappings
+WHIST_MAPPINGS_DIR=/whist/resourceMappings
 GPU_INDEX_FILENAME=gpu_index
 GPU_INDEX=$(cat $WHIST_MAPPINGS_DIR/$GPU_INDEX_FILENAME)
 

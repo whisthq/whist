@@ -450,7 +450,7 @@ VOLUME [ "/sys/fs/cgroup" ]
 RUN chown -vR whist:whist /home/whist
 RUN chown root:root /run/user
 
-# Create fractal Directory and Subdirectories in /usr/share
+# Create whist Directory and Subdirectories in /usr/share
 RUN mkdir -p /usr/share/whist/private
 
 # Set /usr/share/whist to root-only
@@ -709,7 +709,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 # Set up the default Whist application symlink
 RUN ln -sf "$(which xeyes)" /usr/bin/whist-application
 
-# Set up script to launch `whist-application` as the `fractal` user
+# Set up script to launch `whist-application` as the `whist` user
 COPY main/run-whist-application.sh /usr/bin/run-whist-application.sh
 RUN chmod 0555 /usr/bin/run-whist-application.sh
 
@@ -769,7 +769,7 @@ RUN systemctl enable whist-main
 # Cleanup
 #########################
 
-# Set our fractal systemd files to be root-visible only
+# Set our whist systemd files to be root-visible only
 RUN chgrp root /etc/systemd/system/whist* \
     && chown root:root /etc/systemd/system/whist* \
     && chmod 600 /etc/systemd/system/whist*

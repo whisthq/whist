@@ -67,8 +67,6 @@ There are some other options available to control properties of the resulting ma
 
 If you want to save your configs between sessions, then pass in a user ID and config encryption token. In case you don't want the server protocol to auto-shutdown after 60 seconds, you can set the timeout with another argument. As mentioned above, pass in `--help` to one of the mandelbox image-running scripts to see all the available options.
 
-Currently, it is important to wait 5-10 seconds after making the cURL request before connecting to the mandelbox via `./WhistClient -w [width] -h [height] [ec2-ip-address]`. This is due to a race condition between the `whist-audio.service` and the protocol audio capturing code: (See issue [#360](https://github.com/fractal/fractal/issues/360)).
-
 ## Publishing
 
 We store our production mandelbox images on GitHub mandelbox Registry (GHCR) and deploy them on EC2 via our host service.

@@ -17,7 +17,7 @@ INITIAL_KEY_REPEAT=68 # default value on macOS, options are 120, 94, 68, 35, 25,
 KEY_REPEAT=6 # default value on macOS, options are 120, 90, 60, 30, 12, 6, 2
 INITIAL_URL=""
 
-WHIST_JSON_FILE=/fractal/resourceMappings/config.json
+WHIST_JSON_FILE=/whist/resourceMappings/config.json
 if [[ -f $WHIST_JSON_FILE ]]; then
   if [ "$( jq 'has("dark_mode")' < $WHIST_JSON_FILE )" == "true"  ]; then
     DARK_MODE="$(jq '.dark_mode' < $WHIST_JSON_FILE)"

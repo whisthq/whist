@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This script is the first systemd service run after systemd starts up. It retrieves
-# the relevant parameters for the mandelbox and starts the fractal systemd user
+# the relevant parameters for the mandelbox and starts the whist systemd user
 
 # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
 eval "$(sentry-cli bash-hook)"
@@ -10,8 +10,8 @@ eval "$(sentry-cli bash-hook)"
 set -Eeuo pipefail
 
 # Begin wait loop to get TTY number and port mapping from Whist Host Service
-WHIST_MAPPINGS_DIR=/fractal/resourceMappings
-USER_CONFIGS_DIR=/fractal/userConfigs
+WHIST_MAPPINGS_DIR=/whist/resourceMappings
+USER_CONFIGS_DIR=/whist/userConfigs
 APP_CONFIG_MAP_FILENAME=/usr/share/whist/app-config-map.json
 
 # Wait for TTY and port mapping files and user config to exist

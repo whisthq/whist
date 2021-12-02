@@ -9,7 +9,7 @@ eval "$(sentry-cli bash-hook)"
 set -Eeuo pipefail
 
 # Set/Retrieve Mandelbox parameters
-WHIST_MAPPINGS_DIR=/fractal/resourceMappings
+WHIST_MAPPINGS_DIR=/whist/resourceMappings
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
 PRIVATE_KEY_FILENAME=/usr/share/whist/private/aes_key
 SENTRY_ENV_FILENAME=/usr/share/whist/private/sentry_env
@@ -97,19 +97,19 @@ unset WHIST_INITIAL_USER_BOOKMARKS_FILE
 
 # Start the application that this mandelbox runs.
 /usr/share/whist/run-as-whist-user.sh "/usr/bin/run-whist-application.sh" &
-fractal_application_runuser_pid=$!
+whist_application_runuser_pid=$!
 
-echo "Whist application runuser pid: $fractal_application_runuser_pid"
+echo "Whist application runuser pid: $whist_application_runuser_pid"
 
 # Wait for run-whist-application.sh to write PID to file
 until [ -f "$WHIST_APPLICATION_PID_FILE" ]
 do
   sleep 0.1
 done
-fractal_application_pid=$(cat $WHIST_APPLICATION_PID_FILE)
+whist_application_pid=$(cat $WHIST_APPLICATION_PID_FILE)
 rm $WHIST_APPLICATION_PID_FILE
 
-echo "Whist application pid: $fractal_application_pid"
+echo "Whist application pid: $whist_application_pid"
 
 echo "Now sleeping until there are X clients..."
 
@@ -129,7 +129,7 @@ OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
 # The point of the named pipe redirection is so that $! will give us the PID of WhistServer, not of tee.
 /usr/share/whist/WhistServer $OPTIONS > >(tee $PROTOCOL_LOG_FILENAME) &
-fractal_server_pid=$!
+whist_server_pid=$!
 
 # Wait for either whist-application or WhistServer to exit (both backgrounded processes).
 
@@ -137,17 +137,17 @@ fractal_server_pid=$!
 # application exited with the `-p` flag to `wait`.
 wait -n
 echo "Either WhistServer or whist-application exited with code $?"
-echo "WhistServer PID: $fractal_server_pid"
-echo "runuser whist-application PID: $fractal_application_runuser_pid"
-echo "whist-application PID: $fractal_application_pid"
+echo "WhistServer PID: $whist_server_pid"
+echo "runuser whist-application PID: $whist_application_runuser_pid"
+echo "whist-application PID: $whist_application_pid"
 echo "Remaining job PIDs: $(jobs -p)"
 
 # Kill whatever is still running of WhistServer and whist-application, with SIGTERM.
-kill $fractal_application_pid ||:
-kill $fractal_server_pid ||:
+kill $whist_application_pid ||:
+kill $whist_server_pid ||:
 
 # Wait for whist-application to finish terminating, ignoring exit code (since
-wait $fractal_application_runuser_pid ||:
+wait $whist_application_runuser_pid ||:
 
 echo "Both whist-application and WhistServer have exited."
 
