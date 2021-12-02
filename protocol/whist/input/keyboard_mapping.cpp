@@ -38,7 +38,7 @@ typedef struct {
 // Set of modifiers, for detecting if a key is a modifier
 // CTRL = control, SHIFT = shift, ALT = alt/option, GUI = windows/command
 set<WhistKeycode> modifiers = {FK_LCTRL, FK_LSHIFT, FK_LALT, FK_LGUI,
-                                 FK_RCTRL, FK_RSHIFT, FK_RALT, FK_RGUI};
+                               FK_RCTRL, FK_RSHIFT, FK_RALT, FK_RGUI};
 
 // Will hash vectors so that we can make an hmap out of them
 struct VectorHasher {
@@ -286,10 +286,9 @@ extern "C" void update_mapped_keyboard_state(InputDevice* input_device, WhistOST
             continue;
         }
         int is_pressed =
-            holding_keymap
-                ? (int)std::count(currently_pressed.begin(), currently_pressed.end(),
-                                  (WhistKeycode)whist_keycode)
-                : (int)get_keyboard_key_state(input_device, (WhistKeycode)whist_keycode);
+            holding_keymap ? (int)std::count(currently_pressed.begin(), currently_pressed.end(),
+                                             (WhistKeycode)whist_keycode)
+                           : (int)get_keyboard_key_state(input_device, (WhistKeycode)whist_keycode);
         if (!mapped_keys[whist_keycode] && is_pressed) {
             LOG_INFO("Discrepancy found at %d (%d), unpressing!", whist_keycode,
                      origin_mapping[whist_keycode]);

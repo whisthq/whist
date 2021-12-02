@@ -167,8 +167,8 @@ int udp_send_constructed_packet(void* raw_context, WhistPacket* packet, size_t p
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payload,
-                    int payload_size, int packet_id) {
+int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payload, int payload_size,
+                    int packet_id) {
     SocketContextData* context = raw_context;
     if (context == NULL) {
         LOG_ERROR("SocketContextData is NULL");
@@ -283,8 +283,7 @@ void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType typ
     }
 }
 
-int udp_nack(SocketContext* socket_context, WhistPacketType type, int packet_id,
-             int packet_index) {
+int udp_nack(SocketContext* socket_context, WhistPacketType type, int packet_id, int packet_index) {
     SocketContextData* context = socket_context->context;
 
     int type_index = (int)type;

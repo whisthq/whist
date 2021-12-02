@@ -336,11 +336,11 @@ int handle_pinch(SDL_Event *event) {
     WhistClientMessage fcmsg = {0};
     fcmsg.type = MESSAGE_MULTIGESTURE;
     fcmsg.multigesture = (WhistMultigestureMessage){.d_theta = 0,
-                                                      .d_dist = event->pinch.scroll_amount,
-                                                      .x = 0,
-                                                      .y = 0,
-                                                      .num_fingers = 2,
-                                                      .active_gesture = active_pinch};
+                                                    .d_dist = event->pinch.scroll_amount,
+                                                    .x = 0,
+                                                    .y = 0,
+                                                    .num_fingers = 2,
+                                                    .active_gesture = active_pinch};
 
     fcmsg.multigesture.gesture_type = MULTIGESTURE_NONE;
     if (event->pinch.magnification < 0) {
@@ -364,11 +364,11 @@ int handle_multi_gesture(SDL_Event *event) {
     WhistClientMessage fcmsg = {0};
     fcmsg.type = MESSAGE_MULTIGESTURE;
     fcmsg.multigesture = (WhistMultigestureMessage){.d_theta = event->mgesture.dTheta,
-                                                      .d_dist = event->mgesture.dDist,
-                                                      .x = event->mgesture.x,
-                                                      .y = event->mgesture.y,
-                                                      .num_fingers = event->mgesture.numFingers,
-                                                      .gesture_type = MULTIGESTURE_NONE};
+                                                    .d_dist = event->mgesture.dDist,
+                                                    .x = event->mgesture.x,
+                                                    .y = event->mgesture.y,
+                                                    .num_fingers = event->mgesture.numFingers,
+                                                    .gesture_type = MULTIGESTURE_NONE};
     send_fcmsg(&fcmsg);
 
     return 0;

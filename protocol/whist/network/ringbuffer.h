@@ -94,8 +94,7 @@ typedef struct RingBuffer {
  * @returns A pointer to the newly created ring buffer. All frames in the new ring buffer have ID
  * -1.
  */
-RingBuffer* init_ring_buffer(WhistPacketType type, int ring_buffer_size,
-                             NackPacketFn nack_packet);
+RingBuffer* init_ring_buffer(WhistPacketType type, int ring_buffer_size, NackPacketFn nack_packet);
 
 /**
  * @brief Retrives the frame at the given ID in the ring buffer.

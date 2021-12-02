@@ -105,10 +105,10 @@ WhistPacket* tcp_read_packet(void* raw_context, bool should_recv) {
             int decrypted_len;
             if (ENCRYPTING_PACKETS) {
                 // Decrypt the packet
-                decrypted_len = decrypt_packet_n(
-                    (WhistPacket*)(encrypted_tcp_packet_buffer->buf + sizeof(int)), target_len,
-                    decrypted_packet_buffer, target_len,
-                    (unsigned char*)context->binary_aes_private_key);
+                decrypted_len =
+                    decrypt_packet_n((WhistPacket*)(encrypted_tcp_packet_buffer->buf + sizeof(int)),
+                                     target_len, decrypted_packet_buffer, target_len,
+                                     (unsigned char*)context->binary_aes_private_key);
             } else {
                 // The decrypted packet is just the original packet, during dev mode
                 decrypted_len = target_len;
@@ -149,9 +149,7 @@ WhistPacket* tcp_read_packet(void* raw_context, bool should_recv) {
     return NULL;
 }
 
-void tcp_free_packet(void* raw_context, WhistPacket* tcp_packet) {
-    deallocate_region(tcp_packet);
-}
+void tcp_free_packet(void* raw_context, WhistPacket* tcp_packet) { deallocate_region(tcp_packet); }
 
 int tcp_send_constructed_packet(void* raw_context, WhistPacket* packet, size_t packet_size) {
     SocketContextData* context = raw_context;

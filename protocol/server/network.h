@@ -46,8 +46,7 @@ int broadcast_ack(Client *client);
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int broadcast_udp_packet(Client *client, WhistPacketType type, void *data, int len,
-                         int packet_id);
+int broadcast_udp_packet(Client *client, WhistPacketType type, void *data, int len, int packet_id);
 
 /**
  * @brief                          Sends a WhistPacket and accompanying

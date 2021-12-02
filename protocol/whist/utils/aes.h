@@ -113,9 +113,8 @@ int decrypt_packet(WhistPacket* encrypted_packet, int packet_len, WhistPacket* p
  * @returns                        Will return -1 on failure, else will return the
  *                                 length of the decrypted packets
  */
-int decrypt_packet_n(WhistPacket* encrypted_packet, int packet_len,
-                     WhistPacket* plaintext_packet, int plaintext_len,
-                     unsigned char* private_key);
+int decrypt_packet_n(WhistPacket* encrypted_packet, int packet_len, WhistPacket* plaintext_packet,
+                     int plaintext_len, unsigned char* private_key);
 
 /**
  * @brief                          Encrypt plaintext data

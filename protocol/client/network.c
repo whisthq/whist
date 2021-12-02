@@ -153,8 +153,7 @@ int discover_ports(bool *with_stun) {
     LOG_INFO("Received discovery info packet from server!");
 
     // Create and send discovery reply message
-    WhistDiscoveryReplyMessage *reply_msg =
-        (WhistDiscoveryReplyMessage *)fsmsg->discovery_reply;
+    WhistDiscoveryReplyMessage *reply_msg = (WhistDiscoveryReplyMessage *)fsmsg->discovery_reply;
 
     set_audio_frequency(reply_msg->audio_sample_rate);
     udp_port = reply_msg->udp_port;

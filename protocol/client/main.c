@@ -501,8 +501,7 @@ int main(int argc, char* argv[]) {
             }
 
             if (native_window_color_update && native_window_color) {
-                set_native_window_color((SDL_Window*)window,
-                                        *(WhistRGBColor*)native_window_color);
+                set_native_window_color((SDL_Window*)window, *(WhistRGBColor*)native_window_color);
                 native_window_color_update = false;
             }
 

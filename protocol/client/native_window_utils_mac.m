@@ -124,7 +124,7 @@ int get_native_window_dpi(SDL_Window *window) {
 }
 
 WhistYUVColor get_frame_color(uint8_t *y_data, uint8_t *u_data, uint8_t *v_data,
-                                bool using_hardware) {
+                              bool using_hardware) {
     WhistYUVColor yuv_color = {0};
     if (using_hardware) {
         if (y_data) {

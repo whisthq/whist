@@ -50,7 +50,7 @@ WhistRGBColor yuv_to_rgb(WhistYUVColor yuv_color) {
     int b_component = lround(1.164 * y_delta + 2.017 * u_delta);
 
     WhistRGBColor rgb_color = {CLAMP_COLOR(r_component), CLAMP_COLOR(g_component),
-                                 CLAMP_COLOR(b_component)};
+                               CLAMP_COLOR(b_component)};
 
     return rgb_color;
 }

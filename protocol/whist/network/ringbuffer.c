@@ -41,8 +41,7 @@ void reset_bitrate_stat_members(RingBuffer* ring_buffer) {
     ring_buffer->num_frames_rendered = 0;
 }
 
-RingBuffer* init_ring_buffer(WhistPacketType type, int ring_buffer_size,
-                             NackPacketFn nack_packet) {
+RingBuffer* init_ring_buffer(WhistPacketType type, int ring_buffer_size, NackPacketFn nack_packet) {
     /*
         Initialize the ring buffer; malloc space for all the frames and set their IDs to -1.
 

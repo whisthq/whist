@@ -154,8 +154,7 @@ int do_discovery_handshake(whist_server_state *state, SocketContext *context,
     memset(fsmsg, 0, sizeof(*fsmsg));
     fsmsg->type = MESSAGE_DISCOVERY_REPLY;
 
-    WhistDiscoveryReplyMessage *reply_msg =
-        (WhistDiscoveryReplyMessage *)fsmsg->discovery_reply;
+    WhistDiscoveryReplyMessage *reply_msg = (WhistDiscoveryReplyMessage *)fsmsg->discovery_reply;
 
     reply_msg->udp_port = state->client.udp_port;
     reply_msg->tcp_port = state->client.tcp_port;
@@ -228,8 +227,7 @@ int broadcast_ack(Client *client) {
     return ret;
 }
 
-int broadcast_udp_packet(Client *client, WhistPacketType type, void *data, int len,
-                         int packet_id) {
+int broadcast_udp_packet(Client *client, WhistPacketType type, void *data, int len, int packet_id) {
     if (packet_id <= 0) {
         LOG_WARNING("Packet IDs must be positive!");
         return -1;

@@ -91,7 +91,7 @@ bool verify_hmac(void* hash, void* buf, int len, void* key) {
     return true;
 }
 
-#define CRYPTO_HEADER_LEN                                                          \
+#define CRYPTO_HEADER_LEN                                                      \
     (sizeof(((WhistPacket*)0)->hash) + sizeof(((WhistPacket*)0)->cipher_len) + \
      sizeof(((WhistPacket*)0)->iv))
 
@@ -139,9 +139,8 @@ int decrypt_packet(WhistPacket* encrypted_packet, int packet_len, WhistPacket* p
     return decrypt_len;
 }
 
-int decrypt_packet_n(WhistPacket* encrypted_packet, int packet_len,
-                     WhistPacket* plaintext_packet, int plaintext_len,
-                     unsigned char* private_key) {
+int decrypt_packet_n(WhistPacket* encrypted_packet, int packet_len, WhistPacket* plaintext_packet,
+                     int plaintext_len, unsigned char* private_key) {
     if ((unsigned long)packet_len < PACKET_HEADER_SIZE) {
         LOG_WARNING("Packet is too small (%d bytes) for metadata!", packet_len);
         return -1;

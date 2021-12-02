@@ -431,7 +431,7 @@ typedef enum InteractionMode { CONTROL = 1, SPECTATE = 2, EXCLUSIVE_CONTROL = 3 
 typedef struct WhistKeyboardMessage {
     WhistKeycode code;  ///< Keyboard input.
     WhistKeymod mod;    ///< Stateful modifier keys applied to keyboard input.
-    bool pressed;         ///< `true` if pressed, `false` if released.
+    bool pressed;       ///< `true` if pressed, `false` if released.
     uint8_t __pad[3];
 } WhistKeyboardMessage;
 
@@ -441,7 +441,7 @@ typedef struct WhistKeyboardMessage {
  */
 typedef struct WhistMouseButtonMessage {
     WhistMouseButton button;  ///< Mouse button.
-    bool pressed;               ///< `true` if clicked, `false` if released.
+    bool pressed;             ///< `true` if clicked, `false` if released.
     uint8_t __pad[3];
 } WhistMouseButtonMessage;
 
@@ -522,12 +522,12 @@ typedef enum WhistOSType {
  * @details Message from multigesture event on touchpad.
  */
 typedef struct WhistMultigestureMessage {
-    float d_theta;                         ///< The amount the fingers rotated.
-    float d_dist;                          ///< The amount the fingers pinched.
-    float x;                               ///< Normalized gesture x-axis center.
-    float y;                               ///< Normalized gesture y-axis center.
-    uint16_t num_fingers;                  ///< Number of fingers used in the gesture.
-    bool active_gesture;                   ///< Whether this multigesture is already active.
+    float d_theta;                       ///< The amount the fingers rotated.
+    float d_dist;                        ///< The amount the fingers pinched.
+    float x;                             ///< Normalized gesture x-axis center.
+    float y;                             ///< Normalized gesture y-axis center.
+    uint16_t num_fingers;                ///< Number of fingers used in the gesture.
+    bool active_gesture;                 ///< Whether this multigesture is already active.
     WhistMultigestureType gesture_type;  ///< Multigesture type
 } WhistMultigestureMessage;
 

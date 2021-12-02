@@ -206,8 +206,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
                        sizeof(ClipboardData) + clipboard_chunk->size);
                 // Send fsmsg
                 if (broadcast_tcp_packet(&state->client, PACKET_MESSAGE, (uint8_t*)fsmsg_response,
-                                         sizeof(WhistServerMessage) + clipboard_chunk->size) <
-                    0) {
+                                         sizeof(WhistServerMessage) + clipboard_chunk->size) < 0) {
                     LOG_WARNING("Failed to broadcast clipboard message.");
                 }
                 // Free fsmsg
