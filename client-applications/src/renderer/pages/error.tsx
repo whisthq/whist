@@ -54,9 +54,7 @@ export const OneButtonError = (props: {
           contents={props.primaryButtonText}
           className="px-12 mx-auto bg-mint py-3"
           state={
-            processing
-              ? WhistButtonState.PROCESSING
-              : WhistButtonState.DEFAULT
+            processing ? WhistButtonState.PROCESSING : WhistButtonState.DEFAULT
           }
           onClick={onClick}
         />
@@ -102,9 +100,7 @@ export const TwoButtonError = (props: {
           contents={props.primaryButtonText}
           className="px-12 mx-auto py-3 bg-mint text-black"
           state={
-            processing
-              ? WhistButtonState.PROCESSING
-              : WhistButtonState.DEFAULT
+            processing ? WhistButtonState.PROCESSING : WhistButtonState.DEFAULT
           }
           onClick={onClick}
         />

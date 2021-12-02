@@ -72,9 +72,7 @@ const Importer = (props: {
           contents="Continue"
           className="mt-4 px-12 w-96 mx-auto py-2 text-gray-300 hover:text-black"
           state={
-            processing
-              ? WhistButtonState.PROCESSING
-              : WhistButtonState.DEFAULT
+            processing ? WhistButtonState.PROCESSING : WhistButtonState.DEFAULT
           }
           onClick={() => onSubmit(browser)}
         />

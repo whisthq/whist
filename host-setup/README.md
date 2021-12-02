@@ -99,8 +99,6 @@ rm -rf fractal
 
 - Manually test that this instance can be attached to an AWS EC2 instances cluster and that it can be connected to, and then save it as an AMI in the AWS console.
 
-**NOTE**: If you want to see the actual userdata that gets passed into the EC2 hosts, it's in the subfolder `webserver` in the file [`app/helpers/utils/aws/ec2_userdata.sh`](https://github.com/fractal/fractal/blob/dev/webserver/app/helpers/utils/aws/ec2_userdata.sh).
-
 ## Copying AMIs Across AWS Regions
 
 If you have created an AMI in a specific AWS region (i.e. `us-east-1`) which you would like to replicate in a different AWS region (i.e. `us-west-1`), you can either re-run the scripts in a different region and start the process from scratch, or you can copy over your AMI (which is much faster). For complete details on how to copy over AMIs, see our [Documentation on Notion](https://www.notion.so/whisthq/4d91593ea0e0438b8bdb14c25c219d55?v=0c3983cf062d4c3d96ac2a65eb31761b&p=ca4fdec782894072a6dd63f32b494e1d).
