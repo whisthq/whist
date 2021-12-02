@@ -8,7 +8,7 @@ import "github.com/google/uuid"
 const (
 	WhistDir                 string = "/fractal/"
 	TempDir                  string = WhistDir + "temp/"
-	WhistPrivateDir          string = "/fractalprivate/"
+	WhistPrivateDir          string = "/whist/"
 	UserInitialBrowserDir    string = WhistDir + "userConfigs/"
 	UserInitialCookiesFile   string = "user-initial-cookies"
 	UserInitialBookmarksFile string = "user-initial-bookmarks"

@@ -21,7 +21,7 @@ It is used by the scripts `run_local_mandelbox_image.sh` and
 """
 
 
-# Set current working directory to fractal/mandelboxes
+# Set current working directory to whist/mandelboxes
 def reset_working_directory():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     os.chdir("..")
@@ -33,8 +33,8 @@ reset_working_directory()
 parser = argparse.ArgumentParser(description=DESCRIPTION)
 parser.add_argument(
     "image",
-    help="Whist mandelbox to run. Defaults to 'fractal/base:current-build'.",
-    default="fractal/base:current-build",
+    help="Whist mandelbox to run. Defaults to 'whist/base:current-build'.",
+    default="whist/base:current-build",
 )
 parser.add_argument(
     "--json-data",
@@ -57,7 +57,7 @@ parser.add_argument(
     help=(
         "This flag skips TLS verification for requests to the host service. Not "
         "passing this flag means that this script will verify against the "
-        "certificate '/fractalprivate/cert.pem'. By default, this flag is disabled."
+        "certificate '/whist/cert.pem'. By default, this flag is disabled."
     ),
 )
 parser.add_argument(
@@ -73,7 +73,7 @@ args = parser.parse_args()
 
 # Define some helper functions and variables
 HOST_SERVICE_URL = f"https://{args.host_address}:{args.host_port}/"
-HOST_SERVICE_CERT_PATH = "/fractalprivate/cert.pem"
+HOST_SERVICE_CERT_PATH = "/whist/cert.pem"
 local_host_service = args.host_address == "127.0.0.1"
 mandelbox_server_path = os.path.abspath("/usr/share/whist/bin")
 PortBindings = namedtuple(

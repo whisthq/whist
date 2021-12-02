@@ -10,7 +10,7 @@
 # to copy the protocol as early as possible to share
 # layers between images.
 ARG BuildAssetPackage "protocol"
-FROM fractal/build-assets:$BuildAssetPackage as build-assets
+FROM whist/build-assets:$BuildAssetPackage as build-assets
 
 ################ STAGE 1: libinput-build ################
 # - Install build dependencies as per the documentation
@@ -268,7 +268,7 @@ RUN cd /whist-teleport-fuse/src \
     && gcc -Wall -D _GNU_SOURCE unshare.c -o unshare.o -c \
     && gcc -Wall unshare.o teleport-fuse.c $(pkg-config fuse3 --cflags --libs) -o ../build/whist-teleport-fuse
 
-################ STAGE 5: fractal-base ######################
+################ STAGE 5: whist-base ######################
 # - Copy and install libinput from libinput-build
 # - Copy and install xf86-input-libinput from
 #   xf86-input-libinput-build
@@ -278,9 +278,9 @@ RUN cd /whist-teleport-fuse/src \
 #   whist-teleport-fuse
 # - Install and configure all necessary components for
 #   our base mandelbox image
-# EXPOSES all of fractal-base as the final image
+# EXPOSES all of whist-base as the final image
 #############################################################
-FROM ubuntu:20.04 as fractal-base
+FROM ubuntu:20.04 as whist-base
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
