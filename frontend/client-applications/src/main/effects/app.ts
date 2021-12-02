@@ -42,7 +42,7 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-withAppReady(fromTrigger(WhistTrigger.configFlowSuccess)).subscribe(
+withAppReady(fromTrigger(WhistTrigger.authFlowSuccess)).subscribe(
   (x: { userEmail: string }) => {
     // Show notification
     startupNotification()?.show()
