@@ -1,7 +1,7 @@
 {
-    "name": "fractal-auth0",
+    "name": "whist-auth0",
     "version": "1.0.0",
-    "description": "Auth0 configuration and hooks",
+    "description": "Whist Auth0 configuration and hooks",
     "repository": "https://github.com/fractal/fractal.git",
     "license": "UNLICENSED",
     "private": true,
