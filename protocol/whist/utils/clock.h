@@ -18,6 +18,7 @@ Includes
 ============================
 */
 
+#include <stdint.h>
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -44,6 +45,8 @@ Custom Types
 */
 
 #define TZ_NAME_MAXLEN 200
+
+typedef uint64_t timestamp_us;
 
 typedef struct WhistTimeData {
     // UTC offset for setting time
@@ -95,5 +98,12 @@ clock create_clock(int timeout_ms);
  * @returns						   The current time as a string
  */
 char* current_time_str();
+
+/**
+ * @brief                          Returns the number of microseconds elapsed since epoch
+ *
+ * @returns                        Number of microseconds elapsed since epoch
+ */
+timestamp_us current_time_us();
 
 #endif

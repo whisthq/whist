@@ -34,9 +34,9 @@ extern SocketContext packet_tcp_context;
 bool connected = true;
 // Ping variables
 clock last_ping_timer;
-volatile int last_ping_id;
-volatile int last_pong_id;
-volatile int ping_failures;
+volatile int last_udp_ping_id;
+volatile int last_udp_pong_id;
+volatile int udp_ping_failures;
 // TCP ping variables
 clock last_tcp_ping_timer;
 volatile int last_tcp_ping_id;
@@ -87,12 +87,12 @@ void update_ping() {
 
     // If we're waiting for a ping, and it's been 600ms, then that ping will be
     // noted as failed
-    if (last_ping_id != last_pong_id && get_timer(last_new_ping_timer) > 0.6) {
-        LOG_WARNING("Ping received no response: %d", last_ping_id);
+    if (last_udp_ping_id != last_udp_pong_id && get_timer(last_new_ping_timer) > 0.6) {
+        LOG_WARNING("Ping received no response: %d", last_udp_ping_id);
         // Keep track of failures, and exit if too many failures
-        last_pong_id = last_ping_id;
-        ++ping_failures;
-        if (ping_failures == 3) {
+        last_udp_pong_id = last_udp_ping_id;
+        ++udp_ping_failures;
+        if (udp_ping_failures == 3) {
             // we make this a LOG_WARNING so it doesn't clog up Sentry, as this
             // error happens periodically but we have recovery systems in place
             // for streaming interruption/connection loss
@@ -102,14 +102,14 @@ void update_ping() {
     }
 
     // if we've received the last ping, send another
-    if (last_ping_id == last_pong_id && get_timer(last_ping_timer) > 0.5) {
-        send_ping(last_ping_id + 1);
+    if (last_udp_ping_id == last_udp_pong_id && get_timer(last_ping_timer) > 0.5) {
+        send_ping(last_udp_ping_id + 1);
         start_timer(&last_new_ping_timer);
     }
 
     // if we haven't received the last ping, send the same ping
-    if (last_ping_id != last_pong_id && get_timer(last_ping_timer) > 0.21) {
-        send_ping(last_ping_id);
+    if (last_udp_ping_id != last_udp_pong_id && get_timer(last_ping_timer) > 0.21) {
+        send_ping(last_udp_ping_id);
     }
 }
 
@@ -196,8 +196,8 @@ int multithreaded_sync_udp_packets(void* opaque) {
     // we initialize latency here because on macOS, latency would not initialize properly in
     // its global declaration. We start at 25ms before the first ping.
     latency = 25.0 / MS_IN_SECOND;
-    last_ping_id = 0;
-    ping_failures = 0;
+    last_udp_ping_id = 0;
+    udp_ping_failures = 0;
 
     clock last_ack;
     clock statistics_timer;

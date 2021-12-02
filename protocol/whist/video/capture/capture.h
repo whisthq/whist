@@ -38,6 +38,7 @@ typedef struct CaptureDevice {
     int pitch;
     void* frame_data;
     WhistRGBColor corner_color;
+    uint64_t last_capture_timestamp;
     void* internal;
 
 #ifdef __linux__

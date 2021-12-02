@@ -24,6 +24,9 @@ typedef struct VideoFrame {
                              // the server is wrong, it can correct it
     int videodata_length;
     WhistRGBColor corner_color;
+    timestamp_us client_input_timestamp;  // Last ping client timestamp + time elapsed. Used for
+                                          // E2E latency calculation.
+    timestamp_us server_timestamp;        // Server timestamp during capture of this frame
 
     unsigned char data[];
 } VideoFrame;

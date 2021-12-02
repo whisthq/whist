@@ -575,7 +575,7 @@ typedef enum WhistClientMessageType {
     MESSAGE_STOP_STREAMING = 105,   ///< Message asking server to stop encoding/sending frames
     MESSAGE_START_STREAMING = 106,  ///< Message asking server to resume encoding/sending frames
     MESSAGE_MBPS = 107,             ///< `mbps` double is valid in FractClientMessage.
-    MESSAGE_PING = 108,
+    MESSAGE_UDP_PING = 108,
     MESSAGE_TCP_PING = 109,
     MESSAGE_DIMENSIONS = 110,  ///< `dimensions.width` int and `dimensions.height`
                                ///< int is valid in FractClientMessage
@@ -641,8 +641,11 @@ typedef struct WhistClientMessage {
             double fec_packet_ratio;
         } bitrate_data;
 
-        // MESSAGE_PING or MESSAGE_TCP_PING
-        int ping_id;
+        // MESSAGE_UDP_PING or MESSAGE_TCP_PING
+        struct {
+            int id;
+            timestamp_us original_timestamp;
+        } ping_data;
 
         // MESSAGE_DIMENSIONS
         struct {

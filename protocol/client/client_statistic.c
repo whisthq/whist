@@ -37,6 +37,8 @@ void init_client_statistics() {
         (StatisticInfo){"VIDEO_DECODE_SEND_PACKET_TIME", true, false, false};
     client_statistic_info[VIDEO_DECODE_GET_FRAME_TIME] =
         (StatisticInfo){"VIDEO_DECODE_GET_FRAME_TIME", true, false, false};
+    client_statistic_info[VIDEO_E2E_LATENCY] =
+        (StatisticInfo){"VIDEO_END_TO_END_LATENCY", true, true, false};
     client_statistic_info[VIDEO_RECEIVE_TIME] =
         (StatisticInfo){"VIDEO_RECEIVE_TIME", true, false, false};
     client_statistic_info[VIDEO_RENDER_TIME] =

@@ -45,6 +45,7 @@ int init_client(Client *client) {
     client->tcp_port = BASE_TCP_PORT;
     init_rw_lock(&client->tcp_rwlock);
     active_holding_write_mutex = whist_create_mutex();
+    client->timestamp_mutex = whist_create_mutex();
 
     return 0;
 }
@@ -60,7 +61,7 @@ int destroy_clients(Client *client) {
         Returns:
             (int): -1 on failure, 0 on success
     */
-
+    whist_destroy_mutex(client->timestamp_mutex);
     destroy_rw_lock(&client->tcp_rwlock);
     return 0;
 }

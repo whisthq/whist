@@ -94,3 +94,25 @@ char* current_time_str() {
 
     return buffer;
 }
+
+timestamp_us current_time_us() {
+    uint64_t output;
+#if defined(_WIN32)
+/* Windows epoch starts on 1601-01-01T00:00:00Z. But UNIX/Linux epoch starts on
+   1970-01-01T00:00:00Z. To bring Windows time on par Unix epoch, the difference is above start
+   times is subtracted */
+#define EPOCH_DIFFERENCE 11644473600LL
+
+    FILETIME file_time;
+    GetSystemTimeAsFileTime(&file_time);
+    output = ((uint64_t)file_time.dwHighDateTime << 32) | file_time.dwLowDateTime;
+    output /= 10;  // To bring it to microseconds
+    output -= (EPOCH_DIFFERENCE * (uint64_t)1000000);
+#else
+    struct timeval time_now;
+    gettimeofday(&time_now, NULL);
+    output = ((uint64_t)time_now.tv_sec * 1000000) + time_now.tv_usec;
+#endif
+    // Ensure that this cast is correct, uint64_t -> timestamp_us
+    return (timestamp_us)output;
+}

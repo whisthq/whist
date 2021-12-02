@@ -149,10 +149,13 @@ int32_t create_new_device(whist_server_state* state, clock* statistics_timer,
  * @param device                    CaptureDevice pointer
  * @param encoder                   VideoEncoder pointer
  * @param id                        Pointer to frame id
+ * @param client_input_timestamp    Estimated client timestamp at which user input is sent
+ * @param server_timestamp          Server timestamp at which this frame is captured
  */
 void send_populated_frames(whist_server_state* state, clock* statistics_timer,
                            clock* server_frame_timer, CaptureDevice* device, VideoEncoder* encoder,
-                           int id) {
+                           int id, timestamp_us client_input_timestamp,
+                           timestamp_us server_timestamp) {
     // transfer the capture of the latest frame from the device to
     // the encoder,
     // This function will try to CUDA/OpenGL optimize the transfer by
@@ -168,6 +171,8 @@ void send_populated_frames(whist_server_state* state, clock* statistics_timer,
     frame->is_empty_frame = false;
     frame->is_window_visible = true;
     frame->corner_color = device->corner_color;
+    frame->server_timestamp = server_timestamp;
+    frame->client_input_timestamp = client_input_timestamp;
 
     static WhistCursorImage cursor_cache[2];
     static int last_cursor_id = 0;
@@ -498,6 +503,19 @@ int32_t multithreaded_send_video(void* opaque) {
                                  get_timer(statistics_timer) * MS_IN_SECOND);
         }
 
+        timestamp_us client_input_timestamp;
+        timestamp_us server_timestamp = current_time_us();
+
+        // Theoretical client timestamp of user input, for E2E Latency Calculation
+        whist_lock_mutex(state->client.timestamp_mutex);
+        // The client timestamp from a ping,
+        // is the timestamp of theoretical client input we're responding to
+        client_input_timestamp = state->client.last_ping_client_time;
+        // But we should adjust for the time between when we received the ping, and now,
+        // To only extract the client->server network latency
+        client_input_timestamp += (server_timestamp - state->client.last_ping_server_time);
+        whist_unlock_mutex(state->client.timestamp_mutex);
+
         // SENDING LOGIC:
         // first, we call capture_screen, which returns how many frames have passed since the last
         // call to capture_screen, If we are using Nvidia, the captured frame is also
@@ -512,6 +530,7 @@ int32_t multithreaded_send_video(void* opaque) {
         if (get_timer(last_frame_capture) > 1.0 / FPS &&
             (!state->stop_streaming || state->wants_iframe)) {
             start_timer(&statistics_timer);
+            uint64_t timestamp = current_time_us();
             accumulated_frames = capture_screen(device);
             log_double_statistic(VIDEO_CAPTURE_SCREEN_TIME,
                                  get_timer(statistics_timer) * MS_IN_SECOND);
@@ -521,22 +540,21 @@ int32_t multithreaded_send_video(void* opaque) {
                 LOG_INFO("Missed Frames! %d frames passed since last capture", accumulated_frames);
 #endif
             }
-            // LOG_INFO( "CaptureScreen: %d", accumulated_frames );
-        }
-
-        // If capture screen failed, we should try again
-        if (accumulated_frames < 0) {
-            retry_capture_screen(state, device, encoder);
-            continue;
+            // If capture screen failed, we should try again
+            if (accumulated_frames < 0) {
+                retry_capture_screen(state, device, encoder);
+                continue;
+            }
+            // Immediately bring consecutives to 0
+            if (accumulated_frames > 0) {
+                consecutive_identical_frames = 0;
+                device->last_capture_timestamp = timestamp;
+            }
         }
 
         clock server_frame_timer;
         start_timer(&server_frame_timer);
 
-        // Immediately bring consecutives to 0
-        if (accumulated_frames > 0) {
-            consecutive_identical_frames = 0;
-        }
         // Disable the encoder when we've sent enough identical frames,
         // And no iframe is being requested at this time.
         // When the encoder is disabled, we only wake the client CPU,
@@ -615,7 +633,8 @@ int32_t multithreaded_send_video(void* opaque) {
                         continue;
                     } else {
                         send_populated_frames(state, &statistics_timer, &server_frame_timer, device,
-                                              encoder, id);
+                                              encoder, id, client_input_timestamp,
+                                              server_timestamp);
 
                         log_double_statistic(VIDEO_FPS_SENT, 1.0);
                         log_double_statistic(VIDEO_SEND_TIME,
