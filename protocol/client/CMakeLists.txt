@@ -40,14 +40,14 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux"
     add_custom_command(
             TARGET WhistClient POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_SOURCE_DIR}/client/fclient
+            ${CMAKE_SOURCE_DIR}/client/wclient
             ${CMAKE_BINARY_DIR})
 endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(
             TARGET WhistClient POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_SOURCE_DIR}/client/fclient.bat
+            ${CMAKE_SOURCE_DIR}/client/wclient.bat
             ${CMAKE_BINARY_DIR})
 endif()
 

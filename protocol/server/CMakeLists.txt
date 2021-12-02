@@ -30,7 +30,7 @@ OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     add_custom_command(
             TARGET WhistServer POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_SOURCE_DIR}/server/fserver
+            ${CMAKE_SOURCE_DIR}/server/wserver
             ${CMAKE_BINARY_DIR})
 endif()
 
@@ -38,7 +38,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(
             TARGET WhistServer POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_SOURCE_DIR}/server/fserver.bat
+            ${CMAKE_SOURCE_DIR}/server/wserver.bat
             ${CMAKE_BINARY_DIR})
 endif()
 
