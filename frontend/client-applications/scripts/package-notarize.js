@@ -5,13 +5,7 @@
 const helpers = require("./build-package-helpers")
 const yargs = require("yargs")
 
-const packageNotarize = (env, config, version, commit) => {
-  // If we're passed a --config CLI argument, we'll use that as the JSON
-  // config value. If no --config argument, we'll build the config ourselves.
-  if (!config) {
-    helpers.buildConfigContainer()
-    config = helpers.getConfig({ deploy: "dev" })
-  }
+const packageNotarize = (env, version, commit) => {
   helpers.reinitializeYarn()
   helpers.buildAndCopyProtocol()
   helpers.buildTailwind()
@@ -20,9 +14,6 @@ const packageNotarize = (env, config, version, commit) => {
 
   // For testing, we just hardcode the environment to dev
   helpers.setPackagedEnv("dev")
-
-  // Add the config to env_overrides.json
-  helpers.setPackagedConfig(config)
 
   // We hardcode the commit sha to the current commit
   helpers.setPackagedCommitSha(commit)
@@ -36,7 +27,6 @@ const packageNotarize = (env, config, version, commit) => {
 
   helpers.snowpackBuild({
     ...env,
-    CONFIG: config,
     VERSION: version,
   })
   helpers.electronBuild()
@@ -51,10 +41,6 @@ if (require.main === module) {
   // least some of our argument handling is covered by CI as well.
   const argv = yargs(process.argv.slice(2))
     .version(false) // necessary to prevent mis-parsing of the `--version` arg we pass in
-    .option("config", {
-      description: "The JSON object output from whist/config",
-      type: "string",
-    })
     .option("version", {
       description:
         "Set the version number of the client app for notarization testing.",
@@ -70,5 +56,5 @@ if (require.main === module) {
     })
     .help().argv
 
-  packageNotarize({}, argv.config, argv.version, argv.commit)
+  packageNotarize({}, argv.version, argv.commit)
 }

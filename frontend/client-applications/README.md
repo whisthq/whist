@@ -214,7 +214,7 @@ All config variables are stored in various files in the `config` folder in the a
 - `environment.js` exports environment-specific variables used while the application is running
 - `paths.js` exports relevant OS-dependent paths
 
-In the electron app itself, these variables are re-exported by the files in `src/config`.
+In the Electron app itself, these variables are re-exported by the files in `src/config`.
 
 ## Packaging
 
