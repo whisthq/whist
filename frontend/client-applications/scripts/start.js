@@ -37,11 +37,9 @@ if (require.main === module) {
       default: "",
     })
     .help().argvs
-  start(
-    {
-      SHOW_PROTOCOL_LOGS: argv.showProtocolLogs,
-      INITIAL_URL: argv.initialUrl,
-      DEVELOPMENT_ENV: argv.useLocalServer ? "local" : "dev",
-    }
-  )
+  start({
+    SHOW_PROTOCOL_LOGS: argv.showProtocolLogs,
+    INITIAL_URL: argv.initialUrl,
+    DEVELOPMENT_ENV: argv.useLocalServer ? "local" : "dev",
+  })
 }

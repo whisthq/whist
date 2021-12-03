@@ -1,7 +1,6 @@
 // This file contains helper functions for building, packaging, and publishing the client application.
 
 const { execCommand } = require("./execCommand")
-const { execSync } = require("child_process")
 const { sync: rimrafSync } = require("rimraf")
 const fs = require("fs")
 const fse = require("fs-extra")
@@ -38,12 +37,6 @@ const addEnvOverride = (envs) => {
 
   const envString = JSON.stringify(newEnv)
   fs.writeFileSync(envOverrideFile, envString)
-}
-
-const configOS = () => {
-  if (process.platform === "win32") return "win32"
-  if (process.platform === "darwin") return "macos"
-  return "linux"
 }
 
 const gitRepoRoot = "../.."

@@ -36,11 +36,9 @@ if (require.main === module) {
     })
     .help().argv
 
-  start(
-    {
-      SHOW_PROTOCOL_LOGS: argv.showProtocolLogs,
-      INITIAL_URL: argv.initialUrl,
-      DEVELOPMENT_ENV: argv.useLocalServer ? "local" : "dev",
-    }
-  )
+  start({
+    SHOW_PROTOCOL_LOGS: argv.showProtocolLogs,
+    INITIAL_URL: argv.initialUrl,
+    DEVELOPMENT_ENV: argv.useLocalServer ? "local" : "dev",
+  })
 }
