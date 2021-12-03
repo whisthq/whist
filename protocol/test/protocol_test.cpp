@@ -367,7 +367,7 @@ TEST_F(CaptureStdoutTest, LogStatistic) {
     log_double_statistic(0, 21.5);
     log_double_statistic(1, 30.0);
     log_double_statistic(1, 20.0);
-    whist_sleep(300);
+    whist_sleep(2010);
     log_double_statistic(1, 60.0);
     flush_logs();
     check_stdout_line(::testing::HasSubstr("\"TEST1\" : 15.75"));
