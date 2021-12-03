@@ -35,10 +35,10 @@ func TestAllocateWithNoFreeTTY(t *testing.T) {
 		ttymap[TTY(allowedTTY)] = inUse
 	}
 
-	// This will create an inUse entry
+	// This will result in an error as there are no available entries
 	testTTY, err := Allocate()
-	if err != nil {
-		t.Fatalf("error allocating TTY with err: %v and tty: %v", err, testTTY)
+	if err == nil {
+		t.Fatalf("error allocating TTY with none available. Expected err and tty: 0, got nil and tty: %v", testTTY)
 	}
 
 	// Free entire map

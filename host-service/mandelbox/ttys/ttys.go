@@ -46,8 +46,9 @@ func Allocate() (TTY, error) {
 	var tty TTY
 	maxTries := 100
 	for numTries := 0; numTries < maxTries; numTries++ {
-		tty = randomTTYInAllowedRange()
-		if _, exists := ttymap[tty]; !exists {
+		tempTTY := randomTTYInAllowedRange()
+		if _, exists := ttymap[tempTTY]; !exists {
+			tty = tempTTY
 			break
 		}
 	}
