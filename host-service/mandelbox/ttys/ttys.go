@@ -43,7 +43,7 @@ func Allocate() (TTY, error) {
 	ttymapLock.Lock()
 	defer ttymapLock.Unlock()
 
-	var tty TTY
+	var tty TTY = TTY(0)
 	maxTries := 100
 	for numTries := 0; numTries < maxTries; numTries++ {
 		tempTTY := randomTTYInAllowedRange()
