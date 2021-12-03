@@ -343,9 +343,7 @@ def run_server_on_instance(pexpect_process):
     server_docker_id = (
         server_mandelbox_output[-2].replace("\n", "").replace("\r", "").replace(" ", "")
     )
-    print(
-        "Whist Server started on EC2 instance, on Docker container {}!".format(server_docker_id)
-    )
+    print("Whist Server started on EC2 instance, on Docker container {}!".format(server_docker_id))
 
     # Retrieve connection configs from server
     json_data = {}
@@ -398,9 +396,7 @@ def run_client_on_instance(pexpect_process, json_data):
         client_mandelbox_output[-2].replace("\n", "").replace("\r", "").replace(" ", "")
     )
     print(
-        "Whist dev client started on EC2 instance, on Docker container {}!".format(
-            client_docker_id
-        )
+        "Whist dev client started on EC2 instance, on Docker container {}!".format(client_docker_id)
     )
     return client_docker_id
 
