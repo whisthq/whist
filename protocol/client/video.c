@@ -864,7 +864,6 @@ int render_video() {
 
         if (!frame->is_empty_frame) {
             sync_decoder_parameters(frame);
-            clock statistics_timer;
             int ret;
             TIME_RUN(
                 ret = video_decoder_send_packets(video_context.decoder, get_frame_videodata(frame),
