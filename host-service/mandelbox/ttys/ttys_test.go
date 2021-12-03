@@ -38,7 +38,7 @@ func TestAllocateWithNoFreeTTY(t *testing.T) {
 	// This will result in an error as there are no available entries
 	testTTY, err := Allocate()
 	if err == nil {
-		t.Fatalf("error allocating TTY with none available. Expected err & tty: 0, got nil and tty: %v", testTTY)
+		t.Fatalf("error allocating TTY with none available. Expected err and tty: 0, got nil and tty: %v", testTTY)
 	}
 
 	// Free entire map
