@@ -543,14 +543,19 @@ def configure_aws_credentials(
         )
         return
     pexpect_process.sendline("sudo apt-get update")
-    result = pexpect_process.expect(["Do you want to continue? [Y/n]", pexpect_prompt])
+    result = pexpect_process.expect(["Do you want to continue?", pexpect_prompt])
     if result == 0:
         pexpect_process.sendline("Y")
         wait_until_cmd_done(pexpect_process, pexpect_prompt)
     else:
         pexpect_process.expect(pexpect_prompt)
     pexpect_process.sendline("sudo apt-get install awscli")
-    wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    result = pexpect_process.expect(["Do you want to continue?", pexpect_prompt])
+    if result == 0:
+        pexpect_process.sendline("Y")
+        wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    else:
+        pexpect_process.expect(pexpect_prompt)
     pexpect_process.sendline("aws configure")
     pexpect_process.expect("AWS Access Key ID")
     pexpect_process.sendline(aws_access_key_id)
