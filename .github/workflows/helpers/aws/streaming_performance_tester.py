@@ -542,6 +542,8 @@ def configure_aws_credentials(
             "Could not parse AWS credentials from file at path {}!".format(aws_credentials_filepath)
         )
         return
+    pexpect_process.sendline("sudo apt-get update")
+    wait_until_cmd_done(pexpect_process, pexpect_prompt)
     pexpect_process.sendline("sudo apt-get install awscli")
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
     pexpect_process.sendline("aws configure")
