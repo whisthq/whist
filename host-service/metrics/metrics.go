@@ -154,7 +154,7 @@ func init() {
 			logger.Panicf(nil, "Error starting metrics collection goroutine: %s", err)
 		}
 	} else {
-		logger.Infof("Skipping metrics collection in CI")
+		logger.Info("Skipping metrics collection in CI")
 	}
 
 	// Initialize exported variables map
