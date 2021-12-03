@@ -43,7 +43,7 @@ Private Functions
 */
 
 int do_discovery_handshake(whist_server_state *state, SocketContext *context,
-                           WhistClientMessage *wsmsg);
+                           WhistClientMessage *wcmsg);
 
 /*
 ============================
@@ -78,12 +78,12 @@ int handle_discovery_port_message(whist_server_state *state, SocketContext *cont
         return -1;
     }
 
-    WhistClientMessage *wsmsg = (WhistClientMessage *)tcp_packet->data;
+    WhistClientMessage *wcmsg = (WhistClientMessage *)tcp_packet->data;
     *new_client = false;
 
-    switch (wsmsg->type) {
+    switch (wcmsg->type) {
         case MESSAGE_DISCOVERY_REQUEST: {
-            int user_id = wsmsg->discoveryRequest.user_id;
+            int user_id = wcmsg->discoveryRequest.user_id;
 
             if (!state->client.is_active) {
                 state->client.user_id = user_id;
@@ -96,12 +96,12 @@ int handle_discovery_port_message(whist_server_state *state, SocketContext *cont
                 if (create_udp_listen_socket(&state->udp_listen, BASE_UDP_PORT,
                                              UDP_CONNECTION_WAIT) != 0) {
                     LOG_WARNING("Failed to create base udp listen socket");
-                } else if (do_discovery_handshake(state, context, wsmsg) != 0) {
+                } else if (do_discovery_handshake(state, context, wcmsg) != 0) {
                     LOG_WARNING("Discovery handshake failed.");
                 }
 
                 free_packet(context, tcp_packet);
-                wsmsg = NULL;
+                wcmsg = NULL;
                 tcp_packet = NULL;
 
                 *new_client = true;
@@ -275,30 +275,30 @@ int try_get_next_message_tcp(Client *client, WhistPacket **p_tcp_packet) {
     return 0;
 }
 
-int try_get_next_message_udp(Client *client, WhistClientMessage *wsmsg, size_t *wsmsg_size) {
-    *wsmsg_size = 0;
+int try_get_next_message_udp(Client *client, WhistClientMessage *wcmsg, size_t *wcmsg_size) {
+    *wcmsg_size = 0;
 
-    memset(wsmsg, 0, sizeof(*wsmsg));
+    memset(wcmsg, 0, sizeof(*wcmsg));
 
     WhistPacket *packet = read_packet(&(client->udp_context), true);
     if (packet) {
-        memcpy(wsmsg, packet->data, max(sizeof(*wsmsg), (size_t)packet->payload_size));
-        if (packet->payload_size != get_wsmsg_size(wsmsg)) {
+        memcpy(wcmsg, packet->data, max(sizeof(*wcmsg), (size_t)packet->payload_size));
+        if (packet->payload_size != get_wcmsg_size(wcmsg)) {
             LOG_WARNING("Packet is of the wrong size!: %d", packet->payload_size);
-            LOG_WARNING("Type: %d", wsmsg->type);
+            LOG_WARNING("Type: %d", wcmsg->type);
             free_packet(&client->udp_context, packet);
             return -1;
         }
-        *wsmsg_size = packet->payload_size;
+        *wcmsg_size = packet->payload_size;
 
         // Make sure that keyboard events are played in order
-        if (wsmsg->type == MESSAGE_KEYBOARD || wsmsg->type == MESSAGE_KEYBOARD_STATE) {
+        if (wcmsg->type == MESSAGE_KEYBOARD || wcmsg->type == MESSAGE_KEYBOARD_STATE) {
             // Check that id is in order
             if (packet->id > last_input_id) {
                 packet->id = last_input_id;
             } else {
                 LOG_WARNING("Ignoring out of order keyboard input.");
-                *wsmsg_size = 0;
+                *wcmsg_size = 0;
                 free_packet(&client->udp_context, packet);
                 return 0;
             }
