@@ -4,7 +4,6 @@ Package whistlogger contains the logic for our custom logging system, including 
 package whistlogger // import "github.com/fractal/fractal/host-service/whistlogger"
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -86,15 +85,9 @@ func Info(format string, v ...interface{}) {
 	}
 }
 
-// InfoWithCapture logs some info + timestamp, but captures the output so that it
-// bypasses stdout but is sent to Logz.io.
-func InfoWithCapture(format string, output bytes.Buffer, v ...interface{}) {
-	// Create a new logger for capturing the output (not sending to stdout).
-	logWithCapture := log.New(&output, "", log.LstdFlags)
-
+// InfoWithCapture sends info + timestamp directly to logz.io, bypassing stdout.
+func InfoWithCapture(format string, v ...interface{}) {
 	str := fmt.Sprintf(format, v...)
-
-	logWithCapture.Print(str)
 	if logzioTransport != nil {
 		timestamp := fmt.Sprintf("time=%s", time.Now().String())
 		logzioTransport.send(fmt.Sprintf("%s %s", str, timestamp), logzioTypeInfo)
