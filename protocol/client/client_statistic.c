@@ -37,8 +37,6 @@ void init_client_statistics() {
         (StatisticInfo){"VIDEO_DECODE_SEND_PACKET_TIME", true, false, false};
     client_statistic_info[VIDEO_DECODE_GET_FRAME_TIME] =
         (StatisticInfo){"VIDEO_DECODE_GET_FRAME_TIME", true, false, false};
-    client_statistic_info[VIDEO_GET_RENDER_METADATA_TIME] =
-        (StatisticInfo){"VIDEO_GET_RENDER_METADATA_TIME", true, false, false};
     client_statistic_info[VIDEO_RECEIVE_TIME] =
         (StatisticInfo){"VIDEO_RECEIVE_TIME", true, false, false};
     client_statistic_info[VIDEO_RENDER_TIME] =

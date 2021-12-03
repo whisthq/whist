@@ -12,7 +12,7 @@
 Public enums
 ============================
 */
-typedef enum ClientMetric {
+typedef enum {
     AUDIO_RECEIVE_TIME,
     AUDIO_UPDATE_TIME,
     AUDIO_FPS_SKIPPED_FLUSH,
@@ -27,7 +27,6 @@ typedef enum ClientMetric {
     VIDEO_CURSOR_UPDATE_TIME,
     VIDEO_DECODE_SEND_PACKET_TIME,
     VIDEO_DECODE_GET_FRAME_TIME,
-    VIDEO_GET_RENDER_METADATA_TIME,
     VIDEO_RECEIVE_TIME,
     VIDEO_RENDER_TIME,
     VIDEO_SDL_WRITE_TIME,
