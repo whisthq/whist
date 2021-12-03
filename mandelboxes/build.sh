@@ -56,6 +56,7 @@ if [[ "$mode" == "dev" ]]; then
   cmake_build_type=Debug
 elif [[ "$mode" == "metrics" ]]; then
   cmake_build_type=Metrics
+  mode=dev
 else
   cmake_build_type=Release
 fi
