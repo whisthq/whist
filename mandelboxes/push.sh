@@ -10,10 +10,10 @@ set -Eeuo pipefail
 
 # Parameters of the local image to push to GHCR
 git_hash=$(git rev-parse HEAD)
-local_name=whist/$1
+local_name=fractal/$1
 local_tag=current-build
 deploy_env=${2:-nodeployenv}
-deploy_name=whist/$deploy_env/$1
+deploy_name=fractal/$deploy_env/$1
 ghcr_uri=ghcr.io
 
 # Authenticate to GHCR
