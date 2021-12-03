@@ -19,7 +19,7 @@ func TestRandHexLenZero(t *testing.T) {
 	numBytes := uint8(0)
 	
 	res := RandHex(numBytes)	
-	if 0 != len(res) {
+	if len(res) != 0  {
 		t.Fatalf("error getting randhex: %s. Expected length %d, got %d", res, 0, len(res))
 	}
 }
