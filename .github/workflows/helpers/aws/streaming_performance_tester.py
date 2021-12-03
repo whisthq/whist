@@ -323,7 +323,7 @@ def run_host_setup_on_instance(pexpect_process, pexpect_prompt, aws_ssh_cmd, aws
 def start_host_service_on_instance(pexpect_process):
     print("Starting the host service on the EC2 instance...")
     command = (
-        "sudo rm -rf /fractal && cd ~/fractal/host-service && make run | tee ~/host_service.log"
+        "sudo rm -rf /whist && cd ~/fractal/host-service && make run | tee ~/host_service.log"
     )
     pexpect_process.sendline(command)
     pexpect_process.expect("Entering event loop...")
