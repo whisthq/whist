@@ -17,7 +17,7 @@ require (
 	github.com/docker/go-units v0.4.0
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/getsentry/sentry-go v0.11.0
-	github.com/golang-jwt/jwt/v4 v4.1.0
+	github.com/golang-jwt/jwt/v4 v4.2.0
 	github.com/jackc/pgconn v1.10.1
 	github.com/jackc/pgtype v1.9.0
 	github.com/jackc/pgx/v4 v4.14.0
