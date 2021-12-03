@@ -62,9 +62,6 @@ func Close() {
 	FlushSentry()
 	Info("Flushing Logzio...")
 	stopAndDrainLogzio()
-
-	// Clear the logs buffer
-	whistBuffer.Reset()
 }
 
 // Print logs an interface + timestamp, but does not send it to Sentry.
