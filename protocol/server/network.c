@@ -146,7 +146,7 @@ int do_discovery_handshake(whist_server_state *state, SocketContext *context,
             (int): 0 on success, -1 on failure
     */
 
-    handle_client_message(state, wsmsg);
+    handle_client_message(state, wcmsg);
 
     size_t wsmsg_size = sizeof(WhistServerMessage) + sizeof(WhistDiscoveryReplyMessage);
 
