@@ -155,12 +155,12 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 	// dev/staging/prod ones, so we can use the same regex list in all
 	// environments.
 	regexes := []string{
-		`whist/browsers/chrome:current-build`,
-		`whist/browsers/brave:current-build`,
+		`fractal/browsers/chrome:current-build`,
+		`fractal/browsers/brave:current-build`,
 		`ghcr.io/fractal/*/browsers/chrome:current-build`,
 		`ghcr.io/fractal/*/browsers/brave:current-build`,
 		`ghcr.io/fractal/*`,
-		`*whist*`,
+		`*fractal*`,
 	}
 
 	image := dockerImageFromRegexes(globalCtx, client, regexes)
@@ -387,13 +387,12 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	mandelboxSubscription := sub.MandelboxInfo[0]
 	req, AppName := getAppName(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
 
-	// Req is only nil if getting the jsonTransportRequest timed out 
+	// Req is only nil if getting the jsonTransportRequest timed out
 	if req == nil {
 		// Clean up the mandelbox if request is nil as the the time out limit is reached.
 		logAndReturnError("Timed out waiting for app name.")
 		return
 	}
-
 
 	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", mandelboxSubscription.ID)
 
