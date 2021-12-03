@@ -85,8 +85,8 @@ func Info(format string, v ...interface{}) {
 	}
 }
 
-// InfoWithCapture sends info + timestamp directly to logz.io, bypassing stdout.
-func InfoWithCapture(format string, v ...interface{}) {
+// SilentInfo sends info + timestamp directly to logz.io, bypassing stdout.
+func SilentInfo(format string, v ...interface{}) {
 	str := fmt.Sprintf(format, v...)
 	if logzioTransport != nil {
 		timestamp := fmt.Sprintf("time=%s", time.Now().String())
