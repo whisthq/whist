@@ -73,7 +73,7 @@ func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Durat
 
 }
 
-// writeToNewFile creates a file then writes the content
+// writeToNewFile creates a file then writes the content or overwrites file
 func WriteToNewFile(filePath string, content string) error {
 	newFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0777)
 	if err != nil {
