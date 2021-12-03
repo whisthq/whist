@@ -39,7 +39,7 @@ jobs:
         run: ./notifications/setup_notifications.sh
 
       - name: Install boto3
-        run: pip install boto3
+        run: pip3 install boto3
 
       - name: List Number of AWS EC2 Instances in Slack
         shell: python3 {0}
@@ -120,7 +120,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Install boto3, python-dateutil and psycopg2
-        run: pip install boto3 python-dateutil psycopg2-binary
+        run: pip3 install boto3 python-dateutil psycopg2-binary
 
       - name: Flag Old EC2 Instances and Notify in Slack if They Exist
         shell: python3 {0}
@@ -288,7 +288,7 @@ jobs:
         run: ./notifications/setup_notifications.sh
 
       - name: Install Utilities to Delete Lingering Packer Builders & AMI Resources
-        run: pip install aws-hashicorp-packer-reaper aws-amicleaner
+        run: pip3 install aws-hashicorp-packer-reaper aws-amicleaner
 
       # Packer takes about 25-30 minutes to build new AMIs across all of our enabled regions,
       # so any Packer instance over 45 minutes old has failed to delete and should be force-deleted

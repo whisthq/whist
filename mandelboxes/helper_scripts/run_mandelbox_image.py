@@ -76,6 +76,7 @@ HOST_SERVICE_URL = f"https://{args.host_address}:{args.host_port}/"
 HOST_SERVICE_CERT_PATH = "/whist/cert.pem"
 local_host_service = args.host_address == "127.0.0.1"
 mandelbox_server_path = os.path.abspath("/usr/share/whist/bin")
+
 PortBindings = namedtuple(
     "PortBindings", ["host_port_32262tcp", "host_port_32263udp", "host_port_32273tcp"]
 )
@@ -191,15 +192,14 @@ if __name__ == "__main__":
         )
         assert len(matching_containers) == 1
         container = matching_containers[0]
-
-    print(
-        f"""Successfully started mandelbox with identifying hostPort {host_ports.host_port_32262tcp}.
-To connect to this mandelbox using the client protocol, run one of the following commands, depending on your platform:
-
-    windows:        .\\wclient.bat {get_public_ipv4_addr()} -p32262:{host_ports.host_port_32262tcp}.32263:{host_ports.host_port_32263udp}.32273:{host_ports.host_port_32273tcp} -k {aeskey}
-    linux/macos:    ./wclient {get_public_ipv4_addr()} -p32262:{host_ports.host_port_32262tcp}.32263:{host_ports.host_port_32263udp}.32273:{host_ports.host_port_32273tcp} -k {aeskey}
-"""
-    )
+    if "development/client" not in args.image:
+        print(
+            f"""Successfully started mandelbox with identifying hostPort {host_ports.host_port_32262tcp}.
+    To connect to this mandelbox using the client protocol, run one of the following commands, depending on your platform:
+        windows:        .\\wclient.bat {get_public_ipv4_addr()} -p32262:{host_ports.host_port_32262tcp}.32263:{host_ports.host_port_32263udp}.32273:{host_ports.host_port_32273tcp} -k {aeskey}
+        linux/macos:    ./wclient {get_public_ipv4_addr()} -p32262:{host_ports.host_port_32262tcp}.32263:{host_ports.host_port_32263udp}.32273:{host_ports.host_port_32273tcp} -k {aeskey}
+    """
+        )
 
     if local_host_service:
         print(

@@ -1066,8 +1066,13 @@ int render_video() {
         // want to render this empty frame though. To avoid a MacOS bug where rendering hangs for 1
         // second upon window occlusion, we immediately block rendering when that happens. The
         // server will send an iframe when the window is visible again.
+
+        // Whenever we are building the client to run on a virtualized environment that does not use
+        // a physical display, we need to to prevent the logic below from blocking the rendering, as
+        // the window will oftentimes be marked as occluded automatically.
         if (frame->is_empty_frame ||
-            (SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_OCCLUDED)) {
+            ((SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_OCCLUDED) &&
+             RENDERING_IN_VIRTUAL_ENVIRONMENT == 0)) {
             // We pretend we just rendered this frame. If we don't do this we'll keep assuming that
             // we're behind on frames and start requesting a bunch of iframes, which forces a
             // render.
@@ -1090,6 +1095,7 @@ int render_video() {
         video_data.loading_index = -1;
 
         safe_SDL_LockMutex(render_mutex);
+
         if (pending_resize_render) {
             // User is in the middle of resizing the window
             // retain server width/height if user is resizing the window

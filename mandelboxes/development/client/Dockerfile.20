@@ -1,0 +1,20 @@
+# See stage 0 of the base dockerfile for an explanation of this build stage.
+ARG BuildAssetPackage "protocol"
+FROM whist/build-assets:$BuildAssetPackage as build-assets
+FROM whist/base:current-build as whist-development-client
+
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
+# WhistClient symbolic link
+RUN ln -sf /usr/share/whist/bin/WhistClient /usr/share/whist/WhistClient
+
+# Replace WhistServer startup scripts with WhistClient startup scripts
+RUN rm /usr/share/whist/run-whist-server.sh
+COPY run-whist-client.sh /usr/share/whist/run-whist-client.sh
+RUN chmod +x /usr/share/whist/run-whist-client.sh
+COPY whist-main.service /etc/systemd/system
+RUN systemctl enable whist-main
+
+# Install Whist Protocol binaries and helper files (if necessary)
+COPY --from=build-assets protocol/* /usr/share/whist/bin/

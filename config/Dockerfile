@@ -9,7 +9,7 @@ FROM python:3.10.0
 
 COPY build/requirements.txt /root/build/requirements.txt
 
-RUN pip install --no-cache-dir -r /root/build/requirements.txt
+RUN pip3 install --no-cache-dir -r /root/build/requirements.txt
 
 COPY . /root
 

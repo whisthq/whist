@@ -116,7 +116,7 @@ EOF
   # Source nvidia-docker apt package
   # Note that we hardcode `distribution` to 20.04, so that we can upgrade to a higher Ubuntu eventually by
   # pinning 20.04 as the nvidia-docker distribution, since it works with unofficially-supported versions
-  # of Ubuntu, like 21.04, which don't have an official nvidia-docker package
+  # of Ubuntu, like 20.04, which don't have an official nvidia-docker package
   distribution="ubuntu20.04"
   curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
   curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
@@ -178,6 +178,11 @@ EOF
 
   wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
   echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-7.x.list
+
+  # The command above will add a duplicate package source link to the /etc/apt/sources.list.d/elastic-7.x.list file if the link already exists (for example if we had
+  # run the host-setup before on the same machine). This will cause warning messages, and occasional misconfigurations.
+  # The instruction below fixes the problem by removing the duplicates.
+  awk '!seen[$0]++' /etc/apt/sources.list.d/elastic-7.x.list | sudo tee /etc/apt/sources.list.d/elastic-7.x.list
 
   # Install filebeat via apt
   sudo apt-get update -y

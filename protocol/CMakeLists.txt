@@ -85,6 +85,9 @@ include(cmake/default-build.cmake)
 # For debug builds log every thing, for release builds log warnings or higher
 if(${CMAKE_BUILD_TYPE} MATCHES Debug)
     add_definitions(-DLOG_LEVEL=5)
+elseif(${CMAKE_BUILD_TYPE} MATCHES Metrics)
+    # All except DEBUG
+    add_definitions(-DLOG_LEVEL=3 -DRENDERING_IN_VIRTUAL_ENVIRONMENT=1)
 elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
     # For now, always show all logs
     add_definitions(-DLOG_LEVEL=5)
@@ -370,7 +373,7 @@ if(${CMAKE_BUILD_TYPE} MATCHES Debug)
         msvcmrtd
         msvcprtd
     )
-elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
+elseif(${CMAKE_BUILD_TYPE} MATCHES Release OR ${CMAKE_BUILD_TYPE} MATCHES Metrics)
     set(WINDOWS_CORE_LIBS
         ucrt
         libcmt
