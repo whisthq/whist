@@ -328,6 +328,16 @@ func TestAllocateAndFreeSinglePortAny(t *testing.T) {
 	}
 }
 
+func TestSinglePortInvalidProtocol(t *testing.T) {
+	testDesiredBind := PortBinding{
+		Protocol: TransportProtocol("testInvalidProtocol"),
+		HostPort: MinAllowedPort,
+	}
+
+	// Free single port will log error and return before trying to free port because of invalid protocol
+	freeSinglePort(testDesiredBind)
+}
+
 func TestFreeSinglePortNonExistent(t *testing.T) {
 	testDesiredBind := PortBinding{
 		Protocol: TransportProtocolTCP,
