@@ -1,4 +1,4 @@
-package initialbrowserdata
+package mandelbox
 
 import (
 	"os"
@@ -6,16 +6,16 @@ import (
 	"path"
 
 	"github.com/fractal/fractal/host-service/utils"
+	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
 	logger "github.com/fractal/fractal/host-service/whistlogger"
 )
 
-// BrowserData is a collection of possible browser datas a user generates
-type BrowserData struct {
-	// CookieJSON is the user's cookie sqlite3 file in a string format
-	CookiesJSON 	string
-	// BookmarkJSON is the user's bookmark json file
-	BookmarksJSON 	string
-}
+// This contains the path and file names related to browser data
+const (
+	UserInitialBrowserDir    string = utils.WhistDir + "userConfigs/"
+	UserInitialCookiesFile   string = "user-initial-cookies"
+	UserInitialBookmarksFile string = "user-initial-bookmarks"
+)
 
 // WriteUserInitialBrowserData writes the user's initial browser data to file(s)
 // received through JSON transport for later use

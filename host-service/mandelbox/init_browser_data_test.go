@@ -1,4 +1,4 @@
-package initialbrowserdata
+package mandelbox
 
 import (
 	"bytes"
@@ -7,6 +7,9 @@ import (
 	"io/ioutil"
 	"path"
 	"testing"
+
+	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
+	"github.com/fractal/fractal/host-service/utils"
 )
 
 // TestUserInitialBrowserWrite checks if the browser data is properly created by
@@ -20,14 +23,13 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	bookmarksJSON := "{ 'test_bookmark_content': '1'}"
 
 	// Create browser data
-	userInitialBrowserData := BrowserData{
+	userInitialBrowserData := mandelboxtypes.BrowserData{
 		CookiesJSON: cookieJSON,
 		BookmarksJSON: bookmarksJSON,
 	}
 
-	destDir, err := ioutil.TempDir("", "testInitBrowser")
-	if err != nil {
-		t.Fatal(err)
+	if err := testMandelboxData.WriteUserInitialBrowserData(userInitialBrowserData); err != nil {
+		t.Fatalf("error writing user initial browser data: %v", err)
 	}
 
 	defer os.RemoveAll(destDir)

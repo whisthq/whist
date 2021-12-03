@@ -539,8 +539,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"),
 		"NVIDIA_DRIVER_CAPABILITIES=all",
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
-		utils.Sprintf("WHIST_INITIAL_USER_COOKIES_FILE=%v%v", browserData.UserInitialBrowserDir, browserData.UserInitialCookiesFile),
-		utils.Sprintf("WHIST_INITIAL_USER_BOOKMARKS_FILE=%v%v", browserData.UserInitialBrowserDir, browserData.UserInitialBookmarksFile),
+		utils.Sprintf("WHIST_INITIAL_USER_COOKIES_FILE=%v%v", mandelboxData.UserInitialBrowserDir, mandelboxData.UserInitialCookiesFile),
+		utils.Sprintf("WHIST_INITIAL_USER_BOOKMARKS_FILE=%v%v", mandelboxData.UserInitialBrowserDir, mandelboxData.UserInitialBookmarksFile),
 	}
 	config := dockercontainer.Config{
 		ExposedPorts: exposedPorts,
@@ -721,18 +721,18 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// Write user initial browser data at the same time as writeJSONData.
 	// This is done separately since both functions are independent of each other and we can save time.
-	userInitialBrowserDataDownloadComplete := make(chan bool)
+	userInitialmandelboxDataDownloadComplete := make(chan bool)
 	go func() {
 		logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
 
 		// Create browser data
-		userInitialBrowserData := mandelboxtypes.BrowserData{
+		userInitialmandelboxData := mandelboxtypes.mandelboxData{
 			CookieJSON: req.Cookies
 			BookmarkJSON: req.BookmarkJSON
 		}
 
-		err := mandelbox.WriteUserInitialBrowserData(userInitialBrowserData)
-		userInitialBrowserDataDownloadComplete <- true
+		err := mandelbox.WriteUserInitialmandelboxData(userInitialmandelboxData)
+		userInitialmandelboxDataDownloadComplete <- true
 		if err != nil {
 			logger.Warningf("Error writing user initial browser data for mandelbox %s: %v", mandelboxSubscription.ID, err)
 			return
@@ -748,7 +748,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		metrics.Increment("ErrorRate")
 	}
 
-	<-userInitialBrowserDataDownloadComplete
+	<-userInitialmandelboxDataDownloadComplete
 
 	// Unblocks whist-startup.sh to start symlink loaded user configs
 	err = mandelbox.MarkReady()
