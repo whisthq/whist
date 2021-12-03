@@ -972,10 +972,7 @@ jobs:
     runs-on: ${{ matrix.config.os }}
     concurrency: client-applications-publish-build-x64-s3-${{ matrix.config.os }}-${{ github.ref }}
     needs:
-      [
-        whist-publish-build-config,
-        client-applications-retrieve-version-number,
-      ]
+      [whist-publish-build-config, client-applications-retrieve-version-number]
 
     # Only run client-apps deployment if none of the previous steps failed
     if: |
@@ -1114,10 +1111,7 @@ jobs:
       run:
         shell: "/usr/bin/arch -arch arm64e /bin/bash {0}"
     needs:
-      [
-        whist-publish-build-config,
-        client-applications-retrieve-version-number,
-      ]
+      [whist-publish-build-config, client-applications-retrieve-version-number]
 
     # Only run client-apps deployment if none of the previous steps failed
     if: |

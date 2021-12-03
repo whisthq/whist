@@ -10,8 +10,7 @@
 // probably haven't imported it here.
 
 // Import the /config folder first to make sure that CONFIG is set in
-// process.env, which is required by core-ts. Once all values are moved into
-// monorepo config, this will no longer be necessary.
+// process.env, which is required by core-ts.
 import "@app/config/environment"
 
 import "@app/main/triggers"

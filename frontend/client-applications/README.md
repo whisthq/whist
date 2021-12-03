@@ -85,7 +85,7 @@ If errors/crashes occur, the best thing to do is to check the client-side and se
 Application data are written and stored on the client-side in the following locations:
 
 - On macOS, look in `~/Library/Application\ Support/{Electron,whist}/{dev,staging,prod}`
-- On Linux, look in `~/.config/{Whwist}/{dev,staging,prod}`
+- On Linux, look in `~/.config/{Whist}/{dev,staging,prod}`
 - On Windows, look in `%APPDATA%\{Whist}\{dev,staging,prod}`. Note that `%APPDATA%` usually corresponds to `C:\Users\<user>\AppData\Roaming`.
   The unpackaged app will have `Electron` in the path while the packaged app will have `whist`. You can clear these files to re-trigger behavior, such as a re-running the login flow, by deleting them via `yarn cache:clear`.
 

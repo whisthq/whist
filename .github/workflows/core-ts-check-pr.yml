@@ -62,8 +62,6 @@ jobs:
 
       - name: Run core-ts test suite
         working-directory: frontend/core-ts
-        env:
-          CONFIG: ${{ steps.config.outputs.config }}
         run: yarn run test:ci
 
       - name: Upload Codecov Report

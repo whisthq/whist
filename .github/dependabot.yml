@@ -79,27 +79,6 @@ updates:
     open-pull-requests-limit: 10
 
   #####################################################
-  ###################### Config #######################
-
-  - package-ecosystem: "docker"
-    directory: "/config" # looks for Dockerfile in this directory
-    schedule:
-      interval: "monthly" # runs on the first day of each month
-    ignore:
-      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-        update-types: ["version-update:semver-patch"]
-    open-pull-requests-limit: 10
-
-  - package-ecosystem: "pip"
-    directory: "/config/build" # looks for requirements.txt in this directory
-    schedule:
-      interval: "monthly" # runs on the first day of each month
-    ignore:
-      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-        update-types: ["version-update:semver-patch"]
-    open-pull-requests-limit: 10
-
-  #####################################################
   ###################### Core-ts ######################
 
   - package-ecosystem: "npm"

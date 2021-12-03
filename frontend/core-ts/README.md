@@ -66,7 +66,7 @@ Regardless of how you develop for this library, your additions should be properl
 
 ## Publishing
 
-This project is not published to any **npm** registry, but is rather built and imported directly into other projects (i.e. `frontend/client-applications`) thanks to our monorepo project structure. For an example of how to import `core-ts` into your project, see `frontend//client-applications/package.json`.
+This project is not published to any **npm** registry, but is rather built and imported directly into other projects (i.e. `frontend/client-applications`) thanks to our monorepo project structure. For an example of how to import `core-ts` into your project, see `frontend/client-applications/package.json`.
 
 ## Style
 
