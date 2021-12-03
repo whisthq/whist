@@ -8,13 +8,23 @@ bearer_token = os.environ.get("TWITTER_BEARER_TOKEN")
 
 # Only stream Tweets that match the following rules
 my_rules = [
-    {"value": "(chrome slow) OR (chrome laggy) OR (chrome performance) -is:retweet -is:reply lang:en", "tag": "1"},
+    {
+        "value": "(chrome slow) OR (chrome laggy) OR (chrome performance) -is:retweet -is:reply lang:en",
+        "tag": "1",
+    },
     {"value": "(figma slow) OR (figma laggy) -is:retweet -is:reply lang:en", "tag": "2"},
-    {"value": "(chrome drain battery) OR (chrome too much battery) -is:retweet -is:reply lang:en", "tag": "3"},
+    {
+        "value": "(chrome drain battery) OR (chrome too much battery) -is:retweet -is:reply lang:en",
+        "tag": "3",
+    },
     {"value": "(chrome tabs slow) OR (too many tabs) -is:retweet -is:reply lang:en", "tag": "4"},
-    {"value": "(chrome ram) OR (chrome too much memory) OR (chrome memory hog) -is:retweet -is:reply lang:en", "tag": "5"},
-    {"value": "(computer fan spin running google chrome) -is:retweet -is:reply lang:en", "tag": 6}
+    {
+        "value": "(chrome ram) OR (chrome too much memory) OR (chrome memory hog) -is:retweet -is:reply lang:en",
+        "tag": "5",
+    },
+    {"value": "(computer fan spin running google chrome) -is:retweet -is:reply lang:en", "tag": 6},
 ]
+
 
 def bearer_oauth(r):
     """
@@ -44,15 +54,11 @@ def delete_all_rules(rules):
     ids = list(map(lambda rule: rule["id"], rules["data"]))
     payload = {"delete": {"ids": ids}}
     response = requests.post(
-        "https://api.twitter.com/2/tweets/search/stream/rules",
-        auth=bearer_oauth,
-        json=payload
+        "https://api.twitter.com/2/tweets/search/stream/rules", auth=bearer_oauth, json=payload
     )
     if response.status_code != 200:
         raise Exception(
-            "Cannot delete rules (HTTP {}): {}".format(
-                response.status_code, response.text
-            )
+            "Cannot delete rules (HTTP {}): {}".format(response.status_code, response.text)
         )
     print("Successfully deleted all old rules")
 
@@ -74,13 +80,13 @@ def set_rules(delete):
 def get_stream(set):
     print("Listening for incoming tweets...")
     response = requests.get(
-        "https://api.twitter.com/2/tweets/search/stream", auth=bearer_oauth, stream=True,
+        "https://api.twitter.com/2/tweets/search/stream",
+        auth=bearer_oauth,
+        stream=True,
     )
     if response.status_code != 200:
         raise Exception(
-            "Cannot get stream (HTTP {}): {}".format(
-                response.status_code, response.text
-            )
+            "Cannot get stream (HTTP {}): {}".format(response.status_code, response.text)
         )
     for response_line in response.iter_lines():
         if response_line:
