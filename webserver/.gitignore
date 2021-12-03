@@ -14,11 +14,6 @@ __pycache__/
 # Heroku
 herokulogs.txt
 
-# Vagrant
-.vagrant
-ubuntu-bionic-18.04-cloudimg-console.log
-*.box
-
 ../.idea/*
 .idea/*
 # VS Code

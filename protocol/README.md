@@ -132,11 +132,7 @@ On all three platforms, you will need to install and log into the [AWS CLI](http
 
 #### Linux
 
-If you are using a rolling release distro, e.g. Arch, then you can likely install the newest version using pacman or your distro's package manager. If you are running 20.04 the version in the Ubuntu package lists is fine. If you are running 18.04 the package lists only has 3.11. You can install the newest version from the developer with:
-
-```bash
-sudo snap install cmake --classic
-```
+If you are using a rolling release distro, e.g. Arch, then you can likely install the newest version using pacman or your distro's package manager. If you are running 20.04 the version in the Ubuntu package lists is fine, otherwise you may need to install the `--classic` version with `snap`.
 
 You can install cppcheck via your package manager, e.g. `sudo apt-get install cppcheck`.
 
