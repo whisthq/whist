@@ -91,7 +91,7 @@ func Info(format string, v ...interface{}) {
 
 // InfoWithCapture logs some info + timestamp, but captures the output so that it
 // bypasses stdout but is sent to Logz.io.
-func InfoWithCapture(format string, output bytes.Buffer,  ...interface{}) {
+func InfoWithCapture(format string, output bytes.Buffer, v ...interface{}) {
 	// Create a new logger for capturing the output (not sending to stdout).
 	logWithCapture := log.New(&output, "", log.LstdFlags)
 
