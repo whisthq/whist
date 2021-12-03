@@ -7,10 +7,10 @@
 // anyways.
 export const DefaultConfig = {
   WEBSERVER_URL: "",
-  AUTH_DOMAIN_URL: "", //fractal-dev.us.auth0.com
-  AUTH_CLIENT_ID: "", //F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF
-  AUTH_API_IDENTIFIER: "", //https://api.fractal.co
-  CLIENT_CALLBACK_URL: "", //http://localhost/callback
+  AUTH_DOMAIN_URL: "", // fractal-dev.us.auth0.com
+  AUTH_CLIENT_ID: "", // F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF
+  AUTH_API_IDENTIFIER: "", // https://api.fractal.co
+  CLIENT_CALLBACK_URL: "", // http://localhost/callback
 }
 
 export type Config = typeof DefaultConfig
@@ -25,3 +25,8 @@ export const isConfig = (obj: any): obj is Config => {
   }
   return true
 }
+
+export const config = (() => {
+  const c = JSON.parse(process.env.CONFIG ?? "{}")
+  if (isConfig(c)) return c
+})()
