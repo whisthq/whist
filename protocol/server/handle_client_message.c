@@ -36,18 +36,18 @@ Private Functions
 ============================
 */
 
-static int handle_user_input_message(whist_server_state *state, WhistClientMessage *fcmsg);
-static int handle_keyboard_state_message(whist_server_state *state, WhistClientMessage *fcmsg);
-static int handle_streaming_toggle_message(whist_server_state *state, WhistClientMessage *fcmsg);
-static int handle_bitrate_message(whist_server_state *state, WhistClientMessage *fcmsg);
-static int handle_ping_message(Client *client, WhistClientMessage *fcmsg);
-static int handle_tcp_ping_message(Client *client, WhistClientMessage *fcmsg);
-static int handle_dimensions_message(whist_server_state *state, WhistClientMessage *fcmsg);
-static int handle_clipboard_message(WhistClientMessage *fcmsg);
-static int handle_nack_message(Client *client, WhistClientMessage *fcmsg);
-static int handle_iframe_request_message(whist_server_state *state, WhistClientMessage *fcmsg);
-static int handle_quit_message(whist_server_state *state, WhistClientMessage *fcmsg);
-static int handle_init_message(whist_server_state *state, WhistClientMessage *fcmsg);
+static int handle_user_input_message(whist_server_state *state, WhistClientMessage *wcmsg);
+static int handle_keyboard_state_message(whist_server_state *state, WhistClientMessage *wcmsg);
+static int handle_streaming_toggle_message(whist_server_state *state, WhistClientMessage *wcmsg);
+static int handle_bitrate_message(whist_server_state *state, WhistClientMessage *wcmsg);
+static int handle_ping_message(Client *client, WhistClientMessage *wcmsg);
+static int handle_tcp_ping_message(Client *client, WhistClientMessage *wcmsg);
+static int handle_dimensions_message(whist_server_state *state, WhistClientMessage *wcmsg);
+static int handle_clipboard_message(WhistClientMessage *wcmsg);
+static int handle_nack_message(Client *client, WhistClientMessage *wcmsg);
+static int handle_iframe_request_message(whist_server_state *state, WhistClientMessage *wcmsg);
+static int handle_quit_message(whist_server_state *state, WhistClientMessage *wcmsg);
+static int handle_init_message(whist_server_state *state, WhistClientMessage *wcmsg);
 
 /*
 ============================
@@ -55,58 +55,58 @@ Public Function Implementations
 ============================
 */
 
-int handle_client_message(whist_server_state *state, WhistClientMessage *fcmsg) {
+int handle_client_message(whist_server_state *state, WhistClientMessage *wcmsg) {
     /*
         Handle message from the client.
 
         Arguments:
-            fcmsg (WhistClientMessage*): message package from client
+            wcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
     */
     static clock temp_clock;
 
-    switch (fcmsg->type) {
+    switch (wcmsg->type) {
         case MESSAGE_KEYBOARD:
         case MESSAGE_MOUSE_BUTTON:
         case MESSAGE_MOUSE_WHEEL:
         case MESSAGE_MOUSE_MOTION:
         case MESSAGE_MULTIGESTURE:
             start_timer(&temp_clock);
-            int r = handle_user_input_message(state, fcmsg);
+            int r = handle_user_input_message(state, wcmsg);
             log_double_statistic(CLIENT_HANDLE_USERINPUT_TIME,
                                  get_timer(temp_clock) * MS_IN_SECOND);
             return r;
         case MESSAGE_KEYBOARD_STATE:
-            return handle_keyboard_state_message(state, fcmsg);
+            return handle_keyboard_state_message(state, wcmsg);
         case MESSAGE_START_STREAMING:
         case MESSAGE_STOP_STREAMING:
-            return handle_streaming_toggle_message(state, fcmsg);
+            return handle_streaming_toggle_message(state, wcmsg);
         case MESSAGE_MBPS:
-            return handle_bitrate_message(state, fcmsg);
+            return handle_bitrate_message(state, wcmsg);
         case MESSAGE_PING:
-            return handle_ping_message(&state->client, fcmsg);
+            return handle_ping_message(&state->client, wcmsg);
         case MESSAGE_TCP_PING:
-            return handle_tcp_ping_message(&state->client, fcmsg);
+            return handle_tcp_ping_message(&state->client, wcmsg);
         case MESSAGE_DIMENSIONS:
-            return handle_dimensions_message(state, fcmsg);
+            return handle_dimensions_message(state, wcmsg);
         case CMESSAGE_CLIPBOARD:
-            return handle_clipboard_message(fcmsg);
+            return handle_clipboard_message(wcmsg);
         case MESSAGE_NACK:
         case MESSAGE_BITARRAY_NACK:
-            return handle_nack_message(&state->client, fcmsg);
+            return handle_nack_message(&state->client, wcmsg);
         case MESSAGE_IFRAME_REQUEST:
-            return handle_iframe_request_message(state, fcmsg);
+            return handle_iframe_request_message(state, wcmsg);
         case CMESSAGE_QUIT:
-            return handle_quit_message(state, fcmsg);
+            return handle_quit_message(state, wcmsg);
         case MESSAGE_DISCOVERY_REQUEST:
-            return handle_init_message(state, fcmsg);
+            return handle_init_message(state, wcmsg);
         default:
             LOG_ERROR(
                 "Unknown WhistClientMessage Received. "
                 "(Type: %d)",
-                fcmsg->type);
+                wcmsg->type);
             return -1;
     }
 }
@@ -117,12 +117,12 @@ Private Function Implementations
 ============================
 */
 
-static int handle_user_input_message(whist_server_state *state, WhistClientMessage *fcmsg) {
+static int handle_user_input_message(whist_server_state *state, WhistClientMessage *wcmsg) {
     /*
         Handle a user input message.
 
         Arguments:
-            fcmsg (WhistClientMessage*): message package from client
+            wcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
@@ -130,7 +130,7 @@ static int handle_user_input_message(whist_server_state *state, WhistClientMessa
 
     // Replay user input (keyboard or mouse presses)
     if (state->input_device) {
-        if (!replay_user_input(state->input_device, fcmsg)) {
+        if (!replay_user_input(state->input_device, wcmsg)) {
             LOG_WARNING("Failed to replay input!");
             return -1;
         }
@@ -140,37 +140,37 @@ static int handle_user_input_message(whist_server_state *state, WhistClientMessa
 }
 
 // TODO: Unix version missing
-static int handle_keyboard_state_message(whist_server_state *state, WhistClientMessage *fcmsg) {
+static int handle_keyboard_state_message(whist_server_state *state, WhistClientMessage *wcmsg) {
     /*
         Handle a user keyboard state change message. Synchronize client and
         server keyboard state
 
         Arguments:
-            fcmsg (WhistClientMessage*): message package from client
+            wcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
     */
 
-    update_keyboard_state(state->input_device, fcmsg);
+    update_keyboard_state(state->input_device, wcmsg);
     return 0;
 }
 
-static int handle_streaming_toggle_message(whist_server_state *state, WhistClientMessage *fcmsg) {
+static int handle_streaming_toggle_message(whist_server_state *state, WhistClientMessage *wcmsg) {
     /*
         Stop encoding and sending frames if the client requests it to save resources
 
         Arguments:
-            fcmsg (WhistClientMessage*): message package from client
+            wcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
     */
 
-    if (fcmsg->type == MESSAGE_STOP_STREAMING) {
+    if (wcmsg->type == MESSAGE_STOP_STREAMING) {
         LOG_INFO("Received message to stop streaming");
         state->stop_streaming = true;
-    } else if (fcmsg->type == MESSAGE_START_STREAMING && state->stop_streaming == true) {
+    } else if (wcmsg->type == MESSAGE_START_STREAMING && state->stop_streaming == true) {
         // Extra check that `stop_streaming == true` is to ignore erroneous extra
         // MESSAGE_START_STREAMING messages
         LOG_INFO("Received message to start streaming again.");
@@ -184,53 +184,53 @@ static int handle_streaming_toggle_message(whist_server_state *state, WhistClien
     return 0;
 }
 
-static int handle_bitrate_message(whist_server_state *state, WhistClientMessage *fcmsg) {
+static int handle_bitrate_message(whist_server_state *state, WhistClientMessage *wcmsg) {
     /*
         Handle a user bitrate change message and update MBPS.
 
         NOTE: idk how to handle this
 
         Arguments:
-            fcmsg (WhistClientMessage*): message package from client
+            wcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
     */
 
-    LOG_INFO("MSG RECEIVED FOR MBPS: %f/%f/%f", fcmsg->bitrate_data.bitrate / 1024.0 / 1024.0,
-             fcmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0,
-             fcmsg->bitrate_data.fec_packet_ratio);
+    LOG_INFO("MSG RECEIVED FOR MBPS: %f/%f/%f", wcmsg->bitrate_data.bitrate / 1024.0 / 1024.0,
+             wcmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0,
+             wcmsg->bitrate_data.fec_packet_ratio);
     // Clamp the bitrates, preferring to clamp at MAX
-    fcmsg->bitrate_data.bitrate =
-        min(max(fcmsg->bitrate_data.bitrate, MINIMUM_BITRATE), MAXIMUM_BITRATE);
-    fcmsg->bitrate_data.burst_bitrate =
-        min(max(fcmsg->bitrate_data.burst_bitrate, MINIMUM_BURST_BITRATE), MAXIMUM_BURST_BITRATE);
-    LOG_INFO("Clamped to %f/%f", fcmsg->bitrate_data.bitrate / 1024.0 / 1024.0,
-             fcmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0);
+    wcmsg->bitrate_data.bitrate =
+        min(max(wcmsg->bitrate_data.bitrate, MINIMUM_BITRATE), MAXIMUM_BITRATE);
+    wcmsg->bitrate_data.burst_bitrate =
+        min(max(wcmsg->bitrate_data.burst_bitrate, MINIMUM_BURST_BITRATE), MAXIMUM_BURST_BITRATE);
+    LOG_INFO("Clamped to %f/%f", wcmsg->bitrate_data.bitrate / 1024.0 / 1024.0,
+             wcmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0);
     // Set the new bitrate data (for the video encoder)
-    state->max_bitrate = fcmsg->bitrate_data.bitrate;
+    state->max_bitrate = wcmsg->bitrate_data.bitrate;
 
     // Update the UDP Context's burst bitrate and fec ratio
-    udp_update_bitrate_settings(&state->client.udp_context, fcmsg->bitrate_data.burst_bitrate,
-                                fcmsg->bitrate_data.fec_packet_ratio);
+    udp_update_bitrate_settings(&state->client.udp_context, wcmsg->bitrate_data.burst_bitrate,
+                                wcmsg->bitrate_data.fec_packet_ratio);
 
     // Update the encoder using the new bitrate
     state->update_encoder = true;
     return 0;
 }
 
-static int handle_ping_message(Client *client, WhistClientMessage *fcmsg) {
+static int handle_ping_message(Client *client, WhistClientMessage *wcmsg) {
     /*
         Handle a client ping (alive) message.
 
         Arguments:
-            fcmsg (WhistClientMessage*): message package from client
+            wcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
     */
 
-    LOG_INFO("Ping Received - Ping ID %d", fcmsg->ping_id);
+    LOG_INFO("Ping Received - Ping ID %d", wcmsg->ping_id);
 
     // Update ping timer
     start_timer(&client->last_ping);
@@ -238,7 +238,7 @@ static int handle_ping_message(Client *client, WhistClientMessage *fcmsg) {
     // Send pong reply
     WhistServerMessage fsmsg_response = {0};
     fsmsg_response.type = MESSAGE_PONG;
-    fsmsg_response.ping_id = fcmsg->ping_id;
+    fsmsg_response.ping_id = wcmsg->ping_id;
 
     if (send_packet(&client->udp_context, PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
                     sizeof(fsmsg_response), 1) < 0) {
@@ -249,18 +249,18 @@ static int handle_ping_message(Client *client, WhistClientMessage *fcmsg) {
     return 0;
 }
 
-static int handle_tcp_ping_message(Client *client, WhistClientMessage *fcmsg) {
+static int handle_tcp_ping_message(Client *client, WhistClientMessage *wcmsg) {
     /*
         Handle a client TCP ping message.
 
         Arguments:
-            fcmsg (WhistClientMessage*): message package from client
+            wcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
     */
 
-    LOG_INFO("TCP Ping Received - TCP Ping ID %d", fcmsg->ping_id);
+    LOG_INFO("TCP Ping Received - TCP Ping ID %d", wcmsg->ping_id);
 
     // Update ping timer
     start_timer(&client->last_ping);
@@ -268,7 +268,7 @@ static int handle_tcp_ping_message(Client *client, WhistClientMessage *fcmsg) {
     // Send pong reply
     WhistServerMessage fsmsg_response = {0};
     fsmsg_response.type = MESSAGE_TCP_PONG;
-    fsmsg_response.ping_id = fcmsg->ping_id;
+    fsmsg_response.ping_id = wcmsg->ping_id;
 
     if (send_packet(&client->tcp_context, PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
                     sizeof(fsmsg_response), -1) < 0) {
@@ -279,12 +279,12 @@ static int handle_tcp_ping_message(Client *client, WhistClientMessage *fcmsg) {
     return 0;
 }
 
-static int handle_dimensions_message(whist_server_state *state, WhistClientMessage *fcmsg) {
+static int handle_dimensions_message(whist_server_state *state, WhistClientMessage *wcmsg) {
     /*
         Handle a user dimensions change message.
 
         Arguments:
-            fcmsg (WhistClientMessage*): message package from client
+            wcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
@@ -292,16 +292,16 @@ static int handle_dimensions_message(whist_server_state *state, WhistClientMessa
 
     // Update knowledge of client monitor dimensions
     LOG_INFO("Request to use codec %d / dimensions %dx%d / dpi %d received",
-             fcmsg->dimensions.codec_type, fcmsg->dimensions.width, fcmsg->dimensions.height,
-             fcmsg->dimensions.dpi);
-    if (state->client_width != fcmsg->dimensions.width ||
-        state->client_height != fcmsg->dimensions.height ||
-        state->client_codec_type != fcmsg->dimensions.codec_type ||
-        state->client_dpi != fcmsg->dimensions.dpi) {
-        state->client_width = fcmsg->dimensions.width;
-        state->client_height = fcmsg->dimensions.height;
-        state->client_codec_type = fcmsg->dimensions.codec_type;
-        state->client_dpi = fcmsg->dimensions.dpi;
+             wcmsg->dimensions.codec_type, wcmsg->dimensions.width, wcmsg->dimensions.height,
+             wcmsg->dimensions.dpi);
+    if (state->client_width != wcmsg->dimensions.width ||
+        state->client_height != wcmsg->dimensions.height ||
+        state->client_codec_type != wcmsg->dimensions.codec_type ||
+        state->client_dpi != wcmsg->dimensions.dpi) {
+        state->client_width = wcmsg->dimensions.width;
+        state->client_height = wcmsg->dimensions.height;
+        state->client_codec_type = wcmsg->dimensions.codec_type;
+        state->client_dpi = wcmsg->dimensions.dpi;
         // Update device if knowledge changed
         state->update_device = true;
     } else {
@@ -312,48 +312,48 @@ static int handle_dimensions_message(whist_server_state *state, WhistClientMessa
     return 0;
 }
 
-static int handle_clipboard_message(WhistClientMessage *fcmsg) {
+static int handle_clipboard_message(WhistClientMessage *wcmsg) {
     /*
         Handle a clipboard copy message.
 
         Arguments:
-            fcmsg (WhistClientMessage*): message package from client
+            wcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
     */
 
     // Update clipboard with message
-    LOG_INFO("Received Clipboard Data! %d", fcmsg->clipboard.type);
-    push_clipboard_chunk(&fcmsg->clipboard);
+    LOG_INFO("Received Clipboard Data! %d", wcmsg->clipboard.type);
+    push_clipboard_chunk(&wcmsg->clipboard);
     return 0;
 }
 
-static int handle_nack_message(Client *client, WhistClientMessage *fcmsg) {
+static int handle_nack_message(Client *client, WhistClientMessage *wcmsg) {
     /*
         Handle a video nack message and relay the packet
 
         Arguments:
-            fcmsg (WhistClientMessage*): message package from client
+            wcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
     */
 
-    if (fcmsg->type == MESSAGE_NACK) {
-        udp_nack(&client->udp_context, fcmsg->simple_nack.type, fcmsg->simple_nack.id,
-                 fcmsg->simple_nack.index);
+    if (wcmsg->type == MESSAGE_NACK) {
+        udp_nack(&client->udp_context, wcmsg->simple_nack.type, wcmsg->simple_nack.id,
+                 wcmsg->simple_nack.index);
     } else {
-        // fcmsg->type == MESSAGE_VIDEO_BITARRAY_NACK
-        BitArray *bit_arr = bit_array_create(fcmsg->bitarray_nack.numBits);
+        // wcmsg->type == MESSAGE_VIDEO_BITARRAY_NACK
+        BitArray *bit_arr = bit_array_create(wcmsg->bitarray_nack.numBits);
         bit_array_clear_all(bit_arr);
 
-        memcpy(bit_array_get_bits(bit_arr), fcmsg->bitarray_nack.ba_raw,
-               BITS_TO_CHARS(fcmsg->bitarray_nack.numBits));
+        memcpy(bit_array_get_bits(bit_arr), wcmsg->bitarray_nack.ba_raw,
+               BITS_TO_CHARS(wcmsg->bitarray_nack.numBits));
 
-        for (int i = fcmsg->bitarray_nack.index; i < fcmsg->bitarray_nack.numBits; i++) {
+        for (int i = wcmsg->bitarray_nack.index; i < wcmsg->bitarray_nack.numBits; i++) {
             if (bit_array_test_bit(bit_arr, i)) {
-                udp_nack(&client->udp_context, fcmsg->bitarray_nack.type, fcmsg->bitarray_nack.id,
+                udp_nack(&client->udp_context, wcmsg->bitarray_nack.type, wcmsg->bitarray_nack.id,
                          i);
             }
         }
@@ -363,12 +363,12 @@ static int handle_nack_message(Client *client, WhistClientMessage *fcmsg) {
     return 0;
 }
 
-static int handle_iframe_request_message(whist_server_state *state, WhistClientMessage *fcmsg) {
+static int handle_iframe_request_message(whist_server_state *state, WhistClientMessage *wcmsg) {
     /*
         Handle an IFrame request message
 
         Arguments:
-            fcmsg (WhistClientMessage*): message package from client
+            wcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
@@ -380,18 +380,18 @@ static int handle_iframe_request_message(whist_server_state *state, WhistClientM
     return 0;
 }
 
-static int handle_quit_message(whist_server_state *state, WhistClientMessage *fcmsg) {
+static int handle_quit_message(whist_server_state *state, WhistClientMessage *wcmsg) {
     /*
         Handle a user quit message
 
         Arguments:
-            fcmsg (WhistClientMessage*): message package from client
+            wcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
     */
 
-    UNUSED(fcmsg);
+    UNUSED(wcmsg);
     if (start_quitting_client(&state->client) != 0) {
         LOG_ERROR("Failed to start quitting client.");
         return -1;
@@ -400,12 +400,12 @@ static int handle_quit_message(whist_server_state *state, WhistClientMessage *fc
     return 0;
 }
 
-static int handle_init_message(whist_server_state *state, WhistClientMessage *cfcmsg) {
+static int handle_init_message(whist_server_state *state, WhistClientMessage *cwcmsg) {
     /*
         Handle a user init message
 
         Arguments:
-            fcmsg (WhistClientMessage*): message package from client
+            wcmsg (WhistClientMessage*): message package from client
 
         Returns:
             (int): Returns -1 on failure, 0 on success
@@ -413,11 +413,11 @@ static int handle_init_message(whist_server_state *state, WhistClientMessage *cf
 
     LOG_INFO("Receiving a message time packet");
 
-    WhistDiscoveryRequestMessage fcmsg = cfcmsg->discoveryRequest;
+    WhistDiscoveryRequestMessage wcmsg = cwcmsg->discoveryRequest;
 
-    state->client_os = fcmsg.os;
+    state->client_os = wcmsg.os;
 
-    error_monitor_set_username(fcmsg.user_email);
+    error_monitor_set_username(wcmsg.user_email);
 
     return 0;
 }

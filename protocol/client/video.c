@@ -530,12 +530,12 @@ bool request_iframe() {
 
     // Only request an iframe once every `IFRAME_REQUEST_INTERVAL_MS` ms
     if (get_timer(video_data.last_iframe_request_timer) > IFRAME_REQUEST_INTERVAL_MS / 1000.0) {
-        WhistClientMessage fcmsg = {0};
-        fcmsg.type = MESSAGE_IFRAME_REQUEST;
+        WhistClientMessage wcmsg = {0};
+        wcmsg.type = MESSAGE_IFRAME_REQUEST;
         // This should give us a full IDR frame,
         // which includes PPS/SPS data
-        fcmsg.reinitialize_encoder = false;
-        send_fcmsg(&fcmsg);
+        wcmsg.reinitialize_encoder = false;
+        send_wcmsg(&wcmsg);
         start_timer(&video_data.last_iframe_request_timer);
         video_data.is_waiting_for_iframe = true;
         return true;
@@ -1084,9 +1084,9 @@ int render_video() {
                 // correct it.
                 // NOTE: Most of the time, this is just because there was a delay between the window
                 // losing visibility and the server reacting.
-                WhistClientMessage fcmsg = {0};
-                fcmsg.type = MESSAGE_START_STREAMING;
-                send_fcmsg(&fcmsg);
+                WhistClientMessage wcmsg = {0};
+                wcmsg.type = MESSAGE_START_STREAMING;
+                send_wcmsg(&wcmsg);
             }
             return -1;
         }

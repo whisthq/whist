@@ -10,7 +10,7 @@ discover_ports, connect_to_server, close_connections, and send_server_quit_messa
 start and end connections to the Whist server. To connect, call discover_ports, then
 connect_to_server. To disconnect, send_server_quit_messages and then close_connections.
 
-To communicate with the server, use send_fcmsg to send Whist messages to the server. Large fcmsg's
+To communicate with the server, use send_wcmsg to send Whist messages to the server. Large wcmsg's
 (e.g. clipboard messages) are sent over TCP; otherwise, messages are sent over UDP. Use update_ping
 to ping the server at regular intervals, and receive_pong to receive pongs (ping acknowledgements)
 from the server.
@@ -100,13 +100,13 @@ int discover_ports(bool *with_stun) {
     }
 
     // Create and send discovery request packet
-    WhistClientMessage fcmsg = {0};
-    fcmsg.type = MESSAGE_DISCOVERY_REQUEST;
-    fcmsg.discoveryRequest.user_id = uid;
+    WhistClientMessage wcmsg = {0};
+    wcmsg.type = MESSAGE_DISCOVERY_REQUEST;
+    wcmsg.discoveryRequest.user_id = uid;
 
-    prepare_init_to_server(&fcmsg.discoveryRequest, user_email);
+    prepare_init_to_server(&wcmsg.discoveryRequest, user_email);
 
-    if (send_packet(&context, PACKET_MESSAGE, (uint8_t *)&fcmsg, (int)sizeof(fcmsg), -1) < 0) {
+    if (send_packet(&context, PACKET_MESSAGE, (uint8_t *)&wcmsg, (int)sizeof(wcmsg), -1) < 0) {
         LOG_ERROR("Failed to send discovery request message.");
         destroy_socket_context(&context);
         return -1;
@@ -142,9 +142,9 @@ int discover_ports(bool *with_stun) {
         return -1;
     }
 
-    WhistServerMessage *fsmsg = (WhistServerMessage *)tcp_packet->data;
-    if (fsmsg->type != MESSAGE_DISCOVERY_REPLY) {
-        LOG_ERROR("Message not of discovery reply type (Type: %d)", fsmsg->type);
+    WhistServerMessage *wsmsg = (WhistServerMessage *)tcp_packet->data;
+    if (wsmsg->type != MESSAGE_DISCOVERY_REPLY) {
+        LOG_ERROR("Message not of discovery reply type (Type: %d)", wsmsg->type);
         free_packet(&context, tcp_packet);
         destroy_socket_context(&context);
         return -1;
@@ -153,7 +153,7 @@ int discover_ports(bool *with_stun) {
     LOG_INFO("Received discovery info packet from server!");
 
     // Create and send discovery reply message
-    WhistDiscoveryReplyMessage *reply_msg = (WhistDiscoveryReplyMessage *)fsmsg->discovery_reply;
+    WhistDiscoveryReplyMessage *reply_msg = (WhistDiscoveryReplyMessage *)wsmsg->discovery_reply;
 
     set_audio_frequency(reply_msg->audio_sample_rate);
     udp_port = reply_msg->udp_port;
@@ -175,12 +175,12 @@ void send_ping(int ping_id) {
         Arguments:
             ping_id (int): Ping ID to send to the server
     */
-    WhistClientMessage fcmsg = {0};
-    fcmsg.type = MESSAGE_PING;
-    fcmsg.ping_id = ping_id;
+    WhistClientMessage wcmsg = {0};
+    wcmsg.type = MESSAGE_PING;
+    wcmsg.ping_id = ping_id;
 
     LOG_INFO("Ping! %d", ping_id);
-    if (send_fcmsg(&fcmsg) != 0) {
+    if (send_wcmsg(&wcmsg) != 0) {
         LOG_WARNING("Failed to ping server! (ID: %d)", ping_id);
     }
     last_ping_id = ping_id;
@@ -195,12 +195,12 @@ void send_tcp_ping(int ping_id) {
             ping_id (int): Ping ID to send to the server
     */
 
-    WhistClientMessage fcmsg = {0};
-    fcmsg.type = MESSAGE_TCP_PING;
-    fcmsg.ping_id = ping_id;
+    WhistClientMessage wcmsg = {0};
+    wcmsg.type = MESSAGE_TCP_PING;
+    wcmsg.ping_id = ping_id;
 
     LOG_INFO("TCP Ping! %d", ping_id);
-    if (send_fcmsg(&fcmsg) != 0) {
+    if (send_wcmsg(&wcmsg) != 0) {
         LOG_WARNING("Failed to TCP ping server! (ID: %d)", ping_id);
     }
     last_tcp_ping_id = ping_id;
@@ -298,8 +298,8 @@ int send_tcp_reconnect_message() {
             0 on success, -1 on failure
     */
 
-    WhistClientMessage fcmsg;
-    fcmsg.type = MESSAGE_TCP_RECOVERY;
+    WhistClientMessage wcmsg;
+    wcmsg.type = MESSAGE_TCP_RECOVERY;
 
     SocketContext discovery_context;
     if (!create_tcp_socket_context(&discovery_context, (char *)server_ip, PORT_DISCOVERY, 1, 300,
@@ -308,7 +308,7 @@ int send_tcp_reconnect_message() {
         return -1;
     }
 
-    if (send_packet(&discovery_context, PACKET_MESSAGE, (uint8_t *)&fcmsg, (int)sizeof(fcmsg), -1) <
+    if (send_packet(&discovery_context, PACKET_MESSAGE, (uint8_t *)&wcmsg, (int)sizeof(wcmsg), -1) <
         0) {
         LOG_ERROR("Failed to send discovery request message.");
         destroy_socket_context(&discovery_context);
@@ -354,12 +354,12 @@ int send_server_quit_messages(int num_messages) {
             (int): 0 on success, -1 on failure
     */
 
-    WhistClientMessage fcmsg = {0};
-    fcmsg.type = CMESSAGE_QUIT;
+    WhistClientMessage wcmsg = {0};
+    wcmsg.type = CMESSAGE_QUIT;
     int retval = 0;
     for (; num_messages > 0; num_messages--) {
         SDL_Delay(50);
-        if (send_fcmsg(&fcmsg) != 0) {
+        if (send_wcmsg(&wcmsg) != 0) {
             retval = -1;
         }
     }
@@ -369,31 +369,31 @@ int send_server_quit_messages(int num_messages) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int send_fcmsg(WhistClientMessage *fcmsg) {
+int send_wcmsg(WhistClientMessage *wcmsg) {
     /*
-        We send large fcmsg's over TCP. At the moment, this is only CLIPBOARD;
+        We send large wcmsg's over TCP. At the moment, this is only CLIPBOARD;
         Currently, sending WhistClientMessage packets over UDP that require multiple
         sub-packets to send is not supported (if low latency large
         WhistClientMessage packets are needed, then this will have to be
         implemented)
 
         Arguments:
-            fcmsg (WhistClientMessage*): pointer to WhistClientMessage to be send
+            wcmsg (WhistClientMessage*): pointer to WhistClientMessage to be send
 
         Return:
             (int): 0 on success, -1 on failure
     */
 
-    // Shouldn't overflow, will take 50 days at 1000 fcmsg/second to overflow
-    static unsigned int fcmsg_id = 0;
-    fcmsg->id = fcmsg_id;
-    fcmsg_id++;
+    // Shouldn't overflow, will take 50 days at 1000 wcmsg/second to overflow
+    static unsigned int wcmsg_id = 0;
+    wcmsg->id = wcmsg_id;
+    wcmsg_id++;
 
-    if (fcmsg->type == CMESSAGE_CLIPBOARD || fcmsg->type == MESSAGE_DISCOVERY_REQUEST ||
-        fcmsg->type == MESSAGE_TCP_PING) {
-        return send_packet(&packet_tcp_context, PACKET_MESSAGE, fcmsg, get_fcmsg_size(fcmsg), -1);
+    if (wcmsg->type == CMESSAGE_CLIPBOARD || wcmsg->type == MESSAGE_DISCOVERY_REQUEST ||
+        wcmsg->type == MESSAGE_TCP_PING) {
+        return send_packet(&packet_tcp_context, PACKET_MESSAGE, wcmsg, get_wcmsg_size(wcmsg), -1);
     } else {
-        if ((size_t)get_fcmsg_size(fcmsg) > MAX_PACKET_SIZE) {
+        if ((size_t)get_wcmsg_size(wcmsg) > MAX_PACKET_SIZE) {
             LOG_ERROR(
                 "Attempting to send FMSG that is too large for UDP, and only CLIPBOARD, TIME, and "
                 "TCP_PING is "
@@ -403,7 +403,7 @@ int send_fcmsg(WhistClientMessage *fcmsg) {
         static int sent_packet_id = 0;
         sent_packet_id++;
 
-        return send_packet(&packet_udp_context, PACKET_MESSAGE, fcmsg, get_fcmsg_size(fcmsg),
+        return send_packet(&packet_udp_context, PACKET_MESSAGE, wcmsg, get_wcmsg_size(wcmsg),
                            sent_packet_id);
     }
 }

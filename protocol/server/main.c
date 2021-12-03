@@ -67,10 +67,10 @@ void graceful_exit(whist_server_state* state) {
     // POSSIBLY below locks are not necessary if we're quitting everything and dying anyway?
 
     // Broadcast client quit message
-    WhistServerMessage fsmsg_response = {0};
-    fsmsg_response.type = SMESSAGE_QUIT;
+    WhistServerMessage wsmsg_response = {0};
+    wsmsg_response.type = SMESSAGE_QUIT;
     if (state->client.is_active) {
-        if (broadcast_udp_packet(&state->client, PACKET_MESSAGE, (uint8_t*)&fsmsg_response,
+        if (broadcast_udp_packet(&state->client, PACKET_MESSAGE, (uint8_t*)&wsmsg_response,
                                  sizeof(WhistServerMessage), 1) != 0) {
             LOG_WARNING("Could not send Quit Message");
         }
@@ -112,16 +112,16 @@ void sig_handler(int sig_num) {
 }
 #endif
 
-void handle_whist_client_message(whist_server_state* state, WhistClientMessage* fcmsg) {
+void handle_whist_client_message(whist_server_state* state, WhistClientMessage* wcmsg) {
     /*
         Handles a Whist client message
 
         Arguments:
-            fcmsg (WhistClientMessage*): the client message being handled
+            wcmsg (WhistClientMessage*): the client message being handled
             id (int): the client ID
     */
 
-    if (handle_client_message(state, fcmsg) != 0) {
+    if (handle_client_message(state, wcmsg) != 0) {
         LOG_ERROR("Failed to handle message from client.");
     }
 }
@@ -132,12 +132,12 @@ void get_whist_udp_client_messages(whist_server_state* state) {
         return;
     }
 
-    WhistClientMessage fcmsg;
-    size_t fcmsg_size;
+    WhistClientMessage wcmsg;
+    size_t wcmsg_size;
 
     // If received a UDP message
-    if (try_get_next_message_udp(&state->client, &fcmsg, &fcmsg_size) == 0 && fcmsg_size != 0) {
-        handle_whist_client_message(state, &fcmsg);
+    if (try_get_next_message_udp(&state->client, &wcmsg, &wcmsg_size) == 0 && wcmsg_size != 0) {
+        handle_whist_client_message(state, &wcmsg);
     }
 }
 
@@ -153,9 +153,9 @@ void get_whist_tcp_client_messages(whist_server_state* state) {
     try_get_next_message_tcp(&state->client, &tcp_packet);
     // If we get a TCP client message, handle it
     if (tcp_packet) {
-        WhistClientMessage* fcmsg = (WhistClientMessage*)tcp_packet->data;
-        LOG_INFO("TCP Packet type: %d", fcmsg->type);
-        handle_whist_client_message(state, fcmsg);
+        WhistClientMessage* wcmsg = (WhistClientMessage*)tcp_packet->data;
+        LOG_INFO("TCP Packet type: %d", wcmsg->type);
+        handle_whist_client_message(state, wcmsg);
         free_packet(&state->client.tcp_context, tcp_packet);
     }
 
@@ -196,21 +196,21 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         if (clipboard_chunk) {
             if (assuming_client_active) {
                 LOG_INFO("Received clipboard trigger. Broadcasting clipboard message.");
-                // Alloc fsmsg
-                WhistServerMessage* fsmsg_response =
+                // Alloc wsmsg
+                WhistServerMessage* wsmsg_response =
                     allocate_region(sizeof(WhistServerMessage) + clipboard_chunk->size);
-                // Build fsmsg
-                memset(fsmsg_response, 0, sizeof(*fsmsg_response));
-                fsmsg_response->type = SMESSAGE_CLIPBOARD;
-                memcpy(&fsmsg_response->clipboard, clipboard_chunk,
+                // Build wsmsg
+                memset(wsmsg_response, 0, sizeof(*wsmsg_response));
+                wsmsg_response->type = SMESSAGE_CLIPBOARD;
+                memcpy(&wsmsg_response->clipboard, clipboard_chunk,
                        sizeof(ClipboardData) + clipboard_chunk->size);
-                // Send fsmsg
-                if (broadcast_tcp_packet(&state->client, PACKET_MESSAGE, (uint8_t*)fsmsg_response,
+                // Send wsmsg
+                if (broadcast_tcp_packet(&state->client, PACKET_MESSAGE, (uint8_t*)wsmsg_response,
                                          sizeof(WhistServerMessage) + clipboard_chunk->size) < 0) {
                     LOG_WARNING("Failed to broadcast clipboard message.");
                 }
-                // Free fsmsg
-                deallocate_region(fsmsg_response);
+                // Free wsmsg
+                deallocate_region(wsmsg_response);
             }
             // Free clipboard chunk
             deallocate_region(clipboard_chunk);
@@ -370,10 +370,10 @@ int main(int argc, char* argv[]) {
                 } else {
                     LOG_INFO("Window is no longer fullscreen. Broadcasting fullscreen message.");
                 }
-                WhistServerMessage fsmsg = {0};
-                fsmsg.type = SMESSAGE_FULLSCREEN;
-                fsmsg.fullscreen = (int)fullscreen;
-                if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, &fsmsg,
+                WhistServerMessage wsmsg = {0};
+                wsmsg.type = SMESSAGE_FULLSCREEN;
+                wsmsg.fullscreen = (int)fullscreen;
+                if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, &wsmsg,
                                          sizeof(WhistServerMessage)) == 0) {
                     LOG_INFO("Sent fullscreen message!");
                     cur_fullscreen = fullscreen;
@@ -391,11 +391,11 @@ int main(int argc, char* argv[]) {
                                  (assuming_client_active && new_window_name))) {
                 LOG_INFO("%sBroadcasting window title message.",
                          new_window_name ? "Window title changed. " : "");
-                static char fsmsg_buf[sizeof(WhistServerMessage) + WINDOW_NAME_MAXLEN + 1];
-                WhistServerMessage* fsmsg = (void*)fsmsg_buf;
-                fsmsg->type = SMESSAGE_WINDOW_TITLE;
-                strncpy(fsmsg->window_title, name, WINDOW_NAME_MAXLEN + 1);
-                if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, (uint8_t*)fsmsg,
+                static char wsmsg_buf[sizeof(WhistServerMessage) + WINDOW_NAME_MAXLEN + 1];
+                WhistServerMessage* wsmsg = (void*)wsmsg_buf;
+                wsmsg->type = SMESSAGE_WINDOW_TITLE;
+                strncpy(wsmsg->window_title, name, WINDOW_NAME_MAXLEN + 1);
+                if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, (uint8_t*)wsmsg,
                                          (int)(sizeof(WhistServerMessage) + strlen(name) + 1)) ==
                     0) {
                     LOG_INFO("Sent window title message!");
@@ -417,18 +417,18 @@ int main(int argc, char* argv[]) {
                 char handled_uri[HANDLED_URI_MAXLEN + 1] = {0};
                 ssize_t bytes = read(fd, &handled_uri, HANDLED_URI_MAXLEN);
                 if (bytes > 0) {
-                    size_t fsmsg_size = sizeof(WhistServerMessage) + bytes + 1;
-                    WhistServerMessage* fsmsg = safe_malloc(fsmsg_size);
-                    memset(fsmsg, 0, sizeof(*fsmsg));
-                    fsmsg->type = SMESSAGE_OPEN_URI;
-                    memcpy(&fsmsg->requested_uri, handled_uri, bytes + 1);
-                    if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, (uint8_t*)fsmsg,
-                                             (int)fsmsg_size) < 0) {
+                    size_t wsmsg_size = sizeof(WhistServerMessage) + bytes + 1;
+                    WhistServerMessage* wsmsg = safe_malloc(wsmsg_size);
+                    memset(wsmsg, 0, sizeof(*wsmsg));
+                    wsmsg->type = SMESSAGE_OPEN_URI;
+                    memcpy(&wsmsg->requested_uri, handled_uri, bytes + 1);
+                    if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, (uint8_t*)wsmsg,
+                                             (int)wsmsg_size) < 0) {
                         LOG_WARNING("Failed to broadcast open URI message.");
                     } else {
                         LOG_INFO("Sent open URI message!");
                     }
-                    free(fsmsg);
+                    free(wsmsg);
                 } else {
                     LOG_WARNING("Unable to read URI handler file: %d", errno);
                 }

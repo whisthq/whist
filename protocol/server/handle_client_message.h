@@ -38,10 +38,10 @@ typedef struct _whist_server_state whist_server_state;
  *                                 Logs errors.
  *
  * @param state					   Server's state
- * @param fcmsg                    Message from client
+ * @param wcmsg                    Message from client
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int handle_client_message(whist_server_state *state, WhistClientMessage *fcmsg);
+int handle_client_message(whist_server_state *state, WhistClientMessage *wcmsg);
 
 #endif  // HANDLE_CLIENT_MESSAGE_H

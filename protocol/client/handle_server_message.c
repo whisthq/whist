@@ -46,14 +46,14 @@ Private Functions
 ============================
 */
 
-static int handle_pong_message(WhistServerMessage *fsmsg, size_t fsmsg_size);
-static int handle_tcp_pong_message(WhistServerMessage *fsmsg, size_t fsmsg_size);
-static int handle_quit_message(WhistServerMessage *fsmsg, size_t fsmsg_size);
-static int handle_audio_frequency_message(WhistServerMessage *fsmsg, size_t fsmsg_size);
-static int handle_clipboard_message(WhistServerMessage *fsmsg, size_t fsmsg_size);
-static int handle_window_title_message(WhistServerMessage *fsmsg, size_t fsmsg_size);
-static int handle_open_uri_message(WhistServerMessage *fsmsg, size_t fsmsg_size);
-static int handle_fullscreen_message(WhistServerMessage *fsmsg, size_t fsmsg_size);
+static int handle_pong_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+static int handle_tcp_pong_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+static int handle_quit_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+static int handle_audio_frequency_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+static int handle_clipboard_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+static int handle_window_title_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+static int handle_open_uri_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+static int handle_fullscreen_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 
 /*
 ============================
@@ -64,99 +64,99 @@ Private Function Implementations
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int handle_server_message(WhistServerMessage *fsmsg, size_t fsmsg_size) {
+int handle_server_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
     /*
         Handle message packets from the server
 
         Arguments:
-            fsmsg (WhistServerMessage*): server message packet
-            fsmsg_size (size_t): size of the packet message contents
+            wsmsg (WhistServerMessage*): server message packet
+            wsmsg_size (size_t): size of the packet message contents
 
         Return:
             (int): 0 on success, -1 on failure
     */
 
-    switch (fsmsg->type) {
+    switch (wsmsg->type) {
         case MESSAGE_PONG:
-            return handle_pong_message(fsmsg, fsmsg_size);
+            return handle_pong_message(wsmsg, wsmsg_size);
         case MESSAGE_TCP_PONG:
-            return handle_tcp_pong_message(fsmsg, fsmsg_size);
+            return handle_tcp_pong_message(wsmsg, wsmsg_size);
         case SMESSAGE_QUIT:
-            return handle_quit_message(fsmsg, fsmsg_size);
+            return handle_quit_message(wsmsg, wsmsg_size);
         case MESSAGE_AUDIO_FREQUENCY:
-            return handle_audio_frequency_message(fsmsg, fsmsg_size);
+            return handle_audio_frequency_message(wsmsg, wsmsg_size);
         case SMESSAGE_CLIPBOARD:
-            return handle_clipboard_message(fsmsg, fsmsg_size);
+            return handle_clipboard_message(wsmsg, wsmsg_size);
         case SMESSAGE_WINDOW_TITLE:
-            return handle_window_title_message(fsmsg, fsmsg_size);
+            return handle_window_title_message(wsmsg, wsmsg_size);
         case SMESSAGE_OPEN_URI:
-            return handle_open_uri_message(fsmsg, fsmsg_size);
+            return handle_open_uri_message(wsmsg, wsmsg_size);
         case SMESSAGE_FULLSCREEN:
-            return handle_fullscreen_message(fsmsg, fsmsg_size);
+            return handle_fullscreen_message(wsmsg, wsmsg_size);
         default:
-            LOG_WARNING("Unknown WhistServerMessage Received (type: %d)", fsmsg->type);
+            LOG_WARNING("Unknown WhistServerMessage Received (type: %d)", wsmsg->type);
             return -1;
     }
 }
 
-static int handle_pong_message(WhistServerMessage *fsmsg, size_t fsmsg_size) {
+static int handle_pong_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
     /*
         Handle server pong message
 
         Arguments:
-            fsmsg (WhistServerMessage*): server pong message
-            fsmsg_size (size_t): size of the packet message contents
+            wsmsg (WhistServerMessage*): server pong message
+            wsmsg_size (size_t): size of the packet message contents
 
         Return:
             (int): 0 on success, -1 on failure
     */
 
-    if (fsmsg_size != sizeof(WhistServerMessage)) {
+    if (wsmsg_size != sizeof(WhistServerMessage)) {
         LOG_ERROR(
             "Incorrect message size for a server message"
             " (type: pong message)!");
         return -1;
     }
-    receive_pong(fsmsg->ping_id);
+    receive_pong(wsmsg->ping_id);
     return 0;
 }
 
-static int handle_tcp_pong_message(WhistServerMessage *fsmsg, size_t fsmsg_size) {
+static int handle_tcp_pong_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
     /*
         Handle server TCP pong message
 
         Arguments:
-            fsmsg (WhistServerMessage*): server TCP pong message
-            fsmsg_size (size_t): size of the packet message contents
+            wsmsg (WhistServerMessage*): server TCP pong message
+            wsmsg_size (size_t): size of the packet message contents
 
         Return:
             (int): 0 on success, -1 on failure
     */
 
-    if (fsmsg_size != sizeof(WhistServerMessage)) {
+    if (wsmsg_size != sizeof(WhistServerMessage)) {
         LOG_ERROR(
             "Incorrect message size for a server message"
             " (type: TCP pong message)!");
         return -1;
     }
-    receive_tcp_pong(fsmsg->ping_id);
+    receive_tcp_pong(wsmsg->ping_id);
     return 0;
 }
 
-static int handle_quit_message(WhistServerMessage *fsmsg, size_t fsmsg_size) {
+static int handle_quit_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
     /*
         Handle server quit message
 
         Arguments:
-            fsmsg (WhistServerMessage*): server quit message
-            fsmsg_size (size_t): size of the packet message contents
+            wsmsg (WhistServerMessage*): server quit message
+            wsmsg_size (size_t): size of the packet message contents
 
         Return:
             (int): 0 on success, -1 on failure
     */
 
-    UNUSED(fsmsg);
-    if (fsmsg_size != sizeof(WhistServerMessage)) {
+    UNUSED(wsmsg);
+    if (wsmsg_size != sizeof(WhistServerMessage)) {
         LOG_ERROR(
             "Incorrect message size for a server message"
             " (type: quit message)!");
@@ -167,55 +167,55 @@ static int handle_quit_message(WhistServerMessage *fsmsg, size_t fsmsg_size) {
     return 0;
 }
 
-static int handle_audio_frequency_message(WhistServerMessage *fsmsg, size_t fsmsg_size) {
+static int handle_audio_frequency_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
     /*
         Handle server audio frequency message
 
         Arguments:
-            fsmsg (WhistServerMessage*): server audio frequency message
-            fsmsg_size (size_t): size of the packet message contents
+            wsmsg (WhistServerMessage*): server audio frequency message
+            wsmsg_size (size_t): size of the packet message contents
 
         Return:
             (int): 0 on success, -1 on failure
     */
 
-    if (fsmsg_size != sizeof(WhistServerMessage)) {
+    if (wsmsg_size != sizeof(WhistServerMessage)) {
         LOG_ERROR(
             "Incorrect message size for a server message"
             " (type: audio frequency message)!");
         return -1;
     }
-    LOG_INFO("Changing audio frequency to %d", fsmsg->frequency);
-    set_audio_frequency(fsmsg->frequency);
+    LOG_INFO("Changing audio frequency to %d", wsmsg->frequency);
+    set_audio_frequency(wsmsg->frequency);
     return 0;
 }
 
-static int handle_clipboard_message(WhistServerMessage *fsmsg, size_t fsmsg_size) {
+static int handle_clipboard_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
     /*
         Handle server clipboard message
 
         Arguments:
-            fsmsg (WhistServerMessage*): server clipboard message
-            fsmsg_size (size_t): size of the packet message contents
+            wsmsg (WhistServerMessage*): server clipboard message
+            wsmsg_size (size_t): size of the packet message contents
 
         Return:
             (int): 0 on success, -1 on failure
     */
 
-    if (fsmsg_size != sizeof(WhistServerMessage) + fsmsg->clipboard.size) {
+    if (wsmsg_size != sizeof(WhistServerMessage) + wsmsg->clipboard.size) {
         LOG_ERROR(
             "Incorrect message size for a server message"
             " (type: clipboard message)! Expected %d, but received %d",
-            sizeof(WhistServerMessage) + fsmsg->clipboard.size, fsmsg_size);
+            sizeof(WhistServerMessage) + wsmsg->clipboard.size, wsmsg_size);
         return -1;
     }
-    LOG_INFO("Received %d byte clipboard message from server!", fsmsg_size);
+    LOG_INFO("Received %d byte clipboard message from server!", wsmsg_size);
     // Known to run in less than ~100 assembly instructions
-    push_clipboard_chunk(&fsmsg->clipboard);
+    push_clipboard_chunk(&wsmsg->clipboard);
     return 0;
 }
 
-static int handle_window_title_message(WhistServerMessage *fsmsg, size_t fsmsg_size) {
+static int handle_window_title_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
     /*
         Handle server window title message
         Since only the main thread is allowed to perform UI functionality on MacOS, instead of
@@ -224,8 +224,8 @@ static int handle_window_title_message(WhistServerMessage *fsmsg, size_t fsmsg_s
         window title.
 
         Arguments:
-            fsmsg (WhistServerMessage*): server window title message
-            fsmsg_size (size_t): size of the packet message contents
+            wsmsg (WhistServerMessage*): server window title message
+            wsmsg_size (size_t): size of the packet message contents
 
         Return:
             (int): 0 on success, -1 on failure
@@ -238,7 +238,7 @@ static int handle_window_title_message(WhistServerMessage *fsmsg, size_t fsmsg_s
         return -1;
     }
 
-    char *title = (char *)&fsmsg->window_title;
+    char *title = (char *)&wsmsg->window_title;
     size_t len = strlen(title) + 1;
     char *new_window_title = safe_malloc(len);
     safe_strncpy(new_window_title, title, strlen(title) + 1);
@@ -248,13 +248,13 @@ static int handle_window_title_message(WhistServerMessage *fsmsg, size_t fsmsg_s
     return 0;
 }
 
-static int handle_open_uri_message(WhistServerMessage *fsmsg, size_t fsmsg_size) {
+static int handle_open_uri_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
     /*
         Handle server open URI message by launching the relevant URI locally
 
         Arguments:
-            fsmsg (WhisterverMessage*): server open uri message
-            fsmsg_size (size_t): size of the packet message contents
+            wsmsg (WhisterverMessage*): server open uri message
+            wsmsg_size (size_t): size of the packet message contents
 
         Return:
             (int): 0 on success, -1 on failure
@@ -271,7 +271,7 @@ static int handle_open_uri_message(WhistServerMessage *fsmsg, size_t fsmsg_size)
 // just to be safe from off-by-1 errors
 #define OPEN_URI_CMD_MAXLEN 30
 
-    const char *uri = (const char *)&fsmsg->requested_uri;
+    const char *uri = (const char *)&wsmsg->requested_uri;
     const int cmd_len = (int)strlen(uri) + OPEN_URI_CMD_MAXLEN + 1;
     char *cmd = safe_malloc(cmd_len);
     memset(cmd, 0, cmd_len);
@@ -281,22 +281,22 @@ static int handle_open_uri_message(WhistServerMessage *fsmsg, size_t fsmsg_size)
     return 0;
 }
 
-static int handle_fullscreen_message(WhistServerMessage *fmsg, size_t fmsg_size) {
+static int handle_fullscreen_message(WhistServerMessage *wsmsg, size_t fmsg_size) {
     /*
         Handle server fullscreen message (enter or exit events)
 
         Arguments:
-            fsmsg (WhistServerMessage*): server fullscreen message
-            fsmsg_size (size_t): size of the packet message contents
+            wsmsg (WhistServerMessage*): server fullscreen message
+            wsmsg_size (size_t): size of the packet message contents
 
         Return:
             (int): 0 on success, -1 on failure
     */
 
-    LOG_INFO("Received fullscreen message from the server! Value: %d", fmsg->fullscreen);
+    LOG_INFO("Received fullscreen message from the server! Value: %d", wsmsg->fullscreen);
 
     fullscreen_trigger = true;
-    fullscreen_value = fmsg->fullscreen;
+    fullscreen_value = wsmsg->fullscreen;
 
     return 0;
 }

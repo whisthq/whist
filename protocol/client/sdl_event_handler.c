@@ -207,12 +207,12 @@ int handle_key_up_down(SDL_Event *event) {
         client_exiting = true;
     }
 
-    WhistClientMessage fcmsg = {0};
-    fcmsg.type = MESSAGE_KEYBOARD;
-    fcmsg.keyboard.code = keycode;
-    fcmsg.keyboard.pressed = is_pressed;
-    fcmsg.keyboard.mod = event->key.keysym.mod;
-    send_fcmsg(&fcmsg);
+    WhistClientMessage wcmsg = {0};
+    wcmsg.type = MESSAGE_KEYBOARD;
+    wcmsg.keyboard.code = keycode;
+    wcmsg.keyboard.pressed = is_pressed;
+    wcmsg.keyboard.mod = event->key.keysym.mod;
+    send_wcmsg(&wcmsg);
 
     return 0;
 }
@@ -267,15 +267,15 @@ int handle_mouse_button_up_down(SDL_Event *event) {
             (int): 0 on success
     */
 
-    WhistClientMessage fcmsg = {0};
-    fcmsg.type = MESSAGE_MOUSE_BUTTON;
+    WhistClientMessage wcmsg = {0};
+    wcmsg.type = MESSAGE_MOUSE_BUTTON;
     // Record if left / right / middle button
-    fcmsg.mouseButton.button = event->button.button;
-    fcmsg.mouseButton.pressed = event->button.type == SDL_MOUSEBUTTONDOWN;
-    if (fcmsg.mouseButton.button == MOUSE_L) {
-        SDL_CaptureMouse(fcmsg.mouseButton.pressed);
+    wcmsg.mouseButton.button = event->button.button;
+    wcmsg.mouseButton.pressed = event->button.type == SDL_MOUSEBUTTONDOWN;
+    if (wcmsg.mouseButton.button == MOUSE_L) {
+        SDL_CaptureMouse(wcmsg.mouseButton.pressed);
     }
-    send_fcmsg(&fcmsg);
+    send_wcmsg(&wcmsg);
 
     return 0;
 }
@@ -311,13 +311,13 @@ int handle_mouse_wheel(SDL_Event *event) {
         return 0;
     }
 
-    WhistClientMessage fcmsg = {0};
-    fcmsg.type = MESSAGE_MOUSE_WHEEL;
-    fcmsg.mouseWheel.x = event->wheel.x;
-    fcmsg.mouseWheel.y = event->wheel.y;
-    fcmsg.mouseWheel.precise_x = event->wheel.preciseX;
-    fcmsg.mouseWheel.precise_y = event->wheel.preciseY;
-    send_fcmsg(&fcmsg);
+    WhistClientMessage wcmsg = {0};
+    wcmsg.type = MESSAGE_MOUSE_WHEEL;
+    wcmsg.mouseWheel.x = event->wheel.x;
+    wcmsg.mouseWheel.y = event->wheel.y;
+    wcmsg.mouseWheel.precise_x = event->wheel.preciseX;
+    wcmsg.mouseWheel.precise_y = event->wheel.preciseY;
+    send_wcmsg(&wcmsg);
 
     return 0;
 }
@@ -333,43 +333,43 @@ int handle_pinch(SDL_Event *event) {
             (int): 0 on success
     */
 
-    WhistClientMessage fcmsg = {0};
-    fcmsg.type = MESSAGE_MULTIGESTURE;
-    fcmsg.multigesture = (WhistMultigestureMessage){.d_theta = 0,
+    WhistClientMessage wcmsg = {0};
+    wcmsg.type = MESSAGE_MULTIGESTURE;
+    wcmsg.multigesture = (WhistMultigestureMessage){.d_theta = 0,
                                                     .d_dist = event->pinch.scroll_amount,
                                                     .x = 0,
                                                     .y = 0,
                                                     .num_fingers = 2,
                                                     .active_gesture = active_pinch};
 
-    fcmsg.multigesture.gesture_type = MULTIGESTURE_NONE;
+    wcmsg.multigesture.gesture_type = MULTIGESTURE_NONE;
     if (event->pinch.magnification < 0) {
-        fcmsg.multigesture.gesture_type = MULTIGESTURE_PINCH_CLOSE;
+        wcmsg.multigesture.gesture_type = MULTIGESTURE_PINCH_CLOSE;
         active_pinch = true;
     } else if (event->pinch.magnification > 0) {
-        fcmsg.multigesture.gesture_type = MULTIGESTURE_PINCH_OPEN;
+        wcmsg.multigesture.gesture_type = MULTIGESTURE_PINCH_OPEN;
         active_pinch = true;
     } else if (active_pinch) {
         // 0 magnification means that the pinch gesture is complete
-        fcmsg.multigesture.gesture_type = MULTIGESTURE_CANCEL;
+        wcmsg.multigesture.gesture_type = MULTIGESTURE_CANCEL;
         active_pinch = false;
     }
 
-    send_fcmsg(&fcmsg);
+    send_wcmsg(&wcmsg);
 
     return 0;
 }
 
 int handle_multi_gesture(SDL_Event *event) {
-    WhistClientMessage fcmsg = {0};
-    fcmsg.type = MESSAGE_MULTIGESTURE;
-    fcmsg.multigesture = (WhistMultigestureMessage){.d_theta = event->mgesture.dTheta,
+    WhistClientMessage wcmsg = {0};
+    wcmsg.type = MESSAGE_MULTIGESTURE;
+    wcmsg.multigesture = (WhistMultigestureMessage){.d_theta = event->mgesture.dTheta,
                                                     .d_dist = event->mgesture.dDist,
                                                     .x = event->mgesture.x,
                                                     .y = event->mgesture.y,
                                                     .num_fingers = event->mgesture.numFingers,
                                                     .gesture_type = MULTIGESTURE_NONE};
-    send_fcmsg(&fcmsg);
+    send_wcmsg(&wcmsg);
 
     return 0;
 }
@@ -419,24 +419,24 @@ int handle_sdl_event(SDL_Event *event) {
             }
 #ifdef __APPLE__
             else if (event->window.event == SDL_WINDOWEVENT_OCCLUDED) {
-                WhistClientMessage fcmsg = {0};
-                fcmsg.type = MESSAGE_STOP_STREAMING;
+                WhistClientMessage wcmsg = {0};
+                wcmsg.type = MESSAGE_STOP_STREAMING;
                 whist_sleep(100);
-                send_fcmsg(&fcmsg);
+                send_wcmsg(&wcmsg);
             } else if (event->window.event == SDL_WINDOWEVENT_UNOCCLUDED) {
-                WhistClientMessage fcmsg = {0};
-                fcmsg.type = MESSAGE_START_STREAMING;
-                send_fcmsg(&fcmsg);
+                WhistClientMessage wcmsg = {0};
+                wcmsg.type = MESSAGE_START_STREAMING;
+                send_wcmsg(&wcmsg);
             }
 #else
             else if (event->window.event == SDL_WINDOWEVENT_MINIMIZED) {
-                WhistClientMessage fcmsg = {0};
-                fcmsg.type = MESSAGE_STOP_STREAMING;
-                send_fcmsg(&fcmsg);
+                WhistClientMessage wcmsg = {0};
+                wcmsg.type = MESSAGE_STOP_STREAMING;
+                send_wcmsg(&wcmsg);
             } else if (event->window.event == SDL_WINDOWEVENT_RESTORED) {
-                WhistClientMessage fcmsg = {0};
-                fcmsg.type = MESSAGE_START_STREAMING;
-                send_fcmsg(&fcmsg);
+                WhistClientMessage wcmsg = {0};
+                wcmsg.type = MESSAGE_START_STREAMING;
+                send_wcmsg(&wcmsg);
             }
 #endif
             break;
