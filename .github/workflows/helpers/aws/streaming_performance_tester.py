@@ -47,7 +47,7 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--region_name",
+    "--region-name",
     help="The AWS region to use for testing",
     type=str,
     choices=[
@@ -98,25 +98,32 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--testing_url",
+    "--testing-url",
     help="The URL to visit for testing",
     type=str,
     default="https://fractal-test-assets.s3.amazonaws.com/SpaceX+Launches+4K+Demo.mp4",
 )
 
 parser.add_argument(
-    "--testing_time",
+    "--testing-time",
     help="The length of the performance test in seconds",
     type=int,
     default=126,  # Length of the video in link above is 2mins, 6seconds
 )
 
 parser.add_argument(
-    "--cmake_build_type",
+    "--cmake-build-type",
     help="The cmake build type to use",
     type=str,
     choices=["dev", "prod", "metrics"],
     default="metrics",
+)
+
+parser.add_argument(
+    "--aws-credentials-filepath",
+    help="The path to the file containing the AWS config credentials",
+    type=str,
+    default="~/.aws/credentials",
 )
 
 args = parser.parse_args()
@@ -509,6 +516,45 @@ def terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate):
     wait_for_instance_to_start_or_stop(boto3client, instance_id, stopping=True)
 
 
+def configure_aws_credentials(
+    pexpect_process, pexpect_prompt, aws_credentials_filepath="~/.aws/credentials"
+):
+
+    aws_credentials_filepath_expanded = os.path.expanduser(aws_credentials_filepath)
+
+    if not os.path.isfile(aws_credentials_filepath_expanded):
+        print(
+            "Could not find local AWS credential file at path {}!".format(aws_credentials_filepath)
+        )
+        return
+
+    aws_credentials_file = open(aws_credentials_filepath_expanded, "r")
+    aws_access_key_id = ""
+    aws_secret_access_key = ""
+    for line in aws_credentials_file.readlines():
+        if "aws_access_key_id" in line:
+            aws_access_key_id = line.strip().split()[2]
+        elif "aws_secret_access_key" in line:
+            aws_secret_access_key = line.strip().split()[2]
+            break
+    if aws_access_key_id == "" or aws_secret_access_key == "":
+        print(
+            "Could not parse AWS credentials from file at path {}!".format(aws_credentials_filepath)
+        )
+        return
+    pexpect_process.sendline("aws configure")
+    pexpect_process.expect("AWS Access Key ID")
+    pexpect_process.sendline(aws_access_key_id)
+    pexpect_process.expect("AWS Secret Access Key")
+    pexpect_process.sendline(aws_secret_access_key)
+    pexpect_process.expect("Default region name")
+    pexpect_process.sendline("")
+    pexpect_process.expect("Default output format")
+    pexpect_process.sendline("")
+    wait_until_cmd_done(pexpect_process, pexpect_prompt_server)
+    aws_credentials_file.close()
+
+
 def server_setup_process(args_dict):
     username = args_dict["username"]
     server_hostname = args_dict["server_hostname"]
@@ -517,6 +563,7 @@ def server_setup_process(args_dict):
     server_log_filepath = args_dict["server_log_filepath"]
     pexpect_prompt_server = args_dict["pexpect_prompt_server"]
     github_token = args_dict["github_token"]
+    aws_credentials_filepath = args_dict["aws_credentials_filepath"]
 
     server_log = open(server_log_filepath, "w")
 
@@ -527,6 +574,8 @@ def server_setup_process(args_dict):
         server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5
     )
     hs_process.expect(pexpect_prompt_server)
+
+    configure_aws_credentials(hs_process, pexpect_prompt_server, aws_credentials_filepath)
 
     clone_whist_repository_on_instance(github_token, hs_process, pexpect_prompt_server)
     apply_dpkg_locking_fixup(hs_process, pexpect_prompt_server)
@@ -560,6 +609,7 @@ def client_setup_process(args_dict):
     github_token = args_dict["github_token"]
     use_two_instances = args_dict["use_two_instances"]
     testing_time = args_dict["testing_time"]
+    aws_credentials_filepath = args_dict["aws_credentials_filepath"]
 
     client_log = open(client_log_filepath, "w")
 
@@ -572,6 +622,8 @@ def client_setup_process(args_dict):
             client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
         )
         hs_process.expect(pexpect_prompt_client)
+
+        configure_aws_credentials(hs_process, pexpect_prompt_client, aws_credentials_filepath)
 
         clone_whist_repository_on_instance(github_token, hs_process, pexpect_prompt_client)
         apply_dpkg_locking_fixup(hs_process, pexpect_prompt_client)
@@ -616,6 +668,9 @@ if __name__ == "__main__":
     if not os.path.isfile(ssh_key_path):
         print("SSH key file {} does not exist".format(ssh_key_path))
         exit()
+
+    # Load the AWS credentials path
+    aws_credentials_filepath = args.aws_credentials_filepath
 
     # Create a boto3 client, create or start the instance(s).
     boto3client = get_boto3client(region_name)
@@ -684,6 +739,7 @@ if __name__ == "__main__":
     args_dict["github_token"] = github_token
     args_dict["use_two_instances"] = use_two_instances
     args_dict["testing_time"] = testing_time
+    args_dict["aws_credentials_filepath"] = aws_credentials_filepath
 
     # If using two instances, parallelize the host-setup and building of the docker containers to save time
     p1 = multiprocessing.Process(target=server_setup_process, args=[args_dict])
