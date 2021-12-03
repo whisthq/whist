@@ -18,14 +18,10 @@ At startup, the execution flow on the Docker container will be:
 
 #### Building
 
-Normally, building a Docker container for a dev mandelbox works as follows:
+To build the Docker container for the dev client, we use the regular mandelbox build scripts, with a slight modification to build and copy the protocol client instead of the protocol server.
 
-- A call to `./build.sh APP` builds the protocol server (WhistServer), copies into a folder which will be accessed by the docker container, then calls `helper_scripts/build_mandelbox_image.py`
-- `helper_scripts/build_mandelbox_image.py` builds the APP mandelbox Docker container, after having built all the other containers that the APP mandelbox depends on
+### Naming
 
-To build the Docker container for the dev client, we use the same scripts, but we need to modify `./build.sh APP` so that if we are building the client app, it builds and copies over the protocol client, rather than the protocol server.
-
-###Naming
 This section provides a brief overview on the difference between container name, container ID, mandelbox name and ID, etc...
 
 - The AppName of the mandelbox will be: `fractal/development/client:current-build`.
