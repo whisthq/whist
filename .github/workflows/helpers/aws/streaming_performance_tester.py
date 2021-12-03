@@ -575,6 +575,7 @@ def server_setup_process(args_dict):
     )
     hs_process.expect(pexpect_prompt_server)
 
+    print("Configuring AWS credentials on server instance...")
     configure_aws_credentials(hs_process, pexpect_prompt_server, aws_credentials_filepath)
 
     clone_whist_repository_on_instance(github_token, hs_process, pexpect_prompt_server)
@@ -622,7 +623,7 @@ def client_setup_process(args_dict):
             client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
         )
         hs_process.expect(pexpect_prompt_client)
-
+        print("Configuring AWS credentials on client instance...")
         configure_aws_credentials(hs_process, pexpect_prompt_client, aws_credentials_filepath)
 
         clone_whist_repository_on_instance(github_token, hs_process, pexpect_prompt_client)
