@@ -43,7 +43,6 @@ The Whist monorepository contains 8 Whist subrepositories:
 | Subrepository       | Description                                                                                         |
 | ------------------- | --------------------------------------------------------------------------------------------------- |
 | client-applications | The client-side Electron-based application users download and use to launch a streamed application. |
-| config              | The Whist common configuration values that can be re-used across our monorepo                       |
 | core-ts             | The Whist internal TypeScript library of utilities and reusable components.                         |
 | host-service        | The Whist service which runs on EC2 instance hosts and orchestrates mandelbox management.           |
 | host-setup          | The scripts to setup an EC2 innstance into a Whist-optimized host ready to run Whist mandelboxes.   |
