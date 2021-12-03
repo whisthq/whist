@@ -9,8 +9,11 @@ import (
 func TestStopAndDrainTimer(t *testing.T) {
 	// Simulate the actual usage of this function
 	timerChan := make(chan interface{})
-	sleepTime := 0
+	sleepTime := 1
 	timer := time.AfterFunc(time.Duration(sleepTime)*time.Millisecond, func() { timerChan <- struct{}{} })
+
+	// Gives timerChan to be filled
+	time.Sleep(10000)
 
 	// Does nothing as timer has been stopped
 	StopAndDrainTimer(timer)
