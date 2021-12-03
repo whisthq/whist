@@ -117,9 +117,6 @@ type Mandelbox interface {
 	GetConfigBuffer() *manager.WriteAtBuffer
 	SetConfigBuffer(*manager.WriteAtBuffer)
 
-	// WriteUserInitialBrowserData writes file(s) containing the user initial browser data
-	WriteUserInitialBrowserData(types.BrowserData) error
-
 	// GetContext provides the context corresponding to this specific mandelbox.
 	GetContext() context.Context
 	// Close cancels the mandelbox-specific context, triggering the cleanup of

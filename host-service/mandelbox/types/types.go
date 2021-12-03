@@ -39,14 +39,6 @@ type ConfigEncryptionToken string
 // ClientAppAccessToken is defined as its own type for similar reasons.
 type ClientAppAccessToken string
 
-// BrowserData is a collection of possible browser datas a user generates
-type BrowserData struct {
-	// CookieJSON is the user's cookie sqlite3 file in a string format
-	CookiesJSON 	string
-	// BookmarkJSON is the user's bookmark json file
-	BookmarksJSON 	string
-}
-
 // String is a utility function to return the string representation of a MandelboxID.
 func (mandelboxID MandelboxID) String() string {
 	return uuid.UUID(mandelboxID).String()

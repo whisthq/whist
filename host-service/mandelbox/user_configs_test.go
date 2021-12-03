@@ -1,9 +1,7 @@
 package mandelbox
 
 import (
-	"bytes"
 	"context"
-	"errors"
 	"os"
 	"os/exec"
 	"path"
