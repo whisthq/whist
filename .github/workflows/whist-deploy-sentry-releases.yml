@@ -39,7 +39,11 @@ jobs:
             sentry-project: webserver
           - name: Website
             sentry-project: website
-            
+
+    env:
+      SENTRY_ORG: whist
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
