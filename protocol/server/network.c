@@ -134,13 +134,13 @@ int handle_discovery_port_message(whist_server_state *state, SocketContext *cont
 }
 
 int do_discovery_handshake(whist_server_state *state, SocketContext *context,
-                           WhistClientMessage *wsmsg) {
+                           WhistClientMessage *wcmsg) {
     /*
         Perform a discovery handshake over the discovery port socket context
 
         Arguments:
             context (SocketContext*): the socket context for the discovery port
-            wsmsg (WhistClientMessage*): discovery message sent from client
+            wcmsg (WhistClientMessage*): discovery message sent from client
 
         Returns:
             (int): 0 on success, -1 on failure
