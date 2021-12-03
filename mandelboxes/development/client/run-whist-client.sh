@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script starts the Whist protocol client
+# This script starts the Whist protocol client (only runs on Linux)
 
 # Exit on subcommand errors
 set -Eeuo pipefail
@@ -17,7 +17,7 @@ SERVER_AES_KEY=""
 # Create list of command-line arguments to pass to the Whist protocol client
 OPTIONS=""
 
-#Sample JSON: {"dev_client_server_ip": "35.170.79.124", "dev_client_server_port_32262": 40618, "dev_client_server_port_32263": 31680, "dev_client_server_port_32273": 5923, "dev_client_server_aes_key": "70512c062ff1101f253be70e4cac81bc"}
+# Sample JSON: {"dev_client_server_ip": "35.170.79.124", "dev_client_server_port_32262": 40618, "dev_client_server_port_32263": 31680, "dev_client_server_port_32273": 5923, "dev_client_server_aes_key": "70512c062ff1101f253be70e4cac81bc"}
 WHIST_JSON_FILE=/whist/resourceMappings/config.json
 if [[ -f $WHIST_JSON_FILE ]]; then
   if [ "$( jq 'has("dev_client_server_ip")' < $WHIST_JSON_FILE )" == "true"  ]; then
@@ -80,5 +80,3 @@ whist_client_pid=$!
 wait -n
 echo "WhistClient exited with code $?"
 echo "WhistClient PID: $whist_client_pid"
-
-
