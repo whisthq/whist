@@ -22,6 +22,11 @@ import (
 	"github.com/shirou/gopsutil/mem"
 )
 
+var (
+	counters     map[string]int64
+	countersLock sync.Mutex
+)
+
 // A RuntimeMetrics groups together several pieces of useful information about
 // the underlying host.
 type RuntimeMetrics struct {
@@ -117,6 +122,28 @@ type RuntimeMetrics struct {
 	// collected. This can be used by callers of `GetLatest` to determine how
 	// out-of-date the stats are.
 	TimeStamp time.Time
+
+	// HTTP server
+
+	// AverageRequestTimeMS measures the average time processing an http request.
+	AverageRequestTimeMS int64
+
+	// SuccessfulRequests counts the number of successfully handled http requests.
+	SuccessfulRequests int64
+
+	// FailedRequests indicates the number of requests that have failed.
+	FailedRequests int64
+
+	// Mandelboxes
+
+	// CleanedStaleMandelboxes measures the number of mandelboxes cleaned by the
+	// CleanUpStaleMandelboxes goroutine.
+	CleanedStaleMandelboxes int64
+
+	// Errors
+
+	// Number of errors in the host service.
+	ErrorRate int64
 }
 
 func init() {
@@ -129,6 +156,17 @@ func init() {
 	} else {
 		logger.Info("Skipping metrics collection in CI")
 	}
+
+	// Initialize exported variables map
+	countersLock.Lock()
+	counters = map[string]int64{
+		"TotalRequestTimeMS":      0,
+		"SuccessfulRequests":      0,
+		"FailedRequests":          0,
+		"CleanedStaleMandelboxes": 0,
+		"ErrorRate":               0,
+	}
+	countersLock.Unlock()
 }
 
 // As long as this channel is blocking, we should keep collecting metrics. As
@@ -340,6 +378,22 @@ func collectOnce() (RuntimeMetrics, []error) {
 	}
 	newMetrics.TimeStamp = time.Now().UTC()
 
+	// Pull the collected values from the metric counters.
+	countersLock.Lock()
+
+	newMetrics.SuccessfulRequests = counters["SuccessfulRequests"]
+	newMetrics.FailedRequests = counters["FailedRequests"]
+	newMetrics.CleanedStaleMandelboxes = counters["CleanedStaleMandelboxes"]
+	newMetrics.ErrorRate = counters["ErrorRate"]
+
+	// Compute average request time
+	requests := counters["SuccessfulRequests"]
+	if requests > 0 {
+		newMetrics.AverageRequestTimeMS = counters["TotalRequestTimeMS"] / requests
+	}
+
+	countersLock.Unlock()
+
 	return newMetrics, errs
 }
 
@@ -363,4 +417,18 @@ func Close() {
 	latestErrors = []error{
 		utils.MakeError("Metrics-collection goroutine has been stopped."),
 	}
+}
+
+func Add(metric string, delta int64) {
+	countersLock.Lock()
+	defer countersLock.Unlock()
+
+	counters[metric] += delta
+}
+
+func Increment(metric string) {
+	countersLock.Lock()
+	defer countersLock.Unlock()
+
+	counters[metric] += 1
 }

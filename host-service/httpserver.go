@@ -13,6 +13,7 @@ import (
 	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
 	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
 	"github.com/fractal/fractal/host-service/metadata"
+	"github.com/fractal/fractal/host-service/metrics"
 	"github.com/fractal/fractal/host-service/utils"
 	logger "github.com/fractal/fractal/host-service/whistlogger"
 	"github.com/golang-jwt/jwt/v4"
@@ -74,6 +75,7 @@ func (r requestResult) send(w http.ResponseWriter) {
 	w.WriteHeader(status)
 	if err != nil {
 		logger.Errorf("Error marshalling a %v HTTP Response body: %s", status, err)
+		metrics.Increment("ErrorRate")
 	}
 	_, _ = w.Write(buf)
 }
@@ -118,8 +120,12 @@ func (s *JSONTransportRequest) createResultChan() {
 // processJSONDataRequest processes an HTTP request to receive data
 // directly from the client app. It is handled in host-service.go
 func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
+	// Start timer to measure average time processing http requests.
+	start := time.Now()
+
 	// Verify that it is an PUT request
 	if verifyRequestType(w, r, http.MethodPut) != nil {
+		metrics.Increment("FailedRequests")
 		return
 	}
 
@@ -127,6 +133,8 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 	var reqdata JSONTransportRequest
 	if err := authenticateAndParseRequest(w, r, &reqdata, !metadata.IsLocalEnv()); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
+		metrics.Increment("FailedRequests")
+		metrics.Increment("ErrorRate")
 		return
 	}
 
@@ -135,6 +143,11 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 	res := <-reqdata.resultChan
 
 	res.send(w)
+
+	// Measure elapsed milliseconds and send to metrics.
+	elapsed := time.Since(start)
+	metrics.Increment("SuccessfulRequests")
+	metrics.Add("TotalRequestTimeMS", elapsed.Milliseconds())
 }
 
 // handleJSONTransportRequest handles any incoming JSON transport requests. First it validates the JWT, then it verifies if
@@ -156,6 +169,7 @@ func handleJSONTransportRequest(serverevent ServerRequest, transportRequestMap m
 		// sub (subject) claim.
 		if _, _, err := parser.ParseUnverified(string(req.JwtAccessToken), claims); err != nil {
 			logger.Errorf("There was a problem while parsing the access token for the second time: %s", err)
+			metrics.Increment("ErrorRate")
 			return
 		}
 	}
