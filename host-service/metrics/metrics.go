@@ -125,8 +125,8 @@ type RuntimeMetrics struct {
 
 	// HTTP server
 
-	// AverageRequestTime measures the average time processing an http request.
-	AverageRequestTime string
+	// TotalRequestTime measures the average time processing an http request.
+	TotalRequestTime string
 
 	// SuccessfulRequests counts the number of successfully handled http requests.
 	SuccessfulRequests int64
@@ -160,7 +160,7 @@ func init() {
 	// Initialize exported variables map
 	countersLock.Lock()
 	counters = map[string]int64{
-		"AverageRequestTime":      0,
+		"TotalRequestTime":        0,
 		"SuccessfulRequests":      0,
 		"FailedRequests":          0,
 		"CleanedStaleMandelboxes": 0,
@@ -379,7 +379,7 @@ func collectOnce() (RuntimeMetrics, []error) {
 	}
 	newMetrics.TimeStamp = time.Now().UTC()
 
-	// Pull exported variables metrics
+	// Pull the collected values from the metric counters.
 	countersLock.Lock()
 
 	newMetrics.SuccessfulRequests = counters["SuccessfulRequests"]
@@ -387,10 +387,11 @@ func collectOnce() (RuntimeMetrics, []error) {
 	newMetrics.CleanedStaleMandelboxes = counters["CleanedStaleMandelboxes"]
 	newMetrics.ErrorRate = counters["ErrorRate"]
 
+	// Compute average request time
 	requests := counters["SuccessfulRequests"]
 	if requests > 0 {
-		average := utils.Sprintf("%v ms", counters["AverageRequestTime"]/requests)
-		newMetrics.AverageRequestTime = average
+		average := utils.Sprintf("%v ms", counters["TotalRequestTime"]/requests)
+		newMetrics.TotalRequestTime = average
 	}
 
 	countersLock.Unlock()

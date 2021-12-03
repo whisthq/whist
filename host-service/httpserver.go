@@ -147,7 +147,7 @@ func processJSONDataRequest(w http.ResponseWriter, r *http.Request, queue chan<-
 	// Measure elapsed milliseconds and send to metrics.
 	elapsed := time.Since(start)
 	metrics.Increment("SuccessfulRequests")
-	metrics.Add("AverageRequestTime", elapsed.Milliseconds())
+	metrics.Add("TotalRequestTime", elapsed.Milliseconds())
 }
 
 // handleJSONTransportRequest handles any incoming JSON transport requests. First it validates the JWT, then it verifies if
