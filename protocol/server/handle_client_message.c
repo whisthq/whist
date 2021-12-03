@@ -32,6 +32,13 @@ Includes
 
 /*
 ============================
+Defines
+============================
+*/
+#define MAX_URL_LENGTH 2048
+
+/*
+============================
 Private Functions
 ============================
 */
@@ -51,6 +58,8 @@ static int handle_quit_message(whist_server_state *state, WhistClientMessage *wc
 static int handle_init_message(whist_server_state *state, WhistClientMessage *wcmsg);
 static int handle_file_metadata_message(WhistClientMessage *wcmsg);
 static int handle_file_chunk_message(WhistClientMessage *wcmsg);
+static int handle_open_url_message(whist_server_state *state, WhistClientMessage *wcmsg);
+
 
 /*
 ============================
@@ -109,6 +118,8 @@ int handle_client_message(whist_server_state *state, WhistClientMessage *wcmsg) 
             return handle_quit_message(state, wcmsg);
         case MESSAGE_DISCOVERY_REQUEST:
             return handle_init_message(state, wcmsg);
+        case MESSAGE_OPEN_URL:
+            return handle_open_url_message(state, wcmsg);
         default:
             LOG_ERROR(
                 "Unknown WhistClientMessage Received. "
@@ -521,6 +532,31 @@ static int handle_init_message(whist_server_state *state, WhistClientMessage *cw
     state->client_os = wcmsg.os;
 
     error_monitor_set_username(wcmsg.user_email);
+
+    return 0;
+}
+
+static int handle_open_url_message(whist_server_state *state, WhistClientMessage *fcmsg) {
+    /*
+        Handle a open URL message
+
+        Arguments:
+            fcmsg (WhistClientMessage*): message package from client
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+    char *received_url = fcmsg->url_to_open;
+    size_t url_length = strlen(received_url);
+    if (url_length > MAX_URL_LENGTH) {
+        return -1;
+    }
+    LOG_INFO("Received URL to open in new tab: %s", received_url);
+
+    size_t command_len = url_length + strlen("exec google-chrome ") + 1;
+    char command[command_len];
+    sprintf(command, "exec google-chrome %s", received_url);
+    system(command);
 
     return 0;
 }
