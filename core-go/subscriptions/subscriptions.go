@@ -55,8 +55,7 @@ func MandelboxStatusHandler(event SubscriptionEvent, variables map[string]interf
 // SetupHostSubscriptions creates a slice of HasuraSubscriptions to start the client. This
 // function is specific for the subscriptions used on the host service.
 func SetupHostSubscriptions(instanceName aws.InstanceName, whistClient WhistHasuraClient) {
-	client := whistClient.(*WhistClient)
-	client.Subscriptions = []HasuraSubscription{
+	hostSubscriptions := []HasuraSubscription{
 		{
 			Query: InstanceStatusQuery,
 			Variables: map[string]interface{}{
@@ -76,13 +75,13 @@ func SetupHostSubscriptions(instanceName aws.InstanceName, whistClient WhistHasu
 			Handler: MandelboxAllocatedHandler,
 		},
 	}
+	whistClient.SetSubscriptions(hostSubscriptions)
 }
 
 // SetupScalingSubscriptions creates a slice of HasuraSubscriptions to start the client. This
 // function is specific for the subscriptions used on the scaling service.
 func SetupScalingSubscriptions(whistClient WhistHasuraClient) {
-	client := whistClient.(*WhistClient)
-	client.Subscriptions = []HasuraSubscription{
+	scalingSubscriptions := []HasuraSubscription{
 		{
 			Query: MandelboxStatusQuery,
 			Variables: map[string]interface{}{
@@ -100,6 +99,7 @@ func SetupScalingSubscriptions(whistClient WhistHasuraClient) {
 			Handler: MandelboxAllocatedHandler,
 		},
 	}
+	whistClient.SetSubscriptions(scalingSubscriptions)
 }
 
 // Start is the main function in the subscriptions package. It initializes a client, sets up the received subscriptions,
@@ -110,8 +110,7 @@ func Start(whistClient WhistHasuraClient, globalCtx context.Context, goroutineTr
 	var subscriptionIDs []string
 
 	// Initialize subscription client
-	client := whistClient.(*WhistClient)
-	client.Initialize()
+	whistClient.Initialize()
 
 	// Start goroutine that shuts down the client if the global context gets
 	// cancelled.
@@ -121,11 +120,11 @@ func Start(whistClient WhistHasuraClient, globalCtx context.Context, goroutineTr
 
 		// Listen for global context cancellation
 		<-globalCtx.Done()
-		whistClient.Close(client.SubscriptionIDs)
+		whistClient.Close(whistClient.GetSubscriptionIDs())
 	}()
 
 	// Send subscriptions to the client
-	for _, subscriptionParams := range client.Subscriptions {
+	for _, subscriptionParams := range whistClient.GetSubscriptions() {
 		query := subscriptionParams.Query
 		variables := subscriptionParams.Variables
 		result := subscriptionParams.Result
@@ -139,8 +138,8 @@ func Start(whistClient WhistHasuraClient, globalCtx context.Context, goroutineTr
 	}
 
 	// Run the client
-	client.SubscriptionIDs = subscriptionIDs
-	client.Run(goroutineTracker)
+	whistClient.SetSubscriptionsIDs(subscriptionIDs)
+	whistClient.Run(goroutineTracker)
 
 	return nil
 }

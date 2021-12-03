@@ -21,6 +21,12 @@ var enabled = (metadata.GetAppEnvironment() != metadata.EnvLocalDev)
 // the official Hasura client.
 type WhistHasuraClient interface {
 	Initialize()
+	GetSubscriptions() []HasuraSubscription
+	SetSubscriptions([]HasuraSubscription)
+	GetSubscriptionIDs() []string
+	SetSubscriptionsIDs([]string)
+	GetParams() HasuraParams
+	SetParams(HasuraParams)
 	Subscribe(GraphQLQuery, map[string]interface{}, SubscriptionEvent, handlerfn, chan SubscriptionEvent) (string, error)
 	Run(*sync.WaitGroup)
 	Close([]string) error
@@ -35,12 +41,36 @@ type WhistClient struct {
 	SubscriptionIDs []string
 }
 
+func (wc *WhistClient) SetSubscriptions(subscriptions []HasuraSubscription) {
+	wc.Subscriptions = subscriptions
+}
+
+func (wc *WhistClient) GetSubscriptions() []HasuraSubscription {
+	return wc.Subscriptions
+}
+
+func (wc *WhistClient) SetSubscriptionIDs(ids []string) {
+	wc.SubscriptionIDs = ids
+}
+
+func (wc *WhistClient) GetSubscriptionsIDs() []string {
+	return wc.SubscriptionIDs
+}
+
+func (wc *WhistClient) SetParams(params HasuraParams) {
+	wc.Params = params
+}
+
+func (wc *WhistClient) GetParams() HasuraParams {
+	return wc.Params
+}
+
 // Initialize creates the client.
 func (wc *WhistClient) Initialize() {
-	wc.Hasura = graphql.NewSubscriptionClient(wc.Params.URL).
+	wc.Hasura = graphql.NewSubscriptionClient(wc.GetParams().URL).
 		WithConnectionParams(map[string]interface{}{
 			"headers": map[string]string{
-				"x-hasura-admin-secret": wc.Params.AccessKey,
+				"x-hasura-admin-secret": wc.GetParams().AccessKey,
 			},
 		}).WithLog(logger.Print).
 		WithoutLogTypes(graphql.GQL_CONNECTION_KEEP_ALIVE).
@@ -130,15 +160,14 @@ func InitializeWhistHasuraClient(whistClient WhistHasuraClient) error {
 	}
 	logger.Infof("Setting up Hasura subscriptions...")
 
-	client := whistClient.(*WhistClient)
 	params, err := getWhistHasuraParams()
 	if err != nil {
 		// Error obtaining the connection parameters, we stop and don't setup the client
 		return utils.MakeError("error creating hasura client: %v", err)
 	}
 
-	client.Params = params
-	client.Initialize()
+	whistClient.SetParams(params)
+	whistClient.Initialize()
 
 	return err
 }
