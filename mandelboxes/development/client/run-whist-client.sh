@@ -69,7 +69,6 @@ if [[ -f $WHIST_JSON_FILE ]]; then
   fi
 fi
 
-
 # The point of the named pipe redirection is so that $! will give us the PID of WhistServer, not of tee.
 # Timeout will turn off the client once we are done gathering metrics data. This value here should match the one in the .github/workflows/helpers/aws/streaming_performance_tester.py file
 timeout 240s /usr/share/whist/WhistClient $OPTIONS > >(tee $PROTOCOL_LOG_FILENAME) &
