@@ -182,6 +182,8 @@ Defines
 // into the protocol)
 #define WHIST_ARGS_MAXLEN 255
 
+#define MAX_URL_LENGTH 2048
+
 /*
 ============================
 Constants
@@ -588,9 +590,11 @@ typedef enum WhistClientMessageType {
     MESSAGE_DISCOVERY_REQUEST = 115,
     MESSAGE_TCP_RECOVERY = 116,
 
+    MESSAGE_OPEN_URL = 177,
+
     CMESSAGE_FILE_METADATA = 119,  ///< file metadata
     CMESSAGE_FILE_DATA = 120,      ///< file chunk
-
+    
     CMESSAGE_QUIT = 999,
 } WhistClientMessageType;
 
@@ -681,6 +685,9 @@ typedef struct WhistClientMessage {
             int numBits;
             unsigned char ba_raw[BITS_TO_CHARS(max(MAX_VIDEO_PACKETS, MAX_AUDIO_PACKETS))];
         } bitarray_nack;
+
+        // MESSAGE_OPEN_URL
+        char url_to_open[MAX_URL_LENGTH + 1];
 
         // MESSAGE_KEYBOARD_STATE
         WhistKeyboardState keyboard_state;
