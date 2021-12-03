@@ -154,7 +154,7 @@ func init() {
 			logger.Panicf(nil, "Error starting metrics collection goroutine: %s", err)
 		}
 	} else {
-		logger.SilentInfo("Skipping metrics collection in CI")
+		logger.Infof("Skipping metrics collection in CI")
 	}
 
 	// Initialize exported variables map
@@ -206,7 +206,7 @@ func startCollectionGoroutine(frequency time.Duration) error {
 
 	// Start the metrics collection goroutine
 	go func() {
-		logger.SilentInfo("Starting metrics collection goroutine.")
+		logger.Infof("Starting metrics collection goroutine.")
 		timerChan := make(chan interface{})
 
 		for {
@@ -221,7 +221,7 @@ func startCollectionGoroutine(frequency time.Duration) error {
 				// closed or written to (it should not be written to), but either way,
 				// it's time to die.
 
-				logger.SilentInfo("Shutting down metrics collection goroutine.")
+				logger.Infof("Shutting down metrics collection goroutine.")
 
 				// Uninitialize libraries (i.e. NVML).
 				if nvmlRet := nvml.Shutdown(); nvmlRet != nvml.SUCCESS {
