@@ -11,12 +11,8 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/fractal/fractal/host-service/metadata"
 	"github.com/fractal/fractal/host-service/utils"
 )
-
-// whistBuffer is the buffer to replace stdout.
-var whistBuffer bytes.Buffer
 
 func init() {
 	// Set some options for the Go logging package.
@@ -57,13 +53,6 @@ func init() {
 		// entire service.
 		Errorf("Failed to initialize LogzIO! Error: %s", err)
 	}
-
-	// Disable output to stdout when running on a nonn local environment.
-	if !metadata.IsLocalEnv() {
-		// Set the output of the `log` package to the whistBuffer. This captures
-		// any output to avoid clogging stdout and only send it to Logz and Sentry.
-		log.SetOutput(&whistBuffer)
-	}
 }
 
 // Close flushes all production logging (i.e. Sentry and Logzio).
@@ -94,6 +83,21 @@ func Info(format string, v ...interface{}) {
 	str := fmt.Sprintf(format, v...)
 
 	log.Print(str)
+	if logzioTransport != nil {
+		timestamp := fmt.Sprintf("time=%s", time.Now().String())
+		logzioTransport.send(fmt.Sprintf("%s %s", str, timestamp), logzioTypeInfo)
+	}
+}
+
+// InfoWithCapture logs some info + timestamp, but captures the output so that it
+// bypasses stdout but is sent to Logz.io.
+func InfoWithCapture(format string, output bytes.Buffer,  ...interface{}) {
+	// Create a new logger for capturing the output (not sending to stdout).
+	logWithCapture := log.New(&output, "", log.LstdFlags)
+
+	str := fmt.Sprintf(format, v...)
+
+	logWithCapture.Print(str)
 	if logzioTransport != nil {
 		timestamp := fmt.Sprintf("time=%s", time.Now().String())
 		logzioTransport.send(fmt.Sprintf("%s %s", str, timestamp), logzioTypeInfo)

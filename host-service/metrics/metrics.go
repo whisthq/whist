@@ -5,6 +5,7 @@ host service runtime. This includes metrics about total load, CPU usage, etc.
 package metrics // import "github.com/fractal/fractal/host-service/metrics"
 
 import (
+	"bytes"
 	"math/rand"
 	"sync"
 	"time"
@@ -23,8 +24,9 @@ import (
 )
 
 var (
-	counters     map[string]int64
-	countersLock sync.Mutex
+	counters      map[string]int64
+	countersLock  sync.Mutex
+	metricsOutput bytes.Buffer
 )
 
 // A RuntimeMetrics groups together several pieces of useful information about
@@ -154,7 +156,7 @@ func init() {
 			logger.Panicf(nil, "Error starting metrics collection goroutine: %s", err)
 		}
 	} else {
-		logger.Info("Skipping metrics collection in CI")
+		logger.InfoWithCapture("Skipping metrics collection in CI", metricsOutput)
 	}
 
 	// Initialize exported variables map
@@ -206,7 +208,7 @@ func startCollectionGoroutine(frequency time.Duration) error {
 
 	// Start the metrics collection goroutine
 	go func() {
-		logger.Infof("Starting metrics collection goroutine.")
+		logger.InfoWithCapture("Starting metrics collection goroutine.", metricsOutput)
 		timerChan := make(chan interface{})
 
 		for {
@@ -221,13 +223,15 @@ func startCollectionGoroutine(frequency time.Duration) error {
 				// closed or written to (it should not be written to), but either way,
 				// it's time to die.
 
-				logger.Infof("Shutting down metrics collection goroutine.")
+				logger.InfoWithCapture("Shutting down metrics collection goroutine.", metricsOutput)
 
 				// Uninitialize libraries (i.e. NVML).
 				if nvmlRet := nvml.Shutdown(); nvmlRet != nvml.SUCCESS {
 					logger.Errorf("Error shutting down NVML library.")
 				}
 
+				// Clear the output buffer before shutting down.
+				metricsOutput.Reset()
 				utils.StopAndDrainTimer(timer)
 				return
 
@@ -239,7 +243,7 @@ func startCollectionGoroutine(frequency time.Duration) error {
 				latestMetrics, latestErrors = newMetrics, errs
 				latestLock.Unlock()
 
-				logger.Infof("Collected latest metrics: %+v", newMetrics)
+				logger.InfoWithCapture("Collected latest metrics: %+v", metricsOutput, newMetrics)
 				if len(latestErrors) != 0 {
 					logger.Errorf("Errors collecting latest metrics: %v", latestErrors)
 				}
