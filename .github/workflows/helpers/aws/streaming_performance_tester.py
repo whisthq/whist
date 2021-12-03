@@ -344,7 +344,7 @@ def run_server_on_instance(pexpect_process):
         server_mandelbox_output[-2].replace("\n", "").replace("\r", "").replace(" ", "")
     )
     print(
-        "Fractal Server started on EC2 instance, on Docker container {}!".format(server_docker_id)
+        "Whist Server started on EC2 instance, on Docker container {}!".format(server_docker_id)
     )
 
     # Retrieve connection configs from server
@@ -369,9 +369,9 @@ def run_server_on_instance(pexpect_process):
 
 
 def build_client_on_instance(pexpect_process, pexpect_prompt, testing_time):
-    # Edit the run-fractal-client.sh to make the client quit after the experiment is over
+    # Edit the run-whist-client.sh to make the client quit after the experiment is over
     print("Setting the experiment duration to {}s...".format(testing_time))
-    command = "sed -i 's/timeout 240s/timeout {}s/g' ~/fractal/mandelboxes/development/client/run-fractal-client.sh".format(
+    command = "sed -i 's/timeout 240s/timeout {}s/g' ~/fractal/mandelboxes/development/client/run-whist-client.sh".format(
         testing_time
     )
     pexpect_process.sendline(command)
@@ -398,7 +398,7 @@ def run_client_on_instance(pexpect_process, json_data):
         client_mandelbox_output[-2].replace("\n", "").replace("\r", "").replace(" ", "")
     )
     print(
-        "Fractal dev client started on EC2 instance, on Docker container {}!".format(
+        "Whist dev client started on EC2 instance, on Docker container {}!".format(
             client_docker_id
         )
     )
@@ -421,20 +421,20 @@ def extract_server_logs_from_instance(
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     server_logfiles = [
-        "/usr/share/fractal/server.log",
-        "/usr/share/fractal/teleport.log",
-        "/usr/share/fractal/display.log",
+        "/usr/share/whist/server.log",
+        "/usr/share/whist/teleport.log",
+        "/usr/share/whist/display.log",
         # Var Logs!
-        "/var/log/fractal/audio-err.log",
-        "/var/log/fractal/audio-out.log",
-        "/var/log/fractal/display-err.log",
-        "/var/log/fractal/display-out.log",
-        "/var/log/fractal/entry-err.log",
-        "/var/log/fractal/entry-out.log",
-        "/var/log/fractal/update_xorg_conf-err.log",
-        "/var/log/fractal/update_xorg_conf-out.log",
-        "/var/log/fractal/protocol-err.log",
-        "/var/log/fractal/protocol-out.log",
+        "/var/log/whist/audio-err.log",
+        "/var/log/whist/audio-out.log",
+        "/var/log/whist/display-err.log",
+        "/var/log/whist/display-out.log",
+        "/var/log/whist/entry-err.log",
+        "/var/log/whist/entry-out.log",
+        "/var/log/whist/update_xorg_conf-err.log",
+        "/var/log/whist/update_xorg_conf-out.log",
+        "/var/log/whist/protocol-err.log",
+        "/var/log/whist/protocol-out.log",
     ]
     for server_file_path in server_logfiles:
         command = "docker cp {}:{} ~/perf_logs/server/".format(server_docker_id, server_file_path)
@@ -467,19 +467,19 @@ def extract_client_logs_from_instance(
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     client_logfiles = [
-        "/usr/share/fractal/client.log",
-        "/usr/share/fractal/display.log",
+        "/usr/share/whist/client.log",
+        "/usr/share/whist/display.log",
         # Var Logs!
-        "/var/log/fractal/audio-err.log",
-        "/var/log/fractal/audio-out.log",
-        "/var/log/fractal/display-err.log",
-        "/var/log/fractal/display-out.log",
-        "/var/log/fractal/entry-err.log",
-        "/var/log/fractal/entry-out.log",
-        "/var/log/fractal/update_xorg_conf-err.log",
-        "/var/log/fractal/update_xorg_conf-out.log",
-        "/var/log/fractal/protocol-err.log",
-        "/var/log/fractal/protocol-out.log",
+        "/var/log/whist/audio-err.log",
+        "/var/log/whist/audio-out.log",
+        "/var/log/whist/display-err.log",
+        "/var/log/whist/display-out.log",
+        "/var/log/whist/entry-err.log",
+        "/var/log/whist/entry-out.log",
+        "/var/log/whist/update_xorg_conf-err.log",
+        "/var/log/whist/update_xorg_conf-out.log",
+        "/var/log/whist/protocol-err.log",
+        "/var/log/whist/protocol-out.log",
     ]
     for client_file_path in client_logfiles:
         command = "docker cp {}:{} ~/perf_logs/client/".format(client_docker_id, client_file_path)
