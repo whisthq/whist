@@ -551,7 +551,7 @@ def configure_aws_credentials(
     pexpect_process.sendline("")
     pexpect_process.expect("Default output format")
     pexpect_process.sendline("")
-    wait_until_cmd_done(pexpect_process, pexpect_prompt_server)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt)
     aws_credentials_file.close()
 
 
