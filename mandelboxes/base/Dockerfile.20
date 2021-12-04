@@ -319,9 +319,11 @@ ENV SENTRY_DSN https://6765c9aeb9c449a599ca6242829799b8@o400459.ingest.sentry.io
 #########################
 
 # Install systemd
+# Locales is needed to solve `pam_env(sudo:session): Unable to open env file: /etc/default/locale: No such file or directory`
 RUN apt-get update && apt-get install --no-install-recommends -y \
     systemd \
     systemd-sysv \
+    locales \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
@@ -403,6 +405,8 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     libfido2-1 \
     # for `killall` in display/update-whist-dpi.sh
     psmisc \
+    # to silence "The name org.freedesktop.UPower was not provided by any .service file" in browsers
+    upower \
     libgbm1 \
     lsb-release \
     ufw \

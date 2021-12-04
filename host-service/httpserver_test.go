@@ -338,25 +338,43 @@ func TestGetAppNameEmpty(t *testing.T) {
 	}
 }
 
-// TestGetAppName will set appName to json request app name
-func TestGetAppName(t *testing.T) {
-	testJSONTransportRequest := JSONTransportRequest{
-		AppName: mandelboxtypes.AppName("test_app_name"),
-	}
-
+// TestGetAppNameNoRequest will time out and return nil request
+func TestGetAppNameNoRequest(t *testing.T) {
 	mandelboxID := mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())
 	testmux := &sync.Mutex{}
 	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
 
-	// Assign JSONTRansportRequest
-	testTransportRequestMap[mandelboxID] = make(chan *JSONTransportRequest, 1)
-	testTransportRequestMap[mandelboxID] <- &testJSONTransportRequest
+	// Will take 1 minute to resolve and return nil request
+	req, _ := getAppName(mandelboxID, testTransportRequestMap, testmux)
 
-	// Should be set to test_app_name
-	_, appName := getAppName(mandelboxID, testTransportRequestMap, testmux)
+	if req != nil {
+		t.Fatalf("error getting app name with no transport request. Expected nil, got %v", req)
+	}
+}
 
-	if appName != testJSONTransportRequest.AppName {
-		t.Fatalf("error getting app name. Expected %v, got %v", testJSONTransportRequest.AppName, appName)
+// TestGetAppName will set appName to json request app name
+func TestGetAppName(t *testing.T) {
+	var appNames = []string{"browsers/chrome", "browsers/brave", "browsers/test"}
+
+	for _, appName := range appNames {
+		testJSONTransportRequest := JSONTransportRequest{
+			AppName: mandelboxtypes.AppName(appName),
+		}
+
+		mandelboxID := mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())
+		testmux := &sync.Mutex{}
+		testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
+
+		// Assign JSONTRansportRequest
+		testTransportRequestMap[mandelboxID] = make(chan *JSONTransportRequest, 1)
+		testTransportRequestMap[mandelboxID] <- &testJSONTransportRequest
+
+		// getAppName should get an appName that matches AppName in testJSONTransportRequest
+		_, mandelboxAppName := getAppName(mandelboxID, testTransportRequestMap, testmux)
+
+		if mandelboxAppName != testJSONTransportRequest.AppName {
+			t.Fatalf("error getting app name. Expected %v, got %v", testJSONTransportRequest.AppName, appName)
+		}
 	}
 }
 

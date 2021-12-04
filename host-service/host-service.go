@@ -156,7 +156,9 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 	// environments.
 	regexes := []string{
 		`whist/browsers/chrome:current-build`,
+		`whist/browsers/brave:current-build`,
 		`ghcr.io/fractal/*/browsers/chrome:current-build`,
+		`ghcr.io/fractal/*/browsers/brave:current-build`,
 		`ghcr.io/fractal/*`,
 		`*whist*`,
 	}
@@ -384,6 +386,14 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// mandelboxSubscription is the pubsub event received from Hasura.
 	mandelboxSubscription := sub.MandelboxInfo[0]
 	req, AppName := getAppName(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
+
+	// Req is only nil if getting the jsonTransportRequest timed out 
+	if req == nil {
+		// Clean up the mandelbox if request is nil as the the time out limit is reached.
+		logAndReturnError("Timed out waiting for app name.")
+		return
+	}
+
 
 	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", mandelboxSubscription.ID)
 
@@ -682,22 +692,6 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	<-userConfigDownloadComplete
 
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
-
-	if req == nil {
-		// Receive the json transport request from the client via the httpserver.
-		jsonchan := getJSONTransportRequestChannel(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
-
-		// Set a timeout for the json transport request to prevent the mandelbox from waiting forever.
-		select {
-		case transportRequest := <-jsonchan:
-			req = transportRequest
-		case <-time.After(1 * time.Minute):
-			// Clean up the mandelbox if the time out limit is reached.
-			mandelboxDieHandler(string(dockerID), transportRequestMap, transportMapLock, dockerClient)
-			logAndReturnError("Timed out waiting for config encryption token.")
-			return
-		}
-	}
 
 	// Verify that this user sent in a (nontrivial) config encryption token
 	if len(req.ConfigEncryptionToken) < 10 {
