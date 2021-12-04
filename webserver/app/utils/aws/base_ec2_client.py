@@ -86,7 +86,9 @@ class EC2Client(CloudClient):
                 },
             ],
             "UserData": userdata_template,
-            "IamInstanceProfile": {"Arn": "arn:aws:iam::747391415460:instance-profile/TestDeploymentRole"},
+            "IamInstanceProfile": {
+                "Arn": "arn:aws:iam::747391415460:instance-profile/TestDeploymentRole"
+            },
             "InstanceInitiatedShutdownBehavior": "terminate",
         }
         resp = self.ec2_client.run_instances(**kwargs)
