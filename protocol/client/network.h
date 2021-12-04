@@ -15,7 +15,7 @@ discover_ports, connect_to_server, close_connections, and send_server_quit_messa
 start and end connections to the Whist server. To connect, call discover_ports, then
 connect_to_server. To disconnect, send_server_quit_messages and then close_connections.
 
-To communicate with the server, use send_fcmsg to send Whist messages to the server. Large fcmsg's
+To communicate with the server, use send_wcmsg to send Whist messages to the server. Large wcmsg's
 (e.g. clipboard messages) are sent over TCP; otherwise, messages are sent over UDP. Use update_ping
 to ping the server at regular intervals, and receive_pong to receive pongs (ping acknowledgements)
 from the server.
@@ -74,11 +74,11 @@ int send_server_quit_messages(int num_messages);
 /**
  * @brief                          Send a WhistMessage from client to server
  *
- * @param fcmsg                     WhistMessage struct to send as packet
+ * @param wcmsg                     WhistMessage struct to send as packet
  *
  * @returns                        0 if succeeded, else -1
  */
-int send_fcmsg(WhistClientMessage* fcmsg);
+int send_wcmsg(WhistClientMessage* wcmsg);
 
 /**
  * @brief                           Send a ping with ID ping_id to the server

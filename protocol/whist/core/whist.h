@@ -560,7 +560,7 @@ typedef struct WhistDiscoveryReplyMessage {
 typedef enum WhistClientMessageType {
     CMESSAGE_NONE = 0,     ///< No Message
     MESSAGE_KEYBOARD = 1,  ///< `keyboard` WhistKeyboardMessage is valid in
-                           ///< FractClientMessage.
+                           ///< WhistClientMessage.
     MESSAGE_KEYBOARD_STATE = 2,
     MESSAGE_MOUSE_BUTTON = 3,  ///< `mouseButton` WhistMouseButtonMessage is
                                ///< valid in FractClientMessage.
@@ -791,11 +791,11 @@ bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
  * @brief                          Calculate the size of a WhistClientMessage
  *                                 struct
  *
- * @param fcmsg                     The Whist Client Message to find the size
+ * @param wcmsg                     The Whist Client Message to find the size
  *
  * @returns                        The size of the Whist Client Message struct
  */
-int get_fcmsg_size(WhistClientMessage* fcmsg);
+int get_wcmsg_size(WhistClientMessage* wcmsg);
 
 /**
  * @brief                          Terminates the protocol

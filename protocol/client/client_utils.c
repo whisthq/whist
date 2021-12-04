@@ -591,13 +591,13 @@ int free_parsed_args(void) {
     return 0;
 }
 
-int prepare_init_to_server(WhistDiscoveryRequestMessage *fcmsg, char *email) {
+int prepare_init_to_server(WhistDiscoveryRequestMessage *wcmsg, char *email) {
     /*
         Prepare for initial request to server by setting
         user email and time data
 
         Arguments:
-            fcmsg (WhistDiscoveryRequestMessage*): pointer to the discovery
+            wcmsg (WhistDiscoveryRequestMessage*): pointer to the discovery
                 request message packet to be sent to the server
             email (char*): user email
 
@@ -606,18 +606,18 @@ int prepare_init_to_server(WhistDiscoveryRequestMessage *fcmsg, char *email) {
     */
 
     // Copy email
-    if (!safe_strncpy(fcmsg->user_email, email, sizeof(fcmsg->user_email))) {
+    if (!safe_strncpy(wcmsg->user_email, email, sizeof(wcmsg->user_email))) {
         LOG_ERROR("User email is too long: %s.\n", email);
         return -1;
     }
 
     // Let the server know what OS we are
 #ifdef _WIN32
-    fcmsg->os = WHIST_WINDOWS;
+    wcmsg->os = WHIST_WINDOWS;
 #elif defined(__APPLE__)
-    fcmsg->os = WHIST_APPLE;
+    wcmsg->os = WHIST_APPLE;
 #else
-    fcmsg->os = WHIST_LINUX;
+    wcmsg->os = WHIST_LINUX;
 #endif
 
     return 0;
@@ -663,14 +663,14 @@ int update_mouse_motion() {
         }
 
         // Send new mouse locations to server
-        WhistClientMessage fcmsg = {0};
-        fcmsg.type = MESSAGE_MOUSE_MOTION;
-        fcmsg.mouseMotion.relative = mouse_state.is_relative;
-        fcmsg.mouseMotion.x = x;
-        fcmsg.mouseMotion.y = y;
-        fcmsg.mouseMotion.x_nonrel = x_nonrel;
-        fcmsg.mouseMotion.y_nonrel = y_nonrel;
-        if (send_fcmsg(&fcmsg) != 0) {
+        WhistClientMessage wcmsg = {0};
+        wcmsg.type = MESSAGE_MOUSE_MOTION;
+        wcmsg.mouseMotion.relative = mouse_state.is_relative;
+        wcmsg.mouseMotion.x = x;
+        wcmsg.mouseMotion.y = y;
+        wcmsg.mouseMotion.x_nonrel = x_nonrel;
+        wcmsg.mouseMotion.y_nonrel = y_nonrel;
+        if (send_wcmsg(&wcmsg) != 0) {
             return -1;
         }
 
@@ -684,15 +684,15 @@ int update_mouse_motion() {
 void send_message_dimensions() {
     // Let the server know the new dimensions so that it
     // can change native dimensions for monitor
-    WhistClientMessage fcmsg = {0};
-    fcmsg.type = MESSAGE_DIMENSIONS;
-    fcmsg.dimensions.width = output_width;
-    fcmsg.dimensions.height = output_height;
-    fcmsg.dimensions.codec_type = output_codec_type;
-    fcmsg.dimensions.dpi = get_native_window_dpi((SDL_Window *)window);
-    LOG_INFO("Sending MESSAGE_DIMENSIONS: output=%dx%d, DPI=%d, codec=%d", fcmsg.dimensions.width,
-             fcmsg.dimensions.height, fcmsg.dimensions.dpi, fcmsg.dimensions.codec_type);
-    send_fcmsg(&fcmsg);
+    WhistClientMessage wcmsg = {0};
+    wcmsg.type = MESSAGE_DIMENSIONS;
+    wcmsg.dimensions.width = output_width;
+    wcmsg.dimensions.height = output_height;
+    wcmsg.dimensions.codec_type = output_codec_type;
+    wcmsg.dimensions.dpi = get_native_window_dpi((SDL_Window *)window);
+    LOG_INFO("Sending MESSAGE_DIMENSIONS: output=%dx%d, DPI=%d, codec=%d", wcmsg.dimensions.width,
+             wcmsg.dimensions.height, wcmsg.dimensions.dpi, wcmsg.dimensions.codec_type);
+    send_wcmsg(&wcmsg);
 }
 
 void nack_packet(WhistPacketType frame_type, int id, int index) {
@@ -704,10 +704,10 @@ void nack_packet(WhistPacketType frame_type, int id, int index) {
             id (int): Frame ID of the packet
             index (int): index of the packet
             */
-    WhistClientMessage fcmsg = {0};
-    fcmsg.type = MESSAGE_NACK;
-    fcmsg.simple_nack.type = frame_type;
-    fcmsg.simple_nack.id = id;
-    fcmsg.simple_nack.index = index;
-    send_fcmsg(&fcmsg);
+    WhistClientMessage wcmsg = {0};
+    wcmsg.type = MESSAGE_NACK;
+    wcmsg.simple_nack.type = frame_type;
+    wcmsg.simple_nack.id = id;
+    wcmsg.simple_nack.index = index;
+    send_wcmsg(&wcmsg);
 }

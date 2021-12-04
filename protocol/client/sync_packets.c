@@ -157,16 +157,16 @@ void update_server_bitrate() {
     */
     if (update_bitrate) {
         update_bitrate = false;
-        WhistClientMessage fcmsg = {0};
-        fcmsg.type = MESSAGE_MBPS;
-        fcmsg.bitrate_data.bitrate = client_max_bitrate;
-        fcmsg.bitrate_data.burst_bitrate = max_burst_bitrate;
-        fcmsg.bitrate_data.fec_packet_ratio = FEC_PACKET_RATIO;
+        WhistClientMessage wcmsg = {0};
+        wcmsg.type = MESSAGE_MBPS;
+        wcmsg.bitrate_data.bitrate = client_max_bitrate;
+        wcmsg.bitrate_data.burst_bitrate = max_burst_bitrate;
+        wcmsg.bitrate_data.fec_packet_ratio = FEC_PACKET_RATIO;
         LOG_INFO("Asking for server MBPS to be %f/%f/%f",
-                 fcmsg.bitrate_data.bitrate / 1024.0 / 1024.0,
-                 fcmsg.bitrate_data.burst_bitrate / 1024.0 / 1024.0,
-                 fcmsg.bitrate_data.fec_packet_ratio);
-        send_fcmsg(&fcmsg);
+                 wcmsg.bitrate_data.bitrate / 1024.0 / 1024.0,
+                 wcmsg.bitrate_data.burst_bitrate / 1024.0 / 1024.0,
+                 wcmsg.bitrate_data.fec_packet_ratio);
+        send_wcmsg(&wcmsg);
     }
 }
 
@@ -297,16 +297,16 @@ int multithreaded_sync_tcp_packets(void* opaque) {
 
         ClipboardData* clipboard_chunk = pull_clipboard_chunk();
         if (clipboard_chunk) {
-            WhistClientMessage* fcmsg = allocate_region(
+            WhistClientMessage* wcmsg = allocate_region(
                 sizeof(WhistClientMessage) + sizeof(ClipboardData) + clipboard_chunk->size);
 
             // Init header to 0 to prevent sending uninitialized packets over the network
-            memset(fcmsg, 0, sizeof(WhistClientMessage));
-            fcmsg->type = CMESSAGE_CLIPBOARD;
-            memcpy(&fcmsg->clipboard, clipboard_chunk,
+            memset(wcmsg, 0, sizeof(WhistClientMessage));
+            wcmsg->type = CMESSAGE_CLIPBOARD;
+            memcpy(&wcmsg->clipboard, clipboard_chunk,
                    sizeof(ClipboardData) + clipboard_chunk->size);
-            send_fcmsg(fcmsg);
-            deallocate_region(fcmsg);
+            send_wcmsg(wcmsg);
+            deallocate_region(wcmsg);
             deallocate_region(clipboard_chunk);
 
             // We want to continue pumping read_packet or pull_clipboard_chunk

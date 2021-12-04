@@ -37,12 +37,12 @@ Public Functions
  *                                 or performs whatever side-effects appropriate
  *                                 in handling message from server. Logs errors.
  *
- * @param fsmsg                     Message from server
- * @param fsmsg_size                The size (in bytes) of the message, including
+ * @param wsmsg                     Message from server
+ * @param wsmsg_size                The size (in bytes) of the message, including
  *                                 any buffer considered part of the message
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int handle_server_message(WhistServerMessage *fsmsg, size_t fsmsg_size);
+int handle_server_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 
 #endif  // SERVER_MESSAGE_HANDLER_H

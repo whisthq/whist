@@ -85,33 +85,33 @@ int try_get_next_message_tcp(Client *client, WhistPacket **p_tcp_packet);
  * @brief                          Tries to read in next available UDP message
  *                                 from a given, active client
  *
- * details                         If no UDP message is available, *fcmsg is
- *                                 set to NULL and *fcmsg_size is set to 0.
- *                                 Otherwise, *fcmsg is populated with a pointer
+ * details                         If no UDP message is available, *wsmsg is
+ *                                 set to NULL and *wsmsg_size is set to 0.
+ *                                 Otherwise, *wsmsg is populated with a pointer
  *                                 to the next available UDP message and
- *                                 *fcmsg_size is set to the size of that
+ *                                 *wsmsg_size is set to the size of that
  *                                 message. The message need not be freed.
  *                                 Failure here
  *
  * @param client				   The target client
- * @param fcmsg                    Pointer to field which is to be populated
+ * @param wsmsg                    Pointer to field which is to be populated
  *                                 with pointer to next available message
- * @param fcmsg_size               Pointer to field which is to be populated
+ * @param wsmsg_size               Pointer to field which is to be populated
  *                                 with size of the next available message.
  *
  * @returns                        Returns -1 on error, 0 otherwise. Not
  *                                 finding an available message is not an error.
  */
-int try_get_next_message_udp(Client *client, WhistClientMessage *fcmsg, size_t *fcmsg_size);
+int try_get_next_message_udp(Client *client, WhistClientMessage *wsmsg, size_t *wsmsg_size);
 
 /**
  * @brief                          Establishes UDP and TCP connection to client.
  *
- * details                         If no UDP message is available, *fcmsg is
- *                                 set to NULL and *fcmsg_size is set to 0.
- *                                 Otherwise, *fcmsg is populated with a pointer
+ * details                         If no UDP message is available, *wsmsg is
+ *                                 set to NULL and *wsmsg_size is set to 0.
+ *                                 Otherwise, *wsmsg is populated with a pointer
  *                                 to the next available UDP message and
- *                                 *fcmsg_size is set to the size of that
+ *                                 *wsmsg_size is set to the size of that
  *                                 message. The message need not be freed.
  *                                 Failure here
  *

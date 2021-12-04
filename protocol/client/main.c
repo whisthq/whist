@@ -133,40 +133,40 @@ int sync_keyboard_state(void) {
     */
 
     // Set keyboard state initialized to null
-    WhistClientMessage fcmsg = {0};
+    WhistClientMessage wcmsg = {0};
 
-    fcmsg.type = MESSAGE_KEYBOARD_STATE;
+    wcmsg.type = MESSAGE_KEYBOARD_STATE;
 
     int num_keys;
     const Uint8* state = SDL_GetKeyboardState(&num_keys);
 #if defined(_WIN32)
-    fcmsg.keyboard_state.num_keycodes = (short)min(KEYCODE_UPPERBOUND, num_keys);
+    wcmsg.keyboard_state.num_keycodes = (short)min(KEYCODE_UPPERBOUND, num_keys);
 #else
-    fcmsg.keyboard_state.num_keycodes = fmin(KEYCODE_UPPERBOUND, num_keys);
+    wcmsg.keyboard_state.num_keycodes = fmin(KEYCODE_UPPERBOUND, num_keys);
 #endif
 
     // Copy keyboard state, but using scancodes of the keys in the current keyboard layout.
     // Must convert to/from the name of the key so SDL returns the scancode for the key in the
     // current layout rather than the scancode for the physical key.
-    for (int i = 0; i < fcmsg.keyboard_state.num_keycodes; i++) {
+    for (int i = 0; i < wcmsg.keyboard_state.num_keycodes; i++) {
         if (state[i]) {
             int scancode = SDL_GetScancodeFromName(SDL_GetKeyName(SDL_GetKeyFromScancode(i)));
-            if (0 <= scancode && scancode < (int)sizeof(fcmsg.keyboard_state.state)) {
-                fcmsg.keyboard_state.state[scancode] = 1;
+            if (0 <= scancode && scancode < (int)sizeof(wcmsg.keyboard_state.state)) {
+                wcmsg.keyboard_state.state[scancode] = 1;
             }
         }
     }
 
     // Also send caps lock and num lock status for syncronization
-    fcmsg.keyboard_state.state[FK_LGUI] = lgui_pressed;
-    fcmsg.keyboard_state.state[FK_RGUI] = rgui_pressed;
+    wcmsg.keyboard_state.state[FK_LGUI] = lgui_pressed;
+    wcmsg.keyboard_state.state[FK_RGUI] = rgui_pressed;
 
-    fcmsg.keyboard_state.caps_lock = SDL_GetModState() & KMOD_CAPS;
-    fcmsg.keyboard_state.num_lock = SDL_GetModState() & KMOD_NUM;
+    wcmsg.keyboard_state.caps_lock = SDL_GetModState() & KMOD_CAPS;
+    wcmsg.keyboard_state.num_lock = SDL_GetModState() & KMOD_NUM;
 
-    fcmsg.keyboard_state.active_pinch = active_pinch;
+    wcmsg.keyboard_state.active_pinch = active_pinch;
 
-    send_fcmsg(&fcmsg);
+    send_wcmsg(&wcmsg);
 
     return 0;
 }

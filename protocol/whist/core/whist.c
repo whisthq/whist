@@ -291,27 +291,27 @@ bool read_hexadecimal_private_key(char *hex_string, char *binary_private_key,
     return true;
 }
 
-int get_fcmsg_size(WhistClientMessage *fcmsg) {
+int get_wcmsg_size(WhistClientMessage *wcmsg) {
     /*
         Calculate the size of a WhistClientMessage struct
 
         Arguments:
-            fcmsg (WhistClientMessage*): The Whist Client Message to find the size
+            wcmsg (WhistClientMessage*): The Whist Client Message to find the size
 
         Returns:
             (int): The size of the Whist Client Message struct
     */
 
-    if (fcmsg->type == MESSAGE_KEYBOARD_STATE || fcmsg->type == MESSAGE_DISCOVERY_REQUEST) {
-        return sizeof(*fcmsg);
-    } else if (fcmsg->type == CMESSAGE_CLIPBOARD) {
-        return sizeof(*fcmsg) + fcmsg->clipboard.size;
-    } else if (fcmsg->type == MESSAGE_BITARRAY_NACK) {
+    if (wcmsg->type == MESSAGE_KEYBOARD_STATE || wcmsg->type == MESSAGE_DISCOVERY_REQUEST) {
+        return sizeof(*wcmsg);
+    } else if (wcmsg->type == CMESSAGE_CLIPBOARD) {
+        return sizeof(*wcmsg) + wcmsg->clipboard.size;
+    } else if (wcmsg->type == MESSAGE_BITARRAY_NACK) {
         // Use numBits for size
-        return sizeof(fcmsg->type) + sizeof(fcmsg->id) + 40 + fcmsg->bitarray_nack.numBits / 8;
+        return sizeof(wcmsg->type) + sizeof(wcmsg->id) + 40 + wcmsg->bitarray_nack.numBits / 8;
     } else {
-        // Send small fcmsg's when we don't need unnecessarily large ones
-        return sizeof(fcmsg->type) + sizeof(fcmsg->id) + 40;
+        // Send small wcmsg's when we don't need unnecessarily large ones
+        return sizeof(wcmsg->type) + sizeof(wcmsg->id) + 40;
     }
 }
 
