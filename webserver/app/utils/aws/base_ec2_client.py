@@ -68,8 +68,10 @@ class EC2Client(CloudClient):
         Returns: the IDs of the started instances
 
         """
-        # rather than having some complex launch config, just make the AWS instance
-        # parameters at call time
+        # Rather than having some complex launch config, we just set the AWS
+        # instance parameters here, at call time.
+        # Note that the IamInstanceProfile is set to one created in the
+        # Console to allows read-only EC2 access and full S3 access.
         kwargs = {
             "ImageId": image_id,
             "InstanceType": instance_type,
@@ -84,7 +86,7 @@ class EC2Client(CloudClient):
                 },
             ],
             "UserData": userdata_template,
-            "IamInstanceProfile": {"Name": "auto_scaling_instance_profile"},
+            "IamInstanceProfile": {"Arn": "arn:aws:iam::747391415460:instance-profile/TestDeploymentRole"},
             "InstanceInitiatedShutdownBehavior": "terminate",
         }
         resp = self.ec2_client.run_instances(**kwargs)
