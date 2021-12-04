@@ -237,7 +237,7 @@ jobs:
         if: runner.os == 'Linux'
         working-directory: protocol
         run: |
-          pip3 install cmakelint
+          pip install cmakelint
           sudo apt-get install fd-find
           # Ubuntu-specific PATH fix for `fd`
           ln -s $(which fdfind) ~/.local/bin/fd

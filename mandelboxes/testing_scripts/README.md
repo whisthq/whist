@@ -25,7 +25,7 @@ Creates virtual device nodes using `/dev/uinput` in order to test the uinput dri
 Usage:
 
 ```bash
-pip3 install python-uinput
+pip install python-uinput
 python3 uinput_tester.py
 ```
 
