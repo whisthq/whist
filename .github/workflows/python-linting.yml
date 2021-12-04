@@ -28,7 +28,7 @@ jobs:
           python-version: "3.10.0"
 
       - name: Install Black
-        run: pip3 install $(grep -i ^black .github/workflows/helpers/requirements.txt)
+        run: pip install $(grep -i ^black .github/workflows/helpers/requirements.txt)
 
       - name: Check Python formatting with Black
         run: black --check .

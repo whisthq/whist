@@ -28,7 +28,7 @@ jobs:
 
       - name: Install beautysh
         working-directory: mandelboxes/helper_scripts
-        run: pip3 install -r requirements.txt
+        run: pip install -r requirements.txt
 
       - name: Run Beautysh to Check Scripts Formatting
         run: beautysh **/*.sh --indent-size 2 --check

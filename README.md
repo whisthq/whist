@@ -68,7 +68,7 @@ To get started with development, you will have to clone this repository and navi
 
 While it is likely that you will work on a feature that touches multiple subrepositories, each subrepository has its own development and styling standards which you should follow, in addition to the usual [Whist Engineering Guidelines](https://www.notion.so/whisthq/Engineering-Guidelines-d8a1d5ff06074ddeb8e5510b4412033b).
 
-To avoid pushing code that does not follow our coding guidelines, we recommend you install pre-commit hooks by running `pip3 install pre-commit`, followed by `pre-commit install` in the top-level directory. This will install the linting rules specified in `.pre-commit-config.yaml` and prevent you from pushing if your code is not linted.
+To avoid pushing code that does not follow our coding guidelines, we recommend you install pre-commit hooks by running `pip install pre-commit`, followed by `pre-commit install` in the top-level directory. This will install the linting rules specified in `.pre-commit-config.yaml` and prevent you from pushing if your code is not linted.
 
 **NOTE**: Also, once you clone the repo run `git config pull.ff only` inside the repo. This will help prevent pushing unnecessary merge commits (see below).
 

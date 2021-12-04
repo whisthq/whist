@@ -244,7 +244,7 @@ local_development_steps () {
   echo "Installing Python dependencies..."
   echo "================================================"
   sudo apt-get install -y python3-pip
-  find ./mandelboxes -name 'requirements.txt' | sed 's/^/-r /g' | xargs sudo pip3 install
+  find ./mandelboxes -name 'requirements.txt' | sed 's/^/-r /g' | xargs sudo pip install
   cd host-setup
 
   if which go &>/dev/null; then
