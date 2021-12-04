@@ -153,7 +153,11 @@ void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data);
  * @param ring_buffer Ring buffer containing the frame
  *
  * @param id ID of the frame we are currently rendering.
+ *
+ * @returns      A new pointer to the frame that's now being rendered.
+ *               Its old location in the ring buffer has been invalidated.
+ *               This FrameData* pointer will be invalidated on the next call to set_rendering.
  */
-void set_rendering(RingBuffer* ring_buffer, int id);
+FrameData* set_rendering(RingBuffer* ring_buffer, int id);
 
 #endif

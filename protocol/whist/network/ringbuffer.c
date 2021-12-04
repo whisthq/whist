@@ -170,7 +170,7 @@ void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data) {
     frame_data->id = -1;
 }
 
-void set_rendering(RingBuffer* ring_buffer, int id) {
+FrameData* set_rendering(RingBuffer* ring_buffer, int id) {
     /*
         Indicate that the frame with ID id is currently rendering and free the frame buffer for the
         previously rendering frame. Ownership of the frame buffer for the rendering frame is
@@ -207,6 +207,8 @@ void set_rendering(RingBuffer* ring_buffer, int id) {
     // clear the current frame's data
     current_frame->frame_buffer = NULL;
     reset_frame(ring_buffer, current_frame);
+
+    return &ring_buffer->currently_rendering_frame;
 }
 
 int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {

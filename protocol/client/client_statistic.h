@@ -12,7 +12,7 @@
 Public enums
 ============================
 */
-enum {
+typedef enum {
     AUDIO_RECEIVE_TIME,
     AUDIO_UPDATE_TIME,
     AUDIO_FPS_SKIPPED_FLUSH,
@@ -33,7 +33,7 @@ enum {
     VIDEO_TIME_BETWEEN_FRAMES,
     VIDEO_UPDATE_TIME,
     CLIENT_NUM_METRICS
-};
+} ClientMetric;
 
 /*
 ============================

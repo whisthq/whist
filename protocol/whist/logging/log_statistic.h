@@ -38,6 +38,22 @@ typedef struct {
 
 /*
 ============================
+Macros
+============================
+*/
+
+/**
+ * @brief                          This macro runs the code in `line`, timing it, and then logging
+ *                                 the result with `log_double_statistic`. It depends on a `clock`
+ *                                 being passed in as a parameter to compute the time delta.
+ */
+#define TIME_RUN(line, name, timer) \
+    start_timer(&timer);            \
+    line;                           \
+    log_double_statistic(name, get_timer(timer) * MS_IN_SECOND);
+
+/*
+============================
 Public Functions
 ============================
 */

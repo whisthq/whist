@@ -147,7 +147,7 @@ int handle_window_size_changed(SDL_Event *event) {
 
     // This propagates the resize to the video thread, and marks it as no longer resizing.
     // output_width/output_height will now be updated
-    set_video_active_resizing(false);
+    trigger_video_resize();
 
     safe_SDL_LockMutex(window_resize_mutex);
     if (get_timer(window_resize_timer) >= WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {

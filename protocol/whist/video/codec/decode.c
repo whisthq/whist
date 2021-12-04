@@ -663,7 +663,8 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
 
     for (int i = 0; i < num_packets; i++) {
         // decode the frame
-        while (avcodec_send_packet(decoder->context, packets[i]) < 0) {
+        int ret;
+        while ((ret = avcodec_send_packet(decoder->context, packets[i])) < 0) {
             LOG_WARNING("Failed to avcodec_send_packet!");
             // Try next decoder
             if (!try_next_decoder(decoder)) {
