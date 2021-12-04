@@ -7,8 +7,8 @@ set -Eeuo pipefail
 # as this prevents Brave from running forevermore! Hence, we should remove this file when we launch the
 # browser for the first time each session. You can think of this as effectively moving the locking mechansim
 # out of the backed-up Brave config folder and into a location that will not persist when the instance dies.
-BRAVE_SINGLETON_LOCK=/home/fractal/.config/BraveSoftware/Brave-Browser/SingletonLock
-WHIST_BRAVE_SINGLETON_LOCK=/home/fractal/.config/WhistBraveSingletonLock
+BRAVE_SINGLETON_LOCK=/home/whist/.config/BraveSoftware/Brave-Browser/SingletonLock
+WHIST_BRAVE_SINGLETON_LOCK=/home/whist/.config/WhistBraveSingletonLock
 
 if [[ ! -f $WHIST_BRAVE_SINGLETON_LOCK ]]; then
     touch $WHIST_BRAVE_SINGLETON_LOCK
