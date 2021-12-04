@@ -330,19 +330,14 @@ deployment_setup_steps() {
   pull_image_chrome="$pull_image_base_chrome:$GIT_HASH"
   echo "pulling image: $pull_image_chrome"
   sudo docker pull "$pull_image_chrome"
+  sudo docker tag "$pull_image_chrome" "$pull_image_base_chrome:current-build"
 
   # Brave
   pull_image_base_brave="$ghcr_uri/fractal/$GIT_BRANCH/browsers/brave"
   pull_image_brave="$pull_image_base_brave:$GIT_HASH"
   echo "pulling image: $pull_image_brave"
   sudo docker pull "$pull_image_brave"
-
-  # Tag the image as `current-build` for now as well, so the client app can ask
-  # for `current-build` without worrying about commit hash mismatches (yet).
-  # Once maintenance mode removal is solidly implemented, we _shouldn't_ need it,
-  # but I strongly suspect our deployment pipeline is not up to snuff for us to
-  # actually get rid of this quite yet.
-  sudo docker tag "$pull_image" "$pull_image_base:current-build"
+  sudo docker tag "$pull_image_brave" "$pull_image_base_brave:current-build"
 
   # Replace the dummy token in filebeat config with the correct token.
   # This will be done in GHA when the AMI for {dev,staging,prod} is being built through CI
