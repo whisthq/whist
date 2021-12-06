@@ -1,3 +1,4 @@
+import botocore
 import threading
 import time
 
@@ -337,23 +338,13 @@ def do_scale_up_if_necessary(
                     )
                 except ClientError as error:
                     if error.response["Error"]["Code"] == "InsufficientInstanceCapacity":
-
                         whist_logger.info(
-                            """skipping start instance for instance
-                                {
-                                    image_id: %s,
-                                    instance_name: %s-%s,
-                                    num_instances: %d,
-                                    instance_type: %s
-                                }
-                                Error: %s""".format(
-                                ami,
-                                base_name,
-                                index,
-                                1,
-                                current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
-                                error.response["Error"]["Code"],
-                            )
+                            "skipping start instance for instance with "
+                            f"image_id: {ami}, "
+                            f"instance_name: {base_name}-{index}, "
+                            f"num_instances: {1}, "
+                            f"instance_type: {current_app.config['AWS_INSTANCE_TYPE_TO_LAUNCH']}, "
+                            f"error: {error.response['Error']['Code']}"
                         )
                         # The error is out of our control and should not raise an error.
                         # Skip adding instance id to list.
