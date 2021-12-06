@@ -322,14 +322,18 @@ int main(int argc, char* argv[]) {
     bool keep_piping = true;
     WhistThread pipe_arg_thread =
         whist_create_thread(multithreaded_read_piped_arguments, "PipeArgThread", &keep_piping);
+    size_t while_loop_iter = 0;
+    size_t while_loop_event = 0;
     if (pipe_arg_thread == NULL) {
         exit_code = WHIST_EXIT_CLI;
     } else {
         SDL_Event event;
         while (continue_pumping) {
+            while_loop_iter++;
             // If we don't delay, your computer's CPU will freak out
             SDL_Delay(50);
             if (SDL_PollEvent(&event)) {
+                while_loop_event++;
                 switch (event.type) {
                     case SDL_QUIT: {
                         client_exiting = true;
@@ -355,6 +359,7 @@ int main(int argc, char* argv[]) {
             exit_code = WHIST_EXIT_CLI;
         }
     }
+    LOG_INFO("Entered while loop %lu times, with %lu events (%lu)%", while_loop_iter, while_loop_event, (while_loop_event/while_loop_iter) * 100);
 
     SDL_Event sdl_msg;
     // Try connection `MAX_INIT_CONNECTION_ATTEMPTS` times before
