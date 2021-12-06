@@ -1,10 +1,11 @@
 import threading
 import time
 
-from collections import defaultdict
 from sys import maxsize
+from collections import defaultdict
 from typing import Any, DefaultDict, List, Optional, Union
 from flask import current_app
+from botocore.exceptions import ClientError
 from app.database.models.cloud import (
     db,
     RegionToAmi,
@@ -163,9 +164,7 @@ def find_instance(region: str, client_commit_hash: str) -> Union[str, MandelboxA
     # occupancy which can improve resource utilization.
     instance_with_max_mandelboxes: Optional[InstancesWithRoomForMandelboxes] = (
         InstancesWithRoomForMandelboxes.query.filter_by(
-            commit_hash=client_commit_hash,
-            location=region,
-            status=MandelboxHostState.ACTIVE,
+            commit_hash=client_commit_hash, location=region, status=MandelboxHostState.ACTIVE
         )
         .limit(1)
         .one_or_none()
@@ -325,17 +324,35 @@ def do_scale_up_if_necessary(
         if num_new > 0:
             client = EC2Client(region_name=region)
             base_name = generate_name(starter_name=f"ec2-{region}")
-            # TODO: test that the simple num_cpu/2 heuristic is accurate
             base_number_free_mandelboxes = get_base_free_mandelboxes(
                 current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"]
             )
             for index in range(num_new):
-                instance_ids = client.start_instances(
-                    image_id=ami,
-                    instance_name=base_name + f"-{index}",
-                    num_instances=1,
-                    instance_type=current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
-                )
+                try:
+                    instance_ids = client.start_instances(
+                        image_id=ami,
+                        instance_name=base_name + f"-{index}",
+                        num_instances=1,
+                        instance_type=current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
+                    )
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "InsufficientInstanceCapacity":
+                        # This error occurs when AWS is out of EC2 instances of the specific
+                        # instance type AWS_INSTANCE_TYPE_TO_LAUNCH, which is out of our control
+                        # and should not raise an error.
+                        whist_logger.info(
+                            "skipping start instance for instance with "
+                            f"image_id: {ami}, "
+                            f"instance_name: {base_name}-{index}, "
+                            f"num_instances: {1}, "
+                            f"instance_type: {current_app.config['AWS_INSTANCE_TYPE_TO_LAUNCH']}, "
+                            f"error: {error.response['Error']['Code']}"
+                        )
+                    else:
+                        # Any other error may suggest issues within the codebase
+                        raise error
+                    # Skip adding instance id to list.
+                    continue
                 # Setting last update time to -1 indicates that the instance
                 # hasn't told the webserver it's live yet. We add the rows to
                 # the DB now so that future scaling operations don't
@@ -530,8 +547,7 @@ def check_and_handle_instances_with_old_commit_hash() -> None:
     current_commit_hash = get_current_commit_hash()
 
     instances_with_old_commit_hash = InstanceInfo.query.filter(
-        InstanceInfo.commit_hash != current_commit_hash,
-        InstanceInfo.status == "ACTIVE",
+        InstanceInfo.commit_hash != current_commit_hash, InstanceInfo.status == "ACTIVE"
     ).all()
 
     for instance in instances_with_old_commit_hash:
