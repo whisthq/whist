@@ -549,23 +549,29 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
     char *received_url = fcmsg->url_to_open;
     size_t url_length = strlen(received_url);
     if (url_length > MAX_URL_LENGTH) {
-        LOG_WARNING("Attempted to open url of length %lu, which exceeds the max allowed length (%lu characters)\n", url_length, MAX_URL_LENGTH);
+        LOG_WARNING(
+            "Attempted to open url of length %lu, which exceeds the max allowed length (%lu "
+            "characters)\n",
+            url_length, MAX_URL_LENGTH);
         return -1;
     }
     LOG_INFO("Received URL to open in new tab: %s", received_url);
 
-    size_t command_len = url_length + strlen("/usr/share/whist/run-as-whist-user.sh \"exec google-chrome \"") + 1;
+    size_t command_len =
+        url_length + strlen("/usr/share/whist/run-as-whist-user.sh \"exec google-chrome \"") + 1;
     char command[command_len];
-    sprintf(command, "/usr/share/whist/run-as-whist-user.sh \"exec google-chrome %s\"", received_url);
-    
-    char* open_url_result;
+    sprintf(command, "/usr/share/whist/run-as-whist-user.sh \"exec google-chrome %s\"",
+            received_url);
+
+    char *open_url_result;
     int ret = runcmd(command, &open_url_result);
     if (ret != 0) {
         free(open_url_result);
-        LOG_ERROR("Running command to open URL %s resulted in error: %s", received_url, open_url_result);
+        LOG_ERROR("Running command to open URL %s resulted in error: %s", received_url,
+                  open_url_result);
         return -1;
     }
-    
+
     free(open_url_result);
 
     return 0;
