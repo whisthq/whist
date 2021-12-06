@@ -7,6 +7,7 @@ import (
 	"github.com/fractal/fractal/core-go/metadata"
 	"github.com/fractal/fractal/core-go/utils"
 	logger "github.com/fractal/fractal/core-go/whistlogger"
+
 	graphql "github.com/hasura/go-graphql-client"
 )
 
@@ -41,30 +42,6 @@ type WhistClient struct {
 	SubscriptionIDs []string
 }
 
-func (wc *WhistClient) SetSubscriptions(subscriptions []HasuraSubscription) {
-	wc.Subscriptions = subscriptions
-}
-
-func (wc *WhistClient) GetSubscriptions() []HasuraSubscription {
-	return wc.Subscriptions
-}
-
-func (wc *WhistClient) SetSubscriptionIDs(ids []string) {
-	wc.SubscriptionIDs = ids
-}
-
-func (wc *WhistClient) GetSubscriptionsIDs() []string {
-	return wc.SubscriptionIDs
-}
-
-func (wc *WhistClient) SetParams(params HasuraParams) {
-	wc.Params = params
-}
-
-func (wc *WhistClient) GetParams() HasuraParams {
-	return wc.Params
-}
-
 // Initialize creates the client.
 func (wc *WhistClient) Initialize() {
 	wc.Hasura = graphql.NewSubscriptionClient(wc.GetParams().URL).
@@ -80,10 +57,34 @@ func (wc *WhistClient) Initialize() {
 		})
 }
 
+func (wc *WhistClient) GetSubscriptions() []HasuraSubscription {
+	return wc.Subscriptions
+}
+
+func (wc *WhistClient) SetSubscriptions(subscriptions []HasuraSubscription) {
+	wc.Subscriptions = subscriptions
+}
+
+func (wc *WhistClient) GetSubscriptionIDs() []string {
+	return wc.SubscriptionIDs
+}
+
+func (wc *WhistClient) SetSubscriptionsIDs(ids []string) {
+	wc.SubscriptionIDs = ids
+}
+
+func (wc *WhistClient) GetParams() HasuraParams {
+	return wc.Params
+}
+
+func (wc *WhistClient) SetParams(params HasuraParams) {
+	wc.Params = params
+}
+
 // Subscribe creates the subscriptions according to the received queries and conditions.
 // It passes results through the received channel if the received `conditionFn` is true.
-func (wc *WhistClient) Subscribe(query GraphQLQuery, variables map[string]interface{}, result SubscriptionEvent, conditionFn handlerfn, subscriptionEvents chan SubscriptionEvent) (string, error) {
-	// This subscriptions fires when the running instance status changes to draining on the database
+func (wc *WhistClient) Subscribe(query GraphQLQuery, variables map[string]interface{}, result SubscriptionEvent,
+	conditionFn handlerfn, subscriptionEvents chan SubscriptionEvent) (string, error) {
 	id, err := wc.Hasura.Subscribe(query, variables, func(data *json.RawMessage, err error) error {
 		if err != nil {
 			return utils.MakeError("error receiving subscription event from Hasura: %v", err)

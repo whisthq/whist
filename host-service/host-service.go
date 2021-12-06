@@ -1050,9 +1050,9 @@ func main() {
 	}
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
 
-	var whistClient subscriptions.WhistClient
-	subscriptions.SetupHostSubscriptions(instanceName, &whistClient)
-	subscriptions.Start(&whistClient, globalCtx, &goroutineTracker, subscriptionEvents)
+	whistClient := &subscriptions.WhistClient{}
+	subscriptions.SetupHostSubscriptions(instanceName, whistClient)
+	subscriptions.Start(whistClient, globalCtx, &goroutineTracker, subscriptionEvents)
 	if err != nil {
 		logger.Errorf("Failed to start database subscriptions. Error: %s", err)
 	}

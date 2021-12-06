@@ -8,8 +8,6 @@ package subscriptions // import "github.com/fractal/fractal/core-go/subscription
 import (
 	"context"
 	"sync"
-
-	"github.com/fractal/fractal/core-go/metadata/aws"
 	// We use hasura's own graphql client for Go
 )
 
@@ -54,7 +52,7 @@ func MandelboxStatusHandler(event SubscriptionEvent, variables map[string]interf
 
 // SetupHostSubscriptions creates a slice of HasuraSubscriptions to start the client. This
 // function is specific for the subscriptions used on the host service.
-func SetupHostSubscriptions(instanceName aws.InstanceName, whistClient WhistHasuraClient) {
+func SetupHostSubscriptions(instanceName string, whistClient WhistHasuraClient) {
 	hostSubscriptions := []HasuraSubscription{
 		{
 			Query: InstanceStatusQuery,

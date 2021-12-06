@@ -6,7 +6,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/fractal/fractal/core-go/metadata/aws"
 	"github.com/google/uuid"
 )
 
@@ -16,24 +15,15 @@ type mockWhistClient struct {
 	SubscriptionIDs []string
 }
 
+func (cl *mockWhistClient) Initialize()                            {}
+func (cl *mockWhistClient) GetSubscriptions() []HasuraSubscription { return cl.Subscriptions }
 func (cl *mockWhistClient) SetSubscriptions(subscriptions []HasuraSubscription) {
 	cl.Subscriptions = subscriptions
 }
-func (cl *mockWhistClient) GetSubscriptions() []HasuraSubscription { return cl.Subscriptions }
-
-func (cl *mockWhistClient) SetSubscriptionIDs(ids []string) { cl.SubscriptionIDs = ids }
-
-func (cl *mockWhistClient) GetSubscriptionsIDs() []string { return cl.SubscriptionIDs }
-
-func (cl *mockWhistClient) SetParams(params HasuraParams) { cl.Params = params }
-
-func (cl *mockWhistClient) GetParams() HasuraParams {
-	return cl.Params
-}
-
-func (cl *mockWhistClient) Initialize()                          {}
-func (cl *mockWhistClient) Run(goroutineTracker *sync.WaitGroup) {}
-
+func (cl *mockWhistClient) GetSubscriptionIDs() []string                 { return cl.SubscriptionIDs }
+func (cl *mockWhistClient) SetSubscriptionsIDs(subscriptionIDs []string) {}
+func (cl *mockWhistClient) GetParams() HasuraParams                      { return cl.Params }
+func (cl *mockWhistClient) SetParams(params HasuraParams)                { cl.Params = params }
 func (cl *mockWhistClient) Subscribe(query GraphQLQuery, variables map[string]interface{}, result SubscriptionEvent,
 	conditionFn handlerfn, subscriptionEvents chan SubscriptionEvent) (string, error) {
 
@@ -47,20 +37,24 @@ func (cl *mockWhistClient) Subscribe(query GraphQLQuery, variables map[string]in
 		Status:       "ALLOCATED",
 	}}}
 
-	if conditionFn(testInstanceEvent, variables) {
-		subscriptionEvents <- testInstanceEvent
-	}
+	switch result.(type) {
 
-	if conditionFn(testMandelboxEvent, variables) {
-		subscriptionEvents <- testMandelboxEvent
+	case InstanceEvent:
+		if conditionFn(testInstanceEvent, variables) {
+			subscriptionEvents <- testInstanceEvent
+		}
+	case MandelboxEvent:
+		if conditionFn(testMandelboxEvent, variables) {
+			subscriptionEvents <- testMandelboxEvent
+		}
+	default:
+
 	}
 
 	return uuid.NewString(), nil
 }
-
-func (cl *mockWhistClient) Close(subscriptionIDs []string) error {
-	return nil
-}
+func (cl *mockWhistClient) Run(goroutinetracker *sync.WaitGroup) {}
+func (cl *mockWhistClient) Close(subscriptionIDs []string) error { return nil }
 
 func TestInstanceStatusHandler(t *testing.T) {
 	var variables = map[string]interface{}{
@@ -168,8 +162,8 @@ func TestMandelboxStatusHandler(t *testing.T) {
 }
 
 func TestInitializeWhistHasuraClientOnLocalEnv(t *testing.T) {
-	whistClient := mockWhistClient{}
-	err := InitializeWhistHasuraClient(&whistClient)
+	whistClient := &mockWhistClient{}
+	err := InitializeWhistHasuraClient(whistClient)
 
 	if err != nil {
 		t.Errorf("Expected err to be nil, got: %v", err)
@@ -178,9 +172,9 @@ func TestInitializeWhistHasuraClientOnLocalEnv(t *testing.T) {
 
 func TestSetupHostSubscriptions(t *testing.T) {
 	instanceName := "test-instance-name"
-	whistClient := mockWhistClient{}
+	whistClient := &mockWhistClient{}
 
-	SetupHostSubscriptions(aws.InstanceName(instanceName), &whistClient)
+	SetupHostSubscriptions(instanceName, whistClient)
 
 	if whistClient.Subscriptions == nil {
 		t.Errorf("Got nil subscriptions")
@@ -207,9 +201,9 @@ func TestSetupHostSubscriptions(t *testing.T) {
 }
 
 func TestSetupScalingSubscriptions(t *testing.T) {
-	whistClient := mockWhistClient{}
+	whistClient := &mockWhistClient{}
 
-	SetupScalingSubscriptions(&whistClient)
+	SetupScalingSubscriptions(whistClient)
 
 	if whistClient.Subscriptions == nil {
 		t.Errorf("Got nil subscriptions")
@@ -234,15 +228,15 @@ func TestSetupScalingSubscriptions(t *testing.T) {
 	}
 }
 func TestStart(t *testing.T) {
-	whistClient := mockWhistClient{}
+	whistClient := &mockWhistClient{}
 	instanceName := "test-instance-name"
 
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
 	tracker := sync.WaitGroup{}
-	subscriptionEvents := make(chan SubscriptionEvent)
+	subscriptionEvents := make(chan SubscriptionEvent, 10)
 
-	SetupHostSubscriptions(aws.InstanceName(instanceName), &whistClient)
-	Start(&whistClient, ctx, &tracker, subscriptionEvents)
+	SetupHostSubscriptions(instanceName, whistClient)
+	Start(whistClient, ctx, &tracker, subscriptionEvents)
 
 	event := <-subscriptionEvents
 	instanceResult := event.(InstanceEvent)
@@ -253,18 +247,21 @@ func TestStart(t *testing.T) {
 	}
 
 	if instance.Status != "DRAINING" {
-		t.Errorf("Expected instance name %v, got %v", "DRAINING", instance.Status)
+		t.Errorf("Expected status %v, got %v", "DRAINING", instance.Status)
 	}
 
 	event = <-subscriptionEvents
 	mandelboxResult := event.(MandelboxEvent)
 	mandelbox := mandelboxResult.MandelboxInfo[0]
 
-	if instance.InstanceName != instanceName {
+	if mandelbox.InstanceName != instanceName {
 		t.Errorf("Expected instance name %v, got %v", instanceName, mandelbox.InstanceName)
 	}
 
-	if instance.Status != "ALLOCATED" {
-		t.Errorf("Expected instance name %v, got %v", "ALLOCATED", mandelbox.Status)
+	if mandelbox.Status != "ALLOCATED" {
+		t.Errorf("Expected status %v, got %v", "ALLOCATED", mandelbox.Status)
 	}
+
+	// Cancel context and terminate client.
+	cancel()
 }
