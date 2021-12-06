@@ -330,12 +330,21 @@ def do_scale_up_if_necessary(
                 current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"]
             )
             for index in range(num_new):
-                instance_ids = client.start_instances(
-                    image_id=ami,
-                    instance_name=base_name + f"-{index}",
-                    num_instances=1,
-                    instance_type=current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
-                )
+                try:
+                    instance_ids = client.start_instances(
+                        image_id=ami,
+                        instance_name=base_name + f"-{index}",
+                        num_instances=1,
+                        instance_type=current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
+                    )
+                except botocore.exceptions.ClientError as error:
+                if error.response['Error']['Code'] == 'InsufficientInstanceCapacity':
+                    whist_logger.infof("skipping start instance with image id %s, name: %s, num instances: %d, and type: %s, Error: %v", ami, base_name + f"-{index}", 1, current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"], error.response['Error']['Code'])
+                    # Do not raise an error as this is out of our control and we do not want to fail build and deploy + skip instance id to list of ids created
+                    continue
+                else:
+                    # Any other error should raise an exception as there may be issues with the codebase
+                    raise error
                 # Setting last update time to -1 indicates that the instance
                 # hasn't told the webserver it's live yet. We add the rows to
                 # the DB now so that future scaling operations don't
