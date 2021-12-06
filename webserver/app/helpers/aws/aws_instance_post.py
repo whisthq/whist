@@ -337,7 +337,9 @@ def do_scale_up_if_necessary(
                     )
                 except ClientError as error:
                     if error.response["Error"]["Code"] == "InsufficientInstanceCapacity":
-                        # The error is out of our control and should not raise an error.
+                        # This error occurs when AWS is out of EC2 instances of the specific
+                        # instance type AWS_INSTANCE_TYPE_TO_LAUNCH, which is out of our control
+                        # and should not raise an error.
                         whist_logger.info(
                             "skipping start instance for instance with "
                             f"image_id: {ami}, "
