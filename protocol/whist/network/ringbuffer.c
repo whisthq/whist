@@ -472,9 +472,13 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
             // If we've received nothing from a frame before max_id,
             // let's try nacking for index 0 of it
             if (ring_buffer->last_missing_frame_nack < id) {
-                // Nack index 0 of the missing frame
-                num_packets_nacked++;
-                nack_single_packet(ring_buffer, id, 0);
+                // Nack the first set of indices of the missing frame
+                // Frames 10-15 packets in size, we'd like to recover in one RTT,
+                // But we don't want to try to recover 200 packet frames so quickly
+                for (int index = 0; index <= 20; index++) {
+                    nack_single_packet(ring_buffer, id, index);
+                    num_packets_nacked++;
+                }
                 LOG_INFO("NACKing for missing Frame ID %d", id);
                 ring_buffer->last_missing_frame_nack = id;
             }
