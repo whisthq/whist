@@ -337,6 +337,7 @@ def do_scale_up_if_necessary(
                     )
                 except ClientError as error:
                     if error.response["Error"]["Code"] == "InsufficientInstanceCapacity":
+                        # The error is out of our control and should not raise an error.
                         whist_logger.info(
                             "skipping start instance for instance with "
                             f"image_id: {ami}, "
@@ -345,12 +346,11 @@ def do_scale_up_if_necessary(
                             f"instance_type: {current_app.config['AWS_INSTANCE_TYPE_TO_LAUNCH']}, "
                             f"error: {error.response['Error']['Code']}"
                         )
-                        # The error is out of our control and should not raise an error.
-                        # Skip adding instance id to list.
-                        continue
                     else:
                         # Any other error may suggest issues within the codebase
                         raise error
+                    # Skip adding instance id to list.
+                    continue
                 # Setting last update time to -1 indicates that the instance
                 # hasn't told the webserver it's live yet. We add the rows to
                 # the DB now so that future scaling operations don't
