@@ -1,4 +1,4 @@
-import { configs } from "../../config/configs"
+import { configs } from "../../config/configs.js"
 import { configGet } from "../"
 import { accessToken, subscriptionStatus } from "../types/data"
 
