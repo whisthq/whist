@@ -1,4 +1,3 @@
-import botocore
 import threading
 import time
 
