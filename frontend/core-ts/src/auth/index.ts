@@ -1,6 +1,6 @@
 import jwtDecode from "jwt-decode"
 import { randomBytes } from "crypto"
-import { config } from "../config"
+import { config } from "../../config"
 import { configPost } from "../"
 import { authCallbackURL, refreshToken, accessToken } from "../types/data"
 
