@@ -1,11 +1,11 @@
 import threading
 import time
 
-from botocore.exceptions import ClientError
-from collections import defaultdict
 from sys import maxsize
+from collections import defaultdict
 from typing import Any, DefaultDict, List, Optional, Union
 from flask import current_app
+from botocore.exceptions import ClientError
 from app.database.models.cloud import (
     db,
     RegionToAmi,
@@ -324,7 +324,6 @@ def do_scale_up_if_necessary(
         if num_new > 0:
             client = EC2Client(region_name=region)
             base_name = generate_name(starter_name=f"ec2-{region}")
-            # TODO: test that the simple num_cpu/2 heuristic is accurate
             base_number_free_mandelboxes = get_base_free_mandelboxes(
                 current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"]
             )
