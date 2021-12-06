@@ -1,7 +1,7 @@
 {
   "include": [
     "src",
-    "config",
+    "../config",
     "scripts",
     "electron-builder.config.js",
     "postcss.config.js",

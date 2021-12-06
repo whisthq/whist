@@ -1,6 +1,6 @@
 {
   "extends": "@tsconfig/recommended/tsconfig.json",
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../config"],
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
     "outDir": "dist",
@@ -15,7 +15,7 @@
       "http/*": ["./http/*"],
       "payment/*": ["./payment/*"],
       "auth/*": ["./auth/*"],
-      "config/*": ["./config/*"]
+      "config/*": ["../config/*"]
     }
   }
 }

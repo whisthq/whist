@@ -6,7 +6,7 @@ import {
   configs,
   WhistEnvironments,
   WhistNodeEnvironments,
-} from "../../config/configs"
+} from "../../../config/configs"
 
 const getDevelopmentConfig = () => {
   const devEnv = process.env.DEVELOPMENT_ENV as string
@@ -57,7 +57,7 @@ const appPath = app.getPath("userData")
 export const loggingBaseFilePath = path.join(appPath, deployEnv)
 
 // Re-exporting
-export { WhistEnvironments } from "../../config/constants"
-export { loggingFiles } from "../../config/paths"
+export { WhistEnvironments } from "../../../config/constants"
+export { loggingFiles } from "../../../config/paths"
 
 export default config
