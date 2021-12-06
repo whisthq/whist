@@ -10,7 +10,7 @@ import { post } from "@app/utils/api"
 import { AWSRegion } from "@app/@types/aws"
 import { sessionID } from "@app/constants/app"
 import { AsyncReturnType } from "@app/@types/state"
-import { appEnvironment, WhistEnvironments } from "../../config/configs"
+import { appEnvironment, WhistEnvironments } from "../../../config/configs"
 import config from "@app/config/environment"
 
 const COMMIT_SHA = config.keys.COMMIT_SHA

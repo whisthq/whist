@@ -2,7 +2,7 @@ import { autoUpdater } from "electron-updater"
 import { take, takeUntil } from "rxjs/operators"
 import Sentry from "@sentry/electron"
 
-import { appEnvironment, WhistEnvironments } from "../../../config/configs"
+import { appEnvironment, WhistEnvironments } from "../../../../config/configs"
 import { fromTrigger } from "@app/utils/flows"
 import { updateDownloadedNotification } from "@app/utils/notification"
 import { WhistTrigger } from "@app/constants/triggers"

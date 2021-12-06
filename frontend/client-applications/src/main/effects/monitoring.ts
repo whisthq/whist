@@ -3,7 +3,7 @@ import * as Sentry from "@sentry/electron"
 import { interval } from "rxjs"
 
 import config from "@app/config/environment"
-import { appEnvironment, WhistEnvironments } from "../../../config/configs"
+import { appEnvironment, WhistEnvironments } from "../../../../config/configs"
 import { HEARTBEAT_INTERVAL_IN_MINUTES, SENTRY_DSN } from "@app/constants/app"
 import { networkAnalyze } from "@app/utils/networkAnalysis"
 import { fromTrigger } from "@app/utils/flows"

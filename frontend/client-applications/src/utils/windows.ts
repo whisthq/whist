@@ -10,7 +10,7 @@ import path from "path"
 import events from "events"
 import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
 import config from "@app/config/environment"
-import { WhistEnvironments } from "../../config/configs"
+import { WhistEnvironments } from "../../../config/configs"
 import { WhistCallbackUrls } from "@app/config/urls"
 import {
   authPortalURL,

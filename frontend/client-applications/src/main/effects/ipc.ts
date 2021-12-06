@@ -11,7 +11,7 @@ import mapValues from "lodash.mapvalues"
 
 import { getElectronWindows } from "@app/utils/windows"
 import { fromTrigger } from "@app/utils/flows"
-import { appEnvironment } from "../../../config/configs"
+import { appEnvironment } from "../../../../config/configs"
 import { getInstalledBrowsers } from "@app/utils/importer"
 import { WhistTrigger } from "@app/constants/triggers"
 
