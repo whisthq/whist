@@ -76,7 +76,7 @@ extern volatile SDL_Renderer* init_sdl_renderer;
 // number of frames ahead we can receive packets for before asking for iframe
 #define MAX_UNSYNCED_FRAMES 4
 // If we want an iframe, this is how often we keep asking for it
-#define IFRAME_REQUEST_INTERVAL_MS (50)
+#define IFRAME_REQUEST_INTERVAL_MS 50.0
 
 #define BITRATE_BUCKET_SIZE 500000
 #define NUMBER_LOADING_FRAMES 50
