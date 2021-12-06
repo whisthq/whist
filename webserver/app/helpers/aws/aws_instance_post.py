@@ -348,9 +348,9 @@ def do_scale_up_if_necessary(
                         # The error is out of our control and should not raise an error.
                         # Skip adding instance id to list.
                         continue
-                else:
-                    # Any other error may suggest issues within the codebase
-                    raise error
+                    else:
+                        # Any other error may suggest issues within the codebase
+                        raise error
                 # Setting last update time to -1 indicates that the instance
                 # hasn't told the webserver it's live yet. We add the rows to
                 # the DB now so that future scaling operations don't
