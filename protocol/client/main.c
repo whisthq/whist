@@ -455,7 +455,7 @@ int main(int argc, char* argv[]) {
         LOG_INFO("Opening up initial url: %s", initial_url);
         send_initial_url();
 
-        //bool sent_url = false;
+        // bool sent_url = false;
 
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
