@@ -90,7 +90,7 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
     delete_on_termination = true
     device_name           = "/dev/sda1"
     volume_size           = 64
-    volume_type           = "gp2"
+    volume_type           = "gp3"
   }
   region       = "${var.source_region}"
   secret_key   = "${var.secret_key}"

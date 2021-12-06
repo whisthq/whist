@@ -40,7 +40,7 @@ def create_ec2_instance(
         "BlockDeviceMappings": [
             {
                 "DeviceName": "/dev/sda1",
-                "Ebs": {"DeleteOnTermination": True, "VolumeSize": disk_size, "VolumeType": "gp2"},
+                "Ebs": {"DeleteOnTermination": True, "VolumeSize": disk_size, "VolumeType": "gp3"},
             },
         ],
         "ImageId": instance_AMI,
