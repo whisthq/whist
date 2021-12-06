@@ -8,6 +8,9 @@ package subscriptions // import "github.com/fractal/fractal/core-go/subscription
 import (
 	"context"
 	"sync"
+
+	"github.com/fractal/fractal/core-go/metadata"
+	logger "github.com/fractal/fractal/core-go/whistlogger"
 	// We use hasura's own graphql client for Go
 )
 
@@ -104,6 +107,11 @@ func SetupScalingSubscriptions(whistClient WhistHasuraClient) {
 // and starts a goroutine for the client. It also has a goroutine to close the client and subscriptions when the global
 // context gets cancelled.
 func Start(whistClient WhistHasuraClient, globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan SubscriptionEvent) error {
+	if !enabled {
+		logger.Infof("Running in app environment %s so not enabling Hasura code.", metadata.GetAppEnvironment())
+		return nil
+	}
+
 	// Slice to hold subscription IDs, necessary to properly unsubscribe when we are done.
 	var subscriptionIDs []string
 

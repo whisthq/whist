@@ -45,10 +45,6 @@ type WhistClient struct {
 // Initialize creates the client. This function is respinsible from fetching the server
 // information from Heroku.
 func (wc *WhistClient) Initialize() error {
-	if !enabled {
-		logger.Infof("Running in app environment %s so not enabling Hasura code.", metadata.GetAppEnvironment())
-		return nil
-	}
 	logger.Infof("Setting up Hasura subscriptions...")
 
 	params, err := getWhistHasuraParams()
