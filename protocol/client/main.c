@@ -455,7 +455,7 @@ int main(int argc, char* argv[]) {
         LOG_INFO("Opening up initial url: %s", initial_url);
         send_initial_url();
 
-        bool sent_url = false;
+        //bool sent_url = false;
 
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
@@ -479,14 +479,14 @@ int main(int argc, char* argv[]) {
 
             update_pending_sdl_tasks();
 
-            if (!sent_url && get_timer(new_tab_timer) * MS_IN_SECOND > 10000) {
-                // send url
-                WhistClientMessage wcmsg = {0};
-                wcmsg.type = MESSAGE_OPEN_URL;
-                safe_strncpy(wcmsg.url_to_open, "apple.com", strlen("apple.com") + 1);
-                send_wcmsg(&wcmsg);
-                sent_url = true;
-            }
+            // if (!sent_url && get_timer(new_tab_timer) * MS_IN_SECOND > 10000) {
+            //     // send url
+            //     WhistClientMessage wcmsg = {0};
+            //     wcmsg.type = MESSAGE_OPEN_URL;
+            //     safe_strncpy(wcmsg.url_to_open, "apple.com", strlen("apple.com") + 1);
+            //     send_wcmsg(&wcmsg);
+            //     sent_url = true;
+            // }
 
             if (get_timer(keyboard_sync_timer) * MS_IN_SECOND > 50.0) {
                 if (sync_keyboard_state() != 0) {
