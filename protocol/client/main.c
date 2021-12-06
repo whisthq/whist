@@ -452,6 +452,9 @@ int main(int argc, char* argv[]) {
         start_timer(&monitor_change_timer);
         start_timer(&new_tab_timer);
 
+        LOG_INFO("Opening up initial url: %s", initial_url);
+        send_initial_url();
+
         bool sent_url = false;
 
         // This code will run for as long as there are events queued, or once every millisecond if

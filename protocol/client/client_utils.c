@@ -92,7 +92,7 @@ const char *usage;
 
 #define INCOMING_MAXLEN 127
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
-#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:n:rl:s"
+#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:n:rl:sx:"
 #define URL_MAX_LEN 1024
 
 /*
@@ -263,8 +263,6 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
             }
             initial_url = calloc(sizeof(char), strlen(eval_optarg) + 1);
             strcpy((char *)initial_url, eval_optarg);
-            LOG_INFO("Opening up initial url: %s", initial_url);
-            send_initial_url();
             break;
         }
         default: {
@@ -708,7 +706,7 @@ void send_initial_url() {
     if (initial_url) {
         WhistClientMessage wcmsg = {0};
         wcmsg.type = MESSAGE_OPEN_URL;
-        safe_strncpy(wcmsg.url_to_open, (const char *)initial_url, strlen("initial_url") + 1);
+        safe_strncpy(wcmsg.url_to_open, (const char *)initial_url, strlen(initial_url) + 1);
         send_wcmsg(&wcmsg);
     }
 }
