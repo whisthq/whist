@@ -47,6 +47,8 @@ volatile char *program_name = NULL;
 volatile CodecType output_codec_type = CODEC_TYPE_H264;
 extern volatile SDL_Window *window;
 
+volatile char *initial_url;
+
 extern volatile int client_max_bitrate;
 
 // From main.c
@@ -80,6 +82,7 @@ const struct option client_cmd_options[] = {
     {"read-pipe", no_argument, NULL, 'r'},
     {"loading", required_argument, NULL, 'l'},
     {"skip-taskbar", no_argument, NULL, 's'},
+    {"initial-url", required_argument, NULL, 'x'},
     // these are standard for POSIX programs
     {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
     {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
@@ -90,6 +93,7 @@ const char *usage;
 #define INCOMING_MAXLEN 127
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
 #define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:n:rl:s"
+#define URL_MAX_LEN 1024
 
 /*
 ============================
@@ -249,6 +253,20 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
             skip_taskbar = true;
             break;
         }
+        case 'x': {
+            if (strlen(eval_optarg) > 1024) {
+                LOG_ERROR(
+                    "Cannot open URLs of length greater than 1024 characters! URL passed has size "
+                    "%lu",
+                    strlen(eval_optarg));
+                break;
+            }
+            initial_url = calloc(sizeof(char), strlen(eval_optarg) + 1);
+            strcpy((char *)initial_url, eval_optarg);
+            LOG_INFO("Opening up initial url: %s", initial_url);
+            send_initial_url();
+            break;
+        }
         default: {
             if (eval_opt != -1) {
                 // illegal option
@@ -311,6 +329,7 @@ int client_parse_args(int argc, char *argv[]) {
         "  -l, --loading                 Custom loading screen message\n"
         "  -s, --skip-taskbar            Launch the protocol without displaying an icon\n"
         "                                  in the taskbar\n"
+        "  -x, --initial-url            Initial URL to open at startup time \n"
         // special options should be indented further to the left
         "      --help     Display this help and exit\n"
         "      --version  Output version information and exit\n";
@@ -588,6 +607,10 @@ int free_parsed_args(void) {
         free((char *)server_ip);
     }
 
+    if (initial_url) {
+        free((char *)initial_url);
+    }
+
     return 0;
 }
 
@@ -679,6 +702,15 @@ int update_mouse_motion() {
         mouse_state.y_rel = 0;
     }
     return 0;
+}
+
+void send_initial_url() {
+    if (initial_url) {
+        WhistClientMessage wcmsg = {0};
+        wcmsg.type = MESSAGE_OPEN_URL;
+        safe_strncpy(wcmsg.url_to_open, (const char *)initial_url, strlen("initial_url") + 1);
+        send_wcmsg(&wcmsg);
+    }
 }
 
 void send_message_dimensions() {

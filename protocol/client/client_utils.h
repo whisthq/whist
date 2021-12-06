@@ -108,6 +108,11 @@ int update_mouse_motion();
 void send_message_dimensions();
 
 /**
+ * @brief                          Sends message to server with initial URL to open.
+ */
+void send_initial_url();
+
+/**
  * @brief                          Nack handler for the ring buffer
  *
  * @param frame_type               The packet type
