@@ -1,6 +1,7 @@
 import threading
 import time
 
+from botocore.exceptions import ClientError
 from collections import defaultdict
 from sys import maxsize
 from typing import Any, DefaultDict, List, Optional, Union
@@ -335,20 +336,31 @@ def do_scale_up_if_necessary(
                         num_instances=1,
                         instance_type=current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
                     )
-                except botocore.exceptions.ClientError as error:
+                except ClientError as error:
                     if error.response["Error"]["Code"] == "InsufficientInstanceCapacity":
-                        whist_logger.infof(
-                            "skipping start instance with image id %s, name: %s, num instances: %d, and type: %s, Error: %v",
-                            ami,
-                            base_name + f"-{index}",
-                            1,
-                            current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
-                            error.response["Error"]["Code"],
+
+                        whist_logger.info(
+                            """skipping start instance for instance
+                                {
+                                    image_id: %s,
+                                    instance_name: %s-%s,
+                                    num_instances: %d,
+                                    instance_type: %s
+                                }
+                                Error: %s""".format(
+                                ami,
+                                base_name,
+                                index,
+                                1,
+                                current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
+                                error.response["Error"]["Code"],
+                            )
                         )
-                        # Do not raise an error as this is out of our control and we do not want to fail build and deploy + skip instance id to list of ids created
+                        # The error is out of our control and should not raise an error.
+                        # Skip adding instance id to list.
                         continue
                 else:
-                    # Any other error should raise an exception as there may be issues with the codebase
+                    # Any other error may suggest issues within the codebase
                     raise error
                 # Setting last update time to -1 indicates that the instance
                 # hasn't told the webserver it's live yet. We add the rows to
