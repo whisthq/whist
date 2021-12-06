@@ -187,6 +187,7 @@ Constants
 */
 
 #define MS_IN_SECOND 1000
+#define US_IN_MS 1000
 #define BYTES_IN_KILOBYTE 1024
 #ifdef _WIN32
 #define DEFAULT_DPI 96.0
