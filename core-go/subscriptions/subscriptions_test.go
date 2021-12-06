@@ -15,7 +15,7 @@ type mockWhistClient struct {
 	SubscriptionIDs []string
 }
 
-func (cl *mockWhistClient) Initialize()                            {}
+func (cl *mockWhistClient) Initialize() error                      { return nil }
 func (cl *mockWhistClient) GetSubscriptions() []HasuraSubscription { return cl.Subscriptions }
 func (cl *mockWhistClient) SetSubscriptions(subscriptions []HasuraSubscription) {
 	cl.Subscriptions = subscriptions
@@ -158,15 +158,6 @@ func TestMandelboxStatusHandler(t *testing.T) {
 				t.Errorf("got %v, want %v", got, tt.want)
 			}
 		})
-	}
-}
-
-func TestInitializeWhistHasuraClientOnLocalEnv(t *testing.T) {
-	whistClient := &mockWhistClient{}
-	err := InitializeWhistHasuraClient(whistClient)
-
-	if err != nil {
-		t.Errorf("Expected err to be nil, got: %v", err)
 	}
 }
 

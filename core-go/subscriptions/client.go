@@ -21,7 +21,7 @@ var enabled = (metadata.GetAppEnvironment() != metadata.EnvLocalDev)
 // WhistHasuraClient is an interface used to abstract the interactions with
 // the official Hasura client.
 type WhistHasuraClient interface {
-	Initialize()
+	Initialize() error
 	GetSubscriptions() []HasuraSubscription
 	SetSubscriptions([]HasuraSubscription)
 	GetSubscriptionIDs() []string
@@ -42,8 +42,23 @@ type WhistClient struct {
 	SubscriptionIDs []string
 }
 
-// Initialize creates the client.
-func (wc *WhistClient) Initialize() {
+// Initialize creates the client. This function is respinsible from fetching the server
+// information from Heroku.
+func (wc *WhistClient) Initialize() error {
+	if !enabled {
+		logger.Infof("Running in app environment %s so not enabling Hasura code.", metadata.GetAppEnvironment())
+		return nil
+	}
+	logger.Infof("Setting up Hasura subscriptions...")
+
+	params, err := getWhistHasuraParams()
+	if err != nil {
+		// Error obtaining the connection parameters, we stop and don't setup the client
+		return utils.MakeError("error creating hasura client: %v", err)
+	}
+
+	wc.SetParams(params)
+
 	wc.Hasura = graphql.NewSubscriptionClient(wc.GetParams().URL).
 		WithConnectionParams(map[string]interface{}{
 			"headers": map[string]string{
@@ -55,6 +70,8 @@ func (wc *WhistClient) Initialize() {
 			logger.Errorf("Error received from Hasura client: %v", err)
 			return err
 		})
+
+	return nil
 }
 
 func (wc *WhistClient) GetSubscriptions() []HasuraSubscription {
@@ -150,25 +167,4 @@ func (wc *WhistClient) Close(subscriptionIDs []string) error {
 	}
 
 	return nil
-}
-
-// InitializeWhistHasuraClient is responsible of obtaining the parameters
-// and creating the Hasura client with said parameters.
-func InitializeWhistHasuraClient(whistClient WhistHasuraClient) error {
-	if !enabled {
-		logger.Infof("Running in app environment %s so not enabling Hasura code.", metadata.GetAppEnvironment())
-		return nil
-	}
-	logger.Infof("Setting up Hasura subscriptions...")
-
-	params, err := getWhistHasuraParams()
-	if err != nil {
-		// Error obtaining the connection parameters, we stop and don't setup the client
-		return utils.MakeError("error creating hasura client: %v", err)
-	}
-
-	whistClient.SetParams(params)
-	whistClient.Initialize()
-
-	return err
 }
