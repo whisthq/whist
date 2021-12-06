@@ -322,18 +322,14 @@ int main(int argc, char* argv[]) {
     bool keep_piping = true;
     WhistThread pipe_arg_thread =
         whist_create_thread(multithreaded_read_piped_arguments, "PipeArgThread", &keep_piping);
-    size_t while_loop_iter = 0;
-    size_t while_loop_event = 0;
     if (pipe_arg_thread == NULL) {
         exit_code = WHIST_EXIT_CLI;
     } else {
         SDL_Event event;
         while (continue_pumping) {
-            while_loop_iter++;
             // If we don't delay, your computer's CPU will freak out
             SDL_Delay(50);
             if (SDL_PollEvent(&event)) {
-                while_loop_event++;
                 switch (event.type) {
                     case SDL_QUIT: {
                         client_exiting = true;
@@ -359,7 +355,6 @@ int main(int argc, char* argv[]) {
             exit_code = WHIST_EXIT_CLI;
         }
     }
-    LOG_INFO("Entered while loop %lu times, with %lu events (%lu)%", while_loop_iter, while_loop_event, (while_loop_event/while_loop_iter) * 100);
 
     SDL_Event sdl_msg;
     // Try connection `MAX_INIT_CONNECTION_ATTEMPTS` times before
@@ -448,10 +443,12 @@ int main(int argc, char* argv[]) {
         window_resize_mutex = whist_create_mutex();
 
         clock keyboard_sync_timer, mouse_motion_timer, monitor_change_timer;
+        clock new_tab_timer;
         start_timer(&keyboard_sync_timer);
         start_timer(&mouse_motion_timer);
         start_timer(&monitor_change_timer);
-
+        start_timer(&new_tab_timer);
+        bool sent_url=false;
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
         while (connected && !client_exiting && exit_code == WHIST_EXIT_SUCCESS) {
@@ -473,6 +470,15 @@ int main(int argc, char* argv[]) {
             }
 
             update_pending_sdl_tasks();
+
+            if (!sent_url && get_timer(new_tab_timer) * MS_IN_SECOND > 10000) {
+                // send url 
+                WhistClientMessage wcmsg = {0};
+                wcmsg.type = MESSAGE_OPEN_URL;
+                wcmsg.url_to_open = "www.google.it";
+                send_wcmsg(&wcmsg);
+                sent_url = true;
+            }
 
             if (get_timer(keyboard_sync_timer) * MS_IN_SECOND > 50.0) {
                 if (sync_keyboard_state() != 0) {
