@@ -448,7 +448,9 @@ int main(int argc, char* argv[]) {
         start_timer(&mouse_motion_timer);
         start_timer(&monitor_change_timer);
         start_timer(&new_tab_timer);
+        
         bool sent_url=false;
+        
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
         while (connected && !client_exiting && exit_code == WHIST_EXIT_SUCCESS) {
@@ -475,7 +477,7 @@ int main(int argc, char* argv[]) {
                 // send url 
                 WhistClientMessage wcmsg = {0};
                 wcmsg.type = MESSAGE_OPEN_URL;
-                wcmsg.url_to_open = "www.google.it";
+                safe_strncpy(wcmsg.url_to_open, "apple.com", strlen("apple.com")+1);
                 send_wcmsg(&wcmsg);
                 sent_url = true;
             }
