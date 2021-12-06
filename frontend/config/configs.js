@@ -70,6 +70,7 @@ const configs = {
       auth0Domain: "fractal-dev.us.auth0.com",
       clientId: "F4M4J6VjbXlT2UzCfnxFaJK2yKJXbxcF", // public; not a secret
       apiIdentifier: "https://api.fractal.co",
+      CLIENT_CALLBACK_URL: "http://localhost/callback",
     },
     deployEnv: "dev",
     clientDownloadURLs: {
@@ -96,6 +97,7 @@ const configs = {
       auth0Domain: "fractal-staging.us.auth0.com",
       clientId: "WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz", // public; not a secret
       apiIdentifier: "https://api.fractal.co",
+      CLIENT_CALLBACK_URL: "http://localhost/callback",
     },
     deployEnv: "staging",
     clientDownloadURLs: {
@@ -123,6 +125,7 @@ const configs = {
       auth0Domain: "auth.whist.com",
       clientId: "Ulk5B2RfB7mM8BVjA3JtkrZT7HhWIBLD", // public; not a secret
       apiIdentifier: "https://api.fractal.co",
+      CLIENT_CALLBACK_URL: "http://localhost/callback",
     },
     deployEnv: "prod",
     clientDownloadURLs: {
