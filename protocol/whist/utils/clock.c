@@ -65,7 +65,7 @@ clock create_clock(int timeout_ms) {
 #if defined(_WIN32)
     out.QuadPart = timeout_ms;
 #else
-    out.tv_sec = timeout_ms / (double)MS_IN_SECOND;
+    out.tv_sec = timeout_ms / MS_IN_SECOND;
     out.tv_usec = (timeout_ms % 1000) * 1000;
 #endif
     return out;
