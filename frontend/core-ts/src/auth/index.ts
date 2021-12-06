@@ -1,10 +1,10 @@
 import jwtDecode from "jwt-decode"
 import { randomBytes } from "crypto"
-import { configs } from "../../../config/configs"
+import { configs } from "config/configs"
 import { configPost } from "../"
 import { authCallbackURL, refreshToken, accessToken } from "../types/data"
 
-const post = configPost({ server: `https://${configs.AUTH_DOMAIN_URL}` })
+const post = configPost({ server: `https://${configs.auth0Domain}` })
 
 export const authInfoCallbackRequest = async ({
   authCallbackURL,
@@ -26,9 +26,9 @@ export const authInfoCallbackRequest = async ({
     headers: { "content-type": "application/json" },
     body: {
       grant_type: "authorization_code",
-      client_id: configs.AUTH_CLIENT_ID,
+      client_id: configs.clientId,
       code,
-      redirect_uri: configs.CLIENT_CALLBACK_URL,
+      redirect_uri: configs.clientCallbackUrl,
     },
   })
 }
@@ -49,7 +49,7 @@ export const authInfoRefreshRequest = async ({
     headers: { "content-type": "application/json" },
     body: {
       grant_type: "refresh_token",
-      client_id: configs.AUTH_CLIENT_ID,
+      client_id: configs.clientId,
       refresh_token: refreshToken,
     },
   })
@@ -57,8 +57,8 @@ export const authInfoRefreshRequest = async ({
 
 export const authPortalURL = () =>
   [
-    `https://${configs.AUTH_DOMAIN_URL}/authorize`,
-    `?audience=${configs.AUTH_API_IDENTIFIER}`,
+    `https://${configs.auth0Domain}/authorize`,
+    `?audience=${configs.apiIdentifier}`,
     // We need to request the admin scope here. If the user is enabled for the admin scope
     // (e.g. marked as a developer in Auth0), then the returned JWT token will be granted
     // the admin scope, thus bypassing Stripe checks and granting additional privileges in
@@ -67,8 +67,8 @@ export const authPortalURL = () =>
     // https://auth0.com/docs/scopes#requested-scopes-versus-granted-scopes
     "&scope=openid profile offline_access email admin",
     "&response_type=code",
-    `&client_id=${configs.AUTH_CLIENT_ID}`,
-    `&redirect_uri=${configs.CLIENT_CALLBACK_URL}`,
+    `&client_id=${configs.clientId}`,
+    `&redirect_uri=${configs.clientCallbackUrl}`,
   ].join("")
 
 export const authInfoParse = (res: {
