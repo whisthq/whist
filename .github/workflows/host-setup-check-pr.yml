@@ -81,7 +81,7 @@ jobs:
           import json
           import datetime
 
-          # we hardcode the git_hash and git_branch name of pre-built Chrome &Brave mandelbox images stored in
+          # we hardcode the git_hash and git_branch name of pre-built Chrome/Brave mandelbox images stored in
           # GHCR to be able to test AMIs without needing to build and deploy new mandelboxes
 
           data = {}
