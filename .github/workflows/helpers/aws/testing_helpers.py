@@ -59,7 +59,6 @@ def create_ec2_instance(
             "container-tester",
         ],
         "InstanceInitiatedShutdownBehavior": "terminate",
-        "IamInstanceProfile": {"Name": "auto_scaling_instance_profile"},
         "KeyName": key_name,  # the pre-created SSH key to associate this instance with, needs to be the same that's loaded on the client calling this function
     }
 
