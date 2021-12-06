@@ -24,8 +24,6 @@ relate different events across server and client.
 int get_utc_offset();
 #endif
 
-#define US_IN_MS 1000.0
-
 void start_timer(clock* timer) {
 #if defined(_WIN32)
     QueryPerformanceCounter(timer);
@@ -49,7 +47,7 @@ double get_timer(clock timer) {
 
     // compute and print the elapsed time in millisec
     double elapsed_time = (t2.tv_sec - timer.tv_sec) * MS_IN_SECOND;  // sec to ms
-    elapsed_time += (t2.tv_usec - timer.tv_usec) / US_IN_MS;          // us to ms
+    elapsed_time += (t2.tv_usec - timer.tv_usec) / (double)US_IN_MS;  // us to ms
 
     // LOG_INFO("elapsed time in ms is: %f\n", elapsedTime);
 
@@ -66,7 +64,7 @@ clock create_clock(int timeout_ms) {
     out.QuadPart = timeout_ms;
 #else
     out.tv_sec = timeout_ms / MS_IN_SECOND;
-    out.tv_usec = (timeout_ms % 1000) * 1000;
+    out.tv_usec = (timeout_ms % MS_IN_SECOND) * US_IN_MS;
 #endif
     return out;
 }
