@@ -163,9 +163,7 @@ def find_instance(region: str, client_commit_hash: str) -> Union[str, MandelboxA
     # occupancy which can improve resource utilization.
     instance_with_max_mandelboxes: Optional[InstancesWithRoomForMandelboxes] = (
         InstancesWithRoomForMandelboxes.query.filter_by(
-            commit_hash=client_commit_hash,
-            location=region,
-            status=MandelboxHostState.ACTIVE,
+            commit_hash=client_commit_hash, location=region, status=MandelboxHostState.ACTIVE
         )
         .limit(1)
         .one_or_none()
@@ -338,10 +336,17 @@ def do_scale_up_if_necessary(
                         instance_type=current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
                     )
                 except botocore.exceptions.ClientError as error:
-                if error.response['Error']['Code'] == 'InsufficientInstanceCapacity':
-                    whist_logger.infof("skipping start instance with image id %s, name: %s, num instances: %d, and type: %s, Error: %v", ami, base_name + f"-{index}", 1, current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"], error.response['Error']['Code'])
-                    # Do not raise an error as this is out of our control and we do not want to fail build and deploy + skip instance id to list of ids created
-                    continue
+                    if error.response["Error"]["Code"] == "InsufficientInstanceCapacity":
+                        whist_logger.infof(
+                            "skipping start instance with image id %s, name: %s, num instances: %d, and type: %s, Error: %v",
+                            ami,
+                            base_name + f"-{index}",
+                            1,
+                            current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
+                            error.response["Error"]["Code"],
+                        )
+                        # Do not raise an error as this is out of our control and we do not want to fail build and deploy + skip instance id to list of ids created
+                        continue
                 else:
                     # Any other error should raise an exception as there may be issues with the codebase
                     raise error
@@ -539,8 +544,7 @@ def check_and_handle_instances_with_old_commit_hash() -> None:
     current_commit_hash = get_current_commit_hash()
 
     instances_with_old_commit_hash = InstanceInfo.query.filter(
-        InstanceInfo.commit_hash != current_commit_hash,
-        InstanceInfo.status == "ACTIVE",
+        InstanceInfo.commit_hash != current_commit_hash, InstanceInfo.status == "ACTIVE"
     ).all()
 
     for instance in instances_with_old_commit_hash:
