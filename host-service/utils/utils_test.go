@@ -115,7 +115,7 @@ func TestWaitForFileCreationTimeout(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Couldn't create new fsnotify.Watcher: %s", err)
 	}
-	newWatcher.Close()
+	defer newWatcher.Close()
 	
 	err = WaitForFileCreation(testDir, "test-file.txt", 1*time.Second, newWatcher)
 
