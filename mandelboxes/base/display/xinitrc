@@ -15,8 +15,8 @@ xmodmap /root/.Xmodmap
 # Things running outside runuser are run as root
 
 # Start playerctl to respond to media keys
-echo "Starting 'playerctl daemon' in the background..."
-$RUN_AS_WHIST "playerctl daemon" &
+echo "Starting 'playerctld daemon' in the background..."
+$RUN_AS_WHIST "playerctld daemon" &
 
 # Start the AwesomeWM window manager
 echo "Starting AwesomeWM in the background..."
