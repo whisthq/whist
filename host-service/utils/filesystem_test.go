@@ -62,16 +62,16 @@ func TestWaitForFileCreationWatchErrorClosed(t *testing.T) {
 		t.Fatalf("Couldn't create new fsnotify.Watcher: %s", err)
 	}
 
-	defer newWatcher.Close()
 	close(newWatcher.Errors)
 
 	// WaitForFileCreation will return an error because watcher's error channel is closed
 	if err := WaitForFileCreation("/", "test", time.Second*1, newWatcher); err == nil {
 		t.Fatal("error waiting for file creation when watcher error chan is closed. Expected err, got nil")
 	}
-
+	
 	// We closed the chan but newWatcher.Close() will attempt to close it again so we add the chan back
 	newWatcher.Errors = make(chan error)
+	newWatcher.Close()
 }
 
 // TestWaitForFileCreationWatchEventClosed will handle the watcher event chan being closed
@@ -81,16 +81,16 @@ func TestWaitForFileCreationWatchEventClosed(t *testing.T) {
 		t.Fatalf("Couldn't create new fsnotify.Watcher: %s", err)
 	}
 
-	defer newWatcher.Close()
 	close(newWatcher.Events)
 
-	// WaitForFileCreation will return an error because watcher's error channel is closed
+	// WaitForFileCreation will return an error because watcher's event channel is closed
 	if err := WaitForFileCreation("/", "test", time.Second*1, newWatcher); err == nil {
 		t.Fatal("error waiting for file creation when watcher event chan is closed. Expected err, got nil")
 	}
 
 	// We closed the chan but newWatcher.Close() will attempt to close it again so we add the chan back
 	newWatcher.Events = make(chan fsnotify.Event)
+	newWatcher.Close()
 }
 
 // TestWriteToNewFile  verify a file has been created
