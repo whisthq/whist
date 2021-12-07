@@ -339,9 +339,7 @@ def build_server_on_instance(pexpect_process, pexpect_prompt):
 
 
 def run_server_on_instance(pexpect_process):
-    command = (
-        "cd ~/whist/mandelboxes && ./run.sh browsers/chrome | tee ~/server_mandelbox_run.log"
-    )
+    command = "cd ~/whist/mandelboxes && ./run.sh browsers/chrome | tee ~/server_mandelbox_run.log"
     pexpect_process.sendline(command)
     pexpect_process.expect(":/#")
     server_mandelbox_output = pexpect_process.before.decode("utf-8").strip().split("\n")
