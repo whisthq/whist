@@ -10,17 +10,17 @@ import (
 
 func main() {
 	globalCtx, globalCancel := context.WithCancel(context.Background())
+	goroutineTracker := &sync.WaitGroup{}
 
+	// goroutine that fires when the global context is canceled.
 	go func() {
 		<-globalCtx.Done()
-		globalCancel()
 	}()
 
-	goroutineTracker := &sync.WaitGroup{}
-	whistClient := &subscriptions.WhistClient{}
-
 	// Start database subscriptions
+	whistClient := &subscriptions.WhistClient{}
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
+
 	subscriptions.SetupScalingSubscriptions(whistClient)
 
 	err := subscriptions.Start(whistClient, globalCtx, goroutineTracker, subscriptionEvents)
@@ -28,18 +28,18 @@ func main() {
 		logger.Errorf("Failed to start database subscriptions. Error: %s", err)
 	}
 
-	// Start event loop
+	// Start main event loop
 	go eventLoop(globalCtx, globalCancel, goroutineTracker, subscriptionEvents)
 }
 
-func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc,
-	goroutineTracker *sync.WaitGroup, subscriptionEvents <-chan subscriptions.SubscriptionEvent) {
+func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup,
+	subscriptionEvents <-chan subscriptions.SubscriptionEvent) {
 
 	for {
 		subscriptionEvent := <-subscriptionEvents
 		switch subscriptionEvent := subscriptionEvent.(type) {
 		case *subscriptions.MandelboxEvent:
-			logger.Infof("%v", subscriptionEvent)
+			// Start scaling algorithm based on region
 		}
 	}
 }
