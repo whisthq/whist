@@ -1,7 +1,7 @@
 /*
 Package portbindings provides the abstraction of port bindings between mandelboxes and the host. It also provides the abstraction of a transport protocol in a fashion similar to Docker.
 */
-package portbindings // import "github.com/fractal/whist/core-go/mandelbox/portbindings"
+package portbindings // import "github.com/fractal/whist/host-service/mandelbox/portbindings"
 
 import (
 	"math/rand"

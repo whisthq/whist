@@ -1,9 +1,9 @@
-package mandelbox // import "github.com/fractal/whist/core-go/mandelbox"
+package mandelbox // import "github.com/fractal/whist/host-service/mandelbox"
 
 import (
 	"sync"
 
-	"github.com/fractal/whist/core-go/mandelbox/types"
+	"github.com/fractal/whist/core-go/types"
 	"github.com/fractal/whist/core-go/utils"
 )
 

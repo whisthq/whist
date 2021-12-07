@@ -3,7 +3,7 @@ Package uinputdevices abstracts away the allocation and assignment of uinput
 devices for mandelboxes. Much of its functionality is provided by the nested
 `uinput` package.
 */
-package uinputdevices // import "github.com/fractal/whist/core-go/mandelbox/uinputdevices"
+package uinputdevices // import "github.com/fractal/whist/host-service/mandelbox/uinputdevices"
 
 import (
 	"bytes"
@@ -19,7 +19,7 @@ import (
 	"github.com/fractal/whist/core-go/utils"
 	logger "github.com/fractal/whist/core-go/whistlogger"
 
-	uinput "github.com/fractal/whist/core-go/mandelbox/uinputdevices/uinput"
+	uinput "github.com/fractal/whist/host-service/mandelbox/uinputdevices/uinput"
 
 	dockercontainer "github.com/docker/docker/api/types/container"
 )

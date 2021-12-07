@@ -1,4 +1,4 @@
-package dbdriver // import "github.com/fractal/whist/core-go/dbdriver"
+package dbdriver // import "github.com/fractal/whist/host-service/dbdriver"
 
 //go:generate echo "Generating dbdriver query code..."
 

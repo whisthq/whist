@@ -5,7 +5,7 @@ Currently, it has been tested JWTs generated with our Auth0 configuration.
 It should work with other JWTs too, provided that they are signed with the RS256
 algorithm.
 */
-package auth // import "github.com/fractal/whist/core-go/auth"
+package auth // import "github.com/fractal/whist/host-service/auth"
 
 import (
 	"encoding/json"

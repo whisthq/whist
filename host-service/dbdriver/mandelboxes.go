@@ -1,4 +1,4 @@
-package dbdriver // import "github.com/fractal/whist/core-go/dbdriver"
+package dbdriver // import "github.com/fractal/whist/host-service/dbdriver"
 
 import (
 	"context"
@@ -8,12 +8,12 @@ import (
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 
-	"github.com/fractal/whist/core-go/dbdriver/queries"
-	"github.com/fractal/whist/core-go/mandelbox/types"
 	"github.com/fractal/whist/core-go/metadata/aws"
-	"github.com/fractal/whist/core-go/metrics"
+	"github.com/fractal/whist/core-go/types"
 	"github.com/fractal/whist/core-go/utils"
 	logger "github.com/fractal/whist/core-go/whistlogger"
+	"github.com/fractal/whist/host-service/dbdriver/queries"
+	"github.com/fractal/whist/host-service/metrics"
 )
 
 // This file is concerned with database interactions at the mandelbox-level.

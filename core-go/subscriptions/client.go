@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/fractal/fractal/core-go/metadata"
-	"github.com/fractal/fractal/core-go/utils"
-	logger "github.com/fractal/fractal/core-go/whistlogger"
+	"github.com/fractal/whist/core-go/metadata"
+	"github.com/fractal/whist/core-go/utils"
+	logger "github.com/fractal/whist/core-go/whistlogger"
 
 	graphql "github.com/hasura/go-graphql-client"
 )

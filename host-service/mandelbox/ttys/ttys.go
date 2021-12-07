@@ -1,7 +1,7 @@
 /*
 Package ttys abstracts away allocation and assignment of TTY devices for mandelboxes.
 */
-package ttys // import "github.com/fractal/whist/core-go/mandelbox/ttys"
+package ttys // import "github.com/fractal/whist/host-service/mandelbox/ttys"
 
 import (
 	"math/rand"

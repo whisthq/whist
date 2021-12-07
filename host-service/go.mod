@@ -2,7 +2,7 @@ module github.com/whisthq/whist/host-service
 
 go 1.17
 
-replace github.com/fractal/fractal/core-go => ../core-go/
+replace github.com/fractal/whist/core-go => ../core-go/
 
 require (
 	github.com/MicahParks/keyfunc v1.0.1
@@ -15,16 +15,16 @@ require (
 	github.com/docker/docker v20.10.11+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-units v0.4.0
-	github.com/fractal/fractal/core-go v0.0.0-00010101000000-000000000000
-	github.com/golang-jwt/jwt/v4 v4.1.0
+	github.com/fractal/whist/core-go v0.0.0-00010101000000-000000000000
+	github.com/golang-jwt/jwt/v4 v4.2.0
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgconn v1.10.1
 	github.com/jackc/pgtype v1.9.1
 	github.com/jackc/pgx/v4 v4.14.1
 	github.com/opencontainers/image-spec v1.0.2
-	github.com/pierrec/lz4/v4 v4.1.11
+	github.com/pierrec/lz4/v4 v4.1.12
 	github.com/shirou/gopsutil v3.21.11+incompatible
-	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
+	golang.org/x/crypto v0.0.0-20211202192323-5770296d904e
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 )
 
@@ -37,7 +37,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.2 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.0.2 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.24.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.25.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.5.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.5.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.9.2 // indirect
@@ -82,5 +82,5 @@ require (
 	google.golang.org/genproto v0.0.0-20201110150050-8816d57aaa9a // indirect
 	google.golang.org/grpc v1.42.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
-	nhooyr.io/websocket v1.8.7 // indirect
+	nhooyr.io/websocket v1.8.6 // indirect
 )

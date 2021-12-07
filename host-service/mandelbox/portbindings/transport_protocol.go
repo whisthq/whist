@@ -1,4 +1,4 @@
-package portbindings // import "github.com/fractal/whist/core-go/mandelbox/portbinding"
+package portbindings // import "github.com/fractal/whist/host-service/mandelbox/portbinding"
 
 import (
 	"strings"

@@ -15,7 +15,7 @@ import (
 	"testing/iotest"
 	"time"
 
-	mandelboxtypes "github.com/fractal/whist/core-go/mandelbox/types"
+	mandelboxtypes "github.com/fractal/whist/core-go/types"
 	"github.com/fractal/whist/core-go/utils"
 )
 

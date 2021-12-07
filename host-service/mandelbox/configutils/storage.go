@@ -1,4 +1,4 @@
-package configutils // import "github.com/fractal/whist/core-go/mandelbox/configutils"
+package configutils // import "github.com/fractal/whist/host-service/mandelbox/configutils"
 
 import (
 	"context"

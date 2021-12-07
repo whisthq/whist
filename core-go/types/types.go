@@ -3,13 +3,13 @@
 // types around to other packages that `mandelbox` itself might depend
 // on.
 //
-package types // import "github.com/fractal/fractal/core-go/types"
+package types // import "github.com/fractal/whist/core-go/types"
 
 import (
 	"encoding/json"
 	"strings"
 
-	"github.com/fractal/fractal/core-go/utils"
+	"github.com/fractal/whist/core-go/utils"
 	"github.com/google/uuid"
 )
 

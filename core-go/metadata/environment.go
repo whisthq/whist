@@ -4,8 +4,8 @@ import (
 	"os"
 	"strings"
 
-	mandelboxtypes "github.com/fractal/whist/core-go/mandelbox/types"
 	"github.com/fractal/whist/core-go/metadata/aws"
+	mandelboxtypes "github.com/fractal/whist/core-go/types"
 	"github.com/fractal/whist/core-go/utils"
 )
 

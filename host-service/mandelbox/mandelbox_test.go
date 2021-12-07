@@ -5,7 +5,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/fractal/whist/core-go/mandelbox/types"
+	"github.com/fractal/whist/core-go/types"
 	"github.com/fractal/whist/core-go/utils"
 )
 

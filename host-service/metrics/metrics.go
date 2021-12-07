@@ -2,7 +2,7 @@
 Package metrics is responsible for computing metrics about the instance during
 host service runtime. This includes metrics about total load, CPU usage, etc.
 */
-package metrics // import "github.com/fractal/whist/core-go/metrics"
+package metrics // import "github.com/fractal/whist/host-service/metrics"
 
 import (
 	"math/rand"
