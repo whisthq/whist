@@ -631,10 +631,14 @@ int32_t multithreaded_send_video(void* opaque) {
 
     // The Nvidia Encoder must be wrapped in the lifetime of the capture device,
     // So we destroy the encoder first
-    multithreaded_destroy_encoder(encoder);
-    encoder = NULL;
-    destroy_capture_device(device);
-    device = NULL;
+    if (encoder) {
+        multithreaded_destroy_encoder(encoder);
+        encoder = NULL;
+    }
+    if (device) {
+        destroy_capture_device(device);
+        device = NULL;
+    }
 
     return 0;
 }
