@@ -68,7 +68,7 @@ set(META_PROJECT_NAME        "Protocol")
 set(META_PROJECT_DESCRIPTION "CMake Project for the Whist client protocol clients on mac, linux and windows
                               and servers on windows and linux.")
 set(META_AUTHOR_ORGANIZATION "Whist")
-set(META_AUTHOR_DOMAIN       "https://github.com/fractal/fractal")
+set(META_AUTHOR_DOMAIN       "https://github.com/fractal/whist")
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 14)
