@@ -43,7 +43,7 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
     memset(decoder, 0, sizeof(*decoder));
 
     // setup the AVCodec and AVFormatContext
-    decoder->codec = avcodec_find_decoder_by_name("libfdk_aac");
+    decoder->codec = avcodec_find_decoder(AV_CODEC_ID_OPUS);
     if (!decoder->codec) {
         LOG_WARNING("AVCodec not found.");
         destroy_audio_decoder(decoder);
@@ -56,16 +56,7 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
         return NULL;
     }
 
-    // if we are using libfdk_aac, the codec has no sample_fmts
-    // the context's sample_fmt is set during decoder initialization
-    if (!decoder->codec->sample_fmts) {
-        LOG_INFO(
-            "No sample formats found in codec. Assuming that context's sample_fmt is "
-            "set automatically during initialization to FDK AAC's AV_SAMPLE_FMT_S16.");
-    } else {
-        decoder->context->sample_fmt = decoder->codec->sample_fmts[0];
-    }
-
+    decoder->context->sample_fmt = AV_SAMPLE_FMT_FLT;
     decoder->context->sample_rate = sample_rate;
     decoder->context->channel_layout = AV_CH_LAYOUT_STEREO;
     decoder->context->channels =
@@ -90,13 +81,13 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
         NULL);  //       might not work if not same sample size throughout
 
     if (!decoder->swr_context) {
-        LOG_WARNING("Could not initialize SwrContext.");
+        LOG_WARNING("Could not allocate SwrContext.");
         destroy_audio_decoder(decoder);
         return NULL;
     }
 
     if (swr_init(decoder->swr_context)) {
-        LOG_WARNING("Could not open SwrContext.");
+        LOG_WARNING("Could not init SwrContext.");
         destroy_audio_decoder(decoder);
         return NULL;
     }

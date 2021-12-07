@@ -43,7 +43,7 @@ AudioEncoder* create_audio_encoder(int bit_rate, int sample_rate) {
     memset(encoder, 0, sizeof(*encoder));
 
     // setup the AVCodec and AVFormatContext
-    encoder->codec = avcodec_find_encoder_by_name("libfdk_aac");
+    encoder->codec = avcodec_find_encoder(AV_CODEC_ID_OPUS);
     if (!encoder->codec) {
         LOG_WARNING("AVCodec not found.");
         destroy_audio_encoder(encoder);
@@ -58,9 +58,8 @@ AudioEncoder* create_audio_encoder(int bit_rate, int sample_rate) {
 
     // set the context's fields to agree with that of the codec (see ffmpeg documentation for info
     // on each codec)
-    encoder->context->codec_id = AV_CODEC_ID_AAC;
     encoder->context->codec_type = AVMEDIA_TYPE_AUDIO;
-    encoder->context->sample_fmt = encoder->codec->sample_fmts[0];
+    encoder->context->sample_fmt = AV_SAMPLE_FMT_FLT;
     encoder->context->sample_rate = sample_rate;
     encoder->context->channel_layout = AV_CH_LAYOUT_STEREO;
     encoder->context->channels =
@@ -79,6 +78,7 @@ AudioEncoder* create_audio_encoder(int bit_rate, int sample_rate) {
     encoder->frame->nb_samples = encoder->context->frame_size;
     encoder->frame->format = encoder->context->sample_fmt;
     encoder->frame->channel_layout = AV_CH_LAYOUT_STEREO;
+    encoder->frame->channels = encoder->context->channels;
 
     encoder->frame_count = 0;
 

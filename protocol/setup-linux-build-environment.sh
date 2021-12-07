@@ -13,6 +13,7 @@ sudo apt-get install --no-install-recommends -y \
   libopencore-amrwb0 \
   libx264-155 \
   libx265-179 \
+  libopus-dev \
   libfdk-aac1 \
   libva-drm2 \
   libvdpau1
