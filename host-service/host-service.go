@@ -340,7 +340,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 
 		watcher, err := fsnotify.NewWatcher()
 		if err != nil {
-			return MakeError("Couldn't create new fsnotify.Watcher: %s", err)
+			return utils.MakeError("Couldn't create new fsnotify.Watcher: %s", err)
 		}
 
 		if err = utils.WaitForFileCreation(utils.Sprintf("/whist/%s/mandelboxResourceMappings/", containerName), "done_sleeping_until_X_clients", time.Minute*5, watcher); err != nil {
@@ -764,7 +764,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	if !metadata.IsLocalEnv() {
 		watcher, err := fsnotify.NewWatcher()
 		if err != nil {
-			return MakeError("Couldn't create new fsnotify.Watcher: %s", err)
+			logAndReturnError("Couldn't create new fsnotify.Watcher: %s", err)
+			return
 		}
 
 		logger.Infof("SpinUpMandelbox(): Waiting for mandelbox %s whist application to start up...", mandelboxSubscription.ID)
