@@ -338,16 +338,10 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 
 		logger.Infof("Waiting for whist application to warm up...")
 
-		watcher, err := fsnotify.NewWatcher()
-		if err != nil {
-			return utils.MakeError("Couldn't create new fsnotify.Watcher: %s", err)
-		}
-
-		if err = utils.WaitForFileCreation(utils.Sprintf("/whist/%s/mandelboxResourceMappings/", containerName), "done_sleeping_until_X_clients", time.Minute*5, watcher); err != nil {
+		if err = utils.WaitForFileCreation(utils.Sprintf("/whist/%s/mandelboxResourceMappings/", containerName), "done_sleeping_until_X_clients", time.Minute*5, nil); err != nil {
 			return utils.MakeError("Error warming up whist application: %s", err)
 		}
 
-		watcher.Close()
 		logger.Infof("Finished waiting for whist application to warm up.")
 
 		time.Sleep(5 * time.Second)
@@ -762,19 +756,12 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// Don't wait for whist application to start up in local environment
 	if !metadata.IsLocalEnv() {
-		watcher, err := fsnotify.NewWatcher()
-		if err != nil {
-			logAndReturnError("Couldn't create new fsnotify.Watcher: %s", err)
-			return
-		}
-
 		logger.Infof("SpinUpMandelbox(): Waiting for mandelbox %s whist application to start up...", mandelboxSubscription.ID)
-		if err = utils.WaitForFileCreation(utils.Sprintf("/whist/%s/mandelboxResourceMappings/", mandelboxSubscription.ID), "done_sleeping_until_X_clients", time.Second*20, watcher); err != nil {
+		if err = utils.WaitForFileCreation(utils.Sprintf("/whist/%s/mandelboxResourceMappings/", mandelboxSubscription.ID), "done_sleeping_until_X_clients", time.Second*20, nil); err != nil {
 			logAndReturnError("Error warming up whist application: %s", err)
 			return
 		}
 
-		watcher.Close()
 		logger.Infof("SpinUpMandelbox(): Finished waiting for mandelbox %s whist application to start up", mandelboxSubscription.ID)
 	}
 
