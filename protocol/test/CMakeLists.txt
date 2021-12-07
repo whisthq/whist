@@ -200,7 +200,7 @@ endif()
 if(UPLOAD_COVERAGE)
     add_custom_command(
         TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
-        COMMAND ${CMAKE_BINARY_DIR}/codecov --sha $ENV{GITHUB_SHA} --slug fractal/fractal -t $ENV{CODECOV_TOKEN} -c -F protocol
+        COMMAND ${CMAKE_BINARY_DIR}/codecov --sha $ENV{GITHUB_SHA} --slug fractal/whist -t $ENV{CODECOV_TOKEN} -c -F protocol
     )
 endif()
 
