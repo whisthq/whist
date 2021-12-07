@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script updates the X11 config file in /etc/X11/xorg.conf.d/01-whist-display.conf
+# This script updates the X11 config file in /usr/share/X11/xorg.conf.d/01-whist-display.conf
 # to use the correct Nvidia bus ID and the correct uinput devices for absolute/relative
 # mouse input and keyboard input.
 
