@@ -7,6 +7,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/fsnotify/fsnotify"
 )
 
 func TestPlaceholderUUIDs(t *testing.T) {
@@ -63,7 +65,14 @@ func TestWaitForFileCreation(t *testing.T) {
 	waitErrorChan := make(chan error)
 	go func() {
 		t.Logf("Testing wait for file creation on path: %v", testDir)
-		err := WaitForFileCreation(testDir, "test-file.txt", 10*time.Second)
+
+		newWatcher, err := fsnotify.NewWatcher()
+		if err != nil {
+			t.Fatalf("Couldn't create new fsnotify.Watcher: %s", err)
+		}
+		defer newWatcher.Close()
+
+		err = WaitForFileCreation(testDir, "test-file.txt", 10*time.Second, newWatcher)
 		waitErrorChan <- err
 	}()
 
@@ -101,7 +110,14 @@ func TestWaitForFileCreationTimeout(t *testing.T) {
 
 	// Wait for a file to be created, send a short timeout to test
 	t.Logf("Testing wait for file creation on path: %v", testDir)
-	err = WaitForFileCreation(testDir, "test-file.txt", 1*time.Second)
+
+	newWatcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		t.Fatalf("Couldn't create new fsnotify.Watcher: %s", err)
+	}
+	newWatcher.Close()
+	
+	err = WaitForFileCreation(testDir, "test-file.txt", 1*time.Second, newWatcher)
 
 	// Verify that we received an error because of the timeout
 	if err == nil {

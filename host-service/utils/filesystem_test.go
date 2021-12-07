@@ -7,16 +7,90 @@ import (
 	"path"
 	"testing"
 	"time"
-)
 
-// TODO (aaron): Figure out how to test watcher related errors
+	"github.com/fsnotify/fsnotify"
+)
 
 // TestWaitForFileCreationNotAbsolute will verify the function requires an absolute directory path
 func TestWaitForFileCreationNotAbsolute(t *testing.T) {
+	newWatcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		t.Fatalf("Couldn't create new fsnotify.Watcher: %s", err)
+	}
+	defer newWatcher.Close()
 	// WaitForFileCreation expects an absolute path to the directory and will return an error
-	if err := WaitForFileCreation("not-abs-dir-path/", "test", time.Second*1); err == nil {
+	if err := WaitForFileCreation("not-abs-dir-path/", "test", time.Second*1, newWatcher); err == nil {
 		t.Fatal("error waiting for file creation when path is not absolute. Expected err, got nil")
 	}
+}
+
+//TestWaitForFileCreationWatcherClosed will verify if a closed watcher are caught
+func TestWaitForFileCreationWatcherClosed(t *testing.T) {
+	newWatcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		t.Fatalf("Couldn't create new fsnotify.Watcher: %s", err)
+	}
+	newWatcher.Close()
+	// WaitForFileCreation will encounter an issue adding parent directory and will return an error
+	if err := WaitForFileCreation("/", "test", time.Second*1, newWatcher); err == nil {
+		t.Fatal("error waiting for file creation when watcher is closed. Expected err, got nil")
+	}
+}
+
+// TestWaitForFileCreationWatchError verify watcher errors are caught
+func TestWaitForFileCreationWatchError(t *testing.T) {
+	newWatcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		t.Fatalf("Couldn't create new fsnotify.Watcher: %s", err)
+	}
+
+	defer newWatcher.Close()
+	go func() {
+		newWatcher.Errors <- MakeError("test watch error")
+	}()
+
+	// WaitForFileCreation weill handle the watcher error being closed
+	if err := WaitForFileCreation("/", "test", time.Second*1, newWatcher); err == nil {
+		t.Fatal("error waiting for file creation when watcher chan has error. Expected err, got nil")
+	}
+}
+
+// TestWaitForFileCreationWatchErrorClosed will verify watcher error chan closed are caught
+func TestWaitForFileCreationWatchErrorClosed(t *testing.T) {
+	newWatcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		t.Fatalf("Couldn't create new fsnotify.Watcher: %s", err)
+	}
+
+	defer newWatcher.Close()
+	close(newWatcher.Errors)
+
+	// WaitForFileCreation will return an error because watcher's error channel is closed
+	if err := WaitForFileCreation("/", "test", time.Second*1, newWatcher); err == nil {
+		t.Fatal("error waiting for file creation when watcher error chan is closed. Expected err, got nil")
+	}
+
+	// We closed the chan but newWatcher.Close() will attempt to close it again so we add the chan back
+	newWatcher.Errors = make(chan error)
+}
+
+// TestWaitForFileCreationWatchEventClosed will handle the watcher event chan being closed
+func TestWaitForFileCreationWatchEventClosed(t *testing.T) {
+	newWatcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		t.Fatalf("Couldn't create new fsnotify.Watcher: %s", err)
+	}
+
+	defer newWatcher.Close()
+	close(newWatcher.Events)
+
+	// WaitForFileCreation will return an error because watcher's error channel is closed
+	if err := WaitForFileCreation("/", "test", time.Second*1, newWatcher); err == nil {
+		t.Fatal("error waiting for file creation when watcher event chan is closed. Expected err, got nil")
+	}
+
+	// We closed the chan but newWatcher.Close() will attempt to close it again so we add the chan back
+	newWatcher.Events = make(chan fsnotify.Event)
 }
 
 // TestWriteToNewFile  verify a file has been created
@@ -77,4 +151,23 @@ func TestWriteToNewFileButFileExistsFile(t *testing.T) {
 	if err := WriteToNewFile(filePath, testFileContent); err == nil {
 		t.Fatalf("error writing to file that already exists %s. Expected err, got nil", filePath)
 	}	
+}
+
+// TestWriteToNewFileMissingDirectory will lead to an error creating the file as directory will not exist
+func TestWriteToNewFileMissingDirectory(t *testing.T) {
+	// Create directory
+	destDir, err := ioutil.TempDir("", "testWriteToNewFile")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer os.RemoveAll(destDir)
+
+	filePath := path.Join(destDir, "non_existent_dir/testingFile")
+	testFileContent := "test content"
+
+	// WriteToNewFile should succeed in writing to new file
+	if err := WriteToNewFile(filePath, testFileContent); err == nil {
+		t.Fatalf("error writing to new file %s with missing directory. Expected err, got nil", filePath)
+	}
 }

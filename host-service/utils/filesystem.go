@@ -27,21 +27,15 @@ import (
 // instances have a limit of 128 watchers per user. Therefore, we bump this
 // limit in host-setup to prevent it from being a limiting factor for our
 // mandelbox launches.
-func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Duration) error {
+func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Duration, watcher *fsnotify.Watcher) error {
 	if !path.IsAbs(absParentDirectory) {
 		return MakeError("Can't pass non-absolute paths into WaitForFileCreation")
 	}
 	targetFileName := path.Join(absParentDirectory, fileName)
 
-	watcher, err := fsnotify.NewWatcher()
+	err := watcher.Add(absParentDirectory)
 	if err != nil {
-		return MakeError("Couldn't create new fsnotify.Watcher: %s", err)
-	}
-	defer watcher.Close()
-
-	err = watcher.Add(absParentDirectory)
-	if err != nil {
-		return MakeError("Error adding dir %s to fsnotify.Watcher: %s", absParentDirectory, err)
+		return MakeError("Error adding dir %s to Watcher: %s", absParentDirectory, err)
 	}
 
 	timer := time.NewTimer(timeout)
@@ -53,15 +47,15 @@ func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Durat
 
 		case err, ok := <-watcher.Errors:
 			if !ok {
-				return MakeError("fsnotify.Watcher error channel closed.")
+				return MakeError("Watcher error channel closed.")
 			}
 			// Note that for us, dropped events _are_ errors, since we should not be
 			// having nearly enough filesystem activity to drop any events.
-			return MakeError("fsnotify returned error: %s", err)
+			return MakeError("returned error: %s", err)
 
 		case ev, ok := <-watcher.Events:
 			if !ok {
-				return MakeError("fsnotify.Watcher events channel closed.")
+				return MakeError("Watcher events channel closed.")
 			}
 			// TODO: remove this log once we're confident this part of the code works
 			log.Printf("Watched filesystem event: %+v", ev)

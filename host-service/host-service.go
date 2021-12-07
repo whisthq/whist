@@ -36,6 +36,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"golang.org/x/sync/errgroup"
 
 	// We use this package instead of the standard library log so that we never
@@ -336,9 +337,17 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		}
 
 		logger.Infof("Waiting for whist application to warm up...")
-		if err = utils.WaitForFileCreation(utils.Sprintf("/whist/%s/mandelboxResourceMappings/", containerName), "done_sleeping_until_X_clients", time.Minute*5); err != nil {
+
+		watcher, err := fsnotify.NewWatcher()
+		if err != nil {
+			return MakeError("Couldn't create new fsnotify.Watcher: %s", err)
+		}
+
+		if err = utils.WaitForFileCreation(utils.Sprintf("/whist/%s/mandelboxResourceMappings/", containerName), "done_sleeping_until_X_clients", time.Minute*5, watcher); err != nil {
 			return utils.MakeError("Error warming up whist application: %s", err)
 		}
+
+		watcher.Close()
 		logger.Infof("Finished waiting for whist application to warm up.")
 
 		time.Sleep(5 * time.Second)
@@ -753,11 +762,18 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// Don't wait for whist application to start up in local environment
 	if !metadata.IsLocalEnv() {
+		watcher, err := fsnotify.NewWatcher()
+		if err != nil {
+			return MakeError("Couldn't create new fsnotify.Watcher: %s", err)
+		}
+
 		logger.Infof("SpinUpMandelbox(): Waiting for mandelbox %s whist application to start up...", mandelboxSubscription.ID)
-		if err = utils.WaitForFileCreation(utils.Sprintf("/whist/%s/mandelboxResourceMappings/", mandelboxSubscription.ID), "done_sleeping_until_X_clients", time.Second*20); err != nil {
+		if err = utils.WaitForFileCreation(utils.Sprintf("/whist/%s/mandelboxResourceMappings/", mandelboxSubscription.ID), "done_sleeping_until_X_clients", time.Second*20, watcher); err != nil {
 			logAndReturnError("Error warming up whist application: %s", err)
 			return
 		}
+
+		watcher.Close()
 		logger.Infof("SpinUpMandelbox(): Finished waiting for mandelbox %s whist application to start up", mandelboxSubscription.ID)
 	}
 
