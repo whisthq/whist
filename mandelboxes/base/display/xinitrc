@@ -18,15 +18,15 @@ xmodmap /root/.Xmodmap
 echo "Starting 'playerctld daemon' in the background..."
 $RUN_AS_WHIST "playerctld daemon" &
 
+# Set the DPI to a default value of 96 and initialize the relevant files
+/usr/share/whist/update-whist-dpi.sh
+
 # Start the AwesomeWM window manager
 echo "Starting AwesomeWM in the background..."
 $RUN_AS_WHIST "awesome" &
 # Gets the PID of the backgrounded AwesomeWM process
 awesome_pid=$!
 echo "AwesomeWM started as PID $awesome_pid..."
-
-# Set the DPI to a default value of 96 and initialize the relevant files
-/usr/share/whist/update-whist-dpi.sh
 
 # Start the XSettings daemon to make DPI changes responsive
 echo "Starting 'xsettingsd' in the background..."
