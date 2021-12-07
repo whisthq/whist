@@ -36,7 +36,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/fsnotify/fsnotify"
 	"golang.org/x/sync/errgroup"
 
 	// We use this package instead of the standard library log so that we never
