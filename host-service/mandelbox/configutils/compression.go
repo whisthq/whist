@@ -1,4 +1,4 @@
-package configutils // import "github.com/fractal/fractal/host-service/mandelbox/configutils"
+package configutils // import "github.com/fractal/whist/host-service/mandelbox/configutils"
 
 import (
 	"archive/tar"
@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/fractal/fractal/host-service/utils"
-	logger "github.com/fractal/fractal/host-service/whistlogger"
+	"github.com/fractal/whist/host-service/utils"
+	logger "github.com/fractal/whist/host-service/whistlogger"
 	"github.com/pierrec/lz4/v4"
 )
 

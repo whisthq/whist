@@ -44,8 +44,8 @@ ignore:
 # so we need this fix to retrieve /webserver as the root folder
 fixes:
   - "app/::webserver/" # Replace app/... with webserver/...
-  - "**/fractal/protocol/::protocol/" # Make protocol coverage relative to protocol directory
-  - "**/fractal/host-service/::host-service/" # Make host service coverage relative to host-service directory
+  - "**/whist/protocol/::protocol/" # Make protocol coverage relative to protocol directory
+  - "**/whist/host-service/::host-service/" # Make host service coverage relative to host-service directory
 
 # Settings for Codecov comments on pull requests
 comment:

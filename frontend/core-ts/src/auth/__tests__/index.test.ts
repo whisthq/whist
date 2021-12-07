@@ -31,7 +31,7 @@ describe("authInfoParse", () => {
 
   test("returns userEmail, accessToken, subscriptionStatus", () => {
     expect(auth.authInfoParse({ json: testJSONGood })).toStrictEqual({
-      userEmail: "test@fractal.co",
+      userEmail: "test@whist.com",
       accessToken: testAccessTokenGood,
       subscriptionStatus: null,
     })

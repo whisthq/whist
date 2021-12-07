@@ -11,10 +11,10 @@ const patch = (pathToPatchedFile, oldContents, newContents) => {
 }
 
 const postInstall = (_env, ..._args) => {
-  console.log("Building `@fractal/core-ts`...")
-  execCommand("yarn install", path.join("node_modules", "@fractal/core-ts"))
-  execCommand("yarn build", path.join("node_modules", "@fractal/core-ts"))
-  console.log("Success building `@fractal/core-ts`!")
+  console.log("Building `@whist/core-ts`...")
+  execCommand("yarn install", path.join("node_modules", "@whist/core-ts"))
+  execCommand("yarn build", path.join("node_modules", "@whist/core-ts"))
+  console.log("Success building `@whist/core-ts`!")
 
   console.log("Building `electron-notarize`...")
   execCommand("yarn install", path.join("node_modules", "electron-notarize"))

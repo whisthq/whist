@@ -35,26 +35,26 @@ To set up your Whist development instance:
 
 ```bash
 # clones `dev` by default
-git clone git@github.com:fractal/fractal.git # via SSH, highly preferable
-git clone https://github.com/fractal/fractal.git # via HTTPS, type password on every push
+git clone git@github.com:fractal/whist.git # via SSH, highly preferable
+git clone https://github.com/fractal/whist.git # via HTTPS, type password on every push
 
 # set up the EC2 host for development
-cd ~/fractal/host-setup
+cd ~/whist/host-setup
 ./setup_host.sh --localdevelopment
 
 # before moving to the next step, make sure to reboot as prompted
 sudo reboot
 
 # build the Whist base container image
-cd ~/fractal/mandelboxes
+cd ~/whist/mandelboxes
 ./build.sh base
 
 # build the Whist Host Service
-cd ~/fractal/host-service
+cd ~/whist/host-service
 make run # keep this open in a separate terminal
 
 # run the Whist base container image (swap base to browsers/chrome to run the Whist Chrome container)
-cd ~/fractal/mandelboxes
+cd ~/whist/mandelboxes
 ./run.sh base
 ```
 
@@ -62,7 +62,7 @@ cd ~/fractal/mandelboxes
 
 ⚠️ If the `./build.sh base` command fails due to apt being unable to fetch some archives (e.g. error: `E: Unable to fetch some archives, maybe run apt-get update or try with --fix-missing?`), call `docker system prune -af` first, then run `./build.sh base` again.
 
-- Start a Whist protocol client to connect to the Whist protocol server running on your instance by following the instructions in [`protocol/client/README.md`](https://github.com/fractal/fractal/blob/dev/protocol/client/README.md). If a window pops up that streams the Whist base application, which is currently **xeyes**, then you are all set!
+- Start a Whist protocol client to connect to the Whist protocol server running on your instance by following the instructions in [`protocol/client/README.md`](https://github.com/fractal/whist/blob/dev/protocol/client/README.md). If a window pops up that streams the Whist base application, which is currently **xeyes**, then you are all set!
 
 - Note that we shut down our dev instances when we're not using them, e.g. evenings and weekends. [Here](https://whisthq.slack.com/archives/CPV6JFG67/p1611603277006600) are some helpful scripts to do so.
 
@@ -84,17 +84,17 @@ We create AMIs for deployment programmatically via our deploy pipeline in GitHub
 
 ```bash
 # This clones `dev` by default --- checkout a different branch if needed
-git clone https://github.com/fractal/fractal.git
+git clone https://github.com/fractal/whist.git
 
 # Set up the EC2 host with proper packages, drivers, and configs.
 # To see the necessary values of ARGS, see the comment at the top of
 # `deployment_setup_steps` in `setup_host.sh`.
-cd ~/fractal/host-setup
+cd ~/whist/host-setup
 ./setup_host.sh --deployment [ARGS...]
 
 # VERY IMPORTANT: remove all Whist code!
 cd ~
-rm -rf fractal
+rm -rf whist
 ```
 
 - Manually test that this instance can be attached to an AWS EC2 instances cluster and that it can be connected to, and then save it as an AMI in the AWS console.

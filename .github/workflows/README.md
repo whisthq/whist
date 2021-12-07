@@ -24,7 +24,7 @@ For example, this is the header and beginning of `whist-deploy-sentry-releases.y
 # workflows/whist-push-sentry-releases.yml
 #
 # Whist: Push Sentry Release
-# Automatically push a new Sentry release for each of the fractal/whist projects.
+# Automatically push a new Sentry release for each of the Whist projects.
 
 name: "Whist: Push Sentry Releases"
 ```

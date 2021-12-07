@@ -1,14 +1,14 @@
 /*
 Package portbindings provides the abstraction of port bindings between mandelboxes and the host. It also provides the abstraction of a transport protocol in a fashion similar to Docker.
 */
-package portbindings // import "github.com/fractal/fractal/host-service/mandelbox/portbindings"
+package portbindings // import "github.com/fractal/whist/host-service/mandelbox/portbindings"
 
 import (
 	"math/rand"
 	"sync"
 
-	"github.com/fractal/fractal/host-service/utils"
-	logger "github.com/fractal/fractal/host-service/whistlogger"
+	"github.com/fractal/whist/host-service/utils"
+	logger "github.com/fractal/whist/host-service/whistlogger"
 )
 
 // A PortBinding represents a single port that is bound inside a mandelbox to a

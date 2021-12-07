@@ -13,7 +13,7 @@
 set -Eeuo pipefail
 
 # Build the benchmark container
-cd ~/fractal/mandelboxes
+cd ~/whist/mandelboxes
 ./build_local_mandelbox_image.sh development/benchmark
 WHIST_SKIP_EXEC_BASH=true ./run_local_mandelbox_image.sh development/benchmark
 sleep 3s

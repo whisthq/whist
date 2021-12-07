@@ -24,8 +24,8 @@ To build the Docker container for the dev client, we use the regular mandelbox b
 
 This section provides a brief overview on the difference between container name, container ID, mandelbox name and ID, etc...
 
-- The AppName of the mandelbox will be: `fractal/development/client:current-build`.
-  - The Docker image name consists of the AppName prefix: `fractal/development/client`
+- The AppName of the mandelbox will be: `whist/development/client:current-build`.
+  - The Docker image name consists of the AppName prefix: `whist/development/client`
   - The Docker image suffix consists of the AppName suffix after the colon: `current-build`
   - The Docker image ID is generated automatically to uniquely identify the image
 - The MandelBox ID: `mandelbox.GetID()`, as described in `host-service/mandelbox/types/types.go` is a random string that the webserver creates for each mandelbox.

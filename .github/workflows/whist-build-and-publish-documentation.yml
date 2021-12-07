@@ -37,10 +37,10 @@ jobs:
     steps:
       ################################# CONFIG STEPS ###############################
 
-      - name: Checkout the fractal/fractal Git Repository
+      - name: Checkout the fractal/whist Git Repository
         uses: actions/checkout@v2
         with:
-          path: fractal
+          path: whist
 
       - name: Checkout the fractal/docs Git Repository
         uses: actions/checkout@v2
@@ -50,7 +50,7 @@ jobs:
           path: docs
 
       - name: Setup Python-based notifications
-        working-directory: fractal/.github/workflows/helpers
+        working-directory: whist/.github/workflows/helpers
         run: ./notifications/setup_notifications.sh
 
       ##############################################################################
@@ -62,18 +62,18 @@ jobs:
           go-version: "1.17"
 
       - name: Build Host Service Documentation
-        working-directory: fractal/host-service
+        working-directory: whist/host-service
         run: make docs
 
       - name: Diff Old and New Documentation
         id: host-service-diff
         run: |
-          git diff --no-index fractal/host-service/build/docs docs/host-service && echo "No changes detected"
+          git diff --no-index whist/host-service/build/docs docs/host-service && echo "No changes detected"
           echo "::set-output name=changed::$?"
 
       - name: Copy New Host-Service Documentation into the fractal/docs Working Tree (Only on Push/Workflow_dispatch Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.host-service-diff.outputs.changed == true }}
-        run: rm -rf docs/host-service && cp -r fractal/host-service/build/docs docs/host-service
+        run: rm -rf docs/host-service && cp -r whist/host-service/build/docs docs/host-service
 
       ##############################################################################
       ################################ PROTOCOL STEPS ##############################
@@ -87,19 +87,19 @@ jobs:
           aws-region: us-east-1
 
       - name: Build Protocol Documentation
-        working-directory: fractal/protocol
+        working-directory: whist/protocol
         run: ./build_protocol_targets.sh docs
 
       - name: Diff Old and New Documentation
         id: protocol-diff
         run: |
           # Since the protocol is built inside a docker container, the folder is build-docker
-          git diff --no-index fractal/protocol/build-docker/docs/html docs/protocol && echo "No changes detected"
+          git diff --no-index whist/protocol/build-docker/docs/html docs/protocol && echo "No changes detected"
           echo "::set-output name=changed::$?"
 
       - name: Copy New Protocol Documentation into the fractal/docs Working Tree (Only on Push/Workflow_dispatch Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.protocol-diff.outputs.changed == true }}
-        run: rm -r docs/protocol && cp -r fractal/protocol/build-docker/docs/html docs/protocol # Since the protocol is built inside a Docker container, the folder is build-docker
+        run: rm -r docs/protocol && cp -r whist/protocol/build-docker/docs/html docs/protocol # Since the protocol is built inside a Docker container, the folder is build-docker
 
       ##############################################################################
       ################################ WEBSERVER STEPS #############################
@@ -107,22 +107,22 @@ jobs:
       # Install the version of Sphinx specified in webserver/requirements-test.txt
       - name: Install requirements
         run: |
-          pip install $(cat fractal/webserver/requirements.txt)
-          pip install $(cat fractal/webserver/requirements-test.txt)
+          pip install $(cat whist/webserver/requirements.txt)
+          pip install $(cat whist/webserver/requirements-test.txt)
 
       - name: Build the Latest Documentation
-        working-directory: fractal/webserver/docs
+        working-directory: whist/webserver/docs
         run: sphinx-apidoc --no-toc -fo . ../app && make html
 
       - name: Diff Old and New Documentation
         id: webserver-diff
         run: |
-          git diff --no-index fractal/webserver/docs/_build/html docs/webserver && echo "No changes detected"
+          git diff --no-index whist/webserver/docs/_build/html docs/webserver && echo "No changes detected"
           echo "::set-output name=changed::$?"
 
       - name: Copy New Webserver Documentation into the fractal/docs Working Tree (Only on Push/Workflow_dispatch Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.webserver-diff.outputs.changed == true }}
-        run: rm -r docs/webserver && cp -r fractal/webserver/docs/_build/html docs/webserver
+        run: rm -r docs/webserver && cp -r whist/webserver/docs/_build/html docs/webserver
 
       ##############################################################################
       ################################# PUBLISH STEPS ##############################
@@ -148,7 +148,7 @@ jobs:
           # Stage, commit, and push documentation changes
           git add host-service
           git commit -F - <<EOF
-          Update Whist internal documentation (https://github.com/fractal/fractal/commit/${{ github.sha }})
+          Update Whist internal documentation (https://github.com/fractal/whist/commit/${{ github.sha }})
           EOF
           git show --stat
           git push
@@ -162,7 +162,7 @@ jobs:
           from notifications.slack_bot import slack_post
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
           SLACK_CHANNEL = "#alerts-dev"
-          BODY = "@releases :rotating_light: Failed to deploy Whist Internal Documentation to `docs.whist.com`, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "@releases :rotating_light: Failed to deploy Whist Internal Documentation to `docs.whist.com`, investigate immediately :rotating_light: (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
       - name: Notify Slack on Workflow Success (Only on Push/Workflow_dispatch Events)
@@ -173,5 +173,5 @@ jobs:
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
           SLACK_CHANNEL = "#alerts-dev"
           TITLE = ":orange_book: Whist Internal Documentation Deployed :orange_book:"
-          BODY = "Whist Internal Documentation Deployed to `docs.whist.com` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "Whist Internal Documentation Deployed to `docs.whist.com` (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)

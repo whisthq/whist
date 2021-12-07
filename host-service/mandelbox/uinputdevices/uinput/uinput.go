@@ -78,7 +78,7 @@ device. Here are a few examples of how to use the virtual touch pad:
 		Example: err = vt.Close()
 
 */
-package uinput // import "github.com/fractal/fractal/host-service/mandelbox/uinputdevices/uinput"
+package uinput // import "github.com/fractal/whist/host-service/mandelbox/uinputdevices/uinput"
 
 import (
 	"bytes"

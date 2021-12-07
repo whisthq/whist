@@ -5,8 +5,8 @@ import (
 	"path"
 	"testing"
 
-	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
-	"github.com/fractal/fractal/host-service/utils"
+	"github.com/fractal/whist/host-service/mandelbox/portbindings"
+	"github.com/fractal/whist/host-service/utils"
 )
 
 func TestWriteMandelboxParams(t *testing.T) {

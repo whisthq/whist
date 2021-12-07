@@ -42,7 +42,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--github-token",
-    help="The GitHub Personal Access Token with permission to fetch the fractal/fractal repository. Required.",
+    help="The GitHub Personal Access Token with permission to fetch the fractal/whist repository. Required.",
     required=True,
 )
 
@@ -259,22 +259,22 @@ def clone_whist_repository_on_instance(github_token, pexpect_process, pexpect_pr
             break
 
     print(
-        "Cloning branch {} of the fractal/fractal repository on the AWS instance ...".format(
+        "Cloning branch {} of the fractal/whist repository on the AWS instance ...".format(
             branch_name
         )
     )
 
-    # Retrieve fractal/fractal monorepo on the instance
+    # Retrieve fractal/whist monorepo on the instance
     command = (
-        "rm -rf fractal; git clone -b "
+        "rm -rf whist; git clone -b "
         + branch_name
         + " https://"
         + github_token
-        + "@github.com/fractal/fractal.git | tee ~/github_log.log"
+        + "@github.com/fractal/whist.git | tee ~/github_log.log"
     )
     pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
-    print("Finished downloading fractal/fractal on EC2 instance")
+    print("Finished downloading fractal/whist on EC2 instance")
 
 
 def apply_dpkg_locking_fixup(pexpect_process, pexpect_prompt):
@@ -300,7 +300,7 @@ def apply_dpkg_locking_fixup(pexpect_process, pexpect_prompt):
 
 def run_host_setup_on_instance(pexpect_process, pexpect_prompt, aws_ssh_cmd, aws_timeout, logfile):
     print("Running the host setup on the instance ...")
-    command = "cd ~/fractal/host-setup && ./setup_host.sh --localdevelopment | tee ~/host_setup.log"
+    command = "cd ~/whist/host-setup && ./setup_host.sh --localdevelopment | tee ~/host_setup.log"
     pexpect_process.sendline(command)
     result = pexpect_process.expect([pexpect_prompt, "E: Could not get lock"])
     pexpect_process.expect(pexpect_prompt)
@@ -322,7 +322,7 @@ def run_host_setup_on_instance(pexpect_process, pexpect_prompt, aws_ssh_cmd, aws
 
 def start_host_service_on_instance(pexpect_process):
     print("Starting the host service on the EC2 instance...")
-    command = "sudo rm -rf /whist && cd ~/fractal/host-service && make run | tee ~/host_service.log"
+    command = "sudo rm -rf /whist && cd ~/whist/host-service && make run | tee ~/host_service.log"
     pexpect_process.sendline(command)
     pexpect_process.expect("Entering event loop...")
     print("Host service is ready!")
@@ -330,7 +330,7 @@ def start_host_service_on_instance(pexpect_process):
 
 def build_server_on_instance(pexpect_process, pexpect_prompt):
     print("Building the server mandelbox in {} mode ...".format(args.cmake_build_type))
-    command = "cd ~/fractal/mandelboxes && ./build.sh browsers/chrome --{} | tee ~/server_mandelbox_build.log".format(
+    command = "cd ~/whist/mandelboxes && ./build.sh browsers/chrome --{} | tee ~/server_mandelbox_build.log".format(
         args.cmake_build_type
     )
     pexpect_process.sendline(command)
@@ -340,7 +340,7 @@ def build_server_on_instance(pexpect_process, pexpect_prompt):
 
 def run_server_on_instance(pexpect_process):
     command = (
-        "cd ~/fractal/mandelboxes && ./run.sh browsers/chrome | tee ~/server_mandelbox_run.log"
+        "cd ~/whist/mandelboxes && ./run.sh browsers/chrome | tee ~/server_mandelbox_run.log"
     )
     pexpect_process.sendline(command)
     pexpect_process.expect(":/#")
@@ -374,14 +374,14 @@ def run_server_on_instance(pexpect_process):
 def build_client_on_instance(pexpect_process, pexpect_prompt, testing_time):
     # Edit the run-whist-client.sh to make the client quit after the experiment is over
     print("Setting the experiment duration to {}s...".format(testing_time))
-    command = "sed -i 's/timeout 240s/timeout {}s/g' ~/fractal/mandelboxes/development/client/run-whist-client.sh".format(
+    command = "sed -i 's/timeout 240s/timeout {}s/g' ~/whist/mandelboxes/development/client/run-whist-client.sh".format(
         testing_time
     )
     pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
 
     print("Building the dev client mandelbox in {} mode ...".format(args.cmake_build_type))
-    command = "cd ~/fractal/mandelboxes && ./build.sh development/client --{} | tee ~/client_mandelbox_build.log".format(
+    command = "cd ~/whist/mandelboxes && ./build.sh development/client --{} | tee ~/client_mandelbox_build.log".format(
         args.cmake_build_type
     )
     pexpect_process.sendline(command)
@@ -391,7 +391,7 @@ def build_client_on_instance(pexpect_process, pexpect_prompt, testing_time):
 
 def run_client_on_instance(pexpect_process, json_data):
     print("Running the dev client mandelbox, and connecting to the server!")
-    command = "cd ~/fractal/mandelboxes && ./run.sh development/client --json-data='{}'".format(
+    command = "cd ~/whist/mandelboxes && ./run.sh development/client --json-data='{}'".format(
         json.dumps(json_data)
     )
     pexpect_process.sendline(command)

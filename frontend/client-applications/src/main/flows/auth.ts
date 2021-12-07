@@ -10,7 +10,7 @@ import {
   refreshToken,
   accessToken,
   generateRandomConfigToken,
-} from "@fractal/core-ts"
+} from "@whist/core-ts"
 
 export const authRefreshFlow = flow<refreshToken>(
   "authRefreshFlow",

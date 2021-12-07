@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Running this script will delete all workflow runs from outdated workflows that have been marked 
-# as `manually disabled` on the GitHub Actions page on the fractal/fractal repository
+# as `manually disabled` on the GitHub Actions page on the fractal/whist repository
 
 # Exit on subcommand errors
 set -Eeuo pipefail
 
 org=fractal
-repo=fractal
+repo=whist
 
 # Get workflow IDs with status "disabled_manually"
 workflow_ids=($(gh api repos/$org/$repo/actions/workflows | jq '.workflows[] | select(.["state"] | contains("disabled_manually")) | .id'))

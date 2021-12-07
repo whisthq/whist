@@ -1,12 +1,12 @@
-package metadata // import "github.com/fractal/fractal/host-service/metadata"
+package metadata // import "github.com/fractal/whist/host-service/metadata"
 
 import (
 	"os"
 	"strings"
 
-	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
-	"github.com/fractal/fractal/host-service/metadata/aws"
-	"github.com/fractal/fractal/host-service/utils"
+	mandelboxtypes "github.com/fractal/whist/host-service/mandelbox/types"
+	"github.com/fractal/whist/host-service/metadata/aws"
+	"github.com/fractal/whist/host-service/utils"
 )
 
 func init() {

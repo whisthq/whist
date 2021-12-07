@@ -75,7 +75,7 @@ module.exports = {
         blink: "blink 1s step-end infinite",
       },
       letterSpacing: {
-        fractal: "0.5em",
+        whist: "0.5em",
       },
     },
   },

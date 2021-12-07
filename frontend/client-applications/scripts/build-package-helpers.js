@@ -46,7 +46,7 @@ const configOS = () => {
   return "linux"
 }
 
-const configImageTag = "fractal/config"
+const configImageTag = "whist/config"
 
 const gitRepoRoot = "../.."
 const configDirectory = path.join(gitRepoRoot, "config")
@@ -54,7 +54,7 @@ const protocolDirectory = path.join(gitRepoRoot, "protocol")
 
 module.exports = {
   buildConfigContainer: () => {
-    // Build the docker image from fractal/config/Dockerfile
+    // Build the docker image from whist/config/Dockerfile
     // When the --quiet flag is used, then the stdout of docker build
     // will be the sha256 hash of the image.
     console.log(`Building ${configImageTag} Docker image`)

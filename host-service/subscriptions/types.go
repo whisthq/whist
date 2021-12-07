@@ -1,6 +1,6 @@
-package subscriptions // import "github.com/fractal/fractal/host-service/subscriptions"
+package subscriptions // import "github.com/fractal/whist/host-service/subscriptions"
 
-import mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
+import mandelboxtypes "github.com/fractal/whist/host-service/mandelbox/types"
 
 // HasuraParams contains the Heroku URL and Admin AccessKey to pass
 // to the client during initialization.

@@ -182,7 +182,7 @@ class DeploymentConfig:
     _database_url = property(getter("DATABASE_URL", fetch=False))
 
     #: str: A domain name identifying the Auth0 tenant with which the Webserver should communicate.
-    #: Examples include ``fractal-dev.us.auth0.com`` and ``login.whist.com``.
+    #: Examples include ``fractal-dev.us.auth0.com`` and ``auth.whist.com``.
     AUTH0_DOMAIN = property(getter("AUTH0_DOMAIN"))
 
     #: str: The client ID of the OAuth 2.0 client representing the Webserver registered to the

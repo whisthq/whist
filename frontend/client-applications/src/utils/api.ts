@@ -4,14 +4,14 @@
  * @brief This file contains utility functions to make API calls.
  */
 
-import { configGet, configPost, configPut } from "@fractal/core-ts"
+import { configGet, configPost, configPut } from "@whist/core-ts"
 import config from "@app/config/environment"
 import { sessionID } from "@app/constants/app"
 
 import { logBase } from "@app/utils/logging"
 
 /*
- * @fractal/core-ts http functions like "get" and "post"
+ * @whist/core-ts http functions like "get" and "post"
  * are constructed at runtime so they can be passed a config
  * object, like the httpConfig object below.
  *

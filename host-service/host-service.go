@@ -43,17 +43,17 @@ import (
 	// to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
 
-	logger "github.com/fractal/fractal/host-service/whistlogger"
+	logger "github.com/fractal/whist/host-service/whistlogger"
 
-	"github.com/fractal/fractal/host-service/dbdriver"
-	mandelboxData "github.com/fractal/fractal/host-service/mandelbox"
-	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
-	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
-	"github.com/fractal/fractal/host-service/metadata"
-	"github.com/fractal/fractal/host-service/metadata/aws"
-	"github.com/fractal/fractal/host-service/metrics"
-	"github.com/fractal/fractal/host-service/subscriptions"
-	"github.com/fractal/fractal/host-service/utils"
+	"github.com/fractal/whist/host-service/dbdriver"
+	mandelboxData "github.com/fractal/whist/host-service/mandelbox"
+	"github.com/fractal/whist/host-service/mandelbox/portbindings"
+	mandelboxtypes "github.com/fractal/whist/host-service/mandelbox/types"
+	"github.com/fractal/whist/host-service/metadata"
+	"github.com/fractal/whist/host-service/metadata/aws"
+	"github.com/fractal/whist/host-service/metrics"
+	"github.com/fractal/whist/host-service/subscriptions"
+	"github.com/fractal/whist/host-service/utils"
 
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"

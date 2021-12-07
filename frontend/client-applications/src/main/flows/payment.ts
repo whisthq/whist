@@ -4,7 +4,7 @@ import {
   subscriptionStatus,
   subscriptionStatusParse,
   hasValidSubscription,
-} from "@fractal/core-ts"
+} from "@whist/core-ts"
 
 import { flow } from "@app/utils/flows"
 
