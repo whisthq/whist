@@ -47,7 +47,7 @@ type WhistClaims struct {
 }
 
 var config authConfig = getAuthConfig()
-var jwks *keyfunc.JWKs
+var jwks *keyfunc.JWKS
 
 func init() {
 	refreshInterval := time.Hour * 1
@@ -59,7 +59,7 @@ func init() {
 		RefreshErrorHandler: func(err error) {
 			logger.Errorf("Error refreshing JWKs: %s", err)
 		},
-		RefreshUnknownKID: &refreshUnknown,
+		RefreshUnknownKID: refreshUnknown,
 	})
 	if err != nil {
 		// Can do a "real" panic since we're in an init function
