@@ -8,7 +8,7 @@ import { zip, from } from "rxjs"
 import { map, switchMap } from "rxjs/operators"
 import { flow, fork } from "@app/utils/flows"
 
-import { accessToken, configToken } from "@fractal/core-ts"
+import { accessToken, configToken } from "@whist/core-ts"
 
 export default flow<
   {

@@ -1,14 +1,14 @@
 /*
 Package ttys abstracts away allocation and assignment of TTY devices for mandelboxes.
 */
-package ttys // import "github.com/fractal/fractal/host-service/mandelbox/ttys"
+package ttys // import "github.com/fractal/whist/host-service/mandelbox/ttys"
 
 import (
 	"math/rand"
 	"sync"
 
-	"github.com/fractal/fractal/host-service/utils"
-	logger "github.com/fractal/fractal/host-service/whistlogger"
+	"github.com/fractal/whist/host-service/utils"
+	logger "github.com/fractal/whist/host-service/whistlogger"
 )
 
 // TTY is defined as a type so that the implementation can change without the

@@ -227,7 +227,7 @@ RUN mkdir /dist /ignore && \
 RUN mkdir /dist/etc && \
     cp -r /etc/{vulkan,nvidia,OpenCL} /dist/etc
 
-################ STAGE 4: fractal-teleport-fuse  ################
+################ STAGE 4: whist-teleport-fuse  ################
 # - Copy and build the FUSE service to handle teleport drag-drop
 #   events
 # EXPOSES the teleport fuse service
@@ -268,17 +268,17 @@ RUN cd /fractal-teleport-fuse/src \
     && gcc -Wall -D _GNU_SOURCE unshare.c -o unshare.o -c \
     && gcc -Wall unshare.o teleport-fuse.c $(pkg-config fuse3 --cflags --libs) -o ../build/fractal-teleport-fuse
 
-################ STAGE 5: fractal-base ######################
+################ STAGE 5: whist-base ######################
 # - Copy and install libinput from libinput-build
 # - Copy and install xf86-input-libinput from
 #   xf86-input-libinput-build
 # - Copy grid driver installation from
 #   nvidia-grid-driver
 # - Copy and install teleport FUSE service from
-#   fractal-teleport-fuse
+#   whist-teleport-fuse
 # - Install and configure all necessary components for
 #   our base mandelbox image
-# EXPOSES all of fractal-base as the final image
+# EXPOSES all of whist-base as the final image
 #############################################################
 FROM ubuntu:20.04 as fractal-base
 

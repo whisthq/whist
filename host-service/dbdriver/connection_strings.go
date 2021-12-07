@@ -1,9 +1,9 @@
-package dbdriver // import "github.com/fractal/fractal/host-service/dbdriver"
+package dbdriver // import "github.com/fractal/whist/host-service/dbdriver"
 
 import (
-	"github.com/fractal/fractal/host-service/metadata"
-	"github.com/fractal/fractal/host-service/metadata/heroku"
-	"github.com/fractal/fractal/host-service/utils"
+	"github.com/fractal/whist/host-service/metadata"
+	"github.com/fractal/whist/host-service/metadata/heroku"
+	"github.com/fractal/whist/host-service/utils"
 )
 
 // Whist database connection strings

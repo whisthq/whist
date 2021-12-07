@@ -15,14 +15,14 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
-	"github.com/fractal/fractal/host-service/mandelbox"
-	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
-	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
-	"github.com/fractal/fractal/host-service/metadata"
-	"github.com/fractal/fractal/host-service/metadata/aws"
-	"github.com/fractal/fractal/host-service/subscriptions"
-	"github.com/fractal/fractal/host-service/utils"
-	logger "github.com/fractal/fractal/host-service/whistlogger"
+	"github.com/fractal/whist/host-service/mandelbox"
+	"github.com/fractal/whist/host-service/mandelbox/portbindings"
+	mandelboxtypes "github.com/fractal/whist/host-service/mandelbox/types"
+	"github.com/fractal/whist/host-service/metadata"
+	"github.com/fractal/whist/host-service/metadata/aws"
+	"github.com/fractal/whist/host-service/subscriptions"
+	"github.com/fractal/whist/host-service/utils"
+	logger "github.com/fractal/whist/host-service/whistlogger"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -36,8 +36,8 @@ import (
 type mockClient struct {
 	client.CommonAPIClient
 
-	config     container.Config
-	hostConfig container.HostConfig
+	config       container.Config
+	hostConfig   container.HostConfig
 	browserImage string
 
 	started bool

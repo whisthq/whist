@@ -19,7 +19,7 @@ import {
   paymentPortalRequest,
   paymentPortalParse,
   accessToken,
-} from "@fractal/core-ts"
+} from "@whist/core-ts"
 import {
   WindowHashAuth,
   WindowHashSignout,

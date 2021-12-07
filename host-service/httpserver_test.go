@@ -15,8 +15,8 @@ import (
 	"testing/iotest"
 	"time"
 
-	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
-	"github.com/fractal/fractal/host-service/utils"
+	mandelboxtypes "github.com/fractal/whist/host-service/mandelbox/types"
+	"github.com/fractal/whist/host-service/utils"
 )
 
 type JSONTransportResult struct {
@@ -32,7 +32,7 @@ func TestSpinUpHandler(t *testing.T) {
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		JSONData:              "test_json_data",
 		Cookies:               "[{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}]",
-		Bookmarks:			   "{ 'test_bookmark': '1'}",
+		Bookmarks:             "{ 'test_bookmark': '1'}",
 		resultChan:            make(chan requestResult),
 	}
 
@@ -128,7 +128,7 @@ func TestHttpServerIntegration(t *testing.T) {
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		JSONData:              "test_json_data",
 		Cookies:               "[{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}]",
-		Bookmarks:			   "{ 'test_bookmark': '1'}",
+		Bookmarks:             "{ 'test_bookmark': '1'}",
 		resultChan:            make(chan requestResult),
 	}
 	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
@@ -382,7 +382,7 @@ func TestGetAppName(t *testing.T) {
 func TestVerifyRequestWrongType(t *testing.T) {
 	res := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "https://localhost", nil)
-	
+
 	// verifyRequestType will catch request with wrong method and return an error
 	if err := verifyRequestType(res, req, http.MethodPut); err == nil {
 		t.Fatal("error verifying request type when the request method does not match. Expected an error, got nil")

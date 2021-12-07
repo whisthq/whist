@@ -62,7 +62,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # needed for migra diff tool
       GITHUB_ISSUE: ${{ github.event.number }}
-      GITHUB_PR_URL: "https://github.com/fractal/fractal/pull/"
+      GITHUB_PR_URL: "https://github.com/fractal/whist/pull/"
       HEROKU_DB_KEY: "DATABASE_URL"
       HEROKU_API_TOKEN: ${{ secrets.HEROKU_DEVELOPER_API_KEY }} # needed to retrieve config vars from Heroku
       PATH_HELPERS: ".github/workflows/helpers"
@@ -179,7 +179,7 @@ jobs:
 
           github_token = os.environ["GITHUB_TOKEN"]
           github_issue = int(os.environ["GITHUB_ISSUE"])
-          github_repo = "fractal/fractal"
+          github_repo = "fractal/whist"
 
           identifier = "AUTOMATED_DB_MIGRATION_MESSAGE"
 

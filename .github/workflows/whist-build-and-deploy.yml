@@ -248,7 +248,7 @@ jobs:
 
           from notifications.slack_bot import slack_post
           SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
-          BODY = "@releases :rotating_light: Deployment failed: could not generate configs for deployment in `whist-publish-build-config` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "@releases :rotating_light: Deployment failed: could not generate configs for deployment in `whist-publish-build-config` job, investigate immediately :rotating_light: (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   #######################################################################################
@@ -321,7 +321,7 @@ jobs:
 
           from notifications.slack_bot import slack_post
           SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
-          BODY = "@releases :rotating_light: Failed to build Whist monorepo config in `whist-build-monorepo-config`, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "@releases :rotating_light: Failed to build Whist monorepo config in `whist-build-monorepo-config`, investigate immediately :rotating_light: (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   #######################################################################################
@@ -378,7 +378,7 @@ jobs:
           from notifications.slack_bot import slack_post
           SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
           TITLE = ":auth0: Auth0 Rules Deployed :auth0:"
-          BODY = f"Auth0 Rules deployed to Auth0 Tenant on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"Auth0 Rules deployed to Auth0 Tenant on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error
@@ -395,7 +395,7 @@ jobs:
 
           from notifications.slack_bot import slack_post
           SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
-          BODY = "@releases :rotating_light: Deployment failed: could not deploy Auth0 Rules in `microservices-deploy-auth0-rules` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "@releases :rotating_light: Deployment failed: could not deploy Auth0 Rules in `microservices-deploy-auth0-rules` job, investigate immediately :rotating_light: (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   #######################################################################################
@@ -619,7 +619,7 @@ jobs:
           from notifications.slack_bot import slack_post
           SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
           TITLE = ":whale: Mandelboxes & AMIs Deployed :whale:"
-          BODY = "Mandelboxes & AMIs deployed to GitHub Container Registry and all supported AWS regions on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "Mandelboxes & AMIs deployed to GitHub Container Registry and all supported AWS regions on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error
@@ -636,7 +636,7 @@ jobs:
 
           from notifications.slack_bot import slack_post
           SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
-          BODY = "@releases :rotating_light: Deployment failed: could not deploy Mandelboxes and AMIs in `mandelboxes-and-amis-publish-ghcr-and-aws` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "@releases :rotating_light: Deployment failed: could not deploy Mandelboxes and AMIs in `mandelboxes-and-amis-publish-ghcr-and-aws` job, investigate immediately :rotating_light: (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   #######################################################################################
@@ -730,7 +730,7 @@ jobs:
 
           SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
           TITLE = ":construction: Database Migration Performed :construction:"
-          BODY = f"Database Schema Migration performed on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"Database Schema Migration performed on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
       - name: Notify Slack on Successful Webserver Deploy
@@ -750,7 +750,7 @@ jobs:
           SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
           HEROKU_APP_NAME = os.environ["HEROKU_APP_NAME"]
           TITLE = ":heroku: Webserver Deployed :heroku:"
-          BODY = f"Webserver deployed to Heroku app `{HEROKU_APP_NAME}` on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"Webserver deployed to Heroku app `{HEROKU_APP_NAME}` on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error
@@ -767,7 +767,7 @@ jobs:
 
           from notifications.slack_bot import slack_post
           SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
-          BODY = "@releases :rotating_light: Deployment failed: could not deploy Webserver in `webserver-deploy-heroku` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "@releases :rotating_light: Deployment failed: could not deploy Webserver in `webserver-deploy-heroku` job, investigate immediately :rotating_light: (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   #######################################################################################
@@ -887,7 +887,7 @@ jobs:
           SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
           WEBSERVER_URL = "${{ needs.whist-publish-build-config.outputs.webserver_url }}"
           TITLE = ":package: Webserver Successfully Created Buffer of New AMIs :package:"
-          BODY = f"Webserver at {WEBSERVER_URL} created buffers for new AMIs on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"Webserver at {WEBSERVER_URL} created buffers for new AMIs on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
       - name: Notify Slack that AMI upgrade has failed
@@ -905,7 +905,7 @@ jobs:
           from notifications.slack_bot import slack_post
           SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
           WEBSERVER_URL = "${{ needs.whist-publish-build-config.outputs.webserver_url }}"
-          BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to create buffers for AMIs, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to create buffers for AMIs, investigate immediately :rotating_light: (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   #######################################################################################
@@ -1362,7 +1362,7 @@ jobs:
           from notifications.slack_bot import slack_post
           SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
           TITLE = ":electron: Windows & macOS Applications Deployed :electron:"
-          BODY = f"Windows & macOS Applications deployed via upload to AWS S3 on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` - You can download them from {WEBSITE_URL} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"Windows & macOS Applications deployed via upload to AWS S3 on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` - You can download them from {WEBSITE_URL} (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
       - name: Notify Slack on Publishing Client Applications Error
@@ -1379,7 +1379,7 @@ jobs:
 
           from notifications.slack_bot import slack_post
           SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
-          BODY = "@releases :rotating_light: Deployment failed: could not deploy Windows/macOS Electron applications in `client-applications-publish-build-[x64/arm64]-s3` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "@releases :rotating_light: Deployment failed: could not deploy Windows/macOS Electron applications in `client-applications-publish-build-[x64/arm64]-s3` job, investigate immediately :rotating_light: (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   #######################################################################################
@@ -1490,7 +1490,7 @@ jobs:
           SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
           WEBSERVER_URL = "${{ needs.whist-publish-build-config.outputs.webserver_url }}"
           TITLE = ":bezos: Webserver Successfully Swapped to New AMIs :bezos:"
-          BODY = f"Webserver at {WEBSERVER_URL} swapped over active AMIs to new AMIs on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"Webserver at {WEBSERVER_URL} swapped over active AMIs to new AMIs on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
       - name: Notify Slack that AMI upgrade has failed
@@ -1508,7 +1508,7 @@ jobs:
           from notifications.slack_bot import slack_post
           SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
           WEBSERVER_URL = "${{ needs.whist-publish-build-config.outputs.webserver_url }}"
-          BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to swap over active AMIs, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to swap over active AMIs, investigate immediately :rotating_light: (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   #######################################################################################
@@ -1569,7 +1569,7 @@ jobs:
           from notifications.slack_bot import slack_post
           SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
           TITLE = ":github: Whist GitHub Release Completed :github:"
-          BODY = "Deployment of Whist Version `v${{ needs.client-applications-retrieve-version-number.outputs.release_version }}` on branch `${{ needs.whist-publish-build-config.outputs.branch }}` completed - See the generated GitHub Release here: https://github.com/fractal/fractal/releases/tag/v${{ needs.client-applications-retrieve-version-number.outputs.release_version }} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "Deployment of Whist Version `v${{ needs.client-applications-retrieve-version-number.outputs.release_version }}` on branch `${{ needs.whist-publish-build-config.outputs.branch }}` completed - See the generated GitHub Release here: https://github.com/fractal/whist/releases/tag/v${{ needs.client-applications-retrieve-version-number.outputs.release_version }} (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error
@@ -1586,5 +1586,5 @@ jobs:
 
           from notifications.slack_bot import slack_post
           SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
-          BODY = "@releases :rotating_light: Deployment failed: could not create GitHub Release in `whist-create-github-release-tag` job, investigate immediately :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "@releases :rotating_light: Deployment failed: could not create GitHub Release in `whist-create-github-release-tag` job, investigate immediately :rotating_light: (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)

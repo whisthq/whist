@@ -3,13 +3,13 @@
 // types around to other packages that `mandelbox` itself might depend
 // on.
 //
-package types // import "github.com/fractal/fractal/host-service/mandelbox/types"
+package types // import "github.com/fractal/whist/host-service/mandelbox/types"
 
 import (
 	"encoding/json"
 	"strings"
 
-	"github.com/fractal/fractal/host-service/utils"
+	"github.com/fractal/whist/host-service/utils"
 	"github.com/google/uuid"
 )
 

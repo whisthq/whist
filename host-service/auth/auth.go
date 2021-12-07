@@ -5,7 +5,7 @@ Currently, it has been tested JWTs generated with our Auth0 configuration.
 It should work with other JWTs too, provided that they are signed with the RS256
 algorithm.
 */
-package auth // import "github.com/fractal/fractal/host-service/auth"
+package auth // import "github.com/fractal/whist/host-service/auth"
 
 import (
 	"encoding/json"
@@ -15,8 +15,8 @@ import (
 	"github.com/MicahParks/keyfunc"
 	"github.com/golang-jwt/jwt/v4"
 
-	"github.com/fractal/fractal/host-service/utils"
-	logger "github.com/fractal/fractal/host-service/whistlogger"
+	"github.com/fractal/whist/host-service/utils"
+	logger "github.com/fractal/whist/host-service/whistlogger"
 )
 
 // Audience is an alias for []string with some custom deserialization behavior.

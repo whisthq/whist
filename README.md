@@ -1,6 +1,6 @@
 # Whist Application Streaming
 
-[![Whist: Build & Deploy](https://github.com/fractal/fractal/actions/workflows/fractal-build-and-deploy.yml/badge.svg)](https://github.com/fractal/fractal/actions/workflows/fractal-build-and-deploy.yml) [![codecov](https://codecov.io/gh/fractal/fractal/branch/dev/graph/badge.svg?token=QB0c3c2NBj)](https://codecov.io/gh/fractal/fractal) [![Netlify Status](https://api.netlify.com/api/v1/badges/f65a863e-37d0-4407-babd-09b2b4802661/deploy-status)](https://app.netlify.com/sites/whist-prod/deploys)
+[![Whist: Build & Deploy](https://github.com/fractal/whist/actions/workflows/whist-build-and-deploy.yml/badge.svg)](https://github.com/fractal/whist/actions/workflows/whist-build-and-deploy.yml) [![codecov](https://codecov.io/gh/fractal/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj)](https://codecov.io/gh/fractal/whist) [![Netlify Status](https://api.netlify.com/api/v1/badges/f65a863e-37d0-4407-babd-09b2b4802661/deploy-status)](https://app.netlify.com/sites/whist-prod/deploys)
 
 This repository contains the end-to-end code for the Whist Application Streaming product, following a [Monorepo](https://en.wikipedia.org/wiki/Monorepo) structure.
 
@@ -175,12 +175,12 @@ Unfortunately, as of June 2021, GitHub does not have a UI to auto-populate pull 
 As such, we keep our default development pull request template in this folder as `PULL_REQUEST_TEMPLATE.md`, which gets auto-populated for every pull request created. To swap to a different PR template from this subfolder instead, simply modify the PR URL to append `expand=1&template=<template-name.md>`. In the case of a promotion from `dev` to `staging`, your URL should be:
 
 ```
-https://github.com/fractal/fractal/compare/staging...dev?expand=1&template=promotion.md
+https://github.com/fractal/whist/compare/staging...dev?expand=1&template=promotion.md
 ```
 
 ## Publishing
 
-We have developed a complex continuous deployment pipeline via GitHub Actions, which enables us to automatically deploy all subrepositories of this monorepositories in the right order when pushing to `prod`, `dev`, and `staging`. See `.github/workflows/fractal-build-and-deploy.yml` to see how we deploy, which AWS regions and which streamed applications get deployed, and more. If something goes wrong in the continuous deployment pipeline and a specific job fails, it is possible to manually trigger a specific job of the `fractal-publish-build.yml` workflow via the GitHub Actions console.
+We have developed a complex continuous deployment pipeline via GitHub Actions, which enables us to automatically deploy all subrepositories of this monorepositories in the right order when pushing to `prod`, `dev`, and `staging`. See `.github/workflows/whist-build-and-deploy.yml` to see how we deploy, which AWS regions and which streamed applications get deployed, and more. If something goes wrong in the continuous deployment pipeline and a specific job fails, it is possible to manually trigger a specific job of the workflow via the GitHub Actions console.
 
 ## Styling
 

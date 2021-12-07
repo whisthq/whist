@@ -2,4 +2,4 @@
 
 set -Eeuo pipefail
 
-cd node_modules/@fractal/core-ts && yarn install && yarn build
+cd node_modules/@whist/core-ts && yarn install && yarn build

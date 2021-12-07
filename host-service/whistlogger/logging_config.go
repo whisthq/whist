@@ -1,10 +1,10 @@
-package whistlogger // import "github.com/fractal/fractal/host-service/whistlogger"
+package whistlogger // import "github.com/fractal/whist/host-service/whistlogger"
 
 import (
 	"os"
 	"strings"
 
-	"github.com/fractal/fractal/host-service/metadata"
+	"github.com/fractal/whist/host-service/metadata"
 )
 
 // usingProdLogging implements the logic for us to decide whether to use

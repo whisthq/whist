@@ -69,11 +69,11 @@ To debug, you can take a look at the client and server logs as described in the 
 
 In order to test the interaction between the client app and the server, you may want to spin up the host-service on a dev instance, and connect to it. To do that, you can follow this procedure.
 
-- On your AWS instance, build the protocol and the Chrome mandelbox with `cd ~/fractal/mandelboxes && ./build.sh browsers/chrome`. Then, run the host-service with cd `~/fractal/host-service && make run`.
+- On your AWS instance, build the protocol and the Chrome mandelbox with `cd ~/whist/mandelboxes && ./build.sh browsers/chrome`. Then, run the host-service with cd `~/whist/host-service && make run`.
   - If you want to use brave instead of chrome run `./build.sh browsers/brave`.
     <<<<<<< HEAD
   - # If you run into any issues getting the `host-service` to run, make sure to stop and remove any Docker containers that are running and delete the /whist folder with `sudo rm -rf /whist/`.
-  - If you run into any issues getting the `host-service` to run, make sure to stop and remove any Docker containers that are running and delete the /fractal folder with `sudo rm -rf /fractal/`.
+  - If you run into any issues getting the `host-service` to run, make sure to stop and remove any Docker containers that are running and delete the /whist folder with `sudo rm -rf /whist/`.
     > > > > > > > b95c6fc40 (remove unnecessary warning about run.sh)
 - On your computer, after initializing yarn by running `yarn`, set the `TESTING_LOCALDEV_HOST_IP` environment variable to the public IP of the AWS instance. Then, from the `client-applications` folder, call `yarn test:manual localdevHost`. If you get errors, try removing the `node_modules` folder and the `yarn.lock` file with `rm -rf node_modules yarn.lock` and then re-initialize with `yarn`.
 - After closing the client-application on your machine, you need to stop and remove all Docker containers on the AWS instance before you can quit the `host-service` (`Ctrl+C` won't work while the Docker containers are still running). To see all running/recently stopped containers, use `docker ps -a`. From the results, you can find the container IDs which you can then use to stop/remove containers with `docker stop <container ID>` and `docker rm <container ID>`. A quicker way to stop/remove all containers is `docker stop $(docker ps -aq) && docker rm $(docker ps -aq)`. Once you are done with this step, press (`Ctrl+C`) to stop the `host-service`.
@@ -87,7 +87,7 @@ Application data are written and stored on the client-side in the following loca
 - On macOS, look in `~/Library/Application\ Support/{Electron,whist}/{dev,staging,prod}`
 - On Linux, look in `~/.config/{Whwist}/{dev,staging,prod}`
 - On Windows, look in `%APPDATA%\{Whist}\{dev,staging,prod}`. Note that `%APPDATA%` usually corresponds to `C:\Users\<user>\AppData\Roaming`.
-  The unpackaged app will have `Electron` in the path while the packaged app will have `fractal`. You can clear these files to re-trigger behavior, such as a re-running the login flow, by deleting them via `yarn cache:clear`.
+  The unpackaged app will have `Electron` in the path while the packaged app will have `whist`. You can clear these files to re-trigger behavior, such as a re-running the login flow, by deleting them via `yarn cache:clear`.
 
 Some pieces of state, such as the user's authentication token, are stored in the file system and persist between app launches. This state is persisted in the file `config.json`.
 
@@ -224,7 +224,7 @@ Before you can package the MacOS application it needs to be notarized. The appli
 
 Notarizing is done in Github CI. In the event you want to notarize locally:
 
-1. Download the Whist Apple Developer Certificate via `aws s3 cp s3://fractal-dev-secrets/fractal-apple-codesigning-certificate.p12 fractal-apple-codesigning-certificate.p12` and import it to your **System** keychain. The file is encrypted and the password is `Whistcomputers!`.
+1. Download the Whist Apple Developer Certificate via `aws s3 cp s3://fractal-dev-secrets/fractal-apple-codesigning-certificate.p12 fractal-apple-codesigning-certificate.p12` and import it to your **System** keychain. The file is encrypted and the password is `Fractalcomputers!`.
 
 2. Make sure you have the latest version of Xcode and have opened it at least once. We recommend downloading Xcode from the App Store, and ensuring that you have the MacOSX SDK at `/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk`.
 

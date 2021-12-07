@@ -1,4 +1,4 @@
-package mandelbox // import "github.com/fractal/fractal/host-service/mandelbox"
+package mandelbox // import "github.com/fractal/whist/host-service/mandelbox"
 
 // This file provides functions that manage user configs, including fetching, uploading, and encrypting them.
 
@@ -14,10 +14,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
-	"github.com/fractal/fractal/host-service/mandelbox/configutils"
-	"github.com/fractal/fractal/host-service/metadata"
-	"github.com/fractal/fractal/host-service/utils"
-	logger "github.com/fractal/fractal/host-service/whistlogger"
+	"github.com/fractal/whist/host-service/mandelbox/configutils"
+	"github.com/fractal/whist/host-service/metadata"
+	"github.com/fractal/whist/host-service/utils"
+	logger "github.com/fractal/whist/host-service/whistlogger"
 )
 
 const (

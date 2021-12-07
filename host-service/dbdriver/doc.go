@@ -64,4 +64,4 @@
 // - `pgx` support is very immature in `sqlc` at the time of this writing
 //   (merged into master 4 days ago, has not officially been released).
 //
-package dbdriver // import "github.com/fractal/fractal/host-service/dbdriver"
+package dbdriver // import "github.com/fractal/whist/host-service/dbdriver"

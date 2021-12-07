@@ -1,4 +1,4 @@
-module github.com/fractal/fractal/host-service
+module github.com/fractal/whist/host-service
 
 go 1.17
 

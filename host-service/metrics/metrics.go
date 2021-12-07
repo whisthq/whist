@@ -2,16 +2,16 @@
 Package metrics is responsible for computing metrics about the instance during
 host service runtime. This includes metrics about total load, CPU usage, etc.
 */
-package metrics // import "github.com/fractal/fractal/host-service/metrics"
+package metrics // import "github.com/fractal/whist/host-service/metrics"
 
 import (
 	"math/rand"
 	"sync"
 	"time"
 
-	"github.com/fractal/fractal/host-service/metadata"
-	"github.com/fractal/fractal/host-service/utils"
-	logger "github.com/fractal/fractal/host-service/whistlogger"
+	"github.com/fractal/whist/host-service/metadata"
+	"github.com/fractal/whist/host-service/utils"
+	logger "github.com/fractal/whist/host-service/whistlogger"
 
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fractal/fractal/host-service/utils"
+	"github.com/fractal/whist/host-service/utils"
 	graphql "github.com/hasura/go-graphql-client"
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"

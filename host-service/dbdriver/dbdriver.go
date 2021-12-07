@@ -1,4 +1,4 @@
-package dbdriver // import "github.com/fractal/fractal/host-service/dbdriver"
+package dbdriver // import "github.com/fractal/whist/host-service/dbdriver"
 
 import (
 	"context"
@@ -6,9 +6,9 @@ import (
 
 	"github.com/jackc/pgx/v4/pgxpool"
 
-	"github.com/fractal/fractal/host-service/metadata"
-	"github.com/fractal/fractal/host-service/utils"
-	logger "github.com/fractal/fractal/host-service/whistlogger"
+	"github.com/fractal/whist/host-service/metadata"
+	"github.com/fractal/whist/host-service/utils"
+	logger "github.com/fractal/whist/host-service/whistlogger"
 )
 
 // `enabled` is a flag denoting whether the functions in this package should do

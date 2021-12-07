@@ -9,13 +9,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fractal/fractal/host-service/auth"
-	"github.com/fractal/fractal/host-service/mandelbox/portbindings"
-	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
-	"github.com/fractal/fractal/host-service/metadata"
-	"github.com/fractal/fractal/host-service/metrics"
-	"github.com/fractal/fractal/host-service/utils"
-	logger "github.com/fractal/fractal/host-service/whistlogger"
+	"github.com/fractal/whist/host-service/auth"
+	"github.com/fractal/whist/host-service/mandelbox/portbindings"
+	mandelboxtypes "github.com/fractal/whist/host-service/mandelbox/types"
+	"github.com/fractal/whist/host-service/metadata"
+	"github.com/fractal/whist/host-service/metrics"
+	"github.com/fractal/whist/host-service/utils"
+	logger "github.com/fractal/whist/host-service/whistlogger"
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -221,10 +221,10 @@ func getAppName(mandelboxID mandelboxtypes.MandelboxID, transportRequestMap map[
 
 	// We will wait 1 minute to get the transport request
 	select {
-		case transportRequest := <-jsonchan:
-			req = transportRequest
-		case <-time.After(1 * time.Minute):
-			return nil, AppName
+	case transportRequest := <-jsonchan:
+		req = transportRequest
+	case <-time.After(1 * time.Minute):
+		return nil, AppName
 	}
 
 	if metadata.IsLocalEnvWithoutDB() {
@@ -237,12 +237,12 @@ func getAppName(mandelboxID mandelboxtypes.MandelboxID, transportRequestMap map[
 	} else {
 		// set the appName to brave/chrome
 		switch string(req.AppName) {
-			case "browsers/chrome":
-				AppName = mandelboxtypes.AppName("browsers/chrome")
-			case "browsers/brave":
-				AppName = mandelboxtypes.AppName("browsers/brave")
-			default:
-				AppName = mandelboxtypes.AppName("browsers/chrome")
+		case "browsers/chrome":
+			AppName = mandelboxtypes.AppName("browsers/chrome")
+		case "browsers/brave":
+			AppName = mandelboxtypes.AppName("browsers/brave")
+		default:
+			AppName = mandelboxtypes.AppName("browsers/chrome")
 		}
 	}
 

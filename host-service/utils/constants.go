@@ -1,4 +1,4 @@
-package utils // import "github.com/fractal/fractal/host-service/utils"
+package utils // import "github.com/fractal/whist/host-service/utils"
 
 import "github.com/google/uuid"
 
