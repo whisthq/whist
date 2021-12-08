@@ -102,6 +102,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      # Build all Docker images, as if we were in production
       - name: Build Mandelboxes
         working-directory: mandelboxes
         run: ./build.sh --all --prod

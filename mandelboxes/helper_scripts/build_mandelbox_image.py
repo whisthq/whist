@@ -51,7 +51,7 @@ target_image_paths = image_paths.copy()
 # If --all is passed, generate image_paths procedurally
 if build_all:
     with subprocess.Popen(
-        "./helper_scripts/find_images_in_git_repo.sh",
+        "./helper_scripts/find_mandelbox_dockerfiles_in_subtree.sh",
         shell=True,
         stdout=subprocess.PIPE,
     ) as files_process:
@@ -103,7 +103,7 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
     # Default is the build asset package without the protocol. By
     # choosing the correct build asset package and passing it as a
     # docker build argument, we can control which dockerfiles copy the
-    # protcool!
+    # protocol!
     build_asset_package = "default"
     if protocol_copy_mode == "dev" and img_path in target_image_paths:
         build_asset_package = "protocol"

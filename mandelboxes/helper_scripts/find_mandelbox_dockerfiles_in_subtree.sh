@@ -13,4 +13,3 @@ cd "$DIR/.."
 
 # Find all the Dockerfiles in this directory, match to "./[PATH]/Dockerfile.20", and replace '\n' with ' '
 find . -name "Dockerfile.20" | sed 's/^\.\/\(.*\)\/Dockerfile\.20$/\1/g' | tr '\n' ' '
-
