@@ -117,12 +117,9 @@ func (scopes *Scopes) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Verify parses an raw access token string, verifies the token's signature,
-// ensures that it is valid at the current moment in time, and checks that it
-// was issued by the proper issuer for the proper audience. It returns a
-// pointer to a WhistClaims type containing the values of its claims if all
-// checks are successful.
-func Verify(tokenString string) (*WhistClaims, error) {
+// ParseToken will parses an raw access token string verifies the token's signature, and
+// ensures that it is valid at the current moment in time
+func ParseToken(tokenString string)  (*WhistClaims, error) {
 	claims := new(WhistClaims)
 	_, err := jwt.ParseWithClaims(tokenString, claims, jwks.Keyfunc)
 
@@ -130,21 +127,33 @@ func Verify(tokenString string) (*WhistClaims, error) {
 		return nil, err
 	}
 
+	return claims, nil
+}
+
+
+// Verify checks that the claim was issued by the proper issuer for the proper audience.
+// It returns a pointer to a WhistClaims type containing the values of its claims if all
+// checks are successful.
+func Verify(claims *WhistClaims) error {
+	if claims == nil {
+		return utils.MakeError("Expected claims but received nil")
+	}
+
 	if !claims.VerifyAudience(config.Aud, true) {
-		return nil, jwt.NewValidationError(
+		return jwt.NewValidationError(
 			utils.Sprintf("Bad audience %s", claims.Audience),
 			jwt.ValidationErrorAudience,
 		)
 	}
 
 	if !claims.VerifyIssuer(config.Iss, true) {
-		return nil, jwt.NewValidationError(
+		return jwt.NewValidationError(
 			utils.Sprintf("Bad issuer %s", claims.Issuer),
 			jwt.ValidationErrorIssuer,
 		)
 	}
 
-	return claims, nil
+	return nil
 }
 
 // VerifyAudience compares the "aud" claim against cmp. If req is false, this
