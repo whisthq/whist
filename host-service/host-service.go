@@ -726,9 +726,9 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
 
 		// Create browser data
-		userInitialBrowserData := mandelboxData.mandelboxData{
+		userInitialBrowserData := mandelboxData.BrowserData {
 			CookiesJSON: req.Cookies,
-			BookmarksJSON: req.BookmarkJSON
+			BookmarksJSON: req.BookmarkJSON,
 		}
 
 		destDir := path.Join(mandelbox.GetUserConfigDir(), mandelboxData.GetUnpackedConfigsDirectoryName())
