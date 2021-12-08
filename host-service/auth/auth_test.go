@@ -5,8 +5,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/fractal/whist/host-service/auth"
-
 	"github.com/golang-jwt/jwt/v4"
 )
 
