@@ -450,8 +450,10 @@ jobs:
         working-directory: protocol
         run: ./build_protocol_targets.sh --cmakebuildtype=Release WhistServer
 
+      # Only push mandelboxes from /browsers to GitHub Container Registry
       - name: Walk Folder to Find All Dockerfiles and Store Paths as Environment Variable
-        run: echo "apps=$(./mandelboxes/helper_scripts/find_images_in_git_repo.sh)" >> $GITHUB_ENV
+        working-directory: mandelboxes/browsers
+        run: echo "apps=$(./../helper_scripts/find_mandelbox_dockerfiles_in_subtree.sh)" >> $GITHUB_ENV
 
       # In deploys, we only build the Docker images used in production
       # Note that they will build the images they depend on automatically (i.e. base)
