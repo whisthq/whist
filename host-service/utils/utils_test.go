@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"math/rand"
 	"os"
 	"path"
+	"sync"
 	"testing"
 	"time"
 )
@@ -25,27 +27,27 @@ func TestPlaceholderUUIDs(t *testing.T) {
 	}
 }
 
-// func TestWaitWithDebugPrints(t *testing.T) {
-// 	// Use a waitgroup and random goroutines to test WaitWithDebugPrints
-// 	wg := sync.WaitGroup{}
-// 	timeout := 1 * time.Second
-// 	level := 2
+func TestWaitWithDebugPrints(t *testing.T) {
+	// Use a waitgroup and random goroutines to test WaitWithDebugPrints
+	wg := sync.WaitGroup{}
+	timeout := 1 * time.Second
+	level := 2
 
-// 	// Use goroutines with random duration
-// 	for i := 1; i <= 5; i++ {
-// 		wg.Add(1)
+	// Use goroutines with random duration
+	for i := 1; i <= 5; i++ {
+		wg.Add(1)
 
-// 		go func() {
-// 			defer wg.Done()
-// 			r := rand.Intn(5)
-// 			time.Sleep(time.Duration(r) * time.Second)
-// 		}()
-// 	}
-// 	WaitWithDebugPrints(&wg, timeout, level)
+		go func() {
+			defer wg.Done()
+			r := rand.Intn(5)
+			time.Sleep(time.Duration(r) * time.Second)
+		}()
+	}
+	WaitWithDebugPrints(&wg, timeout, level)
 
-// 	// Check if the wait group finished successfully
-// 	wg.Wait()
-// }
+	// Check if the wait group finished successfully
+	wg.Wait()
+}
 
 func TestWaitForFileCreationTimeout(t *testing.T) {
 	testDir := path.Join(TempDir, "testBase")
