@@ -49,26 +49,26 @@ func TestWaitWithDebugPrints(t *testing.T) {
 	wg.Wait()
 }
 
-func TestWaitForFileCreationTimeout(t *testing.T) {
-	testDir := path.Join(TempDir, "testBase")
+// func TestWaitForFileCreationTimeout(t *testing.T) {
+// 	testDir := path.Join(TempDir, "testBase")
 
-	// Setup the test directory to write the test file
-	err := setupTestDirs(testDir)
-	defer cleanupTestDirs()
-	if err != nil {
-		t.Fatalf("Failed to setup test directory: %v", err)
-	}
+// 	// Setup the test directory to write the test file
+// 	err := setupTestDirs(testDir)
+// 	defer cleanupTestDirs()
+// 	if err != nil {
+// 		t.Fatalf("Failed to setup test directory: %v", err)
+// 	}
 
-	// Wait for a file to be created, send a short timeout to test
-	t.Logf("Testing wait for file creation on path: %v", testDir)
+// 	// Wait for a file to be created, send a short timeout to test
+// 	t.Logf("Testing wait for file creation on path: %v", testDir)
 
-	err = WaitForFileCreation(testDir, "test-file.txt", 1*time.Second, nil)
+// 	err = WaitForFileCreation(testDir, "test-file.txt", 1*time.Second, nil)
 
-	// Verify that we received an error because of the timeout
-	if err == nil {
-		t.Errorf("Expected timeout error, received nil")
-	}
-}
+// 	// Verify that we received an error because of the timeout
+// 	if err == nil {
+// 		t.Errorf("Expected timeout error, received nil")
+// 	}
+// }
 
 func TestWaitForFileCreation(t *testing.T) {
 	testDir := path.Join(TempDir, "testBase")
