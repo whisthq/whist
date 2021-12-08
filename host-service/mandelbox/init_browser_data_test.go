@@ -7,9 +7,6 @@ import (
 	"io/ioutil"
 	"path"
 	"testing"
-
-	mandelboxtypes "github.com/fractal/whist/host-service/mandelbox/types"
-	"github.com/fractal/whist/host-service/utils"
 )
 
 // TestUserInitialBrowserWrite checks if the browser data is properly created by
@@ -30,12 +27,12 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	bookmarksJSON := ""
 
 	// Create browser data
-	userInitialBrowserData := mandelboxtypes.BrowserData{
+	userInitialBrowserData := BrowserData{
 		CookiesJSON: cookieJSON,
 		BookmarksJSON: bookmarksJSON,
 	}
 
-	if err := testMandelboxData.WriteUserInitialBrowserData(userInitialBrowserData, destDir); err != nil {
+	if err := WriteUserInitialBrowserData(userInitialBrowserData, destDir); err != nil {
 		t.Fatalf("error writing user initial browser data: %v", err)
 	}
 
