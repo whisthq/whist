@@ -109,18 +109,29 @@ func (wc *WhistClient) Subscribe(query GraphQLQuery, variables map[string]interf
 		switch result := result.(type) {
 		case InstanceEvent:
 			err = json.Unmarshal(*data, &result)
+
+			if err != nil {
+				return utils.MakeError("failed to unmarshal subscription event: %v", err)
+			}
+
+			if conditionFn(result, variables) {
+				// We notify via the subscriptionsEvent channel
+				subscriptionEvents <- &result
+			}
+
 		case MandelboxEvent:
 			err = json.Unmarshal(*data, &result)
+
+			if err != nil {
+				return utils.MakeError("failed to unmarshal subscription event: %v", err)
+			}
+
+			if conditionFn(result, variables) {
+				// We notify via the subscriptionsEvent channel
+				subscriptionEvents <- &result
+			}
 		}
 
-		if err != nil {
-			return utils.MakeError("failed to unmarshal subscription event: %v", err)
-		}
-
-		if conditionFn(result, variables) {
-			// We notify via the subscriptionsEvent channel
-			subscriptionEvents <- &result
-		}
 		return nil
 	})
 
