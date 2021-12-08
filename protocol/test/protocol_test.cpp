@@ -51,6 +51,7 @@ extern "C" {
 #include <whist/utils/avpacket_buffer.h>
 #include <whist/utils/atomic.h>
 #include <whist/utils/fec.h>
+#include <whist/core/whist_pollset.h>
 }
 
 /*
@@ -678,6 +679,316 @@ TEST(ProtocolTest, BitArrayMemCpyTest) {
         bit_array_free(bit_arr_recovered);
     }
 }
+
+#if !defined(__APPLE__) || \
+    (defined(__aarch64__) || defined(__arm64__))  // do run the test on MacOs X86
+
+#ifdef _WIN32
+
+int socketpair(int domain, int type, int protocol, SOCKET socks[2]) {
+    union {
+        struct sockaddr_in inaddr;
+
+        struct sockaddr addr;
+    } a;
+
+    SOCKET listener;
+    int e;
+    socklen_t addrlen = sizeof(a.inaddr);
+    int make_overlapped = 0;
+    DWORD flags = (make_overlapped ? WSA_FLAG_OVERLAPPED : 0);
+    int reuse = 1;
+
+    if (socks == NULL) {
+        WSASetLastError(WSAEINVAL);
+        return SOCKET_ERROR;
+    }
+
+    listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+    if (listener == INVALID_SOCKET) return SOCKET_ERROR;
+
+    memset(&a, 0, sizeof(a));
+    a.inaddr.sin_family = AF_INET;
+    a.inaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    a.inaddr.sin_port = 0;
+
+    socks[0] = socks[1] = INVALID_SOCKET;
+
+    do {
+        if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, (char*)&reuse,
+                       (socklen_t)sizeof(reuse)) == -1)
+            break;
+
+        if (bind(listener, &a.addr, sizeof(a.inaddr)) == SOCKET_ERROR) break;
+
+        memset(&a, 0, sizeof(a));
+
+        if (getsockname(listener, &a.addr, &addrlen) == SOCKET_ERROR) break;
+
+        // win32 getsockname may only set the port number, p=0.0005.
+        // ( http://msdn.microsoft.com/library/ms738543.aspx ):
+        a.inaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        a.inaddr.sin_family = AF_INET;
+
+        set_timeout(listener, 0);  // non-blocking
+        if (listen(listener, 1) == SOCKET_ERROR) break;
+
+        socks[0] = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, flags);
+        if (socks[0] == INVALID_SOCKET) break;
+
+        set_timeout(socks[0], 0);  // non-blocking
+        if (connect(socks[0], &a.addr, sizeof(a.inaddr)) == SOCKET_ERROR &&
+            GetLastError() != WSAEWOULDBLOCK)
+            break;
+
+        fd_set rset;
+        FD_ZERO(&rset);
+        FD_SET(listener, &rset);
+
+        /* let 1 second for the socket to be connected */
+        struct timeval tv;
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
+        if (select(listener + 1, &rset, NULL, NULL, &tv) <= 0) break;
+
+        socks[1] = accept(listener, NULL, NULL);
+        if (socks[1] == INVALID_SOCKET) break;
+
+        set_timeout(socks[0], -1);  // blocking
+        closesocket(listener);
+        return 0;
+    } while (0);
+
+    e = WSAGetLastError();
+    closesocket(listener);
+    closesocket(socks[0]);
+    closesocket(socks[1]);
+    WSASetLastError(e);
+    return SOCKET_ERROR;
+}
+
+#endif
+
+typedef struct {
+    SOCKET sockets[2];
+    int nreads;
+    int nwrite;
+    int ntimeout;
+
+    int nreadErrors;
+    int nreadBytes;
+    int readSocketIndex;
+} LocalContext;
+
+static void event_counter_cb(WhistPollsetSource idx, int mask, void* data) {
+    LocalContext* ctx = (LocalContext*)data;
+    int ret;
+    char buf[100];
+
+    // printf("mask=0x%x\n", mask);
+    if (mask & WHIST_POLLEVENT_READ) {
+        ctx->nreads++;
+
+        ret = recv(ctx->sockets[ctx->readSocketIndex], buf, sizeof(buf), 0);
+        if (ret < 0)
+            ctx->nreadErrors++;
+        else
+            ctx->nreadBytes += ret;
+    }
+
+    if (mask & WHIST_POLLEVENT_WRITE) ctx->nwrite++;
+
+    if (mask & WHIST_POLLEVENT_TIMEOUT) ctx->ntimeout++;
+}
+
+#define MANY_SOCKS 40
+
+typedef struct {
+    SOCKET sockets[MANY_SOCKS * 2];
+    WhistPollsetSource sources[MANY_SOCKS];
+    int nreads;
+    int nwrite;
+    int ntimeout;
+
+    int nreadErrors;
+    int nreadBytes;
+    size_t drainSocketIndex;
+    WhistPollsetSource lastSource;
+} LocalContext2;
+
+static void event_counter_cb2(WhistPollsetSource idx, int mask, void* data) {
+    LocalContext2* ctx = (LocalContext2*)data;
+
+    ctx->lastSource = idx;
+    if (mask & WHIST_POLLEVENT_READ) {
+        char buf[20];
+
+        ctx->nreads++;
+
+        int ret = recv(ctx->sockets[ctx->drainSocketIndex], buf, sizeof(buf), 0);
+        if (ret < 0)
+            ctx->nreadErrors++;
+        else
+            ctx->nreadBytes += ret;
+    }
+}
+
+TEST(ProtocolTest, PollsetTest) {
+    WhistPollset* set = whist_pollset_new();
+    LocalContext ctx;
+    WhistPollsetSource s1_source, s2_source;
+    char buf[1000];
+
+    /* setup with a socket pair, we'll use sockets[0] for reading, sockets[1] for writing  */
+    memset(&ctx, 0, sizeof(ctx));
+    whist_init_networking();
+    EXPECT_GE(socketpair(PF_LOCAL, SOCK_STREAM, 0, ctx.sockets), 0);
+
+    s1_source =
+        whist_pollset_add(set, ctx.sockets[0], WHIST_POLLEVENT_READ, 100, event_counter_cb, &ctx);
+    ASSERT_FALSE(s1_source == WHIST_INVALID_SOURCE);
+
+    /* polling 10ms so timeout shall not trigger */
+    EXPECT_EQ(whist_pollset_poll(set, 10), 0);
+    EXPECT_EQ(ctx.ntimeout, 0);
+    EXPECT_EQ(ctx.nreads, 0);
+    EXPECT_EQ(ctx.nwrite, 0);
+
+    /* polling a max of 500ms, so we shall wait for ~50ms and trigger the timeout */
+    EXPECT_EQ(whist_pollset_poll(set, 500), 1);
+    EXPECT_EQ(ctx.ntimeout, 1);
+
+    /* polling 2 times 10ms the timeout has fired before so it shall not trigger again */
+    EXPECT_EQ(whist_pollset_poll(set, 10), 0);
+    EXPECT_EQ(ctx.ntimeout, 1);
+
+    EXPECT_EQ(whist_pollset_poll(set, 10), 0);
+    EXPECT_EQ(ctx.ntimeout, 1);
+
+    /* inject some bytes and check that it's read available */
+    EXPECT_EQ(send(ctx.sockets[1], "aa", 2, 0), 2);
+    EXPECT_EQ(whist_pollset_poll(set, 200), 1);
+    EXPECT_EQ(ctx.nreads, 1);
+    EXPECT_EQ(ctx.nreadBytes, 2);
+    EXPECT_EQ(ctx.nreadErrors, 0);
+    EXPECT_EQ(ctx.ntimeout, 1);
+
+    /* check that write availability is reported correctly on socket[1] */
+    s2_source =
+        whist_pollset_add(set, ctx.sockets[1], WHIST_POLLEVENT_WRITE, 0, event_counter_cb, &ctx);
+    ASSERT_FALSE(s2_source == WHIST_INVALID_SOURCE);
+
+    EXPECT_EQ(whist_pollset_poll(set, 200), 1);
+    EXPECT_EQ(ctx.nreads, 1);
+    EXPECT_EQ(ctx.nwrite, 1);
+    EXPECT_EQ(ctx.ntimeout, 1);
+
+    /* update s2_source to switch to read polling, counters shall not have changed */
+    EXPECT_EQ(whist_pollset_update(set, s2_source, WHIST_POLLEVENT_READ, 0, event_counter_cb, &ctx),
+              s2_source);
+    EXPECT_EQ(whist_pollset_poll(set, 20), 0);
+    EXPECT_EQ(ctx.nreads, 1);
+    EXPECT_EQ(ctx.nwrite, 1);
+    EXPECT_EQ(ctx.ntimeout, 1);
+
+    /* remove s1 which has a timeout, so now nothing shall happen when we poll */
+    whist_pollset_remove(set, &s1_source);
+    EXPECT_EQ(s1_source, WHIST_INVALID_SOURCE);
+    EXPECT_EQ(whist_pollset_poll(set, 100), 0);
+
+    /* inject bytes on sockets[0] */
+    EXPECT_EQ(send(ctx.sockets[0], "aaa", 3, 0), 3);
+    ctx.readSocketIndex = 1;
+    EXPECT_EQ(whist_pollset_poll(set, 20), 1);
+    EXPECT_EQ(ctx.nreads, 2);
+    EXPECT_EQ(ctx.nreadBytes, 5);
+
+    /* try to fill sockets[0] until we block write, then test write availability */
+    set_timeout(ctx.sockets[1], 0);
+    while (send(ctx.sockets[1], "aaa", 3, 0) > 0)
+        ;
+
+    /* socket is not write available */
+    EXPECT_EQ(
+        whist_pollset_update(set, s2_source, WHIST_POLLEVENT_WRITE, 0, event_counter_cb, &ctx),
+        s2_source);
+    EXPECT_EQ(whist_pollset_poll(set, 20), 0);
+
+    /* let's give some air by pulling some bytes in sockets[0], and then write availability should
+     * be back */
+    set_timeout(ctx.sockets[0], 0);
+    while (recv(ctx.sockets[0], buf, sizeof(buf), 0) > 0)
+        ;
+    EXPECT_EQ(whist_pollset_poll(set, 20), 1);
+    EXPECT_EQ(ctx.nwrite, 2);
+
+    WHIST_CLOSE_SOCKET(ctx.sockets[0]);
+
+    whist_pollset_remove(set, &s2_source);
+    WHIST_CLOSE_SOCKET(ctx.sockets[1]);
+
+    /*
+     * give a try with lots of sockets and sources so that we can test the dynamic
+     * arrays in whist_pollset
+     */
+    LocalContext2 ctx2;
+    size_t i;
+    memset(&ctx2, 0, sizeof(ctx2));
+
+    for (i = 0; i < MANY_SOCKS; i++) {
+        SOCKET socks[2];
+        EXPECT_EQ(socketpair(PF_LOCAL, SOCK_STREAM, 0, socks), 0);
+
+        ctx2.sockets[i * 2] = socks[0];
+        ctx2.sockets[1 + (i * 2)] = socks[1];
+
+        ctx2.sources[i] =
+            whist_pollset_add(set, socks[0], WHIST_POLLEVENT_READ, 0, event_counter_cb2, &ctx2);
+        EXPECT_NE(ctx2.sources[i], WHIST_INVALID_SOURCE);
+    }
+
+    /* no activity, we shall not have any event */
+    EXPECT_EQ(whist_pollset_poll(set, 100), 0);
+    EXPECT_EQ(ctx2.nreads, 0);
+
+    /* let's trigger a read event */
+    ctx2.drainSocketIndex = 0;
+    EXPECT_EQ(send(ctx2.sockets[1], "aa", 2, 0), 2);
+    EXPECT_EQ(whist_pollset_poll(set, 1 * 1000), 1);
+    EXPECT_EQ(ctx2.nreads, 1);
+    EXPECT_EQ(ctx2.nreadBytes, 2);
+    EXPECT_EQ(ctx2.lastSource, ctx2.sources[0]);
+
+    /* socket has been drained there should have no more activity */
+    EXPECT_EQ(whist_pollset_poll(set, 100), 0);
+    EXPECT_EQ(ctx2.nreads, 1);
+
+    /* let's just keep the first and last source */
+    for (i = 1; i < MANY_SOCKS - 1; i++) {
+        whist_pollset_remove(set, &ctx2.sources[i]);
+    }
+
+    EXPECT_EQ(whist_pollset_poll(set, 100), 0);
+    EXPECT_EQ(ctx2.nreads, 1);
+
+    /* poll shall still work */
+    EXPECT_EQ(send(ctx2.sockets[1], "aa", 2, 0), 2);
+    EXPECT_EQ(whist_pollset_poll(set, 1 * 1000), 1);
+    EXPECT_EQ(ctx2.nreads, 2);
+    EXPECT_EQ(ctx2.nreadBytes, 4);
+    EXPECT_EQ(ctx2.lastSource, ctx2.sources[0]);
+
+    /* tear down */
+    whist_pollset_remove(set, &ctx2.sources[0]);
+    whist_pollset_remove(set, &ctx2.sources[MANY_SOCKS - 1]);
+
+    for (i = 0; i < MANY_SOCKS * 2; i++) WHIST_CLOSE_SOCKET(ctx2.sockets[i]);
+
+    whist_pollset_free(&set);
+}
+
+#endif
 
 #ifndef _WIN32
 // This test is disabled on Windows for the time being, since UTF-8

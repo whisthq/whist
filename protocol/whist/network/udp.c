@@ -569,7 +569,7 @@ int create_udp_server_context_stun(SocketContextData* context, int port, int rec
     return 0;
 }
 
-int create_udp_client_context(SocketContextData* context, char* destination, int port,
+int create_udp_client_context(SocketContextData* context, const char* destination, int port,
                               int recvfrom_timeout_ms, int stun_timeout_ms) {
     // Create UDP socket
     if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
@@ -611,7 +611,7 @@ int create_udp_client_context(SocketContextData* context, char* destination, int
     return 0;
 }
 
-int create_udp_client_context_stun(SocketContextData* context, char* destination, int port,
+int create_udp_client_context_stun(SocketContextData* context, const char* destination, int port,
                                    int recvfrom_timeout_ms, int stun_timeout_ms) {
     // Create UDP socket
     if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
@@ -703,9 +703,9 @@ Public Function Implementations
 ============================
 */
 
-bool create_udp_socket_context(SocketContext* network_context, char* destination, int port,
+bool create_udp_socket_context(SocketContext* network_context, const char* destination, int port,
                                int recvfrom_timeout_ms, int connection_timeout_ms, bool using_stun,
-                               char* binary_aes_private_key) {
+                               const char* binary_aes_private_key) {
     /*
         Create a UDP socket context
 

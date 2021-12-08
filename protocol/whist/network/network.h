@@ -66,7 +66,7 @@ Server
 -----
 
 SocketContext context;
-creaqte_tcp_socket_context(&context, NULL, 5055, 500, 250);
+create_tcp_socket_context(&context, NULL, 5055, 500, 250);
 
 WhistPacket* packet = NULL;
 while(packet == NULL) {
@@ -123,6 +123,8 @@ Defines
 #define socklen_t int
 #define WHIST_IOCTL_SOCKET ioctlsocket
 #define WHIST_CLOSE_SOCKET closesocket
+#define whist_is_EINTR() (GetLastError() == WSAEINTR)
+#define PF_LOCAL AF_INET
 #else
 #define SOCKET int
 #define INVALID_SOCKET -1
@@ -133,6 +135,7 @@ Defines
 #define WHIST_EWOULDBLOCK EWOULDBLOCK
 #define WHIST_EAGAIN EAGAIN
 #define WHIST_EINPROGRESS EINPROGRESS
+#define whist_is_EINTR() (errno == EINTR)
 #endif
 
 #define STUN_IP "0.0.0.0"
@@ -240,7 +243,29 @@ typedef struct {
     StunEntry entry;
 } StunRequest;
 
+typedef enum {
+    SOCKET_STATE_HAVE_SOCKET,
+    SOCKET_STATE_HANDSHAKE_WAITING_PKEY_ANSWER,
+    SOCKET_STATE_HANDSHAKE_WAITING_PKEY_CONFIRM,
+    SOCKET_STATE_ESTABLISHED,
+    SOCKET_STATE_ERROR
+} SocketState;
+
+/** @brief */
 typedef struct {
+    char iv[16];
+    char signature[32];
+} PrivateKeyData;
+
+typedef struct {
+    SocketState state;
+
+    PrivateKeyData local_pkey_data;
+    PrivateKeyData remote_pkey_data;
+    PrivateKeyData signed_pkey_data;
+    int expectingBytes;
+    char* readPtr;
+
     int timeout;
     SOCKET socket;
     struct sockaddr_in addr;

@@ -18,6 +18,7 @@
 
 #ifndef _WIN32
 #include "curl/curl.h"
+#include <sys/types.h>
 #else
 #include <winhttp.h>
 #endif
@@ -86,11 +87,6 @@ void destroy_socket_context(SocketContext* context) {
 Private Function Declarations
 ============================
 */
-
-typedef struct {
-    char iv[16];
-    char signature[32];
-} PrivateKeyData;
 
 typedef struct {
     char iv[16];
@@ -179,9 +175,6 @@ void set_timeout(SOCKET socket, int timeout_ms) {
     */
 
     if (timeout_ms < 0) {
-        LOG_WARNING(
-            "WARNING: This socket will blocking indefinitely. You will not be "
-            "able to recover if a packet is never received");
         unsigned long mode = 0;
 
         if (WHIST_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
@@ -206,7 +199,6 @@ void set_timeout(SOCKET socket, int timeout_ms) {
                        sizeof(read_timeout)) < 0) {
             int err = get_last_network_error();
             LOG_WARNING("Failed to set timeout: %d. Msg: %s\n", err, strerror(err));
-
             return;
         }
     }
@@ -284,6 +276,86 @@ int get_packet_size(WhistPacket* packet) {
     return PACKET_HEADER_SIZE + packet->payload_size;
 }
 
+bool handshake_next_state(SocketContextData* context) {
+    switch (context->state) {
+        case SOCKET_STATE_HAVE_SOCKET: {
+            // Generate and send private key request data
+            prepare_private_key_request(&context->local_pkey_data);
+            if (send(context->socket, (const char*)&context->local_pkey_data,
+                     sizeof(context->local_pkey_data), 0) < 0) {
+                LOG_ERROR("send(3) failed! Could not send private key request data! %d",
+                          get_last_network_error());
+                context->state = SOCKET_STATE_ERROR;
+                return false;
+            }
+
+            context->state = SOCKET_STATE_HANDSHAKE_WAITING_PKEY_ANSWER;
+            context->expectingBytes = sizeof(PrivateKeyData);
+            context->readPtr = (char*)&context->remote_pkey_data;
+            return true;
+        }
+
+        case SOCKET_STATE_HANDSHAKE_WAITING_PKEY_ANSWER:
+        case SOCKET_STATE_HANDSHAKE_WAITING_PKEY_CONFIRM: {
+            /* common part that reads context->expectingBytes bytes */
+            socklen_t slen = sizeof(context->addr);
+            int ret = recvfrom(context->socket, context->readPtr, context->expectingBytes, 0,
+                               (struct sockaddr*)(&context->addr), &slen);
+            if (ret < 0) {
+                context->state = SOCKET_STATE_ERROR;
+                return false;
+            }
+
+            context->expectingBytes -= ret;
+            context->readPtr += ret;
+
+            if (context->expectingBytes) return true;
+
+            if (context->state == SOCKET_STATE_HANDSHAKE_WAITING_PKEY_ANSWER) {
+                LOG_INFO("Private key request received");
+                if (!sign_private_key(&context->remote_pkey_data, sizeof(PrivateKeyData),
+                                      context->binary_aes_private_key)) {
+                    LOG_ERROR("signPrivateKey failed!");
+                    context->state = SOCKET_STATE_ERROR;
+                    return false;
+                }
+
+                if (send(context->socket, (const char*)&context->remote_pkey_data,
+                         sizeof(context->remote_pkey_data), 0) < 0) {
+                    LOG_ERROR("send(3) failed! Could not send signed private key data! %d",
+                              get_last_network_error());
+                    context->state = SOCKET_STATE_ERROR;
+                    return false;
+                }
+
+                context->state = SOCKET_STATE_HANDSHAKE_WAITING_PKEY_CONFIRM;
+                context->expectingBytes = sizeof(PrivateKeyData);
+                context->readPtr = (char*)&context->signed_pkey_data;
+                return true;
+            }
+
+            /* state == SOCKET_STATE_HANDSHAKE_WAITING_PKEY_CONFIRM */
+            if (!confirm_private_key(&context->local_pkey_data, &context->signed_pkey_data,
+                                     sizeof(PrivateKeyData), context->binary_aes_private_key)) {
+                LOG_ERROR("Could not confirmPrivateKey!");
+                return false;
+            }
+
+            LOG_INFO("Private key confirmed");
+            set_timeout(context->socket, context->timeout);
+            context->state = SOCKET_STATE_ESTABLISHED;
+            return true;
+        }
+
+        case SOCKET_STATE_ESTABLISHED:
+            return true;
+
+        case SOCKET_STATE_ERROR:
+        default:
+            return false;
+    }
+}
+
 bool handshake_private_key(SocketContextData* context) {
     /*
         Perform a private key handshake with a peer.
@@ -316,7 +388,7 @@ bool handshake_private_key(SocketContextData* context) {
     while ((recv_size =
                 recvfrom(context->socket, (char*)&their_priv_key_data, sizeof(their_priv_key_data),
                          0, (struct sockaddr*)(&context->addr), &slen)) == 0) {
-        if (cnt >= 3)  // we are (very likely) getting a dead loop casued by stream socket closed
+        if (cnt >= 3)  // we are (very likely) getting a dead loop caused by stream socket closed
         {              // the loop should be okay to be removed, just kept for debugging.
             return false;
         }

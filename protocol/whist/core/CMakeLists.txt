@@ -10,9 +10,21 @@ add_custom_target(git_revision ALL
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/include/whist.sha.v ${CMAKE_BINARY_DIR}/include/whist.v
         )
 
+include(CheckIncludeFile)
+include(CheckIncludeFiles)
+
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	check_include_files(poll.h HAVE_POLL)
+	if (HAVE_POLL)
+		add_definitions(-DHAVE_POLL)
+	endif()
+endif()
+
 add_library(whistCore STATIC
         whist_memory.h
         whist_memory.c
+        whist_pollset.c
+        whist_pollset.h
         whist.h
         whist.c
         whistgetopt.h

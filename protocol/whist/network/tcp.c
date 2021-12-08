@@ -4,11 +4,17 @@
 #endif
 
 #include "tcp.h"
+#include <whist/core/whist.h>
 #include <whist/utils/aes.h>
 
 #ifndef _WIN32
+#define _GNU_SOURCE
 #include <fcntl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #endif
+
+#include <assert.h>
 
 extern unsigned short port_mappings[USHRT_MAX + 1];
 
@@ -346,8 +352,7 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
                 "Could not connect() over TCP to server: Returned %d, Error "
                 "Code %d",
                 ret, get_last_network_error());
-            closesocket(socket);
-            return false;
+            goto out_fail;
         }
     }
 
@@ -367,8 +372,7 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
                 "%d\n",
                 ret, get_last_network_error());
         }
-        closesocket(socket);
-        return false;
+        goto out_fail;
     }
 
     // Check for errors that may have happened during the select()
@@ -376,25 +380,24 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
     socklen_t len = sizeof(error);
     if (getsockopt(socket, SOL_SOCKET, SO_ERROR, (void*)&error, &len) < 0) {
         LOG_WARNING("Could not getsockopt SO_ERROR");
-        closesocket(socket);
-        return false;
+        goto out_fail;
     }
     if (error != 0) {
         LOG_WARNING("getsockopt has captured the following error: %d", error);
-        closesocket(socket);
-        return false;
+        goto out_fail;
     }
 
     set_timeout(socket, timeout_ms);
     return true;
+
+out_fail:
+    closesocket(socket);
+    return false;
 }
 
 int create_tcp_server_context(SocketContextData* context, int port, int recvfrom_timeout_ms,
                               int stun_timeout_ms) {
-    if (context == NULL) {
-        LOG_WARNING("Context is NULL");
-        return -1;
-    }
+    assert(context);
 
     fd_set fd_read, fd_write;
     FD_ZERO(&fd_read);
@@ -577,7 +580,7 @@ int create_tcp_server_context_stun(SocketContextData* context, int port, int rec
     return 0;
 }
 
-int create_tcp_client_context(SocketContextData* context, char* destination, int port,
+int create_tcp_client_context(SocketContextData* context, const char* destination, int port,
                               int recvfrom_timeout_ms, int stun_timeout_ms) {
     UNUSED(stun_timeout_ms);
     if (context == NULL) {
@@ -617,7 +620,7 @@ int create_tcp_client_context(SocketContextData* context, char* destination, int
     return 0;
 }
 
-int create_tcp_client_context_stun(SocketContextData* context, char* destination, int port,
+int create_tcp_client_context_stun(SocketContextData* context, const char* destination, int port,
                                    int recvfrom_timeout_ms, int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
@@ -774,9 +777,9 @@ Public Function Implementations
 ============================
 */
 
-bool create_tcp_socket_context(SocketContext* network_context, char* destination, int port,
+bool create_tcp_socket_context(SocketContext* network_context, const char* destination, int port,
                                int recvfrom_timeout_ms, int connection_timeout_ms, bool using_stun,
-                               char* binary_aes_private_key) {
+                               const char* binary_aes_private_key) {
     /*
         Create a TCP socket context
 
@@ -801,8 +804,7 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
     network_context->destroy_socket_context = tcp_destroy_socket_context;
 
     // Create the SocketContextData, and set to zero
-    SocketContextData* context = safe_malloc(sizeof(SocketContextData));
-    memset(context, 0, sizeof(SocketContextData));
+    SocketContextData* context = safe_zalloc(sizeof(SocketContextData));
     network_context->context = context;
 
     // if dest is NULL, it means the context will be listening for income connections
@@ -880,8 +882,7 @@ int create_tcp_listen_socket(SOCKET* sock, int port, int timeout_ms) {
     int opt = 1;
     if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt)) < 0) {
         LOG_ERROR("Could not setsockopt SO_REUSEADDR");
-        closesocket(*sock);
-        return -1;
+        goto out_fail;
     }
 
     struct sockaddr_in origin_addr;
@@ -892,17 +893,19 @@ int create_tcp_listen_socket(SOCKET* sock, int port, int timeout_ms) {
     // Bind to port
     if (bind(*sock, (struct sockaddr*)(&origin_addr), sizeof(origin_addr)) < 0) {
         LOG_ERROR("Failed to bind to port %d! %d\n", port, get_last_network_error());
-        closesocket(*sock);
-        return -1;
+        goto out_fail;
     }
 
     // Set listen queue
     LOG_INFO("Waiting for TCP Connection");
     if (listen(*sock, 3) < 0) {
         LOG_ERROR("Could not listen(2)! %d\n", get_last_network_error());
-        closesocket(*sock);
-        return -1;
+        goto out_fail;
     }
 
     return 0;
+
+out_fail:
+    closesocket(*sock);
+    return -1;
 }

@@ -16,7 +16,7 @@ Includes
 
 #ifdef _WIN32
 #define _CRT_SECURE_NO_WARNINGS
-#endif
+#endif /* _WIN32 */
 
 // In order to use accept4 we have to allow non-standard extensions
 #if !defined(_GNU_SOURCE) && defined(__linux__)

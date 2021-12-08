@@ -82,10 +82,11 @@ int discover_ports(bool *with_stun) {
     */
 
     // Create TCP context
+    int ret = -1;
     SocketContext context;
     LOG_INFO("Trying to connect (Using STUN: %s)", *with_stun ? "true" : "false");
     if (!create_tcp_socket_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                                   *with_stun, (char *)client_binary_aes_private_key)) {
+                                   *with_stun, (const char *)client_binary_aes_private_key)) {
         /*
                 *using_stun = !*using_stun;
                 LOG_INFO("Trying to connect (Using STUN: %s)", *using_stun ? "true" : "false");
@@ -108,8 +109,7 @@ int discover_ports(bool *with_stun) {
 
     if (send_packet(&context, PACKET_MESSAGE, (uint8_t *)&wcmsg, (int)sizeof(wcmsg), -1) < 0) {
         LOG_ERROR("Failed to send discovery request message.");
-        destroy_socket_context(&context);
-        return -1;
+        goto out_with_socket;
     }
     LOG_INFO("Sent discovery packet");
 
@@ -137,17 +137,13 @@ int discover_ports(bool *with_stun) {
             "%d",
             sizeof(WhistServerMessage) + sizeof(WhistDiscoveryReplyMessage),
             tcp_packet->payload_size);
-        free_packet(&context, tcp_packet);
-        destroy_socket_context(&context);
-        return -1;
+        goto out_with_packet;
     }
 
     WhistServerMessage *wsmsg = (WhistServerMessage *)tcp_packet->data;
     if (wsmsg->type != MESSAGE_DISCOVERY_REPLY) {
         LOG_ERROR("Message not of discovery reply type (Type: %d)", wsmsg->type);
-        free_packet(&context, tcp_packet);
-        destroy_socket_context(&context);
-        return -1;
+        goto out_with_packet;
     }
 
     LOG_INFO("Received discovery info packet from server!");
@@ -162,10 +158,13 @@ int discover_ports(bool *with_stun) {
              reply_msg->audio_sample_rate);
 
     error_monitor_set_connection_id(reply_msg->connection_id);
+    ret = 0;
 
+out_with_packet:
     free_packet(&context, tcp_packet);
+out_with_socket:
     destroy_socket_context(&context);
-    return 0;
+    return ret;
 }
 
 void send_ping(int ping_id) {
