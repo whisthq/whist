@@ -27,12 +27,8 @@ type BrowserData struct {
 // WriteUserInitialBrowserData writes the user's initial browser data to file(s)
 // received through JSON transport for later use
 func WriteUserInitialBrowserData(initialBrowserData BrowserData, destDir string) error {
-
-	cookieJSON := initialBrowserData.CookiesJSON
-	bookmarksJSON := initialBrowserData.BookmarksJSON
-
 	// Avoid doing work for empty string/array string
-	if len(cookieJSON) <= 2 && len(bookmarksJSON) <= 2 {
+	if len(initialBrowserData.CookiesJSON) <= 2 && len(initialBrowserData.BookmarksJSON) <= 2 {
 		logger.Infof("Not writing to file as user initial browser data is empty.")
 		// the browser data can be empty
 		return nil
@@ -56,8 +52,8 @@ func WriteUserInitialBrowserData(initialBrowserData BrowserData, destDir string)
 	bookmarkFilePath := path.Join(destDir, UserInitialBookmarksFile)
 
 	browserDataFile := [][]string{
-		{cookieJSON, cookieFilePath, "cookies"},
-		{bookmarksJSON, bookmarkFilePath, "bookmarks"}
+		{nitialBrowserData.CookiesJSON, cookieFilePath, "cookies"},
+		{nitialBrowserData.BookmarksJSON, bookmarkFilePath, "bookmarks"},
 	}
 
 	for _, browserDataFile := range s {
