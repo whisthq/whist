@@ -322,11 +322,15 @@ var authenticateAndParseRequest = func(w http.ResponseWriter, r *http.Request, s
 			return utils.MakeError("Error getting jwt_access_token from JSON body sent on %s to URL %s: %s", r.Host, r.URL, err)
 		}
 
-		// Actually verify authentication. We check that the access token sent is
-		// a valid JWT signed by Auth0.
-		_, err := auth.Verify(requestAuthSecret)
-
+		// Actually verify authentication. We check that the access token sent is a valid JWT signed by Auth0.
+		// Parses a raw access token string, verifies the token's signature, ensures that it is valid at the current moment in time.
+		claims, err := auth.ParseToken(requestAuthSecret)
 		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
+		}
+
+		if err := auth.Verify(claims); err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
 		}

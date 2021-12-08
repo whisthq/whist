@@ -30,8 +30,8 @@ var authConfigProd = authConfig{
 	Iss: "https://auth.whist.com/",
 }
 
-func getAuthConfig() authConfig {
-	switch metadata.GetAppEnvironment() {
+func getAuthConfig(appEnv metadata.AppEnvironment) authConfig {
+	switch appEnv {
 	case metadata.EnvDev:
 		return authConfigDev
 	case metadata.EnvStaging:
