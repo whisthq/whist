@@ -58,13 +58,17 @@ type MandelboxResult struct {
 type SubscriptionEvent interface{}
 
 // InstanceEvent represents an occurred event on the
-// `cloud.instance_info` database table.
+// `cloud.instance_info` database table. This struct is
+// meant to be used by any event that operates on the
+// instance_info database table.
 type InstanceEvent struct {
 	InstanceInfo []Instance `json:"cloud_instance_info"`
 }
 
 // MandelboxInfoEvent represents an occurred event on the
-// `cloud.mandelbox_info` database table.
+// `cloud.mandelbox_info` database table.This struct is
+// meant to be used by any event that operates on the
+// mandelbox_info database table.
 type MandelboxEvent struct {
 	MandelboxInfo []Mandelbox `json:"cloud_mandelbox_info"`
 }

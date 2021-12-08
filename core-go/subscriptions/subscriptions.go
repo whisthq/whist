@@ -61,18 +61,18 @@ func SetupHostSubscriptions(instanceName string, whistClient WhistHasuraClient) 
 			Query: InstanceStatusQuery,
 			Variables: map[string]interface{}{
 				"instance_name": graphql.String(instanceName),
-				"status":       graphql.String("DRAINING"),
+				"status":        graphql.String("DRAINING"),
 			},
-			Result:  InstanceEvent{},
+			Result:  InstanceEvent{[]Instance{}},
 			Handler: InstanceStatusHandler,
 		},
 		{
 			Query: MandelboxAllocatedQuery,
 			Variables: map[string]interface{}{
 				"instance_name": graphql.String(instanceName),
-				"status":       graphql.String("ALLOCATED"),
+				"status":        graphql.String("ALLOCATED"),
 			},
-			Result:  MandelboxEvent{},
+			Result:  MandelboxEvent{[]Mandelbox{}},
 			Handler: MandelboxAllocatedHandler,
 		},
 	}

@@ -98,12 +98,21 @@ func (wc *WhistClient) SetParams(params HasuraParams) {
 // It passes results through the received channel if the received `conditionFn` is true.
 func (wc *WhistClient) Subscribe(query GraphQLQuery, variables map[string]interface{}, result SubscriptionEvent,
 	conditionFn handlerfn, subscriptionEvents chan SubscriptionEvent) (string, error) {
+
 	id, err := wc.Hasura.Subscribe(query, variables, func(data *json.RawMessage, err error) error {
 		if err != nil {
 			return utils.MakeError("error receiving subscription event from Hasura: %v", err)
 		}
 
-		err = json.Unmarshal(*data, &result)
+		// Note: this switch is necessary to unmarshal the result into the appropiate
+		// event type. Otherwise it will be unmarshalled as a map[string]interface{}
+		switch result := result.(type) {
+		case InstanceEvent:
+			err = json.Unmarshal(*data, &result)
+		case MandelboxEvent:
+			err = json.Unmarshal(*data, &result)
+		}
+
 		if err != nil {
 			return utils.MakeError("failed to unmarshal subscription event: %v", err)
 		}
