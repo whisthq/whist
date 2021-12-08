@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"math/rand"
 	"os"
 	"path"
 	"sync"
