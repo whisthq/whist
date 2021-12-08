@@ -11,7 +11,7 @@ import (
 
 	"github.com/fractal/whist/core-go/metadata"
 	logger "github.com/fractal/whist/core-go/whistlogger"
-	// We use hasura's own graphql client for Go
+	graphql "github.com/hasura/go-graphql-client" // We use hasura's own graphql client for Go
 )
 
 // InstanceStatusHandler handles events from the hasura subscription which
@@ -60,8 +60,8 @@ func SetupHostSubscriptions(instanceName string, whistClient WhistHasuraClient) 
 		{
 			Query: InstanceStatusQuery,
 			Variables: map[string]interface{}{
-				"instanceName": instanceName,
-				"status":       "DRAINING",
+				"instance_name": graphql.String(instanceName),
+				"status":       graphql.String("DRAINING"),
 			},
 			Result:  InstanceEvent{},
 			Handler: InstanceStatusHandler,
@@ -69,8 +69,8 @@ func SetupHostSubscriptions(instanceName string, whistClient WhistHasuraClient) 
 		{
 			Query: MandelboxAllocatedQuery,
 			Variables: map[string]interface{}{
-				"instanceName": instanceName,
-				"status":       "ALLOCATED",
+				"instance_name": graphql.String(instanceName),
+				"status":       graphql.String("ALLOCATED"),
 			},
 			Result:  MandelboxEvent{},
 			Handler: MandelboxAllocatedHandler,
@@ -86,7 +86,7 @@ func SetupScalingSubscriptions(whistClient WhistHasuraClient) {
 		{
 			Query: MandelboxStatusQuery,
 			Variables: map[string]interface{}{
-				"status": "ALLOCATED",
+				"status": graphql.String("ALLOCATED"),
 			},
 			Result:  MandelboxEvent{},
 			Handler: MandelboxAllocatedHandler,
@@ -94,7 +94,7 @@ func SetupScalingSubscriptions(whistClient WhistHasuraClient) {
 		{
 			Query: MandelboxStatusQuery,
 			Variables: map[string]interface{}{
-				"status": "EXITED",
+				"status": graphql.String("EXITED"),
 			},
 			Result:  MandelboxEvent{},
 			Handler: MandelboxAllocatedHandler,

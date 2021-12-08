@@ -6,7 +6,7 @@ import graphql "github.com/hasura/go-graphql-client"
 // represent the graphql queries described in this file.
 type GraphQLQuery interface{}
 
-// InstanceStatusSubscription defines the event when
+// InstanceStatusQuery defines the event when
 // the provided instance $instance_name
 // changes to the provided status $status in the database
 var InstanceStatusQuery struct {
@@ -16,7 +16,7 @@ var InstanceStatusQuery struct {
 	} `graphql:"cloud_instance_info(where: {instance_name: {_eq: $instance_name}, _and: {status: {_eq: $status}}})"`
 }
 
-// MandelboxInfoSubscription defines the event when
+// MandelboxAllocatedQuery defines the event when
 // a mandelbox is assigned to the provided $instance_name
 var MandelboxAllocatedQuery struct {
 	CloudMandelboxInfo struct {
@@ -28,7 +28,7 @@ var MandelboxAllocatedQuery struct {
 	} `graphql:"cloud_mandelbox_info(where: {instance_name: {_eq: $instance_name}, _and: {status: {_eq: $status}}})"`
 }
 
-// MandelboxInfoSubscription defines the event when
+// MandelboxStatusQuery defines the event when
 // a mandelbox's status changes.
 var MandelboxStatusQuery struct {
 	CloudMandelboxInfo struct {
