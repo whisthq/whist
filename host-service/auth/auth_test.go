@@ -168,7 +168,7 @@ func TestParseToken(t *testing.T) {
 }
 
 func TestVerify(t *testing.T) {
-	// Ensure an invalid token will result in an error
+	// Ensure nil claims will result in an error
 	t.Run("NilClaim", func(t *testing.T) {
 		t.Parallel()
 
@@ -180,7 +180,7 @@ func TestVerify(t *testing.T) {
 		}
 	})
 
-	// Ensure a token without aud will result in an error
+	// Ensure claims without aud will result in an error
 	t.Run("ClaimsWithoutAud", func(t *testing.T) {
 		t.Parallel()
 
@@ -225,7 +225,7 @@ func TestVerify(t *testing.T) {
 		}
 	})
 
-	// Ensure a valid token will result in a claim
+	// Ensure a valid claims will pass all verifies
 	t.Run("ValidClaims", func(t *testing.T) {
 
 		// token is an H256-signed JWT whose payload matches config dev
