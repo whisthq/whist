@@ -44,7 +44,7 @@ func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Durat
 
 	err = watcher.Add(absParentDirectory)
 	if err != nil {
-		return MakeError("Error adding dir %s to Watcher: %s", absParentDirectory, err)
+		return MakeError("Error adding dir %s to fsnotify.Watcher: %s", absParentDirectory, err)
 	}
 
 	timer := time.NewTimer(timeout)
@@ -56,7 +56,7 @@ func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Durat
 
 		case err, ok := <-watcher.Errors:
 			if !ok {
-				return MakeError("Watcher error channel closed.")
+				return MakeError("fsnotify.Watcher error channel closed.")
 			}
 			// Note that for us, dropped events _are_ errors, since we should not be
 			// having nearly enough filesystem activity to drop any events.
@@ -64,10 +64,10 @@ func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Durat
 
 		case ev, ok := <-watcher.Events:
 			if !ok {
-				return MakeError("Watcher events channel closed.")
+				return MakeError("fsnotify.Watcher events channel closed.")
 			}
 			// TODO: remove this log once we're confident this part of the code works
-			log.Printf("Watched filesystem event: %+v", ev)
+			log.Printf("fsnotify.Watched filesystem event: %+v", ev)
 			// Check if it's a creation event that matches the filename we expect
 			if ev.Op&fsnotify.Create == fsnotify.Create && ev.Name == targetFileName {
 				return nil
