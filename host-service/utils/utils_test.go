@@ -102,7 +102,7 @@ func TestWaitForFileCreationTimeout(t *testing.T) {
 
 	// Wait for a file to be created, send a short timeout to test
 	t.Logf("Testing wait for file creation on path: %v", testDir)
-	err = WaitForFileCreation(testDir, "test-file.txt", 1*time.Second)
+	err = WaitForFileCreation(testDir, "test-file.txt", 1*time.Second, nil)
 
 	// Verify that we received an error because of the timeout
 	if err == nil {
