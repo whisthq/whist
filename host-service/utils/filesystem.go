@@ -56,7 +56,7 @@ func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Durat
 
 		case err, ok := <-watcher.Errors:
 			if !ok {
-				return MakeError("fsnotify.Watcher error channel closed.")
+				return MakeError("fsnotify.Watcher error channel closed with error: %v", err)
 			}
 			// Note that for us, dropped events _are_ errors, since we should not be
 			// having nearly enough filesystem activity to drop any events.
