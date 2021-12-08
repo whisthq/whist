@@ -3,7 +3,6 @@ package utils
 import (
 	"os"
 	"path"
-	"sync"
 	"testing"
 	"time"
 )
