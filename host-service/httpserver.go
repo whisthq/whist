@@ -330,7 +330,7 @@ var authenticateAndParseRequest = func(w http.ResponseWriter, r *http.Request, s
 			return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
 		}
 
-		if _, err := auth.Verify(claims); err != nil {
+		if err := auth.Verify(claims); err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return utils.MakeError("Received an unpermissioned backend request on %s to URL %s. Error: %s", r.Host, r.URL, err)
 		}
