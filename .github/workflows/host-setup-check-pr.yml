@@ -63,6 +63,8 @@ jobs:
       ###########################################################################
       ############################## Building AMIs ##############################
 
+      # dummy comment to trigger a deploy
+
       - name: Configure AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
