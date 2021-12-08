@@ -51,18 +51,18 @@ func WriteUserInitialBrowserData(initialBrowserData BrowserData, destDir string)
 	cookieFilePath := path.Join(destDir, UserInitialCookiesFile)
 	bookmarkFilePath := path.Join(destDir, UserInitialBookmarksFile)
 
-	browserDataFile := [][]string{
-		{nitialBrowserData.CookiesJSON, cookieFilePath, "cookies"},
-		{nitialBrowserData.BookmarksJSON, bookmarkFilePath, "bookmarks"},
+	browserDataInfos := [][]string{
+		{initialBrowserData.CookiesJSON, cookieFilePath, "cookies"},
+		{initialBrowserData.BookmarksJSON, bookmarkFilePath, "bookmarks"},
 	}
 
-	for _, browserDataFile := range s {
-		content := browserDataFile[0]
-		filePath := browserDataFile[1]
-		contentType := browserDataFile[2]
+	for _, browserDataInfo := range  browserDataInfos {
+		content := browserDataInfo[0]
+		filePath := browserDataInfo[1]
+		contentType := browserDataInfo[2]
 
-		if len(browserDataFile[0]) > 0 {
-			if err := utils.WriteToNewFile(browserDataFile[1], browserDataFile[0]); err != nil {
+		if len(content) > 0 {
+			if err := utils.WriteToNewFile(filePath, content); err != nil {
 				logger.Errorf("could not create %s file. Error: %v", contentType, err)
 			}
 		}
