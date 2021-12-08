@@ -103,7 +103,7 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
     # Default is the build asset package without the protocol. By
     # choosing the correct build asset package and passing it as a
     # docker build argument, we can control which dockerfiles copy the
-    # protcool!
+    # protocol!
     build_asset_package = "default"
     if protocol_copy_mode == "dev" and img_path in target_image_paths:
         build_asset_package = "protocol"
