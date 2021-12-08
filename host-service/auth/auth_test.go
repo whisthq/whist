@@ -245,7 +245,6 @@ func TestVerify(t *testing.T) {
 			t.Fatalf("Verify should have returned nil but got %v", err)
 		}	
 	})
-	// nneed to pass the ParseWithClaims but fail next then need one to pass all 
 }
 
 func TestVerifyAudience(t *testing.T) {
