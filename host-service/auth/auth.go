@@ -15,6 +15,7 @@ import (
 	"github.com/MicahParks/keyfunc"
 	"github.com/golang-jwt/jwt/v4"
 
+	"github.com/fractal/whist/host-service/metadata"
 	"github.com/fractal/whist/host-service/utils"
 	logger "github.com/fractal/whist/host-service/whistlogger"
 )
@@ -46,7 +47,7 @@ type WhistClaims struct {
 	Scopes Scopes `json:"scope"`
 }
 
-var config authConfig = getAuthConfig()
+var config authConfig = getAuthConfig(metadata.GetAppEnvironment())
 var jwks *keyfunc.JWKS
 
 func init() {
