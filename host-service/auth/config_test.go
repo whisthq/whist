@@ -16,7 +16,7 @@ func TestGetAuthConfigDev(t *testing.T) {
 	}
 }
 
-// TestGetAuthConfigStaging will get the dev app environmet
+// TestGetAuthConfigStaging will get the staging app environmet
 func TestGetAuthConfigStaging(t *testing.T) {
 	// getAuthConfig should return authConfigStaging
 	config := getAuthConfig(metadata.EnvStaging)
@@ -26,7 +26,7 @@ func TestGetAuthConfigStaging(t *testing.T) {
 	}
 }
 
-// TestGetAuthConfigProd will get the dev app environmet
+// TestGetAuthConfigProd will get the prod app environmet
 func TestGetAuthConfigProd(t *testing.T) {
 	// getAuthConfig should return authConfigProd
 	config := getAuthConfig(metadata.EnvProd)

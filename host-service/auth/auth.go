@@ -118,8 +118,9 @@ func (scopes *Scopes) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// ParseToken will parses an raw access token string verifies the token's signature, and
-// ensures that it is valid at the current moment in time
+// ParseToken will parses a raw access token string verifies the token's signature, and
+// ensures that it is valid at the current moment in time.
+// It returns a pointer to a WhistClaims type with the values it claims if all checks are successful.
 func ParseToken(tokenString string)  (*WhistClaims, error) {
 	claims := new(WhistClaims)
 	_, err := jwt.ParseWithClaims(tokenString, claims, jwks.Keyfunc)
@@ -133,8 +134,7 @@ func ParseToken(tokenString string)  (*WhistClaims, error) {
 
 
 // Verify checks that the claim was issued by the proper issuer for the proper audience.
-// It returns a pointer to a WhistClaims type containing the values of its claims if all
-// checks are successful.
+// It returns an error if any of the checks are fail.
 func Verify(claims *WhistClaims) error {
 	if claims == nil {
 		return utils.MakeError("Expected claims but received nil")
