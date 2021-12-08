@@ -93,164 +93,173 @@ func (m *mockClient) ContainerStart(ctx context.Context, container string, optio
 // TestSpinUpMandelbox calls SpinUpMandelbox and checks if the setup steps
 // are performed correctly.
 func TestSpinUpMandelbox(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	goroutineTracker := sync.WaitGroup{}
+	var browserImages = []string{"browsers/chrome", "browsers/brave"}
+	for _, browserImage := range browserImages {
+		t.Run(browserImage, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			goroutineTracker := sync.WaitGroup{}
 
-	// Defer the wait first since deferred functions are executed in LIFO order.
-	defer goroutineTracker.Wait()
-	defer cancelMandelboxContextByID(mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()))
-	defer cancel()
+			// Defer the wait first since deferred functions are executed in LIFO order.
+			defer goroutineTracker.Wait()
+			defer cancelMandelboxContextByID(mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()))
+			defer cancel()
 
-	var instanceName aws.InstanceName
-	var userID mandelboxtypes.UserID
-	var err error
-	if metadata.IsRunningInCI() {
-		userID = "localdev_host_service_CI"
-	} else {
-		instanceName, err = aws.GetInstanceName()
-		if err != nil {
-			logger.Errorf("Can't get AWS Instance name for localdev user config userID.")
-		}
-		userID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceName))
-	}
+			var instanceName aws.InstanceName
+			var userID mandelboxtypes.UserID
+			var err error
+			if metadata.IsRunningInCI() {
+				userID = "localdev_host_service_CI"
+			} else {
+				instanceName, err = aws.GetInstanceName()
+				if err != nil {
+					logger.Errorf("Can't get AWS Instance name for localdev user config userID.")
+				}
+				userID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceName))
+			}
 
-	// We always want to start with a clean slate
-	uninitializeFilesystem()
-	initializeFilesystem(cancel)
-	defer uninitializeFilesystem()
+			// We always want to start with a clean slate
+			uninitializeFilesystem()
+			initializeFilesystem(cancel)
+			defer uninitializeFilesystem()
 
-	testMandelboxInfo := subscriptions.Mandelbox{
-		InstanceName: string(instanceName),
-		ID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
-		SessionID:    "1234",
-		UserID:       userID,
-	}
-	testMandelboxDBEvent := subscriptions.MandelboxEvent{
-		MandelboxInfo: []subscriptions.Mandelbox{testMandelboxInfo},
-	}
-	testJSONTransportRequest := JSONTransportRequest{
-		ConfigEncryptionToken: "testToken1234",
-		JwtAccessToken:        "test_jwt_token",
-		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
-		JSONData:              "test_json_data",
-		resultChan:            make(chan requestResult),
-	}
+			testMandelboxInfo := subscriptions.Mandelbox{
+				InstanceName: string(instanceName),
+				ID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
+				SessionID:    "1234",
+				UserID:       userID,
+			}
+			testMandelboxDBEvent := subscriptions.MandelboxEvent{
+				MandelboxInfo: []subscriptions.Mandelbox{testMandelboxInfo},
+			}
+			testJSONTransportRequest := JSONTransportRequest{
+				AppName:               mandelboxtypes.AppName(browserImage),
+				ConfigEncryptionToken: "testToken1234",
+				JwtAccessToken:        "test_jwt_token",
+				MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
+				JSONData:              "test_json_data",
+				resultChan:            make(chan requestResult),
+			}
 
-	testmux := &sync.Mutex{}
-	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
+			testmux := &sync.Mutex{}
+			testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
 
-	dockerClient := mockClient{}
-	go handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
-	go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testMandelboxDBEvent, testTransportRequestMap, testmux)
+			dockerClient := mockClient{
+				browserImage: browserImage,
+			}
 
-	// Check that response is as expected
-	result := <-testJSONTransportRequest.resultChan
-	if result.Err != nil {
-		t.Fatalf("SpinUpMandelbox returned with error: %v", result.Err)
-	}
-	spinUpResult, ok := result.Result.(JSONTransportRequestResult)
-	if !ok {
-		t.Fatalf("Expected instance of SpinUpMandelboxRequestResult, got: %v", result.Result)
-	}
+			go handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
+			go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testMandelboxDBEvent, testTransportRequestMap, testmux)
 
-	// Check that container would have been started
-	if !dockerClient.started {
-		t.Errorf("Docker container was never started!")
-	}
+			// Check that response is as expected
+			result := <-testJSONTransportRequest.resultChan
+			if result.Err != nil {
+				t.Fatalf("SpinUpMandelbox returned with error: %v", result.Err)
+			}
+			spinUpResult, ok := result.Result.(JSONTransportRequestResult)
+			if !ok {
+				t.Fatalf("Expected instance of SpinUpMandelboxRequestResult, got: %v", result.Result)
+			}
 
-	// Assert port assignments are valid
-	portAssignmentAssertions := []struct {
-		portName     string
-		assignedPort uint16
-	}{
-		{"HostPortForTCP32262", spinUpResult.HostPortForTCP32262},
-		{"HostPortForTCP32273", spinUpResult.HostPortForTCP32273},
-		{"HostPortForUDP32263", spinUpResult.HostPortForUDP32263},
-	}
+			// Check that container would have been started
+			if !dockerClient.started {
+				t.Errorf("Docker container was never started!")
+			}
 
-	for _, portAssertion := range portAssignmentAssertions {
-		if portAssertion.assignedPort < portbindings.MinAllowedPort || portAssertion.assignedPort >= portbindings.MaxAllowedPort {
-			t.Errorf("Port assignment for %s is invalid: %d", portAssertion.portName, portAssertion.assignedPort)
-		}
-	}
+			// Assert port assignments are valid
+			portAssignmentAssertions := []struct {
+				portName     string
+				assignedPort uint16
+			}{
+				{"HostPortForTCP32262", spinUpResult.HostPortForTCP32262},
+				{"HostPortForTCP32273", spinUpResult.HostPortForTCP32273},
+				{"HostPortForUDP32263", spinUpResult.HostPortForUDP32263},
+			}
 
-	// Assert aesKey is valid
-	if len(spinUpResult.AesKey) != 32 {
-		t.Errorf("Expected AES key of length 32, got key: %s of length %d", spinUpResult.AesKey, len(spinUpResult.AesKey))
-	}
+			for _, portAssertion := range portAssignmentAssertions {
+				if portAssertion.assignedPort < portbindings.MinAllowedPort || portAssertion.assignedPort >= portbindings.MaxAllowedPort {
+					t.Errorf("Port assignment for %s is invalid: %d", portAssertion.portName, portAssertion.assignedPort)
+				}
+			}
 
-	// Check that container config was passed in correctly
-	if dockerClient.config.Image != "browsers/chrome" {
-		t.Errorf("Expected container to use image browsers/chrome, got %v", dockerClient.config.Image)
-	}
+			// Assert aesKey is valid
+			if len(spinUpResult.AesKey) != 32 {
+				t.Errorf("Expected AES key of length 32, got key: %s of length %d", spinUpResult.AesKey, len(spinUpResult.AesKey))
+			}
 
-	// Check ports have been exposed correctly
-	exposedPorts := dockerClient.config.ExposedPorts
-	exposedPortNames := []string{"32262/tcp", "32273/tcp", "32263/udp"}
-	for _, exposedPort := range exposedPortNames {
-		if _, ok := exposedPorts[nat.Port(exposedPort)]; !ok {
-			t.Errorf("Expected port %s to be exposed on docker container, but it wasn't", exposedPort)
-		}
-	}
+			// Check that container config was passed in correctly
+			if dockerClient.config.Image != browserImage {
+				t.Errorf("Expected container to use image %s, got %v", browserImage, dockerClient.config.Image)
+			}
 
-	// Check that host config port bindings are correct
-	portBindings := dockerClient.hostConfig.PortBindings
-	portBindingAssertions := []struct {
-		portName     string
-		assignedPort uint16
-	}{
-		{"32262/tcp", spinUpResult.HostPortForTCP32262},
-		{"32273/tcp", spinUpResult.HostPortForTCP32273},
-		{"32263/udp", spinUpResult.HostPortForUDP32263},
-	}
+			// Check ports have been exposed correctly
+			exposedPorts := dockerClient.config.ExposedPorts
+			exposedPortNames := []string{"32262/tcp", "32273/tcp", "32263/udp"}
+			for _, exposedPort := range exposedPortNames {
+				if _, ok := exposedPorts[nat.Port(exposedPort)]; !ok {
+					t.Errorf("Expected port %s to be exposed on docker container, but it wasn't", exposedPort)
+				}
+			}
 
-	for _, portBindingAssertion := range portBindingAssertions {
-		binding, ok := portBindings[nat.Port(portBindingAssertion.portName)]
-		if !ok {
-			t.Errorf("Expected port %s to be bound, but it wasn't", portBindingAssertion.portName)
-		}
-		if len(binding) < 1 || binding[0].HostPort != strconv.Itoa(int(portBindingAssertion.assignedPort)) {
-			t.Errorf("Expected port %s to be bound to %d, but it wasn't", portBindingAssertion.portName, portBindingAssertion.assignedPort)
-		}
-	}
+			// Check that host config port bindings are correct
+			portBindings := dockerClient.hostConfig.PortBindings
+			portBindingAssertions := []struct {
+				portName     string
+				assignedPort uint16
+			}{
+				{"32262/tcp", spinUpResult.HostPortForTCP32262},
+				{"32273/tcp", spinUpResult.HostPortForTCP32273},
+				{"32263/udp", spinUpResult.HostPortForUDP32263},
+			}
 
-	// Check that all resource mapping files were written correctly
-	resourceMappingDir := path.Join(utils.WhistDir, utils.PlaceholderTestUUID().String(), "mandelboxResourceMappings")
+			for _, portBindingAssertion := range portBindingAssertions {
+				binding, ok := portBindings[nat.Port(portBindingAssertion.portName)]
+				if !ok {
+					t.Errorf("Expected port %s to be bound, but it wasn't", portBindingAssertion.portName)
+				}
+				if len(binding) < 1 || binding[0].HostPort != strconv.Itoa(int(portBindingAssertion.assignedPort)) {
+					t.Errorf("Expected port %s to be bound to %d, but it wasn't", portBindingAssertion.portName, portBindingAssertion.assignedPort)
+				}
+			}
 
-	hostPortFile := path.Join(resourceMappingDir, "hostPort_for_my_32262_tcp")
-	hostPortFileContents, err := ioutil.ReadFile(hostPortFile)
-	if err != nil {
-		t.Fatalf("Failed to read resource file %s: %v", hostPortFile, err)
-	}
-	if string(hostPortFileContents) != utils.Sprintf("%d", spinUpResult.HostPortForTCP32262) {
-		t.Errorf("Host port resource mapping file does not match returned port.")
-	}
+			// Check that all resource mapping files were written correctly
+			resourceMappingDir := path.Join(utils.WhistDir, utils.PlaceholderTestUUID().String(), "mandelboxResourceMappings")
 
-	ttyFile := path.Join(resourceMappingDir, "tty")
-	ttyFileContents, err := ioutil.ReadFile(ttyFile)
-	if err != nil {
-		t.Fatalf("Failed to read resource file %s: %v", ttyFile, err)
-	}
-	if _, err := strconv.ParseUint(string(ttyFileContents), 10, 8); err != nil {
-		t.Errorf("TTY value %s written to file is not a valid uint8: %v.", string(ttyFileContents), err)
-	}
+			hostPortFile := path.Join(resourceMappingDir, "hostPort_for_my_32262_tcp")
+			hostPortFileContents, err := ioutil.ReadFile(hostPortFile)
+			if err != nil {
+				t.Fatalf("Failed to read resource file %s: %v", hostPortFile, err)
+			}
+			if string(hostPortFileContents) != utils.Sprintf("%d", spinUpResult.HostPortForTCP32262) {
+				t.Errorf("Host port resource mapping file does not match returned port.")
+			}
 
-	gpuFile := path.Join(resourceMappingDir, "gpu_index")
-	gpuFileContents, err := ioutil.ReadFile(gpuFile)
-	if err != nil {
-		t.Fatalf("Failed to read resource file %s: %v", gpuFile, err)
-	}
-	if _, err := strconv.Atoi(string(gpuFileContents)); err != nil {
-		t.Errorf("GPU index %s written to file is not a valid int: %v.", string(gpuFileContents), err)
-	}
+			ttyFile := path.Join(resourceMappingDir, "tty")
+			ttyFileContents, err := ioutil.ReadFile(ttyFile)
+			if err != nil {
+				t.Fatalf("Failed to read resource file %s: %v", ttyFile, err)
+			}
+			if _, err := strconv.ParseUint(string(ttyFileContents), 10, 8); err != nil {
+				t.Errorf("TTY value %s written to file is not a valid uint8: %v.", string(ttyFileContents), err)
+			}
 
-	readyFile := path.Join(resourceMappingDir, ".ready")
-	readyFileContents, err := ioutil.ReadFile(readyFile)
-	if err != nil {
-		t.Fatalf("Failed to read resource file %s: %v", readyFile, err)
-	}
-	if string(readyFileContents) != ".ready" {
-		t.Errorf("Ready file contains invalid contents: %s", string(readyFileContents))
+			gpuFile := path.Join(resourceMappingDir, "gpu_index")
+			gpuFileContents, err := ioutil.ReadFile(gpuFile)
+			if err != nil {
+				t.Fatalf("Failed to read resource file %s: %v", gpuFile, err)
+			}
+			if _, err := strconv.Atoi(string(gpuFileContents)); err != nil {
+				t.Errorf("GPU index %s written to file is not a valid int: %v.", string(gpuFileContents), err)
+			}
+
+			readyFile := path.Join(resourceMappingDir, ".ready")
+			readyFileContents, err := ioutil.ReadFile(readyFile)
+			if err != nil {
+				t.Fatalf("Failed to read resource file %s: %v", readyFile, err)
+			}
+			if string(readyFileContents) != ".ready" {
+				t.Errorf("Ready file contains invalid contents: %s", string(readyFileContents))
+			}
+		})
 	}
 }
 
