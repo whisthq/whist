@@ -22,6 +22,10 @@ import (
 // `path/filepath` are just vague enough for me to enforce this rule for the
 // callers. This rule may be subject to relaxation in the future.
 //
+// The function accepts a pointer to a fsnotify watcher. If the caller passes in
+// nil then we will create a new watcher and handle the clean up. If a watcher
+// is passed by the caller then they are expected to clean up their watcher.
+//
 // NOTE: Each invocation of this function creates an `inotify` instance and
 // holds onto it for the duration of this function call. By default, our
 // instances have a limit of 128 watchers per user. Therefore, we bump this
