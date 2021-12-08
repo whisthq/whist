@@ -87,11 +87,17 @@ test: build
 # Set AWS credentials to allow user config integration tests to run
 	sudo env "PATH=$(PATH)" "CI=$(CI)" "AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID)" "AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY)" go test -v -p 1 ./... -race -covermode=atomic -coverprofile=coverage.out
 
+ifeq ($(CI),true)
+	$(info Running in CI, uploading code coverage results to Codecov...)
 # Download the Codecov uploader
 	curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
 
 # Upload coverage report to Codecov
 	./codecov -t ${CODECOV_TOKEN} -c -F host-service
+	$(info Finished uploading code coverage results to Codecov.)
+else
+	$(info Not running in CI, skipping code coverage upload to Codecov...)
+endif
 
 docs:
 	$(GOCMD) install github.com/johnstarich/go/gopages@master
