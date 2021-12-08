@@ -1,4 +1,4 @@
-package auth_test
+package auth
 
 import (
 	"encoding/json"
@@ -15,7 +15,7 @@ func TestUnmarshalScopes(t *testing.T) {
 	t.Run("InvalidJSON", func(t *testing.T) {
 		t.Parallel()
 
-		scope := make(auth.Scopes, 0)
+		scope := make(Scopes, 0)
 		err := scope.UnmarshalJSON([]byte{})
 
 		if err == nil {
@@ -28,8 +28,8 @@ func TestUnmarshalScopes(t *testing.T) {
 	t.Run("EmptyString", func(t *testing.T) {
 		t.Parallel()
 
-		want := auth.Scopes{}
-		got := make(auth.Scopes, 0)
+		want := Scopes{}
+		got := make(Scopes, 0)
 		err := got.UnmarshalJSON([]byte(`""`))
 
 		if err != nil {
@@ -46,8 +46,8 @@ func TestUnmarshalScopes(t *testing.T) {
 	t.Run("Singleton", func(t *testing.T) {
 		t.Parallel()
 
-		want := auth.Scopes{"hello"}
-		got := make(auth.Scopes, 1)
+		want := Scopes{"hello"}
+		got := make(Scopes, 1)
 		err := got.UnmarshalJSON([]byte(`"hello"`))
 
 		if err != nil {
@@ -64,8 +64,8 @@ func TestUnmarshalScopes(t *testing.T) {
 	t.Run("Multi", func(t *testing.T) {
 		t.Parallel()
 
-		want := auth.Scopes{"hello", "world"}
-		got := make(auth.Scopes, 2)
+		want := Scopes{"hello", "world"}
+		got := make(Scopes, 2)
 		err := got.UnmarshalJSON([]byte(`"hello world"`))
 
 		if err != nil {
@@ -82,8 +82,8 @@ func TestUnmarshalScopes(t *testing.T) {
 	t.Run("Overwrite", func(t *testing.T) {
 		t.Parallel()
 
-		want := auth.Scopes{"hello"}
-		got := auth.Scopes{"hi"}
+		want := Scopes{"hello"}
+		got := Scopes{"hi"}
 		err := got.UnmarshalJSON([]byte(`"hello"`))
 
 		if err != nil {
@@ -99,8 +99,8 @@ func TestUnmarshalScopes(t *testing.T) {
 	t.Run("UnmarshalValue", func(t *testing.T) {
 		t.Parallel()
 
-		want := auth.Scopes{"hello", "world"}
-		got := make(auth.Scopes, 2)
+		want := Scopes{"hello", "world"}
+		got := make(Scopes, 2)
 		err := json.Unmarshal([]byte(`"hello world"`), &got)
 
 		if err != nil {
@@ -117,10 +117,10 @@ func TestUnmarshalScopes(t *testing.T) {
 		t.Parallel()
 
 		type myStruct struct {
-			Scopes auth.Scopes `json:"scope"`
+			Scopes Scopes `json:"scope"`
 		}
 
-		want := myStruct{auth.Scopes{"hello", "world"}}
+		want := myStruct{Scopes{"hello", "world"}}
 		got := myStruct{}
 		err := json.Unmarshal([]byte(`{"scope": "hello world"}`), &got)
 
@@ -140,7 +140,7 @@ func TestUnmarshalAudience(t *testing.T) {
 	t.Run("InvalidJSON", func(t *testing.T) {
 		t.Parallel()
 
-		audience := make(auth.Audience, 0)
+		audience := make(Audience, 0)
 		// UnmarshalJSON will throw an error as the byte array does not contain a string/string splice
 		err := audience.UnmarshalJSON([]byte(`{"test":"not string"}`))
 
@@ -150,46 +150,107 @@ func TestUnmarshalAudience(t *testing.T) {
 	})
 }
 
-func TestVerify(t *testing.T) {
+func TestParseToken(t *testing.T) {
 	// Ensure an invalid token will result in an error
 	t.Run("InvalidToken", func(t *testing.T) {
 		t.Parallel()
 
 		token := "not_a_real_token"
-		// Verify should return an error as the token is invalid
-		claim, err := Verify(token)
+		// ParseToken should return an error as the token is invalid
+		claim, err := ParseToken(token)
+
+		if err == nil {
+			t.Fatal("ParseToken should have returned an err")
+		}
+
+		if claim != nil {
+			t.Fatalf("ParseToken should have set claim to nil but got %v", claim)
+		}
+	})
+}
+
+func TestVerify(t *testing.T) {
+	// Ensure an invalid token will result in an error
+	t.Run("NilClaim", func(t *testing.T) {
+		t.Parallel()
+
+		// Verify should return an error as the claims is nil
+		err := Verify(nil)
 
 		if err == nil {
 			t.Fatal("Verify should have returned an err")
 		}
+	})
 
-		if claim != nil {
-			t.Fatalf("Verify should have set claim to nil but got %v", claim)
+	// Ensure a token without aud will result in an error
+	t.Run("ClaimsWithoutAud", func(t *testing.T) {
+		t.Parallel()
+
+		// token is an H256-signed JWT whose payload is {}
+		token := "eyJraWQiOiI1eTV0SUxqcUVvT0tyT0t6RGJTMXgiLCJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImhtYWMiOiJubyJ9.e30.piTMYmm7MvoJ8dAXSwpJhZJStB90TgCcHgy0-uLja1g"
+
+		claims := new(WhistClaims)
+		parser := new(jwt.Parser)
+		_, _, err := parser.ParseUnverified(token, claims)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// Verify should return an error as the claims will not match the config's audience
+		err = Verify(claims)
+
+		if err == nil {
+			t.Fatal("ParseToken should have returned an err")
 		}
 	})
 
-	// Ensure a token with missing Iss will result in an error
-	t.Run("TokenWIthoutIss", func(t *testing.T) {
+	// Ensure claims with missing Iss will result in an error
+	t.Run("ClaimsWIthoutIss", func(t *testing.T) {
 		t.Parallel()
 
-		// rawToken is an H256-signed JWT whose payload is {"aud": "foo"}
-		token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJmb28ifQ.h44sAymzUhQYXbdOqrCkr7aEf0HkU-wbgWQdQ74Q288"
-		// Verify should return an error as the token is invalid
-		claim, err := Verify(token)
+		// token is an H256-signed JWT whose payload is {"aud": "https://api.fractal.co"}
+		token := "eyJraWQiOiI1eTV0SUxqcUVvT0tyT0t6RGJTMXgiLCJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImhtYWMiOiJubyJ9.eyJhdWQiOiJodHRwczovL2FwaS5mcmFjdGFsLmNvIn0.1UkhyuDTJ59e6ZSFgVIgGGj1Xo59XxLoeFpNyx9ssr8"
+		// Verify should return an error as the claims are missing Iss
+		claims := new(WhistClaims)
+		parser := new(jwt.Parser)
+		_, _, err := parser.ParseUnverified(token, claims)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		err = Verify(claims)
 
 		if err == nil {
 			t.Fatal("Verify should have returned an err because Iss is missing")
 		}
-
-		if claim != nil {
-			t.Fatalf("Verify should have set claim to nil but got %v", claim)
-		}
 	})
 
+	// Ensure a valid token will result in a claim
+	t.Run("ValidClaims", func(t *testing.T) {
+
+		// token is an H256-signed JWT whose payload matches config dev
+		token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJodHRwczovL2FwaS5mcmFjdGFsLmNvIiwiaXNzIjoiaHR0cHM6Ly9mcmFjdGFsLWRldi51cy5hdXRoMC5jb20vIn0.kYmU7bGXvpRuISydcIYju2yoUy018vkPD6y1tcvxzVM"
+		// Verify should return nil as the claims are valid
+		claims := new(WhistClaims)
+		parser := new(jwt.Parser)
+		_, _, err := parser.ParseUnverified(token, claims)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		err = Verify(claims)
+
+		if err != nil {
+			t.Fatalf("Verify should have returned nil but got %v", err)
+		}	
+	})
 	// nneed to pass the ParseWithClaims but fail next then need one to pass all 
 }
 
-func TestParseToken(t *testing.T) {
+func TestVerifyAudience(t *testing.T) {
 	// Ensure that tokens whose "aud" claim is a string are parsed correctly.
 	t.Run("OneAudience", func(t *testing.T) {
 		t.Parallel()
@@ -197,7 +258,7 @@ func TestParseToken(t *testing.T) {
 		// rawToken is an H256-signed JWT whose payload is {"aud": "foo"}
 		const rawToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJmb28ifQ.h44sAymzUhQYXbdOqrCkr7aEf0HkU-wbgWQdQ74Q288"
 
-		claims := new(auth.WhistClaims)
+		claims := new(WhistClaims)
 		parser := new(jwt.Parser)
 		_, _, err := parser.ParseUnverified(rawToken, claims)
 
@@ -219,7 +280,7 @@ func TestParseToken(t *testing.T) {
 		// {"aud": ["hello", "world"]}.
 		const rawToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsiaGVsbG8iLCJ3b3JsZCJdfQ.ckOGyW7IkarMXd8-KxlDXB9LbdFwN06tVqraRXjRRyk"
 
-		claims := new(auth.WhistClaims)
+		claims := new(WhistClaims)
 		parser := new(jwt.Parser)
 		_, _, err := parser.ParseUnverified(rawToken, claims)
 
@@ -238,7 +299,7 @@ func TestVerifyScope(t *testing.T) {
 	t.Run("Empty", func(t *testing.T) {
 		t.Parallel()
 
-		claims := new(auth.WhistClaims)
+		claims := new(WhistClaims)
 
 		if claims.VerifyScope("foo") {
 			t.Fatal("VerifyScope should return false")
@@ -250,8 +311,8 @@ func TestVerifyScope(t *testing.T) {
 	t.Run("Mismatch", func(t *testing.T) {
 		t.Parallel()
 
-		claims := &auth.WhistClaims{
-			Scopes: auth.Scopes{"foo", "bar"},
+		claims := &WhistClaims{
+			Scopes: Scopes{"foo", "bar"},
 		}
 
 		if claims.VerifyScope("baz") {
@@ -263,8 +324,8 @@ func TestVerifyScope(t *testing.T) {
 	t.Run("Match", func(t *testing.T) {
 		t.Parallel()
 
-		claims := &auth.WhistClaims{
-			Scopes: auth.Scopes{"foo", "bar", "baz"},
+		claims := &WhistClaims{
+			Scopes: Scopes{"foo", "bar", "baz"},
 		}
 
 		if !claims.VerifyScope("bar") {
