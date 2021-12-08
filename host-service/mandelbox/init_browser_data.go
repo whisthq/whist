@@ -5,8 +5,8 @@ import (
 	"os/exec"
 	"path"
 
-	"github.com/fractal/fractal/host-service/utils"
-	logger "github.com/fractal/fractal/host-service/whistlogger"
+	"github.com/fractal/whist/host-service/utils"
+	logger "github.com/fractal/whist/host-service/whistlogger"
 )
 
 // This contains the path and file names related to browser data
