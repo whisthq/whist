@@ -91,13 +91,14 @@ func TestWaitForFileCreation(t *testing.T) {
 }
 
 func TestWaitForFileCreationTimeout(t *testing.T) {
+	testDir := path.Join(TempDir, "testBase")
+
 	// Setup the test directory to write the test file
 	err := setupTestDirs(testDir)
 	defer cleanupTestDirs()
 	if err != nil {
 		t.Fatalf("Failed to setup test directory: %v", err)
 	}
-	testDir := path.Join(TempDir, "testBase")
 
 	// Wait for a file to be created, send a short timeout to test
 	t.Logf("Testing wait for file creation on path: %v", testDir)
