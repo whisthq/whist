@@ -33,15 +33,16 @@ func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Durat
 	}
 	targetFileName := path.Join(absParentDirectory, fileName)
 
+	var err error
 	if watcher == nil {
-		watcher, err := fsnotify.NewWatcher()
+		watcher, err = fsnotify.NewWatcher()
 		if err != nil {
 			return MakeError("Couldn't create new fsnotify.Watcher: %s", err)
 		}
 		defer watcher.Close()
 	}
 
-	err := watcher.Add(absParentDirectory)
+	err = watcher.Add(absParentDirectory)
 	if err != nil {
 		return MakeError("Error adding dir %s to Watcher: %s", absParentDirectory, err)
 	}
