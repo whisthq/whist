@@ -22,28 +22,44 @@ import (
 // `path/filepath` are just vague enough for me to enforce this rule for the
 // callers. This rule may be subject to relaxation in the future.
 //
+// The function accepts a pointer to a fsnotify watcher. If the caller passes in
+// nil then we will create a new watcher and handle the clean up. If a watcher
+// is passed by the caller then they are expected to clean up their watcher.
+//
 // NOTE: Each invocation of this function creates an `inotify` instance and
 // holds onto it for the duration of this function call. By default, our
 // instances have a limit of 128 watchers per user. Therefore, we bump this
 // limit in host-setup to prevent it from being a limiting factor for our
 // mandelbox launches.
-func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Duration) error {
+func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Duration, watcher *fsnotify.Watcher) error {
 	if !path.IsAbs(absParentDirectory) {
 		return MakeError("Can't pass non-absolute paths into WaitForFileCreation")
 	}
 	targetFileName := path.Join(absParentDirectory, fileName)
 
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return MakeError("Couldn't create new fsnotify.Watcher: %s", err)
+	var err error
+	if watcher == nil {
+		watcher, err = fsnotify.NewWatcher()
+		if err != nil {
+			return MakeError("Couldn't create new fsnotify.Watcher: %s", err)
+		}
+		defer watcher.Close()
 	}
-	defer watcher.Close()
 
-	err = watcher.Add(absParentDirectory)
-	if err != nil {
+	if err = watcher.Add(absParentDirectory); err != nil {
 		return MakeError("Error adding dir %s to fsnotify.Watcher: %s", absParentDirectory, err)
 	}
 
+	if err = waitForErrorOrCreation(timeout, targetFileName, watcher.Events, watcher.Errors); err != nil {
+		return MakeError("Error waiting for file creation: %v", err)
+	}
+
+	return nil
+}
+
+// waitForErrorOrCreation will handle watcher events, errors, and timeouts that occur
+func waitForErrorOrCreation(timeout time.Duration, targetFileName string, watcherEvent chan fsnotify.Event, watcherErr chan error) error {
+	// Create timer here
 	timer := time.NewTimer(timeout)
 
 	for {
@@ -51,27 +67,26 @@ func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Durat
 		case <-timer.C:
 			return context.DeadlineExceeded
 
-		case err, ok := <-watcher.Errors:
+		case err, ok := <-watcherErr:
 			if !ok {
-				return MakeError("fsnotify.Watcher error channel closed.")
+				return MakeError("fsnotify.Watcher error channel closed with error: %v", err)
 			}
 			// Note that for us, dropped events _are_ errors, since we should not be
 			// having nearly enough filesystem activity to drop any events.
-			return MakeError("fsnotify returned error: %s", err)
+			return MakeError("returned error: %s", err)
 
-		case ev, ok := <-watcher.Events:
+		case ev, ok := <-watcherEvent:
 			if !ok {
 				return MakeError("fsnotify.Watcher events channel closed.")
 			}
 			// TODO: remove this log once we're confident this part of the code works
-			log.Printf("Watched filesystem event: %+v", ev)
+			log.Printf("fsnotify.Watched filesystem event: %+v", ev)
 			// Check if it's a creation event that matches the filename we expect
 			if ev.Op&fsnotify.Create == fsnotify.Create && ev.Name == targetFileName {
 				return nil
 			}
 		}
 	}
-
 }
 
 // writeToNewFile creates a file then writes the content

@@ -336,9 +336,11 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		}
 
 		logger.Infof("Waiting for whist application to warm up...")
-		if err = utils.WaitForFileCreation(utils.Sprintf("/whist/%s/mandelboxResourceMappings/", containerName), "done_sleeping_until_X_clients", time.Minute*5); err != nil {
+
+		if err = utils.WaitForFileCreation(utils.Sprintf("/whist/%s/mandelboxResourceMappings/", containerName), "done_sleeping_until_X_clients", time.Minute*5, nil); err != nil {
 			return utils.MakeError("Error warming up whist application: %s", err)
 		}
+
 		logger.Infof("Finished waiting for whist application to warm up.")
 
 		time.Sleep(5 * time.Second)
@@ -754,10 +756,11 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// Don't wait for whist application to start up in local environment
 	if !metadata.IsLocalEnv() {
 		logger.Infof("SpinUpMandelbox(): Waiting for mandelbox %s whist application to start up...", mandelboxSubscription.ID)
-		if err = utils.WaitForFileCreation(utils.Sprintf("/whist/%s/mandelboxResourceMappings/", mandelboxSubscription.ID), "done_sleeping_until_X_clients", time.Second*20); err != nil {
+		if err = utils.WaitForFileCreation(utils.Sprintf("/whist/%s/mandelboxResourceMappings/", mandelboxSubscription.ID), "done_sleeping_until_X_clients", time.Second*20, nil); err != nil {
 			logAndReturnError("Error warming up whist application: %s", err)
 			return
 		}
+
 		logger.Infof("SpinUpMandelbox(): Finished waiting for mandelbox %s whist application to start up", mandelboxSubscription.ID)
 	}
 
