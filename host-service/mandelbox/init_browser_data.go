@@ -6,7 +6,6 @@ import (
 	"path"
 
 	"github.com/fractal/fractal/host-service/utils"
-	mandelboxtypes "github.com/fractal/fractal/host-service/mandelbox/types"
 	logger "github.com/fractal/fractal/host-service/whistlogger"
 )
 
@@ -16,6 +15,14 @@ const (
 	UserInitialCookiesFile   string = "user-initial-cookies"
 	UserInitialBookmarksFile string = "user-initial-bookmarks"
 )
+
+// BrowserData is a collection of possible browser datas a user generates
+type BrowserData struct {
+	// CookieJSON is the user's cookie sqlite3 file in a string format
+	CookiesJSON 	string
+	// BookmarkJSON is the user's bookmark json file
+	BookmarksJSON 	string
+}
 
 // WriteUserInitialBrowserData writes the user's initial browser data to file(s)
 // received through JSON transport for later use
@@ -44,18 +51,25 @@ func WriteUserInitialBrowserData(initialBrowserData BrowserData, destDir string)
 			cmd.Run()
 		}()
 	}
-
 	// Begin writing user initial browser data
 	cookieFilePath := path.Join(destDir, UserInitialCookiesFile)
-
-	if err := utils.WriteToNewFile(cookieFilePath, cookieJSON); err != nil {
-		return utils.MakeError("error creating cookies file. Error: %v", err)
-	}
-
 	bookmarkFilePath := path.Join(destDir, UserInitialBookmarksFile)
 
-	if err := utils.WriteToNewFile(bookmarkFilePath, bookmarksJSON); err != nil {
-		return utils.MakeError("error creating bookmarks file. Error: %v", err)
+	browserDataFile := [][]string{
+		{cookieJSON, cookieFilePath, "cookies"},
+		{bookmarksJSON, bookmarkFilePath, "bookmarks"}
+	}
+
+	for _, browserDataFile := range s {
+		content := browserDataFile[0]
+		filePath := browserDataFile[1]
+		contentType := browserDataFile[2]
+
+		if len(browserDataFile[0]) > 0 {
+			if err := utils.WriteToNewFile(browserDataFile[1], browserDataFile[0]); err != nil {
+				logger.Errorf("could not create %s file. Error: %v", contentType, err)
+			}
+		}
 	}
 
 	logger.Infof("Finished storing user initial browser data.")

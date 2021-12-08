@@ -49,7 +49,7 @@ func TestUserConfigIntegration(t *testing.T) {
 	}
 	defer cleanupTestDirs()
 
-	unpackedConfigPath := path.Join(testMandelboxData.getUserConfigDir(), testMandelboxData.getUnpackedConfigsDirectoryName())
+	unpackedConfigPath := path.Join(testMandelboxData.GetUserConfigDir(), GetUnpackedConfigsDirectoryName())
 	if err := os.MkdirAll(unpackedConfigPath, 0777); err != nil {
 		t.Fatalf("failed to create config dir %s: %v", unpackedConfigPath, err)
 	}

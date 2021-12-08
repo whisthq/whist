@@ -114,6 +114,9 @@ type Mandelbox interface {
 	// Backup the user configs to S3
 	BackupUserConfigs() error
 
+	// GetUserConfigDir provides the directory for the user config
+	GetUserConfigDir() string
+
 	GetConfigBuffer() *manager.WriteAtBuffer
 	SetConfigBuffer(*manager.WriteAtBuffer)
 

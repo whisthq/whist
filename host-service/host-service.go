@@ -721,18 +721,19 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// Write user initial browser data at the same time as writeJSONData.
 	// This is done separately since both functions are independent of each other and we can save time.
-	userInitialmandelboxDataDownloadComplete := make(chan bool)
+	userInitialBrowserDataDownloadComplete := make(chan bool)
 	go func() {
 		logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
 
 		// Create browser data
-		userInitialmandelboxData := mandelboxtypes.mandelboxData{
-			CookieJSON: req.Cookies
-			BookmarkJSON: req.BookmarkJSON
+		userInitialBrowserData := mandelboxData.mandelboxData{
+			CookiesJSON: req.Cookies,
+			BookmarksJSON: req.BookmarkJSON
 		}
 
-		err := mandelbox.WriteUserInitialmandelboxData(userInitialmandelboxData)
-		userInitialmandelboxDataDownloadComplete <- true
+		destDir := path.Join(mandelbox.GetUserConfigDir(), mandelboxData.GetUnpackedConfigsDirectoryName())
+		err := mandelbox.WriteUserInitialBrowserData(userInitialBrowserData, destDir)
+		userInitialBrowserDataDownloadComplete <- true
 		if err != nil {
 			logger.Warningf("Error writing user initial browser data for mandelbox %s: %v", mandelboxSubscription.ID, err)
 			return
@@ -748,7 +749,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		metrics.Increment("ErrorRate")
 	}
 
-	<-userInitialmandelboxDataDownloadComplete
+	<-userInitialBrowserDataDownloadComplete
 
 	// Unblocks whist-startup.sh to start symlink loaded user configs
 	err = mandelbox.MarkReady()

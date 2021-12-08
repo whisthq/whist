@@ -15,12 +15,19 @@ import (
 // TestUserInitialBrowserWrite checks if the browser data is properly created by
 // calling the write function and comparing results with a manually generated cookie file
 func TestUserInitialBrowserWrite(t *testing.T) {
+	destDir, err := ioutil.TempDir("", "testInitBrowser")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer os.RemoveAll(destDir)
+	
 	// Define browser data
 	testCookie1 := "{'creation_utc': 13280861983875934, 'host_key': 'test_host_key_1.com'}"
 	testCookie2 := "{'creation_utc': 4228086198342934, 'host_key': 'test_host_key_2.com'}"
 
 	cookieJSON := "[" + testCookie1 + "," + testCookie2 + "]"
-	bookmarksJSON := "{ 'test_bookmark_content': '1'}"
+	bookmarksJSON := ""
 
 	// Create browser data
 	userInitialBrowserData := mandelboxtypes.BrowserData{
@@ -28,11 +35,9 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 		BookmarksJSON: bookmarksJSON,
 	}
 
-	if err := testMandelboxData.WriteUserInitialBrowserData(userInitialBrowserData); err != nil {
+	if err := testMandelboxData.WriteUserInitialBrowserData(userInitialBrowserData, destDir); err != nil {
 		t.Fatalf("error writing user initial browser data: %v", err)
 	}
-
-	defer os.RemoveAll(destDir)
 
 	if err := WriteUserInitialBrowserData(userInitialBrowserData, destDir); err != nil {
 		t.Fatalf("error writing user initial browser data: %v", err)

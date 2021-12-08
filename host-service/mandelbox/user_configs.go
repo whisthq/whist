@@ -110,8 +110,8 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 	logger.Infof("Decompressing user config for mandelbox %s", mandelbox.GetID())
 
 	// Make directory for user configs
-	configDir := mandelbox.getUserConfigDir()
-	unpackedConfigDir := path.Join(configDir, mandelbox.getUnpackedConfigsDirectoryName())
+	configDir := mandelbox.GetUserConfigDir()
+	unpackedConfigDir := path.Join(configDir, GetUnpackedConfigsDirectoryName())
 	err = mandelbox.SetupUserConfigDirs()
 	if err != nil {
 		return utils.MakeError("failed to setup user config directories: %v", err)
@@ -156,8 +156,8 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 		return utils.MakeError("Cannot save user configs for MandelboxID %s since ConfigEncryptionToken is empty", mandelboxID)
 	}
 
-	configDir := mandelbox.getUserConfigDir()
-	unpackedConfigPath := path.Join(configDir, mandelbox.getUnpackedConfigsDirectoryName())
+	configDir := mandelbox.GetUserConfigDir()
+	unpackedConfigPath := path.Join(configDir, GetUnpackedConfigsDirectoryName())
 
 	// Compress the user configs into a tar.lz4 file
 	compressedConfig, err := configutils.CompressTarLz4(unpackedConfigPath)
@@ -205,12 +205,12 @@ func (mandelbox *mandelboxData) WriteJSONData() error {
 func (mandelbox *mandelboxData) SetupUserConfigDirs() error {
 	logger.Infof("Creating user config directories for mandelbox %s", mandelbox.GetID())
 
-	configDir := mandelbox.getUserConfigDir()
+	configDir := mandelbox.GetUserConfigDir()
 	if err := os.MkdirAll(configDir, 0777); err != nil {
 		return utils.MakeError("Could not make dir %s. Error: %s", configDir, err)
 	}
 
-	unpackedConfigDir := path.Join(configDir, mandelbox.getUnpackedConfigsDirectoryName())
+	unpackedConfigDir := path.Join(configDir, GetUnpackedConfigsDirectoryName())
 	if err := os.MkdirAll(unpackedConfigDir, 0777); err != nil {
 		return utils.MakeError("Could not make dir %s. Error: %s", unpackedConfigDir, err)
 	}
@@ -220,15 +220,21 @@ func (mandelbox *mandelboxData) SetupUserConfigDirs() error {
 
 // cleanUserConfigDir removes all user config related files and directories from the host.
 func (mandelbox *mandelboxData) cleanUserConfigDir() {
-	err := os.RemoveAll(mandelbox.getUserConfigDir())
+	err := os.RemoveAll(mandelbox.GetUserConfigDir())
 	if err != nil {
-		logger.Errorf("Failed to remove dir %s. Error: %s", mandelbox.getUserConfigDir(), err)
+		logger.Errorf("Failed to remove dir %s. Error: %s", mandelbox.GetUserConfigDir(), err)
 	}
 }
 
-// getUserConfigDir returns the absolute path to the user config directory.
-func (mandelbox *mandelboxData) getUserConfigDir() string {
+// GetUserConfigDir returns the absolute path to the user config directory.
+func (mandelbox *mandelboxData) GetUserConfigDir() string {
 	return utils.Sprintf("%s%v/%s", utils.WhistDir, mandelbox.GetID(), "userConfigs")
+}
+
+// GetUnpackedConfigsDirectoryName returns the name of the
+// directory that stores unpacked user configs.
+func GetUnpackedConfigsDirectoryName() string {
+	return "unpacked_configs/"
 }
 
 // getS3ConfigKey returns the S3 key to the encrypted user config file.
@@ -239,12 +245,6 @@ func (mandelbox *mandelboxData) getS3ConfigKey() string {
 // getEncryptedArchiveFilename returns the name of the encrypted user config file.
 func (mandelbox *mandelboxData) getEncryptedArchiveFilename() string {
 	return "fractal-app-config.tar.lz4.enc"
-}
-
-// getUnpackedConfigsDirectoryName returns the name of the
-// directory that stores unpacked user configs.
-func (mandelbox *mandelboxData) getUnpackedConfigsDirectoryName() string {
-	return "unpacked_configs/"
 }
 
 // getTokenHash returns a hash of the given token.
