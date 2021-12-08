@@ -105,6 +105,6 @@ jobs:
       # Build all Docker images, as if we were in production
       - name: Build Mandelboxes
         working-directory: mandelboxes
-        run: ./build.sh browsers/chrome --prod
+        run: ./build.sh --all --prod
         env:
           DOCKER_BUILDKIT: 1
