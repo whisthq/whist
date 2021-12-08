@@ -36,10 +36,6 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 		t.Fatalf("error writing user initial browser data: %v", err)
 	}
 
-	if err := WriteUserInitialBrowserData(userInitialBrowserData, destDir); err != nil {
-		t.Fatalf("error writing user initial browser data: %v", err)
-	}
-
 	// Get browser data file path
 	cookieFilePath := path.Join(destDir, UserInitialCookiesFile)
 	bookmarkFilePath := path.Join(destDir, UserInitialBookmarksFile)
