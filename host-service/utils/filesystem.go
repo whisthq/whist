@@ -42,11 +42,20 @@ func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Durat
 		defer watcher.Close()
 	}
 
-	err = watcher.Add(absParentDirectory)
-	if err != nil {
+	if err = watcher.Add(absParentDirectory); err != nil {
 		return MakeError("Error adding dir %s to fsnotify.Watcher: %s", absParentDirectory, err)
 	}
 
+	if err = waitForErrorOrCreation(timeout, targetFileName, watcher.Events, watcher.Errors); err != nil {
+		return MakeError("Error waiting for file creation: %v", err)
+	}
+
+	return nil
+}
+
+// waitForErrorOrCreation will handle watcher events, errors, and timeouts that occur
+func waitForErrorOrCreation(timeout time.Duration, targetFileName string, watcherEvent chan fsnotify.Event, watcherErr chan error) error {
+	// Create timer here
 	timer := time.NewTimer(timeout)
 
 	for {
@@ -54,7 +63,7 @@ func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Durat
 		case <-timer.C:
 			return context.DeadlineExceeded
 
-		case err, ok := <-watcher.Errors:
+		case err, ok := <-watcherErr:
 			if !ok {
 				return MakeError("fsnotify.Watcher error channel closed with error: %v", err)
 			}
@@ -62,7 +71,7 @@ func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Durat
 			// having nearly enough filesystem activity to drop any events.
 			return MakeError("returned error: %s", err)
 
-		case ev, ok := <-watcher.Events:
+		case ev, ok := <-watcherEvent:
 			if !ok {
 				return MakeError("fsnotify.Watcher events channel closed.")
 			}
@@ -74,7 +83,6 @@ func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Durat
 			}
 		}
 	}
-
 }
 
 // writeToNewFile creates a file then writes the content
