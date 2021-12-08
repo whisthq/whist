@@ -71,10 +71,7 @@ In order to test the interaction between the client app and the server, you may 
 
 - On your AWS instance, build the protocol and the Chrome mandelbox with `cd ~/whist/mandelboxes && ./build.sh browsers/chrome`. Then, run the host-service with cd `~/whist/host-service && make run`.
   - If you want to use brave instead of chrome run `./build.sh browsers/brave`.
-    <<<<<<< HEAD
-  - # If you run into any issues getting the `host-service` to run, make sure to stop and remove any Docker containers that are running and delete the /whist folder with `sudo rm -rf /whist/`.
   - If you run into any issues getting the `host-service` to run, make sure to stop and remove any Docker containers that are running and delete the /whist folder with `sudo rm -rf /whist/`.
-    > > > > > > > b95c6fc40 (remove unnecessary warning about run.sh)
 - On your computer, after initializing yarn by running `yarn`, set the `TESTING_LOCALDEV_HOST_IP` environment variable to the public IP of the AWS instance. Then, from the `client-applications` folder, call `yarn test:manual localdevHost`. If you get errors, try removing the `node_modules` folder and the `yarn.lock` file with `rm -rf node_modules yarn.lock` and then re-initialize with `yarn`.
 - After closing the client-application on your machine, you need to stop and remove all Docker containers on the AWS instance before you can quit the `host-service` (`Ctrl+C` won't work while the Docker containers are still running). To see all running/recently stopped containers, use `docker ps -a`. From the results, you can find the container IDs which you can then use to stop/remove containers with `docker stop <container ID>` and `docker rm <container ID>`. A quicker way to stop/remove all containers is `docker stop $(docker ps -aq) && docker rm $(docker ps -aq)`. Once you are done with this step, press (`Ctrl+C`) to stop the `host-service`.
 
