@@ -38,10 +38,9 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 
 	// Get browser data file path
 	cookieFilePath := path.Join(destDir, UserInitialCookiesFile)
-	bookmarkFilePath := path.Join(destDir, UserInitialBookmarksFile)
 
-	// Stores the file path and content for each browser data type
-	fileAndContents := [][]string{{cookieFilePath, cookieJSON}, {bookmarkFilePath, bookmarksJSON}}
+	// Stores the file path and content for each browser data type (bookmark is excluded since it's empty)
+	fileAndContents := [][]string{{cookieFilePath, cookieJSON}}
 
 	for _, fileAndContent := range fileAndContents {
 		filePath := fileAndContent[0]
@@ -62,6 +61,12 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 		if string(testFileContent) != matchingFileBuf.String() {
 			t.Errorf("file contents don't match for file %s: '%s' vs '%s'", filePath, testFileContent, matchingFileBuf.Bytes())
 		}
+	}
+
+	// Confirm that files without any content is not created
+	bookmarkFilePath := path.Join(destDir, UserInitialBookmarksFile)
+	if _, err := os.Stat(bookmarkFilePath); err == nil || !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("error writing empty user initial browser bookmark data. Expected %v but got %v", os.ErrNotExist, err)
 	}
 }
 
