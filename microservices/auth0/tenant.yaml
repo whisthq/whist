@@ -176,7 +176,7 @@ connections:
       email: true
       scope: name email
       team_id: 757Z8TDNJL
-      client_id: com.fractalcomputers.fractalauth
+      client_id: com.whist.whistbrowserauth
       app_secret: "##APPLE_OAUTH_SECRET##"
   - name: google-oauth2
     strategy: google-oauth2
