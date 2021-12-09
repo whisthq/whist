@@ -321,6 +321,14 @@ def do_scale_up_if_necessary(
 
         ami_obj = RegionToAmi.query.filter_by(region_name=region, ami_id=ami).one_or_none()
 
+        if ami_obj:
+            whist_logger.info(f"Scaling up {str(num_new)} instances in {region} with AMI ID {ami}")
+        else:
+            whist_logger.info(
+                f"Wanted to scale up {str(num_new)} instances in "
+                f"{region} with AMI ID {ami} but no active entry found in database"
+            )
+
         if num_new > 0:
             client = EC2Client(region_name=region)
             base_name = generate_name(starter_name=f"ec2-{region}")
@@ -340,7 +348,7 @@ def do_scale_up_if_necessary(
                         # This error occurs when AWS is out of EC2 instances of the specific
                         # instance type AWS_INSTANCE_TYPE_TO_LAUNCH, which is out of our control
                         # and should not raise an error.
-                        whist_logger.info(
+                        whist_logger.warning(
                             "skipping start instance for instance with "
                             f"image_id: {ami}, "
                             f"instance_name: {base_name}-{index}, "
@@ -373,6 +381,8 @@ def do_scale_up_if_necessary(
                 new_instance_names.append(new_instance.instance_name)
                 db.session.add(new_instance)
                 db.session.commit()
+
+                whist_logger.info(f"Successfully spun up instance {new_instance.instance_name}")
     return new_instance_names
 
 
