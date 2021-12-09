@@ -8,7 +8,12 @@
 
 import path from "path"
 import events from "events"
-import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
+import {
+  app,
+  BrowserWindow,
+  BrowserWindowConstructorOptions,
+  BrowserView,
+} from "electron"
 import config from "@app/config/environment"
 import { WhistEnvironments } from "../../config/configs"
 import { WhistCallbackUrls } from "@app/config/urls"
@@ -192,24 +197,43 @@ export const createWindow = (args: {
 }
 
 export const createAuthWindow = () => {
+  const padding = 60
+  const auth0Height = height.sm.height + 30
+  const windowWidth = Math.round(width.xs.width + padding)
+  const windowHeight = Math.round(auth0Height + padding)
   const win = createWindow({
     options: {
       ...base,
-      ...width.xs,
-      height: 16 * 37,
+      width: windowWidth,
+      height: windowHeight,
+      frame: false,
       border: false,
-      backgroundColor: "#ffffff",
-      title: "",
+      titleBarStyle: "hidden",
     } as BrowserWindowConstructorOptions,
     hash: WindowHashAuth,
-    customURL: authPortalURL(),
     closeElectronWindows: true,
   })
+
+  const view = new BrowserView()
+
+  win.setBrowserView(view)
+  view.setBounds({
+    x: windowWidth / 2 - width.xs.width / 2,
+    y: windowHeight / 2 - auth0Height / 2,
+    ...width.xs,
+    height: auth0Height,
+  })
+  let ua = view.webContents.userAgent
+  ua = ua.replace(/Electron\/*/, "")
+  ua = ua.replace(/Chrome\/*/, "")
+  view.webContents.userAgent = ua
+
+  view.webContents.loadURL(authPortalURL()).catch((err) => console.error(err))
 
   // Authentication
   const {
     session: { webRequest },
-  } = win.webContents
+  } = view.webContents
 
   const filter = {
     urls: [WhistCallbackUrls.authCallBack],

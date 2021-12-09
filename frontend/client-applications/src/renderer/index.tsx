@@ -20,6 +20,7 @@ import {
   WindowHashUpdate,
   WindowHashImporter,
   WindowHashOnboarding,
+  WindowHashAuth,
 } from "@app/constants/windows"
 import {
   whistError,
@@ -84,6 +85,8 @@ const RootComponent = () => {
     })
   }, [])
 
+  if (show === WindowHashAuth)
+    return <div className="bg-gray-100 w-screen h-screen"></div>
   if (show === WindowHashSignout) return <Signout onClick={handleSignout} />
   if (show === WindowHashUpdate) return <Update />
   if (show === WindowHashImporter)
