@@ -267,7 +267,7 @@ def swapover_amis(new_amis_str: List[str], amis_failed: bool) -> None:
         whist_logger.info("Finished performing AMI upgrade.")
     else:
         whist_logger.info(
-            f"Failed to create buffer for some AMIs, so not performing swapover operation. Rolling back failed AMIs."
+            f"Failed to create buffer for some AMIs, so not performing swapover operation. Rolling back new AMIs from database."
         )
 
         # Rollback new AMIs from the database. Only delete the new ami rows
