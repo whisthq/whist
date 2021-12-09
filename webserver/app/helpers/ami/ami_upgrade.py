@@ -1,6 +1,6 @@
 import sys
 from threading import Thread
-from typing import cast, Any, List, Mapping
+from typing import cast, Any, List, Mapping, Tuple
 import requests
 from flask import current_app, Flask
 from sqlalchemy import or_, and_
@@ -131,7 +131,7 @@ def fetch_current_running_instances(amis_to_exclude: List[str]) -> List[Instance
 
 def create_ami_buffer(
     client_commit_hash: str, region_to_ami_id_mapping: Mapping[str, str]
-) -> List[str]:
+) -> Tuple[List[str], bool]:
     """
     Creates new instances for the AMIs in the regions that are passed in as the keys of the region_to_ami_id_mapping
     This happens in the following steps:
@@ -193,9 +193,9 @@ def create_ami_buffer(
         )
         region_wise_upgrade_thread.start()
     threads_succeeded = True
+    amis_failed = False
     instances_created = []
     regions_failed = []
-    amis_failed = []
     for region_and_bool_pair in region_wise_upgrade_threads:
         region_and_bool_pair[0].join()
         if not region_and_bool_pair[1]:
@@ -208,9 +208,9 @@ def create_ami_buffer(
             )
             if region_row is not None:
                 region_row.protected_from_scale_down = False
-            amis_failed.append(ami_id)
             db.session.commit()
             threads_succeeded = False
+            amis_failed = True
         else:
             instances_created.append(region_and_bool_pair[3])
     if not threads_succeeded:
@@ -225,7 +225,7 @@ def create_ami_buffer(
     return new_amis_str, amis_failed
 
 
-def swapover_amis(new_amis_str: List[str], amis_failed: List[str]) -> None:
+def swapover_amis(new_amis_str: List[str], amis_failed: bool) -> None:
     """
     Actually swaps over which AMIs are active, once a new buffer is spun up
     STEPS:
@@ -233,14 +233,15 @@ def swapover_amis(new_amis_str: List[str], amis_failed: List[str]) -> None:
         2) Sets the old AMIs to inactive and the new ones to active.
     Args:
         new_amis: The new AMI rows we want to be active.
-        amis_failed: List on any amis that failed to create a buffer.
+        amis_failed: Indicates if any ami failed to create a buffer.
 
     Returns:
         None
     """
 
-    # If amis_failed is not empty, it means at least one region failed to upgrade. Only swapover if
+    # If amis_failed is true, it means at least one region failed to upgrade. Only swapover if
     # all of the region buffers were created successfully.
+
     if not amis_failed:
         new_amis = [RegionToAmi.query.filter_by(ami_id=ami_id).first() for ami_id in new_amis_str]
         region_current_active_ami_map = {}
@@ -265,14 +266,13 @@ def swapover_amis(new_amis_str: List[str], amis_failed: List[str]) -> None:
 
         whist_logger.info("Finished performing AMI upgrade.")
     else:
-        whist_logger.info(f"AMIs failed to create buffer: {amis_failed}")
         whist_logger.info(
-            f"Some AMIs failed, so not performing swapover operation. Rolling back failed AMIs."
+            f"Failed to create buffer for some AMIs, so not performing swapover operation. Rolling back failed AMIs."
         )
 
-        # Rollback failed AMIs from the database. Only delete the failed ami rows
+        # Rollback new AMIs from the database. Only delete the new ami rows
         # since they were not marked as active yet.
-        for ami_id in amis_failed:
+        for ami_id in new_amis_str:
             RegionToAmi.query.filter_by(ami_id=ami_id).delete()
 
         db.session.commit()
