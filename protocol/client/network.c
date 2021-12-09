@@ -45,9 +45,9 @@ extern bool using_stun;
 
 volatile double latency;
 extern clock last_ping_timer;
-extern volatile int last_ping_id;
-extern volatile int ping_failures;
-extern volatile int last_pong_id;
+extern volatile int last_udp_ping_id;
+extern volatile int udp_ping_failures;
+extern volatile int last_udp_pong_id;
 const double ping_lambda = 0.8;
 
 extern clock last_tcp_ping_timer;
@@ -176,14 +176,15 @@ void send_ping(int ping_id) {
             ping_id (int): Ping ID to send to the server
     */
     WhistClientMessage wcmsg = {0};
-    wcmsg.type = MESSAGE_PING;
-    wcmsg.ping_id = ping_id;
+    wcmsg.type = MESSAGE_UDP_PING;
+    wcmsg.ping_data.id = ping_id;
+    wcmsg.ping_data.original_timestamp = current_time_us();
 
     LOG_INFO("Ping! %d", ping_id);
     if (send_wcmsg(&wcmsg) != 0) {
         LOG_WARNING("Failed to ping server! (ID: %d)", ping_id);
     }
-    last_ping_id = ping_id;
+    last_udp_ping_id = ping_id;
     start_timer(&last_ping_timer);
 }
 
@@ -197,7 +198,7 @@ void send_tcp_ping(int ping_id) {
 
     WhistClientMessage wcmsg = {0};
     wcmsg.type = MESSAGE_TCP_PING;
-    wcmsg.ping_id = ping_id;
+    wcmsg.ping_data.id = ping_id;
 
     LOG_INFO("TCP Ping! %d", ping_id);
     if (send_wcmsg(&wcmsg) != 0) {
@@ -214,17 +215,18 @@ void receive_pong(int pong_id) {
         Arguments:
             pong_id (int): ID of pong to receive
     */
-    if (pong_id == last_ping_id) {
+    if (pong_id == last_udp_ping_id) {
         // the server received the last ping we sent!
         double ping_time = get_timer(last_ping_timer);
         LOG_INFO("Pong %d received: took %f seconds", pong_id, ping_time);
         LOG_METRIC("\"UDP_RTT\" : %d", (int)(ping_time * MS_IN_SECOND));  // In milliseconds
 
         latency = ping_lambda * latency + (1 - ping_lambda) * ping_time;
-        ping_failures = 0;
-        last_pong_id = pong_id;
+        udp_ping_failures = 0;
+
+        last_udp_pong_id = pong_id;
     } else {
-        LOG_WARNING("Received old pong (ID %d), expected ID %d", pong_id, last_ping_id);
+        LOG_WARNING("Received old pong (ID %d), expected ID %d", pong_id, last_udp_ping_id);
     }
 }
 

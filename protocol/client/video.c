@@ -856,6 +856,8 @@ int render_video() {
     WhistRGBColor window_color = {0};
     WhistCursorImage cursor_image = {0};
     bool has_cursor_image = false;
+    timestamp_us server_timestamp = 0;
+    timestamp_us client_input_timestamp = 0;
 
     // Receive and process a render context that's being pushed
     if (pushing_render_context) {
@@ -865,6 +867,9 @@ int render_video() {
         if (!frame->is_empty_frame) {
             sync_decoder_parameters(frame);
             int ret;
+            server_timestamp = frame->server_timestamp;
+            client_input_timestamp = frame->client_input_timestamp;
+
             TIME_RUN(
                 ret = video_decoder_send_packets(video_context.decoder, get_frame_videodata(frame),
                                                  frame->videodata_length),
@@ -974,6 +979,24 @@ int render_video() {
         declare_user_activity();
         // This function call will take up to 16ms if VSYNC is ON, otherwise 0ms
         TIME_RUN(SDL_RenderPresent(video_context.renderer), VIDEO_RENDER_TIME, statistics_timer);
+
+        static timestamp_us last_rendered_time = 0;
+
+        // Calculate E2E latency
+        // Get the difference in time from the moment client pressed user-input to now.
+        timestamp_us e2e_latency = current_time_us() - client_input_timestamp;
+        // But client_input_timestamp used above does not include time it took between user-input to
+        // frame refresh in server-side. Please refer to server\video.c to understand how
+        // client_input_timestamp is calculated.
+        // But "Latency from user-click to frame refresh" cannot be calculated accurately.
+        // We approximate it as "Server time elapsed since last render"/2.
+        // We are doing this calculation on the client-side, since server cannot predict for frame
+        // drops due to packet drops.
+        if (last_rendered_time != 0) {
+            e2e_latency += (server_timestamp - last_rendered_time) / 2;
+        }
+        last_rendered_time = server_timestamp;
+        log_double_statistic(VIDEO_E2E_LATENCY, (double)(e2e_latency / 1000));
 
         has_video_rendered_yet = true;
 

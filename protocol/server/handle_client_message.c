@@ -85,7 +85,7 @@ int handle_client_message(whist_server_state *state, WhistClientMessage *wcmsg) 
             return handle_streaming_toggle_message(state, wcmsg);
         case MESSAGE_MBPS:
             return handle_bitrate_message(state, wcmsg);
-        case MESSAGE_PING:
+        case MESSAGE_UDP_PING:
             return handle_ping_message(&state->client, wcmsg);
         case MESSAGE_TCP_PING:
             return handle_tcp_ping_message(&state->client, wcmsg);
@@ -230,7 +230,7 @@ static int handle_ping_message(Client *client, WhistClientMessage *wcmsg) {
             (int): Returns -1 on failure, 0 on success
     */
 
-    LOG_INFO("Ping Received - Ping ID %d", wcmsg->ping_id);
+    LOG_INFO("Ping Received - Ping ID %d", wcmsg->ping_data.id);
 
     // Update ping timer
     start_timer(&client->last_ping);
@@ -238,7 +238,12 @@ static int handle_ping_message(Client *client, WhistClientMessage *wcmsg) {
     // Send pong reply
     WhistServerMessage fsmsg_response = {0};
     fsmsg_response.type = MESSAGE_PONG;
-    fsmsg_response.ping_id = wcmsg->ping_id;
+    fsmsg_response.ping_id = wcmsg->ping_data.id;
+    timestamp_us server_time = current_time_us();
+    whist_lock_mutex(client->timestamp_mutex);
+    client->last_ping_client_time = wcmsg->ping_data.original_timestamp;
+    client->last_ping_server_time = server_time;
+    whist_unlock_mutex(client->timestamp_mutex);
 
     if (send_packet(&client->udp_context, PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
                     sizeof(fsmsg_response), 1) < 0) {
@@ -260,7 +265,7 @@ static int handle_tcp_ping_message(Client *client, WhistClientMessage *wcmsg) {
             (int): Returns -1 on failure, 0 on success
     */
 
-    LOG_INFO("TCP Ping Received - TCP Ping ID %d", wcmsg->ping_id);
+    LOG_INFO("TCP Ping Received - TCP Ping ID %d", wcmsg->ping_data.id);
 
     // Update ping timer
     start_timer(&client->last_ping);
@@ -268,7 +273,7 @@ static int handle_tcp_ping_message(Client *client, WhistClientMessage *wcmsg) {
     // Send pong reply
     WhistServerMessage fsmsg_response = {0};
     fsmsg_response.type = MESSAGE_TCP_PONG;
-    fsmsg_response.ping_id = wcmsg->ping_id;
+    fsmsg_response.ping_id = wcmsg->ping_data.id;
 
     if (send_packet(&client->tcp_context, PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
                     sizeof(fsmsg_response), -1) < 0) {
