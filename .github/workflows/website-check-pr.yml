@@ -43,3 +43,100 @@ jobs:
       - name: Check if code follows ESLint standards
         working-directory: frontend/website
         run: yarn run lint:check
+
+  # Check Netlify Deploy Preview
+  website-deploy-preview-netlify:
+    name: "Netlify Deploy Preview"
+    runs-on: ubuntu-20.04
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Configure Netlify
+        working-directory: frontend/website
+        run: |
+          netlify --telemetry-disable
+
+          if [[ ${{ github.base_ref }} == dev ]]; then
+            NETLIFY_APP_NAME=whist-dev
+          elif [[ ${{ github.base_ref }} == staging ]]; then
+            NETLIFY_APP_NAME=whist-staging
+          elif [[ ${{ github.base_ref }} == prod ]]; then
+            NETLIFY_APP_NAME=whist-prod
+          else
+            NETLIFY_APP_NAME=whist-dev
+          fi
+          netlify link --name $NETLIFY_APP_NAME
+
+      - name: Build and Deploy Netlify Website
+        working-directory: frontend/website
+        run: |
+          netlify deploy --build | tee netlify.log
+          cat netlify.log | grep "Website Draft URL" -B1 > netlify.info
+
+      # Need to install this dependency for the notification step.
+      - name: Install Python Dependencies
+        run: pip install PyGithub
+
+      # Actual messages are defined in the environment configuration at
+      # the top of this job.
+      - name: Update GitHub PR Comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # needed for migra diff tool
+          GITHUB_ISSUE: ${{ github.event.number }}
+          GITHUB_PR_URL: "https://github.com/fractal/whist/pull/"
+        shell: python3 {0}
+        run: |
+          import os
+          import sys
+          sys.path.append(".github/workflows/helpers")
+          from notifications.github_bot import github_comment_update
+
+          if not os.environ.get("GITHUB_ISSUE"):
+            print("No GitHub Issue number! Skipping PR notification.")
+            sys.exit(0)
+
+          github_token = os.environ["GITHUB_TOKEN"]
+          github_issue = int(os.environ["GITHUB_ISSUE"])
+          github_repo = "fractal/whist"
+
+          identifier = "AUTOMATED_NETLIFY_DEPLOY_PREVIEW_MESSAGE"
+
+          title = "Netlify Deploy Preview"
+          file = open("frontend/website/netlify.info")
+          body = file.read()
+          file.close()
+
+          github_comment_update(
+            github_token,
+            github_repo,
+            github_issue,
+            identifier,
+            body,
+            title=title,
+          )
+
+      - name: Setup Python-based notifications
+        if: failure()
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Notify Slack on Job Error
+        if: failure()
+        shell: python3 {0}
+        run: |
+          # Retrieve Slack webhook
+          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
+          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
+          else:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
+
+          from notifications.slack_bot import slack_post
+          SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
+          BODY = "@releases :rotating_light: Failed to build Whist monorepo config in `whist-build-monorepo-config`, investigate immediately :rotating_light: (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
