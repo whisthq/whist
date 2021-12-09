@@ -195,6 +195,7 @@ def create_ami_buffer(
     threads_succeeded = True
     instances_created = []
     regions_failed = []
+    amis_failed = []
     for region_and_bool_pair in region_wise_upgrade_threads:
         region_and_bool_pair[0].join()
         if not region_and_bool_pair[1]:
@@ -207,6 +208,7 @@ def create_ami_buffer(
             )
             if region_row is not None:
                 region_row.protected_from_scale_down = False
+            amis_failed.append(ami_id)
             db.session.commit()
             threads_succeeded = False
         else:
@@ -220,10 +222,10 @@ def create_ami_buffer(
             drain_instance(instanceinfo)
         # If any thread here failed, fail the workflow
         raise Exception("AMIS failed to upgrade, see logs")
-    return new_amis_str
+    return new_amis_str, amis_failed
 
 
-def swapover_amis(new_amis_str: List[str]) -> None:
+def swapover_amis(new_amis_str: List[str], amis_failed: List[str]) -> None:
     """
     Actually swaps over which AMIs are active, once a new buffer is spun up
     STEPS:
@@ -231,29 +233,46 @@ def swapover_amis(new_amis_str: List[str]) -> None:
         2) Sets the old AMIs to inactive and the new ones to active.
     Args:
         new_amis: The new AMI rows we want to be active.
+        amis_failed: List on any amis that failed to create a buffer.
 
     Returns:
         None
     """
-    new_amis = [RegionToAmi.query.filter_by(ami_id=ami_id).first() for ami_id in new_amis_str]
-    region_current_active_ami_map = {}
-    current_active_amis = RegionToAmi.query.filter_by(ami_active=True).all()
-    for current_active_ami in current_active_amis:
-        region_current_active_ami_map[current_active_ami.region_name] = current_active_ami
 
-    for new_ami in new_amis:
-        new_ami.protected_from_scale_down = False
-        new_ami.ami_active = True
+    # If amis_failed is not empty, it means at least one region failed to upgrade. Only swapover if
+    # all of the region buffers were created successfully.
+    if not amis_failed:
+        new_amis = [RegionToAmi.query.filter_by(ami_id=ami_id).first() for ami_id in new_amis_str]
+        region_current_active_ami_map = {}
+        current_active_amis = RegionToAmi.query.filter_by(ami_active=True).all()
+        for current_active_ami in current_active_amis:
+            region_current_active_ami_map[current_active_ami.region_name] = current_active_ami
 
-    for current_ami in current_active_amis:
-        current_ami.ami_active = False
+        for new_ami in new_amis:
+            new_ami.protected_from_scale_down = False
+            new_ami.ami_active = True
 
-    db.session.commit()
+        for current_ami in current_active_amis:
+            current_ami.ami_active = False
 
-    current_running_instances = fetch_current_running_instances(new_amis_str)
-    for active_instance in current_running_instances:
-        # At this point, the instance is marked as DRAINING in the database.
-        active_instance.status = MandelboxHostState.DRAINING
-        drain_instance(active_instance)
+        db.session.commit()
 
-    whist_logger.info("Finished performing AMI upgrade.")
+        current_running_instances = fetch_current_running_instances(new_amis_str)
+        for active_instance in current_running_instances:
+            # At this point, the instance is marked as DRAINING in the database.
+            active_instance.status = MandelboxHostState.DRAINING
+            drain_instance(active_instance)
+
+        whist_logger.info("Finished performing AMI upgrade.")
+    else:
+        whist_logger.info(f"AMIs failed to create buffer: {amis_failed}")
+        whist_logger.info(
+            f"Some AMIs failed, so not performing swapover operation. Rolling back failed AMIs."
+        )
+
+        # Rollback failed AMIs from the database. Only delete the failed ami rows
+        # since they were not marked as active yet.
+        for ami_id in amis_failed:
+            RegionToAmi.query.filter_by(ami_id=ami_id).delete()
+
+        db.session.commit()
