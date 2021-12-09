@@ -120,7 +120,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
             # If we're not testing, we want to scale up a new instance to handle this load
             # and we know what instance type we're missing from the request
             ami = RegionToAmi.query.get(
-                {"region_name": body.regions[0], "client_commit_hash": client_commit_hash}
+                {"region_name": region, "client_commit_hash": client_commit_hash}
             )
             if ami is None:
                 whist_logger.debug(
