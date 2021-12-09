@@ -112,7 +112,7 @@ extern volatile bool connected;
 extern volatile bool client_exiting;
 volatile int try_amount;
 
-extern volatile char* initial_url;
+extern volatile char* new_tab_url;
 
 // Defines
 #define APP_PATH_MAXLEN 1023
@@ -452,11 +452,6 @@ int main(int argc, char* argv[]) {
         start_timer(&monitor_change_timer);
         start_timer(&new_tab_timer);
 
-        LOG_INFO("Opening up initial url: %s", initial_url);
-        send_initial_url();
-
-        // bool sent_url = false;
-
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
         while (connected && !client_exiting && exit_code == WHIST_EXIT_SUCCESS) {
@@ -477,16 +472,9 @@ int main(int argc, char* argv[]) {
                 continue;
             }
 
-            update_pending_sdl_tasks();
+            int ret = read_piped_arguments(true);
 
-            // if (!sent_url && get_timer(new_tab_timer) * MS_IN_SECOND > 10000) {
-            //     // send url
-            //     WhistClientMessage wcmsg = {0};
-            //     wcmsg.type = MESSAGE_OPEN_URL;
-            //     safe_strncpy(wcmsg.url_to_open, "apple.com", strlen("apple.com") + 1);
-            //     send_wcmsg(&wcmsg);
-            //     sent_url = true;
-            // }
+            update_pending_sdl_tasks();
 
             if (get_timer(keyboard_sync_timer) * MS_IN_SECOND > 50.0) {
                 if (sync_keyboard_state() != 0) {

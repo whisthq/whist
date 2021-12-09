@@ -47,7 +47,7 @@ volatile char *program_name = NULL;
 volatile CodecType output_codec_type = CODEC_TYPE_H264;
 extern volatile SDL_Window *window;
 
-volatile char *initial_url;
+volatile char *new_tab_url;
 
 extern volatile int client_max_bitrate;
 
@@ -254,15 +254,15 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
             break;
         }
         case 'x': {
-            if (strlen(eval_optarg) > 1024) {
+            if (strlen(eval_optarg) > URL_MAX_LEN) {
                 LOG_ERROR(
                     "Cannot open URLs of length greater than 1024 characters! URL passed has size "
                     "%lu",
                     strlen(eval_optarg));
                 break;
             }
-            initial_url = calloc(sizeof(char), strlen(eval_optarg) + 1);
-            strcpy((char *)initial_url, eval_optarg);
+            new_tab_url = calloc(sizeof(char), strlen(eval_optarg) + 1);
+            strcpy((char *)new_tab_url, eval_optarg);
             break;
         }
         default: {
@@ -327,7 +327,7 @@ int client_parse_args(int argc, char *argv[]) {
         "  -l, --loading                 Custom loading screen message\n"
         "  -s, --skip-taskbar            Launch the protocol without displaying an icon\n"
         "                                  in the taskbar\n"
-        "  -x, --initial-url            Initial URL to open at startup time \n"
+        "  -x, --new-tab-url             URL to open in new tab \n"
         // special options should be indented further to the left
         "      --help     Display this help and exit\n"
         "      --version  Output version information and exit\n";
@@ -610,8 +610,8 @@ int free_parsed_args(void) {
         free((char *)server_ip);
     }
 
-    if (initial_url) {
-        free((char *)initial_url);
+    if (new_tab_url) {
+        free((char *)new_tab_url);
     }
 
     return 0;
@@ -707,12 +707,12 @@ int update_mouse_motion() {
     return 0;
 }
 
-void send_initial_url() {
-    if (initial_url) {
+void send_new_tab_url() {
+    if (new_tab_url) {
         WhistClientMessage wcmsg = {0};
         wcmsg.type = MESSAGE_OPEN_URL;
-        safe_strncpy(wcmsg.url_to_open, (const char *)initial_url,
-                     strlen((const char *)initial_url) + 1);
+        safe_strncpy(wcmsg.url_to_open, (const char *)new_tab_url,
+                     strlen((const char *)new_tab_url) + 1);
         send_wcmsg(&wcmsg);
     }
 }
