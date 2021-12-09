@@ -123,7 +123,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
                 {"region_name": region, "client_commit_hash": client_commit_hash}
             )
             if ami is None:
-                whist_logger.debug(
+                whist_logger.warning(
                     f"No AMI found for region: {region}, commit hash: {client_commit_hash}"
                 )
             else:
