@@ -227,7 +227,11 @@ def create_ami_buffer(
 
 def swapover_amis(new_amis_str: List[str], amis_failed: bool) -> None:
     """
-    Actually swaps over which AMIs are active, once a new buffer is spun up
+    Actually swaps over which AMIs are active, once a new buffer is spun up. The swapover only
+    happens if there were no errors starting buffers for the new AMIs. That is, if even one fails
+    to create a buffer, the whole swapover operation will fail and the new AMIs will be removed from
+    the database, effectively making the upgrade flow atomic.
+
     STEPS:
         1) Drains all instances of old AMIs
         2) Sets the old AMIs to inactive and the new ones to active.
