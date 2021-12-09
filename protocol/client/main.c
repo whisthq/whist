@@ -472,7 +472,8 @@ int main(int argc, char* argv[]) {
                 continue;
             }
 
-            int ret = read_piped_arguments(true);
+            keep_piping = true;
+            int ret = read_piped_arguments(&keep_piping);
 
             update_pending_sdl_tasks();
 
