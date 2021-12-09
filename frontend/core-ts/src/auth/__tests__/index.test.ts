@@ -1,25 +1,19 @@
 import * as auth from "../"
 
 describe("authInfoParse", () => {
-  const testIDTokenGood =
-    "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE2MjYyNzU5NDYsImV4cCI6MTY1NzgxMTk0NiwiYXVkIjoid3d3LmV4YW1wbGUuY29tIiwic3ViIjoianJvY2tldEBleGFtcGxlLmNvbSIsImVtYWlsIjoidGVzdEBmcmFjdGFsLmNvIiwiaHR0cHM6Ly9hcGkuZnJhY3RhbC5jby9zdWJzY3JpcHRpb25fc3RhdHVzIjoiY2FuY2VsZWQifQ.JvPevh0_pOWtgAlH2oZsX1HXF4m7fNA5pRFMt4d1glk"
+  // These tokens were generated using https://dinochiesa.github.io/jwt.
+  // Please use a similar tool to manually decode/update these tokens. The symmetric
+  // encryption key is `Key-Must-Be-at-least-32-bytes-in-length!`.
 
+  // This token encodes things like the subscription status.
   const testAccessTokenGood =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJteV91c2VybmFtZSIsImh0dHBzOi8vYXBpLmZyYWN0YWwuY28vc3Vic2NyaXB0aW9uX3N0YXR1cyI6bnVsbH0.7sa1hPGgOCbHTGpB4RS5PO2FjP20fkeCpI8Fgb6BQEQ"
-  // Token decodes to:
-  // {
-  //     "iss": "Online JWT Builder",
-  //     "iat": 1626275946,
-  //     "exp": 1657811946,
-  //     "aud": "www.example.com",
-  //     "sub": "jrocket@example.com",
-  //     "email": "test@whist.com"
-  //     "https://api.fractal.co/subscription_status": "canceled"
-  // }
-
-  // Decodes to same as above, but missing email field
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0LXVzZXIiLCJodHRwczovL2FwaS5mcmFjdGFsLmNvL3N1YnNjcmlwdGlvbl9zdGF0dXMiOm51bGx9.6XU_EXIffw32nU21on_jkDBJ-w1F8pGMr11R38pDYvA"
+  // This token encodes things like the user's email address.
+  const testIDTokenGood =
+    "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJXaGlzdCBUZXN0IEpXSyBCdWlsZGVyIiwiaWF0IjoxNjI2Mjc1OTQ2LCJleHAiOjE2NTc4MTE5NDYsImF1ZCI6Ind3dy53aGlzdC5jb20iLCJzdWIiOiJ0ZXN0LXVzZXIiLCJlbWFpbCI6InRlc3QtdXNlckB3aGlzdC5jb20iLCJodHRwczovL2FwaS5mcmFjdGFsLmNvL3N1YnNjcmlwdGlvbl9zdGF0dXMiOiJjYW5jZWxlZCJ9.TYRuQ2E5yDJWbXfJrBSI_O7rIuXVD79tkvBAYOnIGNU"
+  // Matches the previous token, but is missing the email address.
   const testIdTokenBadEmail =
-    "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE2MjYyNzU5NDYsImV4cCI6MTY1NzgxMTk0NiwiYXVkIjoid3d3LmV4YW1wbGUuY29tIiwic3ViIjoianJvY2tldEBleGFtcGxlLmNvbSIsImh0dHBzOi8vYXBpLmZyYWN0YWwuY28vc3Vic2NyaXB0aW9uX3N0YXR1cyI6ImNhbmNlbGVkIn0.qhaIQ5dAMgPNpXWi3geaTxSlZVCvfXs_-bRIe_8ldsk"
+    "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJXaGlzdCBUZXN0IEpXSyBCdWlsZGVyIiwiaWF0IjoxNjI2Mjc1OTQ2LCJleHAiOjE2NTc4MTE5NDYsImF1ZCI6Ind3dy53aGlzdC5jb20iLCJzdWIiOiJ0ZXN0LXVzZXIiLCJodHRwczovL2FwaS5mcmFjdGFsLmNvL3N1YnNjcmlwdGlvbl9zdGF0dXMiOiJjYW5jZWxlZCJ9.nBvJ3k_xUqt0d6IDM2qZfhcDnOcbTq51hxjW-goaAXo"
 
   const testJSONGood = {
     id_token: testIDTokenGood,
@@ -31,7 +25,7 @@ describe("authInfoParse", () => {
 
   test("returns userEmail, accessToken, subscriptionStatus", () => {
     expect(auth.authInfoParse({ json: testJSONGood })).toStrictEqual({
-      userEmail: "test@fractal.co",
+      userEmail: "test-user@whist.com",
       accessToken: testAccessTokenGood,
       subscriptionStatus: null,
     })
