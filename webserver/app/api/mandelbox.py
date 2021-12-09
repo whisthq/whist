@@ -112,8 +112,8 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
 
     if MandelboxAssignError.contains(instance_or_error):
         whist_logger.info(
-            f"No instance found in region {region}\
-              with client_commit_hash: {client_commit_hash} because {instance_or_error}"
+            f"No instance found in region {region} "
+            f"with client_commit_hash: {client_commit_hash} because {instance_or_error}"
         )
 
         if not current_app.testing:

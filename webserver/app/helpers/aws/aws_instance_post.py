@@ -325,7 +325,7 @@ def do_scale_up_if_necessary(
             whist_logger.info(f"Scaling up {str(num_new)} instances in {region} with AMI ID {ami}")
         else:
             whist_logger.info(
-                f"Wanted to scale up {str(num_new)} instances in"
+                f"Wanted to scale up {str(num_new)} instances in "
                 f"{region} with AMI ID {ami} but no active entry found in database"
             )
 
