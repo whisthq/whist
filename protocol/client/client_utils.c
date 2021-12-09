@@ -444,7 +444,10 @@ int read_piped_arguments(bool *keep_waiting) {
             LOG_ERROR("ioctl error with piped arguments: %s", strerror(errno));
             return -1;
         } else if (available_chars == 0) {
+            LOG_INFO("ioctl available_chars: %d", available_chars);
             continue;
+        } else {
+            LOG_INFO("ioctl available_chars: %d", available_chars);
         }
 #else
         // When in piped mode (e.g. from the client app), stdin is a NamedPipe
@@ -511,6 +514,8 @@ int read_piped_arguments(bool *keep_waiting) {
 
             arg_name[strcspn(arg_name, "\n")] = 0;  // removes trailing newline, if exists
             arg_name[strcspn(arg_name, "\r")] = 0;  // removes trailing carriage return, if exists
+
+            LOG_INFO("arg_name: %s", arg_name);
 
             // Iterate through client_cmd_options to find the corresponding opt
             int opt_index = -1;
@@ -706,7 +711,7 @@ void send_initial_url() {
     if (initial_url) {
         WhistClientMessage wcmsg = {0};
         wcmsg.type = MESSAGE_OPEN_URL;
-        safe_strncpy(wcmsg.url_to_open, (const char *)initial_url, strlen(initial_url) + 1);
+        safe_strncpy(wcmsg.url_to_open, (const char *)initial_url, strlen((const char*)initial_url) + 1);
         send_wcmsg(&wcmsg);
     }
 }

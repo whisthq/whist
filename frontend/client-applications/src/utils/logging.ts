@@ -131,6 +131,7 @@ export const logBase = (
         "cookies",
         "bookmarks",
         "extensions",
+        "accessToken", // saving space on log output
       ].includes(k)
     ) {
       return "***********"
