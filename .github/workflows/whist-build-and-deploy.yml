@@ -327,6 +327,65 @@ jobs:
   #######################################################################################
   #######################################################################################
 
+  # Website: Build & Deploy to Netlify
+  # This job builds and deploys the website to netlify.
+  website-deploy-netlify:
+    name: "Website: Build & Deploy to Netlify"
+    runs-on: ubuntu-20.04
+    needs: [whist-publish-build-config]
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Configure Netlify
+        working-directory: frontend/website
+        run: |
+          netlify --telemetry-disable
+
+          if [[ ${{ needs.whist-publish-build-config.outputs.branch }} == dev ]]; then
+            NETLIFY_APP_NAME=whist-dev
+          elif [[ ${{ needs.whist-publish-build-config.outputs.branch }} == staging ]]; then
+            NETLIFY_APP_NAME=whist-staging
+          elif [[ ${{ needs.whist-publish-build-config.outputs.branch }} == prod ]]; then
+            NETLIFY_APP_NAME=whist-prod
+          else
+            echo 'Error: Invalid branch' && false
+          fi
+          netlify link --name $NETLIFY_APP_NAME
+
+      - name: Build and Deploy Netlify Website
+        working-directory: frontend/website
+        run: |
+          netlify deploy --build --prod
+
+      - name: Setup Python-based notifications
+        if: failure()
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Notify Slack on Job Error
+        if: failure()
+        shell: python3 {0}
+        run: |
+          # Retrieve Slack webhook
+          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
+          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
+          else:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
+
+          from notifications.slack_bot import slack_post
+          SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
+          BODY = "@releases :rotating_light: Failed to build Whist monorepo config in `whist-build-monorepo-config`, investigate immediately :rotating_light: (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
+  #######################################################################################
+  #######################################################################################
+
   # Auth0 Rules: Build & Deploy Auth0 Rules to Auth0 Tenant
   # Build and deploy the Auth0 rules to the Whist Auth0 Tenant platform, with
   # which our client-application interfaces with authenticating users through Auth0

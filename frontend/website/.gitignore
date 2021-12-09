@@ -36,3 +36,6 @@ scripts/.ipynb_checkpoints
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# netlify
+.netlify
