@@ -856,8 +856,8 @@ int render_video() {
     WhistRGBColor window_color = {0};
     WhistCursorImage cursor_image = {0};
     bool has_cursor_image = false;
-    uint64_t server_timestamp = 0;
-    uint64_t client_input_timestamp = 0;
+    timestamp_us server_timestamp = 0;
+    timestamp_us client_input_timestamp = 0;
 
     // Receive and process a render context that's being pushed
     if (pushing_render_context) {
@@ -980,11 +980,11 @@ int render_video() {
         // This function call will take up to 16ms if VSYNC is ON, otherwise 0ms
         TIME_RUN(SDL_RenderPresent(video_context.renderer), VIDEO_RENDER_TIME, statistics_timer);
 
-        static uint64_t last_rendered_time = 0;
+        static timestamp_us last_rendered_time = 0;
 
         // Calculate E2E latency
         // Get the difference in time from the moment client pressed user-input to now.
-        uint64_t e2e_latency = current_time_us() - client_input_timestamp;
+        timestamp_us e2e_latency = current_time_us() - client_input_timestamp;
         // But client_input_timestamp used above does not include time it took between user-input to
         // frame refresh in server-side. Please refer to server\video.c to understand how
         // client_input_timestamp is calculated.

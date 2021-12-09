@@ -239,7 +239,7 @@ static int handle_ping_message(Client *client, WhistClientMessage *wcmsg) {
     WhistServerMessage fsmsg_response = {0};
     fsmsg_response.type = MESSAGE_PONG;
     fsmsg_response.ping_id = wcmsg->ping_data.id;
-    uint64_t server_time = current_time_us();
+    timestamp_us server_time = current_time_us();
     whist_lock_mutex(client->timestamp_mutex);
     client->last_ping_client_time = wcmsg->ping_data.original_timestamp;
     client->last_ping_server_time = server_time;
