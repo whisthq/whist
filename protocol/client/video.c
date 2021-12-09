@@ -73,11 +73,6 @@ volatile bool initialized_video_buffer = false;
 extern volatile SDL_Renderer* init_sdl_renderer;
 #endif
 
-// number of frames ahead we can receive packets for before asking for iframe
-#define MAX_UNSYNCED_FRAMES 4
-// If we want an iframe, this is how often we keep asking for it
-#define IFRAME_REQUEST_INTERVAL_MS 50.0
-
 #define BITRATE_BUCKET_SIZE 500000
 #define NUMBER_LOADING_FRAMES 50
 
@@ -105,7 +100,6 @@ struct VideoData {
     int most_recent_iframe;
 
     clock last_iframe_request_timer;
-    bool is_waiting_for_iframe;
 
     double target_mbps;
     int bucket;  // = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
@@ -155,16 +149,14 @@ Private Functions
 
 SDL_Rect new_sdl_rect(int x, int y, int w, int h);
 int32_t multithreaded_destroy_decoder(void* opaque);
-bool request_iframe();
 void finalize_video_context_data();
 void replace_texture();
 void clear_sdl(SDL_Renderer* renderer);
 void calculate_statistics();
 void skip_to_next_iframe();
 void sync_decoder_parameters(VideoFrame* frame);
-// Try to request an iframe, if we need to catch up,
-// returns true if we're trying to get an iframe
-bool try_request_iframe_to_catch_up();
+// Try to request any missing packets or video frames
+void try_recovering_missing_packets_or_frames();
 /*
 ============================
 Private Function Implementations
@@ -268,36 +260,59 @@ void update_sws_context(Uint8** data, int* linesize) {
     }
 }
 
-bool try_request_iframe_to_catch_up() {
+// TODO: Refactor into ringbuffer.c, so that ringbuffer.h
+// is what exposes the 'try_recovering_missing_packets_or_frames' function
+void try_recovering_missing_packets_or_frames() {
     /*
-        Check if we are MAX_UNSYNCED_FRAMES behind on rendering frames,
-        and request an iframe if so
+        Try to recover any missing packets or frames
     */
 
-    // If we are more than MAX_UNSYNCED_FRAMES behind, we should request an iframe.
-    // we should also request if the next to render frame has been sitting for 200ms and we
-    // still haven't rendered.
+// If we want an iframe, this is how often we keep asking for it
+#define IFRAME_REQUEST_INTERVAL_MS 50.0
+// Number of frames ahead we can be before asking for iframe
+#define MAX_UNSYNCED_FRAMES 4
+// How stale the next-to-render-frame can be before asking for an iframe
+#define MAX_TO_RENDER_STALENESS 100.0
+
+    // Try to nack for any missing packets
+    bool nacking_succeeded = try_nacking(video_ring_buffer, latency);
+
+    // Get how stale the frame we're trying to render is
+    double next_to_render_staleness = -1.0;
     int next_render_id = video_data.last_rendered_id + 1;
     FrameData* ctx = get_frame_at_id(video_ring_buffer, next_render_id);
-    if (video_ring_buffer->max_id > video_data.last_rendered_id + MAX_UNSYNCED_FRAMES ||
-        (ctx->id == next_render_id && get_timer(ctx->frame_creation_timer) > 200.0 / MS_IN_SECOND &&
-         !video_data.is_waiting_for_iframe)) {
-        // old condition, which only checked if we hadn't received any packets in a while:
-        // || (cur_ctx->id == VideoData.last_rendered_id && get_timer(
-        // cur_ctx->last_packet_timer ) > 96.0 / MS_IN_SECOND) )
-        if (request_iframe()) {
-            LOG_INFO(
-                "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
-                "and the next frame to render has been alive for %fms. I-Frame is now being "
-                "requested to catch-up.",
-                video_ring_buffer->max_id, video_ring_buffer->max_id - video_data.last_rendered_id,
-                get_timer(ctx->frame_creation_timer) * MS_IN_SECOND);
-        }
-        return true;
+    if (ctx->id == next_render_id) {
+        next_to_render_staleness = get_timer(ctx->frame_creation_timer);
     }
 
-    // No I-Frame is being requested
-    return false;
+    // If nacking has failed to recover the packets we need,
+    if (!nacking_succeeded
+        // Or if we're more than MAX_UNSYNCED_FRAMES frames out-of-sync,
+        || video_ring_buffer->max_id > video_data.last_rendered_id + MAX_UNSYNCED_FRAMES
+        // Or we've spent MAX_TO_RENDER_STALENESS trying to render this one frame
+        || (next_to_render_staleness > MAX_TO_RENDER_STALENESS / MS_IN_SECOND)) {
+        // THEN, we should send an iframe request
+
+        // TODO: Set the throttle timer to a tight 1-5ms,
+        // and add a renderID that we send so the server doesn't
+        // keep sending iframes after sending a single iframe
+        // We keep it as 50ms for now, so that we don't make the server
+        // send multiple iframes consecutively.
+        if (get_timer(video_data.last_iframe_request_timer) >
+            IFRAME_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
+            WhistClientMessage wcmsg = {0};
+            wcmsg.type = MESSAGE_IFRAME_REQUEST;
+            send_wcmsg(&wcmsg);
+            start_timer(&video_data.last_iframe_request_timer);
+            LOG_INFO(
+                "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
+                "and the frame we're trying to render has been alive for %fms. I-Frame is now "
+                "being "
+                "requested to catch-up.",
+                video_ring_buffer->max_id, video_ring_buffer->max_id - video_data.last_rendered_id,
+                next_to_render_staleness * MS_IN_SECOND);
+        }
+    }
 }
 
 void render_sdl_cursor(WhistCursorImage* cursor) {
@@ -494,31 +509,6 @@ void render_loading_screen(SDL_Renderer* renderer, int idx) {
     gif_frame_index %= NUMBER_LOADING_FRAMES;
 }
 
-bool request_iframe() {
-    /*
-        Request an IFrame from the server if too long since last frame
-
-        Return:
-            (bool): true if IFrame requested, false if not
-    */
-
-    // Only request an iframe once every `IFRAME_REQUEST_INTERVAL_MS` ms
-    if (get_timer(video_data.last_iframe_request_timer) >
-        IFRAME_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
-        WhistClientMessage wcmsg = {0};
-        wcmsg.type = MESSAGE_IFRAME_REQUEST;
-        // This should give us a full IDR frame,
-        // which includes PPS/SPS data
-        wcmsg.reinitialize_encoder = false;
-        send_wcmsg(&wcmsg);
-        start_timer(&video_data.last_iframe_request_timer);
-        video_data.is_waiting_for_iframe = true;
-        return true;
-    } else {
-        return false;
-    }
-}
-
 void replace_texture() {
     /*
         Destroy the old texture and create a new texture. This function is called during renderer
@@ -601,7 +591,9 @@ void skip_to_next_iframe() {
     /*
         Skip to the latest iframe we're received if said iframe is ahead of what we are currently
         rendering.
+        TODO: Refactor into ringbuffer.c
     */
+
     // Only run if we're not rendering or we haven't rendered anything yet
     if (video_data.most_recent_iframe > 0 && video_data.last_rendered_id == -1) {
         // Silently skip to next iframe if it's the start of the stream
@@ -704,11 +696,8 @@ void update_video() {
         }
     }
 
-    // Try requesting an iframe, if we're too far behind
-    try_request_iframe_to_catch_up();
-
-    // Try to nack
-    try_nacking(video_ring_buffer, latency);
+    // Try to recover missing information, via nacks / iframe requests
+    try_recovering_missing_packets_or_frames();
 }
 
 // NOTE that this function is in the hotpath.
@@ -800,7 +789,6 @@ int init_video_renderer() {
 
     // mbps that currently works
     working_mbps = STARTING_BITRATE;
-    video_data.is_waiting_for_iframe = false;
 
     has_video_rendered_yet = false;
 
@@ -888,10 +876,6 @@ int render_video() {
                 has_cursor_image = true;
             } else {
                 has_cursor_image = false;
-            }
-
-            if (frame->is_iframe) {
-                video_data.is_waiting_for_iframe = false;
             }
         }
 

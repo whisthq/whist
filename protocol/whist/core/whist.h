@@ -673,10 +673,6 @@ typedef struct WhistClientMessage {
 
         // MESSAGE_KEYBOARD_STATE
         WhistKeyboardState keyboard_state;
-
-        // MESSAGE_IFRAME_REQUEST
-        // TODO: Remove this boolean
-        bool reinitialize_encoder;
     };
 
     // Any type of message that has an additional `data[]` member at the end

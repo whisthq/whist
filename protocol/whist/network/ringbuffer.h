@@ -134,8 +134,11 @@ void destroy_ring_buffer(RingBuffer* ring_buffer);
  * @param ring_buffer The ring buffer to try nacking with
  *
  * @param latency The round-trip latency of the connection. Helpful with nacking logic
+ *
+ * @returns     True if nacking succeded,
+ *              False if we've bandwidth saturated our ability to nack.
  */
-void try_nacking(RingBuffer* ring_buffer, double latency);
+bool try_nacking(RingBuffer* ring_buffer, double latency);
 
 /**
  * @brief Reset the frame, both metadata and frame buffer.

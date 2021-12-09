@@ -402,10 +402,11 @@ int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_d
     return num_packets_nacked;
 }
 
-void try_nacking(RingBuffer* ring_buffer, double latency) {
+bool try_nacking(RingBuffer* ring_buffer, double latency) {
     if (ring_buffer->max_id == -1) {
         // Don't nack if we haven't received anything yet
-        return;
+        // Return true, our nacking vacuously succeeded
+        return true;
     }
     if (ring_buffer->last_rendered_id == -1) {
         ring_buffer->last_rendered_id = ring_buffer->max_id - 1;
@@ -434,9 +435,10 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
     // interval The XYZ_counter is the amount of packets we've already sent in that interval We
     // subtract the two, to get the max nacks that we're allowed to send at this point in time We
     // min to take the stricter restriction of either burst or average
-    int max_nacks =
-        (int)min(MAX_NACK_BURST_MBPS * burst_interval / MAX_PAYLOAD_SIZE - burst_counter,
-                 MAX_NACK_AVG_MBPS * avg_interval / MAX_PAYLOAD_SIZE - avg_counter);
+    int max_nacks_remaining =
+        MAX_NACK_BURST_MBPS * burst_interval / MAX_PAYLOAD_SIZE - burst_counter;
+    int avg_nacks_remaining = MAX_NACK_AVG_MBPS * avg_interval / MAX_PAYLOAD_SIZE - avg_counter;
+    int max_nacks = (int)min(max_nacks_remaining, avg_nacks_remaining);
     // Note how the order-of-ops ensures arithmetic is done with double's for higher accuracy
 
     static bool last_nack_possibility = true;
@@ -446,7 +448,9 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
             LOG_INFO("Can't nack anymore! Hit NACK bitrate limit. Try increasing NACK bitrate?");
             last_nack_possibility = false;
         }
-        return;
+        // Nacking has failed when avg_nacks has been saturated.
+        // If max_nacks has been saturated, that's just burst bitrate distribution
+        return avg_nacks_remaining > 0;
     } else {
         if (!last_nack_possibility) {
             LOG_INFO("NACKing is possible again.");
@@ -577,6 +581,9 @@ void try_nacking(RingBuffer* ring_buffer, double latency) {
     // Update the counters to track max nack bitrate
     burst_counter += num_packets_nacked;
     avg_counter += num_packets_nacked;
+
+    // Nacking succeeded
+    return true;
 }
 
 void destroy_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data) {
