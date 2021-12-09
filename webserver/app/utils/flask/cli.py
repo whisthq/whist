@@ -74,7 +74,7 @@ def create_buffers(client_commit_hash: str, region_to_ami_id_mapping_str: str) -
 @command_bp.cli.command("swap_over_buffers")  # type: ignore
 @click.argument("new_amis")  # type: ignore
 @click.argument("amis_failed")  # type: ignore
-def swap_over_buffers(new_amis: str, amis_failed: bool) -> None:
+def swap_over_buffers(new_amis: str, amis_failed: str) -> None:
     """
     This function sets the new AMIs to active, the old AMIs to inactive,
     and drains all previously active instances.
@@ -87,8 +87,8 @@ def swap_over_buffers(new_amis: str, amis_failed: bool) -> None:
 
     current_app.config["WHIST_ACCESS_TOKEN"] = os.environ["WHIST_ACCESS_TOKEN"]
     new_amis_list: List[str] = json.loads(new_amis)
-    amis_failed: bool = json.loads(amis_failed)
-    swapover_amis(new_amis_list, amis_failed)
+    amis_failed_bool: bool = json.loads(amis_failed)
+    swapover_amis(new_amis_list, amis_failed_bool)
 
 
 # In @owenniles's opinion, all CLI commands should contain hyphens rather than underscores. The
