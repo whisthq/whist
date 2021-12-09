@@ -84,6 +84,10 @@ jobs:
       # Actual messages are defined in the environment configuration at
       # the top of this job.
       - name: Update GitHub PR Comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # needed for migra diff tool
+          GITHUB_ISSUE: ${{ github.event.number }}
+          GITHUB_PR_URL: "https://github.com/fractal/whist/pull/"
         shell: python3 {0}
         run: |
           import os
