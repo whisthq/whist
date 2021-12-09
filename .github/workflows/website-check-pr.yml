@@ -74,7 +74,46 @@ jobs:
       - name: Build and Deploy Netlify Website
         working-directory: frontend/website
         run: |
-          netlify deploy --build
+          netlify deploy --build | tee netlify.log
+          cat netlify.log | grep "Website Draft URL" -B1 > netlify.info
+
+      # Need to install this dependency for the notification step.
+      - name: Install Python Dependencies
+        run: pip install PyGithub
+
+      # Actual messages are defined in the environment configuration at
+      # the top of this job.
+      - name: Update GitHub PR Comment
+        shell: python3 {0}
+        run: |
+          import os
+          import sys
+          sys.path.append(".github/workflows/helpers")
+          from notifications.github_bot import github_comment_update
+
+          if not os.environ.get("GITHUB_ISSUE"):
+            print("No GitHub Issue number! Skipping PR notification.")
+            sys.exit(0)
+
+          github_token = os.environ["GITHUB_TOKEN"]
+          github_issue = int(os.environ["GITHUB_ISSUE"])
+          github_repo = "fractal/whist"
+
+          identifier = "AUTOMATED_NETLIFY_DEPLOY_PREVIEW_MESSAGE"
+
+          title = "Netlify Deploy Preview"
+          file = open("frontend/website/netlify.info")
+          body = file.read()
+          file.close()
+
+          github_comment_update(
+            github_token,
+            github_repo,
+            github_issue,
+            identifier,
+            body,
+            title=title,
+          )
 
       - name: Setup Python-based notifications
         if: failure()
