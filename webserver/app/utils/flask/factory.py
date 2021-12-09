@@ -76,7 +76,11 @@ def create_app(testing: bool = False) -> Flask:
     whist_logger.info("environment = {}".format(app.config["ENVIRONMENT"]))
 
     # Only set up a connection to a Sentry event ingestion endpoint in production, staging, and development.
-    if app.config["ENVIRONMENT"] in (env_names.PRODUCTION, env_names.STAGING, env_names.DEVELOPMENT):
+    if app.config["ENVIRONMENT"] in (
+        env_names.PRODUCTION,
+        env_names.STAGING,
+        env_names.DEVELOPMENT,
+    ):
         init_and_ensure_sentry_connection(app.config["ENVIRONMENT"], app.config["SENTRY_DSN"])
 
     # Set the Stripe API key.
