@@ -113,9 +113,10 @@ def build_image_path(img_path, running_processes=None, ret=None, root_image=Fals
     command = [
         "docker",
         "build",
-        "--memory=4g",  # give Docker more memory to build the image
+        "-rm",
+        "--memory=7g",  # give Docker more memory to build the image
         "--memory-swap=-1",  # enable unlimited swap
-        "--shm-size=4g",  # give Docker more memory to build the image
+        "--shm-size=7g",  # give Docker more memory to build the image
         "-f",
         f"{img_path}/Dockerfile.20",
         img_path,
