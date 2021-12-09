@@ -394,7 +394,7 @@ int client_parse_args(int argc, char *argv[]) {
     return 0;
 }
 
-int read_piped_arguments(bool *keep_waiting) {
+int read_piped_arguments(bool *keep_waiting, bool run_only_once) {
     /*
         Read arguments from the stdin pipe if `using_piped_arguments` is
         set to `true`.
@@ -432,13 +432,19 @@ int read_piped_arguments(bool *keep_waiting) {
         return -1;
     }
 #endif
-
+    LOG_INFO("1!");
     // Each argument will be passed via pipe from the client application
     //    with the argument name and value separated by a "?"
     //    and each argument/value pair on its own line
-    while (keep_reading && *keep_waiting) {
-        SDL_Delay(50);  // to keep the fan from freaking out
-                        // If stdin doesn't have any characters, continue the loop
+    bool ran_once=false;
+    while (keep_reading && *keep_waiting && !(run_only_once && ran_once)) {
+        ran_once =true;
+        LOG_INFO("2!");
+        if (!run_only_once) {
+            SDL_Delay(50);  // to keep the fan from freaking out
+                            // If stdin doesn't have any characters, continue the loop
+        }
+        LOG_INFO("3!");
 #ifndef _WIN32
         if (ioctl(STDIN_FILENO, FIONREAD, &available_chars) < 0) {
             LOG_ERROR("ioctl error with piped arguments: %s", strerror(errno));
@@ -460,14 +466,14 @@ int read_piped_arguments(bool *keep_waiting) {
             continue;
         }
 #endif  // _WIN32
-
+        LOG_INFO("4!");
         // Reset `incoming` so that it is at the very least initialized.
         memset(incoming, 0, INCOMING_MAXLEN + 1);
-
+        LOG_INFO("5!");
         for (int char_idx = 0; char_idx < (int)available_chars; char_idx++) {
             // Read a character from stdin
             read_char = (char)fgetc(stdin);
-
+            LOG_INFO("6.%d!", char_idx);
             // If the character is EOF, make sure the loop ends after this iteration
             if (read_char == EOF) {
                 keep_reading = false;
@@ -475,7 +481,7 @@ int read_piped_arguments(bool *keep_waiting) {
                 incoming[total_stored_chars] = read_char;
                 total_stored_chars++;
             }
-
+            LOG_INFO("7.%d!", char_idx);
             // Causes some funky behavior if the line being read in is longer than 128 characters
             // because
             //   it splits into two and processes as two different pieces
@@ -485,8 +491,10 @@ int read_piped_arguments(bool *keep_waiting) {
                 finished_line = true;
                 total_stored_chars = 0;
             } else {
+                LOG_INFO("777777.%d!", char_idx);
                 continue;
             }
+            LOG_INFO("8.%d!", char_idx);
 
             // We could use `strsep`, but it sadly is not cross-platform.
             // We split at the first occurence of '?'; the first part becomes
@@ -501,6 +509,8 @@ int read_piped_arguments(bool *keep_waiting) {
                 *c = '\0';
                 arg_value = c + 1;
             }
+
+            LOG_INFO("9.%d!", char_idx);
 
             if (!arg_name) {
                 goto completed_line_eval;
@@ -527,6 +537,7 @@ int read_piped_arguments(bool *keep_waiting) {
                     break;
                 }
             }
+            LOG_INFO("10.%d!", char_idx);
 
             if (opt_index >= 0) {
                 // Evaluate the passed argument, if a valid opt

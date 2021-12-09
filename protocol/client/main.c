@@ -180,7 +180,7 @@ int multithreaded_read_piped_arguments(void* keep_piping) {
             (int) 0 on success, -1 on failure
     */
 
-    int ret = read_piped_arguments((bool*)keep_piping);
+    int ret = read_piped_arguments((bool*)keep_piping, /*run_only_once=*/false);
     continue_pumping = false;
     return ret;
 }
@@ -473,7 +473,8 @@ int main(int argc, char* argv[]) {
             }
 
             keep_piping = true;
-            int ret = read_piped_arguments(&keep_piping);
+            //LOG_INFO("About to enter read_piped_arguments!");
+            int ret = read_piped_arguments(&keep_piping, true);
 
             update_pending_sdl_tasks();
 

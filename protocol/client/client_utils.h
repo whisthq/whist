@@ -66,7 +66,7 @@ int client_parse_args(int argc, char* argv[]);
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int read_piped_arguments(bool* keep_waiting);
+int read_piped_arguments(bool* keep_waiting, bool run_only_once);
 
 /**
  * @brief                          Init any allocated memory for parsed args
