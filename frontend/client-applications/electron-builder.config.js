@@ -5,7 +5,7 @@ const { iconName, appEnvironment } = require("./config/build")
 
 const appDetails = {
   appId:
-    "com.fractalcomputers.fractal" +
+    "com.whist.whistbrowser" +
     (appEnvironment === "prod" ? "" : `-${appEnvironment}`), // Standard Apple appId format: <domain-extension>.<domain>.<company-name>
   copyright: "Copyright © Whist Technologies, Inc.",
   productName:
