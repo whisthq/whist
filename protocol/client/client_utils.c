@@ -711,7 +711,8 @@ void send_initial_url() {
     if (initial_url) {
         WhistClientMessage wcmsg = {0};
         wcmsg.type = MESSAGE_OPEN_URL;
-        safe_strncpy(wcmsg.url_to_open, (const char *)initial_url, strlen((const char*)initial_url) + 1);
+        safe_strncpy(wcmsg.url_to_open, (const char *)initial_url,
+                     strlen((const char *)initial_url) + 1);
         send_wcmsg(&wcmsg);
     }
 }
