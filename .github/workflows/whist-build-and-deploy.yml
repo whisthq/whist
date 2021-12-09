@@ -409,7 +409,7 @@ jobs:
   # Runs if config succeeds and branch is in ["prod", "staging", "dev"]
   mandelboxes-and-amis-publish-ghcr-and-aws:
     name: "Mandelbox Infrastructure: Build & Publish Whist Mandelboxes and AMIs"
-    runs-on: ubuntu-20.04
+    runs-on: [self-hosted, linux, x64, t3.xlarge]
     concurrency: mandelboxes-and-amis-publish-ghcr-and-aws-${{ github.ref }}
     needs: [whist-publish-build-config, whist-build-monorepo-config]
     outputs:

@@ -89,7 +89,7 @@ jobs:
   # Checks that the Docker images build successfully.
   mandelboxes-build-images:
     name: Building
-    runs-on: ubuntu-20.04
+    runs-on: [self-hosted, linux, x64, t3.xlarge]
 
     steps:
       - name: Checkout Git Repository
