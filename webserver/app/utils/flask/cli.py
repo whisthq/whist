@@ -65,28 +65,30 @@ def create_buffers(client_commit_hash: str, region_to_ami_id_mapping_str: str) -
 
     current_app.config["WHIST_ACCESS_TOKEN"] = os.environ["WHIST_ACCESS_TOKEN"]
     region_to_ami_id_mapping: Dict[str, str] = json.loads(region_to_ami_id_mapping_str)
-    new_amis = create_ami_buffer(client_commit_hash, region_to_ami_id_mapping)
+    new_amis, amis_failed = create_ami_buffer(client_commit_hash, region_to_ami_id_mapping)
 
     print(f"::set-output name=new_amis::{json.dumps(new_amis)}")
+    print(f"::set-output name=amis_failed::{json.dumps(amis_failed)}")
 
 
 @command_bp.cli.command("swap_over_buffers")  # type: ignore
 @click.argument("new_amis")  # type: ignore
-def swap_over_buffers(
-    new_amis: str,
-) -> None:
+@click.argument("amis_failed")  # type: ignore
+def swap_over_buffers(new_amis: str, amis_failed: str) -> None:
     """
     This function sets the new AMIs to active, the old AMIs to inactive,
     and drains all previously active instances.
     Args:
-        new_amis: Stringified list of new AMIs
+        new_amis: Stringified list of new AMIs.
+        amis_failed: indicates if any AMI failed to create a buffer.
     Returns:
         None
     """
 
     current_app.config["WHIST_ACCESS_TOKEN"] = os.environ["WHIST_ACCESS_TOKEN"]
     new_amis_list: List[str] = json.loads(new_amis)
-    swapover_amis(new_amis_list)
+    amis_failed_bool: bool = json.loads(amis_failed)
+    swapover_amis(new_amis_list, amis_failed_bool)
 
 
 # In @owenniles's opinion, all CLI commands should contain hyphens rather than underscores. The

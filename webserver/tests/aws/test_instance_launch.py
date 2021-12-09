@@ -152,8 +152,8 @@ def test_perform_ami_upgrade(
         # status of each threads's success state, we need to mark this as true
         # to indicate that the calls to launch_new_ami_buffer have succeded
         thread_index = args[2]
-        thead_status_index = 1
-        ami_upgrade.region_wise_upgrade_threads[thread_index][thead_status_index] = True
+        thread_status_index = 1
+        ami_upgrade.region_wise_upgrade_threads[thread_index][thread_status_index] = True
 
     # We are mocking the `launch_new_ami_buffer` to capture the function calls
     # and check args to ensure that we are upgrading the appropriate region
@@ -199,8 +199,10 @@ def test_perform_ami_upgrade(
         new_ami_list.append(newer_ami)
         region_to_new_ami_map[region] = newer_ami
 
-    new_amis = create_ami_buffer(generate_name("new-client-hash", True), region_to_new_ami_map)
-    swapover_amis(new_amis)
+    new_amis, amis_failed = create_ami_buffer(
+        generate_name("new-client-hash", True), region_to_new_ami_map
+    )
+    swapover_amis(new_amis, amis_failed)
 
     region_wise_new_amis_added_to_db_session = {
         item.region_name: item
