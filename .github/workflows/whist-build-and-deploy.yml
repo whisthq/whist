@@ -438,10 +438,6 @@ jobs:
         with:
           python-version: "3.10.0"
 
-      - name: Install webserver scripting dependencies
-        working-directory: webserver
-        run: pip install -r scripts/requirements.txt
-
       - name: Setup Python-based notifications # slack notifications need to be set up before steps that can lead to errors
         working-directory: .github/workflows/helpers
         run: ./notifications/setup_notifications.sh
