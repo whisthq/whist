@@ -1,3 +1,3 @@
 [build]
   publish = "build/"
-  command = "yarn build:netlify"
+  command = "yarn && yarn build:netlify"
