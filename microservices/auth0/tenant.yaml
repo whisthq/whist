@@ -79,8 +79,6 @@ clients:
     native_social_login:
       apple:
         enabled: false
-      microsoft:
-        enabled: false
     jwt_configuration:
       alg: RS256
       lifetime_in_seconds: 36000
@@ -114,8 +112,6 @@ clients:
     native_social_login:
       apple:
         enabled: false
-      microsoft:
-        enabled: false
     jwt_configuration:
       alg: RS256
       lifetime_in_seconds: 36000
@@ -148,8 +144,6 @@ clients:
     oidc_conformant: true
     native_social_login:
       apple:
-        enabled: false
-      microsoft:
         enabled: false
     jwt_configuration:
       alg: RS256
