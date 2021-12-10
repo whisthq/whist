@@ -1,44 +1,56 @@
-rules:
-  - name: add-customer-id-claim
-    script: ./rules/add-customer-id-claim.js
-    stage: login_success
-    enabled: true
-    order: 2
-  - name: create-customer
-    script: ./rules/create-customer.js
-    stage: login_success
-    enabled: true
-    order: 1
-  - name: add-subscription-status-claim
-    script: ./rules/add-subscription-status-claim.js
-    stage: login_success
-    enabled: true
-    order: 3
-rulesConfigs: []
-hooks: []
+# Auth0-Deploy-CLI Tenant YAML Configuration
+
+tenant:
+  # Settings
+  friendly_name: "Whist Technologies, Inc."
+  picture_url: https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2.png
+  support_email: support@whist.com
+  support_url: "https://whist.com/contact"
+
+  # API Authorization Settings
+  default_audience: ""
+  default_directory: ""
+
+  # Languages
+  enabled_locales:
+    - en
+    - es
+    - fr-FR
+    - FR-CA
+
+  # Login Page Flags
+  flags:
+    new_universal_login_experience_enabled: true
+    universal_login: true
+    dashboard_ui_next: true
+    revoke_refresh_token_grant: false
+    disable_clickjack_protection_headers: false
+
+  # Login Page
+  universal_login:
+    colors:
+      page_background: "#ffffff"
+      primary: "#4f35de"
+
+
 pages:
-  - name: guardian_multifactor
-    enabled: false
-    html: ./pages/guardian_multifactor.html
+  # Login Page
   - name: login
     enabled: true
     html: ./pages/login.html
-resourceServers:
-  - name: Whist API
-    identifier: "##WHIST_AUTHENTICATION_API##"
-    allow_offline_access: true
-    enforce_policies: true
-    scopes:
-      - value: admin
-        description: Administrative resources
-      - value: backend
-        description: Granted to trusted backends
-    signing_alg: RS256
-    skip_consent_for_verifiable_first_party_clients: true
-    token_dialect: access_token
-    token_lifetime: 86400
-    token_lifetime_for_web: 7200
+
+  # Multifactor Authentication Page
+  - name: guardian_multifactor
+    enabled: false
+    html: ./pages/guardian_multifactor.html
+
+
 clients:
+
+
+
+
+
   - name: Whist
     allowed_clients: []
     app_type: native
@@ -46,7 +58,7 @@ clients:
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
-    description: The Whist desktop application.
+    description: The Whist desktop application
     grant_types:
       - authorization_code
       - refresh_token
@@ -60,7 +72,7 @@ clients:
     native_social_login:
       apple:
         enabled: false
-      facebook:
+      microsoft:
         enabled: false
     oidc_conformant: true
     refresh_token:
@@ -94,7 +106,7 @@ clients:
     native_social_login:
       apple:
         enabled: false
-      facebook:
+      microsoft:
         enabled: false
     oidc_conformant: true
     refresh_token:
@@ -128,7 +140,7 @@ clients:
     native_social_login:
       apple:
         enabled: false
-      facebook:
+      microsoft:
         enabled: false
     oidc_conformant: true
     refresh_token:
@@ -164,7 +176,53 @@ clients:
       rotation_type: non-rotating
     sso_disabled: false
     token_endpoint_auth_method: client_secret_post
+
+
+
+
+
+
+rules:
+  - name: add-customer-id-claim
+    script: ./rules/add-customer-id-claim.js
+    stage: login_success
+    enabled: true
+    order: 2
+  - name: create-customer
+    script: ./rules/create-customer.js
+    stage: login_success
+    enabled: true
+    order: 1
+  - name: add-subscription-status-claim
+    script: ./rules/add-subscription-status-claim.js
+    stage: login_success
+    enabled: true
+    order: 3
+
+rulesConfigs: []
+
+hooks: []
+
+
+resourceServers:
+  - name: Whist API
+    identifier: "##WHIST_AUTHENTICATION_API##"
+    allow_offline_access: true
+    enforce_policies: true
+    scopes:
+      - value: admin
+        description: Administrative resources
+      - value: backend
+        description: Granted to trusted backends
+    signing_alg: RS256
+    skip_consent_for_verifiable_first_party_clients: true
+    token_dialect: access_token
+    token_lifetime: 86400
+    token_lifetime_for_web: 7200
+
+
 databases: []
+
 connections:
   - name: apple
     strategy: apple
@@ -221,31 +279,16 @@ connections:
       google_cloud_storage: false
       content_api_for_shopping: false
       google_affiliate_network: false
-tenant:
-  default_audience: ""
-  default_directory: ""
-  enabled_locales:
-    - en
-  flags:
-    new_universal_login_experience_enabled: true
-    universal_login: true
-    dashboard_ui_next: true
-    revoke_refresh_token_grant: false
-    disable_clickjack_protection_headers: false
-  friendly_name: ""
-  picture_url: https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2.png
-  support_email: support@whist.com
-  support_url: ""
-  universal_login:
-    colors:
-      page_background: "#ffffff"
-      primary: "#4f35de"
+
+
+
 emailProvider:
   name: sendgrid
   credentials:
     api_key: "##SENDGRID_API_KEY##"
   default_from_address: Whist <support@whist.com>
   enabled: true
+
 emailTemplates:
   - template: welcome_email
     body: ./emailTemplates/welcome_email.html
@@ -253,11 +296,13 @@ emailTemplates:
     from: Whist <noreply@whist.com>
     subject: Welcome to Whist!
     syntax: liquid
+
 clientGrants:
   - client_id: Webserver
     audience: "##WHIST_AUTHENTICATION_API##"
     scope:
       - backend
+
 guardianFactors:
   - name: duo
     enabled: false
@@ -275,29 +320,41 @@ guardianFactors:
     enabled: false
   - name: webauthn-roaming
     enabled: false
+
 guardianFactorProviders: []
+
 guardianFactorTemplates: []
+
 guardianPolicies:
   policies: []
+
 guardianPhoneFactorSelectedProvider:
   provider: auth0
+
 guardianPhoneFactorMessageTypes:
   message_types: []
+
 roles:
   - name: Developer
     description: A Whist developer
     permissions:
       - permission_name: admin
         resource_server_identifier: "##WHIST_AUTHENTICATION_API##"
+
 branding:
   colors:
     page_background: "#ffffff"
     primary: "#4f35de"
   logo_url: https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2.png
+
 prompts:
   universal_login_experience: new
   identifier_first: true
+
 migrations: {}
+
 actions: []
+
 triggers: {}
+
 organizations: []
