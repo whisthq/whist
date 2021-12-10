@@ -135,7 +135,7 @@ func Panic(globalCancel context.CancelFunc, err error) {
 	PrintStackTrace()
 
 	if globalCancel != nil {
-		Error(err)
+		log.Print(utils.ColorRed(errstr))
 		globalCancel()
 	} else {
 		// If we're truly trying to panic, let's at least flush our logging queues
