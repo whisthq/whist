@@ -251,7 +251,7 @@ connections:
     enabled_clients: []
     options:
       scope: name email
-      client_id: com.whist.whistbrowserauth
+      client_id: com.whisttechnologies.whistauth
       app_secret: "##APPLE_OAUTH_SECRET##"
       team_id: 757Z8TDNJL
       kid: D3T9SSLTY5

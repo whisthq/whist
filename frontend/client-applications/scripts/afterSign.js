@@ -24,7 +24,7 @@ exports.default = async function afterSign(context) {
 
     if (appleApiKey && appleApiKeyIssuer) {
       return await notarize({
-        appBundleId: "com.whist.whistbrowser",
+        appBundleId: "com.whisttechnologies.whist",
         appPath: path.join(appOutDir, `${appName}.app`),
         appleApiKey: appleApiKey,
         appleApiIssuer: appleApiKeyIssuer,
