@@ -480,6 +480,7 @@ jobs:
       aws_new_ami_instance_type: g4dn.xlarge # The AWS EC2 instance type our new AMI gets built on
       aws_new_ami_vpc_id: vpc-e0935889 # The ID of the Whist-created VPC the EC2 instance building the AMI is part of
       aws_source_ami_id: ami-0bd9c26722573e69b # The base AWS-provided AMI we build our AMI from (AWS Ubuntu Server 20.04 LTS) associated with the aws_new_ami_source_region
+      apps: "browsers/chrome browsers/brave" # We only deploy the browsers mandelboxes
 
     steps:
       - name: Checkout Git Repository
@@ -505,16 +506,11 @@ jobs:
         working-directory: protocol
         run: ./build_protocol_targets.sh --cmakebuildtype=Release WhistServer
 
-      # Only push mandelboxes from /browsers to GitHub Container Registry
-      - name: Walk Folder to Find All Dockerfiles and Store Paths as Environment Variable
-        working-directory: mandelboxes/browsers
-        run: echo "apps=$(./../helper_scripts/find_mandelbox_dockerfiles_in_subtree.sh)" >> $GITHUB_ENV
-
       # In deploys, we only build the Docker images used in production
       # Note that they will build the images they depend on automatically (i.e. base)
       - name: Build Mandelboxes
         working-directory: mandelboxes
-        run: ./build.sh browsers/chrome browsers/brave --prod
+        run: ./build.sh ${{ env.apps }} --prod
         env:
           DOCKER_BUILDKIT: 1
 
@@ -617,6 +613,9 @@ jobs:
           json.dump(data, fp)
           fp.close()
 
+          # print JSON data for debugging/logging purposes
+          print(data)
+
       # This spins up an AWS EC2 instance to create the AMI, and then deletes it
       # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
       - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
@@ -630,7 +629,7 @@ jobs:
           import json
 
           # stdout will be shared with the subprocess so we can see what is happening
-          subprocess.run("packer build -machine-readable -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
+          subprocess.run("packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
 
           # if packer fails, manifest.json does not get created and the entire workflow fails here
           assert os.path.exists("manifest.json")
