@@ -352,7 +352,7 @@ guardianPolicies:
 roles:
   # Internal role for Whist developers to perform Auth0 administrative tasks
   - name: Developer
-    description: A Whist developer
+    description: Whist developers
     permissions:
       - permission_name: admin
         resource_server_identifier: "##WHIST_AUTHENTICATION_API##"
