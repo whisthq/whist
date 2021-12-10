@@ -106,9 +106,6 @@ jobs:
           json.dump(data, fp)
           fp.close()
 
-          # print JSON data for debugging/logging purposes
-          print(data)
-
       # This spins up an AWS EC2 instance to create the AMI, and then deletes it
       # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
       - name: Create New AMI in aws_new_ami_source_region via Packer

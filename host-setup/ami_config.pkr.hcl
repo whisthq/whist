@@ -1,4 +1,9 @@
 
+
+
+###
+
+
 variable "access_key" {
   type      = string
   default   = ""
@@ -78,6 +83,15 @@ variable "vpc_id" {
   default = ""
 }
 
+
+
+
+
+
+####
+
+
+
 source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   access_key           = "${var.access_key}"
   ami_description      = "Whist-optimized Ubuntu 20.04 AWS Machine Image."
@@ -93,6 +107,7 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
     volume_type           = "gp3"
   }
   region       = "${var.source_region}"
+  availability_zone = "eu-north-1b"
   secret_key   = "${var.secret_key}"
   source_ami   = "${var.source_ami}"
   ssh_username = "ubuntu"
@@ -119,6 +134,14 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
     value = "${var.git_commit_sha}"
   }
 }
+
+
+
+
+####3
+## 
+###
+
 
 build {
   sources = ["source.amazon-ebs.Whist_AWS_AMI_Builder"]
