@@ -63,6 +63,9 @@ int client_parse_args(int argc, char* argv[]);
  *                                 is set to `true`.
  *
  * @param keep_waiting             Pointer to a boolean indicating whether to continue waiting
+ * @param run_only_once            A boolean controlling whether to keep polling for stdin updates
+ * or read from stdin only one time. Must use 'true' if this function is being called in a while
+ * loop.
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
@@ -108,7 +111,8 @@ int update_mouse_motion();
 void send_message_dimensions();
 
 /**
- * @brief                          Sends message to server with new tab URL to open.
+ * @brief                          Sends message to server with new tab URL to open, if the global
+ * new_tab_url is non-NULL.
  */
 void send_new_tab_url_if_needed();
 
