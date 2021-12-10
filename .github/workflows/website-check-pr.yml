@@ -87,7 +87,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # needed for migra diff tool
           GITHUB_ISSUE: ${{ github.event.number }}
-          GITHUB_PR_URL: "https://github.com/fractal/whist/pull/"
+          GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
         shell: python3 {0}
         run: |
           import os
@@ -101,7 +101,7 @@ jobs:
 
           github_token = os.environ["GITHUB_TOKEN"]
           github_issue = int(os.environ["GITHUB_ISSUE"])
-          github_repo = "fractal/whist"
+          github_repo = "whisthq/whist"
 
           identifier = "AUTOMATED_NETLIFY_DEPLOY_PREVIEW_MESSAGE"
 
@@ -138,5 +138,5 @@ jobs:
 
           from notifications.slack_bot import slack_post
           SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
-          BODY = "@releases :rotating_light: Failed to build Whist monorepo config in `whist-build-monorepo-config`, investigate immediately :rotating_light: (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "@releases :rotating_light: Failed to build Whist monorepo config in `whist-build-monorepo-config`, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)

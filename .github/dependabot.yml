@@ -1,6 +1,6 @@
 # dependabot.yml
 #
-# Configuration file for Dependabot on the fractal/whist monorepository.
+# Configuration file for Dependabot on the whisthq/whist monorepository.
 
 # Note: Dependabot does not support globbing as of the writing of this file. As
 # a result, this configuration file is structured on a per-subrepo basis and
