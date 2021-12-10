@@ -109,7 +109,6 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
     volume_type           = "gp3"
   }
   region       = "${var.source_region}"
-  availability_zone = "us-east-1f"
   secret_key   = "${var.secret_key}"
   source_ami   = "${var.source_ami}"
   ssh_username = "ubuntu"
