@@ -157,10 +157,10 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 	regexes := []string{
 		`fractal/browsers/chrome:current-build`,
 		`fractal/browsers/brave:current-build`,
-		`ghcr.io/fractal/*/browsers/chrome:current-build`,
-		`ghcr.io/fractal/*/browsers/brave:current-build`,
-		`ghcr.io/fractal/*`,
-		`*fractal*`,
+		`ghcr.io/fractal/.*/browsers/chrome:current-build`,
+		`ghcr.io/fractal/.*/browsers/brave:current-build`,
+		`ghcr.io/fractal/.*`,
+		`.*fractal.*`,
 	}
 
 	image := dockerImageFromRegexes(globalCtx, client, regexes)
