@@ -15,8 +15,9 @@ tenant:
   enabled_locales:
     - en
     - es
+    - it
     - fr-FR
-    - FR-CA
+    - fr-CA
 
   # Login Page Flags
   flags:
