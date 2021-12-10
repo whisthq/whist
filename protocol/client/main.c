@@ -446,11 +446,14 @@ int main(int argc, char* argv[]) {
         window_resize_mutex = whist_create_mutex();
 
         clock keyboard_sync_timer, mouse_motion_timer, monitor_change_timer;
-        clock new_tab_timer;
         start_timer(&keyboard_sync_timer);
         start_timer(&mouse_motion_timer);
         start_timer(&monitor_change_timer);
-        start_timer(&new_tab_timer);
+
+        // Timer ensures we check piped args for potential URLs to open no more than once every
+        // 50ms. This prevents CPU overload.
+        clock new_tab_url_timer;
+        start_timer(&new_tab_url_timer);
 
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
@@ -472,9 +475,11 @@ int main(int argc, char* argv[]) {
                 continue;
             }
 
-            keep_piping = true;
-            //LOG_INFO("About to enter read_piped_arguments!");
-            int ret = read_piped_arguments(&keep_piping, true);
+            if (get_timer(new_tab_url_timer) * MS_IN_SECOND > 50.0) {
+                bool keep_piping2 = true;
+                int res = read_piped_arguments(&keep_piping2, /*run_only_one=*/true);
+                start_timer(&new_tab_url_timer);
+            }
 
             update_pending_sdl_tasks();
 
