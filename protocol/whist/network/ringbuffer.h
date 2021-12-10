@@ -14,6 +14,7 @@ packet, call nack_single_packet.
 */
 
 #include <whist/core/whist.h>
+#include <whist/utils/fec.h>
 
 /**
  * @brief FrameData struct containing content and metadata of encoded frames.
@@ -23,9 +24,11 @@ packet, call nack_single_packet.
  */
 typedef struct FrameData {
     WhistPacketType type;
-    int num_packets;
+    int num_original_packets;
+    int num_fec_packets;
     int id;
-    int packets_received;
+    int original_packets_received;
+    int fec_packets_received;
     int frame_size;
     bool* received_indices;
     char* frame_buffer;
@@ -40,6 +43,7 @@ typedef struct FrameData {
     clock last_nacked_timer;
     clock last_nonnack_packet_timer;
     clock frame_creation_timer;
+    FECDecoder* decoder;
 } FrameData;
 
 // Handler that gets called when the ring buffer wants to nack for a packet

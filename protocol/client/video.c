@@ -366,10 +366,11 @@ void skip_to_next_iframe() {
              i < video_data.most_recent_iframe; i++) {
             FrameData* frame_data = get_frame_at_id(video_ring_buffer, i);
             if (frame_data->id == i) {
-                LOG_WARNING("Frame dropped with ID %d: %d/%d", i, frame_data->packets_received,
-                            frame_data->num_packets);
+                LOG_WARNING("Frame dropped with ID %d: %d/%d", i,
+                            frame_data->original_packets_received,
+                            frame_data->num_original_packets);
 
-                for (int j = 0; j < frame_data->num_packets; j++) {
+                for (int j = 0; j < frame_data->num_original_packets; j++) {
                     if (!frame_data->received_indices[j]) {
                         LOG_WARNING("Did not receive ID %d, Index %d", i, j);
                     }
@@ -459,7 +460,8 @@ void update_video() {
 
             // When we receive a packet that is a part of the next_render_id, and we have received
             // every packet for that frame, we set rendering=true
-            if (ctx->id == next_render_id && ctx->packets_received == ctx->num_packets) {
+            if (ctx->id == next_render_id &&
+                ctx->original_packets_received == ctx->num_original_packets) {
                 // The following line invalidates the information stored at the pointer ctx
                 render_context = set_rendering(video_ring_buffer, next_render_id);
                 // Progress the videodata last rendered pointer
@@ -505,7 +507,7 @@ int32_t receive_video(WhistPacket* packet) {
     } else {
         FrameData* ctx = get_frame_at_id(video_ring_buffer, packet->id);
         // If we received all of the packets
-        if (ctx->packets_received == ctx->num_packets) {
+        if (ctx->original_packets_received == ctx->num_original_packets) {
             bool is_iframe = ((VideoFrame*)ctx->frame_buffer)->is_iframe;
 
 #if LOG_VIDEO

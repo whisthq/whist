@@ -1,5 +1,6 @@
 #include "ringbuffer.h"
 #include <assert.h>
+#include <whist/utils/fec.h>
 
 #define MAX_RING_BUFFER_SIZE 500
 #define MAX_VIDEO_PACKETS 500
@@ -7,7 +8,7 @@
 #define MAX_UNORDERED_PACKETS 10
 
 void reset_ring_buffer(RingBuffer* ring_buffer);
-void init_frame(RingBuffer* ring_buffer, int id, int num_indices);
+void init_frame(RingBuffer* ring_buffer, int id, int, int);
 void allocate_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data);
 void destroy_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data);
 
@@ -71,15 +72,21 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int ring_buffer_size, NackPac
         return NULL;
     }
     ring_buffer->largest_num_packets =
-        ring_buffer->type == PACKET_VIDEO ? MAX_VIDEO_PACKETS : MAX_AUDIO_PACKETS;
+        ring_buffer->type == PACKET_VIDEO
+            ? MAX_VIDEO_PACKETS
+            : MAX_AUDIO_PACKETS;  // TODO consider increase this for FEC. Also we dont seem to have
+                                  // boundary check for array allocated by this value
     // allocate data for frames
     for (int i = 0; i < ring_buffer_size; i++) {
         FrameData* frame_data = &ring_buffer->receiving_frames[i];
         frame_data->frame_buffer = NULL;
         int indices_array_size = ring_buffer->largest_num_packets * sizeof(bool);
         int nacked_array_size = ring_buffer->largest_num_packets * sizeof(int);
+        // int size= ring_buffer->largest_num_packets * sizeof(int);
         frame_data->received_indices = safe_malloc(indices_array_size);
+        // frame_data->received_sizes = safe_malloc(size);
         frame_data->nacked_indices = safe_malloc(nacked_array_size);
+        frame_data->decoder = NULL;
     }
 
     // determine largest frame size
@@ -127,7 +134,7 @@ void allocate_frame_buffer(RingBuffer* ring_buffer, FrameData* frame_data) {
     }
 }
 
-void init_frame(RingBuffer* ring_buffer, int id, int num_indices) {
+void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int num_fec_indices) {
     /*
         Initialize a frame with num_indices indices and ID id. This allocates the frame buffer and
         the arrays we use for metadata.
@@ -143,8 +150,10 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_indices) {
     // initialize new framedata
     frame_data->id = id;
     allocate_frame_buffer(ring_buffer, frame_data);
-    frame_data->packets_received = 0;
-    frame_data->num_packets = num_indices;
+    frame_data->original_packets_received = 0;
+    frame_data->fec_packets_received = 0;
+    frame_data->num_original_packets = num_original_indices;
+    frame_data->num_fec_packets = num_fec_indices;
     memset(frame_data->received_indices, 0, indices_array_size);
     memset(frame_data->nacked_indices, 0, nacked_array_size);
     frame_data->last_nacked_index = -1;
@@ -154,6 +163,10 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_indices) {
     frame_data->recovery_mode = false;
     start_timer(&frame_data->frame_creation_timer);
     start_timer(&frame_data->last_nacked_timer);
+    if (frame_data->decoder != NULL) {
+        free_fec_decoder(frame_data->decoder);
+        frame_data->decoder = NULL;
+    }
 }
 
 void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data) {
@@ -167,6 +180,10 @@ void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data) {
     */
 
     destroy_frame_buffer(ring_buffer, frame_data);
+    if (frame_data->decoder != NULL) {
+        free_fec_decoder(frame_data->decoder);
+        frame_data->decoder = 0;
+    }
     frame_data->id = -1;
 }
 
@@ -200,7 +217,7 @@ FrameData* set_rendering(RingBuffer* ring_buffer, int id) {
     if (current_frame->id != id) {
         LOG_FATAL("The Frame ID %d does not exist, got %d instead", id, current_frame->id);
     }
-    if (current_frame->packets_received != current_frame->num_packets) {
+    if (current_frame->original_packets_received != current_frame->num_original_packets) {
         LOG_FATAL("Tried to call set_rendering on an incomplete packet %d!", id);
     }
     ring_buffer->currently_rendering_frame = *current_frame;
@@ -210,7 +227,6 @@ FrameData* set_rendering(RingBuffer* ring_buffer, int id) {
 
     return &ring_buffer->currently_rendering_frame;
 }
-
 int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
     /*
         Process a WhistPacket and add it to the ring buffer. If the packet belongs to an existing
@@ -228,7 +244,6 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
     FrameData* frame_data = get_frame_at_id(ring_buffer, packet->id);
 
     ring_buffer->num_packets_received++;
-
     int num_overwritten_frames = 0;
     // This packet is old, because the current resident already contains packets with a newer ID in
     // it
@@ -257,7 +272,13 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
             }
         }
         // Now, we can overwrite with no other concerns
-        init_frame(ring_buffer, packet->id, packet->num_indices);
+        if (packet->num_indices < packet->num_fec_indices) {
+            LOG_ERROR("unexpected packet, packet->num_indices = %d < packet->num_fec_indices = %d",
+                      packet->num_indices, packet->num_fec_indices);
+            return -1;
+        }
+        int num_original = packet->num_indices - packet->num_fec_indices;
+        init_frame(ring_buffer, packet->id, num_original, packet->num_fec_indices);
     }
 
     // check if we have nacked for the packet
@@ -287,14 +308,47 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
         if (!already_logged_about_it) {
             // It shouldn't be possible to receive the frame twice, without nacking for it
             LOG_ERROR("Duplicate of ID %d, Index %d received", packet->id, packet->index);
+            // TODO print different log for packet recovered by FEC
         }
         return -1;
     }
 
     // Update framedata metadata + buffer
     ring_buffer->max_id = max(ring_buffer->max_id, frame_data->id);
+    if (packet->num_indices - packet->num_fec_indices != frame_data->num_original_packets) {
+        LOG_ERROR(
+            "packet->num_indices - packet->num_fec_indices != frame_data->num_original_packets");
+        return -1;
+    }
+    if (packet->num_fec_indices != frame_data->num_fec_packets) {
+        LOG_ERROR("packet->num_fec_indices != frame_data->num_fec_packets");
+        return -1;
+    }
+    if (packet->index < 0 ||
+        packet->index >= frame_data->num_original_packets + frame_data->num_fec_packets) {
+        LOG_ERROR("packet->index =%d, not in correct range", (int)packet->index);
+        return -1;
+    }
+    if (packet->num_fec_indices > 0 &&
+        frame_data->original_packets_received + frame_data->fec_packets_received == 0) {
+        int origin = frame_data->num_original_packets;
+        int fec = frame_data->num_fec_packets;
+        int total = origin + fec;
+        if (frame_data->decoder != NULL) {
+            LOG_ERROR("original decoder not freed");
+            return -1;
+        }
+        frame_data->decoder = create_fec_decoder(origin, total, MAX_PAYLOAD_SIZE);
+    }
     frame_data->received_indices[packet->index] = true;
-    frame_data->packets_received++;
+    // frame_data->received_sizes[packet->index] = packet->payload_size;
+
+    if (packet->index < frame_data->num_original_packets) {
+        frame_data->original_packets_received++;
+    } else {
+        frame_data->fec_packets_received++;
+    }
+
     // Copy the packet data
     int place = packet->index * MAX_PAYLOAD_SIZE;
     if (place + packet->payload_size >= ring_buffer->largest_frame_size) {
@@ -304,7 +358,53 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
     memcpy(frame_data->frame_buffer + place, packet->data, packet->payload_size);
     frame_data->frame_size += packet->payload_size;
 
-    if (frame_data->packets_received == frame_data->num_packets) {
+    if (frame_data->original_packets_received > frame_data->num_original_packets) {
+        LOG_ERROR("frame_data->original_packets_received > frame_data->num_original_packets");
+        return -1;
+    }
+    if (frame_data->decoder &&
+        frame_data->original_packets_received != frame_data->num_original_packets) {
+        int res = decoder_register_buffer(
+            frame_data->decoder, packet->index,
+            frame_data->frame_buffer + packet->index * MAX_PAYLOAD_SIZE, packet->payload_size);
+        if (res != frame_data->original_packets_received + frame_data->fec_packets_received) {
+            LOG_ERROR("decoder_register_buffer() return value unexpected %d");
+            return -1;
+        }
+    }
+
+    if (frame_data->decoder &&
+        frame_data->original_packets_received != frame_data->num_original_packets &&
+        frame_data->original_packets_received + frame_data->fec_packets_received >=
+            frame_data->num_original_packets) {
+        int origin = frame_data->num_original_packets;
+        int fec = frame_data->num_fec_packets;
+        int total = origin + fec;
+        char** buf = safe_malloc(origin * sizeof(char*));
+        int* size = safe_malloc(origin * sizeof(int));
+
+        if (get_decoded_buffer(frame_data->decoder, buf, size) == 0) {
+            LOG_INFO(
+                "[FEC] decode success, type=%d id=%d origin=%d,fec=%d,total=%d "
+                ",recv_origin=%d, recv_fec=%d",
+                (int)packet->type, (int)packet->id, origin, fec, total,
+                frame_data->original_packets_received, frame_data->fec_packets_received);
+            frame_data->original_packets_received = frame_data->num_original_packets;
+            if ((origin - 1) * MAX_PAYLOAD_SIZE >= ring_buffer->largest_frame_size) {
+                LOG_ERROR("[FEC] Packet payload too large for frame buffer!");
+                return -1;
+            }
+            for (int i = 0; i < origin; i++) {
+                if (frame_data->received_indices[i] == true) continue;
+                memcpy(frame_data->frame_buffer + i * MAX_PAYLOAD_SIZE, buf[i], size[i]);
+                frame_data->received_indices[i] = true;
+            }
+        }
+        free(buf);
+        free(size);
+    }
+
+    if (frame_data->original_packets_received == frame_data->num_original_packets) {
         ring_buffer->frames_received++;
     }
     return num_overwritten_frames;
@@ -489,7 +589,7 @@ bool try_nacking(RingBuffer* ring_buffer, double latency) {
             continue;
         }
         // If this frame has been entirely received, there's nothing to nack for
-        if (frame_data->packets_received == frame_data->num_packets) {
+        if (frame_data->original_packets_received == frame_data->num_original_packets) {
             continue;
         }
 
@@ -499,7 +599,7 @@ bool try_nacking(RingBuffer* ring_buffer, double latency) {
 
         // Get the last index we received
         int last_packet_received = 0;
-        for (int i = frame_data->num_packets - 1; i >= 0; i--) {
+        for (int i = frame_data->num_original_packets - 1; i >= 0; i--) {
             if (frame_data->received_indices[i]) {
                 last_packet_received = i;
                 break;
@@ -549,9 +649,9 @@ bool try_nacking(RingBuffer* ring_buffer, double latency) {
                          frame_data->packets_received, frame_data->num_packets);
 #endif
                 packets_nacked_this_frame = nack_missing_packets_up_to_index(
-                    ring_buffer, frame_data, frame_data->num_packets - 1,
+                    ring_buffer, frame_data, frame_data->num_original_packets - 1,
                     max_nacks - num_packets_nacked);
-                if (frame_data->last_nacked_index == frame_data->num_packets - 1) {
+                if (frame_data->last_nacked_index == frame_data->num_original_packets - 1) {
                     frame_data->last_nacked_index = -1;
                     start_timer(&frame_data->last_nacked_timer);
 

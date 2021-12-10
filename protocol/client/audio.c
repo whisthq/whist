@@ -208,7 +208,7 @@ bool is_next_audio_frame_valid() {
               frame_data->packets_received, frame_data->num_packets);
 #endif
     return frame_data->id == next_to_play_id &&
-           frame_data->num_packets == frame_data->packets_received;
+           frame_data->num_original_packets == frame_data->original_packets_received;
 }
 
 bool buffer_audio(int audio_device_queue) {

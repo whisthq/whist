@@ -450,6 +450,7 @@ int create_udp_server_context(void* raw_context, int port, int recvfrom_timeout_
              ntohs(context->addr.sin_port));
 
     set_timeout(context->socket, recvfrom_timeout_ms);
+    context->fec_packet_ratio = FEC_PACKET_RATIO;
 
     return 0;
 }
