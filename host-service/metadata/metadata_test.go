@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fractal/whist/host-service/utils"
+	"github.com/whisthq/whist/host-service/utils"
 )
 
 var environmentTests = []struct {

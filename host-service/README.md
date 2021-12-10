@@ -26,7 +26,7 @@ If you want to test the host service with our production Sentry configuration, u
 
 ### Running Chrome with a development instance
 
-There are two ways of running development mandelboxes on the host service. The first is to start the mandelboxes directly on your development instance, and the second is to connect a local client app on your machine to the host service on your development instance. The instructions below assume you have already gone through the [host setup readme](https://github.com/fractal/whist/blob/dev/host-setup/README.md#setting-up-a-development-instance) and built the `browsers/chrome` image on your dev instance.
+There are two ways of running development mandelboxes on the host service. The first is to start the mandelboxes directly on your development instance, and the second is to connect a local client app on your machine to the host service on your development instance. The instructions below assume you have already gone through the [host setup readme](https://github.com/whisthq/whist/blob/dev/host-setup/README.md#setting-up-a-development-instance) and built the `browsers/chrome` image on your dev instance.
 
 #### Connecting with the protocol client
 
@@ -44,7 +44,7 @@ There are two ways of running development mandelboxes on the host service. The f
 
 ### Working with the JSON transport endpoint
 
-The host service communicates with the client through the `json_transport` endpoint. The purpose of this endpoint is to send data directly from client to host service, which in turn writes a `config.json` file for the protocol to read. You can find the spec of this project on [this notion doc](https://www.notion.so/whisthq/4d91593ea0e0438b8bdb14c25c219d55?v=0c3983cf062d4c3d96ac2a65eb31761b&p=21ada58db10249c2bce9158578873261). If you need to add a feature or test the json transport, you can follow the steps above. You can modify the values sent from the client [here](https://github.com/fractal/whist/blob/9cd531e5ea52a7c5abe4c1e21c8ce6e83e21170f/client-applications/src/main/flows/mandelbox/index.ts#L30). If you work on the protocol side, just edit the values sent on the client and then look for the `/whist/<mandelboxID>/resourceMappings/config.json` file and the data you sent should be there.
+The host service communicates with the client through the `json_transport` endpoint. The purpose of this endpoint is to send data directly from client to host service, which in turn writes a `config.json` file for the protocol to read. You can find the spec of this project on [this notion doc](https://www.notion.so/whisthq/4d91593ea0e0438b8bdb14c25c219d55?v=0c3983cf062d4c3d96ac2a65eb31761b&p=21ada58db10249c2bce9158578873261). If you need to add a feature or test the json transport, you can follow the steps above. You can modify the values sent from the client [here](https://github.com/whisthq/whist/blob/9cd531e5ea52a7c5abe4c1e21c8ce6e83e21170f/client-applications/src/main/flows/mandelbox/index.ts#L30). If you work on the protocol side, just edit the values sent on the client and then look for the `/whist/<mandelboxID>/resourceMappings/config.json` file and the data you sent should be there.
 
 ### Set up Hasura and a local database
 

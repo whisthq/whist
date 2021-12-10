@@ -1,12 +1,12 @@
 /*
 Package heroku contains code to pull configuration variables from Heroku at runtime.
 */
-package heroku // import "github.com/fractal/whist/host-service/metadata/heroku"
+package heroku // import "github.com/whisthq/whist/host-service/metadata/heroku"
 
 import (
 	"github.com/bgentry/heroku-go"
 
-	"github.com/fractal/whist/host-service/metadata"
+	"github.com/whisthq/whist/host-service/metadata"
 )
 
 // The following variables are filled in by the linker.

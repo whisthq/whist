@@ -1,4 +1,4 @@
-package whistlogger // import "github.com/fractal/whist/host-service/whistlogger"
+package whistlogger // import "github.com/whisthq/whist/host-service/whistlogger"
 
 import (
 	"encoding/json"
@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/fractal/whist/host-service/metadata"
-	"github.com/fractal/whist/host-service/metadata/aws"
-	"github.com/fractal/whist/host-service/utils"
+	"github.com/whisthq/whist/host-service/metadata"
+	"github.com/whisthq/whist/host-service/metadata/aws"
+	"github.com/whisthq/whist/host-service/utils"
 
 	"github.com/logzio/logzio-go"
 )

@@ -1,4 +1,4 @@
-package dbdriver // import "github.com/fractal/whist/host-service/dbdriver"
+package dbdriver // import "github.com/whisthq/whist/host-service/dbdriver"
 
 import (
 	"context"
@@ -8,13 +8,13 @@ import (
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 
-	"github.com/fractal/whist/host-service/metadata"
-	"github.com/fractal/whist/host-service/metadata/aws"
-	"github.com/fractal/whist/host-service/metrics"
-	"github.com/fractal/whist/host-service/utils"
-	logger "github.com/fractal/whist/host-service/whistlogger"
+	"github.com/whisthq/whist/host-service/metadata"
+	"github.com/whisthq/whist/host-service/metadata/aws"
+	"github.com/whisthq/whist/host-service/metrics"
+	"github.com/whisthq/whist/host-service/utils"
+	logger "github.com/whisthq/whist/host-service/whistlogger"
 
-	"github.com/fractal/whist/host-service/dbdriver/queries"
+	"github.com/whisthq/whist/host-service/dbdriver/queries"
 )
 
 // This file is concerned with database interactions at the instance-level

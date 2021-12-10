@@ -3,7 +3,7 @@ package auth
 import (
 	"testing"
 
-	"github.com/fractal/whist/host-service/metadata"
+	"github.com/whisthq/whist/host-service/metadata"
 )
 
 // TestGetAuthConfigDev will get the dev app environmet

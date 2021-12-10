@@ -1,14 +1,14 @@
-package whistlogger // import "github.com/fractal/whist/host-service/whistlogger"
+package whistlogger // import "github.com/whisthq/whist/host-service/whistlogger"
 
 import (
 	"log"
 	"time"
 
-	"github.com/fractal/whist/host-service/metadata"
-	"github.com/fractal/whist/host-service/metadata/aws"
 	"github.com/getsentry/sentry-go"
+	"github.com/whisthq/whist/host-service/metadata"
+	"github.com/whisthq/whist/host-service/metadata/aws"
 
-	"github.com/fractal/whist/host-service/utils"
+	"github.com/whisthq/whist/host-service/utils"
 )
 
 type sentrySender struct{}

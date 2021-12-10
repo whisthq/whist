@@ -1,8 +1,8 @@
 package subscriptions
 
 import (
-	logger "github.com/fractal/whist/host-service/whistlogger"
 	graphql "github.com/hasura/go-graphql-client"
+	logger "github.com/whisthq/whist/host-service/whistlogger"
 )
 
 // SetUpHasuraClient does all the necessary work to set up the Hasura client

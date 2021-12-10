@@ -9,9 +9,9 @@ import (
 	"path"
 	"testing"
 
-	"github.com/fractal/whist/host-service/mandelbox/configutils"
-	mandelboxtypes "github.com/fractal/whist/host-service/mandelbox/types"
-	"github.com/fractal/whist/host-service/utils"
+	"github.com/whisthq/whist/host-service/mandelbox/configutils"
+	mandelboxtypes "github.com/whisthq/whist/host-service/mandelbox/types"
+	"github.com/whisthq/whist/host-service/utils"
 )
 
 // TestUserConfigIntegration is an integration test for the

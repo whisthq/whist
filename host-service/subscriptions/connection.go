@@ -1,9 +1,9 @@
-package subscriptions // import "github.com/fractal/whist/host-service/subscriptions"
+package subscriptions // import "github.com/whisthq/whist/host-service/subscriptions"
 
 import (
-	"github.com/fractal/whist/host-service/metadata"
-	"github.com/fractal/whist/host-service/metadata/heroku"
-	"github.com/fractal/whist/host-service/utils"
+	"github.com/whisthq/whist/host-service/metadata"
+	"github.com/whisthq/whist/host-service/metadata/heroku"
+	"github.com/whisthq/whist/host-service/utils"
 )
 
 // Whist database connection strings
