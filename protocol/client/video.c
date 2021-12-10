@@ -124,7 +124,7 @@ SDLVideoContext video_context;
 volatile double working_mbps;
 
 // Context of the frame that is currently being rendered
-static volatile VideoFrame* render_context;
+static volatile FrameData* render_context;
 static volatile bool pushing_render_context = false;
 
 // True if RenderScreen is currently trying to render something
@@ -305,9 +305,8 @@ void try_recovering_missing_packets_or_frames() {
             send_wcmsg(&wcmsg);
             LOG_INFO(
                 "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
-                "and the frame we're trying to render has been alive for %fms. I-Frame is now "
-                "being "
-                "requested to catch-up.",
+                "and the frame we're trying to render has been alive for %fms. "
+                "An I-Frame is now being requested to catch-up.",
                 video_ring_buffer->max_id, video_ring_buffer->max_id - video_data.last_rendered_id,
                 next_to_render_staleness * MS_IN_SECOND);
             start_timer(&video_data.last_iframe_request_timer);
@@ -673,22 +672,9 @@ void update_video() {
             // every packet for that frame, we set rendering=true
             if (ctx->id == next_render_id && ctx->packets_received == ctx->num_packets) {
                 // The following line invalidates the information stored at the pointer ctx
-                render_context =
-                    (VideoFrame*)set_rendering(video_ring_buffer, next_render_id)->frame_buffer;
+                render_context = set_rendering(video_ring_buffer, next_render_id);
                 // Progress the videodata last rendered pointer
                 video_data.last_rendered_id = next_render_id;
-                // If server thinks the window isn't visible, but the window is visible now,
-                // Send a START_STREAMING message
-                if (!render_context->is_window_visible &&
-                    !(SDL_GetWindowFlags((SDL_Window*)window) &
-                      (SDL_WINDOW_OCCLUDED | SDL_WINDOW_MINIMIZED))) {
-                    // The server thinks the client window is occluded/minimized, but it isn't. So
-                    // we'll correct it. NOTE: Most of the time, this is just because there was a
-                    // delay between the window losing visibility and the server reacting.
-                    WhistClientMessage wcmsg = {0};
-                    wcmsg.type = MESSAGE_START_STREAMING;
-                    send_wcmsg(&wcmsg);
-                }
 
                 // Render out current_render_id
                 pushing_render_context = true;
@@ -844,13 +830,26 @@ int render_video() {
     WhistRGBColor window_color = {0};
     WhistCursorImage cursor_image = {0};
     bool has_cursor_image = false;
+    FrameData frame_data;
     timestamp_us server_timestamp = 0;
     timestamp_us client_input_timestamp = 0;
 
     // Receive and process a render context that's being pushed
     if (pushing_render_context) {
-        // Drop volatile
-        VideoFrame* frame = (VideoFrame*)render_context;
+        // Drop volatile, and pull data from the frame
+        VideoFrame* frame = (VideoFrame*)render_context->frame_buffer;
+
+        // If server thinks the window isn't visible, but the window is visible now,
+        // Send a START_STREAMING message
+        if (!frame->is_window_visible && !(SDL_GetWindowFlags((SDL_Window*)window) &
+                                           (SDL_WINDOW_OCCLUDED | SDL_WINDOW_MINIMIZED))) {
+            // The server thinks the client window is occluded/minimized, but it isn't. So
+            // we'll correct it. NOTE: Most of the time, this is just because there was a
+            // delay between the window losing visibility and the server reacting.
+            WhistClientMessage wcmsg = {0};
+            wcmsg.type = MESSAGE_START_STREAMING;
+            send_wcmsg(&wcmsg);
+        }
 
         if (!frame->is_empty_frame) {
             sync_decoder_parameters(frame);
@@ -879,7 +878,8 @@ int render_video() {
             }
         }
 
-        // Mark as received
+        // Save the FrameData, and mark as received so render_context can be overwritten
+        frame_data = *render_context;
         pushing_render_context = false;
     }
 
@@ -963,6 +963,11 @@ int render_video() {
         declare_user_activity();
         // This function call will take up to 16ms if VSYNC is ON, otherwise 0ms
         TIME_RUN(SDL_RenderPresent(video_context.renderer), VIDEO_RENDER_TIME, statistics_timer);
+
+#if LOG_VIDEO
+        LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", frame_data.id, frame_data.frame_size,
+                  get_timer(frame_data.frame_creation_timer));
+#endif
 
         static timestamp_us last_rendered_time = 0;
 
