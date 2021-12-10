@@ -488,8 +488,8 @@ jobs:
       - name: Configure AWS CLI # To get and install GRID driver
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
       - name: Set up Python 3.10.0
@@ -557,8 +557,8 @@ jobs:
       - name: Configure AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_EC2_S3_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.aws_new_ami_source_region }}
 
       - name: Set Host Service APP_ENV based on Git Branch (File gets read by host-service.service)
@@ -1150,8 +1150,8 @@ jobs:
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
       ############################# Windows Configuration Steps START #############################
@@ -1288,8 +1288,8 @@ jobs:
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
       ############################### Unix Configuration Steps START ##############################

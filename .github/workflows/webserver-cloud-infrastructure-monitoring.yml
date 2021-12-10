@@ -26,8 +26,8 @@ jobs:
       - name: Configure AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
       - name: Set up Python-based helper AWS
@@ -115,8 +115,8 @@ jobs:
       - name: Configure AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
       - name: Install boto3, python-dateutil and psycopg2
@@ -279,8 +279,8 @@ jobs:
       - name: Configure AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
           aws-region: ${{ matrix.aws-region }}
 
       - name: Setup Python-based Notifications
