@@ -178,7 +178,7 @@ void sync_decoder_parameters(VideoFrame* frame) {
     }
 
     if (!frame->is_iframe) {
-        LOG_INFO("Wants to change resolution, but not an i-frame!");
+        LOG_INFO("Wants to change resolution, but not an I-Frame!");
         return;
     }
 
@@ -599,7 +599,7 @@ void skip_to_next_iframe() {
         video_data.last_rendered_id = video_data.most_recent_iframe - 1;
     } else if (video_data.most_recent_iframe - 1 > video_data.last_rendered_id) {
         // Loudly declare the skip and log which frames we dropped
-        LOG_INFO("Skipping from %d to i-frame %d", video_data.last_rendered_id,
+        LOG_INFO("Skipping from %d to I-Frame %d", video_data.last_rendered_id,
                  video_data.most_recent_iframe);
         for (int i = max(video_data.last_rendered_id + 1,
                          video_data.most_recent_iframe - video_ring_buffer->frames_received + 1);
@@ -721,7 +721,7 @@ int32_t receive_video(WhistPacket* packet) {
 
 #if LOG_VIDEO
             LOG_INFO("Received Video Frame ID %d (Packets: %d) (Size: %d) %s", ctx->id,
-                     ctx->num_packets, ctx->frame_size, is_iframe ? "(i-frame)" : "");
+                     ctx->num_packets, ctx->frame_size, is_iframe ? "(I-Frame)" : "");
 #endif
 
             // If it's an I-frame, then just skip right to it, if the id is ahead of
