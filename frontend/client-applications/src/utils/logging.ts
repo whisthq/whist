@@ -131,8 +131,6 @@ export const logBase = (
         "cookies",
         "bookmarks",
         "extensions",
-        "accessToken", // saving space on log output
-        "jwt_access_token",
       ].includes(k)
     ) {
       return "***********"
