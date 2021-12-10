@@ -582,7 +582,7 @@ typedef enum WhistClientMessageType {
     MESSAGE_NACK = 111,
     MESSAGE_BITARRAY_NACK = 112,
     CMESSAGE_CLIPBOARD = 113,
-    MESSAGE_IFRAME_REQUEST = 114,
+    MESSAGE_STREAM_RESET_REQUEST = 114,
     MESSAGE_DISCOVERY_REQUEST = 115,
     MESSAGE_TCP_RECOVERY = 116,
 
@@ -654,6 +654,12 @@ typedef struct WhistClientMessage {
             int dpi;
             CodecType codec_type;
         } dimensions;
+
+        // MESSAGE_STREAM_RESET_REQUEST
+        struct {
+            WhistPacketType type;
+            int last_failed_id;
+        } stream_reset_data;
 
         // MESSAGE_NACK
         struct {

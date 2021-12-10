@@ -268,7 +268,7 @@ void try_recovering_missing_packets_or_frames() {
     */
 
 // If we want an iframe, this is how often we keep asking for it
-#define IFRAME_REQUEST_INTERVAL_MS 50.0
+#define IFRAME_REQUEST_INTERVAL_MS 5.0
 // Number of frames ahead we can be before asking for iframe
 #define MAX_UNSYNCED_FRAMES 4
 // How stale the next-to-render-frame can be before asking for an iframe
@@ -293,17 +293,16 @@ void try_recovering_missing_packets_or_frames() {
         || (next_to_render_staleness > MAX_TO_RENDER_STALENESS / MS_IN_SECOND)) {
         // THEN, we should send an iframe request
 
-        // TODO: Set the throttle timer to a tight 1-5ms,
-        // and add a renderID that we send so the server doesn't
-        // keep sending iframes after sending a single iframe
-        // We keep it as 50ms for now, so that we don't make the server
-        // send multiple iframes consecutively.
+        // Throttle the requests to prevent network upload saturation, however
         if (get_timer(video_data.last_iframe_request_timer) >
             IFRAME_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
             WhistClientMessage wcmsg = {0};
-            wcmsg.type = MESSAGE_IFRAME_REQUEST;
+            // Send a video packet stream reset request
+            wcmsg.type = MESSAGE_STREAM_RESET_REQUEST;
+            wcmsg.stream_reset_data.type = PACKET_VIDEO;
+            wcmsg.stream_reset_data.last_failed_id =
+                max(next_render_id, video_ring_buffer->max_id - 1);
             send_wcmsg(&wcmsg);
-            start_timer(&video_data.last_iframe_request_timer);
             LOG_INFO(
                 "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
                 "and the frame we're trying to render has been alive for %fms. I-Frame is now "
@@ -311,6 +310,7 @@ void try_recovering_missing_packets_or_frames() {
                 "requested to catch-up.",
                 video_ring_buffer->max_id, video_ring_buffer->max_id - video_data.last_rendered_id,
                 next_to_render_staleness * MS_IN_SECOND);
+            start_timer(&video_data.last_iframe_request_timer);
         }
     }
 }
