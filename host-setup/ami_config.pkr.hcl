@@ -92,6 +92,8 @@ variable "vpc_id" {
 
 
 
+# Don't specify availability_zone so that it tries in all zones.
+
 source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   access_key           = "${var.access_key}"
   ami_description      = "Whist-optimized Ubuntu 20.04 AWS Machine Image."
@@ -107,7 +109,7 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
     volume_type           = "gp3"
   }
   region       = "${var.source_region}"
-  availability_zone = "eu-north-1b"
+  availability_zone = "us-east-1f"
   secret_key   = "${var.secret_key}"
   source_ami   = "${var.source_ami}"
   ssh_username = "ubuntu"
