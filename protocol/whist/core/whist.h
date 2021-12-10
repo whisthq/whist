@@ -590,7 +590,7 @@ typedef enum WhistClientMessageType {
     MESSAGE_DISCOVERY_REQUEST = 115,
     MESSAGE_TCP_RECOVERY = 116,
 
-    MESSAGE_OPEN_URL = 177,
+    MESSAGE_OPEN_URL = 117,
 
     CMESSAGE_FILE_METADATA = 119,  ///< file metadata
     CMESSAGE_FILE_DATA = 120,      ///< file chunk
