@@ -10,16 +10,15 @@ on:
     paths:
       - "host-setup/**"
       - "!host-setup/README.md"
-      - "!host-setup/setup_localdev_dependencies.sh"
       - ".github/workflows/host-setup-check-pr.yml"
   workflow_dispatch:
 
 jobs:
   # Building
-  # Check that the AMIs build.
+  # Check that the AMIs build
   host-setup-check-pr-building:
     name: Building
-    runs-on: ubuntu-20.04
+    runs-on: [self-hosted, linux, x64, t3.xlarge]
     env:
       aws_new_ami_source_region: eu-north-1 # The AWS region our new AMI gets built in, we pick a region that's not very used to avoid "insufficient capacity" issues
       aws_new_ami_instance_type: g4dn.xlarge # The AWS EC2 instance type our new AMI gets built on (must be the EC2 instance type we run in production)
