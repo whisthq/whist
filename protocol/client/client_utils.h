@@ -108,9 +108,9 @@ int update_mouse_motion();
 void send_message_dimensions();
 
 /**
- * @brief                          Sends message to server with initial URL to open.
+ * @brief                          Sends message to server with new tab URL to open.
  */
-void send_initial_url();
+void send_new_tab_url_if_needed();
 
 /**
  * @brief                          Nack handler for the ring buffer

@@ -71,6 +71,17 @@ export const protocolLaunch = async () => {
       .flat(),
     "--read-pipe",
   ]
+  console.log("")
+  console.log("")
+  console.log("")
+  console.log("")
+  console.log("")
+  console.log(protocolArguments)
+  console.log("")
+  console.log("")
+  console.log("")
+  console.log("")
+  console.log("")
 
   // Create a pipe to the protocol logs file
   if (!fs.existsSync(electronLogPath))

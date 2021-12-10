@@ -458,6 +458,10 @@ int main(int argc, char* argv[]) {
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
         while (connected && !client_exiting && exit_code == WHIST_EXIT_SUCCESS) {
+            // This should be called BEFORE the call to read_piped_arguments, otherwise one URL may
+            // get lost.
+            send_new_tab_url_if_needed();
+
             // Check if the window is minimized or occluded. If it is, we can just sleep for a bit
             // and then check again.
             if (!sdl_is_window_visible()) {
