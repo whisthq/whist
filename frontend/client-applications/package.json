@@ -116,5 +116,12 @@
     "node": ">=15.x",
     "npm": "use-yarn",
     "yarn": ">=1.19.x"
+  },
+  "protocols": {
+    "name": "http-protocol",
+    "schemes": [
+      "http",
+      "https"
+    ]
   }
 }
