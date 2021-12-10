@@ -36,6 +36,7 @@ Defines
 ============================
 */
 #define MAX_URL_LENGTH 2048
+#define MAX_URL_CMD_LENGTH 2108  // MAX_URL_LENGTH + 60 for the command itself
 
 /*
 ============================
@@ -559,7 +560,9 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
 
     size_t command_len =
         url_length + strlen("/usr/share/whist/run-as-whist-user.sh \"exec google-chrome \"") + 1;
-    char command[command_len];
+    char command[MAX_URL_CMD_LENGTH];
+    memset(command, 0, MAX_URL_CMD_LENGTH);
+
     sprintf(command, "/usr/share/whist/run-as-whist-user.sh \"exec google-chrome %s\"",
             received_url);
 
