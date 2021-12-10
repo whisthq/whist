@@ -60,38 +60,31 @@ pages:
 
 
 clients:
-
-
-
-
-
-#TODO START
-
-
+  # Configuration for the Whist desktop application(s) (Electron) to interact with Auth0
   - name: Whist
-    allowed_clients: []
+    description: The Whist desktop application(s)
+    logo_uri: https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2.png
     app_type: native
-    callbacks: @@WHIST_ELECTRON_APP_CALLBACK@@
+    allowed_clients: []
     client_aliases: []
+    callbacks: @@WHIST_ELECTRON_APP_CALLBACK@@
     cross_origin_auth: false
     custom_login_page_on: true
-    description: The Whist desktop application
     grant_types:
       - authorization_code
       - refresh_token
     is_first_party: true
     is_token_endpoint_ip_header_trusted: false
-    jwt_configuration:
-      alg: RS256
-      lifetime_in_seconds: 36000
-      secret_encoded: false
-    logo_uri: https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2.png
+    oidc_conformant: true
     native_social_login:
       apple:
         enabled: false
       microsoft:
         enabled: false
-    oidc_conformant: true
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
     refresh_token:
       expiration_type: non-expiring
       leeway: 0
@@ -103,31 +96,30 @@ clients:
     sso_disabled: false
     token_endpoint_auth_method: none
 
-  # 
+  # Configuration for the Whist GitHub Actions to interact with Auth0
   - name: GitHub Actions
-    allowed_clients: []
+    description: The Whist CI pipeline(s)
+    logo_uri: https://github.githubassets.com/images/modules/logos_page/Octocat.png
     app_type: non_interactive
-    callbacks: []
+    allowed_clients: []
     client_aliases: []
+    callbacks: []
     cross_origin_auth: false
     custom_login_page_on: true
-    description: A service that performs administrative operations on the Whist
-      webservers on behalf of Whist developers.
     grant_types:
       - client_credentials
     is_first_party: true
     is_token_endpoint_ip_header_trusted: false
-    jwt_configuration:
-      alg: RS256
-      lifetime_in_seconds: 36000
-      secret_encoded: false
-    logo_uri: https://github.githubassets.com/images/modules/logos_page/Octocat.png
+    oidc_conformant: true
     native_social_login:
       apple:
         enabled: false
       microsoft:
         enabled: false
-    oidc_conformant: true
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
     refresh_token:
       expiration_type: non-expiring
       leeway: 0
@@ -139,23 +131,30 @@ clients:
     sso_disabled: false
     token_endpoint_auth_method: client_secret_post
 
-
-
-
-
+  # Configuration for the Whist webserver(s) to interact with Auth0
   - name: Webserver
+    description: The Whist backend webserver(s)
+    logo_uri: https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2.png
     app_type: non_interactive
+    allowed_clients: []
+    client_aliases: []
+    callbacks: []
     cross_origin_auth: false
     custom_login_page_on: true
     grant_types:
       - client_credentials
     is_first_party: true
     is_token_endpoint_ip_header_trusted: false
+    oidc_conformant: true
+    native_social_login:
+      apple:
+        enabled: false
+      microsoft:
+        enabled: false
     jwt_configuration:
       alg: RS256
       lifetime_in_seconds: 36000
       secret_encoded: false
-    oidc_conformant: true
     refresh_token:
       expiration_type: non-expiring
       leeway: 0
@@ -166,17 +165,6 @@ clients:
       rotation_type: non-rotating
     sso_disabled: false
     token_endpoint_auth_method: client_secret_post
-
-
-
-
-
-
-#TODO END
-
-
-
-
 
 
 databases: []
