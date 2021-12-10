@@ -221,20 +221,12 @@ func getAppName(mandelboxID mandelboxtypes.MandelboxID, transportRequestMap map[
 	if metadata.IsLocalEnvWithoutDB() {
 		// Receive the json transport request immediately when running on local env
 		jsonchan := getJSONTransportRequestChannel(mandelboxID, transportRequestMap, transportMapLock)
-
-		// We will wait 1 minute to get the transport request
-		select {
-		case transportRequest := <-jsonchan:
-			req = transportRequest
-
-			if req.AppName == "" {
-				// If no app name is set, we default to using the `browsers/chrome` image.
-				AppName = mandelboxtypes.AppName("browsers/chrome")
-			} else {
-				AppName = req.AppName
-			}
-		case <-time.After(1 * time.Minute):
-			return nil, AppName
+		req = <-jsonchan
+		if req.AppName == "" {
+			// If no app name is set, we default to using the `browsers/chrome` image.
+			AppName = mandelboxtypes.AppName("browsers/chrome")
+		} else {
+			AppName = req.AppName
 		}
 
 	} else {
