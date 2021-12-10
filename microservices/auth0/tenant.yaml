@@ -11,13 +11,47 @@ tenant:
   default_audience: ""
   default_directory: ""
 
-  # Languages
+  # Supported Languages
   enabled_locales:
+    - bs
+    - bg
+    - zh-CN
+    - zh-TW
+    - hr
+    - cs
+    - da
+    - nl
     - en
-    - es
-    - it
-    - fr-FR
+    - et
+    - fi
     - fr-CA
+    - fr-FR
+    - de
+    - el
+    - hi
+    - hu
+    - is
+    - id
+    - it
+    - ja
+    - ko
+    - lv
+    - lt
+    - nb
+    - pl
+    - pt-BR
+    - pt-PT
+    - ro
+    - ru
+    - sr
+    - sk
+    - sl
+    - es
+    - sv
+    - th
+    - tr
+    - uk
+    - vi
 
   # Login Page Flags
   flags:
