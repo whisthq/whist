@@ -73,6 +73,7 @@ jobs:
         working-directory: host-setup
         shell: python3 {0}
         run: |
+          import os
           import json
           import datetime
 
@@ -106,6 +107,8 @@ jobs:
           json.dump(data, fp)
           fp.close()
 
+          os.path.abspath(__file__)
+
           # print JSON data for debugging/logging purposes
           print(data)
 
@@ -118,6 +121,8 @@ jobs:
           import os
           import subprocess
           import json
+
+          os.path.abspath(__file__)
 
           # stdout will be shared with the subprocess so we can see what is happening
           subprocess.run("packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
