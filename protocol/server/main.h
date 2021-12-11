@@ -69,6 +69,7 @@ struct _whist_server_config {
 typedef struct _whist_server_config whist_server_config;
 
 /** @brief internal state of the whist server */
+// TODO: Mutex usage of this state
 struct _whist_server_state {
     whist_server_config* config;
 
@@ -83,8 +84,12 @@ struct _whist_server_state {
 
     int sample_rate;
     volatile int max_bitrate;
-    volatile bool wants_iframe;
     InputDevice* input_device;
+
+    /* iframe */
+    volatile bool wants_iframe;
+    // This ID must be set when wants_iframe is set true
+    volatile int last_failed_id;
 
     /* video */
     volatile int client_width;

@@ -604,7 +604,13 @@ int32_t multithreaded_send_video(void* opaque) {
                                      get_timer(statistics_timer) * MS_IN_SECOND);
 
                 if (state->wants_iframe) {
-                    video_encoder_set_iframe(encoder);
+                    static int last_iframe_id = -1;
+                    // If it's a start-of-stream, or an id beyond the last sent iframe has failed,
+                    // Then we send a new iframe
+                    if (state->last_failed_id == -1 || state->last_failed_id > last_iframe_id) {
+                        video_encoder_set_iframe(encoder);
+                        last_iframe_id = id;
+                    }
                     state->wants_iframe = false;
                 }
 

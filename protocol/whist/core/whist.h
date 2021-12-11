@@ -582,7 +582,7 @@ typedef enum WhistClientMessageType {
     MESSAGE_NACK = 111,
     MESSAGE_BITARRAY_NACK = 112,
     CMESSAGE_CLIPBOARD = 113,
-    MESSAGE_IFRAME_REQUEST = 114,
+    MESSAGE_STREAM_RESET_REQUEST = 114,
     MESSAGE_DISCOVERY_REQUEST = 115,
     MESSAGE_TCP_RECOVERY = 116,
 
@@ -655,6 +655,12 @@ typedef struct WhistClientMessage {
             CodecType codec_type;
         } dimensions;
 
+        // MESSAGE_STREAM_RESET_REQUEST
+        struct {
+            WhistPacketType type;
+            int last_failed_id;
+        } stream_reset_data;
+
         // MESSAGE_NACK
         struct {
             WhistPacketType type;
@@ -673,10 +679,6 @@ typedef struct WhistClientMessage {
 
         // MESSAGE_KEYBOARD_STATE
         WhistKeyboardState keyboard_state;
-
-        // MESSAGE_IFRAME_REQUEST
-        // TODO: Remove this boolean
-        bool reinitialize_encoder;
     };
 
     // Any type of message that has an additional `data[]` member at the end

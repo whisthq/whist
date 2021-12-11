@@ -45,7 +45,8 @@ static int handle_tcp_ping_message(Client *client, WhistClientMessage *wcmsg);
 static int handle_dimensions_message(whist_server_state *state, WhistClientMessage *wcmsg);
 static int handle_clipboard_message(WhistClientMessage *wcmsg);
 static int handle_nack_message(Client *client, WhistClientMessage *wcmsg);
-static int handle_iframe_request_message(whist_server_state *state, WhistClientMessage *wcmsg);
+static int handle_stream_reset_request_message(whist_server_state *state,
+                                               WhistClientMessage *wcmsg);
 static int handle_quit_message(whist_server_state *state, WhistClientMessage *wcmsg);
 static int handle_init_message(whist_server_state *state, WhistClientMessage *wcmsg);
 
@@ -96,8 +97,8 @@ int handle_client_message(whist_server_state *state, WhistClientMessage *wcmsg) 
         case MESSAGE_NACK:
         case MESSAGE_BITARRAY_NACK:
             return handle_nack_message(&state->client, wcmsg);
-        case MESSAGE_IFRAME_REQUEST:
-            return handle_iframe_request_message(state, wcmsg);
+        case MESSAGE_STREAM_RESET_REQUEST:
+            return handle_stream_reset_request_message(state, wcmsg);
         case CMESSAGE_QUIT:
             return handle_quit_message(state, wcmsg);
         case MESSAGE_DISCOVERY_REQUEST:
@@ -176,6 +177,7 @@ static int handle_streaming_toggle_message(whist_server_state *state, WhistClien
         LOG_INFO("Received message to start streaming again.");
         state->stop_streaming = false;
         state->wants_iframe = true;
+        state->last_failed_id = -1;
     } else {
         LOG_WARNING("Received streaming message to %s streaming, but we're already in that state!",
                     state->stop_streaming ? "stop" : "start");
@@ -368,7 +370,8 @@ static int handle_nack_message(Client *client, WhistClientMessage *wcmsg) {
     return 0;
 }
 
-static int handle_iframe_request_message(whist_server_state *state, WhistClientMessage *wcmsg) {
+static int handle_stream_reset_request_message(whist_server_state *state,
+                                               WhistClientMessage *wcmsg) {
     /*
         Handle an IFrame request message
 
@@ -380,8 +383,13 @@ static int handle_iframe_request_message(whist_server_state *state, WhistClientM
     */
 
     LOG_INFO("Request for i-frame found: Creating iframe");
-    // Mark as wanting an iframe
-    state->wants_iframe = true;
+    if (wcmsg->stream_reset_data.type == PACKET_VIDEO) {
+        // Mark as wanting an iframe, since that will reset the udp video stream
+        state->wants_iframe = true;
+        state->last_failed_id = wcmsg->stream_reset_data.last_failed_id;
+    } else {
+        LOG_ERROR("Can't reset the stream for other types of packets");
+    }
     return 0;
 }
 
