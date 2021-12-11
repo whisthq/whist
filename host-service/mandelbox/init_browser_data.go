@@ -5,9 +5,9 @@ import (
 	"os/exec"
 	"path"
 
-	"github.com/fractal/whist/host-service/mandelbox/types"
-	"github.com/fractal/whist/host-service/utils"
-	logger "github.com/fractal/whist/host-service/whistlogger"
+	"github.com/whisthq/whist/host-service/mandelbox/types"
+	"github.com/whisthq/whist/host-service/utils"
+	logger "github.com/whisthq/whist/host-service/whistlogger"
 )
 
 // This contains the path and file names related to browser data

@@ -8,7 +8,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/fractal/whist/host-service/mandelbox/types"
+	"github.com/whisthq/whist/host-service/mandelbox/types"
 )
 
 // TestUserInitialBrowserWrite checks if the browser data is properly created by
