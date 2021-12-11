@@ -23,13 +23,14 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	testCookie1 := "{'creation_utc': 13280861983875934, 'host_key': 'test_host_key_1.com'}"
 	testCookie2 := "{'creation_utc': 4228086198342934, 'host_key': 'test_host_key_2.com'}"
 
-	cookieJSON := "[" + testCookie1 + "," + testCookie2 + "]"
+	// We will simulate a user with cookies but no bookmarks
+	cookiesJSON := "[" + testCookie1 + "," + testCookie2 + "]"
 	bookmarksJSON := ""
 
 	// Create browser data
 	userInitialBrowserData := BrowserData{
-		CookiesJSON: cookieJSON,
-		BookmarksJSON: bookmarksJSON,
+		CookiesJSON: Cookies(cookiesJSON),
+		BookmarksJSON: Bookmarks(bookmarksJSON),
 	}
 
 	if err := WriteUserInitialBrowserData(userInitialBrowserData, destDir); err != nil {
@@ -40,7 +41,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	cookieFilePath := path.Join(destDir, UserInitialCookiesFile)
 
 	// Stores the file path and content for each browser data type (bookmark is excluded since it's empty)
-	fileAndContents := [][]string{{cookieFilePath, cookieJSON}}
+	fileAndContents := [][]string{{cookieFilePath, cookiesJSON}}
 
 	for _, fileAndContent := range fileAndContents {
 		filePath := fileAndContent[0]

@@ -16,12 +16,16 @@ const (
 	UserInitialBookmarksFile string = "user-initial-bookmarks"
 )
 
+type Cookies string
+
+type Bookmarks string
+
 // BrowserData is a collection of possible browser datas a user generates
 type BrowserData struct {
 	// CookieJSON is the user's cookie sqlite3 file in a string format
-	CookiesJSON 	string
+	CookiesJSON 	Cookies
 	// BookmarkJSON is the user's bookmark json file
-	BookmarksJSON 	string
+	BookmarksJSON 	Bookmarks
 }
 
 // WriteUserInitialBrowserData writes the user's initial browser data to file(s)
@@ -52,8 +56,8 @@ func WriteUserInitialBrowserData(initialBrowserData BrowserData, destDir string)
 	bookmarkFilePath := path.Join(destDir, UserInitialBookmarksFile)
 
 	browserDataInfos := [][]string{
-		{initialBrowserData.CookiesJSON, cookieFilePath, "cookies"},
-		{initialBrowserData.BookmarksJSON, bookmarkFilePath, "bookmarks"},
+		{string(initialBrowserData.CookiesJSON), cookieFilePath, "cookies"},
+		{string(initialBrowserData.BookmarksJSON), bookmarkFilePath, "bookmarks"},
 	}
 
 	for _, browserDataInfo := range  browserDataInfos {
