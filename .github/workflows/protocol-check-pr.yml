@@ -324,6 +324,15 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      # Load the AWS SSH keypair onto the runner
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          name: id_rsa
+          key: ${{ secrets.SSH_KEY }}
+          known_hosts: unnecessary # INSECURE, WE NEED TO USE A BASTION SERVER
+          if_key_exists: fail
+
       # Other possible flags:
       # --testing_url, defaults to Big Buck Bunny video stored on our AWS S3
       # --testing_time, defaults to 126s
@@ -340,6 +349,27 @@ jobs:
           python3 streaming_e2e_tester.py --ssh-key-name TODO --ssh-key-path TODO --github_token ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
 
           # Parse the results of the test into a .info file, to be displayed on the GitHub PR
+          import mmap
+
+          # Create output .info file
+          results_file = open("streaming_e2e_test_results.info", "w+")
+          results_file.write(
+            ## End-to-End Streaming Test Results
+            # TODO
+          )
+
+          # Parse client logs
+          with open(os.path.abspath("client_monitoring_log.txt") as client_logs_file:
+              stringified_file = mmap.mmap(client_logs_file.fileno(), 0, access=mmap.ACCESS_READ)
+
+              # TODO: Read all the variables we want here with stringified_file.find('var-name') != -1: write-to-our-result-file
+
+          # Parse server logs
+          with open(os.path.abspath("server_monitoring_log.txt") as server_logs_file:
+              stringified_file = mmap.mmap(server_logs_file.fileno(), 0, access=mmap.ACCESS_READ)
+              
+              # TODO: Read all the variables we want here with stringified_file.find('var-name') != -1: write-to-our-result-file
+
           # TODO
 
       - name: Post Streaming End-to-End Test Results to GitHub PR
