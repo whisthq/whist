@@ -1,4 +1,4 @@
-package uinput // import "github.com/fractal/whist/host-service/mandelbox/uinputdevices/uinput"
+package uinput // import "github.com/whisthq/whist/host-service/mandelbox/uinputdevices/uinput"
 
 import "syscall"
 

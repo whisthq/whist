@@ -1,7 +1,7 @@
 # workflows/whist-deploy-sentry-releases.yml
 #
 # Whist: Deploy Sentry Releases
-# Automatically push a new Sentry release for each of the fractal/whist projects.
+# Automatically push a new Sentry release for each of the whisthq/whist projects.
 
 name: "Whist: Deploy Sentry Releases"
 
@@ -59,7 +59,7 @@ jobs:
         run: ./notifications/setup_notifications.sh
 
       - name: Set Git Repository URL to Enable sentry-cli Automatic Commit Tagging
-        run: git remote set-url origin https://github.com/fractal/whist
+        run: git remote set-url origin https://github.com/whisthq/whist
 
       - name: Create New Sentry Release
         env:
@@ -91,7 +91,7 @@ jobs:
 
           from notifications.slack_bot import slack_post
           SLACK_CHANNEL = "#alerts-${{ steps.set-deploy-environment.outputs.environment }}"
-          BODY = f"@releases :rotating_light: Failed to deploy `${{ matrix.project.sentry-project }}` Sentry release on branch: `${{ steps.set-deploy-environment.outputs.environment }}`, investigate immediately :rotating_light: (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"@releases :rotating_light: Failed to deploy `${{ matrix.project.sentry-project }}` Sentry release on branch: `${{ steps.set-deploy-environment.outputs.environment }}`, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
   notify-slack:
@@ -121,5 +121,5 @@ jobs:
           from notifications.slack_bot import slack_post
           SLACK_CHANNEL = "#alerts-${{ needs.whist-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}"
           TITLE = ":sentry: Sentry Releases Deployed :sentry:"
-          BODY = f"Sentry Releases for Whist Sentry Projects `webserver`, `protocol`, `host-service`, and `client-applications` deployed to Sentry on branch: `${{ needs.whist-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}` (<https://github.com/fractal/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"Sentry Releases for Whist Sentry Projects `webserver`, `protocol`, `host-service`, and `client-applications` deployed to Sentry on branch: `${{ needs.whist-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)

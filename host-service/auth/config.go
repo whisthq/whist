@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/fractal/whist/host-service/metadata"
+	"github.com/whisthq/whist/host-service/metadata"
 )
 
 type authConfig struct {

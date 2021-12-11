@@ -1,4 +1,4 @@
-package utils // import "github.com/fractal/whist/host-service/utils"
+package utils // import "github.com/whisthq/whist/host-service/utils"
 
 // MemoizeStringWithError lets us memoize a function of type (func() (string,
 // error)) into another function of the same type.  The function returned from

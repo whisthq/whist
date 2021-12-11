@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fractal/whist/host-service/metadata"
-	"github.com/fractal/whist/host-service/utils"
+	"github.com/whisthq/whist/host-service/metadata"
+	"github.com/whisthq/whist/host-service/utils"
 )
 
 func TestGetAppName(t *testing.T) {

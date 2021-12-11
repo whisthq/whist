@@ -12,7 +12,7 @@
       ],
       "buildpacks": [
         {
-          "url": "https://github.com/fractal/subdir-heroku-buildpack.git"
+          "url": "https://github.com/whisthq/subdir-heroku-buildpack.git"
         },
         {
           "url": "heroku/python"

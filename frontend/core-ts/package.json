@@ -8,7 +8,7 @@
     "*"
   ],
   "license": "UNLICENSED",
-  "repository": "https://github.com/fractal/whist",
+  "repository": "https://github.com/whisthq/whist",
   "devDependencies": {
     "@babel/cli": "^7.16.0",
     "@babel/core": "^7.16.0",

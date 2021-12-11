@@ -21,7 +21,7 @@ Additionally, consider the following rules:
 - No method should assume that the lock is locked before entry
 - Getters and setters should always be used for struct field access when possible
 */
-package mandelbox // import "github.com/fractal/whist/host-service/mandelbox"
+package mandelbox // import "github.com/whisthq/whist/host-service/mandelbox"
 
 import (
 	"context"
@@ -29,16 +29,16 @@ import (
 	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
-	"github.com/fractal/whist/host-service/dbdriver"
-	"github.com/fractal/whist/host-service/metadata"
-	"github.com/fractal/whist/host-service/utils"
-	logger "github.com/fractal/whist/host-service/whistlogger"
+	"github.com/whisthq/whist/host-service/dbdriver"
+	"github.com/whisthq/whist/host-service/metadata"
+	"github.com/whisthq/whist/host-service/utils"
+	logger "github.com/whisthq/whist/host-service/whistlogger"
 
-	"github.com/fractal/whist/host-service/mandelbox/gpus"
-	"github.com/fractal/whist/host-service/mandelbox/portbindings"
-	"github.com/fractal/whist/host-service/mandelbox/ttys"
-	"github.com/fractal/whist/host-service/mandelbox/types"
-	"github.com/fractal/whist/host-service/mandelbox/uinputdevices"
+	"github.com/whisthq/whist/host-service/mandelbox/gpus"
+	"github.com/whisthq/whist/host-service/mandelbox/portbindings"
+	"github.com/whisthq/whist/host-service/mandelbox/ttys"
+	"github.com/whisthq/whist/host-service/mandelbox/types"
+	"github.com/whisthq/whist/host-service/mandelbox/uinputdevices"
 
 	dockercontainer "github.com/docker/docker/api/types/container"
 )

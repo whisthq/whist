@@ -3,7 +3,7 @@ Package uinputdevices abstracts away the allocation and assignment of uinput
 devices for mandelboxes. Much of its functionality is provided by the nested
 `uinput` package.
 */
-package uinputdevices // import "github.com/fractal/whist/host-service/mandelbox/uinputdevices"
+package uinputdevices // import "github.com/whisthq/whist/host-service/mandelbox/uinputdevices"
 
 import (
 	"bytes"
@@ -16,10 +16,10 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/fractal/whist/host-service/utils"
-	logger "github.com/fractal/whist/host-service/whistlogger"
+	"github.com/whisthq/whist/host-service/utils"
+	logger "github.com/whisthq/whist/host-service/whistlogger"
 
-	uinput "github.com/fractal/whist/host-service/mandelbox/uinputdevices/uinput"
+	uinput "github.com/whisthq/whist/host-service/mandelbox/uinputdevices/uinput"
 
 	dockercontainer "github.com/docker/docker/api/types/container"
 )

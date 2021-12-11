@@ -221,7 +221,7 @@ Before you can package the MacOS application it needs to be notarized. The appli
 
 Notarizing is done in Github CI. In the event you want to notarize locally:
 
-1. Download the Whist Apple Developer Certificate via `aws s3 cp s3://fractal-dev-secrets/fractal-apple-codesigning-certificate.p12 fractal-apple-codesigning-certificate.p12` and import it to your **System** keychain. The file is encrypted and the password is `Fractalcomputers!`.
+1. Download the Whist Apple Developer Certificate via `aws s3 cp s3://fractal-dev-secrets/whist-apple-codesigning-certificate.p12 whist-apple-codesigning-certificate.p12` and import it to your **System** keychain. The file is encrypted and the password is `Fractalcomputers!`.
 
 2. Make sure you have the latest version of Xcode and have opened it at least once. We recommend downloading Xcode from the App Store, and ensuring that you have the MacOSX SDK at `/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk`.
 

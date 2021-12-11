@@ -28,8 +28,8 @@ traceback.install()
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 GITHUB_ISSUE = os.environ.get("GITHUB_ISSUE")
 HEROKU_APP_NAME = os.environ.get("HEROKU_APP_NAME")
-GITHUB_REPO = "fractal/whist"
-GITHUB_PR_URL = "https://github.com/fractal/whist/pull/"
+GITHUB_REPO = "whisthq/whist"
+GITHUB_PR_URL = "https://github.com/whisthq/whist/pull/"
 HEROKU_API_TOKEN = os.environ.get("HEROKU_DEVELOPER_API_KEY")
 SERVER_DEV = "whist-dev-server"
 SERVER_STAGING = "whist-staging-server"

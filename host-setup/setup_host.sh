@@ -326,14 +326,14 @@ deployment_setup_steps() {
   echo "$GH_PAT" | sudo docker login --username "$GH_USERNAME" --password-stdin "$ghcr_uri"
 
   # Chrome
-  pull_image_base_chrome="$ghcr_uri/fractal/$GIT_BRANCH/browsers/chrome"
+  pull_image_base_chrome="$ghcr_uri/whisthq/$GIT_BRANCH/browsers/chrome"
   pull_image_chrome="$pull_image_base_chrome:$GIT_HASH"
   echo "pulling image: $pull_image_chrome"
   sudo docker pull "$pull_image_chrome"
   sudo docker tag "$pull_image_chrome" "$pull_image_base_chrome:current-build"
 
   # Brave
-  pull_image_base_brave="$ghcr_uri/fractal/$GIT_BRANCH/browsers/brave"
+  pull_image_base_brave="$ghcr_uri/whisthq/$GIT_BRANCH/browsers/brave"
   pull_image_brave="$pull_image_base_brave:$GIT_HASH"
   echo "pulling image: $pull_image_brave"
   sudo docker pull "$pull_image_brave"

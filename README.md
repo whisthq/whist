@@ -1,6 +1,6 @@
 # Whist Application Streaming
 
-[![Whist: Build & Deploy](https://github.com/fractal/whist/actions/workflows/whist-build-and-deploy.yml/badge.svg)](https://github.com/fractal/whist/actions/workflows/whist-build-and-deploy.yml) [![codecov](https://codecov.io/gh/fractal/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj)](https://codecov.io/gh/fractal/whist) [![Netlify Status](https://api.netlify.com/api/v1/badges/f65a863e-37d0-4407-babd-09b2b4802661/deploy-status)](https://app.netlify.com/sites/whist-prod/deploys)
+[![Whist: Build & Deploy](https://github.com/whisthq/whist/actions/workflows/whist-build-and-deploy.yml/badge.svg)](https://github.com/whisthq/whist/actions/workflows/whist-build-and-deploy.yml) [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj)](https://codecov.io/gh/whisthq/whist) [![Netlify Status](https://api.netlify.com/api/v1/badges/f65a863e-37d0-4407-babd-09b2b4802661/deploy-status)](https://app.netlify.com/sites/whist-prod/deploys)
 
 This repository contains the end-to-end code for the Whist Application Streaming product, following a [Monorepo](https://en.wikipedia.org/wiki/Monorepo) structure.
 
@@ -76,7 +76,7 @@ To avoid pushing code that does not follow our coding guidelines, we recommend y
 
 #### `prod` is for Releases only; `staging` is "almost `prod`"
 
-At Whist, we maintain a `prod` branch for releases only, and auto-tag every commit on `prod` with a release tag [[TODO]](https://github.com/fractal/whist/issues/1139).
+At Whist, we maintain a `prod` branch for releases only, and auto-tag every commit on `prod` with a release tag [[TODO]](https://github.com/whisthq/whist/issues/1139).
 
 We also maintain a `staging` branch for release candidates. Therefore, `staging` will always be ahead of `prod`, except after a production release, when they will be even.
 
@@ -175,7 +175,7 @@ Unfortunately, as of June 2021, GitHub does not have a UI to auto-populate pull 
 As such, we keep our default development pull request template in this folder as `PULL_REQUEST_TEMPLATE.md`, which gets auto-populated for every pull request created. To swap to a different PR template from this subfolder instead, simply modify the PR URL to append `expand=1&template=<template-name.md>`. In the case of a promotion from `dev` to `staging`, your URL should be:
 
 ```
-https://github.com/fractal/whist/compare/staging...dev?expand=1&template=promotion.md
+https://github.com/whisthq/whist/compare/staging...dev?expand=1&template=promotion.md
 ```
 
 ## Publishing

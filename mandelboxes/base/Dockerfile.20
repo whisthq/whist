@@ -10,7 +10,7 @@
 # to copy the protocol as early as possible to share
 # layers between images.
 ARG BuildAssetPackage "protocol"
-FROM fractal/build-assets:$BuildAssetPackage as build-assets
+FROM whist/build-assets:$BuildAssetPackage as build-assets
 
 ################ STAGE 1: libinput-build ################
 # - Install build dependencies as per the documentation
@@ -232,7 +232,7 @@ RUN mkdir /dist/etc && \
 #   events
 # EXPOSES the teleport fuse service
 #################################################################
-FROM ubuntu:20.04 as fractal-teleport-fuse
+FROM ubuntu:20.04 as whist-teleport-fuse
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -259,14 +259,14 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /fractal-teleport-fuse/{src,build}
+RUN mkdir -p /whist-teleport-fuse/{src,build}
 
-COPY teleport/teleport-fuse /fractal-teleport-fuse/src
+COPY teleport/teleport-fuse /whist-teleport-fuse/src
 
 # hadolint ignore=SC2046
-RUN cd /fractal-teleport-fuse/src \
+RUN cd /whist-teleport-fuse/src \
     && gcc -Wall -D _GNU_SOURCE unshare.c -o unshare.o -c \
-    && gcc -Wall unshare.o teleport-fuse.c $(pkg-config fuse3 --cflags --libs) -o ../build/fractal-teleport-fuse
+    && gcc -Wall unshare.o teleport-fuse.c $(pkg-config fuse3 --cflags --libs) -o ../build/whist-teleport-fuse
 
 ################ STAGE 5: whist-base ######################
 # - Copy and install libinput from libinput-build
@@ -280,7 +280,7 @@ RUN cd /fractal-teleport-fuse/src \
 #   our base mandelbox image
 # EXPOSES all of whist-base as the final image
 #############################################################
-FROM ubuntu:20.04 as fractal-base
+FROM ubuntu:20.04 as whist-base
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -728,7 +728,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
-COPY --from=fractal-teleport-fuse /fractal-teleport-fuse/build/fractal-teleport-fuse /usr/bin/fractal-teleport-fuse
+COPY --from=whist-teleport-fuse /whist-teleport-fuse/build/whist-teleport-fuse /usr/bin/whist-teleport-fuse
 
 # Set up script to launch teleport functionality
 COPY teleport/run-whist-teleport.sh /usr/bin/run-whist-teleport.sh

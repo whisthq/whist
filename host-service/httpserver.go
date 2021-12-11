@@ -9,14 +9,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fractal/whist/host-service/auth"
-	"github.com/fractal/whist/host-service/mandelbox/portbindings"
-	mandelboxtypes "github.com/fractal/whist/host-service/mandelbox/types"
-	"github.com/fractal/whist/host-service/metadata"
-	"github.com/fractal/whist/host-service/metrics"
-	"github.com/fractal/whist/host-service/utils"
-	logger "github.com/fractal/whist/host-service/whistlogger"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/whisthq/whist/host-service/auth"
+	"github.com/whisthq/whist/host-service/mandelbox/portbindings"
+	mandelboxtypes "github.com/whisthq/whist/host-service/mandelbox/types"
+	"github.com/whisthq/whist/host-service/metadata"
+	"github.com/whisthq/whist/host-service/metrics"
+	"github.com/whisthq/whist/host-service/utils"
+	logger "github.com/whisthq/whist/host-service/whistlogger"
 )
 
 // Constants for use in setting up the HTTPS server

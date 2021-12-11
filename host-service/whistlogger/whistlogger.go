@@ -1,7 +1,7 @@
 /*
 Package whistlogger contains the logic for our custom logging system, including sending events to Logz.io and Sentry.
 */
-package whistlogger // import "github.com/fractal/whist/host-service/whistlogger"
+package whistlogger // import "github.com/whisthq/whist/host-service/whistlogger"
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/fractal/whist/host-service/utils"
+	"github.com/whisthq/whist/host-service/utils"
 )
 
 func init() {

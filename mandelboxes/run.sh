@@ -14,9 +14,9 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # Working directory is whist/mandelboxes/
 cd "$DIR"
 
-# We add the `fractal/` prefix and `:current-build` tag to the image name, then
+# We add the `whisthq/` prefix and `:current-build` tag to the image name, then
 # call `run_mandelbox_image.sh` with that image name and any other arguments
 # provided.
 app_path=${1%/}
-image=fractal/$app_path:current-build
+image=whisthq/$app_path:current-build
 ./helper_scripts/run_mandelbox_image.sh "$image" "${@:2}"

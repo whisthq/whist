@@ -5,7 +5,7 @@ Currently, it has been tested JWTs generated with our Auth0 configuration.
 It should work with other JWTs too, provided that they are signed with the RS256
 algorithm.
 */
-package auth // import "github.com/fractal/whist/host-service/auth"
+package auth // import "github.com/whisthq/whist/host-service/auth"
 
 import (
 	"encoding/json"
@@ -15,9 +15,9 @@ import (
 	"github.com/MicahParks/keyfunc"
 	"github.com/golang-jwt/jwt/v4"
 
-	"github.com/fractal/whist/host-service/metadata"
-	"github.com/fractal/whist/host-service/utils"
-	logger "github.com/fractal/whist/host-service/whistlogger"
+	"github.com/whisthq/whist/host-service/metadata"
+	"github.com/whisthq/whist/host-service/utils"
+	logger "github.com/whisthq/whist/host-service/whistlogger"
 )
 
 // Audience is an alias for []string with some custom deserialization behavior.
@@ -121,7 +121,7 @@ func (scopes *Scopes) UnmarshalJSON(data []byte) error {
 // ParseToken will parses a raw access token string verifies the token's signature, and
 // ensures that it is valid at the current moment in time.
 // It returns a pointer to a WhistClaims type with the values it claims if all checks are successful.
-func ParseToken(tokenString string)  (*WhistClaims, error) {
+func ParseToken(tokenString string) (*WhistClaims, error) {
 	claims := new(WhistClaims)
 	_, err := jwt.ParseWithClaims(tokenString, claims, jwks.Keyfunc)
 
@@ -131,7 +131,6 @@ func ParseToken(tokenString string)  (*WhistClaims, error) {
 
 	return claims, nil
 }
-
 
 // Verify checks that the claim was issued by the proper issuer for the proper audience.
 // It returns an error if any of the checks are fail.

@@ -1,7 +1,7 @@
 # See stage 0 of the base Dockerfile for an explanation of this build stage.
 ARG BuildAssetPackage "protocol"
-FROM fractal/build-assets:$BuildAssetPackage as build-assets
-FROM fractal/base:current-build as fractal-browsers-brave
+FROM whist/build-assets:$BuildAssetPackage as build-assets
+FROM whisthq/base:current-build as whist-browsers-brave
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -42,7 +42,7 @@ RUN mkdir -p /etc/opt/brave/policies/managed \
     # Disable background apps (to prevent apps like Superhuman from
     # indefinitely blocking mandelbox shutdown).
     | jq '.BackgroundModeEnabled=false' \
-    > /etc/opt/brave/policies/managed/FractalPolicies.json
+    > /etc/opt/brave/policies/managed/WhistPolicies.json
 
 # Install Brave Browser extensions
 COPY install-extensions.sh /usr/bin/install-extensions.sh
