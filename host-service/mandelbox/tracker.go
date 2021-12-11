@@ -1,10 +1,10 @@
-package mandelbox // import "github.com/fractal/whist/host-service/mandelbox"
+package mandelbox // import "github.com/whisthq/whist/host-service/mandelbox"
 
 import (
 	"sync"
 
-	"github.com/fractal/whist/host-service/mandelbox/types"
-	"github.com/fractal/whist/host-service/utils"
+	"github.com/whisthq/whist/host-service/mandelbox/types"
+	"github.com/whisthq/whist/host-service/utils"
 )
 
 // This file contains the code to track all Mandelboxes. We _need to_ do this

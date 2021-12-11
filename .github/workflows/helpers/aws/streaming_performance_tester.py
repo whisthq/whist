@@ -270,7 +270,7 @@ def clone_whist_repository_on_instance(github_token, pexpect_process, pexpect_pr
         + branch_name
         + " https://"
         + github_token
-        + "@github.com/fractal/whist.git | tee ~/github_log.log"
+        + "@github.com/whisthq/whist.git | tee ~/github_log.log"
     )
     pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
