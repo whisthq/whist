@@ -324,13 +324,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      # Load the AWS SSH keypair onto the runner
+      # Load the AWS SSH keypair onto the runner, so that it can run remote commands on the AWS EC2 machine
+      # running the streaming end-to-end test
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
         with:
           name: id_rsa
-          key: ${{ secrets.SSH_KEY }}
-          known_hosts: unnecessary # INSECURE, WE NEED TO USE A BASTION SERVER
+          key: ${{ secrets.SSH_KEY }} # TODO: add this
+          known_hosts: unnecessary # THIS IS UNSECURE -- WE NEED A BETTER WAY TO DO THIS
           if_key_exists: fail
 
       # Other possible flags:
@@ -346,7 +347,8 @@ jobs:
         working-directory: protocol/test
         run: |
           # Run the streaming end-to-end integration test
-          python3 streaming_e2e_tester.py --ssh-key-name TODO --ssh-key-path TODO --github_token ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+          # ssh_key_name = "protocol_performance_testing_sshkey" # This is configured in AWS EC2 "Key Pairs" section
+          python3 streaming_e2e_tester.py --ssh-key-name TODO --ssh-key-path "/Users/runner/.ssh/id_rsa" --github_token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}""
 
           # Parse the results of the test into a .info file, to be displayed on the GitHub PR
           import mmap
