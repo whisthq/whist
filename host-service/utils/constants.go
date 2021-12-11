@@ -9,9 +9,6 @@ const (
 	WhistDir                 string = "/whist/"
 	TempDir                  string = WhistDir + "temp/"
 	WhistPrivateDir          string = "/whist/"
-	UserInitialBrowserDir    string = WhistDir + "userConfigs/"
-	UserInitialCookiesFile   string = "user-initial-cookies"
-	UserInitialBookmarksFile string = "user-initial-bookmarks"
 )
 
 // Note: We use these values as placeholder UUIDs because they are obvious and immediate

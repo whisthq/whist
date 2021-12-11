@@ -114,11 +114,11 @@ type Mandelbox interface {
 	// Backup the user configs to S3
 	BackupUserConfigs() error
 
+	// GetUserConfigDir provides the directory for the user config
+	GetUserConfigDir() string
+
 	GetConfigBuffer() *manager.WriteAtBuffer
 	SetConfigBuffer(*manager.WriteAtBuffer)
-
-	// WriteUserInitialBrowserData writes file(s) containing the user initial browser data
-	WriteUserInitialBrowserData(string, string) error
 
 	// GetContext provides the context corresponding to this specific mandelbox.
 	GetContext() context.Context
