@@ -830,6 +830,7 @@ int render_video() {
     WhistRGBColor window_color = {0};
     WhistCursorImage cursor_image = {0};
     bool has_cursor_image = false;
+    FrameData frame_data;
     timestamp_us server_timestamp = 0;
     timestamp_us client_input_timestamp = 0;
 
