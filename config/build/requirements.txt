@@ -1,5 +1,5 @@
 click==8.0.1
-hypothesis==6.29.0
+hypothesis==6.31.3
 pytest==6.2.4
 pytest-mock==3.6.1
 pytest-watch==4.2.0
