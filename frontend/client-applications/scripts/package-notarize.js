@@ -29,8 +29,6 @@ const packageNotarize = (env, config, version, commit) => {
 
   // We test setting the secret keys
   helpers.populateSecretKeys([
-    "AWS_ACCESS_KEY",
-    "AWS_SECRET_KEY",
     "AMPLITUDE_KEY",
   ])
 

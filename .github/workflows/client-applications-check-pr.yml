@@ -176,8 +176,6 @@ jobs:
         working-directory: frontend/client-applications
         env:
           CONFIG: ${{ needs.build-monorepo-config.outputs.win32 }}
-          AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
-          AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
         shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
         run: |
@@ -211,8 +209,6 @@ jobs:
         working-directory: frontend/client-applications
         env:
           CONFIG: ${{ needs.build-monorepo-config.outputs.macos }}
-          AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
-          AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
           MACOS_ARCH: "x64"
           WHIST_OSXSYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
@@ -300,8 +296,6 @@ jobs:
         working-directory: frontend/client-applications
         env:
           CONFIG: ${{ needs.build-monorepo-config.outputs.macos }}
-          AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
-          AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
           MACOS_ARCH: "arm64"
           WHIST_OSXSYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
