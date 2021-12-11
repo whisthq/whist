@@ -83,8 +83,8 @@ mv nvidia-driver-installer.run base/build-assets/build-temp/nvidia-driver
 
 # Bundle these build assets into a cached Docker image
 echo "Bundling build assets..."
-docker build -t fractal/build-assets:default -f base/build-assets/Dockerfile.20 --target default base/build-assets -q > /dev/null
-docker build -t fractal/build-assets:protocol -f base/build-assets/Dockerfile.20 --target protocol base/build-assets -q > /dev/null
+docker build -t whist/build-assets:default -f base/build-assets/Dockerfile.20 --target default base/build-assets -q > /dev/null
+docker build -t whist/build-assets:protocol -f base/build-assets/Dockerfile.20 --target protocol base/build-assets -q > /dev/null
 
 # Now, our Dockerfiles can copy over these files using
 # COPY --from=whist/build-assets:default most of the time,

@@ -10,11 +10,11 @@ import "@app/styles/global.module.css"
 import "@app/styles/bootstrap.css"
 import { MainProvider } from "@app/shared/utils/context"
 
-if (import.meta.env.FRACTAL_ENVIRONMENT === "production") {
+if (import.meta.env.WHIST_ENVIRONMENT === "production") {
   Sentry.init({
     dsn: "https://4fbefcae900443d58c38489898773eea@o400459.ingest.sentry.io/5394481",
     environment: config.sentry_env,
-    release: `website@${import.meta.env.FRACTAL_VERSION as string}`,
+    release: `website@${import.meta.env.WHIST_VERSION as string}`,
   })
 }
 

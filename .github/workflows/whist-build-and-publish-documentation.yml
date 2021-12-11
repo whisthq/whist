@@ -1,7 +1,7 @@
 # workflows/whist-build-and-publish-documentation.yml
 #
 # Whist: Build & Publish Documentation
-# Build and conditionally deploy fractal/whist monorepo documentation. Although this
+# Build and conditionally deploy whisthq/whist monorepo documentation. Although this
 # workflow is triggered by both pull requests and pushes, the steps that deploy
 # the built documentation only run when the triggering event is a push.
 
@@ -28,7 +28,7 @@ on:
 
 jobs:
   whist-build-and-publish-documentation:
-    name: Build & Publish Whist Internal Documentation to fractal/docs
+    name: Build & Publish Whist Internal Documentation to whisthq/docs
     runs-on: ubuntu-20.04
     concurrency: whist-build-and-publish-documentation
     env:
@@ -37,15 +37,15 @@ jobs:
     steps:
       ################################# CONFIG STEPS ###############################
 
-      - name: Checkout the fractal/whist Git Repository
+      - name: Checkout the whisthq/whist Git Repository
         uses: actions/checkout@v2
         with:
           path: whist
 
-      - name: Checkout the fractal/docs Git Repository
+      - name: Checkout the whisthq/docs Git Repository
         uses: actions/checkout@v2
         with:
-          repository: fractal/docs
+          repository: whisthq/docs
           token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
           path: docs
 
@@ -71,7 +71,7 @@ jobs:
           git diff --no-index whist/host-service/build/docs docs/host-service && echo "No changes detected"
           echo "::set-output name=changed::$?"
 
-      - name: Copy New Host-Service Documentation into the fractal/docs Working Tree (Only on Push/Workflow_dispatch Events)
+      - name: Copy New Host-Service Documentation into the whisthq/docs Working Tree (Only on Push/Workflow_dispatch Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.host-service-diff.outputs.changed == true }}
         run: rm -rf docs/host-service && cp -r whist/host-service/build/docs docs/host-service
 
@@ -97,7 +97,7 @@ jobs:
           git diff --no-index whist/protocol/build-docker/docs/html docs/protocol && echo "No changes detected"
           echo "::set-output name=changed::$?"
 
-      - name: Copy New Protocol Documentation into the fractal/docs Working Tree (Only on Push/Workflow_dispatch Events)
+      - name: Copy New Protocol Documentation into the whisthq/docs Working Tree (Only on Push/Workflow_dispatch Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.protocol-diff.outputs.changed == true }}
         run: rm -r docs/protocol && cp -r whist/protocol/build-docker/docs/html docs/protocol # Since the protocol is built inside a Docker container, the folder is build-docker
 
@@ -120,18 +120,18 @@ jobs:
           git diff --no-index whist/webserver/docs/_build/html docs/webserver && echo "No changes detected"
           echo "::set-output name=changed::$?"
 
-      - name: Copy New Webserver Documentation into the fractal/docs Working Tree (Only on Push/Workflow_dispatch Events)
+      - name: Copy New Webserver Documentation into the whisthq/docs Working Tree (Only on Push/Workflow_dispatch Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.webserver-diff.outputs.changed == true }}
         run: rm -r docs/webserver && cp -r whist/webserver/docs/_build/html docs/webserver
 
       ##############################################################################
       ################################# PUBLISH STEPS ##############################
 
-      - name: Commit the Documentation Changes to fractal/docs (Only on Push/Workflow_dispatch Events)
+      - name: Commit the Documentation Changes to whisthq/docs (Only on Push/Workflow_dispatch Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.host-service-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true || steps.webserver-diff.outputs.changed == true) }}
         working-directory: docs
         run: |
-          # Set the author of the commit in fractal/docs to be the user
+          # Set the author of the commit in whisthq/docs to be the user
           # who just pushed to the dev branch of the monorepo.
           git config user.name "${{ github.event.pusher.name }}"
           git config user.email "${{ github.event.pusher.email }}"

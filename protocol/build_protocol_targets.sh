@@ -59,7 +59,7 @@ USER=$(whoami)
 docker build . \
   --build-arg uid=$(id -u ${USER}) \
   -f Dockerfile \
-  -t fractal/protocol-builder
+  -t whisthq/protocol-builder
 
 DOCKER_USER="whist-builder"
 
@@ -86,7 +86,7 @@ docker run \
   $MOUNT_AWS \
   --name whist-protocol-builder-$(date +"%s") \
   --user "$DOCKER_USER" \
-  fractal/protocol-builder \
+  whisthq/protocol-builder \
   bash -c "\
     cd protocol &&                                      \
     mkdir -p build-docker &&                            \

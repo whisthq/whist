@@ -33,8 +33,8 @@ reset_working_directory()
 parser = argparse.ArgumentParser(description=DESCRIPTION)
 parser.add_argument(
     "image",
-    help="Whist mandelbox to run. Defaults to 'fractal/base:current-build'.",
-    default="fractal/base:current-build",
+    help="Whist mandelbox to run. Defaults to 'whist/base:current-build'.",
+    default="whist/base:current-build",
 )
 parser.add_argument(
     "--json-data",

@@ -1,7 +1,7 @@
 # workflows/whist-deploy-sentry-releases.yml
 #
 # Whist: Deploy Sentry Releases
-# Automatically push a new Sentry release for each of the fractal/whist projects.
+# Automatically push a new Sentry release for each of the whisthq/whist projects.
 
 name: "Whist: Deploy Sentry Releases"
 

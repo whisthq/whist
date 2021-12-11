@@ -42,7 +42,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--github-token",
-    help="The GitHub Personal Access Token with permission to fetch the fractal/whist repository. Required.",
+    help="The GitHub Personal Access Token with permission to fetch the whisthq/whist repository. Required.",
     required=True,
 )
 
@@ -264,7 +264,7 @@ def clone_whist_repository_on_instance(github_token, pexpect_process, pexpect_pr
         )
     )
 
-    # Retrieve fractal/whist monorepo on the instance
+    # Retrieve whisthq/whist monorepo on the instance
     command = (
         "rm -rf whist; git clone -b "
         + branch_name
@@ -274,7 +274,7 @@ def clone_whist_repository_on_instance(github_token, pexpect_process, pexpect_pr
     )
     pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt)
-    print("Finished downloading fractal/whist on EC2 instance")
+    print("Finished downloading whisthq/whist on EC2 instance")
 
 
 def apply_dpkg_locking_fixup(pexpect_process, pexpect_prompt):

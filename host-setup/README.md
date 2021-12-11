@@ -35,7 +35,7 @@ To set up your Whist development instance:
 
 ```bash
 # clones `dev` by default
-git clone git@github.com:fractal/whist.git # via SSH, highly preferable
+git clone git@github.com:whisthq/whist.git # via SSH, highly preferable
 git clone https://github.com/whisthq/whist.git # via HTTPS, type password on every push
 
 # set up the EC2 host for development
