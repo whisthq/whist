@@ -304,3 +304,76 @@ jobs:
           ./codecov -t ${CODECOV_TOKEN} -c -F protocol
 
       # Note that we don't run clang-tidy on arm64 macOS, since we already run it on x64 macOS
+
+  #######################################################################################
+  #######################################################################################
+
+  # Check Protocol PR for end-to-end streaming performance
+  protocol-streaming-e2e-check-pr:
+    name: "Protocol Streaming End-to-End Test"
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Configure AWS S3 CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # Other possible flags:
+      # --testing_url, defaults to Big Buck Bunny video stored on our AWS S3
+      # --testing_time, defaults to 126s
+      # --cmake-build-type, defaults to `Metrics`
+      # --region-name, defaults to `us-east-1`
+      # --use-two-instances, defaults to `false`
+      # --use-existing-server-instance, defaults to `false`
+      # --use-existing-client-instance, defaults to `false`
+      # --aws-credentials-filepath, defaults to `~/.aws/credentials`
+      - name: Run Streaming End-to-End Test
+        working-directory: protocol/test
+        run: |
+          # Run the streaming end-to-end integration test
+          python3 streaming_e2e_tester.py --ssh-key-name TODO --ssh-key-path TODO --github_token ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+
+          # Parse the results of the test into a .info file, to be displayed on the GitHub PR
+          # TODO
+
+      - name: Post Streaming End-to-End Test Results to GitHub PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ISSUE: ${{ github.event.number }}
+          GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
+        shell: python3 {0}
+        run: |
+          import os
+          import sys
+          sys.path.append(".github/workflows/helpers")
+          from notifications.github_bot import github_comment_update
+
+          if not os.environ.get("GITHUB_ISSUE"):
+            print("No GitHub PR/Issue number! Skipping PR notification.")
+            sys.exit(0)
+
+          github_token = os.environ["GITHUB_TOKEN"]
+          github_issue = int(os.environ["GITHUB_ISSUE"])
+          github_repo = "whisthq/whist"
+
+          identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE"
+          title = "Protocol End-to-End Streaming Test Results"
+
+          file = open("protocol/test/streaming_e2e_test_results.info")
+          body = file.read()
+          file.close()
+
+          github_comment_update(
+            github_token,
+            github_repo,
+            github_issue,
+            identifier,
+            body,
+            title=title,
+          )

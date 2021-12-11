@@ -85,11 +85,9 @@ jobs:
       - name: Install Python Dependencies
         run: pip install PyGithub
 
-      # Actual messages are defined in the environment configuration at
-      # the top of this job.
       - name: Update GitHub PR Comment
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # needed for migra diff tool
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ISSUE: ${{ github.event.number }}
           GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
         shell: python3 {0}
@@ -101,7 +99,7 @@ jobs:
           from notifications.github_bot import github_comment_update
 
           if not os.environ.get("GITHUB_ISSUE"):
-            print("No GitHub Issue number! Skipping PR notification.")
+            print("No GitHub PR/Issue number! Skipping PR notification.")
             sys.exit(0)
 
           github_token = os.environ["GITHUB_TOKEN"]

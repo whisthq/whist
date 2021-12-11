@@ -4,8 +4,6 @@ import sys
 import os
 import time
 import argparse
-import boto3
-import paramiko
 import subprocess
 import pexpect
 import json
@@ -25,7 +23,7 @@ from testing_helpers import (
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 DESCRIPTION = """
-This script will spin a g4dn.2xlarge EC2 instance with two docker containers
+This script will spin a g4dn.2xlarge EC2 instance with two Docker containers
 and run a protocol streaming performance test between the two of them. 
 """
 

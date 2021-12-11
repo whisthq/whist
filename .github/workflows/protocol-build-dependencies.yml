@@ -54,7 +54,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: openssl/openssl
-          ref: OpenSSL_1_1_1k # GitHub Tag of latest stable OpenSSL release
+          ref: openssl-3.0.0 # GitHub Tag of latest stable OpenSSL release
 
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
@@ -187,7 +187,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: openssl/openssl
-          ref: OpenSSL_1_1_1k # GitHub Tag of latest stable OpenSSL release
+          ref: openssl-3.0.0 # GitHub Tag of latest stable OpenSSL release
 
       - name: Install awscli, cmake, gcc, and pkg-config
         run: brew install awscli cmake pkg-config gcc
