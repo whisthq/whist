@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"path"
 
+	"github.com/fractal/whist/host-service/mandelbox/types"
 	"github.com/fractal/whist/host-service/utils"
 	logger "github.com/fractal/whist/host-service/whistlogger"
 )
@@ -16,16 +17,12 @@ const (
 	UserInitialBookmarksFile string = "user-initial-bookmarks"
 )
 
-type Cookies string
-
-type Bookmarks string
-
 // BrowserData is a collection of possible browser datas a user generates
 type BrowserData struct {
 	// CookieJSON is the user's cookie sqlite3 file in a string format
-	CookiesJSON 	Cookies
+	CookiesJSON 	types.Cookies
 	// BookmarkJSON is the user's bookmark json file
-	BookmarksJSON 	Bookmarks
+	BookmarksJSON 	types.Bookmarks
 }
 
 // WriteUserInitialBrowserData writes the user's initial browser data to file(s)
