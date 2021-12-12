@@ -170,10 +170,15 @@ func (wc *WhistClient) Close(subscriptionIDs []string) error {
 		}
 	}
 
+	var err error
 	// Once we have successfully unsubscribed, close the connection to the
-	// Hasura server.
+	// Hasura server. Only do so if `wc.Hasura` is nil, otherwise the close
+	// function will attempt to do so with a nil pointer.
 	logger.Infof("Closing connection to Hasura server...")
-	err := wc.Hasura.Close()
+	if wc.Hasura != nil {
+		err = wc.Hasura.Close()
+	}
+
 	if err != nil {
 		// Only use a warning instead of an error because failure to close the
 		// Hasura server is not fatal, as we have already started the host service
@@ -182,5 +187,7 @@ func (wc *WhistClient) Close(subscriptionIDs []string) error {
 		return err
 	}
 
+	// Once successfully close, set the Hasura field to nil
+	wc.Hasura = nil
 	return nil
 }
