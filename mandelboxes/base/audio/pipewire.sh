@@ -16,7 +16,7 @@ git checkout 0.3.36
   -Dsndfile=disabled -Dlibusb=disabled
 make -j4 && make install
 
-adduser root rtkit && adduser fractal rtkit
+adduser root rtkit && adduser whist rtkit
 # These also need to be exported
 cd /
 echo "PIPEWIRE_RUNTIME_DIR=\"/pipewire-0\"" > /test-env
