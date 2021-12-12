@@ -29,6 +29,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -532,8 +533,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		utils.Sprintf("NVIDIA_VISIBLE_DEVICES=%v", "all"),
 		"NVIDIA_DRIVER_CAPABILITIES=all",
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
-		utils.Sprintf("WHIST_INITIAL_USER_COOKIES_FILE=%v%v", utils.UserInitialBrowserDir, utils.UserInitialCookiesFile),
-		utils.Sprintf("WHIST_INITIAL_USER_BOOKMARKS_FILE=%v%v", utils.UserInitialBrowserDir, utils.UserInitialBookmarksFile),
+		utils.Sprintf("WHIST_INITIAL_USER_COOKIES_FILE=%v%v", mandelboxData.UserInitialBrowserDir, mandelboxData.UserInitialCookiesFile),
+		utils.Sprintf("WHIST_INITIAL_USER_BOOKMARKS_FILE=%v%v", mandelboxData.UserInitialBrowserDir, mandelboxData.UserInitialBookmarksFile),
 	}
 	config := dockercontainer.Config{
 		ExposedPorts: exposedPorts,
@@ -734,8 +735,14 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	go func() {
 		logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
 
-		//  Pass along cookies and bookmarks
-		err := mandelbox.WriteUserInitialBrowserData(req.Cookies, req.Bookmarks)
+		// Create browser data
+		userInitialBrowserData := mandelboxData.BrowserData{
+			CookiesJSON:   req.Cookies,
+			BookmarksJSON: req.Bookmarks,
+		}
+
+		destDir := path.Join(mandelbox.GetUserConfigDir(), mandelboxData.GetUnpackedConfigsDirectoryName())
+		err := mandelboxData.WriteUserInitialBrowserData(userInitialBrowserData, destDir)
 		userInitialBrowserDataDownloadComplete <- true
 		if err != nil {
 			logger.Warningf("Error writing user initial browser data for mandelbox %s: %v", mandelboxSubscription.ID, err)
