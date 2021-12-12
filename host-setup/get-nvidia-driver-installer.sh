@@ -11,10 +11,10 @@ set -Eeuo pipefail
 # The Gaming drivers can support more 4K streams concurrently, so we use those. You can find details on
 # the differences between the two types of drivers and how to install one or the other here:
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
-# 
+#
 # From AWS: Starting with GRID version 11.0, you can use the driver packages under latest for both G3 and G4dn instances. AWS will not add
 # versions later than 11.0 to g4/latest, but will keep version 11.0 and the earlier versions specific to G4dn under g4/latest.
-# 
+#
 # From AWS: Regarding the Gaming drivers, you can use the driver packages under linux/latest for both G3 and G4dn instances.
 
 # Hardcode a driver version to avoid server/client version mismatch. This driver version needs to be updated periodically.
