@@ -1536,7 +1536,7 @@ jobs:
           APP_GIT_COMMIT: ${{ github.sha }}
           WHIST_ACCESS_TOKEN: ${{ steps.get-token.outputs.access-token }}
         shell: bash --noprofile --norc -eo pipefail {0}
-        run: flask ami swap_over_buffers '${{ needs.webserver-spin-up-new-buffer.outputs.new_amis_str }}'
+        run: flask ami swap_over_buffers '${{ needs.webserver-spin-up-new-buffer.outputs.new_amis_str }} '${{ needs.webserver-spin-up-new-buffer.outputs.amis_failed }}'
 
       - name: Notify Slack that AMI upgrade has completed succesfully
         if: always() && (steps.run-webserver-cli-ami-swap-over.outcome == 'success')
