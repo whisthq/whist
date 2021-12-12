@@ -73,15 +73,8 @@ extern volatile bool update_bitrate;
 extern volatile char binary_aes_private_key[16];
 extern volatile char hex_aes_private_key[33];
 extern volatile SDL_Window* window;
-extern volatile char* window_title;
-extern volatile bool should_update_window_title;
 volatile bool is_timing_latency;
 extern volatile double latency;
-
-extern volatile WhistRGBColor* native_window_color;
-extern volatile bool native_window_color_update;
-extern volatile bool fullscreen_trigger;
-extern volatile bool fullscreen_value;
 
 extern volatile int output_width;
 extern volatile int output_height;
@@ -111,7 +104,7 @@ extern MouseMotionAccumulation mouse_state;
 extern bool active_pinch;
 
 // Window resizing state
-extern SDL_mutex* window_resize_mutex;  // protects pending_resize_message
+extern WhistMutex window_resize_mutex;  // protects pending_resize_message
 extern clock window_resize_timer;
 extern volatile bool pending_resize_message;
 
@@ -315,7 +308,7 @@ int main(int argc, char* argv[]) {
     // Set error monitor username based on email from parsed arguments.
     error_monitor_set_username(user_email);
 
-    SDL_Thread* renderer_thread = NULL;
+    WhistThread renderer_thread = NULL;
 
     print_system_info();
     LOG_INFO("Whist client revision %s", whist_git_revision());
@@ -327,8 +320,8 @@ int main(int argc, char* argv[]) {
     //    If the arguments are bad, then skip to the destruction phase
     continue_pumping = true;
     bool keep_piping = true;
-    SDL_Thread* pipe_arg_thread =
-        SDL_CreateThread(multithreaded_read_piped_arguments, "PipeArgThread", &keep_piping);
+    WhistThread pipe_arg_thread =
+        whist_create_thread(multithreaded_read_piped_arguments, "PipeArgThread", &keep_piping);
     if (pipe_arg_thread == NULL) {
         exit_code = WHIST_EXIT_CLI;
     } else {
@@ -357,7 +350,7 @@ int main(int argc, char* argv[]) {
             }
         }
         int pipe_arg_ret;
-        SDL_WaitThread(pipe_arg_thread, &pipe_arg_ret);
+        whist_wait_thread(pipe_arg_thread, &pipe_arg_ret);
         if (pipe_arg_ret != 0) {
             exit_code = WHIST_EXIT_CLI;
         }
@@ -426,7 +419,8 @@ int main(int argc, char* argv[]) {
         init_video();
 
         run_renderer_thread = true;
-        renderer_thread = SDL_CreateThread(multithreaded_renderer, "multithreaded_renderer", NULL);
+        renderer_thread =
+            whist_create_thread(multithreaded_renderer, "multithreaded_renderer", NULL);
 
         // Initialize audio and variables
         // reset because now connected
@@ -445,7 +439,7 @@ int main(int argc, char* argv[]) {
         init_packet_synchronizers();
 
         start_timer(&window_resize_timer);
-        window_resize_mutex = safe_SDL_CreateMutex();
+        window_resize_mutex = whist_create_mutex();
 
         clock keyboard_sync_timer, mouse_motion_timer, monitor_change_timer;
         start_timer(&keyboard_sync_timer);
@@ -475,35 +469,8 @@ int main(int argc, char* argv[]) {
                 whist_sleep(50);
                 continue;
             }
-            // Check if window title should be updated
-            // SDL_SetWindowTitle must be called in the main thread for
-            // some clients (e.g. all Macs), hence why we update the title here
-            // and not in handle_server_message
-            // Since its in the PollEvent loop, it won't update if PollEvent freezes
-            if (should_update_window_title) {
-                if (window_title) {
-                    SDL_SetWindowTitle((SDL_Window*)window, (char*)window_title);
-                    free((char*)window_title);
-                    window_title = NULL;
-                } else {
-                    LOG_ERROR("Window Title should not be null!");
-                }
-                should_update_window_title = false;
-            }
 
-            if (fullscreen_trigger) {
-                if (fullscreen_value) {
-                    SDL_SetWindowFullscreen((SDL_Window*)window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-                } else {
-                    SDL_SetWindowFullscreen((SDL_Window*)window, 0);
-                }
-                fullscreen_trigger = false;
-            }
-
-            if (native_window_color_update && native_window_color) {
-                set_native_window_color((SDL_Window*)window, *(WhistRGBColor*)native_window_color);
-                native_window_color_update = false;
-            }
+            update_pending_sdl_tasks();
 
             if (get_timer(keyboard_sync_timer) * MS_IN_SECOND > 50.0) {
                 if (sync_keyboard_state() != 0) {
@@ -517,7 +484,7 @@ int main(int argc, char* argv[]) {
             if (pending_resize_message &&
                 get_timer(window_resize_timer) >=
                     WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {
-                safe_SDL_LockMutex(window_resize_mutex);
+                whist_lock_mutex(window_resize_mutex);
                 if (pending_resize_message &&
                     get_timer(window_resize_timer) >=
                         WINDOW_RESIZE_MESSAGE_INTERVAL /
@@ -526,7 +493,7 @@ int main(int argc, char* argv[]) {
                     send_message_dimensions();
                     start_timer(&window_resize_timer);
                 }
-                safe_SDL_UnlockMutex(window_resize_mutex);
+                whist_unlock_mutex(window_resize_mutex);
             }
 
             if (get_timer(monitor_change_timer) * MS_IN_SECOND > 10) {
@@ -573,7 +540,7 @@ int main(int argc, char* argv[]) {
         destroy_audio();
         close_connections();
         run_renderer_thread = false;
-        SDL_WaitThread(renderer_thread, NULL);
+        whist_wait_thread(renderer_thread, NULL);
         destroy_video();
         connected = false;
     }

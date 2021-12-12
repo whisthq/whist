@@ -85,34 +85,28 @@ SDL_Surface* sdl_surface_from_png_file(char* filename);
  */
 void free_sdl_rgb_surface(SDL_Surface* surface);
 
-/**
- * @brief                          Wrapper around SDL_CreateMutex that will correctly exit the
- *                                 protocol when SDL_LockMutex fails
- */
-SDL_mutex* safe_SDL_CreateMutex();  // NOLINT(readability-identifier-naming)
+void sdl_render_loading_screen(SDL_Renderer* renderer, int idx);
 
-/**
- * @brief                          Wrapper around SDL_LockMutex that will correctly exit the
- *                                 protocol when SDL_LockMutex fails
- */
-void safe_SDL_LockMutex(SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
+void sdl_render_cursor(WhistCursorImage* cursor_image);
 
-/**
- * @brief                          Wrapper around SDL_TryLockMutex that will correctly exit the
- *                                 protocol when SDL_TryLockMutex fails
- */
-int safe_SDL_TryLockMutex(SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
+void sdl_blank_screen(SDL_Renderer* renderer);
 
-/**
- * @brief                          Wrapper around SDL_UnlockMutex that will correctly exit the
- * protocol when SDL_UnlockMutex fails
- */
-void safe_SDL_UnlockMutex(SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
+// The pixel format required for the data/linesize passed into sdl_render_frame
+#define SDL_TEXTURE_PIXEL_FORMAT AV_PIX_FMT_NV12
+// Update the renderer's framebuffer
+void sdl_update_framebuffer(SDL_Renderer* renderer, Uint8* data[4], int linesize[4], int width,
+                            int height, int output_width, int output_height);
 
-/**
- * @brief                          Wrapper around SDL_CondWait that will correctly exit the
- *                                 protocol when SDL_LockMutex fails
- */
-void safe_SDL_CondWait(SDL_cond* cond, SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
+// Render out the frame
+void sdl_render(SDL_Renderer* renderer);
+
+void sdl_render_window_titlebar_color(WhistRGBColor color);
+
+void sdl_set_fullscreen(bool is_fullscreen);
+
+void sdl_set_window_title(const char* window_title);
+
+// Call from main thread
+void update_pending_sdl_tasks();
 
 #endif  // SDL_UTILS_H

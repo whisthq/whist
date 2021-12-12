@@ -35,7 +35,7 @@ bool rgui_pressed = false;
 // Main state variables
 extern bool client_exiting;
 
-SDL_mutex *window_resize_mutex;
+WhistMutex window_resize_mutex;
 extern const float window_resize_interval;
 clock window_resize_timer;
 // pending_resize_message should be set to true if sdl event handler was not able to process resize
@@ -149,7 +149,7 @@ int handle_window_size_changed(SDL_Event *event) {
     // output_width/output_height will now be updated
     trigger_video_resize();
 
-    safe_SDL_LockMutex(window_resize_mutex);
+    whist_lock_mutex(window_resize_mutex);
     if (get_timer(window_resize_timer) >= WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {
         pending_resize_message = false;
         send_message_dimensions();
@@ -157,7 +157,7 @@ int handle_window_size_changed(SDL_Event *event) {
     } else {
         pending_resize_message = true;
     }
-    safe_SDL_UnlockMutex(window_resize_mutex);
+    whist_unlock_mutex(window_resize_mutex);
 
     LOG_INFO("Window %d resized to %dx%d (Actual %dx%d)", event->window.windowID,
              event->window.data1, event->window.data2, output_width, output_height);

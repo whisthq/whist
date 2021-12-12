@@ -55,8 +55,8 @@ extern volatile int output_width;
 extern volatile int output_height;
 
 // Threads
-static SDL_Thread* sync_udp_packets_thread;
-static SDL_Thread* sync_tcp_packets_thread;
+static WhistThread sync_udp_packets_thread;
+static WhistThread sync_tcp_packets_thread;
 static bool run_sync_packets_threads;
 
 /*
@@ -337,11 +337,11 @@ void init_packet_synchronizers() {
     }
     run_sync_packets_threads = true;
     sync_udp_packets_thread =
-        SDL_CreateThread(multithreaded_sync_udp_packets, "multithreaded_sync_udp_packets",
-                         &run_sync_packets_threads);
+        whist_create_thread(multithreaded_sync_udp_packets, "multithreaded_sync_udp_packets",
+                            &run_sync_packets_threads);
     sync_tcp_packets_thread =
-        SDL_CreateThread(multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets",
-                         &run_sync_packets_threads);
+        whist_create_thread(multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets",
+                            &run_sync_packets_threads);
 }
 
 void destroy_packet_synchronizers() {
@@ -353,6 +353,6 @@ void destroy_packet_synchronizers() {
         return;
     }
     run_sync_packets_threads = false;
-    SDL_WaitThread(sync_tcp_packets_thread, NULL);
-    SDL_WaitThread(sync_udp_packets_thread, NULL);
+    whist_wait_thread(sync_tcp_packets_thread, NULL);
+    whist_wait_thread(sync_udp_packets_thread, NULL);
 }

@@ -28,6 +28,7 @@ Includes
 #include "client_utils.h"
 #include "audio.h"
 #include "network.h"
+#include "sdl_utils.h"
 
 #include <stddef.h>
 
@@ -35,10 +36,6 @@ bool client_exiting = false;
 extern int audio_frequency;
 extern volatile double latency;
 extern volatile int try_amount;
-volatile bool fullscreen_trigger;
-volatile bool fullscreen_value;
-volatile char *window_title;
-volatile bool should_update_window_title;
 
 /*
 ============================
@@ -232,19 +229,9 @@ static int handle_window_title_message(WhistServerMessage *wsmsg, size_t wsmsg_s
     */
 
     LOG_INFO("Received window title message from server!");
-    if (should_update_window_title) {
-        LOG_WARNING(
-            "Failed to update window title, as the previous window title update is still pending");
-        return -1;
-    }
 
-    char *title = (char *)&wsmsg->window_title;
-    size_t len = strlen(title) + 1;
-    char *new_window_title = safe_malloc(len);
-    safe_strncpy(new_window_title, title, strlen(title) + 1);
-    window_title = new_window_title;
+    sdl_set_window_title((char *)wsmsg->window_title);
 
-    should_update_window_title = true;
     return 0;
 }
 
@@ -295,8 +282,7 @@ static int handle_fullscreen_message(WhistServerMessage *wsmsg, size_t fmsg_size
 
     LOG_INFO("Received fullscreen message from the server! Value: %d", wsmsg->fullscreen);
 
-    fullscreen_trigger = true;
-    fullscreen_value = wsmsg->fullscreen;
+    sdl_set_fullscreen(wsmsg->fullscreen);
 
     return 0;
 }
