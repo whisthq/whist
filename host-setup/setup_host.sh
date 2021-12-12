@@ -91,7 +91,7 @@ common_steps () {
   sudo apt-get upgrade -y linux-aws
 
   # Install Linux headers
-  sudo apt-get install -y gcc make "linux-headers-$(uname -r)"
+  sudo apt-get install -y unzip gcc make "linux-headers-$(uname -r)"
 
   # Blacklist some Linux kernel modules that would block NVIDIA drivers
   cat << EOF | sudo tee --append /etc/modprobe.d/blacklist.conf
