@@ -87,6 +87,9 @@ common_steps () {
   # Stop any running nvidia-persistenced service
   sudo systemctl stop nvidia-persistenced.service ||:
 
+  # Upgrade the linux-aws package to receive the latest version
+  sudo apt-get upgrade -y linux-aws
+
   # Install Linux headers
   sudo apt-get install -y gcc make "linux-headers-$(uname -r)"
 
@@ -103,11 +106,22 @@ EOF
 GRUB_CMDLINE_LINUX="rdblacklist=nouveau"
 EOF
 
-  # Install NVIDIA GRID (virtualized GPU) drivers
+  # Rebuild the Grub configuration
+  sudo update-grub
+
+  # Install Nvidia Gaming drivers for virtualized GPU
   ./get-nvidia-driver-installer.sh
   sudo chmod +x nvidia-driver-installer.run
   sudo ./nvidia-driver-installer.run --silent
   sudo rm nvidia-driver-installer.run
+
+  # Create the required configuration file for Nvidia Gaming drivers
+  cat << EOF | sudo tee -a /etc/nvidia/gridd.conf
+vGamingMarketplace=2
+EOF
+
+  # Download and rename the certification file (for version 460.39 or later)
+  sudo curl -o /etc/nvidia/GridSwCert.txt "https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertLinux_2021_10_2.cert"
 
   echo "================================================"
   echo "Installing nvidia-docker..."
@@ -193,7 +207,6 @@ EOF
   sudo curl https://raw.githubusercontent.com/logzio/public-certificates/master/TrustExternalCARoot_and_USERTrustRSAAAACA.crt --create-dirs -o /etc/pki/tls/certs/COMODORSADomainValidationSecureServerCA.crt
 
   sudo cp filebeat-config/filebeat.yml /etc/filebeat/filebeat.yml
-
 
   echo "================================================"
   echo "Updating resource limits..."
