@@ -5,9 +5,9 @@ import (
 	"os/exec"
 	"path"
 
+	"github.com/whisthq/whist/core-go/types"
 	"github.com/whisthq/whist/core-go/utils"
 	logger "github.com/whisthq/whist/core-go/whistlogger"
-	"github.com/whisthq/whist/host-service/mandelbox/types"
 )
 
 // This contains the path and file names related to browser data

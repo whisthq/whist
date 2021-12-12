@@ -6,12 +6,9 @@ import "github.com/google/uuid"
 // service. They're used in a lot of packages, so we put them in the least
 // common denominator --- this package.
 const (
-	WhistDir                 string = "/whist/"
-	TempDir                  string = WhistDir + "temp/"
-	WhistPrivateDir          string = "/whist/"
-	UserInitialBrowserDir    string = WhistDir + "userConfigs/"
-	UserInitialCookiesFile   string = "user-initial-cookies"
-	UserInitialBookmarksFile string = "user-initial-bookmarks"
+	WhistDir        string = "/whist/"
+	TempDir         string = WhistDir + "temp/"
+	WhistPrivateDir string = "/whist/"
 )
 
 // Note: We use these values as placeholder UUIDs because they are obvious and immediate

@@ -39,6 +39,12 @@ type ConfigEncryptionToken string
 // ClientAppAccessToken is defined as its own type for similar reasons.
 type ClientAppAccessToken string
 
+// Cookies is defined as its own type for similar reasons.
+type Cookies string
+
+// Bookmarks is defined as its own type for similar reasons.
+type Bookmarks string
+
 // String is a utility function to return the string representation of a MandelboxID.
 func (mandelboxID MandelboxID) String() string {
 	return uuid.UUID(mandelboxID).String()
