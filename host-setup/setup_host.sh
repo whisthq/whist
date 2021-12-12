@@ -109,6 +109,9 @@ EOF
   # Rebuild the Grub configuration
   sudo update-grub
 
+  # Install unzip to retrieve Nvidia drivers
+  sudo apt-get install -y unzip
+
   # Install Nvidia Gaming drivers for virtualized GPU
   ./get-nvidia-driver-installer.sh
   sudo chmod +x nvidia-driver-installer.run
