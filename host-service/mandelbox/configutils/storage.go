@@ -1,4 +1,4 @@
-package configutils // import "github.com/fractal/whist/host-service/mandelbox/configutils"
+package configutils // import "github.com/whisthq/whist/host-service/mandelbox/configutils"
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/fractal/whist/core-go/utils"
+	"github.com/whisthq/whist/core-go/utils"
 )
 
 // NewS3Client returns a new S3 client.

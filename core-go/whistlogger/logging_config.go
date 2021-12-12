@@ -1,10 +1,10 @@
-package whistlogger // import "github.com/fractal/whist/core-go/whistlogger"
+package whistlogger // import "github.com/whisthq/whist/core-go/whistlogger"
 
 import (
 	"os"
 	"strings"
 
-	"github.com/fractal/whist/core-go/metadata"
+	"github.com/whisthq/whist/core-go/metadata"
 )
 
 // usingProdLogging implements the logic for us to decide whether to use

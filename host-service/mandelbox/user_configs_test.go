@@ -9,9 +9,9 @@ import (
 	"path"
 	"testing"
 
-	mandelboxtypes "github.com/fractal/whist/core-go/types"
-	"github.com/fractal/whist/core-go/utils"
-	"github.com/fractal/whist/host-service/mandelbox/configutils"
+	mandelboxtypes "github.com/whisthq/whist/core-go/types"
+	"github.com/whisthq/whist/core-go/utils"
+	"github.com/whisthq/whist/host-service/mandelbox/configutils"
 )
 
 // TestUserConfigIntegration is an integration test for the

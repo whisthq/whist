@@ -1,4 +1,4 @@
-package whistlogger // import "github.com/fractal/whist/core-go/whistlogger"
+package whistlogger // import "github.com/whisthq/whist/core-go/whistlogger"
 
 import (
 	"encoding/json"
@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/fractal/whist/core-go/metadata"
-	"github.com/fractal/whist/core-go/metadata/aws"
-	"github.com/fractal/whist/core-go/utils"
+	"github.com/whisthq/whist/core-go/metadata"
+	"github.com/whisthq/whist/core-go/metadata/aws"
+	"github.com/whisthq/whist/core-go/utils"
 
 	"github.com/logzio/logzio-go"
 )

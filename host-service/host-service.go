@@ -43,17 +43,17 @@ import (
 	// to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
 
-	logger "github.com/fractal/whist/core-go/whistlogger"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
 
-	"github.com/fractal/whist/core-go/metadata"
-	"github.com/fractal/whist/core-go/metadata/aws"
-	"github.com/fractal/whist/core-go/subscriptions"
-	mandelboxtypes "github.com/fractal/whist/core-go/types"
-	"github.com/fractal/whist/core-go/utils"
-	"github.com/fractal/whist/host-service/dbdriver"
-	mandelboxData "github.com/fractal/whist/host-service/mandelbox"
-	"github.com/fractal/whist/host-service/mandelbox/portbindings"
-	"github.com/fractal/whist/host-service/metrics"
+	"github.com/whisthq/whist/core-go/metadata"
+	"github.com/whisthq/whist/core-go/metadata/aws"
+	"github.com/whisthq/whist/core-go/subscriptions"
+	mandelboxtypes "github.com/whisthq/whist/core-go/types"
+	"github.com/whisthq/whist/core-go/utils"
+	"github.com/whisthq/whist/host-service/dbdriver"
+	mandelboxData "github.com/whisthq/whist/host-service/mandelbox"
+	"github.com/whisthq/whist/host-service/mandelbox/portbindings"
+	"github.com/whisthq/whist/host-service/metrics"
 
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"

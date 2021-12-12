@@ -1,12 +1,12 @@
-package metadata // import "github.com/fractal/whist/core-go/metadata"
+package metadata // import "github.com/whisthq/whist/core-go/metadata"
 
 import (
 	"os"
 	"strings"
 
-	"github.com/fractal/whist/core-go/metadata/aws"
-	mandelboxtypes "github.com/fractal/whist/core-go/types"
-	"github.com/fractal/whist/core-go/utils"
+	"github.com/whisthq/whist/core-go/metadata/aws"
+	mandelboxtypes "github.com/whisthq/whist/core-go/types"
+	"github.com/whisthq/whist/core-go/utils"
 )
 
 func init() {

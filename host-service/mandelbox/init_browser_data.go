@@ -5,9 +5,9 @@ import (
 	"os/exec"
 	"path"
 
+	"github.com/whisthq/whist/core-go/utils"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
 	"github.com/whisthq/whist/host-service/mandelbox/types"
-	"github.com/whisthq/whist/host-service/utils"
-	logger "github.com/whisthq/whist/host-service/whistlogger"
 )
 
 // This contains the path and file names related to browser data
@@ -20,9 +20,9 @@ const (
 // BrowserData is a collection of possible browser datas a user generates
 type BrowserData struct {
 	// CookieJSON is the user's cookie sqlite3 file in a string format
-	CookiesJSON 	types.Cookies
+	CookiesJSON types.Cookies
 	// BookmarkJSON is the user's bookmark json file
-	BookmarksJSON 	types.Bookmarks
+	BookmarksJSON types.Bookmarks
 }
 
 // WriteUserInitialBrowserData writes the user's initial browser data to file(s)
@@ -57,7 +57,7 @@ func WriteUserInitialBrowserData(initialBrowserData BrowserData, destDir string)
 		{string(initialBrowserData.BookmarksJSON), bookmarkFilePath, "bookmarks"},
 	}
 
-	for _, browserDataInfo := range  browserDataInfos {
+	for _, browserDataInfo := range browserDataInfos {
 		content := browserDataInfo[0]
 		filePath := browserDataInfo[1]
 		contentType := browserDataInfo[2]

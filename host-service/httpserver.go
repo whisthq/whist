@@ -9,14 +9,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fractal/whist/core-go/metadata"
-	mandelboxtypes "github.com/fractal/whist/core-go/types"
-	"github.com/fractal/whist/core-go/utils"
-	logger "github.com/fractal/whist/core-go/whistlogger"
-	"github.com/fractal/whist/host-service/auth"
-	"github.com/fractal/whist/host-service/mandelbox/portbindings"
-	"github.com/fractal/whist/host-service/metrics"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/whisthq/whist/core-go/metadata"
+	mandelboxtypes "github.com/whisthq/whist/core-go/types"
+	"github.com/whisthq/whist/core-go/utils"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
+	"github.com/whisthq/whist/host-service/auth"
+	"github.com/whisthq/whist/host-service/mandelbox/portbindings"
+	"github.com/whisthq/whist/host-service/metrics"
 )
 
 // Constants for use in setting up the HTTPS server

@@ -1,4 +1,4 @@
-package subscriptions // import "github.com/fractal/whist/core-go/subscriptions"
+package subscriptions // import "github.com/whisthq/whist/core-go/subscriptions"
 
 import graphql "github.com/hasura/go-graphql-client"
 

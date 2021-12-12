@@ -1,4 +1,4 @@
-module github.com/fractal/whist/core-go
+module github.com/whisthq/whist/core-go
 
 go 1.17
 

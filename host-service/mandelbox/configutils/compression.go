@@ -1,4 +1,4 @@
-package configutils // import "github.com/fractal/whist/host-service/mandelbox/configutils"
+package configutils // import "github.com/whisthq/whist/host-service/mandelbox/configutils"
 
 import (
 	"archive/tar"
@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/fractal/whist/core-go/utils"
-	logger "github.com/fractal/whist/core-go/whistlogger"
 	"github.com/pierrec/lz4/v4"
+	"github.com/whisthq/whist/core-go/utils"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
 )
 
 // ExtractTarLz4 extracts a tar.lz4 file in memory to the specified directory.

@@ -1,10 +1,10 @@
-package mandelbox // import "github.com/fractal/whist/host-service/mandelbox"
+package mandelbox // import "github.com/whisthq/whist/host-service/mandelbox"
 
 import (
 	"sync"
 
-	"github.com/fractal/whist/core-go/types"
-	"github.com/fractal/whist/core-go/utils"
+	"github.com/whisthq/whist/core-go/types"
+	"github.com/whisthq/whist/core-go/utils"
 )
 
 // This file contains the code to track all Mandelboxes. We _need to_ do this

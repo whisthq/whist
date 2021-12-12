@@ -1,4 +1,4 @@
-package utils // import "github.com/fractal/whist/core-go/utils"
+package utils // import "github.com/whisthq/whist/core-go/utils"
 
 // SliceContains returns true if the given slice contains val, and false otherwise.
 func SliceContains(slice []interface{}, val interface{}) bool {

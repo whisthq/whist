@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/fractal/whist/core-go/metadata"
+	"github.com/whisthq/whist/core-go/metadata"
 )
 
 type authConfig struct {

@@ -1,16 +1,16 @@
-package dbdriver // import "github.com/fractal/whist/host-service/dbdriver"
+package dbdriver // import "github.com/whisthq/whist/host-service/dbdriver"
 
 import (
 	"context"
 	"math/rand"
 	"time"
 
-	"github.com/fractal/whist/core-go/metadata/aws"
-	"github.com/fractal/whist/core-go/utils"
-	logger "github.com/fractal/whist/core-go/whistlogger"
-	"github.com/fractal/whist/host-service/metrics"
+	"github.com/whisthq/whist/core-go/metadata/aws"
+	"github.com/whisthq/whist/core-go/utils"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
+	"github.com/whisthq/whist/host-service/metrics"
 
-	"github.com/fractal/whist/host-service/dbdriver/queries"
+	"github.com/whisthq/whist/host-service/dbdriver/queries"
 )
 
 // As long as this channel is blocking, we should keep sending "alive"

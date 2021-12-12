@@ -1,16 +1,16 @@
 /*
 Package gpus provides the code to optimally allocate mandelboxes to GPUs.
 */
-package gpus // import "github.com/fractal/whist/host-service/mandelbox/gpus"
+package gpus // import "github.com/whisthq/whist/host-service/mandelbox/gpus"
 
 import (
 	"math"
 	"sync"
 
-	"github.com/fractal/whist/core-go/types"
-	"github.com/fractal/whist/core-go/utils"
-	logger "github.com/fractal/whist/core-go/whistlogger"
-	"github.com/fractal/whist/host-service/metrics"
+	"github.com/whisthq/whist/core-go/types"
+	"github.com/whisthq/whist/core-go/utils"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
+	"github.com/whisthq/whist/host-service/metrics"
 )
 
 func init() {

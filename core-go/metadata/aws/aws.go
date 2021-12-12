@@ -2,7 +2,7 @@
 Package aws abstracts away the collection and caching of important runtime
 metadata about the AWS instance the host service is running on.
 */
-package aws // import "github.com/fractal/whist/core-go/metadata/aws"
+package aws // import "github.com/whisthq/whist/core-go/metadata/aws"
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 
-	"github.com/fractal/whist/core-go/utils"
+	"github.com/whisthq/whist/core-go/utils"
 )
 
 // This file is laid out as a series of types corresponding to various

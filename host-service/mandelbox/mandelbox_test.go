@@ -5,8 +5,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/fractal/whist/core-go/types"
-	"github.com/fractal/whist/core-go/utils"
+	"github.com/whisthq/whist/core-go/types"
+	"github.com/whisthq/whist/core-go/utils"
 )
 
 func TestNewMandelbox(t *testing.T) {

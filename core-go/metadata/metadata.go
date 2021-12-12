@@ -1,7 +1,7 @@
 /*
 Package metadata exposes some metadata about the build and run environments of the host service.
 */
-package metadata // import "github.com/fractal/whist/core-go/metadata"
+package metadata // import "github.com/whisthq/whist/core-go/metadata"
 
 // Variable for hash of last Git commit --- filled in by linker
 var gitCommit string

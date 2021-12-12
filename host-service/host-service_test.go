@@ -15,15 +15,15 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
-	"github.com/fractal/whist/core-go/metadata"
-	"github.com/fractal/whist/core-go/metadata/aws"
-	"github.com/fractal/whist/core-go/subscriptions"
-	mandelboxtypes "github.com/fractal/whist/core-go/types"
-	"github.com/fractal/whist/core-go/utils"
-	logger "github.com/fractal/whist/core-go/whistlogger"
-	"github.com/fractal/whist/host-service/mandelbox"
-	"github.com/fractal/whist/host-service/mandelbox/portbindings"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/whisthq/whist/core-go/metadata"
+	"github.com/whisthq/whist/core-go/metadata/aws"
+	"github.com/whisthq/whist/core-go/subscriptions"
+	mandelboxtypes "github.com/whisthq/whist/core-go/types"
+	"github.com/whisthq/whist/core-go/utils"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
+	"github.com/whisthq/whist/host-service/mandelbox"
+	"github.com/whisthq/whist/host-service/mandelbox/portbindings"
 )
 
 // mockClient is a mock Docker client that implements the CommonAPIClient

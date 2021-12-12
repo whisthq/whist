@@ -3,15 +3,15 @@ Package subscriptions is responsible for implementing a pubsub architecture
 on the host-service. This is achieved using Hasura live subscriptions, so that
 the host-service can be notified instantly of any change in the database
 */
-package subscriptions // import "github.com/fractal/whist/core-go/subscriptions"
+package subscriptions // import "github.com/whisthq/whist/core-go/subscriptions"
 
 import (
 	"context"
 	"sync"
 
-	"github.com/fractal/whist/core-go/metadata"
-	logger "github.com/fractal/whist/core-go/whistlogger"
 	graphql "github.com/hasura/go-graphql-client" // We use hasura's own graphql client for Go
+	"github.com/whisthq/whist/core-go/metadata"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
 )
 
 // InstanceStatusHandler handles events from the hasura subscription which

@@ -1,6 +1,6 @@
-package subscriptions // import "github.com/fractal/whist/core-go/subscriptions"
+package subscriptions // import "github.com/whisthq/whist/core-go/subscriptions"
 
-import mandelboxtypes "github.com/fractal/whist/core-go/types"
+import mandelboxtypes "github.com/whisthq/whist/core-go/types"
 
 // HasuraParams contains the Heroku URL and Admin AccessKey to pass
 // to the client during initialization.

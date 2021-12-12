@@ -1,10 +1,10 @@
-package portbindings // import "github.com/fractal/whist/host-service/mandelbox/portbinding"
+package portbindings // import "github.com/whisthq/whist/host-service/mandelbox/portbinding"
 
 import (
 	"strings"
 
-	"github.com/fractal/whist/core-go/utils"
-	logger "github.com/fractal/whist/core-go/whistlogger"
+	"github.com/whisthq/whist/core-go/utils"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
 )
 
 // This block contains the two transport protocols (TCP and UDP) that we care

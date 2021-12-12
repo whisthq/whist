@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fractal/whist/core-go/utils"
+	"github.com/whisthq/whist/core-go/utils"
 )
 
 var environmentTests = []struct {

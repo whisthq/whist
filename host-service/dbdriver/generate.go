@@ -1,4 +1,4 @@
-package dbdriver // import "github.com/fractal/whist/host-service/dbdriver"
+package dbdriver // import "github.com/whisthq/whist/host-service/dbdriver"
 
 //go:generate echo "Generating dbdriver query code..."
 
@@ -9,7 +9,7 @@ package dbdriver // import "github.com/fractal/whist/host-service/dbdriver"
 import (
 	"math/bits"
 
-	logger "github.com/fractal/whist/core-go/whistlogger"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
 )
 
 func init() {
