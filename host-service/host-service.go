@@ -544,6 +544,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		AttachStdout: true,
 		AttachStderr: true,
 		Tty:          true,
+		NetworkDisabled: false,
 	}
 	natPortBindings := make(dockernat.PortMap)
 	natPortBindings[dockernat.Port("32262/tcp")] = []dockernat.PortBinding{{HostPort: utils.Sprintf("%v", hostPortForTCP32262)}}
@@ -616,6 +617,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			"apparmor:mandelbox-apparmor-profile",
 		},
 		Privileged: true,
+		NetworkMode: "bridge",
 	}
 	mandelboxName := utils.Sprintf("%s-%s", AppName, mandelboxSubscription.ID)
 	re := regexp.MustCompile(`[^a-zA-Z0-9_.-]`)

@@ -3,7 +3,7 @@ apt-get update && apt-get install python3-pip -y && pip3 install meson
 apt-get install dbus-x11 pkg-config ninja-build build-essential libpython3-dev libdbus-1-dev libudev1 libudev-dev libglib2.0-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev bluez libbluetooth-dev libsbc-dev qjackctl pulseaudio-module-jack libjack-jackd2-dev libvulkan1 mesa-vulkan-drivers vulkan-utils libvulkan-dev rtkit libsystemd-dev libpulse-dev xdg-desktop-portal systemd-coredump -y
 
 git clone https://gitlab.freedesktop.org/pipewire/pipewire.git && cd pipewire
-git checkout 0.3.38
+git checkout 0.3.36
 ./autogen.sh -Dsystemd=enabled -Dsystemd-system-service=enabled \
   -Dpipewire-alsa=enabled -Dlibpulse=enabled \
   -Droc=disabled -Dlibusb=disabled \
@@ -33,5 +33,5 @@ dbus-launch --sh-syntax --exit-with-session
 rm -r /usr/local/share/pipewire/client-rt.conf /usr/local/share/pipewire/filter-chain
 rm -r /usr/local/share/pipewire/media-session.d/bluez-monitor.conf /usr/local/share/pipewire/media-session.d/with-jack
 
-systemctl daemon-reload
-systemctl enable pipewire.service pipewire.socket pipewire-media-session.service pipewire-pulse.service pipewire-pulse.socket
+# systemctl daemon-reload
+# systemctl enable pipewire.service pipewire.socket pipewire-media-session.service pipewire-pulse.service pipewire-pulse.socket

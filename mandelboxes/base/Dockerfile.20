@@ -649,9 +649,15 @@ COPY audio/pulse-client.conf /etc/pulse/client.conf
 COPY audio/pipewire.sh /pipewire.sh
 RUN chmod +x /pipewire.sh \
     && bash -x /pipewire.sh
+COPY audio/pipewire-pulse.service /etc/systemd/system/pipewire-pulse.service
+COPY audio/pipewire-pulse.socket /etc/systemd/system/pipewire-pulse.socket
+COPY audio/launch-pipewire.sh /launch-pipewire.sh
 COPY audio/pipewire.conf /usr/local/share/pipewire/pipewire.conf
 COPY audio/media-session.conf /usr/local/share/pipewire/media-session.d/media-session.conf
 COPY audio/pipewire-pulse.conf /usr/local/share/pipewire/pipewire-pulse.conf
+RUN chmod +x /launch-pipewire.sh \
+    && bash -x /launch-pipewire.sh
+
 
 #########################
 # Startup
