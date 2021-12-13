@@ -95,6 +95,11 @@ int quit_client(Client *client) {
         return 0;
     }
 
+    // Client and server share file transfer indexes when sending files, so
+    //     when a client disconnects, we need to reset the transferring files
+    //     to make sure that if a client reconnects that the indices are fresh.
+    reset_all_transferring_files();
+
     client->is_active = false;
     if (disconnect_client(client) != 0) {
         LOG_ERROR("Failed to disconnect client.");

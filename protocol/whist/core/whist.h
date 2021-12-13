@@ -65,6 +65,7 @@ Includes
 #include <whist/core/whist_memory.h>
 #include <whist/utils/threads.h>
 #include <whist/clipboard/clipboard_synchronizer.h>
+#include <whist/file/file_synchronizer.h>
 #include <whist/utils/color.h>
 #include <whist/network/network.h>
 #include <whist/utils/clock.h>
@@ -586,6 +587,9 @@ typedef enum WhistClientMessageType {
     MESSAGE_DISCOVERY_REQUEST = 115,
     MESSAGE_TCP_RECOVERY = 116,
 
+    CMESSAGE_FILE_METADATA = 119,  ///< file metadata
+    CMESSAGE_FILE_DATA = 120,      ///< file chunk
+
     CMESSAGE_QUIT = 999,
 } WhistClientMessageType;
 
@@ -681,11 +685,12 @@ typedef struct WhistClientMessage {
         WhistKeyboardState keyboard_state;
     };
 
-    // Any type of message that has an additional `data[]` member at the end
-    //     should be a part of this union
+    // Any type of message that has an additional `data[]` (or equivalent)
+    //     member at the end should be a part of this union
     union {
-        // CMESSAGE_CLIPBOARD
-        ClipboardData clipboard;
+        ClipboardData clipboard;     // CMESSAGE_CLIPBOARD
+        FileMetadata file_metadata;  // CMESSAGE_FILE_METADATA
+        FileData file;               // CMESSAGE_FILE_DATA
     };
 } WhistClientMessage;
 
@@ -703,6 +708,8 @@ typedef enum WhistServerMessageType {
     MESSAGE_DISCOVERY_REPLY = 6,
     SMESSAGE_OPEN_URI = 7,
     SMESSAGE_FULLSCREEN = 8,
+    SMESSAGE_FILE_METADATA = 9,
+    SMESSAGE_FILE_DATA = 10,
     SMESSAGE_QUIT = 100,
 } WhistServerMessageType;
 
@@ -719,6 +726,8 @@ typedef struct WhistServerMessage {
     };
     union {
         ClipboardData clipboard;
+        FileMetadata file_metadata;
+        FileData file;
         char window_title[0];
         char discovery_reply[0];
         char init_msg[0];

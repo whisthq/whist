@@ -162,6 +162,80 @@ void get_whist_tcp_client_messages(whist_server_state* state) {
     read_unlock(&state->client.tcp_rwlock);
 }
 
+void create_and_send_tcp_wmsg(WhistServerMessageType message_type, char* payload) {
+    /*
+        Create and send a TCP wmsg according to the given payload, and then
+        deallocate once finished.
+
+        Arguments:
+            message_type (WhistServerMessageType): the type of the TCP message to be sent
+            payload (char*): the payload of the TCP message
+    */
+
+    int data_size = 0;
+    char* copy_location = NULL;
+    int type_size = 0;
+
+    switch (message_type) {
+        case SMESSAGE_CLIPBOARD: {
+            data_size = ((ClipboardData*)payload)->size;
+            type_size = sizeof(ClipboardData);
+            break;
+        }
+        case SMESSAGE_FILE_METADATA: {
+            data_size = ((FileMetadata*)payload)->filename_len;
+            type_size = sizeof(FileMetadata);
+            break;
+        }
+        case SMESSAGE_FILE_DATA: {
+            data_size = ((FileData*)payload)->size;
+            type_size = sizeof(FileData);
+            break;
+        }
+        default: {
+            LOG_ERROR("Not a valid server wmsg type");
+            return;
+        }
+    }
+
+    // Alloc wmsg
+    WhistServerMessage* wmsg_tcp = allocate_region(sizeof(WhistServerMessage) + data_size);
+
+    switch (message_type) {
+        case SMESSAGE_CLIPBOARD: {
+            copy_location = (char*)&wmsg_tcp->clipboard;
+            break;
+        }
+        case SMESSAGE_FILE_METADATA: {
+            copy_location = (char*)&wmsg_tcp->file_metadata;
+            break;
+        }
+        case SMESSAGE_FILE_DATA: {
+            copy_location = (char*)&wmsg_tcp->file;
+            break;
+        }
+        default: {
+            // This is unreachable code, only here for consistency's sake
+            deallocate_region(wmsg_tcp);
+            LOG_ERROR("Not a valid server wmsg type");
+            return;
+        }
+    }
+
+    // Build wmsg
+    // Init header to 0 to prevent sending uninitialized packets over the network
+    memset(wmsg_tcp, 0, sizeof(*wmsg_tcp));
+    wmsg_tcp->type = message_type;
+    memcpy(copy_location, payload, type_size + data_size);
+    // Send wmsg
+    if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, (uint8_t*)wmsg_tcp,
+                             sizeof(WhistServerMessage) + data_size) < 0) {
+        LOG_WARNING("Failed to broadcast server message of type %d.", message_type);
+    }
+    // Free wmsg
+    deallocate_region(wmsg_tcp);
+}
+
 int multithreaded_sync_tcp_packets(void* opaque) {
     /*
         Thread to send and receive all TCP packets (clipboard and file)
@@ -176,8 +250,8 @@ int multithreaded_sync_tcp_packets(void* opaque) {
 
     LOG_INFO("multithreaded_sync_tcp_packets running on Thread %p", SDL_GetThreadID(NULL));
 
-    // TODO: compartmentalize each part into its own function
     init_clipboard_synchronizer(false);
+    init_file_synchronizer();
 
     add_thread_to_client_active_dependents();
     bool assuming_client_active = false;
@@ -199,24 +273,36 @@ int multithreaded_sync_tcp_packets(void* opaque) {
                 // Alloc wsmsg
                 WhistServerMessage* wsmsg_response =
                     allocate_region(sizeof(WhistServerMessage) + clipboard_chunk->size);
-                // Build wsmsg
-                memset(wsmsg_response, 0, sizeof(*wsmsg_response));
-                wsmsg_response->type = SMESSAGE_CLIPBOARD;
-                memcpy(&wsmsg_response->clipboard, clipboard_chunk,
-                       sizeof(ClipboardData) + clipboard_chunk->size);
-                // Send wsmsg
-                if (broadcast_tcp_packet(&state->client, PACKET_MESSAGE, (uint8_t*)wsmsg_response,
-                                         sizeof(WhistServerMessage) + clipboard_chunk->size) < 0) {
-                    LOG_WARNING("Failed to broadcast clipboard message.");
-                }
-                // Free wsmsg
-                deallocate_region(wsmsg_response);
+
+                create_and_send_tcp_wmsg(SMESSAGE_CLIPBOARD, (char*)clipboard_chunk);
             }
             // Free clipboard chunk
             deallocate_region(clipboard_chunk);
         }
 
-        // TODO: add file send handler
+        // READ FILE CHUNK HANDLER
+        FileData* file_chunk;
+        FileMetadata* file_metadata;
+        // Iterate through all file indexes and try to read next chunk to send
+        for (int file_index = 0; file_index < NUM_TRANSFERRING_FILES; file_index++) {
+            file_synchronizer_read_next_file_chunk(file_index, &file_chunk);
+            if (file_chunk == NULL) {
+                // If chunk cannot be read, then try opening the file
+                file_synchronizer_open_file_for_reading(file_index, &file_metadata);
+                if (file_metadata == NULL) {
+                    continue;
+                }
+
+                create_and_send_tcp_wmsg(SMESSAGE_FILE_METADATA, (char*)file_metadata);
+                // Free file chunk
+                deallocate_region(file_metadata);
+                continue;
+            }
+
+            create_and_send_tcp_wmsg(SMESSAGE_FILE_DATA, (char*)file_chunk);
+            // Free file chunk
+            deallocate_region(file_chunk);
+        }
     }
 
     destroy_clipboard_synchronizer();
