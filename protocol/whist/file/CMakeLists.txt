@@ -1,4 +1,6 @@
 add_library(whistFile STATIC
+        file_drop.h
+        file_drop.c
         file_synchronizer.h
         file_synchronizer.c
         )

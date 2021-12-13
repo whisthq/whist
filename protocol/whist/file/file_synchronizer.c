@@ -144,6 +144,7 @@ void init_file_synchronizer() {
     // Zero out all the currently transferring file infos
     memset(transferring_files, 0, sizeof(TransferringFile) * NUM_TRANSFERRING_FILES);
     file_synchrony_update_mutex = whist_create_mutex();
+    init_file_drop_handler();
     is_initialized = true;
 }
 
@@ -195,6 +196,11 @@ void file_synchronizer_open_file_for_writing(char* file_directory, FileMetadata*
     active_file->file_handle = fopen(active_file->file_path, "w");
     active_file->direction = FILE_WRITE_END;
 
+    // Start the XDND drop process on the server as soon as the file exists
+    if (active_file->transfer_type == FILE_TRANSFER_SERVER_DROP) {
+        drop_file_into_active_window(active_file);
+    }
+
     whist_unlock_mutex(file_synchrony_update_mutex);
 }
 
@@ -244,6 +250,11 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
         }
         case FILE_CLOSE: {
             LOG_INFO("Finished writing to file index %d", file_chunk->index);
+
+            // If on the server, write the FUSE ready file when file writing is complete
+            if (active_file->transfer_type == FILE_TRANSFER_SERVER_DROP) {
+                write_fuse_ready_file(active_file->id);
+            }
 
             // For end chunks, close the file handle and reset the slot in the array
             reset_transferring_file(file_chunk->index);
@@ -297,6 +308,8 @@ void file_synchronizer_set_file_reading_basic_metadata(char* file_path,
     active_file->transfer_type = transfer_type;
     if (event_info) {
         active_file->event_info = *event_info;
+        LOG_INFO("mouse: %d %d", active_file->event_info.server_drop.x,
+                 active_file->event_info.server_drop.y);
     } else {
         memset(&active_file->event_info, 0, sizeof(FileEventInfo));
     }
@@ -469,6 +482,7 @@ void destroy_file_synchronizer() {
     whist_lock_mutex(file_synchrony_update_mutex);
 
     reset_all_transferring_files();
+    destroy_file_drop_handler();
     is_initialized = false;
 
     whist_unlock_mutex(file_synchrony_update_mutex);
