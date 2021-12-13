@@ -431,9 +431,10 @@ int main(int argc, char* argv[]) {
         is_timing_latency = false;
         init_audio();
 
-        // Initialize the clipboard synchronizer. This must happen before we start the udp/tcp
-        // threads
+        // Initialize the clipboard and file synchronizers. This must happen before we start
+        // the udp/tcp threads
         init_clipboard_synchronizer(true);
+        init_file_synchronizer();
 
         // Create threads to receive udp/tcp packets and handle them as needed
         init_packet_synchronizers();

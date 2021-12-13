@@ -392,14 +392,14 @@ int send_wcmsg(WhistClientMessage *wcmsg) {
     wcmsg_id++;
 
     if (wcmsg->type == CMESSAGE_CLIPBOARD || wcmsg->type == MESSAGE_DISCOVERY_REQUEST ||
+        wcmsg->type == CMESSAGE_FILE_DATA || wcmsg->type == CMESSAGE_FILE_METADATA ||
         wcmsg->type == MESSAGE_TCP_PING) {
         return send_packet(&packet_tcp_context, PACKET_MESSAGE, wcmsg, get_wcmsg_size(wcmsg), -1);
     } else {
         if ((size_t)get_wcmsg_size(wcmsg) > MAX_PACKET_SIZE) {
             LOG_ERROR(
-                "Attempting to send FMSG that is too large for UDP, and only CLIPBOARD, TIME, and "
-                "TCP_PING is "
-                "presumed to be over TCP");
+                "Attempting to send WMSG that is too large for UDP, and only CLIPBOARD, TIME, "
+                "TCP_PING, and FILE is presumed to be over TCP");
             return -1;
         }
         static int sent_packet_id = 0;

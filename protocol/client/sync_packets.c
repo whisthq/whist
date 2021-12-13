@@ -127,14 +127,14 @@ void update_tcp_ping() {
         timer_initialized = true;
     }
 
-    // If it's been 4 seconds since the last ping, we should warn
-    if (get_timer(last_tcp_ping_timer) > 4.0) {
-        LOG_WARNING("No TCP ping sent or pong received in over a second");
+    // If it's been 10 seconds since the last TCP ping, we should warn
+    if (get_timer(last_tcp_ping_timer) > 10.0) {
+        LOG_WARNING("No TCP ping sent or pong received in over 10 seconds");
     }
 
-    // If we're waiting for a ping, and it's been 1s, then that ping will be
+    // If we're waiting for a ping, and it's been 5s, then that ping will be
     // noted as failed
-    if (last_tcp_ping_id != last_tcp_pong_id && get_timer(last_new_ping_timer) > 1.0) {
+    if (last_tcp_ping_id != last_tcp_pong_id && get_timer(last_new_ping_timer) > 5.0) {
         LOG_WARNING("TCP ping received no response: %d", last_tcp_ping_id);
 
         // Only if we successfully recover the TCP connection should we continue
@@ -144,7 +144,7 @@ void update_tcp_ping() {
         }
     }
 
-    // if we've received the last ping, send another
+    // If we've received the last pong, send another if it's been 2s since last ping
     if (last_tcp_ping_id == last_tcp_pong_id && get_timer(last_tcp_ping_timer) > 2.0) {
         send_tcp_ping(last_tcp_ping_id + 1);
         start_timer(&last_new_ping_timer);
@@ -251,6 +251,76 @@ int multithreaded_sync_udp_packets(void* opaque) {
     return 0;
 }
 
+void create_and_send_tcp_wcmsg(WhistClientMessageType message_type, char* payload) {
+    /*
+        Create and send a TCP wcmsg according to the given payload, and then
+        deallocate once finished.
+        Arguments:
+            message_type (WhistClientMessageType): the type of the TCP message to be sent
+            payload (char*): the payload of the TCP message
+    */
+
+    int data_size = 0;
+    char* copy_location = NULL;
+    int type_size = 0;
+
+    switch (message_type) {
+        case CMESSAGE_CLIPBOARD: {
+            data_size = ((ClipboardData*)payload)->size;
+            type_size = sizeof(ClipboardData);
+            break;
+        }
+        case CMESSAGE_FILE_METADATA: {
+            data_size = ((FileMetadata*)payload)->filename_len;
+            type_size = sizeof(FileMetadata);
+            break;
+        }
+        case CMESSAGE_FILE_DATA: {
+            data_size = ((FileData*)payload)->size;
+            type_size = sizeof(FileData);
+            break;
+        }
+        default: {
+            LOG_ERROR("Not a valid server wcmsg type");
+            return;
+        }
+    }
+
+    // Alloc wcmsg
+    WhistClientMessage* wcmsg_tcp = allocate_region(sizeof(WhistClientMessage) + data_size);
+
+    switch (message_type) {
+        case CMESSAGE_CLIPBOARD: {
+            copy_location = (char*)&wcmsg_tcp->clipboard;
+            break;
+        }
+        case CMESSAGE_FILE_METADATA: {
+            copy_location = (char*)&wcmsg_tcp->file_metadata;
+            break;
+        }
+        case CMESSAGE_FILE_DATA: {
+            copy_location = (char*)&wcmsg_tcp->file;
+            break;
+        }
+        default: {
+            // This is unreachable code, only here for consistency's sake
+            deallocate_region(wcmsg_tcp);
+            LOG_ERROR("Not a valid server wcmsg type");
+            return;
+        }
+    }
+
+    // Build wcmsg
+    // Init header to 0 to prevent sending uninitialized packets over the network
+    memset(wcmsg_tcp, 0, sizeof(*wcmsg_tcp));
+    wcmsg_tcp->type = message_type;
+    memcpy(copy_location, payload, type_size + data_size);
+    // Send wcmsg
+    send_wcmsg(wcmsg_tcp);
+    // Free wcmsg
+    deallocate_region(wcmsg_tcp);
+}
+
 int multithreaded_sync_tcp_packets(void* opaque) {
     /*
         Thread to send and receive all TCP packets (clipboard and file)
@@ -297,16 +367,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
 
         ClipboardData* clipboard_chunk = pull_clipboard_chunk();
         if (clipboard_chunk) {
-            WhistClientMessage* wcmsg = allocate_region(
-                sizeof(WhistClientMessage) + sizeof(ClipboardData) + clipboard_chunk->size);
-
-            // Init header to 0 to prevent sending uninitialized packets over the network
-            memset(wcmsg, 0, sizeof(WhistClientMessage));
-            wcmsg->type = CMESSAGE_CLIPBOARD;
-            memcpy(&wcmsg->clipboard, clipboard_chunk,
-                   sizeof(ClipboardData) + clipboard_chunk->size);
-            send_wcmsg(wcmsg);
-            deallocate_region(wcmsg);
+            create_and_send_tcp_wcmsg(CMESSAGE_CLIPBOARD, (char*)clipboard_chunk);
             deallocate_region(clipboard_chunk);
 
             // We want to continue pumping read_packet or pull_clipboard_chunk
