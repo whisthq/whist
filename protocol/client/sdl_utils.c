@@ -41,46 +41,31 @@ static SDL_Texture* frame_buffer = NULL;
 
 /*
 ============================
-Private Function Implementations
+Private Function Declarations
 ============================
 */
 
-void send_captured_key(SDL_Keycode key, int type, int time) {
-    /*
-        Send a key to SDL event queue, presumably one that is captured and wouldn't
-        naturally make it to the event queue by itself
+/**
+ * @brief                          Creates an SDL_Surface from a png file
+ *
+ * @param filename                 The filename of the png file that will be used
+ *
+ * @returns                        The SDL_Surface that got created from the png file
+ */
+SDL_Surface* sdl_surface_from_png_file(char* filename);
 
-        Arguments:
-            key (SDL_Keycode): key that was captured
-            type (int): event type (press or release)
-            time (int): time that the key event was registered
-    */
+/**
+ * @brief                          Destroys an SDL_Surface created by sdl_surface_from_png_file
+ *
+ * @param surface                  The SDL_Surface to free
+ */
+void sdl_free_png_file_rgb_surface(SDL_Surface* surface);
 
-    SDL_Event e = {0};
-    e.type = type;
-    e.key.keysym.sym = key;
-    e.key.keysym.scancode = SDL_GetScancodeFromName(SDL_GetKeyName(key));
-    LOG_INFO("KEY: %d", key);
-    e.key.timestamp = time;
-    SDL_PushEvent(&e);
-}
-
-void set_window_icon_from_png(SDL_Window* sdl_window, char* filename) {
-    /*
-        Set the icon for a SDL window from a PNG file
-
-        Arguments:
-            sdl_window (SDL_Window*): The window whose icon will be set
-            filename (char*): A path to a `.png` file containing the 64x64 pixel icon.
-
-        Return:
-            None
-    */
-
-    SDL_Surface* icon_surface = sdl_surface_from_png_file(filename);
-    SDL_SetWindowIcon(sdl_window, icon_surface);
-    free_sdl_rgb_surface(icon_surface);
-}
+/*
+============================
+Public Function Implementations
+============================
+*/
 
 SDL_Window* init_sdl(int target_output_width, int target_output_height, char* name,
                      char* icon_filename) {
@@ -165,9 +150,11 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     sdl_init_renderer(sdl_window);
 #endif
 
-    // Set icon
+    // Set icon, if an icon_filename was given
     if (strcmp(icon_filename, "") != 0) {
-        set_window_icon_from_png(sdl_window, icon_filename);
+        SDL_Surface* icon_surface = sdl_surface_from_png_file(icon_filename);
+        SDL_SetWindowIcon(sdl_window, icon_surface);
+        sdl_free_png_file_rgb_surface(icon_surface);
     }
 
     const WhistRGBColor white = {255, 255, 255};
@@ -211,6 +198,12 @@ void sdl_init_renderer(SDL_Window* sdl_window) {
             LOG_FATAL("SDL: could not create renderer - exiting: %s", SDL_GetError());
         }
         SDL_SetRenderDrawBlendMode(sdl_renderer, SDL_BLENDMODE_BLEND);
+
+        // Render a black screen before anything else,
+        // To prevent being exposed to random colors
+        SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+        SDL_RenderClear(sdl_renderer);
+        SDL_RenderPresent(sdl_renderer);
     }
 
     if (frame_buffer == NULL) {
@@ -256,6 +249,427 @@ void destroy_sdl(SDL_Window* window_param) {
         window_param = NULL;
     }
     SDL_Quit();
+}
+
+WhistMutex window_resize_mutex;
+clock window_resize_timer;
+// pending_resize_message should be set to true if sdl event handler was not able to process resize
+// event due to throttling, so the main loop should process it
+volatile bool pending_resize_message = false;
+void sdl_renderer_resize_window(int width, int height) {
+    // Try to make pixel width and height conform to certain desirable dimensions
+    int current_width = get_window_pixel_width((SDL_Window*)window);
+    int current_height = get_window_pixel_height((SDL_Window*)window);
+
+    LOG_INFO("Received resize event for %dx%d, currently %dx%d", width, height, current_width,
+             current_height);
+
+#ifndef __linux__
+    int dpi = current_width / get_window_virtual_width((SDL_Window*)window);
+
+    // The server will round the dimensions up in order to satisfy the YUV pixel format
+    // requirements. Specifically, it will round the width up to a multiple of 8 and the height up
+    // to a multiple of 2. Here, we try to force the window size to be valid values so the
+    // dimensions of the client and server match. We round down rather than up to avoid extending
+    // past the size of the display.
+    int desired_width = current_width - (current_width % 8);
+    int desired_height = current_height - (current_height % 2);
+    static int prev_desired_width = 0;
+    static int prev_desired_height = 0;
+    static int tries = 0;  // number of attemps to force window size to be prev_desired_width/height
+    if (current_width != desired_width || current_height != desired_height) {
+        // Avoid trying to force the window size forever, stop after 4 attempts
+        if (!(prev_desired_width == desired_width && prev_desired_height == desired_height &&
+              tries > 4)) {
+            if (prev_desired_width == desired_width && prev_desired_height == desired_height) {
+                tries++;
+            } else {
+                prev_desired_width = desired_width;
+                prev_desired_height = desired_height;
+                tries = 0;
+            }
+
+            SDL_SetWindowSize((SDL_Window*)window, desired_width / dpi, desired_height / dpi);
+            LOG_INFO("Forcing a resize from %dx%d to %dx%d", current_width, current_height,
+                     desired_width, desired_height);
+            current_width = get_window_pixel_width((SDL_Window*)window);
+            current_height = get_window_pixel_height((SDL_Window*)window);
+
+            if (current_width != desired_width || current_height != desired_height) {
+                LOG_WARNING(
+                    "Unable to change window size to match desired dimensions using "
+                    "SDL_SetWindowSize: "
+                    "actual output=%dx%d, desired output=%dx%d",
+                    current_width, current_height, desired_width, desired_height);
+            }
+        }
+    }
+#endif
+
+    // Update output width / output height
+    if (current_width != output_width || current_height != output_height) {
+        output_width = current_width;
+        output_height = current_height;
+    }
+
+    whist_lock_mutex(window_resize_mutex);
+    pending_resize_message = true;
+    whist_unlock_mutex(window_resize_mutex);
+
+    LOG_INFO("Window resized to %dx%d (Actual %dx%d)", width, height, output_width, output_height);
+}
+
+void sdl_update_framebuffer_loading_screen(int idx) {
+    /*
+        Make the screen black and show the loading screen
+        Arguments:
+            idx (int): the index of the loading frame
+    */
+
+#define NUMBER_LOADING_FRAMES 50
+
+    int gif_frame_index = idx % NUMBER_LOADING_FRAMES;
+
+    clock c;
+    start_timer(&c);
+
+    char frame_name[24];
+    if (gif_frame_index < 10) {
+        snprintf(frame_name, sizeof(frame_name), "loading/frame_0%d.png", gif_frame_index);
+        //            LOG_INFO("Frame loading/frame_0%d.png", gif_frame_index);
+    } else {
+        snprintf(frame_name, sizeof(frame_name), "loading/frame_%d.png", gif_frame_index);
+        //            LOG_INFO("Frame loading/frame_%d.png", gif_frame_index);
+    }
+
+    SDL_Surface* loading_screen = sdl_surface_from_png_file(frame_name);
+    if (loading_screen == NULL) {
+        LOG_WARNING("Loading screen not loaded from %s", frame_name);
+        return;
+    }
+
+    // free pkt.data which is initialized by calloc in png_file_to_bmp
+
+    SDL_Texture* loading_screen_texture =
+        SDL_CreateTextureFromSurface(sdl_renderer, loading_screen);
+
+    // surface can now be freed
+    sdl_free_png_file_rgb_surface(loading_screen);
+
+    int w = 200;
+    int h = 200;
+    SDL_Rect dstrect;
+
+    // SDL_QueryTexture( loading_screen_texture, NULL, NULL, &w, &h );
+    dstrect.x = output_width / 2 - w / 2;
+    dstrect.y = output_height / 2 - h / 2;
+    dstrect.w = w;
+    dstrect.h = h;
+
+    SDL_SetRenderDrawColor(sdl_renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(sdl_renderer);
+    SDL_RenderCopy(sdl_renderer, loading_screen_texture, NULL, &dstrect);
+
+    // texture may now be destroyed
+    SDL_DestroyTexture(loading_screen_texture);
+}
+
+void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int height) {
+    // The texture object we allocate is larger than the frame, so we only
+    // copy the valid section of the frame into the texture.
+    SDL_Rect texture_rect = {
+        .x = 0,
+        .y = 0,
+        .w = width,
+        .h = height,
+    };
+
+    int res = SDL_UpdateNVTexture(frame_buffer, &texture_rect, data[0], linesize[0], data[1],
+                                  linesize[1]);
+    if (res < 0) {
+        LOG_ERROR("SDL_UpdateNVTexture failed: %s", SDL_GetError());
+        SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+        SDL_RenderClear(sdl_renderer);
+        return;
+    }
+
+    // Subsection of texture that should be rendered to screen.
+    SDL_Rect output_rect = {
+        .x = 0,
+        .y = 0,
+        .w = output_width,
+        .h = output_height,
+    };
+    SDL_RenderCopy(sdl_renderer, frame_buffer, &output_rect, NULL);
+}
+
+void sdl_render_framebuffer() {
+    // Present the framebuffer to the monitor
+    SDL_RenderPresent(sdl_renderer);
+}
+
+volatile WhistCursorState cursor_state = CURSOR_STATE_VISIBLE;
+volatile SDL_Cursor* sdl_cursor = NULL;
+volatile WhistCursorID last_cursor = (WhistCursorID)SDL_SYSTEM_CURSOR_ARROW;
+
+void sdl_update_cursor(WhistCursorImage* cursor) {
+    /*
+      Update the cursor image on the screen. If the cursor hasn't changed since the last frame we
+      received, we don't do anything. Otherwise, we either use the provided bitmap or  update the
+      cursor ID to tell SDL which cursor to render.
+     */
+    // Set cursor to frame's desired cursor type
+    // Only update the cursor, if a cursor image is even embedded in the frame at all.
+#define CURSORIMAGE_A 0xff000000
+#define CURSORIMAGE_R 0x00ff0000
+#define CURSORIMAGE_G 0x0000ff00
+#define CURSORIMAGE_B 0x000000ff
+
+    if (cursor) {
+        if ((WhistCursorID)cursor->cursor_id != last_cursor || cursor->using_bmp) {
+            if (sdl_cursor) {
+                SDL_FreeCursor((SDL_Cursor*)sdl_cursor);
+            }
+            if (cursor->using_bmp) {
+                // use bitmap data to set cursor
+                SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
+                    cursor->bmp, cursor->bmp_width, cursor->bmp_height, sizeof(uint32_t) * 8,
+                    sizeof(uint32_t) * cursor->bmp_width, CURSORIMAGE_R, CURSORIMAGE_G,
+                    CURSORIMAGE_B, CURSORIMAGE_A);
+
+                // Use BLENDMODE_NONE to allow for proper cursor blit-resize
+                SDL_SetSurfaceBlendMode(cursor_surface, SDL_BLENDMODE_NONE);
+
+#ifdef _WIN32
+                // on Windows, the cursor DPI is unchanged
+                const int cursor_dpi = 96;
+#else
+                // on other platforms, use the window DPI
+                const int cursor_dpi = get_native_window_dpi((SDL_Window*)window);
+#endif  // _WIN32
+
+                // Create the scaled cursor surface which takes DPI into account
+                SDL_Surface* scaled_cursor_surface = SDL_CreateRGBSurface(
+                    0, cursor->bmp_width * 96 / cursor_dpi, cursor->bmp_height * 96 / cursor_dpi,
+                    cursor_surface->format->BitsPerPixel, cursor_surface->format->Rmask,
+                    cursor_surface->format->Gmask, cursor_surface->format->Bmask,
+                    cursor_surface->format->Amask);
+
+                // Copy the original cursor into the scaled surface
+                SDL_BlitScaled(cursor_surface, NULL, scaled_cursor_surface, NULL);
+
+                // Potentially SDL_SetSurfaceBlendMode here since X11 cursor BMPs are
+                // pre-alpha multplied. Remember to adjust hot_x/y by the DPI scaling.
+                sdl_cursor = SDL_CreateColorCursor(scaled_cursor_surface,
+                                                   cursor->bmp_hot_x * 96 / cursor_dpi,
+                                                   cursor->bmp_hot_y * 96 / cursor_dpi);
+                SDL_FreeSurface(cursor_surface);
+                SDL_FreeSurface(scaled_cursor_surface);
+            } else {
+                // use cursor id to set cursor
+                sdl_cursor = SDL_CreateSystemCursor((SDL_SystemCursor)cursor->cursor_id);
+            }
+            SDL_SetCursor((SDL_Cursor*)sdl_cursor);
+
+            last_cursor = (WhistCursorID)cursor->cursor_id;
+        }
+
+        if (cursor->cursor_state != cursor_state) {
+            if (cursor->cursor_state == CURSOR_STATE_HIDDEN) {
+                SDL_SetRelativeMouseMode(SDL_TRUE);
+            } else {
+                SDL_SetRelativeMouseMode(SDL_FALSE);
+            }
+
+            cursor_state = cursor->cursor_state;
+        }
+    }
+}
+
+volatile WhistRGBColor* native_window_color = NULL;
+volatile bool native_window_color_update = false;
+
+void sdl_render_window_titlebar_color(WhistRGBColor color) {
+    /*
+      Update window titlebar color using the colors of the new frame
+     */
+    WhistRGBColor* current_color = (WhistRGBColor*)native_window_color;
+    if (current_color != NULL) {
+        if (current_color->red != color.red || current_color->green != color.green ||
+            current_color->blue != color.blue) {
+            // delete the old color we were using
+            free(current_color);
+
+            // make the new color and signal that we're ready to update
+            WhistRGBColor* new_native_window_color = safe_malloc(sizeof(WhistRGBColor));
+            *new_native_window_color = color;
+            native_window_color = new_native_window_color;
+            native_window_color_update = true;
+        }
+    } else {
+        // make the new color and signal that we're ready to update
+        WhistRGBColor* new_native_window_color = safe_malloc(sizeof(WhistRGBColor));
+        *new_native_window_color = color;
+        native_window_color = new_native_window_color;
+        native_window_color_update = true;
+    }
+
+    /* DEALLOC
+    if (native_window_color) {
+        free((WhistRGBColor*)native_window_color);
+        native_window_color = NULL;
+    }*/
+}
+
+volatile char* window_title;
+volatile bool should_update_window_title = false;
+
+void sdl_set_window_title(const char* window_title) {
+    if (should_update_window_title) {
+        LOG_WARNING(
+            "Failed to update window title, as the previous window title update is still pending");
+    }
+
+    size_t len = strlen(window_title) + 1;
+    char* new_window_title = safe_malloc(len);
+    safe_strncpy(new_window_title, window_title, strlen(window_title) + 1);
+    window_title = new_window_title;
+
+    should_update_window_title = true;
+}
+
+volatile bool fullscreen_trigger;
+volatile bool fullscreen_value;
+
+void sdl_set_fullscreen(bool is_fullscreen) {
+    fullscreen_trigger = true;
+    fullscreen_value = is_fullscreen;
+}
+
+bool sdl_is_window_visible() {
+    return !(SDL_GetWindowFlags((SDL_Window*)window) &
+             (SDL_WINDOW_OCCLUDED | SDL_WINDOW_MINIMIZED));
+}
+
+void update_pending_sdl_tasks() {
+    // Handle any pending window title updates
+    if (should_update_window_title) {
+        if (window_title) {
+            SDL_SetWindowTitle((SDL_Window*)window, (char*)window_title);
+            free((char*)window_title);
+            window_title = NULL;
+        } else {
+            LOG_ERROR("Window Title should not be null!");
+        }
+        should_update_window_title = false;
+    }
+
+    // Handle any pending fullscreen events
+    if (fullscreen_trigger) {
+        if (fullscreen_value) {
+            SDL_SetWindowFullscreen((SDL_Window*)window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+        } else {
+            SDL_SetWindowFullscreen((SDL_Window*)window, 0);
+        }
+        fullscreen_trigger = false;
+    }
+
+    // Handle any pending window titlebar color events
+    if (native_window_color_update && native_window_color) {
+        set_native_window_color((SDL_Window*)window, *(WhistRGBColor*)native_window_color);
+        native_window_color_update = false;
+    }
+
+    // Check if a pending window resize message should be sent to server
+    whist_lock_mutex(window_resize_mutex);
+    if (pending_resize_message &&
+        get_timer(window_resize_timer) >= WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {
+        pending_resize_message = false;
+        send_message_dimensions();
+        start_timer(&window_resize_timer);
+    }
+    whist_unlock_mutex(window_resize_mutex);
+}
+
+/*
+============================
+Private Function Implementations
+============================
+*/
+
+void send_captured_key(SDL_Keycode key, int type, int time) {
+    /*
+        Send a key to SDL event queue, presumably one that is captured and wouldn't
+        naturally make it to the event queue by itself
+
+        Arguments:
+            key (SDL_Keycode): key that was captured
+            type (int): event type (press or release)
+            time (int): time that the key event was registered
+    */
+
+    SDL_Event e = {0};
+    e.type = type;
+    e.key.keysym.sym = key;
+    e.key.keysym.scancode = SDL_GetScancodeFromName(SDL_GetKeyName(key));
+    LOG_INFO("KEY: %d", key);
+    e.key.timestamp = time;
+    SDL_PushEvent(&e);
+}
+
+SDL_Surface* sdl_surface_from_png_file(char* filename) {
+    /*
+        Load a PNG file to an SDL surface using lodepng.
+
+        Arguments:
+            filename (char*): PNG image file path
+
+        Returns:
+            surface (SDL_Surface*): the loaded surface on success, and NULL on failure
+
+        NOTE:
+            After a successful call to sdl_surface_from_png_file, remember to call
+            `sdl_free_png_file_rgb_surface(surface)` to free the memory later!
+    */
+
+    unsigned int w, h, error;
+    unsigned char* image;
+
+    // decode to 32-bit RGBA
+    // TODO: We need to free image after destroying the SDL_Surface!
+    // Perhaps we should simply return a PNG buffer and have the caller
+    // manage memory allocation.
+    error = lodepng_decode32_file(&image, &w, &h, filename);
+    if (error) {
+        LOG_ERROR("decoder error %u: %s\n", error, lodepng_error_text(error));
+        return NULL;
+    }
+
+// masks for little-endian RGBA
+#define RGBA_MASK_A 0xff000000
+#define RGBA_MASK_B 0x00ff0000
+#define RGBA_MASK_G 0x0000ff00
+#define RGBA_MASK_R 0x000000ff
+
+    // buffer pointer, width, height, bits per pixel, bytes per row, R/G/B/A masks
+    SDL_Surface* surface =
+        SDL_CreateRGBSurfaceFrom(image, w, h, sizeof(uint32_t) * 8, sizeof(uint32_t) * w,
+                                 RGBA_MASK_R, RGBA_MASK_G, RGBA_MASK_B, RGBA_MASK_A);
+
+    if (surface == NULL) {
+        LOG_ERROR("Failed to load SDL surface from file '%s': %s", filename, SDL_GetError());
+        free(image);
+        return NULL;
+    }
+
+    return surface;
+}
+
+void sdl_free_png_file_rgb_surface(SDL_Surface* surface) {
+    // Specified to call `SDL_FreeSurface` on the surface, and `free` on the pixels array
+    char* pixels = surface->pixels;
+    SDL_FreeSurface(surface);
+    free(pixels);
 }
 
 #if defined(_WIN32)
@@ -334,403 +748,3 @@ LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_pa
     return CallNextHookEx(mule, n_code, w_param, l_param);
 }
 #endif
-
-// masks for little-endian RGBA
-#define RGBA_MASK_A 0xff000000
-#define RGBA_MASK_B 0x00ff0000
-#define RGBA_MASK_G 0x0000ff00
-#define RGBA_MASK_R 0x000000ff
-
-SDL_Surface* sdl_surface_from_png_file(char* filename) {
-    /*
-        Load a PNG file to an SDL surface using lodepng.
-
-        Arguments:
-            filename (char*): PNG image file path
-
-        Returns:
-            surface (SDL_Surface*): the loaded surface on success, and NULL on failure
-
-        NOTE:
-            After a successful call to sdl_surface_from_png_file, remember to call
-            `SDL_FreeSurface(surface)` to free memory.
-    */
-
-    unsigned int w, h, error;
-    unsigned char* image;
-
-    // decode to 32-bit RGBA
-    // TODO: We need to free image after destroying the SDL_Surface!
-    // Perhaps we should simply return a PNG buffer and have the caller
-    // manage memory allocation.
-    error = lodepng_decode32_file(&image, &w, &h, filename);
-    if (error) {
-        LOG_ERROR("decoder error %u: %s\n", error, lodepng_error_text(error));
-        return NULL;
-    }
-
-    // buffer pointer, width, height, bits per pixel, bytes per row, R/G/B/A masks
-    SDL_Surface* surface =
-        SDL_CreateRGBSurfaceFrom(image, w, h, sizeof(uint32_t) * 8, sizeof(uint32_t) * w,
-                                 RGBA_MASK_R, RGBA_MASK_G, RGBA_MASK_B, RGBA_MASK_A);
-
-    if (surface == NULL) {
-        LOG_ERROR("Failed to load SDL surface from file '%s': %s", filename, SDL_GetError());
-        free(image);
-        return NULL;
-    }
-
-    return surface;
-}
-
-void free_sdl_rgb_surface(SDL_Surface* surface) {
-    // Specified to call `SDL_FreeSurface` on the surface, and `free` on the pixels array
-    char* pixels = surface->pixels;
-    SDL_FreeSurface(surface);
-    free(pixels);
-}
-
-WhistMutex window_resize_mutex;
-clock window_resize_timer;
-// pending_resize_message should be set to true if sdl event handler was not able to process resize
-// event due to throttling, so the main loop should process it
-volatile bool pending_resize_message = false;
-void sdl_resize_window(int width, int height) {
-    // Try to make pixel width and height conform to certain desirable dimensions
-    int current_width = get_window_pixel_width((SDL_Window*)window);
-    int current_height = get_window_pixel_height((SDL_Window*)window);
-
-    LOG_INFO("Received resize event for %dx%d, currently %dx%d", width, height, current_width,
-             current_height);
-
-#ifndef __linux__
-    int dpi = current_width / get_window_virtual_width((SDL_Window*)window);
-
-    // The server will round the dimensions up in order to satisfy the YUV pixel format
-    // requirements. Specifically, it will round the width up to a multiple of 8 and the height up
-    // to a multiple of 2. Here, we try to force the window size to be valid values so the
-    // dimensions of the client and server match. We round down rather than up to avoid extending
-    // past the size of the display.
-    int desired_width = current_width - (current_width % 8);
-    int desired_height = current_height - (current_height % 2);
-    static int prev_desired_width = 0;
-    static int prev_desired_height = 0;
-    static int tries = 0;  // number of attemps to force window size to be prev_desired_width/height
-    if (current_width != desired_width || current_height != desired_height) {
-        // Avoid trying to force the window size forever, stop after 4 attempts
-        if (!(prev_desired_width == desired_width && prev_desired_height == desired_height &&
-              tries > 4)) {
-            if (prev_desired_width == desired_width && prev_desired_height == desired_height) {
-                tries++;
-            } else {
-                prev_desired_width = desired_width;
-                prev_desired_height = desired_height;
-                tries = 0;
-            }
-
-            SDL_SetWindowSize((SDL_Window*)window, desired_width / dpi, desired_height / dpi);
-            LOG_INFO("Forcing a resize from %dx%d to %dx%d", current_width, current_height,
-                     desired_width, desired_height);
-            current_width = get_window_pixel_width((SDL_Window*)window);
-            current_height = get_window_pixel_height((SDL_Window*)window);
-
-            if (current_width != desired_width || current_height != desired_height) {
-                LOG_WARNING(
-                    "Unable to change window size to match desired dimensions using "
-                    "SDL_SetWindowSize: "
-                    "actual output=%dx%d, desired output=%dx%d",
-                    current_width, current_height, desired_width, desired_height);
-            }
-        }
-    }
-#endif
-
-    // Update output width / output height
-    if (current_width != output_width || current_height != output_height) {
-        output_width = current_width;
-        output_height = current_height;
-    }
-
-    whist_lock_mutex(window_resize_mutex);
-    pending_resize_message = true;
-    whist_unlock_mutex(window_resize_mutex);
-
-    LOG_INFO("Window resized to %dx%d (Actual %dx%d)", width, height, output_width, output_height);
-}
-
-void sdl_render_loading_screen(int idx) {
-    /*
-        Make the screen black and show the loading screen
-        Arguments:
-            idx (int): the index of the loading frame
-    */
-
-#define NUMBER_LOADING_FRAMES 50
-
-    int gif_frame_index = idx % NUMBER_LOADING_FRAMES;
-
-    clock c;
-    start_timer(&c);
-
-    char frame_name[24];
-    if (gif_frame_index < 10) {
-        snprintf(frame_name, sizeof(frame_name), "loading/frame_0%d.png", gif_frame_index);
-        //            LOG_INFO("Frame loading/frame_0%d.png", gif_frame_index);
-    } else {
-        snprintf(frame_name, sizeof(frame_name), "loading/frame_%d.png", gif_frame_index);
-        //            LOG_INFO("Frame loading/frame_%d.png", gif_frame_index);
-    }
-
-    SDL_Surface* loading_screen = sdl_surface_from_png_file(frame_name);
-    if (loading_screen == NULL) {
-        LOG_WARNING("Loading screen not loaded from %s", frame_name);
-        return;
-    }
-
-    // free pkt.data which is initialized by calloc in png_file_to_bmp
-
-    SDL_Texture* loading_screen_texture =
-        SDL_CreateTextureFromSurface(sdl_renderer, loading_screen);
-
-    // surface can now be freed
-    free_sdl_rgb_surface(loading_screen);
-
-    int w = 200;
-    int h = 200;
-    SDL_Rect dstrect;
-
-    // SDL_QueryTexture( loading_screen_texture, NULL, NULL, &w, &h );
-    dstrect.x = output_width / 2 - w / 2;
-    dstrect.y = output_height / 2 - h / 2;
-    dstrect.w = w;
-    dstrect.h = h;
-
-    SDL_SetRenderDrawColor(sdl_renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear(sdl_renderer);
-    SDL_RenderCopy(sdl_renderer, loading_screen_texture, NULL, &dstrect);
-    SDL_RenderPresent(sdl_renderer);
-
-    // texture may now be destroyed
-    SDL_DestroyTexture(loading_screen_texture);
-}
-
-volatile WhistCursorState cursor_state = CURSOR_STATE_VISIBLE;
-volatile SDL_Cursor* sdl_cursor = NULL;
-volatile WhistCursorID last_cursor = (WhistCursorID)SDL_SYSTEM_CURSOR_ARROW;
-
-void sdl_render_cursor(WhistCursorImage* cursor) {
-    /*
-      Update the cursor image on the screen. If the cursor hasn't changed since the last frame we
-      received, we don't do anything. Otherwise, we either use the provided bitmap or  update the
-      cursor ID to tell SDL which cursor to render.
-     */
-    // Set cursor to frame's desired cursor type
-    // Only update the cursor, if a cursor image is even embedded in the frame at all.
-#define CURSORIMAGE_A 0xff000000
-#define CURSORIMAGE_R 0x00ff0000
-#define CURSORIMAGE_G 0x0000ff00
-#define CURSORIMAGE_B 0x000000ff
-
-    if (cursor) {
-        if ((WhistCursorID)cursor->cursor_id != last_cursor || cursor->using_bmp) {
-            if (sdl_cursor) {
-                SDL_FreeCursor((SDL_Cursor*)sdl_cursor);
-            }
-            if (cursor->using_bmp) {
-                // use bitmap data to set cursor
-                SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
-                    cursor->bmp, cursor->bmp_width, cursor->bmp_height, sizeof(uint32_t) * 8,
-                    sizeof(uint32_t) * cursor->bmp_width, CURSORIMAGE_R, CURSORIMAGE_G,
-                    CURSORIMAGE_B, CURSORIMAGE_A);
-
-                // Use BLENDMODE_NONE to allow for proper cursor blit-resize
-                SDL_SetSurfaceBlendMode(cursor_surface, SDL_BLENDMODE_NONE);
-
-#ifdef _WIN32
-                // on Windows, the cursor DPI is unchanged
-                const int cursor_dpi = 96;
-#else
-                // on other platforms, use the window DPI
-                const int cursor_dpi = get_native_window_dpi((SDL_Window*)window);
-#endif  // _WIN32
-
-                // Create the scaled cursor surface which takes DPI into account
-                SDL_Surface* scaled_cursor_surface = SDL_CreateRGBSurface(
-                    0, cursor->bmp_width * 96 / cursor_dpi, cursor->bmp_height * 96 / cursor_dpi,
-                    cursor_surface->format->BitsPerPixel, cursor_surface->format->Rmask,
-                    cursor_surface->format->Gmask, cursor_surface->format->Bmask,
-                    cursor_surface->format->Amask);
-
-                // Copy the original cursor into the scaled surface
-                SDL_BlitScaled(cursor_surface, NULL, scaled_cursor_surface, NULL);
-
-                // Potentially SDL_SetSurfaceBlendMode here since X11 cursor BMPs are
-                // pre-alpha multplied. Remember to adjust hot_x/y by the DPI scaling.
-                sdl_cursor = SDL_CreateColorCursor(scaled_cursor_surface,
-                                                   cursor->bmp_hot_x * 96 / cursor_dpi,
-                                                   cursor->bmp_hot_y * 96 / cursor_dpi);
-                SDL_FreeSurface(cursor_surface);
-                SDL_FreeSurface(scaled_cursor_surface);
-            } else {
-                // use cursor id to set cursor
-                sdl_cursor = SDL_CreateSystemCursor((SDL_SystemCursor)cursor->cursor_id);
-            }
-            SDL_SetCursor((SDL_Cursor*)sdl_cursor);
-
-            last_cursor = (WhistCursorID)cursor->cursor_id;
-        }
-
-        if (cursor->cursor_state != cursor_state) {
-            if (cursor->cursor_state == CURSOR_STATE_HIDDEN) {
-                SDL_SetRelativeMouseMode(SDL_TRUE);
-            } else {
-                SDL_SetRelativeMouseMode(SDL_FALSE);
-            }
-
-            cursor_state = cursor->cursor_state;
-        }
-    }
-}
-
-void sdl_blank_screen() {
-    /*
-        Blank the SDL renderer with a black screen
-    */
-
-    SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear(sdl_renderer);
-    SDL_RenderPresent(sdl_renderer);
-}
-
-void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int height) {
-    // The texture object we allocate is larger than the frame, so we only
-    // copy the valid section of the frame into the texture.
-    SDL_Rect texture_rect = {
-        .x = 0,
-        .y = 0,
-        .w = width,
-        .h = height,
-    };
-
-    int res = SDL_UpdateNVTexture(frame_buffer, &texture_rect, data[0], linesize[0], data[1],
-                                  linesize[1]);
-    if (res < 0) {
-        LOG_ERROR("SDL_UpdateNVTexture failed: %s", SDL_GetError());
-        SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(sdl_renderer);
-        return;
-    }
-
-    // Subsection of texture that should be rendered to screen.
-    SDL_Rect output_rect = {
-        .x = 0,
-        .y = 0,
-        .w = output_width,
-        .h = output_height,
-    };
-    SDL_RenderCopy(sdl_renderer, frame_buffer, &output_rect, NULL);
-}
-
-void sdl_render() { SDL_RenderPresent(sdl_renderer); }
-
-volatile WhistRGBColor* native_window_color = NULL;
-volatile bool native_window_color_update = false;
-
-void sdl_render_window_titlebar_color(WhistRGBColor color) {
-    /*
-      Update window titlebar color using the colors of the new frame
-     */
-    WhistRGBColor* current_color = (WhistRGBColor*)native_window_color;
-    if (current_color != NULL) {
-        if (current_color->red != color.red || current_color->green != color.green ||
-            current_color->blue != color.blue) {
-            // delete the old color we were using
-            free(current_color);
-
-            // make the new color and signal that we're ready to update
-            WhistRGBColor* new_native_window_color = safe_malloc(sizeof(WhistRGBColor));
-            *new_native_window_color = color;
-            native_window_color = new_native_window_color;
-            native_window_color_update = true;
-        }
-    } else {
-        // make the new color and signal that we're ready to update
-        WhistRGBColor* new_native_window_color = safe_malloc(sizeof(WhistRGBColor));
-        *new_native_window_color = color;
-        native_window_color = new_native_window_color;
-        native_window_color_update = true;
-    }
-
-    /* DEALLOC
-    if (native_window_color) {
-        free((WhistRGBColor*)native_window_color);
-        native_window_color = NULL;
-    }*/
-}
-
-volatile char* window_title;
-volatile bool should_update_window_title = false;
-
-void sdl_set_window_title(const char* window_title) {
-    if (should_update_window_title) {
-        LOG_WARNING(
-            "Failed to update window title, as the previous window title update is still pending");
-    }
-
-    size_t len = strlen(window_title) + 1;
-    char* new_window_title = safe_malloc(len);
-    safe_strncpy(new_window_title, window_title, strlen(window_title) + 1);
-    window_title = new_window_title;
-
-    should_update_window_title = true;
-}
-
-bool sdl_is_window_visible() {
-    return !(SDL_GetWindowFlags((SDL_Window*)window) &
-             (SDL_WINDOW_OCCLUDED | SDL_WINDOW_MINIMIZED));
-}
-
-volatile bool fullscreen_trigger;
-volatile bool fullscreen_value;
-
-void sdl_set_fullscreen(bool is_fullscreen) {
-    fullscreen_trigger = true;
-    fullscreen_value = is_fullscreen;
-}
-
-void update_pending_sdl_tasks() {
-    if (should_update_window_title) {
-        if (window_title) {
-            SDL_SetWindowTitle((SDL_Window*)window, (char*)window_title);
-            free((char*)window_title);
-            window_title = NULL;
-        } else {
-            LOG_ERROR("Window Title should not be null!");
-        }
-        should_update_window_title = false;
-    }
-
-    if (fullscreen_trigger) {
-        if (fullscreen_value) {
-            SDL_SetWindowFullscreen((SDL_Window*)window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-        } else {
-            SDL_SetWindowFullscreen((SDL_Window*)window, 0);
-        }
-        fullscreen_trigger = false;
-    }
-
-    if (native_window_color_update && native_window_color) {
-        set_native_window_color((SDL_Window*)window, *(WhistRGBColor*)native_window_color);
-        native_window_color_update = false;
-    }
-
-    // Check if window resize message should be sent to server
-    whist_lock_mutex(window_resize_mutex);
-    if (pending_resize_message &&
-        get_timer(window_resize_timer) >= WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {
-        pending_resize_message = false;
-        send_message_dimensions();
-        start_timer(&window_resize_timer);
-    }
-    whist_unlock_mutex(window_resize_mutex);
-}

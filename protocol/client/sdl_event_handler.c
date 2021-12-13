@@ -317,7 +317,7 @@ int handle_sdl_event(SDL_Event *event) {
     switch (event->type) {
         case SDL_WINDOWEVENT: {
             if (event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-                sdl_resize_window(event->window.data1, event->window.data2);
+                sdl_renderer_resize_window(event->window.data1, event->window.data2);
             }
 #ifdef __APPLE__
             else if (event->window.event == SDL_WINDOWEVENT_OCCLUDED) {

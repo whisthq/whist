@@ -503,9 +503,6 @@ int init_video_renderer() {
     // Initialize the SDL renderer
     sdl_init_renderer((SDL_Window*)window);
 
-    // Show a black screen initially before anything else
-    sdl_blank_screen();
-
     // mbps that currently works
     working_mbps = STARTING_BITRATE;
 
@@ -528,7 +525,9 @@ int init_video_renderer() {
     video_data.loading_index = 0;
     start_timer(&video_data.last_loading_frame_timer);
     // Present first frame of loading animation
-    sdl_render_loading_screen(video_data.loading_index);
+    sdl_update_framebuffer_loading_screen(video_data.loading_index);
+    sdl_render_framebuffer();
+    // Then progress the animation
     video_data.loading_index++;
 
     // Mark as initialized and return
@@ -656,7 +655,7 @@ int render_video() {
 
         // Render out the cursor image
         if (has_cursor_image) {
-            TIME_RUN(sdl_render_cursor(&cursor_image), VIDEO_CURSOR_UPDATE_TIME, statistics_timer);
+            TIME_RUN(sdl_update_cursor(&cursor_image), VIDEO_CURSOR_UPDATE_TIME, statistics_timer);
         }
 
         // Update the window titlebar color
@@ -668,7 +667,7 @@ int render_video() {
                  VIDEO_SDL_WRITE_TIME, statistics_timer);
 
         // This function call will take up to 16ms if VSYNC is ON, otherwise 0ms
-        TIME_RUN(sdl_render(), VIDEO_RENDER_TIME, statistics_timer);
+        TIME_RUN(sdl_render_framebuffer(), VIDEO_RENDER_TIME, statistics_timer);
 
         // Declare user activity to prevent screensaver
         declare_user_activity();
@@ -715,7 +714,8 @@ int render_video() {
         const float loading_animation_fps = 20.0;
         if (get_timer(video_data.last_loading_frame_timer) > 1 / loading_animation_fps) {
             // Present the loading screen
-            sdl_render_loading_screen(video_data.loading_index);
+            sdl_update_framebuffer_loading_screen(video_data.loading_index);
+            sdl_render_framebuffer();
             // Progress animation
             video_data.loading_index++;
             // Reset timer

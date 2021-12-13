@@ -48,13 +48,17 @@ Public Functions
 SDL_Window* init_sdl(int output_width, int output_height, char* name, char* icon_filename);
 
 /**
- * @brief                          Creates the SDL Renderer,
- *                                 using the current SDL `window`.
+ * @brief                          Creates the SDL Renderer, using the given SDL `window`.
+ *                                 The renderer will be bound to thread that
+ *                                 this function was called from.
  *
  * @param sdl_window               The SDL Window to use
  */
 void sdl_init_renderer(SDL_Window* sdl_window);
 
+/**
+ * @brief                          Destroy the renderer created by `sdl_init_renderer`.
+ */
 void sdl_destroy_renderer();
 
 /**
@@ -66,52 +70,95 @@ void sdl_destroy_renderer();
 void destroy_sdl(SDL_Window* window);
 
 /**
- * @brief                          Load a PNG file to an SDL surface using lodepng.
- *
- * @param filename                 PNG image file path
- *
- * @returns                        The loaded surface on success, and NULL on failure
- *
- * @note                           After a successful call to sdl_surface_from_png_file,
- *                                 remember to call `free_sdl_rgb_surface` when you're done using
- * it!
+ * @brief                          When the window gets resized, call this function
+ *                                 to update the internal rendering dimensions.
+ *                                 This function will also sync the server to those dimensions.
  */
-SDL_Surface* sdl_surface_from_png_file(char* filename);
+void sdl_renderer_resize_window(int width, int height);
 
 /**
- * @brief                          Free the SDL_Surface and its pixels array.
- *                                 Only call this if the pixels array has been malloc'ed,
- *                                 and the surface was created via `SDL_CreateRGBSurfaceFrom`
+ * @brief                          Updates the framebuffer to a loading screen image.
+ *                                 Remember to call sdl_render_framebuffer later.
  *
- * @param surface                  The SDL_Surface to be freed
+ * @param idx                      The index of the animation to render.
+ *                                 This should normally be strictly increasing or reset to 0.
  */
-void free_sdl_rgb_surface(SDL_Surface* surface);
+void sdl_update_framebuffer_loading_screen(int idx);
 
-void sdl_resize_window(int width, int height);
-
-void sdl_render_loading_screen(int idx);
-
-void sdl_render_cursor(WhistCursorImage* cursor_image);
-
-void sdl_blank_screen();
-
-// The pixel format required for the data/linesize passed into sdl_render_frame
+// The pixel format required for the data/linesize passed into sdl_update_framebuffer
 #define SDL_TEXTURE_PIXEL_FORMAT AV_PIX_FMT_NV12
-// Update the renderer's framebuffer
+/**
+ * @brief                          Update the renderer's framebuffer,
+ *                                 using the provided texture.
+ *
+ * @param data                     The data pointers to the image
+ * @param linesize                 The linesize data for the image
+ * @param width                    The width of the image
+ * @param height                   The height of the image
+ */
 void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int height);
 
-// Render out the frame
-void sdl_render();
+/**
+ * @brief                          Render the most recently updated framebuffer.
+ *                                 This takes some time, <1ms normally, ~8ms if VSYNC_ON
+ */
+void sdl_render_framebuffer();
 
+/**
+ * @brief                          Update the cursor
+ *
+ * @param cursor_image             The WhistCursorImage to use for the new cursor
+ *
+ * @note                           This function is virtually instantaneous
+ */
+void sdl_update_cursor(WhistCursorImage* cursor_image);
+
+/**
+ * @brief                          Update the color of the window's titlebar
+ *
+ * @param color                    The color to set the titlebar too
+ *
+ * @note                           This function is virtually instantaneous
+ */
 void sdl_render_window_titlebar_color(WhistRGBColor color);
 
-void sdl_set_fullscreen(bool is_fullscreen);
-
+/**
+ * @brief                          Update the title of the window
+ *
+ * @param window_title             The string to set the window's title to
+ *
+ * @note                           This function is virtually instantaneous
+ */
 void sdl_set_window_title(const char* window_title);
 
+/**
+ * @brief                          Update the window's fullscreen state
+ *
+ * @param is_fullscreen            If True, the window will become fullscreen
+ *                                 If False, the window will return to windowed mode
+ *
+ * @note                           This function is virtually instantaneous
+ */
+void sdl_set_fullscreen(bool is_fullscreen);
+
+/**
+ * @brief                          Returns whether or not the window is currently visible
+ *
+ * @returns                        False if the window is occluded or minimized,
+ *                                 True otherwise
+ *
+ * @note                           This function is virtually instantaneous
+ */
 bool sdl_is_window_visible();
 
-// Call from main thread
+/**
+ * @brief                          The above functions may be expensive, and thus may
+ *                                 have to be queued up. This function executes all of the
+ *                                 currently internally queued actions.
+ *
+ * @note                           This function must be called by the
+ *                                 same thread that originally called init_sdl
+ */
 void update_pending_sdl_tasks();
 
 #endif  // SDL_UTILS_H
