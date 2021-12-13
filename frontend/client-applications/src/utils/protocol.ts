@@ -11,7 +11,7 @@ import path from "path"
 import fs from "fs"
 import { spawn, ChildProcess } from "child_process"
 import config, { loggingFiles } from "@app/config/environment"
-import { electronLogPath, protocolToLogz } from "@app/utils/logging"
+import { electronLogPath, protocolToLogz, logBase } from "@app/utils/logging"
 import { appEnvironment, WhistEnvironments } from "../../config/configs"
 import logRotate from "log-rotate"
 
