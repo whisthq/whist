@@ -217,33 +217,27 @@ func getAppName(mandelboxID mandelboxtypes.MandelboxID, transportRequestMap map[
 	var AppName mandelboxtypes.AppName
 	var req *JSONTransportRequest
 
-	jsonchan := getJSONTransportRequestChannel(mandelboxID, transportRequestMap, transportMapLock)
-
-	// We will wait 1 minute to get the transport request
-	select {
-	case transportRequest := <-jsonchan:
-		req = transportRequest
-	case <-time.After(1 * time.Minute):
-		return nil, AppName
-	}
-
 	if metadata.IsLocalEnvWithoutDB() {
-		if req.AppName == "" {
-			// If no app name is set, we default to using the `browsers/chrome` image.
-			AppName = mandelboxtypes.AppName("browsers/chrome")
-		} else {
-			AppName = req.AppName
+		// Receive the json transport request immediately when running on local env
+		jsonchan := getJSONTransportRequestChannel(mandelboxID, transportRequestMap, transportMapLock)
+
+		// We will wait 1 minute to get the transport request
+		select {
+		case transportRequest := <-jsonchan:
+			req = transportRequest
+
+			if req.AppName == "" {
+				// If no app name is set, we default to using the `browsers/chrome` image.
+				AppName = mandelboxtypes.AppName("browsers/chrome")
+			} else {
+				AppName = req.AppName
+			}
+		case <-time.After(1 * time.Minute):
+			return nil, AppName
 		}
 	} else {
-		// set the appName to brave/chrome
-		switch string(req.AppName) {
-		case "browsers/chrome":
-			AppName = mandelboxtypes.AppName("browsers/chrome")
-		case "browsers/brave":
-			AppName = mandelboxtypes.AppName("browsers/brave")
-		default:
-			AppName = mandelboxtypes.AppName("browsers/chrome")
-		}
+		// If not on a local environment, we default to using the `browsers/chrome` image.
+		AppName = mandelboxtypes.AppName("browsers/chrome")
 	}
 
 	return req, AppName
