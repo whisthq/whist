@@ -69,6 +69,10 @@ Custom Types
 */
 
 struct VideoData {
+    // Variables needed for rendering
+    VideoDecoder* decoder;
+    struct SwsContext* sws;
+
     FrameData* pending_ctx;
     int frames_received;
     int bytes_transferred;
@@ -88,13 +92,6 @@ struct VideoData {
     int loading_index;
     clock last_loading_frame_timer;
 } video_data;
-
-typedef struct SDLVideoContext {
-    struct SwsContext* sws;
-
-    VideoDecoder* decoder;
-} SDLVideoContext;
-SDLVideoContext video_context;
 
 // mbps that currently works
 volatile double working_mbps;
@@ -124,7 +121,6 @@ Private Functions
 */
 
 int32_t multithreaded_destroy_decoder(void* opaque);
-void finalize_video_context_data();
 void calculate_statistics();
 void skip_to_next_iframe();
 void sync_decoder_parameters(VideoFrame* frame);
@@ -161,11 +157,11 @@ void sync_decoder_parameters(VideoFrame* frame) {
         "From %dx%d, codec %d to %dx%d, codec %d",
         server_width, server_height, server_codec_type, frame->width, frame->height,
         frame->codec_type);
-    if (video_context.decoder) {
+    if (video_data.decoder) {
         WhistThread destroy_decoder_thread = whist_create_thread(
-            multithreaded_destroy_decoder, "multithreaded_destroy_decoder", video_context.decoder);
+            multithreaded_destroy_decoder, "multithreaded_destroy_decoder", video_data.decoder);
         whist_detach_thread(destroy_decoder_thread);
-        video_context.decoder = NULL;
+        video_data.decoder = NULL;
     }
 
     VideoDecoder* decoder =
@@ -173,7 +169,7 @@ void sync_decoder_parameters(VideoFrame* frame) {
     if (!decoder) {
         LOG_FATAL("ERROR: Decoder could not be created!");
     }
-    video_context.decoder = decoder;
+    video_data.decoder = decoder;
 
     server_width = frame->width;
     server_height = frame->height;
@@ -195,7 +191,7 @@ void update_sws_context(Uint8** data, int* linesize) {
             linesize (int*): pointer to the linesize array to be filled in
     */
 
-    VideoDecoder* decoder = video_context.decoder;
+    VideoDecoder* decoder = video_data.decoder;
     enum AVPixelFormat input_format = decoder->sw_frame->format;
     static enum AVPixelFormat cached_format = AV_PIX_FMT_NONE;
     static int cached_width = -1;
@@ -209,10 +205,10 @@ void update_sws_context(Uint8** data, int* linesize) {
         cached_height = decoder->height;
 
         // No matter what, we now should destroy the old context if it exists
-        if (video_context.sws) {
+        if (video_data.sws) {
             av_freep(&data[0]);
-            sws_freeContext(video_context.sws);
-            video_context.sws = NULL;
+            sws_freeContext(video_data.sws);
+            video_data.sws = NULL;
         }
 
         if (input_format == SDL_TEXTURE_PIXEL_FORMAT) {
@@ -224,7 +220,7 @@ void update_sws_context(Uint8** data, int* linesize) {
             LOG_INFO("Creating sws context to convert from %s to %s",
                      av_get_pix_fmt_name(input_format),
                      av_get_pix_fmt_name(SDL_TEXTURE_PIXEL_FORMAT));
-            video_context.sws = sws_getContext(
+            video_data.sws = sws_getContext(
                 decoder->width, decoder->height, input_format, decoder->width, decoder->height,
                 SDL_TEXTURE_PIXEL_FORMAT, SWS_FAST_BILINEAR, NULL, NULL, NULL);
             av_image_alloc(data, linesize, decoder->width, decoder->height,
@@ -394,7 +390,7 @@ void init_video() {
         Initializes the video system
     */
     initialized_video_renderer = false;
-    memset(&video_context, 0, sizeof(video_context));
+    memset(&video_data, 0, sizeof(video_data));
     video_ring_buffer = init_ring_buffer(PACKET_VIDEO, RECV_FRAMES_BUFFER_SIZE, nack_packet);
     initialized_video_buffer = true;
 }
@@ -515,7 +511,7 @@ int init_video_renderer() {
 
     has_video_rendered_yet = false;
 
-    video_context.sws = NULL;
+    video_data.sws = NULL;
     client_max_bitrate = STARTING_BITRATE;
     video_data.target_mbps = STARTING_BITRATE;
     video_data.pending_ctx = NULL;
@@ -589,7 +585,7 @@ int render_video() {
             client_input_timestamp = frame->client_input_timestamp;
 
             TIME_RUN(
-                ret = video_decoder_send_packets(video_context.decoder, get_frame_videodata(frame),
+                ret = video_decoder_send_packets(video_data.decoder, get_frame_videodata(frame),
                                                  frame->videodata_length),
                 VIDEO_DECODE_SEND_PACKET_TIME, statistics_timer);
             if (ret < 0) {
@@ -620,9 +616,9 @@ int render_video() {
 
     // Try to get a frame from the decoder, if any exist
     bool got_frame_from_decoder = false;
-    while (video_context.decoder != NULL) {
+    while (video_data.decoder != NULL) {
         int res;
-        TIME_RUN(res = video_decoder_get_frame(video_context.decoder), VIDEO_DECODE_GET_FRAME_TIME,
+        TIME_RUN(res = video_decoder_get_frame(video_data.decoder), VIDEO_DECODE_GET_FRAME_TIME,
                  statistics_timer);
         if (res < 0) {
             LOG_ERROR("Error getting frame from decoder!");
@@ -634,19 +630,19 @@ int render_video() {
             got_frame_from_decoder = true;
 
             // Pull the most recently decoded data/linesize from the decoder
-            if (video_context.decoder->hw_frame && video_context.decoder->hw_frame->data[3]) {
-                data[0] = data[1] = video_context.decoder->hw_frame->data[3];
-                linesize[0] = linesize[1] = video_context.decoder->width;
+            if (video_data.decoder->hw_frame && video_data.decoder->hw_frame->data[3]) {
+                data[0] = data[1] = video_data.decoder->hw_frame->data[3];
+                linesize[0] = linesize[1] = video_data.decoder->width;
             } else {
                 update_sws_context(data, linesize);
-                if (video_context.sws) {
-                    sws_scale(video_context.sws,
-                              (uint8_t const* const*)video_context.decoder->sw_frame->data,
-                              video_context.decoder->sw_frame->linesize, 0,
-                              video_context.decoder->height, data, linesize);
+                if (video_data.sws) {
+                    sws_scale(video_data.sws,
+                              (uint8_t const* const*)video_data.decoder->sw_frame->data,
+                              video_data.decoder->sw_frame->linesize, 0,
+                              video_data.decoder->height, data, linesize);
                 } else {
-                    memcpy(data, video_context.decoder->sw_frame->data, sizeof(data));
-                    memcpy(linesize, video_context.decoder->sw_frame->linesize, sizeof(linesize));
+                    memcpy(data, video_data.decoder->sw_frame->data, sizeof(data));
+                    memcpy(linesize, video_data.decoder->sw_frame->linesize, sizeof(linesize));
                 }
             }
         } else {
@@ -671,7 +667,7 @@ int render_video() {
         // Render the decoded frame
         TIME_RUN(
             sdl_update_framebuffer(data, linesize,
-            video_context.decoder->width, video_context.decoder->height),
+            video_data.decoder->width, video_data.decoder->height),
                  VIDEO_SDL_WRITE_TIME, statistics_timer);
 
         // This function call will take up to 16ms if VSYNC is ON, otherwise 0ms
@@ -746,12 +742,12 @@ void destroy_video() {
         destroy_ring_buffer(video_ring_buffer);
         video_ring_buffer = NULL;
 
-        if (video_context.decoder) {
+        if (video_data.decoder) {
             WhistThread destroy_decoder_thread =
                 whist_create_thread(multithreaded_destroy_decoder, "multithreaded_destroy_decoder",
-                                    video_context.decoder);
+                                    video_data.decoder);
             whist_detach_thread(destroy_decoder_thread);
-            video_context.decoder = NULL;
+            video_data.decoder = NULL;
         }
     }
 
