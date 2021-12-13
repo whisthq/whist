@@ -676,6 +676,8 @@ int render_video() {
 #if LOG_VIDEO
         LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", frame_data.id, frame_data.frame_size,
                   get_timer(frame_data.frame_creation_timer));
+#else
+        UNUSED(frame_data);
 #endif
 
         static timestamp_us last_rendered_time = 0;
