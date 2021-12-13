@@ -583,10 +583,9 @@ int render_video() {
             server_timestamp = frame->server_timestamp;
             client_input_timestamp = frame->client_input_timestamp;
 
-            TIME_RUN(
-                ret = video_decoder_send_packets(video_data.decoder, get_frame_videodata(frame),
-                                                 frame->videodata_length),
-                VIDEO_DECODE_SEND_PACKET_TIME, statistics_timer);
+            TIME_RUN(ret = video_decoder_send_packets(
+                         video_data.decoder, get_frame_videodata(frame), frame->videodata_length),
+                     VIDEO_DECODE_SEND_PACKET_TIME, statistics_timer);
             if (ret < 0) {
                 LOG_ERROR("Failed to send packets to decoder, unable to render frame");
                 pushing_render_context = false;
@@ -637,8 +636,8 @@ int render_video() {
                 if (video_data.sws) {
                     sws_scale(video_data.sws,
                               (uint8_t const* const*)video_data.decoder->sw_frame->data,
-                              video_data.decoder->sw_frame->linesize, 0,
-                              video_data.decoder->height, data, linesize);
+                              video_data.decoder->sw_frame->linesize, 0, video_data.decoder->height,
+                              data, linesize);
                 } else {
                     memcpy(data, video_data.decoder->sw_frame->data, sizeof(data));
                     memcpy(linesize, video_data.decoder->sw_frame->linesize, sizeof(linesize));
@@ -664,9 +663,8 @@ int render_video() {
         sdl_render_window_titlebar_color(window_color);
 
         // Render the decoded frame
-        TIME_RUN(
-            sdl_update_framebuffer(data, linesize,
-            video_data.decoder->width, video_data.decoder->height),
+        TIME_RUN(sdl_update_framebuffer(data, linesize, video_data.decoder->width,
+                                        video_data.decoder->height),
                  VIDEO_SDL_WRITE_TIME, statistics_timer);
 
         // This function call will take up to 16ms if VSYNC is ON, otherwise 0ms
@@ -742,9 +740,8 @@ void destroy_video() {
         video_ring_buffer = NULL;
 
         if (video_data.decoder) {
-            WhistThread destroy_decoder_thread =
-                whist_create_thread(multithreaded_destroy_decoder, "multithreaded_destroy_decoder",
-                                    video_data.decoder);
+            WhistThread destroy_decoder_thread = whist_create_thread(
+                multithreaded_destroy_decoder, "multithreaded_destroy_decoder", video_data.decoder);
             whist_detach_thread(destroy_decoder_thread);
             video_data.decoder = NULL;
         }

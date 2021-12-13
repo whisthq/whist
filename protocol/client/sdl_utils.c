@@ -203,9 +203,9 @@ void sdl_init_renderer(SDL_Window* sdl_window) {
         SDL_SetHint(SDL_HINT_RENDER_VSYNC, VSYNC_ON ? "1" : "0");
 
         Uint32 flags = SDL_RENDERER_ACCELERATED;
-    #if VSYNC_ON
+#if VSYNC_ON
         flags |= SDL_RENDERER_PRESENTVSYNC;
-    #endif
+#endif
         sdl_renderer = SDL_CreateRenderer(sdl_window, -1, flags);
         if (sdl_renderer == NULL) {
             LOG_FATAL("SDL: could not create renderer - exiting: %s", SDL_GetError());
@@ -216,7 +216,7 @@ void sdl_init_renderer(SDL_Window* sdl_window) {
     if (frame_buffer == NULL) {
         frame_buffer =
             SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STREAMING,
-                                MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
+                              MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
         if (frame_buffer == NULL) {
             LOG_FATAL("SDL: could not create texture - exiting");
         }
@@ -686,10 +686,8 @@ void sdl_set_window_title(const char* window_title) {
 }
 
 bool sdl_is_window_visible() {
-    return !(
-        SDL_GetWindowFlags((SDL_Window*)window)
-        & (SDL_WINDOW_OCCLUDED | SDL_WINDOW_MINIMIZED)
-    );
+    return !(SDL_GetWindowFlags((SDL_Window*)window) &
+             (SDL_WINDOW_OCCLUDED | SDL_WINDOW_MINIMIZED));
 }
 
 volatile bool fullscreen_trigger;
@@ -729,8 +727,7 @@ void update_pending_sdl_tasks() {
     // Check if window resize message should be sent to server
     whist_lock_mutex(window_resize_mutex);
     if (pending_resize_message &&
-        get_timer(window_resize_timer) >=
-            WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {
+        get_timer(window_resize_timer) >= WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {
         pending_resize_message = false;
         send_message_dimensions();
         start_timer(&window_resize_timer);
