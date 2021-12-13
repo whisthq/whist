@@ -303,13 +303,4 @@ jobs:
           # Upload coverage report to Codecov
           ./codecov -t ${CODECOV_TOKEN} -c -F protocol
 
-      - name: Verify Builds with clang-tidy on macOS
-        if: runner.os == 'macOS'
-        working-directory: protocol
-        run: |
-          # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
-          echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
-
-          # Run clang-tidy
-          cd build
-          make clang-tidy -j
+      # Note that we don't run clang-tidy on arm64 macOS, since we already run it on x64 macOS
