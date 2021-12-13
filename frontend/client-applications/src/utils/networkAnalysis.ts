@@ -3,7 +3,7 @@ import events from "events"
 
 // Maximum amount of time we want the download test to take in seconds
 const MILLISECONDS = 1000
-const TEST_DURATION_MILLISECONDS = 7 * MILLISECONDS
+const TEST_DURATION_MILLISECONDS = 8 * MILLISECONDS
 // Sometimes events can emit out of order so we track the max progress to make sure we're not emitting
 // an earlier event
 let MAX_PROGRESS = 0

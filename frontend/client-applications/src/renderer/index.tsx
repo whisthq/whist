@@ -21,6 +21,7 @@ import {
   WindowHashImporter,
   WindowHashOnboarding,
   WindowHashAuth,
+  WindowHashNetwork,
 } from "@app/constants/windows"
 import {
   whistError,
@@ -105,6 +106,9 @@ const RootComponent = () => {
         onSubmit={handleNetworkSubmit}
       />
     )
+  }
+  if (show === WindowHashNetwork) {
+    return <Network networkInfo={mainState.networkInfo} onSubmit={undefined} />
   }
   if (show === WindowHashBugTypeform)
     return (

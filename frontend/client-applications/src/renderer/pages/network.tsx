@@ -203,7 +203,7 @@ const Network = (props: {
     progress: number
     downloadMbps: number
   }
-  onSubmit: () => void
+  onSubmit?: () => void
 }) => {
   const testState = getNetworkTestState(props.networkInfo)
 
@@ -223,9 +223,11 @@ const Network = (props: {
             className="rounded-t-none h-1"
           />
         </div>
-        <div className="mt-6 h-12">
-          <Button state={testState} onSubmit={props.onSubmit} />
-        </div>
+        {props.onSubmit !== undefined && (
+          <div className="mt-6 h-12">
+            <Button state={testState} onSubmit={props.onSubmit} />
+          </div>
+        )}
       </div>
     </div>
   )
