@@ -35,18 +35,7 @@ bool rgui_pressed = false;
 // Main state variables
 extern bool client_exiting;
 
-WhistMutex window_resize_mutex;
-extern const float window_resize_interval;
-clock window_resize_timer;
-// pending_resize_message should be set to true if sdl event handler was not able to process resize
-// event due to throttling, so the main loop should process it
-volatile bool pending_resize_message = false;
-
 extern volatile SDL_Window *window;
-
-extern volatile int output_width;
-extern volatile int output_height;
-extern volatile CodecType output_codec_type;
 
 extern MouseMotionAccumulation mouse_state;
 
@@ -67,7 +56,6 @@ Private Functions
 ============================
 */
 
-int handle_window_size_changed(SDL_Event *event);
 int handle_key_up_down(SDL_Event *event);
 int handle_mouse_motion(SDL_Event *event);
 int handle_mouse_wheel(SDL_Event *event);
@@ -80,90 +68,6 @@ int handle_pinch(SDL_Event *event);
 Private Function Implementations
 ============================
 */
-
-int handle_window_size_changed(SDL_Event *event) {
-    /*
-        Handle the SDL window size change event
-
-        Arguments:
-            event (SDL_Event*): SDL event for window change
-
-        Return:
-            (int): 0 on success
-    */
-
-    // Let video thread know about the resizing to
-    // reinitialize display dimensions
-
-    LOG_INFO("Received resize event for %dx%d, currently %dx%d", event->window.data1,
-             event->window.data2, get_window_pixel_width((SDL_Window *)window),
-             get_window_pixel_height((SDL_Window *)window));
-
-#ifndef __linux__
-    // Try to make pixel width and height conform to certain desirable dimensions
-    int current_width = get_window_pixel_width((SDL_Window *)window);
-    int current_height = get_window_pixel_height((SDL_Window *)window);
-    int dpi = get_window_pixel_width((SDL_Window *)window) /
-              get_window_virtual_width((SDL_Window *)window);
-
-    // The server will round the dimensions up in order to satisfy the YUV pixel format
-    // requirements. Specifically, it will round the width up to a multiple of 8 and the height up
-    // to a multiple of 2. Here, we try to force the window size to be valid values so the
-    // dimensions of the client and server match. We round down rather than up to avoid extending
-    // past the size of the display.
-    int desired_width = current_width - (current_width % 8);
-    int desired_height = current_height - (current_height % 2);
-    static int prev_desired_width = 0;
-    static int prev_desired_height = 0;
-    static int tries = 0;  // number of attemps to force window size to be prev_desired_width/height
-    if (current_width != desired_width || current_height != desired_height) {
-        // Avoid trying to force the window size forever, stop after 4 attempts
-        if (!(prev_desired_width == desired_width && prev_desired_height == desired_height &&
-              tries > 4)) {
-            if (prev_desired_width == desired_width && prev_desired_height == desired_height) {
-                tries++;
-            } else {
-                prev_desired_width = desired_width;
-                prev_desired_height = desired_height;
-                tries = 0;
-            }
-
-            SDL_SetWindowSize((SDL_Window *)window, desired_width / dpi, desired_height / dpi);
-            LOG_INFO("Forcing a resize from %dx%d to %dx%d", current_width, current_height,
-                     desired_width, desired_height);
-            current_width = get_window_pixel_width((SDL_Window *)window);
-            current_height = get_window_pixel_height((SDL_Window *)window);
-
-            if (current_width != desired_width || current_height != desired_height) {
-                LOG_WARNING(
-                    "Unable to change window size to match desired dimensions using "
-                    "SDL_SetWindowSize: "
-                    "actual output=%dx%d, desired output=%dx%d",
-                    current_width, current_height, desired_width, desired_height);
-            }
-        }
-    }
-#endif
-
-    // This propagates the resize to the video thread, and marks it as no longer resizing.
-    // output_width/output_height will now be updated
-    trigger_video_resize();
-
-    whist_lock_mutex(window_resize_mutex);
-    if (get_timer(window_resize_timer) >= WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {
-        pending_resize_message = false;
-        send_message_dimensions();
-        start_timer(&window_resize_timer);
-    } else {
-        pending_resize_message = true;
-    }
-    whist_unlock_mutex(window_resize_mutex);
-
-    LOG_INFO("Window %d resized to %dx%d (Actual %dx%d)", event->window.windowID,
-             event->window.data1, event->window.data2, output_width, output_height);
-
-    return 0;
-}
 
 int handle_key_up_down(SDL_Event *event) {
     /*
@@ -413,9 +317,7 @@ int handle_sdl_event(SDL_Event *event) {
     switch (event->type) {
         case SDL_WINDOWEVENT: {
             if (event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-                if (handle_window_size_changed(event) != 0) {
-                    return -1;
-                }
+                sdl_resize_window(event->window.data1, event->window.data2);
             }
 #ifdef __APPLE__
             else if (event->window.event == SDL_WINDOWEVENT_OCCLUDED) {

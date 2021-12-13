@@ -53,8 +53,6 @@ extern volatile int client_max_bitrate;
 extern volatile int max_burst_bitrate;
 extern volatile bool update_bitrate;
 
-extern volatile int output_width;
-extern volatile int output_height;
 extern volatile CodecType output_codec_type;
 extern volatile double latency;
 
@@ -504,7 +502,7 @@ int init_video_renderer() {
             (int): 0 on success, -1 on failure
     */
 
-    LOG_INFO("Creating renderer for %dx%d display", output_width, output_height);
+    LOG_INFO("Initializing video renderer");
 
     // Initialize the SDL renderer
     sdl_init_renderer((SDL_Window*)window);
@@ -671,8 +669,9 @@ int render_video() {
         sdl_render_window_titlebar_color(window_color);
 
         // Render the decoded frame
-        TIME_RUN(sdl_update_framebuffer(data, linesize, video_context.decoder->width,
-                                        video_context.decoder->height, output_width, output_height),
+        TIME_RUN(
+            sdl_update_framebuffer(data, linesize,
+            video_context.decoder->width, video_context.decoder->height),
                  VIDEO_SDL_WRITE_TIME, statistics_timer);
 
         // This function call will take up to 16ms if VSYNC is ON, otherwise 0ms
@@ -762,22 +761,4 @@ void destroy_video() {
     server_codec_type = CODEC_TYPE_UNKNOWN;
 
     has_video_rendered_yet = false;
-}
-
-void trigger_video_resize() {
-    /*
-        Set the global variable 'resizing' to true if the SDL window is
-        being resized, else false
-
-        Arguments:
-            is_resizing (bool): Boolean indicating whether or not the SDL
-                window is being resized
-    */
-
-    int new_width = get_window_pixel_width((SDL_Window*)window);
-    int new_height = get_window_pixel_height((SDL_Window*)window);
-    if (new_width != output_width || new_height != output_height) {
-        output_width = new_width;
-        output_height = new_height;
-    }
 }

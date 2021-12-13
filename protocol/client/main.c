@@ -480,22 +480,6 @@ int main(int argc, char* argv[]) {
                 start_timer(&keyboard_sync_timer);
             }
 
-            // Check if window resize message should be sent to server
-            if (pending_resize_message &&
-                get_timer(window_resize_timer) >=
-                    WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {
-                whist_lock_mutex(window_resize_mutex);
-                if (pending_resize_message &&
-                    get_timer(window_resize_timer) >=
-                        WINDOW_RESIZE_MESSAGE_INTERVAL /
-                            (float)MS_IN_SECOND) {  // double checked locking
-                    pending_resize_message = false;
-                    send_message_dimensions();
-                    start_timer(&window_resize_timer);
-                }
-                whist_unlock_mutex(window_resize_mutex);
-            }
-
             if (get_timer(monitor_change_timer) * MS_IN_SECOND > 10) {
                 static int current_display = -1;
                 int sdl_display = SDL_GetWindowDisplayIndex((SDL_Window*)window);

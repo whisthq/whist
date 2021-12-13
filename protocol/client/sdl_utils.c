@@ -23,6 +23,7 @@ Includes
 
 #include <whist/utils/color.h>
 #include "native_window_utils.h"
+#include "client_utils.h"
 
 extern volatile int output_width;
 extern volatile int output_height;
@@ -211,6 +212,15 @@ void sdl_init_renderer(SDL_Window* sdl_window) {
         }
         SDL_SetRenderDrawBlendMode(sdl_renderer, SDL_BLENDMODE_BLEND);
     }
+
+    if (frame_buffer == NULL) {
+        frame_buffer =
+            SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STREAMING,
+                                MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
+        if (frame_buffer == NULL) {
+            LOG_FATAL("SDL: could not create texture - exiting");
+        }
+    }
 }
 
 void sdl_destroy_renderer() {
@@ -380,6 +390,74 @@ void free_sdl_rgb_surface(SDL_Surface* surface) {
     free(pixels);
 }
 
+WhistMutex window_resize_mutex;
+clock window_resize_timer;
+// pending_resize_message should be set to true if sdl event handler was not able to process resize
+// event due to throttling, so the main loop should process it
+volatile bool pending_resize_message = false;
+void sdl_resize_window(int width, int height) {
+    // Try to make pixel width and height conform to certain desirable dimensions
+    int current_width = get_window_pixel_width((SDL_Window*)window);
+    int current_height = get_window_pixel_height((SDL_Window*)window);
+
+    LOG_INFO("Received resize event for %dx%d, currently %dx%d", width, height, current_width,
+             current_height);
+
+#ifndef __linux__
+    int dpi = current_width / get_window_virtual_width((SDL_Window*)window);
+
+    // The server will round the dimensions up in order to satisfy the YUV pixel format
+    // requirements. Specifically, it will round the width up to a multiple of 8 and the height up
+    // to a multiple of 2. Here, we try to force the window size to be valid values so the
+    // dimensions of the client and server match. We round down rather than up to avoid extending
+    // past the size of the display.
+    int desired_width = current_width - (current_width % 8);
+    int desired_height = current_height - (current_height % 2);
+    static int prev_desired_width = 0;
+    static int prev_desired_height = 0;
+    static int tries = 0;  // number of attemps to force window size to be prev_desired_width/height
+    if (current_width != desired_width || current_height != desired_height) {
+        // Avoid trying to force the window size forever, stop after 4 attempts
+        if (!(prev_desired_width == desired_width && prev_desired_height == desired_height &&
+              tries > 4)) {
+            if (prev_desired_width == desired_width && prev_desired_height == desired_height) {
+                tries++;
+            } else {
+                prev_desired_width = desired_width;
+                prev_desired_height = desired_height;
+                tries = 0;
+            }
+
+            SDL_SetWindowSize((SDL_Window*)window, desired_width / dpi, desired_height / dpi);
+            LOG_INFO("Forcing a resize from %dx%d to %dx%d", current_width, current_height,
+                     desired_width, desired_height);
+            current_width = get_window_pixel_width((SDL_Window*)window);
+            current_height = get_window_pixel_height((SDL_Window*)window);
+
+            if (current_width != desired_width || current_height != desired_height) {
+                LOG_WARNING(
+                    "Unable to change window size to match desired dimensions using "
+                    "SDL_SetWindowSize: "
+                    "actual output=%dx%d, desired output=%dx%d",
+                    current_width, current_height, desired_width, desired_height);
+            }
+        }
+    }
+#endif
+
+    // Update output width / output height
+    if (current_width != output_width || current_height != output_height) {
+        output_width = current_width;
+        output_height = current_height;
+    }
+
+    whist_lock_mutex(window_resize_mutex);
+    pending_resize_message = true;
+    whist_unlock_mutex(window_resize_mutex);
+
+    LOG_INFO("Window resized to %dx%d (Actual %dx%d)", width, height, output_width, output_height);
+}
+
 void sdl_render_loading_screen(int idx) {
     /*
         Make the screen black and show the loading screen
@@ -524,24 +602,7 @@ void sdl_blank_screen() {
     SDL_RenderPresent(sdl_renderer);
 }
 
-void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int height,
-                            int output_width, int output_height) {
-    if (frame_buffer == NULL) {
-        frame_buffer =
-            SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STREAMING,
-                              MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
-        if (frame_buffer == NULL) {
-            LOG_FATAL("SDL: could not create texture - exiting");
-        }
-        /*
-        // On __APPLE__, video_context.renderer is maintained in init_sdl_renderer
-        if (video_context.texture) {
-            SDL_DestroyTexture(video_context.texture);
-            video_context.texture = NULL;
-        }
-        */
-    }
-
+void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int height) {
     // The texture object we allocate is larger than the frame, so we only
     // copy the valid section of the frame into the texture.
     SDL_Rect texture_rect = {
@@ -657,4 +718,15 @@ void update_pending_sdl_tasks() {
         set_native_window_color((SDL_Window*)window, *(WhistRGBColor*)native_window_color);
         native_window_color_update = false;
     }
+
+    // Check if window resize message should be sent to server
+    whist_lock_mutex(window_resize_mutex);
+    if (pending_resize_message &&
+        get_timer(window_resize_timer) >=
+            WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {
+        pending_resize_message = false;
+        send_message_dimensions();
+        start_timer(&window_resize_timer);
+    }
+    whist_unlock_mutex(window_resize_mutex);
 }
