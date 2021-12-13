@@ -390,13 +390,6 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	mandelboxSubscription := sub.MandelboxInfo[0]
 	req, AppName := getAppName(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
 
-	// Req is only nil if getting the jsonTransportRequest timed out
-	if req == nil {
-		// Clean up the mandelbox if request is nil as the the time out limit is reached.
-		logAndReturnError("Timed out waiting for app name.")
-		return
-	}
-
 	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", mandelboxSubscription.ID)
 
 	// Then, verify that we are expecting this user to request a mandelbox.
@@ -695,6 +688,22 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
 
+	if req == nil {
+		// Receive the json transport request from the client via the httpserver.
+		jsonchan := getJSONTransportRequestChannel(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
+
+		// Set a timeout for the json transport request to prevent the mandelbox from waiting forever.
+		select {
+		case transportRequest := <-jsonchan:
+			req = transportRequest
+		case <-time.After(1 * time.Minute):
+			// Clean up the mandelbox if the time out limit is reached.
+			mandelboxDieHandler(string(dockerID), transportRequestMap, transportMapLock, dockerClient)
+			logAndReturnError("Timed out waiting for config encryption token.")
+			return
+		}
+	}
+
 	// Verify that this user sent in a (nontrivial) config encryption token
 	if len(req.ConfigEncryptionToken) < 10 {
 		logAndReturnError("Unable to spin up mandelbox: trivial config encryption token received.", err)
@@ -727,8 +736,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
 
 		// Create browser data
-		userInitialBrowserData := mandelboxData.BrowserData {
-			CookiesJSON: req.Cookies,
+		userInitialBrowserData := mandelboxData.BrowserData{
+			CookiesJSON:   req.Cookies,
 			BookmarksJSON: req.Bookmarks,
 		}
 
