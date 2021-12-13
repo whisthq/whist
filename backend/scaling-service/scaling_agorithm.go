@@ -2,7 +2,13 @@ package main
 
 import (
 	"github.com/whisthq/whist/core-go/subscriptions"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
+	"github.com/whisthq/whist/scaling-service/hosts"
 )
+
+// BUFFER_SIZE is the number of instances that should always
+// be running on each region.
+const BUFFER_SIZE = 3
 
 // ScalingAlgorithm is the basic abstraction of the scaling service
 // that receives a stream of events and makes calls to the host handler.
@@ -11,6 +17,7 @@ type ScalingAlgorithm interface {
 	HandleInstanceEvent(*subscriptions.InstanceEvent) ScalingEvent
 	HandleMandelboxEvent(*subscriptions.MandelboxEvent) ScalingEvent
 	createEventChans()
+	createBuffer()
 }
 
 // ScalingEvent is an event that contains all the relevant information
@@ -26,6 +33,8 @@ type ScalingEvent struct {
 // BaseScalingAlgorithm abstracts the shared functionalities to be used
 // by all of the different, region-based scaling algorithms.
 type BaseScalingAlgorithm struct {
+	Host               hosts.HostHandler
+	InstanceBuffer     *int32
 	instanceEventChan  chan *subscriptions.InstanceEvent
 	mandelboxEventChan chan *subscriptions.MandelboxEvent
 }
@@ -41,7 +50,13 @@ func (s *BaseScalingAlgorithm) createEventChans() {
 	}
 }
 
-// ProcessEvents is the mainn event loop from the scaling algorithm that
+// createBuffer initializes the
+func (s *BaseScalingAlgorithm) createBuffer() {
+	buff := int32(BUFFER_SIZE)
+	s.InstanceBuffer = &buff
+}
+
+// ProcessEvents is the main event loop from the scaling algorithm that
 // will redirect the received events to the appropiate channel.
 func (s *BaseScalingAlgorithm) ProcessEvents() {
 	select {
@@ -51,7 +66,33 @@ func (s *BaseScalingAlgorithm) ProcessEvents() {
 
 		switch scalingEvent.Action {
 		// Actually make the scaling decisions with the data
-		// from the scaling event
+		// from the scaling event.
+		case SpinupInstance:
+		// This will require to refactor the webserver's assign endpoint
+
+		case CreateImageBuffer:
+			if s.Host == nil {
+				// TODO when multi-cloud support is introduced, figure out a way to
+				// decide which host to use. For now default to AWS.
+				handler := &hosts.AWSHost{}
+				err := handler.Initialize(scalingEvent.Region)
+
+				if err != nil {
+					logger.Errorf("Error starting host for event %v: %v", scalingEvent, err)
+				}
+
+				s.Host = handler
+			}
+
+			//Insert new image in database
+
+			// Create buffer with new image on allowed regions
+			instanceNum, err := s.Host.SpinUpInstances(s.InstanceBuffer, "")
+
+			if err != nil {
+				logger.Errorf("Failed to spin up %v instances on region %v for event: %v. Error: %v ",
+					instanceNum, scalingEvent.Region, scalingEvent, err)
+			}
 		}
 
 	case mandelboxEvent := <-s.mandelboxEventChan:
@@ -82,12 +123,7 @@ func (s *BaseScalingAlgorithm) HandleInstanceEvent(event *subscriptions.Instance
 
 	// Instance is ready, add to database and start host service
 	if instance.Status == "PRE_CONNECTION" {
-		instanceScalingEvent.Action = "MARK_INSTANCE_AS_READY_DATABASE"
-	}
-
-	// Instance is draining, scale down?
-	if instance.Status == "DRAINING" {
-		instanceScalingEvent.Action = "VERIFY_INSTANCE_SCALE_DOWN"
+		instanceScalingEvent.Action = MarkInstanceAsReady
 	}
 
 	return instanceScalingEvent
@@ -109,12 +145,12 @@ func (s *BaseScalingAlgorithm) HandleMandelboxEvent(event *subscriptions.Mandelb
 
 	// Mandelbox was allocated, start instance spin up
 	if mandelbox.Status == "ALLOCATED" {
-		mandelboxScalingEvent.Action = "SPIN_UP_INSTANCE_FOR_ALLOCATED_MANDELBOX"
+		mandelboxScalingEvent.Action = SpinupInstance
 	}
 
 	// Mandelbox exited, verify if we need to scale down instance
 	if mandelbox.Status == "EXITED" {
-		mandelboxScalingEvent.Action = "TRY_SCALE_DOWN_IF_NECESSARY"
+		mandelboxScalingEvent.Action = ScaleDownInstances
 	}
 
 	return mandelboxScalingEvent

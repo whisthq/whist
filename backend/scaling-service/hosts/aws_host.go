@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/whisthq/whist/core-go/utils"
 )
 
@@ -15,6 +16,7 @@ type AWSHost struct {
 	EC2    *ec2.Client
 }
 
+// Initialize starts the AWS and EC2 clients.
 func (host *AWSHost) Initialize(region string) error {
 	// Initialize general AWS config on the selected region
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region))
@@ -30,43 +32,55 @@ func (host *AWSHost) Initialize(region string) error {
 	return nil
 }
 
-func (host *AWSHost) SpinUpInstances(region string, numInstances int) (int, error) {
+// SpinDownInstances is responsible for launching `numInstances` number of instances with the received imageID.
+func (host *AWSHost) SpinUpInstances(numInstances *int32, imageID string) (int, error) {
 	ctx := context.Background()
 
-	// Set start input
-	startInput := &ec2.StartInstancesInput{}
-	for i := 0; i < numInstances; i++ {
+	// Set run input
+	runInput := &ec2.RunInstancesInput{
+		MaxCount:                          numInstances,
+		ImageId:                           &imageID,
+		InstanceInitiatedShutdownBehavior: ec2Types.ShutdownBehaviorTerminate,
+	}
 
-		startOutput, err := host.EC2.StartInstances(ctx, startInput)
+	runOutput, err := host.EC2.RunInstances(ctx, runInput)
 
-		// Verify start output
-		if startOutput == nil {
+	// Verify start output
+	startedInstances := int(*numInstances)
+	if len(runOutput.Instances) != startedInstances {
+		return startedInstances,
+			utils.MakeError("failed to start requested number of instances with parameters: %v. Number of started instances: %v",
+				runInput, len(runOutput.Instances))
+	}
 
-		}
-
-		if err != nil {
-			return 0, utils.MakeError("error starting instances with parameters: %v. Error: %v", startInput, err)
-		}
+	if err != nil {
+		return 0, utils.MakeError("error starting instances with parameters: %v. Error: %v", runInput, err)
 	}
 	return 0, nil
 }
 
-func (host *AWSHost) SpinDownInstance(instanceID string) error {
+// SpinDownInstances is responsible for terminating the instances in `instanceIDs`.
+func (host *AWSHost) SpinDownInstances(instanceIDs []string) error {
 	ctx := context.Background()
 
-	terminationParams := &ec2.TerminateInstancesInput{
-		InstanceIds: []string{instanceID},
+	terminateInput := &ec2.TerminateInstancesInput{
+		InstanceIds: instanceIDs,
 	}
 
-	terminationOutput, err := host.EC2.TerminateInstances(ctx, terminationParams)
+	terminateOutput, err := host.EC2.TerminateInstances(ctx, terminateInput)
 
 	// Verify termination output
-	if terminationOutput == nil {
-
+	if len(terminateOutput.TerminatingInstances) != len(instanceIDs) {
+		return utils.MakeError("failed to terminate requested number of instances with parameters: %v. Number of terminated instances: %v",
+			terminateInput, len(terminateOutput.TerminatingInstances))
 	}
 
 	if err != nil {
-		return utils.MakeError("error terminating instance with id: %v. Error: %v", instanceID, err)
+		return utils.MakeError("error terminating instance with id: %v. Error: %v", instanceIDs, err)
 	}
+	return nil
+}
+
+func (host *AWSHost) CreateImageBuffer() error {
 	return nil
 }

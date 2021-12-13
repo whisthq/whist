@@ -1,7 +1,7 @@
 package hosts
 
 type HostHandler interface {
-	Initialize() error
-	SpinUpInstances(region string, numInstances int) (spunUp int, err error)
-	SpinDownInstance(instanceId string) error
+	Initialize(region string) error
+	SpinUpInstances(numInstances *int32, imageID string) (spunUp int, err error)
+	SpinDownInstances(instanceIDs []string) error
 }

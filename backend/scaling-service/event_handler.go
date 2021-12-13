@@ -40,6 +40,7 @@ func main() {
 	algorithmByRegion.Range(func(key, value interface{}) bool {
 		algorithm := value.(ScalingAlgorithm)
 		algorithm.createEventChans()
+		algorithm.createBuffer()
 		algorithm.ProcessEvents()
 		return true
 	})
@@ -54,20 +55,28 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 	for {
 		subscriptionEvent := <-subscriptionEvents
 		switch subscriptionEvent := subscriptionEvent.(type) {
+		case *subscriptions.InstanceEvent:
+			// Start scaling algorithm based on region
+			// Read region from subscription, for this we need to add a region field to the db
+			region := "us-east"
+			algorithm, ok := algorithmByRegion.Load(region)
+
+			if !ok {
+				logger.Errorf("%v not found on algorithm map", region)
+			}
+			algorithm.(BaseScalingAlgorithm).instanceEventChan <- subscriptionEvent
+
 		case *subscriptions.MandelboxEvent:
 			// Start scaling algorithm based on region
 			// Read region from subscription, for this we need to add a region field to the db
-			algorithm, ok := algorithmByRegion.Load("us-east")
+			region := "us-east"
+			algorithm, ok := algorithmByRegion.Load(region)
 
 			if !ok {
-				logger.Errorf("USEastScalingAlgorithm not found on algorithm map")
+				logger.Errorf("%v not found on algorithm map", region)
 			}
+			algorithm.(BaseScalingAlgorithm).mandelboxEventChan <- subscriptionEvent
 
-			USEast := algorithm.(USEastScalingAlgorithm)
-			USEast.mandelboxEventChan <- subscriptionEvent
-
-		case *subscriptions.InstanceEvent:
-			// Instance event
 		}
 	}
 }
