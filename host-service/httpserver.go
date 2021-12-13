@@ -91,6 +91,7 @@ type JSONTransportRequest struct {
 	JSONData              string                               `json:"json_data"`                      // Arbitrary stringified JSON data to pass to mandelbox
 	Cookies               mandelboxtypes.Cookies               `json:"cookies,omitempty"`              // The cookies provided by the client-app
 	Bookmarks             mandelboxtypes.Bookmarks             `json:"bookmarks,omitempty"`            // Bookmarks provided by the client-app
+	Extensions            mandelboxtypes.Extensions            `json:"extensions,omitempty"`           // Extensions provided by the client-ap
 	resultChan            chan requestResult                   // Channel to pass the request result between goroutines
 }
 

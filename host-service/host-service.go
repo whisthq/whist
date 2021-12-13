@@ -535,6 +535,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
 		utils.Sprintf("WHIST_INITIAL_USER_COOKIES_FILE=%v%v", mandelboxData.UserInitialBrowserDir, mandelboxData.UserInitialCookiesFile),
 		utils.Sprintf("WHIST_INITIAL_USER_BOOKMARKS_FILE=%v%v", mandelboxData.UserInitialBrowserDir, mandelboxData.UserInitialBookmarksFile),
+		utils.Sprintf("WHIST_INITIAL_BROWSER_EXTENSIONS_FILE=%v%v", mandelboxData.UserInitialBrowserDir, mandelboxData.UserInitialExtensionsFile),
 	}
 	config := dockercontainer.Config{
 		ExposedPorts: exposedPorts,
@@ -739,6 +740,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		userInitialBrowserData := mandelboxData.BrowserData{
 			CookiesJSON:   req.Cookies,
 			BookmarksJSON: req.Bookmarks,
+			Extensions:	   req.Extensions,
 		}
 
 		destDir := path.Join(mandelbox.GetUserConfigDir(), mandelboxData.GetUnpackedConfigsDirectoryName())
