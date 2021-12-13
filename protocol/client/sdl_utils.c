@@ -34,10 +34,9 @@ HHOOK g_h_keyboard_hook;
 LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_param);
 #endif
 
-#ifdef __APPLE__
 // on macOS, we must initialize the renderer in `init_sdl()` instead of video.c
-volatile SDL_Renderer* init_sdl_renderer;
-#endif
+static SDL_Renderer* sdl_renderer = NULL;
+static SDL_Texture* frame_buffer = NULL;
 
 /*
 ============================
@@ -162,7 +161,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     renderer creation
 */
 #ifdef __APPLE__
-    init_sdl_renderer = init_renderer(sdl_window);
+    sdl_init_renderer(sdl_window);
 #endif
 
     // Set icon
@@ -190,12 +189,44 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     return sdl_window;
 }
 
-SDL_Renderer* init_renderer(SDL_Window* sdl_window) {
-    Uint32 flags = SDL_RENDERER_ACCELERATED;
-#if VSYNC_ON
-    flags |= SDL_RENDERER_PRESENTVSYNC;
+void sdl_init_renderer(SDL_Window* sdl_window) {
+    if (sdl_renderer == NULL) {
+        /*
+        // configure renderer
+        if (SDL_GetWindowFlags(sdl_window) & SDL_WINDOW_OPENGL) {
+            // only opengl if windowed mode
+            SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
+        }
+        */
+        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
+        SDL_SetHint(SDL_HINT_RENDER_VSYNC, VSYNC_ON ? "1" : "0");
+
+        Uint32 flags = SDL_RENDERER_ACCELERATED;
+    #if VSYNC_ON
+        flags |= SDL_RENDERER_PRESENTVSYNC;
+    #endif
+        sdl_renderer = SDL_CreateRenderer(sdl_window, -1, flags);
+        if (sdl_renderer == NULL) {
+            LOG_FATAL("SDL: could not create renderer - exiting: %s", SDL_GetError());
+        }
+        SDL_SetRenderDrawBlendMode(sdl_renderer, SDL_BLENDMODE_BLEND);
+    }
+}
+
+void sdl_destroy_renderer() {
+#ifdef __APPLE__
+    // On __APPLE__, the renderer is maintained in init_sdl
+    if (frame_buffer) {
+        SDL_DestroyTexture(frame_buffer);
+        frame_buffer = NULL;
+    }
+#else
+    // SDL_DestroyTexture(frame_buffer); is not needed,
+    // the renderer destroys it
+    SDL_DestroyRenderer(sdl_renderer);
+    sdl_renderer = NULL;
+    frame_buffer = NULL;
 #endif
-    return SDL_CreateRenderer(sdl_window, -1, flags);
 }
 
 void destroy_sdl(SDL_Window* window_param) {
@@ -349,11 +380,10 @@ void free_sdl_rgb_surface(SDL_Surface* surface) {
     free(pixels);
 }
 
-void sdl_render_loading_screen(SDL_Renderer* renderer, int idx) {
+void sdl_render_loading_screen(int idx) {
     /*
         Make the screen black and show the loading screen
         Arguments:
-            renderer (SDL_Renderer*): video renderer
             idx (int): the index of the loading frame
     */
 
@@ -381,7 +411,8 @@ void sdl_render_loading_screen(SDL_Renderer* renderer, int idx) {
 
     // free pkt.data which is initialized by calloc in png_file_to_bmp
 
-    SDL_Texture* loading_screen_texture = SDL_CreateTextureFromSurface(renderer, loading_screen);
+    SDL_Texture* loading_screen_texture =
+        SDL_CreateTextureFromSurface(sdl_renderer, loading_screen);
 
     // surface can now be freed
     free_sdl_rgb_surface(loading_screen);
@@ -396,10 +427,10 @@ void sdl_render_loading_screen(SDL_Renderer* renderer, int idx) {
     dstrect.w = w;
     dstrect.h = h;
 
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear(renderer);
-    SDL_RenderCopy(renderer, loading_screen_texture, NULL, &dstrect);
-    SDL_RenderPresent(renderer);
+    SDL_SetRenderDrawColor(sdl_renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(sdl_renderer);
+    SDL_RenderCopy(sdl_renderer, loading_screen_texture, NULL, &dstrect);
+    SDL_RenderPresent(sdl_renderer);
 
     // texture may now be destroyed
     SDL_DestroyTexture(loading_screen_texture);
@@ -483,25 +514,21 @@ void sdl_render_cursor(WhistCursorImage* cursor) {
     }
 }
 
-void sdl_blank_screen(SDL_Renderer* renderer) {
+void sdl_blank_screen() {
     /*
         Blank the SDL renderer with a black screen
-
-        Arguments:
-            renderer (SDL_Renderer*): the video renderer
     */
 
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear(renderer);
-    SDL_RenderPresent(renderer);
+    SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(sdl_renderer);
+    SDL_RenderPresent(sdl_renderer);
 }
 
-SDL_Texture* frame_buffer = NULL;
-void sdl_update_framebuffer(SDL_Renderer* renderer, Uint8* data[4], int linesize[4], int width,
-                            int height, int output_width, int output_height) {
+void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int height,
+                            int output_width, int output_height) {
     if (frame_buffer == NULL) {
         frame_buffer =
-            SDL_CreateTexture(renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STREAMING,
+            SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STREAMING,
                               MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
         if (frame_buffer == NULL) {
             LOG_FATAL("SDL: could not create texture - exiting");
@@ -528,8 +555,8 @@ void sdl_update_framebuffer(SDL_Renderer* renderer, Uint8* data[4], int linesize
                                   linesize[1]);
     if (res < 0) {
         LOG_ERROR("SDL_UpdateNVTexture failed: %s", SDL_GetError());
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(renderer);
+        SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+        SDL_RenderClear(sdl_renderer);
         return;
     }
 
@@ -540,10 +567,10 @@ void sdl_update_framebuffer(SDL_Renderer* renderer, Uint8* data[4], int linesize
         .w = output_width,
         .h = output_height,
     };
-    SDL_RenderCopy(renderer, frame_buffer, &output_rect, NULL);
+    SDL_RenderCopy(sdl_renderer, frame_buffer, &output_rect, NULL);
 }
 
-void sdl_render(SDL_Renderer* renderer) { SDL_RenderPresent(renderer); }
+void sdl_render() { SDL_RenderPresent(sdl_renderer); }
 
 volatile WhistRGBColor* native_window_color = NULL;
 volatile bool native_window_color_update = false;

@@ -53,7 +53,9 @@ SDL_Window* init_sdl(int output_width, int output_height, char* name, char* icon
  *
  * @param sdl_window               The SDL Window to use
  */
-SDL_Renderer* init_renderer(SDL_Window* sdl_window);
+void sdl_init_renderer(SDL_Window* sdl_window);
+
+void sdl_destroy_renderer();
 
 /**
  * @brief                          Destroys an SDL window and associated
@@ -85,20 +87,20 @@ SDL_Surface* sdl_surface_from_png_file(char* filename);
  */
 void free_sdl_rgb_surface(SDL_Surface* surface);
 
-void sdl_render_loading_screen(SDL_Renderer* renderer, int idx);
+void sdl_render_loading_screen(int idx);
 
 void sdl_render_cursor(WhistCursorImage* cursor_image);
 
-void sdl_blank_screen(SDL_Renderer* renderer);
+void sdl_blank_screen();
 
 // The pixel format required for the data/linesize passed into sdl_render_frame
 #define SDL_TEXTURE_PIXEL_FORMAT AV_PIX_FMT_NV12
 // Update the renderer's framebuffer
-void sdl_update_framebuffer(SDL_Renderer* renderer, Uint8* data[4], int linesize[4], int width,
-                            int height, int output_width, int output_height);
+void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int height,
+                            int output_width, int output_height);
 
 // Render out the frame
-void sdl_render(SDL_Renderer* renderer);
+void sdl_render();
 
 void sdl_render_window_titlebar_color(WhistRGBColor color);
 

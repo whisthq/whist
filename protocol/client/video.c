@@ -62,11 +62,6 @@ extern volatile double latency;
 volatile bool initialized_video_renderer = false;
 volatile bool initialized_video_buffer = false;
 
-#ifdef __APPLE__
-// on macOS, we must initialize the renderer in `init_sdl()` instead of video.c
-extern volatile SDL_Renderer* init_sdl_renderer;
-#endif
-
 #define BITRATE_BUCKET_SIZE 500000
 
 /*
@@ -97,7 +92,6 @@ struct VideoData {
 } video_data;
 
 typedef struct SDLVideoContext {
-    SDL_Renderer* renderer;
     struct SwsContext* sws;
 
     VideoDecoder* decoder;
@@ -512,38 +506,16 @@ int init_video_renderer() {
 
     LOG_INFO("Creating renderer for %dx%d display", output_width, output_height);
 
-    // configure renderer
-    if (SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_OPENGL) {
-        // only opengl if windowed mode
-        SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
-    }
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
-    SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
-
-// SDL guidelines say that renderer functions should be done on the main thread,
-//      but our implementation requires that the renderer is made in this thread
-//      for non-MacOS
-#ifdef __APPLE__
-    SDL_Renderer* renderer = (SDL_Renderer*)init_sdl_renderer;
-#else
-    SDL_Renderer* renderer = init_renderer((SDL_Window*)window);
-#endif
+    // Initialize the SDL renderer
+    sdl_init_renderer((SDL_Window*)window);
 
     // Show a black screen initially before anything else
-    sdl_blank_screen(renderer);
-
-    video_context.renderer = renderer;
-    if (!renderer) {
-        LOG_WARNING("SDL: could not create renderer - exiting: %s", SDL_GetError());
-        return -1;
-    }
+    sdl_blank_screen();
 
     // mbps that currently works
     working_mbps = STARTING_BITRATE;
 
     has_video_rendered_yet = false;
-
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
     video_context.sws = NULL;
     client_max_bitrate = STARTING_BITRATE;
@@ -562,7 +534,7 @@ int init_video_renderer() {
     video_data.loading_index = 0;
     start_timer(&video_data.last_loading_frame_timer);
     // Present first frame of loading animation
-    sdl_render_loading_screen(renderer, video_data.loading_index);
+    sdl_render_loading_screen(video_data.loading_index);
     video_data.loading_index++;
 
     // Mark as initialized and return
@@ -699,13 +671,12 @@ int render_video() {
         sdl_render_window_titlebar_color(window_color);
 
         // Render the decoded frame
-        TIME_RUN(sdl_update_framebuffer(video_context.renderer, data, linesize,
-                                        video_context.decoder->width, video_context.decoder->height,
-                                        output_width, output_height),
+        TIME_RUN(sdl_update_framebuffer(data, linesize, video_context.decoder->width,
+                                        video_context.decoder->height, output_width, output_height),
                  VIDEO_SDL_WRITE_TIME, statistics_timer);
 
         // This function call will take up to 16ms if VSYNC is ON, otherwise 0ms
-        TIME_RUN(sdl_render(video_context.renderer), VIDEO_RENDER_TIME, statistics_timer);
+        TIME_RUN(sdl_render(), VIDEO_RENDER_TIME, statistics_timer);
 
         // Declare user activity to prevent screensaver
         declare_user_activity();
@@ -750,7 +721,7 @@ int render_video() {
         const float loading_animation_fps = 20.0;
         if (get_timer(video_data.last_loading_frame_timer) > 1 / loading_animation_fps) {
             // Present the loading screen
-            sdl_render_loading_screen(video_context.renderer, video_data.loading_index);
+            sdl_render_loading_screen(video_data.loading_index);
             // Progress animation
             video_data.loading_index++;
             // Reset timer
@@ -769,10 +740,8 @@ void destroy_video() {
     if (!initialized_video_renderer) {
         LOG_WARNING("Destroying video, but never called init_video_renderer");
     } else {
-#ifndef __APPLE__
-        SDL_DestroyRenderer((SDL_Renderer*)video_context.renderer);
-        video_context.renderer = NULL;
-#endif
+        // Destroy the SDL renderer
+        sdl_destroy_renderer();
 
         // Destroy the ring buffer
         destroy_ring_buffer(video_ring_buffer);
