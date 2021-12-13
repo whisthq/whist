@@ -250,8 +250,7 @@ message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
 #[[
 ################## Libraries we supply ##################
 ]]
-# the NO_* paramaters tell cmake to only look for our included libs and not system wide ones.
-# For linux we use the system openssl/libcrypto. For mac and windows we bundle our own because is not included with the os
+# the NO_* paramaters tell cmake to only look for our included libs and not system wide ones
 find_library(LIB_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
         NO_DEFAULT_PATH
         NO_CMAKE_ENVIRONMENT PATH
