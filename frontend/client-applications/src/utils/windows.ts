@@ -424,8 +424,8 @@ export const createNetworkWindow = () =>
   createWindow({
     options: {
       ...base,
-      ...width.md,
-      ...height.xs,
+      ...width.lg,
+      ...height.md,
       frame: false,
       titleBarStyle: "hidden",
       transparent: true,

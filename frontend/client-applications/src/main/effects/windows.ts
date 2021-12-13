@@ -16,6 +16,7 @@ import { logBase } from "@app/utils/logging"
 import { withAppReady } from "@app/utils/observables"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
 import { WindowHashProtocol } from "@app/constants/windows"
+import { isNewConfigToken } from "@app/utils/state"
 import {
   createProtocolWindow,
   createAuthWindow,
@@ -163,8 +164,10 @@ withAppReady(
   merge(
     fromTrigger(WhistTrigger.checkPaymentFlowSuccess),
     fromTrigger(WhistTrigger.stripeAuthRefresh)
-  )
-).subscribe(() => {
-  networkAnalyze()
-  createNetworkWindow()
+  ).pipe(withLatestFrom(isNewConfigToken))
+).subscribe(([, _isNewConfigToken]: [any, boolean]) => {
+  if (!_isNewConfigToken) {
+    networkAnalyze()
+    createNetworkWindow()
+  }
 })
