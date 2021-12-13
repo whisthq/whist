@@ -400,13 +400,8 @@ export const createProtocolWindow = async () => {
     }
   })
 }
-app.setAsDefaultProtocolClient("http")
-app.on("open-url", function (event, url) {
-  event.preventDefault()
-  ProtocolSendUrlToOpenInNewTab(url)
-  logBase(url, {})
-})
 
+app.setAsDefaultProtocolClient("http")
 app.setAsDefaultProtocolClient("https")
 app.on("open-url", function (event, url) {
   event.preventDefault()

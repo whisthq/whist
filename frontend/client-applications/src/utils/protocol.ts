@@ -183,7 +183,7 @@ export const ProtocolSendUrlToOpenInNewTab = (message: string) => {
     return
   }
 
-  writeStream(childProcess, `--new-tab-url?${message}\n`)
+  writeStream(childProcess, `new-tab-url?${message}\n`)
 }
 
 export const isNetworkUnstable = (message?: string) => {
