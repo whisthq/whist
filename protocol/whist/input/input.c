@@ -77,6 +77,39 @@ void update_keyboard_state(InputDevice* input_device, WhistClientMessage* fcmsg)
         return;
     }
 
+    char* layout = fcmsg->keyboard_state.layout;
+    char* variant = fcmsg->keyboard_state.variant;
+
+    char* cmd = NULL;
+
+    if(layout != NULL && variant != NULL) {
+        const char cmd_format[] = "setxkbmap -layout %s -variant %s";
+        const int cmd_size = sizeof(cmd_format)+strlen(layout)+strlen(variant);
+        char cmd_buf[cmd_size];
+        snprintf(cmd_buf, cmd_size, cmd_format, layout, variant);
+        cmd=cmd_buf;
+    }
+    if(layout != NULL && variant == NULL) {
+        const char cmd_format[] = "setxkbmap -layout %s";
+        const int cmd_size = sizeof(cmd_format)+strlen(layout);
+        char cmd_buf[cmd_size];
+        snprintf(cmd_buf, cmd_size, cmd_format, layout);
+        cmd=cmd_buf;
+    }
+    if(layout == NULL && variant != NULL) {
+        const char cmd_format[] = "setxkbmap -variant %s";
+        const int cmd_size = sizeof(cmd_format)+strlen(variant);
+        char cmd_buf[cmd_size];
+        snprintf(cmd_buf, cmd_size, cmd_format, variant);
+        cmd=cmd_buf;
+    }
+
+    //eventually check if layout/variant has changed from what the server has stored
+    //this way we only run the command if needed.
+    if(cmd != NULL) {
+        runcmd(cmd, NULL);
+    }
+
     update_mapped_keyboard_state(input_device, input_os_type, fcmsg->keyboard_state);
 }
 
