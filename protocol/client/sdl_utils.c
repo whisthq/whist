@@ -39,6 +39,9 @@ LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_pa
 static SDL_Renderer* sdl_renderer = NULL;
 static SDL_Texture* frame_buffer = NULL;
 
+// Render Update
+bool pending_render = false;
+
 // Window Color Update
 static volatile WhistRGBColor* native_window_color = NULL;
 static volatile bool native_window_color_update = false;
@@ -212,7 +215,7 @@ void sdl_init_renderer(SDL_Window* sdl_window) {
         // To prevent being exposed to random colors
         SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_RenderClear(sdl_renderer);
-        SDL_RenderPresent(sdl_renderer);
+        pending_render = true;
     }
 
     if (frame_buffer == NULL) {
@@ -243,6 +246,9 @@ void destroy_sdl(SDL_Window* window_param) {
         Arguments:
             window_param (SDL_Window*): SDL window to be destroyed
     */
+
+    // Destroy the renderer
+    sdl_destroy_renderer();
 
     if (native_window_color) {
         free((WhistRGBColor*)native_window_color);
@@ -416,7 +422,7 @@ void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int heig
 
 void sdl_render_framebuffer() {
     // Present the framebuffer to the monitor
-    SDL_RenderPresent(sdl_renderer);
+    pending_render = true;
 }
 
 void sdl_update_cursor(WhistCursorImage* cursor) {
@@ -582,6 +588,12 @@ void update_pending_sdl_tasks() {
         start_timer(&window_resize_timer);
     }
     whist_unlock_mutex(window_resize_mutex);
+
+    // Render out the current framebuffer, if there's a pending render
+    if (pending_render) {
+        SDL_RenderPresent(sdl_renderer);
+        pending_render = false;
+    }
 }
 
 /*

@@ -496,9 +496,6 @@ int init_video_renderer() {
 
     LOG_INFO("Initializing video renderer");
 
-    // Initialize the SDL renderer
-    sdl_init_renderer((SDL_Window*)window);
-
     // mbps that currently works
     working_mbps = STARTING_BITRATE;
 
@@ -730,9 +727,6 @@ void destroy_video() {
     if (!initialized_video_renderer) {
         LOG_WARNING("Destroying video, but never called init_video_renderer");
     } else {
-        // Destroy the SDL renderer
-        sdl_destroy_renderer();
-
         // Destroy the ring buffer
         destroy_ring_buffer(video_ring_buffer);
         video_ring_buffer = NULL;
