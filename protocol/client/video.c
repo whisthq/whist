@@ -53,36 +53,14 @@ extern volatile int client_max_bitrate;
 extern volatile int max_burst_bitrate;
 extern volatile bool update_bitrate;
 
-extern volatile int output_width;
-extern volatile int output_height;
 extern volatile CodecType output_codec_type;
 extern volatile double latency;
 
-volatile WhistRGBColor* native_window_color = NULL;
-volatile bool native_window_color_update = false;
-
 // START VIDEO VARIABLES
-volatile WhistCursorState cursor_state = CURSOR_STATE_VISIBLE;
-volatile SDL_Cursor* sdl_cursor = NULL;
-volatile WhistCursorID last_cursor = (WhistCursorID)SDL_SYSTEM_CURSOR_ARROW;
 volatile bool initialized_video_renderer = false;
 volatile bool initialized_video_buffer = false;
 
-#ifdef __APPLE__
-// on macOS, we must initialize the renderer in `init_sdl()` instead of video.c
-extern volatile SDL_Renderer* init_sdl_renderer;
-#endif
-
 #define BITRATE_BUCKET_SIZE 500000
-#define NUMBER_LOADING_FRAMES 50
-
-#define CURSORIMAGE_A 0xff000000
-#define CURSORIMAGE_R 0x00ff0000
-#define CURSORIMAGE_G 0x0000ff00
-#define CURSORIMAGE_B 0x000000ff
-
-// The pixel format expected by SDL_UpdateNVTexture
-#define SDL_TEXTURE_PIXEL_FORMAT AV_PIX_FMT_NV12
 
 /*
 ============================
@@ -91,6 +69,10 @@ Custom Types
 */
 
 struct VideoData {
+    // Variables needed for rendering
+    VideoDecoder* decoder;
+    struct SwsContext* sws;
+
     FrameData* pending_ctx;
     int frames_received;
     int bytes_transferred;
@@ -110,15 +92,6 @@ struct VideoData {
     int loading_index;
     clock last_loading_frame_timer;
 } video_data;
-
-typedef struct SDLVideoContext {
-    SDL_Renderer* renderer;
-    SDL_Texture* texture;
-    struct SwsContext* sws;
-
-    VideoDecoder* decoder;
-} SDLVideoContext;
-SDLVideoContext video_context;
 
 // mbps that currently works
 volatile double working_mbps;
@@ -147,11 +120,7 @@ Private Functions
 ============================
 */
 
-SDL_Rect new_sdl_rect(int x, int y, int w, int h);
 int32_t multithreaded_destroy_decoder(void* opaque);
-void finalize_video_context_data();
-void replace_texture();
-void clear_sdl(SDL_Renderer* renderer);
 void calculate_statistics();
 void skip_to_next_iframe();
 void sync_decoder_parameters(VideoFrame* frame);
@@ -188,11 +157,11 @@ void sync_decoder_parameters(VideoFrame* frame) {
         "From %dx%d, codec %d to %dx%d, codec %d",
         server_width, server_height, server_codec_type, frame->width, frame->height,
         frame->codec_type);
-    if (video_context.decoder) {
-        SDL_Thread* destroy_decoder_thread = SDL_CreateThread(
-            multithreaded_destroy_decoder, "multithreaded_destroy_decoder", video_context.decoder);
-        SDL_DetachThread(destroy_decoder_thread);
-        video_context.decoder = NULL;
+    if (video_data.decoder) {
+        WhistThread destroy_decoder_thread = whist_create_thread(
+            multithreaded_destroy_decoder, "multithreaded_destroy_decoder", video_data.decoder);
+        whist_detach_thread(destroy_decoder_thread);
+        video_data.decoder = NULL;
     }
 
     VideoDecoder* decoder =
@@ -200,7 +169,7 @@ void sync_decoder_parameters(VideoFrame* frame) {
     if (!decoder) {
         LOG_FATAL("ERROR: Decoder could not be created!");
     }
-    video_context.decoder = decoder;
+    video_data.decoder = decoder;
 
     server_width = frame->width;
     server_height = frame->height;
@@ -222,7 +191,7 @@ void update_sws_context(Uint8** data, int* linesize) {
             linesize (int*): pointer to the linesize array to be filled in
     */
 
-    VideoDecoder* decoder = video_context.decoder;
+    VideoDecoder* decoder = video_data.decoder;
     enum AVPixelFormat input_format = decoder->sw_frame->format;
     static enum AVPixelFormat cached_format = AV_PIX_FMT_NONE;
     static int cached_width = -1;
@@ -236,10 +205,10 @@ void update_sws_context(Uint8** data, int* linesize) {
         cached_height = decoder->height;
 
         // No matter what, we now should destroy the old context if it exists
-        if (video_context.sws) {
+        if (video_data.sws) {
             av_freep(&data[0]);
-            sws_freeContext(video_context.sws);
-            video_context.sws = NULL;
+            sws_freeContext(video_data.sws);
+            video_data.sws = NULL;
         }
 
         if (input_format == SDL_TEXTURE_PIXEL_FORMAT) {
@@ -251,7 +220,7 @@ void update_sws_context(Uint8** data, int* linesize) {
             LOG_INFO("Creating sws context to convert from %s to %s",
                      av_get_pix_fmt_name(input_format),
                      av_get_pix_fmt_name(SDL_TEXTURE_PIXEL_FORMAT));
-            video_context.sws = sws_getContext(
+            video_data.sws = sws_getContext(
                 decoder->width, decoder->height, input_format, decoder->width, decoder->height,
                 SDL_TEXTURE_PIXEL_FORMAT, SWS_FAST_BILINEAR, NULL, NULL, NULL);
             av_image_alloc(data, linesize, decoder->width, decoder->height,
@@ -314,116 +283,6 @@ void try_recovering_missing_packets_or_frames() {
     }
 }
 
-void render_sdl_cursor(WhistCursorImage* cursor) {
-    /*
-      Update the cursor image on the screen. If the cursor hasn't changed since the last frame we
-      received, we don't do anything. Otherwise, we either use the provided bitmap or  update the
-      cursor ID to tell SDL which cursor to render.
-     */
-    // Set cursor to frame's desired cursor type
-    // Only update the cursor, if a cursor image is even embedded in the frame at all.
-    if (cursor) {
-        if ((WhistCursorID)cursor->cursor_id != last_cursor || cursor->using_bmp) {
-            if (sdl_cursor) {
-                SDL_FreeCursor((SDL_Cursor*)sdl_cursor);
-            }
-            if (cursor->using_bmp) {
-                // use bitmap data to set cursor
-                SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
-                    cursor->bmp, cursor->bmp_width, cursor->bmp_height, sizeof(uint32_t) * 8,
-                    sizeof(uint32_t) * cursor->bmp_width, CURSORIMAGE_R, CURSORIMAGE_G,
-                    CURSORIMAGE_B, CURSORIMAGE_A);
-
-                // Use BLENDMODE_NONE to allow for proper cursor blit-resize
-                SDL_SetSurfaceBlendMode(cursor_surface, SDL_BLENDMODE_NONE);
-
-#ifdef _WIN32
-                // on Windows, the cursor DPI is unchanged
-                const int cursor_dpi = 96;
-#else
-                // on other platforms, use the window DPI
-                const int cursor_dpi = get_native_window_dpi((SDL_Window*)window);
-#endif  // _WIN32
-
-                // Create the scaled cursor surface which takes DPI into account
-                SDL_Surface* scaled_cursor_surface = SDL_CreateRGBSurface(
-                    0, cursor->bmp_width * 96 / cursor_dpi, cursor->bmp_height * 96 / cursor_dpi,
-                    cursor_surface->format->BitsPerPixel, cursor_surface->format->Rmask,
-                    cursor_surface->format->Gmask, cursor_surface->format->Bmask,
-                    cursor_surface->format->Amask);
-
-                // Copy the original cursor into the scaled surface
-                SDL_BlitScaled(cursor_surface, NULL, scaled_cursor_surface, NULL);
-
-                // Potentially SDL_SetSurfaceBlendMode here since X11 cursor BMPs are
-                // pre-alpha multplied. Remember to adjust hot_x/y by the DPI scaling.
-                sdl_cursor = SDL_CreateColorCursor(scaled_cursor_surface,
-                                                   cursor->bmp_hot_x * 96 / cursor_dpi,
-                                                   cursor->bmp_hot_y * 96 / cursor_dpi);
-                SDL_FreeSurface(cursor_surface);
-                SDL_FreeSurface(scaled_cursor_surface);
-            } else {
-                // use cursor id to set cursor
-                sdl_cursor = SDL_CreateSystemCursor((SDL_SystemCursor)cursor->cursor_id);
-            }
-            SDL_SetCursor((SDL_Cursor*)sdl_cursor);
-
-            last_cursor = (WhistCursorID)cursor->cursor_id;
-        }
-
-        if (cursor->cursor_state != cursor_state) {
-            if (cursor->cursor_state == CURSOR_STATE_HIDDEN) {
-                SDL_SetRelativeMouseMode(SDL_TRUE);
-            } else {
-                SDL_SetRelativeMouseMode(SDL_FALSE);
-            }
-
-            cursor_state = cursor->cursor_state;
-        }
-    }
-}
-
-SDL_Rect new_sdl_rect(int x, int y, int w, int h) {
-    /*
-      Wrapper to create a new SDL rectangle.
-
-      Returns:
-      (SDL_Rect): SDL_Rect with the given dimensions
-     */
-    SDL_Rect new_rect;
-    new_rect.x = x;
-    new_rect.y = y;
-    new_rect.w = w;
-    new_rect.h = h;
-    return new_rect;
-}
-
-void render_window_titlebar_color(WhistRGBColor color) {
-    /*
-      Update window titlebar color using the colors of the new frame
-     */
-    WhistRGBColor* current_color = (WhistRGBColor*)native_window_color;
-    if (current_color != NULL) {
-        if (current_color->red != color.red || current_color->green != color.green ||
-            current_color->blue != color.blue) {
-            // delete the old color we were using
-            free(current_color);
-
-            // make the new color and signal that we're ready to update
-            WhistRGBColor* new_native_window_color = safe_malloc(sizeof(WhistRGBColor));
-            *new_native_window_color = color;
-            native_window_color = new_native_window_color;
-            native_window_color_update = true;
-        }
-    } else {
-        // make the new color and signal that we're ready to update
-        WhistRGBColor* new_native_window_color = safe_malloc(sizeof(WhistRGBColor));
-        *new_native_window_color = color;
-        native_window_color = new_native_window_color;
-        native_window_color_update = true;
-    }
-}
-
 int32_t multithreaded_destroy_decoder(void* opaque) {
     /*
         Destroy the video decoder. This will be run in a separate SDL thread, hence the void* opaque
@@ -438,110 +297,6 @@ int32_t multithreaded_destroy_decoder(void* opaque) {
     VideoDecoder* decoder = (VideoDecoder*)opaque;
     destroy_video_decoder(decoder);
     return 0;
-}
-
-void update_decoder_parameters(int width, int height, CodecType codec_type) {
-    /*
-        Update video decoder parameters
-
-        Arguments:
-            width (int): video width
-            height (int): video height
-            codec_type (CodecType): decoder codec type
-    */
-}
-
-void render_loading_screen(SDL_Renderer* renderer, int idx) {
-    /*
-        Make the screen black and show the loading screen
-        Arguments:
-            renderer (SDL_Renderer*): video renderer
-            idx (int): the index of the loading frame
-    */
-
-    int gif_frame_index = idx % NUMBER_LOADING_FRAMES;
-
-    clock c;
-    start_timer(&c);
-
-    char frame_name[24];
-    if (gif_frame_index < 10) {
-        snprintf(frame_name, sizeof(frame_name), "loading/frame_0%d.png", gif_frame_index);
-        //            LOG_INFO("Frame loading/frame_0%d.png", gif_frame_index);
-    } else {
-        snprintf(frame_name, sizeof(frame_name), "loading/frame_%d.png", gif_frame_index);
-        //            LOG_INFO("Frame loading/frame_%d.png", gif_frame_index);
-    }
-
-    SDL_Surface* loading_screen = sdl_surface_from_png_file(frame_name);
-    if (loading_screen == NULL) {
-        LOG_WARNING("Loading screen not loaded from %s", frame_name);
-        return;
-    }
-
-    // free pkt.data which is initialized by calloc in png_file_to_bmp
-
-    SDL_Texture* loading_screen_texture = SDL_CreateTextureFromSurface(renderer, loading_screen);
-
-    // surface can now be freed
-    free_sdl_rgb_surface(loading_screen);
-
-    int w = 200;
-    int h = 200;
-    SDL_Rect dstrect;
-
-    // SDL_QueryTexture( loading_screen_texture, NULL, NULL, &w, &h );
-    dstrect.x = output_width / 2 - w / 2;
-    dstrect.y = output_height / 2 - h / 2;
-    dstrect.w = w;
-    dstrect.h = h;
-
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear(renderer);
-    SDL_RenderCopy(renderer, loading_screen_texture, NULL, &dstrect);
-    SDL_RenderPresent(renderer);
-
-    // texture may now be destroyed
-    SDL_DestroyTexture(loading_screen_texture);
-
-    gif_frame_index += 1;
-    gif_frame_index %= NUMBER_LOADING_FRAMES;
-}
-
-void replace_texture() {
-    /*
-        Destroy the old texture and create a new texture. This function is called during renderer
-        initialization and if the user has finished resizing the window.
-    */
-
-    // Destroy the old texture
-    if (video_context.texture) {
-        SDL_DestroyTexture(video_context.texture);
-        video_context.texture = NULL;
-    }
-    // Create a new texture
-    SDL_Texture* texture =
-        SDL_CreateTexture(video_context.renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STREAMING,
-                          MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
-    if (!texture) {
-        LOG_FATAL("SDL: could not create texture - exiting");
-    }
-
-    // Save the new texture over the old one
-    video_context.texture = texture;
-}
-
-void clear_sdl(SDL_Renderer* renderer) {
-    /*
-        Clear the SDL renderer
-
-        Arguments:
-            renderer (SDL_Renderer*): the video renderer
-    */
-
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear(renderer);
-    SDL_RenderPresent(renderer);
 }
 
 #define STATISTICS_SECONDS 5
@@ -635,7 +390,7 @@ void init_video() {
         Initializes the video system
     */
     initialized_video_renderer = false;
-    memset(&video_context, 0, sizeof(video_context));
+    memset(&video_data, 0, sizeof(video_data));
     video_ring_buffer = init_ring_buffer(PACKET_VIDEO, RECV_FRAMES_BUFFER_SIZE, nack_packet);
     initialized_video_buffer = true;
 }
@@ -743,48 +498,17 @@ int init_video_renderer() {
             (int): 0 on success, -1 on failure
     */
 
-    LOG_INFO("Creating renderer for %dx%d display", output_width, output_height);
+    LOG_INFO("Initializing video renderer");
 
-    // configure renderer
-    if (SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_OPENGL) {
-        // only opengl if windowed mode
-        SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
-    }
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
-    SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
-
-// SDL guidelines say that renderer functions should be done on the main thread,
-//      but our implementation requires that the renderer is made in this thread
-//      for non-MacOS
-#ifdef __APPLE__
-    SDL_Renderer* renderer = (SDL_Renderer*)init_sdl_renderer;
-#else
-    SDL_Renderer* renderer = init_renderer((SDL_Window*)window);
-#endif
-
-    // Show a black screen initially before anything else
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear(renderer);
-    SDL_RenderPresent(renderer);
-
-    video_context.renderer = renderer;
-    if (!renderer) {
-        LOG_WARNING("SDL: could not create renderer - exiting: %s", SDL_GetError());
-        return -1;
-    }
+    // Initialize the SDL renderer
+    sdl_init_renderer((SDL_Window*)window);
 
     // mbps that currently works
     working_mbps = STARTING_BITRATE;
 
     has_video_rendered_yet = false;
 
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    // Allocate a place to put our YUV image on that screen.
-    // Rather than allocating a new texture every time the dimensions change, we instead allocate
-    // the texture once and render sub-rectangles of it.
-    replace_texture();
-
-    video_context.sws = NULL;
+    video_data.sws = NULL;
     client_max_bitrate = STARTING_BITRATE;
     video_data.target_mbps = STARTING_BITRATE;
     video_data.pending_ctx = NULL;
@@ -801,7 +525,9 @@ int init_video_renderer() {
     video_data.loading_index = 0;
     start_timer(&video_data.last_loading_frame_timer);
     // Present first frame of loading animation
-    render_loading_screen(renderer, video_data.loading_index);
+    sdl_update_framebuffer_loading_screen(video_data.loading_index);
+    sdl_render_framebuffer();
+    // Then progress the animation
     video_data.loading_index++;
 
     // Mark as initialized and return
@@ -841,8 +567,7 @@ int render_video() {
 
         // If server thinks the window isn't visible, but the window is visible now,
         // Send a START_STREAMING message
-        if (!frame->is_window_visible && !(SDL_GetWindowFlags((SDL_Window*)window) &
-                                           (SDL_WINDOW_OCCLUDED | SDL_WINDOW_MINIMIZED))) {
+        if (!frame->is_window_visible && sdl_is_window_visible()) {
             // The server thinks the client window is occluded/minimized, but it isn't. So
             // we'll correct it. NOTE: Most of the time, this is just because there was a
             // delay between the window losing visibility and the server reacting.
@@ -857,10 +582,9 @@ int render_video() {
             server_timestamp = frame->server_timestamp;
             client_input_timestamp = frame->client_input_timestamp;
 
-            TIME_RUN(
-                ret = video_decoder_send_packets(video_context.decoder, get_frame_videodata(frame),
-                                                 frame->videodata_length),
-                VIDEO_DECODE_SEND_PACKET_TIME, statistics_timer);
+            TIME_RUN(ret = video_decoder_send_packets(
+                         video_data.decoder, get_frame_videodata(frame), frame->videodata_length),
+                     VIDEO_DECODE_SEND_PACKET_TIME, statistics_timer);
             if (ret < 0) {
                 LOG_ERROR("Failed to send packets to decoder, unable to render frame");
                 pushing_render_context = false;
@@ -889,9 +613,9 @@ int render_video() {
 
     // Try to get a frame from the decoder, if any exist
     bool got_frame_from_decoder = false;
-    while (video_context.decoder != NULL) {
+    while (video_data.decoder != NULL) {
         int res;
-        TIME_RUN(res = video_decoder_get_frame(video_context.decoder), VIDEO_DECODE_GET_FRAME_TIME,
+        TIME_RUN(res = video_decoder_get_frame(video_data.decoder), VIDEO_DECODE_GET_FRAME_TIME,
                  statistics_timer);
         if (res < 0) {
             LOG_ERROR("Error getting frame from decoder!");
@@ -903,19 +627,19 @@ int render_video() {
             got_frame_from_decoder = true;
 
             // Pull the most recently decoded data/linesize from the decoder
-            if (video_context.decoder->hw_frame && video_context.decoder->hw_frame->data[3]) {
-                data[0] = data[1] = video_context.decoder->hw_frame->data[3];
-                linesize[0] = linesize[1] = video_context.decoder->width;
+            if (video_data.decoder->hw_frame && video_data.decoder->hw_frame->data[3]) {
+                data[0] = data[1] = video_data.decoder->hw_frame->data[3];
+                linesize[0] = linesize[1] = video_data.decoder->width;
             } else {
                 update_sws_context(data, linesize);
-                if (video_context.sws) {
-                    sws_scale(video_context.sws,
-                              (uint8_t const* const*)video_context.decoder->sw_frame->data,
-                              video_context.decoder->sw_frame->linesize, 0,
-                              video_context.decoder->height, data, linesize);
+                if (video_data.sws) {
+                    sws_scale(video_data.sws,
+                              (uint8_t const* const*)video_data.decoder->sw_frame->data,
+                              video_data.decoder->sw_frame->linesize, 0, video_data.decoder->height,
+                              data, linesize);
                 } else {
-                    memcpy(data, video_context.decoder->sw_frame->data, sizeof(data));
-                    memcpy(linesize, video_context.decoder->sw_frame->linesize, sizeof(linesize));
+                    memcpy(data, video_data.decoder->sw_frame->data, sizeof(data));
+                    memcpy(linesize, video_data.decoder->sw_frame->linesize, sizeof(linesize));
                 }
             }
         } else {
@@ -931,42 +655,28 @@ int render_video() {
 
         // Render out the cursor image
         if (has_cursor_image) {
-            TIME_RUN(render_sdl_cursor(&cursor_image), VIDEO_CURSOR_UPDATE_TIME, statistics_timer);
+            TIME_RUN(sdl_update_cursor(&cursor_image), VIDEO_CURSOR_UPDATE_TIME, statistics_timer);
         }
 
         // Update the window titlebar color
-        render_window_titlebar_color(window_color);
+        sdl_render_window_titlebar_color(window_color);
 
-        // The texture object we allocate is larger than the frame, so we only
-        // copy the valid section of the frame into the texture.
-        SDL_Rect texture_rect =
-            new_sdl_rect(0, 0, video_context.decoder->width, video_context.decoder->height);
-        int res;
-        TIME_RUN(res = SDL_UpdateNVTexture(video_context.texture, &texture_rect, data[0],
-                                           linesize[0], data[1], linesize[1]),
+        // Render the decoded frame
+        TIME_RUN(sdl_update_framebuffer(data, linesize, video_data.decoder->width,
+                                        video_data.decoder->height),
                  VIDEO_SDL_WRITE_TIME, statistics_timer);
-        if (res < 0) {
-            LOG_ERROR("SDL_UpdateNVTexture failed: %s", SDL_GetError());
-            return -1;
-        }
 
-        // Subsection of texture that should be rendered to screen.
-        SDL_Rect output_rect = texture_rect;
-        if (texture_rect.w != output_width || texture_rect.h != output_height) {
-            // If the texture is smaller than the screen, we need to render it
-            // to the screen.
-            output_rect = new_sdl_rect(0, 0, output_width, output_height);
-        }
-        SDL_RenderCopy(video_context.renderer, video_context.texture, &output_rect, NULL);
+        // This function call will take up to 16ms if VSYNC is ON, otherwise 0ms
+        TIME_RUN(sdl_render_framebuffer(), VIDEO_RENDER_TIME, statistics_timer);
 
         // Declare user activity to prevent screensaver
         declare_user_activity();
-        // This function call will take up to 16ms if VSYNC is ON, otherwise 0ms
-        TIME_RUN(SDL_RenderPresent(video_context.renderer), VIDEO_RENDER_TIME, statistics_timer);
 
 #if LOG_VIDEO
         LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", frame_data.id, frame_data.frame_size,
                   get_timer(frame_data.frame_creation_timer));
+#else
+        UNUSED(frame_data);
 #endif
 
         static timestamp_us last_rendered_time = 0;
@@ -1004,7 +714,8 @@ int render_video() {
         const float loading_animation_fps = 20.0;
         if (get_timer(video_data.last_loading_frame_timer) > 1 / loading_animation_fps) {
             // Present the loading screen
-            render_loading_screen(video_context.renderer, video_data.loading_index);
+            sdl_update_framebuffer_loading_screen(video_data.loading_index);
+            sdl_render_framebuffer();
             // Progress animation
             video_data.loading_index++;
             // Reset timer
@@ -1023,35 +734,18 @@ void destroy_video() {
     if (!initialized_video_renderer) {
         LOG_WARNING("Destroying video, but never called init_video_renderer");
     } else {
-#ifdef __APPLE__
-        // On __APPLE__, video_context.renderer is maintained in init_sdl_renderer
-        if (video_context.texture) {
-            SDL_DestroyTexture(video_context.texture);
-            video_context.texture = NULL;
-        }
-#else
-        // SDL_DestroyTexture(video_context.texture); is not needed,
-        // the renderer destroys it
-        SDL_DestroyRenderer((SDL_Renderer*)video_context.renderer);
-        video_context.renderer = NULL;
-        video_context.texture = NULL;
-#endif
-
-        if (native_window_color) {
-            free((WhistRGBColor*)native_window_color);
-            native_window_color = NULL;
-        }
+        // Destroy the SDL renderer
+        sdl_destroy_renderer();
 
         // Destroy the ring buffer
         destroy_ring_buffer(video_ring_buffer);
         video_ring_buffer = NULL;
 
-        if (video_context.decoder) {
-            SDL_Thread* destroy_decoder_thread =
-                SDL_CreateThread(multithreaded_destroy_decoder, "multithreaded_destroy_decoder",
-                                 video_context.decoder);
-            SDL_DetachThread(destroy_decoder_thread);
-            video_context.decoder = NULL;
+        if (video_data.decoder) {
+            WhistThread destroy_decoder_thread = whist_create_thread(
+                multithreaded_destroy_decoder, "multithreaded_destroy_decoder", video_data.decoder);
+            whist_detach_thread(destroy_decoder_thread);
+            video_data.decoder = NULL;
         }
     }
 
@@ -1061,22 +755,4 @@ void destroy_video() {
     server_codec_type = CODEC_TYPE_UNKNOWN;
 
     has_video_rendered_yet = false;
-}
-
-void trigger_video_resize() {
-    /*
-        Set the global variable 'resizing' to true if the SDL window is
-        being resized, else false
-
-        Arguments:
-            is_resizing (bool): Boolean indicating whether or not the SDL
-                window is being resized
-    */
-
-    int new_width = get_window_pixel_width((SDL_Window*)window);
-    int new_height = get_window_pixel_height((SDL_Window*)window);
-    if (new_width != output_width || new_height != output_height) {
-        output_width = new_width;
-        output_height = new_height;
-    }
 }

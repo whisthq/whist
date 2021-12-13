@@ -79,13 +79,4 @@ int render_video();
  */
 void destroy_video();
 
-/**
- * @brief                          Set the global variable 'resizing' to true if
- *                                 the SDL window is being resized, else false
- *
- * @param is_resizing              Boolean indicating whether or not the SDL
- *                                 window is being resized
- */
-void trigger_video_resize();
-
 #endif  // CLIENT_VIDEO_H

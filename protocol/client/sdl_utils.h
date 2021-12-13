@@ -48,12 +48,18 @@ Public Functions
 SDL_Window* init_sdl(int output_width, int output_height, char* name, char* icon_filename);
 
 /**
- * @brief                          Creates the SDL Renderer,
- *                                 using the current SDL `window`.
+ * @brief                          Creates the SDL Renderer, using the given SDL `window`.
+ *                                 The renderer will be bound to thread that
+ *                                 this function was called from.
  *
  * @param sdl_window               The SDL Window to use
  */
-SDL_Renderer* init_renderer(SDL_Window* sdl_window);
+void sdl_init_renderer(SDL_Window* sdl_window);
+
+/**
+ * @brief                          Destroy the renderer created by `sdl_init_renderer`.
+ */
+void sdl_destroy_renderer();
 
 /**
  * @brief                          Destroys an SDL window and associated
@@ -64,55 +70,95 @@ SDL_Renderer* init_renderer(SDL_Window* sdl_window);
 void destroy_sdl(SDL_Window* window);
 
 /**
- * @brief                          Load a PNG file to an SDL surface using lodepng.
+ * @brief                          When the window gets resized, call this function
+ *                                 to update the internal rendering dimensions.
+ *                                 This function will also sync the server to those dimensions.
+ */
+void sdl_renderer_resize_window(int width, int height);
+
+/**
+ * @brief                          Updates the framebuffer to a loading screen image.
+ *                                 Remember to call sdl_render_framebuffer later.
  *
- * @param filename                 PNG image file path
+ * @param idx                      The index of the animation to render.
+ *                                 This should normally be strictly increasing or reset to 0.
+ */
+void sdl_update_framebuffer_loading_screen(int idx);
+
+// The pixel format required for the data/linesize passed into sdl_update_framebuffer
+#define SDL_TEXTURE_PIXEL_FORMAT AV_PIX_FMT_NV12
+/**
+ * @brief                          Update the renderer's framebuffer,
+ *                                 using the provided texture.
  *
- * @returns                        The loaded surface on success, and NULL on failure
+ * @param data                     The data pointers to the image
+ * @param linesize                 The linesize data for the image
+ * @param width                    The width of the image
+ * @param height                   The height of the image
+ */
+void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int height);
+
+/**
+ * @brief                          Render the most recently updated framebuffer.
+ *                                 This takes some time, <1ms normally, ~8ms if VSYNC_ON
+ */
+void sdl_render_framebuffer();
+
+/**
+ * @brief                          Update the cursor
  *
- * @note                           After a successful call to sdl_surface_from_png_file,
- *                                 remember to call `free_sdl_rgb_surface` when you're done using
- * it!
- */
-SDL_Surface* sdl_surface_from_png_file(char* filename);
-
-/**
- * @brief                          Free the SDL_Surface and its pixels array.
- *                                 Only call this if the pixels array has been malloc'ed,
- *                                 and the surface was created via `SDL_CreateRGBSurfaceFrom`
+ * @param cursor_image             The WhistCursorImage to use for the new cursor
  *
- * @param surface                  The SDL_Surface to be freed
+ * @note                           This function is virtually instantaneous
  */
-void free_sdl_rgb_surface(SDL_Surface* surface);
+void sdl_update_cursor(WhistCursorImage* cursor_image);
 
 /**
- * @brief                          Wrapper around SDL_CreateMutex that will correctly exit the
- *                                 protocol when SDL_LockMutex fails
+ * @brief                          Update the color of the window's titlebar
+ *
+ * @param color                    The color to set the titlebar too
+ *
+ * @note                           This function is virtually instantaneous
  */
-SDL_mutex* safe_SDL_CreateMutex();  // NOLINT(readability-identifier-naming)
+void sdl_render_window_titlebar_color(WhistRGBColor color);
 
 /**
- * @brief                          Wrapper around SDL_LockMutex that will correctly exit the
- *                                 protocol when SDL_LockMutex fails
+ * @brief                          Update the title of the window
+ *
+ * @param window_title             The string to set the window's title to
+ *
+ * @note                           This function is virtually instantaneous
  */
-void safe_SDL_LockMutex(SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
+void sdl_set_window_title(const char* window_title);
 
 /**
- * @brief                          Wrapper around SDL_TryLockMutex that will correctly exit the
- *                                 protocol when SDL_TryLockMutex fails
+ * @brief                          Update the window's fullscreen state
+ *
+ * @param is_fullscreen            If True, the window will become fullscreen
+ *                                 If False, the window will return to windowed mode
+ *
+ * @note                           This function is virtually instantaneous
  */
-int safe_SDL_TryLockMutex(SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
+void sdl_set_fullscreen(bool is_fullscreen);
 
 /**
- * @brief                          Wrapper around SDL_UnlockMutex that will correctly exit the
- * protocol when SDL_UnlockMutex fails
+ * @brief                          Returns whether or not the window is currently visible
+ *
+ * @returns                        False if the window is occluded or minimized,
+ *                                 True otherwise
+ *
+ * @note                           This function is virtually instantaneous
  */
-void safe_SDL_UnlockMutex(SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
+bool sdl_is_window_visible();
 
 /**
- * @brief                          Wrapper around SDL_CondWait that will correctly exit the
- *                                 protocol when SDL_LockMutex fails
+ * @brief                          The above functions may be expensive, and thus may
+ *                                 have to be queued up. This function executes all of the
+ *                                 currently internally queued actions.
+ *
+ * @note                           This function must be called by the
+ *                                 same thread that originally called init_sdl
  */
-void safe_SDL_CondWait(SDL_cond* cond, SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
+void update_pending_sdl_tasks();
 
 #endif  // SDL_UTILS_H

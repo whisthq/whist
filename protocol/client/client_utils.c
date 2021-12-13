@@ -703,7 +703,7 @@ void nack_packet(WhistPacketType frame_type, int id, int index) {
             frame_type (WhistPacketType): the packet type
             id (int): Frame ID of the packet
             index (int): index of the packet
-            */
+    */
     WhistClientMessage wcmsg = {0};
     wcmsg.type = MESSAGE_NACK;
     wcmsg.simple_nack.type = frame_type;
