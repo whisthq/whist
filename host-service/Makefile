@@ -57,10 +57,10 @@ build: checkCI
 	GOFLAGS=-mod=mod $(GOCMD) generate ./...
 
 	$(GOCMD) build -ldflags "\
-		-X 'github.com/whisthq/whist/host-service/metadata.gitCommit=$(GIT_COMMIT)'\
-		-X 'github.com/whisthq/whist/host-service/metadata/heroku.email=$(HEROKU_USER)'\
-		-X 'github.com/whisthq/whist/host-service/metadata/heroku.apiKey=$(HEROKU_APIKEY)'\
-		-X 'github.com/whisthq/whist/host-service/metadata/heroku.appNameOverride=$(HEROKU_APP_NAME_OVERRIDE)'\
+		-X 'github.com/whisthq/whist/core-go/metadata.gitCommit=$(GIT_COMMIT)'\
+		-X 'github.com/whisthq/whist/core-go/metadata/heroku.email=$(HEROKU_USER)'\
+		-X 'github.com/whisthq/whist/core-go/metadata/heroku.apiKey=$(HEROKU_APIKEY)'\
+		-X 'github.com/whisthq/whist/core-go/metadata/heroku.appNameOverride=$(HEROKU_APP_NAME_OVERRIDE)'\
 		" -o $(BUILD_FOLDER)/$(BINARY_NAME) .
 
 format:

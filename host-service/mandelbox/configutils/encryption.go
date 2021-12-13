@@ -6,7 +6,7 @@ import (
 	"crypto/rand"
 	"io"
 
-	"github.com/whisthq/whist/host-service/utils"
+	"github.com/whisthq/whist/core-go/utils"
 	"golang.org/x/crypto/argon2"
 )
 

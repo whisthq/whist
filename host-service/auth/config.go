@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/whisthq/whist/host-service/metadata"
+	"github.com/whisthq/whist/core-go/metadata"
 )
 
 type authConfig struct {

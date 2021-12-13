@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/pierrec/lz4/v4"
-	"github.com/whisthq/whist/host-service/utils"
-	logger "github.com/whisthq/whist/host-service/whistlogger"
+	"github.com/whisthq/whist/core-go/utils"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
 )
 
 // ExtractTarLz4 extracts a tar.lz4 file in memory to the specified directory.

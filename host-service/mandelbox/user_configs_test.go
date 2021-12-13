@@ -7,9 +7,9 @@ import (
 	"path"
 	"testing"
 
+	mandelboxtypes "github.com/whisthq/whist/core-go/types"
+	"github.com/whisthq/whist/core-go/utils"
 	"github.com/whisthq/whist/host-service/mandelbox/configutils"
-	mandelboxtypes "github.com/whisthq/whist/host-service/mandelbox/types"
-	"github.com/whisthq/whist/host-service/utils"
 )
 
 // TestUserConfigIntegration is an integration test for the

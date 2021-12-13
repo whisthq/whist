@@ -10,13 +10,13 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/whisthq/whist/core-go/metadata"
+	mandelboxtypes "github.com/whisthq/whist/core-go/types"
+	"github.com/whisthq/whist/core-go/utils"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
 	"github.com/whisthq/whist/host-service/auth"
 	"github.com/whisthq/whist/host-service/mandelbox/portbindings"
-	mandelboxtypes "github.com/whisthq/whist/host-service/mandelbox/types"
-	"github.com/whisthq/whist/host-service/metadata"
 	"github.com/whisthq/whist/host-service/metrics"
-	"github.com/whisthq/whist/host-service/utils"
-	logger "github.com/whisthq/whist/host-service/whistlogger"
 )
 
 // Constants for use in setting up the HTTPS server
@@ -235,6 +235,7 @@ func getAppName(mandelboxID mandelboxtypes.MandelboxID, transportRequestMap map[
 		case <-time.After(1 * time.Minute):
 			return nil, AppName
 		}
+
 	} else {
 		// If not on a local environment, we default to using the `browsers/chrome` image.
 		AppName = mandelboxtypes.AppName("browsers/chrome")

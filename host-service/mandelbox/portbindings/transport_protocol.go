@@ -3,8 +3,8 @@ package portbindings // import "github.com/whisthq/whist/host-service/mandelbox/
 import (
 	"strings"
 
-	"github.com/whisthq/whist/host-service/utils"
-	logger "github.com/whisthq/whist/host-service/whistlogger"
+	"github.com/whisthq/whist/core-go/utils"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
 )
 
 // This block contains the two transport protocols (TCP and UDP) that we care

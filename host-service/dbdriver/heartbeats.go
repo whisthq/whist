@@ -5,10 +5,10 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/whisthq/whist/host-service/metadata/aws"
+	"github.com/whisthq/whist/core-go/metadata/aws"
+	"github.com/whisthq/whist/core-go/utils"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
 	"github.com/whisthq/whist/host-service/metrics"
-	"github.com/whisthq/whist/host-service/utils"
-	logger "github.com/whisthq/whist/host-service/whistlogger"
 
 	"github.com/whisthq/whist/host-service/dbdriver/queries"
 )

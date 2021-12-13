@@ -7,8 +7,8 @@ import (
 	"math/rand"
 	"sync"
 
-	"github.com/whisthq/whist/host-service/utils"
-	logger "github.com/whisthq/whist/host-service/whistlogger"
+	"github.com/whisthq/whist/core-go/utils"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
 )
 
 // A PortBinding represents a single port that is bound inside a mandelbox to a
@@ -209,7 +209,7 @@ func isInAllowedRange(p uint16) bool {
 	return p >= MinAllowedPort && p < MaxAllowedPort
 }
 
-// Helper function to check that a `whisthqtypes.PortBinding` is valid (i.e.
+// Helper function to check that a `fractaltypes.PortBinding` is valid (i.e.
 // either "tcp" or "udp"), and return a pointer to the correct map to
 // read/modify (i.e. either `tcpPorts` or `udpPorts`).
 func getProtocolSpecificHostPortMap(protocol TransportProtocol) (*protocolSpecificHostPortMap, error) {

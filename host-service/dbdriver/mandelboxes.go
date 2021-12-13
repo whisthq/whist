@@ -8,12 +8,12 @@ import (
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 
+	"github.com/whisthq/whist/core-go/metadata/aws"
+	"github.com/whisthq/whist/core-go/types"
+	"github.com/whisthq/whist/core-go/utils"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
 	"github.com/whisthq/whist/host-service/dbdriver/queries"
-	"github.com/whisthq/whist/host-service/mandelbox/types"
-	"github.com/whisthq/whist/host-service/metadata/aws"
 	"github.com/whisthq/whist/host-service/metrics"
-	"github.com/whisthq/whist/host-service/utils"
-	logger "github.com/whisthq/whist/host-service/whistlogger"
 )
 
 // This file is concerned with database interactions at the mandelbox-level.

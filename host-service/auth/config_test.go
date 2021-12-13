@@ -3,7 +3,7 @@ package auth
 import (
 	"testing"
 
-	"github.com/whisthq/whist/host-service/metadata"
+	"github.com/whisthq/whist/core-go/metadata"
 )
 
 // TestGetAuthConfigDev will get the dev app environmet

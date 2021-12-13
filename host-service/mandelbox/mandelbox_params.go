@@ -3,9 +3,9 @@ package mandelbox // import "github.com/whisthq/whist/host-service/mandelbox"
 import (
 	"os"
 
-	logger "github.com/whisthq/whist/host-service/whistlogger"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
 
-	"github.com/whisthq/whist/host-service/utils"
+	"github.com/whisthq/whist/core-go/utils"
 )
 
 func (mandelbox *mandelboxData) WriteMandelboxParams() error {

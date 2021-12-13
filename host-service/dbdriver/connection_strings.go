@@ -1,9 +1,9 @@
 package dbdriver // import "github.com/whisthq/whist/host-service/dbdriver"
 
 import (
-	"github.com/whisthq/whist/host-service/metadata"
-	"github.com/whisthq/whist/host-service/metadata/heroku"
-	"github.com/whisthq/whist/host-service/utils"
+	"github.com/whisthq/whist/core-go/metadata"
+	"github.com/whisthq/whist/core-go/metadata/heroku"
+	"github.com/whisthq/whist/core-go/utils"
 )
 
 // Whist database connection strings

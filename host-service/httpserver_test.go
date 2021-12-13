@@ -15,8 +15,8 @@ import (
 	"testing/iotest"
 	"time"
 
-	mandelboxtypes "github.com/whisthq/whist/host-service/mandelbox/types"
-	"github.com/whisthq/whist/host-service/utils"
+	mandelboxtypes "github.com/whisthq/whist/core-go/types"
+	"github.com/whisthq/whist/core-go/utils"
 )
 
 type JSONTransportResult struct {
@@ -330,7 +330,7 @@ func TestGetAppNameEmpty(t *testing.T) {
 	testTransportRequestMap[mandelboxID] = make(chan *JSONTransportRequest, 1)
 	testTransportRequestMap[mandelboxID] <- &JSONTransportRequest{}
 
-	// Should default name to browser/chrome
+	// Should default name to browsers/chrome
 	_, appName := getAppName(mandelboxID, testTransportRequestMap, testmux)
 
 	if appName != mandelboxtypes.AppName("browsers/chrome") {

@@ -29,15 +29,15 @@ import (
 	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/whisthq/whist/core-go/metadata"
+	"github.com/whisthq/whist/core-go/utils"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
 	"github.com/whisthq/whist/host-service/dbdriver"
-	"github.com/whisthq/whist/host-service/metadata"
-	"github.com/whisthq/whist/host-service/utils"
-	logger "github.com/whisthq/whist/host-service/whistlogger"
 
+	"github.com/whisthq/whist/core-go/types"
 	"github.com/whisthq/whist/host-service/mandelbox/gpus"
 	"github.com/whisthq/whist/host-service/mandelbox/portbindings"
 	"github.com/whisthq/whist/host-service/mandelbox/ttys"
-	"github.com/whisthq/whist/host-service/mandelbox/types"
 	"github.com/whisthq/whist/host-service/mandelbox/uinputdevices"
 
 	dockercontainer "github.com/docker/docker/api/types/container"

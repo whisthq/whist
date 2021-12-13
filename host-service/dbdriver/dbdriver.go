@@ -6,9 +6,9 @@ import (
 
 	"github.com/jackc/pgx/v4/pgxpool"
 
-	"github.com/whisthq/whist/host-service/metadata"
-	"github.com/whisthq/whist/host-service/utils"
-	logger "github.com/whisthq/whist/host-service/whistlogger"
+	"github.com/whisthq/whist/core-go/metadata"
+	"github.com/whisthq/whist/core-go/utils"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
 )
 
 // `enabled` is a flag denoting whether the functions in this package should do

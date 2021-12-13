@@ -44,17 +44,17 @@ import (
 	// to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
 
-	logger "github.com/whisthq/whist/host-service/whistlogger"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
 
+	"github.com/whisthq/whist/core-go/metadata"
+	"github.com/whisthq/whist/core-go/metadata/aws"
+	"github.com/whisthq/whist/core-go/subscriptions"
+	mandelboxtypes "github.com/whisthq/whist/core-go/types"
+	"github.com/whisthq/whist/core-go/utils"
 	"github.com/whisthq/whist/host-service/dbdriver"
 	mandelboxData "github.com/whisthq/whist/host-service/mandelbox"
 	"github.com/whisthq/whist/host-service/mandelbox/portbindings"
-	mandelboxtypes "github.com/whisthq/whist/host-service/mandelbox/types"
-	"github.com/whisthq/whist/host-service/metadata"
-	"github.com/whisthq/whist/host-service/metadata/aws"
 	"github.com/whisthq/whist/host-service/metrics"
-	"github.com/whisthq/whist/host-service/subscriptions"
-	"github.com/whisthq/whist/host-service/utils"
 
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainer "github.com/docker/docker/api/types/container"
@@ -156,12 +156,12 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 	// dev/staging/prod ones, so we can use the same regex list in all
 	// environments.
 	regexes := []string{
-		`whisthq/browsers/chrome:current-build`,
-		`whisthq/browsers/brave:current-build`,
-		`ghcr.io/whisthq/.*/browsers/chrome:current-build`,
-		`ghcr.io/whisthq/.*/browsers/brave:current-build`,
-		`ghcr.io/whisthq/.*`,
-		`.*whisthq.*`,
+		`fractal/browsers/chrome:current-build`,
+		`fractal/browsers/brave:current-build`,
+		`ghcr.io/fractal/*/browsers/chrome:current-build`,
+		`ghcr.io/fractal/*/browsers/brave:current-build`,
+		`ghcr.io/fractal/*`,
+		`*fractal*`,
 	}
 
 	image := dockerImageFromRegexes(globalCtx, client, regexes)
@@ -378,7 +378,7 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 
 // SpinUpMandelbox is the request used to create a mandelbox on this host.
 func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient,
-	sub *subscriptions.MandelboxInfoEvent, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
+	sub *subscriptions.MandelboxEvent, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
 
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
@@ -518,7 +518,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 		image = dockerImageFromRegexes(globalCtx, dockerClient, regexes)
 	} else {
-		image = utils.Sprintf("ghcr.io/whisthq/%s/%s:current-build", metadata.GetAppEnvironmentLowercase(), AppName)
+		image = utils.Sprintf("ghcr.io/fractal/%s/%s:current-build", metadata.GetAppEnvironmentLowercase(), AppName)
 	}
 
 	// We now create the underlying docker container for this mandelbox.
@@ -1065,7 +1065,13 @@ func main() {
 		metrics.Increment("ErrorRate")
 	}
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
-	go subscriptions.Run(globalCtx, globalCancel, &goroutineTracker, string(instanceName), subscriptionEvents)
+
+	whistClient := &subscriptions.WhistClient{}
+	subscriptions.SetupHostSubscriptions(string(instanceName), whistClient)
+	subscriptions.Start(whistClient, globalCtx, &goroutineTracker, subscriptionEvents)
+	if err != nil {
+		logger.Errorf("Failed to start database subscriptions. Error: %s", err)
+	}
 
 	// Start main event loop. Note that we don't track this goroutine, but
 	// instead control its lifetime with `eventLoopKeepAlive`. This is because it
@@ -1195,7 +1201,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 						SessionID:    "1234",
 						UserID:       userID,
 					}
-					subscriptionEvent := subscriptions.MandelboxInfoEvent{
+					subscriptionEvent := subscriptions.MandelboxEvent{
 						MandelboxInfo: []subscriptions.Mandelbox{mandelbox},
 					}
 
@@ -1214,11 +1220,11 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 		case subscriptionEvent := <-subscriptionEvents:
 			switch subscriptionEvent := subscriptionEvent.(type) {
 			// TODO: actually handle panics in these goroutines
-			case *subscriptions.MandelboxInfoEvent:
+			case *subscriptions.MandelboxEvent:
 				go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient,
 					subscriptionEvent, transportRequestMap, transportMapLock)
 
-			case *subscriptions.InstanceStatusEvent:
+			case *subscriptions.InstanceEvent:
 				// Don't do this in a separate goroutine, since there's no reason to.
 				drainAndShutdown(globalCtx, globalCancel, goroutineTracker)
 

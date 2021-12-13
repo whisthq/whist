@@ -9,7 +9,7 @@ package dbdriver // import "github.com/whisthq/whist/host-service/dbdriver"
 import (
 	"math/bits"
 
-	logger "github.com/whisthq/whist/host-service/whistlogger"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
 )
 
 func init() {

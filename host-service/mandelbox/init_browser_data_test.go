@@ -3,12 +3,12 @@ package mandelbox
 import (
 	"bytes"
 	"errors"
-	"os"
 	"io/ioutil"
+	"os"
 	"path"
 	"testing"
 
-	"github.com/whisthq/whist/host-service/mandelbox/types"
+	"github.com/whisthq/whist/core-go/types"
 )
 
 // TestUserInitialBrowserWrite checks if the browser data is properly created by
@@ -20,7 +20,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	}
 
 	defer os.RemoveAll(destDir)
-	
+
 	// Define browser data
 	testCookie1 := "{'creation_utc': 13280861983875934, 'host_key': 'test_host_key_1.com'}"
 	testCookie2 := "{'creation_utc': 4228086198342934, 'host_key': 'test_host_key_2.com'}"
@@ -31,7 +31,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 
 	// Create browser data
 	userInitialBrowserData := BrowserData{
-		CookiesJSON: types.Cookies(cookiesJSON),
+		CookiesJSON:   types.Cookies(cookiesJSON),
 		BookmarksJSON: types.Bookmarks(bookmarksJSON),
 	}
 
@@ -87,7 +87,7 @@ func TestUserInitialBrowserWriteEmpty(t *testing.T) {
 		t.Fatalf("error writing empty user initial browser data: %v", err)
 	}
 
-	// Check if the files do not exists	
+	// Check if the files do not exists
 	cookieFilePath := path.Join(destDir, UserInitialCookiesFile)
 	if _, err := os.Stat(cookieFilePath); err == nil || !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("error writing empty user initial browser data (cookie file). Expected %v but got %v", os.ErrNotExist, err)

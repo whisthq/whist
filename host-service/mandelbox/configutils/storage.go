@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/whisthq/whist/host-service/utils"
+	"github.com/whisthq/whist/core-go/utils"
 )
 
 // NewS3Client returns a new S3 client.

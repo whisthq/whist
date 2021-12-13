@@ -16,14 +16,14 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/whisthq/whist/core-go/metadata"
+	"github.com/whisthq/whist/core-go/metadata/aws"
+	"github.com/whisthq/whist/core-go/subscriptions"
+	mandelboxtypes "github.com/whisthq/whist/core-go/types"
+	"github.com/whisthq/whist/core-go/utils"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
 	"github.com/whisthq/whist/host-service/mandelbox"
 	"github.com/whisthq/whist/host-service/mandelbox/portbindings"
-	mandelboxtypes "github.com/whisthq/whist/host-service/mandelbox/types"
-	"github.com/whisthq/whist/host-service/metadata"
-	"github.com/whisthq/whist/host-service/metadata/aws"
-	"github.com/whisthq/whist/host-service/subscriptions"
-	"github.com/whisthq/whist/host-service/utils"
-	logger "github.com/whisthq/whist/host-service/whistlogger"
 )
 
 // mockClient is a mock Docker client that implements the CommonAPIClient
@@ -128,7 +128,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 				SessionID:    "1234",
 				UserID:       userID,
 			}
-			testMandelboxDBEvent := subscriptions.MandelboxInfoEvent{
+			testMandelboxDBEvent := subscriptions.MandelboxEvent{
 				MandelboxInfo: []subscriptions.Mandelbox{testMandelboxInfo},
 			}
 			testJSONTransportRequest := JSONTransportRequest{
@@ -309,7 +309,7 @@ func TestSpinUpWithNewToken(t *testing.T) {
 		SessionID: "1234",
 		UserID:    mandelboxtypes.UserID(testUser),
 	}
-	testMandelboxDBEvent := subscriptions.MandelboxInfoEvent{
+	testMandelboxDBEvent := subscriptions.MandelboxEvent{
 		MandelboxInfo: []subscriptions.Mandelbox{testMandelboxInfo},
 	}
 	testJSONTransportRequest := JSONTransportRequest{

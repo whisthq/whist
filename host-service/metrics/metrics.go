@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/whisthq/whist/host-service/metadata"
-	"github.com/whisthq/whist/host-service/utils"
-	logger "github.com/whisthq/whist/host-service/whistlogger"
+	"github.com/whisthq/whist/core-go/metadata"
+	"github.com/whisthq/whist/core-go/utils"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
 
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 
