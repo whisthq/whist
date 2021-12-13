@@ -25,6 +25,7 @@ Includes
 #include "audio.h"
 #include "client_utils.h"
 #include "network.h"
+#include "native_window_utils.h"
 
 // Keyboard state variables
 bool alt_pressed = false;
@@ -374,6 +375,21 @@ int handle_multi_gesture(SDL_Event *event) {
     return 0;
 }
 
+int handle_file_drop(SDL_Event *event) {
+    int mouse_x, mouse_y;
+    SDL_CaptureMouse(true);
+    SDL_GetMouseState(&mouse_x, &mouse_y);
+    SDL_CaptureMouse(false);
+    FileEventInfo drop_event_info;
+    // Scale the mouse position for server-side compatibility
+    drop_event_info.server_drop.x = mouse_x * get_native_window_dpi((SDL_Window *)window) / 96;
+    drop_event_info.server_drop.y = mouse_y * get_native_window_dpi((SDL_Window *)window) / 96;
+    file_synchronizer_set_file_reading_basic_metadata(event->drop.file, FILE_TRANSFER_SERVER_DROP,
+                                                      &drop_event_info);
+
+    return 0;
+}
+
 /*
 ============================
 Public Function Implementations
@@ -481,6 +497,12 @@ int handle_sdl_event(SDL_Event *event) {
         }
         case SDL_PINCH: {
             if (handle_pinch(event) != 0) {
+                return -1;
+            }
+            break;
+        }
+        case SDL_DROPFILE: {
+            if (handle_file_drop(event) != 0) {
                 return -1;
             }
             break;

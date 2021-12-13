@@ -65,6 +65,7 @@ Includes
 #include <whist/core/whist_memory.h>
 #include <whist/utils/threads.h>
 #include <whist/clipboard/clipboard_synchronizer.h>
+#include <whist/file/file_drop.h>
 #include <whist/file/file_synchronizer.h>
 #include <whist/utils/color.h>
 #include <whist/network/network.h>

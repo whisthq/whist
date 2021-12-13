@@ -255,6 +255,7 @@ void create_and_send_tcp_wcmsg(WhistClientMessageType message_type, char* payloa
     /*
         Create and send a TCP wcmsg according to the given payload, and then
         deallocate once finished.
+
         Arguments:
             message_type (WhistClientMessageType): the type of the TCP message to be sent
             payload (char*): the payload of the TCP message
@@ -340,6 +341,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
     clock last_ack;
     clock statistics_timer;
     start_timer(&last_ack);
+    bool successful_read_or_pull = false;
 
     while (*run_sync_packets) {
         // Ack the connection every 50 ms
@@ -351,6 +353,8 @@ int multithreaded_sync_tcp_packets(void* opaque) {
             }
             start_timer(&last_ack);
         }
+
+        successful_read_or_pull = false;
 
         // Update TCP ping and reconnect TCP if needed (TODO: does that function do too much?)
         update_tcp_ping();
@@ -365,18 +369,46 @@ int multithreaded_sync_tcp_packets(void* opaque) {
             free_packet(socket_context, packet);
         }
 
+        // PULL CLIPBOARD HANDLER
         ClipboardData* clipboard_chunk = pull_clipboard_chunk();
         if (clipboard_chunk) {
             create_and_send_tcp_wcmsg(CMESSAGE_CLIPBOARD, (char*)clipboard_chunk);
             deallocate_region(clipboard_chunk);
 
-            // We want to continue pumping read_packet or pull_clipboard_chunk
-            // until we pull a NULL chunk
-            continue;
+            successful_read_or_pull = true;
         }
 
-        // Sleep to target one loop every 25 ms.
-        if (get_timer(last_ack) * MS_IN_SECOND < 25.0) {
+        // READ FILE HANDLER
+        FileData* file_chunk;
+        FileMetadata* file_metadata;
+        // Iterate through all file indexes and try to read next chunk to send
+        for (int file_index = 0; file_index < NUM_TRANSFERRING_FILES; file_index++) {
+            file_synchronizer_read_next_file_chunk(file_index, &file_chunk);
+            if (file_chunk == NULL) {
+                // If chunk cannot be read, then try opening the file
+                file_synchronizer_open_file_for_reading(file_index, &file_metadata);
+                if (file_metadata == NULL) {
+                    continue;
+                }
+
+                create_and_send_tcp_wcmsg(CMESSAGE_FILE_METADATA, (char*)file_metadata);
+                // Free file chunk
+                deallocate_region(file_metadata);
+            } else {
+                // If we successfully read a chunk, then send it to the server.
+                create_and_send_tcp_wcmsg(CMESSAGE_FILE_DATA, (char*)file_chunk);
+                // Free file chunk
+                deallocate_region(file_chunk);
+            }
+
+            successful_read_or_pull = true;
+        }
+
+        // We want to continue pumping pull_clipboard_chunk and
+        //     file_synchronizer_read_next_file_chunk
+        //     without sleeping if either of them are currently pulling/reading chunks. Otherwise,
+        //     sleep to target one loop every 25 ms.
+        if (!successful_read_or_pull && get_timer(last_ack) * MS_IN_SECOND < 25.0) {
             whist_sleep(max(1, (int)(25.0 - get_timer(last_ack) * MS_IN_SECOND)));
         }
     }
