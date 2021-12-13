@@ -17,7 +17,7 @@ import {
 import config from "@app/config/environment"
 import { WhistEnvironments } from "../../config/configs"
 import { WhistCallbackUrls } from "@app/config/urls"
-import {logBase} from "@app/utils/logging"
+import { logBase } from "@app/utils/logging"
 import {
   authPortalURL,
   authInfoParse,
@@ -400,19 +400,19 @@ export const createProtocolWindow = async () => {
     }
   })
 }
-app.setAsDefaultProtocolClient('http');
-app.on('open-url', function (event, url) {
+app.setAsDefaultProtocolClient("http")
+app.on("open-url", function (event, url) {
   event.preventDefault()
   ProtocolSendUrlToOpenInNewTab(url)
   logBase(url, {})
-});
+})
 
-app.setAsDefaultProtocolClient('https');
-app.on('open-url', function (event, url) {
+app.setAsDefaultProtocolClient("https")
+app.on("open-url", function (event, url) {
   event.preventDefault()
   ProtocolSendUrlToOpenInNewTab(url)
   logBase(url, {})
-});
+})
 
 export const relaunch = (options?: { args: string[] }) => {
   protocolStreamKill()
