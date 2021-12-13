@@ -32,8 +32,11 @@ install_chrome_extension () {
   echo "{" > "$pref_file_path"
   echo "\"external_update_url\": \"$upd_url\"" >> "$pref_file_path"
   echo "}" >> "$pref_file_path"
-  echo Added \""$pref_file_path"\" ["$2"]
+  echo Added \""$pref_file_path"\"
 }
+
+# Allow developers to install extensions by calling this function
+install_chrome_extension $1 
 
 # Install Chrome (Chromium) Extensions
 # format: install_chrome_extension [extension string ID] [extension name]
