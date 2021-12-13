@@ -14,10 +14,10 @@ shift
 DEST_DIR="$1"
 shift
 if [[ $OS == "Darwin" ]]; then
-    MACOS_ARCH="${1:-x86_64}"
-    shift
+  MACOS_ARCH="${1:-x86_64}"
+  shift
 else
-    MACOS_ARCH="x86_64"
+  MACOS_ARCH="x86_64"
 fi
 CLIENT_DIR="$DEST_DIR/client/build64"
 SERVER_DIR="$DEST_DIR/server/build64"

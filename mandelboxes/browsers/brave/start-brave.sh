@@ -11,8 +11,8 @@ BRAVE_SINGLETON_LOCK=/home/whist/.config/BraveSoftware/Brave-Browser/SingletonLo
 WHIST_BRAVE_SINGLETON_LOCK=/home/whist/.config/WhistBraveSingletonLock
 
 if [[ ! -f $WHIST_BRAVE_SINGLETON_LOCK ]]; then
-    touch $WHIST_BRAVE_SINGLETON_LOCK
-    rm -f $BRAVE_SINGLETON_LOCK
+  touch $WHIST_BRAVE_SINGLETON_LOCK
+  rm -f $BRAVE_SINGLETON_LOCK
 fi
 
 features="VaapiVideoDecoder,Vulkan,CanvasOopRasterization,OverlayScrollbar"
@@ -31,12 +31,12 @@ flags=(
 )
 
 if [[ $DARK_MODE == true ]]; then
-    features="$features,WebUIDarkMode"
-    flags+=(--force-dark-mode)
+  features="$features,WebUIDarkMode"
+  flags+=(--force-dark-mode)
 fi
 
 if [[ $RESTORE_LAST_SESSION == true ]]; then
-    flags+=(--restore-last-session)
+  flags+=(--restore-last-session)
 fi
 
 flags+=(--enable-features=$features)

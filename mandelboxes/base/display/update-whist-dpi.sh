@@ -19,8 +19,8 @@ WHIST_DPI_CACHE_FILE=/usr/share/whist/dpi.cache
 
 # Don't do anything if the DPI didn't change!
 if [[ -f "$WHIST_DPI_CACHE_FILE" ]]; then
-    CACHED_DPI=$(cat $WHIST_DPI_CACHE_FILE)
-    [[ "$WHIST_DPI" == "$CACHED_DPI" ]] && exit
+  CACHED_DPI=$(cat $WHIST_DPI_CACHE_FILE)
+  [[ "$WHIST_DPI" == "$CACHED_DPI" ]] && exit
 fi
 
 # https://unix.stackexchange.com/a/640599

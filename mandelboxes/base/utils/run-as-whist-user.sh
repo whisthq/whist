@@ -36,7 +36,7 @@ if [[ -f $WHIST_JSON_FILE ]]; then
     # Set the system-wide timezone
     timedatectl set-timezone $DESIRED_TIMEZONE
   fi
-  if [ "$( jq 'has("initial_key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then 
+  if [ "$( jq 'has("initial_key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
     if [ "$( jq 'has("key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
       INITIAL_KEY_REPEAT=$( jq -r '.initial_key_repeat' < $WHIST_JSON_FILE )
       KEY_REPEAT=$( jq -r '.key_repeat' < $WHIST_JSON_FILE )
