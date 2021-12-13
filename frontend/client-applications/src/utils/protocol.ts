@@ -173,6 +173,19 @@ export const protocolStreamKill = () => {
   writeStream(childProcess, "kill?0\n")
 }
 
+export const ProtocolSendUrlToOpenInNewTab = (message: string) => {
+  if (message === undefined || message === "") {
+    logBase("Attempted to open undefined/empty URL in new tab", {})
+    return
+  }
+  if (message.length > 2048) {
+    logBase("Attempted to open URL of length that exceeds 2048", {})
+    return
+  }
+
+  writeStream(childProcess, `--new-tab-url?${message}\n`)
+}
+
 export const isNetworkUnstable = (message?: string) => {
   const currentTime = Date.now() / 1000
   if (message?.toString()?.includes("STATISTIC") ?? false)
