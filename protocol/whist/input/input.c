@@ -33,6 +33,8 @@ Defines
 #define KeyUp(input_device, whist_keycode) emit_key_event(input_device, whist_keycode, 0)
 #define KeyDown(input_device, whist_keycode) emit_key_event(input_device, whist_keycode, 1)
 
+#define WHIST_KB_CMD_BUFFER_MAX 128
+
 unsigned int last_input_fcmsg_id = 0;
 WhistOSType input_os_type = WHIST_UNKNOWN_OS;
 
@@ -75,6 +77,23 @@ void update_keyboard_state(InputDevice* input_device, WhistClientMessage* fcmsg)
             "updateKeyboardState requires fcmsg.type to be "
             "MESSAGE_KEYBOARD_STATE");
         return;
+    }
+
+    char* layout = fcmsg->keyboard_state.layout;
+    char* variant = fcmsg->keyboard_state.variant;
+
+    LOG_INFO("LAYOUT: %s", layout);
+    LOG_INFO("VARIANT: %s", variant);
+
+    // we don't care if variant is NULL or empty. The command will still set the proper values.
+    if (layout != NULL) {
+        const char* cmd_format = "setxkbmap -layout %s -variant %s";
+        char cmd_buf[WHIST_KB_CMD_BUFFER_MAX];
+        int bytes_written = snprintf(cmd_buf, WHIST_KB_CMD_BUFFER_MAX, cmd_format, layout, variant);
+
+        if (bytes_written < WHIST_KB_CMD_BUFFER_MAX) {
+            runcmd(cmd_buf, NULL);
+        }
     }
 
     update_mapped_keyboard_state(input_device, input_os_type, fcmsg->keyboard_state);
