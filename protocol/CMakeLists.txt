@@ -252,20 +252,16 @@ message(VERBOSE "FFMPEG PATHS ${FFMPEG_LIBS_PATHS}")
 ]]
 # the NO_* paramaters tell cmake to only look for our included libs and not system wide ones.
 # For linux we use the system openssl/libcrypto. For mac and windows we bundle our own because is not included with the os
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    find_library(LIB_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
-            NO_DEFAULT_PATH
-            NO_CMAKE_ENVIRONMENT PATH
-            NO_CMAKE_PATH
-            NO_SYSTEM_ENVIRONMENT_PATH
-            NO_CMAKE_SYSTEM_PATH
-            NO_CMAKE_FIND_ROOT_PATH)
+find_library(LIB_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
+        NO_DEFAULT_PATH
+        NO_CMAKE_ENVIRONMENT PATH
+        NO_CMAKE_PATH
+        NO_SYSTEM_ENVIRONMENT_PATH
+        NO_CMAKE_SYSTEM_PATH
+        NO_CMAKE_FIND_ROOT_PATH)
 
-    if(NOT LIB_OPENSSL)
-        message(FATAL_ERROR "Library openssl was not found! ${CMAKE_BINARY_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/")
-    endif()
-else()
-    find_package(OpenSSL REQUIRED)
+if(NOT LIB_OPENSSL)
+    message(FATAL_ERROR "Library openssl was not found! ${CMAKE_BINARY_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/")
 endif()
 
 find_library(LIB_SENTRY NAMES sentry PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/sentry/${CMAKE_SYSTEM_NAME}"
@@ -345,6 +341,7 @@ set(PLATFORM_INDEPENDENT_LIBS   whistCore
     whistUtils
     ${STATIC_SDL2}
     ${LIB_SENTRY}
+    ${LIB_OPENSSL}
 )
 set(MAC_SPECIFIC_CLIENT_LIBS       "-framework OpenGL"
     "-framework VideoToolbox"
@@ -359,7 +356,6 @@ set(MAC_SPECIFIC_CLIENT_LIBS       "-framework OpenGL"
     "-framework QuartzCore"
     objc
     iconv
-    ${LIB_OPENSSL}
 )
 
 # MSVC C/C++ Standard Library linking, based on Debug/Release
@@ -388,7 +384,6 @@ endif()
 # Windows Libs Shared by both server and client go here
 set(WINDOWS_CORE_LIBS
     ${WINDOWS_CORE_LIBS}
-    ${LIB_OPENSSL}
     oldnames # Needed by gtest for things like dup2/creat/etc
     kernel32
     gdi32
@@ -433,6 +428,7 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile 
         whistUtils
         ${STATIC_SDL2}
         ${LIB_SENTRY}
+        ${LIB_OPENSSL}
         ${LIBMFX}
     )
     # Server Specific windows libs go here

@@ -149,7 +149,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         GL
         asound
         m
-        OpenSSL::Crypto
     )
 endif()
 
