@@ -28,7 +28,7 @@ Includes
 extern volatile int output_width;
 extern volatile int output_height;
 extern volatile SDL_Window* window;
-bool skip_taskbar = false;
+extern bool skip_taskbar;
 
 #if defined(_WIN32)
 HHOOK g_h_keyboard_hook;
@@ -38,6 +38,23 @@ LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_pa
 // on macOS, we must initialize the renderer in `init_sdl()` instead of video.c
 static SDL_Renderer* sdl_renderer = NULL;
 static SDL_Texture* frame_buffer = NULL;
+
+// Window Color Update
+static volatile WhistRGBColor* native_window_color = NULL;
+static volatile bool native_window_color_update = false;
+
+// Cursor Image Update
+static volatile WhistCursorState cursor_state = CURSOR_STATE_VISIBLE;
+static volatile SDL_Cursor* sdl_cursor = NULL;
+static volatile WhistCursorID last_cursor = (WhistCursorID)SDL_SYSTEM_CURSOR_ARROW;
+
+// Window Title Update
+static volatile char* window_title = NULL;
+static volatile bool should_update_window_title = false;
+
+// Full Screen Update
+static volatile bool fullscreen_trigger = false;
+static volatile bool fullscreen_value = false;
 
 /*
 ============================
@@ -140,15 +157,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         return NULL;
     }
 
-/*
-    On macOS, we must initialize the renderer in the main thread -- seems not needed
-    and not possible on other OSes. If the renderer is created later in the main thread
-    on macOS, the user will see a window open in this function, then close/reopen during
-    renderer creation
-*/
-#ifdef __APPLE__
     sdl_init_renderer(sdl_window);
-#endif
 
     // Set icon, if an icon_filename was given
     if (strcmp(icon_filename, "") != 0) {
@@ -217,19 +226,14 @@ void sdl_init_renderer(SDL_Window* sdl_window) {
 }
 
 void sdl_destroy_renderer() {
-#ifdef __APPLE__
-    // On __APPLE__, the renderer is maintained in init_sdl
     if (frame_buffer) {
         SDL_DestroyTexture(frame_buffer);
         frame_buffer = NULL;
     }
-#else
-    // SDL_DestroyTexture(frame_buffer); is not needed,
-    // the renderer destroys it
-    SDL_DestroyRenderer(sdl_renderer);
-    sdl_renderer = NULL;
-    frame_buffer = NULL;
-#endif
+    if (sdl_renderer) {
+        SDL_DestroyRenderer(sdl_renderer);
+        sdl_renderer = NULL;
+    }
 }
 
 void destroy_sdl(SDL_Window* window_param) {
@@ -239,6 +243,11 @@ void destroy_sdl(SDL_Window* window_param) {
         Arguments:
             window_param (SDL_Window*): SDL window to be destroyed
     */
+
+    if (native_window_color) {
+        free((WhistRGBColor*)native_window_color);
+        native_window_color = NULL;
+    }
 
     LOG_INFO("Destroying SDL");
 #if defined(_WIN32)
@@ -330,53 +339,53 @@ void sdl_update_framebuffer_loading_screen(int idx) {
 
     int gif_frame_index = idx % NUMBER_LOADING_FRAMES;
 
-    clock c;
-    start_timer(&c);
+    char frame_filename[256];
+    snprintf(frame_filename, sizeof(frame_filename), "loading/frame_%02d.png", gif_frame_index);
 
-    char frame_name[24];
-    if (gif_frame_index < 10) {
-        snprintf(frame_name, sizeof(frame_name), "loading/frame_0%d.png", gif_frame_index);
-        //            LOG_INFO("Frame loading/frame_0%d.png", gif_frame_index);
-    } else {
-        snprintf(frame_name, sizeof(frame_name), "loading/frame_%d.png", gif_frame_index);
-        //            LOG_INFO("Frame loading/frame_%d.png", gif_frame_index);
-    }
-
-    SDL_Surface* loading_screen = sdl_surface_from_png_file(frame_name);
+    SDL_Surface* loading_screen = sdl_surface_from_png_file(frame_filename);
     if (loading_screen == NULL) {
-        LOG_WARNING("Loading screen not loaded from %s", frame_name);
+        LOG_ERROR("Loading screen image failed to load: %s", frame_filename);
+        SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+        SDL_RenderClear(sdl_renderer);
         return;
     }
-
-    // free pkt.data which is initialized by calloc in png_file_to_bmp
 
     SDL_Texture* loading_screen_texture =
         SDL_CreateTextureFromSurface(sdl_renderer, loading_screen);
 
-    // surface can now be freed
+    // The surface can now be freed
     sdl_free_png_file_rgb_surface(loading_screen);
 
-    int w = 200;
-    int h = 200;
-    SDL_Rect dstrect;
+    // Position the rectangle such that the texture will be centered
+    int w, h;
+    SDL_QueryTexture(loading_screen_texture, NULL, NULL, &w, &h);
+    SDL_Rect centered_rect = {
+        .x = output_width / 2 - w / 2,
+        .y = output_height / 2 - h / 2,
+        .w = w,
+        .h = h,
+    };
 
-    // SDL_QueryTexture( loading_screen_texture, NULL, NULL, &w, &h );
-    dstrect.x = output_width / 2 - w / 2;
-    dstrect.y = output_height / 2 - h / 2;
-    dstrect.w = w;
-    dstrect.h = h;
-
-    SDL_SetRenderDrawColor(sdl_renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+    // Write the texture out to the renderer
+    SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(sdl_renderer);
-    SDL_RenderCopy(sdl_renderer, loading_screen_texture, NULL, &dstrect);
+    SDL_RenderCopy(sdl_renderer, loading_screen_texture, NULL, &centered_rect);
 
     // texture may now be destroyed
     SDL_DestroyTexture(loading_screen_texture);
 }
 
 void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int height) {
-    // The texture object we allocate is larger than the frame, so we only
-    // copy the valid section of the frame into the texture.
+    // Check dimensions as a fail-safe
+    if (width > MAX_SCREEN_WIDTH || height > MAX_SCREEN_HEIGHT || width < 0 || height < 0) {
+        LOG_ERROR("Invalid Dimensions! %dx%d", width, height);
+        SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+        SDL_RenderClear(sdl_renderer);
+        return;
+    }
+
+    // The texture object we allocate is larger than the frame,
+    // so we only copy the valid section of the frame into the texture.
     SDL_Rect texture_rect = {
         .x = 0,
         .y = 0,
@@ -384,6 +393,7 @@ void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int heig
         .h = height,
     };
 
+    // Update the SDLTexture with the given framedata
     int res = SDL_UpdateNVTexture(frame_buffer, &texture_rect, data[0], linesize[0], data[1],
                                   linesize[1]);
     if (res < 0) {
@@ -393,7 +403,8 @@ void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int heig
         return;
     }
 
-    // Subsection of texture that should be rendered to screen.
+    // Take the subsection of texture that should be rendered to screen,
+    // And draw it on the renderer
     SDL_Rect output_rect = {
         .x = 0,
         .y = 0,
@@ -407,10 +418,6 @@ void sdl_render_framebuffer() {
     // Present the framebuffer to the monitor
     SDL_RenderPresent(sdl_renderer);
 }
-
-volatile WhistCursorState cursor_state = CURSOR_STATE_VISIBLE;
-volatile SDL_Cursor* sdl_cursor = NULL;
-volatile WhistCursorID last_cursor = (WhistCursorID)SDL_SYSTEM_CURSOR_ARROW;
 
 void sdl_update_cursor(WhistCursorImage* cursor) {
     /*
@@ -486,9 +493,6 @@ void sdl_update_cursor(WhistCursorImage* cursor) {
     }
 }
 
-volatile WhistRGBColor* native_window_color = NULL;
-volatile bool native_window_color_update = false;
-
 void sdl_render_window_titlebar_color(WhistRGBColor color) {
     /*
       Update window titlebar color using the colors of the new frame
@@ -513,21 +517,13 @@ void sdl_render_window_titlebar_color(WhistRGBColor color) {
         native_window_color = new_native_window_color;
         native_window_color_update = true;
     }
-
-    /* DEALLOC
-    if (native_window_color) {
-        free((WhistRGBColor*)native_window_color);
-        native_window_color = NULL;
-    }*/
 }
-
-volatile char* window_title;
-volatile bool should_update_window_title = false;
 
 void sdl_set_window_title(const char* requested_window_title) {
     if (should_update_window_title) {
         LOG_WARNING(
             "Failed to update window title, as the previous window title update is still pending");
+        return;
     }
 
     size_t len = strlen(requested_window_title) + 1;
@@ -537,9 +533,6 @@ void sdl_set_window_title(const char* requested_window_title) {
 
     should_update_window_title = true;
 }
-
-volatile bool fullscreen_trigger;
-volatile bool fullscreen_value;
 
 void sdl_set_fullscreen(bool is_fullscreen) {
     fullscreen_trigger = true;
