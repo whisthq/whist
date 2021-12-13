@@ -109,6 +109,8 @@ void sdl_set_fullscreen(bool is_fullscreen);
 
 void sdl_set_window_title(const char* window_title);
 
+bool sdl_is_window_visible();
+
 // Call from main thread
 void update_pending_sdl_tasks();
 

@@ -685,6 +685,13 @@ void sdl_set_window_title(const char* window_title) {
     should_update_window_title = true;
 }
 
+bool sdl_is_window_visible() {
+    return !(
+        SDL_GetWindowFlags((SDL_Window*)window)
+        & (SDL_WINDOW_OCCLUDED | SDL_WINDOW_MINIMIZED)
+    );
+}
+
 volatile bool fullscreen_trigger;
 volatile bool fullscreen_value;
 
