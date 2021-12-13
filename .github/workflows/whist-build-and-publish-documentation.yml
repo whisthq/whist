@@ -30,7 +30,12 @@ jobs:
   whist-build-and-publish-documentation:
     name: Build & Publish Whist Internal Documentation to whisthq/docs
     runs-on: ubuntu-20.04
-    concurrency: whist-build-and-publish-documentation
+    # This is a hack. We don't want concurrency for PRs, since they do not deploy and
+    # can cause spurious PR CI failure. Here, concurrency depends on the branch name
+    # that triggered the action. Deploys end with "-dev" and therefore will be in the
+    # same group, whereas each branch will be in a different group for CI, disabling
+    # concurrency in that case.
+    concurrency: whist-build-and-publish-documentation-${{ github.ref_name }}
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
