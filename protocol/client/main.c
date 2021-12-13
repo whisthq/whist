@@ -140,14 +140,13 @@ int sync_keyboard_state(void) {
     wcmsg.keyboard_state.num_keycodes = fmin(KEYCODE_UPPERBOUND, num_keys);
 #endif
 
-    // Copy keyboard state, but using scancodes of the keys in the current keyboard layout.
-    // Must convert to/from the name of the key so SDL returns the scancode for the key in the
-    // current layout rather than the scancode for the physical key.
+    // We are just keeping track of every key state here.
+    // Now we just care about the scancode and will let the server OS handle
+    // mapping from scancode to keycode
     for (int i = 0; i < wcmsg.keyboard_state.num_keycodes; i++) {
         if (state[i]) {
-            int scancode = SDL_GetScancodeFromName(SDL_GetKeyName(SDL_GetKeyFromScancode(i)));
-            if (0 <= scancode && scancode < (int)sizeof(wcmsg.keyboard_state.state)) {
-                wcmsg.keyboard_state.state[scancode] = 1;
+            if (0 <= i && i < (int)sizeof(wcmsg.keyboard_state.state)) {
+                wcmsg.keyboard_state.state[i] = 1;
             }
         }
     }
