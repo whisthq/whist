@@ -342,7 +342,6 @@ def do_scale_up_if_necessary(
                 current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"]
             )
 
-            global MAX_RETRY_ATTEMPTS, WAIT_TIME_BEFORE_RETRY_IN_SECONDS
             num_attempts = 0
             instance_indexes = range(num_new)
 
