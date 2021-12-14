@@ -36,7 +36,7 @@ install_chrome_extension () {
 }
 
 # Allow developers to install extensions by calling this function
-if [ "$#" -ne 1 ]; then
+if [ "$#" -eq 1 ]; then
   install_chrome_extension $1
 fi
 
