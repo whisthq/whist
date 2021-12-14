@@ -70,11 +70,10 @@ if [ -f "$BOOKMARK_FILE_FILENAME" ]; then
 fi
 
 if [ -f "$EXTENSION_FILENAME"]; then
-  IFS=',' read -ra EXTENSIONS <<< "$(cat $EXTENSION_FILENAME)"
-  for extension in "${EXTENSIONS[@]}"; do
+  while IFS= read -r extension; do
     #  Install user extensions
     /usr/bin/install-extension.sh $extension
-  done
+  done < $(cat $EXTENSION_FILENAME)
   # rm $EXTENSION_FILENAME
   # TODO uncomment when it works
 fi
