@@ -69,7 +69,7 @@ if [ -f "$BOOKMARK_FILE_FILENAME" ]; then
   export WHIST_INITIAL_USER_BOOKMARKS_FILE=$(cat $BOOKMARK_FILE_FILENAME)
 fi
 
-if [ -n "${EXTENSION_FILENAME+1}" ] && [ -f "$EXTENSION_FILENAME"]; then
+if [ -f "$EXTENSION_FILENAME"]; then
   IFS=',' read -ra EXTENSIONS <<< cat $EXTENSION_FILENAME
   for extension in "${EXTENSIONS[@]}"; do
     #  Install user extensions
