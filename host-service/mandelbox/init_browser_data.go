@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 
 	"github.com/whisthq/whist/core-go/types"
 	"github.com/whisthq/whist/core-go/utils"
@@ -50,7 +51,7 @@ func WriteUserInitialBrowserData(initialBrowserData BrowserData, destDir string)
 	extensionFilePath := path.Join(destDir, UserInitialExtensionsFile)
 
 	// We want to replace the comma separated extensions with newlines
-	parsedExtensions = strings.Replace(string(initialBrowserData.Extensions), ",", "\n")
+	parsedExtensions := strings.Replace(string(initialBrowserData.Extensions), ",", "\n")
 
 	browserDataInfos := [][]string{
 		{string(initialBrowserData.CookiesJSON), cookieFilePath, "cookies"},
