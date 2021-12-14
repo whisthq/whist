@@ -87,7 +87,7 @@ void update_keyboard_state(InputDevice* input_device, WhistClientMessage* fcmsg)
     if(layout != NULL) {
         const char* cmd_format = "setxkbmap -layout %s -variant %s";
         const int cmd_size = WHIST_KB_LAYOUT_MAX+WHIST_KB_VARIANT_MAX+64;
-        char cmd_buf[cmd_size];
+        char cmd_buf[96];
         int bytes_written = snprintf(cmd_buf, cmd_size, cmd_format, layout, variant);
 
         if(bytes_written < cmd_size) {
