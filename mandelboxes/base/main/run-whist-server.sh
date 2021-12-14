@@ -70,7 +70,7 @@ if [ -f "$BOOKMARK_FILE_FILENAME" ]; then
 fi
 
 if [ -f "$EXTENSION_FILENAME"]; then
-  IN="$(cat $EXTENSION_FILENAME)"
+  IN="$(cat $(cat $EXTENSION_FILENAME))"
   extensions=(${IN//,/ })
   for extension in "${extensions[@]}"
   do
