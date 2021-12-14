@@ -48,7 +48,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	// Stores the file path and content for each browser data type (bookmark is excluded since it's empty)
 	fileAndContents := [][]string{
 		{cookieFilePath, cookiesJSON},
-		{extensionFilePath, extensions}
+		{extensionFilePath, extensions},
 	}
 
 	for _, fileAndContent := range fileAndContents {
