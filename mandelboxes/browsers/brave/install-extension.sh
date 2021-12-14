@@ -26,9 +26,11 @@ install_brave_extension () {
 # Allow developers to install extensions by calling this function
 if [ "$#" -eq 1 ]; then
   install_brave_extension $1
+else
+  echo "Could not install brave extension $1. Expected 1 arg, got $#"
 fi
 
 
 # Install Brave (Chromium) Extensions
-# format: install_brave_extension [extension string ID] [extension name]
-# i.e.: install_brave_extension "cjpalhdlnbpafiamejdnhcphjbkeiagm" "uBlock Origin"
+# format: install_brave_extension [extension string ID]
+# i.e.: install_brave_extension "cjpalhdlnbpafiamejdnhcphjbkeiagm"
