@@ -29,7 +29,7 @@ const getNetworkTestState = (
   // Network test is finished and the network is good
   if (
     networkInfo.progress >= 100 &&
-    networkInfo.downloadMbps > MIN_ACCEPTABLE_DOWNLAOD_MBPS &&
+    networkInfo.downloadMbps >= MIN_ACCEPTABLE_DOWNLAOD_MBPS &&
     networkInfo.jitter < MAX_ACCEPTABLE_JITTER_MS
   )
     return NetworkTestState.NETWORK_GOOD
