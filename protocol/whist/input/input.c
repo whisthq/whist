@@ -86,13 +86,11 @@ void update_keyboard_state(InputDevice* input_device, WhistClientMessage* fcmsg)
     //we don't care if variant is NULL or empty. The command will still set the proper values.
     if(layout != NULL) {
         const char* cmd_format = "setxkbmap -layout %s -variant %s";
-        //sizeof(cmd_format) should include the null terminator.
-        const size_t cmd_size = sizeof(cmd_format)+WHIST_KB_LAYOUT_MAX+WHIST_KB_VARIANT_MAX;
+        const int cmd_size = WHIST_KB_LAYOUT_MAX+WHIST_KB_VARIANT_MAX+64;
         char cmd_buf[cmd_size];
         int bytes_written = snprintf(cmd_buf, cmd_size, cmd_format, layout, variant);
 
-        //if the bytes_written is greater than our cmd_size than the cmd_buf was truncated
-        if((size_t)bytes_written < cmd_size) {
+        if(bytes_written < cmd_size) {
             runcmd(cmd_buf, NULL);
         }
     }
