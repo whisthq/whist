@@ -401,12 +401,12 @@ export const createProtocolWindow = async () => {
   })
 }
 
-app.setAsDefaultProtocolClient("http")
-app.setAsDefaultProtocolClient("https")
+// app.setAsDefaultProtocolClient("http")
+// app.setAsDefaultProtocolClient("https")
 app.on("open-url", function (event, url) {
   event.preventDefault()
   ProtocolSendUrlToOpenInNewTab(url)
-  logBase(url, {})
+  logBase(`Captured url ${url} after setting Whist as default browser!\n`, {})
 })
 
 export const relaunch = (options?: { args: string[] }) => {

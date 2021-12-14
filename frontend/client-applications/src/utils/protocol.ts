@@ -178,11 +178,11 @@ export const ProtocolSendUrlToOpenInNewTab = (message: string) => {
     logBase("Attempted to open undefined/empty URL in new tab", {})
     return
   }
-  if (message.length > 2048) {
-    logBase("Attempted to open URL of length that exceeds 2048", {})
+  if (message.length > 1024) {
+    logBase("Attempted to open URL of length that exceeds 1024", {})
     return
   }
-
+  logBase(`Sending URL ${message} to protocol to open in new tab!\n`, {})
   writeStream(childProcess, `new-tab-url?${message}\n`)
 }
 

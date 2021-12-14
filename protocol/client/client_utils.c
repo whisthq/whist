@@ -703,6 +703,7 @@ int update_mouse_motion() {
 
 void send_new_tab_url_if_needed() {
     if (new_tab_url) {
+        LOG_INFO("Opening URL %s in new tab!", new_tab_url);
         WhistClientMessage wcmsg = {0};
         wcmsg.type = MESSAGE_OPEN_URL;
         safe_strncpy(wcmsg.url_to_open, (const char *)new_tab_url,
