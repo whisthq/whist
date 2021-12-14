@@ -50,6 +50,12 @@ instance_type_to_vcpu_map = {
     "g4dn.12xlarge": 48,
 }
 
+# We want to have multiple attempts at starting an instance
+# if it fails due to insufficient capacity.
+WAIT_TIME_BEFORE_RETRY_IN_SECONDS = 15
+MAX_WAIT_TIME_IN_SECONDS = 200
+MAX_RETRY_ATTEMPTS = MAX_WAIT_TIME_IN_SECONDS / WAIT_TIME_BEFORE_RETRY_IN_SECONDS
+
 # Currently the limiting factors are GPU count and
 # vCPU count. Our two constraints are mandelboxes/GPU
 # (configured to 2 in the host service) and vCPUs/mandelbox
@@ -335,54 +341,74 @@ def do_scale_up_if_necessary(
             base_number_free_mandelboxes = get_base_free_mandelboxes(
                 current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"]
             )
-            for index in range(num_new):
-                try:
-                    instance_ids = client.start_instances(
-                        image_id=ami,
-                        instance_name=base_name + f"-{index}",
-                        num_instances=1,
-                        instance_type=current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
-                    )
-                except ClientError as error:
-                    if error.response["Error"]["Code"] == "InsufficientInstanceCapacity":
-                        # This error occurs when AWS is out of EC2 instances of the specific
-                        # instance type AWS_INSTANCE_TYPE_TO_LAUNCH, which is out of our control
-                        # and should not raise an error.
-                        whist_logger.warning(
-                            "skipping start instance for instance with "
-                            f"image_id: {ami}, "
-                            f"instance_name: {base_name}-{index}, "
-                            f"num_instances: {1}, "
-                            f"instance_type: {current_app.config['AWS_INSTANCE_TYPE_TO_LAUNCH']}, "
-                            f"error: {error.response['Error']['Code']}"
-                        )
-                    else:
-                        # Any other error may suggest issues within the codebase
-                        raise error
-                    # Skip adding instance id to list.
-                    continue
-                # Setting last update time to -1 indicates that the instance
-                # hasn't told the webserver it's live yet. We add the rows to
-                # the DB now so that future scaling operations don't
-                # double-scale.
-                new_instance = InstanceInfo(
-                    location=region,
-                    aws_ami_id=ami,
-                    cloud_provider_id=f"aws-{instance_ids[0]}",
-                    instance_name=base_name + f"-{index}",
-                    aws_instance_type=current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
-                    mandelbox_capacity=base_number_free_mandelboxes,
-                    last_updated_utc_unix_ms=-1,
-                    creation_time_utc_unix_ms=int(time.time() * 1000),
-                    status=MandelboxHostState.PRE_CONNECTION,
-                    commit_hash=ami_obj.client_commit_hash,
-                    ip="",  # Will be set by `host_service` once it boots up.
-                )
-                new_instance_names.append(new_instance.instance_name)
-                db.session.add(new_instance)
-                db.session.commit()
 
-                whist_logger.info(f"Successfully spun up instance {new_instance.instance_name}")
+            global MAX_RETRY_ATTEMPTS, WAIT_TIME_BEFORE_RETRY_IN_SECONDS
+            num_attempts = 0
+            instance_indexes = range(num_new)
+            while num_attempts <= MAX_RETRY_ATTEMPTS and len(instance_indexes) > 0:
+                whist_logger.info(f"Attempt #{num_attempts} at starting instances")
+
+                # Wait before attempting to start instances again
+                if num_attempts >= 1:
+                    time.sleep(WAIT_TIME_BEFORE_RETRY_IN_SECONDS)
+
+                num_attempts += 1
+                instances_to_retry = []
+
+                for index in instance_indexes:
+                    try:
+                        instance_ids = client.start_instances(
+                            image_id=ami,
+                            instance_name=base_name + f"-{index}",
+                            num_instances=1,
+                            instance_type=current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
+                        )
+                    except ClientError as error:
+                        if error.response["Error"]["Code"] == "InsufficientInstanceCapacity":
+                            # This error occurs when AWS is out of EC2 instances of the specific
+                            # instance type AWS_INSTANCE_TYPE_TO_LAUNCH, which is out of our control
+                            # and should not raise an error.
+                            whist_logger.warning(
+                                "skipping start instance for instance with "
+                                f"image_id: {ami}, "
+                                f"instance_name: {base_name}-{index}, "
+                                f"num_instances: {1}, "
+                                f"instance_type: {current_app.config['AWS_INSTANCE_TYPE_TO_LAUNCH']}, "
+                                f"error: {error.response['Error']['Code']}"
+                            )
+                            # We want to attempt to start instance again
+                            instances_to_retry.append(index)
+                        else:
+                            # Any other error may suggest issues within the codebase
+                            raise error
+                        # Skip adding instance id to list of new instances started
+                        continue
+                    # Setting last update time to -1 indicates that the instance
+                    # hasn't told the webserver it's live yet. We add the rows to
+                    # the DB now so that future scaling operations don't
+                    # double-scale.
+                    new_instance = InstanceInfo(
+                        location=region,
+                        aws_ami_id=ami,
+                        cloud_provider_id=f"aws-{instance_ids[0]}",
+                        instance_name=base_name + f"-{index}",
+                        aws_instance_type=current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
+                        mandelbox_capacity=base_number_free_mandelboxes,
+                        last_updated_utc_unix_ms=-1,
+                        creation_time_utc_unix_ms=int(time.time() * 1000),
+                        status=MandelboxHostState.PRE_CONNECTION,
+                        commit_hash=ami_obj.client_commit_hash,
+                        ip="",  # Will be set by `host_service` once it boots up.
+                    )
+                    new_instance_names.append(new_instance.instance_name)
+                    db.session.add(new_instance)
+                    db.session.commit()
+
+                    whist_logger.info(f"Successfully spun up instance {new_instance.instance_name}")
+
+                # Update the list of instance_indexes to onces that need to be retried
+                instance_indexes = instances_to_retry
+
     return new_instance_names
 
 
