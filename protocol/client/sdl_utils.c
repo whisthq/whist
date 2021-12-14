@@ -38,9 +38,10 @@ LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_pa
 // on macOS, we must initialize the renderer in `init_sdl()` instead of video.c
 static SDL_Renderer* sdl_renderer = NULL;
 static SDL_Texture* frame_buffer = NULL;
+static WhistMutex renderer_mutex;
 
 // Render Update
-bool pending_render = false;
+static bool pending_render = false;
 
 // Window Color Update
 static volatile WhistRGBColor* native_window_color = NULL;
@@ -119,6 +120,8 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         LOG_ERROR("Could not initialize SDL - %s", SDL_GetError());
         return NULL;
     }
+
+    renderer_mutex = whist_create_mutex();
 
     // Allow the screensaver to activate
     SDL_EnableScreenSaver();
@@ -263,6 +266,9 @@ void destroy_sdl(SDL_Window* window_param) {
         SDL_DestroyWindow((SDL_Window*)window_param);
         window_param = NULL;
     }
+
+    whist_destroy_mutex(renderer_mutex);
+
     SDL_Quit();
 }
 
@@ -343,6 +349,8 @@ void sdl_update_framebuffer_loading_screen(int idx) {
 
 #define NUMBER_LOADING_FRAMES 50
 
+    whist_lock_mutex(renderer_mutex);
+
     int gif_frame_index = idx % NUMBER_LOADING_FRAMES;
 
     char frame_filename[256];
@@ -353,6 +361,7 @@ void sdl_update_framebuffer_loading_screen(int idx) {
         LOG_ERROR("Loading screen image failed to load: %s", frame_filename);
         SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_RenderClear(sdl_renderer);
+        whist_unlock_mutex(renderer_mutex);
         return;
     }
 
@@ -379,14 +388,18 @@ void sdl_update_framebuffer_loading_screen(int idx) {
 
     // texture may now be destroyed
     SDL_DestroyTexture(loading_screen_texture);
+    whist_unlock_mutex(renderer_mutex);
 }
 
 void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int height) {
+    whist_lock_mutex(renderer_mutex);
+
     // Check dimensions as a fail-safe
     if (width > MAX_SCREEN_WIDTH || height > MAX_SCREEN_HEIGHT || width < 0 || height < 0) {
         LOG_ERROR("Invalid Dimensions! %dx%d", width, height);
         SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_RenderClear(sdl_renderer);
+        whist_unlock_mutex(renderer_mutex);
         return;
     }
 
@@ -406,6 +419,7 @@ void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int heig
         LOG_ERROR("SDL_UpdateNVTexture failed: %s", SDL_GetError());
         SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_RenderClear(sdl_renderer);
+        whist_unlock_mutex(renderer_mutex);
         return;
     }
 
@@ -418,6 +432,7 @@ void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int heig
         .h = output_height,
     };
     SDL_RenderCopy(sdl_renderer, frame_buffer, &output_rect, NULL);
+    whist_unlock_mutex(renderer_mutex);
 }
 
 void sdl_render_framebuffer() {
@@ -591,7 +606,9 @@ void update_pending_sdl_tasks() {
 
     // Render out the current framebuffer, if there's a pending render
     if (pending_render) {
+        whist_lock_mutex(renderer_mutex);
         SDL_RenderPresent(sdl_renderer);
+        whist_unlock_mutex(renderer_mutex);
         pending_render = false;
     }
 }
