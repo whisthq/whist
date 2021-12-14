@@ -55,7 +55,7 @@ func (wc *SubscriptionClient) Initialize() error {
 
 	wc.SetParams(params)
 
-	sc := graphql.NewSubscriptionClient(wc.GetParams().URL).
+	wc.Hasura = graphql.NewSubscriptionClient(wc.GetParams().URL).
 		WithConnectionParams(map[string]interface{}{
 			"headers": map[string]string{
 				"x-hasura-admin-secret": wc.GetParams().AccessKey,
@@ -66,10 +66,6 @@ func (wc *SubscriptionClient) Initialize() error {
 			logger.Errorf("Error received from Hasura client: %v", err)
 			return err
 		})
-
-	// Use our custom websocket connection
-	sc.WithWebSocket(WhistWebsocketConn)
-	wc.Hasura = sc
 
 	return nil
 }
