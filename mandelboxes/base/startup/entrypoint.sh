@@ -27,7 +27,7 @@ esac
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-WHIST_PRIVATE_DIR = "/usr/share/whist/private"
+WHIST_PRIVATE_DIR=/usr/share/whist/private
 
 # If WHIST_AES_KEY is set, then create file
 if [ -n "${WHIST_AES_KEY+1}" ]
