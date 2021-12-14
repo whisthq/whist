@@ -79,12 +79,12 @@ common_steps () {
   echo "Installing Cloud Provider CLI..."
   echo "================================================"
 
-  if "$CLOUD_PROVIDER" == "aws"; then
+  if [[ "$CLOUD_PROVIDER" == "aws" ]]; then
     # We don't need to configure the AWS CLI (only install it) because this script runs
     # on an AWS EC2 instance, which have awscli automatically configured
     echo "Installing AWS CLI..."
     sudo apt-get install -y awscli
-  elif "$CLOUD_PROVIDER" == "azure"; then
+  elif [[ "$CLOUD_PROVIDER" == "azure" ]]; then
     echo "Installing Azure CLI..."
     curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
     # TODO: do we need to configure it or not?
