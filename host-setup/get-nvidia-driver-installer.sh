@@ -27,6 +27,6 @@ elif [[ "$CLOUD_PROVIDER" == "azure" ]]; then
     wget https://download.microsoft.com/download/5/f/9/5f9d855b-8910-4e2d-90a6-5a038e78940f/NVIDIA-Linux-x86_64-460.73.01-grid-azure.run -O nvidia-driver-installer.run
     chmod +x ./nvidia-driver-installer.run
 else
-    echo "ERROR: Invalid cloud provider: $CLOUD_PROVIDER. This cloud provider is either invalid or not supported yet!"
+    echo "Unrecognized cloud provider $CLOUD_PROVIDER in get-nvidia-driver-installer.sh, not downloading Nvidia GRID drivers. This cloud provier is either invalid or not supported yet!"    
     exit -1
 fi

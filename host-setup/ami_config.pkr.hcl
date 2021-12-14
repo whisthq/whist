@@ -213,7 +213,7 @@ build {
   }
 
   provisioner "shell" {
-    inline       = ["cd /home/ubuntu/host-setup", "./setup_host.sh --deployment ${var.github_username} ${var.github_pat} ${var.git_branch} ${var.git_hash} ${var.mandelbox_logz_shipping_token}", "cd ..", "rm -rf host-setup"]
+    inline       = ["cd /home/ubuntu/host-setup", "./setup_host.sh --deployment aws us-east-1 ${var.access_key} ${var.secret_key} ${var.github_username} ${var.github_pat} ${var.git_branch} ${var.git_hash} ${var.mandelbox_logz_shipping_token}", "cd ..", "rm -rf host-setup"]
     pause_before = "10s"
   }
 

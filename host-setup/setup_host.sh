@@ -42,8 +42,11 @@ EOF
 common_steps () {
   cd "$DIR"
 
-  # Parse input variable(s)
+  # Parse input variables
   CLOUD_PROVIDER=${1}
+  AWS_REGION=${2}
+  AWS_ACCESS_KEY_ID=${3}
+  AWS_SECRET_KEY=${4}
 
   # Set dkpg frontend as non-interactive to avoid irrelevant warnings
   echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
@@ -76,20 +79,35 @@ common_steps () {
   sudo gpasswd -a "$USER" docker
 
   echo "================================================"
-  echo "Installing Cloud Provider CLI..."
+  echo "Installing AWS CLI..."
   echo "================================================"
 
-  if [[ "$CLOUD_PROVIDER" == "aws" ]]; then
-    # We don't need to configure the AWS CLI (only install it) because this script runs
-    # on an AWS EC2 instance, which have awscli automatically configured
-    echo "Installing AWS CLI..."
-    sudo apt-get install -y awscli
-  elif [[ "$CLOUD_PROVIDER" == "azure" ]]; then
+  # We need to install the AWS CLI regardless of which cloud provider this instance is
+  # running on, so that we can retrieve user configs and protocol binaries from AWS S3.
+  sudo apt-get install -y awscli
+
+  # For AWS EC2 instances, we don't need to configure the AWS CLI (only install it), since they
+  # have awscli automatically configured 
+  if [[ "$CLOUD_PROVIDER" -ne "aws" ]]; then
+    echo "Configuring AWS CLI..."
+    aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
+    aws configure set aws_secret_access_key "$AWS_SECRET_KEY"
+    aws configure set default.region "$AWS_REGION"
+  fi
+
+  echo "================================================"
+  echo "Installing Cloud Provider CLI, If Necessary..."
+  echo "================================================"
+
+  # Here we install the CLI of other cloud providers, in this case where this script
+  # is not being run on an AWS EC2 instance, which will also need their own cloud CLI
+  # for the host-service to interface with metadata services
+  if [[ "$CLOUD_PROVIDER" == "azure" ]]; then
     echo "Installing Azure CLI..."
     curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
     # TODO: do we need to configure it or not?
   else
-    echo "ERROR: Invalid cloud provider: $CLOUD_PROVIDER. This cloud provider is either invalid or not supported yet!"
+    echo "Unknown cloud provider: $CLOUD_PROVIDER. This cloud provider is either invalid or not supported yet!"
     exit -1
   fi
 
@@ -440,13 +458,16 @@ if [[ -n "$DEPLOYMENT" ]]; then
   # Parse input variable(s)
   # On deployment, we send the cloud provider and the deployment environment as arguments
   CLOUD_PROVIDER=${1}
-  GH_USERNAME=${2}
-  GH_PAT=${3}
-  GIT_BRANCH=${4}
-  GIT_HASH=${5}
-  LOGZ_TOKEN=${6}
+  AWS_REGION=${2}
+  AWS_ACCESS_KEY_ID=${3}
+  AWS_SECRET_KEY=${4}
+  GH_USERNAME=${5}
+  GH_PAT=${6}
+  GIT_BRANCH=${7}
+  GIT_HASH=${8}
+  LOGZ_TOKEN=${9}
 
-  common_steps "$CLOUD_PROVIDER"
+  common_steps "$CLOUD_PROVIDER" "$AWS_REGION" "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_KEY"
   deployment_setup_steps "$GH_USERNAME" "$GH_PAT" "$GIT_BRANCH" "$GIT_HASH" "$LOGZ_TOKEN"
   common_steps_post
 fi
