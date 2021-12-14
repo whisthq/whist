@@ -467,6 +467,8 @@ const getExtensions = async (
 
   const extensions = getExtensionIDs(browser)
 
+  if (extensions.length === 0) return undefined
+
   return extensions
 }
 
