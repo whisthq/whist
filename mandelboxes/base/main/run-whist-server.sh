@@ -77,8 +77,7 @@ if [ -f "$EXTENSION_FILENAME" ]; then
     #  Install user extensions
     /usr/bin/install-extension.sh $extension
   done
-  # rm $EXTENSION_FILENAME
-  # TODO uncomment when it works
+  rm $EXTENSION_FILENAME
 fi
 
 # We use named pipe redirection for consistency with our WhistServer launch setup
