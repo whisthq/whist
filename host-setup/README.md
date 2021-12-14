@@ -23,7 +23,16 @@ To set up your Whist development instance:
 
 - Set the keypair permissions to owner-readonly by running `chmod 400 your-keypair.pem` and connect to your `ssh -i "your-keypair.pem" ubuntu@ec2-[your-instance-public-ipv4-with-hyphens].compute-1.amazonaws.com`.
 
-  - If you want to make connecting to your AWS instance easier, you can export an alias for the command in your `.zshrc`/`.bashrc`, depending on which shell you use, by adding `alias [your-alias]="ssh -i "[path-to-your-keypair.pem" ubuntu@ec2-[your-instance-public-ipv4].compute-1.amazonaws.com".
+  - If you want to make connecting to your AWS instance easier, you can export an alias for the command in your `.zshrc`/`.bashrc`, depending on which shell you use, by adding `alias [your-alias]="ssh -i "[path-to-your-keypair].pem" ubuntu@ec2-[your-instance-public-ipv4].compute-1.amazonaws.com"`.
+
+  - Alternatively, put the following in your .ssh/config file:
+
+        Host foo
+            Hostname        ec2-[your-instance-ip].compute-1.amazonaws.com
+            User            ubuntu
+            IdentityFile    [path-to-your-keypair].pem
+
+    and then you can both `ssh foo` and `scp bar foo:~`.
 
 - Run `sudo apt-get update` to refresh the packager manager, and run `sudo apt-get install awscli git`. **Note that all steps in below need to be run in the ubuntu userspace**.
 
@@ -45,7 +54,7 @@ cd ~/whist/host-setup
 # before moving to the next step, make sure to reboot as prompted
 sudo reboot
 
-# build the Whist base container image
+# build the Whist base container image (swap base to browsers/chrome to build the Whist Chrome container)
 cd ~/whist/mandelboxes
 ./build.sh base
 
@@ -56,11 +65,14 @@ make run # keep this open in a separate terminal
 # run the Whist base container image (swap base to browsers/chrome to run the Whist Chrome container)
 cd ~/whist/mandelboxes
 ./run.sh base
+# this will give you a root shell inside the container; when the shell exits, the container will close as well
 ```
 
 ⚠️ If `./setup_host.sh` fails with the error `Unable to locate credentials`, run `aws configure` and then rerun the script. Enter your AWS credentials for the access key and secret key; for the region, use **us-east-1**.
 
 ⚠️ If the `./build.sh base` command fails due to apt being unable to fetch some archives (e.g. error: `E: Unable to fetch some archives, maybe run apt-get update or try with --fix-missing?`), call `docker system prune -af` first, then run `./build.sh base` again.
+
+⚠️ If the `./run.sh foo` command doesn't appear to do anything, check the host-service output. If it complains about fetching objects, make sure that the build step for foo was successful.
 
 - Start a Whist protocol client to connect to the Whist protocol server running on your instance by following the instructions in [`protocol/client/README.md`](https://github.com/whisthq/whist/blob/dev/protocol/client/README.md). If a window pops up that streams the Whist base application, which is currently **xeyes**, then you are all set!
 
