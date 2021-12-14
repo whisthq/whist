@@ -73,12 +73,18 @@ common_steps () {
   sudo gpasswd -a "$USER" docker
 
   echo "================================================"
-  echo "Installing AWS CLI..."
+  echo "Installing Cloud Provider CLI..."
   echo "================================================"
 
-  # We don't need to configure the AWS CLI (only install it) because this script runs
-  # on an AWS EC2 instance, which have awscli automatically configured
-  sudo apt install -y awscli
+  if cloud_provider == "aws"; then
+    # We don't need to configure the AWS CLI (only install it) because this script runs
+    # on an AWS EC2 instance, which have awscli automatically configured
+    echo "Installing AWS CLI..."
+    sudo apt-get install -y awscli
+  elif cloud_provider == "azure"; then
+    echo "Installing Azure CLI..."
+    curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+  fi
 
   echo "================================================"
   echo "Installing NVIDIA drivers..."
@@ -103,7 +109,7 @@ EOF
 GRUB_CMDLINE_LINUX="rdblacklist=nouveau"
 EOF
 
-  # Install NVIDIA GRID (virtualized GPU) drivers
+  # Install NVIDIA GRID (virtualized GPU) drivers for the right cloud provider
   ./get-nvidia-driver-installer.sh
   sudo chmod +x nvidia-driver-installer.run
   sudo ./nvidia-driver-installer.run --silent

@@ -1,6 +1,6 @@
 # Whist Host Setup
 
-This subfolder contains the scripts to set up AWS EC2 instances for developing Whist, and for setting up AWS EC2 AMIs (Amazon Machine Images) for our production EC2 instances running Whist containers for our users.
+This subfolder contains the scripts to set up cloud instances for developing Whist, and for setting up AWS EC2 AMIs (Amazon Machine Images) for our production EC2 instances running Whist containers for our users.
 
 An AMI is an operating system image, in our case a snapshot of Linux Ubuntu with specific packages, drivers and settings preinstalled and preconfigured, which can be easily loaded onto an EC2 instance instead of using default Linux Ubuntu. We use Whist-specific AMIs with our EC2 instances as it results in faster deployment (the images are prebuilt) and ensures that all of our EC2 instances run the exact same operating system, which is specifically optimized for running Whist containers.
 
