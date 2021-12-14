@@ -335,11 +335,12 @@ def do_scale_up_if_necessary(
                 f"{region} with AMI ID {ami} but no active entry found in database"
             )
 
+        aws_instance_type = current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"]
         if num_new > 0:
             client = EC2Client(region_name=region)
             base_name = generate_name(starter_name=f"ec2-{region}")
             base_number_free_mandelboxes = get_base_free_mandelboxes(
-                current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"]
+                aws_instance_type
             )
 
             num_attempts = 0
@@ -362,7 +363,7 @@ def do_scale_up_if_necessary(
                             image_id=ami,
                             instance_name=base_name + f"-{index}",
                             num_instances=1,
-                            instance_type=current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
+                            instance_type=aws_instance_type,
                         )
                     except ClientError as error:
                         if error.response["Error"]["Code"] == "InsufficientInstanceCapacity":
@@ -374,7 +375,7 @@ def do_scale_up_if_necessary(
                                 f"image_id: {ami}, "
                                 f"instance_name: {base_name}-{index}, "
                                 f"num_instances: {1}, "
-                                f"instance_type: {current_app.config['AWS_INSTANCE_TYPE_TO_LAUNCH']}, "
+                                f"instance_type: {aws_instance_type}, "
                                 f"error: {error.response['Error']['Code']}"
                             )
                             # We want to attempt to start instance again
