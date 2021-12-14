@@ -33,6 +33,8 @@ Defines
 #define KeyUp(input_device, whist_keycode) emit_key_event(input_device, whist_keycode, 0)
 #define KeyDown(input_device, whist_keycode) emit_key_event(input_device, whist_keycode, 1)
 
+#define WHIST_KB_CMD_BUFFER_MAX 128
+
 unsigned int last_input_fcmsg_id = 0;
 WhistOSType input_os_type = WHIST_UNKNOWN_OS;
 
@@ -83,14 +85,13 @@ void update_keyboard_state(InputDevice* input_device, WhistClientMessage* fcmsg)
     LOG_INFO("LAYOUT: %s", layout);
     LOG_INFO("VARIANT: %s", variant);
 
-    //we don't care if variant is NULL or empty. The command will still set the proper values.
-    if(layout != NULL) {
+    // we don't care if variant is NULL or empty. The command will still set the proper values.
+    if (layout != NULL) {
         const char* cmd_format = "setxkbmap -layout %s -variant %s";
-        const int cmd_size = WHIST_KB_LAYOUT_MAX+WHIST_KB_VARIANT_MAX+64;
-        char cmd_buf[96];
-        int bytes_written = snprintf(cmd_buf, cmd_size, cmd_format, layout, variant);
+        char cmd_buf[WHIST_KB_CMD_BUFFER_MAX];
+        int bytes_written = snprintf(cmd_buf, WHIST_KB_CMD_BUFFER_MAX, cmd_format, layout, variant);
 
-        if(bytes_written < cmd_size) {
+        if (bytes_written < WHIST_KB_CMD_BUFFER_MAX) {
             runcmd(cmd_buf, NULL);
         }
     }
