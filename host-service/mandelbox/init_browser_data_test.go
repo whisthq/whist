@@ -34,7 +34,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	userInitialBrowserData := BrowserData{
 		CookiesJSON:   types.Cookies(cookiesJSON),
 		BookmarksJSON: types.Bookmarks(bookmarksJSON),
-		Extensions:    types.Extensions(extensions)
+		Extensions:    types.Extensions(extensions),
 	}
 
 	if err := WriteUserInitialBrowserData(userInitialBrowserData, destDir); err != nil {
