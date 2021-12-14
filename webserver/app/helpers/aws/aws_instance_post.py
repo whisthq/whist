@@ -339,12 +339,10 @@ def do_scale_up_if_necessary(
         if num_new > 0:
             client = EC2Client(region_name=region)
             base_name = generate_name(starter_name=f"ec2-{region}")
-            base_number_free_mandelboxes = get_base_free_mandelboxes(
-                aws_instance_type
-            )
+            base_number_free_mandelboxes = get_base_free_mandelboxes(aws_instance_type)
 
             num_attempts = 0
-            instance_indexes = range(num_new)
+            instance_indexes = list(range(num_new))
 
             # Attempt to start new instancces if necessary
             while num_attempts <= MAX_RETRY_ATTEMPTS and len(instance_indexes) > 0:
