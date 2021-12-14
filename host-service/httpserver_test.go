@@ -33,6 +33,7 @@ func TestSpinUpHandler(t *testing.T) {
 		JSONData:              "test_json_data",
 		Cookies:               "[{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}]",
 		Bookmarks:             "{ 'test_bookmark': '1'}",
+		Extensions:            "not_real_extension_id,not_real_second_extension_id",
 		resultChan:            make(chan requestResult),
 	}
 
@@ -129,6 +130,7 @@ func TestHttpServerIntegration(t *testing.T) {
 		JSONData:              "test_json_data",
 		Cookies:               "[{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}]",
 		Bookmarks:             "{ 'test_bookmark': '1'}",
+		Extensions:			   "",
 		resultChan:            make(chan requestResult),
 	}
 	req, err := generateTestJSONTransportRequest(testJSONTransportRequest)
