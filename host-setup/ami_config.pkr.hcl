@@ -63,6 +63,11 @@ variable "github_username" {
 
 /* Miscellaneous variables */
 
+variable "cloud_provider" {
+  type    = string
+  default = ""
+}
+
 variable "mandelbox_logz_shipping_token" {
   type    = string
   default = ""

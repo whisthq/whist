@@ -279,7 +279,7 @@ def apply_dpkg_locking_fixup(pexpect_process, pexpect_prompt):
 
 def run_host_setup_on_instance(pexpect_process, pexpect_prompt, aws_ssh_cmd, aws_timeout, logfile):
     print("Running the host setup on the instance ...")
-    command = "cd ~/whist/host-setup && ./setup_host.sh --localdevelopment | tee ~/host_setup.log"
+    command = "cd ~/whist/host-setup && ./setup_host.sh --localdevelopment aws | tee ~/host_setup.log"
     pexpect_process.sendline(command)
     result = pexpect_process.expect([pexpect_prompt, "E: Could not get lock"])
     pexpect_process.expect(pexpect_prompt)
