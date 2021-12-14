@@ -24,7 +24,10 @@ install_brave_extension () {
 }
 
 # Allow developers to install extensions by calling this function
-install_brave_extension $1
+if [ "$#" -eq 1 ]; then
+  install_brave_extension $1
+fi
+
 
 # Install Brave (Chromium) Extensions
 # format: install_brave_extension [extension string ID] [extension name]

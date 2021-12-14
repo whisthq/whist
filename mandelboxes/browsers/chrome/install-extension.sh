@@ -36,7 +36,9 @@ install_chrome_extension () {
 }
 
 # Allow developers to install extensions by calling this function
-install_chrome_extension $1 
+if [ "$#" -ne 1 ]; then
+  install_chrome_extension $1
+fi
 
 # Install Chrome (Chromium) Extensions
 # format: install_chrome_extension [extension string ID] [extension name]
