@@ -23,6 +23,7 @@ import { ONBOARDED } from "@app/constants/store"
 import {
   getDecryptedCookies,
   getBookmarks,
+  getExtensions,
   InstalledBrowser,
 } from "@app/utils/importer"
 
@@ -85,6 +86,13 @@ const importBookmarks = fromTrigger(WhistTrigger.onboarded).pipe(
   share() // If you don't share, this observable will fire many times (once for each subscriber of the flow)
 )
 
+const importExtensions = fromTrigger(WhistTrigger.onboarded).pipe(
+  switchMap((t) =>
+    from(getExtensions(t?.importBrowserDataFrom as InstalledBrowser))
+  ),
+  share() // If you don't share, this observable will fire many times (once for each subscriber of the flow)
+)
+
 const dontImportBrowserData = of(persistGet(ONBOARDED) as boolean).pipe(
   take(1),
   filter((onboarded: boolean) => onboarded),
@@ -100,6 +108,7 @@ const launchTrigger = fromSignal(
     isNewConfigToken,
     cookies: merge(importCookies, dontImportBrowserData),
     bookmarks: merge(importBookmarks, dontImportBrowserData),
+    extensions: merge(importExtensions, dontImportBrowserData),
     userEmail,
   }).pipe(
     map((x: object) => ({

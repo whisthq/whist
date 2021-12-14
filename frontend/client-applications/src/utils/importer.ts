@@ -39,7 +39,7 @@ enum InstalledBrowser {
 
 interface Cookie {
   [key: string]: Buffer | string | number
-}
+}Cook
 
 const getBrowserDefaultDirectory = (browser: InstalledBrowser): string[] => {
   switch (process.platform) {
@@ -101,6 +101,11 @@ const getCookieFilePath = (browser: InstalledBrowser): string[] => {
 const getBookmarkFilePath = (browser: InstalledBrowser): string[] => {
   const browserDirectories = getBrowserDefaultDirectory(browser)
   return browserDirectories.map((dir) => path.join(dir, "Bookmarks"))
+}
+
+const getExtensionDir = (browser: InstalledBrowser): string[] => {
+  const browserDirectories = getBrowserDefaultDirectory(browser)
+  return browserDirectories.map((dir) => path.join(dir, "Extensions"))
 }
 
 const getOsCryptName = (browser: InstalledBrowser): string => {
@@ -340,6 +345,19 @@ const getBookmarksFromFile = (browser: InstalledBrowser): string => {
   }
 }
 
+const getExtensionIDs = (browser: InstalledBrowser): string => {
+  const extensionsDir = expandPaths(getExtensionDir(browser))
+
+  try {
+    // Get all the directory names as it is the extenion's ID
+    const extensions = fs.readdirSync(extensionsDir, { withFileTypes: true }).filter(dirent => dirent.isDirectory() && dirent.name != "Temp").map(dirent => dirent.name)
+    return extensions.toString()
+  } catch (err) {
+    console.error(err)
+    return ""
+  }
+}
+
 const getCookieEncryptionKey = async (
   browser: InstalledBrowser
 ): Promise<Buffer> => {
@@ -439,9 +457,20 @@ const getBookmarks = async (
   return JSON.stringify(bookmarks)
 }
 
+const getExtensions = async (
+  browser: InstalledBrowser
+): Promise<string | undefined> => {
+  if (browser === undefined) return undefined
+
+  const extensions = getExtensionIDs(browser)
+
+  return extensions
+}
+
 export {
   InstalledBrowser,
   getInstalledBrowsers,
   getDecryptedCookies,
   getBookmarks,
+  getExtensions,
 }

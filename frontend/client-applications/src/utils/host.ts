@@ -25,6 +25,7 @@ export const hostSpinUp = async ({
   json_data,
   cookies,
   bookmarks,
+  extensions,
 }: {
   ip: string
   config_encryption_token: string
@@ -34,6 +35,7 @@ export const hostSpinUp = async ({
   json_data: string
   cookies: string | undefined
   bookmarks: string | undefined
+  extensions: string | undefined
 }) =>
   hostPut(`https://${ip}:${HostServicePort}`)({
     endpoint: "/json_transport",
@@ -45,6 +47,7 @@ export const hostSpinUp = async ({
       json_data,
       ...((cookies ?? "") !== "" && { cookies }),
       ...((bookmarks ?? "") !== "" && { bookmarks }),
+      ...((extensions ?? "") !== "" && { extensions }),
     },
   })
 

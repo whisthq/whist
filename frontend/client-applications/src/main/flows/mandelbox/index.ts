@@ -17,6 +17,7 @@ export default flow(
       isNewConfigToken: boolean
       cookies: string
       bookmarks: string
+      extensions: string
       userEmail: string
     }>
   ) => {
@@ -43,6 +44,7 @@ export default flow(
           mandelboxID: c.mandelboxID,
           cookies: t.cookies,
           bookmarks: t.bookmarks,
+          extensions: t.extensions,
           jsonData: JSON.stringify({
             dark_mode: nativeTheme.shouldUseDarkColors,
             desired_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
