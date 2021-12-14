@@ -468,7 +468,7 @@ jobs:
   # Runs if config succeeds and branch is in ["prod", "staging", "dev"]
   mandelboxes-and-amis-publish-ghcr-and-aws:
     name: "Mandelbox Infrastructure: Build & Publish Whist Mandelboxes and AMIs"
-    runs-on: [self-hosted, linux, x64, t3.xlarge]
+    runs-on: ubuntu-20.04
     concurrency: mandelboxes-and-amis-publish-ghcr-and-aws-${{ github.ref }}
     needs: [whist-publish-build-config, whist-build-monorepo-config]
     outputs:
@@ -499,7 +499,7 @@ jobs:
 
       - name: Setup Python-based notifications # slack notifications need to be set up before steps that can lead to errors
         working-directory: .github/workflows/helpers
-        run: ./notifications/setup_notifications.sh "true" # "True" means we install dependencies, in case of running on a self-hosted runner
+        run: ./notifications/setup_notifications.sh
 
       - name: Build release protocol # No need to run this for debug, just for release
         working-directory: protocol
