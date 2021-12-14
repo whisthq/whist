@@ -39,7 +39,7 @@ enum InstalledBrowser {
 
 interface Cookie {
   [key: string]: Buffer | string | number
-}Cook
+}
 
 const getBrowserDefaultDirectory = (browser: InstalledBrowser): string[] => {
   switch (process.platform) {
@@ -350,7 +350,10 @@ const getExtensionIDs = (browser: InstalledBrowser): string => {
 
   try {
     // Get all the directory names as it is the extenion's ID
-    const extensions = fs.readdirSync(extensionsDir, { withFileTypes: true }).filter(dirent => dirent.isDirectory() && dirent.name != "Temp").map(dirent => dirent.name)
+    const extensions = fs
+      .readdirSync(extensionsDir, { withFileTypes: true })
+      .filter((dirent) => dirent.isDirectory() && dirent.name !== "Temp")
+      .map((dirent) => dirent.name)
     return extensions.toString()
   } catch (err) {
     console.error(err)
