@@ -80,34 +80,21 @@ void update_keyboard_state(InputDevice* input_device, WhistClientMessage* fcmsg)
     char* layout = fcmsg->keyboard_state.layout;
     char* variant = fcmsg->keyboard_state.variant;
 
-    char* cmd = NULL;
+    LOG_INFO("LAYOUT: %s", layout);
+    LOG_INFO("VARIANT: %s", variant);
 
-    if(layout != NULL && variant != NULL) {
-        const char cmd_format[] = "setxkbmap -layout %s -variant %s";
-        const int cmd_size = sizeof(cmd_format)+strlen(layout)+strlen(variant);
+    //we don't care if variant is NULL or empty. The command will still set the proper values.
+    if(layout != NULL) {
+        const char* cmd_format = "setxkbmap -layout %s -variant %s";
+        //sizeof(cmd_format) should include the null terminator.
+        const size_t cmd_size = sizeof(cmd_format)+WHIST_KB_LAYOUT_MAX+WHIST_KB_VARIANT_MAX;
         char cmd_buf[cmd_size];
-        snprintf(cmd_buf, cmd_size, cmd_format, layout, variant);
-        cmd=cmd_buf;
-    }
-    if(layout != NULL && variant == NULL) {
-        const char cmd_format[] = "setxkbmap -layout %s";
-        const int cmd_size = sizeof(cmd_format)+strlen(layout);
-        char cmd_buf[cmd_size];
-        snprintf(cmd_buf, cmd_size, cmd_format, layout);
-        cmd=cmd_buf;
-    }
-    if(layout == NULL && variant != NULL) {
-        const char cmd_format[] = "setxkbmap -variant %s";
-        const int cmd_size = sizeof(cmd_format)+strlen(variant);
-        char cmd_buf[cmd_size];
-        snprintf(cmd_buf, cmd_size, cmd_format, variant);
-        cmd=cmd_buf;
-    }
+        int bytes_written = snprintf(cmd_buf, cmd_size, cmd_format, layout, variant);
 
-    //eventually check if layout/variant has changed from what the server has stored
-    //this way we only run the command if needed.
-    if(cmd != NULL) {
-        runcmd(cmd, NULL);
+        //if the bytes_written is greater than our cmd_size than the cmd_buf was truncated
+        if((size_t)bytes_written < cmd_size) {
+            runcmd(cmd_buf, NULL);
+        }
     }
 
     update_mapped_keyboard_state(input_device, input_os_type, fcmsg->keyboard_state);
