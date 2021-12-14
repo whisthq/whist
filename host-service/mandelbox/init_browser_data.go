@@ -51,7 +51,7 @@ func WriteUserInitialBrowserData(initialBrowserData BrowserData, destDir string)
 	extensionFilePath := path.Join(destDir, UserInitialExtensionsFile)
 
 	// We want to replace the comma separated extensions with newlines
-	parsedExtensions := strings.Replace(string(initialBrowserData.Extensions), ",", "\n")
+	parsedExtensions := strings.Replace(string(initialBrowserData.Extensions), ",", "\n", -1)
 
 	browserDataInfos := [][]string{
 		{string(initialBrowserData.CookiesJSON), cookieFilePath, "cookies"},
