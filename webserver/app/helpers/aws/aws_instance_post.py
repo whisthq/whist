@@ -392,7 +392,7 @@ def do_scale_up_if_necessary(
                         aws_ami_id=ami,
                         cloud_provider_id=f"aws-{instance_ids[0]}",
                         instance_name=base_name + f"-{index}",
-                        aws_instance_type=current_app.config["AWS_INSTANCE_TYPE_TO_LAUNCH"],
+                        aws_instance_type=aws_instance_type,
                         mandelbox_capacity=base_number_free_mandelboxes,
                         last_updated_utc_unix_ms=-1,
                         creation_time_utc_unix_ms=int(time.time() * 1000),
