@@ -4,7 +4,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"strings"
 
 	"github.com/whisthq/whist/core-go/types"
 	"github.com/whisthq/whist/core-go/utils"
