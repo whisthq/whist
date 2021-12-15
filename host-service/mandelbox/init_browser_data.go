@@ -60,7 +60,7 @@ func WriteUserInitialBrowserData(initialBrowserData BrowserData, destDir string)
 		filePath := browserDataInfo[1]
 		contentType := browserDataInfo[2]
 
-		if len(content) < 0 {
+		if len(content) == 0 {
 			logger.Infof("Did not create new file: %s of type %v as content was empty", filePath, contentType)
 			continue
 		}
