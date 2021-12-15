@@ -128,14 +128,18 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
 
   ssh_username = "ubuntu"
 
+associate_public_ip_address = true  # (bool) - If using a non-default VPC, public IP addresses are not provided by default. If this is true, your new instance will get a Public IP. default: false
+
+availability_zone (string) - Destination availability zone to launch instance in. Leave this empty to allow Amazon to auto-assign.
+
+
 
   subnet_filter {
     filters = {
-      "tag:Purpose": "Packer",
       "tag:Purpose": "packer"
     }
-    most_free = true
-    random    = true
+    most_free = true # The Subnet with the most free IPv4 addresses will be used if multiple Subnets matches the filter.
+    random    = true # A random Subnet will be used if multiple Subnets matches the filter. most_free have precendence over this.
   }
 
 
@@ -161,7 +165,7 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
 
 
 
-
+shutdown_behavior (string) - Automatically terminate instances on shutdown in case Packer exits ungracefully. Possible values are stop and terminate. Defaults to stop.
 
 
 
