@@ -12,6 +12,8 @@ type HasuraParams struct {
 // Instance represents a row from the "instance_info" table
 // in the database. These fields are defined in queries.go
 type Instance struct {
+	Location     string `json:"location"`
+	ImageID      string `json:"aws_ami_id"`
 	InstanceName string `json:"instance_name"`
 	Status       string `json:"status"`
 }
