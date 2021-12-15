@@ -102,6 +102,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      # This is necessary to avoid running out of storage on stateful, self-hosted runners
+      - name: Prune Old Docker Containers
+        run: sudo docker system prune -af
+
       # Build all Docker images, as if we were in production
       - name: Build Mandelboxes
         working-directory: mandelboxes
