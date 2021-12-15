@@ -205,12 +205,12 @@ option(DOWNLOAD_BINARIES "download binaries from S3 via AWS CLI" ON)
 if(DOWNLOAD_BINARIES)
     message(STATUS "Downloading Whist Protocol binaries from AWS S3")
     if(WSL)
-        set(download_args ${CMAKE_SYSTEM_NAME} "`wslpath ${CMAKE_BINARY_DIR}/client/build64`" "`wslpath ${CMAKE_BINARY_DIR}/server/build64`" "`wslpath ${CMAKE_BINARY_DIR}`" "`wslpath ${CMAKE_BINARY_DIR}/.download-binaries-cache`")
+        set(download_args ${CMAKE_SYSTEM_NAME} "`wslpath ${CMAKE_BINARY_DIR}`")
         execute_process(COMMAND ${WSL} ${BASH} "`wslpath ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh`" ${download_args}
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                         RESULT_VARIABLE download_result)
     else()
-        set(download_args ${CMAKE_SYSTEM_NAME} ${CMAKE_BINARY_DIR}/client/build64 ${CMAKE_BINARY_DIR}/server/build64 ${CMAKE_BINARY_DIR} ${CMAKE_BINARY_DIR}/.download-binaries-cache ${MACOS_ARCHITECTURE})
+        set(download_args ${CMAKE_SYSTEM_NAME} ${CMAKE_BINARY_DIR} ${MACOS_ARCHITECTURE})
         execute_process(COMMAND ${BASH} ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh ${download_args}
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                         RESULT_VARIABLE download_result)

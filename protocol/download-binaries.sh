@@ -10,16 +10,23 @@ set -Eeuo pipefail
 ###############################
 
 OS="$1"
-CLIENT_DIR="$2"
-SERVER_DIR="$3"
-DEST_DIR="$4"
-CACHE_DIR="$5"
-MACOS_ARCH="${6:-x86_64}"
+shift
+DEST_DIR="$1"
+shift
+if [[ $OS == "Darwin" ]]; then
+  MACOS_ARCH="${1:-x86_64}"
+  shift
+else
+  MACOS_ARCH="x86_64"
+fi
+CLIENT_DIR="$DEST_DIR/client/build64"
+SERVER_DIR="$DEST_DIR/server/build64"
+CACHE_DIR="$DEST_DIR/download-binaries-cache"
 mkdir -p "$CLIENT_DIR"
 mkdir -p "$SERVER_DIR"
 mkdir -p "$CACHE_DIR"
 
-CACHE_FILE="$CACHE_DIR/.libcache"
+CACHE_FILE="$CACHE_DIR/libcache"
 touch "$CACHE_FILE"
 # NOTE: Should be listed _first_ in an || statement, so that it updates the timestamp without getting short-circuited
 function has_updated {

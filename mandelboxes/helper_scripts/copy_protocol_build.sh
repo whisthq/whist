@@ -18,9 +18,9 @@ SOURCE_DIR="../protocol"
 BUILD_DIR=""
 
 if [[ "${2:-WhistServer}" == "WhistServer" ]]; then
-	BUILD_DIR="../protocol/build-docker/server/build64"
+  BUILD_DIR="../protocol/build-docker/server/build64"
 else
-	BUILD_DIR="../protocol/build-docker/client/build64"
+  BUILD_DIR="../protocol/build-docker/client/build64"
 fi
 
 # Verify that the WhistServer/WhistClient is there
