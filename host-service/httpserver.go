@@ -92,7 +92,7 @@ type JSONTransportRequest struct {
 	Cookies               mandelboxtypes.Cookies               `json:"cookies,omitempty"`              // The cookies provided by the client-app
 	Bookmarks             mandelboxtypes.Bookmarks             `json:"bookmarks,omitempty"`            // Bookmarks provided by the client-app
 	Extensions            mandelboxtypes.Extensions            `json:"extensions,omitempty"`           // Extensions provided by the client-ap
-	resultChan            chan requestResult                   // Channel to pass the request result between goroutines
+	resultChan            chan requestResult                                                           // Channel to pass the request result between goroutines
 }
 
 // JSONTransportRequestResult defines the data returned by the

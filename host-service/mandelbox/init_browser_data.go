@@ -60,12 +60,13 @@ func WriteUserInitialBrowserData(initialBrowserData BrowserData, destDir string)
 		filePath := browserDataInfo[1]
 		contentType := browserDataInfo[2]
 
-		if len(content) > 0 {
-			if err := utils.WriteToNewFile(filePath, content); err != nil {
-				logger.Errorf("could not create %s file. Error: %v", contentType, err)
-			}
-		} else {
+		if len(content) < 0 {
 			logger.Infof("Did not create new file: %s of type %v as content was empty", filePath, contentType)
+			continue
+		}
+		
+		if err := utils.WriteToNewFile(filePath, content); err != nil {
+			logger.Errorf("could not create %s file. Error: %v", contentType, err)
 		}
 	}
 

@@ -349,7 +349,7 @@ const getExtensionIDs = (browser: InstalledBrowser): string => {
   const extensionsDir = expandPaths(getExtensionDir(browser))
 
   try {
-    // Get all the directory names as it is the extenion's ID
+    // Get all the directory names as it is the extension's ID
     const extensions = fs
       .readdirSync(extensionsDir, { withFileTypes: true })
       .filter((dirent) => dirent.isDirectory() && dirent.name !== "Temp")
