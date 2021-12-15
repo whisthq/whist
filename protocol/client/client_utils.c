@@ -93,7 +93,6 @@ const char *usage;
 #define INCOMING_MAXLEN 127
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
 #define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:n:rl:sx:"
-#define URL_MAX_LEN 1024
 
 /*
 ============================
@@ -254,11 +253,11 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
             break;
         }
         case 'x': {
-            if (strlen(eval_optarg) > URL_MAX_LEN) {
+            if (strlen(eval_optarg) > MAX_URL_LENGTH) {
                 LOG_ERROR(
-                    "Cannot open URLs of length greater than 1024 characters! URL passed has size "
+                    "Cannot open URLs of length greater than %d characters! URL passed has size "
                     "%lu",
-                    strlen(eval_optarg));
+                    MAX_URL_LENGTH, strlen(eval_optarg));
                 break;
             }
             new_tab_url = calloc(sizeof(char), strlen(eval_optarg) + 1);

@@ -21,6 +21,7 @@ Includes
 
 #include <whist/network/network.h>
 #include <whist/network/ringbuffer.h>
+#include <whist/core/whist.h>
 
 #define MAX_INIT_CONNECTION_ATTEMPTS (6)
 #define MAX_RECONNECTION_ATTEMPTS (10)

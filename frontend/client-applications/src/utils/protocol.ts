@@ -12,7 +12,11 @@ import fs from "fs"
 import { spawn, ChildProcess } from "child_process"
 import config, { loggingFiles } from "@app/config/environment"
 import { electronLogPath, protocolToLogz, logBase } from "@app/utils/logging"
-import { appEnvironment, WhistEnvironments } from "../../config/configs"
+import {
+  appEnvironment,
+  WhistEnvironments,
+  GeneralConstants,
+} from "../../config/configs"
 import logRotate from "log-rotate"
 
 const NACK_LOOKBACK_PERIOD_IN_MS = 1500 // Number of milliseconds to look back when measuring # of nacks
@@ -178,8 +182,11 @@ export const ProtocolSendUrlToOpenInNewTab = (message: string) => {
     logBase("Attempted to open undefined/empty URL in new tab", {})
     return
   }
-  if (message.length > 1024) {
-    logBase("Attempted to open URL of length that exceeds 1024", {})
+  if (message.length > GeneralConstants.MAX_URL_LENGTH) {
+    logBase(
+      `Attempted to open URL of length that exceeds ${GeneralConstants.MAX_URL_LENGTH}`,
+      {}
+    )
     return
   }
   logBase(`Sending URL ${message} to protocol to open in new tab!\n`, {})

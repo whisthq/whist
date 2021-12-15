@@ -35,7 +35,6 @@ Includes
 Defines
 ============================
 */
-#define MAX_URL_LENGTH 2048
 #define MAX_URL_CMD_LENGTH 2108  // MAX_URL_LENGTH + 60 for the command itself
 
 /*
@@ -547,6 +546,9 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
         Returns:
             (int): Returns -1 on failure, 0 on success
     */
+
+    // Step 1: Obtain a pointer to the URL string, and measure the length to ensure it is not too
+    // long.
     char *received_url = fcmsg->url_to_open;
     size_t url_length = strlen(received_url);
     if (url_length > MAX_URL_LENGTH) {
@@ -558,6 +560,13 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
     }
     LOG_INFO("Received URL to open in new tab: %s", received_url);
 
+    // Step 2: Create the command to run on the Mandelbox's terminal to open the received URL in a
+    // new tab. To open a new tab with a given url, we can just use the terminal command: `exec
+    // google-chrome <insert url here>`. This command, however, needs to be run after by the same
+    // user that ran the initial google-chrome command, responsible for starting the browser on the
+    // back end. In our case, the user is 'whist', and we can use the run-as-whist-user.sh script to
+    // do just that. We pass the `exec google-chrome <received url here>` command as a parameter to
+    // the run-as-whist-user.sh script, and the script will take care of the rest.
     size_t command_len =
         url_length + strlen("/usr/share/whist/run-as-whist-user.sh \"exec google-chrome \"") + 1;
     char command[MAX_URL_CMD_LENGTH];
@@ -566,6 +575,9 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
     sprintf(command, "/usr/share/whist/run-as-whist-user.sh \"exec google-chrome %s\"",
             received_url);
 
+    // Step 3: Execute the command created in step 2 (which consists of a call to the
+    // run-as-whist-user.sh script with the appropriate parameter) in the mandelbox, and save the
+    // resulting stdout in the open_url_result string.
     char *open_url_result;
     int ret = runcmd(command, &open_url_result);
     if (ret != 0) {

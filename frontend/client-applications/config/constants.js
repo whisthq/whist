@@ -23,8 +23,13 @@ const WhistWebservers = {
   production: "https://prod-server.whist.com",
 }
 
+const GeneralConstants = {
+  MAX_URL_LENGTH: 2048,
+}
+
 module.exports = {
   WhistNodeEnvironments,
   WhistEnvironments,
   WhistWebservers,
+  GeneralConstants,
 }
