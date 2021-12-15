@@ -480,7 +480,7 @@ jobs:
       aws_new_ami_instance_type: g4dn.xlarge # The AWS EC2 instance type our new AMI gets built on
       aws_new_ami_vpc_id: vpc-e0935889 # The ID of the Whist-created VPC the EC2 instance building the AMI is part of
       aws_source_ami_id: ami-0bd9c26722573e69b # The base AWS-provided AMI we build our AMI from (AWS Ubuntu Server 20.04 LTS) associated with the aws_new_ami_source_region
-      apps: "browsers/chrome browsers/brave" # We only deploy the browsers mandelboxes
+      apps: "browsers/chrome browsers/brave" # We only deploy the browsers mandelboxes, as other mandelboxes are for internal use only
 
     steps:
       - name: Checkout Git Repository
@@ -625,11 +625,17 @@ jobs:
           import subprocess
           import json
 
-          # stdout will be shared with the subprocess so we can see what is happening
-          subprocess.run("packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
+          retry_count = 0
+          while not os.path.exists("manifest.json") and retry_count < 5:
+            retry_count += 1
+            # stdout will be shared with the subprocess so we can see what is happening
+            subprocess.run("packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
 
-          # if packer fails, manifest.json does not get created and the entire workflow fails here
-          assert os.path.exists("manifest.json")
+            # If Packer fails, manifest.json does not get created. We retry up to 5 times, as we may 
+            # face InsufficientCapacity issues from AWS, which typically get resolved via retrying after
+            # waiting up to 200 seconds.
+
+          # Save Packer output to a JSON, to use for creating new instances with the newly created AMI
           fp = open("manifest.json", "r")
           data = json.load(fp)
           fp.close()

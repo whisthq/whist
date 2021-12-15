@@ -1,8 +1,8 @@
+/* 
+ * Variables passed to Packer via the -var-file flag, as JSON
+ */
 
-
-
-###
-
+/* AWS variables */
 
 variable "access_key" {
   type      = string
@@ -10,15 +10,15 @@ variable "access_key" {
   sensitive = true
 }
 
-variable "ami_name" {
-  type    = string
-  default = ""
+variable "secret_key" {
+  type      = string
+  default   = ""
+  sensitive = true
 }
 
-variable "destination_regions" {
-  type    = list(string)
-  default = []
-}
+
+
+/* GitHub variables */
 
 variable "git_branch" {
   type    = string
@@ -52,16 +52,25 @@ variable "github_username" {
   sensitive = true
 }
 
+
+
+
+variable "ami_name" {
+  type    = string
+  default = ""
+}
+
+variable "destination_regions" {
+  type    = list(string)
+  default = []
+}
+
 variable "instance_type" {
   type    = string
   default = ""
 }
 
-variable "secret_key" {
-  type      = string
-  default   = ""
-  sensitive = true
-}
+
 
 variable "source_ami" {
   type    = string

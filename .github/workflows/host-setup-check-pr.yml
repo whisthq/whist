@@ -21,7 +21,7 @@ jobs:
     runs-on: [self-hosted, linux, x64, t3.xlarge]
     env:
       aws_new_ami_source_region: us-east-1 # The AWS region our new AMI gets built in, we pick a region that's not very used to avoid "insufficient capacity" issues
-      aws_new_ami_instance_type: g4dn.2xlarge # The AWS EC2 instance type our new AMI gets built on (must be the EC2 instance type we run in production)
+      aws_new_ami_instance_type: g4dn.xlarge # The AWS EC2 instance type our new AMI gets built on (must be the EC2 instance type we run in production)
       aws_new_ami_vpc_id: vpc-34aded4e # The ID of the Whist-created VPC the EC2 instance building the AMI is part of
       aws_source_ami_id: ami-0885b1f6bd170450c # The base AWS-provided AMI we build our AMI from (AWS Ubuntu Server 20.04 LTS) associated with the aws_new_ami_source_region
 
@@ -86,7 +86,7 @@ jobs:
           data["git_hash"] = "e885ddd98fd5d02841435592a6cb191321a53d24"
 
           # pr_number is the number of the pr this check is running for,
-          # used to identify the packer instance we create
+          # used to identify the Packer instance we create
           data["pr_number"] = "${{ github.event.number }}"
           data["git_commit_sha"] = "${{ github.sha }}"
           data["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
@@ -116,11 +116,18 @@ jobs:
           import subprocess
           import json
 
-          # stdout will be shared with the subprocess so we can see what is happening
-          subprocess.run("packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
+          retry_count = 0
+          while not os.path.exists("manifest.json") and retry_count < 5:
+            retry_count += 1
+            # stdout will be shared with the subprocess so we can see what is happening
+            subprocess.run("packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
 
-          # if packer fails, manifest.json does not get created and the entire workflow fails here
-          assert os.path.exists("manifest.json")
+            # If Packer fails, manifest.json does not get created. We retry up to 5 times, as we may 
+            # face InsufficientCapacity issues from AWS, which typically get resolved via retrying after
+            # waiting up to 200 seconds.
+
+          # Print Packer output for debugging visibility, since this data is used in the next step of the 
+          # deploy stage, in `whist-build-and-deploy.yml`
           fp = open("manifest.json", "r")
           data = json.load(fp)
           fp.close()
