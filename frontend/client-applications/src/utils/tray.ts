@@ -14,7 +14,10 @@ import { defaultAllowedRegions } from "@app/constants/mandelbox"
 import { MenuItem } from "electron/main"
 import { createSpeedtestWindow } from "@app/utils/windows"
 import { persistGet } from "@app/utils/persist"
-import { RESTORE_LAST_SESSION } from "@app/constants/store"
+import {
+  RESTORE_LAST_SESSION,
+  WHIST_IS_DEFAULT_BROWSER,
+} from "@app/constants/store"
 
 // We create the tray here so that it persists throughout the application
 let tray: Tray | null = null
@@ -92,9 +95,11 @@ const settingsMenu = new MenuItem({
       },
     },
     {
-      label: "(Coming Soon) Make Whist my default browser",
+      label: "Make Whist my default browser",
+      type: "checkbox",
+      checked: <boolean>persistGet(WHIST_IS_DEFAULT_BROWSER) ?? false,
       click: () => {
-        trayEvent.emit("default-browser")
+        trayEvent.emit("whist-is-default-browser")
       },
     },
   ],

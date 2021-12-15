@@ -51,6 +51,7 @@ const WhistTrigger = {
   trayFeedbackAction: "trayFeedbackAction",
   trayBugAction: "trayBugAction",
   trayRestoreSessionAction: "trayRestoreSessionAction",
+  trayWhistIsDefaultBrowserAction: "trayWhistIsDefaultBrowserAction",
   showPaymentWindow: "showPaymentWindow",
 
   // Flow triggers
