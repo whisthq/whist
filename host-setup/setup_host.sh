@@ -43,10 +43,10 @@ common_steps () {
   cd "$DIR"
 
   # Parse input variables
-  CLOUD_PROVIDER=${1}
-  AWS_REGION=${2}
-  AWS_ACCESS_KEY_ID=${3}
-  AWS_SECRET_KEY=${4}
+  CLOUD_PROVIDER=${1:-"aws"}
+  AWS_REGION=${2:-"us-east-1"}
+  AWS_ACCESS_KEY_ID=${3:-""}
+  AWS_SECRET_KEY=${4:-""}
 
   # Set dkpg frontend as non-interactive to avoid irrelevant warnings
   echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
@@ -90,9 +90,22 @@ common_steps () {
   # have awscli automatically configured 
   if [[ "$CLOUD_PROVIDER" -ne "aws" ]]; then
     echo "Configuring AWS CLI..."
-    aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
-    aws configure set aws_secret_access_key "$AWS_SECRET_KEY"
-    aws configure set default.region "$AWS_REGION"
+
+    if [[ -f "/home/ubuntu/.aws/credentials" ]]; then
+      echo "Found existing AWS credentials, assuming this is a local development instance..."
+    else
+      if [[ "$AWS_ACCESS_KEY_ID" == "" ]]; then
+        # If the user has not set up their AWS credentials, then we need to prompt them for them.
+        echo "AWS credentials not found. If this is a development instance, please run `aws configure` to set them up."
+        echo "If this is a deployment instance, please ensure that the credentials are set in the Packer deployment."
+        exit -1
+      else
+        # We have the credentials, so we can configure the AWS CLI
+        aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
+        aws configure set aws_secret_access_key "$AWS_SECRET_KEY"
+        aws configure set default.region "$AWS_REGION"
+      fi
+    fi
   fi
 
   echo "================================================"
