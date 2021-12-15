@@ -156,12 +156,12 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 	// dev/staging/prod ones, so we can use the same regex list in all
 	// environments.
 	regexes := []string{
-		`fractal/browsers/chrome:current-build`,
-		`fractal/browsers/brave:current-build`,
-		`ghcr.io/fractal/*/browsers/chrome:current-build`,
-		`ghcr.io/fractal/*/browsers/brave:current-build`,
-		`ghcr.io/fractal/*`,
-		`*fractal*`,
+		`whisthq/browsers/chrome:current-build`,
+		`whisthq/browsers/brave:current-build`,
+		`ghcr.io/whisthq/.*/browsers/chrome:current-build`,
+		`ghcr.io/whisthq/.*/browsers/brave:current-build`,
+		`ghcr.io/whisthq/.*`,
+		`.*whisthq.*`,
 	}
 
 	image := dockerImageFromRegexes(globalCtx, client, regexes)
@@ -518,7 +518,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 		image = dockerImageFromRegexes(globalCtx, dockerClient, regexes)
 	} else {
-		image = utils.Sprintf("ghcr.io/fractal/%s/%s:current-build", metadata.GetAppEnvironmentLowercase(), AppName)
+		image = utils.Sprintf("ghcr.io/whisthq/%s/%s:current-build", metadata.GetAppEnvironmentLowercase(), AppName)
 	}
 
 	// We now create the underlying docker container for this mandelbox.
