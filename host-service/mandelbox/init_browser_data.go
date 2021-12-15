@@ -20,9 +20,9 @@ const (
 
 // BrowserData is a collection of possible browser datas a user generates
 type BrowserData struct {
-	// CookieJSON is the user's cookie sqlite3 file in a string format
+	// CookieJSON is the user's cookie sqlite3 file in a json string format
 	CookiesJSON types.Cookies
-	// BookmarkJSON is the user's bookmark json file
+	// BookmarkJSON is the user's bookmark json file using json string format
 	BookmarksJSON types.Bookmarks
 	// Extensions is a comma spliced string that represents the users browser extensions
 	Extensions types.Extensions
