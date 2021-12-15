@@ -3,7 +3,16 @@
 # This script starts the Whist protocol server and the Whist application.
 
 # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
-eval "$(sentry-cli bash-hook)"
+SENTRY_ENV_FILENAME=/usr/share/whist/private/sentry_env
+case $(cat $SENTRY_ENV_FILENAME) in
+  dev|staging|prod)
+    export SENTRY_ENVIRONMENT=${SENTRY_ENV}
+    eval "$(sentry-cli bash-hook)"
+    ;;
+  *)
+    echo "Sentry environment not set, skipping Sentry error handler"
+    ;;
+esac
 
 # Exit on subcommand errors
 set -Eeuo pipefail
@@ -12,7 +21,6 @@ set -Eeuo pipefail
 WHIST_MAPPINGS_DIR=/whist/resourceMappings
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
 PRIVATE_KEY_FILENAME=/usr/share/whist/private/aes_key
-SENTRY_ENV_FILENAME=/usr/share/whist/private/sentry_env
 COOKIE_FILE_FILENAME=/usr/share/whist/private/user_cookies_file
 BOOKMARK_FILE_FILENAME=/usr/share/whist/private/user_bookmarks_file
 USER_UPLOAD_TARGET_FILENAME=/usr/share/whist/private/user_target
