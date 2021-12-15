@@ -31,7 +31,6 @@ import (
 	"os/signal"
 	"path"
 	"regexp"
-	"runtimme"
 	"strconv"
 	"strings"
 	"sync"
@@ -380,10 +379,8 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 // SpinUpMandelbox is the request used to create a mandelbox on this host.
 func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient,
 	sub *subscriptions.MandelboxEvent, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
-	// Use at least 2 threads
-	runtime.GOMAXPROCS(2)
 
-	logAndReturnError := func(fmt string, v ...interface{}) {
+		logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
 		logger.Error(err)
 		metrics.Increment("ErrorRate")
@@ -735,8 +732,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// Write user initial browser data at the same time as writeJSONData.
 	// This is done separately since both functions are independent of each other and we can save time.
-	userInitialBrowserDataDownloadComplete := make(chan bool)
-	go func() {
+	browserDataGroup, _ := errgroup.WithContext(mandelbox.GetContext())
+	browserDataGroup.Go(func() {
 		logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
 
 		// Create browser data
@@ -755,7 +752,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		}
 
 		logger.Infof("SpinUpMandelbox(): Successfully wrote user initial browser data for mandelbox %s", mandelboxSubscription.ID)
-	}()
+	})
 
 	// Write the config.json file with the data received from JSON transport
 	err = mandelbox.WriteJSONData()
@@ -764,7 +761,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		metrics.Increment("ErrorRate")
 	}
 
-	<-userInitialBrowserDataDownloadComplete
+	browserDataGroup.Wait()
 
 	// Unblocks whist-startup.sh to start symlink loaded user configs
 	err = mandelbox.MarkReady()
