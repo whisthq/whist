@@ -323,7 +323,7 @@ const getCookiesFromFile = async (
 
     return rows
   } catch (err) {
-    console.error(`Could not get cookies from file. Error: ${err}`)
+    console.error("Could not get cookies from file. Error:", err)
     return []
   }
 }
@@ -339,8 +339,8 @@ const getBookmarksFromFile = (browser: InstalledBrowser): string => {
     delete bookmarksJSON.checksum
 
     return JSON.stringify(bookmarksJSON)
-  } catch (err) {    
-    console.error(`Could not get bookmarks from file. Error: ${err}`)
+  } catch (err) {
+    console.error("Could not get bookmarks from file. Error:", err)
     return ""
   }
 }
@@ -356,7 +356,7 @@ const getExtensionIDs = (browser: InstalledBrowser): string => {
       .map((dirent) => dirent.name)
     return extensions.toString()
   } catch (err) {
-    console.error(`Could not get extensions IDs. Error: ${err}`)
+    console.error("Could not get extensions IDs. Error:", err)
     return ""
   }
 }
