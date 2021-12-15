@@ -733,7 +733,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// Write user initial browser data at the same time as writeJSONData.
 	// This is done separately since both functions are independent of each other and we can save time.
 	browserDataGroup, _ := errgroup.WithContext(mandelbox.GetContext())
-	browserDataGroup.Go(func() {
+	browserDataGroup.Go(func() error {
 		logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
 
 		// Create browser data
@@ -747,10 +747,11 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		err := mandelboxData.WriteUserInitialBrowserData(userInitialBrowserData, destDir)
 		if err != nil {
 			logger.Warningf("Error writing user initial browser data for mandelbox %s: %v", mandelboxSubscription.ID, err)
-			return
+			return nil
 		}
 
 		logger.Infof("SpinUpMandelbox(): Successfully wrote user initial browser data for mandelbox %s", mandelboxSubscription.ID)
+		return nil
 	})
 
 	// Write the config.json file with the data received from JSON transport
