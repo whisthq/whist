@@ -31,6 +31,7 @@ import (
 	"os/signal"
 	"path"
 	"regexp"
+	"runtimme"
 	"strconv"
 	"strings"
 	"sync"
@@ -379,6 +380,8 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 // SpinUpMandelbox is the request used to create a mandelbox on this host.
 func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient,
 	sub *subscriptions.MandelboxEvent, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
+	// Use at least 2 threads
+	runtime.GOMAXPROCS(2)
 
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
