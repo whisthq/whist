@@ -69,7 +69,7 @@ if [ -f "$BOOKMARK_FILE_FILENAME" ]; then
   export WHIST_INITIAL_USER_BOOKMARKS_FILE=$(cat $BOOKMARK_FILE_FILENAME)
 fi
 
-if [ -f "$EXTENSION_FILENAME" ] && [ -n "{$(cat $EXTENSION_FILENAME)+1}" ]; then
+if [ -f "$EXTENSION_FILENAME" ] && [ -f "$(cat $EXTENSION_FILENAME)" ]; then
   IN="$(cat $(cat $EXTENSION_FILENAME))"
   extensions=(${IN//,/ })
   for extension in "${extensions[@]}"
