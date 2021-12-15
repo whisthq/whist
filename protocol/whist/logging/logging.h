@@ -75,6 +75,10 @@ extern const char *debug_tag, *info_tag, *metric_tag, *warning_tag, *error_tag, 
 #define ERROR_TAG error_tag
 #define FATAL_ERROR_TAG fatal_error_tag
 
+// We use do/while(0) to force the user to ";" the end of the LOG,
+// While still keeping the statement inside a contiguous single block,
+// so that `if(cond) LOG;` works as expected
+
 #if LOG_LEVEL >= DEBUG_LEVEL
 #define LOG_DEBUG(message, ...)                                                          \
     do {                                                                                 \
@@ -109,8 +113,10 @@ extern const char *debug_tag, *info_tag, *metric_tag, *warning_tag, *error_tag, 
 #define LOG_METRIC(message, ...)
 #endif
 
-// LOG_WARNING refers to something going wrong, but it's unknown whether or not it's the code or the
-// host's configuration (i.e. no audio device etc)
+// LOG_WARNING refers to something going wrong,
+// but it's unknown whether or not it's the code's fault or
+// simply the host's situation (i.e. no audio device etc)
+// TLDR ~ Something dubious happened, but not sure if it's an issue or not though.
 #if LOG_LEVEL >= WARNING_LEVEL
 #define LOG_WARNING(message, ...)                                                            \
     do {                                                                                     \
@@ -121,8 +127,10 @@ extern const char *debug_tag, *info_tag, *metric_tag, *warning_tag, *error_tag, 
 #define LOG_WARNING(message, ...)
 #endif
 
-// LOG_ERROR must imply that something is fundamentally wrong with our code, but it is a recoverable
-// error
+// LOG_ERROR *must* directly imply that something is fundamentally wrong with our code,
+// but refers to something that is recoverable nonetheless.
+// For OS errors, use LOG_WARNING when we want to try to recover, and LOG_FATAL when we do not.
+// TLDR ~ Problems with *our code* that we can still and want to, recover from.
 #if LOG_LEVEL >= ERROR_LEVEL
 #define LOG_ERROR(message, ...)                                                          \
     do {                                                                                 \
@@ -133,13 +141,27 @@ extern const char *debug_tag, *info_tag, *metric_tag, *warning_tag, *error_tag, 
 #define LOG_ERROR(message, ...)
 #endif
 
-// LOG_FATAL implies that the protocol cannot recover from this error, something might be
-// wrong with our code (Or e.g. the host is out of RAM etc)
+// LOG_FATAL implies that the protocol cannot recover from this (usually OS-related) error,
+// This is generally used for OS errors (the host being out of RAM, SDL failing to initialize),
+// If an OS-related error code is recoverable, but exceedingly unlikely or unheard of thusfar
+// (e.g. mutex creation failing), LOG_FATAL is highly preferred over attempting a recovery.
+// TLDR ~ Problems with *the OS* that are unexpected and not easily recoverable from.
 #define LOG_FATAL(message, ...)                                            \
     do {                                                                   \
         internal_logging_printf(FATAL_ERROR_TAG, LOG_FMT message NEWLINE,  \
                                 LOG_ARGS(FATAL_ERROR_TAG), ##__VA_ARGS__); \
         terminate_protocol(WHIST_EXIT_FAILURE);                            \
+    } while (0)
+
+// FATAL_ASSERT will fatally exist when something absurd happens,
+// such as an index being negative, or otherwise out-of-bounds.
+// Even if we "could" recover, fatally asserting is preferred for absurdity checks.
+// TLDR ~ Problems with *our code* that are absurd or unexpected.
+#define FATAL_ASSERT(condition)                              \
+    do {                                                     \
+        if (!(condition)) {                                  \
+            LOG_FATAL("Assertion [%s] Failed!", #condition); \
+        }                                                    \
     } while (0)
 
 /*
