@@ -70,7 +70,7 @@ Private Functions
 
 bool clipboard_action_is_active(WhistClipboardActionType check_action_type);
 bool start_clipboard_transfer(WhistClipboardActionType new_clipboard_action_type);
-void finish_active_transfer(bool action_complete);
+void finish_active_transfer(bool action_complete, bool destroying);
 
 /*** Thread Functions ***/
 int push_clipboard_thread_function(void* opaque);
@@ -128,7 +128,7 @@ bool start_clipboard_transfer(WhistClipboardActionType new_clipboard_action_type
     }
 
     // Abort an active transfer if it exists
-    finish_active_transfer(false);
+    finish_active_transfer(false, false);
 
     // Create new thread
     if (new_clipboard_action_type == CLIPBOARD_ACTION_PUSH) {
@@ -152,7 +152,7 @@ bool start_clipboard_transfer(WhistClipboardActionType new_clipboard_action_type
     return true;
 }
 
-void finish_active_transfer(bool action_complete) {
+void finish_active_transfer(bool action_complete, bool destroying) {
     /*
         If active clipboard action thread exists, wake up the thread,
         set all variables that will allow this thread to exit,
@@ -161,6 +161,9 @@ void finish_active_transfer(bool action_complete) {
         Arguments:
             action_complete (bool): true if the action is complete, false
                 if the action is being aborted
+            destroying (bool): true if we are going to destroy the clipboard
+                synchronizer - in this case, do not detach the thread because
+                the caller will join it
 
         NOTE: must be called with `current_clipboard_activity.clipboard_action_mutex` held
     */
@@ -206,12 +209,17 @@ void finish_active_transfer(bool action_complete) {
     // Wake up the current thread and clean up its resources
     whist_broadcast_cond(current_clipboard_activity.continue_action_condvar);
 
-    // It is safe to pass NULL to `whist_detach_thread`, so we don't need to check
-    whist_detach_thread(current_clipboard_activity.active_clipboard_action_thread);
-    current_clipboard_activity.active_clipboard_action_thread = NULL;
-    current_clipboard_activity.aborting_ptr = NULL;
-    current_clipboard_activity.complete_ptr = NULL;
-    current_clipboard_activity.clipboard_buffer_ptr = NULL;
+    if (destroying) {
+        // The caller needs to join the thread to ensure that it has finished,
+        // so do nothing here.
+    } else {
+        // It is safe to pass NULL to `whist_detach_thread`, so we don't need to check
+        whist_detach_thread(current_clipboard_activity.active_clipboard_action_thread);
+        current_clipboard_activity.active_clipboard_action_thread = NULL;
+        current_clipboard_activity.aborting_ptr = NULL;
+        current_clipboard_activity.complete_ptr = NULL;
+        current_clipboard_activity.clipboard_buffer_ptr = NULL;
+    }
 }
 
 /*** Thread Functions ***/
@@ -489,7 +497,7 @@ void push_clipboard_chunk(ClipboardData* cb_chunk) {
     if (cb_chunk->chunk_type == CLIPBOARD_FINAL) {
         // ready to set OS clipboard
         LOG_INFO("Finishing clipboard push");
-        finish_active_transfer(true);
+        finish_active_transfer(true, false);
     }
 
     whist_unlock_mutex(current_clipboard_activity.clipboard_action_mutex);
@@ -552,7 +560,7 @@ ClipboardData* pull_clipboard_chunk() {
                (*current_clipboard_activity.clipboard_buffer_ptr)->size) {
         cb_chunk->chunk_type = CLIPBOARD_FINAL;
         LOG_INFO("Finished pulling chunks from OS clipboard");
-        finish_active_transfer(true);
+        finish_active_transfer(true, false);
     } else {
         cb_chunk->chunk_type = CLIPBOARD_MIDDLE;
     }
@@ -583,9 +591,20 @@ void destroy_clipboard_synchronizer() {
     whist_lock_mutex(current_clipboard_activity.clipboard_action_mutex);
 
     current_clipboard_activity.is_initialized = false;
-    finish_active_transfer(false);
+    finish_active_transfer(false, true);
 
     whist_unlock_mutex(current_clipboard_activity.clipboard_action_mutex);
+
+    // If there is an active clipboard thread then wait for it to finish,
+    // because it could still be using the mutex and associated variables
+    // we are about to destroy.
+    // Note that there is still a race with previous threads which were
+    // detached before this was called, but we ignore it because it is
+    // highly unlikely that they haven't finished yet.
+    if (current_clipboard_activity.active_clipboard_action_thread) {
+        whist_wait_thread(current_clipboard_activity.active_clipboard_action_thread, NULL);
+        current_clipboard_activity.active_clipboard_action_thread = NULL;
+    }
 
     whist_destroy_mutex(current_clipboard_activity.clipboard_action_mutex);
     whist_destroy_cond(current_clipboard_activity.continue_action_condvar);
