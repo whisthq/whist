@@ -344,7 +344,7 @@ def do_scale_up_if_necessary(
             num_attempts = 0
             instance_indexes = list(range(num_new))
 
-            # Attempt to start new instancces if necessary
+            # Attempt to start new instances if necessary
             while num_attempts <= MAX_RETRY_ATTEMPTS and len(instance_indexes) > 0:
                 whist_logger.info(f"Attempt #{num_attempts} at starting instances")
 
