@@ -1,7 +1,16 @@
 #!/bin/bash
 
 # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
-eval "$(sentry-cli bash-hook)"
+SENTRY_ENV_FILENAME=/usr/share/whist/private/sentry_env
+case $(cat $SENTRY_ENV_FILENAME) in
+  dev|staging|prod)
+    export SENTRY_ENVIRONMENT=${SENTRY_ENV}
+    eval "$(sentry-cli bash-hook)"
+    ;;
+  *)
+    echo "Sentry environment not set, skipping Sentry error handler"
+    ;;
+esac
 
 # Exit on subcommand errors
 set -Eeuo pipefail
@@ -36,7 +45,7 @@ if [[ -f $WHIST_JSON_FILE ]]; then
     # Set the system-wide timezone
     timedatectl set-timezone $DESIRED_TIMEZONE
   fi
-  if [ "$( jq 'has("initial_key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then 
+  if [ "$( jq 'has("initial_key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
     if [ "$( jq 'has("key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
       INITIAL_KEY_REPEAT=$( jq -r '.initial_key_repeat' < $WHIST_JSON_FILE )
       KEY_REPEAT=$( jq -r '.key_repeat' < $WHIST_JSON_FILE )

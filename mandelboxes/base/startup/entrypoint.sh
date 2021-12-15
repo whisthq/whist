@@ -5,8 +5,24 @@
 # the Whist mandelbox to use. It then starts systemd, which starts all of the
 # Whist system services (.service files), starting Whist inside the mandelbox.
 
-# Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
-eval "$(sentry-cli bash-hook)"
+
+SENTRY_ENV_FILENAME=/usr/share/whist/private/sentry_env
+# If SENTRY_ENV is set, then create file
+if [ -n "${SENTRY_ENV+1}" ]
+then
+  echo $SENTRY_ENV > $SENTRY_ENV_FILENAME
+fi
+
+# Enable Sentry bash error handler, this will `set -e` and catch errors in a bash script
+case $(cat $SENTRY_ENV_FILENAME) in
+  dev|staging|prod)
+    export SENTRY_ENVIRONMENT=${SENTRY_ENV}
+    eval "$(sentry-cli bash-hook)"
+    ;;
+  *)
+    echo "Sentry environment not set, skipping Sentry error handler"
+    ;;
+esac
 
 # Exit on subcommand errors
 set -Eeuo pipefail
@@ -15,12 +31,6 @@ set -Eeuo pipefail
 if [ -n "${WHIST_AES_KEY+1}" ]
 then
   echo $WHIST_AES_KEY > /usr/share/whist/private/aes_key
-fi
-
-# If SENTRY_ENV is set, then create file
-if [ -n "${SENTRY_ENV+1}" ]
-then
-  echo $SENTRY_ENV > /usr/share/whist/private/sentry_env
 fi
 
 # Unset the AWS key to make sure that this environment variable does not
