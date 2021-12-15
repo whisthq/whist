@@ -116,7 +116,6 @@ extern volatile char* new_tab_url;
 
 // Defines
 #define APP_PATH_MAXLEN 1023
-#define URL_MAX_LEN 1024
 
 int sync_keyboard_state(void) {
     /*
