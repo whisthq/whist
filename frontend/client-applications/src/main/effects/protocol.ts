@@ -97,16 +97,18 @@ fromTrigger("trayWhistIsDefaultBrowserAction").subscribe(() => {
   }
 })
 
-// Check once at startup if we are supposed to have Whist as the default browser (might need to re-set Whist as default if we set another browser to default since the last execution)
-const whistShouldBeSetToDefault =
-  <boolean>persistGet(WHIST_IS_DEFAULT_BROWSER) ?? false
-if (whistShouldBeSetToDefault) {
-  app.setAsDefaultProtocolClient("http")
-  app.setAsDefaultProtocolClient("https")
-}
-
-app.on("open-url", function (event, url: string) {
-  event.preventDefault()
-  ProtocolSendUrlToOpenInNewTab(url)
-  logBase(`Captured url ${url} after setting Whist as default browser!\n`, {})
+fromTrigger(WhistTrigger.appReady).subscribe(() => {
+  // Check once at startup if we are supposed to have Whist as the default browser (might need to re-set Whist as default if we set another browser to default since the last execution)
+  const whistShouldBeSetToDefault =
+    <boolean>persistGet(WHIST_IS_DEFAULT_BROWSER) ?? false
+  if (whistShouldBeSetToDefault) {
+    app.setAsDefaultProtocolClient("http")
+    app.setAsDefaultProtocolClient("https")
+  }
+  // Intercept URLs (Mac version)
+  app.on("open-url", function (event, url: string) {
+    event.preventDefault()
+    ProtocolSendUrlToOpenInNewTab(url)
+    logBase(`Captured url ${url} after setting Whist as default browser!\n`, {})
+  })
 })
