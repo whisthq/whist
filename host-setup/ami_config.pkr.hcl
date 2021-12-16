@@ -95,6 +95,11 @@ variable "mandelbox_logz_shipping_token" {
 
 source "amazon-ebs" "Whist_AWS_AMI_Builder" {
 
+
+
+
+
+
   /* AWS AMI Packer parameters */
 
   ami_description = "Whist-optimized Ubuntu 20.04 AWS Machine Image"
@@ -173,6 +178,10 @@ shutdown_behavior (string) - Automatically terminate instances on shutdown in ca
 
 
 
+
+
+
+
   /* AWS EC2 Tags Packer parameters */
 
   run_tag {
@@ -227,6 +236,7 @@ build {
     pause_before = "10s"
   }
 
+  # This file is used to verify that Packer succeeded and pass Packer data to the next deploy stages
   post-processor "manifest" {
     output     = "manifest.json"
     strip_path = true
