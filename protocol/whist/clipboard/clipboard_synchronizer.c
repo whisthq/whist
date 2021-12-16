@@ -37,6 +37,7 @@ Includes
 #include <stdio.h>
 
 #include <whist/core/whist.h>
+#include <whist/utils/atomic.h>
 #include "clipboard.h"
 
 /*
@@ -62,6 +63,20 @@ WhistThreadID queued_os_clipboard_setter_thread_id;
 //     false)
 WhistCondition os_clipboard_setting_condvar;
 
+typedef struct ClipboardThread {
+    // Thread handle: to allow joining the thread.
+    WhistThread thread;
+    // Thread finish marker: initially zero, thread can be joined (hopefully)
+    // without blocking when it becomes nonzero.
+    atomic_int finished;
+    // Next entry in the linked list.
+    struct ClipboardThread* next;
+} ClipboardThread;
+
+// Linked list of running (/ possibly-finished) clipboard threads.
+// Protected by current_clipboard_activity.clipboard_action_mutex.
+static ClipboardThread* clipboard_thread_list;
+
 /*
 ============================
 Private Functions
@@ -71,6 +86,7 @@ Private Functions
 bool clipboard_action_is_active(WhistClipboardActionType check_action_type);
 bool start_clipboard_transfer(WhistClipboardActionType new_clipboard_action_type);
 void finish_active_transfer(bool action_complete);
+void join_outstanding_threads(bool join_all);
 
 /*** Thread Functions ***/
 int push_clipboard_thread_function(void* opaque);
@@ -130,14 +146,21 @@ bool start_clipboard_transfer(WhistClipboardActionType new_clipboard_action_type
     // Abort an active transfer if it exists
     finish_active_transfer(false);
 
+    // Create thread reference in the linked list so we can join it later.
+    ClipboardThread* thr = safe_malloc(sizeof(*thr));
+    atomic_init(&thr->finished, 0);
+    thr->next = clipboard_thread_list;
+    clipboard_thread_list = thr->next;
+
     // Create new thread
     if (new_clipboard_action_type == CLIPBOARD_ACTION_PUSH) {
         current_clipboard_activity.active_clipboard_action_thread =
-            whist_create_thread(push_clipboard_thread_function, "push_clipboard_thread", NULL);
+            whist_create_thread(push_clipboard_thread_function, "push_clipboard_thread", thr);
     } else {
         current_clipboard_activity.active_clipboard_action_thread =
-            whist_create_thread(pull_clipboard_thread_function, "pull_clipboard_thread", NULL);
+            whist_create_thread(pull_clipboard_thread_function, "pull_clipboard_thread", thr);
     }
+    thr->thread = current_clipboard_activity.active_clipboard_action_thread;
 
     if (current_clipboard_activity.active_clipboard_action_thread == NULL) {
         return false;
@@ -206,12 +229,46 @@ void finish_active_transfer(bool action_complete) {
     // Wake up the current thread and clean up its resources
     whist_broadcast_cond(current_clipboard_activity.continue_action_condvar);
 
-    // It is safe to pass NULL to `whist_detach_thread`, so we don't need to check
-    whist_detach_thread(current_clipboard_activity.active_clipboard_action_thread);
     current_clipboard_activity.active_clipboard_action_thread = NULL;
     current_clipboard_activity.aborting_ptr = NULL;
     current_clipboard_activity.complete_ptr = NULL;
     current_clipboard_activity.clipboard_buffer_ptr = NULL;
+
+    // Join any threads which have actually finished.  The current thread may
+    // or may not finish in time - this is fine, we will join it next time if
+    // if so.
+    join_outstanding_threads(false);
+}
+
+void join_outstanding_threads(bool join_all) {
+    /*
+        Join with any outstanding clipboard threads which have finished.
+
+        Arguments:
+            join_all (bool): join all threads, waiting while they finish
+                if necessary.
+
+        NOTE: if a new transfer might be issued then should be called with
+           `current_clipboard_activity.clipboard_action_mutex` held to avoid
+            racing on manipulating the list, if that isn't possible (during
+            destruction) then not necessary.
+    */
+
+    LOG_INFO("Joining outstanding threads.");
+
+    ClipboardThread** tmp = &clipboard_thread_list;
+    while (*tmp) {
+        ClipboardThread* thr = *tmp;
+        if (join_all || atomic_load(&thr->finished)) {
+            LOG_INFO("Joining %p.", thr->thread);
+            whist_wait_thread(thr->thread, NULL);
+            *tmp = thr->next;
+            free(thr);
+        } else {
+            LOG_INFO("Not joining %p.", thr->thread);
+            tmp = &thr->next;
+        }
+    }
 }
 
 /*** Thread Functions ***/
@@ -224,7 +281,7 @@ int push_clipboard_thread_function(void* opaque) {
         loop exits and the thread finishes by cleaning up resources.
 
         Arguments:
-            opaque (void*): thread argument (unused)
+            opaque (void*): ClipboardThread reference
 
         Return:
             (int): 0 on success
@@ -235,6 +292,8 @@ int push_clipboard_thread_function(void* opaque) {
     */
 
     LOG_INFO("Begun pushing clipboard");
+
+    ClipboardThread* thread = opaque;
 
     // Set thread status members
     bool aborting = false;
@@ -323,6 +382,8 @@ int push_clipboard_thread_function(void* opaque) {
     // Free the allocated clipboard buffer
     deallocate_region(clipboard_buffer);
 
+    atomic_store(&thread->finished, 1);
+
     return 0;
 }
 
@@ -334,7 +395,7 @@ int pull_clipboard_thread_function(void* opaque) {
         loop exits and the thread finishes by cleaning up resources.
 
         Arguments:
-            opaque (void*): thread argument (unused)
+            opaque (void*): ClipboardThread reference
 
         Return:
             (int): 0 on success
@@ -345,6 +406,8 @@ int pull_clipboard_thread_function(void* opaque) {
     */
 
     LOG_INFO("Begun pulling clipboard");
+
+    ClipboardThread* thread = opaque;
 
     // Set thread status members
     bool aborting = false;
@@ -385,6 +448,8 @@ int pull_clipboard_thread_function(void* opaque) {
 
     // After calling `get_os_clipboard()`, we call `free_clipboard_buffer()`
     free_clipboard_buffer(clipboard_buffer);
+
+    atomic_store(&thread->finished, 1);
 
     return 0;
 }
@@ -586,6 +651,8 @@ void destroy_clipboard_synchronizer() {
     finish_active_transfer(false);
 
     whist_unlock_mutex(current_clipboard_activity.clipboard_action_mutex);
+
+    join_outstanding_threads(true);
 
     whist_destroy_mutex(current_clipboard_activity.clipboard_action_mutex);
     whist_destroy_cond(current_clipboard_activity.continue_action_condvar);
