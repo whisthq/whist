@@ -34,7 +34,7 @@ import {
   WindowHashBugTypeform,
   WindowHashSpeedtest,
   WindowHashUpdate,
-  WindowHashNetwork,
+  WindowHashLoading,
 } from "@app/constants/windows"
 import {
   protocolLaunch,
@@ -420,15 +420,15 @@ export const createUpdateWindow = () =>
     closeProtocolWindow: true,
   })
 
-export const createNetworkWindow = () =>
+export const createLoadingWindow = () =>
   createWindow({
     options: {
       ...base,
-      ...width.lg,
-      ...height.md,
+      ...width.md,
+      ...height.xs,
       frame: false,
       titleBarStyle: "hidden",
       transparent: true,
     } as BrowserWindowConstructorOptions,
-    hash: WindowHashNetwork,
+    hash: WindowHashLoading,
   })

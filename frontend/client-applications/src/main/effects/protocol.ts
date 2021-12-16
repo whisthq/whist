@@ -21,49 +21,49 @@ import { WhistTrigger } from "@app/constants/triggers"
 // We solve this streaming the ip, secret_key, and ports info to the protocol
 // they become available from when a successful mandelbox status response.
 
-fromTrigger(WhistTrigger.mandelboxFlowSuccess)
-  .pipe(
-    withLatestFrom(
-      fromTrigger(WhistTrigger.onboarded).pipe(
-        startWith(undefined),
-        map(
-          (
-            payload: undefined | { importBrowserDataFrom: string | undefined }
-          ) => payload?.importBrowserDataFrom
-        )
-      )
-    )
-  )
-  .subscribe(
-    ([info, importBrowserDataFrom]: [
-      {
-        mandelboxIP: string
-        mandelboxSecret: string
-        mandelboxPorts: {
-          port_32262: number
-          port_32263: number
-          port_32273: number
-        }
-      },
-      string | undefined
-    ]) => {
-      setTimeout(
-        () => {
-          console.log("Connecting to", info)
-          if (childProcess === undefined) {
-            createProtocolWindow()
-              .then(() => {
-                protocolStreamInfo(info)
-              })
-              .catch((err) => Sentry.captureException(err))
-          } else {
-            protocolStreamInfo(info)
-          }
-        },
-        importBrowserDataFrom !== undefined ? 5000 : 0
-      )
-    }
-  )
+// fromTrigger(WhistTrigger.mandelboxFlowSuccess)
+//   .pipe(
+//     withLatestFrom(
+//       fromTrigger(WhistTrigger.onboarded).pipe(
+//         startWith(undefined),
+//         map(
+//           (
+//             payload: undefined | { importBrowserDataFrom: string | undefined }
+//           ) => payload?.importBrowserDataFrom
+//         )
+//       )
+//     )
+//   )
+//   .subscribe(
+//     ([info, importBrowserDataFrom]: [
+//       {
+//         mandelboxIP: string
+//         mandelboxSecret: string
+//         mandelboxPorts: {
+//           port_32262: number
+//           port_32263: number
+//           port_32273: number
+//         }
+//       },
+//       string | undefined
+//     ]) => {
+//       setTimeout(
+//         () => {
+//           console.log("Connecting to", info)
+//           if (childProcess === undefined) {
+//             createProtocolWindow()
+//               .then(() => {
+//                 protocolStreamInfo(info)
+//               })
+//               .catch((err) => Sentry.captureException(err))
+//           } else {
+//             protocolStreamInfo(info)
+//           }
+//         },
+//         importBrowserDataFrom !== undefined ? 5000 : 0
+//       )
+//     }
+//   )
 
 fromTrigger("trayRestoreSessionAction").subscribe(() => {
   const restore = <boolean>persistGet(RESTORE_LAST_SESSION)

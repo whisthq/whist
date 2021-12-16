@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 
-import { WhistButton, WhistButtonState } from "@app/components/html/button"
+import { WhistButton, WhistButtonState } from "@app/components/button"
 import classNames from "classnames"
 
 const BaseError = (props: { title: string; text: string }) => {

@@ -20,7 +20,7 @@ import { isNewConfigToken } from "@app/utils/state"
 import {
   createProtocolWindow,
   createAuthWindow,
-  createNetworkWindow,
+  createLoadingWindow,
 } from "@app/utils/windows"
 import { persistGet } from "@app/utils/persist"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
@@ -168,6 +168,6 @@ withAppReady(
 ).subscribe(([, _isNewConfigToken]: [any, boolean]) => {
   if (!_isNewConfigToken) {
     networkAnalyze()
-    createNetworkWindow()
+    createLoadingWindow()
   }
 })

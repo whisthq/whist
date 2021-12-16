@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 import classNames from "classnames"
 
-import { WhistButton, WhistButtonState } from "@app/components/html/button"
+import { WhistButton, WhistButtonState } from "@app/components/button"
 
 const SelectBrowser = (props: {
   browsers: string[]
