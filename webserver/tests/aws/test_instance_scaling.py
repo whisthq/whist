@@ -16,7 +16,11 @@ from app.constants.mandelbox_host_states import MandelboxHostState
 from app.utils.aws.base_ec2_client import EC2Client
 from app.helpers.aws.aws_instance_post import drain_instance
 
-from tests.helpers.utils import get_allowed_regions, update_status_change_time
+from tests.helpers.utils import (
+    get_allowed_regions,
+    update_status_change_time,
+    set_protected_region_to_ami,
+)
 
 
 def test_scale_up_single(
@@ -556,6 +560,16 @@ def test_old_commit_hash_instances(
 
     monkeypatch.setattr(aws_funcs, "drain_instance", _helper)
 
+    # Create an instance with an old commit hash but is protected
+    set_protected_region_to_ami(region_name, "inactive_ami_v2", "old_commit_hash_v2", False)
+    bulk_instance(
+        instance_name="active_instance_3",
+        aws_ami_id="inactive_ami_v2",
+        commit_hash="old_commit_hash_v2",
+        location=region_name,
+        last_updated_utc_unix_ms=time() * 1000,
+        creation_time_utc_unix_ms=time() * 1000,
+    )
     bulk_instance(
         instance_name="active_instance",
         aws_ami_id="test-AMI",

@@ -57,3 +57,24 @@ def update_status_change_time(timestamp: Any, instance_name: str) -> None:
     ).first()
     instance.timestamp = timestamp
     db.session.commit()
+
+
+def set_protected_region_to_ami(region: str, ami: str, commit_hash: str, active: bool) -> None:
+    """
+    Adds a new entry that is protected from scale down in region to ami
+
+    Arguments:
+        region: region name of new entry
+        ami: the id of the ami of new entry
+        commit_hash: client's commit hash of new entry
+    """
+
+    new_region_to_ami = RegionToAmi(
+        region_name=region,
+        ami_id=ami,
+        ami_active=active,
+        client_commit_hash=commit_hash,
+        protected_from_scale_down=True,
+    )
+    db.session.add(new_region_to_ami)
+    db.session.commit()
