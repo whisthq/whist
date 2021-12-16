@@ -105,7 +105,7 @@ if (whistShouldBeSetToDefault) {
   app.setAsDefaultProtocolClient("https")
 }
 
-app.on("open-url", function (event, url) {
+app.on("open-url", function (event, url: string) {
   event.preventDefault()
   ProtocolSendUrlToOpenInNewTab(url)
   logBase(`Captured url ${url} after setting Whist as default browser!\n`, {})
