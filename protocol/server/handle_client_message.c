@@ -24,7 +24,7 @@ Includes
 #include <whist/logging/logging.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/logging/error_monitor.h>
-#include "main.h"
+#include "state.h"
 #include "client.h"
 #include "handle_client_message.h"
 #include "network.h"

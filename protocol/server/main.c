@@ -17,7 +17,7 @@ Includes
 ============================
 */
 
-#include "main.h"
+#include "state.h"
 #include "parse_args.h"
 #include "handle_client_message.h"
 #include "server_statistic.h"

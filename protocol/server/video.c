@@ -43,7 +43,7 @@ Includes
 #include "client.h"
 #include "network.h"
 #include "video.h"
-#include "main.h"
+#include "state.h"
 #include "server_statistic.h"
 
 #ifdef _WIN32

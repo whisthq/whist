@@ -25,7 +25,7 @@ Includes
 
 #include "network.h"
 #include "client.h"
-#include "main.h"
+#include "state.h"
 #include "handle_client_message.h"
 
 #define UDP_CONNECTION_WAIT 1000

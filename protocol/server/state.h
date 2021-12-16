@@ -1,17 +1,10 @@
-#ifndef SERVER_MAIN_H
-#define SERVER_MAIN_H
+#ifndef WHIST_SERVER_STATE_H
+#define WHIST_SERVER_STATE_H
 /**
  * Copyright 2021 Whist Technologies, Inc.
- * @file main.h
- * @brief This file contains the main code that runs a Whist server on a
- *        Windows or Linux Ubuntu computer.
-============================
-Usage
-============================
-
-Follow main() to see a Whist video streaming server being created and creating
-its threads.
-*/
+ * @file state.h
+ * @brief This file defines a struct to hold server global state
+ */
 
 /*
 ============================
@@ -117,4 +110,4 @@ struct _whist_server_state {
 
 typedef struct _whist_server_state whist_server_state;
 
-#endif  // SERVER_MAIN_H
+#endif  // WHIST_SERVER_STATE_H
