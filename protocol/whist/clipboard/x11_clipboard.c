@@ -55,6 +55,12 @@ static Window window;
 static Atom clipboard;
 static Atom incr_id;
 
+// Empty clipboard object for use when nothing else is available.
+static ClipboardData clipboard_none = {
+    .type = CLIPBOARD_NONE,
+    .size = 0,
+};
+
 /*
 ============================
 Private Functions
@@ -210,7 +216,7 @@ void unsafe_free_clipboard_buffer(ClipboardData* cb) {
             cb (ClipboardData*): clipboard buffer data to be freed
     */
 
-    if (cb) {
+    if (cb && cb != &clipboard_none) {
         deallocate_region(cb);
     }
 }
@@ -239,11 +245,8 @@ ClipboardData* unsafe_get_os_clipboard() {
     }
 
     if (cb == NULL) {
-        // If no cb was found, just return a CLIPBOARD_NONE object
-        static ClipboardData cb_none;
-        cb_none.type = CLIPBOARD_NONE;
-        cb_none.size = 0;
-        return &cb_none;
+        // If no cb was found, just return the CLIPBOARD_NONE object
+        return &clipboard_none;
     }
 
     return cb;
