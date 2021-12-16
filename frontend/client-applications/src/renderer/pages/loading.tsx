@@ -23,7 +23,7 @@ const Loading = (props: {
       <div className="text-gray-500 mt-2">
         Please allow a few seconds while we connect to our servers
       </div>
-      <div className="mt-6">
+      <div className="mt-6 w-full">
         <NetworkComponent networkInfo={props.networkInfo} withText={false} />
       </div>
     </div>

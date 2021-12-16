@@ -157,7 +157,7 @@ const NetworkStats = (props: {
               <dd className="mt-1 flex items-baseline">
                 <div
                   className={classNames(
-                    "items-baseline text-lg md:text-2xl font-semibold justify-between",
+                    "items-baseline text-lg sm:text-2xl font-semibold justify-between",
                     warning ? "text-red-500" : "text-mint"
                   )}
                 >
@@ -211,7 +211,7 @@ const Network = (props: {
 
   return (
     <div className="w-full max-w-sm m-auto font-body text-center">
-      {props.withText && (
+      {(props.withText ?? false) && (
         <>
           <Icon state={testState} />
           <div className="mt-4 mb-8">
