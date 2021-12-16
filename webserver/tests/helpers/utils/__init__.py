@@ -59,9 +59,7 @@ def update_status_change_time(timestamp: Any, instance_name: str) -> None:
     db.session.commit()
 
 
-def set_protected_region_to_ami(
-    region: string, ami: string, commit_hash: string, active: bool
-) -> None:
+def set_protected_region_to_ami(region: str, ami: str, commit_hash: str, active: bool) -> None:
     """
     Adds a new entry that is protected from scale down in region to ami
 
