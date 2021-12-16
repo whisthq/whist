@@ -126,7 +126,6 @@ fi
 
 # Select Sentry lib dir and Sentry lib targz name based on OS and hardware architecture (macOS)
 SENTRY_LIB_DIR="$DEST_DIR/lib/64/sentry/$OS"
-
 if [[ "$OS" =~ "Windows" ]]; then
   SENTRY_LIB="fractal-windows-sentry-shared-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
