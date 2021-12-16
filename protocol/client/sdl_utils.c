@@ -41,7 +41,14 @@ static SDL_Texture* frame_buffer = NULL;
 static WhistMutex renderer_mutex;
 
 // Render Update
-static bool pending_render = false;
+static volatile bool pending_render = false;
+
+// Framebuffer render update
+static bool pending_nv12data = false;
+static Uint8* pending_nv12data_data[4];
+static int pending_nv12data_linesize[4];
+static int pending_nv12data_width;
+static int pending_nv12data_height;
 
 // Window Color Update
 static volatile WhistRGBColor* native_window_color = NULL;
@@ -81,6 +88,11 @@ SDL_Surface* sdl_surface_from_png_file(char* filename);
  * @param surface                  The SDL_Surface to free
  */
 void sdl_free_png_file_rgb_surface(SDL_Surface* surface);
+
+/**
+ * @brief                          Sets the framebuffer to a black screen
+ */
+void sdl_set_framebuffer_black();
 
 /*
 ============================
@@ -163,7 +175,38 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         return NULL;
     }
 
-    sdl_init_renderer(sdl_window);
+    // Initialize the renderer
+    /*
+    if (SDL_GetWindowFlags(sdl_window) & SDL_WINDOW_OPENGL) {
+        // only opengl if windowed mode
+        SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
+    }
+    */
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
+    SDL_SetHint(SDL_HINT_RENDER_VSYNC, VSYNC_ON ? "1" : "0");
+
+    Uint32 flags = SDL_RENDERER_ACCELERATED;
+#if VSYNC_ON
+    flags |= SDL_RENDERER_PRESENTVSYNC;
+#endif
+    sdl_renderer = SDL_CreateRenderer(sdl_window, -1, flags);
+    if (sdl_renderer == NULL) {
+        LOG_FATAL("SDL: could not create renderer - exiting: %s", SDL_GetError());
+    }
+    SDL_SetRenderDrawBlendMode(sdl_renderer, SDL_BLENDMODE_BLEND);
+
+    // Render a black screen before anything else,
+    // To prevent being exposed to random colors
+    sdl_set_framebuffer_black();
+    SDL_RenderPresent(sdl_renderer);
+
+    // Initialize the framebuffer texture
+    frame_buffer =
+        SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STREAMING,
+                          MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
+    if (frame_buffer == NULL) {
+        LOG_FATAL("SDL: could not create texture - exiting: %s", SDL_GetError());
+    }
 
     // Set icon, if an icon_filename was given
     if (strcmp(icon_filename, "") != 0) {
@@ -172,6 +215,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         sdl_free_png_file_rgb_surface(icon_surface);
     }
 
+    // Initialize the window color to white
     const WhistRGBColor white = {255, 255, 255};
     set_native_window_color(sdl_window, white);
 
@@ -192,56 +236,6 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     return sdl_window;
 }
 
-void sdl_init_renderer(SDL_Window* sdl_window) {
-    if (sdl_renderer == NULL) {
-        /*
-        // configure renderer
-        if (SDL_GetWindowFlags(sdl_window) & SDL_WINDOW_OPENGL) {
-            // only opengl if windowed mode
-            SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
-        }
-        */
-        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
-        SDL_SetHint(SDL_HINT_RENDER_VSYNC, VSYNC_ON ? "1" : "0");
-
-        Uint32 flags = SDL_RENDERER_ACCELERATED;
-#if VSYNC_ON
-        flags |= SDL_RENDERER_PRESENTVSYNC;
-#endif
-        sdl_renderer = SDL_CreateRenderer(sdl_window, -1, flags);
-        if (sdl_renderer == NULL) {
-            LOG_FATAL("SDL: could not create renderer - exiting: %s", SDL_GetError());
-        }
-        SDL_SetRenderDrawBlendMode(sdl_renderer, SDL_BLENDMODE_BLEND);
-
-        // Render a black screen before anything else,
-        // To prevent being exposed to random colors
-        SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(sdl_renderer);
-        pending_render = true;
-    }
-
-    if (frame_buffer == NULL) {
-        frame_buffer =
-            SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STREAMING,
-                              MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
-        if (frame_buffer == NULL) {
-            LOG_FATAL("SDL: could not create texture - exiting");
-        }
-    }
-}
-
-void sdl_destroy_renderer() {
-    if (frame_buffer) {
-        SDL_DestroyTexture(frame_buffer);
-        frame_buffer = NULL;
-    }
-    if (sdl_renderer) {
-        SDL_DestroyRenderer(sdl_renderer);
-        sdl_renderer = NULL;
-    }
-}
-
 void destroy_sdl(SDL_Window* window_param) {
     /*
         Destroy the SDL resources
@@ -250,8 +244,17 @@ void destroy_sdl(SDL_Window* window_param) {
             window_param (SDL_Window*): SDL window to be destroyed
     */
 
+    // Destroy the framebuffer
+    if (frame_buffer) {
+        SDL_DestroyTexture(frame_buffer);
+        frame_buffer = NULL;
+    }
+
     // Destroy the renderer
-    sdl_destroy_renderer();
+    if (sdl_renderer) {
+        SDL_DestroyRenderer(sdl_renderer);
+        sdl_renderer = NULL;
+    }
 
     if (native_window_color) {
         free((WhistRGBColor*)native_window_color);
@@ -359,8 +362,7 @@ void sdl_update_framebuffer_loading_screen(int idx) {
     SDL_Surface* loading_screen = sdl_surface_from_png_file(frame_filename);
     if (loading_screen == NULL) {
         LOG_ERROR("Loading screen image failed to load: %s", frame_filename);
-        SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(sdl_renderer);
+        sdl_set_framebuffer_black();
         whist_unlock_mutex(renderer_mutex);
         return;
     }
@@ -382,8 +384,6 @@ void sdl_update_framebuffer_loading_screen(int idx) {
     };
 
     // Write the texture out to the renderer
-    SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear(sdl_renderer);
     SDL_RenderCopy(sdl_renderer, loading_screen_texture, NULL, &centered_rect);
 
     // texture may now be destroyed
@@ -395,49 +395,29 @@ void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int heig
     whist_lock_mutex(renderer_mutex);
 
     // Check dimensions as a fail-safe
-    if (width > MAX_SCREEN_WIDTH || height > MAX_SCREEN_HEIGHT || width < 0 || height < 0) {
+    if (width < 0 || width > MAX_SCREEN_WIDTH || height < 0 || height > MAX_SCREEN_HEIGHT) {
         LOG_ERROR("Invalid Dimensions! %dx%d", width, height);
-        SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(sdl_renderer);
+        sdl_set_framebuffer_black();
         whist_unlock_mutex(renderer_mutex);
         return;
     }
 
-    // The texture object we allocate is larger than the frame,
-    // so we only copy the valid section of the frame into the texture.
-    SDL_Rect texture_rect = {
-        .x = 0,
-        .y = 0,
-        .w = width,
-        .h = height,
-    };
+    // Overwrite the pending framebuffer metadata,
+    // And mark the framebuffer as pending
+    memcpy(pending_nv12data_data, data, sizeof(pending_nv12data_data));
+    memcpy(pending_nv12data_linesize, linesize, sizeof(pending_nv12data_linesize));
+    pending_nv12data_width = width;
+    pending_nv12data_height = height;
+    pending_nv12data = true;
 
-    // Update the SDLTexture with the given framedata
-    int res = SDL_UpdateNVTexture(frame_buffer, &texture_rect, data[0], linesize[0], data[1],
-                                  linesize[1]);
-    if (res < 0) {
-        LOG_ERROR("SDL_UpdateNVTexture failed: %s", SDL_GetError());
-        SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(sdl_renderer);
-        whist_unlock_mutex(renderer_mutex);
-        return;
-    }
-
-    // Take the subsection of texture that should be rendered to screen,
-    // And draw it on the renderer
-    SDL_Rect output_rect = {
-        .x = 0,
-        .y = 0,
-        .w = output_width,
-        .h = output_height,
-    };
-    SDL_RenderCopy(sdl_renderer, frame_buffer, &output_rect, NULL);
     whist_unlock_mutex(renderer_mutex);
 }
 
 void sdl_render_framebuffer() {
+    whist_lock_mutex(renderer_mutex);
     // Present the framebuffer to the monitor
     pending_render = true;
+    whist_unlock_mutex(renderer_mutex);
 }
 
 void sdl_update_cursor(WhistCursorImage* cursor) {
@@ -605,12 +585,44 @@ void update_pending_sdl_tasks() {
     whist_unlock_mutex(window_resize_mutex);
 
     // Render out the current framebuffer, if there's a pending render
+    whist_lock_mutex(renderer_mutex);
     if (pending_render) {
-        whist_lock_mutex(renderer_mutex);
+        if (pending_nv12data) {
+            // The texture object we allocate is larger than the frame,
+            // so we only copy the valid section of the frame into the texture.
+            SDL_Rect texture_rect = {
+                .x = 0,
+                .y = 0,
+                .w = pending_nv12data_width,
+                .h = pending_nv12data_height,
+            };
+
+            // Update the SDLTexture with the given nvdata
+            int res = SDL_UpdateNVTexture(frame_buffer, &texture_rect, pending_nv12data_data[0],
+                                          pending_nv12data_linesize[0], pending_nv12data_data[1],
+                                          pending_nv12data_linesize[1]);
+            if (res < 0) {
+                LOG_ERROR("SDL_UpdateNVTexture failed: %s", SDL_GetError());
+                sdl_set_framebuffer_black();
+                whist_unlock_mutex(renderer_mutex);
+                return;
+            }
+
+            // Take the subsection of texture that should be rendered to screen,
+            // And draw it on the renderer
+            SDL_Rect output_rect = {
+                .x = 0,
+                .y = 0,
+                .w = output_width,
+                .h = output_height,
+            };
+            SDL_RenderCopy(sdl_renderer, frame_buffer, &output_rect, NULL);
+            pending_nv12data = false;
+        }
         SDL_RenderPresent(sdl_renderer);
-        whist_unlock_mutex(renderer_mutex);
         pending_render = false;
     }
+    whist_unlock_mutex(renderer_mutex);
 }
 
 /*
@@ -692,6 +704,14 @@ void sdl_free_png_file_rgb_surface(SDL_Surface* surface) {
     char* pixels = surface->pixels;
     SDL_FreeSurface(surface);
     free(pixels);
+}
+
+void sdl_set_framebuffer_black() {
+    // Wipes the renderer's color
+    SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(sdl_renderer);
+    // If we were previously trying to render a framebuffer, this overrides that now
+    pending_nv12data = false;
 }
 
 #if defined(_WIN32)
