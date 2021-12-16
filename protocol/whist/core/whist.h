@@ -594,7 +594,7 @@ typedef enum WhistClientMessageType {
 
     CMESSAGE_FILE_METADATA = 119,  ///< file metadata
     CMESSAGE_FILE_DATA = 120,      ///< file chunk
-    
+
     CMESSAGE_QUIT = 999,
 } WhistClientMessageType;
 
