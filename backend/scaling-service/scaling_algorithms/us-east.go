@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/whisthq/whist/core-go/subscriptions"
+	"github.com/whisthq/whist/core-go/utils"
 	logger "github.com/whisthq/whist/core-go/whistlogger"
 	"github.com/whisthq/whist/scaling-service/hosts"
 )
@@ -41,7 +42,17 @@ func (s USEastScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup) 
 				instance := instanceEvent.Data.(subscriptions.Instance)
 
 				if instance.Status == "DRAINING" {
-					s.VerifyInstanceScaleDown(instanceEvent, instance)
+					// Create context for scaling operation
+					scalingCtx, scalingCancel := context.WithCancel(context.Background())
+
+					err := s.VerifyInstanceScaleDown(scalingCtx, instanceEvent, instance)
+
+					// Cancel context once the operation is done
+					scalingCancel()
+
+					if err != nil {
+						logger.Errorf("Error verifying instance scale down. Error: %v", err)
+					}
 				}
 
 			case mandelboxEvent := <-s.mandelboxEventChan:
@@ -56,27 +67,54 @@ func (s USEastScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup) 
 
 }
 
-func (s *USEastScalingAlgorithm) VerifyInstanceScaleDown(event ScalingEvent, instance subscriptions.Instance) {
-	scalingCtx, scalingCancel := context.WithCancel(context.Background())
+func (s *USEastScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Context, event ScalingEvent, instance subscriptions.Instance) error {
+	logger.Infof("Verifying instance scale down for event: %v", event)
 	// First, verify if the draining instance has mandelboxes running
-	query := subscriptions.QueryMandelboxesByInstanceName
+	mandelboxesRunningQuery := subscriptions.QueryMandelboxesByInstanceName
 	queryParams := map[string]interface{}{
-		"instance_name": instance.InstanceName,
+		"instance_name": instance.Name,
 	}
 
-	s.GraphQLClient.Query(scalingCtx, query, queryParams)
-	// If not, poll AWS until the instance terminates
+	err := s.GraphQLClient.Query(scalingCtx, mandelboxesRunningQuery, queryParams)
+	if err != nil {
+		return utils.MakeError("failed to query database for running mandelboxes with params: %v. Error: %v", queryParams, err)
+	}
 
-	// Once its terminated, verify that it was removed from the database
-	// query = subscriptions.QueryMandelboxStatus
-	// queryParams = map[string]interface{}{
-	// 	"mandelbox_id": query.CloudMandelboxInfo.MandelboxID,
+	// Check underlying struct received...
+	logger.Infof("Query is now: %v", mandelboxesRunningQuery)
+	//
+
+	// If not, wait until the instance is terminated in AWS
+	// waiterClient := new(ec2.DescribeInstancesAPIClient)
+	// waiter := ec2.NewInstanceTerminatedWaiter(*waiterClient, func(*ec2.InstanceTerminatedWaiterOptions) {
+	// 	logger.Infof("Waiting for instance to terminate on AWS")
+	// })
+
+	// waitParams := &ec2.DescribeInstancesInput{
+	// 	InstanceIds: []string{instance.Name},
 	// }
 
-	// s.GraphQLClient.Query(scalingCtx, query, queryParams)
+	// err = waiter.Wait(scalingCtx, waitParams, 5*time.Minute)
+	// if err != nil {
+	// 	return utils.MakeError("failed waiting for instance %v to terminate from AWS: %v", instance.Name, err)
+	// }
 
-	// // If mandelbox still exists, delete from db
+	// Once its terminated, verify that it was removed from the database
+	mandelboxExistsQuery := subscriptions.QueryMandelboxStatus
+	queryParams = map[string]interface{}{
+		"mandelbox_id": mandelboxExistsQuery.CloudMandelboxInfo.ID,
+	}
 
-	// Cancel context once operation is done
-	scalingCancel()
+	err = s.GraphQLClient.Query(scalingCtx, mandelboxExistsQuery, queryParams)
+	if err != nil {
+		return utils.MakeError("failed to query database for mandelbox with params: %v. Error: %v", queryParams, err)
+	}
+
+	// Check underlying struct received...
+	logger.Infof("Query is now: %v", mandelboxExistsQuery)
+	//
+
+	// If mandelbox still exists, delete from db. Write mutation to delete mandelbox from db
+
+	return nil
 }
