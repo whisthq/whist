@@ -465,6 +465,16 @@ const getExtensions = async (
 ): Promise<string | undefined> => {
   if (browser === undefined) return undefined
 
+  // For now we only want to get extensions for browsers that are compatible
+  // with chrome extensions ie brave/chrome/chromium
+  if (
+    browser !== InstalledBrowser.CHROME &&
+    browser !== InstalledBrowser.BRAVE &&
+    browser !== InstalledBrowser.CHROMIUM
+  ) {
+    return undefined
+  }
+
   const extensions = getExtensionIDs(browser)
 
   if (extensions.length === 0) return undefined
