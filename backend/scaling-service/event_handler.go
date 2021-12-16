@@ -99,28 +99,21 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 					instance := subscriptionEvent.InstanceInfo[0]
 
 					scalingEvent.Data = instance
-					scalingEvent.Region = instance
+					scalingEvent.Region = instance.Location
 				}
 
 				// Start scaling algorithm based on region
-				// Read region from subscription, for this we need to add a region field to the db
-				// For now hardcode us-east.
-				region := "us-east"
 				logger.Infof("Received database event.")
 
-				algorithm, ok := algorithmByRegion.Load(region)
+				algorithm, ok := algorithmByRegion.Load(scalingEvent.Region)
 				if !ok {
-					logger.Errorf("%v not found on algorithm map", region)
+					logger.Errorf("%v not found on algorithm map", scalingEvent.Region)
 				}
-				USEastScaling := algorithm.(sa.USEastScalingAlgorithm)
 
-				USEastScaling.GetInstanceEventChan() <- scalingEvent
+				scalingAlgorithm := algorithm.(sa.BaseScalingAlgorithm)
+				scalingAlgorithm.GetInstanceEventChan() <- scalingEvent
 
 			case *subscriptions.MandelboxEvent:
-				if len(subscriptionEvent.MandelboxInfo) > 0 {
-					scalingEvent.Data = subscriptionEvent.MandelboxInfo[0]
-				}
-				USEastScaling.GetMandelboxEventChan() <- scalingEvent
 			}
 		}
 	}

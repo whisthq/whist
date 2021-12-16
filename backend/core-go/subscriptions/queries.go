@@ -1,39 +1,58 @@
 package subscriptions // import "github.com/whisthq/whist/backend/core-go/subscriptions"
 
-import graphql "github.com/hasura/go-graphql-client"
+import (
+	graphql "github.com/hasura/go-graphql-client"
+)
 
 // GraphQLQuery is a custom empty interface to represent the graphql queries
 // described in this file. An advantage is that these queries can be used both
 // as subscriptions and normal queries.
 type GraphQLQuery interface{}
 
-// QueryInstanceStatus returns an instance that matches the given instance_name and status.
+// CloudInstanceInfo is the mapping of the `cloud_instance_info` table.
+type CloudInstanceInfo struct {
+	Location          graphql.String `graphql:"location"`
+	ImageID           graphql.String `graphql:"aws_ami_id"`
+	Type              graphql.String `graphql:"aws_instance_type"`
+	CloudProviderID   graphql.String `graphql:"cloud_provider_id"`
+	CommitHash        graphql.String `graphql:"commit_hash"`
+	CreationTimeMS    graphql.Int    `graphql:"creation_time_utc_unix_ms"`
+	GPUVramRemaing    graphql.Int    `graphql:"gpu_vram_remaining_kb"`
+	Name              graphql.String `graphql:"instance_name"`
+	LastUpdatedMS     graphql.Int    `graphql:"last_updated_utc_unix_ms"`
+	MandelboxCapacity graphql.Int    `graphql:"mandelbox_capacity"`
+	MemoryRemainingKB graphql.Int    `graphql:"memory_remaining_kb"`
+	NanoCPUsRemaining graphql.Int    `graphql:"nanocpus_remaining"`
+	Status            graphql.String `graphql:"status"`
+}
+
+// CloudMandelboxInfo is the mapping of the `cloud_mandelbox_info` table.
+type CloudMandelboxInfo struct {
+	ID             graphql.String `graphql:"mandelbox_id"`
+	UserID         graphql.String `graphql:"user_id"`
+	InstanceName   graphql.String `graphql:"instance_name"`
+	SessionID      graphql.String `graphql:"session_id"`
+	CreationTimeMS graphql.Int    `graphql:"creation_time_utc_unix_ms"`
+	Status         graphql.String `graphql:"status"`
+}
+
+// QueryInstanceStatusByName returns an instance that matches the given instance_name and status.
+var QueryInstanceStatusByName struct {
+	CloudInstanceInfo `graphql:"cloud_instance_info(where: {instance_name: {_eq: $instance_name}, _and: {status: {_eq: $status}}})"`
+}
+
+// QueryInstanceStatus returns any instance that matches the given status.
 var QueryInstanceStatus struct {
-	CloudInstanceInfo struct {
-		InstanceName graphql.String `graphql:"instance_name"`
-		Status       graphql.String `graphql:"status"`
-	} `graphql:"cloud_instance_info(where: {instance_name: {_eq: $instance_name}, _and: {status: {_eq: $status}}})"`
+	CloudInstanceInfo `graphql:"cloud_instance_info(where: {status: {_eq: $status}})"`
 }
 
 // QueryMandelboxesByInstanceName returns a mandelbox associated with the given instance
-// and that is on the given status.
+// and that has the given status.
 var QueryMandelboxesByInstanceName struct {
-	CloudMandelboxInfo struct {
-		InstanceName graphql.String `graphql:"instance_name"`
-		MandelboxID  graphql.String `graphql:"mandelbox_id"`
-		SessionID    graphql.String `graphql:"session_id"`
-		UserID       graphql.String `graphql:"user_id"`
-		Status       graphql.String `graphql:"status"`
-	} `graphql:"cloud_mandelbox_info(where: {instance_name: {_eq: $instance_name}, _and: {status: {_eq: $status}}})"`
+	CloudMandelboxInfo `graphql:"cloud_mandelbox_info(where: {instance_name: {_eq: $instance_name}, _and: {status: {_eq: $status}}})"`
 }
 
 // QueryMandelboxStatus returns every mandelbox that matches the given status.
 var QueryMandelboxStatus struct {
-	CloudMandelboxInfo struct {
-		InstanceName graphql.String `graphql:"instance_name"`
-		MandelboxID  graphql.String `graphql:"mandelbox_id"`
-		SessionID    graphql.String `graphql:"session_id"`
-		UserID       graphql.String `graphql:"user_id"`
-		Status       graphql.String `graphql:"status"`
-	} `graphql:"cloud_mandelbox_info(where: {status: {_eq: $status}})"`
+	CloudMandelboxInfo `graphql:"cloud_mandelbox_info(where: {status: {_eq: $status}})"`
 }

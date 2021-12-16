@@ -50,8 +50,8 @@ func (cl *mockWhistClient) Subscribe(query GraphQLQuery, variables map[string]in
 
 	// Create fake instance event
 	testInstanceEvent := InstanceEvent{InstanceInfo: []Instance{{
-		InstanceName: variables["instanceName"].(string),
-		Status:       variables["status"].(string),
+		Name:   variables["instanceName"].(string),
+		Status: variables["status"].(string),
 	}}}
 
 	// Create fake mandelbox event
@@ -100,12 +100,12 @@ func TestInstanceStatusHandler(t *testing.T) {
 		{"Empty event", InstanceEvent{InstanceInfo: []Instance{}}, false},
 		{"Wrong status event", InstanceEvent{
 			InstanceInfo: []Instance{
-				{InstanceName: "test-instance-name", Status: "PRE_CONNECTION"},
+				{Name: "test-instance-name", Status: "PRE_CONNECTION"},
 			},
 		}, false},
 		{"Correct status event", InstanceEvent{
 			InstanceInfo: []Instance{
-				{InstanceName: "test-instance-name", Status: "DRAINING"},
+				{Name: "test-instance-name", Status: "DRAINING"},
 			},
 		}, true},
 	}
@@ -283,8 +283,8 @@ func TestStart(t *testing.T) {
 	instance := instanceResult.InstanceInfo[0]
 
 	// Check that the result has the correct information
-	if instance.InstanceName != instanceName {
-		t.Errorf("Expected instance name %v, got %v", instanceName, instance.InstanceName)
+	if instance.Name != instanceName {
+		t.Errorf("Expected instance name %v, got %v", instanceName, instance.Name)
 	}
 
 	if instance.Status != "DRAINING" {
