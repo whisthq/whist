@@ -20,20 +20,20 @@ destroy_file_drop_handler();
 
 #ifndef __linux__
 
-void init_file_drop_handler() { LOG_ERROR("UNIMPLEMENTED: init_file_drop_handler on non-Linux"); }
+void init_file_drop_handler() { LOG_WARNING("UNIMPLEMENTED: init_file_drop_handler on non-Linux"); }
 
 int drop_file_into_active_window(TransferringFile* drop_file) {
-    LOG_ERROR("UNIMPLEMENTED: drop_file_into_active_window on non-Linux");
+    LOG_WARNING("UNIMPLEMENTED: drop_file_into_active_window on non-Linux");
     return -1;
 }
 
 int write_fuse_ready_file(int unique_id) {
-    LOG_ERROR("UNIMPLEMENTED: write_fuse_ready_file on non-Linux");
+    LOG_WARNING("UNIMPLEMENTED: write_fuse_ready_file on non-Linux");
     return -1;
 }
 
 void destroy_file_drop_handler() {
-    LOG_ERROR("UNIMPLEMENTED: destroy_file_drop_handler on non-Linux");
+    LOG_WARNING("UNIMPLEMENTED: destroy_file_drop_handler on non-Linux");
 }
 
 #elif __linux__
