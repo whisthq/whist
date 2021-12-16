@@ -738,8 +738,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 		// Create browser data
 		userInitialBrowserData := mandelboxData.BrowserData{
-			CookiesJSON:   req.Cookies,
-			BookmarksJSON: req.Bookmarks,
+			CookiesJSON:   req.CookiesJSON,
+			BookmarksJSON: req.BookmarksJSON,
 			Extensions:	   req.Extensions,
 		}
 
