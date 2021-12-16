@@ -13,6 +13,7 @@ import Typeform from "@app/renderer/pages/typeform"
 import Importer from "@app/renderer/pages/importer"
 import Update from "@app/renderer/pages/update"
 import Network from "@app/renderer/pages/network"
+import Loading from "@app/renderer/pages/loading"
 
 import {
   WindowHashSignout,
@@ -21,7 +22,7 @@ import {
   WindowHashImporter,
   WindowHashOnboarding,
   WindowHashAuth,
-  WindowHashNetwork,
+  WindowHashLoading,
 } from "@app/constants/windows"
 import {
   whistError,
@@ -107,8 +108,8 @@ const RootComponent = () => {
       />
     )
   }
-  if (show === WindowHashNetwork) {
-    return <Network networkInfo={mainState.networkInfo} onSubmit={undefined} />
+  if (show === WindowHashLoading) {
+    return <Loading networkInfo={mainState.networkInfo} />
   }
   if (show === WindowHashBugTypeform)
     return (

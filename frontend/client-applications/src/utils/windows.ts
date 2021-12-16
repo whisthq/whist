@@ -34,7 +34,7 @@ import {
   WindowHashBugTypeform,
   WindowHashSpeedtest,
   WindowHashUpdate,
-  WindowHashNetwork,
+  WindowHashLoading,
 } from "@app/constants/windows"
 import {
   protocolLaunch,
@@ -92,7 +92,7 @@ export const width = {
 export const height = {
   xxs: { height: 16 * 4 },
   xs: { height: 16 * 20 },
-  sm: { height: 16 * 32 },
+  sm: { height: 16 * 28 },
   md: { height: 16 * 44 },
   lg: { height: 16 * 56 },
   xl: { height: 16 * 64 },
@@ -198,7 +198,7 @@ export const createWindow = (args: {
 
 export const createAuthWindow = () => {
   const padding = 60
-  const auth0Height = height.sm.height + 30
+  const auth0Height = height.sm.height + 80
   const windowWidth = Math.round(width.xs.width + padding)
   const windowHeight = Math.round(auth0Height + padding)
   const win = createWindow({
@@ -322,8 +322,8 @@ export const createOnboardingWindow = () =>
   createWindow({
     options: {
       ...base,
-      ...width.lg,
-      ...height.md,
+      ...width.md,
+      ...height.sm,
       skipTaskbar: true,
       frame: false,
       titleBarStyle: "hidden",
@@ -420,15 +420,15 @@ export const createUpdateWindow = () =>
     closeProtocolWindow: true,
   })
 
-export const createNetworkWindow = () =>
+export const createLoadingWindow = () =>
   createWindow({
     options: {
       ...base,
-      ...width.lg,
-      ...height.md,
+      ...width.md,
+      ...height.xs,
       frame: false,
       titleBarStyle: "hidden",
       transparent: true,
     } as BrowserWindowConstructorOptions,
-    hash: WindowHashNetwork,
+    hash: WindowHashLoading,
   })

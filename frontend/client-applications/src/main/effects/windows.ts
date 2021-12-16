@@ -16,11 +16,10 @@ import { logBase } from "@app/utils/logging"
 import { withAppReady } from "@app/utils/observables"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
 import { WindowHashProtocol } from "@app/constants/windows"
-import { isNewConfigToken } from "@app/utils/state"
 import {
   createProtocolWindow,
   createAuthWindow,
-  createNetworkWindow,
+  createLoadingWindow,
 } from "@app/utils/windows"
 import { persistGet } from "@app/utils/persist"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
@@ -31,6 +30,7 @@ import {
   CACHED_CONFIG_TOKEN,
   CACHED_REFRESH_TOKEN,
   CACHED_USER_EMAIL,
+  ONBOARDED,
 } from "@app/constants/store"
 import { networkAnalyze } from "@app/utils/networkAnalysis"
 
@@ -164,10 +164,10 @@ withAppReady(
   merge(
     fromTrigger(WhistTrigger.checkPaymentFlowSuccess),
     fromTrigger(WhistTrigger.stripeAuthRefresh)
-  ).pipe(withLatestFrom(isNewConfigToken))
-).subscribe(([, _isNewConfigToken]: [any, boolean]) => {
-  if (!_isNewConfigToken) {
+  )
+).subscribe(() => {
+  if (persistGet(ONBOARDED) as boolean) {
     networkAnalyze()
-    createNetworkWindow()
+    createLoadingWindow()
   }
 })

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react"
-import { Progress } from "@app/components/html/progress"
+import { Progress } from "@app/components/progress"
 
 import { useMainState } from "@app/utils/ipc"
 
