@@ -590,11 +590,11 @@ def check_and_handle_instances_with_old_commit_hash() -> None:
 
     commit_hashes_to_skip.append(current_commit_hash)
 
-    instances_with__not_protected_old_commit_hash = InstanceInfo.query.filter(
+    instances_not_protected_with_old_commit_hash = InstanceInfo.query.filter(
         InstanceInfo.commit_hash.not_in(commit_hashes_to_skip), InstanceInfo.status == "ACTIVE"
     ).all()
 
-    for instance in instances_with__not_protected_old_commit_hash:
+    for instance in instances_not_protected_with_old_commit_hash:
         set_local_lock_timeout(5)
         whist_logger.info(
             f"Instance {instance.instance_name} has an old commit hash that is not protected and is being drained"
