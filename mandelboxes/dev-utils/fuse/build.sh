@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker build . --tag fractal/mandelbox-utils/fuse:current-build
+docker build . --tag whist/mandelbox-utils/fuse:current-build

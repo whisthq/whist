@@ -24,7 +24,7 @@ void unshare_thread() {
     // The syntax here is "from to range_size".
     // Right now this is just the trivial mapping 0->0,
     // but eventually we will want to map child-namespace 0
-    // to parent-namespace 1000 (fractal) for uid and gid.
+    // to parent-namespace 1000 (whist) for uid and gid.
     // This is difficult because this is only permitted if
     // the process is uid/gid 1000 in the parent namespace.
     write_to_file("/proc/thread-self/uid_map", "0 0 1", 5);

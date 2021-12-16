@@ -1,4 +1,4 @@
-FROM fractal/base:current-build
+FROM whist/base:current-build
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -17,16 +17,16 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /usr/share/fractal-fuse
+RUN mkdir -p /usr/share/whist-fuse
 
-COPY hello.c /usr/share/fractal-fuse
+COPY hello.c /usr/share/whist-fuse
 
-RUN cd /usr/share/fractal-fuse \
+RUN cd /usr/share/whist-fuse \
     && gcc -Wall -D _GNU_SOURCE hello.c `pkg-config fuse3 --cflags --libs` -o hello \
-    && cp hello /usr/bin/fractal-fuse
+    && cp hello /usr/bin/whist-fuse
 
-COPY unshare.c /usr/share/fractal-fuse
+COPY unshare.c /usr/share/whist-fuse
 
-RUN cd /usr/share/fractal-fuse \
+RUN cd /usr/share/whist-fuse \
     && gcc -Wall -D _GNU_SOURCE unshare.c -o unshare \
-    && cp unshare /usr/bin/fractal-unshare
+    && cp unshare /usr/bin/whist-unshare

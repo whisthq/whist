@@ -2,7 +2,7 @@
 #
 # This script runs strace on any newly-started Docker container
 #
-# Written by Amr S. Abed <AmrAbed@vt.edu>, but heavily modified by Fractal.
+# Written by Amr S. Abed <AmrAbed@vt.edu>, but heavily modified by Whist.
 #
 # Last updated June 30, 2021
 
