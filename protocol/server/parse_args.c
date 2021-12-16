@@ -21,7 +21,7 @@ Includes
 #include <whist/logging/error_monitor.h>
 #include "parse_args.h"
 #include "network.h"
-#include "main.h"
+#include "state.h"
 
 // i: means --identifier MUST take an argument
 #define OPTION_STRING "k:i:w:e:t:"

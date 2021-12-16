@@ -40,7 +40,7 @@ extern "C" {
 #include <fcntl.h>
 
 #ifndef __APPLE__
-#include "server/main.h"
+#include "server/state.h"
 #include "server/parse_args.h"
 #endif
 
