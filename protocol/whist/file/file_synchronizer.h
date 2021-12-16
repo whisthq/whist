@@ -84,7 +84,7 @@ typedef struct FileMetadata {
     FileTransferType transfer_type;  // Type of file transfer
     FileEventInfo event_info;        // Extra information for the file transfer
     int file_size;                   // Total file size
-    int filename_len;                // Length of the filename
+    size_t filename_len;             // Length of the filename
     char filename[0];                // The file name
 } FileMetadata;
 

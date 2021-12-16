@@ -175,14 +175,14 @@ void file_synchronizer_open_file_for_writing(char* file_directory, FileMetadata*
     active_file->id = unique_id;
 
     // Set transferring file filename
-    int filename_len = strlen(file_metadata->filename);
+    size_t filename_len = strlen(file_metadata->filename);
     active_file->filename = safe_malloc(filename_len + 1);
     memset(active_file->filename, 0, filename_len + 1);
     memcpy(active_file->filename, file_metadata->filename, filename_len);
 
     // Set transferring file filepath
-    int file_directory_len = strlen(file_directory);
-    int file_path_len = file_directory_len + filename_len + 1;
+    size_t file_directory_len = strlen(file_directory);
+    size_t file_path_len = file_directory_len + filename_len + 1;
     active_file->file_path = safe_malloc(file_path_len + 1);
     memset(active_file->file_path, 0, file_path_len + 1);
     memcpy(active_file->file_path, file_directory, file_directory_len);
@@ -300,7 +300,7 @@ void file_synchronizer_set_file_reading_basic_metadata(char* file_path,
     TransferringFile* active_file = &transferring_files[file_index];
 
     // Set transferring file filepath
-    int file_path_len = strlen(file_path);
+    size_t file_path_len = strlen(file_path);
     active_file->file_path = safe_malloc(file_path_len + 1);
     memset(active_file->file_path, 0, file_path_len + 1);
     memcpy(active_file->file_path, file_path, file_path_len);
@@ -373,7 +373,7 @@ void file_synchronizer_open_file_for_reading(int file_index, FileMetadata** file
     for (char* c = active_file->file_path; *c; ++c) {
         if (*c == '/') temp_file_name = c + 1;
     }
-    int filename_len = strlen(temp_file_name);
+    size_t filename_len = strlen(temp_file_name);
 
     // Set all file metadata
     FileMetadata* file_metadata = allocate_region(sizeof(FileData) + filename_len + 1);
