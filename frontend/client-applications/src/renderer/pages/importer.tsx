@@ -10,9 +10,10 @@ const SelectBrowser = (props: {
   return (
     <div className="w-full">
       <div className="font-semibold text-2xl text-gray-300">
-        Import your cookies, bookmarks, extensions and passwords
+        Import your browser data from any browser to Whist
       </div>
       <div className="m-auto mt-2 mb-4 text-gray-400 max-w-xl">
+        Your cookies, bookmarks, extensions and passwords will be copied over.
         You will be asked for your computer password twice when we copy your
         browser data.
       </div>
