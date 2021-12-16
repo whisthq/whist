@@ -596,7 +596,8 @@ def check_and_handle_instances_with_old_commit_hash() -> None:
 
     for instance in instances_not_protected_with_old_commit_hash:
         set_local_lock_timeout(5)
+        instance_name = instance.instance_name
         whist_logger.info(
-            f"Instance {instance.instance_name} has an old commit hash that is not protected and is being drained"
+            f"Instance {instance_name} has a nonprotected old commit hash that is being drained"
         )
         drain_instance(instance)
