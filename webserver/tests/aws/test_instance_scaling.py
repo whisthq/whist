@@ -561,7 +561,7 @@ def test_old_commit_hash_instances(
     monkeypatch.setattr(aws_funcs, "drain_instance", _helper)
 
     # Create an instance with an old commit hash but is protected
-    set_protected_region_to_ami(region_name, "inactive_ami_v2", "old_commit_hash_v2", True)
+    set_protected_region_to_ami(region_name, "inactive_ami_v2", "old_commit_hash_v2", False)
     bulk_instance(
         instance_name="active_instance_3",
         aws_ami_id="inactive_ami_v2",
