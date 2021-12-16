@@ -582,13 +582,21 @@ def check_and_handle_instances_with_old_commit_hash() -> None:
     # All active ami must have the same commit hash.
     current_commit_hash = get_current_commit_hash()
 
-    instances_with_old_commit_hash = InstanceInfo.query.filter(
-        InstanceInfo.commit_hash != current_commit_hash, InstanceInfo.status == "ACTIVE"
+    # Get the commit hashes that are protected
+    commit_hashes_to_skip = [
+        region.client_commit_hash
+        for region in RegionToAmi.query.filter_by(protected_from_scale_down=True).all()
+    ]
+
+    commit_hashes_to_skip.append(current_commit_hash)
+
+    instances_with__not_protected_old_commit_hash = InstanceInfo.query.filter(
+        InstanceInfo.commit_hash.not_in(commit_hashes_to_skip), InstanceInfo.status == "ACTIVE"
     ).all()
 
-    for instance in instances_with_old_commit_hash:
+    for instance in instances_with__not_protected_old_commit_hash:
         set_local_lock_timeout(5)
         whist_logger.info(
-            f"Instance {instance.instance_name} has an old commit hash and is being drained"
+            f"Instance {instance.instance_name} has an old commit hash that is not protected and is being drained"
         )
         drain_instance(instance)
