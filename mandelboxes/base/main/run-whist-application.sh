@@ -3,8 +3,8 @@
 # This script starts the symlinked whist-application as the whist user.
 
 # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
-SENTRY_ENV_FILENAME=/usr/share/whist/private/sentry_env
-case $(cat $SENTRY_ENV_FILENAME) in
+# This is called via `./run-as-whist-user.sh`, which passes sentry environment in.
+case $SENTRY_ENVIORNMENT in
   dev|staging|prod)
     export SENTRY_ENVIRONMENT=${SENTRY_ENV}
     eval "$(sentry-cli bash-hook)"
