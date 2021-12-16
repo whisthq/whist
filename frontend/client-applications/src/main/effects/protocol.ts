@@ -5,6 +5,7 @@
  */
 
 import Sentry from "@sentry/electron"
+import { app } from "electron"
 import { map, startWith, withLatestFrom } from "rxjs/operators"
 
 import { fromTrigger } from "@app/utils/flows"
@@ -15,7 +16,10 @@ import {
 } from "@app/utils/protocol"
 import { createProtocolWindow } from "@app/utils/windows"
 import { persistGet, persistSet } from "@app/utils/persist"
-import { RESTORE_LAST_SESSION } from "@app/constants/store"
+import {
+  RESTORE_LAST_SESSION,
+  WHIST_IS_DEFAULT_BROWSER,
+} from "@app/constants/store"
 import { WhistTrigger } from "@app/constants/triggers"
 import { logBase } from "@app/utils/logging"
 
@@ -104,8 +108,5 @@ if (whistShouldBeSetToDefault) {
 app.on("open-url", function (event, url) {
   event.preventDefault()
   ProtocolSendUrlToOpenInNewTab(url)
-  logBase(
-    `Captured url ${<string>url} after setting Whist as default browser!\n`,
-    {}
-  )
+  logBase(`Captured url ${url} after setting Whist as default browser!\n`, {})
 })
