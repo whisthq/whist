@@ -4,19 +4,19 @@ This project contains the code to integrate a FUSE filesystem into a C program r
 
 ### Preliminaries
 
-This project assumes running in an environment where an AppArmor config is available which allows the `mount` syscall, and the Seccomp filter enables `mount`, `umount`, `umount2`, and `unshare`. See https://github.com/fractal/fractal/pull/2930 for an example of setting up such an environment.
+This project assumes running in an environment where an AppArmor config is available which allows the `mount` syscall, and the Seccomp filter enables `mount`, `umount`, `umount2`, and `unshare`. See https://github.com/whisthq/whist/pull/2930 for an example of setting up such an environment.
 
 ### Building
 
-The docker container depends on the `fractal/base:current-build` image from https://github.com/fractal/fractal being built on the system. Then, simply run
+The docker container depends on the `whist/base:current-build` image from https://github.com/whisthq/whist being built on the system. Then, simply run
 ```bash
-docker build . --tag fractal/mandelbox-utils/fuse:current-build
+docker build . --tag whist/mandelbox-utils/fuse:current-build
 ```
 to build the image.
 
 ### Running
 
-The best way to run this image is from the `mandelbox-images` project in https://github.com/fractal/fractal. Simply run:
+The best way to run this image is from the `mandelbox-images` project in https://github.com/whisthq/whist. Simply run:
 ```bash
 ./run_local_container_image mandelbox-utils/fuse
 ```
