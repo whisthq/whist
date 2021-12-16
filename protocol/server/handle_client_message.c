@@ -565,7 +565,7 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
     // The maximum possible command length is equal to the (constant) length of the part of the
     // command that needs to go before the url plus the length of the url itself, which may be up to
     // MAX_URL_LENGTH.
-    char *command = (char *)calloc(MAX_URL_LENGTH + len_cmd_before_url + 1, sizeof(char));
+    char *command = (char *)calloc(url_length + len_cmd_before_url + 1, sizeof(char));
     sprintf(command, "/usr/share/whist/run-as-whist-user.sh \"exec google-chrome %s\"",
             received_url);
 
