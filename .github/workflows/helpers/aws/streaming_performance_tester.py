@@ -13,6 +13,7 @@ import multiprocessing
 
 from testing_helpers import (
     get_boto3client,
+    get_current_AMI,
     create_ec2_instance,
     wait_for_instance_to_start_or_stop,
     get_instance_ip,

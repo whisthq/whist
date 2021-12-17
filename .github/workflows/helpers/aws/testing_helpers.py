@@ -5,6 +5,7 @@ import os
 import time
 import boto3, botocore
 import paramiko
+from operator import itemgetter
 
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
