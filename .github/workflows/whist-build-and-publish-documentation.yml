@@ -59,6 +59,28 @@ jobs:
         run: ./notifications/setup_notifications.sh
 
       ##############################################################################
+      ############################## CORE-GO STEPS ############################
+
+      - name: Setup Go environment
+        uses: actions/setup-go@v2.1.3
+        with:
+          go-version: "1.17"
+
+      - name: Build Core Go Documentation
+        working-directory: whist/backend/core-go
+        run: make docs
+
+      - name: Diff Old and New Documentation
+        id: core-go-diff
+        run: |
+          git diff --no-index whist/backend/core-go/build/docs docs/core-go && echo "No changes detected"
+          echo "::set-output name=changed::$?"
+
+      - name: Copy New Core Go Documentation into the whisthq/docs Working Tree (Only on Push/Workflow_dispatch Events)
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.core-go-diff.outputs.changed == true }}
+        run: rm -rf docs/core-go && cp -r whist/backend/core-go/build/docs docs/core-go
+
+      ##############################################################################
       ############################## HOST-SERVICE STEPS ############################
 
       - name: Setup Go environment
@@ -67,7 +89,7 @@ jobs:
           go-version: "1.17"
 
       - name: Build Host Service Documentation
-        working-directory: whist/host-service
+        working-directory: whist/backend/host-service
         run: make docs
 
       - name: Diff Old and New Documentation
@@ -79,6 +101,28 @@ jobs:
       - name: Copy New Host-Service Documentation into the whisthq/docs Working Tree (Only on Push/Workflow_dispatch Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.host-service-diff.outputs.changed == true }}
         run: rm -rf docs/host-service && cp -r whist/backend/host-service/build/docs docs/host-service
+
+      ##############################################################################
+      ############################## SCALING-SERVICE STEPS ############################
+
+      - name: Setup Go environment
+        uses: actions/setup-go@v2.1.3
+        with:
+          go-version: "1.17"
+
+      - name: Build Scaling Service Documentation
+        working-directory: whist/backend/host-service
+        run: make docs
+
+      - name: Diff Old and New Documentation
+        id: scaling-service-diff
+        run: |
+          git diff --no-index whist/backend/scaling-service/build/docs docs/scaling-service && echo "No changes detected"
+          echo "::set-output name=changed::$?"
+
+      - name: Copy New Scaling-Service Documentation into the whisthq/docs Working Tree (Only on Push/Workflow_dispatch Events)
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.scaling-service-diff.outputs.changed == true }}
+        run: rm -rf docs/scaling-service && cp -r whist/backend/scaling-service/build/docs docs/scaling-service
 
       ##############################################################################
       ################################ PROTOCOL STEPS ##############################

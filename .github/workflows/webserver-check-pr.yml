@@ -45,7 +45,7 @@ jobs:
         run: pylint-wrapper backend/webserver/app backend/webserver/tests backend/webserver/scripts
 
       - name: Perform static type analysis with mypy
-        working-directory: webserver
+        working-directory: backend/webserver
         run: mypy --strict app scripts tests
 
   # Heroku Testing
