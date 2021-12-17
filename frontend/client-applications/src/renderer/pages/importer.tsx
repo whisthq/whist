@@ -15,8 +15,7 @@ const SelectBrowser = (props: {
       <div className="m-auto mt-2 mb-4 text-gray-400 max-w-xl">
         Your cookies, bookmarks, extensions and passwords will be copied over.
         You will be asked for your computer password twice when we copy your
-        browser data. Note that we can only import extensions that are
-        compatible with Chrome due to compatibility reasons.
+        browser data. Note that only extensions from Chrome-compatible browsers can be imported, like Brave and Chrome.
       </div>
       <div className="mt-8">
         <div className="bg-gray-900 px-4 py-2 rounded w-96 m-auto">
