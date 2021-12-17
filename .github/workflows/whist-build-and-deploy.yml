@@ -897,12 +897,12 @@ jobs:
         run: ./notifications/setup_notifications.sh
 
       - name: Install webserver dependencies for running the flask cli
-        working-directory: webserver
+        working-directory: backend/webserver
         run: pip install -r requirements.txt
 
       - name: Run flask cli to create new instance buffers
         id: run-webserver-cli-ami-upgrade
-        working-directory: webserver
+        working-directory: backend/webserver
         env:
           AUTH0_DOMAIN: ${{ needs.whist-publish-build-config.outputs.auth0-domain }}
           AUTH0_WEBSERVER_CLIENT_ID: ${{ needs.whist-publish-build-config.outputs.auth0-client-id }}
@@ -1501,12 +1501,12 @@ jobs:
         run: ./notifications/setup_notifications.sh
 
       - name: Install webserver dependencies for running the flask cli
-        working-directory: webserver
+        working-directory: backend/webserver
         run: pip install -r requirements.txt
 
       - name: Run flask cli to swap over to the new instance buffers
         id: run-webserver-cli-ami-swap-over
-        working-directory: webserver
+        working-directory: backend/webserver
         env:
           AUTH0_DOMAIN: ${{ needs.whist-publish-build-config.outputs.auth0-domain }}
           AUTH0_WEBSERVER_CLIENT_ID: ${{ needs.whist-publish-build-config.outputs.auth0-client-id }}

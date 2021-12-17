@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	graphql "github.com/hasura/go-graphql-client"
 )
 
 // mockWhistClient is a struct that mocks a real Hasura client for testing.
@@ -83,6 +84,117 @@ func (cl *mockWhistClient) Run(goroutinetracker *sync.WaitGroup) {}
 func (cl *mockWhistClient) Close(subscriptionIDs []string) error {
 	return nil
 }
+func TestInstanceStatusHandler(t *testing.T) {
+	var variables = map[string]interface{}{
+		"instance_name": graphql.String("test-instance-name"),
+		"status":        graphql.String("DRAINING"),
+	}
+
+	// Create different tests for the instance status handler,
+	// verify if it returns the appropiate response
+	var instanceTests = []struct {
+		testName string
+		event    InstanceEvent
+		want     bool
+	}{
+		{"Empty event", InstanceEvent{InstanceInfo: []Instance{}}, false},
+		{"Wrong status event", InstanceEvent{
+			InstanceInfo: []Instance{
+				{InstanceName: "test-instance-name", Status: "PRE_CONNECTION"},
+			},
+		}, false},
+		{"Correct status event", InstanceEvent{
+			InstanceInfo: []Instance{
+				{InstanceName: "test-instance-name", Status: "DRAINING"},
+			},
+		}, true},
+	}
+
+	for _, tt := range instanceTests {
+		testname := tt.testName
+		t.Run(testname, func(t *testing.T) {
+			got := InstanceStatusHandler(tt.event, variables)
+
+			if got != tt.want {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+func TestMandelboxAllocatedHandler(t *testing.T) {
+	var variables = map[string]interface{}{
+		"instance_name": graphql.String("test-instance-name"),
+		"status":        graphql.String("ALLOCATED"),
+	}
+
+	// Create different tests for the mandelbox allocated handler,
+	// verify if it returns the appropiate response
+	var mandelboxTests = []struct {
+		testName string
+		event    MandelboxEvent
+		want     bool
+	}{
+		{"Empty event", MandelboxEvent{MandelboxInfo: []Mandelbox{}}, false},
+		{"Wrong instance name event", MandelboxEvent{
+			MandelboxInfo: []Mandelbox{
+				{InstanceName: "test-instance-name-2", Status: "EXITED"},
+			},
+		}, false},
+		{"Correct status event", MandelboxEvent{
+			MandelboxInfo: []Mandelbox{
+				{InstanceName: "test-instance-name", Status: "ALLOCATED"},
+			},
+		}, true},
+	}
+
+	for _, tt := range mandelboxTests {
+		testname := tt.testName
+		t.Run(testname, func(t *testing.T) {
+			got := MandelboxAllocatedHandler(tt.event, variables)
+
+			if got != tt.want {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMandelboxStatusHandler(t *testing.T) {
+	var variables = map[string]interface{}{
+		"status": graphql.String("ALLOCATED"),
+	}
+
+	// Create different tests for the mandelbox status handler,
+	// verify if it returns the appropiate response
+	var mandelboxTests = []struct {
+		testName string
+		event    MandelboxEvent
+		want     bool
+	}{
+		{"Empty event", MandelboxEvent{MandelboxInfo: []Mandelbox{}}, false},
+		{"Wrong status event", MandelboxEvent{
+			MandelboxInfo: []Mandelbox{
+				{Status: "EXITED"},
+			},
+		}, false},
+		{"Correct status event", MandelboxEvent{
+			MandelboxInfo: []Mandelbox{
+				{Status: "ALLOCATED"},
+			},
+		}, true},
+	}
+
+	for _, tt := range mandelboxTests {
+		testname := tt.testName
+		t.Run(testname, func(t *testing.T) {
+			got := MandelboxStatusHandler(tt.event, variables)
+
+			if got != tt.want {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
 func TestSetupHostSubscriptions(t *testing.T) {
 	instanceName := "test-instance-name"
@@ -101,8 +213,8 @@ func TestSetupHostSubscriptions(t *testing.T) {
 
 	// Create a fake variables map that matches the host subscriptions variable map
 	var variables = map[string]interface{}{
-		"instanceName": instanceName,
-		"status":       "DRAINING",
+		"instanceName": graphql.String(instanceName),
+		"status":       graphql.String("DRAINING"),
 	}
 
 	// Verify that the "variables" maps are deep equal for the first subscription
@@ -110,7 +222,7 @@ func TestSetupHostSubscriptions(t *testing.T) {
 		t.Errorf("Expected variable map to be %v, got: %v", whistClient.Subscriptions[0].Variables, variables)
 	}
 
-	variables["status"] = "ALLOCATED"
+	variables["status"] = graphql.String("ALLOCATED")
 
 	// Verify that the "variables" maps are deep equal for the second subscription
 	if !reflect.DeepEqual(whistClient.Subscriptions[1].Variables, variables) {
@@ -134,67 +246,21 @@ func TestSetupScalingSubscriptions(t *testing.T) {
 
 	// Create a fake variables map that matches the host subscriptions variable map
 	var variables = map[string]interface{}{
-		"status": "ALLOCATED",
+		"status": graphql.String("ALLOCATED"),
 	}
 
 	// Verify that the "variables" maps are deep equal for the first subscription
 
-	if !reflect.DeepEqual(whistClient.Subscriptions[0].Variables, variables) {
+	if !reflect.DeepEqual(variables, whistClient.Subscriptions[0].Variables) {
 		t.Errorf("Expected variable map to be %v, got: %v", whistClient.Subscriptions[0].Variables, variables)
 	}
 
-	variables["status"] = "EXITED"
+	variables["status"] = graphql.String("EXITED")
 
 	// Verify that the "variables" maps are deep equal for the second subscription
-	if !reflect.DeepEqual(whistClient.Subscriptions[1].Variables, variables) {
+	if !reflect.DeepEqual(variables, whistClient.Subscriptions[1].Variables) {
 		t.Errorf("Expected variable map to be %v, got: %v", whistClient.Subscriptions[1].Variables, variables)
 	}
 }
-func TestStart(t *testing.T) {
-	whistClient := &mockWhistClient{}
-	instanceName := "test-instance-name"
 
-	// Setup context, goroutine tracker and event channel
-	ctx, cancel := context.WithCancel(context.Background())
-	tracker := sync.WaitGroup{}
-	subscriptionEvents := make(chan SubscriptionEvent, 10)
-
-	// Create the host service specific subscriptions
-	SetupHostSubscriptions(instanceName, whistClient)
-
-	// Start the subscriptions
-	Start(whistClient, ctx, &tracker, subscriptionEvents)
-
-	// Verify that the results are sent through the appropiate channel,
-	// and correspond to the first host service subscription
-	event := <-subscriptionEvents
-	instanceResult := event.(InstanceEvent)
-	instance := instanceResult.InstanceInfo[0]
-
-	// Check that the result has the correct information
-	if instance.InstanceName != instanceName {
-		t.Errorf("Expected instance name %v, got %v", instanceName, instance.InstanceName)
-	}
-
-	if instance.Status != "DRAINING" {
-		t.Errorf("Expected status %v, got %v", "DRAINING", instance.Status)
-	}
-
-	// Verify that the results are sent through the appropiate channel,
-	// and correspond to the second host service subscription
-	event = <-subscriptionEvents
-	mandelboxResult := event.(MandelboxEvent)
-	mandelbox := mandelboxResult.MandelboxInfo[0]
-
-	// Check that the result has the correct information
-	if mandelbox.InstanceName != instanceName {
-		t.Errorf("Expected instance name %v, got %v", instanceName, mandelbox.InstanceName)
-	}
-
-	if mandelbox.Status != "ALLOCATED" {
-		t.Errorf("Expected status %v, got %v", "ALLOCATED", mandelbox.Status)
-	}
-
-	// Cancel context and terminate client.
-	cancel()
-}
+// TODO: Add test to subscriptions start function once scaling service is done.

@@ -24,10 +24,14 @@ func InstanceStatusHandler(event SubscriptionEvent, variables map[string]interfa
 		instance = result.InstanceInfo[0]
 	}
 
-	instanceName := string(variables["instance_name"].(graphql.String))
+	if (variables["instance_name"] == nil) || (variables["status"] == nil) {
+		return false
+	}
+
+	name := string(variables["instance_name"].(graphql.String))
 	status := string(variables["status"].(graphql.String))
 
-	return (instance.InstanceName == instanceName) && (instance.Status == status)
+	return (instance.InstanceName == name) && (instance.Status == status)
 }
 
 // MandelboxAllocatedHandler handles events from the hasura subscription which
@@ -38,6 +42,10 @@ func MandelboxAllocatedHandler(event SubscriptionEvent, variables map[string]int
 	var mandelbox Mandelbox
 	if len(result.MandelboxInfo) > 0 {
 		mandelbox = result.MandelboxInfo[0]
+	}
+
+	if variables["instance_name"] == nil {
+		return false
 	}
 
 	instanceName := string(variables["instance_name"].(graphql.String))
@@ -53,6 +61,10 @@ func MandelboxStatusHandler(event SubscriptionEvent, variables map[string]interf
 	var mandelbox Mandelbox
 	if len(result.MandelboxInfo) > 0 {
 		mandelbox = result.MandelboxInfo[0]
+	}
+
+	if variables["status"] == nil {
+		return false
 	}
 
 	status := string(variables["status"].(graphql.String))
