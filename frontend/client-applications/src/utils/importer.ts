@@ -103,6 +103,11 @@ const getBookmarkFilePath = (browser: InstalledBrowser): string[] => {
   return browserDirectories.map((dir) => path.join(dir, "Bookmarks"))
 }
 
+const getExtensionDir = (browser: InstalledBrowser): string[] => {
+  const browserDirectories = getBrowserDefaultDirectory(browser)
+  return browserDirectories.map((dir) => path.join(dir, "Extensions"))
+}
+
 const getOsCryptName = (browser: InstalledBrowser): string => {
   switch (browser) {
     case InstalledBrowser.CHROME: {
@@ -318,7 +323,7 @@ const getCookiesFromFile = async (
 
     return rows
   } catch (err) {
-    console.error(err)
+    console.error("Could not get cookies from file. Error:", err)
     return []
   }
 }
@@ -335,7 +340,23 @@ const getBookmarksFromFile = (browser: InstalledBrowser): string => {
 
     return JSON.stringify(bookmarksJSON)
   } catch (err) {
-    console.error(err)
+    console.error("Could not get bookmarks from file. Error:", err)
+    return ""
+  }
+}
+
+const getExtensionIDs = (browser: InstalledBrowser): string => {
+  const extensionsDir = expandPaths(getExtensionDir(browser))
+
+  try {
+    // Get all the directory names as it is the extension's ID
+    const extensions = fs
+      .readdirSync(extensionsDir, { withFileTypes: true })
+      .filter((dirent) => dirent.isDirectory() && dirent.name !== "Temp")
+      .map((dirent) => dirent.name)
+    return extensions.toString()
+  } catch (err) {
+    console.error("Could not get extensions IDs. Error:", err)
     return ""
   }
 }
@@ -439,9 +460,32 @@ const getBookmarks = async (
   return JSON.stringify(bookmarks)
 }
 
+const getExtensions = async (
+  browser: InstalledBrowser
+): Promise<string | undefined> => {
+  if (browser === undefined) return undefined
+
+  // For now we only want to get extensions for browsers that are compatible
+  // with chrome extensions ie brave/chrome/chromium
+  if (
+    browser !== InstalledBrowser.CHROME &&
+    browser !== InstalledBrowser.BRAVE &&
+    browser !== InstalledBrowser.CHROMIUM
+  ) {
+    return undefined
+  }
+
+  const extensions = getExtensionIDs(browser)
+
+  if (extensions.length === 0) return undefined
+
+  return extensions
+}
+
 export {
   InstalledBrowser,
   getInstalledBrowsers,
   getDecryptedCookies,
   getBookmarks,
+  getExtensions,
 }

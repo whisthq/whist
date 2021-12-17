@@ -16,6 +16,7 @@ export default flow<
     jsonData: string
     cookies: string | undefined
     bookmarks: string | undefined
+    extensions: string | undefined
     mandelboxID: string
     isNewConfigToken: boolean
   } & accessToken &
@@ -34,6 +35,7 @@ export default flow<
             is_new_config_encryption_token: args.isNewConfigToken,
             cookies: args.cookies,
             bookmarks: args.bookmarks,
+            extensions: args.extensions,
           })
         )
       )

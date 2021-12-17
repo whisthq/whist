@@ -28,11 +28,13 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	// We will simulate a user with cookies but no bookmarks
 	cookiesJSON := "[" + testCookie1 + "," + testCookie2 + "]"
 	bookmarksJSON := ""
+	extensions := "not_real_extension_id,not_real_second_extension_id"
 
 	// Create browser data
 	userInitialBrowserData := BrowserData{
 		CookiesJSON:   types.Cookies(cookiesJSON),
 		BookmarksJSON: types.Bookmarks(bookmarksJSON),
+		Extensions:    types.Extensions(extensions),
 	}
 
 	if err := WriteUserInitialBrowserData(userInitialBrowserData, destDir); err != nil {
@@ -41,9 +43,13 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 
 	// Get browser data file path
 	cookieFilePath := path.Join(destDir, UserInitialCookiesFile)
+	extensionFilePath := path.Join(destDir, UserInitialExtensionsFile)
 
 	// Stores the file path and content for each browser data type (bookmark is excluded since it's empty)
-	fileAndContents := [][]string{{cookieFilePath, cookiesJSON}}
+	fileAndContents := [][]string{
+		{cookieFilePath, cookiesJSON},
+		{extensionFilePath, extensions},
+	}
 
 	for _, fileAndContent := range fileAndContents {
 		filePath := fileAndContent[0]
@@ -96,5 +102,10 @@ func TestUserInitialBrowserWriteEmpty(t *testing.T) {
 	bookmarkFilePath := path.Join(destDir, UserInitialBookmarksFile)
 	if _, err := os.Stat(bookmarkFilePath); err == nil || !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("error writing empty user initial browser data (bookmark file). Expected %v but got %v", os.ErrNotExist, err)
+	}
+
+	extensionFilePath := path.Join(destDir, UserInitialExtensionsFile)
+	if _, err := os.Stat(extensionFilePath); err == nil || !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("error writing empty user initial browser data (extension file). Expected %v but got %v", os.ErrNotExist, err)
 	}
 }

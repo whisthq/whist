@@ -380,7 +380,7 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient,
 	sub *subscriptions.MandelboxEvent, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
 
-	logAndReturnError := func(fmt string, v ...interface{}) {
+		logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
 		logger.Error(err)
 		metrics.Increment("ErrorRate")
@@ -535,6 +535,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		utils.Sprintf("SENTRY_ENV=%s", metadata.GetAppEnvironment()),
 		utils.Sprintf("WHIST_INITIAL_USER_COOKIES_FILE=%v%v", mandelboxData.UserInitialBrowserDir, mandelboxData.UserInitialCookiesFile),
 		utils.Sprintf("WHIST_INITIAL_USER_BOOKMARKS_FILE=%v%v", mandelboxData.UserInitialBrowserDir, mandelboxData.UserInitialBookmarksFile),
+		utils.Sprintf("WHIST_INITIAL_BROWSER_EXTENSIONS_FILE=%v%v", mandelboxData.UserInitialBrowserDir, mandelboxData.UserInitialExtensionsFile),
 	}
 	config := dockercontainer.Config{
 		ExposedPorts: exposedPorts,
@@ -731,26 +732,27 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// Write user initial browser data at the same time as writeJSONData.
 	// This is done separately since both functions are independent of each other and we can save time.
-	userInitialBrowserDataDownloadComplete := make(chan bool)
-	go func() {
+	browserDataGroup, _ := errgroup.WithContext(mandelbox.GetContext())
+	browserDataGroup.Go(func() error {
 		logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
 
 		// Create browser data
 		userInitialBrowserData := mandelboxData.BrowserData{
-			CookiesJSON:   req.Cookies,
-			BookmarksJSON: req.Bookmarks,
+			CookiesJSON:   req.CookiesJSON,
+			BookmarksJSON: req.BookmarksJSON,
+			Extensions:	   req.Extensions,
 		}
 
 		destDir := path.Join(mandelbox.GetUserConfigDir(), mandelboxData.GetUnpackedConfigsDirectoryName())
 		err := mandelboxData.WriteUserInitialBrowserData(userInitialBrowserData, destDir)
-		userInitialBrowserDataDownloadComplete <- true
 		if err != nil {
 			logger.Warningf("Error writing user initial browser data for mandelbox %s: %v", mandelboxSubscription.ID, err)
-			return
+			return nil
 		}
 
 		logger.Infof("SpinUpMandelbox(): Successfully wrote user initial browser data for mandelbox %s", mandelboxSubscription.ID)
-	}()
+		return nil
+	})
 
 	// Write the config.json file with the data received from JSON transport
 	err = mandelbox.WriteJSONData()
@@ -759,7 +761,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		metrics.Increment("ErrorRate")
 	}
 
-	<-userInitialBrowserDataDownloadComplete
+	browserDataGroup.Wait()
 
 	// Unblocks whist-startup.sh to start symlink loaded user configs
 	err = mandelbox.MarkReady()

@@ -27,10 +27,12 @@ esac
 # Exit on subcommand errors
 set -Eeuo pipefail
 
+WHIST_PRIVATE_DIR=/usr/share/whist/private
+
 # If WHIST_AES_KEY is set, then create file
 if [ -n "${WHIST_AES_KEY+1}" ]
 then
-  echo $WHIST_AES_KEY > /usr/share/whist/private/aes_key
+  echo $WHIST_AES_KEY > $WHIST_PRIVATE_DIR/aes_key
 fi
 
 # Unset the AWS key to make sure that this environment variable does not
@@ -38,26 +40,29 @@ fi
 unset WHIST_AES_KEY
 
 # If WHIST_INITIAL_USER_COOKIES_FILE is set, then create file
-if [ -n "${WHIST_INITIAL_USER_COOKIES_FILE+1}" ]
-then
-  echo $WHIST_INITIAL_USER_COOKIES_FILE > /usr/share/whist/private/user_cookies_file
+if [ -n "${WHIST_INITIAL_USER_COOKIES_FILE+1}" ]; then
+  echo $WHIST_INITIAL_USER_COOKIES_FILE > $WHIST_PRIVATE_DIR/user_cookies_file
 fi
 
 # If WHIST_COOKIE_UPLOAD_TARGET is set, then create file
 if [ -n "${WHIST_COOKIE_UPLOAD_TARGET+1}" ]
 then
-  echo $WHIST_COOKIE_UPLOAD_TARGET > /usr/share/whist/private/user_target
+  echo $WHIST_COOKIE_UPLOAD_TARGET > $WHIST_PRIVATE_DIR/user_target
 fi
 
 # If WHIST_INITIAL_USER_BOOKMARKS_FILE is set, then create file
-if [ -n "${WHIST_INITIAL_USER_BOOKMARKS_FILE+1}" ]
-then
-  echo $WHIST_INITIAL_USER_BOOKMARKS_FILE > /usr/share/whist/private/user_bookmarks_file
+if [ -n "${WHIST_INITIAL_USER_BOOKMARKS_FILE+1}" ]; then
+  echo $WHIST_INITIAL_USER_BOOKMARKS_FILE > $WHIST_PRIVATE_DIR/user_bookmarks_file
+fi
+
+# If WHIST_INITIAL_BROWSER_EXTENSIONS_FILE is set, then create file
+if [ -n "${WHIST_INITIAL_BROWSER_EXTENSIONS_FILE+1}" ]; then
+  echo $WHIST_INITIAL_BROWSER_EXTENSIONS_FILE > $WHIST_PRIVATE_DIR/extensions_file
 fi
 
 unset WHIST_INITIAL_USER_BOOKMARKS_FILE
 unset WHIST_INITIAL_USER_COOKIES_FILE
-
+unset WHIST_INITIAL_BROWSER_EXTENSIONS_FILE
 
 # Remove a vestigal file that we do not use.
 # This is how LXC used to read environment variables: see that deprecated code in

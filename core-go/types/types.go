@@ -45,6 +45,9 @@ type Cookies string
 // Bookmarks is defined as its own type for similar reasons.
 type Bookmarks string
 
+// Extensions is defined as its own type for similar reasons.
+type Extensions string
+
 // String is a utility function to return the string representation of a MandelboxID.
 func (mandelboxID MandelboxID) String() string {
 	return uuid.UUID(mandelboxID).String()

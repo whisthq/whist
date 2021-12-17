@@ -32,9 +32,16 @@ install_chrome_extension () {
   echo "{" > "$pref_file_path"
   echo "\"external_update_url\": \"$upd_url\"" >> "$pref_file_path"
   echo "}" >> "$pref_file_path"
-  echo Added \""$pref_file_path"\" ["$2"]
+  echo Added \""$pref_file_path"\"
 }
 
+# Allow developers to install extensions by calling this function
+if [ "$#" -eq 1 ]; then
+  install_chrome_extension $1
+else
+  echo "Could not install chrome extension $1. Expected 1 arg, got $#"
+fi
+
 # Install Chrome (Chromium) Extensions
-# format: install_chrome_extension [extension string ID] [extension name]
-# i.e.: install_chrome_extension "cjpalhdlnbpafiamejdnhcphjbkeiagm" "uBlock Origin"
+# format: install_chrome_extension [extension string ID]
+# i.e.: install_chrome_extension "cjpalhdlnbpafiamejdnhcphjbkeiagm"

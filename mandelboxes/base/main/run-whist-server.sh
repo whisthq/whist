@@ -3,7 +3,8 @@
 # This script starts the Whist protocol server and the Whist application.
 
 # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
-SENTRY_ENV_FILENAME=/usr/share/whist/private/sentry_env
+WHIST_PRIVATE_DIR=/usr/share/whist/private
+SENTRY_ENV_FILENAME=$WHIST_PRIVATE_DIR/sentry_env
 case $(cat $SENTRY_ENV_FILENAME) in
   dev|staging|prod)
     export SENTRY_ENVIRONMENT=${SENTRY_ENV}
@@ -20,10 +21,11 @@ set -Eeuo pipefail
 # Set/Retrieve Mandelbox parameters
 WHIST_MAPPINGS_DIR=/whist/resourceMappings
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
-PRIVATE_KEY_FILENAME=/usr/share/whist/private/aes_key
-COOKIE_FILE_FILENAME=/usr/share/whist/private/user_cookies_file
-BOOKMARK_FILE_FILENAME=/usr/share/whist/private/user_bookmarks_file
-USER_UPLOAD_TARGET_FILENAME=/usr/share/whist/private/user_target
+PRIVATE_KEY_FILENAME=$WHIST_PRIVATE_DIR/aes_key
+COOKIE_FILE_FILENAME=$WHIST_PRIVATE_DIR/user_cookies_file
+BOOKMARK_FILE_FILENAME=$WHIST_PRIVATE_DIR/user_bookmarks_file
+EXTENSION_FILENAME=$WHIST_PRIVATE_DIR/extensions_file
+USER_UPLOAD_TARGET_FILENAME=$WHIST_PRIVATE_DIR/user_target
 TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/timeout
 WHIST_APPLICATION_PID_FILE=/home/whist/whist-application-pid
 PROTOCOL_LOG_FILENAME=/usr/share/whist/server.log
@@ -65,6 +67,17 @@ fi
 
 if [ -f "$BOOKMARK_FILE_FILENAME" ]; then
   export WHIST_INITIAL_USER_BOOKMARKS_FILE=$(cat $BOOKMARK_FILE_FILENAME)
+fi
+
+if [ -f "$EXTENSION_FILENAME" ] && [ -f "$(cat $EXTENSION_FILENAME)" ]; then
+  IN="$(cat $(cat $EXTENSION_FILENAME))"
+  extensions=(${IN//,/ })
+  for extension in "${extensions[@]}"
+  do
+    #  Install user extensions
+    /usr/bin/install-extension.sh $extension
+  done
+  rm $(cat $EXTENSION_FILENAME)
 fi
 
 # We use named pipe redirection for consistency with our WhistServer launch setup

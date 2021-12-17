@@ -130,6 +130,7 @@ export const logBase = (
         "config_encryption_token",
         "cookies",
         "bookmarks",
+        "extensions",
       ].includes(k)
     ) {
       return "***********"
