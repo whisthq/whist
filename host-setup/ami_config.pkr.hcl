@@ -159,11 +159,6 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
     random    = true # A random Subnet will be used if multiple Subnets matches the filter. most_free have precendence over this.
   }
 
-  /* Metadata configuration */
-
-  http_endpoint = "enabled"  # A string to enable or disble the IMDS endpoint for an instance. Defaults to enabled. Accepts either "enabled" or "disabled"
-  http_tokens   = "required" # A string to either set the use of IMDSv2 for the instance to optional or required. Defaults to "optional". Accepts either "optional" or "required"
-
   /* Block Device configuration */
 
   launch_block_device_mappings {
