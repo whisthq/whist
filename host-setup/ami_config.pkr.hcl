@@ -139,6 +139,7 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   # This feature exists to help prevent situations where a Packer build fails because a particular availability
   # zone does not have capacity for the specific instance_type requested in instance_type.
   spot_instance_types = ["g4dn.xlarge", "g4dn.2xlarge", "g4dn.4xlarge", "g4dn.8xlarge", "g4dn.16xlarge"]
+  spot_price = "auto"
 
   # We do not set spot_price (string), so that it defaults to a maximum price equal to the on demand price 
   # of the instance. In the situation where the current Amazon-set spot price exceeds the value set in this
