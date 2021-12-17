@@ -476,10 +476,7 @@ jobs:
     if: contains(needs.whist-publish-build-config.outputs.jobs, '|mandelboxes-and-amis-publish-ghcr-and-aws|')
 
     env:
-      aws_new_ami_source_region: us-east-1 # The AWS region our new AMI gets built in
-      aws_new_ami_vpc_id: vpc-34aded4e # The ID of the Whist-created VPC the EC2 instance building the AMI is part of
       aws_source_ami_id: ami-04505e74c0741db8d # The base AWS-provided AMI we build our AMI from (AWS Ubuntu Server 20.04 LTS) associated with the aws_new_ami_source_region
-      apps: "browsers/chrome browsers/brave" # We only deploy the browsers mandelboxes, as other mandelboxes are for internal use only
 
     steps:
       - name: Checkout Git Repository
@@ -509,10 +506,11 @@ jobs:
       # Note that they will build the images they depend on automatically (i.e. base)
       - name: Build Mandelboxes
         working-directory: mandelboxes
-        run: ./build.sh ${{ env.apps }} --prod
+        run: ./build.sh browsers/chrome browsers/brave --prod
         env:
           DOCKER_BUILDKIT: 1
 
+      # We only deploy the browsers mandelboxes, other mandelboxes are for internal use only
       - name: Push mandelboxes
         if: needs.whist-publish-build-config.outputs.publish == 'true'
         working-directory: mandelboxes
@@ -520,10 +518,8 @@ jobs:
           GH_USERNAME: ${{ secrets.GHA_USERNAME }}
           GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
         run: |
-          for app in ${{ env.apps }}
-          do
-            ./push.sh $app ${{ needs.whist-publish-build-config.outputs.branch }}
-          done
+          ./push.sh browsers/chrome ${{ needs.whist-publish-build-config.outputs.branch }}
+          ./push.sh browsers/brave ${{ needs.whist-publish-build-config.outputs.branch }}
 
       ##########################################################################################
       ############################# Stage 2 - Build Host Service  ##############################
@@ -589,8 +585,6 @@ jobs:
           data["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
           date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
           data["ami_name"] = f"whist-ami-${{ github.sha }}-{date_str}"
-          data["source_region"] = "${{ env.aws_new_ami_source_region }}"
-          data["vpc_id"] = "${{ env.aws_new_ami_vpc_id }}"
           data["source_ami"] = "${{ env.aws_source_ami_id }}"
 
           # Set logz token and regions to clone AMI to by environment

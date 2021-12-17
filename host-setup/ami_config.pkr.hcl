@@ -22,11 +22,6 @@ variable "secret_key" {
   sensitive = true
 }
 
-variable "instance_types" {
-  type    = list(string)
-  default = []
-}
-
 variable "ami_name" {
   type    = string
   default = ""
@@ -37,19 +32,9 @@ variable "source_ami" {
   default = ""
 }
 
-variable "source_region" {
-  type    = string
-  default = ""
-}
-
 variable "destination_regions" {
   type    = list(string)
   default = []
-}
-
-variable "vpc_id" {
-  type    = string
-  default = ""
 }
 
 /* GitHub variables */
@@ -114,8 +99,8 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
 
   access_key  = "${var.access_key}"
   secret_key  = "${var.secret_key}"
-  region      = "${var.source_region}" # The source AWS region where the Packer Builder will run
-  max_retries = 5                      # Retry up to 5 times using exponential backoff if Packer fails to connect to AWS, in case of throttling/transient failures
+  region      = "us-east-1" # The source AWS region where the Packer Builder will run
+  max_retries = 5           # Retry up to 5 times using exponential backoff if Packer fails to connect to AWS, in case of throttling/transient failures
 
   /* Run configuration */
 
@@ -132,18 +117,18 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   # This feature exists to help prevent situations where a Packer build fails because a particular availability
   # zone does not have capacity for the specific instance_type requested in instance_type.
   spot_instance_types = ["g4dn.xlarge", "g4dn.2xlarge", "g4dn.4xlarge", "g4dn.8xlarge", "g4dn.16xlarge"]
-  spot_price = "auto"
 
   # We do not set spot_price (string), so that it defaults to a maximum price equal to the on demand price 
   # of the instance. In the situation where the current Amazon-set spot price exceeds the value set in this
   # field, Packer will not launch an instance and the build will error. In the situation where the Amazon-set
   # spot price is less than the value set in this field, Packer will launch and you will pay the Amazon-set 
   # spot price, not this maximum value. For more information, see the Amazon docs on spot pricing.
+  spot_price = "auto"
 
   iam_instance_profile = "PackerAMIBuilder" # This is the IAM role we configured for Packer in AWS
   shutdown_behavior    = "terminate"        # Automatically terminate instances on shutdown in case Packer exits ungracefully. Possible values are stop and terminate. Defaults to stop.
 
-  vpc_id = "${var.vpc_id}" # The VPC where the Packer Builer will run. This VPC needs to have subnet(s) configured as per the `subnet_filter` below
+  vpc_id = "vpc-34aded4e" # The VPC where the Packer Builer will run. This VPC needs to have subnet(s) configured as per the `subnet_filter` below
 
   # This filter ensures Packer will pick a subnet which was configured for Packer by looking for the tag
   # Purpose: packer. If no subnet with this tag is found in `region`, Packer will fail.
