@@ -11,7 +11,6 @@ const {
   WhistEnvironments,
   WhistNodeEnvironments,
   WhistWebservers,
-  GeneralConstants,
 } = require("./constants")
 
 const {
@@ -143,5 +142,4 @@ module.exports = {
   WhistNodeEnvironments,
   WhistEnvironments,
   WhistWebservers,
-  GeneralConstants,
 }
