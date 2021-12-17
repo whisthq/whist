@@ -22,7 +22,7 @@ jobs:
     env:
       aws_new_ami_source_region: us-east-1 # The AWS region our new AMI gets built in
       aws_new_ami_vpc_id: vpc-34aded4e # The ID of the Whist-created VPC the EC2 instance building the AMI is part of
-      aws_source_ami_id: ami-0885b1f6bd170450c # The base AWS-provided AMI we build our AMI from (AWS Ubuntu Server 20.04 LTS) associated with the aws_new_ami_source_region
+      aws_source_ami_id: ami-04505e74c0741db8d # The base AWS-provided AMI we build our AMI from (AWS Ubuntu Server 20.04 LTS) associated with the aws_new_ami_source_region
 
     steps:
       - name: Checkout Git Repository
