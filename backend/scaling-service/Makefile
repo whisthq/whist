@@ -115,19 +115,19 @@ run: build
 # the Scaling Service can use the `ubuntu` account's aws credentials to run,
 # even though it runs as root.
 ifeq ("$(wildcard /root/.aws/*)","")
-	sudo ln -sf /home/ubuntu/.aws /root/.aws
+	ln -sf /home/ubuntu/.aws /root/.aws
 endif
-	sudo env "PATH=$(PATH)" APP_ENV=localdev $(BUILD_FOLDER)/$(BINARY_NAME)
+	env "PATH=$(PATH)" APP_ENV=localdev $(BUILD_FOLDER)/$(BINARY_NAME)
 
 runlocaldevwithdb: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with localdevwithdb configuration...)
 ifeq ("$(wildcard /root/.aws/*)","")
-	sudo ln -sf /home/ubuntu/.aws /root/.aws
+	ln -sf /home/ubuntu/.aws /root/.aws
 endif
-	sudo env "PATH=$(PATH)" APP_ENV=localdevwithdb $(BUILD_FOLDER)/$(BINARY_NAME)
+	env "PATH=$(PATH)" APP_ENV=localdevwithdb $(BUILD_FOLDER)/$(BINARY_NAME)
 
 rundev: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with dev configuration...)
-	sudo env "PATH=$(PATH)" APP_ENV=dev USE_PROD_LOGGING=0 $(BUILD_FOLDER)/$(BINARY_NAME)
+	env "PATH=$(PATH)" APP_ENV=dev USE_PROD_LOGGING=0 $(BUILD_FOLDER)/$(BINARY_NAME)
 
 .PHONY: build clean run rundev format lint vet check

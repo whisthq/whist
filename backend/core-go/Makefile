@@ -57,8 +57,16 @@ build: checkCI
 		-X 'github.com/whisthq/whist/backend/core-go/metadata/heroku.email=$(HEROKU_USER)'\
 		-X 'github.com/whisthq/whist/backend/core-go/metadata/heroku.apiKey=$(HEROKU_APIKEY)'\
 		-X 'github.com/whisthq/whist/backend/core-go/metadata/heroku.appNameOverride=$(HEROKU_APP_NAME_OVERRIDE)'\
-		" -o $(BUILD_FOLDER)/$(BINARY_NAME) .
+		" -o $(BUILD_FOLDER)/$(BINARY_NAME)/metadata ./metadata
 
+	$(GOCMD) build -ldflags "\
+		" -o $(BUILD_FOLDER)/$(BINARY_NAME)/subscriptions ./subscriptions
+
+	$(GOCMD) build -ldflags "\
+		" -o $(BUILD_FOLDER)/$(BINARY_NAME)/utils ./utils
+
+	$(GOCMD) build -ldflags "\
+		" -o $(BUILD_FOLDER)/$(BINARY_NAME)/whistlogger ./whistlogger
 format:
 	(cd ~ && $(GOCMD) install golang.org/x/tools/cmd/goimports@latest)
 	goimports -l -w $$(find $(CURDIR) -name "*.go" | grep --invert-match ".sql.go" | xargs)
@@ -115,19 +123,19 @@ run: build
 # the core go can use the `ubuntu` account's aws credentials to run,
 # even though it runs as root.
 ifeq ("$(wildcard /root/.aws/*)","")
-	sudo ln -sf /home/ubuntu/.aws /root/.aws
+	ln -sf /home/ubuntu/.aws /root/.aws
 endif
-	sudo env "PATH=$(PATH)" APP_ENV=localdev $(BUILD_FOLDER)/$(BINARY_NAME)
+	env "PATH=$(PATH)" APP_ENV=localdev $(BUILD_FOLDER)/$(BINARY_NAME)
 
 runlocaldevwithdb: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with localdevwithdb configuration...)
 ifeq ("$(wildcard /root/.aws/*)","")
-	sudo ln -sf /home/ubuntu/.aws /root/.aws
+	ln -sf /home/ubuntu/.aws /root/.aws
 endif
-	sudo env "PATH=$(PATH)" APP_ENV=localdevwithdb $(BUILD_FOLDER)/$(BINARY_NAME)
+	env "PATH=$(PATH)" APP_ENV=localdevwithdb $(BUILD_FOLDER)/$(BINARY_NAME)
 
 rundev: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with dev configuration...)
-	sudo env "PATH=$(PATH)" APP_ENV=dev USE_PROD_LOGGING=0 $(BUILD_FOLDER)/$(BINARY_NAME)
+	env "PATH=$(PATH)" APP_ENV=dev USE_PROD_LOGGING=0 $(BUILD_FOLDER)/$(BINARY_NAME)
 
 .PHONY: build clean run rundev format lint vet check

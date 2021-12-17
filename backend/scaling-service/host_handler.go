@@ -1,4 +1,4 @@
-package scaling
+package main
 
 type HostHandler interface {
 	SpinUpInstances(region string, numInstances int) (spunUp int, err error)

@@ -1,4 +1,4 @@
-package scaling
+package main
 
 func main() {
 
