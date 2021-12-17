@@ -10,22 +10,15 @@ on:
     paths:
       - "host-setup/**"
       - "!host-setup/README.md"
-      - "!host-setup/setup_localdev_dependencies.sh"
       - ".github/workflows/host-setup-check-pr.yml"
   workflow_dispatch:
 
 jobs:
   # Building
-  # Check that the AMIs build.
+  # Check that the AMIs build
   host-setup-check-pr-building:
     name: Building
-    runs-on: ubuntu-20.04
-    env:
-      aws_new_ami_source_region: eu-north-1 # The AWS region our new AMI gets built in, we pick a region that's not very used to avoid "insufficient capacity" issues
-      aws_new_ami_instance_type: g4dn.xlarge # The AWS EC2 instance type our new AMI gets built on (must be the EC2 instance type we run in production)
-      aws_new_ami_vpc_id: vpc-e0935889 # The ID of the Whist-created VPC the EC2 instance building the AMI is part of
-      aws_source_ami_id: ami-0bd9c26722573e69b # The base AWS-provided AMI we build our AMI from (AWS Ubuntu Server 20.04 LTS) associated with the aws_new_ami_source_region
-
+    runs-on: [self-hosted, linux, x64, t3.xlarge]
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
@@ -64,7 +57,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.aws_new_ami_source_region }}
+          aws-region: us-east-1
 
       - name: Set Host Service APP_ENV based to DEV (File gets read by host-service.service)
         working-directory: host-setup
@@ -77,6 +70,8 @@ jobs:
           import json
           import datetime
 
+          date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
+
           # we hardcode the git_hash and git_branch name of pre-built Chrome/Brave mandelbox images stored in
           # GHCR to be able to test AMIs without needing to build and deploy new mandelboxes
 
@@ -84,20 +79,11 @@ jobs:
           data["github_pat"] = "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
           data["github_username"] = "${{ secrets.GHA_USERNAME }}"
           data["git_branch"] = "dev"
-          data["git_hash"] = "e885ddd98fd5d02841435592a6cb191321a53d24"
-
-          # pr_number is the number of the pr this check is running for,
-          # used to identify the packer instance we create
-          data["pr_number"] = "${{ github.event.number }}"
-          data["git_commit_sha"] = "${{ github.sha }}"
+          data["git_hash"] = "88c656033c927e10337cf1c00bb0e73359929ecd"
+          data["pr_number"] = "${{ github.event.number }}" # Used to identify the Packer test instance we create
           data["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
           data["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
-          date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
           data["ami_name"] = f"whist-test-ami-${{ github.sha }}-{date_str}"
-          data["source_region"] = "${{ env.aws_new_ami_source_region }}"
-          data["instance_type"] = "${{ env.aws_new_ami_instance_type }}"
-          data["vpc_id"] = "${{ env.aws_new_ami_vpc_id }}"
-          data["source_ami"] = "${{ env.aws_source_ami_id }}"
           data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_DEV }}"
 
           # The regions our new AMI gets cloned to (Only us-east-1 for testing, as cloning takes some time)
@@ -106,6 +92,10 @@ jobs:
           fp = open("packer_vars.json", "w")
           json.dump(data, fp)
           fp.close()
+
+      - name: Validate Packer File
+        working-directory: host-setup
+        run: packer validate  -var-file=packer_vars.json ami_config.pkr.hcl
 
       # This spins up an AWS EC2 instance to create the AMI, and then deletes it
       # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
@@ -117,11 +107,16 @@ jobs:
           import subprocess
           import json
 
-          # stdout will be shared with the subprocess so we can see what is happening
-          subprocess.run("packer build -machine-readable -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
+          # Stdout will be shared with the subprocess so we can see what is happening
+          subprocess.run("packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
 
-          # if packer fails, manifest.json does not get created and the entire workflow fails here
+          # If Packer fails, manifest.json does not get created and the entire workflow fails here
+          # Note that, defined in our ami_config.pkr.hcl file, we set multiple retries for Packer and
+          # configure it to use AWS Spot instances, to avoid failing due to AWS InsufficientCapacity
           assert os.path.exists("manifest.json")
+
+          # Print Packer output for debugging visibility, since this data is used in the next step of the 
+          # deploy stage, in `whist-build-and-deploy.yml`
           fp = open("manifest.json", "r")
           data = json.load(fp)
           fp.close()

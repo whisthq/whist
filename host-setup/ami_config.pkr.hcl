@@ -1,5 +1,22 @@
+/*
+ * This Packer HCL configuration file creates an AWS EBS-backed AMI. For full documentation,
+ * pleaser refer to this link: https://www.packer.io/docs/builders/amazon/ebs
+**/
+
+
+/* 
+ * Variables passed to Packer via the -var-file flag, as a JSON file.
+**/
+
+/* AWS variables */
 
 variable "access_key" {
+  type      = string
+  default   = ""
+  sensitive = true
+}
+
+variable "secret_key" {
   type      = string
   default   = ""
   sensitive = true
@@ -15,17 +32,14 @@ variable "destination_regions" {
   default = []
 }
 
+/* GitHub variables */
+
 variable "git_branch" {
   type    = string
   default = ""
 }
 
 variable "git_hash" {
-  type    = string
-  default = ""
-}
-
-variable "git_commit_sha" {
   type    = string
   default = ""
 }
@@ -47,78 +61,125 @@ variable "github_username" {
   sensitive = true
 }
 
-variable "instance_type" {
-  type    = string
-  default = ""
-}
-
-variable "secret_key" {
-  type      = string
-  default   = ""
-  sensitive = true
-}
-
-variable "source_ami" {
-  type    = string
-  default = ""
-}
+/* Miscellaneous variables */
 
 variable "mandelbox_logz_shipping_token" {
   type    = string
   default = ""
 }
 
-variable "source_region" {
-  type    = string
-  default = ""
-}
 
-variable "vpc_id" {
-  type    = string
-  default = ""
-}
+/* 
+ * Packer Builder configuration, using the variables from the `variable` configurations defined above.
+ * Note that we don't specify availability_zone so that Packer tries all availabilities zones it is configured
+ * for (i.e. zones with a subnet with tag `Purpose: packer`) in the `region`. 
+**/
 
 source "amazon-ebs" "Whist_AWS_AMI_Builder" {
-  access_key           = "${var.access_key}"
-  ami_description      = "Whist-optimized Ubuntu 20.04 AWS Machine Image."
-  ami_name             = "${var.ami_name}"
-  ami_regions          = "${var.destination_regions}"
-  ebs_optimized        = true
-  iam_instance_profile = "PackerAMIBuilder"
-  instance_type        = "${var.instance_type}"
-  launch_block_device_mappings {
-    delete_on_termination = true
-    device_name           = "/dev/sda1"
-    volume_size           = 64
-    volume_type           = "gp3"
+
+  /* AMI configuration */
+
+  ami_description = "Whist-optimized Ubuntu 20.04 AWS Machine Image"
+  ami_name        = "${var.ami_name}"
+  ami_regions     = "${var.destination_regions}" # All AWS regions the AMI will get copied to
+
+  # Options are paravirtual (default) or hvm. AWS recommends usings HVM,
+  # as per: https://cloudacademy.com/blog/aws-ami-hvm-vs-pv-paravirtual-amazon/
+  ami_virtualization_type = "hvm"
+
+  force_deregister      = true # Force Packer to first deregister an existing AMI if one with the same name already exists
+  force_delete_snapshot = true # Force Packer to delete snapshots associated with AMIs, which have been deregistered by force_deregister
+
+  /* Access configuration */
+
+  access_key  = "${var.access_key}"
+  secret_key  = "${var.secret_key}"
+  region      = "us-east-1" # The source AWS region where the Packer Builder will run
+  max_retries = 5           # Retry up to 5 times using exponential backoff if Packer fails to connect to AWS, in case of throttling/transient failures
+
+  /* Run configuration */
+
+  # This filter populates the `source_ami` variable with the AMI ID of the source AMI deefined in `filters`
+  source_ami_filter {
+    filters = {
+       virtualization-type = "hvm"
+       name = "ubuntu/images/*ubuntu-focal-20.04-amd64-server-*" # Ubuntu Server 20.04
+       root-device-type = "ebs"
+    }
+    owners = ["099720109477"] # Canonical
+    most_recent = true
   }
-  region       = "${var.source_region}"
-  secret_key   = "${var.secret_key}"
-  source_ami   = "${var.source_ami}"
-  ssh_username = "ubuntu"
+  associate_public_ip_address = true # Make new instances with this AMI get assigned a public IP address
+  ebs_optimized               = true # Optimize for EBS volumes
+
+  # We do not specifiy the availability_zone parameter, since leaving it empty allows Amazon to auto-assign. 
+
+  # spot_instance_types is a list of acceptable instance types to run your build on. We will request a spot
+  # instance using the max price of spot_price and the allocation strategy of "lowest price". Your instance
+  # will be launched on an instance type of the lowest available price that you have in your list. This is 
+  # used in place of instance_type. You may only set either spot_instance_types or instance_type, not both. 
+  # This feature exists to help prevent situations where a Packer build fails because a particular availability
+  # zone does not have capacity for the specific instance_type requested in instance_type.
+  spot_instance_types = ["g4dn.xlarge", "g4dn.2xlarge", "g4dn.4xlarge", "g4dn.8xlarge", "g4dn.16xlarge"]
+
+  # We do not set spot_price (string), so that it defaults to a maximum price equal to the on demand price 
+  # of the instance. In the situation where the current Amazon-set spot price exceeds the value set in this
+  # field, Packer will not launch an instance and the build will error. In the situation where the Amazon-set
+  # spot price is less than the value set in this field, Packer will launch and you will pay the Amazon-set 
+  # spot price, not this maximum value. For more information, see the Amazon docs on spot pricing.
+  spot_price = "auto"
+
+  iam_instance_profile = "PackerAMIBuilder" # This is the IAM role we configured for Packer in AWS
+  shutdown_behavior    = "terminate"        # Automatically terminate instances on shutdown in case Packer exits ungracefully. Possible values are stop and terminate. Defaults to stop.
+
+  vpc_id = "vpc-34aded4e" # The VPC where the Packer Builer will run. This VPC needs to have subnet(s) configured as per the `subnet_filter` below
+
+  # This filter ensures Packer will pick a subnet which was configured for Packer by looking for the tag
+  # Purpose: packer. If no subnet with this tag is found in `region`, Packer will fail.
   subnet_filter {
     filters = {
-      "tag:Purpose": "packer"
+      "tag:Purpose" : "packer"
     }
-    most_free = true
-    random    = true
+    most_free = true # The Subnet with the most free IPv4 addresses will be used if multiple Subnets matches the filter.
+    random    = true # A random Subnet will be used if multiple Subnets matches the filter. most_free have precendence over this.
   }
-  vpc_id       = "${var.vpc_id}"
-  force_deregister      = true
-  force_delete_snapshot = true
+
+  /* Block Device configuration */
+
+  launch_block_device_mappings {
+    device_name           = "/dev/sda1"
+    volume_size           = 64
+    volume_type           = "gp3" # Options are gp2 and gp3. gp3 is the newer, more performant and cheaper AWS block volume
+    delete_on_termination = true  # This ensures that the EBS volume of the EC2 instance(s) using the AMI Packer creates get deleted when the instance gets deleted
+  }
+
+  /* Comunicator configuration */
+
+  communicator = "ssh"
+  ssh_username = "ubuntu"
+
+  /* Tags configuration */
+
   run_tag {
-    key = "PR Number"
+    key   = "AMI Initial Region"
+    value = "us-east-1"
+  }
+
+  run_tag {
+    key   = "Git Commit SHA"
+    value = "${var.git_hash}"
+  }
+
+  run_tag {
+    key   = "PR Number"
     value = "${var.pr_number}"
   }
-  run_tag {
-    key = "Instance Region"
-    value = "${var.source_region}"
-  }
-  run_tag {
-    key = "Git Commit SHA"
-    value = "${var.git_commit_sha}"
-  }
 }
+
+
+/* 
+ * Packer build commands, run on the Packer Builder created via the `source` configuration defined above. 
+ */
 
 build {
   sources = ["source.amazon-ebs.Whist_AWS_AMI_Builder"]
@@ -151,6 +212,7 @@ build {
     pause_before = "10s"
   }
 
+  # This file is used to verify that Packer succeeded and pass Packer data to the next deploy stages
   post-processor "manifest" {
     output     = "manifest.json"
     strip_path = true
