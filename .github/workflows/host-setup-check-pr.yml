@@ -19,9 +19,6 @@ jobs:
   host-setup-check-pr-building:
     name: Building
     runs-on: [self-hosted, linux, x64, t3.xlarge]
-    env:
-      aws_source_ami_id: ami-04505e74c0741db8d # The base AWS-provided AMI we build our AMI from (AWS Ubuntu Server 20.04 LTS) associated with the aws_new_ami_source_region
-
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
@@ -73,6 +70,8 @@ jobs:
           import json
           import datetime
 
+          date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
+
           # we hardcode the git_hash and git_branch name of pre-built Chrome/Brave mandelbox images stored in
           # GHCR to be able to test AMIs without needing to build and deploy new mandelboxes
 
@@ -81,15 +80,10 @@ jobs:
           data["github_username"] = "${{ secrets.GHA_USERNAME }}"
           data["git_branch"] = "dev"
           data["git_hash"] = "88c656033c927e10337cf1c00bb0e73359929ecd"
-
-          # pr_number is the number of the pr this check is running for,
-          # used to identify the Packer instance we create
-          data["pr_number"] = "${{ github.event.number }}"
+          data["pr_number"] = "${{ github.event.number }}" # Used to identify the Packer test instance we create
           data["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
           data["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
-          date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
           data["ami_name"] = f"whist-test-ami-${{ github.sha }}-{date_str}"
-          data["source_ami"] = "${{ env.aws_source_ami_id }}"
           data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_DEV }}"
 
           # The regions our new AMI gets cloned to (Only us-east-1 for testing, as cloning takes some time)

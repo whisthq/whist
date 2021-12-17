@@ -475,9 +475,6 @@ jobs:
       region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
     if: contains(needs.whist-publish-build-config.outputs.jobs, '|mandelboxes-and-amis-publish-ghcr-and-aws|')
 
-    env:
-      aws_source_ami_id: ami-04505e74c0741db8d # The base AWS-provided AMI we build our AMI from (AWS Ubuntu Server 20.04 LTS) associated with the aws_new_ami_source_region
-
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
@@ -576,6 +573,9 @@ jobs:
         run: |
           import json
           import datetime
+
+          date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
+
           data = {}
           data["github_pat"] = "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
           data["github_username"] = "${{ secrets.GHA_USERNAME }}"
@@ -583,9 +583,7 @@ jobs:
           data["git_hash"] = "${{ github.sha }}"
           data["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
           data["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
-          date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
           data["ami_name"] = f"whist-ami-${{ github.sha }}-{date_str}"
-          data["source_ami"] = "${{ env.aws_source_ami_id }}"
 
           # Set logz token and regions to clone AMI to by environment
           # The regions our new AMI gets cloned to (All AWS supported regions)

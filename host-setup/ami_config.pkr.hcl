@@ -27,11 +27,6 @@ variable "ami_name" {
   default = ""
 }
 
-variable "source_ami" {
-  type    = string
-  default = ""
-}
-
 variable "destination_regions" {
   type    = list(string)
   default = []
@@ -104,9 +99,18 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
 
   /* Run configuration */
 
-  source_ami                  = "${var.source_ami}" # The AWS AMI to use as a base for the new AMI
-  associate_public_ip_address = true                # Make new instances with this AMI get assigned a public IP address
-  ebs_optimized               = true                # Optimize for EBS volumes
+  # This filter populates the `source_ami` variable with the AMI ID of the source AMI deefined in `filters`
+  source_ami_filter {
+    filters = {
+       virtualization-type = "hvm"
+       name = "ubuntu/images/*ubuntu-focal-20.04-amd64-server-*" # Ubuntu Server 20.04
+       root-device-type = "ebs"
+    }
+    owners = ["099720109477"] # Canonical
+    most_recent = true
+  }
+  associate_public_ip_address = true # Make new instances with this AMI get assigned a public IP address
+  ebs_optimized               = true # Optimize for EBS volumes
 
   # We do not specifiy the availability_zone parameter, since leaving it empty allows Amazon to auto-assign. 
 
@@ -157,8 +161,8 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   /* Tags configuration */
 
   run_tag {
-    key   = "Instance Region"
-    value = "${var.source_region}"
+    key   = "AMI Initial Region"
+    value = "us-east-1"
   }
 
   run_tag {
