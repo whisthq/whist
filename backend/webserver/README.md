@@ -81,12 +81,12 @@ In CI, we use Black, mypy, and Pylint to format and catch errors in our code wit
 
 ```bash
 # Format code with Black
-backend/webserver/ $ black --config ../pyproject.toml .
+backend/webserver/ $ black --config ../../pyproject.toml .
 
 # Perform static type checking with mypy
 # Note: We need to re-enable this for scripts and tests!
 backend/webserver/ $ mypy --strict app scripts tests
 
 # Lint with Pylint
-backend/webserver/ $ pylint --rcfile=../pylintrc app auth0 payments
+backend/webserver/ $ pylint --rcfile=../../pylintrc app auth0 payments
 ```
