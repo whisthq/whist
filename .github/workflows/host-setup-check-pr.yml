@@ -81,8 +81,8 @@ jobs:
           data["git_branch"] = "dev"
           data["git_hash"] = "88c656033c927e10337cf1c00bb0e73359929ecd"
           data["pr_number"] = "${{ github.event.number }}" # Used to identify the Packer test instance we create
-          data["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
-          data["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
+          data["access_key"] = "${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}"
+          data["secret_key"] = "${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}"
           data["ami_name"] = f"whist-test-ami-${{ github.sha }}-{date_str}"
           data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_DEV }}"
 
