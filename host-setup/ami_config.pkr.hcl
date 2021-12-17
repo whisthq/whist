@@ -107,13 +107,6 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   # as per: https://cloudacademy.com/blog/aws-ami-hvm-vs-pv-paravirtual-amazon/
   ami_virtualization_type = "hvm"
 
-  # Enable enhanced networking for the AMI. These two flags enabled Elastic Network Adapter support and SriovNetsupport
-  # on HVM-compatible AMIs. If set, you need ec2:ModifyInstanceAttribute on your AWS IAM policy and must make sure that
-  # enhanced networking is enabled on the AWS EC2 instances.
-  # Ubuntu Server 20.04 LTS (HVM), SSD Volume Type are ENA-enabled by default
-  ena_support   = true 
-  sriov_support = true 
-
   force_deregister      = true # Force Packer to first deregister an existing AMI if one with the same name already exists
   force_delete_snapshot = true # Force Packer to delete snapshots associated with AMIs, which have been deregistered by force_deregister
 
