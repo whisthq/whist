@@ -11,15 +11,15 @@ on:
     branches:
       - dev
     paths:
-      - "host-service/**"
-      - "!host-service/README.md"
-      - "webserver/db_migration/schema.sql"
+      - "backend/host-service/**"
+      - "!backend/host-service/README.md"
+      - "backend/webserver/db_migration/schema.sql"
       - ".github/workflows/host-service-check-pr.yml"
   pull_request:
     paths:
-      - "host-service/**"
-      - "!host-service/README.md"
-      - "webserver/db_migration/schema.sql"
+      - "backend/host-service/**"
+      - "!backend/host-service/README.md"
+      - "backend/webserver/db_migration/schema.sql"
       - ".github/workflows/host-service-check-pr.yml"
   workflow_dispatch:
 

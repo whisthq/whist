@@ -13,17 +13,17 @@ on:
       - dev
     paths:
       - ".github/workflows/whist-build-and-publish-documentation.yml"
-      - "host-service/**"
+      - "backend/host-service/**"
       - "protocol/**"
-      - "webserver/**"
+      - "backend/webserver/**"
   push:
     branches:
       - dev
     paths:
       - ".github/workflows/whist-build-and-publish-documentation.yml"
-      - "host-service/**"
+      - "backend/host-service/**"
       - "protocol/**"
-      - "webserver/**"
+      - "backend/webserver/**"
   workflow_dispatch:
 
 jobs:
@@ -73,12 +73,12 @@ jobs:
       - name: Diff Old and New Documentation
         id: host-service-diff
         run: |
-          git diff --no-index whist/host-service/build/docs docs/host-service && echo "No changes detected"
+          git diff --no-index whist/backend/host-service/build/docs docs/host-service && echo "No changes detected"
           echo "::set-output name=changed::$?"
 
       - name: Copy New Host-Service Documentation into the whisthq/docs Working Tree (Only on Push/Workflow_dispatch Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.host-service-diff.outputs.changed == true }}
-        run: rm -rf docs/host-service && cp -r whist/host-service/build/docs docs/host-service
+        run: rm -rf docs/host-service && cp -r whist/backend/host-service/build/docs docs/host-service
 
       ##############################################################################
       ################################ PROTOCOL STEPS ##############################
@@ -109,25 +109,25 @@ jobs:
       ##############################################################################
       ################################ WEBSERVER STEPS #############################
 
-      # Install the version of Sphinx specified in webserver/requirements-test.txt
+      # Install the version of Sphinx specified in backend/webserver/requirements-test.txt
       - name: Install requirements
         run: |
-          pip install $(cat whist/webserver/requirements.txt)
-          pip install $(cat whist/webserver/requirements-test.txt)
+          pip install $(cat whist/backend/webserver/requirements.txt)
+          pip install $(cat whist/backend/webserver/requirements-test.txt)
 
       - name: Build the Latest Documentation
-        working-directory: whist/webserver/docs
+        working-directory: whist/backend/webserver/docs
         run: sphinx-apidoc --no-toc -fo . ../app && make html
 
       - name: Diff Old and New Documentation
         id: webserver-diff
         run: |
-          git diff --no-index whist/webserver/docs/_build/html docs/webserver && echo "No changes detected"
+          git diff --no-index whist/backend/webserver/docs/_build/html docs/webserver && echo "No changes detected"
           echo "::set-output name=changed::$?"
 
       - name: Copy New Webserver Documentation into the whisthq/docs Working Tree (Only on Push/Workflow_dispatch Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.webserver-diff.outputs.changed == true }}
-        run: rm -r docs/webserver && cp -r whist/webserver/docs/_build/html docs/webserver
+        run: rm -r docs/webserver && cp -r whist/backend/webserver/docs/_build/html docs/webserver
 
       ##############################################################################
       ################################# PUBLISH STEPS ##############################

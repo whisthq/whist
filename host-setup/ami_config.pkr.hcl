@@ -204,7 +204,7 @@ build {
 
   provisioner "file" {
     destination = "/home/ubuntu/host-service"
-    source      = "../host-service/build/host-service"
+    source      = "../backend/host-service/build/host-service"
   }
 
   provisioner "shell" {

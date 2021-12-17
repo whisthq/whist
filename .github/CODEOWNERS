@@ -14,12 +14,14 @@
 /frontend/client-applications/   @mingy98 @rpadaki @mauaraujo
 /config/                         @philippemnoel @sardination @rpadaki
 /frontend/core-ts/               @mingy98 @owenniles @sardination
-/host-service/                   @djsavvy @rpadaki @mauaraujo
+/backend/core-go/                @djsavvy @rpadaki @mauaraujo
+/backend/host-service/           @djsavvy @rpadaki @mauaraujo
+/backend/microservices/          @owenniles @rpadaki @philippemnoel
+/backend/scaling-service/        @djsavvy @rpadaki @mauaraujo
+/backend/webserver/              @djsavvy @owenniles @mauaraujo
 /host-setup/                     @rpadaki @djsavvy @philippemnoel
 /mandelboxes/                    @djsavvy @rpadaki @philippemnoel
-/microservices/                  @owenniles @rpadaki @philippemnoel
 /protocol/                       @npip99 @rpadaki @sardination
-/webserver/                      @djsavvy @owenniles @mauaraujo
 /frontend/website/               @mingy98 @rpadaki @philippemnoel
 
 # In each subsection folders are ordered first by depth, then alphabetically.
