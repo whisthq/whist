@@ -104,6 +104,7 @@ jobs:
           fp.close()
 
       - name: Validate Packer File
+        working-directory: host-setup
         run: packer validate  -var-file=packer_vars.json ami_config.pkr.hcl
 
       # This spins up an AWS EC2 instance to create the AMI, and then deletes it
