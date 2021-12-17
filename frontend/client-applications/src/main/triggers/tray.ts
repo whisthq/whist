@@ -18,3 +18,7 @@ createTrigger(
   WhistTrigger.trayRestoreSessionAction,
   fromEvent(trayEvent, "restore-last-browser-session")
 )
+createTrigger(
+  WhistTrigger.trayWhistIsDefaultBrowserAction,
+  fromEvent(trayEvent, "whist-is-default-browser")
+)

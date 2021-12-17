@@ -51,6 +51,7 @@ static int handle_quit_message(whist_server_state *state, WhistClientMessage *wc
 static int handle_init_message(whist_server_state *state, WhistClientMessage *wcmsg);
 static int handle_file_metadata_message(WhistClientMessage *wcmsg);
 static int handle_file_chunk_message(WhistClientMessage *wcmsg);
+static int handle_open_url_message(whist_server_state *state, WhistClientMessage *wcmsg);
 
 /*
 ============================
@@ -109,6 +110,8 @@ int handle_client_message(whist_server_state *state, WhistClientMessage *wcmsg) 
             return handle_quit_message(state, wcmsg);
         case MESSAGE_DISCOVERY_REQUEST:
             return handle_init_message(state, wcmsg);
+        case MESSAGE_OPEN_URL:
+            return handle_open_url_message(state, wcmsg);
         default:
             LOG_ERROR(
                 "Unknown WhistClientMessage Received. "
@@ -521,6 +524,65 @@ static int handle_init_message(whist_server_state *state, WhistClientMessage *cw
     state->client_os = wcmsg.os;
 
     error_monitor_set_username(wcmsg.user_email);
+
+    return 0;
+}
+
+static int handle_open_url_message(whist_server_state *state, WhistClientMessage *fcmsg) {
+    /*
+        Handle a open URL message
+
+        Arguments:
+            fcmsg (WhistClientMessage*): message package from client
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
+    // Step 1: Obtain a pointer to the URL string, and measure the length to ensure it is not too
+    // long.
+    char *received_url = fcmsg->url_to_open;
+    size_t url_length = strlen(received_url);
+    if (url_length > MAX_URL_LENGTH) {
+        LOG_WARNING(
+            "Attempted to open url of length %lu, which exceeds the max allowed length (%lu "
+            "characters)\n",
+            url_length, MAX_URL_LENGTH);
+        return -1;
+    }
+    LOG_INFO("Received URL to open in new tab: %s", received_url);
+
+    // Step 2: Create the command to run on the Mandelbox's terminal to open the received URL in a
+    // new tab. To open a new tab with a given url, we can just use the terminal command: `exec
+    // google-chrome <insert url here>`. This command, however, needs to be run after by the same
+    // user that ran the initial google-chrome command, responsible for starting the browser on the
+    // back end. In our case, the user is 'whist', and we can use the run-as-whist-user.sh script to
+    // do just that. We pass the `exec google-chrome <received url here>` command as a parameter to
+    // the run-as-whist-user.sh script, and the script will take care of the rest.
+    size_t len_cmd_before_url =
+        strlen("/usr/share/whist/run-as-whist-user.sh \"exec google-chrome \"");
+    size_t command_len = len_cmd_before_url + url_length + 1;
+    // The maximum possible command length is equal to the (constant) length of the part of the
+    // command that needs to go before the url plus the length of the url itself, which may be up to
+    // MAX_URL_LENGTH.
+    char *command = (char *)calloc(url_length + len_cmd_before_url + 1, sizeof(char));
+    sprintf(command, "/usr/share/whist/run-as-whist-user.sh \"exec google-chrome %s\"",
+            received_url);
+
+    // Step 3: Execute the command created in step 2 (which consists of a call to the
+    // run-as-whist-user.sh script with the appropriate parameter) in the mandelbox, and save the
+    // resulting stdout in the open_url_result string.
+    char *open_url_result;
+    int ret = runcmd(command, &open_url_result);
+    if (ret != 0) {
+        free(open_url_result);
+        LOG_ERROR("Running command to open URL %s resulted in error: %s", received_url,
+                  open_url_result);
+        return -1;
+    }
+
+    free(open_url_result);
+    free(command);
 
     return 0;
 }

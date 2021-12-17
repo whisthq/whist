@@ -47,6 +47,8 @@ volatile char *program_name = NULL;
 volatile CodecType output_codec_type = CODEC_TYPE_H264;
 extern volatile SDL_Window *window;
 
+volatile char *new_tab_url;
+
 extern volatile int client_max_bitrate;
 
 // From main.c
@@ -80,6 +82,7 @@ const struct option client_cmd_options[] = {
     {"read-pipe", no_argument, NULL, 'r'},
     {"loading", required_argument, NULL, 'l'},
     {"skip-taskbar", no_argument, NULL, 's'},
+    {"new-tab-url", required_argument, NULL, 'x'},
     // these are standard for POSIX programs
     {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
     {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
@@ -89,7 +92,7 @@ const char *usage;
 
 #define INCOMING_MAXLEN 127
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
-#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:n:rl:s"
+#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:n:rl:sx:"
 
 /*
 ============================
@@ -249,6 +252,19 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
             skip_taskbar = true;
             break;
         }
+        case 'x': {
+            if (strlen(eval_optarg) > MAX_URL_LENGTH) {
+                LOG_ERROR(
+                    "Cannot open URLs of length greater than %d characters! URL passed has size "
+                    "%lu",
+                    MAX_URL_LENGTH, strlen(eval_optarg));
+                break;
+            }
+            new_tab_url = calloc(sizeof(char), strlen(eval_optarg) + 1);
+            strcpy((char *)new_tab_url, eval_optarg);
+
+            break;
+        }
         default: {
             if (eval_opt != -1) {
                 // illegal option
@@ -311,6 +327,7 @@ int client_parse_args(int argc, char *argv[]) {
         "  -l, --loading                 Custom loading screen message\n"
         "  -s, --skip-taskbar            Launch the protocol without displaying an icon\n"
         "                                  in the taskbar\n"
+        "  -x, --new-tab-url             URL to open in new tab \n"
         // special options should be indented further to the left
         "      --help     Display this help and exit\n"
         "      --version  Output version information and exit\n";
@@ -377,7 +394,7 @@ int client_parse_args(int argc, char *argv[]) {
     return 0;
 }
 
-int read_piped_arguments(bool *keep_waiting) {
+int read_piped_arguments(bool *keep_waiting, bool run_only_once) {
     /*
         Read arguments from the stdin pipe if `using_piped_arguments` is
         set to `true`.
@@ -402,6 +419,7 @@ int read_piped_arguments(bool *keep_waiting) {
     char read_char = 0;
     bool keep_reading = true;
     bool finished_line = false;
+    bool keep_iterating = true;
 
 #ifndef _WIN32
     int available_chars;
@@ -415,13 +433,16 @@ int read_piped_arguments(bool *keep_waiting) {
         return -1;
     }
 #endif
-
     // Each argument will be passed via pipe from the client application
     //    with the argument name and value separated by a "?"
     //    and each argument/value pair on its own line
-    while (keep_reading && *keep_waiting) {
-        SDL_Delay(50);  // to keep the fan from freaking out
-                        // If stdin doesn't have any characters, continue the loop
+    while (keep_reading && *keep_waiting && keep_iterating) {
+        if (!run_only_once) {
+            SDL_Delay(50);  // to keep the fan from freaking out
+                            // If stdin doesn't have any characters, continue the loop
+        } else {
+            keep_iterating = false;
+        }
 #ifndef _WIN32
         if (ioctl(STDIN_FILENO, FIONREAD, &available_chars) < 0) {
             LOG_ERROR("ioctl error with piped arguments: %s", strerror(errno));
@@ -436,18 +457,13 @@ int read_piped_arguments(bool *keep_waiting) {
                 // On closed stdin, fgetc will return 0 for EOF, so force a char read to eval line
                 available_chars = 1;
             }
-        } else if (available_chars == 0) {
-            continue;
         }
 #endif  // _WIN32
-
         // Reset `incoming` so that it is at the very least initialized.
         memset(incoming, 0, INCOMING_MAXLEN + 1);
-
         for (int char_idx = 0; char_idx < (int)available_chars; char_idx++) {
             // Read a character from stdin
             read_char = (char)fgetc(stdin);
-
             // If the character is EOF, make sure the loop ends after this iteration
             if (read_char == EOF) {
                 keep_reading = false;
@@ -455,7 +471,6 @@ int read_piped_arguments(bool *keep_waiting) {
                 incoming[total_stored_chars] = read_char;
                 total_stored_chars++;
             }
-
             // Causes some funky behavior if the line being read in is longer than 128 characters
             // because
             //   it splits into two and processes as two different pieces
@@ -588,6 +603,10 @@ int free_parsed_args(void) {
         free((char *)server_ip);
     }
 
+    if (new_tab_url) {
+        free((char *)new_tab_url);
+    }
+
     return 0;
 }
 
@@ -679,6 +698,19 @@ int update_mouse_motion() {
         mouse_state.y_rel = 0;
     }
     return 0;
+}
+
+void send_new_tab_url_if_needed() {
+    if (new_tab_url) {
+        LOG_INFO("Opening URL %s in new tab!", new_tab_url);
+        WhistClientMessage wcmsg = {0};
+        wcmsg.type = MESSAGE_OPEN_URL;
+        safe_strncpy(wcmsg.url_to_open, (const char *)new_tab_url,
+                     strlen((const char *)new_tab_url) + 1);
+        send_wcmsg(&wcmsg);
+    }
+    free((char *)new_tab_url);
+    new_tab_url = NULL;
 }
 
 void send_message_dimensions() {

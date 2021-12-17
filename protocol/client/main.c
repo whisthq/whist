@@ -112,6 +112,8 @@ extern volatile bool connected;
 extern volatile bool client_exiting;
 volatile int try_amount;
 
+extern volatile char* new_tab_url;
+
 // Defines
 #define APP_PATH_MAXLEN 1023
 
@@ -177,7 +179,7 @@ int multithreaded_read_piped_arguments(void* keep_piping) {
             (int) 0 on success, -1 on failure
     */
 
-    int ret = read_piped_arguments((bool*)keep_piping);
+    int ret = read_piped_arguments((bool*)keep_piping, /*run_only_once=*/false);
     continue_pumping = false;
     return ret;
 }
@@ -447,9 +449,18 @@ int main(int argc, char* argv[]) {
         start_timer(&mouse_motion_timer);
         start_timer(&monitor_change_timer);
 
+        // Timer ensures we check piped args for potential URLs to open no more than once every
+        // 50ms. This prevents CPU overload.
+        clock new_tab_url_timer;
+        start_timer(&new_tab_url_timer);
+
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
         while (connected && !client_exiting && exit_code == WHIST_EXIT_SUCCESS) {
+            // This should be called BEFORE the call to read_piped_arguments, otherwise one URL may
+            // get lost.
+            send_new_tab_url_if_needed();
+
             // Check if the window is minimized or occluded. If it is, we can just sleep for a bit
             // and then check again.
             if (!sdl_is_window_visible()) {
@@ -465,6 +476,12 @@ int main(int argc, char* argv[]) {
                 // effects while still reducing CPU strain while the window is minimized
                 whist_sleep(50);
                 continue;
+            }
+
+            if (get_timer(new_tab_url_timer) * MS_IN_SECOND > 50.0) {
+                bool keep_piping2 = true;
+                int res = read_piped_arguments(&keep_piping2, /*run_only_one=*/true);
+                start_timer(&new_tab_url_timer);
             }
 
             update_pending_sdl_tasks();
