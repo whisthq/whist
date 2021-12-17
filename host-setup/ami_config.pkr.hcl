@@ -102,11 +102,11 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   ami_description = "Whist-optimized Ubuntu 20.04 AWS Machine Image"
   ami_name        = "${var.ami_name}"
   ami_regions     = "${var.destination_regions}" # All AWS regions the AMI will get copied to
-  
+
   # Options are paravirtual (default) or hvm. AWS recommends usings HVM,
   # as per: https://cloudacademy.com/blog/aws-ami-hvm-vs-pv-paravirtual-amazon/
-  ami_virtualization_type = "hvm" 
-  
+  ami_virtualization_type = "hvm"
+
   # TODO: add enhanced networking support to our instances in another PR, and uncomment this!
   # Enable enhanced networking for the AMI. These two flags enabled Elastic Network Adapter support and SriovNetsupport
   # on HVM-compatible AMIs. If set, you need ec2:ModifyInstanceAttribute on your AWS IAM policy and must make sure that
@@ -122,24 +122,23 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   access_key  = "${var.access_key}"
   secret_key  = "${var.secret_key}"
   region      = "${var.source_region}" # The source AWS region where the Packer Builder will run
-  max_retries = 5 # Retry up to 5 times using exponential backoff if Packer fails to connect to AWS, in case of throttling/transient failures
+  max_retries = 5                      # Retry up to 5 times using exponential backoff if Packer fails to connect to AWS, in case of throttling/transient failures
 
   /* Run configuration */
 
   source_ami                  = "${var.source_ami}" # The AWS AMI to use as a base for the new AMI
-  associate_public_ip_address = true # Make new instances with this AMI get assigned a public IP address
-  ebs_optimized               = true # Optimize for EBS volumes
+  associate_public_ip_address = true                # Make new instances with this AMI get assigned a public IP address
+  ebs_optimized               = true                # Optimize for EBS volumes
 
   # We do not specifiy the availability_zone parameter, since leaving it empty allows Amazon to auto-assign. 
-  
+
   # spot_instance_types is a list of acceptable instance types to run your build on. We will request a spot
   # instance using the max price of spot_price and the allocation strategy of "lowest price". Your instance
   # will be launched on an instance type of the lowest available price that you have in your list. This is 
   # used in place of instance_type. You may only set either spot_instance_types or instance_type, not both. 
   # This feature exists to help prevent situations where a Packer build fails because a particular availability
   # zone does not have capacity for the specific instance_type requested in instance_type.
-  instance_type       = ""
-  spot_instance_types = "${var.instance_types}"
+  spot_instance_types = ["g4dn.xlarge", "g4dn.2xlarge", "g4dn.4xlarge", "g4dn.8xlarge", "g4dn.16xlarge"]
 
   # We do not set spot_price (string), so that it defaults to a maximum price equal to the on demand price 
   # of the instance. In the situation where the current Amazon-set spot price exceeds the value set in this
@@ -148,7 +147,7 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   # spot price, not this maximum value. For more information, see the Amazon docs on spot pricing.
 
   iam_instance_profile = "PackerAMIBuilder" # This is the IAM role we configured for Packer in AWS
-  shutdown_behavior    = "terminate" # Automatically terminate instances on shutdown in case Packer exits ungracefully. Possible values are stop and terminate. Defaults to stop.
+  shutdown_behavior    = "terminate"        # Automatically terminate instances on shutdown in case Packer exits ungracefully. Possible values are stop and terminate. Defaults to stop.
 
   vpc_id = "${var.vpc_id}" # The VPC where the Packer Builer will run. This VPC needs to have subnet(s) configured as per the `subnet_filter` below
 
@@ -156,7 +155,7 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   # Purpose: packer. If no subnet with this tag is found in `region`, Packer will fail.
   subnet_filter {
     filters = {
-      "tag:Purpose": "packer"
+      "tag:Purpose" : "packer"
     }
     most_free = true # The Subnet with the most free IPv4 addresses will be used if multiple Subnets matches the filter.
     random    = true # A random Subnet will be used if multiple Subnets matches the filter. most_free have precendence over this.
@@ -179,17 +178,17 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   /* Tags configuration */
 
   run_tag {
-    key = "Instance Region"
+    key   = "Instance Region"
     value = "${var.source_region}"
   }
 
   run_tag {
-    key = "Git Commit SHA"
+    key   = "Git Commit SHA"
     value = "${var.git_hash}"
   }
 
   run_tag {
-    key = "PR Number"
+    key   = "PR Number"
     value = "${var.pr_number}"
   }
 }
