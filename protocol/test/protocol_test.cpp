@@ -49,6 +49,7 @@ extern "C" {
 #include <whist/utils/aes.h>
 #include <whist/utils/png.h>
 #include <whist/utils/avpacket_buffer.h>
+#include <whist/utils/atomic.h>
 }
 
 /*
@@ -730,6 +731,93 @@ TEST(ProtocolTest, Utf8Truncation) {
     }
 }
 #endif  // _WIN32
+
+// Test atomics and threads.
+
+// Make an atomic variable and four threads.  Two of the threads
+// atomically add to the variable and the other two atomically
+// subtract the same values.  At the end, it should be zero.
+
+// The threads will immediately wait on a condition variable after being
+// created so that they all start at roughly the same time.  To test the
+// test, each thread internally records the highest and lowest values it
+// saw - these can be verified to make sure that the atomic operations
+// actually did happen simultaneously.
+
+static atomic_int atomic_test_variable;
+static bool atomic_test_start;
+static WhistMutex atomic_test_start_mutex;
+static WhistCondition atomic_test_start_condition;
+
+static int atomic_test_thread(void* arg) {
+    int thread = (int)(intptr_t)arg;
+
+    whist_lock_mutex(atomic_test_start_mutex);
+    while (!atomic_test_start)
+        whist_wait_cond(atomic_test_start_condition, atomic_test_start_mutex);
+    whist_unlock_mutex(atomic_test_start_mutex);
+
+    int min = +1000000, max = -1000000;
+    for (int i = 0; i < 10000; i++) {
+        int old_value;
+        switch (thread) {
+            case 0:
+                old_value = atomic_fetch_add(&atomic_test_variable, 1);
+                break;
+            case 1:
+                old_value = atomic_fetch_add(&atomic_test_variable, 42);
+                break;
+            case 2:
+                old_value = atomic_fetch_sub(&atomic_test_variable, 1);
+                break;
+            case 3:
+                old_value = atomic_fetch_sub(&atomic_test_variable, 42);
+                break;
+            default:
+                // Something has gone wrong.
+                return -1;
+        }
+        if (old_value < min) min = old_value;
+        if (old_value > max) max = old_value;
+    }
+
+    // Uncomment to check that the test is working properly (that operations
+    // are actually happening simultaneously).  We can't build in a
+    // deterministic check of this because it probably will sometimes run
+    // serially anyway.
+    // LOG_INFO("Atomic Test Thread %d: min = %d, max = %d", thread, min, max);
+
+    return thread;
+}
+
+TEST(ProtocolTest, Atomics) {
+    atomic_test_start_mutex = whist_create_mutex();
+    atomic_test_start_condition = whist_create_cond();
+
+    atomic_test_start = false;
+
+    atomic_init(&atomic_test_variable, 0);
+
+    WhistThread threads[4];
+    for (int i = 0; i < 4; i++) {
+        threads[i] =
+            whist_create_thread(&atomic_test_thread, "Atomic Test Thread", (void*)(intptr_t)i);
+        EXPECT_FALSE(threads[i] == NULL);
+    }
+
+    whist_lock_mutex(atomic_test_start_mutex);
+    atomic_test_start = true;
+    whist_broadcast_cond(atomic_test_start_condition);
+    whist_unlock_mutex(atomic_test_start_mutex);
+
+    for (int i = 0; i < 4; i++) {
+        int ret;
+        whist_wait_thread(threads[i], &ret);
+        EXPECT_EQ(ret, i);
+    }
+
+    EXPECT_EQ(atomic_load(&atomic_test_variable), 0);
+}
 
 /*
 ============================
