@@ -20,8 +20,7 @@ jobs:
     name: Building
     runs-on: [self-hosted, linux, x64, t3.xlarge]
     env:
-      aws_new_ami_source_region: us-east-1 # The AWS region our new AMI gets built in, we pick a region that's not very used to avoid "insufficient capacity" issues
-      aws_new_ami_instance_type: g4dn.xlarge # The AWS EC2 instance type our new AMI gets built on (must be the EC2 instance type we run in production)
+      aws_new_ami_source_region: us-east-1 # The AWS region our new AMI gets built in
       aws_new_ami_vpc_id: vpc-34aded4e # The ID of the Whist-created VPC the EC2 instance building the AMI is part of
       aws_source_ami_id: ami-0885b1f6bd170450c # The base AWS-provided AMI we build our AMI from (AWS Ubuntu Server 20.04 LTS) associated with the aws_new_ami_source_region
 
@@ -93,10 +92,10 @@ jobs:
           date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
           data["ami_name"] = f"whist-test-ami-${{ github.sha }}-{date_str}"
           data["source_region"] = "${{ env.aws_new_ami_source_region }}"
-          data["instance_type"] = "${{ env.aws_new_ami_instance_type }}"
           data["vpc_id"] = "${{ env.aws_new_ami_vpc_id }}"
           data["source_ami"] = "${{ env.aws_source_ami_id }}"
           data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_DEV }}"
+          data["instance_types"] = ["g4dn.xlarge", "g4dn.2xlarge", "g4dn.4xlarge", "g4dn.8xlarge", "g4dn.16xlarge"]
 
           # The regions our new AMI gets cloned to (Only us-east-1 for testing, as cloning takes some time)
           # defined as a string of comma-separated values (no spaces) as required by Packer.

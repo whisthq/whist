@@ -1,11 +1,11 @@
 /*
  * This Packer HCL configuration file creates an AWS EBS-backed AMI. For full documentation,
  * pleaser refer to this link: https://www.packer.io/docs/builders/amazon/ebs
- */
+**/
 
 /* 
  * Variables passed to Packer via the -var-file flag, as a JSON file.
- */
+**/
 
 /* AWS variables */
 
@@ -21,9 +21,9 @@ variable "secret_key" {
   sensitive = true
 }
 
-variable "instance_type" {
-  type    = string
-  default = ""
+variable "instance_types" {
+  type    = list(string)
+  default = []
 }
 
 variable "ami_name" {
@@ -91,54 +91,66 @@ variable "mandelbox_logz_shipping_token" {
  * Packer Builder configuration, using the variables from the `variable` configurations defined above.
  * Note that we don't specify availability_zone so that Packer tries all availabilities zones it is configured
  * for (i.e. zones with a subnet with tag `Purpose: packer`) in the `region`. 
- */
+**/
 
 source "amazon-ebs" "Whist_AWS_AMI_Builder" {
 
-
-
-
-
-
-  /* AWS AMI Packer parameters */
+  /* AMI configuration */
 
   ami_description = "Whist-optimized Ubuntu 20.04 AWS Machine Image"
-  ami_virtualization_type = "hvm" # Options are paravirtual (default) or hvm. AWS recommends usings HVM, as per: https://cloudacademy.com/blog/aws-ami-hvm-vs-pv-paravirtual-amazon/
   ami_name        = "${var.ami_name}"
   ami_regions     = "${var.destination_regions}" # All AWS regions the AMI will get copied to
-  region          = "${var.source_region}" # The source AWS region where the Packer Builder will run
-  source_ami      = "${var.source_ami}"
-  instance_type   = "${var.instance_type}"
-
-
-
-
-  ena_support           = true
-  # Enable enhanced networking (ENA but not SriovNetSupport) on HVM-compatible AMIs. If set, add ec2:ModifyInstanceAttribute to your AWS IAM policy.
-  # Note: you must make sure enhanced networking is enabled on your instance. See Amazon's documentation on enabling enhanced networking.
-  sriov_support         = true 
-  # Enable enhanced networking (SriovNetSupport but not ENA) on HVM-compatible AMIs. If true, add ec2:ModifyInstanceAttribute to your AWS IAM policy. Note: you must make sure enhanced networking is enabled on your instance. See Amazon's documentation on enabling enhanced networking. Default false.
-
+  
+  # Options are paravirtual (default) or hvm. AWS recommends usings HVM,
+  # as per: https://cloudacademy.com/blog/aws-ami-hvm-vs-pv-paravirtual-amazon/
+  ami_virtualization_type = "hvm" 
+  
+  # TODO: add enhanced networking support to our instances in another PR, and uncomment this!
+  # Enable enhanced networking for the AMI. These two flags enabled Elastic Network Adapter support and SriovNetsupport
+  # on HVM-compatible AMIs. If set, you need ec2:ModifyInstanceAttribute on your AWS IAM policy and must make sure that
+  # enhanced networking is enabled on the AWS EC2 instances.
+  #ena_support   = true 
+  #sriov_support = true 
 
   force_deregister      = true # Force Packer to first deregister an existing AMI if one with the same name already exists
   force_delete_snapshot = true # Force Packer to delete snapshots associated with AMIs, which have been deregistered by force_deregister
 
+  /* Access configuration */
 
+  access_key  = "${var.access_key}"
+  secret_key  = "${var.secret_key}"
+  region      = "${var.source_region}" # The source AWS region where the Packer Builder will run
+  max_retries = 5 # Retry up to 5 times using exponential backoff if Packer fails to connect to AWS, in case of throttling/transient failures
 
-  /* AWS VPC Packer parameters */
+  /* Run configuration */
 
+  source_ami                  = "${var.source_ami}" # The AWS AMI to use as a base for the new AMI
+  associate_public_ip_address = true # Make new instances with this AMI get assigned a public IP address
+  ebs_optimized               = true # Optimize for EBS volumes
 
-  vpc_id          = "${var.vpc_id}" # The VPC where the Packer Builer will run. This VPC needs to have subnet(s) configured as per the `subnet_filter` below
+  # We do not specifiy the availability_zone parameter, since leaving it empty allows Amazon to auto-assign. 
+  
+  # spot_instance_types is a list of acceptable instance types to run your build on. We will request a spot
+  # instance using the max price of spot_price and the allocation strategy of "lowest price". Your instance
+  # will be launched on an instance type of the lowest available price that you have in your list. This is 
+  # used in place of instance_type. You may only set either spot_instance_types or instance_type, not both. 
+  # This feature exists to help prevent situations where a Packer build fails because a particular availability
+  # zone does not have capacity for the specific instance_type requested in instance_type.
+  spot_instance_types = "${var.instance_types}"
 
+  # We do not set spot_price (string), so that it defaults to a maximum price equal to the on demand price 
+  # of the instance. In the situation where the current Amazon-set spot price exceeds the value set in this
+  # field, Packer will not launch an instance and the build will error. In the situation where the Amazon-set
+  # spot price is less than the value set in this field, Packer will launch and you will pay the Amazon-set 
+  # spot price, not this maximum value. For more information, see the Amazon docs on spot pricing.
 
-  ssh_username = "ubuntu"
+  iam_instance_profile = "PackerAMIBuilder" # This is the IAM role we configured for Packer in AWS
+  shutdown_behavior    = "terminate" # Automatically terminate instances on shutdown in case Packer exits ungracefully. Possible values are stop and terminate. Defaults to stop.
 
-associate_public_ip_address = true  # (bool) - If using a non-default VPC, public IP addresses are not provided by default. If this is true, your new instance will get a Public IP. default: false
+  vpc_id = "${var.vpc_id}" # The VPC where the Packer Builer will run. This VPC needs to have subnet(s) configured as per the `subnet_filter` below
 
-availability_zone (string) - Destination availability zone to launch instance in. Leave this empty to allow Amazon to auto-assign.
-
-
-
+  # This filter ensures Packer will pick a subnet which was configured for Packer by looking for the tag
+  # Purpose: packer. If no subnet with this tag is found in `region`, Packer will fail.
   subnet_filter {
     filters = {
       "tag:Purpose": "packer"
@@ -147,42 +159,26 @@ availability_zone (string) - Destination availability zone to launch instance in
     random    = true # A random Subnet will be used if multiple Subnets matches the filter. most_free have precendence over this.
   }
 
+  /* Metadata configuration */
 
-  max_retries = 5 # This is the maximum number of times an API call is retried, in the case where requests are being throttled or experiencing transient failures. The delay between the subsequent API calls increases exponentially.
+  http_endpoint = "enabled"  # A string to enable or disble the IMDS endpoint for an instance. Defaults to enabled. Accepts either "enabled" or "disabled"
+  http_tokens   = "required" # A string to either set the use of IMDSv2 for the instance to optional or required. Defaults to "optional". Accepts either "optional" or "required"
 
+  /* Block Device configuration */
 
-
-  /* AWS IAM Packer parameters */
-
-  access_key   = "${var.access_key}"
-  secret_key   = "${var.secret_key}"
-  iam_instance_profile = "PackerAMIBuilder" # This is the IAM role configured for Packer in AWS
-
-  /* AWS EBS Packer parameters */
-
-  ebs_optimized = true
   launch_block_device_mappings {
-    delete_on_termination = true # This ensures that the EBS volume of the EC2 instance(s) using the AMI Packer creates get deleted when the instance gets deleted
     device_name           = "/dev/sda1"
     volume_size           = 64
     volume_type           = "gp3" # Options are gp2 and gp3. gp3 is the newer, more performant and cheaper AWS block volume
+    delete_on_termination = true  # This ensures that the EBS volume of the EC2 instance(s) using the AMI Packer creates get deleted when the instance gets deleted
   }
 
+  /* Comunicator configuration */
 
+  communicator = "ssh"
+  ssh_username = "ubuntu"
 
-shutdown_behavior (string) - Automatically terminate instances on shutdown in case Packer exits ungracefully. Possible values are stop and terminate. Defaults to stop.
-
-
-
-
-
-
-
-
-
-
-
-  /* AWS EC2 Tags Packer parameters */
+  /* Tags configuration */
 
   run_tag {
     key = "Instance Region"
