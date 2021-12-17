@@ -625,15 +625,13 @@ jobs:
           import subprocess
           import json
 
-          retry_count = 0
-          while not os.path.exists("manifest.json") and retry_count < 5:
-            retry_count += 1
-            # stdout will be shared with the subprocess so we can see what is happening
-            subprocess.run("packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
-
-            # If Packer fails, manifest.json does not get created. We retry up to 5 times, as we may 
-            # face InsufficientCapacity issues from AWS, which typically get resolved via retrying after
-            # waiting up to 200 seconds.
+          # Stdout will be shared with the subprocess so we can see what is happening
+          subprocess.run("packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
+          
+          # If Packer fails, manifest.json does not get created and the entire workflow fails here
+          # Note that, defined in our ami_config.pkr.hcl file, we set multiple retries for Packer and
+          # configure it to use AWS Spot instances, to avoid failing due to AWS InsufficientCapacity
+          assert os.path.exists("manifest.json")
 
           # Save Packer output to a JSON, to use for creating new instances with the newly created AMI
           fp = open("manifest.json", "r")
