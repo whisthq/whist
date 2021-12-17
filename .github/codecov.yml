@@ -20,7 +20,7 @@ coverage:
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
         flags:
           - core-go
-      scaling-service:
+      host-service:
         target: auto # /host-service code coverage
         threshold: 1% # Percentage of tolerable code coverage decrease from base branch
         flags:

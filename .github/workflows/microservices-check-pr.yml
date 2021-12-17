@@ -86,11 +86,11 @@ jobs:
           node-version: "16"
 
       - name: Install Dependencies
-        working-directory: microservices/auth0
+        working-directory: backend/microservices/auth0
         run: yarn install
 
       - name: Dump the Upstream Auth0 Tenant
-        working-directory: microservices/auth0
+        working-directory: backend/microservices/auth0
         env:
           AUTH0_CLIENT_SECRET: ${{ secrets[format('AUTH0_GHA_CLIENT_SECRET_{0}', matrix.environment.branch)] }}
           GOOGLE_OAUTH_SECRET: ${{ secrets.GOOGLE_OAUTH_SECRET }}
