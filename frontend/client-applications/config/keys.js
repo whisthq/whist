@@ -15,7 +15,6 @@ const {
 } = envOverrides
 
 const keys = {
-  AWS_SECRET_KEY,
   AMPLITUDE_KEY,
   COMMIT_SHA,
 }

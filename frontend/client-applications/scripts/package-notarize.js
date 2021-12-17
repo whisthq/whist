@@ -29,7 +29,7 @@ const packageNotarize = (env, config, version, commit) => {
 
   // We test setting the secret keys
   helpers.populateSecretKeys([
-    "AMPLITUDE_KEY",
+    "AMPLITUDE_KEY"
   ])
 
   helpers.snowpackBuild({
