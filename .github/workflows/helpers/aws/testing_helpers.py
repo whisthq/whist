@@ -27,7 +27,7 @@ def get_current_AMI(boto3client: botocore.client, region_name: str) -> str:
         target_ami (str): The AMI of the target image or an empty string if no image was found.
     """
     amazon_owner_id = "099720109477"
-    # TODO: need to change the name filter once the target version of Linux changes (right now it's version 20.04)
+    # We will need to change the name filter once the target version of Linux Ubuntu changes
     response = boto3client.describe_images(
         Owners=[amazon_owner_id],
         Filters=[
