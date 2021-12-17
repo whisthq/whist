@@ -1,7 +1,6 @@
 package subscriptions
 
 import (
-	"context"
 	"reflect"
 	"sync"
 	"testing"
