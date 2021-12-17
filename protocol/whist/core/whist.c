@@ -310,9 +310,9 @@ int get_wcmsg_size(WhistClientMessage *wcmsg) {
         // Use numBits for size
         return sizeof(wcmsg->type) + sizeof(wcmsg->id) + 40 + wcmsg->bitarray_nack.numBits / 8;
     } else if (wcmsg->type == CMESSAGE_FILE_METADATA) {
-        return sizeof(*wcmsg) + wcmsg->file_metadata.filename_len;
+        return (int)sizeof(*wcmsg) + wcmsg->file_metadata.filename_len;
     } else if (wcmsg->type == CMESSAGE_FILE_DATA) {
-        return sizeof(*wcmsg) + wcmsg->file.size;
+        return (int)sizeof(*wcmsg) + wcmsg->file.size;
     } else {
         // Send small wcmsg's when we don't need unnecessarily large ones
         return sizeof(wcmsg->type) + sizeof(wcmsg->id) + 40;

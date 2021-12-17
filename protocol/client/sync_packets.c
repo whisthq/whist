@@ -272,12 +272,12 @@ void create_and_send_tcp_wcmsg(WhistClientMessageType message_type, char* payloa
             break;
         }
         case CMESSAGE_FILE_METADATA: {
-            data_size = ((FileMetadata*)payload)->filename_len;
+            data_size = (int)((FileMetadata*)payload)->filename_len;
             type_size = sizeof(FileMetadata);
             break;
         }
         case CMESSAGE_FILE_DATA: {
-            data_size = ((FileData*)payload)->size;
+            data_size = (int)((FileData*)payload)->size;
             type_size = sizeof(FileData);
             break;
         }
