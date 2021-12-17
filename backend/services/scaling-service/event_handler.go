@@ -139,6 +139,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 				case *sa.DefaultScalingAlgorithm:
 					algorithm.InstanceEventChan <- scalingEvent
 				}
+				scalingAlgorithm := algorithm.(*sa.DefaultScalingAlgorithm)
 
 			case *subscriptions.ImageEvent:
 				var scalingEvent sa.ScalingEvent
