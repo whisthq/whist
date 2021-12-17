@@ -592,7 +592,6 @@ jobs:
           data["source_region"] = "${{ env.aws_new_ami_source_region }}"
           data["vpc_id"] = "${{ env.aws_new_ami_vpc_id }}"
           data["source_ami"] = "${{ env.aws_source_ami_id }}"
-          data["instance_types"] = ["g4dn.xlarge", "g4dn.2xlarge", "g4dn.4xlarge", "g4dn.8xlarge", "g4dn.16xlarge"]
 
           # Set logz token and regions to clone AMI to by environment
           # The regions our new AMI gets cloned to (All AWS supported regions)
