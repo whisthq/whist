@@ -35,7 +35,7 @@ jobs:
           python-version: "3.10.0"
 
       - name: Install Dependencies
-        working-directory: /backend/webserver
+        working-directory: backend/webserver
         run: pip install -r requirements.txt -r requirements-test.txt
 
       - name: Add pylint-wrapper to the PATH
@@ -150,7 +150,7 @@ jobs:
 
       # Need to install this dependency for the notification step.
       - name: Install Python Dependencies
-        working-directory: /backend/webserver
+        working-directory: backend/webserver
         run: pip install PyGithub
 
       # Using the workflow notifcation helpers, we'll send out

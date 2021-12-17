@@ -60,7 +60,7 @@ jobs:
 
       # Check go project (clean, build, vet, format, lint, test, docs)
       - name: Check Go project
-        working-directory: /backend/core-go
+        working-directory: backend/core-go
         env:
           HEROKU_USER: developers@whist.com
           HEROKU_APIKEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
