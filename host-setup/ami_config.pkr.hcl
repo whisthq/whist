@@ -3,6 +3,7 @@
  * pleaser refer to this link: https://www.packer.io/docs/builders/amazon/ebs
 **/
 
+
 /* 
  * Variables passed to Packer via the -var-file flag, as a JSON file.
 **/
@@ -87,6 +88,7 @@ variable "mandelbox_logz_shipping_token" {
   default = ""
 }
 
+
 /* 
  * Packer Builder configuration, using the variables from the `variable` configurations defined above.
  * Note that we don't specify availability_zone so that Packer tries all availabilities zones it is configured
@@ -136,6 +138,7 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   # used in place of instance_type. You may only set either spot_instance_types or instance_type, not both. 
   # This feature exists to help prevent situations where a Packer build fails because a particular availability
   # zone does not have capacity for the specific instance_type requested in instance_type.
+  instance_type       = ""
   spot_instance_types = "${var.instance_types}"
 
   # We do not set spot_price (string), so that it defaults to a maximum price equal to the on demand price 
