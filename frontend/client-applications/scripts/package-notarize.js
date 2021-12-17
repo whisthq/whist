@@ -28,9 +28,7 @@ const packageNotarize = (env, config, version, commit) => {
   helpers.setPackagedCommitSha(commit)
 
   // We test setting the secret keys
-  helpers.populateSecretKeys([
-    "AMPLITUDE_KEY"
-  ])
+  helpers.populateSecretKeys(["AMPLITUDE_KEY"])
 
   helpers.snowpackBuild({
     ...env,

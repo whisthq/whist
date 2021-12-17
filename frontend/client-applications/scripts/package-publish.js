@@ -23,9 +23,7 @@ const packageNotarize = (env, config, version, environment, commit) => {
   // We hardcode the commit sha to the current commit
   helpers.setPackagedCommitSha(commit)
 
-  helpers.populateSecretKeys([
-    "AMPLITUDE_KEY"
-  ])
+  helpers.populateSecretKeys(["AMPLITUDE_KEY"])
 
   helpers.snowpackBuild({
     ...env,
