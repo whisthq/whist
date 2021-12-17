@@ -17,13 +17,13 @@ type Instance struct {
 	Type              string `json:"aws_instance_type"`
 	CloudProviderID   string `json:"cloud_provider_id"`
 	CommitHash        string `json:"commit_hash"`
-	CreationTimeMS    int32  `json:"creation_time_utc_unix_ms"`
-	GPUVramRemaing    int32  `json:"gpu_vram_remaining_kb"`
+	CreationTimeMS    int64  `json:"creation_time_utc_unix_ms"`
+	GPUVramRemaing    int64  `json:"gpu_vram_remaining_kb"`
 	Name              string `json:"instance_name"`
-	LastUpdatedMS     int32  `json:"last_updated_utc_unix_ms"`
-	MandelboxCapacity int32  `json:"mandelbox_capacity"`
-	MemoryRemainingKB int32  `json:"memory_remaining_kb"`
-	NanoCPUsRemaining int32  `json:"nanocpus_remaining"`
+	LastUpdatedMS     int64  `json:"last_updated_utc_unix_ms"`
+	MandelboxCapacity int64  `json:"mandelbox_capacity"`
+	MemoryRemainingKB int64  `json:"memory_remaining_kb"`
+	NanoCPUsRemaining int64  `json:"nanocpus_remaining"`
 	Status            string `json:"status"`
 }
 
@@ -34,7 +34,7 @@ type Mandelbox struct {
 	UserID         mandelboxtypes.UserID      `json:"user_id"`
 	InstanceName   string                     `json:"instance_name"`
 	SessionID      string                     `json:"session_id"`
-	CreationTimeMS int32                      `json:"creation_time_utc_unix_ms"`
+	CreationTimeMS int64                      `json:"creation_time_utc_unix_ms"`
 	Status         string                     `json:"status"`
 }
 

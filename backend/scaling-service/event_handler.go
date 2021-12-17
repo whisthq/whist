@@ -43,24 +43,17 @@ func main() {
 	// Use a sync map since we only write the keys once but will be reading multiple
 	// times by different goroutines.
 	algorithmByRegionMap := sync.Map{}
-	algorithmByRegionMap.Store("us-east", sa.USEastScalingAlgorithm{
-		BaseScalingAlgorithm: &sa.BaseScalingAlgorithm{
-			Region: "us-east",
-		},
+	algorithmByRegionMap.Store("us-east-1", &sa.DefaultScalingAlgorithm{
+		Region: "us-east",
 	})
 
 	// Instantiate scaling algorithms on allowed regions
 	algorithmByRegionMap.Range(func(key, value interface{}) bool {
 		scalingAlgorithm := value.(sa.ScalingAlgorithm)
 		scalingAlgorithm.CreateBuffer()
+		scalingAlgorithm.CreateEventChans()
 		scalingAlgorithm.CreateGraphQLClient(graphqlClient)
-
-		// This type switch is necessary to be able to use
-		// each region scaling algorithm `ProcessEvents` function.
-		switch regionAlgorithm := scalingAlgorithm.(type) {
-		case sa.USEastScalingAlgorithm:
-			regionAlgorithm.ProcessEvents(goroutineTracker)
-		}
+		scalingAlgorithm.ProcessEvents(goroutineTracker)
 
 		return true
 	})
@@ -95,6 +88,8 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 			case *subscriptions.InstanceEvent:
 				var scalingEvent sa.ScalingEvent
 
+				scalingEvent.Type = "INSTANCE_DATABASE_EVENT"
+
 				if len(subscriptionEvent.InstanceInfo) > 0 {
 					instance := subscriptionEvent.InstanceInfo[0]
 
@@ -109,9 +104,10 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 				if !ok {
 					logger.Errorf("%v not found on algorithm map", scalingEvent.Region)
 				}
+				scalingAlgorithm := algorithm.(*sa.DefaultScalingAlgorithm)
 
-				scalingAlgorithm := algorithm.(sa.BaseScalingAlgorithm)
-				scalingAlgorithm.GetInstanceEventChan() <- scalingEvent
+				logger.Infof("Sending to instance event chan")
+				scalingAlgorithm.InstanceEventChan <- scalingEvent
 
 			case *subscriptions.MandelboxEvent:
 			}

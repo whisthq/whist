@@ -2,12 +2,15 @@ package hosts
 
 import (
 	"context"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/whisthq/whist/core-go/subscriptions"
 	"github.com/whisthq/whist/core-go/utils"
+	logger "github.com/whisthq/whist/core-go/whistlogger"
 )
 
 type AWSHost struct {
@@ -81,6 +84,22 @@ func (host *AWSHost) SpinDownInstances(instanceIDs []string) error {
 	return nil
 }
 
-func (host *AWSHost) CreateImageBuffer() error {
+// WaitForInstanceTermination waits until the given instance has been terminated on the
+// cloud service
+func (host *AWSHost) WaitForInstanceTermination(scalingCtx context.Context, instance subscriptions.Instance) error {
+	waiterClient := new(ec2.DescribeInstancesAPIClient)
+	waiter := ec2.NewInstanceTerminatedWaiter(*waiterClient, func(*ec2.InstanceTerminatedWaiterOptions) {
+		logger.Infof("Waiting for instance to terminate on AWS")
+	})
+
+	waitParams := &ec2.DescribeInstancesInput{
+		InstanceIds: []string{instance.Name},
+	}
+
+	err := waiter.Wait(scalingCtx, waitParams, 5*time.Minute)
+	if err != nil {
+		return utils.MakeError("failed waiting for instance %v to terminate from AWS: %v", instance.Name, err)
+	}
+
 	return nil
 }
