@@ -212,8 +212,8 @@ func TestSetupHostSubscriptions(t *testing.T) {
 
 	// Create a fake variables map that matches the host subscriptions variable map
 	var variables = map[string]interface{}{
-		"instanceName": graphql.String(instanceName),
-		"status":       graphql.String("DRAINING"),
+		"instance_name": graphql.String(instanceName),
+		"status":        graphql.String("DRAINING"),
 	}
 
 	// Verify that the "variables" maps are deep equal for the first subscription

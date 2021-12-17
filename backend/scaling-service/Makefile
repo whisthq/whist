@@ -81,7 +81,7 @@ test: build
 # This ensures that tests that use the file system do not conflict or race with each other
 #
 # Set AWS credentials to allow user config integration tests to run
-	env "PATH=$(PATH)" "CI=$(CI)" "AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID)" "AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY)" go test -v -p 1 ./... -race -covermode=atomic -coverprofile=coverage.out
+	sudo env "PATH=$(PATH)" "CI=$(CI)" "AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID)" "AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY)" go test -v -p 1 ./... -race -covermode=atomic -coverprofile=coverage.out
 
 ifeq ($(CI),true)
 	$(info Running in CI, uploading code coverage results to Codecov...)
@@ -115,19 +115,19 @@ run: build
 # the Scaling Service can use the `ubuntu` account's aws credentials to run,
 # even though it runs as root.
 ifeq ("$(wildcard /root/.aws/*)","")
-	ln -sf /home/ubuntu/.aws /root/.aws
+	sudo ln -sf /home/ubuntu/.aws /root/.aws
 endif
-	env "PATH=$(PATH)" APP_ENV=localdev $(BUILD_FOLDER)/$(BINARY_NAME)
+	sudo env "PATH=$(PATH)" APP_ENV=localdev $(BUILD_FOLDER)/$(BINARY_NAME)
 
 runlocaldevwithdb: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with localdevwithdb configuration...)
 ifeq ("$(wildcard /root/.aws/*)","")
-	ln -sf /home/ubuntu/.aws /root/.aws
+	sudo ln -sf /home/ubuntu/.aws /root/.aws
 endif
-	env "PATH=$(PATH)" APP_ENV=localdevwithdb $(BUILD_FOLDER)/$(BINARY_NAME)
+	sudo env "PATH=$(PATH)" APP_ENV=localdevwithdb $(BUILD_FOLDER)/$(BINARY_NAME)
 
 rundev: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with dev configuration...)
-	env "PATH=$(PATH)" APP_ENV=dev USE_PROD_LOGGING=0 $(BUILD_FOLDER)/$(BINARY_NAME)
+	sudo env "PATH=$(PATH)" APP_ENV=dev USE_PROD_LOGGING=0 $(BUILD_FOLDER)/$(BINARY_NAME)
 
 .PHONY: build clean run rundev format lint vet check
