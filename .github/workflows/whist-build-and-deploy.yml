@@ -547,7 +547,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.aws_new_ami_source_region }}
+          aws-region: us-east-1
 
       - name: Set Host Service APP_ENV based on Git Branch (File gets read by host-service.service)
         working-directory: host-setup
