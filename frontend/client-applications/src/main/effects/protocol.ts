@@ -84,14 +84,10 @@ fromTrigger("trayRestoreSessionAction").subscribe(() => {
 })
 
 fromTrigger("trayWhistIsDefaultBrowserAction").subscribe(() => {
-  const whistDefaultBrowser = <boolean>persistGet(WHIST_IS_DEFAULT_BROWSER)
-  if (whistDefaultBrowser !== undefined) {
-    persistSet(WHIST_IS_DEFAULT_BROWSER, !whistDefaultBrowser)
-  } else {
-    persistSet(WHIST_IS_DEFAULT_BROWSER, false)
-  }
+  const whistDefaultBrowser = <boolean>persistGet(WHIST_IS_DEFAULT_BROWSER) ?? false
+  persistSet(WHIST_IS_DEFAULT_BROWSER, !whistDefaultBrowser)
   // if the value changed to true, then we need to set Whist as the default browser now.
-  if (whistDefaultBrowser) {
+  if (!whistDefaultBrowser) {
     app.setAsDefaultProtocolClient("http")
     app.setAsDefaultProtocolClient("https")
   }
