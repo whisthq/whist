@@ -128,29 +128,6 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-# Ubuntu Server 20 LTS - AMIs for the various AWS regions
-instance_AMI_dict = {}
-instance_AMI_dict["us-east-1"] = "ami-0885b1f6bd170450c"
-instance_AMI_dict["us-east-2"] = "ami-0629230e074c580f2"
-instance_AMI_dict["us-west-1"] = "ami-053ac55bdcfe96e85"
-instance_AMI_dict["us-west-2"] = "ami-036d46416a34a611c"
-instance_AMI_dict["af-south-1"] = "ami-0ff86122fd4ad7208"
-instance_AMI_dict["ap-east-1"] = "ami-0a9c1cc3697104990"
-instance_AMI_dict["ap-south-1"] = "ami-0108d6a82a783b352"
-instance_AMI_dict["ap-northeast-3"] = "ami-0c3904e7363bbc4bc"
-instance_AMI_dict["ap-northeast-2"] = "ami-0f8b8babb98cc66d0"
-instance_AMI_dict["ap-southeast-1"] = "ami-0fed77069cd5a6d6c"
-instance_AMI_dict["ap-southeast-2"] = "ami-0bf8b986de7e3c7ce"
-instance_AMI_dict["ap-northeast-1"] = "ami-036d0684fc96830ca"
-instance_AMI_dict["ca-central-1"] = "ami-0bb84e7329f4fa1f7"
-instance_AMI_dict["eu-central-1"] = "ami-0a49b025fffbbdac6"
-instance_AMI_dict["eu-west-1"] = "ami-08edbb0e85d6a0a07"
-instance_AMI_dict["eu-west-2"] = "ami-0fdf70ed5c34c5f52"
-instance_AMI_dict["eu-south-1"] = "ami-0f8ce9c417115413d"
-instance_AMI_dict["eu-west-3"] = "ami-06d79c60d7454e2af"
-instance_AMI_dict["eu-north-1"] = "ami-0bd9c26722573e69b"
-instance_AMI_dict["sa-east-1"] = "ami-0e66f5495b4efdd0f"
-
 
 def attempt_ssh_connection(ssh_command, timeout, log_file_handle, pexpect_prompt, max_retries):
     for retries in range(max_retries):
@@ -217,9 +194,10 @@ def create_or_start_aws_instance(boto3client, region_name, existing_instance_id,
 
     # Define the AWS machine variables
 
-    instance_AMI = instance_AMI_dict[
-        region_name
-    ]  # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
+    # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
+    instance_AMI = get_current_AMI(boto3client, region_name)
+    if instance_AMI == "":
+        print("Error, could not get instance AMI for region {}".format(region_name))
     instance_type = "g4dn.2xlarge"  # The type of instance we want to create
 
     print(

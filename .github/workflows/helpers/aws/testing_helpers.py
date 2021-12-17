@@ -15,6 +15,42 @@ def get_boto3client(region_name: str) -> botocore.client:
     return boto3.client("ec2", region_name=region_name)
 
 
+def get_current_AMI(boto3client: botocore.client, region_name: str) -> str:
+    """
+    Get the AMI of the most recent AWS EC2 Amazon Machine Image running Ubuntu Server 20.04 Focal Fossa
+
+    Args:
+        boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
+        region_name (str): The name of the region of interest (e.g. "us-east-1")
+
+    Returns:
+        target_ami (str): The AMI of the target image or an empty string if no image was found.
+    """
+    amazon_owner_id = "099720109477"
+    # We will need to change the name filter once the target version of Linux Ubuntu changes
+    response = boto3client.describe_images(
+        Owners=[amazon_owner_id],
+        Filters=[
+            {
+                "Name": "name",
+                "Values": ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"],
+            },
+            {
+                "Name": "architecture",
+                "Values": ["x86_64"],
+            },
+        ],
+    )
+    if len(response) < 1:
+        return ""
+    # Sort the Images in reverse order of creation
+    images_list = sorted(response["Images"], key=itemgetter("CreationDate"), reverse=True)
+    # Get the AMI of the most recent Image
+    target_ami = images_list[0]["ImageId"]
+
+    return target_ami
+
+
 def create_ec2_instance(
     boto3client: botocore.client,
     region_name: str,
