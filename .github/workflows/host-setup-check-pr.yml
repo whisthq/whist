@@ -80,7 +80,7 @@ jobs:
           data["github_pat"] = "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
           data["github_username"] = "${{ secrets.GHA_USERNAME }}"
           data["git_branch"] = "dev"
-          data["git_hash"] = "e885ddd98fd5d02841435592a6cb191321a53d24"
+          data["git_hash"] = "88c656033c927e10337cf1c00bb0e73359929ecd"
 
           # pr_number is the number of the pr this check is running for,
           # used to identify the Packer instance we create
