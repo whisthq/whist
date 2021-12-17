@@ -51,7 +51,7 @@ typedef enum FileChunkType {
  */
 typedef struct FileData {
     int index;                 // The index of the file in the synchrony array
-    int size;                  // Number of bytes for the file chunk data
+    size_t size;               // Number of bytes for the file chunk data
     FileChunkType chunk_type;  // Whether this is a first, middle or last chunk
     char data[0];              // The file chunk byte contents
 } FileData;
@@ -84,7 +84,7 @@ typedef struct FileMetadata {
     FileTransferType transfer_type;  // Type of file transfer
     FileEventInfo event_info;        // Extra information for the file transfer
     int file_size;                   // Total file size
-    int filename_len;                // Length of the filename
+    size_t filename_len;             // Length of the filename
     char filename[0];                // The file name
 } FileMetadata;
 

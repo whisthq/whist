@@ -354,7 +354,7 @@ static int handle_file_metadata_message(WhistClientMessage *wcmsg) {
 
     static int local_directory_id = 0;  // static so only set to 0 on first iteration
     static const char *parent_drag_drop_directory = "/home/whist/.teleport/drag-drop";
-    int target_directory_maxlen =
+    size_t target_directory_maxlen =
         strlen(parent_drag_drop_directory) + 64 + 1;  // have enough space for int in paths
 
     // Use `unique_id` for the rest of the function, NOT `local_directory_id`.
