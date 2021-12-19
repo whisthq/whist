@@ -27,7 +27,8 @@ typedef enum WhistThreadPriority {
 
 void whist_init_multithreading();
 
-WhistThread whist_create_thread(WhistThreadFunction thread_function, char* thread_name, void* data);
+WhistThread whist_create_thread(WhistThreadFunction thread_function, const char* thread_name,
+                                void* data);
 WhistThreadID whist_get_thread_id(WhistThread thread);
 void whist_detach_thread(WhistThread thread);
 void whist_wait_thread(WhistThread thread, int* ret);

@@ -70,7 +70,7 @@ set(META_PROJECT_DESCRIPTION "CMake Project for the Whist client protocol client
 set(META_AUTHOR_ORGANIZATION "Whist")
 set(META_AUTHOR_DOMAIN       "https://github.com/fractal/whist")
 
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 14)
 
 # verbose cmake outputs, useful for debugging CMake issues such as linking
@@ -144,7 +144,7 @@ if(RUN_CPPCHECK)
                 "--template=\"cppcheck: {file}:{line} ({severity}) {message}\""
                 "--enable=performance,portability"
                 "--verbose"
-                "--std=c99"
+                "--std=c11"
                 "-j 8" # Run in 8 threads
                 "--error-exitcode=1" # Propagate cppcheck errors to cmake
                 "--suppress=shiftTooManyBitsSigned"

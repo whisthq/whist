@@ -12,7 +12,7 @@ void whist_init_multithreading() {
     SDL_Init(SDL_INIT_VIDEO);
 }
 
-WhistThread whist_create_thread(WhistThreadFunction thread_function, char *thread_name,
+WhistThread whist_create_thread(WhistThreadFunction thread_function, const char *thread_name,
                                 void *data) {
     WhistThread ret = SDL_CreateThread(thread_function, thread_name, data);
     if (ret == NULL) {
