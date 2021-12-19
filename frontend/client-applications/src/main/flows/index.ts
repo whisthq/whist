@@ -118,8 +118,7 @@ const launchTrigger = fromSignal(
   ),
   merge(
     fromTrigger(WhistTrigger.checkPaymentFlowSuccess),
-    refreshAfterPaying.success,
-    fromTrigger(WhistTrigger.reactivated)
+    refreshAfterPaying.success
   )
 ).pipe(share())
 

@@ -6,7 +6,7 @@
 
 import { app } from "electron"
 import { fromEvent } from "rxjs"
-import { filter, map, withLatestFrom } from "rxjs/operators"
+import { take, switchMap } from "rxjs/operators"
 
 import { createTrigger, fromTrigger } from "@app/utils/flows"
 import { windowMonitor } from "@app/utils/windows"
@@ -29,9 +29,7 @@ createTrigger(
 // Fires when all windows are closed and the user clicks the dock icon to re-open Whist
 createTrigger(
   WhistTrigger.reactivated,
-  fromEvent(app, "activate").pipe(
-    withLatestFrom(fromTrigger(WhistTrigger.windowInfo)),
-    filter(([, args]) => args.numberWindowsRemaining === 0),
-    map(([x]) => x)
+  fromTrigger(WhistTrigger.windowsAllClosed).pipe(
+    switchMap(() => fromEvent(app, "activate").pipe(take(1)))
   )
 )

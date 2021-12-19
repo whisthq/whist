@@ -53,6 +53,7 @@ const sleep = () => {
   logBase("Application closed and sleeping", {})
   destroyTray()
   protocolStreamKill()
+  app?.dock?.show()
 }
 
 const allWindowsClosed = fromTrigger(WhistTrigger.windowInfo).pipe(
