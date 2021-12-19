@@ -524,15 +524,15 @@ void sdl_render_window_titlebar_color(WhistRGBColor color) {
 volatile char* window_title;
 volatile bool should_update_window_title = false;
 
-void sdl_set_window_title(const char* window_title) {
+void sdl_set_window_title(const char* requested_window_title) {
     if (should_update_window_title) {
         LOG_WARNING(
             "Failed to update window title, as the previous window title update is still pending");
     }
 
-    size_t len = strlen(window_title) + 1;
+    size_t len = strlen(requested_window_title) + 1;
     char* new_window_title = safe_malloc(len);
-    safe_strncpy(new_window_title, window_title, strlen(window_title) + 1);
+    safe_strncpy(new_window_title, requested_window_title, len);
     window_title = new_window_title;
 
     should_update_window_title = true;
