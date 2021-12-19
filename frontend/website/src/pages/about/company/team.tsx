@@ -1,5 +1,8 @@
 import React from "react"
 
+import { Client as NotionClient } from "@notionhq/client"
+import { config } from "@app/shared/constants/config"
+
 const people = [
   {
     name: "Philippe Noel",
@@ -81,6 +84,15 @@ const people = [
   const textB = b.name.toUpperCase()
   return textA < textB ? -1 : textA > textB ? 1 : 0
 })
+
+const notion = new NotionClient({ auth: config.keys.NOTION_API_KEY })
+
+notion.databases
+  .retrieve({
+    database_id:
+      "f023b39bd511459d822fadbe2cf5b605?v=afc98c210fec4100802e580b69578b9c",
+  })
+  .then((x) => console.log(x))
 
 export const Team = () => {
   return (

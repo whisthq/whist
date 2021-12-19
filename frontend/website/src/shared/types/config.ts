@@ -1,6 +1,6 @@
 export interface WhistConfig {
   keys: {
-    GOOGLE_ANALYTICS_TRACKING_CODES: string[]
+    NOTION_API_KEY: string
   }
   sentry_env: string
   client_download_urls: {
