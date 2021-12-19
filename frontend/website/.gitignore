@@ -16,7 +16,6 @@
 
 # dynamically generated css
 /public/css
-/public/assets/team
 
 # Python
 __pycache__
