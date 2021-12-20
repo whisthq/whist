@@ -62,7 +62,8 @@ const allWindowsClosed = fromTrigger(WhistTrigger.windowInfo).pipe(
 )
 
 fromTrigger(WhistTrigger.windowsAllClosed).subscribe((evt: IpcMainEvent) => {
-  evt?.preventDefault()
+  // Macs don't completely quit the desktop app when you close the application's windows
+  if (process.platform === "darwin") evt?.preventDefault()
 })
 
 allWindowsClosed.subscribe(
