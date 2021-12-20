@@ -24,6 +24,12 @@ Includes
 #include <whist/logging/logging.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/logging/error_monitor.h>
+
+#ifdef _WIN32
+#pragma warning(disable : 4996)
+#include <direct.h>
+#endif  // _WIN32
+
 #include "state.h"
 #include "client.h"
 #include "handle_client_message.h"
