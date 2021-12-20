@@ -18,19 +18,21 @@ const Investors = () => {
           <ul className="space-y-12 sm:grid sm:grid-cols-2 sm:gap-12 sm:space-y-0 lg:gap-x-8">
             {Notion?.investors?.map((investor) => (
               <li key={investor.name}>
-                <div className="flex items-center space-x-4 lg:space-x-6">
-                  <img
-                    className="w-16 h-16 rounded-full border-2 filter grayscale mr-4"
-                    src={investor.imageUrl}
-                    alt=""
-                  />
-                  <div className="font-medium leading-6 space-y-1 text-gray-400">
-                    <div className="text-xl">{investor.name}</div>
-                    <p className="text-gray-500 text-sm">
-                      {investor.description}
-                    </p>
+                <a href={investor.website} target="_blank">
+                  <div className="flex items-center space-x-4 lg:space-x-6">
+                    <img
+                      className="w-16 h-16 rounded-full border-2 filter grayscale mr-4"
+                      src={investor.imageUrl}
+                      alt=""
+                    />
+                    <div className="font-medium leading-6 space-y-1 text-gray-400">
+                      <div className="text-xl">{investor.name}</div>
+                      <p className="text-gray-500 text-sm">
+                        {investor.description}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                </a>
               </li>
             ))}
           </ul>
