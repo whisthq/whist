@@ -10,13 +10,11 @@ const SelectBrowser = (props: {
   return (
     <div className="w-full">
       <div className="font-semibold text-2xl text-gray-300">
-        Import your browsing data from any browser to Whist
+        Sync with your current browser
       </div>
-      <div className="m-auto mt-2 mb-4 text-gray-400 max-w-xl">
-        Your cookies, bookmarks, extensions and passwords will be copied over.
-        You will be asked for your computer password twice when we copy your
-        browser data. Note that only extensions from Chrome-compatible browsers
-        can be imported, like Brave and Chrome.
+      <div className="m-auto mt-2 mb-4 text-gray-400 max-w-sm">
+        Copy your passwords, extensions, and bookmarks to Whist. You will need
+        to submit your computer password twice to permit us to do this.
       </div>
       <div className="mt-8">
         <div className="bg-gray-900 px-4 py-2 rounded w-96 m-auto">
