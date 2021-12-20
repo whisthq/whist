@@ -48,7 +48,7 @@ if(MSVC)
 endif()
 
 # Add our compiler flags
-include(cmake/CompilerOptions.cmake)
+include(cmake/compiler-options.cmake)
 
 # Add rpath to look for shared libraries on linux
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
