@@ -18,7 +18,7 @@ const Investors = () => {
           <ul className="space-y-12 sm:grid sm:grid-cols-2 sm:gap-12 sm:space-y-0 lg:gap-x-8">
             {Notion?.investors?.map((investor) => (
               <li key={investor.name}>
-                <a href={investor.website} target="_blank">
+                <a href={investor.website} target="_blank" rel="noreferrer">
                   <div className="flex items-center space-x-4 lg:space-x-6">
                     <img
                       className="w-16 h-16 rounded-full border-2 filter grayscale mr-4"
