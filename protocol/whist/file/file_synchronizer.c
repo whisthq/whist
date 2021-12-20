@@ -26,6 +26,10 @@ if (our_chunk_to_send) {
 destroy_file_synchronizer();
 */
 
+#ifdef _WIN32
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 /*
 ============================
 Includes
