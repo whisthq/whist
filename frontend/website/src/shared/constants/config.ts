@@ -4,9 +4,6 @@ import type { WhistEnvironment, WhistConfig } from "@app/shared/types/config"
 
 const environment: WhistEnvironment = {
   dev: {
-    keys: {
-      NOTION_API_KEY: "secret_IWKwfhedzKrvbiWtCF7XcbxuX9emMwyfWNoAXfnQXNZ",
-    },
     sentry_env: "dev",
     client_download_urls: {
       macOS_x64:
@@ -18,9 +15,6 @@ const environment: WhistEnvironment = {
     },
   },
   staging: {
-    keys: {
-      NOTION_API_KEY: "secret_IWKwfhedzKrvbiWtCF7XcbxuX9emMwyfWNoAXfnQXNZ",
-    },
     sentry_env: "staging",
     client_download_urls: {
       macOS_x64:
@@ -32,9 +26,6 @@ const environment: WhistEnvironment = {
     },
   },
   prod: {
-    keys: {
-      NOTION_API_KEY: "secret_IWKwfhedzKrvbiWtCF7XcbxuX9emMwyfWNoAXfnQXNZ",
-    },
     sentry_env: "prod",
     client_download_urls: {
       macOS_x64:
