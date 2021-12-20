@@ -635,7 +635,10 @@ void sdl_present_pending_framebuffer() {
                 .h = h,
             };
 
-            // Write the texture out to the renderer
+            // The texture is semi-transparent, so we clear to white first
+            SDL_SetRenderDrawColor(sdl_renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+            SDL_RenderClear(sdl_renderer);
+            // Now, we write the texture out to the renderer
             SDL_RenderCopy(sdl_renderer, loading_screen_texture, NULL, &centered_rect);
 
             // The loading screen texture may now be destroyed
