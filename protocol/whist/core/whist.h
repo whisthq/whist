@@ -686,9 +686,6 @@ typedef struct WhistClientMessage {
             unsigned char ba_raw[BITS_TO_CHARS(max(MAX_VIDEO_PACKETS, MAX_AUDIO_PACKETS))];
         } bitarray_nack;
 
-        // MESSAGE_OPEN_URL
-        char url_to_open[MAX_URL_LENGTH + 1];
-
         // MESSAGE_KEYBOARD_STATE
         WhistKeyboardState keyboard_state;
     };
@@ -699,6 +696,7 @@ typedef struct WhistClientMessage {
         ClipboardData clipboard;     // CMESSAGE_CLIPBOARD
         FileMetadata file_metadata;  // CMESSAGE_FILE_METADATA
         FileData file;               // CMESSAGE_FILE_DATA
+        char url_to_open[0];         // MESSAGE_OPEN_URL
     };
 } WhistClientMessage;
 
