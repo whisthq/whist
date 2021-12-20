@@ -23,7 +23,7 @@ export const Team = () => {
           </p>
         </div>
         <ul className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-6 sm:space-y-0 lg:grid-cols-3 lg:gap-8">
-          {Notion?.team.map((person) => (
+          {Notion?.team?.map((person) => (
             <li
               key={person.name}
               className="py-10 px-6 bg-gray-900 text-center rounded-lg xl:px-10 xl:text-left"
