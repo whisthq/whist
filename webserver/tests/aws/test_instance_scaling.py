@@ -642,19 +642,20 @@ def test_buffer_wrong_ami() -> None:
     )
 
 
-def test_buffer_empty(region_ami_pair: Tuple[str, str]) -> None:
+def test_buffer_empty(app: Flask, region_ami_pair: Tuple[str, str]) -> None:
     """
     Tests that we ask for a new instance when the buffer is empty
     """
     region_name, ami_id = region_ami_pair
+    default_increment = int(app.config["DEFAULT_INSTANCE_BUFFER"])
     assert (
         aws_funcs._get_num_new_instances(region_name, ami_id)  # pylint: disable=protected-access
-        == 1
+        == default_increment
     )
 
 
 def test_buffer_part_full(
-    bulk_instance: Callable[..., InstanceInfo], region_ami_pair: Tuple[str, str]
+    app: Flask, bulk_instance: Callable[..., InstanceInfo], region_ami_pair: Tuple[str, str]
 ) -> None:
     """
     Tests that we ask for a new instance when there's only a full instance running
@@ -663,9 +664,10 @@ def test_buffer_part_full(
     bulk_instance(
         aws_ami_id=ami_id, associated_mandelboxes=10, mandelbox_capacity=10, location=region_name
     )
+    default_increment = int(app.config["DEFAULT_INSTANCE_BUFFER"])
     assert (
         aws_funcs._get_num_new_instances(region_name, ami_id)  # pylint: disable=protected-access
-        == 1
+        == default_increment
     )
 
 
@@ -936,11 +938,12 @@ def test_buffer_region_sensitive(app: Flask, bulk_instance: Callable[..., Instan
         )
         == -1
     )
+    default_increment = int(app.config["DEFAULT_INSTANCE_BUFFER"])
     assert (
         aws_funcs._get_num_new_instances(  # pylint: disable=protected-access
             region_ami_without_buffer[0], region_ami_without_buffer[1]
         )
-        == app.config["DEFAULT_INSTANCE_BUFFER"]
+        == default_increment
     )
 
 
