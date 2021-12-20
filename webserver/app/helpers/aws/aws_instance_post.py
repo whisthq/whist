@@ -294,8 +294,9 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
         all_instances
     )
 
-    # And then figure out whether to increase or decrement the number of running mandelboxes.
-    # Check config DB for the correct value for the environment.
+    # And then figure out whether to call for an increase (by default_increment)
+    # or decrease (by default_decrement).
+    # Check config DB for the correct value for the number of desired free mandelboxes.
     desired_free_mandelboxes = int(current_app.config["DESIRED_FREE_MANDELBOXES"])
 
     if num_free_mandelboxes < desired_free_mandelboxes:
