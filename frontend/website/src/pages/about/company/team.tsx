@@ -22,28 +22,30 @@ export const Team = () => {
             .
           </p>
         </div>
-        <ul className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-6 sm:space-y-0 lg:grid-cols-3 lg:gap-8">
-          {Notion?.team?.map((person) => (
-            <li
-              key={person.name}
-              className="py-10 px-6 bg-gray-900 text-center rounded-lg xl:px-10 xl:text-left"
-            >
-              <div className="space-y-6 xl:space-y-10">
-                <div
-                  className="mx-auto h-40 w-40 rounded-full xl:w-56 xl:h-56 bg-cover bg-center"
-                  style={{
-                    backgroundImage: `url(${person.imageUrl})`,
-                  }}
-                ></div>
-                <div className="space-y-2 xl:flex xl:items-center xl:justify-between mt-12">
-                  <div className="font-medium leading-6 space-y-1 text-left">
-                    <h3 className="text-gray-300">{person.name}</h3>
-                    <p className="text-gray-500">{person.title}</p>
+        <ul className="space-y-4 sm:gr{{id sm:grid-cols-2 sm:gap-6 sm:space-y-0 lg:grid-cols-3 lg:gap-8">
+          {Notion?.team?.map(
+            (person: { name: string; imageUrl: string; title: string }) => (
+              <li
+                key={person.name}
+                className="py-10 px-6 bg-gray-900 text-center rounded-lg xl:px-10 xl:text-left"
+              >
+                <div className="space-y-6 xl:space-y-10">
+                  <div
+                    className="mx-auto h-40 w-40 rounded-full xl:w-56 xl:h-56 bg-cover bg-center"
+                    style={{
+                      backgroundImage: `url(${person.imageUrl})`,
+                    }}
+                  ></div>
+                  <div className="space-y-2 xl:flex xl:items-center xl:justify-between mt-12">
+                    <div className="font-medium leading-6 space-y-1 text-left">
+                      <h3 className="text-gray-300">{person.name}</h3>
+                      <p className="text-gray-500">{person.title}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </li>
-          ))}
+              </li>
+            )
+          )}
           <li className="relative pt-64 pb-10 rounded overflow-hidden">
             <a href="/contact#careers">
               <img
