@@ -1,11 +1,5 @@
 import { app, IpcMainEvent, Notification } from "electron"
-import {
-  withLatestFrom,
-  startWith,
-  mapTo,
-  throttle,
-  filter,
-} from "rxjs/operators"
+import { withLatestFrom, startWith, throttle, filter } from "rxjs/operators"
 import { interval, of, merge } from "rxjs"
 import Sentry from "@sentry/electron"
 import isEmpty from "lodash.isempty"
@@ -53,7 +47,7 @@ const sleep = () => {
   logBase("Application closed and sleeping", {})
   destroyTray()
   protocolStreamKill()
-  app?.dock?.show()
+  app?.dock?.show().catch((err) => Sentry.captureException(err))
 }
 
 const allWindowsClosed = fromTrigger(WhistTrigger.windowInfo).pipe(
