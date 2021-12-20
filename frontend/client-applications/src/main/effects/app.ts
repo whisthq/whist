@@ -6,6 +6,7 @@
 
 import { app, session } from "electron"
 import { autoUpdater } from "electron-updater"
+import { merge } from "rxjs"
 import { take } from "rxjs/operators"
 import Sentry from "@sentry/electron"
 
@@ -83,7 +84,10 @@ fromTrigger(WhistTrigger.trayRegionAction).subscribe((region: AWSRegion) => {
   relaunch({ args: process.argv.slice(1).concat([region]) })
 })
 
-fromTrigger(WhistTrigger.relaunchAction).subscribe(() => {
+merge(
+  fromTrigger(WhistTrigger.relaunchAction),
+  fromTrigger(WhistTrigger.reactivated)
+).subscribe(() => {
   relaunch()
 })
 

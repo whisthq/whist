@@ -17,7 +17,7 @@ const Loading = (props: {
         "justify-center font-body text-center"
       )}
     >
-      <div className="mt-6 font-semibold text-2xl text-gray-300">
+      <div className="mt-4 font-semibold text-2xl text-gray-300">
         Whist is loading
       </div>
       <div className="text-gray-500 mt-2">

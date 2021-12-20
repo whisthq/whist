@@ -1,11 +1,5 @@
 import { app, IpcMainEvent, Notification } from "electron"
-import {
-  withLatestFrom,
-  startWith,
-  mapTo,
-  throttle,
-  filter,
-} from "rxjs/operators"
+import { withLatestFrom, startWith, throttle, filter } from "rxjs/operators"
 import { interval, of, merge } from "rxjs"
 import Sentry from "@sentry/electron"
 import isEmpty from "lodash.isempty"
@@ -49,11 +43,11 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
   rebootNotification = rebootWarning()
 })
 
-const quit = () => {
-  logBase("Application exited", {})
+const sleep = () => {
+  logBase("Application closed and sleeping", {})
   destroyTray()
   protocolStreamKill()
-  app.quit()
+  app?.dock?.show().catch((err) => Sentry.captureException(err))
 }
 
 const allWindowsClosed = fromTrigger(WhistTrigger.windowInfo).pipe(
@@ -68,37 +62,26 @@ const allWindowsClosed = fromTrigger(WhistTrigger.windowInfo).pipe(
 )
 
 fromTrigger(WhistTrigger.windowsAllClosed).subscribe((evt: IpcMainEvent) => {
-  evt?.preventDefault()
+  // Macs don't completely quit the desktop app when you close the application's windows
+  if (process.platform === "darwin") evt?.preventDefault()
 })
 
-allWindowsClosed
-  .pipe(
-    withLatestFrom(
-      fromTrigger(WhistTrigger.mandelboxFlowFailure).pipe(
-        mapTo(true),
-        startWith(false)
-      )
-    )
-  )
-  .subscribe(
-    ([args, mandelboxFailure]: [
-      {
-        crashed: boolean
-        numberWindowsRemaining: number
-        hash: string
-        event: string
-      },
-      boolean
-    ]) => {
-      // If they didn't crash out and didn't fill out the exit survey, show it to them
-      if (
-        args.hash !== WindowHashProtocol ||
-        (args.hash === WindowHashProtocol && !args.crashed)
-      ) {
-        quit()
-      }
+allWindowsClosed.subscribe(
+  (args: {
+    crashed: boolean
+    numberWindowsRemaining: number
+    hash: string
+    event: string
+  }) => {
+    // If they didn't crash out and didn't fill out the exit survey, show it to them
+    if (
+      args.hash !== WindowHashProtocol ||
+      (args.hash === WindowHashProtocol && !args.crashed)
+    ) {
+      sleep()
     }
-  )
+  }
+)
 
 fromTrigger(WhistTrigger.windowInfo)
   .pipe(
