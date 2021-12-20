@@ -60,21 +60,6 @@ Test Fixtures
 
 #define TEST_OUTPUT_DIRNAME "test_output"
 
-#if defined(_WIN32)
-#define STDOUT_FILENO _fileno(stdout)
-#define safe_mkdir(dir) _mkdir(dir)
-#define safe_dup(fd) _dup(fd)
-#define safe_dup2(fd1, fd2) _dup2(fd1, fd2)
-#define safe_open(path, flags) _open(path, flags)
-#define safe_close(fd) _close(fd)
-#else
-#define safe_mkdir(dir) mkdir(dir, 0777)
-#define safe_dup(fd) dup(fd)
-#define safe_dup2(fd1, fd2) dup2(fd1, fd2)
-#define safe_open(path, flags) open(path, flags, 0666)
-#define safe_close(fd) close(fd)
-#endif
-
 class CaptureStdoutTest : public ::testing::Test {
     /*
         This class is a test fixture which redirects stdout to a file
