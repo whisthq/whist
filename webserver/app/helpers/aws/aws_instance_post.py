@@ -233,7 +233,7 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
      negative infinity).
 
      At the moment, our scaling algorithm is
-     - 'if we have less than DESIRED_FREE_MANDELBOXES mandelboxes in a valid AMI/region pair,
+     - 'if we have fewer than DESIRED_FREE_MANDELBOXES mandelboxes in a valid AMI/region pair,
      make DEFAULT_INSTANCE_BUFFER new instances'
      - 'Else, if we have a full instance of extra space more than DESIRED_FREE_MANDELBOXES, try to
      stop an instance'
