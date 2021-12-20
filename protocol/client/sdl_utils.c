@@ -181,12 +181,6 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     }
 
     // Initialize the renderer
-    /*
-    if (SDL_GetWindowFlags(sdl_window) & SDL_WINDOW_OPENGL) {
-        // only opengl if windowed mode
-        SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
-    }
-    */
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
     SDL_SetHint(SDL_HINT_RENDER_VSYNC, VSYNC_ON ? "1" : "0");
 
@@ -391,6 +385,13 @@ void sdl_render_framebuffer() {
     // Mark a render as pending
     pending_render = true;
     whist_unlock_mutex(renderer_mutex);
+}
+
+bool sdl_render_pending() {
+    whist_lock_mutex(renderer_mutex);
+    bool pending_render_val = pending_render;
+    whist_unlock_mutex(renderer_mutex);
+    return pending_render_val;
 }
 
 void sdl_update_cursor(WhistCursorImage* cursor) {
@@ -653,7 +654,6 @@ void sdl_present_pending_framebuffer() {
     bool will_render_present = false;
     if (pending_render) {
         will_render_present = true;
-        pending_render = false;
     }
 
     whist_unlock_mutex(renderer_mutex);
@@ -664,6 +664,10 @@ void sdl_present_pending_framebuffer() {
     if (will_render_present) {
         SDL_RenderPresent(sdl_renderer);
     }
+
+    whist_lock_mutex(renderer_mutex);
+    pending_render = false;
+    whist_unlock_mutex(renderer_mutex);
 }
 
 SDL_Surface* sdl_surface_from_png_file(char* filename) {
@@ -737,7 +741,6 @@ void send_captured_key(SDL_Keycode key, int type, int time) {
     e.type = type;
     e.key.keysym.sym = key;
     e.key.keysym.scancode = SDL_GetScancodeFromName(SDL_GetKeyName(key));
-    LOG_INFO("KEY: %d", key);
     e.key.timestamp = time;
     SDL_PushEvent(&e);
 }

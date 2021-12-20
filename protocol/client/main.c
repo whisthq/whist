@@ -461,20 +461,19 @@ int main(int argc, char* argv[]) {
             // get lost.
             send_new_tab_url_if_needed();
 
+            update_pending_sdl_tasks();
+
             // Check if the window is minimized or occluded. If it is, we can just sleep for a bit
             // and then check again.
             if (!sdl_is_window_visible()) {
                 // Even though the window is minized/occluded, we still need to handle SDL events or
                 // else the application will permanently hang
-                if (SDL_WaitEventTimeout(&sdl_msg, 50) && handle_sdl_event(&sdl_msg) != 0) {
+                if (SDL_WaitEventTimeout(&sdl_msg, 1) && handle_sdl_event(&sdl_msg) != 0) {
                     // unable to handle event
                     exit_code = WHIST_EXIT_FAILURE;
                     break;
                 }
 
-                // This 50ms sleep is an arbitrary length that seems not to have noticeable latency
-                // effects while still reducing CPU strain while the window is minimized
-                whist_sleep(50);
                 continue;
             }
 
@@ -483,8 +482,6 @@ int main(int argc, char* argv[]) {
                 read_piped_arguments(&keep_piping2, /*run_only_one=*/true);
                 start_timer(&new_tab_url_timer);
             }
-
-            update_pending_sdl_tasks();
 
             if (get_timer(keyboard_sync_timer) * MS_IN_SECOND > 50.0) {
                 if (sync_keyboard_state() != 0) {
@@ -509,9 +506,9 @@ int main(int argc, char* argv[]) {
                 start_timer(&monitor_change_timer);
             }
 
-            // Timeout after 50ms (On Windows, will hang when user is dragging or resizing the
-            // window)
-            if (SDL_WaitEventTimeout(&sdl_msg, 50) && handle_sdl_event(&sdl_msg) != 0) {
+            // Timeout after 1ms
+            // (On Windows, this call will hang when user is dragging or resizing the window)
+            if (SDL_WaitEventTimeout(&sdl_msg, 1) && handle_sdl_event(&sdl_msg) != 0) {
                 // unable to handle event
                 exit_code = WHIST_EXIT_FAILURE;
                 break;
@@ -530,8 +527,9 @@ int main(int argc, char* argv[]) {
 
         LOG_INFO("Disconnecting...");
         if (client_exiting || exit_code != WHIST_EXIT_SUCCESS ||
-            try_amount + 1 == max_connection_attempts)
+            try_amount + 1 == max_connection_attempts) {
             send_server_quit_messages(3);
+        }
 
         destroy_packet_synchronizers();
         destroy_clipboard_synchronizer();

@@ -87,8 +87,20 @@ void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int heig
 /**
  * @brief                          Render the most recently updated framebuffer.
  *                                 This takes some time, <1ms normally, ~8ms if VSYNC_ON
+ *
+ * @note                           Will make `sdl_render_pending` return true, up until
+ *                                 `update_pending_sdl_tasks` is called on the main thread.
  */
 void sdl_render_framebuffer();
+
+/**
+ * @brief                          Returns whether or not
+ *                                 a framebuffer is pending to render
+ *
+ * @returns                        True if `sdl_render_framebuffer` has been called,
+ *                                 but `update_pending_sdl_tasks` has not been called.
+ */
+bool sdl_render_pending();
 
 /**
  * @brief                          Update the cursor
@@ -143,7 +155,7 @@ bool sdl_is_window_visible();
  *                                 currently internally queued actions.
  *
  * @note                           This function must be called by the
- *                                 same thread that originally called init_sdl
+ *                                 same thread that originally called init_sdl.
  */
 void update_pending_sdl_tasks();
 
