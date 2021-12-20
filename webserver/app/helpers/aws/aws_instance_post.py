@@ -251,7 +251,8 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
     # If the region is invalid or the AMI is not current, we want no buffer
     if region not in {x.region_name for x in RegionToAmi.query.all()}:
         whist_logger.info(
-            f"Returning negative infinity for (region: {region}, ami_id: {ami_id}) because the region {region} is invalid."
+            f"Returning negative infinity for (region: {region}, ami_id: {ami_id}) because the"
+            f" region {region} is invalid."
         )
         return -maxsize
     active_ami_for_given_region = RegionToAmi.query.filter_by(
@@ -259,12 +260,15 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
     ).one_or_none()
     if active_ami_for_given_region is None:
         whist_logger.info(
-            f"Returning negative infinity for (region: {region}, ami_id: {ami_id}) because the active AMI for region {region} is None."
+            f"Returning negative infinity for (region: {region}, ami_id: {ami_id}) because the"
+            f" active AMI for region {region} is None."
         )
         return -maxsize
     if ami_id != active_ami_for_given_region.ami_id:
         whist_logger.info(
-            f"Returning negative infinity for (region: {region}, ami_id: {ami_id}) because the provided AMI does not match the expected active AMI for region {region} ({active_ami_for_given_region.ami_id})."
+            f"Returning negative infinity for (region: {region}, ami_id: {ami_id}) because the"
+            " provided AMI does not match the expected active AMI for region"
+            f" {region} ({active_ami_for_given_region.ami_id})."
         )
         return -maxsize
 
@@ -274,7 +278,8 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
     if len(all_instances) == 0:
         # If there are no instances running, we want one.
         whist_logger.info(
-            f"Returning {default_increment} for (region: {region}, ami_id: {ami_id}) because there are no instances running."
+            f"Returning {default_increment} for (region: {region}, ami_id: {ami_id}) because there"
+            " are no instances running."
         )
         return default_increment
 
@@ -295,18 +300,24 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
 
     if num_free_mandelboxes < desired_free_mandelboxes:
         whist_logger.info(
-            f"Returning {default_increment} for (region: {region}, ami_id: {ami_id}) because there are only {num_free_mandelboxes} free mandelboxes, but we desire {desired_free_mandelboxes}."
+            f"Returning {default_increment} for (region: {region}, ami_id: {ami_id}) because there"
+            f" are only {num_free_mandelboxes} free mandelboxes, but we desire"
+            f" {desired_free_mandelboxes}."
         )
         return default_increment
 
     if num_free_mandelboxes >= (desired_free_mandelboxes + avg_mandelbox_capacity):
         whist_logger.info(
-            f"Returning {default_decrement} for (region: {region}, ami_id: {ami_id}) because there are {num_free_mandelboxes} free mandelboxes, but we desire {desired_free_mandelboxes} and have current avg_mandelbox_capacity {avg_mandelbox_capacity}."
+            f"Returning {default_decrement} for (region: {region}, ami_id: {ami_id}) because there"
+            f" are {num_free_mandelboxes} free mandelboxes, but we desire"
+            f" {desired_free_mandelboxes} and have current avg_mandelbox_capacity"
+            f" {avg_mandelbox_capacity}."
         )
         return default_decrement
 
     whist_logger.info(
-        f"Returning 0 for (region: {region}, ami_id: {ami_id}) because no other conditions were satisfied."
+        f"Returning 0 for (region: {region}, ami_id: {ami_id}) because no other conditions were"
+        " satisfied."
     )
     return 0
 
