@@ -55,7 +55,7 @@ def test_scale_up_multiple(
     Tests that we successfully scale up multiple instances when required.
     Mocks every side-effecting function.
     """
-    desired_num = randint(1, 10)
+    desired_num = randint(2, 10)
     call_list = hijack_ec2_calls
     mock_get_num_new_instances(desired_num)
     us_east_1_image_obj = RegionToAmi.query.filter_by(
@@ -375,7 +375,7 @@ def test_scale_down_multiple_available(
 
     monkeypatch.setitem(app.config, "WHIST_ACCESS_TOKEN", "dummy-access-token")
 
-    desired_num = randint(1, 10)
+    desired_num = randint(2, 10)
     instance_list = []
     for instance_num in range(desired_num):
         bulk_instance(
