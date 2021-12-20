@@ -559,9 +559,8 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
     // back end. In our case, the user is 'whist', and we can use the run-as-whist-user.sh script to
     // do just that. We pass the `exec google-chrome <received url here>` command as a parameter to
     // the run-as-whist-user.sh script, and the script will take care of the rest.
-    size_t len_cmd_before_url =
+    const size_t len_cmd_before_url =
         strlen("/usr/share/whist/run-as-whist-user.sh \"exec google-chrome \"");
-    size_t command_len = len_cmd_before_url + url_length + 1;
     // The maximum possible command length is equal to the (constant) length of the part of the
     // command that needs to go before the url plus the length of the url itself, which may be up to
     // MAX_URL_LENGTH.

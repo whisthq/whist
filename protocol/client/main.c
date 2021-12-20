@@ -480,7 +480,7 @@ int main(int argc, char* argv[]) {
 
             if (get_timer(new_tab_url_timer) * MS_IN_SECOND > 50.0) {
                 bool keep_piping2 = true;
-                int res = read_piped_arguments(&keep_piping2, /*run_only_one=*/true);
+                read_piped_arguments(&keep_piping2, /*run_only_one=*/true);
                 start_timer(&new_tab_url_timer);
             }
 

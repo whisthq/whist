@@ -208,13 +208,14 @@ TEST_F(CaptureStdoutTest, AddingPacketsToRingBuffer) {
     RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, num_packets, NULL);
 
     // setup packets to add to ringbuffer
-    WhistPacket pkt1 = {0};
+    // note that = {} in C++ is the same as = {0} in C
+    WhistPacket pkt1 = {};
     pkt1.type = PACKET_VIDEO;
     pkt1.id = 0;
     pkt1.index = 0;
     pkt1.is_a_nack = false;
 
-    WhistPacket pkt2 = {0};
+    WhistPacket pkt2 = {};
     pkt2.type = PACKET_VIDEO;
     pkt2.id = 1;
     pkt2.index = 0;
