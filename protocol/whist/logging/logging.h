@@ -76,16 +76,22 @@ extern const char *debug_tag, *info_tag, *metric_tag, *warning_tag, *error_tag, 
 #define FATAL_ERROR_TAG fatal_error_tag
 
 #if LOG_LEVEL >= DEBUG_LEVEL
-#define LOG_DEBUG(message, ...) \
-    internal_logging_printf(DEBUG_TAG, LOG_FMT message NEWLINE, LOG_ARGS(DEBUG_TAG), ##__VA_ARGS__)
+#define LOG_DEBUG(message, ...)                                                          \
+    do {                                                                                 \
+        internal_logging_printf(DEBUG_TAG, LOG_FMT message NEWLINE, LOG_ARGS(DEBUG_TAG), \
+                                ##__VA_ARGS__);                                          \
+    } while (0)
 #else
 #define LOG_DEBUG(message, ...)
 #endif
 
 // LOG_INFO refers to something that can happen, and does not imply that anything went wrong
 #if LOG_LEVEL >= INFO_LEVEL
-#define LOG_INFO(message, ...) \
-    internal_logging_printf(INFO_TAG, LOG_FMT message NEWLINE, LOG_ARGS(INFO_TAG), ##__VA_ARGS__)
+#define LOG_INFO(message, ...)                                                         \
+    do {                                                                               \
+        internal_logging_printf(INFO_TAG, LOG_FMT message NEWLINE, LOG_ARGS(INFO_TAG), \
+                                ##__VA_ARGS__);                                        \
+    } while (0)
 #else
 #define LOG_INFO(message, ...)
 #endif
@@ -95,8 +101,10 @@ extern const char *debug_tag, *info_tag, *metric_tag, *warning_tag, *error_tag, 
 // For example :
 // LOG_METRIC("\"Latency\" : %d", latency);
 #if LOG_LEVEL >= METRIC_LEVEL
-#define LOG_METRIC(message, ...) \
-    internal_logging_printf(METRIC_TAG, "{ " message " }" NEWLINE, ##__VA_ARGS__)
+#define LOG_METRIC(message, ...)                                                       \
+    do {                                                                               \
+        internal_logging_printf(METRIC_TAG, "{ " message " }" NEWLINE, ##__VA_ARGS__); \
+    } while (0)
 #else
 #define LOG_METRIC(message, ...)
 #endif
@@ -104,9 +112,11 @@ extern const char *debug_tag, *info_tag, *metric_tag, *warning_tag, *error_tag, 
 // LOG_WARNING refers to something going wrong, but it's unknown whether or not it's the code or the
 // host's configuration (i.e. no audio device etc)
 #if LOG_LEVEL >= WARNING_LEVEL
-#define LOG_WARNING(message, ...)                                                        \
-    internal_logging_printf(WARNING_TAG, LOG_FMT message NEWLINE, LOG_ARGS(WARNING_TAG), \
-                            ##__VA_ARGS__);
+#define LOG_WARNING(message, ...)                                                            \
+    do {                                                                                     \
+        internal_logging_printf(WARNING_TAG, LOG_FMT message NEWLINE, LOG_ARGS(WARNING_TAG), \
+                                ##__VA_ARGS__);                                              \
+    } while (0)
 #else
 #define LOG_WARNING(message, ...)
 #endif
@@ -114,18 +124,23 @@ extern const char *debug_tag, *info_tag, *metric_tag, *warning_tag, *error_tag, 
 // LOG_ERROR must imply that something is fundamentally wrong with our code, but it is a recoverable
 // error
 #if LOG_LEVEL >= ERROR_LEVEL
-#define LOG_ERROR(message, ...) \
-    internal_logging_printf(ERROR_TAG, LOG_FMT message NEWLINE, LOG_ARGS(ERROR_TAG), ##__VA_ARGS__);
+#define LOG_ERROR(message, ...)                                                          \
+    do {                                                                                 \
+        internal_logging_printf(ERROR_TAG, LOG_FMT message NEWLINE, LOG_ARGS(ERROR_TAG), \
+                                ##__VA_ARGS__);                                          \
+    } while (0)
 #else
 #define LOG_ERROR(message, ...)
 #endif
 
 // LOG_FATAL implies that the protocol cannot recover from this error, something might be
 // wrong with our code (Or e.g. the host is out of RAM etc)
-#define LOG_FATAL(message, ...)                                                                  \
-    internal_logging_printf(FATAL_ERROR_TAG, LOG_FMT message NEWLINE, LOG_ARGS(FATAL_ERROR_TAG), \
-                            ##__VA_ARGS__);                                                      \
-    terminate_protocol(WHIST_EXIT_FAILURE)
+#define LOG_FATAL(message, ...)                                            \
+    do {                                                                   \
+        internal_logging_printf(FATAL_ERROR_TAG, LOG_FMT message NEWLINE,  \
+                                LOG_ARGS(FATAL_ERROR_TAG), ##__VA_ARGS__); \
+        terminate_protocol(WHIST_EXIT_FAILURE);                            \
+    } while (0)
 
 /*
 ============================
