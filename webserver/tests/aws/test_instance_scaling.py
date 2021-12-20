@@ -55,7 +55,7 @@ def test_scale_up_multiple(
     Tests that we successfully scale up multiple instances when required.
     Mocks every side-effecting function.
     """
-    desired_num = randint(1, 10)
+    desired_num = randint(2, 10)
     call_list = hijack_ec2_calls
     mock_get_num_new_instances(desired_num)
     us_east_1_image_obj = RegionToAmi.query.filter_by(
@@ -375,7 +375,7 @@ def test_scale_down_multiple_available(
 
     monkeypatch.setitem(app.config, "WHIST_ACCESS_TOKEN", "dummy-access-token")
 
-    desired_num = randint(1, 10)
+    desired_num = randint(2, 10)
     instance_list = []
     for instance_num in range(desired_num):
         bulk_instance(
@@ -642,19 +642,20 @@ def test_buffer_wrong_ami() -> None:
     )
 
 
-def test_buffer_empty(region_ami_pair: Tuple[str, str]) -> None:
+def test_buffer_empty(app: Flask, region_ami_pair: Tuple[str, str]) -> None:
     """
     Tests that we ask for a new instance when the buffer is empty
     """
     region_name, ami_id = region_ami_pair
+    default_increment = int(app.config["DEFAULT_INSTANCE_BUFFER"])
     assert (
         aws_funcs._get_num_new_instances(region_name, ami_id)  # pylint: disable=protected-access
-        == 1
+        == default_increment
     )
 
 
 def test_buffer_part_full(
-    bulk_instance: Callable[..., InstanceInfo], region_ami_pair: Tuple[str, str]
+    app: Flask, bulk_instance: Callable[..., InstanceInfo], region_ami_pair: Tuple[str, str]
 ) -> None:
     """
     Tests that we ask for a new instance when there's only a full instance running
@@ -663,9 +664,10 @@ def test_buffer_part_full(
     bulk_instance(
         aws_ami_id=ami_id, associated_mandelboxes=10, mandelbox_capacity=10, location=region_name
     )
+    default_increment = int(app.config["DEFAULT_INSTANCE_BUFFER"])
     assert (
         aws_funcs._get_num_new_instances(region_name, ami_id)  # pylint: disable=protected-access
-        == 1
+        == default_increment
     )
 
 
@@ -936,11 +938,12 @@ def test_buffer_region_sensitive(app: Flask, bulk_instance: Callable[..., Instan
         )
         == -1
     )
+    default_increment = int(app.config["DEFAULT_INSTANCE_BUFFER"])
     assert (
         aws_funcs._get_num_new_instances(  # pylint: disable=protected-access
             region_ami_without_buffer[0], region_ami_without_buffer[1]
         )
-        == app.config["DEFAULT_INSTANCE_BUFFER"]
+        == default_increment
     )
 
 

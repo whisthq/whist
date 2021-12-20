@@ -47,7 +47,8 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
     if care_about_active and is_user_active(username):
         # If the user already has a mandelbox running, don't start up a new one
         whist_logger.debug(
-            f"Returning 503 to user {username} because they are already active. (client reported email {unsafe_email}, this value might not be accurate and is untrusted)"
+            f"Returning 503 to user {username} because they are already active. (client reported"
+            f" email {unsafe_email}, this value might not be accurate and is untrusted)"
         )
         return (
             jsonify(
@@ -67,7 +68,8 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
 
     if not allowed_regions:
         whist_logger.error(
-            f"None of the request regions {body.regions} are enabled, enabled regions are {enabled_regions}"
+            f"None of the request regions {body.regions} are enabled, enabled regions are"
+            f" {enabled_regions}"
         )
         return (
             jsonify(
@@ -100,8 +102,9 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
 
     # Begin finding an instance
     whist_logger.debug(
-        f"Trying to find instance for user {username} in region {region},\
-        with commit hash {client_commit_hash}. (client reported email {unsafe_email}, this value might not be accurate and is untrusted)"
+        f"Trying to find instance for user {username} in region {region}, with commit hash"
+        f" {client_commit_hash}. (client reported email {unsafe_email}, this value might not be"
+        " accurate and is untrusted)"
     )
     instance_or_error = find_instance(region, client_commit_hash)
     time_when_instance_found = time.time() * 1000
@@ -128,7 +131,8 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
                 )
             else:
                 whist_logger.info(
-                    f"Starting scale up thread for region: {region}, commit hash: {client_commit_hash}"
+                    f"Starting scale up thread for region: {region}, commit hash:"
+                    f" {client_commit_hash}"
                 )
 
                 scaling_thread = Thread(
@@ -140,7 +144,8 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
                 )
                 scaling_thread.start()
         whist_logger.debug(
-            f"Returning 503 to user {username} because we didn't find an instance for them. (client reported email {unsafe_email}, this value might not be accurate and is untrusted)"
+            f"Returning 503 to user {username} because we didn't find an instance for them. (client"
+            f" reported email {unsafe_email}, this value might not be accurate and is untrusted)"
         )
         return (
             jsonify({"ip": "None", "mandelbox_id": "None", "error": instance_or_error}),

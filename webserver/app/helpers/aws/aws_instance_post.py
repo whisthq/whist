@@ -233,9 +233,9 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
      negative infinity).
 
      At the moment, our scaling algorithm is
-     - 'if we have less than 20 mandelboxes in a valid AMI/region pair,
-     make a new instance'
-     - 'Else, if we have a full instance of extra space more than 20, try to
+     - 'if we have fewer than DESIRED_FREE_MANDELBOXES mandelboxes in a valid AMI/region pair,
+     make DEFAULT_INSTANCE_BUFFER new instances'
+     - 'Else, if we have a full instance of extra space more than DESIRED_FREE_MANDELBOXES, try to
      stop an instance'
      - 'Else, we're fine'.
     Args:
@@ -245,24 +245,44 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
     Returns: the integer number of new instances we want live
 
     """
+    default_increment = int(current_app.config["DEFAULT_INSTANCE_BUFFER"])
+    default_decrement = -1
 
     # If the region is invalid or the AMI is not current, we want no buffer
     if region not in {x.region_name for x in RegionToAmi.query.all()}:
+        whist_logger.info(
+            f"Returning negative infinity for (region: {region}, ami_id: {ami_id}) because the"
+            f" region {region} is invalid."
+        )
         return -maxsize
     active_ami_for_given_region = RegionToAmi.query.filter_by(
         region_name=region, ami_active=True
     ).one_or_none()
     if active_ami_for_given_region is None:
+        whist_logger.info(
+            f"Returning negative infinity for (region: {region}, ami_id: {ami_id}) because the"
+            f" active AMI for region {region} is None."
+        )
         return -maxsize
     if ami_id != active_ami_for_given_region.ami_id:
+        whist_logger.info(
+            f"Returning negative infinity for (region: {region}, ami_id: {ami_id}) because the"
+            " provided AMI does not match the expected active AMI for region"
+            f" {region} ({active_ami_for_given_region.ami_id})."
+        )
         return -maxsize
+
     # Now, we want to get the average number of mandelboxes per instance in that region
     # and the number of free mandelboxes
     all_instances = list(InstanceInfo.query.filter_by(location=region, aws_ami_id=ami_id).all())
-
     if len(all_instances) == 0:
         # If there are no instances running, we want one.
-        return 1
+        whist_logger.info(
+            f"Returning {default_increment} for (region: {region}, ami_id: {ami_id}) because there"
+            " are no instances running."
+        )
+        return default_increment
+
     all_free_instances = list(
         InstancesWithRoomForMandelboxes.query.filter_by(location=region, aws_ami_id=ami_id).all()
     )
@@ -274,16 +294,32 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
         all_instances
     )
 
-    # And then figure out how many instances we need to spin up/purge to get 20 free total
-    # Check config DB for the correct value for the environment.
+    # And then figure out whether to call for an increase (by default_increment)
+    # or decrease (by default_decrement).
+    # Check config DB for the correct value for the number of desired free mandelboxes.
     desired_free_mandelboxes = int(current_app.config["DESIRED_FREE_MANDELBOXES"])
 
     if num_free_mandelboxes < desired_free_mandelboxes:
-        return int(current_app.config["DEFAULT_INSTANCE_BUFFER"])
+        whist_logger.info(
+            f"Returning {default_increment} for (region: {region}, ami_id: {ami_id}) because there"
+            f" are only {num_free_mandelboxes} free mandelboxes, but we desire"
+            f" {desired_free_mandelboxes}."
+        )
+        return default_increment
 
     if num_free_mandelboxes >= (desired_free_mandelboxes + avg_mandelbox_capacity):
-        return -1
+        whist_logger.info(
+            f"Returning {default_decrement} for (region: {region}, ami_id: {ami_id}) because there"
+            f" are {num_free_mandelboxes} free mandelboxes, but we desire"
+            f" {desired_free_mandelboxes} and have current avg_mandelbox_capacity"
+            f" {avg_mandelbox_capacity}."
+        )
+        return default_decrement
 
+    whist_logger.info(
+        f"Returning 0 for (region: {region}, ami_id: {ami_id}) because no other conditions were"
+        " satisfied."
+    )
     return 0
 
 
