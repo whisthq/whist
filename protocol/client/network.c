@@ -397,9 +397,8 @@ int send_wcmsg(WhistClientMessage *wcmsg) {
         return send_packet(&packet_tcp_context, PACKET_MESSAGE, wcmsg, get_wcmsg_size(wcmsg), -1);
     } else {
         if ((size_t)get_wcmsg_size(wcmsg) > MAX_PACKET_SIZE) {
-            LOG_ERROR(
-                "Attempting to send WMSG that is too large for UDP, and only CLIPBOARD, TIME, "
-                "TCP_PING, and FILE is presumed to be over TCP");
+            LOG_ERROR("Attempting to send WMSG of type %d over UDP, but message is too large.",
+                      wcmsg->type);
             return -1;
         }
         static int sent_packet_id = 0;

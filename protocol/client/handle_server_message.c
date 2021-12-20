@@ -240,7 +240,7 @@ static int handle_open_uri_message(WhistServerMessage *wsmsg, size_t wsmsg_size)
         Handle server open URI message by launching the relevant URI locally
 
         Arguments:
-            wsmsg (WhisterverMessage*): server open uri message
+            wsmsg (WhistServerMessage*): server open uri message
             wsmsg_size (size_t): size of the packet message contents
 
         Return:

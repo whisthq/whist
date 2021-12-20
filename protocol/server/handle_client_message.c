@@ -541,7 +541,7 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
 
     // Step 1: Obtain a pointer to the URL string, and measure the length to ensure it is not too
     // long.
-    char *received_url = fcmsg->url_to_open;
+    char *received_url = (char *)&fcmsg->url_to_open;
     size_t url_length = strlen(received_url);
     if (url_length > MAX_URL_LENGTH) {
         LOG_WARNING(
@@ -550,7 +550,7 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
             url_length, MAX_URL_LENGTH);
         return -1;
     }
-    LOG_INFO("Received URL to open in new tab: %s", received_url);
+    LOG_INFO("Received URL to open in new tab");
 
     // Step 2: Create the command to run on the Mandelbox's terminal to open the received URL in a
     // new tab. To open a new tab with a given url, we can just use the terminal command: `exec
@@ -576,8 +576,7 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
     int ret = runcmd(command, &open_url_result);
     if (ret != 0) {
         free(open_url_result);
-        LOG_ERROR("Running command to open URL %s resulted in error: %s", received_url,
-                  open_url_result);
+        LOG_ERROR("Error opening URL in new tab: %s", open_url_result);
         return -1;
     }
 

@@ -702,12 +702,15 @@ int update_mouse_motion() {
 
 void send_new_tab_url_if_needed() {
     if (new_tab_url) {
-        LOG_INFO("Opening URL %s in new tab!", new_tab_url);
-        WhistClientMessage wcmsg = {0};
-        wcmsg.type = MESSAGE_OPEN_URL;
-        safe_strncpy(wcmsg.url_to_open, (const char *)new_tab_url,
-                     strlen((const char *)new_tab_url) + 1);
-        send_wcmsg(&wcmsg);
+        LOG_INFO("Sending message to open URL in new tab");
+        const size_t url_length = strlen((const char *)new_tab_url);
+        const size_t wcmsg_size = sizeof(WhistClientMessage) + url_length + 1;
+        WhistClientMessage *wcmsg = safe_malloc(wcmsg_size);
+        memset(wcmsg, 0, sizeof(*wcmsg));
+        wcmsg->type = MESSAGE_OPEN_URL;
+        memcpy(&wcmsg->url_to_open, (const char *)new_tab_url, url_length + 1);
+        send_wcmsg(wcmsg);
+        free(wcmsg);
     }
     free((char *)new_tab_url);
     new_tab_url = NULL;
