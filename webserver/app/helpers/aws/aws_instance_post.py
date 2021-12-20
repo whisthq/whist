@@ -318,7 +318,9 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
 
     whist_logger.info(
         f"Returning 0 for (region: {region}, ami_id: {ami_id}) because no other conditions were"
-        " satisfied."
+        f" satisfied. Some more details: num_free_mandelboxes: {num_free_mandelboxes},"
+        f" desired_free_mandelboxes: {desired_free_mandelboxes}, avg_mandelbox_capacity:"
+        f" {avg_mandelbox_capacity}."
     )
     return 0
 
