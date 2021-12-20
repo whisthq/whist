@@ -20,37 +20,16 @@ const fs = require("fs")
 const NOTION_API_KEY = "secret_IWKwfhedzKrvbiWtCF7XcbxuX9emMwyfWNoAXfnQXNZ"
 // ID of our Team Directory Notion database
 const NOTION_DATABASE_ID = "f023b39bd511459d822fadbe2cf5b605"
-// Team photos directory, relative to root of the website subrepo
-const TEAM_PHOTOS_DIRECTORY = "public/assets/team"
+// Where to save .json file containing database info e.g. team member names
+const TEAM_DATA_DIRECTORY = "public/assets/metadata"
 // Initialize Notion SDK
 const notion = new Client({ auth: NOTION_API_KEY })
-// Function to save image locally
-const downloadImageLocally = (
-  imageUrl,
-  name,
-  directory = TEAM_PHOTOS_DIRECTORY
-) => {
-  const url = new URL(imageUrl)
-  const client = url.protocol === "https:" ? https : http
 
-  client
-    .request(imageUrl, function (response) {
-      let data = new Stream()
-
-      response.on("data", function (chunk) {
-        data.push(chunk)
-      })
-
-      response.on("end", function () {
-        fs.writeFileSync(`./${directory}/${name}.jpg`, data.read())
-        console.log(`Saved image ${directory}/${name}.jpg`)
-      })
-    })
-    .end()
-}
-
-// Query Notion API and pull all data
+// The main function that actually runs
+// Queries Notion API and pull all data
 ;(async () => {
+  console.log("Pulling assets from Notion database...")
+
   const database = await notion.databases.query({
     database_id: NOTION_DATABASE_ID,
     sorts: [
@@ -61,15 +40,10 @@ const downloadImageLocally = (
     ],
   })
 
-  // Before looping through the database entries, create a clean folder
-  // to store the team photos
-  const teamPhotosDirectoryExists = fs.existsSync(TEAM_PHOTOS_DIRECTORY)
-  if (teamPhotosDirectoryExists)
-    fs.rmSync(TEAM_PHOTOS_DIRECTORY, { recursive: true })
-  fs.mkdirSync(TEAM_PHOTOS_DIRECTORY)
-  console.log(`Directory ${TEAM_PHOTOS_DIRECTORY} created`)
+  let savedTeamInfo = []
 
-  database?.results?.forEach(async (row) => {
+  // Iterate through database entries
+  await database?.results?.forEach(async (row) => {
     const pageId = row?.id
     const pageContents = await notion.pages.retrieve({
       page_id: pageId,
@@ -82,7 +56,23 @@ const downloadImageLocally = (
     // Team member title e.g. Roman Emperor
     const title = pageContents?.properties?.Title?.rich_text?.[0]?.plain_text
 
-    // Now we have pulled all the data, it's time to save it locally
-    downloadImageLocally(imageUrl, name.replace(/\s/g, ""))
+    // Finally, save the info
+    savedTeamInfo.push({
+      name,
+      title,
+      imageUrl,
+    })
+
+    if (savedTeamInfo.length === database.results.length) {
+      fs.writeFileSync(
+        `./${TEAM_DATA_DIRECTORY}/notion.json`,
+        JSON.stringify({
+          team: savedTeamInfo,
+        })
+      )
+      console.log(
+        `Retrieved Notion data and created ./${TEAM_DATA_DIRECTORY}/notion.json`
+      )
+    }
   })
 })()

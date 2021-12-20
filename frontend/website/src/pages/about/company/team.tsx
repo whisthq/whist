@@ -1,98 +1,6 @@
 import React from "react"
 
-import { Client as NotionClient } from "@notionhq/client"
-import { config } from "@app/shared/constants/config"
-
-const people = [
-  {
-    name: "Philippe Noel",
-    role: "Founder",
-    imageUrl: "https://ca.slack-edge.com/TQ8RU2KE2-UPTRX7MGA-51c2ecce0b3b-512",
-  },
-  {
-    name: "Ming Ying",
-    role: "Founder",
-    imageUrl: "https://ca.slack-edge.com/TQ8RU2KE2-UPTRXFK98-89ab30c74d35-192",
-  },
-  {
-    name: "Owen Niles",
-    role: "Backend Engineer",
-    imageUrl:
-      "https://ca.slack-edge.com/TQ8RU2KE2-U01A493UNTT-76d91cabde41-512",
-  },
-  {
-    name: "Raviteja Guttula",
-    role: "Backend Engineer",
-    imageUrl:
-      "https://ca.slack-edge.com/TQ8RU2KE2-U0243QG947L-7e40b38b0d88-512",
-  },
-  {
-    name: "Jannie Zhong",
-    role: "Full Stack Engineer",
-    imageUrl:
-      "https://ca.slack-edge.com/TQ8RU2KE2-U01J380KFS8-0642358c2177-512",
-  },
-  {
-    name: "Neil Hansen",
-    role: "Full Stack Engineer",
-    imageUrl:
-      "https://ca.slack-edge.com/TQ8RU2KE2-U01JS94Q8UF-eb6b84b7179a-192",
-  },
-  {
-    name: "Leor Fishman",
-    role: "Backend Engineer",
-    imageUrl:
-      "https://ca.slack-edge.com/TQ8RU2KE2-U01997UQJGK-1c4fa8641f69-192",
-  },
-  {
-    name: "Suriya Kandaswamy",
-    role: "Systems Engineer",
-    imageUrl:
-      "https://ca.slack-edge.com/TQ8RU2KE2-U018FBSHUC8-e07952d1d5e3-512",
-  },
-  {
-    name: "Roshan Padaki",
-    role: "Systems Engineer",
-    imageUrl:
-      "https://ca.slack-edge.com/TQ8RU2KE2-U01125TJ6EB-241dcde74e6b-192",
-  },
-  {
-    name: "Savvy Raghuvanshi",
-    role: "Systems Engineer",
-    imageUrl:
-      "https://ca.slack-edge.com/TQ8RU2KE2-U019K89H3N2-ebcb96e31c54-192",
-  },
-  {
-    name: "Nicholas Pipitone",
-    role: "Systems Engineer",
-    imageUrl: "https://ca.slack-edge.com/TQ8RU2KE2-USEKRDGH1-8672b16c3d84-512",
-  },
-  {
-    name: "Serina Hu",
-    role: "Systems Engineer",
-    imageUrl:
-      "https://ca.slack-edge.com/TQ8RU2KE2-U022KK7URP0-c124ebf8b079-192",
-  },
-  {
-    name: "Yoel Hawa",
-    role: "Systems Engineer",
-    imageUrl:
-      "https://ca.slack-edge.com/TQ8RU2KE2-U024MGVNKF0-34ae41116f01-192",
-  },
-].sort((a, b) => {
-  const textA = a.name.toUpperCase()
-  const textB = b.name.toUpperCase()
-  return textA < textB ? -1 : textA > textB ? 1 : 0
-})
-
-const notion = new NotionClient({ auth: config.keys.NOTION_API_KEY })
-
-notion.databases
-  .retrieve({
-    database_id:
-      "f023b39bd511459d822fadbe2cf5b605?v=afc98c210fec4100802e580b69578b9c",
-  })
-  .then((x) => console.log(x))
+import Notion from "@app/assets/metadata/notion.json"
 
 export const Team = () => {
   return (
@@ -115,21 +23,22 @@ export const Team = () => {
           </p>
         </div>
         <ul className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-6 sm:space-y-0 lg:grid-cols-3 lg:gap-8">
-          {people.map((person) => (
+          {Notion?.team.map((person) => (
             <li
               key={person.name}
               className="py-10 px-6 bg-gray-900 text-center rounded-lg xl:px-10 xl:text-left"
             >
               <div className="space-y-6 xl:space-y-10">
-                <img
-                  className="mx-auto h-40 w-40 rounded-full xl:w-56 xl:h-56"
-                  src={person.imageUrl}
-                  alt=""
-                />
-                <div className="space-y-2 xl:flex xl:items-center xl:justify-between">
-                  <div className="font-medium text-lg leading-6 space-y-1 text-left">
+                <div
+                  className="mx-auto h-40 w-40 rounded-full xl:w-56 xl:h-56 bg-cover bg-center"
+                  style={{
+                    backgroundImage: `url(${person.imageUrl})`,
+                  }}
+                ></div>
+                <div className="space-y-2 xl:flex xl:items-center xl:justify-between mt-12">
+                  <div className="font-medium leading-6 space-y-1 text-left">
                     <h3 className="text-gray-300">{person.name}</h3>
-                    <p className="text-gray-500">{person.role}</p>
+                    <p className="text-gray-500">{person.title}</p>
                   </div>
                 </div>
               </div>
