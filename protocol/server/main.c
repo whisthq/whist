@@ -270,10 +270,6 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         if (clipboard_chunk) {
             if (assuming_client_active) {
                 LOG_INFO("Received clipboard trigger. Broadcasting clipboard message.");
-                // Alloc wsmsg
-                WhistServerMessage* wsmsg_response =
-                    allocate_region(sizeof(WhistServerMessage) + clipboard_chunk->size);
-
                 create_and_send_tcp_wmsg(SMESSAGE_CLIPBOARD, (char*)clipboard_chunk);
             }
             // Free clipboard chunk

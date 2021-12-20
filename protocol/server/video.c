@@ -530,7 +530,6 @@ int32_t multithreaded_send_video(void* opaque) {
         if (get_timer(last_frame_capture) > 1.0 / FPS &&
             (!state->stop_streaming || state->wants_iframe)) {
             start_timer(&statistics_timer);
-            timestamp_us timestamp = current_time_us();
             accumulated_frames = capture_screen(device);
             log_double_statistic(VIDEO_CAPTURE_SCREEN_TIME,
                                  get_timer(statistics_timer) * MS_IN_SECOND);

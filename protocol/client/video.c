@@ -100,10 +100,6 @@ volatile double working_mbps;
 static volatile FrameData* render_context;
 static volatile bool pushing_render_context = false;
 
-// True if RenderScreen is currently trying to render something
-// This is only used for iframe logic
-static volatile bool rendering = false;
-
 // Hold information about frames as the packets come in
 #define RECV_FRAMES_BUFFER_SIZE 275
 RingBuffer* video_ring_buffer;

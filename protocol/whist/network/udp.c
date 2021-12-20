@@ -196,9 +196,9 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payloa
     // If nack buffer can't hold a packet that large,
     // Or there's no nack buffer but it's a packet that must be split,
     // Then there's a problem and we LOG_ERROR
-    if (nack_buffer && num_indices > context->nack_buffer_max_indices[type_index] ||
-        nack_buffer && payload_size > context->nack_buffer_max_payload_size[type_index] ||
-        !nack_buffer && num_indices > 1) {
+    if ((nack_buffer && num_indices > context->nack_buffer_max_indices[type_index]) ||
+        (nack_buffer && payload_size > context->nack_buffer_max_payload_size[type_index]) ||
+        (!nack_buffer && num_indices > 1)) {
         LOG_ERROR("Packet is too large to send the payload! %d", num_indices);
         return -1;
     }

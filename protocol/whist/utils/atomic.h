@@ -53,7 +53,7 @@ static inline int atomic_compare_exchange_strong(volatile atomic_int *object, in
 static inline int atomic_compare_exchange_weak(volatile atomic_int *object, int *expected,
                                                int desired) {
     // MSVC has no weak version, so just call the strong one.
-    return atomic_compare_exchange_weak(object, expected, desired);
+    return atomic_compare_exchange_strong(object, expected, desired);
 }
 
 static inline int atomic_fetch_add(volatile atomic_int *object, int operand) {
