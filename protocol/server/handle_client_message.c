@@ -24,12 +24,6 @@ Includes
 #include <whist/logging/logging.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/logging/error_monitor.h>
-
-#ifdef _WIN32
-#pragma warning(disable : 4996)
-#include <direct.h>
-#endif  // _WIN32
-
 #include "state.h"
 #include "client.h"
 #include "handle_client_message.h"
@@ -385,7 +379,7 @@ static int handle_file_metadata_message(WhistClientMessage *wcmsg) {
              parent_drag_drop_directory, unique_id);
 
     // Create file info directory
-    if (mkdir(file_info_directory, 0777) == -1) {
+    if (safe_mkdir(file_info_directory) == -1) {
         LOG_ERROR("Could not create directory %s for download file info", file_info_directory);
     } else {
         // Get the path for the `/home/whist/.teleport/drag-drop/file_info/[ID]/file_size` file
@@ -407,7 +401,7 @@ static int handle_file_metadata_message(WhistClientMessage *wcmsg) {
     }
 
     // Create the downloads subdirectory for this ID
-    if (mkdir(downloads_directory, 0777) == -1) {
+    if (safe_mkdir(downloads_directory) == -1) {
         LOG_ERROR("Could not create directory %s for download", downloads_directory);
         free(downloads_directory);
         return -1;
