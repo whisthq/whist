@@ -10,39 +10,44 @@ import (
 type GraphQLQuery interface{}
 
 // CloudInstanceInfo is the mapping of the `cloud_instance_info` table.
-type CloudInstanceInfo struct {
+type CloudInstanceInfo []struct {
 	Location          graphql.String `graphql:"location"`
 	ImageID           graphql.String `graphql:"aws_ami_id"`
 	Type              graphql.String `graphql:"aws_instance_type"`
 	CloudProviderID   graphql.String `graphql:"cloud_provider_id"`
 	CommitHash        graphql.String `graphql:"commit_hash"`
-	CreationTimeMS    graphql.Int    `graphql:"creation_time_utc_unix_ms"`
-	GPUVramRemaing    graphql.Int    `graphql:"gpu_vram_remaining_kb"`
+	CreationTimeMS    graphql.Float  `graphql:"creation_time_utc_unix_ms"`
+	GPUVramRemaing    graphql.Float  `graphql:"gpu_vram_remaining_kb"`
 	Name              graphql.String `graphql:"instance_name"`
-	LastUpdatedMS     graphql.Int    `graphql:"last_updated_utc_unix_ms"`
-	MandelboxCapacity graphql.Int    `graphql:"mandelbox_capacity"`
-	MemoryRemainingKB graphql.Int    `graphql:"memory_remaining_kb"`
-	NanoCPUsRemaining graphql.Int    `graphql:"nanocpus_remaining"`
+	LastUpdatedMS     graphql.Float  `graphql:"last_updated_utc_unix_ms"`
+	MandelboxCapacity graphql.Float  `graphql:"mandelbox_capacity"`
+	MemoryRemainingKB graphql.Float  `graphql:"memory_remaining_kb"`
+	NanoCPUsRemaining graphql.Float  `graphql:"nanocpus_remaining"`
 	Status            graphql.String `graphql:"status"`
 }
 
 // CloudMandelboxInfo is the mapping of the `cloud_mandelbox_info` table.
-type CloudMandelboxInfo struct {
+type CloudMandelboxInfo []struct {
 	ID             graphql.String `graphql:"mandelbox_id"`
 	UserID         graphql.String `graphql:"user_id"`
 	InstanceName   graphql.String `graphql:"instance_name"`
 	SessionID      graphql.String `graphql:"session_id"`
-	CreationTimeMS graphql.Int    `graphql:"creation_time_utc_unix_ms"`
+	CreationTimeMS graphql.Float  `graphql:"creation_time_utc_unix_ms"`
 	Status         graphql.String `graphql:"status"`
 }
 
 // QueryInstanceStatusByName returns an instance that matches the given instance_name and status.
-var QueryInstanceStatusByName struct {
+var QueryInstanceByNameWithStatus struct {
 	CloudInstanceInfo `graphql:"cloud_instance_info(where: {instance_name: {_eq: $instance_name}, _and: {status: {_eq: $status}}})"`
 }
 
+// QueryInstanceStatusByName returns an instance that matches the given instance_name and status.
+var QueryInstanceByName struct {
+	CloudInstanceInfo `graphql:"cloud_instance_info(where: {instance_name: {_eq: $instance_name}})"`
+}
+
 // QueryInstanceStatus returns any instance that matches the given status.
-var QueryInstanceStatus struct {
+var QueryInstancesByStatus struct {
 	CloudInstanceInfo `graphql:"cloud_instance_info(where: {status: {_eq: $status}})"`
 }
 
@@ -53,6 +58,6 @@ var QueryMandelboxesByInstanceName struct {
 }
 
 // QueryMandelboxStatus returns every mandelbox that matches the given status.
-var QueryMandelboxStatus struct {
+var QueryMandelboxByStatus struct {
 	CloudMandelboxInfo `graphql:"cloud_mandelbox_info(where: {status: {_eq: $status}})"`
 }

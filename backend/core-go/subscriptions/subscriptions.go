@@ -77,7 +77,7 @@ func MandelboxStatusHandler(event SubscriptionEvent, variables map[string]interf
 func SetupHostSubscriptions(instanceName string, whistClient WhistSubscriptionClient) {
 	hostSubscriptions := []HasuraSubscription{
 		{
-			Query: QueryInstanceStatus,
+			Query: QueryInstanceByNameWithStatus,
 			Variables: map[string]interface{}{
 				"instance_name": graphql.String(instanceName),
 				"status":        graphql.String("DRAINING"),
@@ -103,7 +103,7 @@ func SetupHostSubscriptions(instanceName string, whistClient WhistSubscriptionCl
 func SetupScalingSubscriptions(whistClient WhistSubscriptionClient) {
 	scalingSubscriptions := []HasuraSubscription{
 		{
-			Query: QueryInstanceStatus,
+			Query: QueryInstancesByStatus,
 			Variables: map[string]interface{}{
 				"status": graphql.String("DRAINING"),
 			},
@@ -111,7 +111,7 @@ func SetupScalingSubscriptions(whistClient WhistSubscriptionClient) {
 			Handler: InstanceStatusHandler,
 		},
 		{
-			Query: QueryMandelboxStatus,
+			Query: QueryInstancesByStatus,
 			Variables: map[string]interface{}{
 				"status": graphql.String("ALLOCATED"),
 			},

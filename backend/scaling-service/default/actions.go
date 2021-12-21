@@ -3,6 +3,7 @@ package scaling_algorithms
 import (
 	"context"
 
+	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/core-go/subscriptions"
 	"github.com/whisthq/whist/core-go/utils"
 	logger "github.com/whisthq/whist/core-go/whistlogger"
@@ -11,11 +12,12 @@ import (
 
 func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Context, host hosts.HostHandler, event ScalingEvent, instance subscriptions.Instance) error {
 	logger.Infof("Verifying instance scale down for event: %v", event)
+
 	// First, verify if the draining instance has mandelboxes running
-	logger.Infof("Querying database: %v", subscriptions.QueryMandelboxesByInstanceName)
-	mandelboxesRunningQuery := subscriptions.QueryMandelboxesByInstanceName
+	mandelboxesRunningQuery := &subscriptions.QueryMandelboxesByInstanceName
 	queryParams := map[string]interface{}{
-		"instance_name": instance.Name,
+		"instance_name": graphql.String(instance.Name),
+		"status":        graphql.String("RUNNING"),
 	}
 
 	err := s.GraphQLClient.Query(scalingCtx, mandelboxesRunningQuery, queryParams)
@@ -23,9 +25,14 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 		return utils.MakeError("failed to query database for running mandelboxes with params: %v. Error: %v", queryParams, err)
 	}
 
-	// Check underlying struct received...
+	// If instance has active mandelboxes, leave it alone
+	runningMandelboxes := len(mandelboxesRunningQuery.CloudMandelboxInfo)
+	if runningMandelboxes > 0 {
+		logger.Infof("Instance has %v running mandelboxes. Not marking as draining.", runningMandelboxes)
+		return nil
+	}
 
-	// If not, wait until the instance is terminated
+	// If not, wait until the instance is terminated from the cloud provider
 	err = host.WaitForInstanceTermination(scalingCtx, instance)
 	if err != nil {
 		// Err is already wrapped here
@@ -33,19 +40,35 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	}
 
 	// Once its terminated, verify that it was removed from the database
-	mandelboxExistsQuery := subscriptions.QueryMandelboxStatus
+	instanceExistsQuery := &subscriptions.QueryInstanceByName
 	queryParams = map[string]interface{}{
-		"mandelbox_id": mandelboxExistsQuery.CloudMandelboxInfo.ID,
+		"instance_name": graphql.String(instance.Name),
 	}
 
-	err = s.GraphQLClient.Query(scalingCtx, mandelboxExistsQuery, queryParams)
+	err = s.GraphQLClient.Query(scalingCtx, instanceExistsQuery, queryParams)
 	if err != nil {
-		return utils.MakeError("failed to query database for mandelbox with params: %v. Error: %v", queryParams, err)
+		return utils.MakeError("failed to query database for instance with params: %v. Error: %v", queryParams, err)
 	}
 
-	// Check underlying struct received...
+	// Verify that instance removed itself from the database
+	instanceResult := instanceExistsQuery.CloudInstanceInfo
+	if len(instanceResult) == 0 {
+		logger.Info("Instance %v was successfully removed from database.", instance.Name)
+		return nil
+	}
 
-	// If mandelbox still exists, delete from db. Write mutation to delete mandelbox from db
+	// If instance still exists on the database, forcefully delete as it no longer exists on cloud provider
+	logger.Info("Forcefully removing instance %v from database as it no longer exists on cloud provider.", instance.Name)
+
+	instanceDeleteMutation := &subscriptions.DeleteInstanceByName
+	deleteParams := map[string]interface{}{
+		"instance_name": graphql.String(instance.Name),
+	}
+
+	err = s.GraphQLClient.Mutate(scalingCtx, instanceDeleteMutation, deleteParams)
+	if err != nil {
+		return utils.MakeError("failed to delete instance from database with params: %v. Error: %v", queryParams, err)
+	}
 
 	return nil
 }
