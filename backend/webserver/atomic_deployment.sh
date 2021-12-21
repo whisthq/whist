@@ -17,7 +17,7 @@ set -Eeuo pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 # Working directory is monorepo root
-cd "$DIR/.."
+cd "$DIR/../.."
 
 HEROKU_APP_NAME=${1}
 MIGRA_EXIT_CODE=${2}
