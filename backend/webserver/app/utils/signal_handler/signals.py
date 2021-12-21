@@ -6,6 +6,7 @@ for more details on when this happens and how we are solving it.
 """
 import signal
 from types import FrameType
+from typing import Optional
 
 from app.utils.general.logs import whist_logger
 from app.utils.flask.flask_handlers import set_web_requests_status
@@ -23,9 +24,9 @@ class WebSignalHandler:
     def __init__(self) -> None:
         signal.signal(signal.SIGTERM, self.handle_sigterm)
 
-    def handle_sigterm(  # pylint: disable=no-self-use
-        self, signum: int, frame: FrameType  # pylint: disable=unused-argument
-    ) -> None:
+    def handle_sigterm(
+        self, signum: int, _frame: Optional[FrameType]
+    ) -> None:  # pylint: disable=no-self-use
         """
         Handles SIGTERM, which is sent by Heroku on various conditions outlined here:
         https://www.notion.so/whisthq/Resolving-Heroku-Dyno-Restart-db63f4cbb9bd49a1a1fdab7aeb1f77e6
