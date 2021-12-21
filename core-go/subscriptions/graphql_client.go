@@ -76,7 +76,5 @@ func (wc *GraphQLClient) Mutate(ctx context.Context, query GraphQLQuery, variabl
 		return utils.MakeError("failed to execute GraphQL mutation %v with variables %v. Error: %v", query, variables, err)
 	}
 
-	logger.Infof("Successfully modified database with params: %v", variables)
-
 	return nil
 }
