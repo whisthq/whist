@@ -26,4 +26,5 @@ export const macToLinuxKeyboardMap = {
   "com.apple.keylayout.SwissFrench": "fr",
   "com.apple.keylayout.LatinAmerican": "latam",
   "com.apple.keylayout.Spanish": "es",
+  "com.apple.keylayout.Hebrew": "il",
 } as { [key: string]: string }
