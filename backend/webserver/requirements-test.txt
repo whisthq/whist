@@ -1,6 +1,6 @@
 flake8==4.0.1
 moto==2.2.0
-mypy==0.910
+mypy==0.920
 pylint==2.12.1
 pytest==6.2.4
 pytest-cov==3.0.0
