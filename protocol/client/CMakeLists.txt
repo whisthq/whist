@@ -2,8 +2,8 @@
 ################## WhistClient ##################
 ]]
 
-add_executable(WhistClient
-        main.c
+set(WHIST_CLIENT_DEPENDS
+        whist_client.c
         audio.c
         client_utils.c
         network.c
@@ -15,7 +15,25 @@ add_executable(WhistClient
         sync_packets.c
         bitrate.c
         client_statistic.c
-        )
+)
+
+if(CLIENT_SHARED_LIB)
+    add_library(WhistClient SHARED
+            ${WHIST_CLIENT_DEPENDS}
+    )
+
+    add_custom_command(
+        TARGET WhistClient POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/client/whist_client.h
+        $<TARGET_FILE_DIR:WhistClient>/WhistClient.h
+    )
+else()
+    add_executable(WhistClient
+            main.c
+            ${WHIST_CLIENT_DEPENDS}
+    )
+endif()
 
 # On Windows during client app packaging, WhistClient should have icon set
 if(USE_CLIENT_APP_ICON AND ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
