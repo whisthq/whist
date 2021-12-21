@@ -83,6 +83,7 @@ const struct option client_cmd_options[] = {
     {"loading", required_argument, NULL, 'l'},
     {"skip-taskbar", no_argument, NULL, 's'},
     {"new-tab-url", required_argument, NULL, 'x'},
+    {"keyboard-layout", required_argument, NULL, 'a'},
     // these are standard for POSIX programs
     {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
     {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
@@ -250,6 +251,10 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
         }
         case 's': {  // skip taskbar
             skip_taskbar = true;
+            break;
+        }
+        case 'a': {
+            LOG_INFO("THIS IS FOR KEYBOARD LAYOUT CHANGES");
             break;
         }
         case 'x': {
