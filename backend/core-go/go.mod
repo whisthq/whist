@@ -9,7 +9,7 @@ require (
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/getsentry/sentry-go v0.11.0
 	github.com/google/uuid v1.3.0
-	github.com/hasura/go-graphql-client v0.5.2
+	github.com/hasura/go-graphql-client v0.6.0
 	github.com/logzio/logzio-go v1.0.3
 )
 
@@ -35,7 +35,6 @@ require (
 	github.com/shirou/gopsutil/v3 v3.21.6 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b // indirect
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
 )
