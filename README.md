@@ -96,7 +96,7 @@ We do all feature development and most bug-fixing on feature branches that are f
 
 **Feature branches are named as follows:**
 
-- Project-specific feature branches (i.e. those restricted to a single top-level directory in the repo) are named in the form `<author>/<project>/<feature-verb>`. For instance, a branch authored by Savvy and designed to make the Host Service llama-themed would be called `djsavvy/backend/host-service/add-llama-theme`.
+- Project-specific feature branches (i.e. those restricted to a single top-level directory in the repo) are named in the form `<author>/<project>/<feature-verb>`. For instance, a branch authored by Savvy and designed to make the Host Service llama-themed would be called `djsavvy/host-service/add-llama-theme`.
 - Broader feature branches that touch multiple projects should be named in the form `<author>/<feature-verb>`.
 
 Note that the last part of the branch name should almost always be an **action** instead of an object (i.e. `add-llama-theme` instead of `llama-theme`). This makes commit logs much easier to parse.
