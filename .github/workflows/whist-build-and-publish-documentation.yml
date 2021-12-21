@@ -111,7 +111,7 @@ jobs:
           go-version: "1.17"
 
       - name: Build Scaling Service Documentation
-        working-directory: whist/backend/host-service
+        working-directory: whist/backend/scaling-service
         run: make docs
 
       - name: Diff Old and New Documentation
