@@ -45,14 +45,13 @@ RUN mkdir -p /etc/opt/brave/policies/managed \
     > /etc/opt/brave/policies/managed/WhistPolicies.json
 
 # Script to Install Brave Browser extension
-COPY install-extension.sh /usr/bin/install-extension.sh
-RUN chmod +x /usr/bin/install-extension.sh
+COPY --chmod=555 install-extension.sh /usr/bin/install-extension.sh
 
 # Create default config paths
-RUN su - whist -c "mkdir -p /home/whist/.config/BraveSoftware/Brave-Browser"
-
 # Don't show first run popup
-RUN su - whist -c "touch /home/whist/.config/BraveSoftware/Brave-Browser/'First Run'"
+RUN mkdir -p /home/whist/.config/BraveSoftware/Brave-Browser \
+    && touch /home/whist/.config/BraveSoftware/Brave-Browser/'First Run' \
+    && chown whist:whist /home/whist/.config/BraveSoftware/Brave-Browser{,/'First Run'}
 
 # Install Whist wrapper script to run Brave Browser into /usr/bin
 ENV WHIST_COOKIE_UPLOAD_TARGET="brave"

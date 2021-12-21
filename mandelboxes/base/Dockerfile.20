@@ -195,7 +195,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /tmp/* /var/tmp/*
 
 # Retrieve nvidia driver installer
-COPY --from=build-assets --chmod=550 nvidia-driver/nvidia-driver-installer.run nvidia-driver-installer.run
+COPY --from=build-assets --chmod=550 nvidia-driver/nvidia-driver-installer.run /nvidia-driver-installer.run
 
 # Unpack the installer
 RUN sh nvidia-driver-installer.run -x
@@ -346,16 +346,14 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
     /lib/systemd/system/systemd-update-utmp*
 
 # Disable some extra systemd services
-RUN systemctl mask plymouth
-RUN systemctl mask systemd-hostnamed
-RUN systemctl mask acpid
-RUN systemctl mask NetworkManager-wait-online
-RUN systemctl disable sshd
+RUN systemctl mask plymouth \
+                   systemd-hostnamed \
+                   acpid \
+                   NetworkManager-wait-online \
+    && systemctl disable sshd
 
 # Remove ProtectHostname=yes lines from logind and timedate systemd services
-RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-logind.service
-RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-timesyncd.service
-RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-timedated.service
+RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-{login,time{sync,date}}d.service
 
 ENV init /sbin/init
 
@@ -745,11 +743,10 @@ COPY --from=build-assets setup-linux-build-environment.sh /usr/share/whist/setup
 RUN /usr/share/whist/setup-linux-build-environment.sh \
     && apt-get autoremove -y \
     && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-RUN rm /usr/share/whist/setup-linux-build-environment.sh
+    && rm -rf /tmp/* /var/tmp/* \
+    && rm /usr/share/whist/setup-linux-build-environment.sh
 
 # Set up Whist Protocol symlink
-RUN mkdir /usr/share/whist/bin
 RUN ln -sf /usr/share/whist/bin/WhistServer /usr/share/whist/WhistServer
 
 # Set up the service which launches both the server protocol and the application
