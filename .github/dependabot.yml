@@ -113,10 +113,34 @@ updates:
     open-pull-requests-limit: 10
 
   #####################################################
+  #################### Core-go ###################
+
+  - package-ecosystem: "gomod"
+    directory: "/backend/core-go" # looks for go.mod and go.sum in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
+
+  #####################################################
   #################### Host-Service ###################
 
   - package-ecosystem: "gomod"
-    directory: "/host-service" # looks for go.mod and go.sum in this directory
+    directory: "/backend/host-service" # looks for go.mod and go.sum in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    ignore:
+      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
+        update-types: ["version-update:semver-patch"]
+    open-pull-requests-limit: 10
+
+  #####################################################
+  #################### Scaling-Service ###################
+
+  - package-ecosystem: "gomod"
+    directory: "/backend/host-service" # looks for go.mod and go.sum in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
     ignore:
@@ -185,7 +209,7 @@ updates:
   ################### Microservices ###################
 
   - package-ecosystem: "npm"
-    directory: "/microservices/auth0" # looks for package.json and [package-lock/yarn].lock file in this directory
+    directory: "/backend/microservices/auth0" # looks for package.json and [package-lock/yarn].lock file in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
     ignore:
@@ -210,7 +234,7 @@ updates:
   ##################### Webserver #####################
 
   - package-ecosystem: "pip"
-    directory: "/webserver/scripts" # looks for requirements.txt in this directory
+    directory: "/backend/webserver/scripts" # looks for requirements.txt in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
     ignore:
@@ -219,7 +243,7 @@ updates:
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
-    directory: "/webserver/docker" # looks for Dockerfile in this directory
+    directory: "/backend/webserver/docker" # looks for Dockerfile in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
     ignore:
@@ -228,7 +252,7 @@ updates:
     open-pull-requests-limit: 10
 
   - package-ecosystem: "pip"
-    directory: "/webserver" # looks for requirements.txt in this directory
+    directory: "/backend/webserver" # looks for requirements.txt in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
     ignore:

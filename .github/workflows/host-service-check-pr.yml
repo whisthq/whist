@@ -11,15 +11,15 @@ on:
     branches:
       - dev
     paths:
-      - "host-service/**"
-      - "!host-service/README.md"
-      - "webserver/db_migration/schema.sql"
+      - "backend/host-service/**"
+      - "!backend/host-service/README.md"
+      - "backend/webserver/db_migration/schema.sql"
       - ".github/workflows/host-service-check-pr.yml"
   pull_request:
     paths:
-      - "host-service/**"
-      - "!host-service/README.md"
-      - "webserver/db_migration/schema.sql"
+      - "backend/host-service/**"
+      - "!backend/host-service/README.md"
+      - "backend/webserver/db_migration/schema.sql"
       - ".github/workflows/host-service-check-pr.yml"
   workflow_dispatch:
 
@@ -60,7 +60,7 @@ jobs:
 
       # Check go project (clean, build, vet, format, lint, test, docs)
       - name: Check Go project
-        working-directory: host-service
+        working-directory: backend/host-service
         env:
           HEROKU_USER: developers@whist.com
           HEROKU_APIKEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}

@@ -15,11 +15,21 @@ coverage:
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
         flags:
           - webserver
-      host-service:
-        target: auto # /host-service code coverage
+      core-go:
+        target: auto # /core-go code coverage
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
         flags:
+          - core-go
+      host-service:
+        target: auto # /host-service code coverage
+        threshold: 1% # Percentage of tolerable code coverage decrease from base branch
+        flags:
           - host-service
+      scaling-service:
+        target: auto # /scaling-service code coverage
+        threshold: 1% # Percentage of tolerable code coverage decrease from base branch
+        flags:
+          - scaling-service
       protocol:
         target: auto # /protocol code coverage
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
@@ -36,16 +46,16 @@ coverage:
 
 # Files ignored by Codecov
 ignore:
-  - "webserver/app/utils/flask/cli.py"
-  - "webserver/app/config.py"
-  - "webserver/app/utils/flask/sentry.py"
+  - "backend/webserver/app/utils/flask/cli.py"
+  - "backend/webserver/app/config.py"
+  - "backend/webserver/app/utils/flask/sentry.py"
 
 # Heroku CI makes /app the root on the Heroku CI instances,
 # so we need this fix to retrieve /webserver as the root folder
 fixes:
   - "app/::webserver/" # Replace app/... with webserver/...
   - "**/whist/protocol/::protocol/" # Make protocol coverage relative to protocol directory
-  - "**/whist/host-service/::host-service/" # Make host service coverage relative to host-service directory
+  - "**/whist/backend/host-service/::host-service/" # Make host service coverage relative to host-service directory
 
 # Settings for Codecov comments on pull requests
 comment:
@@ -62,11 +72,19 @@ comment:
 flags:
   webserver:
     paths:
-      - webserver/
+      - backend/webserver/
+    carryforward: true
+  core-go:
+    paths:
+      - backend/core-go/
     carryforward: true
   host-service:
     paths:
-      - host-service/
+      - backend/host-service/
+    carryforward: true
+  scaling-service:
+    paths:
+      - backend/scaling-service/
     carryforward: true
   protocol:
     paths:

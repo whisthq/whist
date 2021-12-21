@@ -2,7 +2,7 @@
 #
 # Webserver: Check PR
 # Checks a webserver PR for linting and unit/integration testing success, and
-# compare the schema of the live database with webserver/db-migration/schema.sql,
+# compare the schema of the live database with backend/webserver/db-migration/schema.sql,
 # notifying the PR if schema changes are detected
 
 name: "Webserver: Check PR"
@@ -10,9 +10,9 @@ name: "Webserver: Check PR"
 on:
   pull_request:
     paths:
-      - "!webserver/README.md"
-      - "webserver/**"
-      - "webserver/db_migration/schema.sql"
+      - "!backend/webserver/README.md"
+      - "backend/webserver/**"
+      - "backend/webserver/db_migration/schema.sql"
       - ".github/workflows/webserver-check-pr.yml"
       - pyproject.toml
       - pylintrc
@@ -35,17 +35,17 @@ jobs:
           python-version: "3.10.0"
 
       - name: Install Dependencies
-        working-directory: webserver
+        working-directory: backend/webserver
         run: pip install -r requirements.txt -r requirements-test.txt
 
       - name: Add pylint-wrapper to the PATH
         run: echo "$GITHUB_WORKSPACE/.github/workflows/helpers" >> "$GITHUB_PATH"
 
       - name: Check if Code Matches Pylint Standards
-        run: pylint-wrapper webserver/app webserver/tests webserver/scripts
+        run: pylint-wrapper backend/webserver/app backend/webserver/tests backend/webserver/scripts
 
       - name: Perform static type analysis with mypy
-        working-directory: webserver
+        working-directory: backend/webserver
         run: mypy --strict app scripts tests
 
   # Heroku Testing
@@ -54,7 +54,7 @@ jobs:
   # pushes to `dev`, to upload the Codecov report for the `dev` branch
 
   # Database Migration
-  # Compare the schema of the live database with webserver/db-migration/schema.sql, and
+  # Compare the schema of the live database with backend/webserver/db-migration/schema.sql, and
   # notify the PR if schema changes are detected
   webserver-check-migra-diff:
     name: Check Migra Diff
@@ -66,9 +66,9 @@ jobs:
       HEROKU_DB_KEY: "DATABASE_URL"
       HEROKU_API_TOKEN: ${{ secrets.HEROKU_DEVELOPER_API_KEY }} # needed to retrieve config vars from Heroku
       PATH_HELPERS: ".github/workflows/helpers"
-      PATH_SCRIPTS: "webserver/db_migration"
+      PATH_SCRIPTS: "backend/webserver/db_migration"
       PATH_CURRENT: "../temporary_db_schema.sql"
-      PATH_MERGING: "webserver/db_migration/schema.sql"
+      PATH_MERGING: "backend/webserver/db_migration/schema.sql"
       PATH_DIFF: "../temporary_diff_file.sql"
       TITLE_ERROR: >-
         An error occured while comparing the database schema.
@@ -150,7 +150,7 @@ jobs:
 
       # Need to install this dependency for the notification step.
       - name: Install Python Dependencies
-        working-directory: webserver
+        working-directory: backend/webserver
         run: pip install PyGithub
 
       # Using the workflow notifcation helpers, we'll send out
