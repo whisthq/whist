@@ -21,15 +21,12 @@ func InstanceStatusHandler(event SubscriptionEvent, variables map[string]interfa
 	if len(result.InstanceInfo) > 0 {
 		instance = result.InstanceInfo[0]
 	}
-<<<<<<< HEAD:backend/core-go/subscriptions/subscriptions.go
 
 	if (variables["instance_name"] == nil) || (variables["status"] == nil) {
 		return false
 	}
 
 	name := string(variables["instance_name"].(graphql.String))
-=======
->>>>>>> 497d9a5e2 (Refactor base algorithm into default algorithm, add logic for instance termination waiting, restructure directories):core-go/subscriptions/subscriptions.go
 	status := string(variables["status"].(graphql.String))
 
 	return (instance.Status == status)
