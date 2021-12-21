@@ -195,11 +195,10 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /tmp/* /var/tmp/*
 
 # Retrieve nvidia driver installer
-COPY --from=build-assets nvidia-driver/nvidia-driver-installer.run nvidia-driver-installer.run
+COPY --from=build-assets --chmod=550 nvidia-driver/nvidia-driver-installer.run /nvidia-driver-installer.run
 
 # Unpack the installer
-RUN chmod +x nvidia-driver-installer.run && \
-    sh nvidia-driver-installer.run -x
+RUN sh nvidia-driver-installer.run -x
 
 # Install the driver to a folder
 RUN mkdir /dist /ignore && \
@@ -347,16 +346,14 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
     /lib/systemd/system/systemd-update-utmp*
 
 # Disable some extra systemd services
-RUN systemctl mask plymouth
-RUN systemctl mask systemd-hostnamed
-RUN systemctl mask acpid
-RUN systemctl mask NetworkManager-wait-online
-RUN systemctl disable sshd
+RUN systemctl mask plymouth \
+                   systemd-hostnamed \
+                   acpid \
+                   NetworkManager-wait-online \
+    && systemctl disable sshd
 
 # Remove ProtectHostname=yes lines from logind and timedate systemd services
-RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-logind.service
-RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-timesyncd.service
-RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-timedated.service
+RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-{login,time{sync,date}}d.service
 
 ENV init /sbin/init
 
@@ -451,21 +448,20 @@ RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 VOLUME [ "/sys/fs/cgroup" ]
 
 # Set appropriate user permissions
-RUN chown -vR whist:whist /home/whist
-RUN chown root:root /run/user
+RUN chown -vR whist:whist /home/whist \
+    &&  chown root:root /run/user
 
 # Create whist Directory and Subdirectories in /usr/share
 RUN mkdir -p /usr/share/whist/private
 
 # Set /usr/share/whist to root-only
-RUN chgrp root -R /usr/share/whist
-RUN chown root:root /usr/share/whist
-RUN chmod 600 -R /usr/share/whist
+RUN chgrp root -R /usr/share/whist \
+    && chown root:root /usr/share/whist \
+    && chmod 600 -R /usr/share/whist
 
 # Set up script to run a program as user `whist` (make sure to do
 # this after setting /usr/share/whist to 600)
-COPY utils/run-as-whist-user.sh /usr/share/whist/run-as-whist-user.sh
-RUN chmod +x /usr/share/whist/run-as-whist-user.sh
+COPY --chmod=550 utils/run-as-whist-user.sh /usr/share/whist/run-as-whist-user.sh
 
 #########################
 # Hardware Acceleration
@@ -514,9 +510,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 COPY display/whist-display.conf /usr/share/X11/xorg.conf.d/01-whist-display.conf
 
 # Set up Whist service that starts before X to fix the Nvidia GPU bus ID and device paths
-COPY display/whist-update-xorg-conf.service /etc/systemd/system/
-COPY display/update-xorg-conf.sh /usr/share/whist/
-RUN chmod +x /usr/share/whist/update-xorg-conf.sh
+COPY --chown=root:root --chmod=600 display/whist-update-xorg-conf.service /etc/systemd/system/
+COPY --chmod=550 display/update-xorg-conf.sh /usr/share/whist/
 RUN systemctl enable whist-update-xorg-conf
 
 # Install playerctl for media keys support. We install playerctl straight from
@@ -529,14 +524,12 @@ RUN wget -q https://github.com/altdesktop/playerctl/releases/download/v2.3.1/pla
 # Set up Whist service to launch X11 display
 COPY display/whist-display-config.env /usr/share/whist
 COPY display/xinitrc /root/.xinitrc
-COPY display/whist-display.service /etc/systemd/system
-COPY display/whist-display.sh /usr/share/whist/whist-display.sh
-RUN chmod +x /usr/share/whist/whist-display.sh
+COPY --chown=root:root --chmod=600 display/whist-display.service /etc/systemd/system
+COPY --chmod=550 display/whist-display.sh /usr/share/whist/whist-display.sh
 RUN systemctl enable whist-display
 
 # Set up script to update display DPI on-the-fly
-COPY display/update-whist-dpi.sh /usr/share/whist/update-whist-dpi.sh
-RUN chmod +x /usr/share/whist/update-whist-dpi.sh
+COPY --chmod=550 display/update-whist-dpi.sh /usr/share/whist/update-whist-dpi.sh
 
 # Set display environment variable
 ENV DISPLAY :10
@@ -638,17 +631,16 @@ RUN adduser root pulse-access \
     && adduser whist pulse-access
 
 # Prevent Pulse Audio from running as user (breaking sound for non-root users)
-RUN rm /etc/systemd/user/default.target.wants/pulseaudio.service
-RUN systemctl mask pulseaudio
-RUN chmod -x /usr/bin/start-pulseaudio-x11
+RUN rm /etc/systemd/user/default.target.wants/pulseaudio.service \
+    && systemctl mask pulseaudio \
+    && chmod -x /usr/bin/start-pulseaudio-x11
 
 # Set up service to start pulseaudio
-COPY audio/run-pulseaudio.sh /usr/share/whist
-RUN chmod +x /usr/share/whist/run-pulseaudio.sh
+COPY --chmod=550 audio/run-pulseaudio.sh /usr/share/whist
 COPY audio/pulse-client.conf /etc/pulse/client.conf
 COPY audio/pulse-daemon.conf /etc/pulse/daemon.conf
 COPY audio/pulse-default.pa ~/.config/pulse/default.pa
-COPY audio/whist-audio.service /etc/systemd/system
+COPY --chown=root:root --chmod=600 audio/whist-audio.service /etc/systemd/system
 RUN systemctl enable whist-audio
 
 #########################
@@ -673,14 +665,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY utils/import_user_browser_data.py /usr/share/whist/import_user_browser_data.py
 
 # Set up first systemd service
-COPY startup/whist-startup.sh /usr/share/whist
-RUN chmod +x /usr/share/whist/whist-startup.sh
-COPY startup/whist-startup.service /etc/systemd/system
+COPY --chmod=550 startup/whist-startup.sh /usr/share/whist
+COPY --chown=root:root --chmod=600 startup/whist-startup.service /etc/systemd/system
 RUN systemctl enable whist-startup
 
 # Set up the entrypoint for the mandelbox (which starts systemd)
-COPY startup/entrypoint.sh /usr/share/whist/entrypoint.sh
-RUN chmod +x /usr/share/whist/entrypoint.sh
+COPY --chmod=550 startup/entrypoint.sh /usr/share/whist/entrypoint.sh
 CMD ["/usr/share/whist/entrypoint.sh"]
 
 #########################
@@ -716,8 +706,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 RUN ln -sf "$(which xeyes)" /usr/bin/whist-application
 
 # Set up script to launch `whist-application` as the `whist` user
-COPY main/run-whist-application.sh /usr/bin/run-whist-application.sh
-RUN chmod 0555 /usr/bin/run-whist-application.sh
+COPY --chmod=555 main/run-whist-application.sh /usr/bin/run-whist-application.sh
 
 # Set up the teleport FUSE service
 
@@ -728,11 +717,10 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
-COPY --from=whist-teleport-fuse /whist-teleport-fuse/build/whist-teleport-fuse /usr/bin/whist-teleport-fuse
+COPY --chmod=555 --from=whist-teleport-fuse /whist-teleport-fuse/build/whist-teleport-fuse /usr/bin/whist-teleport-fuse
 
 # Set up script to launch teleport functionality
-COPY teleport/run-whist-teleport.sh /usr/bin/run-whist-teleport.sh
-RUN chmod +x /usr/bin/run-whist-teleport.sh
+COPY --chmod=555 teleport/run-whist-teleport.sh /usr/bin/run-whist-teleport.sh
 
 # Set up the teleport URI handler
 
@@ -745,9 +733,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 
 # Install whist-teleport-uri-handler.desktop to capture URI protocols like zoommtg://*
 # See whist-teleport-uri-handler.desktop for a list of currently-supported protocols.
-RUN mkdir -p /opt/teleport
-COPY teleport/uri-handler/whist-teleport-uri-handler.sh /opt/teleport/uri-handler
-RUN chmod +x /opt/teleport/uri-handler
+COPY --chmod=555 teleport/uri-handler/whist-teleport-uri-handler.sh /opt/teleport/uri-handler
 RUN ln -sf /opt/teleport/uri-handler /usr/bin/xdg-open
 
 # Set up the Whist server protocol
@@ -757,29 +743,21 @@ COPY --from=build-assets setup-linux-build-environment.sh /usr/share/whist/setup
 RUN /usr/share/whist/setup-linux-build-environment.sh \
     && apt-get autoremove -y \
     && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-RUN rm /usr/share/whist/setup-linux-build-environment.sh
+    && rm -rf /tmp/* /var/tmp/* \
+    && rm /usr/share/whist/setup-linux-build-environment.sh
 
 # Set up Whist Protocol symlink
-RUN mkdir /usr/share/whist/bin
 RUN ln -sf /usr/share/whist/bin/WhistServer /usr/share/whist/WhistServer
 
 # Set up the service which launches both the server protocol and the application
 
-COPY main/run-whist-server.sh /usr/share/whist/run-whist-server.sh
-RUN chmod +x /usr/share/whist/run-whist-server.sh
-COPY main/whist-main.service /etc/systemd/system
+COPY --chmod=550 main/run-whist-server.sh /usr/share/whist/run-whist-server.sh
+COPY --chown=root:root --chmod=600 main/whist-main.service /etc/systemd/system
 RUN systemctl enable whist-main
 
 #########################
 # Cleanup
 #########################
-
-# Set our whist systemd files to be root-visible only
-RUN chgrp root /etc/systemd/system/whist* \
-    && chown root:root /etc/systemd/system/whist* \
-    && chmod 600 /etc/systemd/system/whist*
-
 
 # Install Whist Protocol binaries and helper files
 # We do this last and symlink `/usr/share/whist/bin` earlier

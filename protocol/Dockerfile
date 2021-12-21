@@ -91,10 +91,11 @@ RUN mkdir /clang-tidy \
     && ln -sf "/clang-tidy/clang+llvm-6.0.1-x86_64-linux-gnu-ubuntu-16.04/bin/clang-tidy" "/usr/bin/clang-tidy"
 
 # Create whist Linux user for building the protocol
-RUN groupadd whist
-RUN useradd -lou ${uid} -g whist whist-builder
-RUN usermod -aG sudo whist-builder
-RUN echo "whist-builder:password" | chpasswd
+RUN groupadd whist \
+    && useradd -lou ${uid} -g whist whist-builder \
+    && usermod -aG sudo whist-builder \
+    && echo "whist-builder:password" \
+    | chpasswd
 
 # Specify workdir for building the protocol
 WORKDIR /workdir

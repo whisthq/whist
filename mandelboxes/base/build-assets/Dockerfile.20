@@ -5,8 +5,8 @@ FROM ubuntu:20.04 as default
 # the protocol gets copied by using docker build arguments
 # to set the tag name ":default" versus ":protocol"!
 
-COPY build-temp/nvidia-driver nvidia-driver
-COPY build-temp/setup-linux-build-environment.sh setup-linux-build-environment.sh
+COPY build-temp/nvidia-driver /nvidia-driver
+COPY build-temp/setup-linux-build-environment.sh /setup-linux-build-environment.sh
 RUN mkdir protocol
 
 FROM default as protocol
@@ -14,5 +14,5 @@ FROM default as protocol
 # This target does bundle the protocol, for the reasons
 # mentioned above.
 
-COPY build-temp/protocol protocol
+COPY build-temp/protocol /protocol
 
