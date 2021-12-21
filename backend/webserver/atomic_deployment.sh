@@ -31,7 +31,7 @@ DB_URL=$(heroku config:get DATABASE_URL --app "${HEROKU_APP_NAME}")
 echo "APP: $HEROKU_APP_NAME, DB URL: $DB_URL"
 
 echo "Checking out the webserver folder as a standalone git repo..."
-splitsh-lite --prefix webserver --target refs/heads/workflows-private/webserver
+splitsh-lite --prefix backend/webserver --target refs/heads/workflows-private/webserver
 git checkout workflows-private/webserver
 # we are now in the webserver folder as a standalone git repo
 
