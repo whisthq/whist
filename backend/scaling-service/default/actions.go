@@ -33,11 +33,11 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	}
 
 	// If not, wait until the instance is terminated from the cloud provider
-	err = host.WaitForInstanceTermination(scalingCtx, instance)
-	if err != nil {
-		// Err is already wrapped here
-		return err
-	}
+	// err = host.WaitForInstanceTermination(scalingCtx, instance)
+	// if err != nil {
+	// 	// Err is already wrapped here
+	// 	return err
+	// }
 
 	// Once its terminated, verify that it was removed from the database
 	instanceExistsQuery := &subscriptions.QueryInstanceByName
@@ -69,6 +69,8 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	if err != nil {
 		return utils.MakeError("failed to delete instance from database with params: %v. Error: %v", queryParams, err)
 	}
+
+	logger.Infof("Deleted %v rows from database.", instanceDeleteMutation.MutationResponse.AffectedRows)
 
 	return nil
 }

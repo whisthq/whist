@@ -41,6 +41,7 @@ type DefaultScalingAlgorithm struct {
 	Region             string
 	InstanceEventChan  chan ScalingEvent
 	MandelboxEventChan chan ScalingEvent
+	ScheduledEventChan chan ScalingEvent
 }
 
 // CreateEventChans creates the event channels if they don't alredy exist.
@@ -50,6 +51,9 @@ func (s *DefaultScalingAlgorithm) CreateEventChans() {
 	}
 	if s.MandelboxEventChan == nil {
 		s.MandelboxEventChan = make(chan ScalingEvent, 100)
+	}
+	if s.ScheduledEventChan == nil {
+		s.ScheduledEventChan = make(chan ScalingEvent, 100)
 	}
 }
 
@@ -113,8 +117,11 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 				mandelbox := mandelboxEvent.Data.(subscriptions.Mandelbox)
 
 				if mandelbox.Status == "ALLOCATED" {
-
+					// TODO handle mandelbox assignation logic
 				}
+
+			case scheduledEvent := <-s.ScheduledEventChan:
+
 			}
 		}
 	}()

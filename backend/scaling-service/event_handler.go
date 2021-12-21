@@ -6,9 +6,12 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
+	"github.com/go-co-op/gocron"
 	"github.com/whisthq/whist/backend/core-go/subscriptions"
 	logger "github.com/whisthq/whist/backend/core-go/whistlogger"
+	sa "github.com/whisthq/whist/backend/scaling-service/scaling_algorithms/default" // Import as sa, short for scaling_algorithms
 )
 
 func main() {
@@ -20,24 +23,19 @@ func main() {
 		<-globalCtx.Done()
 	}()
 
-	// Start database subscription client
-	subscriptionClient := &subscriptions.SubscriptionClient{}
-	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
-
-	subscriptions.SetupScalingSubscriptions(subscriptionClient)
-
-	err := subscriptions.Start(subscriptionClient, globalCtx, goroutineTracker, subscriptionEvents)
-	if err != nil {
-		logger.Errorf("Failed to start database subscription client. Error: %s", err)
-	}
-
-	// Start GraphQL client
+	// Start GraphQL client for queries/mutations
 	graphqlClient := &subscriptions.GraphQLClient{}
-
-	err = graphqlClient.Initialize()
+	err := graphqlClient.Initialize()
 	if err != nil {
 		logger.Errorf("Failed to start GraphQL client. Error: %v", err)
 	}
+
+	// Start database subscriptions
+	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
+	StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents)
+
+	// Start scheduler and setup scheduler event chan
+	StartSchedulerEvents()
 
 	// algorithmByRegionMap holds all of the scaling algorithms mapped by region.
 	// Use a sync map since we only write the keys once but will be reading multiple
@@ -59,7 +57,7 @@ func main() {
 	})
 
 	// Start main event loop
-	go eventLoop(globalCtx, globalCancel, goroutineTracker, subscriptionEvents, algorithmByRegionMap)
+	go eventLoop(globalCtx, globalCancel, goroutineTracker, subscriptionEvents, scheduledEvents, algorithmByRegionMap)
 
 	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
 	sigChan := make(chan os.Signal, 2)
@@ -75,8 +73,32 @@ func main() {
 	}
 }
 
+func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan subscriptions.SubscriptionEvent) {
+	subscriptionClient := &subscriptions.SubscriptionClient{}
+	subscriptions.SetupScalingSubscriptions(subscriptionClient)
+
+	err := subscriptions.Start(subscriptionClient, globalCtx, goroutineTracker, subscriptionEvents)
+	if err != nil {
+		logger.Errorf("Failed to start database subscription client. Error: %s", err)
+	}
+
+}
+
+func StartSchedulerEvents() {
+	scheduledEvents := make(chan sa.ScalingEvent, 100)
+	s := gocron.NewScheduler(time.UTC)
+
+	// Schedule scale down routine every 10 minutes
+	s.Every(5).Seconds().Do(func() {
+		// Send to scheduling channel
+		scheduledEvents <- sa.ScalingEvent{}
+	})
+
+	s.StartAsync()
+}
+
 func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup,
-	subscriptionEvents <-chan subscriptions.SubscriptionEvent, algorithmByRegion sync.Map) {
+	subscriptionEvents <-chan subscriptions.SubscriptionEvent, scheduledEvents <-chan sa.ScalingEvent, algorithmByRegion sync.Map) {
 
 	for {
 		select {
@@ -111,6 +133,21 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 
 			case *subscriptions.MandelboxEvent:
 			}
+
+		case scheduledEvent := <-scheduledEvents:
+			scheduledEvent.Type = "SCHEDULED_EVENT"
+
+			// Start scaling algorithm based on region
+			logger.Infof("Received scheduled event.")
+
+			algorithm, ok := algorithmByRegion.Load(scheduledEvent.Region)
+			if !ok {
+				logger.Errorf("%v not found on algorithm map", scheduledEvent.Region)
+			}
+			scalingAlgorithm := algorithm.(*sa.DefaultScalingAlgorithm)
+
+			logger.Infof("Sending to instance event chan")
+			scalingAlgorithm.InstanceEventChan <- scheduledEvent
 		}
 	}
 }
