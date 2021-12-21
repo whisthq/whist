@@ -639,7 +639,6 @@ RUN rm /etc/systemd/user/default.target.wants/pulseaudio.service \
 COPY --chmod=550 audio/run-pulseaudio.sh /usr/share/whist
 COPY audio/pulse-client.conf /etc/pulse/client.conf
 COPY audio/pulse-daemon.conf /etc/pulse/daemon.conf
-COPY audio/pulse-default.pa ~/.config/pulse/default.pa
 COPY --chown=root:root --chmod=600 audio/whist-audio.service /etc/systemd/system
 RUN systemctl enable whist-audio
 
