@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	sa "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default" // Import as sa, short for scaling_algorithms
 	"github.com/whisthq/whist/backend/services/subscriptions"
@@ -33,12 +34,23 @@ func main() {
 	}
 
 	// Start database subscriptions
+<<<<<<< HEAD:backend/services/scaling-service/event_handler.go
+=======
+<<<<<<< HEAD
+	whistClient := &subscriptions.WhistClient{}
+=======
+>>>>>>> 6259ae053 (Add scheduled events)
+>>>>>>> 7bb63f8df (Add scheduled events):backend/scaling-service/event_handler.go
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
 	StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents)
 
 	// Start scheduler and setup scheduler event chan
+<<<<<<< HEAD
 	scheduledEvents := make(chan sa.ScalingEvent, 100)
 	StartSchedulerEvents(globalCtx, goroutineTracker, scheduledEvents)
+=======
+	StartSchedulerEvents()
+>>>>>>> 6259ae053 (Add scheduled events)
 
 	// algorithmByRegionMap holds all of the scaling algorithms mapped by region.
 	// Use a sync map since we only write the keys once but will be reading multiple
@@ -88,6 +100,16 @@ func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *syn
 }
 
 func StartSchedulerEvents(globalCtx context.Context, goroutineTracker *sync.WaitGroup, scheduledEvents chan sa.ScalingEvent) {
+	scheduledEvents := make(chan sa.ScalingEvent, 100)
+	s := gocron.NewScheduler(time.UTC)
+
+	// Schedule scale down routine every 10 minutes
+	s.Every(5).Seconds().Do(func() {
+		// Send to scheduling channel
+		scheduledEvents <- sa.ScalingEvent{}
+	})
+
+	s.StartAsync()
 }
 
 func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent sa.ScalingEvent) sa.ScalingAlgorithm {
@@ -172,6 +194,21 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 				logger.Infof("Sending to scheduled event chan")
 				algorithm.ScheduledEventChan <- scheduledEvent
 			}
+
+		case scheduledEvent := <-scheduledEvents:
+			scheduledEvent.Type = "SCHEDULED_EVENT"
+
+			// Start scaling algorithm based on region
+			logger.Infof("Received scheduled event.")
+
+			algorithm, ok := algorithmByRegion.Load(scheduledEvent.Region)
+			if !ok {
+				logger.Errorf("%v not found on algorithm map", scheduledEvent.Region)
+			}
+			scalingAlgorithm := algorithm.(*sa.DefaultScalingAlgorithm)
+
+			logger.Infof("Sending to instance event chan")
+			scalingAlgorithm.InstanceEventChan <- scheduledEvent
 		}
 	}
 }

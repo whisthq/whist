@@ -53,6 +53,9 @@ func (s *DefaultScalingAlgorithm) CreateEventChans() {
 	if s.ScheduledEventChan == nil {
 		s.ScheduledEventChan = make(chan ScalingEvent, 100)
 	}
+	if s.ScheduledEventChan == nil {
+		s.ScheduledEventChan = make(chan ScalingEvent, 100)
+	}
 }
 
 // CreateBuffer initializes the instance buffer.
@@ -102,6 +105,9 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 				case "SCHEDULED_SCALE_DOWN":
 					logger.Infof("Scaling algorithm received a scheduled scale down event with value: %v", scheduledEvent)
 				}
+
+			case scheduledEvent := <-s.ScheduledEventChan:
+
 			}
 		}
 	}()
