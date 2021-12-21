@@ -21,6 +21,7 @@ jobs:
         with:
           # Match how we've been labeling our PRs before the action 3.0.0 changed
           # its default behavior to remove the prefix.
+          prefix: "📁 Repo:"
       - name: Label Pull Request (backend subprojects)
         uses: adamzolyak/monorepo-pr-labeler-action@3.1.0
         env:
