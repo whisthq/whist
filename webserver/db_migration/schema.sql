@@ -105,42 +105,6 @@ $$;
 
 
 --
--- Name: change_trigger_regions(); Type: FUNCTION; Schema: cloud; Owner: -
---
-
-CREATE FUNCTION cloud.change_trigger_regions() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-       BEGIN
-         IF TG_OP = 'INSERT'
-         THEN INSERT INTO logging.t_region_history (
-                tabname, schemaname, operation, new_val
-              ) VALUES (
-                TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(NEW)
-              );
-           RETURN NEW;
-         ELSIF  TG_OP = 'UPDATE'
-         THEN
-           INSERT INTO logging.t_region_history (
-             tabname, schemaname, operation, new_val, old_val
-           )
-           VALUES (TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(NEW),
-row_to_json(OLD));
-           RETURN NEW;
-         ELSIF TG_OP = 'DELETE'
-         THEN
-           INSERT INTO logging.t_region_history
-             (tabname, schemaname, operation, old_val)
-             VALUES (
-               TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(OLD)
-             );
-             RETURN OLD;
-         END IF;
-       END;
-$$;
-
-
---
 -- Name: gen_hasura_uuid(); Type: FUNCTION; Schema: hdb_catalog; Owner: -
 --
 
@@ -152,36 +116,6 @@ CREATE FUNCTION hdb_catalog.gen_hasura_uuid() RETURNS uuid
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
-
---
--- Name: t_region_history; Type: TABLE; Schema: logging; Owner: -
---
-
-CREATE TABLE logging.t_region_history (
-    id integer NOT NULL,
-    tstamp timestamp without time zone DEFAULT now(),
-    schemaname text,
-    tabname text,
-    operation text,
-    who text DEFAULT CURRENT_USER,
-    new_val json,
-    old_val json
-);
-
-
---
--- Name: ami_status_changes; Type: VIEW; Schema: cloud; Owner: -
---
-
-CREATE VIEW cloud.ami_status_changes AS
- SELECT t_region_history.tstamp,
-    (t_region_history.new_val ->> 'ami_id'::text) AS ami_changed,
-    COALESCE((t_region_history.new_val ->> 'ami_active'::text), 'deleted'::text) AS new_status,
-    COALESCE((t_region_history.old_val ->> 'ami_active'::text), 'newly 
-added'::text) AS old_status
-   FROM logging.t_region_history
-  WHERE ((t_region_history.old_val IS NULL) OR (t_region_history.new_val IS NULL) OR ((t_region_history.old_val ->> 'ami_active'::text) <> (t_region_history.new_val ->> 'ami_active'::text)));
-
 
 --
 -- Name: instance_info; Type: TABLE; Schema: cloud; Owner: -
@@ -468,36 +402,10 @@ ALTER SEQUENCE logging.t_instance_history_id_seq OWNED BY logging.t_instance_his
 
 
 --
--- Name: t_region_history_id_seq; Type: SEQUENCE; Schema: logging; Owner: -
---
-
-CREATE SEQUENCE logging.t_region_history_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: t_region_history_id_seq; Type: SEQUENCE OWNED BY; Schema: logging; Owner: -
---
-
-ALTER SEQUENCE logging.t_region_history_id_seq OWNED BY logging.t_region_history.id;
-
-
---
 -- Name: t_instance_history id; Type: DEFAULT; Schema: logging; Owner: -
 --
 
 ALTER TABLE ONLY logging.t_instance_history ALTER COLUMN id SET DEFAULT nextval('logging.t_instance_history_id_seq'::regclass);
-
-
---
--- Name: t_region_history id; Type: DEFAULT; Schema: logging; Owner: -
---
-
-ALTER TABLE ONLY logging.t_region_history ALTER COLUMN id SET DEFAULT nextval('logging.t_region_history_id_seq'::regclass);
 
 
 --
@@ -637,13 +545,6 @@ CREATE UNIQUE INDEX hdb_version_one_row ON hdb_catalog.hdb_version USING btree (
 --
 
 CREATE TRIGGER t BEFORE INSERT OR DELETE OR UPDATE ON cloud.instance_info FOR EACH ROW EXECUTE FUNCTION cloud.change_trigger();
-
-
---
--- Name: region_to_ami t; Type: TRIGGER; Schema: cloud; Owner: -
---
-
-CREATE TRIGGER t BEFORE INSERT OR DELETE OR UPDATE ON cloud.region_to_ami FOR EACH ROW EXECUTE FUNCTION cloud.change_trigger_regions();
 
 
 --
