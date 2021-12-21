@@ -12,16 +12,18 @@ import { fromTrigger } from "@app/utils/flows"
 import {
   protocolStreamInfo,
   childProcess,
-  ProtocolSendUrlToOpenInNewTab,
+  protocolSendUrlToOpenInNewTab,
+  listenToKeyboardLayout,
 } from "@app/utils/protocol"
 import { createProtocolWindow } from "@app/utils/windows"
 import { persistGet, persistSet } from "@app/utils/persist"
+import { logBase } from "@app/utils/logging"
+
 import {
   RESTORE_LAST_SESSION,
   WHIST_IS_DEFAULT_BROWSER,
 } from "@app/constants/store"
 import { WhistTrigger } from "@app/constants/triggers"
-import { logBase } from "@app/utils/logging"
 
 // The current implementation of the protocol process shows its own loading
 // screen while a mandelbox is created and configured. To do this, we need it
@@ -68,13 +70,16 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess)
           } else {
             protocolStreamInfo(info)
           }
+
+          // Get the keyboard layout and send it over too
+          listenToKeyboardLayout()
         },
         importBrowserDataFrom !== undefined ? 5000 : 0
       )
     }
   )
 
-fromTrigger("trayRestoreSessionAction").subscribe(() => {
+fromTrigger(WhistTrigger.trayRestoreSessionAction).subscribe(() => {
   const restore = <boolean>persistGet(RESTORE_LAST_SESSION)
   if (restore !== undefined) {
     persistSet(RESTORE_LAST_SESSION, !restore)
@@ -83,7 +88,7 @@ fromTrigger("trayRestoreSessionAction").subscribe(() => {
   }
 })
 
-fromTrigger("trayWhistIsDefaultBrowserAction").subscribe(() => {
+fromTrigger(WhistTrigger.trayWhistIsDefaultBrowserAction).subscribe(() => {
   const whistDefaultBrowser =
     <boolean>persistGet(WHIST_IS_DEFAULT_BROWSER) ?? false
   persistSet(WHIST_IS_DEFAULT_BROWSER, !whistDefaultBrowser)
@@ -105,7 +110,7 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
   // Intercept URLs (Mac version)
   app.on("open-url", function (event, url: string) {
     event.preventDefault()
-    ProtocolSendUrlToOpenInNewTab(url)
+    protocolSendUrlToOpenInNewTab(url)
     logBase(`Captured url ${url} after setting Whist as default browser!\n`, {})
   })
 })

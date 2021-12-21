@@ -10,11 +10,14 @@ import { app } from "electron"
 import path from "path"
 import fs from "fs"
 import { spawn, ChildProcess } from "child_process"
+import KeyboardLayout from "keyboard-layout"
+
 import config, { loggingFiles } from "@app/config/environment"
 import { electronLogPath, protocolToLogz, logBase } from "@app/utils/logging"
 import { appEnvironment, WhistEnvironments } from "../../config/configs"
 import logRotate from "log-rotate"
 import { MAX_URL_LENGTH } from "@app/constants/app"
+import { macToLinuxKeyboardMap } from "@app/constants/keyboard"
 
 const NACK_LOOKBACK_PERIOD_IN_MS = 1500 // Number of milliseconds to look back when measuring # of nacks
 const MAX_NACKS_ALLOWED = 6 // Maximum # of nacks allowed before we decide the network is unstable
@@ -174,7 +177,7 @@ export const protocolStreamKill = () => {
   writeStream(childProcess, "kill?0\n")
 }
 
-export const ProtocolSendUrlToOpenInNewTab = (message: string) => {
+export const protocolSendUrlToOpenInNewTab = (message: string) => {
   if (message === undefined || message === "") {
     logBase("Attempted to open undefined/empty URL in new tab", {})
     return
@@ -211,4 +214,26 @@ export const isNetworkUnstable = (message?: string) => {
   }
 
   return (currentTime - lastNackTime) * 1000 < NACK_LOOKBACK_PERIOD_IN_MS
+}
+
+export const listenToKeyboardLayout = () => {
+  const sendLayoutToProtocol = (layout: string) => {
+    let linuxLayout = "us"
+
+    if (process.platform === "darwin") {
+      linuxLayout = Object.keys(macToLinuxKeyboardMap).includes(layout)
+        ? macToLinuxKeyboardMap[layout]
+        : "us"
+    }
+
+    writeStream(childProcess, `keyboard-layout?${linuxLayout}\n`)
+  }
+
+  KeyboardLayout.observeCurrentKeyboardLayout((layout: string) =>
+    sendLayoutToProtocol(layout)
+  )
+
+  KeyboardLayout.onDidChangeCurrentKeyboardLayout((layout: string) =>
+    sendLayoutToProtocol(layout)
+  )
 }

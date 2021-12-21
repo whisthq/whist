@@ -8,7 +8,7 @@ import {
   KEY_REPEAT_RANGE_LINUX,
   KEY_REPEAT_RANGE_MAC,
   KEY_REPEAT_MIN_LINUX,
-} from "@app/constants/keyRepeat"
+} from "@app/constants/keyboard"
 
 const getInitialKeyRepeat = () => {
   const initialKeyRepeatRaw = execCommandByOS(
