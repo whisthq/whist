@@ -138,8 +138,7 @@ def test_perform_ami_upgrade(
     - Check if we are marking the AMIs that are active before the AMI upgrade are
     marked as inactive.
     - Check if we are marking the newer AMIs are marked as inactive.
-    - Mark the instances that are running(in ACTIVE or PRE_CONNECTION) state for draining
-    by calling the `drain_and_shutdown` endpoint on the host_service.
+    - Mark the instances that are running(in ACTIVE or PRE_CONNECTION) state for draining.
     """
 
     monkeypatch.setitem(app.config, "WHIST_ACCESS_TOKEN", "dummy-access-token")
@@ -177,7 +176,7 @@ def test_perform_ami_upgrade(
 
     # We mock `fetch_current_running_instances` to return a list of mock
     # instances that are running with older AMIs. We will be checking that the
-    # instances returned are being passed to drain_and_shutdown.
+    # instances returned are being drained.
     monkeypatch.setattr(ami_upgrade, "fetch_current_running_instances", _mock_instance_info_query)
 
     # The following make instances appear active so that we can attempt to drain them.

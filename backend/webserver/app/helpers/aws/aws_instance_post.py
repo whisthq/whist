@@ -490,8 +490,8 @@ def drain_instance(instance: InstanceInfo) -> None:
         terminate_instance(instance)
     else:
         # We need to modify the status to DRAINING to ensure that we don't assign a new
-        # mandelbox to the instance. We need to commit here as we don't want to enter a
-        # deadlock with host service where it tries to modify the instance_info row.
+        # mandelbox to the instance. We commit here to avoid entering a
+        # deadlock with host service if it tries to modify the instance_info row.
         instance.status = MandelboxHostState.DRAINING
         db.session.commit()
 
