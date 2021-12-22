@@ -138,7 +138,7 @@ def test_perform_ami_upgrade(
     - Check if we are marking the AMIs that are active before the AMI upgrade are
     marked as inactive.
     - Check if we are marking the newer AMIs are marked as inactive.
-    - Mark the instances that are running(in ACTIVE or PRE_CONNECTION) state for draining.
+    - Mark the instances that are running (in ACTIVE or PRE_CONNECTION state) for draining.
     """
 
     monkeypatch.setitem(app.config, "WHIST_ACCESS_TOKEN", "dummy-access-token")
