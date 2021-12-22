@@ -471,6 +471,14 @@ def drain_instance(instance: InstanceInfo) -> None:
     if not instance:
         whist_logger.info("skipping drain_instance as instance is None")
         return
+    elif not check_instance_exists(get_instance_id(instance), instance.location):
+        whist_logger.info(
+            f"deleting instance {instance.instance_name} from DB since its state in AWS is already"
+            " stopped/terminated."
+        )
+        db.session.delete(instance)
+        db.session.commit()
+        return
     elif (
         instance.status == MandelboxHostState.PRE_CONNECTION
         or instance.ip is None
