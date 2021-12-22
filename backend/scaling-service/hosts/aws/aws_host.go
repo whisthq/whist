@@ -107,8 +107,7 @@ func (host *AWSHost) SpinDownInstances(instanceIDs []string) ([]subscriptions.In
 	return outputInstances, nil
 }
 
-// WaitForInstanceTermination waits until the given instance has been terminated on the
-// cloud service
+// WaitForInstanceTermination waits until the given instance has been terminated on AWS.
 func (host *AWSHost) WaitForInstanceTermination(scalingCtx context.Context, instance subscriptions.Instance) error {
 	waiterClient := new(ec2.DescribeInstancesAPIClient)
 	waiter := ec2.NewInstanceTerminatedWaiter(*waiterClient, func(*ec2.InstanceTerminatedWaiterOptions) {
@@ -122,6 +121,25 @@ func (host *AWSHost) WaitForInstanceTermination(scalingCtx context.Context, inst
 	err := waiter.Wait(scalingCtx, waitParams, 5*time.Minute)
 	if err != nil {
 		return utils.MakeError("failed waiting for instance %v to terminate from AWS: %v", instance.Name, err)
+	}
+
+	return nil
+}
+
+// WaitForInstanceReady waits until the given instance is running on AWS.
+func (host *AWSHost) WaitForInstanceReady(scalingCtx context.Context, instance subscriptions.Instance) error {
+	waiterClient := new(ec2.DescribeInstancesAPIClient)
+	waiter := ec2.NewInstanceRunningWaiter(*waiterClient, func(*ec2.InstanceRunningWaiterOptions) {
+		logger.Infof("Waiting for instance to be ready on AWS")
+	})
+
+	waitParams := &ec2.DescribeInstancesInput{
+		InstanceIds: []string{instance.Name},
+	}
+
+	err := waiter.Wait(scalingCtx, waitParams, 5*time.Minute)
+	if err != nil {
+		return utils.MakeError("failed waiting for instance %v to be ready from AWS: %v", instance.Name, err)
 	}
 
 	return nil

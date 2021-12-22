@@ -62,7 +62,7 @@ var QueryInstancesByStatus struct {
 
 // QueryFreeInstances returns any instance that matches the given status.
 var QueryFreeInstances struct {
-	CloudInstanceInfo `graphql:"cloud_instance_info(where: {num_running_mandelboxes: {_eq: $num_mandelboxes}})"`
+	CloudInstanceInfo `graphql:"cloud_instance_info(where: {num_running_mandelboxes: {_eq: $num_mandelboxes}, _and {status: {_eq: $status}}})"`
 }
 
 // QueryMandelboxesByInstanceName returns a mandelbox associated with the given instance
