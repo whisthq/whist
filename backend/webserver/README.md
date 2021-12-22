@@ -55,7 +55,7 @@ Module documentation for every module in the `webserver` directory is available 
 
 ## Testing
 
-Deploying your code locally is not currently supported. However, it is possible to test your code programmatically.
+Deploying your code locally is not currently supported. However, it is possible to test your code locally.
 
 1. First, you'll need to spin up a local PostgreSQL database.
 
@@ -71,7 +71,13 @@ Deploying your code locally is not currently supported. However, it is possible 
    backend/webserver/ $ bash tests/run_tests.sh
    ```
 
-   The `run_tests.sh` script accepts the same arguments as `pytest`. Try `bash tests/run_tests.sh --help` for more information. Set `COV=1` to generate a test coverage report. You can view the report with `coverage report` (see `coverage --help` for more options).
+   The `run_tests.sh` script accepts the same arguments as `pytest`. Try `bash tests/run_tests.sh --help` for more information, or go to the [pytest usage docs](https://docs.pytest.org/en/latest/how-to/usage.html) to view the arguments that can be passed in. As an example, to run the single test `test_terminate_single_ec2_fails` in `test_instance_scaling.py`, you run the following command:
+
+   ```bash
+   ./tests/run_tests.sh tests/aws/test_instance_scaling.py::test_terminate_single_ec2_fails
+   ```
+
+   You can also set the environment variable `COV=1` before executing `run_tests.sh` to generate a test coverage report. You can view the report with `coverage report` (see `coverage --help` for more options).
 
    Note that, since `run_tests.sh` calls `pytest` under the hood, pytest must be accessible from your `PATH`. This may mean that your Python virtual environment needs to be active when you run the script.
 
