@@ -30,11 +30,15 @@ Includes
 #include <gtest/gtest.h>
 #include "fixtures.hpp"
 
+
 extern "C" {
+#include <client/sdl_utils.h>
 #include "client/client_utils.h"
 #include "whist/utils/color.h"
 #include <whist/core/whist.h>
 #include <whist/network/ringbuffer.h>
+
+#include "client/native_window_utils.h"
 
 #ifndef __APPLE__
 #include "server/state.h"
@@ -77,6 +81,87 @@ TEST_F(ProtocolTest, ClientParseArgsEmpty) {
 Client Tests
 ============================
 */
+
+/**
+ * client/sdl_utils.c
+ **/
+TEST(ProtocolTest, InitSDL) {
+    char very_long_title[] = "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";
+    size_t title_len = strlen(very_long_title);
+    EXPECT_EQ(title_len, 2000);
+    char icon_filepath[] = "../../../frontend/client-applications/public/icon_dev.png";
+
+    int width = 500;
+    int height = 375;
+
+    SDL_Window* new_window = init_sdl(width, height, very_long_title, icon_filepath);
+    EXPECT_TRUE(new_window != NULL);
+    
+    // Check that the initial title was set appropriately
+    const char *title = SDL_GetWindowTitle(new_window);
+    EXPECT_EQ(strcmp(title, very_long_title), 0);
+
+    // Check that the screensaver option was enabled
+    bool screen_saver_check = SDL_IsScreenSaverEnabled();
+    EXPECT_TRUE(screen_saver_check);
+
+    // Ensure that the flags below were successfully set at SDL initialization time
+    const uint32_t desired_sdl_flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
+    uint32_t actual_sdl_flags = SDL_WasInit(desired_sdl_flags);
+    EXPECT_EQ(actual_sdl_flags, desired_sdl_flags);
+
+    // Check that the dimensions are the desired ones
+    int actual_width=-1, actual_height=-1;
+    SDL_GetWindowSize(new_window, &actual_width, &actual_height);
+    EXPECT_EQ(actual_width, width);
+    EXPECT_EQ(actual_height, height);
+
+    // Check that the native window options were applied successfully
+    NSWindow *native_window = get_native_window(new_window);
+    EXPECT_TRUE(native_window != NULL);
+    bool titlebaristransparent = [native_window titlebarAppearsTransparent];
+    EXPECT_TRUE(titlebaristransparent);
+    
+
+    //whist_sleep(10000);
+
+    // char very_short_title[] = "a";
+    // title_len = strlen(very_short_title);
+    // EXPECT_EQ(title_len, 1);
+    // SDL_SetWindowTitle(new_window, very_short_title);
+
+    // whist_sleep(10000);
+
+    // const char *new_title = SDL_GetWindowTitle(new_window);
+    // EXPECT_EQ(strcmp(new_title, very_short_title), 0);
+
+    // whist_sleep(1000);
+ 
+    SDL_Event e;
+    const char *titles[] = {
+        "t", "thi", "this w", "this win", "this windo", "this window's", "this window's ti", "this window's title",
+        "chis window's title is", "chih window's title is ", "chih wandnw's title is ", "c  h wandnw'g title is ",
+        "c  h  a  nw'g titln is ", "c  h  a  n  g  i  n ig ", "c  h  a  n  g  i  n  g!", "",
+        "c  h  a  n  g  i  n  g!", "", "c  h  a  n  g  i  n  g!", "c  h  a  n  g  i  n  g!"
+    };
+
+    // Enter the main loop. Press any key or hit the x to exit.
+    for( ; e.type!=SDL_QUIT&&e.type!=SDL_KEYDOWN; SDL_PollEvent(&e)){
+        static int i = 0, t = 0;
+
+        if(!(++t%9)){ // every 9th frame...
+            printf("Setting title: %s\n",titles[i]);
+          SDL_SetWindowTitle(new_window, titles[i]);            // loop through the
+          if(++i >= sizeof(titles)/sizeof(titles[0])) i = 0; // array of titles
+        }
+
+        SDL_Delay(10);
+
+    }
+
+
+    destroy_sdl(new_window);
+}
 
 /**
  * client/ringbuffer.c
