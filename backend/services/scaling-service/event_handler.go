@@ -183,21 +183,6 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 				logger.Infof("Sending to scheduled event chan")
 				algorithm.ScheduledEventChan <- scheduledEvent
 			}
-
-		case scheduledEvent := <-scheduledEvents:
-			scheduledEvent.Type = "SCHEDULED_EVENT"
-
-			// Start scaling algorithm based on region
-			logger.Infof("Received scheduled event.")
-
-			algorithm, ok := algorithmByRegion.Load(scheduledEvent.Region)
-			if !ok {
-				logger.Errorf("%v not found on algorithm map", scheduledEvent.Region)
-			}
-			scalingAlgorithm := algorithm.(*sa.DefaultScalingAlgorithm)
-
-			logger.Infof("Sending to instance event chan")
-			scalingAlgorithm.InstanceEventChan <- scheduledEvent
 		}
 	}
 }

@@ -90,14 +90,13 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		return nil
 	}
 
-	if freeInstances == DEFAULT_INSTANCE_BUFFER {
-		logger.Info("Not scaling down instances as buffer is complete.")
-		return nil
-	}
-
 	if freeInstances < DEFAULT_INSTANCE_BUFFER {
 		logger.Warningf("Available instances are less than desired buffer, scaling up to match %v", DEFAULT_INSTANCE_BUFFER)
-		// TODO: ScaleUpIfNecessary()
+		wantedNumInstances := DEFAULT_INSTANCE_BUFFER - freeInstances
+
+		activeImageID := freeInstancesQuery.CloudInstanceInfo[0].ImageID
+		// Try scale up instances to match buffer size
+		s.ScaleUpIfNecessary(wantedNumInstances, scalingCtx, host, event, string(activeImageID))
 	}
 
 	logger.Info("Scaling down %v free instances.", freeInstances)
@@ -114,13 +113,41 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		}
 
 		logger.Info("Marked instance %v as draining on database.", instance)
-		// TODO: verify scale down for each drained instance
+		// s.VerifyInstanceScaleDown(scalingCtx, host, event, si)
 	}
 
 	return nil
 }
 
-func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(scalingCtx context.Context, host hosts.HostHandler, event ScalingEvent) error {
+func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scalingCtx context.Context, host hosts.HostHandler, event ScalingEvent, imageID string) error {
+	// Try scale up in given region
+	instanceNum := int32(instancesToScale)
+	createdInstances, err := host.SpinUpInstances(&instanceNum, imageID)
+
+	if err != nil {
+		return utils.MakeError("Failed to spin up instances, created %v, err: %v", createdInstances, err)
+	}
+
+	// Check if we could create the desired number of instances
+	if len(createdInstances) != instancesToScale {
+		return utils.MakeError("Could not scale up %v instances, only scaled up %v.", instancesToScale, len(createdInstances))
+	}
+
+	logger.Infof("Inserting newly created instances to database.")
+
+	// If successful, write to db
+	insertMutation := &subscriptions.InsertInstances
+	mutationParams := map[string]interface{}{
+		"instance": createdInstances,
+	}
+
+	err = s.GraphQLClient.Mutate(scalingCtx, insertMutation, mutationParams)
+	if err != nil {
+		logger.Errorf("Failed to insert instances into database")
+	}
+
+	logger.Infof("Inserted %v rows to database.", insertMutation.MutationResponse.AffectedRows)
+
 	return nil
 }
 
