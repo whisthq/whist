@@ -43,7 +43,7 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
   rebootNotification = rebootWarning()
 })
 
-const sleep = () => {
+const quit = () => {
   logBase("Application quitting", {})
   destroyTray()
   protocolStreamKill()
@@ -73,7 +73,7 @@ allWindowsClosed.subscribe(
       args.hash !== WindowHashProtocol ||
       (args.hash === WindowHashProtocol && !args.crashed)
     ) {
-      sleep()
+      quit()
     }
   }
 )
