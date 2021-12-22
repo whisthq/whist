@@ -127,15 +127,10 @@ void init_file_synchronizer();
 /**
  * @brief                          Open a file for writing based on `file_metadata`
  *
- * @param file_directory           Directory in which to write the file
- *
  * @param file_metadata            Pointer to file metadata
  *
- * @param unique_id                A unique ID for the file being written
- *
  */
-void file_synchronizer_open_file_for_writing(char* file_directory, FileMetadata* file_metadata,
-                                             int unique_id);
+void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata);
 
 /**
  * @brief                          Write a file chunk to a transferring file

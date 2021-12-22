@@ -27,8 +27,13 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
     return -1;
 }
 
-int write_fuse_ready_file(int unique_id) {
-    LOG_WARNING("UNIMPLEMENTED: write_fuse_ready_file on non-Linux");
+const char* file_drop_prepare(int id, FileMetadata* file_metadata) {
+    LOG_WARNING("UNIMPLEMENTED: file_drop_prepare on non-Linux");
+    return NULL;
+}
+
+int file_drop_mark_ready(int unique_id) {
+    LOG_WARNING("UNIMPLEMENTED: file_drop_mark_ready on non-Linux");
     return -1;
 }
 
@@ -328,7 +333,61 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
     return 0;
 }
 
-int write_fuse_ready_file(int id) {
+const char* file_drop_prepare(int id, FileMetadata* file_metadata) {
+    /*
+        Create directories to house the file data and metadata, and write
+        necesary metadata (for example, the file size) to the metadata file.
+
+        Arguments:
+            id (int): the unique ID for the file transfer
+            file_metadata (FileMetadata*): the metadata for the file being transferred
+
+        Returns:
+            const char*: on success, the path to the file data directory, NULL on failure
+
+        NOTE: This is only for servers running a parallel FUSE filesystem
+    */
+
+    static const char* base_downloads_directory = "/home/whist/.teleport/drag-drop/downloads";
+    static const char* base_info_directory = "/home/whist/.teleport/drag-drop/file_info";
+#define MAX_INT_LEN 64
+    char* downloads_path = safe_malloc(strlen(base_downloads_directory) + 1 + MAX_INT_LEN + 1);
+    char* info_path = safe_malloc(strlen(base_info_directory) + 1 + MAX_INT_LEN + 1);
+    snprintf(downloads_path, strlen(base_downloads_directory) + 1 + MAX_INT_LEN + 1, "%s/%d",
+             base_downloads_directory, id);
+    snprintf(info_path, strlen(base_info_directory) + 1 + MAX_INT_LEN + 1, "%s/%d",
+             base_info_directory, id);
+
+    // Create file_info directory
+    if (safe_mkdir(info_path)) {
+        LOG_ERROR("Failed to create info directory for file ID %d", id);
+        free(downloads_path);
+        free(info_path);
+        return NULL;
+    }
+
+    // Write the file size to file_info/id/file_size
+    char* file_size_path = safe_malloc(strlen(info_path) + 1 + MAX_INT_LEN + 1);
+    snprintf(file_size_path, strlen(info_path) + 1 + MAX_INT_LEN + 1, "%s/file_size", info_path);
+    FILE* file_size_file_handle = fopen(file_size_path, "w");
+    if (file_size_file_handle) {
+        fprintf(file_size_file_handle, "%d", file_metadata->file_size);
+        fclose(file_size_file_handle);
+    }
+    free(file_size_path);
+    free(info_path);
+
+    // Create download directory last, since that's what activates teleport
+    if (safe_mkdir(downloads_path)) {
+        LOG_ERROR("Failed to create downloads directory for file ID %d", id);
+        free(downloads_path);
+        return NULL;
+    }
+
+    return downloads_path;
+}
+
+int file_drop_mark_ready(int id) {
     /*
         Write the ready file that indicates that the file has been fully
         written and the FUSE node is ready.

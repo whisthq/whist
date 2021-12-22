@@ -27,7 +27,9 @@ destroy_file_synchronizer();
 */
 
 #ifdef _WIN32
+#pragma warning(disable : 4996)
 #define _CRT_SECURE_NO_WARNINGS
+#define _CRT_NONSTDC_NO_WARNINGS
 #endif
 
 /*
@@ -152,18 +154,17 @@ void init_file_synchronizer() {
     is_initialized = true;
 }
 
-void file_synchronizer_open_file_for_writing(char* file_directory, FileMetadata* file_metadata,
-                                             int unique_id) {
+void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
     /*
         Open a file for writing based on `file_metadata`
 
         Arguments:
-            file_directory (char*): directory in which to write the file
             file_metadata (FileMetadata*): pointer to the file metadata
-            unique_id (int): a unique ID for the file being written
     */
 
     whist_lock_mutex(file_synchrony_update_mutex);
+
+    static int unique_id = 0;
 
     TransferringFile* active_file = &transferring_files[file_metadata->index];
     if (active_file->file_handle) {
@@ -176,23 +177,26 @@ void file_synchronizer_open_file_for_writing(char* file_directory, FileMetadata*
 
     LOG_INFO("Opening file index %d for writing", file_metadata->index);
 
-    active_file->id = unique_id;
+    active_file->id = unique_id++;
 
     // Set transferring file filename
-    size_t filename_len = strlen(file_metadata->filename);
-    active_file->filename = safe_malloc(filename_len + 1);
-    memset(active_file->filename, 0, filename_len + 1);
-    memcpy(active_file->filename, file_metadata->filename, filename_len);
+    active_file->filename = strdup(file_metadata->filename);
+
+    // Get file path to which we will write
+    const char* file_dir;
+    switch (file_metadata->transfer_type) {
+        case FILE_TRANSFER_SERVER_DROP:
+            file_dir = file_drop_prepare(active_file->id, file_metadata);
+            break;
+        default:
+            file_dir = ".";
+            break;
+    }
 
     // Set transferring file filepath
-    size_t file_directory_len = strlen(file_directory);
-    size_t file_path_len = file_directory_len + filename_len + 1;
+    const size_t file_path_len = strlen(file_dir) + strlen(active_file->filename) + 1;
     active_file->file_path = safe_malloc(file_path_len + 1);
-    memset(active_file->file_path, 0, file_path_len + 1);
-    memcpy(active_file->file_path, file_directory, file_directory_len);
-    char dir_split_char = '/';
-    active_file->file_path[file_directory_len] = dir_split_char;
-    memcpy(active_file->file_path + file_directory_len + 1, file_metadata->filename, filename_len);
+    snprintf(active_file->file_path, file_path_len + 1, "%s/%s", file_dir, active_file->filename);
 
     active_file->transfer_type = file_metadata->transfer_type;
     active_file->event_info = file_metadata->event_info;
@@ -257,7 +261,7 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
 
             // If on the server, write the FUSE ready file when file writing is complete
             if (active_file->transfer_type == FILE_TRANSFER_SERVER_DROP) {
-                write_fuse_ready_file(active_file->id);
+                file_drop_mark_ready(active_file->id);
             }
 
             // For end chunks, close the file handle and reset the slot in the array
