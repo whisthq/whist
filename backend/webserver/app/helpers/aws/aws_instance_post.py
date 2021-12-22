@@ -512,7 +512,9 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
     with scale_mutex[f"{region}-{ami}"]:
         num_new = _get_num_new_instances(region, ami)
         instances = InstanceInfo.query.filter_by(location=region, aws_ami_id=ami).all()
-        whist_logger.info(f"ami {region}/{ami} | instances {len(instances)} | delta {num_new}")
+        whist_logger.info(
+            f"ami {region}/{ami} | instances {len(instances)} | desired delta {num_new}"
+        )
         for instance in instances:
             mandelboxes = MandelboxInfo.query.filter_by(instance_name=instance.instance_name).all()
             whist_logger.info(
@@ -535,7 +537,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
             )
             if len(available_empty_instances) == 0:
                 whist_logger.info(
-                    f"ami {region}/{ami} | there are no avaliable empty instances to scale down"
+                    f"ami {region}/{ami} | there are no available empty instances to scale down"
                 )
                 return
             for instance in available_empty_instances:
@@ -627,6 +629,15 @@ def check_and_handle_instances_with_old_commit_hash() -> None:
     ]
 
     commit_hashes_to_skip.append(current_commit_hash)
+
+    instances_skipped = InstanceInfo.query.filter(
+        InstanceInfo.commit_hash.in_(commit_hashes_to_skip), InstanceInfo.status == "ACTIVE"
+    ).all()
+    instances_skipped = [x.instance_name for x in instances_skipped]
+    whist_logger.info(
+        "Skipping the following instances because they have protected commit hashes:"
+        f" {instances_skipped}"
+    )
 
     instances_not_protected_with_old_commit_hash = InstanceInfo.query.filter(
         InstanceInfo.commit_hash.not_in(commit_hashes_to_skip), InstanceInfo.status == "ACTIVE"
