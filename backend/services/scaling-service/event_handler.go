@@ -34,23 +34,13 @@ func main() {
 	}
 
 	// Start database subscriptions
-<<<<<<< HEAD:backend/services/scaling-service/event_handler.go
-=======
-<<<<<<< HEAD
 	whistClient := &subscriptions.WhistClient{}
-=======
->>>>>>> 6259ae053 (Add scheduled events)
->>>>>>> 7bb63f8df (Add scheduled events):backend/scaling-service/event_handler.go
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
 	StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents)
 
 	// Start scheduler and setup scheduler event chan
-<<<<<<< HEAD
 	scheduledEvents := make(chan sa.ScalingEvent, 100)
-	StartSchedulerEvents(globalCtx, goroutineTracker, scheduledEvents)
-=======
-	StartSchedulerEvents()
->>>>>>> 6259ae053 (Add scheduled events)
+	StartSchedulerEvents(globalCtx, goroutineTracker, scheduledEvents)=
 
 	// algorithmByRegionMap holds all of the scaling algorithms mapped by region.
 	// Use a sync map since we only write the keys once but will be reading multiple
@@ -100,11 +90,10 @@ func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *syn
 }
 
 func StartSchedulerEvents(globalCtx context.Context, goroutineTracker *sync.WaitGroup, scheduledEvents chan sa.ScalingEvent) {
-	scheduledEvents := make(chan sa.ScalingEvent, 100)
 	s := gocron.NewScheduler(time.UTC)
 
 	// Schedule scale down routine every 10 minutes
-	s.Every(5).Seconds().Do(func() {
+	s.Every(10).Minutes().Do(func() {
 		// Send to scheduling channel
 		scheduledEvents <- sa.ScalingEvent{}
 	})

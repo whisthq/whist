@@ -1,6 +1,7 @@
 package scaling_algorithms
 
 import (
+	"context"
 	"sync"
 
 	"github.com/whisthq/whist/backend/services/scaling-service/hosts"
@@ -107,7 +108,14 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 				}
 
 			case scheduledEvent := <-s.ScheduledEventChan:
+				scalingCtx, scalingCancel := context.WithCancel(context.Background())
 
+				err := s.ScaleDownIfNecessary(scalingCtx, s.Host, scheduledEvent)
+				if err != nil {
+					logger.Errorf("Error running scale down job. Err: %v", err)
+				}
+
+				scalingCancel()
 			}
 		}
 	}()
