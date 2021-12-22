@@ -38,7 +38,7 @@ flags=(
   --disable-font-subpixel-positioning
   --force-color-profile=display-p3-d65
   --disable-gpu-process-crash-limit
-  --disable-notifications #This is tech debt, remove when notification redirection is implemented
+#   --disable-notifications #This is tech debt, remove when notification redirection is implemented
   --no-default-browser-check
   --load-extension=/opt/teleport/chrome-extension
 )
