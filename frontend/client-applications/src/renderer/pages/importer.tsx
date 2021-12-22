@@ -19,15 +19,17 @@ const SelectBrowser = (props: {
       <div className="mt-8">
         <div className="bg-gray-900 px-4 py-2 rounded w-96 m-auto">
           <select
-            id="browser"
-            name="browser"
             className="bg-gray-900 font-semibold text-gray-300 outline-none mt-1 block w-full py-2 text-base border-gray-300 sm:text-sm"
-            defaultValue={props.browsers?.[0]}
-            onChange={(evt: any) => props.onSelect(evt.target.value)}
+            defaultValue={props.browsers[0]}
+            onChange={(evt: any) => {
+              props.onSelect(evt.target.value)
+            }}
           >
-            <option value={undefined}>None, start from a clean slate</option>
+            <option key={0} value="None">
+              None, start from a clean slate
+            </option>
             {props.browsers.map((browser: string, index: number) => (
-              <option key={index} value={browser}>
+              <option key={index + 1} value={browser}>
                 {browser}
               </option>
             ))}
@@ -42,17 +44,15 @@ const Importer = (props: {
   browsers: string[]
   onSubmit: (browser: string | undefined) => void
 }) => {
-  const [browser, setBrowser] = useState<string | undefined>(
-    props.browsers?.[0]
-  )
+  const [browser, setBrowser] = useState<string>(props.browsers?.[0])
   const [processing, setProcessing] = useState(false)
 
-  const onSubmit = (browser: string | undefined) => {
+  const onSubmit = (browser: string) => {
     setProcessing(true)
-    props.onSubmit(browser)
+    props.onSubmit(browser === "None" ? undefined : browser)
   }
 
-  const onSelect = (browser: string | undefined) => {
+  const onSelect = (browser: string) => {
     setBrowser(browser)
   }
 
