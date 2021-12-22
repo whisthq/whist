@@ -157,6 +157,6 @@ bool sdl_is_window_visible();
  * @note                           This function must be called by the
  *                                 same thread that originally called init_sdl.
  */
-void update_pending_sdl_tasks();
+void sdl_update_pending_tasks();
 
 #endif  // SDL_UTILS_H

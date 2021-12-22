@@ -519,7 +519,7 @@ bool sdl_is_window_visible() {
              (SDL_WINDOW_OCCLUDED | SDL_WINDOW_MINIMIZED));
 }
 
-void update_pending_sdl_tasks() {
+void sdl_update_pending_tasks() {
     // Handle any pending window title updates
     if (should_update_window_title) {
         if (window_title) {

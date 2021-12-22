@@ -461,7 +461,8 @@ int main(int argc, char* argv[]) {
             // get lost.
             send_new_tab_url_if_needed();
 
-            update_pending_sdl_tasks();
+            // Update any pending SDL tasks
+            sdl_update_pending_tasks();
 
             // Check if the window is minimized or occluded. If it is, we can just sleep for a bit
             // and then check again.
