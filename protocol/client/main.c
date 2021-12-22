@@ -113,6 +113,7 @@ extern volatile bool client_exiting;
 volatile int try_amount;
 
 extern volatile char* new_tab_url;
+extern volatile char current_keyboard_layout[WHIST_KB_LAYOUT_MAX_LENGTH];
 
 // Defines
 #define APP_PATH_MAXLEN 1023
@@ -160,8 +161,9 @@ int sync_keyboard_state(void) {
 
     wcmsg.keyboard_state.active_pinch = active_pinch;
 
-    safe_strncpy(wcmsg.keyboard_state.layout, WHIST_KB_DEFAULT_LAYOUT, WHIST_KB_LAYOUT_MAX);
-    safe_strncpy(wcmsg.keyboard_state.variant, WHIST_KB_DEFAULT_VARIANT, WHIST_KB_VARIANT_MAX);
+    safe_strncpy(wcmsg.keyboard_state.layout, (char*)current_keyboard_layout,
+                 WHIST_KB_LAYOUT_MAX_LENGTH);
+    LOG_INFO("Sending keyboard layout to client of value: %s", wcmsg.keyboard_state.layout);
 
     send_wcmsg(&wcmsg);
 

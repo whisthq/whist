@@ -49,6 +49,8 @@ extern volatile SDL_Window *window;
 
 volatile char *new_tab_url;
 
+volatile char current_keyboard_layout[WHIST_KB_LAYOUT_MAX_LENGTH] = WHIST_KB_DEFAULT_LAYOUT;
+
 extern volatile int client_max_bitrate;
 
 // From main.c
@@ -83,7 +85,7 @@ const struct option client_cmd_options[] = {
     {"loading", required_argument, NULL, 'l'},
     {"skip-taskbar", no_argument, NULL, 's'},
     {"new-tab-url", required_argument, NULL, 'x'},
-    {"keyboard-layout", required_argument, NULL, 'a'},
+    {"keyboard-layout", required_argument, NULL, 'd'},
     // these are standard for POSIX programs
     {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
     {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
@@ -93,7 +95,7 @@ const char *usage;
 
 #define INCOMING_MAXLEN 127
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
-#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:n:rl:sx:"
+#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:d:n:rl:sx:"
 
 /*
 ============================
@@ -253,8 +255,14 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
             skip_taskbar = true;
             break;
         }
-        case 'a': {
-            LOG_INFO("THIS IS FOR KEYBOARD LAYOUT CHANGES");
+        case 'd': {
+            LOG_INFO("Recieved event or argument to set current keyboard layout.");
+            if (strlen(eval_optarg) > WHIST_KB_LAYOUT_MAX_LENGTH) {
+                LOG_ERROR("KEYBOARD LAYOUT TO LONG");
+                break;
+            }
+            safe_strncpy((char *)current_keyboard_layout, eval_optarg, WHIST_KB_LAYOUT_MAX_LENGTH);
+            LOG_INFO("Setting keyboard layout to: %s", current_keyboard_layout);
             break;
         }
         case 'x': {
@@ -333,6 +341,7 @@ int client_parse_args(int argc, char *argv[]) {
         "  -s, --skip-taskbar            Launch the protocol without displaying an icon\n"
         "                                  in the taskbar\n"
         "  -x, --new-tab-url             URL to open in new tab \n"
+        "  -d, --keyboard-layout         Sets the server keyboard layout\n"
         // special options should be indented further to the left
         "      --help     Display this help and exit\n"
         "      --version  Output version information and exit\n";

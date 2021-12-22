@@ -80,16 +80,13 @@ void update_keyboard_state(InputDevice* input_device, WhistClientMessage* fcmsg)
     }
 
     char* layout = fcmsg->keyboard_state.layout;
-    char* variant = fcmsg->keyboard_state.variant;
 
-    LOG_INFO("LAYOUT: %s", layout);
-    LOG_INFO("VARIANT: %s", variant);
+    LOG_INFO("Recieved new layout on server: %s", layout);
 
-    // we don't care if variant is NULL or empty. The command will still set the proper values.
     if (layout != NULL) {
-        const char* cmd_format = "setxkbmap -layout %s -variant %s";
+        const char* cmd_format = "setxkbmap -layout %s";
         char cmd_buf[WHIST_KB_CMD_BUFFER_MAX];
-        int bytes_written = snprintf(cmd_buf, WHIST_KB_CMD_BUFFER_MAX, cmd_format, layout, variant);
+        int bytes_written = snprintf(cmd_buf, WHIST_KB_CMD_BUFFER_MAX, cmd_format, layout);
 
         if (bytes_written < WHIST_KB_CMD_BUFFER_MAX) {
             runcmd(cmd_buf, NULL);
