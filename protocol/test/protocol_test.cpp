@@ -121,6 +121,10 @@ TEST_F(CaptureStdoutTest, InitSDL) {
     SDL_Window* new_window = init_sdl(width, height, very_long_title, icon_filepath);
     EXPECT_TRUE(new_window != NULL);
 
+#if defined(_WIN32)
+    check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
+#endif
+
     // Check that the initial title was set appropriately
     const char* title = SDL_GetWindowTitle(new_window);
     EXPECT_EQ(strcmp(title, very_long_title), 0);
@@ -140,48 +144,20 @@ TEST_F(CaptureStdoutTest, InitSDL) {
     EXPECT_EQ(actual_width, width);
     EXPECT_EQ(actual_height, height);
 
-    // Check that the native window options were applied successfully
-    // NSWindow *native_window = get_native_window(new_window);
+    // Need to import Cocoa with #include <Cocoa/Cocoa.h> to test code below, but can only import
+    // Cocoa in .m file, so need to create helper file. Check that the native window options were
+    // applied successfully NSWindow *native_window = get_native_window(new_window);
     // EXPECT_TRUE(native_window != NULL);
     // bool titlebaristransparent = [native_window titlebarAppearsTransparent];
     // EXPECT_TRUE(titlebaristransparent);
-
-    // whist_sleep(10000);
 
     char very_short_title[] = "a";
     title_len = strlen(very_short_title);
     EXPECT_EQ(title_len, 1);
     SDL_SetWindowTitle(new_window, very_short_title);
 
-    // whist_sleep(10000);
-
     const char* new_title = SDL_GetWindowTitle(new_window);
     EXPECT_EQ(strcmp(new_title, very_short_title), 0);
-
-    // whist_sleep(1000);
-
-    // SDL_Event e;
-    // const char *titles[] = {
-    //     "t", "thi", "this w", "this win", "this windo", "this window's", "this window's ti",
-    //     "this window's title", "chis window's title is", "chih window's title is ", "chih
-    //     wandnw's title is ", "c  h wandnw'g title is ", "c  h  a  nw'g titln is ", "c  h  a  n  g
-    //     i  n ig ", "c  h  a  n  g  i  n  g!", "", "c  h  a  n  g  i  n  g!", "", "c  h  a  n  g
-    //     i  n  g!", "c  h  a  n  g  i  n  g!"
-    // };
-
-    // // Enter the main loop. Press any key or hit the x to exit.
-    // for( ; e.type!=SDL_QUIT&&e.type!=SDL_KEYDOWN; SDL_PollEvent(&e)){
-    //     static int i = 0, t = 0;
-
-    //     if(!(++t%9)){ // every 9th frame...
-    //         printf("Setting title: %s\n",titles[i]);
-    //       SDL_SetWindowTitle(new_window, titles[i]);            // loop through the
-    //       if(++i >= sizeof(titles)/sizeof(titles[0])) i = 0; // array of titles
-    //     }
-
-    //     SDL_Delay(10);
-
-    // }
 
     destroy_sdl(new_window);
     check_stdout_line(::testing::HasSubstr("Destroying SDL"));
