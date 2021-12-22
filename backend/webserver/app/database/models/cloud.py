@@ -9,10 +9,26 @@ models representing SQL views (e.g. :class:`LingeringInstances`), the attribute 
 primary key column must be defined explicitly.
 """
 
+from enum import auto, Enum
+
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.declarative import DeferredReflection
 
 db = SQLAlchemy(engine_options={"pool_pre_ping": True})
+
+
+class NoValue(Enum):
+    # https://docs.python.org/3/library/enum.html#omitting-values
+
+    def __repr__(self) -> str:
+        return "<%s.%s>" % (self.__class__.__name__, self.name)
+
+
+class MandelboxHostState(str, NoValue):
+    PRE_CONNECTION = "PRE_CONNECTION"
+    ACTIVE = "ACTIVE"
+    DRAINING = "DRAINING"
+    HOST_SERVICE_UNRESPONSIVE = "HOST_SERVICE_UNRESPONSIVE"
 
 
 class InstanceInfo(DeferredReflection, db.Model):  # type: ignore[name-defined]

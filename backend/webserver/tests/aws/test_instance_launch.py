@@ -5,7 +5,7 @@ import random
 from flask import Flask
 from pytest import MonkeyPatch
 
-from app.database.models.cloud import RegionToAmi, db, InstanceInfo
+from app.database.models.cloud import RegionToAmi, db, InstanceInfo, MandelboxHostState
 from app.helpers.ami import ami_upgrade
 from app.helpers.ami.ami_upgrade import (
     launch_new_ami_buffer,
@@ -17,7 +17,6 @@ from app.helpers.aws.aws_instance_post import do_scale_up_if_necessary
 from app.utils.aws.base_ec2_client import EC2Client
 from app.utils.general.name_generation import generate_name
 from app.constants.ec2_instance_states import EC2InstanceState
-from app.constants.mandelbox_host_states import MandelboxHostState
 from tests.patches import function
 
 

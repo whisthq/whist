@@ -3,10 +3,10 @@ import time
 from app.database.models.cloud import (
     db,
     InstanceInfo,
+    MandelboxHostState,
 )
 
 from app.utils.general.logs import whist_logger
-from app.constants.mandelbox_host_states import MandelboxHostState
 
 MAX_POLL_TIME = 900  # seconds
 POLL_SLEEP_INTERVAL = 5  # seconds

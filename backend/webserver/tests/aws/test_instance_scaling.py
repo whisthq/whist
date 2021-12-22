@@ -10,9 +10,8 @@ from flask import Flask
 from pytest import MonkeyPatch
 import pytest
 
-from app.database.models.cloud import db, RegionToAmi, InstanceInfo
+from app.database.models.cloud import db, RegionToAmi, InstanceInfo, MandelboxHostState
 import app.helpers.aws.aws_instance_post as aws_funcs
-from app.constants.mandelbox_host_states import MandelboxHostState
 from app.utils.aws.base_ec2_client import EC2Client
 from app.helpers.aws.aws_instance_post import drain_instance
 
@@ -303,7 +302,7 @@ def test_scale_down_single_unavailable(
     mock_get_num_new_instances(-1)
     aws_funcs.try_scale_down_if_necessary(region_name, "test-AMI")
     db.session.refresh(instance)
-    assert instance.status == "ACTIVE"
+    assert instance.status == MandelboxHostState.ACTIVE
 
 
 def test_scale_down_single_wrong_region(
@@ -325,7 +324,7 @@ def test_scale_down_single_wrong_region(
     mock_get_num_new_instances(-1)
     aws_funcs.try_scale_down_if_necessary(region_name_2, "test-AMI")
     db.session.refresh(instance)
-    assert instance.status == "ACTIVE"
+    assert instance.status == MandelboxHostState.ACTIVE
 
 
 def test_check_instance_exists(region_name: str) -> None:
@@ -358,7 +357,7 @@ def test_scale_down_single_wrong_ami(
     mock_get_num_new_instances(-1)
     aws_funcs.try_scale_down_if_necessary(region_name, "wrong-AMI")
     db.session.refresh(instance)
-    assert instance.status == "ACTIVE"
+    assert instance.status == MandelboxHostState.ACTIVE
 
 
 def test_scale_down_multiple_available(
@@ -388,7 +387,7 @@ def test_scale_down_multiple_available(
     aws_funcs.try_scale_down_if_necessary(region_name, "test-AMI")
     for instance in instance_list:
         instance_info = InstanceInfo.query.get(instance)
-        assert instance_info.status == MandelboxHostState.DRAINING.value
+        assert instance_info.status == MandelboxHostState.DRAINING
 
 
 def test_scale_down_multiple_partial_available(
@@ -429,10 +428,10 @@ def test_scale_down_multiple_partial_available(
     aws_funcs.try_scale_down_if_necessary(region_name, "test-AMI")
     for instance in instance_list:
         instance_info = InstanceInfo.query.get(instance)
-        assert instance_info.status == MandelboxHostState.DRAINING.value
+        assert instance_info.status == MandelboxHostState.DRAINING
     for instance in active_list:
         instance_info = InstanceInfo.query.get(instance)
-        assert instance_info.status == MandelboxHostState.ACTIVE.value
+        assert instance_info.status == MandelboxHostState.ACTIVE
 
 
 def test_lingering_instances(
@@ -462,7 +461,7 @@ def test_lingering_instances(
         instance_name="not_associated_mandelbox_instance",
         aws_ami_id="test-AMI",
         location=region_name,
-        status=MandelboxHostState.DRAINING.value,
+        status=MandelboxHostState.DRAINING,
         last_updated_utc_unix_ms=time() * 1000,
         creation_time_utc_unix_ms=time() * 1000,
     )
@@ -474,7 +473,7 @@ def test_lingering_instances(
         aws_ami_id="test-AMI-2",
         location=region_name,
         associated_mandelboxes=1,
-        status=MandelboxHostState.DRAINING.value,
+        status=MandelboxHostState.DRAINING,
         last_updated_utc_unix_ms=time() * 1000,
         creation_time_utc_unix_ms=time() * 1000,
     )
@@ -502,7 +501,7 @@ def test_lingering_instances(
         instance_name="inactive_starting_instance",
         aws_ami_id="test-AMI",
         location=region_name,
-        status=MandelboxHostState.PRE_CONNECTION.value,
+        status=MandelboxHostState.PRE_CONNECTION,
         last_updated_utc_unix_ms=((time() - 1801) * 1000),
         creation_time_utc_unix_ms=((time() - 1801) * 1000),
     )
@@ -510,14 +509,14 @@ def test_lingering_instances(
         instance_name="still starting",
         aws_ami_id="test-AMI",
         location=region_name,
-        status=MandelboxHostState.PRE_CONNECTION.value,
+        status=MandelboxHostState.PRE_CONNECTION,
         last_updated_utc_unix_ms=((time() - 18000001) * 1000),
     )
     bulk_instance(
         instance_name="active_starting_instance",
         aws_ami_id="test-AMI",
         location=region_name,
-        status=MandelboxHostState.PRE_CONNECTION.value,
+        status=MandelboxHostState.PRE_CONNECTION,
         last_updated_utc_unix_ms=((time() - 121) * 1000),
         creation_time_utc_unix_ms=((time() - 121) * 1000),
     )
@@ -525,7 +524,7 @@ def test_lingering_instances(
         instance_name="host_service_unrepsonsive_instance",
         aws_ami_id="test-AMI",
         location=region_name,
-        status=MandelboxHostState.HOST_SERVICE_UNRESPONSIVE.value,
+        status=MandelboxHostState.HOST_SERVICE_UNRESPONSIVE,
         last_updated_utc_unix_ms=((time() - 18000001) * 1000),
     )
     aws_funcs.check_and_handle_lingering_instances()
@@ -583,7 +582,7 @@ def test_old_commit_hash_instances(
         aws_ami_id="test-AMI",
         commit_hash=aws_funcs.get_current_commit_hash(),
         location=region_name,
-        status=MandelboxHostState.PRE_CONNECTION.value,
+        status=MandelboxHostState.PRE_CONNECTION,
         last_updated_utc_unix_ms=((time() - 121) * 1000),
         creation_time_utc_unix_ms=((time() - 121) * 1000),
     )
@@ -592,7 +591,7 @@ def test_old_commit_hash_instances(
         aws_ami_id="test-AMI",
         commit_hash=aws_funcs.get_current_commit_hash(),
         location=region_name,
-        status=MandelboxHostState.HOST_SERVICE_UNRESPONSIVE.value,
+        status=MandelboxHostState.HOST_SERVICE_UNRESPONSIVE,
         last_updated_utc_unix_ms=((time() - 18000001) * 1000),
     )
     instances_with_old_commit_hash = bulk_instance(
@@ -608,7 +607,7 @@ def test_old_commit_hash_instances(
         aws_ami_id="inactive_ami",
         commit_hash="old_commit_hash",
         location=region_name,
-        status=MandelboxHostState.DRAINING.value,
+        status=MandelboxHostState.DRAINING,
         last_updated_utc_unix_ms=time() * 1000,
         creation_time_utc_unix_ms=time() * 1000,
     )
@@ -741,14 +740,14 @@ def test_buffer_with_multiple_draining(
         aws_ami_id=ami_id,
         associated_mandelboxes=0,
         mandelbox_capacity=10,
-        status="DRAINING",
+        status=MandelboxHostState.DRAINING,
         location=region_name,
     )
     bulk_instance(
         aws_ami_id=ami_id,
         associated_mandelboxes=0,
         mandelbox_capacity=10,
-        status="DRAINING",
+        status=MandelboxHostState.DRAINING,
         location=region_name,
     )
     assert (
