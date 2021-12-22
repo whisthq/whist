@@ -49,14 +49,31 @@ void init_file_drop_handler();
 int drop_file_into_active_window(TransferringFile* drop_file);
 
 /**
+ * @brief                          Create directories to house the file data and metadata,
+ *                                 and write necesary metadata (for example, the file size)
+ *                                 to the metadata file.
+ *
+ * @param id                      The unique ID for the file transfer
+ * @param file_metadata           The metadata for the file being transferred
+ *
+ * @returns                      Returns the path to the file data directory on success,
+ *                                NULL on failure
+ *
+ * @note                          This is only for servers running a parallel FUSE filesystem
+ */
+const char* file_drop_prepare(int id, FileMetadata* file_metadata);
+
+/**
  * @brief                          Write the ready file that indicates that the
  *                                 file has been fully written and the FUSE node is ready.
  *
  * @param id                       The unique ID for which we are writing the ready file
  *
  * @returns                        Returns -1 on failure, 0 on success
+ *
+ * @note                          This is only for servers running a parallel FUSE filesystem
  */
-int write_fuse_ready_file(int id);
+int file_drop_mark_ready(int id);
 
 /**
  * @brief                          Clean up the file drop handler

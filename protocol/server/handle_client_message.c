@@ -355,61 +355,7 @@ static int handle_file_metadata_message(WhistClientMessage *wcmsg) {
             (int): Returns -1 on failure, 0 on success
     */
 
-    static int local_directory_id = 0;  // static so only set to 0 on first iteration
-    static const char *parent_drag_drop_directory = "/home/whist/.teleport/drag-drop";
-    size_t target_directory_maxlen =
-        strlen(parent_drag_drop_directory) + 64 + 1;  // have enough space for int in paths
-
-    // Use `unique_id` for the rest of the function, NOT `local_directory_id`.
-    //     We increment `local_directory_id` here instead of later because if the function
-    //     exits early with failure, we still want the next directory ID to be incremented.
-    int unique_id = local_directory_id;
-    local_directory_id++;
-
-    // Get the path for the `/home/whist/.teleport/drag-drop/downloads/[ID]/` directory
-    char *downloads_directory = safe_malloc(target_directory_maxlen);
-    memset(downloads_directory, 0, target_directory_maxlen);
-    snprintf(downloads_directory, target_directory_maxlen, "%s/downloads/%d",
-             parent_drag_drop_directory, unique_id);
-
-    // Get the path for the `/home/whist/.teleport/drag-drop/file_info/[ID]/` directory
-    char *file_info_directory = safe_malloc(target_directory_maxlen);
-    memset(file_info_directory, 0, target_directory_maxlen);
-    snprintf(file_info_directory, target_directory_maxlen, "%s/file_info/%d",
-             parent_drag_drop_directory, unique_id);
-
-    // Create file info directory
-    if (safe_mkdir(file_info_directory) == -1) {
-        LOG_ERROR("Could not create directory %s for download file info", file_info_directory);
-    } else {
-        // Get the path for the `/home/whist/.teleport/drag-drop/file_info/[ID]/file_size` file
-        char *file_size_file_path = safe_malloc(target_directory_maxlen);
-        memset(file_size_file_path, 0, target_directory_maxlen);
-        snprintf(file_size_file_path, target_directory_maxlen, "%s/file_size", file_info_directory);
-
-        // Write the file size to file
-        FILE *file_size_file_handle = fopen(file_size_file_path, "w");
-        if (file_size_file_handle) {
-            char file_size_string[64];
-            memset(file_size_string, 0, 64);
-            snprintf(file_size_string, 64, "%d", wcmsg->file_metadata.file_size);
-            fwrite(file_size_string, 1, strlen(file_size_string), file_size_file_handle);
-            fclose(file_size_file_handle);
-        }
-
-        free(file_size_file_path);
-    }
-
-    // Create the downloads subdirectory for this ID
-    if (safe_mkdir(downloads_directory) == -1) {
-        LOG_ERROR("Could not create directory %s for download", downloads_directory);
-        free(downloads_directory);
-        return -1;
-    }
-
-    file_synchronizer_open_file_for_writing(downloads_directory, &wcmsg->file_metadata, unique_id);
-
-    free(downloads_directory);
+    file_synchronizer_open_file_for_writing(&wcmsg->file_metadata);
 
     return 0;
 }
