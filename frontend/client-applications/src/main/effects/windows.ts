@@ -1,4 +1,4 @@
-import { app, IpcMainEvent, Notification } from "electron"
+import { app, Notification } from "electron"
 import { withLatestFrom, startWith, throttle, filter } from "rxjs/operators"
 import { interval, of, merge } from "rxjs"
 import Sentry from "@sentry/electron"
@@ -43,11 +43,11 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
   rebootNotification = rebootWarning()
 })
 
-const sleep = () => {
-  logBase("Application closed and sleeping", {})
+const quit = () => {
+  logBase("Application quitting", {})
   destroyTray()
   protocolStreamKill()
-  app?.dock?.show().catch((err) => Sentry.captureException(err))
+  app?.quit()
 }
 
 const allWindowsClosed = fromTrigger(WhistTrigger.windowInfo).pipe(
@@ -61,11 +61,6 @@ const allWindowsClosed = fromTrigger(WhistTrigger.windowInfo).pipe(
   )
 )
 
-fromTrigger(WhistTrigger.windowsAllClosed).subscribe((evt: IpcMainEvent) => {
-  // Macs don't completely quit the desktop app when you close the application's windows
-  if (process.platform === "darwin") evt?.preventDefault()
-})
-
 allWindowsClosed.subscribe(
   (args: {
     crashed: boolean
@@ -78,7 +73,7 @@ allWindowsClosed.subscribe(
       args.hash !== WindowHashProtocol ||
       (args.hash === WindowHashProtocol && !args.crashed)
     ) {
-      sleep()
+      quit()
     }
   }
 )
