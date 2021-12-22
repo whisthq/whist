@@ -32,11 +32,11 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	}
 
 	// If not, wait until the instance is terminated from the cloud provider
-	// err = host.WaitForInstanceTermination(scalingCtx, instance)
-	// if err != nil {
-	// 	// Err is already wrapped here
-	// 	return err
-	// }
+	err = host.WaitForInstanceTermination(scalingCtx, instance)
+	if err != nil {
+		// Err is already wrapped here
+		return err
+	}
 
 	// Once its terminated, verify that it was removed from the database
 	instanceExistsQuery := &subscriptions.QueryInstanceByName
@@ -79,6 +79,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	freeInstancesQuery := &subscriptions.QueryFreeInstances
 	queryParams := map[string]interface{}{
 		"num_mandelboxes": graphql.Int(0),
+		"status":          graphql.String("ACTIVE"),
 	}
 
 	s.GraphQLClient.Query(scalingCtx, freeInstancesQuery, queryParams)
@@ -88,6 +89,34 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	if freeInstances == 0 {
 		logger.Info("There are no available instances to scale down.")
 		return nil
+	}
+
+	// check database for draining instances without mandelboxes
+	lingeringInstancesQuery := &subscriptions.QueryFreeInstances
+	queryParams = map[string]interface{}{
+		"num_mandelboxes": graphql.Int(0),
+		"status":          graphql.String("DRAINING"),
+	}
+
+	s.GraphQLClient.Query(scalingCtx, freeInstancesQuery, queryParams)
+
+	// Verify if there are lingering instances that can be scaled down
+	lingeringInstances := len(lingeringInstancesQuery.CloudInstanceInfo)
+	if lingeringInstances == 0 {
+		logger.Info("There are no lingering to scale down.")
+		return nil
+	}
+
+	var lingeringIds []string
+	for _, lingeringInstance := range lingeringInstancesQuery.CloudInstanceInfo {
+		lingeringIds = append(lingeringIds, string(lingeringInstance.CloudProviderID))
+	}
+
+	logger.Info("Forcefully terminating lingering instances from cloud provider.")
+
+	_, err := s.Host.SpinDownInstances(lingeringIds)
+	if err != nil {
+		logger.Warningf("Failed to forcefully terminate lingering instances from cloud provider. Err: %v", err)
 	}
 
 	if freeInstances < DEFAULT_INSTANCE_BUFFER {
@@ -126,6 +155,16 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 
 	if err != nil {
 		return utils.MakeError("Failed to spin up instances, created %v, err: %v", createdInstances, err)
+	}
+
+	// Wait for instances to be ready on cloud provider
+	for _, createdInstance := range createdInstances {
+		err = s.Host.WaitForInstanceReady(scalingCtx, createdInstance)
+
+		if err != nil {
+			logger.Warningf("Failed to wait for instance %v to be ready. Err: %v", createdInstance.Name, err)
+			continue
+		}
 	}
 
 	// Check if we could create the desired number of instances
