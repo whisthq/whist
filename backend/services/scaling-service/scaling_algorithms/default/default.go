@@ -54,6 +54,9 @@ func (s *DefaultScalingAlgorithm) CreateEventChans() {
 	if s.ScheduledEventChan == nil {
 		s.ScheduledEventChan = make(chan ScalingEvent, 100)
 	}
+	if s.ImageEventChan == nil {
+		s.ImageEventChan = make(chan ScalingEvent, 100)
+	}
 	if s.ScheduledEventChan == nil {
 		s.ScheduledEventChan = make(chan ScalingEvent, 100)
 	}
@@ -99,25 +102,60 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 			select {
 			case instanceEvent := <-s.InstanceEventChan:
 				logger.Infof("Scaling algorithm received an instance database event with value: %v", instanceEvent)
+				instance := instanceEvent.Data.(subscriptions.Instance)
+
+				if instance.Status == "DRAINING" {
+					// Create context for scaling operation
+					scalingCtx, scalingCancel := context.WithCancel(context.Background())
+
+					err := s.VerifyInstanceScaleDown(scalingCtx, instanceEvent, instance)
+
+					// Cancel context once the operation is done
+					scalingCancel()
+
+					if err != nil {
+						logger.Errorf("Error verifying instance scale down. Error: %v", err)
+					}
+				}
+
 			case imageEvent := <-s.ImageEventChan:
 				logger.Infof("Scaling algorithm received an image database event with value: %v", imageEvent)
+				image := imageEvent.Data.(subscriptions.Image)
+
+				// Check if deploy has fired and is changing images
+
+				// Create context for scaling operation
+				scalingCtx, scalingCancel := context.WithCancel(context.Background())
+
+				err := s.UpgradeImage(scalingCtx, s.Host, imageEvent, image)
+
+				// Cancel context once the operation is done
+				scalingCancel()
+
+				if err != nil {
+					logger.Errorf("Error performing image upgrade. Error: %v", err)
+				}
+
 			case scheduledEvent := <-s.ScheduledEventChan:
 				switch scheduledEvent.Type {
 				case "SCHEDULED_SCALE_DOWN":
 					logger.Infof("Scaling algorithm received a scheduled scale down event with value: %v", scheduledEvent)
+					scalingCtx, scalingCancel := context.WithCancel(context.Background())
+
+					for _, region := range bundledRegions {
+						// scheduledEvent.Region = region
+						// err := s.ScaleUpIfNecessary(2, scalingCtx, scheduledEvent, "ami-0ef406ddccd08da93")
+						// logger.Error(err)
+
+						err := s.ScaleDownIfNecessary(scalingCtx, s.Host, scheduledEvent)
+						if err != nil {
+							logger.Errorf("Error running scale down job on region %v. Err: %v", region, err)
+						}
+					}
+
+					scalingCancel()
 				}
-
-			case scheduledEvent := <-s.ScheduledEventChan:
-				scalingCtx, scalingCancel := context.WithCancel(context.Background())
-
-				err := s.ScaleDownIfNecessary(scalingCtx, s.Host, scheduledEvent)
-				if err != nil {
-					logger.Errorf("Error running scale down job. Err: %v", err)
-				}
-
-				scalingCancel()
 			}
 		}
 	}()
-
 }

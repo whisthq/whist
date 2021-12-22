@@ -83,10 +83,21 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 
 	s.GraphQLClient.Query(scalingCtx, freeInstancesQuery, queryParams)
 
+	// Verify if there are free instances that can be scaled down
 	freeInstances := len(freeInstancesQuery.CloudInstanceInfo)
 	if freeInstances == 0 {
 		logger.Info("There are no available instances to scale down.")
 		return nil
+	}
+
+	if freeInstances == DEFAULT_INSTANCE_BUFFER {
+		logger.Info("Not scaling down instances as buffer is complete.")
+		return nil
+	}
+
+	if freeInstances < DEFAULT_INSTANCE_BUFFER {
+		logger.Warningf("Available instances are less than desired buffer, scaling up to match %v", DEFAULT_INSTANCE_BUFFER)
+		// TODO: ScaleUpIfNecessary()
 	}
 
 	logger.Info("Scaling down %v free instances.", freeInstances)
@@ -103,7 +114,23 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		}
 
 		logger.Info("Marked instance %v as draining on database.", instance)
+		// TODO: verify scale down for each drained instance
 	}
 
+	return nil
+}
+
+func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(scalingCtx context.Context, host hosts.HostHandler, event ScalingEvent) error {
+	return nil
+}
+
+func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, host hosts.HostHandler, event ScalingEvent, image subscriptions.Image) error {
+	// create instance buffer with new image
+
+	// wait for buffer to be ready
+
+	// drain instances with old image
+
+	// swapover active image on database
 	return nil
 }
