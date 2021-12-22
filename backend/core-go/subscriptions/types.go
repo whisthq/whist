@@ -38,6 +38,14 @@ type Mandelbox struct {
 	Status         string                     `json:"status"`
 }
 
+type Image struct {
+	ID         string `json:"ami_id"`
+	Region     string `json:"region_name"`
+	Active     bool   `json:"ami_active"`
+	CommitHash string `json:"client_commit_hash"`
+	Protected  bool   `json:"protected_from_scale_down"`
+}
+
 // handlerfn is used to send subscription handlers to the Subscribe function.
 type handlerfn func(SubscriptionEvent, map[string]interface{}) bool
 
@@ -64,6 +72,10 @@ type MandelboxResult struct {
 	CloudMandelboxInfo interface{} `json:"cloud_mandelbox_info"`
 }
 
+type ImageResult struct {
+	CloudMandelboxInfo interface{} `json:"cloud_region_to_ami"`
+}
+
 // SubscriptionEvent represents any event received from Hasura
 // subscriptions. We define a custom (empty) interface to make the
 // main select on `host-service.go` cleaner.
@@ -83,4 +95,8 @@ type InstanceEvent struct {
 // mandelbox_info database table.
 type MandelboxEvent struct {
 	MandelboxInfo []Mandelbox `json:"cloud_mandelbox_info"`
+}
+
+type ImageEvent struct {
+	ImageInfo []Mandelbox `json:"cloud_region_to_ami"`
 }

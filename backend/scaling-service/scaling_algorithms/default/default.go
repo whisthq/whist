@@ -41,16 +41,22 @@ type DefaultScalingAlgorithm struct {
 	Region             string
 	InstanceEventChan  chan ScalingEvent
 	MandelboxEventChan chan ScalingEvent
+	ImageEventChan     chan ScalingEvent
 	ScheduledEventChan chan ScalingEvent
 }
 
 // CreateEventChans creates the event channels if they don't alredy exist.
 func (s *DefaultScalingAlgorithm) CreateEventChans() {
+	// TODO: Only use one chan for database events and
+	// one for scheduled events
 	if s.InstanceEventChan == nil {
 		s.InstanceEventChan = make(chan ScalingEvent, 100)
 	}
 	if s.MandelboxEventChan == nil {
 		s.MandelboxEventChan = make(chan ScalingEvent, 100)
+	}
+	if s.ImageEventChan == nil {
+		s.ImageEventChan = make(chan ScalingEvent, 100)
 	}
 	if s.ScheduledEventChan == nil {
 		s.ScheduledEventChan = make(chan ScalingEvent, 100)
@@ -117,15 +123,38 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 				mandelbox := mandelboxEvent.Data.(subscriptions.Mandelbox)
 
 				if mandelbox.Status == "ALLOCATED" {
-					// TODO handle mandelbox assignation logic
+					// TODO: handle mandelbox assignation logic
+				}
+
+			case imageEvent := <-s.ImageEventChan:
+				image := imageEvent.Data.(subscriptions.Image)
+
+				// Check if deploy has fired and is changing images
+
+				// Create context for scaling operation
+				scalingCtx, scalingCancel := context.WithCancel(context.Background())
+
+				err := s.UpgradeImage(scalingCtx, s.Host, imageEvent, image)
+
+				// Cancel context once the operation is done
+				scalingCancel()
+
+				if err != nil {
+					logger.Errorf("Error performing image upgrade. Error: %v", err)
 				}
 
 			case scheduledEvent := <-s.ScheduledEventChan:
 				scalingCtx, scalingCancel := context.WithCancel(context.Background())
 
-				err := s.ScaleDownIfNecessary(scalingCtx, s.Host, scheduledEvent)
-				if err != nil {
-					logger.Errorf("Error running scale down job. Err: %v", err)
+				// TODO: create constant for bundlehd regions
+				allowedRegions := []string{"us-east", "us-west"}
+
+				// Scale down each region
+				for _, region := range allowedRegions {
+					err := s.ScaleDownIfNecessary(scalingCtx, s.Host, scheduledEvent)
+					if err != nil {
+						logger.Errorf("Error running scale down job on region %v. Err: %v", region, err)
+					}
 				}
 
 				scalingCancel()
