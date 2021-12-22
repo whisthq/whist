@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/hasura/go-graphql-client"
-	"github.com/whisthq/whist/core-go/subscriptions"
-	"github.com/whisthq/whist/core-go/utils"
-	logger "github.com/whisthq/whist/core-go/whistlogger"
-	"github.com/whisthq/whist/scaling-service/hosts"
+	"github.com/whisthq/whist/backend/core-go/subscriptions"
+	"github.com/whisthq/whist/backend/core-go/utils"
+	logger "github.com/whisthq/whist/backend/core-go/whistlogger"
+	"github.com/whisthq/whist/backend/scaling-service/hosts"
 )
 
 func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Context, host hosts.HostHandler, event ScalingEvent, instance subscriptions.Instance) error {
@@ -71,6 +71,40 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	}
 
 	logger.Infof("Deleted %v rows from database.", instanceDeleteMutation.MutationResponse.AffectedRows)
+
+	return nil
+}
+
+func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Context, host hosts.HostHandler, event ScalingEvent) error {
+	// check database for active instances without mandelboxes
+	freeInstancesQuery := &subscriptions.QueryFreeInstances
+	queryParams := map[string]interface{}{
+		"num_mandelboxes": graphql.Int(0),
+	}
+
+	s.GraphQLClient.Query(scalingCtx, freeInstancesQuery, queryParams)
+
+	freeInstances := len(freeInstancesQuery.CloudInstanceInfo)
+	if freeInstances == 0 {
+		logger.Info("There are no available instances to scale down.")
+		return nil
+	}
+
+	logger.Info("Scaling down %v free instances.", freeInstances)
+
+	drainMutation := &subscriptions.UpdateInstanceStatus
+	mutationParams := map[string]interface{}{
+		"status": graphql.String("DRAINING"),
+	}
+
+	for _, instance := range freeInstancesQuery.CloudInstanceInfo {
+		err := s.GraphQLClient.Mutate(scalingCtx, drainMutation, mutationParams)
+		if err != nil {
+			logger.Errorf("Failed to mark instance %v as draining.", instance)
+		}
+
+		logger.Info("Marked instance %v as draining on database.", instance)
+	}
 
 	return nil
 }

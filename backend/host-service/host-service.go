@@ -1053,7 +1053,7 @@ func main() {
 	}
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
 
-	subscriptionClient := &subscriptions.WhistSubscriptionClient{}
+	subscriptionClient := &subscriptions.SubscriptionClient{}
 	subscriptions.SetupHostSubscriptions(string(instanceName), subscriptionClient)
 	subscriptions.Start(subscriptionClient, globalCtx, &goroutineTracker, subscriptionEvents)
 	if err != nil {

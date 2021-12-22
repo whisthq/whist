@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
-	"github.com/whisthq/whist/core-go/subscriptions"
-	logger "github.com/whisthq/whist/core-go/whistlogger"
-	"github.com/whisthq/whist/scaling-service/hosts"
+	"github.com/whisthq/whist/backend/core-go/subscriptions"
+	logger "github.com/whisthq/whist/backend/core-go/whistlogger"
+	"github.com/whisthq/whist/backend/scaling-service/hosts"
 )
 
 // DEFAULT_INSTANCE_BUFFER is the number of instances that should always
@@ -121,7 +121,14 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 				}
 
 			case scheduledEvent := <-s.ScheduledEventChan:
+				scalingCtx, scalingCancel := context.WithCancel(context.Background())
 
+				err := s.ScaleDownIfNecessary(scalingCtx, s.Host, scheduledEvent)
+				if err != nil {
+					logger.Errorf("Error running scale down job. Err: %v", err)
+				}
+
+				scalingCancel()
 			}
 		}
 	}()

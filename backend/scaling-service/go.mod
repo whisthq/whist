@@ -1,14 +1,16 @@
-module github.com/whisthq/whist/scaling-service
+module github.com/whisthq/whist/backend/scaling-service
 
 go 1.17
 
-replace github.com/whisthq/whist/core-go => ../core-go/
+replace github.com/whisthq/whist/backend/core-go => ../core-go/
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.11.2
 	github.com/aws/aws-sdk-go-v2/config v1.11.0
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.25.0
-	github.com/whisthq/whist/core-go v0.0.0-00010101000000-000000000000
+	github.com/go-co-op/gocron v1.11.0
+	github.com/hasura/go-graphql-client v0.6.0
+	github.com/whisthq/whist/backend/core-go v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -26,12 +28,10 @@ require (
 	github.com/bgentry/heroku-go v0.0.0-20150810151148-ee4032d686ae // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/getsentry/sentry-go v0.11.0 // indirect
-	github.com/go-co-op/gocron v1.11.0 // indirect
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/hasura/go-graphql-client v0.5.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/klauspost/compress v1.10.3 // indirect
 	github.com/logzio/logzio-go v1.0.3 // indirect

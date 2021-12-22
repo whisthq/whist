@@ -29,7 +29,7 @@ func InstanceStatusHandler(event SubscriptionEvent, variables map[string]interfa
 	name := string(variables["instance_name"].(graphql.String))
 	status := string(variables["status"].(graphql.String))
 
-	return (instance.Status == status)
+	return (instance.Name == name) && (instance.Status == status)
 }
 
 // MandelboxAllocatedHandler handles events from the hasura subscription which
