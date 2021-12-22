@@ -131,7 +131,29 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 				logger.Infof("Sending to instance event chan")
 				scalingAlgorithm.InstanceEventChan <- scalingEvent
 
-			case *subscriptions.MandelboxEvent:
+			case *subscriptions.ImageEvent:
+				var scalingEvent sa.ScalingEvent
+
+				scalingEvent.Type = "INSTANCE_DATABASE_EVENT"
+
+				if len(subscriptionEvent.ImageInfo) > 0 {
+					image := subscriptionEvent.ImageInfo[0]
+
+					scalingEvent.Data = image
+					scalingEvent.Region = image.Region
+				}
+
+				// Start scaling algorithm based on region
+				logger.Infof("Received database event.")
+
+				algorithm, ok := algorithmByRegion.Load(scalingEvent.Region)
+				if !ok {
+					logger.Errorf("%v not found on algorithm map", scalingEvent.Region)
+				}
+				scalingAlgorithm := algorithm.(*sa.DefaultScalingAlgorithm)
+
+				logger.Infof("Sending to instance event chan")
+				scalingAlgorithm.ImageEventChan <- scalingEvent
 			}
 
 		case scheduledEvent := <-scheduledEvents:

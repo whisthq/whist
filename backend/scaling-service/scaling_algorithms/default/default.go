@@ -40,7 +40,6 @@ type DefaultScalingAlgorithm struct {
 	InstanceBuffer     *int32
 	Region             string
 	InstanceEventChan  chan ScalingEvent
-	MandelboxEventChan chan ScalingEvent
 	ImageEventChan     chan ScalingEvent
 	ScheduledEventChan chan ScalingEvent
 }
@@ -51,9 +50,6 @@ func (s *DefaultScalingAlgorithm) CreateEventChans() {
 	// one for scheduled events
 	if s.InstanceEventChan == nil {
 		s.InstanceEventChan = make(chan ScalingEvent, 100)
-	}
-	if s.MandelboxEventChan == nil {
-		s.MandelboxEventChan = make(chan ScalingEvent, 100)
 	}
 	if s.ImageEventChan == nil {
 		s.ImageEventChan = make(chan ScalingEvent, 100)
@@ -119,13 +115,6 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 					}
 				}
 
-			case mandelboxEvent := <-s.MandelboxEventChan:
-				mandelbox := mandelboxEvent.Data.(subscriptions.Mandelbox)
-
-				if mandelbox.Status == "ALLOCATED" {
-					// TODO: handle mandelbox assignation logic
-				}
-
 			case imageEvent := <-s.ImageEventChan:
 				image := imageEvent.Data.(subscriptions.Image)
 
@@ -146,7 +135,7 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 			case scheduledEvent := <-s.ScheduledEventChan:
 				scalingCtx, scalingCancel := context.WithCancel(context.Background())
 
-				// TODO: create constant for bundlehd regions
+				// TODO: create constant for bundled regions
 				allowedRegions := []string{"us-east", "us-west"}
 
 				// Scale down each region

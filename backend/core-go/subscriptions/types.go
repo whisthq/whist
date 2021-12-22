@@ -12,6 +12,7 @@ type HasuraParams struct {
 // Instance represents a row from the "instance_info" table
 // in the database. These fields are defined in queries.go
 type Instance struct {
+	IP                string `json:"ip"`
 	Location          string `json:"location"`
 	ImageID           string `json:"aws_ami_id"`
 	Type              string `json:"aws_instance_type"`
@@ -73,7 +74,7 @@ type MandelboxResult struct {
 }
 
 type ImageResult struct {
-	CloudMandelboxInfo interface{} `json:"cloud_region_to_ami"`
+	CloudImageInfo interface{} `json:"cloud_region_to_ami"`
 }
 
 // SubscriptionEvent represents any event received from Hasura
@@ -98,5 +99,5 @@ type MandelboxEvent struct {
 }
 
 type ImageEvent struct {
-	ImageInfo []Mandelbox `json:"cloud_region_to_ami"`
+	ImageInfo []Image `json:"cloud_region_to_ami"`
 }

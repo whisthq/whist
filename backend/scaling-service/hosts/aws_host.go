@@ -36,7 +36,7 @@ func (host *AWSHost) Initialize(region string) error {
 }
 
 // SpinDownInstances is responsible for launching `numInstances` number of instances with the received imageID.
-func (host *AWSHost) SpinUpInstances(numInstances *int32, imageID string) (int, error) {
+func (host *AWSHost) SpinUpInstances(numInstances *int32, imageID string) ([]subscriptions.Instance, error) {
 	ctx := context.Background()
 
 	// Set run input
@@ -48,22 +48,36 @@ func (host *AWSHost) SpinUpInstances(numInstances *int32, imageID string) (int, 
 
 	runOutput, err := host.EC2.RunInstances(ctx, runInput)
 
+	// Create slice with created instances
+	var outputInstances []subscriptions.Instance
+
+	for _, outputInstance := range runOutput.Instances {
+		outputInstances = append(outputInstances, subscriptions.Instance{
+			IP:              *outputInstance.PublicIpAddress,
+			ImageID:         *outputInstance.ImageId,
+			Type:            *outputInstance.PlatformDetails,
+			CloudProviderID: *outputInstance.InstanceId,
+			Name:            *outputInstance.Tags[0].Value,
+			Status:          "PRE_CONNECTION",
+		})
+	}
+
 	// Verify start output
 	startedInstances := int(*numInstances)
 	if len(runOutput.Instances) != startedInstances {
-		return startedInstances,
+		return outputInstances,
 			utils.MakeError("failed to start requested number of instances with parameters: %v. Number of started instances: %v",
 				runInput, len(runOutput.Instances))
 	}
 
 	if err != nil {
-		return 0, utils.MakeError("error starting instances with parameters: %v. Error: %v", runInput, err)
+		return outputInstances, utils.MakeError("error starting instances with parameters: %v. Error: %v", runInput, err)
 	}
-	return 0, nil
+	return outputInstances, nil
 }
 
 // SpinDownInstances is responsible for terminating the instances in `instanceIDs`.
-func (host *AWSHost) SpinDownInstances(instanceIDs []string) error {
+func (host *AWSHost) SpinDownInstances(instanceIDs []string) ([]subscriptions.Instance, error) {
 	ctx := context.Background()
 
 	terminateInput := &ec2.TerminateInstancesInput{
@@ -72,16 +86,25 @@ func (host *AWSHost) SpinDownInstances(instanceIDs []string) error {
 
 	terminateOutput, err := host.EC2.TerminateInstances(ctx, terminateInput)
 
+	// Create slice with created instances
+	var outputInstances []subscriptions.Instance
+
+	for _, outputInstance := range terminateOutput.TerminatingInstances {
+		outputInstances = append(outputInstances, subscriptions.Instance{
+			CloudProviderID: *outputInstance.InstanceId,
+		})
+	}
+
 	// Verify termination output
 	if len(terminateOutput.TerminatingInstances) != len(instanceIDs) {
-		return utils.MakeError("failed to terminate requested number of instances with parameters: %v. Number of terminated instances: %v",
+		return outputInstances, utils.MakeError("failed to terminate requested number of instances with parameters: %v. Number of terminated instances: %v",
 			terminateInput, len(terminateOutput.TerminatingInstances))
 	}
 
 	if err != nil {
-		return utils.MakeError("error terminating instance with id: %v. Error: %v", instanceIDs, err)
+		return outputInstances, utils.MakeError("error terminating instance with id: %v. Error: %v", instanceIDs, err)
 	}
-	return nil
+	return outputInstances, nil
 }
 
 // WaitForInstanceTermination waits until the given instance has been terminated on the

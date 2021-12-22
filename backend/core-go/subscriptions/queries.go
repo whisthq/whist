@@ -11,6 +11,7 @@ type GraphQLQuery interface{}
 
 // CloudInstanceInfo is the mapping of the `cloud_instance_info` table.
 type CloudInstanceInfo []struct {
+	IP                graphql.String `graphql:"ip"`
 	Location          graphql.String `graphql:"location"`
 	ImageID           graphql.String `graphql:"aws_ami_id"`
 	Type              graphql.String `graphql:"aws_instance_type"`
@@ -34,6 +35,14 @@ type CloudMandelboxInfo []struct {
 	SessionID      graphql.String `graphql:"session_id"`
 	CreationTimeMS graphql.Float  `graphql:"creation_time_utc_unix_ms"`
 	Status         graphql.String `graphql:"status"`
+}
+
+type CloudImageInfo []struct {
+	Region     graphql.String  `graphql:"region_name"`
+	ID         graphql.String  `graphql:"ami_id"`
+	Active     graphql.Boolean `graphql:"ami_active"`
+	CommitHash graphql.String  `graphql:"client_commit_hash"`
+	Protected  graphql.Boolean `graphql:"protected_from_scale_down"`
 }
 
 // QueryInstanceStatusByName returns an instance that matches the given instance_name and status.
