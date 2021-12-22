@@ -12,24 +12,17 @@ jobs:
     name: Label Pull Request
     runs-on: ubuntu-20.04
 
+    env:
+      PR_LABEL_PREFIX: "📁 Repo:"
+
     steps:
-      - name: Label Pull Request (.github and frontend subprojects)
+      - name: Label Pull Request (.github, backend, and frontend subprojects)
         uses: adamzolyak/monorepo-pr-labeler-action@3.1.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BASE_DIRS: ".github|frontend"
+          BASE_DIRS: ".github|frontend|backend"
         with:
-          # Match how we've been labeling our PRs before the action 3.0.0 changed
-          # its default behavior to remove the prefix.
-      - name: Label Pull Request (backend subprojects)
-        uses: adamzolyak/monorepo-pr-labeler-action@3.1.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BASE_DIRS: "backend"
-        with:
-          # Match how we've been labeling our PRs before the action 3.0.0 changed
-          # its default behavior to remove the prefix.
-          prefix: "📁 Repo:"
+          prefix: ${{ env.PR_LABEL_PREFIX }}
       - name: Label Pull Request (monorepo root)
         uses: adamzolyak/monorepo-pr-labeler-action@3.1.0
         env:
@@ -37,4 +30,4 @@ jobs:
         with:
           # Match how we've been labeling our PRs before the action 3.0.0 changed
           # its default behavior to remove the prefix.
-          prefix: "📁 Repo:"
+          prefix: ${{ env.PR_LABEL_PREFIX }}
