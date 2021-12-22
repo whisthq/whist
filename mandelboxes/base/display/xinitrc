@@ -27,7 +27,7 @@ echo "playerctld daemon started as PID: $playerctld_pid"
 
 # Start the AwesomeWM window manager and get the PID of the backgrounded process
 echo "Starting AwesomeWM in the background..."
-$RUN_AS_WHIST "awesome" &
+$RUN_AS_WHIST "dbus-launch --exit-with-session awesome" &
 awesome_pid=$!
 echo "AwesomeWM started as PID: $awesome_pid"
 
