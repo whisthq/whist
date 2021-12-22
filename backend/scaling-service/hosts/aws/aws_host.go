@@ -126,3 +126,7 @@ func (host *AWSHost) WaitForInstanceTermination(scalingCtx context.Context, inst
 
 	return nil
 }
+
+func (host *AWSHost) RetryInstanceSpinUp() {
+
+}

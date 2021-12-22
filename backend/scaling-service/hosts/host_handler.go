@@ -11,4 +11,5 @@ type HostHandler interface {
 	SpinUpInstances(numInstances *int32, imageID string) (createdInstances []subscriptions.Instance, err error)
 	SpinDownInstances(instanceIDs []string) (terminatedInstances []subscriptions.Instance, err error)
 	WaitForInstanceTermination(context.Context, subscriptions.Instance) error
+	RetryInstanceSpinUp()
 }

@@ -7,11 +7,8 @@ import (
 	"github.com/whisthq/whist/backend/core-go/subscriptions"
 	logger "github.com/whisthq/whist/backend/core-go/whistlogger"
 	"github.com/whisthq/whist/backend/scaling-service/hosts"
+	aws "github.com/whisthq/whist/backend/scaling-service/hosts/aws"
 )
-
-// DEFAULT_INSTANCE_BUFFER is the number of instances that should always
-// be running on each region.
-const DEFAULT_INSTANCE_BUFFER = 1
 
 // ScalingAlgorithm is the basic abstraction of the scaling service
 // that receives a stream of events and makes calls to the host handler.
@@ -79,7 +76,7 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 	if s.Host == nil {
 		// TODO when multi-cloud support is introduced, figure out a way to
 		// decide which host to use. For now default to AWS.
-		handler := &hosts.AWSHost{}
+		handler := &aws.AWSHost{}
 		err := handler.Initialize(s.Region)
 
 		if err != nil {
