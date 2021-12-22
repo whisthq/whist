@@ -463,7 +463,12 @@ const getBookmarks = async (
 const getExtensions = async (
   browser: InstalledBrowser
 ): Promise<string | undefined> => {
-  if (browser === undefined) return undefined
+  // If no browser is requested or the browser is not recognized, don't run anything
+  if (
+    browser === undefined ||
+    !Object.values(InstalledBrowser).includes(browser)
+  )
+    return undefined
 
   // For now we only want to get extensions for browsers that are compatible
   // with chrome extensions ie brave/chrome/chromium
