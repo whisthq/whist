@@ -259,10 +259,10 @@ browser_bookmarks = [
 @pytest.mark.parametrize("browser,browser_bookmark_path", browser_bookmarks)
 def test_create_bookmark_file(browser, browser_bookmark_path):
 
-    bookmark_content = "test_bookmark_content"
+    bookmark_content = json.dumps("test_bookmark_content")
 
     # Upload bookmarks
-    create_bookmark_file(browser, json.dumps(bookmark_content), browser_bookmark_path)
+    create_bookmark_file(browser, bookmark_content, browser_bookmark_path)
 
     # Get bookmarks file to test
     bookmark_file = get_or_create_cookie_file(browser, browser_bookmark_path)
@@ -275,7 +275,7 @@ def test_create_bookmark_file(browser, browser_bookmark_path):
 
 def test_extension_file():
     extension = "not_real_extension"
-    create_extension_files(extension, "./install-extension.sh")
+    create_extension_files(extension, "./tests/install-extension.sh")
 
     # Check if file is created from script
     assert os.path.isfile(f"./{extension}.json")
