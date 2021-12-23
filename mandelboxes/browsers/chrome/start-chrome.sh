@@ -60,6 +60,10 @@ flags+=(--flag-switches-end)
 # on the user settings.
 flags+=($INITIAL_URL)
 
+# Load D-Bus configurations from .xinitrc
+eval `cat /whist/dbus_config.txt`
+echo "d-bus address: $DBUS_SESSION_BUS_ADDRESS | pid: $DBUS_SESSION_BUS_PID"
+
 # Start Chrome
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
-exec google-chrome "${flags[@]}"
+DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID=$DBUS_SESSION_BUS_PID exec google-chrome "${flags[@]}"
