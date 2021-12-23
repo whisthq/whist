@@ -5,8 +5,8 @@ with the schema cloud. Each model's attributes are automatically loaded from dat
 column names when we call ``DeferredReflection.prepare()`` in ``app/utils/flask/factory.py``.
 
 Note that SQLAlchemy is unable to reflect primary key constraints from views automatically. For
-models representing SQL views (e.g. :class:`LingeringInstances`), the attribute representing the
-primary key column must be defined explicitly.
+models representing SQL views (e.g. :class:`InstancesWithRoomForMandelboxes`), the attribute
+representing the primary key column must be defined explicitly.
 """
 
 from enum import auto, Enum
@@ -28,7 +28,6 @@ class MandelboxHostState(str, NoValue):
     PRE_CONNECTION = "PRE_CONNECTION"
     ACTIVE = "ACTIVE"
     DRAINING = "DRAINING"
-    HOST_SERVICE_UNRESPONSIVE = "HOST_SERVICE_UNRESPONSIVE"
 
 
 class InstanceInfo(DeferredReflection, db.Model):  # type: ignore[name-defined]
@@ -48,7 +47,7 @@ class InstanceInfo(DeferredReflection, db.Model):  # type: ignore[name-defined]
         last_updated_utc_unix_ms (int): when did this instance last tell us it existed?
         creation_time_utc_unix_ms (int):  When was this instance created?
         aws_ami_id (str): what image is this machine based on?
-        status (str): either PRE_CONNECTION, ACTIVE, HOST_SERVICE_UNRESPONSIVE or DRAINING
+        status (str): either PRE_CONNECTION, ACTIVE, or DRAINING
         commit_hash (str): what commit hash of our infrastructure is this machine running?"""
 
     __tablename__ = "instance_info"
@@ -70,31 +69,6 @@ class InstancesWithRoomForMandelboxes(DeferredReflection, db.Model):  # type: ig
     """
 
     __tablename__ = "instances_with_room_for_mandelboxes"
-    __table_args__ = {"schema": "cloud"}
-
-    #: str: A string that uniquely identifies the instance.
-    instance_name = db.Column(db.String(), primary_key=True)
-
-
-class LingeringInstances(DeferredReflection, db.Model):  # type: ignore[name-defined]
-    """
-    A view detailing which instances haven't updated recently so we can manually
-    drain them.
-
-    Specifically, it's all instances that are listed as either active or preconnection,
-    but that have not updated in the db for the specified period of time:
-    2 min for running instances, 15 for preconnected instances
-    Or, instances that are not associated with a mandelbox with the status draining for
-    longer than 2 mins and possibly still updating in the db
-
-
-    Attributes:
-        instance_name (string): what is the instance called?
-        cloud_provider_id (string): What's it called on AWS?
-        status (string):  What's it's most recent status??
-    """
-
-    __tablename__ = "lingering_instances"
     __table_args__ = {"schema": "cloud"}
 
     #: str: A string that uniquely identifies the instance.

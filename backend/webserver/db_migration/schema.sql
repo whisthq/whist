@@ -220,23 +220,6 @@ CREATE VIEW cloud.instances_with_room_for_mandelboxes AS
 
 
 --
--- Name: lingering_instances; Type: VIEW; Schema: cloud; Owner: -
---
-
-CREATE VIEW cloud.lingering_instances AS
- SELECT instance_info.instance_name,
-    instance_info.cloud_provider_id,
-    instance_info.status
-   FROM cloud.instance_info
-  WHERE ((((((date_part('epoch'::text, now()) * (1000)::double precision))::bigint - instance_info.last_updated_utc_unix_ms) > 120000) AND ((instance_info.status)::text <> 'PRE_CONNECTION'::text)) OR (((((date_part('epoch'::text, now()) * (1000)::double precision))::bigint - instance_info.last_updated_utc_unix_ms) > 900000) AND ((((date_part('epoch'::text, now()) * (1000)::double precision))::bigint - instance_info.creation_time_utc_unix_ms) > 900000) AND ((instance_info.status)::text <> 'DRAINING'::text) AND ((instance_info.status)::text <> 'HOST_SERVICE_UNRESPONSIVE'::text)) OR ((((instance_info.status)::text = 'DRAINING'::text) OR ((instance_info.status)::text = 'HOST_SERVICE_UNRESPONSIVE'::text)) AND (NOT ((instance_info.instance_name)::text IN ( SELECT mandelbox_info.instance_name
-           FROM cloud.mandelbox_info))) AND ((((date_part('epoch'::text, now()) * (1000)::double precision))::bigint - ((date_part('epoch'::text, ( SELECT instance_status_changes."timestamp"
-           FROM cloud.instance_status_changes
-          WHERE (instance_status_changes.instance_name = (instance_info.instance_name)::text)
-          ORDER BY instance_status_changes."timestamp" DESC
-         LIMIT 1)) * (1000)::double precision))::bigint) > 120000)));
-
-
---
 -- Name: region_to_ami; Type: TABLE; Schema: cloud; Owner: -
 --
 

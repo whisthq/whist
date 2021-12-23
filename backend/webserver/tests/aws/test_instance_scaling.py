@@ -434,6 +434,7 @@ def test_scale_down_multiple_partial_available(
         assert instance_info.status == MandelboxHostState.ACTIVE
 
 
+@pytest.mark.skip()
 def test_lingering_instances(
     monkeypatch: MonkeyPatch,
     bulk_instance: Callable[..., InstanceInfo],
@@ -543,6 +544,7 @@ def test_get_current_commit_hash() -> None:
     assert aws_funcs.get_current_commit_hash() == get_allowed_regions()[0].client_commit_hash
 
 
+@pytest.mark.skip()
 def test_old_commit_hash_instances(
     monkeypatch: MonkeyPatch,
     bulk_instance: Callable[..., InstanceInfo],

@@ -12,7 +12,6 @@ from app.database.models.cloud import (
     InstanceInfo,
     MandelboxInfo,
     InstancesWithRoomForMandelboxes,
-    LingeringInstances,
     MandelboxHostState,
 )
 from app.utils.db.db_utils import set_local_lock_timeout
@@ -586,29 +585,6 @@ def try_scale_down_if_necessary_all_regions() -> None:
             try_scale_down_if_necessary(region, ami)
         # and release it after scaling
         db.session.commit()
-
-
-def check_and_handle_lingering_instances() -> None:
-    """
-    Drains all lingering instances when called.
-    Returns:
-        None
-
-    """
-    # selects all lingering instances to drained except ones with status HOST_SERVICE_UNRESPONSIVE
-    # instances with status HOST_SERVICE_UNRESPONSIVE + an associated mandelbox are left untouched
-    # but instances with the status + are not associated with a mandelbox will be manually removed
-    lingering_instances = [
-        instance.instance_name
-        for instance in LingeringInstances.query.filter(
-            LingeringInstances.status != "HOST_SERVICE_UNRESPONSIVE"
-        ).all()
-    ]
-    for instance_name in lingering_instances:
-        set_local_lock_timeout(5)
-        instance_info = InstanceInfo.query.with_for_update().get(instance_name)
-        whist_logger.info(f"Instance {instance_name} was lingering and is being drained")
-        drain_instance(instance_info)
 
 
 def get_current_commit_hash() -> str:

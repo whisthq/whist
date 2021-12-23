@@ -135,10 +135,10 @@ def register_commands(app: Flask) -> None:
         - app: Flask object
     """
 
-    from app.utils.flask.cli import command_bp, compute_bp
+    from app.utils.flask.cli import command_bp, region_cli
 
     app.register_blueprint(command_bp)
-    app.register_blueprint(compute_bp)
+    app.cli.add_command(region_cli)
 
 
 def register_blueprints(app: Flask) -> None:

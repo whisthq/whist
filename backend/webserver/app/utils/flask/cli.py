@@ -27,25 +27,30 @@ custom commands will appear in the ``flask help`` output and can be called as su
 
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List
 
+import boto3
 import click
 from flask import Blueprint, current_app
+from flask.cli import AppGroup
+from sqlalchemy.sql.expression import exists
 
-from app.helpers.aws.aws_instance_post import (
-    try_scale_down_if_necessary_all_regions,
-    check_and_handle_lingering_instances,
-    check_and_handle_instances_with_old_commit_hash,
+from app.database.models.cloud import (
+    db,
+    InstanceInfo,
+    MandelboxHostState,
+    MandelboxInfo,
+    RegionToAmi,
 )
 from app.helpers.ami.ami_upgrade import create_ami_buffer, swapover_amis
+from app.helpers.aws.aws_instance_post import _get_num_new_instances
 
 # This blueprint creates CLI commands that can be used to manipulate AMIs when it is registered to
 # a Flask application.
 command_bp = Blueprint("command", __name__, cli_group="ami")
-
-# This blueprint creates the flask compute subcommand when registered to a Flask application.
-# Further subcommands under flask compute allow us to manipulate compute resources.
-compute_bp = Blueprint("compute", __name__)
+region_cli = AppGroup("region", short_help="Manage compute capacity")
 
 
 @command_bp.cli.command("create_buffers")  # type: ignore
@@ -91,39 +96,65 @@ def swap_over_buffers(new_amis: str, amis_failed: str) -> None:
     swapover_amis(new_amis_list, amis_failed_bool)
 
 
-# In @owenniles's opinion, all CLI commands should contain hyphens rather than underscores. The
-# pattern of using hyphens over underscores when necessary is prevalent in established CLIs.
-@compute_bp.cli.command("scale-down-instances")  # type: ignore
-def scale_down() -> None:
-    """Scale compute resources down to the minimum required levels in all regions.
+@region_cli.command()  # type: ignore[misc]
+@click.argument("provider", required=True)
+@click.argument("region", required=True)
+def cleanup(provider: str, region: str) -> None:  # pylint: disable=unused-argument
+    """Terminate empty instances.
 
-    Schedule this command to run periodically to ensure that we are not paying for too much more
-    compute capacity than we need at any given time.
+    DRAINING instances that have no connected clients should be terminated. The purpose of this
+    operation is to save money and minimize clutter in the database.
     """
 
-    current_app.config["WHIST_ACCESS_TOKEN"] = os.environ["WHIST_ACCESS_TOKEN"]
-    try_scale_down_if_necessary_all_regions()
+    ec2 = boto3.resource("ec2")
+    instances = InstanceInfo.query.filter(
+        InstanceInfo.status == MandelboxHostState.DRAINING,
+        ~(exists().where(MandelboxInfo.instance_name == InstanceInfo.instance_name)),
+    )
+
+    # Terminate each instance individually rather than batch-terminating them. If a single instance
+    # in a batch-termination request cannot be terminated, the entire request will fail.
+    with ThreadPoolExecutor() as pool:
+        futures = []
+
+        for instance in instances:
+            future = pool.submit(ec2.Instance(instance.instance_name).terminate)
+            future.add_done_callback(db.session.delete(instance))
+            futures.append(future)
+
+    for i in range(len(futures)):
+        try:
+            futures[i]
+        except:
+            # The instance could not be terminated
+            pass
+        else:
+            # The instance was terminated successfully
+            pass
 
 
-@compute_bp.cli.command("prune-lingering-instances")  # type: ignore
-def prune() -> None:
-    """Identify and terminate compute instances left over from past deployments.
+@region_cli.command("scale-down")  # type: ignore[misc]
+@click.argument("provider", required=True)
+@click.argument("region", required=True)
+def scale_down(provider: str, region: str) -> None:  # pylint: disable=unused-argument
+    """Drain extraneous instances.
 
-    Schedule this command to run periodically to ensure that we are not paying for too much more
-    compute capacity than we need at any given time.
+    Extraneous instances include instances that were launched from old virtual machine images and
+    surplus ACTIVE instances.
     """
 
-    current_app.config["WHIST_ACCESS_TOKEN"] = os.environ["WHIST_ACCESS_TOKEN"]
-    check_and_handle_lingering_instances()
+    recent = (datetime.now(timezone.utc) - timedelta(hours=1)).timestamp()
+    active_ami_id = RegionToAmi.query.filter_by(region_name=region, ami_active=True).one().ami_id
+    count = _get_num_new_instances(region, active_ami_id)
 
-
-@compute_bp.cli.command("clean-old-commit-hash-instances")  # type: ignore
-def clean() -> None:
-    """Identify and drain compute instances with old commit hash.
-
-    Schedule this command to run periodically to ensure that we are not paying for too much more
-    compute capacity than we need at any given time.
-    """
-
-    current_app.config["WHIST_ACCESS_TOKEN"] = os.environ["WHIST_ACCESS_TOKEN"]
-    check_and_handle_instances_with_old_commit_hash()
+    InstanceInfo.query.filter(  # Instances launched from old virtual machine images
+        InstanceInfo.aws_ami_id != active_ami_id, InstanceInfo.creation_time_utc_unix_ms < recent
+    ).union(
+        InstanceInfo.query.filter(  # Surplus capacity
+            InstanceInfo.status == MandelboxHostState.ACTIVE,
+            InstanceInfo.aws_ami_id == active_ami_id,
+            ~(exists().where(MandelboxInfo.instance_name == InstanceInfo.instance_name)),
+        ).limit(abs(min(count, 0)))
+    ).update(
+        {"status": MandelboxHostState.DRAINING}
+    )
