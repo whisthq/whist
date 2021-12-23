@@ -474,7 +474,7 @@ def drain_instance(instance: InstanceInfo) -> None:
     elif not check_instance_exists(get_instance_id(instance), instance.location):
         whist_logger.info(
             f"deleting instance {instance.instance_name} from DB since its state in AWS is already"
-            " stopped/terminated."
+            " stopped/terminated (or nonexistent)."
         )
         db.session.delete(instance)
         db.session.commit()
