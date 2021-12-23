@@ -447,12 +447,12 @@ def test_lingering_instances(
     status last changed > 2 mins
 
     """
-    call_set = set()
+    drain_call_set = set()
 
-    def _helper(instance: InstanceInfo) -> None:
-        call_set.add(instance.instance_name)
+    def _mock_drain_instance(instance: InstanceInfo) -> None:
+        drain_call_set.add(instance.instance_name)
 
-    monkeypatch.setattr(aws_funcs, "drain_instance", _helper)
+    monkeypatch.setattr(aws_funcs, "drain_instance", _mock_drain_instance)
 
     # A draining instance which status last updated 2 mins ago and
     # has NO associated mandelbox should be included to lingering_instances
@@ -528,7 +528,7 @@ def test_lingering_instances(
         last_updated_utc_unix_ms=((time() - 18000001) * 1000),
     )
     aws_funcs.check_and_handle_lingering_instances()
-    assert call_set == {
+    assert drain_call_set == {
         instance_bad_normal.instance_name,
         instance_bad_preconnect.instance_name,
         instance_no_associated_mandelbox.instance_name,
@@ -552,12 +552,12 @@ def test_old_commit_hash_instances(
     Tests that old_commit_hash_instances properly drains only those instances that are
     associated with an old commit hash
     """
-    call_set = set()
+    drain_call_set = set()
 
-    def _helper(instance: InstanceInfo) -> None:
-        call_set.add(instance.instance_name)
+    def _mock_drain_instance(instance: InstanceInfo) -> None:
+        drain_call_set.add(instance.instance_name)
 
-    monkeypatch.setattr(aws_funcs, "drain_instance", _helper)
+    monkeypatch.setattr(aws_funcs, "drain_instance", _mock_drain_instance)
 
     # Create an instance with an old commit hash but is protected
     set_protected_region_to_ami(region_name, "inactive_ami_v2", "old_commit_hash_v2", False)
@@ -612,7 +612,7 @@ def test_old_commit_hash_instances(
         creation_time_utc_unix_ms=time() * 1000,
     )
     aws_funcs.check_and_handle_instances_with_old_commit_hash()
-    assert call_set == {
+    assert drain_call_set == {
         instances_with_old_commit_hash.instance_name,
     }
 

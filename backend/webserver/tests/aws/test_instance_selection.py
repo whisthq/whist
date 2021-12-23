@@ -139,8 +139,8 @@ def test_assignment_logic(bulk_instance: Callable[..., InstanceInfo], location: 
     ), f"we assigned an already full instance in the secondary region, {replacement_region}"
     bulk_instance(location=replacement_region, instance_name="replacement-mandelbox")
     assert find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING) is not None, (
-        f"we failed to find the available instance "
-        f"in the replacement region {replacement_region}"
+        "we failed to find the available instance in the replacement region"
+        f" {replacement_region} for original region {location}."
     )
     bulk_instance(location=location, instance_name="main-mandelbox")
     instance_name = find_instance(location, CLIENT_COMMIT_HASH_FOR_TESTING)

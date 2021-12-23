@@ -94,7 +94,7 @@ def get_instance_id(instance: InstanceInfo) -> str:
     Returns:
         the EC2 ID of that instance
     """
-    return str(instance.cloud_provider_id.strip("aws-"))
+    return str(instance.cloud_provider_id.removeprefix("aws-"))
 
 
 def check_instance_exists(instance_id: str, location: str) -> bool:
@@ -471,6 +471,14 @@ def drain_instance(instance: InstanceInfo) -> None:
     if not instance:
         whist_logger.info("skipping drain_instance as instance is None")
         return
+    elif not check_instance_exists(get_instance_id(instance), instance.location):
+        whist_logger.info(
+            f"deleting instance {instance.instance_name} from DB since its state in AWS is already"
+            " stopped/terminated (or nonexistent)."
+        )
+        db.session.delete(instance)
+        db.session.commit()
+        return
     elif (
         instance.status == MandelboxHostState.PRE_CONNECTION
         or instance.ip is None
@@ -490,8 +498,8 @@ def drain_instance(instance: InstanceInfo) -> None:
         terminate_instance(instance)
     else:
         # We need to modify the status to DRAINING to ensure that we don't assign a new
-        # mandelbox to the instance. We need to commit here as we don't want to enter a
-        # deadlock with host service where it tries to modify the instance_info row.
+        # mandelbox to the instance. We commit here to avoid entering a
+        # deadlock with host service if it tries to modify the instance_info row.
         instance.status = MandelboxHostState.DRAINING
         db.session.commit()
 

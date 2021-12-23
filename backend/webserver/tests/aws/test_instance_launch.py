@@ -13,7 +13,7 @@ from app.helpers.ami.ami_upgrade import (
     create_ami_buffer,
     swapover_amis,
 )
-from app.helpers.aws.aws_instance_post import do_scale_up_if_necessary
+from app.helpers.aws import aws_instance_post
 from app.utils.aws.base_ec2_client import EC2Client
 from app.utils.general.name_generation import generate_name
 from app.constants.ec2_instance_states import EC2InstanceState
@@ -65,7 +65,9 @@ def test_fail_disabled_instance_launch(
         randomized_ami = random.choice(all_amis)
         region_name = randomized_ami.region_name
         set_amis_state([randomized_ami], False)
-        do_scale_up_if_necessary(region_name, randomized_ami.ami_id, flask_app=app)
+        aws_instance_post.do_scale_up_if_necessary(
+            region_name, randomized_ami.ami_id, flask_app=app
+        )
         assert len(call_list) == 0
 
 
@@ -84,7 +86,9 @@ def test_success_enabled_instance_launch(
         randomized_ami = random.choice(all_amis)
         region_name = randomized_ami.region_name
         set_amis_state([randomized_ami], True)
-        do_scale_up_if_necessary(region_name, randomized_ami.ami_id, 1, flask_app=app)
+        aws_instance_post.do_scale_up_if_necessary(
+            region_name, randomized_ami.ami_id, 1, flask_app=app
+        )
         assert len(call_list) == 1
         assert call_list[0]["kwargs"]["image_id"] == randomized_ami.ami_id
 
@@ -137,12 +141,14 @@ def test_perform_ami_upgrade(
     - Check if we are marking the AMIs that are active before the AMI upgrade are
     marked as inactive.
     - Check if we are marking the newer AMIs are marked as inactive.
-    - Mark the instances that are running(in ACTIVE or PRE_CONNECTION) state for draining
-    by calling the `drain_and_shutdown` endpoint on the host_service.
+    - Mark the instances that are running (in ACTIVE or PRE_CONNECTION state) for draining.
     """
 
     monkeypatch.setitem(app.config, "WHIST_ACCESS_TOKEN", "dummy-access-token")
 
+    # We mock the `launch_new_ami_buffer` to capture the function calls
+    # and check args to ensure that we are upgrading the appropriate region
+    # with the correct AMI.
     launch_new_ami_buffer_calls: List[Dict[str, Any]] = []
 
     def _mock_launch_new_ami_buffer(*args: Any, **kwargs: Any) -> None:
@@ -154,36 +160,43 @@ def test_perform_ami_upgrade(
         thread_status_index = 1
         ami_upgrade.region_wise_upgrade_threads[thread_index][thread_status_index] = True
 
-    # We are mocking the `launch_new_ami_buffer` to capture the function calls
-    # and check args to ensure that we are upgrading the appropriate region
-    # with the correct AMI.
     monkeypatch.setattr(ami_upgrade, "launch_new_ami_buffer", _mock_launch_new_ami_buffer)
 
+    # We mock `fetch_current_running_instances` to return a list of mock
+    # instances that are running with older AMIs. We will be checking that the
+    # instances returned are being drained.
     num_running_instances = 10
+    random_running_instances = [
+        bulk_instance(
+            instance_name=generate_name("current_running_instance", True),
+            status=random.choice([MandelboxHostState.ACTIVE, MandelboxHostState.PRE_CONNECTION]),
+        )
+        for _ in range(num_running_instances)
+    ]
 
     def _mock_instance_info_query(
         *args: Any, **kwargs: Any  # pylint: disable=unused-argument
     ) -> List[InstanceInfo]:
-        return [
-            bulk_instance(
-                instance_name=generate_name("current_running_instance", True),
-                status=random.choice(
-                    [MandelboxHostState.ACTIVE, MandelboxHostState.PRE_CONNECTION]
-                ),
-            )
-            for _ in range(num_running_instances)
-        ]
+        return random_running_instances
 
-    # We mock `fetch_current_running_instances` to return a list of mock
-    # instances that are running with older AMIs. We will be checking that the
-    # instances returned are being passed to drain_and_shutdown.
     monkeypatch.setattr(ami_upgrade, "fetch_current_running_instances", _mock_instance_info_query)
 
-    # The following make instances appear active so that we can attempt to drain them.
+    # We mock _active_instances to make instances appear active so that we can
+    # attempt to drain them.
     def _active_instances(*args: Any, **kwargs: Any) -> str:  # pylint: disable=unused-argument
         return EC2InstanceState.RUNNING
 
     monkeypatch.setattr(EC2Client, "get_instance_states", _active_instances)
+
+    # We also mock the calls to drain_instance to avoid errors from trying to
+    # terminate bogus instances with boto3. The functionality of drain_instance
+    # is also tested separately so we can do this with confidence.
+    drain_call_set = set()
+
+    def _mock_drain_instance(instance: InstanceInfo) -> None:
+        drain_call_set.add(instance.instance_name)
+
+    monkeypatch.setattr(ami_upgrade, "drain_instance", _mock_drain_instance)
 
     region_current_active_ami_map = {}
     current_active_amis = RegionToAmi.query.filter_by(ami_active=True).all()
@@ -223,3 +236,6 @@ def test_perform_ami_upgrade(
         launch_new_ami_buffer_args = launch_new_ami_buffer_call["args"]
         assert launch_new_ami_buffer_args[0] == region
         assert launch_new_ami_buffer_args[1] == new_ami
+
+    # Check that we did indeed drain all the prior-running instances.
+    assert drain_call_set == {x.instance_name for x in random_running_instances}
