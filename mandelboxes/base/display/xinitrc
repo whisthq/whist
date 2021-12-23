@@ -25,9 +25,26 @@ echo "playerctld daemon started as PID: $playerctld_pid"
 # but not in-between as this can lead to a race condition between AwesomeWM and DPI setting
 /usr/share/whist/update-whist-dpi.sh
 
+# Start D-Bus
+dbus_result=`$RUN_AS_WHIST "dbus-launch --sh-syntax --exit-with-x11"`
+
+# Extract environment variables for D-Bus configuration
+search_str="DBUS_SESSION_BUS_ADDRESS"
+prefix=${dbus_result%%$search_str*}
+tot_len=${#dbus_result}
+prefix_len=${#prefix}
+
+dbus_env_cmd=`echo $dbus_result | cut -c $prefix_len-$tot_len`
+echo "DBUS LOGGING CMD: $dbus_env_cmd"
+eval "$dbus_env_cmd"
+echo "d-bus address: $DBUS_SESSION_BUS_ADDRESS | pid: $DBUS_SESSION_BUS_PID"
+
+# Dump D-Bus configuration commands to file
+echo $dbus_env_cmd > /whist/dbus_config.txt
+
 # Start the AwesomeWM window manager and get the PID of the backgrounded process
 echo "Starting AwesomeWM in the background..."
-$RUN_AS_WHIST "dbus-launch --exit-with-session awesome" &
+$RUN_AS_WHIST "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID=$DBUS_SESSION_BUS_PID awesome" &
 awesome_pid=$!
 echo "AwesomeWM started as PID: $awesome_pid"
 
