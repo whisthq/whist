@@ -118,20 +118,23 @@ run: build
 # handling for Ctrl+C does not work. We also create the symlink below so that
 # the host service can use the `ubuntu` account's aws credentials to run,
 # even though it runs as root.
-ifeq ("$(wildcard /root/.aws/*)","")
-	sudo ln -sf /home/ubuntu/.aws /root/.aws
+ifeq ("$(wildcard $(HOME)/.aws/*)","")
+	sudo ln -sf -T "$(shell sudo --preserve-env=PATH sh -c 'cd ~ && pwd')/.aws" "$(HOME)/.aws"
 endif
 	sudo env "PATH=$(PATH)" APP_ENV=localdev $(BUILD_FOLDER)/$(BINARY_NAME)
 
 runlocaldevwithdb: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with localdevwithdb configuration...)
-ifeq ("$(wildcard /root/.aws/*)","")
-	sudo ln -sf /home/ubuntu/.aws /root/.aws
+ifeq ("$(wildcard $(HOME)/.aws/*)","")
+	sudo ln -sf -T "$(shell sudo --preserve-env=PATH sh -c 'cd ~ && pwd')/.aws" "$(HOME)/.aws"
 endif
 	sudo env "PATH=$(PATH)" APP_ENV=localdevwithdb $(BUILD_FOLDER)/$(BINARY_NAME)
 
 rundev: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with dev configuration...)
+ifeq ("$(wildcard $(HOME)/.aws/*)","")
+	sudo ln -sf -T "$(shell sudo --preserve-env=PATH sh -c 'cd ~ && pwd')/.aws" "$(HOME)/.aws"
+endif
 	sudo env "PATH=$(PATH)" APP_ENV=dev USE_PROD_LOGGING=0 $(BUILD_FOLDER)/$(BINARY_NAME)
 
 .PHONY: build clean run rundev format lint vet check
