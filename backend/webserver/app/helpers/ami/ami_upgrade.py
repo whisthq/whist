@@ -5,14 +5,13 @@ import requests
 from flask import current_app, Flask
 from sqlalchemy import or_, and_
 
-from app.database.models.cloud import db, RegionToAmi, InstanceInfo
+from app.database.models.cloud import db, RegionToAmi, InstanceInfo, MandelboxHostState
 from app.utils.general.logs import whist_logger
 from app.helpers.aws.aws_instance_post import (
     do_scale_up_if_necessary,
     drain_instance,
 )
 from app.helpers.aws.aws_instance_state import _poll
-from app.constants.mandelbox_host_states import MandelboxHostState
 
 #  This list allows thread success to be passed back to the main thread.
 #  It is thread-safe because lists in Python are thread-safe.

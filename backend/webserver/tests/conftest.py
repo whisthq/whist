@@ -19,6 +19,7 @@ from app.database.models.cloud import (
     db,
     InstanceInfo,
     RegionToAmi,
+    MandelboxHostState,
 )
 from app.utils.flask.flask_handlers import set_web_requests_status
 from app.utils.signal_handler.signals import WebSignalHandler
@@ -152,7 +153,7 @@ def bulk_instance() -> Generator[
             aws_ami_id=kwargs.get("aws_ami_id", "test"),
             aws_instance_type=kwargs.get("aws_instance_type", "test_type"),
             last_updated_utc_unix_ms=kwargs.get("last_updated_utc_unix_ms", 10),
-            status=kwargs.get("status", "ACTIVE"),
+            status=kwargs.get("status", MandelboxHostState.ACTIVE),
             commit_hash=kwargs.get("commit_hash", CLIENT_COMMIT_HASH_FOR_TESTING),
         )
 

@@ -3,7 +3,7 @@ from typing import Callable
 
 import pytest
 
-from app.database.models.cloud import InstanceInfo
+from app.database.models.cloud import InstanceInfo, MandelboxHostState
 from app.helpers.aws.aws_instance_post import find_instance, bundled_region
 from app.constants.mandelbox_assign_error_names import MandelboxAssignError
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING, INCORRECT_COMMIT_HASH_FOR_TESTING
@@ -90,7 +90,9 @@ def test_no_find_pre_connected_instance(
     """
     Confirms that we don't find a pre-connection instance
     """
-    _ = bulk_instance(location=region_name, associated_mandelboxes=0, status="PRE_CONNECTION")
+    _ = bulk_instance(
+        location=region_name, associated_mandelboxes=0, status=MandelboxHostState.PRE_CONNECTION
+    )
     assert (
         find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING)
         is MandelboxAssignError.NO_INSTANCE_AVAILABLE
