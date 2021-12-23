@@ -9,6 +9,7 @@ require (
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/getsentry/sentry-go v0.11.0
 	github.com/google/uuid v1.3.0
+	github.com/gorilla/websocket v1.4.1
 	github.com/hasura/go-graphql-client v0.6.0
 	github.com/logzio/logzio-go v1.0.3
 )
