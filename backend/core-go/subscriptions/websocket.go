@@ -3,6 +3,7 @@ package subscriptions // import "github.com/whisthq/whist/backend/core-go/subscr
 import (
 	"context"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -25,7 +26,17 @@ func (wh *WhistWebsocketHandler) WriteJSON(v interface{}) error {
 // ReadJSON reads the next JSON-encoded message from the connection and stores
 // it in the value pointed to by v.
 func (wh *WhistWebsocketHandler) ReadJSON(v interface{}) error {
-	return wh.Conn.ReadJSON(v)
+	err := wh.Conn.ReadJSON(v)
+
+	// This error always fires when shutting down the Hasura client because we close
+	// the websocket concurrently. As it is not a harmful error we supress it here to
+	// avoid clogging sentry with it.
+	// See: https://github.com/gorilla/websocket/issues/439
+	if (err != nil) && (strings.Contains(err.Error(), "write tcp use of closed network connection")) {
+		return nil
+	}
+
+	return err
 }
 
 // Close closes the underlying network connection without sending or waiting
