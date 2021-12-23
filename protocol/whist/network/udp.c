@@ -276,7 +276,7 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payloa
     }
 
     if (fec_encoder) {
-        free_fec_encoder(fec_encoder);
+        destroy_fec_encoder(fec_encoder);
     }
 
     return 0;
