@@ -71,15 +71,26 @@ void print_os_info() {
         buildlab[0] = '\0';
     }
 
-    char win_o_sstring[512];
-    snprintf(win_o_sstring, sizeof(win_o_sstring), "%s %s.%s", product, version, buildlab);
+    char win_os_string[512];
+    snprintf(win_os_string, sizeof(win_os_string), "%s %s.%s", product, version, buildlab);
+
+    int win_os_bitness;
+#if defined(_WIN64)
+    // 64-bit process must be running on 64-bit OS.
+    win_os_bitness = 64;
+#else
+    // 32-bit process could be running on either, so test whether it is
+    // running under WOW64 and therefore on 64-bit OS.
+    BOOL wow64;
+    if (IsWow64Process(GetCurrentProcess(), &wow64))
+        win_os_bitness = wow64 ? 64 : 32;
+    else
+        win_os_bitness = 32;
+#endif
 #endif
 
 #ifdef _WIN32
-    snprintf(buf, sizeof(buf), "32-bit %s", win_o_sstring);
-    LOG_INFO("  OS: %s", buf);
-#elif _WIN64
-    snprintf(buf, sizeof(buf), "64-bit %s", winOSstring);
+    snprintf(buf, sizeof(buf), "%d-bit %s", win_os_bitness, win_os_string);
     LOG_INFO("  OS: %s", buf);
 #elif __APPLE__ || __MACH__
     char* os_version = NULL;
