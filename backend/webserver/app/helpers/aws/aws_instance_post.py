@@ -94,7 +94,7 @@ def get_instance_id(instance: InstanceInfo) -> str:
     Returns:
         the EC2 ID of that instance
     """
-    return str(instance.cloud_provider_id.lstrip("aws-"))
+    return str(instance.cloud_provider_id.removeprefix("aws-"))
 
 
 def check_instance_exists(instance_id: str, location: str) -> bool:
