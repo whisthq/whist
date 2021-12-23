@@ -57,7 +57,7 @@ extern volatile CodecType output_codec_type;
 extern volatile double latency;
 
 // START VIDEO VARIABLES
-volatile bool initialized_video_renderer = false;
+volatile bool initialized_video = false;
 volatile bool initialized_video_buffer = false;
 
 #define BITRATE_BUCKET_SIZE 500000
@@ -394,10 +394,39 @@ void init_video() {
     /*
         Initializes the video system
     */
-    initialized_video_renderer = false;
+
+    initialized_video = false;
+
+    // Initialize everything
     memset(&video_data, 0, sizeof(video_data));
     video_ring_buffer = init_ring_buffer(PACKET_VIDEO, RECV_FRAMES_BUFFER_SIZE, nack_packet);
     initialized_video_buffer = true;
+    working_mbps = STARTING_BITRATE;
+    has_video_rendered_yet = false;
+    video_data.sws = NULL;
+    client_max_bitrate = STARTING_BITRATE;
+    video_data.target_mbps = STARTING_BITRATE;
+    video_data.pending_ctx = NULL;
+    video_data.frames_received = 0;
+    video_data.bytes_transferred = 0;
+    start_timer(&video_data.frame_timer);
+    video_data.last_statistics_id = 1;
+    video_data.last_rendered_id = 0;
+    video_data.most_recent_iframe = -1;
+    video_data.bucket = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
+    start_timer(&video_data.last_iframe_request_timer);
+
+    // Init loading animation variables
+    video_data.loading_index = 0;
+    start_timer(&video_data.last_loading_frame_timer);
+    // Present first frame of loading animation
+    sdl_update_framebuffer_loading_screen(video_data.loading_index);
+    sdl_render_framebuffer();
+    // Then progress the animation
+    video_data.loading_index++;
+
+    // Mark as initialized and return
+    initialized_video = true;
 }
 
 int last_rendered_index = 0;
@@ -495,48 +524,6 @@ int32_t receive_video(WhistPacket* packet) {
     return 0;
 }
 
-int init_video_renderer() {
-    /*
-        Initialize the video renderer. Used as a thread function.
-
-        Return:
-            (int): 0 on success, -1 on failure
-    */
-
-    LOG_INFO("Initializing video renderer");
-
-    // mbps that currently works
-    working_mbps = STARTING_BITRATE;
-
-    has_video_rendered_yet = false;
-
-    video_data.sws = NULL;
-    client_max_bitrate = STARTING_BITRATE;
-    video_data.target_mbps = STARTING_BITRATE;
-    video_data.pending_ctx = NULL;
-    video_data.frames_received = 0;
-    video_data.bytes_transferred = 0;
-    start_timer(&video_data.frame_timer);
-    video_data.last_statistics_id = 1;
-    video_data.last_rendered_id = 0;
-    video_data.most_recent_iframe = -1;
-    video_data.bucket = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
-    start_timer(&video_data.last_iframe_request_timer);
-
-    // Init loading animation variables
-    video_data.loading_index = 0;
-    start_timer(&video_data.last_loading_frame_timer);
-    // Present first frame of loading animation
-    sdl_update_framebuffer_loading_screen(video_data.loading_index);
-    sdl_render_framebuffer();
-    // Then progress the animation
-    video_data.loading_index++;
-
-    // Mark as initialized and return
-    initialized_video_renderer = true;
-    return 0;
-}
-
 int render_video() {
     /*
         Render the video screen that the user sees
@@ -547,7 +534,7 @@ int render_video() {
         Return:
             (int): 0 on success, -1 on failure
     */
-    if (!initialized_video_renderer) {
+    if (!initialized_video) {
         LOG_ERROR("Video rendering is not initialized!");
         return -1;
     }
@@ -763,8 +750,8 @@ void destroy_video() {
         Free the video thread and VideoContext data to exit
     */
 
-    if (!initialized_video_renderer) {
-        LOG_WARNING("Destroying video, but never called init_video_renderer");
+    if (!initialized_video) {
+        LOG_WARNING("Destroying video, but never called init_video");
     } else {
         // Destroy the ring buffer
         destroy_ring_buffer(video_ring_buffer);

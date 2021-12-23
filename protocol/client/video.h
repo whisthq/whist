@@ -64,11 +64,6 @@ int32_t receive_video(WhistPacket* packet);
 void update_video();
 
 /**
- * @brief                          Initialize the video renderer
- */
-int init_video_renderer();
-
-/**
  * @brief                          Render the video frame (If any are available to render)
  */
 int render_video();
