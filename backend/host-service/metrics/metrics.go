@@ -13,8 +13,6 @@ import (
 	"github.com/whisthq/whist/backend/core-go/utils"
 	logger "github.com/whisthq/whist/backend/core-go/whistlogger"
 
-	"github.com/NVIDIA/go-nvml/pkg/nvml"
-
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/host"
@@ -185,11 +183,11 @@ func startCollectionGoroutine(frequency time.Duration) error {
 		return utils.MakeError("The frequency passed to StartMetricsCollection must be at least one 1.5 seconds to avoid performance issues.")
 	}
 
-	// Initialize necessary libraries (i.e. NVML). Don't forget to uninitialize
+	// Initialize necessary libraries (e.g. NVML). Don't forget to uninitialize
 	// them below (we can't use defer here since we're returning from this
 	// function).
-	if nvmlRet := nvml.Init(); nvmlRet != nvml.SUCCESS {
-		return utils.MakeError("Unable to initialize NVML for metrics collection.")
+	if err := initializeGPUMetricsCollector(); err != nil {
+		return utils.MakeError("Couldn't initialize GPU metrics collector: %v", err)
 	}
 
 	// We do the first batch of metrics collection before returning, so that any
@@ -223,10 +221,8 @@ func startCollectionGoroutine(frequency time.Duration) error {
 
 				logger.Infof("Shutting down metrics collection goroutine.")
 
-				// Uninitialize libraries (i.e. NVML).
-				if nvmlRet := nvml.Shutdown(); nvmlRet != nvml.SUCCESS {
-					logger.Errorf("Error shutting down NVML library.")
-				}
+				// Uninitialize GPU libraries (e.g. NVML).
+				shutdownGPUMetricsCollector()
 
 				utils.StopAndDrainTimer(timer)
 				return
@@ -304,48 +300,7 @@ func collectOnce() (RuntimeMetrics, []error) {
 	}
 
 	// GPU stats
-	if numGPUs, nvmlRet := nvml.DeviceGetCount(); nvmlRet != nvml.SUCCESS {
-		errs = append(errs, utils.MakeError("Error getting GPU count"))
-		newMetrics.NumberOfGPUs = -1
-	} else {
-		newMetrics.NumberOfGPUs = numGPUs
-
-		var totalVramKB uint64 = 0
-		var usedVramKB uint64 = 0
-		var totalKernelUtilPercent uint32 = 0
-		var totalMemBandwidthUtilPercent uint32 = 0
-		for i := 0; i < numGPUs; i++ {
-			if device, nvmlRet := nvml.DeviceGetHandleByIndex(i); nvmlRet != nvml.SUCCESS {
-				errs = append(errs, utils.MakeError("Couldn't get NVIDIA device at index %v", i))
-				break
-			} else {
-				if memInfo, nvmlRet := nvml.DeviceGetMemoryInfo(device); nvmlRet != nvml.SUCCESS {
-					errs = append(errs, utils.MakeError("Couldn't get video memory info for device at NVML index %v", i))
-					break
-				} else {
-					totalVramKB += memInfo.Total / 1024
-					usedVramKB += memInfo.Used / 1024
-					// For some reason, NVML always returns 0 for memInfo.Free, so we do
-					// the free calculation ourselves below.
-				}
-
-				if util, nvmlRet := nvml.DeviceGetUtilizationRates(device); nvmlRet != nvml.SUCCESS {
-					errs = append(errs, utils.MakeError("Couldn't get utilization info for device at NVML index %v", i))
-					break
-				} else {
-					totalKernelUtilPercent += util.Gpu
-					totalMemBandwidthUtilPercent += util.Memory
-				}
-			}
-		}
-
-		newMetrics.TotalVideoMemoryKB = totalVramKB
-		newMetrics.UsedVideoMemoryKB = usedVramKB
-		newMetrics.FreeVideoMemoryKB = totalVramKB - usedVramKB
-
-		newMetrics.GPUKernelUtilizationPercent = float64(totalKernelUtilPercent) / float64(numGPUs)
-		newMetrics.GPUMemoryBandwidthUtilizationPercent = float64(totalMemBandwidthUtilPercent) / float64(numGPUs)
-	}
+	errs = append(errs, newMetrics.collectGPUMetrics()...)
 
 	// Load stats
 	if avgStat, err := load.Avg(); err != nil {
