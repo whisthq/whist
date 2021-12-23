@@ -46,6 +46,7 @@ const esbuildCommand = [
   "--external:knex",
   "--external:workerjs",
   "--external:@m-lab/ndt7",
+  "--external:keyboard-layout-manager",
   "--external:keyboard-layout",
 ]
 // We minify our output to make this less convenient for snooping users.
@@ -168,6 +169,7 @@ module.exports = {
       "keytar",
       "x11",
       "node:path",
+      "keyboard-layout",
     ],
     // We ask Snowpack to polyfill and NodeJS APIs that it can, so that we can
     // still make some use of the NodeJS standard library. It cannot polyfill
