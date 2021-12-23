@@ -3,6 +3,7 @@ package mandelbox
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -37,45 +38,30 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 		Extensions:    types.Extensions(extensions),
 	}
 
+
+	testFileContent := fmt.Sprintf(`{"cookiesJSON": "%s", "extensions": "%s"}`, cookiesJSON, extensions)
+
 	if err := WriteUserInitialBrowserData(userInitialBrowserData, destDir); err != nil {
 		t.Fatalf("error writing user initial browser data: %v", err)
 	}
 
 	// Get browser data file path
-	cookieFilePath := path.Join(destDir, UserInitialCookiesFile)
-	extensionFilePath := path.Join(destDir, UserInitialExtensionsFile)
+	browserDataFile := path.Join(destDir, UserInitialBrowserFile)
 
-	// Stores the file path and content for each browser data type (bookmark is excluded since it's empty)
-	fileAndContents := [][]string{
-		{cookieFilePath, cookiesJSON},
-		{extensionFilePath, extensions},
+	matchingFile, err := os.Open(browserDataFile)
+	if err != nil {
+		t.Fatalf("error opening matching file %s: %v", filePath, err)
 	}
 
-	for _, fileAndContent := range fileAndContents {
-		filePath := fileAndContent[0]
-		testFileContent := fileAndContent[1]
-
-		matchingFile, err := os.Open(filePath)
-		if err != nil {
-			t.Fatalf("error opening matching file %s: %v", filePath, err)
-		}
-
-		matchingFileBuf := bytes.NewBuffer(nil)
-		_, err = matchingFileBuf.ReadFrom(matchingFile)
-		if err != nil {
-			t.Fatalf("error reading matching file %s: %v", filePath, err)
-		}
-
-		// Check contents match
-		if string(testFileContent) != matchingFileBuf.String() {
-			t.Errorf("file contents don't match for file %s: '%s' vs '%s'", filePath, testFileContent, matchingFileBuf.Bytes())
-		}
+	matchingFileBuf := bytes.NewBuffer(nil)
+	_, err = matchingFileBuf.ReadFrom(matchingFile)
+	if err != nil {
+		t.Fatalf("error reading matching file %s: %v", filePath, err)
 	}
 
-	// Confirm that files without any content is not created
-	bookmarkFilePath := path.Join(destDir, UserInitialBookmarksFile)
-	if _, err := os.Stat(bookmarkFilePath); err == nil || !errors.Is(err, os.ErrNotExist) {
-		t.Fatalf("error writing empty user initial browser bookmark data. Expected %v but got %v", os.ErrNotExist, err)
+	// Check contents match
+	if string(testFileContent) != matchingFileBuf.String() {
+		t.Errorf("file contents don't match for file %s: '%s' vs '%s'", filePath, testFileContent, matchingFileBuf.Bytes())
 	}
 }
 
@@ -94,18 +80,8 @@ func TestUserInitialBrowserWriteEmpty(t *testing.T) {
 	}
 
 	// Check if the files do not exists
-	cookieFilePath := path.Join(destDir, UserInitialCookiesFile)
-	if _, err := os.Stat(cookieFilePath); err == nil || !errors.Is(err, os.ErrNotExist) {
-		t.Fatalf("error writing empty user initial browser data (cookie file). Expected %v but got %v", os.ErrNotExist, err)
-	}
-
-	bookmarkFilePath := path.Join(destDir, UserInitialBookmarksFile)
-	if _, err := os.Stat(bookmarkFilePath); err == nil || !errors.Is(err, os.ErrNotExist) {
-		t.Fatalf("error writing empty user initial browser data (bookmark file). Expected %v but got %v", os.ErrNotExist, err)
-	}
-
-	extensionFilePath := path.Join(destDir, UserInitialExtensionsFile)
-	if _, err := os.Stat(extensionFilePath); err == nil || !errors.Is(err, os.ErrNotExist) {
-		t.Fatalf("error writing empty user initial browser data (extension file). Expected %v but got %v", os.ErrNotExist, err)
+	browserDataFile := path.Join(destDir, UserInitialBrowserFile)
+	if _, err := os.Stat(browserDataFile); err == nil || !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("error writing empty user initial browser data file. Expected %v but got %v", os.ErrNotExist, err)
 	}
 }
