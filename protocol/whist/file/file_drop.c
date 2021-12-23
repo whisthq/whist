@@ -17,10 +17,14 @@ destroy_file_drop_handler();
 */
 
 #include <whist/core/whist.h>
+#include "file_drop.h"
 
 #ifndef __linux__
 
-void init_file_drop_handler() { LOG_WARNING("UNIMPLEMENTED: init_file_drop_handler on non-Linux"); }
+bool init_file_drop_handler() {
+    LOG_INFO("File drop handler not supported on this platform");
+    return false;
+}
 
 int drop_file_into_active_window(TransferringFile* drop_file) {
     LOG_WARNING("UNIMPLEMENTED: drop_file_into_active_window on non-Linux");
@@ -78,10 +82,13 @@ Public Function Implementations
 ============================
 */
 
-void init_file_drop_handler() {
+bool init_file_drop_handler() {
     /*
         Initialize the X11 display and XDND atoms for the file
         drop handler
+
+        Returns:
+            (bool): true if successful, false otherwise
     */
 
     if (display == NULL) {
@@ -100,6 +107,8 @@ void init_file_drop_handler() {
     XA_XdndStatus = XInternAtom(display, "XdndStatus", False);
     XA_XdndDrop = XInternAtom(display, "XdndDrop", False);
     XA_XdndFinished = XInternAtom(display, "XdndFinished", False);
+
+    return true;
 }
 
 int drop_file_into_active_window(TransferringFile* drop_file) {

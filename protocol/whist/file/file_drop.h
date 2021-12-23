@@ -33,10 +33,11 @@ Public Functions
 */
 
 /**
- * @brief                          Initialize the X11 display and XDND atoms for the file
- *                                 drop handler
+ * @brief                          Initialize the file drop handler if supported.
+ *
+ * @returns                        true if successful, false otherwise
  */
-void init_file_drop_handler();
+bool init_file_drop_handler();
 
 /**
  * @brief                          Use the XDND protocol to execute a drag and drop of
