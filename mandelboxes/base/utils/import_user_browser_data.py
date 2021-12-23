@@ -277,8 +277,8 @@ if __name__ == "__main__":
 
     if browser and browser_data_file:
         # Get browser data in file
-        with (browser_data_file) as file:
-            browser_data = json.load(file)
+        with open(browser_data_file, 'r') as file:
+            browser_data = json.load(file.read())
             if "cookiesJSON" in browser_data and len(browser_data["cookiesJSON"]) > 0:
                 set_browser_cookies(browser, browser_data["cookiesJSON"])
 
