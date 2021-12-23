@@ -50,18 +50,18 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 
 	matchingFile, err := os.Open(browserDataFile)
 	if err != nil {
-		t.Fatalf("error opening matching file %s: %v", filePath, err)
+		t.Fatalf("error opening matching file %s: %v", browserDataFile, err)
 	}
 
 	matchingFileBuf := bytes.NewBuffer(nil)
 	_, err = matchingFileBuf.ReadFrom(matchingFile)
 	if err != nil {
-		t.Fatalf("error reading matching file %s: %v", filePath, err)
+		t.Fatalf("error reading matching file %s: %v", browserDataFile, err)
 	}
 
 	// Check contents match
 	if string(testFileContent) != matchingFileBuf.String() {
-		t.Errorf("file contents don't match for file %s: '%s' vs '%s'", filePath, testFileContent, matchingFileBuf.Bytes())
+		t.Errorf("file contents don't match for file %s: '%s' vs '%s'", browserDataFile, testFileContent, matchingFileBuf.Bytes())
 	}
 }
 
