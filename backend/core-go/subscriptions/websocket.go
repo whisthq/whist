@@ -32,7 +32,7 @@ func (wh *WhistWebsocketHandler) ReadJSON(v interface{}) error {
 	// the websocket concurrently. As it is not a harmful error we supress it here to
 	// avoid clogging sentry with it.
 	// See: https://github.com/gorilla/websocket/issues/439
-	if (err != nil) && (strings.Contains(err.Error(), "write tcp use of closed network connection")) {
+	if (err != nil) && (strings.Contains(err.Error(), "use of closed network connection")) {
 		return nil
 	}
 
