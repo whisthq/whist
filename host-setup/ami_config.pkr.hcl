@@ -27,6 +27,11 @@ variable "ami_name" {
   default = ""
 }
 
+variable "availability_zone" {
+  type    = string
+  default = ""
+}
+
 variable "destination_regions" {
   type    = list(string)
   default = []
@@ -71,6 +76,8 @@ variable "mandelbox_logz_shipping_token" {
 
 /* 
  * Packer Builder configuration, using the variables from the `variable` configurations defined above.
+ * Note that we manually specify availability_zone so that we can manually loop over all AZes Packer is 
+ * configured for (i.e. zones with a subnet with tag `Purpose: packer`) in the `region`. 
 **/
 
 source "amazon-ebs" "Whist_AWS_AMI_Builder" {
@@ -110,9 +117,9 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   associate_public_ip_address = true # Make new instances with this AMI get assigned a public IP address (necessary for SSH communication)
   ebs_optimized               = true # Optimize for EBS volumes
 
-  # We manually specify an availability zone, since the Packer+AWS autoassign feature is very weak. Eventually,
-  # we will want to manually loop over all AZes to make this more robust to insufficient capacity in a specific AZ.   
-  availability_zone = "us-east-1b"
+  # We manually loop over all availabilitiy zones for the given region in CI, so that we can try all AZes
+  # in case there is no capacity in any given AZ.
+  availability_zone = "${var.availability_zone}"
 
   # spot_instance_types is a list of acceptable instance types to run your build on. We will request a spot
   # instance using the max price of spot_price and the allocation strategy of "lowest price". Your instance

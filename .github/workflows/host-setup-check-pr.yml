@@ -111,9 +111,26 @@ jobs:
           import subprocess
           import json
 
-          # Stdout will be shared with the subprocess so we can see what is happening
-          # PACKER_LOG=1 generates full log output, which is helpful for troubleshooting
-          subprocess.run("PACKER_LOG=1 packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
+          # Packer isn't able to loop over Availability Zones by itself. This means that if we specify
+          # us-east-1 as the region (which has availability zones a through f), Packer will randomly
+          # pick one and attempt to run there, failing if there is no capacity in that AZ (even if there
+          # is capacity in other AZes). To work around this, we need to loop over all AZs ourselves, until
+          # one of them has capacity (only returning an error if there is no capacity in any of the AZes).
+          # 
+          # These are all the AZes in us-east-1 region, where we run Packer
+          for az in ["us-east-1a", "us-east-1b", "us-east-1c", "us-east-1d", "us-east-1e", "us-east-1f"]:
+
+
+
+            # Stdout will be shared with the subprocess so we can see what is happening
+            subprocess.run("PACKER_LOG=1 packer build -var-file=packer_vars.json -var availability_zone=az ami_config.pkr.hcl", shell=True)
+
+            if os.path.exists("manifest.json"):
+              break
+            
+          
+
+
 
           # If Packer fails, manifest.json does not get created and the entire workflow fails here
           # Note that, defined in our ami_config.pkr.hcl file, we set multiple retries for Packer and
