@@ -83,18 +83,6 @@ func init() {
 	}
 }
 
-// Start the Docker daemon ourselves, to have control over all Docker
-// containers running on the host.
-func startDockerDaemon(globalCancel context.CancelFunc) {
-	cmd := exec.Command("/usr/bin/systemctl", "start", "docker")
-	err := cmd.Run()
-	if err != nil {
-		logger.Panicf(globalCancel, "Unable to start Docker daemon. Error: %v", err)
-	} else {
-		logger.Info("Successfully started the Docker daemon ourselves.")
-	}
-}
-
 // createDockerClient creates a docker client. It returns an error if creation
 // failed.
 func createDockerClient() (*dockerclient.Client, error) {
@@ -1025,7 +1013,6 @@ func main() {
 	initializeFilesystem(globalCancel)
 
 	// Start Docker
-	startDockerDaemon(globalCancel)
 	dockerClient, err := createDockerClient()
 	if err != nil {
 		logger.Panic(globalCancel, err)
@@ -1152,9 +1139,7 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 				logger.Panicf(globalCancel, "Docker event stream has been completely read.")
 			case dockerclient.IsErrConnectionFailed(err):
 				// This means "Cannot connect to the Docker daemon..."
-				logger.Info("Got error \"%v\". Trying to start Docker daemon ourselves...", err)
-				startDockerDaemon(globalCancel)
-				continue
+				logger.Panicf(globalCancel, "Got error \"%v\". Could not connect to the Docker daemon.", err)
 			default:
 				if !strings.HasSuffix(strings.ToLower(err.Error()), "context canceled") {
 					logger.Panicf(globalCancel, "Got an unknown error from the Docker event stream: %v", err)
