@@ -8,6 +8,7 @@ GOCMD        = go
 BUILD_FOLDER = build
 DOCS_FOLDER  = $(BUILD_FOLDER)/docs
 BINARY_NAME  = host-service
+ROOT_HOMEDIR := $(shell sudo --preserve-env=PATH sh -c 'cd ~ && pwd')
 
 # Git parameters
 GIT_COMMIT := $(shell git rev-list -1 HEAD)
@@ -118,22 +119,22 @@ run: build
 # handling for Ctrl+C does not work. We also create the symlink below so that
 # the host service can use the `ubuntu` account's aws credentials to run,
 # even though it runs as root.
-ifeq ("$(wildcard $(HOME)/.aws/*)","")
-	sudo ln -sf -T "$(shell sudo --preserve-env=PATH sh -c 'cd ~ && pwd')/.aws" "$(HOME)/.aws"
+ifeq ("$(wildcard $(ROOT_HOMEDIR)/.aws/*)","")
+	sudo ln -sf -T "$(HOME)/.aws" "$(ROOT_HOMEDIR)/.aws"
 endif
 	sudo env "PATH=$(PATH)" APP_ENV=localdev $(BUILD_FOLDER)/$(BINARY_NAME)
 
 runlocaldevwithdb: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with localdevwithdb configuration...)
-ifeq ("$(wildcard $(HOME)/.aws/*)","")
-	sudo ln -sf -T "$(shell sudo --preserve-env=PATH sh -c 'cd ~ && pwd')/.aws" "$(HOME)/.aws"
+ifeq ("$(wildcard $(ROOT_HOMEDIR)/.aws/*)","")
+	sudo ln -sf -T "$(HOME)/.aws" "$(ROOT_HOMEDIR)/.aws"
 endif
 	sudo env "PATH=$(PATH)" APP_ENV=localdevwithdb $(BUILD_FOLDER)/$(BINARY_NAME)
 
 rundev: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with dev configuration...)
-ifeq ("$(wildcard $(HOME)/.aws/*)","")
-	sudo ln -sf -T "$(shell sudo --preserve-env=PATH sh -c 'cd ~ && pwd')/.aws" "$(HOME)/.aws"
+ifeq ("$(wildcard $(ROOT_HOMEDIR)/.aws/*)","")
+	sudo ln -sf -T "$(HOME)/.aws" "$(ROOT_HOMEDIR)/.aws"
 endif
 	sudo env "PATH=$(PATH)" APP_ENV=dev USE_PROD_LOGGING=0 $(BUILD_FOLDER)/$(BINARY_NAME)
 
