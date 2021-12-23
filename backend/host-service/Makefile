@@ -122,20 +122,20 @@ run: build
 ifeq ("$(wildcard $(ROOT_HOMEDIR)/.aws/*)","")
 	sudo ln -sf -T "$(HOME)/.aws" "$(ROOT_HOMEDIR)/.aws"
 endif
-	sudo env "PATH=$(PATH)" APP_ENV=localdev $(BUILD_FOLDER)/$(BINARY_NAME)
+	sudo --preserve-env=PATH APP_ENV=localdev $(BUILD_FOLDER)/$(BINARY_NAME)
 
 runlocaldevwithdb: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with localdevwithdb configuration...)
 ifeq ("$(wildcard $(ROOT_HOMEDIR)/.aws/*)","")
 	sudo ln -sf -T "$(HOME)/.aws" "$(ROOT_HOMEDIR)/.aws"
 endif
-	sudo env "PATH=$(PATH)" APP_ENV=localdevwithdb $(BUILD_FOLDER)/$(BINARY_NAME)
+	sudo --preserve-env=PATH APP_ENV=localdevwithdb $(BUILD_FOLDER)/$(BINARY_NAME)
 
 rundev: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with dev configuration...)
 ifeq ("$(wildcard $(ROOT_HOMEDIR)/.aws/*)","")
 	sudo ln -sf -T "$(HOME)/.aws" "$(ROOT_HOMEDIR)/.aws"
 endif
-	sudo env "PATH=$(PATH)" APP_ENV=dev USE_PROD_LOGGING=0 $(BUILD_FOLDER)/$(BINARY_NAME)
+	sudo --preserve-env=PATH APP_ENV=dev USE_PROD_LOGGING=0 $(BUILD_FOLDER)/$(BINARY_NAME)
 
 .PHONY: build clean run rundev format lint vet check
