@@ -57,7 +57,7 @@ typedef struct AudioContext {
 // holds information related to decoding and rendering audio
 static AudioContext volatile audio_context;
 // holds the current audio frame to play
-static volatile FrameData audio_render_context;
+static volatile AudioFrame* audio_render_context;
 // true if and only if the audio packet in audio_render_context should be played
 static bool volatile pending_render_audio = false;
 static WhistMutex audio_mutex;
@@ -185,7 +185,7 @@ void catchup_audio() {
     }
     for (int i = 0; i < MAX_NUM_AUDIO_FRAMES; i++) {
         FrameData* frame_data = &audio_ring_buffer->receiving_frames[i];
-        if (frame_data->id <= last_played_id) {
+        if (frame_data->id <= last_played_id && frame_data->id != -1) {
             reset_frame(audio_ring_buffer, frame_data);
         }
     }
@@ -202,13 +202,15 @@ bool is_next_audio_frame_valid() {
     // prepare to play the next frame in the buffer
     int next_to_play_id = last_played_id + 1;
 
-    FrameData* frame_data = get_frame_at_id(audio_ring_buffer, next_to_play_id);
 #if LOG_AUDIO
-    LOG_DEBUG("next_to_play_id: %d, frame data: %d, packets %d/%d", next_to_play_id, frame_data->id,
-              frame_data->packets_received, frame_data->num_packets);
+    FrameData* frame_data = get_frame_at_id(audio_ring_buffer, next_to_play_id);
+    if (frame_data->id != -1) {
+        LOG_DEBUG("next_to_play_id: %d, frame data: %d, packets %d/%d", next_to_play_id,
+                  frame_data->id, frame_data->original_packets_received,
+                  frame_data->num_original_packets);
+    }
 #endif
-    return frame_data->id == next_to_play_id &&
-           frame_data->num_packets == frame_data->packets_received;
+    return is_ready_to_render(audio_ring_buffer, next_to_play_id);
 }
 
 bool buffer_audio(int audio_device_queue) {
@@ -296,13 +298,13 @@ void update_render_context() {
     */
     // we always encode our audio now
     int next_to_play_id = last_played_id + 1;
-    FrameData* frame_data = get_frame_at_id(audio_ring_buffer, next_to_play_id);
 #if LOG_AUDIO
+    FrameData* frame_data = get_frame_at_id(audio_ring_buffer, next_to_play_id);
     LOG_INFO("Moving audio frame ID %d into render context", frame_data->id);
 #endif
-    audio_render_context = *frame_data;
     // Tell the ring buffer we're rendering this frame
-    set_rendering(audio_ring_buffer, frame_data->id);
+    audio_render_context =
+        (AudioFrame*)set_rendering(audio_ring_buffer, next_to_play_id)->frame_buffer;
     // increment to indicate that we've processed the next frame
     last_played_id++;
 }
@@ -326,12 +328,12 @@ bool is_valid_audio_frequency() {
 }
 
 int send_next_frame_to_decoder() {
-    AudioFrame* frame = (AudioFrame*)audio_render_context.frame_buffer;
-    if (frame == NULL) {
+    if (audio_render_context == NULL) {
         LOG_FATAL("Fatal Error! A NULL frame was pulled from the render context!");
     }
-    if (audio_decoder_send_packets(audio_context.audio_decoder, frame->data, frame->data_length) <
-        0) {
+    AudioFrame* audio_frame = (AudioFrame*)audio_render_context;
+    if (audio_decoder_send_packets(audio_context.audio_decoder, audio_frame->data,
+                                   audio_frame->data_length) < 0) {
         LOG_WARNING("Failed to send packets to decoder!");
         return -1;
     }
@@ -507,17 +509,21 @@ int32_t receive_audio(WhistPacket* packet) {
     }
     int res = receive_packet(audio_ring_buffer, packet);
 #if LOG_AUDIO
-    LOG_DEBUG("Received packet with ID %d", packet->id);
+    LOG_DEBUG("Received packet with ID/Index %d/%d", packet->id, packet->index);
 #endif
     if (res < 0) {
         return res;
     } else if (res > 0) {
-        if (audio_ring_buffer->currently_rendering_id != -1)
+        if (audio_ring_buffer->currently_rendering_id != -1) {
             log_double_statistic(AUDIO_FPS_SKIPPED_RECEIVE, (double)res);
+        }
         // we overwrote the last frame
         if (last_played_id < packet->id && last_played_id > 0) {
             last_played_id = packet->id - 1;
-            reset_frame(audio_ring_buffer, get_frame_at_id(audio_ring_buffer, last_played_id));
+            FrameData* frame_data = get_frame_at_id(audio_ring_buffer, last_played_id);
+            if (frame_data->id != -1) {
+                reset_frame(audio_ring_buffer, frame_data);
+            }
             LOG_INFO("Last played ID now %d", last_played_id);
         }
     }

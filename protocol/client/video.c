@@ -366,10 +366,11 @@ void skip_to_next_iframe() {
              i < video_data.most_recent_iframe; i++) {
             FrameData* frame_data = get_frame_at_id(video_ring_buffer, i);
             if (frame_data->id == i) {
-                LOG_WARNING("Frame dropped with ID %d: %d/%d", i, frame_data->packets_received,
-                            frame_data->num_packets);
+                LOG_WARNING("Frame dropped with ID %d: %d/%d", i,
+                            frame_data->original_packets_received,
+                            frame_data->num_original_packets);
 
-                for (int j = 0; j < frame_data->num_packets; j++) {
+                for (int j = 0; j < frame_data->num_original_packets; j++) {
                     if (!frame_data->received_indices[j]) {
                         LOG_WARNING("Did not receive ID %d, Index %d", i, j);
                     }
@@ -455,11 +456,10 @@ void update_video() {
         // Try to render out the next frame, if possible
         if (video_data.last_rendered_id >= 0) {
             int next_render_id = video_data.last_rendered_id + 1;
-            FrameData* ctx = get_frame_at_id(video_ring_buffer, next_render_id);
 
             // When we receive a packet that is a part of the next_render_id, and we have received
             // every packet for that frame, we set rendering=true
-            if (ctx->id == next_render_id && ctx->packets_received == ctx->num_packets) {
+            if (is_ready_to_render(video_ring_buffer, next_render_id)) {
                 // The following line invalidates the information stored at the pointer ctx
                 render_context = set_rendering(video_ring_buffer, next_render_id);
                 // Progress the videodata last rendered pointer
@@ -503,20 +503,29 @@ int32_t receive_video(WhistPacket* packet) {
     if (res < 0) {
         return res;
     } else {
-        FrameData* ctx = get_frame_at_id(video_ring_buffer, packet->id);
         // If we received all of the packets
-        if (ctx->packets_received == ctx->num_packets) {
-            bool is_iframe = ((VideoFrame*)ctx->frame_buffer)->is_iframe;
+        if (is_ready_to_render(video_ring_buffer, packet->id)) {
+            FrameData* ctx = get_frame_at_id(video_ring_buffer, packet->id);
+
+            // TODO: Clean this up by moving iframe logic into ringbuffer.c
+            VideoFrame* video_frame;
+            if (ctx->successful_fec_recovery) {
+                video_frame = (VideoFrame*)ctx->fec_frame_buffer;
+            } else {
+                video_frame = (VideoFrame*)ctx->packet_buffer;
+            }
+            bool is_iframe = video_frame->is_iframe;
 
 #if LOG_VIDEO
             LOG_INFO("Received Video Frame ID %d (Packets: %d) (Size: %d) %s", ctx->id,
-                     ctx->num_packets, ctx->frame_size, is_iframe ? "(I-Frame)" : "");
+                     ctx->num_packets, sizeof(VideoFrame) + video_frame->videodata_length,
+                     is_iframe ? "(I-Frame)" : "");
 #endif
 
             // If it's an I-frame, then just skip right to it, if the id is ahead of
             // the next to render id
             if (is_iframe) {
-                video_data.most_recent_iframe = max(video_data.most_recent_iframe, ctx->id);
+                video_data.most_recent_iframe = max(video_data.most_recent_iframe, packet->id);
             }
         }
     }
@@ -554,8 +563,10 @@ int render_video() {
 
     // Receive and process a render context that's being pushed
     if (pushing_render_context) {
-        // Drop volatile, and pull data from the frame
-        VideoFrame* frame = (VideoFrame*)render_context->frame_buffer;
+        // Save frame data, drop volatile
+        frame_data = *(FrameData*)render_context;
+        // Grab and consume the actual frame
+        VideoFrame* frame = (VideoFrame*)frame_data.frame_buffer;
 
         // If server thinks the window isn't visible, but the window is visible now,
         // Send a START_STREAMING message
@@ -593,8 +604,7 @@ int render_video() {
             }
         }
 
-        // Save the FrameData, and mark as received so render_context can be overwritten
-        frame_data = *render_context;
+        // Mark as received so render_context can be overwritten again
         pushing_render_context = false;
     }
 
@@ -692,10 +702,8 @@ int render_video() {
         declare_user_activity();
 
 #if LOG_VIDEO
-        LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", frame_data.id, frame_data.frame_size,
+        LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", frame_data.id, frame_data.frame_buffer_size,
                   get_timer(frame_data.frame_creation_timer));
-#else
-        UNUSED(frame_data);
 #endif
 
         static timestamp_us last_rendered_time = 0;

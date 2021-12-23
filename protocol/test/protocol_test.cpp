@@ -214,12 +214,16 @@ TEST_F(CaptureStdoutTest, AddingPacketsToRingBuffer) {
     pkt1.id = 0;
     pkt1.index = 0;
     pkt1.is_a_nack = false;
+    pkt1.num_indices = 1;
+    pkt1.num_fec_indices = 0;
 
     WhistPacket pkt2 = {};
     pkt2.type = PACKET_VIDEO;
     pkt2.id = 1;
     pkt2.index = 0;
     pkt2.is_a_nack = false;
+    pkt2.num_indices = 1;
+    pkt2.num_fec_indices = 0;
 
     // checks that everything goes well when adding to an empty ringbuffer
     EXPECT_EQ(receive_packet(rb, &pkt1), 0);
@@ -251,6 +255,8 @@ TEST(ProtocolTest, ResetRingBufferFrame) {
     pkt1.index = 0;
     pkt1.is_a_nack = false;
     pkt1.payload_size = 0;
+    pkt1.num_indices = 1;
+    pkt1.num_fec_indices = 0;
 
     receive_packet(rb, &pkt1);
     reset_frame(rb, get_frame_at_id(rb, pkt1.id));
