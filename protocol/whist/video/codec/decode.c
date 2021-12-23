@@ -60,6 +60,15 @@ void swap_decoder(void* t, int t2, const char* fmt, va_list vargs) {
 Private Function Implementations
 ============================
 */
+
+AVFrame* safe_av_frame_alloc() {
+    AVFrame* frame = av_frame_alloc();
+    if (frame == NULL) {
+        LOG_FATAL("Failed to av_frame_alloc!");
+    }
+    return frame;
+}
+
 static void set_opt(VideoDecoder* decoder, char* option, char* value) {
     /*
         Wrapper function to set decoder options.
@@ -228,9 +237,6 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
 
     destroy_video_decoder_members(decoder);
 
-    int width = decoder->width;
-    int height = decoder->height;
-
     if (decoder->type == DECODE_TYPE_SOFTWARE) {
         // BEGIN SOFTWARE DECODER
         LOG_INFO("Trying software decoder");
@@ -248,20 +254,14 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
         decoder->context = avcodec_alloc_context3(decoder->codec);
         decoder->context->opaque = decoder;
 
-        decoder->sw_frame = (AVFrame*)av_frame_alloc();
-        decoder->sw_frame->format = AV_PIX_FMT_NV12;
-        decoder->sw_frame->width = width;
-        decoder->sw_frame->height = height;
-        decoder->sw_frame->pts = 0;
-
         if (avcodec_open2(decoder->context, decoder->codec, NULL) < 0) {
             LOG_WARNING("Failed to open codec for stream");
             return -1;
         }
 
         set_decoder_opts(decoder);
-        // END SOFTWARE DECODER
 
+        // END SOFTWARE DECODER
     } else if (decoder->type == DECODE_TYPE_QSV) {
         // BEGIN QSV DECODER
         LOG_INFO("Trying QSV decoder");
@@ -285,11 +285,7 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
             return -1;
         }
 
-        decoder->sw_frame = av_frame_alloc();
-        decoder->hw_frame = av_frame_alloc();
-
         // END QSV DECODER
-
     } else if (decoder->type == DECODE_TYPE_HARDWARE ||
                decoder->type == DECODE_TYPE_HARDWARE_OLDER) {
         // BEGIN HARDWARE DECODER
@@ -350,14 +346,6 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
         }
 
         set_decoder_opts(decoder);
-
-        if (!(decoder->hw_frame = av_frame_alloc()) || !(decoder->sw_frame = av_frame_alloc())) {
-            LOG_WARNING("Can not alloc frame");
-
-            av_frame_free(&decoder->hw_frame);
-            av_frame_free(&decoder->sw_frame);
-            return -1;
-        }
 
         // END HARDWARE DECODER
     } else {
@@ -458,8 +446,7 @@ void destroy_video_decoder_members(VideoDecoder* decoder) {
 
     // free the decoder context and frame
     av_free(decoder->context);
-    av_frame_free(&decoder->sw_frame);
-    av_frame_free(&decoder->hw_frame);
+    av_frame_free(&decoder->decoded_frame);
 
     // free the packets
     for (int i = 0; i < MAX_ENCODED_VIDEO_PACKETS; i++) {
@@ -546,10 +533,10 @@ int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, int buffer_s
         while ((res = avcodec_send_packet(decoder->context, &decoder->packets[i])) < 0) {
             LOG_WARNING("Failed to avcodec_send_packet! Error %d: %s", res, av_err2str(res));
             if (!try_next_decoder(decoder)) {
-                destroy_video_decoder(decoder);
                 for (int j = 0; j < num_packets; j++) {
                     av_packet_unref(&decoder->packets[j]);
                 }
+                destroy_video_decoder(decoder);
             }
             return -1;
         }
@@ -557,7 +544,7 @@ int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, int buffer_s
     return 0;
 }
 
-int video_decoder_get_frame(VideoDecoder* decoder) {
+int video_decoder_decode_frame(VideoDecoder* decoder) {
     /*
         Get the next frame from the decoder. If we were using hardware decoding, also move the frame
        to software. At the end of this function, the decoded frame is always in decoder->sw_frame.
@@ -569,160 +556,107 @@ int video_decoder_get_frame(VideoDecoder* decoder) {
             (int): 0 on success (can call this function again), 1 on EAGAIN (must send more input
        before calling again), -1 on failure
             */
-    int res;
 
     static clock latency_clock;
+
+    // The frame we'll receive into
+    // We can't receive into hw/sw_frame, or it'll wipe on EAGAIN.
+    AVFrame* frame = safe_av_frame_alloc();
+    // This might compel the software decoder to decode into NV12?
+    // TODO: Is this actually necessary?
+    frame->format = AV_PIX_FMT_NV12;
 
     // If frame was computed on the GPU
     if (decoder->context->hw_frames_ctx) {
         start_timer(&latency_clock);
-        res = avcodec_receive_frame(decoder->context, decoder->hw_frame);
+
+        int res = avcodec_receive_frame(decoder->context, frame);
         log_double_statistic(VIDEO_AVCODEC_RECEIVE_TIME, get_timer(latency_clock) * 1000);
+
+        // Exit or copy the captured frame into hw_frame
         if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
+            av_frame_free(&frame);
             return 1;
         } else if (res < 0) {
+            av_frame_free(&frame);
             LOG_WARNING("Failed to avcodec_receive_frame, error: %s", av_err2str(res));
             destroy_video_decoder(decoder);
             return -1;
         }
-#ifndef __APPLE__
-        // On mac, we will use the hardware frame directly
+
+        // Free the old captured frame, if there was any
+        av_frame_free(&decoder->decoded_frame);
+
+#ifdef __APPLE__
+        // On Mac, we'll use the hw frame directly
+        decoder->decoded_frame = frame;
+        decoder->using_hw = true;
+#else
+        // Otherwise, copy the hw data into a software frame
         start_timer(&latency_clock);
-        av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
+        decoder->decoded_frame = safe_av_frame_alloc();
+        res = av_hwframe_transfer_data(decoder->decoded_frame, frame, 0);
+        av_frame_free(&frame);
+        if (res < 0) {
+            av_frame_free(&decoder->decoded_frame);
+            LOG_WARNING("Failed to av_hwframe_transfer_data, error: %s", av_err2str(res));
+            destroy_video_decoder(decoder);
+            return -1;
+        }
         log_double_statistic(VIDEO_AV_HWFRAME_TRANSFER_TIME, get_timer(latency_clock) * 1000);
-#endif  // #ifndef __APPLE__
+        decoder->using_hw = false;
+#endif  // #ifdef __APPLE__
     } else {
         if (decoder->type != DECODE_TYPE_SOFTWARE) {
             LOG_ERROR("Decoder cascaded from hardware to software");
             decoder->type = DECODE_TYPE_SOFTWARE;
         }
 
-        res = avcodec_receive_frame(decoder->context, decoder->sw_frame);
+        int res = avcodec_receive_frame(decoder->context, frame);
         if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
+            av_frame_free(&frame);
             return 1;
         } else if (res < 0) {
+            av_frame_free(&frame);
             LOG_WARNING("Failed to avcodec_receive_frame, error: %s", av_err2str(res));
             destroy_video_decoder(decoder);
             return -1;
         }
+
+        // Free the old captured frame, if there was any
+        av_frame_free(&decoder->decoded_frame);
+        // Move the captured frame into the decoder struct
+        decoder->decoded_frame = frame;
+        decoder->using_hw = false;
     }
+
     return 0;
 }
 
-bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) {
-    /*
-        Decode a frame, whose encoded data lies in buffer, using decoder, into decoder->sw_frame.
+DecodedFrameData video_decoder_get_last_decoded_frame(VideoDecoder* decoder) {
+    DecodedFrameData decoded_frame_data;
 
-        Arguments:
-            decoder (VideoDecoder*): the decoder which will decode the frame
-            buffer (void*): buffer containing AVPackets and their metadata. Specifically the buffer
-       contains: (n = number of packets)(s1 = size of packet 1)...(sn = size of packet n)(packet 1
-       data)...(packet n data) buffer_size (int): the size of buffer, in bytes
-
-        Returns:
-            (bool): true if decode succeeded, false if failed
-            */
-    clock t;
-    start_timer(&t);
-
-    // copy the received packet back into the decoder AVPacket
-    int* int_buffer = buffer;
-    int num_packets = *int_buffer;
-    int_buffer++;
-
-    int computed_size = sizeof(int);
-
-    // make an array of AVPacket*s and alloc each one
-    AVPacket** packets = safe_malloc(num_packets * sizeof(AVPacket*));
-
-    for (int i = 0; i < num_packets; i++) {
-        // allocate packet and set size
-        packets[i] = av_packet_alloc();
-        packets[i]->size = *int_buffer;
-        computed_size += sizeof(int) + packets[i]->size;
-        int_buffer++;
+    if (decoder->decoded_frame == NULL) {
+        LOG_FATAL("No decoded frame available!");
     }
 
-    if (buffer_size != computed_size) {
-        LOG_ERROR(
-            "Given Buffer Size did not match computed buffer size: given %d vs "
-            "computed %d",
-            buffer_size, computed_size);
-        return false;
-    }
+    // Move the frame into decoded_frame_data,
+    // And then clear it from the decoder
 
-    char* char_buffer = (void*)int_buffer;
-    for (int i = 0; i < num_packets; i++) {
-        // set packet data
-        // we don't use av_grow_packet or av_packet_from_data:
-        // the former involves allocating a new buffer and memcpying all of buffer
-        // the latter needs data to be av_malloced, which is not the case for us.
-        packets[i]->data = (void*)char_buffer;
-        char_buffer += packets[i]->size;
-    }
+    decoded_frame_data.decoded_frame = decoder->decoded_frame;
+    decoder->decoded_frame = NULL;
 
-    for (int i = 0; i < num_packets; i++) {
-        // decode the frame
-        int ret;
-        while ((ret = avcodec_send_packet(decoder->context, packets[i])) < 0) {
-            LOG_WARNING("Failed to avcodec_send_packet!");
-            // Try next decoder
-            if (!try_next_decoder(decoder)) {
-                destroy_video_decoder(decoder);
-                for (int j = 0; j < num_packets; j++) {
-                    av_packet_free(&packets[j]);
-                }
-                free(packets);
-                return false;
-            }
-        }
-    }
+    // Copy the data into the struct
+    decoded_frame_data.using_hw = decoder->using_hw;
+    decoded_frame_data.pixel_format = decoded_frame_data.decoded_frame->format;
+    decoded_frame_data.width = decoder->width;
+    decoded_frame_data.height = decoder->height;
 
-    for (int i = 0; i < num_packets; i++) {
-        av_packet_free(&packets[i]);
-    }
-    free(packets);
+    return decoded_frame_data;
+}
 
-    // If frame was computed on the CPU
-    if (decoder->context->hw_frames_ctx) {
-        // If frame was computed on the GPU
-        if (avcodec_receive_frame(decoder->context, decoder->hw_frame) < 0) {
-            LOG_WARNING("Failed to avcodec_receive_frame!");
-            destroy_video_decoder(decoder);
-            return false;
-        }
-
-        av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
-    } else {
-        if (decoder->type != DECODE_TYPE_SOFTWARE) {
-            LOG_ERROR("Decoder cascaded from hardware to software");
-            decoder->type = DECODE_TYPE_SOFTWARE;
-        }
-
-        if (avcodec_receive_frame(decoder->context, decoder->sw_frame) < 0) {
-            LOG_WARNING("Failed to avcodec_receive_frame!");
-            destroy_video_decoder(decoder);
-            return false;
-        }
-    }
-
-    double time = get_timer(t);
-
-    static double total_time = 0.0;
-    static double max_time = 0.0;
-    static int num_times = 0;
-
-    total_time += time;
-    max_time = max(max_time, time);
-    num_times++;
-
-    if (num_times == 10) {
-        LOG_INFO("Avg Decode Time: %f\n", total_time / num_times);
-        total_time = 0.0;
-        max_time = 0.0;
-        num_times = 0;
-    }
-    return true;
+void video_decoder_free_decoded_frame(DecodedFrameData* decoded_frame_data) {
+    av_frame_free(&decoded_frame_data->decoded_frame);
 }
 
 #if defined(_WIN32)

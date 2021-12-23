@@ -58,7 +58,7 @@ volatile bool update_bitrate = false;
 char user_email[WHIST_ARGS_MAXLEN + 1];
 char icon_png_filename[WHIST_ARGS_MAXLEN + 1];
 
-extern bool skip_taskbar;
+bool skip_taskbar = false;
 
 bool using_stun = false;
 

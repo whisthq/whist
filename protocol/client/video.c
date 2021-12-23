@@ -57,7 +57,7 @@ extern volatile CodecType output_codec_type;
 extern volatile double latency;
 
 // START VIDEO VARIABLES
-volatile bool initialized_video_renderer = false;
+volatile bool initialized_video = false;
 volatile bool initialized_video_buffer = false;
 
 #define BITRATE_BUCKET_SIZE 500000
@@ -173,7 +173,7 @@ void sync_decoder_parameters(VideoFrame* frame) {
     output_codec_type = frame->codec_type;
 }
 
-void update_sws_context(Uint8** data, int* linesize) {
+void update_sws_context(Uint8** data, int* linesize, enum AVPixelFormat input_format) {
     /*
         Create an SWS context as needed to perform pixel format
         conversions, destroying any existing context first. If no
@@ -185,15 +185,18 @@ void update_sws_context(Uint8** data, int* linesize) {
         Arguments:
             data (Uint8**): pointer to the data array to be filled in
             linesize (int*): pointer to the linesize array to be filled in
+            input_format (AVPixelFormat): the pixel format that the data is in
     */
 
     VideoDecoder* decoder = video_data.decoder;
-    enum AVPixelFormat input_format = decoder->sw_frame->format;
     static enum AVPixelFormat cached_format = AV_PIX_FMT_NONE;
     static int cached_width = -1;
     static int cached_height = -1;
 
-    // Update the cache on a cache miss
+    static Uint8* static_data[4] = {0};
+    static int static_linesize[4] = {0};
+
+    // If the cache missed, reconstruct the sws and static avimage
     if (input_format != cached_format || decoder->width != cached_width ||
         decoder->height != cached_height) {
         cached_format = input_format;
@@ -202,7 +205,7 @@ void update_sws_context(Uint8** data, int* linesize) {
 
         // No matter what, we now should destroy the old context if it exists
         if (video_data.sws) {
-            av_freep(&data[0]);
+            av_freep(&static_data[0]);
             sws_freeContext(video_data.sws);
             video_data.sws = NULL;
         }
@@ -219,9 +222,15 @@ void update_sws_context(Uint8** data, int* linesize) {
             video_data.sws = sws_getContext(
                 decoder->width, decoder->height, input_format, decoder->width, decoder->height,
                 SDL_TEXTURE_PIXEL_FORMAT, SWS_FAST_BILINEAR, NULL, NULL, NULL);
-            av_image_alloc(data, linesize, decoder->width, decoder->height,
+            av_image_alloc(static_data, static_linesize, decoder->width, decoder->height,
                            SDL_TEXTURE_PIXEL_FORMAT, 32);
         }
+    }
+
+    // Copy the static avimage into the provided data/linesize buffers.
+    if (video_data.sws) {
+        memcpy(data, static_data, sizeof(static_data));
+        memcpy(linesize, static_linesize, sizeof(static_linesize));
     }
 }
 
@@ -385,10 +394,39 @@ void init_video() {
     /*
         Initializes the video system
     */
-    initialized_video_renderer = false;
+
+    initialized_video = false;
+
+    // Initialize everything
     memset(&video_data, 0, sizeof(video_data));
     video_ring_buffer = init_ring_buffer(PACKET_VIDEO, RECV_FRAMES_BUFFER_SIZE, nack_packet);
     initialized_video_buffer = true;
+    working_mbps = STARTING_BITRATE;
+    has_video_rendered_yet = false;
+    video_data.sws = NULL;
+    client_max_bitrate = STARTING_BITRATE;
+    video_data.target_mbps = STARTING_BITRATE;
+    video_data.pending_ctx = NULL;
+    video_data.frames_received = 0;
+    video_data.bytes_transferred = 0;
+    start_timer(&video_data.frame_timer);
+    video_data.last_statistics_id = 1;
+    video_data.last_rendered_id = 0;
+    video_data.most_recent_iframe = -1;
+    video_data.bucket = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
+    start_timer(&video_data.last_iframe_request_timer);
+
+    // Init loading animation variables
+    video_data.loading_index = 0;
+    start_timer(&video_data.last_loading_frame_timer);
+    // Present first frame of loading animation
+    sdl_update_framebuffer_loading_screen(video_data.loading_index);
+    sdl_render_framebuffer();
+    // Then progress the animation
+    video_data.loading_index++;
+
+    // Mark as initialized and return
+    initialized_video = true;
 }
 
 int last_rendered_index = 0;
@@ -486,51 +524,6 @@ int32_t receive_video(WhistPacket* packet) {
     return 0;
 }
 
-int init_video_renderer() {
-    /*
-        Initialize the video renderer. Used as a thread function.
-
-        Return:
-            (int): 0 on success, -1 on failure
-    */
-
-    LOG_INFO("Initializing video renderer");
-
-    // Initialize the SDL renderer
-    sdl_init_renderer((SDL_Window*)window);
-
-    // mbps that currently works
-    working_mbps = STARTING_BITRATE;
-
-    has_video_rendered_yet = false;
-
-    video_data.sws = NULL;
-    client_max_bitrate = STARTING_BITRATE;
-    video_data.target_mbps = STARTING_BITRATE;
-    video_data.pending_ctx = NULL;
-    video_data.frames_received = 0;
-    video_data.bytes_transferred = 0;
-    start_timer(&video_data.frame_timer);
-    video_data.last_statistics_id = 1;
-    video_data.last_rendered_id = 0;
-    video_data.most_recent_iframe = -1;
-    video_data.bucket = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
-    start_timer(&video_data.last_iframe_request_timer);
-
-    // Init loading animation variables
-    video_data.loading_index = 0;
-    start_timer(&video_data.last_loading_frame_timer);
-    // Present first frame of loading animation
-    sdl_update_framebuffer_loading_screen(video_data.loading_index);
-    sdl_render_framebuffer();
-    // Then progress the animation
-    video_data.loading_index++;
-
-    // Mark as initialized and return
-    initialized_video_renderer = true;
-    return 0;
-}
-
 int render_video() {
     /*
         Render the video screen that the user sees
@@ -541,7 +534,7 @@ int render_video() {
         Return:
             (int): 0 on success, -1 on failure
     */
-    if (!initialized_video_renderer) {
+    if (!initialized_video) {
         LOG_ERROR("Video rendering is not initialized!");
         return -1;
     }
@@ -549,12 +542,15 @@ int render_video() {
     clock statistics_timer;
 
     // Information needed to render a FrameData* to the screen
-    WhistRGBColor window_color = {0};
-    WhistCursorImage cursor_image = {0};
-    bool has_cursor_image = false;
-    FrameData frame_data;
-    timestamp_us server_timestamp = 0;
-    timestamp_us client_input_timestamp = 0;
+    // We make this static so that even if `sdl_render_pending` happens,
+    // a later call to render_video can still access the data
+    // from the most recently consumed render context.
+    static WhistRGBColor window_color = {0};
+    static WhistCursorImage cursor_image = {0};
+    static bool has_cursor_image = false;
+    static FrameData frame_data = {0};
+    static timestamp_us server_timestamp = 0;
+    static timestamp_us client_input_timestamp = 0;
 
     // Receive and process a render context that's being pushed
     if (pushing_render_context) {
@@ -577,7 +573,6 @@ int render_video() {
             int ret;
             server_timestamp = frame->server_timestamp;
             client_input_timestamp = frame->client_input_timestamp;
-
             TIME_RUN(ret = video_decoder_send_packets(
                          video_data.decoder, get_frame_videodata(frame), frame->videodata_length),
                      VIDEO_DECODE_SEND_PACKET_TIME, statistics_timer);
@@ -603,15 +598,12 @@ int render_video() {
         pushing_render_context = false;
     }
 
-    // Make these static so sws context doesn't need to be updated every time
-    static Uint8* data[4];
-    static int linesize[4];
-
-    // Try to get a frame from the decoder, if any exist
-    bool got_frame_from_decoder = false;
+    // Try to keep decoding frames from the decoder, if we can
+    // Use static so we can remember, even if sdl_render_pending exits early.
+    static bool got_frame_from_decoder = false;
     while (video_data.decoder != NULL) {
         int res;
-        TIME_RUN(res = video_decoder_get_frame(video_data.decoder), VIDEO_DECODE_GET_FRAME_TIME,
+        TIME_RUN(res = video_decoder_decode_frame(video_data.decoder), VIDEO_DECODE_GET_FRAME_TIME,
                  statistics_timer);
         if (res < 0) {
             LOG_ERROR("Error getting frame from decoder!");
@@ -621,31 +613,62 @@ int render_video() {
         if (res == 0) {
             // Mark that we got at least one frame from the decoder
             got_frame_from_decoder = true;
-
-            // Pull the most recently decoded data/linesize from the decoder
-            if (video_data.decoder->hw_frame && video_data.decoder->hw_frame->data[3]) {
-                data[0] = data[1] = video_data.decoder->hw_frame->data[3];
-                linesize[0] = linesize[1] = video_data.decoder->width;
-            } else {
-                update_sws_context(data, linesize);
-                if (video_data.sws) {
-                    sws_scale(video_data.sws,
-                              (uint8_t const* const*)video_data.decoder->sw_frame->data,
-                              video_data.decoder->sw_frame->linesize, 0, video_data.decoder->height,
-                              data, linesize);
-                } else {
-                    memcpy(data, video_data.decoder->sw_frame->data, sizeof(data));
-                    memcpy(linesize, video_data.decoder->sw_frame->linesize, sizeof(linesize));
-                }
-            }
         } else {
             // Exit once we get EAGAIN
             break;
         }
     }
 
+    if (sdl_render_pending()) {
+        // We cannot call `video_decoder_free_decoded_frame`,
+        // until the renderer is done rendering the previously decoded frame.
+
+        // We only skip a render after setting `pushing_render_context = false`,
+        // To make sure we can keep consuming frames and keep up-to-date.
+
+        // We only skip a render after calling `video_decoder_decode_frame`, because the internal
+        // decoder buffer returns errors if we don't actively decode frames fast enough.
+
+        return 0;
+    }
+
     // Render any frame we got from the decoder
     if (got_frame_from_decoder) {
+        // Mark frame as consumed
+        got_frame_from_decoder = false;
+
+        // The final data/linesize that we will render
+        Uint8* data[4] = {0};
+        int linesize[4] = {0};
+
+        static DecodedFrameData decoded_frame_data = {0};
+
+        // Free the previous frame, if there was any
+        video_decoder_free_decoded_frame(&decoded_frame_data);
+
+        // Get the last decoded frame
+        decoded_frame_data = video_decoder_get_last_decoded_frame(video_data.decoder);
+
+        // Pull the most recently decoded data/linesize from the decoder
+        if (decoded_frame_data.using_hw) {
+            data[0] = data[1] = decoded_frame_data.decoded_frame->data[3];
+            linesize[0] = linesize[1] = decoded_frame_data.width;
+        } else {
+            // This will allocate the sws target frame into data/linesize,
+            // using the provided pixel_format
+            update_sws_context(data, linesize, decoded_frame_data.pixel_format);
+            if (video_data.sws) {
+                // Scale from the swframe into the sws target frame.
+                sws_scale(video_data.sws,
+                          (uint8_t const* const*)decoded_frame_data.decoded_frame->data,
+                          decoded_frame_data.decoded_frame->linesize, 0, decoded_frame_data.height,
+                          data, linesize);
+            } else {
+                memcpy(data, decoded_frame_data.decoded_frame->data, sizeof(data));
+                memcpy(linesize, decoded_frame_data.decoded_frame->linesize, sizeof(linesize));
+            }
+        }
+
         // Invalidate loading animation once rendering occurs
         video_data.loading_index = -1;
 
@@ -727,12 +750,9 @@ void destroy_video() {
         Free the video thread and VideoContext data to exit
     */
 
-    if (!initialized_video_renderer) {
-        LOG_WARNING("Destroying video, but never called init_video_renderer");
+    if (!initialized_video) {
+        LOG_WARNING("Destroying video, but never called init_video");
     } else {
-        // Destroy the SDL renderer
-        sdl_destroy_renderer();
-
         // Destroy the ring buffer
         destroy_ring_buffer(video_ring_buffer);
         video_ring_buffer = NULL;

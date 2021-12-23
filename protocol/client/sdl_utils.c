@@ -28,7 +28,7 @@ Includes
 extern volatile int output_width;
 extern volatile int output_height;
 extern volatile SDL_Window* window;
-bool skip_taskbar = false;
+extern bool skip_taskbar;
 
 #if defined(_WIN32)
 HHOOK g_h_keyboard_hook;
@@ -38,6 +38,38 @@ LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_pa
 // on macOS, we must initialize the renderer in `init_sdl()` instead of video.c
 static SDL_Renderer* sdl_renderer = NULL;
 static SDL_Texture* frame_buffer = NULL;
+static WhistMutex renderer_mutex;
+
+// pending render Update
+static volatile bool pending_render = false;
+
+// Loading screen framebuffer update
+static bool pending_loadingscreen = false;
+static int pending_loadingscreen_idx;
+
+// NV12 framebuffer update
+static bool pending_nv12data = false;
+static Uint8* pending_nv12data_data[4];
+static int pending_nv12data_linesize[4];
+static int pending_nv12data_width;
+static int pending_nv12data_height;
+
+// Window Color Update
+static volatile WhistRGBColor* native_window_color = NULL;
+static volatile bool native_window_color_update = false;
+
+// Cursor Image Update
+static volatile WhistCursorState cursor_state = CURSOR_STATE_VISIBLE;
+static volatile SDL_Cursor* sdl_cursor = NULL;
+static volatile WhistCursorID last_cursor = (WhistCursorID)SDL_SYSTEM_CURSOR_ARROW;
+
+// Window Title Update
+static volatile char* window_title = NULL;
+static volatile bool should_update_window_title = false;
+
+// Full Screen Update
+static volatile bool fullscreen_trigger = false;
+static volatile bool fullscreen_value = false;
 
 /*
 ============================
@@ -60,6 +92,12 @@ SDL_Surface* sdl_surface_from_png_file(char* filename);
  * @param surface                  The SDL_Surface to free
  */
 void sdl_free_png_file_rgb_surface(SDL_Surface* surface);
+
+/**
+ * @brief                          Updates the framebuffer from any pending framebuffer call,
+ *                                 Then RenderPresent if sdl_render_framebuffer is pending.
+ */
+void sdl_present_pending_framebuffer();
 
 /*
 ============================
@@ -99,6 +137,8 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         LOG_ERROR("Could not initialize SDL - %s", SDL_GetError());
         return NULL;
     }
+
+    renderer_mutex = whist_create_mutex();
 
     // Allow the screensaver to activate
     SDL_EnableScreenSaver();
@@ -140,15 +180,34 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         return NULL;
     }
 
-/*
-    On macOS, we must initialize the renderer in the main thread -- seems not needed
-    and not possible on other OSes. If the renderer is created later in the main thread
-    on macOS, the user will see a window open in this function, then close/reopen during
-    renderer creation
-*/
-#ifdef __APPLE__
-    sdl_init_renderer(sdl_window);
+    // Initialize the renderer
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
+    SDL_SetHint(SDL_HINT_RENDER_VSYNC, VSYNC_ON ? "1" : "0");
+
+    Uint32 flags = SDL_RENDERER_ACCELERATED;
+#if VSYNC_ON
+    flags |= SDL_RENDERER_PRESENTVSYNC;
 #endif
+    sdl_renderer = SDL_CreateRenderer(sdl_window, -1, flags);
+    if (sdl_renderer == NULL) {
+        LOG_FATAL("SDL: could not create renderer - exiting: %s", SDL_GetError());
+    }
+    SDL_SetRenderDrawBlendMode(sdl_renderer, SDL_BLENDMODE_BLEND);
+
+    // Render a black screen before anything else,
+    // To prevent being exposed to random colors
+    pending_nv12data = false;
+    pending_loadingscreen = false;
+    pending_render = true;
+    sdl_present_pending_framebuffer();
+
+    // Initialize the framebuffer texture
+    frame_buffer =
+        SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STREAMING,
+                          MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
+    if (frame_buffer == NULL) {
+        LOG_FATAL("SDL: could not create texture - exiting: %s", SDL_GetError());
+    }
 
     // Set icon, if an icon_filename was given
     if (strcmp(icon_filename, "") != 0) {
@@ -157,6 +216,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         sdl_free_png_file_rgb_surface(icon_surface);
     }
 
+    // Initialize the window color to white
     const WhistRGBColor white = {255, 255, 255};
     set_native_window_color(sdl_window, white);
 
@@ -177,61 +237,6 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     return sdl_window;
 }
 
-void sdl_init_renderer(SDL_Window* sdl_window) {
-    if (sdl_renderer == NULL) {
-        /*
-        // configure renderer
-        if (SDL_GetWindowFlags(sdl_window) & SDL_WINDOW_OPENGL) {
-            // only opengl if windowed mode
-            SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
-        }
-        */
-        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
-        SDL_SetHint(SDL_HINT_RENDER_VSYNC, VSYNC_ON ? "1" : "0");
-
-        Uint32 flags = SDL_RENDERER_ACCELERATED;
-#if VSYNC_ON
-        flags |= SDL_RENDERER_PRESENTVSYNC;
-#endif
-        sdl_renderer = SDL_CreateRenderer(sdl_window, -1, flags);
-        if (sdl_renderer == NULL) {
-            LOG_FATAL("SDL: could not create renderer - exiting: %s", SDL_GetError());
-        }
-        SDL_SetRenderDrawBlendMode(sdl_renderer, SDL_BLENDMODE_BLEND);
-
-        // Render a black screen before anything else,
-        // To prevent being exposed to random colors
-        SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(sdl_renderer);
-        SDL_RenderPresent(sdl_renderer);
-    }
-
-    if (frame_buffer == NULL) {
-        frame_buffer =
-            SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_NV12, SDL_TEXTUREACCESS_STREAMING,
-                              MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
-        if (frame_buffer == NULL) {
-            LOG_FATAL("SDL: could not create texture - exiting");
-        }
-    }
-}
-
-void sdl_destroy_renderer() {
-#ifdef __APPLE__
-    // On __APPLE__, the renderer is maintained in init_sdl
-    if (frame_buffer) {
-        SDL_DestroyTexture(frame_buffer);
-        frame_buffer = NULL;
-    }
-#else
-    // SDL_DestroyTexture(frame_buffer); is not needed,
-    // the renderer destroys it
-    SDL_DestroyRenderer(sdl_renderer);
-    sdl_renderer = NULL;
-    frame_buffer = NULL;
-#endif
-}
-
 void destroy_sdl(SDL_Window* window_param) {
     /*
         Destroy the SDL resources
@@ -239,6 +244,23 @@ void destroy_sdl(SDL_Window* window_param) {
         Arguments:
             window_param (SDL_Window*): SDL window to be destroyed
     */
+
+    // Destroy the framebuffer
+    if (frame_buffer) {
+        SDL_DestroyTexture(frame_buffer);
+        frame_buffer = NULL;
+    }
+
+    // Destroy the renderer
+    if (sdl_renderer) {
+        SDL_DestroyRenderer(sdl_renderer);
+        sdl_renderer = NULL;
+    }
+
+    if (native_window_color) {
+        free((WhistRGBColor*)native_window_color);
+        native_window_color = NULL;
+    }
 
     LOG_INFO("Destroying SDL");
 #if defined(_WIN32)
@@ -248,6 +270,9 @@ void destroy_sdl(SDL_Window* window_param) {
         SDL_DestroyWindow((SDL_Window*)window_param);
         window_param = NULL;
     }
+
+    whist_destroy_mutex(renderer_mutex);
+
     SDL_Quit();
 }
 
@@ -326,91 +351,48 @@ void sdl_update_framebuffer_loading_screen(int idx) {
             idx (int): the index of the loading frame
     */
 
-#define NUMBER_LOADING_FRAMES 50
+    whist_lock_mutex(renderer_mutex);
 
-    int gif_frame_index = idx % NUMBER_LOADING_FRAMES;
+    pending_loadingscreen_idx = idx;
+    pending_loadingscreen = true;
 
-    clock c;
-    start_timer(&c);
-
-    char frame_name[24];
-    if (gif_frame_index < 10) {
-        snprintf(frame_name, sizeof(frame_name), "loading/frame_0%d.png", gif_frame_index);
-        //            LOG_INFO("Frame loading/frame_0%d.png", gif_frame_index);
-    } else {
-        snprintf(frame_name, sizeof(frame_name), "loading/frame_%d.png", gif_frame_index);
-        //            LOG_INFO("Frame loading/frame_%d.png", gif_frame_index);
-    }
-
-    SDL_Surface* loading_screen = sdl_surface_from_png_file(frame_name);
-    if (loading_screen == NULL) {
-        LOG_WARNING("Loading screen not loaded from %s", frame_name);
-        return;
-    }
-
-    // free pkt.data which is initialized by calloc in png_file_to_bmp
-
-    SDL_Texture* loading_screen_texture =
-        SDL_CreateTextureFromSurface(sdl_renderer, loading_screen);
-
-    // surface can now be freed
-    sdl_free_png_file_rgb_surface(loading_screen);
-
-    int w = 200;
-    int h = 200;
-    SDL_Rect dstrect;
-
-    // SDL_QueryTexture( loading_screen_texture, NULL, NULL, &w, &h );
-    dstrect.x = output_width / 2 - w / 2;
-    dstrect.y = output_height / 2 - h / 2;
-    dstrect.w = w;
-    dstrect.h = h;
-
-    SDL_SetRenderDrawColor(sdl_renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear(sdl_renderer);
-    SDL_RenderCopy(sdl_renderer, loading_screen_texture, NULL, &dstrect);
-
-    // texture may now be destroyed
-    SDL_DestroyTexture(loading_screen_texture);
+    whist_unlock_mutex(renderer_mutex);
 }
 
 void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int height) {
-    // The texture object we allocate is larger than the frame, so we only
-    // copy the valid section of the frame into the texture.
-    SDL_Rect texture_rect = {
-        .x = 0,
-        .y = 0,
-        .w = width,
-        .h = height,
-    };
+    whist_lock_mutex(renderer_mutex);
 
-    int res = SDL_UpdateNVTexture(frame_buffer, &texture_rect, data[0], linesize[0], data[1],
-                                  linesize[1]);
-    if (res < 0) {
-        LOG_ERROR("SDL_UpdateNVTexture failed: %s", SDL_GetError());
-        SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(sdl_renderer);
+    // Check dimensions as a fail-safe
+    if (width < 0 || width > MAX_SCREEN_WIDTH || height < 0 || height > MAX_SCREEN_HEIGHT) {
+        LOG_ERROR("Invalid Dimensions! %dx%d", width, height);
+        whist_unlock_mutex(renderer_mutex);
         return;
     }
 
-    // Subsection of texture that should be rendered to screen.
-    SDL_Rect output_rect = {
-        .x = 0,
-        .y = 0,
-        .w = output_width,
-        .h = output_height,
-    };
-    SDL_RenderCopy(sdl_renderer, frame_buffer, &output_rect, NULL);
+    // Overwrite the pending framebuffer metadata,
+    // And mark the framebuffer as pending
+    memcpy(pending_nv12data_data, data, sizeof(pending_nv12data_data));
+    memcpy(pending_nv12data_linesize, linesize, sizeof(pending_nv12data_linesize));
+    pending_nv12data_width = width;
+    pending_nv12data_height = height;
+    pending_nv12data = true;
+
+    whist_unlock_mutex(renderer_mutex);
 }
 
 void sdl_render_framebuffer() {
-    // Present the framebuffer to the monitor
-    SDL_RenderPresent(sdl_renderer);
+    whist_lock_mutex(renderer_mutex);
+    // Mark a render as pending
+    pending_render = true;
+    whist_unlock_mutex(renderer_mutex);
 }
 
-volatile WhistCursorState cursor_state = CURSOR_STATE_VISIBLE;
-volatile SDL_Cursor* sdl_cursor = NULL;
-volatile WhistCursorID last_cursor = (WhistCursorID)SDL_SYSTEM_CURSOR_ARROW;
+bool sdl_render_pending() {
+    whist_lock_mutex(renderer_mutex);
+    bool pending_render_val = pending_render;
+    whist_unlock_mutex(renderer_mutex);
+    return pending_render_val;
+}
 
 void sdl_update_cursor(WhistCursorImage* cursor) {
     /*
@@ -486,9 +468,6 @@ void sdl_update_cursor(WhistCursorImage* cursor) {
     }
 }
 
-volatile WhistRGBColor* native_window_color = NULL;
-volatile bool native_window_color_update = false;
-
 void sdl_render_window_titlebar_color(WhistRGBColor color) {
     /*
       Update window titlebar color using the colors of the new frame
@@ -513,21 +492,13 @@ void sdl_render_window_titlebar_color(WhistRGBColor color) {
         native_window_color = new_native_window_color;
         native_window_color_update = true;
     }
-
-    /* DEALLOC
-    if (native_window_color) {
-        free((WhistRGBColor*)native_window_color);
-        native_window_color = NULL;
-    }*/
 }
-
-volatile char* window_title;
-volatile bool should_update_window_title = false;
 
 void sdl_set_window_title(const char* requested_window_title) {
     if (should_update_window_title) {
         LOG_WARNING(
             "Failed to update window title, as the previous window title update is still pending");
+        return;
     }
 
     size_t len = strlen(requested_window_title) + 1;
@@ -537,9 +508,6 @@ void sdl_set_window_title(const char* requested_window_title) {
 
     should_update_window_title = true;
 }
-
-volatile bool fullscreen_trigger;
-volatile bool fullscreen_value;
 
 void sdl_set_fullscreen(bool is_fullscreen) {
     fullscreen_trigger = true;
@@ -551,7 +519,7 @@ bool sdl_is_window_visible() {
              (SDL_WINDOW_OCCLUDED | SDL_WINDOW_MINIMIZED));
 }
 
-void update_pending_sdl_tasks() {
+void sdl_update_pending_tasks() {
     // Handle any pending window title updates
     if (should_update_window_title) {
         if (window_title) {
@@ -589,6 +557,8 @@ void update_pending_sdl_tasks() {
         start_timer(&window_resize_timer);
     }
     whist_unlock_mutex(window_resize_mutex);
+
+    sdl_present_pending_framebuffer();
 }
 
 /*
@@ -597,24 +567,107 @@ Private Function Implementations
 ============================
 */
 
-void send_captured_key(SDL_Keycode key, int type, int time) {
-    /*
-        Send a key to SDL event queue, presumably one that is captured and wouldn't
-        naturally make it to the event queue by itself
+void sdl_present_pending_framebuffer() {
+    // Wipes the renderer to all-black before we present
+    SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(sdl_renderer);
 
-        Arguments:
-            key (SDL_Keycode): key that was captured
-            type (int): event type (press or release)
-            time (int): time that the key event was registered
-    */
+    // Render out the current framebuffer, if there's a pending render
+    whist_lock_mutex(renderer_mutex);
 
-    SDL_Event e = {0};
-    e.type = type;
-    e.key.keysym.sym = key;
-    e.key.keysym.scancode = SDL_GetScancodeFromName(SDL_GetKeyName(key));
-    LOG_INFO("KEY: %d", key);
-    e.key.timestamp = time;
-    SDL_PushEvent(&e);
+    // Copy nv12 data, if any pending nv12 data exists
+    if (pending_nv12data) {
+        // The texture object we allocate is larger than the frame,
+        // so we only copy the valid section of the frame into the texture.
+        SDL_Rect texture_rect = {
+            .x = 0,
+            .y = 0,
+            .w = pending_nv12data_width,
+            .h = pending_nv12data_height,
+        };
+
+        // Update the SDLTexture with the given nvdata
+        int res = SDL_UpdateNVTexture(frame_buffer, &texture_rect, pending_nv12data_data[0],
+                                      pending_nv12data_linesize[0], pending_nv12data_data[1],
+                                      pending_nv12data_linesize[1]);
+        if (res < 0) {
+            LOG_ERROR("SDL_UpdateNVTexture failed: %s", SDL_GetError());
+        } else {
+            // Take the subsection of texture that should be rendered to screen,
+            // And draw it on the renderer
+            SDL_Rect output_rect = {
+                .x = 0,
+                .y = 0,
+                .w = output_width,
+                .h = output_height,
+            };
+            SDL_RenderCopy(sdl_renderer, frame_buffer, &output_rect, NULL);
+        }
+
+        // No longer pending nv12 data
+        pending_nv12data = false;
+    }
+
+    // Copy loading screen texture, if any pending one exists
+    if (pending_loadingscreen) {
+#define NUMBER_LOADING_FRAMES 50
+        int gif_frame_index = pending_loadingscreen_idx % NUMBER_LOADING_FRAMES;
+
+        char frame_filename[256];
+        snprintf(frame_filename, sizeof(frame_filename), "loading/frame_%02d.png", gif_frame_index);
+
+        SDL_Surface* loading_screen = sdl_surface_from_png_file(frame_filename);
+        if (loading_screen == NULL) {
+            LOG_ERROR("Loading screen image failed to load: %s", frame_filename);
+        } else {
+            SDL_Texture* loading_screen_texture =
+                SDL_CreateTextureFromSurface(sdl_renderer, loading_screen);
+
+            // The surface can now be freed
+            sdl_free_png_file_rgb_surface(loading_screen);
+
+            // Position the rectangle such that the texture will be centered
+            int w, h;
+            SDL_QueryTexture(loading_screen_texture, NULL, NULL, &w, &h);
+            SDL_Rect centered_rect = {
+                .x = output_width / 2 - w / 2,
+                .y = output_height / 2 - h / 2,
+                .w = w,
+                .h = h,
+            };
+
+            // The texture is semi-transparent, so we clear to white first
+            SDL_SetRenderDrawColor(sdl_renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+            SDL_RenderClear(sdl_renderer);
+            // Now, we write the texture out to the renderer
+            SDL_RenderCopy(sdl_renderer, loading_screen_texture, NULL, &centered_rect);
+
+            // The loading screen texture may now be destroyed
+            SDL_DestroyTexture(loading_screen_texture);
+        }
+
+        // The loading screen render is no longer pending
+        pending_loadingscreen = false;
+    }
+
+    // Render, if there's a pending render
+    bool will_render_present = false;
+    if (pending_render) {
+        will_render_present = true;
+    }
+
+    whist_unlock_mutex(renderer_mutex);
+
+    // RenderPresent outside of the mutex, since RenderCopy made a copy anyway
+    // and this will take ~8ms if VSYNC is on.
+    // (If this causes a bug, feel free to pull back to inside of the mutex)
+    if (will_render_present) {
+        SDL_RenderPresent(sdl_renderer);
+    }
+
+    whist_lock_mutex(renderer_mutex);
+    pending_render = false;
+    whist_unlock_mutex(renderer_mutex);
 }
 
 SDL_Surface* sdl_surface_from_png_file(char* filename) {
@@ -673,6 +726,25 @@ void sdl_free_png_file_rgb_surface(SDL_Surface* surface) {
 }
 
 #if defined(_WIN32)
+void send_captured_key(SDL_Keycode key, int type, int time) {
+    /*
+        Send a key to SDL event queue, presumably one that is captured and wouldn't
+        naturally make it to the event queue by itself
+
+        Arguments:
+            key (SDL_Keycode): key that was captured
+            type (int): event type (press or release)
+            time (int): time that the key event was registered
+    */
+
+    SDL_Event e = {0};
+    e.type = type;
+    e.key.keysym.sym = key;
+    e.key.keysym.scancode = SDL_GetScancodeFromName(SDL_GetKeyName(key));
+    e.key.timestamp = time;
+    SDL_PushEvent(&e);
+}
+
 HHOOK mule;
 LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_param) {
     /*

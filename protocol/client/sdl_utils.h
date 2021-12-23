@@ -48,20 +48,6 @@ Public Functions
 SDL_Window* init_sdl(int output_width, int output_height, char* name, char* icon_filename);
 
 /**
- * @brief                          Creates the SDL Renderer, using the given SDL `window`.
- *                                 The renderer will be bound to thread that
- *                                 this function was called from.
- *
- * @param sdl_window               The SDL Window to use
- */
-void sdl_init_renderer(SDL_Window* sdl_window);
-
-/**
- * @brief                          Destroy the renderer created by `sdl_init_renderer`.
- */
-void sdl_destroy_renderer();
-
-/**
  * @brief                          Destroys an SDL window and associated
  *                                 parameters
  *
@@ -101,8 +87,20 @@ void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int heig
 /**
  * @brief                          Render the most recently updated framebuffer.
  *                                 This takes some time, <1ms normally, ~8ms if VSYNC_ON
+ *
+ * @note                           Will make `sdl_render_pending` return true, up until
+ *                                 `update_pending_sdl_tasks` is called on the main thread.
  */
 void sdl_render_framebuffer();
+
+/**
+ * @brief                          Returns whether or not
+ *                                 a framebuffer is pending to render
+ *
+ * @returns                        True if `sdl_render_framebuffer` has been called,
+ *                                 but `update_pending_sdl_tasks` has not been called.
+ */
+bool sdl_render_pending();
 
 /**
  * @brief                          Update the cursor
@@ -157,8 +155,8 @@ bool sdl_is_window_visible();
  *                                 currently internally queued actions.
  *
  * @note                           This function must be called by the
- *                                 same thread that originally called init_sdl
+ *                                 same thread that originally called init_sdl.
  */
-void update_pending_sdl_tasks();
+void sdl_update_pending_tasks();
 
 #endif  // SDL_UTILS_H
