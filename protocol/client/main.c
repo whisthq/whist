@@ -188,10 +188,6 @@ static volatile bool run_renderer_thread = false;
 int32_t multithreaded_renderer(void* opaque) {
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
-    if (init_video_renderer() != 0) {
-        LOG_FATAL("Failed to initialize video renderer!");
-    }
-
     while (run_renderer_thread) {
         render_audio();
         render_video();
@@ -418,6 +414,9 @@ int main(int argc, char* argv[]) {
         SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
         SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
 
+        // Initialize audio and video
+        is_timing_latency = false;
+        init_audio();
         init_video();
 
         run_renderer_thread = true;
@@ -428,10 +427,6 @@ int main(int argc, char* argv[]) {
         // reset because now connected
         try_amount = 0;
         max_connection_attempts = MAX_RECONNECTION_ATTEMPTS;
-
-        // Initialize audio and variables
-        is_timing_latency = false;
-        init_audio();
 
         // Initialize the clipboard and file synchronizers. This must happen before we start
         // the udp/tcp threads
@@ -532,13 +527,20 @@ int main(int argc, char* argv[]) {
             send_server_quit_messages(3);
         }
 
+        // Destroy the network system
         destroy_packet_synchronizers();
         destroy_clipboard_synchronizer();
-        destroy_audio();
         close_connections();
+
+        // Destroy the renderer thread
         run_renderer_thread = false;
         whist_wait_thread(renderer_thread, NULL);
+
+        // Destroy audio and video
+        destroy_audio();
         destroy_video();
+
+        // Mark as disconnected
         connected = false;
     }
 

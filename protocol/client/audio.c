@@ -59,7 +59,8 @@ static AudioContext volatile audio_context;
 // holds the current audio frame to play
 static volatile FrameData audio_render_context;
 // true if and only if the audio packet in audio_render_context should be played
-static bool volatile rendering_audio = false;
+static bool volatile pending_render_audio = false;
+static WhistMutex audio_mutex;
 
 // sample rate of audio signal
 static int volatile audio_frequency = -1;
@@ -373,16 +374,23 @@ void init_audio() {
 
     // Set audio to be reinit'ed
     audio_refresh = true;
-    rendering_audio = false;
+    audio_mutex = whist_create_mutex();
+    pending_render_audio = false;
 }
 
 void destroy_audio() {
     LOG_INFO("Destroying audio system");
-    // Ensure is thread-safe against arbitrary calls to render_audio
-    while (rendering_audio) {
-        SDL_Delay(5);
-    }
+
+    // Clear any pending audio renders, so render_audio won't render anymore
+    pending_render_audio = false;
+
+    // Ensure is thread-safe against arbitrary calls to render_audio,
+    // Lock/Unlock will hang until render_audio is done with its current render
+    whist_lock_mutex(audio_mutex);
+    whist_unlock_mutex(audio_mutex);
+
     client_destroy_audio_device();
+    whist_destroy_mutex(audio_mutex);
 }
 
 void enable_audio_refresh() { audio_refresh = true; }
@@ -398,31 +406,34 @@ void render_audio() {
         configure @global audio_render_context to contain the latest audio packet to render.
         This function simply decodes and renders it.
     */
-    if (rendering_audio) {
-        if (!is_valid_audio_frequency()) {
-            // if the audio frequency is bad, stop rendering
-            rendering_audio = false;
-            return;
-        }
 
-        sync_audio_device();
+    // Lock before we read `pending_render_audio`, in-case destroy_audio set it to false
+    whist_lock_mutex(audio_mutex);
+    if (pending_render_audio) {
+        // Only do work, if the audio frequency is valid
+        if (is_valid_audio_frequency()) {
+            sync_audio_device();
 
-        int res = send_next_frame_to_decoder();
+            int res = send_next_frame_to_decoder();
 
-        // this buffer will always hold the decoded data
-        static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
-        // decode the frame into the buffer
-        while ((res = get_next_audio_frame(decoded_data)) == 0) {
-            res = SDL_QueueAudio(audio_context.dev, decoded_data,
-                                 audio_decoder_get_frame_data_size(audio_context.audio_decoder));
+            // this buffer will always hold the decoded data
+            static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
+            // decode the frame into the buffer
+            while ((res = get_next_audio_frame(decoded_data)) == 0) {
+                res =
+                    SDL_QueueAudio(audio_context.dev, decoded_data,
+                                   audio_decoder_get_frame_data_size(audio_context.audio_decoder));
 
-            if (res < 0) {
-                LOG_WARNING("Could not play audio!");
+                if (res < 0) {
+                    LOG_WARNING("Could not play audio!");
+                }
             }
         }
+
         // No longer rendering audio
-        rendering_audio = false;
+        pending_render_audio = false;
     }
+    whist_unlock_mutex(audio_mutex);
 }
 
 void update_audio() {
@@ -432,7 +443,7 @@ void update_audio() {
       render_audio will actually play this packet.
     */
 
-    if (rendering_audio) {
+    if (pending_render_audio) {
         // If we're currently rendering an audio packet, don't update audio - the audio_context
         // struct is being used, so a race condition will occur if we call SDL_GetQueuedAudioSize at
         // the same time.
@@ -467,7 +478,7 @@ void update_audio() {
             // move the next frame into the render context
             update_render_context();
             // tell renderer thread to render the audio
-            rendering_audio = true;
+            pending_render_audio = true;
         }
     } else {
         return;
