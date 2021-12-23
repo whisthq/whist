@@ -51,6 +51,7 @@ Defines
 TransferringFile transferring_files[NUM_TRANSFERRING_FILES];
 WhistMutex file_synchrony_update_mutex;  // used to protect the global file synchrony
 static bool is_initialized = false;
+static FileTransferType enabled_actions = 0;
 
 /*
 ============================
@@ -136,9 +137,12 @@ Public Function Implementations
 ============================
 */
 
-void init_file_synchronizer() {
+void init_file_synchronizer(FileTransferType requested_actions) {
     /*
-        Initialized the file synchronizer
+        Initialize the file synchronizer
+
+        Arguments:
+            requested_actions (FileTransferType): the actions to attempt to enable
     */
 
     if (is_initialized) {
@@ -150,7 +154,9 @@ void init_file_synchronizer() {
     // Zero out all the currently transferring file infos
     memset(transferring_files, 0, sizeof(TransferringFile) * NUM_TRANSFERRING_FILES);
     file_synchrony_update_mutex = whist_create_mutex();
-    init_file_drop_handler();
+    if ((requested_actions & FILE_TRANSFER_SERVER_DROP) && init_file_drop_handler()) {
+        enabled_actions |= FILE_TRANSFER_SERVER_DROP;
+    }
     is_initialized = true;
 }
 
@@ -184,13 +190,19 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
 
     // Get file path to which we will write
     const char* file_dir;
-    switch (file_metadata->transfer_type) {
-        case FILE_TRANSFER_SERVER_DROP:
+    switch (file_metadata->transfer_type & enabled_actions) {
+        case FILE_TRANSFER_SERVER_DROP: {
             file_dir = file_drop_prepare(active_file->id, file_metadata);
             break;
-        default:
+        }
+        case 0: {
+            LOG_WARNING("File transfer type %d is not enabled", file_metadata->transfer_type);
+            // fall through to default
+        }
+        default: {
             file_dir = ".";
             break;
+        }
     }
 
     // Set transferring file filepath
@@ -205,7 +217,7 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
     active_file->direction = FILE_WRITE_END;
 
     // Start the XDND drop process on the server as soon as the file exists
-    if (active_file->transfer_type == FILE_TRANSFER_SERVER_DROP) {
+    if ((active_file->transfer_type & enabled_actions) == FILE_TRANSFER_SERVER_DROP) {
         drop_file_into_active_window(active_file);
     }
 
@@ -260,7 +272,7 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
             LOG_INFO("Finished writing to file index %d", file_chunk->index);
 
             // If on the server, write the FUSE ready file when file writing is complete
-            if (active_file->transfer_type == FILE_TRANSFER_SERVER_DROP) {
+            if ((active_file->transfer_type & enabled_actions) == FILE_TRANSFER_SERVER_DROP) {
                 file_drop_mark_ready(active_file->id);
             }
 
@@ -490,7 +502,13 @@ void destroy_file_synchronizer() {
     whist_lock_mutex(file_synchrony_update_mutex);
 
     reset_all_transferring_files();
-    destroy_file_drop_handler();
+
+    if (enabled_actions & FILE_TRANSFER_SERVER_DROP) {
+        LOG_INFO("Destroying file drop handler");
+        destroy_file_drop_handler();
+    }
+
+    enabled_actions = 0;
     is_initialized = false;
 
     whist_unlock_mutex(file_synchrony_update_mutex);

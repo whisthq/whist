@@ -8,7 +8,7 @@
 ============================
 Usage
 ============================
-init_file_synchronizer(true);
+init_file_synchronizer(FILE_TRASFER_SERVER_DROP | FILE_TRANSFER_SERVER_UPLOAD);
 
 FileChunk received_file_chunk;
 
@@ -57,13 +57,13 @@ typedef struct FileData {
 } FileData;
 
 /**
- * @brief                          The type of the file transfer
+ * @brief                          The type of the file transfer, as a boolean enum
  */
 typedef enum FileTransferType {
-    FILE_TRANSFER_SERVER_DROP,     // Drop a file onto the server
-    FILE_TRANSFER_CLIENT_DROP,     // Drop a file onto the client
-    FILE_TRANSFER_SERVER_UPLOAD,   // Upload a file to the server
-    FILE_TRANSFER_CLIENT_DOWNLOAD  // Download a file to the client
+    FILE_TRANSFER_SERVER_DROP = 0b0001,     // Drop a file onto the server
+    FILE_TRANSFER_CLIENT_DROP = 0b0010,     // Drop a file onto the client
+    FILE_TRANSFER_SERVER_UPLOAD = 0b0100,   // Upload a file to the server
+    FILE_TRANSFER_CLIENT_DOWNLOAD = 0b1000  // Download a file to the client
 } FileTransferType;
 
 /**
@@ -121,8 +121,9 @@ Public Functions
 /**
  * @brief                          Initialize the file sychrony variables
  *
+ * @param requested_actions        The file transfer types to attempt to initialize
  */
-void init_file_synchronizer();
+void init_file_synchronizer(FileTransferType requested_actions);
 
 /**
  * @brief                          Open a file for writing based on `file_metadata`

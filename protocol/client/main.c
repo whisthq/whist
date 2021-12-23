@@ -436,7 +436,7 @@ int main(int argc, char* argv[]) {
         // Initialize the clipboard and file synchronizers. This must happen before we start
         // the udp/tcp threads
         init_clipboard_synchronizer(true);
-        init_file_synchronizer();
+        init_file_synchronizer(0);
 
         // Create threads to receive udp/tcp packets and handle them as needed
         init_packet_synchronizers();
