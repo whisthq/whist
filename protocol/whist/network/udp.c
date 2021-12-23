@@ -131,6 +131,8 @@ int udp_send_constructed_packet(void* raw_context, WhistPacket* packet, size_t p
     WhistPacket encrypted_packet;
     size_t encrypted_len = (size_t)encrypt_packet(packet, (int)packet_size, &encrypted_packet,
                                                   (unsigned char*)context->binary_aes_private_key);
+    // NOTE: This doesn't interfere with clientside hotpath,
+    // since the throttler only throttles the serverside
     network_throttler_wait_byte_allocation(context->network_throttler, (size_t)encrypted_len);
 
     // If sending fails because of no buffer space available on the system, retry a few times.
@@ -199,13 +201,7 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payloa
 
     int num_fec_packets = 0;
     if (nack_buffer && context->fec_packet_ratio > 0.0) {
-        // num_fec_packets / (num_fec_packets + num_indices) = context->fec_packet_ratio
-        // a / (a + b) = c
-        // a = ac + bc
-        // a(1-c) = bc
-        // a = bc/(1-c)
-        num_fec_packets =
-            num_indices * context->fec_packet_ratio / (1.0 - context->fec_packet_ratio);
+        num_fec_packets = get_num_fec_packets(num_indices, context->fec_packet_ratio);
     }
 
     int num_total_packets = num_indices + num_fec_packets;
@@ -222,9 +218,9 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payloa
     // OR the original buffer is illegally large
     // OR there's no nack buffer but it's a packet that needed to be split up,
     // THEN there's a problem and we LOG_ERROR
-    if (nack_buffer && num_total_packets > context->nack_buffer_max_indices[type_index] ||
-        nack_buffer && payload_size > context->nack_buffer_max_payload_size[type_index] ||
-        !nack_buffer && num_total_packets > 1) {
+    if ((nack_buffer && num_total_packets > context->nack_buffer_max_indices[type_index]) ||
+        (nack_buffer && payload_size > context->nack_buffer_max_payload_size[type_index]) ||
+        (!nack_buffer && num_total_packets > 1)) {
         LOG_ERROR("Packet is too large to send the payload! %d/%d", num_indices, num_total_packets);
         return -1;
     }
@@ -239,8 +235,8 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payloa
         int packet_payload_size = (int)min(payload_size - current_position, MAX_PAYLOAD_SIZE);
         if (fec_encoder) {
             // Pass the buffers into the FEC encoder, when using FEC
-            encoder_register_buffer(fec_encoder, (char*)payload + current_position,
-                                    packet_payload_size);
+            fec_encoder_register_buffer(fec_encoder, (char*)payload + current_position,
+                                        packet_payload_size);
         } else {
             // Populate the buffers directly when not using FEC
             buffers[packet_index] = (char*)payload + current_position;
@@ -251,7 +247,7 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payloa
 
     if (fec_encoder) {
         // If using FEC, populate the buffers with FEC's buffers
-        get_encoded_buffers(fec_encoder, buffers, buffer_sizes);
+        fec_get_encoded_buffers(fec_encoder, (void**)buffers, buffer_sizes);
     }
 
     // Write all the packets into the packet buffer and send them all
@@ -450,7 +446,6 @@ int create_udp_server_context(void* raw_context, int port, int recvfrom_timeout_
              ntohs(context->addr.sin_port));
 
     set_timeout(context->socket, recvfrom_timeout_ms);
-    context->fec_packet_ratio = FEC_PACKET_RATIO;
 
     return 0;
 }

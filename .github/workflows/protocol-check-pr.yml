@@ -131,10 +131,10 @@ jobs:
         shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
         working-directory: protocol
         run: |
-          # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
+          REM Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
           echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
 
-          # Run clang-tidy
+          REM Run clang-tidy
           cd build
           ninja clang-tidy || EXIT /B 1
 

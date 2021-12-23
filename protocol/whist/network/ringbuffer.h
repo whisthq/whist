@@ -29,21 +29,29 @@ typedef struct FrameData {
     int id;
     int original_packets_received;
     int fec_packets_received;
-    int frame_size;
     bool* received_indices;
+    char* packet_buffer;
+
+    // When the FrameData is being rendered,
+    // this is the data that's being rendered
     char* frame_buffer;
+    int frame_buffer_size;
+
+    // FEC logic
+    char* fec_frame_buffer;
+    bool successful_fec_recovery;
 
     // Nack logic
 
     // Whether or not we're in "recovery mode"
     bool recovery_mode;
-    int* nacked_indices;
+    int* num_times_index_nacked;
     int num_times_nacked;
     int last_nacked_index;
     clock last_nacked_timer;
     clock last_nonnack_packet_timer;
     clock frame_creation_timer;
-    FECDecoder* decoder;
+    FECDecoder* fec_decoder;
 } FrameData;
 
 // Handler that gets called when the ring buffer wants to nack for a packet
@@ -60,10 +68,9 @@ typedef struct RingBuffer {
     FrameData* receiving_frames;
     WhistPacketType type;
     int largest_frame_size;
-    int largest_num_packets;
     NackPacketFn nack_packet;
 
-    BlockAllocator* frame_buffer_allocator;  // unused if audio
+    BlockAllocator* packet_buffer_allocator;  // unused if audio
 
     int currently_rendering_id;
     FrameData currently_rendering_frame;
@@ -159,11 +166,24 @@ void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data);
  *
  * @param ring_buffer Ring buffer containing the frame
  *
+ * @param id ID of the frame we want to render
+ *
+ * @returns true if the frame is ready, false if it's not
+ */
+bool is_ready_to_render(RingBuffer* ring_buffer, int id);
+
+/**
+ * @brief       Indicate that the frame with ID id is currently rendering, and free the frame buffer
+ *              for the previously rendered frame. The ring buffer will not write to the currently
+ *              rendering frame.
+ *
+ * @param ring_buffer Ring buffer containing the frame
+ *
  * @param id ID of the frame we are currently rendering.
  *
- * @returns      A new pointer to the frame that's now being rendered.
- *               Its old location in the ring buffer has been invalidated.
- *               This FrameData* pointer will be invalidated on the next call to set_rendering.
+ * @returns      A new pointer to the frame buffer that's now being rendered.
+ *               This pointer will be invalidated on the next call to set_rendering.
+ *               Use ->frame_buffer to read the contents of the captured frame
  */
 FrameData* set_rendering(RingBuffer* ring_buffer, int id);
 
