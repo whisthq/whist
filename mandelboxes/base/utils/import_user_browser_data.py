@@ -275,7 +275,7 @@ if __name__ == "__main__":
     browser = os.getenv("WHIST_BROWSER_UPLOAD_TARGET", None)
     browser_data_file = os.getenv("WHIST_INITIAL_USER_DATA_FILE", None)
 
-    if browser and browser_bookmark_file:
+    if browser and browser_data_file:
         # Get browser data in file
         with (browser_data_file) as file:
             browser_data = json.load(file)
