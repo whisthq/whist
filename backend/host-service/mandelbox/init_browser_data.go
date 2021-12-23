@@ -51,8 +51,8 @@ func WriteUserInitialBrowserData(initialBrowserData BrowserData, destDir string)
 		return utils.MakeError("Could not marshal initialBrowserData: %v", initialBrowserData)
 	}
 
-	// Do not create file if there is no data
-	if len(data) == 0 {
+	// Do not create file if there is no data or not empty slice
+	if len(data) < 3 {
 		logger.Infof("Did not create browsing data file as no data was given")
 		return nil
 	}

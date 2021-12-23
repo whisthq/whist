@@ -39,7 +39,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	}
 
 
-	testFileContent := fmt.Sprintf(`{"cookiesJSON": "%s", "extensions": "%s"}`, cookiesJSON, extensions)
+	testFileContent := fmt.Sprintf(`{"cookiesJSON":"%s","extensions": "%s"}`, cookiesJSON, extensions)
 
 	if err := WriteUserInitialBrowserData(userInitialBrowserData, destDir); err != nil {
 		t.Fatalf("error writing user initial browser data: %v", err)
