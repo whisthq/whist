@@ -21,6 +21,7 @@ Includes
 ============================
 */
 
+#include <whist/utils/os_utils.h>
 #include "input_driver.h"
 #include "keyboard_mapping.h"
 
@@ -76,6 +77,8 @@ void update_keyboard_state(InputDevice* input_device, WhistClientMessage* fcmsg)
             "MESSAGE_KEYBOARD_STATE");
         return;
     }
+
+    set_keyboard_layout(fcmsg->keyboard_state.layout);
 
     update_mapped_keyboard_state(input_device, input_os_type, fcmsg->keyboard_state);
 }

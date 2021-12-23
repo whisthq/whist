@@ -628,12 +628,16 @@ typedef enum WhistExitCode {
     WHIST_EXIT_CLI = 2
 } WhistExitCode;
 
+#define WHIST_KB_DEFAULT_LAYOUT "us"
+#define WHIST_KB_LAYOUT_MAX_LENGTH 24
+
 typedef struct {
     short num_keycodes;
     bool caps_lock;
     bool num_lock;
     char state[KEYCODE_UPPERBOUND];
     bool active_pinch;
+    char layout[WHIST_KB_LAYOUT_MAX_LENGTH];
 } WhistKeyboardState;
 
 /* position of bit within character */
