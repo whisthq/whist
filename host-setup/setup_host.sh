@@ -145,7 +145,7 @@ EOF
   echo "================================================"
 
   # Set custom seccomp filter
-  sudo systemctl start docker
+  sudo systemctl enable --now docker
   ./docker-daemon-config/generate-seccomp.sh
 
   sudo cp docker-daemon-config/daemon.json /etc/docker/daemon.json
