@@ -53,16 +53,6 @@ if [ -f "$TIMEOUT_FILENAME" ]; then
   OPTIONS="$OPTIONS --timeout=$TIMEOUT"
 fi
 
-# Set user upload target, if file exists
-if [ -f "$USER_UPLOAD_TARGET_FILENAME" ]; then
-  export WHIST_BROWSER_UPLOAD_TARGET=$(cat $USER_UPLOAD_TARGET_FILENAME)
-fi
-
-if [ -f "$BROWSER_DATA_FILE_FILENAME" ]; then
-  export WHIST_INITIAL_USER_DATA_FILE=$(cat $BROWSER_DATA_FILE_FILENAME)
-  rm $BROWSER_DATA_FILE_FILENAME
-fi
-
 # We use named pipe redirection for consistency with our WhistServer launch setup
 # &> redirects both stdout and stdin together; shorthand for '> XYZ 2>&1'
 /usr/share/whist/run-as-whist-user.sh "/usr/bin/run-whist-teleport.sh" &> >(tee $TELEPORT_LOG_FILENAME) &
@@ -83,17 +73,15 @@ if [ "$ENV_NAME" != "localdev" ]; then
   trap cleanup EXIT ERR
 fi
 
-# Imports user browser data if file exists
-python3 /usr/share/whist/import_user_browser_data.py
+# Set user upload target, if file exists
+if [ -f "$USER_UPLOAD_TARGET_FILENAME" ] && [ -f "$BROWSER_DATA_FILE_FILENAME" ]; then
+  # Imports user browser data if file exists
+  python3 /usr/share/whist/import_user_browser_data.py $(cat $USER_UPLOAD_TARGET_FILENAME) $(cat $BROWSER_DATA_FILE_FILENAME)
 
-if [ -n "${WHIST_INITIAL_USER_DATA_FILE+1}" ] && [ -f "$WHIST_INITIAL_USER_DATA_FILE" ]; then
   # Remove temporary file containing the user's intial cookies
   rm $WHIST_INITIAL_USER_DATA_FILE
+  rm $BROWSER_DATA_FILE_FILENAME
 fi
-
-# Clean up traces of temporary files
-unset WHIST_INITIAL_USER_DATA_FILE
-unset WHIST_BROWSER_UPLOAD_TARGET
 
 # Start the application that this mandelbox runs.
 /usr/share/whist/run-as-whist-user.sh "/usr/bin/run-whist-application.sh" &
