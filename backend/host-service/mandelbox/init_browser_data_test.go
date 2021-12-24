@@ -65,7 +65,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	}
 }
 
-// TestUserInitialBrowserWriteEmpty checks if passing empty browser data will result in no files generated
+// TestUserInitialBrowserWriteEmpty checks if passing empty browser data will result in an empty json file
 func TestUserInitialBrowserWriteEmpty(t *testing.T) {
 	destDir, err := ioutil.TempDir("", "testInitBrowser")
 	if err != nil {
@@ -74,14 +74,27 @@ func TestUserInitialBrowserWriteEmpty(t *testing.T) {
 
 	defer os.RemoveAll(destDir)
 
-	// Empty browser data will not generate any files
+	// Empty browser data will generate an empty json file
 	if err := WriteUserInitialBrowserData(BrowserData{}, destDir); err != nil {
 		t.Fatalf("error writing empty user initial browser data: %v", err)
 	}
 
-	// Check if the files do not exists
+	// Get browser data file path
 	browserDataFile := path.Join(destDir, UserInitialBrowserFile)
-	if _, err := os.Stat(browserDataFile); err == nil || !errors.Is(err, os.ErrNotExist) {
-		t.Fatalf("error writing empty user initial browser data file. Expected %v but got %v", os.ErrNotExist, err)
+
+	matchingFile, err := os.Open(browserDataFile)
+	if err != nil {
+		t.Fatalf("error opening matching file %s: %v", browserDataFile, err)
+	}
+
+	var matchingFileBuf bytes.Buffer
+	_, err = matchingFileBuf.ReadFrom(matchingFile)
+	if err != nil {
+		t.Fatalf("error reading matching file %s: %v", browserDataFile, err)
+	}
+
+	// Check contents match
+	if "{}" != matchingFileBuf.String() {
+		t.Errorf("file contents don't match for file %s: '%s' vs '%s'", browserDataFile, testFileContent, matchingFileBuf.Bytes())
 	}
 }
