@@ -272,10 +272,15 @@ def create_extension_files(extensions, custom_script=None):
 
 
 if __name__ == "__main__":
-    browser = os.getenv("WHIST_BROWSER_UPLOAD_TARGET", None)
-    browser_data_file = os.getenv("WHIST_INITIAL_USER_DATA_FILE", None)
+    """
+    The expected use of this function is:
 
-    if browser and browser_data_file:
+    python3 import_user_browser_data.py <browser target> <user data file>
+
+    """
+    if len(sys.argv) == 3:
+        browser = sys.argv[1]
+        browser_data_file = sys.argv[2]
         # Get browser data in file
         with open(browser_data_file, "r") as file:
             browser_data = json.load(file)
