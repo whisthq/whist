@@ -50,6 +50,7 @@ extern "C" {
 #include <whist/utils/png.h>
 #include <whist/utils/avpacket_buffer.h>
 #include <whist/utils/atomic.h>
+#include <whist/utils/fec.h>
 }
 
 /*
@@ -809,6 +810,67 @@ TEST(ProtocolTest, Atomics) {
     }
 
     EXPECT_EQ(atomic_load(&atomic_test_variable), 0);
+}
+
+TEST(ProtocolTest, FECTest) {
+#define NUM_FEC_PACKETS 2
+
+#define NUM_ORIGINAL_PACKETS 2
+#define PACKET1_SIZE 97
+#define PACKET2_SIZE 90
+
+#define NUM_TOTAL_PACKETS (NUM_ORIGINAL_PACKETS + NUM_FEC_PACKETS)
+
+    char packet1[PACKET1_SIZE] = {0};
+    char packet2[PACKET2_SIZE] = {0};
+    packet1[0] = 92;
+    packet2[PACKET2_SIZE - 1] = 31;
+
+    // ** ENCODING **
+
+    FECEncoder* fec_encoder =
+        create_fec_encoder(NUM_ORIGINAL_PACKETS, NUM_FEC_PACKETS, MAX_PACKET_SIZE);
+
+    // Register the original packets
+    fec_encoder_register_buffer(fec_encoder, packet1, sizeof(packet1));
+    fec_encoder_register_buffer(fec_encoder, packet2, sizeof(packet2));
+
+    // Get the encoded packets
+    void* encoded_buffers_tmp[NUM_TOTAL_PACKETS];
+    int encoded_buffer_sizes[NUM_TOTAL_PACKETS];
+    fec_get_encoded_buffers(fec_encoder, encoded_buffers_tmp, encoded_buffer_sizes);
+
+    // Since destroying the fec encoder drops the void*'s data, we must memcpy it over
+    char encoded_buffers[NUM_TOTAL_PACKETS][MAX_PACKET_SIZE];
+    for (int i = 0; i < NUM_TOTAL_PACKETS; i++) {
+        memcpy(encoded_buffers[i], encoded_buffers_tmp[i], encoded_buffer_sizes[i]);
+    }
+
+    // Now we can safely destroy the encoder
+    destroy_fec_encoder(fec_encoder);
+
+    // ** DECODING **
+
+    // Now, we decode
+    FECDecoder* fec_decoder =
+        create_fec_decoder(NUM_ORIGINAL_PACKETS, NUM_FEC_PACKETS, MAX_PACKET_SIZE);
+
+    // Register some sufficiently large subset of the encoded packets
+    fec_decoder_register_buffer(fec_decoder, 0, encoded_buffers[0], encoded_buffer_sizes[0]);
+    // It's not possible to reconstruct 2 packets, only being given 1 FEC packet
+    EXPECT_EQ(fec_get_decoded_buffer(fec_decoder, NULL), -1);
+    // Given the FEC packets, it should be possible to reconstruct packet #2
+    fec_decoder_register_buffer(fec_decoder, 2, encoded_buffers[2], encoded_buffer_sizes[2]);
+    fec_decoder_register_buffer(fec_decoder, 3, encoded_buffers[3], encoded_buffer_sizes[3]);
+
+    // Decode the buffer using FEC
+    char decoded_buffer[NUM_ORIGINAL_PACKETS * MAX_PACKET_SIZE];
+    int decoded_size = fec_get_decoded_buffer(fec_decoder, decoded_buffer);
+
+    // Confirm that we correctly reconstructed the original data
+    EXPECT_EQ(decoded_size, PACKET1_SIZE + PACKET2_SIZE);
+    EXPECT_EQ(memcmp(decoded_buffer, packet1, PACKET1_SIZE), 0);
+    EXPECT_EQ(memcmp(decoded_buffer + PACKET1_SIZE, packet2, PACKET2_SIZE), 0);
 }
 
 /*

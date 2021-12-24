@@ -4,6 +4,7 @@
  * Copyright 2021 Whist Technologies, Inc.
  * @file fec.h
  * @brief This file contains the FEC API Interface
+ * @note See protocol_test.cpp for usage
  */
 
 typedef void FECEncoder;
