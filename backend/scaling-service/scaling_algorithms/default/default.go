@@ -132,11 +132,8 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 			case scheduledEvent := <-s.ScheduledEventChan:
 				scalingCtx, scalingCancel := context.WithCancel(context.Background())
 
-				// TODO: create constant for bundled regions
-				allowedRegions := []string{"us-east", "us-west"}
-
 				// Scale down each region
-				for _, region := range allowedRegions {
+				for _, region := range bundledRegions {
 					err := s.ScaleDownIfNecessary(scalingCtx, s.Host, scheduledEvent)
 					if err != nil {
 						logger.Errorf("Error running scale down job on region %v. Err: %v", region, err)

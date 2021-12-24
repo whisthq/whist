@@ -58,7 +58,7 @@ func main() {
 	})
 
 	// Start main event loop
-	go eventLoop(globalCtx, globalCancel, goroutineTracker, subscriptionEvents, scheduledEvents, algorithmByRegionMap)
+	go eventLoop(globalCtx, globalCancel, goroutineTracker, subscriptionEvents, scheduledEvents, &algorithmByRegionMap)
 
 	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
 	sigChan := make(chan os.Signal, 2)
@@ -97,8 +97,22 @@ func StartSchedulerEvents(globalCtx context.Context, goroutineTracker *sync.Wait
 	s.StartAsync()
 }
 
+func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent sa.ScalingEvent) sa.ScalingAlgorithm {
+	var scalingAlgorithm sa.ScalingAlgorithm
+
+	algorithm, ok := algorithmByRegion.Load(scalingEvent.Region)
+	if !ok {
+		logger.Warningf("%v not found on algorithm map. Using default.", scalingEvent.Region)
+		scalingAlgorithm = &sa.DefaultScalingAlgorithm{Region: "us-east"}
+	} else {
+		scalingAlgorithm = algorithm.(*sa.DefaultScalingAlgorithm)
+	}
+
+	return scalingAlgorithm
+}
+
 func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup,
-	subscriptionEvents <-chan subscriptions.SubscriptionEvent, scheduledEvents <-chan sa.ScalingEvent, algorithmByRegion sync.Map) {
+	subscriptionEvents <-chan subscriptions.SubscriptionEvent, scheduledEvents <-chan sa.ScalingEvent, algorithmByRegion *sync.Map) {
 
 	for {
 		select {
@@ -121,15 +135,12 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 
 				// Start scaling algorithm based on region
 				logger.Infof("Received database event.")
+				algorithm := getScalingAlgorithm(algorithmByRegion, scalingEvent)
 
-				algorithm, ok := algorithmByRegion.Load(scalingEvent.Region)
-				if !ok {
-					logger.Errorf("%v not found on algorithm map", scalingEvent.Region)
+				switch algorithm := algorithm.(type) {
+				case *sa.DefaultScalingAlgorithm:
+					algorithm.InstanceEventChan <- scalingEvent
 				}
-				scalingAlgorithm := algorithm.(*sa.DefaultScalingAlgorithm)
-
-				logger.Infof("Sending to instance event chan")
-				scalingAlgorithm.InstanceEventChan <- scalingEvent
 
 			case *subscriptions.ImageEvent:
 				var scalingEvent sa.ScalingEvent
@@ -145,31 +156,24 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 
 				// Start scaling algorithm based on region
 				logger.Infof("Received database event.")
+				algorithm := getScalingAlgorithm(algorithmByRegion, scalingEvent)
 
-				algorithm, ok := algorithmByRegion.Load(scalingEvent.Region)
-				if !ok {
-					logger.Errorf("%v not found on algorithm map", scalingEvent.Region)
+				switch algorithm := algorithm.(type) {
+				case *sa.DefaultScalingAlgorithm:
+					algorithm.ImageEventChan <- scalingEvent
 				}
-				scalingAlgorithm := algorithm.(*sa.DefaultScalingAlgorithm)
-
-				logger.Infof("Sending to instance event chan")
-				scalingAlgorithm.ImageEventChan <- scalingEvent
 			}
-
 		case scheduledEvent := <-scheduledEvents:
 			scheduledEvent.Type = "SCHEDULED_EVENT"
 
 			// Start scaling algorithm based on region
 			logger.Infof("Received scheduled event.")
+			algorithm := getScalingAlgorithm(algorithmByRegion, scheduledEvent)
 
-			algorithm, ok := algorithmByRegion.Load(scheduledEvent.Region)
-			if !ok {
-				logger.Errorf("%v not found on algorithm map", scheduledEvent.Region)
+			switch algorithm := algorithm.(type) {
+			case *sa.DefaultScalingAlgorithm:
+				algorithm.ScheduledEventChan <- scheduledEvent
 			}
-			scalingAlgorithm := algorithm.(*sa.DefaultScalingAlgorithm)
-
-			logger.Infof("Sending to instance event chan")
-			scalingAlgorithm.InstanceEventChan <- scheduledEvent
 		}
 	}
 }
