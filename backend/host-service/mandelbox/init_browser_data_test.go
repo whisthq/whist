@@ -95,6 +95,6 @@ func TestUserInitialBrowserWriteEmpty(t *testing.T) {
 
 	// Check contents match
 	if "{}" != matchingFileBuf.String() {
-		t.Errorf("file contents don't match for file %s: '%s' vs '%s'", browserDataFile, testFileContent, matchingFileBuf.Bytes())
+		t.Errorf("file contents don't match for file %s: '{}' vs '%s'", browserDataFile, matchingFileBuf.Bytes())
 	}
 }
