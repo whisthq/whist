@@ -25,22 +25,19 @@ Includes
 Public Functions
 ============================
 */
-/**
- * @brief                          Pops latest client-side SDL event,
- *                                 if there is one, and handles the event, on
- *                                 the client-side.
- *
- * @returns                        Returns -1 if no SDL event is available
- *                                 or an error occurs, 0 on success
- */
-int try_handle_sdl_event(void);
 
 /**
- * @brief                          Handles a client-side SDL event, on the
- *                                 client-side.
+ * @brief                          Flushes the SDL event queue,
+ *                                 and handles all of the events
  *
- * @returns                        Returns -1 on failure, 0 on success
+ * @returns                        True on success,
+ *                                 False on failure
+ *
+ * @note                           This function call MAY occasionally hang for an indefinitely long
+ * time. To see an example of this, simply drag the window on MSWindows, or hold down the minimize
+ * button on Mac. To see more information on this issue, and my related rant, go to
+ * https://github.com/libsdl-org/SDL/issues/1059
  */
-int handle_sdl_event(SDL_Event *event);
+bool sdl_handle_events();
 
 #endif  // SDL_EVENT_HANDLER_H

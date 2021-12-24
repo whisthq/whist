@@ -53,16 +53,55 @@ bool active_momentum_scroll = false;
 
 /*
 ============================
-Private Functions
+Private Functions Declarations
 ============================
 */
 
+int handle_sdl_event(SDL_Event *event);
 int handle_key_up_down(SDL_Event *event);
 int handle_mouse_motion(SDL_Event *event);
 int handle_mouse_wheel(SDL_Event *event);
 int handle_mouse_button_up_down(SDL_Event *event);
 int handle_multi_gesture(SDL_Event *event);
 int handle_pinch(SDL_Event *event);
+
+/*
+============================
+Public Function Implementations
+============================
+*/
+
+bool sdl_handle_events() {
+    /*
+        Handle an SDL event if polled
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
+    // We cannot use SDL_WaitEventTimeout here, because
+    // Linux seems to treat a 1ms timeout as an infinite timeout
+    SDL_Event sdl_event;
+    while (SDL_PollEvent(&sdl_event)) {
+        if (handle_sdl_event(&sdl_event) != 0) {
+            return false;
+        }
+    }
+
+    // After handle_sdl_event potentially captures a mouse motion,
+    // We throttle it down to only update once every 0.5ms
+    static clock mouse_motion_timer;
+    static bool first_mouse_motion = true;
+    if (first_mouse_motion || get_timer(mouse_motion_timer) * MS_IN_SECOND > 0.5) {
+        if (update_mouse_motion() != 0) {
+            return -1;
+        }
+        start_timer(&mouse_motion_timer);
+        first_mouse_motion = false;
+    }
+
+    return true;
+}
 
 /*
 ============================
@@ -291,29 +330,6 @@ int handle_file_drop(SDL_Event *event) {
     file_synchronizer_set_file_reading_basic_metadata(event->drop.file, FILE_TRANSFER_SERVER_DROP,
                                                       &drop_event_info);
 
-    return 0;
-}
-
-/*
-============================
-Public Function Implementations
-============================
-*/
-
-int try_handle_sdl_event(void) {
-    /*
-        Handle an SDL event if polled
-
-        Return:
-            (int): 0 on success, -1 on failure
-    */
-
-    SDL_Event event;
-    if (SDL_PollEvent(&event)) {
-        if (handle_sdl_event(&event) != 0) {
-            return -1;
-        }
-    }
     return 0;
 }
 

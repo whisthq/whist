@@ -439,9 +439,8 @@ int main(int argc, char* argv[]) {
         start_timer(&window_resize_timer);
         window_resize_mutex = whist_create_mutex();
 
-        clock keyboard_sync_timer, mouse_motion_timer, monitor_change_timer;
+        clock keyboard_sync_timer, monitor_change_timer;
         start_timer(&keyboard_sync_timer);
-        start_timer(&mouse_motion_timer);
         start_timer(&monitor_change_timer);
 
         // Timer ensures we check piped args for potential URLs to open no more than once every
@@ -452,25 +451,20 @@ int main(int argc, char* argv[]) {
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
         while (connected && !client_exiting && exit_code == WHIST_EXIT_SUCCESS) {
-            // This should be called BEFORE the call to read_piped_arguments, otherwise one URL may
-            // get lost.
+            // This should be called BEFORE the call to read_piped_arguments,
+            // otherwise one URL may get lost.
             send_new_tab_url_if_needed();
 
             // Update any pending SDL tasks
             sdl_update_pending_tasks();
 
-            // Check if the window is minimized or occluded. If it is, we can just sleep for a bit
-            // and then check again.
-            if (!sdl_is_window_visible()) {
-                // Even though the window is minized/occluded, we still need to handle SDL events or
-                // else the application will permanently hang
-                if (SDL_WaitEventTimeout(&sdl_msg, 1) && handle_sdl_event(&sdl_msg) != 0) {
-                    // unable to handle event
-                    exit_code = WHIST_EXIT_FAILURE;
-                    break;
-                }
-
-                continue;
+            // We _must_ keep make calling this function as much as we can,
+            // or else the user will get beachball / "Whist Not Responding"
+            // Note, that the OS will sometimes hang this function for an arbitrarily long time
+            if (!sdl_handle_events()) {
+                // unable to handle event
+                exit_code = WHIST_EXIT_FAILURE;
+                break;
             }
 
             if (get_timer(new_tab_url_timer) * MS_IN_SECOND > 50.0) {
@@ -502,22 +496,14 @@ int main(int argc, char* argv[]) {
                 start_timer(&monitor_change_timer);
             }
 
-            // Timeout after 1ms
-            // (On Windows, this call will hang when user is dragging or resizing the window)
-            if (SDL_WaitEventTimeout(&sdl_msg, 1) && handle_sdl_event(&sdl_msg) != 0) {
-                // unable to handle event
-                exit_code = WHIST_EXIT_FAILURE;
-                break;
-            }
-
-            // After handle_sdl_event potentially captures a mouse motion,
-            // We throttle it down to only update once every 0.5ms
-            if (get_timer(mouse_motion_timer) * MS_IN_SECOND > 0.5) {
-                if (update_mouse_motion()) {
-                    exit_code = WHIST_EXIT_FAILURE;
-                    break;
-                }
-                start_timer(&mouse_motion_timer);
+            // Check if the window is minimized or occluded.
+            if (!sdl_is_window_visible()) {
+                // If it is, we can sleep for a good while to keep CPU usage very low.
+                whist_sleep(10);
+            } else {
+                // Otherwise, we sleep for a much shorter time to stay responsive,
+                // but we still don't let the loop be tight (in order to improve battery life)
+                whist_usleep(0.25 * US_IN_MS);
             }
         }
 
