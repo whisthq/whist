@@ -48,15 +48,6 @@ func (s *DefaultScalingAlgorithm) CreateEventChans() {
 	if s.InstanceEventChan == nil {
 		s.InstanceEventChan = make(chan ScalingEvent, 100)
 	}
-<<<<<<< HEAD
-	if s.ImageEventChan == nil {
-		s.ImageEventChan = make(chan ScalingEvent, 100)
-	}
-	if s.ScheduledEventChan == nil {
-		s.ScheduledEventChan = make(chan ScalingEvent, 100)
-	}
-=======
->>>>>>> 9f3552a91 (Finish scalinng logic)
 	if s.ImageEventChan == nil {
 		s.ImageEventChan = make(chan ScalingEvent, 100)
 	}
