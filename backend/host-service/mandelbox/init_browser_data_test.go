@@ -3,13 +3,13 @@ package mandelbox
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
 
 	"github.com/whisthq/whist/backend/core-go/types"
+	"github.com/whisthq/whist/backend/core-go/utils"
 )
 
 // TestUserInitialBrowserWrite checks if the browser data is properly created by
@@ -38,8 +38,8 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 		Extensions:    types.Extensions(extensions),
 	}
 
-
-	testFileContent := fmt.Sprintf(`{"cookiesJSON":"%s","extensions":"%s"}`, cookiesJSON, extensions)
+	// Explicitly set the result to what we expect
+	testFileContent := utils.Sprintf(`{"cookiesJSON":"%s","extensions":"%s"}`, cookiesJSON, extensions)
 
 	if err := WriteUserInitialBrowserData(userInitialBrowserData, destDir); err != nil {
 		t.Fatalf("error writing user initial browser data: %v", err)
@@ -53,7 +53,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 		t.Fatalf("error opening matching file %s: %v", browserDataFile, err)
 	}
 
-	matchingFileBuf := bytes.NewBuffer(nil)
+	var matchingnFileBuf byte
 	_, err = matchingFileBuf.ReadFrom(matchingFile)
 	if err != nil {
 		t.Fatalf("error reading matching file %s: %v", browserDataFile, err)
