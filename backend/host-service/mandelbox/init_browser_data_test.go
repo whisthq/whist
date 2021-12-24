@@ -53,7 +53,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 		t.Fatalf("error opening matching file %s: %v", browserDataFile, err)
 	}
 
-	var matchingFileBuf byte.Buffer
+	var matchingFileBuf bytes.Buffer
 	_, err = matchingFileBuf.ReadFrom(matchingFile)
 	if err != nil {
 		t.Fatalf("error reading matching file %s: %v", browserDataFile, err)
