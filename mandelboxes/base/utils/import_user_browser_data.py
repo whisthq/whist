@@ -159,12 +159,12 @@ def format_chromium_based_cookie(cookie):
     return formatted_cookie
 
 
-def set_browser_cookies(target_browser_name, cookie_full_path, target_cookie_file=None):
+def set_browser_cookies(target_browser_name, cookies_json, target_cookie_file=None):
     """
     Set cookies from file to target browser
     Args:
         target_browser_name (str): the name of the browser we will import cookies to
-        cookie_full_path (str): path to file containing cookie json
+        cookies_json (str): cookies in json format
         target_cookie_file (str): [optional] path to target browser cookie file
     """
     # This function only supports the targets Brave, Opera, Chrome, and any browser with
@@ -183,42 +183,40 @@ def set_browser_cookies(target_browser_name, cookie_full_path, target_cookie_fil
     con.text_factory = browser_cookie3.text_factory
     cur = con.cursor()
 
-    with open(cookie_full_path, "r") as f:
-        cookies_json = f.read()
-        cookies = json.loads(cookies_json)
+    cookies = json.loads(cookies_json)
 
-        formatted_cookies = []
-        for cookie in cookies:
+    formatted_cookies = []
+    for cookie in cookies:
 
-            # Encrypted_value should not be included with cookiess
-            cookie.pop("encrypted_value", None)
+        # Encrypted_value should not be included with cookiess
+        cookie.pop("encrypted_value", None)
 
-            decrypted_value = cookie.get("decrypted_value", None)
-            if decrypted_value:
-                encrypted_prefix = cookie.get("encrypted_prefix", None)
-                cookie["encrypted_value"] = encrypt(decrypted_value)
+        decrypted_value = cookie.get("decrypted_value", None)
+        if decrypted_value:
+            encrypted_prefix = cookie.get("encrypted_prefix", None)
+            cookie["encrypted_value"] = encrypt(decrypted_value)
 
-            cookie.pop("decrypted_value", None)
-            cookie.pop("encryption_prefix", None)
+        cookie.pop("decrypted_value", None)
+        cookie.pop("encryption_prefix", None)
 
-            # We only want the values in a list form
-            try:
-                formatted_cookies.append(format_chromium_based_cookie(cookie))
-            except KeyError as err:
-                subprocess.run(["echo", f"Cookie failed to format with key err: {err}"])
-
+        # We only want the values in a list form
         try:
-            # This is very specific to Chrome/Brave/Opera
-            # TODO (aaron): when we add support to more browsers on mandelbox we will need to support diff cookie db columns
-            cur.executemany(
-                "INSERT OR REPLACE INTO cookies (creation_utc, top_frame_site_key, host_key, name, value, encrypted_value, path, expires_utc, is_secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_scheme, source_port, is_same_party) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                formatted_cookies,
-            )
-            con.commit()
-        except sqlite3.InterfaceError as err:
-            subprocess.run(["echo", f"Cookie failed to import with the interface error: {err}"])
-        except sqlite3.IntegrityError as err:
-            subprocess.run(["echo", f"Cookie failed to import with the integrity error: {err}"])
+            formatted_cookies.append(format_chromium_based_cookie(cookie))
+        except KeyError as err:
+            subprocess.run(["echo", f"Cookie failed to format with key err: {err}"])
+
+    try:
+        # This is very specific to Chrome/Brave/Opera
+        # TODO (aaron): when we add support to more browsers on mandelbox we will need to support diff cookie db columns
+        cur.executemany(
+            "INSERT OR REPLACE INTO cookies (creation_utc, top_frame_site_key, host_key, name, value, encrypted_value, path, expires_utc, is_secure, is_httponly, last_access_utc, has_expires, is_persistent, priority, samesite, source_scheme, source_port, is_same_party) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            formatted_cookies,
+        )
+        con.commit()
+    except sqlite3.InterfaceError as err:
+        subprocess.run(["echo", f"Cookie failed to import with the interface error: {err}"])
+    except sqlite3.IntegrityError as err:
+        subprocess.run(["echo", f"Cookie failed to import with the integrity error: {err}"])
 
     con.close()
 
@@ -230,23 +228,14 @@ def set_browser_cookies(target_browser_name, cookie_full_path, target_cookie_fil
             os.remove(singleton_cookie_file)
 
 
-def create_bookmark_file(target_browser_name, temp_bookmark_path, custom_bookmark_file_path=None):
+def create_bookmark_file(target_browser_name, bookmarks_json, custom_bookmark_file_path=None):
     """
     Create bookmarks file for target browser
     Args:
         target_browser_name (str): the name of the browser we will import cookies to
-        temp_bookmark_path (str): path to file containing bookmark json
+        bookmarks_json (str): bookmarks in json format json
         custom_bookmark_file_path (str): [optional] path to target browser bookmark file
     """
-    # This function only supports the targets Brave, Opera, Chrome, and any browser with
-    # the same db columns. Otherwise it will not work and error out.
-    if (
-        target_browser_name != "chrome"
-        and target_browser_name != "brave"
-        and target_browser_name != "opera"
-    ):
-        raise ("Unrecognized browser type. Only works for brave, chrome, and opera.")
-
     bookmarks_paths = []
     if custom_bookmark_file_path:
         bookmarks_paths.append(custom_bookmark_file_path)
@@ -263,24 +252,43 @@ def create_bookmark_file(target_browser_name, temp_bookmark_path, custom_bookmar
         os.makedirs(directory)
         os.chmod(directory, 0o777)
 
-    with open(temp_bookmark_path, "r") as temp_bookmark_file:
-        bookmarks = temp_bookmark_file.read()
-        with open(path, "w") as browser_bookmark_file:
-            browser_bookmark_file.write(json.loads(bookmarks))
+    with open(path, "w") as browser_bookmark_file:
+        browser_bookmark_file.write(bookmarks_json)
+
+
+def create_extension_files(extensions, custom_script=None):
+    """
+    Creates extension files with the help of a given script
+    Args:
+        extensions (str): comma separated list of extensions in a form of a string
+        custom_script (str): [optional] script that helps create extension file
+    """
+    # Use custom script path if not None
+    extension_install_script = custom_script if custom_script else "/usr/bin/install-extension.sh"
+
+    # Install extensions one by one
+    for extension in extensions.split(","):
+        subprocess.run([extension_install_script, extension])
 
 
 if __name__ == "__main__":
-    browser = os.getenv("WHIST_COOKIE_UPLOAD_TARGET", None)
-    cookie_full_path = os.getenv("WHIST_INITIAL_USER_COOKIES_FILE", None)
-    bookmark_full_path = os.getenv("WHIST_INITIAL_USER_BOOKMARKS_FILE", None)
+    """
+    The expected use of this function is:
 
-    if browser:
-        if cookie_full_path and len(cookie_full_path) > 0 and os.path.exists(cookie_full_path):
-            set_browser_cookies(browser, cookie_full_path)
+    python3 import_user_browser_data.py <browser target> <user data file>
 
-        if (
-            bookmark_full_path
-            and len(bookmark_full_path) > 0
-            and os.path.exists(bookmark_full_path)
-        ):
-            create_bookmark_file(browser, bookmark_full_path)
+    """
+    if len(sys.argv) == 3:
+        browser = sys.argv[1]
+        browser_data_file = sys.argv[2]
+        # Get browser data in file
+        with open(browser_data_file, "r") as file:
+            browser_data = json.load(file)
+            if "cookiesJSON" in browser_data and len(browser_data["cookiesJSON"]) > 0:
+                set_browser_cookies(browser, browser_data["cookiesJSON"])
+
+            if "bookmarksJSON" in browser_data and len(browser_data["bookmarksJSON"]) > 0:
+                create_bookmark_file(browser, browser_data["bookmarksJSON"])
+
+            if "extensions" in browser_data and len(browser_data["extensions"]) > 0:
+                create_extension_files(browser_data["extensions"])

@@ -22,10 +22,8 @@ set -Eeuo pipefail
 WHIST_MAPPINGS_DIR=/whist/resourceMappings
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
 PRIVATE_KEY_FILENAME=$WHIST_PRIVATE_DIR/aes_key
-COOKIE_FILE_FILENAME=$WHIST_PRIVATE_DIR/user_cookies_file
-BOOKMARK_FILE_FILENAME=$WHIST_PRIVATE_DIR/user_bookmarks_file
-EXTENSION_FILENAME=$WHIST_PRIVATE_DIR/extensions_file
-USER_UPLOAD_TARGET_FILENAME=$WHIST_PRIVATE_DIR/user_target
+BROWSER_DATA_FILE_FILENAME=$WHIST_PRIVATE_DIR/user_browser_data_file
+USER_DEST_BROWSER_FILENAME=$WHIST_PRIVATE_DIR/user_dest_browser
 TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/timeout
 WHIST_APPLICATION_PID_FILE=/home/whist/whist-application-pid
 PROTOCOL_LOG_FILENAME=/usr/share/whist/server.log
@@ -55,31 +53,6 @@ if [ -f "$TIMEOUT_FILENAME" ]; then
   OPTIONS="$OPTIONS --timeout=$TIMEOUT"
 fi
 
-# Set cookies file, if file exists
-if [ -f "$COOKIE_FILE_FILENAME" ]; then
-  export WHIST_INITIAL_USER_COOKIES_FILE=$(cat $COOKIE_FILE_FILENAME)
-fi
-
-# Set user upload target, if file exists
-if [ -f "$USER_UPLOAD_TARGET_FILENAME" ]; then
-  export WHIST_COOKIE_UPLOAD_TARGET=$(cat $USER_UPLOAD_TARGET_FILENAME)
-fi
-
-if [ -f "$BOOKMARK_FILE_FILENAME" ]; then
-  export WHIST_INITIAL_USER_BOOKMARKS_FILE=$(cat $BOOKMARK_FILE_FILENAME)
-fi
-
-if [ -f "$EXTENSION_FILENAME" ] && [ -f "$(cat $EXTENSION_FILENAME)" ]; then
-  IN="$(cat $(cat $EXTENSION_FILENAME))"
-  extensions=(${IN//,/ })
-  for extension in "${extensions[@]}"
-  do
-    #  Install user extensions
-    /usr/bin/install-extension.sh $extension
-  done
-  rm $(cat $EXTENSION_FILENAME)
-fi
-
 # We use named pipe redirection for consistency with our WhistServer launch setup
 # &> redirects both stdout and stdin together; shorthand for '> XYZ 2>&1'
 /usr/share/whist/run-as-whist-user.sh "/usr/bin/run-whist-teleport.sh" &> >(tee $TELEPORT_LOG_FILENAME) &
@@ -100,21 +73,16 @@ if [ "$ENV_NAME" != "localdev" ]; then
   trap cleanup EXIT ERR
 fi
 
-# Imports user browser data if file exists
-python3 /usr/share/whist/import_user_browser_data.py
+# Set user upload target, if file exists
+if [ -f "$USER_DEST_BROWSER_FILENAME" ] && [ -f "$BROWSER_DATA_FILE_FILENAME" ]; then
+  # Imports user browser data if file exists
+  python3 /usr/share/whist/import_user_browser_data.py $(cat $USER_DEST_BROWSER_FILENAME) $(cat $BROWSER_DATA_FILE_FILENAME)
 
-if [ -n "${WHIST_INITIAL_USER_COOKIES_FILE+1}" ] && [ -f "$WHIST_INITIAL_USER_COOKIES_FILE" ]; then
-  # Remove temporary file containing the user's intial cookies
-  rm $WHIST_INITIAL_USER_COOKIES_FILE
+  # Remove temporary files
+  rm -f $(cat $BROWSER_DATA_FILE_FILENAME)
+  rm $BROWSER_DATA_FILE_FILENAME
+  rm $USER_DEST_BROWSER_FILENAME
 fi
-
-if [ -n "${WHIST_INITIAL_USER_BOOKMARKS_FILE+1}" ] && [ -f "$WHIST_INITIAL_USER_BOOKMARKS_FILE" ]; then
-  rm $WHIST_INITIAL_USER_BOOKMARKS_FILE
-fi
-
-# Clean up traces of temporary files
-unset WHIST_INITIAL_USER_COOKIES_FILE
-unset WHIST_INITIAL_USER_BOOKMARKS_FILE
 
 # Start the application that this mandelbox runs.
 /usr/share/whist/run-as-whist-user.sh "/usr/bin/run-whist-application.sh" &

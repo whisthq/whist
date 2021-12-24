@@ -226,17 +226,9 @@ browser_cookies = [
 
 
 @pytest.mark.parametrize("browser,cookies,browser_cookie_path,num_valid_cookies", browser_cookies)
-def test_setting_browser_cookies(
-    browser, cookies, browser_cookie_path, num_valid_cookies, tmp_path
-):
-    # Create file to store cookies
-    temp_dir = tmp_path / "sub"
-    temp_dir.mkdir()
-    cookie_json_path = temp_dir / "cookies.txt"
-    cookie_json_path.write_text(json.dumps(cookies))
-
+def test_setting_browser_cookies(browser, cookies, browser_cookie_path, num_valid_cookies):
     # Upload cookies
-    set_browser_cookies(browser, cookie_json_path, browser_cookie_path)
+    set_browser_cookies(browser, json.dumps(cookies), browser_cookie_path)
 
     # Get cookie file to test
     cookie_file = get_or_create_cookie_file(browser, browser_cookie_path)
@@ -259,29 +251,18 @@ def test_setting_invalid_target_browsers_cookies(target_browser):
         set_browser_cookies(target_browser, "")
 
 
-@pytest.mark.parametrize("target_browser", invalid_target_mandelbox_browsers)
-def test_setting_invalid_target_browsers_bookmark(target_browser):
-    with pytest.raises(Exception):
-        create_bookmark_file(target_browser, "")
-
-
 browser_bookmarks = [
     ["chrome", "~/.config/temp/google-chrome/Default/Bookmark"],
 ]
 
 
 @pytest.mark.parametrize("browser,browser_bookmark_path", browser_bookmarks)
-def test_create_bookmark_file(browser, browser_bookmark_path, tmp_path):
+def test_create_bookmark_file(browser, browser_bookmark_path):
 
-    bookmark_content = "test_bookmark_content"
-    # Create file to store bookmarks
-    temp_dir = tmp_path / "sub"
-    temp_dir.mkdir()
-    bookmark_json_path = temp_dir / "bookmark.txt"
-    bookmark_json_path.write_text(json.dumps(bookmark_content))
+    bookmark_content = json.dumps("test_bookmark_content")
 
     # Upload bookmarks
-    create_bookmark_file(browser, bookmark_json_path, browser_bookmark_path)
+    create_bookmark_file(browser, bookmark_content, browser_bookmark_path)
 
     # Get bookmarks file to test
     bookmark_file = get_or_create_cookie_file(browser, browser_bookmark_path)
@@ -290,3 +271,13 @@ def test_create_bookmark_file(browser, browser_bookmark_path, tmp_path):
         assert b_file.read() == bookmark_content
 
     os.remove(bookmark_file)
+
+
+def test_extension_file():
+    extension = "not_real_extension"
+    create_extension_files(extension, "./tests/install-extension.sh")
+
+    # Check if file is created from script
+    assert os.path.isfile(f"./{extension}.json")
+
+    os.remove(f"./{extension}.json")

@@ -1,6 +1,7 @@
 package mandelbox
 
 import (
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path"
@@ -13,19 +14,17 @@ import (
 // This contains the path and file names related to browser data
 const (
 	UserInitialBrowserDir     string = utils.WhistDir + "userConfigs/"
-	UserInitialCookiesFile    string = "user-initial-cookies"
-	UserInitialBookmarksFile  string = "user-initial-bookmarks"
-	UserInitialExtensionsFile string = "user-initial-extensions"
+	UserInitialBrowserFile    string = "user-intial-file"
 )
 
 // BrowserData is a collection of possible browser datas a user generates
 type BrowserData struct {
 	// CookieJSON is the user's cookie sqlite3 file in a json string format
-	CookiesJSON types.Cookies
+	CookiesJSON types.Cookies `json:"cookiesJSON,omitempty"`
 	// BookmarkJSON is the user's bookmark json file using json string format
-	BookmarksJSON types.Bookmarks
+	BookmarksJSON types.Bookmarks `json:"bookmarksJSON,omitempty"`
 	// Extensions is a comma spliced string that represents the users browser extensions
-	Extensions types.Extensions
+	Extensions types.Extensions `json:"extensions,omitempty"`
 }
 
 // WriteUserInitialBrowserData writes the user's initial browser data to file(s)
@@ -44,30 +43,19 @@ func WriteUserInitialBrowserData(initialBrowserData BrowserData, destDir string)
 			cmd.Run()
 		}()
 	}
-	// Begin writing user initial browser data
-	cookieFilePath := path.Join(destDir, UserInitialCookiesFile)
-	bookmarkFilePath := path.Join(destDir, UserInitialBookmarksFile)
-	extensionFilePath := path.Join(destDir, UserInitialExtensionsFile)
 
-	browserDataInfos := [][]string{
-		{string(initialBrowserData.CookiesJSON), cookieFilePath, "cookies"},
-		{string(initialBrowserData.BookmarksJSON), bookmarkFilePath, "bookmarks"},
-		{string(initialBrowserData.Extensions), extensionFilePath, "extensions"},
+	// Convert struct into json string
+	data, err := json.Marshal(initialBrowserData)
+
+	if err != nil {
+		return utils.MakeError("Could not marshal inipialBrowserData: %v", initialBrowserData)
 	}
 
-	for _, browserDataInfo := range browserDataInfos {
-		content := browserDataInfo[0]
-		filePath := browserDataInfo[1]
-		contentType := browserDataInfo[2]
+	filePath := path.Join(destDir, UserInitialBrowserFile)
 
-		if len(content) == 0 {
-			logger.Infof("Did not create new file: %s of type %v as content was empty", filePath, contentType)
-			continue
-		}
-
-		if err := utils.WriteToNewFile(filePath, content); err != nil {
-			logger.Errorf("could not create %s file. Error: %v", contentType, err)
-		}
+	// Save the browser data into a file
+	if err := utils.WriteToNewFile(filePath, string(data)); err != nil {
+		logger.Errorf("could not create %s file. Error: %v", filePath, err)
 	}
 
 	logger.Infof("Finished storing user initial browser data.")

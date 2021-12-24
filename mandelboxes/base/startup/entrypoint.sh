@@ -39,30 +39,20 @@ fi
 # leak in any way (probably redundant, but still good practice)
 unset WHIST_AES_KEY
 
-# If WHIST_INITIAL_USER_COOKIES_FILE is set, then create file
-if [ -n "${WHIST_INITIAL_USER_COOKIES_FILE+1}" ]; then
-  echo $WHIST_INITIAL_USER_COOKIES_FILE > $WHIST_PRIVATE_DIR/user_cookies_file
+# If WHIST_INITIAL_USER_DATA_FILE is set, then create file
+if [ -n "${WHIST_INITIAL_USER_DATA_FILE+1}" ]; then
+  echo $WHIST_INITIAL_USER_DATA_FILE > $WHIST_PRIVATE_DIR/user_browser_data_file
 fi
 
-# If WHIST_COOKIE_UPLOAD_TARGET is set, then create file
-if [ -n "${WHIST_COOKIE_UPLOAD_TARGET+1}" ]
+# If WHIST_DEST_BROWSER is set, then create file
+if [ -n "${WHIST_DEST_BROWSER+1}" ]
 then
-  echo $WHIST_COOKIE_UPLOAD_TARGET > $WHIST_PRIVATE_DIR/user_target
+  echo $WHIST_DEST_BROWSER > $WHIST_PRIVATE_DIR/user_dest_browser
 fi
 
-# If WHIST_INITIAL_USER_BOOKMARKS_FILE is set, then create file
-if [ -n "${WHIST_INITIAL_USER_BOOKMARKS_FILE+1}" ]; then
-  echo $WHIST_INITIAL_USER_BOOKMARKS_FILE > $WHIST_PRIVATE_DIR/user_bookmarks_file
-fi
 
-# If WHIST_INITIAL_BROWSER_EXTENSIONS_FILE is set, then create file
-if [ -n "${WHIST_INITIAL_BROWSER_EXTENSIONS_FILE+1}" ]; then
-  echo $WHIST_INITIAL_BROWSER_EXTENSIONS_FILE > $WHIST_PRIVATE_DIR/extensions_file
-fi
-
-unset WHIST_INITIAL_USER_BOOKMARKS_FILE
-unset WHIST_INITIAL_USER_COOKIES_FILE
-unset WHIST_INITIAL_BROWSER_EXTENSIONS_FILE
+unset WHIST_INITIAL_USER_DATA_FILE
+unset WHIST_DEST_BROWSER
 
 # Remove a vestigal file that we do not use.
 # This is how LXC used to read environment variables: see that deprecated code in
