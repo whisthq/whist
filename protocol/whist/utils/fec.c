@@ -14,7 +14,7 @@ typedef struct {
     int num_accepted_buffers;
     int num_buffers;
     int num_real_buffers;
-    int packet_size;
+    int max_buffer_size;
     int* buffer_sizes;
     void** buffers;
 } InternalFECEncoder;
@@ -23,7 +23,7 @@ typedef struct {
     int num_accepted_buffers;
     int num_buffers;
     int num_real_buffers;
-    int packet_size;
+    int max_buffer_size;
     int* buffer_sizes;
     void** buffers;
 } InternalFECDecoder;
@@ -38,10 +38,10 @@ int get_num_fec_packets(int num_real_packets, double fec_packet_ratio) {
     return num_real_packets * ratio;
 }
 
-FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int packet_size) {
+FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int max_buffer_size) {
     InternalFECEncoder* fec_encoder = safe_malloc(sizeof(InternalFECEncoder));
 
-    fec_encoder->packet_size = packet_size;
+    fec_encoder->max_buffer_size = max_buffer_size;
     fec_encoder->num_accepted_buffers = 0;
     fec_encoder->num_real_buffers = num_real_buffers;
     int num_total_buffers = num_real_buffers + num_fec_buffers;
@@ -56,7 +56,7 @@ void fec_encoder_register_buffer(FECEncoder* fec_encoder_raw, void* buffer, int 
     InternalFECEncoder* fec_encoder = (InternalFECEncoder*)fec_encoder_raw;
 
     FATAL_ASSERT(fec_encoder->num_accepted_buffers < fec_encoder->num_real_buffers);
-    FATAL_ASSERT(0 <= buffer_size && buffer_size <= fec_encoder->packet_size);
+    FATAL_ASSERT(0 <= buffer_size && buffer_size <= fec_encoder->max_buffer_size);
 
     fec_encoder->buffers[fec_encoder->num_accepted_buffers] = buffer;
     fec_encoder->buffer_sizes[fec_encoder->num_accepted_buffers] = buffer_size;
@@ -81,7 +81,7 @@ void fec_get_encoded_buffers(FECEncoder* fec_encoder_raw, void** buffers, int* b
     }
 }
 
-void free_fec_encoder(FECEncoder* fec_context_raw) {
+void destroy_fec_encoder(FECEncoder* fec_context_raw) {
     InternalFECEncoder* fec_context = (InternalFECEncoder*)fec_context_raw;
 
     free(fec_context->buffers);
@@ -89,12 +89,12 @@ void free_fec_encoder(FECEncoder* fec_context_raw) {
     free(fec_context);
 }
 
-FECDecoder* create_fec_decoder(int num_real_buffers, int num_fec_buffers, int packet_size) {
+FECDecoder* create_fec_decoder(int num_real_buffers, int num_fec_buffers, int max_buffer_size) {
     InternalFECDecoder* fec_decoder = safe_malloc(sizeof(InternalFECDecoder));
 
     int num_total_buffers = num_real_buffers + num_fec_buffers;
 
-    fec_decoder->packet_size = packet_size;
+    fec_decoder->max_buffer_size = max_buffer_size;
     fec_decoder->num_real_buffers = num_real_buffers;
     fec_decoder->num_buffers = num_total_buffers;
     fec_decoder->buffers = safe_malloc(sizeof(void*) * num_total_buffers);
@@ -111,14 +111,14 @@ void fec_decoder_register_buffer(FECDecoder* fec_decoder_raw, int index, void* b
     InternalFECDecoder* fec_decoder = (InternalFECDecoder*)fec_decoder_raw;
 
     FATAL_ASSERT(0 <= index && index < fec_decoder->num_buffers);
-    FATAL_ASSERT(0 <= buffer_size && buffer_size <= fec_decoder->packet_size);
+    FATAL_ASSERT(0 <= buffer_size && buffer_size <= fec_decoder->max_buffer_size);
 
     fec_decoder->buffers[index] = buffer;
     fec_decoder->buffer_sizes[index] = buffer_size;
     fec_decoder->num_accepted_buffers++;
 }
 
-int fec_get_decoded_buffer(FECDecoder* fec_decoder_raw, void* buffer, int buffer_size) {
+int fec_get_decoded_buffer(FECDecoder* fec_decoder_raw, void* buffer) {
     InternalFECDecoder* fec_decoder = (InternalFECDecoder*)fec_decoder_raw;
 
     // Loop over the redundant packets
@@ -141,19 +141,19 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder_raw, void* buffer, int buffer
     // Write into the provided buffer
     int running_size = 0;
     for (int i = 0; i < fec_decoder->num_real_buffers; i++) {
-        if (running_size + fec_decoder->buffer_sizes[i] >= buffer_size) {
-            LOG_ERROR("Buffer for FEC data is too large! Overflowing buffer of size %d",
-                      buffer_size);
-            return -1;
+        // Don't actually write, if the caller doesn't want the data
+        if (buffer != NULL) {
+            memcpy((char*)buffer + running_size, fec_decoder->buffers[i],
+                   fec_decoder->buffer_sizes[i]);
         }
-        memcpy((char*)buffer + running_size, fec_decoder->buffers[i], fec_decoder->buffer_sizes[i]);
         running_size += fec_decoder->buffer_sizes[i];
     }
 
+    // Return the size of the decoded buffer.
     return running_size;
 }
 
-void free_fec_decoder(FECDecoder* fec_context_raw) {
+void destroy_fec_decoder(FECDecoder* fec_context_raw) {
     InternalFECDecoder* fec_context = (InternalFECDecoder*)fec_context_raw;
 
     free(fec_context->buffers);

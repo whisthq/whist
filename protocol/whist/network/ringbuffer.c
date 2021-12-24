@@ -177,7 +177,7 @@ void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data) {
 
     // Free FEC-related data
     if (frame_data->num_fec_packets > 0) {
-        free_fec_decoder(frame_data->fec_decoder);
+        destroy_fec_decoder(frame_data->fec_decoder);
         free_block(ring_buffer->packet_buffer_allocator, frame_data->fec_frame_buffer);
     }
 
@@ -407,8 +407,8 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
                                     packet->payload_size);
 
         // Using the newly registered packet, try to decode the frame using FEC
-        int frame_size = fec_get_decoded_buffer(
-            frame_data->fec_decoder, frame_data->fec_frame_buffer, ring_buffer->largest_frame_size);
+        int frame_size =
+            fec_get_decoded_buffer(frame_data->fec_decoder, frame_data->fec_frame_buffer);
 
         // If we were able to successfully decode the frame, mark it as such!
         if (frame_size >= 0) {
