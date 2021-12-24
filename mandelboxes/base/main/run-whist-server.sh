@@ -23,7 +23,7 @@ WHIST_MAPPINGS_DIR=/whist/resourceMappings
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
 PRIVATE_KEY_FILENAME=$WHIST_PRIVATE_DIR/aes_key
 BROWSER_DATA_FILE_FILENAME=$WHIST_PRIVATE_DIR/user_browser_data_file
-USER_UPLOAD_TARGET_FILENAME=$WHIST_PRIVATE_DIR/user_target
+USER_DEST_BROWSER_FILENAME=$WHIST_PRIVATE_DIR/user_dest_browser
 TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/timeout
 WHIST_APPLICATION_PID_FILE=/home/whist/whist-application-pid
 PROTOCOL_LOG_FILENAME=/usr/share/whist/server.log
@@ -74,13 +74,14 @@ if [ "$ENV_NAME" != "localdev" ]; then
 fi
 
 # Set user upload target, if file exists
-if [ -f "$USER_UPLOAD_TARGET_FILENAME" ] && [ -f "$BROWSER_DATA_FILE_FILENAME" ]; then
+if [ -f "$USER_DEST_BROWSER_FILENAME" ] && [ -f "$BROWSER_DATA_FILE_FILENAME" ]; then
   # Imports user browser data if file exists
-  python3 /usr/share/whist/import_user_browser_data.py $(cat $USER_UPLOAD_TARGET_FILENAME) $(cat $BROWSER_DATA_FILE_FILENAME)
+  python3 /usr/share/whist/import_user_browser_data.py $(cat $USER_DEST_BROWSER_FILENAME) $(cat $BROWSER_DATA_FILE_FILENAME)
 
   # Remove temporary file containing the user's intial cookies
   rm $(cat $BROWSER_DATA_FILE_FILENAME)
   rm $BROWSER_DATA_FILE_FILENAME
+  rm $USER_DEST_BROWSER_FILENAME
 fi
 
 # Start the application that this mandelbox runs.
