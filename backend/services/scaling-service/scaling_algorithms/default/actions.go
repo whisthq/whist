@@ -150,8 +150,9 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 
 func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scalingCtx context.Context, host hosts.HostHandler, event ScalingEvent, imageID string) error {
 	// Try scale up in given region
+	logger.Infof("Trying to spin up %v instances on region %v with image id %v", instancesToScale, event.Region, imageID)
 	instanceNum := int32(instancesToScale)
-	createdInstances, err := host.SpinUpInstances(&instanceNum, imageID)
+	createdInstances, err := host.SpinUpInstances(instanceNum, imageID)
 
 	if err != nil {
 		return utils.MakeError("Failed to spin up instances, created %v, err: %v", createdInstances, err)
