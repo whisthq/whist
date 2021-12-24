@@ -41,8 +41,8 @@ func main() {
 	// algorithmByRegionMap holds all of the scaling algorithms mapped by region.
 	// Use a sync map since we only write the keys once but will be reading multiple
 	// times by different goroutines.
-	algorithmByRegionMap := sync.Map{}
-	algorithmByRegionMap.Store("us-east-1", &sa.DefaultScalingAlgorithm{
+	algorithmByRegionMap := &sync.Map{}
+	algorithmByRegionMap.Store("default", &sa.DefaultScalingAlgorithm{
 		Region: "us-east",
 	})
 
@@ -58,7 +58,7 @@ func main() {
 	})
 
 	// Start main event loop
-	go eventLoop(globalCtx, globalCancel, goroutineTracker, subscriptionEvents, scheduledEvents, &algorithmByRegionMap)
+	go eventLoop(globalCtx, globalCancel, goroutineTracker, subscriptionEvents, scheduledEvents, algorithmByRegionMap)
 
 	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
 	sigChan := make(chan os.Signal, 2)
@@ -98,17 +98,22 @@ func StartSchedulerEvents(globalCtx context.Context, goroutineTracker *sync.Wait
 }
 
 func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent sa.ScalingEvent) sa.ScalingAlgorithm {
-	var scalingAlgorithm sa.ScalingAlgorithm
-
+	// Try to get the scaling algoithm on the region the
+	// scaling event was requested.
 	algorithm, ok := algorithmByRegion.Load(scalingEvent.Region)
-	if !ok {
-		logger.Warningf("%v not found on algorithm map. Using default.", scalingEvent.Region)
-		scalingAlgorithm = &sa.DefaultScalingAlgorithm{Region: "us-east"}
-	} else {
-		scalingAlgorithm = algorithm.(*sa.DefaultScalingAlgorithm)
+	if ok {
+		return algorithm.(sa.ScalingAlgorithm)
 	}
 
-	return scalingAlgorithm
+	logger.Warningf("%v not found on algorithm map. Using default.", scalingEvent.Region)
+
+	// Try to get the default scaling algorithm
+	algorithm, ok = algorithmByRegion.Load("default")
+	if ok {
+		return algorithm.(sa.ScalingAlgorithm)
+	}
+
+	return nil
 }
 
 func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup,
@@ -172,6 +177,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 
 			switch algorithm := algorithm.(type) {
 			case *sa.DefaultScalingAlgorithm:
+				logger.Infof("Sending to scheduled event chan")
 				algorithm.ScheduledEventChan <- scheduledEvent
 			}
 		}

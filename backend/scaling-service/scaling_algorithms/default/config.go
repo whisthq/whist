@@ -4,4 +4,4 @@ package scaling_algorithms
 // be running on each region.
 const DEFAULT_INSTANCE_BUFFER = 1
 
-var bundledRegions = []string{"us-east", "us-west"}
+var bundledRegions = []string{"us-east-1"}

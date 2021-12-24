@@ -113,6 +113,7 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 				}
 
 			case imageEvent := <-s.ImageEventChan:
+				logger.Infof("Scaling algorithm received an image database event with value: %v", imageEvent)
 				image := imageEvent.Data.(subscriptions.Image)
 
 				// Check if deploy has fired and is changing images
@@ -130,10 +131,14 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 				}
 
 			case scheduledEvent := <-s.ScheduledEventChan:
+				logger.Infof("Scaling algorithm received a scheduled event with value: %v", scheduledEvent)
 				scalingCtx, scalingCancel := context.WithCancel(context.Background())
 
-				// Scale down each region
 				for _, region := range bundledRegions {
+					// scheduledEvent.Region = region
+					// err := s.ScaleUpIfNecessary(2, scalingCtx, s.Host, scheduledEvent, "ami-05c376522f5c52626")
+					// logger.Error(err)
+
 					err := s.ScaleDownIfNecessary(scalingCtx, s.Host, scheduledEvent)
 					if err != nil {
 						logger.Errorf("Error running scale down job on region %v. Err: %v", region, err)

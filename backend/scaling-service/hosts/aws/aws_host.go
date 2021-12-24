@@ -35,23 +35,53 @@ func (host *AWSHost) Initialize(region string) error {
 	return nil
 }
 
+func MakeInstance(c context.Context, host *AWSHost, input *ec2.RunInstancesInput) (*ec2.RunInstancesOutput, error) {
+	return host.EC2.RunInstances(c, input)
+}
+
+func MakeTags(c context.Context, host *AWSHost, input *ec2.CreateTagsInput) (*ec2.CreateTagsOutput, error) {
+	return host.EC2.CreateTags(c, input)
+}
+
 // SpinDownInstances is responsible for launching `numInstances` number of instances with the received imageID.
-func (host *AWSHost) SpinUpInstances(numInstances *int32, imageID string) ([]subscriptions.Instance, error) {
+func (host *AWSHost) SpinUpInstances(numInstances int32, imageID string) ([]subscriptions.Instance, error) {
 	ctx := context.Background()
 
 	// Set run input
-	runInput := &ec2.RunInstancesInput{
-		MaxCount:                          numInstances,
-		ImageId:                           &imageID,
+	input := &ec2.RunInstancesInput{
+		MinCount:                          aws.Int32(MIN_INSTANCE_COUNT),
+		MaxCount:                          aws.Int32(numInstances),
+		ImageId:                           aws.String(imageID),
 		InstanceInitiatedShutdownBehavior: ec2Types.ShutdownBehaviorTerminate,
+		InstanceType:                      INSTANCE_TYPE,
 	}
 
-	runOutput, err := host.EC2.RunInstances(ctx, runInput)
+	result, err := MakeInstance(ctx, host, input)
+	if err != nil {
+		return nil, utils.MakeError("error creating instances: Err: %v", err)
+	}
+
+	tagInput := &ec2.CreateTagsInput{
+		Resources: []string{*result.Instances[0].InstanceId},
+		Tags: []ec2Types.Tag{
+			{
+				Key:   aws.String("name"),
+				Value: aws.String("scaling-service-instance"),
+			},
+		},
+	}
+
+	_, err = MakeTags(ctx, host, tagInput)
+	if err != nil {
+		return nil, utils.MakeError("error taging instance. Err: %v", err)
+	}
+
+	logger.Infof("Created tagged instance with ID " + *result.Instances[0].InstanceId)
 
 	// Create slice with created instances
 	var outputInstances []subscriptions.Instance
 
-	for _, outputInstance := range runOutput.Instances {
+	for _, outputInstance := range result.Instances {
 		outputInstances = append(outputInstances, subscriptions.Instance{
 			IP:              *outputInstance.PublicIpAddress,
 			ImageID:         *outputInstance.ImageId,
@@ -63,15 +93,15 @@ func (host *AWSHost) SpinUpInstances(numInstances *int32, imageID string) ([]sub
 	}
 
 	// Verify start output
-	startedInstances := int(*numInstances)
-	if len(runOutput.Instances) != startedInstances {
+	startedInstances := int(numInstances)
+	if len(result.Instances) != startedInstances {
 		return outputInstances,
 			utils.MakeError("failed to start requested number of instances with parameters: %v. Number of started instances: %v",
-				runInput, len(runOutput.Instances))
+				input, len(result.Instances))
 	}
 
 	if err != nil {
-		return outputInstances, utils.MakeError("error starting instances with parameters: %v. Error: %v", runInput, err)
+		return outputInstances, utils.MakeError("error starting instances with parameters: %v. Error: %v", input, err)
 	}
 	return outputInstances, nil
 }
