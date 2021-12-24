@@ -78,8 +78,8 @@ if [ -f "$USER_DEST_BROWSER_FILENAME" ] && [ -f "$BROWSER_DATA_FILE_FILENAME" ];
   # Imports user browser data if file exists
   python3 /usr/share/whist/import_user_browser_data.py $(cat $USER_DEST_BROWSER_FILENAME) $(cat $BROWSER_DATA_FILE_FILENAME)
 
-  # Remove temporary file containing the user's intial cookies
-  rm $(cat $BROWSER_DATA_FILE_FILENAME)
+  # Remove temporary files
+  rm -f $(cat $BROWSER_DATA_FILE_FILENAME)
   rm $BROWSER_DATA_FILE_FILENAME
   rm $USER_DEST_BROWSER_FILENAME
 fi
