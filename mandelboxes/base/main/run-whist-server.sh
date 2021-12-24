@@ -79,7 +79,7 @@ if [ -f "$USER_UPLOAD_TARGET_FILENAME" ] && [ -f "$BROWSER_DATA_FILE_FILENAME" ]
   python3 /usr/share/whist/import_user_browser_data.py $(cat $USER_UPLOAD_TARGET_FILENAME) $(cat $BROWSER_DATA_FILE_FILENAME)
 
   # Remove temporary file containing the user's intial cookies
-  rm $WHIST_INITIAL_USER_DATA_FILE
+  rm $(cat $BROWSER_DATA_FILE_FILENAME)
   rm $BROWSER_DATA_FILE_FILENAME
 fi
 
