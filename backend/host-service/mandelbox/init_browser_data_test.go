@@ -2,7 +2,6 @@ package mandelbox
 
 import (
 	"bytes"
-	"errors"
 	"io/ioutil"
 	"os"
 	"path"
