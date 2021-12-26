@@ -57,9 +57,9 @@ export default flow(
               !isNaN(parseInt(keyRepeat)) && {
                 key_repeat: parseInt(keyRepeat),
               }),
-            ...(t.isNewConfigToken && {
-              initial_url: "https://whist.typeform.com/to/Oi21wwbg",
-            }),
+            // ...(t.isNewConfigToken && {
+            //   initial_url: "https://whist.typeform.com/to/Oi21wwbg",
+            // }),
           }), // Data to send through the JSON transport
         }))
       )
