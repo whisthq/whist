@@ -1,0 +1,20 @@
+{
+  "environments": {
+    "review": {
+      "buildpacks": [
+        {
+          "url": "https://github.com/whisthq/subdir-heroku-buildpack.git"
+        },
+        {
+          "url": "heroku/nodejs"
+        }
+      ],
+      "env": {
+        "PROJECT_PATH": {
+          "description": "Path of the webserver project relative to monorepo root.",
+          "value": "server"
+        }
+      }
+    }
+  }
+}

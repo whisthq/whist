@@ -1,0 +1,47 @@
+{
+  "name": "@whist/core-ts",
+  "version": "1.0.0",
+  "description": "Whist Internal Library for all Whist React components, Typescript functions, CSS modules, etc.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "*"
+  ],
+  "license": "UNLICENSED",
+  "repository": "https://github.com/whisthq/whist",
+  "devDependencies": {
+    "@tsconfig/recommended": "^1.0.1",
+    "@types/node": "^16.9.0",
+    "@types/nodemon": "^1.19.0",
+    "@typescript-eslint/eslint-plugin": "^4.31.0",
+    "@typescript-eslint/parser": "^4.31.0",
+    "eslint": "^7.31.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.24.2",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-promise": "^5.2.0",
+    "install": "^0.13.0",
+    "nodemon": "^2.0.13",
+    "prettier": "^2.5.0",
+    "rimraf": "^3.0.2",
+    "ts-jest": "^27.0.5",
+    "ts-node": "^10.4.0",
+    "tsconfig-paths": "^3.9.0",
+    "typescript": "4.4.4"
+  },
+  "scripts": {
+    "compile": "tsc",
+    "clean": "rimraf dist",
+    "copy-package": "mkdir -p dist && cp package.json dist/package.json",
+    "build": "yarn run clean && yarn run compile",
+    "lint:check": "eslint src/** --no-error-on-unmatched-pattern",
+    "lint:fix": "eslint --fix src/** --no-error-on-unmatched-pattern"
+  },
+  "engines": {
+    "node": ">=12.x",
+    "npm": "use-yarn",
+    "yarn": ">=1.19.x"
+  }
+}
