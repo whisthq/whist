@@ -6,8 +6,13 @@ FROM whisthq/base:current-build as whist-ming-test-app
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 
+
+
 # Import the omnibar folder, we build it via `yarn run package:local` in start-ming-test-app.sh
 COPY omnibar/ .
+WORKDIR /omnibar/browser
+RUN yarn run package:local
+RUN mv release/Linux/FractalBar /usr/bin/FractalBar && chmod +x FractalBar
 
 # Install Whist wrapper script to run ming-test-app into /usr/bin
 COPY start-ming-test-app.sh /usr/bin/start-ming-test-app

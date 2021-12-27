@@ -21,4 +21,4 @@ if pgrep chrome; then
 fi
 
 # Start ming-test-app
-yarn run package:local
+exec /usr/bin/FractalBar $@
