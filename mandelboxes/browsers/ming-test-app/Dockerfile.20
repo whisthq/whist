@@ -6,13 +6,25 @@ FROM whisthq/base:current-build as whist-ming-test-app
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 
+# Install dependencies
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    nodejs \
+    npm \
+    && apt-get install -y --global yarn && \
+    && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash && \
+    && source ~/.bashrc && nvm use 16 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-
-# Import the omnibar folder, we build it via `yarn run package:local` in start-ming-test-app.sh
+# Import the omnibar folder and build FractalBar
 COPY omnibar/ .
 WORKDIR /omnibar/browser
-RUN yarn run package:local
-RUN mv release/Linux/FractalBar /usr/bin/FractalBar && chmod +x FractalBar
+RUN yarn -i && yarn run package:local
+
+# Move the FractalBar executable to the correct location and reset working directory
+RUN mv release/Fractal.deb /usr/bin/FractalBar && chmod +x Fractal.deb
+WORKDIR /
 
 # Install Whist wrapper script to run ming-test-app into /usr/bin
 COPY start-ming-test-app.sh /usr/bin/start-ming-test-app
