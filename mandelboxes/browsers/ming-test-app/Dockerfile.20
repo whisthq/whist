@@ -10,17 +10,16 @@ SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     nodejs \
     npm \
-    && apt-get install -y --global yarn && \
-    && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash && \
-    && source ~/.bashrc && nvm use 16 \
+    && sudo npm install --global yarn \
+    && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash \
+    && . ~/.nvm/nvm.sh && nvm install 16 && nvm use 16 \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Import the omnibar folder and build FractalBar
-COPY omnibar/ .
-WORKDIR /omnibar/browser
-RUN yarn -i && yarn run package:local
+# Import the omnibar folder and build Fractal Electron browser
+WORKDIR ../../../omnibar/browser
+RUN yarn && yarn run package:local
 
 # Move the FractalBar executable to the correct location and reset working directory
 RUN mv release/Fractal.deb /usr/bin/FractalBar && chmod +x Fractal.deb
