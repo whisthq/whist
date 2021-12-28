@@ -21,4 +21,4 @@ if pgrep chrome; then
 fi
 
 # Start ming-test-app
-exec /usr/bin/Fractal.deb $@
+exec /usr/bin/Whist.deb $@

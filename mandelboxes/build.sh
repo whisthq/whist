@@ -82,7 +82,7 @@ if [[ "${python_args[0]}" == "browsers/ming-test-app" ]]; then
   [[ -d node_modules ]] || yarn
   yarn run package:local
   popd
-  cp ../omnibar/browser/release/Fractal.deb browsers/ming-test-app/Fractal.deb
+  cp ../omnibar/browser/release/Whist.deb browsers/ming-test-app/Whist.deb
 fi
 
 # Copy the Nvidia driver installer
