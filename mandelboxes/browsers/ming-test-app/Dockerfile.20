@@ -6,14 +6,14 @@ FROM whisthq/base:current-build as whist-ming-test-app
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 
-COPY Fractal.deb /
+COPY Whist.deb /
 
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
-    /Fractal.deb \
+    /Whist.deb \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    && rm /Fractal.deb
+    && rm /Whist.deb
 
 
 # Install Whist wrapper script to run ming-test-app into /usr/bin
