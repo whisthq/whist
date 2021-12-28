@@ -1,6 +1,6 @@
 const WhistServer = {
     LOCAL: "http://localhost:3000",
-    DEV: "https://whist-dev-server.herokuapp.com"
+    DEV: "https://whist-dev-socketio.herokuapp.com/"
 }
 
 export { WhistServer }
