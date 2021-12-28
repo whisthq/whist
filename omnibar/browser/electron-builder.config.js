@@ -1,16 +1,15 @@
 // This configuration specifies the name, description, and other
 // metadata regarding the Fractal application.
 
-const { iconName, appEnvironment } = require("./config/build");
+const { iconName, appEnvironment } = require("./config/build")
 
 const appDetails = {
   appId:
     "com.fractalcomputers.fractal" +
     (appEnvironment === "prod" ? "" : `-${appEnvironment}`), // Standard Apple appId format: <domain-extension>.<domain>.<company-name>
   copyright: "Copyright © Fractal Computers, Inc.",
-  productName:
-    "whist",
-};
+  productName: "whist",
+}
 
 // This configuration controls how the application is bundled,
 // including OS-specific details, icons, and ASAR packing.
@@ -19,7 +18,7 @@ const bundleConfig = {
 
   // We need to disable an eslint error here because this is electron-builder-specific syntax
   // (https://www.electron.build/configuration/configuration#artifact-file-name-template)
-  artifactName: "Fractal.${ext}", // eslint-disable-line no-template-curly-in-string
+  artifactName: "Whist.${ext}", // eslint-disable-line no-template-curly-in-string
 
   asar: true,
 
@@ -94,7 +93,7 @@ const bundleConfig = {
     target: ["deb"],
     extraFiles: ["protocol-build"],
   },
-};
+}
 
 // This configuration specifies to where and how we publish
 // our bundled application.
@@ -105,7 +104,7 @@ const publishConfig = {
     provider: "s3",
     region: "us-east-1",
   },
-};
+}
 
 // electron-builder expects CommonJS syntax
 // via dependency on read-config-file
@@ -113,4 +112,4 @@ module.exports.default = {
   ...appDetails,
   ...bundleConfig,
   ...publishConfig,
-};
+}
