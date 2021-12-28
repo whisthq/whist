@@ -9,7 +9,7 @@ const appDetails = {
     (appEnvironment === "prod" ? "" : `-${appEnvironment}`), // Standard Apple appId format: <domain-extension>.<domain>.<company-name>
   copyright: "Copyright © Fractal Computers, Inc.",
   productName:
-    "FractalBar",
+    "whist",
 };
 
 // This configuration controls how the application is bundled,

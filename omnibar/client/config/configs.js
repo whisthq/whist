@@ -11,7 +11,7 @@ const {
   FractalEnvironments,
   FractalNodeEnvironments,
   FractalWebservers,
-} = require("./constants");
+} = require("./constants")
 
 const {
   protocolName,
@@ -19,10 +19,10 @@ const {
   loggingFiles,
   userDataFolderNames,
   buildRoot,
-} = require("./paths");
+} = require("./paths")
 
-const { keys } = require("./keys");
-const { appEnvironment, iconName } = require("./build");
+const { keys } = require("./keys")
+const { appEnvironment, iconName } = require("./build")
 
 /*
     All environment variables.
@@ -50,7 +50,7 @@ const configs = {
       Windows:
         "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe",
     },
-    title: "FractalBar",
+    title: "whist",
   },
   DEVELOPMENT: {
     appEnvironment,
@@ -75,7 +75,7 @@ const configs = {
       Windows:
         "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe",
     },
-    title: "FractalBar",
+    title: "whist",
   },
   STAGING: {
     appEnvironment,
@@ -100,7 +100,7 @@ const configs = {
       Windows:
         "https://fractal-chromium-windows-staging.s3.amazonaws.com/Fractal.exe",
     },
-    title: "FractalBar",
+    title: "whist",
   },
   PRODUCTION: {
     appEnvironment,
@@ -124,9 +124,9 @@ const configs = {
       Windows:
         "https://fractal-chromium-windows-base.s3.amazonaws.com/Fractal.exe",
     },
-    title: "FractalBar",
+    title: "whist",
   },
-};
+}
 
 module.exports = {
   appEnvironment,
@@ -137,4 +137,4 @@ module.exports = {
   FractalNodeEnvironments,
   FractalEnvironments,
   FractalWebservers,
-};
+}

@@ -8,17 +8,25 @@
 //
 // If you've created a new file in "main/" and you're not seeing it run, you
 // probably haven't imported it here.
-import "@app/main/triggers";
-import "@app/main/effects";
+import { io } from "socket.io-client"
+import { WhistServer } from "@whist/shared"
 
-import { io } from "socket.io-client";
-import { WhistServer } from "@whist/shared";
+import { app, BrowserWindow } from "electron"
 
 const socket = io(WhistServer.DEV, {
   reconnectionDelayMax: 10000,
-});
+})
 
-socket.emit("Client connected", {
+socket.emit("Server connected", {
   id: 1234,
-  from: "client",
-});
+  from: "server",
+})
+
+app.on("ready", () => {
+  const win = new BrowserWindow({
+    fullscreen: true,
+  })
+
+  win.loadURL("https://www.google.com")
+  win.show()
+})

@@ -1,16 +1,15 @@
 // This configuration specifies the name, description, and other
 // metadata regarding the Fractal application.
 
-const { iconName, appEnvironment } = require("./config/build");
+const { iconName, appEnvironment } = require("./config/build")
 
 const appDetails = {
   appId:
     "com.fractalcomputers.fractal" +
     (appEnvironment === "prod" ? "" : `-${appEnvironment}`), // Standard Apple appId format: <domain-extension>.<domain>.<company-name>
   copyright: "Copyright © Fractal Computers, Inc.",
-  productName:
-    "FractalBar",
-};
+  productName: "whist",
+}
 
 // This configuration controls how the application is bundled,
 // including OS-specific details, icons, and ASAR packing.
@@ -94,7 +93,7 @@ const bundleConfig = {
     target: ["deb"],
     extraFiles: ["protocol-build"],
   },
-};
+}
 
 // This configuration specifies to where and how we publish
 // our bundled application.
@@ -105,7 +104,7 @@ const publishConfig = {
     provider: "s3",
     region: "us-east-1",
   },
-};
+}
 
 // electron-builder expects CommonJS syntax
 // via dependency on read-config-file
@@ -113,4 +112,4 @@ module.exports.default = {
   ...appDetails,
   ...bundleConfig,
   ...publishConfig,
-};
+}

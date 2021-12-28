@@ -1,6 +1,6 @@
 {
-  "name": "fractalbar",
-  "productName": "FractalBar",
+  "name": "whist",
+  "productName": "whist",
   "category": "Utility",
   "version": "1.0.0",
   "license": "UNLICENSED",
@@ -25,27 +25,14 @@
     "test:manual": "node ./scripts/testManual.js"
   },
   "dependencies": {
-    "@headlessui/react": "^1.4.0",
-    "@types/auto-launch": "^5.0.2",
     "@types/react-router": "^5.1.13",
     "@types/react-router-dom": "^5.1.7",
-    "@types/valid-url": "^1.0.3",
-    "auto-launch": "^5.0.5",
-    "classnames": "^2.3.1",
-    "electron-better-web-request": "^1.0.1",
-    "electron-context-menu": "^3.1.1",
-    "electron-store": "^8.0.0",
-    "electron-updater": "4.4.0",
-    "history": "^4.1.10",
-    "lodash": "^4.17.21",
     "path": "^0.12.7",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-router": "^5.2.0",
     "rxjs": "^7.3.0",
-    "socket.io-client": "^4.4.0",
-    "ts-toolbelt": "^9.6.0",
-    "valid-url": "^1.0.9"
+    "socket.io-client": "^4.4.0"
   },
   "devDependencies": {
     "@snowpack/plugin-build-script": "^2.1.0",
@@ -55,7 +42,6 @@
     "@snowpack/plugin-typescript": "^1.2.1",
     "@types/classnames": "^2.3.1",
     "@types/json-stringify-safe": "^5.0.0",
-    "@types/lodash": "^4.14.169",
     "@types/node": "^16.4.3",
     "@types/react": "^17.0.13",
     "@types/react-dom": "^17.0.5",

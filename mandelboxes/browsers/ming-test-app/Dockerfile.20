@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 
 # Install Whist wrapper script to run ming-test-app into /usr/bin
 COPY start-ming-test-app.sh /usr/bin/start-ming-test-app
-RUN chmod +x /usr/bin/start-ming-test-app && ln -sf /opt/FractalBar/fractalbar /usr/bin/whist-application
+RUN chmod +x /usr/bin/start-ming-test-app && ln -sf /opt/whist/whist /usr/bin/whist-application
 
 # Install Whist Protocol binaries and helper files (if necessary)
 COPY --from=build-assets protocol/* /usr/share/whist/bin/
