@@ -6,7 +6,6 @@
     "@types/express": "^4.17.13",
     "@types/node": "^17.0.5",
     "@types/socket.io": "^3.0.2",
-    "@whist/shared": "file:../shared",
     "express": "^4.17.2",
     "prettier": "^2.5.1",
     "redis": "^4.0.1",
@@ -31,8 +30,7 @@
   "scripts": {
     "start": "node ./scripts/build.js && nodemon dist/index.js --watch ./src",
     "build": "node ./scripts/build.js",
-    "lint:fix": "node ./scripts/lint.js --fix",
-    "postinstall": "node ./scripts/postinstall.js"
+    "lint:fix": "node ./scripts/lint.js --fix"
   },
   "engines": {
     "node": "16.x"
