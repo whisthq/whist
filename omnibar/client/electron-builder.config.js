@@ -91,7 +91,7 @@ const bundleConfig = {
   },
   linux: {
     icon: `build/${iconName}.png`,
-    target: ["AppImage", "pacman", "deb"],
+    target: ["deb"],
     extraFiles: ["protocol-build"],
   },
 };

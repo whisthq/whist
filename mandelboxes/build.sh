@@ -75,6 +75,16 @@ else
   ./helper_scripts/copy_protocol_build.sh base/build-assets/build-temp WhistServer
 fi
 
+# Build omnibar
+if [[ "${python_args[0]}" == "browsers/ming-test-app" ]]; then
+  echo "Building omnibar..."
+  pushd ../omnibar/browser
+  [[ -d node_modules ]] || yarn
+  yarn run package:local
+  popd
+  cp ../omnibar/browser/release/Fractal.deb browsers/ming-test-app/Fractal.deb
+fi
+
 # Copy the Nvidia driver installer
 echo "Fetching Nvidia driver installer..."
 mkdir base/build-assets/build-temp/nvidia-driver
