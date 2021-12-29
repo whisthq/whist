@@ -179,7 +179,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		// into the mandelbox)
 		preCreateGroup.Go(func() error {
 			if err := mandelbox.AssignPortBindings([]portbindings.PortBinding{
-				{MandelboxPort: 32261, HostPort: 0, BindIP: "", Protocol: "tcp"}
+				{MandelboxPort: 32261, HostPort: 0, BindIP: "", Protocol: "tcp"},
 				{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
 				{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
 				{MandelboxPort: 32273, HostPort: 0, BindIP: "", Protocol: "tcp"},
