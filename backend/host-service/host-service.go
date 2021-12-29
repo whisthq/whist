@@ -451,7 +451,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		hostPortForTCP32262, err32262 = mandelbox.GetHostPort(32262, portbindings.TransportProtocolTCP)
 		hostPortForUDP32263, err32263 = mandelbox.GetHostPort(32263, portbindings.TransportProtocolUDP)
 		hostPortForTCP32273, err32273 = mandelbox.GetHostPort(32273, portbindings.TransportProtocolTCP)
-		if err32261 != nill || err32262 != nil || err32263 != nil || err32273 != nil {
+		if err32261 != nil || err32262 != nil || err32263 != nil || err32273 != nil {
 			return utils.MakeError("Couldn't return host port bindings.")
 		}
 
