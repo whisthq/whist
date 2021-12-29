@@ -77,8 +77,17 @@ fi
 
 # Build omnibar
 if [[ "${python_args[0]}" == "browsers/ming-test-app" ]]; then
-  echo "Building omnibar..."
+  echo "Building omnibar, installing dependencies first"
   pushd ../omnibar/server
+  
+  # Install dependencies
+  sudo apt-get install --allow-downgrades --no-install-recommends -y \
+  nodejs \
+  npm \
+  && sudo npm install --global yarn \
+  && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash \
+  && . ~/.nvm/nvm.sh && nvm install 16 && nvm use 16 
+
   [[ -d node_modules ]] || yarn
   yarn run package:local
   popd
