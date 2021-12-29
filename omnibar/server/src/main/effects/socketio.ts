@@ -12,8 +12,8 @@ const io = new Socketio(server)
 
 // Whenever any socketio-client connects, this function will fire
 io.on("connection", (socket) => {
-  socket.on(clientToServerDiscovery(1234).name, (msg: any) => {
-    console.log("Received client", msg)
+  socket.on(clientToServerDiscovery(1234).name, () => {
+    console.log("Received client!")
   })
 })
 

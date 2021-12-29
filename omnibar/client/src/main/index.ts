@@ -12,13 +12,10 @@ import "@app/main/triggers"
 import "@app/main/effects"
 
 import { io } from "socket.io-client"
-import { WhistServer } from "@whist/shared"
+import { WhistServer, clientToServerDiscovery } from "@whist/shared"
 
 const socket = io(WhistServer.LOCAL, {
   reconnectionDelayMax: 10000,
 })
 
-socket.emit("Client connected", {
-  id: 1234,
-  from: "client",
-})
+socket.emit(clientToServerDiscovery(1234).name)
