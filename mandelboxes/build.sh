@@ -78,11 +78,11 @@ fi
 # Build omnibar
 if [[ "${python_args[0]}" == "browsers/ming-test-app" ]]; then
   echo "Building omnibar..."
-  pushd ../omnibar/browser
+  pushd ../omnibar/server
   [[ -d node_modules ]] || yarn
   yarn run package:local
   popd
-  cp ../omnibar/browser/release/Whist.deb browsers/ming-test-app/Whist.deb
+  cp ../omnibar/server/release/Whist.deb browsers/ming-test-app/Whist.deb
 fi
 
 # Copy the Nvidia driver installer
