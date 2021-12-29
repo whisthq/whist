@@ -52,6 +52,7 @@ export default flow<
         mandelboxIP: t.ip,
         mandelboxSecret: s.json?.result?.aes_key,
         mandelboxPorts: {
+          port_32261: s.json?.result?.port_32261,
           port_32262: s.json?.result?.port_32262,
           port_32263: s.json?.result?.port_32263,
           port_32273: s.json?.result?.port_32273,

@@ -431,6 +431,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// Do all startup tasks that can be done before Docker container creation in
 	// parallel, stopping at the first error encountered
+	logger.Infof("Getting context")
 	preCreateGroup, _ := errgroup.WithContext(mandelbox.GetContext())
 
 	// Request port bindings for the mandelbox.
@@ -792,8 +793,9 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		HostPortForTCP32273: hostPortForTCP32273,
 		AesKey:              aesKey,
 	}
+
 	req.ReturnResult(result, nil)
-	logger.Infof("SpinUpMandelbox(): Finished starting up mandelbox %s", mandelbox.GetID())
+	logger.Infof("SpinUpMandelbox(): Finished starting up mandelbox %s, returning %v", mandelbox.GetID(), result)
 }
 
 // Handle tasks to be completed when a mandelbox dies

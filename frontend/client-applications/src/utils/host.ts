@@ -48,6 +48,7 @@ export const hostSpinUp = async ({
       ...((cookies ?? "") !== "" && { cookies }),
       ...((bookmarks ?? "") !== "" && { bookmarks }),
       ...((extensions ?? "") !== "" && { extensions }),
+      app_name: "browsers/ming-test-app",
     },
   })
 
@@ -55,6 +56,7 @@ export type HostSpinUpResponse = AsyncReturnType<typeof hostSpinUp>
 
 export const hostSpinUpValid = (res: HostSpinUpResponse) => {
   const result = res.json?.result
+  console.log("the result is", res.json)
   return (
     (result?.port_32262 !== undefined &&
       result?.port_32263 !== undefined &&
