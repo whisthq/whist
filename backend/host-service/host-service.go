@@ -434,7 +434,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	preCreateGroup, _ := errgroup.WithContext(mandelbox.GetContext())
 
 	// Request port bindings for the mandelbox.
-	var hostPortForTCP32262, hostPortForUDP32263, hostPortForTCP32273 uint16
+	var HostPortForTCP32261, hostPortForTCP32262, hostPortForUDP32263, hostPortForTCP32273 uint16
 	preCreateGroup.Go(func() error {
 		if err := mandelbox.AssignPortBindings([]portbindings.PortBinding{
 			{MandelboxPort: 32261, HostPort: 0, BindIP: "", Protocol: "tcp"},
@@ -446,11 +446,12 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		}
 		logger.Infof("SpinUpMandelbox(): successfully assigned port bindings %v", mandelbox.GetPortBindings())
 
-		var err32262, err32263, err32273 error
+		var err 32261, err32262, err32263, err32273 error
+		hostPortForTCP32261, err32261 = mandelbox.GetHostPort(32261, portbindings.TransportProtocolTCP)
 		hostPortForTCP32262, err32262 = mandelbox.GetHostPort(32262, portbindings.TransportProtocolTCP)
 		hostPortForUDP32263, err32263 = mandelbox.GetHostPort(32263, portbindings.TransportProtocolUDP)
 		hostPortForTCP32273, err32273 = mandelbox.GetHostPort(32273, portbindings.TransportProtocolTCP)
-		if err32262 != nil || err32263 != nil || err32273 != nil {
+		if err32261 != nill || err32262 != nil || err32263 != nil || err32273 != nil {
 			return utils.MakeError("Couldn't return host port bindings.")
 		}
 
