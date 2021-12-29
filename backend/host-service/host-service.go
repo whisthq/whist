@@ -436,6 +436,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// Request port bindings for the mandelbox.
 	var hostPortForTCP32261, hostPortForTCP32262, hostPortForUDP32263, hostPortForTCP32273 uint16
 	preCreateGroup.Go(func() error {
+		logger.Infof("Starting to assign port bindings")
 		if err := mandelbox.AssignPortBindings([]portbindings.PortBinding{
 			{MandelboxPort: 32261, HostPort: 0, BindIP: "", Protocol: "tcp"},
 			{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
