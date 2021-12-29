@@ -170,6 +170,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 				portName     string
 				assignedPort uint16
 			}{
+				{"HostPortForTCP32261", spinUpResult.HostPortForTCP32261},
 				{"HostPortForTCP32262", spinUpResult.HostPortForTCP32262},
 				{"HostPortForTCP32273", spinUpResult.HostPortForTCP32273},
 				{"HostPortForUDP32263", spinUpResult.HostPortForUDP32263},
@@ -193,7 +194,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 
 			// Check ports have been exposed correctly
 			exposedPorts := dockerClient.config.ExposedPorts
-			exposedPortNames := []string{"32262/tcp", "32273/tcp", "32263/udp"}
+			exposedPortNames := []string{"32261/tcp", "32262/tcp", "32273/tcp", "32263/udp"}
 			for _, exposedPort := range exposedPortNames {
 				if _, ok := exposedPorts[nat.Port(exposedPort)]; !ok {
 					t.Errorf("Expected port %s to be exposed on docker container, but it wasn't", exposedPort)
@@ -206,6 +207,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 				portName     string
 				assignedPort uint16
 			}{
+				{"32261/tcp", spinUpResult.HostPortForTCP32261},
 				{"32262/tcp", spinUpResult.HostPortForTCP32262},
 				{"32273/tcp", spinUpResult.HostPortForTCP32273},
 				{"32263/udp", spinUpResult.HostPortForUDP32263},

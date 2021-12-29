@@ -8,17 +8,17 @@
 //
 // If you've created a new file in "main/" and you're not seeing it run, you
 // probably haven't imported it here.
-import "@app/main/triggers";
-import "@app/main/effects";
+import "@app/main/triggers"
+import "@app/main/effects"
 
-import { io } from "socket.io-client";
-import { WhistServer } from "@whist/shared";
+import { io } from "socket.io-client"
+import { WhistServer } from "@whist/shared"
 
-const socket = io(WhistServer.DEV, {
+const socket = io(WhistServer.LOCAL, {
   reconnectionDelayMax: 10000,
-});
+})
 
 socket.emit("Client connected", {
   id: 1234,
   from: "client",
-});
+})

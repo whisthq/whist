@@ -17,6 +17,7 @@ func TestWriteMandelboxParams(t *testing.T) {
 	defer cancel()
 
 	if err := mandelbox.AssignPortBindings([]portbindings.PortBinding{
+		{MandelboxPort: 32261, HostPort: 0, BindIP: "", Protocol: "tcp"},
 		{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
 		{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
 		{MandelboxPort: 32273, HostPort: 0, BindIP: "", Protocol: "tcp"},

@@ -13,6 +13,6 @@ io.on("connection", (socket) => {
   });
 });
 
-// Tells express to listen on port 3000 (local) or
+// Tells express to list en on port 3000 (local) or
 // process.env.PORT (if deployed on Heroku)
 server.listen(process.env.PORT || 3000);

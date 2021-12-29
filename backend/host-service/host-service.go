@@ -179,6 +179,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		// into the mandelbox)
 		preCreateGroup.Go(func() error {
 			if err := mandelbox.AssignPortBindings([]portbindings.PortBinding{
+				{MandelboxPort: 32261, HostPort: 0, BindIP: "", Protocol: "tcp"}
 				{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
 				{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
 				{MandelboxPort: 32273, HostPort: 0, BindIP: "", Protocol: "tcp"},
@@ -436,6 +437,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	var hostPortForTCP32262, hostPortForUDP32263, hostPortForTCP32273 uint16
 	preCreateGroup.Go(func() error {
 		if err := mandelbox.AssignPortBindings([]portbindings.PortBinding{
+			{MandelboxPort: 32261, HostPort: 0, BindIP: "", Protocol: "tcp"},
 			{MandelboxPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
 			{MandelboxPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
 			{MandelboxPort: 32273, HostPort: 0, BindIP: "", Protocol: "tcp"},
@@ -511,6 +513,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// We now create the underlying docker container for this mandelbox.
 	exposedPorts := make(dockernat.PortSet)
+	exposedPorts[dockernat.Port("32261/tcp")] = struct{}{}
 	exposedPorts[dockernat.Port("32262/tcp")] = struct{}{}
 	exposedPorts[dockernat.Port("32263/udp")] = struct{}{}
 	exposedPorts[dockernat.Port("32273/tcp")] = struct{}{}
@@ -533,6 +536,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		Tty:          true,
 	}
 	natPortBindings := make(dockernat.PortMap)
+	natPortBindings[dockernat.Port("32261/tcp")] = []dockernat.PortBinding{{HostPort: utils.Sprintf("%v", hostPortForTCP32261)}}
 	natPortBindings[dockernat.Port("32262/tcp")] = []dockernat.PortBinding{{HostPort: utils.Sprintf("%v", hostPortForTCP32262)}}
 	natPortBindings[dockernat.Port("32263/udp")] = []dockernat.PortBinding{{HostPort: utils.Sprintf("%v", hostPortForUDP32263)}}
 	natPortBindings[dockernat.Port("32273/tcp")] = []dockernat.PortBinding{{HostPort: utils.Sprintf("%v", hostPortForTCP32273)}}
@@ -780,6 +784,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	createFailed = false
 
 	result := JSONTransportRequestResult{
+		hostPortForTCP32261: hostPortForTCP32261,
 		HostPortForTCP32262: hostPortForTCP32262,
 		HostPortForUDP32263: hostPortForUDP32263,
 		HostPortForTCP32273: hostPortForTCP32273,
