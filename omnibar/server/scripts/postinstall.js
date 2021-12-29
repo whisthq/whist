@@ -1,16 +1,51 @@
 // Build core-ts and electron-notarize after the normal install procedures.
-const execCommand = require("./execCommand").execCommand
-const path = require("path")
+const execCommand = require("./execCommand").execCommand;
+const path = require("path");
+const fs = require("fs");
+
+const patch = (pathToPatchedFile, oldContents, newContents) => {
+  const oldFile = fs.readFileSync(pathToPatchedFile, "utf8");
+  const newFile = oldFile.replaceAll(oldContents, newContents);
+  fs.writeFileSync(pathToPatchedFile, newFile, "utf8");
+  console.log(`Success patching ${pathToPatchedFile}`);
+};
 
 const postInstall = (_env, ..._args) => {
-  console.log("Building `@whist/shared`...")
-  execCommand("yarn install", path.join("node_modules", "@whist/shared"))
-  execCommand("yarn build", path.join("node_modules", "@whist/shared"))
-  console.log("Success building `@whist/shared`!")
-}
+  console.log("Building `@whist/shared`...");
+  execCommand("yarn install", path.join("node_modules", "@whist/shared"));
+  execCommand("yarn build", path.join("node_modules", "@whist/shared"));
+  console.log("Success building `@whist/shared`!");
 
-module.exports = postInstall
+  console.log("Building `electron-notarize`...");
+  execCommand("yarn install", path.join("node_modules", "electron-notarize"));
+  execCommand("yarn build", path.join("node_modules", "electron-notarize"));
+  console.log("Success building `electron-notarize`!");
+
+  // electron-builder's S3 uploader seems to spuriously fail with a TCP
+  // error on our tiny macstadium m1 build instance. Our best bet is
+  // setting up logic to retry the publish command on failure!
+  const appBuilderLibS3Publisher = path.join(
+    "node_modules",
+    "app-builder-lib",
+    "out",
+    "publish",
+    "s3",
+    "BaseS3Publisher.js"
+  );
+  const maxRetries = 5;
+
+  patch(
+    appBuilderLibS3Publisher,
+    "builder_util_1.executeAppBuilder(",
+    `(async (a, p, o={}, m=${maxRetries}) => await builder_util_1.executeAppBuilder(a, p, o, m))(`
+  );
+  // Recompile node native modules
+  console.log("Recompiling node modules for your computer...");
+  execCommand("electron-builder install-app-deps");
+};
+
+module.exports = postInstall;
 
 if (require.main === module) {
-  postInstall()
+  postInstall();
 }

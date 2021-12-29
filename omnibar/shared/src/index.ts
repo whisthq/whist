@@ -3,8 +3,7 @@ export { WhistServer } from "./constants"
 export { 
     sendDesiredUrls, 
     openDesiredUrl,   
-    initializeClientServerConnection,
+    clientToServerDiscovery,
     stopClientServerConnection,
-    initializeBrowserServerConnection,
-    stopBrowserServerConnection 
+    serverToClientAck
 } from "./messages"

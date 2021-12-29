@@ -1,8 +1,8 @@
 import { constructWhistMessage } from "../utils/messages";
 
-const initializeClientServerConnection = (sessionID: number) =>
+const clientToServerDiscovery = (sessionID: number) =>
   constructWhistMessage(sessionID, {
-    name: "INITIALIZE_CLIENT_SERVER_CONNECTION",
+    name: "SEND_CLIENT_SERVER_DISCOVERY",
   });
 
 const stopClientServerConnection = (sessionID: number) =>
@@ -10,19 +10,14 @@ const stopClientServerConnection = (sessionID: number) =>
     name: "STOP_CLIENT_SERVER_CONNECTION",
   });
 
-const initializeBrowserServerConnection = (sessionID: number) =>
-  constructWhistMessage(sessionID, {
-    name: "INITIALIZE_BROWSER_SERVER_CONNECTION",
-  });
 
-const stopBrowserServerConnection = (sessionID: number) =>
+const serverToClientAck = (sessionID: number) =>
   constructWhistMessage(sessionID, {
-    name: "STOP_BROWSER_SERVER_CONNECTION",
+    name: "SEND_SERVER_CLIENT_ACK",
   });
 
 export {
-  initializeClientServerConnection,
+  clientToServerDiscovery,
   stopClientServerConnection,
-  initializeBrowserServerConnection,
-  stopBrowserServerConnection,
+  serverToClientAck
 };
