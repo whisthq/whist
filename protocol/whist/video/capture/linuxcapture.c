@@ -157,10 +157,10 @@ void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_t heigh
         runcmd(cmd, NULL);
         snprintf(cmd, sizeof(cmd), "xrandr --rmmode %s", modename);
         runcmd(cmd, NULL);
-        snprintf(cmd, sizeof(cmd),
-                 "xrandr --newmode %s $(cvt -r %d %d 60 | sed -n \"2p\" | "
-                 "cut -d' ' -f3-)",
-                 modename, width, height);
+        double pixel_clock = 60.0 * (width + 24) * (height + 24);
+        snprintf(cmd, sizeof(cmd), "xrandr --newmode %s %.2f %d %d %d %d %d %d %d %d +hsync +vsync",
+                 modename, pixel_clock / 1000000.0, width, width + 8, width + 16, width + 24,
+                 height, height + 8, height + 16, height + 24);
         runcmd(cmd, NULL);
         snprintf(cmd, sizeof(cmd), "xrandr --addmode %s %s", display_name, modename);
         runcmd(cmd, NULL);
@@ -171,7 +171,8 @@ void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_t heigh
 
         // If it's still not the correct dimensions
         if (!is_same_wh(device)) {
-            LOG_ERROR("Could not force monitor to a given width/height. Tried to set to %dx%d");
+            LOG_ERROR("Could not force monitor to a given width/height. Tried to set to %dx%d",
+                      width, height);
             // Get the width/height that the device actually is though
             get_wh(device, &device->width, &device->height);
         }
