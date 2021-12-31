@@ -726,70 +726,107 @@ TEST(ProtocolTest, Utf8Truncation) {
 #endif  // _WIN32
 
 // Test atomics and threads.
+// This uses four threads operating simultaneously on atomic variables,
+// making sure that the results are consistent with the operations have
+// actually happened atomically.
 
-// Make an atomic variable and four threads.  Two of the threads
-// atomically add to the variable and the other two atomically
-// subtract the same values.  At the end, it should be zero.
-
-// The threads will immediately wait on a condition variable after being
-// created so that they all start at roughly the same time.  To test the
-// test, each thread internally records the highest and lowest values it
-// saw - these can be verified to make sure that the atomic operations
-// actually did happen simultaneously.
-
-static atomic_int atomic_test_variable;
-static bool atomic_test_start;
-static WhistMutex atomic_test_start_mutex;
-static WhistCondition atomic_test_start_condition;
+static atomic_int atomic_test_cmpswap;
+static atomic_int atomic_test_addsub;
+static atomic_int atomic_test_xor;
 
 static int atomic_test_thread(void* arg) {
     int thread = (int)(intptr_t)arg;
 
-    whist_lock_mutex(atomic_test_start_mutex);
-    while (!atomic_test_start)
-        whist_wait_cond(atomic_test_start_condition, atomic_test_start_mutex);
-    whist_unlock_mutex(atomic_test_start_mutex);
+    // Compare/swap test.
+    // Each thread looks for values equal to its thread number mod 4.  When
+    // found, it swaps with a value one higher for the next thread to find.
+    // After N iterations each, the final value should be 4N.  This test
+    // also causes the four threads to be at roughly the same point when it
+    // finishes, to maximise the chance of operations happening
+    // simultaneously in the following tests.
+
+    for (int i = thread; i < 64; i += 4) {
+        while (1) {
+            int expected = i;
+            int desired = i + 1;
+            bool ret = atomic_compare_exchange_strong(&atomic_test_cmpswap, &expected, desired);
+            if (ret) {
+                break;
+            } else {
+                // If the expected value didn't match then the actual value
+                // must be lower.  If not, something has gone very wrong.
+                EXPECT_LT(expected, i);
+
+                // If this test takes too long because of threads spinning
+                // then it might help to add something like sched_yield()
+                // here to increase the change that the single thread which
+                // can make forward has a chance to run.
+            }
+
+            // Attempt to swap in other nearby values which should not work.
+            expected = i + 1;
+            ret = atomic_compare_exchange_strong(&atomic_test_cmpswap, &expected, desired);
+            EXPECT_FALSE(ret);
+            expected = i - 4;
+            ret = atomic_compare_exchange_weak(&atomic_test_cmpswap, &expected, desired);
+            EXPECT_FALSE(ret);
+        }
+    }
+
+    // Add/sub test.
+    // Two of the four threads atomically add to the variable and the
+    // other two subtract the same values.  After all have fully run, the
+    // variable should be zero again (which can only be tested on the
+    // main thread after all others have finished).
 
     int min = +1000000, max = -1000000;
     for (int i = 0; i < 10000; i++) {
         int old_value;
         switch (thread) {
             case 0:
-                old_value = atomic_fetch_add(&atomic_test_variable, 1);
+                old_value = atomic_fetch_add(&atomic_test_addsub, 1);
                 break;
             case 1:
-                old_value = atomic_fetch_add(&atomic_test_variable, 42);
+                old_value = atomic_fetch_add(&atomic_test_addsub, 42);
                 break;
             case 2:
-                old_value = atomic_fetch_sub(&atomic_test_variable, 1);
+                old_value = atomic_fetch_sub(&atomic_test_addsub, 1);
                 break;
             case 3:
-                old_value = atomic_fetch_sub(&atomic_test_variable, 42);
+                old_value = atomic_fetch_sub(&atomic_test_addsub, 42);
                 break;
             default:
-                // Something has gone wrong.
+                EXPECT_TRUE(false);
                 return -1;
         }
         if (old_value < min) min = old_value;
         if (old_value > max) max = old_value;
     }
 
-    // Uncomment to check that the test is working properly (that operations
-    // are actually happening simultaneously).  We can't build in a
-    // deterministic check of this because it probably will sometimes run
-    // serially anyway.
+    // Uncomment to check that the add/sub test is working properly (that
+    // operations are actually happening simultaneously).  We can't build
+    // in a deterministic check of this because it probably will sometimes
+    // run serially anyway.
     // LOG_INFO("Atomic Test Thread %d: min = %d, max = %d", thread, min, max);
+
+    // Xor test.
+    // Each thread xors in a sequence of random(ish) numbers, then the
+    // same sequence again to cancel it.  The result should be zero.
+
+    int val = 0;
+    for (int i = 0; i < 10000; i++) {
+        if (i == 5000) val = 0;
+        val = val * 7 + 1 + thread;
+        atomic_fetch_xor(&atomic_test_xor, val);
+    }
 
     return thread;
 }
 
 TEST(ProtocolTest, Atomics) {
-    atomic_test_start_mutex = whist_create_mutex();
-    atomic_test_start_condition = whist_create_cond();
-
-    atomic_test_start = false;
-
-    atomic_init(&atomic_test_variable, 0);
+    atomic_init(&atomic_test_cmpswap, 0);
+    atomic_init(&atomic_test_addsub, 0);
+    atomic_init(&atomic_test_xor, 0);
 
     WhistThread threads[4];
     for (int i = 0; i < 4; i++) {
@@ -798,18 +835,15 @@ TEST(ProtocolTest, Atomics) {
         EXPECT_FALSE(threads[i] == NULL);
     }
 
-    whist_lock_mutex(atomic_test_start_mutex);
-    atomic_test_start = true;
-    whist_broadcast_cond(atomic_test_start_condition);
-    whist_unlock_mutex(atomic_test_start_mutex);
-
     for (int i = 0; i < 4; i++) {
         int ret;
         whist_wait_thread(threads[i], &ret);
         EXPECT_EQ(ret, i);
     }
 
-    EXPECT_EQ(atomic_load(&atomic_test_variable), 0);
+    EXPECT_EQ(atomic_load(&atomic_test_addsub), 0);
+    EXPECT_EQ(atomic_load(&atomic_test_cmpswap), 64);
+    EXPECT_EQ(atomic_load(&atomic_test_xor), 0);
 }
 
 TEST(ProtocolTest, FECTest) {
