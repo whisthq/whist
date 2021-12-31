@@ -118,7 +118,9 @@ jobs:
           # one of them has capacity (only returning an error if there is no capacity in any of the AZes).
           # 
           # These are all the AZes in us-east-1 region, where we run Packer
-          for az in ["us-east-1a", "us-east-1b", "us-east-1c", "us-east-1d", "us-east-1e", "us-east-1f"]:
+          # We skip us-east-1e since it is the only AZ in us-east-1 for which we haven't configured a subnet
+          # for Packer, since we can only configure 5 CIDRs
+          for az in ["us-east-1a", "us-east-1b", "us-east-1c", "us-east-1d", "us-east-1f"]:
 
 
 
