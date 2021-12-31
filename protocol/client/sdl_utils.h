@@ -72,21 +72,27 @@ void sdl_renderer_resize_window(int width, int height);
 void sdl_update_framebuffer_loading_screen(int idx);
 
 // The pixel format required for the data/linesize passed into sdl_update_framebuffer
-#define SDL_TEXTURE_PIXEL_FORMAT AV_PIX_FMT_NV12
+#define SDL_FRAMEBUFFER_PIXEL_FORMAT AV_PIX_FMT_NV12
+
 /**
  * @brief                          Update the renderer's framebuffer,
  *                                 using the provided texture.
  *
  * @param data                     The data pointers to the image
+ *                                 The image must be of the format SDL_FRAMEBUFFER_PIXEL_FORMAT
  * @param linesize                 The linesize data for the image
  * @param width                    The width of the image
  * @param height                   The height of the image
+ *
+ * @note                           The Uint8*'s pointed to by data[] MUST be kept alive,
+ *                                 until after BOTH `sdl_render_framebuffer` is called,
+ *                                 AND `sdl_render_pending` subsequently returns false.
  */
 void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int height);
 
 /**
- * @brief                          Render the most recently updated framebuffer.
- *                                 This takes some time, <1ms normally, ~8ms if VSYNC_ON
+ * @brief                          This will mark the framebuffer as ready-to-render,
+ *                                 and `update_pending_sdl_tasks` will eventually render it.
  *
  * @note                           Will make `sdl_render_pending` return true, up until
  *                                 `update_pending_sdl_tasks` is called on the main thread.
@@ -156,6 +162,8 @@ bool sdl_is_window_visible();
  *
  * @note                           This function must be called by the
  *                                 same thread that originally called init_sdl.
+ *                                 This will also render out any pending framebuffer,
+ *                                 thereby setting `sdl_render_pending` to false.
  */
 void sdl_update_pending_tasks();
 

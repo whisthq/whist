@@ -60,7 +60,6 @@ static AudioContext volatile audio_context;
 static volatile AudioFrame* audio_render_context;
 // true if and only if the audio packet in audio_render_context should be played
 static bool volatile pending_render_audio = false;
-static WhistMutex audio_mutex;
 
 // sample rate of audio signal
 static int volatile audio_frequency = -1;
@@ -376,23 +375,12 @@ void init_audio() {
 
     // Set audio to be reinit'ed
     audio_refresh = true;
-    audio_mutex = whist_create_mutex();
     pending_render_audio = false;
 }
 
 void destroy_audio() {
     LOG_INFO("Destroying audio system");
-
-    // Clear any pending audio renders, so render_audio won't render anymore
-    pending_render_audio = false;
-
-    // Ensure is thread-safe against arbitrary calls to render_audio,
-    // Lock/Unlock will hang until render_audio is done with its current render
-    whist_lock_mutex(audio_mutex);
-    whist_unlock_mutex(audio_mutex);
-
     client_destroy_audio_device();
-    whist_destroy_mutex(audio_mutex);
 }
 
 void enable_audio_refresh() { audio_refresh = true; }
@@ -409,8 +397,6 @@ void render_audio() {
         This function simply decodes and renders it.
     */
 
-    // Lock before we read `pending_render_audio`, in-case destroy_audio set it to false
-    whist_lock_mutex(audio_mutex);
     if (pending_render_audio) {
         // Only do work, if the audio frequency is valid
         if (is_valid_audio_frequency()) {
@@ -435,7 +421,6 @@ void render_audio() {
         // No longer rendering audio
         pending_render_audio = false;
     }
-    whist_unlock_mutex(audio_mutex);
 }
 
 void update_audio() {

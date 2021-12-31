@@ -20,6 +20,7 @@ Includes
 #include "sdl_utils.h"
 #include <whist/utils/png.h>
 #include <whist/utils/lodepng.h>
+#include "client_statistic.h"
 
 #include <whist/utils/color.h>
 #include "native_window_utils.h"
@@ -44,11 +45,11 @@ static WhistMutex renderer_mutex;
 static volatile bool pending_render = false;
 
 // Loading screen framebuffer update
-static bool pending_loadingscreen = false;
+static volatile bool pending_loadingscreen = false;
 static int pending_loadingscreen_idx;
 
 // NV12 framebuffer update
-static bool pending_nv12data = false;
+static volatile bool pending_nv12data = false;
 static Uint8* pending_nv12data_data[4];
 static int pending_nv12data_linesize[4];
 static int pending_nv12data_width;
@@ -353,6 +354,9 @@ void sdl_update_framebuffer_loading_screen(int idx) {
 
     whist_lock_mutex(renderer_mutex);
 
+    // Clear any other pending framebuffer
+    pending_nv12data = false;
+    // Mark the pending framebuffer as the loading screen
     pending_loadingscreen_idx = idx;
     pending_loadingscreen = true;
 
@@ -364,18 +368,20 @@ void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int heig
 
     // Check dimensions as a fail-safe
     if (width < 0 || width > MAX_SCREEN_WIDTH || height < 0 || height > MAX_SCREEN_HEIGHT) {
-        LOG_ERROR("Invalid Dimensions! %dx%d", width, height);
-        whist_unlock_mutex(renderer_mutex);
-        return;
+        LOG_ERROR("Invalid Dimensions! %dx%d. nv12 update dropped", width, height);
+    } else {
+        // Clear any other pending framebuffer
+        pending_loadingscreen = false;
+        // Overwrite the pending framebuffer metadata,
+        // And mark the nv12 framebuffer as pending
+        memcpy(pending_nv12data_data, data, sizeof(pending_nv12data_data));
+        memcpy(pending_nv12data_linesize, linesize, sizeof(pending_nv12data_linesize));
+        pending_nv12data_width = width;
+        pending_nv12data_height = height;
+        pending_nv12data = true;
+        // NOTE: The Uint8*'s that data[] points to, CANNOT be invalidated
+        // until AFTER pending_nv12data is set back to false.
     }
-
-    // Overwrite the pending framebuffer metadata,
-    // And mark the framebuffer as pending
-    memcpy(pending_nv12data_data, data, sizeof(pending_nv12data_data));
-    memcpy(pending_nv12data_linesize, linesize, sizeof(pending_nv12data_linesize));
-    pending_nv12data_width = width;
-    pending_nv12data_height = height;
-    pending_nv12data = true;
 
     whist_unlock_mutex(renderer_mutex);
 }
@@ -568,12 +574,22 @@ Private Function Implementations
 */
 
 void sdl_present_pending_framebuffer() {
+    // Render out the current framebuffer, if there's a pending render
+    whist_lock_mutex(renderer_mutex);
+
+    // If there's no pending render, just do nothing,
+    // Don't consume and discard any pending nv12 or loading screen.
+    if (!pending_render) {
+        whist_unlock_mutex(renderer_mutex);
+        return;
+    }
+
     // Wipes the renderer to all-black before we present
     SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(sdl_renderer);
 
-    // Render out the current framebuffer, if there's a pending render
-    whist_lock_mutex(renderer_mutex);
+    clock statistics_timer;
+    start_timer(&statistics_timer);
 
     // Copy nv12 data, if any pending nv12 data exists
     if (pending_nv12data) {
@@ -650,20 +666,14 @@ void sdl_present_pending_framebuffer() {
         pending_loadingscreen = false;
     }
 
-    // Render, if there's a pending render
-    bool will_render_present = false;
-    if (pending_render) {
-        will_render_present = true;
-    }
+    log_double_statistic(VIDEO_RENDER_TIME, get_timer(statistics_timer) * MS_IN_SECOND);
 
     whist_unlock_mutex(renderer_mutex);
 
     // RenderPresent outside of the mutex, since RenderCopy made a copy anyway
     // and this will take ~8ms if VSYNC is on.
     // (If this causes a bug, feel free to pull back to inside of the mutex)
-    if (will_render_present) {
-        SDL_RenderPresent(sdl_renderer);
-    }
+    TIME_RUN(SDL_RenderPresent(sdl_renderer), VIDEO_RENDER_TIME, statistics_timer);
 
     whist_lock_mutex(renderer_mutex);
     pending_render = false;

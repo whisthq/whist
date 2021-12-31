@@ -210,20 +210,20 @@ void update_sws_context(Uint8** data, int* linesize, enum AVPixelFormat input_fo
             video_data.sws = NULL;
         }
 
-        if (input_format == SDL_TEXTURE_PIXEL_FORMAT) {
-            LOG_INFO("The input format is already correct, no sws needed!");
+        if (input_format == SDL_FRAMEBUFFER_PIXEL_FORMAT) {
             // If the pixel format already matches, we require no pixel format conversion,
             // we can just pass directly to the renderer!
+            LOG_INFO("The input format is already correct, no sws needed!");
         } else {
             // We need to create a new context to handle the pixel fmt conversion
             LOG_INFO("Creating sws context to convert from %s to %s",
                      av_get_pix_fmt_name(input_format),
-                     av_get_pix_fmt_name(SDL_TEXTURE_PIXEL_FORMAT));
+                     av_get_pix_fmt_name(SDL_FRAMEBUFFER_PIXEL_FORMAT));
             video_data.sws = sws_getContext(
                 decoder->width, decoder->height, input_format, decoder->width, decoder->height,
-                SDL_TEXTURE_PIXEL_FORMAT, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+                SDL_FRAMEBUFFER_PIXEL_FORMAT, SWS_FAST_BILINEAR, NULL, NULL, NULL);
             av_image_alloc(static_data, static_linesize, decoder->width, decoder->height,
-                           SDL_TEXTURE_PIXEL_FORMAT, 32);
+                           SDL_FRAMEBUFFER_PIXEL_FORMAT, 32);
         }
     }
 
@@ -631,13 +631,14 @@ int render_video() {
 
     if (sdl_render_pending()) {
         // We cannot call `video_decoder_free_decoded_frame`,
-        // until the renderer is done rendering the previously decoded frame.
+        // until the renderer is done rendering the previously decoded frame data.
+        // So, we skip renders until after the previous render is done.
 
-        // We only skip a render after setting `pushing_render_context = false`,
+        // However, We only skip a render after setting `pushing_render_context = false`,
         // To make sure we can keep consuming frames and keep up-to-date.
 
-        // We only skip a render after calling `video_decoder_decode_frame`, because the internal
-        // decoder buffer returns errors if we don't actively decode frames fast enough.
+        // And, We only skip a render after calling `video_decoder_decode_frame`, because the
+        // internal decoder buffer overflow errors if we don't actively decode frames fast enough.
 
         return 0;
     }
@@ -691,12 +692,11 @@ int render_video() {
         sdl_render_window_titlebar_color(window_color);
 
         // Render the decoded frame
-        TIME_RUN(sdl_update_framebuffer(data, linesize, video_data.decoder->width,
-                                        video_data.decoder->height),
-                 VIDEO_SDL_WRITE_TIME, statistics_timer);
+        sdl_update_framebuffer(data, linesize, video_data.decoder->width,
+                               video_data.decoder->height);
 
-        // This function call will take up to 16ms if VSYNC is ON, otherwise 0ms
-        TIME_RUN(sdl_render_framebuffer(), VIDEO_RENDER_TIME, statistics_timer);
+        // Mark the framebuffer out to render
+        sdl_render_framebuffer();
 
         // Declare user activity to prevent screensaver
         declare_user_activity();
