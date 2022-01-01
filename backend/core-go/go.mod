@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.25.0
 	github.com/bgentry/heroku-go v0.0.0-20150810151148-ee4032d686ae
 	github.com/fsnotify/fsnotify v1.5.1
-	github.com/getsentry/sentry-go v0.11.0
+	github.com/getsentry/sentry-go v0.12.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.4.1
 	github.com/hasura/go-graphql-client v0.6.0
@@ -36,6 +36,6 @@ require (
 	github.com/shirou/gopsutil/v3 v3.21.6 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
+	golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
 )
