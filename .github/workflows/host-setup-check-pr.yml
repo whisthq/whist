@@ -116,11 +116,9 @@ jobs:
           # pick one and attempt to run there, failing if there is no capacity in that AZ (even if there
           # is capacity in other AZes). To work around this, we need to loop over all AZs ourselves, until
           # one of them has capacity (only returning an error if there is no capacity in any of the AZes).
-          # 
-          # These are all the AZes in us-east-1 region, where we run Packer
-          # We skip us-east-1e since it is the only AZ in us-east-1 for which we haven't configured a subnet
-          # for Packer, since we can only configure 5 CIDRs
-          for az in ["us-east-1a", "us-east-1b", "us-east-1c", "us-east-1d", "us-east-1f"]:
+          for az in ["us-east-1a", "us-east-1b", "us-east-1c", "us-east-1d", "us-east-1e", "us-east-1f"]:
+
+
 
 
 
