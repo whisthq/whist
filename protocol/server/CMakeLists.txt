@@ -117,7 +117,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     pkg_check_modules(DBUS REQUIRED dbus-1)
     include_directories(${DBUS_INCLUDE_DIRS})
     message(STATUS "DBUS_INCLUDE_DIRS: ${DBUS_INCLUDE_DIRS}")
-
     if(NOT DBUS_FOUND)
         message(FATAL_ERROR "Library dbus-1 was not found!")
     endif()
@@ -133,6 +132,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             asound
             m
             OpenSSL::Crypto
+            event
             )
 endif()
 
