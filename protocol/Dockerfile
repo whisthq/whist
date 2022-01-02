@@ -75,10 +75,10 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install dbus utilities
+# Install notification utilities: dbus and libevent
 RUN apt-get update && apt-get install -y \
-    dbus-x11 \
     libdbus-1-dev \
+    libevent-dev \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
