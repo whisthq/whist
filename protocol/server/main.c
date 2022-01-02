@@ -373,6 +373,14 @@ int main(int argc, char* argv[]) {
 
     LOG_INFO("Whist server revision %s", whist_git_revision());
 
+    // Initialize notification listeners
+    struct event_base* eb = event_base_new();
+    struct dbus_ctx* dbus_context = dbus_init(eb, &server_state.client);
+    if (dbus_context == NULL) {
+        LOG_FATAL("D-Bus context creation failed");
+    }
+    LOG_INFO("D-Bus notification callbacks registered");
+
     server_state.input_device = create_input_device();
     if (!server_state.input_device) {
         LOG_FATAL("Failed to create input device for playback.");
@@ -589,6 +597,10 @@ int main(int argc, char* argv[]) {
     destroy_logger();
     whist_error_monitor_shutdown();
     destroy_clients(&server_state.client);
+
+    // Clean up d-bus connection
+    dbus_close(dbus_context);
+    event_base_free(eb);
 
     return 0;
 }

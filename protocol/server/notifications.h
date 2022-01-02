@@ -19,13 +19,20 @@ Includes
 ============================
 */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <stdbool.h>
 #include <string.h>
+#include <unistd.h>
+#include <signal.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 #include <dbus/dbus.h>
+#include <event.h>
 
 #include <whist/logging/logging.h>
 #include <whist/core/whist.h>
@@ -40,10 +47,18 @@ Public Functions
 */
 
 /**
- * @brief Connects to the d-bus daemon and begins listening for notifications.
- * When notifications arrive, they are sent to the client via the Whist protocol.
+ * @brief Connects to the d-bus daemon and prepares to listen for notifications
  * 
+ * @param eb An eventlib event_base
+ * @return struct dbus_ctx* 
  */
-int init_notif_watcher();
+struct dbus_ctx *dbus_init(struct event_base *eb, Client *init_server_state_client);
+
+/**
+ * @brief Frees a complete d-bus context variable
+ * 
+ * @param ctx D-Bus connection context
+ */
+void dbus_close(struct dbus_ctx *ctx);
 
 #endif  // NOTIFICATIONS_H
