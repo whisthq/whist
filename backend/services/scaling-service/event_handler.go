@@ -95,7 +95,9 @@ func StartSchedulerEvents(globalCtx context.Context, goroutineTracker *sync.Wait
 	// Schedule scale down routine every 10 minutes
 	s.Every(10).Minutes().Do(func() {
 		// Send to scheduling channel
-		scheduledEvents <- sa.ScalingEvent{}
+		scheduledEvents <- sa.ScalingEvent{
+			Type: "SCHEDULED_SCALE_DOWN",
+		}
 	})
 
 	s.StartAsync()
