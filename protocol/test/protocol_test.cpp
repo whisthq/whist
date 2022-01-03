@@ -445,7 +445,7 @@ TEST(ProtocolTest, EncryptAndDecrypt) {
     size_t len = strlen(data);
 
     // Construct test packet
-    WhistPacket original_packet;
+    WhistPacket original_packet = {};
 
     // Contruct packet metadata
     original_packet.id = -1;
@@ -484,7 +484,7 @@ TEST_F(CaptureStdoutTest, BadDecrypt) {
     size_t len = strlen(data);
 
     // Construct test packet
-    WhistPacket original_packet;
+    WhistPacket original_packet = {};
 
     // Contruct packet metadata
     original_packet.id = -1;
