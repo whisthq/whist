@@ -21,6 +21,7 @@ Includes
 
 #include <stdio.h>
 
+#include <whist/logging/logging.h>
 #include <whist/network/network.h>
 
 /*
