@@ -391,13 +391,6 @@ COPY input/Xmodmap /root/.Xmodmap
 # General Utilities
 #########################
 
-# Install dbus utility
-RUN apt-get update && apt-get install -y \
-    dbus-x11 \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
 # Install general utility packages
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     xvfb \
