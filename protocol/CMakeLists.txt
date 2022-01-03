@@ -292,6 +292,17 @@ if(NOT STATIC_SDL2)
     message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_BINARY_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
 endif()
 
+find_library(STATIC_BEEEP_WRAPPER NAMES beep-wrapper PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/beeep-wrapper/${CMAKE_SYSTEM_NAME}"
+        NO_DEFAULT_PATH
+        NO_CMAKE_ENVIRONMENT_PATH
+        NO_CMAKE_PATH
+        NO_SYSTEM_ENVIRONMENT_PATH
+        NO_CMAKE_SYSTEM_PATH
+        NO_CMAKE_FIND_ROOT_PATH)
+if(NOT STATIC_BEEEP_WRAPPER)
+    message(FATAL_ERROR "Library beeep-wrapper was not found! ${CMAKE_BINARY_DIR}/lib/${arch}/beeep-wrapper/${CMAKE_SYSTEM_NAME}")
+endif()
+
 find_library(LIBMFX NAMES libmfx mfx PATHS ${CMAKE_SOURCE_DIR}/lib/${arch}/mfx/${CMAKE_SYSTEM_NAME}/
         NO_DEFAULT_PATH
         NO_CMAKE_ENVIRONMENT_PATH
@@ -348,6 +359,7 @@ set(PLATFORM_INDEPENDENT_LIBS   whistCore
     whistUtils
     ${STATIC_SDL2}
     ${LIB_SENTRY}
+    ${STATIC_BEEEP_WRAPPER}
 )
 set(MAC_SPECIFIC_CLIENT_LIBS
     "-framework OpenGL"
