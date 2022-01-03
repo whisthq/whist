@@ -324,13 +324,10 @@ void calculate_statistics() {
         stats.num_nacks_per_second = video_ring_buffer->num_packets_nacked / STATISTICS_SECONDS;
         stats.num_received_packets_per_second =
             video_ring_buffer->num_packets_received / STATISTICS_SECONDS;
-        stats.num_skipped_frames_per_second =
-            video_ring_buffer->num_frames_skipped / STATISTICS_SECONDS;
         stats.num_rendered_frames_per_second =
             video_ring_buffer->num_frames_rendered / STATISTICS_SECONDS;
 
-        LOG_METRIC("\"rendered_fps\" : %d, \"skipped_fps\" : %d",
-                   stats.num_rendered_frames_per_second, stats.num_skipped_frames_per_second);
+        LOG_METRIC("\"rendered_fps\" : %d", stats.num_rendered_frames_per_second);
         new_bitrates = calculate_new_bitrate(stats);
         if (new_bitrates.bitrate != client_max_bitrate ||
             new_bitrates.burst_bitrate != max_burst_bitrate) {
@@ -340,7 +337,6 @@ void calculate_statistics() {
         }
         video_ring_buffer->num_packets_nacked = 0;
         video_ring_buffer->num_packets_received = 0;
-        video_ring_buffer->num_frames_skipped = 0;
         video_ring_buffer->num_frames_rendered = 0;
         start_timer(&t);
     }
