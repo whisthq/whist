@@ -43,11 +43,11 @@ set<WhistKeycode> modifiers = {FK_LCTRL, FK_LSHIFT, FK_LALT, FK_LGUI,
 // Will hash vectors so that we can make an hmap out of them
 struct VectorHasher {
     int operator()(const vector<WhistKeycode>& v) const {
-        int hash = (int)v.size();
+        uint32_t hash = (uint32_t)v.size();
         for (auto& i : v) {
             hash ^= i + 0x9e3779b9 + (hash << 6) + (hash >> 2);
         }
-        return hash;
+        return (int)hash;
     }
 };
 
