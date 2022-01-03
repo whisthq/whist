@@ -243,7 +243,7 @@ fi
 ###############################
 
 # Select beeep-wrapper lib dir and targz name based on OS and hardware architecture (macOS)
-BEEEP_LIB_DIR="$DEST_DIR/lib/64/beeep-wrapper"
+BEEEP_LIB_DIR="$DEST_DIR/lib/64/beeep-wrapper/$OS"
 BEEEP_HEADER_DIR="$DEST_DIR/include/beeep-wrapper"
 if [[ "$OS" =~ "Windows" ]]; then
   BEEEP_LIB="whist-windows-beeep-static-lib.tar.gz"
