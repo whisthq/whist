@@ -156,6 +156,7 @@ void log_double_statistic(uint32_t index, double val) {
 }
 
 void destroy_statistic_logger() {
+    free(statistic_context.all_statistics);
     memset((void *)&statistic_context, 0, sizeof(statistic_context));
     whist_destroy_mutex(log_statistic_mutex);
 }
