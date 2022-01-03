@@ -37,8 +37,10 @@ Includes
 #include <whist/logging/logging.h>
 #include <whist/core/whist.h>
 #include <whist/utils/whist_notification.h>
+#include <whist/utils/threads.h>
 #include "client.h"
 #include "network.h"
+#include "state.h"
 
 /*
 ============================
@@ -46,19 +48,21 @@ Public Functions
 ============================
 */
 
-/**
- * @brief Connects to the d-bus daemon and prepares to listen for notifications
- * 
- * @param eb An eventlib event_base
- * @return struct dbus_ctx* 
- */
-struct dbus_ctx *dbus_init(struct event_base *eb, Client *init_server_state_client);
+int32_t listen_and_process_notifications(void *opaque);
 
-/**
- * @brief Frees a complete d-bus context variable
- * 
- * @param ctx D-Bus connection context
- */
-void dbus_close(struct dbus_ctx *ctx);
+// /**
+//  * @brief Connects to the d-bus daemon and prepares to listen for notifications
+//  * 
+//  * @param eb An eventlib event_base
+//  * @return struct dbus_ctx* 
+//  */
+// struct dbus_ctx *dbus_init(struct event_base *eb, Client *init_server_state_client);
+
+// /**
+//  * @brief Frees a complete d-bus context variable
+//  * 
+//  * @param ctx D-Bus connection context
+//  */
+// void dbus_close(struct dbus_ctx *ctx);
 
 #endif  // NOTIFICATIONS_H

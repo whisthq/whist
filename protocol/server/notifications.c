@@ -290,7 +290,7 @@ struct dbus_ctx *dbus_init(struct event_base *eb, Client *init_server_state_clie
     struct dbus_ctx *ctx = calloc(1, sizeof(struct dbus_ctx));
     if (!ctx) {
         printf("can't allocate dbus_ctx\n");
-        goto out;
+        goto fail;
     }
 
     // Connect to appropriate d-bus daemon
@@ -298,7 +298,7 @@ struct dbus_ctx *dbus_init(struct event_base *eb, Client *init_server_state_clie
     FILE *f_dbus_info = fopen(config_file, "r");
     if (f_dbus_info == NULL) {
       printf("Required d-bus configuration file %s not found!\n", config_file);
-      goto out;
+      goto fail;
     }
 
     char dbus_info[120];
@@ -317,7 +317,7 @@ struct dbus_ctx *dbus_init(struct event_base *eb, Client *init_server_state_clie
     conn = dbus_connection_open_private(dbus_addr, &error);
     if (conn == NULL) {
         printf("Connection to %s failed: %s\n", dbus_addr, error.message);
-        goto out;
+        goto fail;
     }
     printf("Connection to %s established: %p\n", dbus_addr, conn);
     free(dbus_addr);
@@ -327,7 +327,7 @@ struct dbus_ctx *dbus_init(struct event_base *eb, Client *init_server_state_clie
     // Register with "hello" message
     if (!dbus_bus_register(conn, &error)) {
         printf("Registration failed. Exiting...\n");
-        goto out;
+        goto fail;
     }
     printf("Registration of connection %p successful\n", conn);
 
@@ -338,27 +338,26 @@ struct dbus_ctx *dbus_init(struct event_base *eb, Client *init_server_state_clie
     if (!dbus_connection_set_watch_functions(conn, add_watch, remove_watch,
                                              toggle_watch, ctx, NULL)) {
         printf("dbus_connection_set_watch_functions() failed\n");
-        goto out;
+        goto fail;
     }
 
     if (!dbus_connection_set_timeout_functions(conn, add_timeout,
                                                remove_timeout, toggle_timeout,
                                                ctx, NULL)) {
         printf("dbus_connection_set_timeout_functions() failed\n");
-        goto out;
+        goto fail;
     }
 
     if (dbus_connection_add_filter(conn, notification_handler, ctx, NULL) == FALSE) {
         printf("dbus_connection_add_filter() failed\n");
-        goto out;
+        goto fail;
     }
 
-    dbus_connection_set_dispatch_status_function(conn, handle_new_dispatch_status,
-                                                 ctx, NULL);
+    dbus_connection_set_dispatch_status_function(conn, handle_new_dispatch_status, ctx, NULL);
 
     if (!become_monitor(conn)) {
         printf("Monitoring failed. Exiting...\n");
-        goto out;
+        goto fail;
     }
     printf("Monitoring started!\n");
 
@@ -366,7 +365,7 @@ struct dbus_ctx *dbus_init(struct event_base *eb, Client *init_server_state_clie
 
     return ctx;
 
-out:
+fail:
     if (conn) {
         dbus_connection_close(conn);
         dbus_connection_unref(conn);
@@ -391,24 +390,24 @@ void dbus_close(struct dbus_ctx *ctx)
         free(ctx);
 }
 
-// int32_t listen_and_process_notifications(void *opaque) {
-//     whist_server_state* state = (whist_server_state*)opaque;
-//     whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
-//     whist_sleep(500);
+int32_t listen_and_process_notifications(void *opaque) {
+    whist_server_state *state = (whist_server_state *) opaque;
+    whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
+    whist_sleep(500);
 
-//     add_thread_to_client_active_dependents();
+    add_thread_to_client_active_dependents();
 
-//     struct event_base *eb = event_base_new();
-//     struct dbus_ctx *ctx = dbus_init(eb);
+    struct event_base *eb = event_base_new();
+    struct dbus_ctx *ctx = dbus_init(eb, &state->client);
 
-//     if (ctx == NULL) {
-//       return -1;
-//     }
+    if (ctx == NULL) {
+      return -1;
+    }
 
-//     event_base_loop(eb, 0);
+    event_base_loop(eb, 0);
 
-//     dbus_close(ctx);
-//     event_base_free(eb);
+    dbus_close(ctx);
+    event_base_free(eb);
 
-//     return 0;
-// }
+    return 0;
+}
