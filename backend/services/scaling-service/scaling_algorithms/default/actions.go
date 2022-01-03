@@ -9,7 +9,7 @@ import (
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
-func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Context, host hosts.HostHandler, event ScalingEvent, instance subscriptions.Instance) error {
+func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Context, event ScalingEvent, instance subscriptions.Instance) error {
 	logger.Infof("Verifying instance scale down for event: %v", event)
 
 	// First, verify if the draining instance has mandelboxes running
@@ -32,7 +32,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	}
 
 	// If not, wait until the instance is terminated from the cloud provider
-	err = host.WaitForInstanceTermination(scalingCtx, instance)
+	err = s.Host.WaitForInstanceTermination(scalingCtx, []string{instance.CloudProviderID})
 	if err != nil {
 		// Err is already wrapped here
 		return err
@@ -74,7 +74,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	return nil
 }
 
-func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Context, host hosts.HostHandler, event ScalingEvent) error {
+func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Context, event ScalingEvent) error {
 	// check database for active instances without mandelboxes
 	freeInstancesQuery := &subscriptions.QueryFreeInstances
 	queryParams := map[string]interface{}{
@@ -114,7 +114,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 
 	logger.Info("Forcefully terminating lingering instances from cloud provider.")
 
-	_, err := s.Host.SpinDownInstances(lingeringIds)
+	_, err := s.Host.SpinDownInstances(scalingCtx, lingeringIds)
 	if err != nil {
 		logger.Warningf("Failed to forcefully terminate lingering instances from cloud provider. Err: %v", err)
 	}
@@ -125,7 +125,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 
 		activeImageID := freeInstancesQuery.CloudInstanceInfo[0].ImageID
 		// Try scale up instances to match buffer size
-		s.ScaleUpIfNecessary(wantedNumInstances, scalingCtx, host, event, string(activeImageID))
+		s.ScaleUpIfNecessary(wantedNumInstances, scalingCtx, event, string(activeImageID))
 	}
 
 	logger.Info("Scaling down %v free instances.", freeInstances)
@@ -148,29 +148,33 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	return nil
 }
 
-func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scalingCtx context.Context, host hosts.HostHandler, event ScalingEvent, imageID string) error {
+func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scalingCtx context.Context, event ScalingEvent, imageID string) error {
 	// Try scale up in given region
 	logger.Infof("Trying to spin up %v instances on region %v with image id %v", instancesToScale, event.Region, imageID)
 	instanceNum := int32(instancesToScale)
-	createdInstances, err := host.SpinUpInstances(instanceNum, imageID)
 
+	createdInstances, err := s.Host.SpinUpInstances(scalingCtx, instanceNum, imageID)
 	if err != nil {
 		return utils.MakeError("Failed to spin up instances, created %v, err: %v", createdInstances, err)
-	}
-
-	// Wait for instances to be ready on cloud provider
-	for _, createdInstance := range createdInstances {
-		err = s.Host.WaitForInstanceReady(scalingCtx, createdInstance)
-
-		if err != nil {
-			logger.Warningf("Failed to wait for instance %v to be ready. Err: %v", createdInstance.Name, err)
-			continue
-		}
 	}
 
 	// Check if we could create the desired number of instances
 	if len(createdInstances) != instancesToScale {
 		return utils.MakeError("Could not scale up %v instances, only scaled up %v.", instancesToScale, len(createdInstances))
+	}
+
+	// Create slice with newly created instance ids
+	var createdInstanceIds []string
+
+	for _, instance := range createdInstances {
+		createdInstanceIds = append(createdInstanceIds, instance.CloudProviderID)
+		logger.Infof("Created tagged instance with ID %v, Name %v", instance.CloudProviderID, instance.Name)
+	}
+
+	// Wait for new instances to be ready before adding to db
+	err = s.Host.WaitForInstanceReady(scalingCtx, createdInstanceIds)
+	if err != nil {
+		return utils.MakeError("error waiting for new instances to be ready. Err: %v", err)
 	}
 
 	logger.Infof("Inserting newly created instances to database.")
@@ -183,7 +187,7 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 
 	err = s.GraphQLClient.Mutate(scalingCtx, insertMutation, mutationParams)
 	if err != nil {
-		logger.Errorf("Failed to insert instances into database")
+		return utils.MakeError("Failed to insert instances into database")
 	}
 
 	logger.Infof("Inserted %v rows to database.", insertMutation.MutationResponse.AffectedRows)

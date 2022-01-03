@@ -8,6 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/lithammer/shortuuid"
+	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -35,18 +37,16 @@ func (host *AWSHost) Initialize(region string) error {
 	return nil
 }
 
-func MakeInstance(c context.Context, host *AWSHost, input *ec2.RunInstancesInput) (*ec2.RunInstancesOutput, error) {
+func (host *AWSHost) MakeInstances(c context.Context, input *ec2.RunInstancesInput) (*ec2.RunInstancesOutput, error) {
 	return host.EC2.RunInstances(c, input)
 }
 
-func MakeTags(c context.Context, host *AWSHost, input *ec2.CreateTagsInput) (*ec2.CreateTagsOutput, error) {
+func (host *AWSHost) MakeTags(c context.Context, input *ec2.CreateTagsInput) (*ec2.CreateTagsOutput, error) {
 	return host.EC2.CreateTags(c, input)
 }
 
 // SpinDownInstances is responsible for launching `numInstances` number of instances with the received imageID.
-func (host *AWSHost) SpinUpInstances(numInstances int32, imageID string) ([]subscriptions.Instance, error) {
-	ctx := context.Background()
-
+func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances int32, imageID string) ([]subscriptions.Instance, error) {
 	// Set run input
 	input := &ec2.RunInstancesInput{
 		MinCount:                          aws.Int32(MIN_INSTANCE_COUNT),
@@ -56,32 +56,41 @@ func (host *AWSHost) SpinUpInstances(numInstances int32, imageID string) ([]subs
 		InstanceType:                      INSTANCE_TYPE,
 	}
 
-	result, err := MakeInstance(ctx, host, input)
+	result, err := host.MakeInstances(scalingCtx, input)
 	if err != nil {
 		return nil, utils.MakeError("error creating instances: Err: %v", err)
 	}
 
-	tagInput := &ec2.CreateTagsInput{
-		Resources: []string{*result.Instances[0].InstanceId},
-		Tags: []ec2Types.Tag{
-			{
-				Key:   aws.String("name"),
-				Value: aws.String("scaling-service-instance"),
-			},
-		},
-	}
-
-	_, err = MakeTags(ctx, host, tagInput)
-	if err != nil {
-		return nil, utils.MakeError("error taging instance. Err: %v", err)
-	}
-
-	logger.Infof("Created tagged instance with ID " + *result.Instances[0].InstanceId)
-
-	// Create slice with created instances
+	// Create slice with instances to write to database
 	var outputInstances []subscriptions.Instance
 
 	for _, outputInstance := range result.Instances {
+		var (
+			IP         = aws.ToString(outputInstance.PublicIpAddress)
+			ImageID    = aws.ToString(outputInstance.ImageId)
+			Type       = aws.ToString(outputInstance.PlatformDetails)
+			InstanceID = aws.ToString(outputInstance.InstanceId)
+			Status     = "PRE_CONNECTION"
+			Name       = host.GenerateName()
+		)
+
+		tagInput := &ec2.CreateTagsInput{
+			Resources: []string{InstanceID},
+			Tags: []ec2Types.Tag{
+				{
+					Key:   aws.String("Name"),
+					Value: aws.String(Name),
+				},
+			},
+		}
+
+		_, err = host.MakeTags(scalingCtx, tagInput)
+		if err != nil {
+			return nil, utils.MakeError("error taging instance. Err: %v", err)
+		}
+
+		// Only append instance to output slice if we have created
+		// and tagged su
 		outputInstances = append(outputInstances, subscriptions.Instance{
 			IPAddress: *outputInstance.PublicIpAddress,
 			ImageID:   *outputInstance.ImageId,
@@ -93,10 +102,10 @@ func (host *AWSHost) SpinUpInstances(numInstances int32, imageID string) ([]subs
 	}
 
 	// Verify start output
-	startedInstances := int(numInstances)
-	if len(result.Instances) != startedInstances {
+	desiredInstances := int(numInstances)
+	if len(outputInstances) != desiredInstances {
 		return outputInstances,
-			utils.MakeError("failed to start requested number of instances with parameters: %v. Number of started instances: %v",
+			utils.MakeError("failed to start requested number of instances with parameters: %v. Number of instances marked as ready: %v",
 				input, len(result.Instances))
 	}
 
@@ -107,14 +116,13 @@ func (host *AWSHost) SpinUpInstances(numInstances int32, imageID string) ([]subs
 }
 
 // SpinDownInstances is responsible for terminating the instances in `instanceIDs`.
-func (host *AWSHost) SpinDownInstances(instanceIDs []string) ([]subscriptions.Instance, error) {
-	ctx := context.Background()
+func (host *AWSHost) SpinDownInstances(scalingCtx context.Context, instanceIDs []string) ([]subscriptions.Instance, error) {
 
 	terminateInput := &ec2.TerminateInstancesInput{
 		InstanceIds: instanceIDs,
 	}
 
-	terminateOutput, err := host.EC2.TerminateInstances(ctx, terminateInput)
+	terminateOutput, err := host.EC2.TerminateInstances(scalingCtx, terminateInput)
 
 	// Create slice with created instances
 	var outputInstances []subscriptions.Instance
@@ -138,10 +146,9 @@ func (host *AWSHost) SpinDownInstances(instanceIDs []string) ([]subscriptions.In
 }
 
 // WaitForInstanceTermination waits until the given instance has been terminated on AWS.
-func (host *AWSHost) WaitForInstanceTermination(scalingCtx context.Context, instance subscriptions.Instance) error {
-	waiterClient := new(ec2.DescribeInstancesAPIClient)
-	waiter := ec2.NewInstanceTerminatedWaiter(*waiterClient, func(*ec2.InstanceTerminatedWaiterOptions) {
-		logger.Infof("Waiting for instance to terminate on AWS")
+func (host *AWSHost) WaitForInstanceTermination(scalingCtx context.Context, instanceIds []string) error {
+	waiter := ec2.NewInstanceTerminatedWaiter(host.EC2, func(*ec2.InstanceTerminatedWaiterOptions) {
+		logger.Infof("Waiting for instances to terminate on AWS")
 	})
 
 	waitParams := &ec2.DescribeInstancesInput{
@@ -157,10 +164,9 @@ func (host *AWSHost) WaitForInstanceTermination(scalingCtx context.Context, inst
 }
 
 // WaitForInstanceReady waits until the given instance is running on AWS.
-func (host *AWSHost) WaitForInstanceReady(scalingCtx context.Context, instance subscriptions.Instance) error {
-	waiterClient := new(ec2.DescribeInstancesAPIClient)
-	waiter := ec2.NewInstanceRunningWaiter(*waiterClient, func(*ec2.InstanceRunningWaiterOptions) {
-		logger.Infof("Waiting for instance to be ready on AWS")
+func (host *AWSHost) WaitForInstanceReady(scalingCtx context.Context, instanceIds []string) error {
+	waiter := ec2.NewInstanceRunningWaiter(host.EC2, func(*ec2.InstanceRunningWaiterOptions) {
+		logger.Infof("Waiting for instances %v to be ready on AWS", instanceIds)
 	})
 
 	waitParams := &ec2.DescribeInstancesInput{
@@ -177,4 +183,11 @@ func (host *AWSHost) WaitForInstanceReady(scalingCtx context.Context, instance s
 
 func (host *AWSHost) RetryInstanceSpinUp() {
 
+}
+
+// GenerateName is a helper function for generating an instance
+// name using a random UUID.
+func (host *AWSHost) GenerateName() string {
+	return utils.Sprintf("ec2-%v-%v-%v%v", host.Region, metadata.GetAppEnvironmentLowercase(),
+		metadata.GetGitCommit(), shortuuid.New())
 }

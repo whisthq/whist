@@ -36,7 +36,7 @@ func main() {
 	// Start database subscriptions
 	whistClient := &subscriptions.WhistClient{}
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
-	StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents)
+	// StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents)
 
 	// Start scheduler and setup scheduler event chan
 	scheduledEvents := make(chan sa.ScalingEvent, 100)
@@ -47,7 +47,7 @@ func main() {
 	// times by different goroutines.
 	algorithmByRegionMap := &sync.Map{}
 	algorithmByRegionMap.Store("default", &sa.DefaultScalingAlgorithm{
-		Region: "us-east",
+		Region: "us-east-1",
 	})
 
 	// Instantiate scaling algorithms on allowed regions
@@ -104,7 +104,7 @@ func StartSchedulerEvents(globalCtx context.Context, goroutineTracker *sync.Wait
 }
 
 func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent sa.ScalingEvent) sa.ScalingAlgorithm {
-	// Try to get the scaling algoithm on the region the
+	// Try to get the scaling algorithm on the region the
 	// scaling event was requested.
 	algorithm, ok := algorithmByRegion.Load(scalingEvent.Region)
 	if ok {
