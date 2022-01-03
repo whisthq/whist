@@ -41,7 +41,6 @@ void reset_bitrate_stat_members(RingBuffer* ring_buffer) {
 
     ring_buffer->num_packets_nacked = 0;
     ring_buffer->num_packets_received = 0;
-    ring_buffer->num_frames_skipped = 0;
     ring_buffer->num_frames_rendered = 0;
 }
 
@@ -253,9 +252,12 @@ FrameData* set_rendering(RingBuffer* ring_buffer, int id) {
     memset(current_frame, 0, sizeof(*current_frame));
     current_frame->id = -1;
 
-    // Mark the framebuffer of the currently rendering frame
+    // Set the framebuffer pointer of the currently rendering frame
     ring_buffer->currently_rendering_frame.frame_buffer =
         get_framebuffer(ring_buffer, &ring_buffer->currently_rendering_frame);
+
+    // Track for statistics
+    ring_buffer->num_frames_rendered++;
 
     // Return the currently rendering frame
     return &ring_buffer->currently_rendering_frame;
