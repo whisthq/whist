@@ -10,6 +10,12 @@ TODO(kevin) write some summary thing here
 
 */
 
+/*
+============================
+Includes
+============================
+*/
+
 #include "notifications.h"
 
 #include <stdio.h>
