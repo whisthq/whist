@@ -29,6 +29,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../client/sdlscreeninfo.c
         ../client/sync_packets.c
         ../client/renderer.c
+        ../client/notifications.c
     )
 # Server & Client files, for Windows/Linux (supported on both client and server)
 else()
@@ -62,6 +63,7 @@ else()
         ../client/sdlscreeninfo.c
         ../client/sync_packets.c
         ../client/renderer.c
+        ../client/notifications.c
 )
 endif()
 
