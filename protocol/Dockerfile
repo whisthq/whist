@@ -75,6 +75,14 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Install dbus utilities
+RUN apt-get update && apt-get install -y \
+    dbus-x11 \
+    libdbus-1-dev \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install clang-tidy 6. We must hardcode this version, else we will install the
 # overaggressive recent version, and we need to symlink it to be able to call
 # it as "clang-tidy".

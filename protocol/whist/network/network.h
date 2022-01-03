@@ -169,7 +169,8 @@ typedef enum {
     PACKET_AUDIO = 0,
     PACKET_VIDEO = 1,
     PACKET_MESSAGE = 2,
-    NUM_PACKET_TYPES = 3,
+    PACKET_NOTIFICATION = 3,
+    NUM_PACKET_TYPES = 4,
 } WhistPacketType;
 
 #include <whist/core/whist.h>
