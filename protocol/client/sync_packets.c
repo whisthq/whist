@@ -203,6 +203,9 @@ int multithreaded_sync_udp_packets(void* opaque) {
                          SERVER_HANDLE_MESSAGE_UDP, statistics_timer);
                 break;
             }
+            case PACKET_NOTIFICATION:
+                TIME_RUN(display_notification(packet), "DisplayNotifiation", statistics_timer);
+                break;
             default:
                 LOG_ERROR("Unknown packet type: %d", packet->type);
                 break;
