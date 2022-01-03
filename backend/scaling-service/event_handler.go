@@ -91,7 +91,9 @@ func StartSchedulerEvents(globalCtx context.Context, goroutineTracker *sync.Wait
 	// Schedule scale down routine every 10 minutes
 	s.Every(10).Minutes().Do(func() {
 		// Send to scheduling channel
-		scheduledEvents <- sa.ScalingEvent{}
+		scheduledEvents <- sa.ScalingEvent{
+			Type: "SCHEDULED_SCALE_DOWN",
+		}
 	})
 
 	s.StartAsync()
@@ -150,7 +152,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 			case *subscriptions.ImageEvent:
 				var scalingEvent sa.ScalingEvent
 
-				scalingEvent.Type = "INSTANCE_DATABASE_EVENT"
+				scalingEvent.Type = "IMAGE_DATABASE_EVENT"
 
 				if len(subscriptionEvent.ImageInfo) > 0 {
 					image := subscriptionEvent.ImageInfo[0]
@@ -169,8 +171,6 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 				}
 			}
 		case scheduledEvent := <-scheduledEvents:
-			scheduledEvent.Type = "SCHEDULED_EVENT"
-
 			// Start scaling algorithm based on region
 			logger.Infof("Received scheduled event.")
 			algorithm := getScalingAlgorithm(algorithmByRegion, scheduledEvent)

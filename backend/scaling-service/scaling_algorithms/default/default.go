@@ -131,21 +131,24 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 				}
 
 			case scheduledEvent := <-s.ScheduledEventChan:
-				logger.Infof("Scaling algorithm received a scheduled event with value: %v", scheduledEvent)
-				scalingCtx, scalingCancel := context.WithCancel(context.Background())
+				switch scheduledEvent.Type {
+				case "SCHEDULED_SCALE_DOWN":
+					logger.Infof("Scaling algorithm received a scheduled scale down event with value: %v", scheduledEvent)
+					scalingCtx, scalingCancel := context.WithCancel(context.Background())
 
-				for _, region := range bundledRegions {
-					// scheduledEvent.Region = region
-					// err := s.ScaleUpIfNecessary(2, scalingCtx, s.Host, scheduledEvent, "ami-05c376522f5c52626")
-					// logger.Error(err)
+					for _, region := range bundledRegions {
+						// scheduledEvent.Region = region
+						// err := s.ScaleUpIfNecessary(2, scalingCtx, s.Host, scheduledEvent, "")
+						// logger.Error(err)
 
-					err := s.ScaleDownIfNecessary(scalingCtx, s.Host, scheduledEvent)
-					if err != nil {
-						logger.Errorf("Error running scale down job on region %v. Err: %v", region, err)
+						err := s.ScaleDownIfNecessary(scalingCtx, s.Host, scheduledEvent)
+						if err != nil {
+							logger.Errorf("Error running scale down job on region %v. Err: %v", region, err)
+						}
 					}
-				}
 
-				scalingCancel()
+					scalingCancel()
+				}
 			}
 		}
 	}()
