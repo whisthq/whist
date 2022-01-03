@@ -720,8 +720,14 @@ void destroy_ring_buffer(RingBuffer* ring_buffer) {
 
     // First, wipe the ring buffer
     reset_ring_buffer(ring_buffer);
+    // If a frame was held by the renderer then also clear it.
+    // (The renderer has already been destroyed when we get here.)
+    if (ring_buffer->currently_rendering_id != -1)
+        reset_frame(ring_buffer, &ring_buffer->currently_rendering_frame);
     // free received_frames
     free(ring_buffer->receiving_frames);
+    // Destroy the allocator.
+    destroy_block_allocator(ring_buffer->packet_buffer_allocator);
     // free ring_buffer
     free(ring_buffer);
 }
