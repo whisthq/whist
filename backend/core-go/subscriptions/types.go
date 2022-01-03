@@ -12,18 +12,39 @@ type HasuraParams struct {
 // Instance represents a row from the "instance_info" table
 // in the database. These fields are defined in queries.go
 type Instance struct {
-	InstanceName string `json:"instance_name"`
-	Status       string `json:"status"`
+	IP                string `json:"ip"`
+	Location          string `json:"location"`
+	ImageID           string `json:"aws_ami_id"`
+	Type              string `json:"aws_instance_type"`
+	CloudProviderID   string `json:"cloud_provider_id"`
+	CommitHash        string `json:"commit_hash"`
+	CreationTimeMS    int64  `json:"creation_time_utc_unix_ms"`
+	GPUVramRemaing    int64  `json:"gpu_vram_remaining_kb"`
+	Name              string `json:"instance_name"`
+	LastUpdatedMS     int64  `json:"last_updated_utc_unix_ms"`
+	MandelboxCapacity int64  `json:"mandelbox_capacity"`
+	MemoryRemainingKB int64  `json:"memory_remaining_kb"`
+	NanoCPUsRemaining int64  `json:"nanocpus_remaining"`
+	Status            string `json:"status"`
 }
 
 // Mandelbox represents a row from the "mandelbox_info" table
 // in the database. These fields are defined in queries.go
 type Mandelbox struct {
-	InstanceName string                     `json:"instance_name"`
-	ID           mandelboxtypes.MandelboxID `json:"mandelbox_id"`
-	SessionID    string                     `json:"session_id"`
-	UserID       mandelboxtypes.UserID      `json:"user_id"`
-	Status       string                     `json:"status"`
+	ID             mandelboxtypes.MandelboxID `json:"mandelbox_id"`
+	UserID         mandelboxtypes.UserID      `json:"user_id"`
+	InstanceName   string                     `json:"instance_name"`
+	SessionID      string                     `json:"session_id"`
+	CreationTimeMS int64                      `json:"creation_time_utc_unix_ms"`
+	Status         string                     `json:"status"`
+}
+
+type Image struct {
+	ID         string `json:"ami_id"`
+	Region     string `json:"region_name"`
+	Active     bool   `json:"ami_active"`
+	CommitHash string `json:"client_commit_hash"`
+	Protected  bool   `json:"protected_from_scale_down"`
 }
 
 // handlerfn is used to send subscription handlers to the Subscribe function.
@@ -52,6 +73,10 @@ type MandelboxResult struct {
 	CloudMandelboxInfo interface{} `json:"cloud_mandelbox_info"`
 }
 
+type ImageResult struct {
+	CloudImageInfo interface{} `json:"cloud_region_to_ami"`
+}
+
 // SubscriptionEvent represents any event received from Hasura
 // subscriptions. We define a custom (empty) interface to make the
 // main select on `host-service.go` cleaner.
@@ -71,4 +96,8 @@ type InstanceEvent struct {
 // mandelbox_info database table.
 type MandelboxEvent struct {
 	MandelboxInfo []Mandelbox `json:"cloud_mandelbox_info"`
+}
+
+type ImageEvent struct {
+	ImageInfo []Image `json:"cloud_region_to_ami"`
 }

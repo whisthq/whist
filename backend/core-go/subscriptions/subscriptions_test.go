@@ -50,8 +50,8 @@ func (cl *mockWhistClient) Subscribe(query GraphQLQuery, variables map[string]in
 
 	// Create fake instance event
 	testInstanceEvent := InstanceEvent{InstanceInfo: []Instance{{
-		InstanceName: variables["instanceName"].(string),
-		Status:       variables["status"].(string),
+		Name:   variables["instanceName"].(string),
+		Status: variables["status"].(string),
 	}}}
 
 	// Create fake mandelbox event
@@ -99,12 +99,12 @@ func TestInstanceStatusHandler(t *testing.T) {
 		{"Empty event", InstanceEvent{InstanceInfo: []Instance{}}, false},
 		{"Wrong status event", InstanceEvent{
 			InstanceInfo: []Instance{
-				{InstanceName: "test-instance-name", Status: "PRE_CONNECTION"},
+				{Name: "test-instance-name", Status: "PRE_CONNECTION"},
 			},
 		}, false},
 		{"Correct status event", InstanceEvent{
 			InstanceInfo: []Instance{
-				{InstanceName: "test-instance-name", Status: "DRAINING"},
+				{Name: "test-instance-name", Status: "DRAINING"},
 			},
 		}, true},
 	}
@@ -245,7 +245,7 @@ func TestSetupScalingSubscriptions(t *testing.T) {
 
 	// Create a fake variables map that matches the host subscriptions variable map
 	var variables = map[string]interface{}{
-		"status": graphql.String("ALLOCATED"),
+		"status": graphql.String("DRAINING"),
 	}
 
 	// Verify that the "variables" maps are deep equal for the first subscription
@@ -254,7 +254,7 @@ func TestSetupScalingSubscriptions(t *testing.T) {
 		t.Errorf("Expected variable map to be %v, got: %v", whistClient.Subscriptions[0].Variables, variables)
 	}
 
-	variables["status"] = graphql.String("EXITED")
+	variables["status"] = graphql.String("ALLOCATED")
 
 	// Verify that the "variables" maps are deep equal for the second subscription
 	if !reflect.DeepEqual(variables, whistClient.Subscriptions[1].Variables) {

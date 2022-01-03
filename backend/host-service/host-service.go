@@ -1045,7 +1045,7 @@ func main() {
 		logger.Panic(globalCancel, err)
 	}
 
-	// Start database subscriptions
+	// Start database subscription client
 	instanceName, err = aws.GetInstanceName()
 	if err != nil {
 		logger.Errorf("Can't get AWS Instance Name to start database subscriptions. Error: %s", err)
@@ -1053,9 +1053,9 @@ func main() {
 	}
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
 
-	whistClient := &subscriptions.WhistClient{}
-	subscriptions.SetupHostSubscriptions(string(instanceName), whistClient)
-	subscriptions.Start(whistClient, globalCtx, &goroutineTracker, subscriptionEvents)
+	subscriptionClient := &subscriptions.SubscriptionClient{}
+	subscriptions.SetupHostSubscriptions(string(instanceName), subscriptionClient)
+	subscriptions.Start(subscriptionClient, globalCtx, &goroutineTracker, subscriptionEvents)
 	if err != nil {
 		logger.Errorf("Failed to start database subscriptions. Error: %s", err)
 	}

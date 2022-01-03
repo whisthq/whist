@@ -3,3 +3,48 @@ module github.com/whisthq/whist/backend/scaling-service
 go 1.17
 
 replace github.com/whisthq/whist/backend/core-go => ../core-go/
+
+require (
+	github.com/aws/aws-sdk-go-v2 v1.11.2
+	github.com/aws/aws-sdk-go-v2/config v1.11.0
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.26.0
+	github.com/whisthq/whist/backend/core-go v0.0.0-00010101000000-000000000000
+)
+
+require (
+	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.6.4 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.8.2 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.2 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.0.2 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.5.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.6.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.11.1 // indirect
+	github.com/aws/smithy-go v1.9.0 // indirect
+	github.com/beeker1121/goque v2.1.0+incompatible // indirect
+	github.com/bgentry/heroku-go v0.0.0-20150810151148-ee4032d686ae // indirect
+	github.com/fsnotify/fsnotify v1.5.1 // indirect
+	github.com/getsentry/sentry-go v0.12.0 // indirect
+	github.com/go-ole/go-ole v1.2.4 // indirect
+	github.com/golang/protobuf v1.4.2 // indirect
+	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
+	github.com/google/uuid v1.3.0 // indirect
+	github.com/gorilla/websocket v1.4.1 // indirect
+	github.com/hasura/go-graphql-client v0.6.0 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/klauspost/compress v1.10.3 // indirect
+	github.com/logzio/logzio-go v1.0.3 // indirect
+	github.com/pborman/uuid v1.2.1 // indirect
+	github.com/shirou/gopsutil/v3 v3.21.6 // indirect
+	github.com/stretchr/testify v1.7.0 // indirect
+	github.com/syndtr/goleveldb v1.0.0 // indirect
+	go.uber.org/atomic v1.9.0 // indirect
+	golang.org/x/net v0.0.0-20211008194852-3b03d305991f // indirect
+	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
+	golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac // indirect
+	google.golang.org/appengine v1.6.6 // indirect
+	google.golang.org/protobuf v1.25.0 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	nhooyr.io/websocket v1.8.6 // indirect
+)

@@ -18,9 +18,9 @@ import (
 // but no-ops in other environments.
 var enabled = (metadata.GetAppEnvironment() != metadata.EnvLocalDev)
 
-// WhistHasuraClient is an interface used to abstract the interactions with
+// WhistSubscriptionClient is an interface used to abstract the interactions with
 // the official Hasura client.
-type WhistHasuraClient interface {
+type WhistSubscriptionClient interface {
 	Initialize() error
 	GetSubscriptions() []HasuraSubscription
 	SetSubscriptions([]HasuraSubscription)
@@ -33,9 +33,9 @@ type WhistHasuraClient interface {
 	Close([]string) error
 }
 
-// WhistClient implements WhistHasuraClient and is exposed to be used
+// SubscriptionClient implements WhistSubscriptionClient and is exposed to be used
 // by any other service that need to interact with the Hasura client.
-type WhistClient struct {
+type SubscriptionClient struct {
 	Hasura          *graphql.SubscriptionClient
 	Params          HasuraParams
 	Subscriptions   []HasuraSubscription
@@ -44,8 +44,8 @@ type WhistClient struct {
 
 // Initialize creates the client. This function is respinsible from fetching the server
 // information from Heroku.
-func (wc *WhistClient) Initialize() error {
-	logger.Infof("Setting up Hasura subscriptions...")
+func (wc *SubscriptionClient) Initialize() error {
+	logger.Infof("Setting up Subscription client...")
 
 	params, err := getWhistHasuraParams()
 	if err != nil {
@@ -74,33 +74,33 @@ func (wc *WhistClient) Initialize() error {
 	return nil
 }
 
-func (wc *WhistClient) GetSubscriptions() []HasuraSubscription {
+func (wc *SubscriptionClient) GetSubscriptions() []HasuraSubscription {
 	return wc.Subscriptions
 }
 
-func (wc *WhistClient) SetSubscriptions(subscriptions []HasuraSubscription) {
+func (wc *SubscriptionClient) SetSubscriptions(subscriptions []HasuraSubscription) {
 	wc.Subscriptions = subscriptions
 }
 
-func (wc *WhistClient) GetSubscriptionIDs() []string {
+func (wc *SubscriptionClient) GetSubscriptionIDs() []string {
 	return wc.SubscriptionIDs
 }
 
-func (wc *WhistClient) SetSubscriptionsIDs(ids []string) {
+func (wc *SubscriptionClient) SetSubscriptionsIDs(ids []string) {
 	wc.SubscriptionIDs = ids
 }
 
-func (wc *WhistClient) GetParams() HasuraParams {
+func (wc *SubscriptionClient) GetParams() HasuraParams {
 	return wc.Params
 }
 
-func (wc *WhistClient) SetParams(params HasuraParams) {
+func (wc *SubscriptionClient) SetParams(params HasuraParams) {
 	wc.Params = params
 }
 
 // Subscribe creates the subscriptions according to the received queries and conditions.
 // It passes results through the received channel if the received `conditionFn` is true.
-func (wc *WhistClient) Subscribe(query GraphQLQuery, variables map[string]interface{}, result SubscriptionEvent,
+func (wc *SubscriptionClient) Subscribe(query GraphQLQuery, variables map[string]interface{}, result SubscriptionEvent,
 	conditionFn handlerfn, subscriptionEvents chan SubscriptionEvent) (string, error) {
 
 	id, err := wc.Hasura.Subscribe(query, variables, func(data *json.RawMessage, err error) error {
@@ -148,7 +148,7 @@ func (wc *WhistClient) Subscribe(query GraphQLQuery, variables map[string]interf
 
 // Run is responsible for starting the subscription client and adding it
 // to the routine tracker.
-func (wc *WhistClient) Run(goroutineTracker *sync.WaitGroup) {
+func (wc *SubscriptionClient) Run(goroutineTracker *sync.WaitGroup) {
 	// Run the client on a goroutine to make sure it closes properly when we are done
 	goroutineTracker.Add(1)
 	go func() {
@@ -159,7 +159,7 @@ func (wc *WhistClient) Run(goroutineTracker *sync.WaitGroup) {
 
 // Close manages all the logic to unsubscribe to every subscription and close the connection
 // to the Hasura server correctly.
-func (wc *WhistClient) Close(subscriptionIDs []string) error {
+func (wc *SubscriptionClient) Close(subscriptionIDs []string) error {
 	// We have to ensure we unsubscribe to every subscription
 	// before closing the client, otherwise it will result in a deadlock!
 	logger.Infof("Closing Hasura subscriptions...")

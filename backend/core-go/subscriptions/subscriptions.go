@@ -31,7 +31,7 @@ func InstanceStatusHandler(event SubscriptionEvent, variables map[string]interfa
 	name := string(variables["instance_name"].(graphql.String))
 	status := string(variables["status"].(graphql.String))
 
-	return (instance.InstanceName == name) && (instance.Status == status)
+	return (instance.Name == name) && (instance.Status == status)
 }
 
 // MandelboxAllocatedHandler handles events from the hasura subscription which
@@ -68,16 +68,15 @@ func MandelboxStatusHandler(event SubscriptionEvent, variables map[string]interf
 	}
 
 	status := string(variables["status"].(graphql.String))
-
 	return mandelbox.Status == status
 }
 
 // SetupHostSubscriptions creates a slice of HasuraSubscriptions to start the client. This
 // function is specific for the subscriptions used on the host service.
-func SetupHostSubscriptions(instanceName string, whistClient WhistHasuraClient) {
+func SetupHostSubscriptions(instanceName string, whistClient WhistSubscriptionClient) {
 	hostSubscriptions := []HasuraSubscription{
 		{
-			Query: InstanceStatusQuery,
+			Query: QueryInstanceByNameWithStatus,
 			Variables: map[string]interface{}{
 				"instance_name": graphql.String(instanceName),
 				"status":        graphql.String("DRAINING"),
@@ -86,7 +85,7 @@ func SetupHostSubscriptions(instanceName string, whistClient WhistHasuraClient) 
 			Handler: InstanceStatusHandler,
 		},
 		{
-			Query: MandelboxAllocatedQuery,
+			Query: QueryMandelboxesByInstanceName,
 			Variables: map[string]interface{}{
 				"instance_name": graphql.String(instanceName),
 				"status":        graphql.String("ALLOCATED"),
@@ -100,23 +99,23 @@ func SetupHostSubscriptions(instanceName string, whistClient WhistHasuraClient) 
 
 // SetupScalingSubscriptions creates a slice of HasuraSubscriptions to start the client. This
 // function is specific for the subscriptions used on the scaling service.
-func SetupScalingSubscriptions(whistClient WhistHasuraClient) {
+func SetupScalingSubscriptions(whistClient WhistSubscriptionClient) {
 	scalingSubscriptions := []HasuraSubscription{
 		{
-			Query: MandelboxStatusQuery,
+			Query: QueryInstancesByStatus,
+			Variables: map[string]interface{}{
+				"status": graphql.String("DRAINING"),
+			},
+			Result:  InstanceEvent{[]Instance{}},
+			Handler: InstanceStatusHandler,
+		},
+		{
+			Query: QueryInstancesByStatus,
 			Variables: map[string]interface{}{
 				"status": graphql.String("ALLOCATED"),
 			},
 			Result:  MandelboxEvent{},
-			Handler: MandelboxAllocatedHandler,
-		},
-		{
-			Query: MandelboxStatusQuery,
-			Variables: map[string]interface{}{
-				"status": graphql.String("EXITED"),
-			},
-			Result:  MandelboxEvent{},
-			Handler: MandelboxAllocatedHandler,
+			Handler: MandelboxStatusHandler,
 		},
 	}
 	whistClient.SetSubscriptions(scalingSubscriptions)
@@ -125,9 +124,9 @@ func SetupScalingSubscriptions(whistClient WhistHasuraClient) {
 // Start is the main function in the subscriptions package. It initializes a client, sets up the received subscriptions,
 // and starts a goroutine for the client. It also has a goroutine to close the client and subscriptions when the global
 // context gets cancelled.
-func Start(whistClient WhistHasuraClient, globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan SubscriptionEvent) error {
+func Start(whistClient WhistSubscriptionClient, globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan SubscriptionEvent) error {
 	if !enabled {
-		logger.Infof("Running in app environment %s so not enabling Hasura code.", metadata.GetAppEnvironment())
+		logger.Infof("Running in app environment %s so not enabling Subscription client code.", metadata.GetAppEnvironment())
 		return nil
 	}
 
