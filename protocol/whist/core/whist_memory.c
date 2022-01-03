@@ -171,8 +171,7 @@ void free_dynamic_buffer(DynamicBuffer* db) {
 #define MAX_FREES 1024
 
 // The internal block allocator struct,
-// which is what a BlockAllocator* actually points to
-typedef struct {
+struct BlockAllocator {
     size_t block_size;
 
     int num_allocated_blocks;
@@ -180,7 +179,7 @@ typedef struct {
     // Free blocks
     int num_free_blocks;
     char* free_blocks[MAX_FREES];
-} InternalBlockAllocator;
+};
 
 /*
 ============================
@@ -202,28 +201,26 @@ BlockAllocator* create_block_allocator(size_t block_size) {
     */
 
     // Create a block allocator
-    InternalBlockAllocator* blk_allocator = safe_malloc(sizeof(InternalBlockAllocator));
+    BlockAllocator* blk_allocator = safe_malloc(sizeof(BlockAllocator));
 
     // Set block allocator values
     blk_allocator->num_allocated_blocks = 0;
     blk_allocator->block_size = block_size;
     blk_allocator->num_free_blocks = 0;
 
-    return (BlockAllocator*)blk_allocator;
+    return blk_allocator;
 }
 
-void* allocate_block(BlockAllocator* blk_allocator_in) {
+void* allocate_block(BlockAllocator* blk_allocator) {
     /*
         Allocates a block using the given block allocator
 
         Arguments:
-            blk_allocator_in (BlockAllocator*): The block allocator to use for allocating the block
+            blk_allocator (BlockAllocator*): The block allocator to use for allocating the block
 
         Returns:
             (void*): The new block
     */
-
-    InternalBlockAllocator* blk_allocator = (InternalBlockAllocator*)blk_allocator_in;
 
     // If a free block already exists, just use that one instead
     if (blk_allocator->num_free_blocks > 0) {
@@ -239,16 +236,14 @@ void* allocate_block(BlockAllocator* blk_allocator_in) {
     return block;
 }
 
-void free_block(BlockAllocator* blk_allocator_in, void* block) {
+void free_block(BlockAllocator* blk_allocator, void* block) {
     /*
         Frees a block allocated by allocate_block
 
         Arguments:
-            blk_allocator_in (BlockAllocator*): The block allocator that the block was allocated
-                from block (void*): The block to free
+            blk_allocator (BlockAllocator*): The block allocator that the block was allocated from
+            block (void*): The block to free
     */
-
-    InternalBlockAllocator* blk_allocator = (InternalBlockAllocator*)blk_allocator_in;
 
     // If there's room in the free block list, just store the free block there instead
     if (blk_allocator->num_free_blocks < MAX_FREES) {
@@ -259,6 +254,28 @@ void free_block(BlockAllocator* blk_allocator_in, void* block) {
         deallocate_region(block);
         blk_allocator->num_allocated_blocks--;
     }
+}
+
+void destroy_block_allocator(BlockAllocator* blk_allocator) {
+    /*
+        Destroy a block allocator.
+        All blocks allocated from it must have been freed before this is called!
+
+        Arguments:
+            blk_allocator (BlockAllocator*): The block allocator t destroy.
+    */
+    if (blk_allocator->num_free_blocks != blk_allocator->num_allocated_blocks) {
+        LOG_FATAL(
+            "Freeing block allocator with blocks still in use: "
+            "%d blocks allocated, %d blocks free.",
+            blk_allocator->num_allocated_blocks, blk_allocator->num_free_blocks);
+        return;
+    }
+    for (int i = blk_allocator->num_free_blocks - 1; i >= 0; i--) {
+        deallocate_region(blk_allocator->free_blocks[i]);
+        blk_allocator->free_blocks[i] = NULL;
+    }
+    free(blk_allocator);
 }
 
 // ------------------------------------
