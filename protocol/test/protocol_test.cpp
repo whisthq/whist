@@ -263,6 +263,8 @@ TEST(ProtocolTest, ResetRingBufferFrame) {
     reset_frame(rb, get_frame_at_id(rb, pkt1.id));
 
     EXPECT_EQ(receive_packet(rb, &pkt1), 0);
+
+    destroy_ring_buffer(rb);
 }
 
 /*
@@ -905,6 +907,8 @@ TEST(ProtocolTest, FECTest) {
     EXPECT_EQ(decoded_size, PACKET1_SIZE + PACKET2_SIZE);
     EXPECT_EQ(memcmp(decoded_buffer, packet1, PACKET1_SIZE), 0);
     EXPECT_EQ(memcmp(decoded_buffer + PACKET1_SIZE, packet2, PACKET2_SIZE), 0);
+
+    destroy_fec_decoder(fec_decoder);
 }
 
 /*
