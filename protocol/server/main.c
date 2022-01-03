@@ -21,6 +21,7 @@ Includes
 #include "parse_args.h"
 #include "handle_client_message.h"
 #include "server_statistic.h"
+#include "notifications.h"
 
 /*
 ============================
