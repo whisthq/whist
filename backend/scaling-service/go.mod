@@ -8,7 +8,6 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.11.2
 	github.com/aws/aws-sdk-go-v2/config v1.11.0
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.26.0
-	github.com/hasura/go-graphql-client v0.6.0
 	github.com/whisthq/whist/backend/core-go v0.0.0-00010101000000-000000000000
 )
 
@@ -32,6 +31,7 @@ require (
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/websocket v1.4.1 // indirect
+	github.com/hasura/go-graphql-client v0.6.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/klauspost/compress v1.10.3 // indirect
 	github.com/logzio/logzio-go v1.0.3 // indirect
