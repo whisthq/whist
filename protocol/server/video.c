@@ -56,6 +56,8 @@ Includes
 
 #define BITS_IN_BYTE 8.0
 
+#define MAX_VBV_FRAMES (((VBV_BUF_SIZE_IN_MS * FPS) / 1000) * 2) // The "* 2" factor is just for safety
+
 /*
 ============================
 Private Functions
@@ -89,6 +91,51 @@ int32_t multithreaded_destroy_encoder(void* opaque) {
     VideoEncoder* encoder = (VideoEncoder*)opaque;
     destroy_video_encoder(encoder);
     return 0;
+}
+
+typedef struct {
+    uint64_t timestamp_ms;
+    int frame_size_in_bits;
+} FrameVbvInfo;
+
+typedef struct {
+    FrameVbvInfo frame_vbv_info[MAX_VBV_FRAMES];
+    int read_idx;
+    int write_idx;
+    int total_bits;
+} VbvInfo;
+
+static VbvInfo vbv_info = {0};
+
+void add_to_vbv(FrameVbvInfo* frame, int bitrate) {
+    vbv_info.frame_vbv_info[vbv_info.write_idx] = *frame;
+    vbv_info.total_bits += frame->frame_size_in_bits;
+    vbv_info.write_idx = (vbv_info.write_idx + 1) % MAX_VBV_FRAMES;
+    if (vbv_info.write_idx == vbv_info.read_idx) {
+        // This should never happen. If it happens then it means the some logic in the code is wrong
+        LOG_ERROR("VBV structure overrun. This should never happen. Please look into the code");
+    }
+}
+
+bool check_vbv_overflow(int bitrate) {
+    uint64_t current_time = current_time_us() / 1000;
+    int vbv_size_in_bits = (bitrate * VBV_BUF_SIZE_IN_MS) / MS_IN_SECOND;
+
+    // Remove the frames that are older than the VBV size
+    while (vbv_info.read_idx != vbv_info.write_idx &&
+           current_time - vbv_info.frame_vbv_info[vbv_info.read_idx].timestamp_ms >=
+               VBV_BUF_SIZE_IN_MS) {
+        uint64_t tmp = vbv_info.frame_vbv_info[vbv_info.read_idx].timestamp_ms;
+        vbv_info.total_bits -= vbv_info.frame_vbv_info[vbv_info.read_idx].frame_size_in_bits;
+        vbv_info.read_idx = (vbv_info.read_idx + 1) % MAX_VBV_FRAMES;
+    }
+    if (vbv_info.total_bits <= vbv_size_in_bits) {
+        return false;  // No overflow. Everything is fine.
+    } else {
+        LOG_DEBUG("VBV overflowed. Average Bitrate = %d, Requested Bitrate = %d",
+                  (vbv_info.total_bits * MS_IN_SECOND) / VBV_BUF_SIZE_IN_MS, bitrate);
+        return true;  // VBV overflowed. Take appropriate action.
+    }
 }
 
 /**
@@ -458,6 +505,13 @@ int32_t multithreaded_send_video(void* opaque) {
             continue;
         }
 
+        // If VBV buffer overflows then sleep until it clears. Indirectly this means we will be
+        // dropping frames whenever VBV buffer overflows.
+        if (check_vbv_overflow(state->max_bitrate)) {
+            whist_sleep(1);
+            continue;
+        }
+
         static clock send_video_loop_timer;
         start_timer(&send_video_loop_timer);
         if (state->client_width < 0 || state->client_height < 0 || state->client_dpi < 0) {
@@ -564,6 +618,12 @@ int32_t multithreaded_send_video(void* opaque) {
 
         // This outer loop potentially runs 10s of thousands of times per second, every ~1usec
 
+        // If it's a start-of-stream, or an id beyond the last sent iframe has failed,
+        // Only then we send a new iframe.
+        if (state->last_failed_id != -1 && state->last_failed_id <= state->last_iframe_id) {
+            state->wants_iframe = false;
+        }
+
         // Send a frame if we have a real frame to send, or we need to keep up with min_fps
         if (state->client.is_active && (accumulated_frames > 0 || state->wants_iframe ||
                                         get_timer(last_frame_capture) > 1.0 / min_fps)) {
@@ -603,13 +663,8 @@ int32_t multithreaded_send_video(void* opaque) {
                                      get_timer(statistics_timer) * MS_IN_SECOND);
 
                 if (state->wants_iframe) {
-                    static int last_iframe_id = -1;
-                    // If it's a start-of-stream, or an id beyond the last sent iframe has failed,
-                    // Then we send a new iframe
-                    if (state->last_failed_id == -1 || state->last_failed_id > last_iframe_id) {
-                        video_encoder_set_iframe(encoder);
-                        last_iframe_id = id;
-                    }
+                    video_encoder_set_iframe(encoder);
+                    state->last_iframe_id = id;
                     state->wants_iframe = false;
                 }
 
@@ -636,6 +691,10 @@ int32_t multithreaded_send_video(void* opaque) {
                                   encoder->encoded_frame_size);
                         continue;
                     } else {
+                        FrameVbvInfo frame_vbv_info;
+                        frame_vbv_info.frame_size_in_bits = encoder->encoded_frame_size * 8;
+                        frame_vbv_info.timestamp_ms = server_timestamp / 1000;
+                        add_to_vbv(&frame_vbv_info, state->max_bitrate);
                         send_populated_frames(state, &statistics_timer, &server_frame_timer, device,
                                               encoder, id, client_input_timestamp,
                                               server_timestamp);

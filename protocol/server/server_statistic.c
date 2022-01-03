@@ -40,5 +40,9 @@ void whist_init_server_statistics() {
         (StatisticInfo){"VIDEO_FRAME_PROCESSING_TIME", true, false, false};
     server_statistic_info[VIDEO_GET_CURSOR_TIME] =
         (StatisticInfo){"GET_CURSOR_TIME", true, false, false};
+    server_statistic_info[VIDEO_INTER_FRAME_QP] =
+        (StatisticInfo){"VIDEO_INTER_FRAME_QP", true, false, false};
+    server_statistic_info[VIDEO_INTRA_FRAME_QP] =
+        (StatisticInfo){"VIDEO_INTRA_FRAME_QP", true, false, false};
     server_statistic_info[VIDEO_SEND_TIME] = (StatisticInfo){"VIDEO_SEND_TIME", true, false, false};
 }
