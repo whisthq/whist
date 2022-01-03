@@ -4,12 +4,12 @@
 /**
  * Copyright 2021 Whist Technologies, Inc., dba Whist
  * @file notifications.h
- * @brief Contains utilities to capture and send notifications for native display in the client.
+ * @brief Contains utilities to receive notifications from the server and display them.
 ============================
 Usage
 ============================
 
-write some summary thing here
+TODO(kevin) write some summary thing here
 
 */
 
@@ -19,9 +19,6 @@ Includes
 ============================
 */
 
-#include <stdio.h>
-
-#include <whist/logging/logging.h>
 #include <whist/network/network.h>
 
 /*
