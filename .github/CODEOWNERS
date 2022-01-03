@@ -21,7 +21,7 @@
 /backend/webserver/              @djsavvy @owenniles @mauaraujo
 /host-setup/                     @rpadaki @djsavvy @philippemnoel
 /mandelboxes/                    @djsavvy @rpadaki @philippemnoel
-/protocol/                       @npip99 @rpadaki @sardination
+/protocol/                       @jkarthic @npip99 @rpadaki @sardination
 /frontend/website/               @mingy98 @rpadaki @philippemnoel
 
 # In each subsection folders are ordered first by depth, then alphabetically.
