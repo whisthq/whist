@@ -292,7 +292,7 @@ if(NOT STATIC_SDL2)
     message(FATAL_ERROR "Library STATIC_SDL2 was not found! ${CMAKE_BINARY_DIR}/lib/${arch}/SDL2/${CMAKE_SYSTEM_NAME}")
 endif()
 
-find_library(STATIC_BEEEP_WRAPPER NAMES beep-wrapper PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/beeep-wrapper/${CMAKE_SYSTEM_NAME}"
+find_library(STATIC_BEEEP_WRAPPER NAMES beeep-wrapper.a PATHS "${CMAKE_BINARY_DIR}/lib/${arch}/beeep-wrapper/${CMAKE_SYSTEM_NAME}"
         NO_DEFAULT_PATH
         NO_CMAKE_ENVIRONMENT_PATH
         NO_CMAKE_PATH
