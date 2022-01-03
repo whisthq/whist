@@ -592,9 +592,5 @@ int main(int argc, char* argv[]) {
     whist_error_monitor_shutdown();
     destroy_clients(&server_state.client);
 
-    // Clean up d-bus connection
-    // dbus_close(dbus_context);
-    // event_base_free(eb);
-
     return 0;
 }
