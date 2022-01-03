@@ -141,7 +141,7 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 						// err := s.ScaleUpIfNecessary(2, scalingCtx, scheduledEvent, "ami-0ef406ddccd08da93")
 						// logger.Error(err)
 
-						err := s.ScaleDownIfNecessary(scalingCtx, s.Host, scheduledEvent)
+						err := s.ScaleDownIfNecessary(scalingCtx, scheduledEvent)
 						if err != nil {
 							logger.Errorf("Error running scale down job on region %v. Err: %v", region, err)
 						}

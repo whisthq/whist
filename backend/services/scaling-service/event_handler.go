@@ -34,13 +34,12 @@ func main() {
 	}
 
 	// Start database subscriptions
-	whistClient := &subscriptions.WhistClient{}
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
 	// StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents)
 
 	// Start scheduler and setup scheduler event chan
 	scheduledEvents := make(chan sa.ScalingEvent, 100)
-	StartSchedulerEvents(globalCtx, goroutineTracker, scheduledEvents)=
+	StartSchedulerEvents(globalCtx, goroutineTracker, scheduledEvents)
 
 	// algorithmByRegionMap holds all of the scaling algorithms mapped by region.
 	// Use a sync map since we only write the keys once but will be reading multiple
@@ -152,7 +151,6 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 				case *sa.DefaultScalingAlgorithm:
 					algorithm.InstanceEventChan <- scalingEvent
 				}
-				scalingAlgorithm := algorithm.(*sa.DefaultScalingAlgorithm)
 
 			case *subscriptions.ImageEvent:
 				var scalingEvent sa.ScalingEvent
