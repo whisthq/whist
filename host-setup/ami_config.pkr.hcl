@@ -112,7 +112,7 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
 
   # We manually specify an availability zone, since the Packer+AWS autoassign feature is very weak. Eventually,
   # we will want to manually loop over all AZes to make this more robust to insufficient capacity in a specific AZ.   
-  availability_zone = "us-east-1a"
+  availability_zone = "us-east-1b"
 
   # spot_instance_types is a list of acceptable instance types to run your build on. We will request a spot
   # instance using the max price of spot_price and the allocation strategy of "lowest price". Your instance
