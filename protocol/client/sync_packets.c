@@ -20,6 +20,7 @@ Includes
 #include <whist/network/network.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/logging/logging.h>
+
 #include "handle_server_message.h"
 #include "network.h"
 #include "audio.h"
@@ -27,6 +28,7 @@ Includes
 #include "sync_packets.h"
 #include "client_utils.h"
 #include "client_statistic.h"
+#include "notifications.h"
 
 // Updater variables
 extern SocketContext packet_udp_context;
