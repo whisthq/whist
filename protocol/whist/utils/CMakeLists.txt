@@ -13,6 +13,7 @@ add_library(whistUtils STATIC
         color.c
         threads.c
         fec.c
+        whist_notification.h
         )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

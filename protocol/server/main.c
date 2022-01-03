@@ -21,6 +21,7 @@ Includes
 #include "parse_args.h"
 #include "handle_client_message.h"
 #include "server_statistic.h"
+#include "notifications.h"
 
 /*
 ============================
@@ -404,6 +405,13 @@ int main(int argc, char* argv[]) {
     LOG_INFO("Receiving packets...");
 
     init_window_info_getter();
+
+#ifdef __linux__
+    if (init_notif_watcher(&server_state.client) < 0) {
+        LOG_FATAL("Notification watcher failed to initialize");
+    }
+    LOG_INFO("Notification watcher successfully started");
+#endif
 
     clock ack_timer;
     start_timer(&ack_timer);
