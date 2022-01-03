@@ -818,7 +818,7 @@ static int atomic_test_thread(void* arg) {
     int val = 0;
     for (int i = 0; i < 10000; i++) {
         if (i == 5000) val = 0;
-        val = val * 7 + 1 + thread;
+        val = (uint32_t)val * 7 + 1 + thread;
         atomic_fetch_xor(&atomic_test_xor, val);
     }
 
