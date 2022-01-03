@@ -66,6 +66,7 @@ const char* fatal_error_tag = "FATAL_ERROR";
 static WhistSemaphore logger_semaphore;
 static WhistMutex logger_queue_mutex;
 static WhistMutex logger_cache_mutex;
+static WhistMutex crash_handler_mutex;
 
 // logger queue
 typedef struct LoggerQueueItem {
@@ -118,9 +119,14 @@ void destroy_logger() {
     whist_wait_thread(mprintf_thread, NULL);
     mprintf_thread = NULL;
 
+    // Once these logger structures are destroyed it is no longer safe to crash (ha).
+    // Hopefully Sentry will be able to pick this up anyway.
+
     whist_destroy_semaphore(logger_semaphore);
     whist_destroy_mutex(logger_queue_mutex);
     whist_destroy_mutex(logger_cache_mutex);
+
+    whist_destroy_mutex(crash_handler_mutex);
 }
 
 int multithreaded_printf(void* opaque) {
@@ -374,8 +380,6 @@ void mprintf(const char* tag, const char* fmt_str, va_list args) {
 
     whist_unlock_mutex(logger_queue_mutex);
 }
-
-WhistMutex crash_handler_mutex;
 
 void print_stacktrace() {
     /*
