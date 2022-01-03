@@ -267,12 +267,11 @@ static DBusHandlerResult notification_handler(DBusConnection *connection, DBusMe
     strcpy(notif.message, n_message);
     LOG_INFO("WhistNotification consists of: title=%s, message=%s\n", notif.title, notif.message);
 
-    // TODO(kmeng01) enable sending once other processes are verified to work.
-    // if (server_state_client->is_active && send_packet(&server_state_client->udp_context, PACKET_NOTIFICATION, &notif, sizeof(WhistNotification), 0) >= 0) {
-    //     LOG_INFO("Notification packet sent");
-    // } else{
-    //     LOG_INFO("Notification packet send failed");
-    // }
+    if (server_state_client->is_active && send_packet(&server_state_client->udp_context, PACKET_NOTIFICATION, &notif, sizeof(WhistNotification), 0) >= 0) {
+        LOG_INFO("Notification packet sent");
+    } else{
+        LOG_INFO("Notification packet send failed");
+    }
 
     return DBUS_HANDLER_RESULT_HANDLED;
 }
