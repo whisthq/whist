@@ -239,4 +239,31 @@ if has_updated "$FFMPEG_LIB"; then
 fi
 
 ###############################
+# Download beeep libraries
+###############################
+
+# Select beeep-wrapper lib dir and targz name based on OS and hardware architecture (macOS)
+BEEEP_LIB_DIR="$DEST_DIR/lib/64/beeep-wrapper"
+BEEEP_HEADER_DIR="$DEST_DIR/include/beeep-wrapper"
+if [[ "$OS" =~ "Windows" ]]; then
+  BEEEP_LIB="whist-windows-beeep-static-lib.tar.gz"
+elif [[ "$OS" == "Darwin" ]]; then
+  if [[ "$MACOS_ARCH" == "arm64" ]]; then
+    BEEEP_LIB="whist-macos-arm64-beeep-static-lib.tar.gz"
+  else
+    BEEEP_LIB="whist-macos-x64-beeep-static-lib.tar.gz"
+  fi
+elif [[ "$OS" == "Linux" ]]; then
+  BEEEP_LIB="whist-linux-beeep-static-lib.tar.gz"
+fi
+
+# Check if BEEEP_LIB has updated, and if so, create the dir and copy the libs into the source dir
+if has_updated "$BEEEP_LIB"; then
+  rm -rf "$BEEEP_LIB_DIR" "$BEEEP_HEADER_DIR"
+  mkdir -p "$BEEEP_LIB_DIR" "$BEEEP_HEADER_DIR"
+  aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$BEEEP_LIB" - | tar -xz -C "$BEEEP_LIB_DIR"
+  mv "$BEEEP_LIB_DIR"/*.h "$BEEEP_HEADER_DIR"
+fi
+
+###############################
 echo "-- Downloading Whist Protocol binaries from AWS S3 - Completed"
