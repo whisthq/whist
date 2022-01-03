@@ -412,6 +412,8 @@ int main(int argc, char* argv[]) {
         whist_create_thread(multithreaded_send_video, "multithreaded_send_video", &server_state);
     WhistThread send_audio_thread =
         whist_create_thread(multithreaded_send_audio, "multithreaded_send_audio", &server_state);
+    WhistThread notifs_thread = whist_create_thread(
+        listen_and_process_notifications, "listen_and_process_notifications", &server_state);
 
 #ifdef __linux__
     struct event_base* notifs_evbase = event_base_new();
@@ -577,8 +579,8 @@ int main(int argc, char* argv[]) {
     destroy_clients(&server_state.client);
 
     // Clean up d-bus connection
-    dbus_close(dbus_context);
-    event_base_free(eb);
+    // dbus_close(dbus_context);
+    // event_base_free(eb);
 
     return 0;
 }
