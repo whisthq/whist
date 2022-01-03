@@ -132,7 +132,12 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   iam_instance_profile = "PackerAMIBuilder" # This is the IAM role we configured for Packer in AWS
   shutdown_behavior    = "terminate"        # Automatically terminate instances on shutdown in case Packer exits ungracefully. Possible values are stop and terminate. Defaults to stop.
 
-  vpc_id = "vpc-34aded4e" # The VPC where the Packer Builer will run. This VPC needs to have subnet(s) configured as per the `subnet_filter` below
+  # The VPC where the Packer Builer will run. This VPC needs to have subnet(s) configured as per the `subnet_filter` below
+  vpc_id = "vpc-34aded4e"
+
+  # We manually specify an availability zone, since the Packer+AWS autoassign feature is very weak. Eventually,
+  # we will want to manually loop over all AZes to make this more robust to insufficient capacity in a specific AZ.   
+  availability_zone = "us-east-1a"
 
   # This filter ensures Packer will pick a subnet which was configured for Packer by looking for the tag
   # Purpose: packer. If no subnet with this tag is found in `region`, Packer will fail.
@@ -141,7 +146,7 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
       "tag:Purpose" : "packer"
     }
     most_free = true # The Subnet with the most free IPv4 addresses will be used if multiple Subnets matches the filter.
-    random    = true # A random Subnet will be used if multiple Subnets matches the filter. most_free have precendence over this.
+    random    = true # A random Subnet will be used if multiple Subnets matches the filter. most_free has precendence over this.
   }
 
   /* Block Device configuration */
@@ -155,8 +160,9 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
 
   /* Comunicator configuration */
 
-  communicator = "ssh"
-  ssh_username = "ubuntu"
+  communicator  = "ssh"
+  ssh_interface = "session_manager"
+  ssh_username  = "ubuntu"
 
   /* Tags configuration */
 
