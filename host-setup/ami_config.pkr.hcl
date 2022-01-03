@@ -110,10 +110,6 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   associate_public_ip_address = true # Make new instances with this AMI get assigned a public IP address
   ebs_optimized               = true # Optimize for EBS volumes
 
-  # We manually specify an availability zone, since the Packer+AWS autoassign feature is very weak. Eventually,
-  # we will want to manually loop over all AZes to make this more robust to insufficient capacity in a specific AZ.   
-  availability_zone = "us-east-1b"
-
   # spot_instance_types is a list of acceptable instance types to run your build on. We will request a spot
   # instance using the max price of spot_price and the allocation strategy of "lowest price". Your instance
   # will be launched on an instance type of the lowest available price that you have in your list. This is 
@@ -137,7 +133,7 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
 
   # We manually specify an availability zone, since the Packer+AWS autoassign feature is very weak. Eventually,
   # we will want to manually loop over all AZes to make this more robust to insufficient capacity in a specific AZ.   
-  availability_zone = "us-east-1a"
+  availability_zone = "us-east-1b"
 
   # This filter ensures Packer will pick a subnet which was configured for Packer by looking for the tag
   # Purpose: packer. If no subnet with this tag is found in `region`, Packer will fail.
