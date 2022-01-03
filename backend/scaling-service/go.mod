@@ -8,7 +8,6 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.11.2
 	github.com/aws/aws-sdk-go-v2/config v1.11.0
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.26.0
-	github.com/go-co-op/gocron v1.11.0
 	github.com/hasura/go-graphql-client v0.6.0
 	github.com/whisthq/whist/backend/core-go v0.0.0-00010101000000-000000000000
 )
@@ -37,15 +36,15 @@ require (
 	github.com/klauspost/compress v1.10.3 // indirect
 	github.com/logzio/logzio-go v1.0.3 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
-	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/shirou/gopsutil/v3 v3.21.6 // indirect
+	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/net v0.0.0-20211008194852-3b03d305991f // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
 )

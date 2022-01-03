@@ -6,9 +6,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-	"time"
 
-	"github.com/go-co-op/gocron"
 	"github.com/whisthq/whist/backend/core-go/subscriptions"
 	logger "github.com/whisthq/whist/backend/core-go/whistlogger"
 	sa "github.com/whisthq/whist/backend/scaling-service/scaling_algorithms/default" // Import as sa, short for scaling_algorithms
@@ -86,17 +84,6 @@ func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *syn
 }
 
 func StartSchedulerEvents(globalCtx context.Context, goroutineTracker *sync.WaitGroup, scheduledEvents chan sa.ScalingEvent) {
-	s := gocron.NewScheduler(time.UTC)
-
-	// Schedule scale down routine every 10 minutes
-	s.Every(10).Minutes().Do(func() {
-		// Send to scheduling channel
-		scheduledEvents <- sa.ScalingEvent{
-			Type: "SCHEDULED_SCALE_DOWN",
-		}
-	})
-
-	s.StartAsync()
 }
 
 func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent sa.ScalingEvent) sa.ScalingAlgorithm {
