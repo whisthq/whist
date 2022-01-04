@@ -93,51 +93,6 @@ int32_t multithreaded_destroy_encoder(void* opaque) {
     return 0;
 }
 
-typedef struct {
-    uint64_t timestamp_ms;
-    int frame_size_in_bits;
-} FrameVbvInfo;
-
-typedef struct {
-    FrameVbvInfo frame_vbv_info[MAX_VBV_FRAMES];
-    int read_idx;
-    int write_idx;
-    int total_bits;
-} VbvInfo;
-
-static VbvInfo vbv_info = {0};
-
-void add_to_vbv(FrameVbvInfo* frame, int bitrate) {
-    vbv_info.frame_vbv_info[vbv_info.write_idx] = *frame;
-    vbv_info.total_bits += frame->frame_size_in_bits;
-    vbv_info.write_idx = (vbv_info.write_idx + 1) % MAX_VBV_FRAMES;
-    if (vbv_info.write_idx == vbv_info.read_idx) {
-        // This should never happen. If it happens then it means the some logic in the code is wrong
-        LOG_ERROR("VBV structure overrun. This should never happen. Please look into the code");
-    }
-}
-
-bool check_vbv_overflow(int bitrate) {
-    uint64_t current_time = current_time_us() / 1000;
-    int vbv_size_in_bits = (bitrate * VBV_BUF_SIZE_IN_MS) / MS_IN_SECOND;
-
-    // Remove the frames that are older than the VBV size
-    while (vbv_info.read_idx != vbv_info.write_idx &&
-           current_time - vbv_info.frame_vbv_info[vbv_info.read_idx].timestamp_ms >=
-               VBV_BUF_SIZE_IN_MS) {
-        uint64_t tmp = vbv_info.frame_vbv_info[vbv_info.read_idx].timestamp_ms;
-        vbv_info.total_bits -= vbv_info.frame_vbv_info[vbv_info.read_idx].frame_size_in_bits;
-        vbv_info.read_idx = (vbv_info.read_idx + 1) % MAX_VBV_FRAMES;
-    }
-    if (vbv_info.total_bits <= vbv_size_in_bits) {
-        return false;  // No overflow. Everything is fine.
-    } else {
-        LOG_DEBUG("VBV overflowed. Average Bitrate = %d, Requested Bitrate = %d",
-                  (vbv_info.total_bits * MS_IN_SECOND) / VBV_BUF_SIZE_IN_MS, bitrate);
-        return true;  // VBV overflowed. Take appropriate action.
-    }
-}
-
 /**
  * @brief                   Creates a new CaptureDevice
  *
@@ -494,20 +449,24 @@ int32_t multithreaded_send_video(void* opaque) {
 
     add_thread_to_client_active_dependents();
 
+    NetworkThrottleContext* network_throttler = network_throttler_create();
+    network_throttler_set_burst_bitrate(network_throttler, state->max_bitrate);
+    int last_frame_size = 0;
+
     int consecutive_identical_frames = 0;
 
     bool assuming_client_active = false;
     while (!state->exiting) {
+        // If we sent a frame, throttle the bytes of the last frame,
+        // before doing anything else
+        if (last_frame_size > 0) {
+            network_throttler_wait_byte_allocation(network_throttler, last_frame_size);
+            last_frame_size = 0;
+        }
+
         update_client_active_status(&state->client, &assuming_client_active);
 
         if (!assuming_client_active) {
-            whist_sleep(1);
-            continue;
-        }
-
-        // If VBV buffer overflows then sleep until it clears. Indirectly this means we will be
-        // dropping frames whenever VBV buffer overflows.
-        if (check_vbv_overflow(state->max_bitrate)) {
             whist_sleep(1);
             continue;
         }
@@ -553,6 +512,8 @@ int32_t multithreaded_send_video(void* opaque) {
         if (state->update_encoder) {
             start_timer(&statistics_timer);
             encoder = do_update_encoder(state, encoder, device);
+            // Update throttler bitrate too
+            network_throttler_set_burst_bitrate(network_throttler, state->max_bitrate);
             log_double_statistic(VIDEO_ENCODER_UPDATE_TIME,
                                  get_timer(statistics_timer) * MS_IN_SECOND);
         }
@@ -691,13 +652,11 @@ int32_t multithreaded_send_video(void* opaque) {
                                   encoder->encoded_frame_size);
                         continue;
                     } else {
-                        FrameVbvInfo frame_vbv_info;
-                        frame_vbv_info.frame_size_in_bits = encoder->encoded_frame_size * 8;
-                        frame_vbv_info.timestamp_ms = server_timestamp / 1000;
-                        add_to_vbv(&frame_vbv_info, state->max_bitrate);
                         send_populated_frames(state, &statistics_timer, &server_frame_timer, device,
                                               encoder, id, client_input_timestamp,
                                               server_timestamp);
+                        // Remember the last frame size, so that we can throttle the bitrate
+                        last_frame_size = encoder->encoded_frame_size;
 
                         log_double_statistic(VIDEO_FPS_SENT, 1.0);
                         log_double_statistic(VIDEO_SEND_TIME,
@@ -721,6 +680,7 @@ int32_t multithreaded_send_video(void* opaque) {
         destroy_capture_device(device);
         device = NULL;
     }
+    network_throttler_destroy(network_throttler);
 
     return 0;
 }
