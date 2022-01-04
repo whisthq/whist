@@ -30,18 +30,20 @@ EOF
 
 # Parse arguments (derived from https://stackoverflow.com/a/7948533/2378475)
 # I'd prefer not to have the short arguments at all, but getopt only uses short arguments
-TEMP=`getopt -o h --long help,usage,cmakebuildtype:,nodownloadbinaries,cmakesetCI -n 'build_protocol_targets.sh' -- "$@"`
+TEMP=`getopt -o h --long help,usage,cmakebuildtype:,nodownloadbinaries,cmakesetCI,sanitize: -n 'build_protocol_targets.sh' -- "$@"`
 eval set -- "$TEMP"
 
 CMAKE_BUILD_TYPE=Debug
 CMAKE_DOWNLOAD_BINARIES=ON
 CMAKE_SET_CI=FALSE
+CMAKE_SANITIZE=OFF
 while true; do
   case "$1" in
     -h | --help | --usage ) usage ;;
     --cmakebuildtype ) CMAKE_BUILD_TYPE="$2"; shift 2 ;;
     --nodownloadbinaries ) CMAKE_DOWNLOAD_BINARIES=OFF; shift ;;
     --cmakesetCI ) CMAKE_SET_CI=TRUE; shift ;;
+    --sanitize ) CMAKE_SANITIZE="$2"; shift 2 ;;
     -- ) shift; break ;;
     * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit -1 ;;
   esac
@@ -96,6 +98,7 @@ docker run \
         -B .                                            \
         -DDOWNLOAD_BINARIES=${CMAKE_DOWNLOAD_BINARIES}  \
         -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}         \
-        -DCHECK_CI=${CMAKE_SET_CI} &&                   \
+        -D CHECK_CI=${CMAKE_SET_CI}                     \
+        -D SANITIZE=${CMAKE_SANITIZE} &&                \
     make -j ${TARGETS}                                  \
   "
