@@ -29,6 +29,7 @@ require (
 	github.com/aws/smithy-go v1.9.0 // indirect
 	github.com/beeker1121/goque v2.1.0+incompatible // indirect
 	github.com/bgentry/testnet v0.0.0-20131107221340-05450cdcf16c // indirect
+	github.com/gin-gonic/gin v1.7.7 // indirect
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
