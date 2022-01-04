@@ -143,7 +143,10 @@ endif()
 ################## MACOS ##################
 ]]
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    target_sources(WhistClient PRIVATE native_window_utils_mac.m)
+    target_sources(WhistClient PRIVATE
+        native_window_utils_mac.m
+        display_notifs_mac.m
+    )
 
     target_link_libraries(WhistClient ${MAC_SPECIFIC_CLIENT_LIBS})
 endif()
