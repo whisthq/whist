@@ -47,6 +47,8 @@ if(MSVC)
     set(CMAKE_INCLUDE_SYSTEM_FLAG_C "/external:I ")
 endif()
 
+option(SANITIZE "Enable sanitizer during build (address, thread, undefined)." OFF)
+
 # Add our compiler flags
 include(cmake/compiler-options.cmake)
 

@@ -25,4 +25,9 @@ else() # GCC and Clang base flags
     "$<$<CONFIG:DEBUG>:-Og;-g;-O0>"
     "$<$<CONFIG:RELEASE>:-O3>")
   add_link_options("-pthread" "-rdynamic")
+
+  if(NOT "${SANITIZE}" STREQUAL "OFF")
+    add_compile_options("-fsanitize=${SANITIZE}")
+    add_link_options("-fsanitize=${SANITIZE}")
+  endif()
 endif()
