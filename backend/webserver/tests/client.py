@@ -15,7 +15,7 @@ class WhistAPITestClient(FlaskClient):  # type: ignore
 
         Args:
             username: The user ID of the user as whom to authenticate all future requests.
-            admin: Optional. A boolean indicating whether or not the authenticated user should have
+            admin: (optional) A boolean indicating whether or not the authenticated user should have
                 have access to administrative endpoints.
 
         Returns:
