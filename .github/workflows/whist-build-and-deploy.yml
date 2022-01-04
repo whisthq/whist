@@ -573,6 +573,7 @@ jobs:
         run: |
           import json
           import datetime
+          import subprocess
 
           date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
 
@@ -603,8 +604,8 @@ jobs:
           json.dump(data, fp)
           fp.close()
 
-          # Display file content, for debugging
-          cat packer_vars.json
+          # Display file content, for debugging purposes
+          subprocess.run("cat packer_vars.json", shell=True)
 
       # This spins up an AWS EC2 instance to create the AMI, and then deletes it
       # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
