@@ -18,13 +18,12 @@ Includes
 
 #include "notifications.h"
 
-#include <stdio.h>
 #include <string.h>
 
 #include <whist/logging/logging.h>
 #include <whist/network/network.h>
 #include <whist/utils/whist_notification.h>
-#include <beeep-wrapper/beeep-wrapper.h>
+#include "display_notifs.h"
 
 /*
 ============================
@@ -39,11 +38,11 @@ int display_notification(WhistPacket *packet) {
     memcpy(c.title, packet->data, MAX_NOTIF_TITLE_LEN);
     memcpy(c.message, (packet->data) + MAX_NOTIF_TITLE_LEN, MAX_NOTIF_MSG_LEN);
 
-    ShowNotification(c.title, c.message, NULL);
+    if (!notif_bundle_initialized()) {
+        if (init_notif_bundle() < 0) {
+            LOG_FATAL("MacOS notification setup failed");
+        }
+    }
 
-    FILE *fout = fopen("/Users/kevin/Downloads/foobar.txt", "w");
-    fprintf(fout, "title %s\nmessage %s\n", c.title, c.message);
-    fclose(fout);
-
-    return 0;
+    return deliver_notification(c.title, c.message);
 }
