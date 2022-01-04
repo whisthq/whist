@@ -1,8 +1,8 @@
 from app.constants import env_names
 
-PRODUCTION = "production"
+PRODUCTION = "prod"
 STAGING = "staging"
-DEVELOPMENT = "dev"  # FIXME switch to development
+DEVELOPMENT = "dev"
 
 
 def from_env(env: str) -> str:
