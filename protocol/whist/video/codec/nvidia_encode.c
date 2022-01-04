@@ -466,11 +466,12 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
         return -1;
     }
 
-    if (lock_params.pictureType == NV_ENC_PIC_TYPE_I ||
-        lock_params.pictureType == NV_ENC_PIC_TYPE_IDR)
+    if (lock_params.pictureType == NV_ENC_PIC_TYPE_I
+        || lock_params.pictureType == NV_ENC_PIC_TYPE_IDR) {
         log_double_statistic(VIDEO_INTRA_FRAME_QP, lock_params.frameAvgQP);
-    else
+    } else {
         log_double_statistic(VIDEO_INTER_FRAME_QP, lock_params.frameAvgQP);
+    }
 
     encoder->frame_size = lock_params.bitstreamSizeInBytes;
     encoder->frame = lock_params.bitstreamBufferPtr;

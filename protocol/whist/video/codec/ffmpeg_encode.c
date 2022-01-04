@@ -135,8 +135,9 @@ FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, 
     encoder->context->width = encoder->out_width;
     encoder->context->height = encoder->out_height;
     encoder->context->bit_rate = bitrate;         // averageBitRate
-    encoder->context->rc_max_rate = 4 * bitrate;  // maxBitRate
-    encoder->context->rc_buffer_size = (VBV_BUF_SIZE_IN_MS * bitrate) / MS_IN_SECOND;   // vbvBufferSize
+    //encoder->context->rc_max_rate = 4 * bitrate;  // maxBitRate
+    encoder->context->rc_buffer_size =
+        (VBV_BUF_SIZE_IN_MS * bitrate) / MS_IN_SECOND;   // vbvBufferSize
     encoder->context->time_base.num = 1;
     encoder->context->time_base.den = FPS;
     encoder->context->gop_size = encoder->gop_size;
@@ -336,8 +337,9 @@ FFmpegEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, in
     encoder->context->width = encoder->out_width;
     encoder->context->height = encoder->out_height;
     encoder->context->bit_rate = bitrate;
-    encoder->context->rc_max_rate = bitrate;
-    encoder->context->rc_buffer_size = 4 * (bitrate / FPS);
+    //encoder->context->rc_max_rate = 4 * bitrate;
+    encoder->context->rc_buffer_size =
+        (VBV_BUF_SIZE_IN_MS * bitrate) / MS_IN_SECOND;   // vbvBufferSize
     encoder->context->time_base.num = 1;
     encoder->context->time_base.den = FPS;
     encoder->context->gop_size = encoder->gop_size;
@@ -625,8 +627,9 @@ FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int
     encoder->context->width = encoder->out_width;
     encoder->context->height = encoder->out_height;
     encoder->context->bit_rate = bitrate;
-    encoder->context->rc_max_rate = bitrate;
-    encoder->context->rc_buffer_size = 4 * (bitrate / FPS);
+    //encoder->context->rc_max_rate = 4 * bitrate;
+    encoder->context->rc_buffer_size =
+        (VBV_BUF_SIZE_IN_MS * bitrate) / MS_IN_SECOND;   // vbvBufferSize
     encoder->context->time_base.num = 1;
     encoder->context->time_base.den = FPS;
     encoder->context->gop_size = encoder->gop_size;
