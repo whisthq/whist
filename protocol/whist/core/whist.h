@@ -127,7 +127,7 @@ Defines
 #define safe_mkdir(dir) _mkdir(dir)
 #define safe_dup(fd) _dup(fd)
 #define safe_dup2(fd1, fd2) _dup2(fd1, fd2)
-#define safe_open(path, flags) _open(path, flags)
+#define safe_open(path, flags) _open(path, flags, 0666)
 #define safe_close(fd) _close(fd)
 #else
 #define safe_mkdir(dir) mkdir(dir, 0777)
