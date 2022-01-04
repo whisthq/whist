@@ -56,7 +56,8 @@ Includes
 
 #define BITS_IN_BYTE 8.0
 
-#define MAX_VBV_FRAMES (((VBV_BUF_SIZE_IN_MS * FPS) / 1000) * 2) // The "* 2" factor is just for safety
+#define MAX_VBV_FRAMES \
+    (((VBV_BUF_SIZE_IN_MS * FPS) / 1000) * 2)  // The "* 2" factor is just for safety
 
 /*
 ============================

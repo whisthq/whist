@@ -187,7 +187,6 @@ Defines
 // VBV Buffer size in milliseconds
 #define VBV_BUF_SIZE_IN_MS 1000
 
-
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
 
