@@ -55,7 +55,12 @@ ignore:
 fixes:
   - "app/::webserver/" # Replace app/... with webserver/...
   - "**/whist/protocol/::protocol/" # Make protocol coverage relative to protocol directory
-  - "**/whist/backend/host-service/::host-service/" # Make host service coverage relative to host-service directory
+  - "**/whist/backend/host-service/::host-service/" # Make host-service coverage relative to host-service directory
+  - "**/whist/backend/scaling-service/::scaling-service/" # Make scaling-service coverage relative to scaling-service directorys
+  - "**/whist/backend/core-go/::core-go/" # Make core-go coverage relative to core-go directory
+  - "**/whist/frontend/core-ts/::core-ts/" # Make core-ts coverage relative to core-ts directory
+  - "**/whist/backend/webserver/::webserver/" # Make webserver coverage relative to webserver directory
+
 
 # Settings for Codecov comments on pull requests
 comment:
