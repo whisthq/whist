@@ -1,5 +1,6 @@
 #ifndef OSUTILS_H
 #define OSUTILS_H
+
 /**
  * Copyright 2021 Whist Technologies, Inc.
  * @file os_utils.h
@@ -14,6 +15,11 @@ Defines
 ============================
 */
 
+#define WHIST_KB_LAYOUT_NAME_MAX_LENGTH 24
+
+typedef struct {
+    char layout_name[WHIST_KB_LAYOUT_NAME_MAX_LENGTH];
+} WhistKeyboardLayout;
 
 /*
 ============================
@@ -23,13 +29,16 @@ Public Functions
 
 /**
  * @brief                          Get keyboard layout
+ *
+ * @returns                        The current keyboard layout
  */
-void get_keyboard_layout(char* dst, int size);
+WhistKeyboardLayout get_keyboard_layout();
 
 /**
  * @brief                          Set keyboard layout
+ *
+ * @param requested_layout         The layout we're requesting the OS to use
  */
-void set_keyboard_layout(const char* requested_layout);
-
+void set_keyboard_layout(WhistKeyboardLayout requested_layout);
 
 #endif

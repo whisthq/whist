@@ -161,8 +161,8 @@ int sync_keyboard_state(void) {
 
     wcmsg.keyboard_state.active_pinch = active_pinch;
 
-    //copies the current layout into the buffer allocated in keyboard_state.layout
-    get_keyboard_layout(wcmsg.keyboard_state.layout, sizeof(wcmsg.keyboard_state.layout));
+    // Grabs the keyboard layout as well
+    wcmsg.keyboard_state.layout = get_keyboard_layout();
 
     send_wcmsg(&wcmsg);
 

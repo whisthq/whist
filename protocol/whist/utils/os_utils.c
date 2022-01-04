@@ -20,41 +20,40 @@ Includes
 #else
 #endif
 
-//TODO This is returning from function stack. Need to either pass in a dst point 
-//or use dynamic memory.
-void get_keyboard_layout(char* dst, int size) {
+#define WHIST_KB_DEFAULT_LAYOUT "us"
 
-  if(size <= WHIST_KB_LAYOUT_MAX_LENGTH) {
-#ifdef _WIN32
-    safe_strncpy(dst, WHIST_KB_DEFAULT_LAYOUT, size);
-#elif __APPLE__
-    safe_strncpy(dst, WHIST_KB_DEFAULT_LAYOUT, size);
-#else
-    safe_strncpy(dst, WHIST_KB_DEFAULT_LAYOUT, size);
-#endif
-  }
+WhistKeyboardLayout get_keyboard_layout() {
+    WhistKeyboardLayout ret = {0};
+    safe_strncpy(ret.layout_name, WHIST_KB_DEFAULT_LAYOUT, sizeof(ret.layout_name));
+    return ret;
 }
 
-#define CMD_BUFFER_MAX_LENGHT 1024
+void set_keyboard_layout(WhistKeyboardLayout requested_layout) {
+    static char current_layout_name[WHIST_KB_LAYOUT_NAME_MAX_LENGTH] = WHIST_KB_DEFAULT_LAYOUT;
 
-void set_keyboard_layout(const char* requested_layout) {
-    static char current_layout[WHIST_KB_LAYOUT_MAX_LENGTH] = WHIST_KB_DEFAULT_LAYOUT;
-
-    if(requested_layout == NULL) {
+    if (requested_layout.layout_name[WHIST_KB_LAYOUT_NAME_MAX_LENGTH - 1] != '\0') {
+        LOG_ERROR("Could not set layout name! last character was not NULL!");
         return;
     }
 
-    if(strncmp(current_layout, requested_layout, strlen(current_layout) + 1) == 0) {
-      return;
+    // Don't set the keyboard if nothing changed
+    if (memcmp(current_layout_name, requested_layout.layout_name, sizeof(current_layout_name)) ==
+        0) {
+        return;
     }
 
-    safe_strncpy(current_layout, requested_layout, WHIST_KB_LAYOUT_MAX_LENGTH);
+    // Otherwise, copy into current_layout_name and handle the new current_layout_name
+    memcpy(current_layout_name, requested_layout.layout_name, sizeof(current_layout_name));
 
-    const char* cmd_format = "setxkbmap -layout %s";
-    char cmd_buf[CMD_BUFFER_MAX_LENGHT];
-    int bytes_written = snprintf(cmd_buf, CMD_BUFFER_MAX_LENGHT, cmd_format, current_layout);
+#ifdef __linux__
+    char cmd_buf[1024];
+    int bytes_written =
+        snprintf(cmd_buf, sizeof(cmd_buf), "setxkbmap -layout %s", current_layout_name);
 
-    if (bytes_written < CMD_BUFFER_MAX_LENGHT) {
+    if (bytes_written >= 0) {
         runcmd(cmd_buf, NULL);
     }
+#else
+    LOG_FATAL("Unimplemented on Mac/Windows!");
+#endif
 }

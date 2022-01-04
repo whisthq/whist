@@ -72,6 +72,7 @@ Includes
 #include <whist/network/network.h>
 #include <whist/utils/clock.h>
 #include <whist/logging/logging.h>
+#include <whist/utils/os_utils.h>
 
 #ifdef _WIN32
 #pragma warning(disable : 4200)
@@ -628,16 +629,13 @@ typedef enum WhistExitCode {
     WHIST_EXIT_CLI = 2
 } WhistExitCode;
 
-#define WHIST_KB_DEFAULT_LAYOUT "us"
-#define WHIST_KB_LAYOUT_MAX_LENGTH 24
-
 typedef struct {
     short num_keycodes;
     bool caps_lock;
     bool num_lock;
     char state[KEYCODE_UPPERBOUND];
     bool active_pinch;
-    char layout[WHIST_KB_LAYOUT_MAX_LENGTH];
+    WhistKeyboardLayout layout;
 } WhistKeyboardState;
 
 /* position of bit within character */
