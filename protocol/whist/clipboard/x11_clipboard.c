@@ -348,7 +348,6 @@ bool unsafe_has_os_clipboard_updated() {
             xfixes_available = false;
             return false;
         }
-        xfixes_available = true;
         XFixesSelectSelectionInput(display, DefaultRootWindow(display), clipboard,
                                    XFixesSetSelectionOwnerNotifyMask);
         if (should_preserve_local_clipboard()) {
