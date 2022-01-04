@@ -83,34 +83,26 @@ Client Tests
 ============================
 */
 
+char* generate_random_string(size_t length) {
+    const char characters[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    if (length <= 0) {
+        return NULL;
+    }
+    char* str = (char*)calloc(length + 1, sizeof(char));
+    for (size_t i = 0; i < length; i++) {
+        int k = rand() % (int)(sizeof(characters) - 1);
+        str[i] = characters[k];
+    }
+    return str;
+}
+
+extern WhistMutex window_resize_mutex;
+extern volatile bool pending_resize_message;
 /**
  * client/sdl_utils.c
  **/
 TEST_F(CaptureStdoutTest, InitSDL) {
-    char very_long_title[] =
-        "bbbbsNx3fjudG3gGy2Fo2wglVPoAIcBh6kgNZFGP8vAG6JQwBKtd9STph7VzxoFBHe8LnSW1Tki5JZz1ZDJOLeUZ7l"
-        "DvePTzDLWnW6cZX5GZOOvbsvXU6tZSJ58N1FeYYnmzKmw4SAqNP3S9wmAqynT0ZpjMieNJR5vNHtNUJR2Z26nxjTE6"
-        "KeJcIw25WduGUXp9Y2y5EiFWWGERsD39eM6GkmMlglTtx07ENcknvtwOCMY1uvCTUOosJTimfii24jKtduzLThqv4l"
-        "hj6bfikbQEu2xQnKxmUy1Z5PYThO30ycwvxVW4qOjzPqC7gQG9UTKuJHFv4fGs9P7Xx5w8dXyMvVmebpY2wcQNO1QQ"
-        "imIuGmVkb54M1hH0sIHkLx6B17cW4Sp5KPSGltE2cAimYr2jLNTrdX45QMRTzyCvWAinDYZYz3ItcPnjPLOBZtCMzJ"
-        "BZbjJRotrbPDpz2gpP2aqhmMJbYpdzKXFSO5ChflHWxz4tHn1cTPvGyWCYhPvDnPtwodXi4qH9xb9EK4qbCZf3mrhZ"
-        "l6bfD04BGS680HVbHAOg5l21j9W1SVMjDagujOupakv1OsV30O4JbZ0yFcCme9xaAgeOY3xwmcrTPjnpINl540f7J6"
-        "naSTWdpuVgj6zqwKI4Lf9kVZ7T3sYamICoiOqnfNssZsX1oZHipLx6JsQL6WxBkJZHSxCBR6jLnZQsqUm8ZKQEAoCa"
-        "s1LJaBfigHbGZWnMpxju19cUzE9uw0XQ5IoxdNXWPKuvMe4k6qH3rlsFlT98qwBC0WFbs4feobzJdOJUqZvaxm6yM0"
-        "PnLbqs4XihVPPhVr253jvDUMvClGFBxEtso812vP7dxbhGLKpdesZ3UVfYgh4ducdsJpsPoIq81gTd1nFi4yzLDxHA"
-        "K9QYHZSYEQTg6DO88eJwWvQlBJtkPTchvkYFcNFphmTtGYPNDKTS4kJacyDDSmCOtn24qMhrhMyKAXP0oOuWBspSWQ"
-        "gYZNsZi3QV0Ngk0FgzYKEoVoFdbwnIJbG6pXxLi8FSQSaxUjyKc6KJnOkZYfrB7eeEAsBtbL09PrjPBvDhOZ8G1RIT"
-        "7eQ1Dk6dvZca8EboJutwFS0WQqtITU1TgiDzLSya4SBmnvz0JohvABOG7HJFqWHQh1eTt9iFzvdDUCWjso0dBgHKQQ"
-        "AmqVbPGeliGvScjD9uw7cM05GUdX0zpMI8rpZOnLzLkdyIB39PpFR1FjwatG5byNW8bNj86OvUqqmmsy9PeIlx8ZP8"
-        "15NC7e3scCxDu767Mu8hXjWqXhdywsAAjn8EkmeaIHmMavtD2GdmZjMGjHiXnjwmn67xj8pABs6AN84R4USukHxdXa"
-        "zsG6nA8eL1nI5iwsq0pfRaY9XNPBiXCdQlF2RlwRgm0X7Ws1PQ7jrzbf5x2B5uOnpDSsdvPwhxxKbnOG57SwaIOzzB"
-        "4NMDY3GqUk4j9uvAoxKnnWhsLWJtQN5B2G8Zz0AvQiCC4VeknlXQWy05xcOYWcw8aD5nzFUxbdlg5qiiK8zLQNmtTq"
-        "IMuU3VKjUvKM5ZV1Nc3msTLR4vkNNK9zzxhXeyoKrcGh5cEQ0jD1bQSZBjWEQsJor5WEp4lVIDIsLkaXwjeTYwKEDz"
-        "DEbzqDaM4V0TAVCQRIPsBf9lMcINJAdAQ1YTEqmcsmsnfLRfRHNbLDnPUsorsr0wYLklOAf30iLcT69FipuarxS0Xn"
-        "uIV3ii1h5DUKxY9IZXapzS1N1364eH36d3dDxBhGPrU7ndkFVQPV5dhlQlgdEvTluBFkfarb0O8kJZPkav6ogtu6fZ"
-        "OHcKAEr5cVr4X1J8xD3LIGcXsGx4OSIsUigs3s887yOkmH7sKmo00ta2dtmBfdrfqAAIiGN0CbmPl3yr9t9uuETOuS"
-        "IxXXULXnr72bgmkzTTrmm3owLiTnWdbzwsel6cTSR9oSoAmY2uCyFoO5bbXmdcMkTa2Zti8EhekDuloBTWEqEB7Ja3"
-        "qpr2YetdSTQp2OUAjCh1";
+    char* very_long_title = generate_random_string(2000);
     size_t title_len = strlen(very_long_title);
     EXPECT_EQ(title_len, 2000);
     char icon_filepath[] = "../../../frontend/client-applications/public/icon_dev.png";
@@ -128,6 +120,8 @@ TEST_F(CaptureStdoutTest, InitSDL) {
     // Check that the initial title was set appropriately
     const char* title = SDL_GetWindowTitle(new_window);
     EXPECT_EQ(strcmp(title, very_long_title), 0);
+    free(very_long_title);
+    free((char*)title);
 
     // Check that the screensaver option was enabled
     bool screen_saver_check = SDL_IsScreenSaverEnabled();
@@ -139,8 +133,9 @@ TEST_F(CaptureStdoutTest, InitSDL) {
     EXPECT_EQ(actual_sdl_flags, desired_sdl_flags);
 
     // Check that the dimensions are the desired ones
-    int actual_width = -1, actual_height = -1;
-    SDL_GetWindowSize(new_window, &actual_width, &actual_height);
+    int actual_width = get_window_pixel_width(new_window);
+    int actual_height = get_window_pixel_height(new_window);
+
     EXPECT_EQ(actual_width, width);
     EXPECT_EQ(actual_height, height);
 
@@ -151,13 +146,111 @@ TEST_F(CaptureStdoutTest, InitSDL) {
     // bool titlebaristransparent = [native_window titlebarAppearsTransparent];
     // EXPECT_TRUE(titlebaristransparent);
 
-    char very_short_title[] = "a";
+    char* very_short_title = generate_random_string(1);
     title_len = strlen(very_short_title);
     EXPECT_EQ(title_len, 1);
     SDL_SetWindowTitle(new_window, very_short_title);
 
     const char* new_title = SDL_GetWindowTitle(new_window);
     EXPECT_EQ(strcmp(new_title, very_short_title), 0);
+
+    free(very_short_title);
+    free((char*)new_title);
+
+    // Check the update_pending_task_functioning
+
+    // Window resize
+    {
+        int temp;
+        temp = width;
+        width = height;
+        height = temp;
+
+        whist_lock_mutex(window_resize_mutex);
+        EXPECT_FALSE(pending_resize_message);
+        whist_unlock_mutex(window_resize_mutex);
+
+        sdl_renderer_resize_window(width, height);
+
+        whist_lock_mutex(window_resize_mutex);
+        EXPECT_TRUE(pending_resize_message);
+        whist_unlock_mutex(window_resize_mutex);
+
+        sdl_update_pending_tasks();
+
+        // Check that the dimensions are the desired ones
+        actual_width = get_window_pixel_width(new_window);
+        actual_height = get_window_pixel_height(new_window);
+        EXPECT_EQ(actual_width, width);
+        EXPECT_EQ(actual_height, height);
+    }
+
+    // Titlebar color change
+    {
+        std::ranlux48 gen;
+        std::uniform_int_distribution<uint8_t> uniform_0_255(0, 255);
+
+        WhistRGBColor c;
+        c.red = uniform_0_255(gen);
+        c.green = uniform_0_255(gen);
+        c.blue = uniform_0_255(gen);
+        EXPECT_FALSE(native_window_color_update);
+        sdl_render_window_titlebar_color(c);
+
+        EXPECT_TRUE(native_window_color_update);
+        WhistRGBColor* new_color = (WhistRGBColor*)native_window_color;
+        EXPECT_NEQ(new_color, NULL);
+
+        sdl_update_pending_tasks();
+        EXPECT_FALSE(native_window_color_update);
+    }
+
+    // Window title
+    {
+        char* changed_title = generate_random_string(150);
+        title_len = strlen(changed_title);
+        EXPECT_EQ(changed_title, 150);
+        EXPECT_FALSE(should_update_window_title);
+
+        sdl_set_window_title(changed_title);
+        EXPECT_TRUE(should_update_window_title);
+        EXPECT_EQ(strcmp(changed_title, window_title), 0);
+
+        const char* old_title = SDL_GetWindowTitle(new_window);
+        EXPECT_NEQ(strcmp(old_title, changed_title), 0);
+
+        sdl_update_pending_tasks();
+        EXPECT_FALSE(should_update_window_title);
+        const char* changed_title2 = SDL_GetWindowTitle(new_window);
+        EXPECT_EQ(strcmp(changed_title, changed_title2), 0);
+
+        free(changed_title);
+        free(old_title);
+        free(changed_title2);
+    }
+
+    // Set fullscreen
+    {
+        EXPECT_FALSE(fullscreen_value);
+        sdl_set_fullscreen();
+        EXPECT_TRUE(fullscreen_value);
+        EXPECT_TRUE(fullscreen_trigger);
+
+        actual_width = get_window_pixel_width(new_window);
+        actual_height = get_window_pixel_height(new_window);
+        EXPECT_EQ(actual_width, width);
+        EXPECT_EQ(actual_height, height);
+
+        sdl_update_pending_tasks();
+
+        EXPECT_FALSE(fullscreen_trigger);
+
+        actual_width = get_window_pixel_width(new_window);
+        actual_height = get_window_pixel_height(new_window);
+
+        EXPECT_EQ(actual_width, full_width);
+        EXPECT_EQ(actual_height, full_height);
+    }
 
     destroy_sdl(new_window);
     check_stdout_line(::testing::HasSubstr("Destroying SDL"));
