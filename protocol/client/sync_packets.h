@@ -1,7 +1,7 @@
 #ifndef CLIENT_SYNC_PACKETS_H
 #define CLIENT_SYNC_PACKETS_H
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file sync_packets.h
  * @brief This file contains code for high-level communication with the server
 ============================

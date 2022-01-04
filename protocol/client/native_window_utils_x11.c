@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file native_window_utils_x11.c
  * @brief This file implements X11 APIs for native window
  *        modifications not handled by SDL.

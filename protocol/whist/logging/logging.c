@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file logging.c
  * @brief This file contains the logging macros and utils to send Winlogon
  *        status and to send the logs to the webserver.

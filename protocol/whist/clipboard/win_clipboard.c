@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file win_clipboard.c
  * @brief This file contains the general clipboard functions for a shared
  *        client-server clipboard on Windows clients/servers.

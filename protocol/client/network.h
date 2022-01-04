@@ -4,7 +4,7 @@
 #include <whist/core/whist.h>
 
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file network.h
  * @brief This file contains client-specific wrappers to low-level network
  *        functions.

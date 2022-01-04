@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file log_statistic.c
  * @brief This contains logging utils to log repeated statistics, where we
  *        don't want to print every time.

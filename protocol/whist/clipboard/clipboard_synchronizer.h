@@ -1,7 +1,7 @@
 #ifndef CLIPBOARD_SYNCHRONIZER_H
 #define CLIPBOARD_SYNCHRONIZER_H
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file clipboard_synchronizer.h
  * @brief This file contains code meant, to be used on the clientside, that will
  *        assist in synchronizing the client-server clipboard.

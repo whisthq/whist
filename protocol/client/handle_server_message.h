@@ -1,7 +1,7 @@
 #ifndef SERVER_MESSAGE_HANDLER_H
 #define SERVER_MESSAGE_HANDLER_H
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file handle_server_message.h
  * @brief This file contains all the code for client-side processing of messages
  *        received from the server

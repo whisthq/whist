@@ -1,7 +1,7 @@
 #ifndef FEC_H
 #define FEC_H
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file fec.h
  * @brief This file contains the FEC API Interface
  * @note See protocol_test.cpp for usage

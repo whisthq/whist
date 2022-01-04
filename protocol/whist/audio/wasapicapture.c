@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file wasapicapture.c
  * @brief This file contains the code to capture audio on Windows using WASAPI.
 ============================

@@ -1,7 +1,7 @@
 #ifndef SDL_UTILS_H
 #define SDL_UTILS_H
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file sdl_utils.h
  * @brief This file contains the code to create and destroy SDL windows on the
  *        client.

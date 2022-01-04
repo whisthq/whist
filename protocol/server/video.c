@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file video.c
  * @brief This file contains all code that interacts directly with processing
  *        video on the server.

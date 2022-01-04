@@ -1,7 +1,7 @@
 #ifndef WHIST_TCP_H
 #define WHIST_TCP_H
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file tcp.h
  * @brief This file contains the network interface code for TCP protocol
  *

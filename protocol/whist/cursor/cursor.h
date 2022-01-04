@@ -1,7 +1,7 @@
 #ifndef CURSOR_H
 #define CURSOR_H
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file cursor.h
  * @brief This file defines the cursor types, functions, init and get.
 ============================

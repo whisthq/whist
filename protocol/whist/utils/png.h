@@ -1,7 +1,7 @@
 #ifndef PNG_H
 #define PNG_H
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file clock.h
  * @brief Helper functions for png to bmp and bmp to png
 ============================

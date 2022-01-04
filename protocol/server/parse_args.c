@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file parse_args.c
  * @brief This file contains the code that parses the args for
 the server protocol.

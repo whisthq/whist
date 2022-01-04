@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file error_monitor.c
  * @brief This file contains the functions to configure and report breadcrumbs
  *        and error events to tools such as Sentry.

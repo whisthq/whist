@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file x11capture.c
  * @brief This file contains the code to create a capture device and use it to capture the screen on
 Linux.

@@ -2,7 +2,7 @@
 #define WHIST_H
 
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file whist.h
  * @brief This file contains the core of Whist custom structs and definitions
  *        used throughout.

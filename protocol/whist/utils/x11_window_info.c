@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file x11_window_info.c
  * @brief This file contains all the code for getting X11-specific window information.
  */

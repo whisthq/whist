@@ -1,7 +1,7 @@
 #ifndef CLIENT_BITRATE_H
 #define CLIENT_BITRATE_H
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file bitrate.h
  * @brief This file contains the client's adaptive bitrate code. Any algorithms we are using for
 predicting bitrate should be stored here.

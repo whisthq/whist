@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file clipboard_synchronizer.c
  * @brief This file contains code meant, to be used by both the server and client
  *        to synchronize clipboard contents, both setting and gettings. Client

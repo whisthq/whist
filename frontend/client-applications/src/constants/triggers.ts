@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file auth.ts
  * @brief This file defines all the triggers recognized by the main thread.
  */

@@ -1,7 +1,7 @@
 #ifndef UINPUT_INPUT_DRIVER_H
 #define UINPUT_INPUT_DRIVER_H
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file uinput_input_driver.h
  * @brief This file defines the uinput input device type.
 ============================
