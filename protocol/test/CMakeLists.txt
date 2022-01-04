@@ -128,7 +128,10 @@ endif()
 
 # Link more Linux-specific libraries
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_sources(${PROTOCOL_TEST_BINARY} PRIVATE ../client/native_window_utils_x11.c)
+    target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
+        ../client/native_window_utils_x11.c
+        ../client/display_notifs_linux.c
+    )
     find_package(X11 REQUIRED
         Xfixes
         Xdamage
@@ -170,6 +173,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
     target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
         ../client/native_window_utils_windows.c
+        ../client/display_notifs_windows.c
     )
     target_link_libraries(${PROTOCOL_TEST_BINARY} whistInput ${LIBMFX})
 

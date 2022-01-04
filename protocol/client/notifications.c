@@ -32,17 +32,9 @@ Public Function Implementations
 */
 
 int display_notification(WhistPacket *packet) {
-    LOG_INFO("GOT PACKET: %s", packet->data);
-
     WhistNotification c;
     memcpy(c.title, packet->data, MAX_NOTIF_TITLE_LEN);
     memcpy(c.message, (packet->data) + MAX_NOTIF_TITLE_LEN, MAX_NOTIF_MSG_LEN);
 
-    if (!notif_bundle_initialized()) {
-        if (init_notif_bundle() < 0) {
-            LOG_FATAL("MacOS notification setup failed");
-        }
-    }
-
-    return deliver_notification(c.title, c.message);
+    return native_show_notification(c.title, c.message);
 }

@@ -46,10 +46,6 @@ BOOL installNSBundleHook()
 
 @end
 
-bool notif_bundle_initialized() {
-  return bundle_spoofed;
-}
-
 int init_notif_bundle() {
     if (installNSBundleHook()) {
         bundle_spoofed = true;
@@ -58,7 +54,13 @@ int init_notif_bundle() {
   return -1;
 }
 
-int deliver_notification(char *title, char *msg) {
+int native_show_notification(char *title, char *msg) {
+    if (!bundle_spoofed) {
+        if (init_notif_bundle() < 0) {
+            LOG_FATAL("MacOS notification setup failed");
+        }
+    }
+
     NSUserNotification *n = [[NSUserNotification alloc] init];
 
     n.title = [NSString stringWithUTF8String:title];
