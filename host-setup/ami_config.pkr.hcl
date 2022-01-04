@@ -107,7 +107,7 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
     owners = ["099720109477"] # Canonical
     most_recent = true
   }
-  associate_public_ip_address = true # Make new instances with this AMI get assigned a public IP address
+  associate_public_ip_address = true # Make new instances with this AMI get assigned a public IP address (necessary for SSH communication)
   ebs_optimized               = true # Optimize for EBS volumes
 
   # We manually specify an availability zone, since the Packer+AWS autoassign feature is very weak. Eventually,
@@ -132,7 +132,8 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
   iam_instance_profile = "PackerAMIBuilder" # This is the IAM role we configured for Packer in AWS
   shutdown_behavior    = "terminate"        # Automatically terminate instances on shutdown in case Packer exits ungracefully. Possible values are stop and terminate. Defaults to stop.
 
-  vpc_id = "vpc-34aded4e" # The VPC where the Packer Builer will run. This VPC needs to have subnet(s) configured as per the `subnet_filter` below
+  # The VPC where the Packer Builer will run. This VPC needs to have subnet(s) configured as per the `subnet_filter` below
+  vpc_id = "vpc-34aded4e"
 
   # This filter ensures Packer will pick a subnet which was configured for Packer by looking for the tag
   # Purpose: packer. If no subnet with this tag is found in `region`, Packer will fail.
@@ -155,8 +156,9 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
 
   /* Comunicator configuration */
 
-  communicator = "ssh"
-  ssh_username = "ubuntu"
+  communicator  = "ssh"
+  ssh_interface = "public_ip" # We can only communicate via public IP, since this code is run in GitHub Actions (outside AWS)
+  ssh_username  = "ubuntu"
 
   /* Tags configuration */
 
