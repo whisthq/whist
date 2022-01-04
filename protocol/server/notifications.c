@@ -295,9 +295,13 @@ static DBusHandlerResult notification_handler(DBusConnection *connection, DBusMe
 
     } while (dbus_message_iter_next(&iter));  // This just keeps iterating until it's all over
 
+    // Create notification. Careful not to access OOB memory!
     WhistNotification notif;
-    strcpy(notif.title, title);
-    strcpy(notif.message, n_message);
+    strncpy(notif.title, title, MAX_NOTIF_TITLE_LEN - 1);
+    notif.title[min(strlen(title), MAX_NOTIF_TITLE_LEN - 1)] = '\0';
+    strncpy(notif.message, n_message, MAX_NOTIF_MSG_LEN - 1);
+    notif.message[min(strlen(n_message), MAX_NOTIF_MSG_LEN - 1)] = '\0';
+
     LOG_INFO("WhistNotification consists of: title=%s, message=%s\n", notif.title, notif.message);
 
     if (server_state_client->is_active &&
