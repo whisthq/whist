@@ -620,7 +620,8 @@ jobs:
           import json
 
           # Stdout will be shared with the subprocess so we can see what is happening
-          subprocess.run("packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
+          # PACKER_LOG=1 generates full log output, which is helpful for troubleshooting
+          subprocess.run("PACKER_LOG=1 packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
 
           # If Packer fails, manifest.json does not get created and the entire workflow fails here
           # Note that, defined in our ami_config.pkr.hcl file, we set multiple retries for Packer and
