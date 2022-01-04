@@ -332,21 +332,25 @@ bool unsafe_has_os_clipboard_updated() {
         Returns:
             (bool): true if clipboard has updated, else false
     */
+    static bool xfixes_available = true;
 
-    if (!display) {
+    if (!display || !xfixes_available) {
         return false;
     }
 
     static bool first = true;  // static, so only sets to true on first call
-    int event_base, error_base;
+    static int event_base, error_base;
     XEvent event;
-    if (!XFixesQueryExtension(display, &event_base, &error_base)) {
-        return false;
-    }
-    XFixesSelectSelectionInput(display, DefaultRootWindow(display), clipboard,
-                               XFixesSetSelectionOwnerNotifyMask);
     if (first) {
         first = false;
+        // these should only be done once 
+        if (!XFixesQueryExtension(display, &event_base, &error_base)) {
+            xfixes_available = false;
+            return false;
+        }
+        xfixes_available = true;
+        XFixesSelectSelectionInput(display, DefaultRootWindow(display), clipboard,
+                                   XFixesSetSelectionOwnerNotifyMask);
         if (should_preserve_local_clipboard()) {
             return true;
         }
