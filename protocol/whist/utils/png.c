@@ -258,6 +258,8 @@ int png_to_bmp(char* png, int png_size, char** bmp_ptr, int* bmp_size) {
         }
     }
 
+    free(lodepng_data);
+
     return 0;
 }
 

@@ -66,7 +66,8 @@ void free_dynamic_buffer(DynamicBuffer* db);
 
 // Dummy typedef for block allocator since only pointers are used anyway
 // See whist.c for the real BlockAllocator struct
-typedef char BlockAllocator;
+struct BlockAllocator;
+typedef struct BlockAllocator BlockAllocator;
 
 /**
  * @brief                          Creates a block allocator that will create and free blocks of the
@@ -96,6 +97,14 @@ void* allocate_block(BlockAllocator* block_allocator);
  * @param block                    The block to free
  */
 void free_block(BlockAllocator* block_allocator, void* block);
+
+/**
+ * @brief                          Destroys a block allocator. All blocks allocated from this
+ *                                 instance must have been freed before calling this!
+ *
+ * @param block_allocator          The block allocator to destroy
+ */
+void destroy_block_allocator(BlockAllocator* block_allocator);
 
 /*
 ==================
