@@ -155,8 +155,9 @@ source "amazon-ebs" "Whist_AWS_AMI_Builder" {
 
   /* Comunicator configuration */
 
-  communicator = "ssh"
-  ssh_username = "ubuntu"
+  communicator  = "ssh"
+  ssh_interface = "public_ip"
+  ssh_username  = "ubuntu"
 
   /* Tags configuration */
 
