@@ -493,7 +493,7 @@ jobs:
 
       - name: Setup Python-based notifications # slack notifications need to be set up before steps that can lead to errors
         working-directory: .github/workflows/helpers
-        run: ./notifications/setup_notifications.sh "true" # "True" means we install dependencies, in case of running on a self-hosted runner
+        run: ./notifications/setup_notifications.sh
 
       - name: Build release protocol # No need to run this for debug, just for release
         working-directory: protocol
@@ -603,6 +603,9 @@ jobs:
           json.dump(data, fp)
           fp.close()
 
+          # Display file content, for debugging
+          cat packer_vars.json
+
       # This spins up an AWS EC2 instance to create the AMI, and then deletes it
       # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
       - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
@@ -616,7 +619,7 @@ jobs:
           import json
 
           # Stdout will be shared with the subprocess so we can see what is happening
-          subprocess.run("packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
+          subprocess.run("packer build -debug -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
 
           # If Packer fails, manifest.json does not get created and the entire workflow fails here
           # Note that, defined in our ami_config.pkr.hcl file, we set multiple retries for Packer and
