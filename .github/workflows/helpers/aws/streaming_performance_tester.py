@@ -238,7 +238,7 @@ def clone_whist_repository_on_instance(github_token, pexpect_process, pexpect_pr
             break
 
     print(
-        "Cloning branch {} of the fractal/whist repository on the AWS instance ...".format(
+        "Cloning branch {} of the whisthg/whist repository on the AWS instance ...".format(
             branch_name
         )
     )

@@ -209,7 +209,7 @@ func isInAllowedRange(p uint16) bool {
 	return p >= MinAllowedPort && p < MaxAllowedPort
 }
 
-// Helper function to check that a `fractaltypes.PortBinding` is valid (i.e.
+// Helper function to check that a `whisttypes.PortBinding` is valid (i.e.
 // either "tcp" or "udp"), and return a pointer to the correct map to
 // read/modify (i.e. either `tcpPorts` or `udpPorts`).
 func getProtocolSpecificHostPortMap(protocol TransportProtocol) (*protocolSpecificHostPortMap, error) {

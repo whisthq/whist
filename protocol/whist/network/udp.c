@@ -188,7 +188,7 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payloa
     }
     if (context->nack_buffers[type_index] != NULL) {
         // Sending payloads that must be split into multiple packets,
-        // is only allowed for FractalPacketType's that have a nack buffer
+        // is only allowed for WhistPacketType's that have a nack buffer
         // This includes allowing the application of fec_ratio at all
         nack_buffer =
             context->nack_buffers[type_index][packet_id % context->nack_num_buffers[type_index]];
