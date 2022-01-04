@@ -493,7 +493,7 @@ jobs:
 
       - name: Setup Python-based notifications # slack notifications need to be set up before steps that can lead to errors
         working-directory: .github/workflows/helpers
-        run: ./notifications/setup_notifications.sh
+        run: ./notifications/setup_notifications.sh "true"
 
       - name: Build release protocol # No need to run this for debug, just for release
         working-directory: protocol
