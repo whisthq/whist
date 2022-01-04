@@ -107,5 +107,6 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
     event.preventDefault()
     ProtocolSendUrlToOpenInNewTab(url)
     logBase(`Captured url ${url} after setting Whist as default browser!\n`, {})
+    unMinimizeElecronWindows()
   })
 })
