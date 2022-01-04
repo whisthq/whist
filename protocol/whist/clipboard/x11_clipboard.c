@@ -343,11 +343,13 @@ bool unsafe_has_os_clipboard_updated() {
     XEvent event;
     if (first) {
         first = false;
-        // these should only be done once 
+        // these should only be done once
+        // check that we can use xfixes
         if (!XFixesQueryExtension(display, &event_base, &error_base)) {
             xfixes_available = false;
             return false;
         }
+        // tell xfixes to deliver clipboard events to display
         XFixesSelectSelectionInput(display, DefaultRootWindow(display), clipboard,
                                    XFixesSetSelectionOwnerNotifyMask);
         if (should_preserve_local_clipboard()) {
