@@ -108,7 +108,10 @@ target_link_libraries(WhistClient ${PLATFORM_INDEPENDENT_LIBS})
 ################## LINUX ##################
 ]]
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_sources(WhistClient PRIVATE native_window_utils_x11.c)
+    target_sources(WhistClient PRIVATE
+        native_window_utils_x11.c
+        display_notifs_linux.c
+    )
 
     find_package(X11 REQUIRED
             Xfixes)
@@ -159,7 +162,10 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     # this comes up when we used precompiled libraries which we do not have .pdb files for
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099 ")
 
-    target_sources(WhistClient PRIVATE native_window_utils_windows.c)
+    target_sources(WhistClient PRIVATE
+        native_window_utils_windows.c
+        display_notifs_windows.c
+    )
 
     target_link_libraries(WhistClient whistInput ${LIBMFX})
 
