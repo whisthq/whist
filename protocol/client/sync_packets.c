@@ -206,7 +206,7 @@ int multithreaded_sync_udp_packets(void* opaque) {
                 break;
             }
             case PACKET_NOTIFICATION: {
-                // TODO(kmeng01) what kind of statistic?
+                // TODO(kmeng01) add statistic?
                 // TIME_RUN(display_notification(packet), -1, statistics_timer);
                 display_notification(packet);
                 break;
