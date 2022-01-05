@@ -338,7 +338,7 @@ struct dbus_ctx *dbus_init(struct event_base *eb, Client *init_server_state_clie
         goto fail;
     }
 
-    char dbus_info[120];
+    char dbus_info[200];
     fscanf(f_dbus_info, "%s", dbus_info);
     fclose(f_dbus_info);
     printf("%s contains: %s\n", config_file, dbus_info);
