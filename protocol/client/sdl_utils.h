@@ -167,4 +167,17 @@ bool sdl_is_window_visible();
  */
 void sdl_update_pending_tasks();
 
+/**
+ * @brief                          Copies private variable values to the variables pointed by the
+ * non-NULL pointers passed as paraemters. Used for testing.
+ *
+ * @returns                        nothing
+ *
+ */
+void sdl_utils_check_private_vars(bool* pending_resize_message_, bool* native_window_color_is_NULL,
+                                  WhistRGBColor* native_window_color_,
+                                  bool* native_window_color_update_, char* window_title_,
+                                  bool* should_update_window_title_, bool* fullscreen_trigger_,
+                                  bool* fullscreen_value_);
+
 #endif  // SDL_UTILS_H
