@@ -244,11 +244,11 @@ TEST_F(CaptureStdoutTest, InitSDL) {
         sdl_render_window_titlebar_color(c);
 
         WhistRGBColor new_color;
-        bool native_window_color_is_NULL;
-        sdl_utils_check_private_vars(NULL, &native_window_color_is_NULL, &new_color,
+        bool native_window_color_is_null;
+        sdl_utils_check_private_vars(NULL, &native_window_color_is_null, &new_color,
                                      &native_window_color_update, NULL, NULL, NULL, NULL);
 
-        EXPECT_FALSE(native_window_color_is_NULL);
+        EXPECT_FALSE(native_window_color_is_null);
         EXPECT_TRUE(native_window_color_update);
         EXPECT_TRUE(new_color.red == c.red);
         EXPECT_TRUE(new_color.blue == c.blue);
