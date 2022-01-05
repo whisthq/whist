@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file app.ts
  * @brief This file contains subscriptions to error Observables.
  */

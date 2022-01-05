@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file power.ts
  * @brief Turns events emitted by powerMonitor into observables, used to monitor the computer's state.
  */

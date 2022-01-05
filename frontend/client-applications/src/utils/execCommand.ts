@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file execCommand.ts
  * @brief This file contains constant functions to execute commands.
  */

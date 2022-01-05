@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file persist.ts
  * @brief This file contains utility functions for interacting with electron-store, which is how
  * we persist data across sessions. This file manages the low-level details of how we'll persist

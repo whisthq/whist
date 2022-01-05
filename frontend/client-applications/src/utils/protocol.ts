@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file protocol.ts
  * @brief This file contains utility functions launching the protocol ChildProcess. This file contains
  * all the code used to interact with the protocol through the client-app. Everything -- launching

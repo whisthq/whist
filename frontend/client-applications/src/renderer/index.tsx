@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file index.tsx
  * @brief This file is the entry point of the renderer thread and acts as a router.
  */

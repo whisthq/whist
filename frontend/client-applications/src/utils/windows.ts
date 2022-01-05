@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file auth.ts
  * @brief This file contains utility functions to create Electron windows. This file manages
  * creation of renderer process windows. It is called from the main process, and passes all
