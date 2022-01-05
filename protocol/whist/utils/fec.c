@@ -43,14 +43,12 @@ bool fec_initalized=false;
 
 typedef void* (*rs_table_t)[rs_table_size];  // NOLINT
 
-// static pthread_once_t  fec_init_flag = PTHREAD_ONCE_INIT;
-
-void free_rs_code_table(void* dummy_ptr)  // TODO check if this is called as expected
+void free_rs_code_table(void* dummy_ptr)
 {
-    LOG_INFO("free_rs_code_table() called!");  // TODO no, it's not called
-    // if (rs_code_table == NULL) return;
+    LOG_INFO("free_rs_code_table() called!"); 
     rs_table_t rs_code_table;
     rs_code_table = SDL_TLSGet(tls_id);
+    if (rs_code_table == NULL) return;
     for (int i = 0; i < rs_table_size; i++) {
         for (int j = i; j < rs_table_size; j++) {
             if (rs_code_table[i][j]) {
@@ -61,8 +59,7 @@ void free_rs_code_table(void* dummy_ptr)  // TODO check if this is called as exp
     free(rs_code_table);
 }
 
-void* get_rs_code(
-    int k,
+void* get_rs_code(int k,
     int n)  // note in the rs lib, k means num of original packets, n means total packets
 {
     if (!tls_id) {
@@ -91,7 +88,7 @@ void* get_rs_code(
         SDL_TLSSet(tls_id, rs_code_table, free_rs_code_table);
     }
 
-    if (rs_code_table[k][n] == 0) {
+    if (rs_code_table[k][n] == NULL) {
         rs_code_table[k][n] = fec_new(k, n);
     }
     return (void*)rs_code_table[k][n];
@@ -315,7 +312,7 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder_raw, void* buffer) {
         if (buffer_size == -1) {
             buffer_size = fec_decoder->max_buffer_size;
         }
-        
+
         if (buffer != NULL) {
             memcpy((char*)buffer + running_size, fec_decoder->buffers[i], buffer_size);
         }
