@@ -199,7 +199,7 @@ void fec_get_encoded_buffers(FECEncoder* fec_encoder_raw, void** buffers, int* b
 
         // call rs encoder to generate new packets
         for (int i = fec_encoder->num_real_buffers; i < fec_encoder->num_buffers; i++) {
-            fec_encoder->buffers[i] = safe_malloc(fec_encoder->max_packet_size);
+            fec_encoder->buffers[i] = safe_malloc(fec_encoder->max_buffer_size);
             fec_encode(fec_encoder->rs_code, (void**)fec_encoder->buffers, fec_encoder->buffers[i],
                        i, fec_encoder->max_buffer_size);
             fec_encoder->buffer_sizes[i] = fec_encoder->max_buffer_size;
