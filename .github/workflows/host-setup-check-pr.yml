@@ -120,7 +120,7 @@ jobs:
 
 
 
-
+            subprocess.run("echo '\"az\" blabla'", shell=True)
 
             # Stdout will be shared with the subprocess so we can see what is happening
             subprocess.run("PACKER_LOG=1 packer build -var-file=packer_vars.json -var availability_zone=az ami_config.pkr.hcl", shell=True)
