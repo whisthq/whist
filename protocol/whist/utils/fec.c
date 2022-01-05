@@ -46,10 +46,6 @@ typedef void* (*rs_table_t)[rs_table_size];  // NOLINT
 
 typedef unsigned short u16_t;  // NOLINT
 
-void write_u16(char* p, u16_t w) {
-    *(unsigned char*)(p + 1) = (w & 0xff);
-    *(unsigned char*)(p + 0) = (w >> 8);
-}
 u16_t read_u16(char* p) {
     u16_t res;
     res = *(const unsigned char*)(p + 0);
@@ -142,7 +138,6 @@ typedef struct {
     bool recovery_performed;
 } InternalFECDecoder;
 
-int get_fec_overhead() { return 2; }
 // num_fec_packets / (num_fec_packets + num_indices) = context->fec_packet_ratio
 // a / (a + b) = c
 // a = ac + bc
@@ -196,23 +191,17 @@ void fec_get_encoded_buffers(FECEncoder* fec_encoder_raw, void** buffers, int* b
         // clock encode_timer;
         // start_timer(&encode_timer);
 
-        // rs encoder requires packets to have equal length, so we pad packets to equal length with
-        // tailing zeros and save original size at the beginning of buffer
-        int fec_payload_size = sizeof(u16_t) + fec_encoder->max_packet_size;
+        // rs encoder requires packets to have equal length, so we pad packets to max_buffer_size
         for (int i = 0; i < fec_encoder->num_real_buffers; i++) {
             char* original_buffer = fec_encoder->buffers[i];
-            int original_size = fec_encoder->buffer_sizes[i];
 
             FATAL_ASSERT(fec_encoder->buffers[i] != NULL);
-            FATAL_ASSERT(original_size <= max_u16);
 
-            fec_encoder->buffers[i] = safe_malloc(fec_payload_size);
-            fec_encoder->buffer_sizes[i] = sizeof(u16_t) + original_size;
+            fec_encoder->buffers[i] = safe_malloc(fec_encoder->max_buffer_size);
 
-            write_u16(fec_encoder->buffers[i], (u16_t)original_size);
-            memcpy((char*)fec_encoder->buffers[i] + sizeof(u16_t), original_buffer, original_size);
+            memcpy((char*)fec_encoder->buffers[i], original_buffer, fec_encoder->buffer_sizes[i]);
             memset((char*)fec_encoder->buffers[i] + fec_encoder->buffer_sizes[i], 0,
-                   fec_payload_size - fec_encoder->buffer_sizes[i]);
+                   fec_encoder->max_buffer_size - fec_encoder->buffer_sizes[i]);
             // we can avoid the malloc and memcpy of whole packet, but that requires modification of
             // the rs lib, and modify the fec API a bit or let upper level code be responsible for
             // padding packets into equal length in advance
@@ -222,10 +211,10 @@ void fec_get_encoded_buffers(FECEncoder* fec_encoder_raw, void** buffers, int* b
 
         // call rs encoder to generate new packets
         for (int i = fec_encoder->num_real_buffers; i < fec_encoder->num_buffers; i++) {
-            fec_encoder->buffers[i] = safe_malloc(sizeof(u16_t) + fec_encoder->max_packet_size);
+            fec_encoder->buffers[i] = safe_malloc(fec_encoder->max_packet_size);
             fec_encode(fec_encoder->rs_code, (void**)fec_encoder->buffers, fec_encoder->buffers[i],
-                       i, fec_payload_size);
-            fec_encoder->buffer_sizes[i] = fec_payload_size;
+                       i, fec_encoder->max_buffer_size);
+            fec_encoder->buffer_sizes[i] = fec_encoder->max_buffer_size;
         }
 
         fec_encoder->encode_performed = true;
@@ -306,9 +295,10 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder_raw, void* buffer) {
     }
 
     bool need_recovery = false;
-    if (fec_decoder->num_accepted_real_buffers != fec_decoder->num_real_buffers)
+    // For optimization, we only need recovery, if we need to reconstruct a real packet
+    if (fec_decoder->num_accepted_real_buffers != fec_decoder->num_real_buffers) {
         need_recovery = true;
-    // for optimization, no need to call fec_decode(), if all real packets are received
+    }
 
     if (need_recovery && !fec_decoder->recovery_performed) {
         // clock decode_timer;
@@ -353,8 +343,11 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder_raw, void* buffer) {
     // Write into the provided buffer
     int running_size = 0;
     for (int i = 0; i < fec_decoder->num_real_buffers; i++) {
-        int current_size = read_u16(fec_decoder->buffers[i]);
-        char* current_buf = (char*)fec_decoder->buffers[i] + sizeof(u16_t);
+        int buffer_size = fec_decoder->buffer_sizes[i];
+        // If we don't have a buffer_size, use the max_buffer_size
+        if (buffer_size == -1) {
+            buffer_size = fec_decoder->max_buffer_size;
+        }
         /*
         if (running_size + current_size >= buffer_size) {
             LOG_ERROR("Buffer for FEC data is too large! Overflowing buffer of size %d",
@@ -362,9 +355,9 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder_raw, void* buffer) {
             return -1;
         }*/
         if (buffer != NULL) {
-            memcpy((char*)buffer + running_size, current_buf, current_size);
+            memcpy((char*)buffer + running_size, fec_decoder->buffers[i], buffer_size);
         }
-        running_size += current_size;
+        running_size += buffer_size;
     }
 
     return running_size;
