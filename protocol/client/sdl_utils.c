@@ -567,6 +567,53 @@ void sdl_update_pending_tasks() {
     sdl_present_pending_framebuffer();
 }
 
+void sdl_utils_check_private_vars(bool* pending_resize_message_, bool* native_window_color_is_NULL,
+                                  WhistRGBColor* native_window_color_,
+                                  bool* native_window_color_update_, char* window_title_,
+                                  bool* should_update_window_title_, bool* fullscreen_trigger_,
+                                  bool* fullscreen_value_) {
+    if (pending_resize_message_) {
+        if (window_resize_mutex) {
+            whist_lock_mutex(window_resize_mutex);
+            *pending_resize_message_ = pending_resize_message;
+            whist_unlock_mutex(window_resize_mutex);
+        } else {
+            *pending_resize_message_ = pending_resize_message;
+        }
+    }
+
+    if (native_window_color_is_NULL && native_window_color_) {
+        if (!native_window_color) {
+            *native_window_color_is_NULL = true;
+        } else {
+            *native_window_color_is_NULL = false;
+            native_window_color_->red = native_window_color->red;
+            native_window_color_->green = native_window_color->green;
+            native_window_color_->blue = native_window_color->blue;
+        }
+    }
+
+    if (native_window_color_update_) {
+        *native_window_color_update_ = native_window_color_update;
+    }
+
+    if (window_title_) {
+        size_t len = strlen(window_title) + 1;
+        safe_strncpy(window_title_, window_title, len);
+    }
+
+    if (should_update_window_title_) {
+        *should_update_window_title_ = should_update_window_title;
+    }
+
+    if (fullscreen_trigger_) {
+        *fullscreen_trigger_ = fullscreen_trigger;
+    }
+    if (fullscreen_value_) {
+        *fullscreen_value_ = fullscreen_value;
+    }
+}
+
 /*
 ============================
 Private Function Implementations
