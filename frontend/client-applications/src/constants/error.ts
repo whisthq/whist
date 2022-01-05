@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file error.ts
  * @brief This file contains various error messages.
  */

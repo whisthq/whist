@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file color.c
  * @brief This file contains functions relating to colors, colorspace conversion,
           and implementations of algorithms and heuristics related to color and UX.

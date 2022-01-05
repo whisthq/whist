@@ -1,7 +1,7 @@
 #ifndef CLOCK_H
 #define CLOCK_H
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file clock.h
  * @brief This file contains the helper functions for timing code.
 ============================

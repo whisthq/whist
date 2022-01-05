@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file x11capture.h
  * @brief This file contains the code to do screen capture via the X11 API on Linux Ubuntu.
 ============================

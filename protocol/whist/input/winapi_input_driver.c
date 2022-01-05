@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file winapi_input_driver.c
  * @brief This file defines the Windows input device type
 ============================

@@ -1,7 +1,7 @@
 #ifndef SERVER_CLIENT_H
 #define SERVER_CLIENT_H
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file client.h
  * @brief This file contains the code for interacting with the client buffer.
 

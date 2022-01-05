@@ -1,7 +1,7 @@
 #ifndef INPUT_H
 #define INPUT_H
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file input.h
  * @brief This file defines general input-processing functions and toggles
  *        between Windows and Linux servers.

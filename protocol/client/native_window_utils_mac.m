@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file native_window_utils_mac.m
  * @brief This file implements macOS APIs for native window
  *        modifications not handled by SDL.

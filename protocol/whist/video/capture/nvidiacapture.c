@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file nvidiacapture.h
  * @brief This file contains the code to do screen capture via the Nvidia FBC SDK on Linux Ubuntu.
 ============================

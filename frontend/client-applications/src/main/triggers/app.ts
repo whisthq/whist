@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file app.ts
  * @brief This file contains all RXJS observables created from Electron app event emitters.
  */

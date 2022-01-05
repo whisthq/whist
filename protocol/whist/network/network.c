@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file network.c
  * @brief This file contains all code that interacts directly with sockets
  *        under-the-hood.

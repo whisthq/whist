@@ -1,7 +1,7 @@
 #ifndef CUDA_CONTEXT_H
 #define CUDA_CONTEXT_H
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file cudacontext.h
  * @brief This file contains the code to create a CUDA context
 ============================
