@@ -124,7 +124,7 @@ jobs:
               print("Packer succeeded, exiting availability zones loop...")
               break
             
-          # Assert that `manifest.json` exists after looping over all AZes to fail the workflow in the evnet that 
+          # Assert that `manifest.json` exists after looping over all AZes to fail the workflow in the event that 
           # we couldn't get capacity in any of the availability zones
           assert os.path.exists("manifest.json")
 
@@ -133,6 +133,6 @@ jobs:
           fp = open("manifest.json", "r")
           data = json.load(fp)
           fp.close()
-          print("Printing Packer output: " + data)
+          print("Printing Packer output: " + str(data))
 
       ###########################################################################
