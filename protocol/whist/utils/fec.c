@@ -38,6 +38,8 @@ const int max_u16 = 0xffff;
 
 static SDL_TLSID tls_id;
 static SDL_SpinLock tls_lock;
+static SDL_mutex* fec_init_mutex;
+bool fec_initalized=false;
 
 typedef void* (*rs_table_t)[rs_table_size];  // NOLINT
 
@@ -62,21 +64,33 @@ void free_rs_code_table(void* dummy_ptr)  // TODO check if this is called as exp
 // tss_t dummy_key;
 
 // note in the rs lib, k means num of original packets, n means total packets
-void* get_rs_code(int k, int n) {
+
+void* get_rs_code(
+    int k,
+    int n)  // note in the rs lib, k means num of original packets, n means total packets
+{
     // pthread_once(&fec_init_flag, fec_do_init_inner);
 
     if (!tls_id) {
         SDL_AtomicLock(&tls_lock);
         if (!tls_id) {
-            init_fec();
+            fec_init_mutex = SDL_CreateMutex();
             tls_id = SDL_TLSCreate();
         }
         SDL_AtomicUnlock(&tls_lock);
     }
 
     rs_table_t rs_code_table = SDL_TLSGet(tls_id);
-    if (rs_code_table == NULL) {
-        // If no rs_code_table was available, make one
+    
+    if(rs_code_table == NULL) 
+    {
+        SDL_LockMutex(fec_init_mutex);
+        if (fec_initalized == false) {
+            init_fec();
+            fec_initalized=true;
+        }
+        SDL_UnlockMutex(fec_init_mutex);
+
         rs_code_table = (rs_table_t)safe_malloc(sizeof(void*) * rs_table_size * rs_table_size);
         memset(rs_code_table, 0, sizeof(void*) * rs_table_size * rs_table_size);
         SDL_TLSSet(tls_id, rs_code_table, free_rs_code_table);
