@@ -308,7 +308,8 @@ jobs:
   #######################################################################################
   #######################################################################################
 
-  # Check Protocol PR for end-to-end streaming performance
+  # This job runs a protocol streaming session between two Docker containers on the same 
+  # AWS EC2 instance to test end-to-end networking performance in a controlled environment.   
   protocol-streaming-e2e-check-pr:
     name: "Protocol Streaming End-to-End Test"
     runs-on: ubuntu-20.04
@@ -320,19 +321,26 @@ jobs:
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
       # Load the AWS SSH keypair onto the runner, so that it can run remote commands on the AWS EC2 machine
-      # running the streaming end-to-end test
+      # running the streaming end-to-end test. This keypair is defined in AWS and stored as a GitHub Secret.
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
         with:
           name: id_rsa
-          key: ${{ secrets.SSH_KEY }} # TODO: add this
-          known_hosts: unnecessary # THIS IS UNSECURE -- WE NEED A BETTER WAY TO DO THIS
+          key: ${{ secrets.PROTOCOL_E2E_SREAMING_TEST_INSTANCE_SSH_KEY }} 
+          known_hosts: unnecessary # Note, this is unsecure and discouraged, but tolerable here given the instance is deleted after the test          
           if_key_exists: fail
+
+
+
+
+
+
+# TODO: add SSH key
 
       # Other possible flags:
       # --testing_url, defaults to Big Buck Bunny video stored on our AWS S3
