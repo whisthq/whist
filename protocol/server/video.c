@@ -56,9 +56,6 @@ Includes
 
 #define BITS_IN_BYTE 8.0
 
-#define MAX_VBV_FRAMES \
-    (((VBV_BUF_SIZE_IN_MS * FPS) / 1000) * 2)  // The "* 2" factor is just for safety
-
 /*
 ============================
 Private Functions
@@ -450,7 +447,8 @@ int32_t multithreaded_send_video(void* opaque) {
 
     add_thread_to_client_active_dependents();
 
-    NetworkThrottleContext* network_throttler = network_throttler_create();
+    NetworkThrottleContext* network_throttler =
+        network_throttler_create((double)VBV_BUF_SIZE_IN_MS, true);
     network_throttler_set_burst_bitrate(network_throttler, state->max_bitrate);
     int last_frame_size = 0;
 

@@ -15,6 +15,8 @@
 // current value (5) is an arbitrary choice that was found to work well in practice.
 #define RETRIES_ON_BUFFER_FULL 5
 
+#define UDP_NETWORK_THROTTLER_BUCKET_MS 0.5
+
 extern unsigned short port_mappings[USHRT_MAX + 1];
 
 /*
@@ -762,7 +764,8 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     if (destination == NULL) {
         // On the server, we create a network throttler to limit the
         // outgoing bitrate.
-        context->network_throttler = network_throttler_create();
+        context->network_throttler =
+            network_throttler_create(UDP_NETWORK_THROTTLER_BUCKET_MS, false);
     } else {
         context->network_throttler = NULL;
     }

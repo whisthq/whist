@@ -5,25 +5,27 @@
 #include "throttle.h"
 #include <server/server_statistic.h>
 
-// The coin bucket should never fill up more than
-// 5 ms of data at the current burst bitrate.
-#define NETWORK_THROTTLER_MAX_COIN_BUCKET_MS 0.5
 #define BITS_IN_BYTE 8.0
 
 typedef struct NetworkThrottleContextInternal {
-    size_t coin_bucket;             //<<< The coin bucket for the current burst bitrate.
-    int burst_bitrate;              //<<< The current burst bitrate.
-    WhistMutex queue_lock;          //<<< The lock to protect the queue.
+    double coin_bucket_ms;   //<<< The size of the coin bucket in milliseconds.
+    size_t coin_bucket_max;  //<<< The maximum size of the coin bucket for the current burst bitrate
+                             // and coin_bucket_ms.
+    size_t coin_bucket;      //<<< The coin bucket for the current burst bitrate.
+    int burst_bitrate;       //<<< The current burst bitrate.
+    WhistMutex queue_lock;   //<<< The lock to protect the queue.
     WhistCondition queue_cond;      //<<< The condition variable which regulates the queue.
     clock coin_bucket_last_fill;    //<<< The timer for the coin bucket's last fill.
     unsigned int next_queue_id;     //<<< The next queue id to use.
     unsigned int current_queue_id;  //<<< The currently-processed queue id.
     bool destroying;                //<<< Whether the context is being destroyed.
+    bool fill_bucket_initially;     //<<< Whether the coin bucket should be filled up initially
 } NetworkThrottleContextInternal;
 
 #define INTERNAL(ctx) ((NetworkThrottleContextInternal*)ctx->internal)
 
-NetworkThrottleContext* network_throttler_create() {
+NetworkThrottleContext* network_throttler_create(double coin_bucket_ms,
+                                                 bool fill_bucket_initially) {
     /*
         Initialize a new network throttler.
 
@@ -32,13 +34,21 @@ NetworkThrottleContext* network_throttler_create() {
     */
     NetworkThrottleContext* ctx = malloc(sizeof(NetworkThrottleContext));
     ctx->internal = malloc(sizeof(NetworkThrottleContextInternal));
-    INTERNAL(ctx)->coin_bucket = 0;
+    INTERNAL(ctx)->coin_bucket_ms = coin_bucket_ms;
+    INTERNAL(ctx)->coin_bucket_max = (size_t)((INTERNAL(ctx)->coin_bucket_ms / MS_IN_SECOND) *
+                                              (STARTING_BURST_BITRATE / BITS_IN_BYTE));
+    if (fill_bucket_initially) {
+        INTERNAL(ctx)->coin_bucket = INTERNAL(ctx)->coin_bucket_max;
+    } else {
+        INTERNAL(ctx)->coin_bucket = 0;
+    }
     INTERNAL(ctx)->burst_bitrate = STARTING_BURST_BITRATE;
     INTERNAL(ctx)->queue_lock = whist_create_mutex();
     INTERNAL(ctx)->queue_cond = whist_create_cond();
     INTERNAL(ctx)->next_queue_id = 0;
     INTERNAL(ctx)->current_queue_id = 0;
     INTERNAL(ctx)->destroying = false;
+    INTERNAL(ctx)->fill_bucket_initially = fill_bucket_initially;
     start_timer(&INTERNAL(ctx)->coin_bucket_last_fill);
 
     LOG_INFO("Created network throttler %p", ctx);
@@ -90,11 +100,21 @@ void network_throttler_set_burst_bitrate(NetworkThrottleContext* ctx, int burst_
     */
     if (!ctx) return;
 
+    size_t coin_bucket_max =
+        (size_t)((INTERNAL(ctx)->coin_bucket_ms / MS_IN_SECOND) * (burst_bitrate / BITS_IN_BYTE));
+
+    // Add difference between previous max value and current max value to account for change in
+    // bitrate
+    if (INTERNAL(ctx)->fill_bucket_initially) {
+        INTERNAL(ctx)->coin_bucket =
+            max(INTERNAL(ctx)->coin_bucket + coin_bucket_max - INTERNAL(ctx)->coin_bucket_max, 0);
+    }
     // We assume that only one thread is writing this at a time.
     // Multiple threads may read this concurrently. If we want
     // to support multiple threads, we need to lock a mutex around
     // accesses to `burst_bitrate`.
     INTERNAL(ctx)->burst_bitrate = burst_bitrate;
+    INTERNAL(ctx)->coin_bucket_max = coin_bucket_max;
 }
 
 int network_throttler_get_burst_bitrate(NetworkThrottleContext* ctx) {
@@ -150,8 +170,7 @@ void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t 
         double elapsed_seconds = get_timer(INTERNAL(ctx)->coin_bucket_last_fill);
         start_timer(&INTERNAL(ctx)->coin_bucket_last_fill);
         int burst_bitrate = network_throttler_get_burst_bitrate(ctx);
-        const size_t coin_bucket_max = (size_t)((double)NETWORK_THROTTLER_MAX_COIN_BUCKET_MS /
-                                                MS_IN_SECOND * burst_bitrate / BITS_IN_BYTE);
+        const size_t coin_bucket_max = INTERNAL(ctx)->coin_bucket_max;
         const size_t coin_bucket_update =
             (size_t)((double)elapsed_seconds * burst_bitrate / BITS_IN_BYTE);
         INTERNAL(ctx)->coin_bucket =
