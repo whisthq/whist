@@ -49,13 +49,15 @@ extern "C" {
 #include "server/parse_args.h"
 #endif
 
-#include "client/client_utils.h"
 #include <whist/logging/log_statistic.h>
 #include <whist/utils/aes.h>
 #include <whist/utils/png.h>
 #include <whist/utils/avpacket_buffer.h>
 #include <whist/utils/atomic.h>
 #include <whist/utils/fec.h>
+
+extern WhistMutex window_resize_mutex;
+extern volatile SDL_Window* window;
 }
 
 class ProtocolTest : public CaptureStdoutFixture {};
@@ -106,8 +108,6 @@ char* generate_random_string(size_t length) {
  **/
 
 TEST_F(CaptureStdoutTest, InitSDL) {
-    extern WhistMutex window_resize_mutex;
-    extern volatile SDL_Window* window;
     char* very_long_title = generate_random_string(2000);
     size_t title_len = strlen(very_long_title);
     EXPECT_EQ(title_len, 2000);
