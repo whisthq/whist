@@ -55,7 +55,8 @@ volatile char *server_ip;
 volatile int output_width;
 volatile int output_height;
 volatile char *program_name = NULL;
-extern volatile SDL_Window *window;
+volatile SDL_Window *window;
+
 
 volatile char *new_tab_url;
 
@@ -71,7 +72,6 @@ bool skip_taskbar = false;
 bool using_stun = false;
 
 MouseMotionAccumulation mouse_state = {0};
-volatile SDL_Window *window;
 
 extern unsigned short port_mappings[USHRT_MAX + 1];
 
