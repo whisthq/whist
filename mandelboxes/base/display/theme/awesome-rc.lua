@@ -12,6 +12,7 @@ local wibox = require("wibox")
 local beautiful = require("beautiful")
 -- Notification library
 local naughty = require("naughty")
+naughty.suspend()
 
 -- Needed for create_titlebar_widget_button
 local imagebox = require("wibox.widget.imagebox")
