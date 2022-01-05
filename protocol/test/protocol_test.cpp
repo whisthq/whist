@@ -106,7 +106,7 @@ char* generate_random_string(size_t length) {
  **/
 extern WhistMutex window_resize_mutex;
 extern volatile SDL_Window* window;
-TEST(ProtocolTest, InitSDL) {
+TEST_F(CaptureStdoutTest, InitSDL) {
     char* very_long_title = generate_random_string(2000);
     size_t title_len = strlen(very_long_title);
     EXPECT_EQ(title_len, 2000);
@@ -122,8 +122,8 @@ TEST(ProtocolTest, InitSDL) {
     check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
 #endif
 
-    // check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
-    // check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
+    check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
+    check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
 
     // Check that the initial title was set appropriately
     const char* title = SDL_GetWindowTitle(new_window);
@@ -145,13 +145,6 @@ TEST(ProtocolTest, InitSDL) {
 
     EXPECT_EQ(actual_width, width);
     EXPECT_EQ(actual_height, height);
-
-    // Need to import Cocoa with #include <Cocoa/Cocoa.h> to test code below, but can only import
-    // Cocoa in .m file, so need to create helper file. Check that the native window options were
-    // applied successfully NSWindow *native_window = get_native_window(new_window);
-    // EXPECT_TRUE(native_window != NULL);
-    // bool titlebaristransparent = [native_window titlebarAppearsTransparent];
-    // EXPECT_TRUE(titlebaristransparent);
 
     char* very_short_title = generate_random_string(1);
     title_len = strlen(very_short_title);
@@ -186,7 +179,6 @@ TEST(ProtocolTest, InitSDL) {
         height = get_window_pixel_height(new_window);
         int adjusted_width = width - (width % 8);
         int adjusted_height = height - (height % 2);
-        int dpi = width / actual_width;
 
         // Check Whist resize procedure (rounding)
         bool pending_resize_message;
@@ -200,18 +192,23 @@ TEST(ProtocolTest, InitSDL) {
         memset(buffer, 0, 1000);
         sprintf(buffer, "Received resize event for %dx%d, currently %dx%d", width, height, width,
                 height);
-        // check_stdout_line(::testing::HasSubstr("buffer"));
+        check_stdout_line(::testing::HasSubstr(buffer));
+        memset(buffer, 0, 1000);
+        sprintf(buffer, "Forcing a resize from %dx%d to %dx%d", width, height, adjusted_width,
+                adjusted_height);
+        check_stdout_line(::testing::HasSubstr(buffer));
         memset(buffer, 0, 1000);
         sprintf(buffer, "Window resized to %dx%d (Actual %dx%d)", width, height, adjusted_width,
                 adjusted_height);
-        // check_stdout_line(::testing::HasSubstr("buffer"));
-        memset(buffer, 0, 1000);
-        sprintf(buffer, "Sending MESSAGE_DIMENSIONS: output=%dx%d, DPI=%d, codec=264",
-                adjusted_width, adjusted_height, dpi, adjusted_height);
-        // check_stdout_line(::testing::HasSubstr("buffer"));
+        check_stdout_line(::testing::HasSubstr(buffer));
 
-        // check_stdout_line(::testing::HasSubstr("The given SocketContext has not been
-        // initialized!"));
+        memset(buffer, 0, 1000);
+        sprintf(buffer, "Sending MESSAGE_DIMENSIONS: output=%dx%d", adjusted_width,
+                adjusted_height);
+        check_stdout_line(::testing::HasSubstr(buffer));
+
+        check_stdout_line(
+            ::testing::HasSubstr("The given SocketContext has not been initialized!"));
 
         sdl_utils_check_private_vars(&pending_resize_message, NULL, NULL, NULL, NULL, NULL, NULL,
                                      NULL);
@@ -228,7 +225,7 @@ TEST(ProtocolTest, InitSDL) {
         EXPECT_EQ(actual_height, adjusted_height);
     }
 
-    /*//  Titlebar color change
+    //  Titlebar color change
     {
         std::ranlux48 gen;
         std::uniform_int_distribution<uint8_t> uniform_0_255(0, 255);
@@ -265,7 +262,6 @@ TEST(ProtocolTest, InitSDL) {
                                      NULL, NULL);
 
         EXPECT_FALSE(native_window_color_update);
-
     }
 
     //  Window title
@@ -286,7 +282,7 @@ TEST(ProtocolTest, InitSDL) {
         EXPECT_EQ(strcmp(changed_title, window_title), 0);
 
         const char* old_title = SDL_GetWindowTitle(new_window);
-        EXPECT_EQ(strcmp(old_title, changed_title), 0);
+        EXPECT_FALSE(strcmp(old_title, changed_title) == 0);
 
         sdl_update_pending_tasks();
         sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, &should_update_window_title,
@@ -300,6 +296,9 @@ TEST(ProtocolTest, InitSDL) {
 
     // Set fullscreen
     {
+        width = get_window_pixel_width(new_window);
+        height = get_window_pixel_height(new_window);
+
         bool fullscreen_trigger, fullscreen_value;
         sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, NULL, &fullscreen_trigger,
                                      &fullscreen_value);
@@ -310,6 +309,7 @@ TEST(ProtocolTest, InitSDL) {
         EXPECT_TRUE(fullscreen_value);
         EXPECT_TRUE(fullscreen_trigger);
 
+        // nothing changed yet
         actual_width = get_window_pixel_width(new_window);
         actual_height = get_window_pixel_height(new_window);
         EXPECT_EQ(actual_width, width);
@@ -320,22 +320,20 @@ TEST(ProtocolTest, InitSDL) {
                                      &fullscreen_value);
         EXPECT_FALSE(fullscreen_trigger);
 
-        actual_width = get_window_pixel_width(new_window);
-        actual_height = get_window_pixel_height(new_window);
+        actual_width = get_window_virtual_width(new_window);
+        actual_height = get_window_virtual_height(new_window);
 
         int full_width = get_virtual_screen_width();
         int full_height = get_virtual_screen_height();
 
         EXPECT_EQ(actual_width, full_width);
         EXPECT_EQ(actual_height, full_height);
-    }*/
+    }
 
     destroy_sdl(new_window);
     whist_destroy_mutex(window_resize_mutex);
-    // TODO: Comment back in lines below when done with debugging
-    // check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
-    // check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
-    // check_stdout_line(::testing::HasSubstr("Destroying SDL"));
+
+    check_stdout_line(::testing::HasSubstr("Destroying SDL"));
 }
 
 /**
