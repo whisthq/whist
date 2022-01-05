@@ -104,9 +104,10 @@ char* generate_random_string(size_t length) {
 /**
  * client/sdl_utils.c
  **/
-extern WhistMutex window_resize_mutex;
-extern volatile SDL_Window* window;
+
 TEST_F(CaptureStdoutTest, InitSDL) {
+    extern WhistMutex window_resize_mutex;
+    extern volatile SDL_Window* window;
     char* very_long_title = generate_random_string(2000);
     size_t title_len = strlen(very_long_title);
     EXPECT_EQ(title_len, 2000);
