@@ -567,16 +567,20 @@ jobs:
           echo 'USE_PROD_LOGGING=true' >> app_env.env
           cat app_env.env
 
-      - name: Generate packer_vars.json Packer Variables File for Building New AMI
+      # This spins up an AWS EC2 instance to create the AMI, and then deletes it
+      # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
+      - name: Generate Packer Configuration, Create New AMI, Update Region, and Update Appropriate Database
+        if: needs.whist-publish-build-config.outputs.publish == 'true'
+        id: build-new-amis
         working-directory: host-setup
         shell: python3 {0}
         run: |
-          import json
-          import datetime
-          import subprocess
+          import os, json, datetime, subprocess
 
+          # Get the current date and time
           date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
 
+          # Generate the Packer configuration variables
           data = {}
           data["github_pat"] = "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
           data["github_username"] = "${{ secrets.GHA_USERNAME }}"
@@ -586,10 +590,10 @@ jobs:
           data["secret_key"] = "${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}"
           data["ami_name"] = f"whist-ami-${{ github.sha }}-{date_str}"
 
-          # Set logz token and regions to clone AMI to by environment
-          # The regions our new AMI gets cloned to (All AWS supported regions)
-          # defined as a string of comma-separated values (no spaces) as required by Packer.
-
+          # Set Logz.io shipping token and regions to which to deploy the new AMI based on the environment. 
+          # For internal environments (dev, staging), we only clone our new AMI  to us-east-1 and us-west-1, to save on 
+          # costs sinc we don't have/need test users in other regions. data["destination_regions"] should be a list of 
+          # all regions we support, defined as a string of comma-separated values (no spaces) as required by Packer
           if data["git_branch"] == "prod":
             data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_PROD }}"
             data["destination_regions"] = ["us-east-1", "us-east-2", "us-west-1", "us-west-2", "ca-central-1"]
@@ -599,40 +603,50 @@ jobs:
           elif data["git_branch"] == "dev":
             data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_DEV }}"
             data["destination_regions"] = ["us-east-1", "us-west-1"]
+          else:
+            raise Exception(f"Invalid environment/git branch: {data['git_branch']}")
 
-          fp = open("packer_vars.json", "w")
-          json.dump(data, fp)
-          fp.close()
+          # Packer isn't able to loop over Availability Zones (AZes) by itself. This means that if we specify
+          # us-east-1 as the region (which has availability zones `a` through `f`), Packer will randomly
+          # pick one and attempt to run there, failing if there is no capacity in that AZ (even if there
+          # is capacity in other AZes). To work around this, we need to loop over all AZs ourselves, until
+          # one of them has capacity (only returning an error if there is no capacity in any of the AZes).
+          # We go alphabetically, since earlier AZes are larger and more likely to have capacity.
+          for a_zone in ["us-east-1a", "us-east-1b", "us-east-1c", "us-east-1d", "us-east-1e", "us-east-1f"]:
+            data["availability_zone"] = a_zone
 
-          # Display file content, for debugging purposes
-          subprocess.run("cat packer_vars.json", shell=True)
+            # Write the generated Packer variables to a file
+            fp = open("packer_vars.json", "w")
+            json.dump(data, fp)
+            fp.close()
 
-      # This spins up an AWS EC2 instance to create the AMI, and then deletes it
-      # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
-      - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
-        if: needs.whist-publish-build-config.outputs.publish == 'true'
-        id: build-new-amis
-        working-directory: host-setup
-        shell: python3 {0}
-        run: |
-          import os
-          import subprocess
-          import json
+            # Display file content, for debugging purposes
+            subprocess.run("cat packer_vars.json && echo '\n\n'", shell=True)
 
-          # Stdout will be shared with the subprocess so we can see what is happening
-          # PACKER_LOG=1 generates full log output, which is helpful for troubleshooting
-          subprocess.run("PACKER_LOG=1 packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
+            # Validate the Packer variables file for syntax errors
+            subprocess.run("packer validate -var-file=packer_vars.json ami_config.pkr.hcl && echo '\n\n'", shell=True)
 
-          # If Packer fails, manifest.json does not get created and the entire workflow fails here
-          # Note that, defined in our ami_config.pkr.hcl file, we set multiple retries for Packer and
-          # configure it to use AWS Spot instances, to avoid failing due to AWS InsufficientCapacity
+            # Generate AMIs via Packer
+            # Stdout will be shared with the subprocess so that we can see what is happening
+            # If you need to debug Packer, add `PACKER_LOG=1` before `packer build ...` in the subprocess.run command
+            subprocess.run("packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
+
+            # If Packer succeeds, it will create `manifest.json`, which is our cue to stop trying other AZes
+            if os.path.exists("manifest.json"):
+              print("Packer succeeded, exiting availability zones loop...")
+              break
+            
+          # Assert that `manifest.json` exists after looping over all AZes to fail the workflow in the event that 
+          # we couldn't get capacity in any of the availability zones
           assert os.path.exists("manifest.json")
 
           # Save Packer output to a JSON, to use for creating new instances with the newly created AMI
           fp = open("manifest.json", "r")
           data = json.load(fp)
           fp.close()
-          print(data)
+          print("Printing Packer output: " + str(data))
+
+          # Extract relevant data for creating new instances with this AMI
           new_ami_ids = data["builds"][0]["artifact_id"]
           region_ami_pairs = new_ami_ids.split(",")
 
