@@ -121,5 +121,5 @@ jobs:
           from notifications.slack_bot import slack_post
           SLACK_CHANNEL = "#alerts-${{ needs.whist-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}"
           TITLE = ":sentry: Sentry Releases Deployed :sentry:"
-          BODY = f"Sentry Releases for Whist Sentry Projects `webserver`, `protocol`, `host-service`, and `client-applications` deployed to Sentry on branch: `${{ needs.whist-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"Sentry Releases for Whist Sentry Projects  `client-applications`, `host-service`, `mandelboxes`, `protocol`, `webserver`, and `website` deployed to Sentry on branch: `${{ needs.whist-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
