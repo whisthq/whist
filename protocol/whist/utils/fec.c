@@ -36,30 +36,11 @@ const int max_u8 = 0xff;
 const int max_u16 = 0xffff;
 #define rs_table_size 256  // size of row and column
 
-static bool initalized = false;
-
 static SDL_TLSID tls_id;
 static SDL_SpinLock tls_lock;
-static SDL_mutex* fec_init_mutex;
 
 typedef void* (*rs_table_t)[rs_table_size];  // NOLINT
 
-typedef unsigned short u16_t;  // NOLINT
-
-u16_t read_u16(char* p) {
-    u16_t res;
-    res = *(const unsigned char*)(p + 0);
-    res = *(const unsigned char*)(p + 1) + (res << 8);
-    return res;
-}
-
-void fec_do_init() {}
-
-void fec_do_init_inner() {
-    FATAL_ASSERT(initalized == false);
-    init_fec();
-    initalized = true;
-}
 // static pthread_once_t  fec_init_flag = PTHREAD_ONCE_INIT;
 
 void free_rs_code_table(void* dummy_ptr)  // TODO check if this is called as expected
@@ -80,32 +61,26 @@ void free_rs_code_table(void* dummy_ptr)  // TODO check if this is called as exp
 
 // tss_t dummy_key;
 
-void* get_rs_code(
-    int k,
-    int n)  // note in the rs lib, k means num of original packets, n means total packets
-{
+// note in the rs lib, k means num of original packets, n means total packets
+void* get_rs_code(int k, int n) {
     // pthread_once(&fec_init_flag, fec_do_init_inner);
 
     if (!tls_id) {
         SDL_AtomicLock(&tls_lock);
         if (!tls_id) {
+            init_fec();
             tls_id = SDL_TLSCreate();
-            fec_init_mutex = SDL_CreateMutex();
         }
-        SDL_LockMutex(fec_init_mutex);
-        if (initalized == false) {
-            fec_do_init_inner();
-        }
-        SDL_UnlockMutex(fec_init_mutex);
-
         SDL_AtomicUnlock(&tls_lock);
-        rs_table_t p = (rs_table_t)safe_malloc(sizeof(void*) * rs_table_size * rs_table_size);
-        memset(p, 0, sizeof(void*) * rs_table_size * rs_table_size);
-        SDL_TLSSet(tls_id, p, free_rs_code_table);
     }
 
-    rs_table_t rs_code_table;
-    rs_code_table = SDL_TLSGet(tls_id);
+    rs_table_t rs_code_table = SDL_TLSGet(tls_id);
+    if (rs_code_table == NULL) {
+        // If no rs_code_table was available, make one
+        rs_code_table = (rs_table_t)safe_malloc(sizeof(void*) * rs_table_size * rs_table_size);
+        memset(rs_code_table, 0, sizeof(void*) * rs_table_size * rs_table_size);
+        SDL_TLSSet(tls_id, rs_code_table, free_rs_code_table);
+    }
 
     if (rs_code_table[k][n] == 0) {
         rs_code_table[k][n] = fec_new(k, n);
