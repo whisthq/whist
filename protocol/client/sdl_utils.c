@@ -528,7 +528,6 @@ bool sdl_is_window_visible() {
 void sdl_update_pending_tasks() {
     // Handle any pending window title updates
     if (should_update_window_title) {
-        LOG_INFO("should_update_window_title");
         if (window_title) {
             SDL_SetWindowTitle((SDL_Window*)window, (char*)window_title);
             free((char*)window_title);
@@ -541,7 +540,6 @@ void sdl_update_pending_tasks() {
 
     // Handle any pending fullscreen events
     if (fullscreen_trigger) {
-        LOG_INFO("fullscreen_trigger");
         if (fullscreen_value) {
             SDL_SetWindowFullscreen((SDL_Window*)window, SDL_WINDOW_FULLSCREEN_DESKTOP);
         } else {
@@ -552,12 +550,9 @@ void sdl_update_pending_tasks() {
 
     // Handle any pending window titlebar color events
     if (native_window_color_update && native_window_color) {
-        LOG_INFO("native window colors: %u, %u, %u", native_window_color->red,
-                 native_window_color->green, native_window_color->blue);
         set_native_window_color((SDL_Window*)window, *(WhistRGBColor*)native_window_color);
         native_window_color_update = false;
     }
-    LOG_INFO("doneeeeee");
 
     // Check if a pending window resize message should be sent to server
     whist_lock_mutex(window_resize_mutex);
