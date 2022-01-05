@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file mac_utils.c
  * @brief This file contains the MacOS helper functions for clipboard functions.
 ============================

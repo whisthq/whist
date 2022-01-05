@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file auth.ts
  * @brief This file contains custom RXJS operators that add functionality on top of existing RXJS
  * operators.

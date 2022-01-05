@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file encode.c
  * @brief This file contains the code to create and destroy Encoders and use
  *        them to encode captured screens.

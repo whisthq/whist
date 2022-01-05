@@ -1,7 +1,7 @@
 #ifndef MAC_UTILS_H
 #define MAC_UTILS_H
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file mac_utils.h
  * @brief This file contains the MacOS helper functions for clipboard functions.
 ============================

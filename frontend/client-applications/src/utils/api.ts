@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file api.ts
  * @brief This file contains utility functions to make API calls.
  */

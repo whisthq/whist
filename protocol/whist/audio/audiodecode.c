@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file audiodecode.c
  * @brief This file contains the code to decode AAC-encoded audio using FFmpeg.
 ============================

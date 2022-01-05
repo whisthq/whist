@@ -1,7 +1,7 @@
 #ifndef WINDOW_INFO_H
 #define WINDOW_INFO_H
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file window_info.h
  * @brief This file contains all the code for getting the name of a window.
 

@@ -2,7 +2,7 @@
 #define _AVPACKET_BUFFER_H_
 
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file avpacket_buffer.h
  * @brief This file contains helper functions for decoding video and audio.
 ============================

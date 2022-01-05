@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file clipboard.c
  * @brief This file contains the general clipboard functions for a shared
  *        client-server clipboard.

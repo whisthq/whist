@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file windowscursor.c
  * @brief This file defines the cursor types, functions, init and get.
 ============================

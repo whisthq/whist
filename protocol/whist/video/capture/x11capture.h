@@ -1,7 +1,7 @@
 #ifndef CAPTURE_X11CAPTURE_H
 #define CAPTURE_X11CAPTURE_H
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file x11capture.h
  * @brief This file contains the code to do screen capture via the X11 API on Linux Ubuntu.
 ============================

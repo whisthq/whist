@@ -1,7 +1,7 @@
 #ifndef WHIST_UDP_H
 #define WHIST_UDP_H
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file udp.h
  * @brief This file contains the network interface code for UDP protocol
  *

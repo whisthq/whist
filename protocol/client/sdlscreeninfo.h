@@ -1,7 +1,7 @@
 #ifndef SDL_SCREEN_INFO_H
 #define SDL_SCREEN_INFO_H
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file sdlscreeninfo.h
  * @brief This file contains SDL screen info code, used to retrive information
  *        about SDL Windows.

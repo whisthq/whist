@@ -1,7 +1,7 @@
 /*
  * GPU screen capture on Windows.
  *
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  **/
 #include "capture.h"
 #include <whist/logging/logging.h>

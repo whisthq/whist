@@ -1,7 +1,7 @@
 #ifndef WHIST_SERVER_STATE_H
 #define WHIST_SERVER_STATE_H
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file state.h
  * @brief This file defines a struct to hold server global state
  */

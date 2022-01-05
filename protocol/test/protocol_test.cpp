@@ -1,7 +1,7 @@
 
 
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file protocol_test.cpp
  * @brief This file contains all the uni tests for the /protocol codebase code f
 ============================

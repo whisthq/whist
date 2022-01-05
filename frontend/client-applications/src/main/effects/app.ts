@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file app.ts
  * @brief This file contains subscriptions to Electron app event emitters observables.
  */

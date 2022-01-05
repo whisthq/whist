@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file bitrate.h
  * @brief This file contains the client's adaptive bitrate code. Any algorithms we are using for
  *        predicting bitrate should be stored here.

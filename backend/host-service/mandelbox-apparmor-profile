@@ -2,7 +2,7 @@
 #
 # The AppArmor profile for mandelboxes, enabling new functionality while maintaining security.
 #
-# Copyright 2022 Whist Technologies, Inc.
+# Copyright (c) 2019-2022 Whist Technologies, Inc.
 #
 # This profile was generated according to whist/mandelbox-utils:apparmor-dump-profile
 # to match the docker-default profile, and then modified as follows:

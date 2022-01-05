@@ -2,7 +2,7 @@
 #define COLOR_H
 
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file color.h
  * @brief This file contains functions relating to colors, colorspace conversion,
           and implementations of algorithms and heuristics related to color and UX.

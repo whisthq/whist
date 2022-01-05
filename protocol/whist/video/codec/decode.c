@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file decode.c
  * @brief This file contains the code to create a video decoder and use that
  *        decoder to decode frames.

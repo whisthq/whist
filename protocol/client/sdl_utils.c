@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file sdl_utils.c
  * @brief This file contains the code to create and destroy SDL windows on the
  *        client.

@@ -1,7 +1,7 @@
 #ifndef AES_H
 #define AES_H
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file aes.h
  * @brief This file contains all code that interacts directly with packets
  *        encryption (using AES encryption).

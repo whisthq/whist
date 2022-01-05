@@ -1,7 +1,7 @@
 #ifndef SDL_EVENT_HANDLER_H
 #define SDL_EVENT_HANDLER_H
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file sdl_event_handler.h
  * @brief This file contains client-specific wrappers to low-level network
  *        functions.

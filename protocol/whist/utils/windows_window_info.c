@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file windows_window_info.c
  * @brief This file contains all the code for getting Windows-specific window information.
  */

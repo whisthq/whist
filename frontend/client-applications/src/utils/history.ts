@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file history.ts
  * @brief This file contains utility functions for browser history, which is used by the renderer
  * thread to navigate between page routes.

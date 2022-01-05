@@ -1,7 +1,7 @@
 #ifndef AUDIO_ENCODE_H
 #define AUDIO_ENCODE_H
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright (c) 2019-2022 Whist Technologies, Inc.
  * @file audioencode.h
  * @brief This file contains the code to encode AAC-encoded audio using FFmpeg.
 ============================
