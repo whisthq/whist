@@ -86,6 +86,8 @@ Client Tests
 ============================
 */
 
+// Helper function returning a pointer to a newly allocated string of alphanumeric characters, with
+// length equal to the length parameter. If length<=0, the function returns NULL
 char* generate_random_string(size_t length) {
     const char characters[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     if (length <= 0) {
@@ -159,10 +161,13 @@ TEST(ProtocolTest, InitSDL) {
 
     // Check the update_pending_task_functioning
 
+    window_resize_mutex = whist_create_mutex();
+
     // Window resize
     {
-        window_resize_mutex = whist_create_mutex();
-
+        // Swap height and width (pixel form)
+        width = get_window_pixel_width(new_window);
+        height = get_window_pixel_height(new_window);
         int temp;
         temp = width;
         width = height;
@@ -182,48 +187,51 @@ TEST(ProtocolTest, InitSDL) {
         sdl_update_pending_tasks();
 
         // Check that the dimensions are the desired ones
-        actual_width = get_window_virtual_width(new_window);
-        actual_height = get_window_virtual_height(new_window);
+        actual_width = get_window_pixel_width(new_window);
+        actual_height = get_window_pixel_height(new_window);
         EXPECT_EQ(actual_width, width);
         EXPECT_EQ(actual_height, height);
-
-        whist_destroy_mutex(window_resize_mutex);
     }
-
-    // Titlebar color change
+    // printf("0!\n");
+    //  Titlebar color change
     {
         std::ranlux48 gen;
         std::uniform_int_distribution<uint8_t> uniform_0_255(0, 255);
-
+        // printf("1!\n");
         WhistRGBColor c;
         c.red = uniform_0_255(gen);
         c.green = uniform_0_255(gen);
         c.blue = uniform_0_255(gen);
+        // printf("1.1!\n");
+
+        // printf("colors: %u, %u, %u\n", c.red, c.green, c.blue);
 
         bool native_window_color_update;
         sdl_utils_check_private_vars(NULL, NULL, NULL, &native_window_color_update, NULL, NULL,
                                      NULL, NULL);
-
+        // printf("2!\n");
         EXPECT_FALSE(native_window_color_update);
         sdl_render_window_titlebar_color(c);
-
+        // printf("3!\n");
         WhistRGBColor new_color;
         bool native_window_color_is_NULL;
         sdl_utils_check_private_vars(NULL, &native_window_color_is_NULL, &new_color,
                                      &native_window_color_update, NULL, NULL, NULL, NULL);
+        // printf("4!\n");
         EXPECT_FALSE(native_window_color_is_NULL);
         EXPECT_TRUE(native_window_color_update);
         EXPECT_TRUE(new_color.red == c.red);
         EXPECT_TRUE(new_color.blue == c.blue);
         EXPECT_TRUE(new_color.green == c.green);
-
+        // printf("5!\n");
         sdl_update_pending_tasks();
         sdl_utils_check_private_vars(NULL, NULL, NULL, &native_window_color_update, NULL, NULL,
                                      NULL, NULL);
         EXPECT_FALSE(native_window_color_update);
+        // printf("6!\n");
     }
-
-    // Window title
+    // printf("Got here!\n");
+    //  Window title
     {
         char* changed_title = generate_random_string(150);
         title_len = strlen(changed_title);
@@ -286,6 +294,8 @@ TEST(ProtocolTest, InitSDL) {
     }
 
     destroy_sdl(new_window);
+    whist_destroy_mutex(window_resize_mutex);
+    // TODO: Comment back in lines below when done with debugging
     // check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
     // check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
     // check_stdout_line(::testing::HasSubstr("Destroying SDL"));
