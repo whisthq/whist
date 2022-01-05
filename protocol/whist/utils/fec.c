@@ -61,21 +61,16 @@ void free_rs_code_table(void* dummy_ptr)  // TODO check if this is called as exp
     free(rs_code_table);
 }
 
-// tss_t dummy_key;
-
-// note in the rs lib, k means num of original packets, n means total packets
-
 void* get_rs_code(
     int k,
     int n)  // note in the rs lib, k means num of original packets, n means total packets
 {
-    // pthread_once(&fec_init_flag, fec_do_init_inner);
-
     if (!tls_id) {
         SDL_AtomicLock(&tls_lock);
         if (!tls_id) {
             fec_init_mutex = SDL_CreateMutex();
-            tls_id = SDL_TLSCreate();
+            tls_id = SDL_TLSCreate(); 
+            //see https://wiki.libsdl.org/SDL_TLSCreate for the offical suggested pattern for SDL_TLSCreate
         }
         SDL_AtomicUnlock(&tls_lock);
     }
@@ -177,9 +172,7 @@ void fec_get_encoded_buffers(FECEncoder* fec_encoder_raw, void** buffers, int* b
 
     FATAL_ASSERT(fec_encoder->num_accepted_buffers == fec_encoder->num_real_buffers);
     if (!fec_encoder->encode_performed) {
-        // clock encode_timer;
-        // start_timer(&encode_timer);
-
+        
         // rs encoder requires packets to have equal length, so we pad packets to max_buffer_size
         for (int i = 0; i < fec_encoder->num_real_buffers; i++) {
             char* original_buffer = fec_encoder->buffers[i];
@@ -191,9 +184,7 @@ void fec_get_encoded_buffers(FECEncoder* fec_encoder_raw, void** buffers, int* b
             memcpy((char*)fec_encoder->buffers[i], original_buffer, fec_encoder->buffer_sizes[i]);
             memset((char*)fec_encoder->buffers[i] + fec_encoder->buffer_sizes[i], 0,
                    fec_encoder->max_buffer_size - fec_encoder->buffer_sizes[i]);
-            // we can avoid the malloc and memcpy of whole packet, but that requires modification of
-            // the rs lib, and modify the fec API a bit or let upper level code be responsible for
-            // padding packets into equal length in advance
+            //the memcpy and memset here can be optimized a lot
 
             // TODO we can optimize special case of fec_packet num equal to 1  (using XOR)
         }
@@ -207,10 +198,6 @@ void fec_get_encoded_buffers(FECEncoder* fec_encoder_raw, void** buffers, int* b
         }
 
         fec_encoder->encode_performed = true;
-
-        // double encode_time=get_timer(encode_timer);
-        // LOG_INFO("[FEC] encode performed %d %d,
-        // time=%f",fec_encoder->num_real_buffers,fec_encoder->num_buffers,encode_time);
 
     }  // currently we allow fec_get_encoded_buffers to be called multiple times,
     // the code can be simplified a bit if only allow once
@@ -290,13 +277,8 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder_raw, void* buffer) {
     }
 
     if (need_recovery && !fec_decoder->recovery_performed) {
-        // clock decode_timer;
-        // start_timer(&decode_timer);
         int cnt = 0;
         int* index = safe_malloc(fec_decoder->num_real_buffers * sizeof(int));
-
-        // LOG_INFO("num_buffers=%d  num_read_buffers=%d", fec_decoder->num_buffers,
-        // fec_decoder->num_real_buffers);
 
         for (int i = 0; i < fec_decoder->num_buffers && cnt < fec_decoder->num_real_buffers; i++) {
             if (fec_decoder->buffer_sizes[i] == -1) continue;
@@ -309,7 +291,7 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder_raw, void* buffer) {
             memcpy(fec_decoder->buffers[cnt], original_buffer, original_size);
             memset((char*)fec_decoder->buffers[cnt] + original_size, 0,
                    fec_decoder->max_packet_size - original_size);
-            // can avoid the allocation and memcpy and memset, if modify the rs lib
+            //the memcpy and memset here can be optimized a lot
             cnt++;
         }
         FATAL_ASSERT(cnt == fec_decoder->num_real_buffers);
@@ -322,10 +304,6 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder_raw, void* buffer) {
         free(index);
         fec_decoder->recovery_performed = true;
 
-        // double decode_time=get_timer(decode_timer);
-        // LOG_INFO("[FEC] decode performed %d %d %d,
-        // time=%f",fec_decoder->num_accepted_real_buffers,fec_decoder->num_real_buffers,fec_decoder->num_buffers,decode_time);
-
     }  // currently we allow fec_get_decoded_buffer to be called again after succesfully recovered
     // the code can be simplify a bit if not allowing this
 
@@ -337,12 +315,7 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder_raw, void* buffer) {
         if (buffer_size == -1) {
             buffer_size = fec_decoder->max_buffer_size;
         }
-        /*
-        if (running_size + current_size >= buffer_size) {
-            LOG_ERROR("Buffer for FEC data is too large! Overflowing buffer of size %d",
-                      buffer_size);
-            return -1;
-        }*/
+        
         if (buffer != NULL) {
             memcpy((char*)buffer + running_size, fec_decoder->buffers[i], buffer_size);
         }
