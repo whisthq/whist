@@ -109,17 +109,19 @@ jobs:
             fp.close()
 
             # Display file content, for debugging purposes
-            subprocess.run("cat packer_vars.json", shell=True)
+            subprocess.run("cat packer_vars.json && echo '\n\n'", shell=True)
 
             # Validate the Packer variables file for syntax errors
-            subprocess.run("packer validate -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
+            subprocess.run("packer validate -var-file=packer_vars.json ami_config.pkr.hcl && echo '\n\n'", shell=True)
 
             # Generate AMIs via Packer
             # Stdout will be shared with the subprocess so that we can see what is happening
-            subprocess.run("PACKER_LOG=1 packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
+            # If you need to debug Packer, add `PACKER_LOG=1` before `packer build ...` in the subprocess.run command
+            subprocess.run("packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
 
             # If Packer succeeds, it will create `manifest.json`, which is our cue to stop trying other AZes
             if os.path.exists("manifest.json"):
+              print("Packer succeeded, exiting availability zones loop...")
               break
             
           # Assert that `manifest.json` exists after looping over all AZes to fail the workflow in the evnet that 
@@ -131,6 +133,6 @@ jobs:
           fp = open("manifest.json", "r")
           data = json.load(fp)
           fp.close()
-          print(data)
+          print("Printing Packer output: " + data)
 
       ###########################################################################
