@@ -228,12 +228,12 @@ TEST_F(CaptureStdoutTest, InitSDL) {
     //  Titlebar color change
     {
         std::ranlux48 gen;
-        std::uniform_int_distribution<uint8_t> uniform_0_255(0, 255);
+        std::uniform_int_distribution<unsigned int> uniform_0_255(0, 255);
 
         WhistRGBColor c;
-        c.red = uniform_0_255(gen);
-        c.green = uniform_0_255(gen);
-        c.blue = uniform_0_255(gen);
+        c.red = (uint8_t)uniform_0_255(gen);
+        c.green = (uint8_t)uniform_0_255(gen);
+        c.blue = (uint8_t)uniform_0_255(gen);
 
         bool native_window_color_update;
         sdl_utils_check_private_vars(NULL, NULL, NULL, &native_window_color_update, NULL, NULL,
