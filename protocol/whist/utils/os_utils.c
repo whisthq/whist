@@ -17,6 +17,9 @@ Includes
 #ifdef __APPLE__
 #include <Carbon/Carbon.h>
 #endif
+#ifdef __linux__
+#include <X11/XKBlib.h>
+#endif
 
 /*
 ============================
@@ -41,6 +44,15 @@ const char* apple_keyboard_mappings[][2] = {
 
 #define NUM_APPLE_KEYBOARD_MAPPINGS \
     ((int)sizeof(apple_keyboard_mappings) / (int)sizeof(apple_keyboard_mappings[0]))
+#endif
+
+#ifdef __linux__
+
+const char linux_supported_layouts[][5] = {"us", "it",    "ara", "de", "fr",
+                                           "es", "latam", "il",  "ca"};
+
+#define NUM_LINUX_SUPPORTED_LAYOUTS \
+    ((int)sizeof(linux_supported_layouts) / (int)sizeof(linux_supported_layouts[0]))
 #endif
 
 WhistKeyboardLayout get_keyboard_layout() {
@@ -77,8 +89,57 @@ WhistKeyboardLayout get_keyboard_layout() {
         // so we can add support for it if we see usage of it
         LOG_ERROR("Mac Keyboard Layout was not recognized! %s", layout);
     }
-#else
-    // Unimplemented on Windows/Linux, so always assuming US layout for now
+#elif __linux__
+    // Convenience function to check compatibility and intitialize the xkb lib
+    Display* dpy = XkbOpenDisplay(NULL, NULL, NULL, NULL, NULL, NULL);
+
+    if (dpy == NULL) {
+        return whist_layout;
+    }
+
+    XkbDescRec* kbd_desc_ptr = XkbAllocKeyboard();
+
+    kbd_desc_ptr->dpy = dpy;
+
+    XkbGetNames(dpy, XkbSymbolsNameMask, kbd_desc_ptr);
+
+    char* symbols = XGetAtomName(dpy, kbd_desc_ptr->names->symbols);
+
+    XkbStateRec xkb_state;
+    XkbGetState(dpy, XkbUseCoreKbd, &xkb_state);
+
+    // the current layout group
+    int current_group_num = (int)xkb_state.group;
+
+    char delims[] = "+_:(";
+    char* tok = strtok(symbols, delims);
+
+    int valid_token_count = 0;
+    int found = 0;
+
+    // tok comes from a string like this pc+fi(dvorak)+fi:2+ru:3+inet(evdev)+group(menu_toggle)
+    // So to simplify things I just check each token against a supported layout list.
+    // And we select the current_group_numth matching layout.
+    while (tok != NULL && !found) {
+        for (int i = 0; i < NUM_LINUX_SUPPORTED_LAYOUTS; i++) {
+            if (strcmp(linux_supported_layouts[i], tok) == 0) {
+                if (valid_token_count == current_group_num) {
+                    safe_strncpy(whist_layout.layout_name, tok, sizeof(whist_layout.layout_name));
+                    found = 1;
+                    break;
+                }
+                valid_token_count++;
+            }
+        }
+        tok = strtok(NULL, delims);
+    }
+
+    XkbFreeNames(kbd_desc_ptr, XkbSymbolsNameMask, 1);
+    XFree(symbols);
+    XFree(kbd_desc_ptr);
+    XCloseDisplay(dpy);
+#elif _WIN32
+    // TODO: Implement on Windows
 #endif
 
     // Return the whist layout
