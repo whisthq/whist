@@ -349,6 +349,8 @@ jobs:
         working-directory: protocol/test
         run: python3 streaming_e2e_tester.py --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" --ssh-key-path "/Users/runner/.ssh/id_rsa" --github_token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}""
 
+      # The streaming_e2e_tester.py file generates the files server_monitoring_log.txt and client_monitoring_log.txt in
+      # the folder it is run in. We parse these files to display the results of the test.
       - name: Parse & Display Test Results
         working-directory: protocol/test
         shell: python3 {0}
@@ -357,37 +359,40 @@ jobs:
           GITHUB_ISSUE: ${{ github.event.number }}
           GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
         run: |
+          import os, sys, mmap
 
-
-
-
-          # Parse the results of the test into a .info file, to be displayed on the GitHub PR
-          import mmap
-
+          # Here, we parse the test results into a .info file, which can be read and displayed on the GitHub PR
           # Create output .info file
           results_file = open("streaming_e2e_test_results.info", "w+")
-          results_file.write(
-            ## End-to-End Streaming Test Results
-            # TODO
-          )
 
-          # Parse client logs
+          # Parse client logs for metrics
           with open(os.path.abspath("client_monitoring_log.txt") as client_logs_file:
-              stringified_file = mmap.mmap(client_logs_file.fileno(), 0, access=mmap.ACCESS_READ)
+            # Stringify the results file, to make it easier to extract specific substrings 
+            stringified_file = mmap.mmap(client_logs_file.fileno(), 0, access=mmap.ACCESS_READ)
 
-              # TODO: Read all the variables we want here with stringified_file.find('var-name') != -1: write-to-our-result-file
+            # TODO: extract the substrings/variables we are interested in from the results
+            # Read all the variables we want here with stringified_file.find('var-name') != -1: write-to-our-result-file
+            results_file.write("THE METRICS WE EXTRACTED ABOVE")
 
-          # Parse server logs
+          # Parse server logs for metrics
           with open(os.path.abspath("server_monitoring_log.txt") as server_logs_file:
-              stringified_file = mmap.mmap(server_logs_file.fileno(), 0, access=mmap.ACCESS_READ)
-              
-              # TODO: Read all the variables we want here with stringified_file.find('var-name') != -1: write-to-our-result-file
+            # Stringify the results file, to make it easier to extract specific substrings 
+            stringified_file = mmap.mmap(server_logs_file.fileno(), 0, access=mmap.ACCESS_READ)
+            
+            # TODO: extract the substrings/variables we are interested in from the results
+            # Read all the variables we want here with stringified_file.find('var-name') != -1: write-to-our-result-file
+            results_file.write("THE METRICS WE EXTRACTED ABOVE")
 
-          # TODO
+          # TODO: format the .info file nicely so it displays well on GitHub
 
+          # We're done, close the file
+          results_file.close()
 
-          import os
-          import sys
+          #######################################################################################
+
+          # Display the results on the GitHub PR. In the future, we could also upload summaries to Logz.io, or post
+          # a nightly update in Slack, if we choose to.
+
           sys.path.append(".github/workflows/helpers")
           from notifications.github_bot import github_comment_update
 
@@ -402,6 +407,7 @@ jobs:
           identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE"
           title = "Protocol End-to-End Streaming Test Results"
 
+          # This file gets created above, in parsing the test results into something more human-readable
           file = open("protocol/test/streaming_e2e_test_results.info")
           body = file.read()
           file.close()
@@ -414,3 +420,5 @@ jobs:
             body,
             title=title,
           )
+
+  #######################################################################################
