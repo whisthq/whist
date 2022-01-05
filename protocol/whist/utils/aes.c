@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file aes.c
  * @brief This file contains all code that interacts directly with packets
  *        encryption (using AES encryption).

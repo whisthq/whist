@@ -1,7 +1,7 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file network.h
  * @brief This file contains all code that interacts directly with sockets
  *        under-the-hood.

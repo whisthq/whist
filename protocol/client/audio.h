@@ -1,7 +1,7 @@
 #ifndef CLIENT_AUDIO_H
 #define CLIENT_AUDIO_H
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file audio.h
  * @brief This file contains all code that interacts directly with processing
  *        audio packets on the client.

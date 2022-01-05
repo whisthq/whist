@@ -1,7 +1,7 @@
 #ifndef SERVER_STATISTIC_H
 #define SERVER_STATISTIC_H
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file server_statistic.h
  * @brief This file lists all the server-side metrics that needs to be logged
  */

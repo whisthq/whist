@@ -1,7 +1,7 @@
 #ifndef WASAPICAPTURE_H
 #define WASAPICAPTURE_H
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file wasapicapture.h
  * @brief This file contains the code to capture audio on Windows using WASAPI.
 ============================

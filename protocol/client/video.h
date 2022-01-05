@@ -1,7 +1,7 @@
 #ifndef CLIENT_VIDEO_H
 #define CLIENT_VIDEO_H
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file video.h
  * @brief This file contains all code that interacts directly with receiving and
  *        processing video packets on the client.

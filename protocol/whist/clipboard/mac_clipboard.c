@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file mac_clipboard.c
  * @brief This file contains the general clipboard functions for a shared
  *        client-server clipboard on MacOS clients.

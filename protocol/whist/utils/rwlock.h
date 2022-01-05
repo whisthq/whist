@@ -1,7 +1,7 @@
 #ifndef RWLOCK_H
 #define RWLOCK_H
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file rwlock.h
  * @brief This file contains a write-preferred read-write lock.
 ============================

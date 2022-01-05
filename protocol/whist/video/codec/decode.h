@@ -1,7 +1,7 @@
 #ifndef VIDEO_CODEC_DECODE_H
 #define VIDEO_CODEC_DECODE_H
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file decode.h
  * @brief This file contains the code to create a video decoder and use that
  *        decoder to decode frames.

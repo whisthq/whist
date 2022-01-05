@@ -1,7 +1,7 @@
 #ifndef AUDIO_DECODE_H
 #define AUDIO_DECODE_H
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file audiodecode.h
  * @brief This file contains the code to decode AAC-encoded audio using FFmpeg.
 ============================

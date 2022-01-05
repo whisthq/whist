@@ -1,7 +1,7 @@
 #ifndef FFMPEG_ENCODE_H
 #define FFMPEG_ENCODE_H
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file ffmpeg_encode.h
  * @brief This file contains the code to create and destroy FFmpeg encoders and use
  *        them to encode captured screens.

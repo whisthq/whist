@@ -1,7 +1,7 @@
 #ifndef INPUT_DRIVER_H
 #define INPUT_DRIVER_H
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file input_driver.h
  * @brief This file defines the methods required to implement an input driver
 ============================

@@ -1,7 +1,7 @@
 #ifndef SERVER_PARSE_ARGS_H
 #define SERVER_PARSE_ARGS_H
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file parse_args.h
  * @brief This file contains all code that parses the arguments
  *        for the call to the server.

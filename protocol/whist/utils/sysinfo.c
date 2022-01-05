@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file sysinfo.c
  * @brief This file contains all code that logs client hardware specifications.
 ============================

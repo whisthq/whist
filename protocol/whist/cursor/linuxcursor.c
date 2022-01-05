@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file linuxcursor.c
  * @brief This file defines the cursor types, functions, init and get.
 ============================

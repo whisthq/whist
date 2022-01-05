@@ -1,7 +1,7 @@
 #ifndef XTEST_INPUT_DRIVER_H
 #define XTEST_INPUT_DRIVER_H
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file xtest_input_driver.h
  * @brief This file defines the X11 input device type.
 ============================

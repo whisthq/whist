@@ -1,7 +1,7 @@
 #ifndef CLIENT_STATISTIC_H
 #define CLIENT_STATISTIC_H
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file client_statistic.h
  * @brief This file lists all the client-side metrics that needs to be logged
  */

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file sdl_event_handler.c
  * @brief This file contains client-specific wrappers to low-level network
  *        functions.

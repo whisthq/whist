@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020-2022 Whist Technologies, Inc.
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file clipboard_osx.m
  * @brief This file contains the code to interface with the MacOS clipboard via
  *        Apple's Objective-C language.
