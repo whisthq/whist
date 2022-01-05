@@ -169,7 +169,7 @@ void sdl_update_pending_tasks();
 
 /**
  * @brief                          Copies private variable values to the variables pointed by the
- * non-NULL pointers passed as paraemters. Used for testing.
+ * non-NULL pointers passed as parameters. Used for testing.
  *
  * @returns                        nothing
  *

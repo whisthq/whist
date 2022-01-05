@@ -574,6 +574,14 @@ void sdl_utils_check_private_vars(bool* pending_resize_message_, bool* native_wi
                                   bool* native_window_color_update_, char* window_title_,
                                   bool* should_update_window_title_, bool* fullscreen_trigger_,
                                   bool* fullscreen_value_) {
+    /*
+      This function sets the variables pointed to by each of the non-NULL parameters (with the
+      exception of native_window_color_is_NULL, which has a slightly different purpose) with the
+      values held by the corresponding sdl_utils.c globals. If native_window_color_is_NULL is not
+      NULL, we set the value pointed to by it with a boolean indicating whether the
+      native_window_color global pointer is NULL.
+     */
+
     if (pending_resize_message_) {
         if (window_resize_mutex) {
             whist_lock_mutex(window_resize_mutex);
