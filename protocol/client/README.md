@@ -7,22 +7,32 @@ This folder builds a client to receive a server stream via Whist. It supports Wi
 The option flags are as follows:
 
 ```
-  -w, --width=WIDTH             set the width for the windowed-mode
+  -w, --width=WIDTH             Set the width for the windowed-mode
                                   window, if both width and height
                                   are specified
-  -h, --height=HEIGHT           set the height for the windowed-mode
+  -h, --height=HEIGHT           Set the height for the windowed-mode
                                   window, if both width and height
                                   are specified
-  -b, --bitrate=BITRATE         set the maximum bitrate to use
-  -s, --spectate                launch the protocol as a spectator
-  -c, --codec=CODEC             launch the protocol using the codec
+  -b, --bitrate=BITRATE         Set the maximum bitrate to use
+  -c, --codec=CODEC             Launch the protocol using the codec
                                   specified: h264 (default) or h265
-  -u, --user                    Tell whist the users email, optional defaults to None"
-  -e, --environment             The environment the protocol is running
-                                in. e.g prod, staging, dev. This is used
-                                for Sentry. Optional defaults to dev
-  --help     display this help and exit"
-  --version  output version information and exit;
+  -k, --private-key=PK          Pass in the RSA Private Key as a
+                                  hexadecimal string
+  -u, --user=EMAIL              Tell Whist the user's email. Default: None
+  -e, --environment=ENV         The environment the protocol is running in,
+                                  e.g production, staging, development. Default: none
+  -i, --icon=PNG_FILE           Set the protocol window icon from a 64x64 pixel png file
+  -p, --ports=PORTS             Pass in custom port:port mappings, period-separated.
+                                  Default: identity mapping
+  -n, --name=NAME               Set the window title. Default: Whist
+  -r, --read-pipe               Read arguments from stdin until EOF. Don't need to pass
+                                  in IP if using this argument and passing with arg `ip`
+  -l, --loading                 Custom loading screen message
+  -s, --skip-taskbar            Launch the protocol without displaying an icon
+                                  in the taskbar
+  -x, --new-tab-url             URL to open in new tab
+  --help     Display this help and exit
+  --version  Output version information and exit
 ```
 
 To test if a build of the client runs (by calling the dummy IP address `0.0.0.0`), call:
