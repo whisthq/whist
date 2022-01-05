@@ -41,6 +41,7 @@ type mockClient struct {
 	browserImage string
 
 	started bool
+	stopped bool
 }
 
 // ImageList mocks the ImageAPIClient interface's ImageList method and returns
@@ -86,8 +87,189 @@ func (m *mockClient) ContainerCreate(ctx context.Context, config *container.Conf
 func (m *mockClient) ContainerStart(ctx context.Context, container string, options types.ContainerStartOptions) error {
 	logger.Infof("Called mock ContainerStart method.")
 	time.Sleep(3 * time.Second)
+	m.stopped = true
+	return nil
+}
+
+
+// ContainerStop mocks the ContainerAPIClient's ContainerStop method and returns
+// nil, simulating successful container stopping. The method will sleep for 1 seconds
+// to simulate (+ exaggerate) the behaviour of a real container stop.
+func (m *mockClient) ContainerStop(ctx context.Context, id string, timeout *time.Duration) error {
+	logger.Infof("Called mock ContainerStop method.")
+	time.Sleep(1 * time.Second)
 	m.started = true
 	return nil
+}
+
+// ContainerRemove mocks the ContainerAPIClient's ContainerRemove method and returns
+// nil, simulating successful container removal. The method will sleep for 1 seconds
+// to simulate (+ exaggerate) the behaviour of a real container being removed.
+func (m *mockClient) ContainerRemove(ctx context.Context, id string, options types.ContainerRemoveOptions) error {
+	logger.Infof("Called mock ContainerRemove method.")
+	time.Sleep(1 * time.Second)
+	return nil
+}
+
+// 	TODO (aaron): Figure out how to test startDockerDaemon
+
+
+// TestCreateDockerClient will check if a valid docker client is created without error
+func TestCreateDockerClient(t *testing.T) {
+	dockerClient, err := createDockerClient()
+
+	if err != nil {
+		t.Fatalf("error creating docker client. Error: %v", err)
+	}
+
+	if dockerClient == nil {
+		t.Fatal("error creating docker client. Expected client, got nil")
+	}
+
+	if _, ok := interface{}(dockerClient).(*client.Client); !ok {
+		t.Fatalf("error creating docker client. Expected docker client")
+	}
+}
+
+// TODO: dockerImageFromRegexes
+
+
+// TestwarmUpDockerClient calls warmUpDockerClient and checks if the setup steps
+// are performed correctly
+func TestWarmUpDockerClient(t *testing.T) {
+	var browserImages = []string{"whisthq/browsers/chrome:current-build", "whisthq/browsers/brave:current-build"}
+	for _, browserImage := range browserImages {
+		t.Run(browserImage, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			goroutineTracker := sync.WaitGroup{}
+
+			// Defer the wait first since deferred functions are executed in LIFO order.
+			defer goroutineTracker.Wait()
+			defer cancelMandelboxContextByID(mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()))
+			defer cancel()
+
+			// We always want to start with a clean slate
+			uninitializeFilesystem()
+			initializeFilesystem(cancel)
+			defer uninitializeFilesystem()
+
+			dockerClient := mockClient{
+				browserImage: browserImage,
+			}
+
+			resourceMappingDir := path.Join(utils.WhistDir, utils.PlaceholderWarmupUUID().String(), "mandelboxResourceMappings")
+			filePath := path.Join(resourceMappingDir, "done_sleeping_until_X_clients")
+			if _, err := os.Stat(resourceMappingDir); os.IsNotExist(err) {
+				if err := os.MkdirAll(resourceMappingDir, 0777); err != nil {
+					t.Fatalf("Could not make dir %s. Error: %s", resourceMappingDir, err)
+				}
+
+				defer os.RemoveAll(resourceMappingDir)
+
+			}
+
+			go utils.WriteToNewFile(filePath, "test")
+			// We need to write the file a second time because warm up runs twice
+			go func() {
+				time.Sleep(1 * time.Minute)
+				for {
+					if _, err := os.Stat(filePath); err != nil {
+						utils.WriteToNewFile(filePath, "test")
+						break
+					}
+					time.Sleep(1 * time.Second)
+				}
+			}()
+
+			// Should succeed
+			err := warmUpDockerClient(ctx, cancel, &goroutineTracker, &dockerClient)
+
+			if err != nil {
+				t.Fatalf("error calling warmUpDockerClient. Error: %v", err)
+			}
+		})
+	}
+}
+
+// TestWarmUpDockerClientUnsupportedImage will check if no suitable image is handled correctly
+func TestWarmUpDockerClientUnsupportedImage(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// Defer the wait first since deferred functions are executed in LIFO order.
+	defer cancelMandelboxContextByID(mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()))
+	defer cancel()
+
+	dockerClient := mockClient{
+		browserImage: "unsupported_image",
+	}
+
+	// Should succeed
+	result := warmUpDockerClient(ctx, cancel, nil, &dockerClient)
+
+	if result == nil {
+		t.Errorf("error calling warmUpDockerClient with an unsupported image. Expected err, got nil")
+	}
+}
+
+// TestWarmUpDockerClientPortUnavailablble will check if an unavailable port is handled properly
+func TestWarmUpDockerClientPortUnavailablble(t *testing.T) {
+	//  All ports
+	ports := []portbindings.PortBinding{}
+
+	for port := portbindings.MinAllowedPort; port < portbindings.MaxAllowedPort; port++ {
+		ports = append(ports,
+			portbindings.PortBinding{
+				MandelboxPort: uint16(22),
+				Protocol: portbindings.TransportProtocolTCP,
+				HostPort: uint16(port),
+				BindIP: "test_ip",
+		})
+	}
+
+	// Allocate ports to replicate all ports unavailable
+	if _, err := portbindings.Allocate(ports); err != nil {
+		t.Fatalf("error allocating all ports. Error: %v", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	goroutineTracker := sync.WaitGroup{}
+
+	// Defer the wait first since deferred functions are executed in LIFO order.
+	defer cancelMandelboxContextByID(mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()))
+	defer cancel()
+
+	dockerClient := mockClient{
+		browserImage: "whisthq/browser/unavailable",
+	}
+
+	// should succeed and return nil
+	result := warmUpDockerClient(ctx, cancel, &goroutineTracker, &dockerClient)
+
+	if result == nil {
+		t.Fatalf("error calling warmUpDockerClient with an unavailable ports. Expected err, got nil")
+	}
+
+	// Free allocated ports
+	portbindings.Free(ports)
+}
+
+
+// Uinput
+
+
+// TTY
+
+// TestDrainAndShutdown will check if shutdownInstanceOnExit is set to false
+func TestDrainAndShutdown(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	shutdownInstanceOnExit = false
+
+	//  Should update the global variable to be true
+	drainAndShutdown(ctx, cancel, nil)
+
+	if !shutdownInstanceOnExit {
+		t.Fatalf("error draining and shutting down. Expected shutdownInstanceOnExit = `true`, got `false`")
+	}
 }
 
 // TestSpinUpMandelbox calls SpinUpMandelbox and checks if the setup steps
