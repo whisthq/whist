@@ -335,6 +335,9 @@ jobs:
           known_hosts: unnecessary # Note, this is not secure and discouraged, but tolerable here given the instance is deleted after the test
           if_key_exists: fail
 
+      - name: Install End-to-End Streaming Test Dependencies
+        run: pip install boto3
+
       # Run the streaming end-to-end integration test. The -ssh-key-name must match the value in AWS EC2 under
       # Key Pairs, where the SSH key is defined. Other possible flags:
       # --testing_url, defaults to Big Buck Bunny video stored on our AWS S3
