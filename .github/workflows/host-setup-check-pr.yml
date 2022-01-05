@@ -119,15 +119,19 @@ jobs:
           for az in ["us-east-1a", "us-east-1b", "us-east-1c", "us-east-1d", "us-east-1e", "us-east-1f"]:
 
 
+            # 
+            data = {}
+            data[availability_zone] = az
+            fp = open("packer_vars.json", "w")
+            json.dump(data, fp)
+            fp.close()
+
+            # Display file content, for debugging purposes
+            subprocess.run("cat packer_vars.json", shell=True)
 
               
-
-
-            subprocess.run(['PACKER_LOG=1 packer build -var-file=packer_vars.json -var availability_zone=', az, ' ami_config.pkr.hcl'], shell=True)
-              
-
             # Stdout will be shared with the subprocess so we can see what is happening
-            # subprocess.run("PACKER_LOG=1 packer build -var-file=packer_vars.json -var availability_zone=az ami_config.pkr.hcl", shell=True)
+            subprocess.run("PACKER_LOG=1 packer build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
 
             if os.path.exists("manifest.json"):
               break
