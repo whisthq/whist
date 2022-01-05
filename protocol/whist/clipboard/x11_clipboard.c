@@ -344,7 +344,6 @@ bool unsafe_has_os_clipboard_updated() {
     }
 
     static bool first = true;  // static, so only sets to true on first call
-    static int event_base, error_base;
     XEvent event;
     if (first) {
         first = false;
