@@ -30,14 +30,14 @@ There are two ways of running development mandelboxes on the host service. The f
 
 #### Connecting with the protocol client
 
-1. Start your instance, ssh into it and go to `~/whist/host-service`, then run `make run`.
+1. Start your instance, ssh into it and go to `~/whist/backend/host-service`, then run `make run`.
 2. Once you see the host enter the event loop, open another terminal window, ssh into your instance, go to `~/whist/mandelboxes` and run `./run_local_mandelbox_image.sh browsers/chrome`. This should start a mandelbox, and you should see the output give a command to run the protocol client on your machine.
 3. Run the protocol client on your local machine (follow the [protocol readme](../protocol/README.md#building-the-protocol)).
 4. You should see a Chrome window open on your machine.
 
 #### Connecting the client application to your development instance
 
-1. Start your instance, ssh into it and go to `~/whist/host-service`, then run `make run` and wait for the event loop to start. Take note of your dev instance ip address.
+1. Start your instance, ssh into it and go to `~/whist/backend/host-service`, then run `make run` and wait for the event loop to start. Take note of your dev instance ip address.
 2. On your local machine, go to `frontend/client-applications` and run the command
    `TESTING_LOCALDEV_HOST_IP=<your instance ip> yarn test:manual localdevHost`. You can also export the `TESTING_LOCALDEV_HOST_IP` env var first and then run `yarn test:manual localdevHost`.
 3. The client should open up a Chrome window.
