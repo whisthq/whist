@@ -606,8 +606,14 @@ void sdl_utils_check_private_vars(bool* pending_resize_message_, bool* native_wi
     }
 
     if (window_title_) {
-        size_t len = strlen(window_title) + 1;
-        safe_strncpy(window_title_, window_title, len);
+        size_t len = 0;
+        // While loop needed for string copy because window_title is volatile
+        while (window_title && window_title[len] != '\0') {
+            window_title_[len] = window_title[len];
+            len += 1;
+        }
+        len += 1;
+        window_title_[len] = '\0';
     }
 
     if (should_update_window_title_) {
