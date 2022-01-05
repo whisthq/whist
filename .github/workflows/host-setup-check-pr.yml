@@ -121,7 +121,7 @@ jobs:
 
             # 
             data = {}
-            data[availability_zone] = az
+            data["availability_zone"] = az
             fp = open("packer_vars.json", "w")
             json.dump(data, fp)
             fp.close()
