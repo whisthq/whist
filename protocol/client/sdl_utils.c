@@ -550,6 +550,8 @@ void sdl_update_pending_tasks() {
 
     // Handle any pending window titlebar color events
     if (native_window_color_update && native_window_color) {
+        LOG_INFO("native window colors: %u, %u, %u", native_window_color->red,
+                 native_window_color->green, native_window_color->blue);
         set_native_window_color((SDL_Window*)window, *(WhistRGBColor*)native_window_color);
         native_window_color_update = false;
     }
