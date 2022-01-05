@@ -164,10 +164,29 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 	}
 
 	// Create slice with newly created instance ids
-	var createdInstanceIds []string
+	var (
+		createdInstanceIds []string
+		instancesForDb     []cloud_instance_info_insert_input
+	)
 
 	for _, instance := range createdInstances {
 		createdInstanceIds = append(createdInstanceIds, instance.CloudProviderID)
+		instancesForDb = append(instancesForDb, cloud_instance_info_insert_input{
+			IP:                graphql.String(instance.IP),
+			Location:          graphql.String(instance.Location),
+			ImageID:           graphql.String(instance.ImageID),
+			Type:              graphql.String(instance.Type),
+			CloudProviderID:   graphql.String(instance.CloudProviderID),
+			CommitHash:        graphql.String(instance.CommitHash),
+			CreationTimeMS:    graphql.Float(instance.CreationTimeMS),
+			GPUVramRemaing:    graphql.Float(instance.GPUVramRemaing),
+			Name:              graphql.String(instance.Name),
+			LastUpdatedMS:     graphql.Float(instance.LastUpdatedMS),
+			MandelboxCapacity: graphql.Float(instance.MandelboxCapacity),
+			MemoryRemainingKB: graphql.Float(instance.MemoryRemainingKB),
+			NanoCPUsRemaining: graphql.Float(instance.NanoCPUsRemaining),
+			Status:            graphql.String(instance.Status),
+		})
 		logger.Infof("Created tagged instance with ID %v, Name %v", instance.CloudProviderID, instance.Name)
 	}
 
@@ -182,12 +201,12 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 	// If successful, write to db
 	insertMutation := &subscriptions.InsertInstances
 	mutationParams := map[string]interface{}{
-		"instance": createdInstances,
+		"objects": instancesForDb,
 	}
 
 	err = s.GraphQLClient.Mutate(scalingCtx, insertMutation, mutationParams)
 	if err != nil {
-		return utils.MakeError("Failed to insert instances into database")
+		return utils.MakeError("Failed to insert instances into database. Error: %v", err)
 	}
 
 	logger.Infof("Inserted %v rows to database.", insertMutation.MutationResponse.AffectedRows)
