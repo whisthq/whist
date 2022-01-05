@@ -46,7 +46,6 @@ Private Functions
 static int handle_pong_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_tcp_pong_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_quit_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
-static int handle_audio_frequency_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_clipboard_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_window_title_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_open_uri_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
@@ -80,8 +79,6 @@ int handle_server_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
             return handle_tcp_pong_message(wsmsg, wsmsg_size);
         case SMESSAGE_QUIT:
             return handle_quit_message(wsmsg, wsmsg_size);
-        case MESSAGE_AUDIO_FREQUENCY:
-            return handle_audio_frequency_message(wsmsg, wsmsg_size);
         case SMESSAGE_CLIPBOARD:
             return handle_clipboard_message(wsmsg, wsmsg_size);
         case SMESSAGE_WINDOW_TITLE:
@@ -161,29 +158,6 @@ static int handle_quit_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
     }
     LOG_INFO("Server signaled a quit!");
     client_exiting = true;
-    return 0;
-}
-
-static int handle_audio_frequency_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
-    /*
-        Handle server audio frequency message
-
-        Arguments:
-            wsmsg (WhistServerMessage*): server audio frequency message
-            wsmsg_size (size_t): size of the packet message contents
-
-        Return:
-            (int): 0 on success, -1 on failure
-    */
-
-    if (wsmsg_size != sizeof(WhistServerMessage)) {
-        LOG_ERROR(
-            "Incorrect message size for a server message"
-            " (type: audio frequency message)!");
-        return -1;
-    }
-    LOG_INFO("Changing audio frequency to %d", wsmsg->frequency);
-    set_audio_frequency(wsmsg->frequency);
     return 0;
 }
 

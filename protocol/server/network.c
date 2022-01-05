@@ -164,7 +164,6 @@ int do_discovery_handshake(whist_server_state *state, SocketContext *context,
 
     // Send connection ID to client
     reply_msg->connection_id = state->connection_id;
-    reply_msg->audio_sample_rate = state->sample_rate;
 
     LOG_INFO("Sending discovery packet");
     LOG_INFO("wsmsg size is %d", (int)wsmsg_size);
@@ -355,12 +354,6 @@ int multithreaded_manage_client(void *opaque) {
     }
 
     while (!state->exiting) {
-        if (state->sample_rate == -1) {
-            // If audio hasn't initialized yet, let's wait a bit.
-            whist_sleep(25);
-            continue;
-        }
-
         LOG_INFO("Is a client connected? %s", state->client.is_active ? "yes" : "no");
 
         // If all threads have stopped using the active client, we can finally quit it

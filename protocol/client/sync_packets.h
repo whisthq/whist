@@ -14,17 +14,29 @@ and wait for them to finish.
 
 /*
 ============================
+Includes
+============================
+*/
+
+#include "renderer.h"
+
+/*
+============================
 Public Functions
 ============================
 */
 
 /**
- * @brief        Initialize the packet synchronizer threads for UDP and TCP.
+ * @brief                          Initialize the packet synchronizer
+ *                                 threads for UDP and TCP
+ *
+ * @param whist_renderer           The whist renderer to pass packets into
  */
-void init_packet_synchronizers();
+void init_packet_synchronizers(WhistRenderer* whist_renderer);
 
 /**
- * @brief        Destroy and wait on the packet synchronizer threads for UDP and TCP.
+ * @brief                          Destroy the packet synchronizer
+ *                                 threads for UDP and TCP
  */
 void destroy_packet_synchronizers();
 

@@ -582,7 +582,6 @@ typedef struct WhistDiscoveryReplyMessage {
     int udp_port;
     int tcp_port;
     int connection_id;
-    int audio_sample_rate;
 } WhistDiscoveryReplyMessage;
 
 /**
@@ -736,7 +735,6 @@ typedef enum WhistServerMessageType {
     SMESSAGE_NONE = 0,  ///< No Message
     MESSAGE_PONG = 1,
     MESSAGE_TCP_PONG = 2,
-    MESSAGE_AUDIO_FREQUENCY = 3,
     SMESSAGE_CLIPBOARD = 4,
     SMESSAGE_WINDOW_TITLE = 5,
     MESSAGE_DISCOVERY_REPLY = 6,
@@ -755,7 +753,6 @@ typedef struct WhistServerMessage {
     WhistServerMessageType type;  ///< Input message type.
     union {
         int ping_id;
-        int frequency;
         int fullscreen;
     };
     union {

@@ -155,11 +155,9 @@ int discover_ports(bool *with_stun) {
     // Create and send discovery reply message
     WhistDiscoveryReplyMessage *reply_msg = (WhistDiscoveryReplyMessage *)wsmsg->discovery_reply;
 
-    set_audio_frequency(reply_msg->audio_sample_rate);
     udp_port = reply_msg->udp_port;
     tcp_port = reply_msg->tcp_port;
-    LOG_INFO("Using UDP Port: %d, TCP Port: %d. Audio frequency: %d.", udp_port, tcp_port,
-             reply_msg->audio_sample_rate);
+    LOG_INFO("Using UDP Port: %d, TCP Port: %d", udp_port, tcp_port);
 
     error_monitor_set_connection_id(reply_msg->connection_id);
 

@@ -50,6 +50,7 @@ Includes
 #include <whist/utils/color.h>
 #include "native_window_utils.h"
 #include "client_statistic.h"
+#include "renderer.h"
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
@@ -184,19 +185,6 @@ int multithreaded_read_piped_arguments(void* keep_piping) {
     return ret;
 }
 
-static volatile bool run_renderer_thread = false;
-int32_t multithreaded_renderer(void* opaque) {
-    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
-
-    while (run_renderer_thread) {
-        render_audio();
-        render_video();
-        SDL_Delay(1);
-    }
-
-    return 0;
-}
-
 void handle_single_icon_launch_client_app(int argc, char* argv[]) {
     // This function handles someone clicking the protocol icon as a means of starting Whist by
     // instead launching the client app
@@ -306,8 +294,6 @@ int main(int argc, char* argv[]) {
     // Set error monitor username based on email from parsed arguments.
     error_monitor_set_username(user_email);
 
-    WhistThread renderer_thread = NULL;
-
     print_system_info();
     LOG_INFO("Whist client revision %s", whist_git_revision());
 
@@ -414,14 +400,9 @@ int main(int argc, char* argv[]) {
         SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
         SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
 
-        // Initialize audio and video
         is_timing_latency = false;
-        init_audio();
-        init_video();
-
-        run_renderer_thread = true;
-        renderer_thread =
-            whist_create_thread(multithreaded_renderer, "multithreaded_renderer", NULL);
+        // Initialize audio and video renderer system
+        WhistRenderer* whist_renderer = init_renderer();
 
         // Initialize audio and variables
         // reset because now connected
@@ -434,7 +415,8 @@ int main(int argc, char* argv[]) {
         init_file_synchronizer(0);
 
         // Create threads to receive udp/tcp packets and handle them as needed
-        init_packet_synchronizers();
+        // Pass the whist_renderer so that udp packets can be fed into it
+        init_packet_synchronizers(whist_renderer);
 
         start_timer(&window_resize_timer);
         window_resize_mutex = whist_create_mutex();
@@ -457,6 +439,9 @@ int main(int argc, char* argv[]) {
 
             // Update any pending SDL tasks
             sdl_update_pending_tasks();
+
+            // Try rendering anything out, if there's something to render out
+            renderer_try_render(whist_renderer);
 
             // We _must_ keep make calling this function as much as we can,
             // or else the user will get beachball / "Whist Not Responding"
@@ -518,13 +503,8 @@ int main(int argc, char* argv[]) {
         destroy_clipboard_synchronizer();
         close_connections();
 
-        // Destroy the renderer thread
-        run_renderer_thread = false;
-        whist_wait_thread(renderer_thread, NULL);
-
-        // Destroy audio and video
-        destroy_audio();
-        destroy_video();
+        // Destroy the renderer
+        destroy_renderer(whist_renderer);
 
         // Mark as disconnected
         connected = false;

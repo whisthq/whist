@@ -190,7 +190,7 @@ int multithreaded_sync_udp_packets(void* opaque) {
         Send, receive, and process UDP packets - dimension messages, bitrate messages, nack
        messages, pings, audio and video packets.
     */
-    bool* run_sync_packets = (bool*)opaque;
+    WhistRenderer* whist_renderer = (WhistRenderer*)opaque;
     SocketContext* socket_context = &packet_udp_context;
 
     // we initialize latency here because on macOS, latency would not initialize properly in
@@ -209,7 +209,7 @@ int multithreaded_sync_udp_packets(void* opaque) {
         send_message_dimensions();
     }
 
-    while (*run_sync_packets) {
+    while (run_sync_packets_threads) {
         // Ack the connection every 5 seconds
         if (get_timer(last_ack) > 5.0) {
             ack(socket_context);
@@ -218,8 +218,8 @@ int multithreaded_sync_udp_packets(void* opaque) {
 
         update_server_bitrate();
         update_ping();
-        TIME_RUN(update_video(), VIDEO_UPDATE_TIME, statistics_timer);
-        TIME_RUN(update_audio(), AUDIO_UPDATE_TIME, statistics_timer);
+        // Update the renderer
+        renderer_update(whist_renderer);
         TIME_RUN(WhistPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_UDP,
                  statistics_timer);
 
@@ -228,12 +228,10 @@ int multithreaded_sync_udp_packets(void* opaque) {
         }
 
         switch (packet->type) {
+            case PACKET_AUDIO:
             case PACKET_VIDEO: {
-                TIME_RUN(receive_video(packet), VIDEO_RECEIVE_TIME, statistics_timer);
-                break;
-            }
-            case PACKET_AUDIO: {
-                TIME_RUN(receive_audio(packet), AUDIO_RECEIVE_TIME, statistics_timer);
+                // Pass the audio/video packet into the renderer
+                renderer_receive_packet(whist_renderer, packet);
                 break;
             }
             case PACKET_MESSAGE: {
@@ -332,8 +330,6 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         Return:
             (int): 0 on success
     */
-
-    bool* run_sync_packets = (bool*)opaque;
     SocketContext* socket_context = &packet_tcp_context;
 
     last_tcp_ping_id = 0;
@@ -343,7 +339,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
     start_timer(&last_ack);
     bool successful_read_or_pull = false;
 
-    while (*run_sync_packets) {
+    while (run_sync_packets_threads) {
         // Ack the connection every 50 ms
         if (get_timer(last_ack) > 0.05) {
             int ret = ack(socket_context);
@@ -421,7 +417,7 @@ Public Function Implementations
 ============================
 */
 
-void init_packet_synchronizers() {
+void init_packet_synchronizers(WhistRenderer* whist_renderer) {
     /*
         Initialize the packet synchronizer threads for UDP and TCP.
     */
@@ -429,12 +425,10 @@ void init_packet_synchronizers() {
         LOG_FATAL("Packet synchronizers are already running!");
     }
     run_sync_packets_threads = true;
-    sync_udp_packets_thread =
-        whist_create_thread(multithreaded_sync_udp_packets, "multithreaded_sync_udp_packets",
-                            &run_sync_packets_threads);
+    sync_udp_packets_thread = whist_create_thread(multithreaded_sync_udp_packets,
+                                                  "multithreaded_sync_udp_packets", whist_renderer);
     sync_tcp_packets_thread =
-        whist_create_thread(multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets",
-                            &run_sync_packets_threads);
+        whist_create_thread(multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", NULL);
 }
 
 void destroy_packet_synchronizers() {

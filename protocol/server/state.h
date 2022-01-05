@@ -75,7 +75,6 @@ struct _whist_server_state {
     bool client_joined_after_window_name_broadcast;
     Client client;
 
-    int sample_rate;
     volatile int max_bitrate;
     InputDevice* input_device;
 
