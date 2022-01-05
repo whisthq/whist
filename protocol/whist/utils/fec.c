@@ -15,7 +15,8 @@
 // lugi's, similiar interface, less memory copies and allocations, might be faster, not confirmed
 
 // https://github.com/catid/leopard    FFT, O(NlogN + ???) decode,  buffer_bytes must be a multiple
-// of 64 https://github.com/catid/cm256     Cauchy Matrix, O(N^2+ N*X*L) decode, only works on MSVC
+// of 64
+// https://github.com/catid/cm256     Cauchy Matrix, O(N^2+ N*X*L) decode, only works on MSVC
 // https://github.com/catid/longhair   Cauchy Matrix, O(N^2+ N*X*L) decode, buffer_bytes must be a
 // multiple of 8 time complexity needs futher confirm
 
@@ -34,23 +35,27 @@ which is much larger. So, we should worry about such optimizations, later.
 
 const int max_u8 = 0xff;
 const int max_u16 = 0xffff;
-#define rs_table_size 256  // size of row and column
+#define RS_TABLE_SIZE 256  // size of row and column
 
-static SDL_TLSID tls_id;
-static SDL_SpinLock tls_lock;
-static SDL_mutex* fec_init_mutex;
-bool fec_initalized=false;
+static SDL_SpinLock tls_lock;      // the spin lock used for SDL_TLSCreate() and SDL_CreateMutex()
+static SDL_TLSID tls_id;           // the key for thread-specific data
+static SDL_mutex* fec_init_mutex;  // switch to this mutex after it's initilized
 
-typedef void* (*rs_table_t)[rs_table_size];  // NOLINT
+bool fec_initalized = false;
 
-void free_rs_code_table(void* dummy_ptr)
+typedef void* (*rs_table_t)[RS_TABLE_SIZE];  // NOLINT  //supress clang-tidy warning
+// a thread-specific table to cache RS coder, for efficiency,  avoid create and destroy again and
+// again
+
+void free_rs_code_table(
+    void* dummy_ptr)  // destructor for thread-specific data, clean the table after thread exit
 {
-    LOG_INFO("free_rs_code_table() called!"); 
+    LOG_INFO("free_rs_code_table() called");
     rs_table_t rs_code_table;
     rs_code_table = SDL_TLSGet(tls_id);
     if (rs_code_table == NULL) return;
-    for (int i = 0; i < rs_table_size; i++) {
-        for (int j = i; j < rs_table_size; j++) {
+    for (int i = 0; i < RS_TABLE_SIZE; i++) {
+        for (int j = i; j < RS_TABLE_SIZE; j++) {
             if (rs_code_table[i][j]) {
                 fec_free(rs_code_table[i][j]);
             }
@@ -59,33 +64,38 @@ void free_rs_code_table(void* dummy_ptr)
     free(rs_code_table);
 }
 
-void* get_rs_code(int k,
-    int n)  // note in the rs lib, k means num of original packets, n means total packets
-{
+// get RS coder for the specific setting, cache RS coder in the table
+// note in the RS lib, k means num of original packets, n means total packets
+void* get_rs_code(int k, int n) {
     if (!tls_id) {
-        SDL_AtomicLock(&tls_lock);
+        SDL_AtomicLock(&tls_lock);  // SDL_CreateMutex() and SDL_TLSCreate() should be called only
+                                    // once, use spin lock for protection
         if (!tls_id) {
             fec_init_mutex = SDL_CreateMutex();
-            tls_id = SDL_TLSCreate(); 
-            //see https://wiki.libsdl.org/SDL_TLSCreate for the offical suggested pattern for SDL_TLSCreate
+            tls_id = SDL_TLSCreate();
+            // see https://wiki.libsdl.org/SDL_TLSCreate for the offical suggested pattern for
+            // SDL_TLSCreate
         }
         SDL_AtomicUnlock(&tls_lock);
     }
 
-    rs_table_t rs_code_table = SDL_TLSGet(tls_id);
-    
-    if(rs_code_table == NULL) 
-    {
-        SDL_LockMutex(fec_init_mutex);
+    rs_table_t rs_code_table = SDL_TLSGet(tls_id);  // get thread-specific data, i.e. the table
+
+    if (rs_code_table == NULL) {
+        SDL_LockMutex(fec_init_mutex);  // init_fec() should be only called once, required by RS
+                                        // lib.
+        // it's more costly than SDL_CreateMutex() and SDL_TLSCreate(), so we switch to mutex,
+        // instead of spinlock
         if (fec_initalized == false) {
             init_fec();
-            fec_initalized=true;
+            fec_initalized = true;
         }
         SDL_UnlockMutex(fec_init_mutex);
 
-        rs_code_table = (rs_table_t)safe_malloc(sizeof(void*) * rs_table_size * rs_table_size);
-        memset(rs_code_table, 0, sizeof(void*) * rs_table_size * rs_table_size);
-        SDL_TLSSet(tls_id, rs_code_table, free_rs_code_table);
+        rs_code_table = (rs_table_t)safe_malloc(sizeof(void*) * RS_TABLE_SIZE * RS_TABLE_SIZE);
+        memset(rs_code_table, 0, sizeof(void*) * RS_TABLE_SIZE * RS_TABLE_SIZE);
+        SDL_TLSSet(tls_id, rs_code_table,
+                   free_rs_code_table);  // set thread-specific data, i.e. the table
     }
 
     if (rs_code_table[k][n] == NULL) {
@@ -169,7 +179,6 @@ void fec_get_encoded_buffers(FECEncoder* fec_encoder_raw, void** buffers, int* b
 
     FATAL_ASSERT(fec_encoder->num_accepted_buffers == fec_encoder->num_real_buffers);
     if (!fec_encoder->encode_performed) {
-        
         // rs encoder requires packets to have equal length, so we pad packets to max_buffer_size
         for (int i = 0; i < fec_encoder->num_real_buffers; i++) {
             char* original_buffer = fec_encoder->buffers[i];
@@ -181,7 +190,9 @@ void fec_get_encoded_buffers(FECEncoder* fec_encoder_raw, void** buffers, int* b
             memcpy((char*)fec_encoder->buffers[i], original_buffer, fec_encoder->buffer_sizes[i]);
             memset((char*)fec_encoder->buffers[i] + fec_encoder->buffer_sizes[i], 0,
                    fec_encoder->max_buffer_size - fec_encoder->buffer_sizes[i]);
-            //the memcpy and memset here can be optimized a lot
+            // TODO, protential optimization
+            // if it's the assumption that all packet has same length excpet the last one, and the
+            // last one is shorter then only the last one needs padding
 
             // TODO we can optimize special case of fec_packet num equal to 1  (using XOR)
         }
@@ -279,7 +290,7 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder_raw, void* buffer) {
 
         for (int i = 0; i < fec_decoder->num_buffers && cnt < fec_decoder->num_real_buffers; i++) {
             if (fec_decoder->buffer_sizes[i] == -1) continue;
-            index[cnt] = i;
+            index[cnt] = i;  // and array required by rs decoder, stores the index of input packets
             FATAL_ASSERT(cnt <= i);
             char* original_buffer = fec_decoder->buffers[i];
             int original_size = fec_decoder->buffer_sizes[i];
@@ -288,7 +299,8 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder_raw, void* buffer) {
             memcpy(fec_decoder->buffers[cnt], original_buffer, original_size);
             memset((char*)fec_decoder->buffers[cnt] + original_size, 0,
                    fec_decoder->max_packet_size - original_size);
-            //the memcpy and memset here can be optimized a lot
+            // just similiar padding as encoder
+            // TODO, protential optimization, similiar to the one in encoder
             cnt++;
         }
         FATAL_ASSERT(cnt == fec_decoder->num_real_buffers);
