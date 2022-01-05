@@ -51,6 +51,8 @@ Includes
 
 static Display* display = NULL;
 static Window window;
+static bool xfixes_available;
+static int event_base, error_base;
 
 static Atom clipboard;
 static Atom incr_id;
@@ -321,6 +323,11 @@ bool start_tracking_clipboard_updates() {
     window = XCreateSimpleWindow(display, DefaultRootWindow(display), 0, 0, 1, 1, 0, color, color);
     clipboard = XInternAtom(display, "CLIPBOARD", False);
     incr_id = XInternAtom(display, "INCR", False);
+    // check if xfixes extension available
+    xfixes_available = XFixesQueryExtension(display, &event_base, &error_base);
+    // tell xfixes to send selection events to display
+    XFixesSelectSelectionInput(display, DefaultRootWindow(display), clipboard,
+                               XFixesSetSelectionOwnerNotifyMask);
     return true;
 }
 
@@ -332,8 +339,6 @@ bool unsafe_has_os_clipboard_updated() {
         Returns:
             (bool): true if clipboard has updated, else false
     */
-    static bool xfixes_available = true;
-
     if (!display || !xfixes_available) {
         return false;
     }
@@ -343,15 +348,6 @@ bool unsafe_has_os_clipboard_updated() {
     XEvent event;
     if (first) {
         first = false;
-        // these should only be done once
-        // check that we can use xfixes
-        if (!XFixesQueryExtension(display, &event_base, &error_base)) {
-            xfixes_available = false;
-            return false;
-        }
-        // tell xfixes to deliver clipboard events to display
-        XFixesSelectSelectionInput(display, DefaultRootWindow(display), clipboard,
-                                   XFixesSetSelectionOwnerNotifyMask);
         if (should_preserve_local_clipboard()) {
             return true;
         }
