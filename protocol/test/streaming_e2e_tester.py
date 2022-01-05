@@ -175,8 +175,8 @@ def reboot_instance(
     ssh_process = attempt_ssh_connection(
         connection_ssh_cmd, timeout, log_file_handle, pexpect_prompt, retries
     )
-    return ssh_process
     print("Reboot complete")
+    return ssh_process
 
 
 def create_or_start_aws_instance(boto3client, region_name, existing_instance_id, ssh_key_name):
