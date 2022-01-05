@@ -325,6 +325,9 @@ bool start_tracking_clipboard_updates() {
     incr_id = XInternAtom(display, "INCR", False);
     // check if xfixes extension available
     xfixes_available = XFixesQueryExtension(display, &event_base, &error_base);
+    if (!xfixes_available) {
+        LOG_ERROR("XFixes not available - clipboard and cursor will not work!");
+    }
     // tell xfixes to send selection events to display
     XFixesSelectSelectionInput(display, DefaultRootWindow(display), clipboard,
                                XFixesSetSelectionOwnerNotifyMask);
