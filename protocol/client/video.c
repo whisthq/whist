@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019-2022 Whist Technologies, Inc.
+ * Copyright (c) 2020-2022 Whist Technologies, Inc.
  * @file video.c
  * @brief This file contains all code that interacts directly with receiving and
  *        processing video packets on the client.

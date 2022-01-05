@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019-2022 Whist Technologies, Inc.
+ * Copyright (c) 2020-2022 Whist Technologies, Inc.
  * @file mandelbox.ts
  * @brief This file contains utility functions interacting with the webserver to create mandelboxes.
  */

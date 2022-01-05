@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019-2022 Whist Technologies, Inc.
+ * Copyright (c) 2020-2022 Whist Technologies, Inc.
  * @file client_statistic.c
  * @brief This file lists all the client-side metrics that needs to be logged
  */

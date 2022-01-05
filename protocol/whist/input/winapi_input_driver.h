@@ -1,7 +1,7 @@
 #ifndef WINAPI_INPUT_DRIVER_H
 #define WINAPI_INPUT_DRIVER_H
 /**
- * Copyright (c) 2019-2022 Whist Technologies, Inc.
+ * Copyright (c) 2020-2022 Whist Technologies, Inc.
  * @file winapi_input_driver.h
  * @brief This file defines the Windows input device type as a char dummy.
 ============================

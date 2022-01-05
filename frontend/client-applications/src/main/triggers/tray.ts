@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019-2022 Whist Technologies, Inc.
+ * Copyright (c) 2020-2022 Whist Technologies, Inc.
  * @file tray.ts
  * @brief This file contains all RXJS observables created from events caused by clicking on the tray.
  */

@@ -1,7 +1,7 @@
 #ifndef TRANSFER_CAPTURE_H
 #define TRANSFER_CAPTURE_H
 /**
- * Copyright (c) 2019-2022 Whist Technologies, Inc.
+ * Copyright (c) 2020-2022 Whist Technologies, Inc.
  * @file transfercapture.h
  * @brief This code handles the data transfer from a video capture device to a
  *        video encoder.

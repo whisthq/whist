@@ -1,7 +1,7 @@
 #ifndef SERVER_NETWORK_H
 #define SERVER_NETWORK_H
 /**
- * Copyright (c) 2019-2022 Whist Technologies, Inc.
+ * Copyright (c) 2020-2022 Whist Technologies, Inc.
  * @file network.h
  * @brief This file contains server-specific wrappers to low-level network
  *        functions.

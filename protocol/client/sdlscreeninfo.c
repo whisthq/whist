@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019-2022 Whist Technologies, Inc.
+ * Copyright (c) 2020-2022 Whist Technologies, Inc.
  * @file sdlscreeninfo.c
  * @brief This file contains SDL screen info code, used to retrive information
  *        about SDL Windows.

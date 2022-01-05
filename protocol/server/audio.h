@@ -1,7 +1,7 @@
 #ifndef SERVER_AUDIO_H
 #define SERVER_AUDIO_H
 /**
- * Copyright (c) 2019-2022 Whist Technologies, Inc.
+ * Copyright (c) 2020-2022 Whist Technologies, Inc.
  * @file audio.h
  * @brief This file contains all code that interacts directly with processing
  *        audio on the server.

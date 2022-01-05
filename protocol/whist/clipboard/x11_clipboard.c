@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019-2022 Whist Technologies, Inc.
+ * Copyright (c) 2020-2022 Whist Technologies, Inc.
  * @file x11_clipboard.c
  * @brief This file contains the general clipboard functions for a shared
  *        client-server clipboard on Linux clients/servers.

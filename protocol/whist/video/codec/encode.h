@@ -1,7 +1,7 @@
 #ifndef VIDEO_CODEC_ENCODE_H
 #define VIDEO_CODEC_ENCODE_H
 /**
- * Copyright (c) 2019-2022 Whist Technologies, Inc.
+ * Copyright (c) 2020-2022 Whist Technologies, Inc.
  * @file encode.h
  * @brief This file contains the code to create and destroy Encoders and use
  *        them to encode captured screens.

@@ -1,7 +1,7 @@
 /*
  * General Whist helper functions and headers.
  *
- * Copyright (c) 2019-2022 Whist Technologies, Inc.
+ * Copyright (c) 2020-2022 Whist Technologies, Inc.
  **/
 
 /*

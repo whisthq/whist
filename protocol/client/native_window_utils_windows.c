@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019-2022 Whist Technologies, Inc.
+ * Copyright (c) 2020-2022 Whist Technologies, Inc.
  * @file native_window_utils_windows.c
  * @brief This file implements Windows APIs for native window
  *        modifications not handled by SDL.

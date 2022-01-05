@@ -1,7 +1,7 @@
 #ifndef CLIPBOARD_H
 #define CLIPBOARD_H
 /**
- * Copyright (c) 2019-2022 Whist Technologies, Inc.
+ * Copyright (c) 2020-2022 Whist Technologies, Inc.
  * @file clipboard.h
  * @brief This file contains the general clipboard functions for a shared
  *        client-server clipboard.
