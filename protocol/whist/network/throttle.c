@@ -7,7 +7,7 @@
 
 #define BITS_IN_BYTE 8.0
 
-typedef struct NetworkThrottleContextInternal {
+struct NetworkThrottleContext {
     double coin_bucket_ms;   //<<< The size of the coin bucket in milliseconds.
     size_t coin_bucket_max;  //<<< The maximum size of the coin bucket for the current burst bitrate
                              // and coin_bucket_ms.
@@ -20,9 +20,7 @@ typedef struct NetworkThrottleContextInternal {
     unsigned int current_queue_id;  //<<< The currently-processed queue id.
     bool destroying;                //<<< Whether the context is being destroyed.
     bool fill_bucket_initially;     //<<< Whether the coin bucket should be filled up initially
-} NetworkThrottleContextInternal;
-
-#define INTERNAL(ctx) ((NetworkThrottleContextInternal*)ctx->internal)
+};
 
 NetworkThrottleContext* network_throttler_create(double coin_bucket_ms,
                                                  bool fill_bucket_initially) {
@@ -32,24 +30,23 @@ NetworkThrottleContext* network_throttler_create(double coin_bucket_ms,
         Returns:
             (NetworkThrottleContext*): The created network throttler context.
     */
-    NetworkThrottleContext* ctx = malloc(sizeof(NetworkThrottleContext));
-    ctx->internal = malloc(sizeof(NetworkThrottleContextInternal));
-    INTERNAL(ctx)->coin_bucket_ms = coin_bucket_ms;
-    INTERNAL(ctx)->coin_bucket_max = (size_t)((INTERNAL(ctx)->coin_bucket_ms / MS_IN_SECOND) *
-                                              (STARTING_BURST_BITRATE / BITS_IN_BYTE));
+    NetworkThrottleContext* ctx = safe_malloc(sizeof(NetworkThrottleContext));
+    ctx->coin_bucket_ms = coin_bucket_ms;
+    ctx->coin_bucket_max =
+        (size_t)((ctx->coin_bucket_ms / MS_IN_SECOND) * (STARTING_BURST_BITRATE / BITS_IN_BYTE));
     if (fill_bucket_initially) {
-        INTERNAL(ctx)->coin_bucket = INTERNAL(ctx)->coin_bucket_max;
+        ctx->coin_bucket = ctx->coin_bucket_max;
     } else {
-        INTERNAL(ctx)->coin_bucket = 0;
+        ctx->coin_bucket = 0;
     }
-    INTERNAL(ctx)->burst_bitrate = STARTING_BURST_BITRATE;
-    INTERNAL(ctx)->queue_lock = whist_create_mutex();
-    INTERNAL(ctx)->queue_cond = whist_create_cond();
-    INTERNAL(ctx)->next_queue_id = 0;
-    INTERNAL(ctx)->current_queue_id = 0;
-    INTERNAL(ctx)->destroying = false;
-    INTERNAL(ctx)->fill_bucket_initially = fill_bucket_initially;
-    start_timer(&INTERNAL(ctx)->coin_bucket_last_fill);
+    ctx->burst_bitrate = STARTING_BURST_BITRATE;
+    ctx->queue_lock = whist_create_mutex();
+    ctx->queue_cond = whist_create_cond();
+    ctx->next_queue_id = 0;
+    ctx->current_queue_id = 0;
+    ctx->destroying = false;
+    ctx->fill_bucket_initially = fill_bucket_initially;
+    start_timer(&ctx->coin_bucket_last_fill);
 
     LOG_INFO("Created network throttler %p", ctx);
 
@@ -67,9 +64,9 @@ void network_throttler_destroy(NetworkThrottleContext* ctx) {
 
     LOG_INFO("Flushing queue for network throttler %p", ctx);
 
-    INTERNAL(ctx)->destroying = true;
+    ctx->destroying = true;
 
-    while (INTERNAL(ctx)->current_queue_id != INTERNAL(ctx)->next_queue_id) {
+    while (ctx->current_queue_id != ctx->next_queue_id) {
         // Wait until the packet queue is empty
         whist_sleep(10);
     }
@@ -84,9 +81,8 @@ void network_throttler_destroy(NetworkThrottleContext* ctx) {
     // moment, but for now we just assume that the caller is
     // smart about that.
 
-    whist_destroy_mutex(INTERNAL(ctx)->queue_lock);
-    whist_destroy_cond(INTERNAL(ctx)->queue_cond);
-    free(ctx->internal);
+    whist_destroy_mutex(ctx->queue_lock);
+    whist_destroy_cond(ctx->queue_cond);
     free(ctx);
 }
 
@@ -101,20 +97,19 @@ void network_throttler_set_burst_bitrate(NetworkThrottleContext* ctx, int burst_
     if (!ctx) return;
 
     size_t coin_bucket_max =
-        (size_t)((INTERNAL(ctx)->coin_bucket_ms / MS_IN_SECOND) * (burst_bitrate / BITS_IN_BYTE));
+        (size_t)((ctx->coin_bucket_ms / MS_IN_SECOND) * (burst_bitrate / BITS_IN_BYTE));
 
     // Add difference between previous max value and current max value to account for change in
     // bitrate
-    if (INTERNAL(ctx)->fill_bucket_initially) {
-        INTERNAL(ctx)->coin_bucket =
-            max(INTERNAL(ctx)->coin_bucket + coin_bucket_max - INTERNAL(ctx)->coin_bucket_max, 0);
+    if (ctx->fill_bucket_initially) {
+        ctx->coin_bucket = max(ctx->coin_bucket + coin_bucket_max - ctx->coin_bucket_max, 0);
     }
     // We assume that only one thread is writing this at a time.
     // Multiple threads may read this concurrently. If we want
     // to support multiple threads, we need to lock a mutex around
     // accesses to `burst_bitrate`.
-    INTERNAL(ctx)->burst_bitrate = burst_bitrate;
-    INTERNAL(ctx)->coin_bucket_max = coin_bucket_max;
+    ctx->burst_bitrate = burst_bitrate;
+    ctx->coin_bucket_max = coin_bucket_max;
 }
 
 int network_throttler_get_burst_bitrate(NetworkThrottleContext* ctx) {
@@ -132,7 +127,7 @@ int network_throttler_get_burst_bitrate(NetworkThrottleContext* ctx) {
     */
     if (!ctx) return -1;
 
-    return INTERNAL(ctx)->burst_bitrate;
+    return ctx->burst_bitrate;
 }
 
 void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t bytes) {
@@ -143,14 +138,14 @@ void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t 
             ctx (NetworkThrottlerContext*): The network throttler context.
             bytes (size_t): The number of bytes that will be sent.
     */
-    if (!ctx || INTERNAL(ctx)->burst_bitrate <= 0 || INTERNAL(ctx)->destroying) return;
+    if (!ctx || ctx->burst_bitrate <= 0 || ctx->destroying) return;
 
-    whist_lock_mutex(INTERNAL(ctx)->queue_lock);
-    unsigned int queue_id = INTERNAL(ctx)->next_queue_id++;
-    while (queue_id > INTERNAL(ctx)->current_queue_id) {
-        whist_wait_cond(INTERNAL(ctx)->queue_cond, INTERNAL(ctx)->queue_lock);
+    whist_lock_mutex(ctx->queue_lock);
+    unsigned int queue_id = ctx->next_queue_id++;
+    while (queue_id > ctx->current_queue_id) {
+        whist_wait_cond(ctx->queue_cond, ctx->queue_lock);
     }
-    whist_unlock_mutex(INTERNAL(ctx)->queue_lock);
+    whist_unlock_mutex(ctx->queue_lock);
 
     // Now we have the guarantee that this is the next quued packet.
     // This thread now assumes the responsiblity of adding to the
@@ -162,25 +157,24 @@ void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t 
     int loops = 0;
     while (true) {
         ++loops;
-        if (INTERNAL(ctx)->destroying) {
+        if (ctx->destroying) {
             // If we are in destruction mode, simply break
             break;
         }
 
-        double elapsed_seconds = get_timer(INTERNAL(ctx)->coin_bucket_last_fill);
-        start_timer(&INTERNAL(ctx)->coin_bucket_last_fill);
+        double elapsed_seconds = get_timer(ctx->coin_bucket_last_fill);
+        start_timer(&ctx->coin_bucket_last_fill);
         int burst_bitrate = network_throttler_get_burst_bitrate(ctx);
-        const size_t coin_bucket_max = INTERNAL(ctx)->coin_bucket_max;
+        const size_t coin_bucket_max = ctx->coin_bucket_max;
         const size_t coin_bucket_update =
             (size_t)((double)elapsed_seconds * burst_bitrate / BITS_IN_BYTE);
-        INTERNAL(ctx)->coin_bucket =
-            min(INTERNAL(ctx)->coin_bucket + coin_bucket_update, coin_bucket_max);
+        ctx->coin_bucket = min(ctx->coin_bucket + coin_bucket_update, coin_bucket_max);
 
         // We don't want to block the current thread forever if the packet is larger than
         // the max coin bucket, so cap it as well.
         size_t effective_bytes = min(bytes, coin_bucket_max);
-        if (INTERNAL(ctx)->coin_bucket >= effective_bytes) {
-            INTERNAL(ctx)->coin_bucket -= effective_bytes;
+        if (ctx->coin_bucket >= effective_bytes) {
+            ctx->coin_bucket -= effective_bytes;
             break;
         }
 
@@ -192,8 +186,8 @@ void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t 
     log_double_statistic(NETWORK_THROTTLED_PACKET_DELAY, time * MS_IN_SECOND);
     log_double_statistic(NETWORK_THROTTLED_PACKET_DELAY_RATE, time * MS_IN_SECOND / (double)bytes);
     log_double_statistic(NETWORK_THROTTLED_PACKET_DELAY_LOOPS, (double)loops);
-    ++INTERNAL(ctx)->current_queue_id;
-    whist_lock_mutex(INTERNAL(ctx)->queue_lock);
-    whist_broadcast_cond(INTERNAL(ctx)->queue_cond);
-    whist_unlock_mutex(INTERNAL(ctx)->queue_lock);
+    ++ctx->current_queue_id;
+    whist_lock_mutex(ctx->queue_lock);
+    whist_broadcast_cond(ctx->queue_cond);
+    whist_unlock_mutex(ctx->queue_lock);
 }
