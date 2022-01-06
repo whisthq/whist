@@ -251,22 +251,22 @@ func TestSpinUpMandelbox(t *testing.T) {
 				t.Errorf("GPU index %s written to file is not a valid int: %v.", string(gpuFileContents), err)
 			}
 
-			pReadyFile := path.Join(resourceMappingDir, ".paramsReady")
-			pReadyFileContents, err := ioutil.ReadFile(pReadyFile)
+			paramsReadyFile := path.Join(resourceMappingDir, ".paramsReady")
+			paramsReadyFileContents, err := ioutil.ReadFile(paramsReadyFile)
 			if err != nil {
-				t.Fatalf("Failed to read resource file %s: %v", pReadyFile, err)
+				t.Fatalf("Failed to read resource file %s: %v", paramsReadyFile, err)
 			}
-			if string(pReadyFileContents) != ".paramsReady" {
-				t.Errorf("Params ready file contains invalid contents: %s", string(pReadyFileContents))
+			if string(paramsReadyFileContents) != ".paramsReady" {
+				t.Errorf("Params ready file contains invalid contents: %s", string(paramsReadyFileContents))
 			}
 
-			cReadyFile := path.Join(resourceMappingDir, ".configReady")
-			cReadyFileContents, err := ioutil.ReadFile(cReadyFile)
+			configReadyFile := path.Join(resourceMappingDir, ".configReady")
+			configReadyFileContents, err := ioutil.ReadFile(configReadyFile)
 			if err != nil {
-				t.Fatalf("Failed to read resource file %s: %v", cReadyFile, err)
+				t.Fatalf("Failed to read resource file %s: %v", configReadyFile, err)
 			}
-			if string(cReadyFileContents) != ".configReady" {
-				t.Errorf("Config ready file contains invalid contents: %s", string(cReadyFileContents))
+			if string(configReadyFileContents) != ".configReady" {
+				t.Errorf("Config ready file contains invalid contents: %s", string(configReadyFileContents))
 			}
 		})
 	}
