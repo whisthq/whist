@@ -34,6 +34,11 @@ func TestWriteMandelboxParams(t *testing.T) {
 		t.Errorf("Error writing protocol timeout: %v", err)
 	}
 
+	err = mandelbox.MarkParamsReady()
+	if err != nil {
+		t.Errorf("Error writing .paramsReady: %v", err)
+	}
+
 	err = mandelbox.MarkConfigReady()
 	if err != nil {
 		t.Errorf("Error writing .configReady: %v", err)

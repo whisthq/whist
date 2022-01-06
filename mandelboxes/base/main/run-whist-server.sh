@@ -24,7 +24,7 @@ set -Eeuo pipefail
 WHIST_MAPPINGS_DIR=/whist/resourceMappings
 USER_CONFIGS_DIR=/whist/userConfigs
 APP_CONFIG_MAP_FILENAME=/usr/share/whist/app-config-map.json
-until [ -f $WHIST_MAPPINGS_DIR/.ready ]
+until [ -f $WHIST_MAPPINGS_DIR/.configReady ]
 do
   sleep 0.1
 done

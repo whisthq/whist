@@ -20,7 +20,7 @@ set -Eeuo pipefail
 
 # Begin wait loop to get TTY number and port mapping from Whist Host Service
 WHIST_MAPPINGS_DIR=/whist/resourceMappings
-until [ -f $WHIST_MAPPINGS_DIR/.prelimReady ]
+until [ -f $WHIST_MAPPINGS_DIR/.paramsReady ]
 do
   sleep 0.1
 done
