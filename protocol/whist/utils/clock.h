@@ -34,8 +34,10 @@ Defines
 
 #if defined(_WIN32)
 #define clock LARGE_INTEGER
-#else
+#elif defined(__APPLE__)
 #define clock struct timeval
+#else
+#define clock struct timespec
 #endif
 
 /*

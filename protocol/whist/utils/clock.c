@@ -27,9 +27,11 @@ int get_utc_offset();
 void start_timer(clock* timer) {
 #if defined(_WIN32)
     QueryPerformanceCounter(timer);
-#else
+#elif defined(__APPLE__)
     // start timer
     gettimeofday(timer, NULL);
+#else
+    clock_gettime(CLOCK_MONOTONIC, timer);
 #endif
 }
 
@@ -40,7 +42,8 @@ double get_timer(clock timer) {
     QueryPerformanceFrequency(&frequency);
     QueryPerformanceCounter(&end);
     double ret = (double)(end.QuadPart - timer.QuadPart) / frequency.QuadPart;
-#else
+#elif defined(__APPLE__)
+    // Apple doesn't have clock_gettime, so we use gettimeofday
     // stop timer
     struct timeval t2;
     gettimeofday(&t2, NULL);
@@ -54,6 +57,15 @@ double get_timer(clock timer) {
     // standard var to return and convert to seconds since it gets converted to
     // ms in function call
     double ret = elapsed_time / MS_IN_SECOND;
+#else
+    struct timespec t2;
+    // use CLOCK_MONOTONIC for relative time
+    clock_gettime(CLOCK_MONOTONIC, &t2);
+
+    double elapsed_time = (t2.tv_sec - timer.tv_sec) * MS_IN_SECOND;
+    elapsed_time += (t2.tv_nsec - timer.tv_nsec) / (double)NS_IN_MS;
+
+    double ret = elapsed_time / MS_IN_SECOND;
 #endif
     return ret;
 }
@@ -62,9 +74,12 @@ clock create_clock(int timeout_ms) {
     clock out;
 #if defined(_WIN32)
     out.QuadPart = timeout_ms;
-#else
+#elif defined(__APPLE__)
     out.tv_sec = timeout_ms / MS_IN_SECOND;
     out.tv_usec = (timeout_ms % MS_IN_SECOND) * US_IN_MS;
+#else
+    out.tv_sec = timeout_ms / MS_IN_SECOND;
+    out.tv_nsec = (timeout_ms & MS_IN_SECOND) * NS_IN_MS;
 #endif
     return out;
 }
@@ -80,7 +95,7 @@ char* current_time_str() {
     GetSystemTime(&time_now);
     snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i.%06li", time_now.wHour, time_now.wMinute,
              time_now.wSecond, (long)time_now.wMilliseconds);
-#else
+#elif defined(__APPLE__)
     struct tm* time_str_tm;
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
@@ -88,6 +103,14 @@ char* current_time_str() {
     time_str_tm = gmtime(&time_now.tv_sec);
     snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i.%06li", time_str_tm->tm_hour,
              time_str_tm->tm_min, time_str_tm->tm_sec, (long)time_now.tv_usec);
+#else
+    struct tm* time_str_tm;
+    struct timespec time_now;
+    // CLOCK_REALTIME gives time since Unix epoch
+    clock_gettime(CLOCK_REALTIME, &time_now);
+    time_str_tm = gmtime(&time_now.tv_sec);
+    snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i.%06li", time_str_tm->tm_hour,
+             time_str_tm->tm_min, time_str_tm->tm_sec, (long)time_now.tv_nsec / NS_IN_US);
 #endif
 
     //    strftime(buffer, 64, "%Y-%m-%d %H:%M:%S", timeinfo);
@@ -108,10 +131,15 @@ timestamp_us current_time_us() {
     output = ((uint64_t)file_time.dwHighDateTime << 32) | file_time.dwLowDateTime;
     output /= 10;  // To bring it to microseconds
     output -= (EPOCH_DIFFERENCE * (uint64_t)1000000);
-#else
+#elif defined(__APPLE__)
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
-    output = ((uint64_t)time_now.tv_sec * 1000000) + time_now.tv_usec;
+    // TODO: change to US_IN_SEC and NS_IN_US
+    output = ((uint64_t)time_now.tv_sec * US_IN_SECOND) + time_now.tv_usec;
+#else
+    struct timespec time_now;
+    clock_gettime(CLOCK_REALTIME, &time_now);
+    output = ((uint64_t)time_now.tv_sec * US_IN_SECOND) + time_now.tv_nsec / NS_IN_US;
 #endif
     // Ensure that this cast is correct, uint64_t -> timestamp_us
     return (timestamp_us)output;
