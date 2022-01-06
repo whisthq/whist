@@ -44,7 +44,7 @@ func MakeTags(c context.Context, host *AWSHost, input *ec2.CreateTagsInput) (*ec
 }
 
 // SpinDownInstances is responsible for launching `numInstances` number of instances with the received imageID.
-func (host *AWSHost) SpinUpInstances(numInstances int32, imageID string) ([]subscriptions.Instance, error) {
+func (host *AWSHost) SpinUpInstances(numInstances int32, imageID string) ([]subscriptions.Host, error) {
 	ctx := context.Background()
 
 	// Set run input
@@ -79,7 +79,7 @@ func (host *AWSHost) SpinUpInstances(numInstances int32, imageID string) ([]subs
 	logger.Infof("Created tagged instance with ID " + *result.Instances[0].InstanceId)
 
 	// Create slice with created instances
-	var outputInstances []subscriptions.Instance
+	var outputInstances []subscriptions.Host
 
 	for _, outputInstance := range result.Instances {
 		outputInstances = append(outputInstances, subscriptions.Instance{

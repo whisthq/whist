@@ -64,7 +64,7 @@ func SetupHostSubscriptions(instanceID string, whistClient WhistSubscriptionClie
 				"id":     graphql.String(instanceID),
 				"status": graphql.String("DRAINING"),
 			},
-			Result:  InstanceEvent{[]Instance{}},
+			Result:  InstanceEvent{[]Host{}},
 			Handler: InstanceStatusHandler,
 		},
 		{
@@ -89,7 +89,7 @@ func SetupScalingSubscriptions(whistClient WhistSubscriptionClient) {
 			Variables: map[string]interface{}{
 				"status": graphql.String("DRAINING"),
 			},
-			Result:  InstanceEvent{[]Instance{}},
+			Result:  InstanceEvent{[]Host{}},
 			Handler: InstanceStatusHandler,
 		},
 	}

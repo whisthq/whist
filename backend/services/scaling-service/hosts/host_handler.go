@@ -8,9 +8,9 @@ import (
 
 type HostHandler interface {
 	Initialize(region string) error
-	SpinUpInstances(numInstances int32, imageID string) (createdInstances []subscriptions.Instance, err error)
-	SpinDownInstances(instanceIDs []string) (terminatedInstances []subscriptions.Instance, err error)
-	WaitForInstanceTermination(context.Context, subscriptions.Instance) error
-	WaitForInstanceReady(context.Context, subscriptions.Instance) error
+	SpinUpInstances(numInstances int32, imageID string) (createdInstances []subscriptions.Host, err error)
+	SpinDownInstances(instanceIDs []string) (terminatedInstances []subscriptions.Host, err error)
+	WaitForInstanceTermination(context.Context, subscriptions.Host) error
+	WaitForInstanceReady(context.Context, subscriptions.Host) error
 	RetryInstanceSpinUp()
 }
