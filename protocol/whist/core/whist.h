@@ -187,8 +187,8 @@ Defines
 // VBV Buffer size in milliseconds
 #define VBV_BUF_SIZE_IN_MS 1000
 
-#define MAX_QP 30        // Max QP value of video frames
-#define MAX_INTRA_QP 36  // Set a higher QP value for intra frames if supported by the encoder
+#define MAX_QP 40                  // Max QP value of video frames
+#define MAX_INTRA_QP (MAX_QP + 6)  // Higher QP value for intra frames if supported by the encoder
 
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
