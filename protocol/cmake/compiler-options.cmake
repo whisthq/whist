@@ -27,7 +27,10 @@ else() # GCC and Clang base flags
   add_link_options("-pthread" "-rdynamic")
 
   if(NOT "${SANITIZE}" STREQUAL "OFF")
-    add_compile_options("-fsanitize=${SANITIZE}")
-    add_link_options("-fsanitize=${SANITIZE}")
+    string(REPLACE "+" ";" SANITIZER_LIST ${SANITIZE})
+    foreach(TYPE ${SANITIZER_LIST})
+      add_compile_options("-fsanitize=${TYPE}")
+      add_link_options("-fsanitize=${TYPE}")
+    endforeach()
   endif()
 endif()
