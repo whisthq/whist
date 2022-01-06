@@ -5,7 +5,7 @@
  * to load our assets (i.e. team photos) into the website
  *
  * This should be invoked via:
- *   $ yarn pull:assetsß
+ *   $ yarn pull:assets
  * from your command line.
  *
  */
