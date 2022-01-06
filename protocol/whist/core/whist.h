@@ -184,6 +184,11 @@ Defines
 #define CONSECUTIVE_IDENTICAL_FRAMES 300
 // FPS to send when the encoder is off
 #define DISABLED_ENCODER_FPS 10
+// VBV Buffer size in milliseconds
+#define VBV_BUF_SIZE_IN_MS 1000
+
+#define MAX_QP 30        // Max QP value of video frames
+#define MAX_INTRA_QP 36  // Set a higher QP value for intra frames if supported by the encoder
 
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720

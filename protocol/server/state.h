@@ -83,6 +83,7 @@ struct _whist_server_state {
     volatile bool wants_iframe;
     // This ID must be set when wants_iframe is set true
     volatile int last_failed_id;
+    int last_iframe_id;
 
     /* video */
     volatile int client_width;

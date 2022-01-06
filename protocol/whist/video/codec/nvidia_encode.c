@@ -1,5 +1,7 @@
 #include "nvidia_encode.h"
 #include "../cudacontext.h"
+#include <whist/logging/log_statistic.h>
+#include <server/server_statistic.h>
 
 #include <dlfcn.h>
 #include <string.h>
@@ -464,6 +466,13 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
         return -1;
     }
 
+    if (lock_params.pictureType == NV_ENC_PIC_TYPE_I ||
+        lock_params.pictureType == NV_ENC_PIC_TYPE_IDR) {
+        log_double_statistic(VIDEO_INTRA_FRAME_QP, lock_params.frameAvgQP);
+    } else {
+        log_double_statistic(VIDEO_INTER_FRAME_QP, lock_params.frameAvgQP);
+    }
+
     encoder->frame_size = lock_params.bitstreamSizeInBytes;
     encoder->frame = lock_params.bitstreamBufferPtr;
     encoder->is_iframe = encoder->wants_iframe || encoder->frame_idx == 0;
@@ -531,6 +540,18 @@ int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType code
     // https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/#recommended-nvenc-settings
     p_preset_config->presetCfg.rcParams.multiPass = NV_ENC_TWO_PASS_QUARTER_RESOLUTION;
     p_preset_config->presetCfg.rcParams.enableAQ = 1;
+
+    // Limiting the max Inter QP to 30 to avoid the video pixelation issue at low bitrates.
+    // Sometimes congestion control chooses a really low bitrate at which the visual quality is
+    // unbearable. To avoid that we set a lower bound on video quality and drop frames if they
+    // are going to exceed the bitrate chosen by congestion control algorithm.
+    // Higher the QP, Lower the bitrate and Lower the visual quality.
+    // Allowed QP range is 0-51 (for both all kind of frames)
+    p_preset_config->presetCfg.rcParams.enableMaxQP = 1;
+    p_preset_config->presetCfg.rcParams.maxQP.qpInterP = MAX_QP;
+    p_preset_config->presetCfg.rcParams.maxQP.qpInterB = MAX_QP;
+    // Max Intra QP is set to a higher value, to avoid really large single frame sizes.
+    p_preset_config->presetCfg.rcParams.maxQP.qpIntra = MAX_INTRA_QP;
     // p_preset_config->presetCfg.rcParams.enableTemporalAQ = 1;
     p_preset_config->presetCfg.rcParams.enableNonRefP = 1;
     // Only create IDRs when we request them
@@ -541,7 +562,8 @@ int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType code
     p_preset_config->presetCfg.rcParams.averageBitRate = bitrate;
     // Experimentally found to give good results,
     // Smaller values reduce bitrate spikes but increase blurriness spikes
-    p_preset_config->presetCfg.rcParams.vbvBufferSize = 60 * bitrate / FPS;
+    p_preset_config->presetCfg.rcParams.vbvBufferSize =
+        (VBV_BUF_SIZE_IN_MS * bitrate) / MS_IN_SECOND;
 
     return 0;
 }

@@ -1,9 +1,10 @@
 #ifndef WHIST_NETWORK_THROTTLE_H
 #define WHIST_NETWORK_THROTTLE_H
 
+#include <stdbool.h>
+
 #ifndef _WIN32
 #include <sys/types.h>
-#include <stdbool.h>
 #endif  // _WIN32
 
 typedef struct NetworkThrottleContext {
@@ -13,9 +14,12 @@ typedef struct NetworkThrottleContext {
 /**
  * @brief                    Initialize a new network throttler.
  *
+ * @param coin_bucket_ms     The size of the coin bucket in milliseconds.
+ * @param fill_bucket_initially    Whether the coin bucket should be filled up initially.
+ *
  * @return                   The created network throttler context.
  */
-NetworkThrottleContext* network_throttler_create();
+NetworkThrottleContext* network_throttler_create(double coin_bucket_ms, bool fill_bucket_initially);
 
 /**
  * @brief                    Destroy a network throttler.

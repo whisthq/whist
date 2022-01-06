@@ -447,10 +447,22 @@ int32_t multithreaded_send_video(void* opaque) {
 
     add_thread_to_client_active_dependents();
 
+    NetworkThrottleContext* network_throttler =
+        network_throttler_create((double)VBV_BUF_SIZE_IN_MS, true);
+    network_throttler_set_burst_bitrate(network_throttler, state->max_bitrate);
+    int last_frame_size = 0;
+
     int consecutive_identical_frames = 0;
 
     bool assuming_client_active = false;
     while (!state->exiting) {
+        // If we sent a frame, throttle the bytes of the last frame,
+        // before doing anything else
+        if (last_frame_size > 0) {
+            network_throttler_wait_byte_allocation(network_throttler, last_frame_size);
+            last_frame_size = 0;
+        }
+
         update_client_active_status(&state->client, &assuming_client_active);
 
         if (!assuming_client_active) {
@@ -499,6 +511,8 @@ int32_t multithreaded_send_video(void* opaque) {
         if (state->update_encoder) {
             start_timer(&statistics_timer);
             encoder = do_update_encoder(state, encoder, device);
+            // Update throttler bitrate too
+            network_throttler_set_burst_bitrate(network_throttler, state->max_bitrate);
             log_double_statistic(VIDEO_ENCODER_UPDATE_TIME,
                                  get_timer(statistics_timer) * MS_IN_SECOND);
         }
@@ -564,6 +578,12 @@ int32_t multithreaded_send_video(void* opaque) {
 
         // This outer loop potentially runs 10s of thousands of times per second, every ~1usec
 
+        // If it's a start-of-stream, or an id beyond the last sent iframe has failed,
+        // Only then we send a new iframe.
+        if (state->last_failed_id != -1 && state->last_failed_id <= state->last_iframe_id) {
+            state->wants_iframe = false;
+        }
+
         // Send a frame if we have a real frame to send, or we need to keep up with min_fps
         if (state->client.is_active && (accumulated_frames > 0 || state->wants_iframe ||
                                         get_timer(last_frame_capture) > 1.0 / min_fps)) {
@@ -603,13 +623,8 @@ int32_t multithreaded_send_video(void* opaque) {
                                      get_timer(statistics_timer) * MS_IN_SECOND);
 
                 if (state->wants_iframe) {
-                    static int last_iframe_id = -1;
-                    // If it's a start-of-stream, or an id beyond the last sent iframe has failed,
-                    // Then we send a new iframe
-                    if (state->last_failed_id == -1 || state->last_failed_id > last_iframe_id) {
-                        video_encoder_set_iframe(encoder);
-                        last_iframe_id = id;
-                    }
+                    video_encoder_set_iframe(encoder);
+                    state->last_iframe_id = id;
                     state->wants_iframe = false;
                 }
 
@@ -639,6 +654,8 @@ int32_t multithreaded_send_video(void* opaque) {
                         send_populated_frames(state, &statistics_timer, &server_frame_timer, device,
                                               encoder, id, client_input_timestamp,
                                               server_timestamp);
+                        // Remember the last frame size, so that we can throttle the bitrate
+                        last_frame_size = encoder->encoded_frame_size;
 
                         log_double_statistic(VIDEO_FPS_SENT, 1.0);
                         log_double_statistic(VIDEO_SEND_TIME,
@@ -662,6 +679,7 @@ int32_t multithreaded_send_video(void* opaque) {
         destroy_capture_device(device);
         device = NULL;
     }
+    network_throttler_destroy(network_throttler);
 
     return 0;
 }
