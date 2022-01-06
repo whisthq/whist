@@ -28,6 +28,7 @@ Includes
 
 volatile int client_max_bitrate = STARTING_BITRATE;
 volatile int max_burst_bitrate = STARTING_BURST_BITRATE;
+volatile int client_override_bitrate = 0;
 #define BAD_BITRATE 10400000
 #define BAD_BURST_BITRATE 31800000
 
