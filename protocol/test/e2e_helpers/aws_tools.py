@@ -193,3 +193,64 @@ def get_instance_ip(boto3client: botocore.client, instance_id: str) -> str:
             )
     print(f"Instance IP is: {retval}")
     return retval
+
+
+def create_or_start_aws_instance(boto3client, region_name, existing_instance_id, ssh_key_name):
+    # Connect to existing instance or create a new one
+
+    # Attempt to start existing instance
+    if existing_instance_id != "":
+        instance_id = existing_instance_id
+        result = start_instance(boto3client, instance_id)
+        if result is True:
+            # Wait for the instance to be running
+            wait_for_instance_to_start_or_stop(boto3client, instance_id, stopping=False)
+            return instance_id
+
+    # Define the AWS machine variables
+
+    # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
+    instance_AMI = get_current_AMI(boto3client, region_name)
+    if instance_AMI == "":
+        print("Error, could not get instance AMI for region {}".format(region_name))
+    instance_type = "g4dn.2xlarge"  # The type of instance we want to create
+
+    print(
+        "Creating AWS EC2 instance of size: {} and with AMI: {}...".format(
+            instance_type, instance_AMI
+        )
+    )
+
+    # Create our EC2 instance
+    instance_id = create_ec2_instance(
+        boto3client=boto3client,
+        region_name=region_name,
+        instance_type=instance_type,
+        instance_AMI=instance_AMI,
+        key_name=ssh_key_name,
+        disk_size=64,
+    )
+    # Give a little time for the instance to be recognized in AWS
+    time.sleep(5)
+
+    # Wait for the instance to be running
+    wait_for_instance_to_start_or_stop(boto3client, instance_id, stopping=False)
+
+    return instance_id
+
+
+def terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate):
+    if should_terminate:
+        # Terminating the instance and waiting for them to shutdown
+        print(f"Testing complete, terminating EC2 instance")
+        boto3client.terminate_instances(InstanceIds=[instance_id])
+    else:
+        # Stopping the instance and waiting for it to shutdown
+        print(f"Testing complete, stopping EC2 instance")
+        result = stop_instance(boto3client, instance_id)
+        if result is False:
+            printf("Error while stopping the EC2 instance!")
+            return
+
+    # Wait for the instance to be terminated
+    wait_for_instance_to_start_or_stop(boto3client, instance_id, stopping=True)
