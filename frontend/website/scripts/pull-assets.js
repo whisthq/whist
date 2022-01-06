@@ -51,9 +51,6 @@ const aws = require("./aws-helpers")
   }
 
   // Save the Notion data as a file so that it can be read by the website
-  console.log(savedTeamInfo)
-  console.log(savedInvestorInfo)
-
   notion.saveDataLocally({
     team: savedTeamInfo,
     investors: savedInvestorInfo,
