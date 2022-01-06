@@ -543,8 +543,8 @@ int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType code
 
     // Limiting the max Inter QP to 30 to avoid the video pixelation issue at low bitrates.
     // Sometimes congestion control chooses a really low bitrate at which the visual quality is
-    // unbearable. To avoid that we set a lower bound on video quality, even if it means exceeding
-    // the bitrate chosen by congestion control algorithm.
+    // unbearable. To avoid that we set a lower bound on video quality and drop frames if they
+    // are going to exceed the bitrate chosen by congestion control algorithm.
     // Higher the QP, Lower the bitrate and Lower the visual quality.
     // Allowed QP range is 0-51 (for both all kind of frames)
     p_preset_config->presetCfg.rcParams.enableMaxQP = 1;

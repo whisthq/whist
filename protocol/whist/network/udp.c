@@ -15,6 +15,7 @@
 // current value (5) is an arbitrary choice that was found to work well in practice.
 #define RETRIES_ON_BUFFER_FULL 5
 
+// Define the bitrate specified to be maintained for each and every 0.5 ms internal.
 #define UDP_NETWORK_THROTTLER_BUCKET_MS 0.5
 
 extern unsigned short port_mappings[USHRT_MAX + 1];
