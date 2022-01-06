@@ -119,12 +119,14 @@ TEST_F(CaptureStdoutTest, InitSDL) {
     SDL_Window* new_window = init_sdl(width, height, very_long_title, icon_filepath);
     EXPECT_TRUE(new_window != NULL);
 
-#if defined(_WIN32)
-    check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
-#endif
+    check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
+    check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
 
-    check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
-    check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
+#ifdef _WIN32
+    check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
+#elif defined(__linux__)
+    check_stdout_line(::testing::HasSubstr("Not implemented on X11."));
+#endif
 
     // Check that the initial title was set appropriately
     const char* title = SDL_GetWindowTitle(new_window);
@@ -178,8 +180,13 @@ TEST_F(CaptureStdoutTest, InitSDL) {
 
         width = get_window_pixel_width(new_window);
         height = get_window_pixel_height(new_window);
+#ifndef __linux__
         int adjusted_width = width - (width % 8);
         int adjusted_height = height - (height % 2);
+#else
+        int adjusted_width = width;
+        int adjusted_height = height;
+#endif
 
         // Check Whist resize procedure (rounding)
         bool pending_resize_message;
@@ -194,10 +201,12 @@ TEST_F(CaptureStdoutTest, InitSDL) {
         sprintf(buffer, "Received resize event for %dx%d, currently %dx%d", width, height, width,
                 height);
         check_stdout_line(::testing::HasSubstr(buffer));
+#ifndef __linux__
         memset(buffer, 0, 1000);
         sprintf(buffer, "Forcing a resize from %dx%d to %dx%d", width, height, adjusted_width,
                 adjusted_height);
         check_stdout_line(::testing::HasSubstr(buffer));
+#endif
         memset(buffer, 0, 1000);
         sprintf(buffer, "Window resized to %dx%d (Actual %dx%d)", width, height, adjusted_width,
                 adjusted_height);
@@ -254,8 +263,14 @@ TEST_F(CaptureStdoutTest, InitSDL) {
         EXPECT_TRUE(new_color.blue == c.blue);
         EXPECT_TRUE(new_color.green == c.green);
 
-        const WhistRGBColor black = {0, 0, 0};
         set_native_window_color(new_window, c);
+
+#ifdef _WIN32
+        check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
+#elif defined(__linux__)
+        check_stdout_line(::testing::HasSubstr("Not implemented on X11."));
+        check_stdout_line(::testing::HasSubstr("Not implemented on X11."));
+#endif
 
         sdl_update_pending_tasks();
 
