@@ -33,6 +33,7 @@ import {
 } from "@app/constants/store"
 import { WhistTrigger } from "@app/constants/triggers"
 import { networkAnalyze } from "@app/utils/networkAnalysis"
+import { protocolStreamKill } from "@app/utils/protocol"
 
 fromTrigger(WhistTrigger.appReady).subscribe(() => {
   createTray(createMenu(false))
@@ -74,6 +75,7 @@ fromTrigger(WhistTrigger.clearCacheAction).subscribe(
       .clearStorageData()
       .catch((err) => Sentry.captureException(err))
     // Restart the app
+    protocolStreamKill()
     relaunch()
   }
 )
@@ -88,6 +90,7 @@ merge(
   fromTrigger(WhistTrigger.relaunchAction),
   fromTrigger(WhistTrigger.reactivated)
 ).subscribe(() => {
+  protocolStreamKill()
   relaunch()
 })
 

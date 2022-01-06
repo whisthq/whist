@@ -7,6 +7,7 @@ import authFlow, { authRefreshFlow } from "@app/main/flows/auth"
 import checkPaymentFlow from "@app/main/flows/payment"
 import mandelboxFlow from "@app/main/flows/mandelbox"
 import autoUpdateFlow from "@app/main/flows/autoupdate"
+import awsPingFlow from "@app/main/flows/ping"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
 import { fromSignal } from "@app/utils/observables"
 import { getRegionFromArgv } from "@app/utils/region"
@@ -30,6 +31,10 @@ import {
 // Autoupdate flow
 const update = autoUpdateFlow(fromTrigger(WhistTrigger.updateAvailable))
 
+// AWS ping flow
+const awsPing = awsPingFlow(of(null))
+
+// Auth flow
 const auth = authFlow(
   merge(
     fromTrigger(WhistTrigger.authInfo),
@@ -45,6 +50,7 @@ const auth = authFlow(
   )
 )
 
+// Onboarding flow
 const onboarded = fromSignal(
   merge(
     fromTrigger(WhistTrigger.onboarded),
@@ -103,13 +109,14 @@ const dontImportBrowserData = of(persistGet(ONBOARDED) as boolean).pipe(
 // Observable that fires when Whist is ready to be launched
 const launchTrigger = fromSignal(
   combineLatest({
+    userEmail,
     accessToken,
     configToken,
     isNewConfigToken,
     cookies: merge(importCookies, dontImportBrowserData),
     bookmarks: merge(importBookmarks, dontImportBrowserData),
     extensions: merge(importExtensions, dontImportBrowserData),
-    userEmail,
+    regions: merge(awsPing.cached, awsPing.refresh),
   }).pipe(
     map((x: object) => ({
       ...x,
@@ -130,6 +137,9 @@ const mandelbox = mandelboxFlow(launchTrigger)
 const refreshAtEnd = authRefreshFlow(
   fromSignal(combineLatest({ refreshToken }), mandelbox.success)
 )
+
+createTrigger(WhistTrigger.awsPingCached, awsPing.cached)
+createTrigger(WhistTrigger.awsPingRefresh, awsPing.refresh)
 
 createTrigger(WhistTrigger.authFlowSuccess, auth.success)
 createTrigger(WhistTrigger.authFlowFailure, auth.failure)

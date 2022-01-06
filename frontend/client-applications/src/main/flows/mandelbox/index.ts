@@ -7,6 +7,7 @@ import { nativeTheme } from "electron"
 import { persistGet } from "@app/utils/persist"
 import { RESTORE_LAST_SESSION } from "@app/constants/store"
 import { getInitialKeyRepeat, getKeyRepeat } from "@app/utils/keyRepeat"
+import { AWSRegion } from "@app/@types/aws"
 
 export default flow(
   "mandelboxFlow",
@@ -19,6 +20,7 @@ export default flow(
       bookmarks: string
       extensions: string
       userEmail: string
+      regions: Array<{ region: AWSRegion; pingTime: number }>
     }>
   ) => {
     const create = mandelboxCreateFlow(
@@ -26,6 +28,7 @@ export default flow(
         map((t) => ({
           accessToken: t.accessToken,
           userEmail: t.userEmail,
+          regions: t.regions.map((r) => r.region),
         }))
       )
     )

@@ -6,68 +6,49 @@
 // These observables are subscribed by protocol launching observables, which
 // react to success mandelbox creation emissions from here.
 
-import { from, of, merge, timer } from "rxjs"
+import { from, of, timer } from "rxjs"
 import {
   map,
   switchMap,
-  withLatestFrom,
   retryWhen,
   delayWhen,
   catchError,
 } from "rxjs/operators"
 
 import { mandelboxRequest, mandelboxCreateSuccess } from "@app/utils/mandelbox"
-import { sortRegionByProximity } from "@app/utils/region"
 import { fork, flow } from "@app/utils/flows"
-import { defaultAllowedRegions } from "@app/constants/mandelbox"
 import { AWSRegion } from "@app/@types/aws"
 
 export default flow<{
   accessToken: string
   userEmail: string
+  regions: AWSRegion[]
 }>("mandelboxCreateFlow", (trigger) => {
   let attempts = 0
 
-  const region = fork(
+  const create = fork(
     trigger.pipe(
-      switchMap(({ accessToken, userEmail }) =>
-        from(sortRegionByProximity(defaultAllowedRegions)).pipe(
-          withLatestFrom(of(accessToken), of(userEmail))
-        )
+      switchMap((t) =>
+        t.regions.length > 0
+          ? from(mandelboxRequest(t.accessToken, t.regions, t.userEmail))
+          : of({})
       ),
-      map(
-        ([regions, accessToken, userEmail]: [AWSRegion[], string, string]) => {
-          if (regions.length === 0) throw new Error()
-          return [regions, accessToken, userEmail]
-        }
-      ),
+      map((req) => {
+        if (!mandelboxCreateSuccess(req)) throw new Error()
+        return req
+      }),
       retryWhen((errors) =>
         errors.pipe(
           delayWhen(() => {
-            if (attempts < 20) {
+            if (attempts < 10) {
               attempts = attempts + 1
-              return timer(500)
+              return timer(1000)
             }
             throw new Error()
           })
         )
       ),
       catchError((error) => of(error)) // We retry because sometimes Whist launches before the computer connects to Wifi
-    ),
-    {
-      success: (regions) => regions.length > 0,
-      failure: (regions) => !(regions.length > 0),
-    }
-  )
-
-  const create = fork(
-    region.success.pipe(
-      switchMap(
-        ([regions, accessToken, userEmail]: [AWSRegion[], string, string]) =>
-          regions.length > 0
-            ? from(mandelboxRequest(accessToken, regions, userEmail))
-            : of({})
-      )
     ),
     {
       success: (req) => mandelboxCreateSuccess(req),
@@ -82,6 +63,6 @@ export default flow<{
         ip: response.json.ip,
       }))
     ),
-    failure: merge(region.failure, create.failure),
+    failure: create.failure,
   }
 })
