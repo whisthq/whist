@@ -3,6 +3,7 @@
 
 #include <libavdevice/avdevice.h>
 #include <libavutil/imgutils.h>
+#include <libavutil/intreadwrite.h>
 #include <libswscale/swscale.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -50,46 +51,45 @@ int bmp_to_png(char* bmp, int bmp_size, char** png, int* png_size) {
         return -1;
     }
     // File Size
-    uint32_t file_size = *((uint32_t*)(&bmp[2]));
+    uint32_t file_size = AV_RL32(&bmp[2]);
     // Unused, value doesn't matter
-    UNUSED(*((uint32_t*)(&bmp[6])));
+    UNUSED(AV_RL32(&bmp[6]));
     // Pixel offset
-    uint32_t pixel_offset = *((uint32_t*)(&bmp[10]));
+    uint32_t pixel_offset = AV_RL32(&bmp[10]);
     // Header size (from this point)
-    uint32_t header_size = *((uint32_t*)(&bmp[14]));
+    uint32_t header_size = AV_RL32(&bmp[14]);
     if (header_size != 40) {
         LOG_ERROR("DIB header size must be 40");
         return -1;
     }
     // Width/height
-    uint32_t w = *((uint32_t*)(&bmp[18]));
-    uint32_t h = *((uint32_t*)(&bmp[22]));
+    uint32_t w = AV_RL32(&bmp[18]);
+    uint32_t h = AV_RL32(&bmp[22]);
     // Number of planes (1)
-    if (*((uint16_t*)(&bmp[26])) != 1) {
+    if (AV_RL16(&bmp[26]) != 1) {
         LOG_ERROR("Number of BMP planes must be 1");
         return -1;
     }
     // Bits per pixel
-    uint16_t bits_per_pixel = *((uint16_t*)(&bmp[28]));
+    uint16_t bits_per_pixel = AV_RL16(&bmp[28]);
     if (bits_per_pixel != 24 && bits_per_pixel != 32) {
         LOG_ERROR("BMP pixel width must be 3 bytes or 4 bytes, got %d bits instead",
                   bits_per_pixel);
         return -1;
     }
     // Compression (0 for none)
-    if (*((uint32_t*)(&bmp[30])) != 0) {
-        LOG_ERROR("BMP must be uncompressed BI_RGB data: %d found instead",
-                  *((uint32_t*)(&bmp[30])));
+    if (AV_RL32(&bmp[30]) != 0) {
+        LOG_ERROR("BMP must be uncompressed BI_RGB data: %d found instead", AV_RL32(&bmp[30]));
         return -1;
     }
     // Size of the pixel data array
-    uint32_t data_size = *((uint32_t*)(&bmp[34]));
+    uint32_t data_size = AV_RL32(&bmp[34]);
     // horizontal DPI in pixels/meter, value doesn't matter
-    UNUSED(*((uint32_t*)(&bmp[38])));
+    UNUSED(AV_RL32(&bmp[38]));
     // vertical DPI in pixels/meter, value doesn't matter
-    UNUSED(*((uint32_t*)(&bmp[42])));
+    UNUSED(AV_RL32(&bmp[42]));
     // Must be 0, no palette
-    if (*((uint32_t*)(&bmp[46])) != 0 || *((uint32_t*)(&bmp[50])) != 0) {
+    if (AV_RL32(&bmp[46]) != 0 || AV_RL32(&bmp[50]) != 0) {
         LOG_ERROR("BMP color palettes are not supported");
         return -1;
     }
@@ -209,32 +209,32 @@ int png_to_bmp(char* png, int png_size, char** bmp_ptr, int* bmp_size) {
     bmp[0] = 'B';
     bmp[1] = 'M';
     // File Size
-    *((uint32_t*)(&bmp[2])) = 54 + h * scanline_bytes;
+    AV_WL32(&bmp[2], 54 + h * scanline_bytes);
     // Unused
-    *((uint32_t*)(&bmp[6])) = 0;
+    AV_WL32(&bmp[6], 0);
     // Pixel offset
-    *((uint32_t*)(&bmp[10])) = 54;
+    AV_WL32(&bmp[10], 54);
     // Header size (from this point)
-    *((uint32_t*)(&bmp[14])) = 40;
+    AV_WL32(&bmp[14], 40);
     // Width/height
-    *((uint32_t*)(&bmp[18])) = w;
-    *((uint32_t*)(&bmp[22])) = h;
+    AV_WL32(&bmp[18], w);
+    AV_WL32(&bmp[22], h);
     // Number of planes (1)
-    *((uint16_t*)(&bmp[26])) = 1;
+    AV_WL16(&bmp[26], 1);
     // Bits per pixel
-    *((uint16_t*)(&bmp[28])) = 8 * num_channels;
+    AV_WL16(&bmp[28], 8 * num_channels);
     // Compression (0 for none)
-    *((uint32_t*)(&bmp[30])) = 0;
+    AV_WL32(&bmp[30], 0);
     // Size of the pixel data array
-    *((uint32_t*)(&bmp[34])) = h * scanline_bytes;
+    AV_WL32(&bmp[34], h * scanline_bytes);
     // horizontal DPI in pixels/meter (we set this to 0 to match what ffmpeg does)
-    *((uint32_t*)(&bmp[38])) = 0;
+    AV_WL32(&bmp[38], 0);
     // vertical DPI in pixels/meter (we set this to 0 to match what ffmpeg does)
-    *((uint32_t*)(&bmp[42])) = 0;
+    AV_WL32(&bmp[42], 0);
     // Must be 0, no palette
-    *((uint32_t*)(&bmp[46])) = 0;
+    AV_WL32(&bmp[46], 0);
     // Must be 0, no palette
-    *((uint32_t*)(&bmp[50])) = 0;
+    AV_WL32(&bmp[50], 0);
 
     // ====================
     // Copy Bitmap Data
