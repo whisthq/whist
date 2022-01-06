@@ -45,6 +45,7 @@ extern volatile double latency;
 // MBPS variables
 extern volatile int client_max_bitrate;
 extern volatile int max_burst_bitrate;
+extern volatile int client_override_bitrate;
 extern volatile bool update_bitrate;
 // dimension variables
 extern volatile int server_width;
@@ -159,7 +160,11 @@ void update_server_bitrate() {
         update_bitrate = false;
         WhistClientMessage wcmsg = {0};
         wcmsg.type = MESSAGE_MBPS;
-        wcmsg.bitrate_data.bitrate = client_max_bitrate;
+        if (client_override_bitrate) {
+            wcmsg.bitrate_data.bitrate = client_override_bitrate;
+        } else {
+            wcmsg.bitrate_data.bitrate = client_max_bitrate;
+        }
         wcmsg.bitrate_data.burst_bitrate = max_burst_bitrate;
         wcmsg.bitrate_data.fec_packet_ratio = FEC_PACKET_RATIO;
         LOG_INFO("Asking for server MBPS to be %f/%f/%f",

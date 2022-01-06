@@ -50,6 +50,7 @@ extern volatile SDL_Window *window;
 volatile char *new_tab_url;
 
 extern volatile int client_max_bitrate;
+extern volatile int client_override_bitrate;
 
 // From main.c
 volatile bool update_bitrate = false;
@@ -83,6 +84,7 @@ const struct option client_cmd_options[] = {
     {"loading", required_argument, NULL, 'l'},
     {"skip-taskbar", no_argument, NULL, 's'},
     {"new-tab-url", required_argument, NULL, 'x'},
+    {"override-bitrate", required_argument, NULL, 'o'},
     // these are standard for POSIX programs
     {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
     {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
@@ -92,7 +94,7 @@ const char *usage;
 
 #define INCOMING_MAXLEN 127
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
-#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:n:rl:sx:"
+#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:n:rl:sx:o:"
 
 /*
 ============================
@@ -163,6 +165,15 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
                 return -1;
             }
             client_max_bitrate = (int)ret;
+            break;
+        }
+        case 'o': {  // override bitrate
+            ret = strtol(eval_optarg, &endptr, 10);
+            if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
+                printf("%s", usage);
+                return -1;
+            }
+            client_override_bitrate = (int)ret;
             break;
         }
         case 'c': {  // codec
@@ -328,6 +339,9 @@ int client_parse_args(int argc, char *argv[]) {
         "  -s, --skip-taskbar            Launch the protocol without displaying an icon\n"
         "                                  in the taskbar\n"
         "  -x, --new-tab-url             URL to open in new tab \n"
+        "  -o, --override-bitrate       Override the bitrate calculated by adaptive bitrate algo\n"
+        "                                  with the provided one. Useful for development, \n"
+        "                                  debugging and testing\n"
         // special options should be indented further to the left
         "      --help     Display this help and exit\n"
         "      --version  Output version information and exit\n";
