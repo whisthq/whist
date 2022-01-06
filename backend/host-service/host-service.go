@@ -671,6 +671,13 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		return
 	}
 
+	err = mandelbox.MarkPrelimReady()
+	if err != nil {
+		logAndReturnError("Error marking mandelbox %s as ready to start A/V + display: %s", mandelboxSubscription.ID, err)
+		return
+	}
+	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s as preliminarily ready. A/V and display services can soon start.", mandelboxSubscription.ID)
+
 	<-userConfigDownloadComplete
 
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")

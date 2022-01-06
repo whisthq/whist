@@ -47,7 +47,15 @@ func (mandelbox *mandelboxData) WriteProtocolTimeout(seconds int) error {
 	return nil
 }
 
+func (mandelbox *mandelboxData) MarkPrelimReady() error {
+	// Indicates that the mandelbox's services that do NOT depend on s3 userConfigs
+	// (e.g. audio and video services) can be started
+	return mandelbox.writeResourceMappingToFile(".prelimReady", ".prelimReady")
+}
+
 func (mandelbox *mandelboxData) MarkReady() error {
+	// Indicates that all configs (including user configs) are in place, and the mandelbox is ready
+	// to start the protocol + application.
 	return mandelbox.writeResourceMappingToFile(".ready", ".ready")
 }
 
