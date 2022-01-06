@@ -10,7 +10,7 @@ const NOTION_DATA_DIRECTORY = "public/assets/metadata" // Where to save .json fi
 const notion = new Client({ auth: NOTION_API_KEY })
 
 module.exports = {
-  fetchNotionTeamData: () => {
+  fetchNotionTeamData: async () => {
     const teamDatabase = await notion.databases.query({
       database_id: NOTION_TEAM_DATABASE_ID,
       sorts: [
@@ -39,7 +39,7 @@ module.exports = {
 
     return savedTeamInfo
   },
-  fetchNotionInvestorData: () => {
+  fetchNotionInvestorData: async () => {
     const investorDatabase = await notion.databases.query({
       database_id: NOTION_INVESTOR_DATABASE_ID,
       sorts: [
@@ -67,10 +67,11 @@ module.exports = {
 
       savedInvestorInfo.push({ name, imageUrl, website, description })
     }
+
+    return savedInvestorInfo
   },
-  saveDataLocally: () => {
+  saveDataLocally: (obj) => {
     const jsonDirectory = `./${NOTION_DATA_DIRECTORY}/notion.json`
     fs.writeFileSync(jsonDirectory, JSON.stringify(obj))
-    return savedInvestorInfo
   },
 }
