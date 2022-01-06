@@ -66,9 +66,9 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 
 	for _, outputInstance := range result.Instances {
 		var (
-			IP         = aws.ToString(outputInstance.PublicIpAddress)
-			ImageID    = aws.ToString(outputInstance.ImageId)
-			Type       = aws.ToString(outputInstance.PlatformDetails)
+			IP      = aws.ToString(outputInstance.PublicIpAddress)
+			ImageID = aws.ToString(outputInstance.ImageId)
+			// Type       = aws.ToString(outputInstance.PlatformDetails)
 			InstanceID = aws.ToString(outputInstance.InstanceId)
 			Status     = "PRE_CONNECTION"
 			Name       = host.GenerateName()
@@ -92,12 +92,12 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 		// Only append instance to output slice if we have created
 		// and tagged su
 		outputInstances = append(outputInstances, subscriptions.Instance{
-			IPAddress: *outputInstance.PublicIpAddress,
-			ImageID:   *outputInstance.ImageId,
-			// Type:            *outputInstance.PlatformDetails,
-			ID: *outputInstance.InstanceId,
-			// Name:   *outputInstance.Tags[0].Value,
-			Status: "PRE_CONNECTION",
+			IPAddress: IP,
+			ImageID:   ImageID,
+			// Type:            Type,
+			ID:     InstanceID,
+			Status: Status,
+			// Name:            Name,
 		})
 	}
 
@@ -152,12 +152,12 @@ func (host *AWSHost) WaitForInstanceTermination(scalingCtx context.Context, inst
 	})
 
 	waitParams := &ec2.DescribeInstancesInput{
-		InstanceIds: []string{instance.ID},
+		InstanceIds: instanceIds,
 	}
 
 	err := waiter.Wait(scalingCtx, waitParams, 5*time.Minute)
 	if err != nil {
-		return utils.MakeError("failed waiting for instance %v to terminate from AWS: %v", instance.ID, err)
+		return utils.MakeError("failed waiting for instance %v to terminate from AWS: %v", instanceIds, err)
 	}
 
 	return nil
@@ -170,12 +170,12 @@ func (host *AWSHost) WaitForInstanceReady(scalingCtx context.Context, instanceId
 	})
 
 	waitParams := &ec2.DescribeInstancesInput{
-		InstanceIds: []string{instance.ID},
+		InstanceIds: instanceIds,
 	}
 
 	err := waiter.Wait(scalingCtx, waitParams, 5*time.Minute)
 	if err != nil {
-		return utils.MakeError("failed waiting for instance %v to be ready from AWS: %v", instance.ID, err)
+		return utils.MakeError("failed waiting for instance %v to be ready from AWS: %v", instanceIds, err)
 	}
 
 	return nil

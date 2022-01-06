@@ -13,9 +13,9 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	logger.Infof("Verifying instance scale down for event: %v", event)
 
 	// First, verify if the draining instance has mandelboxes running
-	mandelboxesRunningQuery := &subscriptions.QueryMandelboxesByInstanceName
+	mandelboxesRunningQuery := &subscriptions.QueryMandelboxesByInstanceId
 	queryParams := map[string]interface{}{
-		"instance_name": graphql.String(instance.Name),
+		"instance_name": graphql.String(instance.ID),
 		"status":        graphql.String("RUNNING"),
 	}
 
@@ -25,23 +25,23 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	}
 
 	// If instance has active mandelboxes, leave it alone
-	runningMandelboxes := len(mandelboxesRunningQuery.CloudMandelboxInfo)
+	runningMandelboxes := len(mandelboxesRunningQuery.WhistMandelboxes)
 	if runningMandelboxes > 0 {
 		logger.Infof("Instance has %v running mandelboxes. Not marking as draining.", runningMandelboxes)
 		return nil
 	}
 
 	// If not, wait until the instance is terminated from the cloud provider
-	err = s.Host.WaitForInstanceTermination(scalingCtx, []string{instance.CloudProviderID})
+	err = s.Host.WaitForInstanceTermination(scalingCtx, []string{instance.ID})
 	if err != nil {
 		// Err is already wrapped here
 		return err
 	}
 
 	// Once its terminated, verify that it was removed from the database
-	instanceExistsQuery := &subscriptions.QueryInstanceByName
+	instanceExistsQuery := &subscriptions.QueryInstanceById
 	queryParams = map[string]interface{}{
-		"instance_name": graphql.String(instance.Name),
+		"instance_name": graphql.String(instance.ID),
 	}
 
 	err = s.GraphQLClient.Query(scalingCtx, instanceExistsQuery, queryParams)
@@ -50,18 +50,18 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	}
 
 	// Verify that instance removed itself from the database
-	instanceResult := instanceExistsQuery.CloudInstanceInfo
+	instanceResult := instanceExistsQuery.WhistInstances
 	if len(instanceResult) == 0 {
-		logger.Info("Instance %v was successfully removed from database.", instance.Name)
+		logger.Info("Instance %v was successfully removed from database.", instance.ID)
 		return nil
 	}
 
 	// If instance still exists on the database, forcefully delete as it no longer exists on cloud provider
-	logger.Info("Forcefully removing instance %v from database as it no longer exists on cloud provider.", instance.Name)
+	logger.Info("Forcefully removing instance %v from database as it no longer exists on cloud provider.", instance.ID)
 
-	instanceDeleteMutation := &subscriptions.DeleteInstanceByName
+	instanceDeleteMutation := &subscriptions.DeleteInstanceById
 	deleteParams := map[string]interface{}{
-		"instance_name": graphql.String(instance.Name),
+		"instance_name": graphql.String(instance.ID),
 	}
 
 	err = s.GraphQLClient.Mutate(scalingCtx, instanceDeleteMutation, deleteParams)
@@ -85,7 +85,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	s.GraphQLClient.Query(scalingCtx, freeInstancesQuery, queryParams)
 
 	// Verify if there are free instances that can be scaled down
-	freeInstances := len(freeInstancesQuery.CloudInstanceInfo)
+	freeInstances := len(freeInstancesQuery.WhistInstances)
 	if freeInstances == 0 {
 		logger.Info("There are no available instances to scale down.")
 		return nil
@@ -101,15 +101,15 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	s.GraphQLClient.Query(scalingCtx, freeInstancesQuery, queryParams)
 
 	// Verify if there are lingering instances that can be scaled down
-	lingeringInstances := len(lingeringInstancesQuery.CloudInstanceInfo)
+	lingeringInstances := len(lingeringInstancesQuery.WhistInstances)
 	if lingeringInstances == 0 {
 		logger.Info("There are no lingering to scale down.")
 		return nil
 	}
 
 	var lingeringIds []string
-	for _, lingeringInstance := range lingeringInstancesQuery.CloudInstanceInfo {
-		lingeringIds = append(lingeringIds, string(lingeringInstance.CloudProviderID))
+	for _, lingeringInstance := range lingeringInstancesQuery.WhistInstances {
+		lingeringIds = append(lingeringIds, string(lingeringInstance.ID))
 	}
 
 	logger.Info("Forcefully terminating lingering instances from cloud provider.")
@@ -123,7 +123,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		logger.Warningf("Available instances are less than desired buffer, scaling up to match %v", DEFAULT_INSTANCE_BUFFER)
 		wantedNumInstances := DEFAULT_INSTANCE_BUFFER - freeInstances
 
-		activeImageID := freeInstancesQuery.CloudInstanceInfo[0].ImageID
+		activeImageID := freeInstancesQuery.WhistInstances[0].ImageID
 		// Try scale up instances to match buffer size
 		s.ScaleUpIfNecessary(wantedNumInstances, scalingCtx, event, string(activeImageID))
 	}
@@ -135,7 +135,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		"status": graphql.String("DRAINING"),
 	}
 
-	for _, instance := range freeInstancesQuery.CloudInstanceInfo {
+	for _, instance := range freeInstancesQuery.WhistInstances {
 		err := s.GraphQLClient.Mutate(scalingCtx, drainMutation, mutationParams)
 		if err != nil {
 			logger.Errorf("Failed to mark instance %v as draining.", instance)
@@ -166,28 +166,24 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 	// Create slice with newly created instance ids
 	var (
 		createdInstanceIds []string
-		instancesForDb     []cloud_instance_info_insert_input
+		instancesForDb     []cloud_instances_insert_input
 	)
 
 	for _, instance := range createdInstances {
-		createdInstanceIds = append(createdInstanceIds, instance.CloudProviderID)
-		instancesForDb = append(instancesForDb, cloud_instance_info_insert_input{
-			IP:                graphql.String(instance.IP),
-			Location:          graphql.String(instance.Location),
-			ImageID:           graphql.String(instance.ImageID),
-			Type:              graphql.String(instance.Type),
-			CloudProviderID:   graphql.String(instance.CloudProviderID),
-			CommitHash:        graphql.String(instance.CommitHash),
-			CreationTimeMS:    graphql.Float(instance.CreationTimeMS),
-			GPUVramRemaing:    graphql.Float(instance.GPUVramRemaing),
-			Name:              graphql.String(instance.Name),
-			LastUpdatedMS:     graphql.Float(instance.LastUpdatedMS),
-			MandelboxCapacity: graphql.Float(instance.MandelboxCapacity),
-			MemoryRemainingKB: graphql.Float(instance.MemoryRemainingKB),
-			NanoCPUsRemaining: graphql.Float(instance.NanoCPUsRemaining),
-			Status:            graphql.String(instance.Status),
+		createdInstanceIds = append(createdInstanceIds, instance.ID)
+		instancesForDb = append(instancesForDb, cloud_instances_insert_input{
+			ID:        graphql.String(instance.ID),
+			Provider:  graphql.String(instance.Provider),
+			Region:    graphql.String(instance.Region),
+			ImageID:   graphql.String(instance.ImageID),
+			ClientSHA: graphql.String(instance.ClientSHA),
+			IPAddress: graphql.String(instance.IPAddress),
+			Capacity:  graphql.Int(instance.Capacity),
+			Status:    graphql.String(instance.Status),
+			CreatedAt: graphql.String(instance.CreatedAt),
+			UpdatedAt: graphql.String(instance.UpdatedAt),
 		})
-		logger.Infof("Created tagged instance with ID %v, Name %v", instance.CloudProviderID, instance.Name)
+		logger.Infof("Created tagged instance with ID %v", instance.ID)
 	}
 
 	// Wait for new instances to be ready before adding to db
