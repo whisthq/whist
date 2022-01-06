@@ -300,7 +300,7 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
     } else if (packet->id <= ring_buffer->currently_rendering_id) {
         // This packet won't help us render any new packets,
         // So we can safely just ignore it
-        return -1;
+        return 0;
     } else if (packet->id > frame_data->id) {
         // This packet is newer than the resident,
         // so it's time to overwrite the resident if such a resident exists
@@ -370,8 +370,9 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
             LOG_ERROR(
                 "We received a packet (ID %d / index %d) twice, but we had never nacked for it?",
                 packet->id, packet->index);
+            return -1;
         }
-        return -1;
+        return 0;
     }
 
     // Remember whether or not this frame was ready to render

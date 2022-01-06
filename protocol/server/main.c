@@ -310,7 +310,6 @@ static void whist_server_state_init(whist_server_state* state, whist_server_conf
     memset(state, 0, sizeof(*state));
     state->config = config;
     state->client_os = WHIST_UNKNOWN_OS;
-    state->sample_rate = -1;
     state->max_bitrate = STARTING_BITRATE;
     state->input_device = NULL;
     state->client_joined_after_window_name_broadcast = false;

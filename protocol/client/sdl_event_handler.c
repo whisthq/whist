@@ -26,6 +26,7 @@ Includes
 #include "client_utils.h"
 #include "network.h"
 #include "native_window_utils.h"
+#include <whist/utils/atomic.h>
 
 // Keyboard state variables
 bool alt_pressed = false;
@@ -53,6 +54,14 @@ bool active_momentum_scroll = false;
 
 /*
 ============================
+Private Globals
+============================
+*/
+
+atomic_int g_num_pending_audio_device_updates = ATOMIC_VAR_INIT(0);
+
+/*
+============================
 Private Functions Declarations
 ============================
 */
@@ -72,13 +81,6 @@ Public Function Implementations
 */
 
 bool sdl_handle_events() {
-    /*
-        Handle an SDL event if polled
-
-        Return:
-            (int): 0 on success, -1 on failure
-    */
-
     // We cannot use SDL_WaitEventTimeout here, because
     // Linux seems to treat a 1ms timeout as an infinite timeout
     SDL_Event sdl_event;
@@ -94,13 +96,20 @@ bool sdl_handle_events() {
     static bool first_mouse_motion = true;
     if (first_mouse_motion || get_timer(mouse_motion_timer) * MS_IN_SECOND > 0.5) {
         if (update_mouse_motion() != 0) {
-            return -1;
+            return false;
         }
         start_timer(&mouse_motion_timer);
         first_mouse_motion = false;
     }
 
     return true;
+}
+
+bool sdl_pending_audio_device_update() {
+    // Mark as no longer pending "0",
+    // and return whether or not it was pending since the last time we called this function
+    int num_pending_audio_device_updates = atomic_exchange(&g_num_pending_audio_device_updates, 0);
+    return num_pending_audio_device_updates > 0;
 }
 
 /*
@@ -377,8 +386,8 @@ int handle_sdl_event(SDL_Event *event) {
         }
         case SDL_AUDIODEVICEADDED:
         case SDL_AUDIODEVICEREMOVED: {
-            // Refresh the audio device
-            enable_audio_refresh();
+            // Mark the audio device as pending an update "1"
+            atomic_fetch_add(&g_num_pending_audio_device_updates, 1);
             break;
         }
         case SDL_KEYDOWN:

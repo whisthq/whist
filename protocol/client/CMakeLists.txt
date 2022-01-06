@@ -15,6 +15,7 @@ add_executable(WhistClient
         sync_packets.c
         bitrate.c
         client_statistic.c
+        renderer.c
         )
 
 # On Windows during client app packaging, WhistClient should have icon set

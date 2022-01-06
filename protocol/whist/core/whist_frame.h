@@ -32,6 +32,7 @@ typedef struct VideoFrame {
 } VideoFrame;
 
 typedef struct AudioFrame {
+    int audio_frequency;
     int data_length;
     unsigned char data[];
 } AudioFrame;

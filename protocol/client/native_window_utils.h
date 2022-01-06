@@ -67,9 +67,6 @@ int set_native_window_color(SDL_Window* window, WhistRGBColor color);
  */
 int get_native_window_dpi(SDL_Window* window);
 
-WhistYUVColor get_frame_color(uint8_t* y_data, uint8_t* u_data, uint8_t* v_data,
-                              bool using_hardware);
-
 /**
  * @brief                          Declares that UserActivity has occured,
  *                                 resetting the timer for screensavers/sleepmode

@@ -9,9 +9,7 @@
 Usage
 ============================
 
-initAudio() must be called first before receiving any audio packets.
-updateAudio() gets called immediately after to update the client to the server's
-audio format.
+See video.h for similar usage
 */
 
 /*
@@ -27,58 +25,83 @@ Includes
 
 /*
 ============================
+Defines
+============================
+*/
+
+typedef void AudioContext;
+
+/*
+============================
 Public Functions
 ============================
 */
 
 /**
- * @brief                          This will initialize the FFmpeg AAC audio
- *                                 decoder, and set the proper audio parameters
- *                                 for receiving from the server
- */
-void init_audio();
-
-/**
- * @brief                          This will indicate to the audio file that an audio
- *                                 refresh event happened.
- */
-void enable_audio_refresh();
-
-/**
- * @brief                          This will change the audio sample rate.
- */
-void set_audio_frequency(int new_audio_frequency);
-
-/**
- * @brief                          Receives a WhistPacket into an audio
- *                                 packet, and check if NACKing is necessary
+ * @brief                          This will initialize the audio system.
+ *                                 The audio system will receive audio packets,
+ *                                 and render the audio out to a playback device
  *
- * @param packet                   Packet of data that gets received over a
- *                                 SocketContext
+ * @returns                        The new audio context
+ */
+AudioContext* init_audio();
+
+/**
+ * @brief                          This will refresh the audio device
+ *                                 of the audio context prior to the next render.
+ *                                 This must be called if a new playback device
+ *                                 is plugged in or unplugged.
  *
- * @returns                        Returns -1 if received an incorrect packet,
- *                                 else 0
+ * @param audio_context            The audio context to use
+ *
+ * @note                           This function is thread-safe, and may be
+ *                                 called independently to receive/update/render
  */
-int32_t receive_audio(WhistPacket* packet);
+void refresh_audio_device(AudioContext* audio_context);
 
 /**
- * @brief                          Update the audio parameters to new parameters
- *                                 sent from server, if any, by reinitializing,
- *                                 and catch up if needed
+ * @brief                          Receive audio packet
+ *
+ * @param audio_context            The audio context to give the audio packet to
+ *
+ * @param packet                   Packet as received from the server
+ *
+ * @note                           This function is guaranteed to return virtually instantly.
+ *                                 It may be used in any hotpaths.
  */
-void update_audio();
+void receive_audio(AudioContext* audio_context, WhistPacket* packet);
 
 /**
- * @brief                          This will play any queued audio packets
- *                                 NOTE: Is thread-safe, and can be called
- *                                 no matter what other audio calls are being made
+ * @brief                          Does any pending work the audio context
+ *                                 wants to do. (Including decoding frames,
+ *                                 and calculating statistics)
+ *
+ * @param audio_context            The audio context to update
+ *
+ * @note                           This function is guaranteed to return virtually instantly.
+ *                                 It may be used in any hotpaths.
+ *
+ * @note                           In order for audio to be responsive,
+ *                                 this function *MUST* be called in a tight loop,
+ *                                 at least once every millisecond.
  */
-void render_audio();
+void update_audio(AudioContext* audio_context);
 
 /**
- * @brief                          Close the SDL audio and the FFmpeg audio
- *                                 decoder
+ * @brief                          Render the audio frame (If any are available to render)
+ *
+ * @param audio_context            The audio context that potentially wants to render audio
+ *
+ * @note                           This function is thread-safe, and may be called
+ *                                 independently of receive_audio/update_audio
  */
-void destroy_audio();
+void render_audio(AudioContext* audio_context);
+
+/**
+ * @brief                          Destroy the audio context
+ *
+ * @param audio_context            The audio context to destroy
+ */
+void destroy_audio(AudioContext* audio_context);
 
 #endif  // CLIENT_AUDIO_H

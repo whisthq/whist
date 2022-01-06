@@ -9,9 +9,30 @@
 Usage
 ============================
 
-initVideo() gets called before any video packet can be received. The video
-packets are received as standard WhistPackets by ReceiveVideo(WhistPacket*
-packet), before being saved in a proper video frame format.
+VideoContext* video_context = init_video();
+
+In one thread:
+update_video(video_context);
+receive_video(video_context, packet_1);
+update_video(video_context);
+update_video(video_context);
+receive_video(video_context, packet_2);
+update_video(video_context);
+update_video(video_context);
+receive_video(video_context, packet_3);
+update_video(video_context);
+update_video(video_context);
+
+In another thread:
+render_video(video_context);
+render_video(video_context);
+render_video(video_context);
+render_video(video_context);
+
+// ~~
+// Join both threads..
+
+destroy_video(video_context);
 */
 
 /*
@@ -21,9 +42,6 @@ Includes
 */
 
 #include <whist/core/whist.h>
-#include <whist/network/network.h>
-#include <whist/video/codec/decode.h>
-#include <whist/utils/avpacket_buffer.h>
 
 /*
 ============================
@@ -35,6 +53,8 @@ Defines
 #define RENDERING_IN_VIRTUAL_ENVIRONMENT 0
 #endif
 
+typedef void VideoContext;
+
 /*
 ============================
 Public Functions
@@ -42,36 +62,57 @@ Public Functions
 */
 
 /**
- * @brief                          Create the SDL video thread
+ * @brief                          This will initialize the video system.
+ *                                 The video system will receive video packets,
+ *                                 and render the video out to the window
+ *
+ * @returns                        The new video context
  */
-void init_video();
+VideoContext* init_video();
 
 /**
  * @brief                          Receive video packet
  *
- * @param packet                   Packet received from the server, which gets
- *                                 stored as video packet with proper parameters
+ * @param video_context            The video context to give a video packet to
  *
- * @returns                        Return -1 if failed to receive packet into
- *                                 video frame, else 0
+ * @param packet                   Packet as received from the server
+ *
+ * @note                           This function is guaranteed to return virtually instantly.
+ *                                 It may be used in any hotpaths.
  */
-int32_t receive_video(WhistPacket* packet);
+void receive_video(VideoContext* video_context, WhistPacket* packet);
 
 /**
- * @brief                          Calculate statistics about bitrate, I-Frame,
- *                                 etc. and request video update from the server
+ * @brief                          Does any pending work the video context
+ *                                 wants to do. (Including decoding frames,
+ *                                 and calculating statistics)
+ *
+ * @param video_context            The video context to update
+ *
+ * @note                           This function is guaranteed to return virtually instantly.
+ *                                 It may be used in any hotpaths.
+ *
+ * @note                           In order for video to be responsive,
+ *                                 this function *MUST* be called in a tight loop,
+ *                                 at least once every millisecond.
  */
-void update_video();
+void update_video(VideoContext* video_context);
 
 /**
  * @brief                          Render the video frame (If any are available to render)
+ *
+ * @param video_context            The video context that wants to render a frame
+ *
+ * @note                           This function is thread-safe, and may be called
+ *                                 independently of receive_video/update_video
  */
-int render_video();
+int render_video(VideoContext* video_context);
 
 /**
- * @brief                          Free the video thread and VideoContext data to
- *                                 exit
+ * @brief                          Destroy the video context
+ *
+ * @param video_context            The video context to destroy
  */
-void destroy_video();
+void destroy_video(VideoContext* video_context);
 
 #endif  // CLIENT_VIDEO_H

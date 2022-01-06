@@ -51,18 +51,6 @@ int get_native_window_dpi(SDL_Window* window) {
     return (int)dpi;
 }
 
-WhistYUVColor get_frame_color(uint8_t* y_data, uint8_t* u_data, uint8_t* v_data,
-                              bool using_hardware) {
-    UNUSED(using_hardware);
-    WhistYUVColor yuv_color = {0};
-    if (y_data && u_data && v_data) {
-        yuv_color.y = y_data[0];
-        yuv_color.u = u_data[0];
-        yuv_color.v = v_data[0];
-    }
-    return yuv_color;
-}
-
 void declare_user_activity() {
     // TODO: Implement actual wake-up code
     // For now, we'll just disable the screensaver
