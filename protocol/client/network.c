@@ -218,7 +218,7 @@ void receive_pong(int pong_id) {
     if (pong_id == last_udp_ping_id) {
         // the server received the last ping we sent!
         double ping_time = get_timer(last_ping_timer);
-        LOG_INFO("Pong %d received: took %f seconds", pong_id, ping_time);
+        LOG_INFO("Pong %d received: took %f milliseconds", pong_id, ping_time * MS_IN_SECOND);
         LOG_METRIC("\"UDP_RTT\" : %d", (int)(ping_time * MS_IN_SECOND));  // In milliseconds
 
         latency = ping_lambda * latency + (1 - ping_lambda) * ping_time;
