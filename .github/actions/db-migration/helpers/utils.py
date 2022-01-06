@@ -12,6 +12,7 @@ def dump_schema(url):
             "--no-privileges",
             "--schema=cloud",
             "--schema=logging",
+            "--schema=whist",
             url,
         ],
         capture_output=True,
