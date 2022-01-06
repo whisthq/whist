@@ -786,7 +786,7 @@ func main() {
 	}
 
 	// Start database subscription client
-	instanceName, err = aws.GetInstanceName()
+	instanceId, err := aws.GetInstanceID()
 	if err != nil {
 		logger.Errorf("Can't get AWS Instance Name to start database subscriptions. Error: %s", err)
 		metrics.Increment("ErrorRate")
@@ -794,7 +794,7 @@ func main() {
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
 
 	subscriptionClient := &subscriptions.SubscriptionClient{}
-	subscriptions.SetupHostSubscriptions(string(instanceName), subscriptionClient)
+	subscriptions.SetupHostSubscriptions(string(instanceId), subscriptionClient)
 	subscriptions.Start(subscriptionClient, globalCtx, &goroutineTracker, subscriptionEvents)
 	if err != nil {
 		logger.Errorf("Failed to start database subscriptions. Error: %s", err)

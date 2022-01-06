@@ -49,15 +49,15 @@ func (cl *mockWhistClient) Subscribe(query GraphQLQuery, variables map[string]in
 	conditionFn handlerfn, subscriptionEvents chan SubscriptionEvent) (string, error) {
 
 	// Create fake instance event
-	testInstanceEvent := InstanceEvent{InstanceInfo: []Instance{{
-		Name:   variables["instanceName"].(string),
+	testInstanceEvent := InstanceEvent{Hosts: []Host{{
+		ID:     variables["id"].(string),
 		Status: variables["status"].(string),
 	}}}
 
 	// Create fake mandelbox event
-	testMandelboxEvent := MandelboxEvent{MandelboxInfo: []Mandelbox{{
-		InstanceName: variables["instanceName"].(string),
-		Status:       "ALLOCATED",
+	testMandelboxEvent := MandelboxEvent{Mandelboxes: []Mandelbox{{
+		HostID: variables["host_id"].(string),
+		Status: "ALLOCATED",
 	}}}
 
 	// Send fake event through channel depending on the result type received
@@ -85,8 +85,8 @@ func (cl *mockWhistClient) Close(subscriptionIDs []string) error {
 }
 func TestInstanceStatusHandler(t *testing.T) {
 	var variables = map[string]interface{}{
-		"instance_name": graphql.String("test-instance-name"),
-		"status":        graphql.String("DRAINING"),
+		"id":     graphql.String("test-instance-id"),
+		"status": graphql.String("DRAINING"),
 	}
 
 	// Create different tests for the instance status handler,
@@ -96,15 +96,15 @@ func TestInstanceStatusHandler(t *testing.T) {
 		event    InstanceEvent
 		want     bool
 	}{
-		{"Empty event", InstanceEvent{InstanceInfo: []Instance{}}, false},
+		{"Empty event", InstanceEvent{Hosts: []Host{}}, false},
 		{"Wrong status event", InstanceEvent{
-			InstanceInfo: []Instance{
-				{Name: "test-instance-name", Status: "PRE_CONNECTION"},
+			Hosts: []Host{
+				{ID: "test-instance-id", Status: "PRE_CONNECTION"},
 			},
 		}, false},
 		{"Correct status event", InstanceEvent{
-			InstanceInfo: []Instance{
-				{Name: "test-instance-name", Status: "DRAINING"},
+			Hosts: []Host{
+				{ID: "test-instance-id", Status: "DRAINING"},
 			},
 		}, true},
 	}
@@ -122,8 +122,8 @@ func TestInstanceStatusHandler(t *testing.T) {
 }
 func TestMandelboxAllocatedHandler(t *testing.T) {
 	var variables = map[string]interface{}{
-		"instance_name": graphql.String("test-instance-name"),
-		"status":        graphql.String("ALLOCATED"),
+		"host_id": graphql.String("test-instance-id"),
+		"status":  graphql.String("ALLOCATED"),
 	}
 
 	// Create different tests for the mandelbox allocated handler,
@@ -133,15 +133,15 @@ func TestMandelboxAllocatedHandler(t *testing.T) {
 		event    MandelboxEvent
 		want     bool
 	}{
-		{"Empty event", MandelboxEvent{MandelboxInfo: []Mandelbox{}}, false},
+		{"Empty event", MandelboxEvent{Mandelboxes: []Mandelbox{}}, false},
 		{"Wrong instance name event", MandelboxEvent{
-			MandelboxInfo: []Mandelbox{
-				{InstanceName: "test-instance-name-2", Status: "EXITED"},
+			Mandelboxes: []Mandelbox{
+				{HostID: "test-instance-id-2", Status: "EXITED"},
 			},
 		}, false},
 		{"Correct status event", MandelboxEvent{
-			MandelboxInfo: []Mandelbox{
-				{InstanceName: "test-instance-name", Status: "ALLOCATED"},
+			Mandelboxes: []Mandelbox{
+				{HostID: "test-instance-id", Status: "ALLOCATED"},
 			},
 		}, true},
 	}
@@ -150,43 +150,6 @@ func TestMandelboxAllocatedHandler(t *testing.T) {
 		testname := tt.testName
 		t.Run(testname, func(t *testing.T) {
 			got := MandelboxAllocatedHandler(tt.event, variables)
-
-			if got != tt.want {
-				t.Errorf("got %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestMandelboxStatusHandler(t *testing.T) {
-	var variables = map[string]interface{}{
-		"status": graphql.String("ALLOCATED"),
-	}
-
-	// Create different tests for the mandelbox status handler,
-	// verify if it returns the appropiate response
-	var mandelboxTests = []struct {
-		testName string
-		event    MandelboxEvent
-		want     bool
-	}{
-		{"Empty event", MandelboxEvent{MandelboxInfo: []Mandelbox{}}, false},
-		{"Wrong status event", MandelboxEvent{
-			MandelboxInfo: []Mandelbox{
-				{Status: "EXITED"},
-			},
-		}, false},
-		{"Correct status event", MandelboxEvent{
-			MandelboxInfo: []Mandelbox{
-				{Status: "ALLOCATED"},
-			},
-		}, true},
-	}
-
-	for _, tt := range mandelboxTests {
-		testname := tt.testName
-		t.Run(testname, func(t *testing.T) {
-			got := MandelboxStatusHandler(tt.event, variables)
 
 			if got != tt.want {
 				t.Errorf("got %v, want %v", got, tt.want)

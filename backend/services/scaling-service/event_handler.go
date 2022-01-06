@@ -120,11 +120,11 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 
 				scalingEvent.Type = "INSTANCE_DATABASE_EVENT"
 
-				if len(subscriptionEvent.InstanceInfo) > 0 {
-					instance := subscriptionEvent.InstanceInfo[0]
+				if len(subscriptionEvent.Hosts) > 0 {
+					instance := subscriptionEvent.Hosts[0]
 
 					scalingEvent.Data = instance
-					scalingEvent.Region = instance.Location
+					scalingEvent.Region = instance.Region
 				}
 
 				// Start scaling algorithm based on region
@@ -141,8 +141,8 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 
 				scalingEvent.Type = "IMAGE_DATABASE_EVENT"
 
-				if len(subscriptionEvent.ImageInfo) > 0 {
-					image := subscriptionEvent.ImageInfo[0]
+				if len(subscriptionEvent.Images) > 0 {
+					image := subscriptionEvent.Images[0]
 
 					scalingEvent.Data = image
 					scalingEvent.Region = image.Region
