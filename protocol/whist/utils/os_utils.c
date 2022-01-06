@@ -40,6 +40,7 @@ const char* apple_keyboard_mappings[][2] = {
     {"com.apple.keylayout.ABC-AZERTY", "fr"},  {"com.apple.keylayout.French", "fr"},
     {"com.apple.keylayout.SwissFrench", "fr"}, {"com.apple.keylayout.LatinAmerican", "latam"},
     {"com.apple.keylayout.Spanish", "es"},     {"com.apple.keylayout.Hebrew", "il"},
+    {"com.apple.keylayout.Canadian", "ca"},
 };
 
 #define NUM_APPLE_KEYBOARD_MAPPINGS \
