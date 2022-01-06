@@ -20,7 +20,7 @@ The services `startup/whist-startup.service`, `display/whist-display.service`, `
 
 1. `startup/entrypoint.sh` starts up and calls `exec` to become systemd (with pid 1)
 
-2. systemd runs `startup/whist-startup.service`, which waits until a `.paramsReady` file is written -- this is configured as a oneshot, meaning that `display/whist-display.service` only starts after `startup/whist-startup.service` finishes. The directory with the `.paramsReady` file also contains files with the parameters necessary to for the mandelbox to start properly (user ID, etc.). Note that we do *not* wait for configs to be loaded, since they are only required at step (5).
+2. systemd runs `startup/whist-startup.service`, which waits until a `.paramsReady` file is written -- this is configured as a oneshot, meaning that `display/whist-display.service` only starts after `startup/whist-startup.service` finishes. The directory with the `.paramsReady` file also contains files with the parameters necessary to for the mandelbox to start properly (user ID, etc.). Note that we do _not_ wait for configs to be loaded, since they are only required at step (5).
 
 3. Once `startup/whist-startup.service` finishes, `display/whist-display.service` starts an X Server with the proper configuration that we need. Note that this starts an X Server that is powered by an Nvidia GPU, meaning our mandelboxes can only be run on GPU-powered hosts.
 
