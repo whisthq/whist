@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
-import pexpect, os, time
+import pexpect
+import os
+import time
+import subprocess
 
 
 def attempt_ssh_connection(ssh_command, timeout, log_file_handle, pexpect_prompt, max_retries):
