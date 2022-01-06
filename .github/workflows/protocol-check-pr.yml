@@ -424,7 +424,6 @@ jobs:
             title=title,
           )
 
-
       # We save the full logs as artifact for debugging purposes. These will be deleted automatically after a certain number of days (default is 90)
       - name: Archive End-to-End Streaming Test logs
         uses: actions/upload-artifact@v2
