@@ -7,9 +7,7 @@
 #include <sys/types.h>
 #endif  // _WIN32
 
-typedef struct NetworkThrottleContext {
-    void* internal;
-} NetworkThrottleContext;
+typedef struct NetworkThrottleContext NetworkThrottleContext;
 
 /**
  * @brief                    Initialize a new network throttler.
