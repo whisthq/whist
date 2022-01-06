@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import pexpect
+import json
 
 # Get tools to run operations on a dev instance via SSH
 from dev_instance_tools import (
