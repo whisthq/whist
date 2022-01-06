@@ -12,5 +12,4 @@ type HostHandler interface {
 	SpinDownInstances(scalingCtx context.Context, instanceIDs []string) (terminatedInstances []subscriptions.Instance, err error)
 	WaitForInstanceTermination(context.Context, []string) error
 	WaitForInstanceReady(context.Context, []string) error
-	RetryInstanceSpinUp()
 }

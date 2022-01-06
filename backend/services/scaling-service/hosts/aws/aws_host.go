@@ -56,9 +56,38 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 		InstanceType:                      INSTANCE_TYPE,
 	}
 
-	result, err := host.MakeInstances(scalingCtx, input)
+	var (
+		attempts int
+		result   *ec2.RunInstancesOutput
+		err      error
+	)
+	retryTicker := time.NewTicker(WAIT_TIME_BEFORE_RETRY_IN_SECONDS * time.Second)
+	retryDone := make(chan bool)
+
+	go func() {
+		for {
+			select {
+			case <-retryDone:
+				logger.Infof("Done retrying for instance spinup.")
+				retryTicker.Stop()
+
+			case <-retryTicker.C:
+				logger.Infof("Trying to spinup instances with input: %v", input)
+
+				attempts += 1
+				result, err = host.MakeInstances(scalingCtx, input)
+
+				if err == nil || attempts == MAX_RETRY_ATTEMPTS {
+					retryDone <- true
+				} else {
+					logger.Warningf("Failed to start desired number of instances. Retrying....")
+				}
+			}
+		}
+	}()
+
 	if err != nil {
-		return nil, utils.MakeError("error creating instances: Err: %v", err)
+		return nil, utils.MakeError("error creating instances, retry time expired: Err: %v", err)
 	}
 
 	// Create slice with instances to write to database
@@ -179,10 +208,6 @@ func (host *AWSHost) WaitForInstanceReady(scalingCtx context.Context, instanceId
 	}
 
 	return nil
-}
-
-func (host *AWSHost) RetryInstanceSpinUp() {
-
 }
 
 // GenerateName is a helper function for generating an instance
