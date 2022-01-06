@@ -381,9 +381,9 @@ void print_cpu_info() {
     // Get vendor
     char cpu_vendor[13] = {0};
     cpu_id(0, regs);
-    ((unsigned*)cpu_vendor)[0] = regs[1];  // EBX
-    ((unsigned*)cpu_vendor)[1] = regs[3];  // EDX
-    ((unsigned*)cpu_vendor)[2] = regs[2];  // ECX
+    memcpy(&cpu_vendor[0], &regs[1], 4);  // EBX
+    memcpy(&cpu_vendor[4], &regs[3], 4);  // EDX
+    memcpy(&cpu_vendor[8], &regs[2], 4);  // ECX
 
     // Get Brand String
     unsigned int n_ex_ids = 0;
