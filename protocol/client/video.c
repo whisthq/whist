@@ -238,6 +238,7 @@ void update_video(VideoContext* video_context) {
                 // The following line invalidates the information stored at the pointer ctx
                 video_context->render_context =
                     set_rendering(video_context->ring_buffer, next_render_id);
+                log_double_statistic(VIDEO_FPS_RENDERED, 1.0);
                 // Progress the videodata last rendered pointer
                 video_context->last_rendered_id = next_render_id;
 
@@ -638,7 +639,6 @@ void calculate_statistics(VideoContext* video_context) {
         stats.num_rendered_frames_per_second =
             ring_buffer->num_frames_rendered / STATISTICS_SECONDS;
 
-        LOG_METRIC("\"rendered_fps\" : %d", stats.num_rendered_frames_per_second);
         new_bitrates = calculate_new_bitrate(stats);
         if (new_bitrates.bitrate != client_max_bitrate ||
             new_bitrates.burst_bitrate != max_burst_bitrate) {
