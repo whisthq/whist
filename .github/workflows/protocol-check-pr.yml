@@ -184,12 +184,12 @@ jobs:
       - name: Build and Test Protocol Client on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol
-        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI --sanitize=address WhistClient WhistProtocolTest
+        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI --sanitize=address+undefined WhistClient WhistProtocolTest
 
       - name: Build Protocol Server on Linux Ubuntu
         if: runner.os == 'Linux'
         working-directory: protocol
-        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI --sanitize=address WhistServer WhistProtocolTest
+        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI --sanitize=address+undefined WhistServer WhistProtocolTest
 
       # Verify clang-format on Linux
       - name: Verify Builds with clang-format
