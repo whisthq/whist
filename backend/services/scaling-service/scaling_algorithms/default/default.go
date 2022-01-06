@@ -137,14 +137,14 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 					scalingCtx, scalingCancel := context.WithCancel(context.Background())
 
 					for _, region := range bundledRegions {
-						// scheduledEvent.Region = region
-						// err := s.ScaleUpIfNecessary(2, scalingCtx, scheduledEvent, "ami-0ef406ddccd08da93")
-						// logger.Error(err)
+						scheduledEvent.Region = region
+						err := s.ScaleUpIfNecessary(2, scalingCtx, scheduledEvent, "ami-05093b907df265a91")
+						logger.Error(err)
 
-						err := s.ScaleDownIfNecessary(scalingCtx, scheduledEvent)
-						if err != nil {
-							logger.Errorf("Error running scale down job on region %v. Err: %v", region, err)
-						}
+						// err := s.ScaleDownIfNecessary(scalingCtx, scheduledEvent)
+						// if err != nil {
+						// 	logger.Errorf("Error running scale down job on region %v. Err: %v", region, err)
+						// }
 					}
 
 					scalingCancel()

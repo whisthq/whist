@@ -166,12 +166,12 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 	// Create slice with newly created instance ids
 	var (
 		createdInstanceIds []string
-		instancesForDb     []cloud_instances_insert_input
+		instancesForDb     []whist_instances_insert_input
 	)
 
 	for _, instance := range createdInstances {
 		createdInstanceIds = append(createdInstanceIds, instance.ID)
-		instancesForDb = append(instancesForDb, cloud_instances_insert_input{
+		instancesForDb = append(instancesForDb, whist_instances_insert_input{
 			ID:        graphql.String(instance.ID),
 			Provider:  graphql.String(instance.Provider),
 			Region:    graphql.String(instance.Region),
