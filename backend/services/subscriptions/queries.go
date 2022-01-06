@@ -9,9 +9,9 @@ import (
 // as subscriptions and normal queries.
 type GraphQLQuery interface{}
 
-// WhistHosts is the mapping of the `whist.hosts` table. It is meant to be used
+// WhistInstances is the mapping of the `whist.hosts` table. It is meant to be used
 // on the database subscriptions.
-type WhistHosts []struct {
+type WhistInstances []struct {
 	ID        graphql.String `graphql:"id"`
 	Provider  graphql.String `graphql:"provider"`
 	Region    graphql.String `graphql:"region"`
@@ -29,7 +29,7 @@ type WhistHosts []struct {
 type WhistMandelboxes []struct {
 	ID        graphql.String `graphql:"id"`
 	App       graphql.String `graphql:"app"`
-	HostID    graphql.String `graphql:"host_id"`
+	HostID    graphql.String `graphql:"instance_id"`
 	UserID    graphql.String `graphql:"user_id"`
 	SessionID graphql.String `graphql:"session_id"`
 	CreatedAt graphql.String `graphql:"created_at"`
@@ -48,28 +48,28 @@ type WhistImages []struct {
 
 // QueryInstanceByIdWithStatus returns an instance that matches the given instance_name and status.
 var QueryInstanceByIdWithStatus struct {
-	WhistHosts `graphql:"whist_hosts(where: {id: {_eq: $id}, _and: {status: {_eq: $status}}})"`
+	WhistInstances `graphql:"whist_hosts(where: {id: {_eq: $id}, _and: {status: {_eq: $status}}})"`
 }
 
 // QueryInstanceById returns an instance that matches the given instance_name and status.
 var QueryInstanceById struct {
-	WhistHosts `graphql:"whist_hosts(where: {id: {_eq: $id}})"`
+	WhistInstances `graphql:"whist_hosts(where: {id: {_eq: $id}})"`
 }
 
 // QueryInstanceStatus returns any instance that matches the given status.
 var QueryInstancesByStatus struct {
-	WhistHosts `graphql:"whist_hosts(where: {status: {_eq: $status}})"`
+	WhistInstances `graphql:"whist_hosts(where: {status: {_eq: $status}})"`
 }
 
 // QueryFreeInstances returns any instance that matches the given status.
 var QueryFreeInstances struct {
-	WhistHosts `graphql:"whist_hosts(where: {capacity: {_eq: $capacity}, _and {status: {_eq: $status}}})"`
+	WhistInstances `graphql:"whist_hosts(where: {capacity: {_eq: $capacity}, _and {status: {_eq: $status}}})"`
 }
 
 // QueryMandelboxesById returns a mandelbox associated with the given instance
 // and that has the given status.
 var QueryMandelboxesByInstanceId struct {
-	WhistMandelboxes `graphql:"whist_mandelboxes(where: {host_id: {_eq: $host_id}, _and: {status: {_eq: $status}}})"`
+	WhistMandelboxes `graphql:"whist_mandelboxes(where: {instance_id: {_eq: $instance_id}, _and: {status: {_eq: $status}}})"`
 }
 
 // QueryMandelboxStatus returns every mandelbox that matches the given status.

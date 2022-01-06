@@ -44,7 +44,7 @@ func MakeTags(c context.Context, host *AWSHost, input *ec2.CreateTagsInput) (*ec
 }
 
 // SpinDownInstances is responsible for launching `numInstances` number of instances with the received imageID.
-func (host *AWSHost) SpinUpInstances(numInstances int32, imageID string) ([]subscriptions.Host, error) {
+func (host *AWSHost) SpinUpInstances(numInstances int32, imageID string) ([]subscriptions.Instance, error) {
 	ctx := context.Background()
 
 	// Set run input
@@ -79,16 +79,16 @@ func (host *AWSHost) SpinUpInstances(numInstances int32, imageID string) ([]subs
 	logger.Infof("Created tagged instance with ID " + *result.Instances[0].InstanceId)
 
 	// Create slice with created instances
-	var outputInstances []subscriptions.Host
+	var outputInstances []subscriptions.Instance
 
 	for _, outputInstance := range result.Instances {
-		outputInstances = append(outputInstances, subscriptions.Host{
-			IP:              *outputInstance.PublicIpAddress,
-			ImageID:         *outputInstance.ImageId,
-			Type:            *outputInstance.PlatformDetails,
-			CloudProviderID: *outputInstance.InstanceId,
-			Name:            *outputInstance.Tags[0].Value,
-			Status:          "PRE_CONNECTION",
+		outputInstances = append(outputInstances, subscriptions.Instance{
+			IPAddress: *outputInstance.PublicIpAddress,
+			ImageID:   *outputInstance.ImageId,
+			// Type:            *outputInstance.PlatformDetails,
+			ID: *outputInstance.InstanceId,
+			// Name:   *outputInstance.Tags[0].Value,
+			Status: "PRE_CONNECTION",
 		})
 	}
 
@@ -121,7 +121,7 @@ func (host *AWSHost) SpinDownInstances(instanceIDs []string) ([]subscriptions.In
 
 	for _, outputInstance := range terminateOutput.TerminatingInstances {
 		outputInstances = append(outputInstances, subscriptions.Instance{
-			CloudProviderID: *outputInstance.InstanceId,
+			ID: *outputInstance.InstanceId,
 		})
 	}
 
@@ -145,12 +145,12 @@ func (host *AWSHost) WaitForInstanceTermination(scalingCtx context.Context, inst
 	})
 
 	waitParams := &ec2.DescribeInstancesInput{
-		InstanceIds: []string{instance.Name},
+		InstanceIds: []string{instance.ID},
 	}
 
 	err := waiter.Wait(scalingCtx, waitParams, 5*time.Minute)
 	if err != nil {
-		return utils.MakeError("failed waiting for instance %v to terminate from AWS: %v", instance.Name, err)
+		return utils.MakeError("failed waiting for instance %v to terminate from AWS: %v", instance.ID, err)
 	}
 
 	return nil
@@ -164,12 +164,12 @@ func (host *AWSHost) WaitForInstanceReady(scalingCtx context.Context, instance s
 	})
 
 	waitParams := &ec2.DescribeInstancesInput{
-		InstanceIds: []string{instance.Name},
+		InstanceIds: []string{instance.ID},
 	}
 
 	err := waiter.Wait(scalingCtx, waitParams, 5*time.Minute)
 	if err != nil {
-		return utils.MakeError("failed waiting for instance %v to be ready from AWS: %v", instance.Name, err)
+		return utils.MakeError("failed waiting for instance %v to be ready from AWS: %v", instance.ID, err)
 	}
 
 	return nil

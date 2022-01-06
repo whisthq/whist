@@ -7,8 +7,8 @@ type HasuraParams struct {
 	AccessKey string
 }
 
-// Host represents a host from the "whist_hosts" table.
-type Host struct {
+// Instance represents a host from the "whist_instances" table.
+type Instance struct {
 	ID        string `json:"id"`
 	Provider  string `json:"provider"`
 	Region    string `json:"region"`
@@ -25,7 +25,7 @@ type Host struct {
 type Mandelbox struct {
 	ID        string `json:"id"`
 	App       string `json:"app"`
-	HostID    string `json:"host_id"`
+	HostID    string `json:"instance_id"`
 	UserID    string `json:"user_id"`
 	SessionID string `json:"session_id"`
 	CreatedAt string `json:"created_at"`
@@ -54,10 +54,10 @@ type HasuraSubscription struct {
 }
 
 // InstanceResult is a struct used to hold results for any
-// subscription to the "instance_info" table. The WhistHosts
+// subscription to the "instance_info" table. The Instances
 // interface represents the table `hosts` from the `whist` schema on the database.
 type InstanceResult struct {
-	WhistHosts interface{} `json:"whist_hosts"`
+	WhistInstances interface{} `json:"whist_instances"`
 }
 
 // MandelboxResult is a struct used to hold results for any
@@ -84,7 +84,7 @@ type SubscriptionEvent interface{}
 // meant to be used by any event that operates on the
 // instance_info database table.
 type InstanceEvent struct {
-	Hosts []Host `json:"whist_hosts"`
+	Instances []Instance `json:"whist_instances"`
 }
 
 // MandelboxEvent represents an occurred event on the

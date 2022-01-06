@@ -120,8 +120,8 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 
 				scalingEvent.Type = "INSTANCE_DATABASE_EVENT"
 
-				if len(subscriptionEvent.Hosts) > 0 {
-					instance := subscriptionEvent.Hosts[0]
+				if len(subscriptionEvent.Instances) > 0 {
+					instance := subscriptionEvent.Instances[0]
 
 					scalingEvent.Data = instance
 					scalingEvent.Region = instance.Region

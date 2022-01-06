@@ -49,14 +49,14 @@ func (cl *mockWhistClient) Subscribe(query GraphQLQuery, variables map[string]in
 	conditionFn handlerfn, subscriptionEvents chan SubscriptionEvent) (string, error) {
 
 	// Create fake instance event
-	testInstanceEvent := InstanceEvent{Hosts: []Host{{
+	testInstanceEvent := InstanceEvent{Instances: []Instance{{
 		ID:     variables["id"].(string),
 		Status: variables["status"].(string),
 	}}}
 
 	// Create fake mandelbox event
 	testMandelboxEvent := MandelboxEvent{Mandelboxes: []Mandelbox{{
-		HostID: variables["host_id"].(string),
+		HostID: variables["instance_id"].(string),
 		Status: "ALLOCATED",
 	}}}
 
@@ -96,14 +96,14 @@ func TestInstanceStatusHandler(t *testing.T) {
 		event    InstanceEvent
 		want     bool
 	}{
-		{"Empty event", InstanceEvent{Hosts: []Host{}}, false},
+		{"Empty event", InstanceEvent{Instances: []Instance{}}, false},
 		{"Wrong status event", InstanceEvent{
-			Hosts: []Host{
+			Instances: []Instance{
 				{ID: "test-instance-id", Status: "PRE_CONNECTION"},
 			},
 		}, false},
 		{"Correct status event", InstanceEvent{
-			Hosts: []Host{
+			Instances: []Instance{
 				{ID: "test-instance-id", Status: "DRAINING"},
 			},
 		}, true},
@@ -122,8 +122,8 @@ func TestInstanceStatusHandler(t *testing.T) {
 }
 func TestMandelboxAllocatedHandler(t *testing.T) {
 	var variables = map[string]interface{}{
-		"host_id": graphql.String("test-instance-id"),
-		"status":  graphql.String("ALLOCATED"),
+		"instance_id": graphql.String("test-instance-id"),
+		"status":      graphql.String("ALLOCATED"),
 	}
 
 	// Create different tests for the mandelbox allocated handler,

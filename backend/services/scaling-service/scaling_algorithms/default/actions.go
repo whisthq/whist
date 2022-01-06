@@ -7,7 +7,7 @@ import (
 	"github.com/whisthq/whist/backend/services/subscriptions"
 )
 
-func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Context, host hosts.HostHandler, event ScalingEvent, instance subscriptions.Host) error {
+func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Context, host hosts.HostHandler, event ScalingEvent, instance subscriptions.Instance) error {
 	// First, verify if the draining instance has mandelboxes running
 
 	// If instance has active mandelboxes, leave it alone
