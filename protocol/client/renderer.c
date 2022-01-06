@@ -143,8 +143,12 @@ void renderer_try_render(WhistRenderer* whist_renderer) {
     }
 
     // Render out any pending audio or video
-    render_audio(whist_renderer->audio_context);
     render_video(whist_renderer->video_context);
+    if (has_video_rendered_yet(whist_renderer->video_context)) {
+        // Only render audio, if the video has rendered something
+        // This is because it feels weird when audio is played to the loading screen
+        render_audio(whist_renderer->audio_context);
+    }
 
     // Mark as recently rendered, and unlock
     start_timer(&whist_renderer->last_try_render_timer);

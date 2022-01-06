@@ -109,6 +109,22 @@ void update_video(VideoContext* video_context);
 int render_video(VideoContext* video_context);
 
 /**
+ * @brief                          Returns whether or not a video frame has been rendered.
+ *                                 (NOT including any "loading animation" frames)
+ *                                 This can be false even after calling render_video,
+ *                                 if there simply weren't enough packets yet or if the video
+ *                                 is still being decoded.
+ *
+ *
+ * @param video_context            The video context that has potentially rendered a frame
+ *
+ * @returns                        Returns true iff a video frame has actually
+ *                                 been rendered out to the SDL framebuffer.
+ *                                 (NOT including any "loading animation" frames)
+ */
+bool has_video_rendered_yet(VideoContext* video_context);
+
+/**
  * @brief                          Destroy the video context
  *
  * @param video_context            The video context to destroy

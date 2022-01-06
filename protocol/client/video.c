@@ -57,10 +57,6 @@ extern volatile bool update_bitrate;
 extern volatile CodecType output_codec_type;
 extern volatile double latency;
 
-// Whether or not video has rendered yet,
-// So that audio doesn't play to a black screen
-bool has_video_rendered_yet = false;
-
 #define BITRATE_BUCKET_SIZE 500000
 // Number of videoframes to have in the ringbuffer
 #define RECV_FRAMES_BUFFER_SIZE 275
@@ -94,6 +90,7 @@ struct VideoContext {
     // Loading animation data
     int loading_index;
     clock last_loading_frame_timer;
+    bool has_video_rendered_yet;
 
     // Context of the frame that is currently being rendered
     FrameData* render_context;
@@ -167,7 +164,7 @@ VideoContext* init_video() {
     video_context->ring_buffer =
         init_ring_buffer(PACKET_VIDEO, RECV_FRAMES_BUFFER_SIZE, nack_packet);
     working_mbps = STARTING_BITRATE;
-    has_video_rendered_yet = false;
+    video_context->has_video_rendered_yet = false;
     video_context->sws = NULL;
     client_max_bitrate = STARTING_BITRATE;
     video_context->target_mbps = STARTING_BITRATE;
@@ -214,7 +211,7 @@ void destroy_video(VideoContext* video_context) {
     server_codec_type = CODEC_TYPE_UNKNOWN;
 
     // Mark as not rendered now
-    has_video_rendered_yet = false;
+    video_context->has_video_rendered_yet = false;
 
     // Free the video context
     free(video_context);
@@ -477,7 +474,7 @@ int render_video(VideoContext* video_context) {
         last_rendered_time = server_timestamp;
         log_double_statistic(VIDEO_E2E_LATENCY, (double)(e2e_latency / 1000));
 
-        has_video_rendered_yet = true;
+        video_context->has_video_rendered_yet = true;
 
         // Track time between consecutive frames
         static clock last_frame_timer;
@@ -504,6 +501,10 @@ int render_video(VideoContext* video_context) {
     }
 
     return 0;
+}
+
+bool has_video_rendered_yet(VideoContext* video_context) {
+    return video_context->has_video_rendered_yet;
 }
 
 /*
