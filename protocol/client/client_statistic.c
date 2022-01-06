@@ -13,16 +13,13 @@ void init_client_statistics() {
         (StatisticInfo){"AUDIO_RECEIVE_TIME", true, false, false};
     client_statistic_info[AUDIO_UPDATE_TIME] =
         (StatisticInfo){"AUDIO_UPDATE_TIME", true, false, false};
-    client_statistic_info[AUDIO_FPS_SKIPPED_FLUSH] =
-        (StatisticInfo){"AUDIO_FPS_SKIPPED_FLUSH", false, false, true};
-    client_statistic_info[AUDIO_FPS_SKIPPED_CATCHUP] =
-        (StatisticInfo){"AUDIO_FPS_SKIPPED_CATCHUP", true, false, true};
-    client_statistic_info[AUDIO_FPS_SKIPPED_RECEIVE] =
-        (StatisticInfo){"AUDIO_FPS_SKIPPED_RECEIVE", true, false, true};
+    client_statistic_info[AUDIO_FPS_SKIPPED] =
+        (StatisticInfo){"AUDIO_FPS_SKIPPED", true, false, true};
     client_statistic_info[NETWORK_READ_PACKET_TCP] =
         (StatisticInfo){"READ_PACKET_TIME_TCP", true, false, false};
     client_statistic_info[NETWORK_READ_PACKET_UDP] =
         (StatisticInfo){"READ_PACKET_TIME_UDP", true, false, false};
+    client_statistic_info[NETWORK_RTT_UDP] = (StatisticInfo){"NETWORK_RTT_UDP", true, true, false};
     client_statistic_info[SERVER_HANDLE_MESSAGE_TCP] =
         (StatisticInfo){"HANDLE_SERVER_MESSAGE_TIME_TCP", true, false, false};
     client_statistic_info[SERVER_HANDLE_MESSAGE_UDP] =
@@ -37,6 +34,8 @@ void init_client_statistics() {
         (StatisticInfo){"VIDEO_DECODE_SEND_PACKET_TIME", true, false, false};
     client_statistic_info[VIDEO_DECODE_GET_FRAME_TIME] =
         (StatisticInfo){"VIDEO_DECODE_GET_FRAME_TIME", true, false, false};
+    client_statistic_info[VIDEO_FPS_RENDERED] =
+        (StatisticInfo){"VIDEO_FPS_RENDERED", false, false, true};
     client_statistic_info[VIDEO_E2E_LATENCY] =
         (StatisticInfo){"VIDEO_END_TO_END_LATENCY", true, true, false};
     client_statistic_info[VIDEO_RECEIVE_TIME] =

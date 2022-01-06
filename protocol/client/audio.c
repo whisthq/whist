@@ -191,7 +191,7 @@ void receive_audio(AudioContext* raw_audio_context, WhistPacket* packet) {
         LOG_ERROR("Ringbuffer packet error!");
     } else if (res > 0) {
         if (audio_context->ring_buffer->currently_rendering_id != -1) {
-            log_double_statistic(AUDIO_FPS_SKIPPED_RECEIVE, (double)res);
+            log_double_statistic(AUDIO_FPS_SKIPPED, (double)res);
         }
         if (audio_context->last_played_id < packet->id && audio_context->last_played_id > 0) {
             audio_context->last_played_id = packet->id - 1;
@@ -393,7 +393,7 @@ void catchup_audio(InternalAudioContext* audio_context) {
                   ring_buffer->max_id - 1);
 #endif
         if (audio_context->last_played_id != -1) {
-            log_double_statistic(AUDIO_FPS_SKIPPED_CATCHUP,
+            log_double_statistic(AUDIO_FPS_SKIPPED,
                                  (double)(ring_buffer->max_id - audio_context->last_played_id - 1));
         }
         audio_context->last_played_id = ring_buffer->max_id - 1;
@@ -476,7 +476,7 @@ bool is_buffering_audio(InternalAudioContext* audio_context) {
                 audio_context->last_played_id = next_to_play_id;
 
                 // Log the skipped frame
-                log_double_statistic(AUDIO_FPS_SKIPPED_FLUSH, 1.0);
+                log_double_statistic(AUDIO_FPS_SKIPPED, 1.0);
                 LOG_WARNING("Audio queue full, skipping ID %d (Queued: %d)", next_to_play_id,
                             audio_device_queue);
             }

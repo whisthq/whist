@@ -28,6 +28,7 @@ Includes
 #include <whist/logging/error_monitor.h>
 #include "network.h"
 #include "client_utils.h"
+#include "client_statistic.h"
 #include "audio.h"
 
 // Init information
@@ -217,7 +218,7 @@ void receive_pong(int pong_id) {
         // the server received the last ping we sent!
         double ping_time = get_timer(last_ping_timer);
         LOG_INFO("Pong %d received: took %f milliseconds", pong_id, ping_time * MS_IN_SECOND);
-        LOG_METRIC("\"UDP_RTT\" : %d", (int)(ping_time * MS_IN_SECOND));  // In milliseconds
+        log_double_statistic(NETWORK_RTT_UDP, ping_time * MS_IN_SECOND);
 
         latency = ping_lambda * latency + (1 - ping_lambda) * ping_time;
         udp_ping_failures = 0;
