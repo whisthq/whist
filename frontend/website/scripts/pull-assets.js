@@ -19,12 +19,12 @@ const aws = require("./aws-helpers")
   const environment = process.env.WHIST_ENVIRONMENT ?? "local"
 
   // Pull investor and team data from Notion
-  let savedInvestorInfo = await notion.fetchNotionInvestorData()
-  let savedTeamInfo = await notion.fetchNotionTeamData()
+  const savedInvestorInfo = await notion.fetchNotionInvestorData()
+  const savedTeamInfo = await notion.fetchNotionTeamData()
 
   // This is meant to run in dev/staging/prod CI deployments
   // Upload the pulled Notion images to S3 so they're saved forever
-  if (environment === "local") {
+  if (environment !== "local") {
     console.log("Uploading assets to S3...")
 
     const teamS3Directory = `${environment}/team`

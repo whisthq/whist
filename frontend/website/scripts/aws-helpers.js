@@ -3,9 +3,8 @@ const request = require("request-promise")
 
 const AWS_BUCKET_NAME = "whist-website-assets" // Where to upload website assets
 const s3 = new AWS.S3({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "AKIA24A776SSDGVALR5K",
-  secretAccessKey:
-    process.env.AWS_SECRET_KEY ?? "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",
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "",
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? "",
 })
 
 module.exports = {

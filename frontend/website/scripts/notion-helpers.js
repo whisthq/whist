@@ -21,7 +21,7 @@ module.exports = {
       ],
     })
 
-    let savedTeamInfo = []
+    const savedTeamInfo = []
 
     // Iterate through database entries
     for (const row of teamDatabase?.results) {
@@ -50,7 +50,7 @@ module.exports = {
       ],
     })
 
-    let savedInvestorInfo = []
+    const savedInvestorInfo = []
 
     // Iterate through database entries
     for (const row of investorDatabase?.results) {
