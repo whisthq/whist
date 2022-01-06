@@ -2,7 +2,7 @@
 #define OSUTILS_H
 
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright (c) 2022 Whist Technologies, Inc.
  * @file os_utils.h
 ============================
 Usage
