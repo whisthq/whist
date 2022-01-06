@@ -251,13 +251,22 @@ func TestSpinUpMandelbox(t *testing.T) {
 				t.Errorf("GPU index %s written to file is not a valid int: %v.", string(gpuFileContents), err)
 			}
 
-			readyFile := path.Join(resourceMappingDir, ".ready")
-			readyFileContents, err := ioutil.ReadFile(readyFile)
+			pReadyFile := path.Join(resourceMappingDir, ".paramsReady")
+			pReadyFileContents, err := ioutil.ReadFile(pReadyFile)
 			if err != nil {
-				t.Fatalf("Failed to read resource file %s: %v", readyFile, err)
+				t.Fatalf("Failed to read resource file %s: %v", pReadyFile, err)
 			}
-			if string(readyFileContents) != ".ready" {
-				t.Errorf("Ready file contains invalid contents: %s", string(readyFileContents))
+			if string(pReadyFileContents) != ".paramsReady" {
+				t.Errorf("Params ready file contains invalid contents: %s", string(pReadyFileContents))
+			}
+
+			cReadyFile := path.Join(resourceMappingDir, ".configReady")
+			cReadyFileContents, err := ioutil.ReadFile(cReadyFile)
+			if err != nil {
+				t.Fatalf("Failed to read resource file %s: %v", cReadyFile, err)
+			}
+			if string(cReadyFileContents) != ".configReady" {
+				t.Errorf("Config ready file contains invalid contents: %s", string(cReadyFileContents))
 			}
 		})
 	}

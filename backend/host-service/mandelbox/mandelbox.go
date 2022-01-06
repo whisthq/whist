@@ -101,12 +101,12 @@ type Mandelbox interface {
 	// how long it will wait for a connection) to a directory accessible to only
 	// this mandelbox.
 	WriteProtocolTimeout(protocolTimeout int) error
-	// MarkPrelimReady indicates that processes that do not depend on user configs
+	// MarkParamsReady indicates that processes that do not depend on user configs
 	// are ready to be initialized.
-	MarkPrelimReady() error
-	// MarkReady tells the protocol inside the mandelbox that it is ready to
+	MarkParamsReady() error
+	// MarkConfigReady tells the protocol inside the mandelbox that it is ready to
 	// start and accept connections.
-	MarkReady() error
+	MarkConfigReady() error
 
 	// Set up the directories for user configs
 	SetupUserConfigDirs() error

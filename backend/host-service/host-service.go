@@ -319,9 +319,13 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		}
 
 		// Unblocks whist-startup.sh to start symlink loaded user configs
-		err = mandelbox.MarkReady()
+		err = mandelbox.MarkParamsReady()
 		if err != nil {
-			return utils.MakeError("Error marking mandelbox as ready: %s", err)
+			return utils.MakeError("Error marking mandelbox params as ready: %s", err)
+		}
+		err = mandelbox.MarkConfigReady()
+		if err != nil {
+			return utils.MakeError("Error marking mandelbox configs as ready: %s", err)
 		}
 
 		logger.Infof("Waiting for whist application to warm up...")
@@ -671,12 +675,12 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		return
 	}
 
-	err = mandelbox.MarkPrelimReady()
+	err = mandelbox.MarkParamsReady()
 	if err != nil {
 		logAndReturnError("Error marking mandelbox %s as ready to start A/V + display: %s", mandelboxSubscription.ID, err)
 		return
 	}
-	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s as preliminarily ready. A/V and display services can soon start.", mandelboxSubscription.ID)
+	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s params as ready. A/V and display services can soon start.", mandelboxSubscription.ID)
 
 	<-userConfigDownloadComplete
 
@@ -757,9 +761,9 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	browserDataGroup.Wait()
 
 	// Unblocks whist-startup.sh to start symlink loaded user configs
-	err = mandelbox.MarkReady()
+	err = mandelbox.MarkConfigReady()
 	if err != nil {
-		logAndReturnError("Error marking mandelbox %s as ready: %s", mandelboxSubscription.ID, err)
+		logAndReturnError("Error marking mandelbox %s configs as ready: %s", mandelboxSubscription.ID, err)
 		return
 	}
 	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s as ready", mandelboxSubscription.ID)
