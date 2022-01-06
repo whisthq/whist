@@ -68,6 +68,13 @@ func initializeSentry() (*sentrySender, error) {
 			log.Printf("Set Sentry tag aws.instance-type: %s", val)
 		}
 
+		if val, err := aws.GetInstanceName(); err != nil {
+			defer Errorf("Unable to set Sentry tag aws.instance-name: %v", err)
+		} else {
+			scope.SetTag("aws.instance-name", string(val))
+			log.Printf("Set Sentry tag aws.instance-name: %s", val)
+		}
+
 		if val, err := aws.GetPlacementRegion(); err != nil {
 			defer Errorf("Unable to set Sentry tag aws.placement-region: %v", err)
 		} else {
