@@ -196,8 +196,8 @@ typedef struct {
     short num_indices;      // The total number of packets that the datagram
                             // was broken down into, including FEC packets.
     short num_fec_indices;  // The # of indices that are only for FEC data
-    int payload_size;       // size of this packet's data[], in bytes
     bool is_a_nack;         // True if this is a replay'ed packet
+    int payload_size;       // size of this packet's data[], in bytes
 
     // Data
     uint8_t data[MAX_PAYLOAD_SIZE];  // data at the end of the struct, with invalid
