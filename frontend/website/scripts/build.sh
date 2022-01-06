@@ -2,4 +2,4 @@
 
 set -Eeuo pipefail
 
-yarn tailwind && snowpack build
+yarn tailwind && yarn pull:assets && snowpack build
