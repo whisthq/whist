@@ -40,4 +40,4 @@ Additionally, consider the following rules:
 
 An alternative to resource mapping is to mount data onto the mandelbox as seen in [host-service.go](https://github.com/whisthq/whist/blob/dev/host-service/host-service.go#L564).
 
-Another important fact to note is `whist-startup.sh` will wait until a `.ready` file is created which happens in [host-service.go](https://github.com/whisthq/whist/blob/dev/host-service/host-service.go#L728) using the mandelbox function [MarkReady](https://github.com/whisthq/whist/blob/dev/host-service/mandelbox/mandelbox_params.go#L50).
+Another important fact to note is `whist-startup.sh` will wait until a `.paramsReady` file is created which happens in `host-service.go` using the mandelbox function `MarkParamsReady`. Moreover, because the protocol and application depend on user configs, `run-whist-server.sh` will block until `.configReady` is created, which happens via the `host-service.go` function `MarkConfigReady`.
