@@ -34,6 +34,12 @@ typedef struct {
 
     bool run_renderer_thread;
     WhistThread renderer_thread;
+    WhistMutex renderer_mutex;
+    WhistSemaphore renderer_semaphore;
+    clock last_try_render_timer;
+    // Used to log renderer thread usage
+    bool using_renderer_thread;
+    bool render_is_on_renderer_thread;
 } WhistRenderer;
 
 /*
@@ -88,8 +94,10 @@ void renderer_receive_packet(WhistRenderer* renderer, WhistPacket* packet);
  *
  * @note                           This function will potentially take a long time (4-8ms)
  *
- * @note                           This function is optional to call,
- *                                 as the renderer will call this function by itself anyway
+ * @note                           This function is optional to call, but it's provided
+ *                                 so that rendering work can be done on a thread that
+ *                                 already exists. If you fail to call this function,
+ *                                 another thread will be used automatically, increasing CPU usage.
  */
 void renderer_try_render(WhistRenderer* renderer);
 
