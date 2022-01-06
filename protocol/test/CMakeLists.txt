@@ -9,6 +9,7 @@ set(PROTOCOL_TEST_BINARY WhistProtocolTest)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     add_executable(${PROTOCOL_TEST_BINARY}
         protocol_test.cpp
+        codec_test.cpp
 
         # Files needed for Whist Lib unit tests
         ../whist/utils/aes.c
@@ -32,6 +33,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 else()
     add_executable(${PROTOCOL_TEST_BINARY}
         protocol_test.cpp
+        codec_test.cpp
+
         # Files needed for Server unit tests
         ../server/client.c
         ../server/video.c

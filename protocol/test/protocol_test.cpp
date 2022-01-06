@@ -3,7 +3,7 @@
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file protocol_test.cpp
- * @brief This file contains all the uni tests for the /protocol codebase code f
+ * @brief This file contains most of the unit tests for the /protocol codebase
 ============================
 Usage
 ============================
