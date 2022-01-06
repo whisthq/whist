@@ -7,6 +7,7 @@ from dev_instance_tools import (
     wait_until_cmd_done,
 )
 
+
 def extract_server_logs_from_instance(
     pexpect_process,
     pexpect_prompt,

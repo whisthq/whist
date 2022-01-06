@@ -147,7 +147,6 @@ parser.add_argument(
 args = parser.parse_args()
 
 
-
 # This main loop creates two AWS EC2 instances, one client, one server, and sets up
 # a protocol streaming test between them
 if __name__ == "__main__":

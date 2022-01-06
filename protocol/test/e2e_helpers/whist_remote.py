@@ -12,6 +12,7 @@ from dev_instance_tools import (
     clone_whist_repository_on_instance,
 )
 
+
 def run_host_setup_on_instance(pexpect_process, pexpect_prompt, aws_ssh_cmd, aws_timeout, logfile):
     print("Running the host setup on the instance ...")
     command = "cd ~/whist/host-setup && ./setup_host.sh --localdevelopment | tee ~/host_setup.log"
@@ -214,7 +215,9 @@ def client_setup_process(args_dict):
     client_pexpect_process = attempt_ssh_connection(
         client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
     )
-    build_client_on_instance(client_pexpect_process, pexpect_prompt_client, testing_time, cmake_build_type)
+    build_client_on_instance(
+        client_pexpect_process, pexpect_prompt_client, testing_time, cmake_build_type
+    )
     client_pexpect_process.kill(0)
 
     client_log.close()

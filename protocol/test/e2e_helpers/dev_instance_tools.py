@@ -128,8 +128,6 @@ def configure_aws_credentials(
     aws_credentials_file.close()
 
 
-
-
 def clone_whist_repository_on_instance(github_token, pexpect_process, pexpect_prompt):
     # Obtain current branch
     subproc_handle = subprocess.Popen("git branch", shell=True, stdout=subprocess.PIPE)
