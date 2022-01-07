@@ -123,7 +123,7 @@ TEST(ProtocolTest, InitSDL) {
         const char *err = SDL_GetError();
         printf("err: '%s', strlen(err): %zu\n", err, strlen(err));
         int res = strcmp(err, "No available video device");
-        printf("res: %i\n");
+        printf("res: %i\n",res);
         if (res == 0) {
             // check_stdout_line(::testing::HasSubstr("Could not initialize SDL - No available video
             // device"));
