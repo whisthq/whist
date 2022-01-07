@@ -34,18 +34,28 @@ volatile int client_override_bitrate = 0;
 
 /*
 ============================
-Private Functions
+Private Function Declarations
 ============================
 */
+
 Bitrates fallback_bitrate(BitrateStatistics stats);
 Bitrates ewma_bitrate(BitrateStatistics stats);
 Bitrates ewma_ratio_bitrate(BitrateStatistics stats);
 
 /*
 ============================
+Public Function Implementations
+============================
+*/
+
+Bitrates calculate_new_bitrate(BitrateStatistics stats) { return ewma_bitrate(stats); }
+
+/*
+============================
 Private Function Implementations
 ============================
 */
+
 Bitrates fallback_bitrate(BitrateStatistics stats) {
     /*
         Switches between two sets of bitrate/burst bitrate: the default of 16mbps/100mbps and a
@@ -271,11 +281,3 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
     }
     return bitrates;
 }
-
-/*
-============================
-Public Function Implementations
-============================
-*/
-
-BitrateCalculator calculate_new_bitrate = ewma_ratio_bitrate;

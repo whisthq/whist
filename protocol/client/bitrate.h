@@ -39,8 +39,6 @@ typedef struct Bitrates {
     int burst_bitrate;
 } Bitrates;
 
-typedef Bitrates (*BitrateCalculator)(BitrateStatistics);
-
 /*
 ============================
 Public Functions
@@ -48,10 +46,14 @@ Public Functions
 */
 
 /**
- * @brief       Update max_bitrate and max_burst_bitrate with the latest client data. This function
- * does not trigger any client bitrate updates.
+ * @brief               Update max_bitrate and max_burst_bitrate with the latest client data.
+ *                      This function does not trigger any client bitrate updates.
  *
- * @param stats         A struct containing any information we might need to update bitrate.
+ * @param stats         A struct containing any information we might need
+ *                      when deciding what bitrate we want
+ *
+ * @returns             A network settings struct
  */
-extern BitrateCalculator calculate_new_bitrate;
+Bitrates calculate_new_bitrate(BitrateStatistics stats);
+
 #endif
