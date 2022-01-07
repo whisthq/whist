@@ -118,7 +118,7 @@ TEST(ProtocolTest, InitSDL) {
     printf("1\n");
     SDL_Window* new_window = init_sdl(width, height, very_long_title, icon_filepath);
 
-    if (!new_window) {
+    if (new_window == NULL) {
         // Check if there is no device available to test SDL (e.g. on Ubuntu CI)
         const char *err = SDL_GetError();
         printf("err: '%s', strlen(err): %lu\n", err, strlen(err));
