@@ -63,12 +63,12 @@ static inline int atomic_compare_exchange_weak(volatile atomic_int *object, int 
 }
 
 static inline int atomic_fetch_add(volatile atomic_int *object, int operand) {
-    return InterlockedAdd(&object->value, operand);
+    return InterlockedExchangeAdd(&object->value, operand);
 }
 
 static inline int atomic_fetch_sub(volatile atomic_int *object, int operand) {
     // No separate atomic subtract, so negate the value and add it.
-    return InterlockedAdd(&object->value, -operand);
+    return InterlockedExchangeAdd(&object->value, -operand);
 }
 
 static inline int atomic_fetch_or(volatile atomic_int *object, int operand) {
