@@ -92,14 +92,6 @@ var QueryInstancesByStatusOnRegion struct {
 	WhistInstances `graphql:"whist_instances(where: {status: {_eq: $status} _and: {region: {_eq: $region}}})"`
 }
 
-// QueryInstanceByStatusWithMandelboxes is a nested query that retrieves the instances with
-// the given status along with its associated mandelboxes.
-var QueryInstanceByStatusWithMandelboxes struct {
-	WhistInstances struct {
-		WhistMandelboxes `graphql:"whist_mandelboxes"`
-	} `graphql:"whist_instances(where: {status: {_eq: $status} _and: {region: {_eq: $region}}})"`
-}
-
 // QueryMandelboxesById returns a mandelbox associated with the given instance
 // and that has the given status.
 var QueryMandelboxesByInstanceId struct {
