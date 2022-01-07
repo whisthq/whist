@@ -138,7 +138,7 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 
 					for _, region := range bundledRegions {
 						scheduledEvent.Region = region
-						err := s.ScaleUpIfNecessary(2, scalingCtx, scheduledEvent, "ami-05093b907df265a91")
+						err := s.ScaleUpIfNecessary(2, scalingCtx, scheduledEvent, "ami-0a799891459ffacb2")
 						logger.Error(err)
 
 						// err := s.ScaleDownIfNecessary(scalingCtx, scheduledEvent)

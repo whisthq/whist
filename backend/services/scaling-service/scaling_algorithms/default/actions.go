@@ -172,16 +172,16 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 	for _, instance := range createdInstances {
 		createdInstanceIds = append(createdInstanceIds, instance.ID)
 		instancesForDb = append(instancesForDb, whist_instances_insert_input{
-			ID:        graphql.String(instance.ID),
-			Provider:  graphql.String(instance.Provider),
-			Region:    graphql.String(instance.Region),
-			ImageID:   graphql.String(instance.ImageID),
-			ClientSHA: graphql.String(instance.ClientSHA),
-			IPAddress: graphql.String(instance.IPAddress),
-			Capacity:  graphql.Int(instance.Capacity),
-			Status:    graphql.String(instance.Status),
-			CreatedAt: graphql.String(instance.CreatedAt),
-			UpdatedAt: graphql.String(instance.UpdatedAt),
+			ID:                graphql.String(instance.ID),
+			Provider:          graphql.String(instance.Provider),
+			Region:            graphql.String(instance.Region),
+			ImageID:           graphql.String(instance.ImageID),
+			ClientSHA:         graphql.String(instance.ClientSHA),
+			IPAddress:         graphql.String(instance.IPAddress),
+			RemainingCapacity: graphql.Int(instance.RemainingCapacity),
+			Status:            graphql.String(instance.Status),
+			CreatedAt:         graphql.String(instance.CreatedAt),
+			UpdatedAt:         graphql.String(instance.UpdatedAt),
 		})
 		logger.Infof("Created tagged instance with ID %v", instance.ID)
 	}
