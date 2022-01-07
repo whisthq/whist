@@ -4,8 +4,6 @@
 #include <whist/core/whist.h>
 #include "input_driver.h"
 
-typedef char KeyboardMapping;
-
 /**
  * @brief                          Updates the keyboard state on the server to
  *                                 match the client's

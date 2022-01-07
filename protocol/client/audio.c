@@ -57,7 +57,7 @@ Custom Types
 ============================
 */
 
-typedef struct {
+struct AudioContext {
     // Currently set sample rate of the audio device/decoder
     int audio_frequency;
 
@@ -78,7 +78,7 @@ typedef struct {
     // The last ID we've processed for rendering
     int last_played_id;
     bool audio_flush_triggered;
-} InternalAudioContext;
+};
 
 // 2 channels, 1024 samples per channel, 32 bits (4 bytes) per sample,
 // comes out to 2 * 1024 * 4 = 8192 bytes per frame
@@ -96,7 +96,7 @@ Private Functions
  *
  * @param audio_context            The audio context to use
  */
-static void init_audio_device(InternalAudioContext* audio_context);
+static void init_audio_device(AudioContext* audio_context);
 
 /**
  * @brief                          Destroy the SDL audio device,
@@ -104,7 +104,7 @@ static void init_audio_device(InternalAudioContext* audio_context);
  *
  * @param audio_context            The audio context to use
  */
-static void destroy_audio_device(InternalAudioContext* audio_context);
+static void destroy_audio_device(AudioContext* audio_context);
 
 /**
  * @brief                          If the ringbuffer has accumulated too many
@@ -113,7 +113,7 @@ static void destroy_audio_device(InternalAudioContext* audio_context);
  *
  * @param audio_context            The audio context to use
  */
-static void catchup_audio(InternalAudioContext* audio_context);
+static void catchup_audio(AudioContext* audio_context);
 
 /**
  * @brief                          Checks whether or not we should be
@@ -127,7 +127,7 @@ static void catchup_audio(InternalAudioContext* audio_context);
  *                                 and we should instead let the ringbuffer accumulate.
  *                                 If False, we can push render contexts out to render.
  */
-static bool is_buffering_audio(InternalAudioContext* audio_context);
+static bool is_buffering_audio(AudioContext* audio_context);
 
 /*
 ============================
@@ -139,8 +139,7 @@ AudioContext* init_audio() {
     LOG_INFO("Initializing audio system");
 
     // Allocate the audio context
-    InternalAudioContext* audio_context =
-        (InternalAudioContext*)safe_malloc(sizeof(InternalAudioContext));
+    AudioContext* audio_context = safe_malloc(sizeof(*audio_context));
     memset(audio_context, 0, sizeof(*audio_context));
 
     // Initialize everything
@@ -157,9 +156,7 @@ AudioContext* init_audio() {
     return audio_context;
 }
 
-void destroy_audio(AudioContext* raw_audio_context) {
-    InternalAudioContext* audio_context = (InternalAudioContext*)raw_audio_context;
-
+void destroy_audio(AudioContext* audio_context) {
     LOG_INFO("Destroying audio system");
 
     // Destroy the audio device
@@ -170,9 +167,7 @@ void destroy_audio(AudioContext* raw_audio_context) {
     free(audio_context);
 }
 
-void refresh_audio_device(AudioContext* raw_audio_context) {
-    InternalAudioContext* audio_context = (InternalAudioContext*)raw_audio_context;
-
+void refresh_audio_device(AudioContext* audio_context) {
     // Mark the audio device as pending a refresh
     audio_context->pending_refresh = true;
 }
@@ -180,9 +175,7 @@ void refresh_audio_device(AudioContext* raw_audio_context) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-void receive_audio(AudioContext* raw_audio_context, WhistPacket* packet) {
-    InternalAudioContext* audio_context = (InternalAudioContext*)raw_audio_context;
-
+void receive_audio(AudioContext* audio_context, WhistPacket* packet) {
     int res = receive_packet(audio_context->ring_buffer, packet);
 #if LOG_AUDIO
     LOG_DEBUG("Received packet with ID/Index %d/%d", packet->id, packet->index);
@@ -205,9 +198,7 @@ void receive_audio(AudioContext* raw_audio_context, WhistPacket* packet) {
     }
 }
 
-void update_audio(AudioContext* raw_audio_context) {
-    InternalAudioContext* audio_context = (InternalAudioContext*)raw_audio_context;
-
+void update_audio(AudioContext* audio_context) {
     if (audio_context->pending_render_context) {
         // If we're currently rendering an audio packet, don't update audio - the audio_context
         // struct is being used, so a race condition will occur if we call SDL_GetQueuedAudioSize at
@@ -259,9 +250,7 @@ void update_audio(AudioContext* raw_audio_context) {
     }
 }
 
-void render_audio(AudioContext* raw_audio_context) {
-    InternalAudioContext* audio_context = (InternalAudioContext*)raw_audio_context;
-
+void render_audio(AudioContext* audio_context) {
     if (audio_context->pending_render_context) {
         // Only do work, if the audio frequency is valid
         FATAL_ASSERT(audio_context->render_context != NULL);
@@ -325,7 +314,7 @@ Private Function Implementations
 ============================
 */
 
-static void init_audio_device(InternalAudioContext* audio_context) {
+static void init_audio_device(AudioContext* audio_context) {
     LOG_INFO("Initializing audio device");
 
     // Verify that the device doesn't already exist
@@ -364,7 +353,7 @@ static void init_audio_device(InternalAudioContext* audio_context) {
     audio_context->audio_decoder = create_audio_decoder(audio_context->audio_frequency);
 }
 
-static void destroy_audio_device(InternalAudioContext* audio_context) {
+static void destroy_audio_device(AudioContext* audio_context) {
     // Destroy the SDL audio device, if any exists
     if (audio_context->dev) {
         SDL_CloseAudioDevice(audio_context->dev);
@@ -378,7 +367,7 @@ static void destroy_audio_device(InternalAudioContext* audio_context) {
     }
 }
 
-void catchup_audio(InternalAudioContext* audio_context) {
+void catchup_audio(AudioContext* audio_context) {
     RingBuffer* ring_buffer = audio_context->ring_buffer;
     audio_context->last_played_id = audio_context->last_played_id;
 
@@ -408,7 +397,7 @@ void catchup_audio(InternalAudioContext* audio_context) {
     }
 }
 
-bool is_buffering_audio(InternalAudioContext* audio_context) {
+bool is_buffering_audio(AudioContext* audio_context) {
     // Get the size of the audio device queue,
     int audio_device_queue = 0;
     if (audio_context->dev) {

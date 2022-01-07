@@ -34,9 +34,6 @@ extern "C" {
 
 #define LOG_KEYBOARD false
 
-typedef struct {
-} InternalKeyboardMapping;
-
 // Set of modifiers, for detecting if a key is a modifier
 // CTRL = control, SHIFT = shift, ALT = alt/option, GUI = windows/command
 set<WhistKeycode> modifiers = {FK_LCTRL, FK_LSHIFT, FK_LALT, FK_LGUI,

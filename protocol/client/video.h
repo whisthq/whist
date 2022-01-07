@@ -53,7 +53,7 @@ Defines
 #define RENDERING_IN_VIRTUAL_ENVIRONMENT 0
 #endif
 
-typedef void VideoContext;
+typedef struct VideoContext VideoContext;
 
 /*
 ============================

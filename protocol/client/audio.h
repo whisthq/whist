@@ -29,7 +29,7 @@ Defines
 ============================
 */
 
-typedef void AudioContext;
+typedef struct AudioContext AudioContext;
 
 /*
 ============================
