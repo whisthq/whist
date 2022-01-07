@@ -71,7 +71,7 @@ Custom Types
 ============================
 */
 
-typedef struct {
+struct VideoContext {
     // Variables needed for rendering
     RingBuffer* ring_buffer;
     VideoDecoder* decoder;
@@ -98,7 +98,7 @@ typedef struct {
     // Context of the frame that is currently being rendered
     FrameData* render_context;
     bool pushing_render_context;
-} InternalVideoContext;
+};
 
 // mbps that currently works
 volatile double working_mbps;
@@ -118,7 +118,7 @@ Private Functions
  *
  * @param frame                    The frame that we will soon attempt to decode
  */
-static void sync_decoder_parameters(InternalVideoContext* video_context, VideoFrame* frame);
+static void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame);
 
 /**
  * @brief                          Updates the sws context of the video_context,
@@ -137,14 +137,14 @@ static void sync_decoder_parameters(InternalVideoContext* video_context, VideoFr
  * @param input_height             The height of the capture image.
  * @param input_format             The format of the capture image.
  */
-static void update_sws_context(InternalVideoContext* video_context, Uint8** data, int* linesize,
-                               int width, int height, enum AVPixelFormat input_format);
+static void update_sws_context(VideoContext* video_context, Uint8** data, int* linesize, int width,
+                               int height, enum AVPixelFormat input_format);
 
 // TODO: Refactor into ringbuffer.c, so that ringbuffer.h
 // is what exposes theese functions
-static void calculate_statistics(InternalVideoContext* video_context);
-static void try_recovering_missing_packets_or_frames(InternalVideoContext* video_context);
-static void skip_to_next_iframe(InternalVideoContext* video_context);
+static void calculate_statistics(VideoContext* video_context);
+static void try_recovering_missing_packets_or_frames(VideoContext* video_context);
+static void skip_to_next_iframe(VideoContext* video_context);
 
 /**
  * @brief                          Destroys an ffmpeg decoder on another thread
@@ -160,7 +160,7 @@ Public Function Implementations
 */
 
 VideoContext* init_video() {
-    InternalVideoContext* video_context = safe_malloc(sizeof(InternalVideoContext));
+    VideoContext* video_context = safe_malloc(sizeof(*video_context));
     memset(video_context, 0, sizeof(*video_context));
 
     // Initialize everything
@@ -196,9 +196,7 @@ VideoContext* init_video() {
     return (VideoContext*)video_context;
 }
 
-void destroy_video(VideoContext* raw_video_context) {
-    InternalVideoContext* video_context = (InternalVideoContext*)raw_video_context;
-
+void destroy_video(VideoContext* video_context) {
     // Destroy the ring buffer
     destroy_ring_buffer(video_context->ring_buffer);
     video_context->ring_buffer = NULL;
@@ -222,9 +220,7 @@ void destroy_video(VideoContext* raw_video_context) {
     free(video_context);
 }
 
-void update_video(VideoContext* raw_video_context) {
-    InternalVideoContext* video_context = (InternalVideoContext*)raw_video_context;
-
+void update_video(VideoContext* video_context) {
     calculate_statistics(video_context);
 
     if (!video_context->pushing_render_context) {
@@ -258,9 +254,7 @@ void update_video(VideoContext* raw_video_context) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-void receive_video(VideoContext* raw_video_context, WhistPacket* packet) {
-    InternalVideoContext* video_context = (InternalVideoContext*)raw_video_context;
-
+void receive_video(VideoContext* video_context, WhistPacket* packet) {
     // The next two lines are commented out, but left in the codebase to be
     // easily toggled back and forth during development. We considered putting
     // this under the LOG_VIDEO ifdef, but decided not to, since these lines
@@ -303,9 +297,7 @@ void receive_video(VideoContext* raw_video_context, WhistPacket* packet) {
     }
 }
 
-int render_video(VideoContext* raw_video_context) {
-    InternalVideoContext* video_context = (InternalVideoContext*)raw_video_context;
-
+int render_video(VideoContext* video_context) {
     clock statistics_timer;
 
     // Information needed to render a FrameData* to the screen
@@ -519,7 +511,7 @@ Private Function Implementations
 ============================
 */
 
-void sync_decoder_parameters(InternalVideoContext* video_context, VideoFrame* frame) {
+void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame) {
     /*
         Update decoder parameters to match the server's width, height, and codec
         of the VideoFrame* that is currently being received
@@ -564,7 +556,7 @@ void sync_decoder_parameters(InternalVideoContext* video_context, VideoFrame* fr
     output_codec_type = frame->codec_type;
 }
 
-void update_sws_context(InternalVideoContext* video_context, Uint8** data, int* linesize, int width,
+void update_sws_context(VideoContext* video_context, Uint8** data, int* linesize, int width,
                         int height, enum AVPixelFormat input_format) {
     /*
         Create an SWS context as needed to perform pixel format
@@ -624,7 +616,7 @@ void update_sws_context(InternalVideoContext* video_context, Uint8** data, int* 
     }
 }
 
-void calculate_statistics(InternalVideoContext* video_context) {
+void calculate_statistics(VideoContext* video_context) {
     static clock statistics_timer;
     static BitrateStatistics stats;
     static Bitrates new_bitrates;
@@ -661,7 +653,7 @@ void calculate_statistics(InternalVideoContext* video_context) {
     }
 }
 
-void try_recovering_missing_packets_or_frames(InternalVideoContext* video_context) {
+void try_recovering_missing_packets_or_frames(VideoContext* video_context) {
 // If we want an iframe, this is how often we keep asking for it
 #define IFRAME_REQUEST_INTERVAL_MS 5.0
 // Number of frames ahead we can be before asking for iframe
@@ -711,7 +703,7 @@ void try_recovering_missing_packets_or_frames(InternalVideoContext* video_contex
     }
 }
 
-void skip_to_next_iframe(InternalVideoContext* video_context) {
+void skip_to_next_iframe(VideoContext* video_context) {
     // Only run if we're not rendering or we haven't rendered anything yet
     if (video_context->most_recent_iframe > 0 && video_context->last_rendered_id == -1) {
         // Silently skip to next iframe if it's the start of the stream
