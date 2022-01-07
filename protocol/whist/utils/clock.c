@@ -79,7 +79,7 @@ clock create_clock(int timeout_ms) {
     out.tv_usec = (timeout_ms % MS_IN_SECOND) * US_IN_MS;
 #else
     out.tv_sec = timeout_ms / MS_IN_SECOND;
-    out.tv_nsec = (timeout_ms & MS_IN_SECOND) * NS_IN_MS;
+    out.tv_nsec = (timeout_ms % MS_IN_SECOND) * NS_IN_MS;
 #endif
     return out;
 }
