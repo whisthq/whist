@@ -4,6 +4,7 @@ import pexpect
 import os
 import time
 import subprocess
+import platform
 
 
 def attempt_ssh_connection(
@@ -54,21 +55,22 @@ def attempt_ssh_connection(
     exit()
 
 
-def wait_until_cmd_done(pexpect_process, pexpect_prompt):
+def wait_until_cmd_done(pexpect_process, pexpect_prompt, current_platform):
     """
     Wait until the currently-running command on a remote machine finishes its execution on the shell monitored to by a pexpect process.
 
     Args:
         pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process monitoring the execution of the process on the remote machine
         pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a new command
+        current_platform (str): The platform where this script is running on
 
     Returns:
         None
     """
-
-    # On a SSH connection, the prompt is printed two times (because of some obscure reason related to encoding and/or color printing on terminal)
     pexpect_process.expect(pexpect_prompt)
-    pexpect_process.expect(pexpect_prompt)
+    # On a SSH connection, the prompt is printed two times on Mac (because of some obscure reason related to encoding and/or color printing on terminal)
+    if platform.system() == "Darwin":
+        pexpect_process.expect(pexpect_prompt)
 
 
 def reboot_instance(
@@ -171,14 +173,14 @@ def configure_aws_credentials(
     if result == 0:
         pexpect_process.sendline("Y")
         wait_until_cmd_done(pexpect_process, pexpect_prompt)
-    else:
+    elif platform.system() == "Darwin":
         pexpect_process.expect(pexpect_prompt)
     pexpect_process.sendline("sudo apt-get install awscli")
     result = pexpect_process.expect(["Do you want to continue?", pexpect_prompt])
     if result == 0:
         pexpect_process.sendline("Y")
         wait_until_cmd_done(pexpect_process, pexpect_prompt)
-    else:
+    elif platform.system() == "Darwin":
         pexpect_process.expect(pexpect_prompt)
     pexpect_process.sendline("aws configure")
     pexpect_process.expect("AWS Access Key ID")

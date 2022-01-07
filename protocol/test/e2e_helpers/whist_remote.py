@@ -2,6 +2,7 @@
 
 import pexpect
 import json
+import platform
 
 # Get tools to run operations on a dev instance via SSH
 from dev_instance_tools import (
@@ -35,7 +36,8 @@ def run_host_setup_on_instance(pexpect_process, pexpect_prompt, ssh_cmd, timeout
     command = "cd ~/whist/host-setup && ./setup_host.sh --localdevelopment | tee ~/host_setup.log"
     pexpect_process.sendline(command)
     result = pexpect_process.expect([pexpect_prompt, "E: Could not get lock"])
-    pexpect_process.expect(pexpect_prompt)
+    if platform.system() == "Darwin" or result == 1:
+        pexpect_process.expect(pexpect_prompt)
 
     if result == 1:
         # If still getting lock issues, no alternative but to reboot
@@ -225,7 +227,8 @@ def server_setup_process(args_dict):
     hs_process = attempt_ssh_connection(
         server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5
     )
-    hs_process.expect(pexpect_prompt_server)
+    if platform.system() == "Darwin":
+        hs_process.expect(pexpect_prompt_server)
 
     print("Configuring AWS credentials on server instance...")
     configure_aws_credentials(hs_process, pexpect_prompt_server, aws_credentials_filepath)
@@ -288,7 +291,8 @@ def client_setup_process(args_dict):
         hs_process = attempt_ssh_connection(
             client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
         )
-        hs_process.expect(pexpect_prompt_client)
+        if platform.system() == "Darwin":
+            hs_process.expect(pexpect_prompt_client)
         print("Configuring AWS credentials on client instance...")
         configure_aws_credentials(hs_process, pexpect_prompt_client, aws_credentials_filepath)
 

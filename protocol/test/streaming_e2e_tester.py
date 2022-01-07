@@ -8,6 +8,7 @@ import subprocess
 import pexpect
 import json
 import multiprocessing
+import platform
 
 # Get tools to create, destroy and manage AWS instances
 from e2e_helpers.aws_tools import (
@@ -296,14 +297,16 @@ if __name__ == "__main__":
     log_grabber_server_process = attempt_ssh_connection(
         server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5
     )
-    log_grabber_server_process.expect(pexpect_prompt_server)
+    if platform.system() == "Darwin":
+        log_grabber_server_process.expect(pexpect_prompt_server)
 
     log_grabber_client_process = log_grabber_server_process
     if use_two_instances:
         log_grabber_client_process = attempt_ssh_connection(
             client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
         )
-        log_grabber_client_process.expect(pexpect_prompt_client)
+        if platform.system() == "Darwin":
+            log_grabber_client_process.expect(pexpect_prompt_client)
 
     extract_server_logs_from_instance(
         log_grabber_server_process,
