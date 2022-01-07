@@ -51,7 +51,11 @@ func MandelboxAllocatedHandler(event SubscriptionEvent, variables map[string]int
 	instanceID := string(variables["instance_id"].(graphql.String))
 	status := string(variables["status"].(graphql.String))
 
+<<<<<<< HEAD
 	return (mandelbox.InstanceID == instanceID) && (mandelbox.Status == status)
+=======
+	return mandelbox.InstanceID == instanceId
+>>>>>>> ad367b0de (Add instance type field, update refs on host service)
 }
 
 // SetupHostSubscriptions creates a slice of HasuraSubscriptions to start the client. This
