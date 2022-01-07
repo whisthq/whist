@@ -175,7 +175,7 @@ fromSignal(
   if (previousClosestRegion === currentClosestRegion) return
 
   // If the difference in ping time to the cached closest AWS region vs. ping time
-  // to the new closest AWS region is less than 20ms, don't do anything
+  // to the new closest AWS region is less than 25ms, don't do anything
   const previousClosestRegionPingTime = find(
     regions,
     (r) => r.region === previousClosestRegion
@@ -183,10 +183,10 @@ fromSignal(
 
   const currentClosestRegionPingTime = regions?.[0]?.pingTime
 
-  // The closest AWS regions are different and ping times are more than 25ms apart,
-  // show the user a warning window to relaunch Whist in the new AWS region
   if (previousClosestRegionPingTime - currentClosestRegionPingTime < 25) return
 
+  // The closest AWS regions are different and ping times are more than 25ms apart,
+  // show the user a warning window to relaunch Whist in the new AWS region
   setTimeout(() => {
     createErrorWindow(LOCATION_CHANGED_ERROR, false)
   }, 5000)
