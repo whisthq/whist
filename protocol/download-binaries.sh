@@ -90,10 +90,12 @@ fi
 
 # Check if SDL_LIB has updated, and if so, create the dir and copy the libs/headers into the source dir
 if has_updated "$SDL_LIB"; then
-  rm -rf "$SDL_LIB_DIR" "$SDL_HEADERS_DIR"
-  mkdir -p "$SDL_LIB_DIR" "$SDL_HEADERS_DIR"
+  rm -rf "$SDL_LIB_DIR"
+  mkdir -p "$SDL_LIB_DIR"
   aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$SDL_LIB" - | tar -xz -C "$SDL_LIB_DIR"
   if [[ -d "$SDL_LIB_DIR/include" ]]; then
+    rm -rf "$SDL_HEADERS_DIR"
+    mkdir -p "$SDL_HEADERS_DIR"
     mv "$SDL_LIB_DIR/include"/* "$SDL_HEADERS_DIR"
     rmdir "$SDL_LIB_DIR/include"
   fi
