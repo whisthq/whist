@@ -5,6 +5,8 @@ import (
 	"time"
 
 	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
+
+	mandelboxtypes "github.com/whisthq/whist/backend/core-go/types"
 )
 =======
 import mandelboxtypes "github.com/whisthq/whist/backend/core-go/types"
