@@ -98,9 +98,6 @@ struct VideoContext {
     bool pushing_render_context;
 };
 
-// mbps that currently works
-volatile double working_mbps;
-
 /*
 ============================
 Private Functions
@@ -164,7 +161,6 @@ VideoContext* init_video() {
     // Initialize everything
     video_context->ring_buffer =
         init_ring_buffer(PACKET_VIDEO, RECV_FRAMES_BUFFER_SIZE, nack_packet);
-    working_mbps = STARTING_BITRATE;
     video_context->server_width = -1;
     video_context->server_height = -1;
     video_context->server_codec_type = CODEC_TYPE_UNKNOWN;
