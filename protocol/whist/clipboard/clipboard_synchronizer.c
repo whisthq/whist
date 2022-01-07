@@ -150,7 +150,7 @@ bool start_clipboard_transfer(WhistClipboardActionType new_clipboard_action_type
     ClipboardThread* thr = safe_malloc(sizeof(*thr));
     atomic_init(&thr->finished, 0);
     thr->next = clipboard_thread_list;
-    clipboard_thread_list = thr->next;
+    clipboard_thread_list = thr;
 
     // Create new thread
     if (new_clipboard_action_type == CLIPBOARD_ACTION_PUSH) {
