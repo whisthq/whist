@@ -223,12 +223,12 @@ RUN mkdir /dist /ignore && \
 RUN mkdir /dist/etc && \
     cp -r /etc/{vulkan,nvidia,OpenCL} /dist/etc
 
-################ STAGE 4: whist-teleport-fuse  ################
+################ STAGE 4: whist-teleport-drag-drop################
 # - Copy and build the FUSE service to handle teleport drag-drop
 #   events
 # EXPOSES the teleport fuse service
-#################################################################
-FROM ubuntu:20.04 as whist-teleport-fuse
+##################################################################
+FROM ubuntu:20.04 as whist-teleport-drag-drop
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
@@ -255,14 +255,14 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /whist-teleport-fuse/{src,build}
+RUN mkdir -p /whist-teleport-drag-drop/{src,build}
 
-COPY teleport/teleport-fuse /whist-teleport-fuse/src
+COPY teleport/drag-drop /whist-teleport-drag-drop/src
 
 # hadolint ignore=SC2046
-RUN cd /whist-teleport-fuse/src \
+RUN cd /whist-teleport-drag-drop/src \
     && gcc -Wall -D _GNU_SOURCE unshare.c -o unshare.o -c \
-    && gcc -Wall unshare.o teleport-fuse.c $(pkg-config fuse3 --cflags --libs) -o ../build/whist-teleport-fuse
+    && gcc -Wall unshare.o drag-drop.c $(pkg-config fuse3 --cflags --libs) -o ../build/whist-teleport-drag-drop
 
 ################ STAGE 5: whist-base ######################
 # - Copy and install libinput from libinput-build
@@ -631,19 +631,18 @@ RUN systemctl enable whist-audio
 # Set up user config map for mandelbox startup
 COPY startup/app-config-map.json /usr/share/whist/app-config-map.json
 
+# Set up custom config scripts
+COPY utils/browser-data/requirements.txt /requirements.txt
+COPY utils/browser-data/import_user_browser_data.py /usr/share/whist/import_user_browser_data.py
+
 # Install Dependencies for Cookie Import
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
-    && pip install --no-cache-dir browser-cookie3 \
-    && pip install --no-cache-dir keyring \
-    && pip install --no-cache-dir pyaes \
-    && pip install --no-cache-dir pbkdf2 \
-    && pip install --no-cache-dir sentry-sdk \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set up custom config scripts
-COPY utils/import_user_browser_data.py /usr/share/whist/import_user_browser_data.py
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --no-cache-dir -r /requirements.txt \
+    && rm /requirements.txt \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Set up first systemd service
 COPY --chmod=550 startup/whist-startup.sh /usr/share/whist
@@ -689,7 +688,7 @@ RUN ln -sf "$(which xeyes)" /usr/bin/whist-application
 # Set up script to launch `whist-application` as the `whist` user
 COPY --chmod=555 main/run-whist-application.sh /usr/bin/run-whist-application.sh
 
-# Set up the teleport FUSE service
+# Set up the teleport drag-drop service
 
 # Install FUSE dependencies
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
@@ -698,10 +697,10 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
-COPY --chmod=555 --from=whist-teleport-fuse /whist-teleport-fuse/build/whist-teleport-fuse /usr/bin/whist-teleport-fuse
+COPY --chmod=555 --from=whist-teleport-drag-drop /whist-teleport-drag-drop/build/whist-teleport-drag-drop /opt/teleport/drag-drop
 
 # Set up script to launch teleport functionality
-COPY --chmod=555 teleport/run-whist-teleport.sh /usr/bin/run-whist-teleport.sh
+COPY --chmod=555 teleport/drag-drop/run-whist-teleport-drag-drop.sh /usr/bin/run-whist-teleport-drag-drop.sh
 
 # Set up the teleport URI handler
 

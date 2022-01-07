@@ -71,7 +71,7 @@ USER_DEST_BROWSER_FILENAME=$WHIST_PRIVATE_DIR/user_dest_browser
 TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/timeout
 WHIST_APPLICATION_PID_FILE=/home/whist/whist-application-pid
 PROTOCOL_LOG_FILENAME=/usr/share/whist/server.log
-TELEPORT_LOG_FILENAME=/usr/share/whist/teleport.log
+TELEPORT_LOG_FILENAME=/usr/share/whist/teleport-drag-drop.log
 WHIST_JSON_FILE=/whist/resourceMappings/config.json
 
 # Parse options from JSON transport file
@@ -109,7 +109,7 @@ fi
 
 # We use named pipe redirection for consistency with our WhistServer launch setup
 # &> redirects both stdout and stdin together; shorthand for '> XYZ 2>&1'
-/usr/share/whist/run-as-whist-user.sh "/usr/bin/run-whist-teleport.sh" &> >(tee $TELEPORT_LOG_FILENAME) &
+/usr/share/whist/run-as-whist-user.sh "/usr/bin/run-whist-teleport-drag-drop.sh" &> >(tee $TELEPORT_LOG_FILENAME) &
 
 # This function is called whenever the script exits, whether that is because we
 # reach the end of this file (because either WhistServer or the Whist
