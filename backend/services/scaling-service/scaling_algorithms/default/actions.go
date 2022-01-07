@@ -2,6 +2,7 @@ package scaling_algorithms
 
 import (
 	"context"
+	"time"
 
 	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/scaling-service/hosts"
@@ -75,74 +76,88 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 }
 
 func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Context, event ScalingEvent) error {
+
+	var (
+		freeInstances, lingeringInstances subscriptions.WhistInstances
+		// lingeringIds                      []string
+	)
+
 	// check database for active instances without mandelboxes
-	freeInstancesQuery := &subscriptions.QueryFreeInstances
+	activeInstancesQuery := &subscriptions.QueryInstancesByStatusOnRegion
 	queryParams := map[string]interface{}{
-		"num_mandelboxes": graphql.Int(0),
-		"status":          graphql.String("ACTIVE"),
+		"status": instance_state("ACTIVE"),
+		"region": graphql.String(event.Region),
 	}
 
-	s.GraphQLClient.Query(scalingCtx, freeInstancesQuery, queryParams)
-
-	// Verify if there are free instances that can be scaled down
-	freeInstances := len(freeInstancesQuery.WhistInstances)
-	if freeInstances == 0 {
-		logger.Info("There are no available instances to scale down.")
-		return nil
+	err := s.GraphQLClient.Query(scalingCtx, activeInstancesQuery, queryParams)
+	if err != nil {
+		return utils.MakeError("failed to query database for active instances. Err: %v", err)
 	}
 
-	// check database for draining instances without mandelboxes
-	lingeringInstancesQuery := &subscriptions.QueryFreeInstances
+	logger.Infof("%v", activeInstancesQuery)
+
+	for _, instance := range activeInstancesQuery.WhistInstances {
+		capacity := int(instanceCapacity[string(instance.Type)])
+		if instance.RemainingCapacity == graphql.Int(capacity) {
+			freeInstances = append(freeInstances, instance)
+		}
+	}
+
+	// check database for draining instances without running mandelboxes
+	lingeringInstancesQuery := &subscriptions.QueryInstanceByStatusWithMandelboxes
 	queryParams = map[string]interface{}{
-		"num_mandelboxes": graphql.Int(0),
-		"status":          graphql.String("DRAINING"),
+		"status": graphql.String("DRAINING"),
+		"region": graphql.String(event.Region),
 	}
 
-	s.GraphQLClient.Query(scalingCtx, freeInstancesQuery, queryParams)
+	s.GraphQLClient.Query(scalingCtx, lingeringInstancesQuery, queryParams)
+	if err != nil {
+		return utils.MakeError("failed to query database for lingering instances. Err: %v", err)
+	}
 
 	// Verify if there are lingering instances that can be scaled down
-	lingeringInstances := len(lingeringInstancesQuery.WhistInstances)
-	if lingeringInstances == 0 {
-		logger.Info("There are no lingering to scale down.")
+	if len(lingeringInstances) > 0 {
+		logger.Info("Forcefully terminating lingering instances from cloud provider.")
+
+		// _, err := s.Host.SpinDownInstances(scalingCtx, lingeringIds)
+		// if err != nil {
+		// 	logger.Warningf("Failed to forcefully terminate lingering instances from cloud provider. Err: %v", err)
+		// }
+
+	} else {
+		logger.Info("There are no lingering instances to scale down on %v.", event.Region)
+	}
+
+	if len(freeInstances) < DEFAULT_INSTANCE_BUFFER {
+		logger.Warningf("Available instances are less than desired buffer, scaling up to match %v", DEFAULT_INSTANCE_BUFFER)
+		// wantedNumInstances := DEFAULT_INSTANCE_BUFFER - freeInstances
+
+		// activeImageID := freeInstancesQuery.WhistInstances[0].ImageID
+		// Try scale up instances to match buffer size
+		// s.ScaleUpIfNecessary(wantedNumInstances, scalingCtx, event, string(activeImageID))
+	}
+
+	// Verify if there are free instances that can be scaled down
+	if len(freeInstances) == 0 {
+		logger.Info("There are no free instances to scale down on %v. Finishing scale down function. %v", event.Region, freeInstances)
 		return nil
 	}
 
-	var lingeringIds []string
-	for _, lingeringInstance := range lingeringInstancesQuery.WhistInstances {
-		lingeringIds = append(lingeringIds, string(lingeringInstance.ID))
-	}
-
-	logger.Info("Forcefully terminating lingering instances from cloud provider.")
-
-	_, err := s.Host.SpinDownInstances(scalingCtx, lingeringIds)
-	if err != nil {
-		logger.Warningf("Failed to forcefully terminate lingering instances from cloud provider. Err: %v", err)
-	}
-
-	if freeInstances < DEFAULT_INSTANCE_BUFFER {
-		logger.Warningf("Available instances are less than desired buffer, scaling up to match %v", DEFAULT_INSTANCE_BUFFER)
-		wantedNumInstances := DEFAULT_INSTANCE_BUFFER - freeInstances
-
-		activeImageID := freeInstancesQuery.WhistInstances[0].ImageID
-		// Try scale up instances to match buffer size
-		s.ScaleUpIfNecessary(wantedNumInstances, scalingCtx, event, string(activeImageID))
-	}
-
-	logger.Info("Scaling down %v free instances.", freeInstances)
+	logger.Info("Scaling down %v free instances on %v.", len(freeInstances), event.Region)
 
 	drainMutation := &subscriptions.UpdateInstanceStatus
-	mutationParams := map[string]interface{}{
-		"status": graphql.String("DRAINING"),
-	}
-
-	for _, instance := range freeInstancesQuery.WhistInstances {
-		err := s.GraphQLClient.Mutate(scalingCtx, drainMutation, mutationParams)
-		if err != nil {
-			logger.Errorf("Failed to mark instance %v as draining.", instance)
+	for _, instance := range activeInstancesQuery.WhistInstances {
+		mutationParams := map[string]interface{}{
+			"id":     graphql.String(instance.ID),
+			"status": instance_state("DRAINING"),
 		}
 
-		logger.Info("Marked instance %v as draining on database.", instance)
-		// s.VerifyInstanceScaleDown(scalingCtx, host, event, si)
+		err := s.GraphQLClient.Mutate(scalingCtx, drainMutation, mutationParams)
+		if err != nil {
+			logger.Errorf("Failed to mark instance %v as draining. Err: %v", instance, err)
+		}
+
+		logger.Info("Marked instance %v as draining on database.", instance.ID)
 	}
 
 	return nil
@@ -150,49 +165,63 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 
 func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scalingCtx context.Context, event ScalingEvent, imageID string) error {
 	// Try scale up in given region
-	logger.Infof("Trying to spin up %v instances on region %v with image id %v", instancesToScale, event.Region, imageID)
-	instanceNum := int32(instancesToScale)
+	// logger.Infof("Trying to spin up %v instances on region %v with image id %v", instancesToScale, event.Region, imageID)
+	// instanceNum := int32(instancesToScale)
 
-	createdInstances, err := s.Host.SpinUpInstances(scalingCtx, instanceNum, imageID)
-	if err != nil {
-		return utils.MakeError("Failed to spin up instances, created %v, err: %v", createdInstances, err)
-	}
+	// createdInstances, err := s.Host.SpinUpInstances(scalingCtx, instanceNum, imageID)
+	// if err != nil {
+	// 	return utils.MakeError("Failed to spin up instances, created %v, err: %v", createdInstances, err)
+	// }
 
-	// Check if we could create the desired number of instances
-	if len(createdInstances) != instancesToScale {
-		return utils.MakeError("Could not scale up %v instances, only scaled up %v.", instancesToScale, len(createdInstances))
-	}
+	// // Check if we could create the desired number of instances
+	// if len(createdInstances) != instancesToScale {
+	// 	return utils.MakeError("Could not scale up %v instances, only scaled up %v.", instancesToScale, len(createdInstances))
+	// }
 
-	// Create slice with newly created instance ids
+	// // Create slice with newly created instance ids
 	var (
-		createdInstanceIds []string
-		instancesForDb     []whist_instances_insert_input
+		// 	createdInstanceIds []string
+		instancesForDb []whist_instances_insert_input
 	)
 
-	for _, instance := range createdInstances {
-		createdInstanceIds = append(createdInstanceIds, instance.ID)
-		instancesForDb = append(instancesForDb, whist_instances_insert_input{
-			ID:                graphql.String(instance.ID),
-			Provider:          graphql.String(instance.Provider),
-			Region:            graphql.String(instance.Region),
-			ImageID:           graphql.String(instance.ImageID),
-			ClientSHA:         graphql.String(instance.ClientSHA),
-			IPAddress:         graphql.String(instance.IPAddress),
-			RemainingCapacity: graphql.Int(instance.RemainingCapacity),
-			Status:            graphql.String(instance.Status),
-			CreatedAt:         graphql.String(instance.CreatedAt),
-			UpdatedAt:         graphql.String(instance.UpdatedAt),
-		})
-		logger.Infof("Created tagged instance with ID %v", instance.ID)
-	}
+	// for _, instance := range createdInstances {
+	// 	createdInstanceIds = append(createdInstanceIds, instance.ID)
+	// 	instancesForDb = append(instancesForDb, whist_instances_insert_input{
+	// 		ID:                graphql.String(instance.ID),
+	// 		Provider:          graphql.String(instance.Provider),
+	// 		Region:            graphql.String(instance.Region),
+	// 		ImageID:           graphql.String(instance.ImageID),
+	// 		ClientSHA:         graphql.String(instance.ClientSHA),
+	// 		IPAddress:         instance.IPAddress,
+	// 		RemainingCapacity: graphql.Int(instance.RemainingCapacity),
+	// 		Status:            graphql.String(instance.Status),
+	// 		CreatedAt:         graphql.String(instance.CreatedAt),
+	// 		UpdatedAt:         graphql.String(instance.UpdatedAt),
+	// 	})
+	// 	logger.Infof("Created tagged instance with ID %v", instance.ID)
+	// }
 
-	// Wait for new instances to be ready before adding to db
-	err = s.Host.WaitForInstanceReady(scalingCtx, createdInstanceIds)
-	if err != nil {
-		return utils.MakeError("error waiting for new instances to be ready. Err: %v", err)
-	}
+	// // Wait for new instances to be ready before adding to db
+	// err = s.Host.WaitForInstanceReady(scalingCtx, createdInstanceIds)
+	// if err != nil {
+	// 	return utils.MakeError("error waiting for new instances to be ready. Err: %v", err)
+	// }
 
 	logger.Infof("Inserting newly created instances to database.")
+
+	instancesForDb = append(instancesForDb, whist_instances_insert_input{
+		IPAddress:         "0.0.0.0",
+		Provider:          "aws",
+		Region:            "",
+		ImageID:           "",
+		Type:              "",
+		ID:                "",
+		ClientSHA:         "",
+		RemainingCapacity: 123,
+		Status:            "PRE_CONNECTION",
+		CreatedAt:         time.Now(),
+		UpdatedAt:         time.Now(),
+	})
 
 	// If successful, write to db
 	insertMutation := &subscriptions.InsertInstances
@@ -200,7 +229,7 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 		"objects": instancesForDb,
 	}
 
-	err = s.GraphQLClient.Mutate(scalingCtx, insertMutation, mutationParams)
+	err := s.GraphQLClient.Mutate(scalingCtx, insertMutation, mutationParams)
 	if err != nil {
 		return utils.MakeError("Failed to insert instances into database. Error: %v", err)
 	}
