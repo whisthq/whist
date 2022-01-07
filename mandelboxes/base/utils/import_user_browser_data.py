@@ -115,10 +115,9 @@ def encrypt(value):
     iterations = 1
 
     # will assume it's linux for now
-    # We will hardcode the my_pass for now as GNOME-Keyring is not properly configured
-    # and will result in the default value `peanuts`
-
-    my_pass = b"peanuts"
+    my_pass = browser_cookie3.get_linux_pass("chrome")
+    if my_pass.decode("utf-8") == "peanuts":
+        print("WARN: google chrome could not find the GNOME keyring password. Defaulting...")
 
     key = PBKDF2(my_pass, salt, iterations=iterations).read(length)
 

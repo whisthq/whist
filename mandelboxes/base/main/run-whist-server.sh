@@ -73,10 +73,14 @@ if [ "$ENV_NAME" != "localdev" ]; then
   trap cleanup EXIT ERR
 fi
 
+# Load D-Bus configurations from .xinitrc
+eval `cat /whist/dbus_config.txt`
+echo "loaded d-bus address in run-whist-server.sh: $DBUS_SESSION_BUS_ADDRESS | pid: $DBUS_SESSION_BUS_PID"
+
 # Set user upload target, if file exists
 if [ -f "$USER_DEST_BROWSER_FILENAME" ] && [ -f "$BROWSER_DATA_FILE_FILENAME" ]; then
   # Imports user browser data if file exists
-  python3 /usr/share/whist/import_user_browser_data.py $(cat $USER_DEST_BROWSER_FILENAME) $(cat $BROWSER_DATA_FILE_FILENAME)
+  DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID=$DBUS_SESSION_BUS_PID python3 /usr/share/whist/import_user_browser_data.py $(cat $USER_DEST_BROWSER_FILENAME) $(cat $BROWSER_DATA_FILE_FILENAME)
 
   # Remove temporary files
   rm -f $(cat $BROWSER_DATA_FILE_FILENAME)
