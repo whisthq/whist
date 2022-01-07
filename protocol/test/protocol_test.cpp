@@ -123,6 +123,7 @@ TEST(ProtocolTest, InitSDL) {
         if (strcmp(SDL_GetError(), "No available video device") == 0) {
             // check_stdout_line(::testing::HasSubstr("Could not initialize SDL - No available video
             // device"));
+            free(very_long_title);
             return;
         }
     }
