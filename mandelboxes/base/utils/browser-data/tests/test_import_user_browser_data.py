@@ -1,10 +1,5 @@
-import os
-import sqlite3
-import json
 import pytest
-import browser_cookie3
-from ..utils.import_user_browser_data import *
-
+from import_user_browser_data import *
 
 browserDefaultDir = [
     [

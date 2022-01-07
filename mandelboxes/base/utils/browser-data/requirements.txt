@@ -1,0 +1,5 @@
+browser-cookie3
+keyring
+pyaes
+pbkdf2
+sentry-sdk

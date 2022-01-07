@@ -19,4 +19,4 @@ esac
 set -Eeuo pipefail
 
 mkdir -p /home/whist/.teleport/drag-drop/fuse
-exec /usr/bin/whist-teleport-fuse /home/whist/.teleport/drag-drop/fuse -f
+exec /opt/teleport/drag-drop /home/whist/.teleport/drag-drop/fuse -f
