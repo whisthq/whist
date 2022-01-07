@@ -115,15 +115,16 @@ TEST_F(CaptureStdoutTest, InitSDL) {
 
     int width = 500;
     int height = 375;
-    
+
     SDL_Window* new_window = init_sdl(width, height, very_long_title, icon_filepath);
 
     if (new_window == NULL) {
         // Check if there is no device available to test SDL (e.g. on Ubuntu CI)
-        const char *err = SDL_GetError();
+        const char* err = SDL_GetError();
         int res = strcmp(err, "No available video device");
         if (res == 0) {
-            check_stdout_line(::testing::HasSubstr("Could not initialize SDL - No available video device"));
+            check_stdout_line(
+                ::testing::HasSubstr("Could not initialize SDL - No available video device"));
             free(very_long_title);
             return;
         }
@@ -134,11 +135,11 @@ TEST_F(CaptureStdoutTest, InitSDL) {
     check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
     check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
 
-    #ifdef _WIN32
-        check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
-    #elif defined(__linux__)
-        check_stdout_line(::testing::HasSubstr("Not implemented on X11."));
-    #endif
+#ifdef _WIN32
+    check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
+#elif defined(__linux__)
+    check_stdout_line(::testing::HasSubstr("Not implemented on X11."));
+#endif
 
     // Check that the initial title was set appropriately
     const char* title = SDL_GetWindowTitle(new_window);
@@ -210,23 +211,19 @@ TEST_F(CaptureStdoutTest, InitSDL) {
 
         sdl_renderer_resize_window(width, height);
 
-
         char buffer[1000];
         memset(buffer, 0, 1000);
-        sprintf(buffer, "Received resize event for %dx%d, currently %dx%d", width,
-        height, width,
+        sprintf(buffer, "Received resize event for %dx%d, currently %dx%d", width, height, width,
                 height);
         check_stdout_line(::testing::HasSubstr(buffer));
 #ifndef __linux__
         memset(buffer, 0, 1000);
-        sprintf(buffer, "Forcing a resize from %dx%d to %dx%d", width, height,
-        adjusted_width,
+        sprintf(buffer, "Forcing a resize from %dx%d to %dx%d", width, height, adjusted_width,
                 adjusted_height);
         check_stdout_line(::testing::HasSubstr(buffer));
 #endif
         memset(buffer, 0, 1000);
-        sprintf(buffer, "Window resized to %dx%d (Actual %dx%d)", width, height,
-        adjusted_width,
+        sprintf(buffer, "Window resized to %dx%d (Actual %dx%d)", width, height, adjusted_width,
                 adjusted_height);
         check_stdout_line(::testing::HasSubstr(buffer));
 
@@ -347,7 +344,6 @@ TEST_F(CaptureStdoutTest, InitSDL) {
 
         EXPECT_TRUE(fullscreen_value);
         EXPECT_TRUE(fullscreen_trigger);
-
 
         // nothing changed yet
         actual_width = get_window_pixel_width(new_window);
