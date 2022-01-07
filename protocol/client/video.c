@@ -35,7 +35,7 @@ Includes
 #include "sdlscreeninfo.h"
 #include "native_window_utils.h"
 #include "network.h"
-#include "bitrate.h"
+#include "network_algorithm.h"
 #include "client_utils.h"
 #include "client_statistic.h"
 
@@ -623,8 +623,8 @@ void update_sws_context(VideoContext* video_context, Uint8** data, int* linesize
 
 void calculate_statistics(VideoContext* video_context) {
     static clock statistics_timer;
-    static BitrateStatistics stats;
-    static Bitrates new_bitrates;
+    static NetworkStatistics stats;
+    static NetworkSettings new_bitrates;
 
     static bool statistics_initialized = false;
     if (!statistics_initialized) {

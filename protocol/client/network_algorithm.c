@@ -7,13 +7,13 @@
 Usage
 ============================
 Place to put any predictive/adaptive bitrate algorithms. In the current setup, each algorithm is a
-function that takes in inputs through a BitrateStatistics struct. The function is responsible for
+function that takes in inputs through a NetworkStatistics struct. The function is responsible for
 maintaining any internal state necessary for the algorithm (possibly through the use of custom types
 or helpers), and should update client_max_bitrate when necessary.
 
 To change the algorithm the client uses, set `calculate_new_bitrate` to the desired algorithm.
 The function assigned to `calculate_new_bitrate` should have signature such that it takes
-one argument of type `BitrateStatistics` and returns type `Bitrates`.
+one argument of type `NetworkStatistics` and returns type `NetworkSettings`.
 
 For more details about the individual algorithms, please visit
 https://www.notion.so/whisthq/Adaptive-Bitrate-Algorithms-a6ea0987adc04e8d84792fc9dcbc7fc7
@@ -24,13 +24,27 @@ https://www.notion.so/whisthq/Adaptive-Bitrate-Algorithms-a6ea0987adc04e8d84792f
 Includes
 ============================
 */
-#include "bitrate.h"
+
+#include "network_algorithm.h"
+
+/*
+============================
+Defines
+============================
+*/
+
+#define BAD_BITRATE 10400000
+#define BAD_BURST_BITRATE 31800000
+
+/*
+============================
+Globals
+============================
+*/
 
 volatile int client_max_bitrate = STARTING_BITRATE;
 volatile int max_burst_bitrate = STARTING_BURST_BITRATE;
 volatile int client_override_bitrate = 0;
-#define BAD_BITRATE 10400000
-#define BAD_BURST_BITRATE 31800000
 
 /*
 ============================
@@ -38,9 +52,12 @@ Private Function Declarations
 ============================
 */
 
-Bitrates fallback_bitrate(BitrateStatistics stats);
-Bitrates ewma_bitrate(BitrateStatistics stats);
-Bitrates ewma_ratio_bitrate(BitrateStatistics stats);
+// These functions involve various potential
+// implementations of `calculate_new_bitrate`
+
+NetworkSettings fallback_bitrate(NetworkStatistics stats);
+NetworkSettings ewma_bitrate(NetworkStatistics stats);
+NetworkSettings ewma_ratio_bitrate(NetworkStatistics stats);
 
 /*
 ============================
@@ -48,7 +65,13 @@ Public Function Implementations
 ============================
 */
 
-Bitrates calculate_new_bitrate(BitrateStatistics stats) { return ewma_bitrate(stats); }
+NetworkSettings calculate_new_bitrate(NetworkStatistics stats) {
+    NetworkSettings network_settings = ewma_bitrate(stats);
+    network_settings.fps = 60;
+    network_settings.fec_packet_ratio = 0.0;
+    network_settings.desired_codec = CODEC_TYPE_H264;
+    return network_settings;
+}
 
 /*
 ============================
@@ -56,53 +79,46 @@ Private Function Implementations
 ============================
 */
 
-Bitrates fallback_bitrate(BitrateStatistics stats) {
+NetworkSettings fallback_bitrate(NetworkStatistics stats) {
     /*
         Switches between two sets of bitrate/burst bitrate: the default of 16mbps/100mbps and a
         fallback of 10mbps/30mbps. We fall back if we've nacked a lot in the last second.
-
-        Arguments:
-            stats (BitrateStatistics): struct containing the average number of nacks per second
-       since the last time this function was called
     */
-    static Bitrates bitrates;
+    static NetworkSettings network_settings;
     if (stats.num_nacks_per_second > 6 && client_max_bitrate != BAD_BITRATE) {
-        bitrates.bitrate = BAD_BITRATE;
-        bitrates.burst_bitrate = BAD_BURST_BITRATE;
+        network_settings.bitrate = BAD_BITRATE;
+        network_settings.burst_bitrate = BAD_BURST_BITRATE;
     } else {
-        bitrates.bitrate = client_max_bitrate;
-        bitrates.burst_bitrate = max_burst_bitrate;
+        network_settings.bitrate = client_max_bitrate;
+        network_settings.burst_bitrate = max_burst_bitrate;
     }
-    return bitrates;
+    return network_settings;
 }
 
-Bitrates ewma_bitrate(BitrateStatistics stats) {
+NetworkSettings ewma_bitrate(NetworkStatistics stats) {
     /*
         Keeps an exponentially weighted moving average of the throughput per second the client is
         getting, and uses that to predict a good bitrate to ask the server for.
-
-        Arguments:
-            stats (BitrateStatistics): struct containing the throughput per second of the client
     */
     static const double alpha = 0.8;
     // because the max bitrate of the encoder is usually larger than the actual amount of data we
     // get from the server
     static const double bitrate_throughput_ratio = 1.25;
     static int throughput = -1;
-    static Bitrates bitrates;
+    static NetworkSettings network_settings;
     if (throughput == -1) {
         throughput = (int)(STARTING_BITRATE / bitrate_throughput_ratio);
     }
     // sanity check to make sure we're not sending it negative bitrate
     if (stats.throughput_per_second >= 0) {
         throughput = (int)(alpha * throughput + (1 - alpha) * stats.throughput_per_second);
-        bitrates.bitrate = (int)(bitrate_throughput_ratio * throughput);
+        network_settings.bitrate = (int)(bitrate_throughput_ratio * throughput);
     }
-    bitrates.burst_bitrate = max_burst_bitrate;
-    return bitrates;
+    network_settings.burst_bitrate = max_burst_bitrate;
+    return network_settings;
 }
 
-Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
+NetworkSettings ewma_ratio_bitrate(NetworkStatistics stats) {
     /*
         Keeps an exponentially weighted moving average of the throughput per second the client is
         getting, and uses that to predict a good bitrate to ask the server for. The throughput
@@ -113,11 +129,8 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
         same for `same_throughput_count_threshold` periods. If the boosted throughput results in
         NACKs, then we revert to the previous throughput and increase the value of
         `same_throughput_count_threshold` so that the successful throughput stays constant
-        for longer and longer periods of time before we try higher bitrates. We follow a similar
-        logic flow for the burst bitrate, except we use skipped renders instead of NACKs.
-
-        Arguments:
-            stats (BitrateStatistics): struct containing the throughput per second of the client
+        for longer and longer periods of time before we try higher network_settings. We follow a
+       similar logic flow for the burst bitrate, except we use skipped renders instead of NACKs.
     */
     static const double alpha = 0.8;
     // Because the max bitrate of the encoder is usually larger than the actual amount of data we
@@ -158,10 +171,10 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
     // The threshold that the latest successful burst needs to meet to be boosted
     static int latest_successful_burst_threshold = meet_expectations_min;
 
-    static Bitrates bitrates;
+    static NetworkSettings network_settings;
     if (expected_throughput == -1) {
         expected_throughput = (int)(STARTING_BITRATE / bitrate_throughput_ratio);
-        bitrates.burst_bitrate = max_burst_bitrate;
+        network_settings.burst_bitrate = max_burst_bitrate;
     }
 
     // Make sure throughput is not negative and also that the client has received frames at all
@@ -213,13 +226,13 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
             met_throughput_expectations_count = 0;
         }
 
-        bitrates.bitrate = (int)(bitrate_throughput_ratio * expected_throughput);
+        network_settings.bitrate = (int)(bitrate_throughput_ratio * expected_throughput);
 
-        if (bitrates.bitrate > MAXIMUM_BITRATE) {
-            bitrates.bitrate = MAXIMUM_BITRATE;
+        if (network_settings.bitrate > MAXIMUM_BITRATE) {
+            network_settings.bitrate = MAXIMUM_BITRATE;
             expected_throughput = (int)(MAXIMUM_BITRATE / bitrate_throughput_ratio);
-        } else if (bitrates.bitrate < MINIMUM_BITRATE) {
-            bitrates.bitrate = MINIMUM_BITRATE;
+        } else if (network_settings.bitrate < MINIMUM_BITRATE) {
+            network_settings.bitrate = MINIMUM_BITRATE;
             expected_throughput = (int)(MINIMUM_BITRATE / bitrate_throughput_ratio);
         }
     }
@@ -227,10 +240,10 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
     // Make sure that frames have been recieved before trying to update the burst bitrate
     if (stats.num_rendered_frames_per_second > 0) {
         int current_burst_heuristic =
-            (int)(bitrates.burst_bitrate * (double)stats.num_rendered_frames_per_second /
+            (int)(network_settings.burst_bitrate * (double)stats.num_rendered_frames_per_second /
                   stats.num_rendered_frames_per_second);
 
-        if (current_burst_heuristic == bitrates.burst_bitrate) {
+        if (current_burst_heuristic == network_settings.burst_bitrate) {
             // If this burst bitrate is the same as the burst bitrate from the last period, then
             //     increment the same burst bitrate count
             met_burst_expectations_count++;
@@ -241,21 +254,23 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
             //     boosting the burst bitrate after continuous success since we may have entered an
             //     area with higher bandwidth.
             if (met_burst_expectations_count >= meet_burst_expectations_threshold) {
-                latest_successful_burst = bitrates.burst_bitrate;
+                latest_successful_burst = network_settings.burst_bitrate;
                 met_burst_expectations_count = 0;
                 latest_successful_burst_threshold = meet_throughput_expectations_threshold;
                 meet_burst_expectations_threshold = meet_expectations_min;
-                bitrates.burst_bitrate = (int)(bitrates.burst_bitrate * boost_multiplier);
+                network_settings.burst_bitrate =
+                    (int)(network_settings.burst_bitrate * boost_multiplier);
             }
         } else {
-            if (bitrates.burst_bitrate > latest_successful_burst && latest_successful_burst != -1) {
+            if (network_settings.burst_bitrate > latest_successful_burst &&
+                latest_successful_burst != -1) {
                 // If the burst bitrate that yielded lost packets was higher than the last
                 //     continuously successful burst bitrate, then set the burst bitrate to
                 //     the last continuously successful burst bitrate to try it again for longer.
                 //     Increase the threshold for boosting the burst bitrate after continuous
                 //     success because it is more likely that we have found our successful
                 //     burst bitrate for now.
-                bitrates.burst_bitrate = latest_successful_burst;
+                network_settings.burst_bitrate = latest_successful_burst;
                 latest_successful_burst_threshold =
                     min(latest_successful_burst_threshold * meet_expectations_multiplier,
                         meet_expectations_max);
@@ -265,19 +280,19 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
                 //     continuously successful burst bitrate, then set the burst bitrate to an
                 //     EWMA-calculated new value and reset the threshold for boosting
                 //     the burst bitrate after continuous success.
-                bitrates.burst_bitrate =
-                    (int)(alpha * bitrates.burst_bitrate + (1 - alpha) * current_burst_heuristic);
+                network_settings.burst_bitrate = (int)(alpha * network_settings.burst_bitrate +
+                                                       (1 - alpha) * current_burst_heuristic);
                 meet_burst_expectations_threshold = meet_expectations_min;
             }
 
             met_burst_expectations_count = 0;
         }
 
-        if (bitrates.burst_bitrate > STARTING_BURST_BITRATE) {
-            bitrates.burst_bitrate = STARTING_BURST_BITRATE;
-        } else if (bitrates.burst_bitrate < MINIMUM_BITRATE) {
-            bitrates.burst_bitrate = MINIMUM_BITRATE;
+        if (network_settings.burst_bitrate > STARTING_BURST_BITRATE) {
+            network_settings.burst_bitrate = STARTING_BURST_BITRATE;
+        } else if (network_settings.burst_bitrate < MINIMUM_BITRATE) {
+            network_settings.burst_bitrate = MINIMUM_BITRATE;
         }
     }
-    return bitrates;
+    return network_settings;
 }

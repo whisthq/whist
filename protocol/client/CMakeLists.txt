@@ -13,7 +13,7 @@ add_executable(WhistClient
         video.c
         sdlscreeninfo.c
         sync_packets.c
-        bitrate.c
+        network_algorithm.c
         client_statistic.c
         renderer.c
         )

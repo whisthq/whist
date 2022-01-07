@@ -3,13 +3,14 @@
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file bitrate.h
- * @brief This file contains the client's adaptive bitrate code. Any algorithms we are using for
-predicting bitrate should be stored here.
+ * @brief     This file contains the client's network algorithm code.
+ *            It takes in any network statistics,
+ *            and returns a network settings decision based on those statistics.
 ============================
 Usage
 ============================
-The client should periodically call calculate_new_bitrate with any data rrequested, such as
-throughput or nack data. This will update max_bitrate and max_burst_bitrate if needed.
+The client should periodically call calculate_new_bitrate with any new network statistics, such as
+throughput or number of nacks. This will return a new network settings as needed
 */
 
 /*
@@ -26,18 +27,21 @@ Custom Types
 ============================
 */
 
-typedef struct BitrateStatistics {
+typedef struct {
     int num_nacks_per_second;
     int num_received_packets_per_second;
     int num_skipped_frames_per_second;
     int num_rendered_frames_per_second;
     int throughput_per_second;
-} BitrateStatistics;
+} NetworkStatistics;
 
-typedef struct Bitrates {
+typedef struct {
+    int fps;
     int bitrate;
     int burst_bitrate;
-} Bitrates;
+    double fec_packet_ratio;
+    CodecType desired_codec;
+} NetworkSettings;
 
 /*
 ============================
@@ -54,6 +58,6 @@ Public Functions
  *
  * @returns             A network settings struct
  */
-Bitrates calculate_new_bitrate(BitrateStatistics stats);
+NetworkSettings calculate_new_bitrate(NetworkStatistics stats);
 
 #endif
