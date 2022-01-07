@@ -5,6 +5,7 @@
  */
 
 import fetch from "node-fetch"
+import sortBy from "lodash.sortby"
 
 import { AWSRegion } from "@app/@types/aws"
 import { logBase } from "@app/utils/logging"
@@ -77,10 +78,7 @@ const sortRegionByProximity = async (regions: AWSRegion[]) => {
       (AWSRegion[]): Sorted array of regions
   */
   const pingResults = await Promise.all(pingLoop(regions))
-  const sortedResults = pingResults
-    .sort((a, b) => (a.pingTime < b.pingTime ? -1 : 1))
-    .filter((r) => r.pingTime > 0)
-    .map((r) => r.region)
+  const sortedResults = sortBy(pingResults, ["pingTime"])
 
   logBase(`Sorted AWS regions are [${sortedResults.toString()}]`, {})
 

@@ -17,6 +17,7 @@ export const AUTH_ERROR = "AUTH_ERROR"
 export const NAVIGATION_ERROR = "NAVIGATION_ERROR"
 export const MAINTENANCE_ERROR = "MAINTENANCE_ERROR"
 export const INTERNET_ERROR = "INTERNET_ERROR"
+export const LOCATION_CHANGED_ERROR = "LOCATION_CHANGED_ERROR"
 
 export const whistError = {
   [NO_PAYMENT_ERROR]: {
@@ -74,6 +75,11 @@ export const whistError = {
   [MANDELBOX_INTERNAL_ERROR]: {
     title: "There was an unexpected error with our servers :(",
     text: "This is likely a temporary bug and we deeply apologize for the inconvenience.",
+  },
+  [LOCATION_CHANGED_ERROR]: {
+    title:
+      "Your location seems to have changed since the last time you opened Whist",
+    text: "We recommend restarting Whist to avoid higher network latency.",
   },
 } as {
   [key: string]: {

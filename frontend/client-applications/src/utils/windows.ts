@@ -288,7 +288,10 @@ export const createPaymentWindow = async (accessToken: accessToken) => {
   })
 }
 
-export const createErrorWindow = (hash: string) => {
+export const createErrorWindow = (
+  hash: string,
+  closeOtherWindows?: boolean
+) => {
   createWindow({
     options: {
       ...base,
@@ -299,8 +302,8 @@ export const createErrorWindow = (hash: string) => {
       transparent: true,
     } as BrowserWindowConstructorOptions,
     hash: hash,
-    closeElectronWindows: true,
-    closeProtocolWindow: true,
+    closeElectronWindows: closeOtherWindows ?? true,
+    closeProtocolWindow: closeOtherWindows ?? true,
   })
 }
 

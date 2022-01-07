@@ -4,16 +4,18 @@ import { interval, of, merge } from "rxjs"
 import Sentry from "@sentry/electron"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
+import find from "lodash.find"
 
 import { destroyTray } from "@app/utils/tray"
 import { logBase } from "@app/utils/logging"
-import { withAppReady } from "@app/utils/observables"
+import { withAppReady, fromSignal } from "@app/utils/observables"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
 import { WindowHashProtocol } from "@app/constants/windows"
 import {
   createProtocolWindow,
   createAuthWindow,
   createLoadingWindow,
+  createErrorWindow,
 } from "@app/utils/windows"
 import { persistGet } from "@app/utils/persist"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
@@ -25,8 +27,11 @@ import {
   CACHED_REFRESH_TOKEN,
   CACHED_USER_EMAIL,
   ONBOARDED,
+  AWS_REGIONS_SORTED_BY_PROXIMITY,
 } from "@app/constants/store"
 import { networkAnalyze } from "@app/utils/networkAnalysis"
+import { AWSRegion } from "@app/@types/aws"
+import { LOCATION_CHANGED_ERROR } from "@app/constants/error"
 
 // Keeps track of how many times we've tried to relaunch the protocol
 const MAX_RETRIES = 3
@@ -148,4 +153,41 @@ withAppReady(
     networkAnalyze()
     createLoadingWindow()
   }
+})
+
+// If we detect that the user to a location where another datacenter is closer
+// than the one we cached, we show them a warning to encourage them to relaunch Whist
+fromSignal(
+  fromTrigger(WhistTrigger.awsPingRefresh),
+  fromTrigger(WhistTrigger.authRefreshSuccess)
+).subscribe((regions) => {
+  const previousCachedRegions = persistGet(
+    AWS_REGIONS_SORTED_BY_PROXIMITY
+  ) as Array<{ region: AWSRegion }>
+
+  const previousClosestRegion = previousCachedRegions?.[0]?.region
+  const currentClosestRegion = regions?.[0]?.region
+
+  if (previousClosestRegion === undefined || currentClosestRegion === undefined)
+    return
+
+  // If the cached closest AWS region and new closest AWS region are the same, don't do anything
+  if (previousClosestRegion === currentClosestRegion) return
+
+  // If the difference in ping time to the cached closest AWS region vs. ping time
+  // to the new closest AWS region is less than 25ms, don't do anything
+  const previousClosestRegionPingTime = find(
+    regions,
+    (r) => r.region === previousClosestRegion
+  )?.pingTime
+
+  const currentClosestRegionPingTime = regions?.[0]?.pingTime
+
+  if (previousClosestRegionPingTime - currentClosestRegionPingTime < 25) return
+
+  // The closest AWS regions are different and ping times are more than 25ms apart,
+  // show the user a warning window to relaunch Whist in the new AWS region
+  setTimeout(() => {
+    createErrorWindow(LOCATION_CHANGED_ERROR, false)
+  }, 5000)
 })
