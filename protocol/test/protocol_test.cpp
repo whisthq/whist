@@ -120,7 +120,9 @@ TEST(ProtocolTest, InitSDL) {
 
     if (!new_window) {
         // Check if there is no device available to test SDL (e.g. on Ubuntu CI)
-        if (strcmp(SDL_GetError(), "No available video device") == 0) {
+        const char *err = SDL_GetError();
+        printf("err: '%s', strlen(err): %lu\n", err, strlen(err));
+        if (strcmp(err, "No available video device") == 0) {
             // check_stdout_line(::testing::HasSubstr("Could not initialize SDL - No available video
             // device"));
             free(very_long_title);
