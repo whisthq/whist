@@ -33,6 +33,21 @@ Includes
 #include <whist/logging/error_monitor.h>
 #include <whist/core/whistgetopt.h>
 
+/*
+============================
+Globals
+============================
+*/
+
+static CodecType override_codec_type = CODEC_TYPE_UNKNOWN;
+static int override_bitrate = -1;
+
+/*
+============================
+Bad Globals [TODO: Remove these or give them `static`!]
+============================
+*/
+
 // Taken from main.c
 volatile char client_binary_aes_private_key[16];
 volatile char client_hex_aes_private_key[33];
@@ -40,13 +55,9 @@ volatile char *server_ip;
 volatile int output_width;
 volatile int output_height;
 volatile char *program_name = NULL;
-volatile CodecType output_codec_type = CODEC_TYPE_H264;
 extern volatile SDL_Window *window;
 
 volatile char *new_tab_url;
-
-extern volatile int client_max_bitrate;
-extern volatile int client_override_bitrate;
 
 // From main.c
 volatile bool update_bitrate = false;
@@ -69,6 +80,7 @@ const struct option client_cmd_options[] = {
     {"width", required_argument, NULL, 'w'},
     {"height", required_argument, NULL, 'h'},
     {"bitrate", required_argument, NULL, 'b'},
+    {"override-bitrate", required_argument, NULL, 'o'},
     {"codec", required_argument, NULL, 'c'},
     {"private-key", required_argument, NULL, 'k'},
     {"user", required_argument, NULL, 'u'},
@@ -80,7 +92,6 @@ const struct option client_cmd_options[] = {
     {"loading", required_argument, NULL, 'l'},
     {"skip-taskbar", no_argument, NULL, 's'},
     {"new-tab-url", required_argument, NULL, 'x'},
-    {"override-bitrate", required_argument, NULL, 'o'},
     // these are standard for POSIX programs
     {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
     {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
@@ -160,7 +171,7 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
                 printf("%s", usage);
                 return -1;
             }
-            client_max_bitrate = (int)ret;
+            LOG_ERROR("-b option is currently unimplemented!");
             break;
         }
         case 'o': {  // override bitrate
@@ -169,14 +180,14 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
                 printf("%s", usage);
                 return -1;
             }
-            client_override_bitrate = (int)ret;
+            override_bitrate = (int)ret;
             break;
         }
         case 'c': {  // codec
             if (!strcmp(eval_optarg, "h264")) {
-                output_codec_type = CODEC_TYPE_H264;
+                override_codec_type = CODEC_TYPE_H264;
             } else if (!strcmp(eval_optarg, "h265")) {
-                output_codec_type = CODEC_TYPE_H265;
+                override_codec_type = CODEC_TYPE_H265;
             } else {
                 printf("Invalid codec type: '%s'\n", eval_optarg);
                 printf("%s", usage);
@@ -317,9 +328,13 @@ int client_parse_args(int argc, char *argv[]) {
         "  -h, --height=HEIGHT           Set the height for the windowed-mode\n"
         "                                  window, if both width and height\n"
         "                                  are specified\n"
-        "  -b, --bitrate=BITRATE         Set the maximum bitrate to use\n"
-        "  -c, --codec=CODEC             Launch the protocol using the codec\n"
-        "                                  specified: h264 (default) or h265\n"
+        "  -b, --bitrate=BITRATE         Set the starting bitrate for the network algorithm.\n"
+        "                                  The algorithm may deviate from this over time.\n"
+        "  -o, --override-bitrate=BR     Set an explicit bitrate that the video steam will use.\n"
+        "                                  This will override the network algorithm's decision\n"
+        "  -c, --codec=CODEC             Launch the protocol using the codec specified.\n"
+        "                                  The options are h264, or h265\n"
+        "                                  This will override the network algorithm's decision\n"
         "  -k, --private-key=PK          Pass in the RSA Private Key as a \n"
         "                                  hexadecimal string\n"
         "  -u, --user=EMAIL              Tell Whist the user's email. Default: None \n"
@@ -335,9 +350,6 @@ int client_parse_args(int argc, char *argv[]) {
         "  -s, --skip-taskbar            Launch the protocol without displaying an icon\n"
         "                                  in the taskbar\n"
         "  -x, --new-tab-url             URL to open in new tab \n"
-        "  -o, --override-bitrate       Override the bitrate calculated by adaptive bitrate algo\n"
-        "                                  with the provided one. Useful for development, \n"
-        "                                  debugging and testing\n"
         // special options should be indented further to the left
         "      --help     Display this help and exit\n"
         "      --version  Output version information and exit\n";
@@ -710,6 +722,19 @@ int update_mouse_motion() {
     return 0;
 }
 
+void send_message_dimensions() {
+    // Let the server know the new dimensions so that it
+    // can change native dimensions for monitor
+    WhistClientMessage wcmsg = {0};
+    wcmsg.type = MESSAGE_DIMENSIONS;
+    wcmsg.dimensions.width = output_width;
+    wcmsg.dimensions.height = output_height;
+    wcmsg.dimensions.dpi = get_native_window_dpi((SDL_Window *)window);
+    LOG_INFO("Sending MESSAGE_DIMENSIONS: output=%dx%d, DPI=%d", wcmsg.dimensions.width,
+             wcmsg.dimensions.height, wcmsg.dimensions.dpi);
+    send_wcmsg(&wcmsg);
+}
+
 void send_new_tab_url_if_needed() {
     if (new_tab_url) {
         LOG_INFO("Sending message to open URL in new tab");
@@ -726,17 +751,28 @@ void send_new_tab_url_if_needed() {
     new_tab_url = NULL;
 }
 
-void send_message_dimensions() {
-    // Let the server know the new dimensions so that it
-    // can change native dimensions for monitor
+void send_desired_network_settings(NetworkSettings desired_network_settings) {
+    // Override anything manually, here
+    if (override_bitrate != -1) {
+        desired_network_settings.bitrate = override_bitrate;
+        desired_network_settings.burst_bitrate =
+            max(desired_network_settings.burst_bitrate, override_bitrate);
+    }
+    if (override_codec_type != CODEC_TYPE_UNKNOWN) {
+        desired_network_settings.desired_codec = override_codec_type;
+    }
+
+    LOG_INFO(
+        "Requesting new network settings! %fmbps avg / %fmbps burst / %f%% FEC / Codec %s / %dFPS",
+        desired_network_settings.bitrate / 1024.0 / 1024.0,
+        desired_network_settings.burst_bitrate / 1024.0 / 1024.0,
+        desired_network_settings.desired_codec == CODEC_TYPE_H265 ? "h265" : "h264",
+        desired_network_settings.fec_packet_ratio * 100.0, desired_network_settings.fps);
+
+    // Send off the network settings request
     WhistClientMessage wcmsg = {0};
-    wcmsg.type = MESSAGE_DIMENSIONS;
-    wcmsg.dimensions.width = output_width;
-    wcmsg.dimensions.height = output_height;
-    wcmsg.dimensions.codec_type = output_codec_type;
-    wcmsg.dimensions.dpi = get_native_window_dpi((SDL_Window *)window);
-    LOG_INFO("Sending MESSAGE_DIMENSIONS: output=%dx%d, DPI=%d, codec=%d", wcmsg.dimensions.width,
-             wcmsg.dimensions.height, wcmsg.dimensions.dpi, wcmsg.dimensions.codec_type);
+    wcmsg.type = MESSAGE_NETWORK_SETTINGS;
+    wcmsg.network_settings = desired_network_settings;
     send_wcmsg(&wcmsg);
 }
 

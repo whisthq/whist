@@ -9,6 +9,9 @@
 Usage
 ============================
 
+NOTE: Only ONE thread can call a function on whist renderer at a time,
+      unless a function says otherwise.
+
 See video.h for similar usage
 */
 
@@ -28,19 +31,7 @@ Defines
 ============================
 */
 
-typedef struct {
-    VideoContext* video_context;
-    AudioContext* audio_context;
-
-    bool run_renderer_thread;
-    WhistThread renderer_thread;
-    WhistMutex renderer_mutex;
-    WhistSemaphore renderer_semaphore;
-    clock last_try_render_timer;
-    // Used to log renderer thread usage
-    bool using_renderer_thread;
-    bool render_is_on_renderer_thread;
-} WhistRenderer;
+typedef struct WhistRenderer WhistRenderer;
 
 /*
 ============================
@@ -89,8 +80,8 @@ void renderer_receive_packet(WhistRenderer* renderer, WhistPacket* packet);
  *
  * @param renderer                 The video context that wants to render a frame
  *
- * @note                           This function is thread-safe, and may be called
- *                                 independently of receive_packet/update
+ * @note                           This function is thread-safe, and may be called in a way
+ *                                 that overlaps other functions that use the whist renderer.
  *
  * @note                           This function will potentially take a long time (4-8ms)
  *

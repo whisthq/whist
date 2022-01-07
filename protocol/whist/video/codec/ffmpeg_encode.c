@@ -140,7 +140,7 @@ FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, 
         (VBV_BUF_SIZE_IN_MS * bitrate) / MS_IN_SECOND;  // vbvBufferSize
     encoder->context->qmax = MAX_QP;
     encoder->context->time_base.num = 1;
-    encoder->context->time_base.den = FPS;
+    encoder->context->time_base.den = MAX_FPS;
     encoder->context->gop_size = encoder->gop_size;
     // encoder->context->keyint_min = 5;
     encoder->context->pix_fmt = hw_format;
@@ -227,8 +227,8 @@ FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, 
     avbsp->width = encoder->in_width;
     avbsp->height = encoder->in_height;
     avbsp->format = hw_format;
-    avbsp->frame_rate = (AVRational){FPS, 1};
-    avbsp->time_base = (AVRational){1, FPS};
+    avbsp->frame_rate = (AVRational){MAX_FPS, 1};
+    avbsp->time_base = (AVRational){1, MAX_FPS};
     avbsp->hw_frames_ctx = encoder->context->hw_frames_ctx;
     av_buffersrc_parameters_set(filter_contexts[0], avbsp);
     if (avfilter_init_str(filter_contexts[0], NULL) < 0) {
@@ -343,7 +343,7 @@ FFmpegEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, in
         (VBV_BUF_SIZE_IN_MS * bitrate) / MS_IN_SECOND;  // vbvBufferSize
     encoder->context->qmax = MAX_QP;
     encoder->context->time_base.num = 1;
-    encoder->context->time_base.den = FPS;
+    encoder->context->time_base.den = MAX_FPS;
     encoder->context->gop_size = encoder->gop_size;
     encoder->context->keyint_min = 5;
     encoder->context->pix_fmt = hw_format;
@@ -420,8 +420,8 @@ FFmpegEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, in
     avbsp->width = encoder->in_width;
     avbsp->height = encoder->in_height;
     avbsp->format = hw_format;
-    avbsp->frame_rate = (AVRational){FPS, 1};
-    avbsp->time_base = (AVRational){1, FPS};
+    avbsp->frame_rate = (AVRational){MAX_FPS, 1};
+    avbsp->time_base = (AVRational){1, MAX_FPS};
     avbsp->hw_frames_ctx = encoder->context->hw_frames_ctx;
     av_buffersrc_parameters_set(filter_contexts[0], avbsp);
     if (avfilter_init_str(filter_contexts[0], NULL) < 0) {
@@ -560,7 +560,7 @@ FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int
     av_opt_set_int(filter_contexts[0], "height", encoder->in_height, AV_OPT_SEARCH_CHILDREN);
     av_opt_set(filter_contexts[0], "pix_fmt", av_get_pix_fmt_name(in_format),
                AV_OPT_SEARCH_CHILDREN);
-    av_opt_set_q(filter_contexts[0], "time_base", (AVRational){1, FPS}, AV_OPT_SEARCH_CHILDREN);
+    av_opt_set_q(filter_contexts[0], "time_base", (AVRational){1, MAX_FPS}, AV_OPT_SEARCH_CHILDREN);
     if (avfilter_init_str(filter_contexts[0], NULL) < 0) {
         LOG_WARNING("Unable to initialize buffer source");
         destroy_ffmpeg_encoder(encoder);
@@ -634,7 +634,7 @@ FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int
         (VBV_BUF_SIZE_IN_MS * bitrate) / MS_IN_SECOND;  // vbvBufferSize
     encoder->context->qmax = MAX_QP;
     encoder->context->time_base.num = 1;
-    encoder->context->time_base.den = FPS;
+    encoder->context->time_base.den = MAX_FPS;
     encoder->context->gop_size = encoder->gop_size;
     encoder->context->keyint_min = 5;
     encoder->context->pix_fmt = out_format;

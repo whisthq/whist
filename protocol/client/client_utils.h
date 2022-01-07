@@ -112,10 +112,17 @@ int update_mouse_motion();
 void send_message_dimensions();
 
 /**
- * @brief                          Sends message to server with new tab URL to open, if the global
- * new_tab_url is non-NULL.
+ * @brief                          Sends message to server with new tab URL to open,
+ *                                 if the global new_tab_url is non-NULL.
  */
 void send_new_tab_url_if_needed();
+
+/**
+ * @brief                          Sends message to server with our desired network settings
+ *
+ * @param desired_network_settings The desired network settings
+ */
+void send_desired_network_settings(NetworkSettings desired_network_settings);
 
 /**
  * @brief                          Nack handler for the ring buffer

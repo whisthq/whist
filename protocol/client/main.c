@@ -61,11 +61,6 @@ Includes
 // N.B.: Please don't put globals here, since main.c won't be included when the testing suite is
 // used instead
 
-// maximum mbps
-extern volatile int max_bitrate;
-extern volatile int max_burst_bitrate;
-extern volatile bool update_bitrate;
-
 // Global state variables
 extern volatile char binary_aes_private_key[16];
 extern volatile char hex_aes_private_key[33];
@@ -76,7 +71,6 @@ extern volatile double latency;
 extern volatile int output_width;
 extern volatile int output_height;
 extern volatile char* program_name;
-extern volatile CodecType output_codec_type;
 extern volatile char* server_ip;
 extern char user_email[WHIST_ARGS_MAXLEN + 1];
 extern char icon_png_filename[WHIST_ARGS_MAXLEN + 1];

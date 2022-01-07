@@ -328,13 +328,14 @@ VideoEncoder* do_update_encoder(whist_server_state* state, VideoEncoder* encoder
     // handle the update_encoder event
     if (encoder != NULL) {
         // store it to prevent race conditions if bitrate is updated
-        int new_bitrate = state->max_bitrate;
+        int new_bitrate = state->requested_video_bitrate;
+        // TODO: Use requested_video_fps as well
         if (reconfigure_encoder(encoder, device->width, device->height, new_bitrate,
-                                (CodecType)state->client_codec_type)) {
+                                (CodecType)state->requested_video_codec)) {
             // If we could update the encoder in-place, then we're done updating the encoder
             LOG_INFO("Reconfigured Encoder to %dx%d using Bitrate: %d from %f, and Codec %d",
                      device->width, device->height, new_bitrate, new_bitrate / 1024.0 / 1024.0,
-                     state->client_codec_type);
+                     state->requested_video_codec);
             state->update_encoder = false;
         } else {
             // TODO: Make LOG_ERROR after ffmpeg reconfiguration is implemented
@@ -362,18 +363,19 @@ VideoEncoder* do_update_encoder(whist_server_state* state, VideoEncoder* encoder
         } else {
             // Starting making new encoder. This will set pending_encoder=true, but won't
             // actually update it yet, we'll still use the old one for a bit
-            int new_bitrate = state->max_bitrate;
+            int new_bitrate = state->requested_video_bitrate;
+            // TODO: Use requested_video_fps
             LOG_INFO(
                 "Creating a new Encoder of dimensions %dx%d using Bitrate: %d from %f, and "
                 "Codec %d",
                 device->width, device->height, new_bitrate, new_bitrate / 1024.0 / 1024.0,
-                (int)state->client_codec_type);
+                (int)state->requested_video_codec);
             state->encoder_finished = false;
             state->encoder_factory_server_w = device->width;
             state->encoder_factory_server_h = device->height;
             state->encoder_factory_client_w = (int)state->client_width;
             state->encoder_factory_client_h = (int)state->client_height;
-            state->encoder_factory_codec_type = (CodecType)state->client_codec_type;
+            state->encoder_factory_codec_type = (CodecType)state->requested_video_codec;
             state->encoder_factory_bitrate = new_bitrate;
 
             // If using nvidia, then we must destroy the existing encoder first
@@ -449,7 +451,7 @@ int32_t multithreaded_send_video(void* opaque) {
 
     NetworkThrottleContext* network_throttler =
         network_throttler_create((double)VBV_BUF_SIZE_IN_MS, true);
-    network_throttler_set_burst_bitrate(network_throttler, state->max_bitrate);
+    network_throttler_set_burst_bitrate(network_throttler, state->requested_video_bitrate);
     int last_frame_size = 0;
 
     int consecutive_identical_frames = 0;
@@ -472,17 +474,6 @@ int32_t multithreaded_send_video(void* opaque) {
 
         static clock send_video_loop_timer;
         start_timer(&send_video_loop_timer);
-        if (state->client_width < 0 || state->client_height < 0 || state->client_dpi < 0) {
-            // if we've just started, capture at a common width, height, and DPI
-            // when a client connects, they'll request a dimension change to the correct dimensions
-            // + DPI. The height, width, and DPI all match the default on a 2020 M1 MacBook Pro.
-            // A cross-platform default DPI would be 192; width and height depend on things like
-            // the Windows Start Bar, the macOS Dock and Menu Bar, and window controls.
-            state->client_width = 2880;
-            state->client_height = 1524;
-            state->client_dpi = 192;
-            state->client_codec_type = CODEC_TYPE_H264;
-        }
 
         // Update device with new parameters
 
@@ -512,7 +503,7 @@ int32_t multithreaded_send_video(void* opaque) {
             start_timer(&statistics_timer);
             encoder = do_update_encoder(state, encoder, device);
             // Update throttler bitrate too
-            network_throttler_set_burst_bitrate(network_throttler, state->max_bitrate);
+            network_throttler_set_burst_bitrate(network_throttler, state->requested_video_bitrate);
             log_double_statistic(VIDEO_ENCODER_UPDATE_TIME,
                                  get_timer(statistics_timer) * MS_IN_SECOND);
         }

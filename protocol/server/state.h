@@ -71,11 +71,20 @@ struct _whist_server_state {
 
     volatile bool exiting;
     volatile bool stop_streaming;
-    volatile bool update_encoder;
     bool client_joined_after_window_name_broadcast;
     Client client;
 
-    volatile int max_bitrate;
+    // TODO: Replace the below 4 variables, with
+    // a function that video.h exposes
+
+    // Requested parameters
+    volatile int requested_video_bitrate;
+    volatile CodecType requested_video_codec;
+    volatile int requested_video_fps;
+    // This `update_encoder` should be set to true,
+    // when the above "requested" variables have changed
+    volatile bool update_encoder;
+
     InputDevice* input_device;
 
     /* iframe */
@@ -88,7 +97,6 @@ struct _whist_server_state {
     volatile int client_width;
     volatile int client_height;
     volatile int client_dpi;
-    volatile CodecType client_codec_type;
     volatile bool update_device;
 
     bool pending_encoder;

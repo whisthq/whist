@@ -16,6 +16,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../whist/utils/png.c
         ../whist/utils/avpacket_buffer.c
         ../whist/network/ringbuffer.c
+        ../whist/network/network_algorithm.c
 
         # Files needed for Client unit tests
         ../client/audio.c
@@ -27,7 +28,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../client/video.c
         ../client/sdlscreeninfo.c
         ../client/sync_packets.c
-        ../client/network_algorithm.c
         ../client/renderer.c
     )
 # Server & Client files, for Windows/Linux (supported on both client and server)
@@ -49,6 +49,7 @@ else()
         ../whist/utils/png.c
         ../whist/utils/avpacket_buffer.c
         ../whist/network/ringbuffer.c
+        ../whist/network/network_algorithm.c
 
         # Files needed for Client unit tests
         ../client/audio.c
@@ -60,7 +61,6 @@ else()
         ../client/video.c
         ../client/sdlscreeninfo.c
         ../client/sync_packets.c
-        ../client/network_algorithm.c
         ../client/renderer.c
 )
 endif()

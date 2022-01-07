@@ -55,7 +55,7 @@ AudioContext* init_audio();
  * @param audio_context            The audio context to use
  *
  * @note                           This function is thread-safe, and may be
- *                                 called independently to receive/update/render
+ *                                 called independently of the rest of the functions
  */
 void refresh_audio_device(AudioContext* audio_context);
 
@@ -93,7 +93,7 @@ void update_audio(AudioContext* audio_context);
  * @param audio_context            The audio context that potentially wants to render audio
  *
  * @note                           This function is thread-safe, and may be called
- *                                 independently of receive_audio/update_audio
+ *                                 independently of the rest of the functions
  */
 void render_audio(AudioContext* audio_context);
 

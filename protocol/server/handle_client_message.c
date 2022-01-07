@@ -39,7 +39,7 @@ Private Functions
 static int handle_user_input_message(whist_server_state *state, WhistClientMessage *wcmsg);
 static int handle_keyboard_state_message(whist_server_state *state, WhistClientMessage *wcmsg);
 static int handle_streaming_toggle_message(whist_server_state *state, WhistClientMessage *wcmsg);
-static int handle_bitrate_message(whist_server_state *state, WhistClientMessage *wcmsg);
+static int handle_network_settings_message(whist_server_state *state, WhistClientMessage *wcmsg);
 static int handle_ping_message(Client *client, WhistClientMessage *wcmsg);
 static int handle_tcp_ping_message(Client *client, WhistClientMessage *wcmsg);
 static int handle_dimensions_message(whist_server_state *state, WhistClientMessage *wcmsg);
@@ -87,8 +87,8 @@ int handle_client_message(whist_server_state *state, WhistClientMessage *wcmsg) 
         case MESSAGE_START_STREAMING:
         case MESSAGE_STOP_STREAMING:
             return handle_streaming_toggle_message(state, wcmsg);
-        case MESSAGE_MBPS:
-            return handle_bitrate_message(state, wcmsg);
+        case MESSAGE_NETWORK_SETTINGS:
+            return handle_network_settings_message(state, wcmsg);
         case MESSAGE_UDP_PING:
             return handle_ping_message(&state->client, wcmsg);
         case MESSAGE_TCP_PING:
@@ -196,7 +196,7 @@ static int handle_streaming_toggle_message(whist_server_state *state, WhistClien
     return 0;
 }
 
-static int handle_bitrate_message(whist_server_state *state, WhistClientMessage *wcmsg) {
+static int handle_network_settings_message(whist_server_state *state, WhistClientMessage *wcmsg) {
     /*
         Handle a user bitrate change message and update MBPS.
 
@@ -209,34 +209,42 @@ static int handle_bitrate_message(whist_server_state *state, WhistClientMessage 
             (int): Returns -1 on failure, 0 on success
     */
 
-    LOG_INFO("MSG RECEIVED FOR MBPS: %f/%f/%f", wcmsg->bitrate_data.bitrate / 1024.0 / 1024.0,
-             wcmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0,
-             wcmsg->bitrate_data.fec_packet_ratio);
+    int requested_avg_bitrate = wcmsg->network_settings.bitrate;
+    int requested_burst_bitrate = wcmsg->network_settings.burst_bitrate;
+    double requested_fec_packet_ratio = wcmsg->network_settings.fec_packet_ratio;
+
+    LOG_INFO("MSG RECEIVED FOR MBPS: %f/%f/%f", requested_avg_bitrate / 1024.0 / 1024.0,
+             requested_burst_bitrate / 1024.0 / 1024.0, requested_fec_packet_ratio);
 
     // Clamp the bitrates & fec ratio, preferring to clamp at MAX
-    int avg_bitrate = min(max(wcmsg->bitrate_data.bitrate, MINIMUM_BITRATE), MAXIMUM_BITRATE);
+    int avg_bitrate = min(max(requested_avg_bitrate, MINIMUM_BITRATE), MAXIMUM_BITRATE);
     int burst_bitrate =
-        min(max(wcmsg->bitrate_data.burst_bitrate, MINIMUM_BURST_BITRATE), MAXIMUM_BURST_BITRATE);
-    double fec_packet_ratio = min(max(wcmsg->bitrate_data.fec_packet_ratio, 0.0), MAX_FEC_RATIO);
+        min(max(requested_burst_bitrate, MINIMUM_BURST_BITRATE), MAXIMUM_BURST_BITRATE);
+    double fec_packet_ratio = min(max(requested_fec_packet_ratio, 0.0), MAX_FEC_RATIO);
     // Log an error if clamping was necessary
-    if (avg_bitrate != wcmsg->bitrate_data.bitrate ||
-        burst_bitrate != wcmsg->bitrate_data.burst_bitrate ||
-        fec_packet_ratio != wcmsg->bitrate_data.fec_packet_ratio) {
+    if (avg_bitrate != requested_avg_bitrate || burst_bitrate != requested_burst_bitrate ||
+        fec_packet_ratio != requested_fec_packet_ratio) {
         LOG_ERROR("Bitrate MSG forcefully clamped to %f/%f/%f!",
-                  wcmsg->bitrate_data.bitrate / 1024.0 / 1024.0,
-                  wcmsg->bitrate_data.burst_bitrate / 1024.0 / 1024.0,
-                  wcmsg->bitrate_data.fec_packet_ratio);
+                  requested_avg_bitrate / 1024.0 / 1024.0,
+                  requested_burst_bitrate / 1024.0 / 1024.0, requested_fec_packet_ratio);
     }
-
-    // Set the new video encoding bitrate,
-    // using only the bandwidth that isn't reserved for FEC packets
-    state->max_bitrate = avg_bitrate * (1.0 - fec_packet_ratio);
 
     // Update the UDP Context's burst bitrate and fec ratio
     udp_update_bitrate_settings(&state->client.udp_context, burst_bitrate, fec_packet_ratio);
 
-    // Update the encoder using the new bitrate
+    // Set the new video encoding parameters,
+    // using only the bandwidth that isn't already reserved for FEC packets
+    state->requested_video_bitrate = avg_bitrate * (1.0 - fec_packet_ratio);
+    state->requested_video_codec = wcmsg->network_settings.desired_codec;
+    state->requested_video_fps = wcmsg->network_settings.fps;
+    // TODO: Implement custom FPS properly
+    if (state->requested_video_fps != MAX_FPS) {
+        LOG_ERROR("Custom FPS of %d is not possible! %d will be used instead.",
+                  state->requested_video_fps, MAX_FPS);
+    }
+    // Mark the encoder for update using the new video encoding parameters
     state->update_encoder = true;
+
     return 0;
 }
 
@@ -317,16 +325,13 @@ static int handle_dimensions_message(whist_server_state *state, WhistClientMessa
     */
 
     // Update knowledge of client monitor dimensions
-    LOG_INFO("Request to use codec %d / dimensions %dx%d / dpi %d received",
-             wcmsg->dimensions.codec_type, wcmsg->dimensions.width, wcmsg->dimensions.height,
-             wcmsg->dimensions.dpi);
+    LOG_INFO("Request to use dimensions %dx%d / dpi %d received", wcmsg->dimensions.width,
+             wcmsg->dimensions.height, wcmsg->dimensions.dpi);
     if (state->client_width != wcmsg->dimensions.width ||
         state->client_height != wcmsg->dimensions.height ||
-        state->client_codec_type != wcmsg->dimensions.codec_type ||
         state->client_dpi != wcmsg->dimensions.dpi) {
         state->client_width = wcmsg->dimensions.width;
         state->client_height = wcmsg->dimensions.height;
-        state->client_codec_type = wcmsg->dimensions.codec_type;
         state->client_dpi = wcmsg->dimensions.dpi;
         // Update device if knowledge changed
         state->update_device = true;

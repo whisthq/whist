@@ -310,15 +310,24 @@ static void whist_server_state_init(whist_server_state* state, whist_server_conf
     memset(state, 0, sizeof(*state));
     state->config = config;
     state->client_os = WHIST_UNKNOWN_OS;
-    state->max_bitrate = STARTING_BITRATE;
     state->input_device = NULL;
     state->client_joined_after_window_name_broadcast = false;
 
-    state->client_width = -1;
-    state->client_height = -1;
-    state->client_dpi = -1;
-    state->client_codec_type = CODEC_TYPE_UNKNOWN;
+    // If we've just started, capture at a common width, height, and DPI
+    // when a client connects, they'll request a dimension change to the correct dimensions
+    // + DPI. The height, width, and DPI all match the default on a 2020 M1 MacBook Pro.
+    // A cross-platform default DPI would be 192; width and height depend on things like
+    // the Windows Start Bar, the macOS Dock and Menu Bar, and window controls.
+    state->client_width = 2880;
+    state->client_height = 1524;
+    state->client_dpi = 192;
     state->update_device = true;
+
+    // Mark initial bitrate/codec/fps request
+    state->requested_video_bitrate = STARTING_BITRATE;
+    state->requested_video_codec = CODEC_TYPE_H264;
+    state->requested_video_fps = 60;
+    state->update_encoder = true;
 
     state->discovery_listen = INVALID_SOCKET;
     state->tcp_listen = INVALID_SOCKET;
@@ -379,7 +388,6 @@ int main(int argc, char* argv[]) {
     clock startup_time;
     start_timer(&startup_time);
 
-    server_state.max_bitrate = STARTING_BITRATE;
     server_state.stop_streaming = false;
     server_state.wants_iframe = false;
     server_state.update_encoder = false;

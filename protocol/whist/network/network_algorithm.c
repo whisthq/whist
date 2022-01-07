@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
- * @file bitrate.h
+ * @file network_algorithm.c
  * @brief This file contains the client's adaptive bitrate code. Any algorithms we are using for
  *        predicting bitrate should be stored here.
 ============================
@@ -33,18 +33,16 @@ Defines
 ============================
 */
 
+static NetworkSettings default_network_settings = {
+    .bitrate = STARTING_BITRATE,
+    .burst_bitrate = STARTING_BURST_BITRATE,
+    .desired_codec = CODEC_TYPE_H264,
+    .fec_packet_ratio = FEC_PACKET_RATIO,
+    .fps = 60,
+};
+
 #define BAD_BITRATE 10400000
 #define BAD_BURST_BITRATE 31800000
-
-/*
-============================
-Globals
-============================
-*/
-
-volatile int client_max_bitrate = STARTING_BITRATE;
-volatile int max_burst_bitrate = STARTING_BURST_BITRATE;
-volatile int client_override_bitrate = 0;
 
 /*
 ============================
@@ -65,11 +63,15 @@ Public Function Implementations
 ============================
 */
 
-NetworkSettings calculate_new_bitrate(NetworkStatistics stats) {
-    NetworkSettings network_settings = ewma_bitrate(stats);
-    network_settings.fps = 60;
-    network_settings.fec_packet_ratio = 0.0;
-    network_settings.desired_codec = CODEC_TYPE_H264;
+NetworkSettings get_desired_network_settings(NetworkStatistics stats) {
+    // If there are no statistics stored, just return the default network settings
+    if (!stats.statistics_gathered) {
+        return default_network_settings;
+    }
+    NetworkSettings network_settings = ewma_ratio_bitrate(stats);
+    network_settings.fps = default_network_settings.fps;
+    network_settings.fec_packet_ratio = default_network_settings.fec_packet_ratio;
+    network_settings.desired_codec = default_network_settings.desired_codec;
     return network_settings;
 }
 
@@ -85,12 +87,12 @@ NetworkSettings fallback_bitrate(NetworkStatistics stats) {
         fallback of 10mbps/30mbps. We fall back if we've nacked a lot in the last second.
     */
     static NetworkSettings network_settings;
-    if (stats.num_nacks_per_second > 6 && client_max_bitrate != BAD_BITRATE) {
+    if (stats.num_nacks_per_second > 6) {
         network_settings.bitrate = BAD_BITRATE;
         network_settings.burst_bitrate = BAD_BURST_BITRATE;
     } else {
-        network_settings.bitrate = client_max_bitrate;
-        network_settings.burst_bitrate = max_burst_bitrate;
+        network_settings.bitrate = STARTING_BITRATE;
+        network_settings.burst_bitrate = STARTING_BURST_BITRATE;
     }
     return network_settings;
 }
@@ -100,21 +102,24 @@ NetworkSettings ewma_bitrate(NetworkStatistics stats) {
         Keeps an exponentially weighted moving average of the throughput per second the client is
         getting, and uses that to predict a good bitrate to ask the server for.
     */
-    static const double alpha = 0.8;
-    // because the max bitrate of the encoder is usually larger than the actual amount of data we
-    // get from the server
-    static const double bitrate_throughput_ratio = 1.25;
+
+    // Constants
+    const double alpha = 0.8;
+    const double bitrate_throughput_ratio = 1.25;
+
+    FATAL_ASSERT(stats.throughput_per_second >= 0);
+
+    // Calculate throughput
     static int throughput = -1;
-    static NetworkSettings network_settings;
     if (throughput == -1) {
         throughput = (int)(STARTING_BITRATE / bitrate_throughput_ratio);
     }
-    // sanity check to make sure we're not sending it negative bitrate
-    if (stats.throughput_per_second >= 0) {
-        throughput = (int)(alpha * throughput + (1 - alpha) * stats.throughput_per_second);
-        network_settings.bitrate = (int)(bitrate_throughput_ratio * throughput);
-    }
-    network_settings.burst_bitrate = max_burst_bitrate;
+    throughput = (int)(alpha * throughput + (1 - alpha) * stats.throughput_per_second);
+
+    // Set network settings
+    NetworkSettings network_settings = default_network_settings;
+    network_settings.bitrate = (int)(bitrate_throughput_ratio * throughput);
+    network_settings.burst_bitrate = STARTING_BURST_BITRATE;
     return network_settings;
 }
 
@@ -132,12 +137,12 @@ NetworkSettings ewma_ratio_bitrate(NetworkStatistics stats) {
         for longer and longer periods of time before we try higher network_settings. We follow a
        similar logic flow for the burst bitrate, except we use skipped renders instead of NACKs.
     */
-    static const double alpha = 0.8;
+    const double alpha = 0.8;
     // Because the max bitrate of the encoder is usually larger than the actual amount of data we
     //     get from the server
-    static const double bitrate_throughput_ratio = 1.25;
+    const double bitrate_throughput_ratio = 1.25;
     // Multiplier when boosting throughput/bitrate after continuous success
-    static const double boost_multiplier = 1.05;
+    const double boost_multiplier = 1.05;
 
     // Hacky way of allowing constant assignment to static variable (cannot assign `const` to
     //     `static`)
@@ -174,7 +179,7 @@ NetworkSettings ewma_ratio_bitrate(NetworkStatistics stats) {
     static NetworkSettings network_settings;
     if (expected_throughput == -1) {
         expected_throughput = (int)(STARTING_BITRATE / bitrate_throughput_ratio);
-        network_settings.burst_bitrate = max_burst_bitrate;
+        network_settings.burst_bitrate = STARTING_BURST_BITRATE;
     }
 
     // Make sure throughput is not negative and also that the client has received frames at all
