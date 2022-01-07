@@ -8,6 +8,8 @@
 
 #elif defined(_MSC_VER)
 
+#include <stdbool.h>
+
 // This is a simple implementation of the default sequentially-consistent
 // C11 atomic operations on int using the MSVC Interlocked* functions.
 // (It works on MSVC LONG, which  is 32-bit like int elsewhere.)
@@ -89,10 +91,15 @@ static inline int atomic_fetch_and(volatile atomic_int *object, int operand) {
 // semantics as C11.  Note that this section is after the MSVC atomics in
 // this header so that the MSVC atomics do get tested when compiled with
 // C++ as the protocol tests are.
+
+// This header might be enclosed in extern "C", so undo that.
+extern "C++" {
+
 #include <atomic>
 
 // Allow using atomic_int without a namespace, as in C.
 using std::atomic_int;
+}
 
 #else /* No C11 atomics, MSVC atomics or C++11 atomics. */
 

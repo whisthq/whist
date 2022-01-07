@@ -1030,6 +1030,39 @@ TEST(ProtocolTest, Atomics) {
     EXPECT_EQ(atomic_load(&atomic_test_xor), 0);
 }
 
+// Test once implementation.
+static WhistOnce once = WHIST_ONCE_INIT;
+static atomic_int once_calls = ATOMIC_VAR_INIT(0);
+
+static void once_function(void) {
+    int value = atomic_fetch_add(&once_calls, 1);
+    EXPECT_EQ(value, 0);
+}
+
+static int once_test_thread(void* arg) {
+    whist_once(&once, &once_function);
+    EXPECT_EQ(atomic_load(&once_calls), 1);
+    return 0;
+}
+
+TEST(ProtocolTest, OnceTest) {
+    WhistThread threads[16];
+    int thread_count = FF_ARRAY_ELEMS(threads);
+
+    for (int i = 0; i < thread_count; i++) {
+        threads[i] = whist_create_thread(&once_test_thread, "Once Test Thread", (void*)(intptr_t)i);
+        EXPECT_FALSE(threads[i] == NULL);
+    }
+
+    for (int i = 0; i < thread_count; i++) {
+        int ret;
+        whist_wait_thread(threads[i], &ret);
+        EXPECT_EQ(ret, 0);
+    }
+
+    EXPECT_EQ(atomic_load(&once_calls), 1);
+}
+
 TEST(ProtocolTest, FECTest) {
 #define NUM_FEC_PACKETS 2
 
