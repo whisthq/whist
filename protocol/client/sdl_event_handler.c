@@ -129,8 +129,7 @@ int handle_key_up_down(SDL_Event *event) {
             (int): 0 on success
     */
 
-    WhistKeycode keycode =
-        (WhistKeycode)SDL_GetScancodeFromName(SDL_GetKeyName(event->key.keysym.sym));
+    WhistKeycode keycode = (WhistKeycode)event->key.keysym.scancode;
     bool is_pressed = event->key.type == SDL_KEYDOWN;
 
     // LOG_INFO("Scancode: %d", event->key.keysym.scancode);

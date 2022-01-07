@@ -72,6 +72,7 @@ Includes
 #include <whist/network/network.h>
 #include <whist/utils/clock.h>
 #include <whist/logging/logging.h>
+#include <whist/utils/os_utils.h>
 
 #ifdef _WIN32
 #pragma warning(disable : 4200)
@@ -641,6 +642,7 @@ typedef struct {
     bool num_lock;
     char state[KEYCODE_UPPERBOUND];
     bool active_pinch;
+    WhistKeyboardLayout layout;
 } WhistKeyboardState;
 
 /* position of bit within character */

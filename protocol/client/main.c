@@ -34,6 +34,7 @@ Includes
 #include <whist/network/network.h>
 #include <whist/utils/aes.h>
 #include <whist/utils/clock.h>
+#include <whist/utils/os_utils.h>
 #include <whist/logging/logging.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/logging/error_monitor.h>
@@ -146,9 +147,8 @@ int sync_keyboard_state(void) {
     // current layout rather than the scancode for the physical key.
     for (int i = 0; i < wcmsg.keyboard_state.num_keycodes; i++) {
         if (state[i]) {
-            int scancode = SDL_GetScancodeFromName(SDL_GetKeyName(SDL_GetKeyFromScancode(i)));
-            if (0 <= scancode && scancode < (int)sizeof(wcmsg.keyboard_state.state)) {
-                wcmsg.keyboard_state.state[scancode] = 1;
+            if (0 <= i && i < (int)sizeof(wcmsg.keyboard_state.state)) {
+                wcmsg.keyboard_state.state[i] = 1;
             }
         }
     }
@@ -161,6 +161,9 @@ int sync_keyboard_state(void) {
     wcmsg.keyboard_state.num_lock = SDL_GetModState() & KMOD_NUM;
 
     wcmsg.keyboard_state.active_pinch = active_pinch;
+
+    // Grabs the keyboard layout as well
+    wcmsg.keyboard_state.layout = get_keyboard_layout();
 
     send_wcmsg(&wcmsg);
 
