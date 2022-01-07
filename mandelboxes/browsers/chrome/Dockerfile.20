@@ -1,10 +1,29 @@
 # See stage 0 of the base Dockerfile for an explanation of this build stage.
 ARG BuildAssetPackage "protocol"
 FROM whist/build-assets:$BuildAssetPackage as build-assets
+
+FROM ubuntu:20.04 as whist-teleport-chrome-extension
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+COPY teleport-extension /teleport-extension
+
+RUN apt-get update && apt-get install -y --allow-downgrades --no-install-recommends curl ca-certificates
+
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash \
+    &&  . /root/.nvm/nvm.sh \
+    && echo "yarn" > /root/.nvm/default-packages \
+    && nvm install 16 \
+    && nvm use 16 \
+    && cd /teleport-extension \
+    && yarn \
+    && yarn build
+
 FROM whisthq/base:current-build as whist-browsers-chrome
 
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
+# Install teleport chrome extension
+COPY --from=whist-teleport-chrome-extension /teleport-extension/build /opt/teleport/chrome-extension
 
 # Install Google Chrome dependencies explicitly
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \

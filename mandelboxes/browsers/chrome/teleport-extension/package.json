@@ -1,10 +1,10 @@
 {
-    "name": "whist-teleport",
+    "name": "teleport-extension",
     "version": "1.0.0",
     "description": "Teleport is a chromium extension that allows the seamless transfer of files to and from streamed browsers.",
     "repository": "https://github.com/whisthq/whist",
-    "author": "Fractal Computers",
-    "license": "MIT",
+    "author": "Whist Technologies, Inc.",
+    "license": "UNLICENSED",
     "private": true,
     "devDependencies": {
         "@types/chrome": "^0.0.130",

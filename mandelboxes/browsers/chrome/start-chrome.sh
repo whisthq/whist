@@ -40,6 +40,7 @@ flags=(
   --disable-gpu-process-crash-limit
   --disable-notifications #This is tech debt, remove when notification redirection is implemented
   --no-default-browser-check
+  --load-extension=/opt/teleport/chrome-extension
 )
 
 if [[ $DARK_MODE == true ]]; then

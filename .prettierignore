@@ -10,10 +10,13 @@ frontend/website/build
 # Auth0 files are creating some errors due to special syntax
 microservices/auth0
 
-# Client-Applications files
+# Client Application files
 frontend/client-applications/public
 frontend/client-applications/release
 frontend/client-applications/*.css
+
+# Teleport Chrome Extension files
+mandelboxes/browsers/chrome/teleport-extension/build
 
 # Protocol files
 protocol/sentry-native/**
