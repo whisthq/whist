@@ -666,6 +666,8 @@ int32_t multithreaded_send_video(void* opaque) {
                     }
                 }
             }
+        } else {
+            whist_usleep(100);  // Sleep for 0.1ms before trying again.
         }
     }
 
