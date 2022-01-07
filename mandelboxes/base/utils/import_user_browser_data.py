@@ -12,6 +12,20 @@ from pbkdf2 import PBKDF2
 sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"))
 
 USER_CONFIG_PATH = "/whist/userConfigs/"
+GNOME_KEYRING_SECRET = None
+
+
+def get_gnome_keyring_secret():
+    os.seteuid(1000)  # the d-bus is running on `whist`; we need its euid to connect
+
+    my_pass = browser_cookie3.get_linux_pass("chrome")
+    if my_pass.decode("utf-8") == "peanuts":
+        print("WARN: could not find the GNOME keyring password for Chrome. Resorting to Chrome default...")
+    else:
+        print("GNOME keyring password successfully retrieved")
+
+    os.seteuid(0)  # return to `root` euid
+    return my_pass
 
 
 def get_browser_default_dir(browser_name):
@@ -114,12 +128,7 @@ def encrypt(value):
     length = 16
     iterations = 1
 
-    # will assume it's linux for now
-    my_pass = browser_cookie3.get_linux_pass("chrome")
-    if my_pass.decode("utf-8") == "peanuts":
-        print("WARN: google chrome could not find the GNOME keyring password. Defaulting...")
-
-    key = PBKDF2(my_pass, salt, iterations=iterations).read(length)
+    key = PBKDF2(GNOME_KEYRING_SECRET, salt, iterations=iterations).read(length)
 
     aes_cbc_encrypt = pyaes.Encrypter(pyaes.AESModeOfOperationCBC(key, iv=iv))
 
@@ -277,6 +286,8 @@ if __name__ == "__main__":
     python3 import_user_browser_data.py <browser target> <user data file>
 
     """
+    GNOME_KEYRING_SECRET = get_gnome_keyring_secret()
+
     if len(sys.argv) == 3:
         browser = sys.argv[1]
         browser_data_file = sys.argv[2]

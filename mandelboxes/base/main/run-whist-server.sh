@@ -18,6 +18,9 @@ esac
 # Exit on subcommand errors
 set -Eeuo pipefail
 
+# Enable running as Whist user if desired
+RUN_AS_WHIST=/usr/share/whist/run-as-whist-user.sh
+
 # Set/Retrieve Mandelbox parameters
 WHIST_MAPPINGS_DIR=/whist/resourceMappings
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
@@ -55,7 +58,7 @@ fi
 
 # We use named pipe redirection for consistency with our WhistServer launch setup
 # &> redirects both stdout and stdin together; shorthand for '> XYZ 2>&1'
-/usr/share/whist/run-as-whist-user.sh "/usr/bin/run-whist-teleport.sh" &> >(tee $TELEPORT_LOG_FILENAME) &
+$RUN_AS_WHIST "/usr/bin/run-whist-teleport.sh" &> >(tee $TELEPORT_LOG_FILENAME) &
 
 # This function is called whenever the script exits, whether that is because we
 # reach the end of this file (because either WhistServer or the Whist
@@ -89,7 +92,7 @@ if [ -f "$USER_DEST_BROWSER_FILENAME" ] && [ -f "$BROWSER_DATA_FILE_FILENAME" ];
 fi
 
 # Start the application that this mandelbox runs.
-/usr/share/whist/run-as-whist-user.sh "/usr/bin/run-whist-application.sh" &
+$RUN_AS_WHIST "/usr/bin/run-whist-application.sh" &
 whist_application_runuser_pid=$!
 
 echo "Whist application runuser pid: $whist_application_runuser_pid"
