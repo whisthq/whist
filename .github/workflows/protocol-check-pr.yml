@@ -424,12 +424,15 @@ jobs:
             title=title,
           )
 
-      # We save the full logs as artifact for debugging purposes. These will be deleted automatically after a certain number of days (default is 90)
-      - name: Archive End-to-End Streaming Test logs
-        uses: actions/upload-artifact@v2
+      # We save the full logs to the whist-e2e-protocol-test-logs S3 bucket for debugging purposes.
+      - name: Upload End-to-End Streaming Test logs to S3 bucket
+        if: always()
+        uses: actions/checkout@master shallwefootball/s3-upload-action@master
         with:
-          name: e2e-streaming-test-logs
-          path: |
-            perf_logs
+          aws_key_id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
+          aws_bucket: "whist-e2e-protocol-test-logs"
+          source_dir: "perf_logs"
+          destination_dir: "$GITHUB_SHA"
 
   #######################################################################################
