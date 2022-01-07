@@ -158,9 +158,6 @@ int x11_capture_screen(X11CaptureDevice* device) {
         return -1;
     }
 
-    device->first = true;
-    XLockDisplay(device->display);
-
     int accumulated_frames = 0;
     while (XPending(device->display)) {
         // XDamageNotifyEvent* dev; unused, remove or is this needed and should
@@ -173,7 +170,11 @@ int x11_capture_screen(X11CaptureDevice* device) {
             accumulated_frames++;
         }
     }
+    // Don't Lock and UnLock Display unneccesarily, if there are no frames to capture
+    if (accumulated_frames == 0) return 0;
 
+    device->first = true;
+    XLockDisplay(device->display);
     if (accumulated_frames || device->first) {
         device->first = false;
 

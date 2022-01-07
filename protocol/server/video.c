@@ -541,12 +541,9 @@ int32_t multithreaded_send_video(void* opaque) {
         // Accumulated_frames is equal to how many frames have passed since the
         // last call to CaptureScreen
         int accumulated_frames = 0;
-        if (get_timer(last_frame_capture) > 1.0 / FPS &&
-            (!state->stop_streaming || state->wants_iframe)) {
+        if ((!state->stop_streaming || state->wants_iframe)) {
             start_timer(&statistics_timer);
             accumulated_frames = capture_screen(device);
-            log_double_statistic(VIDEO_CAPTURE_SCREEN_TIME,
-                                 get_timer(statistics_timer) * MS_IN_SECOND);
             if (accumulated_frames > 1) {
                 log_double_statistic(VIDEO_FPS_SKIPPED_IN_CAPTURE, 1.0);
 #if LOG_VIDEO
@@ -561,6 +558,8 @@ int32_t multithreaded_send_video(void* opaque) {
             // Immediately bring consecutives to 0, when a new frame is captured
             if (accumulated_frames > 0) {
                 consecutive_identical_frames = 0;
+                log_double_statistic(VIDEO_CAPTURE_SCREEN_TIME,
+                                     get_timer(statistics_timer) * MS_IN_SECOND);
             }
         }
 
