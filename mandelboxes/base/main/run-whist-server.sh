@@ -18,6 +18,50 @@ esac
 # Exit on subcommand errors
 set -Eeuo pipefail
 
+### BEGIN USER CONFIG RETRIEVE ###
+
+# Begin wait loop to get userConfigs
+WHIST_MAPPINGS_DIR=/whist/resourceMappings
+USER_CONFIGS_DIR=/whist/userConfigs
+APP_CONFIG_MAP_FILENAME=/usr/share/whist/app-config-map.json
+until [ -f $WHIST_MAPPINGS_DIR/.configReady ]
+do
+  sleep 0.1
+done
+
+# Symlink loaded user configs into the appropriate folders
+
+# While perhaps counterintuitive, "source" is the path in the userConfigs directory
+#   and "destination" is the original location of the config file/folder.
+#   This is because when creating symlinks, the userConfig path is the source
+#   and the original location is the destination
+# Iterate through the possible configuration locations and copy
+for row in $(cat $APP_CONFIG_MAP_FILENAME | jq -rc '.[]'); do
+  SOURCE_CONFIG_SUBPATH=$(echo ${row} | jq -r '.source')
+  SOURCE_CONFIG_PATH=$USER_CONFIGS_DIR/$SOURCE_CONFIG_SUBPATH
+  DEST_CONFIG_PATH=$(echo ${row} | jq -r '.destination')
+
+  # If original config path does not exist, then continue
+  if [ ! -f "$DEST_CONFIG_PATH" ] && [ ! -d "$DEST_CONFIG_PATH" ]; then
+    continue
+  fi
+
+  # If the source path doesn't exist, then copy default configs to the synced app config folder
+  if [ ! -f "$SOURCE_CONFIG_PATH" ] && [ ! -d "$SOURCE_CONFIG_PATH" ]; then
+    cp -rT $DEST_CONFIG_PATH $SOURCE_CONFIG_PATH
+  fi
+
+  # Remove the original configs and symlink the new ones to the original locations
+  rm -rf $DEST_CONFIG_PATH
+  ln -sfnT $SOURCE_CONFIG_PATH $DEST_CONFIG_PATH
+  chown -R whist $SOURCE_CONFIG_PATH
+done
+
+# Delete broken symlinks from config
+find $USER_CONFIGS_DIR -xtype l -delete
+
+### END USER CONFIG RETRIEVE ###
+
 # Set/Retrieve Mandelbox parameters
 WHIST_MAPPINGS_DIR=/whist/resourceMappings
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp

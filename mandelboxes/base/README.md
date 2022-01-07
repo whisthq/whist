@@ -20,13 +20,13 @@ The services `startup/whist-startup.service`, `display/whist-display.service`, `
 
 1. `startup/entrypoint.sh` starts up and calls `exec` to become systemd (with pid 1)
 
-2. systemd runs `startup/whist-startup.service`, which waits until a `.ready` file is written -- this is configured as a oneshot, meaning that `display/whist-display.service` only starts after `startup/whist-startup.service` finishes. This means that everything waits for `.ready` file to be written. The directory with the `.ready` file also contains files with the parameters necessary to for the mandelbox to start properly (user ID, etc.).
+2. systemd runs `startup/whist-startup.service`, which waits until a `.paramsReady` file is written -- this is configured as a oneshot, meaning that `display/whist-display.service` only starts after `startup/whist-startup.service` finishes. The directory with the `.paramsReady` file also contains files with the parameters necessary to for the mandelbox to start properly (user ID, etc.). Note that we do _not_ wait for configs to be loaded, since they are only required at step (5).
 
 3. Once `startup/whist-startup.service` finishes, `display/whist-display.service` starts an X Server with the proper configuration that we need. Note that this starts an X Server that is powered by an Nvidia GPU, meaning our mandelboxes can only be run on GPU-powered hosts.
 
 4. `audio/whist-audio.service`, meanwhile, can start as soon as `display/whist-display.service` _begins_ running (which is important because the lifecycle of whist-display is the lifecycle of our mandelboxized applications). It starts a virtual Pulse Audio soundcard in the mandelbox, enabling sound.
 
-5. `main/whist-main.service` can start as soon as `display/whist-display.service` and `audio/whist-audio.service` are both running, running the Whist protocol and configuring some environment variables to work correctly with the X Server.
+5. `main/whist-main.service` can start as soon as `display/whist-display.service` and `audio/whist-audio.service` are both running, running the Whist protocol and configuring some environment variables to work correctly with the X Server. Note that we block until `.configReady` is written, since the application and protocol will depend on user configs.
 
 ### Useful Debugging Practices
 
