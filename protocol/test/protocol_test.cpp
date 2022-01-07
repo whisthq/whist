@@ -107,7 +107,7 @@ char* generate_random_string(size_t length) {
  * client/sdl_utils.c
  **/
 
-TEST_F(CaptureStdoutTest, InitSDL) {
+TEST(ProtocolTest, InitSDL) {
     char* very_long_title = generate_random_string(2000);
     size_t title_len = strlen(very_long_title);
     EXPECT_EQ(title_len, 2000);
