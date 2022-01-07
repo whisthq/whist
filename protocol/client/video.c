@@ -662,6 +662,8 @@ void try_recovering_missing_packets_or_frames(VideoContext* video_context) {
         next_to_render_staleness = get_timer(ctx->frame_creation_timer);
     }
 
+    static bool already_logged_iframe_request = false;
+
     // If nacking has failed to recover the packets we need,
     if (!nacking_succeeded
         // Or if we're more than MAX_UNSYNCED_FRAMES frames out-of-sync,
@@ -674,22 +676,34 @@ void try_recovering_missing_packets_or_frames(VideoContext* video_context) {
         // Throttle the requests to prevent network upload saturation, however
         if (get_timer(video_context->last_iframe_request_timer) >
             IFRAME_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
-            WhistClientMessage wcmsg = {0};
+            int last_failed_id = max(next_render_id, video_context->ring_buffer->max_id - 1);
             // Send a video packet stream reset request
+            WhistClientMessage wcmsg = {0};
             wcmsg.type = MESSAGE_STREAM_RESET_REQUEST;
             wcmsg.stream_reset_data.type = PACKET_VIDEO;
-            wcmsg.stream_reset_data.last_failed_id =
-                max(next_render_id, video_context->ring_buffer->max_id - 1);
+            wcmsg.stream_reset_data.last_failed_id = last_failed_id;
             send_wcmsg(&wcmsg);
-            LOG_INFO(
-                "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
-                "and the frame we're trying to render has been alive for %fms. "
-                "An I-Frame is now being requested to catch-up.",
-                video_context->ring_buffer->max_id,
-                video_context->ring_buffer->max_id - video_context->last_rendered_id,
-                next_to_render_staleness * MS_IN_SECOND);
+
+            // If we haven't already logged the iframe request,
+            // Logged the iframe request
+            if (!already_logged_iframe_request) {
+                LOG_INFO(
+                    "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
+                    "and the frame we're trying to render has been alive for %fms. "
+                    "An I-Frame is now being requested to catch-up.",
+                    video_context->ring_buffer->max_id,
+                    video_context->ring_buffer->max_id - video_context->last_rendered_id,
+                    next_to_render_staleness * MS_IN_SECOND);
+#if !LOG_VIDEO
+                // Prevent logging every iframe requests, when LOG_VIDEO is false
+                already_logged_iframe_request = true;
+#endif
+            }
+
             start_timer(&video_context->last_iframe_request_timer);
         }
+    } else {
+        already_logged_iframe_request = false;
     }
 }
 
