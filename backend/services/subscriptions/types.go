@@ -1,5 +1,7 @@
 package subscriptions // import "github.com/whisthq/whist/backend/services/subscriptions"
 
+import mandelboxtypes "github.com/whisthq/whist/backend/core-go/types"
+
 // HasuraParams contains the Heroku URL and Admin AccessKey to pass
 // to the client during initialization.
 type HasuraParams struct {
@@ -9,27 +11,28 @@ type HasuraParams struct {
 
 // Instance represents a host from the "whist_instances" table.
 type Instance struct {
-	ID        string `json:"id"`
-	Provider  string `json:"provider"`
-	Region    string `json:"region"`
-	ImageID   string `json:"image_id"`
-	ClientSHA string `json:"client_sha"`
-	IPAddress string `json:"ip_addr"`
-	Capacity  int64  `json:"capacity"`
-	Status    string `json:"status"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
+	ID                string `json:"id"`
+	Provider          string `json:"provider"`
+	Region            string `json:"region"`
+	ImageID           string `json:"image_id"`
+	ClientSHA         string `json:"client_sha"`
+	IPAddress         string `json:"ip_addr"`
+	Type              string `json:"instance_type"`
+	RemainingCapacity int64  `json:"remaining_capacity"`
+	Status            string `json:"status"`
+	CreatedAt         string `json:"created_at"`
+	UpdatedAt         string `json:"updated_at"`
 }
 
 // Mandelbox represents a host from the "whist_mandelboxes" table.
 type Mandelbox struct {
-	ID        string `json:"id"`
-	App       string `json:"app"`
-	HostID    string `json:"instance_id"`
-	UserID    string `json:"user_id"`
-	SessionID string `json:"session_id"`
-	CreatedAt string `json:"created_at"`
-	Status    string `json:"status"`
+	ID         mandelboxtypes.MandelboxID `json:"id"`
+	App        string                     `json:"app"`
+	InstanceID string                     `json:"instance_id"`
+	UserID     mandelboxtypes.UserID      `json:"user_id"`
+	SessionID  string                     `json:"session_id"`
+	Status     string                     `json:"status"`
+	CreatedAt  string                     `json:"created_at"`
 }
 
 // Image represents a host from the "whist_images" table.

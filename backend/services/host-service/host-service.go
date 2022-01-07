@@ -138,7 +138,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 
 	// mandelboxSubscription is the pubsub event received from Hasura.
-	mandelboxSubscription := sub.MandelboxInfo[0]
+	mandelboxSubscription := sub.Mandelboxes[0]
 	req, AppName := getAppName(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
 
 	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", mandelboxSubscription.ID)
@@ -914,20 +914,20 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 						metrics.Increment("ErrorRate")
 					}
 
-					instanceName, err := aws.GetInstanceName()
+					instanceId, err := aws.GetInstanceID()
 					if err != nil {
 						logger.Errorf("Error getting instance name from AWS, %v", err)
 						metrics.Increment("ErrorRate")
 					}
 					// Create a mandelbox object as would be received from a Hasura subscription.
 					mandelbox := subscriptions.Mandelbox{
-						InstanceName: string(instanceName),
-						ID:           jsonReq.MandelboxID,
-						SessionID:    "1234",
-						UserID:       userID,
+						InstanceID: string(instanceId),
+						ID:         jsonReq.MandelboxID,
+						SessionID:  "1234",
+						UserID:     userID,
 					}
 					subscriptionEvent := subscriptions.MandelboxEvent{
-						MandelboxInfo: []subscriptions.Mandelbox{mandelbox},
+						Mandelboxes: []subscriptions.Mandelbox{mandelbox},
 					}
 
 					// Launch both the JSON transport handler and the SpinUpMandelbox goroutines.

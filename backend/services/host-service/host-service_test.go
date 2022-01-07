@@ -232,17 +232,17 @@ func TestSpinUpMandelbox(t *testing.T) {
 			defer cancelMandelboxContextByID(mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()))
 			defer cancel()
 
-			var instanceName aws.InstanceName
+			var instanceId aws.InstanceID
 			var userID mandelboxtypes.UserID
 			var err error
 			if metadata.IsRunningInCI() {
 				userID = "localdev_host_service_CI"
 			} else {
-				instanceName, err = aws.GetInstanceName()
+				instanceId, err = aws.GetInstanceID()
 				if err != nil {
 					logger.Errorf("Can't get AWS Instance name for localdev user config userID.")
 				}
-				userID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceName))
+				userID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceId))
 			}
 
 			// We always want to start with a clean slate
@@ -251,13 +251,13 @@ func TestSpinUpMandelbox(t *testing.T) {
 			defer uninitializeFilesystem()
 
 			testMandelboxInfo := subscriptions.Mandelbox{
-				InstanceName: string(instanceName),
-				ID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
-				SessionID:    "1234",
-				UserID:       userID,
+				InstanceID: string(instanceId),
+				ID:         mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
+				SessionID:  "1234",
+				UserID:     userID,
 			}
 			testMandelboxDBEvent := subscriptions.MandelboxEvent{
-				MandelboxInfo: []subscriptions.Mandelbox{testMandelboxInfo},
+				Mandelboxes: []subscriptions.Mandelbox{testMandelboxInfo},
 			}
 			testJSONTransportRequest := JSONTransportRequest{
 				AppName:               mandelboxtypes.AppName(browserImage),

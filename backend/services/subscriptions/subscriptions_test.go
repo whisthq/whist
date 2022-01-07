@@ -56,8 +56,8 @@ func (cl *mockWhistClient) Subscribe(query GraphQLQuery, variables map[string]in
 
 	// Create fake mandelbox event
 	testMandelboxEvent := MandelboxEvent{Mandelboxes: []Mandelbox{{
-		HostID: variables["instance_id"].(string),
-		Status: "ALLOCATED",
+		InstanceID: variables["instance_id"].(string),
+		Status:     "ALLOCATED",
 	}}}
 
 	// Send fake event through channel depending on the result type received
@@ -136,12 +136,12 @@ func TestMandelboxAllocatedHandler(t *testing.T) {
 		{"Empty event", MandelboxEvent{Mandelboxes: []Mandelbox{}}, false},
 		{"Wrong instance name event", MandelboxEvent{
 			Mandelboxes: []Mandelbox{
-				{HostID: "test-instance-id-2", Status: "EXITED"},
+				{InstanceID: "test-instance-id-2", Status: "EXITED"},
 			},
 		}, false},
 		{"Correct status event", MandelboxEvent{
 			Mandelboxes: []Mandelbox{
-				{HostID: "test-instance-id", Status: "ALLOCATED"},
+				{InstanceID: "test-instance-id", Status: "ALLOCATED"},
 			},
 		}, true},
 	}

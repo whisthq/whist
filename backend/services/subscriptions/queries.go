@@ -12,28 +12,29 @@ type GraphQLQuery interface{}
 // WhistInstances is the mapping of the `whist.hosts` table. It is meant to be used
 // on the database subscriptions.
 type WhistInstances []struct {
-	ID        graphql.String `graphql:"id"`
-	Provider  graphql.String `graphql:"provider"`
-	Region    graphql.String `graphql:"region"`
-	ImageID   graphql.String `graphql:"image_id"`
-	ClientSHA graphql.String `graphql:"client_sha"`
-	IPAddress graphql.String `graphql:"ip_addr"`
-	Capacity  graphql.Int    `graphql:"capacity"`
-	Status    graphql.String `graphql:"status"`
-	CreatedAt graphql.String `graphql:"created_at"`
-	UpdatedAt graphql.String `graphql:"updated_at"`
+	ID                graphql.String `graphql:"id"`
+	Provider          graphql.String `graphql:"provider"`
+	Region            graphql.String `graphql:"region"`
+	ImageID           graphql.String `graphql:"image_id"`
+	ClientSHA         graphql.String `graphql:"client_sha"`
+	IPAddress         graphql.String `graphql:"ip_addr"`
+	Type              graphql.String `graphql:"instance_type"`
+	RemainingCapacity graphql.Int    `graphql:"remaining_capacity"`
+	Status            graphql.String `graphql:"status"`
+	CreatedAt         graphql.String `graphql:"created_at"`
+	UpdatedAt         graphql.String `graphql:"updated_at"`
 }
 
 // WhistMandelboxes is the mapping of the `whist.mandelboxes` table. It is meant to be used
 // on the database subscriptions.
 type WhistMandelboxes []struct {
-	ID        graphql.String `graphql:"id"`
-	App       graphql.String `graphql:"app"`
-	HostID    graphql.String `graphql:"instance_id"`
-	UserID    graphql.String `graphql:"user_id"`
-	SessionID graphql.String `graphql:"session_id"`
-	CreatedAt graphql.String `graphql:"created_at"`
-	Status    graphql.String `graphql:"status"`
+	ID         graphql.String `graphql:"id"`
+	App        graphql.String `graphql:"app"`
+	InstanceID graphql.String `graphql:"instance_id"`
+	UserID     graphql.String `graphql:"user_id"`
+	SessionID  graphql.String `graphql:"session_id"`
+	Status     graphql.String `graphql:"status"`
+	CreatedAt  graphql.String `graphql:"created_at"`
 }
 
 // WhistImages is the mapping of the `whist.images` table. It is meant to be used
