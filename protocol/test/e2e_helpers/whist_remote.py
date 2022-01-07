@@ -14,7 +14,23 @@ from dev_instance_tools import (
 )
 
 
-def run_host_setup_on_instance(pexpect_process, pexpect_prompt, aws_ssh_cmd, aws_timeout, logfile):
+def run_host_setup_on_instance(pexpect_process, pexpect_prompt, ssh_cmd, timeout_value, logfile):
+    """
+    Run Whist's host setup on a remote machine accessible via a SSH connection within a pexpect process.
+
+    The function assumes that the pexpect_process process has already successfully established a SSH connection to the host, and that the Whist repository has already been cloned.
+
+    Args:
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
+        ssh_cmd (str): The shell command to use to establish a SSH connection to the remote machine. This is used if we need to reboot the machine.
+        timeout_value (int): The amount of time to wait before timing out the attemps to gain a SSH connection to the remote machine.
+        logfile (file object): The file (already opened) to use for logging the terminal output from the remote machine
+
+    Returns:
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process to be used from now on to interact with the remote machine. This is equal to the first argument if a reboot of the remote machine was not needed.
+    """
+
     print("Running the host setup on the instance ...")
     command = "cd ~/whist/host-setup && ./setup_host.sh --localdevelopment | tee ~/host_setup.log"
     pexpect_process.sendline(command)
@@ -27,7 +43,7 @@ def run_host_setup_on_instance(pexpect_process, pexpect_prompt, aws_ssh_cmd, aws
             "Running into severe locking issues (happens frequently), rebooting the instance and trying again!"
         )
         pexpect_process = reboot_instance(
-            pexpect_process, aws_ssh_cmd, aws_timeout, logfile, pexpect_prompt, 5
+            pexpect_process, ssh_cmd, timeout_value, logfile, pexpect_prompt, 5
         )
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt)
@@ -37,6 +53,14 @@ def run_host_setup_on_instance(pexpect_process, pexpect_prompt, aws_ssh_cmd, aws
 
 
 def start_host_service_on_instance(pexpect_process):
+    """
+    Run Whist's host service on a remote machine accessible via a SSH connection within a pexpect process.
+
+    The function assumes that the pexpect_process process has already successfully established a SSH connection to the host, and that the Whist repository has already been cloned.
+
+    Args:
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
+    """
     print("Starting the host service on the EC2 instance...")
     command = (
         "sudo rm -rf /whist && cd ~/whist/backend/host-service && make run | tee ~/host_service.log"
@@ -47,6 +71,17 @@ def start_host_service_on_instance(pexpect_process):
 
 
 def build_server_on_instance(pexpect_process, pexpect_prompt, cmake_build_type):
+    """
+    Build the Whist server (browsers/chrome mandelbox) on a remote machine accessible via a SSH connection within a pexpect process.
+
+    The function assumes that the pexpect_process process has already successfully established a SSH connection to the host, and that the Whist repository has already been cloned.
+
+    Args:
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
+        cmake_build_type (str): A string identifying whether to build the protocol in release, debug, metrics, or any other Cmake build mode that will be introduced later.
+
+    """
     print("Building the server mandelbox in {} mode ...".format(cmake_build_type))
     command = "cd ~/whist/mandelboxes && ./build.sh browsers/chrome --{} | tee ~/server_mandelbox_build.log".format(
         cmake_build_type
@@ -57,6 +92,18 @@ def build_server_on_instance(pexpect_process, pexpect_prompt, cmake_build_type):
 
 
 def run_server_on_instance(pexpect_process):
+    """
+    Run the Whist server (browsers/chrome mandelbox) on a remote machine accessible via a SSH connection within a pexpect process.
+
+    The function assumes that the pexpect_process process has already successfully established a SSH connection to the host, that the Whist repository has already been cloned, and that the browsers/chrome mandelbox has already been built. Further, the host service must be already running on the remote machine.
+
+    Args:
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
+
+    Return:
+        server_docker_id (str): The Docker ID of the container running the Whist server (browsers/chrome mandelbox) on the remote machine
+        json_data (dict): A dictionary containing the IP, AES KEY, and port mappings that are needed by the client to successfully connect to the Whist server.
+    """
     command = "cd ~/whist/mandelboxes && ./run.sh browsers/chrome | tee ~/server_mandelbox_run.log"
     pexpect_process.sendline(command)
     pexpect_process.expect(":/#")
@@ -88,6 +135,18 @@ def run_server_on_instance(pexpect_process):
 
 
 def build_client_on_instance(pexpect_process, pexpect_prompt, testing_time, cmake_build_type):
+    """
+    Build the Whist protocol client (development/client mandelbox) on a remote machine accessible via a SSH connection within a pexpect process.
+
+    The function assumes that the pexpect_process process has already successfully established a SSH connection to the host, and that the Whist repository has already been cloned.
+
+    Args:
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
+        testing_time(int): The amount of time to leave the connection open between the client and the server (when the client is started) before shutting it down
+        cmake_build_type (str): A string identifying whether to build the protocol in release, debug, metrics, or any other Cmake build mode that will be introduced later.
+
+    """
     # Edit the run-whist-client.sh to make the client quit after the experiment is over
     print("Setting the experiment duration to {}s...".format(testing_time))
     command = "sed -i 's/timeout 240s/timeout {}s/g' ~/whist/mandelboxes/development/client/run-whist-client.sh".format(
@@ -106,6 +165,19 @@ def build_client_on_instance(pexpect_process, pexpect_prompt, testing_time, cmak
 
 
 def run_client_on_instance(pexpect_process, json_data):
+    """
+    Run the Whist dev client (development/client mandelbox) on a remote machine accessible via a SSH connection within a pexpect process.
+
+    The function assumes that the pexpect_process process has already successfully established a SSH connection to the host, that the Whist repository has already been cloned, and that the browsers/chrome mandelbox has already been built. Further, the host service must be already running on the remote machine.
+
+    Args:
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
+        json_data (dict): A dictionary containing the IP, AES KEY, and port mappings that are needed by the client to successfully connect to the Whist server.
+
+    Return:
+        client_docker_id (str): The Docker ID of the container running the Whist dev client (development/client mandelbox) on the remote machine
+
+    """
     print("Running the dev client mandelbox, and connecting to the server!")
     command = "cd ~/whist/mandelboxes && ./run.sh development/client --json-data='{}'".format(
         json.dumps(json_data)
@@ -123,6 +195,18 @@ def run_client_on_instance(pexpect_process, json_data):
 
 
 def server_setup_process(args_dict):
+    """
+    Prepare a remote Ubuntu machine to host the Whist server. This entails:
+    - opening a SSH connection to the machine
+    - setting up the AWS credentials
+    - cloning the current branch of the Whist repository
+    - launching the Whist host setup (after having applied a small dpkg-related fixup)
+    - building the server mandelbox
+
+    Args:
+        args_dict (dict): A dictionary containing the configs needed to access the remote machine and get a Whist server ready for execution
+
+    """
     username = args_dict["username"]
     server_hostname = args_dict["server_hostname"]
     ssh_key_path = args_dict["ssh_key_path"]
@@ -169,6 +253,19 @@ def server_setup_process(args_dict):
 
 
 def client_setup_process(args_dict):
+    """
+    Prepare a remote Ubuntu machine to host the Whist dev client. This entails:
+    - opening a SSH connection to the machine
+    - if the client is not running on the same machine as the server:
+        - setting up the AWS credentials
+        - cloning the current branch of the Whist repository
+        - launching the Whist host setup (after having applied a small dpkg-related fixup)
+    - building the client mandelbox
+
+    Args:
+        args_dict (dict): A dictionary containing the configs needed to access the remote machine and get a Whist dev client ready for execution
+
+    """
     username = args_dict["username"]
     client_hostname = args_dict["client_hostname"]
     ssh_key_path = args_dict["ssh_key_path"]

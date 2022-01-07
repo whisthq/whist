@@ -12,7 +12,15 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
 def get_boto3client(region_name: str) -> botocore.client:
-    # Define boto3 client with a specific region
+    """
+    Create a Boto3 client to talk to the Amazon E2 service at the region of interest
+
+    Args:
+        region_name (str): The name of the region of interest (e.g. "us-east-1")
+
+    Returns:
+        (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
+    """
     return boto3.client("ec2", region_name=region_name)
 
 
@@ -64,6 +72,8 @@ def create_ec2_instance(
     Creates an AWS EC2 instance of a specific instance type and AMI
 
     Args:
+        boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
+        region_name (str): The name of the region of interest (e.g. "us-east-1")
         instance_type (str): The type of instance to create (i.e. g4dn.2xlarge)
         instance_AMI (str): The AMI to use for the instance (i.e. ami-0b9c9d7f7f8b8f8b9)
         key_name (str): The name of the AWS key to use for connecting to the instance
@@ -114,6 +124,7 @@ def start_instance(boto3client: botocore.client, instance_id: str) -> bool:
     Attempt to turn on an existing EC2 instance. Return a bool indicating whether the operation succeeded.
 
     Args:
+        boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
         instance_id (str): The ID of the instance to start
     Returns:
         success (bool): indicates whether the start succeeded.
@@ -132,7 +143,9 @@ def stop_instance(boto3client: botocore.client, instance_id: str) -> bool:
     Attempt to turn off an existing EC2 instance. Return a bool indicating whether the operation succeeded.
 
     Args:
+        boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
         instance_id (str): The ID of the instance to stop
+
     Returns:
         success (bool): indicates whether the start succeeded.
     """
@@ -153,6 +166,7 @@ def wait_for_instance_to_start_or_stop(
     it timeout after some time.
 
     Args:
+        boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
         instance_id (str): The ID of the instance to wait for
         stopping (bool): Whether or not the instance is being stopped, if not provided
             it will wait for the instance to start
@@ -176,7 +190,14 @@ def wait_for_instance_to_start_or_stop(
 
 def get_instance_ip(boto3client: botocore.client, instance_id: str) -> str:
     """
-    TODO
+    Get the public and private IP addresses of an existing E2 instance.
+
+    Args:
+        boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
+        instance_id (str): The ID of the instance of interest
+
+    Returns:
+        retval (list): A list of dictionaries with the public and private IPs of every instance with instance id equal to the parameter.
     """
     retval = []
 
@@ -196,7 +217,17 @@ def get_instance_ip(boto3client: botocore.client, instance_id: str) -> str:
 
 
 def create_or_start_aws_instance(boto3client, region_name, existing_instance_id, ssh_key_name):
-    # Connect to existing instance or create a new one
+    """
+    Connect to an existing instance (if the parameter existing_instance_id is not empty) or create a new one
+
+    Args:
+        boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
+        region_name (str): The name of the region of interest (e.g. "us-east-1")
+        existing_instance_id (str): The ID of the instance to connect to, or "" to create a new one
+        ssh_key_name (str): The name of the AWS key to use to create a new instance. This parameter is ignored if a valid instance ID is passed to the existing_instance_id parameter.
+    Returns:
+        instance_id (str): the ID of the started instance. This can be the existing instance (if we passed a existing_instance_id) or the new instance (if we passed an empty string to existing_instance_id)
+    """
 
     # Attempt to start existing instance
     if existing_instance_id != "":
@@ -240,6 +271,16 @@ def create_or_start_aws_instance(boto3client, region_name, existing_instance_id,
 
 
 def terminate_or_stop_aws_instance(boto3client, instance_id, should_terminate):
+    """
+    Stop (if should_terminate==False) or terminate (if should_terminate==True) a AWS instance
+
+    Args:
+        boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
+        instance_id (str): The ID of the instance to stop or terminate
+        should_terminate (bool): A boolean indicating whether the instance should be terminated (instead of stopped)
+    Returns:
+        None
+    """
     if should_terminate:
         # Terminating the instance and waiting for them to shutdown
         print(f"Testing complete, terminating EC2 instance")

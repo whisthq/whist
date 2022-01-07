@@ -6,9 +6,27 @@ import time
 import subprocess
 
 
-def attempt_ssh_connection(ssh_command, timeout, log_file_handle, pexpect_prompt, max_retries):
+def attempt_ssh_connection(
+    ssh_command, timeout_value, log_file_handle, pexpect_prompt, max_retries
+):
+    """
+    Attempt to establish a SSH connection to a remote machine. It is normal for the function to need several attempts before successfully opening a SSH connection to the remote machine.
+
+    Args:
+        ssh_cmd (str): The shell command to use to establish a SSH connection to the remote machine.
+        timeout_value (int): The amount of time to wait before timing out the attemps to gain a SSH connection to the remote machine.
+        log_file_handle (file object): The file (already opened) to use for logging the terminal output from the remote machine
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
+        max_retries (int): The maximum number of attempts to use before giving up on establishing a SSH connection to the remote machine
+
+    Returns:
+        On success:
+            pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process to be used from now on to interact with the remote machine.
+        On failure:
+            None
+    """
     for retries in range(max_retries):
-        child = pexpect.spawn(ssh_command, timeout=timeout, logfile=log_file_handle.buffer)
+        child = pexpect.spawn(ssh_command, timeout=timeout_value, logfile=log_file_handle.buffer)
         result_index = child.expect(
             [
                 "Connection refused",
@@ -36,32 +54,66 @@ def attempt_ssh_connection(ssh_command, timeout, log_file_handle, pexpect_prompt
     exit()
 
 
-def wait_until_cmd_done(ssh_proc, pexpect_prompt):
+def wait_until_cmd_done(pexpect_process, pexpect_prompt):
+    """
+    Wait until the currently-running command on a remote machine finishes its execution on the shell monitored to by a pexpect process.
+
+    Args:
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process monitoring the execution of the process on the remote machine
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a new command
+
+    Returns:
+        None
+    """
+
     # On a SSH connection, the prompt is printed two times (because of some obscure reason related to encoding and/or color printing on terminal)
-    ssh_proc.expect(pexpect_prompt)
-    ssh_proc.expect(pexpect_prompt)
+    pexpect_process.expect(pexpect_prompt)
+    pexpect_process.expect(pexpect_prompt)
 
 
 def reboot_instance(
-    ssh_process, connection_ssh_cmd, timeout, log_file_handle, pexpect_prompt, retries
+    pexpect_process, ssh_cmd, timeout_value, log_file_handle, pexpect_prompt, retries
 ):
-    ssh_process.sendline(" ")
-    wait_until_cmd_done(ssh_process, pexpect_prompt)
-    ssh_process.sendline("sudo reboot")
-    ssh_process.kill(0)
+    """
+    Reboot a remote machine and establish a new SSH connection after the machine comes back up.
+
+    Args:
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
+        ssh_cmd (str): The shell command to use to establish a new SSH connection to the remote machine after the current connection is broken by the reboot.
+        timeout_value (int): The amount of time to wait before timing out the attemps to gain a SSH connection to the remote machine.
+        log_file_handle (file object): The file (already opened) to use for logging the terminal output from the remote machine
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
+        retries (int): Maximum number of attempts before giving up on gaining a new SSH connection after rebooting the remote machine.
+    Returns:
+        None
+    """
+
+    pexpect_process.sendline(" ")
+    wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    pexpect_process.sendline("sudo reboot")
+    pexpect_process.kill(0)
     time.sleep(5)
-    ssh_process = attempt_ssh_connection(
-        connection_ssh_cmd, timeout, log_file_handle, pexpect_prompt, retries
+    pexpect_process = attempt_ssh_connection(
+        ssh_cmd, timeout_value, log_file_handle, pexpect_prompt, retries
     )
     print("Reboot complete")
-    return ssh_process
+    return pexpect_process
 
 
 def apply_dpkg_locking_fixup(pexpect_process, pexpect_prompt):
-    ## Prevent dpkg locking issues such as the following one:
-    # E: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 2392 (apt-get)
-    # E: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), is another process using it?
-    # See also here: https://github.com/ray-project/ray/blob/master/doc/examples/lm/lm-cluster.yaml
+    """
+    Prevent dpkg locking issues such as the following one:
+    - E: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 2392 (apt-get)
+    - E: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), is another process using it?
+    - See also here: https://github.com/ray-project/ray/blob/master/doc/examples/lm/lm-cluster.yaml
+
+    Args:
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
+    Returns:
+        None
+    """
+
     dpkg_commands = [
         "sudo kill -9 `sudo lsof /var/lib/dpkg/lock-frontend | awk '{print $2}' | tail -n 1`",
         "sudo kill -9 `sudo lsof /var/lib/apt/lists/lock | awk '{print $2}' | tail -n 1`",
@@ -81,6 +133,16 @@ def apply_dpkg_locking_fixup(pexpect_process, pexpect_prompt):
 def configure_aws_credentials(
     pexpect_process, pexpect_prompt, aws_credentials_filepath="~/.aws/credentials"
 ):
+    """
+    Configure AWS credentials on a remote machine by copying them from the ones configures on the machine where this script is being run.
+
+    Args:
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
+        aws_credentials_filepath(str): The path to the file where AWS stores the credentials on the machine where this script is run
+    Returns:
+        None
+    """
 
     aws_credentials_filepath_expanded = os.path.expanduser(aws_credentials_filepath)
 
@@ -132,6 +194,17 @@ def configure_aws_credentials(
 
 
 def clone_whist_repository_on_instance(github_token, pexpect_process, pexpect_prompt):
+    """
+    Clone the Whist repository on a remote machine, and check out the same branch used locally on the machine where this script is run.
+
+    Args:
+        github_token (str): The secret token to use to access the Whist private repository on GitHub
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
+    Returns:
+        None
+    """
+
     # Obtain current branch
     subproc_handle = subprocess.Popen("git branch", shell=True, stdout=subprocess.PIPE)
     subprocess_stdout = subproc_handle.stdout.readlines()
