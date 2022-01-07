@@ -2118,6 +2118,13 @@ TEST_F(ProtocolTest, ClientParseArgs) {
     EXPECT_EQ(free_parsed_args(), 0);
 }
 
+#ifdef __APPLE__
+TEST_F(ProtocolTest, LeakTest) {
+    void* ptr = malloc(42);
+    EXPECT_TRUE(ptr);
+}
+#endif
+
 /*
 ============================
 Run Tests
