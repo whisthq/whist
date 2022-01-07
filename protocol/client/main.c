@@ -61,11 +61,6 @@ Includes
 // N.B.: Please don't put globals here, since main.c won't be included when the testing suite is
 // used instead
 
-// Width and Height
-extern volatile int server_width;
-extern volatile int server_height;
-extern volatile CodecType server_codec_type;
-
 // maximum mbps
 extern volatile int max_bitrate;
 extern volatile int max_burst_bitrate;
@@ -403,11 +398,14 @@ int main(int argc, char* argv[]) {
         SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
         SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
 
+        // Send our initial width/height/codec to the server,
+        // so it can synchronize with us
+        send_message_dimensions();
+
         is_timing_latency = false;
         // Initialize audio and video renderer system
         WhistRenderer* whist_renderer = init_renderer();
 
-        // Initialize audio and variables
         // reset because now connected
         try_amount = 0;
         max_connection_attempts = MAX_RECONNECTION_ATTEMPTS;

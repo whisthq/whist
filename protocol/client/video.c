@@ -44,11 +44,6 @@ Includes
 
 // Global Variables
 
-// Server width/height/codec
-extern volatile int server_width;
-extern volatile int server_height;
-extern volatile CodecType server_codec_type;
-
 // Keeping track of max mbps
 extern volatile int client_max_bitrate;
 extern volatile int max_burst_bitrate;
@@ -72,6 +67,12 @@ struct VideoContext {
     RingBuffer* ring_buffer;
     VideoDecoder* decoder;
     struct SwsContext* sws;
+
+    // Serverside width/height/codec, which stores
+    // metadata from the most recently rendered frame
+    int server_width;
+    int server_height;
+    CodecType server_codec_type;
 
     FrameData* pending_ctx;
     int frames_received;
@@ -164,6 +165,9 @@ VideoContext* init_video() {
     video_context->ring_buffer =
         init_ring_buffer(PACKET_VIDEO, RECV_FRAMES_BUFFER_SIZE, nack_packet);
     working_mbps = STARTING_BITRATE;
+    video_context->server_width = -1;
+    video_context->server_height = -1;
+    video_context->server_codec_type = CODEC_TYPE_UNKNOWN;
     video_context->has_video_rendered_yet = false;
     video_context->sws = NULL;
     client_max_bitrate = STARTING_BITRATE;
@@ -198,6 +202,7 @@ void destroy_video(VideoContext* video_context) {
     destroy_ring_buffer(video_context->ring_buffer);
     video_context->ring_buffer = NULL;
 
+    // Destroy the ffmpeg decoder, if any exists
     if (video_context->decoder) {
         WhistThread destroy_decoder_thread = whist_create_thread(
             multithreaded_destroy_decoder, "multithreaded_destroy_decoder", video_context->decoder);
@@ -205,13 +210,11 @@ void destroy_video(VideoContext* video_context) {
         video_context->decoder = NULL;
     }
 
-    // Reset globals
-    server_width = -1;
-    server_height = -1;
-    server_codec_type = CODEC_TYPE_UNKNOWN;
-
-    // Mark as not rendered now
-    video_context->has_video_rendered_yet = false;
+    // Destroy the sws context, if any exists
+    if (video_context->sws) {
+        sws_freeContext(video_context->sws);
+        video_context->sws = NULL;
+    }
 
     // Free the video context
     free(video_context);
@@ -521,8 +524,9 @@ void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame) {
         Arguments:
             frame (VideoFrame*): next frame to render
     */
-    if (frame->width == server_width && frame->height == server_height &&
-        frame->codec_type == server_codec_type) {
+    if (frame->width == video_context->server_width &&
+        frame->height == video_context->server_height &&
+        frame->codec_type == video_context->server_codec_type) {
         // The width/height/codec are the same, so there's nothing to change
         return;
     }
@@ -535,9 +539,9 @@ void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame) {
     LOG_INFO(
         "Updating client rendering to match server's width and "
         "height and codec! "
-        "From %dx%d, codec %d to %dx%d, codec %d",
-        server_width, server_height, server_codec_type, frame->width, frame->height,
-        frame->codec_type);
+        "From %dx%d (codec %d), to %dx%d (codec %d)",
+        video_context->server_width, video_context->server_height, video_context->server_codec_type,
+        frame->width, frame->height, frame->codec_type);
     if (video_context->decoder) {
         WhistThread destroy_decoder_thread = whist_create_thread(
             multithreaded_destroy_decoder, "multithreaded_destroy_decoder", video_context->decoder);
@@ -552,9 +556,9 @@ void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame) {
     }
     video_context->decoder = decoder;
 
-    server_width = frame->width;
-    server_height = frame->height;
-    server_codec_type = frame->codec_type;
+    video_context->server_width = frame->width;
+    video_context->server_height = frame->height;
+    video_context->server_codec_type = frame->codec_type;
     output_codec_type = frame->codec_type;
 }
 
@@ -588,8 +592,11 @@ void update_sws_context(VideoContext* video_context, Uint8** data, int* linesize
         cached_height = height;
 
         // No matter what, we now should destroy the old context if it exists
-        if (video_context->sws) {
+        if (static_data[0] != NULL) {
             av_freep(&static_data[0]);
+            static_data[0] = NULL;
+        }
+        if (video_context->sws) {
             sws_freeContext(video_context->sws);
             video_context->sws = NULL;
         }

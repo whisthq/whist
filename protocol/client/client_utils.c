@@ -34,10 +34,6 @@ Includes
 #include <whist/core/whistgetopt.h>
 
 // Taken from main.c
-volatile int server_width = -1;
-volatile int server_height = -1;
-volatile CodecType server_codec_type = CODEC_TYPE_UNKNOWN;
-
 volatile char client_binary_aes_private_key[16];
 volatile char client_hex_aes_private_key[33];
 volatile char *server_ip;
