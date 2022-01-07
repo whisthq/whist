@@ -350,7 +350,9 @@ jobs:
       # --aws-credentials-filepath, defaults to `~/.aws/credentials`
       - name: Run End-to-End Streaming Test
         working-directory: protocol/test
-        run: python3 streaming_e2e_tester.py --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" --ssh-key-path "/home/runner/.ssh/id_rsa" --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
+        run: |
+          python3 streaming_e2e_tester.py --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" --ssh-key-path "/home/runner/.ssh/id_rsa" --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
+          aws s3 cp perf_logs s3://whist-e2e-protocol-test-logs/"$GITHUB_SHA" --recursive
 
       # The streaming_e2e_tester.py file generates the files server_monitoring_log.txt and client_monitoring_log.txt in
       # the folder perf_logs at the path where it is run in. We parse these files to display the results of the test.
@@ -423,16 +425,5 @@ jobs:
             body,
             title=title,
           )
-
-      # We save the full logs to the whist-e2e-protocol-test-logs S3 bucket for debugging purposes.
-      - name: Upload End-to-End Streaming Test logs to S3 bucket
-        if: always()
-        uses: actions/checkout@master shallwefootball/s3-upload-action@master
-        with:
-          aws_key_id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
-          aws_bucket: "whist-e2e-protocol-test-logs"
-          source_dir: "perf_logs"
-          destination_dir: "$GITHUB_SHA"
 
   #######################################################################################
