@@ -52,7 +52,7 @@ function has_updated {
 }
 
 ###############################
-# Download SDL2 headers
+# Download SDL2 headers (deprecated)
 ###############################
 
 # If the include/SDL2 directory doesn't exist, make it and fill it
@@ -70,11 +70,12 @@ if has_updated "$LIB" || [[ ! -d "$SDL_DIR" ]]; then
 fi
 
 ###############################
-# Download SDL2 libraries
+# Download SDL2 libraries/headers
 ###############################
 
 # Select SDL lib dir and SDL lib targz name based on OS and hardware architecture (macOS)
 SDL_LIB_DIR="$DEST_DIR/lib/64/SDL2/$OS"
+SDL_HEADERS_DIR="$DEST_DIR/include/SDL2"
 if [[ "$OS" =~ "Windows" ]]; then
   SDL_LIB="fractal-windows-sdl2-static-lib.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
@@ -87,11 +88,15 @@ elif [[ "$OS" == "Linux" ]]; then
   SDL_LIB="fractal-linux-sdl2-static-lib.tar.gz"
 fi
 
-# Check if SDL_LIB has updated, and if so, create the dir and copy the libs into the source dir
+# Check if SDL_LIB has updated, and if so, create the dir and copy the libs/headers into the source dir
 if has_updated "$SDL_LIB"; then
-  rm -rf "$SDL_LIB_DIR"
-  mkdir -p "$SDL_LIB_DIR"
+  rm -rf "$SDL_LIB_DIR" "$SDL_HEADERS_DIR"
+  mkdir -p "$SDL_LIB_DIR" "$SDL_HEADERS_DIR"
   aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$SDL_LIB" - | tar -xz -C "$SDL_LIB_DIR"
+  if [[ -d "$SDL_LIB_DIR/include" ]]; then
+    mv "$SDL_LIB_DIR/include"/* "$SDL_HEADERS_DIR"
+    rmdir "$SDL_LIB_DIR/include"
+  fi
 fi
 
 ###############################
