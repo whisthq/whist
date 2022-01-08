@@ -88,7 +88,7 @@ jobs:
       - name: Build Whist OpenSSL on macOS
         if: runner.os == 'macOS'
         env:
-          WHIST_OSXSYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+          CMAKE_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
         run: |
           # configure and build OpenSSL with -O3 flag
           ./config --release
@@ -204,7 +204,8 @@ jobs:
 
       - name: Build Whist OpenSSL on macOS
         env:
-          WHIST_OSXSYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+          CMAKE_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+          CMAKE_OSX_DEPLOYMENT_TARGET: "11.0" # Oldest supported arm64 macOS version, to comply with older OSes
         run: |
           # configure and build OpenSSL with -O3 flag
           ./config --release
@@ -327,7 +328,7 @@ jobs:
       - name: Build Sentry Native on macOS
         if: runner.os == 'macOS'
         env:
-          WHIST_OSXSYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+          CMAKE_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
         run: |
           # configure and build Sentry Native
           cmake -S . \
@@ -460,7 +461,8 @@ jobs:
 
       - name: Build Sentry Native on macOS
         env:
-          WHIST_OSXSYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+          CMAKE_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+          CMAKE_OSX_DEPLOYMENT_TARGET: "11.0" # Oldest supported arm64 macOS version, to comply with older OSes
         run: |
           # configure and build Sentry Native
           cmake -S . \
