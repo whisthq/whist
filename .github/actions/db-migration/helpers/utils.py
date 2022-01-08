@@ -4,7 +4,16 @@ import subprocess
 
 def dump_schema(url):
     result = subprocess.run(
-        ["pg_dump", "--no-owner", "--no-privileges", "--schema-only", url],
+        [
+            "pg_dump",
+            "--schema-only",
+            "--no-comment",
+            "--no-owner",
+            "--no-privileges",
+            "--schema=cloud",
+            "--schema=logging",
+            url,
+        ],
         capture_output=True,
         check=True,
         text=True,
