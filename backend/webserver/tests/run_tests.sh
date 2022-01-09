@@ -35,7 +35,7 @@ else
 
   # we use the remote user and remote db to make ephemeral db look as close to dev as possible
   # but of course, host and port are local
-  export DATABASE_URL=postgres://"${POSTGRES_USER}"@"${POSTGRES_HOST}":"${POSTGRES_PORT}"/"${POSTGRES_DB}"
+  export DATABASE_URL="postgres://${POSTGRES_USER}@${POSTGRES_PORT}/${POSTGRES_DB}"
 fi
 
 # regardless of in CI or local tests, we set this variable
