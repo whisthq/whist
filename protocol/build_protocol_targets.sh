@@ -59,7 +59,7 @@ USER=$(whoami)
 
 # Build protocol-builder Docker image
 docker build . \
-  --build-arg uid="$(id -u "${USER}")" \
+  --build-arg uid="$(id -u ${USER})" \
   -f Dockerfile \
   -t whisthq/protocol-builder
 
@@ -86,7 +86,7 @@ docker run \
   --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION --env AWS_DEFAULT_OUTPUT --env GITHUB_SHA --env CODECOV_TOKEN \
   --mount type=bind,source="$(cd ..; pwd)",destination=/workdir \
   "$MOUNT_AWS" \
-  --name whist-protocol-builder-"$(date +\"%s\")" \
+  --name whist-protocol-builder-$(date +"%s") \
   --user "$DOCKER_USER" \
   whisthq/protocol-builder \
   bash -c "\

@@ -22,16 +22,16 @@ if [[ -f $WHIST_JSON_FILE ]]; then
   if [ "$( jq 'has("dev_client_server_ip")' < $WHIST_JSON_FILE )" == "true"  ]; then
     SERVER_IP_ADDRESS="$(jq '.dev_client_server_ip' < $WHIST_JSON_FILE)"
     # Remove potential quotation marks
-    SERVER_IP_ADDRESS="$(echo "$SERVER_IP_ADDRESS" | tr -d '"')"
+    SERVER_IP_ADDRESS="$(echo $SERVER_IP_ADDRESS | tr -d '"')"
     # Add server IP address to options
     OPTIONS="$OPTIONS $SERVER_IP_ADDRESS"
   fi
   if [ "$( jq 'has("dev_client_server_port_32262")' < $WHIST_JSON_FILE )" == "true"  ]; then
     SERVER_PORT_32262="$(jq '.dev_client_server_port_32262' < $WHIST_JSON_FILE)"
     # Remove potential quotation marks
-    SERVER_PORT_32262="$(echo "$SERVER_PORT_32262" | tr -d '"')"
+    SERVER_PORT_32262="$(echo $SERVER_PORT_32262 | tr -d '"')"
     # Add server port 32262 address to options
-    OPTIONS="$OPTIONS -p32262:$SERVER_PORT_32262"
+    OPTIONS="$OPTIONS" "-p32262:$SERVER_PORT_32262"
   else
     echo "Server port 32262 not found in JSON data!"
     exit 1
@@ -39,7 +39,7 @@ if [[ -f $WHIST_JSON_FILE ]]; then
   if [ "$( jq 'has("dev_client_server_port_32263")' < $WHIST_JSON_FILE )" == "true"  ]; then
     SERVER_PORT_32263="$(jq '.dev_client_server_port_32263' < $WHIST_JSON_FILE)"
     # Remove potential quotation marks
-    SERVER_PORT_32263=$(echo "$SERVER_PORT_32263" | tr -d '"')
+    SERVER_PORT_32263="$(echo $SERVER_PORT_32263 | tr -d '"')"
     # Add server port 32263 address to options
     OPTIONS="$OPTIONS.32263:$SERVER_PORT_32263"
   else
@@ -49,7 +49,7 @@ if [[ -f $WHIST_JSON_FILE ]]; then
   if [ "$( jq 'has("dev_client_server_port_32273")' < $WHIST_JSON_FILE )" == "true"  ]; then
     SERVER_PORT_32273="$(jq '.dev_client_server_port_32273' < $WHIST_JSON_FILE)"
     # Remove potential quotation marks
-    SERVER_PORT_32273=$(echo "$SERVER_PORT_32273" | tr -d '"')
+    SERVER_PORT_32273="$(echo $SERVER_PORT_32273 | tr -d '"')"
     # Add server port 32273 address to options
     OPTIONS="$OPTIONS.32273:$SERVER_PORT_32273"
   else
@@ -59,7 +59,7 @@ if [[ -f $WHIST_JSON_FILE ]]; then
   if [ "$( jq 'has("dev_client_server_aes_key")' < $WHIST_JSON_FILE )" == "true"  ]; then
     SERVER_AES_KEY="$(jq '.dev_client_server_aes_key' < $WHIST_JSON_FILE)"
     # Remove potential quotation marks
-    SERVER_AES_KEY="$(echo "$SERVER_AES_KEY" | tr -d '"')"
+    SERVER_AES_KEY="$(echo $SERVER_AES_KEY | tr -d '"')"
     # Add server AES key address to options
     OPTIONS="$OPTIONS -k $SERVER_AES_KEY"
   else

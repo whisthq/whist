@@ -43,7 +43,7 @@ flags=(
 )
 
 if [[ $DARK_MODE == true ]]; then
-  features="$features"",WebUIDarkMode"
+  features="$features,WebUIDarkMode"
   flags+=(--force-dark-mode)
 fi
 
