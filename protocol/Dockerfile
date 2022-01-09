@@ -19,7 +19,7 @@ RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selectio
 RUN APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 \ 
     wget -qO - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add - \
     && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main' \\
-    & dpkg --configure -a && apt-get install --allow-downgrades --no-install-recommends -y -f
+    && dpkg --configure -a && apt-get install --allow-downgrades --no-install-recommends -y -f
 
 # Install and configure Ubuntu utils, build tools, and `docs` target dependencies
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
