@@ -41,12 +41,10 @@ fi
 # add env vars to current env. these tell us the host, db, role, pwd
 export $(cat .env | xargs)
 
-export AWS_INSTANCE_TYPE_TO_LAUNCH
-AWS_INSTANCE_TYPE_TO_LAUNCH="g4dn.2xlarge"
+export AWS_INSTANCE_TYPE_TO_LAUNCH="g4dn.2xlarge"
 
 if [ $USE_DEV_DB == true ]; then
-  export DATABASE_URL
-  DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}/${POSTGRES_DB}
+  export DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}/${POSTGRES_DB}
 
   # launch all images but dev db
   APP_GIT_BRANCH=$BRANCH APP_GIT_COMMIT=$COMMIT docker-compose up --build -d web # don't spin up postgres_db
