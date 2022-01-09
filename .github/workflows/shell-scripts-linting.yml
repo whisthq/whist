@@ -26,15 +26,22 @@ jobs:
         with:
           python-version: "3.10.0"
 
-      - name: Install beautysh
+      - name: Install beautysh & shellcheck
         working-directory: mandelboxes/helper_scripts
         run: pip install -r requirements.txt
 
-      - name: Run Beautysh to Check Scripts Formatting
+      - name: Run Beautysh to check Bash scripts formatting
         run: |
           # We need to use globstar for glob expansion on bash
           shopt -s globstar
           beautysh **/*.sh --indent-size 2 --check
+          shopt -u globstar
+
+      - name: Run Shellcheck to check Bash scripts
+        run: |
+          # We need to use globstar for glob expansion on bash
+          shopt -s globstar
+          shellcheck **/**.sh
           shopt -u globstar
 
       - name: Check that All Bash Scripts Start with "#!/bin/bash"

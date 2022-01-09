@@ -5,9 +5,9 @@
 
 # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
 SENTRY_ENV_FILENAME=/usr/share/whist/private/sentry_env
-case $(cat $SENTRY_ENV_FILENAME) in
+case "$(cat $SENTRY_ENV_FILENAME)" in
   dev|staging|prod)
-    export SENTRY_ENVIRONMENT=${SENTRY_ENV}
+    export SENTRY_ENVIRONMENT="${SENTRY_ENV}"
     eval "$(sentry-cli bash-hook)"
     ;;
   *)
@@ -37,7 +37,7 @@ install_chrome_extension () {
 
 # Allow developers to install extensions by calling this function
 if [ "$#" -eq 1 ]; then
-  install_chrome_extension $1
+  install_chrome_extension "$1"
 else
   echo "Could not install chrome extension $1. Expected 1 arg, got $#"
 fi

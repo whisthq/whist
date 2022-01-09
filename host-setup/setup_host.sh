@@ -377,7 +377,7 @@ common_steps_post () {
 # Parse arguments (derived from https://stackoverflow.com/a/7948533/2378475)
 # I'd prefer not to have the short arguments at all, but it looks like getopt
 # chokes without them.
-TEMP=`getopt -o hld --long help,usage,localdevelopment,deployment -n 'setup_host.sh' -- "$@"`
+TEMP=$(getopt -o hld --long help,usage,localdevelopment,deployment -n 'setup_host.sh' -- "$@")
 eval set -- "$TEMP"
 
 LOCAL_DEVELOPMENT=
@@ -388,7 +388,7 @@ while true; do
     -l | --localdevelopment ) LOCAL_DEVELOPMENT=true; shift ;;
     -d | --deployment ) DEPLOYMENT=true; shift ;;
     -- ) shift; break ;;
-    * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit -1 ;;
+    * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit 255 ;;
   esac
 done
 
@@ -398,7 +398,7 @@ fi
 
 if [[ -n "$LOCAL_DEVELOPMENT" && -n "$DEPLOYMENT" ]]; then
   echo 'Both `--localdevelopment` and `--deployment` were passed in. Make up your mind!'
-  exit -1
+  exit 255
 fi
 
 if [[ -n "$LOCAL_DEVELOPMENT" ]]; then

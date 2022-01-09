@@ -36,10 +36,10 @@ done
 #   This is because when creating symlinks, the userConfig path is the source
 #   and the original location is the destination
 # Iterate through the possible configuration locations and copy
-for row in $(cat $APP_CONFIG_MAP_FILENAME | jq -rc '.[]'); do
-  SOURCE_CONFIG_SUBPATH=$(echo ${row} | jq -r '.source')
-  SOURCE_CONFIG_PATH=$USER_CONFIGS_DIR/$SOURCE_CONFIG_SUBPATH
-  DEST_CONFIG_PATH=$(echo ${row} | jq -r '.destination')
+for row in "$(cat $APP_CONFIG_MAP_FILENAME | jq -rc '.[]')"; do
+  SOURCE_CONFIG_SUBPATH="$(echo "${row}" | jq -r '.source')"
+  SOURCE_CONFIG_PATH="$USER_CONFIGS_DIR/$SOURCE_CONFIG_SUBPATH"
+  DEST_CONFIG_PATH="$(echo "${row}" | jq -r '.destination')"
 
   # If original config path does not exist, then continue
   if [ ! -f "$DEST_CONFIG_PATH" ] && [ ! -d "$DEST_CONFIG_PATH" ]; then
@@ -48,17 +48,17 @@ for row in $(cat $APP_CONFIG_MAP_FILENAME | jq -rc '.[]'); do
 
   # If the source path doesn't exist, then copy default configs to the synced app config folder
   if [ ! -f "$SOURCE_CONFIG_PATH" ] && [ ! -d "$SOURCE_CONFIG_PATH" ]; then
-    cp -rT $DEST_CONFIG_PATH $SOURCE_CONFIG_PATH
+    cp -rT "$DEST_CONFIG_PATH $SOURCE_CONFIG_PATH"
   fi
 
   # Remove the original configs and symlink the new ones to the original locations
-  rm -rf $DEST_CONFIG_PATH
-  ln -sfnT $SOURCE_CONFIG_PATH $DEST_CONFIG_PATH
-  chown -R whist $SOURCE_CONFIG_PATH
+  rm -rf "$DEST_CONFIG_PATH"
+  ln -sfnT "$SOURCE_CONFIG_PATH $DEST_CONFIG_PATH"
+  chown -R whist "$SOURCE_CONFIG_PATH"
 done
 
 # Delete broken symlinks from config
-find $USER_CONFIGS_DIR -xtype l -delete
+find "$USER_CONFIGS_DIR" -xtype l -delete
 
 ### END USER CONFIG RETRIEVE ###
 
@@ -74,14 +74,14 @@ PROTOCOL_LOG_FILENAME=/usr/share/whist/server.log
 TELEPORT_LOG_FILENAME=/usr/share/whist/teleport.log
 
 # Define a string-format identifier for this mandelbox
-IDENTIFIER=$(cat $WHIST_MAPPINGS_DIR/$IDENTIFIER_FILENAME)
+IDENTIFIER="$(cat $WHIST_MAPPINGS_DIR/$IDENTIFIER_FILENAME)"
 
 # Create list of command-line arguments to pass to the Whist protocol server
 OPTIONS=""
 
 # Send in AES private key, if set
 if [ -f "$PRIVATE_KEY_FILENAME" ]; then
-  export WHIST_AES_KEY=$(cat $PRIVATE_KEY_FILENAME)
+  export WHIST_AES_KEY="$(cat $PRIVATE_KEY_FILENAME)"
   OPTIONS="$OPTIONS --private-key=$WHIST_AES_KEY"
 fi
 
@@ -148,7 +148,7 @@ echo "Now sleeping until there are X clients..."
 
 # Wait until the application has created its display before launching WhistServer.
 #    This prevents a black no input window from appearing when a user connects.
-until [ $(xlsclients -display :10 | wc -l) != 0 ]
+until [ "$(xlsclients -display :10 | wc -l)" != 0 ]
 do
   sleep 0.1
 done
@@ -161,7 +161,7 @@ sync # Necessary so that even if the container exits very soon the host service 
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
 # The point of the named pipe redirection is so that $! will give us the PID of WhistServer, not of tee.
-/usr/share/whist/WhistServer $OPTIONS &> >(tee $PROTOCOL_LOG_FILENAME) &
+/usr/share/whist/WhistServer "$OPTIONS" &> >(tee $PROTOCOL_LOG_FILENAME) &
 whist_server_pid=$!
 
 # Wait for either whist-application or WhistServer to exit (both backgrounded processes).
@@ -176,11 +176,11 @@ echo "whist-application PID: $whist_application_pid"
 echo "Remaining job PIDs: $(jobs -p)"
 
 # Kill whatever is still running of WhistServer and whist-application, with SIGTERM.
-kill $whist_application_pid ||:
-kill $whist_server_pid ||:
+kill "$whist_application_pid" ||:
+kill "$whist_server_pid" ||:
 
 # Wait for whist-application to finish terminating, ignoring exit code (since
-wait $whist_application_runuser_pid ||:
+wait "$whist_application_runuser_pid" ||:
 
 echo "Both whist-application and WhistServer have exited."
 

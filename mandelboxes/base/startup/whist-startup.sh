@@ -33,7 +33,7 @@ ASSIGNED_TTY=$(cat $WHIST_MAPPINGS_DIR/tty)
 # this CANNOT be done in the Dockerfile because it affects /dev/, so we have to do it here.
 # Note that we always use /dev/tty10 even though the minor number below (i.e.
 # the number after 4) may change
-sudo mknod -m 620 /dev/tty10 c 4 $ASSIGNED_TTY
+sudo mknod -m 620 /dev/tty10 c 4 "$ASSIGNED_TTY"
 sudo mkdir /dev/dri
 sudo mknod -m 660 /dev/dri/card0 c 226 0
 
@@ -42,5 +42,6 @@ sudo chmod 0600 -R /var/log/whist/
 
 # This installs whist service
 echo "Start Pam Systemd Process for User whist"
-export WHIST_UID=`id -u whist`
-systemctl start user@$WHIST_UID
+export WHIST_UID
+WHIST_UID="$(id -u whist)"
+systemctl start "user@$WHIST_UID"

@@ -40,13 +40,6 @@ case "${unameOut}" in
   MINGW*)     isWindows=1 ;;
 esac
 
-# array of all folders to be checked and modified
-declare -a includeFolders=(
-  "whist"
-  "client"
-  "server"
-)
-
 # set clang-tidy-fixes file
 yamlFolder="$BUILD_DIR/fixes"
 rm -rf "$yamlFolder" # -f to silence "no file found" error
@@ -115,9 +108,9 @@ else
       # run clang-tidy noted replacements
       if command -v clang-apply-replacements &> /dev/null
       then
-        clang-apply-replacements $yamlFolder
+        clang-apply-replacements "$yamlFolder"
       else
-        clang-apply-replacements-10 $yamlFolder
+        clang-apply-replacements-10 "$yamlFolder"
       fi
     else
       exit

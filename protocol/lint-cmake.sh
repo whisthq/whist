@@ -13,4 +13,4 @@ cd "$DIR"
 CMAKELISTS_FILES=$(fd --glob 'CMakeLists.txt')
 CMAKE_HELPER_FILES=$(fd --glob '*.cmake')
 
-cmakelint --config=".cmakelintrc" $CMAKELISTS_FILES $CMAKE_HELPER_FILES
+cmakelint --config=".cmakelintrc" "$CMAKELISTS_FILES" "$CMAKE_HELPER_FILES"

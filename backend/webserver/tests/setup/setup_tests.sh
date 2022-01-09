@@ -37,7 +37,7 @@ fi
 # 4. applying schema and inserting data into docker db
 
 # Make sure .env file exists
-if [ ! -f ../../docker/.env ]; then
+if [ ! -f "../../docker/.env" ]; then
   echo "Did not find docker/.env file. Make sure you have already run docker/retrieve_config.sh!"
   exit 1
 fi

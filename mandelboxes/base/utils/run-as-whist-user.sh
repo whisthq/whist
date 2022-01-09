@@ -2,9 +2,9 @@
 
 # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
 SENTRY_ENV_FILENAME=/usr/share/whist/private/sentry_env
-case $(cat $SENTRY_ENV_FILENAME) in
+case "$(cat $SENTRY_ENV_FILENAME)" in
   dev|staging|prod)
-    export SENTRY_ENVIRONMENT=${SENTRY_ENV}
+    export SENTRY_ENVIRONMENT="${SENTRY_ENV}"
     eval "$(sentry-cli bash-hook)"
     ;;
   *)
@@ -27,23 +27,23 @@ KEY_REPEAT=6 # default value on macOS, options are 120, 90, 60, 30, 12, 6, 2
 INITIAL_URL=""
 
 WHIST_JSON_FILE=/whist/resourceMappings/config.json
-if [[ -f $WHIST_JSON_FILE ]]; then
+if [[ -f "$WHIST_JSON_FILE" ]]; then
   if [ "$( jq 'has("dark_mode")' < $WHIST_JSON_FILE )" == "true"  ]; then
     DARK_MODE="$(jq '.dark_mode' < $WHIST_JSON_FILE)"
     # Remove potential quotation marks
-    DARK_MODE=$(echo $DARK_MODE | tr -d '"')
+    DARK_MODE="$(echo "$DARK_MODE" | tr -d '"')"
   fi
   if [ "$( jq 'has("restore_last_session")' < $WHIST_JSON_FILE )" == "true"  ]; then
     RESTORE_LAST_SESSION="$(jq '.restore_last_session' < $WHIST_JSON_FILE)"
     # Remove potential quotation marks
-    RESTORE_LAST_SESSION=$(echo $RESTORE_LAST_SESSION | tr -d '"')
+    RESTORE_LAST_SESSION="$(echo "$RESTORE_LAST_SESSION" | tr -d '"')"
   fi
   if [ "$( jq 'has("desired_timezone")' < $WHIST_JSON_FILE )" == "true"  ]; then
     DESIRED_TIMEZONE="$(jq '.desired_timezone' < $WHIST_JSON_FILE)"
     # Remove potential quotation marks
-    DESIRED_TIMEZONE=$(echo $DESIRED_TIMEZONE | tr -d '"')
+    DESIRED_TIMEZONE="$(echo "$DESIRED_TIMEZONE" | tr -d '"')"
     # Set the system-wide timezone
-    timedatectl set-timezone $DESIRED_TIMEZONE
+    timedatectl set-timezone "$DESIRED_TIMEZONE"
   fi
   if [ "$( jq 'has("initial_key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
     if [ "$( jq 'has("key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
@@ -51,27 +51,27 @@ if [[ -f $WHIST_JSON_FILE ]]; then
       KEY_REPEAT=$( jq -r '.key_repeat' < $WHIST_JSON_FILE )
 
       # Remove potential quotation marks
-      INITIAL_KEY_REPEAT=$(echo $INITIAL_KEY_REPEAT | tr -d '"')
-      KEY_REPEAT=$(echo $KEY_REPEAT | tr -d '"')
+      INITIAL_KEY_REPEAT="$(echo "$INITIAL_KEY_REPEAT" | tr -d '"')"
+      KEY_REPEAT="$(echo "$KEY_REPEAT" | tr -d '"')"
 
       # Set the key repeat rates
-      xset r rate $INITIAL_KEY_REPEAT $KEY_REPEAT
+      xset r rate "$INITIAL_KEY_REPEAT" "$KEY_REPEAT"
     fi
   fi
   if [ "$( jq 'has("initial_url")' < $WHIST_JSON_FILE )" == "true"  ]; then
     RECEIVED_URL="$(jq '.initial_url' < $WHIST_JSON_FILE)"
     # Remove potential quotation marks
-    INITIAL_URL=$(echo $RECEIVED_URL | tr -d '"')
+    INITIAL_URL="$(echo "$RECEIVED_URL" | tr -d '"')"
   fi
 fi
 
-export DARK_MODE=$DARK_MODE
-export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
+export DARK_MODE="$DARK_MODE"
+export RESTORE_LAST_SESSION="$RESTORE_LAST_SESSION"
 # Setting the TZ environment variable (https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html)
 # in order to automatically adjust the timezone at the lower layers
-export TZ=$DESIRED_TIMEZONE
-export INITIAL_URL=$INITIAL_URL
-export SENTRY_ENVIORNMENT=${SENTRY_ENVIRONMENT:-}
+export TZ="$DESIRED_TIMEZONE"
+export INITIAL_URL="$INITIAL_URL"
+export SENTRY_ENVIORNMENT="${SENTRY_ENVIRONMENT:-}"
 
 exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,INITIAL_URL,SENTRY_ENVIORNMENT -c \
   'DISPLAY=:10 \

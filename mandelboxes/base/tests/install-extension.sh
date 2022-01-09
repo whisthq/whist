@@ -6,4 +6,4 @@
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-touch $1.json
+touch "$1.json"
