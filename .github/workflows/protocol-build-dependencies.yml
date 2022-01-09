@@ -277,7 +277,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: getsentry/sentry-native
-          ref: "0.4.12" # GitHub Tag of the Sentry release we use
+          ref: "0.4.13" # GitHub Tag of the Sentry release we use
           submodules: recursive # Sentry uses (nested) submodules for external dependencies
 
       - name: Configure AWS S3 CLI
@@ -446,7 +446,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: getsentry/sentry-native
-          ref: "0.4.12" # GitHub Tag of the Sentry release we use
+          ref: "0.4.13" # GitHub Tag of the Sentry release we use
           submodules: recursive # Sentry uses (nested) submodules for external dependencies
 
       - name: Configure AWS S3 CLI
