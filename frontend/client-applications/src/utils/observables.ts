@@ -14,7 +14,7 @@ import {
   from,
   combineLatest,
 } from "rxjs"
-import { map, mapTo, switchMap, take } from "rxjs/operators"
+import { map, mapTo, switchMap, take, takeUntil } from "rxjs/operators"
 import toPairs from "lodash.topairs"
 
 import { fromTrigger } from "@app/utils/flows"
@@ -113,3 +113,6 @@ export const fromSignal = (obs: Observable<any>, signal: Observable<any>) =>
 
 export const withAppReady = (obs: Observable<any>) =>
   fromSignal(obs, fromTrigger(WhistTrigger.appReady))
+
+export const untilUpdateAvailable = (obs: Observable<any>) =>
+  obs.pipe(takeUntil(fromTrigger(WhistTrigger.updateAvailable)))
