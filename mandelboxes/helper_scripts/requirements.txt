@@ -3,4 +3,4 @@ docker==5.0.0
 psutil==5.9.0
 requests==2.26.0
 beautysh==6.2.1
-shellcheck==0.8.0
+shellcheck-py==0.8.0.3
