@@ -1525,8 +1525,8 @@ static const size_t MAX_SUPPORTED_DEFLATE_LENGTH = 258;
 /*search the index in the array, that has the largest value smaller than or equal to the given
 value, given array must be sorted (if no value is smaller, it returns the size of the given array)*/
 static size_t searchCodeIndex(const unsigned* array, size_t array_size, size_t value) {
-    /*binary search (only small gain over linear). LODEPNG_TODO: use CPU log2 instruction for getting
-     * symbols instead*/
+    /*binary search (only small gain over linear). LODEPNG_TODO: use CPU log2 instruction for
+     * getting symbols instead*/
     size_t left = 1;
     size_t right = array_size - 1;
 
@@ -4276,7 +4276,8 @@ unsigned lodepng_inspect(unsigned* w, unsigned* h, LodePNGState* state, const un
     /*read the values given in the header*/
     width = lodepng_read32bitInt(&in[16]);
     height = lodepng_read32bitInt(&in[20]);
-    /*LODEPNG_TODO: remove the undocumented feature that allows to give null pointers to width or height*/
+    /*LODEPNG_TODO: remove the undocumented feature that allows to give null pointers to width or
+     * height*/
     if (w) *w = width;
     if (h) *h = height;
     info->color.bitdepth = in[24];
@@ -5220,7 +5221,7 @@ unsigned lodepng_decode(unsigned char** out, unsigned* w, unsigned* h, LodePNGSt
         size_t outsize;
 
         /*LODEPNG_TODO: check if this works according to the statement in the documentation: "The
-        converter can convert from grayscale input color type, to 8-bit grayscale or grayscale 
+        converter can convert from grayscale input color type, to 8-bit grayscale or grayscale
         with alpha"*/
         if (!(state->info_raw.colortype == LCT_RGB || state->info_raw.colortype == LCT_RGBA) &&
             !(state->info_raw.bitdepth == 8)) {
