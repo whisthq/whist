@@ -11,6 +11,7 @@ Includes
 */
 
 #include "renderer.h"
+#include "client_utils.h"
 #include "client_statistic.h"
 #include "sdl_event_handler.h"
 
@@ -21,14 +22,6 @@ Defines
 */
 
 #define LOG_RENDERER_THREAD_USAGE false
-
-/*
-============================
-Variables
-============================
-*/
-
-extern bool connected = true;
 
 /*
 ============================
