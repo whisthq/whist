@@ -7,7 +7,8 @@ WHIST_PRIVATE_DIR=/usr/share/whist/private
 SENTRY_ENV_FILENAME=$WHIST_PRIVATE_DIR/sentry_env
 case $(cat $SENTRY_ENV_FILENAME) in
   dev|staging|prod)
-    export SENTRY_ENVIRONMENT=${SENTRY_ENV}
+    export SENTRY_ENVIRONMENT
+    SENTRY_ENVIRONMENT="${SENTRY_ENV}"
     eval "$(sentry-cli bash-hook)"
     ;;
   *)
@@ -24,7 +25,7 @@ set -Eeuo pipefail
 WHIST_MAPPINGS_DIR=/whist/resourceMappings
 USER_CONFIGS_DIR=/whist/userConfigs
 APP_CONFIG_MAP_FILENAME=/usr/share/whist/app-config-map.json
-until [ -f $WHIST_MAPPINGS_DIR/.configReady ]
+until [ -f "$WHIST_MAPPINGS_DIR/.configReady" ]
 do
   sleep 0.1
 done
@@ -36,10 +37,10 @@ done
 #   This is because when creating symlinks, the userConfig path is the source
 #   and the original location is the destination
 # Iterate through the possible configuration locations and copy
-for row in "$(cat $APP_CONFIG_MAP_FILENAME | jq -rc '.[]')"; do
+for row in $(cat $APP_CONFIG_MAP_FILENAME | jq -rc '.[]'); do
   SOURCE_CONFIG_SUBPATH="$(echo "${row}" | jq -r '.source')"
   SOURCE_CONFIG_PATH="$USER_CONFIGS_DIR/$SOURCE_CONFIG_SUBPATH"
-  DEST_CONFIG_PATH="$(echo "${row}" | jq -r '.destination')"
+  DEST_CONFIG_PATH="$(echo ${row} | jq -r '.destination')"
 
   # If original config path does not exist, then continue
   if [ ! -f "$DEST_CONFIG_PATH" ] && [ ! -d "$DEST_CONFIG_PATH" ]; then
@@ -48,12 +49,12 @@ for row in "$(cat $APP_CONFIG_MAP_FILENAME | jq -rc '.[]')"; do
 
   # If the source path doesn't exist, then copy default configs to the synced app config folder
   if [ ! -f "$SOURCE_CONFIG_PATH" ] && [ ! -d "$SOURCE_CONFIG_PATH" ]; then
-    cp -rT "$DEST_CONFIG_PATH $SOURCE_CONFIG_PATH"
+    cp -rT "$DEST_CONFIG_PATH" "$SOURCE_CONFIG_PATH"
   fi
 
   # Remove the original configs and symlink the new ones to the original locations
   rm -rf "$DEST_CONFIG_PATH"
-  ln -sfnT "$SOURCE_CONFIG_PATH $DEST_CONFIG_PATH"
+  ln -sfnT "$SOURCE_CONFIG_PATH" "$DEST_CONFIG_PATH"
   chown -R whist "$SOURCE_CONFIG_PATH"
 done
 
@@ -65,9 +66,9 @@ find "$USER_CONFIGS_DIR" -xtype l -delete
 # Set/Retrieve Mandelbox parameters
 WHIST_MAPPINGS_DIR=/whist/resourceMappings
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
-PRIVATE_KEY_FILENAME=$WHIST_PRIVATE_DIR/aes_key
-BROWSER_DATA_FILE_FILENAME=$WHIST_PRIVATE_DIR/user_browser_data_file
-USER_DEST_BROWSER_FILENAME=$WHIST_PRIVATE_DIR/user_dest_browser
+PRIVATE_KEY_FILENAME="$WHIST_PRIVATE_DIR/aes_key"
+BROWSER_DATA_FILE_FILENAME="$WHIST_PRIVATE_DIR/user_browser_data_file"
+USER_DEST_BROWSER_FILENAME="$WHIST_PRIVATE_DIR/user_dest_browser"
 TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/timeout
 WHIST_APPLICATION_PID_FILE=/home/whist/whist-application-pid
 PROTOCOL_LOG_FILENAME=/usr/share/whist/server.log
@@ -81,19 +82,22 @@ OPTIONS=""
 
 # Send in AES private key, if set
 if [ -f "$PRIVATE_KEY_FILENAME" ]; then
-  export WHIST_AES_KEY="$(cat $PRIVATE_KEY_FILENAME)"
+  export WHIST_AES_KEY
+  WHIST_AES_KEY="$(cat $PRIVATE_KEY_FILENAME)"
   OPTIONS="$OPTIONS --private-key=$WHIST_AES_KEY"
 fi
 
 # Send in Sentry environment, if set
 if [ -f "$SENTRY_ENV_FILENAME" ]; then
-  export SENTRY_ENV=$(cat $SENTRY_ENV_FILENAME)
+  export SENTRY_ENV
+  SENTRY_ENV="$(cat $SENTRY_ENV_FILENAME)"
   OPTIONS="$OPTIONS --environment=$SENTRY_ENV"
 fi
 
 # Send in timeout, if set
 if [ -f "$TIMEOUT_FILENAME" ]; then
-  export TIMEOUT=$(cat $TIMEOUT_FILENAME)
+  export TIMEOUT
+  TIMEOUT=$(cat $TIMEOUT_FILENAME)
   OPTIONS="$OPTIONS --timeout=$TIMEOUT"
 fi
 
@@ -111,7 +115,8 @@ function cleanup {
   sudo shutdown now
 }
 
-export ENV_NAME=$(cat $SENTRY_ENV_FILENAME)
+export ENV_NAME
+ENV_NAME=$(cat $SENTRY_ENV_FILENAME)
 if [ "$ENV_NAME" != "localdev" ]; then
   # Make sure `cleanup` gets called on script exit in all environments except localdev.
   trap cleanup EXIT ERR
@@ -120,17 +125,17 @@ fi
 # Set user upload target, if file exists
 if [ -f "$USER_DEST_BROWSER_FILENAME" ] && [ -f "$BROWSER_DATA_FILE_FILENAME" ]; then
   # Imports user browser data if file exists
-  python3 /usr/share/whist/import_user_browser_data.py $(cat $USER_DEST_BROWSER_FILENAME) $(cat $BROWSER_DATA_FILE_FILENAME)
+  python3 /usr/share/whist/import_user_browser_data.py "$(cat $USER_DEST_BROWSER_FILENAME)" "$(cat $BROWSER_DATA_FILE_FILENAME)"
 
   # Remove temporary files
-  rm -f $(cat $BROWSER_DATA_FILE_FILENAME)
-  rm $BROWSER_DATA_FILE_FILENAME
-  rm $USER_DEST_BROWSER_FILENAME
+  rm -f "$(cat $BROWSER_DATA_FILE_FILENAME)"
+  rm "$BROWSER_DATA_FILE_FILENAME"
+  rm "$USER_DEST_BROWSER_FILENAME"
 fi
 
 # Start the application that this mandelbox runs.
 /usr/share/whist/run-as-whist-user.sh "/usr/bin/run-whist-application.sh" &
-whist_application_runuser_pid=$!
+whist_application_runuser_pid="$!"
 
 echo "Whist application runuser pid: $whist_application_runuser_pid"
 
@@ -139,8 +144,8 @@ until [ -f "$WHIST_APPLICATION_PID_FILE" ]
 do
   sleep 0.1
 done
-whist_application_pid=$(cat $WHIST_APPLICATION_PID_FILE)
-rm $WHIST_APPLICATION_PID_FILE
+whist_application_pid="$(cat $WHIST_APPLICATION_PID_FILE)"
+rm "$WHIST_APPLICATION_PID_FILE"
 
 echo "Whist application pid: $whist_application_pid"
 
@@ -154,7 +159,7 @@ do
 done
 
 echo "Done sleeping until there are X clients..."
-echo "done" > $WHIST_MAPPINGS_DIR/done_sleeping_until_X_clients
+echo "done" > "$WHIST_MAPPINGS_DIR/done_sleeping_until_X_clients"
 sync # Necessary so that even if the container exits very soon the host service sees the file written.
 
 # Send in identifier

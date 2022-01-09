@@ -397,7 +397,7 @@ if [[ -z "$LOCAL_DEVELOPMENT" && -z "$DEPLOYMENT" ]]; then
 fi
 
 if [[ -n "$LOCAL_DEVELOPMENT" && -n "$DEPLOYMENT" ]]; then
-  echo 'Both `--localdevelopment` and `--deployment` were passed in. Make up your mind!'
+  echo "Both --localdevelopment and --deployment were passed in. Make up your mind!"
   exit 255
 fi
 

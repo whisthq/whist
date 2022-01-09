@@ -27,7 +27,8 @@ if [[ ^$POSTGRES_URI =~ "postgres://" ]]; then
 
 else
   # pg_dump will look at this and skip asking for a prompt
-  export PGPASSWORD=$POSTGRES_PASSWORD
+  export PGPASSWORD
+  PGPASSWORD="$POSTGRES_PASSWORD"
 
   echo "=== Retrieving DB data ==="
   echo ""

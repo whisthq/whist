@@ -39,7 +39,7 @@ Xft/DPI $((1024*$WHIST_DPI))
 Gtk/CursorThemeSize $((24*$WHIST_DPI/96))
 EOF
 
-echo $WHIST_DPI > $WHIST_DPI_CACHE_FILE
+echo "$WHIST_DPI" > "$WHIST_DPI_CACHE_FILE"
 
 # Succeed even if these are not yet running, as we have successfully pre-initialized them
 killall -HUP xsettingsd awesome || true

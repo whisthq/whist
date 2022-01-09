@@ -35,7 +35,7 @@ splitsh-lite --prefix backend/webserver --target refs/heads/workflows-private/we
 git checkout workflows-private/webserver
 # we are now in the webserver folder as a standalone git repo
 
-if [ $MIGRA_EXIT_CODE == "2" ] || [ $MIGRA_EXIT_CODE == "3" ]; then
+if [ "$MIGRA_EXIT_CODE" == "2" ] || [ "$MIGRA_EXIT_CODE" == "3" ]; then
   # a diff exists, now apply it atomically by first pausing the webserver
 
   echo "Migra SQL diff:"
@@ -59,7 +59,7 @@ if [ $MIGRA_EXIT_CODE == "2" ] || [ $MIGRA_EXIT_CODE == "3" ]; then
 
   echo "DB_MIGRATION_PERFORMED=true" >> "${GITHUB_ENV}"
 
-elif [ $MIGRA_EXIT_CODE == "0" ]; then
+elif [ "$MIGRA_EXIT_CODE" == "0" ]; then
   echo "No diff. Continuing redeploy."
 
   echo "Redeploying webserver..."

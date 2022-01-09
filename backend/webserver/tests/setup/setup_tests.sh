@@ -57,7 +57,7 @@ export POSTGRES_PORT="9999"
 # let db prepare. Check connections using psql.
 echo "Trying to connect to local db..."
 cmds="\q"
-while ! (psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U postgres -d postgres <<< $cmds) &> /dev/null
+while ! (psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U postgres -d postgres <<< "$cmds") &> /dev/null
 do
   echo "Connection failed. Retrying in 2 seconds..."
   sleep 2
