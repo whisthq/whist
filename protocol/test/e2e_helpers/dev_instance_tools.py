@@ -225,31 +225,34 @@ def clone_whist_repository_on_instance(
         None
     """
 
-    # Obtain current branch
-    subproc_handle = subprocess.Popen("git branch", shell=True, stdout=subprocess.PIPE)
+    # Obtain current commit hash
+    subproc_handle = subprocess.Popen(
+        'git log -1 --format="%H"', shell=True, stdout=subprocess.PIPE
+    )
     subprocess_stdout = subproc_handle.stdout.readlines()
 
-    branch_name = ""
-    for line in subprocess_stdout:
-        converted_line = line.decode("utf-8").strip()
-        if "*" in converted_line:
-            branch_name = converted_line[2:]
-            break
+    commit_hash = subprocess_stdout[0].decode("utf-8").strip()
 
     print(
-        "Cloning branch {} of the whisthg/whist repository on the AWS instance ...".format(
-            branch_name
+        "Cloning commit {} of the whisthg/whist repository on the AWS instance ...".format(
+            commit_hash
         )
     )
 
     # Retrieve whisthq/whist monorepo on the instance
     command = (
-        "rm -rf whist; git clone -b "
-        + branch_name
+        "rm -rf whist && git clone "
         + " https://"
         + github_token
-        + "@github.com/whisthq/whist.git | tee ~/github_log.log"
+        + "@github.com/whisthq/whist.git && cd whist && git checkout "
+        + commit_hash
+        + " && cd .. | tee ~/github_log.log"
     )
     pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
+    command = " | tee ~/github_log.log"
+    pexpect_process.sendline(command)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
     print("Finished downloading whisthq/whist on EC2 instance")
