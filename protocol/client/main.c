@@ -110,6 +110,9 @@ extern WhistMutex window_resize_mutex;  // protects pending_resize_message
 extern clock window_resize_timer;
 extern volatile bool pending_resize_message;
 
+// The state of the client, i.e. whether it's connected to a server or not
+extern volatile bool connected;
+
 extern volatile bool client_exiting;
 volatile int try_amount;
 

@@ -11,7 +11,6 @@ Includes
 */
 
 #include "renderer.h"
-#include "client_utils.h"
 #include "client_statistic.h"
 #include "sdl_event_handler.h"
 
@@ -22,6 +21,9 @@ Defines
 */
 
 #define LOG_RENDERER_THREAD_USAGE false
+
+// The state of the client, i.e. whether it's connected to a server or not
+extern volatile bool connected;
 
 /*
 ============================

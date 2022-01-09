@@ -27,9 +27,6 @@ Includes
 #define MAX_RECONNECTION_ATTEMPTS (10)
 #define IP_MAXLEN (31)
 
-// The state of the client, i.e. whether it's connected to a server or not
-extern volatile bool connected;
-
 /*
 ============================
 Custom Types
