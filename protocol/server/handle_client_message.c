@@ -114,8 +114,8 @@ int handle_client_message(whist_server_state *state, WhistClientMessage *wcmsg) 
             return handle_open_url_message(state, wcmsg);
         default:
             LOG_ERROR(
-                "Unknown WhistClientMessage Received. "
-                "(Type: %d). Failed to handle message from client.",
+                "Failed to handle message from client: Unknown WhistClientMessage Received. "
+                "(Type: %d).",
                 wcmsg->type);
             return -1;
     }
