@@ -322,7 +322,7 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
             } else {
                 // Here, the frame is older than where our renderer is,
                 // So we can just reset the undesired frame
-                LOG_ERROR(
+                LOG_WARNING(
                     "Trying to allocate Frame ID %d, but Frame ID %d has not been destroyed yet!",
                     packet->id, frame_data->id);
                 reset_frame(ring_buffer, frame_data);

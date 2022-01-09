@@ -112,20 +112,6 @@ void sig_handler(int sig_num) {
 }
 #endif
 
-void handle_whist_client_message(whist_server_state* state, WhistClientMessage* wcmsg) {
-    /*
-        Handles a Whist client message
-
-        Arguments:
-            wcmsg (WhistClientMessage*): the client message being handled
-            id (int): the client ID
-    */
-
-    if (handle_client_message(state, wcmsg) != 0) {
-        LOG_ERROR("Failed to handle message from client.");
-    }
-}
-
 // Gets all pending Whist UDP messages
 void get_whist_udp_client_messages(whist_server_state* state) {
     if (!state->client.is_active) {
@@ -137,7 +123,7 @@ void get_whist_udp_client_messages(whist_server_state* state) {
 
     // If received a UDP message
     if (try_get_next_message_udp(&state->client, &wcmsg, &wcmsg_size) == 0 && wcmsg_size != 0) {
-        handle_whist_client_message(state, &wcmsg);
+        handle_client_message(state, &wcmsg);
     }
 }
 
@@ -155,7 +141,7 @@ void get_whist_tcp_client_messages(whist_server_state* state) {
     if (tcp_packet) {
         WhistClientMessage* wcmsg = (WhistClientMessage*)tcp_packet->data;
         LOG_INFO("TCP Packet type: %d", wcmsg->type);
-        handle_whist_client_message(state, wcmsg);
+        handle_client_message(state, wcmsg);
         free_packet(&state->client.tcp_context, tcp_packet);
     }
 
