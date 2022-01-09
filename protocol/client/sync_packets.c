@@ -31,7 +31,7 @@ Includes
 // Updater variables
 extern SocketContext packet_udp_context;
 extern SocketContext packet_tcp_context;
-bool connected = true; // The state of the client, i.e. whether it's connected to a server or not
+bool connected = true;  // The state of the client, i.e. whether it's connected to a server or not
 // Ping variables
 clock last_ping_timer;
 volatile int last_udp_ping_id;
