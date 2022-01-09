@@ -150,14 +150,14 @@ enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* p
 
     for (const enum AVPixelFormat* p = pix_fmts; *p != -1; p++) {
         if (*p == match_pix_fmt) {
-            LOG_WARNING("Hardware format found: %s", av_get_pix_fmt_name(*p));
-            return *p;
+            LOG_INFO("Hardware format found, using format: %s", av_get_pix_fmt_name(*p));
+            return match_pix_fmt;
         }
     }
 
     // default to the first entry of pix_fmts if we couldn't find a match
     if (*pix_fmts != -1) {
-        LOG_WARNING("Hardware format not found, using format %s", av_get_pix_fmt_name(*pix_fmts));
+        LOG_WARNING("Hardware format not found, defaulting to using format: %s", av_get_pix_fmt_name(*pix_fmts));
         return *pix_fmts;
     }
 
