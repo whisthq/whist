@@ -175,6 +175,7 @@ def configure_aws_credentials(
             elif "aws_secret_access_key" in line:
                 aws_secret_access_key = line.strip().split()[2]
                 break
+        aws_credentials_file.close()
         if aws_access_key_id == "" or aws_secret_access_key == "":
             print(
                 "Could not parse AWS credentials from file at path {}!".format(
@@ -207,7 +208,6 @@ def configure_aws_credentials(
     pexpect_process.expect("Default output format")
     pexpect_process.sendline("")
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
-    aws_credentials_file.close()
 
 
 def clone_whist_repository_on_instance(
