@@ -1294,7 +1294,8 @@ static unsigned getTreeInflateDynamic(HuffmanTree* tree_ll, HuffmanTree* tree_d,
             if (reader->bp > reader->bitsize) {
                 /*return error code 10 or 11 depending on the situation that happened in
                 huffmanDecodeSymbol (10=no endcode, 11=wrong jump outside of tree)*/
-                /* LODEPNG_TODO: revise error codes 10,11,50: the above comment is no longer valid */
+                /* LODEPNG_TODO: revise error codes 10,11,50: the above comment is no longer valid
+                 */
                 ERROR_BREAK(50); /*error, bit pointer jumps past memory*/
             }
         }
@@ -1405,7 +1406,8 @@ static unsigned inflateHuffmanBlock(ucvector* out, LodePNGBitReader* reader, uns
         if (reader->bp > reader->bitsize) {
             /*return error code 10 or 11 depending on the situation that happened in
             huffmanDecodeSymbol (10=no endcode, 11=wrong jump outside of tree)*/
-            /* LODEPNG_TODO: revise error codes 10,11,50: the above comment is no longer valid */
+            /* LODEPNG_TODO: revise error codes 10,11,50: the above comment is no longer valid
+             */
             ERROR_BREAK(51); /*error, bit pointer jumps past memory*/
         }
         if (max_output_size && out->size > max_output_size) {
@@ -4563,8 +4565,8 @@ static unsigned postProcessScanlines(unsigned char* out, unsigned char* in, unsi
         for (i = 0; i != 7; ++i) {
             CERROR_TRY_RETURN(unfilter(&in[padded_passstart[i]], &in[filter_passstart[i]], passw[i],
                                        passh[i], bpp));
-            /*LODEPNG_TODO: possible efficiency improvement: if in this reduced image the bits fit nicely in
-            1 scanline, move bytes instead of bits or move not at all*/
+            /*LODEPNG_TODO: possible efficiency improvement: if in this reduced image the bits fit
+            nicely in 1 scanline, move bytes instead of bits or move not at all*/
             if (bpp < 8) {
                 /*remove padding bits in scanlines; after this there still may be padding
                 bits between the different reduced images: each reduced image still starts nicely at
@@ -5217,8 +5219,9 @@ unsigned lodepng_decode(unsigned char** out, unsigned* w, unsigned* h, LodePNGSt
         unsigned char* data = *out;
         size_t outsize;
 
-        /*LODEPNG_TODO: check if this works according to the statement in the documentation: "The converter
-        can convert from grayscale input color type, to 8-bit grayscale or grayscale with alpha"*/
+        /*LODEPNG_TODO: check if this works according to the statement in the documentation: "The
+        converter can convert from grayscale input color type, to 8-bit grayscale or grayscale 
+        with alpha"*/
         if (!(state->info_raw.colortype == LCT_RGB || state->info_raw.colortype == LCT_RGBA) &&
             !(state->info_raw.bitdepth == 8)) {
             return 56; /*unsupported color mode conversion*/
