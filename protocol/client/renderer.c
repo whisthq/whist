@@ -28,7 +28,7 @@ Variables
 ============================
 */
 
-bool connected = true;
+extern bool connected = true;
 
 /*
 ============================

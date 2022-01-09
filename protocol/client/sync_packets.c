@@ -31,7 +31,7 @@ Includes
 // Updater variables
 extern SocketContext packet_udp_context;
 extern SocketContext packet_tcp_context;
-bool connected = true;
+extern bool connected = true;
 // Ping variables
 clock last_ping_timer;
 volatile int last_udp_ping_id;
