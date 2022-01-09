@@ -25,23 +25,26 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     apt-transport-https \
     ca-certificates \
     gnupg \
+    software-properties-common \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Cmake repository from Kitware, and update apt source list to recognize it locally
 RUN APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 \ 
-    wget -qO - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add - \
-    && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main' \
-    && apt-get update \
+    wget -qO - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add -
+    
+RUN apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
+
+RUN apt-get update \
     && apt-get autoremove -y \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && dpkg --configure -a && apt-get install --allow-downgrades --no-install-recommends -y -f
+    && rm -rf /var/lib/apt/lists/*
 
-# Install build tools and `docs` target dependencies
+RUN dpkg --configure -a && apt-get install --allow-downgrades --no-install-recommends -y -f
+
+# Install build tools & `docs` target dependencies
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
-    # Build tools
+    # build tools
     make \
     gcc \
     g++ \
