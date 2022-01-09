@@ -42,6 +42,5 @@ sudo chmod 0600 -R /var/log/whist/
 
 # This installs whist service
 echo "Start Pam Systemd Process for User whist"
-export WHIST_UID
-WHIST_UID="$(id -u whist)"
+export WHIST_UID="$(id -u whist)"
 systemctl start "user@$WHIST_UID"

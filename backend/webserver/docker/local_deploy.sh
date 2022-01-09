@@ -53,16 +53,13 @@ if [ $USE_DEV_DB == true ]; then
 
 else
   # eph db configurations
-  export POSTGRES_HOST
-  export POSTGRES_PORT
-  POSTGRES_HOST="localhost"
-  POSTGRES_PORT="9999"
+  export POSTGRES_HOST="localhost"
+  export POSTGRES_PORT="9999"
 
   # POSTGRES_USER and POSTGRES_DB will be created in the db a few steps down with ../ephemeral_db_setup/db_setup.sh
   # since this is run in a docker container, the @postgres_db allows our web container
   # to talk to the postgres_db container. Our docker-compose sets up this container networking.
-  export DATABASE_URL
-  DATABASE_URL=postgres://${POSTGRES_USER}@postgres_db/${POSTGRES_DB}
+  export DATABASE_URL=postgres://${POSTGRES_USER}@postgres_db/${POSTGRES_DB}
 
   # launch images with ephemeral db
   APP_GIT_BRANCH=$BRANCH APP_GIT_COMMIT=$COMMIT docker-compose up -d --build
