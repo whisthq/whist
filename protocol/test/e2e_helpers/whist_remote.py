@@ -260,7 +260,7 @@ def server_setup_process(args_dict):
     )
 
     # 3- Build the protocol server
-    build_server_on_instance(hs_process, pexpect_prompt_server, cmake_build_type)
+    build_server_on_instance(hs_process, pexpect_prompt_server, cmake_build_type, running_in_ci)
 
     hs_process.kill(0)
 
@@ -335,7 +335,7 @@ def client_setup_process(args_dict):
         client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
     )
     build_client_on_instance(
-        client_pexpect_process, pexpect_prompt_client, testing_time, cmake_build_type
+        client_pexpect_process, pexpect_prompt_client, testing_time, cmake_build_type, running_in_ci
     )
     client_pexpect_process.kill(0)
 
