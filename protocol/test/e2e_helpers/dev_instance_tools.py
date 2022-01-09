@@ -55,26 +55,26 @@ def attempt_ssh_connection(
     exit()
 
 
-def wait_until_cmd_done(pexpect_process, pexpect_prompt, current_platform):
+def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci):
     """
     Wait until the currently-running command on a remote machine finishes its execution on the shell monitored to by a pexpect process.
 
     Args:
         pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process monitoring the execution of the process on the remote machine
         pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a new command
-        current_platform (str): The platform where this script is running on
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         None
     """
     pexpect_process.expect(pexpect_prompt)
     # On a SSH connection, the prompt is printed two times on Mac (because of some obscure reason related to encoding and/or color printing on terminal)
-    if platform.system() == "Darwin":
+    if not running_in_ci:
         pexpect_process.expect(pexpect_prompt)
 
 
 def reboot_instance(
-    pexpect_process, ssh_cmd, timeout_value, log_file_handle, pexpect_prompt, retries
+    pexpect_process, ssh_cmd, timeout_value, log_file_handle, pexpect_prompt, retries, running_in_ci
 ):
     """
     Reboot a remote machine and establish a new SSH connection after the machine comes back up.
@@ -86,12 +86,13 @@ def reboot_instance(
         log_file_handle (file object): The file (already opened) to use for logging the terminal output from the remote machine
         pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
         retries (int): Maximum number of attempts before giving up on gaining a new SSH connection after rebooting the remote machine.
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
     Returns:
         None
     """
 
     pexpect_process.sendline(" ")
-    wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
     pexpect_process.sendline("sudo reboot")
     pexpect_process.kill(0)
     time.sleep(5)
@@ -102,7 +103,7 @@ def reboot_instance(
     return pexpect_process
 
 
-def apply_dpkg_locking_fixup(pexpect_process, pexpect_prompt):
+def apply_dpkg_locking_fixup(pexpect_process, pexpect_prompt, running_in_ci):
     """
     Prevent dpkg locking issues such as the following one:
     - E: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 2392 (apt-get)
@@ -112,6 +113,7 @@ def apply_dpkg_locking_fixup(pexpect_process, pexpect_prompt):
     Args:
         pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
         pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
     Returns:
         None
     """
@@ -129,11 +131,11 @@ def apply_dpkg_locking_fixup(pexpect_process, pexpect_prompt):
     ]
     for command in dpkg_commands:
         pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
 
 def configure_aws_credentials(
-    pexpect_process, pexpect_prompt, aws_credentials_filepath="~/.aws/credentials"
+    pexpect_process, pexpect_prompt, running_in_ci, aws_credentials_filepath="~/.aws/credentials"
 ):
     """
     Configure AWS credentials on a remote machine by copying them from the ones configures on the machine where this script is being run.
@@ -141,6 +143,7 @@ def configure_aws_credentials(
     Args:
         pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
         pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
         aws_credentials_filepath(str): The path to the file where AWS stores the credentials on the machine where this script is run
     Returns:
         None
@@ -154,33 +157,44 @@ def configure_aws_credentials(
         )
         return
 
-    aws_credentials_file = open(aws_credentials_filepath_expanded, "r")
     aws_access_key_id = ""
     aws_secret_access_key = ""
-    for line in aws_credentials_file.readlines():
-        if "aws_access_key_id" in line:
-            aws_access_key_id = line.strip().split()[2]
-        elif "aws_secret_access_key" in line:
-            aws_secret_access_key = line.strip().split()[2]
-            break
-    if aws_access_key_id == "" or aws_secret_access_key == "":
-        print(
-            "Could not parse AWS credentials from file at path {}!".format(aws_credentials_filepath)
-        )
-        return
+
+    if running_in_ci:
+        # In CI, the aws credentials are stored in env variables instead of a file on disk
+        aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
+        aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+        if aws_access_key_id == None or aws_secret_access_key == None:
+            return
+    else:
+        aws_credentials_file = open(aws_credentials_filepath_expanded, "r")
+        for line in aws_credentials_file.readlines():
+            if "aws_access_key_id" in line:
+                aws_access_key_id = line.strip().split()[2]
+            elif "aws_secret_access_key" in line:
+                aws_secret_access_key = line.strip().split()[2]
+                break
+        if aws_access_key_id == "" or aws_secret_access_key == "":
+            print(
+                "Could not parse AWS credentials from file at path {}!".format(
+                    aws_credentials_filepath
+                )
+            )
+            return
+
     pexpect_process.sendline("sudo apt-get update")
     result = pexpect_process.expect(["Do you want to continue?", pexpect_prompt])
     if result == 0:
         pexpect_process.sendline("Y")
-        wait_until_cmd_done(pexpect_process, pexpect_prompt)
-    elif platform.system() == "Darwin":
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    elif not running_in_ci:
         pexpect_process.expect(pexpect_prompt)
     pexpect_process.sendline("sudo apt-get install awscli")
     result = pexpect_process.expect(["Do you want to continue?", pexpect_prompt])
     if result == 0:
         pexpect_process.sendline("Y")
-        wait_until_cmd_done(pexpect_process, pexpect_prompt)
-    elif platform.system() == "Darwin":
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    elif not running_in_ci:
         pexpect_process.expect(pexpect_prompt)
     pexpect_process.sendline("aws configure")
     pexpect_process.expect("AWS Access Key ID")
@@ -191,11 +205,13 @@ def configure_aws_credentials(
     pexpect_process.sendline("")
     pexpect_process.expect("Default output format")
     pexpect_process.sendline("")
-    wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
     aws_credentials_file.close()
 
 
-def clone_whist_repository_on_instance(github_token, pexpect_process, pexpect_prompt):
+def clone_whist_repository_on_instance(
+    github_token, pexpect_process, pexpect_prompt, running_in_ci
+):
     """
     Clone the Whist repository on a remote machine, and check out the same branch used locally on the machine where this script is run.
 
@@ -203,6 +219,7 @@ def clone_whist_repository_on_instance(github_token, pexpect_process, pexpect_pr
         github_token (str): The secret token to use to access the Whist private repository on GitHub
         pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
         pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
     Returns:
         None
     """
@@ -233,5 +250,5 @@ def clone_whist_repository_on_instance(github_token, pexpect_process, pexpect_pr
         + "@github.com/whisthq/whist.git | tee ~/github_log.log"
     )
     pexpect_process.sendline(command)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
     print("Finished downloading whisthq/whist on EC2 instance")

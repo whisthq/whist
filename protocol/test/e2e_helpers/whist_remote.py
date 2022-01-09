@@ -15,7 +15,9 @@ from dev_instance_tools import (
 )
 
 
-def run_host_setup_on_instance(pexpect_process, pexpect_prompt, ssh_cmd, timeout_value, logfile):
+def run_host_setup_on_instance(
+    pexpect_process, pexpect_prompt, ssh_cmd, timeout_value, logfile, running_in_ci
+):
     """
     Run Whist's host setup on a remote machine accessible via a SSH connection within a pexpect process.
 
@@ -27,6 +29,7 @@ def run_host_setup_on_instance(pexpect_process, pexpect_prompt, ssh_cmd, timeout
         ssh_cmd (str): The shell command to use to establish a SSH connection to the remote machine. This is used if we need to reboot the machine.
         timeout_value (int): The amount of time to wait before timing out the attemps to gain a SSH connection to the remote machine.
         logfile (file object): The file (already opened) to use for logging the terminal output from the remote machine
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process to be used from now on to interact with the remote machine. This is equal to the first argument if a reboot of the remote machine was not needed.
@@ -45,10 +48,10 @@ def run_host_setup_on_instance(pexpect_process, pexpect_prompt, ssh_cmd, timeout
             "Running into severe locking issues (happens frequently), rebooting the instance and trying again!"
         )
         pexpect_process = reboot_instance(
-            pexpect_process, ssh_cmd, timeout_value, logfile, pexpect_prompt, 5
+            pexpect_process, ssh_cmd, timeout_value, logfile, pexpect_prompt, 5, running_in_ci
         )
         pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
     print("Finished running the host setup script on the EC2 instance")
     return pexpect_process
@@ -72,7 +75,7 @@ def start_host_service_on_instance(pexpect_process):
     print("Host service is ready!")
 
 
-def build_server_on_instance(pexpect_process, pexpect_prompt, cmake_build_type):
+def build_server_on_instance(pexpect_process, pexpect_prompt, cmake_build_type, running_in_ci):
     """
     Build the Whist server (browsers/chrome mandelbox) on a remote machine accessible via a SSH connection within a pexpect process.
 
@@ -82,6 +85,7 @@ def build_server_on_instance(pexpect_process, pexpect_prompt, cmake_build_type):
         pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
         pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
         cmake_build_type (str): A string identifying whether to build the protocol in release, debug, metrics, or any other Cmake build mode that will be introduced later.
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     """
     print("Building the server mandelbox in {} mode ...".format(cmake_build_type))
@@ -89,7 +93,7 @@ def build_server_on_instance(pexpect_process, pexpect_prompt, cmake_build_type):
         cmake_build_type
     )
     pexpect_process.sendline(command)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
     print("Finished building the browsers/chrome (server) mandelbox on the EC2 instance")
 
 
@@ -136,7 +140,9 @@ def run_server_on_instance(pexpect_process):
     return server_docker_id, json_data
 
 
-def build_client_on_instance(pexpect_process, pexpect_prompt, testing_time, cmake_build_type):
+def build_client_on_instance(
+    pexpect_process, pexpect_prompt, testing_time, cmake_build_type, running_in_ci
+):
     """
     Build the Whist protocol client (development/client mandelbox) on a remote machine accessible via a SSH connection within a pexpect process.
 
@@ -147,6 +153,7 @@ def build_client_on_instance(pexpect_process, pexpect_prompt, testing_time, cmak
         pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
         testing_time(int): The amount of time to leave the connection open between the client and the server (when the client is started) before shutting it down
         cmake_build_type (str): A string identifying whether to build the protocol in release, debug, metrics, or any other Cmake build mode that will be introduced later.
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     """
     # Edit the run-whist-client.sh to make the client quit after the experiment is over
@@ -155,14 +162,14 @@ def build_client_on_instance(pexpect_process, pexpect_prompt, testing_time, cmak
         testing_time
     )
     pexpect_process.sendline(command)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
     print("Building the dev client mandelbox in {} mode ...".format(cmake_build_type))
     command = "cd ~/whist/mandelboxes && ./build.sh development/client --{} | tee ~/client_mandelbox_build.log".format(
         cmake_build_type
     )
     pexpect_process.sendline(command)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
     print("Finished building the dev client mandelbox on the EC2 instance")
 
 
@@ -218,6 +225,7 @@ def server_setup_process(args_dict):
     github_token = args_dict["github_token"]
     aws_credentials_filepath = args_dict["aws_credentials_filepath"]
     cmake_build_type = args_dict["cmake_build_type"]
+    running_in_ci = args_dict["running_in_ci"]
 
     server_log = open(server_log_filepath, "w")
 
@@ -227,24 +235,28 @@ def server_setup_process(args_dict):
     hs_process = attempt_ssh_connection(
         server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5
     )
-    if platform.system() == "Darwin":
+    if not running_in_ci:
         hs_process.expect(pexpect_prompt_server)
 
     print("Configuring AWS credentials on server instance...")
-    configure_aws_credentials(hs_process, pexpect_prompt_server, aws_credentials_filepath)
+    configure_aws_credentials(
+        hs_process, pexpect_prompt_server, running_in_ci, aws_credentials_filepath
+    )
 
-    clone_whist_repository_on_instance(github_token, hs_process, pexpect_prompt_server)
-    apply_dpkg_locking_fixup(hs_process, pexpect_prompt_server)
+    clone_whist_repository_on_instance(
+        github_token, hs_process, pexpect_prompt_server, running_in_ci
+    )
+    apply_dpkg_locking_fixup(hs_process, pexpect_prompt_server, running_in_ci)
 
     # 1- run host-setup
     hs_process = run_host_setup_on_instance(
-        hs_process, pexpect_prompt_server, server_cmd, aws_timeout, server_log
+        hs_process, pexpect_prompt_server, server_cmd, aws_timeout, server_log, running_in_ci
     )
 
     # 2- reboot and wait for it to come back up
     print("Rebooting the server EC2 instance (required after running the host setup)...")
     hs_process = reboot_instance(
-        hs_process, server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5
+        hs_process, server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5, running_in_ci
     )
 
     # 3- Build the protocol server
@@ -280,6 +292,7 @@ def client_setup_process(args_dict):
     testing_time = args_dict["testing_time"]
     aws_credentials_filepath = args_dict["aws_credentials_filepath"]
     cmake_build_type = args_dict["cmake_build_type"]
+    running_in_ci = args_dict["running_in_ci"]
 
     client_log = open(client_log_filepath, "w")
 
@@ -291,23 +304,27 @@ def client_setup_process(args_dict):
         hs_process = attempt_ssh_connection(
             client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
         )
-        if platform.system() == "Darwin":
+        if not running_in_ci:
             hs_process.expect(pexpect_prompt_client)
         print("Configuring AWS credentials on client instance...")
-        configure_aws_credentials(hs_process, pexpect_prompt_client, aws_credentials_filepath)
+        configure_aws_credentials(
+            hs_process, pexpect_prompt_client, running_in_ci, aws_credentials_filepath
+        )
 
-        clone_whist_repository_on_instance(github_token, hs_process, pexpect_prompt_client)
-        apply_dpkg_locking_fixup(hs_process, pexpect_prompt_client)
+        clone_whist_repository_on_instance(
+            github_token, hs_process, pexpect_prompt_client, running_in_ci
+        )
+        apply_dpkg_locking_fixup(hs_process, pexpect_prompt_client, running_in_ci)
 
         # 1- run host-setup
         hs_process = run_host_setup_on_instance(
-            hs_process, pexpect_prompt_client, client_cmd, aws_timeout, client_log
+            hs_process, pexpect_prompt_client, client_cmd, aws_timeout, client_log, running_in_ci
         )
 
         # 2- reboot and wait for it to come back up
         print("Rebooting the server EC2 instance (required after running the host setup)...")
         hs_process = reboot_instance(
-            hs_process, client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
+            hs_process, client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5, running_in_ci
         )
 
         hs_process.kill(0)

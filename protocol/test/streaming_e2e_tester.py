@@ -66,6 +66,14 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--running-in-ci",
+    help="Whether the script is being run by a Github action/workflow.",
+    type=str,
+    choices=["false", "true"],
+    default="false",
+)
+
+parser.add_argument(
     "--region-name",
     help="The AWS region to use for testing",
     type=str,
@@ -155,6 +163,7 @@ if __name__ == "__main__":
     ssh_key_name = args.ssh_key_name  # In CI, this is "protocol_performance_testing_sshkey"
     ssh_key_path = args.ssh_key_path
     github_token = args.github_token  # The PAT allowing us to fetch code from GitHub
+    running_in_ci = True if args.running_in_ci == "true" else False
     testing_url = args.testing_url
     testing_time = args.testing_time
     region_name = args.region_name
@@ -237,6 +246,7 @@ if __name__ == "__main__":
     args_dict["testing_time"] = testing_time
     args_dict["aws_credentials_filepath"] = aws_credentials_filepath
     args_dict["cmake_build_type"] = args.cmake_build_type
+    args_dict["running_in_ci"] = running_in_ci
 
     # If using two instances, parallelize the host-setup and building of the docker containers to save time
     p1 = multiprocessing.Process(target=server_setup_process, args=[args_dict])
@@ -297,7 +307,7 @@ if __name__ == "__main__":
     log_grabber_server_process = attempt_ssh_connection(
         server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5
     )
-    if platform.system() == "Darwin":
+    if not running_in_ci:
         log_grabber_server_process.expect(pexpect_prompt_server)
 
     log_grabber_client_process = log_grabber_server_process
@@ -305,7 +315,7 @@ if __name__ == "__main__":
         log_grabber_client_process = attempt_ssh_connection(
             client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
         )
-        if platform.system() == "Darwin":
+        if not running_in_ci:
             log_grabber_client_process.expect(pexpect_prompt_client)
 
     extract_server_logs_from_instance(
@@ -318,6 +328,7 @@ if __name__ == "__main__":
         aws_timeout,
         perf_logs_folder_name,
         server_log,
+        running_in_ci,
     )
     extract_client_logs_from_instance(
         log_grabber_client_process,
@@ -329,23 +340,24 @@ if __name__ == "__main__":
         aws_timeout,
         perf_logs_folder_name,
         client_log,
+        running_in_ci,
     )
 
     # Clean up the instance(s)
     # Exit the server/client mandelboxes
     server_pexpect_process.sendline("exit")
-    wait_until_cmd_done(server_pexpect_process, pexpect_prompt_server)
+    wait_until_cmd_done(server_pexpect_process, pexpect_prompt_server, running_in_ci)
     client_pexpect_process.sendline("exit")
-    wait_until_cmd_done(client_pexpect_process, pexpect_prompt_client)
+    wait_until_cmd_done(client_pexpect_process, pexpect_prompt_client, running_in_ci)
 
     # Delete all Docker containers
 
     command = "docker stop $(docker ps -aq) && docker rm $(docker ps -aq)"
     server_pexpect_process.sendline(command)
-    wait_until_cmd_done(server_pexpect_process, pexpect_prompt_server)
+    wait_until_cmd_done(server_pexpect_process, pexpect_prompt_server, running_in_ci)
     if use_two_instances:
         client_pexpect_process.sendline(command)
-        wait_until_cmd_done(client_pexpect_process, pexpect_prompt_client)
+        wait_until_cmd_done(client_pexpect_process, pexpect_prompt_client, running_in_ci)
 
     # Terminate the host service
     server_hs_process.sendcontrol("c")

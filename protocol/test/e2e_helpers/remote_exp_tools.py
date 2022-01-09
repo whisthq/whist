@@ -18,6 +18,7 @@ def extract_server_logs_from_instance(
     timeout_value,
     perf_logs_folder_name,
     log_grabber_log,
+    running_in_ci,
 ):
     """
     Extract the logs related to the run of the Whist server mandelbox (browsers/chrome) on a remote machine. This should be called after the client/server connection has terminated, but before the server container is stopped/destroyed.
@@ -32,6 +33,7 @@ def extract_server_logs_from_instance(
         timeout_value (int): The amount of time to wait before timing out the attemps to gain a SSH connection to the remote machine.
         perf_logs_folder_name (str): The path to the folder (on the machine where this script is run) where to store the logs
         log_grabber_log (file object): The file (already opened) to use for logging the terminal output from the shell process used to download the logs
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Return:
         None
@@ -39,7 +41,7 @@ def extract_server_logs_from_instance(
     """
     command = "rm -rf ~/perf_logs/server; mkdir -p ~/perf_logs/server"
     pexpect_process.sendline(command)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
     server_logfiles = [
         "/usr/share/whist/server.log",
@@ -60,7 +62,7 @@ def extract_server_logs_from_instance(
     for server_file_path in server_logfiles:
         command = "docker cp {}:{} ~/perf_logs/server/".format(server_docker_id, server_file_path)
         pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
     # Download all the logs from the AWS machine
     command = "scp -r -i {} {}@{}:~/perf_logs/server {}".format(
@@ -82,6 +84,7 @@ def extract_client_logs_from_instance(
     timeout_value,
     perf_logs_folder_name,
     log_grabber_log,
+    running_in_ci,
 ):
     """
     Extract the logs related to the run of the Whist dev client (development/client) on a remote machine. This should be called after the client/server connection has terminated, but before the dev client container is stopped/destroyed.
@@ -96,6 +99,7 @@ def extract_client_logs_from_instance(
         timeout_value (int): The amount of time to wait before timing out the attemps to gain a SSH connection to the remote machine.
         perf_logs_folder_name (str): The path to the folder (on the machine where this script is run) where to store the logs
         log_grabber_log (file object): The file (already opened) to use for logging the terminal output from the shell process used to download the logs
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Return:
         None
@@ -103,7 +107,7 @@ def extract_client_logs_from_instance(
     """
     command = "rm -rf ~/perf_logs/client; mkdir -p ~/perf_logs/client"
     pexpect_process.sendline(command)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
     client_logfiles = [
         "/usr/share/whist/client.log",
@@ -123,7 +127,7 @@ def extract_client_logs_from_instance(
     for client_file_path in client_logfiles:
         command = "docker cp {}:{} ~/perf_logs/client/".format(client_docker_id, client_file_path)
         pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
     # Download all the logs from the AWS machine
     command = "scp -r -i {} {}@{}:~/perf_logs/client {}".format(
