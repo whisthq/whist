@@ -147,7 +147,8 @@ void init_file_synchronizer(FileTransferType requested_actions) {
 
     if (is_initialized) {
         LOG_WARNING(
-            "Tried to init_file_synchronizer, but the file synchronizer is already initialized, probably because we're attempting a reconnection.");
+            "Tried to init_file_synchronizer, but the file synchronizer is already initialized, "
+            "probably because we're attempting a reconnection.");
         return;
     }
 

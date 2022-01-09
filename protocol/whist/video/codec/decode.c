@@ -157,7 +157,8 @@ enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* p
 
     // default to the first entry of pix_fmts if we couldn't find a match
     if (*pix_fmts != -1) {
-        LOG_WARNING("Hardware format not found, defaulting to using format: %s", av_get_pix_fmt_name(*pix_fmts));
+        LOG_WARNING("Hardware format not found, defaulting to using format: %s",
+                    av_get_pix_fmt_name(*pix_fmts));
         return *pix_fmts;
     }
 

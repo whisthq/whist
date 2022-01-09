@@ -436,8 +436,10 @@ bool confirm_private_key(PrivateKeyData* our_priv_key_data,
             }
         }
     } else {
-        LOG_ERROR("Could not confirmPrivateKey: Recv Size was not equal to PrivateKeyData: %d instead of %d", recv_size,
-                  sizeof(PrivateKeyData));
+        LOG_ERROR(
+            "Could not confirmPrivateKey: Recv Size was not equal to PrivateKeyData: %d instead of "
+            "%d",
+            recv_size, sizeof(PrivateKeyData));
         return false;
     }
 }
