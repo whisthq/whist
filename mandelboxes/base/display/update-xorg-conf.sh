@@ -6,9 +6,9 @@
 
 # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
 SENTRY_ENV_FILENAME=/usr/share/whist/private/sentry_env
-case $(cat $SENTRY_ENV_FILENAME) in
+case "$(cat $SENTRY_ENV_FILENAME)" in
   dev|staging|prod)
-    export SENTRY_ENVIRONMENT=${SENTRY_ENV}
+    export SENTRY_ENVIRONMENT="${SENTRY_ENV}"
     eval "$(sentry-cli bash-hook)"
     ;;
   *)
@@ -21,13 +21,13 @@ set -Eeuo pipefail
 # Retrieve mandelbox parameters
 WHIST_MAPPINGS_DIR=/whist/resourceMappings
 GPU_INDEX_FILENAME=gpu_index
-GPU_INDEX=$(cat $WHIST_MAPPINGS_DIR/$GPU_INDEX_FILENAME)
+GPU_INDEX="$(cat $WHIST_MAPPINGS_DIR/$GPU_INDEX_FILENAME)"
 
 echo "Using GPU Index ${GPU_INDEX}"
 
 # Retrieve the Whist NVIDIA display config
 XCONFIG="/usr/share/X11/xorg.conf.d/01-whist-display.conf"
-if [ ! -f ${XCONFIG} ]; then
+if [ ! -f "${XCONFIG}" ]; then
   echo "Xconfig at location ${XCONFIG} not found (or is not a file)"
   exit 1
 fi
@@ -55,17 +55,17 @@ fi
 
 # Loop through files /dev/input/eventN to determine which correspond to which device
 for filename in /dev/input/event*; do
-  name=$(udevadm info -a $filename | grep 'ATTRS{name}' | sed 's/^\s*ATTRS{name}=="\(.*\)"/\1/')
+  name="$(udevadm info -a $filename | grep 'ATTRS{name}' | sed 's/^\s*ATTRS{name}=="\(.*\)"/\1/')"
   if [[ $name == 'Whist Virtual Absolute Input' ]]; then
     echo "Found device file $filename=$name"
-    sed -i "s~ABSOLUTE_INPUT_DEVICE~$filename~g" ${XCONFIG}
+    sed -i "s~ABSOLUTE_INPUT_DEVICE~$filename~g" "${XCONFIG}"
   fi
   if [[ $name == 'Whist Virtual Relative Input' ]]; then
     echo "Found device file $filename=$name"
-    sed -i "s~RELATIVE_INPUT_DEVICE~$filename~g" ${XCONFIG}
+    sed -i "s~RELATIVE_INPUT_DEVICE~$filename~g" "${XCONFIG}"
   fi
   if [[ $name == 'Whist Virtual Keyboard' ]]; then
     echo "Found device file $filename=$name"
-    sed -i "s~KEYBOARD_DEVICE~$filename~g" ${XCONFIG}
+    sed -i "s~KEYBOARD_DEVICE~$filename~g" "${XCONFIG}"
   fi
 done

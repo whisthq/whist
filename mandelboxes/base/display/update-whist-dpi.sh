@@ -23,7 +23,7 @@ set -Eeuo pipefail
 # 96 is a reasonable default, but Macbooks these days
 # default to 192, so this is a hack until JSON transport
 # is ready!
-WHIST_DPI=${1:-192}
+WHIST_DPI="${1:-192}"
 WHIST_DPI_CACHE_FILE=/usr/share/whist/dpi.cache
 
 # Don't do anything if the DPI didn't change!

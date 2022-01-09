@@ -8,8 +8,9 @@
 
 # exit on error
 set -Eeuo pipefail
-BRANCH=$(git branch --show-current)
-COMMIT=$(git rev-parse --short HEAD)
+BRANCH="$(git branch --show-current)"
+COMMIT="$(git rev-parse --short HEAD)"
+
 # Retrieve relative subfolder path
 # https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -39,15 +40,15 @@ if [ ! -f .env ]; then
 fi
 
 # add env vars to current env. these tell us the host, db, role, pwd
-export $(cat .env | xargs)
+export "$(cat .env | xargs)"
 
 export AWS_INSTANCE_TYPE_TO_LAUNCH="g4dn.2xlarge"
 
-if [ $USE_DEV_DB == true ]; then
-  export DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}/${POSTGRES_DB}
+if [ "$USE_DEV_DB" == true ]; then
+  export DATABASE_URL=postgres://"${POSTGRES_USER}":"${POSTGRES_PASSWORD}"@"${POSTGRES_HOST}"/"${POSTGRES_DB}"
 
   # launch all images but dev db
-  APP_GIT_BRANCH=$BRANCH APP_GIT_COMMIT=$COMMIT docker-compose up --build -d web # don't spin up postgres_db
+  APP_GIT_BRANCH="$BRANCH" APP_GIT_COMMIT="$COMMIT" docker-compose up --build -d web # don't spin up postgres_db
 
 else
   # eph db configurations
@@ -57,10 +58,10 @@ else
   # POSTGRES_USER and POSTGRES_DB will be created in the db a few steps down with ../ephemeral_db_setup/db_setup.sh
   # since this is run in a docker container, the @postgres_db allows our web container
   # to talk to the postgres_db container. Our docker-compose sets up this container networking.
-  export DATABASE_URL=postgres://${POSTGRES_USER}@postgres_db/${POSTGRES_DB}
+  export DATABASE_URL=postgres://"${POSTGRES_USER}"@postgres_db/"${POSTGRES_DB}"
 
   # launch images with ephemeral db
-  APP_GIT_BRANCH=$BRANCH APP_GIT_COMMIT=$COMMIT docker-compose up -d --build
+  APP_GIT_BRANCH="$BRANCH" APP_GIT_COMMIT="$COMMIT" docker-compose up -d --build
 
   # let ephemeral db prepare. Check connections using psql.
   echo "Trying to connect to local db..."

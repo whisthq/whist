@@ -19,10 +19,10 @@ fi
 
 # check if db has already been created. this happens in CI and review app contexts.
 # in this case, we simply need to apply the schema and data to the ephemeral db.
-DB_EXISTS=${DB_EXISTS:=false} # default: false
-if [ $DB_EXISTS == true ]; then
+DB_EXISTS="${DB_EXISTS:=false}" # default: false
+if [ "$DB_EXISTS" == true ]; then
   # setup ephemeral db
-  export POSTGRES_URI=$POSTGRES_DEST_URI
+  export POSTGRES_URI="$POSTGRES_DEST_URI"
   # db itself was already created by Heroku; we just need to apply schema and insert data
   export DB_EXISTS=true
   bash ../../ephemeral_db_setup/db_setup.sh
@@ -43,12 +43,12 @@ if [ ! -f "../../docker/.env" ]; then
 fi
 
 # load env vars, namely (POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB)
-export $(cat ../../docker/.env | xargs)
+export "$(cat ../../docker/.env | xargs)"
 
-BRANCH=$(git branch --show-current)
-COMMIT=$(git rev-parse --short HEAD)
+BRANCH="$(git branch --show-current)"
+COMMIT="$(git rev-parse --short HEAD)"
 
-GIT_APP_BRANCH=$BRANCH GIT_APP_COMMIT=$COMMIT docker-compose up -d --build
+GIT_APP_BRANCH="$BRANCH" GIT_APP_COMMIT="$COMMIT" docker-compose up -d --build
 
 # local testing uses localhost db. override POSTGRES_HOST and set POSTGRES_PORT.
 export POSTGRES_HOST="localhost"

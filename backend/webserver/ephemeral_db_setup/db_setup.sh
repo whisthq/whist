@@ -19,8 +19,8 @@ cd "$DIR"
 
 # check if the user is already initialized. this happens in CI and during review apps.
 # if so, POSTGRES_URI should be provided
-DB_EXISTS=${DB_EXISTS:=false} # default: false
-if [ $DB_EXISTS == true ]; then
+DB_EXISTS="${DB_EXISTS:=false}" # default: false
+if [ "$DB_EXISTS" == true ]; then
   # copy schema
   psql -d "$POSTGRES_URI" -f ../db_migration/schema.sql
 
@@ -43,7 +43,7 @@ cmds="CREATE ROLE $POSTGRES_USER WITH LOGIN CREATEDB;\q"
 psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U postgres -d postgres <<< "$cmds"
 
 # Get rid of 0 width spaces.
-POSTGRES_DB=$( (echo $POSTGRES_DB) | sed $'s/[^[:print:]\t]//g')
+POSTGRES_DB="$( (echo $POSTGRES_DB) | sed $'s/[^[:print:]\t]//g')"
 
 cmds="CREATE DATABASE $POSTGRES_DB;\q"
 psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d postgres <<< "$cmds"

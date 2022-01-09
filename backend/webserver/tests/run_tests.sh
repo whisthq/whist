@@ -10,16 +10,16 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd "$DIR"
 
 # if in CI, run setup tests and set env vars
-IN_CI=${CI:=false} # default: false
-if [ $IN_CI == true ]; then
+IN_CI="${CI:=false}" # default: false
+if [ "$IN_CI" == true ]; then
   # these are needed to migrate schema/data
-  export POSTGRES_SOURCE_URI=$DATABASE_URL # set in config vars on Heroku
-  export POSTGRES_DEST_URI=$POSTGRES_EPHEMERAL_DB_URL # set in app.json, _URL appended by Heroku
+  export POSTGRES_SOURCE_URI="$DATABASE_URL" # set in config vars on Heroku
+  export POSTGRES_DEST_URI="$POSTGRES_EPHEMERAL_DB_URL" # set in app.json, _URL appended by Heroku
   export DB_EXISTS=true # Heroku has created the db
   # this sets up the local db to look like the remote db
   bash setup/setup_tests.sh
   # override DATABASE_URL to the ephemeral db
-  export DATABASE_URL=$POSTGRES_DEST_URI
+  export DATABASE_URL="$POSTGRES_DEST_URI"
 else
   echo "=== Make sure to run tests/setup/setup_tests.sh once prior to this ==="
 
@@ -35,7 +35,7 @@ else
 
   # we use the remote user and remote db to make ephemeral db look as close to dev as possible
   # but of course, host and port are local
-  export DATABASE_URL=postgres://${POSTGRES_USER}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+  export DATABASE_URL=postgres://"${POSTGRES_USER}"@"${POSTGRES_HOST}":"${POSTGRES_PORT}"/"${POSTGRES_DB}"
 fi
 
 # regardless of in CI or local tests, we set this variable
@@ -46,7 +46,7 @@ cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report xml --cov=.
 
 # pass args to pytest, including Codecov flags for relevant webserver folders, and ignore the scripts/
 # folder as it is irrelevant to unit/integration testing
-(cd .. && pytest --ignore=scripts/ $cov "$@")
+(cd .. && pytest --ignore=scripts/ "$cov" "$@")
 
 # Download the Codecov uploader
 (cd .. && curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov)
