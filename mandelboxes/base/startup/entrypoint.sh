@@ -15,8 +15,7 @@ fi
 # Enable Sentry bash error handler, this will `set -e` and catch errors in a bash script
 case $(cat $SENTRY_ENV_FILENAME) in
   dev|staging|prod)
-    export SENTRY_ENVIRONMENT
-    SENTRY_ENVIRONMENT="${SENTRY_ENV}"
+    export SENTRY_ENVIRONMENT="${SENTRY_ENV}"
     eval "$(sentry-cli bash-hook)"
     ;;
   *)

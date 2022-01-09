@@ -7,8 +7,7 @@ WHIST_PRIVATE_DIR=/usr/share/whist/private
 SENTRY_ENV_FILENAME=$WHIST_PRIVATE_DIR/sentry_env
 case $(cat $SENTRY_ENV_FILENAME) in
   dev|staging|prod)
-    export SENTRY_ENVIRONMENT
-    SENTRY_ENVIRONMENT="${SENTRY_ENV}"
+    export SENTRY_ENVIRONMENT="${SENTRY_ENV}"
     eval "$(sentry-cli bash-hook)"
     ;;
   *)
@@ -82,22 +81,19 @@ OPTIONS=""
 
 # Send in AES private key, if set
 if [ -f "$PRIVATE_KEY_FILENAME" ]; then
-  export WHIST_AES_KEY
-  WHIST_AES_KEY="$(cat $PRIVATE_KEY_FILENAME)"
+  export WHIST_AES_KEY="$(cat $PRIVATE_KEY_FILENAME)"
   OPTIONS="$OPTIONS --private-key=$WHIST_AES_KEY"
 fi
 
 # Send in Sentry environment, if set
 if [ -f "$SENTRY_ENV_FILENAME" ]; then
-  export SENTRY_ENV
-  SENTRY_ENV="$(cat $SENTRY_ENV_FILENAME)"
+  export SENTRY_ENV="$(cat $SENTRY_ENV_FILENAME)"
   OPTIONS="$OPTIONS --environment=$SENTRY_ENV"
 fi
 
 # Send in timeout, if set
 if [ -f "$TIMEOUT_FILENAME" ]; then
-  export TIMEOUT
-  TIMEOUT=$(cat $TIMEOUT_FILENAME)
+  export TIMEOUT=$(cat $TIMEOUT_FILENAME)
   OPTIONS="$OPTIONS --timeout=$TIMEOUT"
 fi
 
@@ -115,8 +111,7 @@ function cleanup {
   sudo shutdown now
 }
 
-export ENV_NAME
-ENV_NAME=$(cat $SENTRY_ENV_FILENAME)
+export ENV_NAME=$(cat $SENTRY_ENV_FILENAME)
 if [ "$ENV_NAME" != "localdev" ]; then
   # Make sure `cleanup` gets called on script exit in all environments except localdev.
   trap cleanup EXIT ERR
