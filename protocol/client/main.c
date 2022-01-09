@@ -373,7 +373,7 @@ int main(int argc, char* argv[]) {
         }
 
         // Log to METRIC for cross-session tracking and INFO for developer-facing logging
-        int discover_ports_time = get_timer(handshake_time)
+        int discover_ports_time = get_timer(handshake_time);
         LOG_INFO("Time elasped after discover_ports() = %f, current time = %s",
                  discover_ports_time, current_time_str());
         LOG_METRIC("\"Handshake discover_ports() time\" : %d", discover_ports_time);
@@ -384,9 +384,9 @@ int main(int argc, char* argv[]) {
         }
 
         // Log to METRIC for cross-session tracking and INFO for developer-facing logging
-        int connect_to_server_time = get_timer(handshake_time)
+        int connect_to_server_time = get_timer(handshake_time);
         LOG_INFO("Time elasped after connect_to_server() = %f, current time= %s",
-                 et_timer(handshake_time), current_time_str());
+                 connect_to_server_time, current_time_str());
         LOG_METRIC("\"Handshake connect_to_server() time\" : %d", connect_to_server_time);
 
         if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
