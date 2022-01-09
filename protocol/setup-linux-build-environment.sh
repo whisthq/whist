@@ -31,5 +31,5 @@ sudo apt-get install --no-install-recommends -y \
   libasound2 \
   libxdamage1 \
   libcurl4 \
-  openssl \
+  libcrypto++6 \
   zlib1g
