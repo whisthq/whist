@@ -137,8 +137,9 @@ void renderer_try_render(WhistRenderer* whist_renderer) {
 #endif
 
     // If the audio device is pending an update,
-    // refresh the audio device
-    if (sdl_pending_audio_device_update()) {
+    // refresh the audio device, but only if we are in a connected state,
+    // otherwise the audio device will crash
+    if (sdl_pending_audio_device_update() && connected) {
         refresh_audio_device(whist_renderer->audio_context);
     }
 
