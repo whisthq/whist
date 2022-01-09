@@ -306,12 +306,11 @@ int client_parse_args(int argc, char *argv[]) {
             (int): 0 on success and -1 on failure
     */
 
-    // TODO: replace `client` with argv[0]
     usage =
-        "Usage: client [OPTION]... IP_ADDRESS\n"
-        "Try 'client --help' for more information.\n";
+        "Usage: ./wclient [OPTION]... IP_ADDRESS\n"
+        "Try './wclient --help' for more information.\n";
     const char *usage_details =
-        "Usage: client [OPTION]... IP_ADDRESS\n"
+        "Usage: ./wclient [OPTION]... IP_ADDRESS\n"
         "\n"
         "All arguments to both long and short options are mandatory.\n"
         // regular options should look nice, with 2-space indenting for multiple lines

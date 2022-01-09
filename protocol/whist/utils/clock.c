@@ -131,7 +131,6 @@ timestamp_us current_time_us() {
 #elif defined(__APPLE__)
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
-    // TODO: change to US_IN_SEC and NS_IN_US
     output = ((uint64_t)time_now.tv_sec * US_IN_SECOND) + time_now.tv_usec;
 #else
     struct timespec time_now;

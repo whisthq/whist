@@ -331,7 +331,6 @@ void free_packet(SocketContext* context, WhistPacket* packet);
  *                                 This function will send the WhistPacket over the network.
  *                                 There is no restriction on the size of this packet,
  *                                 it will be fragmented if necessary.
- *                                 TODO: Fragment over UDP
  *
  * @param context                  The socket context
  * @param packet_type              The WhistPacketType, either VIDEO, AUDIO,

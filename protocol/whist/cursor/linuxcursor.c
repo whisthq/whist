@@ -97,7 +97,7 @@ void init_cursors() {
 /**
  * @brief Matches the cursor image from the screen to a WhistCursorID
  *
- * TODO: (abecohen) X11 cursor fonts are overridden by the running application.
+ * TODO: X11 cursor fonts are overridden by the running application.
  * In this case, chrome will override the cursor library and use its own. If
  * we can find where that cursor file is located, get X11 to use that as its theme,
  * we may be able to just match the cursor via the name parameter in cursor_image.
