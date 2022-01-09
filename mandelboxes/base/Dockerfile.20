@@ -569,10 +569,8 @@ RUN wget -qO /usr/local/share/fonts/TwemojiMozilla.ttf https://github.com/mozill
 COPY --chown=whist display/theme/fonts.conf /home/whist/.config/fontconfig/fonts.conf
 
 # Install WhiteSur cursor and icons, for macOS-like theming
-RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git \
-    && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors \
-    git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git \
-    && cd WhiteSur-icon-theme && /bin/bash install.sh && rm -rf /WhiteSur-icon-theme
+RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors
+RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git && cd WhiteSur-icon-theme && /bin/bash install.sh && rm -rf /WhiteSur-icon-theme
 
 # Set up window manager running on X server, with GTK/QT theming
 COPY display/theme/gtk-3-settings.ini /etc/gtk-3.0/settings.ini
