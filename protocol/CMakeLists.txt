@@ -349,10 +349,12 @@ set(PLATFORM_INDEPENDENT_LIBS   whistCore
     ${STATIC_SDL2}
     ${LIB_SENTRY}
 )
-set(MAC_SPECIFIC_CLIENT_LIBS       "-framework OpenGL"
+set(MAC_SPECIFIC_CLIENT_LIBS
+    "-framework OpenGL"
     "-framework VideoToolbox"
     "-framework CoreMedia"
     "-framework CoreAudio"
+    "-framework CoreHaptics"
     "-framework AudioToolbox"
     "-framework IOKit"
     "-framework ForceFeedback"
@@ -360,6 +362,7 @@ set(MAC_SPECIFIC_CLIENT_LIBS       "-framework OpenGL"
     "-framework AppKit"
     "-framework Metal"
     "-framework QuartzCore"
+    "-framework GameController"
     objc
     iconv
     ${LIB_OPENSSL}
