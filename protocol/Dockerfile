@@ -15,39 +15,25 @@ RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 # Turn off interactive mode
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
-# Install and configure Ubuntu utils
+# Install Cmake repository (before Ubuntu utils, as we need to run apt-get update after installing Cmake this way)
+RUN APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 \ 
+    wget -qO - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add - \
+    && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main' \\
+    & dpkg --configure -a && apt-get install --allow-downgrades --no-install-recommends -y -f
+
+# Install and configure Ubuntu utils, build tools, and `docs` target dependencies
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    # Ubuntu utils
     apt-utils \
     wget \
     curl \
     git \
     xz-utils \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     apt-transport-https \
     ca-certificates \
     gnupg \
     software-properties-common \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 \ 
-    wget -qO - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add -
-RUN apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
-
-RUN apt-get update \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN dpkg --configure -a && apt-get install --allow-downgrades --no-install-recommends -y -f
-
-# Install build tools
-RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    # Build tools
     make \
     gcc \
     g++ \
@@ -60,12 +46,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     lcov \
     jq \
     build-essential \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install `docs` target dependencies
-RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    # `docs` target dependencies
     doxygen \
     coreutils \
     perl \
