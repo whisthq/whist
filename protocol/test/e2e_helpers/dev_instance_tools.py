@@ -149,14 +149,6 @@ def configure_aws_credentials(
         None
     """
 
-    aws_credentials_filepath_expanded = os.path.expanduser(aws_credentials_filepath)
-
-    if not os.path.isfile(aws_credentials_filepath_expanded):
-        print(
-            "Could not find local AWS credential file at path {}!".format(aws_credentials_filepath)
-        )
-        return
-
     aws_access_key_id = ""
     aws_secret_access_key = ""
 
@@ -167,6 +159,15 @@ def configure_aws_credentials(
         if aws_access_key_id == None or aws_secret_access_key == None:
             return
     else:
+        aws_credentials_filepath_expanded = os.path.expanduser(aws_credentials_filepath)
+
+        if not os.path.isfile(aws_credentials_filepath_expanded):
+            print(
+                "Could not find local AWS credential file at path {}!".format(
+                    aws_credentials_filepath
+                )
+            )
+            return
         aws_credentials_file = open(aws_credentials_filepath_expanded, "r")
         for line in aws_credentials_file.readlines():
             if "aws_access_key_id" in line:
