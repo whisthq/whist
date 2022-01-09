@@ -365,14 +365,14 @@ int main(int argc, char* argv[]) {
 
         clock handshake_time;
         start_timer(&handshake_time);  // start timer for measuring handshake time
-        LOG_INFO("Begin measuring handshake, current time = %s", current_time_str());
+        LOG_METRICS("Begin measuring handshake, current time = %s", current_time_str());
 
         if (discover_ports(&using_stun) != 0) {
             LOG_WARNING("Failed to discover ports.");
             continue;
         }
 
-        LOG_INFO("Time elasped after discover_ports() = %f, current time = %s",
+        LOG_METRICS("Time elasped after discover_ports() = %f, current time = %s",
                  get_timer(handshake_time), current_time_str());
 
         if (connect_to_server(using_stun) != 0) {
@@ -380,7 +380,7 @@ int main(int argc, char* argv[]) {
             continue;
         }
 
-        LOG_INFO("Time elasped after connect_to_server() = %f, current time= %s",
+        LOG_METRICS("Time elasped after connect_to_server() = %f, current time= %s",
                  get_timer(handshake_time), current_time_str());
 
         if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
