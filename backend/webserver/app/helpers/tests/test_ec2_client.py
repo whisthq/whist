@@ -15,7 +15,7 @@ def test_single() -> None:
     ec2_client = EC2Client("us-east-1")
     up_start = time.time()
     ids = ec2_client.start_instances(
-        # TODO: ami-0dc2d3e4c0f9ebd18 is the id for base linux instance,
+        # ami-0dc2d3e4c0f9ebd18 is the id for base linux instance,
         # it might approach EOL probably sometimes during 2022 (?)
         # Figure out a way to get an AMI that doesn't expire..
         "ami-0dc2d3e4c0f9ebd18",

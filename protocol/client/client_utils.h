@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file client_utils.h
- * @brief TODO
+ * @brief Utilities for the client protocol to communicate with the frontend framework.
 ============================
 Usage
 ============================

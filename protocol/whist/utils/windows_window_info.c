@@ -11,7 +11,6 @@
 // Window name will always be NULL, only return true once
 bool has_returned_window_name_yet;
 
-// TODO: implement functionality for windows servers
 void init_window_info_getter() {
     // We only error on init/destroy, to prevent spam
     LOG_ERROR("UNIMPLEMENTED: init_window_info_getter on Win32");

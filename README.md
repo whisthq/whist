@@ -76,8 +76,6 @@ To avoid pushing code that does not follow our coding guidelines, we recommend y
 
 #### `prod` is for Releases only; `staging` is "almost `prod`"
 
-At Whist, we maintain a `prod` branch for releases only, and auto-tag every commit on `prod` with a release tag [[TODO]](https://github.com/whisthq/whist/issues/1139).
-
 We also maintain a `staging` branch for release candidates. Therefore, `staging` will always be ahead of `prod`, except after a production release, when they will be even.
 
 When we approach a release milestone, we:
@@ -158,7 +156,7 @@ Eventually, but hopefully rarely, production will be on fire, and we will need t
 
 Here's the workflow:
 
-1. Fork a branch with name starting with `hotfix/` off `prod`. (This is important, as the CI will prevent merging in a non-`staging` branch that doesn't meet this criterion (TODO).)
+1. Fork a branch with name starting with `hotfix/` off `prod`.
 2. Make the fix on the hotfix branch, and PR it directly to `prod`.
 3. Get as many eyeballs on the PR as possible, and approve it if it looks good.
 4. Wait for all CI checks and tests to pass. This is important --- we will **not** skip CI and force a hotfix PR through to prod. The CI is our last line of defense, and the time saved by "skipping it" is not worth the increased chance of pushing another bad commit to production.

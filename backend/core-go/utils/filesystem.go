@@ -3,7 +3,6 @@ package utils // import "github.com/whisthq/whist/backend/core-go/utils"
 import (
 	"context"
 	"errors"
-	"log"
 	"os"
 	"path"
 	"time"
@@ -79,8 +78,6 @@ func waitForErrorOrCreation(timeout time.Duration, targetFileName string, watche
 			if !ok {
 				return MakeError("fsnotify.Watcher events channel closed.")
 			}
-			// TODO: remove this log once we're confident this part of the code works
-			log.Printf("fsnotify.Watched filesystem event: %+v", ev)
 			// Check if it's a creation event that matches the filename we expect
 			if ev.Op&fsnotify.Create == fsnotify.Create && ev.Name == targetFileName {
 				return nil

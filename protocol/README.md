@@ -293,8 +293,6 @@ We also use Doxygen in this repository. The Doxy file is `docs/Doxyfile`. To gen
 
 These builds will also have `cppcheck` run against them which is a static analysis tool which can catch errors which compilers cannot, e.g. accessing uninitialized memory and other undefined behavior. Not everything it catches is critical, but it does indicate the possibility of unexpected behavior.
 
-These builds will also (TODO) be tested against a live server VM. This workflow will spin up an Azure VM, upload the server build to it, and then use GitHub Actions VMs on Windows, MacOS and Linux Ubuntu as clients to connect and stream via the protocol for one minute. This will also occur nightly against the `dev` branch, but these builds will not be released (this can be removed once testing is stable and re-enabled on all commits).
-
 To see the warnings in context go to the Actions tab, click on your PR/push that launched the action, select an OS it ran on and then select build. This expands the build log, where you can clearly see the warnings/errors generated.
 
 #### Unit Testing

@@ -176,7 +176,14 @@ def wait_for_instance_to_start_or_stop(
 
 def get_instance_ip(boto3client: botocore.client, instance_id: str) -> str:
     """
-    TODO
+    Retrieves the public IPv4 address of a specified AWS EC2 instance.
+
+    Args:
+        boto3client (botocore.client): The boto3 client to use to make the API call
+        instance_id (str): The ID of the instance to retrive the IPv4 of
+
+    Returns:
+        None
     """
     retval = []
 

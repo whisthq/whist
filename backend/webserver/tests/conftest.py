@@ -40,8 +40,6 @@ def app() -> Flask:
 
     https://pytest-flask.readthedocs.io/en/latest/tutorial.html#step-2-configure.
 
-    TODO: Check if anymore cleanup here is needed since we removed celery.
-
     For now, This test fixture must have session scope because the session-
     scoped celery_parameters test fixture depends on it and session-scoped
     fixtures cannot depend on other fixtures with more granular scopes. If you

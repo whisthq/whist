@@ -149,7 +149,6 @@ static int handle_user_input_message(whist_server_state *state, WhistClientMessa
     return 0;
 }
 
-// TODO: Unix version missing
 static int handle_keyboard_state_message(whist_server_state *state, WhistClientMessage *wcmsg) {
     /*
         Handle a user keyboard state change message. Synchronize client and
