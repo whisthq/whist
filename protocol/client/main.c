@@ -514,7 +514,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (exit_code != WHIST_EXIT_SUCCESS) {
-        LOG_ERROR("Failure in main loop!");
+        LOG_ERROR("Failure in main loop! Exiting with code %d", exit_code);
     }
 
     if (try_amount >= 3) {
