@@ -18,10 +18,10 @@ WORKDIR /repo
 RUN apt-get update \
     && apt-get install -y \
     build-essential \
-    libssl-dev \
-    libffi-dev \
-    python-dev \
-    libpq-dev
+    libssl1.1 \
+    libffi7 \
+    python \
+    libpq5
 
 # Install Python requirements
 COPY requirements.txt ./

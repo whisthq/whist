@@ -13,22 +13,23 @@ sudo apt-get install --no-install-recommends -y \
   libopencore-amrwb0 \
   libx264-155 \
   libx265-179 \
-  libopus-dev \
+  libopus0 \
   libfdk-aac1 \
   libva-drm2 \
   libvdpau1
 
 # Install Whist dependencies
 sudo apt-get install --no-install-recommends -y \
-  libssl-dev \
-  libgl1-mesa-dev \
-  libavcodec-dev \
-  libavdevice-dev \
-  libx11-dev \
-  libxtst-dev \
+  libssl1.1 \
+  libgl1-mesa-dri \
+  libavcodec58 \
+  libavdevice58 \
+  libx11-6 \
+  libxtst6 \
   xclip \
   x11-xserver-utils \
-  libasound2-dev \
-  libxdamage-dev \
-  libcurl4-openssl-dev \
-  zlib1g-dev
+  libasound2 \
+  libxdamage1 \
+  libcurl4 \
+  openssl \
+  zlib1g
