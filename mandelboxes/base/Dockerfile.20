@@ -607,7 +607,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     libsndfile1 \
     libsoxr0 \
     libasound2-data \
-    libasound2 \
+    libasound2-dev \
     libspeexdsp1 \
     libwebrtc-audio-processing1 \
     libasound2-plugins \
