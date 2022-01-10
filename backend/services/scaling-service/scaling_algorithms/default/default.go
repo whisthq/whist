@@ -147,14 +147,17 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 				case "SCHEDULED_SCALE_DOWN":
 					logger.Infof("Scaling algorithm received a scheduled scale down event with value: %v", scheduledEvent)
 
+					goroutineTracker.Add(1)
 					go func() {
 						defer goroutineTracker.Done()
 
 						scalingCtx, scalingCancel := context.WithCancel(context.Background())
 						for _, region := range bundledRegions {
 							scheduledEvent.Region = region
-							// err := s.ScaleUpIfNecessary(2, scalingCtx, scheduledEvent, "ami-0a799891459ffacb2")
-							// logger.Error(err)
+							// err := s.ScaleUpIfNecessary(2, scalingCtx, scheduledEvent, "ami-0f8b6142e66248359")
+							// if err != nil {
+							// 	logger.Error(err)
+							// }
 
 							err := s.ScaleDownIfNecessary(scalingCtx, scheduledEvent)
 							if err != nil {

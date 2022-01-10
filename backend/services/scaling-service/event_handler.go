@@ -35,7 +35,7 @@ func main() {
 
 	// Start database subscriptions
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
-	// StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents)
+	StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents)
 
 	// Start scheduler and setup scheduler event chan
 	scheduledEvents := make(chan sa.ScalingEvent, 100)
