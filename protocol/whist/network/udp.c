@@ -47,7 +47,7 @@ WhistPacket* udp_read_packet(void* raw_context, bool should_recv) {
     // Wait to receive packet over TCP, until timing out
     WhistPacket encrypted_packet;
     int encrypted_len =
-        recv(context->socket, (char*)&encrypted_packet, sizeof(encrypted_packet), 0);
+        recv_no_intr(context->socket, (char*)&encrypted_packet, sizeof(encrypted_packet), 0);
 
     // If the packet was successfully received, then decrypt it
     if (encrypted_len > 0) {
@@ -426,8 +426,8 @@ int create_udp_server_context(void* raw_context, int port, int recvfrom_timeout_
 
     socklen_t slen = sizeof(context->addr);
     int recv_size;
-    if ((recv_size = recvfrom(context->socket, NULL, 0, 0, (struct sockaddr*)(&context->addr),
-                              &slen)) != 0) {
+    if ((recv_size = recvfrom_no_intr(context->socket, NULL, 0, 0,
+                                      (struct sockaddr*)(&context->addr), &slen)) != 0) {
         LOG_WARNING("Failed to receive ack! %d %d", recv_size, get_last_network_error());
         closesocket(context->socket);
         return -1;
@@ -496,8 +496,8 @@ int create_udp_server_context_stun(SocketContextData* context, int port, int rec
     socklen_t slen = sizeof(context->addr);
     StunEntry entry = {0};
     int recv_size;
-    while ((recv_size = recvfrom(context->socket, (char*)&entry, sizeof(entry), 0,
-                                 (struct sockaddr*)(&context->addr), &slen)) < 0) {
+    while ((recv_size = recvfrom_no_intr(context->socket, (char*)&entry, sizeof(entry), 0,
+                                         (struct sockaddr*)(&context->addr), &slen)) < 0) {
         // If we haven't spent too much time waiting, and our previous 100ms
         // poll failed, then send another STUN update
         if (get_timer(recv_timer) * MS_IN_SECOND < stun_timeout_ms &&
@@ -645,7 +645,7 @@ int create_udp_client_context_stun(SocketContextData* context, char* destination
 
     StunEntry entry = {0};
     int recv_size;
-    if ((recv_size = recv(context->socket, (char*)&entry, sizeof(entry), 0)) < 0) {
+    if ((recv_size = recv_no_intr(context->socket, (char*)&entry, sizeof(entry), 0)) < 0) {
         LOG_WARNING("Could not receive message from STUN %d\n", get_last_network_error());
         closesocket(context->socket);
         return -1;

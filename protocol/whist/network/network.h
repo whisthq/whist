@@ -434,6 +434,34 @@ SOCKET socketp_udp();
  */
 bool handshake_private_key(SocketContextData* context);
 
+#if !defined(_WIN32)
+/**
+ * @brief Call recv() while ignoring EINTR returns.
+ *
+ * The function signature is identical to the host recv() call.
+ */
+ssize_t recv_no_intr(int sockfd, void* buf, size_t len, int flags);
+
+/**
+ * @brief Call recvfrom() while ignoring EINTR returns.
+ *
+ * The function signature is identical to the host recv() call.
+ */
+ssize_t recvfrom_no_intr(int sockfd, void* buf, size_t len, int flags, struct sockaddr* src_addr,
+                         socklen_t* addrlen);
+#else
+// EINTR does happen happen on Windows, so pass calls through directly.
+
+static inline int recv_no_intr(SOCKET s, char* buf, int len, int flags) {
+    return recv(s, buf, len, flags);
+}
+
+static inline int recvfrom_no_intr(SOCKET s, char* buf, int len, int flags, struct sockaddr* from,
+                                   int* fromlen) {
+    return recvfrom(s, buf, len, flags, from, fromlen);
+}
+#endif
+
 // Included at the bottom due to circular #include <network.h> reference
 #include <whist/network/tcp.h>
 #include <whist/network/udp.h>
