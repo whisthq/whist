@@ -70,16 +70,24 @@ double get_timer(clock timer) {
     return ret;
 }
 
-clock create_clock(int timeout_ms) {
-    clock out;
+clock_timeout create_clock(int timeout_ms) {
+    clock_timeout out;
 #if defined(_WIN32)
     out.QuadPart = timeout_ms;
-#elif defined(__APPLE__)
-    out.tv_sec = timeout_ms / MS_IN_SECOND;
-    out.tv_usec = (timeout_ms % MS_IN_SECOND) * US_IN_MS;
 #else
     out.tv_sec = timeout_ms / MS_IN_SECOND;
-    out.tv_nsec = (timeout_ms % MS_IN_SECOND) * NS_IN_MS;
+    out.tv_usec = (timeout_ms % MS_IN_SECOND) * US_IN_MS;
+#endif
+    return out;
+}
+
+int clock_to_ms(clock_timeout timeout) {
+    int out;
+#if defined(_WIN32)
+    out = timeout.QuadPart;
+#else
+    out = timeout.tv_sec * MS_IN_SECOND;
+    out += (timeout.tv_usec / US_IN_MS);
 #endif
     return out;
 }

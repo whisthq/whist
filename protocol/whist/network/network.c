@@ -200,7 +200,7 @@ void set_timeout(SOCKET socket, int timeout_ms) {
             LOG_FATAL("Failed to make socket blocking.");
         }
 
-        clock read_timeout = create_clock(timeout_ms);
+        clock_timeout read_timeout = create_clock(timeout_ms);
 
         if (setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&read_timeout,
                        sizeof(read_timeout)) < 0) {
@@ -210,6 +210,18 @@ void set_timeout(SOCKET socket, int timeout_ms) {
             return;
         }
     }
+}
+
+// Get the recv timeout of this socket in milliseconds.
+int get_timeout(SOCKET socket) {
+    clock_timeout read_timeout;
+    socklen_t optlen = sizeof(read_timeout);
+    if (getsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (void*)&read_timeout, &optlen) < 0) {
+        int err = get_last_network_error();
+        LOG_WARNING("Failed to get timeout: %d. Msg: %s\n", err, strerror(err));
+        return -1;
+    }
+    return clock_to_ms(read_timeout);
 }
 
 void set_tos(SOCKET socket, WhistTOSValue tos) {
@@ -439,4 +451,28 @@ bool confirm_private_key(PrivateKeyData* our_priv_key_data,
                   sizeof(PrivateKeyData));
         return false;
     }
+}
+
+ssize_t recv_ignore_eintr(int sockfd, void* buf, int len, int flags) {
+    ssize_t ret;
+    const int original_timeout_ms = get_timeout(sockfd);
+    const timestamp_us start_time = current_time_us();
+    do {
+        ret = recv(sockfd, buf, len, flags);
+        int err = get_last_network_error();
+        if (ret < 0 && err == EINTR) {
+            int time_elapsed_ms = (current_time_us() - start_time) / US_IN_MS;
+            if (original_timeout_ms > 0) {
+                set_timeout(sockfd, max(original_timeout_ms - time_elapsed_ms, 0));
+            }
+            LOG_INFO("EINTR received. time_elapsed_ms = %d, original_timeout_ms = %d\n",
+                     time_elapsed_ms, original_timeout_ms);
+        } else {
+            break;
+        }
+    } while (0);
+    if (original_timeout_ms > 0) {
+        set_timeout(sockfd, original_timeout_ms);
+    }
+    return ret;
 }

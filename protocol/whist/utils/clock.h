@@ -40,6 +40,12 @@ Defines
 #define clock struct timespec
 #endif
 
+#if defined(_WIN32)
+#define clock_timeout LARGE_INTEGER
+#else
+#define clock_timeout struct timeval
+#endif
+
 /*
 ============================
 Custom Types
@@ -85,14 +91,24 @@ void start_timer(clock* timer);
 double get_timer(clock timer);
 
 /**
- * @brief                          Create a clock that represents the given
+ * @brief                          Create a clock_timeout that represents the given
  *                                 timeout in milliseconds
  *
- * @param timeout_ms	           The number of milliseconds for the clock
+ * @param timeout_ms	           The number of milliseconds for the clock_timeout
  *
- * @returns						   The desired clock
+ * @returns						   The desired clock_timeout representation
  */
-clock create_clock(int timeout_ms);
+clock_timeout create_clock(int timeout_ms);
+
+/**
+ * @brief                          Inverse function of create_clock. Convert timeout in
+ *                                 clock_timeout representation to milliseconds
+ *
+ * @param timeout                  timeout in clock_timeout representation
+ *
+ * @returns                        timeout in milliseconds
+ */
+int clock_to_ms(clock_timeout timeout);
 
 /**
  * @brief                          Returns the current time as a string

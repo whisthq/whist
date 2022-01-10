@@ -47,7 +47,7 @@ WhistPacket* udp_read_packet(void* raw_context, bool should_recv) {
     // Wait to receive packet over TCP, until timing out
     WhistPacket encrypted_packet;
     int encrypted_len =
-        recv(context->socket, (char*)&encrypted_packet, sizeof(encrypted_packet), 0);
+        recv_ignore_eintr(context->socket, (char*)&encrypted_packet, sizeof(encrypted_packet), 0);
 
     // If the packet was successfully received, then decrypt it
     if (encrypted_len > 0) {
@@ -812,7 +812,7 @@ int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms) {
     LOG_INFO("Creating listen UDP Socket");
     *sock = socketp_udp();
     if (*sock == INVALID_SOCKET) {
-        LOG_ERROR("Failed to create UDP listen socket");
+        LOG_ERROR("Failed to create UDP listen socket. errno=%d", get_last_network_error());
         return -1;
     }
     set_timeout(*sock, timeout_ms);

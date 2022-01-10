@@ -32,11 +32,15 @@ Includes
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <signal.h>
+
 extern "C" {
 #include "client/client_utils.h"
 #include "whist/utils/color.h"
 #include <whist/core/whist.h>
+#include <whist/network/network.h>
 #include <whist/network/ringbuffer.h>
+#include <whist/network/udp.h>
 #include <fcntl.h>
 
 #ifndef __APPLE__
@@ -434,6 +438,20 @@ TEST(ProtocolTest, TimersTest) {
     // elapsed = get_timer(timer);
     // EXPECT_GE(elapsed, 0.100);
     // EXPECT_LE(elapsed, 0.110);
+}
+
+TEST(ProtocolTest, GetTimeout) {
+    SOCKET sock;
+    int port = 10000;
+    int timeout_ms = 1234;
+    EXPECT_EQ(create_udp_listen_socket(&sock, port, timeout_ms), 0);
+
+    int recv_timeout_ms = get_timeout(sock);
+
+    // Allow for an error of 10ms on either side
+    EXPECT_GT(recv_timeout_ms, timeout_ms - 10);
+    EXPECT_LT(recv_timeout_ms, timeout_ms + 10);
+    closesocket(sock);
 }
 
 /**
@@ -919,5 +937,6 @@ Run Tests
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
+    whist_init_networking();
     return RUN_ALL_TESTS();
 }

@@ -100,6 +100,8 @@ Includes
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
 #else
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -397,6 +399,15 @@ int get_packet_size(WhistPacket* packet);
 void set_timeout(SOCKET socket, int timeout_ms);
 
 /**
+ * @brief                          This will get the recv timeout for the `socket` in milliseconds
+ *
+ * @param socket                   The SOCKET whose timeout is required
+ *
+ * @returns                        recv timeout of the `socket` in milliseconds
+ */
+int get_timeout(SOCKET socket);
+
+/**
  *
  * @brief                          This will set `socket` to have the specified TOS
  *                                 value. This is used to set the type of service
@@ -433,6 +444,10 @@ SOCKET socketp_udp();
  * @param context                  The SocketContextData that the handshake will happen over
  */
 bool handshake_private_key(SocketContextData* context);
+
+// This is just a wrapper function over POSIX's recv functions to ignore EINTR error and call it
+// again, while making sure that the timeout set already is honoured.
+ssize_t recv_ignore_eintr(int sockfd, void* buf, int len, int flags);
 
 // Included at the bottom due to circular #include <network.h> reference
 #include <whist/network/tcp.h>
