@@ -2,7 +2,7 @@ import React from "react"
 import { CheckIcon } from "@heroicons/react/outline"
 
 import ChromeBackground from "@app/assets/graphics/speedTestBackground.svg"
-import SpeedTest from "@app/assets/gifs/speedTest.gif"
+import SpeedTest from "@app/assets/gifs/speedTest.webm"
 import RAMUsage from "@app/assets/graphics/ramUsage.svg"
 
 const features = [
@@ -109,11 +109,12 @@ export const Middle = () => {
               src={ChromeBackground}
               alt=""
             />
-            <img
-              className="absolute inline-block top-1/2 left-1/2 transform -translate-x-1/2 translate-y-20 md:-translate-y-4 w-1/2 max-w-xs"
-              src={SpeedTest}
-              alt=""
-            />
+
+            <video autoPlay loop muted playsInline inline-block max-w-xs>
+              <source src={SpeedTest} type="video/webm"></source>
+            </video>
+
+
           </div>
         }
       />
