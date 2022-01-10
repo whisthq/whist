@@ -119,19 +119,6 @@ export const closeElectronWindows = (windows?: BrowserWindow[]) => {
   })
 }
 
-export const unMinimizeElecronWindows = (windows?: BrowserWindow[]) => {
-  const windowsToMinimize = windows ?? getElectronWindows()
-  windowsToMinimize.forEach((win: BrowserWindow) => {
-    try {
-      if (<boolean>windowsToMinimize.isMinimized()) {
-        windowsToMinimize.restore()
-      }
-    } catch (err) {
-      console.error(err)
-    }
-  })
-}
-
 export const closeAllWindows = (windows?: BrowserWindow[]) => {
   closeElectronWindows(windows)
   protocolStreamKill()
