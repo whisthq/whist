@@ -558,7 +558,7 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
        before calling again), -1 on failure
             */
 
-    static clock latency_clock;
+    static WhistTimer latency_clock;
 
     // The frame we'll receive into
     // We can't receive into hw/sw_frame, or it'll wipe on EAGAIN.
@@ -572,7 +572,7 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
         start_timer(&latency_clock);
 
         int res = avcodec_receive_frame(decoder->context, frame);
-        log_double_statistic(VIDEO_AVCODEC_RECEIVE_TIME, get_timer(latency_clock) * 1000);
+        log_double_statistic(VIDEO_AVCODEC_RECEIVE_TIME, get_timer(&latency_clock) * 1000);
 
         // Exit or copy the captured frame into hw_frame
         if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
@@ -604,7 +604,7 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
             destroy_video_decoder(decoder);
             return -1;
         }
-        log_double_statistic(VIDEO_AV_HWFRAME_TRANSFER_TIME, get_timer(latency_clock) * 1000);
+        log_double_statistic(VIDEO_AV_HWFRAME_TRANSFER_TIME, get_timer(&latency_clock) * 1000);
         decoder->using_hw = false;
 #endif  // #ifdef __APPLE__
     } else {

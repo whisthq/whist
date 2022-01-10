@@ -103,7 +103,7 @@ int32_t multithreaded_destroy_encoder(void* opaque) {
  * @param true_height       True height of client screen
  * @return                  On success, 0. On failure, -1.
  */
-int32_t create_new_device(whist_server_state* state, clock* statistics_timer,
+int32_t create_new_device(whist_server_state* state, WhistTimer* statistics_timer,
                           CaptureDevice** device, CaptureDevice* rdevice, VideoEncoder** encoder,
                           uint32_t true_width, uint32_t true_height) {
     start_timer(statistics_timer);
@@ -134,7 +134,7 @@ int32_t create_new_device(whist_server_state* state, clock* statistics_timer,
     // Next, we should update our ffmpeg encoder
     state->update_encoder = true;
 
-    log_double_statistic(VIDEO_CAPTURE_CREATE_TIME, get_timer(*statistics_timer) * MS_IN_SECOND);
+    log_double_statistic(VIDEO_CAPTURE_CREATE_TIME, get_timer(statistics_timer) * MS_IN_SECOND);
 
     return 0;
 }
@@ -152,9 +152,9 @@ int32_t create_new_device(whist_server_state* state, clock* statistics_timer,
  * @param client_input_timestamp    Estimated client timestamp at which user input is sent
  * @param server_timestamp          Server timestamp at which this frame is captured
  */
-void send_populated_frames(whist_server_state* state, clock* statistics_timer,
-                           clock* server_frame_timer, CaptureDevice* device, VideoEncoder* encoder,
-                           int id, timestamp_us client_input_timestamp,
+void send_populated_frames(whist_server_state* state, WhistTimer* statistics_timer,
+                           WhistTimer* server_frame_timer, CaptureDevice* device,
+                           VideoEncoder* encoder, int id, timestamp_us client_input_timestamp,
                            timestamp_us server_timestamp) {
     // transfer the capture of the latest frame from the device to
     // the encoder,
@@ -183,7 +183,7 @@ void send_populated_frames(whist_server_state* state, clock* statistics_timer,
 
     start_timer(statistics_timer);
     get_current_cursor(current_cursor);
-    log_double_statistic(VIDEO_GET_CURSOR_TIME, get_timer(*statistics_timer) * MS_IN_SECOND);
+    log_double_statistic(VIDEO_GET_CURSOR_TIME, get_timer(statistics_timer) * MS_IN_SECOND);
 
     // If the current cursor is the same as the last cursor,
     // just don't send any cursor
@@ -250,7 +250,7 @@ void retry_capture_screen(whist_server_state* state, CaptureDevice* device, Vide
  * @param true_width       True width of client screen
  * @param true_height      True height of client screen
  */
-void update_current_device(whist_server_state* state, clock* statistics_timer,
+void update_current_device(whist_server_state* state, WhistTimer* statistics_timer,
                            CaptureDevice* device, VideoEncoder* encoder, uint32_t true_width,
                            uint32_t true_height) {
     state->update_device = false;
@@ -280,7 +280,7 @@ void update_current_device(whist_server_state* state, clock* statistics_timer,
     } else {
         LOG_INFO("No capture device exists yet, creating a new one.");
     }
-    log_double_statistic(VIDEO_CAPTURE_UPDATE_TIME, get_timer(*statistics_timer) * MS_IN_SECOND);
+    log_double_statistic(VIDEO_CAPTURE_UPDATE_TIME, get_timer(statistics_timer) * MS_IN_SECOND);
 }
 
 /**
@@ -433,15 +433,15 @@ int32_t multithreaded_send_video(void* opaque) {
 
     VideoEncoder* encoder = NULL;
 
-    clock world_timer;
+    WhistTimer world_timer;
     start_timer(&world_timer);
 
-    clock statistics_timer;
+    WhistTimer statistics_timer;
 
     int id = 1;
     state->update_device = true;
 
-    clock last_frame_capture;
+    WhistTimer last_frame_capture;
     start_timer(&last_frame_capture);
 
     state->pending_encoder = false;
@@ -472,7 +472,7 @@ int32_t multithreaded_send_video(void* opaque) {
             continue;
         }
 
-        static clock send_video_loop_timer;
+        static WhistTimer send_video_loop_timer;
         start_timer(&send_video_loop_timer);
 
         // Update device with new parameters
@@ -505,7 +505,7 @@ int32_t multithreaded_send_video(void* opaque) {
             // Update throttler bitrate too
             network_throttler_set_burst_bitrate(network_throttler, state->requested_video_bitrate);
             log_double_statistic(VIDEO_ENCODER_UPDATE_TIME,
-                                 get_timer(statistics_timer) * MS_IN_SECOND);
+                                 get_timer(&statistics_timer) * MS_IN_SECOND);
         }
 
         timestamp_us client_input_timestamp;
@@ -550,11 +550,11 @@ int32_t multithreaded_send_video(void* opaque) {
             if (accumulated_frames > 0) {
                 consecutive_identical_frames = 0;
                 log_double_statistic(VIDEO_CAPTURE_SCREEN_TIME,
-                                     get_timer(statistics_timer) * MS_IN_SECOND);
+                                     get_timer(&statistics_timer) * MS_IN_SECOND);
             }
         }
 
-        clock server_frame_timer;
+        WhistTimer server_frame_timer;
         start_timer(&server_frame_timer);
 
         // Disable the encoder when we've sent enough identical frames,
@@ -576,9 +576,9 @@ int32_t multithreaded_send_video(void* opaque) {
 
         // Send a frame if we have a real frame to send, or we need to keep up with min_fps
         if (state->client.is_active && (accumulated_frames > 0 || state->wants_iframe ||
-                                        get_timer(last_frame_capture) > 1.0 / min_fps)) {
+                                        get_timer(&last_frame_capture) > 1.0 / min_fps)) {
             // This loop only runs ~1/current_fps times per second, every 16-100ms
-            // LOG_INFO("Frame Time: %f\n", get_timer(last_frame_capture));
+            // LOG_INFO("Frame Time: %f\n", get_timer(&last_frame_capture));
             start_timer(&last_frame_capture);
 
             if (accumulated_frames == 0) {
@@ -610,7 +610,7 @@ int32_t multithreaded_send_video(void* opaque) {
                     break;
                 }
                 log_double_statistic(VIDEO_CAPTURE_TRANSFER_TIME,
-                                     get_timer(statistics_timer) * MS_IN_SECOND);
+                                     get_timer(&statistics_timer) * MS_IN_SECOND);
 
                 if (state->wants_iframe) {
                     video_encoder_set_iframe(encoder);
@@ -632,7 +632,8 @@ int32_t multithreaded_send_video(void* opaque) {
                     state->exiting = true;
                     break;
                 }
-                log_double_statistic(VIDEO_ENCODE_TIME, get_timer(statistics_timer) * MS_IN_SECOND);
+                log_double_statistic(VIDEO_ENCODE_TIME,
+                                     get_timer(&statistics_timer) * MS_IN_SECOND);
 
                 if (encoder->encoded_frame_size != 0) {
                     if (encoder->encoded_frame_size > (int)MAX_VIDEOFRAME_DATA_SIZE) {
@@ -649,10 +650,10 @@ int32_t multithreaded_send_video(void* opaque) {
 
                         log_double_statistic(VIDEO_FPS_SENT, 1.0);
                         log_double_statistic(VIDEO_SEND_TIME,
-                                             get_timer(statistics_timer) * MS_IN_SECOND);
+                                             get_timer(&statistics_timer) * MS_IN_SECOND);
                         log_double_statistic(VIDEO_FRAME_SIZE, encoder->encoded_frame_size);
                         log_double_statistic(VIDEO_FRAME_PROCESSING_TIME,
-                                             get_timer(server_frame_timer) * 1000);
+                                             get_timer(&server_frame_timer) * 1000);
                     }
                 }
             }

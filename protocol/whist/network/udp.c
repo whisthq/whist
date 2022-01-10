@@ -490,7 +490,7 @@ int create_udp_server_context_stun(SocketContextData* context, int port, int rec
     set_timeout(context->socket, 100);
 
     // But keep track of time to compare against stun_timeout_ms
-    clock recv_timer;
+    WhistTimer recv_timer;
     start_timer(&recv_timer);
 
     socklen_t slen = sizeof(context->addr);
@@ -500,7 +500,7 @@ int create_udp_server_context_stun(SocketContextData* context, int port, int rec
                                          (struct sockaddr*)(&context->addr), &slen)) < 0) {
         // If we haven't spent too much time waiting, and our previous 100ms
         // poll failed, then send another STUN update
-        if (get_timer(recv_timer) * MS_IN_SECOND < stun_timeout_ms &&
+        if (get_timer(&recv_timer) * MS_IN_SECOND < stun_timeout_ms &&
             (get_last_network_error() == WHIST_ETIMEDOUT ||
              get_last_network_error() == WHIST_EAGAIN)) {
             if (sendto(context->socket, (const char*)&stun_request, sizeof(stun_request), 0,

@@ -74,11 +74,11 @@ struct VideoContext {
     int last_rendered_id;
     int most_recent_iframe;
 
-    clock last_iframe_request_timer;
+    WhistTimer last_iframe_request_timer;
 
     // Loading animation data
     int loading_index;
-    clock last_loading_frame_timer;
+    WhistTimer last_loading_frame_timer;
     bool has_video_rendered_yet;
 
     // Context of the frame that is currently being rendered
@@ -86,7 +86,7 @@ struct VideoContext {
     bool pushing_render_context;
 
     // Statistics calculator
-    clock network_statistics_timer;
+    WhistTimer network_statistics_timer;
     NetworkStatistics network_statistics;
     bool statistics_initialized;
 };
@@ -286,7 +286,7 @@ void receive_video(VideoContext* video_context, WhistPacket* packet) {
 }
 
 int render_video(VideoContext* video_context) {
-    clock statistics_timer;
+    WhistTimer statistics_timer;
 
     // Information needed to render a FrameData* to the screen
     // We make this static so that even if `sdl_render_pending` happens,
@@ -446,7 +446,7 @@ int render_video(VideoContext* video_context) {
 
 #if LOG_VIDEO
         LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", frame_data.id, frame_data.frame_buffer_size,
-                  get_timer(frame_data.frame_creation_timer));
+                  get_timer(&frame_data.frame_creation_timer));
 #endif
 
         static timestamp_us last_rendered_time = 0;
@@ -470,11 +470,11 @@ int render_video(VideoContext* video_context) {
         video_context->has_video_rendered_yet = true;
 
         // Track time between consecutive frames
-        static clock last_frame_timer;
+        static WhistTimer last_frame_timer;
         static bool last_frame_timer_started = false;
         if (last_frame_timer_started) {
             log_double_statistic(VIDEO_TIME_BETWEEN_FRAMES,
-                                 get_timer(last_frame_timer) * MS_IN_SECOND);
+                                 get_timer(&last_frame_timer) * MS_IN_SECOND);
         }
         start_timer(&last_frame_timer);
         last_frame_timer_started = true;
@@ -482,7 +482,7 @@ int render_video(VideoContext* video_context) {
         // If we didn't get a frame, and loading_index is valid,
         // Render the loading animation
         const float loading_animation_fps = 20.0;
-        if (get_timer(video_context->last_loading_frame_timer) > 1 / loading_animation_fps) {
+        if (get_timer(&video_context->last_loading_frame_timer) > 1 / loading_animation_fps) {
             // Present the loading screen
             sdl_update_framebuffer_loading_screen(video_context->loading_index);
             sdl_render_framebuffer();
@@ -628,7 +628,7 @@ void calculate_statistics(VideoContext* video_context) {
     // do some calculation
     // Update mbps every STATISTICS_SECONDS seconds
 #define STATISTICS_SECONDS 5
-    if (get_timer(video_context->network_statistics_timer) > STATISTICS_SECONDS) {
+    if (get_timer(&video_context->network_statistics_timer) > STATISTICS_SECONDS) {
         NetworkStatistics network_statistics = {0};
         network_statistics.num_nacks_per_second =
             ring_buffer->num_packets_nacked / STATISTICS_SECONDS;
@@ -662,7 +662,7 @@ void try_recovering_missing_packets_or_frames(VideoContext* video_context) {
     int next_render_id = video_context->last_rendered_id + 1;
     FrameData* ctx = get_frame_at_id(video_context->ring_buffer, next_render_id);
     if (ctx->id == next_render_id) {
-        next_to_render_staleness = get_timer(ctx->frame_creation_timer);
+        next_to_render_staleness = get_timer(&ctx->frame_creation_timer);
     }
 
     static bool already_logged_iframe_request = false;
@@ -677,7 +677,7 @@ void try_recovering_missing_packets_or_frames(VideoContext* video_context) {
         // THEN, we should send an iframe request
 
         // Throttle the requests to prevent network upload saturation, however
-        if (get_timer(video_context->last_iframe_request_timer) >
+        if (get_timer(&video_context->last_iframe_request_timer) >
             IFRAME_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
             int last_failed_id = max(next_render_id, video_context->ring_buffer->max_id - 1);
             // Send a video packet stream reset request

@@ -65,12 +65,12 @@ int handle_discovery_port_message(whist_server_state *state, SocketContext *cont
     */
 
     WhistPacket *tcp_packet;
-    clock timer;
+    WhistTimer timer;
     start_timer(&timer);
     do {
         tcp_packet = read_packet(context, true);
         whist_sleep(5);
-    } while (tcp_packet == NULL && get_timer(timer) < CLIENT_PING_TIMEOUT_SEC);
+    } while (tcp_packet == NULL && get_timer(&timer) < CLIENT_PING_TIMEOUT_SEC);
     // Exit on null tcp packet, otherwise analyze the resulting WhistClientMessage
     if (tcp_packet == NULL) {
         LOG_WARNING("Did not receive request over discovery port from client.");
@@ -253,14 +253,14 @@ int broadcast_tcp_packet(Client *client, WhistPacketType type, void *data, int l
     return 0;
 }
 
-clock last_tcp_read;
+static WhistTimer last_tcp_read;
 bool has_read = false;
 int try_get_next_message_tcp(Client *client, WhistPacket **p_tcp_packet) {
     *p_tcp_packet = NULL;
 
     // Check if 20ms has passed since last TCP recvp, since each TCP recvp read takes 8ms
     bool should_recvp = false;
-    if (!has_read || get_timer(last_tcp_read) * MS_IN_SECOND > 20.0) {
+    if (!has_read || get_timer(&last_tcp_read) * MS_IN_SECOND > 20.0) {
         should_recvp = true;
         start_timer(&last_tcp_read);
         has_read = true;
@@ -325,7 +325,7 @@ int multithreaded_manage_client(void *opaque) {
     SocketContext discovery_context;
     bool new_client;
 
-    clock last_update_timer;
+    WhistTimer last_update_timer;
     start_timer(&last_update_timer);
 
     state->connection_id = rand();
@@ -337,10 +337,11 @@ int multithreaded_manage_client(void *opaque) {
         // If the variable is -1, disable auto-exit.
         disable_timeout = true;
     }
-    clock first_client_timer;  // start this now and then discard when first client has connected
+    WhistTimer first_client_timer;
+    // start this now and then discard when first client has connected
     start_timer(&first_client_timer);
 
-    clock last_ping_check;
+    WhistTimer last_ping_check;
     start_timer(&last_ping_check);
 
     if (create_tcp_listen_socket(&state->discovery_listen, PORT_DISCOVERY, TCP_CONNECTION_WAIT) !=
@@ -384,7 +385,7 @@ int multithreaded_manage_client(void *opaque) {
             // We don't place this in a lock because:
             //  * if the first client connects right on the threshold of begin_time_to_exit, it
             //  doesn't matter if we disconnect
-            if (!disable_timeout && (first_client_connected || (get_timer(first_client_timer) >
+            if (!disable_timeout && (first_client_connected || (get_timer(&first_client_timer) >
                                                                 config->begin_time_to_exit))) {
                 state->exiting = true;
             }

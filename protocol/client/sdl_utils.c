@@ -278,7 +278,7 @@ void destroy_sdl(SDL_Window* window_param) {
 }
 
 WhistMutex window_resize_mutex;
-clock window_resize_timer;
+WhistTimer window_resize_timer;
 // pending_resize_message should be set to true if sdl event handler was not able to process resize
 // event due to throttling, so the main loop should process it
 volatile bool pending_resize_message = false;
@@ -557,7 +557,7 @@ void sdl_update_pending_tasks() {
     // Check if a pending window resize message should be sent to server
     whist_lock_mutex(window_resize_mutex);
     if (pending_resize_message &&
-        get_timer(window_resize_timer) >= WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {
+        get_timer(&window_resize_timer) >= WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {
         pending_resize_message = false;
         send_message_dimensions();
         start_timer(&window_resize_timer);
@@ -588,7 +588,7 @@ void sdl_present_pending_framebuffer() {
     SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(sdl_renderer);
 
-    clock statistics_timer;
+    WhistTimer statistics_timer;
     start_timer(&statistics_timer);
 
     // Copy nv12 data, if any pending nv12 data exists
@@ -666,7 +666,7 @@ void sdl_present_pending_framebuffer() {
         pending_loadingscreen = false;
     }
 
-    log_double_statistic(VIDEO_RENDER_TIME, get_timer(statistics_timer) * MS_IN_SECOND);
+    log_double_statistic(VIDEO_RENDER_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);
 
     whist_unlock_mutex(renderer_mutex);
 

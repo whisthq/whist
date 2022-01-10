@@ -125,7 +125,7 @@ int get_native_window_dpi(SDL_Window *window) {
 
 static IOPMAssertionID power_assertion_id = kIOPMNullAssertionID;
 static WhistMutex last_user_activity_timer_mutex;
-static clock last_user_activity_timer;
+static WhistTimer last_user_activity_timer;
 static bool assertion_set = false;
 
 // Timeout the screensaver after 1min of inactivity,
@@ -139,7 +139,7 @@ int user_activity_deactivator(void *unique) {
         // Only wake up once every 30 seconds, resolution doesn't matter that much here
         whist_sleep(30 * MS_IN_SECOND);
         whist_lock_mutex(last_user_activity_timer_mutex);
-        if (get_timer(last_user_activity_timer) > SCREENSAVER_TIMEOUT_SECONDS && assertion_set) {
+        if (get_timer(&last_user_activity_timer) > SCREENSAVER_TIMEOUT_SECONDS && assertion_set) {
             IOReturn result = IOPMAssertionRelease(power_assertion_id);
             if (result != kIOReturnSuccess) {
                 LOG_ERROR("IOPMAssertionRelease Failed!");

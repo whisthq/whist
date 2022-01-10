@@ -24,24 +24,43 @@ relate different events across server and client.
 int get_utc_offset();
 #endif
 
-void start_timer(clock* timer) {
+struct WhistTimerInternal {
 #if defined(_WIN32)
-    QueryPerformanceCounter(timer);
+    LARGE_INTEGER pc;
+#elif defined(__APPLE__)
+    struct timeval tv;
+#else
+    struct timespec ts;
+#endif
+};
+
+void start_timer(WhistTimer* timer_opaque) {
+    struct WhistTimerInternal* timer = (struct WhistTimerInternal*)timer_opaque;
+#if defined(_WIN32)
+    QueryPerformanceCounter(&timer->pc);
 #elif defined(__APPLE__)
     // start timer
-    gettimeofday(timer, NULL);
+    gettimeofday(&timer->tv, NULL);
 #else
-    clock_gettime(CLOCK_MONOTONIC, timer);
+    clock_gettime(CLOCK_MONOTONIC, &timer->ts);
 #endif
+
+    // Ensure that compilation fails if the size of the opaque structure
+    // is not large enough to fit the real structure.  (This compiles to
+    // no code, but needs to occur inside a function.)
+    _Static_assert(sizeof(struct WhistTimerInternal) <= sizeof(struct WhistTimerOpaque),
+                   "WhistTimerOpaque must be at least as large as WhistTimerInternal "
+                   "on all platforms!");
 }
 
-double get_timer(clock timer) {
+double get_timer(const WhistTimer* timer_opaque) {
+    const struct WhistTimerInternal* timer = (const struct WhistTimerInternal*)timer_opaque;
 #if defined(_WIN32)
     LARGE_INTEGER end;
     LARGE_INTEGER frequency;
     QueryPerformanceFrequency(&frequency);
     QueryPerformanceCounter(&end);
-    double ret = (double)(end.QuadPart - timer.QuadPart) / frequency.QuadPart;
+    double ret = (double)(end.QuadPart - timer->pc.QuadPart) / frequency.QuadPart;
 #elif defined(__APPLE__)
     // Apple doesn't have clock_gettime, so we use gettimeofday
     // stop timer
@@ -49,8 +68,8 @@ double get_timer(clock timer) {
     gettimeofday(&t2, NULL);
 
     // compute and print the elapsed time in millisec
-    double elapsed_time = (t2.tv_sec - timer.tv_sec) * MS_IN_SECOND;  // sec to ms
-    elapsed_time += (t2.tv_usec - timer.tv_usec) / (double)US_IN_MS;  // us to ms
+    double elapsed_time = (t2.tv_sec - timer->tv.tv_sec) * MS_IN_SECOND;  // sec to ms
+    elapsed_time += (t2.tv_usec - timer->tv.tv_usec) / (double)US_IN_MS;  // us to ms
 
     // LOG_INFO("elapsed time in ms is: %f\n", elapsedTime);
 
@@ -62,23 +81,12 @@ double get_timer(clock timer) {
     // use CLOCK_MONOTONIC for relative time
     clock_gettime(CLOCK_MONOTONIC, &t2);
 
-    double elapsed_time = (t2.tv_sec - timer.tv_sec) * MS_IN_SECOND;
-    elapsed_time += (t2.tv_nsec - timer.tv_nsec) / (double)NS_IN_MS;
+    double elapsed_time = (t2.tv_sec - timer->ts.tv_sec) * MS_IN_SECOND;
+    elapsed_time += (t2.tv_nsec - timer->ts.tv_nsec) / (double)NS_IN_MS;
 
     double ret = elapsed_time / MS_IN_SECOND;
 #endif
     return ret;
-}
-
-timeout_clock create_timeout_clock(int timeout_ms) {
-    timeout_clock out;
-#if defined(_WIN32)
-    out.QuadPart = timeout_ms;
-#else
-    out.tv_sec = timeout_ms / MS_IN_SECOND;
-    out.tv_usec = (timeout_ms % MS_IN_SECOND) * US_IN_MS;
-#endif
-    return out;
 }
 
 char* current_time_str() {

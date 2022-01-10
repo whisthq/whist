@@ -126,12 +126,12 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
     */
 
     // Try to wait for FUSE path to exist before initiating drop sequence
-    clock fuse_ready_wait_timer;
+    WhistTimer fuse_ready_wait_timer;
     start_timer(&fuse_ready_wait_timer);
     char fuse_ready_path[128];
     snprintf(fuse_ready_path, 128, "/home/whist/.teleport/drag-drop/fuse_ready/%d", drop_file->id);
     while (access(fuse_ready_path, F_OK) != 0 &&
-           get_timer(fuse_ready_wait_timer) < 200.0 / MS_IN_SECOND) {
+           get_timer(&fuse_ready_wait_timer) < 200.0 / MS_IN_SECOND) {
         whist_sleep(50);
     }
 
@@ -248,12 +248,12 @@ int drop_file_into_active_window(TransferringFile* drop_file) {
     safe_strncpy(xdnd_file_url, "file://", 8);
     safe_strncpy(xdnd_file_url + 7, fuse_path, strlen(fuse_path) + 1);
 
-    clock active_window_response_loop_timer;
+    WhistTimer active_window_response_loop_timer;
     start_timer(&active_window_response_loop_timer);
     XEvent e;
     bool accepted_drop = false;
     // Wait for up to 2 seconds for the XDND exchange to successfully complete, and then abort.
-    while (get_timer(active_window_response_loop_timer) < 2.0) {
+    while (get_timer(&active_window_response_loop_timer) < 2.0) {
         XLockDisplay(display);
         XNextEvent(display, &e);
         XUnlockDisplay(display);

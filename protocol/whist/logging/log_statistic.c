@@ -26,7 +26,7 @@ Includes
 
 static WhistMutex log_statistic_mutex;
 
-static clock print_statistic_clock;
+static WhistTimer print_statistic_clock;
 
 /*
 ============================
@@ -149,7 +149,7 @@ void log_double_statistic(uint32_t index, double val) {
         all_statistics[index].min = val;
     }
 
-    if (get_timer(print_statistic_clock) > statistic_context.interval) {
+    if (get_timer(&print_statistic_clock) > statistic_context.interval) {
         unsafe_print_statistics();
     }
     whist_unlock_mutex(log_statistic_mutex);

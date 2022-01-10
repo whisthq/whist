@@ -102,7 +102,7 @@ int32_t multithreaded_send_audio(void* opaque) {
                        audio_encoder->context->frame_size) {
                     // create and encode a frame
 
-                    clock t;
+                    WhistTimer t;
                     start_timer(&t);
                     int res = audio_encoder_encode_frame(audio_encoder);
 
@@ -115,7 +115,7 @@ int32_t multithreaded_send_audio(void* opaque) {
                         break;
                     }
 
-                    log_double_statistic(AUDIO_ENCODE_TIME, get_timer(t) * 1000);
+                    log_double_statistic(AUDIO_ENCODE_TIME, get_timer(&t) * 1000);
                     if (audio_encoder->encoded_frame_size > (int)MAX_AUDIOFRAME_DATA_SIZE) {
                         LOG_ERROR("Audio data too large: %d", audio_encoder->encoded_frame_size);
                     } else if (assuming_client_active && state->client.is_active) {

@@ -59,7 +59,7 @@ static char error_monitor_environment[WHIST_ARGS_MAXLEN + 1];
 static char error_monitor_environment_set = false;
 static bool error_monitor_initialized = false;
 
-clock last_error_event_timer;
+static WhistTimer last_error_event_timer;
 
 bool check_error_monitor_backoff() {
     /*
@@ -76,7 +76,7 @@ bool check_error_monitor_backoff() {
 
     static int errors_sent = 0;
 
-    if (get_timer(last_error_event_timer) > MAX_EVENTS_PERIOD_MS / MS_IN_SECOND) {
+    if (get_timer(&last_error_event_timer) > MAX_EVENTS_PERIOD_MS / MS_IN_SECOND) {
         errors_sent = 0;
         start_timer(&last_error_event_timer);
     }

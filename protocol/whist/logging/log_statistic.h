@@ -50,7 +50,7 @@ Macros
 #define TIME_RUN(line, name, timer) \
     start_timer(&timer);            \
     line;                           \
-    log_double_statistic(name, get_timer(timer) * MS_IN_SECOND);
+    log_double_statistic(name, get_timer(&timer) * MS_IN_SECOND);
 
 /*
 ============================

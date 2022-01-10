@@ -538,19 +538,19 @@ bool try_nacking(RingBuffer* ring_buffer, double latency) {
     }
 
     static bool first_call = true;
-    static clock burst_timer;
-    static clock avg_timer;
+    static WhistTimer burst_timer;
+    static WhistTimer avg_timer;
     static int burst_counter;
     static int avg_counter;
 
     double burst_interval = 5.0 / MS_IN_SECOND;
     double avg_interval = 100.0 / MS_IN_SECOND;
 
-    if (first_call || get_timer(burst_timer) > burst_interval) {
+    if (first_call || get_timer(&burst_timer) > burst_interval) {
         burst_counter = 0;
         start_timer(&burst_timer);
     }
-    if (first_call || get_timer(avg_timer) > avg_interval) {
+    if (first_call || get_timer(&avg_timer) > avg_interval) {
         avg_counter = 0;
         start_timer(&avg_timer);
         first_call = false;
@@ -634,7 +634,7 @@ bool try_nacking(RingBuffer* ring_buffer, double latency) {
         // If too much time has passed since the last packet received,
         // we swap into *recovery mode*, since something is probably wrong with this packet
         if ((id < ring_buffer->max_id ||
-             get_timer(frame_data->last_nonnack_packet_timer) > 0.2 * latency) &&
+             get_timer(&frame_data->last_nonnack_packet_timer) > 0.2 * latency) &&
             !frame_data->recovery_mode) {
 #if LOG_NACKING
             LOG_INFO("Too long since last non-nack packet from ID %d. Entering recovery mode...",
@@ -667,7 +667,7 @@ bool try_nacking(RingBuffer* ring_buffer, double latency) {
             // On the first round, we finish up the work that the *normal nacking mode* did,
             // i.e. we nack for everything after last_packet_received - MAX_UNORDERED_PACKETS.
             // After an additional 1.2 * latency, we send another round of nacks
-            if (get_timer(frame_data->last_nacked_timer) >
+            if (get_timer(&frame_data->last_nacked_timer) >
                 1.2 * latency * frame_data->num_times_nacked) {
 #if LOG_NACKING
                 LOG_INFO("Attempting to recover Frame ID %d, %d/%d indices received.", id,
