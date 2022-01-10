@@ -32,6 +32,25 @@ func InstanceStatusHandler(event SubscriptionEvent, variables map[string]interfa
 	return (instance.ID == id) && (instance.Status == status)
 }
 
+// InstancesStatusHandler handles events from the hasura subscription which
+// detects changes on all instances to the given status in the database.
+func InstancesStatusHandler(event SubscriptionEvent, variables map[string]interface{}) bool {
+	result := event.(InstanceEvent)
+
+	var instance Instance
+	if len(result.Instances) > 0 {
+		instance = result.Instances[0]
+	}
+
+	if variables["status"] == nil {
+		return false
+	}
+
+	status := string(variables["status"].(instance_state))
+
+	return instance.Status == status
+}
+
 // MandelboxAllocatedHandler handles events from the hasura subscription which
 // detects changes on instance instanceName to the given status in the database.
 func MandelboxAllocatedHandler(event SubscriptionEvent, variables map[string]interface{}) bool {
@@ -88,7 +107,7 @@ func SetupScalingSubscriptions(whistClient WhistSubscriptionClient) {
 				"status": graphql.String("DRAINING"),
 			},
 			Result:  InstanceEvent{[]Instance{}},
-			Handler: InstanceStatusHandler,
+			Handler: InstancesStatusHandler,
 		},
 	}
 	whistClient.SetSubscriptions(scalingSubscriptions)
