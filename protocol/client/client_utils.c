@@ -726,13 +726,14 @@ void send_new_tab_url_if_needed() {
         memcpy(&wcmsg->url_to_open, (const char *)new_tab_url, url_length + 1);
         send_wcmsg(wcmsg);
         free(wcmsg);
-    }
-    free((char *)new_tab_url);
-    new_tab_url = NULL;
 
-    // Unmimimize the window if needed
-    if (SDL_GetWindowFlags((SDL_Window *)window) & SDL_WINDOW_MINIMIZED) {
-        SDL_RestoreWindow((SDL_Window *)window);
+        free((char *)new_tab_url);
+        new_tab_url = NULL;
+
+        // Unmimimize the window if needed
+        if (SDL_GetWindowFlags((SDL_Window *)window) & SDL_WINDOW_MINIMIZED) {
+            SDL_RestoreWindow((SDL_Window *)window);
+        }
     }
 }
 
