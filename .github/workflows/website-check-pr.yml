@@ -77,8 +77,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
         run: |
-          netlify deploy --build | tee netlify.log
-          cat netlify.log | grep "Website Draft URL" -B1 > netlify.info
+          netlify deploy --build --json > build.json
 
       # Need to install this dependency for the notification step.
       - name: Install Python Dependencies
@@ -94,6 +93,7 @@ jobs:
         shell: python3 {0}
         run: |
           import os
+          import json
           import sys
           sys.path.append(".github/workflows/helpers")
           from notifications.github_bot import github_comment_update
@@ -109,9 +109,9 @@ jobs:
           identifier = "AUTOMATED_NETLIFY_DEPLOY_PREVIEW_MESSAGE"
 
           title = "Netlify Deploy Preview"
-          file = open("frontend/website/netlify.info")
-          body = file.read()
-          file.close()
+          with open("frontend/website/build.json") as file:
+            data = json.load(file)
+            body = f"Deploy preview: {data['deploy_url']}\n\nDeploy logs: {data['logs']}"
 
           github_comment_update(
             github_token,
