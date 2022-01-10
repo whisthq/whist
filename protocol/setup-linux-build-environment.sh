@@ -24,7 +24,7 @@ sudo apt-get install --no-install-recommends -y \
   libgl1-mesa-dri \
   libavcodec58 \
   libavdevice58 \
-  libx11-6 \
+  libx11-dev \
   libxtst6 \
   xclip \
   x11-xserver-utils \
