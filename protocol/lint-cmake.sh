@@ -10,7 +10,7 @@ cd "$DIR"
 # We want only _our_ CMakeLists.txt. Fortunately,
 # `fd` is a lightning-fast `find` replacement which
 # ignores `.gitignore`d files by default!
-CMAKELISTS_FILES=$(fd --glob 'CMakeLists.txt')
-CMAKE_HELPER_FILES=$(fd --glob '*.cmake')
+CMAKELISTS_FILES="$(fd --glob 'CMakeLists.txt')"
+CMAKE_HELPER_FILES="$(fd --glob '*.cmake')"
 
 cmakelint --config=".cmakelintrc" $CMAKELISTS_FILES $CMAKE_HELPER_FILES
