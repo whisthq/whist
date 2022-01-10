@@ -200,7 +200,7 @@ void set_timeout(SOCKET socket, int timeout_ms) {
             LOG_FATAL("Failed to make socket blocking.");
         }
 
-        clock read_timeout = create_clock(timeout_ms);
+        timeout_clock read_timeout = create_timeout_clock(timeout_ms);
 
         if (setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&read_timeout,
                        sizeof(read_timeout)) < 0) {
