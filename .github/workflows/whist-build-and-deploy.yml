@@ -341,6 +341,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install Dependencies
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
         working-directory: frontend/website
         run: yarn install
 
@@ -362,9 +365,6 @@ jobs:
 
       - name: Build and Deploy Netlify Website
         working-directory: frontend/website
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
         run: |
           npx netlify build
           npx netlify deploy --prod
