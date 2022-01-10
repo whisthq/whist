@@ -408,6 +408,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     git \
     sudo \
     jq \
+    inotify-tools \
     # utilities for debugging/testing
     less \
     vim \
@@ -643,6 +644,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && pip install --no-cache-dir -r /requirements.txt \
     && rm /requirements.txt \
     && rm -rf /tmp/* /var/tmp/*
+
+# Add inotify file watching blocker
+COPY --chmod=555 utils/block-until-file-exists.sh /usr/bin/block-until-file-exists.sh
 
 # Set up first systemd service
 COPY --chmod=550 startup/whist-startup.sh /usr/share/whist
