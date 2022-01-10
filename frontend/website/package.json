@@ -4,8 +4,8 @@
   "main": "index.js",
   "license": "UNLICENSED",
   "scripts": {
-    "start": "./scripts/start.sh",
-    "build": "./scripts/build.sh",
+    "start": "snowpack dev",
+    "build": "snowpack build",
     "tailwind": "./scripts/tailwind.sh",
     "postinstall": "./scripts/postinstall.sh",
     "lint:check": "node ./scripts/lint.js",
