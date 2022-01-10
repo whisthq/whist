@@ -28,8 +28,8 @@ func InstanceStatusHandler(event SubscriptionEvent, variables map[string]interfa
 		return false
 	}
 
-	id := string(variables["id"].(graphql.String))
-	status := string(variables["status"].(graphql.String))
+	id := string(variables["id"].(instance_state))
+	status := string(variables["status"].(instance_state))
 
 	return (instance.ID == id) && (instance.Status == status)
 }
@@ -48,7 +48,7 @@ func MandelboxAllocatedHandler(event SubscriptionEvent, variables map[string]int
 		return false
 	}
 
-	instanceId := string(variables["instance_id"].(graphql.String))
+	instanceId := string(variables["instance_id"].(mandelbox_state))
 
 	return mandelbox.InstanceID == instanceId
 }
