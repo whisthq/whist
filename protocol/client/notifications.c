@@ -23,7 +23,7 @@ Includes
 #include <whist/logging/logging.h>
 #include <whist/network/network.h>
 #include <whist/utils/whist_notification.h>
-#include "display_notifs.h"
+#include "notif_utils/display_notifs.h"
 
 /*
 ============================
