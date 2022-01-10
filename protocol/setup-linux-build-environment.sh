@@ -20,7 +20,7 @@ sudo apt-get install --no-install-recommends -y \
 
 # Install Whist dependencies
 sudo apt-get install --no-install-recommends -y \
-  libssl1.1 \
+  libssl-dev \
   libgl1-mesa-dri \
   libavcodec58 \
   libavdevice58 \
