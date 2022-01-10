@@ -240,8 +240,10 @@ static int handle_network_settings_message(whist_server_state *state, WhistClien
     udp_update_bitrate_settings(&state->client.udp_context, burst_bitrate, video_fec_ratio);
 
     // Set the new video encoding parameters,
-    // using only the bandwidth that isn't already reserved for FEC packets
-    state->requested_video_bitrate = avg_bitrate * (1.0 - video_fec_ratio);
+    // using only the bandwidth that isn't already meant for audio,
+    // Or reserved for the audio's FEC packets
+    state->requested_video_bitrate = (avg_bitrate - AUDIO_BITRATE) * (1.0 - video_fec_ratio);
+    FATAL_ASSERT(state->requested_video_bitrate > 0);
     state->requested_video_codec = wcmsg->network_settings.desired_codec;
     state->requested_video_fps = wcmsg->network_settings.fps;
     // TODO: Implement custom FPS properly
