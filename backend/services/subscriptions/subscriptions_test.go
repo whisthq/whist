@@ -184,6 +184,7 @@ func TestSetupHostSubscriptions(t *testing.T) {
 		t.Errorf("Expected variable map to be %v, got: %v", whistClient.Subscriptions[0].Variables, variables)
 	}
 
+	variables["instance_id"] = graphql.String(instanceId)
 	variables["status"] = graphql.String("ALLOCATED")
 
 	// Verify that the "variables" maps are deep equal for the second subscription
