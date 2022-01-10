@@ -53,7 +53,7 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
     static int times_measured = 0;
     static double time_spent = 0.0;
 
-    clock cpu_transfer_timer;
+    WhistTimer cpu_transfer_timer;
     start_timer(&cpu_transfer_timer);
 
 #ifdef _WIN32
@@ -67,7 +67,7 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
     }
 
     times_measured++;
-    time_spent += get_timer(cpu_transfer_timer);
+    time_spent += get_timer(&cpu_transfer_timer);
 
     if (times_measured == 10) {
         LOG_INFO("Average time transferring frame from capture to encoder frame on CPU: %f",

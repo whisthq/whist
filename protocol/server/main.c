@@ -386,7 +386,7 @@ int main(int argc, char* argv[]) {
     XSetIOErrorHandler(xioerror_handler);
 #endif
 
-    clock startup_time;
+    WhistTimer startup_time;
     start_timer(&startup_time);
 
     server_state.stop_streaming = false;
@@ -406,24 +406,24 @@ int main(int argc, char* argv[]) {
         multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", &server_state);
     LOG_INFO("Sending video and audio...");
 
-    clock totaltime;
+    WhistTimer totaltime;
     start_timer(&totaltime);
 
     LOG_INFO("Receiving packets...");
 
     init_window_info_getter();
 
-    clock ack_timer;
+    WhistTimer ack_timer;
     start_timer(&ack_timer);
 
-    clock window_name_timer;
+    WhistTimer window_name_timer;
     start_timer(&window_name_timer);
 
-    clock window_fullscreen_timer;
+    WhistTimer window_fullscreen_timer;
     start_timer(&window_fullscreen_timer);
 
 #ifndef _WIN32
-    clock uri_handler_timer;
+    WhistTimer uri_handler_timer;
     start_timer(&uri_handler_timer);
 #endif  // ! _WIN32
 
@@ -439,7 +439,7 @@ int main(int argc, char* argv[]) {
         // Get UDP messages
         get_whist_udp_client_messages(&server_state);
 
-        if (get_timer(ack_timer) > 5) {
+        if (get_timer(&ack_timer) > 5) {
             if (get_using_stun()) {
                 // Broadcast ack
                 if (broadcast_ack(&server_state.client) != 0) {
@@ -449,7 +449,7 @@ int main(int argc, char* argv[]) {
             start_timer(&ack_timer);
         }
 
-        if (get_timer(window_fullscreen_timer) > 50.0 / MS_IN_SECOND) {
+        if (get_timer(&window_fullscreen_timer) > 50.0 / MS_IN_SECOND) {
             // This is the cached fullscreen state. We only send state change events
             // to the client if the fullscreen value has changed.
             static bool cur_fullscreen = false;
@@ -474,7 +474,7 @@ int main(int argc, char* argv[]) {
             start_timer(&window_fullscreen_timer);
         }
 
-        if (get_timer(window_name_timer) > 50.0 / MS_IN_SECOND) {
+        if (get_timer(&window_name_timer) > 50.0 / MS_IN_SECOND) {
             char* name = NULL;
             bool new_window_name = get_focused_window_name(&name);
             if (name != NULL && (server_state.client_joined_after_window_name_broadcast ||
@@ -500,7 +500,7 @@ int main(int argc, char* argv[]) {
 #ifndef _WIN32
 #define URI_HANDLER_FILE "/home/whist/.teleport/handled-uri"
 #define HANDLED_URI_MAXLEN 4096
-        if (get_timer(uri_handler_timer) > 50.0 / MS_IN_SECOND) {
+        if (get_timer(&uri_handler_timer) > 50.0 / MS_IN_SECOND) {
             if (!access(URI_HANDLER_FILE, R_OK)) {
                 // If the handler file exists, read it and delete the file
                 int fd = open(URI_HANDLER_FILE, O_RDONLY);

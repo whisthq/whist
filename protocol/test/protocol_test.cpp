@@ -220,7 +220,7 @@ TEST_F(ProtocolTest, RecvNoIntr) {
     int ret, err;
     int socks[2];
     char buf[2];
-    clock timer;
+    WhistTimer timer;
     double elapsed;
 
     // Set the signal action to a trivial handler so can see when an
@@ -299,7 +299,7 @@ TEST_F(ProtocolTest, RecvNoIntr) {
     EXPECT_EQ(ret, -1);
     EXPECT_EQ(errno, EAGAIN);
     EXPECT_EQ(atomic_load(&recv_intr_count), 4);
-    elapsed = get_timer(timer);
+    elapsed = get_timer(&timer);
     EXPECT_GE(elapsed, 0.5);
     EXPECT_LT(elapsed, 1.0);
 
@@ -315,7 +315,7 @@ TEST_F(ProtocolTest, RecvNoIntr) {
     ret = recv_no_intr(socks[0], buf, 1, 0);
     EXPECT_EQ(ret, 1);
     EXPECT_EQ(atomic_load(&recv_intr_count), 5);
-    elapsed = get_timer(timer);
+    elapsed = get_timer(&timer);
     EXPECT_GE(elapsed, 0.5);
     EXPECT_LT(elapsed, 1.0);
 
@@ -332,7 +332,7 @@ TEST_F(ProtocolTest, RecvNoIntr) {
     EXPECT_EQ(ret, -1);
     EXPECT_EQ(errno, EAGAIN);
     EXPECT_EQ(atomic_load(&recv_intr_count), 6);
-    elapsed = get_timer(timer);
+    elapsed = get_timer(&timer);
     EXPECT_GE(elapsed, 0.3);
     EXPECT_LT(elapsed, 0.5);
 

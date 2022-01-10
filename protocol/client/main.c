@@ -96,7 +96,7 @@ extern bool active_pinch;
 
 // Window resizing state
 extern WhistMutex window_resize_mutex;  // protects pending_resize_message
-extern clock window_resize_timer;
+extern WhistTimer window_resize_timer;
 extern volatile bool pending_resize_message;
 
 // The state of the client, i.e. whether it's connected to a server or not
@@ -354,7 +354,7 @@ int main(int argc, char* argv[]) {
             client_exiting = true;
         }
 
-        clock handshake_time;
+        WhistTimer handshake_time;
         start_timer(&handshake_time);  // start timer for measuring handshake time
         LOG_INFO("Begin measuring handshake, current time = %s", current_time_str());
 
@@ -364,7 +364,7 @@ int main(int argc, char* argv[]) {
         }
 
         // Log to METRIC for cross-session tracking and INFO for developer-facing logging
-        double discover_ports_time = get_timer(handshake_time);
+        double discover_ports_time = get_timer(&handshake_time);
         LOG_INFO("Time elasped after discover_ports() = %f, current time = %s", discover_ports_time,
                  current_time_str());
         LOG_METRIC("\"Handshake_discover_ports_time\" : %f", discover_ports_time);
@@ -375,7 +375,7 @@ int main(int argc, char* argv[]) {
         }
 
         // Log to METRIC for cross-session tracking and INFO for developer-facing logging
-        double connect_to_server_time = get_timer(handshake_time);
+        double connect_to_server_time = get_timer(&handshake_time);
         LOG_INFO("Time elasped after connect_to_server() = %f, current time= %s",
                  connect_to_server_time, current_time_str());
         LOG_METRIC("\"Handshake_connect_to_server_time\" : %f", connect_to_server_time);
@@ -424,13 +424,13 @@ int main(int argc, char* argv[]) {
         start_timer(&window_resize_timer);
         window_resize_mutex = whist_create_mutex();
 
-        clock keyboard_sync_timer, monitor_change_timer;
+        WhistTimer keyboard_sync_timer, monitor_change_timer;
         start_timer(&keyboard_sync_timer);
         start_timer(&monitor_change_timer);
 
         // Timer ensures we check piped args for potential URLs to open no more than once every
         // 50ms. This prevents CPU overload.
-        clock new_tab_url_timer;
+        WhistTimer new_tab_url_timer;
         start_timer(&new_tab_url_timer);
 
         // This code will run for as long as there are events queued, or once every millisecond if
@@ -455,7 +455,7 @@ int main(int argc, char* argv[]) {
                 break;
             }
 
-            if (get_timer(new_tab_url_timer) * MS_IN_SECOND > 50.0) {
+            if (get_timer(&new_tab_url_timer) * MS_IN_SECOND > 50.0) {
                 bool keep_piping2 = true;
                 int piped_args_ret = read_piped_arguments(&keep_piping2, /*run_only_one=*/true);
                 if (piped_args_ret == -1) {
@@ -467,7 +467,7 @@ int main(int argc, char* argv[]) {
                 start_timer(&new_tab_url_timer);
             }
 
-            if (get_timer(keyboard_sync_timer) * MS_IN_SECOND > 50.0) {
+            if (get_timer(&keyboard_sync_timer) * MS_IN_SECOND > 50.0) {
                 if (sync_keyboard_state() != 0) {
                     exit_code = WHIST_EXIT_FAILURE;
                     break;
@@ -475,7 +475,7 @@ int main(int argc, char* argv[]) {
                 start_timer(&keyboard_sync_timer);
             }
 
-            if (get_timer(monitor_change_timer) * MS_IN_SECOND > 10) {
+            if (get_timer(&monitor_change_timer) * MS_IN_SECOND > 10) {
                 static int current_display = -1;
                 int sdl_display = SDL_GetWindowDisplayIndex((SDL_Window*)window);
 

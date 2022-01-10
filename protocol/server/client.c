@@ -123,7 +123,7 @@ int reap_timed_out_client(Client *client, double timeout) {
             (int): Returns -1 on failure, 0 on success.
     */
 
-    if (client->is_active && get_timer(client->last_ping) > timeout) {
+    if (client->is_active && get_timer(&client->last_ping) > timeout) {
         LOG_INFO("Dropping timed out client");
         if (start_quitting_client(client) != 0) {
             LOG_ERROR("Failed to start quitting client.");

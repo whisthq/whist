@@ -92,9 +92,9 @@ bool sdl_handle_events() {
 
     // After handle_sdl_event potentially captures a mouse motion,
     // We throttle it down to only update once every 0.5ms
-    static clock mouse_motion_timer;
+    static WhistTimer mouse_motion_timer;
     static bool first_mouse_motion = true;
-    if (first_mouse_motion || get_timer(mouse_motion_timer) * MS_IN_SECOND > 0.5) {
+    if (first_mouse_motion || get_timer(&mouse_motion_timer) * MS_IN_SECOND > 0.5) {
         if (update_mouse_motion() != 0) {
             return false;
         }

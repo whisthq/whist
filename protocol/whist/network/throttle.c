@@ -14,12 +14,12 @@ struct NetworkThrottleContext {
     size_t coin_bucket;      //<<< The coin bucket for the current burst bitrate.
     int burst_bitrate;       //<<< The current burst bitrate.
     WhistMutex queue_lock;   //<<< The lock to protect the queue.
-    WhistCondition queue_cond;      //<<< The condition variable which regulates the queue.
-    clock coin_bucket_last_fill;    //<<< The timer for the coin bucket's last fill.
-    unsigned int next_queue_id;     //<<< The next queue id to use.
-    unsigned int current_queue_id;  //<<< The currently-processed queue id.
-    bool destroying;                //<<< Whether the context is being destroyed.
-    bool fill_bucket_initially;     //<<< Whether the coin bucket should be filled up initially
+    WhistCondition queue_cond;         //<<< The condition variable which regulates the queue.
+    WhistTimer coin_bucket_last_fill;  //<<< The timer for the coin bucket's last fill.
+    unsigned int next_queue_id;        //<<< The next queue id to use.
+    unsigned int current_queue_id;     //<<< The currently-processed queue id.
+    bool destroying;                   //<<< Whether the context is being destroyed.
+    bool fill_bucket_initially;        //<<< Whether the coin bucket should be filled up initially
 };
 
 NetworkThrottleContext* network_throttler_create(double coin_bucket_ms,
@@ -152,7 +152,7 @@ void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t 
     // coin bucket at a rate of `burst_bitrate` bytes per second.
     // Once there are enough coins in the bucket, we can actually
     // send the packet.
-    clock start;
+    WhistTimer start;
     start_timer(&start);
     int loops = 0;
     while (true) {
@@ -162,7 +162,7 @@ void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t 
             break;
         }
 
-        double elapsed_seconds = get_timer(ctx->coin_bucket_last_fill);
+        double elapsed_seconds = get_timer(&ctx->coin_bucket_last_fill);
         start_timer(&ctx->coin_bucket_last_fill);
         int burst_bitrate = network_throttler_get_burst_bitrate(ctx);
         const size_t coin_bucket_max = ctx->coin_bucket_max;
@@ -182,7 +182,7 @@ void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t 
     }
 
     // Wake up the next waiter in the queue.
-    double time = get_timer(start);
+    double time = get_timer(&start);
     log_double_statistic(NETWORK_THROTTLED_PACKET_DELAY, time * MS_IN_SECOND);
     log_double_statistic(NETWORK_THROTTLED_PACKET_DELAY_RATE, time * MS_IN_SECOND / (double)bytes);
     log_double_statistic(NETWORK_THROTTLED_PACKET_DELAY_LOOPS, (double)loops);

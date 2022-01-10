@@ -28,29 +28,21 @@ Includes
 
 /*
 ============================
-Defines
-============================
-*/
-
-#if defined(_WIN32)
-#define clock LARGE_INTEGER
-#elif defined(__APPLE__)
-#define clock struct timeval
-#else
-#define clock struct timespec
-#endif
-
-#if defined(_WIN32)
-#define timeout_clock LARGE_INTEGER
-#else
-#define timeout_clock struct timeval
-#endif
-
-/*
-============================
 Custom Types
 ============================
 */
+
+/**
+ * @brief Structure representing a timer.
+ *
+ * Start the timer with start_timer(), get the time elapsed since it was
+ * started with get_timer().
+ */
+typedef struct WhistTimerOpaque {
+    // This structure is opaque, but needs to be defined so that instances
+    // of it can be made on the stack.
+    uint64_t opaque[2];
+} WhistTimer;
 
 #define TZ_NAME_MAXLEN 200
 
@@ -78,27 +70,17 @@ Public Functions
  * @brief                          Start the given timer at the current time, as
  *                                 a stopwatch
  *
- * @param timer		               Pointer to the the timer in question
+ * @param timer		           Pointer to the timer to start.
  */
-void start_timer(clock* timer);
+void start_timer(WhistTimer* timer);
 
 /**
  * @brief                          Get the amount of elapsed time in seconds since
  *                                 the last start_timer
  *
- * @param timer		               The timer in question
+ * @param timer		           Pointer to the timer to query.
  */
-double get_timer(clock timer);
-
-/**
- * @brief                          Create a clock that represents the given
- *                                 timeout in milliseconds
- *
- * @param timeout_ms	           The number of milliseconds for the clock
- *
- * @returns						   The desired clock
- */
-timeout_clock create_timeout_clock(int timeout_ms);
+double get_timer(const WhistTimer* timer);
 
 /**
  * @brief                          Returns the current time as a string

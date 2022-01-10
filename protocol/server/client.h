@@ -42,8 +42,8 @@ typedef struct Client {
     RWLock tcp_rwlock;          // protects tcp_context for synchrony-sensitive sends and recvs
 
     /* PING */
-    clock last_ping;      // not lock protected
-    clock last_tcp_ping;  // not lock protected
+    WhistTimer last_ping;      // not lock protected
+    WhistTimer last_tcp_ping;  // not lock protected
 
     timestamp_us last_ping_client_time;
     timestamp_us last_ping_server_time;

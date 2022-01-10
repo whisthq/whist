@@ -45,13 +45,13 @@ int uid;
 extern bool using_stun;
 
 volatile double latency;
-extern clock last_ping_timer;
+extern WhistTimer last_ping_timer;
 extern volatile int last_udp_ping_id;
 extern volatile int udp_ping_failures;
 extern volatile int last_udp_pong_id;
 const double ping_lambda = 0.8;
 
-extern clock last_tcp_ping_timer;
+extern WhistTimer last_tcp_ping_timer;
 extern volatile int last_tcp_ping_id;
 extern volatile int last_tcp_pong_id;
 
@@ -116,12 +116,12 @@ int discover_ports(bool *with_stun) {
 
     // Receive discovery packets from server
     WhistPacket *tcp_packet = NULL;
-    clock timer;
+    WhistTimer timer;
     start_timer(&timer);
     do {
         tcp_packet = read_packet(&context, true);
         SDL_Delay(5);
-    } while (tcp_packet == NULL && get_timer(timer) < 5.0);
+    } while (tcp_packet == NULL && get_timer(&timer) < 5.0);
 
     // If no tcp packet was found, just return -1
     // Otherwise, parse the tcp packet's WhistDiscoveryReplyMessage
@@ -216,7 +216,7 @@ void receive_pong(int pong_id) {
     */
     if (pong_id == last_udp_ping_id) {
         // the server received the last ping we sent!
-        double ping_time = get_timer(last_ping_timer);
+        double ping_time = get_timer(&last_ping_timer);
         LOG_INFO("Pong %d received: took %f milliseconds", pong_id, ping_time * MS_IN_SECOND);
         log_double_statistic(NETWORK_RTT_UDP, ping_time * MS_IN_SECOND);
 
@@ -238,7 +238,7 @@ void receive_tcp_pong(int pong_id) {
     */
     if (pong_id == last_tcp_ping_id) {
         // the server received the last TCP ping we sent!
-        double ping_time = get_timer(last_tcp_ping_timer);
+        double ping_time = get_timer(&last_tcp_ping_timer);
         LOG_INFO("TCP Pong %d received: took %f seconds", pong_id, ping_time);
 
         last_tcp_pong_id = pong_id;

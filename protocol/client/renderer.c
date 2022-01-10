@@ -28,7 +28,7 @@ struct WhistRenderer {
     WhistThread renderer_thread;
     WhistMutex renderer_mutex;
     WhistSemaphore renderer_semaphore;
-    clock last_try_render_timer;
+    WhistTimer last_try_render_timer;
     // Used to log renderer thread usage
     bool using_renderer_thread;
     bool render_is_on_renderer_thread;
@@ -86,7 +86,7 @@ WhistRenderer* init_renderer() {
 }
 
 void renderer_receive_packet(WhistRenderer* whist_renderer, WhistPacket* packet) {
-    clock statistics_timer;
+    WhistTimer statistics_timer;
 
     // Pass the receive packet into the video or audio context
     switch (packet->type) {
@@ -107,7 +107,7 @@ void renderer_receive_packet(WhistRenderer* whist_renderer, WhistPacket* packet)
 }
 
 void renderer_update(WhistRenderer* whist_renderer) {
-    clock statistics_timer;
+    WhistTimer statistics_timer;
 
     // Update video/audio
     TIME_RUN(update_audio(whist_renderer->audio_context), AUDIO_UPDATE_TIME, statistics_timer);
@@ -133,7 +133,7 @@ void renderer_update(WhistRenderer* whist_renderer) {
     if (whist_try_lock_mutex(whist_renderer->renderer_mutex) == 0) {
         // AND the timer confirms we haven't rendered recently... [Last ~2ms]
         double last_try_render_time_ms =
-            get_timer(whist_renderer->last_try_render_timer) * MS_IN_SECOND;
+            get_timer(&whist_renderer->last_try_render_timer) * MS_IN_SECOND;
         if (last_try_render_time_ms > 2.0) {
             // Then..., we hit the semaphore so the renderer thread can do the rendering
             whist_post_semaphore(whist_renderer->renderer_semaphore);

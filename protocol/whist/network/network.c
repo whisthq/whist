@@ -201,7 +201,14 @@ void set_timeout(SOCKET socket, int timeout_ms) {
             LOG_FATAL("Failed to make socket blocking.");
         }
 
-        timeout_clock read_timeout = create_timeout_clock(timeout_ms);
+        // setsockopt(SO_RCVTIMEO) argument is struct timeval on Unices
+        // but DWORD in milliseconds on Windows.
+#ifdef _WIN32
+        DWORD read_timeout = timeout_ms;
+#else
+        struct timeval read_timeout = {.tv_sec = timeout_ms / MS_IN_SECOND,
+                                       .tv_usec = timeout_ms % MS_IN_SECOND * US_IN_MS};
+#endif
 
         if (setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&read_timeout,
                        sizeof(read_timeout)) < 0) {
@@ -393,7 +400,7 @@ ssize_t recv_no_intr(int sockfd, void* buf, size_t len, int flags) {
     ssize_t ret;
     bool got_timeout = false;
     int original_timeout, current_timeout;
-    clock timer;
+    WhistTimer timer;
     // For timeouts we only care about how long has elapsed since this call started.
     start_timer(&timer);
     while (1) {
@@ -416,7 +423,7 @@ ssize_t recv_no_intr(int sockfd, void* buf, size_t len, int flags) {
         while (1) {
             // If there was a timeout set we need compare against how long
             // has actually elapsed.
-            int elapsed = (int)(get_timer(timer) * MS_IN_SECOND);
+            int elapsed = (int)(get_timer(&timer) * MS_IN_SECOND);
             if (elapsed >= original_timeout) {
                 // If the full time has already elapsed we should return.
                 // Set errno to the expected value for a timeout case.
@@ -454,7 +461,7 @@ ssize_t recvfrom_no_intr(int sockfd, void* buf, size_t len, int flags, struct so
     ssize_t ret;
     bool got_timeout = false;
     int original_timeout, current_timeout;
-    clock timer;
+    WhistTimer timer;
     // For timeouts we only care about how long has elapsed since this call started.
     start_timer(&timer);
     while (1) {
@@ -477,7 +484,7 @@ ssize_t recvfrom_no_intr(int sockfd, void* buf, size_t len, int flags, struct so
         while (1) {
             // If there was a timeout set we need compare against how long
             // has actually elapsed.
-            int elapsed = (int)(get_timer(timer) * MS_IN_SECOND);
+            int elapsed = (int)(get_timer(&timer) * MS_IN_SECOND);
             if (elapsed >= original_timeout) {
                 // If the full time has already elapsed we should return.
                 // Set errno to the expected value for a timeout case.

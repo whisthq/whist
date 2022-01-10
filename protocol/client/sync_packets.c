@@ -33,12 +33,12 @@ extern SocketContext packet_udp_context;
 extern SocketContext packet_tcp_context;
 bool connected = true;  // The state of the client, i.e. whether it's connected to a server or not
 // Ping variables
-clock last_ping_timer;
+WhistTimer last_ping_timer;
 volatile int last_udp_ping_id;
 volatile int last_udp_pong_id;
 volatile int udp_ping_failures;
 // TCP ping variables
-clock last_tcp_ping_timer;
+WhistTimer last_tcp_ping_timer;
 volatile int last_tcp_ping_id;
 volatile int last_tcp_pong_id;
 extern volatile double latency;
@@ -62,7 +62,7 @@ void update_ping() {
        pong and it has been 210 ms, resend the ping.
     */
 
-    static clock last_new_ping_timer;
+    static WhistTimer last_new_ping_timer;
     static bool timer_initialized = false;
     if (!timer_initialized) {
         start_timer(&last_new_ping_timer);
@@ -70,13 +70,13 @@ void update_ping() {
     }
 
     // If it's been 1 second since the last ping, we should warn
-    if (get_timer(last_ping_timer) > 1.0) {
+    if (get_timer(&last_ping_timer) > 1.0) {
         LOG_WARNING("No ping sent or pong received in over a second");
     }
 
     // If we're waiting for a ping, and it's been 600ms, then that ping will be
     // noted as failed
-    if (last_udp_ping_id != last_udp_pong_id && get_timer(last_new_ping_timer) > 0.6) {
+    if (last_udp_ping_id != last_udp_pong_id && get_timer(&last_new_ping_timer) > 0.6) {
         LOG_WARNING("Ping received no response: %d", last_udp_ping_id);
         // Keep track of failures, and exit if too many failures
         last_udp_pong_id = last_udp_ping_id;
@@ -91,13 +91,13 @@ void update_ping() {
     }
 
     // if we've received the last ping, send another
-    if (last_udp_ping_id == last_udp_pong_id && get_timer(last_ping_timer) > 0.5) {
+    if (last_udp_ping_id == last_udp_pong_id && get_timer(&last_ping_timer) > 0.5) {
         send_ping(last_udp_ping_id + 1);
         start_timer(&last_new_ping_timer);
     }
 
     // if we haven't received the last ping, send the same ping
-    if (last_udp_ping_id != last_udp_pong_id && get_timer(last_ping_timer) > 0.21) {
+    if (last_udp_ping_id != last_udp_pong_id && get_timer(&last_ping_timer) > 0.21) {
         send_ping(last_udp_ping_id);
     }
 }
@@ -109,7 +109,7 @@ void update_tcp_ping() {
        the lost connection was caused by the client or the server.
     */
 
-    static clock last_new_ping_timer;
+    static WhistTimer last_new_ping_timer;
     static bool timer_initialized = false;
     if (!timer_initialized) {
         start_timer(&last_new_ping_timer);
@@ -117,13 +117,13 @@ void update_tcp_ping() {
     }
 
     // If it's been 10 seconds since the last TCP ping, we should warn
-    if (get_timer(last_tcp_ping_timer) > 10.0) {
+    if (get_timer(&last_tcp_ping_timer) > 10.0) {
         LOG_WARNING("No TCP ping sent or pong received in over 10 seconds");
     }
 
     // If we're waiting for a ping, and it's been 5s, then that ping will be
     // noted as failed
-    if (last_tcp_ping_id != last_tcp_pong_id && get_timer(last_new_ping_timer) > 5.0) {
+    if (last_tcp_ping_id != last_tcp_pong_id && get_timer(&last_new_ping_timer) > 5.0) {
         LOG_WARNING("TCP ping received no response: %d", last_tcp_ping_id);
 
         // Only if we successfully recover the TCP connection should we continue
@@ -134,7 +134,7 @@ void update_tcp_ping() {
     }
 
     // If we've received the last pong, send another if it's been 2s since last ping
-    if (last_tcp_ping_id == last_tcp_pong_id && get_timer(last_tcp_ping_timer) > 2.0) {
+    if (last_tcp_ping_id == last_tcp_pong_id && get_timer(&last_tcp_ping_timer) > 2.0) {
         send_tcp_ping(last_tcp_ping_id + 1);
         start_timer(&last_new_ping_timer);
     }
@@ -169,13 +169,13 @@ int multithreaded_sync_udp_packets(void* opaque) {
     last_udp_ping_id = 0;
     udp_ping_failures = 0;
 
-    clock last_ack;
-    clock statistics_timer;
+    WhistTimer last_ack;
+    WhistTimer statistics_timer;
     start_timer(&last_ack);
 
     while (run_sync_packets_threads) {
         // Ack the connection every 5 seconds
-        if (get_timer(last_ack) > 5.0) {
+        if (get_timer(&last_ack) > 5.0) {
             ack(socket_context);
             start_timer(&last_ack);
         }
@@ -297,14 +297,14 @@ int multithreaded_sync_tcp_packets(void* opaque) {
 
     last_tcp_ping_id = 0;
 
-    clock last_ack;
-    clock statistics_timer;
+    WhistTimer last_ack;
+    WhistTimer statistics_timer;
     start_timer(&last_ack);
     bool successful_read_or_pull = false;
 
     while (run_sync_packets_threads) {
         // Ack the connection every 50 ms
-        if (get_timer(last_ack) > 0.05) {
+        if (get_timer(&last_ack) > 0.05) {
             int ret = ack(socket_context);
             if (ret != 0) {
                 LOG_WARNING("Lost TCP Connection (Error: %d)", get_last_network_error());
@@ -367,8 +367,8 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         //     file_synchronizer_read_next_file_chunk
         //     without sleeping if either of them are currently pulling/reading chunks. Otherwise,
         //     sleep to target one loop every 25 ms.
-        if (!successful_read_or_pull && get_timer(last_ack) * MS_IN_SECOND < 25.0) {
-            whist_sleep(max(1, (int)(25.0 - get_timer(last_ack) * MS_IN_SECOND)));
+        if (!successful_read_or_pull && get_timer(&last_ack) * MS_IN_SECOND < 25.0) {
+            whist_sleep(max(1, (int)(25.0 - get_timer(&last_ack) * MS_IN_SECOND)));
         }
     }
     return 0;

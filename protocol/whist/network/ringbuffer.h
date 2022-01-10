@@ -48,9 +48,9 @@ typedef struct FrameData {
     int* num_times_index_nacked;
     int num_times_nacked;
     int last_nacked_index;
-    clock last_nacked_timer;
-    clock last_nonnack_packet_timer;
-    clock frame_creation_timer;
+    WhistTimer last_nacked_timer;
+    WhistTimer last_nonnack_packet_timer;
+    WhistTimer frame_creation_timer;
     FECDecoder* fec_decoder;
 } FrameData;
 

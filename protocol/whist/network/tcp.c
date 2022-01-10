@@ -507,13 +507,13 @@ int create_tcp_server_context_stun(SocketContextData* context, int port, int rec
     }
 
     // Receive STUN response
-    clock t;
+    WhistTimer t;
     start_timer(&t);
 
     int recv_size = 0;
     StunEntry entry = {0};
 
-    while (recv_size < (int)sizeof(entry) && get_timer(t) < stun_timeout_ms) {
+    while (recv_size < (int)sizeof(entry) && get_timer(&t) < stun_timeout_ms) {
         int single_recv_size;
         if ((single_recv_size = recv_no_intr(context->socket, ((char*)&entry) + recv_size,
                                              max(0, (int)sizeof(entry) - recv_size), 0)) < 0) {
@@ -688,13 +688,13 @@ int create_tcp_client_context_stun(SocketContextData* context, char* destination
     }
 
     // Receive STUN response
-    clock t;
+    WhistTimer t;
     start_timer(&t);
 
     int recv_size = 0;
     StunEntry entry = {0};
 
-    while (recv_size < (int)sizeof(entry) && get_timer(t) < stun_timeout_ms) {
+    while (recv_size < (int)sizeof(entry) && get_timer(&t) < stun_timeout_ms) {
         int single_recv_size;
         if ((single_recv_size = recv_no_intr(context->socket, ((char*)&entry) + recv_size,
                                              max(0, (int)sizeof(entry) - recv_size), 0)) < 0) {

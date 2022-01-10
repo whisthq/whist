@@ -69,7 +69,7 @@ int handle_client_message(whist_server_state *state, WhistClientMessage *wcmsg) 
         Returns:
             (int): Returns -1 on failure, 0 on success
     */
-    static clock temp_clock;
+    static WhistTimer temp_clock;
 
     switch (wcmsg->type) {
         case MESSAGE_KEYBOARD:
@@ -80,7 +80,7 @@ int handle_client_message(whist_server_state *state, WhistClientMessage *wcmsg) 
             start_timer(&temp_clock);
             int r = handle_user_input_message(state, wcmsg);
             log_double_statistic(CLIENT_HANDLE_USERINPUT_TIME,
-                                 get_timer(temp_clock) * MS_IN_SECOND);
+                                 get_timer(&temp_clock) * MS_IN_SECOND);
             return r;
         case MESSAGE_KEYBOARD_STATE:
             return handle_keyboard_state_message(state, wcmsg);
