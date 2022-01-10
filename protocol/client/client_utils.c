@@ -551,9 +551,9 @@ int read_piped_arguments(bool *keep_waiting, bool run_only_once) {
                     LOG_INFO("Connecting to IP %s", server_ip);
                 }
             } else if (strlen(arg_name) == 4 && !strncmp(arg_name, "kill", strlen(arg_name))) {
-                // If arg_name is `kill`, then return failure
+                // If arg_name is `kill`, then return indication for graceful exit
                 LOG_INFO("Killing client app");
-                return 0;
+                return 1;
             } else if (strlen(arg_name) == 8 && !strncmp(arg_name, "finished", strlen(arg_name))) {
                 // If arg_name is `finished`, then stop reading args from pipe
                 LOG_INFO("Finished piping arguments");

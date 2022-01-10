@@ -457,7 +457,13 @@ int main(int argc, char* argv[]) {
 
             if (get_timer(new_tab_url_timer) * MS_IN_SECOND > 50.0) {
                 bool keep_piping2 = true;
-                read_piped_arguments(&keep_piping2, /*run_only_one=*/true);
+                int piped_args_ret = read_piped_arguments(&keep_piping2, /*run_only_one=*/true);
+                if (piped_args_ret == -1) {
+                    LOG_ERROR("Failed to read piped arguments - exiting client");
+                    exit_code = WHIST_EXIT_FAILURE;
+                } else if (piped_args_ret == 1) {
+                    exit_code = WHIST_EXIT_CLI;
+                }
                 start_timer(&new_tab_url_timer);
             }
 
