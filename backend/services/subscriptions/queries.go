@@ -102,3 +102,8 @@ var QueryMandelboxesByInstanceId struct {
 var QueryMandelboxByStatus struct {
 	WhistMandelboxes `graphql:"whist_mandelboxes(where: {status: {_eq: $status}})"`
 }
+
+// QueryLatestImage returns the latest image from the database for the specified provider/region pair.
+var QueryLatestImage struct {
+	WhistImages `graphql:"  whist_images(where: {provider: {_eq: $provider}, _and: {region: {_eq: $region}}}, order_by: {updated_at: desc})"`
+}
