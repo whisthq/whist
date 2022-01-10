@@ -31,6 +31,7 @@ Includes
 #include <iterator>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <signal.h>
 
 extern "C" {
 #include "client/client_utils.h"
@@ -266,6 +267,185 @@ TEST(ProtocolTest, ResetRingBufferFrame) {
 
     destroy_ring_buffer(rb);
 }
+
+// Test network calls ignoring EINTR.
+
+// Not relevant on Windows, and we need pthread_kill() for the test.
+#ifndef _WIN32
+
+typedef struct {
+    WhistSemaphore semaphore;
+    bool write;
+    int fd;
+    bool kill;
+    pthread_t kill_target;
+    int kill_signal;
+    bool finish;
+} IntrThread;
+
+static int test_intr_thread(void* arg) {
+    IntrThread* intr = (IntrThread*)arg;
+
+    while (1) {
+        whist_wait_semaphore(intr->semaphore);
+        if (intr->finish) break;
+
+        // Wait a short time before performing the requested operation,
+        // because the parent thread has to trigger this before it
+        // actually enters the state where we want something to happen.
+        if (intr->kill) {
+            whist_sleep(250);
+            pthread_kill(intr->kill_target, intr->kill_signal);
+            intr->kill = false;
+        }
+        if (intr->write) {
+            whist_sleep(250);
+            char tmp = 42;
+            write(intr->fd, &tmp, 1);
+            intr->write = false;
+        }
+    }
+
+    return 0;
+}
+
+static atomic_int recv_intr_count = ATOMIC_VAR_INIT(0);
+static void test_intr_handler(int signal) { atomic_fetch_add(&recv_intr_count, 1); }
+
+TEST(ProtocolTest, RecvNoIntr) {
+    int ret, err;
+    int socks[2];
+    char buf[2];
+    clock timer;
+    double elapsed;
+
+    // Set the signal action to a trivial handler so can see when an
+    // interrupt happens.
+    struct sigaction sa = {0}, old_sa;
+    sa.sa_handler = &test_intr_handler;
+    ret = sigaction(SIGHUP, &sa, &old_sa);
+    EXPECT_EQ(ret, 0);
+
+    // Use a pair of local sockets.  These are used as a pipe, reading
+    // from socks[0] and writing to socks[1].
+    ret = socketpair(AF_UNIX, SOCK_STREAM, 0, socks);
+    EXPECT_EQ(ret, 0);
+
+    // A separate thread to do the interrupting.  We can't trigger the
+    // events from our own thread because we will be calling recv() at
+    // the time, so we need another thread to do it after a short delay
+    // to allow the recv() to start.
+    IntrThread intr = {0};
+    intr.semaphore = whist_create_semaphore(0);
+    WhistThread thr;
+    thr = whist_create_thread(&test_intr_thread, "Intr Test Thread", &intr);
+    EXPECT_TRUE(thr);
+
+    // Test recv() working normally.
+    intr.write = true;
+    intr.fd = socks[1];
+    whist_post_semaphore(intr.semaphore);
+    ret = recv(socks[0], buf, 1, 0);
+    EXPECT_EQ(ret, 1);
+    EXPECT_EQ(atomic_load(&recv_intr_count), 0);
+
+    // Test that EINTR is happening as expected.
+    intr.kill = true;
+    intr.kill_target = pthread_self();
+    intr.kill_signal = SIGHUP;
+    whist_post_semaphore(intr.semaphore);
+    ret = recv(socks[0], buf, 1, 0);
+    err = errno;
+    EXPECT_EQ(ret, -1);
+    EXPECT_EQ(err, EINTR);
+    EXPECT_EQ(atomic_load(&recv_intr_count), 1);
+
+    // Test that EINTR doesn't happen when we don't want it to.
+    intr.kill = true;
+    intr.kill_target = pthread_self();
+    intr.kill_signal = SIGHUP;
+    intr.write = true;
+    intr.fd = socks[1];
+    whist_post_semaphore(intr.semaphore);
+    ret = recv_no_intr(socks[0], buf, 1, 0);
+    EXPECT_EQ(ret, 1);
+    EXPECT_EQ(atomic_load(&recv_intr_count), 2);
+
+    // Same test with recvfrom() this time.
+    intr.kill = true;
+    intr.kill_target = pthread_self();
+    intr.kill_signal = SIGHUP;
+    intr.write = true;
+    intr.fd = socks[1];
+    whist_post_semaphore(intr.semaphore);
+    struct sockaddr addr;
+    socklen_t addr_len = sizeof(addr);
+    ret = recvfrom_no_intr(socks[0], buf, 1, 0, &addr, &addr_len);
+    EXPECT_EQ(ret, 1);
+    EXPECT_EQ(atomic_load(&recv_intr_count), 3);
+
+    // Test that EINTR on a socket with a timeout respects the timeout.
+    set_timeout(socks[0], 500);
+    start_timer(&timer);
+    intr.kill = true;
+    intr.kill_target = pthread_self();
+    intr.kill_signal = SIGHUP;
+    whist_post_semaphore(intr.semaphore);
+    ret = recv_no_intr(socks[0], buf, 1, 0);
+    EXPECT_EQ(ret, -1);
+    EXPECT_EQ(errno, EAGAIN);
+    EXPECT_EQ(atomic_load(&recv_intr_count), 4);
+    elapsed = get_timer(timer);
+    EXPECT_GE(elapsed, 0.5);
+    EXPECT_LT(elapsed, 1.0);
+
+    // Test that receive with timeout works after EINTR.
+    set_timeout(socks[0], 1000);
+    start_timer(&timer);
+    intr.kill = true;
+    intr.kill_target = pthread_self();
+    intr.kill_signal = SIGHUP;
+    intr.write = true;
+    intr.fd = socks[1];
+    whist_post_semaphore(intr.semaphore);
+    ret = recv_no_intr(socks[0], buf, 1, 0);
+    EXPECT_EQ(ret, 1);
+    EXPECT_EQ(atomic_load(&recv_intr_count), 5);
+    elapsed = get_timer(timer);
+    EXPECT_GE(elapsed, 0.5);
+    EXPECT_LT(elapsed, 1.0);
+
+    // Test that EINTR does not reset the timeout.
+    set_timeout(socks[0], 300);
+    start_timer(&timer);
+    intr.kill = true;
+    intr.kill_target = pthread_self();
+    intr.kill_signal = SIGHUP;
+    intr.write = true;
+    intr.fd = socks[1];
+    whist_post_semaphore(intr.semaphore);
+    ret = recv_no_intr(socks[0], buf, 1, 0);
+    EXPECT_EQ(ret, -1);
+    EXPECT_EQ(errno, EAGAIN);
+    EXPECT_EQ(atomic_load(&recv_intr_count), 6);
+    elapsed = get_timer(timer);
+    EXPECT_GE(elapsed, 0.3);
+    EXPECT_LT(elapsed, 0.5);
+
+    // Clean up thread.
+    intr.finish = true;
+    whist_post_semaphore(intr.semaphore);
+    whist_wait_thread(thr, &ret);
+    EXPECT_EQ(ret, 0);
+
+    whist_destroy_semaphore(intr.semaphore);
+    close(socks[0]);
+    close(socks[1]);
+
+    // Restore the old signal action, since other tests might want it.
+    sigaction(SIGHUP, &old_sa, NULL);
+}
+#endif
 
 /*
 ============================
