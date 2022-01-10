@@ -116,8 +116,8 @@ COPY --from=libinput-build libinput-whist.deb /
 # Install build dependencies
 # This includes our build of libinput
 RUN apt-get update && apt-get install --no-install-recommends -y \
-    xorg \
-    xutils \
+    xorg-dev \
+    xutils-dev \
     libudev1 \
     wget \
     ca-certificates \
