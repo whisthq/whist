@@ -159,6 +159,11 @@ args = parser.parse_args()
 # This main loop creates two AWS EC2 instances, one client, one server, and sets up
 # a protocol streaming test between them
 if __name__ == "__main__":
+
+    # Debugging:
+    for k, v in os.environ.items():
+        print(f"{k}={v}")
+
     # Retrieve args
     ssh_key_name = args.ssh_key_name  # In CI, this is "protocol_performance_testing_sshkey"
     ssh_key_path = args.ssh_key_path
@@ -217,8 +222,8 @@ if __name__ == "__main__":
         if use_two_instances
         else pexpect_prompt_server
     )
-    aws_timeout = 1200  # 10 mins is not enough to build the base mandelbox, so we'll go ahead with 20 mins to be safe
-
+    # aws_timeout = 1200  # 10 mins is not enough to build the base mandelbox, so we'll go ahead with 20 mins to be safe
+    aws_timeout = 180  # for debugging, 3mins to speed things up
     # Create local folder for logs
     perf_logs_folder_name = time.strftime("%Y_%m_%d@%H-%M-%S")
     perf_logs_folder_name = "./perf_logs/{}".format(perf_logs_folder_name)

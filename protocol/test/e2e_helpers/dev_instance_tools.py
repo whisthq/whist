@@ -225,33 +225,48 @@ def clone_whist_repository_on_instance(
         None
     """
 
-    # Obtain current commit hash
-    subproc_handle = subprocess.Popen(
-        'git log -1 --format="%H"', shell=True, stdout=subprocess.PIPE
-    )
-    subprocess_stdout = subproc_handle.stdout.readlines()
-
-    commit_hash = subprocess_stdout[0].decode("utf-8").strip()
-
-    print(
-        "Cloning commit {} of the whisthg/whist repository on the AWS instance ...".format(
-            commit_hash
+    command = ""
+    if running_in_ci:
+        github_sha = os.getenv("GITHUB_SHA")
+        github_ref = os.getenv("GITHUB_REF")
+        print("Extracted github_sha: {}, github_ref: {}".format(github_sha, github_ref))
+        command = (
+            "rm -rf whist && git clone "
+            + " https://"
+            + github_token
+            + "@github.com/whisthq/whist.git && cd whist "
         )
-    )
+        +"&& git -c protocol.version=2 fetch --no-tags --prune --progress --no-recurse-submodules --depth=1 origin +{}:{} ".format(
+            github_sha, github_ref
+        )
+        (
+            +" && git checkout --progress --force {} ".format(github_ref)
+            + " && cd .. | tee ~/github_log.log"
+        )
+    else:
+        # Obtain current commit hash
+        subproc_handle = subprocess.Popen(
+            'git log -1 --format="%H"', shell=True, stdout=subprocess.PIPE
+        )
+        subprocess_stdout = subproc_handle.stdout.readlines()
+        commit_hash = subprocess_stdout[0].decode("utf-8").strip()
 
-    # Retrieve whisthq/whist monorepo on the instance
-    command = (
-        "rm -rf whist && git clone "
-        + " https://"
-        + github_token
-        + "@github.com/whisthq/whist.git && cd whist && git checkout "
-        + commit_hash
-        + " && cd .. | tee ~/github_log.log"
-    )
-    pexpect_process.sendline(command)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+        print(
+            "Cloning commit {} of the whisthg/whist repository on the AWS instance ...".format(
+                commit_hash
+            )
+        )
 
-    command = " | tee ~/github_log.log"
+        # Retrieve whisthq/whist monorepo on the instance
+        command = (
+            "rm -rf whist && git clone "
+            + " https://"
+            + github_token
+            + "@github.com/whisthq/whist.git && cd whist && git checkout "
+            + commit_hash
+            + " && cd .. | tee ~/github_log.log"
+        )
+
     pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
