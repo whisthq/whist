@@ -29,7 +29,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../client/sdlscreeninfo.c
         ../client/sync_packets.c
         ../client/renderer.c
-        ../client/notifications/notifications.c
+        ../client/notifications.c
     )
 # Server & Client files, for Windows/Linux (supported on both client and server)
 else()
@@ -63,7 +63,7 @@ else()
         ../client/sdlscreeninfo.c
         ../client/sync_packets.c
         ../client/renderer.c
-        ../client/notifications/notifications.c
+        ../client/notifications.c
 )
 endif()
 
@@ -119,10 +119,14 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
         ../client/native_window_utils_mac.m
 <<<<<<< HEAD
+<<<<<<< HEAD
         ../client/notif_utils/display_notifs_mac.m
 =======
         ../client/notifications/display_notifs_mac.m
 >>>>>>> fix last-line \n and refactor notifications in client
+=======
+        ../client/notif_utils/display_notifs_mac.m
+>>>>>>> further reorganization of client-side notification files
     )
     target_link_libraries(${PROTOCOL_TEST_BINARY} ${MAC_SPECIFIC_CLIENT_LIBS})
 endif()
@@ -132,10 +136,14 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
         ../client/native_window_utils_x11.c
 <<<<<<< HEAD
+<<<<<<< HEAD
         ../client/notif_utils/display_notifs_linux.c
 =======
         ../client/notifications/display_notifs_linux.c
 >>>>>>> fix last-line \n and refactor notifications in client
+=======
+        ../client/notif_utils/display_notifs_linux.c
+>>>>>>> further reorganization of client-side notification files
     )
     find_package(X11 REQUIRED
         Xfixes
@@ -179,10 +187,14 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
         ../client/native_window_utils_windows.c
 <<<<<<< HEAD
+<<<<<<< HEAD
         ../client/notif_utils/display_notifs_windows.c
 =======
         ../client/notifications/display_notifs_windows.c
 >>>>>>> fix last-line \n and refactor notifications in client
+=======
+        ../client/notif_utils/display_notifs_windows.c
+>>>>>>> further reorganization of client-side notification files
     )
     target_link_libraries(${PROTOCOL_TEST_BINARY} whistInput ${LIBMFX})
 
