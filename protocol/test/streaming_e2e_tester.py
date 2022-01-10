@@ -155,7 +155,7 @@ if __name__ == "__main__":
     ssh_key_name = args.ssh_key_name  # In CI, this is "protocol_performance_testing_sshkey"
     ssh_key_path = args.ssh_key_path
     github_token = args.github_token  # The PAT allowing us to fetch code from GitHub
-    running_in_ci = os.environ.getenv("CI")
+    running_in_ci = os.getenv("CI")
     if running_in_ci is None or running_in_ci == "false":
         running_in_ci = False
     else:
