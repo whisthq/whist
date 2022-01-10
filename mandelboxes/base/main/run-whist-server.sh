@@ -18,16 +18,17 @@ esac
 # Exit on subcommand errors
 set -Eeuo pipefail
 
+# Set wait utility function
+BLOCK_UNTIL_FILE_EXISTS=/usr/bin/block-until-file-exists.sh
+
 ### BEGIN USER CONFIG RETRIEVE ###
 
 # Begin wait loop to get userConfigs
 WHIST_MAPPINGS_DIR=/whist/resourceMappings
 USER_CONFIGS_DIR=/whist/userConfigs
 APP_CONFIG_MAP_FILENAME=/usr/share/whist/app-config-map.json
-until [ -f $WHIST_MAPPINGS_DIR/.configReady ]
-do
-  sleep 0.1
-done
+
+$BLOCK_UNTIL_FILE_EXISTS $WHIST_MAPPINGS_DIR .configReady
 
 # Symlink loaded user configs into the appropriate folders
 
@@ -69,7 +70,8 @@ PRIVATE_KEY_FILENAME=$WHIST_PRIVATE_DIR/aes_key
 BROWSER_DATA_FILE_FILENAME=$WHIST_PRIVATE_DIR/user_browser_data_file
 USER_DEST_BROWSER_FILENAME=$WHIST_PRIVATE_DIR/user_dest_browser
 TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/timeout
-WHIST_APPLICATION_PID_FILE=/home/whist/whist-application-pid
+WHIST_HOME=/home/whist
+WHIST_APPLICATION_PID_FILE=whist-application-pid
 PROTOCOL_LOG_FILENAME=/usr/share/whist/server.log
 TELEPORT_LOG_FILENAME=/usr/share/whist/teleport.log
 WHIST_JSON_FILE=/whist/resourceMappings/config.json
@@ -145,19 +147,16 @@ whist_application_runuser_pid=$!
 echo "Whist application runuser pid: $whist_application_runuser_pid"
 
 # Wait for run-whist-application.sh to write PID to file
-until [ -f "$WHIST_APPLICATION_PID_FILE" ]
-do
-  sleep 0.1
-done
-whist_application_pid=$(cat $WHIST_APPLICATION_PID_FILE)
-rm $WHIST_APPLICATION_PID_FILE
+$BLOCK_UNTIL_FILE_EXISTS $WHIST_HOME $WHIST_APPLICATION_PID_FILE
+whist_application_pid=$(cat $WHIST_HOME/$WHIST_APPLICATION_PID_FILE)
+rm $WHIST_HOME/$WHIST_APPLICATION_PID_FILE
 
 echo "Whist application pid: $whist_application_pid"
 
 echo "Now sleeping until there are X clients..."
 
 # Wait until the application has created its display before launching WhistServer.
-#    This prevents a black no input window from appearing when a user connects.
+# This prevents a black no input window from appearing when a user connects.
 until [ $(xlsclients -display :10 | wc -l) != 0 ]
 do
   sleep 0.1

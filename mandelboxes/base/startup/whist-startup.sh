@@ -20,10 +20,7 @@ set -Eeuo pipefail
 
 # Begin wait loop to get TTY number and port mapping from Whist Host Service
 WHIST_MAPPINGS_DIR=/whist/resourceMappings
-until [ -f $WHIST_MAPPINGS_DIR/.paramsReady ]
-do
-  sleep 0.1
-done
+/usr/bin/block-until-file-exists.sh $WHIST_MAPPINGS_DIR .paramsReady
 
 # Register TTY once it was assigned via writing to a file by Whist Host Service
 ASSIGNED_TTY=$(cat $WHIST_MAPPINGS_DIR/tty)
