@@ -28,9 +28,9 @@ ENV container docker
 ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
-
-RUN apt-get update \
+# Update apt source list
+RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
+    && apt-get update \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
@@ -63,8 +63,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /tmp/* /var/tmp/*
 
 # Download libinput source
-RUN wget -qO - https://freedesktop.org/software/libinput/libinput-1.19.2.tar.xz \
-    | tar xJ
+RUN wget -qO - https://freedesktop.org/software/libinput/libinput-1.19.2.tar.xz | tar xJ
 
 # Configure and build libinput
 RUN meson libinput-1.19.2 build \
@@ -103,9 +102,9 @@ ENV container docker
 ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
-
-RUN apt-get update \
+# Update apt source list
+RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
+    && apt-get update \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
@@ -132,8 +131,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /tmp/* /var/tmp/*
 
 # Download xorgproto source (xf86-input-libinput dependency)
-RUN wget -qO - https://www.x.org/archive/individual/proto/xorgproto-2021.5.tar.bz2 \
-    | tar xj
+RUN wget -qO - https://www.x.org/archive/individual/proto/xorgproto-2021.5.tar.bz2 | tar xj
 
 # Configure and build xorgproto
 RUN cd xorgproto-2021.5 \
@@ -143,8 +141,7 @@ RUN cd xorgproto-2021.5 \
     && make -j install
 
 # Download xf86-input-libinput source
-RUN wget -qO - https://xorg.freedesktop.org/releases/individual/driver/xf86-input-libinput-1.2.0.tar.bz2 \
-    | tar xj
+RUN wget -qO - https://xorg.freedesktop.org/releases/individual/driver/xf86-input-libinput-1.2.0.tar.bz2 | tar xj
 
 # Configure and build xf86-input-libinput
 RUN cd xf86-input-libinput-1.2.0 \
@@ -179,9 +176,9 @@ ENV container docker
 ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
-
-RUN apt-get update \
+# Update apt source list
+RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
+    && apt-get update \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
@@ -240,9 +237,9 @@ ENV container docker
 ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
-
-RUN apt-get update \
+# Update apt source list
+RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
+    && apt-get update \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
@@ -288,9 +285,9 @@ ENV container docker
 ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
-
-RUN apt-get update \
+# Update apt source list
+RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list \
+    && apt-get update \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
@@ -411,6 +408,10 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     git \
     sudo \
     jq \
+    # utilities for debugging/testing
+    less \
+    vim \
+    nano \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
@@ -419,15 +420,6 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 ENV LOCAL="yes"
 RUN apt-get update && apt-get install --no-install-recommends -y \
     tzdata \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
-# Install utilities for debugging/testing
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    less \
-    vim \
-    nano \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
@@ -447,12 +439,10 @@ RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 # Mount cgroup from host (Is this needed?)
 VOLUME [ "/sys/fs/cgroup" ]
 
-# Set appropriate user permissions
+# Set appropriate user permissions and create /whist/ Directory and Subdirectories in /usr/share
 RUN chown -vR whist:whist /home/whist \
-    &&  chown root:root /run/user
-
-# Create whist Directory and Subdirectories in /usr/share
-RUN mkdir -p /usr/share/whist/private
+    && chown root:root /run/user \
+    && mkdir -p /usr/share/whist/private
 
 # Set /usr/share/whist to root-only
 RUN chgrp root -R /usr/share/whist \
@@ -467,16 +457,9 @@ COPY --chmod=550 utils/run-as-whist-user.sh /usr/share/whist/run-as-whist-user.s
 # Hardware Acceleration
 #########################
 
-# Install the Nvidia GRID Driver
+# Install the Nvidia GRID Driver and libraries for (limited) hardware acceleration
 RUN apt-get update && apt-get install --no-install-recommends -y \
     libglvnd0 \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-COPY --from=nvidia-grid-driver /dist /
-
-# Install libraries for (limited) hardware acceleration
-RUN apt-get update && apt-get install --no-install-recommends -y \
     vainfo \
     vdpauinfo \
     mesa-vdpau-drivers \
@@ -484,6 +467,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
+COPY --from=nvidia-grid-driver /dist /
 
 #########################
 # Display
@@ -584,9 +568,11 @@ RUN wget -qO /usr/local/share/fonts/TwemojiMozilla.ttf https://github.com/mozill
 # Set up fontconfig to use our nice fots
 COPY --chown=whist display/theme/fonts.conf /home/whist/.config/fontconfig/fonts.conf
 
-# Set up window manager running on X server, with GTK/QT theming
+# Install WhiteSur cursor and icons, for macOS-like theming
 RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors
 RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git && cd WhiteSur-icon-theme && /bin/bash install.sh && rm -rf /WhiteSur-icon-theme
+
+# Set up window manager running on X server, with GTK/QT theming
 COPY display/theme/gtk-3-settings.ini /etc/gtk-3.0/settings.ini
 COPY display/theme/gtkrc-2.0 /root/.gtkrc-2.0
 COPY --chown=whist display/theme/gtkrc-2.0 /home/whist/.gtkrc-2.0
@@ -598,8 +584,9 @@ COPY display/theme/awesome-rc.lua /home/whist/.config/awesome/rc.lua
 # Audio
 #########################
 
-# Install dependencies
+# Install PulseAudio and its dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
+    # PulseAudio dependencies
     libunwind8 \
     liborc-0.4-0 \
     libpulse0 \
@@ -615,12 +602,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     pulseaudio-utils \
     libltdl7 \
     libtdb1 \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /tmp/* /var/tmp/*
-
-# Install Pulse Audio
-RUN apt-get update && apt-get install --no-install-recommends -y \
+    # PulseAudio
     pulseaudio \
     && apt-get autoremove -y \
     && apt-get clean \

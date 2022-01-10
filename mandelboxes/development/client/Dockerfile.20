@@ -9,6 +9,8 @@ SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 # Replace WhistServer startup scripts with WhistClient startup scripts
 RUN ln -sf /usr/share/whist/bin/WhistClient /usr/share/whist/WhistClient \
     && rm /usr/share/whist/run-whist-server.sh
+
+# Enable proper scripts and services for Whist client
 COPY --chmod=555 run-whist-client.sh /usr/share/whist/run-whist-client.sh
 COPY --chown=root:root --chmod=600 whist-main.service /etc/systemd/system
 RUN systemctl enable whist-main

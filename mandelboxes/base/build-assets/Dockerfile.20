@@ -1,4 +1,5 @@
 FROM ubuntu:20.04 as default
+
 # This target bundles assets from other monorepo projects for
 # convenient importing in various Dockerfiles. It does not
 # provide the protocol build; this allows us to control when
@@ -11,8 +12,6 @@ RUN mkdir protocol
 
 FROM default as protocol
 
-# This target does bundle the protocol, for the reasons
-# mentioned above.
+# This target bundles the protocol, for the reasons mentioned above.
 
 COPY build-temp/protocol /protocol
-
