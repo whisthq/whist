@@ -176,7 +176,7 @@ func TestSetupHostSubscriptions(t *testing.T) {
 	// Create a fake variables map that matches the host subscriptions variable map
 	var variables = map[string]interface{}{
 		"id":     graphql.String(instanceId),
-		"status": graphql.String("DRAINING"),
+		"status": instance_state("DRAINING"),
 	}
 
 	// Verify that the "variables" maps are deep equal for the first subscription
@@ -185,7 +185,7 @@ func TestSetupHostSubscriptions(t *testing.T) {
 	}
 
 	variables["instance_id"] = graphql.String(instanceId)
-	variables["status"] = graphql.String("ALLOCATED")
+	variables["status"] = instance_state("ALLOCATED")
 
 	// Verify that the "variables" maps are deep equal for the second subscription
 	if !reflect.DeepEqual(whistClient.Subscriptions[1].Variables, variables) {
@@ -209,7 +209,7 @@ func TestSetupScalingSubscriptions(t *testing.T) {
 
 	// Create a fake variables map that matches the host subscriptions variable map
 	var variables = map[string]interface{}{
-		"status": graphql.String("DRAINING"),
+		"status": instance_state("DRAINING"),
 	}
 
 	// Verify that the "variables" maps are deep equal for the first subscription
@@ -218,7 +218,7 @@ func TestSetupScalingSubscriptions(t *testing.T) {
 		t.Errorf("Expected variable map to be %v, got: %v", whistClient.Subscriptions[0].Variables, variables)
 	}
 
-	variables["status"] = graphql.String("ALLOCATED")
+	variables["status"] = instance_state("ALLOCATED")
 
 	// Verify that the "variables" maps are deep equal for the second subscription
 	if !reflect.DeepEqual(variables, whistClient.Subscriptions[1].Variables) {
