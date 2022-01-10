@@ -144,23 +144,6 @@ Defines
 // Used to throttle resize event spam.
 #define WINDOW_RESIZE_MESSAGE_INTERVAL 200
 
-// Max/Min/Starting Bitrates/Burst Bitrates
-
-#define MAXIMUM_BITRATE 30000000
-#define MINIMUM_BITRATE 2000000
-#define STARTING_BITRATE_RAW 15400000
-#define STARTING_BITRATE (min(max(STARTING_BITRATE_RAW, MINIMUM_BITRATE), MAXIMUM_BITRATE))
-
-#define MAXIMUM_BURST_BITRATE 200000000
-#define MINIMUM_BURST_BITRATE 4000000
-#define STARTING_BURST_BITRATE_RAW 100000000
-#define STARTING_BURST_BITRATE \
-    (min(max(STARTING_BURST_BITRATE_RAW, MINIMUM_BURST_BITRATE), MAXIMUM_BURST_BITRATE))
-
-// The FEC Ratio to use on all packets
-// (Only used for testing phase of FEC)
-// This refers to the percentage of packets that will be FEC packets
-#define FEC_PACKET_RATIO 0.0
 // Maximum allowed FEC ratio. Used for allocation of static buffers
 // Don't let this get too close to 1, e.g. 0.99, or memory usage will explode
 #define MAX_FEC_RATIO 0.7
@@ -173,8 +156,6 @@ Defines
 #define MIN_SCREEN_HEIGHT 500
 #define MAX_SCREEN_WIDTH 8192
 #define MAX_SCREEN_HEIGHT 4096
-
-#define AUDIO_BITRATE 128000
 
 // Set max FPS to 60, or 16ms
 #define MAX_FPS 60
@@ -262,7 +243,8 @@ typedef struct {
     int fps;
     int bitrate;
     int burst_bitrate;
-    double fec_packet_ratio;
+    double audio_fec_ratio;
+    double video_fec_ratio;
     CodecType desired_codec;
 } NetworkSettings;
 #include <whist/network/network_algorithm.h>

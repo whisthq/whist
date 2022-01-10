@@ -211,30 +211,37 @@ static int handle_network_settings_message(whist_server_state *state, WhistClien
 
     int requested_avg_bitrate = wcmsg->network_settings.bitrate;
     int requested_burst_bitrate = wcmsg->network_settings.burst_bitrate;
-    double requested_fec_packet_ratio = wcmsg->network_settings.fec_packet_ratio;
+    double requested_audio_fec_ratio = wcmsg->network_settings.audio_fec_ratio;
+    double requested_video_fec_ratio = wcmsg->network_settings.video_fec_ratio;
 
-    LOG_INFO("MSG RECEIVED FOR MBPS: %f/%f/%f", requested_avg_bitrate / 1024.0 / 1024.0,
-             requested_burst_bitrate / 1024.0 / 1024.0, requested_fec_packet_ratio);
+    LOG_INFO("Network Settings Message: %fmbps avg/%fmbps burst/%f%% audio FEC/%f%% video FEC",
+             requested_avg_bitrate / 1024.0 / 1024.0, requested_burst_bitrate / 1024.0 / 1024.0,
+             requested_audio_fec_ratio * 100.0, requested_video_fec_ratio * 100.0);
 
     // Clamp the bitrates & fec ratio, preferring to clamp at MAX
     int avg_bitrate = min(max(requested_avg_bitrate, MINIMUM_BITRATE), MAXIMUM_BITRATE);
     int burst_bitrate =
         min(max(requested_burst_bitrate, MINIMUM_BURST_BITRATE), MAXIMUM_BURST_BITRATE);
-    double fec_packet_ratio = min(max(requested_fec_packet_ratio, 0.0), MAX_FEC_RATIO);
+    double audio_fec_ratio = min(max(requested_audio_fec_ratio, 0.0), MAX_FEC_RATIO);
+    double video_fec_ratio = min(max(requested_video_fec_ratio, 0.0), MAX_FEC_RATIO);
     // Log an error if clamping was necessary
     if (avg_bitrate != requested_avg_bitrate || burst_bitrate != requested_burst_bitrate ||
-        fec_packet_ratio != requested_fec_packet_ratio) {
-        LOG_ERROR("Bitrate MSG forcefully clamped to %f/%f/%f!",
-                  requested_avg_bitrate / 1024.0 / 1024.0,
-                  requested_burst_bitrate / 1024.0 / 1024.0, requested_fec_packet_ratio);
+        audio_fec_ratio != requested_audio_fec_ratio ||
+        video_fec_ratio != requested_video_fec_ratio) {
+        LOG_ERROR(
+            "Network Settings msg FORCEFULLY CLAMPED: %fmbps avg/%fmbps burst/%f%% audio FEC/%f%% "
+            "video FEC",
+            requested_avg_bitrate / 1024.0 / 1024.0, requested_burst_bitrate / 1024.0 / 1024.0,
+            requested_audio_fec_ratio * 100.0, requested_video_fec_ratio * 100.0);
     }
 
     // Update the UDP Context's burst bitrate and fec ratio
-    udp_update_bitrate_settings(&state->client.udp_context, burst_bitrate, fec_packet_ratio);
+    // TODO: Handle audio_fec_ratio correctly
+    udp_update_bitrate_settings(&state->client.udp_context, burst_bitrate, video_fec_ratio);
 
     // Set the new video encoding parameters,
     // using only the bandwidth that isn't already reserved for FEC packets
-    state->requested_video_bitrate = avg_bitrate * (1.0 - fec_packet_ratio);
+    state->requested_video_bitrate = avg_bitrate * (1.0 - video_fec_ratio);
     state->requested_video_codec = wcmsg->network_settings.desired_codec;
     state->requested_video_fps = wcmsg->network_settings.fps;
     // TODO: Implement custom FPS properly

@@ -37,7 +37,8 @@ static NetworkSettings default_network_settings = {
     .bitrate = STARTING_BITRATE,
     .burst_bitrate = STARTING_BURST_BITRATE,
     .desired_codec = CODEC_TYPE_H264,
-    .fec_packet_ratio = FEC_PACKET_RATIO,
+    .audio_fec_ratio = AUDIO_FEC_RATIO,
+    .video_fec_ratio = VIDEO_FEC_RATIO,
     .fps = 60,
 };
 
@@ -70,7 +71,8 @@ NetworkSettings get_desired_network_settings(NetworkStatistics stats) {
     }
     NetworkSettings network_settings = ewma_ratio_bitrate(stats);
     network_settings.fps = default_network_settings.fps;
-    network_settings.fec_packet_ratio = default_network_settings.fec_packet_ratio;
+    network_settings.audio_fec_ratio = default_network_settings.audio_fec_ratio;
+    network_settings.video_fec_ratio = default_network_settings.video_fec_ratio;
     network_settings.desired_codec = default_network_settings.desired_codec;
     return network_settings;
 }
