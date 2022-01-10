@@ -715,6 +715,7 @@ int update_mouse_motion() {
 }
 
 void send_new_tab_url_if_needed() {
+    // Send any new URL to the server
     if (new_tab_url) {
         LOG_INFO("Sending message to open URL in new tab");
         const size_t url_length = strlen((const char *)new_tab_url);
@@ -728,6 +729,11 @@ void send_new_tab_url_if_needed() {
     }
     free((char *)new_tab_url);
     new_tab_url = NULL;
+
+    // Unmimimize the window if needed
+    if (SDL_GetWindowFlags((SDL_Window *)window) & SDL_WINDOW_MINIMIZED) {
+        SDL_RestoreWindow((SDL_Window *)window);
+    }
 }
 
 void send_message_dimensions() {
