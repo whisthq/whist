@@ -2,4 +2,10 @@
 
 set -Eeuo pipefail
 
-cd node_modules/@whist/core-ts && yarn install && yarn build
+pushd node_modules/@whist/core-ts
+yarn install
+yarn build
+popd
+
+yarn tailwind
+yarn assets:pull

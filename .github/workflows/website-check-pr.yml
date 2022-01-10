@@ -55,10 +55,14 @@ jobs:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
 
+      - name: Install Dependencies
+        working-directory: frontend/website
+        run: yarn install
+
       - name: Configure Netlify
         working-directory: frontend/website
         run: |
-          netlify --telemetry-disable
+          npx netlify --telemetry-disable
 
           if [[ ${{ github.base_ref }} == dev ]]; then
             NETLIFY_APP_NAME=whist-dev
@@ -69,7 +73,7 @@ jobs:
           else
             NETLIFY_APP_NAME=whist-dev
           fi
-          netlify link --name $NETLIFY_APP_NAME
+          npx netlify link --name $NETLIFY_APP_NAME
 
       - name: Build and Deploy Netlify Website
         working-directory: frontend/website
@@ -77,7 +81,8 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
         run: |
-          netlify deploy --build --json > build.json
+          npx netlify build
+          npx netlify deploy --json > deploy.json
 
       # Need to install this dependency for the notification step.
       - name: Install Python Dependencies
@@ -109,7 +114,7 @@ jobs:
           identifier = "AUTOMATED_NETLIFY_DEPLOY_PREVIEW_MESSAGE"
 
           title = "Netlify Deploy Preview"
-          with open("frontend/website/build.json") as file:
+          with open("frontend/website/deploy.json") as file:
             data = json.load(file)
             body = f"Deploy preview: {data['deploy_url']}\n\nDeploy logs: {data['logs']}"
 
