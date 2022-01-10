@@ -66,14 +66,6 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--running-in-ci",
-    help="Whether the script is being run by a Github action/workflow.",
-    type=str,
-    choices=["false", "true"],
-    default="false",
-)
-
-parser.add_argument(
     "--region-name",
     help="The AWS region to use for testing",
     type=str,
@@ -159,16 +151,15 @@ args = parser.parse_args()
 # This main loop creates two AWS EC2 instances, one client, one server, and sets up
 # a protocol streaming test between them
 if __name__ == "__main__":
-
-    # Debugging:
-    for k, v in os.environ.items():
-        print(f"{k}={v}")
-
     # Retrieve args
     ssh_key_name = args.ssh_key_name  # In CI, this is "protocol_performance_testing_sshkey"
     ssh_key_path = args.ssh_key_path
     github_token = args.github_token  # The PAT allowing us to fetch code from GitHub
-    running_in_ci = True if args.running_in_ci == "true" else False
+    running_in_ci = os.environ.getenv("CI")
+    if running_in_ci is None or running_in_ci == "false":
+        running_in_ci = False
+    else:
+        running_in_ci = True
     testing_url = args.testing_url
     testing_time = args.testing_time
     region_name = args.region_name

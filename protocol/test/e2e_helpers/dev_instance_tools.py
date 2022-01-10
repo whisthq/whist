@@ -224,48 +224,38 @@ def clone_whist_repository_on_instance(
     Returns:
         None
     """
+    branch_name = ""
 
-    command = ""
     if running_in_ci:
-        github_sha = os.getenv("GITHUB_SHA")
-        github_ref = os.getenv("GITHUB_REF")
-        print("Extracted github_sha: {}, github_ref: {}".format(github_sha, github_ref))
-        command = (
-            "rm -rf whist && git clone "
-            + " https://"
-            + github_token
-            + "@github.com/whisthq/whist.git && cd whist "
-        )
-        +"&& git -c protocol.version=2 fetch --no-tags --prune --progress --no-recurse-submodules --depth=1 origin +{}:{} ".format(
-            github_sha, github_ref
-        )
-        (
-            +" && git checkout --progress --force {} ".format(github_ref)
-            + " && cd .. | tee ~/github_log.log"
-        )
+        # In CI, the PR branch name is saved in the GITHUB_HEAD_REF environment variable
+        branch_name = os.getenv("GITHUB_HEAD_REF")
     else:
-        # Obtain current commit hash
-        subproc_handle = subprocess.Popen(
-            'git log -1 --format="%H"', shell=True, stdout=subprocess.PIPE
-        )
+        # Locally, we can find the branch using the 'git branch' command.
+        # WARNING: this command will fail on detached HEADS.
+
+        subproc_handle = subprocess.Popen("git branch", shell=True, stdout=subprocess.PIPE)
         subprocess_stdout = subproc_handle.stdout.readlines()
-        commit_hash = subprocess_stdout[0].decode("utf-8").strip()
 
-        print(
-            "Cloning commit {} of the whisthg/whist repository on the AWS instance ...".format(
-                commit_hash
-            )
-        )
+        for line in subprocess_stdout:
+            converted_line = line.decode("utf-8").strip()
+            if "*" in converted_line:
+                branch_name = converted_line[2:]
+                break
 
-        # Retrieve whisthq/whist monorepo on the instance
-        command = (
-            "rm -rf whist && git clone "
-            + " https://"
-            + github_token
-            + "@github.com/whisthq/whist.git && cd whist && git checkout "
-            + commit_hash
-            + " && cd .. | tee ~/github_log.log"
+    print(
+        "Cloning branch {} of the whisthg/whist repository on the AWS instance ...".format(
+            branch_name
         )
+    )
+
+    # Retrieve whisthq/whist monorepo on the instance
+    command = (
+        "rm -rf whist; git clone -b "
+        + branch_name
+        + " https://"
+        + github_token
+        + "@github.com/whisthq/whist.git | tee ~/github_log.log"
+    )
 
     pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
