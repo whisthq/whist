@@ -86,7 +86,7 @@ func (cl *mockWhistClient) Close(subscriptionIDs []string) error {
 func TestInstanceStatusHandler(t *testing.T) {
 	var variables = map[string]interface{}{
 		"id":     graphql.String("test-instance-id"),
-		"status": graphql.String("DRAINING"),
+		"status": instance_state("DRAINING"),
 	}
 
 	// Create different tests for the instance status handler,
@@ -123,7 +123,7 @@ func TestInstanceStatusHandler(t *testing.T) {
 func TestMandelboxAllocatedHandler(t *testing.T) {
 	var variables = map[string]interface{}{
 		"id":     graphql.String("test-instance-id"),
-		"status": graphql.String("ALLOCATED"),
+		"status": mandelbox_state("ALLOCATED"),
 	}
 
 	// Create different tests for the mandelbox allocated handler,

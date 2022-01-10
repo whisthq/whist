@@ -61,7 +61,7 @@ func SetupHostSubscriptions(instanceId string, whistClient WhistSubscriptionClie
 			Query: QueryInstanceByIdWithStatus,
 			Variables: map[string]interface{}{
 				"id":     graphql.String(instanceId),
-				"status": graphql.String("DRAINING"),
+				"status": instance_state("DRAINING"),
 			},
 			Result:  InstanceEvent{[]Instance{}},
 			Handler: InstanceStatusHandler,
@@ -70,7 +70,7 @@ func SetupHostSubscriptions(instanceId string, whistClient WhistSubscriptionClie
 			Query: QueryMandelboxesByInstanceId,
 			Variables: map[string]interface{}{
 				"instance_id": graphql.String(instanceId),
-				"status":      graphql.String("ALLOCATED"),
+				"status":      mandelbox_state("ALLOCATED"),
 			},
 			Result:  MandelboxEvent{[]Mandelbox{}},
 			Handler: MandelboxAllocatedHandler,
@@ -86,7 +86,7 @@ func SetupScalingSubscriptions(whistClient WhistSubscriptionClient) {
 		{
 			Query: QueryInstancesByStatus,
 			Variables: map[string]interface{}{
-				"status": graphql.String("DRAINING"),
+				"status": instance_state("DRAINING"),
 			},
 			Result:  InstanceEvent{[]Instance{}},
 			Handler: InstanceStatusHandler,

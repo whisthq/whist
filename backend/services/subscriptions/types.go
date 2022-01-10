@@ -112,3 +112,14 @@ type MandelboxEvent struct {
 type ImageEvent struct {
 	Images []Image `json:"whist_images"`
 }
+
+// The following types are not idiomatic go, but are
+// necessary so that Hasura can properly recognize
+// the enum types on the database.
+type application string
+
+type cloud_provider string
+
+type instance_state string
+
+type mandelbox_state string
