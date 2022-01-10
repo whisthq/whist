@@ -10,8 +10,7 @@
     "postinstall": "./scripts/postinstall.sh",
     "lint:check": "node ./scripts/lint.js",
     "lint:fix": "node ./scripts/lint.js --fix",
-    "build:netlify": "./scripts/build-netlify.sh",
-    "pull:assets": "node ./scripts/pull-assets.js"
+    "assets:pull": "node ./scripts/pull-assets.mjs"
   },
   "dependencies": {
     "@headlessui/react": "^1.4.0",
