@@ -30,6 +30,5 @@ sudo apt-get install --no-install-recommends -y \
   x11-xserver-utils \
   libasound2 \
   libxdamage1 \
-  libcurl4 \
-  libcrypto++6 \
+  libcurl4-openssl-dev \
   zlib1g
