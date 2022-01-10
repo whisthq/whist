@@ -80,7 +80,7 @@ jobs:
       - name: Build and Deploy Netlify Website
         working-directory: frontend/website
         run: |
-          npx netlify build
+          npx netlify build --context deploy-preview
           npx netlify deploy --json > deploy.json
 
       # Need to install this dependency for the notification step.
