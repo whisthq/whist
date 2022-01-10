@@ -4,8 +4,8 @@ package mandelbox // import "github.com/whisthq/whist/backend/services/host-serv
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/base64"
+	"crypto/md5"
+	"encoding/base32"
 	"errors"
 	"os"
 	"os/exec"
@@ -249,6 +249,6 @@ func (mandelbox *mandelboxData) getEncryptedArchiveFilename() string {
 
 // getTokenHash returns a hash of the given token.
 func getTokenHash(token string) string {
-	hash := sha256.Sum256([]byte(token))
-	return base64.StdEncoding.EncodeToString(hash[:])
+	hash := md5.Sum([]byte(token))
+	return base32.StdEncoding.EncodeToString(hash[:])
 }
