@@ -32,7 +32,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../client/sdlscreeninfo.c
         ../client/sync_packets.c
         ../client/renderer.c
-        ../client/notifications/notifications.c
+        ../client/notifications.c
     )
 # Server & Client files, for Windows/Linux (supported on both client and server)
 else()
@@ -66,7 +66,7 @@ else()
         ../client/sdlscreeninfo.c
         ../client/sync_packets.c
         ../client/renderer.c
-        ../client/notifications/notifications.c
+        ../client/notifications.c
 )
 endif()
 
@@ -121,7 +121,7 @@ target_link_libraries(${PROTOCOL_TEST_BINARY}
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
         ../client/native_window_utils_mac.m
-        ../client/notifications/display_notifs_mac.m
+        ../client/notif_utils/display_notifs_mac.m
     )
     target_link_libraries(${PROTOCOL_TEST_BINARY} ${MAC_SPECIFIC_CLIENT_LIBS})
 endif()
@@ -130,7 +130,7 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
         ../client/native_window_utils_x11.c
-        ../client/notifications/display_notifs_linux.c
+        ../client/notif_utils/display_notifs_linux.c
     )
     find_package(X11 REQUIRED
         Xfixes
@@ -173,7 +173,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
     target_sources(${PROTOCOL_TEST_BINARY} PRIVATE
         ../client/native_window_utils_windows.c
-        ../client/notifications/display_notifs_windows.c
+        ../client/notif_utils/display_notifs_windows.c
     )
     target_link_libraries(${PROTOCOL_TEST_BINARY} whistInput ${LIBMFX})
 
