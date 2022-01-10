@@ -40,6 +40,12 @@ Defines
 #define clock struct timespec
 #endif
 
+#if defined(_WIN32)
+#define timeout_clock LARGE_INTEGER
+#else
+#define timeout_clock struct timeval
+#endif
+
 /*
 ============================
 Custom Types
@@ -92,7 +98,7 @@ double get_timer(clock timer);
  *
  * @returns						   The desired clock
  */
-clock create_clock(int timeout_ms);
+timeout_clock create_timeout_clock(int timeout_ms);
 
 /**
  * @brief                          Returns the current time as a string
