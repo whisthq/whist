@@ -283,8 +283,8 @@ void receive_video(VideoContext* video_context, WhistPacket* packet) {
             bool is_iframe = video_frame->is_iframe;
 
 #if LOG_VIDEO
-            LOG_INFO("Received Video Frame ID %d (Packets: %d) (Size: %d) %s", ctx->id,
-                     ctx->num_packets, sizeof(VideoFrame) + video_frame->videodata_length,
+            LOG_INFO("Received Video Frame ID %d (Original Packets: %d) (Size: %d) %s", ctx->id,
+                     ctx->num_original_packets, sizeof(VideoFrame) + video_frame->videodata_length,
                      is_iframe ? "(I-Frame)" : "");
 #endif
 
