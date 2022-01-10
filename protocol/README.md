@@ -18,11 +18,11 @@ In order to give the user their low-latency high-FPS experience, the protocol ex
 
 - `create_capture_device` from either `./whist/video/dxgicapture.c` or `./whist/video/x11capture.c` is called, the former is for Windows and the latter is for Linux. Then, `capture_screen` is called in `./server/main.c` to capture the screen.
 - `encoder_t` from `videoencode.c` will be used to encode the screenshot using h264, if needed. If Nvidia Capture SDK is being used (`USING_GPU_CAPTURE == true` and on linux), then the image will already be encoded upon capture, and this is not necessary.
-- A `Frame*` is created and the members of the `Frame` struct is filled in, see `./server/main.c` for the code and `./whist/core/whist.h` for the `Frame` struct.
-- `broadcast_udp_packet_from_payload` from `./server/network.c`is called with the `Frame*` passed in. This will break-up the `Frame*` into hundreds of individual network packets.
+- A `VideoFrame*` is created and the members of the `VideoFrame` struct is filled in, see `./server/main.c` for the code and `./whist/core/whist_frame.h` for the `VideoFrame` struct.
+- `broadcast_udp_packet_from_payload` from `./server/network.c` is called with the `VideoFrame*` passed in. This will break-up the `Frame*` into hundreds of individual network packets.
 - On the client, these packets are received in `./client/main.c` and passed into `receive_video` in `./client/video.c`.
-- `receive_video` will receive video packets and will save them in a buffer (packet 17 will be stored at `buffer + PACKET_SIZE*(17-1)`, so that the packets go into their correct slot until the entire `Frame*` is recreated). `video.c` keeps track of the ID of the most recently rendered frame, ie ID 247. Once all of the packets of ID 248 are received, it will take the pointer to the beginning of the buffer and then render it. Each packet will contain the number of packets for the `Frame*`, so once one is received, the client will know when all of them have been received.
-- Once a `Frame*` has been accumulated, `render_screen` in `./server/video.c` will trigger, and `video_decoder_decode` from `./whist/video/videodecode.c` will be called. Any cursor image will be rendered on-top, along with `sws_scale`'ing if the frame is not the same resolution as the client. Peruse `render_screen` for further details.
+- `receive_video` will receive video packets and will save them in a buffer (packet 17 will be stored at `buffer + PACKET_SIZE*(17-1)`, so that the packets go into their correct slot until the entire `VideoFrame*` is recreated). `video.c` keeps track of the ID of the most recently rendered frame, ie ID 247. Once all of the packets of ID 248 are received, it will take the pointer to the beginning of the buffer and then render it. Each packet will contain the number of packets for the `VideoFrame*`, so once one is received, the client will know when all of them have been received.
+- Once a `VideoFrame*` has been accumulated, `render_screen` in `./server/video.c` will trigger, and `video_decoder_decode` from `./whist/video/videodecode.c` will be called. Any cursor image will be rendered on-top, along with `sws_scale`'ing if the frame is not the same resolution as the client. Peruse `render_screen` for further details.
 - Finally, `SDL_RenderPresent` will be called, rendering the Frame.
 - If no packet from the expected ID is received within a couple hundred milliseconds, or if a subset of packets have been received and it's been a couple hundred milliseconds since the last seen packet, then the `./client/video.c`protocol will send a `nack()` to the server in order to get a copy of the presumably dropped or missed packet. The server keeps the last couple `Frame*`'s in a buffer in order to respond to `nack()`'s.
 
@@ -52,13 +52,18 @@ In an ideal world, we'd use the NVIDIA Capture SDK with the NVIDIA encoder. Howe
 ./protocol
 ├── client
 │   ├── audio.c <- Handle and play audio packets
+│   ├── bitrate.c <- Protocols for calculating adaptive bitrate
+│   ├── client_statistic.c <- Client-side metrics
 │   ├── client_utils.c <- cmdline options, among others
 │   ├── handle_server_message.c <- Handle server fcmsg's
 │   ├── main.c <- SDL Event loop, receive and categorize packets as fcmsg/audio/video
+│   ├── native_window_utils_windows.c <- Functions to modify SDL window on Windows
+│   ├── native_window_utils_x11.c <- Functions to modify SDL window for X11
 │   ├── network.c <- Functions to connect to server, and send_fcmsg
 │   ├── sdl_event_handler.c <- Handle SDL Events
-│   ├── sdl_utils.c <- Set window icon, resize handler
 │   ├── sdlscreeninfo.c <- Get monitor/window width/height functions
+│   ├── sdl_utils.c <- Set window icon, resize handler
+│   ├── sync_packets.c <- Syncs info betwen client/server including clipboard data, files, and bitrate
 │   └── video.c <- Handle and render video packets
 ├── whist
 │   ├── audio
@@ -75,18 +80,31 @@ In an ideal world, we'd use the NVIDIA Capture SDK with the NVIDIA encoder. Howe
 │   │   └── x11_clipboard.c <- Linux implementation of {get,set}_clipboard
 │   ├── core
 │   │   ├── whist.c <- Various helpers
-│   │   └── whistgetopt.c <- Cross-platform getopt
+│   │   └── whist_frame.c <- VideoFrame and AudioFrame
+│   │   ├── whistgetopt.c <- Cross-platform getopt
+│   │   └── whist_memory.c <- Memory handling
 │   ├── cursor
 │   │   ├── linuxcursor.c <- get_current_cursor for Linux
 │   │   └── windowscursor.c <- get_current_cursor for Windows
+│   ├── file
+│   │   ├── file_drop.c <- Handles dropping a file into window
+│   │   └── file_synchronizer.c.c <- Sync file transfer between client and server
 │   ├── input
 │   │   ├── input.c <- Trigger keyboard/mouse press and sync, wraps raw input_driver.h calls
 │   │   ├── input_driver.h -> The following three c files share this h file
 │   │   ├── winapi_input_driver.c <- Windows keyboard/mouse-press code
 │   │   ├── uinput_input_driver.c <- Linux uinput keyboard/mouse-press/touchpad code
 │   │   └── xtest_input_driver.c <- Linux X11 keyboard/mouse-press code
+│   ├── logging
+│   │   ├── error_monitor.c <- Error reporting
+│   │   └── logging.c.c <- Logging tools
+│   │   └── log_statistic.c.c <- Logging tools for repeated stats
 │   ├── network
 │   │   └── network.c <- send udp/tcp/http packets.
+│   │   └── ringbuffer.c <- Ring buffer for receiving audio/video
+│   │   └── tcp.c <- Sending tcp packets
+│   │   └── throttle.c <- Network throttler
+│   │   └── udp.c <- Sending udp packets
 │   ├── utils
 │   │   ├── aes.c <- Generic encrypt/decrypt of network packets
 │   │   ├── clock.c <- Clock
@@ -101,20 +119,31 @@ In an ideal world, we'd use the NVIDIA Capture SDK with the NVIDIA encoder. Howe
 │   │   ├── window_name.c <- Linux Getter for the window name of the application
 │   │   └── windows_utils.c <- Log-in past windows start screen
 │   └── video
-│       ├── cudacontext.c <- Set up CUDA context for NVIDIA encoder
+│       ├── capture
+│       │   └── linuxcapture.c <- Capture screen on linux
+│       │   └── nvidiacaapture.c <- Screen capture via Nvidia FBC SDK
+│       │   └── windowscapture.c <- Capture screen on Windows
+│       │   └── x11capture.c <- Capture screen using X11
+│       ├── codec
+│       │   └── decode.c  <- Decode image
+│       │   └── encode.c <- Compress image using h264/h265
+│       │   └── ffmpeg_encode.c  <- FFmpeg encoding
+│       │   └── nvidia_encode.c <- NVIDIA encoding
+│       ├── cudacontext.c <- Set up CUDA context for Nvidia encoder
 │       ├── dxgicapture.c <- Capture screen using DXGI
 │       ├── nvidia-linux
 │       │   └── NvFBCUtils.c (NVDA Header)
 │       ├── transfercapture.c <- Implements CPU or CUDA transfer of frame from device to encoder
-│       ├── videodecode.c <- Decompress image using h264/h265
-│       ├── videoencode.c <- Compress image using h264/h265
-│       ├── x11capture.c <- Capture screen using X11
 │       └── x11nvidiacapture.c <- Capture h264/h265 compressed screen with NvidiaCaptureSDK
-└── server
-|    ├── client.c <- Handle multiclient messages
-|    ├── handle_client_message.c <- Handle client fmsg's
-|    ├── main.c <- Initialize server, receive packets and pass to where it needs to go
-|    ├── network.c <- Networking code for multiclient
+├── server
+│   ├── audio.c <- Send audio
+│   ├── client.c <- Handle multiclient messages
+│   ├── handle_client_message.c <- Handle client fmsg's
+│   ├── main.c <- Initialize server, receive packets and pass to where it needs to go
+│   ├── network.c <- Networking code for multiclient
+│   ├── parse_args.c <- Arg parsing for server
+│   ├── server_statistic.c <- Server-side metrics
+│   └── video.c <- Send video
 └── test
     ├── images <- images for unit testing
     └── protocol_test.cpp <- tests code in whist/ module
