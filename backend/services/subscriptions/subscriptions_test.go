@@ -99,12 +99,12 @@ func TestInstanceStatusHandler(t *testing.T) {
 		{"Empty event", InstanceEvent{Instances: []Instance{}}, false},
 		{"Wrong status event", InstanceEvent{
 			Instances: []Instance{
-				{ID: "test-instance-id", Status: instance_state("PRE_CONNECTION")},
+				{ID: "test-instance-id", Status: "PRE_CONNECTION"},
 			},
 		}, false},
 		{"Correct status event", InstanceEvent{
 			Instances: []Instance{
-				{ID: "test-instance-id", Status: instance_state("DRAINING")},
+				{ID: "test-instance-id", Status: "DRAINING"},
 			},
 		}, true},
 	}
