@@ -349,6 +349,7 @@ jobs:
       # --use-existing-client-instance, defaults to `false`
       # --aws-credentials-filepath, defaults to `~/.aws/credentials`
       - name: Run End-to-End Streaming Test
+        id: e2e_streaming_test
         working-directory: protocol/test
         run: python3 streaming_e2e_tester.py --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" --ssh-key-path "/home/runner/.ssh/id_rsa" --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
 
@@ -357,6 +358,37 @@ jobs:
         if: always()
         working-directory: protocol/test
         run: aws s3 cp perf_logs s3://whist-e2e-protocol-test-logs/"$GITHUB_SHA" --recursive
+
+      - name: Terminate leftover AWS instances
+        if: ${{ always() && (steps.e2e_streaming_test.outcome == 'failure') }}
+        working-directory: protocol/test
+        shell: python3 {0}
+        run: |
+          import os
+          from e2e_helpers.aws_tools import terminate_or_stop_aws_instance
+          from e2e_helpers.aws_tools import get_boto3client
+
+          # Check if there is any instance we need to terminate
+          if not os.path.exists("new_instances.txt") or not os.path.isfile("new_instances.txt"):
+            print("No leftover instances need to be terminated")
+            return
+
+          print("Connecting to E2 console...")
+
+          # Connect to the E2 console
+          bc = get_boto3client("us-east-1")
+
+          # Terminate the instances with the instance IDs from the file
+          instances_file = open('new_instances.txt', 'r')
+          for line in instances_file.readlines():
+            i = line.strip()
+            print("Terminating instance {} ...".format(i))
+            terminate_or_stop_aws_instance(bc, i, True)
+
+
+          # Close and delete file
+          instances_file.close()
+          os.remove("'new_instances.txt'")
 
       # The streaming_e2e_tester.py file generates the files server_monitoring_log.txt and client_monitoring_log.txt in
       # the folder perf_logs at the path where it is run in. We parse these files to display the results of the test.
