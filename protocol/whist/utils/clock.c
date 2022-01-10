@@ -20,10 +20,6 @@ relate different events across server and client.
 #include <whist/core/whist.h>
 #include "clock.h"
 
-#ifdef _WIN32
-int get_utc_offset();
-#endif
-
 struct WhistTimerInternal {
 #if defined(_WIN32)
     LARGE_INTEGER pc;
