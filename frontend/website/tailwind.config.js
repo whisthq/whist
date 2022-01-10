@@ -61,12 +61,8 @@ module.exports = {
       },
       keyframes: {
         bounce: {
-          "0%, 100%": {
-            transform: "translateY(-25%)",
-          },
-          "50%": {
-            transform: "translateY(0)",
-          },
+          "0%, 100%": { transform: "translateY(-25%)" },
+          "50%": { transform: "translateY(0)" },
         },
         blink: {
           "0%, 100%": { opacity: 1 },
