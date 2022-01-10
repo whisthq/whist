@@ -122,8 +122,8 @@ func TestInstanceStatusHandler(t *testing.T) {
 }
 func TestMandelboxAllocatedHandler(t *testing.T) {
 	var variables = map[string]interface{}{
-		"instance_id": graphql.String("test-instance-id"),
-		"status":      graphql.String("ALLOCATED"),
+		"id":     graphql.String("test-instance-id"),
+		"status": graphql.String("ALLOCATED"),
 	}
 
 	// Create different tests for the mandelbox allocated handler,
@@ -134,7 +134,7 @@ func TestMandelboxAllocatedHandler(t *testing.T) {
 		want     bool
 	}{
 		{"Empty event", MandelboxEvent{Mandelboxes: []Mandelbox{}}, false},
-		{"Wrong instance name event", MandelboxEvent{
+		{"Wrong instance id event", MandelboxEvent{
 			Mandelboxes: []Mandelbox{
 				{InstanceID: "test-instance-id-2", Status: "EXITED"},
 			},
@@ -159,11 +159,11 @@ func TestMandelboxAllocatedHandler(t *testing.T) {
 }
 
 func TestSetupHostSubscriptions(t *testing.T) {
-	instanceName := "test-instance-name"
+	instanceId := "test-instance-id"
 	whistClient := &mockWhistClient{}
 
 	// Create the host service specific subscriptions
-	SetupHostSubscriptions(instanceName, whistClient)
+	SetupHostSubscriptions(instanceId, whistClient)
 
 	if whistClient.Subscriptions == nil {
 		t.Errorf("Got nil subscriptions")
@@ -175,8 +175,8 @@ func TestSetupHostSubscriptions(t *testing.T) {
 
 	// Create a fake variables map that matches the host subscriptions variable map
 	var variables = map[string]interface{}{
-		"instance_name": graphql.String(instanceName),
-		"status":        graphql.String("DRAINING"),
+		"id":     graphql.String(instanceId),
+		"status": graphql.String("DRAINING"),
 	}
 
 	// Verify that the "variables" maps are deep equal for the first subscription

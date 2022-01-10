@@ -20,7 +20,7 @@ var InsertOneInstance struct {
 var UpdateInstanceStatus struct {
 	MutationResponse struct {
 		AffectedRows graphql.Int `graphql:"affected_rows"`
-	} `graphql:"update_whist_instances(where: {status: {_eq: $status}})"`
+	} `graphql:"update_whist_instances(where: {id: {_eq: $id}}, _set: {status: $status})"`
 }
 
 // DeleteInstanceStatusById deletes an instance that matches the given instance_name.

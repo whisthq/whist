@@ -1,6 +1,10 @@
 package subscriptions // import "github.com/whisthq/whist/backend/services/subscriptions"
 
-import mandelboxtypes "github.com/whisthq/whist/backend/core-go/types"
+import (
+	"time"
+
+	mandelboxtypes "github.com/whisthq/whist/backend/core-go/types"
+)
 
 // HasuraParams contains the Heroku URL and Admin AccessKey to pass
 // to the client during initialization.
@@ -9,22 +13,24 @@ type HasuraParams struct {
 	AccessKey string
 }
 
-// Instance represents a host from the "whist_instances" table.
+// Instance represents a host from the "whist_instances" table. This type is
+// meant to be used for development purposes.
 type Instance struct {
-	ID                string `json:"id"`
-	Provider          string `json:"provider"`
-	Region            string `json:"region"`
-	ImageID           string `json:"image_id"`
-	ClientSHA         string `json:"client_sha"`
-	IPAddress         string `json:"ip_addr"`
-	Type              string `json:"instance_type"`
-	RemainingCapacity int64  `json:"remaining_capacity"`
-	Status            string `json:"status"`
-	CreatedAt         string `json:"created_at"`
-	UpdatedAt         string `json:"updated_at"`
+	ID                string    `json:"id"`
+	Provider          string    `json:"provider"`
+	Region            string    `json:"region"`
+	ImageID           string    `json:"image_id"`
+	ClientSHA         string    `json:"client_sha"`
+	IPAddress         string    `json:"ip_addr"`
+	Type              string    `json:"instance_type"`
+	RemainingCapacity int64     `json:"remaining_capacity"`
+	Status            string    `json:"status"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
 }
 
-// Mandelbox represents a host from the "whist_mandelboxes" table.
+// Mandelbox represents a host from the "whist_mandelboxes" table. This type is
+// meant to be used for development purposes.
 type Mandelbox struct {
 	ID         mandelboxtypes.MandelboxID `json:"id"`
 	App        string                     `json:"app"`
@@ -32,16 +38,17 @@ type Mandelbox struct {
 	UserID     mandelboxtypes.UserID      `json:"user_id"`
 	SessionID  string                     `json:"session_id"`
 	Status     string                     `json:"status"`
-	CreatedAt  string                     `json:"created_at"`
+	CreatedAt  time.Time                  `json:"created_at"`
 }
 
-// Image represents a host from the "whist_images" table.
+// Image represents a host from the "whist_images" table. This type is
+// meant to be used for development purposes.
 type Image struct {
-	Provider  string `json:"provider"`
-	Region    string `json:"region"`
-	ImageID   string `json:"image_id"`
-	ClientSHA string `json:"client_sha"`
-	UpdatedAt string `json:"updated_at"`
+	Provider  string    `json:"provider"`
+	Region    string    `json:"region"`
+	ImageID   string    `json:"image_id"`
+	ClientSHA string    `json:"client_sha"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // handlerfn is used to send subscription handlers to the Subscribe function.
