@@ -15,7 +15,7 @@ add_executable(WhistClient
         sync_packets.c
         client_statistic.c
         renderer.c
-        notifications/notifications.c
+        notifications.c
         )
 
 # On Windows during client app packaging, WhistClient should have icon set
@@ -110,7 +110,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
     target_sources(WhistClient PRIVATE
         native_window_utils_x11.c
-        notifications/display_notifs_linux.c
+        notif_utils/display_notifs_linux.c
     )
 
     find_package(X11 REQUIRED
@@ -131,7 +131,7 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(WhistClient PRIVATE
         native_window_utils_mac.m
-        notifications/display_notifs_mac.m
+        notif_utils/display_notifs_mac.m
     )
 
     target_link_libraries(WhistClient ${MAC_SPECIFIC_CLIENT_LIBS})
@@ -147,7 +147,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
     target_sources(WhistClient PRIVATE
         native_window_utils_windows.c
-        notifications/display_notifs_windows.c
+        notif_utils/display_notifs_windows.c
     )
 
     target_link_libraries(WhistClient whistInput ${LIBMFX})
