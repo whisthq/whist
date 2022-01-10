@@ -335,15 +335,21 @@ jobs:
     needs: [whist-publish-build-config]
     env:
       NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
 
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
 
+      - name: Install Dependencies
+        working-directory: frontend/website
+        run: yarn install
+
       - name: Configure Netlify
         working-directory: frontend/website
         run: |
-          netlify --telemetry-disable
+          npx netlify --telemetry-disable
 
           if [[ ${{ needs.whist-publish-build-config.outputs.branch }} == dev ]]; then
             NETLIFY_APP_NAME=whist-dev
@@ -354,15 +360,13 @@ jobs:
           else
             echo 'Error: Invalid branch' && false
           fi
-          netlify link --name $NETLIFY_APP_NAME
+          npx netlify link --name $NETLIFY_APP_NAME
 
       - name: Build and Deploy Netlify Website
         working-directory: frontend/website
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
         run: |
-          netlify deploy --build --prod
+          npx netlify build
+          npx netlify deploy --prod
 
       - name: Setup Python-based notifications
         if: failure()
@@ -593,9 +597,9 @@ jobs:
           data["secret_key"] = "${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}"
           data["ami_name"] = f"whist-ami-${{ github.sha }}-{date_str}"
 
-          # Set Logz.io shipping token and regions to which to deploy the new AMI based on the environment. 
-          # For internal environments (dev, staging), we only clone our new AMI  to us-east-1 and us-west-1, to save on 
-          # costs sinc we don't have/need test users in other regions. data["destination_regions"] should be a list of 
+          # Set Logz.io shipping token and regions to which to deploy the new AMI based on the environment.
+          # For internal environments (dev, staging), we only clone our new AMI  to us-east-1 and us-west-1, to save on
+          # costs sinc we don't have/need test users in other regions. data["destination_regions"] should be a list of
           # all regions we support, defined as a string of comma-separated values (no spaces) as required by Packer
           if data["git_branch"] == "prod":
             data["mandelbox_logz_shipping_token"] = "${{ secrets.LOGZ_SHIPPING_TOKEN_PROD }}"
@@ -638,8 +642,8 @@ jobs:
             if os.path.exists("manifest.json"):
               print("Packer succeeded, exiting availability zones loop...")
               break
-            
-          # Assert that `manifest.json` exists after looping over all AZes to fail the workflow in the event that 
+
+          # Assert that `manifest.json` exists after looping over all AZes to fail the workflow in the event that
           # we couldn't get capacity in any of the availability zones
           assert os.path.exists("manifest.json")
 
