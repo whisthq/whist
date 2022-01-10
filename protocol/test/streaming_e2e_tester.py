@@ -227,8 +227,7 @@ if __name__ == "__main__":
         if use_two_instances
         else pexpect_prompt_server
     )
-    # aws_timeout = 1200  # 10 mins is not enough to build the base mandelbox, so we'll go ahead with 20 mins to be safe
-    aws_timeout = 180  # for debugging, 3mins to speed things up
+    aws_timeout = 1200  # 10 mins is not enough to build the base mandelbox, so we'll go ahead with 20 mins to be safe
     # Create local folder for logs
     perf_logs_folder_name = time.strftime("%Y_%m_%d@%H-%M-%S")
     perf_logs_folder_name = "./perf_logs/{}".format(perf_logs_folder_name)
