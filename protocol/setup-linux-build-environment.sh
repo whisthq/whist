@@ -29,6 +29,6 @@ sudo apt-get install --no-install-recommends -y \
   xclip \
   x11-xserver-utils \
   libasound2 \
-  libxdamage1 \
+  libxdamage-dev \
   libcurl4-openssl-dev \
   zlib1g
