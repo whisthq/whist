@@ -357,7 +357,7 @@ jobs:
       - name: Upload logs to S3 for debugging purposes
         if: always()
         working-directory: protocol/test
-        run: aws s3 cp perf_logs s3://whist-e2e-protocol-test-logs/"$GITHUB_SHA" --recursive
+        run: aws s3 cp perf_logs s3://whist-e2e-protocol-test-logs/"$GITHUB_REF" --recursive
 
       - name: Terminate leftover AWS instances
         if: ${{ always() && (steps.e2e_streaming_test.outcome == 'failure') }}
@@ -371,7 +371,7 @@ jobs:
           # Check if there is any instance we need to terminate
           if not os.path.exists("new_instances.txt") or not os.path.isfile("new_instances.txt"):
             print("No leftover instances need to be terminated")
-            return
+            exit()
 
           print("Connecting to E2 console...")
 
@@ -388,7 +388,7 @@ jobs:
 
           # Close and delete file
           instances_file.close()
-          os.remove("'new_instances.txt'")
+          os.remove("new_instances.txt")
 
       # The streaming_e2e_tester.py file generates the files server_monitoring_log.txt and client_monitoring_log.txt in
       # the folder perf_logs at the path where it is run in. We parse these files to display the results of the test.
