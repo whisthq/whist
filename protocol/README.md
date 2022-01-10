@@ -242,6 +242,18 @@ Next hit `c` again to reconfigure with your possibly new settings, then hit `g` 
 Only running `make` defaults to building WhistClient and WhistServer if you set both of these to ON in your configuration.
 GCC only supports one type of build at a time, so if you are currently building Release, but want to build Debug, you need to edit the cache and regenerate the makefile.
 
+When making `Debug` builds, it is often desirable to run them with sanitizers - these are compiler tools which add extra run-time checks into the code to find common errors and report them. Enable one or more of these with the `SANITIZE` cmake option.
+
+- `address` (ASan): finds memory errors like array overruns and use-after-free, and also reports on memory leaks once the program ends.
+- `undefined` (UBSan): finds undefined behaviour like integer overflow and misaligned pointers.
+- `thread` (TSan): finds data-races, including unsafe use of mutexes and file descriptors across threads.
+- `OFF`: disable all (set to clear a previously-cached value).
+- Other options also exist, consult the documentation for the compiler you are using:
+  - [gcc instrumentation options](https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html#index-fsanitize_003daddress).
+  - [clang code generation operations](https://clang.llvm.org/docs/UsersManual.html#controlling-code-generation).
+
+These can be combined in the `SANITIZER` option by separating them with `+`, though some combinations (such as TSan and ASan together) are not supported. CI currently runs tests with `address+undefined` set, and will fail if they generate any errors.
+
 ### Further documentation
 
 We also use Doxygen in this repository. The Doxy file is `docs/Doxyfile`. To generate it, you should first install `doxygen`, and then run `doxygen Doxyfile`. This will generate the docs and put them in `docs/html` and `docs/latex`. You can view the html docs by opening the index.html page with a web browser. We keep the docs `.gitignore`d to avoid clutter on the repository. They are also published at `docs.whist.com`.
