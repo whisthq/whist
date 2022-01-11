@@ -361,21 +361,25 @@ int handle_sdl_event(SDL_Event *event) {
             }
 #ifdef __APPLE__
             else if (event->window.event == SDL_WINDOWEVENT_OCCLUDED) {
+                LOG_INFO("SDL_WINDOWEVENT_OCCLUDED - Stop Streaming");
                 WhistClientMessage wcmsg = {0};
                 wcmsg.type = MESSAGE_STOP_STREAMING;
                 whist_sleep(100);
                 send_wcmsg(&wcmsg);
             } else if (event->window.event == SDL_WINDOWEVENT_UNOCCLUDED) {
+                LOG_INFO("SDL_WINDOWEVENT_UNOCCLUDED - Start Streaming");
                 WhistClientMessage wcmsg = {0};
                 wcmsg.type = MESSAGE_START_STREAMING;
                 send_wcmsg(&wcmsg);
             }
 #else
             else if (event->window.event == SDL_WINDOWEVENT_MINIMIZED) {
+                LOG_INFO("SDL_WINDOWEVENT_MINIMIZED - Stop Streaming");
                 WhistClientMessage wcmsg = {0};
                 wcmsg.type = MESSAGE_STOP_STREAMING;
                 send_wcmsg(&wcmsg);
             } else if (event->window.event == SDL_WINDOWEVENT_RESTORED) {
+                LOG_INFO("SDL_WINDOWEVENT_RESTORED - Start Streaming");
                 WhistClientMessage wcmsg = {0};
                 wcmsg.type = MESSAGE_START_STREAMING;
                 send_wcmsg(&wcmsg);

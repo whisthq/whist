@@ -325,6 +325,9 @@ int render_video(VideoContext* video_context) {
             // The server thinks the client window is occluded/minimized, but it isn't. So
             // we'll correct it. NOTE: Most of the time, this is just because there was a
             // delay between the window losing visibility and the server reacting.
+            LOG_INFO(
+                "Server thinks the client window is occluded/minimized, but it isn't. So, Start "
+                "Streaming");
             WhistClientMessage wcmsg = {0};
             wcmsg.type = MESSAGE_START_STREAMING;
             send_wcmsg(&wcmsg);
