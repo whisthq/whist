@@ -9,7 +9,8 @@
 Usage
 ============================
 
-TODO(kevin) write some summary thing here
+After receiving a WhistPacket consisting of notification data, the client code can call
+display_notification to natively the notification natively on the user's computer.
 
 */
 
@@ -27,6 +28,12 @@ Public Functions
 ============================
 */
 
+/**
+ * @brief           Displays notification contained in WhistPacket
+ *
+ * @param packet    WhistPacket containing notification data
+ * @return int      0 if success, -1 if failure
+ */
 int display_notification(WhistPacket *packet);
 
 #endif  // NOTIFICATIONS_H
