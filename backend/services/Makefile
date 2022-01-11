@@ -110,7 +110,9 @@ docs:
 # Note that we should build before we lint or vet, since build updates the whist dependencies.
 .NOTPARALLEL:
 check: clean build vet format lint test docs
-  # In CI, we check for a diff to make sure that `format` didn't change anything. This also helps us make sure we didn't delete a `.sql` file without deleting the `.sql.go` file, for instance.
+# In CI, we check for a diff to make sure that `format` didn't change
+# anything. This also helps us make sure we didn't delete a `.sql` file
+# without deleting the `.sql.go` file, for instance.
 ifeq ($(CI),true)
 	git diff --exit-code
 endif
