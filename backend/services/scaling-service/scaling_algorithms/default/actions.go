@@ -33,7 +33,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	}
 
 	// If not, wait until the host service terminates the instance.
-	err = s.Host.WaitForInstanceTermination(scalingCtx, []string{instance.ID})
+	err := s.Host.WaitForInstanceTermination(scalingCtx, []string{instance.ID})
 	if err != nil {
 		// Err is already wrapped here.
 		// TODO: Notify that the instance didn't terminate itself, should be investigated.
