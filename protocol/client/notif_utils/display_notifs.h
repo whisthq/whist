@@ -13,6 +13,16 @@ Usage
 Interfaces with native libraries on various operating systems (OSX/Windows/Linux)
 to display notifications thrown from the server application.
 
+Example usage: displaying information from a whist packet
+
+int display_notification(WhistPacket *packet) {
+    WhistNotification c;
+    memcpy(c.title, packet->data, MAX_NOTIF_TITLE_LEN);
+    memcpy(c.message, (packet->data) + MAX_NOTIF_TITLE_LEN, MAX_NOTIF_MSG_LEN);
+
+    return native_show_notification(c.title, c.message);
+}
+
 */
 
 /*
