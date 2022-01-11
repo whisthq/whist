@@ -24,14 +24,6 @@ Includes
 
 /*
 ============================
-Public Functions
-============================
-*/
-
-int native_show_notification(char *title, char *msg);
-
-/*
-============================
 Public Function Implementations
 ============================
 */
