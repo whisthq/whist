@@ -33,8 +33,7 @@ export const fetchBase: ServerEffect = async (req: ServerRequest) => {
       Authorization: `Bearer ${req.token}`,
     },
     body: JSON.stringify(req.body),
-    // TODO: Once Electron fixes https://github.com/electron/electron/issues/31212
-    // we can get rid of this
+    // TODO: Once we upgrade to Electron 15.2+ we can get rid of this
     ...((req.url ?? "").startsWith("https") && { agent }),
   })
 

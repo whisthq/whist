@@ -378,7 +378,6 @@ class LocalConfig(DeploymentConfig):
         load_dotenv(dotenv_path=os.path.join(os.getcwd(), "docker/.env"), verbose=True)
         super().__init__()
 
-    # TODO remove type: ignore once resolved -> https://github.com/python/mypy/issues/4125
     ENVIRONMENT = property(getter("ENVIRONMENT", fetch=False, default=env_names.LOCAL))  # type: ignore # pylint: disable=line-too-long
     APP_GIT_BRANCH = property(getter("APP_GIT_BRANCH", default="unknown", fetch=False))  # type: ignore # pylint: disable=line-too-long
     APP_GIT_COMMIT = property(getter("APP_GIT_COMMIT", default="unknown", fetch=False))  # type: ignore # pylint: disable=line-too-long
@@ -388,7 +387,6 @@ class LocalConfig(DeploymentConfig):
     AUTH0_WEBSERVER_CLIENT_SECRET = property(getter("AUTH0_WEBSERVER_CLIENT_SECRET"))
 
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
-    # TODO remove type: ignore once resolved -> https://github.com/python/mypy/issues/4125
     SENTRY_DSN = ""  # type: ignore
 
 

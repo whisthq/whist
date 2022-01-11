@@ -364,7 +364,7 @@ DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_HARDWARE_OL
 #elif __APPLE__
 DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_SOFTWARE};
 #else  // linux
-// TODO: Fix QSV
+// Once we add support for Windows clients, we should fix QSV
 DecodeType decoder_precedence[] = {/* DECODE_TYPE_QSV, */ DECODE_TYPE_SOFTWARE};
 #endif
 
@@ -562,8 +562,7 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
     // The frame we'll receive into
     // We can't receive into hw/sw_frame, or it'll wipe on EAGAIN.
     AVFrame* frame = safe_av_frame_alloc();
-    // This might compel the software decoder to decode into NV12?
-    // TODO: Is this actually necessary?
+    // This might compel the software decoder to decode into NV12? Is this necessary?
     frame->format = AV_PIX_FMT_NV12;
 
     // If frame was computed on the GPU

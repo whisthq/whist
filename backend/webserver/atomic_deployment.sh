@@ -41,7 +41,9 @@ if [ $MIGRA_EXIT_CODE == "2" ] || [ $MIGRA_EXIT_CODE == "3" ]; then
   echo "Migra SQL diff:"
   echo "${SQL_DIFF_STRING}"
 
-  # stop webserver. TODO: parse how many dynos exist currently and
+  # stop webserver. Note: This restores to just one dyno in Heroku, even if 
+  # we had more than one. For now, this is fine as dynos will scale up again. If 
+  # this becomes an issue, we would nede to parse how many dynos exist currently and
   # restore that many as opposed to just restoring to 1 dyno
   heroku ps:scale web=0 --app "${HEROKU_APP_NAME}"
 

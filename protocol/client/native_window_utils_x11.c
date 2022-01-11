@@ -52,7 +52,7 @@ int get_native_window_dpi(SDL_Window* window) {
 }
 
 void declare_user_activity() {
-    // TODO: Implement actual wake-up code
     // For now, we'll just disable the screensaver
+    LOG_INFO("Not implemented on Linux.");
     SDL_DisableScreenSaver();
 }

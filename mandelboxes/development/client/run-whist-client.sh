@@ -76,6 +76,7 @@ whist_client_pid=$!
 
 # TODO: once our mandelboxes have bash 5.1 we will be able to deduce _which_
 # application exited with the `-p` flag to `wait`.
+# We can do it by doing: apt-get install --only-upgrade bash since it is now released
 wait -n
 echo "WhistClient exited with code $?"
 echo "WhistClient PID: $whist_client_pid"

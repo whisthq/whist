@@ -183,7 +183,7 @@ const getLinuxCookieEncryptionKey = async (
   if (secretLocations.length > 0) {
     const variant = new dbus.Variant("s", "")
 
-    // TODO (aaron): add different encryptions for getting password
+    // TODO: add different encryptions for getting user password
     const [, sessionPath] = await secretService.OpenSession(
       ALGORITHM_PLAIN,
       variant

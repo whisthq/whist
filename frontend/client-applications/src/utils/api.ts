@@ -57,6 +57,6 @@ export const hostPut =
     })(...args)
   }
 
-// TODO: this needs to move somewhere else, but we're not using it yet
+// TODO: this needs to move somewhere else for userConfig encryption, but we're not using it yet
 export const tokenValidate = async (accessToken: string) =>
   get({ endpoint: "/token/validate", accessToken })

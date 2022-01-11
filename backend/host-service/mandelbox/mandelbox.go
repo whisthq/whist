@@ -230,7 +230,7 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 }
 
 type mandelboxData struct {
-	// TODO: re-evaluate whether we should still be doing this
+	// TODO: re-evaluate whether we should still be doing this?
 	// Note: while the Go language authors discourage storing a context in a
 	// struct, we need to do this to be able to call mandelbox methods from both
 	// the host service and ecsagent (NOTE: we no longer use the ECS agent, this

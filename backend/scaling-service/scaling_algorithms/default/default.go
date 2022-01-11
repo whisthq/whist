@@ -42,8 +42,7 @@ type DefaultScalingAlgorithm struct {
 
 // CreateEventChans creates the event channels if they don't alredy exist.
 func (s *DefaultScalingAlgorithm) CreateEventChans() {
-	// TODO: Only use one chan for database events and
-	// one for scheduled events
+	// TODO: Only use one chan for database events and one for scheduled events
 	if s.InstanceEventChan == nil {
 		s.InstanceEventChan = make(chan ScalingEvent, 100)
 	}

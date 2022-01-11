@@ -23,7 +23,7 @@ def init_and_ensure_sentry_connection(env: str, sentry_dsn: str) -> None:
         dsn=sentry_dsn,
         integrations=[FlaskIntegration()],
         environment=env,
-        release="webserver@" + os.getenv("HEROKU_SLUG_COMMIT", "local"),  # FIXME no env usage
+        release="webserver@" + os.getenv("HEROKU_SLUG_COMMIT", "local"),
     )
 
     # If you want to test Sentry, uncomment the following

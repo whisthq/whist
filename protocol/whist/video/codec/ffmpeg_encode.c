@@ -681,7 +681,6 @@ FFmpegEncoder *create_ffmpeg_encoder(int in_width, int in_height, int out_width,
             (FFmpegEncoder*): the newly created encoder
      */
     FFmpegEncoder *ffmpeg_encoder = NULL;
-    // TODO: Get QSV Encoder Working
     FFmpegEncoderCreator encoder_precedence[] = {create_nvenc_encoder, create_sw_encoder};
     for (unsigned int i = 0; i < sizeof(encoder_precedence) / sizeof(FFmpegEncoderCreator); ++i) {
         ffmpeg_encoder =

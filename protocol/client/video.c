@@ -141,7 +141,7 @@ static void update_sws_context(VideoContext* video_context, Uint8** data, int* l
                                int height, enum AVPixelFormat input_format);
 
 // TODO: Refactor into ringbuffer.c, so that ringbuffer.h
-// is what exposes theese functions
+// is what exposes these functions
 static void calculate_statistics(VideoContext* video_context);
 static void try_recovering_missing_packets_or_frames(VideoContext* video_context);
 static void skip_to_next_iframe(VideoContext* video_context);
