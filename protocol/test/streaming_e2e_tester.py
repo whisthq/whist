@@ -176,11 +176,11 @@ if __name__ == "__main__":
     # Create a boto3 client, create or start the instance(s).
     boto3client = get_boto3client(region_name)
     server_instance_id = create_or_start_aws_instance(
-        boto3client, region_name, args.use_existing_server_instance, ssh_key_name
+        boto3client, region_name, args.use_existing_server_instance, ssh_key_name, running_in_ci
     )
     client_instance_id = (
         create_or_start_aws_instance(
-            boto3client, region_name, args.use_existing_client_instance, ssh_key_name
+            boto3client, region_name, args.use_existing_client_instance, ssh_key_name, running_in_ci
         )
         if use_two_instances
         else server_instance_id

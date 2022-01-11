@@ -5,6 +5,7 @@ import os
 import time
 import boto3, botocore
 import paramiko
+import subprocess
 from operator import itemgetter
 
 # add the current directory to the path no matter where this is called from
@@ -67,6 +68,7 @@ def create_ec2_instance(
     instance_AMI: str,
     key_name: str,
     disk_size: int,
+    running_in_ci: bool,
 ) -> str:
     """
     Creates an AWS EC2 instance of a specific instance type and AMI
@@ -78,10 +80,28 @@ def create_ec2_instance(
         instance_AMI (str): The AMI to use for the instance (i.e. ami-0b9c9d7f7f8b8f8b9)
         key_name (str): The name of the AWS key to use for connecting to the instance
         disk_size (int): The size (in GB) of the additional EBS disk volume to attach
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
 
     Returns:
         instance_id (str): The ID of the created instance
     """
+
+    branch_name = ""
+    if running_in_ci:
+        # In CI, the PR branch name is saved in the GITHUB_HEAD_REF environment variable
+        branch_name = os.getenv("GITHUB_HEAD_REF")
+    else:
+        # Locally, we can find the branch using the 'git branch' command.
+        # WARNING: this command will fail on detached HEADS.
+        subproc_handle = subprocess.Popen("git branch", shell=True, stdout=subprocess.PIPE)
+        subprocess_stdout = subproc_handle.stdout.readlines()
+
+        for line in subprocess_stdout:
+            converted_line = line.decode("utf-8").strip()
+            if "*" in converted_line:
+                branch_name = converted_line[2:]
+                break
+    instance_name = "protocol-e2e-benchmarking-{}".format(branch_name)
 
     kwargs = {
         "BlockDeviceMappings": [
@@ -98,7 +118,7 @@ def create_ec2_instance(
             {
                 "ResourceType": "instance",
                 "Tags": [
-                    {"Key": "Name", "Value": "protocol-streaming-performance-testing-machine"},
+                    {"Key": "Name", "Value": instance_name},
                 ],
             },
         ],
@@ -216,7 +236,9 @@ def get_instance_ip(boto3client: botocore.client, instance_id: str) -> str:
     return retval
 
 
-def create_or_start_aws_instance(boto3client, region_name, existing_instance_id, ssh_key_name):
+def create_or_start_aws_instance(
+    boto3client, region_name, existing_instance_id, ssh_key_name, running_in_ci
+):
     """
     Connect to an existing instance (if the parameter existing_instance_id is not empty) or create a new one
 
@@ -225,6 +247,7 @@ def create_or_start_aws_instance(boto3client, region_name, existing_instance_id,
         region_name (str): The name of the region of interest (e.g. "us-east-1")
         existing_instance_id (str): The ID of the instance to connect to, or "" to create a new one
         ssh_key_name (str): The name of the AWS key to use to create a new instance. This parameter is ignored if a valid instance ID is passed to the existing_instance_id parameter.
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
     Returns:
         instance_id (str): the ID of the started instance. This can be the existing instance (if we passed a existing_instance_id) or the new instance (if we passed an empty string to existing_instance_id)
     """
@@ -260,6 +283,7 @@ def create_or_start_aws_instance(boto3client, region_name, existing_instance_id,
         instance_AMI=instance_AMI,
         key_name=ssh_key_name,
         disk_size=64,
+        running_in_ci=running_in_ci,
     )
     # Give a little time for the instance to be recognized in AWS
     time.sleep(5)
