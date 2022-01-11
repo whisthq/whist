@@ -162,7 +162,10 @@ def sort_logs(parsed_logs):
 # for later sorting purposes
 def parse_logs(parsed_logs, logs_page):
     for log in logs_page:
-        message = log["_source"]["message"]
+        try:
+            message = log["_source"]["message"]
+        except:
+            continue
         # Each timestamp comes something like "2021-10-22T15:05:05.420Z"
         # and we only need the "2021-10-22", which is the first 9 characters
         logz_io_timestamp = log["_source"]["@timestamp"]
