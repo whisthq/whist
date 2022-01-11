@@ -631,6 +631,7 @@ void calculate_statistics(VideoContext* video_context) {
     RingBuffer* ring_buffer = video_context->ring_buffer;
     // do some calculation
     // Update mbps every STATISTICS_SECONDS seconds
+    // goog_cc TODO: Reccomended epoch is in [0.5, 1.0] seconds
 #define STATISTICS_SECONDS 5
     if (get_timer(statistics_timer) > STATISTICS_SECONDS) {
         stats.num_nacks_per_second = ring_buffer->num_packets_nacked / STATISTICS_SECONDS;
@@ -638,7 +639,7 @@ void calculate_statistics(VideoContext* video_context) {
             ring_buffer->num_packets_received / STATISTICS_SECONDS;
         stats.num_rendered_frames_per_second =
             ring_buffer->num_frames_rendered / STATISTICS_SECONDS;
-        int num_gradient_frame = ring_buffer->num_gradient_frames_tracked;
+        int num_gradient_frames = ring_buffer->num_gradient_frames_tracked;
         if (num_gradient_frames) {
             stats.average_delay_gradient = ring_buffer->total_delay_gradient / num_gradient_frames;
             // computing as s^2 = E(x^2) - (E(x))^2
@@ -649,6 +650,7 @@ void calculate_statistics(VideoContext* video_context) {
             stats.average_delay_gradient = 0;
             stats.delay_gradient_variance = 0;
         }
+        stats.collection_period_seconds = STATISTICS_SECONDS;
 
         new_bitrates = calculate_new_bitrate(stats);
         if (new_bitrates.bitrate != client_max_bitrate ||
@@ -657,7 +659,7 @@ void calculate_statistics(VideoContext* video_context) {
             max_burst_bitrate = new_bitrates.burst_bitrate;
             update_bitrate = true;
         }
-        reset_bitrate_stat_members(ring_buffer);
+        // reset_bitrate_stat_members(ring_buffer);
         start_timer(&statistics_timer);
     }
 }

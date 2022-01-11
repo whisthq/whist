@@ -42,8 +42,8 @@ void reset_bitrate_stat_members(RingBuffer* ring_buffer) {
     ring_buffer->num_packets_nacked = 0;
     ring_buffer->num_packets_received = 0;
     ring_buffer->num_frames_rendered = 0;
-    ring_buffer->total_delay_gradient = 0;
-    ring_buffer->total_delay_gradient_squared = 0;
+    ring_buffer->total_delay_gradient = 0.0;
+    ring_buffer->total_delay_gradient_squared = 0.0;
     ring_buffer->num_gradient_frames_tracked = 0;
 }
 
@@ -430,20 +430,30 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
         }
     }
 
+    static timestamp_us prev_recvside_ts = 0;
+    static timestamp_us prev_sendside_ts = 0;
+
     if (is_ready_to_render(ring_buffer, packet->id) && !was_already_ready) {
         ring_buffer->frames_received++;
         // Update bitrate delay gradient statistics
-        ring_buffer->num_gradient_frames_tracked++;
         VideoFrame* video_frame;
-        if (!frame_data->successful_fec_recovery) {
+        if (frame_data->successful_fec_recovery) {
             video_frame = (VideoFrame*)frame_data->fec_frame_buffer;
         } else {
             video_frame = (VideoFrame*)frame_data->packet_buffer;
         }
-        // Delay gradient: difference in time first packet sent and last packet received for frame
-        clock delay_gradient = current_time_us() - video_frame->server_timestamp;
-        total_delay_gradient += delay_gradient;
-        total_delay_gradient_squared += delay_gradient * delay_gradient;
+        if (!prev_recvside_ts || !prev_sendside_ts) {
+            prev_recvside_ts = current_time_us();
+            prev_sendside_ts = video_frame->server_timestamp;
+        } else {
+            // Delay gradient: difference in time first packet sent and last packet received for
+            // frame
+            int delay_gradient = (current_time_us() - prev_recvside_ts) -
+                                 (video_frame->server_timestamp - prev_sendside_ts);
+            ring_buffer->total_delay_gradient += delay_gradient;
+            ring_buffer->total_delay_gradient_squared += delay_gradient * delay_gradient;
+            ring_buffer->num_gradient_frames_tracked++;
+        }
     }
 
     return num_overwritten_frames;

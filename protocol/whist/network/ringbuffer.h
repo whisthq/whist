@@ -79,8 +79,8 @@ typedef struct RingBuffer {
     int num_packets_nacked;
     int num_packets_received;
     int num_frames_rendered;
-    clock total_delay_gradient; // see google congestion protocol for reference
-    clock total_delay_gradient_squared; // to calculate delay gradient variance
+    int total_delay_gradient;          // see google congestion protocol for reference
+    int total_delay_gradient_squared;  // to calculate delay gradient variance
     int num_gradient_frames_tracked;
     // *** DONE FOR BITRATE STAT CALCULATIONS ***
     int frames_received;
@@ -188,5 +188,13 @@ bool is_ready_to_render(RingBuffer* ring_buffer, int id);
  *               Use ->frame_buffer to read the contents of the captured frame
  */
 FrameData* set_rendering(RingBuffer* ring_buffer, int id);
+
+/**
+ * @brief       Reset accumulators used for calculating bitrate statistics
+ *
+ * @param ring_buffer Pointer to ring buffer
+ *
+ */
+void reset_bitrate_stat_members(RingBuffer* ring_buffer);
 
 #endif

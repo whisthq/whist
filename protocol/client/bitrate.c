@@ -272,6 +272,102 @@ Bitrates ewma_ratio_bitrate(BitrateStatistics stats) {
     return bitrates;
 }
 
+Bitrates gcc_bitrate(BitrateStatistics stats) {
+    /*
+        Calculate bitrate based on google congestion protocol
+
+        This does the steps of the the delay-based controller and loss-based controller as described
+        per the google congestion protocol.
+
+        Arguments:
+            stats (BitrateStatistics): struct containing the throughput per second of the client
+    */
+
+    // All constants are reccomended values from the paper
+    static int step = 0;
+    static const double system_error_variance = 0.01;
+    static double kalman_gain = 0;
+    static double measurement_variance = 0.1;
+    static double filtered_delay_gradient = 0;
+
+    static const double adaptive_threshold_overuse_gain = 0.01;
+    static const double adaptive_threshold_underuse_gain = 0.00018;
+    static double overuse_threshold;
+
+    static const double delay_controller_eta = 1.05;
+    static const double delay_controller_alpha = 0.85;
+    static int receiver_estimated_maximum_bitrate = STARTING_BITRATE;
+
+    static const double loss_controller_increase_threshold = 0.1;
+    static const double loss_controller_decrease_threshold = 0.02;
+
+    enum {
+        OVERUSE_DETECTOR_INCREASE_SIGNAL,
+        OVERUSE_DETECTOR_HOLD_SIGNAL,
+        OVERUSE_DETECTOR_DECREASE_SIGNAL,
+    } overuse_detector_signal;
+
+    static const double burst_multiplier = 1.5;
+    Bitrates bitrates;
+
+    if (!step) {
+        measurement_variance = stats.delay_gradient_variance;
+        filtered_delay_gradient = stats.average_delay_gradient;
+        overuse_threshold = stats.average_delay_gradient;
+    }
+
+    // Arrival filter- calculated delay gradient while accounting for network jitter (modeled as a
+    // constant value process so state update equation is not necessary)
+    double residual = stats.average_delay_gradient - filtered_delay_gradient;
+    double aggregate_variance = system_error_variance + measurement_variance;
+    kalman_gain =
+        aggregate_variance / (aggregate_variance + stats.delay_gradient_variance);  // gain update
+    filtered_delay_gradient =
+        filtered_delay_gradient + residual * kalman_gain;             // filter state update
+    measurement_variance = (1 - kalman_gain) * (aggregate_variance);  // measurement variance update
+
+    // Adaptive threshold update for overuse detector
+    double threshold_gain = (fabs(filtered_delay_gradient) < overuse_threshold)
+                                ? adaptive_threshold_underuse_gain
+                                : adaptive_threshold_overuse_gain;
+    overuse_threshold = overuse_threshold + stats.collection_period_seconds * threshold_gain *
+                                                (fabs(filtered_delay_gradient) - overuse_threshold);
+
+    // Detect over/under use using state machine outlined in paper
+    if (overuse_threshold > filtered_delay_gradient) {
+        overuse_detector_signal = OVERUSE_DETECTOR_DECREASE_SIGNAL;
+    } else if (-overuse_threshold > filtered_delay_gradient) {
+        overuse_detector_signal = OVERUSE_DETECTOR_INCREASE_SIGNAL;
+    } else {
+        overuse_detector_signal = OVERUSE_DETECTOR_HOLD_SIGNAL;
+    }
+
+    // Delay-based controller selects based on signal
+    if (overuse_detector_signal != OVERUSE_DETECTOR_HOLD_SIGNAL) {
+        double multiplier = (overuse_detector_signal == OVERUSE_DETECTOR_DECREASE_SIGNAL)
+                                ? delay_controller_eta
+                                : delay_controller_alpha;
+        receiver_estimated_maximum_bitrate *= multiplier;
+    }
+
+    // Loss based controller
+    double loss_percentage = stats.num_nacks_per_second /
+                             stats.num_received_packets_per_second;  // Not exact - approximation
+    if (loss_percentage > loss_controller_increase_threshold) {
+        receiver_estimated_maximum_bitrate *= (1 - 0.5 * loss_percentage);
+    } else if (loss_percentage < loss_controller_decrease_threshold) {
+        receiver_estimated_maximum_bitrate *= 1.05;
+    }
+
+    bitrates.bitrate = receiver_estimated_maximum_bitrate;
+    // Paper suggests constant multiplier > 1 for burst bandwidth
+    bitrates.burst_bitrate = receiver_estimated_maximum_bitrate * burst_multiplier;
+
+    step++;
+
+    return bitrates;
+}
+
 /*
 ============================
 Public Function Implementations
