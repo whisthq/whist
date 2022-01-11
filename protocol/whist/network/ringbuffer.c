@@ -367,7 +367,7 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
     if (frame_data->received_indices[packet->index]) {
         // The only way it should possible to receive a packet twice, is if nacking got involved
         if (frame_data->num_times_index_nacked[packet->index] == 0) {
-            LOG_WARNING(
+            LOG_ERROR(
                 "We received a packet (ID %d / index %d) twice, but we had never nacked for it?",
                 packet->id, packet->index);
             return -1;
