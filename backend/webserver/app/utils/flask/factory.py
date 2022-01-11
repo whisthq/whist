@@ -18,7 +18,7 @@ from app.config import CONFIG_MATRIX
 from app.utils.flask.sentry import init_and_ensure_sentry_connection
 from app.utils.metrics.flask_view import register_flask_view_metrics_monitor
 from app.constants import env_names
-from app.database.models.cloud import db
+from app.models import db
 
 from app.utils.auth.auth0 import ScopeError
 from app.utils.stripe.payments import payment_portal_factory, get_customer_id, PaymentRequired

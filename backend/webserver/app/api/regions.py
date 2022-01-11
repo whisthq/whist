@@ -5,7 +5,7 @@ from typing import Any
 
 from app import log_request
 
-from app.database.models.cloud import RegionToAmi
+from app.models import Image
 
 aws_region_bp = Blueprint("aws_region_bp", __name__)
 
@@ -20,6 +20,4 @@ def regions() -> Any:
         A list of strings, where each string is the name of a region.
     """
 
-    enabled_regions = RegionToAmi.query.filter_by(ami_active=True).distinct(RegionToAmi.region_name)
-
-    return jsonify([region.region_name for region in enabled_regions])
+    return jsonify([image.region for image in Image.query.distinct(Image.name).all()])
