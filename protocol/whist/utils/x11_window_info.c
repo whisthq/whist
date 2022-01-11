@@ -86,8 +86,8 @@ bool get_focused_window_name(char** name_return) {
         }
     } else {
         LOG_ERROR(
-            "XGetWMName returned status %d and failed to get the name of the focused window %lu",
-            s, w);
+            "XGetWMName returned status %d and failed to get the name of the focused window %lu", s,
+            w);
     }
     return false;
 }
