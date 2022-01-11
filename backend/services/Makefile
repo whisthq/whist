@@ -114,6 +114,10 @@ check: clean build vet format lint test docs
 
 clean:
 	rm -rf $(BUILD_FOLDER)
+# We do this to reset the host-service to a "full clean build" state.
+	@touch $(CURDIR)/dbdriver/queries/temp.sql.go
+	@find $(CURDIR)/dbdriver/queries -type f -name "*.sql.go" | xargs rm
+	@echo "The automatically generated .sql.go files in dbdriver/queries/ have been removed. To get them back, run 'make' or use a variation of 'git reset'."
 
 clean_modcache:
 	$(GOCMD) clean -modcache
