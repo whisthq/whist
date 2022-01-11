@@ -79,7 +79,7 @@ vet: build
 	$(GOCMD) list ./... | grep -v /agent/ | xargs $(GOCMD) vet
 
 test: build
-	echo "Running go tests..."
+	@echo "Running go tests..."
 
 # We need to run some tests as root since the host service init() checks for root perms.
 #
@@ -114,7 +114,7 @@ check: clean build vet format lint test docs
 ifeq ($(CI),true)
 	git diff --exit-code
 endif
-	echo "All checks (clean, build, vet, format, lint, test, and docs) succeeded!"
+	@echo "All checks (clean, build, vet, format, lint, test, and docs) succeeded!"
 
 clean:
 	rm -rf $(BUILD_FOLDER)
