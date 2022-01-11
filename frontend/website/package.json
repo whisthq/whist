@@ -54,7 +54,6 @@
     "@typescript-eslint/parser": "^4.28.1",
     "@whist/core-ts": "file:../core-ts",
     "autoprefixer": "^10.3.0",
-    "aws-sdk": "^2.1051.0",
     "eslint": "^7.31.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^3.4.0",

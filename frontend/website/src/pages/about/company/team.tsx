@@ -1,6 +1,6 @@
 import React from "react"
 
-import Notion from "@app/assets/metadata/notion.json"
+import team from "@app/assets/company/team.json"
 
 export const Team = () => {
   return (
@@ -23,8 +23,8 @@ export const Team = () => {
           </p>
         </div>
         <ul className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-6 sm:space-y-0 lg:grid-cols-3 lg:gap-8">
-          {Notion?.team?.map(
-            (person: { name: string; imageUrl: string; title: string }) => (
+          {team?.map(
+            (person: { name: string; imagePath: string; title: string }) => (
               <li
                 key={person.name}
                 className="py-10 px-6 bg-gray-900 text-center rounded-lg xl:px-10 xl:text-left"
@@ -33,7 +33,7 @@ export const Team = () => {
                   <div
                     className="mx-auto h-40 w-40 rounded-full xl:w-56 xl:h-56 bg-cover bg-center"
                     style={{
-                      backgroundImage: `url(${person.imageUrl})`,
+                      backgroundImage: `url(${person.imagePath})`,
                     }}
                   ></div>
                   <div className="space-y-2 xl:flex xl:items-center xl:justify-between mt-12">
