@@ -392,7 +392,10 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		return
 	}
 
-	// If so, create the mandelbox object.
+	// If so, create the mandelbox object. Note the usage of
+	// `context.Background()` instead of `globalCtx` as the base context for the
+	// Mandelbox's context. This is so that we do not clean up running
+	// mandelboxes when the host service receives a drain signal.
 	mandelbox := mandelboxData.New(context.Background(), goroutineTracker, mandelboxSubscription.ID)
 	logger.Infof("SpinUpMandelbox(): created Mandelbox object %s", mandelbox.GetID())
 
