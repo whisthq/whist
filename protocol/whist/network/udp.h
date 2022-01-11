@@ -79,11 +79,22 @@ void udp_update_network_settings(SocketContext* context, NetworkSettings network
  *
  * @param context                  The SocketContext that will have a nack buffer
  * @param type                     The WhistPacketType that this nack buffer will be used for
- * @param max_payload_size         The largest payload that will be saved in the nack buffer
+ * @param max_frame_size           The largest frame that can be saved in the nack buffer
  * @param num_buffers              The number of buffers that will be stored in the nack buffer
  */
-void udp_register_nack_buffer(SocketContext* context, WhistPacketType type, int max_payload_size,
+void udp_register_nack_buffer(SocketContext* context, WhistPacketType type, int max_frame_size,
                               int num_buffers);
+
+/**
+ * @brief                          Registers a ring buffer to reconstruct WhistPackets that can be split into smaller WhistPackets, e.g. video frames. This will hold up to num_buffer IDs for the given type.
+ *                                 NOTE: This function is not thread-safe on SocketContext
+ *
+ * @param context                  The SocketContext that will have a ring buffer
+ * @param type                     The WhistPacketType that this ring buffer will be used for
+ * @param max_frame_size           The largest frame that can be saved in the ring buffer
+ * @param num_buffers              The number of frames that will be stored in the ring buffer
+ */
+void udp_register_ring_buffer(SocketContext* context, WhistPacketType type, int max_frame_size, int num_buffers);
 
 /**
  * @brief                          Respond to a nack for a given ID/Index
@@ -96,5 +107,12 @@ void udp_register_nack_buffer(SocketContext* context, WhistPacketType type, int 
  *                                 (The UDP packet index into the larger WhistPacket)
  */
 int udp_nack(SocketContext* context, WhistPacketType type, int id, int index);
+
+/**
+ * @brief   Get the number of consecutive fully received frames of the given type available. Use this e.g. to predict how many ms of audio we have buffered.
+ * 
+ * @param type The type of frames to query for
+ */
+int udp_get_num_pending_frames(WhistPacketType type);
 
 #endif  // WHIST_UDP_H

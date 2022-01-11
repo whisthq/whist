@@ -110,8 +110,7 @@ void renderer_update(WhistRenderer* whist_renderer) {
     WhistTimer statistics_timer;
 
     // Update video/audio
-    TIME_RUN(update_audio(whist_renderer->audio_context), AUDIO_UPDATE_TIME, statistics_timer);
-    TIME_RUN(update_video(whist_renderer->video_context), VIDEO_UPDATE_TIME, statistics_timer);
+    // NOTE: this is now done in the UDP context
 
     // Get any network statistics,
     // Calculate desired network settings from them, and if new network settings are desired,

@@ -12,10 +12,8 @@ Usage
 SocketContextData: This type represents a socket.
    - To use a socket, call CreateUDPContext or CreateTCPContext with the desired
      parameters
-   - To send data over a socket, call SendTCPPacket or SendUDPPacket
-   - To receive data over a socket, call ReadTCPPacket or ReadUDPPacket
-   - If there is belief that a packet wasn't sent, you can call ReplayPacket to
-     send a packet twice
+   - To send data over a socket, call send_packet
+   - To receive data over a socket, call update and then get_packet to receive packets of a certain type.
 
 WhistPacket: This type represents a packet of information
    - Unique packets of a given type will be given unique IDs. IDs are expected
@@ -52,7 +50,8 @@ send_packet(&context, PACKET_MESSAGE, msg, strlen(msg) + 1);
 
 WhistPacket* packet = NULL;
 while(packet == NULL) {
-    packet = read_packet(&context);
+    update(context);
+    packet = get_packet(&context, PACKET_MESSAGE);
 }
 
 LOG_INFO("Response: %s", packet->data); // Will print "Message received!"
@@ -66,11 +65,12 @@ Server
 -----
 
 SocketContext context;
-creaqte_tcp_socket_context(&context, NULL, 5055, 500, 250);
+create_tcp_socket_context(&context, NULL, 5055, 500, 250);
 
 WhistPacket* packet = NULL;
 while(packet == NULL) {
-    packet = read_packet(&context);
+    update(context);
+    packet = get_packet(&context, PACKET_MESSAGE);
 }
 
 LOG_INFO("Message: %s", packet->data); // Will print "Hello this is a message!"
@@ -245,6 +245,7 @@ typedef struct {
     bool decrypted_packet_used;
     WhistPacket decrypted_packet;
     // Nack Buffer Data
+    // TODO: change this to WhistUDPPacket
     WhistPacket** nack_buffers[NUM_PACKET_TYPES];
     // This mutex will protect the data in nack_buffers
     WhistMutex nack_mutex[NUM_PACKET_TYPES];
@@ -265,9 +266,11 @@ typedef struct {
 
     // Function table
     int (*ack)(void* context);
-    WhistPacket* (*read_packet)(void* context, bool should_recv);
+    void (*update)(void* context, bool should_recv);
+    WhistPacket* (*get_packet)(void* context, WhistPacketType type);
     void (*free_packet)(void* context, WhistPacket* packet);
     int (*send_packet)(void* context, WhistPacketType type, void* data, int len, int id);
+    bool (*needs_stream_reset)(void* context);
     void (*destroy_socket_context)(void* context);
 } SocketContext;
 
@@ -293,19 +296,32 @@ SocketContext Interface
 int ack(SocketContext* context);
 
 /**
- * @brief                          Receive a WhistPacket from a SocketContext,
- *                                 if any such packet exists
+ * @brief   Receive the next WhistPacket from the given SocketContext of given WhistPacketType
  *
- * @param context                  The socket context
- * @param should_recv              If false, this function will only pop buffered packets,
- *                                 if any exist.
- *                                 If true, this function will call recv from the socket,
- *                                 but that might take a while in the case of TCP.
+ * @param context     The socket context
+ * @param type   Type of packet to pop
  *
- * @returns                        A pointer to the WhistPacket on success,
- *                                 NULL on failure
+ * @returns  A pointer to the WhistPacket if one is available, NULL otherwise.
  */
-WhistPacket* read_packet(SocketContext* context, bool should_recv);
+WhistPacket* get_packet(SocketContext* context, WhistPacketType type);
+
+/**
+ * @brief   Read the next packet from the socket if one is available and buffer it.
+ *
+ * @param context  The socket context to read from
+ * @param should_recv  Whether to call recv (which could take a while over TCP) or immediately return if no new data is available.
+ */
+void update(SocketContext* context, bool should_recv);
+
+/**
+ * @brief    Determine whether or not context's stream of packets of the given type needs to be reset, e.g. sending an iframe.
+ *
+ * @param context   The socket context to read from
+ * @param type   The type of data that needs resetting
+ *
+ * @returns   true if the stream needs a reset, false otherwise. 
+ */
+bool needs_stream_reset(SocketContext context, WhistPacketType type);
 
 /**
  * @brief                          Frees a WhistPacket created by read_packet
@@ -320,7 +336,6 @@ void free_packet(SocketContext* context, WhistPacket* packet);
  *                                 This function will send the WhistPacket over the network.
  *                                 There is no restriction on the size of this packet,
  *                                 it will be fragmented if necessary.
- *                                 TODO: Fragment over UDP
  *
  * @param context                  The socket context
  * @param packet_type              The WhistPacketType, either VIDEO, AUDIO,

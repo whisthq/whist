@@ -462,9 +462,8 @@ bool is_buffering_audio(AudioContext* audio_context) {
             // _and_ there's a frame trying to render => Skip that frame!
             int next_to_play_id = audio_context->last_played_id + 1;
             if (is_ready_to_render(audio_context->ring_buffer, next_to_play_id)) {
-                // Skip the frame
-                reset_frame(audio_context->ring_buffer,
-                            get_frame_at_id(audio_context->ring_buffer, next_to_play_id));
+                // Skip the frame, by ignoring the FrameData* returned
+                set_rendering(audio_context->ring_buffer, next_to_play_id);
                 audio_context->last_played_id = next_to_play_id;
 
                 // Log the skipped frame

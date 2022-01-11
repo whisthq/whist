@@ -171,7 +171,19 @@ int multithreaded_sync_udp_packets(void* opaque) {
 
     WhistTimer last_ack;
     WhistTimer statistics_timer;
+    WhistPacket* last_video_packet;
+    WhistPacket* last_audio_packet;
     start_timer(&last_ack);
+
+    // Initialize dimensions prior to update_video and receive_video calls
+    if (server_width != output_width || server_height != output_height ||
+        server_codec_type != output_codec_type) {
+        send_message_dimensions();
+    }
+    
+    // For now, manually make ring buffers for audio and video
+    udp_register_ring_buffer(socket_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE, VIDEO_RING_BUFFER_SIZE);
+    udp_register_ring_buffer(socket_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE, AUDIO_RING_BUFFER_SIZE);
 
     while (run_sync_packets_threads) {
         // Ack the connection every 5 seconds
@@ -183,31 +195,35 @@ int multithreaded_sync_udp_packets(void* opaque) {
         update_ping();
         // Update the renderer
         renderer_update(whist_renderer);
-        TIME_RUN(WhistPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_UDP,
-                 statistics_timer);
-
-        if (!packet) {
-            continue;
+        // Try to read data from the socket
+        TIME_RUN(update(socket_context, true), NETWORK_READ_PACKET_UDP, statistics_timer);
+        // Handle any messages we've received
+        WhistPacket* message_packet = get_packet(socket_context, PACKET_MESSAGE);
+        if (message_packet) {
+            handle_server_message(message_packet);
         }
-
-        switch (packet->type) {
-            case PACKET_AUDIO:
-            case PACKET_VIDEO: {
-                // Pass the audio/video packet into the renderer
-                renderer_receive_packet(whist_renderer, packet);
-                break;
+        // check if video can process the next frame
+        if (video_ready_for_frame(whist_renderer->video_context)) {
+            if (last_video_packet) {
+                free_packet(socket_context, last_video_packet);
             }
-            case PACKET_MESSAGE: {
-                TIME_RUN(handle_server_message((WhistServerMessage*)packet->data,
-                                               (size_t)packet->payload_size),
-                         SERVER_HANDLE_MESSAGE_UDP, statistics_timer);
-                break;
+            WhistPacket* video_frame = get_packet(socket_context, PACKET_VIDEO);
+            if (video_frame) {
+                receive_video(whist_renderer->video_context, video_frame);
+                // after this call to until rendering finishes, video_ready_for_frame must return false
             }
-            default:
-                LOG_ERROR("Unknown packet type: %d", packet->type);
-                break;
         }
-        free_packet(socket_context, packet);
+        // same for audio
+        if (audio_ready_for_frame(whist_renderer->audio_context)) {
+            if (last_audio_packet) {
+                free_packet(socket_context, last_audio_packet);
+            }
+            WhistPacket* audio_frame = get_packet(socket_context, PACKET_VIDEO);
+            if (audio_frame) {
+                receive_audio(whist_renderer->audio_context, audio_frame);
+                // after this call to until rendering finishes, audio_ready_for_frame must return false
+            }
+        }
     }
     return 0;
 }

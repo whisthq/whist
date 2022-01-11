@@ -53,6 +53,15 @@ extern unsigned short port_mappings[USHRT_MAX + 1];
 
 /*
 ============================
+Private Functions
+============================
+/**
+ * @brief    Send an encrypted WhistPacket of size at most MAX_UDP_PAYLOAD_SIZE through the network.
+*/
+int udp_send_constructed_packet(void* raw_context, WhistPacket* packet, size_t packet_size);
+
+/*
+============================
 UDP Implementation of Network.h Interface
 ============================
 */
@@ -62,7 +71,13 @@ static int udp_ack(void* raw_context) {
     return send(context->socket, NULL, 0, 0);
 }
 
-static WhistPacket* udp_read_packet(void* raw_context, bool should_recv) {
+WhistPacket* udp_read_packet(void* raw_context, bool should_recv) {
+    /*
+     * Read a WhistPacket from the socket represented by raw_context, decrypt it if necessary, and return a pointer to the decrypted data.
+     * If there are no packets to receive, return NULL.
+     * TODO: specify that we are reading WhistUDPPackets from the UDP socket and handle combining the WhistUDPPackets into WhistPackets. Return NULL if no full packet is available, and the full WhistPacket otherwise.
+     * TODO: handle nacking by creating ring buffers for packet types that require nacking (audio and video)
+     */ 
     SocketContextData* context = raw_context;
 
     if (should_recv == false) {
@@ -130,6 +145,7 @@ static WhistPacket* udp_read_packet(void* raw_context, bool should_recv) {
         context->decrypted_packet_used = true;
         return &context->decrypted_packet;
     } else {
+        // Network error or no packets to receive
         if (recv_len < 0) {
             int error = get_last_network_error();
             switch (error) {
@@ -166,7 +182,11 @@ static void udp_free_packet(void* raw_context, WhistPacket* udp_packet) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-static int udp_send_constructed_packet(void* raw_context, WhistPacket* packet, size_t packet_size) {
+int udp_send_constructed_packet(void* raw_context, WhistPacket* packet, size_t packet_size) {
+    /*
+     * Send a WhistPacket over UDP.
+     * TODO: rename this function and emphasize that it handles networking only, any packet encryption, etc. is handled by udp_send_packet.
+     */
     SocketContextData* context = raw_context;
     if (context == NULL) {
         LOG_ERROR("SocketContextData is NULL");
@@ -231,8 +251,14 @@ static int udp_send_constructed_packet(void* raw_context, WhistPacket* packet, s
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-static int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payload,
-                           int payload_size, int packet_id) {
+int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payload, int payload_size,
+                    int packet_id) {
+    /*
+     * Send data of type packet_type and ID packet_id over UDP. This breaks up the data into WhistPackets (TODO: WhistUDPPackets) small enough to be sent over UDP, applies any other transforms (e.g. encryption, error correction), and calls udp_send_constructed_packet on the transformed WhistPackets (TODO: WhistUDPPackets).
+     * It also updates a nack buffer to handle client nacks for lost data if necessary.
+     * TODO: wrap each step of the transform (splitting, encryption, FEC) into separate functions
+     * TODO: possibly make `udp_send_constructed_packet` not necessarily send data over the network
+     */
     SocketContextData* context = raw_context;
     if (context == NULL) {
         LOG_ERROR("SocketContextData is NULL");
@@ -361,6 +387,9 @@ void udp_update_network_settings(SocketContext* socket_context, NetworkSettings 
 
 void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType type,
                               int max_payload_size, int num_buffers) {
+    /*
+     * Create a nack buffer for the specified packet type which will resend packets to the client in case of data loss.
+     */
     SocketContextData* context = socket_context->context;
 
     int type_index = (int)type;
@@ -403,8 +432,12 @@ void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType typ
 }
 
 int udp_nack(SocketContext* socket_context, WhistPacketType type, int packet_id, int packet_index) {
+    /*
+     * Respond to a client nack by sending the requested packet from the nack buffer if possible.
+     */
     SocketContextData* context = socket_context->context;
 
+    // Sanity check the request metadata
     int type_index = (int)type;
     if (type_index >= NUM_PACKET_TYPES) {
         LOG_ERROR("Type is out of bounds! Something wrong happened");
@@ -420,6 +453,8 @@ int udp_nack(SocketContext* socket_context, WhistPacketType type, int packet_id,
         return -1;
     }
 
+    // retrieve the WhistPacket from the nack buffer and send using `udp_send_constructed_packet`
+    // TODO: change to WhistUDPPacket
     whist_lock_mutex(context->nack_mutex[type_index]);
     WhistPacket* packet =
         &context->nack_buffers[type_index][packet_id % context->nack_num_buffers[type_index]]
