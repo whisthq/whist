@@ -76,7 +76,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Install notification utilities: dbus and libevent
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     libdbus-1-dev \
     libevent-dev \
     && apt-get autoremove -y \

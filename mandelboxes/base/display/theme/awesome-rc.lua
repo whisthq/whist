@@ -12,6 +12,7 @@ local wibox = require("wibox")
 local beautiful = require("beautiful")
 -- Notification library
 local naughty = require("naughty")
+-- Disable server-side awesome notification display; this will be handled on the client-side
 naughty.suspend()
 
 -- Needed for create_titlebar_widget_button
