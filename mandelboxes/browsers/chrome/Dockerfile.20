@@ -22,9 +22,6 @@ FROM whisthq/base:current-build as whist-browsers-chrome
 # Force failure on non-zero exit code for commands with a pipe in them
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 
-# Install teleport chrome extension
-COPY --from=whist-teleport-chrome-extension /teleport-extension/build /opt/teleport/chrome-extension
-
 # Install Google Chrome dependencies explicitly
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     libappindicator3-1 \
@@ -81,6 +78,24 @@ RUN mkdir -p /etc/opt/chrome/policies/managed \
     # Disable the file selection dialog to hide the mandelbox filesystem
     | jq '.AllowFileSelectionDialogs=false' \
     > /etc/opt/chrome/policies/managed/WhistPolicies.json
+
+# Configure teleport extension and native messaging
+
+# Install teleport chrome extension
+COPY --from=whist-teleport-chrome-extension /teleport-extension/build /opt/teleport/chrome-extension
+
+RUN mkdir -p /etc/opt/chrome/native-messaging-hosts \
+    && echo {} \
+    | jq '.name="whist_teleport_extension_host"' \
+    | jq '.description="Whist Teleport Chrome Extension Host"' \
+    | jq '.path="/opt/teleport/chrome-extension-host"' \
+    | jq '.type="stdio"' \
+    # This ID is a hash of the path to the teleport chrome extension.
+    # It will need to be updated if the path ever changes.
+    | jq '.allowed_origins[0]="chrome-extension://gilacbinnkddlokepdofmojhijgileoj/"' \
+    > /etc/opt/chrome/native-messaging-hosts/whist_teleport_extension_host.json
+
+COPY --chmod=555 teleport-extension-host.py /opt/teleport/chrome-extension-host
 
 # Script to Install Google Chrome extensions
 COPY --chmod=555 install-extension.sh /usr/bin/install-extension.sh

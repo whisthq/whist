@@ -9,5 +9,5 @@
         "scripts": ["js/downloadHandler.js"]
     },
     "default_locale": "en",
-    "permissions": ["downloads", "downloads.shelf"]
+    "permissions": ["downloads", "downloads.shelf", "nativeMessaging"]
 }
