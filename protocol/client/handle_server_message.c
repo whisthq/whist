@@ -176,11 +176,11 @@ static int handle_clipboard_message(WhistServerMessage *wsmsg, size_t wsmsg_size
     if (wsmsg_size != sizeof(WhistServerMessage) + wsmsg->clipboard.size) {
         LOG_ERROR(
             "Incorrect message size for a server message"
-            " (type: clipboard message)! Expected %d, but received %d",
+            " (type: clipboard message)! Expected %zu, but received %zu",
             sizeof(WhistServerMessage) + wsmsg->clipboard.size, wsmsg_size);
         return -1;
     }
-    LOG_INFO("Received %d byte clipboard message from server!", wsmsg_size);
+    LOG_INFO("Received %zu byte clipboard message from server!", wsmsg_size);
     // Known to run in less than ~100 assembly instructions
     push_clipboard_chunk(&wsmsg->clipboard);
     return 0;

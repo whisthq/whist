@@ -262,7 +262,8 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
 
     switch (file_chunk->chunk_type) {
         case FILE_BODY: {
-            LOG_INFO("Writing chunk to file index %d size %d", file_chunk->index, file_chunk->size);
+            LOG_INFO("Writing chunk to file index %d size %zu", file_chunk->index,
+                     file_chunk->size);
 
             // For body chunks, write the data to the file
             fwrite(file_chunk->data, 1, file_chunk->size, active_file->file_handle);
@@ -379,7 +380,7 @@ void file_synchronizer_open_file_for_reading(int file_index, FileMetadata** file
     LOG_INFO("Opening file index %d for reading", file_index);
     active_file->file_handle = fopen(active_file->file_path, "r");
     if (active_file->file_handle == NULL) {
-        LOG_ERROR("Could not open file index %d for reading");
+        LOG_ERROR("Could not open file index %d for reading", file_index);
         // If file cannot be opened, then just abort the file transfer
         reset_transferring_file(file_index);
         *file_metadata_ptr = NULL;

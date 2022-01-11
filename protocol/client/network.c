@@ -134,7 +134,7 @@ int discover_ports(bool *with_stun) {
     if (tcp_packet->payload_size !=
         sizeof(WhistServerMessage) + sizeof(WhistDiscoveryReplyMessage)) {
         LOG_ERROR(
-            "Incorrect discovery reply message size. Expected: %d, Received: "
+            "Incorrect discovery reply message size. Expected: %zu, Received: "
             "%d",
             sizeof(WhistServerMessage) + sizeof(WhistDiscoveryReplyMessage),
             tcp_packet->payload_size);

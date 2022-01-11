@@ -58,7 +58,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
         Returns:
             (NvidiaEncoder*): New Nvidia encoder with the correct settings
     */
-    LOG_INFO("Creating encoder of bitrate %d, codec %d, width %d, height %d, cuda_context %x",
+    LOG_INFO("Creating encoder of bitrate %d, codec %d, width %d, height %d, cuda_context %p",
              bitrate, codec, out_width, out_height, cuda_context);
     NVENCSTATUS status;
 
@@ -344,7 +344,7 @@ int register_resource(NvidiaEncoder* encoder, RegisteredResource* resource_to_re
             return 0;
         }
         default:
-            LOG_ERROR("Unknown device type: %d");
+            LOG_ERROR("Unknown device type: %d", resource_to_register->device_type);
             return -1;
     }
 }

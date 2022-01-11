@@ -36,7 +36,7 @@ void* safe_malloc(size_t size) {
 
     void* ret = malloc(size);
     if (ret == NULL) {
-        LOG_FATAL("Malloc of size %d failed!", size);
+        LOG_FATAL("Malloc of size %zu failed!", size);
     } else {
         return ret;
     }
@@ -57,7 +57,7 @@ void* safe_realloc(void* buffer, size_t new_size) {
 
     void* ret = realloc(buffer, new_size);
     if (ret == NULL) {
-        LOG_FATAL("Realloc of size %d failed!", new_size);
+        LOG_FATAL("Realloc of size %zu failed!", new_size);
     } else {
         return ret;
     }
