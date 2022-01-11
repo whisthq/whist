@@ -110,9 +110,10 @@ check: clean build vet format lint test docs
 	echo "All checks (clean, build, vet, format, lint, test, and docs) succeeded!"
 
 clean:
-	$(GOCMD) clean -modcache
 	rm -rf $(BUILD_FOLDER)
 
+clean_modcache:
+	$(GOCMD) clean -modcache
 
 ## Host service-specific targets
 
