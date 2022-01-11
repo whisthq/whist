@@ -152,4 +152,4 @@ run_scaling_service_dev: build
 	APP_ENV=dev USE_PROD_LOGGING=0 $(BUILD_FOLDER)/scaling-service
 
 
-.PHONY: build clean run rundev format lint vet check
+.PHONY: checkCI build format lint vet test docs check clean clean_modcache run runlocaldevwithdb rundev
