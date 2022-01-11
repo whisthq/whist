@@ -271,7 +271,9 @@ TEST(ProtocolTest, ResetRingBufferFrame) {
 // Test network calls ignoring EINTR.
 
 // Not relevant on Windows, and we need pthread_kill() for the test.
-#ifndef _WIN32
+// This should run on macOS, but the CI instances do not run with
+// sufficiently consistent timing for the test to always pass.
+#if !defined(_WIN32) && !defined(__APPLE__)
 
 typedef struct {
     WhistSemaphore semaphore;
