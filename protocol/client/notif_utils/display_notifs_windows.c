@@ -19,6 +19,14 @@ Includes
 
 /*
 ============================
+Public Functions
+============================
+*/
+
+int native_show_notification(WhistPacket *packet);
+
+/*
+============================
 Public Function Implementations
 ============================
 */
