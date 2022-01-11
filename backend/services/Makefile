@@ -47,16 +47,19 @@ else
 	$(info CI is false)
 endif
 
-build: checkCI
-	$(GOCMD) mod tidy -v
+queries_sql_files := $(wildcard ./dbdriver/queries/*.sql)
+queries_sql_go_files := $(patsubst %.sql,%.sql.go,$(queries_sql_files))
+$(queries_sql_go_files): $(queries_sql_files) ../webserver/db_migration/schema.sql go.mod
 	$(GOCMD) install github.com/jschaf/pggen/cmd/pggen@latest
 	touch $(CURDIR)/host-service/dbdriver/queries/temp.sql.go
 	find $(CURDIR)/host-service/dbdriver/queries -type f -name "*.sql.go" | xargs rm
 
 # GOFLAGS fixes go.sum issue with lz4 package
 # Detailed at: https://github.com/golang/go/issues/44129#issuecomment-788810473
-	GOFLAGS=-mod=mod $(GOCMD) generate ./...
+	GOFLAGS=-mod=mod $(GOCMD) generate ./dbdriver/...
 
+build: checkCI $(queries_sql_go_files)
+	$(GOCMD) mod tidy -v
 	$(GOCMD) build -ldflags "\
 		-X 'github.com/whisthq/whist/backend/services/metadata.gitCommit=$(GIT_COMMIT)'\
 		-X 'github.com/whisthq/whist/backend/services/metadata/heroku.email=$(HEROKU_USER)'\
