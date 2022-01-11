@@ -347,7 +347,7 @@ bool handshake_private_key(SocketContextData* context) {
                              sizeof(our_signed_priv_key_data), 0);
     if (!confirm_private_key(&our_priv_key_data, &our_signed_priv_key_data, recv_size,
                              context->binary_aes_private_key)) {
-        LOG_ERROR("Could not confirmPrivateKey!");
+        // we LOG_ERROR and its context within the confirm_private_key function
         return false;
     } else {
         LOG_INFO("Private key confirmed");
@@ -574,7 +574,7 @@ bool confirm_private_key(PrivateKeyData* our_priv_key_data,
 
     if (recv_size == sizeof(PrivateKeyData)) {
         if (memcmp(our_priv_key_data->iv, our_signed_priv_key_data->iv, 16) != 0) {
-            LOG_ERROR("IV is incorrect!");
+            LOG_ERROR("Could not confirmPrivateKey: IV is incorrect!");
             return false;
         } else {
             SignatureData sig_data;
@@ -582,7 +582,7 @@ bool confirm_private_key(PrivateKeyData* our_priv_key_data,
             memcpy(sig_data.private_key, private_key, sizeof(sig_data.private_key));
             if (!verify_hmac(our_signed_priv_key_data->signature, &sig_data, sizeof(sig_data),
                              private_key)) {
-                LOG_ERROR("Verify HMAC Failed");
+                LOG_ERROR("Could not confirmPrivateKey: Verify HMAC Failed");
                 return false;
             } else {
                 return true;

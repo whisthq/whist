@@ -8,7 +8,7 @@
 ============================
 Usage
 ============================
-init_file_synchronizer(FILE_TRASFER_SERVER_DROP | FILE_TRANSFER_SERVER_UPLOAD);
+init_file_synchronizer(FILE_TRANSFER_SERVER_DROP | FILE_TRANSFER_SERVER_UPLOAD);
 
 FileChunk received_file_chunk;
 
