@@ -27,6 +27,12 @@ Public Functions
 ============================
 */
 
+/**
+ * @brief
+ *
+ * @param opaque
+ * @return int32_t
+ */
 int32_t listen_and_process_notifications(void *opaque);
 
 #endif  // NOTIFICATIONS_H

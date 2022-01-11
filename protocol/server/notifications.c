@@ -6,7 +6,8 @@
 Usage
 ============================
 
-TODO(kmeng01) write some summary thing here
+Implements logic to connect to an existing D-Bus session, listen for notifications
+passed through the D-Bus, and send them via the Whist Protocol to the client.
 
 */
 
