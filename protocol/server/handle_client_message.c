@@ -191,7 +191,6 @@ static int handle_streaming_toggle_message(whist_server_state *state, WhistClien
     } else {
         LOG_WARNING("Received streaming message to %s streaming, but we're already in that state!",
                     state->stop_streaming ? "stop" : "start");
-        return -1;
     }
     return 0;
 }
