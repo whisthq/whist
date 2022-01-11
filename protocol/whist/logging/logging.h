@@ -191,6 +191,9 @@ void whist_init_logger();
  *
  * @param fmt_str                  The format string to printf with
  */
+#ifdef __GNUC__
+__attribute__((format(printf, 2, 3)))
+#endif
 void internal_logging_printf(const char* tag, const char* fmt_str, ...);
 
 /**
