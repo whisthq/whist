@@ -22,9 +22,6 @@ Defines
 
 #define LOG_RENDERER_THREAD_USAGE false
 
-// The state of the client, i.e. whether it's connected to a server or not
-extern volatile bool connected;
-
 /*
 ============================
 Private Function Declarations
@@ -142,7 +139,7 @@ void renderer_try_render(WhistRenderer* whist_renderer) {
     // If the audio device is pending an update,
     // refresh the audio device, but only if we are in a connected state,
     // otherwise the audio device will crash
-    if (sdl_pending_audio_device_update() && connected) {
+    if (sdl_pending_audio_device_update()) {
         refresh_audio_device(whist_renderer->audio_context);
     }
 

@@ -310,7 +310,7 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
                 // We have received a packet which will overwrite a frame that needs to be rendered
                 // in the future. In other words, the ring buffer is full, so we should wipe the
                 // whole ring buffer.
-                LOG_WARNING(
+                LOG_ERROR(
                     "We received a packet with Frame ID %d, that is trying to overwrite Frame ID "
                     "%d!\n"
                     "But we can't overwrite that frame, since our renderer has only gotten to ID "
@@ -322,7 +322,7 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
             } else {
                 // Here, the frame is older than where our renderer is,
                 // So we can just reset the undesired frame
-                LOG_WARNING(
+                LOG_ERROR(
                     "Trying to allocate Frame ID %d, but Frame ID %d has not been destroyed yet!",
                     packet->id, frame_data->id);
                 reset_frame(ring_buffer, frame_data);

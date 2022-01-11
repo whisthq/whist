@@ -75,7 +75,7 @@ int send_packet(SocketContext* context, WhistPacketType packet_type, void* paylo
 void destroy_socket_context(SocketContext* context) {
     // if there is no context, there is nothing to destroy but we log that info anyway
     if (context->context == NULL) {
-        LOG_INFO("The given SocketContext has not been initialized!");
+        LOG_ERROR("The given SocketContext has not been initialized!");
         return;
     }
     context->destroy_socket_context(context->context);
