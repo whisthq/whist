@@ -502,6 +502,16 @@ jobs:
         working-directory: protocol
         run: ./build_protocol_targets.sh --cmakebuildtype=Release WhistServer
 
+      - name: Copy Server debug symbols to sentry
+        env:
+          SENTRY_ORG: whist
+          SENTRY_PROJECT: protocol
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        working-directory: protocol
+        run: |
+          curl -sL https://sentry.io/get-cli/ | bash
+          sentry-cli upload-dif ./build-docker/server/build64/WhistServer
+
       # In deploys, we only build the Docker images used in production
       # Note that they will build the images they depend on automatically (i.e. base)
       - name: Build Mandelboxes
@@ -1255,6 +1265,18 @@ jobs:
           --environment='${{ needs.whist-publish-build-config.outputs.branch }}' \
           --commit='${{ github.sha }}'
 
+      - name: Copy Client debug symbols to sentry
+        if: runner.os == 'macOS'
+        working-directory: frontend/client-applications
+        env:
+          SENTRY_ORG: whist
+          SENTRY_PROJECT: protocol
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          curl -sL https://sentry.io/get-cli/ | bash
+          sentry-cli upload-dif ./protocol-build/client/WhistClient
+          sentry-cli upload-dif ./protocol-build/client/WhistClient.debug
+
   #######################################################################################
   #######################################################################################
 
@@ -1358,6 +1380,18 @@ jobs:
           --version='${{ needs.client-applications-retrieve-version-number.outputs.release_version }}' \
           --environment='${{ needs.whist-publish-build-config.outputs.branch }}' \
           --commit='${{ github.sha }}'
+
+      - name: Copy Client debug symbols to sentry
+        if: runner.os == 'macOS'
+        working-directory: frontend/client-applications
+        env:
+          SENTRY_ORG: whist
+          SENTRY_PROJECT: protocol
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          curl -sL https://sentry.io/get-cli/ | bash
+          sentry-cli upload-dif ./protocol-build/client/WhistClient
+          sentry-cli upload-dif ./protocol-build/client/WhistClient.debug
 
   #######################################################################################
   #######################################################################################

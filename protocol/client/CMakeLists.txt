@@ -43,6 +43,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux"
             COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/client/wclient
             ${CMAKE_BINARY_DIR})
+
 endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(
@@ -107,6 +108,10 @@ target_link_libraries(WhistClient ${PLATFORM_INDEPENDENT_LIBS})
 ################## LINUX ##################
 ]]
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    add_custom_command(
+            TARGET WhistClient POST_BUILD
+            COMMAND objcopy --only-keep-debug ${CMAKE_BINARY_DIR}/client/build${arch}/WhistClient ${CMAKE_BINARY_DIR}/client/build${arch}/WhistClient.debug
+            COMMAND objcopy --strip-debug --strip-unneeded ${CMAKE_BINARY_DIR}/client/build${arch}/WhistClient)
 
     target_sources(WhistClient PRIVATE native_window_utils_x11.c)
 
@@ -129,6 +134,11 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(WhistClient PRIVATE native_window_utils_mac.m)
 
     target_link_libraries(WhistClient ${MAC_SPECIFIC_CLIENT_LIBS})
+
+    add_custom_command(
+            TARGET WhistClient POST_BUILD
+            COMMAND dsymutil ${CMAKE_BINARY_DIR}/client/build${arch}/WhistClient -o ${CMAKE_BINARY_DIR}/client/build${arch}/WhistClient.debug
+            COMMAND strip ${CMAKE_BINARY_DIR}/client/build${arch}/WhistClient)
 endif()
 
 #[[

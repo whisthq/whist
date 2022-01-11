@@ -32,6 +32,7 @@ OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/server/wserver
             ${CMAKE_BINARY_DIR})
+
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
