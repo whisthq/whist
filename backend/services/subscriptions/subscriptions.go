@@ -28,7 +28,7 @@ func InstanceStatusHandler(event SubscriptionEvent, variables map[string]interfa
 		return false
 	}
 
-	id := string(variables["id"].(instance_state))
+	id := string(variables["id"].(graphql.String))
 	status := string(variables["status"].(instance_state))
 
 	return (instance.ID == id) && (instance.Status == status)
@@ -48,9 +48,10 @@ func MandelboxAllocatedHandler(event SubscriptionEvent, variables map[string]int
 		return false
 	}
 
-	instanceId := string(variables["instance_id"].(mandelbox_state))
+	instanceId := string(variables["instance_id"].(graphql.String))
+	status := string(variables["status"].(mandelbox_state))
 
-	return mandelbox.InstanceID == instanceId
+	return (mandelbox.InstanceID == instanceId) && (mandelbox.Status == status)
 }
 
 // SetupHostSubscriptions creates a slice of HasuraSubscriptions to start the client. This

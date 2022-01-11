@@ -122,8 +122,8 @@ func TestInstanceStatusHandler(t *testing.T) {
 }
 func TestMandelboxAllocatedHandler(t *testing.T) {
 	var variables = map[string]interface{}{
-		"id":     graphql.String("test-instance-id"),
-		"status": mandelbox_state("ALLOCATED"),
+		"instance_id": graphql.String("test-instance-id"),
+		"status":      mandelbox_state("ALLOCATED"),
 	}
 
 	// Create different tests for the mandelbox allocated handler,
@@ -184,8 +184,10 @@ func TestSetupHostSubscriptions(t *testing.T) {
 		t.Errorf("Expected variable map to be %v, got: %v", whistClient.Subscriptions[0].Variables, variables)
 	}
 
-	variables["instance_id"] = graphql.String(instanceId)
-	variables["status"] = instance_state("ALLOCATED")
+	variables = map[string]interface{}{
+		"instance_id": graphql.String(instanceId),
+		"status":      mandelbox_state("ALLOCATED"),
+	}
 
 	// Verify that the "variables" maps are deep equal for the second subscription
 	if !reflect.DeepEqual(whistClient.Subscriptions[1].Variables, variables) {
@@ -203,8 +205,8 @@ func TestSetupScalingSubscriptions(t *testing.T) {
 		t.Errorf("Got nil subscriptions")
 	}
 
-	if len(whistClient.Subscriptions) != 2 {
-		t.Errorf("Expected subscriptions lenght to be 2, got: %v", len(whistClient.Subscriptions))
+	if len(whistClient.Subscriptions) != 1 {
+		t.Errorf("Expected subscriptions lenght to be 1, got: %v", len(whistClient.Subscriptions))
 	}
 
 	// Create a fake variables map that matches the host subscriptions variable map
@@ -216,13 +218,6 @@ func TestSetupScalingSubscriptions(t *testing.T) {
 
 	if !reflect.DeepEqual(variables, whistClient.Subscriptions[0].Variables) {
 		t.Errorf("Expected variable map to be %v, got: %v", whistClient.Subscriptions[0].Variables, variables)
-	}
-
-	variables["status"] = instance_state("ALLOCATED")
-
-	// Verify that the "variables" maps are deep equal for the second subscription
-	if !reflect.DeepEqual(variables, whistClient.Subscriptions[1].Variables) {
-		t.Errorf("Expected variable map to be %v, got: %v", whistClient.Subscriptions[1].Variables, variables)
 	}
 }
 
