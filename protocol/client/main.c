@@ -99,7 +99,9 @@ extern WhistMutex window_resize_mutex;  // protects pending_resize_message
 extern clock window_resize_timer;
 extern volatile bool pending_resize_message;
 
+// The state of the client, i.e. whether it's connected to a server or not
 extern volatile bool connected;
+
 extern volatile bool client_exiting;
 volatile int try_amount;
 
@@ -518,7 +520,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (exit_code != WHIST_EXIT_SUCCESS) {
-        LOG_ERROR("Failure in main loop!");
+        LOG_ERROR("Failure in main loop! Exiting with code %d", exit_code);
     }
 
     if (try_amount >= 3) {
