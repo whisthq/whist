@@ -99,7 +99,6 @@ def create_app(testing: bool = False) -> Flask:
         DeferredReflection.prepare(db.engine)
 
     register_handlers(app)
-    register_commands(app)
     register_blueprints(app)
 
     return app
@@ -125,19 +124,6 @@ def register_handlers(app: Flask) -> None:
             jsonify(error="That resource is only available to Whist subscribers"),
             HTTPStatus.PAYMENT_REQUIRED,
         )
-
-
-def register_commands(app: Flask) -> None:
-    """
-    Registers all blueprints (cli commands) for the Flask app
-
-    Args:
-        - app: Flask object
-    """
-
-    from app.utils.flask.cli import compute_bp
-
-    app.register_blueprint(compute_bp)
 
 
 def register_blueprints(app: Flask) -> None:
