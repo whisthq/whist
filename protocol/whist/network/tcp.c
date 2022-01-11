@@ -74,8 +74,9 @@ WhistPacket* tcp_read_packet(void* raw_context, bool should_recv) {
         resize_dynamic_buffer(encrypted_tcp_packet_buffer,
                               context->reading_packet_len + TCP_SEGMENT_SIZE);
         // Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE
-        len = recv(context->socket, encrypted_tcp_packet_buffer->buf + context->reading_packet_len,
-                   TCP_SEGMENT_SIZE, 0);
+        len = recv_no_intr(context->socket,
+                           encrypted_tcp_packet_buffer->buf + context->reading_packet_len,
+                           TCP_SEGMENT_SIZE, 0);
 
         if (len < 0) {
             int err = get_last_network_error();
@@ -514,8 +515,8 @@ int create_tcp_server_context_stun(SocketContextData* context, int port, int rec
 
     while (recv_size < (int)sizeof(entry) && get_timer(t) < stun_timeout_ms) {
         int single_recv_size;
-        if ((single_recv_size = recv(context->socket, ((char*)&entry) + recv_size,
-                                     max(0, (int)sizeof(entry) - recv_size), 0)) < 0) {
+        if ((single_recv_size = recv_no_intr(context->socket, ((char*)&entry) + recv_size,
+                                             max(0, (int)sizeof(entry) - recv_size), 0)) < 0) {
             LOG_WARNING("Did not receive STUN response %d\n", get_last_network_error());
             closesocket(context->socket);
             return -1;
@@ -695,8 +696,8 @@ int create_tcp_client_context_stun(SocketContextData* context, char* destination
 
     while (recv_size < (int)sizeof(entry) && get_timer(t) < stun_timeout_ms) {
         int single_recv_size;
-        if ((single_recv_size = recv(context->socket, ((char*)&entry) + recv_size,
-                                     max(0, (int)sizeof(entry) - recv_size), 0)) < 0) {
+        if ((single_recv_size = recv_no_intr(context->socket, ((char*)&entry) + recv_size,
+                                             max(0, (int)sizeof(entry) - recv_size), 0)) < 0) {
             LOG_WARNING("Did not receive STUN response %d\n", get_last_network_error());
             closesocket(context->socket);
             return -1;

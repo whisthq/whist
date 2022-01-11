@@ -17,6 +17,7 @@
 #include <fcntl.h>
 
 #ifndef _WIN32
+#include <sys/poll.h>
 #include "curl/curl.h"
 #else
 #include <winhttp.h>
@@ -313,9 +314,9 @@ bool handshake_private_key(SocketContextData* context) {
 
     // Receive, sign, and send back their private key request data
     int cnt = 0;
-    while ((recv_size =
-                recvfrom(context->socket, (char*)&their_priv_key_data, sizeof(their_priv_key_data),
-                         0, (struct sockaddr*)(&context->addr), &slen)) == 0) {
+    while ((recv_size = recvfrom_no_intr(context->socket, (char*)&their_priv_key_data,
+                                         sizeof(their_priv_key_data), 0,
+                                         (struct sockaddr*)(&context->addr), &slen)) == 0) {
         if (cnt >= 3)  // we are (very likely) getting a dead loop casued by stream socket closed
         {              // the loop should be okay to be removed, just kept for debugging.
             return false;
@@ -342,8 +343,8 @@ bool handshake_private_key(SocketContextData* context) {
     }
 
     // Wait for and verify their signed private key request data
-    recv_size = recv(context->socket, (char*)&our_signed_priv_key_data,
-                     sizeof(our_signed_priv_key_data), 0);
+    recv_size = recv_no_intr(context->socket, (char*)&our_signed_priv_key_data,
+                             sizeof(our_signed_priv_key_data), 0);
     if (!confirm_private_key(&our_priv_key_data, &our_signed_priv_key_data, recv_size,
                              context->binary_aes_private_key)) {
         LOG_ERROR("Could not confirmPrivateKey!");
@@ -354,6 +355,159 @@ bool handshake_private_key(SocketContextData* context) {
         return true;
     }
 }
+
+#if !defined(_WIN32)
+// Receive implementations avoiding EINTR.
+
+// Note that this get_timeout() implementation will not work on Windows
+// (because the non-blocking state of a socket cannot be queried), hence
+// it is not made public.
+static int get_timeout(SOCKET socket) {
+    int ret, err;
+
+    ret = fcntl(socket, F_GETFL);
+    if (ret < 0) {
+        err = get_last_network_error();
+        LOG_WARNING("Failed to retrieve socket non-blocking setting: %d, %s.\n", err,
+                    strerror(err));
+    } else if (ret & O_NONBLOCK) {
+        // Socket is non-blocking, so the timeout is zero.
+        return 0;
+    }
+
+    struct timeval read_timeout;
+    socklen_t opt_len = sizeof(read_timeout);
+    ret = getsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, &opt_len);
+    if (ret < 0) {
+        err = get_last_network_error();
+        LOG_WARNING("Failed to retrieve socket receive timeout: %d, %s.\n", err, strerror(err));
+        return -1;
+    }
+    if (read_timeout.tv_sec == 0 && read_timeout.tv_usec == 0)
+        return -1;
+    else
+        return read_timeout.tv_sec * MS_IN_SECOND + read_timeout.tv_usec / US_IN_MS;
+}
+
+ssize_t recv_no_intr(int sockfd, void* buf, size_t len, int flags) {
+    ssize_t ret;
+    bool got_timeout = false;
+    int original_timeout, current_timeout;
+    clock timer;
+    // For timeouts we only care about how long has elapsed since this call started.
+    start_timer(&timer);
+    while (1) {
+        ret = recv(sockfd, buf, len, flags);
+        if (ret >= 0 || errno != EINTR) {
+            // If we didn't hit an EINTR case, return immediately.
+            return ret;
+        }
+        if (!got_timeout) {
+            // Only fetch the timeout the first time around.
+            current_timeout = original_timeout = get_timeout(sockfd);
+            got_timeout = true;
+        }
+        // cppcheck-suppress uninitvar
+        if (current_timeout <= 0) {
+            // If either the socket is non-blocking (0) or there wasn't a
+            // timeout set (-1) then we just call again.
+            continue;
+        }
+        while (1) {
+            // If there was a timeout set we need compare against how long
+            // has actually elapsed.
+            int elapsed = (int)(get_timer(timer) * MS_IN_SECOND);
+            if (elapsed >= original_timeout) {
+                // If the full time has already elapsed we should return.
+                // Set errno to the expected value for a timeout case.
+                errno = EAGAIN;
+                return -1;
+            }
+            // Now wait for the remaining timeout for anything to happen.
+            current_timeout = original_timeout - elapsed;
+            struct pollfd pfd = {
+                .fd = sockfd,
+                .events = POLLIN,
+            };
+            ret = poll(&pfd, 1, current_timeout);
+            if (ret == 0) {
+                // We timed out, so return that.
+                errno = EAGAIN;
+                return -1;
+            }
+            if (ret >= 0 || errno != EINTR) {
+                // Either something is now there so we can recv() it, or
+                // it is an external error and we want to return whatever
+                // recv() says the error is.
+                break;
+            }
+            // We got EINTR again in poll(), so recalculate the timeout
+            // and go around again.
+        }
+    }
+}
+
+// This is identical to the previous function except for the recv() call.
+// Any changes should be kept in sync between them.
+ssize_t recvfrom_no_intr(int sockfd, void* buf, size_t len, int flags, struct sockaddr* src_addr,
+                         socklen_t* addrlen) {
+    ssize_t ret;
+    bool got_timeout = false;
+    int original_timeout, current_timeout;
+    clock timer;
+    // For timeouts we only care about how long has elapsed since this call started.
+    start_timer(&timer);
+    while (1) {
+        ret = recvfrom(sockfd, buf, len, flags, src_addr, addrlen);
+        if (ret >= 0 || errno != EINTR) {
+            // If we didn't hit an EINTR case, return immediately.
+            return ret;
+        }
+        if (!got_timeout) {
+            // Only fetch the timeout the first time around.
+            current_timeout = original_timeout = get_timeout(sockfd);
+            got_timeout = true;
+        }
+        // cppcheck-suppress uninitvar
+        if (current_timeout <= 0) {
+            // If either the socket is non-blocking (0) or there wasn't a
+            // timeout set (-1) then we just call again.
+            continue;
+        }
+        while (1) {
+            // If there was a timeout set we need compare against how long
+            // has actually elapsed.
+            int elapsed = (int)(get_timer(timer) * MS_IN_SECOND);
+            if (elapsed >= original_timeout) {
+                // If the full time has already elapsed we should return.
+                // Set errno to the expected value for a timeout case.
+                errno = EAGAIN;
+                return -1;
+            }
+            // Now wait for the remaining timeout for anything to happen.
+            current_timeout = original_timeout - elapsed;
+            struct pollfd pfd = {
+                .fd = sockfd,
+                .events = POLLIN,
+            };
+            ret = poll(&pfd, 1, current_timeout);
+            if (ret == 0) {
+                // We timed out, so return that.
+                errno = EAGAIN;
+                return -1;
+            }
+            if (ret >= 0 || errno != EINTR) {
+                // Either something is now there so we can recv() it, or
+                // it is an external error and we want to return whatever
+                // recv() says the error is.
+                break;
+            }
+            // We got EINTR again in poll(), so recalculate the timeout
+            // and go around again.
+        }
+    }
+}
+#endif
 
 /*
 ============================
