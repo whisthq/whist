@@ -742,7 +742,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			Extensions:    req.Extensions,
 		}
 
-		destDir := path.Join(mandelbox.GetUserConfigDir(), mandelboxData.GetUnpackedConfigsDirectoryName())
+		destDir := path.Join(mandelbox.GetUserConfigDir(), mandelboxData.UnpackedConfigsDirectoryName)
 		err := mandelboxData.WriteUserInitialBrowserData(userInitialBrowserData, destDir)
 		if err != nil {
 			logger.Warningf("Error writing user initial browser data for mandelbox %s: %v", mandelboxSubscription.ID, err)
