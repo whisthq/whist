@@ -152,6 +152,13 @@ func Infof(format string, v ...interface{}) {
 	Info(format, v...)
 }
 
+// SilentInfof is identical to SilentInfo, since SilentInfo already respects
+// printf syntax. We only include SilentInfof for consistency with Errorf,
+// Warningf, and Panicf.
+func SilentInfof(format string, v ...interface{}) {
+	Info(format, v...)
+}
+
 // Errorf is like Error, but it respects printf syntax, i.e. takes in a format
 // string and arguments, for convenience.
 func Errorf(format string, v ...interface{}) {
