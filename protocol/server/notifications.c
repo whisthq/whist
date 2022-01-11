@@ -44,7 +44,7 @@ Includes
 
 /*
 ============================
-Globals
+Defines
 ============================
 */
 
@@ -54,6 +54,12 @@ struct dbus_ctx {
     struct event dispatch_ev;
     void *extra;
 };
+
+/*
+============================
+Globals
+============================
+*/
 
 Client *server_state_client = NULL;
 
