@@ -158,9 +158,19 @@ void init_file_synchronizer(FileTransferType requested_actions) {
     if ((requested_actions & FILE_TRANSFER_SERVER_DROP) && init_file_drop_handler()) {
         enabled_actions |= FILE_TRANSFER_SERVER_DROP;
     }
+    if ((requested_actions & FILE_TRANSFER_CLIENT_DOWNLOAD)) {
+        enabled_actions |= FILE_TRANSFER_CLIENT_DOWNLOAD;
+    }
     is_initialized = true;
 }
 
+#ifdef _WIN32
+#define sep '\\'
+#define HOME_ENV_VAR "HOMEPATH"
+#else
+#define sep '/'
+#define HOME_ENV_VAR "HOME"
+#endif  // _WIN32
 void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
     /*
         Open a file for writing based on `file_metadata`
@@ -196,6 +206,15 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
             file_dir = file_drop_prepare(active_file->id, file_metadata);
             break;
         }
+        case FILE_TRANSFER_CLIENT_DOWNLOAD: {
+            const char* home_dir = getenv(HOME_ENV_VAR);
+            const char* downloads = "Downloads";
+            char* download_file_dir = malloc(strlen(home_dir) + 1 + strlen(downloads) + 1);
+            snprintf(download_file_dir, strlen(home_dir) + 1 + strlen(downloads) + 1, "%s%c%s",
+                     home_dir, sep, downloads);
+            file_dir = download_file_dir;
+            break;
+        }
         case 0: {
             LOG_WARNING("File transfer type %d is not enabled", file_metadata->transfer_type);
             // fall through to default
@@ -207,9 +226,10 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
     }
 
     // Set transferring file filepath
-    const size_t file_path_len = strlen(file_dir) + strlen(active_file->filename) + 1;
+    const size_t file_path_len = strlen(file_dir) + 1 + strlen(active_file->filename) + 1;
     active_file->file_path = safe_malloc(file_path_len + 1);
-    snprintf(active_file->file_path, file_path_len + 1, "%s/%s", file_dir, active_file->filename);
+    snprintf(active_file->file_path, file_path_len + 1, "%s%c%s", file_dir, sep,
+             active_file->filename);
 
     active_file->transfer_type = file_metadata->transfer_type;
     active_file->event_info = file_metadata->event_info;
@@ -393,7 +413,7 @@ void file_synchronizer_open_file_for_reading(int file_index, FileMetadata** file
     //     We could use `basename`, but it sadly is not cross-platform.
     char* temp_file_name = active_file->file_path;
     for (char* c = active_file->file_path; *c; ++c) {
-        if (*c == '/') temp_file_name = c + 1;
+        if (*c == sep) temp_file_name = c + 1;
     }
     size_t filename_len = strlen(temp_file_name);
 

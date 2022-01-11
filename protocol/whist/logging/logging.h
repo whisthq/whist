@@ -49,6 +49,9 @@ Defines
 
 #define LOGGER_QUEUE_SIZE 1000
 #define LOGGER_BUF_SIZE 1000
+#ifndef __ROOT_FILE__
+#define __ROOT_FILE__ ""
+#endif
 #define _FILE ((sizeof(__ROOT_FILE__) < sizeof(__FILE__)) ? (&__FILE__[sizeof(__ROOT_FILE__)]) : "")
 #define NO_LOG 0x00
 #define ERROR_LEVEL 0x01

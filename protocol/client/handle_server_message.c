@@ -50,6 +50,8 @@ static int handle_clipboard_message(WhistServerMessage *wsmsg, size_t wsmsg_size
 static int handle_window_title_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_open_uri_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_fullscreen_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+static int handle_file_metadata_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+static int handle_file_chunk_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 
 /*
 ============================
@@ -87,6 +89,10 @@ int handle_server_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
             return handle_open_uri_message(wsmsg, wsmsg_size);
         case SMESSAGE_FULLSCREEN:
             return handle_fullscreen_message(wsmsg, wsmsg_size);
+        case SMESSAGE_FILE_DATA:
+            return handle_file_chunk_message(wsmsg, wsmsg_size);
+        case SMESSAGE_FILE_METADATA:
+            return handle_file_metadata_message(wsmsg, wsmsg_size);
         default:
             LOG_WARNING("Unknown WhistServerMessage Received (type: %d)", wsmsg->type);
             return -1;
@@ -242,7 +248,7 @@ static int handle_open_uri_message(WhistServerMessage *wsmsg, size_t wsmsg_size)
     return 0;
 }
 
-static int handle_fullscreen_message(WhistServerMessage *wsmsg, size_t fmsg_size) {
+static int handle_fullscreen_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
     /*
         Handle server fullscreen message (enter or exit events)
 
@@ -257,6 +263,36 @@ static int handle_fullscreen_message(WhistServerMessage *wsmsg, size_t fmsg_size
     LOG_INFO("Received fullscreen message from the server! Value: %d", wsmsg->fullscreen);
 
     sdl_set_fullscreen(wsmsg->fullscreen);
+
+    return 0;
+}
+
+static int handle_file_metadata_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
+    /*
+        Handle a file metadata message.
+
+        Arguments:
+            wsmsg (WhistServerMessage*): message packet from client
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
+    file_synchronizer_open_file_for_writing(&wsmsg->file_metadata);
+
+    return 0;
+}
+
+static int handle_file_chunk_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
+    /*
+        Handle a file chunk message.
+
+        Arguments:
+            wsmsg (WhistServerMessage*): message packet from client
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
+    file_synchronizer_write_file_chunk(&wsmsg->file);
 
     return 0;
 }
