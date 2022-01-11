@@ -1,0 +1,17 @@
+package hosts
+
+import (
+	"context"
+
+	"github.com/whisthq/whist/backend/core-go/subscriptions"
+)
+
+// HostHandler defines the necessary methods for performing scaling actions. There should be a different
+// implementation for each cloud service provider, which will interact directly with the provider's API.
+type HostHandler interface {
+	Initialize(region string) error
+	SpinUpInstances(scalingCtx context.Context, numInstances int32, imageID string) (createdInstances []subscriptions.Instance, err error)
+	SpinDownInstances(scalingCtx context.Context, instanceIDs []string) (terminatedInstances []subscriptions.Instance, err error)
+	WaitForInstanceTermination(context.Context, []string) error
+	WaitForInstanceReady(context.Context, []string) error
+}
