@@ -196,7 +196,7 @@ void get_current_cursor(WhistCursorImage* image) {
         if (cursor_image->width > MAX_CURSOR_WIDTH || cursor_image->height > MAX_CURSOR_HEIGHT) {
             LOG_WARNING(
                 "whist/cursor/linuxcursor.c::GetCurrentCursor(): cursor width or height exceeds "
-                "maximum dimensions. Truncating cursor from %hu by %hu to %hu by %hu.",
+                "maximum dimensions. Truncating cursor from %hu by %hu to %d by %d.",
                 cursor_image->width, cursor_image->height, MAX_CURSOR_WIDTH, MAX_CURSOR_HEIGHT);
         }
         image->cursor_id = get_cursor_id(cursor_image);

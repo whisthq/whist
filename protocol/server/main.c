@@ -248,7 +248,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
     */
     whist_server_state* state = (whist_server_state*)opaque;
 
-    LOG_INFO("multithreaded_sync_tcp_packets running on Thread %p", SDL_GetThreadID(NULL));
+    LOG_INFO("multithreaded_sync_tcp_packets running on Thread %lu", SDL_GetThreadID(NULL));
 
     init_clipboard_synchronizer(false);
     init_file_synchronizer(FILE_TRANSFER_SERVER_DROP);

@@ -550,7 +550,7 @@ bool sign_private_key(PrivateKeyData* priv_key_data, int recv_size, void* privat
         hmac(priv_key_data->signature, &sig_data, sizeof(sig_data), private_key);
         return true;
     } else {
-        LOG_ERROR("Recv Size was not equal to PrivateKeyData: %d instead of %d", recv_size,
+        LOG_ERROR("Recv Size was not equal to PrivateKeyData: %d instead of %zu", recv_size,
                   sizeof(PrivateKeyData));
         return false;
     }
@@ -589,7 +589,7 @@ bool confirm_private_key(PrivateKeyData* our_priv_key_data,
             }
         }
     } else {
-        LOG_ERROR("Recv Size was not equal to PrivateKeyData: %d instead of %d", recv_size,
+        LOG_ERROR("Recv Size was not equal to PrivateKeyData: %d instead of %zu", recv_size,
                   sizeof(PrivateKeyData));
         return false;
     }

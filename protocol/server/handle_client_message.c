@@ -501,7 +501,7 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
     size_t url_length = strlen(received_url);
     if (url_length > MAX_URL_LENGTH) {
         LOG_WARNING(
-            "Attempted to open url of length %lu, which exceeds the max allowed length (%lu "
+            "Attempted to open url of length %zu, which exceeds the max allowed length (%d "
             "characters)\n",
             url_length, MAX_URL_LENGTH);
         return -1;

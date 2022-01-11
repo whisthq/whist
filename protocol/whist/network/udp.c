@@ -127,7 +127,7 @@ int udp_send_constructed_packet(void* raw_context, WhistPacket* packet, size_t p
 
     // Use MAX_PACKET_SIZE here since we are checking the size of the packet itself.
     if (packet_size > MAX_PACKET_SIZE) {
-        LOG_ERROR("Packet too large to send over UDP: %d", packet_size);
+        LOG_ERROR("Packet too large to send over UDP: %zu", packet_size);
         return -1;
     }
 

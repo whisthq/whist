@@ -331,7 +331,7 @@ void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
         LOG_ERROR("destroy_nvidia_capture_device received NULL device!");
         return;
     }
-    LOG_DEBUG("Thread %d called destroy_nvidia_capture_device", syscall(SYS_gettid));
+    LOG_DEBUG("Called destroy_nvidia_capture_device");
     NVFBCSTATUS status;
 
     /*

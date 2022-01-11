@@ -63,7 +63,7 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
         // set current context
         CUresult cu_res = cu_ctx_push_current_ptr(*get_nvidia_thread_cuda_context_ptr());
         if (cu_res != CUDA_SUCCESS) {
-            LOG_ERROR("Failed to push current context, status %d!");
+            LOG_ERROR("Failed to push current context, status %d!", cu_res);
         }
         cu_ctx_synchronize_ptr();
         // Nvidia requires recreation
@@ -73,7 +73,7 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
             whist_sleep(500);
         }
         LOG_INFO("Created nvidia capture device!");
-        LOG_DEBUG("device handle: %d", device->nvidia_capture_device->fbc_handle);
+        LOG_DEBUG("device handle: %" PRIu64, device->nvidia_capture_device->fbc_handle);
         nvidia_release_context(device->nvidia_capture_device);
         cu_res = cu_ctx_pop_current_ptr(get_video_thread_cuda_context_ptr());
         // Tell the main thread to bind the nvidia context again
