@@ -21,7 +21,8 @@ HEROKU_APIKEY ?= $(shell heroku auth:token | tail -1)
 HEROKU_APP_NAME_OVERRIDE ?=
 endif
 
-all: build
+.default: build
+.DEFAULT_GOAL := build
 
 # Check that the required environment variables for building as part of our
 # continuous integration/deployment pipeline on GitHub Actions are set properly.
