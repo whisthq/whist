@@ -132,7 +132,6 @@ func TestUnmarshalScopes(t *testing.T) {
 	})
 }
 
-
 func TestUnmarshalAudience(t *testing.T) {
 	// Ensure that UnmarshalJSON returns an error when it cannot unmarshal to string
 	t.Run("InvalidJSON", func(t *testing.T) {
@@ -243,7 +242,7 @@ func TestVerify(t *testing.T) {
 
 		if err != nil {
 			t.Fatalf("Verify should have returned nil but got %v", err)
-		}	
+		}
 	})
 }
 
@@ -330,4 +329,3 @@ func TestVerifyScope(t *testing.T) {
 		}
 	})
 }
-

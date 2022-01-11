@@ -7,7 +7,7 @@ import (
 func TestAllocateZeroPorts(t *testing.T) {
 	// Give zero portBinds
 	ports, err := Allocate([]PortBinding{})
-	
+
 	if err != nil {
 		t.Fatalf("error allocating an empty array of port binds. Error: %v", err)
 	}
@@ -21,27 +21,27 @@ func TestAllocateAllOrNone(t *testing.T) {
 	// Have valid and invalid PortBindings
 	testValidPortBinding := PortBinding{
 		MandelboxPort: uint16(22),
-		Protocol: TransportProtocolTCP,
-		HostPort: uint16(0),
-		BindIP: "test_ip",
+		Protocol:      TransportProtocolTCP,
+		HostPort:      uint16(0),
+		BindIP:        "test_ip",
 	}
 
 	testValidPortBinding2 := PortBinding{
 		MandelboxPort: uint16(22),
-		Protocol: TransportProtocolTCP,
-		HostPort: uint16(MinAllowedPort),
-		BindIP: "test_ip",
+		Protocol:      TransportProtocolTCP,
+		HostPort:      uint16(MinAllowedPort),
+		BindIP:        "test_ip",
 	}
 
 	testInvalidPortBinding := PortBinding{
 		MandelboxPort: uint16(22),
-		Protocol: TransportProtocolTCP,
-		HostPort: uint16(MinAllowedPort-1),
-		BindIP: "test_ip",
+		Protocol:      TransportProtocolTCP,
+		HostPort:      uint16(MinAllowedPort - 1),
+		BindIP:        "test_ip",
 	}
 
 	// Allocate should cause an error as one of the ports are invalid
-	ports, err := Allocate([]PortBinding{testValidPortBinding, testValidPortBinding2, testInvalidPortBinding})	
+	ports, err := Allocate([]PortBinding{testValidPortBinding, testValidPortBinding2, testInvalidPortBinding})
 
 	if err == nil {
 		t.Fatalf("error allocating an array of port binds with invalid bindings. Expected err but got nil")
@@ -57,16 +57,16 @@ func TestAllocateAndFree(t *testing.T) {
 	// Create two valid port bindings
 	testValidPortBinding := PortBinding{
 		MandelboxPort: uint16(22),
-		Protocol: TransportProtocolTCP,
-		HostPort: uint16(0),
-		BindIP: "test_ip",
+		Protocol:      TransportProtocolTCP,
+		HostPort:      uint16(0),
+		BindIP:        "test_ip",
 	}
 
 	testValidPortBinding2 := PortBinding{
 		MandelboxPort: uint16(22),
-		Protocol: TransportProtocolTCP,
-		HostPort: uint16(MinAllowedPort),
-		BindIP: "test_ip",
+		Protocol:      TransportProtocolTCP,
+		HostPort:      uint16(MinAllowedPort),
+		BindIP:        "test_ip",
 	}
 
 	portBindings := []PortBinding{testValidPortBinding, testValidPortBinding2}
@@ -74,7 +74,7 @@ func TestAllocateAndFree(t *testing.T) {
 
 	//  Allocate should get 2 valid ports
 	ports, err := Allocate(portBindings)
-		
+
 	if err != nil {
 		t.Fatalf("error allocating an array of port binds. Error: %v", err)
 	}
@@ -100,8 +100,8 @@ func TestAllocateAndFree(t *testing.T) {
 	mapSizeAfterFree := len(*mapToUse)
 
 	// Confirm that the number of Free'd ports are as expected
-	if mapSizeBeforeFree - numOfPortBindings != mapSizeAfterFree {
-		t.Fatalf("error freeing %v port bindings. Expected %v since nothing should be freed but got %v", numOfPortBindings, mapSizeBeforeFree - numOfPortBindings, mapSizeAfterFree)
+	if mapSizeBeforeFree-numOfPortBindings != mapSizeAfterFree {
+		t.Fatalf("error freeing %v port bindings. Expected %v since nothing should be freed but got %v", numOfPortBindings, mapSizeBeforeFree-numOfPortBindings, mapSizeAfterFree)
 	}
 }
 
@@ -132,9 +132,9 @@ func TestAllocateSinglePortNotFree(t *testing.T) {
 	// Creating a desired binding with host-port being set to 0
 	testDesiredBind := PortBinding{
 		MandelboxPort: uint16(22),
-		Protocol: TransportProtocolTCP,
-		HostPort: uint16(MinAllowedPort),
-		BindIP: "test_ip",
+		Protocol:      TransportProtocolTCP,
+		HostPort:      uint16(MinAllowedPort),
+		BindIP:        "test_ip",
 	}
 
 	portMapsLock.Lock()
@@ -160,9 +160,9 @@ func TestAllocateSinglePortNotAllowed(t *testing.T) {
 	// Creating a desired binding with host-port being set to 0
 	testDesiredBind := PortBinding{
 		MandelboxPort: uint16(22),
-		Protocol: TransportProtocolTCP,
-		HostPort: uint16(1),
-		BindIP: "test_ip",
+		Protocol:      TransportProtocolTCP,
+		HostPort:      uint16(1),
+		BindIP:        "test_ip",
 	}
 
 	portMapsLock.Lock()
@@ -176,12 +176,12 @@ func TestAllocateSinglePortNotAllowed(t *testing.T) {
 }
 
 func TestAllocateSinglePortInvalidProtocol(t *testing.T) {
-	// Creating a desired binding with an invalid protocol 
+	// Creating a desired binding with an invalid protocol
 	testDesiredBind := PortBinding{
 		MandelboxPort: uint16(22),
-		Protocol: TransportProtocol("testInvalidProtocol"),
-		HostPort: MinAllowedPort,
-		BindIP: "test_ip",
+		Protocol:      TransportProtocol("testInvalidProtocol"),
+		HostPort:      MinAllowedPort,
+		BindIP:        "test_ip",
 	}
 
 	portMapsLock.Lock()
@@ -195,12 +195,12 @@ func TestAllocateSinglePortInvalidProtocol(t *testing.T) {
 }
 
 func TestAllocateAndFreeSinglePort(t *testing.T) {
-	// Creating a desired binding with a set host-port 
+	// Creating a desired binding with a set host-port
 	testDesiredBind := PortBinding{
 		MandelboxPort: uint16(22),
-		Protocol: TransportProtocolTCP,
-		HostPort: MinAllowedPort,
-		BindIP: "test_ip",
+		Protocol:      TransportProtocolTCP,
+		HostPort:      MinAllowedPort,
+		BindIP:        "test_ip",
 	}
 
 	portMapsLock.Lock()
@@ -236,8 +236,8 @@ func TestAllocateAndFreeSinglePort(t *testing.T) {
 	mapSizeAfterFree := len(*mapToUse)
 
 	// Only one port should be freed
-	if mapSizeBeforeFree - 1 != mapSizeAfterFree {
-		t.Fatalf("error freeing single port. Expected map size to be %v but got %v", mapSizeBeforeFree - 1, mapSizeAfterFree)
+	if mapSizeBeforeFree-1 != mapSizeAfterFree {
+		t.Fatalf("error freeing single port. Expected map size to be %v but got %v", mapSizeBeforeFree-1, mapSizeAfterFree)
 	}
 }
 
@@ -245,20 +245,20 @@ func TestAllocateSinglePortAnyFullHostPortMap(t *testing.T) {
 	// Creating a desired binding with host-port being set to 0
 	testDesiredBind := PortBinding{
 		MandelboxPort: uint16(22),
-		Protocol: TransportProtocolTCP,
-		HostPort: uint16(0),
-		BindIP: "test_ip",
+		Protocol:      TransportProtocolTCP,
+		HostPort:      uint16(0),
+		BindIP:        "test_ip",
 	}
 
 	// Fill out entire map
 	portMapsLock.Lock()
 	defer portMapsLock.Unlock()
-	
+
 	mapToUse, err := getProtocolSpecificHostPortMap(testDesiredBind.Protocol)
 	if err != nil {
 		t.Fatalf("error getting host port map. Error: %v", err)
 	}
-	
+
 	for port := MinAllowedPort; port < MaxAllowedPort; port++ {
 		(*mapToUse)[uint16(port)] = inUse
 	}
@@ -280,9 +280,9 @@ func TestAllocateAndFreeSinglePortAny(t *testing.T) {
 	// Creating a desired binding with host-port being set to 0
 	testDesiredBind := PortBinding{
 		MandelboxPort: uint16(22),
-		Protocol: TransportProtocolTCP,
-		HostPort: uint16(0),
-		BindIP: "test_ip",
+		Protocol:      TransportProtocolTCP,
+		HostPort:      uint16(0),
+		BindIP:        "test_ip",
 	}
 
 	portMapsLock.Lock()
@@ -318,13 +318,13 @@ func TestAllocateAndFreeSinglePortAny(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting host port map. Error: %v", err)
 	}
-	
+
 	mapSizeBeforeFree := len(*mapToUse)
 	freeSinglePort(updatedPortBind)
 	mapSizeAfterFree := len(*mapToUse)
 
-	if mapSizeBeforeFree - 1 != mapSizeAfterFree {
-		t.Fatalf("error freeing single port. Expected map size to be %v but got %v", mapSizeBeforeFree - 1, mapSizeAfterFree)
+	if mapSizeBeforeFree-1 != mapSizeAfterFree {
+		t.Fatalf("error freeing single port. Expected map size to be %v but got %v", mapSizeBeforeFree-1, mapSizeAfterFree)
 	}
 }
 
@@ -467,7 +467,7 @@ func TestReservePortInvalidProtocol(t *testing.T) {
 func TestReservePortOutsideAllowedRange(t *testing.T) {
 	testDesiredBind := PortBinding{
 		Protocol: TransportProtocol("testInvalidProtocol"),
-		HostPort: uint16(MinAllowedPort-1),
+		HostPort: uint16(MinAllowedPort - 1),
 	}
 
 	portMapsLock.Lock()
@@ -541,7 +541,7 @@ func TestGetProtocolSpecificHostPortMapUDP(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting udp port map: %v", err)
 	}
-	
+
 	// Confirm returudpPortMapn type is protocolSpecificHostPortMap
 	if _, ok := interface{}(udpPortMap).(*protocolSpecificHostPortMap); !ok {
 		t.Fatalf("error getting protocol specific host port maps")
@@ -554,7 +554,7 @@ func TestGetProtocolSpecificHostPortMapTCP(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting tcp port map: %v", err)
 	}
-	
+
 	// Confirm return type is protocolSpecificHostPortMap
 	if _, ok := interface{}(tcpPortMap).(*protocolSpecificHostPortMap); !ok {
 		t.Fatalf("error getting protocol specific host port maps")
