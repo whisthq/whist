@@ -21,6 +21,15 @@ import (
 )
 
 const (
+	// UnpackedConfigsDirectoryName is the name of the directory in the mandelbox that stores
+	// unpacked user configs.
+	UnpackedConfigsDirectoryName = "unpacked_configs/"
+
+	// EncryptedArchiveFilename is the name of the encrypted user config file.
+	EncryptedArchiveFilename = "fractal-app-config.tar.lz4.enc"
+)
+
+const (
 	userConfigS3Bucket = "fractal-user-app-configs"
 	aes256KeyLength    = 32
 	aes256IVLength     = 16
@@ -111,7 +120,7 @@ func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 
 	// Make directory for user configs
 	configDir := mandelbox.GetUserConfigDir()
-	unpackedConfigDir := path.Join(configDir, GetUnpackedConfigsDirectoryName())
+	unpackedConfigDir := path.Join(configDir, UnpackedConfigsDirectoryName)
 	err = mandelbox.SetupUserConfigDirs()
 	if err != nil {
 		return utils.MakeError("failed to setup user config directories: %v", err)
@@ -157,7 +166,7 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 	}
 
 	configDir := mandelbox.GetUserConfigDir()
-	unpackedConfigPath := path.Join(configDir, GetUnpackedConfigsDirectoryName())
+	unpackedConfigPath := path.Join(configDir, UnpackedConfigsDirectoryName)
 
 	// Compress the user configs into a tar.lz4 file
 	compressedConfig, err := configutils.CompressTarLz4(unpackedConfigPath)
@@ -210,7 +219,7 @@ func (mandelbox *mandelboxData) SetupUserConfigDirs() error {
 		return utils.MakeError("Could not make dir %s. Error: %s", configDir, err)
 	}
 
-	unpackedConfigDir := path.Join(configDir, GetUnpackedConfigsDirectoryName())
+	unpackedConfigDir := path.Join(configDir, UnpackedConfigsDirectoryName)
 	if err := os.MkdirAll(unpackedConfigDir, 0777); err != nil {
 		return utils.MakeError("Could not make dir %s. Error: %s", unpackedConfigDir, err)
 	}
@@ -231,20 +240,9 @@ func (mandelbox *mandelboxData) GetUserConfigDir() string {
 	return utils.Sprintf("%s%v/%s", utils.WhistDir, mandelbox.GetID(), "userConfigs")
 }
 
-// GetUnpackedConfigsDirectoryName returns the name of the
-// directory that stores unpacked user configs.
-func GetUnpackedConfigsDirectoryName() string {
-	return "unpacked_configs/"
-}
-
 // getS3ConfigKey returns the S3 key to the encrypted user config file.
 func (mandelbox *mandelboxData) getS3ConfigKey() string {
-	return path.Join(string(mandelbox.GetUserID()), metadata.GetAppEnvironmentLowercase(), string(mandelbox.GetAppName()), mandelbox.getEncryptedArchiveFilename())
-}
-
-// getEncryptedArchiveFilename returns the name of the encrypted user config file.
-func (mandelbox *mandelboxData) getEncryptedArchiveFilename() string {
-	return "fractal-app-config.tar.lz4.enc"
+	return path.Join(string(mandelbox.GetUserID()), metadata.GetAppEnvironmentLowercase(), string(mandelbox.GetAppName()), EncryptedArchiveFilename)
 }
 
 // getTokenHash returns a hash of the given token.
