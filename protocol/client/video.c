@@ -638,6 +638,17 @@ void calculate_statistics(VideoContext* video_context) {
             ring_buffer->num_packets_received / STATISTICS_SECONDS;
         stats.num_rendered_frames_per_second =
             ring_buffer->num_frames_rendered / STATISTICS_SECONDS;
+        int num_gradient_frame = ring_buffer->num_gradient_frames_tracked;
+        if (num_gradient_frames) {
+            stats.average_delay_gradient = ring_buffer->total_delay_gradient / num_gradient_frames;
+            // computing as s^2 = E(x^2) - (E(x))^2
+            stats.delay_gradient_variance =
+                ring_buffer->total_delay_gradient_squared / num_gradient_frames -
+                stats.average_delay_gradient * stats.average_delay_gradient;
+        } else {
+            stats.average_delay_gradient = 0;
+            stats.delay_gradient_variance = 0;
+        }
 
         new_bitrates = calculate_new_bitrate(stats);
         if (new_bitrates.bitrate != client_max_bitrate ||
@@ -646,9 +657,7 @@ void calculate_statistics(VideoContext* video_context) {
             max_burst_bitrate = new_bitrates.burst_bitrate;
             update_bitrate = true;
         }
-        ring_buffer->num_packets_nacked = 0;
-        ring_buffer->num_packets_received = 0;
-        ring_buffer->num_frames_rendered = 0;
+        reset_bitrate_stat_members(ring_buffer);
         start_timer(&statistics_timer);
     }
 }

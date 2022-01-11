@@ -79,6 +79,9 @@ typedef struct RingBuffer {
     int num_packets_nacked;
     int num_packets_received;
     int num_frames_rendered;
+    clock total_delay_gradient; // see google congestion protocol for reference
+    clock total_delay_gradient_squared; // to calculate delay gradient variance
+    int num_gradient_frames_tracked;
     // *** DONE FOR BITRATE STAT CALCULATIONS ***
     int frames_received;
     int max_id;

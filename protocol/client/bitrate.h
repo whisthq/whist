@@ -32,6 +32,8 @@ typedef struct BitrateStatistics {
     int num_skipped_frames_per_second;
     int num_rendered_frames_per_second;
     int throughput_per_second;
+    double average_delay_gradient;
+    double delay_gradient_variance;
 } BitrateStatistics;
 
 typedef struct Bitrates {
