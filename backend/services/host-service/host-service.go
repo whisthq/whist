@@ -770,7 +770,10 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s as ready", mandelboxSubscription.ID)
 
-	// Don't wait for whist application to start up in local environment
+	// Don't wait for whist application to start up in local environment. We do
+	// this because in local environments, we want to provide the developer a
+	// shell into the container immediately, not conditional on everything
+	// starting up properly.
 	if !metadata.IsLocalEnv() {
 		logger.Infof("SpinUpMandelbox(): Waiting for mandelbox %s whist application to start up...", mandelboxSubscription.ID)
 		if err = utils.WaitForFileCreation(utils.Sprintf("/whist/%s/mandelboxResourceMappings/", mandelboxSubscription.ID), "done_sleeping_until_X_clients", time.Second*20, nil); err != nil {
