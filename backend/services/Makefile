@@ -89,15 +89,15 @@ test: build
 # This ensures that tests that use the file system do not conflict or race with each other
 #
 # Set AWS credentials to allow user config integration tests to run
-	sudo --preserve-env=PATH,CI,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY go test -v -p 1 ./... -race -covermode=atomic -coverprofile=coverage.out
+	sudo --preserve-env=PATH,CI,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY go test -v -p 1 ./... -race -covermode=atomic -coverprofile=$(BUILD_FOLDER)/coverage.out
 
 ifeq ($(CI),true)
 	$(info Running in CI, uploading code coverage results to Codecov...)
 # Download the Codecov uploader
-	curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
+	curl -Os https://uploader.codecov.io/latest/linux/codecov > $(BUILD_FOLDER)/codecov && chmod +x $(BUILD_FOLDER)/codecov
 
 # Upload coverage report to Codecov
-	./codecov -t ${CODECOV_TOKEN} -c -F host-service
+	$(BUILD_FOLDER)/codecov -t ${CODECOV_TOKEN} -c -F host-service
 	$(info Finished uploading code coverage results to Codecov.)
 else
 	$(info Not running in CI, skipping code coverage upload to Codecov...)
