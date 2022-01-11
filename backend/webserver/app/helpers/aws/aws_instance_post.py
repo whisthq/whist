@@ -3,17 +3,10 @@ import time
 
 from sys import maxsize
 from collections import defaultdict
-from typing import Any, DefaultDict, List, Optional, Union
+from typing import Any, DefaultDict, List, Union
 from flask import current_app
 from botocore.exceptions import ClientError
-from app.database.models.cloud import (
-    db,
-    RegionToAmi,
-    InstanceInfo,
-    InstancesWithRoomForMandelboxes,
-    MandelboxHostState,
-)
-from app.utils.db.db_utils import set_local_lock_timeout
+from app.models import CloudProvider, db, Image, Instance, MandelboxHostState
 from app.utils.aws.base_ec2_client import EC2Client
 from app.utils.general.name_generation import generate_name
 from app.utils.general.logs import whist_logger
@@ -83,12 +76,13 @@ def get_base_free_mandelboxes(instance_type: str) -> int:
     return type_to_number_map[instance_type]
 
 
-def find_enabled_regions() -> Any:
+def find_enabled_regions() -> List[str]:
     """
     Returns a list of regions that are currently active
     """
 
-    return RegionToAmi.query.filter_by(ami_active=True).distinct(RegionToAmi.region_name)
+    images = Image.query.distinct(Image.region)
+    return [image.region for image in images]
 
 
 def find_instance(region: str, client_commit_hash: str) -> Union[str, MandelboxAssignError]:
@@ -103,63 +97,61 @@ def find_instance(region: str, client_commit_hash: str) -> Union[str, MandelboxA
 
     """
     bundled_regions = bundled_region.get(region, []) + [region]
-    # InstancesWithRoomForMandelboxes is sorted in DESC
-    # with number of mandelboxes running, So doing a
-    # query with limit of 1 returns the instance with max
-    # occupancy which can improve resource utilization.
-    instance_with_max_mandelboxes: Optional[InstancesWithRoomForMandelboxes] = (
-        InstancesWithRoomForMandelboxes.query.filter_by(
-            commit_hash=client_commit_hash, location=region, status=MandelboxHostState.ACTIVE
+
+    # Find the instance with the least available capacity; concentrate Mandelboxes on as few
+    # instances as possible.
+    instance_with_max_mandelboxes = (
+        Instance.query.filter(
+            Instance.region == region,
+            Instance.status == MandelboxHostState.ACTIVE,
+            Instance.client_sha == client_commit_hash,
+            Instance.remaining_capacity > 0,
         )
-        .limit(1)
-        .one_or_none()
+        .order_by(Instance.remaining_capacity.asc())
+        .first()
     )
 
     if instance_with_max_mandelboxes is None:
         # If we are unable to find the instance in the required region,
         # let's try to find an instance in nearby AZ
         # that doesn't impact the user experience too much.
-        active_instances_in_bundled_regions = InstancesWithRoomForMandelboxes.query.filter(
-            InstancesWithRoomForMandelboxes.location.in_(bundled_regions)
-        ).filter_by(status=MandelboxHostState.ACTIVE)
+        active_instances_in_bundled_regions = (
+            Instance.query.filter(
+                Instance.region.in_(bundled_regions),
+                Instance.status == MandelboxHostState.ACTIVE,
+                Instance.remaining_capacity > 0,
+            )
+            .order_by(Instance.remaining_capacity.asc())
+            .all()
+        )
 
         # If there are no active instances in nearby regions,
         # return NO_INSTANCE_AVAILABLE
-        if active_instances_in_bundled_regions.limit(1).one_or_none() is None:
+        if len(active_instances_in_bundled_regions) < 1:
             return MandelboxAssignError.NO_INSTANCE_AVAILABLE
+
+        instances_with_correct_commit_hash = [
+            instance
+            for instance in active_instances_in_bundled_regions
+            if instance.client_sha == client_commit_hash
+        ]
 
         # If there was an active instance but none with the right commit hash,
         # return COMMIT_HASH_MISMATCH
-        instances_with_correct_commit_hash = (
-            active_instances_in_bundled_regions.filter_by(commit_hash=client_commit_hash)
-            .limit(1)
-            .one_or_none()
-        )
-
-        if instances_with_correct_commit_hash is None:
+        if not instances_with_correct_commit_hash:
             return MandelboxAssignError.COMMIT_HASH_MISMATCH
 
-        instance_with_max_mandelboxes = instances_with_correct_commit_hash
+        instance_with_max_mandelboxes = (
+            instances_with_correct_commit_hash[0] if instances_with_correct_commit_hash else None
+        )
 
     if instance_with_max_mandelboxes is None:
         # We should never reach this line, if so return UNDEFINED
         return MandelboxAssignError.UNDEFINED
     else:
-        # 5sec arbitrarily decided as sufficient timeout when using with_for_update
-        set_local_lock_timeout(5)
-        # We are locking InstanceInfo row to ensure that we are not assigning a user/mandelbox
-        # to an instance that might be marked as DRAINING. With the locking, the instance will be
-        # marked as DRAINING after the assignment is complete but not during the assignment.
-        avail_instance: Optional[InstanceInfo] = (
-            InstanceInfo.query.filter_by(instance_name=instance_with_max_mandelboxes.instance_name)
-            .with_for_update()
-            .one_or_none()
-        )
-        # The instance that was available earlier might be lost before we try to grab a lock.
-        if avail_instance is None or avail_instance.status != MandelboxHostState.ACTIVE:
-            return MandelboxAssignError.COULD_NOT_LOCK_INSTANCE
-        else:
-            return str(avail_instance.instance_name)
+        # Wrap instance_with_max_mandelboxes.id with a call to str() to make it explicitly clear to
+        # mypy that we're returning a string.
+        return str(instance_with_max_mandelboxes.id)
 
 
 def _get_num_new_instances(region: str, ami_id: str) -> int:
@@ -187,33 +179,30 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
     default_increment = int(current_app.config["DEFAULT_INSTANCE_BUFFER"])
     default_decrement = -1
 
-    # If the region is invalid or the AMI is not current, we want no buffer
-    if region not in {x.region_name for x in RegionToAmi.query.all()}:
-        whist_logger.info(
-            f"Returning negative infinity for (region: {region}, ami_id: {ami_id}) because the"
-            f" region {region} is invalid."
-        )
-        return -maxsize
-    active_ami_for_given_region = RegionToAmi.query.filter_by(
-        region_name=region, ami_active=True
-    ).one_or_none()
-    if active_ami_for_given_region is None:
+    # TODO: Don't just select AWS every time.
+    image = Image.query.get((CloudProvider.AWS, region))
+
+    if image is None:
         whist_logger.info(
             f"Returning negative infinity for (region: {region}, ami_id: {ami_id}) because the"
             f" active AMI for region {region} is None."
         )
         return -maxsize
-    if ami_id != active_ami_for_given_region.ami_id:
+
+    if image.image_id != ami_id:
         whist_logger.info(
             f"Returning negative infinity for (region: {region}, ami_id: {ami_id}) because the"
             " provided AMI does not match the expected active AMI for region"
-            f" {region} ({active_ami_for_given_region.ami_id})."
+            f" {region} ({image.image_id})."
         )
         return -maxsize
 
     # Now, we want to get the average number of mandelboxes per instance in that region
     # and the number of free mandelboxes
-    all_instances = list(InstanceInfo.query.filter_by(location=region, aws_ami_id=ami_id).all())
+    all_instances = Instance.query.filter_by(
+        image_id=ami_id, status=MandelboxHostState.ACTIVE
+    ).all()
+
     if len(all_instances) == 0:
         # If there are no instances running, we want one.
         whist_logger.info(
@@ -222,16 +211,9 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
         )
         return default_increment
 
-    all_free_instances = list(
-        InstancesWithRoomForMandelboxes.query.filter_by(location=region, aws_ami_id=ami_id).all()
-    )
-    num_free_mandelboxes = sum(
-        instance.mandelbox_capacity - instance.num_running_mandelboxes
-        for instance in all_free_instances
-    )
-    avg_mandelbox_capacity = sum(instance.mandelbox_capacity for instance in all_instances) / len(
-        all_instances
-    )
+    num_free_mandelboxes = sum(instance.remaining_capacity for instance in all_instances)
+    num_assigned_mandelboxes = sum(len(instance.mandelboxes) for instance in all_instances)
+    avg_mandelbox_capacity = (num_free_mandelboxes + num_assigned_mandelboxes) / len(all_instances)
 
     # And then figure out whether to call for an increase (by default_increment)
     # or decrease (by default_decrement).
@@ -289,6 +271,7 @@ def do_scale_up_if_necessary(
     Returns: List of names of the instances created, if any.
 
     """
+
     new_instance_names = []
     with scale_mutex[f"{region}-{ami}"], kwargs["flask_app"].app_context():
 
@@ -302,7 +285,10 @@ def do_scale_up_if_necessary(
         else:
             num_new = _get_num_new_instances(region, ami)
 
-        ami_obj = RegionToAmi.query.filter_by(region_name=region, ami_id=ami).one_or_none()
+        # TODO: Don't just select the first virtual machine image. When we support multiple cloud
+        # providers, this may result in the cloud providers that sort ahead of others hosting a
+        # disproportionate amount of our capacity.
+        ami_obj = Image.query.filter_by(region=region, image_id=ami).first()
 
         if ami_obj:
             whist_logger.info(f"Scaling up {str(num_new)} instances in {region} with AMI ID {ami}")
@@ -364,24 +350,21 @@ def do_scale_up_if_necessary(
                     # hasn't told the webserver it's live yet. We add the rows to
                     # the DB now so that future scaling operations don't
                     # double-scale.
-                    new_instance = InstanceInfo(
-                        location=region,
-                        aws_ami_id=ami,
-                        cloud_provider_id=f"aws-{instance_ids[0]}",
-                        instance_name=base_name + f"-{index}",
-                        aws_instance_type=aws_instance_type,
-                        mandelbox_capacity=base_number_free_mandelboxes,
-                        last_updated_utc_unix_ms=-1,
-                        creation_time_utc_unix_ms=int(time.time() * 1000),
+                    new_instance = Instance(
+                        id=instance_ids[0],
+                        provider=CloudProvider.AWS,
+                        region=region,
+                        image_id=ami,
+                        client_sha=ami_obj.client_sha,
+                        instance_type=aws_instance_type,
+                        remaining_capacity=base_number_free_mandelboxes,
                         status=MandelboxHostState.PRE_CONNECTION,
-                        commit_hash=ami_obj.client_commit_hash,
-                        ip="",  # Will be set by `host_service` once it boots up.
                     )
-                    new_instance_names.append(new_instance.instance_name)
+                    new_instance_names.append(new_instance.id)
                     db.session.add(new_instance)
                     db.session.commit()
 
-                    whist_logger.info(f"Successfully spun up instance {new_instance.instance_name}")
+                    whist_logger.info(f"Successfully spun up instance {new_instance.id}")
 
                 # Update the list of instance_indexes to onces that need to be retried
                 instance_indexes = instances_to_retry
