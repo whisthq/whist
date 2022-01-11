@@ -25,14 +25,6 @@ Includes
 
 /*
 ============================
-Public Functions
-============================
-*/
-
-int display_notification(WhistPacket *packet);
-
-/*
-============================
 Public Function Implementations
 ============================
 */
