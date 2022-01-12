@@ -6,13 +6,13 @@
 WHIST_PRIVATE_DIR=/usr/share/whist/private
 SENTRY_ENV_FILENAME=$WHIST_PRIVATE_DIR/sentry_env
 case $(cat $SENTRY_ENV_FILENAME) in
-  dev|staging|prod)
-    export SENTRY_ENVIRONMENT=${SENTRY_ENV}
-    eval "$(sentry-cli bash-hook)"
-    ;;
-  *)
-    echo "Sentry environment not set, skipping Sentry error handler"
-    ;;
+    dev|staging|prod)
+        export SENTRY_ENVIRONMENT=${SENTRY_ENV}
+        eval "$(sentry-cli bash-hook)"
+        ;;
+    *)
+        echo "Sentry environment not set, skipping Sentry error handler"
+        ;;
 esac
 
 # Exit on subcommand errors
@@ -26,7 +26,7 @@ USER_CONFIGS_DIR=/whist/userConfigs
 APP_CONFIG_MAP_FILENAME=/usr/share/whist/app-config-map.json
 until [ -f $WHIST_MAPPINGS_DIR/.configReady ]
 do
-  sleep 0.1
+    sleep 0.1
 done
 
 # Symlink loaded user configs into the appropriate folders
@@ -37,24 +37,24 @@ done
 #   and the original location is the destination
 # Iterate through the possible configuration locations and copy
 for row in $(cat $APP_CONFIG_MAP_FILENAME | jq -rc '.[]'); do
-  SOURCE_CONFIG_SUBPATH=$(echo ${row} | jq -r '.source')
-  SOURCE_CONFIG_PATH=$USER_CONFIGS_DIR/$SOURCE_CONFIG_SUBPATH
-  DEST_CONFIG_PATH=$(echo ${row} | jq -r '.destination')
+    SOURCE_CONFIG_SUBPATH=$(echo ${row} | jq -r '.source')
+    SOURCE_CONFIG_PATH=$USER_CONFIGS_DIR/$SOURCE_CONFIG_SUBPATH
+    DEST_CONFIG_PATH=$(echo ${row} | jq -r '.destination')
 
-  # If original config path does not exist, then continue
-  if [ ! -f "$DEST_CONFIG_PATH" ] && [ ! -d "$DEST_CONFIG_PATH" ]; then
-    continue
-  fi
+    # If original config path does not exist, then continue
+    if [ ! -f "$DEST_CONFIG_PATH" ] && [ ! -d "$DEST_CONFIG_PATH" ]; then
+        continue
+    fi
 
-  # If the source path doesn't exist, then copy default configs to the synced app config folder
-  if [ ! -f "$SOURCE_CONFIG_PATH" ] && [ ! -d "$SOURCE_CONFIG_PATH" ]; then
-    cp -rT $DEST_CONFIG_PATH $SOURCE_CONFIG_PATH
-  fi
+    # If the source path doesn't exist, then copy default configs to the synced app config folder
+    if [ ! -f "$SOURCE_CONFIG_PATH" ] && [ ! -d "$SOURCE_CONFIG_PATH" ]; then
+        cp -rT $DEST_CONFIG_PATH $SOURCE_CONFIG_PATH
+    fi
 
-  # Remove the original configs and symlink the new ones to the original locations
-  rm -rf $DEST_CONFIG_PATH
-  ln -sfnT $SOURCE_CONFIG_PATH $DEST_CONFIG_PATH
-  chown -R whist $SOURCE_CONFIG_PATH
+    # Remove the original configs and symlink the new ones to the original locations
+    rm -rf $DEST_CONFIG_PATH
+    ln -sfnT $SOURCE_CONFIG_PATH $DEST_CONFIG_PATH
+    chown -R whist $SOURCE_CONFIG_PATH
 done
 
 # Delete broken symlinks from config
@@ -81,20 +81,20 @@ OPTIONS=""
 
 # Send in AES private key, if set
 if [ -f "$PRIVATE_KEY_FILENAME" ]; then
-  export WHIST_AES_KEY=$(cat $PRIVATE_KEY_FILENAME)
-  OPTIONS="$OPTIONS --private-key=$WHIST_AES_KEY"
+    export WHIST_AES_KEY=$(cat $PRIVATE_KEY_FILENAME)
+    OPTIONS="$OPTIONS --private-key=$WHIST_AES_KEY"
 fi
 
 # Send in Sentry environment, if set
 if [ -f "$SENTRY_ENV_FILENAME" ]; then
-  export SENTRY_ENV=$(cat $SENTRY_ENV_FILENAME)
-  OPTIONS="$OPTIONS --environment=$SENTRY_ENV"
+    export SENTRY_ENV=$(cat $SENTRY_ENV_FILENAME)
+    OPTIONS="$OPTIONS --environment=$SENTRY_ENV"
 fi
 
 # Send in timeout, if set
 if [ -f "$TIMEOUT_FILENAME" ]; then
-  export TIMEOUT=$(cat $TIMEOUT_FILENAME)
-  OPTIONS="$OPTIONS --timeout=$TIMEOUT"
+    export TIMEOUT=$(cat $TIMEOUT_FILENAME)
+    OPTIONS="$OPTIONS --timeout=$TIMEOUT"
 fi
 
 # We use named pipe redirection for consistency with our WhistServer launch setup
@@ -105,27 +105,31 @@ fi
 # reach the end of this file (because either WhistServer or the Whist
 # application died), or there was an error somewhere else in the script.
 function cleanup {
-  echo "cleanup() called! Shutting down the mandelbox..."
+    echo "cleanup() called! Shutting down the mandelbox..."
 
-  # Make sure we shutdown the mandelbox when this script exits
-  sudo shutdown now
+    # Make sure we shutdown the mandelbox when this script exits
+    sudo shutdown now
 }
 
 export ENV_NAME=$(cat $SENTRY_ENV_FILENAME)
 if [ "$ENV_NAME" != "localdev" ]; then
-  # Make sure `cleanup` gets called on script exit in all environments except localdev.
-  trap cleanup EXIT ERR
+    # Make sure `cleanup` gets called on script exit in all environments except localdev.
+    trap cleanup EXIT ERR
 fi
+
+# Load D-Bus configurations from .xinitrc
+eval `cat /whist/dbus_config.txt`
+echo "Loaded d-bus address in run-whist-server.sh: $DBUS_SESSION_BUS_ADDRESS | pid: $DBUS_SESSION_BUS_PID"
 
 # Set user upload target, if file exists
 if [ -f "$USER_DEST_BROWSER_FILENAME" ] && [ -f "$BROWSER_DATA_FILE_FILENAME" ]; then
-  # Imports user browser data if file exists
-  python3 /usr/share/whist/import_user_browser_data.py $(cat $USER_DEST_BROWSER_FILENAME) $(cat $BROWSER_DATA_FILE_FILENAME)
+    # Imports user browser data if file exists
+    DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID=$DBUS_SESSION_BUS_PID python3 /usr/share/whist/import_user_browser_data.py $(cat $USER_DEST_BROWSER_FILENAME) $(cat $BROWSER_DATA_FILE_FILENAME)
 
-  # Remove temporary files
-  rm -f $(cat $BROWSER_DATA_FILE_FILENAME)
-  rm $BROWSER_DATA_FILE_FILENAME
-  rm $USER_DEST_BROWSER_FILENAME
+    # Remove temporary files
+    rm -f $(cat $BROWSER_DATA_FILE_FILENAME)
+    rm $BROWSER_DATA_FILE_FILENAME
+    rm $USER_DEST_BROWSER_FILENAME
 fi
 
 # Start the application that this mandelbox runs.
@@ -137,7 +141,7 @@ echo "Whist application runuser pid: $whist_application_runuser_pid"
 # Wait for run-whist-application.sh to write PID to file
 until [ -f "$WHIST_APPLICATION_PID_FILE" ]
 do
-  sleep 0.1
+    sleep 0.1
 done
 whist_application_pid=$(cat $WHIST_APPLICATION_PID_FILE)
 rm $WHIST_APPLICATION_PID_FILE
@@ -150,7 +154,7 @@ echo "Now sleeping until there are X clients..."
 #    This prevents a black no input window from appearing when a user connects.
 until [ $(xlsclients -display :10 | wc -l) != 0 ]
 do
-  sleep 0.1
+    sleep 0.1
 done
 
 echo "Done sleeping until there are X clients..."
