@@ -7,7 +7,7 @@ import (
 func TestAllocateAndFreeTTYIntegration(t *testing.T) {
 	testTTY, err := Allocate()
 	// Attempt to allocate TTY
-	if  err != nil {
+	if err != nil {
 		t.Fatalf("error initializing TTY with err: %v", err)
 	}
 
@@ -27,7 +27,6 @@ func TestAllocateAndFreeTTYIntegration(t *testing.T) {
 		t.Fatalf("error freeing TTY as mandelbox TTY still exists: %v", testTTY)
 	}
 }
-
 
 func TestAllocateWithNoFreeTTY(t *testing.T) {
 	// Fill out the entire map
@@ -84,8 +83,8 @@ func TestFreeInUseTTY(t *testing.T) {
 	Free(testTTY)
 
 	// Free should have removed only one tty
-	if mapSizeAfterFree := len(ttymap); mapSizeBeforeFree - 1 != mapSizeAfterFree {
-		t.Fatalf("error ttymap expected size to be %v after free but is %v", mapSizeBeforeFree - 1, mapSizeAfterFree)
+	if mapSizeAfterFree := len(ttymap); mapSizeBeforeFree-1 != mapSizeAfterFree {
+		t.Fatalf("error ttymap expected size to be %v after free but is %v", mapSizeBeforeFree-1, mapSizeAfterFree)
 	}
 
 	// TTY should not exist

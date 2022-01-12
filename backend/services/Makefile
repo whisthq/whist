@@ -21,7 +21,8 @@ HEROKU_APIKEY ?= $(shell heroku auth:token | tail -1)
 HEROKU_APP_NAME_OVERRIDE ?=
 endif
 
-all: build
+.default: build
+.DEFAULT_GOAL := build
 
 # Check that the required environment variables for building as part of our
 # continuous integration/deployment pipeline on GitHub Actions are set properly.
@@ -46,16 +47,16 @@ else
 	$(info CI is false)
 endif
 
-build: checkCI
-	$(GOCMD) mod tidy -v
+queries_sql_files := $(wildcard ./host-service/dbdriver/queries/*.sql)
+queries_sql_go_files := $(patsubst %.sql,%.sql.go,$(queries_sql_files))
+$(queries_sql_go_files): $(queries_sql_files) ../webserver/db_migration/schema.sql go.mod
 	$(GOCMD) install github.com/jschaf/pggen/cmd/pggen@latest
 	touch $(CURDIR)/host-service/dbdriver/queries/temp.sql.go
 	find $(CURDIR)/host-service/dbdriver/queries -type f -name "*.sql.go" | xargs rm
+	$(GOCMD) generate ./host-service/dbdriver/...
 
-# GOFLAGS fixes go.sum issue with lz4 package
-# Detailed at: https://github.com/golang/go/issues/44129#issuecomment-788810473
-	GOFLAGS=-mod=mod $(GOCMD) generate ./...
-
+build: checkCI $(queries_sql_go_files)
+	$(GOCMD) mod tidy -v
 	$(GOCMD) build -ldflags "\
 		-X 'github.com/whisthq/whist/backend/services/metadata.gitCommit=$(GIT_COMMIT)'\
 		-X 'github.com/whisthq/whist/backend/services/metadata/heroku.email=$(HEROKU_USER)'\
@@ -75,7 +76,7 @@ vet: build
 	$(GOCMD) list ./... | grep -v /agent/ | xargs $(GOCMD) vet
 
 test: build
-	echo "Running go tests..."
+	@echo "Running go tests..."
 
 # We need to run some tests as root since the host service init() checks for root perms.
 #
@@ -85,15 +86,15 @@ test: build
 # This ensures that tests that use the file system do not conflict or race with each other
 #
 # Set AWS credentials to allow user config integration tests to run
-	sudo env "PATH=$(PATH)" "CI=$(CI)" "AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID)" "AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY)" go test -v -p 1 ./... -race -covermode=atomic -coverprofile=coverage.out
+	sudo env "PATH=$(PATH)" "CI=$(CI)" "AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID)" "AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY)" $(GOCMD) test -v -p 1 ./... -race -covermode=atomic -coverprofile=$(BUILD_FOLDER)/coverage.out
 
 ifeq ($(CI),true)
 	$(info Running in CI, uploading code coverage results to Codecov...)
 # Download the Codecov uploader
-	curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov
+	curl -Os https://uploader.codecov.io/latest/linux/codecov > $(BUILD_FOLDER)/codecov && chmod +x $(BUILD_FOLDER)/codecov
 
 # Upload coverage report to Codecov
-	./codecov -t ${CODECOV_TOKEN} -c -F host-service
+	$(BUILD_FOLDER)/codecov -t ${CODECOV_TOKEN} -c -F backend-services
 	$(info Finished uploading code coverage results to Codecov.)
 else
 	$(info Not running in CI, skipping code coverage upload to Codecov...)
@@ -106,12 +107,23 @@ docs:
 # Note that we should build before we lint or vet, since build updates the whist dependencies.
 .NOTPARALLEL:
 check: clean build vet format lint test docs
-	echo "All checks (clean, build, vet, format, lint, test, and docs) succeeded!"
+# In CI, we check for a diff to make sure that `format` didn't change
+# anything. This also helps us make sure we didn't delete a `.sql` file
+# without deleting the `.sql.go` file, for instance.
+ifeq ($(CI),true)
+	git diff --exit-code
+endif
+	@echo "All checks (clean, build, vet, format, lint, test, and docs) succeeded!"
 
 clean:
-	$(GOCMD) clean -modcache
 	rm -rf $(BUILD_FOLDER)
+# We do this to reset the host-service to a "full clean build" state.
+	@touch $(CURDIR)/host-service/dbdriver/queries/temp.sql.go
+	@find $(CURDIR)/host-service/dbdriver/queries -type f -name "*.sql.go" | xargs rm
+	@echo "The automatically generated .sql.go files in host-service/dbdriver/queries/ have been removed. To get them back, run 'make' or use a variation of 'git reset'."
 
+clean_modcache:
+	$(GOCMD) clean -modcache
 
 ## Host service-specific targets
 
@@ -150,4 +162,4 @@ run_scaling_service_dev: build
 	APP_ENV=dev USE_PROD_LOGGING=0 $(BUILD_FOLDER)/scaling-service
 
 
-.PHONY: build clean run rundev format lint vet check
+.PHONY: checkCI build format lint vet test docs check clean clean_modcache run_host_service run_host_service_localdevwithdb run_host_service_dev run_scaling_service run_scaling_service_localdevwithdb run_scaling_service_dev

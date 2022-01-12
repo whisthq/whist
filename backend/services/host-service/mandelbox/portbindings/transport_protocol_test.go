@@ -66,9 +66,9 @@ func TestUnmarshalJSONUdp(t *testing.T) {
 
 func TestMarshalJSON(t *testing.T) {
 	tp := TransportProtocolTCP
-	
+
 	// Will get byte version of tp
-	res, err:= (&tp).MarshalJSON()
+	res, err := (&tp).MarshalJSON()
 	if err != nil {
 		t.Fatalf("error marshalJSON: %v", err)
 	}
@@ -105,7 +105,7 @@ func TestNewTransportProtocolInvalid(t *testing.T) {
 	if protocol != TransportProtocolTCP {
 		t.Fatalf("error with new transport protocol invalid. Expected %v but got %v", TransportProtocolTCP, protocol)
 	}
-	
+
 	if err == nil {
 		t.Fatalf("error with new transport protocol invalid. Expected err but got nil")
 	}

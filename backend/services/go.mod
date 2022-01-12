@@ -50,6 +50,7 @@ require (
 	github.com/bgentry/testnet v0.0.0-20131107221340-05450cdcf16c // indirect
 	github.com/containerd/containerd v1.5.9 // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
+	github.com/gin-gonic/gin v1.7.7 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
