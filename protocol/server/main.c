@@ -415,8 +415,9 @@ int main(int argc, char* argv[]) {
         whist_create_thread(multithreaded_send_video, "multithreaded_send_video", &server_state);
     WhistThread send_audio_thread =
         whist_create_thread(multithreaded_send_audio, "multithreaded_send_audio", &server_state);
-    WhistThread notifs_thread = whist_create_thread(
-        listen_and_process_notifications, "listen_and_process_notifications", &server_state);
+
+    struct event_base* notifs_evbase = event_base_new();
+    init_notifications_thread(&server_state, notifs_evbase);
 
     WhistThread manage_clients_thread = whist_create_thread(
         multithreaded_manage_client, "multithreaded_manage_client", &server_state);
@@ -594,6 +595,7 @@ int main(int argc, char* argv[]) {
     whist_wait_thread(send_audio_thread, NULL);
     whist_wait_thread(sync_tcp_packets_thread, NULL);
     whist_wait_thread(manage_clients_thread, NULL);
+    destroy_notifications_thread(notifs_evbase);
 
     whist_destroy_mutex(packet_mutex);
 
