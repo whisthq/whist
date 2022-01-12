@@ -85,9 +85,7 @@ const fetchInvestorData = async () => {
           })
 
           return {
-            name:
-              pageContents?.properties?.Name?.title?.[0]?.title?.plain_text ??
-              "", // e.g. Sam Lessin
+            name: pageContents?.properties?.Name?.title?.[0]?.plain_text ?? "", // e.g. Sam Lessin
             website: pageContents?.properties?.Website?.url ?? "", // e.g. http://slow.co
             description:
               pageContents?.properties?.Description?.rich_text?.[0]
