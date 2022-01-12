@@ -57,7 +57,7 @@ processors:
   - dissect:
       # https://www.elastic.co/guide/en/beats/filebeat/current/dissect.html
       # We use the dissect processor to parse out the metadata for logs based on file-path.
-      # Logs are mounted from mandelboxes onto host through bind mounts decalared in `ecs-host-service/ecs-host-service.go`
+      # Logs are mounted from mandelboxes onto host through bind mounts declared by the host service.
       # A filepath looks like below.
       # /whist/temp/logs/6137d7df55ecba06846ab1b5670121335f31a30f045ecfe6f31acdf09a3e/protocol-out.log
       tokenizer: "/whist/temp/logs/%{container_id}/%{session_id}/%{sub_component}-%{log_level}.log"

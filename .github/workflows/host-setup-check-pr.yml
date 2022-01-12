@@ -28,7 +28,7 @@ jobs:
         with:
           python-version: "3.10.0"
 
-      ########################## Building Services ##########################
+      ########################## Building Backend Services ######################
 
       # To build Services
       - name: Setup Go environment
