@@ -1,7 +1,5 @@
-import sys
 from threading import Thread
 from typing import cast, Any, List, Mapping, Tuple
-import requests
 from flask import current_app, Flask
 from sqlalchemy import or_, and_
 
@@ -78,7 +76,7 @@ def launch_new_ami_buffer(
     Returns:
         None.
     """
-    global region_wise_upgrade_threads
+    global region_wise_upgrade_threads  # pylint:disable=global-variable-not-assigned,invalid-name
     whist_logger.debug(f"launching_instances in {region_name} with ami: {ami_id}")
     with flask_app.app_context():
         force_buffer = flask_app.config["DEFAULT_INSTANCE_BUFFER"]
@@ -100,15 +98,17 @@ def launch_new_ami_buffer(
 def fetch_current_running_instances(amis_to_exclude: List[str]) -> List[InstanceInfo]:
     """
     Fetches the instances that are either
-        ACTIVE - Instances that were launched and have potentially users running their applications on it.
+        ACTIVE - Instances that were launched and have potentially users running their applications
+            on it.
         PRE_CONNECTION - Instances that are launched few instants ago but haven't
                         marked themselves active in the database through host service.
     Args:
-        amis_to_exclude -> List of new AMIs from this upgrade. We will be using this list to differentiate
-        between the instances launched from new AMIs that we are going to upgrade to and the current/older AMIs.
-        We can just mark all the running instances as DRAINING before we start the instances with new AMI but that
-        is going to increase the length of our unavailable window for users. This reduces the window by the time
-        it takes to spin up and warm up an AWS instance, which can be several minutes.
+        amis_to_exclude -> List of new AMIs from this upgrade. We will be using this list to
+            differentiate between the instances launched from new AMIs that we are going to upgrade
+            to and the current/older AMIs. We can just mark all the running instances as DRAINING
+            before we start the instances with new AMI but that is going to increase the length of
+            our unavailable window for users. This reduces the window by the time it takes to spin
+            up and warm up an AWS instance, which can be several minutes.
     Returns:
         List[InstanceInfo] -> List of instances that are currently running.
     """
@@ -132,35 +132,38 @@ def create_ami_buffer(
     client_commit_hash: str, region_to_ami_id_mapping: Mapping[str, str]
 ) -> Tuple[List[str], bool]:
     """
-    Creates new instances for the AMIs in the regions that are passed in as the keys of the region_to_ami_id_mapping
+    Creates new instances for the AMIs in the regions that are passed in as the keys of the
+    region_to_ami_id_mapping
+
     This happens in the following steps:
         - Get current active AMIs in the database, these will be marked as inactive once
-        we have sufficient buffer capacity from the new AMIs
-        - Insert the new AMIs that are passed in as an argument to this function and associate them with the
-        client_commit_hash.
-        - Launch new instances in regions with the new AMIs and wait until they are up and mark themselves as
-        active in the instances table. Since this launching the instances is going to take time, we will be using
-        a thread per each region to parallelize the process.
+          we have sufficient buffer capacity from the new AMIs
+        - Insert the new AMIs that are passed in as an argument to this function and associate them
+          with the client_commit_hash.
+        - Launch new instances in regions with the new AMIs and wait until they are up and mark
+          themselves as active in the instances table. Since this launching the instances is going
+          to take time, we will be using a thread per each region to parallelize the process.
 
+    Edge cases:
+        - What if the argument region_to_ami_id_mapping has more regions than we currently support.
+          This should be fine as we use the regions passed in as the argument as a reference to
+          spin up instances in new regions.
+        - What if the argument region_to_ami_id_mapping has less number of regions than we
+          currently support. Then, we would update the AMIs in the regions that are passed in as
+          the argument and mark the AMIs in missing regions as disabled. Also, we would be marking
+          all the current running instances for draining. So, this would essentially purge the
+          regions that are missing in the passed in arguments.
 
-        Edge cases:
-            - What if the argument region_to_ami_id_mapping has more regions than we currently support. This should be fine
-            as we use the regions passed in as the argument as a reference to spin up instances in new regions.
-            - What if the argument region_to_ami_id_mapping has less number of regions than we currently support. Then, we
-            would update the AMIs in the regions that are passed in as the argument and mark the AMIs in missing regions as disabled.
-            Also, we would be marking all the current running instances for draining. So, this would essentially purge the regions
-            that are missing in the passed in arguments.
+    Args:
+        client_commit_hash: Commit hash of the client that is compatible with the AMIs that are
+            going to be passed in as the other argument.
+        region_to_ami_id_mapping: String representation of Dict<Region, AMI>. Dict of regions to
+            AMIs that are compatible with the <client_commit_hash>.
 
-        Args:
-            client_commit_hash: Commit hash of the client that is compatible with the AMIs
-                            that are going to be passed in as the other argument.
-            region_to_ami_id_mapping: String representation of Dict<Region, AMI>. Dict of regions to AMIs that are compatible
-                                        with the <client_commit_hash>.
-
-        Returns:
-            None
+    Returns:
+        None
     """
-    global region_wise_upgrade_threads
+    global region_wise_upgrade_threads  # pylint: disable=global-variable-not-assigned,invalid-name
 
     new_amis = insert_new_amis(client_commit_hash, region_to_ami_id_mapping)
     new_amis_str = [
@@ -185,7 +188,9 @@ def create_ami_buffer(
             args=(region_name, ami_id, len(region_wise_upgrade_threads)),
             # current_app is a proxy for app object, so `_get_current_object` method
             # should be used to fetch the application object to be passed to the thread.
-            kwargs={"flask_app": current_app._get_current_object()},
+            kwargs={
+                "flask_app": current_app._get_current_object()  # pylint: disable=protected-access
+            },
         )
         region_wise_upgrade_threads.append(
             [region_wise_upgrade_thread, False, (region_name, ami_id), None]
@@ -268,8 +273,8 @@ def swapover_amis(new_amis_str: List[str], amis_failed: bool) -> None:
         whist_logger.info("Finished performing AMI upgrade.")
     else:
         whist_logger.info(
-            f"Failed to create buffer for some AMIs, so not performing swapover operation. Rolling"
-            f" back new AMIs from database."
+            "Failed to create buffer for some AMIs, so not performing swapover operation. Rolling "
+            "back new AMIs from database."
         )
 
         # Rollback new AMIs from the database. Only delete the new ami rows
