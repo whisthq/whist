@@ -411,26 +411,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	mandelbox.SetAppName(AppName)
 	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", mandelboxSubscription.ID, mandelboxSubscription.UserID)
 
-	// Begin downloading user configs at the same time as other setup is being done.
-	// This is done separately from the rest of the startup goroutines since the user
-	// config download is a potentially long-running process that other pieces do not
-	// depend on.
-	userConfigDownloadComplete := make(chan bool)
-	go func() {
-		// User config errors aren't fatal --- we still want to spin up a mandelbox,
-		// and we will just use the provided encryption token to save configs when
-		// the mandelbox dies.
-		logger.Infof("SpinUpMandelbox(): Beginning user config download for mandelbox %s", mandelboxSubscription.ID)
-		err := mandelbox.DownloadUserConfigs()
-		if err != nil {
-			logger.Warningf("Error downloading user configs for mandelbox %s: %v", mandelboxSubscription.ID, err)
-			userConfigDownloadComplete <- true
-			return
-		}
-
-		userConfigDownloadComplete <- true
-		logger.Infof("SpinUpMandelbox(): Successfully downloaded user configs for mandelbox %s", mandelboxSubscription.ID)
-	}()
+	// Begin loading user configs in parallel with the rest of the mandelbox startup procedure.
+	sendEncryptionTokenChan, configDownloadErrChan := mandelbox.StartLoadUserConfigs()
 
 	// Do all startup tasks that can be done before Docker container creation in
 	// parallel, stopping at the first error encountered
@@ -684,8 +666,6 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 	logger.Infof("SpinUpMandelbox(): Successfully marked mandelbox %s params as ready. A/V and display services can soon start.", mandelboxSubscription.ID)
 
-	<-userConfigDownloadComplete
-
 	logger.Infof("SpinUpMandelbox(): Waiting for config encryption token from client...")
 
 	if req == nil {
@@ -709,7 +689,6 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logAndReturnError("Unable to spin up mandelbox: trivial config encryption token received.", err)
 		return
 	}
-	mandelbox.SetConfigEncryptionToken(req.ConfigEncryptionToken)
 	mandelbox.SetJSONData(req.JSONData)
 
 	// If the config token wasn't reset, decrypt the previously downloaded user configs
