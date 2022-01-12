@@ -22,6 +22,6 @@ fromTrigger(WhistTrigger.startNetworkAnalysis).subscribe(() => {
   networkAnalyze()
 })
 
-interval(HEARTBEAT_INTERVAL_IN_MINUTES * 60 * 1000).subscribe(() => {
+interval(HEARTBEAT_INTERVAL_IN_MINUTES).subscribe(() => {
   logBase("heartbeat", {})
 })
