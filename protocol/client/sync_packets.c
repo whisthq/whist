@@ -214,7 +214,7 @@ int multithreaded_sync_udp_packets(void* opaque) {
             }
         }
         // same for audio
-        if (audio_ready_for_frame(whist_renderer->audio_context)) {
+        if (audio_ready_for_frame(whist_renderer->audio_context, udp_get_num_pending_frames(socket_context, PACKET_AUDIO)) {
             if (last_audio_packet) {
                 free_packet(socket_context, last_audio_packet);
             }

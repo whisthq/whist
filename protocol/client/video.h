@@ -143,4 +143,11 @@ NetworkStatistics get_video_network_statistics(VideoContext* video_context);
  */
 void destroy_video(VideoContext* video_context);
 
+/**
+ * @brief          Whether or not the video context is ready to render a new frame
+ *
+ * @param video_context       The video context to query
+ */
+bool video_ready_for_frame(VideoContext* video_context);
+
 #endif  // CLIENT_VIDEO_H

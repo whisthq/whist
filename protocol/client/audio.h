@@ -104,4 +104,11 @@ void render_audio(AudioContext* audio_context);
  */
 void destroy_audio(AudioContext* audio_context);
 
+/**
+ * @brief          Whether or not the audio context is ready to render a new frame
+ *
+ * @param audio_context       The audio context to query
+ */
+bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered);
+
 #endif  // CLIENT_AUDIO_H

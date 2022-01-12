@@ -113,6 +113,6 @@ int udp_nack(SocketContext* context, WhistPacketType type, int id, int index);
  * 
  * @param type The type of frames to query for
  */
-int udp_get_num_pending_frames(WhistPacketType type);
+int udp_get_num_pending_frames(SocketContext* context, WhistPacketType type);
 
 #endif  // WHIST_UDP_H
