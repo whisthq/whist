@@ -160,7 +160,7 @@ dbus_ctx *dbus_init(struct event_base *eb, Client *server_state_client) {
 
     dbus_ctx *ctx = calloc(1, sizeof(dbus_ctx));
     if (!ctx) {
-        printf("can't allocate dbus_ctx\n");
+        LOG_ERROR("Can't allocate dbus_ctx");
         goto fail;
     }
 
@@ -168,7 +168,7 @@ dbus_ctx *dbus_init(struct event_base *eb, Client *server_state_client) {
     const char *config_file = "/whist/dbus_config.txt";
     FILE *f_dbus_info = fopen(config_file, "r");
     if (f_dbus_info == NULL) {
-        printf("Required d-bus configuration file %s not found!\n", config_file);
+        LOG_ERROR("Required d-bus configuration file %s not found!", config_file);
         goto fail;
     }
 
@@ -176,7 +176,7 @@ dbus_ctx *dbus_init(struct event_base *eb, Client *server_state_client) {
     char dbus_info[200];
     fscanf(f_dbus_info, "%s", dbus_info);
     fclose(f_dbus_info);
-    printf("%s contains: %s\n", config_file, dbus_info);
+    LOG_INFO("%s contains: %s", config_file, dbus_info);
 
     // This parsing strategy depends on the formatting of `config_file`
     size_t start_idx = (strchr(dbus_info, (int)'\'') - dbus_info) + 1;
@@ -189,20 +189,20 @@ dbus_ctx *dbus_init(struct event_base *eb, Client *server_state_client) {
     // Use parsed address to open a private connection
     conn = dbus_connection_open_private(dbus_addr, &error);
     if (conn == NULL) {
-        printf("Connection to %s failed: %s\n", dbus_addr, error.message);
+        LOG_ERROR("D-Bus connection to %s failed: %s", dbus_addr, error.message);
         goto fail;
     }
-    printf("Connection to %s established: %p\n", dbus_addr, conn);
+    LOG_INFO("D-Bus connection to %s established: %p", dbus_addr, conn);
     free(dbus_addr);
 
     dbus_connection_set_exit_on_disconnect(conn, FALSE);
 
     // Register with "hello" message
     if (!dbus_bus_register(conn, &error)) {
-        printf("Registration failed. Exiting...\n");
+        LOG_ERROR("D-Bus registration failed. Exiting...");
         goto fail;
     }
-    printf("Registration of connection %p successful\n", conn);
+    LOG_INFO("D-Bus registration of connection %p successful", conn);
 
     // Configure watch, timeout, and filter
     ctx->conn = conn;
@@ -211,19 +211,19 @@ dbus_ctx *dbus_init(struct event_base *eb, Client *server_state_client) {
 
     if (!dbus_connection_set_watch_functions(conn, add_watch, remove_watch, toggle_watch, ctx,
                                              NULL)) {
-        printf("dbus_connection_set_watch_functions() failed\n");
+        LOG_ERROR("dbus_connection_set_watch_functions() failed");
         goto fail;
     }
 
     if (!dbus_connection_set_timeout_functions(conn, add_timeout, remove_timeout, toggle_timeout,
                                                ctx, NULL)) {
-        printf("dbus_connection_set_timeout_functions() failed\n");
+        LOG_ERROR("dbus_connection_set_timeout_functions() failed");
         goto fail;
     }
 
     if (dbus_connection_add_filter(conn, notification_handler, server_state_client, NULL) ==
         FALSE) {
-        printf("dbus_connection_add_filter() failed\n");
+        LOG_ERROR("dbus_connection_add_filter() failed");
         goto fail;
     }
 
@@ -231,10 +231,10 @@ dbus_ctx *dbus_init(struct event_base *eb, Client *server_state_client) {
 
     // Explicitly begin monitoring the connection
     if (!become_monitor(conn)) {
-        printf("Monitoring failed. Exiting...\n");
+        LOG_ERROR("D-BUs monitoring failed");
         goto fail;
     }
-    printf("Monitoring started!\n");
+    LOG_INFO("D-Bus monitoring started");
 
     seteuid(0);  // Set euid back to root
 
@@ -282,14 +282,14 @@ DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *
                                        void *user_data) {
     // Handle case of disconnect
     if (dbus_message_is_signal(message, DBUS_INTERFACE_LOCAL, "Disconnected")) {
-        printf("D-Bus unexpectedly disconnected. Exiting...\n");
+        LOG_ERROR("D-Bus unexpectedly disconnected");
         return -1;
     }
     const char *msg_str = dbus_message_get_member(message);
-    printf("\nSignal received: %s\n", msg_str);
+    LOG_INFO("D-Bus signal received: %s", msg_str);
 
     if (msg_str == NULL || strcmp(msg_str, "Notify") != 0) {
-        printf("Did not detect notification body\n");
+        LOG_INFO("Did not detect notification body; skipping current D-Bus signal");
         return DBUS_HANDLER_RESULT_HANDLED;
     }
 
@@ -304,7 +304,7 @@ DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *
 
         // This is bad if it occurs, so we will need to leave.
         if (type == DBUS_TYPE_INVALID) {
-            printf("Got invalid argument type from D-Bus server\n");
+            LOG_ERROR("Got invalid argument type from D-Bus server");
             return -1;
         }
 
@@ -328,7 +328,7 @@ DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *
     strncpy(notif.message, n_message, MAX_NOTIF_MSG_LEN - 1);
     notif.message[min(strlen(n_message), MAX_NOTIF_MSG_LEN - 1)] = '\0';
 
-    LOG_INFO("WhistNotification consists of: title=%s, message=%s\n", notif.title, notif.message);
+    LOG_INFO("WhistNotification consists of: title=%s, message=%s", notif.title, notif.message);
 
     // Parse protocol client from void pointer
     Client *server_state_client = (Client *)user_data;
@@ -339,12 +339,18 @@ DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *
                     sizeof(WhistNotification), 0) >= 0) {
         LOG_INFO("Notification packet sent");
     } else {
-        LOG_INFO("Notification packet send failed");
+        LOG_ERROR("Notification packet send failed");
     }
 
     return DBUS_HANDLER_RESULT_HANDLED;
 }
 
+/**
+ * @brief               Register current connection as a monitor for the session bus.
+ *
+ * @param connection    D-Bus connection.
+ * @return dbus_bool_t  Boolean indicating whether the operation was successful.
+ */
 dbus_bool_t become_monitor(DBusConnection *connection) {
     DBusError error = DBUS_ERROR_INIT;
     DBusMessage *m;
@@ -354,9 +360,6 @@ dbus_bool_t become_monitor(DBusConnection *connection) {
 
     m = dbus_message_new_method_call(DBUS_SERVICE_DBUS, DBUS_PATH_DBUS, DBUS_INTERFACE_MONITORING,
                                      "BecomeMonitor");
-
-    if (m == NULL) printf("becoming a monitor");
-
     dbus_message_iter_init_append(m, &appender);
 
     if (!dbus_message_iter_open_container(&appender, DBUS_TYPE_ARRAY, "s", &array_appender))
@@ -371,15 +374,15 @@ dbus_bool_t become_monitor(DBusConnection *connection) {
     if (r != NULL) {
         dbus_message_unref(r);
     } else if (dbus_error_has_name(&error, DBUS_ERROR_UNKNOWN_INTERFACE)) {
-        fprintf(stderr,
-                "dbus-monitor: unable to enable new-style monitoring, "
-                "your dbus-daemon is too old. Falling back to eavesdropping.\n");
+        LOG_WARNING(
+            "dbus-monitor: unable to enable new-style monitoring, "
+            "your dbus-daemon is too old. Falling back to eavesdropping.");
         dbus_error_free(&error);
     } else {
-        fprintf(stderr,
-                "dbus-monitor: unable to enable new-style monitoring: "
-                "%s: \"%s\". Falling back to eavesdropping.\n",
-                error.name, error.message);
+        LOG_WARNING(
+            "dbus-monitor: unable to enable new-style monitoring: "
+            "%s: \"%s\". Falling back to eavesdropping.",
+            error.name, error.message);
         dbus_error_free(&error);
     }
 
@@ -388,20 +391,33 @@ dbus_bool_t become_monitor(DBusConnection *connection) {
     return (r != NULL);
 }
 
+/**
+ * @brief       Reads new data from the file descriptor that we are watching.
+ *
+ * @param fd    (Unused)
+ * @param ev    (Unused)
+ * @param x     Data that the user can specify; we use it to pass the D-Bus
+ *              Connection struct.
+ */
 void dispatch(int fd, short ev, void *x) {
     dbus_ctx *ctx = x;
     DBusConnection *c = ctx->conn;
-
-    printf("dispatching\n");
 
     while (dbus_connection_get_dispatch_status(c) == DBUS_DISPATCH_DATA_REMAINS)
         dbus_connection_dispatch(c);
 }
 
+/**
+ * @brief           If there is incoming D-Bus data that we have not processed,
+ *                  create a new event to process it immediately.
+ *
+ * @param c         D-Bus connction.
+ * @param status    New status.
+ * @param data      Data that the user can specify; we use it to pass in the
+ *                  D-Bus connection struct.
+ */
 void handle_new_dispatch_status(DBusConnection *c, DBusDispatchStatus status, void *data) {
     dbus_ctx *ctx = data;
-
-    printf("new dbus dispatch status: %d\n", status);
 
     if (status == DBUS_DISPATCH_DATA_REMAINS) {
         struct timeval tv = {
@@ -419,17 +435,20 @@ void handle_watch(int fd, short events, void *x) {
     unsigned int flags = 0;
     if (events & EV_READ) flags |= DBUS_WATCH_READABLE;
     if (events & EV_WRITE) flags |= DBUS_WATCH_WRITABLE;
-    /*if (events & HUP)
-        flags |= DBUS_WATCH_HANGUP;
-    if (events & ERR)
-        flags |= DBUS_WATCH_ERROR;*/
 
-    printf("got dbus watch event fd=%d watch=%p ev=%d\n", fd, watch, events);
-    if (dbus_watch_handle(watch, flags) == FALSE) printf("dbus_watch_handle() failed\n");
+    LOG_INFO("Got d-bus watch event fd=%d watch=%p ev=%d", fd, watch, events);
+    if (dbus_watch_handle(watch, flags) == FALSE) LOG_ERROR("dbus_watch_handle() failed");
 
     handle_new_dispatch_status(ctx->conn, DBUS_DISPATCH_DATA_REMAINS, ctx);
 }
 
+/**
+ * @brief                   Indicates to libevent that we would like to monitor a D-Bus descriptor.
+ *
+ * @param w                 Contains information about the descriptor we want to watch.
+ * @param data              User data; contains the D-Bus connection.
+ * @return dbus_bool_t      TRUE for success, FALSE for failure.
+ */
 dbus_bool_t add_watch(DBusWatch *w, void *data) {
     if (!dbus_watch_get_enabled(w)) return TRUE;
 
@@ -449,10 +468,16 @@ dbus_bool_t add_watch(DBusWatch *w, void *data) {
 
     dbus_watch_set_data(w, event, NULL);
 
-    printf("added dbus watch fd=%d watch=%p cond=%d\n", fd, w, cond);
+    LOG_INFO("Added d-bus watch fd=%d watch=%p cond=%d", fd, w, cond);
     return TRUE;
 }
 
+/**
+ * @brief           Function to remove watch.
+ *
+ * @param w         The watch event we want to remove.
+ * @param data      User data; contains the D-Bus Connection.
+ */
 void remove_watch(DBusWatch *w, void *data) {
     struct event *event = dbus_watch_get_data(w);
 
@@ -460,11 +485,17 @@ void remove_watch(DBusWatch *w, void *data) {
 
     dbus_watch_set_data(w, NULL, NULL);
 
-    printf("removed dbus watch watch=%p\n", w);
+    LOG_INFO("Removed d-bus watch watch=%p", w);
 }
 
+/**
+ * @brief           Toggles watch/unwatch of the specified event.
+ *
+ * @param w         The event whose status we want to toggle.
+ * @param data      User data; contains the D-Bus Connection.
+ */
 void toggle_watch(DBusWatch *w, void *data) {
-    printf("toggling dbus watch watch=%p\n", w);
+    LOG_INFO("Toggling d-bus watch watch=%p", w);
 
     if (dbus_watch_get_enabled(w))
         add_watch(w, data);
@@ -472,25 +503,39 @@ void toggle_watch(DBusWatch *w, void *data) {
         remove_watch(w, data);
 }
 
+/**
+ * @brief       Helper function to handle timeout
+ *
+ * @param fd    (Unused)
+ * @param ev    (Unused)
+ * @param x     User data; contains the D-Bus Connection.
+ */
 void handle_timeout(int fd, short ev, void *x) {
     dbus_ctx *ctx = x;
     DBusTimeout *t = ctx->extra;
 
-    printf("got dbus handle timeout event %p\n", t);
+    LOG_INFO("Got d-bus handle timeout event %p", t);
 
     dbus_timeout_handle(t);
 }
 
+/**
+ * @brief                   Add timeout specification.
+ *
+ * @param t                 The timeout to add.
+ * @param data              User data; contains the D-Bus Connection.
+ * @return dbus_bool_t      TRUE on success, FALSE on failure.
+ */
 dbus_bool_t add_timeout(DBusTimeout *t, void *data) {
     dbus_ctx *ctx = data;
 
     if (!dbus_timeout_get_enabled(t)) return TRUE;
 
-    printf("adding timeout %p\n", t);
+    LOG_INFO("Adding d-bus timeout %p", t);
 
     struct event *event = event_new(ctx->evbase, -1, EV_TIMEOUT | EV_PERSIST, handle_timeout, t);
     if (!event) {
-        printf("failed to allocate new event for timeout\n");
+        LOG_ERROR("Failed to allocate new event for timeout");
         return FALSE;
     }
 
@@ -506,18 +551,30 @@ dbus_bool_t add_timeout(DBusTimeout *t, void *data) {
     return TRUE;
 }
 
+/**
+ * @brief           Remove timeout event.
+ *
+ * @param t         Timeout to remove.
+ * @param data      User data; contains the D-Bus Connection.
+ */
 void remove_timeout(DBusTimeout *t, void *data) {
     struct event *event = dbus_timeout_get_data(t);
 
-    printf("removing timeout %p\n", t);
+    LOG_INFO("Removing d-bus timeout %p", t);
 
     event_free(event);
 
     dbus_timeout_set_data(t, NULL, NULL);
 }
 
+/**
+ * @brief           Toggles timeout event between on/off.
+ *
+ * @param t         Timeout event to toggle.
+ * @param data      User data; contains the D-Bus Connection.
+ */
 void toggle_timeout(DBusTimeout *t, void *data) {
-    printf("toggling timeout %p\n", t);
+    LOG_INFO("Toggling d-bus timeout %p", t);
 
     if (dbus_timeout_get_enabled(t))
         add_timeout(t, data);
