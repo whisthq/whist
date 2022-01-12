@@ -23,17 +23,19 @@ type logzioSender logzio.LogzioSender
 
 type logzioMessageType string
 
+// message is a generic log message with basic data.
 type message struct {
-	Message      string `json:"message"`
-	Type         string `json:"type"`
-	Component    string `json:"component"`
-	SubComponent string `json:"sub_component"`
+	Message      string                  `json:"message"`
+	Type         string                  `json:"type"`
+	Component    string                  `json:"component"`
+	SubComponent string                  `json:"sub_component"`
+	Environment  metadata.AppEnvironment `json:"environment"`
 }
 
+// hostMessage includes data specific for the host service logs.
 type hostMessage struct {
-	AWSInstanceID aws.InstanceID          `json:"aws_instance_id"`
-	AWSAmiID      aws.AmiID               `json:"aws_ami_id"`
-	Environment   metadata.AppEnvironment `json:"environment"`
+	AWSInstanceID aws.InstanceID `json:"aws_instance_id"`
+	AWSAmiID      aws.AmiID      `json:"aws_ami_id"`
 	message
 }
 
@@ -52,14 +54,16 @@ func (sender *logzioSender) send(payload string, msgType logzioMessageType) {
 		err     error
 	)
 
-	if hostMsg == (hostMessage{}) {
+	if hostMsg != (hostMessage{}) {
 		hostMsg.Message = payload
 		hostMsg.Type = string(msgType)
 		byteMsg, err = json.Marshal(scalingMsg)
-	} else {
+	} else if scalingMsg != (message{}) {
 		scalingMsg.Message = payload
 		scalingMsg.Type = string(msgType)
 		byteMsg, err = json.Marshal(hostMsg)
+	} else {
+		return
 	}
 
 	if err != nil {

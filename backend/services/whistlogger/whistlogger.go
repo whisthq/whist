@@ -104,12 +104,12 @@ func InitHostLogging() {
 	hostMsg = hostMessage{
 		AWSInstanceID: instanceID,
 		AWSAmiID:      amiID,
-		Environment:   metadata.GetAppEnvironment(),
 		message: message{
 			Message:      "",
 			Type:         "",
 			Component:    "backend",
 			SubComponent: "host-service",
+			Environment:  metadata.GetAppEnvironment(),
 		},
 	}
 
@@ -140,6 +140,7 @@ func InitScalingLogging() {
 		Type:         "",
 		Component:    "backend",
 		SubComponent: "scaling-service",
+		Environment:  metadata.GetAppEnvironment(),
 	}
 
 	logzioTransport, err = initializeLogzIO()
