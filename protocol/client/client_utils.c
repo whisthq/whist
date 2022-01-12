@@ -57,7 +57,6 @@ volatile int output_height;
 volatile char *program_name = NULL;
 volatile SDL_Window *window;
 
-
 volatile char *new_tab_url;
 
 // From main.c
