@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/base32"
-	"errors"
 	"os"
 	"os/exec"
 	"path"
@@ -14,7 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/aws/smithy-go"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	types "github.com/whisthq/whist/backend/services/host-service/mandelbox/types"
 	"github.com/whisthq/whist/backend/services/metadata"
@@ -36,28 +34,38 @@ const (
 	EncryptedArchiveFilename = "fractal-app-config.tar.lz4.enc"
 )
 
-// StartLoadingUserConfigs starts the process of loading user configs. It returns
-// immediately, providing a channel used to send the configEncryptionToken once
-// it's available (to start the decryption process), and a channel that returns
-// errors with the process as they occur. The configEncryptionToken channel
-// should only ever have exactly one value sent over it, but the error channel
-// might potentially have multiple errors to report. The error channel will
-// close to signify the completion of loading user configs. This design allows
-// the config decryption to occur in parallel with the other steps to spinning
-// up a mandelbox, while also providing the synchronization necessary.
-func (mandelbox *mandelboxData) StartLoadingUserConfigs() (chan<- types.ConfigEncryptionToken, <-chan error) {
+// ConfigEncryptionInfo defines the information we want from the client-app to successfully decrypt configs.
+type ConfigEncryptionInfo struct {
+	Token                          types.ConfigEncryptionToken
+	IsNewTokenAccordingToClientApp bool
+}
+
+// StartLoadingUserConfigs starts the process of loading user configs. It
+// returns immediately, providing a channel used to send the
+// configEncryptionToken once it's available (to start the decryption process),
+// and a channel that returns errors with the process as they occur. The
+// configEncryptionToken channel should only ever have exactly one value sent
+// over it, but the error channel might potentially have multiple errors to
+// report. The error channel will close to signify the completion of loading
+// user configs. This design allows the config decryption to occur in parallel
+// with the other steps to spinning up a mandelbox, while also providing the
+// synchronization necessary.
+func (mandelbox *mandelboxData) StartLoadingUserConfigs() (chan<- ConfigEncryptionInfo, <-chan error) {
 	// We buffer both channels to prevent blocking.
-	configEncryptionTokenChan := make(chan types.ConfigEncryptionToken, 1)
+	tokenChan := make(chan ConfigEncryptionInfo, 1)
 	errorChan := make(chan error, 10)
 
 	// This inner function is where we perform all the real work of loading user configs.
-	go mandelbox.loadUserConfigs(configEncryptionTokenChan, errorChan)
+	go mandelbox.loadUserConfigs(tokenChan, errorChan)
 
-	return configEncryptionTokenChan, errorChan
+	return tokenChan, errorChan
 }
 
-// loadUserConfigs does the "real work" of LoadUserConfigs. For each deviation from the happy path in this function, we need to decide whether it is a warning or an error — warnings get logged here, and errors get sent back.
-func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan types.ConfigEncryptionToken, errorChan chan<- error) {
+// loadUserConfigs does the "real work" of LoadUserConfigs. For each
+// deviation from the happy path in this function, we need to decide whether it
+// is a warning or an error — warnings get logged here, and errors get sent
+// back.
+func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptionInfo, errorChan chan<- error) {
 	defer close(errorChan)
 
 	// If userID is not set, then we don't retrieve configs from s3
@@ -89,9 +97,16 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan types.ConfigEnc
 	// download it into a buffer for decrypting. However, we don't want to block
 	// on this unless we know that the config is indeed the one we need.
 	// TODO: don't block
+	predictedConfigBuf, err := mandelbox.downloadUserConfig(s3Client, *predictedConfig.Key)
+	if err != nil {
+		errorChan <- utils.MakeError("Error downloading predicted config: %s", err)
+	}
 
 	// What we do want to block on is receiving the configEncryptionToken.
-	token := <-tokenChan
+	encryptionInfo := <-tokenChan
+	// TODO: Verify non-empty and non-trivial
+	// Set config encryption token for the mandelbox
+	mandelbox.SetConfigEncryptionToken(cgtypes.ConfigEncryptionToken(encryptionInfo.Token))
 
 	// TODO: More logic here
 
