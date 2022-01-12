@@ -51,7 +51,7 @@ You first need to build the protocol and then build the base image before you ca
 
 ### Running Local Images
 
-Before you can run mandelbox images (local or remote), make sure you have the host service running in a separate terminal with `cd ../host-service && make run`.
+Before you can run mandelbox images (local or remote), make sure you have the host service running in a separate terminal with `cd ../backend/services && make run_host_service`.
 
 Once an image with tag `current-build` has been built locally via `build_mandelbox_images.sh`, it may be run locally by calling:
 

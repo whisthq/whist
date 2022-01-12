@@ -59,8 +59,8 @@ cd ~/whist/mandelboxes
 ./build.sh base
 
 # build the Whist Host Service
-cd ~/whist/backend/services/host-service
-make run # keep this open in a separate terminal
+cd ~/whist/backend/services
+make run_host_service # keep this open in a separate terminal
 
 # run the Whist base container image (swap base to browsers/chrome to run the Whist Chrome container)
 cd ~/whist/mandelboxes

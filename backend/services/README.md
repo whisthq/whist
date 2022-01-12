@@ -39,11 +39,9 @@ The best way to learn about the codebase without worrying about implementation d
 
 It is only possible to run the host service on AWS EC2 instances, since the host service code retrieves metadata about the instance on which it is running from the EC2 instance metadata endpoint <http://169.254.169.254/latest/meta-data/>. According to the [EC2 documentation](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html), "the IP address `196.254.169.254` is a link-local address and is valid only from the [EC2] instance."
 
-From an EC2 instance, you can run the host service via `make run`. Note that the service must be run as `root` since it manages `systemd` and `docker`, so make sure that your Linux user has permission to use `sudo` and be prepared to supply your password, if necessary on your system.
+From an EC2 instance, you can run the host service via `make run_host_service`. Note that the service must be run as `root` since it manages `systemd` and `docker`, so make sure that your Linux user has permission to use `sudo` and be prepared to supply your password, if necessary on your system.
 
 Note that you can test the host service with different environment configurations by using the `make_run_host_service_*` Makefile target variations.
-
-If you want to test the host service with our deployment Sentry configuration, use the command `make runprod`. Note that this will count against our Sentry logging quotas! As such, we only recommend you try to do that on an Whist-optimized AWS EC2 instance that was started by the webserver (see `host-setup/`).
 
 ### Running Chrome with a development instance
 
@@ -89,7 +87,7 @@ INSERT INTO "cloud"."instance_info" ("ip","location","aws_ami_id","aws_instance_
 
 Make sure to change `<your instance name>` on the command to your actual instance name, `<the commit hash you are on>` to the actual commit hash, and verify the status is `PRE_CONNECTION`.
 
-Once you have added the row to the database, start the host service with `make runlocaldevwithdb` and verify it starts the Hasura subscriptions and enters the event loop correctly.
+Once you have added the row to the database, start the host service with `make run_host_service_localdevwithdb` and verify it starts the Hasura subscriptions and enters the event loop correctly.
 
 After this, if you want to test the `SpinUpMandelbox` function by "allocating" a mandelbox for your instance on the local database. Do this by adding a row to the `mandelbox_info` table with this command:
 
@@ -107,7 +105,7 @@ To test the `DrainAndShutdown` function, which is also tied to the pubsub, chang
 
 If, for some reason, you need to test the pubsub with the dev Hasura server, you don't need to do the local setup. Just run follow the same steps for adding your instance and allocating a mandelbox on the development database (change the test values to something real).
 
-Before starting the host service export your heroku api token `export HEROKU_API_TOKEN=<your api token>` and the logzio token `export LOGZIO_SHIPPING_TOKEN=<logzio shipping token>`, and then set the prod logging as necessary `export USE_PROD_LOGGING=false`, then you can start the host service with `make rundev`.
+Before starting the host service export your heroku api token `export HEROKU_API_TOKEN=<your api token>` and the logzio token `export LOGZIO_SHIPPING_TOKEN=<logzio shipping token>`, then you can start the host service with `make run_host_service_dev`.
 
 ### Design Decisions on the Host Service
 
