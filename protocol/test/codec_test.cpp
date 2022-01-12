@@ -4,6 +4,10 @@
  * @brief This file contains unit tests for codecs in the /protocol codebase
  */
 
+#ifdef _WIN32
+#define _CRT_SECURE_NO_WARNINGS  // stupid Windows warnings
+#endif
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <iostream>
