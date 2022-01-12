@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file display_notifs_mac.m
  * @brief Handles client-side notification display on MacOS
 

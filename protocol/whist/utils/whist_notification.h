@@ -2,7 +2,7 @@
 #define WHIST_NOTIFICATION_H
 
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file whist_notification.h
  * @brief Contains a notification struct for convenient data packaging
 ============================

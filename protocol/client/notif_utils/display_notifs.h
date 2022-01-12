@@ -2,7 +2,7 @@
 #define DISPLAY_NOTIFS_H
 
 /**
- * Copyright 2021 Whist Technologies, Inc.
+ * Copyright 2022 Whist Technologies, Inc.
  * @file display_notifs.h
  * @brief Handles client-side notification display. Integrated with different
  * .c files to display on different platforms

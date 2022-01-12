@@ -2,7 +2,7 @@
 #define NOTIFICATIONS_H
 
 /**
- * Copyright 2021 Whist Technologies, Inc., dba Whist
+ * Copyright 2022 Whist Technologies, Inc.
  * @file notifications.h
  * @brief Contains utilities to receive notifications from the server and display them.
 ============================
