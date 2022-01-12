@@ -78,7 +78,7 @@ jobs:
 
       - name: Copy New Core Go Documentation into the whisthq/docs Working Tree (Only on Push/Workflow_dispatch Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.services-diff.outputs.changed == true }}
-        run: rm -rf docs/backend/services && mkdir docs/backend && cp -r whist/backend/services/build/docs docs/backend/services
+        run: rm -rf docs/backend/services && cp -r whist/backend/services/build/docs docs/backend/services
 
       ##############################################################################
       ################################ PROTOCOL STEPS ##############################
