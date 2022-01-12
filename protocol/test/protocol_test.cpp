@@ -31,7 +31,6 @@ Includes
 #include <iterator>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include <signal.h>
 
 extern "C" {
 #include "client/client_utils.h"
@@ -39,6 +38,7 @@ extern "C" {
 #include <whist/core/whist.h>
 #include <whist/network/ringbuffer.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #ifndef __APPLE__
 #include "server/state.h"
