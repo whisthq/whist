@@ -161,25 +161,25 @@ void whist_wait_semaphore(WhistSemaphore semaphore) {
 void whist_destroy_semaphore(WhistSemaphore semaphore) { SDL_DestroySemaphore(semaphore); }
 
 void whist_once(WhistOnce *once, void (*init_function)(void)) {
-    int already_finished = atomic_load(&once->already_finished);
-    if (already_finished > 0) {
-        // Already done, return immediately.
+    if (atomic_load(&once->already_finished)) {
+        // Init has already finished, return immediately.
         return;
     }
 
-    // Atomically add ourselves to the "tried running" list
-    int already_tried_running = atomic_fetch_add(&once->already_tried_running, 1);
-
-    if (already_tried_running == 0) {
-        // If we were the first one to the party,
-        // Call the init function
+    // Atomically set the running flag and get its previous value.
+    int already_running = atomic_fetch_or(&once->already_running, 1);
+    if (already_running == 0) {
+        // Noone has previously set the flag, so we are the first to the
+        // party and should call the init function.
         init_function();
-        // Then mark as finished
-        atomic_fetch_add(&once->already_finished, 1);
+        // Mark init as finished.
+        atomic_store(&once->already_finished, 1);
     } else {
-        // Otherwise, if we were late to the party,
-        // wait until the first one to the party has marked the finished variable
+        // Someone else is already running the init function, so we should
+        // wait until they mark it as finished.
         while (atomic_load(&once->already_finished) == 0) {
+            // The sleep of 1ms is chosen in the hope that it will both
+            // finish promptly and avoid excessive context switches.
             whist_sleep(1);
         }
     }

@@ -46,7 +46,7 @@ typedef enum WhistThreadPriority {
  */
 typedef struct {
     atomic_int already_finished;
-    atomic_int already_tried_running;
+    atomic_int already_running;
 } WhistOnce;
 
 /**
