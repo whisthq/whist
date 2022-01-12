@@ -12,13 +12,12 @@ import { trayIconPath } from "@app/config/files"
 import { AWSRegion } from "@app/@types/aws"
 import { defaultAllowedRegions } from "@app/constants/mandelbox"
 import { MenuItem } from "electron/main"
-import { createSpeedtestWindow } from "@app/utils/windows"
+import { createLicenseWindow, createSpeedtestWindow } from "@app/utils/windows"
 import { persistGet } from "@app/utils/persist"
 import {
   RESTORE_LAST_SESSION,
   WHIST_IS_DEFAULT_BROWSER,
 } from "@app/constants/store"
-import { protocolOpenUrl } from "./protocol"
 import { openSourceUrls } from "@app/constants/app"
 
 // We create the tray here so that it persists throughout the application
@@ -30,6 +29,18 @@ const createNativeImage = () => {
   image.setTemplateImage(true)
   return image
 }
+
+const aboutMenu = new MenuItem({
+  label: "About",
+  submenu: [
+    {
+      label: "Open Source Licenses",
+      click: () => {
+        openSourceUrls.forEach((url) => createLicenseWindow(url))
+      },
+    },
+  ],
+})
 
 const feedbackMenu = new MenuItem({
   label: "Support",
@@ -50,12 +61,6 @@ const feedbackMenu = new MenuItem({
       label: "Test My Internet Speed",
       click: () => {
         createSpeedtestWindow()
-      },
-    },
-    {
-      label: "View Open Source Licenses",
-      click: () => {
-        openSourceUrls.forEach((url) => protocolOpenUrl(url))
       },
     },
   ],
@@ -113,11 +118,11 @@ const settingsMenu = new MenuItem({
   ],
 })
 
-export const destroyTray = () => {
+const destroyTray = () => {
   tray?.destroy()
 }
 
-export const createTray = (menu: Menu) => {
+const createTray = (menu: Menu) => {
   // We should only have one tray at any given time
   if (tray != null) destroyTray()
   // Set the tray icon
@@ -126,11 +131,13 @@ export const createTray = (menu: Menu) => {
   tray.setContextMenu(menu)
 }
 
-export const createMenu = (signedIn: boolean, userEmail?: string) =>
+const createMenu = (signedIn: boolean, userEmail?: string) =>
   Menu.buildFromTemplate([
     ...(signedIn ? [accountMenu] : []),
-    ...[settingsMenu, feedbackMenu],
+    ...[settingsMenu, feedbackMenu, aboutMenu],
     ...(signedIn && (userEmail ?? "").endsWith("@whist.com")
       ? [regionMenu]
       : []),
   ])
+
+export { destroyTray, createTray, createMenu }
