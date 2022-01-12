@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Whist Technologies, Inc., dba Whist
+ * Copyright 2022 Whist Technologies, Inc.
  * @file notifications.c
  * @brief Contains utilities to capture and send notifications to the client.
 ============================
