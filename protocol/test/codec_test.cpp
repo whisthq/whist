@@ -4,12 +4,19 @@
  * @brief This file contains unit tests for codecs in the /protocol codebase
  */
 
+#ifdef _WIN32
+#define _CRT_SECURE_NO_WARNINGS  // stupid Windows warnings
+#endif
+
 #include <gtest/gtest.h>
+#include "fixtures.hpp"
 
 extern "C" {
 #include "whist/video/codec/encode.h"
 #include "whist/video/codec/decode.h"
 }
+
+class CodecTest : public CaptureStdoutFixture {};
 
 static void test_write_image(uint8_t *data, int width, int height, int pitch, int value) {
     // Encode a 16-bit number in binary using black and white patches in the video.
@@ -52,7 +59,7 @@ static int test_read_image(const uint8_t *data, int width, int height, int pitch
 }
 
 // Meta-test to make sure the image setup for encode/decode tests is correct.
-TEST(CodecTest, ImageSetupTest) {
+TEST_F(CodecTest, ImageSetupTest) {
     int width = 1280;
     int height = 720;
     int pitch = 4 * width;
@@ -113,7 +120,7 @@ static const DecodeTestInput decode_test_input[] = {
 };
 
 // Decode the provided stream and check the output.
-TEST(CodecTest, DecodeTest) {
+TEST_F(CodecTest, DecodeTest) {
     int width = 64;
     int height = 64;
 
@@ -151,7 +158,7 @@ TEST(CodecTest, DecodeTest) {
 // Run frames through an encode-decode pair and check the output.
 #if __linux__
 // We only have encode support on Linux.
-TEST(CodecTest, EncodeDecodeTest) {
+TEST_F(CodecTest, EncodeDecodeTest) {
     int width = 1280;
     int height = 720;
     int pitch = 4 * width;

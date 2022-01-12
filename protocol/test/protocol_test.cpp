@@ -25,20 +25,16 @@ Includes
 #define _CRT_SECURE_NO_WARNINGS  // stupid Windows warnings
 #endif
 
-#include <iostream>
-#include <fstream>
 #include <algorithm>
 #include <iterator>
 #include <gtest/gtest.h>
-#include <gmock/gmock.h>
-#include <signal.h>
+#include "fixtures.hpp"
 
 extern "C" {
 #include "client/client_utils.h"
 #include "whist/utils/color.h"
 #include <whist/core/whist.h>
 #include <whist/network/ringbuffer.h>
-#include <fcntl.h>
 
 #ifndef __APPLE__
 #include "server/state.h"
@@ -54,101 +50,7 @@ extern "C" {
 #include <whist/utils/fec.h>
 }
 
-/*
-============================
-Test Fixtures
-============================
-*/
-
-#define TEST_OUTPUT_DIRNAME "test_output"
-
-class CaptureStdoutTest : public ::testing::Test {
-    /*
-        This class is a test fixture which redirects stdout to a file
-        for the duration of the test. The file is then read and compared
-        to registered expected output matchers on a line-by-line basis.
-    */
-   protected:
-    void SetUp() override {
-        /*
-            This function captures the output of stdout to a file for the current
-            test. The file is named after the test name, and is located in the
-            test/test_output directory. The file is overwritten if it already
-            exists.
-        */
-        old_stdout = safe_dup(STDOUT_FILENO);
-        safe_mkdir(TEST_OUTPUT_DIRNAME);
-        std::string filename = std::string(TEST_OUTPUT_DIRNAME) + "/" +
-                               ::testing::UnitTest::GetInstance()->current_test_info()->name() +
-                               ".log";
-        fd = safe_open(filename.c_str(), O_WRONLY | O_CREAT);
-        EXPECT_GE(fd, 0);
-        fflush(stdout);
-        safe_dup2(fd, STDOUT_FILENO);
-    }
-
-    void TearDown() override {
-        /*
-            This function releases the output of stdout captured by the `SetUp()`
-            function. We then open the file and read it line by line, comparing
-            the output to matchers we have registerd with `check_stdout_line()`.
-        */
-        fflush(stdout);
-        safe_dup2(old_stdout, STDOUT_FILENO);
-        safe_close(fd);
-        std::ifstream file(std::string(TEST_OUTPUT_DIRNAME) + "/" +
-                           ::testing::UnitTest::GetInstance()->current_test_info()->name() +
-                           ".log");
-
-        for (::testing::Matcher<std::string> matcher : line_matchers) {
-            std::string line;
-            std::getline(file, line);
-            EXPECT_THAT(line, matcher);
-        }
-
-        file.close();
-    }
-
-    void check_stdout_line(::testing::Matcher<std::string> matcher) {
-        /*
-            This function registers a matcher to be used to compare the output
-            of the current test to the expected output. For example, if we want
-            to check that the output contains the string "hello", we can do so
-            by calling `check_stdout_line(::testing::HasSubstr("hello"))`. If we
-            then want to verify that the next line of output contains the string
-            "world", we then call `check_stdout_line(::testing::HasSubstr("world"))`.
-
-            The matcher is added to a vector of matchers, which is used to
-            compare the output line-by-line. To add multiple matchers for a
-            single line, we can use `::testing::AllOf()` or `::testing::AnyOf()`
-            to combine multiple matchers into a single matcher.
-
-            Note that the matchers are not checked until the `TearDown()` function
-            is called.
-
-            Arguments:
-                matcher (::testing::Matcher<std::string>): The matcher to use
-                    to compare the output line.
-        */
-        line_matchers.push_back(matcher);
-    }
-
-    int old_stdout;
-    int fd;
-    std::vector<::testing::Matcher<std::string>> line_matchers;
-};
-
-/*
-============================
-Matchers
-============================
-*/
-
-#define LOG_DEBUG_MATCHER ::testing::HasSubstr("DEBUG")
-#define LOG_INFO_MATCHER ::testing::HasSubstr("INFO")
-#define LOG_WARNING_MATCHER ::testing::HasSubstr("WARNING")
-#define LOG_ERROR_MATCHER ::testing::HasSubstr("ERROR")
-#define LOG_FATAL_MATCHER ::testing::HasSubstr("FATAL")
+class ProtocolTest : public CaptureStdoutFixture {};
 
 /*
 ============================
@@ -157,7 +59,7 @@ Example Test
 */
 
 // Example of a test using a function from the client module
-TEST_F(CaptureStdoutTest, ClientParseArgsEmpty) {
+TEST_F(ProtocolTest, ClientParseArgsEmpty) {
     int argc = 1;
 
     char argv0[] = "./client/build64/WhistClient";
@@ -186,7 +88,7 @@ Client Tests
 
 // Tests that an initialized ring buffer is correct size and has
 // frame IDs initialized to -1
-TEST(ProtocolTest, InitRingBuffer) {
+TEST_F(ProtocolTest, InitRingBuffer) {
     RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, NUM_AUDIO_TEST_FRAMES, NULL);
 
     EXPECT_EQ(rb->ring_buffer_size, NUM_AUDIO_TEST_FRAMES);
@@ -197,14 +99,14 @@ TEST(ProtocolTest, InitRingBuffer) {
 }
 
 // Tests that an initialized ring buffer with a bad size returns NULL
-TEST_F(CaptureStdoutTest, InitRingBufferBadSize) {
+TEST_F(ProtocolTest, InitRingBufferBadSize) {
     RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, MAX_RING_BUFFER_SIZE + 1, NULL);
     EXPECT_TRUE(rb == NULL);
     check_stdout_line(LOG_ERROR_MATCHER);
 }
 
 // Tests adding packets into ringbuffer
-TEST_F(CaptureStdoutTest, AddingPacketsToRingBuffer) {
+TEST_F(ProtocolTest, AddingPacketsToRingBuffer) {
     // initialize ringbuffer
     const size_t num_packets = 1;
     RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, num_packets, NULL);
@@ -240,12 +142,12 @@ TEST_F(CaptureStdoutTest, AddingPacketsToRingBuffer) {
 
     destroy_ring_buffer(rb);
 
-    // For now we use the CaptureStdoutTest fixture to simply suppress stdout;
+    // For now we use the ProtocolTest fixture to simply suppress stdout;
     // eventually we should validate output.
 }
 
 // Test that resetting the ringbuffer resets the values
-TEST(ProtocolTest, ResetRingBufferFrame) {
+TEST_F(ProtocolTest, ResetRingBufferFrame) {
     // initialize ringbuffer
     const size_t num_packets = 1;
     RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, num_packets, NULL);
@@ -314,7 +216,7 @@ static int test_intr_thread(void* arg) {
 static atomic_int recv_intr_count = ATOMIC_VAR_INIT(0);
 static void test_intr_handler(int signal) { atomic_fetch_add(&recv_intr_count, 1); }
 
-TEST(ProtocolTest, RecvNoIntr) {
+TEST_F(ProtocolTest, RecvNoIntr) {
     int ret, err;
     int socks[2];
     char buf[2];
@@ -462,7 +364,7 @@ Server Tests
  **/
 
 // Testing that good values passed into server_parse_args returns success
-TEST_F(CaptureStdoutTest, ServerParseArgsUsage) {
+TEST_F(ProtocolTest, ServerParseArgsUsage) {
     whist_server_config config;
     int argc = 2;
 
@@ -487,7 +389,7 @@ Whist Library Tests
 /**
  * logging/logging.c
  **/
-TEST_F(CaptureStdoutTest, LoggerTest) {
+TEST_F(ProtocolTest, LoggerTest) {
     whist_init_logger();
     LOG_DEBUG("This is a debug log!");
     LOG_INFO("This is an info log!");
@@ -518,7 +420,7 @@ TEST_F(CaptureStdoutTest, LoggerTest) {
 /**
  * logging/log_statistic.c
  **/
-TEST_F(CaptureStdoutTest, LogStatistic) {
+TEST_F(ProtocolTest, LogStatistic) {
     StatisticInfo statistic_info[] = {
         {"TEST1", true, true, false},
         {"TEST2", false, false, true},
@@ -566,7 +468,7 @@ TEST_F(CaptureStdoutTest, LogStatistic) {
  * utils/color.c
  **/
 
-TEST(ProtocolTest, WhistColorTest) {
+TEST_F(ProtocolTest, WhistColorTest) {
     WhistRGBColor cyan = {0, 255, 255};
     WhistRGBColor magenta = {255, 0, 255};
     WhistRGBColor dark_gray = {25, 25, 25};
@@ -598,7 +500,7 @@ TEST(ProtocolTest, WhistColorTest) {
  * utils/clock.c
  **/
 
-TEST(ProtocolTest, TimersTest) {
+TEST_F(ProtocolTest, TimersTest) {
     // Note: This test is currently a no-op, as the GitHub Actions runner is too slow for
     // sleep/timer to work properly. Uncomment the code to run it locally.
 
@@ -624,7 +526,7 @@ TEST(ProtocolTest, TimersTest) {
 
 // This test makes a packet, encrypts it, decrypts it, and confirms the latter is
 // the original packet
-TEST(ProtocolTest, EncryptAndDecrypt) {
+TEST_F(ProtocolTest, EncryptAndDecrypt) {
     const char* data = "testing...testing";
     size_t len = strlen(data);
 
@@ -663,7 +565,7 @@ TEST(ProtocolTest, EncryptAndDecrypt) {
 
 // This test encrypts a packet with one key, then attempts to decrypt it with a differing
 // key, confirms that it returns -1
-TEST_F(CaptureStdoutTest, BadDecrypt) {
+TEST_F(ProtocolTest, BadDecrypt) {
     const char* data = "testing...testing";
     size_t len = strlen(data);
 
@@ -711,7 +613,7 @@ TEST_F(CaptureStdoutTest, BadDecrypt) {
 // must be the output of a lodepng encode, as other PNG encoders
 // (including FFmpeg) may produce different results (lossiness,
 // different interpolation, etc.).
-TEST(ProtocolTest, PngToBmpToPng) {
+TEST_F(ProtocolTest, PngToBmpToPng) {
     // Read in PNG
     std::ifstream png_image("assets/image.png", std::ios::binary);
 
@@ -747,7 +649,7 @@ TEST(ProtocolTest, PngToBmpToPng) {
 // must be a BMP of the BITMAPINFOHEADER specification, where the
 // now-optional paramters for x/y pixel resolutions are set to 0.
 // `ffmpeg -i input-image.{ext} output.bmp` will generate such a BMP.
-TEST(ProtocolTest, BmpToPngToBmp) {
+TEST_F(ProtocolTest, BmpToPngToBmp) {
     // Read in PNG
     std::ifstream bmp_image("assets/image.bmp", std::ios::binary);
 
@@ -781,7 +683,7 @@ TEST(ProtocolTest, BmpToPngToBmp) {
 
 // Adds AVPackets to an buffer via write_packets_to_buffer and
 // confirms that buffer structure is correct
-TEST(ProtocolTest, PacketsToBuffer) {
+TEST_F(ProtocolTest, PacketsToBuffer) {
     // Make some dummy packets
 
     const char* data1 = "testing...testing";
@@ -811,7 +713,7 @@ TEST(ProtocolTest, PacketsToBuffer) {
     EXPECT_EQ(strncmp((char*)(buffer + 2), data1, strlen(data1)), 0);
 }
 
-TEST(ProtocolTest, BitArrayMemCpyTest) {
+TEST_F(ProtocolTest, BitArrayMemCpyTest) {
     // A bunch of prime numbers + {10,100,200,250,299,300}
     std::vector<int> bitarray_sizes{1,  2,  3,  5,  7,  10, 11,  13,  17,  19, 23,
                                     29, 31, 37, 41, 47, 53, 100, 250, 299, 300};
@@ -868,7 +770,7 @@ TEST(ProtocolTest, BitArrayMemCpyTest) {
 // seems to behave differently in MSVC, which causes indefinite hanging
 // in our CI. See the implementation of `trim_utf8_string` for a bit
 // more context.
-TEST(ProtocolTest, Utf8Truncation) {
+TEST_F(ProtocolTest, Utf8Truncation) {
     // Test that a string with a UTF-8 character that is truncated
     // is fixed correctly.
 
@@ -1007,7 +909,7 @@ static int atomic_test_thread(void* arg) {
     return thread;
 }
 
-TEST(ProtocolTest, Atomics) {
+TEST_F(ProtocolTest, Atomics) {
     atomic_init(&atomic_test_cmpswap, 0);
     atomic_init(&atomic_test_addsub, 0);
     atomic_init(&atomic_test_xor, 0);
@@ -1030,7 +932,7 @@ TEST(ProtocolTest, Atomics) {
     EXPECT_EQ(atomic_load(&atomic_test_xor), 0);
 }
 
-TEST(ProtocolTest, FECTest) {
+TEST_F(ProtocolTest, FECTest) {
 #define NUM_FEC_PACKETS 2
 
 #define NUM_ORIGINAL_PACKETS 2
