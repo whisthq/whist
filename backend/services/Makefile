@@ -112,8 +112,11 @@ clean:
 	$(GOCMD) clean -modcache
 	rm -rf $(BUILD_FOLDER)
 
-run: build
-	$(info running $(BUILD_FOLDER)/host-service with local dev (debug) configuration...)
+
+## Host service-specific targets
+
+run_host_service: build
+	$(info running $(BUILD_FOLDER)/host-service with localdev configuration...)
 # we run the built binary instead of using `go run` because otherwise signal
 # handling for Ctrl+C does not work. We also create the symlink below so that
 # the host service can use the `ubuntu` account's aws credentials to run,
@@ -121,14 +124,30 @@ run: build
 	sudo [ -e $(ROOT_HOMEDIR)/.aws ] || sudo ln -s -T "$(HOME)/.aws" "$(ROOT_HOMEDIR)/.aws"
 	sudo --preserve-env=PATH APP_ENV=localdev $(BUILD_FOLDER)/host-service
 
-runlocaldevwithdb: build
+run_host_service_localdevwithdb: build
 	$(info running $(BUILD_FOLDER)/host-service with localdevwithdb configuration...)
 	sudo [ -e $(ROOT_HOMEDIR)/.aws ] || sudo ln -s -T "$(HOME)/.aws" "$(ROOT_HOMEDIR)/.aws"
 	sudo --preserve-env=PATH APP_ENV=localdevwithdb $(BUILD_FOLDER)/host-service
 
-rundev: build
+run_host_service_dev: build
 	$(info running $(BUILD_FOLDER)/host-service with dev configuration...)
 	sudo [ -e $(ROOT_HOMEDIR)/.aws ] || sudo ln -s -T "$(HOME)/.aws" "$(ROOT_HOMEDIR)/.aws"
 	sudo --preserve-env=PATH APP_ENV=dev USE_PROD_LOGGING=0 $(BUILD_FOLDER)/host-service
+
+
+## Scaling service-specific targets
+
+run_scaling_service: build
+	$(info running $(BUILD_FOLDER)/scaling-service with localdev configuration...)
+	APP_ENV=localdev $(BUILD_FOLDER)/scaling-service
+
+run_scaling_service_localdevwithdb: build
+	$(info running $(BUILD_FOLDER)/scaling-service with localdevwithdb configuration...)
+	APP_ENV=localdevwithdb $(BUILD_FOLDER)/scaling-service
+
+run_scaling_service_dev: build
+	$(info running $(BUILD_FOLDER)/scaling-service with dev (deployed) configuration...)
+	APP_ENV=dev USE_PROD_LOGGING=0 $(BUILD_FOLDER)/scaling-service
+
 
 .PHONY: build clean run rundev format lint vet check
