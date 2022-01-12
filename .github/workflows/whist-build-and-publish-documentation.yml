@@ -67,18 +67,18 @@ jobs:
           go-version: "1.17"
 
       - name: Build Core Go Documentation
-        working-directory: whist/backend/core-go
+        working-directory: whist/backend/services
         run: make docs
 
       - name: Diff Old and New Documentation
         id: core-go-diff
         run: |
-          git diff --no-index whist/backend/core-go/build/docs docs/core-go && echo "No changes detected"
+          git diff --no-index whist/backend/services/build/docs docs/core-go && echo "No changes detected"
           echo "::set-output name=changed::$?"
 
       - name: Copy New Core Go Documentation into the whisthq/docs Working Tree (Only on Push/Workflow_dispatch Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.core-go-diff.outputs.changed == true }}
-        run: rm -rf docs/core-go && cp -r whist/backend/core-go/build/docs docs/core-go
+        run: rm -rf docs/core-go && cp -r whist/backend/services/build/docs docs/core-go
 
       ##############################################################################
       ############################## HOST-SERVICE STEPS ############################
@@ -89,18 +89,18 @@ jobs:
           go-version: "1.17"
 
       - name: Build Host Service Documentation
-        working-directory: whist/backend/host-service
+        working-directory: whist/backend/services/host-service
         run: make docs
 
       - name: Diff Old and New Documentation
         id: host-service-diff
         run: |
-          git diff --no-index whist/backend/host-service/build/docs docs/host-service && echo "No changes detected"
+          git diff --no-index whist/backend/services/host-service/build/docs docs/host-service && echo "No changes detected"
           echo "::set-output name=changed::$?"
 
       - name: Copy New Host-Service Documentation into the whisthq/docs Working Tree (Only on Push/Workflow_dispatch Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.host-service-diff.outputs.changed == true }}
-        run: rm -rf docs/host-service && cp -r whist/backend/host-service/build/docs docs/host-service
+        run: rm -rf docs/host-service && cp -r whist/backend/services/host-service/build/docs docs/host-service
 
       ##############################################################################
       ############################## SCALING-SERVICE STEPS ############################
@@ -111,18 +111,18 @@ jobs:
           go-version: "1.17"
 
       - name: Build Scaling Service Documentation
-        working-directory: whist/backend/scaling-service
+        working-directory: whist/backend/services/scaling-service
         run: make docs
 
       - name: Diff Old and New Documentation
         id: scaling-service-diff
         run: |
-          git diff --no-index whist/backend/scaling-service/build/docs docs/scaling-service && echo "No changes detected"
+          git diff --no-index whist/backend/services/scaling-service/build/docs docs/scaling-service && echo "No changes detected"
           echo "::set-output name=changed::$?"
 
       - name: Copy New Scaling-Service Documentation into the whisthq/docs Working Tree (Only on Push/Workflow_dispatch Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.scaling-service-diff.outputs.changed == true }}
-        run: rm -rf docs/scaling-service && cp -r whist/backend/scaling-service/build/docs docs/scaling-service
+        run: rm -rf docs/scaling-service && cp -r whist/backend/services/scaling-service/build/docs docs/scaling-service
 
       ##############################################################################
       ################################ PROTOCOL STEPS ##############################
