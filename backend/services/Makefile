@@ -50,8 +50,8 @@ endif
 build: checkCI
 	$(GOCMD) mod tidy -v
 	$(GOCMD) install github.com/jschaf/pggen/cmd/pggen@latest
-	touch $(CURDIR)/dbdriver/queries/temp.sql.go
-	find $(CURDIR)/dbdriver/queries -type f -name "*.sql.go" | xargs rm
+	touch $(CURDIR)/host-service/dbdriver/queries/temp.sql.go
+	find $(CURDIR)/host-service/dbdriver/queries -type f -name "*.sql.go" | xargs rm
 
 # GOFLAGS fixes go.sum issue with lz4 package
 # Detailed at: https://github.com/golang/go/issues/44129#issuecomment-788810473
