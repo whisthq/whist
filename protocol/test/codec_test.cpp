@@ -154,7 +154,7 @@ TEST_F(CodecTest, DecodeTest) {
 // Run frames through an encode-decode pair and check the output.
 #if __linux__
 // We only have encode support on Linux.
-TEST(CodecTest, EncodeDecodeTest) {
+TEST_F(CodecTest, EncodeDecodeTest) {
     int width = 1280;
     int height = 720;
     int pitch = 4 * width;
