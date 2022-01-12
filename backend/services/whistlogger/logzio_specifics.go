@@ -57,11 +57,11 @@ func (sender *logzioSender) send(payload string, msgType logzioMessageType) {
 	if hostMsg != (hostMessage{}) {
 		hostMsg.Message = payload
 		hostMsg.Type = string(msgType)
-		byteMsg, err = json.Marshal(scalingMsg)
+		byteMsg, err = json.Marshal(hostMsg)
 	} else if scalingMsg != (message{}) {
 		scalingMsg.Message = payload
 		scalingMsg.Type = string(msgType)
-		byteMsg, err = json.Marshal(hostMsg)
+		byteMsg, err = json.Marshal(scalingMsg)
 	} else {
 		return
 	}
@@ -79,15 +79,15 @@ func (sender *logzioSender) send(payload string, msgType logzioMessageType) {
 }
 
 func initializeLogzIO() (*logzioSender, error) {
-	if usingProdLogging() {
-		Info("Setting up logz.io integration.")
-	} else {
-		Info("Not setting up logz.io integration.")
-		return nil, nil
-	}
+	// if usingProdLogging() {
+	// 	Info("Setting up logz.io integration.")
+	// } else {
+	// 	Info("Not setting up logz.io integration.")
+	// 	return nil, nil
+	// }
 
 	logzioShippingToken := os.Getenv("LOGZIO_SHIPPING_TOKEN")
-
+	log.Print(logzioShippingToken)
 	if logzioShippingToken == "" {
 		return nil, utils.MakeError("Error initializing logz.io integration: logzioShippingToken is uninitialized")
 	}
