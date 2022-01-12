@@ -21,7 +21,7 @@ This will build the services under directory `/build` as `host-service` and `sca
 
 ### Styling
 
-We use `goimports` and `golint` for Golang linting and coding standards. These are automatically installed when running `make format` or `make lint`.
+We use `goimports` and `staticcheck` for Golang linting and coding standards. These are automatically installed when running `make format` or `make lint`.
 
 The easiest way to check that your code is ready for review (i.e. is linted, vetted, and formatted) is just to run `make check`. This is what we use to check the code in CI as well.
 
