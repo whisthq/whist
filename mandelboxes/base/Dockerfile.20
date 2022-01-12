@@ -392,7 +392,7 @@ COPY input/Xmodmap /root/.Xmodmap
 #########################
 
 # Install dbus + event requirements
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     dbus-x11 \
     libdbus-1-dev \
     libevent-dev \
