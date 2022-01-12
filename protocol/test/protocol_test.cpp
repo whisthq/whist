@@ -33,7 +33,6 @@ Includes
 #include <gtest/gtest.h>
 #include "fixtures.hpp"
 
-//#include <Cocoa/Cocoa.h>
 
 extern "C" {
 #include <client/sdl_utils.h>
