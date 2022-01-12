@@ -151,7 +151,7 @@ jobs:
           EOF
 
           # Stage, commit, and push documentation changes
-          git add services
+          git add .
           git commit -F - <<EOF
           Update Whist internal documentation (https://github.com/whisthq/whist/commit/${{ github.sha }})
           EOF
