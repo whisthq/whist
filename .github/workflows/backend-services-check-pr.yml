@@ -1,9 +1,9 @@
-# workflows/services-check-pr.yml
+# workflows/backend-services-check-pr.yml
 #
-# Services: Check PR
-# Checks a Services PR for linting and building success.
+# Backend Services: Check PR
+# Checks a Backend Services PR to make sure it builds and matches code standards.
 
-name: "Services: Check PR"
+name: "Backend Services: Check PR"
 
 on:
   push:
@@ -14,19 +14,19 @@ on:
       - "backend/services/**"
       - "!backend/services/README.md"
       - "backend/webserver/db_migration/schema.sql"
-      - ".github/workflows/services-check-pr.yml"
+      - ".github/workflows/backend-services-check-pr.yml"
   pull_request:
     paths:
       - "backend/services/**"
       - "!backend/services/README.md"
       - "backend/webserver/db_migration/schema.sql"
-      - ".github/workflows/services-check-pr.yml"
+      - ".github/workflows/backend-services-check-pr.yml"
   workflow_dispatch:
 
 jobs:
   # Building
   # Check that the Host Service builds.
-  services-check-pr-building:
+  backend-services-check-pr-building:
     name: Building
     runs-on: ubuntu-20.04
 
@@ -59,7 +59,7 @@ jobs:
           aws-region: us-east-1
 
       # Check go project (clean, build, vet, format, lint, test, docs)
-      - name: Check Go project
+      - name: Check Go Project
         working-directory: backend/services
         env:
           HEROKU_USER: developers@whist.com
