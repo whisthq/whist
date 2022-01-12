@@ -53,10 +53,7 @@ $(queries_sql_go_files): $(queries_sql_files) ../webserver/db_migration/schema.s
 	$(GOCMD) install github.com/jschaf/pggen/cmd/pggen@latest
 	touch $(CURDIR)/host-service/dbdriver/queries/temp.sql.go
 	find $(CURDIR)/host-service/dbdriver/queries -type f -name "*.sql.go" | xargs rm
-
-# GOFLAGS fixes go.sum issue with lz4 package
-# Detailed at: https://github.com/golang/go/issues/44129#issuecomment-788810473
-	GOFLAGS=-mod=mod $(GOCMD) generate ./host-service/dbdriver/...
+	$(GOCMD) generate ./host-service/dbdriver/...
 
 build: checkCI $(queries_sql_go_files)
 	$(GOCMD) mod tidy -v
