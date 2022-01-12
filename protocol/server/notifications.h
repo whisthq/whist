@@ -9,7 +9,14 @@
 Usage
 ============================
 
-TODO(kmeng01) write some summary thing here
+In the main function of the server, one can create a thread and destroy it later.
+
+struct event_base* notifs_evbase = event_base_new();
+init_notifications_thread(&server_state, notifs_evbase);
+
+// execute main loop of server
+
+destroy_notifications_thread(notifs_evbase);
 
 */
 

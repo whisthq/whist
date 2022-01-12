@@ -30,7 +30,6 @@ Public Function Implementations
 */
 
 int display_notification(WhistPacket *packet) {
-    // TODO(kmeng01) catch case where packet is not notification data
     WhistNotification c;
     memcpy(c.title, packet->data, MAX_NOTIF_TITLE_LEN);
     memcpy(c.message, (packet->data) + MAX_NOTIF_TITLE_LEN, MAX_NOTIF_MSG_LEN);
