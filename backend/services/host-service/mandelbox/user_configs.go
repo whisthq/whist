@@ -12,13 +12,17 @@ import (
 	"path"
 
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
+	types "github.com/whisthq/whist/backend/services/host-service/mandelbox/types"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
+
+// Exported members
 
 const (
 	// UnpackedConfigsDirectoryName is the name of the directory in the mandelbox that stores
@@ -29,6 +33,66 @@ const (
 	EncryptedArchiveFilename = "fractal-app-config.tar.lz4.enc"
 )
 
+// StartLoadingUserConfigs starts the process of loading user configs. It returns
+// immediately, providing a channel used to send the configEncryptionToken once
+// it's available (to start the decryption process), and a channel that returns
+// errors with the process as they occur. The configEncryptionToken channel
+// should only ever have exactly one value sent over it, but the error channel
+// might potentially have multiple errors to report. The error channel will
+// close to signify the completion of loading user configs. This design allows
+// the config decryption to occur in parallel with the other steps to spinning
+// up a mandelbox, while also providing the synchronization necessary.
+func (mandelbox *mandelboxData) StartLoadingUserConfigs() (chan<- types.ConfigEncryptionToken, <-chan error) {
+	// We buffer both channels to prevent blocking.
+	configEncryptionTokenChan := make(chan types.ConfigEncryptionToken, 1)
+	errorChan := make(chan error, 10)
+
+	// This inner function is where we perform all the real work of loading user configs.
+	go mandelbox.loadUserConfigs(configEncryptionTokenChan, errorChan)
+
+	return configEncryptionTokenChan, errorChan
+}
+
+// loadUserConfigs does the "real work" of LoadUserConfigs.
+func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan types.ConfigEncryptionToken, errorChan chan<- error) {
+	defer close(errorChan)
+
+	// If userID is not set, then we don't retrieve configs from s3
+	if len(mandelbox.GetUserID()) == 0 {
+		errorChan <- utils.MakeError("User ID is not set for mandelbox %s. Skipping config download.", mandelbox.GetID())
+		return
+	}
+
+	s3Client, err := configutils.NewS3Client("us-east-1")
+	if err != nil {
+		errorChan <- utils.MakeError("Could not make new S3 client: %s", err)
+		return
+	}
+
+	// At this point, we are still waiting on the client-app to get the user's
+	// config encryption token. Instead of waiting, we want to speculatively
+	// download a config that we think is the most likely to be the one we need.
+	_, err = mandelbox.predictConfigToDownload(s3Client)
+	if err != nil {
+		errorChan <- utils.MakeError("There are no existing configs in s3 for user %s", mandelbox.GetUserID())
+		return
+	}
+
+	// TODO: More logic here
+}
+
+// predictConfigToDownload guesses which config is the most likely to be the
+// one we need to download, given the user's config encryption token.
+func (mandelbox *mandelboxData) predictConfigToDownload(s3client *s3.Client) (*s3types.Object, error) {
+	// We use the simple guess that the most recently-modified config is the one
+	// that we need.
+
+	prefix := path.Join(string(mandelbox.GetUserID()), metadata.GetAppEnvironmentLowercase(), string(mandelbox.GetAppName()))
+	return configutils.GetMostRecentMatchingKey(s3client, userConfigS3Bucket, prefix, EncryptedArchiveFilename)
+}
+
+// Helpers
+
 const (
 	userConfigS3Bucket = "fractal-user-app-configs"
 	aes256KeyLength    = 32
@@ -37,12 +101,6 @@ const (
 
 // DownloadUserConfigs downloads user configs from S3 and saves them to an in-memory buffer.
 func (mandelbox *mandelboxData) DownloadUserConfigs() error {
-	// If userID is not set, then we don't retrieve configs from s3
-	if len(mandelbox.GetUserID()) == 0 {
-		logger.Warningf("User ID is not set for mandelbox %s. Skipping config download.", mandelbox.GetID())
-		return nil
-	}
-
 	s3ConfigKey := mandelbox.getS3ConfigKey()
 
 	logger.Infof("Starting S3 config download for mandelbox %s", mandelbox.GetID())
@@ -77,7 +135,7 @@ func (mandelbox *mandelboxData) DownloadUserConfigs() error {
 	configBuffer := manager.NewWriteAtBuffer(make([]byte, headObject.ContentLength))
 	numBytes, err := configutils.DownloadObjectToBuffer(s3Client, userConfigS3Bucket, s3ConfigKey, configBuffer)
 
-	var noSuchKeyErr *types.NoSuchKey
+	var noSuchKeyErr *s3types.NoSuchKey
 	if err != nil {
 		if errors.As(err, &noSuchKeyErr) {
 			logger.Infof("Could not download user config because config does not exist for user %s", mandelbox.GetUserID())
