@@ -23,7 +23,7 @@ Public Function Implementations
 ============================
 */
 
-int native_show_notification(WhistPacket *packet) {
+int native_show_notification(char *title, char *msg) {
     LOG_WARNING("Notification display not implemented on linux");
     return -1;
 }
