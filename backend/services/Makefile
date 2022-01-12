@@ -47,7 +47,7 @@ else
 	$(info CI is false)
 endif
 
-queries_sql_files := $(wildcard ./dbdriver/queries/*.sql)
+queries_sql_files := $(wildcard ./host-service/dbdriver/queries/*.sql)
 queries_sql_go_files := $(patsubst %.sql,%.sql.go,$(queries_sql_files))
 $(queries_sql_go_files): $(queries_sql_files) ../webserver/db_migration/schema.sql go.mod
 	$(GOCMD) install github.com/jschaf/pggen/cmd/pggen@latest
@@ -56,7 +56,7 @@ $(queries_sql_go_files): $(queries_sql_files) ../webserver/db_migration/schema.s
 
 # GOFLAGS fixes go.sum issue with lz4 package
 # Detailed at: https://github.com/golang/go/issues/44129#issuecomment-788810473
-	GOFLAGS=-mod=mod $(GOCMD) generate ./dbdriver/...
+	GOFLAGS=-mod=mod $(GOCMD) generate ./host-service/dbdriver/...
 
 build: checkCI $(queries_sql_go_files)
 	$(GOCMD) mod tidy -v
@@ -121,9 +121,9 @@ endif
 clean:
 	rm -rf $(BUILD_FOLDER)
 # We do this to reset the host-service to a "full clean build" state.
-	@touch $(CURDIR)/dbdriver/queries/temp.sql.go
-	@find $(CURDIR)/dbdriver/queries -type f -name "*.sql.go" | xargs rm
-	@echo "The automatically generated .sql.go files in dbdriver/queries/ have been removed. To get them back, run 'make' or use a variation of 'git reset'."
+	@touch $(CURDIR)/host-service/dbdriver/queries/temp.sql.go
+	@find $(CURDIR)/host-service/dbdriver/queries -type f -name "*.sql.go" | xargs rm
+	@echo "The automatically generated .sql.go files in host-service/dbdriver/queries/ have been removed. To get them back, run 'make' or use a variation of 'git reset'."
 
 clean_modcache:
 	$(GOCMD) clean -modcache
@@ -165,4 +165,4 @@ run_scaling_service_dev: build
 	APP_ENV=dev USE_PROD_LOGGING=0 $(BUILD_FOLDER)/scaling-service
 
 
-.PHONY: checkCI build format lint vet test docs check clean clean_modcache run runlocaldevwithdb rundev
+.PHONY: checkCI build format lint vet test docs check clean clean_modcache run_host_service run_host_service_localdevwithdb run_host_service_dev run_scaling_service run_scaling_service_localdevwithdb run_scaling_service_dev
