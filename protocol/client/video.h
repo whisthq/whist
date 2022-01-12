@@ -9,6 +9,9 @@
 Usage
 ============================
 
+NOTE: Only ONE thread can call a function on video_context at a time,
+      unless a function says otherwise.
+
 VideoContext* video_context = init_video();
 
 In one thread:
@@ -23,7 +26,7 @@ receive_video(video_context, packet_3);
 update_video(video_context);
 update_video(video_context);
 
-In another thread:
+In another thread: (NOTE: ONLY render_video is thread-safe. The rest of the functions are not)
 render_video(video_context);
 render_video(video_context);
 render_video(video_context);
@@ -103,10 +106,35 @@ void update_video(VideoContext* video_context);
  *
  * @param video_context            The video context that wants to render a frame
  *
- * @note                           This function is thread-safe, and may be called
- *                                 independently of receive_video/update_video
+ * @note                           This function is thread-safe, and may be called in a way
+ *                                 that overlaps other functions that use the vide context.
  */
 int render_video(VideoContext* video_context);
+
+/**
+ * @brief                          Returns whether or not a video frame has been rendered.
+ *                                 (NOT including any "loading animation" frames)
+ *                                 This can be false even after calling render_video,
+ *                                 if there simply weren't enough packets yet or if the video
+ *                                 is still being decoded.
+ *
+ *
+ * @param video_context            The video context that has potentially rendered a frame
+ *
+ * @returns                        Returns true iff a video frame has actually
+ *                                 been rendered out to the SDL framebuffer.
+ *                                 (NOT including any "loading animation" frames)
+ */
+bool has_video_rendered_yet(VideoContext* video_context);
+
+/**
+ * @brief                          Gets any networking statistics from the video
+ *
+ * @param video_context            The video context
+ *
+ * @returns                        Any networking statistics from the video context
+ */
+NetworkStatistics get_video_network_statistics(VideoContext* video_context);
 
 /**
  * @brief                          Destroy the video context

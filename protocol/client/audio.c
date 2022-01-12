@@ -35,9 +35,6 @@ Defines
 // Verbose audio logs
 #define LOG_AUDIO false
 
-// Used to prevent audio from playing before video has played
-extern bool has_video_rendered_yet;
-
 // system audio queue + our buffer limits, in decompressed bytes
 #define AUDIO_QUEUE_LOWER_LIMIT 18000
 #define AUDIO_QUEUE_UPPER_LIMIT 59000
@@ -373,8 +370,7 @@ void catchup_audio(AudioContext* audio_context) {
 
     // If nothing has played yet, or if we've fallen far behind (because of a disconnect),
     // Then catch-up by setting last_played_id to max_id - 1
-    if ((audio_context->last_played_id == -1 && has_video_rendered_yet &&
-         ring_buffer->max_id > 0) ||
+    if ((audio_context->last_played_id == -1 && ring_buffer->max_id > 0) ||
         (audio_context->last_played_id != -1 &&
          ring_buffer->max_id - audio_context->last_played_id > MAX_NUM_AUDIO_FRAMES)) {
 #if LOG_AUDIO

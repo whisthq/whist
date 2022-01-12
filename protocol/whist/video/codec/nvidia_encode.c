@@ -149,7 +149,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     init_params.encodeHeight = out_height;
     init_params.maxEncodeWidth = MAX_SCREEN_WIDTH;
     init_params.maxEncodeHeight = MAX_SCREEN_HEIGHT;
-    init_params.frameRateNum = FPS;
+    init_params.frameRateNum = MAX_FPS;
     init_params.frameRateDen = 1;
     init_params.enablePTD = 1;
 

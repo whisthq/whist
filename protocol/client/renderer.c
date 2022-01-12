@@ -20,6 +20,22 @@ Defines
 ============================
 */
 
+struct WhistRenderer {
+    VideoContext* video_context;
+    AudioContext* audio_context;
+
+    bool run_renderer_thread;
+    WhistThread renderer_thread;
+    WhistMutex renderer_mutex;
+    WhistSemaphore renderer_semaphore;
+    clock last_try_render_timer;
+    // Used to log renderer thread usage
+    bool using_renderer_thread;
+    bool render_is_on_renderer_thread;
+
+    NetworkSettings last_network_settings;
+};
+
 #define LOG_RENDERER_THREAD_USAGE false
 
 /*
@@ -97,6 +113,18 @@ void renderer_update(WhistRenderer* whist_renderer) {
     TIME_RUN(update_audio(whist_renderer->audio_context), AUDIO_UPDATE_TIME, statistics_timer);
     TIME_RUN(update_video(whist_renderer->video_context), VIDEO_UPDATE_TIME, statistics_timer);
 
+    // Get any network statistics,
+    // Calculate desired network settings from them, and if new network settings are desired,
+    // simply request the server to match those desired network settings
+    NetworkStatistics network_statistics =
+        get_video_network_statistics(whist_renderer->video_context);
+    NetworkSettings desired_network_settings = get_desired_network_settings(network_statistics);
+    if (memcmp(&desired_network_settings, &whist_renderer->last_network_settings,
+               sizeof(NetworkSettings)) != 0) {
+        send_desired_network_settings(desired_network_settings);
+        whist_renderer->last_network_settings = desired_network_settings;
+    }
+
     // If it's been 2 ms since the last time someone else called try_render,
     // let's ping our renderer thread to do the work instead
 
@@ -143,8 +171,12 @@ void renderer_try_render(WhistRenderer* whist_renderer) {
     }
 
     // Render out any pending audio or video
-    render_audio(whist_renderer->audio_context);
     render_video(whist_renderer->video_context);
+    if (has_video_rendered_yet(whist_renderer->video_context)) {
+        // Only render audio, if the video has rendered something
+        // This is because it feels weird when audio is played to the loading screen
+        render_audio(whist_renderer->audio_context);
+    }
 
     // Mark as recently rendered, and unlock
     start_timer(&whist_renderer->last_try_render_timer);

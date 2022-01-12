@@ -4,6 +4,7 @@ add_library(whistNetwork STATIC
         tcp.c
         throttle.c
         ringbuffer.c
+        network_algorithm.c
     )
 
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")

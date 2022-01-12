@@ -35,7 +35,6 @@ Includes
 #include "sdlscreeninfo.h"
 #include "native_window_utils.h"
 #include "network.h"
-#include "bitrate.h"
 #include "client_utils.h"
 #include "client_statistic.h"
 
@@ -44,24 +43,8 @@ Includes
 
 // Global Variables
 
-// Server width/height/codec
-extern volatile int server_width;
-extern volatile int server_height;
-extern volatile CodecType server_codec_type;
-
-// Keeping track of max mbps
-extern volatile int client_max_bitrate;
-extern volatile int max_burst_bitrate;
-extern volatile bool update_bitrate;
-
-extern volatile CodecType output_codec_type;
 extern volatile double latency;
 
-// Whether or not video has rendered yet,
-// So that audio doesn't play to a black screen
-bool has_video_rendered_yet = false;
-
-#define BITRATE_BUCKET_SIZE 500000
 // Number of videoframes to have in the ringbuffer
 #define RECV_FRAMES_BUFFER_SIZE 275
 
@@ -77,6 +60,13 @@ struct VideoContext {
     VideoDecoder* decoder;
     struct SwsContext* sws;
 
+    // Stores metadata from the last rendered frame,
+    // So that we know if the encoder/sws and such must
+    // be reinitialized to a new width/height/codec
+    int last_frame_width;
+    int last_frame_height;
+    CodecType last_frame_codec;
+
     FrameData* pending_ctx;
     int frames_received;
     int bytes_transferred;
@@ -86,22 +76,20 @@ struct VideoContext {
 
     clock last_iframe_request_timer;
 
-    double target_mbps;
-    int bucket;  // = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
-    int nack_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
-    double seconds_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
-
     // Loading animation data
     int loading_index;
     clock last_loading_frame_timer;
+    bool has_video_rendered_yet;
 
     // Context of the frame that is currently being rendered
     FrameData* render_context;
     bool pushing_render_context;
-};
 
-// mbps that currently works
-volatile double working_mbps;
+    // Statistics calculator
+    clock network_statistics_timer;
+    NetworkStatistics network_statistics;
+    bool statistics_initialized;
+};
 
 /*
 ============================
@@ -166,20 +154,20 @@ VideoContext* init_video() {
     // Initialize everything
     video_context->ring_buffer =
         init_ring_buffer(PACKET_VIDEO, RECV_FRAMES_BUFFER_SIZE, nack_packet);
-    working_mbps = STARTING_BITRATE;
-    has_video_rendered_yet = false;
+    video_context->last_frame_width = -1;
+    video_context->last_frame_height = -1;
+    video_context->last_frame_codec = CODEC_TYPE_UNKNOWN;
+    video_context->has_video_rendered_yet = false;
     video_context->sws = NULL;
-    client_max_bitrate = STARTING_BITRATE;
-    video_context->target_mbps = STARTING_BITRATE;
     video_context->pending_ctx = NULL;
     video_context->frames_received = 0;
     video_context->bytes_transferred = 0;
     video_context->last_statistics_id = 1;
     video_context->last_rendered_id = 0;
     video_context->most_recent_iframe = -1;
-    video_context->bucket = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
     video_context->render_context = NULL;
     video_context->pushing_render_context = false;
+    video_context->statistics_initialized = false;
 
     start_timer(&video_context->last_iframe_request_timer);
 
@@ -201,6 +189,7 @@ void destroy_video(VideoContext* video_context) {
     destroy_ring_buffer(video_context->ring_buffer);
     video_context->ring_buffer = NULL;
 
+    // Destroy the ffmpeg decoder, if any exists
     if (video_context->decoder) {
         WhistThread destroy_decoder_thread = whist_create_thread(
             multithreaded_destroy_decoder, "multithreaded_destroy_decoder", video_context->decoder);
@@ -208,13 +197,11 @@ void destroy_video(VideoContext* video_context) {
         video_context->decoder = NULL;
     }
 
-    // Reset globals
-    server_width = -1;
-    server_height = -1;
-    server_codec_type = CODEC_TYPE_UNKNOWN;
-
-    // Mark as not rendered now
-    has_video_rendered_yet = false;
+    // Destroy the sws context, if any exists
+    if (video_context->sws) {
+        sws_freeContext(video_context->sws);
+        video_context->sws = NULL;
+    }
 
     // Free the video context
     free(video_context);
@@ -480,7 +467,7 @@ int render_video(VideoContext* video_context) {
         last_rendered_time = server_timestamp;
         log_double_statistic(VIDEO_E2E_LATENCY, (double)(e2e_latency / 1000));
 
-        has_video_rendered_yet = true;
+        video_context->has_video_rendered_yet = true;
 
         // Track time between consecutive frames
         static clock last_frame_timer;
@@ -509,6 +496,14 @@ int render_video(VideoContext* video_context) {
     return 0;
 }
 
+bool has_video_rendered_yet(VideoContext* video_context) {
+    return video_context->has_video_rendered_yet;
+}
+
+NetworkStatistics get_video_network_statistics(VideoContext* video_context) {
+    return video_context->network_statistics;
+}
+
 /*
 ============================
 Private Function Implementations
@@ -523,8 +518,9 @@ void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame) {
         Arguments:
             frame (VideoFrame*): next frame to render
     */
-    if (frame->width == server_width && frame->height == server_height &&
-        frame->codec_type == server_codec_type) {
+    if (frame->width == video_context->last_frame_width &&
+        frame->height == video_context->last_frame_height &&
+        frame->codec_type == video_context->last_frame_codec) {
         // The width/height/codec are the same, so there's nothing to change
         return;
     }
@@ -537,9 +533,9 @@ void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame) {
     LOG_INFO(
         "Updating client rendering to match server's width and "
         "height and codec! "
-        "From %dx%d, codec %d to %dx%d, codec %d",
-        server_width, server_height, server_codec_type, frame->width, frame->height,
-        frame->codec_type);
+        "From %dx%d (codec %d), to %dx%d (codec %d)",
+        video_context->last_frame_width, video_context->last_frame_height,
+        video_context->last_frame_codec, frame->width, frame->height, frame->codec_type);
     if (video_context->decoder) {
         WhistThread destroy_decoder_thread = whist_create_thread(
             multithreaded_destroy_decoder, "multithreaded_destroy_decoder", video_context->decoder);
@@ -554,10 +550,9 @@ void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame) {
     }
     video_context->decoder = decoder;
 
-    server_width = frame->width;
-    server_height = frame->height;
-    server_codec_type = frame->codec_type;
-    output_codec_type = frame->codec_type;
+    video_context->last_frame_width = frame->width;
+    video_context->last_frame_height = frame->height;
+    video_context->last_frame_codec = frame->codec_type;
 }
 
 void update_sws_context(VideoContext* video_context, Uint8** data, int* linesize, int width,
@@ -590,8 +585,11 @@ void update_sws_context(VideoContext* video_context, Uint8** data, int* linesize
         cached_height = height;
 
         // No matter what, we now should destroy the old context if it exists
-        if (video_context->sws) {
+        if (static_data[0] != NULL) {
             av_freep(&static_data[0]);
+            static_data[0] = NULL;
+        }
+        if (video_context->sws) {
             sws_freeContext(video_context->sws);
             video_context->sws = NULL;
         }
@@ -621,38 +619,30 @@ void update_sws_context(VideoContext* video_context, Uint8** data, int* linesize
 }
 
 void calculate_statistics(VideoContext* video_context) {
-    static clock statistics_timer;
-    static BitrateStatistics stats;
-    static Bitrates new_bitrates;
-
-    static bool statistics_initialized = false;
-    if (!statistics_initialized) {
-        start_timer(&statistics_timer);
-        statistics_initialized = true;
+    if (!video_context->statistics_initialized) {
+        start_timer(&video_context->network_statistics_timer);
+        video_context->statistics_initialized = true;
     }
 
     RingBuffer* ring_buffer = video_context->ring_buffer;
     // do some calculation
     // Update mbps every STATISTICS_SECONDS seconds
 #define STATISTICS_SECONDS 5
-    if (get_timer(statistics_timer) > STATISTICS_SECONDS) {
-        stats.num_nacks_per_second = ring_buffer->num_packets_nacked / STATISTICS_SECONDS;
-        stats.num_received_packets_per_second =
+    if (get_timer(video_context->network_statistics_timer) > STATISTICS_SECONDS) {
+        NetworkStatistics network_statistics = {0};
+        network_statistics.num_nacks_per_second =
+            ring_buffer->num_packets_nacked / STATISTICS_SECONDS;
+        network_statistics.num_received_packets_per_second =
             ring_buffer->num_packets_received / STATISTICS_SECONDS;
-        stats.num_rendered_frames_per_second =
+        network_statistics.num_rendered_frames_per_second =
             ring_buffer->num_frames_rendered / STATISTICS_SECONDS;
+        network_statistics.statistics_gathered = true;
+        video_context->network_statistics = network_statistics;
 
-        new_bitrates = calculate_new_bitrate(stats);
-        if (new_bitrates.bitrate != client_max_bitrate ||
-            new_bitrates.burst_bitrate != max_burst_bitrate) {
-            client_max_bitrate = max(min(new_bitrates.bitrate, MAXIMUM_BITRATE), MINIMUM_BITRATE);
-            max_burst_bitrate = new_bitrates.burst_bitrate;
-            update_bitrate = true;
-        }
         ring_buffer->num_packets_nacked = 0;
         ring_buffer->num_packets_received = 0;
         ring_buffer->num_frames_rendered = 0;
-        start_timer(&statistics_timer);
+        start_timer(&video_context->network_statistics_timer);
     }
 }
 
@@ -675,6 +665,8 @@ void try_recovering_missing_packets_or_frames(VideoContext* video_context) {
         next_to_render_staleness = get_timer(ctx->frame_creation_timer);
     }
 
+    static bool already_logged_iframe_request = false;
+
     // If nacking has failed to recover the packets we need,
     if (!nacking_succeeded
         // Or if we're more than MAX_UNSYNCED_FRAMES frames out-of-sync,
@@ -687,22 +679,34 @@ void try_recovering_missing_packets_or_frames(VideoContext* video_context) {
         // Throttle the requests to prevent network upload saturation, however
         if (get_timer(video_context->last_iframe_request_timer) >
             IFRAME_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
-            WhistClientMessage wcmsg = {0};
+            int last_failed_id = max(next_render_id, video_context->ring_buffer->max_id - 1);
             // Send a video packet stream reset request
+            WhistClientMessage wcmsg = {0};
             wcmsg.type = MESSAGE_STREAM_RESET_REQUEST;
             wcmsg.stream_reset_data.type = PACKET_VIDEO;
-            wcmsg.stream_reset_data.last_failed_id =
-                max(next_render_id, video_context->ring_buffer->max_id - 1);
+            wcmsg.stream_reset_data.last_failed_id = last_failed_id;
             send_wcmsg(&wcmsg);
-            LOG_INFO(
-                "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
-                "and the frame we're trying to render has been alive for %fms. "
-                "An I-Frame is now being requested to catch-up.",
-                video_context->ring_buffer->max_id,
-                video_context->ring_buffer->max_id - video_context->last_rendered_id,
-                next_to_render_staleness * MS_IN_SECOND);
+
+            // If we haven't already logged the iframe request,
+            // Logged the iframe request
+            if (!already_logged_iframe_request) {
+                LOG_INFO(
+                    "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
+                    "and the frame we're trying to render has been alive for %fms. "
+                    "An I-Frame is now being requested to catch-up.",
+                    video_context->ring_buffer->max_id,
+                    video_context->ring_buffer->max_id - video_context->last_rendered_id,
+                    next_to_render_staleness * MS_IN_SECOND);
+#if !LOG_VIDEO
+                // Prevent logging every iframe requests, when LOG_VIDEO is false
+                already_logged_iframe_request = true;
+#endif
+            }
+
             start_timer(&video_context->last_iframe_request_timer);
         }
+    } else {
+        already_logged_iframe_request = false;
     }
 }
 

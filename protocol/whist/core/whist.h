@@ -144,23 +144,6 @@ Defines
 // Used to throttle resize event spam.
 #define WINDOW_RESIZE_MESSAGE_INTERVAL 200
 
-// Max/Min/Starting Bitrates/Burst Bitrates
-
-#define MAXIMUM_BITRATE 30000000
-#define MINIMUM_BITRATE 2000000
-#define STARTING_BITRATE_RAW 15400000
-#define STARTING_BITRATE (min(max(STARTING_BITRATE_RAW, MINIMUM_BITRATE), MAXIMUM_BITRATE))
-
-#define MAXIMUM_BURST_BITRATE 200000000
-#define MINIMUM_BURST_BITRATE 4000000
-#define STARTING_BURST_BITRATE_RAW 100000000
-#define STARTING_BURST_BITRATE \
-    (min(max(STARTING_BURST_BITRATE_RAW, MINIMUM_BURST_BITRATE), MAXIMUM_BURST_BITRATE))
-
-// The FEC Ratio to use on all packets
-// (Only used for testing phase of FEC)
-// This refers to the percentage of packets that will be FEC packets
-#define FEC_PACKET_RATIO 0.0
 // Maximum allowed FEC ratio. Used for allocation of static buffers
 // Don't let this get too close to 1, e.g. 0.99, or memory usage will explode
 #define MAX_FEC_RATIO 0.7
@@ -174,10 +157,8 @@ Defines
 #define MAX_SCREEN_WIDTH 8192
 #define MAX_SCREEN_HEIGHT 4096
 
-#define AUDIO_BITRATE 128000
-
 // Set max FPS to 60, or 16ms
-#define FPS 60
+#define MAX_FPS 60
 // Once 22ms has passed, we can presume no frame will be coming anymore,
 // so this starts to send identical frames to keep up with the min fps
 #define MIN_FPS 45
@@ -256,6 +237,17 @@ typedef enum CodecType {
     CODEC_TYPE_H265 = 265,
     CODEC_TYPE_MAKE_32 = 0x7FFFFFFF
 } CodecType;
+
+// TODO: Move to <whist/network/network_algorithm.h>
+typedef struct {
+    int fps;
+    int bitrate;
+    int burst_bitrate;
+    double audio_fec_ratio;
+    double video_fec_ratio;
+    CodecType desired_codec;
+} NetworkSettings;
+#include <whist/network/network_algorithm.h>
 
 /**
  * @brief           Enum indicating whether we are using the Nvidia or X11 capture device. If we
@@ -601,12 +593,12 @@ typedef enum WhistClientMessageType {
                                ///< valid in FractClientMessage.
     MESSAGE_MOUSE_MOTION = 5,  ///< `mouseMotion` WhistMouseMotionMessage is
 
-    MESSAGE_MULTIGESTURE = 6,       ///< Gesture Event
-    MESSAGE_RELEASE = 7,            ///< Message instructing the host to release all input
-                                    ///< that is currently pressed.
-    MESSAGE_STOP_STREAMING = 105,   ///< Message asking server to stop encoding/sending frames
-    MESSAGE_START_STREAMING = 106,  ///< Message asking server to resume encoding/sending frames
-    MESSAGE_MBPS = 107,             ///< `mbps` double is valid in FractClientMessage.
+    MESSAGE_MULTIGESTURE = 6,        ///< Gesture Event
+    MESSAGE_RELEASE = 7,             ///< Message instructing the host to release all input
+                                     ///< that is currently pressed.
+    MESSAGE_STOP_STREAMING = 105,    ///< Message asking server to stop encoding/sending frames
+    MESSAGE_START_STREAMING = 106,   ///< Message asking server to resume encoding/sending frames
+    MESSAGE_NETWORK_SETTINGS = 107,  ///< `network_settings` struct is valid in FractClientMessage.
     MESSAGE_UDP_PING = 108,
     MESSAGE_TCP_PING = 109,
     MESSAGE_DIMENSIONS = 110,  ///< `dimensions.width` int and `dimensions.height`
@@ -663,21 +655,26 @@ typedef struct WhistClientMessage {
     WhistClientMessageType type;  ///< Input message type.
     unsigned int id;
     union {
-        WhistKeyboardMessage keyboard;                  ///< Keyboard message.
-        WhistMouseButtonMessage mouseButton;            ///< Mouse button message.
-        WhistMouseWheelMessage mouseWheel;              ///< Mouse wheel message.
-        WhistMouseMotionMessage mouseMotion;            ///< Mouse motion message.
-        WhistDiscoveryRequestMessage discoveryRequest;  ///< Discovery request message.
+        // MESSAGE_DISCOVERY_REQUEST
+        WhistDiscoveryRequestMessage discoveryRequest;
+
+        // MESSAGE_KEYBOARD
+        WhistKeyboardMessage keyboard;
+
+        // MESSAGE_MOUSE_BUTTON
+        WhistMouseButtonMessage mouseButton;
+
+        // MESSAGE_MOUSE_WHEEL
+        WhistMouseWheelMessage mouseWheel;
+
+        // MESSAGE_MOUSE_MOTION
+        WhistMouseMotionMessage mouseMotion;
 
         // MESSAGE_MULTIGESTURE
         WhistMultigestureMessage multigesture;  ///< Multigesture message.
 
-        // MESSAGE_MBPS
-        struct {
-            int bitrate;
-            int burst_bitrate;
-            double fec_packet_ratio;
-        } bitrate_data;
+        // MESSAGE_NETWORK_SETTINGS
+        NetworkSettings network_settings;
 
         // MESSAGE_UDP_PING or MESSAGE_TCP_PING
         struct {
@@ -690,7 +687,6 @@ typedef struct WhistClientMessage {
             int width;
             int height;
             int dpi;
-            CodecType codec_type;
         } dimensions;
 
         // MESSAGE_STREAM_RESET_REQUEST
@@ -982,6 +978,7 @@ int bit_array_test_bit(const BitArray* const ba, const unsigned int bit);
  */
 char* whist_git_revision();
 
+// TODO: Resolve circular references
 #include "whist_frame.h"
 
 #endif  // WHIST_H
