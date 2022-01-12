@@ -56,13 +56,13 @@ func (mandelbox *mandelboxData) StartLoadingUserConfigs() (chan<- types.ConfigEn
 	return configEncryptionTokenChan, errorChan
 }
 
-// loadUserConfigs does the "real work" of LoadUserConfigs.
+// loadUserConfigs does the "real work" of LoadUserConfigs. For each deviation from the happy path in this function, we need to decide whether it is a warning or an error — warnings get logged here, and errors get sent back.
 func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan types.ConfigEncryptionToken, errorChan chan<- error) {
 	defer close(errorChan)
 
 	// If userID is not set, then we don't retrieve configs from s3
 	if len(mandelbox.GetUserID()) == 0 {
-		errorChan <- utils.MakeError("User ID is not set for mandelbox %s. Skipping config download.", mandelbox.GetID())
+		logger.Warningf("User ID is not set for mandelbox %s. Skipping config download.", mandelbox.GetID())
 		return
 	}
 
@@ -77,11 +77,11 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan types.ConfigEnc
 	// download a config that we think is the most likely to be the one we need.
 	predictedConfig, err := mandelbox.predictConfigToDownload(s3Client)
 	if err != nil {
-		errorChan <- utils.MakeError("Error retrieving existing configs for user %s from S3: %s", mandelbox.GetUserID(), err)
+		errorChan <- utils.MakeError("Error retrieving existing configs for user %s from S3 for mandelbox %s: %s", mandelbox.GetUserID(), mandelbox.GetID(), err)
 		return
 	}
 	if predictedConfig == nil {
-		errorChan <- utils.MakeError("There are no existing configs in s3 for user %s", mandelbox.GetUserID())
+		logger.Warningf("There are no existing configs in s3 for user %s for mandelbox %s", mandelbox.GetUserID(), mandelbox.GetID())
 		return
 	}
 
