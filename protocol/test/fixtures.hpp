@@ -2,8 +2,10 @@
 #define TEST_FIXTURES_HPP
 
 #ifdef _WIN32
-#define _CRT_SECURE_NO_WARNINGS  // stupid Windows warnings
-#endif
+#ifndef _CRT_SECURE_NO_WARNINGS
+#error "_CRT_SECURE_NO_WARNINGS must be defined to include this file"
+#endif  // _CRT_SECURE_NO_WARNINGS
+#endif  // _WIN32
 
 #include <iostream>
 #include <fstream>

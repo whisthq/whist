@@ -21,6 +21,10 @@ Includes
 ============================
 */
 
+#ifdef _WIN32
+#define _CRT_SECURE_NO_WARNINGS  // stupid Windows warnings
+#endif
+
 #include <algorithm>
 #include <iterator>
 #include <gtest/gtest.h>
