@@ -3,7 +3,7 @@ package subscriptions // import "github.com/whisthq/whist/backend/services/subsc
 import (
 	"time"
 
-	mandelboxtypes "github.com/whisthq/whist/backend/core-go/types"
+	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
 )
 
 // HasuraParams contains the Heroku URL and Admin AccessKey to pass
