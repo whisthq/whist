@@ -24,7 +24,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Dependency #1 -- OpenSSL (X64)
+  # Dependency #1 -- OpenSSL (x64)
   build-and-publish-openssl-x64:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
@@ -34,9 +34,9 @@ jobs:
         config:
           - name: "OpenSSL (Windows)"
             os: windows-2019
-          - name: "OpenSSL (macOS X64)"
+          - name: "OpenSSL (macOS x64)"
             os: macos-10.15
-          - name: "OpenSSL (Linux Ubuntu)"
+          - name: "OpenSSL (Ubuntu Linux)"
             os: ubuntu-20.04
 
     env:
@@ -88,7 +88,8 @@ jobs:
       - name: Build Whist OpenSSL on macOS
         if: runner.os == 'macOS'
         env:
-          CMAKE_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+          CFLAGS: "-mmacosx-version-min=10.13 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+          CXXFLAGS: "-mmacosx-version-min=10.13 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
         run: |
           # configure and build OpenSSL with -O3 flag
           ./config --release
@@ -97,7 +98,7 @@ jobs:
       ###################################################################################
       ################################# LINUX STEPS START ###############################
 
-      - name: Build Whist OpenSSL on Linux Ubuntu
+      - name: Build Whist OpenSSL on Ubuntu Linux
         if: runner.os == 'Linux'
         env:
           DEBIAN_FRONTEND: "noninteractive"
@@ -167,9 +168,9 @@ jobs:
   #######################################################################################
   #######################################################################################
 
-  # Dependency #2 -- OpenSSL (ARM64)
+  # Dependency #2 -- OpenSSL (arm64)
   build-and-publish-openssl-arm64:
-    name: "OpenSSL (macOS ARM64)"
+    name: "OpenSSL (macOS arm64)"
     runs-on: [self-hosted, macOS, ARM64]
     defaults:
       run:
@@ -204,8 +205,8 @@ jobs:
 
       - name: Build Whist OpenSSL on macOS
         env:
-          CMAKE_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
-          CMAKE_OSX_DEPLOYMENT_TARGET: "11.0" # Oldest supported arm64 macOS version, to comply with older OSes
+          CFLAGS: "-mmacosx-version-min=11.0 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+          CXXFLAGS: "-mmacosx-version-min=11.0 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
         run: |
           # configure and build OpenSSL with -O3 flag
           ./config --release
@@ -247,7 +248,7 @@ jobs:
   #######################################################################################
   #######################################################################################
 
-  # Dependency #3 -- Sentry (X64)
+  # Dependency #3 -- Sentry (x64)
   build-and-publish-sentry-x64:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
@@ -257,9 +258,9 @@ jobs:
         config:
           - name: "Sentry (Windows)"
             os: windows-2019
-          - name: "Sentry (macOS X64)"
+          - name: "Sentry (macOS x64)"
             os: macos-10.15
-          - name: "Sentry (Linux Ubuntu)"
+          - name: "Sentry (Ubuntu Linux)"
             os: ubuntu-20.04
 
     env:
@@ -329,6 +330,7 @@ jobs:
         if: runner.os == 'macOS'
         env:
           CMAKE_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+          CMAKE_OSX_DEPLOYMENT_TARGET: "10.13"
         run: |
           # configure and build Sentry Native
           cmake -S . \
@@ -337,7 +339,10 @@ jobs:
                 -D SENTRY_BUILD_SHARED_LIBS=ON \
                 -D SENTRY_BUILD_RUNTIMESTATIC=ON \
                 -D SENTRY_BUILD_TESTS=OFF \
-                -D SENTRY_BACKEND=crashpad
+                -D SENTRY_BACKEND=crashpad \
+                -D CMAKE_OSX_SYSROOT="${{ env.CMAKE_OSX_SYSROOT }}" \
+                -D CMAKE_OSX_DEPLOYMENT_TARGET="${{ env.CMAKE_OSX_DEPLOYMENT_TARGET }}"
+
           cd build
           make -j
 
@@ -348,7 +353,7 @@ jobs:
       ###################################################################################
       ################################# LINUX STEPS START ###############################
 
-      - name: Build Sentry Native on Linux Ubuntu
+      - name: Build Sentry Native on Ubuntu Linux
         if: runner.os == 'Linux'
         env:
           DEBIAN_FRONTEND: "noninteractive"
@@ -426,9 +431,9 @@ jobs:
   #######################################################################################
   #######################################################################################
 
-  # Dependency #3 -- Sentry (ARM64)
+  # Dependency #3 -- Sentry (arm64)
   build-and-publish-sentry-arm64:
-    name: "Sentry (macOS ARM64)"
+    name: "Sentry (macOS arm64)"
     runs-on: [self-hosted, macOS, ARM64]
     defaults:
       run:
@@ -472,6 +477,9 @@ jobs:
                 -D SENTRY_BUILD_RUNTIMESTATIC=ON \
                 -D SENTRY_BUILD_TESTS=OFF \
                 -D SENTRY_BACKEND=crashpad
+                -D CMAKE_OSX_SYSROOT="${{ env.CMAKE_OSX_SYSROOT }}" \
+                -D CMAKE_OSX_DEPLOYMENT_TARGET="${{ env.CMAKE_OSX_DEPLOYMENT_TARGET }}"
+
           cd build
           make -j
 
