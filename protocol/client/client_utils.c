@@ -774,9 +774,10 @@ void send_desired_network_settings(NetworkSettings desired_network_settings) {
         "FEC / Codec %s / %dFPS",
         desired_network_settings.bitrate / 1024.0 / 1024.0,
         desired_network_settings.burst_bitrate / 1024.0 / 1024.0,
-        desired_network_settings.desired_codec == CODEC_TYPE_H265 ? "h265" : "h264",
         desired_network_settings.audio_fec_ratio * 100.0,
-        desired_network_settings.video_fec_ratio * 100.0, desired_network_settings.fps);
+        desired_network_settings.video_fec_ratio * 100.0,
+        desired_network_settings.desired_codec == CODEC_TYPE_H265 ? "h265" : "h264",
+        desired_network_settings.fps);
 
     // Send off the network settings request
     WhistClientMessage wcmsg = {0};
