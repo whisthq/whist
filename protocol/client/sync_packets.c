@@ -206,9 +206,8 @@ int multithreaded_sync_udp_packets(void* opaque) {
                 break;
             }
             case PACKET_NOTIFICATION: {
-                // TODO(kmeng01) add statistic?
-                // TIME_RUN(display_notification(packet), -1, statistics_timer);
                 display_notification(packet);
+                log_double_statistic(NOTIFICATIONS_RECEIVED, 1.);
                 break;
             }
             default:
