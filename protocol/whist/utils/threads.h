@@ -1,6 +1,12 @@
 #ifndef WHIST_THREADS_H
 #define WHIST_THREADS_H
 
+/*
+============================
+Includes
+============================
+*/
+
 // So that SDL sees symbols such as memcpy
 #ifdef _WIN32
 #include <windows.h>
@@ -14,6 +20,12 @@
 
 #include "atomic.h"
 
+/*
+============================
+Defines
+============================
+*/
+
 typedef SDL_mutex* WhistMutex;
 typedef SDL_cond* WhistCondition;
 typedef SDL_sem* WhistSemaphore;
@@ -26,6 +38,28 @@ typedef enum WhistThreadPriority {
     WHIST_THREAD_PRIORITY_HIGH = SDL_THREAD_PRIORITY_HIGH,
     WHIST_THREAD_PRIORITY_REALTIME = SDL_THREAD_PRIORITY_TIME_CRITICAL
 } WhistThreadPriority;
+
+/**
+ * Type used with whist_once().
+ *
+ * MUST be initialised with WHIST_ONCE_INIT.
+ */
+typedef struct {
+    atomic_int already_finished;
+    atomic_int already_tried_running;
+} WhistOnce;
+
+/**
+ * Static initialiser for WhistOnce.
+ */
+#define WHIST_ONCE_INIT \
+    { ATOMIC_VAR_INIT(0), ATOMIC_VAR_INIT(0) }
+
+/*
+============================
+Public Functions
+============================
+*/
 
 void whist_init_multithreading();
 
@@ -56,33 +90,6 @@ void whist_wait_semaphore(WhistSemaphore semaphore);
 void whist_destroy_semaphore(WhistSemaphore semaphore);
 
 /**
- * @brief Type used with whist_once().
- *
- * MUST be initialised with WHIST_ONCE_INIT.
- */
-typedef struct {
-    // Bits 0-28 = number of waiters.
-    // Bit 29 = init running.
-    // Bit 30 = init complete.
-    atomic_int state;
-#if _MSC_VER
-    struct {
-        void* value;
-    } semaphore;
-#elif __cplusplus
-    std::atomic<void*> semaphore;
-#else /* C11 */
-    void* _Atomic semaphore;
-#endif
-} WhistOnce;
-
-/**
- * Static initialiser for WhistOnce.
- */
-#define WHIST_ONCE_INIT \
-    { ATOMIC_VAR_INIT(0), ATOMIC_VAR_INIT(NULL) }
-
-/**
  * @brief Ensure that a function has run exactly once.
  *
  * When this function returns, init_function will have been called exactly
@@ -92,34 +99,9 @@ typedef struct {
  * approximately zero - a single load and comparison.
  *
  * This can be useful to perform some sort of global initialisation step
- * for a component without requiring any additional user interaction.  An
- * alternative is to provide a global function and require that the user
- * call it and allow it to complete before calling any other functions in
- * that component.  The tradeoff here is between requiring callers to
- * always remember the global function versus having the once call on
- * every new entrypoint to the component.
+ * for a component without requiring any additional user interaction.
  *
- * With a global init function:
- * @code{.c}
- * void something_init(void) {
- *     precalculate_something_tables();
- *     create_something_mutexes();
- * }
- *
- * void create_something(...) {
- *     ...
- * }
- *
- * void use_something(...) {
- *     ...
- * }
- *
- * // Then, in the main function of every program and the constructor of
- * // every library using the something component:
- * something_init();
- * @endcode
- *
- * Using whist_once():
+ * Usage
  * @code{.c}
  * static WhistOnce something_once = WHIST_ONCE_INIT;
  *
@@ -142,6 +124,7 @@ typedef struct {
  *
  * @param once           WhistOnce instance.
  *                       This MUST be initialised to WHIST_ONCE_INIT before use!
+ *
  * @param init_function  Function to be called.
  */
 void whist_once(WhistOnce* once, void (*init_function)(void));

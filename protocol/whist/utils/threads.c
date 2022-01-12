@@ -160,106 +160,29 @@ void whist_wait_semaphore(WhistSemaphore semaphore) {
 
 void whist_destroy_semaphore(WhistSemaphore semaphore) { SDL_DestroySemaphore(semaphore); }
 
-#define ONCE_WAITERS (0x1fffffff)
-#define ONCE_RUNNING (0x20000000)
-#define ONCE_COMPLETE (0x40000000)
-
 void whist_once(WhistOnce *once, void (*init_function)(void)) {
-    int state, waiters;
-
-    state = atomic_load(&once->state);
-    if (state & ONCE_COMPLETE) {
+    int already_finished = atomic_load(&once->already_finished);
+    if (already_finished > 0) {
         // Already done, return immediately.
         return;
     }
 
-    // Atomically add ourselves to the wait list.
-    state = atomic_fetch_add(&once->state, 1);
-    if (state & ONCE_COMPLETE) {
-        // It just completed.
-        if (state & ONCE_RUNNING) {
-            // Someone will still be able to see the add we just made, so
-            // we need to wait anyway.
-        } else {
-            // Also all other threads had finished, so the semaphore has
-            // already been destroyed and we don't want to wait.
-            atomic_fetch_sub(&once->state, 1);
-            return;
-        }
-    }
+    // Atomically add ourselves to the "tried running" list
+    int already_tried_running = atomic_fetch_add(&once->already_tried_running, 1);
 
-    // Now try to load the semaphore.  If it isn't set yet, attempt to be
-    // the first to create it.
-    WhistSemaphore sem;
-    bool first;
-#if _MSC_VER
-    sem = once->semaphore.value;
-    if (!sem) {
-        sem = whist_create_semaphore(0);
-        void *result = InterlockedCompareExchangePointer(&once->semaphore.value, sem, NULL);
-        if (result == NULL) {
-            first = true;
-        } else {
-            first = false;
-            whist_destroy_semaphore(sem);
-            sem = result;
-        }
-    } else {
-        first = false;
-    }
-#else
-    sem = atomic_load(&once->semaphore);
-    if (!sem) {
-        sem = whist_create_semaphore(0);
-        void *swap = NULL;
-        first = atomic_compare_exchange_strong(&once->semaphore, &swap, sem);
-        if (!first) {
-            whist_destroy_semaphore(sem);
-            sem = swap;
-        }
-    } else {
-        first = false;
-    }
-#endif
-
-    if (first) {
-        // We won the race, so set the flag and run the init function.
-        atomic_fetch_or(&once->state, ONCE_RUNNING);
+    if (already_tried_running == 0) {
+        // If we were the first one to the party,
+        // Call the init function
         init_function();
-        // Mark the state as completed, so that new threads entering
-        // don't need to do anything.
-        atomic_fetch_or(&once->state, ONCE_COMPLETE);
+        // Then mark as finished
+        atomic_fetch_add(&once->already_finished, 1);
     } else {
-        // We lost the race, so we need to wait.
-        whist_wait_semaphore(sem);
-    }
-
-    // Atomically remove ourselves from the wait list.
-    bool removed;
-    do {
-        state = atomic_load(&once->state);
-        waiters = state & ONCE_WAITERS;
-
-        int next_state = state - 1;
-        if (waiters == 1) {
-            // If we are the last waiter we must also unset the running
-            // flag so that no more threads can start waiting.  If someone
-            // else enters while we try this, then the atomic add above
-            // will either change the state so that our compare-exchange
-            // fails with the extra waiter and we will post the semaphore
-            // to keep them awake, or they will see the running flag unset
-            // and therefore not try to wait.
-            next_state = (state - 1) & ~ONCE_RUNNING;
+        // Otherwise, if we were late to the party,
+        // wait until the first one to the party has marked the finished variable
+        while (atomic_load(&once->already_finished) == 0) {
+            whist_sleep(1);
         }
-        removed = atomic_compare_exchange_strong(&once->state, &state, next_state);
-    } while (!removed);
-
-    if (waiters > 1) {
-        // Someone else was waiting (or is about to wait), so wake them up.
-        whist_post_semaphore(sem);
-    } else {
-        // We are definitely last and we should switch off the lights on
-        // our way out.
-        whist_destroy_semaphore(sem);
     }
+
+    // Done!
 }
