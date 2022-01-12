@@ -67,9 +67,7 @@ def start_host_service_on_instance(pexpect_process):
         pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
     """
     print("Starting the host service on the EC2 instance...")
-    command = (
-        "sudo rm -rf /whist && cd ~/whist/backend/host-service && make run | tee ~/host_service.log"
-    )
+    command = "sudo rm -rf /whist && cd ~/whist/backend/services && make run_host_service | tee ~/host_service.log"
     pexpect_process.sendline(command)
     pexpect_process.expect("Entering event loop...")
     print("Host service is ready!")

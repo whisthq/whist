@@ -113,34 +113,10 @@ updates:
     open-pull-requests-limit: 10
 
   #####################################################
-  ###################### Core-go #####################
+  ###################### Services #####################
 
   - package-ecosystem: "gomod"
-    directory: "/backend/core-go" # looks for go.mod and go.sum in this directory
-    schedule:
-      interval: "monthly" # runs on the first day of each month
-    ignore:
-      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-        update-types: ["version-update:semver-patch"]
-    open-pull-requests-limit: 10
-
-  #####################################################
-  #################### Host-Service ###################
-
-  - package-ecosystem: "gomod"
-    directory: "/backend/host-service" # looks for go.mod and go.sum in this directory
-    schedule:
-      interval: "monthly" # runs on the first day of each month
-    ignore:
-      - dependency-name: "*" # ignore all micro/patch updates for all dependencies
-        update-types: ["version-update:semver-patch"]
-    open-pull-requests-limit: 10
-
-  #####################################################
-  ################## Scaling-Service ##################
-
-  - package-ecosystem: "gomod"
-    directory: "/backend/scaling-service" # looks for go.mod and go.sum in this directory
+    directory: "/backend/services" # looks for go.mod and go.sum in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
     ignore:

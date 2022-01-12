@@ -10,19 +10,17 @@
 # Order is important. The last matching pattern has the most precedence.
 # The folders are ordered as follows:
 
-/.github/                        @philippemnoel @rpadaki @npip99
-/frontend/client-applications/   @mingy98 @rpadaki @mauaraujo
-/config/                         @philippemnoel @sardination @rpadaki
-/frontend/core-ts/               @mingy98 @owenniles @sardination
-/backend/core-go/                @djsavvy @rpadaki @mauaraujo
-/backend/host-service/           @djsavvy @rpadaki @mauaraujo
-/backend/microservices/          @owenniles @rpadaki @philippemnoel
-/backend/scaling-service/        @djsavvy @rpadaki @mauaraujo
-/backend/webserver/              @djsavvy @owenniles @mauaraujo
-/host-setup/                     @rpadaki @djsavvy @philippemnoel
-/mandelboxes/                    @djsavvy @rpadaki @philippemnoel
-/protocol/                       @jkarthic @npip99 @rpadaki @sardination
-/frontend/website/               @mingy98 @rpadaki @philippemnoel
+/.github/                           @philippemnoel @rpadaki @npip99
+/frontend/client-applications/      @mingy98 @rpadaki @mauaraujo
+/config/                            @philippemnoel @sardination @rpadaki
+/frontend/core-ts/                  @mingy98 @owenniles @sardination
+/backend/services/                  @djsavvy @rpadaki @mauaraujo
+/backend/microservices/             @owenniles @rpadaki @philippemnoel
+/backend/webserver/                 @djsavvy @owenniles @mauaraujo
+/host-setup/                        @rpadaki @djsavvy @philippemnoel
+/mandelboxes/                       @djsavvy @rpadaki @philippemnoel
+/protocol/                          @jkarthic @npip99 @rpadaki @sardination
+/frontend/website/                  @mingy98 @rpadaki @philippemnoel
 
 # In each subsection folders are ordered first by depth, then alphabetically.
 # This should make it easy to add new rules without breaking existing ones.

@@ -13,7 +13,7 @@ on:
       - dev
     paths:
       - ".github/workflows/whist-build-and-publish-documentation.yml"
-      - "backend/host-service/**"
+      - "backend/services/**"
       - "protocol/**"
       - "backend/webserver/**"
   push:
@@ -21,7 +21,7 @@ on:
       - dev
     paths:
       - ".github/workflows/whist-build-and-publish-documentation.yml"
-      - "backend/host-service/**"
+      - "backend/services/**"
       - "protocol/**"
       - "backend/webserver/**"
   workflow_dispatch:
@@ -59,70 +59,26 @@ jobs:
         run: ./notifications/setup_notifications.sh
 
       ##############################################################################
-      ############################## CORE-GO STEPS ############################
+      ########################### BACKEND SERVICES STEPS ###########################
 
       - name: Setup Go environment
         uses: actions/setup-go@v2.1.3
         with:
           go-version: "1.17"
 
-      - name: Build Core Go Documentation
-        working-directory: whist/backend/core-go
+      - name: Build Backend Services Documentation
+        working-directory: whist/backend/services
         run: make docs
 
       - name: Diff Old and New Documentation
-        id: core-go-diff
+        id: services-diff
         run: |
-          git diff --no-index whist/backend/core-go/build/docs docs/core-go && echo "No changes detected"
+          git diff --no-index whist/backend/services/build/docs docs/backend/services && echo "No changes detected"
           echo "::set-output name=changed::$?"
 
       - name: Copy New Core Go Documentation into the whisthq/docs Working Tree (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.core-go-diff.outputs.changed == true }}
-        run: rm -rf docs/core-go && cp -r whist/backend/core-go/build/docs docs/core-go
-
-      ##############################################################################
-      ############################## HOST-SERVICE STEPS ############################
-
-      - name: Setup Go environment
-        uses: actions/setup-go@v2.1.3
-        with:
-          go-version: "1.17"
-
-      - name: Build Host Service Documentation
-        working-directory: whist/backend/host-service
-        run: make docs
-
-      - name: Diff Old and New Documentation
-        id: host-service-diff
-        run: |
-          git diff --no-index whist/backend/host-service/build/docs docs/host-service && echo "No changes detected"
-          echo "::set-output name=changed::$?"
-
-      - name: Copy New Host-Service Documentation into the whisthq/docs Working Tree (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.host-service-diff.outputs.changed == true }}
-        run: rm -rf docs/host-service && cp -r whist/backend/host-service/build/docs docs/host-service
-
-      ##############################################################################
-      ############################## SCALING-SERVICE STEPS ############################
-
-      - name: Setup Go environment
-        uses: actions/setup-go@v2.1.3
-        with:
-          go-version: "1.17"
-
-      - name: Build Scaling Service Documentation
-        working-directory: whist/backend/scaling-service
-        run: make docs
-
-      - name: Diff Old and New Documentation
-        id: scaling-service-diff
-        run: |
-          git diff --no-index whist/backend/scaling-service/build/docs docs/scaling-service && echo "No changes detected"
-          echo "::set-output name=changed::$?"
-
-      - name: Copy New Scaling-Service Documentation into the whisthq/docs Working Tree (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.scaling-service-diff.outputs.changed == true }}
-        run: rm -rf docs/scaling-service && cp -r whist/backend/scaling-service/build/docs docs/scaling-service
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.services-diff.outputs.changed == true }}
+        run: rm -rf docs/backend/services && mkdir docs/backend && cp -r whist/backend/services/build/docs docs/backend/services
 
       ##############################################################################
       ################################ PROTOCOL STEPS ##############################
@@ -177,7 +133,7 @@ jobs:
       ################################# PUBLISH STEPS ##############################
 
       - name: Commit the Documentation Changes to whisthq/docs (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.host-service-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true || steps.webserver-diff.outputs.changed == true) }}
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.services-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true || steps.webserver-diff.outputs.changed == true) }}
         working-directory: docs
         run: |
           # Set the author of the commit in whisthq/docs to be the user
@@ -195,7 +151,7 @@ jobs:
           EOF
 
           # Stage, commit, and push documentation changes
-          git add host-service
+          git add services
           git commit -F - <<EOF
           Update Whist internal documentation (https://github.com/whisthq/whist/commit/${{ github.sha }})
           EOF
@@ -205,7 +161,7 @@ jobs:
       ##############################################################################
 
       - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.host-service-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true || steps.webserver-diff.outputs.changed == true) && failure() }}
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.services-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true || steps.webserver-diff.outputs.changed == true) && failure() }}
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
@@ -215,7 +171,7 @@ jobs:
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
       - name: Notify Slack on Workflow Success (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.host-service-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true || steps.webserver-diff.outputs.changed == true) && success() }}
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.services-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true || steps.webserver-diff.outputs.changed == true) && success() }}
         shell: python3 {0}
         run: |
           from notifications.slack_bot import slack_post
