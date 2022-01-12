@@ -14,8 +14,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
-	types "github.com/whisthq/whist/backend/services/host-service/mandelbox/types"
 	"github.com/whisthq/whist/backend/services/metadata"
+	types "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
@@ -106,7 +106,7 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 	encryptionInfo := <-tokenChan
 	// TODO: Verify non-empty and non-trivial
 	// Set config encryption token for the mandelbox
-	mandelbox.SetConfigEncryptionToken(cgtypes.ConfigEncryptionToken(encryptionInfo.Token))
+	mandelbox.SetConfigEncryptionToken(encryptionInfo.Token)
 
 	// TODO: More logic here
 
