@@ -10,6 +10,9 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/getsentry/sentry-go"
+	"github.com/whisthq/whist/backend/services/metadata"
+	"github.com/whisthq/whist/backend/services/metadata/aws"
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
@@ -25,9 +28,6 @@ func init() {
 	// It is more likely that logzio initialization would fail, So we initialize
 	// Sentry first.
 
-	// We declare error separately to avoid shadowing sentryTransport.
-	var err error
-
 	// Note that according to the Sentry Go documentation, if we run
 	// sentry.CaptureMessage or sentry.CaptureError on separate goroutines, they
 	// can overwrite each other's tags. The thread-safe solution is to use
@@ -39,11 +39,107 @@ func init() {
 	// imagine we would use local tags for) we just add in the text of the
 	// respective error message sent to Sentry. Alternatively, we might just be
 	// able to use sentry.WithScope(), but that is future work.
-	sentryTransport, err = initializeSentry()
+	// sentryTransport, err = initializeSentry()
+}
+
+func InitHostLogging() {
+	var err error
+	sentryTransport, err = initializeSentry(func(scope *sentry.Scope) {
+		// This function looks repetitive, but we can't refactor its functionality
+		// into a separate function because we want to defer sending the errors
+		// about being unable to set Sentry tags until after we have set all the
+		// ones we can.
+
+		if val, err := aws.GetAmiID(); err != nil {
+			defer Errorf("Unable to set Sentry tag aws.ami-id: %v", err)
+		} else {
+			scope.SetTag("aws.ami-id", string(val))
+			log.Printf("Set Sentry tag aws.ami-id: %s", val)
+		}
+
+		if val, err := aws.GetInstanceID(); err != nil {
+			defer Errorf("Unable to set Sentry tag aws.instance-id: %v", err)
+		} else {
+			scope.SetTag("aws.instance-id", string(val))
+			log.Printf("Set Sentry tag aws.instance-id: %s", val)
+		}
+
+		if val, err := aws.GetInstanceType(); err != nil {
+			defer Errorf("Unable to set Sentry tag aws.instance-type: %v", err)
+		} else {
+			scope.SetTag("aws.instance-type", string(val))
+			log.Printf("Set Sentry tag aws.instance-type: %s", val)
+		}
+
+		if val, err := aws.GetInstanceName(); err != nil {
+			defer Errorf("Unable to set Sentry tag aws.instance-name: %v", err)
+		} else {
+			scope.SetTag("aws.instance-name", string(val))
+			log.Printf("Set Sentry tag aws.instance-name: %s", val)
+		}
+
+		if val, err := aws.GetPlacementRegion(); err != nil {
+			defer Errorf("Unable to set Sentry tag aws.placement-region: %v", err)
+		} else {
+			scope.SetTag("aws.placement-region", string(val))
+			log.Printf("Set Sentry tag aws.placement-region: %s", val)
+		}
+
+		if val, err := aws.GetPublicIpv4(); err != nil {
+			defer Errorf("Unable to set Sentry tag aws.public-ipv4: %v", err)
+		} else {
+			scope.SetTag("aws.public-ipv4", val.String())
+			log.Printf("Set Sentry tag aws.public-ipv4: %s", val)
+		}
+	})
 	if err != nil {
 		// Error, don't Panic, since a Sentry outage should not bring down our
 		// entire service.
 		Errorf("Failed to initialize Sentry! Error: %s", err)
+	}
+
+	instanceID, _ := aws.GetInstanceID()
+	amiID, _ := aws.GetAmiID()
+
+	hostMsg = hostMessage{
+		AWSInstanceID: instanceID,
+		AWSAmiID:      amiID,
+		Environment:   metadata.GetAppEnvironment(),
+		message: message{
+			Message:      "",
+			Type:         "",
+			Component:    "backend",
+			SubComponent: "host-service",
+		},
+	}
+
+	if err != nil {
+		log.Print(utils.ColorRed(utils.Sprintf("Couldn't marshal payload for logz.io. Error: %s", err)))
+		return
+	}
+
+	logzioTransport, err = initializeLogzIO()
+	if err != nil {
+		// Error, don't Panic, since a logzio outage should not bring down our
+		// entire service.
+		Errorf("Failed to initialize LogzIO! Error: %s", err)
+	}
+}
+
+func InitScalingLogging() {
+	var err error
+	sentryTransport, err = initializeSentry(func(scope *sentry.Scope) {})
+	if err != nil {
+		// Error, don't Panic, since a Sentry outage should not bring down our
+		// entire service.
+		Errorf("Failed to initialize Sentry! Error: %s", err)
+	}
+
+	scalingMsg = message{
+		Message:      "",
+		Type:         "",
+		Component:    "backend",
+		SubComponent: "scaling-service",
 	}
 
 	logzioTransport, err = initializeLogzIO()
