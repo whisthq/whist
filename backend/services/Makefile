@@ -62,7 +62,7 @@ build: checkCI
 		-X 'github.com/whisthq/whist/backend/services/metadata/heroku.email=$(HEROKU_USER)'\
 		-X 'github.com/whisthq/whist/backend/services/metadata/heroku.apiKey=$(HEROKU_APIKEY)'\
 		-X 'github.com/whisthq/whist/backend/services/metadata/heroku.appNameOverride=$(HEROKU_APP_NAME_OVERRIDE)'\
-		" -o $(BUILD_FOLDER)/$(BINARY_NAME) .
+		" -o $(BUILD_FOLDER)/ ./...
 
 format:
 	(cd ~ && $(GOCMD) install golang.org/x/tools/cmd/goimports@latest)
