@@ -45,6 +45,9 @@ file(GLOB_RECURSE TEST_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/test/*.cpp)
 list(FILTER WHIST_DIR_H_FILES EXCLUDE REGEX "^.*/nvidia-linux/.*$")
 list(FILTER WHIST_DIR_C_FILES EXCLUDE REGEX "^.*/nvidia-linux/.*$")
 
+list(FILTER WHIST_DIR_H_FILES EXCLUDE REGEX ".*/rs.h")
+list(FILTER WHIST_DIR_C_FILES EXCLUDE REGEX ".*/rs.c")
+
 add_custom_target(
   clang-format
   COMMAND ${CLANG_FORMAT_EXE} -style=file -i ${CLIENT_SOURCE_FILES}

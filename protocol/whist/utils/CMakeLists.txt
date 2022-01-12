@@ -13,6 +13,7 @@ add_library(whistUtils STATIC
         color.c
         threads.c
         fec.c
+        rs.c
         os_utils.c
         )
 
