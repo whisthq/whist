@@ -33,10 +33,12 @@ Includes
 #include <dbus/dbus.h>
 
 #include <whist/logging/logging.h>
+#include <whist/logging/log_statistic.h>
 #include <whist/core/whist.h>
 #include <whist/utils/whist_notification.h>
 #include <whist/utils/threads.h>
 #include "client.h"
+#include "server_statistic.h"
 #include "network.h"
 
 /*
@@ -287,6 +289,7 @@ DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *
     }
     const char *msg_str = dbus_message_get_member(message);
     LOG_INFO("D-Bus signal received: %s", msg_str);
+    log_double_statistic(DBUS_MSGS_RECEIVED, 1.);
 
     if (msg_str == NULL || strcmp(msg_str, "Notify") != 0) {
         LOG_INFO("Did not detect notification body; skipping current D-Bus signal");
