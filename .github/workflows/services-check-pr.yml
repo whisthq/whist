@@ -1,9 +1,9 @@
-# workflows/scaling-service-check-pr.yml
+# workflows/services-check-pr.yml
 #
-# Scaling Service: Check PR
-# Checks an Scaling Service PR for linting and building success.
+# Services: Check PR
+# Checks a Services PR for linting and building success.
 
-name: "Scaling Service: Check PR"
+name: "Services: Check PR"
 
 on:
   push:
@@ -11,22 +11,22 @@ on:
     branches:
       - dev
     paths:
-      - "backend/scaling-service/**"
-      - "!backend/scaling-service/README.md"
+      - "backend/services/**"
+      - "!backend/services/README.md"
       - "backend/webserver/db_migration/schema.sql"
-      - ".github/workflows/scaling-service-check-pr.yml"
+      - ".github/workflows/services-check-pr.yml"
   pull_request:
     paths:
-      - "backend/scaling-service/**"
-      - "!backend/scaling-service/README.md"
+      - "backend/services/**"
+      - "!backend/services/README.md"
       - "backend/webserver/db_migration/schema.sql"
-      - ".github/workflows/scaling-service-check-pr.yml"
+      - ".github/workflows/services-check-pr.yml"
   workflow_dispatch:
 
 jobs:
   # Building
-  # Check that the Scaling Service builds.
-  scaling-service-check-pr-building:
+  # Check that the Host Service builds.
+  services-check-pr-building:
     name: Building
     runs-on: ubuntu-20.04
 
@@ -60,7 +60,7 @@ jobs:
 
       # Check go project (clean, build, vet, format, lint, test, docs)
       - name: Check Go project
-        working-directory: backend/scaling-service
+        working-directory: backend/services
         env:
           HEROKU_USER: developers@whist.com
           HEROKU_APIKEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
