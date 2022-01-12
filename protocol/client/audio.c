@@ -180,8 +180,9 @@ void receive_audio(AudioContext* audio_context, WhistPacket* packet) {
 #if LOG_AUDIO
     LOG_DEBUG("Received packet with ID/Index %d/%d", packet->id, packet->index);
 #endif
-    // < 0 ringbuffer packet errors are handled and logged verbosely directly in receive_packet
-    if (res > 0) {
+    if (res < 0) {
+        LOG_ERROR("Ringbuffer packet error!");
+    } else if (res > 0) {
         if (audio_context->ring_buffer->currently_rendering_id != -1) {
             log_double_statistic(AUDIO_FPS_SKIPPED, (double)res);
         }
