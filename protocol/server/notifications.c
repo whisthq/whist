@@ -2,9 +2,6 @@
  * Copyright 2022 Whist Technologies, Inc.
  * @file notifications.c
  * @brief Contains utilities to capture and send notifications to the client.
-============================
-Usage
-============================
 
 Implements logic to connect to an existing D-Bus session, listen for notifications
 passed through the D-Bus, and send them via the Whist Protocol to the client.
@@ -431,6 +428,14 @@ void handle_new_dispatch_status(DBusConnection *c, DBusDispatchStatus status, vo
     }
 }
 
+/**
+ * @brief           Handles the case where a DBusWatch is marked ready for read/write.
+ *                  This usually means there is data to be read.
+ *
+ * @param fd        File descriptor being watched.
+ * @param events    Information about the event that triggered this function.
+ * @param x         User data; contains the D-Bus Connection.
+ */
 void handle_watch(int fd, short events, void *x) {
     dbus_ctx *ctx = x;
     struct DBusWatch *watch = ctx->extra;
@@ -446,7 +451,8 @@ void handle_watch(int fd, short events, void *x) {
 }
 
 /**
- * @brief                   Indicates to libevent that we would like to monitor a D-Bus descriptor.
+ * @brief                   Indicates to libevent that we would like to monitor a UNIX file
+ *                          descriptor. In our case this descriptor is a D-Bus address.
  *
  * @param w                 Contains information about the descriptor we want to watch.
  * @param data              User data; contains the D-Bus connection.
@@ -507,7 +513,8 @@ void toggle_watch(DBusWatch *w, void *data) {
 }
 
 /**
- * @brief       Helper function to handle timeout
+ * @brief       This function is called when a timeout occurs. It then
+ *              invokes `dbus_timeout_handle`, which deals with this situation.
  *
  * @param fd    (Unused)
  * @param ev    (Unused)
@@ -523,7 +530,7 @@ void handle_timeout(int fd, short ev, void *x) {
 }
 
 /**
- * @brief                   Add timeout specification.
+ * @brief                   Specify a new timeout specification.
  *
  * @param t                 The timeout to add.
  * @param data              User data; contains the D-Bus Connection.
