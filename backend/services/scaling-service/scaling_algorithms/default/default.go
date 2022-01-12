@@ -4,10 +4,10 @@ import (
 	"context"
 	"sync"
 
-	"github.com/whisthq/whist/backend/core-go/subscriptions"
-	logger "github.com/whisthq/whist/backend/core-go/whistlogger"
-	"github.com/whisthq/whist/backend/scaling-service/hosts"
-	aws "github.com/whisthq/whist/backend/scaling-service/hosts/aws"
+	"github.com/whisthq/whist/backend/services/scaling-service/hosts"
+	aws "github.com/whisthq/whist/backend/services/scaling-service/hosts/aws"
+	"github.com/whisthq/whist/backend/services/subscriptions"
+	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
 // ScalingAlgorithm is the basic abstraction of the scaling service

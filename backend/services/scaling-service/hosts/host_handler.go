@@ -3,7 +3,7 @@ package hosts
 import (
 	"context"
 
-	"github.com/whisthq/whist/backend/core-go/subscriptions"
+	"github.com/whisthq/whist/backend/services/subscriptions"
 )
 
 // HostHandler defines the necessary methods for performing scaling actions. There should be a different

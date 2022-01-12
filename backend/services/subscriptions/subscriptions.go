@@ -10,8 +10,8 @@ import (
 	"sync"
 
 	graphql "github.com/hasura/go-graphql-client" // We use hasura's own graphql client for Go
-	"github.com/whisthq/whist/backend/core-go/metadata"
-	logger "github.com/whisthq/whist/backend/core-go/whistlogger"
+	"github.com/whisthq/whist/backend/services/metadata"
+	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
 // InstanceStatusHandler handles events from the hasura subscription which

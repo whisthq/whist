@@ -4,14 +4,9 @@ import (
 	"context"
 
 	graphql "github.com/hasura/go-graphql-client"
-<<<<<<< HEAD:backend/services/subscriptions/graphql_client.go
+	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
-=======
-	"github.com/whisthq/whist/backend/core-go/metadata"
-	"github.com/whisthq/whist/backend/core-go/utils"
-	logger "github.com/whisthq/whist/backend/core-go/whistlogger"
->>>>>>> 207c2003d (Add docstrings and comments):backend/core-go/subscriptions/graphql_client.go
 	"golang.org/x/oauth2"
 )
 

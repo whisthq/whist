@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/go-co-op/gocron"
-	"github.com/whisthq/whist/backend/core-go/subscriptions"
-	logger "github.com/whisthq/whist/backend/core-go/whistlogger"
-	sa "github.com/whisthq/whist/backend/scaling-service/scaling_algorithms/default" // Import as sa, short for scaling_algorithms
+	sa "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default" // Import as sa, short for scaling_algorithms
+	"github.com/whisthq/whist/backend/services/subscriptions"
+	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
 func main() {

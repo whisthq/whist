@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/hasura/go-graphql-client"
-	"github.com/whisthq/whist/backend/core-go/subscriptions"
-	"github.com/whisthq/whist/backend/core-go/utils"
-	logger "github.com/whisthq/whist/backend/core-go/whistlogger"
-	"github.com/whisthq/whist/backend/scaling-service/hosts"
+	"github.com/whisthq/whist/backend/services/scaling-service/hosts"
+	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/utils"
+	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
 // VerifyInstanceScaleDown is a scaling action which fires when an instace is marked as DRAINING
