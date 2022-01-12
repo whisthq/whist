@@ -12,7 +12,7 @@ import { fromTrigger } from "@app/utils/flows"
 import {
   protocolStreamInfo,
   childProcess,
-  ProtocolSendUrlToOpenInNewTab,
+  protocolOpenUrl,
 } from "@app/utils/protocol"
 import { createProtocolWindow } from "@app/utils/windows"
 import { persistGet, persistSet } from "@app/utils/persist"
@@ -105,7 +105,7 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
   // Intercept URLs (Mac version)
   app.on("open-url", function (event, url: string) {
     event.preventDefault()
-    ProtocolSendUrlToOpenInNewTab(url)
+    protocolOpenUrl(url)
     logBase(`Captured url ${url} after setting Whist as default browser!\n`, {})
   })
 })

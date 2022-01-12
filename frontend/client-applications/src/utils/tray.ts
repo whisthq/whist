@@ -18,6 +18,8 @@ import {
   RESTORE_LAST_SESSION,
   WHIST_IS_DEFAULT_BROWSER,
 } from "@app/constants/store"
+import { protocolOpenUrl } from "./protocol"
+import { openSourceUrls } from "@app/constants/app"
 
 // We create the tray here so that it persists throughout the application
 let tray: Tray | null = null
@@ -48,6 +50,12 @@ const feedbackMenu = new MenuItem({
       label: "Test My Internet Speed",
       click: () => {
         createSpeedtestWindow()
+      },
+    },
+    {
+      label: "View Open Source Licenses",
+      click: () => {
+        openSourceUrls.forEach((url) => protocolOpenUrl(url))
       },
     },
   ],
