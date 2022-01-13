@@ -94,7 +94,8 @@ if [ -f "$PRIVATE_KEY_FILENAME" ]; then
   OPTIONS="$OPTIONS --private-key=$WHIST_AES_KEY"
 fi
 
-# Send in Sentry environment, if set
+# Send in Sentry environment, if set, except for the LOCAL_CLIENT case,
+# since local clients might be in a version mismatch with server protocol
 if [ -f "$SENTRY_ENV_FILENAME" ] && [ "$LOCAL_CLIENT" == "false" ]; then
   export SENTRY_ENV=$(cat $SENTRY_ENV_FILENAME)
   OPTIONS="$OPTIONS --environment=$SENTRY_ENV"
