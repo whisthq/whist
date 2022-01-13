@@ -3,7 +3,7 @@ import { map } from "rxjs/operators"
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
-import { nativeTheme } from "electron"
+import { nativeTheme, screen } from "electron"
 import { persistGet } from "@app/utils/persist"
 import { RESTORE_LAST_SESSION } from "@app/constants/store"
 import { getInitialKeyRepeat, getKeyRepeat } from "@app/utils/keyRepeat"
@@ -39,6 +39,11 @@ export default flow(
     const initialKeyRepeat = getInitialKeyRepeat()
     const keyRepeat = getKeyRepeat()
 
+    // Get initial screen DPI
+    const primaryDisplay = screen.getPrimaryDisplay()
+    const scaleFactor = primaryDisplay.scaleFactor
+    const baseDpi = 96
+
     const host = hostSpinUpFlow(
       zip([trigger, create.success]).pipe(
         map(([t, c]) => ({
@@ -53,6 +58,7 @@ export default flow(
           jsonData: JSON.stringify({
             dark_mode: nativeTheme.shouldUseDarkColors,
             desired_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            client_dpi: baseDpi * scaleFactor,
             restore_last_session: persistGet(RESTORE_LAST_SESSION) ?? true,
             ...(initialKeyRepeat !== "" &&
               !isNaN(parseInt(initialKeyRepeat)) && {
