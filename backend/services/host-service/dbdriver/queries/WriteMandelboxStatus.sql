@@ -1,4 +1,4 @@
 -- name: WriteMandelboxStatus :exec
-UPDATE cloud.mandelbox_info
+UPDATE whist.mandelboxes
   SET status = pggen.arg('status')
-  WHERE mandelbox_id = pggen.arg('mandelboxID');
+  WHERE id = pggen.arg('mandelboxId');

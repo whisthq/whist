@@ -1,12 +1,12 @@
 -- name: RemoveStaleMandelboxes :exec
-DELETE FROM cloud.mandelbox_info
+DELETE FROM whist.mandelboxes
   WHERE
-    instance_name = pggen.arg('instanceName')
+    instance_id = pggen.arg('instanceId')
     AND (
       (status = pggen.arg('allocatedStatus')
-        AND creation_time_utc_unix_ms < pggen.arg('allocatedCreationTimeThreshold'))
+        AND created_at < pggen.arg('allocatedCreationTimeThreshold'))
       OR (
       (status = pggen.arg('connectingStatus')
-        AND creation_time_utc_unix_ms < pggen.arg('connectingCreationTimeThreshold'))
+        AND created_at < pggen.arg('connectingCreationTimeThreshold'))
       )
     );

@@ -1,2 +1,2 @@
 -- name: FindInstanceByName :many
-SELECT * FROM cloud.instance_info WHERE instance_name = pggen.arg('instanceName');
+SELECT * FROM whist.instances WHERE id = pggen.arg('instanceId');

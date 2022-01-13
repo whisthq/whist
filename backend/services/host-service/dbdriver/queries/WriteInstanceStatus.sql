@@ -1,4 +1,4 @@
 -- name: WriteInstanceStatus :exec
-UPDATE cloud.instance_info
+UPDATE whist.instances
   SET status = pggen.arg('status')
-  WHERE instance_name = pggen.arg('instanceName');
+  WHERE id = pggen.arg('instanceId');
