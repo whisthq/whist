@@ -510,6 +510,7 @@ int main(int argc, char* argv[]) {
         // Destroy the network system
         destroy_packet_synchronizers();
         destroy_clipboard_synchronizer();
+        destroy_file_synchronizer();
         close_connections();
 
         // Destroy the renderer

@@ -302,6 +302,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
     }
 
     destroy_clipboard_synchronizer();
+    destroy_file_synchronizer();
 
     return 0;
 }
