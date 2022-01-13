@@ -492,7 +492,7 @@ static int handle_init_message(whist_server_state *state, WhistClientMessage *cw
 
     state->client_os = wcmsg.os;
 
-    error_monitor_set_username(wcmsg.user_email);
+    whist_error_monitor_set_username(wcmsg.user_email);
 
     return 0;
 }

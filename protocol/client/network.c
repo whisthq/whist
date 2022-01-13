@@ -160,7 +160,7 @@ int discover_ports(bool *with_stun) {
     tcp_port = reply_msg->tcp_port;
     LOG_INFO("Using UDP Port: %d, TCP Port: %d", udp_port, tcp_port);
 
-    error_monitor_set_connection_id(reply_msg->connection_id);
+    whist_error_monitor_set_connection_id(reply_msg->connection_id);
 
     free_packet(&context, tcp_packet);
     destroy_socket_context(&context);

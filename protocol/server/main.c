@@ -551,7 +551,7 @@ int main(int argc, char* argv[]) {
 
     destroy_statistic_logger();
     destroy_logger();
-    error_monitor_shutdown();
+    whist_error_monitor_shutdown();
     destroy_clients(&server_state.client);
 
     return 0;

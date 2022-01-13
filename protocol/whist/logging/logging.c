@@ -186,9 +186,9 @@ void flush_logs() {
             // Log to the error monitor
             const char* tag = logger_queue_cache[i].tag;
             if (tag == WARNING_TAG) {
-                error_monitor_log_breadcrumb(tag, (const char*)logger_queue_cache[i].buf);
+                whist_error_monitor_log_breadcrumb(tag, (const char*)logger_queue_cache[i].buf);
             } else if (tag == ERROR_TAG || tag == FATAL_ERROR_TAG) {
-                error_monitor_log_error((const char*)logger_queue_cache[i].buf);
+                whist_error_monitor_log_error((const char*)logger_queue_cache[i].buf);
             }
         }
         whist_unlock_mutex(logger_cache_mutex);
@@ -541,10 +541,15 @@ LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS* ExceptionInfo) {  // N
 void unix_crash_handler(int sig) {
     fprintf(stdout, "\nError: signal %d:%s\n", sig, strsignal(sig));
     print_stacktrace();
-    // We reset the signal handler to default to allow Sentry to handle the crash without
-    //     getting stuck in an infinite loop of crash signal handling
-    signal(sig, SIG_DFL);
-    // If we exit, then the program doesn't crash and Sentry does not receive the event
+    if (whist_error_monitor_is_initialized()) {
+        // We reset the signal handler to default to allow the error monitor
+        // to handle the crash without getting stuck in an infinite loop of
+        // crash signal handling
+        signal(sig, SIG_DFL);
+    } else {
+        // If the error monitor isn't initialized, we just exit
+        exit(1);
+    }
 }
 #endif
 
