@@ -13,6 +13,7 @@ from pbkdf2 import PBKDF2
 sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"))
 
 USER_CONFIG_PATH = "/whist/userConfigs/"
+GNOME_KEYRING_SECRET = get_gnome_keyring_secret()
 
 
 def get_gnome_keyring_secret():
@@ -291,8 +292,6 @@ if __name__ == "__main__":
     python3 import_user_browser_data.py <browser target> <user data file>
 
     """
-    GNOME_KEYRING_SECRET = get_gnome_keyring_secret()
-
     if len(sys.argv) == 3:
         browser = sys.argv[1]
         browser_data_file = sys.argv[2]
