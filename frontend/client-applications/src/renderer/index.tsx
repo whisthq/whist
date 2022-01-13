@@ -14,6 +14,7 @@ import Importer from "@app/renderer/pages/importer"
 import Update from "@app/renderer/pages/update"
 import Network from "@app/renderer/pages/network"
 import Loading from "@app/renderer/pages/loading"
+import Omnibar from "@app/renderer/pages/omnibar"
 
 import {
   WindowHashSignout,
@@ -23,6 +24,7 @@ import {
   WindowHashOnboarding,
   WindowHashAuth,
   WindowHashLoading,
+  WindowHashOmnibar,
 } from "@app/constants/windows"
 import {
   whistError,
@@ -87,6 +89,7 @@ const RootComponent = () => {
     })
   }, [])
 
+  if (show === WindowHashOmnibar) return <Omnibar />
   if (show === WindowHashAuth)
     return <div className="bg-gray-100 w-screen h-screen"></div>
   if (show === WindowHashSignout) return <Signout onClick={handleSignout} />

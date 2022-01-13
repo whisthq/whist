@@ -14,7 +14,7 @@ import {
   childProcess,
   protocolOpenUrl,
 } from "@app/utils/protocol"
-import { createProtocolWindow } from "@app/utils/windows"
+import { createProtocolWindow, createOmnibar } from "@app/utils/windows"
 import { persistGet, persistSet } from "@app/utils/persist"
 import {
   RESTORE_LAST_SESSION,
@@ -58,7 +58,6 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess)
     ]) => {
       setTimeout(
         () => {
-          console.log("Connecting to", info)
           if (childProcess === undefined) {
             createProtocolWindow()
               .then(() => {
@@ -68,6 +67,8 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess)
           } else {
             protocolStreamInfo(info)
           }
+
+          createOmnibar()
         },
         importBrowserDataFrom !== undefined ? 5000 : 0
       )
