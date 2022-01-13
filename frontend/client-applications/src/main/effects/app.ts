@@ -54,11 +54,9 @@ withAppReady(fromTrigger(WhistTrigger.authFlowSuccess)).subscribe(
 )
 
 // If an update is available, show the update window and download the update
-fromTrigger(WhistTrigger.updateAvailable)
-  .pipe(take(1))
-  .subscribe(() => {
-    autoUpdater.downloadUpdate().catch((err) => Sentry.captureException(err))
-  })
+fromTrigger(WhistTrigger.updateAvailable).subscribe(() => {
+  autoUpdater.downloadUpdate().catch((err) => Sentry.captureException(err))
+})
 
 // On signout or relaunch, clear the cache (so the user can log in again) and restart
 // the app
