@@ -29,6 +29,7 @@ import (
 	"sync"
 
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
+	"github.com/whisthq/whist/backend/services/host-service/dbdriver/queries"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -176,7 +177,7 @@ func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.Ma
 
 		// Mark mandelbox as dying in the database, but only if it's not a warmup
 		if fid != types.MandelboxID(utils.PlaceholderWarmupUUID()) {
-			if err := dbdriver.WriteMandelboxStatus(mandelbox.GetID(), dbdriver.MandelboxStatusDying); err != nil {
+			if err := dbdriver.WriteMandelboxStatus(mandelbox.GetID(), queries.MandelboxStateDYING); err != nil {
 				logger.Error(err)
 			}
 		}

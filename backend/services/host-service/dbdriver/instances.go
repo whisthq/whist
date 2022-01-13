@@ -77,7 +77,11 @@ func RegisterInstance() error {
 
 	// Check if there's a row for us in the database already
 	q := queries.NewQuerier(tx)
+<<<<<<< HEAD
 	rows, err := q.FindInstanceByID(context.Background(), string(instanceID))
+=======
+	rows, err := q.FindInstanceByName(context.Background(), string(instanceID))
+>>>>>>> b58275b09 (Update queries and files in dbdriver)
 	if err != nil {
 		return utils.MakeError("RegisterInstance(): Error running query: %s", err)
 	}
@@ -102,12 +106,13 @@ func RegisterInstance() error {
 	if rows[0].InstanceType.String != string(instanceType) {
 		return utils.MakeError(`RegisterInstance(): Existing database row found, but AWS instance type differs. Expected "%s", Got "%s"`, instanceType, rows[0].InstanceType.String)
 	}
-	if rows[0].Status.String != string(InstanceStatusPreConnection) {
-		return utils.MakeError(`RegisterInstance(): Existing database row found, but status differs. Expected "%s", Got "%s"`, InstanceStatusPreConnection, rows[0].Status.String)
+	if rows[0].Status != queries.InstanceStatePRECONNECTION {
+		return utils.MakeError(`RegisterInstance(): Existing database row found, but status differs. Expected "%s", Got "%s"`, queries.InstanceStatePRECONNECTION, rows[0].Status.String)
 	}
 
 	// There is an existing row in the database for this instance --- we now "take over" and update it with the correct information.
 	result, err := q.RegisterInstance(context.Background(), queries.RegisterInstanceParams{
+<<<<<<< HEAD
 		Provider: pgtype.Varchar{
 			String: string("aws"),
 			Status: pgtype.Present,
@@ -116,10 +121,13 @@ func RegisterInstance() error {
 			String: string(region),
 			Status: pgtype.Present,
 		},
+=======
+>>>>>>> b58275b09 (Update queries and files in dbdriver)
 		ImageID: pgtype.Varchar{
 			String: string(imageID),
 			Status: pgtype.Present,
 		},
+<<<<<<< HEAD
 		ClientSha: pgtype.Varchar{
 			String: string(metadata.GetGitCommit()),
 			Status: pgtype.Present,
@@ -146,6 +154,21 @@ func RegisterInstance() error {
 		UpdatedAt: pgtype.Timestamptz{
 			Time:   time.Now(),
 			Status: pgtype.Present,
+=======
+		IpAddr: pgtype.Inet{
+			IPNet: &net.IPNet{
+				IP: publicIP4,
+			},
+		},
+		InstanceType: pgtype.Varchar{
+			String: string(instanceType),
+			Status: pgtype.Present,
+		},
+		RemainingCapacity: int32(latestMetrics.NumberOfGPUs),
+		Status:            queries.InstanceStateACTIVE,
+		UpdatedAt: pgtype.Timestamptz{
+			Time: time.Now(),
+>>>>>>> b58275b09 (Update queries and files in dbdriver)
 		},
 		InstanceID: string(instanceID),
 	})
@@ -185,10 +208,14 @@ func markDraining() error {
 		return utils.MakeError("Couldn't mark instance as draining: couldn't get instance name: %s", err)
 	}
 
+<<<<<<< HEAD
 	result, err := q.WriteInstanceStatus(context.Background(), pgtype.Varchar{
 		String: string(InstanceStatusDraining),
 		Status: pgtype.Present,
 	}, string(instanceID))
+=======
+	result, err := q.WriteInstanceStatus(context.Background(), queries.InstanceStateDRAINING, string(instanceID))
+>>>>>>> b58275b09 (Update queries and files in dbdriver)
 	if err != nil {
 		return utils.MakeError("Couldn't mark instance as draining: error updating existing row in table `cloud.instance_info`: %s", err)
 	} else if result.RowsAffected() == 0 {

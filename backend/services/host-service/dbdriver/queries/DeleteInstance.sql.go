@@ -65,17 +65,24 @@ type Querier interface {
 	// WriteHeartbeatScan scans the result of an executed WriteHeartbeatBatch query.
 	WriteHeartbeatScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
+<<<<<<< HEAD
 	WriteInstanceStatus(ctx context.Context, status pgtype.Varchar, instanceID string) (pgconn.CommandTag, error)
 	// WriteInstanceStatusBatch enqueues a WriteInstanceStatus query into batch to be executed
 	// later by the batch.
 	WriteInstanceStatusBatch(batch genericBatch, status pgtype.Varchar, instanceID string)
+=======
+	WriteInstanceStatus(ctx context.Context, status InstanceState, instanceID string) (pgconn.CommandTag, error)
+	// WriteInstanceStatusBatch enqueues a WriteInstanceStatus query into batch to be executed
+	// later by the batch.
+	WriteInstanceStatusBatch(batch genericBatch, status InstanceState, instanceID string)
+>>>>>>> b58275b09 (Update queries and files in dbdriver)
 	// WriteInstanceStatusScan scans the result of an executed WriteInstanceStatusBatch query.
 	WriteInstanceStatusScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
-	WriteMandelboxStatus(ctx context.Context, status pgtype.Varchar, mandelboxID string) (pgconn.CommandTag, error)
+	WriteMandelboxStatus(ctx context.Context, status MandelboxState, mandelboxID string) (pgconn.CommandTag, error)
 	// WriteMandelboxStatusBatch enqueues a WriteMandelboxStatus query into batch to be executed
 	// later by the batch.
-	WriteMandelboxStatusBatch(batch genericBatch, status pgtype.Varchar, mandelboxID string)
+	WriteMandelboxStatusBatch(batch genericBatch, status MandelboxState, mandelboxID string)
 	// WriteMandelboxStatusScan scans the result of an executed WriteMandelboxStatusBatch query.
 	WriteMandelboxStatusScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 }
@@ -184,6 +191,47 @@ func PrepareAllQueries(ctx context.Context, p preparer) error {
 	}
 	return nil
 }
+
+// Application represents the Postgres enum "application".
+type Application string
+
+const (
+	ApplicationChrome Application = "chrome"
+)
+
+func (a Application) String() string { return string(a) }
+
+// CloudProvider represents the Postgres enum "cloud_provider".
+type CloudProvider string
+
+const (
+	CloudProviderAws CloudProvider = "aws"
+)
+
+func (c CloudProvider) String() string { return string(c) }
+
+// InstanceState represents the Postgres enum "instance_state".
+type InstanceState string
+
+const (
+	InstanceStatePRECONNECTION InstanceState = "PRE_CONNECTION"
+	InstanceStateACTIVE        InstanceState = "ACTIVE"
+	InstanceStateDRAINING      InstanceState = "DRAINING"
+)
+
+func (i InstanceState) String() string { return string(i) }
+
+// MandelboxState represents the Postgres enum "mandelbox_state".
+type MandelboxState string
+
+const (
+	MandelboxStateALLOCATED  MandelboxState = "ALLOCATED"
+	MandelboxStateCONNECTING MandelboxState = "CONNECTING"
+	MandelboxStateRUNNING    MandelboxState = "RUNNING"
+	MandelboxStateDYING      MandelboxState = "DYING"
+)
+
+func (m MandelboxState) String() string { return string(m) }
 
 // typeResolver looks up the pgtype.ValueTranscoder by Postgres type name.
 type typeResolver struct {

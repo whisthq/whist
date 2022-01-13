@@ -46,6 +46,7 @@ import (
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
+	"github.com/whisthq/whist/backend/services/host-service/dbdriver/queries"
 	mandelboxData "github.com/whisthq/whist/backend/services/host-service/mandelbox"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
@@ -514,7 +515,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logger.Infof("SpinUpMandelbox(): Finished waiting for mandelbox %s whist application to start up", mandelboxSubscription.ID)
 	}
 
-	err = dbdriver.WriteMandelboxStatus(mandelboxSubscription.ID, dbdriver.MandelboxStatusRunning)
+	err = dbdriver.WriteMandelboxStatus(mandelboxSubscription.ID, queries.MandelboxStateRUNNING)
 	if err != nil {
 		logAndReturnError("Error marking mandelbox running: %s", err)
 		return
@@ -918,10 +919,14 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 					instanceID, err := aws.GetInstanceID()
 =======
 					instanceId, err := aws.GetInstanceID()
 >>>>>>> ad367b0de (Add instance type field, update refs on host service)
+=======
+					instanceID, err := aws.GetInstanceID()
+>>>>>>> b58275b09 (Update queries and files in dbdriver)
 					if err != nil {
 						logger.Errorf("Error getting instance name from AWS, %v", err)
 						metrics.Increment("ErrorRate")
@@ -929,10 +934,14 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 					// Create a mandelbox object as would be received from a Hasura subscription.
 					mandelbox := subscriptions.Mandelbox{
 <<<<<<< HEAD
+<<<<<<< HEAD
 						InstanceID: string(instanceID),
 =======
 						InstanceID: string(instanceId),
 >>>>>>> ad367b0de (Add instance type field, update refs on host service)
+=======
+						InstanceID: string(instanceID),
+>>>>>>> b58275b09 (Update queries and files in dbdriver)
 						ID:         jsonReq.MandelboxID,
 						SessionID:  "1234",
 						UserID:     userID,

@@ -49,6 +49,7 @@ func MandelboxAllocatedHandler(event SubscriptionEvent, variables map[string]int
 	}
 
 	instanceID := string(variables["instance_id"].(graphql.String))
+<<<<<<< HEAD
 	status := string(variables["status"].(graphql.String))
 
 <<<<<<< HEAD
@@ -56,6 +57,11 @@ func MandelboxAllocatedHandler(event SubscriptionEvent, variables map[string]int
 =======
 	return mandelbox.InstanceID == instanceId
 >>>>>>> ad367b0de (Add instance type field, update refs on host service)
+=======
+	status := string(variables["status"].(mandelbox_state))
+
+	return (mandelbox.InstanceID == instanceID) && (mandelbox.Status == status)
+>>>>>>> b58275b09 (Update queries and files in dbdriver)
 }
 
 // SetupHostSubscriptions creates a slice of HasuraSubscriptions to start the client. This
@@ -66,7 +72,11 @@ func SetupHostSubscriptions(instanceID string, whistClient WhistSubscriptionClie
 			Query: QueryInstanceByIdWithStatus,
 			Variables: map[string]interface{}{
 				"id":     graphql.String(instanceID),
+<<<<<<< HEAD
 				"status": graphql.String("DRAINING"),
+=======
+				"status": instance_state("DRAINING"),
+>>>>>>> b58275b09 (Update queries and files in dbdriver)
 			},
 			Result:  InstanceEvent{[]Instance{}},
 			Handler: InstanceStatusHandler,
@@ -75,7 +85,11 @@ func SetupHostSubscriptions(instanceID string, whistClient WhistSubscriptionClie
 			Query: QueryMandelboxesByInstanceId,
 			Variables: map[string]interface{}{
 				"instance_id": graphql.String(instanceID),
+<<<<<<< HEAD
 				"status":      graphql.String("ALLOCATED"),
+=======
+				"status":      mandelbox_state("ALLOCATED"),
+>>>>>>> b58275b09 (Update queries and files in dbdriver)
 			},
 			Result:  MandelboxEvent{[]Mandelbox{}},
 			Handler: MandelboxAllocatedHandler,

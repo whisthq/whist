@@ -22,17 +22,6 @@ import (
 // agent interacting with the database rows for the mandelboxes once the
 // webserver creates them in the "ALLOCATED" state.
 
-// A MandelboxStatus represents a possible status that a mandelbox can have in the database.
-type MandelboxStatus string
-
-// These represent the currently-defined statuses for mandelboxes.
-const (
-	MandelboxStatusAllocated  MandelboxStatus = "ALLOCATED"
-	MandelboxStatusConnecting MandelboxStatus = "CONNECTING"
-	MandelboxStatusRunning    MandelboxStatus = "RUNNING"
-	MandelboxStatusDying      MandelboxStatus = "DYING"
-)
-
 // VerifyAllocatedMandelbox verifies that this host service is indeed expecting
 // the provided mandelbox for the given user, and if found marks it as
 // connecting.
@@ -77,16 +66,13 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID
 
 	// Mark the container as connecting. We can't just use WriteMandelboxStatus
 	// since we want to do it in a single transaction.
-	result, err := q.WriteMandelboxStatus(context.Background(), pgtype.Varchar{
-		String: string(MandelboxStatusConnecting),
-		Status: pgtype.Present,
-	}, mandelboxID.String())
+	result, err := q.WriteMandelboxStatus(context.Background(), queries.MandelboxStateCONNECTING, mandelboxID.String())
 	if err != nil {
-		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `cloud.mandelbox_info`: %s", MandelboxStatusConnecting, mandelboxID, err)
+		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `cloud.mandelbox_info`: %s", queries.MandelboxStateCONNECTING, mandelboxID, err)
 	} else if result.RowsAffected() == 0 {
-		return utils.MakeError("Couldn't write status %s for mandelbox %s: row in database missing!", MandelboxStatusConnecting, mandelboxID)
+		return utils.MakeError("Couldn't write status %s for mandelbox %s: row in database missing!", queries.MandelboxStateCONNECTING, mandelboxID)
 	}
-	logger.Infof("Updated status in database for mandelbox %s to %s: %s", mandelboxID, MandelboxStatusConnecting, result)
+	logger.Infof("Updated status in database for mandelbox %s to %s: %s", mandelboxID, queries.MandelboxStateCONNECTING, result)
 
 	// Finish the transaction
 	tx.Commit(context.Background())
@@ -95,7 +81,7 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID
 }
 
 // WriteMandelboxStatus updates a mandelbox's status in the database.
-func WriteMandelboxStatus(mandelboxID types.MandelboxID, status MandelboxStatus) error {
+func WriteMandelboxStatus(mandelboxID types.MandelboxID, status queries.MandelboxState) error {
 	if !enabled {
 		return nil
 	}
@@ -104,10 +90,7 @@ func WriteMandelboxStatus(mandelboxID types.MandelboxID, status MandelboxStatus)
 	}
 
 	q := queries.NewQuerier(dbpool)
-	result, err := q.WriteMandelboxStatus(context.Background(), pgtype.Varchar{
-		String: string(status),
-		Status: pgtype.Present,
-	}, mandelboxID.String())
+	result, err := q.WriteMandelboxStatus(context.Background(), status, mandelboxID.String())
 	if err != nil {
 		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `cloud.mandelbox_info`: %s", status, mandelboxID, err)
 	} else if result.RowsAffected() == 0 {
@@ -160,6 +143,7 @@ func removeStaleMandelboxes(allocatedAge, connectingAge time.Duration) error {
 	q := queries.NewQuerier(dbpool)
 	result, err := q.RemoveStaleMandelboxes(context.Background(), queries.RemoveStaleMandelboxesParams{
 		InstanceID:      string(instanceID),
+<<<<<<< HEAD
 		AllocatedStatus: string(MandelboxStatusAllocated),
 		AllocatedCreationTimeThreshold: pgtype.Timestamptz{
 			Time:   time.Now().Add(-1 * allocatedAge),
@@ -169,6 +153,15 @@ func removeStaleMandelboxes(allocatedAge, connectingAge time.Duration) error {
 		ConnectingCreationTimeThreshold: pgtype.Timestamptz{
 			Time:   time.Now().Add(-1 * connectingAge),
 			Status: pgtype.Present,
+=======
+		AllocatedStatus: queries.MandelboxStateALLOCATED,
+		AllocatedCreationTimeThreshold: pgtype.Timestamptz{
+			Time: time.Now().Add(-1 * allocatedAge),
+		},
+		ConnectingStatus: queries.MandelboxStateCONNECTING,
+		ConnectingCreationTimeThreshold: pgtype.Timestamptz{
+			Time: time.Now().Add(-1 * connectingAge),
+>>>>>>> b58275b09 (Update queries and files in dbdriver)
 		},
 	})
 	if err != nil {
