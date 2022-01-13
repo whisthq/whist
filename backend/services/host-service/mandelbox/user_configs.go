@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -124,6 +125,9 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 	// TODO: More logic here
 
 	// TODO: no logic about mandelbox.SetConfigBuffer(configBuffer)
+
+	_ = predictedConfigBuf
+	_ = encryptionInfo
 }
 
 // predictConfigToDownload guesses which config is the most likely to be the
@@ -197,8 +201,27 @@ func (mandelbox *mandelboxData) receiveAndVerifyEncryptionInfo(tokenChan <-chan 
 	return &encryptionInfo, nil
 }
 
-func (mandelbox *mandelboxData) evaluatePredictedConfigCorrectness(predictedConfig *s3types.Object, encryptionInfo ConfigEncryptionInfo) {
+func (mandelbox *mandelboxData) evaluatePredictedConfigCorrectness(s3client *s3.Client, predictedConfig *s3types.Object, encryptionInfo ConfigEncryptionInfo) bool {
+	tokenHash := hash(encryptionInfo.Token)
 
+	// TODO: yo gotta fix this
+
+	// (happy path) If the predicted config's key contains the hash of the token, then we know we're good to go.
+	if strings.Contains(*predictedConfig.Key, tokenHash) {
+		return true
+	}
+
+	// If there is a config in s3 that contains the token hash, that's the one we need.
+	desiredHead, err := configutils.GetHeadObject(s3client, UserConfigS3Bucket, mandelbox.getS3ConfigKey(tokenHash))
+	if err == nil {
+		return false
+	} else if err != nil {
+		logger.Errorf("ERROR: %s", err)
+	}
+
+	_ = desiredHead
+
+	return false
 }
 
 // Helpers
