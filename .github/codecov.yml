@@ -10,11 +10,11 @@ coverage:
       default:
         target: auto # Overall monorepo code coverage
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
-      webserver:
-        target: auto # /webserver code coverage
+      backend/webserver:
+        target: auto # backend/webserver code coverage
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
         flags:
-          - webserver
+          - backend/webserver
       backend/services:
         target: auto # /backend/services code coverage
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
@@ -62,7 +62,7 @@ comment:
 # This is where we define every flag for the Codecov uploader and update when new Flags are added
 # See here for carryforward documentation: https://docs.codecov.com/docs/carryforward-flags
 flags:
-  webserver:
+  backend/webserver:
     paths:
       - backend/webserver/
     carryforward: true
