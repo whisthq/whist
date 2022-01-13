@@ -4,7 +4,7 @@ import { interval } from "rxjs"
 
 import config from "@app/config/environment"
 import { appEnvironment, WhistEnvironments } from "../../../config/configs"
-import { HEARTBEAT_INTERVAL_IN_MINUTES, SENTRY_DSN } from "@app/constants/app"
+import { HEARTBEAT_INTERVAL_IN_MS, SENTRY_DSN } from "@app/constants/app"
 import { networkAnalyze } from "@app/utils/networkAnalysis"
 import { fromTrigger } from "@app/utils/flows"
 import { WhistTrigger } from "@app/constants/triggers"
@@ -22,6 +22,6 @@ fromTrigger(WhistTrigger.startNetworkAnalysis).subscribe(() => {
   networkAnalyze()
 })
 
-interval(HEARTBEAT_INTERVAL_IN_MINUTES).subscribe(() => {
+interval(HEARTBEAT_INTERVAL_IN_MS).subscribe(() => {
   logBase("heartbeat", {})
 })

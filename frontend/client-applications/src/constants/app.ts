@@ -4,8 +4,8 @@
 
 export const sessionID = Date.now()
 
-export const HEARTBEAT_INTERVAL_IN_MINUTES = 5 * 60 * 1000
-export const CHECK_UPDATE_INTERVAL_IN_MINUTES = 5 * 60 * 1000
+export const HEARTBEAT_INTERVAL_IN_MS = 5 * 60 * 1000
+export const CHECK_UPDATE_INTERVAL_IN_MS = 5 * 60 * 1000
 
 export const SENTRY_DSN =
   "https://5b0accb25f3341d280bb76f08775efe1@o400459.ingest.sentry.io/5412323"
