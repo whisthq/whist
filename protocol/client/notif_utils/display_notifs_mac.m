@@ -31,6 +31,8 @@ Public Function Implementations
 int native_show_notification(char *title, char *msg) {
     NSUserNotification *n = [[NSUserNotification alloc] init];
 
+    LOG_INFO("Trying to display notif on OSX: %s | %s", title, msg);
+
     n.title = [NSString stringWithUTF8String:title];
     n.informativeText = [NSString stringWithUTF8String:msg];
 
