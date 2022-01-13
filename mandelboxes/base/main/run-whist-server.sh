@@ -121,8 +121,12 @@ fi
 eval `cat /whist/dbus_config.txt`
 echo "Loaded d-bus address in run-whist-server.sh: $DBUS_SESSION_BUS_ADDRESS | pid: $DBUS_SESSION_BUS_PID"
 
-# Commented testing code that reflects Chrome keyring registration. Can be used in the future to debug cookie encryption.
-# Should NOT print out peanuts. Instead you should see a byte string similar to b'q6dj0uwi6luGvZ+2zisaMQ=='
+# Below is commented testing code that can be used in the future to debug cookie encryption.
+# It should NOT print out peanuts. Instead you should see a byte string similar to b'q6dj0uwi6luGvZ+2zisaMQ=='.
+# This is tech debt! Currently the cookies are still being encrypted with peanuts because Chrome is not registering with
+# the keyring until the application actually starts. Our goal is to make the below code output a secret in the desired format
+# BEFORE import_user_browser_data.py is called so that cookies can be encrypted more securely.
+
 # (while true; do DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID=$DBUS_SESSION_BUS_PID python3 -c "import os; os.seteuid(1000); import browser_cookie3; print('COOKIE:', browser_cookie3.get_linux_pass('chrome')); os.seteuid(0);" && sleep 1; done) &
 
 # Set user upload target, if file exists
