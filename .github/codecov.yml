@@ -11,7 +11,7 @@ coverage:
         target: auto # Overall monorepo code coverage
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
       backend/webserver:
-        target: auto # backend/webserver code coverage
+        target: auto # /backend/webserver code coverage
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
         flags:
           - backend/webserver
@@ -25,11 +25,11 @@ coverage:
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
         flags:
           - protocol
-      core-ts:
-        target: auto # /core-ts code coverage
+      frontend/core-ts:
+        target: auto # /frontend/core-ts code coverage
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
         flags:
-          - core-ts
+          - frontend/core-ts
   precision: 2 # Number of decimal places on code coverage, between 0 and 5
   round: down # Up, down, or nearest
   range: "70...90" # First number represents red, and second represents green (default is 70..100)
@@ -44,7 +44,7 @@ ignore:
 # so we need this fix to retrieve /webserver as the root folder
 fixes:
   - "app/::backend/webserver/" # Replace app/... with backend/webserver/...
-  - "**/whist/backend/services/::services/" # Make backend-services coverage relative to backend/services directory
+  - "**/whist/backend/services/::services/" # Make backend/services coverage relative to backend/services directory
   - "**/whist/backend/webserver/::webserver/" # Make webserver coverage relative to webserver directory
   - "**/whist/frontend/core-ts/::core-ts/" # Make core-ts coverage relative to core-ts directory
   - "**/whist/protocol/::protocol/" # Make protocol coverage relative to protocol directory
@@ -74,7 +74,7 @@ flags:
     paths:
       - protocol/
     carryforward: true
-  core-ts:
+  frontend/core-ts:
     paths:
       - frontend/core-ts/
     carryforward: true
