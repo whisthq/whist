@@ -131,14 +131,20 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 func (mandelbox *mandelboxData) predictConfigToDownload(s3Client *s3.Client) (*s3types.Object, error) {
 	// We use the simple guess that the most recently-modified config is the one
 	// that we need.
-	return configutils.GetMostRecentMatchingKey(s3Client, UserConfigS3Bucket, mandelbox.getS3ConfigPrefix(), EncryptedArchiveFilename)
+	return configutils.GetMostRecentMatchingKey(s3Client, UserConfigS3Bucket, mandelbox.getS3ConfigKeyPrefix(), EncryptedArchiveFilename)
 }
 
-// getS3ConfigPrefix returns the name of the S3 key to the encrypted user
+// getS3ConfigKeyPrefix returns the name of the S3 key to the encrypted user
 // config file, up to the app name. This does not include the suffix
 // (`EncryptedArchiveFileName`) or the token hash that comes before it.
-func (mandelbox *mandelboxData) getS3ConfigPrefix() string {
+func (mandelbox *mandelboxData) getS3ConfigKeyPrefix() string {
 	return path.Join(string(mandelbox.GetUserID()), metadata.GetAppEnvironmentLowercase(), string(mandelbox.GetAppName()))
+}
+
+// getS3ConfigPath returns the full key name of the S3 key to encrypted user
+// config file. Note that this includes the hash of the user config.
+func (mandelbox *mandelboxData) getS3ConfigKey(tokenHash string) string {
+	return path.Join(mandelbox.getS3ConfigKeyPrefix(), "/", tokenHash, "/", EncryptedArchiveFilename)
 }
 
 // downloadUserConfig downloads a given user config from S3 into an in-memory buffer.
