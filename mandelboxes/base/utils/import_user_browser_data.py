@@ -13,7 +13,7 @@ from pbkdf2 import PBKDF2
 sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"))
 
 USER_CONFIG_PATH = "/whist/userConfigs/"
-GNOME_KEYRING_SECRET = None
+GNOME_KEYRING_SECRET = b"peanuts"
 
 
 def get_gnome_keyring_secret():
