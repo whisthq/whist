@@ -50,6 +50,9 @@ func (host *AWSHost) MakeTags(c context.Context, input *ec2.CreateTagsInput) (*e
 
 // SpinDownInstances is responsible for launching `numInstances` number of instances with the received imageID.
 func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances int32, imageID string) ([]subscriptions.Instance, error) {
+	ctx, cancel := context.WithCancel(scalingCtx)
+	defer cancel()
+
 	// Set run input
 	input := &ec2.RunInstancesInput{
 		MinCount:                          aws.Int32(MIN_INSTANCE_COUNT),
@@ -78,7 +81,7 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 				logger.Infof("Trying to spinup %v instances with image %v", numInstances, imageID)
 
 				attempts += 1
-				result, err = host.MakeInstances(scalingCtx, input)
+				result, err = host.MakeInstances(ctx, input)
 
 				if err == nil || attempts == MAX_RETRY_ATTEMPTS {
 					retryDone <- true
@@ -118,7 +121,7 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 			},
 		}
 
-		_, err = host.MakeTags(scalingCtx, tagInput)
+		_, err = host.MakeTags(ctx, tagInput)
 		if err != nil {
 			return nil, utils.MakeError("error taging instance. Err: %v", err)
 		}
@@ -152,12 +155,14 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 
 // SpinDownInstances is responsible for terminating the instances in `instanceIDs`.
 func (host *AWSHost) SpinDownInstances(scalingCtx context.Context, instanceIDs []string) ([]subscriptions.Instance, error) {
+	ctx, cancel := context.WithCancel(scalingCtx)
+	defer cancel()
 
 	terminateInput := &ec2.TerminateInstancesInput{
 		InstanceIds: instanceIDs,
 	}
 
-	terminateOutput, err := host.EC2.TerminateInstances(scalingCtx, terminateInput)
+	terminateOutput, err := host.EC2.TerminateInstances(ctx, terminateInput)
 
 	// Create slice with created instances
 	var outputInstances []subscriptions.Instance
@@ -182,6 +187,9 @@ func (host *AWSHost) SpinDownInstances(scalingCtx context.Context, instanceIDs [
 
 // WaitForInstanceTermination waits until the given instance has been terminated on AWS.
 func (host *AWSHost) WaitForInstanceTermination(scalingCtx context.Context, instanceIds []string) error {
+	ctx, cancel := context.WithCancel(scalingCtx)
+	defer cancel()
+
 	waiter := ec2.NewInstanceTerminatedWaiter(host.EC2, func(*ec2.InstanceTerminatedWaiterOptions) {
 		logger.Infof("Waiting for instances to terminate on AWS")
 	})
@@ -190,7 +198,7 @@ func (host *AWSHost) WaitForInstanceTermination(scalingCtx context.Context, inst
 		InstanceIds: instanceIds,
 	}
 
-	err := waiter.Wait(scalingCtx, waitParams, 5*time.Minute)
+	err := waiter.Wait(ctx, waitParams, 5*time.Minute)
 	if err != nil {
 		return utils.MakeError("failed waiting for instances %v to terminate from AWS: %v", instanceIds, err)
 	}
@@ -200,6 +208,9 @@ func (host *AWSHost) WaitForInstanceTermination(scalingCtx context.Context, inst
 
 // WaitForInstanceReady waits until the given instance is running on AWS.
 func (host *AWSHost) WaitForInstanceReady(scalingCtx context.Context, instanceIds []string) error {
+	ctx, cancel := context.WithCancel(scalingCtx)
+	defer cancel()
+
 	waiter := ec2.NewInstanceRunningWaiter(host.EC2, func(*ec2.InstanceRunningWaiterOptions) {
 		logger.Infof("Waiting for instances %v to be ready on AWS", instanceIds)
 	})
@@ -208,7 +219,7 @@ func (host *AWSHost) WaitForInstanceReady(scalingCtx context.Context, instanceId
 		InstanceIds: instanceIds,
 	}
 
-	err := waiter.Wait(scalingCtx, waitParams, 5*time.Minute)
+	err := waiter.Wait(ctx, waitParams, 5*time.Minute)
 	if err != nil {
 		return utils.MakeError("failed waiting for instances %v to be ready from AWS: %v", instanceIds, err)
 	}
