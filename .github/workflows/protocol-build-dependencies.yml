@@ -476,7 +476,7 @@ jobs:
                 -D SENTRY_BUILD_SHARED_LIBS=ON \
                 -D SENTRY_BUILD_RUNTIMESTATIC=ON \
                 -D SENTRY_BUILD_TESTS=OFF \
-                -D SENTRY_BACKEND=crashpad
+                -D SENTRY_BACKEND=crashpad \
                 -D CMAKE_OSX_SYSROOT="${{ env.CMAKE_OSX_SYSROOT }}" \
                 -D CMAKE_OSX_DEPLOYMENT_TARGET="${{ env.CMAKE_OSX_DEPLOYMENT_TARGET }}"
 
