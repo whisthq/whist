@@ -28,8 +28,8 @@ Defines
 ============================
 */
 
-#define MAX_NOTIF_TITLE_LEN 500
-#define MAX_NOTIF_MSG_LEN 500
+#define MAX_NOTIF_TITLE_LEN 50
+#define MAX_NOTIF_MSG_LEN 150
 
 typedef struct WhistNotification {
     char title[MAX_NOTIF_TITLE_LEN];
