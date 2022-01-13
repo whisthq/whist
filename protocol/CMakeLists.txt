@@ -363,6 +363,7 @@ set(MAC_SPECIFIC_CLIENT_LIBS
     "-framework Metal"
     "-framework QuartzCore"
     "-framework GameController"
+    "-framework Foundation"
     objc
     iconv
     ${LIB_OPENSSL}
