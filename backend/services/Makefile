@@ -91,7 +91,7 @@ test: build
 ifeq ($(CI),true)
 	@echo "Running in CI, uploading code coverage results to Codecov..."
 # Download the Codecov uploader
-	curl --silent https://uploader.codecov.io/latest/linux/codecov --create-dirs --output-dir $(BUILD_FOLDER) --output codecov && chmod +x $(BUILD_FOLDER)/codecov
+	curl --silent https://uploader.codecov.io/latest/linux/codecov --create-dirs --output $(BUILD_FOLDER)/codecov && chmod +x $(BUILD_FOLDER)/codecov
 
 # Upload coverage report to Codecov
 	$(BUILD_FOLDER)/codecov -t ${CODECOV_TOKEN} -c -F backend-services
