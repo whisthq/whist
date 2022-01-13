@@ -34,6 +34,7 @@ import {
   WindowHashBugTypeform,
   WindowHashUpdate,
   WindowHashLoading,
+  WindowHashOmnibar,
 } from "@app/constants/windows"
 import {
   protocolLaunch,
@@ -131,6 +132,20 @@ export const getWindowTitle = () => {
   return `Whist (${deployEnv})`
 }
 
+export const getWindowByHash = (hash: string) => {
+  for (const win of getElectronWindows()) {
+    console.log(
+      "the hash is",
+      win.webContents.getURL()?.split("show=")?.[1],
+      "looking for",
+      hash
+    )
+    if (win.webContents.getURL()?.split("show=")?.[1] === hash) return win
+  }
+  console.log("returning undefined")
+  return undefined
+}
+
 // This is a "base" window creation function. It won't be called directly from
 // the application, instead we'll use it to contain the common functionality
 // that we want to share between all windows.
@@ -179,7 +194,7 @@ export const createWindow = (args: {
   // Electron recommends showing the window on the ready-to-show event:
   // https://www.electronjs.org/docs/api/browser-window
   win.once("ready-to-show", () => {
-    args.focus ?? true ? win.show() : win.showInactive()
+    args.focus ?? true ? win.show() : win.hide()
     emitWindowInfo({ crashed: false, event: "open", hash: args.hash })
   })
 
@@ -394,7 +409,14 @@ export const createProtocolWindow = async () => {
         hash: WindowHashProtocol,
       })
 
-      closeElectronWindows(getElectronWindows())
+      const windowsToClose = getElectronWindows().filter(
+        (win) =>
+          ![WindowHashOmnibar].includes(
+            win.webContents.getURL()?.split("show=")?.[1]
+          )
+      )
+
+      closeElectronWindows(windowsToClose)
 
       app?.dock?.hide()
     }
@@ -447,4 +469,24 @@ export const createLicenseWindow = (url: string) =>
     hash: "",
     closeElectronWindows: false,
     customURL: url,
+  })
+
+export const createOmnibar = () =>
+  createWindow({
+    options: {
+      ...base,
+      ...width.md,
+      ...height.xs,
+      frame: false,
+      transparent: true,
+      alwaysOnTop: true,
+      resizable: false,
+      fullscreenable: false,
+      minimizable: false,
+      titleBarStyle: "hidden",
+      closable: false,
+      show: false,
+    },
+    hash: WindowHashOmnibar,
+    focus: false,
   })
