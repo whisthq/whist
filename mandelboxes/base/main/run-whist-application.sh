@@ -4,7 +4,7 @@
 
 # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
 # This is called via `./run-as-whist-user.sh`, which passes sentry environment in.
-case $SENTRY_ENVIORNMENT in
+case $SENTRY_ENVIRONMENT in
   dev|staging|prod)
     export SENTRY_ENVIRONMENT=${SENTRY_ENV}
     eval "$(sentry-cli bash-hook)"
