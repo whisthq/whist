@@ -35,15 +35,26 @@ Defines
 // Verbose audio logs
 #define LOG_AUDIO false
 
-// system audio queue + our buffer limits, in decompressed bytes
-#define AUDIO_QUEUE_LOWER_LIMIT 18000
-#define AUDIO_QUEUE_UPPER_LIMIT 59000
-#define TARGET_AUDIO_QUEUE_LIMIT 28000
+// Used to prevent audio from playing before video has played
+extern bool has_video_rendered_yet;
+
+#define SAMPLES_PER_FRAME 960
+#define BYTES_PER_SAMPLE 4
+#define NUM_CHANNELS 2
+#define DECODED_BYTES_PER_FRAME (SAMPLES_PER_FRAME * BYTES_PER_SAMPLE * NUM_CHANNELS)
 
 // Audio frames in the audio ringbuffer
-#define MAX_NUM_AUDIO_FRAMES 25
+#define MAX_NUM_AUDIO_FRAMES 5
 
-#define SDL_AUDIO_BUFFER_SIZE 1024
+// system audio queue + our buffer limits, in number of frames and decompressed bytes
+#define AUDIO_QUEUE_LOWER_LIMIT_FRAMES 1
+#define AUDIO_QUEUE_UPPER_LIMIT_FRAMES MAX_NUM_AUDIO_FRAMES
+#define TARGET_AUDIO_QUEUE_LIMIT_FRAMES 3
+#define AUDIO_QUEUE_LOWER_LIMIT (AUDIO_QUEUE_LOWER_LIMIT_FRAMES * DECODED_BYTES_PER_FRAME)
+#define AUDIO_QUEUE_UPPER_LIMIT (AUDIO_QUEUE_UPPER_LIMIT_FRAMES * DECODED_BYTES_PER_FRAME)
+#define TARGET_AUDIO_QUEUE_LIMIT (TARGET_AUDIO_QUEUE_LIMIT_FRAMES * DECODED_BYTES_PER_FRAME)
+
+#define SDL_AUDIO_BUFFER_SIZE SAMPLES_PER_FRAME
 
 // Maximum valid audio frequency
 #define MAX_FREQ 128000
@@ -76,10 +87,6 @@ struct AudioContext {
     int last_played_id;
     bool audio_flush_triggered;
 };
-
-// 2 channels, 1024 samples per channel, 32 bits (4 bytes) per sample,
-// comes out to 2 * 1024 * 4 = 8192 bytes per frame
-#define DECODED_BYTES_PER_FRAME 8192
 
 /*
 ============================
