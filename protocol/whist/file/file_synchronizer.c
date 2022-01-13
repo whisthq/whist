@@ -42,6 +42,10 @@ Includes
 
 #include <whist/core/whist.h>
 
+#include "file_synchronizer.h"
+#include "file_drop.h"
+#include "file_download.h"
+
 /*
 ============================
 Defines
@@ -294,8 +298,18 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
             LOG_INFO("Finished writing to file index %d", file_chunk->index);
 
             // If on the server, write the FUSE ready file when file writing is complete
-            if ((active_file->transfer_type & enabled_actions) == FILE_TRANSFER_SERVER_DROP) {
-                file_drop_mark_ready(active_file->id);
+            switch ((active_file->transfer_type & enabled_actions)) {
+                case FILE_TRANSFER_SERVER_DROP: {
+                    file_drop_mark_ready(active_file->id);
+                    break;
+                }
+                case FILE_TRANSFER_CLIENT_DOWNLOAD: {
+                    whist_file_download_notify_finished(active_file->file_path);
+                    break;
+                }
+                default: {
+                    break;
+                }
             }
 
             // For end chunks, close the file handle and reset the slot in the array

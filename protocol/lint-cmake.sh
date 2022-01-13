@@ -13,4 +13,8 @@ cd "$DIR"
 CMAKELISTS_FILES=$(fd --glob 'CMakeLists.txt')
 CMAKE_HELPER_FILES=$(fd --glob '*.cmake')
 
+echo "Linting the following files:"
+echo "$CMAKELISTS_FILES"
+echo "$CMAKE_HELPER_FILES"
+
 cmakelint --config=".cmakelintrc" $CMAKELISTS_FILES $CMAKE_HELPER_FILES
