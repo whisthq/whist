@@ -94,7 +94,7 @@ ifeq ($(CI),true)
 	curl -Os https://uploader.codecov.io/latest/linux/codecov > $(BUILD_FOLDER)/codecov && chmod +x $(BUILD_FOLDER)/codecov
 
 # Upload coverage report to Codecov
-	$(BUILD_FOLDER)/codecov -t ${CODECOV_TOKEN} -c coverage.out -F services
+	$(BUILD_FOLDER)/codecov -t ${CODECOV_TOKEN} -c -F services
 	$(info Finished uploading code coverage results to Codecov.)
 else
 	$(info Not running in CI, skipping code coverage upload to Codecov...)
