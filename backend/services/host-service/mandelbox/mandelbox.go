@@ -114,8 +114,8 @@ type Mandelbox interface {
 	// Set up the directories for user configs
 	SetupUserConfigDirs() error
 
-	// Download the user configs from S3 and writes them to buffer
-	DownloadUserConfigs() error
+	// TODO: add comment
+	StartLoadingUserConfigs() (chan<- ConfigEncryptionInfo, <-chan error)
 
 	// Backup the user configs to S3
 	BackupUserConfigs() error

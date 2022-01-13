@@ -125,6 +125,7 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 	// TODO: More logic here
 
 	// TODO: no logic about mandelbox.SetConfigBuffer(configBuffer)
+	// TODO: lots more changes to the mandelbox interface
 
 	_ = predictedConfigBuf
 	_ = encryptionInfo
@@ -313,7 +314,7 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 	}
 
 	// Encrypt the compressed config
-	logger.Infof("Using (hashed) encryption token %s for mandelbox %s", hashConfigEncryptionToken(string(configToken)), mandelboxID)
+	logger.Infof("Using (hashed) encryption token %s for mandelbox %s", hash(configToken), mandelboxID)
 	encryptedConfig, err := configutils.EncryptAES256GCM(string(configToken), compressedConfig)
 	if err != nil {
 		return utils.MakeError("Failed to encrypt user configs: %v", err)
@@ -326,7 +327,7 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 		return utils.MakeError("error creating s3 client: %v", err)
 	}
 
-	uploadResult, err := configutils.UploadFileToBucket(s3Client, UserConfigS3Bucket, mandelbox.getS3ConfigKey(), encryptedConfigBuffer)
+	uploadResult, err := configutils.UploadFileToBucket(s3Client, UserConfigS3Bucket, mandelbox.getS3ConfigKey(hash(configToken)), encryptedConfigBuffer)
 	if err != nil {
 		return utils.MakeError("error uploading encrypted config to s3: %v", err)
 	}
