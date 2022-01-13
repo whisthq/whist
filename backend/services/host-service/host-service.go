@@ -412,7 +412,9 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", mandelboxSubscription.ID, mandelboxSubscription.UserID)
 
 	// Begin loading user configs in parallel with the rest of the mandelbox startup procedure.
-	sendEncryptionTokenChan, configDownloadErrChan := mandelbox.StartLoadUserConfigs()
+	sendEncryptionTokenChan, configDownloadErrChan := mandelbox.StartLoadingUserConfigs()
+	_ = sendEncryptionTokenChan
+	_ = configDownloadErrChan
 
 	// Do all startup tasks that can be done before Docker container creation in
 	// parallel, stopping at the first error encountered
