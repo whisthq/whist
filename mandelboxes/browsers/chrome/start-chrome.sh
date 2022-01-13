@@ -3,13 +3,13 @@
 # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
 # This is called via `./run-as-whist-user.sh`, which passes sentry environment in.
 case $(cat $SENTRY_ENVIRONMENT) in
-    dev|staging|prod)
-        export SENTRY_ENVIRONMENT=${SENTRY_ENV}
-        eval "$(sentry-cli bash-hook)"
-        ;;
-    *)
-        echo "Sentry environment not set, skipping Sentry error handler"
-        ;;
+  dev|staging|prod)
+    export SENTRY_ENVIRONMENT=${SENTRY_ENV}
+    eval "$(sentry-cli bash-hook)"
+    ;;
+  *)
+    echo "Sentry environment not set, skipping Sentry error handler"
+    ;;
 esac
 
 # Exit on subcommand errors
@@ -23,32 +23,32 @@ GOOGLE_CHROME_SINGLETON_LOCK=/home/whist/.config/google-chrome/SingletonLock
 WHIST_CHROME_SINGLETON_LOCK=/home/whist/.config/WhistChromeSingletonLock
 
 if [[ ! -f $WHIST_CHROME_SINGLETON_LOCK ]]; then
-    touch $WHIST_CHROME_SINGLETON_LOCK
-    rm -f $GOOGLE_CHROME_SINGLETON_LOCK
+  touch $WHIST_CHROME_SINGLETON_LOCK
+  rm -f $GOOGLE_CHROME_SINGLETON_LOCK
 fi
 
 features="VaapiVideoDecoder,Vulkan,CanvasOopRasterization,OverlayScrollbar"
 flags=(
-    --use-gl=desktop
-    --password-store=gnome
-    --flag-switches-begin
-    --enable-gpu-rasterization
-    --enable-zero-copy
-    --double-buffer-compositing
-    --disable-smooth-scrolling
-    --disable-font-subpixel-positioning
-    --force-color-profile=display-p3-d65
-    --disable-gpu-process-crash-limit
-    --no-default-browser-check
+  --use-gl=desktop
+  --password-store=gnome
+  --flag-switches-begin
+  --enable-gpu-rasterization
+  --enable-zero-copy
+  --double-buffer-compositing
+  --disable-smooth-scrolling
+  --disable-font-subpixel-positioning
+  --force-color-profile=display-p3-d65
+  --disable-gpu-process-crash-limit
+  --no-default-browser-check
 )
 
 if [[ $DARK_MODE == true ]]; then
-    features="$features,WebUIDarkMode"
-    flags+=(--force-dark-mode)
+  features="$features,WebUIDarkMode"
+  flags+=(--force-dark-mode)
 fi
 
 if [[ $RESTORE_LAST_SESSION == true ]]; then
-    flags+=(--restore-last-session)
+  flags+=(--restore-last-session)
 fi
 
 flags+=(--enable-features=$features)
