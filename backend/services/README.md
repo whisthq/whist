@@ -119,4 +119,31 @@ The Whist host service gets built into our AMIs during deployment.
 
 ## Scaling Service Specifics
 
-This section is to be filled out by MauAraujo in a future PR.
+### Structure
+
+The scaling service is an event driven system, which is composed of three main parts: the event handler, the scaling algorithm, and the host handler. It follows the same design conventions as the host service, but with a more event-focused approach. As a result, it uses go channels, goroutines and contexts heavily. It is recommended to be familiar with these concepts while working on the scaling service. A more detailed write up of the scaling service is available [here](https://www.notion.so/whisthq/4d91593ea0e0438b8bdb14c25c219d55?v=0c3983cf062d4c3d96ac2a65eb31761b&p=1a8d9b668a8442e79778fb41df01c3e8).
+
+#### Event Handler
+
+The event handler can be seen as the main process in the scaling service. It is responsible of creating and initializing database subscriptions, scheduled events, and scaling algorithms, which are indexed on a sync map. It then receives events, and sends them to the appropiate channels. In a sense, this is the simplest part of the scaling service. 
+
+
+#### Scaling Algorithm
+
+Scaling algorithms are abstracted on the `ScalingAlgorithm` interface, which has generic methods that every scaling algorithm will need. The intention behind making a simple interface is that each scaling algorithm can be extended as necessary to perform different scaling strategies, so that they can be swaped by the event handler with ease. As a start, the default scaling algorithm was created, which contains logic similar to the one in the webserver which can be applied to any region.
+
+In overall, a scaling algorithm has the following structure:
+- The `actions` file, which contains code for the scaling actions (scaling up/down). This file is the most important one as the actions make the scaling decisons.
+- The `config` file contains constants and variables that are used by the scaling actions, such as the size of the buffer and bundled regions.
+- The `types` file has go types specific to the database that are necessary for Hasura.
+- The main file (in the default scaling algorithm its named `default`). Here are the method implementations to satisfy the `ScalingAlgorithm` interface. It also has the logic for starting actions based on the received events.
+
+
+#### Host Handler
+
+Host handlers are abstracted on the `HostHandler` interface, which has the basic methods necessary to perform scaling actions. Each host handler implementation is meant to deal directly with the cloud provider's sdk. By abstracting cloud provider specific logic behind an interface, the scaling actions can be made in an agnostic way, so that multi-cloud support can be added easily. The structure of a host handler is very straightforward , it only has a `config` file with configuration variables specific to the cloud provider, and the main host file where the interface methods are implemented.
+
+
+## Running the scaling algorithm
+
+The scaling service can be run locally on your computer with the command `make run_scaling_service`. Make sure to have your AWS credentials configured so that the scaling service is able to start/stop instances.
