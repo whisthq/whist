@@ -159,11 +159,11 @@ func TestMandelboxAllocatedHandler(t *testing.T) {
 }
 
 func TestSetupHostSubscriptions(t *testing.T) {
-	instanceId := "test-instance-id"
+	instanceID := "test-instance-id"
 	whistClient := &mockWhistClient{}
 
 	// Create the host service specific subscriptions
-	SetupHostSubscriptions(instanceId, whistClient)
+	SetupHostSubscriptions(instanceID, whistClient)
 
 	if whistClient.Subscriptions == nil {
 		t.Errorf("Got nil subscriptions")
@@ -175,7 +175,7 @@ func TestSetupHostSubscriptions(t *testing.T) {
 
 	// Create a fake variables map that matches the host subscriptions variable map
 	var variables = map[string]interface{}{
-		"id":     graphql.String(instanceId),
+		"id":     graphql.String(instanceID),
 		"status": instance_state("DRAINING"),
 	}
 
@@ -185,7 +185,7 @@ func TestSetupHostSubscriptions(t *testing.T) {
 	}
 
 	variables = map[string]interface{}{
-		"instance_id": graphql.String(instanceId),
+		"instance_id": graphql.String(instanceID),
 		"status":      mandelbox_state("ALLOCATED"),
 	}
 

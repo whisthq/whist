@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-const removeMandelboxSQL = `DELETE FROM cloud.mandelbox_info WHERE mandelbox_id = $1;`
+const removeMandelboxSQL = `DELETE FROM whist.mandelboxes WHERE id = $1;`
 
 // RemoveMandelbox implements Querier.RemoveMandelbox.
 func (q *DBQuerier) RemoveMandelbox(ctx context.Context, mandelboxID string) (pgconn.CommandTag, error) {

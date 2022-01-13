@@ -9,29 +9,26 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-const findInstanceByNameSQL = `SELECT * FROM cloud.instance_info WHERE instance_name = $1;`
+const findInstanceByNameSQL = `SELECT * FROM whist.instances WHERE id = $1;`
 
 type FindInstanceByNameRow struct {
-	Ip                    pgtype.Varchar `json:"ip"`
-	Location              pgtype.Varchar `json:"location"`
-	AwsAmiID              pgtype.Varchar `json:"aws_ami_id"`
-	AwsInstanceType       pgtype.Varchar `json:"aws_instance_type"`
-	CloudProviderID       pgtype.Varchar `json:"cloud_provider_id"`
-	CommitHash            pgtype.Varchar `json:"commit_hash"`
-	CreationTimeUtcUnixMs int            `json:"creation_time_utc_unix_ms"`
-	GpuVramRemainingKb    int            `json:"gpu_vram_remaining_kb"`
-	InstanceName          pgtype.Varchar `json:"instance_name"`
-	LastUpdatedUtcUnixMs  int            `json:"last_updated_utc_unix_ms"`
-	MandelboxCapacity     int            `json:"mandelbox_capacity"`
-	MemoryRemainingKb     int            `json:"memory_remaining_kb"`
-	NanocpusRemaining     int            `json:"nanocpus_remaining"`
-	Status                pgtype.Varchar `json:"status"`
+	ID                pgtype.Varchar     `json:"id"`
+	Provider          CloudProvider      `json:"provider"`
+	Region            pgtype.Varchar     `json:"region"`
+	ImageID           pgtype.Varchar     `json:"image_id"`
+	ClientSha         pgtype.Varchar     `json:"client_sha"`
+	IpAddr            pgtype.Inet        `json:"ip_addr"`
+	InstanceType      pgtype.Varchar     `json:"instance_type"`
+	RemainingCapacity int32              `json:"remaining_capacity"`
+	Status            InstanceState      `json:"status"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 }
 
 // FindInstanceByName implements Querier.FindInstanceByName.
-func (q *DBQuerier) FindInstanceByName(ctx context.Context, instanceName string) ([]FindInstanceByNameRow, error) {
+func (q *DBQuerier) FindInstanceByName(ctx context.Context, instanceID string) ([]FindInstanceByNameRow, error) {
 	ctx = context.WithValue(ctx, "pggen_query_name", "FindInstanceByName")
-	rows, err := q.conn.Query(ctx, findInstanceByNameSQL, instanceName)
+	rows, err := q.conn.Query(ctx, findInstanceByNameSQL, instanceID)
 	if err != nil {
 		return nil, fmt.Errorf("query FindInstanceByName: %w", err)
 	}
@@ -39,7 +36,7 @@ func (q *DBQuerier) FindInstanceByName(ctx context.Context, instanceName string)
 	items := []FindInstanceByNameRow{}
 	for rows.Next() {
 		var item FindInstanceByNameRow
-		if err := rows.Scan(&item.Ip, &item.Location, &item.AwsAmiID, &item.AwsInstanceType, &item.CloudProviderID, &item.CommitHash, &item.CreationTimeUtcUnixMs, &item.GpuVramRemainingKb, &item.InstanceName, &item.LastUpdatedUtcUnixMs, &item.MandelboxCapacity, &item.MemoryRemainingKb, &item.NanocpusRemaining, &item.Status); err != nil {
+		if err := rows.Scan(&item.ID, &item.Provider, &item.Region, &item.ImageID, &item.ClientSha, &item.IpAddr, &item.InstanceType, &item.RemainingCapacity, &item.Status, &item.CreatedAt, &item.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan FindInstanceByName row: %w", err)
 		}
 		items = append(items, item)
@@ -51,8 +48,8 @@ func (q *DBQuerier) FindInstanceByName(ctx context.Context, instanceName string)
 }
 
 // FindInstanceByNameBatch implements Querier.FindInstanceByNameBatch.
-func (q *DBQuerier) FindInstanceByNameBatch(batch genericBatch, instanceName string) {
-	batch.Queue(findInstanceByNameSQL, instanceName)
+func (q *DBQuerier) FindInstanceByNameBatch(batch genericBatch, instanceID string) {
+	batch.Queue(findInstanceByNameSQL, instanceID)
 }
 
 // FindInstanceByNameScan implements Querier.FindInstanceByNameScan.
@@ -65,7 +62,7 @@ func (q *DBQuerier) FindInstanceByNameScan(results pgx.BatchResults) ([]FindInst
 	items := []FindInstanceByNameRow{}
 	for rows.Next() {
 		var item FindInstanceByNameRow
-		if err := rows.Scan(&item.Ip, &item.Location, &item.AwsAmiID, &item.AwsInstanceType, &item.CloudProviderID, &item.CommitHash, &item.CreationTimeUtcUnixMs, &item.GpuVramRemainingKb, &item.InstanceName, &item.LastUpdatedUtcUnixMs, &item.MandelboxCapacity, &item.MemoryRemainingKb, &item.NanocpusRemaining, &item.Status); err != nil {
+		if err := rows.Scan(&item.ID, &item.Provider, &item.Region, &item.ImageID, &item.ClientSha, &item.IpAddr, &item.InstanceType, &item.RemainingCapacity, &item.Status, &item.CreatedAt, &item.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan FindInstanceByNameBatch row: %w", err)
 		}
 		items = append(items, item)

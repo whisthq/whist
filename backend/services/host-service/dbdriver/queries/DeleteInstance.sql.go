@@ -16,17 +16,17 @@ import (
 // calling SendBatch on pgx.Conn, pgxpool.Pool, or pgx.Tx, use the Scan methods
 // to parse the results.
 type Querier interface {
-	DeleteInstance(ctx context.Context, instanceName string) (pgconn.CommandTag, error)
+	DeleteInstance(ctx context.Context, instanceID string) (pgconn.CommandTag, error)
 	// DeleteInstanceBatch enqueues a DeleteInstance query into batch to be executed
 	// later by the batch.
-	DeleteInstanceBatch(batch genericBatch, instanceName string)
+	DeleteInstanceBatch(batch genericBatch, instanceID string)
 	// DeleteInstanceScan scans the result of an executed DeleteInstanceBatch query.
 	DeleteInstanceScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
-	FindInstanceByName(ctx context.Context, instanceName string) ([]FindInstanceByNameRow, error)
+	FindInstanceByName(ctx context.Context, instanceID string) ([]FindInstanceByNameRow, error)
 	// FindInstanceByNameBatch enqueues a FindInstanceByName query into batch to be executed
 	// later by the batch.
-	FindInstanceByNameBatch(batch genericBatch, instanceName string)
+	FindInstanceByNameBatch(batch genericBatch, instanceID string)
 	// FindInstanceByNameScan scans the result of an executed FindInstanceByNameBatch query.
 	FindInstanceByNameScan(results pgx.BatchResults) ([]FindInstanceByNameRow, error)
 
@@ -58,24 +58,24 @@ type Querier interface {
 	// RemoveStaleMandelboxesScan scans the result of an executed RemoveStaleMandelboxesBatch query.
 	RemoveStaleMandelboxesScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
-	WriteHeartbeat(ctx context.Context, params WriteHeartbeatParams) (pgconn.CommandTag, error)
+	WriteHeartbeat(ctx context.Context, updatedAt pgtype.Timestamptz, instanceID string) (pgconn.CommandTag, error)
 	// WriteHeartbeatBatch enqueues a WriteHeartbeat query into batch to be executed
 	// later by the batch.
-	WriteHeartbeatBatch(batch genericBatch, params WriteHeartbeatParams)
+	WriteHeartbeatBatch(batch genericBatch, updatedAt pgtype.Timestamptz, instanceID string)
 	// WriteHeartbeatScan scans the result of an executed WriteHeartbeatBatch query.
 	WriteHeartbeatScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
-	WriteInstanceStatus(ctx context.Context, status pgtype.Varchar, instanceName string) (pgconn.CommandTag, error)
+	WriteInstanceStatus(ctx context.Context, status InstanceState, instanceID string) (pgconn.CommandTag, error)
 	// WriteInstanceStatusBatch enqueues a WriteInstanceStatus query into batch to be executed
 	// later by the batch.
-	WriteInstanceStatusBatch(batch genericBatch, status pgtype.Varchar, instanceName string)
+	WriteInstanceStatusBatch(batch genericBatch, status InstanceState, instanceID string)
 	// WriteInstanceStatusScan scans the result of an executed WriteInstanceStatusBatch query.
 	WriteInstanceStatusScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
-	WriteMandelboxStatus(ctx context.Context, status pgtype.Varchar, mandelboxID string) (pgconn.CommandTag, error)
+	WriteMandelboxStatus(ctx context.Context, status MandelboxState, mandelboxID string) (pgconn.CommandTag, error)
 	// WriteMandelboxStatusBatch enqueues a WriteMandelboxStatus query into batch to be executed
 	// later by the batch.
-	WriteMandelboxStatusBatch(batch genericBatch, status pgtype.Varchar, mandelboxID string)
+	WriteMandelboxStatusBatch(batch genericBatch, status MandelboxState, mandelboxID string)
 	// WriteMandelboxStatusScan scans the result of an executed WriteMandelboxStatusBatch query.
 	WriteMandelboxStatusScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 }
@@ -185,6 +185,47 @@ func PrepareAllQueries(ctx context.Context, p preparer) error {
 	return nil
 }
 
+// Application represents the Postgres enum "application".
+type Application string
+
+const (
+	ApplicationChrome Application = "chrome"
+)
+
+func (a Application) String() string { return string(a) }
+
+// CloudProvider represents the Postgres enum "cloud_provider".
+type CloudProvider string
+
+const (
+	CloudProviderAws CloudProvider = "aws"
+)
+
+func (c CloudProvider) String() string { return string(c) }
+
+// InstanceState represents the Postgres enum "instance_state".
+type InstanceState string
+
+const (
+	InstanceStatePRECONNECTION InstanceState = "PRE_CONNECTION"
+	InstanceStateACTIVE        InstanceState = "ACTIVE"
+	InstanceStateDRAINING      InstanceState = "DRAINING"
+)
+
+func (i InstanceState) String() string { return string(i) }
+
+// MandelboxState represents the Postgres enum "mandelbox_state".
+type MandelboxState string
+
+const (
+	MandelboxStateALLOCATED  MandelboxState = "ALLOCATED"
+	MandelboxStateCONNECTING MandelboxState = "CONNECTING"
+	MandelboxStateRUNNING    MandelboxState = "RUNNING"
+	MandelboxStateDYING      MandelboxState = "DYING"
+)
+
+func (m MandelboxState) String() string { return string(m) }
+
 // typeResolver looks up the pgtype.ValueTranscoder by Postgres type name.
 type typeResolver struct {
 	connInfo *pgtype.ConnInfo // types by Postgres type name
@@ -220,12 +261,12 @@ func (tr *typeResolver) setValue(vt pgtype.ValueTranscoder, val interface{}) pgt
 	return vt
 }
 
-const deleteInstanceSQL = `DELETE FROM cloud.instance_info WHERE instance_name = $1;`
+const deleteInstanceSQL = `DELETE FROM whist.instances WHERE id = $1;`
 
 // DeleteInstance implements Querier.DeleteInstance.
-func (q *DBQuerier) DeleteInstance(ctx context.Context, instanceName string) (pgconn.CommandTag, error) {
+func (q *DBQuerier) DeleteInstance(ctx context.Context, instanceID string) (pgconn.CommandTag, error) {
 	ctx = context.WithValue(ctx, "pggen_query_name", "DeleteInstance")
-	cmdTag, err := q.conn.Exec(ctx, deleteInstanceSQL, instanceName)
+	cmdTag, err := q.conn.Exec(ctx, deleteInstanceSQL, instanceID)
 	if err != nil {
 		return cmdTag, fmt.Errorf("exec query DeleteInstance: %w", err)
 	}
@@ -233,8 +274,8 @@ func (q *DBQuerier) DeleteInstance(ctx context.Context, instanceName string) (pg
 }
 
 // DeleteInstanceBatch implements Querier.DeleteInstanceBatch.
-func (q *DBQuerier) DeleteInstanceBatch(batch genericBatch, instanceName string) {
-	batch.Queue(deleteInstanceSQL, instanceName)
+func (q *DBQuerier) DeleteInstanceBatch(batch genericBatch, instanceID string) {
+	batch.Queue(deleteInstanceSQL, instanceID)
 }
 
 // DeleteInstanceScan implements Querier.DeleteInstanceScan.

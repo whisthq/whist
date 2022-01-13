@@ -9,16 +9,17 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-const findMandelboxByIDSQL = `SELECT * FROM cloud.mandelbox_info
-  WHERE mandelbox_id = $1;`
+const findMandelboxByIDSQL = `SELECT * FROM whist.mandelboxes
+  WHERE id = $1;`
 
 type FindMandelboxByIDRow struct {
-	MandelboxID           pgtype.Varchar `json:"mandelbox_id"`
-	UserID                pgtype.Varchar `json:"user_id"`
-	InstanceName          pgtype.Varchar `json:"instance_name"`
-	Status                pgtype.Varchar `json:"status"`
-	CreationTimeUtcUnixMs int            `json:"creation_time_utc_unix_ms"`
-	SessionID             pgtype.Varchar `json:"session_id"`
+	ID         pgtype.Varchar     `json:"id"`
+	App        Application        `json:"app"`
+	InstanceID pgtype.Varchar     `json:"instance_id"`
+	UserID     pgtype.Varchar     `json:"user_id"`
+	SessionID  pgtype.Varchar     `json:"session_id"`
+	Status     MandelboxState     `json:"status"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 }
 
 // FindMandelboxByID implements Querier.FindMandelboxByID.
@@ -32,7 +33,7 @@ func (q *DBQuerier) FindMandelboxByID(ctx context.Context, mandelboxID string) (
 	items := []FindMandelboxByIDRow{}
 	for rows.Next() {
 		var item FindMandelboxByIDRow
-		if err := rows.Scan(&item.MandelboxID, &item.UserID, &item.InstanceName, &item.Status, &item.CreationTimeUtcUnixMs, &item.SessionID); err != nil {
+		if err := rows.Scan(&item.ID, &item.App, &item.InstanceID, &item.UserID, &item.SessionID, &item.Status, &item.CreatedAt); err != nil {
 			return nil, fmt.Errorf("scan FindMandelboxByID row: %w", err)
 		}
 		items = append(items, item)
@@ -58,7 +59,7 @@ func (q *DBQuerier) FindMandelboxByIDScan(results pgx.BatchResults) ([]FindMande
 	items := []FindMandelboxByIDRow{}
 	for rows.Next() {
 		var item FindMandelboxByIDRow
-		if err := rows.Scan(&item.MandelboxID, &item.UserID, &item.InstanceName, &item.Status, &item.CreationTimeUtcUnixMs, &item.SessionID); err != nil {
+		if err := rows.Scan(&item.ID, &item.App, &item.InstanceID, &item.UserID, &item.SessionID, &item.Status, &item.CreatedAt); err != nil {
 			return nil, fmt.Errorf("scan FindMandelboxByIDBatch row: %w", err)
 		}
 		items = append(items, item)

@@ -46,6 +46,7 @@ import (
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
+	"github.com/whisthq/whist/backend/services/host-service/dbdriver/queries"
 	mandelboxData "github.com/whisthq/whist/backend/services/host-service/mandelbox"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
@@ -514,7 +515,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logger.Infof("SpinUpMandelbox(): Finished waiting for mandelbox %s whist application to start up", mandelboxSubscription.ID)
 	}
 
-	err = dbdriver.WriteMandelboxStatus(mandelboxSubscription.ID, dbdriver.MandelboxStatusRunning)
+	err = dbdriver.WriteMandelboxStatus(mandelboxSubscription.ID, queries.MandelboxStateRUNNING)
 	if err != nil {
 		logAndReturnError("Error marking mandelbox running: %s", err)
 		return
@@ -771,9 +772,8 @@ func main() {
 		// draining, the webserver doesn't want it anymore so we should shut down.
 
 		// TODO: make this a bit more robust
-		if !metadata.IsLocalEnv() && (strings.Contains(err.Error(), string(dbdriver.InstanceStatusUnresponsive)) ||
-			strings.Contains(err.Error(), string(dbdriver.InstanceStatusDraining))) {
-			logger.Infof("Instance wasn't registered in database because we found ourselves already marked draining or unresponsive. Shutting down.... Error: %s", err)
+		if !metadata.IsLocalEnv() && strings.Contains(err.Error(), string(queries.InstanceStateDRAINING)) {
+			logger.Infof("Instance wasn't registered in database because we found ourselves already marked draining. Shutting down.... Error: %s", err)
 			shutdownInstanceOnExit = true
 			globalCancel()
 		} else {
@@ -790,7 +790,7 @@ func main() {
 	}
 
 	// Start database subscription client
-	instanceId, err := aws.GetInstanceID()
+	instanceID, err := aws.GetInstanceID()
 	if err != nil {
 		logger.Errorf("Can't get AWS Instance Name to start database subscriptions. Error: %s", err)
 		metrics.Increment("ErrorRate")
@@ -798,7 +798,7 @@ func main() {
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
 
 	subscriptionClient := &subscriptions.SubscriptionClient{}
-	subscriptions.SetupHostSubscriptions(string(instanceId), subscriptionClient)
+	subscriptions.SetupHostSubscriptions(string(instanceID), subscriptionClient)
 	subscriptions.Start(subscriptionClient, globalCtx, &goroutineTracker, subscriptionEvents)
 	if err != nil {
 		logger.Errorf("Failed to start database subscriptions. Error: %s", err)
@@ -918,14 +918,14 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 						metrics.Increment("ErrorRate")
 					}
 
-					instanceId, err := aws.GetInstanceID()
+					instanceID, err := aws.GetInstanceID()
 					if err != nil {
 						logger.Errorf("Error getting instance name from AWS, %v", err)
 						metrics.Increment("ErrorRate")
 					}
 					// Create a mandelbox object as would be received from a Hasura subscription.
 					mandelbox := subscriptions.Mandelbox{
-						InstanceID: string(instanceId),
+						InstanceID: string(instanceID),
 						ID:         jsonReq.MandelboxID,
 						SessionID:  "1234",
 						UserID:     userID,

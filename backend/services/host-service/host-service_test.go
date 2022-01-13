@@ -232,17 +232,17 @@ func TestSpinUpMandelbox(t *testing.T) {
 			defer cancelMandelboxContextByID(mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()))
 			defer cancel()
 
-			var instanceId aws.InstanceID
+			var instanceID aws.InstanceID
 			var userID mandelboxtypes.UserID
 			var err error
 			if metadata.IsRunningInCI() {
 				userID = "localdev_host_service_CI"
 			} else {
-				instanceId, err = aws.GetInstanceID()
+				instanceID, err = aws.GetInstanceID()
 				if err != nil {
 					logger.Errorf("Can't get AWS Instance name for localdev user config userID.")
 				}
-				userID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceId))
+				userID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceID))
 			}
 
 			// We always want to start with a clean slate
@@ -251,7 +251,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 			defer uninitializeFilesystem()
 
 			testMandelboxInfo := subscriptions.Mandelbox{
-				InstanceID: string(instanceId),
+				InstanceID: string(instanceID),
 				ID:         mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 				SessionID:  "1234",
 				UserID:     userID,

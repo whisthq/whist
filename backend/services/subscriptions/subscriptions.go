@@ -48,20 +48,20 @@ func MandelboxAllocatedHandler(event SubscriptionEvent, variables map[string]int
 		return false
 	}
 
-	instanceId := string(variables["instance_id"].(graphql.String))
+	instanceID := string(variables["instance_id"].(graphql.String))
 	status := string(variables["status"].(mandelbox_state))
 
-	return (mandelbox.InstanceID == instanceId) && (mandelbox.Status == status)
+	return (mandelbox.InstanceID == instanceID) && (mandelbox.Status == status)
 }
 
 // SetupHostSubscriptions creates a slice of HasuraSubscriptions to start the client. This
 // function is specific for the subscriptions used on the host service.
-func SetupHostSubscriptions(instanceId string, whistClient WhistSubscriptionClient) {
+func SetupHostSubscriptions(instanceID string, whistClient WhistSubscriptionClient) {
 	hostSubscriptions := []HasuraSubscription{
 		{
 			Query: QueryInstanceByIdWithStatus,
 			Variables: map[string]interface{}{
-				"id":     graphql.String(instanceId),
+				"id":     graphql.String(instanceID),
 				"status": instance_state("DRAINING"),
 			},
 			Result:  InstanceEvent{[]Instance{}},
@@ -70,7 +70,7 @@ func SetupHostSubscriptions(instanceId string, whistClient WhistSubscriptionClie
 		{
 			Query: QueryMandelboxesByInstanceId,
 			Variables: map[string]interface{}{
-				"instance_id": graphql.String(instanceId),
+				"instance_id": graphql.String(instanceID),
 				"status":      mandelbox_state("ALLOCATED"),
 			},
 			Result:  MandelboxEvent{[]Mandelbox{}},

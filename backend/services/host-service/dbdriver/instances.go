@@ -2,19 +2,20 @@ package dbdriver // import "github.com/whisthq/whist/backend/services/host-servi
 
 import (
 	"context"
+	"net"
 	"strings"
 	"time"
 
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 
-	"github.com/whisthq/whist/backend/services/host-service/metrics"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/metadata/aws"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver/queries"
+	"github.com/whisthq/whist/backend/services/host-service/metrics"
 )
 
 // This file is concerned with database interactions at the instance-level
@@ -22,14 +23,6 @@ import (
 
 // A InstanceStatus represents a possible status that this instance can have in the database.
 type InstanceStatus string
-
-// These represent the currently-defined statuses for instances.
-const (
-	InstanceStatusPreConnection InstanceStatus = "PRE_CONNECTION"
-	InstanceStatusActive        InstanceStatus = "ACTIVE"
-	InstanceStatusDraining      InstanceStatus = "DRAINING"
-	InstanceStatusUnresponsive  InstanceStatus = "HOST_SERVICE_UNRESPONSIVE"
-)
 
 // RegisterInstance registers the instance in the database. If the expected row
 // is not found, then it returns an error. This function also starts the
@@ -42,15 +35,11 @@ func RegisterInstance() error {
 		return utils.MakeError("registerInstance() called but dbdriver is not initialized!")
 	}
 
-	instanceName, err := aws.GetInstanceName()
-	if err != nil {
-		return utils.MakeError("Couldn't register instance: couldn't get instance name: %s", err)
-	}
 	publicIP4, err := aws.GetPublicIpv4()
 	if err != nil {
 		return utils.MakeError("Couldn't register instance: couldn't get public IPv4: %s", err)
 	}
-	amiID, err := aws.GetAmiID()
+	imageID, err := aws.GetAmiID()
 	if err != nil {
 		return utils.MakeError("Couldn't register instance: couldn't get AMI ID: %s", err)
 	}
@@ -66,12 +55,10 @@ func RegisterInstance() error {
 	if err != nil {
 		return utils.MakeError("Couldn't register instance: couldn't get AWS Instance id: %s", err)
 	}
-
 	latestMetrics, errs := metrics.GetLatest()
 	if len(errs) != 0 {
 		return utils.MakeError("Couldn't register instance: errors getting metrics: %+v", errs)
 	}
-
 	// Create a transaction to register the instance, since we are querying and
 	// writing separately.
 	tx, err := dbpool.BeginTx(context.Background(), pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
@@ -83,7 +70,7 @@ func RegisterInstance() error {
 
 	// Check if there's a row for us in the database already
 	q := queries.NewQuerier(tx)
-	rows, err := q.FindInstanceByName(context.Background(), string(instanceName))
+	rows, err := q.FindInstanceByName(context.Background(), string(instanceID))
 	if err != nil {
 		return utils.MakeError("RegisterInstance(): Error running query: %s", err)
 	}
@@ -95,43 +82,44 @@ func RegisterInstance() error {
 	}
 
 	// Verify that the properties of the existing row are actually as we expect
-	if rows[0].AwsAmiID.String != string(amiID) {
-		return utils.MakeError(`RegisterInstance(): Existing database row found, but AMI differs. Expected "%s", Got "%s"`, amiID, rows[0].AwsAmiID.String)
+	if rows[0].ImageID.String != string(imageID) {
+		return utils.MakeError(`RegisterInstance(): Existing database row found, but AMI differs. Expected "%s", Got "%s"`, imageID, rows[0].ImageID.String)
 	}
-	if rows[0].Location.String != string(region) {
-		return utils.MakeError(`RegisterInstance(): Existing database row found, but location differs. Expected "%s", Got "%s"`, region, rows[0].Location.String)
+	if rows[0].Region.String != string(region) {
+		return utils.MakeError(`RegisterInstance(): Existing database row found, but location differs. Expected "%s", Got "%s"`, region, rows[0].Region.String)
 	}
-	if !(rows[0].CommitHash.Status == pgtype.Present && strings.HasPrefix(metadata.GetGitCommit(), rows[0].CommitHash.String)) {
+	if !(rows[0].ClientSha.Status == pgtype.Present && strings.HasPrefix(metadata.GetGitCommit(), rows[0].ClientSha.String)) {
 		// This is the only string where we have to check status, since an empty string is a prefix for anything.
-		return utils.MakeError(`RegisterInstance(): Existing database row found, but commit hash differs. Expected "%s", Got "%s"`, metadata.GetGitCommit(), rows[0].CommitHash.String)
+		return utils.MakeError(`RegisterInstance(): Existing database row found, but commit hash differs. Expected "%s", Got "%s"`, metadata.GetGitCommit(), rows[0].ClientSha.String)
 	}
-	if rows[0].AwsInstanceType.String != string(instanceType) {
-		return utils.MakeError(`RegisterInstance(): Existing database row found, but AWS instance type differs. Expected "%s", Got "%s"`, instanceType, rows[0].AwsInstanceType.String)
+	if rows[0].InstanceType.String != string(instanceType) {
+		return utils.MakeError(`RegisterInstance(): Existing database row found, but AWS instance type differs. Expected "%s", Got "%s"`, instanceType, rows[0].InstanceType.String)
 	}
-	if rows[0].Status.String != string(InstanceStatusPreConnection) {
-		return utils.MakeError(`RegisterInstance(): Existing database row found, but status differs. Expected "%s", Got "%s"`, InstanceStatusPreConnection, rows[0].Status.String)
+	if rows[0].Status != queries.InstanceStatePRECONNECTION {
+		return utils.MakeError(`RegisterInstance(): Existing database row found, but status differs. Expected "%s", Got "%s"`, queries.InstanceStatePRECONNECTION, rows[0].Status.String)
 	}
 
 	// There is an existing row in the database for this instance --- we now "take over" and update it with the correct information.
 	result, err := q.RegisterInstance(context.Background(), queries.RegisterInstanceParams{
-		CloudProviderID: pgtype.Varchar{
-			String: "aws-" + string(instanceID),
+		ImageID: pgtype.Varchar{
+			String: string(imageID),
 			Status: pgtype.Present,
 		},
-		MemoryRemainingKB:    int(latestMetrics.AvailableMemoryKB),
-		NanoCPUsRemainingKB:  int(latestMetrics.NanoCPUsRemaining),
-		GpuVramRemainingKb:   int(latestMetrics.FreeVideoMemoryKB),
-		MandelboxCapacity:    latestMetrics.NumberOfGPUs,
-		LastUpdatedUtcUnixMs: int(time.Now().UnixNano() / 1_000_000),
-		Ip: pgtype.Varchar{
-			String: publicIP4.String(),
+		IpAddr: pgtype.Inet{
+			IPNet: &net.IPNet{
+				IP: publicIP4,
+			},
+		},
+		InstanceType: pgtype.Varchar{
+			String: string(instanceType),
 			Status: pgtype.Present,
 		},
-		Status: pgtype.Varchar{
-			String: string(InstanceStatusActive),
-			Status: pgtype.Present,
+		RemainingCapacity: int32(latestMetrics.NumberOfGPUs),
+		Status:            queries.InstanceStateACTIVE,
+		UpdatedAt: pgtype.Timestamptz{
+			Time: time.Now(),
 		},
-		InstanceName: string(instanceName),
+		InstanceID: string(instanceID),
 	})
 	if err != nil {
 		return utils.MakeError("Couldn't register instance: error updating existing row in table `cloud.instance_info`: %s", err)
@@ -140,7 +128,7 @@ func RegisterInstance() error {
 	}
 	tx.Commit(context.Background())
 
-	logger.Infof("Successfully registered %s instance in database.", instanceName)
+	logger.Infof("Successfully registered %s instance in database.", instanceID)
 
 	// Initialize the heartbeat goroutine. Note that this goroutine does not
 	// listen to the global context, and is not tracked by the global
@@ -164,22 +152,18 @@ func markDraining() error {
 
 	q := queries.NewQuerier(dbpool)
 
-	instanceName, err := aws.GetInstanceName()
+	instanceID, err := aws.GetInstanceID()
 	if err != nil {
 		return utils.MakeError("Couldn't mark instance as draining: couldn't get instance name: %s", err)
 	}
 
-	result, err := q.WriteInstanceStatus(context.Background(), pgtype.Varchar{
-		String: string(InstanceStatusDraining),
-		Status: pgtype.Present,
-	},
-		string(instanceName))
+	result, err := q.WriteInstanceStatus(context.Background(), queries.InstanceStateDRAINING, string(instanceID))
 	if err != nil {
 		return utils.MakeError("Couldn't mark instance as draining: error updating existing row in table `cloud.instance_info`: %s", err)
 	} else if result.RowsAffected() == 0 {
 		return utils.MakeError("Couldn't mark instance as draining: row in database went missing!")
 	}
-	logger.Infof("Successfully marked instance %s as draining in database.", instanceName)
+	logger.Infof("Successfully marked instance %s as draining in database.", instanceID)
 	return nil
 }
 

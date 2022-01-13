@@ -1,2 +1,2 @@
 -- name: WriteHeartbeat :exec
-UPDATE whist.instances SET (updated_at) = (pggen.arg('updated_at')) WHERE id = pggen.arg('instanceId');
+UPDATE whist.instances SET (updated_at) = row(pggen.arg('updated_at')) WHERE id = pggen.arg('instanceID');
