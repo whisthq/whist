@@ -251,8 +251,9 @@ typedef struct {
     int reading_packet_len;
     DynamicBuffer* encrypted_tcp_packet_buffer;
     NetworkThrottleContext* network_throttler;
-    int burst_bitrate;
-    double fec_packet_ratio;
+
+    double fec_packet_ratios[NUM_PACKET_TYPES];
+
     bool decrypted_packet_used;
     WhistPacket decrypted_packet;
     // Nack Buffer Data
@@ -462,7 +463,7 @@ static inline int recvfrom_no_intr(SOCKET s, char* buf, int len, int flags, stru
 }
 #endif
 
-// Included at the bottom due to circular #include <network.h> reference
+// TODO: Move
 #include <whist/network/tcp.h>
 #include <whist/network/udp.h>
 

@@ -68,7 +68,6 @@ Includes
 #include <whist/clipboard/clipboard_synchronizer.h>
 #include <whist/file/file_synchronizer.h>
 #include <whist/utils/color.h>
-#include <whist/network/network.h>
 #include <whist/utils/clock.h>
 #include <whist/logging/logging.h>
 #include <whist/utils/os_utils.h>
@@ -246,7 +245,10 @@ typedef struct {
     double video_fec_ratio;
     CodecType desired_codec;
 } NetworkSettings;
+
+// These things need NetworkSettings
 #include <whist/network/network_algorithm.h>
+#include <whist/network/network.h>
 
 /**
  * @brief           Enum indicating whether we are using the Nvidia or X11 capture device. If we

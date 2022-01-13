@@ -203,8 +203,9 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payloa
                                                 (payload_size % MAX_PAYLOAD_SIZE == 0 ? 0 : 1));
 
     int num_fec_packets = 0;
-    if (nack_buffer && context->fec_packet_ratio > 0.0) {
-        num_fec_packets = get_num_fec_packets(num_indices, context->fec_packet_ratio);
+    int fec_packet_ratio = context->fec_packet_ratios[packet_type];
+    if (nack_buffer && fec_packet_ratio > 0.0) {
+        num_fec_packets = get_num_fec_packets(num_indices, fec_packet_ratio);
     }
 
     int num_total_packets = num_indices + num_fec_packets;
@@ -285,9 +286,12 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payloa
     return 0;
 }
 
-void udp_update_bitrate_settings(SocketContext* socket_context, int burst_bitrate,
-                                 double fec_packet_ratio) {
+void udp_update_network_settings(SocketContext* socket_context, NetworkSettings network_settings) {
     SocketContextData* context = socket_context->context;
+
+    int burst_bitrate = network_settings.burst_bitrate;
+    int video_fec_ratio = network_settings.video_fec_ratio;
+    int audio_fec_ratio = network_settings.audio_fec_ratio;
 
     // Set burst bitrate, if possible
     if (context->network_throttler == NULL) {
@@ -297,8 +301,10 @@ void udp_update_bitrate_settings(SocketContext* socket_context, int burst_bitrat
     }
 
     // Set fec packet ratio
-    FATAL_ASSERT(0.0 <= fec_packet_ratio && fec_packet_ratio <= MAX_FEC_RATIO);
-    context->fec_packet_ratio = fec_packet_ratio;
+    FATAL_ASSERT(0.0 <= video_fec_ratio && video_fec_ratio <= MAX_FEC_RATIO);
+    FATAL_ASSERT(0.0 <= audio_fec_ratio && audio_fec_ratio <= MAX_FEC_RATIO);
+    context->fec_packet_ratios[PACKET_VIDEO] = video_fec_ratio;
+    context->fec_packet_ratios[PACKET_AUDIO] = audio_fec_ratio;
 }
 
 void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType type,
@@ -772,8 +778,10 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     } else {
         context->network_throttler = NULL;
     }
-    context->burst_bitrate = -1;
-    context->fec_packet_ratio = 0.0;
+
+    for (int i = 0; i < NUM_PACKET_TYPES; i++) {
+        context->fec_packet_ratios[i] = 0.0;
+    }
 
     int ret;
     if (using_stun) {
