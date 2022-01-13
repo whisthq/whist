@@ -8,6 +8,8 @@ import { persistGet } from "@app/utils/persist"
 import { RESTORE_LAST_SESSION } from "@app/constants/store"
 import { getInitialKeyRepeat, getKeyRepeat } from "@app/utils/keyRepeat"
 import { AWSRegion } from "@app/@types/aws"
+import { appEnvironment } from "config/build"
+import { WhistEnvironments } from "config/constants"
 
 export default flow(
   "mandelboxFlow",
@@ -62,6 +64,9 @@ export default flow(
               }),
             ...(t.isNewConfigToken && {
               initial_url: "https://whist.typeform.com/to/Oi21wwbg",
+            }),
+            ...(appEnvironment === WhistEnvironments.LOCAL && {
+              local_client: true,
             }),
           }), // Data to send through the JSON transport
         }))

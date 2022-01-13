@@ -60,10 +60,9 @@ export const protocolLaunch = async () => {
   // Protocol arguments
   // We send the environment so that the protocol can init sentry if necessary
   const protocolParameters = {
-    ...(app.isPackaged &&
-      appEnvironment !== WhistEnvironments.LOCAL && {
-        environment: config.deployEnv,
-      }),
+    ...(appEnvironment !== WhistEnvironments.LOCAL && {
+      environment: config.deployEnv,
+    }),
   }
 
   const protocolArguments = [
