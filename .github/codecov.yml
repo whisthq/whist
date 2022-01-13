@@ -16,7 +16,7 @@ coverage:
         flags:
           - webserver
       backend-services:
-        target: auto # /services code coverage
+        target: auto # /backend/services code coverage
         threshold: 1% # Percentage of tolerable code coverage decrease from the base branch
         flags:
           - backend-services
