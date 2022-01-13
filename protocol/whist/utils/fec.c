@@ -104,7 +104,7 @@ void* get_rs_code(int k, int n) {
     return (void*)rs_code_table[k][n];
 }
 
-typedef struct {
+struct FECEncoder {
     int num_accepted_buffers;
     int num_buffers;
     int num_real_buffers;
@@ -114,9 +114,9 @@ typedef struct {
     int max_packet_size;  // max (original) packet size feed into encoder so far
     void* rs_code;
     bool encode_performed;
-} InternalFECEncoder;
+};
 
-typedef struct {
+struct FECDecoder {
     int num_accepted_buffers;
     int num_accepted_real_buffers;
     int num_buffers;
@@ -127,7 +127,7 @@ typedef struct {
     int max_packet_size;  // max packet size feed into decoder so far
     void* rs_code;
     bool recovery_performed;
-} InternalFECDecoder;
+};
 
 // num_fec_packets / (num_fec_packets + num_indices) = context->fec_packet_ratio
 // a / (a + b) = c
@@ -140,7 +140,7 @@ int get_num_fec_packets(int num_real_packets, double fec_packet_ratio) {
 }
 
 FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int max_buffer_size) {
-    InternalFECEncoder* fec_encoder = safe_malloc(sizeof(InternalFECEncoder));
+    FECEncoder* fec_encoder = safe_malloc(sizeof(*fec_encoder));
 
     FATAL_ASSERT(num_real_buffers + num_fec_buffers <= max_u8);
 
@@ -160,9 +160,7 @@ FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int ma
     return fec_encoder;
 }
 
-void fec_encoder_register_buffer(FECEncoder* fec_encoder_raw, void* buffer, int buffer_size) {
-    InternalFECEncoder* fec_encoder = (InternalFECEncoder*)fec_encoder_raw;
-
+void fec_encoder_register_buffer(FECEncoder* fec_encoder, void* buffer, int buffer_size) {
     FATAL_ASSERT(fec_encoder->num_accepted_buffers < fec_encoder->num_real_buffers);
     FATAL_ASSERT(0 <= buffer_size && buffer_size <= fec_encoder->max_buffer_size);
 
@@ -174,9 +172,7 @@ void fec_encoder_register_buffer(FECEncoder* fec_encoder_raw, void* buffer, int 
     fec_encoder->num_accepted_buffers++;
 }
 
-void fec_get_encoded_buffers(FECEncoder* fec_encoder_raw, void** buffers, int* buffer_sizes) {
-    InternalFECEncoder* fec_encoder = (InternalFECEncoder*)fec_encoder_raw;
-
+void fec_get_encoded_buffers(FECEncoder* fec_encoder, void** buffers, int* buffer_sizes) {
     FATAL_ASSERT(fec_encoder->num_accepted_buffers == fec_encoder->num_real_buffers);
     if (!fec_encoder->encode_performed) {
         // rs encoder requires packets to have equal length, so we pad packets to max_buffer_size
@@ -217,9 +213,7 @@ void fec_get_encoded_buffers(FECEncoder* fec_encoder_raw, void** buffers, int* b
     }
 }
 
-void destroy_fec_encoder(FECEncoder* fec_context_raw) {
-    InternalFECEncoder* fec_encoder = (InternalFECEncoder*)fec_context_raw;
-
+void destroy_fec_encoder(FECEncoder* fec_encoder) {
     int num_total_buffers = fec_encoder->num_buffers;
     if (fec_encoder->encode_performed) {
         for (int i = 0; i < num_total_buffers; i++) {
@@ -232,7 +226,7 @@ void destroy_fec_encoder(FECEncoder* fec_context_raw) {
 }
 
 FECDecoder* create_fec_decoder(int num_real_buffers, int num_fec_buffers, int max_buffer_size) {
-    InternalFECDecoder* fec_decoder = safe_malloc(sizeof(InternalFECDecoder));
+    FECDecoder* fec_decoder = safe_malloc(sizeof(*fec_decoder));
 
     int num_total_buffers = num_real_buffers + num_fec_buffers;
 
@@ -252,10 +246,8 @@ FECDecoder* create_fec_decoder(int num_real_buffers, int num_fec_buffers, int ma
     return fec_decoder;
 }
 
-void fec_decoder_register_buffer(FECDecoder* fec_decoder_raw, int index, void* buffer,
+void fec_decoder_register_buffer(FECDecoder* fec_decoder, int index, void* buffer,
                                  int buffer_size) {
-    InternalFECDecoder* fec_decoder = (InternalFECDecoder*)fec_decoder_raw;
-
     FATAL_ASSERT(0 <= index && index < fec_decoder->num_buffers);
     FATAL_ASSERT(0 <= buffer_size && buffer_size <= fec_decoder->max_buffer_size);
 
@@ -271,9 +263,7 @@ void fec_decoder_register_buffer(FECDecoder* fec_decoder_raw, int index, void* b
     fec_decoder->max_packet_size = max(fec_decoder->max_packet_size, buffer_size);
 }
 
-int fec_get_decoded_buffer(FECDecoder* fec_decoder_raw, void* buffer) {
-    InternalFECDecoder* fec_decoder = (InternalFECDecoder*)fec_decoder_raw;
-
+int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer) {
     if (fec_decoder->num_accepted_buffers < fec_decoder->num_real_buffers) {
         return -1;
     }
@@ -334,9 +324,7 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder_raw, void* buffer) {
     return running_size;
 }
 
-void destroy_fec_decoder(FECDecoder* fec_context_raw) {
-    InternalFECDecoder* fec_decoder = (InternalFECDecoder*)fec_context_raw;
-
+void destroy_fec_decoder(FECDecoder* fec_decoder) {
     if (fec_decoder->recovery_performed) {
         for (int i = 0; i < fec_decoder->num_real_buffers; i++) {
             free(fec_decoder->buffers[i]);

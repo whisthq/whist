@@ -7,8 +7,8 @@
  * @note See protocol_test.cpp for usage
  */
 
-typedef void FECEncoder;
-typedef void FECDecoder;
+typedef struct FECEncoder FECEncoder;
+typedef struct FECDecoder FECDecoder;
 
 /**
  * @brief                          Converts an fec packet ratio,
@@ -139,6 +139,6 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer);
  *
  * @note                           Should be called for every `create_fec_decoder`
  */
-void destroy_fec_decoder(FECEncoder* fec_decoder);
+void destroy_fec_decoder(FECDecoder* fec_decoder);
 
 #endif
