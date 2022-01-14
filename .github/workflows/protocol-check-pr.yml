@@ -313,7 +313,7 @@ jobs:
 
       - name: Setup Python-based notifications
         working-directory: .github/workflows/helpers
-        run: ./notifications/setup_notifications.sh
+        run: ./notifications/setup_notifications.sh true
 
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
