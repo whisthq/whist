@@ -16,14 +16,14 @@ const registerInstanceSQL = `UPDATE whist.instances
   WHERE id = $11;`
 
 type RegisterInstanceParams struct {
-	Provider          CloudProvider
+	Provider          pgtype.Varchar
 	Region            pgtype.Varchar
 	ImageID           pgtype.Varchar
 	ClientSha         pgtype.Varchar
 	IpAddr            pgtype.Inet
 	InstanceType      pgtype.Varchar
 	RemainingCapacity int32
-	Status            InstanceState
+	Status            pgtype.Varchar
 	CreatedAt         pgtype.Timestamptz
 	UpdatedAt         pgtype.Timestamptz
 	InstanceID        string

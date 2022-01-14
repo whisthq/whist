@@ -22,6 +22,17 @@ import (
 // agent interacting with the database rows for the mandelboxes once the
 // webserver creates them in the "ALLOCATED" state.
 
+// A MandelboxStatus represents a possible status that a mandelbox can have in the database.
+type MandelboxStatus string
+
+// These represent the currently-defined statuses for mandelboxes.
+const (
+	MandelboxStatusAllocated  MandelboxStatus = "ALLOCATED"
+	MandelboxStatusConnecting MandelboxStatus = "CONNECTING"
+	MandelboxStatusRunning    MandelboxStatus = "RUNNING"
+	MandelboxStatusDying      MandelboxStatus = "DYING"
+)
+
 // VerifyAllocatedMandelbox verifies that this host service is indeed expecting
 // the provided mandelbox for the given user, and if found marks it as
 // connecting.
@@ -58,21 +69,24 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID
 	// error.
 	if len(rows) == 0 {
 		return utils.MakeError("Couldn't verify mandelbox %s for user %s: didn't find matching row in the database.", mandelboxID, userID)
-	} else if string(rows[0].Status) != string(queries.MandelboxStateALLOCATED) {
-		return utils.MakeError(`Couldn't verify mandelbox %s for user %s: found a mandelbox row in the database for this instance, but it's in the wrong state. Expected "%s", got "%s".`, mandelboxID, userID, queries.MandelboxStateALLOCATED, rows[0].Status.String)
+	} else if rows[0].Status.String != string(MandelboxStatusAllocated) {
+		return utils.MakeError(`Couldn't verify mandelbox %s for user %s: found a mandelbox row in the database for this instance, but it's in the wrong state. Expected "%s", got "%s".`, mandelboxID, userID, MandelboxStatusAllocated, rows[0].Status.String)
 	} else if rows[0].InstanceID.String != string(instanceID) {
 		return utils.MakeError(`Couldn't verify mandelbox %s for user %s: found an allocated mandelbox row in the database, but it has the wrong instanceName. Expected "%s", got "%s".`, mandelboxID, userID, rows[0].InstanceID.String, instanceID)
 	}
 
 	// Mark the container as connecting. We can't just use WriteMandelboxStatus
 	// since we want to do it in a single transaction.
-	result, err := q.WriteMandelboxStatus(context.Background(), queries.MandelboxStateCONNECTING, mandelboxID.String())
+	result, err := q.WriteMandelboxStatus(context.Background(), pgtype.Varchar{
+		String: string(MandelboxStatusConnecting),
+		Status: pgtype.Present,
+	}, mandelboxID.String())
 	if err != nil {
-		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `cloud.mandelbox_info`: %s", queries.MandelboxStateCONNECTING, mandelboxID, err)
+		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `cloud.mandelbox_info`: %s", MandelboxStatusConnecting, mandelboxID, err)
 	} else if result.RowsAffected() == 0 {
-		return utils.MakeError("Couldn't write status %s for mandelbox %s: row in database missing!", queries.MandelboxStateCONNECTING, mandelboxID)
+		return utils.MakeError("Couldn't write status %s for mandelbox %s: row in database missing!", MandelboxStatusConnecting, mandelboxID)
 	}
-	logger.Infof("Updated status in database for mandelbox %s to %s: %s", mandelboxID, queries.MandelboxStateCONNECTING, result)
+	logger.Infof("Updated status in database for mandelbox %s to %s: %s", mandelboxID, MandelboxStatusConnecting, result)
 
 	// Finish the transaction
 	tx.Commit(context.Background())
@@ -81,7 +95,7 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID
 }
 
 // WriteMandelboxStatus updates a mandelbox's status in the database.
-func WriteMandelboxStatus(mandelboxID types.MandelboxID, status queries.MandelboxState) error {
+func WriteMandelboxStatus(mandelboxID types.MandelboxID, status MandelboxStatus) error {
 	if !enabled {
 		return nil
 	}
@@ -90,7 +104,10 @@ func WriteMandelboxStatus(mandelboxID types.MandelboxID, status queries.Mandelbo
 	}
 
 	q := queries.NewQuerier(dbpool)
-	result, err := q.WriteMandelboxStatus(context.Background(), status, mandelboxID.String())
+	result, err := q.WriteMandelboxStatus(context.Background(), pgtype.Varchar{
+		String: string(status),
+		Status: pgtype.Present,
+	}, mandelboxID.String())
 	if err != nil {
 		return utils.MakeError("Couldn't write status %s for mandelbox %s: error updating existing row in table `cloud.mandelbox_info`: %s", status, mandelboxID, err)
 	} else if result.RowsAffected() == 0 {
@@ -141,11 +158,11 @@ func removeStaleMandelboxes(allocatedAge, connectingAge time.Duration) error {
 	q := queries.NewQuerier(dbpool)
 	result, err := q.RemoveStaleMandelboxes(context.Background(), queries.RemoveStaleMandelboxesParams{
 		InstanceID:      string(instanceID),
-		AllocatedStatus: queries.MandelboxStateALLOCATED,
+		AllocatedStatus: string(MandelboxStatusAllocated),
 		AllocatedCreationTimeThreshold: pgtype.Timestamptz{
 			Time: time.Now().Add(-1 * allocatedAge),
 		},
-		ConnectingStatus: queries.MandelboxStateCONNECTING,
+		ConnectingStatus: string(MandelboxStatusConnecting),
 		ConnectingCreationTimeThreshold: pgtype.Timestamptz{
 			Time: time.Now().Add(-1 * connectingAge),
 		},

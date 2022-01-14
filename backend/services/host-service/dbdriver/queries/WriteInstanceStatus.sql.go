@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgconn"
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 )
 
@@ -14,7 +15,7 @@ const writeInstanceStatusSQL = `UPDATE whist.instances
   WHERE id = $2;`
 
 // WriteInstanceStatus implements Querier.WriteInstanceStatus.
-func (q *DBQuerier) WriteInstanceStatus(ctx context.Context, status InstanceState, instanceID string) (pgconn.CommandTag, error) {
+func (q *DBQuerier) WriteInstanceStatus(ctx context.Context, status pgtype.Varchar, instanceID string) (pgconn.CommandTag, error) {
 	ctx = context.WithValue(ctx, "pggen_query_name", "WriteInstanceStatus")
 	cmdTag, err := q.conn.Exec(ctx, writeInstanceStatusSQL, status, instanceID)
 	if err != nil {
@@ -24,7 +25,7 @@ func (q *DBQuerier) WriteInstanceStatus(ctx context.Context, status InstanceStat
 }
 
 // WriteInstanceStatusBatch implements Querier.WriteInstanceStatusBatch.
-func (q *DBQuerier) WriteInstanceStatusBatch(batch genericBatch, status InstanceState, instanceID string) {
+func (q *DBQuerier) WriteInstanceStatusBatch(batch genericBatch, status pgtype.Varchar, instanceID string) {
 	batch.Queue(writeInstanceStatusSQL, status, instanceID)
 }
 

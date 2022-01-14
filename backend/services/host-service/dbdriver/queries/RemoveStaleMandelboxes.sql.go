@@ -24,9 +24,9 @@ const removeStaleMandelboxesSQL = `DELETE FROM whist.mandelboxes
 
 type RemoveStaleMandelboxesParams struct {
 	InstanceID                      string
-	AllocatedStatus                 MandelboxState
+	AllocatedStatus                 string
 	AllocatedCreationTimeThreshold  pgtype.Timestamptz
-	ConnectingStatus                MandelboxState
+	ConnectingStatus                string
 	ConnectingCreationTimeThreshold pgtype.Timestamptz
 }
 

@@ -24,6 +24,13 @@ import (
 // A InstanceStatus represents a possible status that this instance can have in the database.
 type InstanceStatus string
 
+// These represent the currently-defined statuses for instances.
+const (
+	InstanceStatusPreConnection InstanceStatus = "PRE_CONNECTION"
+	InstanceStatusActive        InstanceStatus = "ACTIVE"
+	InstanceStatusDraining      InstanceStatus = "DRAINING"
+)
+
 // RegisterInstance registers the instance in the database. If the expected row
 // is not found, then it returns an error. This function also starts the
 // heartbeat goroutine.
@@ -70,7 +77,7 @@ func RegisterInstance() error {
 
 	// Check if there's a row for us in the database already
 	q := queries.NewQuerier(tx)
-	rows, err := q.FindInstanceByName(context.Background(), string(instanceID))
+	rows, err := q.FindInstanceByID(context.Background(), string(instanceID))
 	if err != nil {
 		return utils.MakeError("RegisterInstance(): Error running query: %s", err)
 	}
@@ -95,8 +102,8 @@ func RegisterInstance() error {
 	if rows[0].InstanceType.String != string(instanceType) {
 		return utils.MakeError(`RegisterInstance(): Existing database row found, but AWS instance type differs. Expected "%s", Got "%s"`, instanceType, rows[0].InstanceType.String)
 	}
-	if rows[0].Status != queries.InstanceStatePRECONNECTION {
-		return utils.MakeError(`RegisterInstance(): Existing database row found, but status differs. Expected "%s", Got "%s"`, queries.InstanceStatePRECONNECTION, rows[0].Status.String)
+	if rows[0].Status.String != string(InstanceStatusPreConnection) {
+		return utils.MakeError(`RegisterInstance(): Existing database row found, but status differs. Expected "%s", Got "%s"`, InstanceStatusPreConnection, rows[0].Status.String)
 	}
 
 	// There is an existing row in the database for this instance --- we now "take over" and update it with the correct information.
@@ -115,14 +122,17 @@ func RegisterInstance() error {
 			Status: pgtype.Present,
 		},
 		RemainingCapacity: int32(latestMetrics.NumberOfGPUs),
-		Status:            queries.InstanceStateACTIVE,
+		Status: pgtype.Varchar{
+			String: string(InstanceStatusActive),
+			Status: pgtype.Present,
+		},
 		UpdatedAt: pgtype.Timestamptz{
 			Time: time.Now(),
 		},
 		InstanceID: string(instanceID),
 	})
 	if err != nil {
-		return utils.MakeError("Couldn't register instance: error updating existing row in table `cloud.instance_info`: %s", err)
+		return utils.MakeError("Couldn't register instance: error updating existing row in table `whist.instances`: %s", err)
 	} else if result.RowsAffected() == 0 {
 		return utils.MakeError("Couldn't register instance in database: row went missing!")
 	}
@@ -157,7 +167,10 @@ func markDraining() error {
 		return utils.MakeError("Couldn't mark instance as draining: couldn't get instance name: %s", err)
 	}
 
-	result, err := q.WriteInstanceStatus(context.Background(), queries.InstanceStateDRAINING, string(instanceID))
+	result, err := q.WriteInstanceStatus(context.Background(), pgtype.Varchar{
+		String: string(InstanceStatusDraining),
+		Status: pgtype.Present,
+	}, string(instanceID))
 	if err != nil {
 		return utils.MakeError("Couldn't mark instance as draining: error updating existing row in table `cloud.instance_info`: %s", err)
 	} else if result.RowsAffected() == 0 {

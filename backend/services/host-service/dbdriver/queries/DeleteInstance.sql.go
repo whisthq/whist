@@ -23,12 +23,12 @@ type Querier interface {
 	// DeleteInstanceScan scans the result of an executed DeleteInstanceBatch query.
 	DeleteInstanceScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
-	FindInstanceByName(ctx context.Context, instanceID string) ([]FindInstanceByNameRow, error)
-	// FindInstanceByNameBatch enqueues a FindInstanceByName query into batch to be executed
+	FindInstanceByID(ctx context.Context, instanceID string) ([]FindInstanceByIDRow, error)
+	// FindInstanceByIDBatch enqueues a FindInstanceByID query into batch to be executed
 	// later by the batch.
-	FindInstanceByNameBatch(batch genericBatch, instanceID string)
-	// FindInstanceByNameScan scans the result of an executed FindInstanceByNameBatch query.
-	FindInstanceByNameScan(results pgx.BatchResults) ([]FindInstanceByNameRow, error)
+	FindInstanceByIDBatch(batch genericBatch, instanceID string)
+	// FindInstanceByIDScan scans the result of an executed FindInstanceByIDBatch query.
+	FindInstanceByIDScan(results pgx.BatchResults) ([]FindInstanceByIDRow, error)
 
 	FindMandelboxByID(ctx context.Context, mandelboxID string) ([]FindMandelboxByIDRow, error)
 	// FindMandelboxByIDBatch enqueues a FindMandelboxByID query into batch to be executed
@@ -65,17 +65,17 @@ type Querier interface {
 	// WriteHeartbeatScan scans the result of an executed WriteHeartbeatBatch query.
 	WriteHeartbeatScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
-	WriteInstanceStatus(ctx context.Context, status InstanceState, instanceID string) (pgconn.CommandTag, error)
+	WriteInstanceStatus(ctx context.Context, status pgtype.Varchar, instanceID string) (pgconn.CommandTag, error)
 	// WriteInstanceStatusBatch enqueues a WriteInstanceStatus query into batch to be executed
 	// later by the batch.
-	WriteInstanceStatusBatch(batch genericBatch, status InstanceState, instanceID string)
+	WriteInstanceStatusBatch(batch genericBatch, status pgtype.Varchar, instanceID string)
 	// WriteInstanceStatusScan scans the result of an executed WriteInstanceStatusBatch query.
 	WriteInstanceStatusScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
-	WriteMandelboxStatus(ctx context.Context, status MandelboxState, mandelboxID string) (pgconn.CommandTag, error)
+	WriteMandelboxStatus(ctx context.Context, status pgtype.Varchar, mandelboxID string) (pgconn.CommandTag, error)
 	// WriteMandelboxStatusBatch enqueues a WriteMandelboxStatus query into batch to be executed
 	// later by the batch.
-	WriteMandelboxStatusBatch(batch genericBatch, status MandelboxState, mandelboxID string)
+	WriteMandelboxStatusBatch(batch genericBatch, status pgtype.Varchar, mandelboxID string)
 	// WriteMandelboxStatusScan scans the result of an executed WriteMandelboxStatusBatch query.
 	WriteMandelboxStatusScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 }
@@ -158,8 +158,8 @@ func PrepareAllQueries(ctx context.Context, p preparer) error {
 	if _, err := p.Prepare(ctx, deleteInstanceSQL, deleteInstanceSQL); err != nil {
 		return fmt.Errorf("prepare query 'DeleteInstance': %w", err)
 	}
-	if _, err := p.Prepare(ctx, findInstanceByNameSQL, findInstanceByNameSQL); err != nil {
-		return fmt.Errorf("prepare query 'FindInstanceByName': %w", err)
+	if _, err := p.Prepare(ctx, findInstanceByIDSQL, findInstanceByIDSQL); err != nil {
+		return fmt.Errorf("prepare query 'FindInstanceByID': %w", err)
 	}
 	if _, err := p.Prepare(ctx, findMandelboxByIDSQL, findMandelboxByIDSQL); err != nil {
 		return fmt.Errorf("prepare query 'FindMandelboxByID': %w", err)
@@ -184,47 +184,6 @@ func PrepareAllQueries(ctx context.Context, p preparer) error {
 	}
 	return nil
 }
-
-// Application represents the Postgres enum "application".
-type Application string
-
-const (
-	ApplicationChrome Application = "chrome"
-)
-
-func (a Application) String() string { return string(a) }
-
-// CloudProvider represents the Postgres enum "cloud_provider".
-type CloudProvider string
-
-const (
-	CloudProviderAws CloudProvider = "aws"
-)
-
-func (c CloudProvider) String() string { return string(c) }
-
-// InstanceState represents the Postgres enum "instance_state".
-type InstanceState string
-
-const (
-	InstanceStatePRECONNECTION InstanceState = "PRE_CONNECTION"
-	InstanceStateACTIVE        InstanceState = "ACTIVE"
-	InstanceStateDRAINING      InstanceState = "DRAINING"
-)
-
-func (i InstanceState) String() string { return string(i) }
-
-// MandelboxState represents the Postgres enum "mandelbox_state".
-type MandelboxState string
-
-const (
-	MandelboxStateALLOCATED  MandelboxState = "ALLOCATED"
-	MandelboxStateCONNECTING MandelboxState = "CONNECTING"
-	MandelboxStateRUNNING    MandelboxState = "RUNNING"
-	MandelboxStateDYING      MandelboxState = "DYING"
-)
-
-func (m MandelboxState) String() string { return string(m) }
 
 // typeResolver looks up the pgtype.ValueTranscoder by Postgres type name.
 type typeResolver struct {

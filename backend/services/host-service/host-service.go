@@ -46,7 +46,6 @@ import (
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
-	"github.com/whisthq/whist/backend/services/host-service/dbdriver/queries"
 	mandelboxData "github.com/whisthq/whist/backend/services/host-service/mandelbox"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
@@ -515,7 +514,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		logger.Infof("SpinUpMandelbox(): Finished waiting for mandelbox %s whist application to start up", mandelboxSubscription.ID)
 	}
 
-	err = dbdriver.WriteMandelboxStatus(mandelboxSubscription.ID, queries.MandelboxStateRUNNING)
+	err = dbdriver.WriteMandelboxStatus(mandelboxSubscription.ID, dbdriver.MandelboxStatusRunning)
 	if err != nil {
 		logAndReturnError("Error marking mandelbox running: %s", err)
 		return
@@ -772,7 +771,7 @@ func main() {
 		// draining, the webserver doesn't want it anymore so we should shut down.
 
 		// TODO: make this a bit more robust
-		if !metadata.IsLocalEnv() && strings.Contains(err.Error(), string(queries.InstanceStateDRAINING)) {
+		if !metadata.IsLocalEnv() && strings.Contains(err.Error(), string(dbdriver.InstanceStatusDraining)) {
 			logger.Infof("Instance wasn't registered in database because we found ourselves already marked draining. Shutting down.... Error: %s", err)
 			shutdownInstanceOnExit = true
 			globalCancel()

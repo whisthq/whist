@@ -14,11 +14,11 @@ const findMandelboxByIDSQL = `SELECT * FROM whist.mandelboxes
 
 type FindMandelboxByIDRow struct {
 	ID         pgtype.Varchar     `json:"id"`
-	App        Application        `json:"app"`
+	App        pgtype.Varchar     `json:"app"`
 	InstanceID pgtype.Varchar     `json:"instance_id"`
 	UserID     pgtype.Varchar     `json:"user_id"`
 	SessionID  pgtype.Varchar     `json:"session_id"`
-	Status     MandelboxState     `json:"status"`
+	Status     pgtype.Varchar     `json:"status"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 }
 

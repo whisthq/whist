@@ -86,7 +86,7 @@ func (cl *mockWhistClient) Close(subscriptionIDs []string) error {
 func TestInstanceStatusHandler(t *testing.T) {
 	var variables = map[string]interface{}{
 		"id":     graphql.String("test-instance-id"),
-		"status": instance_state("DRAINING"),
+		"status": graphql.String("DRAINING"),
 	}
 
 	// Create different tests for the instance status handler,
@@ -123,7 +123,7 @@ func TestInstanceStatusHandler(t *testing.T) {
 func TestMandelboxAllocatedHandler(t *testing.T) {
 	var variables = map[string]interface{}{
 		"instance_id": graphql.String("test-instance-id"),
-		"status":      mandelbox_state("ALLOCATED"),
+		"status":      graphql.String("ALLOCATED"),
 	}
 
 	// Create different tests for the mandelbox allocated handler,
@@ -176,7 +176,7 @@ func TestSetupHostSubscriptions(t *testing.T) {
 	// Create a fake variables map that matches the host subscriptions variable map
 	var variables = map[string]interface{}{
 		"id":     graphql.String(instanceID),
-		"status": instance_state("DRAINING"),
+		"status": graphql.String("DRAINING"),
 	}
 
 	// Verify that the "variables" maps are deep equal for the first subscription
@@ -186,7 +186,7 @@ func TestSetupHostSubscriptions(t *testing.T) {
 
 	variables = map[string]interface{}{
 		"instance_id": graphql.String(instanceID),
-		"status":      mandelbox_state("ALLOCATED"),
+		"status":      graphql.String("ALLOCATED"),
 	}
 
 	// Verify that the "variables" maps are deep equal for the second subscription
@@ -211,7 +211,7 @@ func TestSetupScalingSubscriptions(t *testing.T) {
 
 	// Create a fake variables map that matches the host subscriptions variable map
 	var variables = map[string]interface{}{
-		"status": instance_state("DRAINING"),
+		"status": graphql.String("DRAINING"),
 	}
 
 	// Verify that the "variables" maps are deep equal for the first subscription
