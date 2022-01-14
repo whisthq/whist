@@ -62,6 +62,7 @@ func (m *mockClient) ImageList(ctx context.Context, options types.ImageListOptio
 		Size:        1234,
 		VirtualSize: 1234,
 	}
+	logger.Infof("%v", options)
 	images := []types.ImageSummary{testAppImage}
 	return images, nil
 }
@@ -91,7 +92,6 @@ func (m *mockClient) ContainerStart(ctx context.Context, container string, optio
 	return nil
 }
 
-
 // ContainerStop mocks the ContainerAPIClient's ContainerStop method and returns
 // nil, simulating successful container stopping. The method will sleep for 1 seconds
 // to simulate (+ exaggerate) the behaviour of a real container stop.
@@ -111,9 +111,6 @@ func (m *mockClient) ContainerRemove(ctx context.Context, id string, options typ
 	return nil
 }
 
-// 	TODO (aaron): Figure out how to test startDockerDaemon
-
-
 // TestCreateDockerClient will check if a valid docker client is created without error
 func TestCreateDockerClient(t *testing.T) {
 	dockerClient, err := createDockerClient()
@@ -131,8 +128,96 @@ func TestCreateDockerClient(t *testing.T) {
 	}
 }
 
-// TODO: dockerImageFromRegexes
+func TestMandelboxDieHandler(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
+	dockerClient := mockClient{
+		browserImage: "whisthq",
+	}
+
+	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
+	testMux := &sync.Mutex{}
+	tracker := &sync.WaitGroup{}
+
+	testMux.Lock()
+	testTransportRequestMap[mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())] = make(chan *JSONTransportRequest)
+	testMux.Unlock()
+
+	m := mandelbox.New(ctx, tracker, mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()))
+	m.RegisterCreation(mandelboxtypes.DockerID("test-docker-id"))
+
+	mandelboxDieHandler("test-docker-id", testTransportRequestMap, testMux, &dockerClient)
+
+	// Wait for the mandelbox to die, otherwise time out.
+	select {
+	case <-m.GetContext().Done():
+		break
+	case <-time.After(30 * time.Second):
+		t.Fatalf("Mandelbox failed to stop successfully after calling mandelboxDieHandler.")
+	}
+
+	// Verify that the docker id was removed from the tracker
+	_, err := mandelbox.LookUpByDockerID(mandelboxtypes.DockerID("test-docker-id"))
+	if err == nil {
+		t.Errorf("Expected mandelbox to be removed from tracker but it still exists.")
+	}
+
+	// Check transport map to verify mandelbox key was removed.
+	testMux.Lock()
+	request := testTransportRequestMap[mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())]
+	testMux.Unlock()
+
+	if request != nil {
+		t.Errorf("Expected mandelbox %v to be removed from JSON transport map, but it still exists.", utils.PlaceholderTestUUID())
+	}
+
+	// Check the container stopped method was called successfully.
+	if !dockerClient.started {
+		t.Errorf("Expected docker client started value to be false, got %v", dockerClient.started)
+	}
+
+}
+
+func TestInitializeFilesystem(t *testing.T) {
+	_, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := os.RemoveAll(utils.WhistDir)
+	if err != nil {
+		t.Fatalf("Failed to delete directory %s for tests: error: %v\n", utils.WhistPrivateDir, err)
+	}
+
+	initializeFilesystem(cancel)
+
+	if _, err := os.Stat(utils.WhistDir); os.IsNotExist(err) {
+		t.Errorf("Whist directory was not created by initializeFilesystem")
+	}
+
+	if _, err := os.Stat(utils.WhistPrivateDir); os.IsNotExist(err) {
+		t.Errorf("Whist private directory was not created by initializeFilesystem")
+	}
+
+	if _, err := os.Stat(utils.TempDir); os.IsNotExist(err) {
+		t.Errorf("Whist temp directory was not created by initializeFilesystem")
+	}
+}
+
+func TestUninitializeFilesystem(t *testing.T) {
+	uninitializeFilesystem()
+
+	if _, err := os.Stat(utils.WhistDir); os.IsExist(err) {
+		t.Errorf("Whist directory was not removed by uninitializeFilesystem")
+	}
+
+	if _, err := os.Stat(utils.WhistPrivateDir); os.IsExist(err) {
+		t.Errorf("Whist private directory was not removed by uninitializeFilesystem")
+	}
+
+	if _, err := os.Stat(utils.TempDir); os.IsExist(err) {
+		t.Errorf("Whist temp directory was not removed by uninitializeFilesystem")
+	}
+}
 
 // TestwarmUpDockerClient calls warmUpDockerClient and checks if the setup steps
 // are performed correctly
@@ -220,10 +305,10 @@ func TestWarmUpDockerClientPortUnavailablble(t *testing.T) {
 		ports = append(ports,
 			portbindings.PortBinding{
 				MandelboxPort: uint16(22),
-				Protocol: portbindings.TransportProtocolTCP,
-				HostPort: uint16(port),
-				BindIP: "test_ip",
-		})
+				Protocol:      portbindings.TransportProtocolTCP,
+				HostPort:      uint16(port),
+				BindIP:        "test_ip",
+			})
 	}
 
 	// Allocate ports to replicate all ports unavailable
@@ -252,12 +337,6 @@ func TestWarmUpDockerClientPortUnavailablble(t *testing.T) {
 	// Free allocated ports
 	portbindings.Free(ports)
 }
-
-
-// Uinput
-
-
-// TTY
 
 // TestDrainAndShutdown will check if shutdownInstanceOnExit is set to false
 func TestDrainAndShutdown(t *testing.T) {
