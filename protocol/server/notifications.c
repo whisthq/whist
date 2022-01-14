@@ -10,6 +10,18 @@ passed through the D-Bus, and send them via the Whist Protocol to the client.
 
 */
 
+#ifndef __linux__
+
+void init_notifications_thread(whist_server_state *state, struct event_base *eb) {
+    LOG_WARNING("Cannot initialize notifications thread; feature only supported on Linux");
+}
+
+void destroy_notifications_thread(struct event_base *eb) {
+    LOG_WARNING("Cannot destroy notifications thread; feature only supported on Linux");
+}
+
+#elif __linux__
+
 /*
 ============================
 Includes
@@ -29,6 +41,7 @@ Includes
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <dbus/dbus.h>
+#include <event.h>
 
 #include <whist/logging/logging.h>
 #include <whist/logging/log_statistic.h>
@@ -592,3 +605,5 @@ void toggle_timeout(DBusTimeout *t, void *data) {
     else
         remove_timeout(t, data);
 }
+
+#endif  // __linux__
