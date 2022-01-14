@@ -42,6 +42,9 @@ type ConfigEncryptionToken string
 // ClientAppAccessToken is defined as its own type for similar reasons.
 type ClientAppAccessToken string
 
+// JSONData is defined as its own type for similar reasons.
+type JSONData string
+
 // Cookies is defined as its own type for similar reasons.
 type Cookies string
 

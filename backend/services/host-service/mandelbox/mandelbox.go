@@ -28,7 +28,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -76,9 +75,7 @@ type Mandelbox interface {
 	GetConfigEncryptionToken() types.ConfigEncryptionToken
 	SetConfigEncryptionToken(types.ConfigEncryptionToken)
 
-	GetJSONData() string
-	SetJSONData(string)
-	WriteJSONData() error
+	WriteJSONData(types.JSONData) error
 
 	GetClientAppAccessToken() types.ClientAppAccessToken
 	SetClientAppAccessToken(types.ClientAppAccessToken)
@@ -250,12 +247,6 @@ type mandelboxData struct {
 	// We use this to mount devices like /dev/fuse
 	otherDeviceMappings []dockercontainer.DeviceMapping
 
-	// We use this to apply any additional configs the user
-	// might have (dark mode, location, etc.)
-	JSONData string
-
-	configBuffer *manager.WriteAtBuffer
-
 	portBindings []portbindings.PortBinding
 }
 
@@ -319,20 +310,6 @@ func (mandelbox *mandelboxData) SetClientAppAccessToken(token types.ClientAppAcc
 	mandelbox.rwlock.Lock()
 	defer mandelbox.rwlock.Unlock()
 	mandelbox.clientAppAccessToken = token
-}
-
-// GetJSONData returns the JSON transport data.
-func (mandelbox *mandelboxData) GetJSONData() string {
-	mandelbox.rwlock.RLock()
-	defer mandelbox.rwlock.RUnlock()
-	return mandelbox.JSONData
-}
-
-// SetJSONData sets the JSON transport data.
-func (mandelbox *mandelboxData) SetJSONData(JSONData string) {
-	mandelbox.rwlock.Lock()
-	defer mandelbox.rwlock.Unlock()
-	mandelbox.JSONData = JSONData
 }
 
 // GetHostPort returns the assigned host port for the given mandelbox

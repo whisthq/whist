@@ -125,16 +125,11 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 	return nil
 }
 
+// TODO: move this function to different file
 // WriteJSONData writes the data received through JSON transport
 // to the config.json file located on the resourceMappingDir.
-func (mandelbox *mandelboxData) WriteJSONData() error {
-	logger.Infof("Writing JSON transport data to config.json file...")
-
-	if err := mandelbox.writeResourceMappingToFile("config.json", mandelbox.GetJSONData()); err != nil {
-		return err
-	}
-
-	return nil
+func (mandelbox *mandelboxData) WriteJSONData(data types.JSONData) error {
+	return mandelbox.writeResourceMappingToFile("config.json", string(data))
 }
 
 // Helpers
