@@ -53,6 +53,7 @@ extern "C" {
 #include <whist/utils/avpacket_buffer.h>
 #include <whist/utils/atomic.h>
 #include <whist/utils/fec.h>
+#include <whist/utils/linked_list.h>
 
 extern WhistMutex window_resize_mutex;
 extern volatile SDL_Window* window;
@@ -1287,6 +1288,77 @@ TEST_F(ProtocolTest, FECTest) {
     EXPECT_EQ(memcmp(decoded_buffer + PACKET1_SIZE, packet2, PACKET2_SIZE), 0);
 
     destroy_fec_decoder(fec_decoder);
+}
+
+TEST_F(ProtocolTest, LinkedListTest) {
+    typedef struct {
+        LINKED_LIST_HEADER;
+        int id;
+    } TestItem;
+
+    LinkedList list;
+    linked_list_init(&list);
+    EXPECT_EQ(linked_list_size(&list), 0);
+
+    TestItem items[16];
+    for (int i = 0; i < 16; i++) items[i].id = i;
+
+    // Build a short list with the various add functions.
+    // [ 1 ]
+    linked_list_add_head(&list, &items[1]);
+    // [ 1, 3 ]
+    linked_list_add_tail(&list, &items[3]);
+    // [ 0, 1, 3 ]
+    linked_list_add_before(&list, &items[1], &items[0]);
+    // [ 0, 1, 2, 3 ]
+    linked_list_add_after(&list, &items[1], &items[2]);
+
+    // Verify that the list is in the right order and each element has
+    // the correct next and prev pointers.
+    linked_list_for_each(&list, const TestItem, iter) {
+        const TestItem* test;
+        // This is clumsy in C++ because it requires an explicit cast.
+        test = (const TestItem*)linked_list_prev(iter);
+        if (iter->id == 0)
+            EXPECT_TRUE(test == NULL);
+        else
+            EXPECT_EQ(test->id, iter->id - 1);
+        test = (const TestItem*)linked_list_next(iter);
+        if (iter->id == 3)
+            EXPECT_TRUE(test == NULL);
+        else
+            EXPECT_EQ(test->id, iter->id + 1);
+    }
+    EXPECT_EQ(linked_list_size(&list), 4);
+
+    // Empty list and create it again with many items.
+    linked_list_init(&list);
+
+    for (int i = 0; i < 16; i++) {
+        linked_list_add_tail(&list, &items[i]);
+    }
+    EXPECT_EQ(linked_list_size(&list), 16);
+
+    // Remove odd-numbered items from the list while iterating.
+    linked_list_for_each(&list, TestItem, iter) {
+        if (iter->id % 2 == 1) linked_list_remove(&list, iter);
+    }
+
+    // Verify that the list contains only the even items.
+    linked_list_for_each(&list, const TestItem, iter) EXPECT_TRUE(iter->id % 2 == 0);
+    EXPECT_EQ(linked_list_size(&list), 8);
+
+    // Remove all other items and make sure the list is empty.
+    for (int i = 0; i < 4; i++) {
+        TestItem* test;
+        test = (TestItem*)linked_list_extract_head(&list);
+        EXPECT_EQ(test->id, 2 * i);
+        test = (TestItem*)linked_list_extract_tail(&list);
+        EXPECT_EQ(test->id, 14 - 2 * i);
+    }
+    EXPECT_EQ(linked_list_size(&list), 0);
+    EXPECT_TRUE(linked_list_extract_head(&list) == NULL);
+    EXPECT_TRUE(linked_list_extract_tail(&list) == NULL);
 }
 
 /*
