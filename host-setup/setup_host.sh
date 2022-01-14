@@ -51,9 +51,9 @@ idempotent_backup () {
   use_sudo="${2:-}"
 
   # If a backup exists, then replace the current file with the original
-  [ -f "$backup" ] && "$use_sudo" mv "$backup" "$1"
+  "$use_sudo" [ -f "$backup" ] && "$use_sudo" mv "$backup" "$original"
   # Create a backup of the original file
-  "$use_sudo" cp "$1" "$backup"
+  "$use_sudo" cp "$original" "$backup"
 }
 
 # `common_steps` contains the commands that must be run for
