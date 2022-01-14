@@ -352,7 +352,7 @@ jobs:
       - name: Upload logs to S3 for debugging purposes
         if: always()
         working-directory: protocol/test
-        run: aws s3 cp perf_logs s3://whist-e2e-protocol-test-logs/"$GITHUB_REF" --recursive
+        run: aws s3 cp perf_logs s3://whist-e2e-protocol-test-logs/"$GITHUB_REF_NAME" --recursive
 
       - name: Terminate leftover AWS instances
         if: ${{ always() && (steps.e2e_streaming_test.outcome == 'failure') }}
