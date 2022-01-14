@@ -57,6 +57,14 @@ if [[ -f $WHIST_JSON_FILE ]]; then
     echo "Server AES key not found in JSON data!"
     exit 1
   fi
+  if [ "$( jq -rc 'has("initial_url")' < $WHIST_JSON_FILE )" == "true"  ]; then
+    INITIAL_URL="$(jq -rc '.initial_url' < $WHIST_JSON_FILE)"
+    # Add initial url to options
+    OPTIONS="$OPTIONS -x $INITIAL_URL"
+  else
+    echo "Initial URL not found in JSON data!"
+    exit 1
+  fi
 fi
 
 # The point of the named pipe redirection is so that $! will give us the PID of WhistServer, not of tee.
