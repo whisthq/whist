@@ -15,6 +15,7 @@ add_library(whistUtils STATIC
         fec.c
         rs.c
         os_utils.c
+        linked_list.c
         )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
