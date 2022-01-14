@@ -13,6 +13,7 @@ Includes
 #include "whist.h"  // header file for this protocol, includes winsock
 #include <whist/logging/logging.h>
 #include <whist/utils/fec.h>
+#include <whist/utils/atomic.h>
 
 #include <ctype.h>
 #include <stdio.h>
@@ -333,6 +334,29 @@ void terminate_protocol(WhistExitCode exit_code) {
     /*
         Terminates the protocol
     */
+
+    static atomic_int terminate_protocol_counter = ATOMIC_VAR_INIT(0);
+
+    // This variable counts reentrancies
+    // (Or rarely, simultaneous calls too, but it's not a big deal
+    // to overcount this)
+    int total_times_called = atomic_fetch_add(&terminate_protocol_counter, 1) + 1;
+
+    if (total_times_called == 2) {
+        // If this is the first reentrancy, try to just stacktrace
+        printf("Error: terminal_protocol has been called twice");
+        fflush(stdout);
+        print_stacktrace();
+        exit(WHIST_EXIT_FAILURE);
+    } else if (total_times_called == 3) {
+        // If we've reentered even more times, print_stacktrace must have failed too
+        printf("Error: terminal_protocol has been called three times");
+        fflush(stdout);
+        exit(WHIST_EXIT_FAILURE);
+    } else if (total_times_called > 3) {
+        // We've reentered way too many times, just give up
+        abort();
+    }
 
     LOG_INFO("Terminating Protocol");
     destroy_logger();
