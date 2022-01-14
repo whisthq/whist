@@ -411,6 +411,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// Begin loading user configs in parallel with the rest of the mandelbox startup procedure.
 	sendEncryptionInfoChan, configDownloadErrChan := mandelbox.StartLoadingUserConfigs(globalCtx, globalCancel, goroutineTracker)
+	defer close(sendEncryptionInfoChan)
 
 	// Do all startup tasks that can be done before Docker container creation in
 	// parallel, stopping at the first error encountered
@@ -678,17 +679,24 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 			// Clean up the mandelbox if the time out limit is reached.
 			// TODO: why do we call the die handler here instead of just returning (and letting the deferred mandelbox.close() take care of things)?
 			mandelboxDieHandler(string(dockerID), transportRequestMap, transportMapLock, dockerClient)
-			logAndReturnError("Timed out waiting for config encryption token.")
+			logAndReturnError("Timed out waiting for config encryption token for user %s for mandelbox %s", mandelbox.GetUserID(), mandelbox.GetID())
 			return
 		}
 	}
 
-	// Report the config encryption info to the config loader
-	sendEncryptionInfoChan <- mandelboxData.ConfigEncryptionInfo{
+	// Report the config encryption info to the config loader after making sure
+	// it passes some basic sanity checks.
+	encryptionInfo := mandelboxData.ConfigEncryptionInfo{
 		Token:                          req.ConfigEncryptionToken,
 		IsNewTokenAccordingToClientApp: req.IsNewConfigToken,
 	}
-	close(sendEncryptionInfoChan)
+	if err = mandelboxData.SanityCheckEncryptionInfo(&encryptionInfo); err != nil {
+		logAndReturnError("Sanity checks for encryptionInfo %s failed for user %s for mandelbox %s: %s", encryptionInfo, mandelbox.GetUserID(), mandelbox.GetID(), err)
+		return
+	}
+	sendEncryptionInfoChan <- encryptionInfo
+	// We don't close the channel here, since we defer the close when we first
+	// make it.
 
 	// While we wait for config decryption, write the config.json file with the
 	// data received from JSON transport.
