@@ -34,6 +34,24 @@ EOF
 }
 
 
+# Backup/load files so that setup is idempotent
+
+# If we are modifying/appending to an existing file, we backup the
+# original file if no backup exists. If a backup exists, we load the
+# backup instead. If we're replacing or generating a file, this is
+# unnecessary.
+idempotent_backup () {
+  # $1 is the file to backup/load
+  # $2 is "sudo" to use sudo for mv/cp
+
+  # If a backup exists, then replace the current file
+  if [ -f "$1.bak" ]; then
+    "${2:-}" mv "$1.bak" "$1"
+  else # Otherwise, create a backup
+    "${2:-}" cp "$1" "$1.bak"
+  fi
+}
+
 # `common_steps` contains the commands that must be run for
 # both the local and deploy environments. This was formerly
 # known as `setup_ubuntu20_host.sh`. This function runs first in both environments.
@@ -91,15 +109,18 @@ common_steps () {
   sudo apt-get install -y gcc make "linux-headers-$(uname -r)"
 
   # Blacklist some Linux kernel modules that would block NVIDIA drivers
-  cat << EOF | sudo tee --append /etc/modprobe.d/blacklist.conf
+  idempotent_backup "/etc/modprobe.d/blacklist.conf" "sudo"
+  cat << EOF | sudo tee --append /etc/modprobe.d/blacklist.conf > /dev/null
 blacklist vga16fb
 blacklist nouveau
 blacklist rivafb
 blacklist nvidiafb
 blacklist rivatv
 EOF
+
+  idempotent_backup "/etc/default/grub" "sudo"
   sudo sed -i 's/GRUB_CMDLINE_LINUX=""/# GRUB_CMDLINE_LINUX=""/g' /etc/default/grub
-  cat << EOF | sudo tee --append /etc/default/grub
+  cat << EOF | sudo tee --append /etc/default/grub > /dev/null
 GRUB_CMDLINE_LINUX="rdblacklist=nouveau"
 EOF
 
@@ -298,6 +319,7 @@ deployment_setup_steps() {
   LOGZ_TOKEN=${5}
 
   # Set IP tables for routing networking from host to mandelboxes
+  idempotent_backup "/etc/sysctl.conf" "sudo"
   sudo sh -c "echo 'net.ipv4.conf.all.route_localnet = 1' >> /etc/sysctl.conf"
   sudo sysctl -p /etc/sysctl.conf
   echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
@@ -309,6 +331,7 @@ deployment_setup_steps() {
   sudo iptables -I DOCKER-USER -i docker0 -d 169.254.169.254 -p tcp -m multiport --dports 80,443 -j DROP
   sudo iptables -I DOCKER-USER -i docker0 -d 169.254.170.2   -p tcp -m multiport --dports 80,443 -j DROP
 
+  idempotent_backup "/etc/iptables/rules.v4" "sudo"
   sudo sh -c 'iptables-save > /etc/iptables/rules.v4'
 
   # Remove a directory (this is necessary for the userdata to run for some reason)
