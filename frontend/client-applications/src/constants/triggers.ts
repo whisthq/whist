@@ -46,14 +46,13 @@ const WhistTrigger = {
   clearCacheAction: "clearCacheAction",
   startNetworkAnalysis: "startNetworkAnalysis",
 
-  // Tray triggers
+  // Omnibar triggers
   showSignoutWindow: "showSignoutWindow",
-  trayRegionAction: "trayRegionAction",
-  trayFeedbackAction: "trayFeedbackAction",
-  trayBugAction: "trayBugAction",
-  trayRestoreSessionAction: "trayRestoreSessionAction",
-  trayWhistIsDefaultBrowserAction: "trayWhistIsDefaultBrowserAction",
   showPaymentWindow: "showPaymentWindow",
+  showSupportWindow: "showSupportWindow",
+  showSpeedtestWindow: "showSpeedtestWindow",
+  setDefaultBrowser: "setDefaultBrowser",
+  restoreLastSession: "restoreLastSession",
 
   // Flow triggers
   mandelboxFlowSuccess: "mandelboxFlowSuccess",

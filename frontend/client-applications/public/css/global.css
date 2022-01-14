@@ -21,6 +21,10 @@
     --font-family-secondary: "Myriad Pro";
 }
 
+::-webkit-scrollbar {
+  display: none;
+}
+
 @font-face {
     font-family: --font-family-primary;
     src: url("../assets/fonts/JosefinSans-VariableFont_wght.ttf");

@@ -18,7 +18,6 @@ import {
   createBugTypeform,
   createOnboardingWindow,
 } from "@app/utils/windows"
-import { createTray, createMenu } from "@app/utils/tray"
 import { fromTrigger } from "@app/utils/flows"
 import { persistGet, persistClear, persistSet, store } from "@app/utils/persist"
 import { withAppReady } from "@app/utils/observables"
@@ -34,24 +33,6 @@ import {
 import { WhistTrigger } from "@app/constants/triggers"
 import { networkAnalyze } from "@app/utils/networkAnalysis"
 import { protocolStreamKill } from "@app/utils/protocol"
-
-fromTrigger(WhistTrigger.appReady).subscribe(() => {
-  createTray(createMenu(false))
-})
-
-// If we have have successfully authorized, close the existing windows.
-// It's important to put this effect after the application closing effect.
-// If not, the filters on the application closing observable don't run.
-// This causes the app to close on every loginSuccess, before the protocol
-// can launch.
-withAppReady(fromTrigger(WhistTrigger.authFlowSuccess)).subscribe(
-  (x: { userEmail: string }) => {
-    // Show notification
-    startupNotification()?.show()
-    // Present the tray (top right corner of screen)
-    createTray(createMenu(true, x.userEmail))
-  }
-)
 
 // If an update is available, show the update window and download the update
 fromTrigger(WhistTrigger.updateAvailable).subscribe(() => {
@@ -78,26 +59,12 @@ fromTrigger(WhistTrigger.clearCacheAction).subscribe(
   }
 )
 
-// If an admin selects a region, relaunch the app with the selected region passed
-// into argv so it can be read by flows/index.ts
-fromTrigger(WhistTrigger.trayRegionAction).subscribe((region: AWSRegion) => {
-  relaunch({ args: process.argv.slice(1).concat([region]) })
-})
-
 merge(
   fromTrigger(WhistTrigger.relaunchAction),
   fromTrigger(WhistTrigger.reactivated)
 ).subscribe(() => {
   protocolStreamKill()
   relaunch()
-})
-
-withAppReady(fromTrigger(WhistTrigger.showSignoutWindow)).subscribe(() => {
-  createSignoutWindow()
-})
-
-withAppReady(fromTrigger(WhistTrigger.trayBugAction)).subscribe(() => {
-  createBugTypeform()
 })
 
 withAppReady(fromTrigger(WhistTrigger.authFlowSuccess))
@@ -109,23 +76,6 @@ withAppReady(fromTrigger(WhistTrigger.authFlowSuccess))
       createOnboardingWindow()
     }
   })
-
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
-withAppReady(fromTrigger(WhistTrigger.showPaymentWindow)).subscribe(() => {
-  const accessToken = (store.get("auth.accessToken") ?? "") as string
-  createPaymentWindow({
-    accessToken,
-  }).catch((err) => Sentry.captureException(err))
-})
-
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
-withAppReady(fromTrigger(WhistTrigger.checkPaymentFlowFailure)).subscribe(
-  ({ accessToken }: accessToken) => {
-    createPaymentWindow({
-      accessToken,
-    }).catch((err) => Sentry.captureException(err))
-  }
-)
 
 withAppReady(fromTrigger(WhistTrigger.onboarded)).subscribe(() => {
   persistSet(ONBOARDED, true)

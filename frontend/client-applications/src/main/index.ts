@@ -17,5 +17,3 @@ import "@app/config/environment"
 import "@app/main/triggers"
 import "@app/main/flows"
 import "@app/main/effects"
-
-import "@app/utils/networkAnalysis"
