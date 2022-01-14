@@ -490,3 +490,16 @@ export const createOmnibar = () =>
     hash: WindowHashOmnibar,
     focus: false,
   })
+
+export const showOmnibar = () => {
+  const win = getWindowByHash(WindowHashOmnibar)
+
+  win?.show()
+  win?.focus()
+}
+
+export const hideOmnibar = () => {
+  const win = getWindowByHash(WindowHashOmnibar)
+
+  win?.hide()
+}

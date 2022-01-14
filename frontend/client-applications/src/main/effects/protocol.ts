@@ -58,15 +58,15 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess)
     ]) => {
       setTimeout(
         () => {
-          if (childProcess === undefined) {
-            createProtocolWindow()
-              .then(() => {
-                protocolStreamInfo(info)
-              })
-              .catch((err) => Sentry.captureException(err))
-          } else {
-            protocolStreamInfo(info)
-          }
+          // if (childProcess === undefined) {
+          //   createProtocolWindow()
+          //     .then(() => {
+          //       protocolStreamInfo(info)
+          //     })
+          //     .catch((err) => Sentry.captureException(err))
+          // } else {
+          //   protocolStreamInfo(info)
+          // }
 
           createOmnibar()
         },
@@ -75,7 +75,7 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess)
     }
   )
 
-fromTrigger("trayRestoreSessionAction").subscribe(() => {
+fromTrigger(WhistTrigger.restoreLastSession).subscribe(() => {
   const restore = <boolean>persistGet(RESTORE_LAST_SESSION)
   if (restore !== undefined) {
     persistSet(RESTORE_LAST_SESSION, !restore)
@@ -84,7 +84,7 @@ fromTrigger("trayRestoreSessionAction").subscribe(() => {
   }
 })
 
-fromTrigger("trayWhistIsDefaultBrowserAction").subscribe(() => {
+fromTrigger(WhistTrigger.setDefaultBrowser).subscribe(() => {
   const whistDefaultBrowser =
     <boolean>persistGet(WHIST_IS_DEFAULT_BROWSER) ?? false
   persistSet(WHIST_IS_DEFAULT_BROWSER, !whistDefaultBrowser)

@@ -2,7 +2,7 @@ import { fromTrigger } from "@app/utils/flows"
 import { createGlobalShortcut } from "@app/utils/shortcuts"
 
 import { WhistTrigger } from "@app/constants/triggers"
-import { getWindowByHash } from "@app/utils/windows"
+import { getWindowByHash, showOmnibar, hideOmnibar } from "@app/utils/windows"
 import { WindowHashOmnibar } from "@app/constants/windows"
 
 fromTrigger(WhistTrigger.mandelboxFlowSuccess).subscribe(() => {
@@ -10,10 +10,9 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess).subscribe(() => {
     const win = getWindowByHash(WindowHashOmnibar)
 
     if (win?.isVisible() ?? false) {
-      win?.hide()
+      hideOmnibar()
     } else {
-      win?.show()
-      win?.focus()
+      showOmnibar()
     }
   })
 })

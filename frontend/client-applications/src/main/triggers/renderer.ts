@@ -18,8 +18,10 @@ const filterByName = (
 ;[
   WhistTrigger.relaunchAction, // Fires when "Continue" button is clicked on error window popup
   WhistTrigger.clearCacheAction, // Fires when "Signout" button is clicked on signout window popup
-  WhistTrigger.showSignoutWindow, // Fires when "Signout" button is clicked on error window popup
-  WhistTrigger.showPaymentWindow, // Fires when "Open Payment Information" button is clicked on error window popup
+  WhistTrigger.showSignoutWindow,
+  WhistTrigger.showPaymentWindow,
+  WhistTrigger.showSupportWindow,
+  WhistTrigger.showSpeedtestWindow,
   WhistTrigger.onboarded,
   WhistTrigger.emitIPC,
   WhistTrigger.startNetworkAnalysis,

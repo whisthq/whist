@@ -6,7 +6,6 @@ import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
 import find from "lodash.find"
 
-import { destroyTray } from "@app/utils/tray"
 import { logBase } from "@app/utils/logging"
 import { withAppReady, fromSignal } from "@app/utils/observables"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
@@ -16,6 +15,11 @@ import {
   createAuthWindow,
   createLoadingWindow,
   createErrorWindow,
+  createSignoutWindow,
+  createBugTypeform,
+  createSpeedtestWindow,
+  createPaymentWindow,
+  hideOmnibar,
 } from "@app/utils/windows"
 import { persistGet } from "@app/utils/persist"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
@@ -50,7 +54,6 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
 
 const quit = () => {
   logBase("Application quitting", {})
-  destroyTray()
   protocolStreamKill()
   app?.quit()
 }
@@ -187,3 +190,38 @@ fromSignal(
     createErrorWindow(LOCATION_CHANGED_ERROR, false)
   }, 5000)
 })
+
+withAppReady(fromTrigger(WhistTrigger.showSignoutWindow)).subscribe(() => {
+  hideOmnibar()
+  createSignoutWindow()
+})
+
+withAppReady(fromTrigger(WhistTrigger.showSupportWindow)).subscribe(() => {
+  hideOmnibar()
+  createBugTypeform()
+})
+
+withAppReady(fromTrigger(WhistTrigger.showSpeedtestWindow)).subscribe(() => {
+  hideOmnibar()
+  createSpeedtestWindow()
+})
+
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
+withAppReady(fromTrigger(WhistTrigger.showPaymentWindow)).subscribe(() => {
+  const accessToken = persistGet(CACHED_ACCESS_TOKEN)
+
+  hideOmnibar()
+
+  createPaymentWindow({
+    accessToken,
+  }).catch((err) => Sentry.captureException(err))
+})
+
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
+withAppReady(fromTrigger(WhistTrigger.checkPaymentFlowFailure)).subscribe(
+  ({ accessToken }: accessToken) => {
+    createPaymentWindow({
+      accessToken,
+    }).catch((err) => Sentry.captureException(err))
+  }
+)
