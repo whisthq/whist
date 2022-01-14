@@ -19,6 +19,11 @@ import {
   userEmail,
   configToken,
   isNewConfigToken,
+  darkMode,
+  timezone,
+  dpi,
+  keyRepeat,
+  initialKeyRepeat,
 } from "@app/utils/state"
 import { ONBOARDED } from "@app/constants/store"
 import {
@@ -117,6 +122,11 @@ const launchTrigger = fromSignal(
     bookmarks: merge(importBookmarks, dontImportBrowserData),
     extensions: merge(importExtensions, dontImportBrowserData),
     regions: merge(awsPing.cached, awsPing.refresh),
+    darkMode,
+    timezone,
+    dpi,
+    keyRepeat,
+    initialKeyRepeat,
   }).pipe(
     map((x: object) => ({
       ...x,

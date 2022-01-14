@@ -1,5 +1,6 @@
 import { map, startWith } from "rxjs/operators"
 import { Observable, of } from "rxjs"
+import { nativeTheme, screen } from "electron"
 
 import { fromTrigger } from "@app/utils/flows"
 import { persistGet } from "@app/utils/persist"
@@ -10,7 +11,10 @@ import {
   CACHED_CONFIG_TOKEN,
 } from "@app/constants/store"
 import { WhistTrigger } from "@app/constants/triggers"
+import { withAppReady } from "@app/utils/observables"
+import { getInitialKeyRepeat, getKeyRepeat } from "@app/utils/keyRepeat"
 
+// Auth state
 const accessToken = fromTrigger(WhistTrigger.authFlowSuccess).pipe(
   map((x) => x.accessToken ?? ""),
   startWith(persistGet(CACHED_ACCESS_TOKEN) ?? "")
@@ -35,4 +39,22 @@ const isNewConfigToken = of(persistGet(CACHED_CONFIG_TOKEN) ?? "").pipe(
   map((x) => x === "")
 )
 
-export { accessToken, refreshToken, userEmail, configToken, isNewConfigToken }
+// JSON transport state e.g. system settings
+const darkMode = withAppReady(of(nativeTheme.shouldUseDarkColors))
+const timezone = of(Intl.DateTimeFormat().resolvedOptions().timeZone)
+const dpi = withAppReady(of(screen.getPrimaryDisplay()?.scaleFactor * 96))
+const keyRepeat = of(getKeyRepeat())
+const initialKeyRepeat = of(getInitialKeyRepeat())
+
+export {
+  accessToken,
+  refreshToken,
+  userEmail,
+  configToken,
+  isNewConfigToken,
+  darkMode,
+  timezone,
+  dpi,
+  keyRepeat,
+  initialKeyRepeat,
+}
