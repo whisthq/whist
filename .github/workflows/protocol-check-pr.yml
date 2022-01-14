@@ -369,14 +369,21 @@ jobs:
           GITHUB_ISSUE: ${{ github.event.number }}
           GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
         run: |
-          import os, sys, mmap
+          import os, sys, mmap, time
 
           # Here, we parse the test results into a .info file, which can be read and displayed on the GitHub PR
           # Create output .info file
           results_file = open("streaming_e2e_test_results.info", "w+")
 
+          logs_root_dir = "perf_logs/"
+          for folder_name in os.listdir("./perf_logs"):
+            if time.strftime("%Y_%m_%d@") in folder_name:
+              logs_root_dir = logs_root_dir + folder_name + "/"
+              break
+
+
           # Parse client logs for metrics
-          with open(os.path.abspath("perf_logs/client_monitoring_log.txt")) as client_logs_file:
+          with open(os.path.abspath("{}/client_monitoring_log.txt".format(logs_root_dir))) as client_logs_file:
             # Stringify the results file, to make it easier to extract specific substrings 
             stringified_file = mmap.mmap(client_logs_file.fileno(), 0, access=mmap.ACCESS_READ)
 
@@ -385,7 +392,7 @@ jobs:
             results_file.write("THE METRICS WE EXTRACTED ABOVE")
 
           # Parse server logs for metrics
-          with open(os.path.abspath("perf_logs/server_monitoring_log.txt")) as server_logs_file:
+          with open(os.path.abspath("{}/server_monitoring_log.txt".format(logs_root_dir))) as server_logs_file:
             # Stringify the results file, to make it easier to extract specific substrings 
             stringified_file = mmap.mmap(server_logs_file.fileno(), 0, access=mmap.ACCESS_READ)
             
