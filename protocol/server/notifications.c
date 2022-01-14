@@ -10,6 +10,7 @@ passed through the D-Bus, and send them via the Whist Protocol to the client.
 
 */
 
+#include "notifications.h"
 #include <whist/logging/logging.h>
 
 #ifndef __linux__
@@ -29,8 +30,6 @@ void destroy_notifications_thread(struct event_base *eb) {
 Includes
 ============================
 */
-
-#include "notifications.h"
 
 #include <errno.h>
 #include <stdio.h>
