@@ -139,6 +139,10 @@ func RegisterInstance() error {
 			String: string(InstanceStatusActive),
 			Status: pgtype.Present,
 		},
+		CreatedAt: pgtype.Timestamptz{
+			Time:   time.Now(),
+			Status: pgtype.Present,
+		},
 		UpdatedAt: pgtype.Timestamptz{
 			Time:   time.Now(),
 			Status: pgtype.Present,
