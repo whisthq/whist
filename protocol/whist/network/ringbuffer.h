@@ -56,6 +56,7 @@ typedef struct FrameData {
 
 // Handler that gets called when the ring buffer wants to nack for a packet
 typedef void (*NackPacketFn)(WhistPacketType frame_type, int id, int index);
+typedef void (*StreamResetFn)(WhistPacketType frame_type, int last_failed_id);
 
 /**
  * @brief	RingBuffer struct for abstracting away frame reconstruction and frame retrieval.
@@ -69,6 +70,7 @@ typedef struct RingBuffer {
     WhistPacketType type;
     int largest_frame_size;
     NackPacketFn nack_packet;
+    StreamResetFn request_stream_reset;
 
     BlockAllocator* packet_buffer_allocator;  // unused if audio
 
@@ -89,6 +91,8 @@ typedef struct RingBuffer {
     // the lowest packet ID we're interested in nacking about
     int last_rendered_id;
     int last_missing_frame_nack;
+    int most_recent_reset_id;
+    clock last_stream_reset_request_timer;
 } RingBuffer;
 
 /**

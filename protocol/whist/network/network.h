@@ -267,7 +267,7 @@ typedef struct {
     // Function table
     int (*ack)(void* context);
     void (*update)(void* context, bool should_recv);
-    WhistPacket* (*get_packet)(void* context, WhistPacketType type);
+    void* (*get_packet)(void* context, WhistPacketType type);
     void (*free_packet)(void* context, WhistPacket* packet);
     int (*send_packet)(void* context, WhistPacketType type, void* data, int len, int id);
     bool (*needs_stream_reset)(void* context);
@@ -301,9 +301,9 @@ int ack(SocketContext* context);
  * @param context     The socket context
  * @param type   Type of packet to pop
  *
- * @returns  A pointer to the WhistPacket if one is available, NULL otherwise.
+ * @returns  A pointer to the next set of data. If type is PACKET_AUDIO or PACKET_VIDEO, this will return a FrameData*; if the type is a MESSAGE, it will be WhistServerMessage*.
  */
-WhistPacket* get_packet(SocketContext* context, WhistPacketType type);
+void* get_packet(SocketContext* context, WhistPacketType type);
 
 /**
  * @brief   Read the next packet from the socket if one is available and buffer it.

@@ -210,7 +210,7 @@ void destroy_video(VideoContext* video_context) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-void receive_video(VideoContext* video_context, WhistPacket* packet) {
+void receive_video(VideoContext* video_context, FrameData* frame_data) {
     // The next two lines are commented out, but left in the codebase to be
     // easily toggled back and forth during development. We considered putting
     // this under the LOG_VIDEO ifdef, but decided not to, since these lines
@@ -226,15 +226,16 @@ void receive_video(VideoContext* video_context, WhistPacket* packet) {
         // send a frame to the renderer and set video_context->pending_render_context to true to signal readiness
         if (video_context->last_rendered_id >= 0) {
             // give data pointer to the video context
-            video_context->render_context = packet->data;
+            video_context->render_context = frame_data;
             log_double_statistic(VIDEO_FPS_RENDERED, 1.0);
             // increment last_rendered_id
-            LOG_DEBUG("received packet with ID %d, video last rendered %d", packet->id, video_context->last_rendered_id);
-            video_context->last_rendered_id = packet->id;
+            LOG_DEBUG("received packet with ID %d, video last rendered %d", frame_data->id, video_context->last_rendered_id);
+            video_context->last_rendered_id = frame_data->id;
+            VideoFrame* frame = (VideoFrame*)frame_data->frame_buffer;
             // record that we got an iframe
-            if (video_context->render_context->is_iframe) {
+            if (frame->is_iframe) {
                 video_context->most_recent_iframe =
-                    max(video_context->most_recent_iframe, packet->id);
+                    max(video_context->most_recent_iframe, frame_data->id);
             }
             // signal to the renderer that we're ready
             video_context->pending_render_context = true;

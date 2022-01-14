@@ -324,6 +324,7 @@ static void destroy_audio_device(AudioContext* audio_context) {
     }
 }
 
+// TODO: this logic should go in get_packet(PACKET_AUDIO)
 void catchup_audio(AudioContext* audio_context) {
     RingBuffer* ring_buffer = audio_context->ring_buffer;
     audio_context->last_played_id = audio_context->last_played_id;

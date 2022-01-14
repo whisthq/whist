@@ -44,7 +44,7 @@ static void reset_bitrate_stat_members(RingBuffer* ring_buffer) {
     ring_buffer->num_frames_rendered = 0;
 }
 
-RingBuffer* init_ring_buffer(WhistPacketType type, int ring_buffer_size, NackPacketFn nack_packet) {
+RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_buffer_size, NackPacketFn nack_packet) {
     /*
         Initialize the ring buffer; malloc space for all the frames and set their IDs to -1.
 
@@ -81,8 +81,7 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int ring_buffer_size, NackPac
     }
 
     // determine largest frame size
-    ring_buffer->largest_frame_size =
-        ring_buffer->type == PACKET_VIDEO ? LARGEST_VIDEOFRAME_SIZE : LARGEST_AUDIOFRAME_SIZE;
+    ring_buffer->largest_frame_size = max_frame_size;
 
     ring_buffer->packet_buffer_allocator = create_block_allocator(ring_buffer->largest_frame_size);
     ring_buffer->currently_rendering_id = -1;
@@ -95,6 +94,91 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int ring_buffer_size, NackPac
 
     return ring_buffer;
 }
+
+void reset_stream(RingBuffer* ring_buffer, int id) {
+    /*
+        "Skip" to the frame at ID id by setting last_rendered_id = id - 1 (if the skip is valid).
+    */
+    // sanity check
+    if (ring_buffer->last_rendered_id >= id || id <= 0) {
+        LOG_INFO("Received stale stream reset request - told to skip to ID %d but at ID %d", id, ring_buffer->last_rendered_id);
+    } else {
+        if (ring_buffer->last_rendered_id != -1) {
+            // Loudly log if we're dropping frames
+            LOG_INFO("Skipping from frame %d to frame %d", ring_buffer->last_rendered_id, id);
+            // Drop frames
+            for (int i = max(ring_buffer->last_rendered_id + 1, ring_buffer->most_recent_reset_id - ring_buffer->frames_received); i < ring_buffer->most_recent_reset_id; i++) {
+                FrameData* frame_data = get_frame_at_id(ring_buffer, i);
+                if (frame_data->id == i) {
+                    LOG_WARNING("Frame dropped with ID %d: %d/%d", i, frame_data->original_packets_received, frame_data->num_original_packets);
+                    for (int j = 0; j < frame_data->num_original_packets; j++) {
+                        if (!frame_data->received_indices[j]) {
+                            LOG_WARNING("Did not receive ID %d, Index %d", i, j);
+                        }
+                    }
+                } else if (frame_data->id != -1) {
+                    LOG_WARNING("Bad ID? %d instead of %d", frame_data->id, i);
+                }
+            }
+        }
+        ring_buffer->most_recent_reset_id = id;
+        ring_buffer->last_rendered_id = id - 1;
+    }
+}
+
+void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer) {
+    // this nacks for missing packets
+    // and sends stream reset requests if needed
+#define STREAM_RESET_REQUEST_INTERVAL_MS 5.0
+#define MAX_UNSYNCED_FRAMES 4
+#define MAX_TO_RENDER_STALENESS 100.0
+    // Try to nack for any missing packets
+    bool nacking_succeeded = try_nacking(video_context->ring_buffer, latency);
+
+    // Get how stale the frame we're trying to render is
+    double next_to_render_staleness = -1.0;
+    int next_render_id = ring_buffer->last_rendered_id + 1;
+    FrameData* ctx = get_frame_at_id(ring_buffer, next_render_id);
+    if (ctx->id == next_render_id) {
+        next_to_render_staleness = get_timer(ctx->frame_creation_timer);
+    }
+
+    // If nacking has failed to recover the packets we need,
+    if (!nacking_succeeded
+        // Or if we're more than MAX_UNSYNCED_FRAMES frames out-of-sync,
+        ||
+        ring_buffer->max_id > ring_buffer->last_rendered_id + MAX_UNSYNCED_FRAMES
+        // Or we've spent MAX_TO_RENDER_STALENESS trying to render this one frame
+        || (next_to_render_staleness > MAX_TO_RENDER_STALENESS / MS_IN_SECOND)) {
+        // THEN, we should send an iframe request
+
+        // Throttle the requests to prevent network upload saturation, however
+        // TODO: change this to a UDP stream reset request
+        if (get_timer(ring_buffer->last_stream_reset_request_timer) >
+            IFRAME_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
+            ring_buffer->request_stream_reset(ring_buffer->type, max(next_render_id, ring_buffer->max_id - 1));
+        }
+        /*
+            WhistClientMessage wcmsg = {0};
+            // Send a video packet stream reset request
+            wcmsg.type = MESSAGE_STREAM_RESET_REQUEST;
+            wcmsg.stream_reset_data.type = PACKET_VIDEO;
+            wcmsg.stream_reset_data.last_failed_id =
+                max(next_render_id, video_context->ring_buffer->max_id - 1);
+            send_wcmsg(&wcmsg);
+            */
+            LOG_INFO(
+                "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
+                "and the frame we're trying to render has been alive for %fms. "
+                "An I-Frame is now being requested to catch-up.",
+                ring_buffer->max_id,
+                ring_buffer->max_id - ring_buffer->last_rendered_id,
+                next_to_render_staleness * MS_IN_SECOND);
+            start_timer(&ring_buffer->last_stream_reset_request_timer);
+        }
+    }
+}
+            
 
 FrameData* get_frame_at_id(RingBuffer* ring_buffer, int id) {
     /*
@@ -287,9 +371,6 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
 
     ring_buffer->num_packets_received++;
 
-    // TODO: Get rid of confusing 'num_overwritten_frames' return variable
-    int num_overwritten_frames = 0;
-
     // If packet->id != frame_data->id, handle the situation
     if (packet->id < frame_data->id) {
         // This packet must be from a very stale frame,
@@ -319,7 +400,7 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
                     "Resetting the entire ringbuffer...",
                     packet->type == PACKET_VIDEO ? "video" : "audio", packet->id, frame_data->id,
                     ring_buffer->currently_rendering_id);
-                num_overwritten_frames = packet->id - ring_buffer->currently_rendering_id - 1;
+                // TODO: log a FPS skip
                 reset_ring_buffer(ring_buffer);
             } else {
                 // Here, the frame is older than where our renderer is,
@@ -434,10 +515,19 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
     }
 
     if (is_ready_to_render(ring_buffer, packet->id) && !was_already_ready) {
+        // if the frame is an iframe, skip to it
+        // TODO: make this less video-specific? Possibly put this in get_packet(PACKET_VIDEO)
+        FrameData* frame_data = get_frame_at_id(ring_buffer, packet->id);
+        if (ring_buffer->type == PACKET_VIDEO) {
+            VideoFrame* frame = (VideoFrame*)frame_data->frame_buffer;
+            if (frame->is_iframe) {
+                reset_stream(ring_buffer, frame_data->id);
+            }
+        }
         ring_buffer->frames_received++;
     }
 
-    return num_overwritten_frames;
+    return 0;
 }
 
 static void nack_single_packet(RingBuffer* ring_buffer, int id, int index) {
