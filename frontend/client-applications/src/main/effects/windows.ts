@@ -84,11 +84,7 @@ allWindowsClosed.subscribe(
 )
 
 fromTrigger(WhistTrigger.windowInfo)
-  .pipe(
-    withLatestFrom(
-      fromTrigger(WhistTrigger.mandelboxFlowSuccess).pipe(startWith({}))
-    )
-  )
+  .pipe(withLatestFrom(fromTrigger(WhistTrigger.mandelboxFlowSuccess)))
   .subscribe(
     ([args, info]: [
       {
