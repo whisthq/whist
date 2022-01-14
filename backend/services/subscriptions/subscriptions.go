@@ -48,7 +48,7 @@ func InstancesStatusHandler(event SubscriptionEvent, variables map[string]interf
 		return false
 	}
 
-	status := string(variables["status"].(instance_state))
+	status := string(variables["status"].(graphql.String))
 
 	return instance.Status == status
 }

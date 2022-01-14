@@ -24,9 +24,3 @@ type whist_instances_insert_input struct {
 	CreatedAt         time.Time      `json:"created_at"`
 	UpdatedAt         time.Time      `json:"updated_at"`
 }
-
-// instance_state represents the status of an instance.
-type instance_state string
-
-// cloud_provider represents the cloud service provider.
-type cloud_provider string

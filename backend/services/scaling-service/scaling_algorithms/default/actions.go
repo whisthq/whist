@@ -86,7 +86,7 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 
 	activeInstancesQuery := subscriptions.QueryInstancesByStatusOnRegion
 	queryParams := map[string]interface{}{
-		"status": instance_state("ACTIVE"),
+		"status": graphql.String("ACTIVE"),
 		"region": graphql.String(event.Region),
 	}
 
@@ -102,7 +102,7 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 		// Query for the latest image id
 		latestImageQuery := subscriptions.QueryLatestImage
 		queryParams := map[string]interface{}{
-			"provider": cloud_provider("aws"), // TODO: set different provider when doing multi-cloud.
+			"provider": graphql.String("aws"), // TODO: set different provider when doing multi-cloud.
 			"region":   graphql.String(event.Region),
 		}
 
@@ -143,7 +143,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// check database for active instances without mandelboxes
 	activeInstancesQuery := subscriptions.QueryInstancesByStatusOnRegion
 	queryParams := map[string]interface{}{
-		"status": instance_state("ACTIVE"),
+		"status": graphql.String("ACTIVE"),
 		"region": graphql.String(event.Region),
 	}
 
@@ -167,7 +167,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// check database for draining instances without running mandelboxes
 	lingeringInstancesQuery := subscriptions.QueryInstancesByStatusOnRegion
 	queryParams = map[string]interface{}{
-		"status": instance_state("DRAINING"),
+		"status": graphql.String("DRAINING"),
 		"region": graphql.String(event.Region),
 	}
 
@@ -243,7 +243,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	for _, instance := range freeInstances {
 		mutationParams := map[string]interface{}{
 			"id":     graphql.String(instance.ID),
-			"status": instance_state("DRAINING"),
+			"status": graphql.String("DRAINING"),
 		}
 
 		err = s.GraphQLClient.Mutate(scalingCtx, &drainMutation, mutationParams)
