@@ -10,6 +10,8 @@ passed through the D-Bus, and send them via the Whist Protocol to the client.
 
 */
 
+#include <whist/logging/logging.h>
+
 #ifndef __linux__
 
 void init_notifications_thread(whist_server_state *state, struct event_base *eb) {
@@ -43,7 +45,6 @@ Includes
 #include <dbus/dbus.h>
 #include <event.h>
 
-#include <whist/logging/logging.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/core/whist.h>
 #include <whist/utils/whist_notification.h>
