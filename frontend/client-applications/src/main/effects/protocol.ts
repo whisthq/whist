@@ -58,15 +58,15 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess)
     ]) => {
       setTimeout(
         () => {
-          // if (childProcess === undefined) {
-          //   createProtocolWindow()
-          //     .then(() => {
-          //       protocolStreamInfo(info)
-          //     })
-          //     .catch((err) => Sentry.captureException(err))
-          // } else {
-          //   protocolStreamInfo(info)
-          // }
+          if (childProcess === undefined) {
+            createProtocolWindow()
+              .then(() => {
+                protocolStreamInfo(info)
+              })
+              .catch((err) => Sentry.captureException(err))
+          } else {
+            protocolStreamInfo(info)
+          }
 
           createOmnibar()
         },
