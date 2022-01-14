@@ -3,6 +3,8 @@
  * @file notifications.c
  * @brief Contains utilities to capture and send notifications to the client.
 
+Only works on Linux! Relies on D-Bus and LibEvent.
+
 Implements logic to connect to an existing D-Bus session, listen for notifications
 passed through the D-Bus, and send them via the Whist Protocol to the client.
 
