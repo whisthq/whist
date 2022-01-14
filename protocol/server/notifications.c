@@ -58,17 +58,17 @@ Defines
 ============================
 */
 
-typedef struct dbus_ctx {
+typedef struct DbusCtx {
     DBusConnection *conn;
     struct event_base *evbase;
     struct event dispatch_ev;
     void *extra;
-} dbus_ctx;
+} DbusCtx;
 
-typedef struct notifs_thread_args {
+typedef struct NotifsThreadArgs {
     whist_server_state *state;
     struct event_base *eb;
-} notifs_thread_args;
+} NotifsThreadArgs;
 
 /*
 ============================
@@ -80,8 +80,8 @@ Private Functions
 static int32_t multithreaded_process_notifications(void *opaque);
 
 // Main d-bus connection + notification handling logic
-static dbus_ctx *dbus_init(struct event_base *eb, Client *init_server_state_client);
-static void dbus_close(dbus_ctx *ctx);
+static DbusCtx *dbus_init(struct event_base *eb, Client *init_server_state_client);
+static void dbus_close(DbusCtx *ctx);
 static DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *message,
                                               void *user_data);
 
@@ -108,7 +108,7 @@ Public Function Implementations
 */
 
 void init_notifications_thread(whist_server_state *state, struct event_base *eb) {
-    notifs_thread_args *args = malloc(sizeof(notifs_thread_args));
+    NotifsThreadArgs *args = malloc(sizeof(NotifsThreadArgs));
     args->state = state;
     args->eb = eb;
     whist_create_thread(multithreaded_process_notifications, "multithreaded_process_notifications",
@@ -130,7 +130,7 @@ Private Function Implementations
  * @return int32_t  0 upon successful completion, -1 if failure.
  */
 int32_t multithreaded_process_notifications(void *opaque) {
-    notifs_thread_args *args = (notifs_thread_args *)opaque;
+    NotifsThreadArgs *args = (NotifsThreadArgs *)opaque;
     whist_server_state *state = args->state;
     struct event_base *eb = args->eb;
     free(args);
@@ -140,7 +140,7 @@ int32_t multithreaded_process_notifications(void *opaque) {
 
     add_thread_to_client_active_dependents();
 
-    dbus_ctx *ctx = dbus_init(eb, &state->client);
+    DbusCtx *ctx = dbus_init(eb, &state->client);
 
     if (ctx == NULL) {
         return -1;
@@ -161,19 +161,19 @@ int32_t multithreaded_process_notifications(void *opaque) {
  * @param eb                        Event base that controls event handling.
  * @param init_server_state_client  Whist protocol client for sending notifications to the user.
  *
- * @return dbus_ctx*                A d-bus connection struct allocated on the heap. Make sure
+ * @return DbusCtx*                A d-bus connection struct allocated on the heap. Make sure
  *                                  to free when program is finished.
  */
-dbus_ctx *dbus_init(struct event_base *eb, Client *server_state_client) {
+DbusCtx *dbus_init(struct event_base *eb, Client *server_state_client) {
     seteuid(1000);  // For d-bus to connect, set euid to that of the `whist` user
 
     DBusConnection *conn = NULL;
     DBusError error;
     dbus_error_init(&error);
 
-    dbus_ctx *ctx = calloc(1, sizeof(dbus_ctx));
+    DbusCtx *ctx = calloc(1, sizeof(DbusCtx));
     if (!ctx) {
-        LOG_ERROR("Can't allocate dbus_ctx");
+        LOG_ERROR("Can't allocate DbusCtx");
         goto fail;
     }
 
@@ -270,7 +270,7 @@ fail:
  *
  * @param ctx   The connection object to close.
  */
-void dbus_close(dbus_ctx *ctx) {
+void dbus_close(DbusCtx *ctx) {
     if (ctx && ctx->conn) {
         dbus_connection_flush(ctx->conn);
         dbus_connection_close(ctx->conn);
@@ -414,7 +414,7 @@ dbus_bool_t become_monitor(DBusConnection *connection) {
  *              Connection struct.
  */
 void dispatch(int fd, short ev, void *x) {
-    dbus_ctx *ctx = x;
+    DbusCtx *ctx = x;
     DBusConnection *c = ctx->conn;
 
     while (dbus_connection_get_dispatch_status(c) == DBUS_DISPATCH_DATA_REMAINS)
@@ -431,7 +431,7 @@ void dispatch(int fd, short ev, void *x) {
  *                  D-Bus connection struct.
  */
 void handle_new_dispatch_status(DBusConnection *c, DBusDispatchStatus status, void *data) {
-    dbus_ctx *ctx = data;
+    DbusCtx *ctx = data;
 
     if (status == DBUS_DISPATCH_DATA_REMAINS) {
         struct timeval tv = {
@@ -451,7 +451,7 @@ void handle_new_dispatch_status(DBusConnection *c, DBusDispatchStatus status, vo
  * @param x         User data; contains the D-Bus Connection.
  */
 void handle_watch(int fd, short events, void *x) {
-    dbus_ctx *ctx = x;
+    DbusCtx *ctx = x;
     struct DBusWatch *watch = ctx->extra;
 
     unsigned int flags = 0;
@@ -475,7 +475,7 @@ void handle_watch(int fd, short events, void *x) {
 dbus_bool_t add_watch(DBusWatch *w, void *data) {
     if (!dbus_watch_get_enabled(w)) return TRUE;
 
-    dbus_ctx *ctx = data;
+    DbusCtx *ctx = data;
     ctx->extra = w;
 
     int fd = dbus_watch_get_unix_fd(w);
@@ -535,7 +535,7 @@ void toggle_watch(DBusWatch *w, void *data) {
  * @param x     User data; contains the D-Bus Connection.
  */
 void handle_timeout(int fd, short ev, void *x) {
-    dbus_ctx *ctx = x;
+    DbusCtx *ctx = x;
     DBusTimeout *t = ctx->extra;
 
     LOG_INFO("Got d-bus handle timeout event %p", t);
@@ -551,7 +551,7 @@ void handle_timeout(int fd, short ev, void *x) {
  * @return dbus_bool_t      TRUE on success, FALSE on failure.
  */
 dbus_bool_t add_timeout(DBusTimeout *t, void *data) {
-    dbus_ctx *ctx = data;
+    DbusCtx *ctx = data;
 
     if (!dbus_timeout_get_enabled(t)) return TRUE;
 
