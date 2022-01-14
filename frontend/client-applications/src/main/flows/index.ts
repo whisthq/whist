@@ -9,7 +9,7 @@ import mandelboxFlow from "@app/main/flows/mandelbox"
 import autoUpdateFlow from "@app/main/flows/autoupdate"
 import awsPingFlow from "@app/main/flows/ping"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
-import { fromSignal } from "@app/utils/observables"
+import { fromSignal, withAppReady } from "@app/utils/observables"
 import { getRegionFromArgv } from "@app/utils/region"
 import { persistGet } from "@app/utils/persist"
 import { WhistTrigger } from "@app/constants/triggers"
@@ -21,7 +21,6 @@ import {
   isNewConfigToken,
   darkMode,
   timezone,
-  dpi,
   keyRepeat,
   initialKeyRepeat,
 } from "@app/utils/state"
@@ -124,7 +123,6 @@ const launchTrigger = fromSignal(
     regions: merge(awsPing.cached, awsPing.refresh),
     darkMode,
     timezone,
-    dpi,
     keyRepeat,
     initialKeyRepeat,
   }).pipe(
@@ -140,7 +138,7 @@ const launchTrigger = fromSignal(
 ).pipe(take(1), share())
 
 // Mandelbox creation flow
-const mandelbox = mandelboxFlow(launchTrigger)
+const mandelbox = mandelboxFlow(withAppReady(launchTrigger))
 
 // After the mandelbox flow is done, run the refresh flow so the tokens are being refreshed
 // every time but don't impede startup time

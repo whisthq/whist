@@ -1,6 +1,6 @@
 import { map, startWith } from "rxjs/operators"
 import { Observable, of } from "rxjs"
-import { nativeTheme, screen } from "electron"
+import { nativeTheme } from "electron"
 
 import { fromTrigger } from "@app/utils/flows"
 import { persistGet } from "@app/utils/persist"
@@ -42,7 +42,6 @@ const isNewConfigToken = of(persistGet(CACHED_CONFIG_TOKEN) ?? "").pipe(
 // JSON transport state e.g. system settings
 const darkMode = withAppReady(of(nativeTheme.shouldUseDarkColors))
 const timezone = of(Intl.DateTimeFormat().resolvedOptions().timeZone)
-const dpi = withAppReady(of(screen.getPrimaryDisplay()?.scaleFactor * 96))
 const keyRepeat = of(getKeyRepeat())
 const initialKeyRepeat = of(getInitialKeyRepeat())
 
@@ -54,7 +53,6 @@ export {
   isNewConfigToken,
   darkMode,
   timezone,
-  dpi,
   keyRepeat,
   initialKeyRepeat,
 }

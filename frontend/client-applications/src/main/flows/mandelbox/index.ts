@@ -1,3 +1,5 @@
+import { screen } from "electron"
+
 import { merge, Observable, zip } from "rxjs"
 import { map } from "rxjs/operators"
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
@@ -23,7 +25,6 @@ export default flow(
       regions: Array<{ region: AWSRegion; pingTime: number }>
       darkMode: boolean
       timezone: string
-      dpi: number
       keyRepeat: number | undefined
       initialKeyRepeat: number | undefined
     }>
@@ -52,7 +53,7 @@ export default flow(
           jsonData: JSON.stringify({
             dark_mode: t.darkMode,
             desired_timezonetime: t.timezone,
-            client_dpi: t.dpi,
+            client_dpi: screen.getPrimaryDisplay()?.scaleFactor * 96,
             restore_last_session: persistGet(RESTORE_LAST_SESSION) ?? true,
             initial_key_repeat: t.initialKeyRepeat,
             key_repeat: t.keyRepeat,
