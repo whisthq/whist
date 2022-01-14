@@ -44,7 +44,7 @@ export const OneButtonError = (props: {
   return (
     <div
       className={classNames(
-        "flex flex-col h-screen items-center bg-gray-800",
+        "flex flex-col h-screen items-center bg-gray-800 draggable",
         "justify-center font-body text-center px-8"
       )}
     >
@@ -90,7 +90,7 @@ export const TwoButtonError = (props: {
   return (
     <div
       className={classNames(
-        "flex flex-col h-screen items-center bg-gray-800",
+        "flex flex-col h-screen items-center bg-gray-800 draggable",
         "justify-center font-body text-center px-8"
       )}
     >

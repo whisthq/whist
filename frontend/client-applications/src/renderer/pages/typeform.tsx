@@ -17,7 +17,7 @@ const Typeform = (props: {
     return (
       <Widget
         id={props.id}
-        className="w-screen h-screen bg-gray-800"
+        className="w-screen h-screen bg-gray-800 draggable"
         onSubmit={onSubmit}
         hidden={{ email: props.email }}
       />

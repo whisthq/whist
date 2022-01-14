@@ -25,7 +25,7 @@ const Signout = (props: { onClick: (clearConfig: boolean) => void }) => {
   return (
     <div
       className={classNames(
-        "flex flex-col h-screen items-center bg-gray-800",
+        "flex flex-col h-screen items-center bg-gray-800 draggable",
         "justify-center font-body text-center px-12"
       )}
     >
