@@ -179,15 +179,6 @@ typedef enum {
  *                                 SocketContextData
  */
 typedef struct {
-    char hash[16];  // Hash of the rest of the packet
-    // hash[16] is a signature for everything below this line
-
-    // Encrypted packet data
-    int cipher_len;  // The length of the encrypted segment
-    char iv[16];     // One-time pad for encrypted data
-
-    // Everything below this line gets encrypted
-
     // Metadata
     WhistPacketType type;   // Video, Audio, or Message
     int id;                 // Unique identifier (Two packets with the same type and id, from
@@ -202,13 +193,10 @@ typedef struct {
     // Data
     uint8_t data[MAX_PAYLOAD_SIZE];  // data at the end of the struct, with invalid
                                      // bytes beyond payload_size / cipher_len
-    uint8_t overflow[16];            // The maximum cipher_len is MAX_PAYLOAD_SIZE + 16,
-                                     // as the encrypted packet might be slightly larger
-                                     // than the unencrypted packet
 } WhistPacket;
 
 #define MAX_PACKET_SIZE (sizeof(WhistPacket))
-#define PACKET_HEADER_SIZE (sizeof(WhistPacket) - MAX_PAYLOAD_SIZE - 16)
+#define PACKET_HEADER_SIZE (sizeof(WhistPacket) - MAX_PAYLOAD_SIZE)
 // Real packet size = PACKET_HEADER_SIZE + WhistPacket.payload_size (If
 // Unencrypted)
 //                  = PACKET_HEADER_SIZE + cipher_len (If Encrypted)

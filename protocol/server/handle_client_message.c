@@ -208,6 +208,9 @@ static int handle_network_settings_message(whist_server_state *state, WhistClien
             (int): Returns -1 on failure, 0 on success
     */
 
+    // TODO: udp.c will handle this function internally at some point,
+    // So that it is not a WhistClientMessage anymore
+
     int requested_avg_bitrate = wcmsg->network_settings.bitrate;
     int requested_burst_bitrate = wcmsg->network_settings.burst_bitrate;
     double requested_audio_fec_ratio = wcmsg->network_settings.audio_fec_ratio;
@@ -232,11 +235,15 @@ static int handle_network_settings_message(whist_server_state *state, WhistClien
             "video FEC",
             requested_avg_bitrate / 1024.0 / 1024.0, requested_burst_bitrate / 1024.0 / 1024.0,
             requested_audio_fec_ratio * 100.0, requested_video_fec_ratio * 100.0);
+        wcmsg->network_settings.bitrate = avg_bitrate;
+        wcmsg->network_settings.burst_bitrate = burst_bitrate;
+        wcmsg->network_settings.audio_fec_ratio = audio_fec_ratio;
+        wcmsg->network_settings.video_fec_ratio = video_fec_ratio;
     }
 
     // Update the UDP Context's burst bitrate and fec ratio
     // TODO: Handle audio_fec_ratio correctly
-    udp_update_bitrate_settings(&state->client.udp_context, burst_bitrate, video_fec_ratio);
+    udp_update_network_settings(&state->client.udp_context, wcmsg->network_settings);
 
     // Set the new video encoding parameters,
     // using only the bandwidth that isn't already meant for audio,
@@ -408,6 +415,9 @@ static int handle_nack_message(Client *client, WhistClientMessage *wcmsg) {
         Returns:
             (int): Returns -1 on failure, 0 on success
     */
+
+    // TODO: udp.c will handle this function internally at some point,
+    // So that it is not a WhistClientMessage anymore
 
     if (wcmsg->type == MESSAGE_NACK) {
         udp_nack(&client->udp_context, wcmsg->simple_nack.type, wcmsg->simple_nack.id,

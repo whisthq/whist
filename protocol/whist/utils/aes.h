@@ -25,12 +25,40 @@ Includes
 
 /*
 ============================
+Defines
+============================
+*/
+
+// Assertions in aes.c verify that these constants are accurate,
+// prior to any encrypting or decrypting operations
+#define IV_SIZE 16
+#define KEY_SIZE 16
+#define HMAC_SIZE 16
+#define MAX_ENCRYPTION_SIZE_INCREASE 32
+
+/**
+ * @brief    The is metadata about the encrypted packet,
+ *
+ */
+typedef struct {
+    // Contains a signature of the iv/cipher_len/the encrypted data
+    char hmac[HMAC_SIZE];
+
+    // Encrypted packet data
+    char iv[IV_SIZE];   // One-time pad for encrypted data
+    int encrypted_len;  // The length of the encrypted segment
+} AESMetadata;
+
+/*
+============================
 Public Functions
 ============================
 */
 
 /**
  * @brief                          Hash a buffer to a pseudorandomly unique ID
+ *                                 This will not be cryptographically secure against
+ *                                 preimage attacks, it is intended to be fast instead
  *
  * @param key                      Buffer to get hashed
  * @param len                      Length of buffer to get hashed, in bytes
@@ -40,108 +68,68 @@ Public Functions
 uint32_t hash(void* key, size_t len);
 
 /**
- * @brief                          Generate a random IV
+ * @brief                          Generates a signature of the given buffer
+ *                                 This will generate the same signature given
+ *                                 the same buf/len, and proves that someone
+ *                                 with the private key generated the hash
  *
- * @param iv                       Buffer to save the IV to
+ * @param hash                     A HMAC_SIZE-byte buffer to write the signature to
+ * @param buf                      The a pointer to the buffer that we want to sign
+ * @param len                      The length of the bugger that we want to sign
+ * @param key                      The private key to sign with
+ *                                   must be KEY_SIZE bytes
+ */
+void hmac(void* hash, void* buf, int len, void* key);
+
+/**
+ * @brief                          Generates some unique IV,
+ *                                 so that a unique IV is given on consective calls
+ *
+ * @param iv                       A IV_SIZE-byte buffer to write the IV to
  */
 void gen_iv(void* iv);
-
-/**
- * @brief                          Generate an hmac signature
- *
- * @param signature                Buffer to save the signature to
- * @param buf                      Buffer to sign
- * @param len                      Length of buffer to sign
- * @param key                      Private key to sign with
- */
-int hmac(void* signature, void* buf, int len, void* key);
-
-/**
- * @brief                          Verify an hmac signature
- *
- * @param signature                Signature of the buffer
- * @param buf                      Buffer that is signed
- * @param len                      Length of signed buffer
- * @param key                      Private key that was signed with
- */
-bool verify_hmac(void* signature, void* buf, int len, void* key);
 
 /**
  * @brief                          Encrypts a data packet using the AES private
  *                                 key
  *
- * @param plaintext_packet         Pointer to the plaintext packet to be
- *                                 encrypted
- * @param packet_len               Length of the packet to encrypt, in bytes
- * @param encrypted_packet         Pointer to receive the encrypted packet
- * @param private_key              AES private key used to encrypt and decrypt
- *                                 the packets
+ * @param encrypted_data           Pointer to receive the encrypted data
+ *                                   NOTE: Buffer must be ENCRYPTION_SIZE_INCREASE bytes larger than
+ * packet_len
+ * @param aes_metadata             Metadata about the encrypted packet gets into this struct
+ * @param plaintext_data           Pointer to the plaintext data to encrypt
+ * @param plaintext_len            Length of the packet to encrypt, in bytes
+ * @param private_key              AES private key used to encrypt the data
+ *                                   must be KEY_SIZE bytes
  *
- * @returns                        Will return the encrypted packet length
+ * @returns                        Will return the encrypted packet length,
+ *                                 (Guaranteed <= plaintext_len + ENCRYPTION_SIZE_INCREASE)
+ *                                 or -1 on failure
  */
-int encrypt_packet(WhistPacket* plaintext_packet, int packet_len, WhistPacket* encrypted_packet,
-                   unsigned char* private_key);
+int encrypt_packet(void* encrypted_data, AESMetadata* aes_metadata, void* plaintext_data,
+                   int plaintext_len, unsigned char* private_key);
 
 /**
  * @brief                          Calls decrypt_packet_n to decrypt an
  *                                 AES-encrypted packet
  *
- * @param encrypted_packet         Pointer to the encrypted packet to be
- *                                 decrypted
- * @param packet_len               Length of the packet to decrypt, in bytes
- * @param plaintext_packet         Pointer to receive the decrypted packet
+ * @param plaintext_buffer         Pointer to write the plaintext to
+ * @param plaintext_buffer_len     The size that the plaintext_buffer can take in,
+ *                                   passed as a parameter to prevent buffer overflows
+ * @param aes_metadata             Metadata about the encrypted packet,
+ *                                 which is needed for decryption
+ * @param encrypted_data           Pointer to the encrypted data
+ * @param encrypted_len            The length of the encrypted data buffer
  * @param private_key              AES private key used to encrypt and decrypt
- *                                 the packets
+ *                                   must be KEY_SIZE bytes
  *
- * @returns                        Will return -1 on failure, else will return the
- *                                 length of the decrypted packets
+ * @returns                        Will return the decrypted packet length,
+ *                                 (Guaranteed <= plaintext_buffer_len)
+ *                                 or -1 on failure
+ *                                 (Including if plaintext_buffer_len was too small to fit the
+ * packet)
  */
-int decrypt_packet(WhistPacket* encrypted_packet, int packet_len, WhistPacket* plaintext_packet,
-                   unsigned char* private_key);
-
-/**
- * @brief                          Decrypts an AES-encrypted packet
- *
- * @param encrypted_packet         Pointer to the encrypted packet to be
- *                                 decrypted
- * @param packet_len               Length of the packet to decrypt, in bytes
- * @param plaintext_packet         Pointer to receive the decrypted packet
- * @param plaintext_len     Length of the decrypted packet, in bytes
- * @param private_key              AES private key used to encrypt and decrypt
- *                                 the packets
- *
- * @returns                        Will return -1 on failure, else will return the
- *                                 length of the decrypted packets
- */
-int decrypt_packet_n(WhistPacket* encrypted_packet, int packet_len, WhistPacket* plaintext_packet,
-                     int plaintext_len, unsigned char* private_key);
-
-/**
- * @brief                          Encrypt plaintext data
- *
- * @param plaintext                Pointer to the plaintext to encrypt
- * @param plaintext_len            Length of the plaintext
- * @param key                      AES Private Key used to encrypt the plaintext
- * @param iv                       IV used to seed the AES encryption
- * @param ciphertext               Pointer to buffer for receiving ciphertext
- *
- * @returns                        Will return -1 on failure, else will return the
- *                                 length of the encrypted result
- */
-int aes_encrypt(void* plaintext, int plaintext_len, void* key, void* iv, void* ciphertext);
-
-/**
- * @brief                          Decrypt ciphertext data
- *
- * @param ciphertext               Pointer to the ciphertext to encrypt
- * @param ciphertext_len           Length of the ciphertext
- * @param key                      AES Private Key used to encrypt the plaintext
- * @param iv                       IV used to seed the AES encryption
- * @param plaintext                Pointer to buffer for receiving plaintext
- *
- * @returns                        Will return -1 on failure, else will return the
- *                                 length of the decrypted result
- */
-int aes_decrypt(void* ciphertext, int ciphertext_len, void* key, void* iv, void* plaintext);
+int decrypt_packet(void* plaintext_buffer, int plaintext_buffer_len, AESMetadata aes_metadata,
+                   void* encrypted_data, int encrypted_len, unsigned char* private_key);
 
 #endif  // AES_H

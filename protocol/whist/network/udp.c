@@ -3,6 +3,12 @@
                                          // be at the very top
 #endif
 
+/*
+============================
+Includes
+============================
+*/
+
 #include "udp.h"
 #include <whist/utils/aes.h>
 #include <whist/utils/fec.h>
@@ -11,6 +17,21 @@
 #include <fcntl.h>
 #endif
 
+/*
+============================
+Defines
+============================
+*/
+
+typedef struct {
+    // Metadata needed to decrypt the packet
+    AESMetadata aes_metadata;
+    // Size of the payload
+    int payload_size;
+    // Enough space for the whist packet, and any encryption size increase
+    char payload[sizeof(WhistPacket) + MAX_ENCRYPTION_SIZE_INCREASE];
+} UDPPacket;
+
 // Define how many times to retry sending a UDP packet in case of Error 55 (buffer full). The
 // current value (5) is an arbitrary choice that was found to work well in practice.
 #define RETRIES_ON_BUFFER_FULL 5
@@ -18,6 +39,13 @@
 // Define the bitrate specified to be maintained for each and every 0.5 ms internal.
 #define UDP_NETWORK_THROTTLER_BUCKET_MS 0.5
 
+/*
+============================
+Globals
+============================
+*/
+
+// TODO: Remove
 extern unsigned short port_mappings[USHRT_MAX + 1];
 
 /*
@@ -45,44 +73,60 @@ WhistPacket* udp_read_packet(void* raw_context, bool should_recv) {
     }
 
     // Wait to receive packet over TCP, until timing out
-    WhistPacket encrypted_packet;
-    int encrypted_len =
-        recv_no_intr(context->socket, (char*)&encrypted_packet, sizeof(encrypted_packet), 0);
+    UDPPacket udp_packet;
+    int recv_len = recv_no_intr(context->socket, (char*)&udp_packet, sizeof(udp_packet), 0);
 
     // If the packet was successfully received, then decrypt it
-    if (encrypted_len > 0) {
+    if (recv_len > 0) {
         int decrypted_len;
+
+        // Verify the reported packet length
+        // We check bounds on udp_packet.payload_size because it's before decrypt_packet,
+        // meaning it's untrusted and could be made to intentionally overflow our addition check.
+        if (udp_packet.payload_size < 0 || MAX_PAYLOAD_SIZE < udp_packet.payload_size ||
+            (int)sizeof(UDPPacket) + udp_packet.payload_size != recv_len) {
+            LOG_WARNING("The UDPPacket's payload size doesn't agree with recv_len!");
+            return NULL;
+        }
+
         if (ENCRYPTING_PACKETS) {
             // Decrypt the packet
             decrypted_len =
-                decrypt_packet(&encrypted_packet, encrypted_len, &context->decrypted_packet,
+                decrypt_packet(&context->decrypted_packet, sizeof(context->decrypted_packet),
+                               udp_packet.aes_metadata, udp_packet.payload, udp_packet.payload_size,
                                (unsigned char*)context->binary_aes_private_key);
+            // If there was an issue decrypting it, warn and return NULL
+            if (decrypted_len < 0) {
+                // This is warning, since it could just be someone else sending packets,
+                // Not necessarily our fault
+                LOG_WARNING("Failed to decrypt packet");
+                return NULL;
+            }
+            // AFTER THIS LINE,
+            // The contents of udp_packet are confirmed to be from the server,
+            // And thus can be trusted as not maliciously formed.
         } else {
-            // The decrypted packet is just the original packet, during dev mode
-            decrypted_len = encrypted_len;
-            memcpy(&context->decrypted_packet, &encrypted_packet, encrypted_len);
+            // The decrypted packet is just the original packet, during no-encryption mode
+            decrypted_len = udp_packet.payload_size;
+            memcpy(&context->decrypted_packet, udp_packet.payload, udp_packet.payload_size);
         }
 #if LOG_NETWORKING
         LOG_INFO("Received a WhistPacket of size %d over UDP", decrypted_len);
 #endif
 
-        // If there was an issue decrypting it, post warning and then
-        // ignore the problem
-        if (decrypted_len < 0) {
-            if (encrypted_len == sizeof(StunEntry)) {
-                StunEntry* e;
-                e = (void*)&encrypted_packet;
-                LOG_INFO("Maybe a map from public %d to private %d?", ntohs(e->private_port),
-                         ntohs(e->private_port));
-            }
-            LOG_WARNING("Failed to decrypt packet");
+        // Also verify the WhistPacket's size
+        if (decrypted_len != get_packet_size(&context->decrypted_packet)) {
+            // This is error, because after a successful decryption, it's under our control
+            LOG_ERROR(
+                "The packet size received %d, doesn't match the calculated WhistPacketSize %d",
+                decrypted_len, get_packet_size(&context->decrypted_packet));
             return NULL;
         }
 
         context->decrypted_packet_used = true;
         return &context->decrypted_packet;
     } else {
-        if (encrypted_len < 0) {
+        if (recv_len < 0) {
             int error = get_last_network_error();
             switch (error) {
                 case WHIST_ETIMEDOUT:
@@ -131,27 +175,37 @@ int udp_send_constructed_packet(void* raw_context, WhistPacket* packet, size_t p
         return -1;
     }
 
-    WhistPacket encrypted_packet;
-    size_t encrypted_len = (size_t)encrypt_packet(packet, (int)packet_size, &encrypted_packet,
-                                                  (unsigned char*)context->binary_aes_private_key);
+    UDPPacket udp_packet;
+    if (ENCRYPTING_PACKETS) {
+        // Encrypt the packet during normal operation
+        int encrypted_len = (int)encrypt_packet(
+            udp_packet.payload, &udp_packet.aes_metadata, packet, (int)packet_size,
+            (unsigned char*)context->binary_aes_private_key);
+        udp_packet.payload_size = encrypted_len;
+    } else {
+        // Or, just memcpy the packet if ENCRYPTING_PACKETS is disabled
+        memcpy(udp_packet.payload, packet, packet_size);
+        udp_packet.payload_size = (int)packet_size;
+    }
+
+    // The size of the udp packet that actually needs to be sent over the network
+    int udp_packet_network_size =
+        sizeof(udp_packet) - sizeof(udp_packet.payload) + udp_packet.payload_size;
+
     // NOTE: This doesn't interfere with clientside hotpath,
     // since the throttler only throttles the serverside
-    network_throttler_wait_byte_allocation(context->network_throttler, (size_t)encrypted_len);
+    network_throttler_wait_byte_allocation(context->network_throttler,
+                                           (size_t)udp_packet_network_size);
 
     // If sending fails because of no buffer space available on the system, retry a few times.
     for (int i = 0; i < RETRIES_ON_BUFFER_FULL; i++) {
         whist_lock_mutex(context->mutex);
         int ret;
 #if LOG_NETWORKING
-        LOG_INFO("Sending a WhistPacket of size %d over UDP", packet_size);
+        LOG_INFO("Sending a WhistPacket of size %d over UDP", (int)packet_size);
 #endif
-        if (ENCRYPTING_PACKETS) {
-            // Send encrypted during normal usage
-            ret = send(context->socket, (const char*)&encrypted_packet, (int)encrypted_len, 0);
-        } else {
-            // Send unencrypted during dev mode
-            ret = send(context->socket, (const char*)packet, (int)packet_size, 0);
-        }
+        // Send the UDPPacket over the network
+        ret = send(context->socket, (const char*)&udp_packet, udp_packet_network_size, 0);
         whist_unlock_mutex(context->mutex);
         if (ret < 0) {
             int error = get_last_network_error();
@@ -232,26 +286,20 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payloa
     FECEncoder* fec_encoder = NULL;
     if (num_fec_packets > 0) {
         fec_encoder = create_fec_encoder(num_indices, num_fec_packets, MAX_PAYLOAD_SIZE);
-    }
-
-    size_t current_position = 0;
-    for (int packet_index = 0; packet_index < num_indices; packet_index++) {
-        int packet_payload_size = (int)min(payload_size - current_position, MAX_PAYLOAD_SIZE);
-        if (fec_encoder) {
-            // Pass the buffers into the FEC encoder, when using FEC
-            fec_encoder_register_buffer(fec_encoder, (char*)payload + current_position,
-                                        packet_payload_size);
-        } else {
-            // Populate the buffers directly when not using FEC
-            buffers[packet_index] = (char*)payload + current_position;
-            buffer_sizes[packet_index] = packet_payload_size;
-        }
-        current_position += packet_payload_size;
-    }
-
-    if (fec_encoder) {
+        // Pass the buffer that we'll be encoding with FEC
+        fec_encoder_register_buffer(fec_encoder, (char*)payload, payload_size);
         // If using FEC, populate the buffers with FEC's buffers
         fec_get_encoded_buffers(fec_encoder, (void**)buffers, buffer_sizes);
+    } else {
+        int current_position = 0;
+        for (int packet_index = 0; packet_index < num_indices; packet_index++) {
+            // Populate the buffers directly when not using FEC
+            int packet_payload_size = (int)min(payload_size - current_position, MAX_PAYLOAD_SIZE);
+            buffers[packet_index] = (char*)payload + current_position;
+            buffer_sizes[packet_index] = packet_payload_size;
+            // Progress the pointer by this payload's size
+            current_position += packet_payload_size;
+        }
     }
 
     // Write all the packets into the packet buffer and send them all

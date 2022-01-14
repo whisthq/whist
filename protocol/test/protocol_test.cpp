@@ -838,24 +838,27 @@ TEST_F(ProtocolTest, EncryptAndDecrypt) {
 
     // Copy packet data
     memcpy(original_packet.data, data, len);
+    int original_len = get_packet_size(&original_packet);
 
-    // Encrypt the packet using aes encryption
-    int original_len = PACKET_HEADER_SIZE + original_packet.payload_size;
+    // The encryption data
+    AESMetadata aes_metadata;
+    char encrypted_data[sizeof(original_packet) + MAX_ENCRYPTION_SIZE_INCREASE];
 
-    WhistPacket encrypted_packet;
-    int encrypted_len = encrypt_packet(&original_packet, original_len, &encrypted_packet,
-                                       (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
+    // Encrypt
+    int encrypted_len = encrypt_packet(encrypted_data, &aes_metadata, &original_packet,
+                                       original_len, (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
 
-    // decrypt packet
+    // The packet after being decrypted
     WhistPacket decrypted_packet;
 
-    int decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
-                                       (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
+    // Decrypt, using the encryption data
+    int decrypted_len =
+        decrypt_packet(&decrypted_packet, sizeof(decrypted_packet), aes_metadata, encrypted_data,
+                       encrypted_len, (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
 
-    // compare original and decrypted packet
+    // Compare the original and decrypted size and data
     EXPECT_EQ(decrypted_len, original_len);
-    EXPECT_EQ(decrypted_packet.payload_size, len);
-    EXPECT_EQ(strncmp((char*)decrypted_packet.data, (char*)original_packet.data, len), 0);
+    EXPECT_EQ(memcmp(&decrypted_packet, &original_packet, original_len), 0);
 }
 
 // This test encrypts a packet with one key, then attempts to decrypt it with a differing
@@ -877,19 +880,23 @@ TEST_F(ProtocolTest, BadDecrypt) {
 
     // Copy packet data
     memcpy(original_packet.data, data, len);
+    int original_len = get_packet_size(&original_packet);
 
-    // Encrypt the packet using aes encryption
-    int original_len = PACKET_HEADER_SIZE + original_packet.payload_size;
+    // The encryption data
+    AESMetadata aes_metadata;
+    char encrypted_data[sizeof(original_packet) + MAX_ENCRYPTION_SIZE_INCREASE];
 
-    WhistPacket encrypted_packet;
-    int encrypted_len = encrypt_packet(&original_packet, original_len, &encrypted_packet,
-                                       (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
+    // Encrypt
+    int encrypted_len = encrypt_packet(encrypted_data, &aes_metadata, &original_packet,
+                                       original_len, (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
 
-    // decrypt packet with differing key
+    // The packet after being decrypted
     WhistPacket decrypted_packet;
 
-    int decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
-                                       (unsigned char*)SECOND_BINARY_PRIVATE_KEY);
+    // Decrypt, using the encryption data
+    int decrypted_len =
+        decrypt_packet(&decrypted_packet, sizeof(decrypted_packet), aes_metadata, encrypted_data,
+                       encrypted_len, (unsigned char*)SECOND_BINARY_PRIVATE_KEY);
 
     EXPECT_EQ(decrypted_len, -1);
 
