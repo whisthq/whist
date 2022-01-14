@@ -479,21 +479,12 @@ export const createOmnibar = () =>
       minimizable: false,
       titleBarStyle: "hidden",
       closable: false,
-      show: false,
     },
     hash: WindowHashOmnibar,
-    focus: false,
   })
 
-export const showOmnibar = () => {
+export const destroyOmnibar = () => {
   const win = getWindowByHash(WindowHashOmnibar)
 
-  win?.show()
-  win?.focus()
-}
-
-export const hideOmnibar = () => {
-  const win = getWindowByHash(WindowHashOmnibar)
-
-  win?.hide()
+  win?.destroy()
 }
