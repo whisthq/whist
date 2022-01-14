@@ -45,7 +45,6 @@ import (
 // Mandelbox represents a mandelbox as it is kept track of in this
 // package. Higher layers of the host service use this interface.
 type Mandelbox interface {
-	// TODO: organize these a bit
 	GetID() types.MandelboxID
 
 	AssignToUser(types.UserID)
@@ -94,16 +93,23 @@ type Mandelbox interface {
 	// they are computed and written when the mandelbox is created.
 	WriteMandelboxParams() error
 
-	WriteJSONData(types.JSONData) error
-	WriteUserInitialBrowserData(initialBrowserData BrowserData) error
-
 	// WriteProtocolTimeout writes a file containing the protocol timeout (i.e.
 	// how long it will wait for a connection) to a directory accessible to only
 	// this mandelbox.
 	WriteProtocolTimeout(protocolTimeout int) error
+
 	// MarkParamsReady indicates that processes that do not depend on user configs
 	// are ready to be initialized.
 	MarkParamsReady() error
+
+	// WriteJSONData writes arbitrary data from JSON Transport endpoint for
+	// mandelbox internals.
+	WriteJSONData(types.JSONData) error
+
+	// WriteUserInitialBrowserData adds data from the user's local browser to
+	// their already-downloaded config in the mandelbox.
+	WriteUserInitialBrowserData(initialBrowserData BrowserData) error
+
 	// MarkConfigReady tells the protocol inside the mandelbox that it is ready to
 	// start and accept connections.
 	MarkConfigReady() error

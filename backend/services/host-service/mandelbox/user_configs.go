@@ -125,13 +125,6 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 	return nil
 }
 
-// TODO: move this function to different file
-// WriteJSONData writes the data received through JSON transport
-// to the config.json file located on the resourceMappingDir.
-func (mandelbox *mandelboxData) WriteJSONData(data types.JSONData) error {
-	return mandelbox.writeResourceMappingToFile("config.json", string(data))
-}
-
 // Helpers
 
 // loadUserConfigs does the "real work" of LoadUserConfigs. For each
@@ -139,8 +132,6 @@ func (mandelbox *mandelboxData) WriteJSONData(data types.JSONData) error {
 // is a warning or an error — warnings get logged here, and errors get sent
 // back.
 func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptionInfo, errorChan chan<- error) {
-	// TODO: pass in mandelbox as an argument in this and all child functions
-	// TODO: lots more changes to the mandelbox interface, including SetConfigBuffer() being gone.
 	defer close(errorChan)
 
 	// If the process fails anywhere, we want to at least set up the empty config
