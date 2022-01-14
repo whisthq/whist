@@ -688,6 +688,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		Token:                          req.ConfigEncryptionToken,
 		IsNewTokenAccordingToClientApp: req.IsNewConfigToken,
 	}
+	close(sendEncryptionInfoChan)
 
 	// While we wait for config decryption, write the config.json file with the
 	// data received from JSON transport.
