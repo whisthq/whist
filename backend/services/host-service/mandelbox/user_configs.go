@@ -125,6 +125,20 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 	return nil
 }
 
+// SanityCheckEncryptionInfo performs some basic sanity checks on the
+// ConfigEncryptionInfo sent by the client-app.
+func SanityCheckEncryptionInfo(encryptionInfo *ConfigEncryptionInfo) error {
+	if encryptionInfo.Token == "" {
+		return utils.MakeError("Encryption token is empty")
+	}
+
+	if len(encryptionInfo.Token) < 20 {
+		return utils.MakeError("Encryption token is way too short (length %v)")
+	}
+
+	return nil
+}
+
 // Helpers
 
 // loadUserConfigs does the "real work" of LoadUserConfigs. For each
@@ -294,20 +308,12 @@ func (mandelbox *mandelboxData) downloadUserConfig(s3Client *s3.Client, key stri
 
 // receiveEncryptionToken blocks until it receives the encryption token info
 // from `tokenChan` (or at least until the channel is closed first, in which
-// case it returns an error). It also performs some basic sanity checks on the
-// token.
+// case it returns an error). It assumes that some basic sanity checks have
+// already been performed on the token (e.g it's not empty).
 func (mandelbox *mandelboxData) receiveAndVerifyEncryptionInfo(tokenChan <-chan ConfigEncryptionInfo) (*ConfigEncryptionInfo, error) {
 	encryptionInfo, gotEncryptionInfo := <-tokenChan
 	if !gotEncryptionInfo {
-		return nil, utils.MakeError("Got no config encryption token for user %s for mandelbox %s, likely because the JSON Transport request never completed.", mandelbox.GetUserID(), mandelbox.GetID())
-	}
-
-	if encryptionInfo.Token == "" {
-		return nil, utils.MakeError("Got an empty config encryption token from the client-app for user %s for mandelbox %s", mandelbox.GetUserID(), mandelbox.GetID())
-	}
-
-	if len(encryptionInfo.Token) < 20 {
-		return nil, utils.MakeError("Got a too-short config encryption (length %v) token from the client-app for user %s for mandelbox %s", len(encryptionInfo.Token), mandelbox.GetUserID(), mandelbox.GetID())
+		return nil, utils.MakeError("Got no config encryption token for user %s for mandelbox %s, likely because the JSON Transport request never completed, or the information provided by the client-app failed sanity checks.", mandelbox.GetUserID(), mandelbox.GetID())
 	}
 
 	// The encryption token _looks_ reasonable. We set it for the mandelbox and log some info.
