@@ -411,7 +411,7 @@ jobs:
           # a nightly update in Slack, if we choose to.
 
           sys.path.append(".github/workflows/helpers")
-          from notifications.github_bot import github_comment_update
+          from helpers.notifications.github_bot import github_comment_update
 
           if not os.environ.get("GITHUB_REF_NAME"):
             print("No GitHub PR/Issue number! Skipping PR notification.")
