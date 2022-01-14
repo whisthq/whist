@@ -66,7 +66,7 @@ fi
 flags+=("$INITIAL_URL")
 
 # Load D-Bus configurations from .xinitrc
-eval `cat /whist/dbus_config.txt`
+eval $(cat /whist/dbus_config.txt)
 echo "Loaded d-bus address in start-chrome.sh: $DBUS_SESSION_BUS_ADDRESS | pid: $DBUS_SESSION_BUS_PID"
 
 # Start Chrome
