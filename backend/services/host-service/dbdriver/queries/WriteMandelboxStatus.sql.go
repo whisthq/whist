@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgconn"
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 )
 
@@ -14,7 +15,7 @@ const writeMandelboxStatusSQL = `UPDATE whist.mandelboxes
   WHERE id = $2;`
 
 // WriteMandelboxStatus implements Querier.WriteMandelboxStatus.
-func (q *DBQuerier) WriteMandelboxStatus(ctx context.Context, status MandelboxState, mandelboxID string) (pgconn.CommandTag, error) {
+func (q *DBQuerier) WriteMandelboxStatus(ctx context.Context, status pgtype.Varchar, mandelboxID string) (pgconn.CommandTag, error) {
 	ctx = context.WithValue(ctx, "pggen_query_name", "WriteMandelboxStatus")
 	cmdTag, err := q.conn.Exec(ctx, writeMandelboxStatusSQL, status, mandelboxID)
 	if err != nil {
@@ -24,7 +25,7 @@ func (q *DBQuerier) WriteMandelboxStatus(ctx context.Context, status MandelboxSt
 }
 
 // WriteMandelboxStatusBatch implements Querier.WriteMandelboxStatusBatch.
-func (q *DBQuerier) WriteMandelboxStatusBatch(batch genericBatch, status MandelboxState, mandelboxID string) {
+func (q *DBQuerier) WriteMandelboxStatusBatch(batch genericBatch, status pgtype.Varchar, mandelboxID string) {
 	batch.Queue(writeMandelboxStatusSQL, status, mandelboxID)
 }
 
