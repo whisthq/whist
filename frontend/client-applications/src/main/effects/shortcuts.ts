@@ -6,13 +6,9 @@ import { getWindowByHash, showOmnibar, hideOmnibar } from "@app/utils/windows"
 import { WindowHashOmnibar } from "@app/constants/windows"
 
 fromTrigger(WhistTrigger.mandelboxFlowSuccess).subscribe(() => {
-  createGlobalShortcut("Option+A", () => {
+  createGlobalShortcut("Option+W", () => {
     const win = getWindowByHash(WindowHashOmnibar)
 
-    if (win?.isVisible() ?? false) {
-      hideOmnibar()
-    } else {
-      showOmnibar()
-    }
+    win?.isVisible() ?? false ? hideOmnibar() : showOmnibar()
   })
 })

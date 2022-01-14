@@ -1,4 +1,4 @@
-import { globalShortcut, Menu } from "electron"
+import { globalShortcut } from "electron"
 
 const createGlobalShortcut = (shortcut: string, fn: () => void) => {
   globalShortcut.register(shortcut, () => {
