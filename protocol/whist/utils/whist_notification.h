@@ -28,6 +28,8 @@ Defines
 ============================
 */
 
+// Hand-chosen numbers that approximate (slightly overestimate) the maximum
+// display size of an OSX notification. Strings are truncated at these lengths.
 #define MAX_NOTIF_TITLE_LEN 50
 #define MAX_NOTIF_MSG_LEN 150
 
