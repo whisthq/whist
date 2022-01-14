@@ -24,6 +24,7 @@ Includes
 
 #ifdef __linux__
 #include "notifications.h"
+#include <event.h>
 #endif
 
 /*
@@ -439,7 +440,6 @@ int main(int argc, char* argv[]) {
     init_window_info_getter();
 
     WhistTimer ack_timer;
-    clock ack_timer;
     start_timer(&ack_timer);
 
     WhistTimer window_name_timer;
