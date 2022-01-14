@@ -391,18 +391,24 @@ int aes_decrypt(void* plaintext_buffer, int plaintext_len, void* ciphertext, int
 
 void hmac_aes_data(void* hash_buffer, AESMetadata* aes_metadata, void* ciphertext,
                    int ciphertext_len, void* private_key) {
+    // Use a different private key for HMAC
+    unsigned char hmac_private_key[KEY_SIZE];
+    FATAL_ASSERT(KEY_SIZE == HMAC_SIZE);
+    // This writes HMAC_SIZE bytes, which ends up being KEY_SIZE bytes anyway
+    hmac(hmac_private_key, private_key, KEY_SIZE, DEFAULT_BINARY_PRIVATE_KEY);
+
     // Contains the concatenated signatures
     char concatenated_hash[HMAC_SIZE + HMAC_SIZE];
 
     // Sign aes_metadata into the first HMAC_SIZE-bytes
     hmac(&concatenated_hash[0], (char*)aes_metadata + sizeof(aes_metadata->hmac),
-         sizeof(*aes_metadata) - sizeof(aes_metadata->hmac), private_key);
+         sizeof(*aes_metadata) - sizeof(aes_metadata->hmac), hmac_private_key);
 
     // Sign the encrypted data into the next HMAC_SIZE-bytes
-    hmac(&concatenated_hash[HMAC_SIZE], ciphertext, ciphertext_len, private_key);
+    hmac(&concatenated_hash[HMAC_SIZE], ciphertext, ciphertext_len, hmac_private_key);
 
     // Combine the two into a single hmac
-    hmac(hash_buffer, concatenated_hash, sizeof(concatenated_hash), private_key);
+    hmac(hash_buffer, concatenated_hash, sizeof(concatenated_hash), hmac_private_key);
 }
 
 void print_ssl_errors() { ERR_print_errors_cb(openssl_callback, NULL); }
