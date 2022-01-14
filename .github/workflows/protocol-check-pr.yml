@@ -343,20 +343,92 @@ jobs:
       # --aws-credentials-filepath, defaults to `~/.aws/credentials`
 
       ### Action below will run the End-to-End Streaming Test for each new commit to a branch of a PR. ###
-      # - name: Run End-to-End Streaming Test
-      #   id: e2e_streaming_test
-      #   working-directory: protocol/test
-      #   run: python3 streaming_e2e_tester.py --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" --ssh-key-path "/home/runner/.ssh/id_rsa" --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
+      - name: Run End-to-End Streaming Test
+        id: e2e_streaming_test
+        working-directory: protocol/test
+        run: python3 streaming_e2e_tester.py --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" --ssh-key-path "/home/runner/.ssh/id_rsa" --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
 
-      # # need one more section like this to ensure the S3 command works in case of failure/timeout of the Python script above
-      # - name: Upload logs to S3 for debugging purposes
-      #   if: always()
-      #   working-directory: protocol/test
-      #   run: aws s3 cp perf_logs s3://whist-e2e-protocol-test-logs/"$GITHUB_REF" --recursive
+      # need one more section like this to ensure the S3 command works in case of failure/timeout of the Python script above
+      - name: Upload logs to S3 for debugging purposes
+        if: always()
+        working-directory: protocol/test
+        run: aws s3 cp perf_logs s3://whist-e2e-protocol-test-logs/"$GITHUB_REF" --recursive
 
-      # - name: Terminate leftover AWS instances
-      #   if: ${{ always() && (steps.e2e_streaming_test.outcome == 'failure') }}
-      #   working-directory: protocol/test
-      #   run: python3 terminate_leftover_instances.py
+      - name: Terminate leftover AWS instances
+        if: ${{ always() && (steps.e2e_streaming_test.outcome == 'failure') }}
+        working-directory: protocol/test
+        run: python3 terminate_leftover_instances.py
+
+      # The streaming_e2e_tester.py file generates the files server_monitoring_log.txt and client_monitoring_log.txt in
+      # the folder perf_logs at the path where it is run in. We parse these files to display the results of the test.
+      - name: Parse & Display Test Results
+        working-directory: protocol/test
+        shell: python3 {0}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ISSUE: ${{ github.event.number }}
+          GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
+        run: |
+          import os, sys, mmap
+
+          # Here, we parse the test results into a .info file, which can be read and displayed on the GitHub PR
+          # Create output .info file
+          results_file = open("streaming_e2e_test_results.info", "w+")
+
+          # Parse client logs for metrics
+          with open(os.path.abspath("perf_logs/client_monitoring_log.txt") as client_logs_file:
+            # Stringify the results file, to make it easier to extract specific substrings 
+            stringified_file = mmap.mmap(client_logs_file.fileno(), 0, access=mmap.ACCESS_READ)
+
+            # TODO: extract the substrings/variables we are interested in from the results
+            # Read all the variables we want here with stringified_file.find('var-name') != -1: write-to-our-result-file
+            results_file.write("THE METRICS WE EXTRACTED ABOVE")
+
+          # Parse server logs for metrics
+          with open(os.path.abspath("perf_logs/server_monitoring_log.txt") as server_logs_file:
+            # Stringify the results file, to make it easier to extract specific substrings 
+            stringified_file = mmap.mmap(server_logs_file.fileno(), 0, access=mmap.ACCESS_READ)
+            
+            # TODO: extract the substrings/variables we are interested in from the results
+            # Read all the variables we want here with stringified_file.find('var-name') != -1: write-to-our-result-file
+            results_file.write("THE METRICS WE EXTRACTED ABOVE")
+
+          # TODO: format the .info file nicely so it displays well on GitHub
+
+          # We're done, close the file
+          results_file.close()
+
+          #######################################################################################
+
+          # Display the results on the GitHub PR. In the future, we could also upload summaries to Logz.io, or post
+          # a nightly update in Slack, if we choose to.
+
+          sys.path.append(".github/workflows/helpers")
+          from notifications.github_bot import github_comment_update
+
+          if not os.environ.get("GITHUB_REF_NAME"):
+            print("No GitHub PR/Issue number! Skipping PR notification.")
+            sys.exit(0)
+
+          github_token = os.environ["GITHUB_TOKEN"]
+          github_issue = int(os.environ["GITHUB_REF_NAME"].split("/")[0])
+          github_repo = "whisthq/whist"
+
+          identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE"
+          title = "Protocol End-to-End Streaming Test Results"
+
+          # This file gets created above, in parsing the test results into something more human-readable
+          f = open("protocol/test/streaming_e2e_test_results.info", "r")
+          body = f.read()
+          f.close()
+
+          github_comment_update(
+            github_token,
+            github_repo,
+            github_issue,
+            identifier,
+            body,
+            title=title,
+          )
 
   #######################################################################################
