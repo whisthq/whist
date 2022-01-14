@@ -9,7 +9,7 @@ import find from "lodash.find"
 import { logBase } from "@app/utils/logging"
 import { withAppReady, fromSignal } from "@app/utils/observables"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
-import { WindowHashOmnibar, WindowHashProtocol } from "@app/constants/windows"
+import { WindowHashProtocol } from "@app/constants/windows"
 import {
   createProtocolWindow,
   createAuthWindow,
@@ -20,7 +20,6 @@ import {
   createSpeedtestWindow,
   createPaymentWindow,
   destroyOmnibar,
-  getWindowByHash,
 } from "@app/utils/windows"
 import { persistGet } from "@app/utils/persist"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
@@ -93,8 +92,7 @@ fromTrigger(WhistTrigger.windowInfo)
     filter((args) => args.hash === WindowHashProtocol && args.event === "close")
   )
   .subscribe(() => {
-    const omnibar = getWindowByHash(WindowHashOmnibar)
-    omnibar?.destroy()
+    destroyOmnibar()
   })
 
 fromTrigger(WhistTrigger.windowInfo)

@@ -27,7 +27,7 @@ const Update = () => {
   }, [mainState])
 
   return (
-    <div className="flex flex-col justify-center items-center bg-gray-800 h-screen text-center">
+    <div className="flex flex-col justify-center items-center bg-gray-800 h-screen text-center draggable">
       <div className="w-full max-w-xs m-auto font-body">
         <div className="font-body text-xl font-semibold text-gray-300">
           Please wait while we download the latest version of Whist
