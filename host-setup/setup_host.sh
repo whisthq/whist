@@ -46,15 +46,14 @@ idempotent_backup () {
   # $2 is optionally "sudo" to use mv/cp as root, else
   #  they run as user
 
-  # If a backup exists, then replace the current file
   original="$1"
   backup=".$original.whistbak"
   use_sudo="${2:-}"
-  if [ -f "$backup" ]; then
-    "$use_sudo" mv "$backup" "$1"
-  else # Otherwise, create a backup
-    "$use_sudo" cp "$1" "$backup"
-  fi
+
+  # If a backup exists, then replace the current file with the original
+  [ -f "$backup" ] && "$use_sudo" mv "$backup" "$1"
+  # Create a backup of the original file
+  "$use_sudo" cp "$1" "$backup"
 }
 
 # `common_steps` contains the commands that must be run for
