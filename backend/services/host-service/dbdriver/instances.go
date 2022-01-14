@@ -116,6 +116,7 @@ func RegisterInstance() error {
 			IPNet: &net.IPNet{
 				IP: publicIP4,
 			},
+			Status: pgtype.Present,
 		},
 		InstanceType: pgtype.Varchar{
 			String: string(instanceType),
@@ -127,7 +128,8 @@ func RegisterInstance() error {
 			Status: pgtype.Present,
 		},
 		UpdatedAt: pgtype.Timestamptz{
-			Time: time.Now(),
+			Time:   time.Now(),
+			Status: pgtype.Present,
 		},
 		InstanceID: string(instanceID),
 	})

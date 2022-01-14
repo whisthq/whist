@@ -155,16 +155,20 @@ func removeStaleMandelboxes(allocatedAge, connectingAge time.Duration) error {
 		return utils.MakeError("Couldn't remove stale allocated mandelboxes: %s", err)
 	}
 
+	logger.Infof("Arguments to stale routine are: %v, %v, %v", instanceID, MandelboxStatusAllocated, time.Now().Add(-1*allocatedAge))
+
 	q := queries.NewQuerier(dbpool)
 	result, err := q.RemoveStaleMandelboxes(context.Background(), queries.RemoveStaleMandelboxesParams{
 		InstanceID:      string(instanceID),
 		AllocatedStatus: string(MandelboxStatusAllocated),
 		AllocatedCreationTimeThreshold: pgtype.Timestamptz{
-			Time: time.Now().Add(-1 * allocatedAge),
+			Time:   time.Now().Add(-1 * allocatedAge),
+			Status: pgtype.Present,
 		},
 		ConnectingStatus: string(MandelboxStatusConnecting),
 		ConnectingCreationTimeThreshold: pgtype.Timestamptz{
-			Time: time.Now().Add(-1 * connectingAge),
+			Time:   time.Now().Add(-1 * connectingAge),
+			Status: pgtype.Present,
 		},
 	})
 	if err != nil {
