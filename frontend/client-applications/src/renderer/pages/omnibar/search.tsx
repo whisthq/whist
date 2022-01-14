@@ -16,7 +16,7 @@ const Search = () => {
           Option
         </kbd>
         <kbd className="inline-flex items-center rounded px-2 py-1 text-xs font-medium text-gray-400 bg-gray-700">
-          A
+          W
         </kbd>
       </div>
       <input
