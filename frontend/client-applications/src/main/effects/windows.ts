@@ -9,7 +9,7 @@ import find from "lodash.find"
 import { logBase } from "@app/utils/logging"
 import { withAppReady, fromSignal } from "@app/utils/observables"
 import { fromTrigger, createTrigger } from "@app/utils/flows"
-import { WindowHashProtocol } from "@app/constants/windows"
+import { WindowHashOmnibar, WindowHashProtocol } from "@app/constants/windows"
 import {
   createProtocolWindow,
   createAuthWindow,
@@ -20,6 +20,8 @@ import {
   createSpeedtestWindow,
   createPaymentWindow,
   hideOmnibar,
+  closeElectronWindows,
+  getWindowByHash,
 } from "@app/utils/windows"
 import { persistGet } from "@app/utils/persist"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
@@ -36,6 +38,7 @@ import {
 import { networkAnalyze } from "@app/utils/networkAnalysis"
 import { AWSRegion } from "@app/@types/aws"
 import { LOCATION_CHANGED_ERROR } from "@app/constants/error"
+import { accessToken } from "@whist/core-ts"
 
 // Keeps track of how many times we've tried to relaunch the protocol
 const MAX_RETRIES = 3
@@ -85,6 +88,15 @@ allWindowsClosed.subscribe(
     }
   }
 )
+
+fromTrigger(WhistTrigger.windowInfo)
+  .pipe(
+    filter((args) => args.hash === WindowHashProtocol && args.event === "close")
+  )
+  .subscribe(() => {
+    const omnibar = getWindowByHash(WindowHashOmnibar)
+    omnibar?.destroy()
+  })
 
 fromTrigger(WhistTrigger.windowInfo)
   .pipe(withLatestFrom(fromTrigger(WhistTrigger.mandelboxFlowSuccess)))
@@ -208,7 +220,7 @@ withAppReady(fromTrigger(WhistTrigger.showSpeedtestWindow)).subscribe(() => {
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 withAppReady(fromTrigger(WhistTrigger.showPaymentWindow)).subscribe(() => {
-  const accessToken = persistGet(CACHED_ACCESS_TOKEN)
+  const accessToken = persistGet(CACHED_ACCESS_TOKEN) as string
 
   hideOmnibar()
 

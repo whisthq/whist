@@ -110,9 +110,10 @@ export const getNumberWindows = () => {
 
 export const closeElectronWindows = (windows?: BrowserWindow[]) => {
   const windowsToClose = windows ?? getElectronWindows()
+
   windowsToClose.forEach((win: BrowserWindow) => {
     try {
-      win.close()
+      win.destroy()
     } catch (err) {
       console.error(err)
     }
@@ -134,15 +135,8 @@ export const getWindowTitle = () => {
 
 export const getWindowByHash = (hash: string) => {
   for (const win of getElectronWindows()) {
-    console.log(
-      "the hash is",
-      win.webContents.getURL()?.split("show=")?.[1],
-      "looking for",
-      hash
-    )
     if (win.webContents.getURL()?.split("show=")?.[1] === hash) return win
   }
-  console.log("returning undefined")
   return undefined
 }
 

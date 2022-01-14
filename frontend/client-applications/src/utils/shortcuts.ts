@@ -1,8 +1,4 @@
-import { globalShortcut } from "electron"
-import EventEmitter from "events"
-
-// Electron shortcuts take callbacks instead of emitting events, so we need to make our own EventEmitter
-const shortcutEmitter = new EventEmitter()
+import { globalShortcut, Menu } from "electron"
 
 const createGlobalShortcut = (shortcut: string, fn: () => void) => {
   globalShortcut.register(shortcut, () => {
@@ -10,4 +6,4 @@ const createGlobalShortcut = (shortcut: string, fn: () => void) => {
   })
 }
 
-export { shortcutEmitter, createGlobalShortcut }
+export { createGlobalShortcut }
