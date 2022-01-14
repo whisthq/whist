@@ -27,9 +27,12 @@ type BrowserData struct {
 	Extensions types.Extensions `json:"extensions,omitempty"`
 }
 
-// WriteUserInitialBrowserData writes the user's initial browser data to file(s)
-// received through JSON transport for later use
-func WriteUserInitialBrowserData(initialBrowserData BrowserData, destDir string) error {
+// WriteUserInitialBrowserData writes the user's initial browser data received
+// through JSON transport on top of the user configs that have already been
+// loaded.
+func (mandelbox *mandelboxData) WriteUserInitialBrowserData(initialBrowserData BrowserData) error {
+	destDir := path.Join(mandelbox.getUserConfigDir(), UnpackedConfigsDirectoryName)
+
 	// Create destination directory if not exists
 	if _, err := os.Stat(destDir); os.IsNotExist(err) {
 		if err := os.MkdirAll(destDir, 0777); err != nil {

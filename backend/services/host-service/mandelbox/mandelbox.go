@@ -45,6 +45,7 @@ import (
 // Mandelbox represents a mandelbox as it is kept track of in this
 // package. Higher layers of the host service use this interface.
 type Mandelbox interface {
+	// TODO: organize these a bit
 	GetID() types.MandelboxID
 
 	AssignToUser(types.UserID)
@@ -72,10 +73,8 @@ type Mandelbox interface {
 	GetDockerID() types.DockerID
 	GetAppName() types.AppName
 
-	GetConfigEncryptionToken() types.ConfigEncryptionToken
 	SetConfigEncryptionToken(types.ConfigEncryptionToken)
-
-	WriteJSONData(types.JSONData) error
+	GetConfigEncryptionToken() types.ConfigEncryptionToken
 
 	GetClientAppAccessToken() types.ClientAppAccessToken
 	SetClientAppAccessToken(types.ClientAppAccessToken)
@@ -94,6 +93,10 @@ type Mandelbox interface {
 	// accessible only to this mandelbox. These data are special because
 	// they are computed and written when the mandelbox is created.
 	WriteMandelboxParams() error
+
+	WriteJSONData(types.JSONData) error
+	WriteUserInitialBrowserData(initialBrowserData BrowserData) error
+
 	// WriteProtocolTimeout writes a file containing the protocol timeout (i.e.
 	// how long it will wait for a connection) to a directory accessible to only
 	// this mandelbox.

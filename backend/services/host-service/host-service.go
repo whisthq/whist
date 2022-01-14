@@ -29,7 +29,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -708,19 +707,18 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// Write the user's initial browser data
 	logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
-	userInitialBrowserData := mandelboxData.BrowserData{
+	err = mandelbox.WriteUserInitialBrowserData(mandelboxData.BrowserData{
 		CookiesJSON:   req.CookiesJSON,
 		BookmarksJSON: req.BookmarksJSON,
 		Extensions:    req.Extensions,
-	}
-	destDir := path.Join(mandelbox.GetUserConfigDir(), mandelboxData.UnpackedConfigsDirectoryName)
-	err = mandelboxData.WriteUserInitialBrowserData(userInitialBrowserData, destDir)
+	})
 	if err != nil {
 		logger.Errorf("Error writing initial browser data for user %s for mandelbox %s: %s", mandelbox.GetUserID(), mandelboxSubscription.ID, err)
+	} else {
+		logger.Infof("SpinUpMandelbox(): Successfully wrote user initial browser data for mandelbox %s", mandelboxSubscription.ID)
 	}
-	logger.Infof("SpinUpMandelbox(): Successfully wrote user initial browser data for mandelbox %s", mandelboxSubscription.ID)
 
-	// Unblocks whist-startup.sh to start symlink loaded user configs
+	// Unblock whist-startup.sh to start symlink loaded user configs
 	err = mandelbox.MarkConfigReady()
 	if err != nil {
 		logAndReturnError("Error marking mandelbox %s configs as ready: %s", mandelboxSubscription.ID, err)
