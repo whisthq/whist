@@ -371,10 +371,12 @@ int udp_nack(SocketContext* socket_context, WhistPacketType type, int packet_id,
     if (packet->id == packet_id) {
         int len = get_packet_size(packet);
         packet->is_a_nack = true;
-        LOG_INFO(
-            "NACKed %s packet ID %d Index %d found of "
-            "length %d. Relaying!",
-            type == PACKET_VIDEO ? "video" : "audio", packet_id, packet_index, len);
+        // We will NACK audio all the time(See NUM_PREVIOUS_FRAMES_RESEND in audio.c). Hence logging
+        // this only for video.
+        if (type == PACKET_VIDEO) {
+            LOG_INFO("NACKed video packet ID %d Index %d found of length %d. Relaying!", packet_id,
+                     packet_index, len);
+        }
         ret = udp_send_constructed_packet(context, packet, len);
     } else {
         LOG_WARNING(

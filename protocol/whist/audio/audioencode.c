@@ -66,6 +66,14 @@ AudioEncoder* create_audio_encoder(int bit_rate, int sample_rate) {
         av_get_channel_layout_nb_channels(encoder->context->channel_layout);
     encoder->context->bit_rate = bit_rate;
 
+    // Set frame duration to 10ms
+    int ret = av_opt_set_double(encoder->context->priv_data, "frame_duration", 10.0, 0);
+    if (ret != 0) {
+        char err_buf[128];
+        av_strerror(ret, err_buf, sizeof(err_buf));
+        LOG_WARNING("Could not set frame_duration of audio encoder, err = %s", err_buf);
+    }
+
     if (avcodec_open2(encoder->context, encoder->codec, NULL) < 0) {
         LOG_WARNING("Could not open AVCodec.");
         destroy_audio_encoder(encoder);
