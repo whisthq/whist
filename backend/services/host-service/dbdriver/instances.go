@@ -108,8 +108,20 @@ func RegisterInstance() error {
 
 	// There is an existing row in the database for this instance --- we now "take over" and update it with the correct information.
 	result, err := q.RegisterInstance(context.Background(), queries.RegisterInstanceParams{
+		Provider: pgtype.Varchar{
+			String: string("aws"),
+			Status: pgtype.Present,
+		},
+		Region: pgtype.Varchar{
+			String: string(region),
+			Status: pgtype.Present,
+		},
 		ImageID: pgtype.Varchar{
 			String: string(imageID),
+			Status: pgtype.Present,
+		},
+		ClientSha: pgtype.Varchar{
+			String: string(metadata.GetGitCommit()),
 			Status: pgtype.Present,
 		},
 		IpAddr: pgtype.Inet{
