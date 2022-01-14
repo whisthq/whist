@@ -35,7 +35,8 @@ const (
 	EncryptedArchiveFilename = "fractal-app-config.tar.lz4.enc"
 )
 
-// ConfigEncryptionInfo defines the information we want from the client-app to successfully decrypt configs.
+// ConfigEncryptionInfo defines the information we want from the client-app to
+// successfully decrypt configs.
 type ConfigEncryptionInfo struct {
 	Token types.ConfigEncryptionToken
 	// When IsNewTokenAccordingToClientApp is true, then the client app
@@ -43,6 +44,26 @@ type ConfigEncryptionInfo struct {
 	// (either a fresh install, or a user who logged out fully).
 	IsNewTokenAccordingToClientApp bool
 }
+
+// A s3ObjectMetadata contains some metadata about an object in S3. We define
+// this custom type so that we can store the Bucket, Key, and Size of a
+// particular object in S3. This is the only metadata we need to allocate a
+// sufficiently large buffer for file download, and it is provided by both the
+// ListObjectsV2 and the GetHeadObject endpoints. We use this type to store the
+// metadata we need, so that we can avoid adding the overhead of a
+// GetHeadObject call to the fast path (the ListObjectsV2 call in
+// `GetMostRecentMatchingKey` will get us the metadata we need).
+type s3ObjectMetadata struct {
+	Bucket string
+	Key    string
+	Size   int64
+}
+
+// func extractS3ObjectMetadata(o *s3types.Object) s3ObjectMetadata {
+// 	return &s3ObjectMetadata{
+// 		Bucket: o.Bucket,
+// 	}
+// }
 
 func (c ConfigEncryptionInfo) String() string {
 	return utils.Sprintf("Token hash %s (isNewTokenAccordingToClientApp: %v)", hash(c.Token), c.IsNewTokenAccordingToClientApp)
@@ -232,8 +253,8 @@ const (
 	aes256IVLength  = 16
 )
 
-// DecryptUserConfigs decrypts and unpacks the previously downloaded
-// s3 config using the encryption token received through JSON transport.
+// DecryptUserConfigs decrypts and unpacks the previously downloaded user
+// config using the encryption token received through JSON transport.
 func (mandelbox *mandelboxData) DecryptUserConfigs() error {
 	if len(mandelbox.GetConfigEncryptionToken()) == 0 {
 		return utils.MakeError("Cannot get user configs for MandelboxID %s since ConfigEncryptionToken is empty", mandelbox.GetID())
