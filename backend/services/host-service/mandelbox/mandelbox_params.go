@@ -3,9 +3,9 @@ package mandelbox // import "github.com/whisthq/whist/backend/services/host-serv
 import (
 	"os"
 
-	logger "github.com/whisthq/whist/backend/services/whistlogger"
-
+	types "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
+	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
 func (mandelbox *mandelboxData) WriteMandelboxParams() error {
@@ -46,23 +46,24 @@ func (mandelbox *mandelboxData) WriteMandelboxParams() error {
 }
 
 func (mandelbox *mandelboxData) WriteProtocolTimeout(seconds int) error {
-	// Write timeout
-	if err := mandelbox.writeResourceMappingToFile("timeout", utils.Sprintf("%v", seconds)); err != nil {
-		// Don't need to wrap err here because it already contains the relevant info
-		return err
-	}
-	return nil
+	return mandelbox.writeResourceMappingToFile("timeout", utils.Sprintf("%v", seconds))
 }
 
+// WriteJSONData writes the data received through JSON transport
+// to the config.json file located on the resourceMappingDir.
+func (mandelbox *mandelboxData) WriteJSONData(data types.JSONData) error {
+	return mandelbox.writeResourceMappingToFile("config.json", string(data))
+}
+
+// MarkParamsReady indicates that the mandelbox's services that do NOT depend
+// on s3 userConfigs (e.g. audio and video services) can be started
 func (mandelbox *mandelboxData) MarkParamsReady() error {
-	// Indicates that the mandelbox's services that do NOT depend on s3 userConfigs
-	// (e.g. audio and video services) can be started
 	return mandelbox.writeResourceMappingToFile(".paramsReady", ".paramsReady")
 }
 
+// MarkConfigReady indicates that all configs (including user configs) are in
+// place, and the mandelbox is ready to start the protocol + application.
 func (mandelbox *mandelboxData) MarkConfigReady() error {
-	// Indicates that all configs (including user configs) are in place, and the mandelbox is ready
-	// to start the protocol + application.
 	return mandelbox.writeResourceMappingToFile(".configReady", ".configReady")
 }
 
