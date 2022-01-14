@@ -44,12 +44,10 @@ import (
 	// to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
 	mandelboxData "github.com/whisthq/whist/backend/services/host-service/mandelbox"
-	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
 	"github.com/whisthq/whist/backend/services/host-service/metrics"
 	"github.com/whisthq/whist/backend/services/metadata"
@@ -70,28 +68,6 @@ import (
 )
 
 var shutdownInstanceOnExit bool = !metadata.IsLocalEnv()
-
-func init() {
-	s3c, _ := configutils.NewS3Client("us-east-1")
-	var bucket string = mandelboxData.UserConfigS3Bucket
-	key := "localdev_host_service_user_savvy-dev3/localdev/whisthq/browsers/chrome:current-build/fractal-app-config.tar.lz4.enc"
-	obj, _ := configutils.GetHeadObject(s3c, mandelboxData.UserConfigS3Bucket, key)
-	logger.Infof("head size: %v", obj.ContentLength)
-
-	list, _ := s3c.ListObjectsV2(context.Background(), &s3.ListObjectsV2Input{
-		Bucket: &bucket,
-	})
-	counter := 0
-	for _, o := range list.Contents {
-		head, _ := configutils.GetHeadObject(s3c, mandelboxData.UserConfigS3Bucket, *o.Key)
-		if o.Size != head.ContentLength {
-			logger.Errorf("DIFFERENT! HEADOBJ: %v, o.Size: %v, KEY: %s", head.ContentLength, o.Size, o.Key)
-		} else {
-			counter += 1
-		}
-	}
-	logger.Infof("COUNTER: %v", counter)
-}
 
 func init() {
 	// Initialize random number generator for all subpackages
