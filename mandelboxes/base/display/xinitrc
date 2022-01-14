@@ -26,7 +26,7 @@ echo "playerctld daemon started as PID: $playerctld_pid"
 /usr/share/whist/update-whist-dpi.sh
 
 # Start D-Bus
-dbus_result=`$RUN_AS_WHIST "dbus-launch --sh-syntax --exit-with-x11"`
+dbus_result=$($RUN_AS_WHIST "dbus-launch --sh-syntax --exit-with-x11")
 
 # Extract environment variables for D-Bus configuration
 search_str="DBUS_SESSION_BUS_ADDRESS"
