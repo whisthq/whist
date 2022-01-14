@@ -311,6 +311,10 @@ jobs:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
 
+      - name: Setup Python-based notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -411,7 +415,7 @@ jobs:
           # a nightly update in Slack, if we choose to.
 
           sys.path.append(".github/workflows/helpers")
-          from helpers.notifications.github_bot import github_comment_update
+          from notifications.github_bot import github_comment_update
 
           if not os.environ.get("GITHUB_REF_NAME"):
             print("No GitHub PR/Issue number! Skipping PR notification.")
