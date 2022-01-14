@@ -21,7 +21,10 @@ Includes
 #include "parse_args.h"
 #include "handle_client_message.h"
 #include "server_statistic.h"
+
+#ifdef __linux__
 #include "notifications.h"
+#endif
 
 /*
 ============================
@@ -400,8 +403,10 @@ int main(int argc, char* argv[]) {
     WhistThread send_audio_thread =
         whist_create_thread(multithreaded_send_audio, "multithreaded_send_audio", &server_state);
 
+#ifdef __linux__
     struct event_base* notifs_evbase = event_base_new();
     init_notifications_thread(&server_state, notifs_evbase);
+#endif
 
     WhistThread manage_clients_thread = whist_create_thread(
         multithreaded_manage_client, "multithreaded_manage_client", &server_state);
@@ -578,7 +583,9 @@ int main(int argc, char* argv[]) {
     whist_wait_thread(send_audio_thread, NULL);
     whist_wait_thread(sync_tcp_packets_thread, NULL);
     whist_wait_thread(manage_clients_thread, NULL);
+#ifdef __linux__
     destroy_notifications_thread(notifs_evbase);
+#endif
 
     whist_destroy_mutex(packet_mutex);
 
