@@ -24,6 +24,7 @@ Includes
 
 #ifdef __linux__
 #include "notifications.h"
+#include <event.h>
 #endif
 
 /*
