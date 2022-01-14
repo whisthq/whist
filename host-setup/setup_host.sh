@@ -47,7 +47,7 @@ idempotent_backup () {
   #  they run as user
 
   original="$1"
-  backup=".$original.whistbak"
+  backup="$original.whistbak"
   use_sudo="${2:-}"
 
   # If a backup exists, then replace the current file with the original
