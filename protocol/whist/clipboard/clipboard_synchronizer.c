@@ -38,6 +38,7 @@ Includes
 
 #include <whist/core/whist.h>
 #include <whist/utils/atomic.h>
+#include "whist/utils/linked_list.h"
 #include "clipboard.h"
 
 /*
@@ -64,18 +65,17 @@ WhistThreadID queued_os_clipboard_setter_thread_id;
 WhistCondition os_clipboard_setting_condvar;
 
 typedef struct ClipboardThread {
+    LINKED_LIST_HEADER;
     // Thread handle: to allow joining the thread.
     WhistThread thread;
     // Thread finish marker: initially zero, thread can be joined (hopefully)
     // without blocking when it becomes nonzero.
     atomic_int finished;
-    // Next entry in the linked list.
-    struct ClipboardThread* next;
 } ClipboardThread;
 
 // Linked list of running (/ possibly-finished) clipboard threads.
 // Protected by current_clipboard_activity.clipboard_action_mutex.
-static ClipboardThread* clipboard_thread_list;
+static LinkedList clipboard_thread_list;
 
 /*
 ============================
@@ -149,8 +149,7 @@ bool start_clipboard_transfer(WhistClipboardActionType new_clipboard_action_type
     // Create thread reference in the linked list so we can join it later.
     ClipboardThread* thr = safe_malloc(sizeof(*thr));
     atomic_init(&thr->finished, 0);
-    thr->next = clipboard_thread_list;
-    clipboard_thread_list = thr;
+    linked_list_add_tail(&clipboard_thread_list, thr);
 
     // Create new thread
     if (new_clipboard_action_type == CLIPBOARD_ACTION_PUSH) {
@@ -256,17 +255,14 @@ void join_outstanding_threads(bool join_all) {
 
     LOG_INFO("Joining outstanding threads.");
 
-    ClipboardThread** tmp = &clipboard_thread_list;
-    while (*tmp) {
-        ClipboardThread* thr = *tmp;
+    linked_list_for_each(&clipboard_thread_list, ClipboardThread, thr) {
         if (join_all || atomic_load(&thr->finished)) {
             LOG_INFO("Joining %p.", thr->thread);
             whist_wait_thread(thr->thread, NULL);
-            *tmp = thr->next;
+            linked_list_remove(&clipboard_thread_list, thr);
             free(thr);
         } else {
             LOG_INFO("Not joining %p.", thr->thread);
-            tmp = &thr->next;
         }
     }
 }
