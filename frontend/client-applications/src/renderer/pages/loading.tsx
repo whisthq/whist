@@ -13,7 +13,7 @@ const Loading = (props: {
   return (
     <div
       className={classNames(
-        "flex flex-col h-screen items-center bg-gray-800 w-full",
+        "flex flex-col h-screen items-center bg-gray-800 w-full draggable",
         "justify-center font-body text-center"
       )}
     >

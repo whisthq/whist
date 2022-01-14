@@ -1,6 +1,14 @@
 import React from "react"
 
+import { withContext } from "@app/renderer/pages/omnibar/context"
+
 const Search = () => {
+  const context = withContext()
+
+  const onChange = (e: any) => {
+    context.setSearch(e.target.value)
+  }
+
   return (
     <div className="relative mb-6">
       <div className="absolute inset-y-0 right-0 flex items-center pointer-events-none space-x-2">
@@ -15,9 +23,8 @@ const Search = () => {
         className="block w-full text-md rounded-md bg-transparent pt-1 focus:outline-none placeholder-gray-600"
         autoFocus
         placeholder="Search Whist Commands"
-        // value={context.userInput}
-        // onKeyDown={onKeyDown}
-        // onChange={onChange}
+        value={context.search}
+        onChange={onChange}
       />
     </div>
   )

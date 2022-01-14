@@ -20,8 +20,8 @@ import {
   createSpeedtestWindow,
   createPaymentWindow,
   hideOmnibar,
-  closeElectronWindows,
   getWindowByHash,
+  createOmnibar,
 } from "@app/utils/windows"
 import { persistGet } from "@app/utils/persist"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
@@ -125,6 +125,8 @@ fromTrigger(WhistTrigger.windowInfo)
               }, 6000)
             })
             .catch((err) => Sentry.captureException(err))
+
+          createOmnibar()
         } else {
           // If we've already tried several times to reconnect, just show the protocol error window
           createTrigger(WhistTrigger.protocolError, of(undefined))

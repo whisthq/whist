@@ -10,19 +10,10 @@ import { merge } from "rxjs"
 import { take } from "rxjs/operators"
 import Sentry from "@sentry/electron"
 
-import { AWSRegion } from "@app/@types/aws"
-import {
-  createSignoutWindow,
-  relaunch,
-  createPaymentWindow,
-  createBugTypeform,
-  createOnboardingWindow,
-} from "@app/utils/windows"
+import { relaunch, createOnboardingWindow } from "@app/utils/windows"
 import { fromTrigger } from "@app/utils/flows"
-import { persistGet, persistClear, persistSet, store } from "@app/utils/persist"
+import { persistGet, persistClear, persistSet } from "@app/utils/persist"
 import { withAppReady } from "@app/utils/observables"
-import { startupNotification } from "@app/utils/notification"
-import { accessToken } from "@whist/core-ts"
 import {
   ONBOARDED,
   CACHED_USER_EMAIL,

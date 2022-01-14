@@ -1,14 +1,18 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
+import FuzzySearch from "fuzzy-search"
+
 import Search from "@app/renderer/pages/omnibar/search"
 import Option from "@app/renderer/pages/omnibar/option"
 import { Dollar, Logout, Mail, Signal } from "@app/renderer/pages/omnibar/icons"
 
 import { useMainState } from "@app/utils/ipc"
 import { WhistTrigger } from "@app/constants/triggers"
+import { withContext } from "@app/renderer/pages/omnibar/context"
 
 const Omnibar = () => {
   const [activeIndex, setActiveIndex] = useState(0)
   const [, setMainState] = useMainState()
+  const context = withContext()
 
   const options = [
     {
@@ -48,6 +52,15 @@ const Omnibar = () => {
     },
   ]
 
+  const searcher = new FuzzySearch(options, ["text"], {
+    caseSensitive: false,
+  })
+  const [filteredOptions, setFilteredOptions] = useState(options)
+
+  useEffect(() => {
+    setFilteredOptions(searcher.search(context.search))
+  }, [context.search])
+
   return (
     <div
       tabIndex={0}
@@ -55,8 +68,8 @@ const Omnibar = () => {
     >
       <Search />
       <div className="overflow-y-scroll h-full">
-        {options.map((option, index) => (
-          <div onMouseEnter={() => setActiveIndex(index)}>
+        {filteredOptions.map((option, index) => (
+          <div onMouseEnter={() => setActiveIndex(index)} key={index}>
             <Option
               icon={option.icon()}
               text={option.text}

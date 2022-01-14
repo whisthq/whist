@@ -15,6 +15,7 @@ import Update from "@app/renderer/pages/update"
 import Network from "@app/renderer/pages/network"
 import Loading from "@app/renderer/pages/loading"
 import Omnibar from "@app/renderer/pages/omnibar"
+import { Provider } from "@app/renderer/pages/omnibar/context"
 
 import {
   WindowHashSignout,
@@ -89,7 +90,12 @@ const RootComponent = () => {
     })
   }, [])
 
-  if (show === WindowHashOmnibar) return <Omnibar />
+  if (show === WindowHashOmnibar)
+    return (
+      <Provider>
+        <Omnibar />
+      </Provider>
+    )
   if (show === WindowHashAuth)
     return <div className="bg-gray-100 w-screen h-screen"></div>
   if (show === WindowHashSignout) return <Signout onClick={handleSignout} />
