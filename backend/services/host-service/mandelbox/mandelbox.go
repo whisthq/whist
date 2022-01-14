@@ -80,9 +80,6 @@ type Mandelbox interface {
 	SetJSONData(string)
 	WriteJSONData() error
 
-	// Decrypts the config encryption token and writes the user configs
-	DecryptUserConfigs() error
-
 	GetClientAppAccessToken() types.ClientAppAccessToken
 	SetClientAppAccessToken(types.ClientAppAccessToken)
 
@@ -111,20 +108,12 @@ type Mandelbox interface {
 	// start and accept connections.
 	MarkConfigReady() error
 
-	// Set up the directories for user configs
-	SetupUserConfigDirs() error
-
-	// TODO: add comment
-	StartLoadingUserConfigs() (chan<- ConfigEncryptionInfo, <-chan error)
+	// StartLoadingUserConfigs starts the process of loading user configs without
+	// blocking.
+	StartLoadingUserConfigs(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) (chan<- ConfigEncryptionInfo, <-chan error)
 
 	// Backup the user configs to S3
 	BackupUserConfigs() error
-
-	// GetUserConfigDir provides the directory for the user config
-	GetUserConfigDir() string
-
-	GetConfigBuffer() *manager.WriteAtBuffer
-	SetConfigBuffer(*manager.WriteAtBuffer)
 
 	// GetContext provides the context corresponding to this specific mandelbox.
 	GetContext() context.Context
@@ -512,20 +501,6 @@ func (mandelbox *mandelboxData) GetContext() context.Context {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.ctx
-}
-
-// GetConfigBuffer returns the buffer where user config downloads are stored.
-func (mandelbox *mandelboxData) GetConfigBuffer() *manager.WriteAtBuffer {
-	mandelbox.rwlock.RLock()
-	defer mandelbox.rwlock.RUnlock()
-	return mandelbox.configBuffer
-}
-
-// SetConfigBuffer sets the buffer where user config downloads are stored.
-func (mandelbox *mandelboxData) SetConfigBuffer(buffer *manager.WriteAtBuffer) {
-	mandelbox.rwlock.Lock()
-	defer mandelbox.rwlock.Unlock()
-	mandelbox.configBuffer = buffer
 }
 
 // Close cancels the context for the mandelbox, causing it to shutdown

@@ -78,6 +78,67 @@ func (mandelbox *mandelboxData) StartLoadingUserConfigs(globalCtx context.Contex
 	return tokenChan, errorChan
 }
 
+// BackupUserConfigs compresses, encrypts, and then uploads user config files to S3.
+func (mandelbox *mandelboxData) BackupUserConfigs() error {
+	userID := mandelbox.GetUserID()
+	configToken := mandelbox.GetConfigEncryptionToken()
+	mandelboxID := mandelbox.GetID()
+
+	if len(userID) == 0 {
+		logger.Infof("Cannot save user configs for mandelbox %s since UserID is empty.", mandelboxID)
+		return nil
+	}
+
+	if len(configToken) == 0 {
+		return utils.MakeError("Cannot save user configs for user %s for mandelbox %s since ConfigEncryptionToken is empty", userID, mandelboxID)
+	}
+
+	configDir := mandelbox.getUserConfigDir()
+	unpackedConfigPath := path.Join(configDir, UnpackedConfigsDirectoryName)
+
+	// Compress the user configs into a tar.lz4 file
+	compressedConfig, err := configutils.CompressTarLz4(unpackedConfigPath)
+	if err != nil {
+		return utils.MakeError("Failed to compress configs for user %s for mandelbox %s: %v", userID, mandelboxID, err)
+	}
+
+	// Encrypt the compressed config
+	logger.Infof("Using (hashed) encryption token %s for user %s for mandelbox %s", hash(configToken), userID, mandelboxID)
+	encryptedConfig, err := configutils.EncryptAES256GCM(string(configToken), compressedConfig)
+	if err != nil {
+		return utils.MakeError("Failed to encrypt configs for user %s for mandelbox %s with hashed token %s: %s", userID, mandelboxID, hash(configToken), err)
+	}
+	encryptedConfigBuffer := bytes.NewBuffer(encryptedConfig)
+
+	// Upload encrypted config to S3
+	s3Client, err := configutils.NewS3Client("us-east-1")
+	if err != nil {
+		return utils.MakeError("Error backing up user configs for user %s for mandelbox %s: error creating s3 client: %s", userID, mandelboxID, err)
+	}
+
+	uploadResult, err := configutils.UploadFileToBucket(s3Client, UserConfigS3Bucket, mandelbox.getS3ConfigKey(hash(configToken)), encryptedConfigBuffer)
+	if err != nil {
+		return utils.MakeError("Error uploading encrypted config for user %s for mandelbox %s to s3: %s", userID, mandelboxID, err)
+	}
+
+	logger.Infof("Successfully saved config version %s for user %s for mandelbox %s", *uploadResult.VersionID, userID, mandelboxID)
+	return nil
+}
+
+// WriteJSONData writes the data received through JSON transport
+// to the config.json file located on the resourceMappingDir.
+func (mandelbox *mandelboxData) WriteJSONData() error {
+	logger.Infof("Writing JSON transport data to config.json file...")
+
+	if err := mandelbox.writeResourceMappingToFile("config.json", mandelbox.GetJSONData()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Helpers
+
 // loadUserConfigs does the "real work" of LoadUserConfigs. For each
 // deviation from the happy path in this function, we need to decide whether it
 // is a warning or an error — warnings get logged here, and errors get sent
@@ -94,7 +155,7 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 	var loadFailed bool = true
 	defer func() {
 		if loadFailed {
-			err := mandelbox.SetupUserConfigDirs()
+			err := mandelbox.setupUserConfigDirs()
 			if err != nil {
 				errorChan <- utils.MakeError("Failed to last-resort setup user config dirs for mandelbox %s: %s", mandelbox.GetID(), err)
 				return
@@ -334,9 +395,9 @@ func (mandelbox *mandelboxData) extractConfig(configKey string, decryptedConfig 
 	logger.Infof("Extracting config %s for user %s for mandelbox %s", configKey, mandelbox.GetUserID(), mandelbox.GetID())
 
 	// Make directory for user configs
-	configDir := mandelbox.GetUserConfigDir()
+	configDir := mandelbox.getUserConfigDir()
 	unpackedConfigDir := path.Join(configDir, UnpackedConfigsDirectoryName)
-	err := mandelbox.SetupUserConfigDirs()
+	err := mandelbox.setupUserConfigDirs()
 	if err != nil {
 		return utils.MakeError("Failed to setup user config directories for user %s for mandelbox %s: %s", mandelbox.GetUserID(), mandelbox.GetID(), err)
 	}
@@ -362,78 +423,11 @@ func (mandelbox *mandelboxData) extractConfig(configKey string, decryptedConfig 
 	return nil
 }
 
-// Helpers
-
-const (
-	aes256KeyLength = 32
-	aes256IVLength  = 16
-)
-
-// BackupUserConfigs compresses, encrypts, and then uploads user config files to S3.
-func (mandelbox *mandelboxData) BackupUserConfigs() error {
-	userID := mandelbox.GetUserID()
-	configToken := mandelbox.GetConfigEncryptionToken()
-	mandelboxID := mandelbox.GetID()
-
-	if len(userID) == 0 {
-		logger.Infof("Cannot save user configs for MandelboxID %s since UserID is empty.", mandelboxID)
-		return nil
-	}
-
-	if len(configToken) == 0 {
-		return utils.MakeError("Cannot save user configs for MandelboxID %s since ConfigEncryptionToken is empty", mandelboxID)
-	}
-
-	configDir := mandelbox.GetUserConfigDir()
-	unpackedConfigPath := path.Join(configDir, UnpackedConfigsDirectoryName)
-
-	// Compress the user configs into a tar.lz4 file
-	compressedConfig, err := configutils.CompressTarLz4(unpackedConfigPath)
-	if err != nil {
-		return utils.MakeError("Failed to compress user configs: %v", err)
-	}
-
-	// Encrypt the compressed config
-	logger.Infof("Using (hashed) encryption token %s for mandelbox %s", hash(configToken), mandelboxID)
-	encryptedConfig, err := configutils.EncryptAES256GCM(string(configToken), compressedConfig)
-	if err != nil {
-		return utils.MakeError("Failed to encrypt user configs: %v", err)
-	}
-	encryptedConfigBuffer := bytes.NewBuffer(encryptedConfig)
-
-	// Upload encrypted config to S3
-	s3Client, err := configutils.NewS3Client("us-east-1")
-	if err != nil {
-		return utils.MakeError("error creating s3 client: %v", err)
-	}
-
-	uploadResult, err := configutils.UploadFileToBucket(s3Client, UserConfigS3Bucket, mandelbox.getS3ConfigKey(hash(configToken)), encryptedConfigBuffer)
-	if err != nil {
-		return utils.MakeError("error uploading encrypted config to s3: %v", err)
-	}
-
-	logger.Infof("Saved user config for mandelbox %s, version %s", mandelboxID, *uploadResult.VersionID)
-
-	return nil
-}
-
-// WriteJSONData writes the data received through JSON transport
-// to the config.json file located on the resourceMappingDir.
-func (mandelbox *mandelboxData) WriteJSONData() error {
-	logger.Infof("Writing JSON transport data to config.json file...")
-
-	if err := mandelbox.writeResourceMappingToFile("config.json", mandelbox.GetJSONData()); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// SetupUserConfigDirs creates the user config directories on the host.
-func (mandelbox *mandelboxData) SetupUserConfigDirs() error {
+// setupUserConfigDirs creates the user config directories on the host.
+func (mandelbox *mandelboxData) setupUserConfigDirs() error {
 	logger.Infof("Creating user config directories for mandelbox %s", mandelbox.GetID())
 
-	configDir := mandelbox.GetUserConfigDir()
+	configDir := mandelbox.getUserConfigDir()
 	if err := os.MkdirAll(configDir, 0777); err != nil {
 		return utils.MakeError("Could not make dir %s. Error: %s", configDir, err)
 	}
@@ -448,14 +442,14 @@ func (mandelbox *mandelboxData) SetupUserConfigDirs() error {
 
 // cleanUserConfigDir removes all user config related files and directories from the host.
 func (mandelbox *mandelboxData) cleanUserConfigDir() {
-	err := os.RemoveAll(mandelbox.GetUserConfigDir())
+	err := os.RemoveAll(mandelbox.getUserConfigDir())
 	if err != nil {
-		logger.Errorf("Failed to remove dir %s. Error: %s", mandelbox.GetUserConfigDir(), err)
+		logger.Errorf("Failed to remove dir %s. Error: %s", mandelbox.getUserConfigDir(), err)
 	}
 }
 
-// GetUserConfigDir returns the absolute path to the user config directory.
-func (mandelbox *mandelboxData) GetUserConfigDir() string {
+// getUserConfigDir returns the absolute path to the user config directory.
+func (mandelbox *mandelboxData) getUserConfigDir() string {
 	return utils.Sprintf("%s%v/%s", utils.WhistDir, mandelbox.GetID(), "userConfigs")
 }
 

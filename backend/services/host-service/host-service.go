@@ -369,8 +369,7 @@ func drainAndShutdown(globalCtx context.Context, globalCancel context.CancelFunc
 // ------------------------------------
 
 // SpinUpMandelbox is the request used to create a mandelbox on this host.
-func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient,
-	sub *subscriptions.MandelboxEvent, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
+func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient dockerclient.CommonAPIClient, sub *subscriptions.MandelboxEvent, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest, transportMapLock *sync.Mutex) {
 
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := utils.MakeError("SpinUpMandelbox(): "+fmt, v...)
@@ -412,9 +411,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	logger.Infof("SpinUpMandelbox(): Successfully assigned mandelbox %s to user %s", mandelboxSubscription.ID, mandelboxSubscription.UserID)
 
 	// Begin loading user configs in parallel with the rest of the mandelbox startup procedure.
-	sendEncryptionTokenChan, configDownloadErrChan := mandelbox.StartLoadingUserConfigs()
-	_ = sendEncryptionTokenChan
-	_ = configDownloadErrChan
+	sendEncryptionInfoChan, configDownloadErrChan := mandelbox.StartLoadingUserConfigs(globalCtx, globalCancel, goroutineTracker)
 
 	// Do all startup tasks that can be done before Docker container creation in
 	// parallel, stopping at the first error encountered
@@ -672,76 +669,55 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	if req == nil {
 		// Receive the json transport request from the client via the httpserver.
-		jsonchan := getJSONTransportRequestChannel(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
+		jsonChan := getJSONTransportRequestChannel(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
 
 		// Set a timeout for the json transport request to prevent the mandelbox from waiting forever.
 		select {
-		case transportRequest := <-jsonchan:
+		case transportRequest := <-jsonChan:
 			req = transportRequest
 		case <-time.After(1 * time.Minute):
 			// Clean up the mandelbox if the time out limit is reached.
+			// TODO: why do we call the die handler here instead of just returning (and letting the deferred mandelbox.close() take care of things)?
 			mandelboxDieHandler(string(dockerID), transportRequestMap, transportMapLock, dockerClient)
 			logAndReturnError("Timed out waiting for config encryption token.")
 			return
 		}
 	}
 
-	// Verify that this user sent in a (nontrivial) config encryption token
-	if len(req.ConfigEncryptionToken) < 10 {
-		logAndReturnError("Unable to spin up mandelbox: trivial config encryption token received.", err)
-		return
+	// Report the config encryption info to the config loader
+	sendEncryptionInfoChan <- mandelboxData.ConfigEncryptionInfo{
+		Token:                          req.ConfigEncryptionToken,
+		IsNewTokenAccordingToClientApp: req.IsNewConfigToken,
 	}
+
+	// While we wait for config decryption, write the config.json file with the
+	// data received from JSON transport.
 	mandelbox.SetJSONData(req.JSONData)
-
-	// If the config token wasn't reset, decrypt the previously downloaded user configs
-	if !req.IsNewConfigToken {
-		err = mandelbox.DecryptUserConfigs()
-		if err != nil {
-			logger.Errorf("Error decrypting user configs for mandelbox %s: %v", mandelboxSubscription.ID, err)
-			metrics.Increment("ErrorRate")
-		}
-	} else {
-		// We still want to setup the directories so the new configs can be populated.
-		logger.Infof("SpinUpMandelbox(): This is a new config encryption token for mandelbox %s, skipping config decryption", mandelboxSubscription.ID)
-		err = mandelbox.SetupUserConfigDirs()
-		if err != nil {
-			logger.Errorf("Error setting up user config directories for mandelbox %s: %v", mandelboxSubscription.ID, err)
-			metrics.Increment("ErrorRate")
-		}
-	}
-
-	// Write user initial browser data at the same time as writeJSONData.
-	// This is done separately since both functions are independent of each other and we can save time.
-	browserDataGroup, _ := errgroup.WithContext(mandelbox.GetContext())
-	browserDataGroup.Go(func() error {
-		logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
-
-		// Create browser data
-		userInitialBrowserData := mandelboxData.BrowserData{
-			CookiesJSON:   req.CookiesJSON,
-			BookmarksJSON: req.BookmarksJSON,
-			Extensions:    req.Extensions,
-		}
-
-		destDir := path.Join(mandelbox.GetUserConfigDir(), mandelboxData.UnpackedConfigsDirectoryName)
-		err := mandelboxData.WriteUserInitialBrowserData(userInitialBrowserData, destDir)
-		if err != nil {
-			logger.Warningf("Error writing user initial browser data for mandelbox %s: %v", mandelboxSubscription.ID, err)
-			return nil
-		}
-
-		logger.Infof("SpinUpMandelbox(): Successfully wrote user initial browser data for mandelbox %s", mandelboxSubscription.ID)
-		return nil
-	})
-
-	// Write the config.json file with the data received from JSON transport
 	err = mandelbox.WriteJSONData()
 	if err != nil {
-		logger.Errorf("Error writing config.json file for protocol: %v", err)
-		metrics.Increment("ErrorRate")
+		logAndReturnError("Error writing config.json file for protocol in mandelbox %s for user %s: %s", mandelbox.GetID(), mandelbox.GetUserID(), err)
+		return
 	}
 
-	browserDataGroup.Wait()
+	// Wait for configs to be fully decrypted before we write any user initial browser data.
+	for err := range configDownloadErrChan {
+		// We don't want these user config errors to be fatal.
+		logger.Error(err)
+	}
+
+	// Write the user's initial browser data
+	logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
+	userInitialBrowserData := mandelboxData.BrowserData{
+		CookiesJSON:   req.CookiesJSON,
+		BookmarksJSON: req.BookmarksJSON,
+		Extensions:    req.Extensions,
+	}
+	destDir := path.Join(mandelbox.GetUserConfigDir(), mandelboxData.UnpackedConfigsDirectoryName)
+	err = mandelboxData.WriteUserInitialBrowserData(userInitialBrowserData, destDir)
+	if err != nil {
+		logger.Errorf("Error writing initial browser data for user %s for mandelbox %s: %s", mandelbox.GetUserID(), mandelboxSubscription.ID, err)
+	}
+	logger.Infof("SpinUpMandelbox(): Successfully wrote user initial browser data for mandelbox %s", mandelboxSubscription.ID)
 
 	// Unblocks whist-startup.sh to start symlink loaded user configs
 	err = mandelbox.MarkConfigReady()
