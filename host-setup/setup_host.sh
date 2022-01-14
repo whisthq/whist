@@ -39,16 +39,21 @@ EOF
 # If we are modifying/appending to an existing file, we backup the
 # original file if no backup exists. If a backup exists, we load the
 # backup instead. If we're replacing or generating a file, this is
-# unnecessary.
+# unnecessary. The goal here is to avoid appending the same changes
+# to the end of a file over and over again if we re-run this setup.
 idempotent_backup () {
   # $1 is the file to backup/load
-  # $2 is "sudo" to use sudo for mv/cp
+  # $2 is optionally "sudo" to use mv/cp as root, else
+  #  they run as user
 
   # If a backup exists, then replace the current file
-  if [ -f "$1.bak" ]; then
-    "${2:-}" mv "$1.bak" "$1"
+  original="$1"
+  backup=".$original.whistbak"
+  use_sudo="${2:-}"
+  if [ -f "$backup" ]; then
+    "$use_sudo" mv "$backup" "$1"
   else # Otherwise, create a backup
-    "${2:-}" cp "$1" "$1.bak"
+    "$use_sudo" cp "$1" "$backup"
   fi
 }
 
