@@ -73,8 +73,8 @@ func GetMostRecentMatchingKey(client *s3.Client, bucket, prefix, suffix string) 
 		for i, v := range output.Contents {
 			if (curMatch == nil || curMatch.LastModified.Before(*v.LastModified)) && strings.HasSuffix(*v.Key, suffix) {
 				// DO NOT use `&v` instead of `&output.Contents[i]`, since Go reuses
-				// memory addresses for loop variables (see the link below). I learned
-				// this the hard way.
+				// memory addresses for loop variables (see the link below). I
+				// re-learned this the hard way.
 				// https://www.evanjones.ca/go-gotcha-loop-variables.html
 				curMatch = &output.Contents[i]
 			}
