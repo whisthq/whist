@@ -692,16 +692,17 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// While we wait for config decryption, write the config.json file with the
 	// data received from JSON transport.
-	mandelbox.SetJSONData(req.JSONData)
-	err = mandelbox.WriteJSONData()
+	err = mandelbox.WriteJSONData(req.JSONData)
 	if err != nil {
 		logAndReturnError("Error writing config.json file for protocol in mandelbox %s for user %s: %s", mandelbox.GetID(), mandelbox.GetUserID(), err)
 		return
 	}
 
-	// Wait for configs to be fully decrypted before we write any user initial browser data.
+	// Wait for configs to be fully decrypted before we write any user initial
+	// browser data.
 	for err := range configDownloadErrChan {
-		// We don't want these user config errors to be fatal.
+		// We don't want these user config errors to be fatal, so we log them as
+		// errors and move on.
 		logger.Error(err)
 	}
 
