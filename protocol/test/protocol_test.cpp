@@ -756,8 +756,9 @@ TEST_F(ProtocolTest, LogStatistic) {
 
 // Constants used for testing encryption
 #define DEFAULT_BINARY_PRIVATE_KEY \
-    "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
-#define SECOND_BINARY_PRIVATE_KEY "\xED\xED\xED\xED\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\xED\xED"
+    ((const void*)"\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF")
+#define SECOND_BINARY_PRIVATE_KEY \
+    ((const void*)"\xED\xED\xED\xED\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\xED\xED")
 
 /**
  * utils/color.c
@@ -846,15 +847,14 @@ TEST_F(ProtocolTest, EncryptAndDecrypt) {
 
     // Encrypt
     int encrypted_len = encrypt_packet(encrypted_data, &aes_metadata, &original_packet,
-                                       original_len, (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
+                                       original_len, DEFAULT_BINARY_PRIVATE_KEY);
 
     // The packet after being decrypted
     WhistPacket decrypted_packet;
 
     // Decrypt, using the encryption data
-    int decrypted_len =
-        decrypt_packet(&decrypted_packet, sizeof(decrypted_packet), aes_metadata, encrypted_data,
-                       encrypted_len, (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
+    int decrypted_len = decrypt_packet(&decrypted_packet, sizeof(decrypted_packet), aes_metadata,
+                                       encrypted_data, encrypted_len, DEFAULT_BINARY_PRIVATE_KEY);
 
     // Compare the original and decrypted size and data
     EXPECT_EQ(decrypted_len, original_len);
@@ -888,15 +888,14 @@ TEST_F(ProtocolTest, BadDecrypt) {
 
     // Encrypt
     int encrypted_len = encrypt_packet(encrypted_data, &aes_metadata, &original_packet,
-                                       original_len, (unsigned char*)DEFAULT_BINARY_PRIVATE_KEY);
+                                       original_len, DEFAULT_BINARY_PRIVATE_KEY);
 
     // The packet after being decrypted
     WhistPacket decrypted_packet;
 
     // Decrypt, using the encryption data
-    int decrypted_len =
-        decrypt_packet(&decrypted_packet, sizeof(decrypted_packet), aes_metadata, encrypted_data,
-                       encrypted_len, (unsigned char*)SECOND_BINARY_PRIVATE_KEY);
+    int decrypted_len = decrypt_packet(&decrypted_packet, sizeof(decrypted_packet), aes_metadata,
+                                       encrypted_data, encrypted_len, SECOND_BINARY_PRIVATE_KEY);
 
     EXPECT_EQ(decrypted_len, -1);
 

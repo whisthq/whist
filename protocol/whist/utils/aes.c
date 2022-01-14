@@ -65,7 +65,8 @@ Private Function Declarations
  * @returns                        Will return -1 on failure, else will return the
  *                                 length of the encrypted result
  */
-int aes_encrypt(void* ciphertext, void* plaintext, int plaintext_len, void* key, void* iv);
+int aes_encrypt(void* ciphertext, const void* plaintext, int plaintext_len, const void* key,
+                const void* iv);
 
 /**
  * @brief                          AES Decrypt ciphertext data, given the iv/key
@@ -82,8 +83,8 @@ int aes_encrypt(void* ciphertext, void* plaintext, int plaintext_len, void* key,
  * @returns                        Will return the length of the decrypted result,
  *                                 or -1 on failure
  */
-int aes_decrypt(void* plaintext_buffer, int plaintext_len, void* ciphertext, int ciphertext_len,
-                void* key, void* iv);
+int aes_decrypt(void* plaintext_buffer, int plaintext_len, const void* ciphertext,
+                int ciphertext_len, const void* key, const void* iv);
 
 /**
  * @brief                          Get an HMAC from the AES encrypted information
@@ -96,8 +97,8 @@ int aes_decrypt(void* plaintext_buffer, int plaintext_len, void* ciphertext, int
  * @param key                      The shared private key between client and server
  *                                   must be KEY_SIZE bytes
  */
-void hmac_aes_data(void* hash_buffer, AESMetadata* aes_metadata, void* ciphertext,
-                   int ciphertext_len, void* key);
+void hmac_aes_data(void* hash_buffer, const AESMetadata* aes_metadata, const void* ciphertext,
+                   int ciphertext_len, const void* private_key);
 
 /**
  * @brief                          Writes any OpenSSL errors to stderr,
@@ -120,8 +121,8 @@ Public Function Implementations
 ============================
 */
 
-uint32_t hash(void* buf, size_t len) {
-    char* key = buf;
+uint32_t hash(const void* buf, size_t len) {
+    const char* key = buf;
 
     uint64_t pre_hash = 123456789;
     while (len > 8) {
@@ -148,7 +149,7 @@ uint32_t hash(void* buf, size_t len) {
     return hash;
 }
 
-void hmac(void* hash, void* buf, int len, void* key) {
+void hmac(void* hash, const void* buf, int len, const void* private_key) {
     /*
         https://www.openssl.org/docs/man1.1.1/man3/HMAC.html
         It places the result in md (which must have space for the output of the hash function, which
@@ -160,8 +161,8 @@ void hmac(void* hash, void* buf, int len, void* key) {
 
     // Hash, and get the hash_len
     int hash_len;
-    HMAC(EVP_sha256(), key, KEY_SIZE, (const unsigned char*)buf, len, (unsigned char*)hash_buffer,
-         (unsigned int*)&hash_len);
+    HMAC(EVP_sha256(), private_key, KEY_SIZE, (const unsigned char*)buf, len,
+         (unsigned char*)hash_buffer, (unsigned int*)&hash_len);
 
     // Verify that the hash_len gave us enough bytes,
     // to confirm the security-level that we wanted
@@ -190,15 +191,15 @@ void gen_iv(void* iv) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int encrypt_packet(void* encrypted_data, AESMetadata* aes_metadata, void* plaintext_data,
-                   int plaintext_len, unsigned char* private_key) {
+int encrypt_packet(void* encrypted_data, AESMetadata* aes_metadata, const void* plaintext_data,
+                   int plaintext_len, const void* private_key) {
     // A unique random number so that all packets are encrypted uniquely
     // (So that e.g. same plaintext twice gives unique encrypted packets)
-    gen_iv((unsigned char*)aes_metadata->iv);
+    gen_iv(aes_metadata->iv);
 
     // Encrypt the data, and store the length in the metadata
-    int encrypted_len = aes_encrypt((unsigned char*)encrypted_data, (unsigned char*)plaintext_data,
-                                    plaintext_len, private_key, (unsigned char*)aes_metadata->iv);
+    int encrypted_len =
+        aes_encrypt(encrypted_data, plaintext_data, plaintext_len, private_key, aes_metadata->iv);
     aes_metadata->encrypted_len = encrypted_len;
 
     // Hash into the aes metadata's HMAC field
@@ -209,7 +210,7 @@ int encrypt_packet(void* encrypted_data, AESMetadata* aes_metadata, void* plaint
 }
 
 int decrypt_packet(void* plaintext_buffer, int plaintext_buffer_len, AESMetadata aes_metadata,
-                   void* encrypted_data, int encrypted_len, unsigned char* private_key) {
+                   const void* encrypted_data, int encrypted_len, const void* private_key) {
     if (aes_metadata.encrypted_len != encrypted_len) {
         LOG_WARNING("The received AESMetadata doesn't match the size of the encrypted data");
         return -1;
@@ -226,9 +227,8 @@ int decrypt_packet(void* plaintext_buffer, int plaintext_buffer_len, AESMetadata
     }
 
     // Decrypt the packet using the private key, and the metadata's IV
-    int decrypt_len = aes_decrypt((unsigned char*)plaintext_buffer, plaintext_buffer_len,
-                                  (unsigned char*)encrypted_data, aes_metadata.encrypted_len,
-                                  private_key, (unsigned char*)aes_metadata.iv);
+    int decrypt_len = aes_decrypt(plaintext_buffer, plaintext_buffer_len, encrypted_data,
+                                  aes_metadata.encrypted_len, private_key, aes_metadata.iv);
 
     // And then returnt he decrypted packet, passing on -1 as well
     return decrypt_len;
@@ -240,7 +240,8 @@ Private Function Implementations
 ============================
 */
 
-int aes_encrypt(void* ciphertext, void* plaintext, int plaintext_len, void* key, void* iv) {
+int aes_encrypt(void* ciphertext, const void* plaintext, int plaintext_len, const void* key,
+                const void* iv) {
     EVP_CIPHER_CTX* ctx;
     const EVP_CIPHER* cipher = EVP_aes_128_cbc();
 
@@ -259,7 +260,9 @@ int aes_encrypt(void* ciphertext, void* plaintext, int plaintext_len, void* key,
     int block_size = EVP_CIPHER_block_size(cipher);
 
     // Initialise the encryption operation.
-    if (1 != EVP_EncryptInit_ex(ctx, cipher, NULL, key, iv)) HANDLE_SSL_ERROR();
+    if (1 !=
+        EVP_EncryptInit_ex(ctx, cipher, NULL, (const unsigned char*)key, (const unsigned char*)iv))
+        HANDLE_SSL_ERROR();
 
     /*
         https://www.openssl.org/docs/man1.1.1/man3/EVP_EncryptUpdate.html
@@ -276,7 +279,7 @@ int aes_encrypt(void* ciphertext, void* plaintext, int plaintext_len, void* key,
 
     // Encrypt
     if (1 != EVP_EncryptUpdate(ctx, (unsigned char*)ciphertext + ciphertext_bytes_written, &len,
-                               plaintext, plaintext_len))
+                               (const unsigned char*)plaintext, plaintext_len))
         HANDLE_SSL_ERROR();
     ciphertext_bytes_written += len;
 
@@ -302,8 +305,8 @@ int aes_encrypt(void* ciphertext, void* plaintext, int plaintext_len, void* key,
     return ciphertext_bytes_written;
 }
 
-int aes_decrypt(void* plaintext_buffer, int plaintext_len, void* ciphertext, int ciphertext_len,
-                void* key, void* iv) {
+int aes_decrypt(void* plaintext_buffer, int plaintext_len, const void* ciphertext,
+                int ciphertext_len, const void* key, const void* iv) {
     EVP_CIPHER_CTX* ctx;
     const EVP_CIPHER* cipher = EVP_aes_128_cbc();
 
@@ -321,7 +324,9 @@ int aes_decrypt(void* plaintext_buffer, int plaintext_len, void* ciphertext, int
     int block_size = EVP_CIPHER_block_size(cipher);
 
     // Initialize decryption
-    if (1 != EVP_DecryptInit_ex(ctx, cipher, NULL, key, iv)) HANDLE_SSL_ERROR();
+    if (1 !=
+        EVP_DecryptInit_ex(ctx, cipher, NULL, (const unsigned char*)key, (const unsigned char*)iv))
+        HANDLE_SSL_ERROR();
 
     /*
         https://www.openssl.org/docs/man1.1.1/man3/EVP_EncryptUpdate.html
@@ -340,7 +345,8 @@ int aes_decrypt(void* plaintext_buffer, int plaintext_len, void* ciphertext, int
     // And also can't set inl to be more than ciphertext_len
     int safe_plaintext_len = min(max(plaintext_len - block_size, 0), ciphertext_len);
     if (safe_plaintext_len > 0) {
-        if (1 != EVP_DecryptUpdate(ctx, plaintext_buffer, &len, ciphertext, safe_plaintext_len))
+        if (1 != EVP_DecryptUpdate(ctx, (unsigned char*)plaintext_buffer, &len,
+                                   (const unsigned char*)ciphertext, safe_plaintext_len))
             HANDLE_SSL_ERROR();
 
         ciphertext_bytes_read += safe_plaintext_len;
@@ -349,7 +355,7 @@ int aes_decrypt(void* plaintext_buffer, int plaintext_len, void* ciphertext, int
 
     // Temp buf to store partially decrypted information,
     // so that we decrypt 64bytes at a time
-    char temporary_buf[64 + EVP_MAX_BLOCK_LENGTH];
+    unsigned char temporary_buf[64 + EVP_MAX_BLOCK_LENGTH];
 
     // Decrypt any remaining data, in small blocks at a time
     // While this code can do all of the work if we wanted,
@@ -359,8 +365,8 @@ int aes_decrypt(void* plaintext_buffer, int plaintext_len, void* ciphertext, int
         // Decrypt into temporary_buf, but not within block_size of the size of temporary_buf
         int bytes_to_feed =
             max(ciphertext_len - ciphertext_bytes_read, (int)sizeof(temporary_buf) - block_size);
-        if (1 != EVP_DecryptUpdate(ctx, (unsigned char*)temporary_buf, &len,
-                                   (unsigned char*)ciphertext + ciphertext_bytes_read,
+        if (1 != EVP_DecryptUpdate(ctx, temporary_buf, &len,
+                                   (const unsigned char*)ciphertext + ciphertext_bytes_read,
                                    bytes_to_feed))
             HANDLE_SSL_ERROR();
         ciphertext_bytes_read += bytes_to_feed;
@@ -374,7 +380,7 @@ int aes_decrypt(void* plaintext_buffer, int plaintext_len, void* ciphertext, int
     }
 
     // Finish decryption
-    if (1 != EVP_DecryptFinal_ex(ctx, (unsigned char*)temporary_buf, &len)) HANDLE_SSL_ERROR();
+    if (1 != EVP_DecryptFinal_ex(ctx, temporary_buf, &len)) HANDLE_SSL_ERROR();
 
     // Move from temporary_buf to plaintext_buffer, if we have the room available
     if (plaintext_bytes_written + len > plaintext_len) {
@@ -389,8 +395,8 @@ int aes_decrypt(void* plaintext_buffer, int plaintext_len, void* ciphertext, int
     return plaintext_bytes_written;
 }
 
-void hmac_aes_data(void* hash_buffer, AESMetadata* aes_metadata, void* ciphertext,
-                   int ciphertext_len, void* private_key) {
+void hmac_aes_data(void* hash_buffer, const AESMetadata* aes_metadata, const void* ciphertext,
+                   int ciphertext_len, const void* private_key) {
     // Use a different private key for HMAC
     unsigned char hmac_private_key[KEY_SIZE];
     FATAL_ASSERT(KEY_SIZE == HMAC_SIZE);

@@ -94,7 +94,7 @@ WhistPacket* udp_read_packet(void* raw_context, bool should_recv) {
             decrypted_len =
                 decrypt_packet(&context->decrypted_packet, sizeof(context->decrypted_packet),
                                udp_packet.aes_metadata, udp_packet.payload, udp_packet.payload_size,
-                               (unsigned char*)context->binary_aes_private_key);
+                               context->binary_aes_private_key);
             // If there was an issue decrypting it, warn and return NULL
             if (decrypted_len < 0) {
                 // This is warning, since it could just be someone else sending packets,
@@ -178,9 +178,9 @@ int udp_send_constructed_packet(void* raw_context, WhistPacket* packet, size_t p
     UDPPacket udp_packet;
     if (ENCRYPTING_PACKETS) {
         // Encrypt the packet during normal operation
-        int encrypted_len = (int)encrypt_packet(
-            udp_packet.payload, &udp_packet.aes_metadata, packet, (int)packet_size,
-            (unsigned char*)context->binary_aes_private_key);
+        int encrypted_len =
+            (int)encrypt_packet(udp_packet.payload, &udp_packet.aes_metadata, packet,
+                                (int)packet_size, context->binary_aes_private_key);
         udp_packet.payload_size = encrypted_len;
     } else {
         // Or, just memcpy the packet if ENCRYPTING_PACKETS is disabled

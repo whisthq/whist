@@ -126,6 +126,8 @@ WhistPacket* tcp_read_packet(void* raw_context, bool should_recv) {
         // Get a pointer to the tcp_packet
         TCPPacket* tcp_packet = (TCPPacket*)encrypted_tcp_packet_buffer->buf;
 
+        // TODO: An untrusted party could make tcp_packet->payload_size so large that it overflows
+        // This should be fixed
         int tcp_packet_size = get_tcp_packet_size(tcp_packet);
 
         // If the target len is valid (Checking because this is an untrusted network),
@@ -137,10 +139,9 @@ WhistPacket* tcp_read_packet(void* raw_context, bool should_recv) {
 
             if (ENCRYPTING_PACKETS) {
                 // Decrypt into whist_packet
-                int decrypted_len =
-                    decrypt_packet(whist_packet, tcp_packet->payload_size, tcp_packet->aes_metadata,
-                                   tcp_packet->payload, tcp_packet->payload_size,
-                                   (unsigned char*)context->binary_aes_private_key);
+                int decrypted_len = decrypt_packet(
+                    whist_packet, tcp_packet->payload_size, tcp_packet->aes_metadata,
+                    tcp_packet->payload, tcp_packet->payload_size, context->binary_aes_private_key);
                 if (decrypted_len == -1) {
                     // Deallocate and prepare to return NULL on decryption failure
                     LOG_WARNING("Could not decrypt TCP message");
@@ -193,9 +194,8 @@ int tcp_send_constructed_packet(void* raw_context, WhistPacket* packet) {
 
     if (ENCRYPTING_PACKETS) {
         // If we're encrypting packets, encrypt the packet into tcp_packet
-        int encrypted_len =
-            encrypt_packet(tcp_packet->payload, &tcp_packet->aes_metadata, packet, packet_size,
-                           (unsigned char*)context->binary_aes_private_key);
+        int encrypted_len = encrypt_packet(tcp_packet->payload, &tcp_packet->aes_metadata, packet,
+                                           packet_size, context->binary_aes_private_key);
         tcp_packet->payload_size = encrypted_len;
     } else {
         // Otherwise, just write it to tcp_packet directly

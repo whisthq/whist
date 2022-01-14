@@ -65,7 +65,7 @@ Public Functions
  *
  * @returns                        Return the result of the hash
  */
-uint32_t hash(void* key, size_t len);
+uint32_t hash(const void* key, size_t len);
 
 /**
  * @brief                          Generates a signature of the given buffer
@@ -79,7 +79,7 @@ uint32_t hash(void* key, size_t len);
  * @param key                      The private key to sign with
  *                                   must be KEY_SIZE bytes
  */
-void hmac(void* hash, void* buf, int len, void* key);
+void hmac(void* hash, const void* buf, int len, const void* key);
 
 /**
  * @brief                          Generates some unique IV,
@@ -106,8 +106,8 @@ void gen_iv(void* iv);
  *                                 (Guaranteed <= plaintext_len + ENCRYPTION_SIZE_INCREASE)
  *                                 or -1 on failure
  */
-int encrypt_packet(void* encrypted_data, AESMetadata* aes_metadata, void* plaintext_data,
-                   int plaintext_len, unsigned char* private_key);
+int encrypt_packet(void* encrypted_data, AESMetadata* aes_metadata, const void* plaintext_data,
+                   int plaintext_len, const void* private_key);
 
 /**
  * @brief                          Calls decrypt_packet_n to decrypt an
@@ -130,6 +130,6 @@ int encrypt_packet(void* encrypted_data, AESMetadata* aes_metadata, void* plaint
  * packet)
  */
 int decrypt_packet(void* plaintext_buffer, int plaintext_buffer_len, AESMetadata aes_metadata,
-                   void* encrypted_data, int encrypted_len, unsigned char* private_key);
+                   const void* encrypted_data, int encrypted_len, const void* private_key);
 
 #endif  // AES_H
