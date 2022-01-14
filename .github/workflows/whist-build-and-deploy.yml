@@ -502,6 +502,8 @@ jobs:
         working-directory: protocol
         run: ./build_protocol_targets.sh --cmakebuildtype=Release WhistServer
 
+        # Each final build has an internal build id and debug id. Sentry will use these
+        # IDs to match the debug symbols with the build that crashed to build the backtrace
       - name: Copy Server debug symbols to sentry
         env:
           SENTRY_ORG: whist
@@ -1265,6 +1267,8 @@ jobs:
           --environment='${{ needs.whist-publish-build-config.outputs.branch }}' \
           --commit='${{ github.sha }}'
 
+        # Each final build has an internal build id and debug id. Sentry will use these
+        # IDs to match the debug symbols with the build that crashed to build the backtrace
       - name: Copy Client debug symbols to sentry
         if: runner.os == 'macOS'
         working-directory: frontend/client-applications
@@ -1381,6 +1385,8 @@ jobs:
           --environment='${{ needs.whist-publish-build-config.outputs.branch }}' \
           --commit='${{ github.sha }}'
 
+        # Each final build has an internal build id and debug id. Sentry will use these
+        # IDs to match the debug symbols with the build that crashed to build the backtrace
       - name: Copy Client debug symbols to sentry
         if: runner.os == 'macOS'
         working-directory: frontend/client-applications
