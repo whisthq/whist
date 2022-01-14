@@ -17,7 +17,8 @@ const Omnibar = () => {
   const options = [
     {
       icon: Dollar,
-      text: "Payment and Billing",
+      text: "Manage My Subscription",
+      keywords: ["Billing", "Payment"],
       onClick: () =>
         setMainState({
           trigger: { name: WhistTrigger.showPaymentWindow, payload: undefined },
@@ -26,6 +27,7 @@ const Omnibar = () => {
     {
       icon: Logout,
       text: "Log Out",
+      keywords: ["Signout", "Sign Out", "Exit", "Quit"],
       onClick: () =>
         setMainState({
           trigger: { name: WhistTrigger.showSignoutWindow, payload: undefined },
@@ -34,6 +36,7 @@ const Omnibar = () => {
     {
       icon: Mail,
       text: "Contact Support",
+      keywords: ["Help", "Feedback", "Report Bug"],
       onClick: () =>
         setMainState({
           trigger: { name: WhistTrigger.showSupportWindow, payload: undefined },
@@ -42,6 +45,7 @@ const Omnibar = () => {
     {
       icon: Signal,
       text: "Test My Internet Speed",
+      keywords: ["Connection"],
       onClick: () =>
         setMainState({
           trigger: {
@@ -52,7 +56,7 @@ const Omnibar = () => {
     },
   ]
 
-  const searcher = new FuzzySearch(options, ["text"], {
+  const searcher = new FuzzySearch(options, ["text", "keywords"], {
     caseSensitive: false,
   })
   const [filteredOptions, setFilteredOptions] = useState(options)
