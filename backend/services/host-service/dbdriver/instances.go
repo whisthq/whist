@@ -210,13 +210,13 @@ func unregisterInstance() error {
 		return utils.MakeError("UnregisterInstance() called but dbdriver is not initialized!")
 	}
 
-	instanceName, err := aws.GetInstanceName()
+	instanceID, err := aws.GetInstanceID()
 	if err != nil {
 		return utils.MakeError("Couldn't unregister instance: couldn't get instance name: %s", err)
 	}
 
 	q := queries.NewQuerier(dbpool)
-	result, err := q.DeleteInstance(context.Background(), string(instanceName))
+	result, err := q.DeleteInstance(context.Background(), string(instanceID))
 	if err != nil {
 		return utils.MakeError("UnregisterInstance(): Error running delete command: %s", err)
 	} else if result.RowsAffected() == 0 {

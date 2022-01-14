@@ -72,14 +72,17 @@ func writeHeartbeat() error {
 		return utils.MakeError("Couldn't write heartbeat: couldn't get instance name: %s", err)
 	}
 
-	result, err := q.WriteHeartbeat(context.Background(), pgtype.Timestamptz{Time: time.Now()}, string(instanceID))
+	result, err := q.WriteHeartbeat(context.Background(), pgtype.Timestamptz{
+		Time:   time.Now(),
+		Status: pgtype.Present,
+	}, string(instanceID))
 	if err != nil {
 		return utils.MakeError("Couldn't write heartbeat: error updating existing row in table `cloud.instance_info`: %s", err)
 	} else if result.RowsAffected() == 0 {
 		return utils.MakeError("Writing heartbeat updated zero rows in database! Instance row seems to be missing.")
 	}
 	// TODO: re-enable this once we can send to logz but not print to standard output
-	// logger.Infof("Wrote heartbeat %+v with result %s", params, result)
+	// logger.SilentInfof("Wrote heartbeat %+v with result %s", params, result)
 
 	return nil
 }
