@@ -5,7 +5,7 @@
  */
 
 import { Observable, ReplaySubject } from "rxjs"
-import { filter, share, map, take } from "rxjs/operators"
+import { filter, share, map } from "rxjs/operators"
 import { withMocking } from "@app/testing"
 import { logBase, LogLevel } from "@app/main/utils/logging"
 import { WhistTrigger } from "@app/constants/triggers"
@@ -62,7 +62,7 @@ export const flow = <T>(
     let startTime = 0
     let triggerPayload: object | undefined = {}
 
-    trigger.pipe(take(1)).subscribe((x?: any) => {
+    trigger.subscribe((x?: any) => {
       logBase(`Flow ${name} started`, x)
       startTime = Date.now() // Get the timestamp of when the flow started running
       triggerPayload = x // Save the trigger payload for logging down below

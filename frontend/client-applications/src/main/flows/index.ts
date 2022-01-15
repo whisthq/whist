@@ -1,5 +1,5 @@
 import { merge, of, combineLatest, zip, from } from "rxjs"
-import { map, take, filter, switchMap, share, mapTo, tap } from "rxjs/operators"
+import { map, take, filter, switchMap, share, mapTo } from "rxjs/operators"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
 
@@ -10,7 +10,6 @@ import autoUpdateFlow from "@app/main/flows/autoupdate"
 import awsPingFlow from "@app/main/flows/ping"
 import { fromTrigger, createTrigger } from "@app/main/utils/flows"
 import { fromSignal } from "@app/main/utils/observables"
-import { getRegionFromArgv } from "@app/main/utils/region"
 import { persistGet } from "@app/main/utils/persist"
 import { WhistTrigger } from "@app/constants/triggers"
 import {
@@ -27,7 +26,6 @@ import {
   getExtensions,
   InstalledBrowser,
 } from "@app/main/utils/importer"
-import { xor } from "lodash"
 
 // Autoupdate flow
 const update = autoUpdateFlow(fromTrigger(WhistTrigger.updateAvailable))

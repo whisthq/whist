@@ -14,11 +14,11 @@ export default flow<
   {
     ip: string
     jsonData: string
-    cookies: string | undefined
-    bookmarks: string | undefined
-    extensions: string | undefined
     mandelboxID: string
     isNewConfigToken: boolean
+    importedData:
+      | { cookies: string; bookmarks: string; extensions: string }
+      | undefined
   } & accessToken &
     configToken
 >("hostSpinUpFlow", (trigger) => {
@@ -33,9 +33,7 @@ export default flow<
             json_data: args.jsonData,
             mandelbox_id: args.mandelboxID,
             is_new_config_encryption_token: args.isNewConfigToken,
-            cookies: args.cookies,
-            bookmarks: args.bookmarks,
-            extensions: args.extensions,
+            importedData: args.importedData,
           })
         )
       )

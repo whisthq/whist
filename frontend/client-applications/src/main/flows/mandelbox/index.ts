@@ -1,5 +1,6 @@
-import { merge, Observable, zip } from "rxjs"
-import { map } from "rxjs/operators"
+import { merge, Observable } from "rxjs"
+import { map, withLatestFrom } from "rxjs/operators"
+
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/main/utils/flows"
@@ -40,16 +41,14 @@ export default flow(
     const keyRepeat = getKeyRepeat()
 
     const host = hostSpinUpFlow(
-      zip([trigger, create.success]).pipe(
-        map(([t, c]) => ({
+      create.success.pipe(withLatestFrom(trigger)).pipe(
+        map(([c, t]) => ({
           ip: c.ip,
           configToken: t.configToken,
           accessToken: t.accessToken,
           isNewConfigToken: t.isNewConfigToken,
           mandelboxID: c.mandelboxID,
-          cookies: t.importedData?.cookies,
-          bookmarks: t.importedData?.bookmarks,
-          extensions: t.importedData?.extensions,
+          importedData: t.importedData,
           jsonData: JSON.stringify({
             dark_mode: nativeTheme.shouldUseDarkColors,
             desired_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
