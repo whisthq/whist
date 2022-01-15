@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-This project was cloned from https://github.com/amrabed/strace-docker.
+This project was cloned from https://github.com/amrabed/strace-docker. At the time, it didn't work well, and there were a number of issues with the implementation. It has been modified/fixed by Whist.
 
 ---
 
