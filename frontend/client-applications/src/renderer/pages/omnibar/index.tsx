@@ -122,7 +122,7 @@ const Omnibar = () => {
       className="w-screen h-screen text-gray-100 text-center bg-gray-800 p-3 relative font-body focus:outline-none py-6 px-8 overflow-hidden"
     >
       <Search />
-      <div className="overflow-y-scroll h-full">
+      <div className="overflow-y-scroll h-full pb-12">
         {options.map((option, index) => (
           <div onMouseEnter={() => setActiveIndex(index)} key={index}>
             <Option
