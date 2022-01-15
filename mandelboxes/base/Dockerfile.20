@@ -648,6 +648,7 @@ COPY utils/import_user_browser_data.py /usr/share/whist/import_user_browser_data
 
 # Add inotify file watching blocker
 COPY --chmod=555 utils/block-until-file-exists.sh /usr/local/bin/block-until-file-exists.sh
+COPY --chmod=555 utils/block-while-file-exists.sh /usr/local/bin/block-while-file-exists.sh
 
 # Set up first systemd service
 COPY --chmod=550 startup/whist-startup.sh /usr/share/whist
