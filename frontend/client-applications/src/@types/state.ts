@@ -10,4 +10,6 @@ export interface StateIPC {
   updateInfo: string // emitted by autoUpdater
   browsers: string[]
   networkInfo: { jitter: number; downloadMbps: number; progress: number }
+  isDefaultBrowser: boolean
+  restoreLastSession: boolean
 }

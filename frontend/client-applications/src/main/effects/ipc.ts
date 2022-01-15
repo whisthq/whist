@@ -14,6 +14,11 @@ import { fromTrigger } from "@app/utils/flows"
 import { appEnvironment } from "../../../config/configs"
 import { getInstalledBrowsers } from "@app/utils/importer"
 import { WhistTrigger } from "@app/constants/triggers"
+import {
+  RESTORE_LAST_SESSION,
+  WHIST_IS_DEFAULT_BROWSER,
+} from "@app/constants/store"
+import { persistGet } from "@app/utils/persist"
 
 // This file is responsible for broadcasting state to all renderer windows.
 // We use a single object and IPC channel for all windows, so here we set up a
@@ -29,6 +34,7 @@ import { WhistTrigger } from "@app/constants/triggers"
 //
 // We can only send serializable values over IPC, so the subscribed map is
 // constrained to observables that emit serializable values.
+
 const subscribed = combineLatest(
   mapValues(
     {
@@ -45,6 +51,14 @@ const subscribed = combineLatest(
       ),
       browsers: of(getInstalledBrowsers()),
       networkInfo: fromTrigger(WhistTrigger.networkAnalysisEvent),
+      isDefaultBrowser: fromTrigger(WhistTrigger.storeDidChange).pipe(
+        map(() => persistGet(WHIST_IS_DEFAULT_BROWSER) ?? false),
+        startWith(persistGet(WHIST_IS_DEFAULT_BROWSER) ?? false)
+      ),
+      restoreLastSession: fromTrigger(WhistTrigger.storeDidChange).pipe(
+        map(() => persistGet(RESTORE_LAST_SESSION) ?? false),
+        startWith(persistGet(RESTORE_LAST_SESSION) ?? false)
+      ),
     },
     (obs) => concat(of(undefined), obs)
   )

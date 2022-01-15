@@ -22,6 +22,8 @@ const filterByName = (
   WhistTrigger.showPaymentWindow,
   WhistTrigger.showSupportWindow,
   WhistTrigger.showSpeedtestWindow,
+  WhistTrigger.setDefaultBrowser,
+  WhistTrigger.restoreLastSession,
   WhistTrigger.onboarded,
   WhistTrigger.emitIPC,
   WhistTrigger.startNetworkAnalysis,
