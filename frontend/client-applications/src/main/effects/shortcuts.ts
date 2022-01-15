@@ -10,7 +10,7 @@ import {
 import { WindowHashOmnibar } from "@app/constants/windows"
 
 fromTrigger(WhistTrigger.mandelboxFlowSuccess).subscribe(() => {
-  createGlobalShortcut("Option+W", () => {
+  createGlobalShortcut("CommandorControl+J", () => {
     const win = getWindowByHash(WindowHashOmnibar)
 
     win === undefined ? createOmnibar() : destroyOmnibar()
