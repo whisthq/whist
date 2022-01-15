@@ -9,14 +9,17 @@ This project assumes running in an environment where an AppArmor config is avail
 ### Building
 
 The docker container depends on the `whist/base:current-build` image from https://github.com/whisthq/whist being built on the system. Then, simply run
+
 ```bash
 ./build.sh
 ```
+
 to build the image (in this folder; not using the `mandelboxes/build.sh`).
 
 ### Running
 
 The best way to run this image is from the `mandelboxes` project in https://github.com/whisthq/whist. Simply run:
+
 ```bash
 ./run.sh mandelboxes/dev-utils/fuse
 ```
