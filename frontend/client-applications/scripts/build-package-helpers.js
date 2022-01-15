@@ -50,7 +50,11 @@ const configImageTag = "whist/config"
 
 const gitRepoRoot = "../.."
 const configDirectory = path.join(gitRepoRoot, "config")
-const protocolDirectory = path.join(gitRepoRoot, "protocol")
+const protocolSourceDir = path.join(gitRepoRoot, "protocol")
+const cmakeBuildDir = "build-clientapp"
+const protocolTargetDir = "WhistProtocolClient"
+const protocolTargetBuild = path.join(protocolTargetDir, "build")
+const protocolTargetDebug = path.join(protocolTargetDir, "debugSymbols")
 
 module.exports = {
   buildConfigContainer: () => {
@@ -82,8 +86,8 @@ module.exports = {
   // Build the protocol and copy it into the expected location
   buildAndCopyProtocol: () => {
     console.log("Building the protocol...")
-    const cmakeBuildDir = "build-clientapp"
-    fs.mkdirSync(path.join(protocolDirectory, cmakeBuildDir), {
+
+    fs.mkdirSync(path.join(protocolSourceDir, cmakeBuildDir), {
       recursive: true,
     })
 
@@ -98,27 +102,40 @@ module.exports = {
       const path = pathArray.join(";")
       execCommand(
         `cmake -S . -B ${cmakeBuildDir} -G Ninja`,
-        protocolDirectory,
+        protocolSourceDir,
         {
           Path: path,
         }
       )
     } else {
-      execCommand(`cmake -S . -B ${cmakeBuildDir}`, protocolDirectory)
+      execCommand(`cmake -S . -B ${cmakeBuildDir}`, protocolSourceDir)
     }
 
     execCommand(
       `cmake --build ${cmakeBuildDir} -j --target WhistClient`,
-      protocolDirectory
+      protocolSourceDir
     )
 
     console.log("Copying over the built protocol...")
 
-    const protocolBuildDir = path.join("protocol-build", "client")
-    rimrafSync("protocol-build")
+    rimrafSync(protocolTargetDir)
+
+    // Copy protocol binaries to WhistProtocolClient/build
     fse.copySync(
-      path.join(protocolDirectory, cmakeBuildDir, "client/build64"),
-      protocolBuildDir
+      path.join(protocolSourceDir, cmakeBuildDir, "client/build64"),
+      protocolTargetBuild,
+      {
+        filter: (src) => !src.endsWith(".debug"),
+      }
+    )
+
+    // Copy protocol debug symbols to WhistProtocolClient/debug
+    fse.copySync(
+      path.join(protocolSourceDir, cmakeBuildDir, "client/build64"),
+      protocolTargetDebug,
+      {
+        filter: (src) => src.endsWith(".debug"),
+      }
     )
 
     const ext = process.platform === "win32" ? ".exe" : ""
@@ -128,16 +145,13 @@ module.exports = {
 
     if (oldExecutable !== newExecutable) {
       fse.moveSync(
-        path.join(protocolBuildDir, `${oldExecutable}${ext}`),
-        path.join(protocolBuildDir, `${newExecutable}${ext}`)
+        path.join(protocolTargetBuild, `${oldExecutable}${ext}`),
+        path.join(protocolTargetBuild, `${newExecutable}${ext}`)
       )
     }
 
-    rimrafSync("./loading")
-    fse.moveSync(
-      path.join("protocol-build/client", "loading"),
-      path.join("loading")
-    )
+    rimrafSync("loading")
+    fse.moveSync(path.join(protocolTargetBuild, "loading"), "loading")
   },
 
   // Build TailwindCSS
@@ -210,15 +224,13 @@ module.exports = {
 
     if (enableCodeSigning) {
       if (process.platform === "darwin") {
-        console.log("Codesigning everything in protocol-build/client")
+        console.log(`Codesigning everything in ${protocolTargetBuild}...`)
         execCommand(
-          'find protocol-build/client -type f -exec codesign -f -v -s "Fractal Computers, Inc." {} \\;',
+          `find ${protocolTargetBuild} -type f -exec codesign -f -v -s "Fractal Computers, Inc." {} \\;`,
           "."
         )
       } else {
-        console.log(
-          "We do not currently do any codesigning on non-MacOS platforms."
-        )
+        console.log("Codesigning is only used for macOS.")
       }
     } else {
       console.log("Disabling codesigning...")

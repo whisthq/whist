@@ -1280,8 +1280,8 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
           curl -sL https://sentry.io/get-cli/ | bash
-          sentry-cli upload-dif ./protocol-build/client/WhistClient
-          sentry-cli upload-dif ./protocol-build/client/WhistClient.debug
+          sentry-cli upload-dif WhistProtocolClient/build/WhistClient
+          sentry-cli upload-dif WhistProtocolClient/debugSymbols/WhistClient.debug
 
   #######################################################################################
   #######################################################################################

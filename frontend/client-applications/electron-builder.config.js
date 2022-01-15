@@ -61,7 +61,7 @@ const bundleConfig = {
     type: "distribution",
     extraFiles: [
       {
-        from: "protocol-build/client",
+        from: "WhistProtocolClient/build",
         to: "MacOS/",
       },
     ],
@@ -89,12 +89,22 @@ const bundleConfig = {
   win: {
     icon: `build/${iconName}.ico`,
     target: ["nsis"],
-    extraFiles: ["protocol-build"],
+    extraFiles: [
+      {
+        from: "WhistProtocolClient/build",
+        to: "WhistProtocolClient/",
+      },
+    ],
   },
   linux: {
     icon: `build/${iconName}.png`,
     target: ["AppImage", "pacman", "deb"],
-    extraFiles: ["protocol-build"],
+    extraFiles: [
+      {
+        from: "WhistProtocolClient/build",
+        to: "WhistProtocolClient/",
+      },
+    ],
   },
 }
 

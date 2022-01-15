@@ -23,10 +23,10 @@ const getProtocolFolder = () => {
     if (process.platform === "darwin") {
       return path.join(app.getAppPath(), "../..", "MacOS")
     } else {
-      return path.join(app.getAppPath(), "../..", "protocol-build/client")
+      return path.join(app.getAppPath(), "../..", "WhistProtocolClient")
     }
   } else {
-    return path.resolve("protocol-build/client")
+    return path.resolve("WhistProtocolClient/build")
   }
 }
 

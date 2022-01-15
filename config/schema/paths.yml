@@ -30,5 +30,5 @@ PROTOCOL_FILE_NAME:
 
 PROTOCOL_FOLDER_PATH:
   macos: "../../MacOS"
-  win32: "../../protocol-build/client"
-  linux: "../../../protocol-build/client"
+  win32: "../../WhistProtocolClient"
+  linux: "../../WhistProtocolClient"
