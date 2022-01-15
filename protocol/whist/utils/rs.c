@@ -34,9 +34,11 @@
 
 // There are incorrect stringop-overflow errors due to insufficient
 // static analysis, so we (Whist) simply disable the `-g3` warning.
+#ifdef __GNUC__
 #pragma GCC diagnostic push
 #if !defined(__has_warning) || __has_warning("-Wstringop-overflow")
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
 #endif
 
 /*
@@ -927,4 +929,6 @@ test_gf()
 #endif /* TEST */
 
 // Undo our (Whist's) warning suppression
+#ifdef __GNUC__
 #pragma GCC diagnostic push
+#endif
