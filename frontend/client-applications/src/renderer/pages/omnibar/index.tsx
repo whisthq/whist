@@ -10,6 +10,7 @@ import {
   Signal,
   Globe,
   Rewind,
+  Document,
 } from "@app/renderer/pages/omnibar/icons"
 
 import { useMainState } from "@app/utils/ipc"
@@ -92,6 +93,18 @@ const createOptions = (mainState: StateIPC, setMainState: any) => [
       setMainState({
         trigger: {
           name: WhistTrigger.showSpeedtestWindow,
+          payload: undefined,
+        },
+      }),
+  },
+  {
+    icon: Document,
+    text: "View Open Source Licenses",
+    keywords: ["About"],
+    onClick: () =>
+      setMainState({
+        trigger: {
+          name: WhistTrigger.showLicenseWindow,
           payload: undefined,
         },
       }),

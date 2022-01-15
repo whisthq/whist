@@ -22,6 +22,7 @@ const filterByName = (
   WhistTrigger.showPaymentWindow,
   WhistTrigger.showSupportWindow,
   WhistTrigger.showSpeedtestWindow,
+  WhistTrigger.showLicenseWindow,
   WhistTrigger.setDefaultBrowser,
   WhistTrigger.restoreLastSession,
   WhistTrigger.onboarded,
