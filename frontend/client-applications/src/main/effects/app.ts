@@ -20,6 +20,7 @@ import {
   CACHED_ACCESS_TOKEN,
   CACHED_REFRESH_TOKEN,
   CACHED_CONFIG_TOKEN,
+  RESTORE_LAST_SESSION,
 } from "@app/constants/store"
 import { WhistTrigger } from "@app/constants/triggers"
 import { networkAnalyze } from "@app/utils/networkAnalysis"
@@ -70,6 +71,7 @@ withAppReady(fromTrigger(WhistTrigger.authFlowSuccess))
 
 withAppReady(fromTrigger(WhistTrigger.onboarded)).subscribe(() => {
   persistSet(ONBOARDED, true)
+  persistSet(RESTORE_LAST_SESSION, true)
 })
 
 fromTrigger(WhistTrigger.onboarded).subscribe(() => {
