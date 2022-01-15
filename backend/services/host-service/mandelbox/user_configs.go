@@ -50,7 +50,7 @@ type ConfigEncryptionInfo struct {
 }
 
 func (c ConfigEncryptionInfo) String() string {
-	return utils.Sprintf("Token hash %s (isNewTokenAccordingToClientApp: %v)", hash(c.Token), c.IsNewTokenAccordingToClientApp)
+	return utils.Sprintf("Token with length %v and hash %s (isNewTokenAccordingToClientApp: %v)", len(c.Token), hash(c.Token), c.IsNewTokenAccordingToClientApp)
 }
 
 // StartLoadingUserConfigs starts the process of loading user configs. It
@@ -65,17 +65,17 @@ func (c ConfigEncryptionInfo) String() string {
 // synchronization necessary.
 func (mandelbox *mandelboxData) StartLoadingUserConfigs(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) (chan<- ConfigEncryptionInfo, <-chan error) {
 	// We buffer both channels to prevent blocking.
-	tokenChan := make(chan ConfigEncryptionInfo, 1)
+	encryptionInfoChan := make(chan ConfigEncryptionInfo, 1)
 	errorChan := make(chan error, 10)
 
 	// This inner function is where we perform all the real work of loading user configs.
 	goroutineTracker.Add(1)
 	go func() {
 		defer goroutineTracker.Done()
-		mandelbox.loadUserConfigs(tokenChan, errorChan)
+		mandelbox.loadUserConfigs(encryptionInfoChan, errorChan)
 	}()
 
-	return tokenChan, errorChan
+	return encryptionInfoChan, errorChan
 }
 
 // BackupUserConfigs compresses, encrypts, and then uploads user config files to S3.
@@ -125,20 +125,6 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 	return nil
 }
 
-// SanityCheckEncryptionInfo performs some basic sanity checks on the
-// ConfigEncryptionInfo sent by the client-app.
-func SanityCheckEncryptionInfo(encryptionInfo *ConfigEncryptionInfo) error {
-	if encryptionInfo.Token == "" {
-		return utils.MakeError("Encryption token is empty")
-	}
-
-	if len(encryptionInfo.Token) < 20 {
-		return utils.MakeError("Encryption token is way too short (length %v)")
-	}
-
-	return nil
-}
-
 // Helpers
 
 // loadUserConfigs does the "real work" of LoadUserConfigs. For each
@@ -163,6 +149,24 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 				logger.Infof("Set up last-resort user config dirs for mandelbox %s because normal loading failed.", mandelbox.GetID())
 			}
 		}
+	}()
+
+	// We also want to receive and set the config encryption token, even if the
+	// process fails before where we would normally block waiting on this info.
+	// Therefore, we begin blocking for it immediately and simply pass the
+	// message along (after some verification) for the body of loadUserConfigs()
+	// to wait on it later.
+	verifiedTokenChan := make(chan ConfigEncryptionInfo)
+	go func() {
+		defer close(verifiedTokenChan)
+		encryptionInfo, err := mandelbox.receiveAndSanityCheckEncryptionToken(tokenChan)
+		if err != nil {
+			errorChan <- err
+			// Here we only return from the inner function, but since we close
+			// `verifiedTokenChan` the entire outer function will not block.
+			return
+		}
+		verifiedTokenChan <- *encryptionInfo
 	}()
 
 	// If userID is not set, then we don't retrieve configs from s3
@@ -208,15 +212,15 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 	}
 
 	// What we do want to block on is receiving the configEncryptionToken.
-	encryptionInfo, err := mandelbox.receiveAndVerifyEncryptionInfo(tokenChan)
-	if err != nil {
-		errorChan <- err
+	encryptionInfo, ok := <-verifiedTokenChan
+	if !ok {
+		// Error already put in errorChan by the inner function above.
 		return
 	}
 
 	// Now we compare the config that we speculatively downloaded to the one we
 	// know we need based on the token that came back from the client-app.
-	correctConfigKey, correctHeadObject, err := mandelbox.determineCorrectConfigKey(s3Client, *predictedConfigObj.Key, predictedConfigHeadObj, *encryptionInfo)
+	correctConfigKey, correctHeadObject, err := mandelbox.determineCorrectConfigKey(s3Client, *predictedConfigObj.Key, predictedConfigHeadObj, encryptionInfo)
 	if err != nil {
 		errorChan <- utils.MakeError("Could not determine correct config key for user %s for mandelbox %s: %s", mandelbox.GetUserID(), mandelbox.GetID(), err)
 		return
@@ -249,7 +253,7 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 	}
 
 	// Decrypt the downloaded config, then unpack it
-	decryptedConfig, err := mandelbox.decryptConfig(correctConfigKey, correctConfigBuf, *encryptionInfo)
+	decryptedConfig, err := mandelbox.decryptConfig(correctConfigKey, correctConfigBuf, encryptionInfo)
 	if err != nil {
 		errorChan <- err
 		return
@@ -306,20 +310,29 @@ func (mandelbox *mandelboxData) downloadUserConfig(s3Client *s3.Client, key stri
 	return buf.Bytes(), nil
 }
 
-// receiveEncryptionToken blocks until it receives the encryption token info
-// from `tokenChan` (or at least until the channel is closed first, in which
-// case it returns an error). It assumes that some basic sanity checks have
-// already been performed on the token (e.g it's not empty).
-func (mandelbox *mandelboxData) receiveAndVerifyEncryptionInfo(tokenChan <-chan ConfigEncryptionInfo) (*ConfigEncryptionInfo, error) {
-	encryptionInfo, gotEncryptionInfo := <-tokenChan
+// receiveAndSanityCheckEncryptionToken blocks until it receives the encryption
+// token info from `uncheckedTokenChan` (or at least until the channel is
+// closed first, which it treats as an error). It also performs some basic
+// sanity checks on the token (e.g to make sure it's not empty), and if they
+// pass, sets the receiving mandelbox's config token to the provided value.
+func (mandelbox *mandelboxData) receiveAndSanityCheckEncryptionToken(uncheckedTokenChan <-chan ConfigEncryptionInfo) (*ConfigEncryptionInfo, error) {
+	encryptionInfo, gotEncryptionInfo := <-uncheckedTokenChan
 	if !gotEncryptionInfo {
-		return nil, utils.MakeError("Got no config encryption token for user %s for mandelbox %s, likely because the JSON Transport request never completed, or the information provided by the client-app failed sanity checks.", mandelbox.GetUserID(), mandelbox.GetID())
+		return nil, utils.MakeError("Got no config encryption token for user %s for mandelbox %s, likely because the JSON Transport request never completed.", mandelbox.GetUserID(), mandelbox.GetID())
+	}
+
+	if encryptionInfo.Token == "" {
+		return &encryptionInfo, utils.MakeError("Encryption token for user %s for mandelbox %s is empty!", mandelbox.GetUserID(), mandelbox.GetID())
+	}
+
+	if len(encryptionInfo.Token) < 20 {
+		return &encryptionInfo, utils.MakeError("Encryption token for user %s for mandelbox %s is way too short (length %v)", mandelbox.GetUserID(), mandelbox.GetID(), len(encryptionInfo.Token))
 	}
 
 	// The encryption token _looks_ reasonable. We set it for the mandelbox and log some info.
 	mandelbox.SetConfigEncryptionToken(encryptionInfo.Token)
 
-	logger.Infof("Got config encryption info for user %s and mandelbox %s: %s", mandelbox.GetUserID(), mandelbox.GetID(), encryptionInfo)
+	logger.Infof("Got config encryption info that passed sanity checks for user %s and mandelbox %s: %s", mandelbox.GetUserID(), mandelbox.GetID(), encryptionInfo)
 
 	return &encryptionInfo, nil
 }

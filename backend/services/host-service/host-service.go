@@ -686,15 +686,10 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// Report the config encryption info to the config loader after making sure
 	// it passes some basic sanity checks.
-	encryptionInfo := mandelboxData.ConfigEncryptionInfo{
+	sendEncryptionInfoChan <- mandelboxData.ConfigEncryptionInfo{
 		Token:                          req.ConfigEncryptionToken,
 		IsNewTokenAccordingToClientApp: req.IsNewConfigToken,
 	}
-	if err = mandelboxData.SanityCheckEncryptionInfo(&encryptionInfo); err != nil {
-		logAndReturnError("Sanity checks for encryptionInfo %s failed for user %s for mandelbox %s: %s", encryptionInfo, mandelbox.GetUserID(), mandelbox.GetID(), err)
-		return
-	}
-	sendEncryptionInfoChan <- encryptionInfo
 	// We don't close the channel here, since we defer the close when we first
 	// make it.
 
