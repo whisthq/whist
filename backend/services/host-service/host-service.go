@@ -1029,11 +1029,12 @@ func main() {
 		logger.Panic(globalCancel, err)
 	}
 
-	if !metadata.IsLocalEnv() {
-		if err := warmUpDockerClient(globalCtx, globalCancel, &goroutineTracker, dockerClient); err != nil {
-			logger.Panicf(globalCancel, "Error warming up docker client: %s", err)
-		}
+	// if !metadata.IsLocalEnv() {
+	if err := warmUpDockerClient(globalCtx, globalCancel, &goroutineTracker, dockerClient); err != nil {
+		logger.Panicf(globalCancel, "Error warming up docker client: %s", err)
 	}
+	return
+	// }
 
 	if err := dbdriver.RegisterInstance(); err != nil {
 		// If the instance starts up and sees its status as unresponsive or
