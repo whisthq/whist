@@ -8,7 +8,7 @@ import "github.com/google/uuid"
 const (
 	WhistDir        string = "/whist/"
 	TempDir         string = WhistDir + "temp/"
-	WhistPrivateDir string = "/whist/"
+	WhistPrivateDir string = "/whistprivate/"
 )
 
 // Note: We use these values as placeholder UUIDs because they are obvious and immediate
