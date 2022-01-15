@@ -62,4 +62,4 @@ flags+=($INITIAL_URL)
 
 # Start Chrome
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
-exec google-chrome "${flags[@]}"
+exec strace -f -T -tt -r -y -C -w -o /strace-logs/chrome-strace.out google-chrome "${flags[@]}"

@@ -246,6 +246,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 				utils.Sprintf("%slogs/%v/host-service-warmup-%d:/var/log/whist", utils.TempDir, mandelbox.GetID(), iter),
 				"/run/udev/data:/run/udev/data:ro",
 				utils.Sprintf("/whist/%s/userConfigs/unpacked_configs:/whist/userConfigs:rshared", containerName),
+				utils.Sprintf("/whist/%v-%s/strace-logs/:/strace-logs", containerName),
 			},
 			CapDrop: strslice.StrSlice{"ALL"},
 			CapAdd: strslice.StrSlice([]string{
