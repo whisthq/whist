@@ -32,7 +32,6 @@ import {
   WindowHashProtocol,
   WindowHashOnboarding,
   WindowHashBugTypeform,
-  WindowHashSpeedtest,
   WindowHashUpdate,
   WindowHashLoading,
 } from "@app/constants/windows"
@@ -363,7 +362,7 @@ export const createSpeedtestWindow = () =>
       frame: false,
       titleBarStyle: "hidden",
     } as BrowserWindowConstructorOptions,
-    hash: WindowHashSpeedtest,
+    hash: "",
     closeElectronWindows: false,
     customURL: "https://speed.cloudflare.com/",
   })
@@ -434,4 +433,18 @@ export const createLoadingWindow = () =>
       transparent: true,
     } as BrowserWindowConstructorOptions,
     hash: WindowHashLoading,
+  })
+
+export const createLicenseWindow = (url: string) =>
+  createWindow({
+    options: {
+      ...base,
+      ...width.lg,
+      ...height.md,
+      skipTaskbar: true,
+      minimizable: false,
+    } as BrowserWindowConstructorOptions,
+    hash: "",
+    closeElectronWindows: false,
+    customURL: url,
   })

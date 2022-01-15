@@ -11,3 +11,8 @@ export const SENTRY_DSN =
   "https://5b0accb25f3341d280bb76f08775efe1@o400459.ingest.sentry.io/5412323"
 
 export const MAX_URL_LENGTH = 2048
+
+export const openSourceUrls = [
+  "http://www.iet.unipi.it/~a007834/fec.html",
+  "https://github.com/lvandeve/lodepng/blob/master/LICENSE",
+]

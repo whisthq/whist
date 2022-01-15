@@ -173,7 +173,7 @@ export const protocolStreamKill = () => {
   writeStream(childProcess, "kill?0\n")
 }
 
-export const ProtocolSendUrlToOpenInNewTab = (message: string) => {
+export const protocolOpenUrl = (message: string) => {
   if (message === undefined || message === "") {
     logBase("Attempted to open undefined/empty URL in new tab", {})
     return
