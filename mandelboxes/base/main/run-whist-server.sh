@@ -25,7 +25,7 @@ WHIST_MAPPINGS_DIR=/whist/resourceMappings
 USER_CONFIGS_DIR=/whist/userConfigs
 APP_CONFIG_MAP_FILENAME=/usr/share/whist/app-config-map.json
 
-block-until-file-exists $WHIST_MAPPINGS_DIR/.configReady
+block-until-file-exists.sh $WHIST_MAPPINGS_DIR/.configReady
 
 # Symlink loaded user configs into the appropriate folders
 
@@ -143,7 +143,7 @@ whist_application_runuser_pid=$!
 echo "Whist application runuser pid: $whist_application_runuser_pid"
 
 # Wait for run-whist-application.sh to write PID to file
-block-until-file-exists $WHIST_APPLICATION_PID_FILE
+block-until-file-exists.sh $WHIST_APPLICATION_PID_FILE
 whist_application_pid=$(cat $WHIST_APPLICATION_PID_FILE)
 rm $WHIST_APPLICATION_PID_FILE
 

@@ -22,7 +22,7 @@ WHIST_APPLICATION_PID_FILE=/home/whist/whist-application-pid
 echo $$ > $WHIST_APPLICATION_PID_FILE
 
 # Wait for the PID file to have been removed
-block-while-file-exists $WHIST_APPLICATION_PID_FILE
+block-while-file-exists.sh $WHIST_APPLICATION_PID_FILE
 
 # Pass JSON transport settings as environment variables
 export DARK_MODE=$DARK_MODE
