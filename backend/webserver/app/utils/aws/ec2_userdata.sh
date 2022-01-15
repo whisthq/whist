@@ -7,12 +7,6 @@ echo "Whist EC2 userdata started"
 
 cd /home/ubuntu
 
-sudo cat << EOF > /home/ubuntu/start-host-service.sh
-#!/bin/bash
-
-strace -f -T -tt -r -y -C -w -o /home/ubuntu/strace.out /home/ubuntu/host-service
-EOF
-
 # The Host Service gets built in the `whist-build-and-deploy.yml` workflow and
 # uploaded from this Git repository to the AMI during Packer via ami_config.json
 # Here, we write the systemd unit file for the Whist Host Service.
@@ -32,7 +26,7 @@ Restart=no
 User=root
 Type=exec
 EnvironmentFile=/usr/share/whist/app_env.env
-ExecStart=/home/ubuntu/start-host-service.sh
+ExecStart=/home/ubuntu/host-service
 
 [Install]
 WantedBy=multi-user.target
