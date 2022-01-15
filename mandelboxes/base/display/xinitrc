@@ -44,6 +44,9 @@ echo "saved d-bus configuration to executable"
 . /usr/local/bin/set_dbus_env_vars.sh
 echo "d-bus address: $DBUS_SESSION_BUS_ADDRESS | pid: $DBUS_SESSION_BUS_PID"
 
+# Unlock gnome keyring
+$RUN_AS_WHIST "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID=$DBUS_SESSION_BUS_PID echo tmp_password | /usr/bin/gnome-keyring-daemon --replace --unlock --components=secrets"
+
 # Start the AwesomeWM window manager and get the PID of the backgrounded process
 echo "Starting AwesomeWM in the background..."
 $RUN_AS_WHIST "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID=$DBUS_SESSION_BUS_PID awesome" &
@@ -51,8 +54,8 @@ awesome_pid=$!
 echo "AwesomeWM started as PID: $awesome_pid"
 
 # Start the XSettings daemon to make DPI changes responsive and get the PID of the backgrounded process
-echo "Starting 'xsettingsd' in the background..."
-$RUN_AS_WHIST "xsettingsd" &
+echo "Starting xsettingsd in the background..."
+$RUN_AS_WHIST "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID=$DBUS_SESSION_BUS_PID xsettingsd" &
 xsettingsd_pid=$!
 echo "xsettingsd started as PID: $xsettingsd_pid"
 

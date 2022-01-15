@@ -30,6 +30,7 @@ fi
 features="VaapiVideoDecoder,Vulkan,CanvasOopRasterization,OverlayScrollbar"
 flags=(
   --use-gl=desktop
+  --password-store=gnome
   --flag-switches-begin
   --enable-gpu-rasterization
   --enable-zero-copy
