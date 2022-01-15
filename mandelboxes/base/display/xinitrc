@@ -34,13 +34,15 @@ prefix=${dbus_result%%$search_str*}
 tot_len=${#dbus_result}
 prefix_len=${#prefix}
 
-dbus_env_cmd=`echo $dbus_result | cut -c $prefix_len-$tot_len`
-echo "DBUS LOGGING CMD: $dbus_env_cmd"
-eval "$dbus_env_cmd"
-echo "d-bus address: $DBUS_SESSION_BUS_ADDRESS | pid: $DBUS_SESSION_BUS_PID"
+# Dump D-Bus configuration commands to exec-only executable
+dbus_env_cmd=$(echo $dbus_result | cut -c $prefix_len-$tot_len)
+echo $dbus_env_cmd > /usr/local/bin/set_dbus_env_vars.sh
+chmod 555 /usr/local/bin/set_dbus_env_vars.sh
+echo "saved d-bus configuration to executable"
 
-# Dump D-Bus configuration commands to file
-echo $dbus_env_cmd > /whist/dbus_config.txt
+# Get D-Bus params
+. /usr/local/bin/set_dbus_env_vars.sh
+echo "d-bus address: $DBUS_SESSION_BUS_ADDRESS | pid: $DBUS_SESSION_BUS_PID"
 
 # Start the AwesomeWM window manager and get the PID of the backgrounded process
 echo "Starting AwesomeWM in the background..."
