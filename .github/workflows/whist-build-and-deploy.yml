@@ -1283,6 +1283,10 @@ jobs:
           sentry-cli upload-dif ./protocol-build/client/WhistClient
           sentry-cli upload-dif ./protocol-build/client/WhistClient.debug
 
+          # This file needs to be removed after being uploaded to Sentry, as it cannot be
+          # codesigned with the package app, since it contains no resources (stripped of symbols)
+          rm -rf ./protocol-build/client/WhistClient.debug
+
   #######################################################################################
   #######################################################################################
 
@@ -1400,6 +1404,10 @@ jobs:
           curl -sL https://sentry.io/get-cli/ | bash
           sentry-cli upload-dif ./protocol-build/client/WhistClient
           sentry-cli upload-dif ./protocol-build/client/WhistClient.debug
+
+          # This file needs to be removed after being uploaded to Sentry, as it cannot be
+          # codesigned with the package app, since it contains no resources (stripped of symbols)
+          rm -rf ./protocol-build/client/WhistClient.debug
 
   #######################################################################################
   #######################################################################################
