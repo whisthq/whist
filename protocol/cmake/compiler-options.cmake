@@ -23,7 +23,7 @@ else() # GCC and Clang base flags
     "$<$<COMPILE_LANGUAGE:C>:-Wincompatible-pointer-types>"
     "$<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,C>:-Werror=implicit-function-declaration>" # Error on implicit function declaration with C
     "$<$<CONFIG:DEBUG>:-Og;-g;-O0>"
-    "$<$<CONFIG:RELEASE>:-O3>")
+    "$<$<CONFIG:RELEASE>:-g3;-O2>")
   add_link_options("-pthread" "-rdynamic")
 
   if(NOT "${SANITIZE}" STREQUAL "OFF")
