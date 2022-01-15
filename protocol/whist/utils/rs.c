@@ -32,6 +32,19 @@
  * OF SUCH DAMAGE.
  */
 
+// There are incorrect stringop-overflow errors due to insufficient
+// static analysis, so we (Whist) simply disable the `-g3` warning.
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#ifdef __has_warning
+#if __has_warning("-Wstringop-overflow")
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif  // __has_warning("-Wstringop-overflow")
+#else
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif  // defined(__has_warning)
+#endif  // defined(__GNUC__)
+
 /*
  * The following parameter defines how many bits are used for
  * field elements. The code supports any value from 2 to 16
@@ -916,4 +929,10 @@ test_gf()
 	    fprintf(stderr, "bad mul table %d,0\n",i);
     }
 }
+
 #endif /* TEST */
+
+// Undo our (Whist's) warning suppression
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#endif  // defined(__GNUC__)
