@@ -8,6 +8,7 @@ DIR_NAME="$(dirname "$1")"
 FILE_NAME="$(basename "$1")"
 
 while read -r line; do
+  echo "inotify event: $line"
   case $line in
     "Watches established.")
       echo "Checking if $FILE_NAME already exists in $DIR_NAME..."
