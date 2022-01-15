@@ -36,10 +36,14 @@
 // static analysis, so we (Whist) simply disable the `-g3` warning.
 #ifdef __GNUC__
 #pragma GCC diagnostic push
-#if !defined(__has_warning) || __has_warning("-Wstringop-overflow")
+#ifdef __has_warning
+#if __has_warning("-Wstringop-overflow")
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
-#endif
-#endif
+#endif  // __has_warning("-Wstringop-overflow")
+#else
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif  // defined(__has_warning)
+#endif  // defined(__GNUC__)
 
 /*
  * The following parameter defines how many bits are used for
@@ -931,4 +935,4 @@ test_gf()
 // Undo our (Whist's) warning suppression
 #ifdef __GNUC__
 #pragma GCC diagnostic push
-#endif
+#endif  // defined(__GNUC__)
