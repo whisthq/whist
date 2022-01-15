@@ -11,12 +11,12 @@ const Search = () => {
 
   return (
     <div className="relative mb-6">
-      <div className="absolute inset-y-0 right-0 flex items-center pointer-events-none space-x-2">
+      <div className="absolute inset-y-0 right-0 flex items-center pointer-events-none space-x-1">
         <kbd className="inline-flex items-center rounded px-2 py-1 text-xs font-medium text-gray-400 bg-gray-700">
-          Option
+          ⌘
         </kbd>
         <kbd className="inline-flex items-center rounded px-2 py-1 text-xs font-medium text-gray-400 bg-gray-700">
-          W
+          J
         </kbd>
       </div>
       <input

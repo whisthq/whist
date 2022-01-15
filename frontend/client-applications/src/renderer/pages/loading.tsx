@@ -20,12 +20,12 @@ const Loading = (props: {
         </div>
       </div>
       <div className="w-full text-center">
-        <div className="flex justify-center pointer-events-none space-x-2 mt-4">
+        <div className="flex justify-center pointer-events-none space-x-1 mt-4">
           <kbd className="inline-flex items-center rounded px-2 py-1 text-xs font-medium text-gray-400 bg-gray-700">
-            Option
+            ⌘
           </kbd>
           <kbd className="inline-flex items-center rounded px-2 py-1 text-xs font-medium text-gray-400 bg-gray-700">
-            W
+            J
           </kbd>
         </div>
         <div className="text-gray-500 text-sm mt-2">to view settings</div>
