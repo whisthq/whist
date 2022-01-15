@@ -108,18 +108,7 @@ const launchTrigger = fromSignal(
     accessToken,
     configToken,
     isNewConfigToken,
-    cookies: merge(
-      importedData.pipe(map((x) => x.cookies)),
-      dontImportBrowserData
-    ),
-    bookmarks: merge(
-      importedData.pipe(map((x) => x.bookmarks)),
-      dontImportBrowserData
-    ),
-    extensions: merge(
-      importedData.pipe(map((x) => x.extensions)),
-      dontImportBrowserData
-    ),
+    importedData: merge(importedData, dontImportBrowserData),
     regions: merge(awsPing.cached, awsPing.refresh),
   }),
   merge(

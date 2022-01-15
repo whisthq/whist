@@ -18,9 +18,9 @@ export default flow(
       accessToken: string
       configToken: string
       isNewConfigToken: boolean
-      cookies: string
-      bookmarks: string
-      extensions: string
+      importedData:
+        | { cookies: string; bookmarks: string; extensions: string }
+        | undefined
       userEmail: string
       regions: Array<{ region: AWSRegion; pingTime: number }>
     }>
@@ -47,9 +47,9 @@ export default flow(
           accessToken: t.accessToken,
           isNewConfigToken: t.isNewConfigToken,
           mandelboxID: c.mandelboxID,
-          cookies: t.cookies,
-          bookmarks: t.bookmarks,
-          extensions: t.extensions,
+          cookies: t.importedData?.cookies,
+          bookmarks: t.importedData?.bookmarks,
+          extensions: t.importedData?.extensions,
           jsonData: JSON.stringify({
             dark_mode: nativeTheme.shouldUseDarkColors,
             desired_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
