@@ -19,6 +19,6 @@ set -Eeuo pipefail
 nohup /usr/bin/xinit -- /usr/bin/Xorg :${whist_display_number} -noreset +extension GLX +extension RANDR +extension RENDER -logfile ${whist_xorg_log_file} -config ${whist_xorg_conf_file} vt${whist_tty_number} &
 
 # Wait for xinit-pid to be written to, which happens at the bottom of xinitrc
-block-until-file-exists.sh /usr/share/whist/xinit-pid
+block-until-file-exists.sh /usr/share/whist/xinit-pid >&1
 
 # Exit, to tell systemd that all is well
