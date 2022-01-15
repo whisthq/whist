@@ -4,8 +4,8 @@
 set -Eeuo pipefail
 
 # Process command-line args
-DIR_NAME=$1
-FILE_NAME=$2
+DIR_NAME="$(dirname "$1")"
+FILE_NAME="$(basename "$1")"
 
 while read -r line; do
   case $line in
