@@ -6,7 +6,7 @@ This project was cloned from https://github.com/amrabed/strace-docker. At the ti
 
 ---
 
-Trace system calls from Docker containers running on the system<a href="#footnote" id="ref"><sup>*</sup></a>
+Trace system calls from Docker containers running on the system<a href="#footnote" id="ref"><sup>\*</sup></a>
 
 ## Usage
 
@@ -15,7 +15,7 @@ Trace system calls from Docker containers running on the system<a href="#footnot
 ```
 git clone https://github.com/amrabed/strace-docker && sudo ./strace-docker/install
 ```
-    
+
 To check if `strace-docker` is successfully installed and running, use `service strace-docker status`.
 
 ### Tracing
@@ -32,4 +32,4 @@ To check if `strace-docker` is successfully installed and running, use `service 
 
 All contributions are welcome :)
 
-<a id="footnote" href="#ref"><sup>*</sup></a> Implemented as part of my Ph.D. dissertation research. See [this paper](https://arxiv.org/abs/1611.03056) for more details.
+<a id="footnote" href="#ref"><sup>\*</sup></a> Implemented as part of my Ph.D. dissertation research. See [this paper](https://arxiv.org/abs/1611.03056) for more details.
