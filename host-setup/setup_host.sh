@@ -164,7 +164,7 @@ EOF
   echo "Installing General Utilities..."
   echo "================================================"
 
-  sudo apt-get install -y lsof jq tar lz4 fio
+  sudo apt-get install -y lsof jq tar lz4 fio nvme-cli
 
   echo "================================================"
   echo "Disabling Automatic Package Upgrades..."
