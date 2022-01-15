@@ -1217,6 +1217,24 @@ jobs:
       #############################################################################################
       #################################### Publish Steps START ####################################
 
+      # Each final build has an internal build id and debug id. Sentry will use these
+      # IDs to match the debug symbols with the build that crashed to build the backtrace
+      - name: Copy Client debug symbols to sentry
+        if: runner.os == 'macOS'
+        working-directory: frontend/client-applications
+        env:
+          SENTRY_ORG: whist
+          SENTRY_PROJECT: protocol
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          curl -sL https://sentry.io/get-cli/ | bash
+          sentry-cli upload-dif ./protocol-build/client/WhistClient
+          sentry-cli upload-dif ./protocol-build/client/WhistClient.debug
+
+          # This file needs to be removed after being uploaded to Sentry, as it cannot be
+          # codesigned with the package app, since it contains no resources (stripped of symbols)
+          rm -rf ./protocol-build/client/WhistClient.debug
+
       # Bump the package version in package.json using jq
       - name: Update Package Version
         working-directory: frontend/client-applications
@@ -1268,24 +1286,6 @@ jobs:
           --version='${{ needs.client-applications-retrieve-version-number.outputs.release_version }}' \
           --environment='${{ needs.whist-publish-build-config.outputs.branch }}' \
           --commit='${{ github.sha }}'
-
-        # Each final build has an internal build id and debug id. Sentry will use these
-        # IDs to match the debug symbols with the build that crashed to build the backtrace
-      - name: Copy Client debug symbols to sentry
-        if: runner.os == 'macOS'
-        working-directory: frontend/client-applications
-        env:
-          SENTRY_ORG: whist
-          SENTRY_PROJECT: protocol
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-        run: |
-          curl -sL https://sentry.io/get-cli/ | bash
-          sentry-cli upload-dif ./protocol-build/client/WhistClient
-          sentry-cli upload-dif ./protocol-build/client/WhistClient.debug
-
-          # This file needs to be removed after being uploaded to Sentry, as it cannot be
-          # codesigned with the package app, since it contains no resources (stripped of symbols)
-          rm -rf ./protocol-build/client/WhistClient.debug
 
   #######################################################################################
   #######################################################################################
@@ -1360,6 +1360,24 @@ jobs:
       #############################################################################################
       #################################### Publish Steps START ####################################
 
+      # Each final build has an internal build id and debug id. Sentry will use these
+      # IDs to match the debug symbols with the build that crashed to build the backtrace
+      - name: Copy Client debug symbols to sentry
+        if: runner.os == 'macOS'
+        working-directory: frontend/client-applications
+        env:
+          SENTRY_ORG: whist
+          SENTRY_PROJECT: protocol
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          curl -sL https://sentry.io/get-cli/ | bash
+          sentry-cli upload-dif ./protocol-build/client/WhistClient
+          sentry-cli upload-dif ./protocol-build/client/WhistClient.debug
+
+          # This file needs to be removed after being uploaded to Sentry, as it cannot be
+          # codesigned with the package app, since it contains no resources (stripped of symbols)
+          rm -rf ./protocol-build/client/WhistClient.debug
+
       # Bump the package version in package.json using jq
       - name: Update Package Version
         working-directory: frontend/client-applications
@@ -1390,24 +1408,6 @@ jobs:
           --version='${{ needs.client-applications-retrieve-version-number.outputs.release_version }}' \
           --environment='${{ needs.whist-publish-build-config.outputs.branch }}' \
           --commit='${{ github.sha }}'
-
-        # Each final build has an internal build id and debug id. Sentry will use these
-        # IDs to match the debug symbols with the build that crashed to build the backtrace
-      - name: Copy Client debug symbols to sentry
-        if: runner.os == 'macOS'
-        working-directory: frontend/client-applications
-        env:
-          SENTRY_ORG: whist
-          SENTRY_PROJECT: protocol
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-        run: |
-          curl -sL https://sentry.io/get-cli/ | bash
-          sentry-cli upload-dif ./protocol-build/client/WhistClient
-          sentry-cli upload-dif ./protocol-build/client/WhistClient.debug
-
-          # This file needs to be removed after being uploaded to Sentry, as it cannot be
-          # codesigned with the package app, since it contains no resources (stripped of symbols)
-          rm -rf ./protocol-build/client/WhistClient.debug
 
   #######################################################################################
   #######################################################################################
