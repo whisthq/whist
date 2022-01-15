@@ -1,9 +1,9 @@
-import React, { useState } from "react"
+import React from "react"
 
 import { WhistButton, WhistButtonState } from "@app/components/button"
 import classNames from "classnames"
 
-const Signout = (props: { onClick: (clearConfig: boolean) => void }) => {
+const Signout = (props: { onClick: () => void }) => {
   /*
         Description:
             Error pop-up
@@ -12,14 +12,8 @@ const Signout = (props: { onClick: (clearConfig: boolean) => void }) => {
             onClick ((clearConfig: boolean) => void): Function to execute when signout button is pressed
     */
 
-  const [clearConfig, setClearConfig] = useState(false)
-
-  const handleCheck = () => {
-    setClearConfig(!clearConfig)
-  }
-
   const handleSignout = () => {
-    props.onClick(clearConfig)
+    props.onClick()
   }
 
   return (
@@ -44,17 +38,6 @@ const Signout = (props: { onClick: (clearConfig: boolean) => void }) => {
             state={WhistButtonState.DEFAULT}
             onClick={handleSignout}
           />
-        </div>
-      </div>
-      <div className="flex mt-6 text-gray-500">
-        <input
-          type="checkbox"
-          checked={clearConfig}
-          onChange={handleCheck}
-          className="mt-1 bg-gray-800"
-        />
-        <div className="ml-3">
-          Also permanently erase all my browsing data (history, cookies, etc.)
         </div>
       </div>
     </div>

@@ -33,23 +33,18 @@ fromTrigger(WhistTrigger.updateAvailable).subscribe(() => {
 
 // On signout or relaunch, clear the cache (so the user can log in again) and restart
 // the app
-fromTrigger(WhistTrigger.clearCacheAction).subscribe(
-  (payload: { clearConfig: boolean }) => {
-    persistClear([
-      ...[CACHED_USER_EMAIL, CACHED_ACCESS_TOKEN, CACHED_REFRESH_TOKEN],
-      ...(payload.clearConfig ? [CACHED_CONFIG_TOKEN] : []),
-    ])
-    // Clear the Auth0 cache. In window.ts, we tell Auth0 to store session info in
-    // a partition called "auth0", so we clear the "auth0" partition here
-    session
-      .fromPartition("auth0")
-      .clearStorageData()
-      .catch((err) => Sentry.captureException(err))
-    // Restart the app
-    protocolStreamKill()
-    relaunch()
-  }
-)
+fromTrigger(WhistTrigger.clearCacheAction).subscribe(() => {
+  persistClear()
+  // Clear the Auth0 cache. In window.ts, we tell Auth0 to store session info in
+  // a partition called "auth0", so we clear the "auth0" partition here
+  session
+    .fromPartition("auth0")
+    .clearStorageData()
+    .catch((err) => Sentry.captureException(err))
+  // Restart the app
+  protocolStreamKill()
+  relaunch()
+})
 
 merge(
   fromTrigger(WhistTrigger.relaunchAction),
