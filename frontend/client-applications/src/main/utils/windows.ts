@@ -35,6 +35,7 @@ import {
   WindowHashUpdate,
   WindowHashLoading,
   WindowHashOmnibar,
+  WindowHashImport,
 } from "@app/constants/windows"
 import {
   protocolLaunch,
@@ -338,7 +339,6 @@ export const createOnboardingWindow = () =>
       skipTaskbar: true,
       frame: false,
       titleBarStyle: "hidden",
-      backgroundColor: "#182129",
     } as BrowserWindowConstructorOptions,
     hash: WindowHashOnboarding,
     closeElectronWindows: true,
@@ -488,3 +488,16 @@ export const destroyOmnibar = () => {
 
   win?.destroy()
 }
+
+export const createImportWindow = () =>
+  createWindow({
+    options: {
+      ...base,
+      ...width.md,
+      ...height.sm,
+      skipTaskbar: true,
+      frame: false,
+      titleBarStyle: "hidden",
+    } as BrowserWindowConstructorOptions,
+    hash: WindowHashImport,
+  })

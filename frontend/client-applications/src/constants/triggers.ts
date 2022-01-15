@@ -37,7 +37,7 @@ const WhistTrigger = {
   // Persist triggers
   persisted: "persisted",
   notPersisted: "notPersisted",
-  onboarded: "onboarded",
+  beginImport: "beginImport",
   storeDidChange: "storeDidChange",
 
   // Renderer triggers
@@ -53,6 +53,7 @@ const WhistTrigger = {
   showSupportWindow: "showSupportWindow",
   showSpeedtestWindow: "showSpeedtestWindow",
   showLicenseWindow: "showLicenseWindow",
+  showImportWindow: "showImportWindow",
   setDefaultBrowser: "setDefaultBrowser",
   restoreLastSession: "restoreLastSession",
 

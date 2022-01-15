@@ -13,6 +13,7 @@ import {
   protocolStreamInfo,
   childProcess,
   protocolOpenUrl,
+  protocolStreamKill,
 } from "@app/main/utils/protocol"
 import { createProtocolWindow } from "@app/main/utils/windows"
 import { persistSet } from "@app/main/utils/persist"
@@ -33,7 +34,7 @@ import { logBase } from "@app/main/utils/logging"
 fromTrigger(WhistTrigger.mandelboxFlowSuccess)
   .pipe(
     withLatestFrom(
-      fromTrigger(WhistTrigger.onboarded).pipe(
+      fromTrigger(WhistTrigger.beginImport).pipe(
         startWith(undefined),
         map(
           (
@@ -101,4 +102,8 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
     protocolOpenUrl(url)
     logBase(`Captured url ${url} after setting Whist as default browser!\n`, {})
   })
+})
+
+fromTrigger(WhistTrigger.beginImport).subscribe(() => {
+  protocolStreamKill()
 })

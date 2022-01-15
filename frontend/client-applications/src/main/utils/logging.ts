@@ -126,8 +126,8 @@ export const logBase = (
   dataClone = mapValuesDeep(dataClone, (v: object | any[], k: string) => {
     if (
       [
-        "configToken",
-        "config_encryption_token",
+        // "configToken",
+        // "config_encryption_token",
         "cookies",
         "bookmarks",
         "extensions",

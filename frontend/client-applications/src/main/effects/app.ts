@@ -69,13 +69,9 @@ withAppReady(fromTrigger(WhistTrigger.authFlowSuccess))
     }
   })
 
-withAppReady(fromTrigger(WhistTrigger.onboarded)).subscribe(() => {
+withAppReady(fromTrigger(WhistTrigger.beginImport)).subscribe(() => {
   persistSet(ONBOARDED, true)
   persistSet(RESTORE_LAST_SESSION, true)
-})
-
-fromTrigger(WhistTrigger.onboarded).subscribe(() => {
-  persistSet(ONBOARDED, true)
 })
 
 fromTrigger(WhistTrigger.appReady).subscribe(() => {

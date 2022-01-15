@@ -23,9 +23,10 @@ const filterByName = (
   WhistTrigger.showSupportWindow,
   WhistTrigger.showSpeedtestWindow,
   WhistTrigger.showLicenseWindow,
+  WhistTrigger.showImportWindow,
   WhistTrigger.setDefaultBrowser,
   WhistTrigger.restoreLastSession,
-  WhistTrigger.onboarded,
+  WhistTrigger.beginImport,
   WhistTrigger.emitIPC,
   WhistTrigger.startNetworkAnalysis,
 ].forEach((trigger: string) => {

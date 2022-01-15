@@ -7,6 +7,7 @@ import Dollar from "@app/components/icons/dollar"
 import Logout from "@app/components/icons/logout"
 import Rewind from "@app/components/icons/rewind"
 import Signal from "@app/components/icons/signal"
+import Download from "@app/components/icons/download"
 import Toggle from "@app/components/toggle"
 
 import { StateIPC } from "@app/@types/state"
@@ -51,6 +52,25 @@ const createOptions = (mainState: StateIPC, setMainState: any) => {
         />
       ),
       onClick: () => {},
+    },
+    {
+      icon: Download,
+      text: "Import Bookmarks and Settings",
+      keywords: [
+        "Extensions",
+        "Cookies",
+        "Passwords",
+        "Sync",
+        "Restore",
+        "Recover",
+      ],
+      onClick: () =>
+        setMainState({
+          trigger: {
+            name: WhistTrigger.showImportWindow,
+            payload: undefined,
+          },
+        }),
     },
     {
       icon: Dollar,

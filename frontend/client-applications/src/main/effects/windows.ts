@@ -21,6 +21,7 @@ import {
   createPaymentWindow,
   destroyOmnibar,
   createLicenseWindow,
+  createImportWindow,
 } from "@app/main/utils/windows"
 import { persistGet } from "@app/main/utils/persist"
 import { internetWarning, rebootWarning } from "@app/main/utils/notification"
@@ -218,6 +219,11 @@ withAppReady(fromTrigger(WhistTrigger.showSupportWindow)).subscribe(() => {
 withAppReady(fromTrigger(WhistTrigger.showSpeedtestWindow)).subscribe(() => {
   destroyOmnibar()
   createSpeedtestWindow()
+})
+
+withAppReady(fromTrigger(WhistTrigger.showImportWindow)).subscribe(() => {
+  destroyOmnibar()
+  createImportWindow()
 })
 
 withAppReady(fromTrigger(WhistTrigger.showLicenseWindow)).subscribe(() => {

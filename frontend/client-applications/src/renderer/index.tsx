@@ -21,7 +21,7 @@ import {
   WindowHashSignout,
   WindowHashBugTypeform,
   WindowHashUpdate,
-  WindowHashImporter,
+  WindowHashImport,
   WindowHashOnboarding,
   WindowHashAuth,
   WindowHashLoading,
@@ -73,13 +73,13 @@ const RootComponent = () => {
   const handleImporterSubmit = (browser: string | undefined) => {
     setMainState({
       trigger: {
-        name: WhistTrigger.onboarded,
+        name: WhistTrigger.beginImport,
         payload: { importBrowserDataFrom: browser },
       },
     })
   }
 
-  const handleNetworkSubmit = () => setShow(WindowHashImporter)
+  const handleNetworkSubmit = () => setShow(WindowHashImport)
 
   useEffect(() => {
     // We need to ask the main thread to re-emit the current StateIPC because
@@ -100,7 +100,7 @@ const RootComponent = () => {
     return <div className="bg-gray-100 w-screen h-screen"></div>
   if (show === WindowHashSignout) return <Signout onClick={handleSignout} />
   if (show === WindowHashUpdate) return <Update />
-  if (show === WindowHashImporter)
+  if (show === WindowHashImport)
     return (
       <Importer
         browsers={mainState.browsers ?? []}
