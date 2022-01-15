@@ -10,7 +10,7 @@ cd /home/ubuntu
 sudo cat << EOF > /home/ubuntu/start-host-service.sh
 #!/bin/bash
 
-strace /home/ubuntu/host-service
+strace -f -T -tt -r -y -C -w -o /home/ubuntu/strace.out /home/ubuntu/host-service
 EOF
 
 # The Host Service gets built in the `whist-build-and-deploy.yml` workflow and
