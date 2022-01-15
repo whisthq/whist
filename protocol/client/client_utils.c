@@ -212,7 +212,7 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
             break;
         }
         case 'e': {  // environment
-            error_monitor_set_environment(optarg);
+            whist_error_monitor_set_environment(optarg);
             break;
         }
         case 'i': {  // protocol window icon

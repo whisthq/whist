@@ -286,7 +286,7 @@ int main(int argc, char* argv[]) {
     whist_error_monitor_initialize(true);
 
     // Set error monitor username based on email from parsed arguments.
-    error_monitor_set_username(user_email);
+    whist_error_monitor_set_username(user_email);
 
     print_system_info();
     LOG_INFO("Whist client revision %s", whist_git_revision());
@@ -541,7 +541,7 @@ int main(int argc, char* argv[]) {
     // We must call this after destroying the logger so that all
     // error monitor breadcrumbs and events can finish being reported
     // before we close the error monitor.
-    error_monitor_shutdown();
+    whist_error_monitor_shutdown();
 
     LOG_INFO("Protocol has shutdown gracefully");
 

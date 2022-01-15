@@ -9,7 +9,7 @@ Usage
 The error monitor needs to have an environment configured before it can be
 started up. This environment should be development/staging/production, and is
 passed in as a command-line parameter. Once the value is known, we may call
-`error_monitor_set_environment()` to configure it.
+`whist_error_monitor_set_environment()` to configure it.
 
 If no environment is set, the error monitor will fail to initialize. This is
 because we don't want it to complain in personal setups and manual connections
@@ -18,19 +18,19 @@ report to the error monitoring service if environment isn't passed in.
 
 To initialize the error monitor, we call `error_monitor_initialize()`. After
 doing so, we can configure the error logging metadata with
-`error_monitor_set_username()` and `error_monitor_set_connection_id()`.
+`whist_error_monitor_set_username()` and `whist_error_monitor_set_connection_id()`.
 
-At this point, calling `error_monitor_log_breadcrumb()` and
-`error_monitor_log_error()` will report a trace of non-error events and report
+At this point, calling `whist_error_monitor_log_breadcrumb()` and
+`whist_error_monitor_log_error()` will report a trace of non-error events and report
 a detailed breakdown for error-level events to the error monitor service,
 respectively. Importantly, *you should almost never be calling this function by
 itself*. Instead, simply use the `LOG_*()` functions from logging.h, which will
 automatically send error monitor breadcrumbs and error reports as needed.
 
 Because of this integration with our logging setup, we run into race conditions
-in `error_monitor_shutdown()`, which may cause us to fail to report our last
+in `whist_error_monitor_shutdown()`, which may cause us to fail to report our last
 few breadcrumbs and error events. In order to avoid this, we must call
-`error_monitor_shutdown()` after calling `destroy_logger()`, to allow for any
+`whist_error_monitor_shutdown()` after calling `destroy_logger()`, to allow for any
 pending error monitor log calls to be handled. Eventually, we should set up
 a more robust solution for synchronizing these calls.
 */
@@ -47,7 +47,7 @@ Includes
 
 /*
 ============================
-Public Function Implementations
+Global Variables
 ============================
 */
 
@@ -58,22 +58,26 @@ Public Function Implementations
 static char error_monitor_environment[WHIST_ARGS_MAXLEN + 1];
 static char error_monitor_environment_set = false;
 static bool error_monitor_initialized = false;
-
 static WhistTimer last_error_event_timer;
 
-bool check_error_monitor_backoff() {
-    /*
-        Check whether we have sent more than `MAX_EVENTS_IN_PERIOD` errors
-        in `MAX_EVENTS_PERIOD_MS` milliseconds.
+/*
+============================
+Private Function Implementations
+============================
+*/
 
-        Returns:
-            (bool): `false` if too many events in most recent period,
-                `true` otherwise
-
-        NOTE: because of the `errors_sent` counter, this function should
-            only be called before sending an error event
-    */
-
+/**
+ * @brief Check whether we have sent more than `MAX_EVENTS_IN_PERIOD` errors
+ *        in `MAX_EVENTS_PERIOD_MS` milliseconds.
+ *
+ * @returns (bool): `false` if too many events in most recent period, else `true`
+ *
+ * @note Because of `errors_sent`, this function should only be called before sending
+ *       an error event. Since this is automatically called from `LOG_*` functions in
+ *       logging.h, `LOG_*` functions should NEVER be called from here, or we risk
+ *       entering an infinite recursion loop.
+ */
+bool check_backoff() {
     static int errors_sent = 0;
 
     if (get_timer(&last_error_event_timer) > MAX_EVENTS_PERIOD_MS / MS_IN_SECOND) {
@@ -91,20 +95,13 @@ bool check_error_monitor_backoff() {
     return true;
 }
 
-void error_monitor_set_environment(char *environment) {
-    /*
-        Configures the error monitor to use the provided environment.
+/*
+============================
+Public Function Implementations
+============================
+*/
 
-        Arguments:
-            environment (char*): The environment to set: should be one of
-                dev/staging/prod.
-
-        Returns:
-            None
-
-        Note: This should only be called before calling
-            `error_monitor_initialize()`.
-    */
+void whist_error_monitor_set_environment(char *environment) {
     if (error_monitor_initialized) {
         LOG_WARNING("Attempting to set the environment to %s after starting the error monitor!",
                     environment);
@@ -122,21 +119,7 @@ void error_monitor_set_environment(char *environment) {
     }
 }
 
-void error_monitor_set_username(char *username) {
-    /*
-        Configures the username tag for error monitor reports.
-
-        Arguments:
-            username (char*): The username to set. Setting NULL or "None" will
-                unset the username instead.
-
-        Returns:
-            None
-
-        Note: This should only be called after calling
-            `error_monitor_initialize()`.
-    */
-
+void whist_error_monitor_set_username(char *username) {
     // If we haven't set the environment, we don't want our error monitor.
     if (!error_monitor_initialized) return;
 
@@ -154,21 +137,7 @@ void error_monitor_set_username(char *username) {
 #endif
 }
 
-void error_monitor_set_connection_id(int id) {
-    /*
-        Configures the connection id tag for error monitor reports.
-
-        Arguments:
-            id (int): The connection id to set. Setting -1 will set the
-                connection id to "waiting".
-
-        Returns:
-            None
-
-        Note: This should only be called after calling
-            `error_monitor_initialize()`.
-    */
-
+void whist_error_monitor_set_connection_id(int id) {
     // If we haven't set the environment, we don't want our error monitor.
     if (!error_monitor_initialized) return;
 
@@ -186,19 +155,9 @@ void error_monitor_set_connection_id(int id) {
 #endif
 }
 
+bool whist_error_monitor_is_initialized() { return error_monitor_initialized; }
+
 void whist_error_monitor_initialize(bool is_client) {
-    /*
-        Initializes the error monitor.
-
-        Arguments:
-            is_client (bool): True if this is the client protocol, else false.
-
-        Returns:
-            None
-
-        Note: This will do nothing if the environment has not already been set.
-    */
-
     // If we haven't set the environment, we don't want our error monitor.
     if (!error_monitor_environment_set) {
         LOG_INFO("Environment not set... not initializing error monitor");
@@ -223,7 +182,7 @@ void whist_error_monitor_initialize(bool is_client) {
     snprintf(release, sizeof(release), "protocol@%s", whist_git_revision());
     sentry_options_set_release(options, release);
 
-    // Set the environment that was set by error_monitor_set_environment();
+    // Set the environment that was set by whist_error_monitor_set_environment();
     sentry_options_set_environment(options, error_monitor_environment);
 
     // Set this to true to enable verbose Sentry debugging.
@@ -249,25 +208,17 @@ void whist_error_monitor_initialize(bool is_client) {
     error_monitor_initialized = true;
 
     // Tag all logs with a connection id of "waiting", to be updated once an actual id arrives.
-    error_monitor_set_connection_id(-1);
+    whist_error_monitor_set_connection_id(-1);
 
     // Tag all logs with a user of "None", to be updated once an actual username arrives.
-    error_monitor_set_username(NULL);
+    whist_error_monitor_set_username(NULL);
 #endif
 
     LOG_INFO("Error monitor initialized!");
 }
 
-void error_monitor_shutdown() {
+void whist_error_monitor_shutdown() {
     /*
-        Shuts down the error monitor.
-
-        Arguments:
-            None
-
-        Returns:
-            None
-
         Note: This should only be called after calling logging.h's
             `destroy_logger()`. See the "Usage" section above for details.
     */
@@ -281,18 +232,8 @@ void error_monitor_shutdown() {
     error_monitor_initialized = false;
 }
 
-void error_monitor_log_breadcrumb(const char *tag, const char *message) {
+void whist_error_monitor_log_breadcrumb(const char *tag, const char *message) {
     /*
-        Logs a breadcrumb to the error monitor.
-
-        Arguments:
-            tag (char*): The level of the breadcrumb; for example, "WARNING" or
-                "INFO".
-            message (char*): The message associated with the breadcrumb.
-
-        Returns:
-            None
-
         Note: This is automatically called from the `LOG_*` functions from
             logging.h, and should almost never be called alone. Because of
             this, `LOG_*` functions should NEVER be called from here, or we
@@ -315,16 +256,8 @@ void error_monitor_log_breadcrumb(const char *tag, const char *message) {
 #endif
 }
 
-void error_monitor_log_error(const char *message) {
+void whist_error_monitor_log_error(const char *message) {
     /*
-        Logs an error event to the error monitor.
-
-        Arguments:
-            message (char*): The message associated with the error event.
-
-        Returns:
-            None
-
         Note: This is automatically called from the `LOG_*` functions from
             logging.h, and should almost never be called alone. Because of
             this, `LOG_*` functions should NEVER be called from here, or we
@@ -336,7 +269,7 @@ void error_monitor_log_error(const char *message) {
 
 #if USING_SENTRY
     // If too many errors have been sent in a period, then don't send this error.
-    if (!check_error_monitor_backoff()) return;
+    if (!check_backoff()) return;
     sentry_value_t event =
         sentry_value_new_message_event(SENTRY_LEVEL_ERROR, "protocol-errors", message);
     // Sentry doesn't document it, but this will free error.

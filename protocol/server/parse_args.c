@@ -109,7 +109,7 @@ int server_parse_args(whist_server_config* config, int argc, char* argv[]) {
                 break;
             }
             case 'e': {
-                error_monitor_set_environment(optarg);
+                whist_error_monitor_set_environment(optarg);
                 break;
             }
             case 't': {

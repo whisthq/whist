@@ -160,7 +160,7 @@ int do_discovery_handshake(whist_server_state *state, SocketContext *context,
     reply_msg->tcp_port = state->client.tcp_port;
 
     // Set connection ID in error monitor.
-    error_monitor_set_connection_id(state->connection_id);
+    whist_error_monitor_set_connection_id(state->connection_id);
 
     // Send connection ID to client
     reply_msg->connection_id = state->connection_id;
