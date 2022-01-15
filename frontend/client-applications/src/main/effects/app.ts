@@ -14,14 +14,7 @@ import { relaunch, createOnboardingWindow } from "@app/main/utils/windows"
 import { fromTrigger } from "@app/main/utils/flows"
 import { persistGet, persistClear, persistSet } from "@app/main/utils/persist"
 import { withAppReady } from "@app/main/utils/observables"
-import {
-  ONBOARDED,
-  CACHED_USER_EMAIL,
-  CACHED_ACCESS_TOKEN,
-  CACHED_REFRESH_TOKEN,
-  CACHED_CONFIG_TOKEN,
-  RESTORE_LAST_SESSION,
-} from "@app/constants/store"
+import { ONBOARDED, RESTORE_LAST_SESSION } from "@app/constants/store"
 import { WhistTrigger } from "@app/constants/triggers"
 import { networkAnalyze } from "@app/main/utils/networkAnalysis"
 import { protocolStreamKill } from "@app/main/utils/protocol"
@@ -37,8 +30,7 @@ fromTrigger(WhistTrigger.clearCacheAction).subscribe(() => {
   persistClear()
   // Clear the Auth0 cache. In window.ts, we tell Auth0 to store session info in
   // a partition called "auth0", so we clear the "auth0" partition here
-  session
-    .fromPartition("auth0")
+  session.defaultSession
     .clearStorageData()
     .catch((err) => Sentry.captureException(err))
   // Restart the app

@@ -28,7 +28,7 @@ const Signout = (props: { onClick: () => void }) => {
       </div>
       <div className="mt-2 mb-4 text-gray-500">
         Signing out will close Whist and you will need to sign back in next
-        time.
+        time. For security, all your browsing data will be cleared.
       </div>
       <div className="w-full">
         <div>
