@@ -20,6 +20,7 @@ import {
   createSpeedtestWindow,
   createPaymentWindow,
   destroyOmnibar,
+  createLicenseWindow,
 } from "@app/utils/windows"
 import { persistGet } from "@app/utils/persist"
 import { internetWarning, rebootWarning } from "@app/utils/notification"
@@ -37,6 +38,7 @@ import { networkAnalyze } from "@app/utils/networkAnalysis"
 import { AWSRegion } from "@app/@types/aws"
 import { LOCATION_CHANGED_ERROR } from "@app/constants/error"
 import { accessToken } from "@whist/core-ts"
+import { openSourceUrls } from "@app/constants/app"
 
 // Keeps track of how many times we've tried to relaunch the protocol
 const MAX_RETRIES = 3
@@ -213,6 +215,11 @@ withAppReady(fromTrigger(WhistTrigger.showSupportWindow)).subscribe(() => {
 withAppReady(fromTrigger(WhistTrigger.showSpeedtestWindow)).subscribe(() => {
   destroyOmnibar()
   createSpeedtestWindow()
+})
+
+withAppReady(fromTrigger(WhistTrigger.showLicenseWindow)).subscribe(() => {
+  destroyOmnibar()
+  openSourceUrls.forEach((url) => createLicenseWindow(url))
 })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises

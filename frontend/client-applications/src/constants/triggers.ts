@@ -52,6 +52,7 @@ const WhistTrigger = {
   showPaymentWindow: "showPaymentWindow",
   showSupportWindow: "showSupportWindow",
   showSpeedtestWindow: "showSpeedtestWindow",
+  showLicenseWindow: "showLicenseWindow",
   setDefaultBrowser: "setDefaultBrowser",
   restoreLastSession: "restoreLastSession",
 
