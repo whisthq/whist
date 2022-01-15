@@ -169,6 +169,9 @@ sync # Necessary so that even if the container exits very soon the host service 
 # Send in identifier
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
+# WhistServer requires that the D-Bus environment variables be set before execution
+. /usr/local/bin/set_dbus_env_vars.sh
+
 # The point of the named pipe redirection is so that $! will give us the PID of WhistServer, not of tee.
 /usr/share/whist/WhistServer $OPTIONS &> >(tee $PROTOCOL_LOG_FILENAME) &
 whist_server_pid=$!
