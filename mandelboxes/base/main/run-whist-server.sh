@@ -36,10 +36,10 @@ done
 #   This is because when creating symlinks, the userConfig path is the source
 #   and the original location is the destination
 # Iterate through the possible configuration locations and copy
-for row in $(cat $APP_CONFIG_MAP_FILENAME | jq -rc '.[]'); do
-  SOURCE_CONFIG_SUBPATH=$(echo ${row} | jq -r '.source')
+for row in $(jq -rc '.[]' < $APP_CONFIG_MAP_FILENAME); do
+  SOURCE_CONFIG_SUBPATH=$(echo ${row} | jq -rc '.source')
   SOURCE_CONFIG_PATH=$USER_CONFIGS_DIR/$SOURCE_CONFIG_SUBPATH
-  DEST_CONFIG_PATH=$(echo ${row} | jq -r '.destination')
+  DEST_CONFIG_PATH=$(echo ${row} | jq -rc '.destination')
 
   # If original config path does not exist, then continue
   if [ ! -f "$DEST_CONFIG_PATH" ] && [ ! -d "$DEST_CONFIG_PATH" ]; then
@@ -72,6 +72,15 @@ TIMEOUT_FILENAME=$WHIST_MAPPINGS_DIR/timeout
 WHIST_APPLICATION_PID_FILE=/home/whist/whist-application-pid
 PROTOCOL_LOG_FILENAME=/usr/share/whist/server.log
 TELEPORT_LOG_FILENAME=/usr/share/whist/teleport.log
+WHIST_JSON_FILE=/whist/resourceMappings/config.json
+
+# Parse options from JSON transport file
+LOCAL_CLIENT=false # true if the client app was `yarn start` or `package:local`
+if [[ -f $WHIST_JSON_FILE ]]; then
+  if [ "$( jq -rc 'has("local_client")' < $WHIST_JSON_FILE )" == "true"  ]; then
+    LOCAL_CLIENT="$(jq -rc '.local_client' < $WHIST_JSON_FILE)"
+  fi
+fi
 
 # Define a string-format identifier for this mandelbox
 IDENTIFIER=$(cat $WHIST_MAPPINGS_DIR/$IDENTIFIER_FILENAME)
@@ -85,8 +94,9 @@ if [ -f "$PRIVATE_KEY_FILENAME" ]; then
   OPTIONS="$OPTIONS --private-key=$WHIST_AES_KEY"
 fi
 
-# Send in Sentry environment, if set
-if [ -f "$SENTRY_ENV_FILENAME" ]; then
+# Send in Sentry environment, if set, except for the LOCAL_CLIENT case,
+# since local clients might be in a version mismatch with server protocol
+if [ -f "$SENTRY_ENV_FILENAME" ] && [ "$LOCAL_CLIENT" == "false" ]; then
   export SENTRY_ENV=$(cat $SENTRY_ENV_FILENAME)
   OPTIONS="$OPTIONS --environment=$SENTRY_ENV"
 fi

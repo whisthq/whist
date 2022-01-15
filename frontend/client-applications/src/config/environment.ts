@@ -29,7 +29,7 @@ const getDevelopmentConfig = () => {
 
 const getProductionConfig = () => {
   if (!app.isPackaged) {
-    return configs.DEVELOPMENT
+    return configs.LOCAL
   }
 
   switch (appEnvironment) {
