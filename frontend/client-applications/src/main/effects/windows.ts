@@ -1,5 +1,5 @@
 import { app, Notification } from "electron"
-import { withLatestFrom, startWith, throttle, filter } from "rxjs/operators"
+import { withLatestFrom, throttle, filter } from "rxjs/operators"
 import { interval, of, merge } from "rxjs"
 import Sentry from "@sentry/electron"
 import isEmpty from "lodash.isempty"
@@ -84,11 +84,7 @@ allWindowsClosed.subscribe(
 )
 
 fromTrigger(WhistTrigger.windowInfo)
-  .pipe(
-    withLatestFrom(
-      fromTrigger(WhistTrigger.mandelboxFlowSuccess).pipe(startWith({}))
-    )
-  )
+  .pipe(withLatestFrom(fromTrigger(WhistTrigger.mandelboxFlowSuccess)))
   .subscribe(
     ([args, info]: [
       {
