@@ -265,7 +265,6 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 	}
 
 	loadFailed = false
-	return
 }
 
 // predictConfigToDownload guesses which config is the most likely to be the
@@ -295,7 +294,7 @@ func (mandelbox *mandelboxData) getS3ConfigKey(tokenHash string) string {
 // the object and any errors.
 func (mandelbox *mandelboxData) downloadUserConfig(s3Client *s3.Client, key string, headObject *s3.HeadObjectOutput) ([]byte, error) {
 	// Log config version
-	logger.Infof("Attempting to download user config key %s (version %s) for mandelbox %s", *headObject.VersionId, mandelbox.GetID())
+	logger.Infof("Attempting to download user config key %s (version %s) for mandelbox %s", key, *headObject.VersionId, mandelbox.GetID())
 
 	// Download file into a pre-allocated in-memory buffer
 	// This should be okay as we don't expect configs to be very large
