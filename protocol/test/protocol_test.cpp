@@ -40,7 +40,7 @@ extern "C" {
 #include <whist/core/whist.h>
 #include <whist/network/ringbuffer.h>
 
-#include "client/native_window_utils.h"
+#include <client/native_window_utils.h>
 
 #ifndef __APPLE__
 #include "server/state.h"
