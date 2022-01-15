@@ -6,31 +6,37 @@ const Option = (props: {
   text: string
   active: boolean
   onClick: () => void
+  rightElement?: JSX.Element
 }) => {
   return (
     <div
       className={className(
-        "flex space-x-6 py-4 px-6 cursor-pointer rounded",
+        "flex py-4 px-6 cursor-pointer rounded justify-between w-full",
         props.active && "bg-blue"
       )}
       onClick={props.onClick}
     >
-      <div
-        className={className(
-          "relative",
-          props.active ? "text-gray-300" : "text-gray-600"
-        )}
-      >
-        {props.icon}
+      <div className="flex space-x-6">
+        <div
+          className={className(
+            "relative",
+            props.active ? "text-gray-300" : "text-gray-600"
+          )}
+        >
+          {props.icon}
+        </div>
+        <div
+          className={className(
+            "tracking-normal text-md",
+            props.active ? "text-gray-100" : "text-gray-400"
+          )}
+        >
+          {props.text}
+        </div>
       </div>
-      <div
-        className={className(
-          "tracking-normal text-md",
-          props.active ? "text-gray-100" : "text-gray-400"
-        )}
-      >
-        {props.text}
-      </div>
+      {props.rightElement !== undefined && (
+        <div className="justify-right">{props.rightElement}</div>
+      )}
     </div>
   )
 }

@@ -12,8 +12,11 @@
 import { app } from "electron"
 import Store from "electron-store"
 import { loggingBaseFilePath } from "@app/config/environment"
+import event from "events"
 
 app.setPath("userData", loggingBaseFilePath)
+
+export const storeEmitter = new event.EventEmitter()
 
 export const store = new Store({
   watch: true,
@@ -33,5 +36,9 @@ const persistClear = (keys: string[]) => {
     store.delete(key)
   })
 }
+
+store.onDidAnyChange(() => {
+  storeEmitter.emit("store-did-change")
+})
 
 export { persistSet, persistClear, persistGet }

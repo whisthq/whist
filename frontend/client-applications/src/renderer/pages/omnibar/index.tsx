@@ -3,67 +3,118 @@ import FuzzySearch from "fuzzy-search"
 
 import Search from "@app/renderer/pages/omnibar/search"
 import Option from "@app/renderer/pages/omnibar/option"
-import { Dollar, Logout, Mail, Signal } from "@app/renderer/pages/omnibar/icons"
+import {
+  Dollar,
+  Logout,
+  Mail,
+  Signal,
+  Globe,
+  Rewind,
+} from "@app/renderer/pages/omnibar/icons"
 
 import { useMainState } from "@app/utils/ipc"
 import { WhistTrigger } from "@app/constants/triggers"
 import { withContext } from "@app/renderer/pages/omnibar/context"
+import Toggle from "@app/components/toggle"
+import { StateIPC } from "@app/@types/state"
+
+const createOptions = (mainState: StateIPC, setMainState: any) => [
+  {
+    icon: Globe,
+    text: "Make Whist My Default Browser",
+    keywords: ["Set Default", "Set As Default"],
+    rightElement: (
+      <Toggle
+        onChecked={(checked: boolean) => {
+          setMainState({
+            trigger: {
+              name: WhistTrigger.setDefaultBrowser,
+              payload: { default: checked },
+            },
+          })
+        }}
+        default={mainState.isDefaultBrowser}
+      />
+    ),
+    onClick: () => {},
+  },
+  {
+    icon: Rewind,
+    text: "Restore Tabs on Launch",
+    keywords: [""],
+    rightElement: (
+      <Toggle
+        onChecked={(checked: boolean) => {
+          setMainState({
+            trigger: {
+              name: WhistTrigger.restoreLastSession,
+              payload: { restore: checked },
+            },
+          })
+        }}
+        default={mainState.restoreLastSession}
+      />
+    ),
+    onClick: () => {},
+  },
+  {
+    icon: Dollar,
+    text: "Manage My Subscription",
+    keywords: ["Billing", "Payment"],
+    onClick: () =>
+      setMainState({
+        trigger: { name: WhistTrigger.showPaymentWindow, payload: undefined },
+      }),
+  },
+  {
+    icon: Logout,
+    text: "Log Out",
+    keywords: ["Signout", "Sign Out", "Exit", "Quit"],
+    onClick: () =>
+      setMainState({
+        trigger: { name: WhistTrigger.showSignoutWindow, payload: undefined },
+      }),
+  },
+  {
+    icon: Mail,
+    text: "Contact Support",
+    keywords: ["Help", "Feedback", "Report Bug"],
+    onClick: () =>
+      setMainState({
+        trigger: { name: WhistTrigger.showSupportWindow, payload: undefined },
+      }),
+  },
+  {
+    icon: Signal,
+    text: "Test My Internet Speed",
+    keywords: ["Connection"],
+    onClick: () =>
+      setMainState({
+        trigger: {
+          name: WhistTrigger.showSpeedtestWindow,
+          payload: undefined,
+        },
+      }),
+  },
+]
 
 const Omnibar = () => {
   const [activeIndex, setActiveIndex] = useState(0)
-  const [, setMainState] = useMainState()
+  const [mainState, setMainState] = useMainState()
   const context = withContext()
 
-  const options = [
-    {
-      icon: Dollar,
-      text: "Manage My Subscription",
-      keywords: ["Billing", "Payment"],
-      onClick: () =>
-        setMainState({
-          trigger: { name: WhistTrigger.showPaymentWindow, payload: undefined },
-        }),
-    },
-    {
-      icon: Logout,
-      text: "Log Out",
-      keywords: ["Signout", "Sign Out", "Exit", "Quit"],
-      onClick: () =>
-        setMainState({
-          trigger: { name: WhistTrigger.showSignoutWindow, payload: undefined },
-        }),
-    },
-    {
-      icon: Mail,
-      text: "Contact Support",
-      keywords: ["Help", "Feedback", "Report Bug"],
-      onClick: () =>
-        setMainState({
-          trigger: { name: WhistTrigger.showSupportWindow, payload: undefined },
-        }),
-    },
-    {
-      icon: Signal,
-      text: "Test My Internet Speed",
-      keywords: ["Connection"],
-      onClick: () =>
-        setMainState({
-          trigger: {
-            name: WhistTrigger.showSpeedtestWindow,
-            payload: undefined,
-          },
-        }),
-    },
-  ]
-
-  const searcher = new FuzzySearch(options, ["text", "keywords"], {
-    caseSensitive: false,
-  })
-  const [filteredOptions, setFilteredOptions] = useState(options)
+  const [options, setOptions] = useState(createOptions(mainState, setMainState))
 
   useEffect(() => {
-    setFilteredOptions(searcher.search(context.search))
-  }, [context.search])
+    const searcher = new FuzzySearch(
+      createOptions(mainState, setMainState),
+      ["text", "keywords"],
+      {
+        caseSensitive: false,
+      }
+    )
+    setOptions(searcher.search(context.search))
+  }, [context.search, mainState])
 
   return (
     <div
@@ -72,13 +123,14 @@ const Omnibar = () => {
     >
       <Search />
       <div className="overflow-y-scroll h-full">
-        {filteredOptions.map((option, index) => (
+        {options.map((option, index) => (
           <div onMouseEnter={() => setActiveIndex(index)} key={index}>
             <Option
               icon={option.icon()}
               text={option.text}
               active={activeIndex === index}
               onClick={option.onClick}
+              rightElement={option?.rightElement}
             />
           </div>
         ))}

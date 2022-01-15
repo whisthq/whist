@@ -38,6 +38,7 @@ const WhistTrigger = {
   persisted: "persisted",
   notPersisted: "notPersisted",
   onboarded: "onboarded",
+  storeDidChange: "storeDidChange",
 
   // Renderer triggers
   loginAction: "loginAction",
