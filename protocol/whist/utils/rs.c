@@ -35,7 +35,9 @@
 // There are incorrect stringop-overflow errors due to insufficient
 // static analysis, so we (Whist) simply disable the `-g3` warning.
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstringop-overflow="
+#if !defined(__has_warning) || __has_warning("-Wstringop-overflow")
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
 
 /*
  * The following parameter defines how many bits are used for
