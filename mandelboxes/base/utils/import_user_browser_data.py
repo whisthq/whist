@@ -13,16 +13,17 @@ from pbkdf2 import PBKDF2
 sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"))
 
 USER_CONFIG_PATH = "/whist/userConfigs/"
-GNOME_KEYRING_SECRET = b"peanuts"
+GNOME_KEYRING_SECRET = b"peanuts"   # Default password is peanuts. Could be due to
+                                    # (1) there is no password in the keyring for chrome or
+                                    # (2) the keyring is not discoverable by chrome.
+                                    # The b"" indicates that it is a bytestring.
 
 
 def get_gnome_keyring_secret():
     os.seteuid(1000)  # the d-bus is running on `whist`; we need its euid to connect
 
     my_pass = browser_cookie3.get_linux_pass("chrome")
-    if (
-        my_pass.decode("utf-8") == "peanuts"
-    ):  # password will be peanuts if either (1) there is no password in the keyring for chrome or (2) the keyring is not discoverable by chrome
+    if (my_pass.decode("utf-8") == "peanuts"):  # Misconfiguration of GNOME keyring + Chrome
         print(
             "WARN: could not find the GNOME keyring password for Chrome. Resorting to Chrome default..."
         )
