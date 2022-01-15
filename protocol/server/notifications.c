@@ -177,27 +177,9 @@ DbusCtx *dbus_init(struct event_base *eb, Client *server_state_client) {
         goto fail;
     }
 
-    // Connect to appropriate d-bus daemon by searching for d-bus configuration
-    const char *config_file = "/whist/dbus_config.txt";
-    FILE *f_dbus_info = fopen(config_file, "r");
-    if (f_dbus_info == NULL) {
-        LOG_ERROR("Required d-bus configuration file %s not found!", config_file);
-        goto fail;
-    }
-
-    // Read configuration file and parse address
-    char dbus_info[200];
-    fscanf(f_dbus_info, "%s", dbus_info);
-    fclose(f_dbus_info);
-    LOG_INFO("%s contains: %s", config_file, dbus_info);
-
-    // This parsing strategy depends on the formatting of `config_file`
-    size_t start_idx = (strchr(dbus_info, (int)'\'') - dbus_info) + 1;
-    size_t final_len = strlen(dbus_info) - start_idx - 2;
-
-    char *dbus_addr = malloc((final_len + 1) * sizeof(char));
-    strncpy(dbus_addr, dbus_info + start_idx, final_len);
-    dbus_addr[final_len] = '\0';
+    // Connect to appropriate d-bus daemon by reading an environment variable
+    const char *dbus_addr = getenv("DBUS_SESSION_BUS_ADDRESS");
+    LOG_INFO("Read D-Bus address from env vars: %s", dbus_addr);
 
     // Use parsed address to open a private connection
     conn = dbus_connection_open_private(dbus_addr, &error);
@@ -206,7 +188,6 @@ DbusCtx *dbus_init(struct event_base *eb, Client *server_state_client) {
         goto fail;
     }
     LOG_INFO("D-Bus connection to %s established: %p", dbus_addr, conn);
-    free(dbus_addr);
 
     dbus_connection_set_exit_on_disconnect(conn, FALSE);
 
@@ -244,7 +225,7 @@ DbusCtx *dbus_init(struct event_base *eb, Client *server_state_client) {
 
     // Explicitly begin monitoring the connection
     if (!become_monitor(conn)) {
-        LOG_ERROR("D-BUs monitoring failed");
+        LOG_ERROR("D-Bus monitoring failed");
         goto fail;
     }
     LOG_INFO("D-Bus monitoring started");
