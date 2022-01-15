@@ -444,7 +444,7 @@ static int handle_stream_reset_request_message(whist_server_state *state,
             (int): Returns -1 on failure, 0 on success
     */
 
-    LOG_INFO("Request for i-frame found: Creating iframe");
+    LOG_INFO("Request for i-frame found");
     if (wcmsg->stream_reset_data.type == PACKET_VIDEO) {
         // Mark as wanting an iframe, since that will reset the udp video stream
         state->wants_iframe = true;

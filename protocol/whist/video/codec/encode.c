@@ -273,6 +273,7 @@ void video_encoder_set_iframe(VideoEncoder *encoder) {
         LOG_ERROR("video_encoder_set_iframe received NULL encoder!");
         return;
     }
+    LOG_INFO("Creating iframe");
     switch (encoder->active_encoder) {
         case NVIDIA_ENCODER:
 #ifdef __linux__
