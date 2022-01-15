@@ -14,6 +14,9 @@ if [ "$EUID" -eq 0 ]; then
   exit
 fi
 
+# TEST CHANGE
+echo "hello world"
+
 
 # `usage` is the help function we provide.
 usage () {
