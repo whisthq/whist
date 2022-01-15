@@ -15,7 +15,7 @@ import Update from "@app/renderer/pages/update"
 import Network from "@app/renderer/pages/network"
 import Loading from "@app/renderer/pages/loading"
 import Omnibar from "@app/renderer/pages/omnibar"
-import { Provider } from "@app/renderer/pages/omnibar/context"
+import { Provider } from "@app/renderer/context/omnibar"
 
 import {
   WindowHashSignout,
