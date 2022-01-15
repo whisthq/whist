@@ -238,6 +238,11 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 		tmpfs["/run"] = "size=52428800"
 		tmpfs["/run/lock"] = "size=52428800"
 
+		straceLogsDir := utils.Sprintf("/strace-logs/%v-%s/strace-logs", iter, containerName)
+		os.MkdirAll(straceLogsDir, 0777)
+		cmd := exec.Command("chown", "-R", "ubuntu", "/strace-logs/")
+		cmd.Run()
+
 		hostConfig := dockercontainer.HostConfig{
 			Binds: []string{
 				"/sys/fs/cgroup:/sys/fs/cgroup:ro",
@@ -246,7 +251,7 @@ func warmUpDockerClient(globalCtx context.Context, globalCancel context.CancelFu
 				utils.Sprintf("%slogs/%v/host-service-warmup-%d:/var/log/whist", utils.TempDir, mandelbox.GetID(), iter),
 				"/run/udev/data:/run/udev/data:ro",
 				utils.Sprintf("/whist/%s/userConfigs/unpacked_configs:/whist/userConfigs:rshared", containerName),
-				utils.Sprintf("/whist/%v-%s/strace-logs/:/home/whist/strace-logs", containerName),
+				utils.Sprintf("%s:/home/whist/strace-logs", straceLogsDir),
 			},
 			CapDrop: strslice.StrSlice{"ALL"},
 			CapAdd: strslice.StrSlice([]string{
