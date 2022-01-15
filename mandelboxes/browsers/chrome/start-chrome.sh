@@ -71,4 +71,4 @@ echo "loaded d-bus address in start-chrome.sh: $DBUS_SESSION_BUS_ADDRESS | pid: 
 
 # Start Chrome
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
-DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID=$DBUS_SESSION_BUS_PID exec google-chrome "${flags[@]}"
+exec google-chrome "${flags[@]}"
