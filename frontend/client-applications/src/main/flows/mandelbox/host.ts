@@ -3,10 +3,10 @@ import {
   hostSpinUpValid,
   hostSpinUpError,
   HostSpinUpResponse,
-} from "@app/utils/host"
+} from "@app/main/utils/host"
 import { zip, from } from "rxjs"
 import { map, switchMap } from "rxjs/operators"
-import { flow, fork } from "@app/utils/flows"
+import { flow, fork } from "@app/main/utils/flows"
 
 import { accessToken, configToken } from "@whist/core-ts"
 

@@ -15,7 +15,7 @@ import {
   BrowserView,
 } from "electron"
 import config from "@app/config/environment"
-import { WhistEnvironments } from "../../config/configs"
+import { WhistEnvironments } from "../../../config/configs"
 import { WhistCallbackUrls } from "@app/config/urls"
 import {
   authPortalURL,
@@ -40,7 +40,7 @@ import {
   protocolLaunch,
   protocolStreamKill,
   isNetworkUnstable,
-} from "@app/utils/protocol"
+} from "@app/main/utils/protocol"
 
 // Custom Event Emitter for Auth0 events
 export const auth0Event = new events.EventEmitter()

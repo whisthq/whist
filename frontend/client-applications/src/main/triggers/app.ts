@@ -8,10 +8,10 @@ import { app } from "electron"
 import { fromEvent } from "rxjs"
 import { take, switchMap } from "rxjs/operators"
 
-import { createTrigger, fromTrigger } from "@app/utils/flows"
-import { windowMonitor } from "@app/utils/windows"
+import { createTrigger, fromTrigger } from "@app/main/utils/flows"
+import { windowMonitor } from "@app/main/utils/windows"
 import { WhistTrigger } from "@app/constants/triggers"
-import { storeEmitter } from "@app/utils/persist"
+import { storeEmitter } from "@app/main/utils/persist"
 
 // Fires when Electron starts; this is the first event to fire
 createTrigger(WhistTrigger.appReady, fromEvent(app, "ready"))

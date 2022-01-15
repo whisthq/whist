@@ -15,8 +15,11 @@ import {
   catchError,
 } from "rxjs/operators"
 
-import { mandelboxRequest, mandelboxCreateSuccess } from "@app/utils/mandelbox"
-import { fork, flow } from "@app/utils/flows"
+import {
+  mandelboxRequest,
+  mandelboxCreateSuccess,
+} from "@app/main/utils/mandelbox"
+import { fork, flow } from "@app/main/utils/flows"
 import { AWSRegion } from "@app/@types/aws"
 
 export default flow<{

@@ -13,7 +13,7 @@ import {
   Document,
 } from "@app/renderer/pages/omnibar/icons"
 
-import { useMainState } from "@app/utils/ipc"
+import { useMainState } from "@app/renderer/utils/ipc"
 import { WhistTrigger } from "@app/constants/triggers"
 import { withContext } from "@app/renderer/pages/omnibar/context"
 import Toggle from "@app/components/toggle"

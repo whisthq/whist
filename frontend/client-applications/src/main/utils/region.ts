@@ -8,7 +8,7 @@ import fetch from "node-fetch"
 import sortBy from "lodash.sortby"
 
 import { AWSRegion } from "@app/@types/aws"
-import { logBase } from "@app/utils/logging"
+import { logBase } from "@app/main/utils/logging"
 
 const whistPingTime = async (host: string, numberPings: number) => {
   /*

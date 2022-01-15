@@ -7,7 +7,7 @@
 import { Observable, ReplaySubject } from "rxjs"
 import { filter, share, map, take } from "rxjs/operators"
 import { withMocking } from "@app/testing"
-import { logBase, LogLevel } from "@app/utils/logging"
+import { logBase, LogLevel } from "@app/main/utils/logging"
 import { WhistTrigger } from "@app/constants/triggers"
 
 import mapValues from "lodash.mapvalues"

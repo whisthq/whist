@@ -16,7 +16,7 @@ import config, {
   loggingBaseFilePath,
   loggingFiles,
 } from "@app/config/environment"
-import { persistGet } from "@app/utils/persist"
+import { persistGet } from "@app/main/utils/persist"
 import { sessionID } from "@app/constants/app"
 import { createLogger } from "logzio-nodejs"
 import { CACHED_USER_EMAIL } from "@app/constants/store"

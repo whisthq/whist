@@ -34,7 +34,7 @@ import {
   AUTH_ERROR,
   NAVIGATION_ERROR,
 } from "@app/constants/error"
-import { useMainState } from "@app/utils/ipc"
+import { useMainState } from "@app/renderer/utils/ipc"
 import { WhistTrigger } from "@app/constants/triggers"
 
 // Electron has no way to pass data to a newly launched browser

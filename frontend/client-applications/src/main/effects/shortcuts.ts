@@ -1,12 +1,12 @@
-import { fromTrigger } from "@app/utils/flows"
-import { createGlobalShortcut } from "@app/utils/shortcuts"
+import { fromTrigger } from "@app/main/utils/flows"
+import { createGlobalShortcut } from "@app/main/utils/shortcuts"
 
 import { WhistTrigger } from "@app/constants/triggers"
 import {
   getWindowByHash,
   createOmnibar,
   destroyOmnibar,
-} from "@app/utils/windows"
+} from "@app/main/utils/windows"
 import { WindowHashOmnibar } from "@app/constants/windows"
 
 fromTrigger(WhistTrigger.mandelboxFlowSuccess).subscribe(() => {

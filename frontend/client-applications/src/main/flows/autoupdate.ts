@@ -2,7 +2,7 @@ import { autoUpdater } from "electron-updater"
 import EventEmitter from "events"
 import { fromEvent } from "rxjs"
 
-import { flow } from "@app/utils/flows"
+import { flow } from "@app/main/utils/flows"
 
 export default flow("autoUpdateFlow", () => {
   return {

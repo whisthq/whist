@@ -1,7 +1,7 @@
 import { Observable } from "rxjs"
 import { filter, map, pluck } from "rxjs/operators"
 
-import { createTrigger, fromTrigger } from "@app/utils/flows"
+import { createTrigger, fromTrigger } from "@app/main/utils/flows"
 import { WhistTrigger } from "@app/constants/triggers"
 
 const filterByName = (

@@ -6,9 +6,9 @@ import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
 import find from "lodash.find"
 
-import { logBase } from "@app/utils/logging"
-import { withAppReady, fromSignal } from "@app/utils/observables"
-import { fromTrigger, createTrigger } from "@app/utils/flows"
+import { logBase } from "@app/main/utils/logging"
+import { withAppReady, fromSignal } from "@app/main/utils/observables"
+import { fromTrigger, createTrigger } from "@app/main/utils/flows"
 import { WindowHashProtocol } from "@app/constants/windows"
 import {
   createProtocolWindow,
@@ -21,10 +21,13 @@ import {
   createPaymentWindow,
   destroyOmnibar,
   createLicenseWindow,
-} from "@app/utils/windows"
-import { persistGet } from "@app/utils/persist"
-import { internetWarning, rebootWarning } from "@app/utils/notification"
-import { protocolStreamInfo, protocolStreamKill } from "@app/utils/protocol"
+} from "@app/main/utils/windows"
+import { persistGet } from "@app/main/utils/persist"
+import { internetWarning, rebootWarning } from "@app/main/utils/notification"
+import {
+  protocolStreamInfo,
+  protocolStreamKill,
+} from "@app/main/utils/protocol"
 import { WhistTrigger } from "@app/constants/triggers"
 import {
   CACHED_ACCESS_TOKEN,
@@ -34,7 +37,7 @@ import {
   ONBOARDED,
   AWS_REGIONS_SORTED_BY_PROXIMITY,
 } from "@app/constants/store"
-import { networkAnalyze } from "@app/utils/networkAnalysis"
+import { networkAnalyze } from "@app/main/utils/networkAnalysis"
 import { AWSRegion } from "@app/@types/aws"
 import { LOCATION_CHANGED_ERROR } from "@app/constants/error"
 import { accessToken } from "@whist/core-ts"

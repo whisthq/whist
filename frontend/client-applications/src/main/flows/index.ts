@@ -8,10 +8,10 @@ import checkPaymentFlow from "@app/main/flows/payment"
 import mandelboxFlow from "@app/main/flows/mandelbox"
 import autoUpdateFlow from "@app/main/flows/autoupdate"
 import awsPingFlow from "@app/main/flows/ping"
-import { fromTrigger, createTrigger } from "@app/utils/flows"
-import { fromSignal } from "@app/utils/observables"
-import { getRegionFromArgv } from "@app/utils/region"
-import { persistGet } from "@app/utils/persist"
+import { fromTrigger, createTrigger } from "@app/main/utils/flows"
+import { fromSignal } from "@app/main/utils/observables"
+import { getRegionFromArgv } from "@app/main/utils/region"
+import { persistGet } from "@app/main/utils/persist"
 import { WhistTrigger } from "@app/constants/triggers"
 import {
   accessToken,
@@ -19,14 +19,14 @@ import {
   userEmail,
   configToken,
   isNewConfigToken,
-} from "@app/utils/state"
+} from "@app/main/utils/state"
 import { ONBOARDED } from "@app/constants/store"
 import {
   getDecryptedCookies,
   getBookmarks,
   getExtensions,
   InstalledBrowser,
-} from "@app/utils/importer"
+} from "@app/main/utils/importer"
 
 // Autoupdate flow
 const update = autoUpdateFlow(fromTrigger(WhistTrigger.updateAvailable))

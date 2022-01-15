@@ -17,7 +17,7 @@ import {
 import { map, mapTo, switchMap, take, takeUntil } from "rxjs/operators"
 import toPairs from "lodash.topairs"
 
-import { fromTrigger } from "@app/utils/flows"
+import { fromTrigger } from "@app/main/utils/flows"
 import { WhistTrigger } from "@app/constants/triggers"
 
 export const loadingFrom = (
