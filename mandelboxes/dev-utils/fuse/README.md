@@ -10,13 +10,13 @@ This project assumes running in an environment where an AppArmor config is avail
 
 The docker container depends on the `whist/base:current-build` image from https://github.com/whisthq/whist being built on the system. Then, simply run
 ```bash
-docker build . --tag whist/mandelbox-utils/fuse:current-build
+./build.sh
 ```
-to build the image.
+to build the image (in this folder; not using the `mandelboxes/build.sh`).
 
 ### Running
 
-The best way to run this image is from the `mandelbox-images` project in https://github.com/whisthq/whist. Simply run:
+The best way to run this image is from the `mandelboxes` project in https://github.com/whisthq/whist. Simply run:
 ```bash
-./run_local_container_image mandelbox-utils/fuse
+./run.sh mandelboxes/dev-utils/fuse
 ```
