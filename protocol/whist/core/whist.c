@@ -338,19 +338,19 @@ void terminate_protocol(WhistExitCode exit_code) {
     static atomic_int terminate_protocol_counter = ATOMIC_VAR_INIT(0);
 
     // This variable counts reentrancies
-    // (Or rarely, simultaneous calls too, but it's not a big deal
-    // to overcount this)
+    // TODO: This currently counts simultaneous calls as well,
+    // not a big deal but something thread_local's can fix
     int total_times_called = atomic_fetch_add(&terminate_protocol_counter, 1) + 1;
 
     if (total_times_called == 2) {
         // If this is the first reentrancy, try to just stacktrace
-        printf("Error: terminal_protocol has been called twice");
+        printf("Error: terminate_protocol has been called twice\n");
         fflush(stdout);
         print_stacktrace();
         exit(WHIST_EXIT_FAILURE);
     } else if (total_times_called == 3) {
         // If we've reentered even more times, print_stacktrace must have failed too
-        printf("Error: terminal_protocol has been called three times");
+        printf("Error: terminate_protocol has been called three times\n");
         fflush(stdout);
         exit(WHIST_EXIT_FAILURE);
     } else if (total_times_called > 3) {
