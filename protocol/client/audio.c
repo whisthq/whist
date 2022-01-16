@@ -38,18 +38,18 @@ Defines
 // Used to prevent audio from playing before video has played
 extern bool has_video_rendered_yet;
 
-#define SAMPLES_PER_FRAME 960
+#define SAMPLES_PER_FRAME 480
 #define BYTES_PER_SAMPLE 4
 #define NUM_CHANNELS 2
 #define DECODED_BYTES_PER_FRAME (SAMPLES_PER_FRAME * BYTES_PER_SAMPLE * NUM_CHANNELS)
 
 // Audio frames in the audio ringbuffer
-#define MAX_NUM_AUDIO_FRAMES 5
+#define MAX_NUM_AUDIO_FRAMES 8
 
 // system audio queue + our buffer limits, in number of frames and decompressed bytes
 #define AUDIO_QUEUE_LOWER_LIMIT_FRAMES 1
 #define AUDIO_QUEUE_UPPER_LIMIT_FRAMES MAX_NUM_AUDIO_FRAMES
-#define TARGET_AUDIO_QUEUE_LIMIT_FRAMES 3
+#define TARGET_AUDIO_QUEUE_LIMIT_FRAMES 5
 #define AUDIO_QUEUE_LOWER_LIMIT (AUDIO_QUEUE_LOWER_LIMIT_FRAMES * DECODED_BYTES_PER_FRAME)
 #define AUDIO_QUEUE_UPPER_LIMIT (AUDIO_QUEUE_UPPER_LIMIT_FRAMES * DECODED_BYTES_PER_FRAME)
 #define TARGET_AUDIO_QUEUE_LIMIT (TARGET_AUDIO_QUEUE_LIMIT_FRAMES * DECODED_BYTES_PER_FRAME)

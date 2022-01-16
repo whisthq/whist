@@ -346,29 +346,33 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
                  packet->num_indices);
 
     // LOG the the nacking situation
-    // TODO: log video vs audio
     if (packet->is_a_nack) {
-        if (!frame_data->received_indices[packet->index]) {
-            LOG_INFO("NACK for ID %d, Index %d received!", packet->id, packet->index);
-        } else {
-            LOG_INFO("NACK for ID %d, Index %d received, but didn't need it.", packet->id,
-                     packet->index);
+        // Server simulates a nack for audio all the time. Hence log only for video.
+        if (packet->type == PACKET_VIDEO) {
+            if (!frame_data->received_indices[packet->index]) {
+                LOG_INFO("NACK for video ID %d, Index %d received!", packet->id, packet->index);
+            } else {
+                LOG_INFO("NACK for video ID %d, Index %d received, but didn't need it.", packet->id,
+                         packet->index);
+            }
         }
     } else {
         // Reset timer since the last time we received a non-nack packet
         start_timer(&frame_data->last_nonnack_packet_timer);
         if (frame_data->num_times_index_nacked[packet->index] > 0) {
-            LOG_INFO("Received original ID %d, Index %d, but we had NACK'ed for it.", packet->id,
-                     packet->index);
+            LOG_INFO("Received original %s ID %d, Index %d, but we had NACK'ed for it.",
+                     packet->type == PACKET_VIDEO ? "video" : "audio", packet->id, packet->index);
         }
     }
 
     // If we have already received this packet anyway, just drop this packet
     if (frame_data->received_indices[packet->index]) {
         // The only way it should possible to receive a packet twice, is if nacking got involved
-        if (frame_data->num_times_index_nacked[packet->index] == 0) {
+        if (packet->type == PACKET_VIDEO &&
+            frame_data->num_times_index_nacked[packet->index] == 0) {
             LOG_ERROR(
-                "We received a packet (ID %d / index %d) twice, but we had never nacked for it?",
+                "We received a video packet (ID %d / index %d) twice, but we had never nacked for "
+                "it?",
                 packet->id, packet->index);
             return -1;
         }
