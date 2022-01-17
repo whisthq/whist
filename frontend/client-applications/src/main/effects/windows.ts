@@ -1,6 +1,6 @@
 import { app, Notification } from "electron"
 import { withLatestFrom, throttle, filter } from "rxjs/operators"
-import { interval, of, merge } from "rxjs"
+import { interval, of } from "rxjs"
 import Sentry from "@sentry/electron"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
@@ -9,7 +9,7 @@ import find from "lodash.find"
 import { logBase } from "@app/main/utils/logging"
 import { withAppReady, fromSignal } from "@app/main/utils/observables"
 import { fromTrigger, createTrigger } from "@app/main/utils/flows"
-import { WindowHashProtocol } from "@app/constants/windows"
+import { WindowHashProtocol, WindowHashPayment } from "@app/constants/windows"
 import {
   createProtocolWindow,
   createAuthWindow,
@@ -22,6 +22,7 @@ import {
   destroyOmnibar,
   createLicenseWindow,
   createImportWindow,
+  getWindowByHash,
 } from "@app/main/utils/windows"
 import { persistGet } from "@app/main/utils/persist"
 import { internetWarning, rebootWarning } from "@app/main/utils/notification"

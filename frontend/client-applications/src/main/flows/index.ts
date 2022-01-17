@@ -100,7 +100,7 @@ const importedData = fromTrigger(WhistTrigger.beginImport).pipe(
 )
 
 // Observable that fires when Whist is ready to be launched
-const launchTrigger = onSignal(
+const launchTrigger = fromSignal(
   combineLatest({
     userEmail,
     accessToken,
@@ -109,10 +109,7 @@ const launchTrigger = onSignal(
     importedData: merge(importedData, dontImportBrowserData),
     regions: merge(awsPing.cached, awsPing.refresh),
   }),
-  merge(
-    fromTrigger(WhistTrigger.checkPaymentFlowSuccess),
-    refreshAfterPaying.success
-  )
+  fromTrigger(WhistTrigger.checkPaymentFlowSuccess)
 ).pipe(share())
 
 // Mandelbox creation flow
