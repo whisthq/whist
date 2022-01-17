@@ -57,11 +57,11 @@ const RootComponent = () => {
       trigger: { name: WhistTrigger.showPaymentWindow, payload: undefined },
     })
 
-  const handleSignout = (clearConfig: boolean) =>
+  const handleSignout = () =>
     setMainState({
       trigger: {
         name: WhistTrigger.clearCacheAction,
-        payload: { clearConfig },
+        payload: undefined,
       },
     })
 
