@@ -433,6 +433,9 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
 
     if (is_ready_to_render(ring_buffer, packet->id) && !was_already_ready) {
         ring_buffer->frames_received++;
+        VideoFrame* video_frame = (VideoFrame*)get_framebuffer(ring_buffer, frame_data);
+        frame_data->send_side_timestamp = video_frame->server_timestamp;
+        frame_data->recv_side_timestamp = current_time_us();
     }
 
     return num_overwritten_frames;

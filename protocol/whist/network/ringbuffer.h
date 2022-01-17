@@ -51,6 +51,9 @@ typedef struct FrameData {
     WhistTimer last_nacked_timer;
     WhistTimer last_nonnack_packet_timer;
     WhistTimer frame_creation_timer;
+    // gogg_cc delay gradient members
+    timestamp_us send_side_timestamp;
+    timestamp_us recv_side_timestamp;
     FECDecoder* fec_decoder;
 } FrameData;
 

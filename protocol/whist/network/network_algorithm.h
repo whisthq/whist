@@ -55,6 +55,10 @@ typedef struct {
     int num_skipped_frames_per_second;
     int num_rendered_frames_per_second;
     int throughput_per_second;
+    double average_delay_gradient;
+    double delay_gradient_variance;
+    double average_client_side_delay;
+    int num_delay_measurements;
     // True so that a NetworkStatistics struct can be marked as valid/invalid
     bool statistics_gathered;
 } NetworkStatistics;
