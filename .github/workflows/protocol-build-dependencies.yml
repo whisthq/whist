@@ -97,7 +97,7 @@ jobs:
             export CXXFLAGS="-mmacosx-version-min=10.13 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
 
             # configure and build OpenSSL with -O2/-O3 flag
-            ./config --release
+            ./Configure darwin64-x86_64-cc --release
             make -j
           elif [[ "${{ matrix.config.name }}" == "OpenSSL (macOS arm64)" ]]; then
             # configure and build OpenSSL for cross-compilation to arm64 from x64 systems
@@ -105,7 +105,7 @@ jobs:
             export CXXFLAGS="-mmacosx-version-min=11.0 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
 
             # configure and build OpenSSL with -O2/-O3 flag
-            ./config darwin64-arm64-cc --release
+            ./Configure darwin64-arm64-cc --release
             make -j
           else
             echo "Unsupported compilation attempt on macOS"
