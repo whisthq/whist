@@ -31,8 +31,10 @@ const persistSet = (key: string, value: string | boolean) => {
 
 const persistGet = (key: string) => store.get(key)
 
-const persistClear = (keys: string[]) => {
-  keys.forEach((key) => {
+const persistClear = (keys?: string[]) => {
+  if (keys === undefined) store.clear()
+
+  keys?.forEach((key) => {
     store.delete(key)
   })
 }
