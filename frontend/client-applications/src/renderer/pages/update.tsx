@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { Progress } from "@app/components/progress"
 
-import { useMainState } from "@app/utils/ipc"
+import { useMainState } from "@app/renderer/utils/ipc"
 
 const Update = () => {
   const [mainState] = useMainState()

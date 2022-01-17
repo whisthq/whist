@@ -4,21 +4,21 @@
  * @brief This file contains subscriptions to Observables related to state persistence.
  */
 import { combineLatest, concat, of, merge } from "rxjs"
-import { ipcBroadcast } from "@app/utils/ipc"
+import { ipcBroadcast } from "@app/main/utils/ipc"
 import { StateIPC } from "@app/@types/state"
 import { map, startWith, filter, withLatestFrom } from "rxjs/operators"
 import mapValues from "lodash.mapvalues"
 
-import { getElectronWindows } from "@app/utils/windows"
-import { fromTrigger } from "@app/utils/flows"
+import { getElectronWindows } from "@app/main/utils/windows"
+import { fromTrigger } from "@app/main/utils/flows"
 import { appEnvironment } from "../../../config/configs"
-import { getInstalledBrowsers } from "@app/utils/importer"
+import { getInstalledBrowsers } from "@app/main/utils/importer"
 import { WhistTrigger } from "@app/constants/triggers"
 import {
   RESTORE_LAST_SESSION,
   WHIST_IS_DEFAULT_BROWSER,
 } from "@app/constants/store"
-import { persistGet } from "@app/utils/persist"
+import { persistGet } from "@app/main/utils/persist"
 
 // This file is responsible for broadcasting state to all renderer windows.
 // We use a single object and IPC channel for all windows, so here we set up a

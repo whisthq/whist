@@ -7,8 +7,8 @@ import {
   mandelboxCreateErrorNoAccess,
   mandelboxCreateErrorUnauthorized,
   mandelboxCreateErrorMaintenance,
-} from "@app/utils/mandelbox"
-import { createErrorWindow } from "@app/utils/windows"
+} from "@app/main/utils/mandelbox"
+import { createErrorWindow } from "@app/main/utils/windows"
 import {
   NO_PAYMENT_ERROR,
   UNAUTHORIZED_ERROR,
@@ -17,8 +17,8 @@ import {
   MAINTENANCE_ERROR,
   PROTOCOL_ERROR,
 } from "@app/constants/error"
-import { fromTrigger } from "@app/utils/flows"
-import { withAppReady, untilUpdateAvailable } from "@app/utils/observables"
+import { fromTrigger } from "@app/main/utils/flows"
+import { withAppReady, untilUpdateAvailable } from "@app/main/utils/observables"
 import { WhistTrigger } from "@app/constants/triggers"
 
 // For any failure, close all windows and display error window

@@ -8,20 +8,21 @@ import Sentry from "@sentry/electron"
 import { app } from "electron"
 import { map, startWith, withLatestFrom } from "rxjs/operators"
 
-import { fromTrigger } from "@app/utils/flows"
+import { fromTrigger } from "@app/main/utils/flows"
 import {
   protocolStreamInfo,
   childProcess,
   protocolOpenUrl,
-} from "@app/utils/protocol"
-import { createProtocolWindow } from "@app/utils/windows"
-import { persistSet } from "@app/utils/persist"
+  protocolStreamKill,
+} from "@app/main/utils/protocol"
+import { createProtocolWindow } from "@app/main/utils/windows"
+import { persistSet } from "@app/main/utils/persist"
 import {
   RESTORE_LAST_SESSION,
   WHIST_IS_DEFAULT_BROWSER,
 } from "@app/constants/store"
 import { WhistTrigger } from "@app/constants/triggers"
-import { logBase } from "@app/utils/logging"
+import { logBase } from "@app/main/utils/logging"
 
 // The current implementation of the protocol process shows its own loading
 // screen while a mandelbox is created and configured. To do this, we need it
@@ -33,7 +34,7 @@ import { logBase } from "@app/utils/logging"
 fromTrigger(WhistTrigger.mandelboxFlowSuccess)
   .pipe(
     withLatestFrom(
-      fromTrigger(WhistTrigger.onboarded).pipe(
+      fromTrigger(WhistTrigger.beginImport).pipe(
         startWith(undefined),
         map(
           (
@@ -101,4 +102,8 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
     protocolOpenUrl(url)
     logBase(`Captured url ${url} after setting Whist as default browser!\n`, {})
   })
+})
+
+fromTrigger(WhistTrigger.beginImport).subscribe(() => {
+  protocolStreamKill()
 })

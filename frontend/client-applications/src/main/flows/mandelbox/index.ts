@@ -1,12 +1,13 @@
-import { merge, Observable, zip } from "rxjs"
-import { map } from "rxjs/operators"
+import { merge, Observable } from "rxjs"
+import { map, withLatestFrom } from "rxjs/operators"
+
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
-import { flow } from "@app/utils/flows"
+import { flow } from "@app/main/utils/flows"
 import { nativeTheme } from "electron"
-import { persistGet } from "@app/utils/persist"
+import { persistGet } from "@app/main/utils/persist"
 import { RESTORE_LAST_SESSION } from "@app/constants/store"
-import { getInitialKeyRepeat, getKeyRepeat } from "@app/utils/keyRepeat"
+import { getInitialKeyRepeat, getKeyRepeat } from "@app/main/utils/keyRepeat"
 import { AWSRegion } from "@app/@types/aws"
 import { appEnvironment } from "config/build"
 import { WhistEnvironments } from "config/constants"
@@ -18,9 +19,9 @@ export default flow(
       accessToken: string
       configToken: string
       isNewConfigToken: boolean
-      cookies: string
-      bookmarks: string
-      extensions: string
+      importedData:
+        | { cookies: string; bookmarks: string; extensions: string }
+        | undefined
       userEmail: string
       regions: Array<{ region: AWSRegion; pingTime: number }>
     }>
@@ -40,16 +41,14 @@ export default flow(
     const keyRepeat = getKeyRepeat()
 
     const host = hostSpinUpFlow(
-      zip([trigger, create.success]).pipe(
-        map(([t, c]) => ({
+      create.success.pipe(withLatestFrom(trigger)).pipe(
+        map(([c, t]) => ({
           ip: c.ip,
           configToken: t.configToken,
           accessToken: t.accessToken,
           isNewConfigToken: t.isNewConfigToken,
           mandelboxID: c.mandelboxID,
-          cookies: t.cookies,
-          bookmarks: t.bookmarks,
-          extensions: t.extensions,
+          importedData: t.importedData,
           jsonData: JSON.stringify({
             dark_mode: nativeTheme.shouldUseDarkColors,
             desired_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,

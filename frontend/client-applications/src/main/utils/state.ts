@@ -1,8 +1,8 @@
 import { map, startWith } from "rxjs/operators"
 import { Observable, of } from "rxjs"
 
-import { fromTrigger } from "@app/utils/flows"
-import { persistGet } from "@app/utils/persist"
+import { fromTrigger } from "@app/main/utils/flows"
+import { persistGet } from "@app/main/utils/persist"
 import {
   CACHED_ACCESS_TOKEN,
   CACHED_REFRESH_TOKEN,

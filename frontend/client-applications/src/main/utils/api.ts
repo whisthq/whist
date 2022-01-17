@@ -8,7 +8,7 @@ import { configGet, configPost, configPut } from "@whist/core-ts"
 import config from "@app/config/environment"
 import { sessionID } from "@app/constants/app"
 
-import { logBase } from "@app/utils/logging"
+import { logBase } from "@app/main/utils/logging"
 
 /*
  * @whist/core-ts http functions like "get" and "post"
