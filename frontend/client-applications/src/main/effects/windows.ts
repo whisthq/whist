@@ -65,8 +65,8 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
 const quit = () => {
   logBase("Application quitting", {})
   protocolStreamKill()
-  app?.dock?.show()
   app?.dock?.setIcon(iconPath())
+  app?.dock?.show()
   // app?.quit()
 }
 

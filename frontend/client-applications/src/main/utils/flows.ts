@@ -136,6 +136,7 @@ export const fromTrigger = (name: string): Observable<any> => {
     // so filtering for "failure" will emit every time any trigger with "failure" in the name fires.
     filter((x: Trigger) => x.name === name),
     // Flatten the trigger so that it can be consumed by a subscriber without transforms
-    map((x: Trigger) => x.payload)
+    map((x: Trigger) => x.payload),
+    share()
   )
 }
