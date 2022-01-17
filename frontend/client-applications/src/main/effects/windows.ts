@@ -157,16 +157,14 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
   }
 })
 
-withAppReady(
-  merge(
-    fromTrigger(WhistTrigger.checkPaymentFlowSuccess),
-    fromTrigger(WhistTrigger.stripeAuthRefresh)
-  )
-).subscribe(() => {
+withAppReady(fromTrigger(WhistTrigger.mandelboxFlowStart)).subscribe(() => {
   if (persistGet(ONBOARDED) as boolean) {
     networkAnalyze()
     createLoadingWindow()
   }
+
+  const paymentWindow = getWindowByHash(WindowHashPayment)
+  paymentWindow?.destroy()
 })
 
 // If we detect that the user to a location where another datacenter is closer

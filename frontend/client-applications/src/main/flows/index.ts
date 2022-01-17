@@ -9,7 +9,7 @@ import mandelboxFlow from "@app/main/flows/mandelbox"
 import autoUpdateFlow from "@app/main/flows/autoupdate"
 import awsPingFlow from "@app/main/flows/ping"
 import { fromTrigger, createTrigger } from "@app/main/utils/flows"
-import { fromSignal } from "@app/main/utils/observables"
+import { fromSignal, onSignal } from "@app/main/utils/observables"
 import { persistGet } from "@app/main/utils/persist"
 import { WhistTrigger } from "@app/constants/triggers"
 import {
@@ -100,7 +100,7 @@ const importedData = fromTrigger(WhistTrigger.beginImport).pipe(
 )
 
 // Observable that fires when Whist is ready to be launched
-const launchTrigger = fromSignal(
+const launchTrigger = onSignal(
   combineLatest({
     userEmail,
     accessToken,
@@ -124,6 +124,8 @@ const refreshAtEnd = authRefreshFlow(
   fromSignal(combineLatest({ refreshToken }), mandelbox.success)
 )
 
+createTrigger(WhistTrigger.mandelboxFlowStart, launchTrigger)
+
 createTrigger(WhistTrigger.awsPingCached, awsPing.cached)
 createTrigger(WhistTrigger.awsPingRefresh, awsPing.refresh)
 
@@ -133,7 +135,10 @@ createTrigger(WhistTrigger.authFlowFailure, auth.failure)
 createTrigger(WhistTrigger.updateDownloaded, update.downloaded)
 createTrigger(WhistTrigger.downloadProgress, update.progress)
 
-createTrigger(WhistTrigger.authRefreshSuccess, refreshAtEnd.success)
+createTrigger(
+  WhistTrigger.authRefreshSuccess,
+  merge(refreshAtEnd.success, refreshAfterPaying.success)
+)
 
 createTrigger(WhistTrigger.checkPaymentFlowSuccess, checkPayment.success)
 createTrigger(WhistTrigger.checkPaymentFlowFailure, checkPayment.failure)

@@ -262,23 +262,42 @@ export const createAuthWindow = () => {
 }
 
 export const createPaymentWindow = async (accessToken: accessToken) => {
+  const padding = 50
+  const paymentHeight = height.md.height + 20
+  const windowWidth = Math.round(width.lg.width + padding)
+  const windowHeight = Math.round(paymentHeight + padding)
+
   const response = await paymentPortalRequest(accessToken)
   const { paymentPortalURL } = paymentPortalParse(response)
 
   const win = createWindow({
     options: {
       ...base,
-      ...width.lg,
-      ...height.md,
+      width: windowWidth,
+      height: windowHeight,
+      frame: false,
+      border: false,
+      titleBarStyle: "hidden",
     } as BrowserWindowConstructorOptions,
     hash: WindowHashPayment,
-    customURL: paymentPortalURL,
     closeElectronWindows: true,
   })
 
+  const view = new BrowserView()
+
+  win.setBrowserView(view)
+  view.setBounds({
+    x: windowWidth / 2 - width.lg.width / 2,
+    y: windowHeight / 2 - paymentHeight / 2,
+    ...width.lg,
+    height: paymentHeight,
+  })
+
+  view.webContents.loadURL(paymentPortalURL ?? "")
+
   const {
     session: { webRequest },
-  } = win.webContents
+  } = view.webContents
 
   const filter = {
     urls: [WhistCallbackUrls.paymentCallBack],
@@ -309,6 +328,7 @@ export const createErrorWindow = (
       frame: false,
       titleBarStyle: "hidden",
       transparent: true,
+      alwaysOnTop: true,
     } as BrowserWindowConstructorOptions,
     hash: hash,
     closeElectronWindows: closeOtherWindows ?? true,
