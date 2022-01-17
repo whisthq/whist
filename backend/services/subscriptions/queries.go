@@ -86,6 +86,11 @@ var QueryInstancesByStatus struct {
 	WhistInstances `graphql:"whist_instances(where: {status: {_eq: $status}})"`
 }
 
+// QueryInstancesByImageID returns any instance with the given image id.
+var QueryInstancesByImageID struct {
+	WhistInstances `graphql:"whist_instances(where: {image_id: {_eq: $image_id}})"`
+}
+
 // QueryInstancesByStatusOnRegion returns any instance that matches the given status and
 // is located on the given region.
 var QueryInstancesByStatusOnRegion struct {

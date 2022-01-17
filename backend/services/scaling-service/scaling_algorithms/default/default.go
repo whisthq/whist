@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/hosts"
 	aws "github.com/whisthq/whist/backend/services/scaling-service/hosts/aws"
 	"github.com/whisthq/whist/backend/services/subscriptions"
@@ -132,7 +133,8 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 					// Create context for scaling operation
 					scalingCtx, scalingCancel := context.WithCancel(context.Background())
 
-					err := s.UpgradeImage(scalingCtx, s.Host, imageEvent, image)
+					// TODO: fire this event when starting scaling service, send proper arguments.
+					err := s.UpgradeImage(scalingCtx, s.Host, imageEvent, metadata.GetGitCommit(), image.ImageID)
 
 					// Cancel context once the operation is done
 					scalingCancel()

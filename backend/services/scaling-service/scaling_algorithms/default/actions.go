@@ -2,6 +2,7 @@ package scaling_algorithms
 
 import (
 	"context"
+	"time"
 
 	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/scaling-service/hosts"
@@ -327,13 +328,68 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 // UpgradeImage is a scaling action which runs when a new version is deployed. Its responsible of
 // starting a buffer of instances with the new image and scaling down instances with the previous
 // image.
-func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, host hosts.HostHandler, event ScalingEvent, image subscriptions.Image) error {
-	// create instance buffer with new image
+func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, host hosts.HostHandler, event ScalingEvent, oldImageID string, newImageID string) error {
+	logger.Infof("Starting upgrade image action for event: %v", event)
+	defer logger.Infof("Finished upgrade image.")
 
-	// wait for buffer to be ready
+	// create instance buffer with new image
+	bufferInstances, err := s.Host.SpinUpInstances(scalingCtx, DEFAULT_INSTANCE_BUFFER, newImageID)
+	if err != nil {
+		return utils.MakeError("failed to create instance buffer for image %v. Error: %v", newImageID, err)
+	}
+
+	// create slice of newly created instance ids
+	var bufferIDs []string
+	for _, instance := range bufferInstances {
+		bufferIDs = append(bufferIDs, instance.ID)
+	}
+
+	// wait for buffer to be ready. TODO: do this on a goroutine?
+	err = s.Host.WaitForInstanceReady(scalingCtx, bufferIDs)
+	if err != nil {
+		return utils.MakeError("error waiting for instances to be ready. Error: %v", err)
+	}
+
+	// get old instances from database
+	// check database for draining instances without running mandelboxes
+	oldInstancesQuery := subscriptions.QueryInstancesByStatus
+	queryParams := map[string]interface{}{
+		"image_id": graphql.String(oldImageID),
+	}
+
+	err = s.GraphQLClient.Query(scalingCtx, &oldInstancesQuery, queryParams)
+	if err != nil {
+		return utils.MakeError("failed to query database for instances with image %v. Err: %v", oldImageID, err)
+	}
+
+	// create slice of newly old instance ids to scale down
+	var oldIDs []string
+	for _, instance := range oldInstancesQuery.WhistInstances {
+		oldIDs = append(bufferIDs, string(instance.ID))
+	}
 
 	// drain instances with old image
+	_, err = s.Host.SpinDownInstances(scalingCtx, oldIDs)
+	if err != nil {
+		return utils.MakeError("failed waiting for instances to terminate. Err: %v", err)
+	}
 
 	// swapover active image on database
+	insertMutation := subscriptions.InsertInstances
+	mutationParams := map[string]interface{}{
+		"objects": subscriptions.Image{
+			Provider:  "aws",
+			Region:    event.Region,
+			ImageID:   newImageID,
+			ClientSHA: newImageID, //TODO: check if clientsha is the same as new image id.
+			UpdatedAt: time.Now(),
+		},
+	}
+
+	err = s.GraphQLClient.Mutate(scalingCtx, &insertMutation, mutationParams)
+	if err != nil {
+		return utils.MakeError("Failed to insert image %v into database. Error: %v", newImageID, err)
+	}
+
 	return nil
 }
