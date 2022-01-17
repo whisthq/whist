@@ -1,12 +1,12 @@
-import { logBase } from "@app/utils/logging"
+import { logBase } from "@app/main/utils/logging"
 import * as Sentry from "@sentry/electron"
 import { interval } from "rxjs"
 
 import config from "@app/config/environment"
 import { appEnvironment, WhistEnvironments } from "../../../config/configs"
 import { HEARTBEAT_INTERVAL_IN_MS, SENTRY_DSN } from "@app/constants/app"
-import { networkAnalyze } from "@app/utils/networkAnalysis"
-import { fromTrigger } from "@app/utils/flows"
+import { networkAnalyze } from "@app/main/utils/networkAnalysis"
+import { fromTrigger } from "@app/main/utils/flows"
 import { WhistTrigger } from "@app/constants/triggers"
 
 // Initialize and report Sentry errors in prod

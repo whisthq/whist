@@ -8,10 +8,10 @@ import checkPaymentFlow from "@app/main/flows/payment"
 import mandelboxFlow from "@app/main/flows/mandelbox"
 import autoUpdateFlow from "@app/main/flows/autoupdate"
 import awsPingFlow from "@app/main/flows/ping"
-import { fromTrigger, createTrigger } from "@app/utils/flows"
-import { fromSignal, withAppReady } from "@app/utils/observables"
-import { getRegionFromArgv } from "@app/utils/region"
-import { persistGet } from "@app/utils/persist"
+import { fromTrigger, createTrigger } from "@app/main/utils/flows"
+import { fromSignal, withAppReady } from "@app/main/utils/observables"
+import { getRegionFromArgv } from "@app/main/utils/region"
+import { persistGet } from "@app/main/utils/persist"
 import { WhistTrigger } from "@app/constants/triggers"
 import {
   accessToken,
@@ -23,14 +23,14 @@ import {
   timezone,
   keyRepeat,
   initialKeyRepeat,
-} from "@app/utils/state"
+} from "@app/main/utils/state"
 import { ONBOARDED } from "@app/constants/store"
 import {
   getDecryptedCookies,
   getBookmarks,
   getExtensions,
   InstalledBrowser,
-} from "@app/utils/importer"
+} from "@app/main/utils/importer"
 
 // Autoupdate flow
 const update = autoUpdateFlow(fromTrigger(WhistTrigger.updateAvailable))
@@ -57,7 +57,7 @@ const auth = authFlow(
 // Onboarding flow
 const onboarded = fromSignal(
   merge(
-    fromTrigger(WhistTrigger.onboarded),
+    fromTrigger(WhistTrigger.beginImport),
     zip(
       of(persistGet(ONBOARDED)).pipe(
         filter((onboarded) => onboarded as boolean)
@@ -81,32 +81,26 @@ const refreshAfterPaying = authRefreshFlow(
   )
 )
 
-// If importBrowserDataFrom is not empty, run the cookie import function
-const importCookies = fromTrigger(WhistTrigger.onboarded).pipe(
-  switchMap((t) =>
-    from(getDecryptedCookies(t?.importBrowserDataFrom as InstalledBrowser))
-  ),
-  share() // If you don't share, this observable will fire many times (once for each subscriber of the flow)
-)
-
-const importBookmarks = fromTrigger(WhistTrigger.onboarded).pipe(
-  switchMap((t) =>
-    from(getBookmarks(t?.importBrowserDataFrom as InstalledBrowser))
-  ),
-  share() // If you don't share, this observable will fire many times (once for each subscriber of the flow)
-)
-
-const importExtensions = fromTrigger(WhistTrigger.onboarded).pipe(
-  switchMap((t) =>
-    from(getExtensions(t?.importBrowserDataFrom as InstalledBrowser))
-  ),
-  share() // If you don't share, this observable will fire many times (once for each subscriber of the flow)
-)
-
 const dontImportBrowserData = of(persistGet(ONBOARDED) as boolean).pipe(
   take(1),
   filter((onboarded: boolean) => onboarded),
   mapTo(undefined),
+  share()
+)
+
+const importedData = fromTrigger(WhistTrigger.beginImport).pipe(
+  switchMap((t) =>
+    zip(
+      from(getDecryptedCookies(t?.importBrowserDataFrom as InstalledBrowser)),
+      from(getBookmarks(t?.importBrowserDataFrom as InstalledBrowser)),
+      from(getExtensions(t?.importBrowserDataFrom as InstalledBrowser))
+    )
+  ),
+  map(([cookies, bookmarks, extensions]) => ({
+    cookies,
+    bookmarks,
+    extensions,
+  })),
   share()
 )
 
@@ -117,25 +111,18 @@ const launchTrigger = fromSignal(
     accessToken,
     configToken,
     isNewConfigToken,
-    cookies: merge(importCookies, dontImportBrowserData),
-    bookmarks: merge(importBookmarks, dontImportBrowserData),
-    extensions: merge(importExtensions, dontImportBrowserData),
+    importedData: merge(importedData, dontImportBrowserData),
     regions: merge(awsPing.cached, awsPing.refresh),
     darkMode,
     timezone,
     keyRepeat,
     initialKeyRepeat,
-  }).pipe(
-    map((x: object) => ({
-      ...x,
-      region: getRegionFromArgv(process.argv),
-    }))
-  ),
+  }),
   merge(
     fromTrigger(WhistTrigger.checkPaymentFlowSuccess),
     refreshAfterPaying.success
   )
-).pipe(take(1), share())
+).pipe(share())
 
 // Mandelbox creation flow
 const mandelbox = mandelboxFlow(withAppReady(launchTrigger))

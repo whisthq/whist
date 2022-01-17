@@ -1,8 +1,8 @@
 import { merge } from "rxjs"
 import toPairs from "lodash.topairs"
 
-import { fromTrigger } from "@app/utils/flows"
-import { persistSet } from "@app/utils/persist"
+import { fromTrigger } from "@app/main/utils/flows"
+import { persistSet } from "@app/main/utils/persist"
 import { WhistTrigger } from "@app/constants/triggers"
 import { AWS_REGIONS_SORTED_BY_PROXIMITY } from "@app/constants/store"
 

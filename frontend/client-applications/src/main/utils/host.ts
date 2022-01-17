@@ -5,7 +5,7 @@
  */
 
 import { AsyncReturnType } from "@app/@types/state"
-import { hostPut } from "@app/utils/api"
+import { hostPut } from "@app/main/utils/api"
 import { HostServicePort } from "@app/constants/mandelbox"
 
 // This file directly interacts with data returned from the webserver, which
@@ -23,9 +23,7 @@ export const hostSpinUp = async ({
   jwt_access_token,
   mandelbox_id,
   json_data,
-  cookies,
-  bookmarks,
-  extensions,
+  importedData,
 }: {
   ip: string
   config_encryption_token: string
@@ -33,9 +31,9 @@ export const hostSpinUp = async ({
   jwt_access_token: string
   mandelbox_id: string
   json_data: string
-  cookies: string | undefined
-  bookmarks: string | undefined
-  extensions: string | undefined
+  importedData:
+    | { cookies: string; bookmarks: string; extensions: string }
+    | undefined
 }) =>
   hostPut(`https://${ip}:${HostServicePort}`)({
     endpoint: "/json_transport",
@@ -45,9 +43,11 @@ export const hostSpinUp = async ({
       jwt_access_token,
       mandelbox_id,
       json_data,
-      ...((cookies ?? "") !== "" && { cookies }),
-      ...((bookmarks ?? "") !== "" && { bookmarks }),
-      ...((extensions ?? "") !== "" && { extensions }),
+      ...(importedData !== undefined && {
+        cookies: importedData.cookies,
+        bookmarks: importedData.bookmarks,
+        extensions: importedData.extensions,
+      }),
     },
   })
 

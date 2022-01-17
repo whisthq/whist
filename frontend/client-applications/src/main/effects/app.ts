@@ -10,10 +10,10 @@ import { merge } from "rxjs"
 import { take } from "rxjs/operators"
 import Sentry from "@sentry/electron"
 
-import { relaunch, createOnboardingWindow } from "@app/utils/windows"
-import { fromTrigger } from "@app/utils/flows"
-import { persistGet, persistClear, persistSet } from "@app/utils/persist"
-import { withAppReady } from "@app/utils/observables"
+import { relaunch, createOnboardingWindow } from "@app/main/utils/windows"
+import { fromTrigger } from "@app/main/utils/flows"
+import { persistGet, persistClear, persistSet } from "@app/main/utils/persist"
+import { withAppReady } from "@app/main/utils/observables"
 import {
   ONBOARDED,
   CACHED_USER_EMAIL,
@@ -23,8 +23,8 @@ import {
   RESTORE_LAST_SESSION,
 } from "@app/constants/store"
 import { WhistTrigger } from "@app/constants/triggers"
-import { networkAnalyze } from "@app/utils/networkAnalysis"
-import { protocolStreamKill } from "@app/utils/protocol"
+import { networkAnalyze } from "@app/main/utils/networkAnalysis"
+import { protocolStreamKill } from "@app/main/utils/protocol"
 
 // If an update is available, show the update window and download the update
 fromTrigger(WhistTrigger.updateAvailable).subscribe(() => {
@@ -69,13 +69,9 @@ withAppReady(fromTrigger(WhistTrigger.authFlowSuccess))
     }
   })
 
-withAppReady(fromTrigger(WhistTrigger.onboarded)).subscribe(() => {
+withAppReady(fromTrigger(WhistTrigger.beginImport)).subscribe(() => {
   persistSet(ONBOARDED, true)
   persistSet(RESTORE_LAST_SESSION, true)
-})
-
-fromTrigger(WhistTrigger.onboarded).subscribe(() => {
-  persistSet(ONBOARDED, true)
 })
 
 fromTrigger(WhistTrigger.appReady).subscribe(() => {

@@ -1,6 +1,6 @@
 import React from "react"
 
-import { withContext } from "@app/renderer/pages/omnibar/context"
+import { withContext } from "@app/renderer/context/omnibar"
 
 const Search = () => {
   const context = withContext()
