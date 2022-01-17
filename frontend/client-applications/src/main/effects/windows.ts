@@ -1,5 +1,5 @@
 import { app, Notification } from "electron"
-import { withLatestFrom, throttle, filter } from "rxjs/operators"
+import { withLatestFrom, throttle, filter, take } from "rxjs/operators"
 import { interval, of } from "rxjs"
 import Sentry from "@sentry/electron"
 import isEmpty from "lodash.isempty"
@@ -24,7 +24,7 @@ import {
   createImportWindow,
   getWindowByHash,
 } from "@app/main/utils/windows"
-import { persistGet } from "@app/main/utils/persist"
+import { persistGet, persistSet } from "@app/main/utils/persist"
 import { internetWarning, rebootWarning } from "@app/main/utils/notification"
 import {
   protocolStreamInfo,
@@ -38,12 +38,14 @@ import {
   CACHED_USER_EMAIL,
   ONBOARDED,
   AWS_REGIONS_SORTED_BY_PROXIMITY,
+  RESTORE_LAST_SESSION,
 } from "@app/constants/store"
 import { networkAnalyze } from "@app/main/utils/networkAnalysis"
 import { AWSRegion } from "@app/@types/aws"
 import { LOCATION_CHANGED_ERROR } from "@app/constants/error"
 import { accessToken } from "@whist/core-ts"
 import { openSourceUrls } from "@app/constants/app"
+import { iconPath } from "@app/config/files"
 
 // Keeps track of how many times we've tried to relaunch the protocol
 const MAX_RETRIES = 3
@@ -63,7 +65,9 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
 const quit = () => {
   logBase("Application quitting", {})
   protocolStreamKill()
-  app?.quit()
+  app?.dock?.show()
+  app?.dock?.setIcon(iconPath())
+  // app?.quit()
 }
 
 const allWindowsClosed = fromTrigger(WhistTrigger.windowInfo).pipe(
@@ -158,12 +162,19 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
   }
 })
 
-withAppReady(fromTrigger(WhistTrigger.mandelboxFlowStart)).subscribe(() => {
-  if (persistGet(ONBOARDED) as boolean) {
-    networkAnalyze()
-    createLoadingWindow()
-  }
+withAppReady(fromTrigger(WhistTrigger.mandelboxFlowStart))
+  .pipe(take(1))
+  .subscribe(() => {
+    if (persistGet(ONBOARDED) as boolean) {
+      networkAnalyze()
+      createLoadingWindow()
+    } else {
+      persistSet(ONBOARDED, true)
+      persistSet(RESTORE_LAST_SESSION, true)
+    }
+  })
 
+withAppReady(fromTrigger(WhistTrigger.stripeAuthRefresh)).subscribe(() => {
   const paymentWindow = getWindowByHash(WindowHashPayment)
   paymentWindow?.destroy()
 })

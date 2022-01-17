@@ -18,6 +18,7 @@ import { ONBOARDED, RESTORE_LAST_SESSION } from "@app/constants/store"
 import { WhistTrigger } from "@app/constants/triggers"
 import { networkAnalyze } from "@app/main/utils/networkAnalysis"
 import { protocolStreamKill } from "@app/main/utils/protocol"
+import { iconPath } from "@app/config/files"
 
 // If an update is available, show the update window and download the update
 fromTrigger(WhistTrigger.updateAvailable).subscribe(() => {
@@ -56,15 +57,14 @@ withAppReady(fromTrigger(WhistTrigger.authFlowSuccess))
     }
   })
 
-withAppReady(fromTrigger(WhistTrigger.beginImport)).subscribe(() => {
-  persistSet(ONBOARDED, true)
-  persistSet(RESTORE_LAST_SESSION, true)
-})
-
 fromTrigger(WhistTrigger.appReady).subscribe(() => {
   app.requestSingleInstanceLock()
 
   app.on("second-instance", (e) => {
     e.preventDefault()
   })
+})
+
+fromTrigger(WhistTrigger.appReady).subscribe(() => {
+  app?.dock?.setIcon(iconPath())
 })

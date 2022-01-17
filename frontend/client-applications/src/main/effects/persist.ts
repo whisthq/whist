@@ -18,7 +18,6 @@ merge(
     refreshToken?: string
     configToken?: string
   }) => {
-    console.log("SUCCESS, PERSISTING")
     toPairs(args).forEach(([key, value]) => {
       if (value !== undefined) persistSet(`auth.${key}`, value)
     })
