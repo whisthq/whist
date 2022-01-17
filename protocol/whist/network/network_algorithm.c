@@ -59,6 +59,7 @@ NetworkSettings fallback_bitrate(NetworkStatistics stats);
 NetworkSettings ewma_bitrate(NetworkStatistics stats);
 NetworkSettings ewma_ratio_bitrate(NetworkStatistics stats);
 NetworkSettings timed_ewma_ratio_bitrate(NetworkStatistics stats);
+NetworkSettings gcc_bitrate(NetworkStatistics stats);
 
 /*
 ============================
@@ -71,7 +72,7 @@ NetworkSettings get_desired_network_settings(NetworkStatistics stats) {
     if (!stats.statistics_gathered) {
         return default_network_settings;
     }
-    NetworkSettings network_settings = timed_ewma_ratio_bitrate(stats);
+    NetworkSettings network_settings = gcc_bitrate(stats);
     network_settings.fps = default_network_settings.fps;
     network_settings.audio_fec_ratio = default_network_settings.audio_fec_ratio;
     network_settings.video_fec_ratio = default_network_settings.video_fec_ratio;
@@ -328,5 +329,136 @@ NetworkSettings ewma_ratio_bitrate(NetworkStatistics stats) {
             network_settings.burst_bitrate = MINIMUM_BITRATE;
         }
     }
+    return network_settings;
+}
+
+NetworkSettings gcc_bitrate(NetworkStatistics stats) {
+    /*
+        Calculate bitrate based on google congestion protocol
+        This does the steps of the the delay-based controller and loss-based controller as described
+        per the google congestion protocol.
+        Arguments:
+            stats (BitrateStatistics): struct containing the throughput per second of the client
+    */
+
+    // All constants are reccomended values from the paper
+    static clock gcc_clock;
+    static int step = 0;
+    static const double system_error_variance = 0.01;
+    static double kalman_gain = 0;
+    static double measurement_variance = 0.1;
+    static double filtered_delay_gradient = 0;
+
+    static const double adaptive_threshold_overuse_gain = 0.01;
+    static const double adaptive_threshold_underuse_gain = 0.00018;
+    static double overuse_threshold = .1;
+
+    static const double delay_controller_eta = 1.05;
+    static const double delay_controller_alpha = 0.85;
+    static int receiver_estimated_maximum_bitrate = STARTING_BITRATE;
+
+    static const double loss_controller_increase_threshold = 0.1;
+    static const double loss_controller_decrease_threshold = 0.01;
+
+    enum {
+        OVERUSE_DETECTOR_INCREASE_SIGNAL,
+        OVERUSE_DETECTOR_HOLD_SIGNAL,
+        OVERUSE_DETECTOR_DECREASE_SIGNAL,
+    } overuse_detector_signal;
+
+    static const double burst_multiplier = 2.0;
+    static NetworkSettings network_settings = {.bitrate = STARTING_BITRATE,
+                                               .burst_bitrate = STARTING_BURST_BITRATE};
+
+    if (stats.num_delay_measurements == 0) {
+        LOG_WARNING("NO MEASUREMENTS FOUND!");
+        LOG_INFO("%d %d %d %d", stats.num_nacks_per_second, stats.num_received_packets_per_second,
+                 stats.num_skipped_frames_per_second, stats.num_rendered_frames_per_second);
+        LOG_INFO("---");
+        return fallback_bitrate(stats);
+    }
+
+    if (!step) {
+        measurement_variance = stats.delay_gradient_variance;
+        filtered_delay_gradient = stats.average_delay_gradient;
+        start_timer(&gcc_clock);
+        LOG_INFO("STARTED TIMER");
+    }
+    step++;
+
+    if (get_timer(gcc_clock) < 2) {
+        return network_settings;
+    }
+
+    // Arrival filter- calculated delay gradient while accounting for network jitter (modeled as a
+    // constant value process so state update equation is not necessary)
+    double residual = stats.average_delay_gradient - filtered_delay_gradient;
+    double aggregate_variance = system_error_variance + measurement_variance;
+    kalman_gain =
+        aggregate_variance / (aggregate_variance + stats.delay_gradient_variance);  // gain update
+    filtered_delay_gradient =
+        filtered_delay_gradient + residual * kalman_gain;             // filter state update
+    measurement_variance = (1 - kalman_gain) * (aggregate_variance);  // measurement variance update
+
+    LOG_INFO("Measured Delay Gradient %f", stats.average_delay_gradient);
+    LOG_INFO("Filtered Delay Gradient %f", filtered_delay_gradient);
+
+    LOG_INFO("Average Client Side Delay %f", stats.average_client_side_delay);
+    LOG_INFO("Fabs diff %f", (fabs(filtered_delay_gradient) - overuse_threshold));
+    // Adaptive threshold update for overuse detector
+    double threshold_gain = (fabs(filtered_delay_gradient) < overuse_threshold)
+                                ? adaptive_threshold_underuse_gain
+                                : adaptive_threshold_overuse_gain;
+    LOG_INFO("Threshold gain %f", threshold_gain);
+    overuse_threshold = overuse_threshold + stats.average_client_side_delay * threshold_gain *
+                                                (fabs(filtered_delay_gradient) - overuse_threshold);
+
+    LOG_INFO("Overuse threshold %f", overuse_threshold);
+
+    // Detect over/under use using state machine outlined in paper
+    if (overuse_threshold < filtered_delay_gradient) {
+        overuse_detector_signal = OVERUSE_DETECTOR_DECREASE_SIGNAL;
+    } else if (-overuse_threshold > filtered_delay_gradient) {
+        overuse_detector_signal = OVERUSE_DETECTOR_INCREASE_SIGNAL;
+    } else {
+        overuse_detector_signal = OVERUSE_DETECTOR_HOLD_SIGNAL;
+    }
+
+    LOG_INFO("Signal %s", (overuse_detector_signal == OVERUSE_DETECTOR_INCREASE_SIGNAL) ? "INCREASE"
+                          : (overuse_detector_signal == OVERUSE_DETECTOR_DECREASE_SIGNAL)
+                              ? "DECREASE"
+                              : "HOLD");
+
+    // Delay-based controller selects based on signal
+    if (overuse_detector_signal != OVERUSE_DETECTOR_HOLD_SIGNAL) {
+        double multiplier = (overuse_detector_signal == OVERUSE_DETECTOR_DECREASE_SIGNAL)
+                                ? delay_controller_eta
+                                : delay_controller_alpha;
+        receiver_estimated_maximum_bitrate *= multiplier;
+    }
+
+    // Loss based controller
+    double loss_percentage = (double)stats.num_nacks_per_second /
+                             (stats.num_received_packets_per_second +
+                              stats.num_nacks_per_second);  // Not exact - approximation
+
+    LOG_INFO("Loss percentage %f", loss_percentage);
+
+    if (loss_percentage > loss_controller_increase_threshold) {
+        LOG_INFO("LOSS REDUCTION");
+        receiver_estimated_maximum_bitrate *= (1 - 0.5 * loss_percentage);
+    } else if (loss_percentage < loss_controller_decrease_threshold) {
+        LOG_INFO("LOSS INCREASE");
+        receiver_estimated_maximum_bitrate *= 1.02;
+    }
+
+    network_settings.bitrate = receiver_estimated_maximum_bitrate;
+    // Paper suggests constant multiplier > 1 for burst bandwidth
+    network_settings.burst_bitrate = receiver_estimated_maximum_bitrate * burst_multiplier;
+
+    LOG_INFO("MBPS BITRATE: %f", receiver_estimated_maximum_bitrate / 1024.0 / 1024.0);
+
+    start_timer(&gcc_clock);
+
     return network_settings;
 }
