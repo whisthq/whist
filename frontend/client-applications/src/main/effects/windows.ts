@@ -1,6 +1,6 @@
 import { app, Notification } from "electron"
-import { withLatestFrom, throttle, filter } from "rxjs/operators"
-import { interval, of, merge } from "rxjs"
+import { withLatestFrom, throttle, filter, take } from "rxjs/operators"
+import { interval, of } from "rxjs"
 import Sentry from "@sentry/electron"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
@@ -9,7 +9,7 @@ import find from "lodash.find"
 import { logBase } from "@app/main/utils/logging"
 import { withAppReady, fromSignal } from "@app/main/utils/observables"
 import { fromTrigger, createTrigger } from "@app/main/utils/flows"
-import { WindowHashProtocol } from "@app/constants/windows"
+import { WindowHashProtocol, WindowHashPayment } from "@app/constants/windows"
 import {
   createProtocolWindow,
   createAuthWindow,
@@ -22,8 +22,9 @@ import {
   destroyOmnibar,
   createLicenseWindow,
   createImportWindow,
+  getWindowByHash,
 } from "@app/main/utils/windows"
-import { persistGet } from "@app/main/utils/persist"
+import { persistGet, persistSet } from "@app/main/utils/persist"
 import { internetWarning, rebootWarning } from "@app/main/utils/notification"
 import {
   protocolStreamInfo,
@@ -37,12 +38,14 @@ import {
   CACHED_USER_EMAIL,
   ONBOARDED,
   AWS_REGIONS_SORTED_BY_PROXIMITY,
+  RESTORE_LAST_SESSION,
 } from "@app/constants/store"
 import { networkAnalyze } from "@app/main/utils/networkAnalysis"
 import { AWSRegion } from "@app/@types/aws"
 import { LOCATION_CHANGED_ERROR } from "@app/constants/error"
 import { accessToken } from "@whist/core-ts"
 import { openSourceUrls } from "@app/constants/app"
+import { iconPath } from "@app/config/files"
 
 // Keeps track of how many times we've tried to relaunch the protocol
 const MAX_RETRIES = 3
@@ -59,10 +62,11 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
   rebootNotification = rebootWarning()
 })
 
-const quit = () => {
+const sleep = () => {
   logBase("Application quitting", {})
   protocolStreamKill()
-  app?.quit()
+  app?.dock?.setIcon(iconPath())
+  app?.dock?.show().catch((err) => console.error(err))
 }
 
 const allWindowsClosed = fromTrigger(WhistTrigger.windowInfo).pipe(
@@ -88,7 +92,7 @@ allWindowsClosed.subscribe(
       args.hash !== WindowHashProtocol ||
       (args.hash === WindowHashProtocol && !args.crashed)
     ) {
-      quit()
+      sleep()
     }
   }
 )
@@ -157,16 +161,21 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
   }
 })
 
-withAppReady(
-  merge(
-    fromTrigger(WhistTrigger.checkPaymentFlowSuccess),
-    fromTrigger(WhistTrigger.stripeAuthRefresh)
-  )
-).subscribe(() => {
-  if (persistGet(ONBOARDED) as boolean) {
-    networkAnalyze()
-    createLoadingWindow()
-  }
+withAppReady(fromTrigger(WhistTrigger.mandelboxFlowStart))
+  .pipe(take(1))
+  .subscribe(() => {
+    if (persistGet(ONBOARDED) as boolean) {
+      networkAnalyze()
+      createLoadingWindow()
+    } else {
+      persistSet(ONBOARDED, true)
+      persistSet(RESTORE_LAST_SESSION, true)
+    }
+  })
+
+withAppReady(fromTrigger(WhistTrigger.stripeAuthRefresh)).subscribe(() => {
+  const paymentWindow = getWindowByHash(WindowHashPayment)
+  paymentWindow?.destroy()
 })
 
 // If we detect that the user to a location where another datacenter is closer

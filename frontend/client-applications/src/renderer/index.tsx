@@ -26,6 +26,7 @@ import {
   WindowHashAuth,
   WindowHashLoading,
   WindowHashOmnibar,
+  WindowHashPayment,
 } from "@app/constants/windows"
 import {
   whistError,
@@ -97,7 +98,17 @@ const RootComponent = () => {
       </Provider>
     )
   if (show === WindowHashAuth)
-    return <div className="bg-gray-100 w-screen h-screen"></div>
+    return (
+      <div className="bg-gray-100 w-screen h-screen">
+        <div className="w-full h-6 draggable"></div>
+      </div>
+    )
+  if (show === WindowHashPayment)
+    return (
+      <div className="bg-white w-screen h-screen">
+        <div className="w-full h-6 draggable"></div>
+      </div>
+    )
   if (show === WindowHashSignout) return <Signout onClick={handleSignout} />
   if (show === WindowHashUpdate) return <Update />
   if (show === WindowHashImport)

@@ -60,12 +60,6 @@ const pingLoop = (regions: AWSRegion[]) => {
   return pingResultPromises
 }
 
-const getRegionFromArgv = (argv: string[]) => {
-  return (Object.values(AWSRegion) as string[]).includes(argv[argv.length - 1])
-    ? argv[argv.length - 1]
-    : undefined
-}
-
 const sortRegionByProximity = async (regions: AWSRegion[]) => {
   /*
   Description:
@@ -85,4 +79,4 @@ const sortRegionByProximity = async (regions: AWSRegion[]) => {
   return sortedResults
 }
 
-export { getRegionFromArgv, sortRegionByProximity }
+export { sortRegionByProximity }

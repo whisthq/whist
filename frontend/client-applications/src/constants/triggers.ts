@@ -58,12 +58,12 @@ const WhistTrigger = {
   restoreLastSession: "restoreLastSession",
 
   // Flow triggers
+  mandelboxFlowStart: "mandelboxFlowStart",
   mandelboxFlowSuccess: "mandelboxFlowSuccess",
   mandelboxFlowFailure: "mandelboxFlowFailure",
   authFlowSuccess: "authFlowSuccess",
   authFlowFailure: "authFlowFailure",
   authRefreshSuccess: "authRefreshSuccess",
-  checkPaymentFlowSuccess: "checkPaymentFlowSuccess",
   checkPaymentFlowFailure: "checkPaymentFlowFailure",
   awsPingCached: "awsPingCached",
   awsPingRefresh: "awsPingRefresh",

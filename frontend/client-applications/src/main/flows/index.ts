@@ -9,8 +9,7 @@ import mandelboxFlow from "@app/main/flows/mandelbox"
 import autoUpdateFlow from "@app/main/flows/autoupdate"
 import awsPingFlow from "@app/main/flows/ping"
 import { fromTrigger, createTrigger } from "@app/main/utils/flows"
-import { fromSignal, withAppReady } from "@app/main/utils/observables"
-import { getRegionFromArgv } from "@app/main/utils/region"
+import { fromSignal, onSignal, withAppReady } from "@app/main/utils/observables"
 import { persistGet } from "@app/main/utils/persist"
 import { WhistTrigger } from "@app/constants/triggers"
 import {
@@ -58,18 +57,17 @@ const auth = authFlow(
 const onboarded = fromSignal(
   merge(
     fromTrigger(WhistTrigger.beginImport),
-    zip(
-      of(persistGet(ONBOARDED)).pipe(
-        filter((onboarded) => onboarded as boolean)
-      )
-    )
+    of(persistGet(ONBOARDED)).pipe(filter((onboarded) => onboarded as boolean))
   ),
   fromTrigger(WhistTrigger.authFlowSuccess)
 )
 
 // Unpack the access token to see if their payment is valid
 const checkPayment = checkPaymentFlow(
-  fromSignal(combineLatest({ accessToken }), onboarded)
+  onSignal(
+    fromSignal(combineLatest({ accessToken }), onboarded),
+    fromTrigger(WhistTrigger.authFlowSuccess)
+  )
 )
 
 // If the payment is invalid, they'll be redirect to the Stripe window. After that they'll
@@ -105,7 +103,7 @@ const importedData = fromTrigger(WhistTrigger.beginImport).pipe(
 )
 
 // Observable that fires when Whist is ready to be launched
-const launchTrigger = fromSignal(
+const launchTrigger = onSignal(
   combineLatest({
     userEmail,
     accessToken,
@@ -119,8 +117,14 @@ const launchTrigger = fromSignal(
     initialKeyRepeat,
   }),
   merge(
-    fromTrigger(WhistTrigger.checkPaymentFlowSuccess),
-    refreshAfterPaying.success
+    zip(
+      checkPayment.success,
+      of(persistGet(ONBOARDED)).pipe(
+        filter((onboarded) => onboarded as boolean)
+      )
+    ), // On a normal launch
+    zip(checkPayment.failure, refreshAfterPaying.success), // If you had an invalid subscription but now paid
+    importedData // On onboarding or import
   )
 ).pipe(share())
 
@@ -130,8 +134,12 @@ const mandelbox = mandelboxFlow(withAppReady(launchTrigger))
 // After the mandelbox flow is done, run the refresh flow so the tokens are being refreshed
 // every time but don't impede startup time
 const refreshAtEnd = authRefreshFlow(
-  fromSignal(combineLatest({ refreshToken }), mandelbox.success)
+  onSignal(combineLatest({ refreshToken }), mandelbox.success)
 )
+
+createTrigger(WhistTrigger.checkPaymentFlowFailure, checkPayment.failure)
+
+createTrigger(WhistTrigger.mandelboxFlowStart, launchTrigger)
 
 createTrigger(WhistTrigger.awsPingCached, awsPing.cached)
 createTrigger(WhistTrigger.awsPingRefresh, awsPing.refresh)
@@ -142,10 +150,10 @@ createTrigger(WhistTrigger.authFlowFailure, auth.failure)
 createTrigger(WhistTrigger.updateDownloaded, update.downloaded)
 createTrigger(WhistTrigger.downloadProgress, update.progress)
 
-createTrigger(WhistTrigger.authRefreshSuccess, refreshAtEnd.success)
-
-createTrigger(WhistTrigger.checkPaymentFlowSuccess, checkPayment.success)
-createTrigger(WhistTrigger.checkPaymentFlowFailure, checkPayment.failure)
+createTrigger(
+  WhistTrigger.authRefreshSuccess,
+  merge(refreshAtEnd.success, refreshAfterPaying.success)
+)
 
 createTrigger(WhistTrigger.mandelboxFlowSuccess, mandelbox.success)
 createTrigger(WhistTrigger.mandelboxFlowFailure, mandelbox.failure)

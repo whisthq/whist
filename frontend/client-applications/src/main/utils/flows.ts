@@ -102,6 +102,7 @@ export const createTrigger = <A>(name: string, obs: Observable<A>) => {
     */
 
   const startTime = Date.now()
+
   obs.pipe(share()).subscribe((x: any) => {
     if (!triggerLogsBlacklist.includes(name)) {
       logBase(`${name}`, { payload: x }, LogLevel.DEBUG, Date.now() - startTime)
@@ -136,6 +137,7 @@ export const fromTrigger = (name: string): Observable<any> => {
     // so filtering for "failure" will emit every time any trigger with "failure" in the name fires.
     filter((x: Trigger) => x.name === name),
     // Flatten the trigger so that it can be consumed by a subscriber without transforms
-    map((x: Trigger) => x.payload)
+    map((x: Trigger) => x.payload),
+    share()
   )
 }

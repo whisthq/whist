@@ -14,24 +14,23 @@ import { WhistTrigger } from "@app/constants/triggers"
 import { withAppReady } from "@app/utils/observables"
 import { getInitialKeyRepeat, getKeyRepeat } from "@app/utils/keyRepeat"
 
-// Auth state
-const accessToken = fromTrigger(WhistTrigger.authFlowSuccess).pipe(
-  map((x) => x.accessToken ?? ""),
+const accessToken = fromTrigger(WhistTrigger.storeDidChange).pipe(
+  map(() => (persistGet(CACHED_ACCESS_TOKEN) as string) ?? ""),
   startWith(persistGet(CACHED_ACCESS_TOKEN) ?? "")
 ) as Observable<string>
 
-const refreshToken = fromTrigger(WhistTrigger.authFlowSuccess).pipe(
-  map((x) => x.refreshToken ?? ""),
+const refreshToken = fromTrigger(WhistTrigger.storeDidChange).pipe(
+  map(() => (persistGet(CACHED_REFRESH_TOKEN) as string) ?? ""),
   startWith(persistGet(CACHED_REFRESH_TOKEN) ?? "")
 ) as Observable<string>
 
-const userEmail = fromTrigger(WhistTrigger.authFlowSuccess).pipe(
-  map((x) => x.userEmail ?? ""),
+const userEmail = fromTrigger(WhistTrigger.storeDidChange).pipe(
+  map(() => (persistGet(CACHED_USER_EMAIL) as string) ?? ""),
   startWith(persistGet(CACHED_USER_EMAIL) ?? "")
 ) as Observable<string>
 
-const configToken = fromTrigger(WhistTrigger.authFlowSuccess).pipe(
-  map((x) => x.configToken ?? ""),
+const configToken = fromTrigger(WhistTrigger.storeDidChange).pipe(
+  map(() => (persistGet(CACHED_CONFIG_TOKEN) as string) ?? ""),
   startWith(persistGet(CACHED_CONFIG_TOKEN) ?? "")
 ) as Observable<string>
 
