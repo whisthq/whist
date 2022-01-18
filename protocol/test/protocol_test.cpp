@@ -105,7 +105,7 @@ char* generate_random_string(size_t length) {
  * client/sdl_utils.c
  **/
 
-/*TEST_F(ProtocolTest, InitSDL) {
+TEST_F(ProtocolTest, InitSDL) {
     char* very_long_title = generate_random_string(2000);
     size_t title_len = strlen(very_long_title);
     EXPECT_EQ(title_len, 2000);
@@ -175,6 +175,7 @@ char* generate_random_string(size_t length) {
     window_resize_mutex = whist_create_mutex();
     window = new_window;
 
+    /*
     // Window resize
     {
         // Swap height and width (pixel form)
@@ -365,11 +366,12 @@ char* generate_random_string(size_t length) {
         EXPECT_EQ(actual_height, full_height);
     }
 
+    */
     destroy_sdl(new_window);
     whist_destroy_mutex(window_resize_mutex);
 
     check_stdout_line(::testing::HasSubstr("Destroying SDL"));
-}*/
+}
 
 /**
  * client/ringbuffer.c
