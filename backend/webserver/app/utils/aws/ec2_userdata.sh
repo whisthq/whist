@@ -7,6 +7,26 @@ echo "Whist EC2 userdata started"
 
 cd /home/ubuntu
 
+# The first thing we want to do is to set up the ephemeral storage available on
+# our instance, if there is some.
+EPHEMERAL_DEVICE_PATH=$(sudo nvme list -o json | jq '.Devices | map(select(.ModelNumber == "Amazon EC2 NVMe Instance Storage")) | max_by(.PhysicalSize) | .DevicePath')
+EPHEMERAL_FS_PATH=/ephemeral
+
+if [ $EPHEMERAL_DEVICE_PATH != "null" ] 
+then
+  echo "Ephemeral device path found: $EPHEMERAL_DEVICE_PATH"
+  sudo mkfs -t ext4 "$EPHEMERAL_DEVICE_PATH"
+  sudo mkdir -p "$EPHEMERAL_FS_PATH"
+  sudo mount "$EPHEMERAL_DEVICE_PATH" "$EPHEMERAL_FS_PATH"
+  echo "Mounted ephemeral storage at $EPHEMERAL_FS_PATH"
+else
+  echo "No ephemeral device path found."
+fi
+
+
+
+
+
 # The Host Service gets built in the `whist-build-and-deploy.yml` workflow and
 # uploaded from this Git repository to the AMI during Packer via ami_config.json
 # Here, we write the systemd unit file for the Whist Host Service.
