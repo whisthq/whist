@@ -4,15 +4,19 @@ import os
 from e2e_helpers.aws_tools import terminate_or_stop_aws_instance
 from e2e_helpers.aws_tools import get_boto3client
 
-# Check if there is any instance we need to terminate
-if not os.path.exists("instances_to_clean.txt") or not os.path.isfile("instances_to_clean.txt"):
-    print("No leftover instances need to be terminated")
+filepath = os.path.join("..", "instances_to_clean.txt")
+
+# Check if there is any instance we need to terminate or stop
+
+if not os.path.exists(filepath) or not os.path.isfile(filepath):
+    print("No leftover instances need to be stopped or terminated")
     exit()
 
-print("Connecting to E2 console...")
-
-# Terminate or stop the instances with the instance IDs from the file
-instances_file = open("instances_to_clean.txt", "r")
+# Terminate or stop the instances with the instance IDs from the file.
+# We terminate instances that were created anew by the
+# streaming_e2e_tester.py script. We stop instances that were reused by
+# the streaming_e2e_tester.py script.
+instances_file = open(filepath, "r")
 for line in instances_file.readlines():
     i = line.strip().split()
     action = i[0]
@@ -32,4 +36,4 @@ for line in instances_file.readlines():
 
 # Close and delete file
 instances_file.close()
-os.remove("instances_to_clean.txt")
+os.remove(filepath)

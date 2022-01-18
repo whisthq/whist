@@ -358,10 +358,10 @@ jobs:
         working-directory: protocol/test
         run: aws s3 cp perf_logs s3://whist-e2e-protocol-test-logs/"$GITHUB_REF_NAME" --recursive
 
-      - name: Terminate leftover AWS instances
+      - name: Stop or terminate leftover AWS instances
         if: ${{ always() && (steps.e2e_streaming_test.outcome == 'failure') }}
         working-directory: protocol/test
-        run: python3 clean_leftover_instances.py
+        run: python3 e2e_helpers/clean_leftover_instances.py
 
       # The streaming_e2e_tester.py file generates the files server_monitoring_log.txt and client_monitoring_log.txt in
       # the folder perf_logs at the path where it is run in. We parse these files to display the results of the test.
@@ -373,8 +373,9 @@ jobs:
           GITHUB_ISSUE: ${{ github.event.number }}
           GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
         run: |
-          import os, sys, mmap, time
+          import os, sys, time
           import numpy as np
+          from pytablewriter import MarkdownTableWriter
 
           # Here, we parse the test results into a .info file, which can be read and displayed on the GitHub PR
           # Create output .info file
@@ -418,13 +419,6 @@ jobs:
                   client_metrics[metric_name] = [metric_value]
                 else:
                   client_metrics[metric_name].append(metric_value)
-            if len(client_metrics) == 0:
-              results_file.write("NO CLIENT METRICS\n")
-            else:
-              results_file.write("###### CLIENT METRICS: ######\n")
-            for k in client_metrics:
-              client_metrics[k] = np.array(client_metrics[k])
-              results_file.write("{} ({} entries): avg={:.4f} std={:.4f}\n".format(k, len(client_metrics[k]), np.mean(client_metrics[k]), np.std(client_metrics[k])))
 
           with open(server_log_file, "r") as f:
             for line in f.readlines():
@@ -436,16 +430,70 @@ jobs:
                   server_metrics[metric_name] = [metric_value]
                 else:
                   server_metrics[metric_name].append(metric_value)
-            if len(server_metrics) == 0:
-              results_file.write("\nNO SERVER METRICS\n")
+
+          client_metrics2 = []
+          server_metrics2 = []
+
+          for k in client_metrics:
+            client_metrics[k] = np.array(client_metrics[k])
+            client_metrics2.append({
+              'metric': k,
+              'entries': len(client_metrics[k]),
+              'avg': np.mean(client_metrics[k]), 
+              'std': np.std(client_metrics[k]), 
+              'max': np.max(client_metrics[k]), 
+              'min':np.min(client_metrics[k])
+            })
+
+          for k in server_metrics:
+            server_metrics[k] = np.array(server_metrics[k])
+            server_metrics2.append({
+              'metric': k,
+              'entries': len(server_metrics[k]),
+              'avg': np.mean(server_metrics[k]), 
+              'std': np.std(server_metrics[k]), 
+              'max': np.max(server_metrics[k]), 
+              'min':np.min(server_metrics[k])
+            })
+
+
+          with redirect_stdout(results_file):
+
+            if len(client_metrics) == 0:
+              print("NO CLIENT METRICS\n")
             else:
-              results_file.write("\n###### SERVER METRICS: ######\n")
-            for k in server_metrics:
-              server_metrics[k] = np.array(server_metrics[k])
-              results_file.write("{} ({} entries): avg={:.4f} std={:.4f}\n".format(k, len(server_metrics[k]), np.mean(server_metrics[k]), np.std(server_metrics[k])))
+              print("###### CLIENT METRICS: ######\n")
+
+            writer = MarkdownTableWriter(
+              #table_name="Client metrics",
+              headers=["Metric", "Entries", "Average", "Standard Deviation", "Min", "Max"],
+              value_matrix=[
+                [i['metric'], i['entries'], i['avg'], i['std'], i['min'], i['max']] for i in client_metrics2
+              ],
+              margin=1,  # add a whitespace for both sides of each cell
+              max_precision=4,
+            )
+            writer.write_table()
+            print("\n")
+
+            if len(server_metrics) == 0:
+              print("NO SERVER METRICS\n")
+            else:
+              print("###### SERVER METRICS: ######\n")
 
 
-          # We're done, close the file
+            writer = MarkdownTableWriter(
+              #table_name="Client metrics",
+              headers=["Metric", "Entries", "Average", "Standard Deviation", "Min", "Max"],
+              value_matrix=[
+                [i['metric'], i['entries'], i['avg'], i['std'], i['min'], i['max']] for i in server_metrics2
+              ],
+              margin=1,  # add a whitespace for both sides of each cell
+              max_precision=4,
+            )
+            writer.write_table()
+
+
           results_file.close()
 
           #######################################################################################
