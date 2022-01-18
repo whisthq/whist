@@ -8,6 +8,9 @@ set(PROTOCOL_TEST_BINARY WhistProtocolTest)
 # Client-only files, since macOS is only supported client-sides
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     add_executable(${PROTOCOL_TEST_BINARY}
+        # Only run this with `make WhistProtocolTest`
+        EXCLUDE_FROM_ALL
+
         protocol_test.cpp
         codec_test.cpp
 
@@ -185,16 +188,21 @@ message(STATUS "Downloading test assets from AWS S3")
 execute_process(COMMAND aws s3 cp --recursive s3://fractal-test-assets/protocol-test-assets ${CMAKE_BINARY_DIR}/test/assets)
 message(STATUS "Downloading test assets from AWS S3 - Completed")
 
+# Include the GoogleTest library, and let gtest scan for the tests in the binary file
+include(GoogleTest)
+gtest_discover_tests(${PROTOCOL_TEST_BINARY})
+
 # Run the tests
+add_custom_target(RunProtocolTests DEPENDS ${PROTOCOL_TEST_BINARY})
 add_custom_command(
-    TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
+    TARGET RunProtocolTests POST_BUILD
     COMMAND ./${PROTOCOL_TEST_BINARY}
 )
 
 # Generate code coverage
 if(GENERATE_COVERAGE)
     add_custom_command(
-        TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
+        TARGET RunProtocolTests POST_BUILD
         COMMAND lcov --capture --directory ${CMAKE_BINARY_DIR} --output-file ${CMAKE_BINARY_DIR}/coverage.info
         COMMAND lcov --remove ${CMAKE_BINARY_DIR}/coverage.info -o ${CMAKE_BINARY_DIR}/coverage.info '${CMAKE_BINARY_DIR}/*' '/Applications/*' '/usr/include/c++/9/*' '/Library/*' '${CMAKE_SOURCE_DIR}/test' # Remove non-Whist files
         COMMAND lcov --list ${CMAKE_BINARY_DIR}/coverage.info # print verbose coverage information
@@ -204,11 +212,9 @@ endif()
 # Upload code coverage to Codecov
 if(UPLOAD_COVERAGE)
     add_custom_command(
-        TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
+        TARGET RunProtocolTests POST_BUILD
         COMMAND ${CMAKE_BINARY_DIR}/codecov --sha $ENV{GITHUB_SHA} --slug whisthq/whist -t $ENV{CODECOV_TOKEN} -c -F protocol
     )
 endif()
 
-# Include the GoogleTest library, and let gtest scan for the tests in the binary file
-include(GoogleTest)
-gtest_discover_tests(${PROTOCOL_TEST_BINARY})
+add_custom_target(test DEPENDS RunProtocolTests)
