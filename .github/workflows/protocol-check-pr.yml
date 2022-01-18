@@ -292,7 +292,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCHECK_CI=TRUE
           make -j WhistClient
           make -j test
 
