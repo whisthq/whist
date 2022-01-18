@@ -105,7 +105,7 @@ char* generate_random_string(size_t length) {
  * client/sdl_utils.c
  **/
 
-TEST_F(ProtocolTest, InitSDL) {
+/*TEST_F(ProtocolTest, InitSDL) {
     char* very_long_title = generate_random_string(2000);
     size_t title_len = strlen(very_long_title);
     EXPECT_EQ(title_len, 2000);
@@ -369,7 +369,7 @@ TEST_F(ProtocolTest, InitSDL) {
     whist_destroy_mutex(window_resize_mutex);
 
     check_stdout_line(::testing::HasSubstr("Destroying SDL"));
-}
+}*/
 
 /**
  * client/ringbuffer.c
