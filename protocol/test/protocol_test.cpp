@@ -300,7 +300,7 @@ TEST_F(ProtocolTest, InitSDL) {
         char* changed_title = generate_random_string(150);
         title_len = strlen(changed_title);
         EXPECT_EQ(title_len, 150);
-        bool should_update_window_title;
+        // bool should_update_window_title;
 
         // sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, &should_update_window_title,
         //                              NULL, NULL);
@@ -324,9 +324,9 @@ TEST_F(ProtocolTest, InitSDL) {
         // const char* changed_title2 = SDL_GetWindowTitle(new_window);
         // EXPECT_EQ(strcmp(changed_title, changed_title2), 0);
 
-        // free(changed_title);
+        free(changed_title);
     }
-    /*
+
     // Set fullscreen
     {
         width = get_window_pixel_width(new_window);
@@ -366,7 +366,6 @@ TEST_F(ProtocolTest, InitSDL) {
         EXPECT_EQ(actual_height, full_height);
     }
 
-    */
     destroy_sdl(new_window);
     whist_destroy_mutex(window_resize_mutex);
 
