@@ -24,8 +24,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Dependency #1 -- OpenSSL (x64)
-  build-and-publish-openssl-x64:
+  # Dependency #1 -- OpenSSL
+  build-and-publish-openssl:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
 
@@ -36,12 +36,15 @@ jobs:
             os: windows-2019
           - name: "OpenSSL (macOS x64)"
             os: macos-10.15
+          - name: "OpenSSL (macOS arm64)"
+            os: macos-11
           - name: "OpenSSL (Ubuntu Linux)"
             os: ubuntu-20.04
 
     env:
       windows-tar-name: fractal-windows-libcrypto-static-lib.tar.gz
-      macos-tar-name: fractal-macos-x64-libcrypto-static-lib.tar.gz
+      macos-x64-tar-name: fractal-macos-x64-libcrypto-static-lib.tar.gz
+      macos-arm64-tar-name: fractal-macos-arm64-libcrypto-static-lib.tar.gz
       linux-tar-name: fractal-linux-libcrypto-static-lib.tar.gz
       headers-tar-name: fractal-libcrypto-headers.tar.gz
       s3-bucket-uri: s3://fractal-protocol-shared-libs
@@ -54,7 +57,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: openssl/openssl
-          ref: OpenSSL_1_1_1k # GitHub Tag of latest stable OpenSSL release
+          ref: OpenSSL_1_1_1m # GitHub Tag of latest stable OpenSSL release
 
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
@@ -78,7 +81,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
         run: |
-          REM configure and build OpenSSL for Windows on the GitHub Actions Windows OS Version, with -O3 flag
+          REM configure and build OpenSSL for Windows on the GitHub Actions Windows OS Version, with -O2/-O3 flag
           perl Configure VC-WIN64A --release
           nmake
 
@@ -87,13 +90,27 @@ jobs:
 
       - name: Build Whist OpenSSL on macOS
         if: runner.os == 'macOS'
-        env:
-          CFLAGS: "-mmacosx-version-min=10.13 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
-          CXXFLAGS: "-mmacosx-version-min=10.13 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
         run: |
-          # configure and build OpenSSL with -O3 flag
-          ./config --release
-          make -j
+          if [[ "${{ matrix.config.name }}" == "OpenSSL (macOS x64)" ]]; then
+            # configure and build OpenSSL for native compilation on x64 systems
+            export CFLAGS="-mmacosx-version-min=10.13 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+            export CXXFLAGS="-mmacosx-version-min=10.13 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+
+            # configure and build OpenSSL with -O2/-O3 flag
+            ./Configure darwin64-x86_64-cc --release
+            make -j
+          elif [[ "${{ matrix.config.name }}" == "OpenSSL (macOS arm64)" ]]; then
+            # configure and build OpenSSL for cross-compilation to arm64 from x64 systems
+            export CFLAGS="-mmacosx-version-min=11.0 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+            export CXXFLAGS="-mmacosx-version-min=11.0 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+
+            # configure and build OpenSSL with -O2/-O3 flag
+            ./Configure darwin64-arm64-cc --release
+            make -j
+          else
+            echo "Unsupported compilation attempt on macOS"
+            exit
+          fi
 
       ###################################################################################
       ################################# LINUX STEPS START ###############################
@@ -103,7 +120,7 @@ jobs:
         env:
           DEBIAN_FRONTEND: "noninteractive"
         run: |
-          # configure and build OpenSSL with -O3 flag
+          # configure and build OpenSSL with -O2/-O3 flag
           ./config --release
           make -j
 
@@ -116,14 +133,22 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail {0}
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
-              tar -zcvf ${{ env.linux-tar-name }} libcrypto.a
-              aws s3 cp ${{ env.linux-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.linux-tar-name }}
+            tar -zcvf ${{ env.linux-tar-name }} libcrypto.a
+            aws s3 cp ${{ env.linux-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.linux-tar-name }}
           elif [ "$RUNNER_OS" == "Windows" ]; then
-              tar -zcvf ${{ env.windows-tar-name }} libcrypto-1_1-x64.dll libcrypto.lib
-              aws s3 cp ${{ env.windows-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.windows-tar-name }}
+            tar -zcvf ${{ env.windows-tar-name }} libcrypto-1_1-x64.dll libcrypto.lib
+            aws s3 cp ${{ env.windows-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.windows-tar-name }}
           else
-              tar -zcvf ${{ env.macos-tar-name }} libcrypto.a
-              aws s3 cp ${{ env.macos-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-tar-name }}
+            if [[ "${{ matrix.config.name }}" == "OpenSSL (macOS x64)" ]]; then
+              tar -zcvf ${{ env.macos-x64-tar-name }} libcrypto.a
+              aws s3 cp ${{ env.macos-x64-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-x64-tar-name }}
+            elif [[ "${{ matrix.config.name }}" == "OpenSSL (macOS arm64)" ]]; then
+              tar -zcvf ${{ env.macos-arm64-tar-name }} libcrypto.a
+              aws s3 cp ${{ env.macos-arm64-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-arm64-tar-name }}
+            else
+              echo "Tried to tar and upload to S3 for an unsupported OS"
+              exit
+            fi
           fi
 
       # Only run once, as headers are identical on every OS
@@ -168,88 +193,8 @@ jobs:
   #######################################################################################
   #######################################################################################
 
-  # Dependency #2 -- OpenSSL (arm64)
-  build-and-publish-openssl-arm64:
-    name: "OpenSSL (macOS arm64)"
-    runs-on: [self-hosted, macOS, ARM64]
-    defaults:
-      run:
-        shell: "/usr/bin/arch -arch arm64e /bin/bash {0}"
-
-    env:
-      macos-tar-name: fractal-macos-arm64-libcrypto-static-lib.tar.gz
-      s3-bucket-uri: s3://fractal-protocol-shared-libs
-      s3-bucket-region: us-east-1
-
-    steps:
-      ################################# CONFIG STEPS START ###############################
-
-      - name: Checkout openssl Git Repository
-        uses: actions/checkout@v2
-        with:
-          repository: openssl/openssl
-          ref: OpenSSL_1_1_1k # GitHub Tag of latest stable OpenSSL release
-
-      - name: Install awscli, cmake, gcc, and pkg-config
-        run: brew install awscli cmake pkg-config gcc
-
-      - name: Configure AWS S3 CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.s3-bucket-region }}
-
-      ###################################################################################
-      ################################# MACOS STEPS START ###############################
-
-      - name: Build Whist OpenSSL on macOS
-        env:
-          CFLAGS: "-mmacosx-version-min=11.0 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
-          CXXFLAGS: "-mmacosx-version-min=11.0 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
-        run: |
-          # configure and build OpenSSL with -O3 flag
-          ./config --release
-          make -j
-
-      ###################################################################################
-      ################################# PUBLISH STEPS START #############################
-
-      # Only publish to AWS S3 on Push events (code merged into `dev`), PRs only build to test
-      - name: Tar libcrypto and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
-        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-        run: |
-          tar -zcvf ${{ env.macos-tar-name }} libcrypto.a
-          aws s3 cp ${{ env.macos-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-tar-name }}
-
-      ###################################################################################
-
-      - name: Checkout whisthq/whist Git Repository
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
-        uses: actions/checkout@v2
-
-      - name: Setup Python-based notifications
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
-        working-directory: .github/workflows/helpers
-        run: ./notifications/setup_notifications.sh
-
-      - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
-        shell: python3 {0}
-        run: |
-          from notifications.slack_bot import slack_post
-
-          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          SLACK_CHANNEL = "#alerts-prod"
-          BODY = f"@releases :rotating_light: Failed to deploy `OpenSSL libcrypto` Static Library to AWS S3, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
-
-          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
-
-  #######################################################################################
-  #######################################################################################
-
-  # Dependency #3 -- Sentry (x64)
-  build-and-publish-sentry-x64:
+  # Dependency #2 -- Sentry
+  build-and-publish-sentry:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
 
@@ -260,12 +205,15 @@ jobs:
             os: windows-2019
           - name: "Sentry (macOS x64)"
             os: macos-10.15
+          - name: "Sentry (macOS arm64)"
+            os: macos-11
           - name: "Sentry (Ubuntu Linux)"
             os: ubuntu-20.04
 
     env:
       windows-tar-name: fractal-windows-sentry-shared-lib.tar.gz
-      macos-tar-name: fractal-macos-x64-sentry-shared-lib.tar.gz
+      macos-x64-tar-name: fractal-macos-x64-sentry-shared-lib.tar.gz
+      macos-arm64-tar-name: fractal-macos-arm64-sentry-shared-lib.tar.gz
       linux-tar-name: fractal-linux-sentry-shared-lib.tar.gz
       headers-tar-name: fractal-sentry-headers.tar.gz
       s3-bucket-uri: s3://fractal-protocol-shared-libs
@@ -330,25 +278,46 @@ jobs:
         if: runner.os == 'macOS'
         env:
           CMAKE_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
-          CMAKE_OSX_DEPLOYMENT_TARGET: "10.13"
         run: |
-          # configure and build Sentry Native
-          cmake -S . \
-                -B build \
-                -D CMAKE_BUILD_TYPE=Release \
-                -D SENTRY_BUILD_SHARED_LIBS=ON \
-                -D SENTRY_BUILD_RUNTIMESTATIC=ON \
-                -D SENTRY_BUILD_TESTS=OFF \
-                -D SENTRY_BACKEND=crashpad \
-                -D CMAKE_OSX_SYSROOT="${{ env.CMAKE_OSX_SYSROOT }}" \
-                -D CMAKE_OSX_DEPLOYMENT_TARGET="${{ env.CMAKE_OSX_DEPLOYMENT_TARGET }}"
+          if [[ "${{ matrix.config.name }}" == "Sentry (macOS x64)" ]]; then
+            # configure Cmake and build Sentry Native for native compilation on x64 systems
+            cmake -S . \
+                  -B build \
+                  -D CMAKE_BUILD_TYPE=Release \
+                  -D SENTRY_BUILD_SHARED_LIBS=ON \
+                  -D SENTRY_BUILD_RUNTIMESTATIC=ON \
+                  -D SENTRY_BUILD_TESTS=OFF \
+                  -D SENTRY_BACKEND=crashpad \
+                  -D CMAKE_OSX_DEPLOYMENT_TARGET="10.13" \
+                  -D CMAKE_OSX_SYSROOT="${{ env.CMAKE_OSX_SYSROOT }}"
 
-          cd build
-          make -j
+            cd build && make -j
 
-          # move files to location for publish steps to tar
-          mv crashpad_build/handler/crashpad_handler ..
-          mv libsentry.dylib ..
+            # move files to location for publish steps to tar
+            mv crashpad_build/handler/crashpad_handler ..
+            mv libsentry.dylib ..
+          elif [[ "${{ matrix.config.name }}" == "Sentry (macOS arm64)" ]]; then
+            # configure Cmake and build Sentry Native for cross-compilation to arm64 from x64 systems
+            cmake -S . \
+                  -B build \
+                  -D CMAKE_BUILD_TYPE=Release \
+                  -D SENTRY_BUILD_SHARED_LIBS=ON \
+                  -D SENTRY_BUILD_RUNTIMESTATIC=ON \
+                  -D SENTRY_BUILD_TESTS=OFF \
+                  -D SENTRY_BACKEND=crashpad \
+                  -D CMAKE_OSX_DEPLOYMENT_TARGET="11.0" \
+                  -D CMAKE_OSX_ARCHITECTURES="arm64" \
+                  -D CMAKE_OSX_SYSROOT="${{ env.CMAKE_OSX_SYSROOT }}"
+
+            cd build && make -j
+
+            # move files to location for publish steps to tar
+            mv crashpad_build/handler/crashpad_handler ..
+            mv libsentry.dylib ..
+          else
+            echo "Unsupported compilation attempt on macOS"
+            exit
+          fi
 
       ###################################################################################
       ################################# LINUX STEPS START ###############################
@@ -386,14 +355,22 @@ jobs:
         shell: bash --noprofile --norc -eo pipefail {0}
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
-              tar -zcvf ${{ env.linux-tar-name }} libsentry.so crashpad_handler
-              aws s3 cp ${{ env.linux-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.linux-tar-name }}
+          tar -zcvf ${{ env.linux-tar-name }} libsentry.so crashpad_handler
+            aws s3 cp ${{ env.linux-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.linux-tar-name }}
           elif [ "$RUNNER_OS" == "Windows" ]; then
-              tar -zcvf ${{ env.windows-tar-name }} sentry.dll sentry.lib crashpad_handler.exe
-              aws s3 cp ${{ env.windows-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.windows-tar-name }}
+            tar -zcvf ${{ env.windows-tar-name }} sentry.dll sentry.lib crashpad_handler.exe
+            aws s3 cp ${{ env.windows-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.windows-tar-name }}
           else
-              tar -zcvf ${{ env.macos-tar-name }} libsentry.dylib crashpad_handler
-              aws s3 cp ${{ env.macos-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-tar-name }}
+            if [[ "${{ matrix.config.name }}" == "Sentry (macOS x64)" ]]; then
+              tar -zcvf ${{ env.macos-x64-tar-name }} libsentry.dylib crashpad_handler
+              aws s3 cp ${{ env.macos-x64-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-x64-tar-name }}
+            elif [[ "${{ matrix.config.name }}" == "Sentry (macOS arm64)" ]]; then
+              tar -zcvf ${{ env.macos-arm64-tar-name }} libsentry.dylib crashpad_handler
+              aws s3 cp ${{ env.macos-arm64-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-arm64-tar-name }}
+            else
+              echo "Tried to tar and upload to S3 for an unsupported OS"
+              exit
+            fi
           fi
 
       # Only run once, as headers are identical on every OS
@@ -431,107 +408,9 @@ jobs:
   #######################################################################################
   #######################################################################################
 
-  # Dependency #3 -- Sentry (arm64)
-  build-and-publish-sentry-arm64:
-    name: "Sentry (macOS arm64)"
-    runs-on: [self-hosted, macOS, ARM64]
-    defaults:
-      run:
-        shell: "/usr/bin/arch -arch arm64e /bin/bash {0}"
-
-    env:
-      macos-tar-name: fractal-macos-arm64-sentry-shared-lib.tar.gz
-      s3-bucket-uri: s3://fractal-protocol-shared-libs
-      s3-bucket-region: us-east-1
-
-    steps:
-      ################################# CONFIG STEPS START ###############################
-
-      - name: Checkout sentry-native Git Repository
-        uses: actions/checkout@v2
-        with:
-          repository: getsentry/sentry-native
-          ref: "0.4.13" # GitHub Tag of the Sentry release we use
-          submodules: recursive # Sentry uses (nested) submodules for external dependencies
-
-      - name: Configure AWS S3 CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.s3-bucket-region }}
-
-      ###################################################################################
-      ################################# MACOS STEPS START ###############################
-
-      - name: Build Sentry Native on macOS
-        env:
-          CMAKE_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
-          CMAKE_OSX_DEPLOYMENT_TARGET: "11.0" # Oldest supported arm64 macOS version, to comply with older OSes
-        run: |
-          # configure and build Sentry Native
-          cmake -S . \
-                -B build \
-                -D CMAKE_BUILD_TYPE=Release \
-                -D SENTRY_BUILD_SHARED_LIBS=ON \
-                -D SENTRY_BUILD_RUNTIMESTATIC=ON \
-                -D SENTRY_BUILD_TESTS=OFF \
-                -D SENTRY_BACKEND=crashpad \
-                -D CMAKE_OSX_SYSROOT="${{ env.CMAKE_OSX_SYSROOT }}" \
-                -D CMAKE_OSX_DEPLOYMENT_TARGET="${{ env.CMAKE_OSX_DEPLOYMENT_TARGET }}"
-
-          cd build
-          make -j
-
-          # move files to location for publish steps to tar
-          mv crashpad_build/handler/crashpad_handler ..
-          mv libsentry.dylib ..
-
-      ###################################################################################
-      ################################# PUBLISH STEPS START #############################
-
-      # Only publish to AWS S3 on Push events (code merged into `dev`), PRs only build to test
-      - name: Tar Sentry and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
-        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-        run: |
-          tar -zcvf ${{ env.macos-tar-name }} libsentry.dylib crashpad_handler
-          aws s3 cp ${{ env.macos-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-tar-name }}
-
-      ###################################################################################
-
-      - name: Checkout whisthq/whist Git Repository
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
-        uses: actions/checkout@v2
-
-      - name: Setup Python-based notifications
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
-        working-directory: .github/workflows/helpers
-        run: ./notifications/setup_notifications.sh
-
-      - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
-        shell: python3 {0}
-        run: |
-          from notifications.slack_bot import slack_post
-
-          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          SLACK_CHANNEL = "#alerts-prod"
-          BODY = f"@releases :rotating_light: Failed to deploy Sentry `sentry-native` Shared Library to AWS S3, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
-
-          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
-
-  #######################################################################################
-  #######################################################################################
-
   notify-slack:
     name: Notify Slack
-    needs:
-      [
-        build-and-publish-openssl-x64,
-        build-and-publish-openssl-arm64,
-        build-and-publish-sentry-x64,
-        build-and-publish-sentry-arm64,
-      ]
+    needs: [build-and-publish-openssl, build-and-publish-sentry]
     if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && success() }}
     runs-on: ubuntu-20.04
     steps:
