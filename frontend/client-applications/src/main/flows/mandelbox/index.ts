@@ -1,12 +1,12 @@
+import { screen } from "electron"
+
 import { merge, Observable, zip } from "rxjs"
 import { map } from "rxjs/operators"
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
 import { flow } from "@app/utils/flows"
-import { nativeTheme } from "electron"
 import { persistGet } from "@app/utils/persist"
 import { RESTORE_LAST_SESSION } from "@app/constants/store"
-import { getInitialKeyRepeat, getKeyRepeat } from "@app/utils/keyRepeat"
 import { AWSRegion } from "@app/@types/aws"
 import { appEnvironment } from "config/build"
 import { WhistEnvironments } from "config/constants"
@@ -23,6 +23,10 @@ export default flow(
       extensions: string
       userEmail: string
       regions: Array<{ region: AWSRegion; pingTime: number }>
+      darkMode: boolean
+      timezone: string
+      keyRepeat: number | undefined
+      initialKeyRepeat: number | undefined
     }>
   ) => {
     const create = mandelboxCreateFlow(
@@ -34,10 +38,6 @@ export default flow(
         }))
       )
     )
-
-    // Retrieve keyboard repeat rates to send them to the mandelbox
-    const initialKeyRepeat = getInitialKeyRepeat()
-    const keyRepeat = getKeyRepeat()
 
     const host = hostSpinUpFlow(
       zip([trigger, create.success]).pipe(
@@ -51,17 +51,12 @@ export default flow(
           bookmarks: t.bookmarks,
           extensions: t.extensions,
           jsonData: JSON.stringify({
-            dark_mode: nativeTheme.shouldUseDarkColors,
-            desired_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            dark_mode: t.darkMode,
+            desired_timezonetime: t.timezone,
+            client_dpi: screen.getPrimaryDisplay()?.scaleFactor * 96,
             restore_last_session: persistGet(RESTORE_LAST_SESSION) ?? true,
-            ...(initialKeyRepeat !== "" &&
-              !isNaN(parseInt(initialKeyRepeat)) && {
-                initial_key_repeat: parseInt(initialKeyRepeat),
-              }),
-            ...(keyRepeat !== "" &&
-              !isNaN(parseInt(keyRepeat)) && {
-                key_repeat: parseInt(keyRepeat),
-              }),
+            initial_key_repeat: t.initialKeyRepeat,
+            key_repeat: t.keyRepeat,
             ...(t.isNewConfigToken && {
               initial_url: "https://whist.typeform.com/to/Oi21wwbg",
             }),
