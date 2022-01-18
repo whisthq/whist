@@ -15,12 +15,14 @@ passed through the D-Bus, and send them via the Whist Protocol to the client.
 
 #ifndef __linux__
 
-void init_notifications_thread(whist_server_state *state, struct event_base *eb) {
-    LOG_WARNING("Cannot initialize notifications thread; feature only supported on Linux");
+void *create_event_base() { return NULL; }
+
+void init_notifications_thread(whist_server_state *state, void *eb) {
+    LOG_INFO("Cannot initialize notifications thread; feature only supported on Linux");
 }
 
-void destroy_notifications_thread(struct event_base *eb) {
-    LOG_WARNING("Cannot destroy notifications thread; feature only supported on Linux");
+void destroy_notifications_thread(void *eb) {
+    LOG_INFO("Cannot destroy notifications thread; feature only supported on Linux");
 }
 
 #elif __linux__
@@ -107,7 +109,9 @@ Public Function Implementations
 ============================
 */
 
-void init_notifications_thread(whist_server_state *state, struct event_base *eb) {
+void *create_event_base() { return event_base_new(); }
+
+void init_notifications_thread(whist_server_state *state, void *eb) {
     NotifsThreadArgs *args = malloc(sizeof(NotifsThreadArgs));
     args->state = state;
     args->eb = eb;
@@ -115,7 +119,7 @@ void init_notifications_thread(whist_server_state *state, struct event_base *eb)
                         (void *)args);
 }
 
-void destroy_notifications_thread(struct event_base *eb) { event_base_loopbreak(eb); }
+void destroy_notifications_thread(void *eb) { event_base_loopbreak(eb); }
 
 /*
 ============================
