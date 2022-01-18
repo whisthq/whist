@@ -1,5 +1,5 @@
 import { autoUpdater } from "electron-updater"
-import { interval } from "rxjs"
+import { timer } from "rxjs"
 import { takeUntil } from "rxjs/operators"
 import Sentry from "@sentry/electron"
 
@@ -11,7 +11,7 @@ import { createUpdateWindow } from "@app/utils/windows"
 import { withAppReady } from "@app/utils/observables"
 import { CHECK_UPDATE_INTERVAL_IN_MS } from "@app/constants/app"
 
-withAppReady(interval(CHECK_UPDATE_INTERVAL_IN_MS)).subscribe(() => {
+withAppReady(timer(0, CHECK_UPDATE_INTERVAL_IN_MS)).subscribe(() => {
   // We want to manually control when we download the update via autoUpdater.quitAndInstall(),
   // so we need to set autoDownload = false
   autoUpdater.autoDownload = false
