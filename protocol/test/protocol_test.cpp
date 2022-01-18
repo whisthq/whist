@@ -175,7 +175,6 @@ TEST_F(ProtocolTest, InitSDL) {
     window_resize_mutex = whist_create_mutex();
     window = new_window;
 
-    /*
     // Window resize
     {
         // Swap height and width (pixel form)
@@ -249,7 +248,7 @@ TEST_F(ProtocolTest, InitSDL) {
         EXPECT_EQ(actual_width, adjusted_width);
         EXPECT_EQ(actual_height, adjusted_height);
     }
-
+    /*
     //  Titlebar color change
     {
         std::ranlux48 gen;
