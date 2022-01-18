@@ -281,6 +281,7 @@ TEST_F(ProtocolTest, InitSDL) {
 
 #ifdef _WIN32
         check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
+        check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
 #elif defined(__linux__)
         check_stdout_line(::testing::HasSubstr("Not implemented on X11."));
         check_stdout_line(::testing::HasSubstr("Not implemented on X11."));
@@ -306,7 +307,7 @@ TEST_F(ProtocolTest, InitSDL) {
         EXPECT_FALSE(should_update_window_title);
 
         sdl_set_window_title(changed_title);
-        char window_title[151];
+        char* window_title = (char*)calloc(2048, sizeof(char));
         sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, window_title,
                                      &should_update_window_title, NULL, NULL);
         EXPECT_TRUE(should_update_window_title);
@@ -322,7 +323,7 @@ TEST_F(ProtocolTest, InitSDL) {
         EXPECT_FALSE(should_update_window_title);
         const char* changed_title2 = SDL_GetWindowTitle(new_window);
         EXPECT_EQ(strcmp(changed_title, changed_title2), 0);
-
+        free(window_title);
         free(changed_title);
     }
 
