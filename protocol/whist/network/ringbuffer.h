@@ -108,7 +108,7 @@ typedef struct RingBuffer {
  * @returns A pointer to the newly created ring buffer. All frames in the new ring buffer have ID
  * -1.
  */
-RingBuffer* init_ring_buffer(WhistPacketType type, int ring_buffer_size, NackPacketFn nack_packet);
+RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_buffer_size, NackPacketFn nack_packet, StreamResetFn request_stream_reset);
 
 /**
  * @brief Retrives the frame at the given ID in the ring buffer.
@@ -189,5 +189,10 @@ bool is_ready_to_render(RingBuffer* ring_buffer, int id);
  *               Use ->frame_buffer to read the contents of the captured frame
  */
 FrameData* set_rendering(RingBuffer* ring_buffer, int id);
+
+/**
+ * @brief    Skip the ring buffer to ID id. This should be used when the client receives a stream reset request.
+ */
+void reset_stream(RingBuffer* ring_buffer, int id);
 
 #endif

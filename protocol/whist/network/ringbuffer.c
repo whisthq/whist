@@ -44,7 +44,7 @@ static void reset_bitrate_stat_members(RingBuffer* ring_buffer) {
     ring_buffer->num_frames_rendered = 0;
 }
 
-RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_buffer_size, NackPacketFn nack_packet) {
+RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_buffer_size, NackPacketFn nack_packet, StreamResetFn request_stream_reset) {
     /*
         Initialize the ring buffer; malloc space for all the frames and set their IDs to -1.
 
@@ -70,6 +70,7 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
     ring_buffer->ring_buffer_size = ring_buffer_size;
     ring_buffer->receiving_frames = safe_malloc(ring_buffer_size * sizeof(FrameData));
     ring_buffer->nack_packet = nack_packet;
+    ring_buffer->request_stream_reset = request_stream_reset;
     if (!ring_buffer->receiving_frames) {
         return NULL;
     }
@@ -158,19 +159,10 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer) {
             IFRAME_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
             ring_buffer->request_stream_reset(ring_buffer->type, max(next_render_id, ring_buffer->max_id - 1));
         }
-        /*
-            WhistClientMessage wcmsg = {0};
-            // Send a video packet stream reset request
-            wcmsg.type = MESSAGE_STREAM_RESET_REQUEST;
-            wcmsg.stream_reset_data.type = PACKET_VIDEO;
-            wcmsg.stream_reset_data.last_failed_id =
-                max(next_render_id, video_context->ring_buffer->max_id - 1);
-            send_wcmsg(&wcmsg);
-            */
             LOG_INFO(
                 "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
                 "and the frame we're trying to render has been alive for %fms. "
-                "An I-Frame is now being requested to catch-up.",
+                "A stream reset is now being requested to catch-up.",
                 ring_buffer->max_id,
                 ring_buffer->max_id - ring_buffer->last_rendered_id,
                 next_to_render_staleness * MS_IN_SECOND);
@@ -515,15 +507,6 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
     }
 
     if (is_ready_to_render(ring_buffer, packet->id) && !was_already_ready) {
-        // if the frame is an iframe, skip to it
-        // TODO: make this less video-specific? Possibly put this in get_packet(PACKET_VIDEO)
-        FrameData* frame_data = get_frame_at_id(ring_buffer, packet->id);
-        if (ring_buffer->type == PACKET_VIDEO) {
-            VideoFrame* frame = (VideoFrame*)frame_data->frame_buffer;
-            if (frame->is_iframe) {
-                reset_stream(ring_buffer, frame_data->id);
-            }
-        }
         ring_buffer->frames_received++;
     }
 

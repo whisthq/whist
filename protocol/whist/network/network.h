@@ -252,6 +252,9 @@ typedef struct {
     int nack_num_buffers[NUM_PACKET_TYPES];
     int nack_buffer_max_indices[NUM_PACKET_TYPES];
     int nack_buffer_max_payload_size[NUM_PACKET_TYPES];
+    RingBuffer* ring_buffers[NUM_PACKET_TYPES];
+    // because we don't need to buffer messages
+    WhistPacket* last_packets[NUM_PACKET_TYPES];
 } SocketContextData;
 
 /**

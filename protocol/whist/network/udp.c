@@ -71,10 +71,9 @@ static int udp_ack(void* raw_context) {
     return send(context->socket, NULL, 0, 0);
 }
 
-WhistPacket* udp_read_packet(void* raw_context, bool should_recv) {
+void udp_update(void* raw_context, bool should_recv) {
     /*
-     * Read a WhistPacket from the socket represented by raw_context, decrypt it if necessary, and return a pointer to the decrypted data.
-     * If there are no packets to receive, return NULL.
+     * Read a WhistPacket from the socket represented by raw_context, decrypt it if necessary, and store the decrypted data for the next get_packet call.
      * TODO: specify that we are reading WhistUDPPackets from the UDP socket and handle combining the WhistUDPPackets into WhistPackets. Return NULL if no full packet is available, and the full WhistPacket otherwise.
      * TODO: handle nacking by creating ring buffers for packet types that require nacking (audio and video)
      */ 
@@ -143,7 +142,19 @@ WhistPacket* udp_read_packet(void* raw_context, bool should_recv) {
         }
 
         context->decrypted_packet_used = true;
-        return &context->decrypted_packet;
+        WhistPacketType packet_type = context->decrypted_packet.type;
+        // put the decrypted packet in the correct ringbuffer
+        if (context->ring_buffers[packet_type] != NULL) {
+            receive_packet(context->ring_buffers[packet_type], &context->decrypted_packet);
+        } else {
+            // if there is no ring buffer (packet is message), store it in the 1-packet buffer instead
+            // first, free the old packet there
+            if (last_packets[packet_type] != NULL) {
+                free_packet(context, last_packets[packet_type]);
+            }
+            last_packets[packet_type] = &context->decrypted_packet;
+        }
+        return NULL;
     } else {
         // Network error or no packets to receive
         if (recv_len < 0) {
@@ -164,7 +175,48 @@ WhistPacket* udp_read_packet(void* raw_context, bool should_recv) {
     }
 }
 
-static void udp_free_packet(void* raw_context, WhistPacket* udp_packet) {
+void* udp_get_packet(void* context, WhistPacketType type) {
+    RingBuffer* ring_buffer = context->ring_buffers[type];
+    switch (type) {
+        case PACKET_MESSAGE: {
+                                 return last_packets[PACKET_MESSAGE];
+                             }
+        case PACKET_AUDIO: {
+                               // first, catch up audio if we're behind
+                               if ((ring_buffer->last_rendered_id == -1 && ring_buffer->max_id > 0) || (ring_buffer->last_rendered_id != -1 && ring_buffer->max_id - ring_buffer->last_rendered_id > MAX_NUM_AUDIO_FRAMES)) {
+                                   ring_buffer->last_rendered_id = ring_buffer->max_id - 1;
+                               }
+                               break;
+                                   }
+        case PACKET_VIDEO: {
+                               // skip to the most recent iframe if necessary
+                               for (int i = ring_buffer->max_id; i > max(0, ring_buffer->last_rendered_id); i--) {
+                                   if (is_ready_to_render(ring_buffer, i)) {
+                                       FrameData* frame_data = get_frame_at_id(ring_buffer, packet->id);
+                                       VideoFrame* frame = (VideoFrame*)frame_data->frame_buffer;
+                                       if (frame->is_iframe) {
+                                           reset_stream(ring_buffer, frame_data->id);
+                                           break;
+                                       }
+                                   }
+                                   // possibly skip to the next iframe
+                                   break;
+                               }
+        default: {
+                     LOG_ERROR("Received a packet that was of unknown type %d!", type);
+                 }
+    }
+    // then, set_rendering the next frame and give it to the decoder
+    int next_to_play_id = ring_buffer->last_rendered_id + 1;
+    if (is_ready_to_render(ring_buffer, next_to_play_id)) {
+        return set_rendering(ring_buffer, next_to_play_id);
+    } else {
+        // no frame ready yet
+        return NULL;
+    }
+}
+
+void udp_free_packet(void* raw_context, WhistPacket* udp_packet) {
     SocketContextData* context = raw_context;
 
     if (!context->decrypted_packet_used) {
@@ -383,6 +435,22 @@ void udp_update_network_settings(SocketContext* socket_context, NetworkSettings 
     FATAL_ASSERT(0.0 <= audio_fec_ratio && audio_fec_ratio <= MAX_FEC_RATIO);
     context->fec_packet_ratios[PACKET_VIDEO] = video_fec_ratio;
     context->fec_packet_ratios[PACKET_AUDIO] = audio_fec_ratio;
+}
+
+void udp_register_ring_buffer(SocketContext* context, WhistPacketType type, int max_frame_size, int num_buffers) {
+    SockeContextData* context = socket_context->context;
+
+    int type_index = (int)type;
+    if (type_index >= NUM_PACKET_TYPES) {
+        LOG_ERROR("Type is out of bounds! Something wrong happened");
+        return;
+    }
+    if (context->ring_buffers[type_index] != NULL) {
+        LOG_ERROR("Ring Buffer has already been initialized!");
+        return;
+    }
+
+    context->ring_buffers[type_index] = init_ring_buffer(type, max_frame_size, num_buffers, nack_packet);
 }
 
 void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType type,
@@ -822,7 +890,8 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
 
     // Populate function pointer table
     network_context->ack = udp_ack;
-    network_context->read_packet = udp_read_packet;
+    network_context->get_packet = udp_get_packet;
+    network_context->update = udp_update;
     network_context->free_packet = udp_free_packet;
     network_context->send_packet = udp_send_packet;
     network_context->destroy_socket_context = udp_destroy_socket_context;

@@ -131,8 +131,6 @@ static void update_sws_context(VideoContext* video_context, Uint8** data, int* l
 // TODO: Refactor into ringbuffer.c, so that ringbuffer.h
 // is what exposes theese functions
 static void calculate_statistics(VideoContext* video_context);
-static void try_recovering_missing_packets_or_frames(VideoContext* video_context);
-static void skip_to_next_iframe(VideoContext* video_context);
 
 /**
  * @brief                          Destroys an ffmpeg decoder on another thread
@@ -151,9 +149,6 @@ VideoContext* init_video() {
     VideoContext* video_context = safe_malloc(sizeof(*video_context));
     memset(video_context, 0, sizeof(*video_context));
 
-    // Initialize everything
-    video_context->ring_buffer =
-        init_ring_buffer(PACKET_VIDEO, RECV_FRAMES_BUFFER_SIZE, nack_packet);
     video_context->last_frame_width = -1;
     video_context->last_frame_height = -1;
     video_context->last_frame_codec = CODEC_TYPE_UNKNOWN;
@@ -607,103 +602,6 @@ void calculate_statistics(VideoContext* video_context) {
         ring_buffer->num_packets_received = 0;
         ring_buffer->num_frames_rendered = 0;
         start_timer(&video_context->network_statistics_timer);
-    }
-}
-
-void try_recovering_missing_packets_or_frames(VideoContext* video_context) {
-// If we want an iframe, this is how often we keep asking for it
-#define IFRAME_REQUEST_INTERVAL_MS 5.0
-// Number of frames ahead we can be before asking for iframe
-#define MAX_UNSYNCED_FRAMES 4
-// How stale the next-to-render-frame can be before asking for an iframe
-#define MAX_TO_RENDER_STALENESS 100.0
-
-    // Try to nack for any missing packets
-    bool nacking_succeeded = try_nacking(video_context->ring_buffer, latency);
-
-    // Get how stale the frame we're trying to render is
-    double next_to_render_staleness = -1.0;
-    int next_render_id = video_context->last_rendered_id + 1;
-    FrameData* ctx = get_frame_at_id(video_context->ring_buffer, next_render_id);
-    if (ctx->id == next_render_id) {
-        next_to_render_staleness = get_timer(&ctx->frame_creation_timer);
-    }
-
-    static bool already_logged_iframe_request = false;
-
-    // If nacking has failed to recover the packets we need,
-    if (!nacking_succeeded
-        // Or if we're more than MAX_UNSYNCED_FRAMES frames out-of-sync,
-        ||
-        video_context->ring_buffer->max_id > video_context->last_rendered_id + MAX_UNSYNCED_FRAMES
-        // Or we've spent MAX_TO_RENDER_STALENESS trying to render this one frame
-        || (next_to_render_staleness > MAX_TO_RENDER_STALENESS / MS_IN_SECOND)) {
-        // THEN, we should send an iframe request
-
-        // Throttle the requests to prevent network upload saturation, however
-        if (get_timer(&video_context->last_iframe_request_timer) >
-            IFRAME_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
-            int last_failed_id = max(next_render_id, video_context->ring_buffer->max_id - 1);
-            // Send a video packet stream reset request
-            WhistClientMessage wcmsg = {0};
-            wcmsg.type = MESSAGE_STREAM_RESET_REQUEST;
-            wcmsg.stream_reset_data.type = PACKET_VIDEO;
-            wcmsg.stream_reset_data.last_failed_id = last_failed_id;
-            send_wcmsg(&wcmsg);
-
-            // If we haven't already logged the iframe request,
-            // Logged the iframe request
-            if (!already_logged_iframe_request) {
-                LOG_INFO(
-                    "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
-                    "and the frame we're trying to render has been alive for %fms. "
-                    "An I-Frame is now being requested to catch-up.",
-                    video_context->ring_buffer->max_id,
-                    video_context->ring_buffer->max_id - video_context->last_rendered_id,
-                    next_to_render_staleness * MS_IN_SECOND);
-#if !LOG_VIDEO
-                // Prevent logging every iframe requests, when LOG_VIDEO is false
-                already_logged_iframe_request = true;
-#endif
-            }
-
-            start_timer(&video_context->last_iframe_request_timer);
-        }
-    } else {
-        already_logged_iframe_request = false;
-    }
-}
-
-void skip_to_next_iframe(VideoContext* video_context) {
-    // Only run if we're not rendering or we haven't rendered anything yet
-    if (video_context->most_recent_iframe > 0 && video_context->last_rendered_id == -1) {
-        // Silently skip to next iframe if it's the start of the stream
-        video_context->last_rendered_id = video_context->most_recent_iframe - 1;
-    } else if (video_context->most_recent_iframe - 1 > video_context->last_rendered_id) {
-        // Loudly declare the skip and log which frames we dropped
-        LOG_INFO("Skipping from %d to I-Frame %d", video_context->last_rendered_id,
-                 video_context->most_recent_iframe);
-        for (int i = max(video_context->last_rendered_id + 1,
-                         video_context->most_recent_iframe -
-                             video_context->ring_buffer->frames_received + 1);
-             i < video_context->most_recent_iframe; i++) {
-            FrameData* frame_data = get_frame_at_id(video_context->ring_buffer, i);
-            if (frame_data->id == i) {
-                LOG_WARNING("Frame dropped with ID %d: %d/%d", i,
-                            frame_data->original_packets_received,
-                            frame_data->num_original_packets);
-
-                for (int j = 0; j < frame_data->num_original_packets; j++) {
-                    if (!frame_data->received_indices[j]) {
-                        LOG_WARNING("Did not receive ID %d, Index %d", i, j);
-                    }
-                }
-                reset_frame(video_context->ring_buffer, frame_data);
-            } else if (frame_data->id != -1) {
-                LOG_WARNING("Bad ID? %d instead of %d", frame_data->id, i);
-            }
-        }
-        video_context->last_rendered_id = video_context->most_recent_iframe - 1;
     }
 }
 
