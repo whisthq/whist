@@ -11,6 +11,7 @@ extern "C" {
 #include "whist/video/codec/encode.h"
 #include "whist/video/codec/decode.h"
 #include "whist/video/capture/capture.h"
+#include "whist/video/ltr.h"
 }
 
 class CodecTest : public CaptureStdoutFixture {};
@@ -296,3 +297,160 @@ TEST_F(CodecTest, CaptureJPEGTest) {
 }
 
 #endif /* __linux__ */
+
+// Test each of the main interactions.
+TEST_F(CodecTest, LTRSimpleTest) {
+    LTRState *ltr;
+    LTRAction action;
+
+    ltr = ltr_create();
+    EXPECT_TRUE(ltr);
+
+    // First frame must always be an intra frame.
+    EXPECT_EQ(ltr_get_next_action(ltr, &action, 1), 0);
+    EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_INTRA);
+    EXPECT_EQ(action.long_term_frame_index, 0);
+
+    // Ack an ID we don't know, which should be ignored.
+    EXPECT_EQ(ltr_mark_frame_received(ltr, 1729), -1);
+
+    // Next frame should be normal.
+    EXPECT_EQ(ltr_get_next_action(ltr, &action, 2), 0);
+    EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_NORMAL);
+
+    // Ack the intra frame.
+    EXPECT_EQ(ltr_mark_frame_received(ltr, 1), 0);
+
+    // Next frame should be to create a new long-term reference, since
+    // we now definitely have the previous.
+    EXPECT_EQ(ltr_get_next_action(ltr, &action, 3), 0);
+    EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_CREATE_LONG_TERM);
+    EXPECT_EQ(action.long_term_frame_index, 1);
+
+    // Ack the first normal frame and send another.
+    EXPECT_EQ(ltr_mark_frame_received(ltr, 2), 0);
+    EXPECT_EQ(ltr_get_next_action(ltr, &action, 4), 0);
+    EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_NORMAL);
+
+    // Ack the long-term reference frame.
+    EXPECT_EQ(ltr_mark_frame_received(ltr, 3), 0);
+
+    // The next frame should create another long-term reference.
+    EXPECT_EQ(ltr_get_next_action(ltr, &action, 5), 0);
+    EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_CREATE_LONG_TERM);
+    EXPECT_EQ(action.long_term_frame_index, 0);
+
+    // Nack the normal frame, which transitively nacks the long-term
+    // reference frame just made as well.
+    EXPECT_EQ(ltr_mark_frame_not_received(ltr, 4), 0);
+
+    // Now we need to recover by referring to a long-term reference
+    // frame.
+    EXPECT_EQ(ltr_get_next_action(ltr, &action, 6), 0);
+    EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_REFER_LONG_TERM);
+    EXPECT_EQ(action.long_term_frame_index, 1);
+
+    // Next frame should be normal depending on the one just sent.
+    EXPECT_EQ(ltr_get_next_action(ltr, &action, 7), 0);
+    EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_NORMAL);
+
+    // Ack that and finish.
+    EXPECT_EQ(ltr_mark_frame_received(ltr, 7), 0);
+
+    ltr_destroy(ltr);
+}
+
+// Test intra frame generation.
+TEST_F(CodecTest, LTRIntraTest) {
+    LTRState *ltr;
+    LTRAction action;
+
+    ltr = ltr_create();
+    EXPECT_TRUE(ltr);
+
+    // Twenty frames, acked with a three-frame delay.
+    for (int i = 0; i < 20; i++) {
+        if (i == 10) {
+            // Request intra frame at frame 10.
+            ltr_force_intra(ltr);
+        }
+
+        EXPECT_EQ(ltr_get_next_action(ltr, &action, i), 0);
+        if (i == 0 || i == 10) {
+            EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_INTRA);
+            EXPECT_EQ(action.long_term_frame_index, 0);
+        }
+
+        if (i >= 3) EXPECT_EQ(ltr_mark_frame_received(ltr, i - 3), 0);
+    }
+
+    ltr_destroy(ltr);
+}
+
+// Test what happens with no acks.
+TEST_F(CodecTest, LTRNoAckTest) {
+    LTRState *ltr;
+    LTRAction action;
+
+    ltr = ltr_create();
+    EXPECT_TRUE(ltr);
+
+    // Three hundred frames (five seconds) with no acks.
+    for (int i = 0; i < 300; i++) {
+        EXPECT_EQ(ltr_get_next_action(ltr, &action, i), 0);
+        // There should be an intra frame at the beginning, then new
+        // ones every 60 frames of no response.
+        if (i % 60 == 0) {
+            EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_INTRA);
+            EXPECT_EQ(action.long_term_frame_index, 0);
+        } else {
+            EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_NORMAL);
+            EXPECT_EQ(action.long_term_frame_index, 0);
+        }
+    }
+
+    ltr_destroy(ltr);
+}
+
+// Test recovery after a gap.
+TEST_F(CodecTest, LTRRecoveryTest) {
+    LTRState *ltr;
+    LTRAction action;
+
+    ltr = ltr_create();
+    EXPECT_TRUE(ltr);
+
+    int last_create_long_term = 0;
+
+    // One hundred frames, with the middle twenty being dropped.
+    for (int i = 0; i < 100; i++) {
+        EXPECT_EQ(ltr_get_next_action(ltr, &action, i), 0);
+
+        if (i == 0) {
+            EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_INTRA);
+            EXPECT_EQ(action.long_term_frame_index, 0);
+        } else if (i == 60) {
+            EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_REFER_LONG_TERM);
+        } else {
+            EXPECT_NE(action.frame_type, VIDEO_FRAME_TYPE_INTRA);
+            EXPECT_NE(action.frame_type, VIDEO_FRAME_TYPE_REFER_LONG_TERM);
+            if (action.frame_type == VIDEO_FRAME_TYPE_CREATE_LONG_TERM) last_create_long_term = i;
+        }
+
+        if (i >= 3 && i < 40) {
+            // Ack initial frames before the gap.
+            EXPECT_EQ(ltr_mark_frame_received(ltr, i - 3), 0);
+        } else if (i == 59) {
+            // Nack one of the missing frames at the end of the gap.
+            EXPECT_EQ(ltr_mark_frame_not_received(ltr, 44), 0);
+        } else if (i >= 63) {
+            // Resume acking frames after the gap.
+            EXPECT_EQ(ltr_mark_frame_received(ltr, i - 3), 0);
+        }
+    }
+
+    // More long-term frames should have been created after the gap.
+    EXPECT_GT(last_create_long_term, 60);
+
+    ltr_destroy(ltr);
+}
