@@ -19,7 +19,7 @@ add_library(whistUtils STATIC
         )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        target_sources(whistUtils PRIVATE mac_utils.c mac_utils.h)
+        target_sources(whistUtils PRIVATE mac_utils.c mac_utils.h ffmpeg_memory.c)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         target_sources(whistUtils PRIVATE x11_window_info.c)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
