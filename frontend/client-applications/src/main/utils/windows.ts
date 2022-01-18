@@ -487,8 +487,8 @@ export const createLicenseWindow = (url: string) =>
     customURL: url,
   })
 
-export const createOmnibar = () =>
-  createWindow({
+export const createOmnibar = () => {
+  const win = createWindow({
     options: {
       ...base,
       ...width.md,
@@ -504,6 +504,11 @@ export const createOmnibar = () =>
     },
     hash: WindowHashOmnibar,
   })
+
+  win.focus()
+
+  return win
+}
 
 export const destroyOmnibar = () => {
   const win = getWindowByHash(WindowHashOmnibar)

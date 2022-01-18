@@ -28,7 +28,9 @@ const Loading = (props: {
             J
           </kbd>
         </div>
-        <div className="text-gray-500 text-sm mt-2">to view settings</div>
+        <div className="text-gray-500 text-sm mt-2">
+          to view settings when launched
+        </div>
       </div>
     </div>
   )
