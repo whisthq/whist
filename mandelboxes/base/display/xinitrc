@@ -4,18 +4,6 @@ set -Eeu
 xinitrc_pid=$$
 echo "xinitrc PID: $xinitrc_pid"
 
-# Obtain relevant config values from the JSON transport file
-WHIST_JSON_FILE=/whist/resourceMappings/config.json
-CLIENT_DPI=""
-if [[ -f $WHIST_JSON_FILE ]]; then
-  if [ "$( jq 'has("client_dpi")' < $WHIST_JSON_FILE )" == "true"  ]; then
-    CLIENT_DPI="$(jq '.client_dpi' < $WHIST_JSON_FILE)"
-    # Remove potential quotation marks
-    CLIENT_DPI=$(echo $CLIENT_DPI | tr -d '"')
-  fi
-fi
-
-
 # This script starts the AwesomeWM window manager inside the mandelbox
 # and starts the mandelbox's application (i.e. Google Chrome)
 
@@ -41,10 +29,7 @@ echo "playerctld daemon started as PID: $playerctld_pid"
 echo "Starting AwesomeWM in the background..."
 $RUN_AS_WHIST "awesome" &
 awesome_pid=$!
-echo "AwesomeWM started as PID $awesome_pid..."
-
-# Pass the client DPI value from the JSON transport. In case CLIENT_DPI is empty, the script will use a default value of 192.
-/usr/share/whist/update-whist-dpi.sh $CLIENT_DPI
+echo "AwesomeWM started as PID: $awesome_pid"
 
 # Start the XSettings daemon to make DPI changes responsive and get the PID of the backgrounded process
 echo "Starting 'xsettingsd' in the background..."
