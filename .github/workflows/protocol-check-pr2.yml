@@ -10,7 +10,7 @@ on:
     # Run once a day at midnight UTC
     #- cron:  '0 0 * * *'
     # once per hour (this is just for testing, to be deleted soon!)
-    - cron: "5 * * * *"
+    - cron: "36 * * * *"
 
 jobs:
   # Check Protocol PR on Intel X86_64 systems (via GHA runners)
