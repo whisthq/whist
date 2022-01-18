@@ -44,6 +44,7 @@ static NetworkSettings default_network_settings = {
 
 #define BAD_BITRATE 10400000
 #define BAD_BURST_BITRATE 31800000
+#define EWMA_STATS_SECONDS 5
 
 /*
 ============================
@@ -57,6 +58,7 @@ Private Function Declarations
 NetworkSettings fallback_bitrate(NetworkStatistics stats);
 NetworkSettings ewma_bitrate(NetworkStatistics stats);
 NetworkSettings ewma_ratio_bitrate(NetworkStatistics stats);
+NetworkSettings timed_ewma_ratio_bitrate(NetworkStatistics stats);
 
 /*
 ============================
@@ -69,7 +71,7 @@ NetworkSettings get_desired_network_settings(NetworkStatistics stats) {
     if (!stats.statistics_gathered) {
         return default_network_settings;
     }
-    NetworkSettings network_settings = ewma_ratio_bitrate(stats);
+    NetworkSettings network_settings = timed_ewma_ratio_bitrate(stats);
     network_settings.fps = default_network_settings.fps;
     network_settings.audio_fec_ratio = default_network_settings.audio_fec_ratio;
     network_settings.video_fec_ratio = default_network_settings.video_fec_ratio;
@@ -122,6 +124,31 @@ NetworkSettings ewma_bitrate(NetworkStatistics stats) {
     NetworkSettings network_settings = default_network_settings;
     network_settings.bitrate = (int)(bitrate_throughput_ratio * throughput);
     network_settings.burst_bitrate = STARTING_BURST_BITRATE;
+    return network_settings;
+}
+
+NetworkSettings timed_ewma_ratio_bitrate(NetworkStatistics stats) {
+    /* This is a stopgap to account for a recent change that calls the ewma_ratio_bitrate
+       at a frequency for which it was not designed for. This should eventually be replaced
+       This updates the ewma_ratio_bitrate steps every 5 seconds as it originally was
+       (in sync with the statistics_timer)
+       */
+
+    static WhistTimer interval_timer;
+    static bool timer_initialized = false;
+    static NetworkSettings network_settings = {.bitrate = STARTING_BITRATE,
+                                               .burst_bitrate = STARTING_BURST_BITRATE};
+
+    if (!timer_initialized) {
+        start_timer(&interval_timer);
+        timer_initialized = true;
+    }
+
+    if (get_timer(&interval_timer) > EWMA_STATS_SECONDS) {
+        network_settings = ewma_ratio_bitrate(stats);
+        start_timer(&interval_timer);
+    }
+
     return network_settings;
 }
 
