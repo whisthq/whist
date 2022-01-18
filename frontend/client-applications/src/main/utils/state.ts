@@ -11,8 +11,8 @@ import {
   CACHED_CONFIG_TOKEN,
 } from "@app/constants/store"
 import { WhistTrigger } from "@app/constants/triggers"
-import { withAppReady } from "@app/utils/observables"
-import { getInitialKeyRepeat, getKeyRepeat } from "@app/utils/keyRepeat"
+import { withAppReady } from "@app/main/utils/observables"
+import { getInitialKeyRepeat, getKeyRepeat } from "@app/main/utils/keyRepeat"
 
 const accessToken = fromTrigger(WhistTrigger.storeDidChange).pipe(
   map(() => (persistGet(CACHED_ACCESS_TOKEN) as string) ?? ""),

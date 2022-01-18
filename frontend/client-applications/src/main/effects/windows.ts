@@ -7,7 +7,7 @@ import pickBy from "lodash.pickby"
 import find from "lodash.find"
 
 import { logBase } from "@app/main/utils/logging"
-import { withAppReady, fromSignal } from "@app/main/utils/observables"
+import { withAppReady, waitForSignal } from "@app/main/utils/observables"
 import { fromTrigger, createTrigger } from "@app/main/utils/flows"
 import { WindowHashProtocol, WindowHashPayment } from "@app/constants/windows"
 import {
@@ -180,7 +180,7 @@ withAppReady(fromTrigger(WhistTrigger.stripeAuthRefresh)).subscribe(() => {
 
 // If we detect that the user to a location where another datacenter is closer
 // than the one we cached, we show them a warning to encourage them to relaunch Whist
-fromSignal(
+waitForSignal(
   fromTrigger(WhistTrigger.awsPingRefresh),
   fromTrigger(WhistTrigger.authRefreshSuccess)
 ).subscribe((regions) => {

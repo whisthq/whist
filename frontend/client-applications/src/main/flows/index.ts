@@ -9,7 +9,11 @@ import mandelboxFlow from "@app/main/flows/mandelbox"
 import autoUpdateFlow from "@app/main/flows/autoupdate"
 import awsPingFlow from "@app/main/flows/ping"
 import { fromTrigger, createTrigger } from "@app/main/utils/flows"
-import { fromSignal, onSignal, withAppReady } from "@app/main/utils/observables"
+import {
+  waitForSignal,
+  emitOnSignal,
+  withAppReady,
+} from "@app/main/utils/observables"
 import { persistGet } from "@app/main/utils/persist"
 import { WhistTrigger } from "@app/constants/triggers"
 import {
@@ -54,7 +58,7 @@ const auth = authFlow(
 )
 
 // Onboarding flow
-const onboarded = fromSignal(
+const onboarded = waitForSignal(
   merge(
     fromTrigger(WhistTrigger.beginImport),
     of(persistGet(ONBOARDED)).pipe(filter((onboarded) => onboarded as boolean))
@@ -64,8 +68,8 @@ const onboarded = fromSignal(
 
 // Unpack the access token to see if their payment is valid
 const checkPayment = checkPaymentFlow(
-  onSignal(
-    fromSignal(combineLatest({ accessToken }), onboarded),
+  emitOnSignal(
+    waitForSignal(combineLatest({ accessToken }), onboarded),
     fromTrigger(WhistTrigger.authFlowSuccess)
   )
 )
@@ -73,7 +77,7 @@ const checkPayment = checkPaymentFlow(
 // If the payment is invalid, they'll be redirect to the Stripe window. After that they'll
 // get new auth credentials
 const refreshAfterPaying = authRefreshFlow(
-  fromSignal(
+  waitForSignal(
     combineLatest({ refreshToken }),
     fromTrigger(WhistTrigger.stripeAuthRefresh)
   )
@@ -103,7 +107,7 @@ const importedData = fromTrigger(WhistTrigger.beginImport).pipe(
 )
 
 // Observable that fires when Whist is ready to be launched
-const launchTrigger = onSignal(
+const launchTrigger = emitOnSignal(
   combineLatest({
     userEmail,
     accessToken,
@@ -134,7 +138,7 @@ const mandelbox = mandelboxFlow(withAppReady(launchTrigger))
 // After the mandelbox flow is done, run the refresh flow so the tokens are being refreshed
 // every time but don't impede startup time
 const refreshAtEnd = authRefreshFlow(
-  onSignal(combineLatest({ refreshToken }), mandelbox.success)
+  emitOnSignal(combineLatest({ refreshToken }), mandelbox.success)
 )
 
 createTrigger(WhistTrigger.checkPaymentFlowFailure, checkPayment.failure)
