@@ -302,16 +302,16 @@ TEST_F(ProtocolTest, InitSDL) {
         EXPECT_EQ(title_len, 150);
         bool should_update_window_title;
 
-        sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, &should_update_window_title,
-                                     NULL, NULL);
-        EXPECT_FALSE(should_update_window_title);
+        // sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, &should_update_window_title,
+        //                              NULL, NULL);
+        // EXPECT_FALSE(should_update_window_title);
 
-        sdl_set_window_title(changed_title);
-        char window_title[151];
-        sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, window_title,
-                                     &should_update_window_title, NULL, NULL);
-        EXPECT_TRUE(should_update_window_title);
-        EXPECT_EQ(strcmp(changed_title, window_title), 0);
+        // sdl_set_window_title(changed_title);
+        // char window_title[151];
+        // sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, window_title,
+        //                              &should_update_window_title, NULL, NULL);
+        // EXPECT_TRUE(should_update_window_title);
+        // EXPECT_EQ(strcmp(changed_title, window_title), 0);
 
         // const char* old_title = SDL_GetWindowTitle(new_window);
         // EXPECT_FALSE(strcmp(old_title, changed_title) == 0);
