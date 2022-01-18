@@ -58,7 +58,7 @@ const Omnibar = () => {
       <div>
         <Search />
       </div>
-      <div className="overflow-y-scroll h-56 pb-12">
+      <div className="overflow-y-scroll h-56">
         {options.map((option, index) => (
           <div
             onMouseEnter={() => setActiveIndex(index)}
