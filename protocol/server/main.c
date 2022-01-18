@@ -21,11 +21,7 @@ Includes
 #include "parse_args.h"
 #include "handle_client_message.h"
 #include "server_statistic.h"
-
-#ifdef __linux__
 #include "notifications.h"
-#include <event.h>
-#endif
 
 /*
 ============================
