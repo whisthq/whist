@@ -24,7 +24,7 @@ Includes
 #include "state.h"
 
 // i: means --identifier MUST take an argument
-#define OPTION_STRING "k:i:w:e:t:d:"
+#define OPTION_STRING "k:i:w:e:t:d:b:"
 
 /*
 ============================
@@ -38,6 +38,7 @@ const struct option cmd_options[] = {{"private-key", required_argument, NULL, 'k
                                      {"environment", required_argument, NULL, 'e'},
                                      {"timeout", required_argument, NULL, 't'},
                                      {"session-id", required_argument, NULL, 'd'},
+                                     {"dbus-address", required_argument, NULL, 'b'},
                                      // these are standard for POSIX programs
                                      {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
                                      {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
@@ -70,6 +71,7 @@ int server_parse_args(whist_server_config* config, int argc, char* argv[]) {
         "  -t, --timeout=TIME            Tell the server to give up after TIME seconds. If TIME\n"
         "                                  is -1, disable auto exit completely. Default: 60\n"
         "  -d, --session-id=ID           Set the session ID for the protocol's error logging\n"
+        "  -b, --dbus-address=DBUS       Pass in the address where the D-Bus connection lives\n"
         // special options should be indented further to the left
         "      --help     Display this help and exit\n"
         "      --version  Output version information and exit\n";
@@ -126,6 +128,16 @@ int server_parse_args(whist_server_config* config, int argc, char* argv[]) {
                 whist_error_monitor_set_session_id(optarg);
                 break;
             }
+            case 'b': {
+                printf("Got D-Bus address: %s\n", optarg);
+                if (!safe_strncpy(config->dbus_address, optarg, sizeof(config->dbus_address))) {
+                    printf("D-Bus address passed in is too long! Has length %lu but max is %d.\n",
+                           (unsigned long)strlen(optarg), DBUS_ADDRESS_MAXLEN);
+                    return -1;
+                }
+                break;
+            }
+
             case WHIST_GETOPT_HELP_CHAR: {
                 printf(usage_details, argv[0]);
                 return 1;
