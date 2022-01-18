@@ -372,11 +372,13 @@ int send_server_quit_messages(int num_messages) {
 // Please pass this comment into any non-trivial function that this function calls.
 int send_wcmsg(WhistClientMessage *wcmsg) {
     /*
-        We send large wcmsg's over TCP. At the moment, this is only CLIPBOARD;
+        We send large wcmsg's over TCP.
         Currently, sending WhistClientMessage packets over UDP that require multiple
         sub-packets to send is not supported (if low latency large
         WhistClientMessage packets are needed, then this will have to be
         implemented)
+        Also any message larger than sizeof(WhistClientMessage) should mandatorily use TCP to avoid
+        server-side stack overflow.
 
         Arguments:
             wcmsg (WhistClientMessage*): pointer to WhistClientMessage to be send
@@ -387,15 +389,15 @@ int send_wcmsg(WhistClientMessage *wcmsg) {
 
     // Shouldn't overflow, will take 50 days at 1000 wcmsg/second to overflow
     static unsigned int wcmsg_id = 0;
+    int wcmsg_size = get_wcmsg_size(wcmsg);
     wcmsg->id = wcmsg_id;
     wcmsg_id++;
 
-    if (wcmsg->type == CMESSAGE_CLIPBOARD || wcmsg->type == MESSAGE_DISCOVERY_REQUEST ||
-        wcmsg->type == CMESSAGE_FILE_DATA || wcmsg->type == CMESSAGE_FILE_METADATA ||
-        wcmsg->type == MESSAGE_TCP_PING) {
-        return send_packet(&packet_tcp_context, PACKET_MESSAGE, wcmsg, get_wcmsg_size(wcmsg), -1);
+    if (wcmsg->type == MESSAGE_DISCOVERY_REQUEST || wcmsg->type == MESSAGE_TCP_PING ||
+        (size_t)wcmsg_size > sizeof(*wcmsg)) {
+        return send_packet(&packet_tcp_context, PACKET_MESSAGE, wcmsg, wcmsg_size, -1);
     } else {
-        if ((size_t)get_wcmsg_size(wcmsg) > MAX_PACKET_SIZE) {
+        if ((size_t)wcmsg_size > MAX_PACKET_SIZE) {
             LOG_ERROR("Attempting to send WMSG of type %d over UDP, but message is too large.",
                       wcmsg->type);
             return -1;
@@ -403,7 +405,6 @@ int send_wcmsg(WhistClientMessage *wcmsg) {
         static int sent_packet_id = 0;
         sent_packet_id++;
 
-        return send_packet(&packet_udp_context, PACKET_MESSAGE, wcmsg, get_wcmsg_size(wcmsg),
-                           sent_packet_id);
+        return send_packet(&packet_udp_context, PACKET_MESSAGE, wcmsg, wcmsg_size, sent_packet_id);
     }
 }
