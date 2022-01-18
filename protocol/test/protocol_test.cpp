@@ -248,7 +248,7 @@ TEST_F(ProtocolTest, InitSDL) {
         EXPECT_EQ(actual_width, adjusted_width);
         EXPECT_EQ(actual_height, adjusted_height);
     }
-    /*
+
     //  Titlebar color change
     {
         std::ranlux48 gen;
@@ -293,7 +293,7 @@ TEST_F(ProtocolTest, InitSDL) {
 
         EXPECT_FALSE(native_window_color_update);
     }
-
+    /*
     //  Window title
     {
         char* changed_title = generate_random_string(150);
