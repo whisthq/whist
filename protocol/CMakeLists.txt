@@ -225,9 +225,9 @@ endif()
 # FFmpeg: Use the FFmpeg libs in /lib/${arch}/ffmpeg
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(FFMPEG_LIBS libswresample.4.dylib;libavcodec.59.dylib;libavdevice.59.dylib;libavfilter.8.dylib;
-                    libavformat.59.dylib;libswscale.6.dylib;libavutil.57.dylib;libpostproc.56.dylib)
+                    libavformat.59.dylib;libswscale.6.dylib;libavutil.57.dylib)
 else()
-    set(FFMPEG_LIBS swresample;avcodec;avdevice;avfilter;avformat;swscale;avutil;postproc)
+    set(FFMPEG_LIBS swresample;avcodec;avdevice;avfilter;avformat;swscale;avutil)
 endif()
 
 set(FFMPEG_LIBS_PATHS "")
