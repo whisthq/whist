@@ -129,6 +129,9 @@ fi
 . /usr/local/bin/set_dbus_env_vars.sh
 echo "loaded d-bus address in run-whist-server.sh: $DBUS_SESSION_BUS_ADDRESS | pid: $DBUS_SESSION_BUS_PID"
 
+# Add D-Bus address to options
+OPTIONS="$OPTIONS --dbus-address=$DBUS_SESSION_BUS_ADDRESS"
+
 # Below is commented testing code that can be used in the future to debug cookie encryption.
 # It should NOT print out peanuts. Instead you should see a byte string similar to b'q6dj0uwi6luGvZ+2zisaMQ=='.
 # This is tech debt! Currently the cookies are still being encrypted with peanuts because Chrome is not registering with
