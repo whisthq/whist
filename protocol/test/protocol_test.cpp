@@ -398,7 +398,6 @@ TEST_F(ProtocolTest, InitRingBufferBadSize) {
     RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, MAX_RING_BUFFER_SIZE + 1, NULL);
     EXPECT_TRUE(rb == NULL);
     check_stdout_line(LOG_ERROR_MATCHER);
-    EXPECT_TRUE(1 == 1);
 }
 
 // Tests adding packets into ringbuffer
