@@ -4,7 +4,7 @@ import EventEmitter from "events"
 import { fromEvent, merge, of } from "rxjs"
 import { takeWhile } from "rxjs/operators"
 
-import { createTrigger } from "@app/utils/flows"
+import { createTrigger } from "@app/main/utils/flows"
 import { WhistTrigger } from "@app/constants/triggers"
 
 // Fires if autoupdate is available

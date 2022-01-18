@@ -224,7 +224,7 @@ const Network = (props: {
       </div>
       <div>
         <Progress
-          percent={props.networkInfo?.progress ?? 1}
+          percent={Math.min(props.networkInfo?.progress ?? 1, 98)}
           className="rounded-t-none h-1"
         />
       </div>

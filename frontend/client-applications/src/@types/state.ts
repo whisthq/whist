@@ -1,4 +1,4 @@
-import { Trigger } from "@app/utils/flows"
+import { Trigger } from "@app/main/utils/flows"
 
 export type AsyncReturnType<T extends (...args: any) => Promise<any>> =
   T extends (...args: any) => Promise<infer R> ? R : any
@@ -10,4 +10,6 @@ export interface StateIPC {
   updateInfo: string // emitted by autoUpdater
   browsers: string[]
   networkInfo: { jitter: number; downloadMbps: number; progress: number }
+  isDefaultBrowser: boolean
+  restoreLastSession: boolean
 }

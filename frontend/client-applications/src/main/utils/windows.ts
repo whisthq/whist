@@ -15,7 +15,7 @@ import {
   BrowserView,
 } from "electron"
 import config from "@app/config/environment"
-import { WhistEnvironments } from "../../config/configs"
+import { WhistEnvironments } from "../../../config/configs"
 import { WhistCallbackUrls } from "@app/config/urls"
 import {
   authPortalURL,
@@ -34,12 +34,14 @@ import {
   WindowHashBugTypeform,
   WindowHashUpdate,
   WindowHashLoading,
+  WindowHashOmnibar,
+  WindowHashImport,
 } from "@app/constants/windows"
 import {
   protocolLaunch,
   protocolStreamKill,
   isNetworkUnstable,
-} from "@app/utils/protocol"
+} from "@app/main/utils/protocol"
 
 // Custom Event Emitter for Auth0 events
 export const auth0Event = new events.EventEmitter()
@@ -109,9 +111,10 @@ export const getNumberWindows = () => {
 
 export const closeElectronWindows = (windows?: BrowserWindow[]) => {
   const windowsToClose = windows ?? getElectronWindows()
+
   windowsToClose.forEach((win: BrowserWindow) => {
     try {
-      win.close()
+      win.destroy()
     } catch (err) {
       console.error(err)
     }
@@ -129,6 +132,13 @@ export const getWindowTitle = () => {
     return "Whist"
   }
   return `Whist (${deployEnv})`
+}
+
+export const getWindowByHash = (hash: string) => {
+  for (const win of getElectronWindows()) {
+    if (win.webContents.getURL()?.split("show=")?.[1] === hash) return win
+  }
+  return undefined
 }
 
 // This is a "base" window creation function. It won't be called directly from
@@ -179,7 +189,7 @@ export const createWindow = (args: {
   // Electron recommends showing the window on the ready-to-show event:
   // https://www.electronjs.org/docs/api/browser-window
   win.once("ready-to-show", () => {
-    args.focus ?? true ? win.show() : win.showInactive()
+    args.focus ?? true ? win.show() : win.hide()
     emitWindowInfo({ crashed: false, event: "open", hash: args.hash })
   })
 
@@ -252,23 +262,44 @@ export const createAuthWindow = () => {
 }
 
 export const createPaymentWindow = async (accessToken: accessToken) => {
+  const padding = 50
+  const paymentHeight = height.md.height + 20
+  const windowWidth = Math.round(width.lg.width + padding)
+  const windowHeight = Math.round(paymentHeight + padding)
+
   const response = await paymentPortalRequest(accessToken)
   const { paymentPortalURL } = paymentPortalParse(response)
 
   const win = createWindow({
     options: {
       ...base,
-      ...width.lg,
-      ...height.md,
+      width: windowWidth,
+      height: windowHeight,
+      frame: false,
+      border: false,
+      titleBarStyle: "hidden",
     } as BrowserWindowConstructorOptions,
     hash: WindowHashPayment,
-    customURL: paymentPortalURL,
     closeElectronWindows: true,
   })
 
+  const view = new BrowserView()
+
+  win.setBrowserView(view)
+  view.setBounds({
+    x: windowWidth / 2 - width.lg.width / 2,
+    y: windowHeight / 2 - paymentHeight / 2,
+    ...width.lg,
+    height: paymentHeight,
+  })
+
+  view.webContents
+    .loadURL(paymentPortalURL ?? "")
+    .catch((err) => console.error(err))
+
   const {
     session: { webRequest },
-  } = win.webContents
+  } = view.webContents
 
   const filter = {
     urls: [WhistCallbackUrls.paymentCallBack],
@@ -299,6 +330,7 @@ export const createErrorWindow = (
       frame: false,
       titleBarStyle: "hidden",
       transparent: true,
+      alwaysOnTop: true,
     } as BrowserWindowConstructorOptions,
     hash: hash,
     closeElectronWindows: closeOtherWindows ?? true,
@@ -329,7 +361,6 @@ export const createOnboardingWindow = () =>
       skipTaskbar: true,
       frame: false,
       titleBarStyle: "hidden",
-      backgroundColor: "#182129",
     } as BrowserWindowConstructorOptions,
     hash: WindowHashOnboarding,
     closeElectronWindows: true,
@@ -394,7 +425,14 @@ export const createProtocolWindow = async () => {
         hash: WindowHashProtocol,
       })
 
-      closeElectronWindows(getElectronWindows())
+      const windowsToClose = getElectronWindows().filter(
+        (win) =>
+          ![WindowHashOmnibar].includes(
+            win.webContents.getURL()?.split("show=")?.[1]
+          )
+      )
+
+      closeElectronWindows(windowsToClose)
 
       app?.dock?.hide()
     }
@@ -447,4 +485,45 @@ export const createLicenseWindow = (url: string) =>
     hash: "",
     closeElectronWindows: false,
     customURL: url,
+  })
+
+export const createOmnibar = () => {
+  const win = createWindow({
+    options: {
+      ...base,
+      ...width.md,
+      ...height.xs,
+      frame: false,
+      transparent: true,
+      alwaysOnTop: true,
+      resizable: false,
+      fullscreenable: false,
+      minimizable: false,
+      titleBarStyle: "hidden",
+      closable: false,
+    },
+    hash: WindowHashOmnibar,
+  })
+
+  win.focus()
+  return win
+}
+
+export const destroyOmnibar = () => {
+  const win = getWindowByHash(WindowHashOmnibar)
+
+  win?.destroy()
+}
+
+export const createImportWindow = () =>
+  createWindow({
+    options: {
+      ...base,
+      ...width.md,
+      ...height.sm,
+      skipTaskbar: true,
+      frame: false,
+      titleBarStyle: "hidden",
+    } as BrowserWindowConstructorOptions,
+    hash: WindowHashImport,
   })

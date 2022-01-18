@@ -11,8 +11,12 @@ import path from "path"
 import fs from "fs"
 import { spawn, ChildProcess } from "child_process"
 import config, { loggingFiles } from "@app/config/environment"
-import { electronLogPath, protocolToLogz, logBase } from "@app/utils/logging"
-import { appEnvironment, WhistEnvironments } from "../../config/configs"
+import {
+  electronLogPath,
+  protocolToLogz,
+  logBase,
+} from "@app/main/utils/logging"
+import { appEnvironment, WhistEnvironments } from "../../../config/configs"
 import logRotate from "log-rotate"
 import { MAX_URL_LENGTH } from "@app/constants/app"
 

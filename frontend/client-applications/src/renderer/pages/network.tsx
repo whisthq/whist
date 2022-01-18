@@ -11,7 +11,7 @@ const Network = (props: {
   onSubmit?: () => void
 }) => {
   return (
-    <div className="flex flex-col justify-center items-center bg-gray-800 h-screen text-center">
+    <div className="flex flex-col justify-center items-center bg-gray-800 h-screen text-center draggable">
       <NetworkComponent
         networkInfo={props.networkInfo}
         onSubmit={props.onSubmit}

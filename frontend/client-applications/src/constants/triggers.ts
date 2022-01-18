@@ -37,7 +37,8 @@ const WhistTrigger = {
   // Persist triggers
   persisted: "persisted",
   notPersisted: "notPersisted",
-  onboarded: "onboarded",
+  beginImport: "beginImport",
+  storeDidChange: "storeDidChange",
 
   // Renderer triggers
   loginAction: "loginAction",
@@ -46,22 +47,23 @@ const WhistTrigger = {
   clearCacheAction: "clearCacheAction",
   startNetworkAnalysis: "startNetworkAnalysis",
 
-  // Tray triggers
+  // Omnibar triggers
   showSignoutWindow: "showSignoutWindow",
-  trayRegionAction: "trayRegionAction",
-  trayFeedbackAction: "trayFeedbackAction",
-  trayBugAction: "trayBugAction",
-  trayRestoreSessionAction: "trayRestoreSessionAction",
-  trayWhistIsDefaultBrowserAction: "trayWhistIsDefaultBrowserAction",
   showPaymentWindow: "showPaymentWindow",
+  showSupportWindow: "showSupportWindow",
+  showSpeedtestWindow: "showSpeedtestWindow",
+  showLicenseWindow: "showLicenseWindow",
+  showImportWindow: "showImportWindow",
+  setDefaultBrowser: "setDefaultBrowser",
+  restoreLastSession: "restoreLastSession",
 
   // Flow triggers
+  mandelboxFlowStart: "mandelboxFlowStart",
   mandelboxFlowSuccess: "mandelboxFlowSuccess",
   mandelboxFlowFailure: "mandelboxFlowFailure",
   authFlowSuccess: "authFlowSuccess",
   authFlowFailure: "authFlowFailure",
   authRefreshSuccess: "authRefreshSuccess",
-  checkPaymentFlowSuccess: "checkPaymentFlowSuccess",
   checkPaymentFlowFailure: "checkPaymentFlowFailure",
   awsPingCached: "awsPingCached",
   awsPingRefresh: "awsPingRefresh",

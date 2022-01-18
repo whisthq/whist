@@ -1,54 +1,62 @@
 :root {
-    --accent-border-color: #69f5b2;
-    --dark-border-color: #aaaaaa;
-    --light-border-color: #dfdfdf;
+  --accent-border-color: #69f5b2;
+  --dark-border-color: #aaaaaa;
+  --light-border-color: #dfdfdf;
 
-    --alert-background-color: #cf1720;
-    --accent-background-color: #69f5b2;
-    --primary-background-color: #553de9;
-    --white-background-color: #ffffff;
-    --light-background-color: #f6f9ff;
-    --dark-background-color: #bbbbbb;
-    --black-background-color: #000000;
+  --alert-background-color: #cf1720;
+  --accent-background-color: #69f5b2;
+  --primary-background-color: #553de9;
+  --white-background-color: #ffffff;
+  --light-background-color: #f6f9ff;
+  --dark-background-color: #bbbbbb;
+  --black-background-color: #000000;
 
-    --accent-text-color: #69f5b2;
-    --white-text-color: #ffffff;
-    --light-text-color: #efefef;
-    --dark-text-color: #555555;
-    --black-text-color: #000000;
+  --accent-text-color: #69f5b2;
+  --white-text-color: #ffffff;
+  --light-text-color: #efefef;
+  --dark-text-color: #555555;
+  --black-text-color: #000000;
 
-    --font-family-primary: "Josefin Sans";
-    --font-family-secondary: "Myriad Pro";
+  --font-family-primary: "Josefin Sans";
+  --font-family-secondary: "Myriad Pro";
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+.draggable {
+  -webkit-app-region: drag;
 }
 
 @font-face {
-    font-family: --font-family-primary;
-    src: url("../assets/fonts/JosefinSans-VariableFont_wght.ttf");
-    font-weight: normal; /* normal == 400 */
-    font-style: normal;
+  font-family: --font-family-primary;
+  src: url("../assets/fonts/JosefinSans-VariableFont_wght.ttf");
+  font-weight: normal; /* normal == 400 */
+  font-style: normal;
 }
 
 @font-face {
-    font-family: --font-family-primary;
-    src: url("../assets/fonts/JosefinSans-VariableFont_wght.ttf");
-    font-weight: bold; /* bold == 700 */
-    font-style: bold;
+  font-family: --font-family-primary;
+  src: url("../assets/fonts/JosefinSans-VariableFont_wght.ttf");
+  font-weight: bold; /* bold == 700 */
+  font-style: bold;
 }
 
 @font-face {
-    font-family: "Myriad-Pro";
-    src: url("../assets/fonts/MyriadPro-Light.otf");
-    font-weight: 300;
+  font-family: "Myriad-Pro";
+  src: url("../assets/fonts/MyriadPro-Light.otf");
+  font-weight: 300;
 }
 
 @font-face {
-    font-family: "Myriad-Pro";
-    src: url("../assets/fonts/MyriadPro-Semibold.otf");
-    font-weight: 600;
+  font-family: "Myriad-Pro";
+  src: url("../assets/fonts/MyriadPro-Semibold.otf");
+  font-weight: 600;
 }
 
 @font-face {
-    font-family: "Myriad-Pro";
-    src: url("../assets/fonts/MyriadPro-Bold.otf");
-    font-weight: 800;
+  font-family: "Myriad-Pro";
+  src: url("../assets/fonts/MyriadPro-Bold.otf");
+  font-weight: 800;
 }

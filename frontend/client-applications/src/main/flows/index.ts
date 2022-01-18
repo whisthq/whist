@@ -8,10 +8,13 @@ import checkPaymentFlow from "@app/main/flows/payment"
 import mandelboxFlow from "@app/main/flows/mandelbox"
 import autoUpdateFlow from "@app/main/flows/autoupdate"
 import awsPingFlow from "@app/main/flows/ping"
-import { fromTrigger, createTrigger } from "@app/utils/flows"
-import { fromSignal, withAppReady } from "@app/utils/observables"
-import { getRegionFromArgv } from "@app/utils/region"
-import { persistGet } from "@app/utils/persist"
+import { fromTrigger, createTrigger } from "@app/main/utils/flows"
+import {
+  waitForSignal,
+  emitOnSignal,
+  withAppReady,
+} from "@app/main/utils/observables"
+import { persistGet } from "@app/main/utils/persist"
 import { WhistTrigger } from "@app/constants/triggers"
 import {
   accessToken,
@@ -23,14 +26,14 @@ import {
   timezone,
   keyRepeat,
   initialKeyRepeat,
-} from "@app/utils/state"
+} from "@app/main/utils/state"
 import { ONBOARDED } from "@app/constants/store"
 import {
   getDecryptedCookies,
   getBookmarks,
   getExtensions,
   InstalledBrowser,
-} from "@app/utils/importer"
+} from "@app/main/utils/importer"
 
 // Autoupdate flow
 const update = autoUpdateFlow(fromTrigger(WhistTrigger.updateAvailable))
@@ -55,52 +58,29 @@ const auth = authFlow(
 )
 
 // Onboarding flow
-const onboarded = fromSignal(
+const onboarded = waitForSignal(
   merge(
-    fromTrigger(WhistTrigger.onboarded),
-    zip(
-      of(persistGet(ONBOARDED)).pipe(
-        filter((onboarded) => onboarded as boolean)
-      )
-    )
+    fromTrigger(WhistTrigger.beginImport),
+    of(persistGet(ONBOARDED)).pipe(filter((onboarded) => onboarded as boolean))
   ),
   fromTrigger(WhistTrigger.authFlowSuccess)
 )
 
 // Unpack the access token to see if their payment is valid
 const checkPayment = checkPaymentFlow(
-  fromSignal(combineLatest({ accessToken }), onboarded)
+  emitOnSignal(
+    waitForSignal(combineLatest({ accessToken }), onboarded),
+    fromTrigger(WhistTrigger.authFlowSuccess)
+  )
 )
 
 // If the payment is invalid, they'll be redirect to the Stripe window. After that they'll
 // get new auth credentials
 const refreshAfterPaying = authRefreshFlow(
-  fromSignal(
+  waitForSignal(
     combineLatest({ refreshToken }),
     fromTrigger(WhistTrigger.stripeAuthRefresh)
   )
-)
-
-// If importBrowserDataFrom is not empty, run the cookie import function
-const importCookies = fromTrigger(WhistTrigger.onboarded).pipe(
-  switchMap((t) =>
-    from(getDecryptedCookies(t?.importBrowserDataFrom as InstalledBrowser))
-  ),
-  share() // If you don't share, this observable will fire many times (once for each subscriber of the flow)
-)
-
-const importBookmarks = fromTrigger(WhistTrigger.onboarded).pipe(
-  switchMap((t) =>
-    from(getBookmarks(t?.importBrowserDataFrom as InstalledBrowser))
-  ),
-  share() // If you don't share, this observable will fire many times (once for each subscriber of the flow)
-)
-
-const importExtensions = fromTrigger(WhistTrigger.onboarded).pipe(
-  switchMap((t) =>
-    from(getExtensions(t?.importBrowserDataFrom as InstalledBrowser))
-  ),
-  share() // If you don't share, this observable will fire many times (once for each subscriber of the flow)
 )
 
 const dontImportBrowserData = of(persistGet(ONBOARDED) as boolean).pipe(
@@ -110,32 +90,47 @@ const dontImportBrowserData = of(persistGet(ONBOARDED) as boolean).pipe(
   share()
 )
 
+const importedData = fromTrigger(WhistTrigger.beginImport).pipe(
+  switchMap((t) =>
+    zip(
+      from(getDecryptedCookies(t?.importBrowserDataFrom as InstalledBrowser)),
+      from(getBookmarks(t?.importBrowserDataFrom as InstalledBrowser)),
+      from(getExtensions(t?.importBrowserDataFrom as InstalledBrowser))
+    )
+  ),
+  map(([cookies, bookmarks, extensions]) => ({
+    cookies,
+    bookmarks,
+    extensions,
+  })),
+  share()
+)
+
 // Observable that fires when Whist is ready to be launched
-const launchTrigger = fromSignal(
+const launchTrigger = emitOnSignal(
   combineLatest({
     userEmail,
     accessToken,
     configToken,
     isNewConfigToken,
-    cookies: merge(importCookies, dontImportBrowserData),
-    bookmarks: merge(importBookmarks, dontImportBrowserData),
-    extensions: merge(importExtensions, dontImportBrowserData),
+    importedData: merge(importedData, dontImportBrowserData),
     regions: merge(awsPing.cached, awsPing.refresh),
     darkMode,
     timezone,
     keyRepeat,
     initialKeyRepeat,
-  }).pipe(
-    map((x: object) => ({
-      ...x,
-      region: getRegionFromArgv(process.argv),
-    }))
-  ),
+  }),
   merge(
-    fromTrigger(WhistTrigger.checkPaymentFlowSuccess),
-    refreshAfterPaying.success
+    zip(
+      checkPayment.success,
+      of(persistGet(ONBOARDED)).pipe(
+        filter((onboarded) => onboarded as boolean)
+      )
+    ), // On a normal launch
+    zip(checkPayment.failure, refreshAfterPaying.success), // If you had an invalid subscription but now paid
+    importedData // On onboarding or import
   )
-).pipe(take(1), share())
+).pipe(share())
 
 // Mandelbox creation flow
 const mandelbox = mandelboxFlow(withAppReady(launchTrigger))
@@ -143,8 +138,12 @@ const mandelbox = mandelboxFlow(withAppReady(launchTrigger))
 // After the mandelbox flow is done, run the refresh flow so the tokens are being refreshed
 // every time but don't impede startup time
 const refreshAtEnd = authRefreshFlow(
-  fromSignal(combineLatest({ refreshToken }), mandelbox.success)
+  emitOnSignal(combineLatest({ refreshToken }), mandelbox.success)
 )
+
+createTrigger(WhistTrigger.checkPaymentFlowFailure, checkPayment.failure)
+
+createTrigger(WhistTrigger.mandelboxFlowStart, launchTrigger)
 
 createTrigger(WhistTrigger.awsPingCached, awsPing.cached)
 createTrigger(WhistTrigger.awsPingRefresh, awsPing.refresh)
@@ -155,10 +154,10 @@ createTrigger(WhistTrigger.authFlowFailure, auth.failure)
 createTrigger(WhistTrigger.updateDownloaded, update.downloaded)
 createTrigger(WhistTrigger.downloadProgress, update.progress)
 
-createTrigger(WhistTrigger.authRefreshSuccess, refreshAtEnd.success)
-
-createTrigger(WhistTrigger.checkPaymentFlowSuccess, checkPayment.success)
-createTrigger(WhistTrigger.checkPaymentFlowFailure, checkPayment.failure)
+createTrigger(
+  WhistTrigger.authRefreshSuccess,
+  merge(refreshAtEnd.success, refreshAfterPaying.success)
+)
 
 createTrigger(WhistTrigger.mandelboxFlowSuccess, mandelbox.success)
 createTrigger(WhistTrigger.mandelboxFlowFailure, mandelbox.failure)

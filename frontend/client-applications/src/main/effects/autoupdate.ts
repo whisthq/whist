@@ -4,11 +4,11 @@ import { takeUntil } from "rxjs/operators"
 import Sentry from "@sentry/electron"
 
 import { appEnvironment, WhistEnvironments } from "../../../config/configs"
-import { fromTrigger } from "@app/utils/flows"
-import { updateDownloadedNotification } from "@app/utils/notification"
+import { fromTrigger } from "@app/main/utils/flows"
+import { updateDownloadedNotification } from "@app/main/utils/notification"
 import { WhistTrigger } from "@app/constants/triggers"
-import { createUpdateWindow } from "@app/utils/windows"
-import { withAppReady } from "@app/utils/observables"
+import { createUpdateWindow } from "@app/main/utils/windows"
+import { withAppReady } from "@app/main/utils/observables"
 import { CHECK_UPDATE_INTERVAL_IN_MS } from "@app/constants/app"
 
 withAppReady(timer(0, CHECK_UPDATE_INTERVAL_IN_MS)).subscribe(() => {

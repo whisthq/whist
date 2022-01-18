@@ -1,11 +1,11 @@
-import { fromTrigger } from "@app/utils/flows"
-import { protocolStreamKill } from "@app/utils/protocol"
-import { createErrorWindow, relaunch } from "@app/utils/windows"
+import { fromTrigger } from "@app/main/utils/flows"
+import { protocolStreamKill } from "@app/main/utils/protocol"
+import { createErrorWindow, relaunch } from "@app/main/utils/windows"
 import { WindowHashSleep } from "@app/constants/windows"
-import { fromSignal } from "@app/utils/observables"
+import { waitForSignal } from "@app/main/utils/observables"
 import { WhistTrigger } from "@app/constants/triggers"
 
-fromSignal(
+waitForSignal(
   fromTrigger(WhistTrigger.powerSuspend),
   fromTrigger(WhistTrigger.appReady)
 ).subscribe(() => {

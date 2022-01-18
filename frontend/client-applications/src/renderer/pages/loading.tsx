@@ -1,5 +1,4 @@
 import React from "react"
-import classNames from "classnames"
 
 import { Network as NetworkComponent } from "@app/components/network"
 
@@ -11,20 +10,27 @@ const Loading = (props: {
   }
 }) => {
   return (
-    <div
-      className={classNames(
-        "flex flex-col h-screen items-center bg-gray-800 w-full",
-        "justify-center font-body text-center"
-      )}
-    >
-      <div className="mt-4 font-semibold text-2xl text-gray-300">
-        Whist is loading
+    <div className="flex flex-col h-screen bg-gray-800 w-full draggable font-body">
+      <div className="w-full text-center pt-10">
+        <div className="mt-4 font-semibold text-xl text-gray-300">
+          Whist is connecting to servers
+        </div>
+        <div className="mt-6 w-full">
+          <NetworkComponent networkInfo={props.networkInfo} withText={false} />
+        </div>
       </div>
-      <div className="text-gray-500 mt-2">
-        Please allow a few seconds while we connect to our servers
-      </div>
-      <div className="mt-6 w-full">
-        <NetworkComponent networkInfo={props.networkInfo} withText={false} />
+      <div className="w-full text-center">
+        <div className="flex justify-center pointer-events-none space-x-1 mt-4">
+          <kbd className="inline-flex items-center rounded px-2 py-1 text-xs font-medium text-gray-400 bg-gray-700">
+            ⌘
+          </kbd>
+          <kbd className="inline-flex items-center rounded px-2 py-1 text-xs font-medium text-gray-400 bg-gray-700">
+            J
+          </kbd>
+        </div>
+        <div className="text-gray-500 text-sm mt-2">
+          to view settings when launched
+        </div>
       </div>
     </div>
   )

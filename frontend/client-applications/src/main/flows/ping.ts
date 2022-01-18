@@ -1,10 +1,10 @@
 import { from, of } from "rxjs"
 import { filter } from "rxjs/operators"
 
-import { sortRegionByProximity } from "@app/utils/region"
-import { flow } from "@app/utils/flows"
+import { sortRegionByProximity } from "@app/main/utils/region"
+import { flow } from "@app/main/utils/flows"
 import { defaultAllowedRegions } from "@app/constants/mandelbox"
-import { persistGet } from "@app/utils/persist"
+import { persistGet } from "@app/main/utils/persist"
 import { AWS_REGIONS_SORTED_BY_PROXIMITY } from "@app/constants/store"
 
 export default flow("awsPingFlow", () => {

@@ -1,4 +1,4 @@
-import { execCommandByOS } from "@app/utils/execCommand"
+import { execCommandByOS } from "@app/main/utils/execCommand"
 import {
   INITIAL_KEY_REPEAT_MIN_LINUX,
   INITIAL_KEY_REPEAT_MIN_MAC,

@@ -6,7 +6,7 @@ import {
   hasValidSubscription,
 } from "@whist/core-ts"
 
-import { flow } from "@app/utils/flows"
+import { flow } from "@app/main/utils/flows"
 
 export default flow<accessToken>("checkPaymentFlow", (trigger) => {
   const parsed = trigger.pipe(

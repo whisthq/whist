@@ -7,9 +7,9 @@
 import { powerMonitor } from "electron"
 import { fromEvent } from "rxjs"
 
-import { createTrigger } from "@app/utils/flows"
+import { createTrigger } from "@app/main/utils/flows"
 import { WhistTrigger } from "@app/constants/triggers"
-import { networkAnalysisEvent } from "@app/utils/networkAnalysis"
+import { networkAnalysisEvent } from "@app/main/utils/networkAnalysis"
 
 // Fires when your computer wakes up
 createTrigger(WhistTrigger.powerResume, fromEvent(powerMonitor, "resume"))

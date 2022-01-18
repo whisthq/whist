@@ -439,13 +439,17 @@ const getDecryptedCookies = async (
 ): Promise<string | undefined> => {
   if (browser === undefined) return undefined
 
-  const encryptedCookies = await getCookiesFromFile(browser)
+  try {
+    const encryptedCookies = await getCookiesFromFile(browser)
 
-  const encryptKey = await getCookieEncryptionKey(browser)
+    const encryptKey = await getCookieEncryptionKey(browser)
 
-  const cookies = await decryptCookies(encryptedCookies, encryptKey)
+    const cookies = await decryptCookies(encryptedCookies, encryptKey)
 
-  return JSON.stringify(cookies)
+    return JSON.stringify(cookies)
+  } catch (err) {
+    return undefined
+  }
 }
 
 const getBookmarks = async (

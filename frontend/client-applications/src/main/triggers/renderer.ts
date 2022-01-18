@@ -1,7 +1,7 @@
 import { Observable } from "rxjs"
 import { filter, map, pluck } from "rxjs/operators"
 
-import { createTrigger, fromTrigger } from "@app/utils/flows"
+import { createTrigger, fromTrigger } from "@app/main/utils/flows"
 import { WhistTrigger } from "@app/constants/triggers"
 
 const filterByName = (
@@ -18,9 +18,15 @@ const filterByName = (
 ;[
   WhistTrigger.relaunchAction, // Fires when "Continue" button is clicked on error window popup
   WhistTrigger.clearCacheAction, // Fires when "Signout" button is clicked on signout window popup
-  WhistTrigger.showSignoutWindow, // Fires when "Signout" button is clicked on error window popup
-  WhistTrigger.showPaymentWindow, // Fires when "Open Payment Information" button is clicked on error window popup
-  WhistTrigger.onboarded,
+  WhistTrigger.showSignoutWindow,
+  WhistTrigger.showPaymentWindow,
+  WhistTrigger.showSupportWindow,
+  WhistTrigger.showSpeedtestWindow,
+  WhistTrigger.showLicenseWindow,
+  WhistTrigger.showImportWindow,
+  WhistTrigger.setDefaultBrowser,
+  WhistTrigger.restoreLastSession,
+  WhistTrigger.beginImport,
   WhistTrigger.emitIPC,
   WhistTrigger.startNetworkAnalysis,
 ].forEach((trigger: string) => {

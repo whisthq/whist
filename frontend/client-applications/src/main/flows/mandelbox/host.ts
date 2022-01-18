@@ -3,10 +3,10 @@ import {
   hostSpinUpValid,
   hostSpinUpError,
   HostSpinUpResponse,
-} from "@app/utils/host"
+} from "@app/main/utils/host"
 import { zip, from } from "rxjs"
 import { map, switchMap } from "rxjs/operators"
-import { flow, fork } from "@app/utils/flows"
+import { flow, fork } from "@app/main/utils/flows"
 
 import { accessToken, configToken } from "@whist/core-ts"
 
@@ -14,11 +14,11 @@ export default flow<
   {
     ip: string
     jsonData: string
-    cookies: string | undefined
-    bookmarks: string | undefined
-    extensions: string | undefined
     mandelboxID: string
     isNewConfigToken: boolean
+    importedData:
+      | { cookies: string; bookmarks: string; extensions: string }
+      | undefined
   } & accessToken &
     configToken
 >("hostSpinUpFlow", (trigger) => {
@@ -33,9 +33,7 @@ export default flow<
             json_data: args.jsonData,
             mandelbox_id: args.mandelboxID,
             is_new_config_encryption_token: args.isNewConfigToken,
-            cookies: args.cookies,
-            bookmarks: args.bookmarks,
-            extensions: args.extensions,
+            importedData: args.importedData,
           })
         )
       )
