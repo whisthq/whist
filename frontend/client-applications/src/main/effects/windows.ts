@@ -44,7 +44,7 @@ import { networkAnalyze } from "@app/main/utils/networkAnalysis"
 import { AWSRegion } from "@app/@types/aws"
 import { LOCATION_CHANGED_ERROR } from "@app/constants/error"
 import { accessToken } from "@whist/core-ts"
-import { openSourceUrls } from "@app/constants/app"
+import { openSourceUrl } from "@app/constants/app"
 import { iconPath } from "@app/config/files"
 
 // Keeps track of how many times we've tried to relaunch the protocol
@@ -237,7 +237,7 @@ withAppReady(fromTrigger(WhistTrigger.showImportWindow)).subscribe(() => {
 
 withAppReady(fromTrigger(WhistTrigger.showLicenseWindow)).subscribe(() => {
   destroyOmnibar()
-  openSourceUrls.forEach((url) => createLicenseWindow(url))
+  createLicenseWindow(openSourceUrl)
 })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
