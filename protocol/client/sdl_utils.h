@@ -167,4 +167,40 @@ bool sdl_is_window_visible();
  */
 void sdl_update_pending_tasks();
 
+/**
+ * @brief                          Copies private variable values to the variables pointed by the
+ * non-NULL pointers passed as parameters. Used for testing.
+ *
+ * @param pending_resize_message_ptr   If non-NULL, the function will save the value of
+ * pending_resize_message in the variable pointed to by this pointer.
+ *
+ * @param native_window_color_is_null_ptr   If non-NULL, the function will save 'true' in the
+ * variable pointed to by this pointer if native_window_color is NULL, 'false' otherwise.
+ *
+ * @param native_window_color_ptr   If non-NULL, the function will save the value of
+ * native_window_color in the variable pointed to by this pointer.
+ *
+ * @param native_window_color_update_ptr   If non-NULL, the function will save the value of
+ * native_window_color_update in the variable pointed to by this pointer.
+ *
+ * @param window_title_ptr   If non-NULL, the function will save the value of window_title in the
+ * variable pointed to by this pointer.
+ *
+ * @param should_update_window_title_ptr   If non-NULL, the function will save the value of
+ * should_update_window_title in the variable pointed to by this pointer.
+ *
+ * @param fullscreen_trigger_ptr   If non-NULL, the function will save the value of
+ * fullscreen_trigger in the variable pointed to by this pointer.
+ *
+ * @param fullscreen_value_ptr   If non-NULL, the function will save the value of fullscreen_value
+ * in the variable pointed to by this pointer.
+ *
+ */
+void sdl_utils_check_private_vars(bool* pending_resize_message_ptr,
+                                  bool* native_window_color_is_null_ptr,
+                                  WhistRGBColor* native_window_color_ptr,
+                                  bool* native_window_color_update_ptr, char* window_title_ptr,
+                                  bool* should_update_window_title_ptr,
+                                  bool* fullscreen_trigger_ptr, bool* fullscreen_value_ptr);
+
 #endif  // SDL_UTILS_H

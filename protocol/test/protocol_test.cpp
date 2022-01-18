@@ -27,27 +27,35 @@ Includes
 
 #include <algorithm>
 #include <iterator>
+#include <random>
+#include <string.h>
+
 #include <gtest/gtest.h>
 #include "fixtures.hpp"
 
 extern "C" {
+#include <client/sdl_utils.h>
 #include "client/client_utils.h"
 #include "whist/utils/color.h"
 #include <whist/core/whist.h>
 #include <whist/network/ringbuffer.h>
+
+#include <client/native_window_utils.h>
 
 #ifndef __APPLE__
 #include "server/state.h"
 #include "server/parse_args.h"
 #endif
 
-#include "client/client_utils.h"
 #include <whist/logging/log_statistic.h>
 #include <whist/utils/aes.h>
 #include <whist/utils/png.h>
 #include <whist/utils/avpacket_buffer.h>
 #include <whist/utils/atomic.h>
 #include <whist/utils/fec.h>
+
+extern WhistMutex window_resize_mutex;
+extern volatile SDL_Window* window;
 }
 
 class ProtocolTest : public CaptureStdoutFixture {};
@@ -77,6 +85,292 @@ TEST_F(ProtocolTest, ClientParseArgsEmpty) {
 Client Tests
 ============================
 */
+
+// Helper function returning a pointer to a newly allocated string of alphanumeric characters, with
+// length equal to the length parameter. If length<=0, the function returns NULL
+char* generate_random_string(size_t length) {
+    const char characters[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    if (length <= 0) {
+        return NULL;
+    }
+    char* str = (char*)calloc(length + 1, sizeof(char));
+    for (size_t i = 0; i < length; i++) {
+        int k = rand() % (int)(sizeof(characters) - 1);
+        str[i] = characters[k];
+    }
+    return str;
+}
+
+/**
+ * client/sdl_utils.c
+ **/
+
+TEST_F(ProtocolTest, InitSDL) {
+    char* very_long_title = generate_random_string(2000);
+    size_t title_len = strlen(very_long_title);
+    EXPECT_EQ(title_len, 2000);
+    char icon_filepath[] = "../../../frontend/client-applications/public/icon_dev.png";
+
+    int width = 500;
+    int height = 375;
+
+    SDL_Window* new_window = init_sdl(width, height, very_long_title, icon_filepath);
+
+    if (new_window == NULL) {
+        // Check if there is no device available to test SDL (e.g. on Ubuntu CI)
+        const char* err = SDL_GetError();
+        int res = strcmp(err, "No available video device");
+        if (res == 0) {
+            check_stdout_line(
+                ::testing::HasSubstr("Could not initialize SDL - No available video device"));
+            free(very_long_title);
+            return;
+        }
+    }
+
+    EXPECT_TRUE(new_window != NULL);
+
+    check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
+    check_stdout_line(::testing::HasSubstr("all_statistics is NULL"));
+
+#ifdef _WIN32
+    check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
+#elif defined(__linux__)
+    check_stdout_line(::testing::HasSubstr("Not implemented on X11."));
+#endif
+
+    // Check that the initial title was set appropriately
+    const char* title = SDL_GetWindowTitle(new_window);
+    EXPECT_EQ(strcmp(title, very_long_title), 0);
+    free(very_long_title);
+
+    // Check that the screensaver option was enabled
+    bool screen_saver_check = SDL_IsScreenSaverEnabled();
+    EXPECT_TRUE(screen_saver_check);
+
+    // Ensure that the flags below were successfully set at SDL initialization time
+    const uint32_t desired_sdl_flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
+    uint32_t actual_sdl_flags = SDL_WasInit(desired_sdl_flags);
+    EXPECT_EQ(actual_sdl_flags, desired_sdl_flags);
+
+    // Check that the dimensions are the desired ones
+    int actual_width = get_window_virtual_width(new_window);
+    int actual_height = get_window_virtual_height(new_window);
+
+    EXPECT_EQ(actual_width, width);
+    EXPECT_EQ(actual_height, height);
+
+    char* very_short_title = generate_random_string(1);
+    title_len = strlen(very_short_title);
+    EXPECT_EQ(title_len, 1);
+    SDL_SetWindowTitle(new_window, very_short_title);
+
+    const char* new_title = SDL_GetWindowTitle(new_window);
+    EXPECT_EQ(strcmp(new_title, very_short_title), 0);
+
+    free(very_short_title);
+
+    // Check the update_pending_task_functioning
+
+    window_resize_mutex = whist_create_mutex();
+    window = new_window;
+
+    // Window resize
+    {
+        // Swap height and width (pixel form)
+        int temp = width;
+        width = height;
+        height = temp;
+
+        // Apply window dimension change to SDL window
+        SDL_SetWindowSize(new_window, width, height);
+
+        actual_width = get_window_virtual_width(new_window);
+        actual_height = get_window_virtual_height(new_window);
+        EXPECT_EQ(actual_width, width);
+        EXPECT_EQ(actual_height, height);
+
+        width = get_window_pixel_width(new_window);
+        height = get_window_pixel_height(new_window);
+
+#ifndef __linux__
+        int adjusted_width = width - (width % 8);
+        int adjusted_height = height - (height % 2);
+#else
+        int adjusted_width = width;
+        int adjusted_height = height;
+#endif
+
+        // Check Whist resize procedure (rounding)
+        bool pending_resize_message;
+        sdl_utils_check_private_vars(&pending_resize_message, NULL, NULL, NULL, NULL, NULL, NULL,
+                                     NULL);
+        EXPECT_FALSE(pending_resize_message);
+
+        sdl_renderer_resize_window(width, height);
+
+        char buffer[1000];
+        memset(buffer, 0, 1000);
+        sprintf(buffer, "Received resize event for %dx%d, currently %dx%d", width, height, width,
+                height);
+        check_stdout_line(::testing::HasSubstr(buffer));
+#ifndef __linux__
+        memset(buffer, 0, 1000);
+        sprintf(buffer, "Forcing a resize from %dx%d to %dx%d", width, height, adjusted_width,
+                adjusted_height);
+        check_stdout_line(::testing::HasSubstr(buffer));
+#endif
+        memset(buffer, 0, 1000);
+        sprintf(buffer, "Window resized to %dx%d (Actual %dx%d)", width, height, adjusted_width,
+                adjusted_height);
+        check_stdout_line(::testing::HasSubstr(buffer));
+
+        memset(buffer, 0, 1000);
+        sprintf(buffer, "Sending MESSAGE_DIMENSIONS: output=%dx%d", adjusted_width,
+                adjusted_height);
+        check_stdout_line(::testing::HasSubstr(buffer));
+
+        check_stdout_line(
+            ::testing::HasSubstr("The given SocketContext has not been initialized!"));
+
+        sdl_utils_check_private_vars(&pending_resize_message, NULL, NULL, NULL, NULL, NULL, NULL,
+                                     NULL);
+        EXPECT_TRUE(pending_resize_message);
+        sdl_update_pending_tasks();
+
+        sdl_utils_check_private_vars(&pending_resize_message, NULL, NULL, NULL, NULL, NULL, NULL,
+                                     NULL);
+        EXPECT_FALSE(pending_resize_message);
+
+        // New dimensions should ensure width is a multiple of 8 and height is a even number
+        actual_width = get_window_pixel_width(new_window);
+        actual_height = get_window_pixel_height(new_window);
+        EXPECT_EQ(actual_width, adjusted_width);
+        EXPECT_EQ(actual_height, adjusted_height);
+    }
+
+    //  Titlebar color change
+    {
+        std::ranlux48 gen;
+        std::uniform_int_distribution<unsigned int> uniform_0_255(0, 255);
+
+        WhistRGBColor c;
+        c.red = (uint8_t)uniform_0_255(gen);
+        c.green = (uint8_t)uniform_0_255(gen);
+        c.blue = (uint8_t)uniform_0_255(gen);
+
+        bool native_window_color_update;
+        sdl_utils_check_private_vars(NULL, NULL, NULL, &native_window_color_update, NULL, NULL,
+                                     NULL, NULL);
+
+        EXPECT_FALSE(native_window_color_update);
+        sdl_render_window_titlebar_color(c);
+
+        WhistRGBColor new_color;
+        bool native_window_color_is_null;
+        sdl_utils_check_private_vars(NULL, &native_window_color_is_null, &new_color,
+                                     &native_window_color_update, NULL, NULL, NULL, NULL);
+
+        EXPECT_FALSE(native_window_color_is_null);
+        EXPECT_TRUE(native_window_color_update);
+        EXPECT_TRUE(new_color.red == c.red);
+        EXPECT_TRUE(new_color.blue == c.blue);
+        EXPECT_TRUE(new_color.green == c.green);
+
+        set_native_window_color(new_window, c);
+
+#ifdef _WIN32
+        check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
+        check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
+#elif defined(__linux__)
+        check_stdout_line(::testing::HasSubstr("Not implemented on X11."));
+        check_stdout_line(::testing::HasSubstr("Not implemented on X11."));
+#endif
+
+        sdl_update_pending_tasks();
+
+        sdl_utils_check_private_vars(NULL, NULL, NULL, &native_window_color_update, NULL, NULL,
+                                     NULL, NULL);
+
+        EXPECT_FALSE(native_window_color_update);
+    }
+
+    //  Window title
+    {
+        char* changed_title = generate_random_string(150);
+        title_len = strlen(changed_title);
+        EXPECT_EQ(title_len, 150);
+        bool should_update_window_title;
+
+        sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, &should_update_window_title,
+                                     NULL, NULL);
+        EXPECT_FALSE(should_update_window_title);
+
+        sdl_set_window_title(changed_title);
+        char* window_title = (char*)calloc(2048, sizeof(char));
+        sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, window_title,
+                                     &should_update_window_title, NULL, NULL);
+        EXPECT_TRUE(should_update_window_title);
+        EXPECT_EQ(strcmp(changed_title, window_title), 0);
+
+        const char* old_title = SDL_GetWindowTitle(new_window);
+        EXPECT_FALSE(strcmp(old_title, changed_title) == 0);
+
+        sdl_update_pending_tasks();
+        sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, &should_update_window_title,
+                                     NULL, NULL);
+
+        EXPECT_FALSE(should_update_window_title);
+        const char* changed_title2 = SDL_GetWindowTitle(new_window);
+        EXPECT_EQ(strcmp(changed_title, changed_title2), 0);
+        free(window_title);
+        free(changed_title);
+    }
+
+    // Set fullscreen
+    {
+        width = get_window_pixel_width(new_window);
+        height = get_window_pixel_height(new_window);
+
+        bool fullscreen_trigger, fullscreen_value;
+        sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, NULL, &fullscreen_trigger,
+                                     &fullscreen_value);
+        EXPECT_FALSE(fullscreen_value);
+        sdl_set_fullscreen(true);
+
+        sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, NULL, &fullscreen_trigger,
+                                     &fullscreen_value);
+
+        EXPECT_TRUE(fullscreen_value);
+        EXPECT_TRUE(fullscreen_trigger);
+
+        // nothing changed yet
+        actual_width = get_window_pixel_width(new_window);
+        actual_height = get_window_pixel_height(new_window);
+        EXPECT_EQ(actual_width, width);
+        EXPECT_EQ(actual_height, height);
+
+        sdl_update_pending_tasks();
+
+        sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, NULL, &fullscreen_trigger,
+                                     &fullscreen_value);
+        EXPECT_FALSE(fullscreen_trigger);
+
+        actual_width = get_window_virtual_width(new_window);
+        actual_height = get_window_virtual_height(new_window);
+
+        int full_width = get_virtual_screen_width();
+        int full_height = get_virtual_screen_height();
+
+        EXPECT_EQ(actual_width, full_width);
+        EXPECT_EQ(actual_height, full_height);
+    }
+
+    destroy_sdl(new_window);
+    whist_destroy_mutex(window_resize_mutex);
+
+    check_stdout_line(::testing::HasSubstr("Destroying SDL"));
+}
 
 /**
  * client/ringbuffer.c

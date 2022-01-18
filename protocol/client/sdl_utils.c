@@ -567,6 +567,68 @@ void sdl_update_pending_tasks() {
     sdl_present_pending_framebuffer();
 }
 
+void sdl_utils_check_private_vars(bool* pending_resize_message_ptr,
+                                  bool* native_window_color_is_null_ptr,
+                                  WhistRGBColor* native_window_color_ptr,
+                                  bool* native_window_color_update_ptr, char* window_title_ptr,
+                                  bool* should_update_window_title_ptr,
+                                  bool* fullscreen_trigger_ptr, bool* fullscreen_value_ptr) {
+    /*
+      This function sets the variables pointed to by each of the non-NULL parameters (with the
+      exception of native_window_color_is_null_ptr, which has a slightly different purpose) with the
+      values held by the corresponding sdl_utils.c globals. If native_window_color_is_null_ptr is
+      not NULL, we set the value pointed to by it with a boolean indicating whether the
+      native_window_color global pointer is NULL.
+     */
+
+    if (pending_resize_message_ptr) {
+        if (window_resize_mutex) {
+            whist_lock_mutex(window_resize_mutex);
+            *pending_resize_message_ptr = pending_resize_message;
+            whist_unlock_mutex(window_resize_mutex);
+        } else {
+            *pending_resize_message_ptr = pending_resize_message;
+        }
+    }
+
+    if (native_window_color_is_null_ptr && native_window_color_ptr) {
+        if (!native_window_color) {
+            *native_window_color_is_null_ptr = true;
+        } else {
+            *native_window_color_is_null_ptr = false;
+            native_window_color_ptr->red = native_window_color->red;
+            native_window_color_ptr->green = native_window_color->green;
+            native_window_color_ptr->blue = native_window_color->blue;
+        }
+    }
+
+    if (native_window_color_update_ptr) {
+        *native_window_color_update_ptr = native_window_color_update;
+    }
+
+    if (window_title_ptr) {
+        size_t len = 0;
+        // While loop needed for string copy because window_title is volatile
+        while (window_title && window_title[len] != '\0') {
+            window_title_ptr[len] = window_title[len];
+            len += 1;
+        }
+        len += 1;
+        window_title_ptr[len] = '\0';
+    }
+
+    if (should_update_window_title_ptr) {
+        *should_update_window_title_ptr = should_update_window_title;
+    }
+
+    if (fullscreen_trigger_ptr) {
+        *fullscreen_trigger_ptr = fullscreen_trigger;
+    }
+    if (fullscreen_value_ptr) {
+        *fullscreen_value_ptr = fullscreen_value;
+    }
+}
+
 /*
 ============================
 Private Function Implementations
