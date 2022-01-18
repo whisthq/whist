@@ -300,11 +300,11 @@ TEST_F(ProtocolTest, InitSDL) {
         char* changed_title = generate_random_string(150);
         title_len = strlen(changed_title);
         EXPECT_EQ(title_len, 150);
-        // bool should_update_window_title;
+        bool should_update_window_title;
 
-        // sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, &should_update_window_title,
-        //                              NULL, NULL);
-        // EXPECT_FALSE(should_update_window_title);
+        sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, &should_update_window_title,
+                                     NULL, NULL);
+        EXPECT_FALSE(should_update_window_title);
 
         // sdl_set_window_title(changed_title);
         // char window_title[151];
