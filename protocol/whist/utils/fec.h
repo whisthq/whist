@@ -7,8 +7,23 @@
  * @note See protocol_test.cpp for usage
  */
 
+/*
+============================
+Defines
+============================
+*/
+
+// This is unused at the moment
+#define FEC_HEADER_SIZE 2
+
 typedef struct FECEncoder FECEncoder;
 typedef struct FECDecoder FECDecoder;
+
+/*
+============================
+Public Functions
+============================
+*/
 
 /**
  * @brief                          Converts an fec packet ratio,
@@ -38,17 +53,16 @@ FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int ma
 
 /**
  * @brief                          Registers a buffer into the encoder.
- *                                 The encoder expects this function to be called
- *                                 `num_real_buffers` times.
  *
  * @param fec_encoder              The FEC encoder to use
  *
  * @param buffer                   The buffer to register
  *
- * @param buffer_size              The size of the buffer that's being registered
+ * @param buffer_size              The size of the buffer that's being registered,
+ *                                 must be <= `max_buffer_size`*`num_real_buffers`
  *
- * @note                           The data pointed to by the buffer being passed in, must be
- *                                 held alive for as long as the fec_encoder is alive.
+ * @note                           The data pointed to by the buffer being passed in, which
+ *                                 must be held alive for as long as the fec_encoder is alive.
  */
 void fec_encoder_register_buffer(FECEncoder* fec_encoder, void* buffer, int buffer_size);
 

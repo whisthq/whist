@@ -33,8 +33,12 @@ which is much larger. So, we should worry about such optimizations, later.
 
 #define MAX_NUM_BUFFERS 1024
 
-const int max_u8 = 0xff;
-const int max_u16 = 0xffff;
+// The most amount of buffers that RS accepts
+#define MAX_RS_BUFFERS 0xff
+// We only use 2 bytes to store the buffer size,
+// so we need to cap the buffer size as such
+#define MAX_BUFFER_SIZE ((1 << (8 * FEC_HEADER_SIZE)) - 1)
+
 #define RS_TABLE_SIZE 256  // size of row and column
 
 static SDL_SpinLock tls_lock;      // the spin lock used for SDL_TLSCreate() and SDL_CreateMutex()
@@ -141,7 +145,8 @@ int get_num_fec_packets(int num_real_packets, double fec_packet_ratio) {
 FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int max_buffer_size) {
     FECEncoder* fec_encoder = safe_malloc(sizeof(*fec_encoder));
 
-    FATAL_ASSERT(num_real_buffers + num_fec_buffers <= max_u8);
+    FATAL_ASSERT(num_real_buffers + num_fec_buffers <= MAX_RS_BUFFERS);
+    FATAL_ASSERT(max_buffer_size <= MAX_BUFFER_SIZE);
 
     fec_encoder->max_buffer_size = max_buffer_size;
     fec_encoder->num_accepted_buffers = 0;
@@ -160,15 +165,28 @@ FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int ma
 }
 
 void fec_encoder_register_buffer(FECEncoder* fec_encoder, void* buffer, int buffer_size) {
-    FATAL_ASSERT(fec_encoder->num_accepted_buffers < fec_encoder->num_real_buffers);
-    FATAL_ASSERT(0 <= buffer_size && buffer_size <= fec_encoder->max_buffer_size);
+    FATAL_ASSERT(buffer != NULL);
+    FATAL_ASSERT(0 <= buffer_size);
 
-    FATAL_ASSERT(buffer_size <= max_u16);
+    char* current_buffer_location = buffer;
+    int remaining_buffer_size = buffer_size;
+    while (remaining_buffer_size > 0) {
+        // If the buffer we were given is larger than max_buffer_size,
+        // Then we split it up
+        int current_buffer_size = min(remaining_buffer_size, fec_encoder->max_buffer_size);
 
-    fec_encoder->buffers[fec_encoder->num_accepted_buffers] = buffer;
-    fec_encoder->buffer_sizes[fec_encoder->num_accepted_buffers] = buffer_size;
-    fec_encoder->max_packet_size = max(fec_encoder->max_packet_size, buffer_size);
-    fec_encoder->num_accepted_buffers++;
+        // Check that we're not about to accept too many buffers,
+        // and then pass the buffer segment into the list of buffer segments
+        FATAL_ASSERT(fec_encoder->num_accepted_buffers + 1 <= fec_encoder->num_real_buffers);
+        fec_encoder->buffers[fec_encoder->num_accepted_buffers] = current_buffer_location;
+        fec_encoder->buffer_sizes[fec_encoder->num_accepted_buffers] = current_buffer_size;
+        fec_encoder->max_packet_size = max(fec_encoder->max_packet_size, current_buffer_size);
+        fec_encoder->num_accepted_buffers++;
+
+        // Progress the buffer tracker
+        current_buffer_location += current_buffer_size;
+        remaining_buffer_size -= current_buffer_size;
+    }
 }
 
 void fec_get_encoded_buffers(FECEncoder* fec_encoder, void** buffers, int* buffer_sizes) {
@@ -228,6 +246,8 @@ FECDecoder* create_fec_decoder(int num_real_buffers, int num_fec_buffers, int ma
     FECDecoder* fec_decoder = safe_malloc(sizeof(*fec_decoder));
 
     int num_total_buffers = num_real_buffers + num_fec_buffers;
+
+    FATAL_ASSERT(max_buffer_size <= MAX_BUFFER_SIZE);
 
     fec_decoder->max_buffer_size = max_buffer_size;
     fec_decoder->num_real_buffers = num_real_buffers;
