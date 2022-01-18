@@ -420,10 +420,8 @@ int main(int argc, char* argv[]) {
     WhistThread send_audio_thread =
         whist_create_thread(multithreaded_send_audio, "multithreaded_send_audio", &server_state);
 
-#ifdef __linux__
-    struct event_base* notifs_evbase = event_base_new();
+    void* notifs_evbase = create_event_base();
     init_notifications_thread(&server_state, notifs_evbase);
-#endif
 
     WhistThread manage_clients_thread = whist_create_thread(
         multithreaded_manage_client, "multithreaded_manage_client", &server_state);
