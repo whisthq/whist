@@ -1,0 +1,441 @@
+# workflows/daily_performance_benchmark.yml
+#
+# Protocol: Daily End-to-End Benchmarking
+# Performs a daily end-to-end benchmarking on the protocol, and posts the results to Slack and as a comment to all open PRs.
+
+name: "Protocol: Daily End-to-End Benchmarking"
+
+on:
+  schedule:
+    # Run once a day at midnight UTC
+    #- cron:  '0 0 * * *'
+    # once per hour (this is just for testing, to be deleted soon!)
+    - cron:  '0 * * * *'
+
+jobs:
+  # Check Protocol PR on Intel X86_64 systems (via GHA runners)
+  protocol-check-pr-x64:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+
+    strategy:
+      matrix:
+        config:
+          - name: "Build and Check Protocol on Windows (cl)"
+            os: windows-2019 # llvm, cmake, clang-tidy are pre-installed on windows-2019+ GHA machines
+            cuda: false # Set to true to CUDA-optimize the windows server executable. Note that CUDA takes 5-7min to install.
+          - name: "Build and Check Protocol on Linux Ubuntu (gcc)"
+            os: ubuntu-20.04 # cmake is pre-installed on ubuntu-20.04+ machines
+          - name: "Build and Check Protocol on macOS X64 (clang)"
+            os: macos-10.15 # cmake is pre-installed on macos-10.15+ machines
+
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+    steps:
+      ################################## CONFIG STEPS START ##############################
+
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      # Necessary for downloading protocol libs and base Dockerfile NVIDIA GRID drivers from AWS S3
+      - name: Configure AWS S3 CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      ###################################################################################
+      ################################ WINDOWS STEPS START ##############################
+
+      - name: Install Chocolatey dependencies on Windows GHA Machine
+        if: runner.os == 'Windows'
+        uses: crazy-max/ghaction-chocolatey@v1
+        with:
+          args: install cppcheck ninja
+
+      - name: Set up Visual Studio Developer Command Prompt (for nmake) on Windows GHA Machine
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install CUDA on Windows GHA Machine
+        if: runner.os == 'Windows' && matrix.config.cuda
+        working-directory: .github\workflows\helpers\protocol
+        env:
+          visual_studio: "Visual Studio 16 2019" # Imported from env in the .ps1 script
+          cuda: "11.0.167" # Imported from env in the .ps1 script, we use CUDA 11.0
+        shell: powershell
+        run: |
+          # Install CUDA and set paths
+          .\install_cuda_windows.ps1
+          if ($?) {
+            # Set paths for subsequent steps, using $env:CUDA_PATH
+            echo "Adding CUDA to CUDA_PATH, CUDA_PATH_X_Y and PATH"
+            echo "CUDA_PATH=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            echo "$env:CUDA_PATH_VX_Y=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            echo "$env:CUDA_PATH/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          } else {
+            exit 1
+          }
+
+      - name: Verify that NVCC is Installed on GHA Windows Machine
+        if: runner.os == 'Windows' && matrix.config.cuda
+        shell: powershell
+        run: |
+          nvcc -V
+          ls $env:CUDA_PATH
+          ls $env:CUDA_PATH\bin
+          ls $env:CUDA_PATH\include
+
+      - name: Register OS Compiler Matchers
+        shell: bash --noprofile --norc -eo pipefail {0}
+        run: |
+          # OS-independent matchers
+          echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/cppcheck_matcher.json"
+          echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/cmake_matcher.json"
+
+          # OS-specific matchers
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/gcc_matcher.json"
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+              echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/msvc_matcher.json"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
+          fi
+
+      - name: Build and Test Protocol Client and Server on Windows
+        if: runner.os == 'Windows'
+        shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
+        working-directory: protocol
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCHECK_CI=TRUE -G "Ninja" || EXIT /B 1
+          ninja WhistClient WhistProtocolTest || EXIT /B 1
+          ninja WhistServer WhistProtocolTest || EXIT /B 1
+
+      - name: Verify builds with clang-tidy on Windows
+        if: runner.os == 'Windows'
+        shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
+        working-directory: protocol
+        run: |
+          REM Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
+          echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
+
+          REM Run clang-tidy
+          cd build
+          ninja clang-tidy || EXIT /B 1
+
+      ###################################################################################
+      ################################# MACOS STEPS START ###############################
+
+      - name: Install macOS Client Protocol Dependencies on macOS GHA Machines
+        if: runner.os == 'macOS'
+        working-directory: protocol
+        run: |
+          # llvm for clang-tidy, coreutils for realpath, lcov for codecov
+          brew install llvm coreutils perl doxygen lcov
+          ln -s "/usr/local/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
+          ln -s "/usr/local/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
+
+      - name: Build and Test Protocol Client on macOS
+        if: runner.os == 'macOS'
+        working-directory: protocol
+        env:
+          WHIST_OSXSYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+        run: |
+          # Build the protocol and its test suite
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCHECK_CI=TRUE
+          make WhistClient WhistProtocolTest -j
+
+      - name: Build and Test Protocol Client on Linux Ubuntu
+        if: runner.os == 'Linux'
+        working-directory: protocol
+        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI WhistClient WhistProtocolTest
+
+      - name: Verify Builds with clang-tidy on macOS
+        if: runner.os == 'macOS'
+        working-directory: protocol
+        run: |
+          # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
+          echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
+
+          # Run clang-tidy
+          cd build
+          make clang-tidy -j
+
+      ###################################################################################
+      ################################# LINUX STEPS START ###############################
+
+      - name: Build and Test Protocol Client on Linux Ubuntu
+        if: runner.os == 'Linux'
+        working-directory: protocol
+        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI --sanitize=address+undefined WhistClient WhistProtocolTest
+
+      - name: Build Protocol Server on Linux Ubuntu
+        if: runner.os == 'Linux'
+        working-directory: protocol
+        run: ./build_protocol_targets.sh --cmakebuildtype=Debug --cmakesetCI --sanitize=address+undefined WhistServer WhistProtocolTest
+
+      # Verify clang-format on Linux
+      - name: Verify Builds with clang-format
+        if: runner.os == 'Linux'
+        working-directory: protocol
+        run: |
+          # Clang-matcher for clang-format, added after the main build sequence so that clang doesn't match gcc errors
+          echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
+
+          # Print clang-format version for local comparison
+          clang-format --version
+
+          # Run clang-format
+          ./build_protocol_targets.sh clang-format
+
+          # Show diff in GitHub Actions logs
+          git diff HEAD .
+
+          # This will return an error if there is a non-empty diff
+          git diff-index --quiet HEAD .
+
+      - name: Verify Builds with clang-tidy on Linux Ubuntu
+        if: runner.os == 'Linux'
+        working-directory: protocol
+        run: |
+          # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
+          echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
+
+          # Run clang-tidy
+          ./build_protocol_targets.sh clang-tidy
+
+      # This tests building the protocol in a container, the same way we do it in production
+      - name: Build Protocol Server in Docker Container
+        if: runner.os == 'Linux'
+        working-directory: protocol
+        run: ./build_protocol_targets.sh --cmakebuildtype=Release WhistServer WhistProtocolTest
+
+      # This ensures that all the build files from build_protocol_targets.sh have actually been generated
+      - name: Ensure that all protocol build files are present
+        if: runner.os == 'Linux'
+        working-directory: mandelboxes
+        run: ./helper_scripts/copy_protocol_build.sh
+
+      - name: Lint CMake Files
+        if: runner.os == 'Linux'
+        working-directory: protocol
+        run: |
+          pip install cmakelint
+          sudo apt-get install fd-find
+          # Ubuntu-specific PATH fix for `fd`
+          ln -s $(which fdfind) ~/.local/bin/fd
+          ./lint-cmake.sh
+
+  #######################################################################################
+  #######################################################################################
+
+  # Check Protocol PR on ARM64 systems (via self-hosted MacStadium M1 runner)
+  protocol-check-pr-arm64:
+    name: Build and Test Protocol on macOS ARM64 (clang)
+    runs-on: [self-hosted, macOS, ARM64]
+    defaults:
+      run:
+        shell: "/usr/bin/arch -arch arm64e /bin/bash {0}"
+
+    steps:
+      ################################## CONFIG STEPS START ##############################
+
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      # Necessary for downloading protocol libs and base Dockerfile NVIDIA GRID drivers from AWS S3
+      - name: Configure AWS S3 CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      ###################################################################################
+      ################################# MACOS STEPS START ###############################
+
+      # These commands must be run with sudo, which requires entering the password. They need
+      # to be run via VNC directly in the terminal, so that the password can be provided. They
+      # are left here, commented out, for reference
+      # - name: Install macOS Client Protocol Dependencies
+      #   if: runner.os == 'macOS'
+      #   working-directory: protocol
+      #   run: |
+      #     # llvm for clang-tidy, coreutils for realpath, lcov for codecov
+      #     brew install llvm coreutils perl doxygen lcov
+      #     sudo ln -s "/opt/homebrew/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
+      #     sudo ln -s "/opt/homebrew/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
+
+      - name: Build and Test Protocol Client
+        working-directory: protocol
+        env:
+          WHIST_OSXSYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
+          make WhistClient WhistProtocolTest -j
+
+          # Generate code coverage report from .gcno/.gcda files generated by `clang --coverage`
+          lcov --capture --directory . --output-file coverage.info
+          lcov --list coverage.info # debug info
+
+          # Download the Codecov uploader
+          curl -Os https://uploader.codecov.io/latest/macos/codecov && chmod +x codecov
+
+          # Upload coverage report to Codecov
+          ./codecov -t ${CODECOV_TOKEN} -c -F protocol
+
+      # Note that we don't run clang-tidy on arm64 macOS, since we already run it on x64 macOS
+
+  #######################################################################################
+  #######################################################################################
+
+  # This job runs a protocol streaming session between two Docker containers on the same
+  # AWS EC2 instance to test end-to-end networking performance in a controlled environment.
+  protocol-streaming-e2e-check-pr:
+    name: "Protocol Streaming End-to-End Test"
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Setup Python-based notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh true
+
+      - name: Configure AWS S3 CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # Load the AWS SSH keypair onto the runner, so that it can run remote commands on the AWS EC2 machine
+      # running the streaming end-to-end test. This keypair is defined in AWS and stored as a GitHub Secret.
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          name: id_rsa
+          key: ${{ secrets.PROTOCOL_E2E_SREAMING_TEST_INSTANCE_SSH_KEY }}
+          known_hosts: unnecessary # Note, this is not secure and discouraged, but tolerable here given the instance is deleted after the test
+          if_key_exists: fail
+
+      - name: Install End-to-End Streaming Test Dependencies
+        run: pip install boto3 paramiko
+
+      # Run the streaming end-to-end integration test. The -ssh-key-name must match the value in AWS EC2 under
+      # Key Pairs, where the SSH key is defined. Other possible flags:
+      # --testing_url, defaults to Big Buck Bunny video stored on our AWS S3
+      # --testing_time, defaults to 126s
+      # --cmake-build-type, defaults to `Metrics`
+      # --region-name, defaults to `us-east-1`
+      # --use-two-instances, defaults to `false`
+      # --use-existing-server-instance, defaults to `false`
+      # --use-existing-client-instance, defaults to `false`
+      # --aws-credentials-filepath, defaults to `~/.aws/credentials`
+
+      ### Action below will run the End-to-End Streaming Test for each new commit to a branch of a PR. ###
+      - name: Run End-to-End Streaming Test
+        id: e2e_streaming_test
+        working-directory: protocol/test
+        run: python3 streaming_e2e_tester.py --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" --ssh-key-path "/home/runner/.ssh/id_rsa" --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" --use-existing-server-instance i-0a6d434cc397b1dc3
+
+      # need one more section like this to ensure the S3 command works in case of failure/timeout of the Python script above
+      - name: Upload logs to S3 for debugging purposes
+        if: always()
+        working-directory: protocol/test
+        run: aws s3 cp perf_logs s3://whist-e2e-protocol-test-logs/"$GITHUB_REF_NAME" --recursive
+
+      - name: Terminate leftover AWS instances
+        if: ${{ always() && (steps.e2e_streaming_test.outcome == 'failure') }}
+        working-directory: protocol/test
+        run: python3 terminate_leftover_instances.py
+
+      # The streaming_e2e_tester.py file generates the files server_monitoring_log.txt and client_monitoring_log.txt in
+      # the folder perf_logs at the path where it is run in. We parse these files to display the results of the test.
+      - name: Parse & Display Test Results
+        working-directory: protocol/test
+        shell: python3 {0}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ISSUE: ${{ github.event.number }}
+          GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
+        run: |
+          import os, sys, mmap, time
+
+          # Here, we parse the test results into a .info file, which can be read and displayed on the GitHub PR
+          # Create output .info file
+          results_file = open("streaming_e2e_test_results.info", "w+")
+
+          logs_root_dir = "perf_logs/"
+          for folder_name in os.listdir("./perf_logs"):
+            if time.strftime("%Y_%m_%d@") in folder_name:
+              logs_root_dir = logs_root_dir + folder_name + "/"
+              break
+
+
+          # Parse client logs for metrics
+          with open(os.path.abspath("{}/client_monitoring_log.txt".format(logs_root_dir))) as client_logs_file:
+            # Stringify the results file, to make it easier to extract specific substrings 
+            stringified_file = mmap.mmap(client_logs_file.fileno(), 0, access=mmap.ACCESS_READ)
+
+            # TODO: extract the substrings/variables we are interested in from the results
+            # Read all the variables we want here with stringified_file.find('var-name') != -1: write-to-our-result-file
+            results_file.write("THE METRICS WE EXTRACTED ABOVE")
+
+          # Parse server logs for metrics
+          with open(os.path.abspath("{}/server_monitoring_log.txt".format(logs_root_dir))) as server_logs_file:
+            # Stringify the results file, to make it easier to extract specific substrings 
+            stringified_file = mmap.mmap(server_logs_file.fileno(), 0, access=mmap.ACCESS_READ)
+            
+            # TODO: extract the substrings/variables we are interested in from the results
+            # Read all the variables we want here with stringified_file.find('var-name') != -1: write-to-our-result-file
+            results_file.write("THE METRICS WE EXTRACTED ABOVE")
+
+          # TODO: format the .info file nicely so it displays well on GitHub
+
+          # We're done, close the file
+          results_file.close()
+
+          #######################################################################################
+
+          # Display the results on the GitHub PR. In the future, we could also upload summaries to Logz.io, or post
+          # a nightly update in Slack, if we choose to.
+
+          sys.path.append(".github/workflows/helpers")
+          from notifications.github_bot import github_comment_update
+
+          if not os.environ.get("GITHUB_REF_NAME"):
+            print("No GitHub PR/Issue number! Skipping PR notification.")
+            sys.exit(0)
+
+          github_token = os.environ["GITHUB_TOKEN"]
+          github_issue = int(os.environ["GITHUB_REF_NAME"].split("/")[0])
+          github_repo = "whisthq/whist"
+
+          identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE"
+          title = "Protocol End-to-End Streaming Test Results"
+
+          # This file gets created above, in parsing the test results into something more human-readable
+          f = open("protocol/test/streaming_e2e_test_results.info", "r")
+          body = f.read()
+          f.close()
+
+          github_comment_update(
+            github_token,
+            github_repo,
+            github_issue,
+            identifier,
+            body,
+            title=title,
+          )
+
+  #######################################################################################
