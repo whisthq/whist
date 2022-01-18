@@ -58,14 +58,14 @@ Public Functions
 /**
  * @brief                          Hash a buffer to a pseudorandomly unique ID
  *                                 This will not be cryptographically secure against
- *                                 preimage attacks, it is intended to be fast instead
+ *                                 preimage/collision attacks, it is intended to be fast instead
  *
- * @param key                      Buffer to get hashed
+ * @param data                     Pointer to the data to get hashed
  * @param len                      Length of buffer to get hashed, in bytes
  *
  * @returns                        Return the result of the hash
  */
-uint32_t hash(const void* key, size_t len);
+uint32_t hash(const void* data, size_t len);
 
 /**
  * @brief                          Generates a signature of the given buffer
@@ -76,10 +76,10 @@ uint32_t hash(const void* key, size_t len);
  * @param hash                     A HMAC_SIZE-byte buffer to write the signature to
  * @param buf                      The a pointer to the buffer that we want to sign
  * @param len                      The length of the bugger that we want to sign
- * @param key                      The private key to sign with
+ * @param private_key              The private key to sign with
  *                                   must be KEY_SIZE bytes
  */
-void hmac(void* hash, const void* buf, int len, const void* key);
+void hmac(void* hash, const void* buf, int len, const void* private_key);
 
 /**
  * @brief                          Generates some unique IV,
@@ -124,10 +124,9 @@ int encrypt_packet(void* encrypted_data, AESMetadata* aes_metadata, const void* 
  *                                   must be KEY_SIZE bytes
  *
  * @returns                        Will return the decrypted packet length,
- *                                 (Guaranteed <= plaintext_buffer_len)
  *                                 or -1 on failure
- *                                 (Including if plaintext_buffer_len was too small to fit the
- * packet)
+ *                                   (Either because it was incorrectly signed/encrypted,
+ *                                    or if plaintext_buffer_len was too small)
  */
 int decrypt_packet(void* plaintext_buffer, int plaintext_buffer_len, AESMetadata aes_metadata,
                    const void* encrypted_data, int encrypted_len, const void* private_key);

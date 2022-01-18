@@ -754,12 +754,6 @@ TEST_F(ProtocolTest, LogStatistic) {
     destroy_logger();
 }
 
-// Constants used for testing encryption
-#define DEFAULT_BINARY_PRIVATE_KEY \
-    ((const void*)"\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF")
-#define SECOND_BINARY_PRIVATE_KEY \
-    ((const void*)"\xED\xED\xED\xED\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\xED\xED")
-
 /**
  * utils/color.c
  **/
@@ -864,6 +858,9 @@ TEST_F(ProtocolTest, EncryptAndDecrypt) {
 // This test encrypts a packet with one key, then attempts to decrypt it with a differing
 // key, confirms that it returns -1
 TEST_F(ProtocolTest, BadDecrypt) {
+#define SECOND_BINARY_PRIVATE_KEY \
+    ((const void*)"\xED\xED\xED\xED\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\xED\xED")
+
     const char* data = "testing...testing";
     size_t len = strlen(data);
 

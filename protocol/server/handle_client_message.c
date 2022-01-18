@@ -233,8 +233,8 @@ static int handle_network_settings_message(whist_server_state *state, WhistClien
         LOG_ERROR(
             "Network Settings msg FORCEFULLY CLAMPED: %fmbps avg/%fmbps burst/%f%% audio FEC/%f%% "
             "video FEC",
-            requested_avg_bitrate / 1024.0 / 1024.0, requested_burst_bitrate / 1024.0 / 1024.0,
-            requested_audio_fec_ratio * 100.0, requested_video_fec_ratio * 100.0);
+            avg_bitrate / 1024.0 / 1024.0, burst_bitrate / 1024.0 / 1024.0, audio_fec_ratio * 100.0,
+            video_fec_ratio * 100.0);
         wcmsg->network_settings.bitrate = avg_bitrate;
         wcmsg->network_settings.burst_bitrate = burst_bitrate;
         wcmsg->network_settings.audio_fec_ratio = audio_fec_ratio;

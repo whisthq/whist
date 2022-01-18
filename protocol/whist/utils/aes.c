@@ -38,10 +38,12 @@ Defines
 
 // Handles and prints the ssl error,
 // Then returns -1
-#define HANDLE_SSL_ERROR(void) \
-    do {                       \
-        print_ssl_errors();    \
-        return -1;             \
+// We LOG_INFO to get the line number
+#define HANDLE_SSL_ERROR(void)            \
+    do {                                  \
+        LOG_INFO("OpenSSL Error caught"); \
+        print_ssl_errors();               \
+        return -1;                        \
     } while (0)
 
 /*
@@ -57,7 +59,7 @@ Private Function Declarations
  * @param ciphertext               Pointer to buffer for receiving ciphertext
  * @param plaintext                Pointer to the plaintext to encrypt
  * @param plaintext_len            Length of the plaintext
- * @param key                      AES Private Key used to encrypt the plaintext
+ * @param private_key              AES Private Key used to encrypt the plaintext
  *                                   must be KEY_SIZE bytes
  * @param iv                       IV used to seed the AES encryption
  *                                   must be IV_SIZE bytes
@@ -65,7 +67,7 @@ Private Function Declarations
  * @returns                        Will return -1 on failure, else will return the
  *                                 length of the encrypted result
  */
-int aes_encrypt(void* ciphertext, const void* plaintext, int plaintext_len, const void* key,
+int aes_encrypt(void* ciphertext, const void* plaintext, int plaintext_len, const void* private_key,
                 const void* iv);
 
 /**
@@ -75,7 +77,7 @@ int aes_encrypt(void* ciphertext, const void* plaintext, int plaintext_len, cons
  * @param plaintext_len            The size of the `plaintext` buffer
  * @param ciphertext               Pointer to the ciphertext to encrypt
  * @param ciphertext_len           Length of the ciphertext
- * @param key                      AES Private Key used to encrypt the plaintext
+ * @param private_key              AES Private Key used to encrypt the plaintext
  *                                   must be KEY_SIZE bytes
  * @param iv                       IV used to seed the AES encryption
  *                                   must be IV_SIZE bytes
@@ -84,7 +86,7 @@ int aes_encrypt(void* ciphertext, const void* plaintext, int plaintext_len, cons
  *                                 or -1 on failure
  */
 int aes_decrypt(void* plaintext_buffer, int plaintext_len, const void* ciphertext,
-                int ciphertext_len, const void* key, const void* iv);
+                int ciphertext_len, const void* private_key, const void* iv);
 
 /**
  * @brief                          Get an HMAC from the AES encrypted information
@@ -94,7 +96,7 @@ int aes_decrypt(void* plaintext_buffer, int plaintext_len, const void* ciphertex
  *                                   where important information will be signed as well
  * @param ciphertext               Pointer to the ciphertext to sign
  * @param ciphertext_len           Length of the ciphertext
- * @param key                      The shared private key between client and server
+ * @param private_key              The shared private key between client and server
  *                                   must be KEY_SIZE bytes
  */
 void hmac_aes_data(void* hash_buffer, const AESMetadata* aes_metadata, const void* ciphertext,
@@ -258,6 +260,7 @@ int aes_encrypt(void* ciphertext, const void* plaintext, int plaintext_len, cons
     FATAL_ASSERT(IV_SIZE == EVP_CIPHER_iv_length(cipher));
     FATAL_ASSERT(KEY_SIZE == EVP_CIPHER_key_length(cipher));
     int block_size = EVP_CIPHER_block_size(cipher);
+    FATAL_ASSERT(MAX_ENCRYPTION_SIZE_INCREASE >= block_size);
 
     // Initialise the encryption operation.
     if (1 !=
@@ -362,9 +365,10 @@ int aes_decrypt(void* plaintext_buffer, int plaintext_len, const void* ciphertex
     // We use EVP_DecryptUpdate above to save a memcpy of the primary bulk of the data,
     // because the code above doesn't use a `temporary_buf` buffer.
     while (ciphertext_bytes_read < ciphertext_len) {
-        // Decrypt into temporary_buf, but not within block_size of the size of temporary_buf
+        // Decrypt into temporary_buf, but not within block_size of the size of temporary_buf,
+        // And not more than the # of bytes left in the ciphertext
         int bytes_to_feed =
-            max(ciphertext_len - ciphertext_bytes_read, (int)sizeof(temporary_buf) - block_size);
+            min(ciphertext_len - ciphertext_bytes_read, (int)sizeof(temporary_buf) - block_size);
         if (1 != EVP_DecryptUpdate(ctx, temporary_buf, &len,
                                    (const unsigned char*)ciphertext + ciphertext_bytes_read,
                                    bytes_to_feed))
@@ -373,6 +377,8 @@ int aes_decrypt(void* plaintext_buffer, int plaintext_len, const void* ciphertex
 
         // Move from temporary_buf to plaintext_buffer, if we have the room available
         if (plaintext_bytes_written + len > plaintext_len) {
+            LOG_INFO("We want to write %d bytes, but we only have %d bytes",
+                     plaintext_bytes_written + len, plaintext_len);
             return -1;
         }
         memcpy((char*)plaintext_buffer + plaintext_bytes_written, temporary_buf, len);
@@ -384,6 +390,8 @@ int aes_decrypt(void* plaintext_buffer, int plaintext_len, const void* ciphertex
 
     // Move from temporary_buf to plaintext_buffer, if we have the room available
     if (plaintext_bytes_written + len > plaintext_len) {
+        LOG_INFO("We want to write %d bytes, but we only have %d bytes",
+                 plaintext_bytes_written + len, plaintext_len);
         return -1;
     }
     memcpy((char*)plaintext_buffer + plaintext_bytes_written, temporary_buf, len);

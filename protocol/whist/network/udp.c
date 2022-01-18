@@ -32,6 +32,9 @@ typedef struct {
     char payload[sizeof(WhistPacket) + MAX_ENCRYPTION_SIZE_INCREASE];
 } UDPPacket;
 
+#define UDPPACKET_HEADER_SIZE ((int)sizeof(UDPPacket) - (int)sizeof((UDPPacket){0}.payload))
+#define MAX_UDPPACKET_PAYLOAD_SIZE ((int)sizeof((UDPPacket){0}.payload))
+
 // Define how many times to retry sending a UDP packet in case of Error 55 (buffer full). The
 // current value (5) is an arbitrary choice that was found to work well in practice.
 #define RETRIES_ON_BUFFER_FULL 5
@@ -83,9 +86,10 @@ WhistPacket* udp_read_packet(void* raw_context, bool should_recv) {
         // Verify the reported packet length
         // We check bounds on udp_packet.payload_size because it's before decrypt_packet,
         // meaning it's untrusted and could be made to intentionally overflow our addition check.
-        if (udp_packet.payload_size < 0 || MAX_PAYLOAD_SIZE < udp_packet.payload_size ||
-            (int)sizeof(UDPPacket) + udp_packet.payload_size != recv_len) {
-            LOG_WARNING("The UDPPacket's payload size doesn't agree with recv_len!");
+        if (udp_packet.payload_size < 0 || MAX_UDPPACKET_PAYLOAD_SIZE < udp_packet.payload_size ||
+            UDPPACKET_HEADER_SIZE + udp_packet.payload_size != recv_len) {
+            LOG_WARNING("The UDPPacket's payload size %d doesn't agree with recv_len %d!",
+                        udp_packet.payload_size, recv_len);
             return NULL;
         }
 
@@ -257,7 +261,7 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payloa
                                                 (payload_size % MAX_PAYLOAD_SIZE == 0 ? 0 : 1));
 
     int num_fec_packets = 0;
-    int fec_packet_ratio = context->fec_packet_ratios[packet_type];
+    double fec_packet_ratio = context->fec_packet_ratios[packet_type];
     if (nack_buffer && fec_packet_ratio > 0.0) {
         num_fec_packets = get_num_fec_packets(num_indices, fec_packet_ratio);
     }
@@ -338,8 +342,8 @@ void udp_update_network_settings(SocketContext* socket_context, NetworkSettings 
     SocketContextData* context = socket_context->context;
 
     int burst_bitrate = network_settings.burst_bitrate;
-    int video_fec_ratio = network_settings.video_fec_ratio;
-    int audio_fec_ratio = network_settings.audio_fec_ratio;
+    double video_fec_ratio = network_settings.video_fec_ratio;
+    double audio_fec_ratio = network_settings.audio_fec_ratio;
 
     // Set burst bitrate, if possible
     if (context->network_throttler == NULL) {

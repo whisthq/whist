@@ -200,21 +200,23 @@ int tcp_send_constructed_packet(void* raw_context, WhistPacket* packet) {
     } else {
         // Otherwise, just write it to tcp_packet directly
         tcp_packet->payload_size = packet_size;
-        memcpy(&tcp_packet->payload, packet, packet_size);
+        memcpy(tcp_packet->payload, packet, packet_size);
     }
 
+    int tcp_packet_size = get_tcp_packet_size(tcp_packet);
+
     // For now, the TCP network throttler is NULL, so this is a no-op.
-    network_throttler_wait_byte_allocation(context->network_throttler,
-                                           get_tcp_packet_size(tcp_packet));
+    network_throttler_wait_byte_allocation(context->network_throttler, tcp_packet_size);
 
     //#if LOG_NETWORKING
     // This is useful enough to print, even outside of LOG_NETWORKING GUARDS
-    LOG_INFO("Sending a WhistPacket of size %d, over TCP", packet_size);
+    LOG_INFO("Sending a WhistPacket of size %d (Total %d bytes), over TCP", packet_size,
+             tcp_packet_size);
     //#endif
 
     // Send the packet
     bool failed = false;
-    int ret = send(context->socket, (const char*)tcp_packet, get_tcp_packet_size(tcp_packet), 0);
+    int ret = send(context->socket, (const char*)tcp_packet, tcp_packet_size, 0);
     if (ret < 0) {
         int error = get_last_network_error();
         LOG_WARNING("Unexpected TCP Packet Error: %d", error);
@@ -239,7 +241,7 @@ int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, int len
 
     // Use our block allocator
     // This function fragments the heap too much to use malloc here
-    int packet_size = sizeof(WhistPacket) + len;
+    int packet_size = PACKET_HEADER_SIZE + len;
     WhistPacket* packet = allocate_region(packet_size);
 
     // Contruct packet metadata

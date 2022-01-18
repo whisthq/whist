@@ -50,7 +50,6 @@ typedef void* (*rs_table_t)[RS_TABLE_SIZE];  // NOLINT  //supress clang-tidy war
 void free_rs_code_table(
     void* dummy_ptr)  // destructor for thread-specific data, clean the table after thread exit
 {
-    LOG_INFO("free_rs_code_table() called");
     rs_table_t rs_code_table;
     rs_code_table = SDL_TLSGet(tls_id);
     if (rs_code_table == NULL) return;
