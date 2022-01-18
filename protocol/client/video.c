@@ -618,31 +618,30 @@ void update_sws_context(VideoContext* video_context, Uint8** data, int* linesize
     }
 }
 
-void calculate_statistics(VideoContext* video_context) {
-    // Gradient previous measurements
+// Accumulated Gradient Delay Measurements
+typedef struct {
+    // Gradient delay cumulative measurements
+    double total_adjusted_delay_gradient;
+    double total_adjusted_delay_gradient_squared;
+    double total_client_side_delay;
+    double total_one_way_trip_ms;
+    int num_delay_measurements;
+} GradientDelayStats;
+
+void update_delay_gradient_statistics(VideoContext* video_context, GradientDelayStats* gd_stats) {
     static timestamp_us prev_recv_side_ts = 0;
     static timestamp_us prev_send_side_ts = 0;
     static int prev_frame_id = 0;
-    // Gradient delay cumulative measurements
-    static double total_adjusted_delay_gradient = 0;
-    static double total_adjusted_delay_gradient_squared = 0;
-    static double total_client_side_delay = 0;
-    static int num_delay_measurements = 0;
-
-    if (!video_context->statistics_initialized) {
-        start_timer(&video_context->network_statistics_timer);
-        video_context->statistics_initialized = true;
-    }
 
     // Calculate running average of gradient delay
     if (!video_context->pushing_render_context) {
         if (video_context->last_rendered_id >= 0) {
             int next_render_id = video_context->last_rendered_id + 1;
-            // Check for most recently received video frame
+            // Check for most recently received video frame + valid timestamps
             if (is_ready_to_render(video_context->ring_buffer, next_render_id)) {
                 FrameData* cur_frame = get_frame_at_id(video_context->ring_buffer, next_render_id);
-                // Calculate after first data point
                 if (cur_frame->send_side_timestamp && cur_frame->recv_side_timestamp) {
+                    // Calculate after first data point
                     if (prev_recv_side_ts == 0 || prev_send_side_ts == 0) {
                         prev_send_side_ts = cur_frame->send_side_timestamp;
                         prev_recv_side_ts = cur_frame->recv_side_timestamp;
@@ -650,7 +649,7 @@ void calculate_statistics(VideoContext* video_context) {
                     } else {
                         int client_side_delay =
                             (int)(cur_frame->recv_side_timestamp - prev_recv_side_ts);
-                        // Adjust server delay for frame skips
+                        // Adjust server delay for frame skips + use it to calculate delay gradient
                         timestamp_us adjusted_prev_timestamp =
                             prev_send_side_ts +
                             (next_render_id - prev_frame_id - 1) * US_IN_SECOND / 60;
@@ -658,11 +657,17 @@ void calculate_statistics(VideoContext* video_context) {
                             (int)(cur_frame->send_side_timestamp - adjusted_prev_timestamp);
                         double adjusted_delay_gradient =
                             (client_side_delay - adjusted_server_side_delay) / 1000.0;
-                        total_client_side_delay += client_side_delay / 1000.0;
-                        total_adjusted_delay_gradient += adjusted_delay_gradient;
-                        total_adjusted_delay_gradient_squared +=
+                        // Update running accumulators
+                        gd_stats->total_client_side_delay += client_side_delay / 1000.0;
+                        gd_stats->total_adjusted_delay_gradient += adjusted_delay_gradient;
+                        gd_stats->total_adjusted_delay_gradient_squared +=
                             (adjusted_delay_gradient * adjusted_delay_gradient);
-                        num_delay_measurements++;
+                        if(cur_frame->recv_side_timestamp > cur_frame->send_side_timestamp) {
+                            //LOG_INFO("PANIC");
+                        }
+                        gd_stats->total_one_way_trip_ms += abs((int)(cur_frame->recv_side_timestamp - cur_frame->send_side_timestamp)) / 1000.0;
+                        gd_stats->num_delay_measurements++;
+                        // Update last frame timestamps/id
                         prev_send_side_ts = cur_frame->send_side_timestamp;
                         prev_recv_side_ts = cur_frame->recv_side_timestamp;
                         prev_frame_id = next_render_id;
@@ -671,11 +676,22 @@ void calculate_statistics(VideoContext* video_context) {
             }
         }
     }
+}
+
+void calculate_statistics(VideoContext* video_context) {
+    static GradientDelayStats running_gradient_delay_stats = {0};
+
+    if (!video_context->statistics_initialized) {
+        start_timer(&video_context->network_statistics_timer);
+        video_context->statistics_initialized = true;
+    }
+
+    update_delay_gradient_statistics(video_context, &running_gradient_delay_stats);
 
     RingBuffer* ring_buffer = video_context->ring_buffer;
     // do some calculation
     // Update mbps every STATISTICS_SECONDS seconds
-#define STATISTICS_SECONDS 5
+#define STATISTICS_SECONDS 1
     if (get_timer(&video_context->network_statistics_timer) > STATISTICS_SECONDS) {
         NetworkStatistics network_statistics = {0};
         network_statistics.num_nacks_per_second =
@@ -685,34 +701,32 @@ void calculate_statistics(VideoContext* video_context) {
         network_statistics.num_rendered_frames_per_second =
             ring_buffer->num_frames_rendered / STATISTICS_SECONDS;
         network_statistics.statistics_gathered = true;
+        // Set gradient delay averages
+        int num_delay_measurements = running_gradient_delay_stats.num_delay_measurements;
         if (num_delay_measurements) {
             double average_adjusted_delay_gradient =
-                total_adjusted_delay_gradient / num_delay_measurements;
+                running_gradient_delay_stats.total_adjusted_delay_gradient / num_delay_measurements;
             network_statistics.average_delay_gradient = average_adjusted_delay_gradient;
             network_statistics.delay_gradient_variance =
-                total_adjusted_delay_gradient_squared / num_delay_measurements -
-                average_adjusted_delay_gradient * average_adjusted_delay_gradient;
+                running_gradient_delay_stats.total_adjusted_delay_gradient_squared / num_delay_measurements - pow(average_adjusted_delay_gradient, 2);
             network_statistics.average_client_side_delay =
-                total_client_side_delay / num_delay_measurements;
+                running_gradient_delay_stats.total_client_side_delay / num_delay_measurements;
+            network_statistics.average_one_way_trip_latency = running_gradient_delay_stats.total_one_way_trip_ms / running_gradient_delay_stats.num_delay_measurements;
             network_statistics.num_delay_measurements = num_delay_measurements;
             LOG_INFO("Average Adjusted Delay Gradient: %f", average_adjusted_delay_gradient);
         } else {
             LOG_WARNING("Could not collect enough data to calculate gradient delay statistics!");
         }
+
         video_context->network_statistics = network_statistics;
 
+        // Reset ring buffer tracking members
         ring_buffer->num_packets_nacked = 0;
         ring_buffer->num_packets_received = 0;
         ring_buffer->num_frames_rendered = 0;
 
-        // Reset delay gradient measurement members
-        prev_recv_side_ts = 0;
-        prev_send_side_ts = 0;
-        prev_frame_id = 0;
-        total_adjusted_delay_gradient = 0;
-        total_adjusted_delay_gradient_squared = 0;
-        total_client_side_delay = 0;
-        num_delay_measurements = 0;
+        // Reset gradient delay accumulator
+        running_gradient_delay_stats = (GradientDelayStats){0};
 
         start_timer(&video_context->network_statistics_timer);
     }

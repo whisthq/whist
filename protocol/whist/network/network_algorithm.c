@@ -342,23 +342,31 @@ NetworkSettings gcc_bitrate(NetworkStatistics stats) {
     */
 
     // All constants are reccomended values from the paper
-    static clock gcc_clock;
+    static WhistTimer gcc_init_clock;
+    static WhistTimer gcc_timer_clock;
     static int step = 0;
-    static const double system_error_variance = 0.01;
+    static const double system_error_variance = 0.1;
     static double kalman_gain = 0;
-    static double measurement_variance = 0.1;
-    static double filtered_delay_gradient = 0;
+    static double measurement_variance = 0.5;
+    static double filtered_delay_gradient = 0.0;
+    static double var_v_hat = 0;
+    static const double chi = 0.01;
 
     static const double adaptive_threshold_overuse_gain = 0.01;
-    static const double adaptive_threshold_underuse_gain = 0.00018;
-    static double overuse_threshold = .1;
+    static const double adaptive_threshold_underuse_gain = 0.01;
+    static double overuse_threshold = .06;
 
     static const double delay_controller_eta = 1.05;
-    static const double delay_controller_alpha = 0.85;
-    static int receiver_estimated_maximum_bitrate = STARTING_BITRATE;
+    static const double delay_controller_alpha = 0.9;
+
+
+    static int receiver_estimated_maximum_bitrate = MINIMUM_BITRATE * 2.5;
+    static double average_decrease_remb = MINIMUM_BITRATE * 2.5;
+    static double decrease_remb_variance = MINIMUM_BITRATE * 2.5;
+    static int decrease_remb_cnt = 0;
 
     static const double loss_controller_increase_threshold = 0.1;
-    static const double loss_controller_decrease_threshold = 0.01;
+    static const double loss_controller_decrease_threshold = 0.02;
 
     enum {
         OVERUSE_DETECTOR_INCREASE_SIGNAL,
@@ -367,35 +375,41 @@ NetworkSettings gcc_bitrate(NetworkStatistics stats) {
     } overuse_detector_signal;
 
     static const double burst_multiplier = 2.0;
-    static NetworkSettings network_settings = {.bitrate = STARTING_BITRATE,
-                                               .burst_bitrate = STARTING_BURST_BITRATE};
+    static NetworkSettings network_settings = {.bitrate = MINIMUM_BITRATE,
+                                               .burst_bitrate = MINIMUM_BURST_BITRATE};
 
     if (stats.num_delay_measurements == 0) {
         LOG_WARNING("NO MEASUREMENTS FOUND!");
         LOG_INFO("%d %d %d %d", stats.num_nacks_per_second, stats.num_received_packets_per_second,
                  stats.num_skipped_frames_per_second, stats.num_rendered_frames_per_second);
-        LOG_INFO("---");
-        return fallback_bitrate(stats);
-    }
-
-    if (!step) {
-        measurement_variance = stats.delay_gradient_variance;
-        filtered_delay_gradient = stats.average_delay_gradient;
-        start_timer(&gcc_clock);
-        LOG_INFO("STARTED TIMER");
-    }
-    step++;
-
-    if (get_timer(gcc_clock) < 2) {
+        network_settings.bitrate = MINIMUM_BITRATE;
+        network_settings.burst_bitrate = MINIMUM_BURST_BITRATE;
         return network_settings;
     }
 
+    if(!step) {
+        start_timer(&gcc_init_clock);
+        start_timer(&gcc_timer_clock);
+    }
+    step++;
+
+
+    // TODO: Move this to a separate timed_gcc function
+    if (get_timer(&gcc_timer_clock) < 1 || get_timer(&gcc_init_clock) < 10) {
+        return network_settings;
+    }
+
+
+    LOG_INFO("Measured Variance %f", stats.delay_gradient_variance);
     // Arrival filter- calculated delay gradient while accounting for network jitter (modeled as a
     // constant value process so state update equation is not necessary)
     double residual = stats.average_delay_gradient - filtered_delay_gradient;
     double aggregate_variance = system_error_variance + measurement_variance;
+    double variance_alpha = pow((1 - chi), 30/(1000 * max(stats.num_received_packets_per_second, 1)));
+    var_v_hat = max(variance_alpha * var_v_hat + (1 - variance_alpha) * residual * residual, 0.1);
     kalman_gain =
-        aggregate_variance / (aggregate_variance + stats.delay_gradient_variance);  // gain update
+        aggregate_variance / (aggregate_variance + var_v_hat);  // gain update
+    LOG_INFO("Kalman Gain: %f", kalman_gain);
     filtered_delay_gradient =
         filtered_delay_gradient + residual * kalman_gain;             // filter state update
     measurement_variance = (1 - kalman_gain) * (aggregate_variance);  // measurement variance update
@@ -404,7 +418,6 @@ NetworkSettings gcc_bitrate(NetworkStatistics stats) {
     LOG_INFO("Filtered Delay Gradient %f", filtered_delay_gradient);
 
     LOG_INFO("Average Client Side Delay %f", stats.average_client_side_delay);
-    LOG_INFO("Fabs diff %f", (fabs(filtered_delay_gradient) - overuse_threshold));
     // Adaptive threshold update for overuse detector
     double threshold_gain = (fabs(filtered_delay_gradient) < overuse_threshold)
                                 ? adaptive_threshold_underuse_gain
@@ -413,29 +426,60 @@ NetworkSettings gcc_bitrate(NetworkStatistics stats) {
     overuse_threshold = overuse_threshold + stats.average_client_side_delay * threshold_gain *
                                                 (fabs(filtered_delay_gradient) - overuse_threshold);
 
+    overuse_threshold = min(fabs(overuse_threshold), 0.125);
     LOG_INFO("Overuse threshold %f", overuse_threshold);
 
     // Detect over/under use using state machine outlined in paper
     if (overuse_threshold < filtered_delay_gradient) {
         overuse_detector_signal = OVERUSE_DETECTOR_DECREASE_SIGNAL;
-    } else if (-overuse_threshold > filtered_delay_gradient) {
+        LOG_INFO("Signal DECREASE");
+    } else if (-overuse_threshold/10 > filtered_delay_gradient) {
         overuse_detector_signal = OVERUSE_DETECTOR_INCREASE_SIGNAL;
+        LOG_INFO("Signal INCREASE");
     } else {
         overuse_detector_signal = OVERUSE_DETECTOR_HOLD_SIGNAL;
+        LOG_INFO("Signal HOLD");
     }
 
-    LOG_INFO("Signal %s", (overuse_detector_signal == OVERUSE_DETECTOR_INCREASE_SIGNAL) ? "INCREASE"
-                          : (overuse_detector_signal == OVERUSE_DETECTOR_DECREASE_SIGNAL)
-                              ? "DECREASE"
-                              : "HOLD");
 
     // Delay-based controller selects based on signal
-    if (overuse_detector_signal != OVERUSE_DETECTOR_HOLD_SIGNAL) {
-        double multiplier = (overuse_detector_signal == OVERUSE_DETECTOR_DECREASE_SIGNAL)
-                                ? delay_controller_eta
-                                : delay_controller_alpha;
-        receiver_estimated_maximum_bitrate *= multiplier;
+    if (overuse_detector_signal == OVERUSE_DETECTOR_INCREASE_SIGNAL) {
+        double std_dev = sqrt(decrease_remb_variance);
+        LOG_INFO("2std_dev %f", std_dev * 1.8);
+        LOG_INFO("Average Decrease Remb: %f", average_decrease_remb);
+        LOG_INFO("stdiff %f", fabs(average_decrease_remb - receiver_estimated_maximum_bitrate));
+        if (fabs(average_decrease_remb - receiver_estimated_maximum_bitrate) >= 1.8 * std_dev) {
+            // Multiplicative increase state, reset running averages and multiply bitrate
+            LOG_INFO("Multiplicative Increase");
+            decrease_remb_variance = 0;
+            average_decrease_remb = 0;
+            decrease_remb_cnt = 0;
+            receiver_estimated_maximum_bitrate *= delay_controller_eta;
+        } else {
+           LOG_INFO("Additive Increase"); 
+           LOG_INFO("average_one_way_trip_latency: %f", stats.average_one_way_trip_latency);
+           int response_time_ms =  stats.average_one_way_trip_latency * 2 + 100;
+           double additive_alpha = 0.5 * min(MS_IN_SECOND/response_time_ms, 1);
+           int bits_per_frame = receiver_estimated_maximum_bitrate/60.0;
+           int packets_per_frame = ceil(bits_per_frame / (MAX_PAYLOAD_SIZE * 8));
+           int expected_packet_size_bits = bits_per_frame / packets_per_frame;
+           LOG_INFO("Additive Constant: %f", additive_alpha * expected_packet_size_bits);
+           receiver_estimated_maximum_bitrate += max(1000, additive_alpha * expected_packet_size_bits);
+
+        }
+    } else if (overuse_detector_signal == OVERUSE_DETECTOR_DECREASE_SIGNAL) {
+        // Update decrease remb statistics
+        double variance_residual = (decrease_remb_cnt) ? receiver_estimated_maximum_bitrate - average_decrease_remb : 0;
+        decrease_remb_variance = ((decrease_remb_variance * decrease_remb_cnt) + (variance_residual * variance_residual))/(decrease_remb_cnt + 1);
+        average_decrease_remb = ((average_decrease_remb * decrease_remb_cnt) + receiver_estimated_maximum_bitrate)/(decrease_remb_cnt + 1);
+        decrease_remb_cnt++;
+        LOG_INFO("Average Decrease Remb: %f", average_decrease_remb);
+        LOG_INFO("Decrease Remb Variance: %f", decrease_remb_variance);
+        receiver_estimated_maximum_bitrate *= delay_controller_alpha;
     }
+
+
+    LOG_INFO("Delay Bitrate: %f", receiver_estimated_maximum_bitrate / 1024.0/ 1024.0);
 
     // Loss based controller
     double loss_percentage = (double)stats.num_nacks_per_second /
@@ -452,13 +496,16 @@ NetworkSettings gcc_bitrate(NetworkStatistics stats) {
         receiver_estimated_maximum_bitrate *= 1.02;
     }
 
+    // Clamp bitrate
+    receiver_estimated_maximum_bitrate = min(max(receiver_estimated_maximum_bitrate, MINIMUM_BITRATE), MAXIMUM_BITRATE);
+
     network_settings.bitrate = receiver_estimated_maximum_bitrate;
     // Paper suggests constant multiplier > 1 for burst bandwidth
     network_settings.burst_bitrate = receiver_estimated_maximum_bitrate * burst_multiplier;
 
     LOG_INFO("MBPS BITRATE: %f", receiver_estimated_maximum_bitrate / 1024.0 / 1024.0);
 
-    start_timer(&gcc_clock);
+    start_timer(&gcc_timer_clock);
 
     return network_settings;
 }

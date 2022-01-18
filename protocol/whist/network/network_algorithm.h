@@ -58,6 +58,7 @@ typedef struct {
     double average_delay_gradient;
     double delay_gradient_variance;
     double average_client_side_delay;
+    double average_one_way_trip_latency;
     int num_delay_measurements;
     // True so that a NetworkStatistics struct can be marked as valid/invalid
     bool statistics_gathered;
