@@ -188,10 +188,6 @@ message(STATUS "Downloading test assets from AWS S3")
 execute_process(COMMAND aws s3 cp --recursive s3://fractal-test-assets/protocol-test-assets ${CMAKE_BINARY_DIR}/test/assets)
 message(STATUS "Downloading test assets from AWS S3 - Completed")
 
-# Include the GoogleTest library, and let gtest scan for the tests in the binary file
-include(GoogleTest)
-gtest_discover_tests(${PROTOCOL_TEST_BINARY})
-
 # Run the tests
 add_custom_target(RunProtocolTests DEPENDS ${PROTOCOL_TEST_BINARY})
 add_custom_command(
