@@ -306,7 +306,7 @@ TEST_F(ProtocolTest, InitSDL) {
                                      NULL, NULL);
         EXPECT_FALSE(should_update_window_title);
 
-        // sdl_set_window_title(changed_title);
+        sdl_set_window_title(changed_title);
         // char window_title[151];
         // sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, window_title,
         //                              &should_update_window_title, NULL, NULL);
@@ -316,7 +316,7 @@ TEST_F(ProtocolTest, InitSDL) {
         // const char* old_title = SDL_GetWindowTitle(new_window);
         // EXPECT_FALSE(strcmp(old_title, changed_title) == 0);
 
-        // sdl_update_pending_tasks();
+        sdl_update_pending_tasks();
         // sdl_utils_check_private_vars(NULL, NULL, NULL, NULL, NULL, &should_update_window_title,
         //                              NULL, NULL);
 
