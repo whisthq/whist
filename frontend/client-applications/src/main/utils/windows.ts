@@ -506,7 +506,6 @@ export const createOmnibar = () => {
   })
 
   win.focus()
-
   return win
 }
 

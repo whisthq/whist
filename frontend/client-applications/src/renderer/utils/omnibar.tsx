@@ -16,7 +16,6 @@ import { WhistTrigger } from "@app/constants/triggers"
 const createOptions = (mainState: StateIPC, setMainState: any) => {
   return [
     {
-      id: 0,
       icon: Globe,
       text: "Make Whist My Default Browser",
       keywords: ["Set Default", "Set As Default"],
@@ -36,7 +35,6 @@ const createOptions = (mainState: StateIPC, setMainState: any) => {
       onClick: () => {},
     },
     {
-      id: 1,
       icon: Rewind,
       text: "Restore Tabs on Launch",
       keywords: [""],
@@ -56,7 +54,6 @@ const createOptions = (mainState: StateIPC, setMainState: any) => {
       onClick: () => {},
     },
     {
-      id: 2,
       icon: Download,
       text: "Import Bookmarks and Settings",
       keywords: [
@@ -76,7 +73,6 @@ const createOptions = (mainState: StateIPC, setMainState: any) => {
         }),
     },
     {
-      id: 3,
       icon: Dollar,
       text: "Manage My Subscription",
       keywords: ["Billing", "Payment"],
@@ -86,7 +82,6 @@ const createOptions = (mainState: StateIPC, setMainState: any) => {
         }),
     },
     {
-      id: 4,
       icon: Logout,
       text: "Log Out",
       keywords: ["Signout", "Sign Out", "Exit", "Quit"],
@@ -96,7 +91,6 @@ const createOptions = (mainState: StateIPC, setMainState: any) => {
         }),
     },
     {
-      id: 5,
       icon: Mail,
       text: "Contact Support",
       keywords: ["Help", "Feedback", "Report Bug"],
@@ -106,7 +100,6 @@ const createOptions = (mainState: StateIPC, setMainState: any) => {
         }),
     },
     {
-      id: 6,
       icon: Signal,
       text: "Test My Internet Speed",
       keywords: ["Connection"],
@@ -119,7 +112,6 @@ const createOptions = (mainState: StateIPC, setMainState: any) => {
         }),
     },
     {
-      id: 7,
       icon: Document,
       text: "View Open Source Licenses",
       keywords: ["About"],

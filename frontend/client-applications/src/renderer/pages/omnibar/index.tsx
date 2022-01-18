@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef, useMemo } from "react"
 import FuzzySearch from "fuzzy-search"
 import range from "lodash.range"
 
@@ -13,9 +13,10 @@ const Omnibar = () => {
   const [activeIndex, setActiveIndex] = useState(0)
   const [mainState, setMainState] = useMainState()
   const [options, setOptions] = useState(createOptions(mainState, setMainState))
+  const numOptions = useMemo(() => options.length, [])
   const context = withContext()
 
-  const refs = range(0, options.length).map(() => useRef(null))
+  const refs = range(0, numOptions).map(() => useRef(null))
 
   const onKeyDown = (e: any) => {
     if (e.key === "Enter") options[activeIndex].onClick()
@@ -58,17 +59,17 @@ const Omnibar = () => {
         <Search />
       </div>
       <div className="overflow-y-scroll h-56 pb-12">
-        {options.map((option) => (
+        {options.map((option, index) => (
           <div
-            onMouseEnter={() => setActiveIndex(option.id)}
-            key={option.id}
-            ref={refs[option.id]}
+            onMouseEnter={() => setActiveIndex(index)}
+            key={index}
+            ref={refs[index]}
             className="duration-100"
           >
             <Option
               icon={option.icon()}
               text={option.text}
-              active={activeIndex === option.id}
+              active={activeIndex === index}
               onClick={option.onClick}
               rightElement={option?.rightElement}
             />
