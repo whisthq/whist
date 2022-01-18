@@ -374,6 +374,7 @@ jobs:
           GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
         run: |
           import os, sys, mmap, time
+          import numpy as np
 
           # Here, we parse the test results into a .info file, which can be read and displayed on the GitHub PR
           # Create output .info file
@@ -418,9 +419,9 @@ jobs:
                 else:
                   client_metrics[metric_name].append(metric_value)
             if len(client_metrics) == 0:
-              results_file.write("\nNO CLIENT METRICS\n")
+              results_file.write("NO CLIENT METRICS\n")
             else:
-              results_file.write("\n###### CLIENT METRICS: ######\n")
+              results_file.write("###### CLIENT METRICS: ######\n")
             for k in client_metrics:
               client_metrics[k] = np.array(client_metrics[k])
               results_file.write("{} ({} entries): avg={:.4f} std={:.4f}\n".format(k, len(client_metrics[k]), np.mean(client_metrics[k]), np.std(client_metrics[k])))
