@@ -7,13 +7,13 @@
 # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
 SENTRY_ENV_FILENAME=/usr/share/whist/private/sentry_env
 case $(cat $SENTRY_ENV_FILENAME) in
-    dev|staging|prod)
-        export SENTRY_ENVIRONMENT=${SENTRY_ENV}
-        eval "$(sentry-cli bash-hook)"
-        ;;
-    *)
-        echo "Sentry environment not set, skipping Sentry error handler"
-        ;;
+  dev|staging|prod)
+    export SENTRY_ENVIRONMENT=${SENTRY_ENV}
+    eval "$(sentry-cli bash-hook)"
+    ;;
+  *)
+    echo "Sentry environment not set, skipping Sentry error handler"
+    ;;
 esac
 
 # Exit on subcommand errors
@@ -23,9 +23,9 @@ set -Eeuo pipefail
 WHIST_JSON_FILE=/whist/resourceMappings/config.json
 INITIAL_DPI=192
 if [[ -f $WHIST_JSON_FILE ]]; then
-    if [ "$( jq 'has("client_dpi")' < $WHIST_JSON_FILE )" == "true"  ]; then
-        INITIAL_DPI="$(jq -rc '.client_dpi' < $WHIST_JSON_FILE)"
-    fi
+  if [ "$( jq 'has("client_dpi")' < $WHIST_JSON_FILE )" == "true"  ]; then
+    INITIAL_DPI="$(jq -rc '.client_dpi' < $WHIST_JSON_FILE)"
+  fi
 fi
 
 
@@ -37,8 +37,8 @@ WHIST_DPI_CACHE_FILE=/usr/share/whist/dpi.cache
 
 # Don't do anything if the DPI didn't change!
 if [[ -f "$WHIST_DPI_CACHE_FILE" ]]; then
-    CACHED_DPI=$(cat $WHIST_DPI_CACHE_FILE)
-    [[ "$WHIST_DPI" == "$CACHED_DPI" ]] && exit
+  CACHED_DPI=$(cat $WHIST_DPI_CACHE_FILE)
+  [[ "$WHIST_DPI" == "$CACHED_DPI" ]] && exit
 fi
 
 # https://unix.stackexchange.com/a/640599
