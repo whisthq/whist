@@ -379,32 +379,70 @@ jobs:
           # Create output .info file
           results_file = open("streaming_e2e_test_results.info", "w+")
 
-          logs_root_dir = "perf_logs/"
+          # Find the path to the folder with the most recent E2E protocol logs
+          logs_root_dir = "perf_logs"
+          test_time = ""
           for folder_name in os.listdir("./perf_logs"):
             if time.strftime("%Y_%m_%d@") in folder_name:
-              logs_root_dir = logs_root_dir + folder_name + "/"
+              logs_root_dir = os.path.join(logs_root_dir, folder_name)
+              test_time = folder_name
               break
+          if logs_root_dir == "perf_logs":
+            print("Error: protocol logs not found!")
+            exit(-1)
 
 
-          # Parse client logs for metrics
-          with open(os.path.abspath("{}/client_monitoring_log.txt".format(logs_root_dir))) as client_logs_file:
-            # Stringify the results file, to make it easier to extract specific substrings 
-            stringified_file = mmap.mmap(client_logs_file.fileno(), 0, access=mmap.ACCESS_READ)
+          # Check if the log files with metrics are present
+          client_log_file = os.path.join(logs_root_dir, "client", "client.log")
+          server_log_file = os.path.join(logs_root_dir, "server", "server.log")
 
-            # TODO: extract the substrings/variables we are interested in from the results
-            # Read all the variables we want here with stringified_file.find('var-name') != -1: write-to-our-result-file
-            results_file.write("THE METRICS WE EXTRACTED ABOVE")
+          if not os.path.isfile(client_log_file):
+            print("Error, client log file {} does not exist".format(client_log_file))
+            exit(-1)
+          if not os.path.isfile(server_log_file):
+            print("Error, server log file {} does not exist".format(server_log_file))
+            exit(-1)
 
-          # Parse server logs for metrics
-          with open(os.path.abspath("{}/server_monitoring_log.txt".format(logs_root_dir))) as server_logs_file:
-            # Stringify the results file, to make it easier to extract specific substrings 
-            stringified_file = mmap.mmap(server_logs_file.fileno(), 0, access=mmap.ACCESS_READ)
-            
-            # TODO: extract the substrings/variables we are interested in from the results
-            # Read all the variables we want here with stringified_file.find('var-name') != -1: write-to-our-result-file
-            results_file.write("THE METRICS WE EXTRACTED ABOVE")
+          # Extract the metric values and save them in two dictionaries
+          client_metrics = {}
+          server_metrics = {}
 
-          # TODO: format the .info file nicely so it displays well on GitHub
+          with open(client_log_file, "r") as f:
+            for line in f.readlines():
+              if line[0] == "{":
+                l = line.strip().split()
+                metric_name = l[1].strip("\"")
+                metric_value = float(l[3].strip("\""))
+                if metric_name not in client_metrics:
+                  client_metrics[metric_name] = [metric_value]
+                else:
+                  client_metrics[metric_name].append(metric_value)
+            if len(client_metrics) == 0:
+              results_file.write("\nNO CLIENT METRICS\n")
+            else:
+              results_file.write("\n###### CLIENT METRICS: ######\n")
+            for k in client_metrics:
+              client_metrics[k] = np.array(client_metrics[k])
+              results_file.write("{} ({} entries): avg={:.4f} std={:.4f}\n".format(k, len(client_metrics[k]), np.mean(client_metrics[k]), np.std(client_metrics[k])))
+
+          with open(server_log_file, "r") as f:
+            for line in f.readlines():
+              if line[0] == "{":
+                l = line.strip().split()
+                metric_name = l[1].strip("\"")
+                metric_value = float(l[3].strip("\""))
+                if metric_name not in server_metrics:
+                  server_metrics[metric_name] = [metric_value]
+                else:
+                  server_metrics[metric_name].append(metric_value)
+            if len(server_metrics) == 0:
+              results_file.write("\nNO SERVER METRICS\n")
+            else:
+              results_file.write("\n###### SERVER METRICS: ######\n")
+            for k in server_metrics:
+              server_metrics[k] = np.array(server_metrics[k])
+              results_file.write("{} ({} entries): avg={:.4f} std={:.4f}\n".format(k, len(server_metrics[k]), np.mean(server_metrics[k]), np.std(server_metrics[k])))
+
 
           # We're done, close the file
           results_file.close()
@@ -426,7 +464,7 @@ jobs:
           github_repo = "whisthq/whist"
 
           identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE"
-          title = "Protocol End-to-End Streaming Test Results"
+          title = "Protocol End-to-End Streaming Test Results - {}".format(test_time)
 
           # This file gets created above, in parsing the test results into something more human-readable
           f = open("streaming_e2e_test_results.info", "r")
