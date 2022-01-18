@@ -281,6 +281,7 @@ TEST_F(ProtocolTest, InitSDL) {
 
 #ifdef _WIN32
         check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
+        check_stdout_line(::testing::HasSubstr("Not implemented on Windows."));
 #elif defined(__linux__)
         check_stdout_line(::testing::HasSubstr("Not implemented on X11."));
         check_stdout_line(::testing::HasSubstr("Not implemented on X11."));
