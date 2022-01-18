@@ -17,13 +17,13 @@ const Omnibar = () => {
   const onKeyDown = (e: any) => {
     if (e.key === "Enter") options[activeIndex].onClick()
     if (e.key === "ArrowDown")
-      setActiveIndex(Math.min(activeIndex + 1, options.length))
+      setActiveIndex(Math.min(activeIndex + 1, options.length - 1))
     if (e.key === "ArrowUp") setActiveIndex(Math.max(0, activeIndex - 1))
   }
 
   const startingID = () => {
-    if (activeIndex < 5) return 0
-    if (activeIndex > options.length - 5) return options.length - 5
+    if (activeIndex < 4) return 0
+    if (activeIndex > options.length - 4) return options.length - 4
     return activeIndex
   }
 
@@ -46,12 +46,12 @@ const Omnibar = () => {
     >
       <Search />
       <div className="overflow-y-scroll h-full pb-12">
-        {options.slice(startingID()).map((option, index) => (
-          <div onMouseEnter={() => setActiveIndex(index)} key={index}>
+        {options.slice(startingID()).map((option) => (
+          <div onMouseEnter={() => setActiveIndex(option.id)} key={option.id}>
             <Option
               icon={option.icon()}
               text={option.text}
-              active={activeIndex === index}
+              active={activeIndex === option.id}
               onClick={option.onClick}
               rightElement={option?.rightElement}
             />
