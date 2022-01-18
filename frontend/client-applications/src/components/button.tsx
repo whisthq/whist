@@ -39,7 +39,7 @@ const BaseButton: FC<BaseButtonProps> = (props: BaseButtonProps) => (
 
   <button
     className={classNames(
-      "text-md rounded bg-blue duration-500 focus:outline-none py-4 font-body font-semibold",
+      "text-md rounded bg-blue duration-500 focus:outline-none py-4 font-body font-semibold min-w-max",
       "transition-colors",
       props.className
     )}
@@ -91,7 +91,7 @@ export const WhistButton: FC<WhistButtonProps> = (
         className: disabledClassName,
         contents: (
           <>
-            <div className="flex justify-center items-center mt-1">
+            <div className="flex justify-center items-center mt-1 px-12">
               <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-gray-100"></div>
             </div>
           </>

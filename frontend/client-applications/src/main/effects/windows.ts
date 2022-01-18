@@ -62,12 +62,11 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
   rebootNotification = rebootWarning()
 })
 
-const quit = () => {
+const sleep = () => {
   logBase("Application quitting", {})
   protocolStreamKill()
   app?.dock?.setIcon(iconPath())
-  app?.dock?.show()
-  // app?.quit()
+  app?.dock?.show().catch((err) => console.error(err))
 }
 
 const allWindowsClosed = fromTrigger(WhistTrigger.windowInfo).pipe(
@@ -93,7 +92,7 @@ allWindowsClosed.subscribe(
       args.hash !== WindowHashProtocol ||
       (args.hash === WindowHashProtocol && !args.crashed)
     ) {
-      quit()
+      sleep()
     }
   }
 )

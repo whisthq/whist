@@ -293,7 +293,9 @@ export const createPaymentWindow = async (accessToken: accessToken) => {
     height: paymentHeight,
   })
 
-  view.webContents.loadURL(paymentPortalURL ?? "")
+  view.webContents
+    .loadURL(paymentPortalURL ?? "")
+    .catch((err) => console.error(err))
 
   const {
     session: { webRequest },

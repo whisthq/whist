@@ -7,7 +7,6 @@
 
 import { Observable, combineLatest } from "rxjs"
 import { map, withLatestFrom, take, takeUntil } from "rxjs/operators"
-import toPairs from "lodash.topairs"
 
 import { fromTrigger } from "@app/main/utils/flows"
 import { WhistTrigger } from "@app/constants/triggers"
