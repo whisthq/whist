@@ -333,7 +333,7 @@ jobs:
           if_key_exists: fail
 
       - name: Install End-to-End Streaming Test Dependencies
-        run: pip install boto3 paramiko numpy
+        run: pip install boto3 paramiko numpy pytablewriter
 
       # Run the streaming end-to-end integration test. The -ssh-key-name must match the value in AWS EC2 under
       # Key Pairs, where the SSH key is defined. Other possible flags:
