@@ -197,16 +197,21 @@ if __name__ == "__main__":
 
     # Save to 'new_instances.txt' file names of new instances that were created. These will have to be terminated by a successive Github action in case this script crashes before being able to terminate them itself.
     instances_to_be_terminated = []
+    instances_to_be_stopped = []
     if server_instance_id != args.use_existing_server_instance:
         instances_to_be_terminated.append(server_instance_id)
-    if (
-        client_instance_id != server_instance_id
-        and client_instance_id != args.use_existing_client_instance
-    ):
-        instances_to_be_terminated.append(client_instance_id)
-    instances_file = open("new_instances.txt", "a+")
+    else:
+        instances_to_be_stopped.append(server_instance_id)
+    if client_instance_id != server_instance_id:
+        if client_instance_id != args.use_existing_client_instance:
+            instances_to_be_terminated.append(client_instance_id)
+        else:
+            instances_to_be_stopped.append(client_instance_id)
+    instances_file = open("instances_to_clean.txt", "a+")
     for i in instances_to_be_terminated:
-        instances_file.write(i)
+        instances_file.write("terminate {} {}", region_name, i)
+    for i in instances_to_be_stopped:
+        instances_file.write("stop {} {}", region_name, i)
     instances_file.close()
 
     # Get the IP address of the instance(s)

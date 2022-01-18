@@ -361,7 +361,7 @@ jobs:
       - name: Terminate leftover AWS instances
         if: ${{ always() && (steps.e2e_streaming_test.outcome == 'failure') }}
         working-directory: protocol/test
-        run: python3 terminate_leftover_instances.py
+        run: python3 clean_leftover_instances.py
 
       # The streaming_e2e_tester.py file generates the files server_monitoring_log.txt and client_monitoring_log.txt in
       # the folder perf_logs at the path where it is run in. We parse these files to display the results of the test.
