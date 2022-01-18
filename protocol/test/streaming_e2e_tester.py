@@ -413,6 +413,6 @@ if __name__ == "__main__":
     print("Instance successfully stopped/terminated, goodbye")
 
     # No longer need the new_instances.txt file because the script has already terminated (if needed) the instances itself
-    os.remove("new_instances.txt")
+    os.remove("instances_to_clean.txt")
 
     print("Done")

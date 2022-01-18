@@ -23,11 +23,11 @@ for line in instances_file.readlines():
     bc = get_boto3client(region)
     should_terminate = True if action == "terminate" else False
     print(
-        "{} instance {} ... on region {}".format(
+        "{} instance {} on region {} ...".format(
             "Terminating" if should_terminate else "Stopping", instance_id, region
         )
     )
-    terminate_or_stop_aws_instance(bc, i, should_terminate)
+    terminate_or_stop_aws_instance(bc, instance_id, should_terminate)
 
 
 # Close and delete file
