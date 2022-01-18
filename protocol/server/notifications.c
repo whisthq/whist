@@ -80,7 +80,7 @@ Private Functions
 static int32_t multithreaded_process_notifications(void *opaque);
 
 // Main d-bus connection + notification handling logic
-static DbusCtx *dbus_init(struct event_base *eb, Client *init_server_state_client);
+DbusCtx *dbus_init(struct event_base *eb, whist_server_state *server_state);
 static void dbus_close(DbusCtx *ctx);
 static DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *message,
                                               void *user_data);
@@ -140,7 +140,7 @@ int32_t multithreaded_process_notifications(void *opaque) {
 
     add_thread_to_client_active_dependents();
 
-    DbusCtx *ctx = dbus_init(eb, &state->client);
+    DbusCtx *ctx = dbus_init(eb, state);
 
     if (ctx == NULL) {
         return -1;
@@ -159,12 +159,12 @@ int32_t multithreaded_process_notifications(void *opaque) {
  *                                  in /whist/dbus_config.txt. Will fail if file does not exist.
  *
  * @param eb                        Event base that controls event handling.
- * @param init_server_state_client  Whist protocol client for sending notifications to the user.
+ * @param server_state              Whist server state: useful for configs and packet sending.
  *
- * @return DbusCtx*                A d-bus connection struct allocated on the heap. Make sure
+ * @return DbusCtx*                 A d-bus connection struct allocated on the heap. Make sure
  *                                  to free when program is finished.
  */
-DbusCtx *dbus_init(struct event_base *eb, Client *server_state_client) {
+DbusCtx *dbus_init(struct event_base *eb, whist_server_state *server_state) {
     seteuid(1000);  // For d-bus to connect, set euid to that of the `whist` user
 
     DBusConnection *conn = NULL;
@@ -177,8 +177,8 @@ DbusCtx *dbus_init(struct event_base *eb, Client *server_state_client) {
         goto fail;
     }
 
-    // Connect to appropriate d-bus daemon by reading an environment variable
-    const char *dbus_addr = getenv("DBUS_SESSION_BUS_ADDRESS");
+    // Connect to appropriate d-bus daemon by reading configs
+    const char *dbus_addr = server_state->config->dbus_address;
     LOG_INFO("Read D-Bus address from env vars: %s", dbus_addr);
 
     // Use parsed address to open a private connection
@@ -215,7 +215,7 @@ DbusCtx *dbus_init(struct event_base *eb, Client *server_state_client) {
         goto fail;
     }
 
-    if (dbus_connection_add_filter(conn, notification_handler, server_state_client, NULL) ==
+    if (dbus_connection_add_filter(conn, notification_handler, &server_state->client, NULL) ==
         FALSE) {
         LOG_ERROR("dbus_connection_add_filter() failed");
         goto fail;
