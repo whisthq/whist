@@ -376,6 +376,7 @@ jobs:
           import os, sys, time
           import numpy as np
           from pytablewriter import MarkdownTableWriter
+          from contextlib import redirect_stdout
 
           # Here, we parse the test results into a .info file, which can be read and displayed on the GitHub PR
           # Create output .info file
