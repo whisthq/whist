@@ -14,6 +14,7 @@
 extern "C" {
 #include "whist/video/codec/encode.h"
 #include "whist/video/codec/decode.h"
+#include "whist/video/ltr.h"
 }
 
 class CodecTest : public CaptureStdoutFixture {};
@@ -227,3 +228,128 @@ TEST_F(CodecTest, EncodeDecodeTest) {
     free(packet_buffer);
 }
 #endif
+
+// Test each of the main interactions.
+TEST_F(CodecTest, LTRSimpleTest) {
+    LTRState *ltr;
+    LTRAction action;
+
+    ltr = ltr_create();
+    EXPECT_TRUE(ltr);
+
+    // First frame must always be an intra frame.
+    EXPECT_EQ(ltr_pick_next_action(ltr, &action), 0);
+    EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_INTRA);
+    EXPECT_EQ(action.long_term_frame_index, 0);
+
+    // Send but don't ack yet.
+    EXPECT_EQ(ltr_mark_frame_sent(ltr, 1), 0);
+
+    // Ack an ID we don't know, which should be ignored.
+    EXPECT_EQ(ltr_ack_frame(ltr, 1729), -1);
+
+    // Next frame should be normal.
+    EXPECT_EQ(ltr_pick_next_action(ltr, &action), 0);
+    EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_NORMAL);
+    EXPECT_EQ(ltr_mark_frame_sent(ltr, 2), 0);
+
+    // Ack the intra frame.
+    EXPECT_EQ(ltr_ack_frame(ltr, 1), 0);
+
+    // Next frame should be to create a new long-term reference, since
+    // we now definitely have the previous.
+    EXPECT_EQ(ltr_pick_next_action(ltr, &action), 0);
+    EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_CREATE_LONG_TERM);
+    EXPECT_EQ(action.long_term_frame_index, 1);
+    EXPECT_EQ(ltr_mark_frame_sent(ltr, 3), 0);
+
+    // Ack the first normal frame and send another.
+    EXPECT_EQ(ltr_ack_frame(ltr, 2), 0);
+    EXPECT_EQ(ltr_pick_next_action(ltr, &action), 0);
+    EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_NORMAL);
+    EXPECT_EQ(ltr_mark_frame_sent(ltr, 4), 0);
+
+    // Ack the long-term reference frame.
+    EXPECT_EQ(ltr_ack_frame(ltr, 3), 0);
+
+    // The next frame should create another long-term reference.
+    EXPECT_EQ(ltr_pick_next_action(ltr, &action), 0);
+    EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_CREATE_LONG_TERM);
+    EXPECT_EQ(action.long_term_frame_index, 0);
+    EXPECT_EQ(ltr_mark_frame_sent(ltr, 5), 0);
+
+    // Nack the normal frame, which transitively nacks the long-term
+    // reference frame just made as well.
+    EXPECT_EQ(ltr_nack_frame(ltr, 4), 0);
+
+    // Now we need to recover by referring to a long-term reference
+    // frame.
+    EXPECT_EQ(ltr_pick_next_action(ltr, &action), 0);
+    EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_REFER_LONG_TERM);
+    EXPECT_EQ(action.long_term_frame_index, 1);
+    EXPECT_EQ(ltr_mark_frame_sent(ltr, 6), 0);
+
+    // Next frame should be normal depending on the one just sent.
+    EXPECT_EQ(ltr_pick_next_action(ltr, &action), 0);
+    EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_NORMAL);
+    EXPECT_EQ(ltr_mark_frame_sent(ltr, 7), 0);
+
+    // Ack that and finish.
+    EXPECT_EQ(ltr_ack_frame(ltr, 7), 0);
+
+    ltr_destroy(ltr);
+}
+
+// Test intra frame generation.
+TEST_F(CodecTest, LTRIntraTest) {
+    LTRState *ltr;
+    LTRAction action;
+
+    ltr = ltr_create();
+    EXPECT_TRUE(ltr);
+
+    // Twenty frames, acked with a three-frame delay.
+    for (int i = 0; i < 20; i++) {
+        if (i == 10) {
+            // Request intra frame at frame 10.
+            ltr_force_intra(ltr);
+        }
+
+        EXPECT_EQ(ltr_pick_next_action(ltr, &action), 0);
+        if (i == 0 || i == 10) {
+            EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_INTRA);
+            EXPECT_EQ(action.long_term_frame_index, 0);
+        }
+        EXPECT_EQ(ltr_mark_frame_sent(ltr, i), 0);
+
+        if (i >= 3) EXPECT_EQ(ltr_ack_frame(ltr, i - 3), 0);
+    }
+
+    ltr_destroy(ltr);
+}
+
+// Test what happens with no acks.
+TEST_F(CodecTest, LTRNoAckTest) {
+    LTRState *ltr;
+    LTRAction action;
+
+    ltr = ltr_create();
+    EXPECT_TRUE(ltr);
+
+    // Three hundred frames (five seconds) with no acks.
+    for (int i = 0; i < 300; i++) {
+        EXPECT_EQ(ltr_pick_next_action(ltr, &action), 0);
+        // There should be an intra frame at the beginning, then new
+        // ones every 60 frames of no response.
+        if (i % 60 == 0) {
+            EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_INTRA);
+            EXPECT_EQ(action.long_term_frame_index, 0);
+        } else {
+            EXPECT_EQ(action.frame_type, VIDEO_FRAME_TYPE_NORMAL);
+            EXPECT_EQ(action.long_term_frame_index, 0);
+        }
+        EXPECT_EQ(ltr_mark_frame_sent(ltr, i), 0);
+    }
+
+    ltr_destroy(ltr);
+}
