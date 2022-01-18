@@ -64,7 +64,6 @@ const WhistTrigger = {
   authFlowSuccess: "authFlowSuccess",
   authFlowFailure: "authFlowFailure",
   authRefreshSuccess: "authRefreshSuccess",
-  checkPaymentFlowSuccess: "checkPaymentFlowSuccess",
   checkPaymentFlowFailure: "checkPaymentFlowFailure",
   awsPingCached: "awsPingCached",
   awsPingRefresh: "awsPingRefresh",

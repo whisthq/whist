@@ -53,18 +53,17 @@ const auth = authFlow(
 const onboarded = fromSignal(
   merge(
     fromTrigger(WhistTrigger.beginImport),
-    zip(
-      of(persistGet(ONBOARDED)).pipe(
-        filter((onboarded) => onboarded as boolean)
-      )
-    )
+    of(persistGet(ONBOARDED)).pipe(filter((onboarded) => onboarded as boolean))
   ),
   fromTrigger(WhistTrigger.authFlowSuccess)
 )
 
 // Unpack the access token to see if their payment is valid
 const checkPayment = checkPaymentFlow(
-  fromSignal(combineLatest({ accessToken }), onboarded)
+  onSignal(
+    fromSignal(combineLatest({ accessToken }), onboarded),
+    fromTrigger(WhistTrigger.authFlowSuccess)
+  )
 )
 
 // If the payment is invalid, they'll be redirect to the Stripe window. After that they'll
@@ -100,7 +99,7 @@ const importedData = fromTrigger(WhistTrigger.beginImport).pipe(
 )
 
 // Observable that fires when Whist is ready to be launched
-const launchTrigger = fromSignal(
+const launchTrigger = onSignal(
   combineLatest({
     userEmail,
     accessToken,
@@ -109,7 +108,16 @@ const launchTrigger = fromSignal(
     importedData: merge(importedData, dontImportBrowserData),
     regions: merge(awsPing.cached, awsPing.refresh),
   }),
-  fromTrigger(WhistTrigger.checkPaymentFlowSuccess)
+  merge(
+    zip(
+      checkPayment.success,
+      of(persistGet(ONBOARDED)).pipe(
+        filter((onboarded) => onboarded as boolean)
+      )
+    ), // On a normal launch
+    zip(checkPayment.failure, refreshAfterPaying.success), // If you had an invalid subscription but now paid
+    importedData // On onboarding or import
+  )
 ).pipe(share())
 
 // Mandelbox creation flow
@@ -118,8 +126,10 @@ const mandelbox = mandelboxFlow(launchTrigger)
 // After the mandelbox flow is done, run the refresh flow so the tokens are being refreshed
 // every time but don't impede startup time
 const refreshAtEnd = authRefreshFlow(
-  fromSignal(combineLatest({ refreshToken }), mandelbox.success)
+  onSignal(combineLatest({ refreshToken }), mandelbox.success)
 )
+
+createTrigger(WhistTrigger.checkPaymentFlowFailure, checkPayment.failure)
 
 createTrigger(WhistTrigger.mandelboxFlowStart, launchTrigger)
 
@@ -136,9 +146,6 @@ createTrigger(
   WhistTrigger.authRefreshSuccess,
   merge(refreshAtEnd.success, refreshAfterPaying.success)
 )
-
-createTrigger(WhistTrigger.checkPaymentFlowSuccess, checkPayment.success)
-createTrigger(WhistTrigger.checkPaymentFlowFailure, checkPayment.failure)
 
 createTrigger(WhistTrigger.mandelboxFlowSuccess, mandelbox.success)
 createTrigger(WhistTrigger.mandelboxFlowFailure, mandelbox.failure)
