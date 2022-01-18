@@ -429,7 +429,7 @@ jobs:
           title = "Protocol End-to-End Streaming Test Results"
 
           # This file gets created above, in parsing the test results into something more human-readable
-          f = open("protocol/test/streaming_e2e_test_results.info", "r")
+          f = open("streaming_e2e_test_results.info", "r")
           body = f.read()
           f.close()
 
