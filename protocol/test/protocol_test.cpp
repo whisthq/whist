@@ -294,7 +294,7 @@ TEST_F(ProtocolTest, InitSDL) {
 
         EXPECT_FALSE(native_window_color_update);
     }
-    /*
+
     //  Window title
     {
         char* changed_title = generate_random_string(150);
@@ -326,7 +326,7 @@ TEST_F(ProtocolTest, InitSDL) {
 
         free(changed_title);
     }
-
+    /*
     // Set fullscreen
     {
         width = get_window_pixel_width(new_window);
