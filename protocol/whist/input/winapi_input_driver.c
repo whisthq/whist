@@ -10,7 +10,11 @@ You can create an input device to receive
 input (keystrokes, mouse clicks, etc.) via CreateInputDevice.
 */
 
-#include "input_driver.h"
+#include "input.h"
+
+typedef struct {
+    InputDevice base;
+} InputDeviceWin;
 
 #define USE_NUMPAD 0x1000
 
@@ -289,35 +293,33 @@ static const int windows_keycodes[KEYCODE_UPPERBOUND] = {
     VK_LAUNCH_MEDIA_SELECT  // 263 -> Media Select
 };
 
-InputDevice* create_input_device(void) {
-    InputDevice* input_device = safe_malloc(sizeof(InputDevice));
-    memset(input_device, 0, sizeof(InputDevice));
-    return input_device;
-}
-
-void destroy_input_device(InputDevice* input_device) {
+void win_destroy_input_device(InputDeviceWin** pdev) {
+    InputDeviceWin* input_device = *pdev;
     free(input_device);
-    return;
+    *pdev = NULL;
 }
 
 #define GetWindowsKeyCode(whist_keycode) windows_keycodes[whist_keycode]
 #define KEYPRESS_MASK 0x8000
 
-int get_keyboard_modifier_state(InputDevice* input_device, WhistKeycode whist_keycode) {
+static int win_get_keyboard_modifier_state(InputDeviceWin* input_device,
+                                           WhistKeycode whist_keycode) {
     UNUSED(input_device);
     return 1 & GetKeyState(GetWindowsKeyCode(whist_keycode));
 }
 
-int get_keyboard_key_state(InputDevice* input_device, WhistKeycode whist_keycode) {
+static int win_get_keyboard_key_state(InputDeviceWin* input_device, WhistKeycode whist_keycode) {
     UNUSED(input_device);
     return (KEYPRESS_MASK & GetAsyncKeyState(GetWindowsKeyCode(whist_keycode))) >> 15;
 }
 
-int ignore_key_state(InputDevice* input_device, WhistKeycode whist_keycode, bool active_pinch) {
+static int win_ignore_key_state(InputDeviceWin* input_device, WhistKeycode whist_keycode,
+                                bool active_pinch) {
     return 0;
 }
 
-int emit_key_event(InputDevice* input_device, WhistKeycode whist_keycode, int pressed) {
+static int win_emit_key_event(InputDeviceWin* input_device, WhistKeycode whist_keycode,
+                              int pressed) {
     UNUSED(input_device);
 
     INPUT ip;
@@ -352,7 +354,8 @@ int emit_key_event(InputDevice* input_device, WhistKeycode whist_keycode, int pr
     return 0;
 }
 
-int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int relative) {
+static int win_emit_mouse_motion_event(InputDeviceWin* input_device, int32_t x, int32_t y,
+                                       int relative) {
     UNUSED(input_device);
 
     INPUT ip;
@@ -378,7 +381,8 @@ int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int
     return 0;
 }
 
-int emit_mouse_button_event(InputDevice* input_device, WhistMouseButton button, int pressed) {
+static int win_emit_mouse_button_event(InputDeviceWin* input_device, WhistMouseButton button,
+                                       int pressed) {
     UNUSED(input_device);
 
     INPUT ip;
@@ -451,7 +455,7 @@ int emit_mouse_button_event(InputDevice* input_device, WhistMouseButton button, 
     return 0;
 }
 
-int emit_low_res_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
+static int win_emit_low_res_mouse_wheel_event(InputDeviceWin* input_device, int32_t x, int32_t y) {
     UNUSED(input_device);
 
     INPUT ip[2];  // vertical and horizontal are separate
@@ -479,7 +483,7 @@ int emit_low_res_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t
     return 0;
 }
 
-int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y) {
+static int win_emit_high_res_mouse_wheel_event(InputDeviceWin* input_device, float x, float y) {
     UNUSED(input_device);
     UNUSED(x);
     UNUSED(y);
@@ -490,8 +494,8 @@ int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y)
     return -1;
 }
 
-int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist,
-                            WhistMultigestureType gesture_type, bool active_gesture) {
+static int win_emit_multigesture_event(InputDeviceWin* input_device, float d_theta, float d_dist,
+                                       WhistMultigestureType gesture_type, bool active_gesture) {
     UNUSED(input_device);
     UNUSED(d_theta);
     UNUSED(d_dist);
@@ -529,4 +533,28 @@ void enter_win_string(enum WhistKeycode* keycodes, int len) {
 
     // send FMSG mapped to Windows event to Windows and return
     SendInput(index, event, sizeof(INPUT));
+}
+
+InputDevice* win_create_input_device(void) {
+    LOG_INFO("creating win input driver");
+
+    InputDeviceWin* ret = safe_malloc(sizeof(*ret));
+    InputDevice* base = &ret->base;
+    base->device_type = WHIST_INPUT_DEVICE_WIN32;
+    base->get_keyboard_key_state =
+        (InputDeviceGetKeyboardModifierStateFn)win_get_keyboard_key_state;
+    base->get_keyboard_modifier_state =
+        (InputDeviceGetKeyboardModifierStateFn)win_get_keyboard_modifier_state;
+    base->ignore_key_state = (InputDeviceIgnoreKeyStateFn)win_ignore_key_state;
+    base->emit_key_event = (InputDeviceEmitKeyEventFn)win_emit_key_event;
+    base->emit_mouse_motion_event = (InputDeviceEmitMouseMotionEventFn)win_emit_mouse_motion_event;
+    base->emit_mouse_button_event = (InputDeviceEmitMouseButtonEventFn)win_emit_mouse_button_event;
+    base->emit_low_res_mouse_wheel_event =
+        (InputDeviceEmitLowResMouseWheelEventFn)win_emit_low_res_mouse_wheel_event;
+    base->emit_high_res_mouse_wheel_event =
+        (InputDeviceEmitHighResMouseWheelEventFn)win_emit_high_res_mouse_wheel_event;
+    base->emit_multigesture_event = (InputDeviceEmitMultiGestureEventFn)win_emit_multigesture_event;
+    base->destroy = (InputDeviceDestroyFn)win_destroy_input_device;
+
+    return base;
 }

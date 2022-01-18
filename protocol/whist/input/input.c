@@ -23,7 +23,6 @@ Includes
 
 #include <whist/utils/os_utils.h>
 #include "input.h"
-#include "input_driver.h"
 #include "keyboard_mapping.h"
 
 /*
@@ -43,6 +42,79 @@ static WhistOSType input_os_type = WHIST_UNKNOWN_OS;
 Public Function Implementations
 ============================
 */
+
+#if defined(__linux__)
+InputDevice* xtest_create_input_device(void);
+InputDevice* uinput_create_input_device(void);
+#endif
+
+#ifdef WIN32
+InputDevice* win_create_input_device(void);
+#endif
+
+InputDevice* create_input_device(InputDeviceType kind) {
+    switch (kind) {
+#if defined(__linux__)
+        case WHIST_INPUT_DEVICE_XTEST:
+            return xtest_create_input_device();
+
+        case WHIST_INPUT_DEVICE_UINPUT:
+            return uinput_create_input_device();
+#endif
+
+#ifdef _WIN32
+        case WHIST_INPUT_DEVICE_WIN32:
+            return win_create_input_device();
+#endif
+
+        case WHIST_INPUT_DEVICE_WESTON:
+        default:
+            return NULL;
+    }
+}
+
+void destroy_input_device(InputDevice** pdev) {
+    InputDevice* dev;
+
+    dev = *pdev;
+    if (dev) dev->destroy(pdev);
+}
+
+int get_keyboard_modifier_state(InputDevice* dev, WhistKeycode keycode) {
+    return dev->get_keyboard_modifier_state(dev, keycode);
+}
+
+int get_keyboard_key_state(InputDevice* dev, WhistKeycode keycode) {
+    return dev->get_keyboard_key_state(dev, keycode);
+}
+
+int ignore_key_state(InputDevice* dev, WhistKeycode keycode, bool active_pinch) {
+    return dev->ignore_key_state(dev, keycode, active_pinch);
+}
+int emit_key_event(InputDevice* dev, WhistKeycode keycode, int pressed) {
+    return dev->emit_key_event(dev, keycode, pressed);
+}
+
+int emit_mouse_motion_event(InputDevice* dev, int32_t x, int32_t y, int relative) {
+    return dev->emit_mouse_motion_event(dev, x, y, relative);
+}
+
+int emit_mouse_button_event(InputDevice* dev, WhistMouseButton button, int pressed) {
+    return dev->emit_mouse_button_event(dev, button, pressed);
+}
+
+int emit_low_res_mouse_wheel_event(InputDevice* dev, int32_t x, int32_t y) {
+    return dev->emit_low_res_mouse_wheel_event(dev, x, y);
+}
+
+int emit_high_res_mouse_wheel_event(InputDevice* dev, float x, float y) {
+    return dev->emit_high_res_mouse_wheel_event(dev, x, y);
+}
+
+int emit_multigesture_event(InputDevice* dev, float d_theta, float d_dist,
+                            WhistMultigestureType gesture_type, bool active_gesture) {
+    return dev->emit_multigesture_event(dev, d_theta, d_dist, gesture_type, active_gesture);
+}
 
 void reset_input(WhistOSType os_type) {
     /*

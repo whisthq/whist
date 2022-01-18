@@ -2,7 +2,7 @@
 #define WHIST_KEYBOARD_MAPPING_H
 
 #include <whist/core/whist.h>
-#include "input_driver.h"
+#include "input.h"
 
 /**
  * @brief                          Updates the keyboard state on the server to
