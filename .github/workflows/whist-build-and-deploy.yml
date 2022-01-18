@@ -1397,7 +1397,6 @@ jobs:
           SENTRY_PROJECT: protocol
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
-          curl -sL https://sentry.io/get-cli/ | bash
           sentry-cli upload-dif ./protocol-build/client/WhistClient
           sentry-cli upload-dif ./protocol-build/client/WhistClient.debug
 
