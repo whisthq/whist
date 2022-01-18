@@ -74,8 +74,7 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 		for {
 			select {
 			case <-retryDone:
-				logger.Infof("Done retrying for instance spinup.")
-				retryTicker.Stop()
+				return
 
 			case <-retryTicker.C:
 				logger.Infof("Trying to spinup %v instances with image %v", numInstances, imageID)
@@ -84,6 +83,8 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 				result, err = host.MakeInstances(ctx, input)
 
 				if err == nil || attempts == MAX_RETRY_ATTEMPTS {
+					logger.Infof("Done trying to spinup instances.")
+					retryTicker.Stop()
 					retryDone <- true
 				} else {
 					logger.Warningf("Failed to start desired number of instances with error: %v", err)

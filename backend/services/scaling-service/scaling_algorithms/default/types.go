@@ -24,3 +24,6 @@ type whist_instances_insert_input struct {
 	CreatedAt         time.Time      `json:"created_at"`
 	UpdatedAt         time.Time      `json:"updated_at"`
 }
+
+// timestamptz is a type used for updating graphql fields of type Time.
+type timestamptz struct{ time.Time }

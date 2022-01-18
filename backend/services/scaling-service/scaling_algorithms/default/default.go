@@ -4,7 +4,6 @@ import (
 	"context"
 	"sync"
 
-	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/scaling-service/hosts"
 	aws "github.com/whisthq/whist/backend/services/scaling-service/hosts/aws"
 	"github.com/whisthq/whist/backend/services/subscriptions"
@@ -119,31 +118,6 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 						}
 					}()
 				}
-
-			case imageEvent := <-s.ImageEventChan:
-				logger.Infof("Scaling algorithm received an image database event with value: %v", imageEvent)
-				image := imageEvent.Data.(subscriptions.Image)
-
-				// Check if deploy has fired and is changing images
-
-				goroutineTracker.Add(1)
-				go func() {
-					defer goroutineTracker.Done()
-
-					// Create context for scaling operation
-					scalingCtx, scalingCancel := context.WithCancel(context.Background())
-
-					// TODO: fire this event when starting scaling service, send proper arguments.
-					err := s.UpgradeImage(scalingCtx, s.Host, imageEvent, metadata.GetGitCommit(), image.ImageID)
-
-					// Cancel context once the operation is done
-					scalingCancel()
-
-					if err != nil {
-						logger.Errorf("Error performing image upgrade. Error: %v", err)
-					}
-				}()
-
 			case scheduledEvent := <-s.ScheduledEventChan:
 				switch scheduledEvent.Type {
 				case "SCHEDULED_SCALE_DOWN":
@@ -159,6 +133,35 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 							err := s.ScaleDownIfNecessary(scalingCtx, scheduledEvent)
 							if err != nil {
 								logger.Errorf("Error running scale down job on region %v. Err: %v", region, err)
+							}
+						}
+
+						scalingCancel()
+					}()
+				case "SCHEDULED_IMAGE_UPGRADE":
+					logger.Infof("Scaling algorithm received an image upgrade event with value: %v", scheduledEvent)
+
+					goroutineTracker.Add(1)
+					go func() {
+						defer goroutineTracker.Done()
+
+						logger.Infof("%v", scheduledEvent)
+
+						if scheduledEvent.Data == nil {
+							logger.Errorf("Error running image upgrade, event data is nil.")
+							return
+						}
+
+						scalingCtx, scalingCancel := context.WithCancel(context.Background())
+
+						// Get arguments from scheduled event
+						regionImageMap := scheduledEvent.Data.(map[string]string)
+
+						for _, region := range bundledRegions {
+							scheduledEvent.Region = "us-east-1"
+							err := s.UpgradeImage(scalingCtx, scheduledEvent, regionImageMap[region])
+							if err != nil {
+								logger.Errorf("Error running image upgrade on region %v. Err: %v", region, err)
 							}
 						}
 

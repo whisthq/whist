@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/hasura/go-graphql-client"
-	"github.com/whisthq/whist/backend/services/scaling-service/hosts"
+	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -100,7 +100,7 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 	if len(currentlyActive) < DEFAULT_INSTANCE_BUFFER {
 		logger.Infof("Current number of instances on %v is less than desired %v. Scaling up to match.", event.Region, DEFAULT_INSTANCE_BUFFER)
 
-		// Query for the latest image id
+		// Query for the current image id
 		latestImageQuery := subscriptions.QueryLatestImage
 		queryParams := map[string]interface{}{
 			"provider": graphql.String("aws"), // TODO: set different provider when doing multi-cloud.
@@ -109,7 +109,11 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 
 		err := s.GraphQLClient.Query(scalingCtx, &latestImageQuery, queryParams)
 		if err != nil {
-			return utils.MakeError("failed to query database for active instances. Err: %v", err)
+			return utils.MakeError("failed to query database for current image. Err: %v", err)
+		}
+
+		if len(latestImageQuery.WhistImages) == 0 {
+			return utils.MakeError("current image doesn't exist on %v", event.Region)
 		}
 
 		latestImageId := string(latestImageQuery.WhistImages[0].ImageID)
@@ -194,42 +198,12 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		err = s.VerifyCapacity(scalingCtx, event)
 	}()
 
-	// Verify if there are lingering instances that can be scaled down
+	// Verify if there are lingering instances and notify.
 	if len(lingeringInstances) > 0 {
-		logger.Info("Forcefully terminating lingering instances from cloud provider.")
-
-		_, err = s.Host.SpinDownInstances(scalingCtx, lingeringIds)
-		if err != nil {
-			logger.Warningf("Failed to forcefully terminate lingering instances from cloud provider. Err: %v", err)
-		}
-
-		// Wait for instance termination
-		err = s.Host.WaitForInstanceTermination(scalingCtx, lingeringIds)
-		if err != nil {
-			// Err is already wrapped here
-			return err
-		}
-
-		// Delete instances from database
-		instanceDeleteMutation := subscriptions.DeleteInstanceById
-
-		for _, lingeringInstance := range lingeringInstances {
-			logger.Infof("Deleting instance %v from database.", lingeringInstance.ID)
-
-			deleteParams := map[string]interface{}{
-				"id": graphql.String(lingeringInstance.ID),
-			}
-
-			err = s.GraphQLClient.Mutate(scalingCtx, &instanceDeleteMutation, deleteParams)
-			if err != nil {
-				return utils.MakeError("failed to delete instance from database with params: %v. Error: %v", queryParams, err)
-			}
-		}
-
-		logger.Infof("Deleted %v rows from database.", instanceDeleteMutation.MutationResponse.AffectedRows)
+		logger.Errorf("There are %v lingering instances on %v. Investigate immediately! Their IDs are %v", len(lingeringInstances), event.Region, lingeringIds)
 
 	} else {
-		logger.Info("There are no lingering instances to scale down in %v.", event.Region)
+		logger.Info("There are no lingering instances in %v.", event.Region)
 	}
 
 	// Verify if there are free instances that can be scaled down
@@ -328,11 +302,30 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 // UpgradeImage is a scaling action which runs when a new version is deployed. Its responsible of
 // starting a buffer of instances with the new image and scaling down instances with the previous
 // image.
-func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, host hosts.HostHandler, event ScalingEvent, oldImageID string, newImageID string) error {
+func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event ScalingEvent, newImageID string) error {
 	logger.Infof("Starting upgrade image action for event: %v", event)
-	defer logger.Infof("Finished upgrade image.")
+	defer logger.Infof("Finished upgrade image action.")
+
+	// Query for the current image id
+	latestImageQuery := subscriptions.QueryLatestImage
+	queryParams := map[string]interface{}{
+		"provider": graphql.String("aws"), // TODO: set different provider when doing multi-cloud.
+		"region":   graphql.String(event.Region),
+	}
+
+	err := s.GraphQLClient.Query(scalingCtx, &latestImageQuery, queryParams)
+	if err != nil {
+		return utils.MakeError("failed to query database for current image on %v. Err: %v", event.Region, err)
+	}
+
+	if len(latestImageQuery.WhistImages) == 0 {
+		return utils.MakeError("current image doesn't exist on %v", event.Region)
+	}
+
+	oldImageID := string(latestImageQuery.WhistImages[0].ImageID)
 
 	// create instance buffer with new image
+	logger.Infof("Creating new instance buffer for image %v", newImageID)
 	bufferInstances, err := s.Host.SpinUpInstances(scalingCtx, DEFAULT_INSTANCE_BUFFER, newImageID)
 	if err != nil {
 		return utils.MakeError("failed to create instance buffer for image %v. Error: %v", newImageID, err)
@@ -344,16 +337,15 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, host 
 		bufferIDs = append(bufferIDs, instance.ID)
 	}
 
-	// wait for buffer to be ready. TODO: do this on a goroutine?
+	// wait for buffer to be ready.
 	err = s.Host.WaitForInstanceReady(scalingCtx, bufferIDs)
 	if err != nil {
 		return utils.MakeError("error waiting for instances to be ready. Error: %v", err)
 	}
 
 	// get old instances from database
-	// check database for draining instances without running mandelboxes
-	oldInstancesQuery := subscriptions.QueryInstancesByStatus
-	queryParams := map[string]interface{}{
+	oldInstancesQuery := subscriptions.QueryInstancesByImageID
+	queryParams = map[string]interface{}{
 		"image_id": graphql.String(oldImageID),
 	}
 
@@ -362,28 +354,34 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, host 
 		return utils.MakeError("failed to query database for instances with image %v. Err: %v", oldImageID, err)
 	}
 
-	// create slice of newly old instance ids to scale down
-	var oldIDs []string
-	for _, instance := range oldInstancesQuery.WhistInstances {
-		oldIDs = append(bufferIDs, string(instance.ID))
-	}
-
 	// drain instances with old image
-	_, err = s.Host.SpinDownInstances(scalingCtx, oldIDs)
-	if err != nil {
-		return utils.MakeError("failed waiting for instances to terminate. Err: %v", err)
+	logger.Infof("Scaling down %v instances from previous image %v.", len(oldInstancesQuery.WhistInstances), oldImageID)
+
+	drainMutation := subscriptions.UpdateInstanceStatus
+	for _, instance := range oldInstancesQuery.WhistInstances {
+		mutationParams := map[string]interface{}{
+			"id":     graphql.String(instance.ID),
+			"status": graphql.String("DRAINING"),
+		}
+
+		err = s.GraphQLClient.Mutate(scalingCtx, &drainMutation, mutationParams)
+		if err != nil {
+			logger.Errorf("Failed to mark instance %v as draining. Err: %v", instance, err)
+		}
+
+		logger.Info("Marked instance %v as draining on database.", instance.ID)
 	}
 
 	// swapover active image on database
-	insertMutation := subscriptions.InsertInstances
+	logger.Infof("Updating old %v image %v to new image %v on database.", event.Region, oldImageID, newImageID)
+
+	insertMutation := subscriptions.UpdateImage
 	mutationParams := map[string]interface{}{
-		"objects": subscriptions.Image{
-			Provider:  "aws",
-			Region:    event.Region,
-			ImageID:   newImageID,
-			ClientSHA: newImageID, //TODO: check if clientsha is the same as new image id.
-			UpdatedAt: time.Now(),
-		},
+		"provider":   graphql.String("aws"),
+		"region":     graphql.String(event.Region),
+		"image_id":   graphql.String(newImageID),
+		"client_sha": graphql.String(metadata.GetGitCommit()),
+		"updated_at": timestamptz{time.Now()},
 	}
 
 	err = s.GraphQLClient.Mutate(scalingCtx, &insertMutation, mutationParams)

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	graphql "github.com/hasura/go-graphql-client"
-	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 	"golang.org/x/oauth2"
@@ -28,10 +27,10 @@ type GraphQLClient struct {
 // Initialize creates the client. This function is respinsible from fetching the server
 // information from Heroku.
 func (wc *GraphQLClient) Initialize() error {
-	if !enabled {
-		logger.Infof("Running in app environment %s so not enabling GraphQL client code.", metadata.GetAppEnvironment())
-		return nil
-	}
+	// if !enabled {
+	// 	logger.Infof("Running in app environment %s so not enabling GraphQL client code.", metadata.GetAppEnvironment())
+	// 	return nil
+	// }
 
 	logger.Infof("Setting up GraphQL client...")
 

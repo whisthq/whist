@@ -10,8 +10,6 @@ import (
 	"sync"
 
 	graphql "github.com/hasura/go-graphql-client" // We use hasura's own graphql client for Go
-	"github.com/whisthq/whist/backend/services/metadata"
-	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
 // InstanceStatusHandler handles events from the hasura subscription which
@@ -119,10 +117,10 @@ func SetupScalingSubscriptions(whistClient WhistSubscriptionClient) {
 // and starts a goroutine for the client. It also has a goroutine to close the client and subscriptions when the global
 // context gets cancelled.
 func Start(whistClient WhistSubscriptionClient, globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan SubscriptionEvent) error {
-	if !enabled {
-		logger.Infof("Running in app environment %s so not enabling Subscription client code.", metadata.GetAppEnvironment())
-		return nil
-	}
+	// if !enabled {
+	// 	logger.Infof("Running in app environment %s so not enabling Subscription client code.", metadata.GetAppEnvironment())
+	// 	return nil
+	// }
 
 	// Slice to hold subscription IDs, necessary to properly unsubscribe when we are done.
 	var subscriptionIDs []string

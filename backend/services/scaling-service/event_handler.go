@@ -36,7 +36,10 @@ func main() {
 
 	// Start scheduler and setup scheduler event chan
 	scheduledEvents := make(chan sa.ScalingEvent, 100)
-	StartSchedulerEvents(globalCtx, goroutineTracker, scheduledEvents)
+	StartSchedulerEvents(scheduledEvents)
+
+	// Start the deploy events once since we are starting the scaling service.
+	StartDeploy(scheduledEvents)
 
 	// algorithmByRegionMap holds all of the scaling algorithms mapped by region.
 	// Use a sync map since we only write the keys once but will be reading multiple
@@ -87,11 +90,12 @@ func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *syn
 }
 
 // StartSchedulerEvents starts the scheduler and its events without blocking the main thread.
-func StartSchedulerEvents(globalCtx context.Context, goroutineTracker *sync.WaitGroup, scheduledEvents chan sa.ScalingEvent) {
+func StartSchedulerEvents(scheduledEvents chan sa.ScalingEvent) {
 	s := gocron.NewScheduler(time.UTC)
 
-	// Schedule scale down routine every 10 minutes
-	s.Every(10).Minutes().Do(func() {
+	// Schedule scale down routine every 10 minutes, start 10 minutes from now.
+	t := time.Now().Add(10 * time.Minute)
+	s.Every(10).Minutes().StartAt(t).Do(func() {
 		// Send to scheduling channel
 		scheduledEvents <- sa.ScalingEvent{
 			Type: "SCHEDULED_SCALE_DOWN",
@@ -99,6 +103,19 @@ func StartSchedulerEvents(globalCtx context.Context, goroutineTracker *sync.Wait
 	})
 
 	s.StartAsync()
+}
+
+func StartDeploy(scheduledEvents chan sa.ScalingEvent) {
+	// TODO: get map from arguments.
+	regionImageMap := map[string]string{
+		"us-east-1": "",
+	}
+
+	// Send image upgrade event to scheduled chan.
+	scheduledEvents <- sa.ScalingEvent{
+		Type: "SCHEDULED_IMAGE_UPGRADE",
+		Data: regionImageMap,
+	}
 }
 
 // getScalingAlgorithm is a helper function that returns the scaling algorithm from the sync map.
@@ -151,31 +168,10 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 				case *sa.DefaultScalingAlgorithm:
 					algorithm.InstanceEventChan <- scalingEvent
 				}
-
-			case *subscriptions.ImageEvent:
-				var scalingEvent sa.ScalingEvent
-
-				scalingEvent.Type = "IMAGE_DATABASE_EVENT"
-
-				if len(subscriptionEvent.Images) > 0 {
-					image := subscriptionEvent.Images[0]
-
-					scalingEvent.Data = image
-					scalingEvent.Region = image.Region
-				}
-
-				// Start scaling algorithm based on region
-				logger.Infof("Received database event.")
-				algorithm := getScalingAlgorithm(algorithmByRegion, scalingEvent)
-
-				switch algorithm := algorithm.(type) {
-				case *sa.DefaultScalingAlgorithm:
-					algorithm.ImageEventChan <- scalingEvent
-				}
 			}
 		case scheduledEvent := <-scheduledEvents:
 			// Start scaling algorithm based on region
-			logger.Infof("Received scheduled event.")
+			logger.Infof("Received scheduled event. %v", scheduledEvent)
 			algorithm := getScalingAlgorithm(algorithmByRegion, scheduledEvent)
 
 			switch algorithm := algorithm.(type) {
