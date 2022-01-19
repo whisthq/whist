@@ -112,7 +112,7 @@ void network_throttler_set_burst_bitrate(NetworkThrottleContext* ctx, int burst_
     ctx->coin_bucket_max = coin_bucket_max;
 }
 
-int network_throttler_get_burst_bitrate(NetworkThrottleContext* ctx) {
+static int network_throttler_get_burst_bitrate(NetworkThrottleContext* ctx) {
     /*
         Get the bandwidth for the network throttler.
 

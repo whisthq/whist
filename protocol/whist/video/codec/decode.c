@@ -34,20 +34,19 @@ Private Functions
 ============================
 */
 static void set_opt(VideoDecoder* decoder, char* option, char* value);
-void set_decoder_opts(VideoDecoder* decoder);
-int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type);
-enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts,
-                                enum AVPixelFormat match_pix_fmt);
-enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts);
-int try_setup_video_decoder(VideoDecoder* decoder);
+static void set_decoder_opts(VideoDecoder* decoder);
+static int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type);
+static enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts,
+                                       enum AVPixelFormat match_pix_fmt);
+static enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts);
+static int try_setup_video_decoder(VideoDecoder* decoder);
 static bool try_next_decoder(VideoDecoder* decoder);
-void destroy_video_decoder_members(VideoDecoder* decoder);
+static void destroy_video_decoder_members(VideoDecoder* decoder);
 
 #define SHOW_DECODER_LOGS false
 
 #if SHOW_DECODER_LOGS
-void swap_decoder(void* t, int t2, const char* fmt, va_list vargs);
-void swap_decoder(void* t, int t2, const char* fmt, va_list vargs) {
+static void swap_decoder(void* t, int t2, const char* fmt, va_list vargs) {
     UNUSED(t);
     UNUSED(t2);
     LOG_INFO("Error found");
@@ -61,7 +60,7 @@ Private Function Implementations
 ============================
 */
 
-AVFrame* safe_av_frame_alloc() {
+static AVFrame* safe_av_frame_alloc(void) {
     AVFrame* frame = av_frame_alloc();
     if (frame == NULL) {
         LOG_FATAL("Failed to av_frame_alloc!");
@@ -84,7 +83,7 @@ static void set_opt(VideoDecoder* decoder, char* option, char* value) {
     }
 }
 
-void set_decoder_opts(VideoDecoder* decoder) {
+static void set_decoder_opts(VideoDecoder* decoder) {
     /*
         Set any decoder options common across all decoders.
 
@@ -96,7 +95,7 @@ void set_decoder_opts(VideoDecoder* decoder) {
     set_opt(decoder, "async_depth", "1");
 }
 
-int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type) {
+static int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type) {
     /*
         Initialize a hardware-accelerated decoder with the given context and device type. Wrapper
        around FFmpeg functions to do so.
@@ -118,8 +117,8 @@ int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type) {
     return err;
 }
 
-enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts,
-                                enum AVPixelFormat match_pix_fmt) {
+static enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts,
+                                       enum AVPixelFormat match_pix_fmt) {
     /*
         Determine if match_pix_fmt is in the array of pixel formats given in pix_fmts. This is
        called as a helper function in FFmpeg.
@@ -167,7 +166,7 @@ enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* p
     return AV_PIX_FMT_NONE;
 }
 
-enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts) {
+static enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts) {
     /*
         Choose a format for the video decoder. Used as a callback function in FFmpeg. This is a
        wrapper around match_fmt unless the decoder wants to use QSV format, in which case we have to
@@ -222,7 +221,7 @@ enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix
     return match;
 }
 
-int try_setup_video_decoder(VideoDecoder* decoder) {
+static int try_setup_video_decoder(VideoDecoder* decoder) {
     /*
         Try to setup a video decoder by checking to see if we can create AVCodecs with the specified
        device type and video codec.
@@ -360,13 +359,13 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
 // Indicate in what order we should try decoding. Software is always last - we prefer hardware
 // acceleration whenever possible.
 #if defined(_WIN32)
-DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_HARDWARE_OLDER,
-                                   DECODE_TYPE_QSV, DECODE_TYPE_SOFTWARE};
+static const DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_HARDWARE_OLDER,
+                                                DECODE_TYPE_QSV, DECODE_TYPE_SOFTWARE};
 #elif __APPLE__
-DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_SOFTWARE};
+static const DecodeType decoder_precedence[] = {DECODE_TYPE_HARDWARE, DECODE_TYPE_SOFTWARE};
 #else  // linux
 // TODO: Fix QSV
-DecodeType decoder_precedence[] = {/* DECODE_TYPE_QSV, */ DECODE_TYPE_SOFTWARE};
+static const DecodeType decoder_precedence[] = {/* DECODE_TYPE_QSV, */ DECODE_TYPE_SOFTWARE};
 #endif
 
 #define NUM_DECODER_TYPES (sizeof(decoder_precedence) / sizeof(decoder_precedence[0]))
@@ -426,7 +425,7 @@ static bool try_next_decoder(VideoDecoder* decoder) {
     }
 }
 
-void destroy_video_decoder_members(VideoDecoder* decoder) {
+static void destroy_video_decoder_members(VideoDecoder* decoder) {
     /*
         Destroy the members of the video decoder.
 

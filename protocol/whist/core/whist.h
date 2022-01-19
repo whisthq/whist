@@ -110,6 +110,7 @@ Defines
 // possible on windows, so let's do it
 #define USING_SERVERSIDE_SCALE true
 #define INPUT_DRIVER WINAPI_INPUT_DRIVER
+#define USING_NVIDIA_ENCODE false
 
 #else
 
@@ -796,17 +797,17 @@ Public Functions
  * @note                           TODO: Make this function take in parsed arguments as a struct,
  *                                 rather than having parse_arguments manipulate `extern` globals
  */
-void whist_init_subsystems();
+void whist_init_subsystems(void);
 
 /**
  * @brief                          Print the memory trace of a process
  */
-void print_memory_info();
+void print_memory_info(void);
 
 /**
  * @brief                          Print the system info of the computer
  */
-void print_system_info();
+void print_system_info(void);
 
 /**
  * @brief                          Run a system command via command prompt or
@@ -818,15 +819,6 @@ void print_system_info();
  * @returns                        0 or value of pipe if success, else -1
  */
 int runcmd(const char* cmdline, char** response);
-
-/**
- * @brief                          Retrieves the public IPv4 of the computer it
- *                                 is run on
- *
- * @returns                        The string of the public IPv4 address of the
- *                                 computer
- */
-char* get_ip();
 
 /**
  * @brief                          Reads a 16-byte hexidecimal string and copies
@@ -988,7 +980,7 @@ int bit_array_test_bit(const BitArray* const ba, const unsigned int bit);
  *
  * @returns                        The git commit
  */
-char* whist_git_revision();
+const char* whist_git_revision(void);
 
 // TODO: Resolve circular references
 #include "whist_frame.h"

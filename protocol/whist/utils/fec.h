@@ -29,7 +29,7 @@ Public Functions
  * @brief                          A global initialization function that should
  *                                 be called before calling anything else in fec.h
  */
-void init_fec();
+void init_fec(void);
 
 /**
  * @brief                          Converts an fec packet ratio,

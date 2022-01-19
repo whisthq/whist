@@ -56,7 +56,7 @@ Private Functions
 ============================
 */
 
-void unsafe_print_statistics();
+static void unsafe_print_statistics(void);
 
 /*
 ============================
@@ -64,7 +64,7 @@ Private Function Implementations
 ============================
 */
 
-void unsafe_print_statistics() {
+static void unsafe_print_statistics(void) {
 #ifdef LOG_STATISTICS
     StatisticData *all_statistics = statistic_context.all_statistics;
     StatisticInfo *statistic_info = statistic_context.statistic_info;
@@ -155,7 +155,7 @@ void log_double_statistic(uint32_t index, double val) {
     whist_unlock_mutex(log_statistic_mutex);
 }
 
-void destroy_statistic_logger() {
+void destroy_statistic_logger(void) {
     free(statistic_context.all_statistics);
     memset((void *)&statistic_context, 0, sizeof(statistic_context));
     whist_destroy_mutex(log_statistic_mutex);

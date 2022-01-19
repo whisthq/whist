@@ -12,7 +12,7 @@
 bool has_returned_window_name_yet;
 
 // TODO: implement functionality for windows servers
-void init_window_info_getter() {
+void init_window_info_getter(void) {
     // We only error on init/destroy, to prevent spam
     LOG_ERROR("UNIMPLEMENTED: init_window_info_getter on Win32");
     has_returned_window_name_yet = true;
@@ -24,7 +24,7 @@ bool get_focused_window_name(char** name_return) {
     has_returned_window_name_yet = false;
     return ret;
 }
-bool is_focused_window_fullscreen() { return false; }
-void destroy_window_info_getter() {
+bool is_focused_window_fullscreen(void) { return false; }
+void destroy_window_info_getter(void) {
     LOG_ERROR("UNIMPLEMENTED: destroy_x11_window_info_getter on Win32");
 }

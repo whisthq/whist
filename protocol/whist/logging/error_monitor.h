@@ -93,7 +93,7 @@ void whist_error_monitor_set_connection_id(int id);
  * @returns                       True if the error monitor is initialized,
  *                                false otherwise.
  */
-bool whist_error_monitor_is_initialized();
+bool whist_error_monitor_is_initialized(void);
 
 /**
  * @brief                          Initializes the error monitor.
@@ -113,7 +113,7 @@ void whist_error_monitor_initialize(bool is_client);
  *                                 logging.h's `destroy_logger()`. See the
  *                                 "Usage" section above for details.
  */
-void whist_error_monitor_shutdown();
+void whist_error_monitor_shutdown(void);
 
 /**
  * @brief                          Logs a breadcrumb to the error monitor.

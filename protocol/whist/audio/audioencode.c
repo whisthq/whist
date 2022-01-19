@@ -16,7 +16,7 @@ audio_encoder_fifo_intake. You can then encode via audio_encoder_encode.
 
 #include "audioencode.h"
 
-int audio_encoder_receive_packet(AudioEncoder* encoder, AVPacket* packet);
+static int audio_encoder_receive_packet(AudioEncoder* encoder, AVPacket* packet);
 
 /*
 ============================
@@ -282,7 +282,7 @@ void destroy_audio_encoder(AudioEncoder* encoder) {
     LOG_INFO("done destroying decoder!\n");
 }
 
-int audio_encoder_receive_packet(AudioEncoder* encoder, AVPacket* packet) {
+static int audio_encoder_receive_packet(AudioEncoder* encoder, AVPacket* packet) {
     /*
         Wrapper around avcodec_receive_packet.
 

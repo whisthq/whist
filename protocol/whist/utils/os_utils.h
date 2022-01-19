@@ -32,7 +32,7 @@ Public Functions
  *
  * @returns                        The current keyboard layout
  */
-WhistKeyboardLayout get_keyboard_layout();
+WhistKeyboardLayout get_keyboard_layout(void);
 
 /**
  * @brief                          Set keyboard layout

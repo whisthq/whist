@@ -90,7 +90,7 @@ Public Functions
 /**
  * @brief                          Initialize all cursors
  */
-void init_cursors();
+void init_cursors(void);
 
 /**
  * @brief                          Returns the current cursor image

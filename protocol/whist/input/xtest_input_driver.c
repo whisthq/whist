@@ -13,7 +13,7 @@
 // @brief Linux keycodes for replaying Whist user inputs on server
 // @details index is Whist keycode, value is Linux keycode
 #define GetX11KeySym(whist_keycode) x11_keysyms[whist_keycode]
-const int x11_keysyms[KEYCODE_UPPERBOUND] = {
+static const int x11_keysyms[KEYCODE_UPPERBOUND] = {
     0,                        // Whist keycodes start at index 4
     0,                        // Whist keycodes start at index 4
     0,                        // Whist keycodes start at index 4
@@ -280,7 +280,7 @@ const int x11_keysyms[KEYCODE_UPPERBOUND] = {
     XF86XK_AudioMedia         // 263 -> Media Select
 };
 
-InputDevice* create_input_device() {
+InputDevice* create_input_device(void) {
     LOG_INFO("creating xtest input driver");
     InputDevice* input_device = safe_malloc(sizeof(InputDevice));
     memset(input_device, 0, sizeof(InputDevice));

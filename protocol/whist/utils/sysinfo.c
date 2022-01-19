@@ -42,7 +42,7 @@ Includes
 
 #include <whist/logging/logging.h>
 
-void print_os_info() {
+void print_os_info(void) {
 #ifdef _WIN32
     char buf[1024];
     char product[256];
@@ -114,7 +114,7 @@ void print_os_info() {
 #endif
 }
 
-void print_model_info() {
+void print_model_info(void) {
 #ifdef _WIN32
     char* response = NULL;
     int total_sz = runcmd("wmic computersystem get model,manufacturer", &response);
@@ -187,7 +187,7 @@ void print_model_info() {
 #endif
 }
 
-void print_monitors() {
+void print_monitors(void) {
 #ifdef _WIN32
     int num_adapters = 0, i = 0, j = 0;
     IDXGIFactory1* factory;
@@ -275,7 +275,7 @@ void print_monitors() {
 #endif
 }
 
-void print_ram_info() {
+void print_ram_info(void) {
 #if defined(_WIN32)
     size_t total_ram;
     size_t total_ram_usage;
@@ -323,7 +323,7 @@ void print_ram_info() {
     LOG_INFO("Total Physical RAM: %.2f GB", (size_t)total_ram / BYTES_IN_GB);
 }
 
-void print_memory_info() {
+void print_memory_info(void) {
 #if defined(_WIN32)
     DWORD process_id = GetCurrentProcessId();
     HANDLE h_process;
@@ -355,7 +355,7 @@ void print_memory_info() {
 
 #ifndef M1
 // On x86 processors, we can use cpuid function call
-void cpu_id(unsigned i, unsigned regs[4]) {
+static void cpu_id(unsigned i, unsigned regs[4]) {
 #ifdef _WIN32
     __cpuid((int*)regs, (int)i);
 #else
@@ -367,7 +367,7 @@ void cpu_id(unsigned i, unsigned regs[4]) {
 }
 #endif
 
-void print_cpu_info() {
+void print_cpu_info(void) {
 #ifdef M1
     const char* cpu_vendor = "AppleM1";
     const char* cpu_brand_string = "Apple M1 8-Core @ 3.2GHz";
@@ -444,7 +444,7 @@ void print_cpu_info() {
 #endif
 }
 
-void print_hard_drive_info() {
+void print_hard_drive_info(void) {
     double used_space;
     double total_space;
     double available_space;

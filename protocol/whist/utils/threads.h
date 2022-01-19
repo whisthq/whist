@@ -25,7 +25,7 @@ typedef enum WhistThreadPriority {
     WHIST_THREAD_PRIORITY_REALTIME = SDL_THREAD_PRIORITY_TIME_CRITICAL
 } WhistThreadPriority;
 
-void whist_init_multithreading();
+void whist_init_multithreading(void);
 
 WhistThread whist_create_thread(WhistThreadFunction thread_function, const char* thread_name,
                                 void* data);
@@ -37,13 +37,13 @@ void whist_set_thread_priority(WhistThreadPriority priority);
 void whist_sleep(uint32_t ms);
 void whist_usleep(uint32_t us);
 
-WhistMutex whist_create_mutex();
+WhistMutex whist_create_mutex(void);
 void whist_lock_mutex(WhistMutex mutex);
 int whist_try_lock_mutex(WhistMutex mutex);
 void whist_unlock_mutex(WhistMutex mutex);
 void whist_destroy_mutex(WhistMutex mutex);
 
-WhistCondition whist_create_cond();
+WhistCondition whist_create_cond(void);
 void whist_wait_cond(WhistCondition cond, WhistMutex mutex);
 void whist_broadcast_cond(WhistCondition cond);
 void whist_destroy_cond(WhistCondition cond);

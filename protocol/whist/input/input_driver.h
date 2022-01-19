@@ -45,7 +45,7 @@ Public Functions
  * @returns                        Initialized input device struct defining
  *                                 mouse and keyboard states
  */
-InputDevice* create_input_device();
+InputDevice* create_input_device(void);
 
 /**
  * @brief                          Destroy and free the memory of an input

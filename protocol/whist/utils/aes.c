@@ -39,7 +39,7 @@ Defines
 // Handles and prints the ssl error,
 // Then returns -1
 // We LOG_INFO to get the line number
-#define HANDLE_SSL_ERROR(void)            \
+#define HANDLE_SSL_ERROR()                \
     do {                                  \
         LOG_INFO("OpenSSL Error caught"); \
         print_ssl_errors();               \
@@ -67,8 +67,8 @@ Private Function Declarations
  * @returns                        Will return -1 on failure, else will return the
  *                                 length of the encrypted result
  */
-int aes_encrypt(void* ciphertext, const void* plaintext, int plaintext_len, const void* private_key,
-                const void* iv);
+static int aes_encrypt(void* ciphertext, const void* plaintext, int plaintext_len,
+                       const void* private_key, const void* iv);
 
 /**
  * @brief                          AES Decrypt ciphertext data, given the iv/key
@@ -85,8 +85,8 @@ int aes_encrypt(void* ciphertext, const void* plaintext, int plaintext_len, cons
  * @returns                        Will return the length of the decrypted result,
  *                                 or -1 on failure
  */
-int aes_decrypt(void* plaintext_buffer, int plaintext_len, const void* ciphertext,
-                int ciphertext_len, const void* private_key, const void* iv);
+static int aes_decrypt(void* plaintext_buffer, int plaintext_len, const void* ciphertext,
+                       int ciphertext_len, const void* private_key, const void* iv);
 
 /**
  * @brief                          Get an HMAC from the AES encrypted information
@@ -99,14 +99,14 @@ int aes_decrypt(void* plaintext_buffer, int plaintext_len, const void* ciphertex
  * @param private_key              The shared private key between client and server
  *                                   must be KEY_SIZE bytes
  */
-void hmac_aes_data(void* hash_buffer, const AESMetadata* aes_metadata, const void* ciphertext,
-                   int ciphertext_len, const void* private_key);
+static void hmac_aes_data(void* hash_buffer, const AESMetadata* aes_metadata,
+                          const void* ciphertext, int ciphertext_len, const void* private_key);
 
 /**
  * @brief                          Writes any OpenSSL errors to stderr,
  *                                 and then fatally terminates the protocol
  */
-void print_ssl_errors();
+static void print_ssl_errors(void);
 
 /**
  * @brief                          An OpenSSL callback function, see `ERR_print_errors_cb`
@@ -115,7 +115,7 @@ void print_ssl_errors();
  * @param len                     The length of the string
  * @param opaque                  Ignored
  */
-int openssl_callback(const char* str, size_t len, void* opaque);
+static int openssl_callback(const char* str, size_t len, void* opaque);
 
 /*
 ============================
@@ -425,9 +425,9 @@ void hmac_aes_data(void* hash_buffer, const AESMetadata* aes_metadata, const voi
     hmac(hash_buffer, concatenated_hash, sizeof(concatenated_hash), hmac_private_key);
 }
 
-void print_ssl_errors() { ERR_print_errors_cb(openssl_callback, NULL); }
+static void print_ssl_errors(void) { ERR_print_errors_cb(openssl_callback, NULL); }
 
-int openssl_callback(const char* str, size_t len, void* opaque) {
+static int openssl_callback(const char* str, size_t len, void* opaque) {
     UNUSED(opaque);
     LOG_ERROR("OpenSSL Error: %.*s\n", (int)len, str);
 

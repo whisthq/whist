@@ -73,13 +73,13 @@ double get_timer(const WhistTimer* timer);
  *
  * @returns						   The current time as a string
  */
-char* current_time_str();
+char* current_time_str(void);
 
 /**
  * @brief                          Returns the number of microseconds elapsed since epoch
  *
  * @returns                        Number of microseconds elapsed since epoch
  */
-timestamp_us current_time_us();
+timestamp_us current_time_us(void);
 
 #endif

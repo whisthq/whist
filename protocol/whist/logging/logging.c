@@ -52,15 +52,15 @@ format strings.
 #include "logging.h"
 #include "error_monitor.h"
 
-void init_backtrace_handler();
+static void init_backtrace_handler(void);
 
 // TAG Strings
-const char* debug_tag = "DEBUG";
-const char* info_tag = "INFO";
-const char* metric_tag = "METRIC";
-const char* warning_tag = "WARNING";
-const char* error_tag = "ERROR";
-const char* fatal_error_tag = "FATAL_ERROR";
+const char* const debug_tag = "DEBUG";
+const char* const info_tag = "INFO";
+const char* const metric_tag = "METRIC";
+const char* const warning_tag = "WARNING";
+const char* const error_tag = "ERROR";
+const char* const fatal_error_tag = "FATAL_ERROR";
 
 // logger Semaphores and Mutexes
 static WhistSemaphore logger_semaphore;
@@ -79,15 +79,15 @@ static volatile int logger_queue_index = 0;
 static volatile int logger_queue_size = 0;
 
 // logger global variables
-WhistThread mprintf_thread = NULL;
+static WhistThread mprintf_thread = NULL;
 static volatile bool run_multithreaded_printf;
-int multithreaded_printf(void* opaque);
-void mprintf(const char* tag, const char* fmt_str, va_list args);
+static int multithreaded_printf(void* opaque);
+static void mprintf(const char* tag, const char* fmt_str, va_list args);
 
 // This is written to in MultiThreaderPrintf
 #define LOG_CACHE_SIZE 1000000
 
-void whist_init_logger() {
+void whist_init_logger(void) {
     /*
         Initializes the Whist logger.
 
@@ -109,7 +109,7 @@ void whist_init_logger() {
     LOG_INFO("Logging initialized!");
 }
 
-void destroy_logger() {
+void destroy_logger(void) {
     // Flush out any remaining logs
     flush_logs();
 
@@ -129,7 +129,7 @@ void destroy_logger() {
     whist_destroy_mutex(crash_handler_mutex);
 }
 
-int multithreaded_printf(void* opaque) {
+static int multithreaded_printf(void* opaque) {
     UNUSED(opaque);
 
     while (true) {
@@ -146,7 +146,7 @@ int multithreaded_printf(void* opaque) {
     return 0;
 }
 
-void flush_logs() {
+void flush_logs(void) {
     if (run_multithreaded_printf) {
         // Clear the queue into the cache, and then let go of `logger_queue_mutex` as soon as
         // possible so that mprintf can continue to accumulate.
@@ -211,7 +211,7 @@ void flush_logs() {
  *                                 "some\\\tstuff\\\r\n\\\r\n"
  *                                 "some\\\tstuff\\\r\\\n\\\r\\\n" <- escape_all=true
  */
-char* escape_string(const char* old_string, bool escape_all) {
+static char* escape_string(const char* old_string, bool escape_all) {
     size_t old_string_len = strlen(old_string);
     char* new_string = safe_malloc(2 * (old_string_len + 1));
     int new_str_len = 0;
@@ -280,7 +280,7 @@ void internal_logging_printf(const char* tag, const char* fmt_str, ...) {
     va_end(args);
 }
 
-void mprintf_queue_line(const char* line_fmt, const char* tag, const char* line) {
+static void mprintf_queue_line(const char* line_fmt, const char* tag, const char* line) {
     /*
         Queues a line of a log message to be printed by the logger thread. Warns the
         user if this queued line is overwriting an existing entry on the queue or if
@@ -341,7 +341,7 @@ void mprintf_queue_line(const char* line_fmt, const char* tag, const char* line)
 }
 
 // Core multithreaded printf function, that accepts va_list and log boolean
-void mprintf(const char* tag, const char* fmt_str, va_list args) {
+static void mprintf(const char* tag, const char* fmt_str, va_list args) {
     whist_lock_mutex(logger_queue_mutex);
 
     // After calls to function which invoke VA args, the args are
@@ -381,7 +381,7 @@ void mprintf(const char* tag, const char* fmt_str, va_list args) {
     whist_unlock_mutex(logger_queue_mutex);
 }
 
-void print_stacktrace() {
+void print_stacktrace(void) {
     /*
         Prints the stacktrace that led to the point at which this function was called.
 
@@ -460,7 +460,7 @@ void print_stacktrace() {
 }
 
 #ifdef _WIN32
-LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS* ExceptionInfo) {  // NOLINT
+static LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS* ExceptionInfo) {  // NOLINT
     fprintf(stdout, "\n");
     switch (ExceptionInfo->ExceptionRecord->ExceptionCode) {
         case EXCEPTION_ACCESS_VIOLATION:
@@ -538,7 +538,7 @@ LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS* ExceptionInfo) {  // N
     return EXCEPTION_EXECUTE_HANDLER;
 }
 #else
-void unix_crash_handler(int sig) {
+static void unix_crash_handler(int sig) {
     fprintf(stdout, "\nError: signal %d:%s\n", sig, strsignal(sig));
     print_stacktrace();
     if (whist_error_monitor_is_initialized()) {
@@ -553,7 +553,7 @@ void unix_crash_handler(int sig) {
 }
 #endif
 
-void init_backtrace_handler() {
+static void init_backtrace_handler(void) {
     crash_handler_mutex = whist_create_mutex();
 #ifdef _WIN32
     SetUnhandledExceptionFilter(windows_exception_handler);

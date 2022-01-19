@@ -25,7 +25,7 @@ Public Function Implementations
 ============================
 */
 
-AudioDevice *create_audio_device() {
+AudioDevice *create_audio_device(void) {
     /*
         Create an audio device to capture audio on Windows
 

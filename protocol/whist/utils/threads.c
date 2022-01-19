@@ -6,7 +6,7 @@
 #include <pthread.h>
 #endif
 
-void whist_init_multithreading() {
+void whist_init_multithreading(void) {
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     SDL_SetHint(SDL_HINT_THREAD_FORCE_REALTIME_TIME_CRITICAL, "1");
 }
@@ -84,7 +84,7 @@ void whist_usleep(uint32_t us) {
 #endif  // _WIN32
 }
 
-WhistMutex whist_create_mutex() {
+WhistMutex whist_create_mutex(void) {
     WhistMutex ret = SDL_CreateMutex();
     if (ret == NULL) {
         LOG_FATAL("Failure creating mutex: %s", SDL_GetError());
@@ -115,7 +115,7 @@ void whist_unlock_mutex(WhistMutex mutex) {
 
 void whist_destroy_mutex(WhistMutex mutex) { SDL_DestroyMutex(mutex); }
 
-WhistCondition whist_create_cond() {
+WhistCondition whist_create_cond(void) {
     WhistCondition ret = SDL_CreateCond();
     if (ret == NULL) {
         LOG_FATAL("Failure creating condition variable: %s", SDL_GetError());

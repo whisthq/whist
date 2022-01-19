@@ -28,13 +28,13 @@ Includes
 #include <whist/core/whist.h>
 
 // A Mutex to ensure unsafe commands don't overlap
-WhistMutex clipboard_mutex;
+static WhistMutex clipboard_mutex;
 // Whether to send the local clipboard contents on startup
-bool preserve_local_clipboard = false;
+static bool preserve_local_clipboard = false;
 // Whether to skip the synchronization for the next clipboard update
 //     This is to prevent Peer 2 from sending a copy event back to
 //     Peer 1 when Peer 1 sends an updated clipboard to Peer 2
-bool skip_next_has_updated = false;
+static bool skip_next_has_updated = false;
 
 /*
 ============================
@@ -45,12 +45,12 @@ Private Functions
 // These clipboard primitives are defined in {x11,win,mac}_clipboard.c
 // CMake will only link one of those C files, depending on the OS
 
-void unsafe_init_clipboard();
-ClipboardData* unsafe_get_os_clipboard();
+void unsafe_init_clipboard(void);
+ClipboardData* unsafe_get_os_clipboard(void);
 void unsafe_set_os_clipboard(ClipboardData* cb);
 void unsafe_free_clipboard_buffer(ClipboardData* cb);
-bool unsafe_has_os_clipboard_updated();
-void unsafe_destroy_clipboard();
+bool unsafe_has_os_clipboard_updated(void);
+void unsafe_destroy_clipboard(void);
 
 /*
 ============================
@@ -77,7 +77,7 @@ void init_clipboard(bool is_client) {
     unsafe_init_clipboard();
 }
 
-bool should_preserve_local_clipboard() {
+bool should_preserve_local_clipboard(void) {
     /*
         Returns whether the local clipboard should be preserved.
         The client should preserve its local clipboard by sharing
@@ -91,7 +91,7 @@ bool should_preserve_local_clipboard() {
     return preserve_local_clipboard;
 }
 
-ClipboardData* get_os_clipboard() {
+ClipboardData* get_os_clipboard(void) {
     /*
         Get the current OS clipboard data
 
@@ -155,7 +155,7 @@ void free_clipboard_buffer(ClipboardData* cb) {
     whist_unlock_mutex(clipboard_mutex);
 }
 
-bool has_os_clipboard_updated() {
+bool has_os_clipboard_updated(void) {
     /*
         Check whether the clipboard has new data
 
@@ -183,7 +183,7 @@ bool has_os_clipboard_updated() {
     }
 }
 
-void destroy_clipboard() {
+void destroy_clipboard(void) {
     /*
         Destroy current clipboard
     */

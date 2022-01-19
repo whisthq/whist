@@ -11,13 +11,13 @@
 #define WHIST_PRESET NV_ENC_PRESET_P2_GUID
 #define WHIST_TUNING NV_ENC_TUNING_INFO_LOW_LATENCY
 
-int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType codec,
-                             NV_ENC_PRESET_CONFIG* p_preset_config);
-GUID get_codec_guid(CodecType codec);
-int register_resource(NvidiaEncoder* encoder, RegisteredResource* resource_to_register);
-void unregister_resource(NvidiaEncoder* encoder, RegisteredResource registered_resource);
+static int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType codec,
+                                    NV_ENC_PRESET_CONFIG* p_preset_config);
+static GUID get_codec_guid(CodecType codec);
+static int register_resource(NvidiaEncoder* encoder, RegisteredResource* resource_to_register);
+static void unregister_resource(NvidiaEncoder* encoder, RegisteredResource registered_resource);
 
-void try_free_frame(NvidiaEncoder* encoder) {
+static void try_free_frame(NvidiaEncoder* encoder) {
     /*
         Unlock the bitstream for the encoder so we can clear the encoder's frame in preparation for
        encoding the next frame.
@@ -284,7 +284,7 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
     return 0;
 }
 
-int register_resource(NvidiaEncoder* encoder, RegisteredResource* resource_to_register) {
+static int register_resource(NvidiaEncoder* encoder, RegisteredResource* resource_to_register) {
     /*
         Register the given resource with the encoder. If a CUDA buffer (externally allocated), we
        call nvEncRegisterResource. Otherwise, we tell the encoder to allocate a buffer of the given
@@ -349,7 +349,7 @@ int register_resource(NvidiaEncoder* encoder, RegisteredResource* resource_to_re
     }
 }
 
-void unregister_resource(NvidiaEncoder* encoder, RegisteredResource registered_resource) {
+static void unregister_resource(NvidiaEncoder* encoder, RegisteredResource registered_resource) {
     /*
         Unregister the given resource. For a CUDA resource, we call nvEncUnregisterResource; for an
        encoder-allocated buffer, we call nvEncDestroyInputBuffer.
@@ -484,7 +484,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     return 0;
 }
 
-GUID get_codec_guid(CodecType codec) {
+static GUID get_codec_guid(CodecType codec) {
     /*
         Get the Nvidia GUID corresponding to the desired codec.
 
@@ -506,8 +506,8 @@ GUID get_codec_guid(CodecType codec) {
     return codec_guid;
 }
 
-int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType codec,
-                             NV_ENC_PRESET_CONFIG* p_preset_config) {
+static int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType codec,
+                                    NV_ENC_PRESET_CONFIG* p_preset_config) {
     /*
         Modify the encoder preset configuration with our desired bitrate and 0 iframes. Right now,
        we are using the low latency high performance preset.

@@ -30,8 +30,8 @@ Private Functions
 ============================
 */
 
-void transfer_nvidia_data(VideoEncoder *encoder);
-int transfer_ffmpeg_data(VideoEncoder *encoder);
+static void transfer_nvidia_data(VideoEncoder *encoder);
+static int transfer_ffmpeg_data(VideoEncoder *encoder);
 
 /*
 ============================
@@ -39,7 +39,7 @@ Private Function Implementations
 ============================
 */
 
-void transfer_nvidia_data(VideoEncoder *encoder) {
+static void transfer_nvidia_data(VideoEncoder *encoder) {
     /*
         Set encoder metadata according to nvidia_encoder members and tell the encoder there is only
        one packet, containing the encoded frame data from the nvidia encoder.
@@ -65,7 +65,7 @@ void transfer_nvidia_data(VideoEncoder *encoder) {
     encoder->encoded_frame_size += 8;
 }
 
-int transfer_ffmpeg_data(VideoEncoder *encoder) {
+static int transfer_ffmpeg_data(VideoEncoder *encoder) {
     /*
         Set encoder metadata according to nvidia encoder members and receive all encoded packets
        from the ffmpeg encoder to the main encoder.
@@ -140,10 +140,10 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
             (VideoEncoder*): the newly created encoder
      */
 
-#if !USING_SERVERSIDE_SCALE
-    out_width = in_width;
-    out_height = in_height;
-#endif
+    if (!USING_SERVERSIDE_SCALE) {
+        out_width = in_width;
+        out_height = in_height;
+    }
 
     VideoEncoder *encoder = (VideoEncoder *)safe_malloc(sizeof(VideoEncoder));
     memset(encoder, 0, sizeof(VideoEncoder));
@@ -152,27 +152,28 @@ VideoEncoder *create_video_encoder(int in_width, int in_height, int out_width, i
     encoder->codec_type = codec_type;
 
 #if USING_NVIDIA_ENCODE
-#if USING_SERVERSIDE_SCALE
-    LOG_ERROR(
-        "Cannot create nvidia encoder, does not accept in_width and in_height when using "
-        "serverside scaling");
-    encoder->active_encoder = FFMPEG_ENCODER;
-#else
-    LOG_INFO("Creating nvidia encoder...");
-    // find next nonempty entry in nvidia_encoders
-    encoder->nvidia_encoders[0] = create_nvidia_encoder(bitrate, codec_type, out_width, out_height,
-                                                        *get_video_thread_cuda_context_ptr());
-    if (!encoder->nvidia_encoders[0]) {
-        LOG_ERROR("Failed to create nvidia encoder!");
+    if (USING_SERVERSIDE_SCALE) {
+        LOG_ERROR(
+            "Cannot create nvidia encoder, does not accept in_width and in_height when using "
+            "serverside scaling");
         encoder->active_encoder = FFMPEG_ENCODER;
     } else {
-        LOG_INFO("Created nvidia encoder!");
-        // nvidia creation succeeded!
-        encoder->active_encoder = NVIDIA_ENCODER;
-        encoder->active_encoder_idx = 0;
-        return encoder;
+        LOG_INFO("Creating nvidia encoder...");
+        // find next nonempty entry in nvidia_encoders
+        encoder->nvidia_encoders[0] = create_nvidia_encoder(
+            bitrate, codec_type, out_width, out_height, *get_video_thread_cuda_context_ptr());
+
+        if (!encoder->nvidia_encoders[0]) {
+            LOG_ERROR("Failed to create nvidia encoder!");
+            encoder->active_encoder = FFMPEG_ENCODER;
+        } else {
+            LOG_INFO("Created nvidia encoder!");
+            // nvidia creation succeeded!
+            encoder->active_encoder = NVIDIA_ENCODER;
+            encoder->active_encoder_idx = 0;
+            return encoder;
+        }
     }
-#endif  // USING_SERVERSIDE_SCALE
 #else
     // No nvidia found
     encoder->active_encoder = FFMPEG_ENCODER;
@@ -213,6 +214,7 @@ int video_encoder_encode(VideoEncoder *encoder) {
             return 0;
 #else
             LOG_FATAL("NVIDIA_ENCODER should not be used on Windows!");
+            UNUSED(transfer_nvidia_data);
 #endif
         case FFMPEG_ENCODER:
             if (ffmpeg_encoder_send_frame(encoder->ffmpeg_encoder)) {

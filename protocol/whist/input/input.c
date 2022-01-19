@@ -22,6 +22,7 @@ Includes
 */
 
 #include <whist/utils/os_utils.h>
+#include "input.h"
 #include "input_driver.h"
 #include "keyboard_mapping.h"
 
@@ -34,8 +35,8 @@ Defines
 #define KeyUp(input_device, whist_keycode) emit_key_event(input_device, whist_keycode, 0)
 #define KeyDown(input_device, whist_keycode) emit_key_event(input_device, whist_keycode, 1)
 
-unsigned int last_input_fcmsg_id = 0;
-WhistOSType input_os_type = WHIST_UNKNOWN_OS;
+static unsigned int last_input_fcmsg_id = 0;
+static WhistOSType input_os_type = WHIST_UNKNOWN_OS;
 
 /*
 ============================

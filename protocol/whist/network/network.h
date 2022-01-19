@@ -352,7 +352,7 @@ Public Functions
  * @brief                          Initialize networking system
  *                                 Must be called before calling any other function in this file
  */
-void whist_init_networking();
+void whist_init_networking(void);
 
 /**
  * @brief                          Get the most recent network error.
@@ -361,7 +361,7 @@ void whist_init_networking();
  *                                 through WSAGetLastError on Windows or errno
  *                                 on Linux
  */
-int get_last_network_error();
+int get_last_network_error(void);
 
 /**
  * @brief                          Get the size of a WhistPacket
@@ -406,7 +406,7 @@ void set_tos(SOCKET socket, WhistTOSValue tos);
  *
  * @returns                        The socket file descriptor, -1 on failure
  */
-SOCKET socketp_udp();
+SOCKET socketp_udp(void);
 
 /**
  * @brief                          Perform socket syscalls and set fds to

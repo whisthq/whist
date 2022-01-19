@@ -50,7 +50,7 @@ Public Functions
  * @brief                          Initialize window info getter
  *
  */
-void init_window_info_getter();
+void init_window_info_getter(void);
 
 /**
  * @brief                          Get the name of the focused window.
@@ -71,12 +71,12 @@ bool get_focused_window_name(char** name_return);
  *                                 to the screen, not through the window manager. Examples include
  *                                 fullscreen video playback in a browser, or fullscreen games.
  */
-bool is_focused_window_fullscreen();
+bool is_focused_window_fullscreen(void);
 
 /**
  * @brief                          Destroy window info getter
  *
  */
-void destroy_window_info_getter();
+void destroy_window_info_getter(void);
 
 #endif  // WINDOW_INFO_H

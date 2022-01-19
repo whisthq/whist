@@ -32,7 +32,7 @@ Defines
 #ifdef __APPLE__
 // If this array gets any longer than 1000 or so,
 // we should probably swap to a C++ std::map<string, string>
-const char* apple_keyboard_mappings[][2] = {
+static const char* const apple_keyboard_mappings[][2] = {
     {"com.apple.keylayout.USExtended", "us"},  {"com.apple.keylayout.US", "us"},
     {"com.apple.keylayout.Italian-Pro", "it"}, {"com.apple.keylayout.Italian", "it"},
     {"com.apple.keylayout.Arabic", "ara"},     {"com.apple.keylayout.ABC-QWERTZ", "de"},
@@ -50,14 +50,14 @@ const char* apple_keyboard_mappings[][2] = {
 
 #ifdef __linux__
 
-const char linux_supported_layouts[][5] = {"us", "it",    "ara", "de", "fr",
-                                           "es", "latam", "il",  "ca"};
+static const char linux_supported_layouts[][5] = {"us", "it",    "ara", "de", "fr",
+                                                  "es", "latam", "il",  "ca"};
 
 #define NUM_LINUX_SUPPORTED_LAYOUTS \
     ((int)sizeof(linux_supported_layouts) / (int)sizeof(linux_supported_layouts[0]))
 #endif
 
-WhistKeyboardLayout get_keyboard_layout() {
+WhistKeyboardLayout get_keyboard_layout(void) {
     WhistKeyboardLayout whist_layout = {0};
     // Set the default layout, in-case the code below fails to set the keyboard layout
     safe_strncpy(whist_layout.layout_name, WHIST_KB_DEFAULT_LAYOUT,

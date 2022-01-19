@@ -86,7 +86,7 @@ Public Function Implementations
 ============================
 */
 
-void init_cursors() {
+void init_cursors(void) {
     /*
         Initialize all cursors by creating the display
     */
@@ -105,7 +105,7 @@ void init_cursors() {
  * @param cursor_image the cursor image from XFixesGetCursorImage
  * @return WhistCursorID, INVALID when no matching WhistCursorID found
  */
-WhistCursorID get_cursor_id(XFixesCursorImage* cursor_image) {
+static WhistCursorID get_cursor_id(XFixesCursorImage* cursor_image) {
     WhistCursorID id = INVALID;
 
     // Need to multiply the size by 4, as the width*height describes

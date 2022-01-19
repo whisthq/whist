@@ -21,7 +21,7 @@
 // @brief Linux keycodes for replaying Whist user inputs on server
 // @details index is Whist keycode, value is Linux keycode.
 // To debug specific keycodes, use 'sudo showkey --keycodes'.
-const int linux_keycodes[KEYCODE_UPPERBOUND] = {
+static const int linux_keycodes[KEYCODE_UPPERBOUND] = {
     0,                 // Whist keycodes start at index 4
     0,                 // Whist keycodes start at index 4
     0,                 // Whist keycodes start at index 4
@@ -289,7 +289,7 @@ const int linux_keycodes[KEYCODE_UPPERBOUND] = {
 };
 
 // Whist only supports these 5 mouse buttons.
-const int linux_mouse_buttons[6] = {
+static const int linux_mouse_buttons[6] = {
     0,           // 0 -> no WhistMouseButton
     BTN_LEFT,    // 1 -> Left Button
     BTN_MIDDLE,  // 2 -> Middle Button
@@ -302,7 +302,7 @@ const int linux_mouse_buttons[6] = {
 #define GetLinuxMouseButton(whist_button) linux_mouse_buttons[whist_button]
 
 // see http://www.normalesup.org/~george/comp/libancillary/ for reference
-int recv_fds(int sock, int* fds, unsigned n_fds) {
+static int recv_fds(int sock, int* fds, unsigned n_fds) {
     int buffer_size = sizeof(struct cmsghdr) + sizeof(int) * n_fds;
     void* buffer = safe_malloc(buffer_size);
 
@@ -340,7 +340,7 @@ int recv_fds(int sock, int* fds, unsigned n_fds) {
     return n_fds;
 }
 
-InputDevice* create_input_device() {
+InputDevice* create_input_device(void) {
     LOG_INFO("creating uinput input driver");
 
     struct sockaddr_un addr;
@@ -406,7 +406,7 @@ void destroy_input_device(InputDevice* input_device) {
     free(input_device);
 }
 
-void emit_input_event(int fd, int type, int code, int val) {
+static void emit_input_event(int fd, int type, int code, int val) {
     struct input_event ie;
     ie.type = type;
     ie.code = code;

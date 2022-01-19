@@ -77,6 +77,6 @@ void log_double_statistic(uint32_t index, double val);
 /**
  * @brief                          Destroy the statistic logger.
  */
-void destroy_statistic_logger();
+void destroy_statistic_logger(void);
 
 #endif  // LOG_STATISTIC_H

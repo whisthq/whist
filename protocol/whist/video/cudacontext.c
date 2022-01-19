@@ -191,7 +191,7 @@ NVFBC_BOOL cuda_init(CUcontext* cuda_context) {
     return NVFBC_TRUE;
 }
 
-CUcontext* get_video_thread_cuda_context_ptr() {
+CUcontext* get_video_thread_cuda_context_ptr(void) {
     /*
         Return a pointer to the CUDA context that will be used next by the video thread.
 
@@ -202,7 +202,7 @@ CUcontext* get_video_thread_cuda_context_ptr() {
     return &video_thread_cuda_context;
 }
 
-CUcontext* get_nvidia_thread_cuda_context_ptr() {
+CUcontext* get_nvidia_thread_cuda_context_ptr(void) {
     /*
         Return a pointer to the CUDA context that will be used next by the nvidia thread.
 

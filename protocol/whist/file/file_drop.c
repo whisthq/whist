@@ -21,7 +21,7 @@ destroy_file_drop_handler();
 
 #ifndef __linux__
 
-bool init_file_drop_handler() {
+bool init_file_drop_handler(void) {
     LOG_INFO("File drop handler not supported on this platform");
     return false;
 }
@@ -41,7 +41,7 @@ int file_drop_mark_ready(int unique_id) {
     return -1;
 }
 
-void destroy_file_drop_handler() {
+void destroy_file_drop_handler(void) {
     LOG_WARNING("UNIMPLEMENTED: destroy_file_drop_handler on non-Linux");
 }
 
@@ -59,20 +59,20 @@ Includes
 #include <stdbool.h>
 
 // As we support for drag and drop types, we can add onto this list.
-Atom XA_text_uri_list;  // NOLINT
+static Atom XA_text_uri_list;  // NOLINT
 
 // The atoms used for the different messages sent between drag and drop peers
-Atom XA_XdndSelection;   // NOLINT
-Atom XA_XdndAware;       // NOLINT
-Atom XA_XdndEnter;       // NOLINT
-Atom XA_XdndLeave;       // NOLINT
-Atom XA_XdndTypeList;    // NOLINT
-Atom XA_XdndPosition;    // NOLINT
-Atom XA_XdndActionCopy;  // NOLINT
-Atom XA_XdndActionAsk;   // NOLINT
-Atom XA_XdndStatus;      // NOLINT
-Atom XA_XdndDrop;        // NOLINT
-Atom XA_XdndFinished;    // NOLINT
+static Atom XA_XdndSelection;   // NOLINT
+static Atom XA_XdndAware;       // NOLINT
+static Atom XA_XdndEnter;       // NOLINT
+static Atom XA_XdndLeave;       // NOLINT
+static Atom XA_XdndTypeList;    // NOLINT
+static Atom XA_XdndPosition;    // NOLINT
+static Atom XA_XdndActionCopy;  // NOLINT
+static Atom XA_XdndActionAsk;   // NOLINT
+static Atom XA_XdndStatus;      // NOLINT
+static Atom XA_XdndDrop;        // NOLINT
+static Atom XA_XdndFinished;    // NOLINT
 
 static Display* display = NULL;
 
@@ -82,7 +82,7 @@ Public Function Implementations
 ============================
 */
 
-bool init_file_drop_handler() {
+bool init_file_drop_handler(void) {
     /*
         Initialize the X11 display and XDND atoms for the file
         drop handler
@@ -427,7 +427,7 @@ int file_drop_mark_ready(int id) {
     return 0;
 }
 
-void destroy_file_drop_handler() {
+void destroy_file_drop_handler(void) {
     /*
         Clean up the file drop handler
     */

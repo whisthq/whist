@@ -77,7 +77,7 @@ Private Function Implementations
  *       logging.h, `LOG_*` functions should NEVER be called from here, or we risk
  *       entering an infinite recursion loop.
  */
-bool check_backoff() {
+static bool check_backoff(void) {
     static int errors_sent = 0;
 
     if (get_timer(&last_error_event_timer) > MAX_EVENTS_PERIOD_MS / MS_IN_SECOND) {
@@ -155,7 +155,7 @@ void whist_error_monitor_set_connection_id(int id) {
 #endif
 }
 
-bool whist_error_monitor_is_initialized() { return error_monitor_initialized; }
+bool whist_error_monitor_is_initialized(void) { return error_monitor_initialized; }
 
 void whist_error_monitor_initialize(bool is_client) {
     // If we haven't set the environment, we don't want our error monitor.
@@ -217,7 +217,7 @@ void whist_error_monitor_initialize(bool is_client) {
     LOG_INFO("Error monitor initialized!");
 }
 
-void whist_error_monitor_shutdown() {
+void whist_error_monitor_shutdown(void) {
     /*
         Note: This should only be called after calling logging.h's
             `destroy_logger()`. See the "Usage" section above for details.

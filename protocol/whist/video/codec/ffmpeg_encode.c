@@ -29,20 +29,18 @@ Includes
 Private Functions
 ============================
 */
-bool set_opt(FFmpegEncoder *encoder, char *option, char *value);
-FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, int out_height,
-                                    int bitrate, CodecType codec_type);
-FFmpegEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int out_height,
-                                  int bitrate, CodecType codec_type);
-FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int out_height,
-                                 int bitrate, CodecType codec_type);
+static bool set_opt(FFmpegEncoder *encoder, char *option, char *value);
+static FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width,
+                                           int out_height, int bitrate, CodecType codec_type);
+static FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int out_height,
+                                        int bitrate, CodecType codec_type);
 
 /*
 ============================
 Private Function Implementations
 ============================
 */
-bool set_opt(FFmpegEncoder *encoder, char *option, char *value) {
+static bool set_opt(FFmpegEncoder *encoder, char *option, char *value) {
     /*
         Wrapper function to set encoder options, like presets, latency, and bitrate.
 
@@ -62,8 +60,8 @@ bool set_opt(FFmpegEncoder *encoder, char *option, char *value) {
 
 typedef FFmpegEncoder *(*FFmpegEncoderCreator)(int, int, int, int, int, CodecType);
 
-FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, int out_height,
-                                    int bitrate, CodecType codec_type) {
+static FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width,
+                                           int out_height, int bitrate, CodecType codec_type) {
     /*
         Create an encoder using Nvidia's video encoding alorithms.
 
@@ -269,214 +267,8 @@ FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width, 
     return encoder;
 }
 
-FFmpegEncoder *create_qsv_encoder(int in_width, int in_height, int out_width, int out_height,
-                                  int bitrate, CodecType codec_type) {
-    /*
-        Create a QSV (Intel Quick Sync Video) encoder for Intel hardware encoding.
-
-        Arguments:
-            in_width (int): Width of the frames that the encoder intakes
-            in_height (int): height of the frames that the encoder intakes
-            out_width (int): width of the frames that the encoder outputs
-            out_height (int): Height of the frames that the encoder outputs
-            bitrate (int): bits per second the encoder will encode to
-            codec_type (CodecType): Codec (currently H264 or H265) the encoder will use
-
-        Returns:
-            (FFmpegEncoder*): the newly created encoder
-     */
-    LOG_INFO("Trying QSV encoder...");
-    FFmpegEncoder *encoder = (FFmpegEncoder *)safe_malloc(sizeof(FFmpegEncoder));
-    memset(encoder, 0, sizeof(FFmpegEncoder));
-
-    encoder->type = QSV_ENCODE;
-    encoder->in_width = in_width;
-    encoder->in_height = in_height;
-    encoder->out_width = out_width;
-    encoder->out_height = out_height;
-    encoder->codec_type = codec_type;
-    encoder->gop_size = GOP_SIZE;
-    encoder->frames_since_last_iframe = 0;
-    enum AVPixelFormat in_format = AV_PIX_FMT_RGB32;
-    enum AVPixelFormat hw_format = AV_PIX_FMT_QSV;
-    enum AVPixelFormat sw_format = AV_PIX_FMT_RGB32;
-
-    // init intake format in sw_frame
-
-    encoder->sw_frame = av_frame_alloc();
-    encoder->sw_frame->format = in_format;
-    encoder->sw_frame->width = encoder->in_width;
-    encoder->sw_frame->height = encoder->in_height;
-    encoder->sw_frame->pts = 0;
-
-    // set frame size and allocate memory for it
-    int frame_size =
-        av_image_get_buffer_size(in_format, encoder->out_width, encoder->out_height, 1);
-    encoder->sw_frame_buffer = safe_malloc(frame_size);
-
-    // fill picture with empty frame buffer
-    av_image_fill_arrays(encoder->sw_frame->data, encoder->sw_frame->linesize,
-                         (uint8_t *)encoder->sw_frame_buffer, in_format, encoder->out_width,
-                         encoder->out_height, 1);
-
-    // init hw_device_ctx
-    if (av_hwdevice_ctx_create(&encoder->hw_device_ctx, AV_HWDEVICE_TYPE_QSV, NULL, NULL, 0) < 0) {
-        LOG_WARNING("Failed to create hardware device context");
-        destroy_ffmpeg_encoder(encoder);
-        return NULL;
-    }
-
-    // init encoder format in context
-
-    if (encoder->codec_type == CODEC_TYPE_H264) {
-        encoder->codec = avcodec_find_encoder_by_name("h264_qsv");
-    } else if (encoder->codec_type == CODEC_TYPE_H265) {
-        encoder->codec = avcodec_find_encoder_by_name("hevc_qsv");
-    }
-
-    encoder->context = avcodec_alloc_context3(encoder->codec);
-    encoder->context->width = encoder->out_width;
-    encoder->context->height = encoder->out_height;
-    encoder->context->bit_rate = bitrate;
-    // encoder->context->rc_max_rate = 4 * bitrate;
-    encoder->context->rc_buffer_size =
-        (VBV_BUF_SIZE_IN_MS * bitrate) / MS_IN_SECOND;  // vbvBufferSize
-    encoder->context->qmax = MAX_QP;
-    encoder->context->time_base.num = 1;
-    encoder->context->time_base.den = MAX_FPS;
-    encoder->context->gop_size = encoder->gop_size;
-    encoder->context->keyint_min = 5;
-    encoder->context->pix_fmt = hw_format;
-
-    // Make all I-Frames IDR Frames
-    if (!set_opt(encoder, "forced-idr", "1")) {
-        LOG_ERROR("Cannot create encoder if IDR's cannot be forced");
-        destroy_ffmpeg_encoder(encoder);
-        return NULL;
-    }
-
-    // assign hw_device_ctx
-    av_buffer_unref(&encoder->context->hw_frames_ctx);
-    encoder->context->hw_frames_ctx = av_hwframe_ctx_alloc(encoder->hw_device_ctx);
-
-    // init HWFramesContext
-    AVHWFramesContext *frames_ctx = (AVHWFramesContext *)encoder->context->hw_frames_ctx->data;
-    frames_ctx->format = hw_format;
-    frames_ctx->sw_format = sw_format;
-    frames_ctx->width = encoder->in_width;
-    frames_ctx->height = encoder->in_height;
-    frames_ctx->initial_pool_size = 2;
-
-    if (av_hwframe_ctx_init(encoder->context->hw_frames_ctx) < 0) {
-        LOG_WARNING("Failed to initialize hardware frames context");
-        destroy_ffmpeg_encoder(encoder);
-        return NULL;
-    }
-
-    if (avcodec_open2(encoder->context, encoder->codec, NULL) < 0) {
-        LOG_WARNING("Failed to open context for stream");
-        destroy_ffmpeg_encoder(encoder);
-        return NULL;
-    }
-
-    // init hardware frame
-    encoder->hw_frame = av_frame_alloc();
-    int res = av_hwframe_get_buffer(encoder->context->hw_frames_ctx, encoder->hw_frame, 0);
-    if (res < 0) {
-        LOG_WARNING("Failed to init buffer for video encoder hw frames: %s", av_err2str(res));
-        destroy_ffmpeg_encoder(encoder);
-        return NULL;
-    }
-
-    // init resizing in filter_graph
-
-    encoder->filter_graph = avfilter_graph_alloc();
-    if (!encoder->filter_graph) {
-        LOG_WARNING("Unable to create filter graph");
-        destroy_ffmpeg_encoder(encoder);
-        return NULL;
-    }
-
-#define N_FILTERS_QSV 3
-    // source -> scale_qsv -> sink
-    const AVFilter *filters[N_FILTERS_QSV] = {0};
-    filters[0] = avfilter_get_by_name("buffer");
-    filters[1] = avfilter_get_by_name("scale_qsv");
-    filters[2] = avfilter_get_by_name("buffersink");
-
-    for (int i = 0; i < N_FILTERS_NVENC; ++i) {
-        if (!filters[i]) {
-            LOG_WARNING("Could not find filter %d in the list!", i);
-            destroy_ffmpeg_encoder(encoder);
-            return NULL;
-        }
-    }
-
-    AVFilterContext *filter_contexts[N_FILTERS_QSV] = {0};
-
-    // source buffer
-    filter_contexts[0] = avfilter_graph_alloc_filter(encoder->filter_graph, filters[0], "src");
-    AVBufferSrcParameters *avbsp = av_buffersrc_parameters_alloc();
-    avbsp->width = encoder->in_width;
-    avbsp->height = encoder->in_height;
-    avbsp->format = hw_format;
-    avbsp->frame_rate = (AVRational){MAX_FPS, 1};
-    avbsp->time_base = (AVRational){1, MAX_FPS};
-    avbsp->hw_frames_ctx = encoder->context->hw_frames_ctx;
-    av_buffersrc_parameters_set(filter_contexts[0], avbsp);
-    if (avfilter_init_str(filter_contexts[0], NULL) < 0) {
-        LOG_WARNING("Unable to initialize buffer source");
-        destroy_ffmpeg_encoder(encoder);
-        return NULL;
-    }
-    av_free(avbsp);
-    encoder->filter_graph_source = filter_contexts[0];
-
-    // scale_qsv (this is not tested yet, but should either just work or be easy
-    // to fix on QSV-supporting machines)
-    filter_contexts[1] =
-        avfilter_graph_alloc_filter(encoder->filter_graph, filters[1], "scale_qsv");
-    char options_string[60] = "";
-    snprintf(options_string, 60, "w=%d:h=%d", encoder->out_width, encoder->out_height);
-    if (avfilter_init_str(filter_contexts[1], options_string) < 0) {
-        LOG_WARNING("Unable to initialize scale filter");
-        destroy_ffmpeg_encoder(encoder);
-        return NULL;
-    }
-
-    // sink buffer
-    if (avfilter_graph_create_filter(&filter_contexts[2], filters[2], "sink", NULL, NULL,
-                                     encoder->filter_graph) < 0) {
-        LOG_WARNING("Unable to initialize buffer sink");
-        destroy_ffmpeg_encoder(encoder);
-        return NULL;
-    }
-    encoder->filter_graph_sink = filter_contexts[2];
-
-    // connect the filters in a simple line
-    for (int i = 0; i < N_FILTERS_QSV - 1; ++i) {
-        if (avfilter_link(filter_contexts[i], 0, filter_contexts[i + 1], 0) < 0) {
-            LOG_WARNING("Unable to link filters %d to %d", i, i + 1);
-            destroy_ffmpeg_encoder(encoder);
-            return NULL;
-        }
-    }
-
-    int err = avfilter_graph_config(encoder->filter_graph, NULL);
-    if (err < 0) {
-        LOG_WARNING("Unable to configure the filter graph: %s", av_err2str(err));
-        destroy_ffmpeg_encoder(encoder);
-        return NULL;
-    }
-
-    // init transfer frame
-    encoder->filtered_frame = av_frame_alloc();
-
-    return encoder;
-}
-
-FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int out_height,
-                                 int bitrate, CodecType codec_type) {
+static FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int out_height,
+                                        int bitrate, CodecType codec_type) {
     /*
         Create an FFmpeg software encoder.
 

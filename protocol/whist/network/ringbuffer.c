@@ -30,7 +30,7 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
     ring_buffer->frames_received = 0;
 }
 
-void reset_bitrate_stat_members(RingBuffer* ring_buffer) {
+static void reset_bitrate_stat_members(RingBuffer* ring_buffer) {
     /*
         Reset all accumulators used for calculating bitrate stats to 0.
 
@@ -188,7 +188,7 @@ void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data) {
 }
 
 // Get a pointer to a framebuffer for that id, if such a framebuffer is possible to construct
-char* get_framebuffer(RingBuffer* ring_buffer, FrameData* current_frame) {
+static char* get_framebuffer(RingBuffer* ring_buffer, FrameData* current_frame) {
     if (current_frame->num_fec_packets > 0) {
         if (current_frame->successful_fec_recovery) {
             return current_frame->fec_frame_buffer;
@@ -440,43 +440,12 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
     return num_overwritten_frames;
 }
 
-void nack_single_packet(RingBuffer* ring_buffer, int id, int index) {
+static void nack_single_packet(RingBuffer* ring_buffer, int id, int index) {
     ring_buffer->num_packets_nacked++;
     // If a nacking function was passed in, use it
     if (ring_buffer->nack_packet) {
         ring_buffer->nack_packet(ring_buffer->type, id, index);
     }
-}
-
-void nack_bitarray_packets(RingBuffer* ring_buffer, int id, int start_index, BitArray* bit_arr) {
-    /*
-        Nack the packets at ID id and start_index start_index.
-
-        Arguments:
-            ring_buffer (RingBuffer*): the ring buffer waiting for the packet
-            id (int): Frame ID of the packet
-            start_index (int): index of the first packet to be NACKed
-            bit_arr (BitArray): the bit array with the indexes of the packets to NACK.
-    */
-
-    LOG_INFO("NACKing with bit array for Packets with ID %d, Starting Index %d", id, start_index);
-    WhistClientMessage fcmsg = {0};
-    fcmsg.type = MESSAGE_BITARRAY_NACK;
-    fcmsg.bitarray_nack.type = ring_buffer->type;
-    fcmsg.bitarray_nack.id = id;
-    fcmsg.bitarray_nack.index = start_index;
-    memset(fcmsg.bitarray_nack.ba_raw, 0, BITS_TO_CHARS(bit_arr->numBits));
-    memcpy(fcmsg.bitarray_nack.ba_raw, bit_array_get_bits(bit_arr),
-           BITS_TO_CHARS(bit_arr->numBits));
-    fcmsg.bitarray_nack.numBits = bit_arr->numBits;
-
-    for (unsigned int i = 0; i < bit_arr->numBits; i++) {
-        if (bit_array_test_bit(bit_arr, i)) {
-            ring_buffer->num_packets_nacked++;
-        }
-    }
-
-    // send_fcmsg(&fcmsg);
 }
 
 // The max number of times we can nack a packet: limited to 2 times right now so that we don't get
@@ -489,8 +458,8 @@ void nack_bitarray_packets(RingBuffer* ring_buffer, int id, int start_index, Bit
 // This is calculated per 5ms interval
 #define MAX_NACK_BURST_MBPS 4800000
 
-int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_data, int end_index,
-                                     int max_packets_to_nack) {
+static int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_data,
+                                            int end_index, int max_packets_to_nack) {
     /*
         Nack up to 1 missing packet up to index
 
