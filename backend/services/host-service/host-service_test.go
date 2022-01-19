@@ -149,22 +149,6 @@ func TestMandelboxDieHandler(t *testing.T) {
 
 	mandelboxDieHandler("test-docker-id", testTransportRequestMap, testMux, &dockerClient)
 
-	// Wait for the mandelbox to die, otherwise time out.
-	select {
-	case <-ctx.Done():
-		t.Log("Mandelbox successfully exited.")
-		break
-	case <-time.After(30 * time.Second):
-		t.Errorf("Mandelbox failed to stop successfully after calling mandelboxDieHandler.")
-		return
-	}
-
-	// Verify that the docker id was removed from the tracker
-	_, err := mandelbox.LookUpByDockerID(mandelboxtypes.DockerID("test-docker-id"))
-	if err == nil {
-		t.Errorf("Expected mandelbox to be removed from tracker but it still exists.")
-	}
-
 	// Check transport map to verify mandelbox key was removed.
 	testMux.Lock()
 	request := testTransportRequestMap[mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())]
