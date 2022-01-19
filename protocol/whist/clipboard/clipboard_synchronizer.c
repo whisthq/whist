@@ -412,6 +412,7 @@ int pull_clipboard_thread_function(void* opaque) {
     current_clipboard_activity.aborting_ptr = &aborting;
     current_clipboard_activity.complete_ptr = &complete;
     current_clipboard_activity.clipboard_action_type = CLIPBOARD_ACTION_PULL;
+    current_clipboard_activity.is_start_done = false;
 
     // Let the pull thread know that it is safe to continue while the
     //     clipboard is being pulled
@@ -607,8 +608,9 @@ ClipboardData* pull_clipboard_chunk() {
            chunk_size);
 
     // based on how many bytes have been written so far, set the chunk type
-    if (current_clipboard_activity.pulled_bytes == 0) {
+    if (!current_clipboard_activity.is_start_done) {
         cb_chunk->chunk_type = CLIPBOARD_START;
+        current_clipboard_activity.is_start_done = true;
     } else if (current_clipboard_activity.pulled_bytes ==
                (*current_clipboard_activity.clipboard_buffer_ptr)->size) {
         cb_chunk->chunk_type = CLIPBOARD_FINAL;
