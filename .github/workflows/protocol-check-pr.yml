@@ -533,11 +533,12 @@ jobs:
 
           # Post updates to Slack channel
           from notifications.slack_bot import slack_post
+
           if not os.environ.get("SLACK_WEBHOOK"):
             print("Error, cannot post updates to Slack because SLACK_WEBHOOK was not set")
             exit(-1)
           slack_webhook = os.environ.get("SLACK_WEBHOOK")
-          slack_post(slack_webhook, channel="\#dev-e2e-benchmarks", body=body, slack_username="Whist Bot", title=title)
-):
+
+          slack_post(slack_webhook, channel="#dev-e2e-benchmarks", body=body, slack_username="Whist Bot", title=title)
 
   #######################################################################################
