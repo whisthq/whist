@@ -55,8 +55,8 @@ typedef struct FrameData {
 } FrameData;
 
 // Handler that gets called when the ring buffer wants to nack for a packet
-typedef void (*NackPacketFn)(WhistPacketType frame_type, int id, int index);
-typedef void (*StreamResetFn)(WhistPacketType frame_type, int last_failed_id);
+typedef void (*NackPacketFn)(SocketContext* socket_context, WhistPacketType frame_type, int id, int index);
+typedef void (*StreamResetFn)(SocketContext* socket_context, WhistPacketType frame_type, int last_failed_id);
 
 /**
  * @brief	RingBuffer struct for abstracting away frame reconstruction and frame retrieval.
@@ -69,6 +69,9 @@ typedef struct RingBuffer {
     FrameData* receiving_frames;
     WhistPacketType type;
     int largest_frame_size;
+
+    // networking interface
+    SocketContext* context;
     NackPacketFn nack_packet;
     StreamResetFn request_stream_reset;
 
@@ -92,7 +95,7 @@ typedef struct RingBuffer {
     int last_rendered_id;
     int last_missing_frame_nack;
     int most_recent_reset_id;
-    clock last_stream_reset_request_timer;
+    WhistTimer last_stream_reset_request_timer;
 } RingBuffer;
 
 /**
@@ -194,5 +197,7 @@ FrameData* set_rendering(RingBuffer* ring_buffer, int id);
  * @brief    Skip the ring buffer to ID id. This should be used when the client receives a stream reset request.
  */
 void reset_stream(RingBuffer* ring_buffer, int id);
+
+void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double latency);
 
 #endif

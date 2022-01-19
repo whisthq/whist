@@ -182,8 +182,8 @@ int multithreaded_sync_udp_packets(void* opaque) {
     }
     
     // For now, manually make ring buffers for audio and video
-    udp_register_ring_buffer(socket_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE, VIDEO_RING_BUFFER_SIZE, nack_packet, request_stream_reset);
-    udp_register_ring_buffer(socket_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE, AUDIO_RING_BUFFER_SIZE, nack_packet, request_stream_reset);
+    udp_register_ring_buffer(socket_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE, VIDEO_RING_BUFFER_SIZE);
+    udp_register_ring_buffer(socket_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE, AUDIO_RING_BUFFER_SIZE);
 
     while (run_sync_packets_threads) {
         // Ack the connection every 5 seconds
@@ -293,6 +293,7 @@ void create_and_send_tcp_wcmsg(WhistClientMessageType message_type, char* payloa
     deallocate_region(wcmsg_tcp);
 }
 
+// TODO: this should move into udp.c
 void request_stream_reset(WhistPacketType type, int last_failed_id) {
     // currently, this just sends a WhistClientMessage. Eventually, it will be internal to UDP.
     WhistClientMessage wcmsg = {0};

@@ -9,8 +9,6 @@
 
 #define MAX_PACKETS (get_num_fec_packets(max(MAX_VIDEO_PACKETS, MAX_AUDIO_PACKETS), MAX_FEC_RATIO))
 
-extern volatile double latency;
-
 void reset_ring_buffer(RingBuffer* ring_buffer);
 void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int num_fec_indices);
 
@@ -129,7 +127,7 @@ void reset_stream(RingBuffer* ring_buffer, int id) {
     }
 }
 
-void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer) {
+void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double latency) {
     // this nacks for missing packets
     // and sends stream reset requests if needed
 #define STREAM_RESET_REQUEST_INTERVAL_MS 5.0
@@ -143,7 +141,7 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer) {
     int next_render_id = ring_buffer->last_rendered_id + 1;
     FrameData* ctx = get_frame_at_id(ring_buffer, next_render_id);
     if (ctx->id == next_render_id) {
-        next_to_render_staleness = get_timer(ctx->frame_creation_timer);
+        next_to_render_staleness = get_timer(&ctx->frame_creation_timer);
     }
 
     // If nacking has failed to recover the packets we need,
@@ -157,9 +155,9 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer) {
 
         // Throttle the requests to prevent network upload saturation, however
         // TODO: change this to a UDP stream reset request
-        if (get_timer(ring_buffer->last_stream_reset_request_timer) >
+        if (get_timer(&ring_buffer->last_stream_reset_request_timer) >
                 STREAM_RESET_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
-            ring_buffer->request_stream_reset(ring_buffer->type, max(next_render_id, ring_buffer->max_id - 1));
+            ring_buffer->request_stream_reset(ring_buffer->socket_context, ring_buffer->type, max(next_render_id, ring_buffer->max_id - 1));
         }
         LOG_INFO(
                 "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
@@ -517,7 +515,7 @@ static void nack_single_packet(RingBuffer* ring_buffer, int id, int index) {
     ring_buffer->num_packets_nacked++;
     // If a nacking function was passed in, use it
     if (ring_buffer->nack_packet) {
-        ring_buffer->nack_packet(ring_buffer->type, id, index);
+        ring_buffer->nack_packet(ring_buffer->socket_context, ring_buffer->type, id, index);
     }
 }
 

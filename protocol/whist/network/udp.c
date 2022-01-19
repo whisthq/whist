@@ -53,6 +53,7 @@ Globals
 
 // TODO: Remove
 extern unsigned short port_mappings[USHRT_MAX + 1];
+extern volatile double latency;
 
 /*
 ============================
@@ -95,6 +96,7 @@ Private Functions
  * @brief    Send an encrypted WhistPacket of size at most MAX_UDP_PAYLOAD_SIZE through the network.
 */
 static int udp_send_constructed_packet(void* raw_context, WhistPacket* packet, size_t packet_size);
+static void nack_packet(WhistPacketType frame_type, int id, int index);
 
 /*
 ============================
@@ -130,8 +132,15 @@ void udp_update(void* raw_context, bool should_recv) {
      */ 
     SocketContextData* context = raw_context;
 
+    // first, try recovering packets
+    for (int i = 0; i < NUM_PACKET_TYPES; i++) {
+        if (context->ring_buffers[i] != NULL) {
+            try_recovering_missing_packets_or_frames(context->ring_buffers[i], latency);
+        }
+    }
+
     if (should_recv == false) {
-        LOG_ERROR("should_recv should only be false in TCP contexts");
+        FATAL_ASSERT("should_recv should only be false in TCP contexts");
         return;
     }
 
@@ -155,7 +164,7 @@ void udp_update(void* raw_context, bool should_recv) {
             UDPPACKET_HEADER_SIZE + udp_packet.payload_size != recv_len) {
             LOG_WARNING("The UDPPacket's payload size %d doesn't agree with recv_len %d!",
                         udp_packet.payload_size, recv_len);
-            return NULL;
+            return;
         }
 
         if (ENCRYPTING_PACKETS) {
@@ -169,7 +178,7 @@ void udp_update(void* raw_context, bool should_recv) {
                 // This is warning, since it could just be someone else sending packets,
                 // Not necessarily our fault
                 LOG_WARNING("Failed to decrypt packet");
-                return NULL;
+                return;
             }
             // AFTER THIS LINE,
             // The contents of udp_packet are confirmed to be from the server,
@@ -186,10 +195,10 @@ void udp_update(void* raw_context, bool should_recv) {
         // Also verify the WhistPacket's size
         if (decrypted_len != get_packet_size(&context->decrypted_packet)) {
             // This is error, because after a successful decryption, it's under our control
-            LOG_ERROR(
+            FATAL_ASSERT(
                 "The packet size received %d, doesn't match the calculated WhistPacketSize %d",
                 decrypted_len, get_packet_size(&context->decrypted_packet));
-            return NULL;
+            return;
         }
 
         context->decrypted_packet_used = true;
@@ -254,6 +263,7 @@ void* udp_get_packet(void* raw_context, WhistPacketType type) {
                                    // possibly skip to the next iframe
                                    break;
                                }
+                           }
         default: {
                      LOG_ERROR("Received a packet that was of unknown type %d!", type);
                  }
@@ -474,8 +484,8 @@ void udp_update_network_settings(SocketContext* socket_context, NetworkSettings 
     context->fec_packet_ratios[PACKET_AUDIO] = audio_fec_ratio;
 }
 
-void udp_register_ring_buffer(SocketContext* context, WhistPacketType type, int max_frame_size, int num_buffers) {
-    SockeContextData* context = socket_context->context;
+void udp_register_ring_buffer(SocketContext* socket_context, WhistPacketType type, int max_frame_size, int num_buffers, NackPacketFn nack_packet, StreamResetFn request_stream_reset) {
+    SocketContextData* context = socket_context->context;
 
     int type_index = (int)type;
     if (type_index >= NUM_PACKET_TYPES) {
@@ -487,7 +497,7 @@ void udp_register_ring_buffer(SocketContext* context, WhistPacketType type, int 
         return;
     }
 
-    context->ring_buffers[type_index] = init_ring_buffer(type, max_frame_size, num_buffers, nack_packet);
+    context->ring_buffers[type_index] = init_ring_buffer(type, max_frame_size, num_buffers, nack_packet, request_stream_reset);
 }
 
 void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType type,
@@ -898,6 +908,26 @@ static int create_udp_client_context_stun(SocketContextData* context, char* dest
     set_timeout(context->socket, recvfrom_timeout_ms);
 
     return 0;
+}
+
+// TODO: move stream reset function here too
+//
+void nack_packet(SocketContext* socket_context, WhistPacketType frame_type, int id, int index) {
+    /*
+        Nack the packet at ID id and index index.
+
+        Arguments:
+            frame_type (WhistPacketType): the packet type
+            id (int): Frame ID of the packet
+            index (int): index of the packet
+    */
+    WhistClientMessage wcmsg = {0};
+    wcmsg.type = MESSAGE_NACK;
+    wcmsg.simple_nack.type = frame_type;
+    wcmsg.simple_nack.id = id;
+    wcmsg.simple_nack.index = index;
+    // TODO: send this over the given socket_context using udp_send_packet
+    send_wcmsg(&wcmsg);
 }
 
 /*
