@@ -311,12 +311,14 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
                 // in the future. In other words, the ring buffer is full, so we should wipe the
                 // whole ring buffer.
                 LOG_WARNING(
-                    "We received a packet with Frame ID %d, that is trying to overwrite Frame ID "
+                    "We received a packet with %s Frame ID %d, that is trying to overwrite Frame "
+                    "ID "
                     "%d!\n"
                     "But we can't overwrite that frame, since our renderer has only gotten to ID "
                     "%d!\n"
                     "Resetting the entire ringbuffer...",
-                    packet->id, frame_data->id, ring_buffer->currently_rendering_id);
+                    packet->type == PACKET_VIDEO ? "video" : "audio", packet->id, frame_data->id,
+                    ring_buffer->currently_rendering_id);
                 num_overwritten_frames = packet->id - ring_buffer->currently_rendering_id - 1;
                 reset_ring_buffer(ring_buffer);
             } else {

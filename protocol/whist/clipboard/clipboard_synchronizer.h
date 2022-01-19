@@ -55,6 +55,7 @@ typedef struct ClipboardActivity {
     bool* complete_ptr;  // whether the action has been completed
     ClipboardData** clipboard_buffer_ptr;
     int pulled_bytes;  // only relevant for PULL actions
+    bool is_start_done;
 
     WhistMutex clipboard_action_mutex;
     WhistCondition continue_action_condvar;
