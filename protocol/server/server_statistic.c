@@ -45,6 +45,4 @@ void whist_init_server_statistics() {
     server_statistic_info[VIDEO_INTRA_FRAME_QP] =
         (StatisticInfo){"VIDEO_INTRA_FRAME_QP", true, false, false};
     server_statistic_info[VIDEO_SEND_TIME] = (StatisticInfo){"VIDEO_SEND_TIME", true, false, false};
-    server_statistic_info[DBUS_MSGS_RECEIVED] =
-        (StatisticInfo){"DBUS_MSGS_RECEIVED", false, false, true};
 }

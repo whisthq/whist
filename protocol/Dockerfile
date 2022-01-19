@@ -75,14 +75,6 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install notification utilities: dbus and libevent
-RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
-    libdbus-1-dev \
-    libevent-dev \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
 # Install clang-tidy 6. We must hardcode this version, else we will install the
 # overaggressive recent version, and we need to symlink it to be able to call
 # it as "clang-tidy".
