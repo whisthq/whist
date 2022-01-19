@@ -519,6 +519,14 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
 
+      # On failure, print the logs of browsers/chrome build
+      - name: Print logs of browsers/chrome on failure
+        if: failure()
+        working-directory: mandelboxes
+        run: |
+          echo "browsers/chrome build logs:"
+          cat browsers/chrome/build.log
+
       # We only deploy the browsers mandelboxes, other mandelboxes are for internal use only
       - name: Push mandelboxes
         if: needs.whist-publish-build-config.outputs.publish == 'true'
