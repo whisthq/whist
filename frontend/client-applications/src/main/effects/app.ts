@@ -10,15 +10,13 @@ import { merge } from "rxjs"
 import { take } from "rxjs/operators"
 import Sentry from "@sentry/electron"
 
-import { relaunch, createOnboardingWindow, closeAllWindows } from "@app/main/utils/windows"
+import { relaunch, createOnboardingWindow } from "@app/main/utils/windows"
 import { fromTrigger } from "@app/main/utils/flows"
 import { persistGet, persistClear } from "@app/main/utils/persist"
 import { withAppReady } from "@app/main/utils/observables"
 import { ONBOARDED } from "@app/constants/store"
 import { WhistTrigger } from "@app/constants/triggers"
 import { networkAnalyze } from "@app/main/utils/networkAnalysis"
-import { protocolStreamKill } from "@app/main/utils/protocol"
-import { iconPath } from "@app/config/files"
 
 // If an update is available, show the update window and download the update
 fromTrigger(WhistTrigger.updateAvailable).subscribe(() => {
@@ -35,13 +33,11 @@ fromTrigger(WhistTrigger.clearCacheAction).subscribe(() => {
     .clearStorageData()
     .catch((err) => Sentry.captureException(err))
   // Restart the app
-  closeAllWindows()
+  relaunch()
 })
 
-merge(
-  fromTrigger(WhistTrigger.relaunchAction),
-).subscribe(() => {
-  closeAllWindows()
+merge(fromTrigger(WhistTrigger.relaunchAction)).subscribe(() => {
+  relaunch()
 })
 
 withAppReady(fromTrigger(WhistTrigger.authFlowSuccess))

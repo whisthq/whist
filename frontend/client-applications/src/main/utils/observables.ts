@@ -5,11 +5,12 @@
  * operators.
  */
 
-import { Observable, combineLatest, zip } from "rxjs"
-import { map, withLatestFrom, take, takeUntil } from "rxjs/operators"
+import { Observable, combineLatest, zip, merge } from "rxjs"
+import { map, withLatestFrom, take, takeUntil, filter } from "rxjs/operators"
 
 import { fromTrigger } from "@app/main/utils/flows"
 import { WhistTrigger } from "@app/constants/triggers"
+import { sleep } from "@app/main/utils/state"
 
 export const waitForSignal = (obs: Observable<any>, signal: Observable<any>) =>
   /*
@@ -44,7 +45,16 @@ export const emitOnSignal = (obs: Observable<any>, signal: Observable<any>) =>
   )
 
 export const withAppReady = (obs: Observable<any>) =>
-  waitForSignal(obs, fromTrigger(WhistTrigger.appReady))
+  waitForSignal(
+    obs,
+    zip(
+      fromTrigger(WhistTrigger.appReady),
+      merge(
+        sleep.pipe(filter((sleep) => !sleep)),
+        fromTrigger(WhistTrigger.reactivated)
+      )
+    )
+  )
 
 export const untilUpdateAvailable = (obs: Observable<any>) =>
   obs.pipe(takeUntil(fromTrigger(WhistTrigger.updateAvailable)))

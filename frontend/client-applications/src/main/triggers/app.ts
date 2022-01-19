@@ -8,7 +8,7 @@ import { app } from "electron"
 import { fromEvent } from "rxjs"
 import { take, switchMap, filter } from "rxjs/operators"
 
-import { createTrigger, fromTrigger } from "@app/main/utils/flows"
+import { createTrigger } from "@app/main/utils/flows"
 import { windowMonitor } from "@app/main/utils/windows"
 import { WhistTrigger } from "@app/constants/triggers"
 import { storeEmitter } from "@app/main/utils/persist"

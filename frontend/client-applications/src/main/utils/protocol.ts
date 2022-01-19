@@ -19,7 +19,6 @@ import {
 import { appEnvironment, WhistEnvironments } from "../../../config/configs"
 import logRotate from "log-rotate"
 import { MAX_URL_LENGTH } from "@app/constants/app"
-import { iconPath } from "@app/config/files"
 
 const NACK_LOOKBACK_PERIOD_IN_MS = 1500 // Number of milliseconds to look back when measuring # of nacks
 const MAX_NACKS_ALLOWED = 6 // Maximum # of nacks allowed before we decide the network is unstable
