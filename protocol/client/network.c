@@ -393,6 +393,9 @@ int send_wcmsg(WhistClientMessage *wcmsg) {
     wcmsg->id = wcmsg_id;
     wcmsg_id++;
 
+    // Please be careful when editing this list!
+    // Please ask the maintainers of each CMESSAGE_ type
+    // before adding/removing from this list
     if (wcmsg->type == MESSAGE_DISCOVERY_REQUEST || wcmsg->type == MESSAGE_TCP_PING ||
         wcmsg->type == CMESSAGE_FILE_DATA || wcmsg->type == CMESSAGE_FILE_METADATA ||
         wcmsg->type == CMESSAGE_CLIPBOARD || (size_t)wcmsg_size > sizeof(*wcmsg)) {
