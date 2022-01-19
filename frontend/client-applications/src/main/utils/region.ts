@@ -33,7 +33,7 @@ const whistPingTime = async (host: string, numberPings: number) => {
   }
 
   // Resolve list of Promises synchronously to get a list of ping outputs
-  return pingResults.reduce((a, b) => (a < b ? a : b))
+  return pingResults.reduce((a, b) => Math.min(a, b))
 }
 
 const pingLoop = (regions: AWSRegion[]) => {
