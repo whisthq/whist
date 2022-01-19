@@ -39,9 +39,11 @@ withAppReady(timer(0, CHECK_UPDATE_INTERVAL_IN_MS)).subscribe(() => {
     .catch((err) => Sentry.captureException(err))
 })
 
-fromTrigger(WhistTrigger.updateAvailable).subscribe(() => {
-  createUpdateWindow()
-})
+fromTrigger(WhistTrigger.updateAvailable)
+  .pipe(takeUntil(fromTrigger(WhistTrigger.mandelboxFlowSuccess)))
+  .subscribe(() => {
+    createUpdateWindow()
+  })
 
 fromTrigger(WhistTrigger.updateDownloaded)
   .pipe(takeUntil(fromTrigger(WhistTrigger.mandelboxFlowSuccess)))
