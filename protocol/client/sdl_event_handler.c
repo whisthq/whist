@@ -344,7 +344,7 @@ static int handle_file_drop(SDL_Event *event) {
 
 static void handle_quit_message(SDL_Event *event) {
     if (event->quit.quit_app) {
-        const char *quit_client_app_notification = "QUIT_CLIENT_APP";
+        const char *quit_client_app_notification = "QUIT_APPLICATION";
         LOG_INFO("%s", quit_client_app_notification);
     }
 
