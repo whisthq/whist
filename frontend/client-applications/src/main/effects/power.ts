@@ -14,5 +14,5 @@ waitForSignal(
 })
 
 fromTrigger(WhistTrigger.powerResume).subscribe(() => {
-  relaunch()
+  relaunch({ args: process.argv.slice(1).concat(["--sleep"]) })
 })

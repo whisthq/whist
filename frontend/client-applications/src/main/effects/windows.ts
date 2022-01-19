@@ -85,7 +85,8 @@ allWindowsClosed
     takeUntil(
       merge(
         fromTrigger(WhistTrigger.relaunchAction),
-        fromTrigger(WhistTrigger.clearCacheAction)
+        fromTrigger(WhistTrigger.clearCacheAction),
+        fromTrigger(WhistTrigger.updateDownloaded)
       )
     )
   )
