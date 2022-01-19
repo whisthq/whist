@@ -325,7 +325,7 @@ static void whist_server_state_init(whist_server_state* state, whist_server_conf
     state->update_device = true;
 
     // Mark initial bitrate/codec/fps request
-    state->requested_video_bitrate = STARTING_BITRATE;
+    state->requested_video_bitrate = MINIMUM_BITRATE;
     state->requested_video_codec = CODEC_TYPE_H264;
     state->requested_video_fps = 60;
     state->update_encoder = true;

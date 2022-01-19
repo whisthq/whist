@@ -662,10 +662,10 @@ void update_delay_gradient_statistics(VideoContext* video_context, GradientDelay
                         gd_stats->total_adjusted_delay_gradient += adjusted_delay_gradient;
                         gd_stats->total_adjusted_delay_gradient_squared +=
                             (adjusted_delay_gradient * adjusted_delay_gradient);
-                        if(cur_frame->recv_side_timestamp > cur_frame->send_side_timestamp) {
-                            //LOG_INFO("PANIC");
-                        }
-                        gd_stats->total_one_way_trip_ms += abs((int)(cur_frame->recv_side_timestamp - cur_frame->send_side_timestamp)) / 1000.0;
+                        gd_stats->total_one_way_trip_ms +=
+                            abs((int)(cur_frame->recv_side_timestamp -
+                                      cur_frame->send_side_timestamp)) /
+                            1000.0;
                         gd_stats->num_delay_measurements++;
                         // Update last frame timestamps/id
                         prev_send_side_ts = cur_frame->send_side_timestamp;
@@ -708,10 +708,14 @@ void calculate_statistics(VideoContext* video_context) {
                 running_gradient_delay_stats.total_adjusted_delay_gradient / num_delay_measurements;
             network_statistics.average_delay_gradient = average_adjusted_delay_gradient;
             network_statistics.delay_gradient_variance =
-                running_gradient_delay_stats.total_adjusted_delay_gradient_squared / num_delay_measurements - pow(average_adjusted_delay_gradient, 2);
+                running_gradient_delay_stats.total_adjusted_delay_gradient_squared /
+                    num_delay_measurements -
+                pow(average_adjusted_delay_gradient, 2);
             network_statistics.average_client_side_delay =
                 running_gradient_delay_stats.total_client_side_delay / num_delay_measurements;
-            network_statistics.average_one_way_trip_latency = running_gradient_delay_stats.total_one_way_trip_ms / running_gradient_delay_stats.num_delay_measurements;
+            network_statistics.average_one_way_trip_latency =
+                running_gradient_delay_stats.total_one_way_trip_ms /
+                running_gradient_delay_stats.num_delay_measurements;
             network_statistics.num_delay_measurements = num_delay_measurements;
             LOG_INFO("Average Adjusted Delay Gradient: %f", average_adjusted_delay_gradient);
         } else {
