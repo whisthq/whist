@@ -29,13 +29,11 @@ echo "playerctld daemon started as PID: $playerctld_pid"
 dbus_result=$($RUN_AS_WHIST "dbus-launch --sh-syntax --exit-with-x11")
 
 # Extract environment variables for D-Bus configuration
-search_str="DBUS_SESSION_BUS_ADDRESS"
-prefix=${dbus_result%%$search_str*}
-tot_len=${#dbus_result}
-prefix_len=${#prefix}
+search_str="DBUS_SESSION_BUS_ADDRESS="
+suffix=${dbus_result#*$search_str}
 
 # Dump D-Bus configuration commands to exec-only executable
-dbus_env_cmd=$(echo $dbus_result | cut -c $prefix_len-$tot_len)
+dbus_env_cmd="$search_str$suffix"
 echo $dbus_env_cmd > /usr/local/bin/set_dbus_env_vars.sh
 chmod 555 /usr/local/bin/set_dbus_env_vars.sh
 echo "saved d-bus configuration to executable"
