@@ -142,9 +142,10 @@ void get_whist_udp_client_messages(whist_server_state* state) {
 }
 
 // Gets all pending Whist TCP messages
-void get_whist_tcp_client_messages(whist_server_state* state) {
+bool get_whist_tcp_client_messages(whist_server_state* state) {
+    bool ret = false;
     if (!state->client.is_active) {
-        return;
+        return ret;
     }
 
     read_lock(&state->client.tcp_rwlock);
@@ -157,9 +158,11 @@ void get_whist_tcp_client_messages(whist_server_state* state) {
         LOG_INFO("TCP Packet type: %d", wcmsg->type);
         handle_whist_client_message(state, wcmsg);
         free_packet(&state->client.tcp_context, tcp_packet);
+        ret = true;
     }
 
     read_unlock(&state->client.tcp_rwlock);
+    return ret;
 }
 
 void create_and_send_tcp_wmsg(WhistServerMessageType message_type, char* payload) {
@@ -259,7 +262,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         update_client_active_status(&state->client, &assuming_client_active);
 
         // RECEIVE TCP PACKET HANDLER
-        get_whist_tcp_client_messages(state);
+        bool data_transferred = get_whist_tcp_client_messages(state);
 
         // SEND TCP PACKET HANDLERS:
 
@@ -271,6 +274,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
             if (assuming_client_active) {
                 LOG_INFO("Received clipboard trigger. Broadcasting clipboard message.");
                 create_and_send_tcp_wmsg(SMESSAGE_CLIPBOARD, (char*)clipboard_chunk);
+                data_transferred = true;
             }
             // Free clipboard chunk
             deallocate_region(clipboard_chunk);
@@ -290,15 +294,22 @@ int multithreaded_sync_tcp_packets(void* opaque) {
                 }
 
                 create_and_send_tcp_wmsg(SMESSAGE_FILE_METADATA, (char*)file_metadata);
+                data_transferred = true;
                 // Free file chunk
                 deallocate_region(file_metadata);
                 continue;
             }
 
             create_and_send_tcp_wmsg(SMESSAGE_FILE_DATA, (char*)file_chunk);
+            data_transferred = true;
             // Free file chunk
             deallocate_region(file_chunk);
         }
+
+        // Sleep for a small duration to avoid busy looping when idle
+        // 100us is just a low enough number to not affect the latency significantly. And it is also
+        // reduces CPU usage significantly.
+        if (!data_transferred) whist_usleep(100);
     }
 
     destroy_clipboard_synchronizer();
