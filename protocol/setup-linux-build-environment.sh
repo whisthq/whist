@@ -20,7 +20,6 @@ sudo apt-get install --no-install-recommends -y \
 
 # Install Whist dependencies
 sudo apt-get install --no-install-recommends -y \
-  libdbus-1-dev \
   libssl-dev \
   libgl1-mesa-dev \
   libavcodec-dev \

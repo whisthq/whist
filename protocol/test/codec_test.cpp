@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Whist Technologies, Inc.
+ * Copyright 2021 Whist Technologies, Inc.
  * @file codec_test.cpp
  * @brief This file contains unit tests for codecs in the /protocol codebase
  */
