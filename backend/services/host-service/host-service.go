@@ -676,9 +676,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		case transportRequest := <-jsonChan:
 			req = transportRequest
 		case <-time.After(1 * time.Minute):
-			// Clean up the mandelbox if the time out limit is reached.
-			// TODO: why do we call the die handler here instead of just returning (and letting the deferred mandelbox.close() take care of things)?
-			mandelboxDieHandler(string(dockerID), transportRequestMap, transportMapLock, dockerClient)
+			// Clean up the mandelbox if the time out limit is reached
 			logAndReturnError("Timed out waiting for config encryption token for user %s for mandelbox %s", mandelbox.GetUserID(), mandelbox.GetID())
 			return
 		}
