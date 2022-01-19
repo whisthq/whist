@@ -73,6 +73,7 @@ static int handle_mouse_wheel(SDL_Event *event);
 static int handle_mouse_button_up_down(SDL_Event *event);
 static int handle_multi_gesture(SDL_Event *event);
 static int handle_pinch(SDL_Event *event);
+static void handle_quit_message(SDL_Event *event);
 
 /*
 ============================
@@ -341,6 +342,16 @@ static int handle_file_drop(SDL_Event *event) {
     return 0;
 }
 
+static void handle_quit_message(SDL_Event *event) {
+    if (event->quit.quit_app) {
+        const char *quit_client_app_notification = "QUIT_CLIENT_APP";
+        LOG_INFO("%s", quit_client_app_notification);
+    }
+
+    LOG_INFO("The user triggered a Quit event! WhistClient is now Quitting...");
+    client_exiting = true;
+}
+
 static int handle_sdl_event(SDL_Event *event) {
     /*
         Handle SDL event based on type
@@ -438,8 +449,7 @@ static int handle_sdl_event(SDL_Event *event) {
             break;
         }
         case SDL_QUIT: {
-            LOG_INFO("The user triggered a Quit event! WhistClient is now Quitting...");
-            client_exiting = true;
+            handle_quit_message(event);
             break;
         }
     }
