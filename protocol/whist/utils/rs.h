@@ -60,7 +60,4 @@ void init_rs();  //if you never called this,it will be automatically called in f
 void rs_encode(RSCode* rs_code, void* src[], void* dst, int index, int sz) ;
 int rs_decode(RSCode* rs_code, void* pkt[], int index[], int sz) ;
 
-int rs_get_k(RSCode* rs_code);
-int rs_get_n(RSCode* rs_code);
-
 /* end of file */

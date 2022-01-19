@@ -9,7 +9,6 @@
 void whist_init_multithreading() {
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     SDL_SetHint(SDL_HINT_THREAD_FORCE_REALTIME_TIME_CRITICAL, "1");
-    SDL_Init(SDL_INIT_VIDEO);
 }
 
 WhistThread whist_create_thread(WhistThreadFunction thread_function, const char *thread_name,

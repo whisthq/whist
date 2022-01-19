@@ -12,6 +12,7 @@ Includes
 
 #include "whist.h"  // header file for this protocol, includes winsock
 #include <whist/logging/logging.h>
+#include <whist/utils/fec.h>
 
 #include <ctype.h>
 #include <stdio.h>
@@ -48,6 +49,13 @@ int multithreaded_print_system_info(void *opaque) {
 Public Function Implementations
 ============================
 */
+
+void whist_init_subsystems() {
+    whist_init_multithreading();
+    whist_init_logger();
+    init_fec();
+    whist_init_networking();
+}
 
 void print_system_info() {
     /*

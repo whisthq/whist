@@ -788,6 +788,17 @@ Public Functions
 */
 
 /**
+ * @brief                          Initialize any and all static state
+ *                                 that needs to be initialized
+ *
+ * @note                           This must be called after parsing arguments
+ *
+ * @note                           TODO: Make this function take in parsed arguments as a struct,
+ *                                 rather than having parse_arguments manipulate `extern` globals
+ */
+void whist_init_subsystems();
+
+/**
  * @brief                          Print the memory trace of a process
  */
 void print_memory_info();

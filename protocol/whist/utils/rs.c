@@ -689,7 +689,7 @@ RSCode* rs_new(int k, int n)
 
     struct fec_parms *retval;
 
-	if(fec_initialized != 0) {
+	if(fec_initialized == 0) {
 		abort();
 	}
 

@@ -92,9 +92,19 @@ Private Function Declarations
 
 /**
  * @brief                          Gets an rs_code
+ *
+ * @param k                        The number of original packets
+ * @param n                        The total number of packets
+ *
+ * @returns                        The RSCode for that (n, k) tuple
  */
 RSCode* get_rs_code(int k, int n);
 
+/**
+ * @brief                          Frees an RSTable
+ *
+ * @param opaque                   The RSTable* to free
+ */
 void free_rs_code_table(void* opaque);
 
 /*
@@ -337,8 +347,10 @@ Private Function Implementations
 */
 
 RSCode* get_rs_code(int k, int n) {
-    RSTable* rs_code_table =
-        SDL_TLSGet(rs_table_tls_id);  // get thread-specific data, i.e. the table
+    FATAL_ASSERT(k <= n);
+
+    // Get the rs code table for this thread
+    RSTable* rs_code_table = SDL_TLSGet(rs_table_tls_id);
 
     // If the table for this thread doesn't exist, initialize it
     if (rs_code_table == NULL) {
@@ -353,13 +365,12 @@ RSCode* get_rs_code(int k, int n) {
     }
 
     // Now return the rs_code for (n, k)
-    return (*rs_code_table)[k][n];
+    return (RSCode*)((*rs_code_table)[k][n]);
+    // We make a redundant (RSCode*) because cppcheck parses the type wrong
 }
 
-void free_rs_code_table(void* opaque) {
-    UNUSED(opaque);
-
-    RSTable* rs_code_table = SDL_TLSGet(rs_table_tls_id);
+void free_rs_code_table(void* raw_rs_code_table) {
+    RSTable* rs_code_table = (RSTable*)raw_rs_code_table;
 
     // If the table was never created, we have nothing to free
     if (rs_code_table == NULL) return;
@@ -367,7 +378,7 @@ void free_rs_code_table(void* opaque) {
     // Find any rs_code entries, and free them
     for (int i = 0; i < RS_TABLE_SIZE; i++) {
         for (int j = i; j < RS_TABLE_SIZE; j++) {
-            if ((*rs_code_table)[i][j]) {
+            if ((*rs_code_table)[i][j] != NULL) {
                 rs_free((*rs_code_table)[i][j]);
             }
         }

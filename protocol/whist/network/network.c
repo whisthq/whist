@@ -256,12 +256,11 @@ void set_tos(SOCKET socket, WhistTOSValue tos) {
 }
 
 void whist_init_networking() {
-    /*
-        Initialize default port mappings (i.e. the identity)
-    */
-
+    // Initialize any uninitialized port mappings with the identity
     for (int i = 0; i <= USHRT_MAX; i++) {
-        port_mappings[i] = (unsigned short)i;
+        if (port_mappings[i] == 0) {
+            port_mappings[i] = (unsigned short)i;
+        }
     }
 
     // initialize the windows socket library if this is on windows
