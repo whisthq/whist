@@ -58,21 +58,25 @@ let internetNotification: Notification | undefined
 let rebootNotification: Notification | undefined
 
 // Immediately initialize the protocol invisibly since it can take time to warm up
-createProtocolWindow().catch((err) => Sentry.captureException(err))
+withAppReady(of(null)).subscribe(() => {
+  createProtocolWindow().catch((err) => Sentry.captureException(err))
+})
 
 fromTrigger(WhistTrigger.appReady).subscribe(() => {
   internetNotification = internetWarning()
   rebootNotification = rebootWarning()
 })
 
-const allWindowsClosed = fromTrigger(WhistTrigger.windowInfo).pipe(
-  filter(
-    (args: {
-      crashed: boolean
-      numberWindowsRemaining: number
-      hash: string
-      event: string
-    }) => args.numberWindowsRemaining === 0
+const allWindowsClosed = withAppReady(
+  fromTrigger(WhistTrigger.windowInfo).pipe(
+    filter(
+      (args: {
+        crashed: boolean
+        numberWindowsRemaining: number
+        hash: string
+        event: string
+      }) => args.numberWindowsRemaining === 0
+    )
   )
 )
 
@@ -81,7 +85,8 @@ allWindowsClosed
     takeUntil(
       merge(
         fromTrigger(WhistTrigger.relaunchAction),
-        fromTrigger(WhistTrigger.clearCacheAction)
+        fromTrigger(WhistTrigger.clearCacheAction),
+        fromTrigger(WhistTrigger.updateDownloaded)
       )
     )
   )
