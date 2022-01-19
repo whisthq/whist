@@ -13,10 +13,10 @@ const BaseError = (props: { title: string; text: string }) => {
     */
   return (
     <div>
-      <div className="mt-6 font-semibold text-2xl text-gray-300">
+      <div className="mt-6 font-semibold text-2xl text-gray-300 max-w-sm m-auto">
         {props.title}
       </div>
-      <div className="my-2 text-gray-500 max-w-md">{props.text}</div>
+      <div className="my-2 text-gray-500 max-w-md mb-4">{props.text}</div>
     </div>
   )
 }

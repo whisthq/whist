@@ -34,6 +34,7 @@ import {
   UNAUTHORIZED_ERROR,
   AUTH_ERROR,
   NAVIGATION_ERROR,
+  LOCATION_CHANGED_ERROR,
 } from "@app/constants/error"
 import { useMainState } from "@app/renderer/utils/ipc"
 import { WhistTrigger } from "@app/constants/triggers"
@@ -146,7 +147,14 @@ const RootComponent = () => {
         onSecondaryClick={showSignoutWindow}
       />
     )
-  if ([UNAUTHORIZED_ERROR, AUTH_ERROR, NAVIGATION_ERROR].includes(show))
+  if (
+    [
+      UNAUTHORIZED_ERROR,
+      AUTH_ERROR,
+      NAVIGATION_ERROR,
+      LOCATION_CHANGED_ERROR,
+    ].includes(show)
+  )
     return (
       <OneButtonError
         title={whistError[show].title}
