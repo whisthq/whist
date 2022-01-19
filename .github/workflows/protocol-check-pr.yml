@@ -372,6 +372,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ISSUE: ${{ github.event.number }}
           GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
+          SLACK_WEBHOOK: ${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}
         run: |
           import os, sys, time
           import numpy as np
@@ -530,11 +531,13 @@ jobs:
             title=title,
           )
 
+          # Post updates to Slack channel
           from notifications.slack_bot import slack_post
-          #slack_post(slack_webhook, channel, body, slack_username="Whist Bot", title=None,code=None,lang=None,)
-          slack_webhook = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-          channel = "#dev-e2e-benchmarks"
-          slack_post(slack_webhook, channel, body, slack_username="Whist Bot", title=title,code=None,lang=None,)
+          if not os.environ.get("SLACK_WEBHOOK"):
+            print("Error, cannot post updates to Slack because SLACK_WEBHOOK was not set")
+            exit(-1)
+          slack_webhook = os.environ.get("SLACK_WEBHOOK")
+          slack_post(slack_webhook, channel=#dev-e2e-benchmarks", body, slack_username="Whist Bot", title=title,code=None,lang=None,)
 ):
 
   #######################################################################################
