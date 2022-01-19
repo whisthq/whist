@@ -391,6 +391,24 @@ COPY input/Xmodmap /root/.Xmodmap
 # General Utilities
 #########################
 
+# Install dbus + event requirements
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    dbus-x11 \
+    libdbus-1-dev \
+    libevent-dev \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install gnome keyring + chrome authentication utilities
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gir1.2-secret-1 \
+    gnome-keyring \
+    libsecret-1-0 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install general utility packages
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     xvfb \

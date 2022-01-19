@@ -25,15 +25,37 @@ echo "playerctld daemon started as PID: $playerctld_pid"
 # but not in-between as this can lead to a race condition between AwesomeWM and DPI setting
 /usr/share/whist/update-whist-dpi.sh
 
+# Start D-Bus
+dbus_result=$($RUN_AS_WHIST "dbus-launch --sh-syntax --exit-with-x11")
+
+# Extract environment variables for D-Bus configuration
+search_str="DBUS_SESSION_BUS_ADDRESS"
+prefix=${dbus_result%%$search_str*}
+tot_len=${#dbus_result}
+prefix_len=${#prefix}
+
+# Dump D-Bus configuration commands to exec-only executable
+dbus_env_cmd=$(echo $dbus_result | cut -c $prefix_len-$tot_len)
+echo $dbus_env_cmd > /usr/local/bin/set_dbus_env_vars.sh
+chmod 555 /usr/local/bin/set_dbus_env_vars.sh
+echo "saved d-bus configuration to executable"
+
+# Get D-Bus params
+. /usr/local/bin/set_dbus_env_vars.sh
+echo "d-bus address: $DBUS_SESSION_BUS_ADDRESS | pid: $DBUS_SESSION_BUS_PID"
+
+# Unlock gnome keyring
+$RUN_AS_WHIST "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID=$DBUS_SESSION_BUS_PID echo tmp_password | /usr/bin/gnome-keyring-daemon --replace --unlock --components=secrets"
+
 # Start the AwesomeWM window manager and get the PID of the backgrounded process
 echo "Starting AwesomeWM in the background..."
-$RUN_AS_WHIST "awesome" &
+$RUN_AS_WHIST "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID=$DBUS_SESSION_BUS_PID awesome" &
 awesome_pid=$!
 echo "AwesomeWM started as PID: $awesome_pid"
 
 # Start the XSettings daemon to make DPI changes responsive and get the PID of the backgrounded process
-echo "Starting 'xsettingsd' in the background..."
-$RUN_AS_WHIST "xsettingsd" &
+echo "Starting xsettingsd in the background..."
+$RUN_AS_WHIST "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID=$DBUS_SESSION_BUS_PID xsettingsd" &
 xsettingsd_pid=$!
 echo "xsettingsd started as PID: $xsettingsd_pid"
 

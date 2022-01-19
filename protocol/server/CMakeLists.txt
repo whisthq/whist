@@ -11,6 +11,7 @@ add_executable(WhistServer
         handle_client_message.c
         network.c
         server_statistic.c
+        notifications.c
         )
 
 set_target_properties(WhistServer PROPERTIES
@@ -113,16 +114,25 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         message(FATAL_ERROR "Library X11_Xext_LIB was not found!")
     endif()
 
+    pkg_check_modules(DBUS REQUIRED dbus-1)
+    include_directories(${DBUS_INCLUDE_DIRS})
+    message(STATUS "DBUS_INCLUDE_DIRS: ${DBUS_INCLUDE_DIRS}")
+    if(NOT DBUS_FOUND)
+        message(FATAL_ERROR "Library dbus-1 was not found!")
+    endif()
+
     target_link_libraries(WhistServer
             ${X11_LIBRARIES}
             ${X11_Xfixes_LIB}
             ${X11_Xdamage_LIB}
             ${X11_Xext_LIB}
             ${X11_Xtst_LIB}
+            ${DBUS_LIBRARIES}
             GL
             asound
             m
             OpenSSL::Crypto
+            event
             )
 endif()
 

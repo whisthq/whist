@@ -30,6 +30,7 @@ fi
 features="VaapiVideoDecoder,Vulkan,CanvasOopRasterization,OverlayScrollbar"
 flags=(
   --use-gl=desktop
+  --password-store=gnome
   --flag-switches-begin
   --enable-gpu-rasterization
   --enable-zero-copy
@@ -38,7 +39,6 @@ flags=(
   --disable-font-subpixel-positioning
   --force-color-profile=display-p3-d65
   --disable-gpu-process-crash-limit
-  --disable-notifications #This is tech debt, remove when notification redirection is implemented
   --no-default-browser-check
   --load-extension=/opt/teleport/chrome-extension
 )
@@ -59,6 +59,10 @@ flags+=(--flag-switches-end)
 # empty, Chrome will open the url as an additional tab at start time. The other tabs will be restored depending
 # on the user settings.
 flags+=($INITIAL_URL)
+
+# Load D-Bus configurations from .xinitrc; necessary for Chrome
+. /usr/local/bin/set_dbus_env_vars.sh
+echo "loaded d-bus address in start-chrome.sh: $DBUS_SESSION_BUS_ADDRESS | pid: $DBUS_SESSION_BUS_PID"
 
 # Start Chrome
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
