@@ -23,20 +23,16 @@ const whistPingTime = async (host: string, numberPings: number) => {
     */
 
   // Create list of Promises, where each Promise resolves to a ping time
-  const pingPromises = []
+  const pingResults = []
   for (let i = 0; i < numberPings; i += 1) {
     const startTime = Date.now()
-    pingPromises.push(
-      fetch(host)
-        .then(() => Date.now() - startTime)
-        .catch(() => {
-          return -1
-        })
-    )
+
+    await fetch(host)
+
+    pingResults.push(Date.now() - startTime)
   }
 
   // Resolve list of Promises synchronously to get a list of ping outputs
-  const pingResults = await Promise.all(pingPromises)
   return pingResults.reduce((a, b) => (a < b ? a : b))
 }
 
@@ -51,7 +47,7 @@ const pingLoop = (regions: AWSRegion[]) => {
     pingResultPromises.push(
       whistPingTime(
         `http://dynamodb.${region}.amazonaws.com${endpoint}`,
-        3
+        6
       ).then((pingTime) => {
         return { region, pingTime }
       })
@@ -72,6 +68,7 @@ const sortRegionByProximity = async (regions: AWSRegion[]) => {
       (AWSRegion[]): Sorted array of regions
   */
   const pingResults = await Promise.all(pingLoop(regions))
+
   const sortedResults = sortBy(pingResults, ["pingTime"])
 
   logBase(`Sorted AWS regions are [${sortedResults.toString()}]`, {})

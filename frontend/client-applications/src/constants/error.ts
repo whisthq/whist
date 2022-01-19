@@ -77,9 +77,8 @@ export const whistError = {
     text: "This is likely a temporary bug and we deeply apologize for the inconvenience.",
   },
   [LOCATION_CHANGED_ERROR]: {
-    title:
-      "Your location seems to have changed since the last time you opened Whist",
-    text: "We recommend restarting Whist to avoid higher network latency.",
+    title: "Your location seems to have changed",
+    text: "Since the last time you opened Whist. We recommend restarting Whist to avoid higher network latency.",
   },
 } as {
   [key: string]: {
