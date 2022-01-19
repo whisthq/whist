@@ -19,7 +19,6 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 def slack_post(
     slack_webhook,
-    channel,
     body,
     slack_username="Whist Bot",
     title=None,
@@ -30,7 +29,6 @@ def slack_post(
 
     Args:
         slack_webhook: a string, Slack webhook to send messages to
-        channel: a string, Slack channel to post to
         body: a string, the main content of the comment
         slack_username: an optional string, Name of account to post messages as
         title: an optional string, formatted at the top of the comment
@@ -41,7 +39,6 @@ def slack_post(
     """
     body = fmt.default_message_slack(body, title, code, lang)
     data = {
-        "channel": channel,
         "username": slack_username,
         "icon_emoji": ":fractal:",
         "link_names": 1,  # this makes @channel, @whist_employee work

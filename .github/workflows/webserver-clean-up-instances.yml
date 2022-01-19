@@ -118,13 +118,10 @@ jobs:
           # Retrieve Slack webhook and channel
           if "prod" in "${{ matrix.app }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-            SLACK_CHANNEL = "#alerts-prod"
           elif "staging" in "${{ matrix.app }}":
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
-            SLACK_CHANNEL = "#alerts-staging"
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-            SLACK_CHANNEL = "#alerts-dev"
 
           BODY = f"@releases :rotating_light: Failed to scale down user EC2 instances, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
-          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)

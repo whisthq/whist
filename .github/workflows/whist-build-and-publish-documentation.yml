@@ -166,9 +166,8 @@ jobs:
         run: |
           from notifications.slack_bot import slack_post
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-          SLACK_CHANNEL = "#alerts-dev"
           BODY = "@releases :rotating_light: Failed to deploy Whist Internal Documentation to `docs.whist.com`, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
-          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
       - name: Notify Slack on Workflow Success (Only on Push/Workflow_dispatch Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (steps.services-diff.outputs.changed == true || steps.protocol-diff.outputs.changed == true || steps.webserver-diff.outputs.changed == true) && success() }}
@@ -176,7 +175,6 @@ jobs:
         run: |
           from notifications.slack_bot import slack_post
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-          SLACK_CHANNEL = "#alerts-dev"
           TITLE = ":orange_book: Whist Internal Documentation Deployed :orange_book:"
           BODY = "Whist Internal Documentation Deployed to `docs.whist.com` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
-          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)

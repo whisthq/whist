@@ -48,14 +48,13 @@ jobs:
           from aws.resource_helpers import num_aws_instances
 
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-          SLACK_CHANNEL = "#alerts-dev"
           BODY = "*Number of Instances:*"
 
           for region in "${{ env.AWS_REGIONS }}".split():
             (running_instances, total_instances) = num_aws_instances(region)
             BODY += "\n     _%s_: `%d running (%d total)`" % (region, running_instances, total_instances)
 
-          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   # Finds old, hanging, unresponsive, or lingering EC2 instances and notify Slack
   #   Old EC2 instances are defined as resources that exist on AWS
@@ -132,9 +131,8 @@ jobs:
 
           if resources:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-            SLACK_CHANNEL = "#alerts-dev"
             BODY = "Old *Instances* in _${{ matrix.aws-region }}_:\n%s" % resources
-            slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+            slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
       - name: Set DB URLs for DEV, STAGING, and PROD
         env:
@@ -171,7 +169,6 @@ jobs:
 
           if hanging_instances:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-            SLACK_CHANNEL = "#alerts-dev"
 
             # Format message
             msg = ""
@@ -181,7 +178,7 @@ jobs:
               msg += f"     - `{instance[0]}` - id: `{instance[1]}`\n"
 
             BODY = "*Instances* in AWS but not in our databases in _${{ matrix.aws-region }}_:\n%s" % msg
-            slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+            slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
       - name: List EC2 Instances that are marked as HOST_SERVICE_UNRESPONSIVE and Notify in Slack if They Exist
         shell: python3 {0}
@@ -196,7 +193,6 @@ jobs:
 
           if dev_instances or staging_instances or prod_instances:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-            SLACK_CHANNEL = "#alerts-dev"
 
             stages = {'dev': dev_instances, 'staging': staging_instances, 'prod': prod_instances}
 
@@ -210,7 +206,7 @@ jobs:
                   msg += f"     - `{instance[0]}` - id: `{instance[1][4:]}`\n"
 
                 BODY = "Host service unresponsive *Instances* in _%s_ _${{ matrix.aws-region }}_:\n%s" % (stage, msg)
-                slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+                slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
       - name: List EC2 Instances that are considered lingering and Notify in Slack if They Exist
         shell: python3 {0}
@@ -225,7 +221,6 @@ jobs:
 
           if dev_instances or staging_instances or prod_instances:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-            SLACK_CHANNEL = "#alerts-dev"
 
             stages = {'dev': dev_instances, 'staging': staging_instances, 'prod': prod_instances}
 
@@ -240,7 +235,7 @@ jobs:
 
                 BODY = "Lingering *Instances* in _%s_ _${{ matrix.aws-region }}_.\n" % stage
                 BODY += "Last update is >2 mins for running and >15 mins for preconnected or, not associated with a mandelbox and >2 min draining: \n%s" % msg
-                slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+                slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   # Delete lingering Packer Builder EC2 instances, and extraneous AMI snapshots and associated
   # EBS volumes from CI and old dev/staging/prod AMIs
@@ -320,10 +315,9 @@ jobs:
           from notifications.slack_bot import slack_post
 
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-          SLACK_CHANNEL = "#alerts-dev"
           BODY = "@releases :rotating_light: Failed to clean lingering Packer Instances and AMI Snapshots in `webserver-cleanup-lingering-packer-builders-and-ami-resources` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
 
-          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   # Notify Slack if an error occurs in the workflow, so that it can be fixed promptly
   notify-slack-on-workflow-failure:
@@ -349,6 +343,5 @@ jobs:
         run: |
           from notifications.slack_bot import slack_post
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-          SLACK_CHANNEL = "#alerts-dev"
           BODY = ":rotating_light: @releases Cloud Infrastructure Monitoring Workflow Failed, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
-          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
