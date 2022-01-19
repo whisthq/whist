@@ -88,7 +88,7 @@ func (m *mockClient) ContainerCreate(ctx context.Context, config *container.Conf
 func (m *mockClient) ContainerStart(ctx context.Context, container string, options types.ContainerStartOptions) error {
 	logger.Infof("Called mock ContainerStart method.")
 	time.Sleep(3 * time.Second)
-	m.stopped = true
+	m.started = true
 	return nil
 }
 
@@ -98,7 +98,7 @@ func (m *mockClient) ContainerStart(ctx context.Context, container string, optio
 func (m *mockClient) ContainerStop(ctx context.Context, id string, timeout *time.Duration) error {
 	logger.Infof("Called mock ContainerStop method.")
 	time.Sleep(1 * time.Second)
-	m.started = true
+	m.stopped = true
 	return nil
 }
 
@@ -151,10 +151,12 @@ func TestMandelboxDieHandler(t *testing.T) {
 
 	// Wait for the mandelbox to die, otherwise time out.
 	select {
-	case <-m.GetContext().Done():
+	case <-ctx.Done():
+		t.Log("Mandelbox successfully exited.")
 		break
 	case <-time.After(30 * time.Second):
-		t.Fatalf("Mandelbox failed to stop successfully after calling mandelboxDieHandler.")
+		t.Errorf("Mandelbox failed to stop successfully after calling mandelboxDieHandler.")
+		return
 	}
 
 	// Verify that the docker id was removed from the tracker
@@ -173,8 +175,8 @@ func TestMandelboxDieHandler(t *testing.T) {
 	}
 
 	// Check the container stopped method was called successfully.
-	if !dockerClient.started {
-		t.Errorf("Expected docker client started value to be false, got %v", dockerClient.started)
+	if dockerClient.started || !dockerClient.stopped {
+		t.Errorf("Expected docker client to be stopped, got started value %v and stopped value %v", dockerClient.started, dockerClient.stopped)
 	}
 
 }
@@ -294,48 +296,6 @@ func TestWarmUpDockerClientUnsupportedImage(t *testing.T) {
 	if result == nil {
 		t.Errorf("error calling warmUpDockerClient with an unsupported image. Expected err, got nil")
 	}
-}
-
-// TestWarmUpDockerClientPortUnavailablble will check if an unavailable port is handled properly
-func TestWarmUpDockerClientPortUnavailablble(t *testing.T) {
-	//  All ports
-	ports := []portbindings.PortBinding{}
-
-	for port := portbindings.MinAllowedPort; port < portbindings.MaxAllowedPort; port++ {
-		ports = append(ports,
-			portbindings.PortBinding{
-				MandelboxPort: uint16(22),
-				Protocol:      portbindings.TransportProtocolTCP,
-				HostPort:      uint16(port),
-				BindIP:        "test_ip",
-			})
-	}
-
-	// Allocate ports to replicate all ports unavailable
-	if _, err := portbindings.Allocate(ports); err != nil {
-		t.Fatalf("error allocating all ports. Error: %v", err)
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	goroutineTracker := sync.WaitGroup{}
-
-	// Defer the wait first since deferred functions are executed in LIFO order.
-	defer cancelMandelboxContextByID(mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()))
-	defer cancel()
-
-	dockerClient := mockClient{
-		browserImage: "whisthq/browser/unavailable",
-	}
-
-	// should succeed and return nil
-	result := warmUpDockerClient(ctx, cancel, &goroutineTracker, &dockerClient)
-
-	if result == nil {
-		t.Fatalf("error calling warmUpDockerClient with an unavailable ports. Expected err, got nil")
-	}
-
-	// Free allocated ports
-	portbindings.Free(ports)
 }
 
 // TestDrainAndShutdown will check if shutdownInstanceOnExit is set to false
