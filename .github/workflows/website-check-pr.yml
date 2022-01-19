@@ -140,6 +140,5 @@ jobs:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
 
           from notifications.slack_bot import slack_post
-          SLACK_CHANNEL = "#alerts-${{ needs.whist-publish-build-config.outputs.branch }}"
           BODY = "@releases :rotating_light: Failed to build Whist monorepo config in `whist-build-monorepo-config`, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
-          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)

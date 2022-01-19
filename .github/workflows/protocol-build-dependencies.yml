@@ -185,10 +185,9 @@ jobs:
           from notifications.slack_bot import slack_post
 
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          SLACK_CHANNEL = "#alerts-prod"
           BODY = f"@releases :rotating_light: Failed to deploy OpenSSL `libcrypto` X86_64 Static Library to AWS S3, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
 
-          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   #######################################################################################
   #######################################################################################
@@ -400,10 +399,9 @@ jobs:
           from notifications.slack_bot import slack_post
 
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          SLACK_CHANNEL = "#alerts-prod"
           BODY = f"@releases :rotating_light: Failed to deploy Sentry X86_64 `sentry-native` Shared Library to AWS S3, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
 
-          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   #######################################################################################
   #######################################################################################
@@ -431,4 +429,4 @@ jobs:
           TITLE = ":openssl: Whist Protocol Dependencies Deployed :openssl:"
           BODY = f"Whist `Sentry` & `OpenSSL` Libraries deployed to Production via upload to AWS S3 (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
 
-          slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
