@@ -3,12 +3,39 @@
                                          // be at the very top
 #endif
 
+/*
+============================
+Includes
+============================
+*/
+
 #include "tcp.h"
 #include <whist/utils/aes.h>
 
 #ifndef _WIN32
 #include <fcntl.h>
 #endif
+
+/*
+============================
+Defines
+============================
+*/
+
+typedef struct {
+    AESMetadata aes_metadata;
+    int payload_size;
+    char payload[];
+} TCPPacket;
+
+// Get tcp packet size from a TCPPacket*
+#define get_tcp_packet_size(tcp_packet) ((size_t)(sizeof(TCPPacket) + (tcp_packet)->payload_size))
+
+/*
+============================
+Globals
+============================
+*/
 
 extern unsigned short port_mappings[USHRT_MAX + 1];
 
@@ -93,57 +120,61 @@ WhistPacket* tcp_read_packet(void* raw_context, bool should_recv) {
         // then try pulling some more from recv
     };
 
-    if ((unsigned long)context->reading_packet_len >= sizeof(int)) {
-        // The amount of data bytes read (actual len), and the amount of bytes
-        // we're looking for (target len), respectively
-        int actual_len = context->reading_packet_len - sizeof(int);
-        int target_len = *((int*)encrypted_tcp_packet_buffer->buf);
+    // If we haven't decoded a packet,
+    // and we have enough bytes to read another TCPPacket header...
+    if ((unsigned long)context->reading_packet_len >= sizeof(TCPPacket)) {
+        // Get a pointer to the tcp_packet
+        TCPPacket* tcp_packet = (TCPPacket*)encrypted_tcp_packet_buffer->buf;
 
-        // If the target len is valid, and actual len > target len, then we're
-        // good to go
-        if (target_len >= 0 && actual_len >= target_len) {
-            WhistPacket* decrypted_packet_buffer = allocate_region(target_len);
-            int decrypted_len;
+        // TODO: An untrusted party could make tcp_packet->payload_size so large that it overflows
+        // This should be fixed
+        int tcp_packet_size = get_tcp_packet_size(tcp_packet);
+
+        // If the target len is valid (Checking because this is an untrusted network),
+        // and we've read enough bytes for the whole tcp packet,
+        // we're ready to go
+        if (tcp_packet_size >= 0 && context->reading_packet_len >= tcp_packet_size) {
+            // The resulting packet will be <= the encrypted size
+            WhistPacket* whist_packet = allocate_region(tcp_packet->payload_size);
+
             if (ENCRYPTING_PACKETS) {
-                // Decrypt the packet
-                decrypted_len =
-                    decrypt_packet_n((WhistPacket*)(encrypted_tcp_packet_buffer->buf + sizeof(int)),
-                                     target_len, decrypted_packet_buffer, target_len,
-                                     (unsigned char*)context->binary_aes_private_key);
+                // Decrypt into whist_packet
+                int decrypted_len = decrypt_packet(
+                    whist_packet, tcp_packet->payload_size, tcp_packet->aes_metadata,
+                    tcp_packet->payload, tcp_packet->payload_size, context->binary_aes_private_key);
+                if (decrypted_len == -1) {
+                    // Deallocate and prepare to return NULL on decryption failure
+                    LOG_WARNING("Could not decrypt TCP message");
+                    deallocate_region(whist_packet);
+                    whist_packet = NULL;
+                } else {
+                    // Verify that the length matches what the WhistPacket's length should be
+                    FATAL_ASSERT(decrypted_len == get_packet_size(whist_packet));
+                }
             } else {
-                // The decrypted packet is just the original packet, during dev mode
-                decrypted_len = target_len;
-                memcpy(decrypted_packet_buffer, (encrypted_tcp_packet_buffer->buf + sizeof(int)),
-                       target_len);
+                // If we're not encrypting packets, just copy it over
+                memcpy(whist_packet, tcp_packet->payload, tcp_packet->payload_size);
+                // Verify that the length matches what the WhistPacket's length should be
+                FATAL_ASSERT(tcp_packet->payload_size == get_packet_size(whist_packet));
             }
+
 #if LOG_NETWORKING
             LOG_INFO("Received a WhistPacket of size %d over TCP", decrypted_len);
 #endif
 
-            // Move the rest of the read bytes to the beginning of the buffer to
-            // continue
-            int start_next_bytes = sizeof(int) + target_len;
-            for (unsigned long i = start_next_bytes; i < sizeof(int) + actual_len; i++) {
-                encrypted_tcp_packet_buffer->buf[i - start_next_bytes] =
+            // Move the rest of the already read bytes,
+            // to the beginning of the buffer to continue
+            for (int i = tcp_packet_size; i < context->reading_packet_len; i++) {
+                encrypted_tcp_packet_buffer->buf[i - tcp_packet_size] =
                     encrypted_tcp_packet_buffer->buf[i];
             }
-            context->reading_packet_len = actual_len - target_len;
+            context->reading_packet_len -= tcp_packet_size;
 
             // Realloc the buffer smaller if we have room to
             resize_dynamic_buffer(encrypted_tcp_packet_buffer, context->reading_packet_len);
 
-            if (decrypted_len < 0) {
-                // A warning not an error, since it doesn't simply we did something wrong
-                // Someone else in the same coffeeshop as you could make you generate these
-                // by sending bad TCP packets. After this point though, the packet is authenticated,
-                // and problems with its data should be LOG_ERROR'ed
-                LOG_WARNING("Could not decrypt TCP message");
-                deallocate_region(decrypted_packet_buffer);
-                return NULL;
-            } else {
-                // Return the decrypted packet
-                return decrypted_packet_buffer;
-            }
+            // Return the whist_packet, which will be NULL if decoding failed
+            return whist_packet;
         }
     }
 
@@ -152,38 +183,40 @@ WhistPacket* tcp_read_packet(void* raw_context, bool should_recv) {
 
 void tcp_free_packet(void* raw_context, WhistPacket* tcp_packet) { deallocate_region(tcp_packet); }
 
-int tcp_send_constructed_packet(void* raw_context, WhistPacket* packet, size_t packet_size) {
+int tcp_send_constructed_packet(void* raw_context, WhistPacket* packet) {
     SocketContextData* context = raw_context;
 
+    int packet_size = get_packet_size(packet);
+
     // Allocate a buffer for the encrypted packet
-    char* encrypted_packet_buffer = allocate_region(packet_size + 128);
+    TCPPacket* tcp_packet =
+        allocate_region(sizeof(TCPPacket) + packet_size + MAX_ENCRYPTION_SIZE_INCREASE);
 
-    // Encrypt the packet using aes encryption, offset by 1 byte
-    int unencrypted_len = get_packet_size(packet);
-    int encrypted_len = encrypt_packet(packet, unencrypted_len,
-                                       (WhistPacket*)(sizeof(int) + encrypted_packet_buffer),
-                                       (unsigned char*)context->binary_aes_private_key);
-
-    // If we shouldn't be encrypted, then unencrypt the packet
-    if (!ENCRYPTING_PACKETS) {
-        encrypted_len = unencrypted_len;
-        memcpy(encrypted_packet_buffer, packet, packet_size);
+    if (ENCRYPTING_PACKETS) {
+        // If we're encrypting packets, encrypt the packet into tcp_packet
+        int encrypted_len = encrypt_packet(tcp_packet->payload, &tcp_packet->aes_metadata, packet,
+                                           packet_size, context->binary_aes_private_key);
+        tcp_packet->payload_size = encrypted_len;
+    } else {
+        // Otherwise, just write it to tcp_packet directly
+        tcp_packet->payload_size = packet_size;
+        memcpy(tcp_packet->payload, packet, packet_size);
     }
 
-    // Pass the length of the packet as the first byte
-    *((int*)encrypted_packet_buffer) = encrypted_len;
+    int tcp_packet_size = get_tcp_packet_size(tcp_packet);
 
     // For now, the TCP network throttler is NULL, so this is a no-op.
-    network_throttler_wait_byte_allocation(context->network_throttler, (size_t)encrypted_len);
+    network_throttler_wait_byte_allocation(context->network_throttler, tcp_packet_size);
 
     //#if LOG_NETWORKING
     // This is useful enough to print, even outside of LOG_NETWORKING GUARDS
-    LOG_INFO("Sending a WhistPacket of size %d over TCP", unencrypted_len);
+    LOG_INFO("Sending a WhistPacket of size %d (Total %d bytes), over TCP", packet_size,
+             tcp_packet_size);
     //#endif
 
     // Send the packet
     bool failed = false;
-    int ret = send(context->socket, encrypted_packet_buffer, sizeof(int) + encrypted_len, 0);
+    int ret = send(context->socket, (const char*)tcp_packet, tcp_packet_size, 0);
     if (ret < 0) {
         int error = get_last_network_error();
         LOG_WARNING("Unexpected TCP Packet Error: %d", error);
@@ -191,7 +224,7 @@ int tcp_send_constructed_packet(void* raw_context, WhistPacket* packet, size_t p
     }
 
     // Free the encrypted allocation
-    deallocate_region(encrypted_packet_buffer);
+    deallocate_region(tcp_packet);
 
     return failed ? -1 : 0;
 }
@@ -208,7 +241,7 @@ int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, int len
 
     // Use our block allocator
     // This function fragments the heap too much to use malloc here
-    int packet_size = sizeof(WhistPacket) + len;
+    int packet_size = PACKET_HEADER_SIZE + len;
     WhistPacket* packet = allocate_region(packet_size);
 
     // Contruct packet metadata
@@ -219,11 +252,12 @@ int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, int len
     packet->num_indices = 1;
     packet->is_a_nack = false;
 
-    // Copy packet data
+    // Copy packet data, verifying the packetsize first
+    FATAL_ASSERT(get_packet_size(packet) == packet_size);
     memcpy(packet->data, data, len);
 
     // Send the packet
-    int ret = tcp_send_constructed_packet(context, packet, packet_size);
+    int ret = tcp_send_constructed_packet(context, packet);
 
     // Free the packet
     deallocate_region(packet);

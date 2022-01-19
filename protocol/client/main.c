@@ -255,10 +255,6 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    // init_networking needs to be called before `client_parse_args` because it modifies
-    //     `port_mappings`
-    whist_init_networking();
-
     int ret = client_parse_args(argc, argv);
     if (ret == -1) {
         // invalid usage
@@ -270,7 +266,8 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    whist_init_logger();
+    whist_init_subsystems();
+
     init_client_statistics();
     whist_init_statistic_logger(CLIENT_NUM_METRICS, client_statistic_info,
                                 STATISTICS_FREQUENCY_IN_SEC);

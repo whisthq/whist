@@ -22,6 +22,7 @@ udp_context->read_packet(...);
 To free a packet:
 udp_context->free_packet(...);
  */
+
 #include <whist/core/whist.h>
 
 /**
@@ -66,11 +67,9 @@ int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms);
  * @brief                          Sets the burst bitrate for the given UDP SocketContext
  *
  * @param context                  The SocketContext that we'll be adjusting the burst bitrate for
- * @param burst_bitrate            The new burst bitrate, in MBPS
- * @param fec_packet_ratio         The percentage of packets that should be FEC
+ * @param network_settings         The new network settings
  */
-void udp_update_bitrate_settings(SocketContext* context, int burst_bitrate,
-                                 double fec_packet_ratio);
+void udp_update_network_settings(SocketContext* context, NetworkSettings network_settings);
 
 /**
  * @brief                          Registers a nack buffer, so that future nacks can be handled.

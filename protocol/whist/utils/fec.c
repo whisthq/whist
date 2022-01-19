@@ -31,78 +31,24 @@ because this happens on the already encoded frame. Not the decoded frame,
 which is much larger. So, we should worry about such optimizations, later.
 */
 
+/*
+============================
+Defines
+============================
+*/
+
 #define MAX_NUM_BUFFERS 1024
 
-const int max_u8 = 0xff;
-const int max_u16 = 0xffff;
+// The most amount of buffers that RS accepts
+#define MAX_RS_BUFFERS 0xff
+// We only use 2 bytes to store the buffer size,
+// so we need to cap the buffer size as such
+#define MAX_BUFFER_SIZE ((1 << (8 * FEC_HEADER_SIZE)) - 1)
+
 #define RS_TABLE_SIZE 256  // size of row and column
 
-static SDL_SpinLock tls_lock;      // the spin lock used for SDL_TLSCreate() and SDL_CreateMutex()
-static SDL_TLSID tls_id;           // the key for thread-specific data
-static SDL_mutex* fec_init_mutex;  // switch to this mutex after it's initilized
-
-bool fec_initalized = false;
-
-typedef void* (*rs_table_t)[RS_TABLE_SIZE];  // NOLINT  //supress clang-tidy warning
-// a thread-specific table to cache RS coder, for efficiency,  avoid create and destroy again and
-// again
-
-void free_rs_code_table(
-    void* dummy_ptr)  // destructor for thread-specific data, clean the table after thread exit
-{
-    LOG_INFO("free_rs_code_table() called");
-    rs_table_t rs_code_table;
-    rs_code_table = SDL_TLSGet(tls_id);
-    if (rs_code_table == NULL) return;
-    for (int i = 0; i < RS_TABLE_SIZE; i++) {
-        for (int j = i; j < RS_TABLE_SIZE; j++) {
-            if (rs_code_table[i][j]) {
-                fec_free(rs_code_table[i][j]);
-            }
-        }
-    }
-    free(rs_code_table);
-}
-
-// get RS coder for the specific setting, cache RS coder in the table
-// note in the RS lib, k means num of original packets, n means total packets
-void* get_rs_code(int k, int n) {
-    if (!tls_id) {
-        SDL_AtomicLock(&tls_lock);  // SDL_CreateMutex() and SDL_TLSCreate() should be called only
-                                    // once, use spin lock for protection
-        if (!tls_id) {
-            fec_init_mutex = SDL_CreateMutex();
-            tls_id = SDL_TLSCreate();
-            // see https://wiki.libsdl.org/SDL_TLSCreate for the offical suggested pattern for
-            // SDL_TLSCreate
-        }
-        SDL_AtomicUnlock(&tls_lock);
-    }
-
-    rs_table_t rs_code_table = SDL_TLSGet(tls_id);  // get thread-specific data, i.e. the table
-
-    if (rs_code_table == NULL) {
-        SDL_LockMutex(fec_init_mutex);  // init_fec() should be only called once, required by RS
-                                        // lib.
-        // it's more costly than SDL_CreateMutex() and SDL_TLSCreate(), so we switch to mutex,
-        // instead of spinlock
-        if (fec_initalized == false) {
-            init_fec();
-            fec_initalized = true;
-        }
-        SDL_UnlockMutex(fec_init_mutex);
-
-        rs_code_table = (rs_table_t)safe_malloc(sizeof(void*) * RS_TABLE_SIZE * RS_TABLE_SIZE);
-        memset(rs_code_table, 0, sizeof(void*) * RS_TABLE_SIZE * RS_TABLE_SIZE);
-        SDL_TLSSet(tls_id, rs_code_table,
-                   free_rs_code_table);  // set thread-specific data, i.e. the table
-    }
-
-    if (rs_code_table[k][n] == NULL) {
-        rs_code_table[k][n] = fec_new(k, n);
-    }
-    return (void*)rs_code_table[k][n];
-}
+// This is the type for the rs_table we use for caching
+typedef RSCode* RSTable[RS_TABLE_SIZE][RS_TABLE_SIZE];
 
 struct FECEncoder {
     int num_accepted_buffers;
@@ -112,7 +58,7 @@ struct FECEncoder {
     int* buffer_sizes;
     void** buffers;
     int max_packet_size;  // max (original) packet size feed into encoder so far
-    void* rs_code;
+    RSCode* rs_code;
     bool encode_performed;
 };
 
@@ -125,9 +71,52 @@ struct FECDecoder {
     int* buffer_sizes;
     void** buffers;
     int max_packet_size;  // max packet size feed into decoder so far
-    void* rs_code;
+    RSCode* rs_code;
     bool recovery_performed;
 };
+
+/*
+============================
+Globals
+============================
+*/
+
+// Holds the RSTable for each thread
+static SDL_TLSID rs_table_tls_id;
+
+/*
+============================
+Private Function Declarations
+============================
+*/
+
+/**
+ * @brief                          Gets an rs_code
+ *
+ * @param k                        The number of original packets
+ * @param n                        The total number of packets
+ *
+ * @returns                        The RSCode for that (n, k) tuple
+ */
+RSCode* get_rs_code(int k, int n);
+
+/**
+ * @brief                          Frees an RSTable
+ *
+ * @param opaque                   The RSTable* to free
+ */
+void free_rs_code_table(void* opaque);
+
+/*
+============================
+Public Function Implementations
+============================
+*/
+
+void init_fec() {
+    rs_table_tls_id = SDL_TLSCreate();
+    init_rs();
+}
 
 // num_fec_packets / (num_fec_packets + num_indices) = context->fec_packet_ratio
 // a / (a + b) = c
@@ -140,9 +129,10 @@ int get_num_fec_packets(int num_real_packets, double fec_packet_ratio) {
 }
 
 FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int max_buffer_size) {
-    FECEncoder* fec_encoder = safe_malloc(sizeof(*fec_encoder));
+    FATAL_ASSERT(num_real_buffers + num_fec_buffers <= MAX_RS_BUFFERS);
+    FATAL_ASSERT(max_buffer_size <= MAX_BUFFER_SIZE);
 
-    FATAL_ASSERT(num_real_buffers + num_fec_buffers <= max_u8);
+    FECEncoder* fec_encoder = safe_malloc(sizeof(*fec_encoder));
 
     fec_encoder->max_buffer_size = max_buffer_size;
     fec_encoder->num_accepted_buffers = 0;
@@ -161,15 +151,28 @@ FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int ma
 }
 
 void fec_encoder_register_buffer(FECEncoder* fec_encoder, void* buffer, int buffer_size) {
-    FATAL_ASSERT(fec_encoder->num_accepted_buffers < fec_encoder->num_real_buffers);
-    FATAL_ASSERT(0 <= buffer_size && buffer_size <= fec_encoder->max_buffer_size);
+    FATAL_ASSERT(buffer != NULL);
+    FATAL_ASSERT(0 <= buffer_size);
 
-    FATAL_ASSERT(buffer_size <= max_u16);
+    char* current_buffer_location = buffer;
+    int remaining_buffer_size = buffer_size;
+    while (remaining_buffer_size > 0) {
+        // If the buffer we were given is larger than max_buffer_size,
+        // Then we split it up
+        int current_buffer_size = min(remaining_buffer_size, fec_encoder->max_buffer_size);
 
-    fec_encoder->buffers[fec_encoder->num_accepted_buffers] = buffer;
-    fec_encoder->buffer_sizes[fec_encoder->num_accepted_buffers] = buffer_size;
-    fec_encoder->max_packet_size = max(fec_encoder->max_packet_size, buffer_size);
-    fec_encoder->num_accepted_buffers++;
+        // Check that we're not about to accept too many buffers,
+        // and then pass the buffer segment into the list of buffer segments
+        FATAL_ASSERT(fec_encoder->num_accepted_buffers + 1 <= fec_encoder->num_real_buffers);
+        fec_encoder->buffers[fec_encoder->num_accepted_buffers] = current_buffer_location;
+        fec_encoder->buffer_sizes[fec_encoder->num_accepted_buffers] = current_buffer_size;
+        fec_encoder->max_packet_size = max(fec_encoder->max_packet_size, current_buffer_size);
+        fec_encoder->num_accepted_buffers++;
+
+        // Progress the buffer tracker
+        current_buffer_location += current_buffer_size;
+        remaining_buffer_size -= current_buffer_size;
+    }
 }
 
 void fec_get_encoded_buffers(FECEncoder* fec_encoder, void** buffers, int* buffer_sizes) {
@@ -196,8 +199,8 @@ void fec_get_encoded_buffers(FECEncoder* fec_encoder, void** buffers, int* buffe
         // call rs encoder to generate new packets
         for (int i = fec_encoder->num_real_buffers; i < fec_encoder->num_buffers; i++) {
             fec_encoder->buffers[i] = safe_malloc(fec_encoder->max_buffer_size);
-            fec_encode(fec_encoder->rs_code, (void**)fec_encoder->buffers, fec_encoder->buffers[i],
-                       i, fec_encoder->max_buffer_size);
+            rs_encode(fec_encoder->rs_code, (void**)fec_encoder->buffers, fec_encoder->buffers[i],
+                      i, fec_encoder->max_buffer_size);
             fec_encoder->buffer_sizes[i] = fec_encoder->max_buffer_size;
         }
 
@@ -226,6 +229,8 @@ void destroy_fec_encoder(FECEncoder* fec_encoder) {
 }
 
 FECDecoder* create_fec_decoder(int num_real_buffers, int num_fec_buffers, int max_buffer_size) {
+    FATAL_ASSERT(max_buffer_size <= MAX_BUFFER_SIZE);
+
     FECDecoder* fec_decoder = safe_malloc(sizeof(*fec_decoder));
 
     int num_total_buffers = num_real_buffers + num_fec_buffers;
@@ -296,8 +301,8 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer) {
         FATAL_ASSERT(cnt == fec_decoder->num_real_buffers);
 
         // decode
-        int res = fec_decode(fec_decoder->rs_code, (void**)fec_decoder->buffers, index,
-                             fec_decoder->max_packet_size);
+        int res = rs_decode(fec_decoder->rs_code, (void**)fec_decoder->buffers, index,
+                            fec_decoder->max_packet_size);
         FATAL_ASSERT(
             res == 0);  // should always success if called correcly,  except malloc fail inside lib
         free(index);
@@ -333,4 +338,52 @@ void destroy_fec_decoder(FECDecoder* fec_decoder) {
     free(fec_decoder->buffers);
     free(fec_decoder->buffer_sizes);
     free(fec_decoder);
+}
+
+/*
+============================
+Private Function Implementations
+============================
+*/
+
+RSCode* get_rs_code(int k, int n) {
+    FATAL_ASSERT(k <= n);
+
+    // Get the rs code table for this thread
+    RSTable* rs_code_table = SDL_TLSGet(rs_table_tls_id);
+
+    // If the table for this thread doesn't exist, initialize it
+    if (rs_code_table == NULL) {
+        rs_code_table = (RSTable*)safe_malloc(sizeof(RSTable));
+        memset(rs_code_table, 0, sizeof(RSTable));
+        SDL_TLSSet(rs_table_tls_id, rs_code_table, free_rs_code_table);
+    }
+
+    // If (n, k)'s rs_code hasn't been create yet, create it
+    if ((*rs_code_table)[k][n] == NULL) {
+        (*rs_code_table)[k][n] = rs_new(k, n);
+    }
+
+    // Now return the rs_code for (n, k)
+    return (RSCode*)((*rs_code_table)[k][n]);
+    // We make a redundant (RSCode*) because cppcheck parses the type wrong
+}
+
+void free_rs_code_table(void* raw_rs_code_table) {
+    RSTable* rs_code_table = (RSTable*)raw_rs_code_table;
+
+    // If the table was never created, we have nothing to free
+    if (rs_code_table == NULL) return;
+
+    // Find any rs_code entries, and free them
+    for (int i = 0; i < RS_TABLE_SIZE; i++) {
+        for (int j = i; j < RS_TABLE_SIZE; j++) {
+            if ((*rs_code_table)[i][j] != NULL) {
+                rs_free((*rs_code_table)[i][j]);
+            }
+        }
+    }
+
+    // Now free the entire table
+    free(rs_code_table);
 }

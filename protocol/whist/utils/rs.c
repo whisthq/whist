@@ -32,6 +32,11 @@
  * OF SUCH DAMAGE.
  */
 
+#ifndef GF_BITS
+#define GF_BITS  8	/* code over GF(2**GF_BITS) - change to suit */
+#endif
+#define	GF_SIZE ((1 << GF_BITS) - 1)	/* powers of \alpha */
+
 // There are incorrect stringop-overflow errors due to insufficient
 // static analysis, so we (Whist) simply disable the `-g3` warning.
 #ifdef __GNUC__
@@ -58,6 +63,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "rs.h"
 
 typedef unsigned long u_long; // NOLINT
 /*
@@ -630,9 +636,9 @@ invert_vdm(gf *src, int k)
     return 0 ;
 }
 
-static int fec_initialized = 0 ;
+static int fec_initialized = 0;
 void
-init_fec()
+init_rs()
 {
     TICK(ticks[0]);
     generate_gf();
@@ -661,12 +667,11 @@ struct fec_parms {
 } ;
 
 void
-fec_free(void *p0)
+rs_free(RSCode* p)
 {
-	struct fec_parms *p= (struct fec_parms *) p0;
     if (p==NULL ||
        p->magic != ( ( (FEC_MAGIC ^ p->k) ^ p->n) ^ (int)((long long)p->enc_matrix)) ) {
-	fprintf(stderr, "bad parameters to fec_free\n");
+	fprintf(stderr, "bad parameters to rs_free\n");
 	return ;
     }
     free(p->enc_matrix);
@@ -677,16 +682,16 @@ fec_free(void *p0)
  * create a new encoder, returning a descriptor. This contains k,n and
  * the encoding matrix.
  */
-struct fec_parms *
-fec_new(int k, int n)
+RSCode* rs_new(int k, int n)
 {
     int row, col ;
     gf *p, *tmp_m ;
 
-    struct fec_parms *retval ;
+    struct fec_parms *retval;
 
-    if (fec_initialized == 0)
-	init_fec();
+	if(fec_initialized == 0) {
+		abort();
+	}
 
     if (k > GF_SIZE + 1 || n > GF_SIZE + 1 || k > n ) {
 	fprintf(stderr, "Invalid parameters k %d n %d GF_SIZE %d\n",
@@ -735,15 +740,13 @@ fec_new(int k, int n)
 }
 
 /*
- * fec_encode accepts as input pointers to n data packets of size sz,
+ * rs_encode accepts as input pointers to n data packets of size sz,
  * and produces as output a packet pointed to by fec, computed
  * with index "index".
  */
 void
-fec_encode(void *code0, void *src0[], void *fec0, int index, int sz)
-//fec_encode(struct fec_parms *code0, gf *src[], gf *fec, int index, int sz)
+rs_encode(RSCode* code, void *src0[], void *fec0, int index, int sz)
 {
-	struct fec_parms * code= (struct fec_parms *)code0;
 	gf **src=(gf**) src0;
 	gf* fec=(gf*)fec0;
     int i, k = code->k ;
@@ -840,7 +843,7 @@ build_decode_matrix(struct fec_parms *code, gf *pkt[], int index[])
 }
 
 /*
- * fec_decode receives as input a vector of packets, the indexes of
+ * rs_decode receives as input a vector of packets, the indexes of
  * packets, and produces the correct vector as output.
  *
  * Input:
@@ -851,10 +854,8 @@ build_decode_matrix(struct fec_parms *code, gf *pkt[], int index[])
  *	sz:    size of each packet
  */
 int
-fec_decode(void *code0, void *pkt0[], int index[], int sz)
-//fec_decode(struct fec_parms *code, gf *pkt[], int index[], int sz)
+rs_decode(RSCode* code, void *pkt0[], int index[], int sz)
 {
-	struct fec_parms * code=(struct fec_parms*)code0;
 	gf **pkt=(gf**)pkt0;
     gf *m_dec ;
     gf **new_pkt ;
@@ -895,14 +896,12 @@ fec_decode(void *code0, void *pkt0[], int index[], int sz)
 
     return 0;
 }
-int fec_get_n(void *code0)
+int rs_get_n(RSCode* code)
 {
-	struct fec_parms * code= (struct fec_parms *)code0;
 	return code->n;
 }
-int fec_get_k(void *code0)
+int rs_get_k(RSCode* code)
 {
-	struct fec_parms * code= (struct fec_parms *)code0;
 	return code->k;
 }
 /*********** end of FEC code -- beginning of test code ************/

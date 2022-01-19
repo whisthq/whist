@@ -68,7 +68,6 @@ Includes
 #include <whist/clipboard/clipboard_synchronizer.h>
 #include <whist/file/file_synchronizer.h>
 #include <whist/utils/color.h>
-#include <whist/network/network.h>
 #include <whist/utils/clock.h>
 #include <whist/logging/logging.h>
 #include <whist/utils/os_utils.h>
@@ -175,7 +174,7 @@ Defines
 #define OUTPUT_HEIGHT 720
 
 #define DEFAULT_BINARY_PRIVATE_KEY \
-    "\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF"
+    ((const void*)"\xED\x5E\xF3\x3C\xD7\x28\xD1\x7D\xB8\x06\x45\x81\x42\x8D\x19\xEF")
 #define DEFAULT_HEX_PRIVATE_KEY "ED5EF33CD728D17DB8064581428D19EF"
 
 #define MOUSE_SCALING_FACTOR 100000
@@ -246,7 +245,10 @@ typedef struct {
     double video_fec_ratio;
     CodecType desired_codec;
 } NetworkSettings;
+
+// These things need NetworkSettings
 #include <whist/network/network_algorithm.h>
+#include <whist/network/network.h>
 
 /**
  * @brief           Enum indicating whether we are using the Nvidia or X11 capture device. If we
@@ -784,6 +786,17 @@ typedef struct BitArray {
 Public Functions
 ============================
 */
+
+/**
+ * @brief                          Initialize any and all static state
+ *                                 that needs to be initialized
+ *
+ * @note                           This must be called after parsing arguments
+ *
+ * @note                           TODO: Make this function take in parsed arguments as a struct,
+ *                                 rather than having parse_arguments manipulate `extern` globals
+ */
+void whist_init_subsystems();
 
 /**
  * @brief                          Print the memory trace of a process

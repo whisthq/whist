@@ -38,19 +38,26 @@
  * but fastest operation is achieved with 8 bit elements
  * This is the only parameter you may want to change.
  */
-#ifndef GF_BITS
-#define GF_BITS  8	/* code over GF(2**GF_BITS) - change to suit */
-#endif
 
-#define	GF_SIZE ((1 << GF_BITS) - 1)	/* powers of \alpha */
-void fec_free(void *p) ;
-void * fec_new(int k, int n) ;//n>=k
+/*
+============================
+Defines
+============================
+*/
 
-void init_fec() ;  //if you never called this,it will be automatically called in fec_new()
-void fec_encode(void *code, void *src[], void *dst, int index, int sz) ;
-int fec_decode(void *code, void *pkt[], int index[], int sz) ;
+typedef struct fec_parms RSCode;
 
-int fec_get_k(void *code);
-int fec_get_n(void *code);
+/*
+============================
+Public Functions
+============================
+*/
+
+void rs_free(RSCode* rs_code) ;
+RSCode* rs_new(int k, int n) ;//n>=k
+
+void init_rs();  //if you never called this,it will be automatically called in fec_new()
+void rs_encode(RSCode* rs_code, void* src[], void* dst, int index, int sz) ;
+int rs_decode(RSCode* rs_code, void* pkt[], int index[], int sz) ;
 
 /* end of file */

@@ -11,6 +11,12 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
+/*
+============================
+Includes
+============================
+*/
+
 #include <whist/core/whist.h>
 
 #include <stdio.h>
@@ -25,18 +31,26 @@
 
 #include "../utils/aes.h"
 
-// Defines
+/*
+============================
+Defines
+============================
+*/
 
 #define BITS_IN_BYTE 8.0
 #define MS_IN_SECOND 1000
 
-// Global data
+/*
+============================
+Globals
+============================
+*/
 
 unsigned short port_mappings[USHRT_MAX + 1];
 
 /*
 ============================
-Public Interface Implementations
+Public Function Implementations
 ============================
 */
 
@@ -88,14 +102,17 @@ Private Function Declarations
 ============================
 */
 
+// This is what gets transmitted,
+// where "signature"
 typedef struct {
-    char iv[16];
-    char signature[32];
+    char iv[IV_SIZE];
+    char signature[HMAC_SIZE];
 } PrivateKeyData;
 
+// This is what gets signed
 typedef struct {
-    char iv[16];
-    char private_key[16];
+    char iv[IV_SIZE];
+    char private_key[KEY_SIZE];
 } SignatureData;
 
 /**
@@ -239,12 +256,11 @@ void set_tos(SOCKET socket, WhistTOSValue tos) {
 }
 
 void whist_init_networking() {
-    /*
-        Initialize default port mappings (i.e. the identity)
-    */
-
+    // Initialize any uninitialized port mappings with the identity
     for (int i = 0; i <= USHRT_MAX; i++) {
-        port_mappings[i] = (unsigned short)i;
+        if (port_mappings[i] == 0) {
+            port_mappings[i] = (unsigned short)i;
+        }
     }
 
     // initialize the windows socket library if this is on windows
@@ -580,15 +596,21 @@ bool confirm_private_key(PrivateKeyData* our_priv_key_data,
     */
 
     if (recv_size == sizeof(PrivateKeyData)) {
-        if (memcmp(our_priv_key_data->iv, our_signed_priv_key_data->iv, 16) != 0) {
+        // Make sure that they used the same IV as us
+        if (memcmp(our_priv_key_data->iv, our_signed_priv_key_data->iv, HMAC_SIZE) != 0) {
             LOG_ERROR("Could not confirmPrivateKey: IV is incorrect!");
             return false;
         } else {
+            // Calculate what the signature should have been,
+            // By signing sig_data ourselves
             SignatureData sig_data;
-            memcpy(sig_data.iv, our_signed_priv_key_data->iv, sizeof(our_signed_priv_key_data->iv));
+            memcpy(sig_data.iv, our_priv_key_data->iv, sizeof(our_signed_priv_key_data->iv));
             memcpy(sig_data.private_key, private_key, sizeof(sig_data.private_key));
-            if (!verify_hmac(our_signed_priv_key_data->signature, &sig_data, sizeof(sig_data),
-                             private_key)) {
+            char hmac_buffer[HMAC_SIZE];
+            hmac(hmac_buffer, &sig_data, sizeof(sig_data), private_key);
+
+            // And compare to
+            if (memcmp(our_signed_priv_key_data->signature, hmac_buffer, HMAC_SIZE) != 0) {
                 LOG_ERROR("Could not confirmPrivateKey: Verify HMAC Failed");
                 return false;
             } else {

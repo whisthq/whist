@@ -338,10 +338,8 @@ static void whist_server_state_init(whist_server_state* state, whist_server_conf
 int main(int argc, char* argv[]) {
     whist_server_config config;
 
-    whist_init_multithreading();
+    whist_init_subsystems();
 
-    whist_init_networking();
-    whist_init_logger();
     whist_init_server_statistics();
     whist_init_statistic_logger(SERVER_NUM_METRICS, server_statistic_info,
                                 STATISTICS_FREQUENCY_IN_SEC);
