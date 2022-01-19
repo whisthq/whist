@@ -372,7 +372,7 @@ int send_server_quit_messages(int num_messages) {
 // Please pass this comment into any non-trivial function that this function calls.
 int send_wcmsg(WhistClientMessage *wcmsg) {
     /*
-        We send large wcmsg's over TCP.
+        We send large and order-sensitive wcmsg's over TCP.
         Currently, sending WhistClientMessage packets over UDP that require multiple
         sub-packets to send is not supported (if low latency large
         WhistClientMessage packets are needed, then this will have to be
@@ -393,8 +393,12 @@ int send_wcmsg(WhistClientMessage *wcmsg) {
     wcmsg->id = wcmsg_id;
     wcmsg_id++;
 
+    // Please be careful when editing this list!
+    // Please ask the maintainers of each CMESSAGE_ type
+    // before adding/removing from this list
     if (wcmsg->type == MESSAGE_DISCOVERY_REQUEST || wcmsg->type == MESSAGE_TCP_PING ||
-        (size_t)wcmsg_size > sizeof(*wcmsg)) {
+        wcmsg->type == CMESSAGE_FILE_DATA || wcmsg->type == CMESSAGE_FILE_METADATA ||
+        wcmsg->type == CMESSAGE_CLIPBOARD || (size_t)wcmsg_size > sizeof(*wcmsg)) {
         return send_packet(&packet_tcp_context, PACKET_MESSAGE, wcmsg, wcmsg_size, -1);
     } else {
         if ((size_t)wcmsg_size > MAX_PACKET_SIZE) {
