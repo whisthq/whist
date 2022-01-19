@@ -12,6 +12,7 @@ Includes
 #include "udp.h"
 #include <whist/utils/aes.h>
 #include <whist/utils/fec.h>
+#include <whist/network/ringbuffer.h>
 
 #ifndef _WIN32
 #include <fcntl.h>
@@ -41,6 +42,8 @@ typedef struct {
 
 // Define the bitrate specified to be maintained for each and every 0.5 ms internal.
 #define UDP_NETWORK_THROTTLER_BUCKET_MS 0.5
+// TODO: make this something sync_packets knows about, not udp.c
+#define MAX_NUM_AUDIO_FRAMES 8
 
 /*
 ============================
@@ -53,12 +56,45 @@ extern unsigned short port_mappings[USHRT_MAX + 1];
 
 /*
 ============================
+Custom Types
+============================
+*/
+
+struct SocketContextData {
+    int timeout;
+    SOCKET socket;
+    struct sockaddr_in addr;
+    int ack;
+    WhistMutex mutex;
+    char binary_aes_private_key[16];
+    NetworkThrottleContext* network_throttler;
+
+    double fec_packet_ratios[NUM_PACKET_TYPES];
+
+    bool decrypted_packet_used;
+    WhistPacket decrypted_packet;
+    // Nack Buffer Data
+    // TODO: change this to WhistUDPPacket
+    WhistPacket** nack_buffers[NUM_PACKET_TYPES];
+    // This mutex will protect the data in nack_buffers
+    WhistMutex nack_mutex[NUM_PACKET_TYPES];
+    int nack_num_buffers[NUM_PACKET_TYPES];
+    int nack_buffer_max_indices[NUM_PACKET_TYPES];
+    int nack_buffer_max_payload_size[NUM_PACKET_TYPES];
+    RingBuffer* ring_buffers[NUM_PACKET_TYPES];
+    // because we don't need to buffer messages
+    WhistPacket* last_packets[NUM_PACKET_TYPES];
+};
+
+/*
+============================
 Private Functions
 ============================
+*/
 /**
  * @brief    Send an encrypted WhistPacket of size at most MAX_UDP_PAYLOAD_SIZE through the network.
 */
-int udp_send_constructed_packet(void* raw_context, WhistPacket* packet, size_t packet_size);
+static int udp_send_constructed_packet(void* raw_context, WhistPacket* packet, size_t packet_size);
 
 /*
 ============================
@@ -71,6 +107,21 @@ static int udp_ack(void* raw_context) {
     return send(context->socket, NULL, 0, 0);
 }
 
+void udp_free_packet(void* raw_context, WhistPacket* udp_packet) {
+    SocketContextData* context = raw_context;
+
+    if (!context->decrypted_packet_used) {
+        LOG_ERROR("Called udp_free_packet, but there was no udp_packet to free!");
+        return;
+    }
+    if (udp_packet != &context->decrypted_packet) {
+        LOG_ERROR("The wrong pointer was passed into udp_free_packet!");
+    }
+
+    // Free the one buffer
+    context->decrypted_packet_used = false;
+}
+
 void udp_update(void* raw_context, bool should_recv) {
     /*
      * Read a WhistPacket from the socket represented by raw_context, decrypt it if necessary, and store the decrypted data for the next get_packet call.
@@ -81,12 +132,12 @@ void udp_update(void* raw_context, bool should_recv) {
 
     if (should_recv == false) {
         LOG_ERROR("should_recv should only be false in TCP contexts");
-        return NULL;
+        return;
     }
 
     if (context->decrypted_packet_used) {
         LOG_ERROR("Cannot use context->decrypted_packet buffer! Still being used somewhere else!");
-        return NULL;
+        return;
     }
 
     // Wait to receive packet over TCP, until timing out
@@ -149,12 +200,12 @@ void udp_update(void* raw_context, bool should_recv) {
         } else {
             // if there is no ring buffer (packet is message), store it in the 1-packet buffer instead
             // first, free the old packet there
-            if (last_packets[packet_type] != NULL) {
-                free_packet(context, last_packets[packet_type]);
+            if (context->last_packets[packet_type] != NULL) {
+                udp_free_packet(raw_context, context->last_packets[packet_type]);
             }
-            last_packets[packet_type] = &context->decrypted_packet;
+            context->last_packets[packet_type] = &context->decrypted_packet;
         }
-        return NULL;
+        return;
     } else {
         // Network error or no packets to receive
         if (recv_len < 0) {
@@ -171,15 +222,16 @@ void udp_update(void* raw_context, bool should_recv) {
         } else {
             // Ignore packets of size 0
         }
-        return NULL;
+        return;
     }
 }
 
-void* udp_get_packet(void* context, WhistPacketType type) {
+void* udp_get_packet(void* raw_context, WhistPacketType type) {
+    SocketContextData* context = raw_context;
     RingBuffer* ring_buffer = context->ring_buffers[type];
     switch (type) {
         case PACKET_MESSAGE: {
-                                 return last_packets[PACKET_MESSAGE];
+                                 return context->last_packets[PACKET_MESSAGE];
                              }
         case PACKET_AUDIO: {
                                // first, catch up audio if we're behind
@@ -192,7 +244,7 @@ void* udp_get_packet(void* context, WhistPacketType type) {
                                // skip to the most recent iframe if necessary
                                for (int i = ring_buffer->max_id; i > max(0, ring_buffer->last_rendered_id); i--) {
                                    if (is_ready_to_render(ring_buffer, i)) {
-                                       FrameData* frame_data = get_frame_at_id(ring_buffer, packet->id);
+                                       FrameData* frame_data = get_frame_at_id(ring_buffer, i);
                                        VideoFrame* frame = (VideoFrame*)frame_data->frame_buffer;
                                        if (frame->is_iframe) {
                                            reset_stream(ring_buffer, frame_data->id);
@@ -214,21 +266,6 @@ void* udp_get_packet(void* context, WhistPacketType type) {
         // no frame ready yet
         return NULL;
     }
-}
-
-void udp_free_packet(void* raw_context, WhistPacket* udp_packet) {
-    SocketContextData* context = raw_context;
-
-    if (!context->decrypted_packet_used) {
-        LOG_ERROR("Called udp_free_packet, but there was no udp_packet to free!");
-        return;
-    }
-    if (udp_packet != &context->decrypted_packet) {
-        LOG_ERROR("The wrong pointer was passed into udp_free_packet!");
-    }
-
-    // Free the one buffer
-    context->decrypted_packet_used = false;
 }
 
 // NOTE that this function is in the hotpath.

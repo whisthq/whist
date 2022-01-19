@@ -149,7 +149,6 @@ AudioContext* init_audio() {
     audio_context->audio_frequency = -1;
     audio_context->pending_refresh = true;
     audio_context->pending_render_context = false;
-    audio_context->ring_buffer = init_ring_buffer(PACKET_AUDIO, MAX_NUM_AUDIO_FRAMES, nack_packet);
     audio_context->last_played_id = -1;
     audio_context->dev = 0;
     audio_context->audio_decoder = NULL;
@@ -321,36 +320,6 @@ static void destroy_audio_device(AudioContext* audio_context) {
     if (audio_context->audio_decoder) {
         destroy_audio_decoder(audio_context->audio_decoder);
         audio_context->audio_decoder = NULL;
-    }
-}
-
-// TODO: this logic should go in get_packet(PACKET_AUDIO)
-void catchup_audio(AudioContext* audio_context) {
-    RingBuffer* ring_buffer = audio_context->ring_buffer;
-    audio_context->last_played_id = audio_context->last_played_id;
-
-    // If nothing has played yet, or if we've fallen far behind (because of a disconnect),
-    // Then catch-up by setting last_played_id to max_id - 1
-    if ((audio_context->last_played_id == -1 && ring_buffer->max_id > 0) ||
-        (audio_context->last_played_id != -1 &&
-         ring_buffer->max_id - audio_context->last_played_id > MAX_NUM_AUDIO_FRAMES)) {
-#if LOG_AUDIO
-        LOG_DEBUG("Catching up audio from ID %d to ID %d", audio_context->last_played_id,
-                  ring_buffer->max_id - 1);
-#endif
-        if (audio_context->last_played_id != -1) {
-            log_double_statistic(AUDIO_FPS_SKIPPED,
-                                 (double)(ring_buffer->max_id - audio_context->last_played_id - 1));
-        }
-        audio_context->last_played_id = ring_buffer->max_id - 1;
-    }
-
-    // Wipe all of the stale frames, i.e. all IDs that are on or before the last played ID
-    for (int i = 0; i < MAX_NUM_AUDIO_FRAMES; i++) {
-        FrameData* frame_data = &ring_buffer->receiving_frames[i];
-        if (frame_data->id <= audio_context->last_played_id && frame_data->id != -1) {
-            reset_frame(ring_buffer, frame_data);
-        }
     }
 }
 

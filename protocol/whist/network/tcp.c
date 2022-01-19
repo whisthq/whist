@@ -40,6 +40,24 @@ Globals
 extern unsigned short port_mappings[USHRT_MAX + 1];
 
 /*
+===========================
+Custom Types
+===========================
+*/
+struct SocketContextData {
+    int timeout;
+    SOCKET socket;
+    struct sockaddr_in addr;
+    int ack;
+    WhistMutex mutex;
+    char binary_aes_private_key[16];
+    // Used for reading TCP packets
+    int reading_packet_len;
+    DynamicBuffer* encrypted_tcp_packet_buffer;
+    NetworkThrottleContext* network_throttler;
+};
+
+/*
 ============================
 Private Functions
 ============================

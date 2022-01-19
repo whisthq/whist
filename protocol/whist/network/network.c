@@ -70,6 +70,22 @@ WhistPacket* read_packet(SocketContext* context, bool should_recv) {
     return context->read_packet(context->context, should_recv);
 }
 
+void update(SocketContext* context, bool should_recv) {
+    if (context->context == NULL) {
+        LOG_ERROR("The given SocketContext has not been initialized!");
+        return;
+    }
+    context->update(context->context, should_recv);
+}
+
+void* get_packet(SocketContext* context, WhistPacketType type) {
+    if (context->context == NULL) {
+        LOG_ERROR("The given SocketContext has not been initialized!");
+        return NULL;
+    }
+    return context->get_packet(context->context, type);
+}
+
 void free_packet(SocketContext* context, WhistPacket* packet) {
     if (context->context == NULL) {
         LOG_ERROR("The given SocketContext has not been initialized!");

@@ -228,35 +228,6 @@ typedef struct {
     StunEntry entry;
 } StunRequest;
 
-typedef struct {
-    int timeout;
-    SOCKET socket;
-    struct sockaddr_in addr;
-    int ack;
-    WhistMutex mutex;
-    char binary_aes_private_key[16];
-    // Used for reading TCP packets
-    int reading_packet_len;
-    DynamicBuffer* encrypted_tcp_packet_buffer;
-    NetworkThrottleContext* network_throttler;
-
-    double fec_packet_ratios[NUM_PACKET_TYPES];
-
-    bool decrypted_packet_used;
-    WhistPacket decrypted_packet;
-    // Nack Buffer Data
-    // TODO: change this to WhistUDPPacket
-    WhistPacket** nack_buffers[NUM_PACKET_TYPES];
-    // This mutex will protect the data in nack_buffers
-    WhistMutex nack_mutex[NUM_PACKET_TYPES];
-    int nack_num_buffers[NUM_PACKET_TYPES];
-    int nack_buffer_max_indices[NUM_PACKET_TYPES];
-    int nack_buffer_max_payload_size[NUM_PACKET_TYPES];
-    RingBuffer* ring_buffers[NUM_PACKET_TYPES];
-    // because we don't need to buffer messages
-    WhistPacket* last_packets[NUM_PACKET_TYPES];
-} SocketContextData;
-
 /**
  * @brief                       Interface describing the available functions
  *                              and socket context of a network protocol
@@ -270,12 +241,16 @@ typedef struct {
     // Function table
     int (*ack)(void* context);
     void (*update)(void* context, bool should_recv);
+    WhistPacket* (*read_packet)(void* context, bool should_recv);
     void* (*get_packet)(void* context, WhistPacketType type);
     void (*free_packet)(void* context, WhistPacket* packet);
     int (*send_packet)(void* context, WhistPacketType type, void* data, int len, int id);
     bool (*needs_stream_reset)(void* context);
     void (*destroy_socket_context)(void* context);
 } SocketContext;
+
+// needed for handshake_private_key
+typedef struct SocketContextData SocketContextData;
 
 /*
 ============================

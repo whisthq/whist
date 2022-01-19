@@ -9,6 +9,8 @@
 
 #define MAX_PACKETS (get_num_fec_packets(max(MAX_VIDEO_PACKETS, MAX_AUDIO_PACKETS), MAX_FEC_RATIO))
 
+extern volatile double latency;
+
 void reset_ring_buffer(RingBuffer* ring_buffer);
 void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int num_fec_indices);
 
@@ -134,7 +136,7 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer) {
 #define MAX_UNSYNCED_FRAMES 4
 #define MAX_TO_RENDER_STALENESS 100.0
     // Try to nack for any missing packets
-    bool nacking_succeeded = try_nacking(video_context->ring_buffer, latency);
+    bool nacking_succeeded = try_nacking(ring_buffer, latency);
 
     // Get how stale the frame we're trying to render is
     double next_to_render_staleness = -1.0;
@@ -156,21 +158,20 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer) {
         // Throttle the requests to prevent network upload saturation, however
         // TODO: change this to a UDP stream reset request
         if (get_timer(ring_buffer->last_stream_reset_request_timer) >
-            IFRAME_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
+                STREAM_RESET_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
             ring_buffer->request_stream_reset(ring_buffer->type, max(next_render_id, ring_buffer->max_id - 1));
         }
-            LOG_INFO(
+        LOG_INFO(
                 "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
                 "and the frame we're trying to render has been alive for %fms. "
                 "A stream reset is now being requested to catch-up.",
                 ring_buffer->max_id,
                 ring_buffer->max_id - ring_buffer->last_rendered_id,
                 next_to_render_staleness * MS_IN_SECOND);
-            start_timer(&ring_buffer->last_stream_reset_request_timer);
-        }
+        start_timer(&ring_buffer->last_stream_reset_request_timer);
     }
 }
-            
+
 
 FrameData* get_frame_at_id(RingBuffer* ring_buffer, int id) {
     /*
@@ -378,7 +379,6 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
         // This packet is newer than the resident,
         // so it's time to overwrite the resident if such a resident exists
         if (frame_data->id != -1) {
-            num_overwritten_frames = 1;
             if (frame_data->id > ring_buffer->currently_rendering_id) {
                 // We have received a packet which will overwrite a frame that needs to be rendered
                 // in the future. In other words, the ring buffer is full, so we should wipe the
