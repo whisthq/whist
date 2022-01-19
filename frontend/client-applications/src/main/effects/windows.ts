@@ -23,6 +23,7 @@ import {
   createLicenseWindow,
   createImportWindow,
   getWindowByHash,
+  relaunch
 } from "@app/main/utils/windows"
 import { persistGet, persistSet } from "@app/main/utils/persist"
 import { internetWarning, rebootWarning } from "@app/main/utils/notification"
@@ -65,8 +66,7 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
 const sleep = () => {
   logBase("Application quitting", {})
   protocolStreamKill()
-  app?.dock?.setIcon(iconPath())
-  app?.dock?.show().catch((err) => console.error(err))
+  relaunch({ args: process.argv.slice(1).concat(["--sleep"]) })
 }
 
 const allWindowsClosed = fromTrigger(WhistTrigger.windowInfo).pipe(

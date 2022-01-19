@@ -10,7 +10,7 @@ import { merge } from "rxjs"
 import { take } from "rxjs/operators"
 import Sentry from "@sentry/electron"
 
-import { relaunch, createOnboardingWindow } from "@app/main/utils/windows"
+import { relaunch, createOnboardingWindow, closeAllWindows } from "@app/main/utils/windows"
 import { fromTrigger } from "@app/main/utils/flows"
 import { persistGet, persistClear } from "@app/main/utils/persist"
 import { withAppReady } from "@app/main/utils/observables"
@@ -35,16 +35,13 @@ fromTrigger(WhistTrigger.clearCacheAction).subscribe(() => {
     .clearStorageData()
     .catch((err) => Sentry.captureException(err))
   // Restart the app
-  protocolStreamKill()
-  relaunch()
+  closeAllWindows()
 })
 
 merge(
   fromTrigger(WhistTrigger.relaunchAction),
-  fromTrigger(WhistTrigger.reactivated)
 ).subscribe(() => {
-  protocolStreamKill()
-  relaunch()
+  closeAllWindows()
 })
 
 withAppReady(fromTrigger(WhistTrigger.authFlowSuccess))
@@ -63,8 +60,4 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
   app.on("second-instance", (e) => {
     e.preventDefault()
   })
-})
-
-fromTrigger(WhistTrigger.appReady).subscribe(() => {
-  app?.dock?.setIcon(iconPath())
 })
