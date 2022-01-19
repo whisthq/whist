@@ -27,6 +27,7 @@ import {
   timezone,
   keyRepeat,
   initialKeyRepeat,
+  userAgent,
 } from "@app/main/utils/state"
 import { ONBOARDED } from "@app/constants/store"
 import {
@@ -126,6 +127,7 @@ const launchTrigger = emitOnSignal(
     timezone,
     keyRepeat,
     initialKeyRepeat,
+    userAgent,
   }),
   merge(
     zip(

@@ -40,11 +40,23 @@ const isNewConfigToken = of(persistGet(CACHED_CONFIG_TOKEN) ?? "").pipe(
   map((x) => x === "")
 )
 
+const getUserAgent = () => {
+  if (process.platform === "linux") {
+    return "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
+  } else if (process.platform === "darwin") {
+    return "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
+  } else {
+    return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
+  }
+}
+
 // JSON transport state e.g. system settings
 const darkMode = withAppReady(of(nativeTheme.shouldUseDarkColors))
 const timezone = of(Intl.DateTimeFormat().resolvedOptions().timeZone)
 const keyRepeat = of(getKeyRepeat())
 const initialKeyRepeat = of(getInitialKeyRepeat())
+
+const userAgent = of(getUserAgent())
 
 export {
   sleep,
@@ -57,4 +69,5 @@ export {
   timezone,
   keyRepeat,
   initialKeyRepeat,
+  userAgent,
 }
