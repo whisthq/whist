@@ -25,6 +25,7 @@ DESIRED_TIMEZONE=Etc/UTC
 INITIAL_KEY_REPEAT=68 # default value on macOS, options are 120, 94, 68, 35, 25, 15
 KEY_REPEAT=6 # default value on macOS, options are 120, 90, 60, 30, 12, 6, 2
 INITIAL_URL=""
+USER_AGENT=""
 
 WHIST_JSON_FILE=/whist/resourceMappings/config.json
 if [[ -f $WHIST_JSON_FILE ]]; then
@@ -51,6 +52,9 @@ if [[ -f $WHIST_JSON_FILE ]]; then
   if [ "$( jq -rc 'has("initial_url")' < $WHIST_JSON_FILE )" == "true"  ]; then
     RECEIVED_URL="$(jq -rc '.initial_url' < $WHIST_JSON_FILE)"
   fi
+  if [ "$( jq -rc 'has("user_agent")' < $WHIST_JSON_FILE )" == "true"  ]; then
+    USER_AGENT="$(jq -rc '.user_agent' < $WHIST_JSON_FILE)"
+  fi
 fi
 
 export DARK_MODE=$DARK_MODE
@@ -59,9 +63,10 @@ export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
 # in order to automatically adjust the timezone at the lower layers
 export TZ=$DESIRED_TIMEZONE
 export INITIAL_URL=$INITIAL_URL
+export USER_AGENT=$USER_AGENT
 export SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT:-}
 
-exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,INITIAL_URL,SENTRY_ENVIRONMENT -c \
+exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,INITIAL_URL,USER_AGENT,SENTRY_ENVIRONMENT -c \
   'DISPLAY=:10 \
     LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
     LOCAL=yes \
