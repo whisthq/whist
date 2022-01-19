@@ -425,7 +425,6 @@ jobs:
           from notifications.slack_bot import slack_post
 
           SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
-          SLACK_CHANNEL = "#alerts-prod"
           TITLE = ":openssl: Whist Protocol Dependencies Deployed :openssl:"
           BODY = f"Whist `Sentry` & `OpenSSL` Libraries deployed to Production via upload to AWS S3 (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
 

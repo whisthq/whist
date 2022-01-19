@@ -221,7 +221,6 @@ jobs:
 
           if dev_instances or staging_instances or prod_instances:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
-            SLACK_CHANNEL = "#alerts-dev"
 
             stages = {'dev': dev_instances, 'staging': staging_instances, 'prod': prod_instances}
 
