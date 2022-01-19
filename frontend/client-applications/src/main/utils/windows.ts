@@ -442,7 +442,7 @@ export const createProtocolWindow = async () => {
 export const relaunch = (options?: { args: string[] }) => {
   protocolStreamKill()
   options === undefined ? app.relaunch() : app.relaunch(options)
-  app.exit()
+  app.quit()
 }
 
 export const createUpdateWindow = () =>

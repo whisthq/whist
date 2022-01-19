@@ -29,7 +29,7 @@ const Loading = (props: {
           </kbd>
         </div>
         <div className="text-gray-500 text-sm mt-2">
-          to view settings when launched
+          to view settings when connected
         </div>
       </div>
     </div>

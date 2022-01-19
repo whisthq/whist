@@ -14,6 +14,8 @@ import { WhistTrigger } from "@app/constants/triggers"
 import { withAppReady } from "@app/main/utils/observables"
 import { getInitialKeyRepeat, getKeyRepeat } from "@app/main/utils/keyRepeat"
 
+const sleep = of(process.argv[process.argv.length - 1] === "--sleep")
+
 const accessToken = fromTrigger(WhistTrigger.storeDidChange).pipe(
   map(() => (persistGet(CACHED_ACCESS_TOKEN) as string) ?? ""),
   startWith(persistGet(CACHED_ACCESS_TOKEN) ?? "")
@@ -45,6 +47,7 @@ const keyRepeat = of(getKeyRepeat())
 const initialKeyRepeat = of(getInitialKeyRepeat())
 
 export {
+  sleep,
   accessToken,
   refreshToken,
   userEmail,

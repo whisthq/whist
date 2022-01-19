@@ -17,6 +17,7 @@ import {
 import { persistGet } from "@app/main/utils/persist"
 import { WhistTrigger } from "@app/constants/triggers"
 import {
+  sleep,
   accessToken,
   refreshToken,
   userEmail,
@@ -43,16 +44,22 @@ const awsPing = awsPingFlow(of(null))
 
 // Auth flow
 const auth = authFlow(
-  merge(
-    fromTrigger(WhistTrigger.authInfo),
-    combineLatest({
-      accessToken,
-      refreshToken,
-      userEmail,
-      configToken,
-    }).pipe(
-      take(1),
-      filter((auth) => isEmpty(pickBy(auth, (x) => x === "")))
+  emitOnSignal(
+    merge(
+      fromTrigger(WhistTrigger.authInfo),
+      combineLatest({
+        accessToken,
+        refreshToken,
+        userEmail,
+        configToken,
+      }).pipe(
+        take(1),
+        filter((auth) => isEmpty(pickBy(auth, (x) => x === "")))
+      )
+    ),
+    merge(
+      sleep.pipe(filter((sleep) => !sleep)),
+      fromTrigger(WhistTrigger.reactivated)
     )
   )
 )

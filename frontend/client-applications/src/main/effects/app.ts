@@ -17,8 +17,6 @@ import { withAppReady } from "@app/main/utils/observables"
 import { ONBOARDED } from "@app/constants/store"
 import { WhistTrigger } from "@app/constants/triggers"
 import { networkAnalyze } from "@app/main/utils/networkAnalysis"
-import { protocolStreamKill } from "@app/main/utils/protocol"
-import { iconPath } from "@app/config/files"
 
 // If an update is available, show the update window and download the update
 fromTrigger(WhistTrigger.updateAvailable).subscribe(() => {
@@ -35,15 +33,10 @@ fromTrigger(WhistTrigger.clearCacheAction).subscribe(() => {
     .clearStorageData()
     .catch((err) => Sentry.captureException(err))
   // Restart the app
-  protocolStreamKill()
   relaunch()
 })
 
-merge(
-  fromTrigger(WhistTrigger.relaunchAction),
-  fromTrigger(WhistTrigger.reactivated)
-).subscribe(() => {
-  protocolStreamKill()
+merge(fromTrigger(WhistTrigger.relaunchAction)).subscribe(() => {
   relaunch()
 })
 
@@ -63,8 +56,4 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
   app.on("second-instance", (e) => {
     e.preventDefault()
   })
-})
-
-fromTrigger(WhistTrigger.appReady).subscribe(() => {
-  app?.dock?.setIcon(iconPath())
 })

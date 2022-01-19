@@ -1,6 +1,12 @@
 import { app, Notification } from "electron"
-import { withLatestFrom, throttle, filter, take } from "rxjs/operators"
-import { interval, of } from "rxjs"
+import {
+  withLatestFrom,
+  throttle,
+  filter,
+  take,
+  takeUntil,
+} from "rxjs/operators"
+import { interval, of, merge } from "rxjs"
 import Sentry from "@sentry/electron"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
@@ -23,13 +29,11 @@ import {
   createLicenseWindow,
   createImportWindow,
   getWindowByHash,
+  relaunch,
 } from "@app/main/utils/windows"
 import { persistGet, persistSet } from "@app/main/utils/persist"
 import { internetWarning, rebootWarning } from "@app/main/utils/notification"
-import {
-  protocolStreamInfo,
-  protocolStreamKill,
-} from "@app/main/utils/protocol"
+import { protocolStreamInfo } from "@app/main/utils/protocol"
 import { WhistTrigger } from "@app/constants/triggers"
 import {
   CACHED_ACCESS_TOKEN,
@@ -45,7 +49,6 @@ import { AWSRegion } from "@app/@types/aws"
 import { LOCATION_CHANGED_ERROR } from "@app/constants/error"
 import { accessToken } from "@whist/core-ts"
 import { openSourceUrl } from "@app/constants/app"
-import { iconPath } from "@app/config/files"
 
 // Keeps track of how many times we've tried to relaunch the protocol
 const MAX_RETRIES = 3
@@ -62,13 +65,6 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
   rebootNotification = rebootWarning()
 })
 
-const sleep = () => {
-  logBase("Application quitting", {})
-  protocolStreamKill()
-  app?.dock?.setIcon(iconPath())
-  app?.dock?.show().catch((err) => console.error(err))
-}
-
 const allWindowsClosed = fromTrigger(WhistTrigger.windowInfo).pipe(
   filter(
     (args: {
@@ -80,22 +76,31 @@ const allWindowsClosed = fromTrigger(WhistTrigger.windowInfo).pipe(
   )
 )
 
-allWindowsClosed.subscribe(
-  (args: {
-    crashed: boolean
-    numberWindowsRemaining: number
-    hash: string
-    event: string
-  }) => {
-    // If they didn't crash out and didn't fill out the exit survey, show it to them
-    if (
-      args.hash !== WindowHashProtocol ||
-      (args.hash === WindowHashProtocol && !args.crashed)
-    ) {
-      sleep()
+allWindowsClosed
+  .pipe(
+    takeUntil(
+      merge(
+        fromTrigger(WhistTrigger.relaunchAction),
+        fromTrigger(WhistTrigger.clearCacheAction)
+      )
+    )
+  )
+  .subscribe(
+    (args: {
+      crashed: boolean
+      numberWindowsRemaining: number
+      hash: string
+      event: string
+    }) => {
+      if (
+        args.hash !== WindowHashProtocol ||
+        (args.hash === WindowHashProtocol && !args.crashed)
+      ) {
+        logBase("Application quitting", {})
+        relaunch({ args: process.argv.slice(1).concat(["--sleep"]) })
+      }
     }
-  }
-)
+  )
 
 fromTrigger(WhistTrigger.windowInfo)
   .pipe(
@@ -147,7 +152,7 @@ fromTrigger(WhistTrigger.networkUnstable)
     if (!unstable) internetNotification?.close()
   })
 
-fromTrigger(WhistTrigger.appReady).subscribe(() => {
+withAppReady(of(null)).subscribe(() => {
   const authCache = {
     accessToken: (persistGet(CACHED_ACCESS_TOKEN) ?? "") as string,
     refreshToken: (persistGet(CACHED_REFRESH_TOKEN) ?? "") as string,
