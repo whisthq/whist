@@ -133,8 +133,8 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND ${CMAKE_BUILD_TYPE} MATCHES "Release")
     add_custom_command(
             TARGET WhistClient POST_BUILD
-            COMMAND dsymutil ${CMAKE_BINARY_DIR}/client/build${arch}/WhistClient -o ${CMAKE_BINARY_DIR}/client/build${arch}/WhistClient.debug
-            COMMAND strip ${CMAKE_BINARY_DIR}/client/build${arch}/WhistClient)
+            COMMAND /usr/bin/dsymutil ${CMAKE_BINARY_DIR}/client/build${arch}/WhistClient -o ${CMAKE_BINARY_DIR}/client/build${arch}/WhistClient.debug
+            COMMAND /usr/bin/strip ${CMAKE_BINARY_DIR}/client/build${arch}/WhistClient)
 endif()
 
 
