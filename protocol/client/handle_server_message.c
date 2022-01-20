@@ -99,28 +99,6 @@ int handle_server_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
     }
 }
 
-static int handle_pong_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
-    /*
-        Handle server pong message
-
-        Arguments:
-            wsmsg (WhistServerMessage*): server pong message
-            wsmsg_size (size_t): size of the packet message contents
-
-        Return:
-            (int): 0 on success, -1 on failure
-    */
-
-    if (wsmsg_size != sizeof(WhistServerMessage)) {
-        LOG_ERROR(
-            "Incorrect message size for a server message"
-            " (type: pong message)!");
-        return -1;
-    }
-    receive_pong(wsmsg->ping_id);
-    return 0;
-}
-
 static int handle_tcp_pong_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
     /*
         Handle server TCP pong message

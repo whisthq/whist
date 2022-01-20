@@ -263,41 +263,6 @@ static int handle_network_settings_message(whist_server_state *state, WhistClien
     return 0;
 }
 
-static int handle_ping_message(Client *client, WhistClientMessage *wcmsg) {
-    /*
-        Handle a client ping (alive) message.
-
-        Arguments:
-            wcmsg (WhistClientMessage*): message package from client
-
-        Returns:
-            (int): Returns -1 on failure, 0 on success
-    */
-
-    LOG_INFO("Ping Received - Ping ID %d", wcmsg->ping_data.id);
-
-    // Update ping timer
-    start_timer(&client->last_ping);
-
-    // Send pong reply
-    WhistServerMessage fsmsg_response = {0};
-    fsmsg_response.type = MESSAGE_PONG;
-    fsmsg_response.ping_id = wcmsg->ping_data.id;
-    timestamp_us server_time = current_time_us();
-    whist_lock_mutex(client->timestamp_mutex);
-    client->last_ping_client_time = wcmsg->ping_data.original_timestamp;
-    client->last_ping_server_time = server_time;
-    whist_unlock_mutex(client->timestamp_mutex);
-
-    if (send_packet(&client->udp_context, PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
-                    sizeof(fsmsg_response), 1) < 0) {
-        LOG_WARNING("Failed to send UDP pong");
-        return -1;
-    }
-
-    return 0;
-}
-
 static int handle_tcp_ping_message(Client *client, WhistClientMessage *wcmsg) {
     /*
         Handle a client TCP ping message.

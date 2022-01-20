@@ -31,12 +31,7 @@ Includes
 // Updater variables
 extern SocketContext packet_udp_context;
 extern SocketContext packet_tcp_context;
-bool connected = true;  // The state of the client, i.e. whether it's connected to a server or not
-// Ping variables
-WhistTimer last_ping_timer;
-volatile int last_udp_ping_id;
-volatile int last_udp_pong_id;
-volatile int udp_ping_failures;
+volatile bool connected = true;  // The state of the client, i.e. whether it's connected to a server or not
 // TCP ping variables
 WhistTimer last_tcp_ping_timer;
 volatile int last_tcp_ping_id;
@@ -53,54 +48,6 @@ static bool run_sync_packets_threads;
 Private Function Implementations
 ============================
 */
-
-void update_ping() {
-    /*
-       Check if we should send more pings, disconnect, etc. If no valid pong has been received for
-       600ms, we mark that as a ping failure. If we successfully received a pong and it has been
-       500ms since the last ping, we send the next ping. Otherwise, if we haven't yet received a
-       pong and it has been 210 ms, resend the ping.
-    */
-
-    static WhistTimer last_new_ping_timer;
-    static bool timer_initialized = false;
-    if (!timer_initialized) {
-        start_timer(&last_new_ping_timer);
-        timer_initialized = true;
-    }
-
-    // If it's been 1 second since the last ping, we should warn
-    if (get_timer(&last_ping_timer) > 1.0) {
-        LOG_WARNING("No ping sent or pong received in over a second");
-    }
-
-    // If we're waiting for a ping, and it's been 600ms, then that ping will be
-    // noted as failed
-    if (last_udp_ping_id != last_udp_pong_id && get_timer(&last_new_ping_timer) > 0.6) {
-        LOG_WARNING("Ping received no response: %d", last_udp_ping_id);
-        // Keep track of failures, and exit if too many failures
-        last_udp_pong_id = last_udp_ping_id;
-        ++udp_ping_failures;
-        if (udp_ping_failures == 3) {
-            // we make this a LOG_WARNING so it doesn't clog up Sentry, as this
-            // error happens periodically but we have recovery systems in place
-            // for streaming interruption/connection loss
-            LOG_WARNING("Server disconnected: 3 consecutive ping failures.");
-            connected = false;
-        }
-    }
-
-    // if we've received the last ping, send another
-    if (last_udp_ping_id == last_udp_pong_id && get_timer(&last_ping_timer) > 0.5) {
-        send_ping(last_udp_ping_id + 1);
-        start_timer(&last_new_ping_timer);
-    }
-
-    // if we haven't received the last ping, send the same ping
-    if (last_udp_ping_id != last_udp_pong_id && get_timer(&last_ping_timer) > 0.21) {
-        send_ping(last_udp_ping_id);
-    }
-}
 
 void update_tcp_ping() {
     /*

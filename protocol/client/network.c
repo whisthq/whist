@@ -44,12 +44,10 @@ extern char *server_ip;
 int uid;
 extern bool using_stun;
 
-volatile double latency;
 extern WhistTimer last_ping_timer;
 extern volatile int last_udp_ping_id;
 extern volatile int udp_ping_failures;
 extern volatile int last_udp_pong_id;
-const double ping_lambda = 0.8;
 
 extern WhistTimer last_tcp_ping_timer;
 extern volatile int last_tcp_ping_id;
@@ -205,28 +203,6 @@ void send_tcp_ping(int ping_id) {
     }
     last_tcp_ping_id = ping_id;
     start_timer(&last_tcp_ping_timer);
-}
-
-void receive_pong(int pong_id) {
-    /*
-        Mark the ping with ID pong_id as received, and warn if pong_id is outdated.
-
-        Arguments:
-            pong_id (int): ID of pong to receive
-    */
-    if (pong_id == last_udp_ping_id) {
-        // the server received the last ping we sent!
-        double ping_time = get_timer(&last_ping_timer);
-        LOG_INFO("Pong %d received: took %f milliseconds", pong_id, ping_time * MS_IN_SECOND);
-        log_double_statistic(NETWORK_RTT_UDP, ping_time * MS_IN_SECOND);
-
-        latency = ping_lambda * latency + (1 - ping_lambda) * ping_time;
-        udp_ping_failures = 0;
-
-        last_udp_pong_id = pong_id;
-    } else {
-        LOG_WARNING("Received old pong (ID %d), expected ID %d", pong_id, last_udp_ping_id);
-    }
 }
 
 void receive_tcp_pong(int pong_id) {

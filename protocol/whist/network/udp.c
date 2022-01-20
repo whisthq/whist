@@ -235,6 +235,8 @@ static int get_udp_packet_size(UDPPacket* udp_packet);
  */
 static int udp_ack(UDPContext* context);
 
+static void udp_update_ping(UDPContext* context);
+
 /*
 ============================
 UDP Implementation of Network.h Interface
@@ -251,6 +253,8 @@ void udp_update(void* raw_context, bool should_recv) {
 
     // Keeps the connection alive
     udp_ack(context);
+    // Check if we need to ping
+    udp_update_ping(context);
 
     // first, try recovering packets
     for (int i = 0; i < NUM_PACKET_TYPES; i++) {
