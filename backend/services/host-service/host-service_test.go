@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"io/ioutil"
-	"os"
 	"path"
 	"strconv"
 	"sync"
@@ -474,94 +473,6 @@ func TestSpinUpMandelbox(t *testing.T) {
 				t.Errorf("Config ready file contains invalid contents: %s", string(configReadyFileContents))
 			}
 		})
-	}
-}
-
-// TestSpinUpWithNewToken tests a mandelbox spinup with the new token flag set
-// and ensures that the old user config is overwritten.
-func TestSpinUpWithNewToken(t *testing.T) {
-	oldCtx, oldCancel := context.WithCancel(context.Background())
-	oldGoroutineTracker := sync.WaitGroup{}
-
-	// We always want to start with a clean slate
-	uninitializeFilesystem()
-	initializeFilesystem(oldCancel)
-	defer uninitializeFilesystem()
-
-	testUser := "testSpinUpWithNewTokenUser"
-	testID := utils.PlaceholderTestUUID()
-	oldID := utils.PlaceholderWarmupUUID()
-
-	// Upload a test config to S3 with an old token
-	oldMandelboxData := mandelbox.New(oldCtx, &oldGoroutineTracker, mandelboxtypes.MandelboxID(oldID))
-	oldMandelboxData.AssignToUser(mandelboxtypes.UserID(testUser))
-	oldMandelboxData.SetAppName("browsers/chrome")
-	oldMandelboxData.SetConfigEncryptionToken("oldToken1234")
-
-	// Manually create user config files
-	err := oldMandelboxData.SetupUserConfigDirs()
-	if err != nil {
-		t.Fatalf("failed to setup user config directories: %v", err)
-	}
-
-	configDir := utils.Sprintf("%s%v/%s/%s", utils.WhistDir, oldID, "userConfigs", "unpacked_configs")
-	fileContents := "This file should never be seen."
-	err = os.WriteFile(path.Join(configDir, "testFile.txt"), []byte(fileContents), 0777)
-	if err != nil {
-		t.Fatalf("failed to write to test file: %v", err)
-	}
-
-	// Tear down the old container before starting the new one
-	// Cancelling the old context will cause the old user configs to be backed up with the given token
-	oldCancel()
-	cancelMandelboxContextByID(mandelboxtypes.MandelboxID(oldID))
-	oldGoroutineTracker.Wait()
-
-	// Set up a new mandelbox
-	testMandelboxInfo := subscriptions.Mandelbox{
-		ID:        mandelboxtypes.MandelboxID(testID),
-		SessionID: "1234",
-		UserID:    mandelboxtypes.UserID(testUser),
-	}
-	testMandelboxDBEvent := subscriptions.MandelboxEvent{
-		MandelboxInfo: []subscriptions.Mandelbox{testMandelboxInfo},
-	}
-	testJSONTransportRequest := JSONTransportRequest{
-		ConfigEncryptionToken: "newToken1234",
-		JwtAccessToken:        "test_jwt_token",
-		MandelboxID:           mandelboxtypes.MandelboxID(testID),
-		JSONData:              "test_json_data",
-		IsNewConfigToken:      true,
-		resultChan:            make(chan requestResult),
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	goroutineTracker := sync.WaitGroup{}
-
-	// Defer the wait first since deferred functions are executed in LIFO order.
-	defer goroutineTracker.Wait()
-	defer cancelMandelboxContextByID(mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()))
-	defer cancel()
-
-	testmux := &sync.Mutex{}
-	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
-
-	dockerClient := mockClient{}
-	go handleJSONTransportRequest(&testJSONTransportRequest, testTransportRequestMap, testmux)
-	go SpinUpMandelbox(ctx, cancel, &goroutineTracker, &dockerClient, &testMandelboxDBEvent, testTransportRequestMap, testmux)
-
-	<-testJSONTransportRequest.resultChan
-
-	// If decryption was skipped as it should, the unpacked_configs directory should exist
-	// but the test file should not be there.
-	newConfigDir := utils.Sprintf("%s%v/%s/%s", utils.WhistDir, testID, "userConfigs", "unpacked_configs")
-	_, err = os.Stat(newConfigDir)
-	if err != nil {
-		t.Errorf("unpacked_configs directory does not exist but it should")
-	}
-	_, err = os.Stat(path.Join(newConfigDir, "testFile.txt"))
-	if err == nil || !os.IsNotExist(err) {
-		t.Errorf("testFile.txt should not exist but it does")
 	}
 }
 

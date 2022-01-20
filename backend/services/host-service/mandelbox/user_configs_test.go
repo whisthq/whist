@@ -136,8 +136,12 @@ func TestUserConfigIntegration(t *testing.T) {
 
 			// In all but the happy-path case, we expect to have set up the
 			// "last-resort" empty config dirs.
-			if _, err := os.Stat(unpackedConfigPath); err != nil {
-				t.Fatalf("Last-resort empty user config directories not created properly!")
+			contents, err := os.ReadDir(unpackedConfigPath)
+			if err != nil {
+				t.Fatalf("Last-resort user config directories not created properly!")
+			}
+			if len(contents) > 0 {
+				t.Fatalf("Last-resort unpacked user config directory not empty as it should be!")
 			}
 		}
 	}
