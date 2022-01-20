@@ -324,7 +324,7 @@ func (mandelbox *mandelboxData) receiveAndSanityCheckEncryptionToken(uncheckedTo
 		return &encryptionInfo, utils.MakeError("Encryption token for user %s for mandelbox %s is empty!", mandelbox.GetUserID(), mandelbox.GetID())
 	}
 
-	if len(encryptionInfo.Token) < 20 {
+	if len(encryptionInfo.Token) < 15 {
 		return &encryptionInfo, utils.MakeError("Encryption token for user %s for mandelbox %s is way too short (length %v)", mandelbox.GetUserID(), mandelbox.GetID(), len(encryptionInfo.Token))
 	}
 
