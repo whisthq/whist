@@ -51,14 +51,14 @@ func (mandelbox *mandelboxData) WriteUserInitialBrowserData(initialBrowserData B
 	data, err := json.Marshal(initialBrowserData)
 
 	if err != nil {
-		return utils.MakeError("Could not marshal inipialBrowserData: %v", initialBrowserData)
+		return utils.MakeError("Could not marshal initialBrowserData: %v", initialBrowserData)
 	}
 
 	filePath := path.Join(destDir, UserInitialBrowserFile)
 
 	// Save the browser data into a file
 	if err := utils.WriteToNewFile(filePath, string(data)); err != nil {
-		logger.Errorf("could not create %s file. Error: %v", filePath, err)
+		return utils.MakeError("could not create %s file. Error: %v", filePath, err)
 	}
 
 	logger.Infof("Finished storing user initial browser data.")

@@ -13,6 +13,12 @@ import (
 // TestUserInitialBrowserWrite checks if the browser data is properly created by
 // calling the write function and comparing results with a manually generated cookie file
 func TestUserInitialBrowserWrite(t *testing.T) {
+	testMbox, _, _ := createTestMandelboxData()
+
+	// Reset filesystem now, and at the end of this test
+	os.RemoveAll(testMbox.GetUserConfigDir())
+	defer os.RemoveAll(testMbox.GetUserConfigDir())
+
 	// Define browser data
 	testCookie1 := "{'creation_utc': 13280861983875934, 'host_key': 'test_host_key_1.com'}"
 	testCookie2 := "{'creation_utc': 4228086198342934, 'host_key': 'test_host_key_2.com'}"
@@ -31,9 +37,6 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 
 	// Explicitly set the result to what we expect
 	testFileContent := utils.Sprintf(`{"cookiesJSON":"%s","extensions":"%s"}`, cookiesJSON, extensions)
-
-	testMbox, _, _ := createTestMandelboxData()
-	defer os.RemoveAll(testMbox.GetUserConfigDir())
 
 	if err := testMbox.WriteUserInitialBrowserData(userInitialBrowserData); err != nil {
 		t.Fatalf("error writing user initial browser data: %v", err)
@@ -62,6 +65,9 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 // TestUserInitialBrowserWriteEmpty checks if passing empty browser data will result in an empty json file
 func TestUserInitialBrowserWriteEmpty(t *testing.T) {
 	testMbox, _, _ := createTestMandelboxData()
+
+	// Reset filesystem now, and at the end of this test
+	os.RemoveAll(testMbox.GetUserConfigDir())
 	defer os.RemoveAll(testMbox.GetUserConfigDir())
 
 	// Empty browser data will generate an empty json file
