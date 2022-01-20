@@ -532,6 +532,13 @@ int32_t multithreaded_send_video(void* opaque) {
         client_input_timestamp += (server_timestamp - state->client.last_ping_server_time);
         whist_unlock_mutex(state->client.timestamp_mutex);
 
+        // check if the client has sent any stream reset requests for video
+        StreamResetData stream_reset_data = udp_get_pending_stream_reset_request(&state->client.udp_context, PACKET_VIDEO);
+        if (stream_reset_data.pending_stream_reset) {
+            state->wants_iframe = true;
+            state->last_failed_id = stream_reset_data.greatest_failed_id;
+        }
+
         // SENDING LOGIC:
         // first, we call capture_screen, which returns how many frames have passed since the last
         // call to capture_screen, If we are using Nvidia, the captured frame is also

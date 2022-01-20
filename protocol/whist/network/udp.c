@@ -110,6 +110,11 @@ typedef struct {
 // Size of the UDPPacket header, excluding the payload
 #define UDPNETWORKPACKET_HEADER_SIZE ((int)sizeof(UDPNetworkPacket) - (int)sizeof((UDPNetworkPacket){0}.payload))
 
+struct StreamResetData {
+    bool pending_stream_reset;
+    int greatest_failed_id;
+}
+
 // An instance of the UDP Context
 typedef struct {
     int timeout;
@@ -132,6 +137,8 @@ typedef struct {
     RingBuffer* ring_buffers[NUM_PACKET_TYPES];
     // because we don't need to buffer messages
     WhistPacket last_packets[NUM_PACKET_TYPES];
+    // Stream reset data for each type
+    StreamResetData reset_data[NUM_PACKET_TYPES];
 } UDPContext;
 
 // Define how many times to retry sending a UDP packet in case of Error 55 (buffer full). The
@@ -1053,8 +1060,21 @@ int udp_handle_message(UDPContext* context, UDPPacket* packet) {
     }
 }
 
-int udp_handle_stream_reset(UDPContext* context, WhistPacketType type, int greatest_failed_id) {
-    // TODO: NEED TO ALLOW ACCESS TO SERVER STATE SOMEHOW
+StreamResetData udp_get_pending_stream_reset_request(SocketContext* socket_context, WhistPacketType type) {
+    UDPContext* context = (UDPContext*)socket_context->context;
+    StreamResetData data = {0};
+    data.pending_stream_reset = reset_data[type].pending_stream_reset;
+    data.greatest_failed_id = reset_data[type].greatest_failed_id;
+    if (reset_data[type].pending_stream_reset) {
+        // server has receeived the stream reset request
+        reset_data[type].pending_stream_reset = false;
+    }
+    return data;
+}
+
+void udp_handle_stream_reset(UDPContext* context, WhistPacketType type, int greatest_failed_id) {
+    context->reset_data[type].pending_stream_reset = true;
+    context->reset_data[type].greatest_failed_id = max(greatest_failed_id, context->reset_data[type].greatest_failed_id);
 }
 
 int udp_nack_packet(SocketContext* socket_context, WhistPacketType type, int id, int index) {

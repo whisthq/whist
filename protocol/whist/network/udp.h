@@ -121,5 +121,14 @@ int udp_request_stream_reset(SocketContext* context, WhistPacketType type, int g
  */
 int udp_get_num_pending_frames(SocketContext* context, WhistPacketType type);
 
+/**
+ * @brief       Check if the context has received any stream reset requests for specified type
+ *
+ * @param socket_context    The socket context to check for reset requests
+ * @param type     The type of the packet stream
+ *
+ * @returns a StreamResetData struct indicating if there is a pending stearm request and the last failed ID from the client
+ */
+StreamResetData udp_get_pending_stream_reset_request(SocketContext* socket_context, WhistPacketType type) {
 
 #endif  // WHIST_UDP_H
