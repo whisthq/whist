@@ -13,7 +13,7 @@ import fs from "fs"
 import { spawn, ChildProcess } from "child_process"
 
 import { appEnvironment, WhistEnvironments } from "../../../config/configs"
-import { MAX_URL_LENGTH } from "@app/constants/app"
+import { sessionID, MAX_URL_LENGTH } from "@app/constants/app"
 import { electronLogPath } from "@app/main/utils/logging"
 import config, { loggingFiles } from "@app/config/environment"
 
@@ -49,10 +49,11 @@ const launchProtocol = async (info?: {
   }
 }) => {
   // Protocol arguments
-  // We send the environment so that the protocol can init sentry if necessary
   const protocolParameters = {
+    // If non-local, send the environment and session id for sentry
     ...(appEnvironment !== WhistEnvironments.LOCAL && {
       environment: config.deployEnv,
+      "session-id": sessionID,
     }),
   }
 

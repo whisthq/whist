@@ -57,8 +57,7 @@ Global Variables
 
 static char error_monitor_environment[WHIST_ARGS_MAXLEN + 1];
 static bool error_monitor_environment_set = false;
-static char error_monitor_session_id[WHIST_ARGS_MAXLEN + 1];
-static bool error_monitor_session_id_set = false;
+static char error_monitor_session_id[WHIST_ARGS_MAXLEN + 1] = {0};
 static bool error_monitor_initialized = false;
 static WhistTimer last_error_event_timer;
 
@@ -129,7 +128,6 @@ void whist_error_monitor_set_session_id(const char *session_id) {
     }
 
     safe_strncpy(error_monitor_session_id, session_id, sizeof(error_monitor_session_id));
-    error_monitor_session_id_set = true;
 }
 
 void whist_error_monitor_set_username(const char *username) {
@@ -211,7 +209,7 @@ void whist_error_monitor_initialize(bool is_client) {
     }
 
     // Set the session id that was set by whist_error_monitor_set_session_id()
-    if (error_monitor_session_id_set) {
+    if (error_monitor_session_id[0] != 0) {
         sentry_set_tag("session-id", error_monitor_session_id);
     } else {
         sentry_set_tag("session-id", "unknown");
