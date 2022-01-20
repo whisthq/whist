@@ -293,9 +293,7 @@ static const int windows_keycodes[KEYCODE_UPPERBOUND] = {
     VK_LAUNCH_MEDIA_SELECT  // 263 -> Media Select
 };
 
-void win_destroy_input_device(InputDeviceWin* input_device) {
-    free(input_device);
-}
+void win_destroy_input_device(InputDeviceWin* input_device) { free(input_device); }
 
 #define GetWindowsKeyCode(whist_keycode) windows_keycodes[whist_keycode]
 #define KEYPRESS_MASK 0x8000
@@ -481,17 +479,6 @@ static int win_emit_low_res_mouse_wheel_event(InputDeviceWin* input_device, int3
     return 0;
 }
 
-static int win_emit_high_res_mouse_wheel_event(InputDeviceWin* input_device, float x, float y) {
-    UNUSED(input_device);
-    UNUSED(x);
-    UNUSED(y);
-
-    LOG_WARNING(
-        "High resolution scroll not implemented for Windows servers! "
-        "Falling back to low-resolution scroll.");
-    return -1;
-}
-
 static int win_emit_multigesture_event(InputDeviceWin* input_device, float d_theta, float d_dist,
                                        WhistMultigestureType gesture_type, bool active_gesture) {
     UNUSED(input_device);
@@ -549,8 +536,7 @@ InputDevice* win_create_input_device(void) {
     base->emit_mouse_button_event = (InputDeviceEmitMouseButtonEventFn)win_emit_mouse_button_event;
     base->emit_low_res_mouse_wheel_event =
         (InputDeviceEmitLowResMouseWheelEventFn)win_emit_low_res_mouse_wheel_event;
-    base->emit_high_res_mouse_wheel_event =
-        (InputDeviceEmitHighResMouseWheelEventFn)win_emit_high_res_mouse_wheel_event;
+    base->emit_high_res_mouse_wheel_event = NULL;
     base->emit_multigesture_event = (InputDeviceEmitMultiGestureEventFn)win_emit_multigesture_event;
     base->destroy = (InputDeviceDestroyFn)win_destroy_input_device;
 

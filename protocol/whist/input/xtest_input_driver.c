@@ -416,16 +416,6 @@ static int xtest_emit_low_res_mouse_wheel_event(InputDeviceXTest* input_device, 
     return 0;
 }
 
-static int xtest_emit_high_res_mouse_wheel_event(InputDeviceXTest* input_device, float x, float y) {
-    UNUSED(input_device);
-    UNUSED(x);
-    UNUSED(y);
-    LOG_WARNING(
-        "High resolution scroll not implemented for the XTest driver! "
-        "Falling back to low-resolution scroll.");
-    return -1;
-}
-
 static int xtest_emit_multigesture_event(InputDeviceXTest* input_device, float d_theta,
                                          float d_dist, WhistMultigestureType gesture_type,
                                          bool active_gesture) {
@@ -460,8 +450,7 @@ InputDevice* xtest_create_input_device(void) {
         (InputDeviceEmitMouseButtonEventFn)xtest_emit_mouse_button_event;
     base->emit_low_res_mouse_wheel_event =
         (InputDeviceEmitLowResMouseWheelEventFn)xtest_emit_low_res_mouse_wheel_event;
-    base->emit_high_res_mouse_wheel_event =
-        (InputDeviceEmitHighResMouseWheelEventFn)xtest_emit_high_res_mouse_wheel_event;
+    base->emit_high_res_mouse_wheel_event = NULL;
     base->emit_multigesture_event =
         (InputDeviceEmitMultiGestureEventFn)xtest_emit_multigesture_event;
     base->destroy = (InputDeviceDestroyFn)xtest_destroy_input_device;

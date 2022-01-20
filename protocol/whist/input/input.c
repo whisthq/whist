@@ -189,13 +189,15 @@ bool replay_user_input(InputDevice* input_device, WhistClientMessage* fcmsg) {
                                           fcmsg->mouseButton.pressed);
             break;
         case MESSAGE_MOUSE_WHEEL:
-#if INPUT_DRIVER == UINPUT_INPUT_DRIVER
-            ret = emit_high_res_mouse_wheel_event(input_device, fcmsg->mouseWheel.precise_x,
-                                                  fcmsg->mouseWheel.precise_y);
-#else
-            ret = emit_low_res_mouse_wheel_event(input_device, fcmsg->mouseWheel.x,
-                                                 fcmsg->mouseWheel.y);
-#endif  // INPUT_DRIVER
+            if (input_device->emit_high_res_mouse_wheel_event) {
+                // Prefer the high res event, if it exists
+                ret = emit_high_res_mouse_wheel_event(input_device, fcmsg->mouseWheel.precise_x,
+                                                      fcmsg->mouseWheel.precise_y);
+            } else {
+                // Otherwise, pass in the low res mouse event
+                ret = emit_low_res_mouse_wheel_event(input_device, fcmsg->mouseWheel.x,
+                                                     fcmsg->mouseWheel.y);
+            }
             break;
         case MESSAGE_MULTIGESTURE:
             ret = emit_multigesture_event(
