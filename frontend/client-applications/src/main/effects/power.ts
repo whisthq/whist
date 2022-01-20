@@ -9,7 +9,6 @@ waitForSignal(
   fromTrigger(WhistTrigger.powerSuspend),
   fromTrigger(WhistTrigger.appReady)
 ).subscribe(() => {
-  createErrorWindow(WindowHashSleep)
   protocolStreamKill()
 })
 
