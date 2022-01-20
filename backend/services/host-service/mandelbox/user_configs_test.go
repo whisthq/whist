@@ -70,7 +70,10 @@ func TestUserConfigIntegration(t *testing.T) {
 
 	downloadTestNotNewToken := func(useOriginalToken bool, isNewToken bool) func(*testing.T) {
 		return func(t *testing.T) {
-			// Delete the user config directory so it can be recreated
+			// Delete the user config directory so it can be recreated. Note that we
+			// reuse `unpackedConfigPath` between the uploader and downloader
+			// mandelboxes, so we rely on the userIDs and mandelboxIDs being the
+			// same.
 			os.RemoveAll(unpackedConfigPath)
 
 			dCtx, dCancel := context.WithCancel(context.Background())
@@ -100,11 +103,26 @@ func TestUserConfigIntegration(t *testing.T) {
 				IsNewTokenAccordingToClientApp: isNewToken,
 			}
 
-			// Verify errors (or their absence) and config directory file paths depending on provided params
+			// Verify errors (or their absence) and config directory file paths
+			// depending on provided params
 			errCount := 0
 			for err := range errChan {
 				t.Log(err)
 				errCount++
+			}
+
+			if !isNewToken && useOriginalToken {
+				// We expect no errors, and for configs to be loaded fully.
+				if errCount != 0 {
+					t.Fatalf("Got errors with happy path configuration!")
+				}
+
+				destinationPath := path.Join(unpackedConfigPath, "testBase")
+				err = configutils.ValidateDirectoryContents(sourceDir, destinationPath)
+				if err != nil {
+					t.Fatalf("error validating directory contents: %v", err)
+				}
+				return
 			}
 
 			if isNewToken {
@@ -116,11 +134,10 @@ func TestUserConfigIntegration(t *testing.T) {
 				t.Fatalf("expected errors since invalid (not new) token supplied!")
 			}
 
-			// Verify that all files in original directory are still there and correct
-			destinationPath := path.Join(unpackedConfigPath, "testBase")
-			err = configutils.ValidateDirectoryContents(sourceDir, destinationPath)
-			if err != nil {
-				t.Fatalf("error validating directory contents: %v", err)
+			// In all but the happy-path case, we expect to have set up the
+			// "last-resort" empty config dirs.
+			if _, err := os.Stat(unpackedConfigPath); err != nil {
+				t.Fatalf("Last-resort empty user config directories not created properly!")
 			}
 		}
 	}
