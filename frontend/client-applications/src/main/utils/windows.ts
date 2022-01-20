@@ -51,6 +51,9 @@ const destroyElectronWindow = (hash: string) => {
   getElectronWindow(hash)?.destroy()
 }
 
+const isElectronWindowVisible = (hash: string) =>
+  getElectronWindow(hash)?.isVisible() ?? false
+
 const createElectronWindow = (args: {
   width: number
   height: number
@@ -102,4 +105,5 @@ export {
   showElectronWindow,
   destroyElectronWindow,
   createElectronWindow,
+  isElectronWindowVisible,
 }

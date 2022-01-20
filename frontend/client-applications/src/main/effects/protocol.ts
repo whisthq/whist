@@ -1,30 +1,38 @@
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file app.ts
- * @brief This file contains subscriptions to Observables related to protocol launching.
+ * @brief This file contains effects that deal with the protocol
  */
 
-import fs from "fs"
-import path from "path"
+import { app } from "electron"
 import { ChildProcess } from "child_process"
-import { of } from "rxjs"
-import { filter, withLatestFrom } from "rxjs/operators"
+import { fromEvent, of } from "rxjs"
+import {
+  filter,
+  withLatestFrom,
+  map,
+  take,
+  count,
+  switchMap,
+} from "rxjs/operators"
 
-import config, { loggingFiles } from "@app/config/environment"
-import { fromTrigger } from "@app/main/utils/flows"
+import { createTrigger, fromTrigger } from "@app/main/utils/flows"
 import {
   pipeNetworkInfo,
   pipeURLToProtocol,
   destroyProtocol,
   launchProtocol,
+  logProtocolStdoutLocally,
 } from "@app/main/utils/protocol"
 import { WhistTrigger } from "@app/constants/triggers"
-import { withAppActivated } from "@app/main/utils/observables"
-import {
-  electronLogPath,
-  protocolToLogz,
-  logBase,
-} from "@app/main/utils/logging"
+import { withAppActivated, emitOnSignal } from "@app/main/utils/observables"
+import { protocolToLogz } from "@app/main/utils/logging"
+
+const threeProtocolFailures = fromTrigger(WhistTrigger.protocolClosed).pipe(
+  filter((args: { crashed: boolean }) => args.crashed),
+  withLatestFrom(fromTrigger(WhistTrigger.mandelboxFlowSuccess)),
+  take(3)
+)
 
 // When launched from node.js, the protocol can take several seconds to spawn,
 // which we want to avoid.
@@ -58,24 +66,7 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess)
 fromTrigger(WhistTrigger.protocol)
   .pipe(filter((p) => p !== undefined))
   .subscribe(async (p) => {
-    // Create a pipe to the protocol logs file
-    if (!fs.existsSync(electronLogPath))
-      fs.mkdirSync(electronLogPath, { recursive: true })
-
-    const protocolLogFile = fs.createWriteStream(
-      path.join(electronLogPath, loggingFiles.protocol)
-    )
-
-    // In order to pipe a child process to this stream, we must wait until an underlying file
-    // descriptor is created. This corresponds to the "open" event in the stream.
-    await new Promise<void>((resolve) => {
-      protocolLogFile.on("open", () => resolve())
-    })
-
-    p.stdout.pipe(protocolLogFile)
-
-    // Also print protocol logs in terminal if requested by the developer
-    if (process.env.SHOW_PROTOCOL_LOGS === "true") p.stdout.pipe(process.stdout)
+    logProtocolStdoutLocally(p)
   })
 
 // Also send protocol logs to logz.io
@@ -102,17 +93,33 @@ fromTrigger(WhistTrigger.protocolStdoutEnd).subscribe(() => {
   }
 })
 
-// Keeps track of how many times we've tried to relaunch the protocol
-const MAX_RETRIES = 3
-let protocolLaunchRetries = 0
+threeProtocolFailures.subscribe(([, info]: [any, any]) => {
+  launchProtocol(info)
+})
 
-fromTrigger(WhistTrigger.protocolClosed)
+threeProtocolFailures
   .pipe(
-    filter((args: { crashed: boolean }) => args.crashed),
-    filter(() => protocolLaunchRetries < MAX_RETRIES),
-    withLatestFrom(fromTrigger(WhistTrigger.mandelboxFlowSuccess))
+    count(), // count() emits when the piped observable finishes i.e. when the protocol has failed three times
+    switchMap(() => fromTrigger(WhistTrigger.protocolClosed)), // this catches the fourth failure
+    take(1)
   )
-  .subscribe(([, info]: [any, any]) => {
-    protocolLaunchRetries = protocolLaunchRetries + 1
-    launchProtocol(info)
+  .subscribe(() => createTrigger(WhistTrigger.protocolError, of(undefined)))
+
+// If you put your computer to sleep, kill the protocol so we don't keep your mandelbox
+// running unnecessarily
+emitOnSignal(
+  fromTrigger(WhistTrigger.protocol),
+  fromTrigger(WhistTrigger.powerSuspend)
+).subscribe((p: ChildProcess) => destroyProtocol(p))
+
+// Redirect URLs to the protocol
+fromTrigger(WhistTrigger.protocolConnected)
+  .pipe(
+    filter((connected: boolean) => connected),
+    switchMap(() => fromEvent(app, "open-url")),
+    withLatestFrom(fromTrigger(WhistTrigger.protocol))
+  )
+  .subscribe(([[event, url], p]: any) => {
+    event.preventDefault()
+    pipeURLToProtocol(p, url)
   })

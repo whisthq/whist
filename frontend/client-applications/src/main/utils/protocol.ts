@@ -9,11 +9,13 @@
 import { app } from "electron"
 import path from "path"
 import events from "events"
-
+import fs from "fs"
 import { spawn, ChildProcess } from "child_process"
-import config from "@app/config/environment"
+
 import { appEnvironment, WhistEnvironments } from "../../../config/configs"
 import { MAX_URL_LENGTH } from "@app/constants/app"
+import { electronLogPath } from "@app/main/utils/logging"
+import config, { loggingFiles } from "@app/config/environment"
 
 const { protocolName, protocolFolder } = config
 
@@ -125,10 +127,33 @@ const pipeURLToProtocol = (childProcess: ChildProcess, message: string) => {
   pipeToProtocol(childProcess, `new-tab-url?${message}\n`)
 }
 
+const logProtocolStdoutLocally = async (childProcess: ChildProcess) => {
+  // Create a pipe to the protocol logs file
+  if (!fs.existsSync(electronLogPath))
+    fs.mkdirSync(electronLogPath, { recursive: true })
+
+  const protocolLogFile = fs.createWriteStream(
+    path.join(electronLogPath, loggingFiles.protocol)
+  )
+
+  // In order to pipe a child process to this stream, we must wait until an underlying file
+  // descriptor is created. This corresponds to the "open" event in the stream.
+  await new Promise<void>((resolve) => {
+    protocolLogFile.on("open", () => resolve())
+  })
+
+  childProcess?.stdout?.pipe(protocolLogFile)
+
+  // Also print protocol logs in terminal if requested by the developer
+  if (process.env.SHOW_PROTOCOL_LOGS === "true")
+    childProcess?.stdout?.pipe(process.stdout)
+}
+
 export {
   protocol,
   launchProtocol,
   pipeNetworkInfo,
   destroyProtocol,
   pipeURLToProtocol,
+  logProtocolStdoutLocally,
 }

@@ -1,5 +1,11 @@
+/**
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
+ * @file app.ts
+ * @brief This file contains miscellaneous effects that deal with monitoring/logging the app
+ */
+
 import { logBase } from "@app/main/utils/logging"
-import * as Sentry from "@sentry/electron"
+import Sentry from "@sentry/electron"
 import { interval } from "rxjs"
 
 import config from "@app/config/environment"

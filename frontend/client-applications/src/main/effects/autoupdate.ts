@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
+ * @file app.ts
+ * @brief This file contains effects that deal with electron-updater
+ */
+
 import { autoUpdater } from "electron-updater"
 import { timer } from "rxjs"
 import { takeUntil } from "rxjs/operators"
@@ -5,11 +11,15 @@ import Sentry from "@sentry/electron"
 
 import { appEnvironment, WhistEnvironments } from "../../../config/configs"
 import { fromTrigger } from "@app/main/utils/flows"
-import { updateDownloadedNotification } from "@app/main/utils/notification"
 import { WhistTrigger } from "@app/constants/triggers"
 import { createUpdateWindow } from "@app/main/utils/renderer"
 import { withAppActivated } from "@app/main/utils/observables"
 import { CHECK_UPDATE_INTERVAL_IN_MS } from "@app/constants/app"
+
+// If an update is available, show the update window and download the update
+fromTrigger(WhistTrigger.updateAvailable).subscribe(() => {
+  autoUpdater.downloadUpdate().catch((err) => Sentry.captureException(err))
+})
 
 withAppActivated(timer(0, CHECK_UPDATE_INTERVAL_IN_MS)).subscribe(() => {
   // We want to manually control when we download the update via autoUpdater.quitAndInstall(),
@@ -39,18 +49,16 @@ withAppActivated(timer(0, CHECK_UPDATE_INTERVAL_IN_MS)).subscribe(() => {
     .catch((err) => Sentry.captureException(err))
 })
 
-fromTrigger(WhistTrigger.updateAvailable)
-  .pipe(takeUntil(fromTrigger(WhistTrigger.mandelboxFlowSuccess)))
-  .subscribe(() => {
-    createUpdateWindow()
-  })
+withAppActivated(
+  fromTrigger(WhistTrigger.updateAvailable).pipe(
+    takeUntil(fromTrigger(WhistTrigger.mandelboxFlowSuccess))
+  )
+).subscribe(() => {
+  createUpdateWindow()
+})
 
 fromTrigger(WhistTrigger.updateDownloaded)
   .pipe(takeUntil(fromTrigger(WhistTrigger.mandelboxFlowSuccess)))
   .subscribe(() => {
     autoUpdater.quitAndInstall()
   })
-
-fromTrigger(WhistTrigger.updateDownloaded).subscribe(() => {
-  updateDownloadedNotification()?.show()
-})
