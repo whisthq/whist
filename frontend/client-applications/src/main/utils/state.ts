@@ -10,6 +10,11 @@ import {
   CACHED_USER_EMAIL,
   CACHED_CONFIG_TOKEN,
 } from "@app/constants/store"
+import {
+  DEFAULT_LINUX_USER_AGENT,
+  DEFAULT_MAC_USER_AGENT,
+  DEFAULT_WINDOWS_USER_AGENT,
+} from "@app/constants/app"
 import { WhistTrigger } from "@app/constants/triggers"
 import { withAppReady } from "@app/main/utils/observables"
 import { getInitialKeyRepeat, getKeyRepeat } from "@app/main/utils/keyRepeat"
@@ -42,11 +47,12 @@ const isNewConfigToken = of(persistGet(CACHED_CONFIG_TOKEN) ?? "").pipe(
 
 const getUserAgent = () => {
   if (process.platform === "linux") {
-    return "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
+    return DEFAULT_LINUX_USER_AGENT
   } else if (process.platform === "darwin") {
-    return "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
+    return DEFAULT_MAC_USER_AGENT
   } else {
-    return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
+    // Windows!
+    return DEFAULT_WINDOWS_USER_AGENT
   }
 }
 
