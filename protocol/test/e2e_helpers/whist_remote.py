@@ -172,6 +172,77 @@ def build_client_on_instance(
     print("Finished building the dev client mandelbox on the EC2 instance")
 
 
+
+def setup_network_conditions_client(
+    pexpect_process, pexpect_prompt, network_conditions, running_in_ci
+):
+    """
+    Set up the network degradation conditions on the client instance. We apply the network settings on the client side to simulate the condition where the user is using Whist on a machine that is connected to the Internet through a unstable connection.
+
+    The function assumes that the pexpect_process process has already successfully established a SSH connection to the host
+
+    Args:
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
+        network_conditions (str): The network conditions expressed as either 'normal' for no network degradation or max_bandwidth, delay, packet drop percentage, with the three values separated by commas and no space.
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
+
+    Return:
+        None
+
+    """
+
+    if network_conditions == "normal":
+        print("Setting up client to run on a instance with no degradation on network conditions")
+    else:
+        max_bandwidth, net_delay, pkt_drop_pctg = network_conditions.split(",")
+        print(
+            "Setting up client to run on a instance with max bandwidth of {}, delay of {} ms and packet drop rate {}".format(
+                max_bandwidth, net_delay, pkt_drop_pctg
+            )
+        )
+
+        command1 = "dnctl pipe 1 config bw {} delay {} plr {} noerror".format(
+            max_bandwidth, net_delay, pkt_drop_pctg
+        )
+        pexpect_process.sendline(command1)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
+        command2 = 'echo "dummynet in proto {tcp,icmp} from any to any pipe 1" | pfctl -f -'
+        pexpect_process.sendline(command2)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
+        command3 = "pfctl -e"
+        pexpect_process.sendline(command3)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
+
+def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_in_ci):
+    """
+    Restore network conditions to factory ones. This function is idempotent and is safe to run even if no network degradation was initially applied.
+
+    The function assumes that the pexpect_process process has already successfully established a SSH connection to the host
+
+    Args:
+        pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process created with pexpect.spawn(...) and to be used to interact with the remote machine
+        pexpect_prompt (str): The bash prompt printed by the shell on the remote machine when it is ready to execute a command
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
+
+    Return:
+        None
+
+    """
+
+    command1 = "pfctl -f /etc/pf.conf"
+    pexpect_process.sendline(command1)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
+    command2 = "dnctl -q flush"
+    pexpect_process.sendline(command2)
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
+
+
 def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
     """
     Run the Whist dev client (development/client mandelbox) on a remote machine accessible via a SSH connection within a pexpect process.

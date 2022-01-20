@@ -153,6 +153,13 @@ parser.add_argument(
     default="~/.aws/credentials",
 )
 
+parser.add_argument(
+    "--network-conditions",
+    help="The network condition for the experiment. The input is in the form of three comma-separated floats indicating the max bandwidth, delay (in ms), and percentage of packet drops (in the range [0.0,1.0]). 'normal' will allow the network to run with no degradation.",
+    type=str,
+    default="normal",
+)
+
 args = parser.parse_args()
 
 
@@ -173,6 +180,8 @@ if __name__ == "__main__":
     region_name = args.region_name
     use_two_instances = True if args.use_two_instances == "true" else False
     simulate_scrolling = True if args.simulate_scrolling == "true" else False
+
+    network_conditions = args.network_conditions
 
     # Load the SSH key
     if not os.path.isfile(ssh_key_path):
@@ -318,11 +327,21 @@ if __name__ == "__main__":
     server_docker_id, json_data = run_server_on_instance(server_pexpect_process)
     json_data["initial_url"] = testing_url
 
+    # Set up the network degradation conditions
+    setup_network_conditions_client(
+        client_pexpect_process, pexpect_prompt_client, network_conditions, running_in_ci
+    )
     # Run the dev client
     client_docker_id = run_client_on_instance(client_pexpect_process, json_data, simulate_scrolling)
 
     # Wait <testing_time> seconds to generate enough data
     time.sleep(testing_time)
+
+    # Restore un-degradated network conditions in case the instance is reused later on
+    if network_conditions != "normal":
+        restore_network_conditions_client(
+            client_pexpect_process, pexpect_prompt_client, running_in_ci
+        )
 
     # Extract the client/server perf logs from the two docker containers
     print("Initiating LOG GRABBING ssh connection(s) with the AWS instance(s)...")
