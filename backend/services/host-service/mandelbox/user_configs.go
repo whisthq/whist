@@ -93,7 +93,7 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 		return utils.MakeError("Cannot save user configs for user %s for mandelbox %s since ConfigEncryptionToken is empty", userID, mandelboxID)
 	}
 
-	configDir := mandelbox.getUserConfigDir()
+	configDir := mandelbox.GetUserConfigDir()
 	unpackedConfigPath := path.Join(configDir, UnpackedConfigsDirectoryName)
 
 	// Compress the user configs into a tar.lz4 file
@@ -399,7 +399,7 @@ func (mandelbox *mandelboxData) extractConfig(configKey string, decryptedConfig 
 	logger.Infof("Extracting config %s for user %s for mandelbox %s", configKey, mandelbox.GetUserID(), mandelbox.GetID())
 
 	// Make directory for user configs
-	configDir := mandelbox.getUserConfigDir()
+	configDir := mandelbox.GetUserConfigDir()
 	unpackedConfigDir := path.Join(configDir, UnpackedConfigsDirectoryName)
 	err := mandelbox.setupUserConfigDirs()
 	if err != nil {
@@ -431,7 +431,7 @@ func (mandelbox *mandelboxData) extractConfig(configKey string, decryptedConfig 
 func (mandelbox *mandelboxData) setupUserConfigDirs() error {
 	logger.Infof("Creating user config directories for mandelbox %s", mandelbox.GetID())
 
-	configDir := mandelbox.getUserConfigDir()
+	configDir := mandelbox.GetUserConfigDir()
 	if err := os.MkdirAll(configDir, 0777); err != nil {
 		return utils.MakeError("Could not make dir %s. Error: %s", configDir, err)
 	}
@@ -446,14 +446,15 @@ func (mandelbox *mandelboxData) setupUserConfigDirs() error {
 
 // cleanUserConfigDir removes all user config related files and directories from the host.
 func (mandelbox *mandelboxData) cleanUserConfigDir() {
-	err := os.RemoveAll(mandelbox.getUserConfigDir())
+	err := os.RemoveAll(mandelbox.GetUserConfigDir())
 	if err != nil {
-		logger.Errorf("Failed to remove dir %s. Error: %s", mandelbox.getUserConfigDir(), err)
+		logger.Errorf("Failed to remove dir %s. Error: %s", mandelbox.GetUserConfigDir(), err)
 	}
 }
 
-// getUserConfigDir returns the absolute path to the user config directory.
-func (mandelbox *mandelboxData) getUserConfigDir() string {
+// GetUserConfigDir returns the absolute path to the user config directory. It
+// is exported for testing reasons.
+func (mandelbox *mandelboxData) GetUserConfigDir() string {
 	return utils.Sprintf("%s%v/%s", utils.WhistDir, mandelbox.GetID(), "userConfigs")
 }
 

@@ -13,8 +13,8 @@ import (
 
 // This contains the path and file names related to browser data
 const (
-	UserInitialBrowserDir  string = utils.WhistDir + "userConfigs/"
-	UserInitialBrowserFile string = "user-intial-file"
+	UserInitialBrowserDirInMbox string = utils.WhistDir + "userConfigs/"
+	UserInitialBrowserFile      string = "user-intial-file"
 )
 
 // BrowserData is a collection of possible browser datas a user generates
@@ -31,7 +31,7 @@ type BrowserData struct {
 // through JSON transport on top of the user configs that have already been
 // loaded.
 func (mandelbox *mandelboxData) WriteUserInitialBrowserData(initialBrowserData BrowserData) error {
-	destDir := path.Join(mandelbox.getUserConfigDir(), UnpackedConfigsDirectoryName)
+	destDir := path.Join(mandelbox.GetUserConfigDir(), UnpackedConfigsDirectoryName)
 
 	// Create destination directory if not exists
 	if _, err := os.Stat(destDir); os.IsNotExist(err) {
