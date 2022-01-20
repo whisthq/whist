@@ -14,7 +14,7 @@ import (
 // This contains the path and file names related to browser data
 const (
 	UserInitialBrowserDirInMbox string = utils.WhistDir + "userConfigs/"
-	UserInitialBrowserFile      string = "user-intial-file"
+	UserInitialBrowserFile      string = "user-initial-file"
 )
 
 // BrowserData is a collection of possible browser datas a user generates

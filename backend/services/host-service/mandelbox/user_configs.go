@@ -132,7 +132,17 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 // is a warning or an error — warnings get logged here, and errors get sent
 // back.
 func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptionInfo, errorChan chan<- error) {
-	defer close(errorChan)
+	// We don't want to close errorChan (which indicates to the consumer that
+	// this function is "done") too early, but it's the last thing we want to do
+	// from this function. No matter what, we want to verify the token/encryption
+	// info that was passed in). Therefore, we block until the token verification
+	// goroutine is done before closing errorChan, and we defer it right here.
+	loadingWaitgroup := &sync.WaitGroup{}
+	defer func() {
+		logger.Infof("loadUserConfigs(): Waiting for loadingWaitgroup to be done...")
+		loadingWaitgroup.Wait()
+		close(errorChan)
+	}()
 
 	// If the process fails anywhere, we want to at least set up the empty config
 	// directories for the mandelbox. We do this by setting `loadFailed` to true
@@ -157,7 +167,9 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 	// message along (after some verification) for the body of loadUserConfigs()
 	// to wait on it later.
 	verifiedTokenChan := make(chan ConfigEncryptionInfo) // note: no buffer
+	loadingWaitgroup.Add(1)
 	go func() {
+		defer loadingWaitgroup.Done()
 		defer close(verifiedTokenChan)
 		encryptionInfo, err := mandelbox.receiveAndSanityCheckEncryptionToken(tokenChan)
 		if err != nil {
