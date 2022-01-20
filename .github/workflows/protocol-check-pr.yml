@@ -541,4 +541,7 @@ jobs:
 
           slack_post(slack_webhook, body=body, slack_username="Whist Bot", title=title)
 
+          # Post updates as a GitHub Gist
+          os.system("cat streaming_e2e_test_results.info | gh gist create -f performance_results.md")
+
   #######################################################################################

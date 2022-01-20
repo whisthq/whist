@@ -31,6 +31,8 @@ from e2e_helpers.whist_remote import (
     start_host_service_on_instance,
     run_server_on_instance,
     run_client_on_instance,
+    setup_network_conditions_client,
+    restore_network_conditions_client,
 )
 
 # Get tools to programmatically run Whist components on a remote machine
