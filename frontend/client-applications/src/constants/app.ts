@@ -11,6 +11,3 @@ export const SENTRY_DSN =
   "https://5b0accb25f3341d280bb76f08775efe1@o400459.ingest.sentry.io/5412323"
 
 export const MAX_URL_LENGTH = 2048
-
-export const openSourceUrl =
-  "https://whisthq.notion.site/Whist-Open-Source-Licenses-ea120824f105494bb721841e53a1d126"

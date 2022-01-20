@@ -7,11 +7,11 @@ import { appEnvironment, WhistEnvironments } from "../../../config/configs"
 import { fromTrigger } from "@app/main/utils/flows"
 import { updateDownloadedNotification } from "@app/main/utils/notification"
 import { WhistTrigger } from "@app/constants/triggers"
-import { createUpdateWindow } from "@app/main/utils/windows"
-import { withAppReady } from "@app/main/utils/observables"
+import { createUpdateWindow } from "@app/main/utils/renderer"
+import { withAppActivated } from "@app/main/utils/observables"
 import { CHECK_UPDATE_INTERVAL_IN_MS } from "@app/constants/app"
 
-withAppReady(timer(0, CHECK_UPDATE_INTERVAL_IN_MS)).subscribe(() => {
+withAppActivated(timer(0, CHECK_UPDATE_INTERVAL_IN_MS)).subscribe(() => {
   // We want to manually control when we download the update via autoUpdater.quitAndInstall(),
   // so we need to set autoDownload = false
   autoUpdater.autoDownload = false

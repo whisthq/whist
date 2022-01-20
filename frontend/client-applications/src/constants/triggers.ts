@@ -7,10 +7,10 @@
 const WhistTrigger = {
   // App triggers
   appReady: "appReady",
-  windowInfo: "windowInfo",
-  windowsAllClosed: "windowsAllClosed",
+  electronWindowsAllClosed: "electronWindowsAllClosed",
   networkUnstable: "networkUnstable",
   reactivated: "reactivated", // When all windows are closed and the user clicks the dock icon
+  userRequestedQuit: "userRequestedQuit",
 
   // Auth triggers
   authInfo: "authInfo",
@@ -39,6 +39,13 @@ const WhistTrigger = {
   notPersisted: "notPersisted",
   beginImport: "beginImport",
   storeDidChange: "storeDidChange",
+
+  // Protocol triggers
+  protocol: "protocol",
+  protocolClosed: "protocolClosed",
+  protocolStdoutData: "protocolStdoutData",
+  protocolStdoutEnd: "protocolStdoutEnd",
+  protocolConnected: "protocolConnected",
 
   // Renderer triggers
   loginAction: "loginAction",

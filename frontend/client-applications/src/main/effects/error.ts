@@ -8,7 +8,7 @@ import {
   mandelboxCreateErrorUnauthorized,
   mandelboxCreateErrorMaintenance,
 } from "@app/main/utils/mandelbox"
-import { createErrorWindow } from "@app/main/utils/windows"
+import { createErrorWindow } from "@app/main/utils/renderer"
 import {
   NO_PAYMENT_ERROR,
   UNAUTHORIZED_ERROR,
@@ -18,12 +18,15 @@ import {
   PROTOCOL_ERROR,
 } from "@app/constants/error"
 import { fromTrigger } from "@app/main/utils/flows"
-import { withAppReady, untilUpdateAvailable } from "@app/main/utils/observables"
+import {
+  withAppActivated,
+  untilUpdateAvailable,
+} from "@app/main/utils/observables"
 import { WhistTrigger } from "@app/constants/triggers"
 
 // For any failure, close all windows and display error window
 untilUpdateAvailable(
-  withAppReady(fromTrigger(WhistTrigger.mandelboxFlowFailure))
+  withAppActivated(fromTrigger(WhistTrigger.mandelboxFlowFailure))
 ).subscribe((x) => {
   if (mandelboxCreateErrorNoAccess(x)) {
     createErrorWindow(NO_PAYMENT_ERROR)
@@ -37,19 +40,19 @@ untilUpdateAvailable(
 })
 
 untilUpdateAvailable(
-  withAppReady(fromTrigger(WhistTrigger.authFlowFailure))
+  withAppActivated(fromTrigger(WhistTrigger.authFlowFailure))
 ).subscribe(() => {
   createErrorWindow(AUTH_ERROR)
 })
 
 untilUpdateAvailable(
-  withAppReady(fromTrigger(WhistTrigger.stripePaymentError))
+  withAppActivated(fromTrigger(WhistTrigger.stripePaymentError))
 ).subscribe(() => {
   createErrorWindow(NO_PAYMENT_ERROR)
 })
 
 untilUpdateAvailable(
-  withAppReady(fromTrigger(WhistTrigger.protocolError))
+  withAppActivated(fromTrigger(WhistTrigger.protocolError))
 ).subscribe(() => {
   createErrorWindow(PROTOCOL_ERROR)
 })

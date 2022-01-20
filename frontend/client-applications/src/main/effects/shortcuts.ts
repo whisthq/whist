@@ -6,7 +6,7 @@ import {
   getWindowByHash,
   createOmnibar,
   destroyOmnibar,
-} from "@app/main/utils/windows"
+} from "@app/main/utils/renderer"
 import { WindowHashOmnibar } from "@app/constants/windows"
 
 fromTrigger(WhistTrigger.mandelboxFlowSuccess).subscribe(() => {

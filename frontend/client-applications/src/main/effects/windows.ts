@@ -13,27 +13,22 @@ import pickBy from "lodash.pickby"
 import find from "lodash.find"
 
 import { logBase } from "@app/main/utils/logging"
-import { withAppReady, waitForSignal } from "@app/main/utils/observables"
+import { withAppActivated, waitForSignal } from "@app/main/utils/observables"
 import { fromTrigger, createTrigger } from "@app/main/utils/flows"
 import { WindowHashProtocol, WindowHashPayment } from "@app/constants/windows"
 import {
-  createProtocolWindow,
   createAuthWindow,
   createLoadingWindow,
   createErrorWindow,
   createSignoutWindow,
-  createBugTypeform,
   createSpeedtestWindow,
   createPaymentWindow,
-  destroyOmnibar,
   createLicenseWindow,
   createImportWindow,
-  getWindowByHash,
-  relaunch,
-} from "@app/main/utils/windows"
+} from "@app/main/utils/renderer"
 import { persistGet, persistSet } from "@app/main/utils/persist"
 import { internetWarning, rebootWarning } from "@app/main/utils/notification"
-import { protocolStreamInfo } from "@app/main/utils/protocol"
+import { pipeNetworkInfo } from "@app/main/utils/protocol"
 import { WhistTrigger } from "@app/constants/triggers"
 import {
   CACHED_ACCESS_TOKEN,
@@ -48,45 +43,28 @@ import { networkAnalyze } from "@app/main/utils/networkAnalysis"
 import { AWSRegion } from "@app/@types/aws"
 import { LOCATION_CHANGED_ERROR } from "@app/constants/error"
 import { accessToken } from "@whist/core-ts"
-import { openSourceUrl } from "@app/constants/app"
 
 // Keeps track of how many times we've tried to relaunch the protocol
 const MAX_RETRIES = 3
 let protocolLaunchRetries = 0
-// Notifications
-let internetNotification: Notification | undefined
-let rebootNotification: Notification | undefined
 
-// Immediately initialize the protocol invisibly since it can take time to warm up
-withAppReady(of(null)).subscribe(() => {
-  createProtocolWindow().catch((err) => Sentry.captureException(err))
-})
-
-fromTrigger(WhistTrigger.appReady).subscribe(() => {
-  internetNotification = internetWarning()
-  rebootNotification = rebootWarning()
-})
-
-const allWindowsClosed = withAppReady(
-  fromTrigger(WhistTrigger.windowInfo).pipe(
-    filter(
-      (args: {
-        crashed: boolean
-        numberWindowsRemaining: number
-        hash: string
-        event: string
-      }) => args.numberWindowsRemaining === 0
-    )
+merge(
+  fromTrigger(WhistTrigger.electronWindowsAllClosed).pipe(
+    withLatestFrom(fromTrigger(WhistTrigger.protocolConnected)),
+    filter(([, connected]) => !connected)
+  ),
+  waitForSignal(
+    fromTrigger(WhistTrigger.protocolClosed),
+    fromTrigger(WhistTrigger.electronWindowsAllClosed)
   )
 )
-
-allWindowsClosed
   .pipe(
     takeUntil(
       merge(
         fromTrigger(WhistTrigger.relaunchAction),
         fromTrigger(WhistTrigger.clearCacheAction),
-        fromTrigger(WhistTrigger.updateDownloaded)
+        fromTrigger(WhistTrigger.updateDownloaded),
+        fromTrigger(WhistTrigger.userRequestedQuit)
       )
     )
   )
@@ -102,7 +80,7 @@ allWindowsClosed
         (args.hash === WindowHashProtocol && !args.crashed)
       ) {
         logBase("Application quitting", {})
-        relaunch({ args: process.argv.slice(1).concat(["--sleep"]) })
+        relaunch({ sleep: true })
       }
     }
   )
@@ -135,7 +113,7 @@ fromTrigger(WhistTrigger.windowInfo)
           protocolLaunchRetries = protocolLaunchRetries + 1
           createProtocolWindow()
             .then(() => {
-              protocolStreamInfo(info)
+              pipeNetworkInfo(info)
               rebootNotification?.show()
               setTimeout(() => {
                 rebootNotification?.close()
@@ -150,14 +128,7 @@ fromTrigger(WhistTrigger.windowInfo)
     }
   )
 
-fromTrigger(WhistTrigger.networkUnstable)
-  .pipe(throttle(() => interval(30000))) // Throttle to 30s so we don't show too often
-  .subscribe((unstable: boolean) => {
-    if (unstable) internetNotification?.show()
-    if (!unstable) internetNotification?.close()
-  })
-
-withAppReady(of(null)).subscribe(() => {
+withAppActivated(of(null)).subscribe(() => {
   const authCache = {
     accessToken: (persistGet(CACHED_ACCESS_TOKEN) ?? "") as string,
     refreshToken: (persistGet(CACHED_REFRESH_TOKEN) ?? "") as string,
@@ -171,7 +142,7 @@ withAppReady(of(null)).subscribe(() => {
   }
 })
 
-withAppReady(fromTrigger(WhistTrigger.mandelboxFlowStart))
+withAppActivated(fromTrigger(WhistTrigger.mandelboxFlowStart))
   .pipe(take(1))
   .subscribe(() => {
     if (persistGet(ONBOARDED) as boolean) {
@@ -183,7 +154,7 @@ withAppReady(fromTrigger(WhistTrigger.mandelboxFlowStart))
     }
   })
 
-withAppReady(fromTrigger(WhistTrigger.stripeAuthRefresh)).subscribe(() => {
+withAppActivated(fromTrigger(WhistTrigger.stripeAuthRefresh)).subscribe(() => {
   const paymentWindow = getWindowByHash(WindowHashPayment)
   paymentWindow?.destroy()
 })
@@ -225,33 +196,35 @@ waitForSignal(
   }, 5000)
 })
 
-withAppReady(fromTrigger(WhistTrigger.showSignoutWindow)).subscribe(() => {
+withAppActivated(fromTrigger(WhistTrigger.showSignoutWindow)).subscribe(() => {
   destroyOmnibar()
   createSignoutWindow()
 })
 
-withAppReady(fromTrigger(WhistTrigger.showSupportWindow)).subscribe(() => {
+withAppActivated(fromTrigger(WhistTrigger.showSupportWindow)).subscribe(() => {
   destroyOmnibar()
   createBugTypeform()
 })
 
-withAppReady(fromTrigger(WhistTrigger.showSpeedtestWindow)).subscribe(() => {
-  destroyOmnibar()
-  createSpeedtestWindow()
-})
+withAppActivated(fromTrigger(WhistTrigger.showSpeedtestWindow)).subscribe(
+  () => {
+    destroyOmnibar()
+    createSpeedtestWindow()
+  }
+)
 
-withAppReady(fromTrigger(WhistTrigger.showImportWindow)).subscribe(() => {
+withAppActivated(fromTrigger(WhistTrigger.showImportWindow)).subscribe(() => {
   destroyOmnibar()
   createImportWindow()
 })
 
-withAppReady(fromTrigger(WhistTrigger.showLicenseWindow)).subscribe(() => {
+withAppActivated(fromTrigger(WhistTrigger.showLicenseWindow)).subscribe(() => {
   destroyOmnibar()
-  createLicenseWindow(openSourceUrl)
+  createLicenseWindow()
 })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-withAppReady(fromTrigger(WhistTrigger.showPaymentWindow)).subscribe(() => {
+withAppActivated(fromTrigger(WhistTrigger.showPaymentWindow)).subscribe(() => {
   const accessToken = persistGet(CACHED_ACCESS_TOKEN) as string
 
   destroyOmnibar()
@@ -262,7 +235,7 @@ withAppReady(fromTrigger(WhistTrigger.showPaymentWindow)).subscribe(() => {
 })
 
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-withAppReady(fromTrigger(WhistTrigger.checkPaymentFlowFailure)).subscribe(
+withAppActivated(fromTrigger(WhistTrigger.checkPaymentFlowFailure)).subscribe(
   ({ accessToken }: accessToken) => {
     createPaymentWindow({
       accessToken,

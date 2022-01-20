@@ -9,7 +9,7 @@ import { StateIPC } from "@app/@types/state"
 import { map, startWith, filter, withLatestFrom } from "rxjs/operators"
 import mapValues from "lodash.mapvalues"
 
-import { getElectronWindows } from "@app/main/utils/windows"
+import { getElectronWindows } from "@app/main/utils/renderer"
 import { fromTrigger } from "@app/main/utils/flows"
 import { appEnvironment } from "../../../config/configs"
 import { getInstalledBrowsers } from "@app/main/utils/importer"
