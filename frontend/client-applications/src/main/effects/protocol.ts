@@ -28,6 +28,10 @@ import { WhistTrigger } from "@app/constants/triggers"
 import { withAppActivated, emitOnSignal } from "@app/main/utils/observables"
 import { protocolToLogz } from "@app/main/utils/logging"
 
+fromTrigger(WhistTrigger.protocol).subscribe((x) => {
+  console.log("PROTOCOL IS", x)
+})
+
 const threeProtocolFailures = fromTrigger(WhistTrigger.protocolClosed).pipe(
   filter((args: { crashed: boolean }) => args.crashed),
   withLatestFrom(fromTrigger(WhistTrigger.mandelboxFlowSuccess)),

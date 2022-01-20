@@ -1,7 +1,3 @@
-import path from "path"
-
-import config from "@app/config/environment"
-
 // The Electron BrowserWindow API can be passed a hash parameter as data.
 // We use this so that renderer threads can decide which view component to
 // render as soon as a window appears.
@@ -30,14 +26,4 @@ export const height = {
   sm: { height: 16 * 20 },
   md: { height: 16 * 32 },
   lg: { height: 16 * 44 },
-}
-
-export const base = {
-  webPreferences: {
-    preload: path.join(config.buildRoot, "preload.js"),
-  },
-  resizable: false,
-  titleBarStyle: "default",
-  frame: false,
-  border: false,
 }

@@ -30,7 +30,7 @@ const window = new events.EventEmitter()
 const createAuthWindow = () => {
   const { win, view } = createElectronWindow({
     ...width.sm,
-    ...height.sm,
+    ...height.md,
     hash: WindowHashAuth,
     customURL: authPortalURL(),
   })
@@ -87,8 +87,8 @@ const createPaymentWindow = async (accessToken: accessToken) => {
 
 const createSpeedtestWindow = () =>
   createElectronWindow({
-    ...width.sm,
-    ...height.sm,
+    ...width.lg,
+    ...height.lg,
     hash: WindowHashSpeedtest,
     customURL: "https://speed.cloudflare.com/",
   })
@@ -104,7 +104,7 @@ const createLicenseWindow = () =>
 
 const createErrorWindow = (hash: string) =>
   createElectronWindow({
-    ...width.sm,
+    ...width.md,
     ...height.sm,
     hash,
     options: {
@@ -121,35 +121,35 @@ const createSignoutWindow = () =>
 
 const createOnboardingWindow = () =>
   createElectronWindow({
-    ...width.md,
+    ...width.lg,
     ...height.lg,
     hash: WindowHashOnboarding,
   })
 
 const createUpdateWindow = () =>
   createElectronWindow({
-    ...width.sm,
+    ...width.md,
     ...height.sm,
     hash: WindowHashUpdate,
   })
 
 const createLoadingWindow = () =>
   createElectronWindow({
-    ...width.sm,
+    ...width.md,
     ...height.sm,
     hash: WindowHashLoading,
   })
 
 const createImportWindow = () =>
   createElectronWindow({
-    ...width.sm,
+    ...width.md,
     ...height.lg,
     hash: WindowHashImport,
   })
 
 const createOmnibar = () =>
   createElectronWindow({
-    ...width.sm,
+    ...width.md,
     ...height.sm,
     hash: WindowHashOmnibar,
     options: {
