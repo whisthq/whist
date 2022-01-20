@@ -2,7 +2,6 @@ package mandelbox
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -14,13 +13,6 @@ import (
 // TestUserInitialBrowserWrite checks if the browser data is properly created by
 // calling the write function and comparing results with a manually generated cookie file
 func TestUserInitialBrowserWrite(t *testing.T) {
-	destDir, err := ioutil.TempDir("", "testInitBrowser")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	defer os.RemoveAll(destDir)
-
 	// Define browser data
 	testCookie1 := "{'creation_utc': 13280861983875934, 'host_key': 'test_host_key_1.com'}"
 	testCookie2 := "{'creation_utc': 4228086198342934, 'host_key': 'test_host_key_2.com'}"
@@ -40,12 +32,15 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	// Explicitly set the result to what we expect
 	testFileContent := utils.Sprintf(`{"cookiesJSON":"%s","extensions":"%s"}`, cookiesJSON, extensions)
 
-	if err := WriteUserInitialBrowserData(userInitialBrowserData, destDir); err != nil {
+	testMbox, _, _ := createTestMandelbox()
+	defer os.RemoveAll(testMbox.GetUserConfigDir())
+
+	if err := testMbox.WriteUserInitialBrowserData(userInitialBrowserData); err != nil {
 		t.Fatalf("error writing user initial browser data: %v", err)
 	}
 
 	// Get browser data file path
-	browserDataFile := path.Join(destDir, UserInitialBrowserFile)
+	browserDataFile := path.Join(testMbox.GetUserConfigDir(), UnpackedConfigsDirectoryName, UserInitialBrowserFile)
 
 	matchingFile, err := os.Open(browserDataFile)
 	if err != nil {
@@ -60,26 +55,22 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 
 	// Check contents match
 	if string(testFileContent) != matchingFileBuf.String() {
-		t.Errorf("file contents don't match for file %s: '%s' vs '%s'", browserDataFile, testFileContent, matchingFileBuf.Bytes())
+		t.Fatalf("file contents don't match for file %s: '%s' vs '%s'", browserDataFile, testFileContent, matchingFileBuf.Bytes())
 	}
 }
 
 // TestUserInitialBrowserWriteEmpty checks if passing empty browser data will result in an empty json file
 func TestUserInitialBrowserWriteEmpty(t *testing.T) {
-	destDir, err := ioutil.TempDir("", "testInitBrowser")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	defer os.RemoveAll(destDir)
+	testMbox, _, _ := createTestMandelbox()
+	defer os.RemoveAll(testMbox.GetUserConfigDir())
 
 	// Empty browser data will generate an empty json file
-	if err := WriteUserInitialBrowserData(BrowserData{}, destDir); err != nil {
-		t.Fatalf("error writing empty user initial browser data: %v", err)
+	if err := testMbox.WriteUserInitialBrowserData(BrowserData{}); err != nil {
+		t.Fatalf("error writing user initial browser data: %v", err)
 	}
 
 	// Get browser data file path
-	browserDataFile := path.Join(destDir, UserInitialBrowserFile)
+	browserDataFile := path.Join(testMbox.GetUserConfigDir(), UnpackedConfigsDirectoryName, UserInitialBrowserFile)
 
 	matchingFile, err := os.Open(browserDataFile)
 	if err != nil {
@@ -94,6 +85,6 @@ func TestUserInitialBrowserWriteEmpty(t *testing.T) {
 
 	// Check contents match
 	if matchingFileBuf.String() != "{}" {
-		t.Errorf("file contents don't match for file %s: '{}' vs '%s'", browserDataFile, matchingFileBuf.Bytes())
+		t.Fatalf("file contents don't match for file %s: '{}' vs '%s'", browserDataFile, matchingFileBuf.Bytes())
 	}
 }
