@@ -76,7 +76,7 @@ def create_ec2_instance(
     Args:
         boto3client (botocore.client): The Boto3 client to use to talk to the Amazon E2 service
         region_name (str): The name of the region of interest (e.g. "us-east-1")
-        instance_type (str): The type of instance to create (i.e. g4dn.2xlarge)
+        instance_type (str): The type of instance to create (i.e. g4dn.xlarge)
         instance_AMI (str): The AMI to use for the instance (i.e. ami-0b9c9d7f7f8b8f8b9)
         key_name (str): The name of the AWS key to use for connecting to the instance
         disk_size (int): The size (in GB) of the additional EBS disk volume to attach
@@ -111,7 +111,7 @@ def create_ec2_instance(
             },
         ],
         "ImageId": instance_AMI,
-        "InstanceType": instance_type,  # should be g4dn.2xlarge for testing the server protocol
+        "InstanceType": instance_type,  # should be g4dn.xlarge for testing the server protocol
         "MaxCount": 1,
         "MinCount": 1,
         "TagSpecifications": [
@@ -267,7 +267,7 @@ def create_or_start_aws_instance(
     instance_AMI = get_current_AMI(boto3client, region_name)
     if instance_AMI == "":
         print("Error, could not get instance AMI for region {}".format(region_name))
-    instance_type = "g4dn.2xlarge"  # The type of instance we want to create
+    instance_type = "g4dn.xlarge"  # The type of instance we want to create
 
     print(
         "Creating AWS EC2 instance of size: {} and with AMI: {}...".format(

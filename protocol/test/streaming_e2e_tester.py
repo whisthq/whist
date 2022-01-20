@@ -43,7 +43,7 @@ from e2e_helpers.remote_exp_tools import (
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 DESCRIPTION = """
-This script will spin a g4dn.2xlarge EC2 instance with two Docker containers
+This script will spin a g4dn.xlarge EC2 instance with two Docker containers
 and run a protocol streaming performance test between the two of them. 
 """
 
