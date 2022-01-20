@@ -49,6 +49,7 @@ format strings.
 
 #include <whist/core/whist.h>
 #include <whist/network/network.h>
+#include <whist/utils/rwlock.h>
 #include "logging.h"
 #include "error_monitor.h"
 
@@ -67,6 +68,8 @@ static WhistSemaphore logger_semaphore;
 static WhistMutex logger_queue_mutex;
 static WhistMutex logger_cache_mutex;
 static WhistMutex crash_handler_mutex;
+
+static RWLock destroy_logger_rwlock;
 
 // logger queue
 typedef struct LoggerQueueItem {
@@ -100,6 +103,8 @@ void whist_init_logger(void) {
 
     init_backtrace_handler();
 
+    init_rw_lock(&destroy_logger_rwlock);
+
     run_multithreaded_printf = true;
     logger_queue_mutex = whist_create_mutex();
     logger_cache_mutex = whist_create_mutex();
@@ -112,6 +117,10 @@ void whist_init_logger(void) {
 void destroy_logger(void) {
     // Flush out any remaining logs
     flush_logs();
+
+    //If there is a read lock in internal_logging_printf we will block here until there are
+    //no more read locks to ensure we can finish any logs occuring in any other threads.
+    write_lock(&destroy_logger_rwlock);
 
     run_multithreaded_printf = false;
     whist_post_semaphore(logger_semaphore);
@@ -127,6 +136,8 @@ void destroy_logger(void) {
     whist_destroy_mutex(logger_cache_mutex);
 
     whist_destroy_mutex(crash_handler_mutex);
+
+    write_unlock(&destroy_logger_rwlock);
 }
 
 static int multithreaded_printf(void* opaque) {
@@ -268,13 +279,17 @@ void internal_logging_printf(const char* tag, const char* fmt_str, ...) {
     va_list args;
     va_start(args, fmt_str);
 
+    if (mprintf_thread != NULL) {
+        read_lock(&destroy_logger_rwlock);
+        if (mprintf_thread != NULL) {
+            mprintf(tag, fmt_str, args);
+        }
+        read_unlock(&destroy_logger_rwlock);
+    }
+
     if (mprintf_thread == NULL) {
-        // If the logger isn't initialized yet, just write to stdout
         vprintf(fmt_str, args);
         fflush(stdout);
-    } else {
-        // Otherwise, use mprintf
-        mprintf(tag, fmt_str, args);
     }
 
     va_end(args);
