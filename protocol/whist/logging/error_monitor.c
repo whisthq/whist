@@ -56,7 +56,9 @@ Global Variables
 #define MAX_EVENTS_PERIOD_MS 1000.0
 
 static char error_monitor_environment[WHIST_ARGS_MAXLEN + 1];
-static char error_monitor_environment_set = false;
+static bool error_monitor_environment_set = false;
+static char error_monitor_session_id[WHIST_ARGS_MAXLEN + 1];
+static bool error_monitor_session_id_set = false;
 static bool error_monitor_initialized = false;
 static WhistTimer last_error_event_timer;
 
@@ -101,7 +103,7 @@ Public Function Implementations
 ============================
 */
 
-void whist_error_monitor_set_environment(char *environment) {
+void whist_error_monitor_set_environment(const char *environment) {
     if (error_monitor_initialized) {
         LOG_WARNING("Attempting to set the environment to %s after starting the error monitor!",
                     environment);
@@ -119,11 +121,21 @@ void whist_error_monitor_set_environment(char *environment) {
     }
 }
 
-void whist_error_monitor_set_username(char *username) {
+void whist_error_monitor_set_session_id(const char *session_id) {
+    if (error_monitor_initialized) {
+        LOG_WARNING("Attempting to set the session id to %s after starting the error monitor!",
+                    session_id);
+        return;
+    }
+
+    safe_strncpy(error_monitor_session_id, session_id, sizeof(error_monitor_session_id));
+    error_monitor_session_id_set = true;
+}
+
+void whist_error_monitor_set_username(const char *username) {
     // If we haven't set the environment, we don't want our error monitor.
     if (!error_monitor_initialized) return;
 
-#if USING_SENTRY
     // Set the user to username, or remove the user as a default.
     // Also remove the user if the username is "None".
     if (username && strcmp(username, "None")) {
@@ -134,7 +146,6 @@ void whist_error_monitor_set_username(char *username) {
     } else {
         sentry_remove_user();
     }
-#endif
 }
 
 void whist_error_monitor_set_connection_id(int id) {
@@ -150,9 +161,7 @@ void whist_error_monitor_set_connection_id(int id) {
         safe_strncpy(connection_id, "waiting", sizeof(connection_id));
     }
 
-#if USING_SENTRY
     sentry_set_tag("connection_id", connection_id);
-#endif
 }
 
 bool whist_error_monitor_is_initialized(void) { return error_monitor_initialized; }
@@ -169,7 +178,6 @@ void whist_error_monitor_initialize(bool is_client) {
         return;
     }
 
-#if USING_SENTRY
     sentry_options_t *options = sentry_options_new();
 
     // By default, Sentry will use the SENTRY_DSN environment variable. We could use this instead
@@ -202,6 +210,13 @@ void whist_error_monitor_initialize(bool is_client) {
         sentry_set_tag("protocol-side", "server");
     }
 
+    // Set the session id that was set by whist_error_monitor_set_session_id()
+    if (error_monitor_session_id_set) {
+        sentry_set_tag("session-id", error_monitor_session_id);
+    } else {
+        sentry_set_tag("session-id", "unknown");
+    }
+
     // Start error event backoff timer
     start_timer(&last_error_event_timer);
 
@@ -212,7 +227,6 @@ void whist_error_monitor_initialize(bool is_client) {
 
     // Tag all logs with a user of "None", to be updated once an actual username arrives.
     whist_error_monitor_set_username(NULL);
-#endif
 
     LOG_INFO("Error monitor initialized!");
 }
@@ -226,9 +240,7 @@ void whist_error_monitor_shutdown(void) {
     // If we haven't set the environment, we don't want our error monitor.
     if (!error_monitor_initialized) return;
 
-#if USING_SENTRY
     sentry_shutdown();
-#endif
     error_monitor_initialized = false;
 }
 
@@ -243,7 +255,6 @@ void whist_error_monitor_log_breadcrumb(const char *tag, const char *message) {
     // If we haven't set the environment, we don't want our error monitor.
     if (!error_monitor_initialized) return;
 
-#if USING_SENTRY
         // In the current sentry-native beta version, breadcrumbs can only be logged
         // from macOS and Linux.
 #ifndef _WIN32
@@ -252,7 +263,6 @@ void whist_error_monitor_log_breadcrumb(const char *tag, const char *message) {
     sentry_value_set_by_key(crumb, "level", sentry_value_new_string(tag));
 
     sentry_add_breadcrumb(crumb);
-#endif
 #endif
 }
 
@@ -267,12 +277,10 @@ void whist_error_monitor_log_error(const char *message) {
     // If we haven't set the environment, we don't want our error monitor.
     if (!error_monitor_initialized) return;
 
-#if USING_SENTRY
     // If too many errors have been sent in a period, then don't send this error.
     if (!check_backoff()) return;
     sentry_value_t event =
         sentry_value_new_message_event(SENTRY_LEVEL_ERROR, "protocol-errors", message);
     // Sentry doesn't document it, but this will free error.
     sentry_capture_event(event);
-#endif
 }

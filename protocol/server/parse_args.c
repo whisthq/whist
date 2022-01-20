@@ -24,7 +24,7 @@ Includes
 #include "state.h"
 
 // i: means --identifier MUST take an argument
-#define OPTION_STRING "k:i:w:e:t:"
+#define OPTION_STRING "k:i:w:e:t:d:"
 
 /*
 ============================
@@ -37,6 +37,7 @@ const struct option cmd_options[] = {{"private-key", required_argument, NULL, 'k
                                      {"identifier", required_argument, NULL, 'i'},
                                      {"environment", required_argument, NULL, 'e'},
                                      {"timeout", required_argument, NULL, 't'},
+                                     {"session-id", required_argument, NULL, 'd'},
                                      // these are standard for POSIX programs
                                      {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
                                      {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
@@ -68,6 +69,7 @@ int server_parse_args(whist_server_config* config, int argc, char* argv[]) {
         "                                  e.g production, staging, development. Default: none\n"
         "  -t, --timeout=TIME            Tell the server to give up after TIME seconds. If TIME\n"
         "                                  is -1, disable auto exit completely. Default: 60\n"
+        "  -d, --session-id=ID           Set the session ID for the protocol's error logging\n"
         // special options should be indented further to the left
         "      --help     Display this help and exit\n"
         "      --version  Output version information and exit\n";
@@ -120,7 +122,10 @@ int server_parse_args(whist_server_config* config, int argc, char* argv[]) {
                 }
                 break;
             }
-
+            case 'd': {
+                whist_error_monitor_set_session_id(optarg);
+                break;
+            }
             case WHIST_GETOPT_HELP_CHAR: {
                 printf(usage_details, argv[0]);
                 return 1;
