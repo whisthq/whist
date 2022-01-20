@@ -29,31 +29,33 @@ echo "playerctld daemon started as PID: $playerctld_pid"
 dbus_result=$($RUN_AS_WHIST "dbus-launch --sh-syntax --exit-with-x11")
 
 # Extract environment variables for D-Bus configuration
-search_str="DBUS_SESSION_BUS_ADDRESS="
-suffix=${dbus_result#*$search_str}
+search_prefix="DBUS_SESSION_BUS_ADDRESS="
+search_suffix=" DBUS_SESSION_BUS_PID="
+content=${dbus_result#*$search_prefix}
+content=${content#*$search_suffix}
 
 # Dump D-Bus configuration commands to exec-only executable
-dbus_env_cmd="$search_str$suffix"
+dbus_env_cmd="$search_prefix$content"
 echo $dbus_env_cmd > /usr/local/bin/set_dbus_env_vars.sh
 chmod 555 /usr/local/bin/set_dbus_env_vars.sh
 echo "saved d-bus configuration to executable"
 
 # Get D-Bus params
 . /usr/local/bin/set_dbus_env_vars.sh
-echo "d-bus address: $DBUS_SESSION_BUS_ADDRESS | pid: $DBUS_SESSION_BUS_PID"
+echo "d-bus address: $DBUS_SESSION_BUS_ADDRESS"
 
 # Unlock gnome keyring
-$RUN_AS_WHIST "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID=$DBUS_SESSION_BUS_PID echo tmp_password | /usr/bin/gnome-keyring-daemon --replace --unlock --components=secrets"
+$RUN_AS_WHIST "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS echo tmp_password | /usr/bin/gnome-keyring-daemon --replace --unlock --components=secrets"
 
 # Start the AwesomeWM window manager and get the PID of the backgrounded process
 echo "Starting AwesomeWM in the background..."
-$RUN_AS_WHIST "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID=$DBUS_SESSION_BUS_PID awesome" &
+$RUN_AS_WHIST "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS awesome" &
 awesome_pid=$!
 echo "AwesomeWM started as PID: $awesome_pid"
 
 # Start the XSettings daemon to make DPI changes responsive and get the PID of the backgrounded process
 echo "Starting xsettingsd in the background..."
-$RUN_AS_WHIST "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID=$DBUS_SESSION_BUS_PID xsettingsd" &
+$RUN_AS_WHIST "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS xsettingsd" &
 xsettingsd_pid=$!
 echo "xsettingsd started as PID: $xsettingsd_pid"
 

@@ -67,7 +67,7 @@ flags+=("$INITIAL_URL")
 
 # Load D-Bus configurations from .xinitrc; necessary for Chrome
 . /usr/local/bin/set_dbus_env_vars.sh
-echo "loaded d-bus address in start-chrome.sh: $DBUS_SESSION_BUS_ADDRESS | pid: $DBUS_SESSION_BUS_PID"
+echo "loaded d-bus address in start-chrome.sh: $DBUS_SESSION_BUS_ADDRESS"
 
 # Start Chrome
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
