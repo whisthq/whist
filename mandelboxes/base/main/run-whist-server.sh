@@ -126,7 +126,9 @@ if [ "$ENV_NAME" != "localdev" ]; then
 fi
 
 # WhistServer and cookie authentication require that the D-Bus environment variables be set
-. /usr/local/bin/set_dbus_env_vars.sh
+dbus_config_file="/home/whist/.dbus/session-bus/$(cat /etc/machine-id)-10"
+. $dbus_config_file
+export DBUS_SESSION_BUS_ADDRESS
 echo "loaded d-bus address in run-whist-server.sh: $DBUS_SESSION_BUS_ADDRESS"
 
 # Add D-Bus address to options
