@@ -19,10 +19,11 @@ const Signout = (props: { onClick: () => void }) => {
   return (
     <div
       className={classNames(
-        "flex flex-col h-screen items-center bg-gray-800 draggable",
+        "flex flex-col h-screen items-center bg-gray-800",
         "justify-center font-body text-center px-12"
       )}
     >
+      <div className="absolute top-0 left-0 w-full h-6 draggable"></div>
       <div className="font-semibold text-2xl text-gray-300">
         Are you sure you want to sign out?
       </div>

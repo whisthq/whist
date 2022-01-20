@@ -44,10 +44,11 @@ export const OneButtonError = (props: {
   return (
     <div
       className={classNames(
-        "flex flex-col h-screen items-center bg-gray-800 draggable",
+        "flex flex-col h-screen items-center bg-gray-800",
         "justify-center font-body text-center px-8"
       )}
     >
+      <div className="absolute top-0 left-0 w-full h-6 draggable"></div>
       <BaseError title={props.title} text={props.text} />
       <div className="mt-4 mb-10 w-full text-center text-black">
         <WhistButton
@@ -90,10 +91,11 @@ export const TwoButtonError = (props: {
   return (
     <div
       className={classNames(
-        "flex flex-col h-screen items-center bg-gray-800 draggable",
+        "flex flex-col h-screen items-center bg-gray-800",
         "justify-center font-body text-center px-8"
       )}
     >
+      <div className="absolute top-0 left-0 w-full h-6 draggable"></div>
       <BaseError title={props.title} text={props.text} />
       <div className="mt-3 mb-1 w-full text-center">
         <WhistButton

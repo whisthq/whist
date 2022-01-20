@@ -59,10 +59,11 @@ const Importer = (props: {
   return (
     <div
       className={classNames(
-        "flex flex-col h-screen items-center bg-gray-800 draggable",
+        "flex flex-col h-screen items-center bg-gray-800",
         "justify-center font-body text-center px-12"
       )}
     >
+      <div className="absolute top-0 left-0 w-full h-6 draggable"></div>
       <SelectBrowser
         browsers={props.browsers}
         onSelect={(browser: string) => onSelect(browser)}
