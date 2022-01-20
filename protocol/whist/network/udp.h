@@ -97,16 +97,22 @@ void udp_register_nack_buffer(SocketContext* context, WhistPacketType type, int 
 void udp_register_ring_buffer(SocketContext* context, WhistPacketType type, int max_frame_size, int num_buffers);
 
 /**
- * @brief                          Respond to a nack for a given ID/Index
- *                                 NOTE: This function is thread-safe with send_packet
- *
- * @param context                  The SocketContext to nack from
- * @param type                     The WhistPacketType of the nack'ed packet
- * @param id                       The ID of the nack'ed packet
- * @param index                    The index of the nack'ed packet
- *                                 (The UDP packet index into the larger WhistPacket)
+ * @brief       Send a nack to the server indicating that the client is missing the packet with given type, ID, and index
+ * @param socket_context     the context we're sending the nack over
+ * @param type      type of packet
+ * @param ID       ID of packet
+ * @param index     index of packet
  */
-int udp_nack(SocketContext* context, WhistPacketType type, int id, int index);
+int udp_nack_packet(SocketContext* socket_context, WhistPacketType type, int id, int index);
+
+/**
+ * @brief        Send a stream reset request to the server indicating that the client is stuck on ID greatest_failed_id for packets of given type
+ *
+ * @param socket_context     Context to send reset request over
+ * @param type    type of packets that need to be reset
+ * @param greatest_failed_id    Last ID the client is stuck on
+ */
+int udp_request_stream_reset(SocketContext* context, WhistPacketType type, int greatest_failed_id);
 
 /**
  * @brief       Get the number of consecutive fully received frames of the given type available. Use this e.g. to predict how many ms of audio we have buffered.
@@ -114,5 +120,6 @@ int udp_nack(SocketContext* context, WhistPacketType type, int id, int index);
  * @param type The type of frames to query for
  */
 int udp_get_num_pending_frames(SocketContext* context, WhistPacketType type);
+
 
 #endif  // WHIST_UDP_H
