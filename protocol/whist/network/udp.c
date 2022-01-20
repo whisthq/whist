@@ -113,7 +113,7 @@ typedef struct {
 struct StreamResetData {
     bool pending_stream_reset;
     int greatest_failed_id;
-}
+};
 
 // An instance of the UDP Context
 typedef struct {
