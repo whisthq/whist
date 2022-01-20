@@ -1,12 +1,6 @@
-import { app, Notification } from "electron"
-import {
-  withLatestFrom,
-  throttle,
-  filter,
-  take,
-  takeUntil,
-} from "rxjs/operators"
-import { interval, of, merge } from "rxjs"
+import { app, BrowserWindow, Notification } from "electron"
+import { withLatestFrom, filter, take, takeUntil } from "rxjs/operators"
+import { of, merge } from "rxjs"
 import Sentry from "@sentry/electron"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
@@ -15,7 +9,11 @@ import find from "lodash.find"
 import { logBase } from "@app/main/utils/logging"
 import { withAppActivated, waitForSignal } from "@app/main/utils/observables"
 import { fromTrigger, createTrigger } from "@app/main/utils/flows"
-import { WindowHashProtocol, WindowHashPayment } from "@app/constants/windows"
+import {
+  WindowHashProtocol,
+  WindowHashPayment,
+  WindowHashOmnibar,
+} from "@app/constants/windows"
 import {
   createAuthWindow,
   createLoadingWindow,
@@ -27,8 +25,7 @@ import {
   createImportWindow,
 } from "@app/main/utils/renderer"
 import { persistGet, persistSet } from "@app/main/utils/persist"
-import { internetWarning, rebootWarning } from "@app/main/utils/notification"
-import { pipeNetworkInfo } from "@app/main/utils/protocol"
+import { launchProtocol, pipeNetworkInfo } from "@app/main/utils/protocol"
 import { WhistTrigger } from "@app/constants/triggers"
 import {
   CACHED_ACCESS_TOKEN,
@@ -43,90 +40,14 @@ import { networkAnalyze } from "@app/main/utils/networkAnalysis"
 import { AWSRegion } from "@app/@types/aws"
 import { LOCATION_CHANGED_ERROR } from "@app/constants/error"
 import { accessToken } from "@whist/core-ts"
+import { relaunch } from "@app/main/utils/app"
+import { destroyElectronWindow } from "../utils/windows"
 
-// Keeps track of how many times we've tried to relaunch the protocol
-const MAX_RETRIES = 3
-let protocolLaunchRetries = 0
-
-merge(
-  fromTrigger(WhistTrigger.electronWindowsAllClosed).pipe(
-    withLatestFrom(fromTrigger(WhistTrigger.protocolConnected)),
-    filter(([, connected]) => !connected)
-  ),
-  waitForSignal(
-    fromTrigger(WhistTrigger.protocolClosed),
-    fromTrigger(WhistTrigger.electronWindowsAllClosed)
-  )
-)
-  .pipe(
-    takeUntil(
-      merge(
-        fromTrigger(WhistTrigger.relaunchAction),
-        fromTrigger(WhistTrigger.clearCacheAction),
-        fromTrigger(WhistTrigger.updateDownloaded),
-        fromTrigger(WhistTrigger.userRequestedQuit)
-      )
-    )
-  )
-  .subscribe(
-    (args: {
-      crashed: boolean
-      numberWindowsRemaining: number
-      hash: string
-      event: string
-    }) => {
-      if (
-        args.hash !== WindowHashProtocol ||
-        (args.hash === WindowHashProtocol && !args.crashed)
-      ) {
-        logBase("Application quitting", {})
-        relaunch({ sleep: true })
-      }
-    }
-  )
-
-fromTrigger(WhistTrigger.windowInfo)
-  .pipe(
-    filter((args) => args.hash === WindowHashProtocol && args.event === "close")
-  )
-  .subscribe(() => {
-    destroyOmnibar()
-  })
-
-fromTrigger(WhistTrigger.windowInfo)
-  .pipe(withLatestFrom(fromTrigger(WhistTrigger.mandelboxFlowSuccess)))
-  .subscribe(
-    ([args, info]: [
-      {
-        hash: string
-        crashed: boolean
-        event: string
-      },
-      any
-    ]) => {
-      if (
-        args.hash === WindowHashProtocol &&
-        args.crashed &&
-        args.event === "close"
-      ) {
-        if (protocolLaunchRetries < MAX_RETRIES) {
-          protocolLaunchRetries = protocolLaunchRetries + 1
-          createProtocolWindow()
-            .then(() => {
-              pipeNetworkInfo(info)
-              rebootNotification?.show()
-              setTimeout(() => {
-                rebootNotification?.close()
-              }, 6000)
-            })
-            .catch((err) => Sentry.captureException(err))
-        } else {
-          // If we've already tried several times to reconnect, just show the protocol error window
-          createTrigger(WhistTrigger.protocolError, of(undefined))
-        }
-      }
-    }
-  )
+// When the protocol closes, also destroy the omnibar so it doesn't take up space
+// in the background
+fromTrigger(WhistTrigger.protocolClosed).subscribe(() => {
+  destroyElectronWindow(WindowHashOmnibar)
+})
 
 withAppActivated(of(null)).subscribe(() => {
   const authCache = {
