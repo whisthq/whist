@@ -523,14 +523,15 @@ int32_t multithreaded_send_video(void* opaque) {
         timestamp_us server_timestamp = current_time_us();
 
         // Theoretical client timestamp of user input, for E2E Latency Calculation
-        whist_lock_mutex(state->client.timestamp_mutex);
+        udp_lock_timestamp_mutex(&state->client.udp_context);
         // The client timestamp from a ping,
         // is the timestamp of theoretical client input we're responding to
-        client_input_timestamp = state->client.last_ping_client_time;
+        client_input_timestamp = udp_get_ping_client_time(&state->client.udp_context);
+        client_last_server_timestamp = udp_get_ping_server_time(&state->client.udp_context);
         // But we should adjust for the time between when we received the ping, and now,
         // To only extract the client->server network latency
-        client_input_timestamp += (server_timestamp - state->client.last_ping_server_time);
-        whist_unlock_mutex(state->client.timestamp_mutex);
+        client_input_timestamp += (server_timestamp - client_last_server_timestamp);
+        udp_unlock_timestamp_mutex(&state->client.udp_context);
 
         // check if the client has sent any stream reset requests for video
         StreamResetData stream_reset_data = udp_get_pending_stream_reset_request(&state->client.udp_context, PACKET_VIDEO);

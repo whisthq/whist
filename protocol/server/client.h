@@ -44,10 +44,6 @@ typedef struct Client {
     /* PING */
     WhistTimer last_ping;      // not lock protected
     WhistTimer last_tcp_ping;  // not lock protected
-
-    timestamp_us last_ping_client_time;
-    timestamp_us last_ping_server_time;
-    WhistMutex timestamp_mutex;
 } Client;
 
 /*

@@ -34,6 +34,7 @@ typedef enum {
     UDP_BITARRAY_NACK,
     UDP_STREAM_RESET,
     UDP_PING,
+    UDP_PONG,
     UDP_NETWORK_SETTINGS,
 } UDPPacketType;
 
@@ -83,7 +84,7 @@ typedef struct {
             int greatest_failed_id;
         } udp_stream_reset_data;
 
-        // UDP_PING
+        // UDP_PING and UDP_PONG
         struct {
             int id;
             timestamp_us original_timestamp;
@@ -127,6 +128,20 @@ typedef struct {
 
     double fec_packet_ratios[NUM_PACKET_TYPES];
 
+    // ping information
+    int last_ping_id;
+    int ping_failures;
+    int last_pong_id;
+    WhistTimer last_ping_timer;
+    WhistTimer last_new_ping_timer;
+    WhistTimer last_received_ping_timer;
+    // do we need this????
+    bool timer_initalized;
+    // time information (used only be the server context)
+    timestamp_us last_ping_client_time;
+    timestamp_us last_ping_server_time;
+    WhistMutex timestamp_mutex;
+
     // Nack Buffer Data
     UDPPacket** nack_buffers[NUM_PACKET_TYPES];
     // This mutex will protect the data in nack_buffers
@@ -158,7 +173,9 @@ Globals
 
 // TODO: Remove
 extern unsigned short port_mappings[USHRT_MAX + 1];
-extern volatile double latency;
+extern volatile bool connected;
+volatile double latency;
+const double ping_lambda = 0.8;
 
 /*
 ============================
@@ -740,6 +757,9 @@ void udp_destroy_socket_context(void* raw_context) {
             context->nack_buffers[type_id] = NULL;
         }
     }
+    
+    // Destroy the timestamp mutex
+    whist_destroy_mutex(context->timestamp_mutex);
 
     closesocket(context->socket);
     if (context->network_throttler != NULL) {
@@ -885,6 +905,8 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     // Create the UDPContext, and set to zero
     UDPContext* context = safe_malloc(sizeof(UDPContext));
     memset(context, 0, sizeof(UDPContext));
+    // Create the mutex
+    context->timestamp_mutex = whist_create_mutex();
     network_context->context = context;
 
     // if dest is NULL, it means the context will be listening for income connections
@@ -1007,6 +1029,7 @@ int get_udp_packet_size(UDPPacket* udp_packet) {
     UDP_STREAM_RESET:
         return offsetof(UDPPacket, udp_stream_reset_data) + sizeof(udp_packet->udp_stream_reset_data);
     UDP_PING:
+    UDP_PONG:
         return offsetof(UDPPacket, udp_ping_data) + sizeof(udp_packet->udp_ping_data);
     UDP_NETWORK_SETTINGS:
         return offsetof(UDPPacket, udp_network_settings_data) + sizeof(udp_packet->udp_network_settings_data);
@@ -1043,7 +1066,7 @@ int udp_handle_message(UDPContext* context, UDPPacket* packet) {
                                     return 0;
                                 }
         case UDP_STREAM_RESET: {
-                                   // currently unimplemented
+                                   udp_handle_stream_reset(context, packet->udp_stream_reset_data.whist_type, packet->udp_stream_reset_data.greatest_failed_id);
                                    return 0;
                                }
         case UDP_PING: {
@@ -1096,4 +1119,114 @@ int udp_request_stream_reset(SocketContext* socket_context, WhistPacketType type
     packet.udp_stream_reset_data.whist_type = type;
     packet.udp_stream_reset_data.greatest_failed_id = greatest_failed_id;
     return udp_send_udp_packet(context, &packet, get_udp_packet_size(&packet));
+}
+
+void udp_handle_pong(UDPContext* context, int id) {
+    // for the client to respond to server pongs
+    if (id == context->last_ping_id) {
+        double ping_time = get_timer(&context->last_ping_timer);
+        LOG_INFO("Pong %d received: took %f milliseconds", id, ping_time * MS_IN_SECOND);
+        log_double_statistic(NETWORK_RTT_UDP, ping_time * MS_IN_SECOND);
+
+        latency = ping_lambda * latency + (1 - ping_lambda) * ping_time;
+        context->ping_failures = 0;
+
+        context->last_pong_id = id;
+    } else {
+        LOG_WARNING("Received old pong (ID %d), expected ID %d", id, context->last_ping_id);
+    }
+}
+
+void udp_update_ping(UDPContext* context) {
+    // called every time we call udp_update to determine if we need to send more pings 
+    if (!context->timer_initalized) {
+        start_timer(&context->last_new_ping_timer);
+        context->timer_initalized = true;
+    }
+
+    if (get_timer(&context->last_ping_timer) > 1.0) {
+        LOG_WARNING("No ping sent or pong received in over a second");
+    }
+
+    // If we're waiting for a ping, and it's been 600ms, then that ping will be
+    // noted as failed
+    if (context->last_ping_id != context->last_pong_id && get_timer(&context->last_new_ping_timer) > 0.6) {
+        LOG_WARNING("Ping received no response: %d", context->last_ping_id);
+        // Keep track of failures, and exit if too many failures
+        context->last_pong_id = context->last_ping_id;
+        ++context->ping_failures;
+        if (context->ping_failures == 3) {
+            // we make this a LOG_WARNING so it doesn't clog up Sentry, as this
+            // error happens periodically but we have recovery systems in place
+            // for streaming interruption/connection loss
+            LOG_WARNING("Server disconnected: 3 consecutive ping failures.");
+            connected = false;
+        }
+    }
+
+    // if we've received the last ping, send another
+    if (context->last_ping_id == context->last_pong_id && get_timer(&context->last_ping_timer) > 0.5) {
+        udp_send_ping(context, context->last_ping_id + 1);
+        start_timer(&context->last_new_ping_timer);
+    }
+
+    // if we haven't received the last ping, send the same ping
+    if (context->last_ping_id != context->last_pong_id && get_timer(&context->last_ping_timer) > 0.21) {
+        udp_send_ping(context, context->last_ping_id);
+    }
+}
+
+void udp_send_ping(UDPContext* context, int id) {
+    UDPPacket ping = {0};
+    ping.type = UDP_PING;
+    ping.udp_ping_data.id = id;
+    ping.udp_ping_data.original_timestamp = current_time_us();
+
+    LOG_INFO("Ping! %d", id);
+    if (udp_send_udp_packet(context, &ping, get_udp_packet_size(&ping)) != 0) {
+        LOG_WARNING("Failed to ping server! (ID: %d)", id);
+    }
+    context->last_ping_id = id;
+    start_timer(&context->last_ping_timer);
+}
+
+// TODO: do something about the void and int return values
+int udp_handle_ping(UDPContext* context, int id, timestamp_us timestamp) {
+    // for the server to respond to client pings
+    LOG_INFO("Ping Received - Ping ID %d", id);
+
+    start_timer(&context->last_received_ping_timer);
+    
+    timestamp_us server_time = current_time_us();
+    // construct a reply
+    UDPPacket pong_packet = {0};
+    pong_packet.type = UDP_PONG;
+    pong_packet.ping_data.id = id;
+    // not actually necessary, handle_pong will discard this
+    pong_packet.ping_data.original_timestamp = server_time;
+    whist_lock_mutex(context->timestamp_mutex);
+    context->last_ping_client_time = timestamp;
+    context->last_ping_server_time = server_time;
+    whist_unlock_mutex(context->timestamp_mutex);
+    return udp_send_udp_packet(context, &pong, get_udp_packet_size(&pong));
+}
+
+void udp_lock_timestamp_mutex(SocketContext* socket_context) {
+    UDPContext* context = (UDPContext*)socket_context->context;
+    whist_lock_mutex(context->timestamp_mutex);
+}
+
+void udp_unlock_timestamp_mutex(SocketContext* socket_context) {
+    UDPContext* context = (UDPContext*)socket_context->context;
+    whist_unlock_mutex(context->timestamp_mutex);
+}
+
+timestamp_us udp_get_ping_client_time(SocketContext* socket_context) {
+    UDPContext* context = (UDPContext*)socket_context->context;
+    return context->last_ping_client_time;
+}
+
+timestamp_us udp_get_ping_server_time(SocketContext* socket_context) {
+    UDPContext* context = (UDPContext*)socket_context->context;
+    return context->last_ping_server_time;
 }

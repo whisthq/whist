@@ -129,6 +129,12 @@ int udp_get_num_pending_frames(SocketContext* context, WhistPacketType type);
  *
  * @returns a StreamResetData struct indicating if there is a pending stearm request and the last failed ID from the client
  */
-StreamResetData udp_get_pending_stream_reset_request(SocketContext* socket_context, WhistPacketType type) {
+StreamResetData udp_get_pending_stream_reset_request(SocketContext* socket_context, WhistPacketType type);
+
+// TODO: document these
+timestamp_us udp_get_ping_server_time(SocketContext* socket_context);
+timestamp_us udp_get_ping_client_time(SocketContext* socket_context);
+void udp_lock_timestamp_mutex(SocketContext* socket_context);
+void udp_unlock_timestamp_mutex(SocketContext* socket_context);
 
 #endif  // WHIST_UDP_H
