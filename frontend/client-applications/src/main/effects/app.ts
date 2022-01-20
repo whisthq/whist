@@ -1,55 +1,16 @@
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file app.ts
- * @brief This file contains subscriptions to Electron app event emitters observables.
+ * @brief This file contains effects that deal with the Electron app module
  */
 
-import { app, session } from "electron"
-import { autoUpdater } from "electron-updater"
-import { merge } from "rxjs"
-import { take } from "rxjs/operators"
-import Sentry from "@sentry/electron"
+import { app } from "electron"
 
-import { relaunch, createOnboardingWindow } from "@app/main/utils/renderer"
 import { fromTrigger } from "@app/main/utils/flows"
-import { persistGet, persistClear } from "@app/main/utils/persist"
-import { withAppActivated } from "@app/main/utils/observables"
-import { ONBOARDED } from "@app/constants/store"
 import { WhistTrigger } from "@app/constants/triggers"
-import { networkAnalyze } from "@app/main/utils/networkAnalysis"
 
-// If an update is available, show the update window and download the update
-fromTrigger(WhistTrigger.updateAvailable).subscribe(() => {
-  autoUpdater.downloadUpdate().catch((err) => Sentry.captureException(err))
-})
-
-// On signout or relaunch, clear the cache (so the user can log in again) and restart
-// the app
-fromTrigger(WhistTrigger.clearCacheAction).subscribe(() => {
-  persistClear()
-  // Clear the Auth0 cache. In window.ts, we tell Auth0 to store session info in
-  // a partition called "auth0", so we clear the "auth0" partition here
-  session.defaultSession
-    .clearStorageData()
-    .catch((err) => Sentry.captureException(err))
-  // Restart the app
-  relaunch()
-})
-
-merge(fromTrigger(WhistTrigger.relaunchAction)).subscribe(() => {
-  relaunch()
-})
-
-withAppActivated(fromTrigger(WhistTrigger.authFlowSuccess))
-  .pipe(take(1))
-  .subscribe(() => {
-    const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
-    if (!onboarded) {
-      networkAnalyze()
-      createOnboardingWindow()
-    }
-  })
-
+// This prevents duplicate apps from opening when the user clicks on the icon
+// multiple times
 fromTrigger(WhistTrigger.appReady).subscribe(() => {
   app.requestSingleInstanceLock()
 
@@ -58,17 +19,9 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
   })
 })
 
-fromTrigger(WhistTrigger.restoreLastSession).subscribe(
-  (body: { restore: boolean }) => {
-    persistSet(RESTORE_LAST_SESSION, body.restore)
-  }
-)
-
+// If the user requests/unrequests Whist as their default browser
 fromTrigger(WhistTrigger.setDefaultBrowser).subscribe(
   (body: { default: boolean }) => {
-    persistSet(WHIST_IS_DEFAULT_BROWSER, body.default)
-
-    // if the value changed to true, then we need to set Whist as the default browser now.
     if (body.default) {
       app.setAsDefaultProtocolClient("http")
       app.setAsDefaultProtocolClient("https")
@@ -78,12 +31,3 @@ fromTrigger(WhistTrigger.setDefaultBrowser).subscribe(
     }
   }
 )
-
-fromTrigger(WhistTrigger.appReady).subscribe(() => {
-  // Intercept URLs (Mac version)
-  app.on("open-url", function (event, url: string) {
-    event.preventDefault()
-    pipeURLToProtocol(url)
-    logBase(`Captured url ${url} after setting Whist as default browser!\n`, {})
-  })
-})

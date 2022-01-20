@@ -1,13 +1,19 @@
-import { BrowserWindow } from "electron"
+/**
+ * Copyright (c) 2021-2022 Whist Technologies, Inc.
+ * @file app.ts
+ * @brief This file contains effects that deal with the app lifecycle (e.g. relaunching, quitting, etc.)
+ */
+
+import { BrowserWindow, session } from "electron"
 import { merge } from "rxjs"
 import { withLatestFrom, filter, takeUntil } from "rxjs/operators"
+import Sentry from "@sentry/electron"
 
 import { fromTrigger } from "@app/main/utils/flows"
-import { destroyProtocol } from "@app/main/utils/protocol"
 import { relaunch } from "@app/main/utils/app"
-import { emitOnSignal, waitForSignal } from "@app/main/utils/observables"
 import { WhistTrigger } from "@app/constants/triggers"
 import { logBase } from "@app/main/utils/logging"
+import { persistClear } from "@app/main/utils/persist"
 
 // Handles the application quit logic
 // When we detect that all windows have been closed, we put the application to sleep
@@ -39,15 +45,25 @@ merge(
     relaunch({ sleep: true })
   })
 
-// If you put your computer to sleep, kill the protocol so we don't keep your mandelbox
-// running unnecessarily
-emitOnSignal(
-  fromTrigger(WhistTrigger.protocol),
-  fromTrigger(WhistTrigger.powerSuspend)
-).subscribe((protocol) => destroyProtocol(protocol))
-
 // If your computer wakes up from sleep, re-launch Whist on standby
 // i.e. don't show any windows but stay active in the dock
 fromTrigger(WhistTrigger.powerResume).subscribe(() => {
   relaunch({ sleep: true })
+})
+
+// On signout or relaunch, clear the cache (so the user can log in again) and restart
+// the app
+fromTrigger(WhistTrigger.clearCacheAction).subscribe(() => {
+  persistClear()
+  // Clear the Auth0 cache. In window.ts, we tell Auth0 to store session info in
+  // a partition called "auth0", so we clear the "auth0" partition here
+  session.defaultSession
+    .clearStorageData()
+    .catch((err) => Sentry.captureException(err))
+  // Restart the app
+  relaunch()
+})
+
+merge(fromTrigger(WhistTrigger.relaunchAction)).subscribe(() => {
+  relaunch()
 })
