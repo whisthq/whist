@@ -92,7 +92,7 @@ func TestSpinUpHandler(t *testing.T) {
 	}{
 		{"ConfigEncryptionToken", string(testJSONTransportRequest.ConfigEncryptionToken), string(gotRequestMap.ConfigEncryptionToken)},
 		{"JWTAccessToken", testJSONTransportRequest.JwtAccessToken, gotRequestMap.JwtAccessToken},
-		{"JSONData", testJSONTransportRequest.JSONData, gotRequestMap.JSONData},
+		{"JSONData", string(testJSONTransportRequest.JSONData), string(gotRequestMap.JSONData)},
 	}
 
 	for _, value := range testMap {
@@ -191,7 +191,7 @@ func TestHttpServerIntegration(t *testing.T) {
 	}{
 		{"ConfigEncryptionToken", string(testJSONTransportRequest.ConfigEncryptionToken), string(gotRequestMap.ConfigEncryptionToken)},
 		{"JWTAccessToken", testJSONTransportRequest.JwtAccessToken, gotRequestMap.JwtAccessToken},
-		{"JSONData", testJSONTransportRequest.JSONData, gotRequestMap.JSONData},
+		{"JSONData", string(testJSONTransportRequest.JSONData), string(gotRequestMap.JSONData)},
 	}
 
 	for _, value := range testMap {
