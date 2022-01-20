@@ -156,7 +156,7 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 	// Therefore, we begin blocking for it immediately and simply pass the
 	// message along (after some verification) for the body of loadUserConfigs()
 	// to wait on it later.
-	verifiedTokenChan := make(chan ConfigEncryptionInfo)
+	verifiedTokenChan := make(chan ConfigEncryptionInfo) // note: no buffer
 	go func() {
 		defer close(verifiedTokenChan)
 		encryptionInfo, err := mandelbox.receiveAndSanityCheckEncryptionToken(tokenChan)
