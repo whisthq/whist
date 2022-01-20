@@ -570,7 +570,8 @@ int main(int argc, char* argv[]) {
 #endif  // ! _WIN32
     }
 
-    destroy_input_device(&server_state.input_device);
+    destroy_input_device(server_state.input_device);
+    server_state.input_device = NULL;
 
     destroy_window_info_getter();
 

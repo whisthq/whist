@@ -73,11 +73,9 @@ InputDevice* create_input_device(InputDeviceType kind) {
     }
 }
 
-void destroy_input_device(InputDevice** pdev) {
-    InputDevice* dev;
-
-    dev = *pdev;
-    if (dev) dev->destroy(pdev);
+void destroy_input_device(InputDevice* dev) {
+    FATAL_ASSERT(dev != NULL);
+    dev->destroy();
 }
 
 int get_keyboard_modifier_state(InputDevice* dev, WhistKeycode keycode) {

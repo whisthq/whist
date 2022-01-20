@@ -306,15 +306,11 @@ static void get_input_dimensions(InputDeviceXTest* input_device, int32_t* w, int
     *h = window_attributes.height;
 }
 
-static void xtest_destroy_input_device(InputDeviceXTest** pdev) {
-    InputDeviceXTest* input_device = *pdev;
-
+static void xtest_destroy_input_device(InputDeviceXTest* input_device) {
     if (input_device) {
         XCloseDisplay(input_device->display);
         free(input_device);
     }
-
-    *pdev = NULL;
 }
 
 static int xtest_get_keyboard_modifier_state(InputDeviceXTest* input_device,

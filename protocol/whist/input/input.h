@@ -57,7 +57,7 @@ typedef int (*InputDeviceEmitHighResMouseWheelEventFn)(InputDevice* input_device
 typedef int (*InputDeviceEmitMultiGestureEventFn)(InputDevice* input_device, float d_theta,
                                                   float d_dist, WhistMultigestureType gesture_type,
                                                   bool active_gesture);
-typedef void (*InputDeviceDestroyFn)(InputDevice** dev);
+typedef void (*InputDeviceDestroyFn)();
 
 /** @brief base InputDevice */
 struct InputDevice {
@@ -94,7 +94,7 @@ InputDevice* create_input_device(InputDeviceType kind);
  *                                 destroy and free the memory of. The pointer is nullified
  *                                 after the call.
  */
-void destroy_input_device(InputDevice** input_device);
+void destroy_input_device(InputDevice* input_device);
 
 /**
  * @brief                          Get the active/inactive state of a key

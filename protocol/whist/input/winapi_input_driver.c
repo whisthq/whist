@@ -293,10 +293,8 @@ static const int windows_keycodes[KEYCODE_UPPERBOUND] = {
     VK_LAUNCH_MEDIA_SELECT  // 263 -> Media Select
 };
 
-void win_destroy_input_device(InputDeviceWin** pdev) {
-    InputDeviceWin* input_device = *pdev;
+void win_destroy_input_device(InputDeviceWin* input_device) {
     free(input_device);
-    *pdev = NULL;
 }
 
 #define GetWindowsKeyCode(whist_keycode) windows_keycodes[whist_keycode]

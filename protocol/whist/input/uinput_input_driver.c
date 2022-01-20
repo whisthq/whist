@@ -350,13 +350,7 @@ static int recv_fds(int sock, int* fds, unsigned n_fds) {
     return n_fds;
 }
 
-static void uinput_destroy_input_device(InputDeviceUInput** pdev) {
-    InputDeviceUInput* input_device = *pdev;
-    if (!input_device) {
-        LOG_INFO("destroy_input_device: Nothing to do, device is null!");
-        return;
-    }
-
+static void uinput_destroy_input_device(InputDeviceUInput* input_device) {
     // We close without emitting `ioctl(fd, UI_DEV_DESTROY)`.
     // This is because we let the host service maintain this responsibility.
     // When we close the protocol's file descriptors, the host service still
@@ -370,7 +364,6 @@ static void uinput_destroy_input_device(InputDeviceUInput** pdev) {
     close(input_device->fd_relmouse);
     close(input_device->fd_keyboard);
     free(input_device);
-    *pdev = NULL;
 }
 
 static void emit_input_event(int fd, int type, int code, int val) {
