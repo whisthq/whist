@@ -27,19 +27,18 @@ Includes
 Private Functions
 ============================
 */
-void get_wh(CaptureDevice* device, int* w, int* h);
-bool is_same_wh(CaptureDevice* device);
-void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi);
-int32_t multithreaded_nvidia_device_manager(void* opaque);
-int unbind_fbc_cuda_context(CaptureDevice* device);
-int bind_fbc_cuda_context(CaptureDevice* device);
+static void get_wh(CaptureDevice* device, int* w, int* h);
+static bool is_same_wh(CaptureDevice* device);
+static void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_t height,
+                                  uint32_t dpi);
+static int32_t multithreaded_nvidia_device_manager(void* opaque);
 
 /*
 ============================
 Private Function Implementations
 ============================
 */
-int32_t multithreaded_nvidia_device_manager(void* opaque) {
+static int32_t multithreaded_nvidia_device_manager(void* opaque) {
     /*
         Multithreaded function to asynchronously destroy and create the nvidia capture device when
        necessary. nvidia_device_semaphore will be posted to if capture_screen on nvidia fails,
@@ -84,7 +83,7 @@ int32_t multithreaded_nvidia_device_manager(void* opaque) {
     return 0;
 }
 
-void get_wh(CaptureDevice* device, int* w, int* h) {
+static void get_wh(CaptureDevice* device, int* w, int* h) {
     /*
         Get the width and height of the display associated with device, and store them in w and h,
         respectively.
@@ -107,7 +106,7 @@ void get_wh(CaptureDevice* device, int* w, int* h) {
     *h = window_attributes.height;
 }
 
-bool is_same_wh(CaptureDevice* device) {
+static bool is_same_wh(CaptureDevice* device) {
     /*
         Determine whether or not the device's width and height agree width actual display width and
         height.
@@ -124,7 +123,8 @@ bool is_same_wh(CaptureDevice* device) {
     return device->width == w && device->height == h;
 }
 
-void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_t height, uint32_t dpi) {
+static void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_t height,
+                                  uint32_t dpi) {
     /*
        Using XRandR, try updating the device's display to the given width, height, and DPI. Even if
        this fails to set the dimensions, device->width and device->height will always equal the
@@ -253,33 +253,33 @@ int create_capture_device(CaptureDevice* device, uint32_t width, uint32_t height
     // if we can create the nvidia capture device, do so
 
     bool res;
-#if USING_NVIDIA_ENCODE
-    // cuda_init the encoder context
-    res = cuda_init(get_video_thread_cuda_context_ptr());
-    if (!res) {
-        LOG_ERROR("Failed to initialize cuda!");
+    if (USING_NVIDIA_ENCODE) {
+        // cuda_init the encoder context
+        res = cuda_init(get_video_thread_cuda_context_ptr());
+        if (!res) {
+            LOG_ERROR("Failed to initialize cuda!");
+        }
     }
-#endif  // USING_NVIDIA_ENCODE
 
-#if USING_NVIDIA_CAPTURE
-    // If using the Nvidia device, we need a second context for second thread
-    res = cuda_init(get_nvidia_thread_cuda_context_ptr());
-    if (!res) {
-        LOG_ERROR("Failed to initialize second cuda context!");
+    if (USING_NVIDIA_CAPTURE) {
+        // If using the Nvidia device, we need a second context for second thread
+        res = cuda_init(get_nvidia_thread_cuda_context_ptr());
+        if (!res) {
+            LOG_ERROR("Failed to initialize second cuda context!");
+        }
+        // pop the second context, since it will belong to nvidia
+        CUresult cu_res = cu_ctx_pop_current_ptr(get_nvidia_thread_cuda_context_ptr());
+        if (!res) {
+            LOG_ERROR("Failed to initialize cuda!");
+        }
+        LOG_DEBUG("Nvidia context: %p, Video context: %p", *get_nvidia_thread_cuda_context_ptr(),
+                  *get_video_thread_cuda_context_ptr());
+        // set up semaphore and nvidia manager
+        device->nvidia_device_semaphore = whist_create_semaphore(0);
+        device->nvidia_manager = whist_create_thread(multithreaded_nvidia_device_manager,
+                                                     "multithreaded_nvidia_manager", device);
+        whist_post_semaphore(device->nvidia_device_semaphore);
     }
-    // pop the second context, since it will belong to nvidia
-    CUresult cu_res = cu_ctx_pop_current_ptr(get_nvidia_thread_cuda_context_ptr());
-    if (!res) {
-        LOG_ERROR("Failed to initialize cuda!");
-    }
-    LOG_DEBUG("Nvidia context: %x, Video context: %x", *get_nvidia_thread_cuda_context_ptr(),
-              *get_video_thread_cuda_context_ptr());
-    // set up semaphore and nvidia manager
-    device->nvidia_device_semaphore = whist_create_semaphore(0);
-    device->nvidia_manager = whist_create_thread(multithreaded_nvidia_device_manager,
-                                                 "multithreaded_nvidia_manager", device);
-    whist_post_semaphore(device->nvidia_device_semaphore);
-#endif  // USING_NVIDIA_CAPTURE
 
     // Create the X11 capture device; when the nvidia manager thread finishes creation, active
     // capture device will change
@@ -310,7 +310,6 @@ int capture_screen(CaptureDevice* device) {
         return -1;
     }
     switch (device->active_capture_device) {
-#if USING_NVIDIA_CAPTURE
         case NVIDIA_DEVICE: {
             static CUcontext current_context;
             // first check if we just switched to nvidia
@@ -351,7 +350,6 @@ int capture_screen(CaptureDevice* device) {
             // otherwise, nvidia failed!
             device->active_capture_device = X11_DEVICE;
         }
-#endif  // USING_NVIDIA_CAPTURE
         case X11_DEVICE:
             device->last_capture_device = X11_DEVICE;
             int ret = x11_capture_screen(device->x11_capture_device);
@@ -391,15 +389,15 @@ bool reconfigure_capture_device(CaptureDevice* device, uint32_t width, uint32_t 
         return false;
     }
     try_update_dimensions(device, width, height, dpi);
-#if USING_NVIDIA_CAPTURE
-    if (device->active_capture_device == NVIDIA_DEVICE) {
-        // destroy the device
-        destroy_nvidia_capture_device(device->nvidia_capture_device);
-        device->nvidia_capture_device = NULL;
-        device->active_capture_device = X11_DEVICE;
-        whist_post_semaphore(device->nvidia_device_semaphore);
+    if (USING_NVIDIA_CAPTURE) {
+        if (device->active_capture_device == NVIDIA_DEVICE) {
+            // destroy the device
+            destroy_nvidia_capture_device(device->nvidia_capture_device);
+            device->nvidia_capture_device = NULL;
+            device->active_capture_device = X11_DEVICE;
+            whist_post_semaphore(device->nvidia_device_semaphore);
+        }
     }
-#endif  // USING_NVIDIA_CAPTURE
     return reconfigure_x11_capture_device(device->x11_capture_device, width, height, dpi);
 }
 
@@ -414,19 +412,19 @@ void destroy_capture_device(CaptureDevice* device) {
         // nothing to do!
         return;
     }
-#if USING_NVIDIA_CAPTURE
-    // tell the nvidia thread to stop
-    device->pending_destruction = true;
-    whist_post_semaphore(device->nvidia_device_semaphore);
-    // wait for the nvidia thread to terminate
-    whist_wait_thread(device->nvidia_manager, NULL);
-    // now we can destroy the capture device
-    if (device->nvidia_capture_device) {
-        destroy_nvidia_capture_device(device->nvidia_capture_device);
+    if (USING_NVIDIA_CAPTURE) {
+        // tell the nvidia thread to stop
+        device->pending_destruction = true;
+        whist_post_semaphore(device->nvidia_device_semaphore);
+        // wait for the nvidia thread to terminate
+        whist_wait_thread(device->nvidia_manager, NULL);
+        // now we can destroy the capture device
+        if (device->nvidia_capture_device) {
+            destroy_nvidia_capture_device(device->nvidia_capture_device);
+        }
+        cuda_destroy(*get_nvidia_thread_cuda_context_ptr());
+        *get_nvidia_thread_cuda_context_ptr() = NULL;
     }
-    cuda_destroy(*get_nvidia_thread_cuda_context_ptr());
-    *get_nvidia_thread_cuda_context_ptr() = NULL;
-#endif  // USING_NVIDIA_CAPTURE
     cuda_destroy(*get_video_thread_cuda_context_ptr());
     *get_video_thread_cuda_context_ptr() = NULL;
     if (device->x11_capture_device) {

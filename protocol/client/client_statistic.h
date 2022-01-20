@@ -52,6 +52,6 @@ Public Functions
 /**
  * @brief                          Initialize "client_statistic_info" array.
  */
-void init_client_statistics();
+void init_client_statistics(void);
 
 #endif  // CLIENT_STATISTIC_H

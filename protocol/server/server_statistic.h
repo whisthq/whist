@@ -51,6 +51,6 @@ Public Functions
 /**
  * @brief                          Initialize "server_statistic_info" array.
  */
-void whist_init_server_statistics();
+void whist_init_server_statistics(void);
 
 #endif  // SERVER_STATISTIC_H

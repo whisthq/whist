@@ -18,20 +18,20 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
     // Handle transfer capture for nvidia capture device
     // check if we need to switch our active encoder
     if (encoder->active_encoder == NVIDIA_ENCODER) {
-#if USING_NVIDIA_CAPTURE
-        // We need to account for switching contexts
-        NvidiaEncoder* old_encoder = encoder->nvidia_encoders[encoder->active_encoder_idx];
-        if (old_encoder->cuda_context != *get_video_thread_cuda_context_ptr()) {
-            LOG_INFO("Switching to other Nvidia encoder!");
-            encoder->active_encoder_idx = encoder->active_encoder_idx == 1 ? 0 : 1;
-            if (encoder->nvidia_encoders[encoder->active_encoder_idx] == NULL) {
-                encoder->nvidia_encoders[encoder->active_encoder_idx] = create_nvidia_encoder(
-                    old_encoder->bitrate, old_encoder->codec_type, old_encoder->width,
-                    old_encoder->height, *get_video_thread_cuda_context_ptr());
+        if (USING_NVIDIA_CAPTURE) {
+            // We need to account for switching contexts
+            NvidiaEncoder* old_encoder = encoder->nvidia_encoders[encoder->active_encoder_idx];
+            if (old_encoder->cuda_context != *get_video_thread_cuda_context_ptr()) {
+                LOG_INFO("Switching to other Nvidia encoder!");
+                encoder->active_encoder_idx = encoder->active_encoder_idx == 1 ? 0 : 1;
+                if (encoder->nvidia_encoders[encoder->active_encoder_idx] == NULL) {
+                    encoder->nvidia_encoders[encoder->active_encoder_idx] = create_nvidia_encoder(
+                        old_encoder->bitrate, old_encoder->codec_type, old_encoder->width,
+                        old_encoder->height, *get_video_thread_cuda_context_ptr());
+                }
+                video_encoder_set_iframe(encoder);
             }
-            video_encoder_set_iframe(encoder);
         }
-#endif  // USING_NVIDIA_CAPTURE
         RegisteredResource resource_to_register = {0};
         resource_to_register.width = device->width;
         resource_to_register.height = device->height;

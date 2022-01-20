@@ -55,9 +55,9 @@ Private Functions
 ============================
 */
 
-WhistCursorImage get_cursor_image(PCURSORINFO pci);
+static WhistCursorImage get_cursor_image(PCURSORINFO pci);
 
-void load_cursors();
+static void load_cursors(void);
 
 /*
 ============================
@@ -65,7 +65,7 @@ Private Function Implementations
 ============================
 */
 
-void load_cursors() {
+void load_cursors(void) {
     /*
         Load each cursor by type
     */
@@ -138,7 +138,7 @@ Public Function Implementations
 ============================
 */
 
-void init_cursors() {
+void init_cursors(void) {
     /*
         Initialize all cursors by loading cursors
     */

@@ -37,7 +37,7 @@ Public Functions
  *
  * @returns                        true if successful, false otherwise
  */
-bool init_file_drop_handler();
+bool init_file_drop_handler(void);
 
 /**
  * @brief                          Use the XDND protocol to execute a drag and drop of
@@ -79,6 +79,6 @@ int file_drop_mark_ready(int id);
 /**
  * @brief                          Clean up the file drop handler
  */
-void destroy_file_drop_handler();
+void destroy_file_drop_handler(void);
 
 #endif  // WINDOW_NAME_H

@@ -120,7 +120,7 @@ typedef struct {
  *
  * @param priv_key_data            The private key data buffer
  */
-void prepare_private_key_request(PrivateKeyData* priv_key_data);
+static void prepare_private_key_request(PrivateKeyData* priv_key_data);
 
 /**
  * @brief                          This will sign the other connection's private key data
@@ -131,7 +131,7 @@ void prepare_private_key_request(PrivateKeyData* priv_key_data);
  *
  * @returns                        True if the verification succeeds, false if it fails
  */
-bool sign_private_key(PrivateKeyData* priv_key_data, int recv_size, void* private_key);
+static bool sign_private_key(PrivateKeyData* priv_key_data, int recv_size, void* private_key);
 
 /**
  * @brief                          This will verify the given private key
@@ -143,9 +143,9 @@ bool sign_private_key(PrivateKeyData* priv_key_data, int recv_size, void* privat
  *
  * @returns                        True if the verification succeeds, false if it fails
  */
-bool confirm_private_key(PrivateKeyData* our_priv_key_data,
-                         PrivateKeyData* our_signed_priv_key_data, int recv_size,
-                         void* private_key);
+static bool confirm_private_key(PrivateKeyData* our_priv_key_data,
+                                PrivateKeyData* our_signed_priv_key_data, int recv_size,
+                                void* private_key);
 
 /*
 ============================
@@ -153,7 +153,7 @@ Public Function Implementations
 ============================
 */
 
-SOCKET socketp_udp() {
+SOCKET socketp_udp(void) {
     /*
         Create a UDP socket and set the FD_CLOEXEC flag.
         Linux permits atomic FD_CLOEXEC definition via SOCK_CLOEXEC,
@@ -255,7 +255,7 @@ void set_tos(SOCKET socket, WhistTOSValue tos) {
     }
 }
 
-void whist_init_networking() {
+void whist_init_networking(void) {
     // Initialize any uninitialized port mappings with the identity
     for (int i = 0; i <= USHRT_MAX; i++) {
         if (port_mappings[i] == 0) {
@@ -273,7 +273,7 @@ void whist_init_networking() {
 #endif
 }
 
-int get_last_network_error() {
+int get_last_network_error(void) {
     /*
         Get the most recent network error.
 
@@ -542,7 +542,7 @@ Private Function Implementations
 ============================
 */
 
-void prepare_private_key_request(PrivateKeyData* priv_key_data) {
+static void prepare_private_key_request(PrivateKeyData* priv_key_data) {
     /*
         This will prepare the private key data
 
@@ -557,7 +557,7 @@ void prepare_private_key_request(PrivateKeyData* priv_key_data) {
     memset(priv_key_data->signature, 0, sizeof(priv_key_data->signature));
 }
 
-bool sign_private_key(PrivateKeyData* priv_key_data, int recv_size, void* private_key) {
+static bool sign_private_key(PrivateKeyData* priv_key_data, int recv_size, void* private_key) {
     /*
         This will sign the other connection's private key data
 
@@ -583,9 +583,9 @@ bool sign_private_key(PrivateKeyData* priv_key_data, int recv_size, void* privat
     }
 }
 
-bool confirm_private_key(PrivateKeyData* our_priv_key_data,
-                         PrivateKeyData* our_signed_priv_key_data, int recv_size,
-                         void* private_key) {
+static bool confirm_private_key(PrivateKeyData* our_priv_key_data,
+                                PrivateKeyData* our_signed_priv_key_data, int recv_size,
+                                void* private_key) {
     /*
         This will verify the given private key
 

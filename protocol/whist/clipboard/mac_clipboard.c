@@ -30,9 +30,9 @@ Includes
 #include "../utils/mac_utils.h"
 #include "clipboard_osx.h"
 
-bool clipboard_has_image = false;
-bool clipboard_has_string = false;
-bool clipboard_has_files = false;
+static bool clipboard_has_image = false;
+static bool clipboard_has_string = false;
+static bool clipboard_has_files = false;
 static int last_clipboard_sequence_number = -1;
 
 /*
@@ -41,11 +41,11 @@ Private Function Implementations
 ============================
 */
 
-void unsafe_init_clipboard(){};
+void unsafe_init_clipboard(void){};
 
-void unsafe_destroy_clipboard(){};
+void unsafe_destroy_clipboard(void){};
 
-bool unsafe_has_os_clipboard_updated() {
+bool unsafe_has_os_clipboard_updated(void) {
     /*
         Check if the Mac clipboard has updated
 
@@ -82,7 +82,7 @@ void unsafe_free_clipboard_buffer(ClipboardData* cb) {
     deallocate_region(cb);
 }
 
-ClipboardData* unsafe_get_os_clipboard() {
+ClipboardData* unsafe_get_os_clipboard(void) {
     /*
         Get and return the current contents of the Mac clipboard
 

@@ -42,7 +42,7 @@ Private Function Implementations
 ============================
 */
 
-char* get_os_clipboard_directory() {
+char* get_os_clipboard_directory(void) {
     /*
         Get the directory of the get clipboard cache
 
@@ -54,7 +54,7 @@ char* get_os_clipboard_directory() {
     wcstombs(buf, lget_os_clipboard_directory(), sizeof(buf));
     return buf;
 }
-char* set_os_clipboard_directory() {
+char* set_os_clipboard_directory(void) {
     /*
         Get the directory of the set clipboard cache
 
@@ -67,7 +67,7 @@ char* set_os_clipboard_directory() {
     return buf;
 }
 
-void unsafe_init_clipboard() {
+void unsafe_init_clipboard(void) {
     /*
         Initialize the clipboard by getting both the
         get clipboard and set clipboard caches
@@ -77,9 +77,9 @@ void unsafe_init_clipboard() {
     set_os_clipboard_directory();
 }
 
-void unsafe_destroy_clipboard() {}
+void unsafe_destroy_clipboard(void) {}
 
-WCHAR* lclipboard_directory() {
+WCHAR* lclipboard_directory(void) {
     /*
         Get the parent directory of the clipboard caches
 
@@ -112,7 +112,7 @@ WCHAR* lclipboard_directory() {
     return directory;
 }
 
-WCHAR* lget_os_clipboard_directory() {
+WCHAR* lget_os_clipboard_directory(void) {
     /*
         Get the get OS clipboard cache directory
 
@@ -133,7 +133,7 @@ WCHAR* lget_os_clipboard_directory() {
     return path;
 }
 
-WCHAR* lset_os_clipboard_directory() {
+WCHAR* lset_os_clipboard_directory(void) {
     /*
         Get the set OS clipboard cache directory
 
@@ -155,101 +155,9 @@ WCHAR* lset_os_clipboard_directory() {
     return path;
 }
 
-#define REPARSE_MOUNTPOINT_HEADER_SIZE 8
-
-/**
- * @brief                          Struct for reparsing file mount point
- */
-typedef struct {
-    DWORD ReparseTag;
-    DWORD ReparseDataLength;
-    WORD Reserved;
-    WORD ReparseTargetLength;
-    WORD ReparseTargetMaximumLength;
-    WORD Reserved1;
-    WCHAR ReparseTarget[1];
-} ReparseMountpointDataBuffer;
-
-#include <winioctl.h>
-
-bool create_junction(WCHAR* sz_junction, WCHAR* sz_path) {
-    /*
-        From filename `sz_junction`, create full path under `sz_path`
-
-        Arguments:
-            sz_junction (WCHAR*): filename of file to be created
-            sz_path (WCHAR*): directory under which new file should be created
-
-        Returns:
-            (bool): true on success, false on failure
-    */
-
-    BYTE buf[sizeof(ReparseMountpointDataBuffer) + (PATH_MAXLEN + 1) * sizeof(WCHAR)];
-    ReparseMountpointDataBuffer* reparse_buffer = (ReparseMountpointDataBuffer*)buf;
-    WCHAR sz_target[PATH_MAXLEN + 1] = L"\\??\\";
-
-    wcscat(sz_target, sz_path);
-    wcscat(sz_target, L"\\");
-
-    if (!CreateDirectoryW(sz_junction, NULL)) {
-        LOG_ERROR("CreateDirectoryW Error: %d", GetLastError());
-        return false;
-    }
-
-    // Obtain SE_RESTORE_NAME privilege (required for opening a directory)
-    HANDLE h_token = NULL;
-    TOKEN_PRIVILEGES tp;
-    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &h_token)) {
-        LOG_ERROR("OpenProcessToken Error: %d", GetLastError());
-        return false;
-    }
-    if (!LookupPrivilegeValueW(NULL, L"SeRestorePrivilege", &tp.Privileges[0].Luid)) {
-        LOG_ERROR("LookupPrivilegeValueW Error: %d", GetLastError());
-        return false;
-    }
-    tp.PrivilegeCount = 1;
-    tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-    if (!AdjustTokenPrivileges(h_token, FALSE, &tp, sizeof(TOKEN_PRIVILEGES), NULL, NULL)) {
-        LOG_ERROR("AdjustTokenPrivileges Error: %d", GetLastError());
-        return false;
-    }
-    if (h_token) CloseHandle(h_token);
-    // End Obtain SE_RESTORE_NAME privilege
-
-    HANDLE h_dir = CreateFileW(sz_junction, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
-                               FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, NULL);
-    if (h_dir == INVALID_HANDLE_VALUE) {
-        LOG_ERROR("CreateFileW Error: %d", GetLastError());
-        return false;
-    }
-
-    memset(buf, 0, sizeof(buf));
-    reparse_buffer->ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
-    int len = (int)wcslen(sz_target);
-    wcscpy(reparse_buffer->ReparseTarget, sz_target);
-    reparse_buffer->ReparseTargetMaximumLength = (WORD)len * sizeof(WCHAR);
-    reparse_buffer->ReparseTargetLength = (WORD)(len - 1) * sizeof(WCHAR);
-    reparse_buffer->ReparseDataLength = reparse_buffer->ReparseTargetLength + 12;
-
-    DWORD dw_ret;
-    if (!DeviceIoControl(h_dir, FSCTL_SET_REPARSE_POINT, reparse_buffer,
-                         reparse_buffer->ReparseDataLength + REPARSE_MOUNTPOINT_HEADER_SIZE, NULL,
-                         0, &dw_ret, NULL)) {
-        CloseHandle(h_dir);
-        RemoveDirectoryW(sz_junction);
-
-        LOG_ERROR("DeviceIoControl Error: %d", GetLastError());
-        return false;
-    }
-
-    CloseHandle(h_dir);
-
-    return true;
-}
-
 static int last_clipboard_sequence_number = -1;
 
-bool unsafe_has_os_clipboard_updated() {
+bool unsafe_has_os_clipboard_updated(void) {
     /*
         Whether the Windows OS clipboard has updated
 
@@ -280,7 +188,7 @@ void unsafe_free_clipboard_buffer(ClipboardData* cb) {
     deallocate_region(cb);
 }
 
-ClipboardData* unsafe_get_os_clipboard() {
+ClipboardData* unsafe_get_os_clipboard(void) {
     /*
         Get and return the current contents of the Windows clipboard
 
@@ -412,7 +320,7 @@ ClipboardData* unsafe_get_os_clipboard() {
     return cb;
 }
 
-HGLOBAL get_global_alloc(void* buf, int len, bool null_char) {
+static HGLOBAL get_global_alloc(void* buf, int len, bool null_char) {
     /*
         Allocate space and copy buffer into allocated space
 

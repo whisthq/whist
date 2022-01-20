@@ -57,12 +57,12 @@ UDP Implementation of Network.h Interface
 ============================
 */
 
-int udp_ack(void* raw_context) {
+static int udp_ack(void* raw_context) {
     SocketContextData* context = raw_context;
     return send(context->socket, NULL, 0, 0);
 }
 
-WhistPacket* udp_read_packet(void* raw_context, bool should_recv) {
+static WhistPacket* udp_read_packet(void* raw_context, bool should_recv) {
     SocketContextData* context = raw_context;
 
     if (should_recv == false) {
@@ -148,7 +148,7 @@ WhistPacket* udp_read_packet(void* raw_context, bool should_recv) {
     }
 }
 
-void udp_free_packet(void* raw_context, WhistPacket* udp_packet) {
+static void udp_free_packet(void* raw_context, WhistPacket* udp_packet) {
     SocketContextData* context = raw_context;
 
     if (!context->decrypted_packet_used) {
@@ -166,7 +166,7 @@ void udp_free_packet(void* raw_context, WhistPacket* udp_packet) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int udp_send_constructed_packet(void* raw_context, WhistPacket* packet, size_t packet_size) {
+static int udp_send_constructed_packet(void* raw_context, WhistPacket* packet, size_t packet_size) {
     SocketContextData* context = raw_context;
     if (context == NULL) {
         LOG_ERROR("SocketContextData is NULL");
@@ -231,8 +231,8 @@ int udp_send_constructed_packet(void* raw_context, WhistPacket* packet, size_t p
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payload, int payload_size,
-                    int packet_id) {
+static int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payload,
+                           int payload_size, int packet_id) {
     SocketContextData* context = raw_context;
     if (context == NULL) {
         LOG_ERROR("SocketContextData is NULL");
@@ -448,7 +448,7 @@ int udp_nack(SocketContext* socket_context, WhistPacketType type, int packet_id,
     return ret;
 }
 
-void udp_destroy_socket_context(void* raw_context) {
+static void udp_destroy_socket_context(void* raw_context) {
     SocketContextData* context = raw_context;
 
     if (context->decrypted_packet_used) {
@@ -480,8 +480,8 @@ Private Function Implementations
 ============================
 */
 
-int create_udp_server_context(void* raw_context, int port, int recvfrom_timeout_ms,
-                              int stun_timeout_ms) {
+static int create_udp_server_context(void* raw_context, int port, int recvfrom_timeout_ms,
+                                     int stun_timeout_ms) {
     SocketContextData* context = raw_context;
 
     socklen_t slen = sizeof(context->addr);
@@ -513,8 +513,8 @@ int create_udp_server_context(void* raw_context, int port, int recvfrom_timeout_
     return 0;
 }
 
-int create_udp_server_context_stun(SocketContextData* context, int port, int recvfrom_timeout_ms,
-                                   int stun_timeout_ms) {
+static int create_udp_server_context_stun(SocketContextData* context, int port,
+                                          int recvfrom_timeout_ms, int stun_timeout_ms) {
     // Create UDP socket
     if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
         return -1;
@@ -632,8 +632,8 @@ int create_udp_server_context_stun(SocketContextData* context, int port, int rec
     return 0;
 }
 
-int create_udp_client_context(SocketContextData* context, char* destination, int port,
-                              int recvfrom_timeout_ms, int stun_timeout_ms) {
+static int create_udp_client_context(SocketContextData* context, char* destination, int port,
+                                     int recvfrom_timeout_ms, int stun_timeout_ms) {
     // Create UDP socket
     if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
         return -1;
@@ -674,8 +674,8 @@ int create_udp_client_context(SocketContextData* context, char* destination, int
     return 0;
 }
 
-int create_udp_client_context_stun(SocketContextData* context, char* destination, int port,
-                                   int recvfrom_timeout_ms, int stun_timeout_ms) {
+static int create_udp_client_context_stun(SocketContextData* context, char* destination, int port,
+                                          int recvfrom_timeout_ms, int stun_timeout_ms) {
     // Create UDP socket
     if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
         return -1;

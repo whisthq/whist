@@ -557,7 +557,7 @@ void push_clipboard_chunk(ClipboardData* cb_chunk) {
     whist_unlock_mutex(current_clipboard_activity.clipboard_action_mutex);
 }
 
-ClipboardData* pull_clipboard_chunk() {
+ClipboardData* pull_clipboard_chunk(void) {
     /*
         When called, return the current clipboard chunk if a new clipboard activity
         has registered, or if the recently updated clipboard is being read.
@@ -627,7 +627,7 @@ ClipboardData* pull_clipboard_chunk() {
     return cb_chunk;
 }
 
-void destroy_clipboard_synchronizer() {
+void destroy_clipboard_synchronizer(void) {
     /*
         Cleanup the clipboard synchronizer and all resources
 

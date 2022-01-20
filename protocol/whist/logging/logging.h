@@ -70,7 +70,9 @@ Defines
 
 #define NEWLINE "\n"
 // Cast to const chars so that comparison against XYZ_TAG is defined
-extern const char *debug_tag, *info_tag, *metric_tag, *warning_tag, *error_tag, *fatal_error_tag;
+extern const char *const debug_tag,
+    *const info_tag, *const metric_tag, *const warning_tag, *const error_tag,
+                                                                *const fatal_error_tag;
 #define DEBUG_TAG debug_tag
 #define INFO_TAG info_tag
 #define METRIC_TAG metric_tag
@@ -177,13 +179,13 @@ Public Functions
  * @brief                          Print the stacktrace of the calling function to stdout
  *                                 This will be registered as if it was logged as well
  */
-void print_stacktrace();
+void print_stacktrace(void);
 
 /**
  * @brief                          Initialize the logger.
  *
  */
-void whist_init_logger();
+void whist_init_logger(void);
 
 /**
  * @brief                          Log the given format string
@@ -204,11 +206,11 @@ void internal_logging_printf(const char* tag, const char* fmt_str, ...);
  *                                 rather than slowly pushing the logs through
  *                                 from another thread
  */
-void flush_logs();
+void flush_logs(void);
 
 /**
  * @brief                          Destroy the logger object
  */
-void destroy_logger();
+void destroy_logger(void);
 
 #endif  // LOGGING_H

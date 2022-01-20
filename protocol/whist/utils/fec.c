@@ -98,14 +98,14 @@ Private Function Declarations
  *
  * @returns                        The RSCode for that (n, k) tuple
  */
-RSCode* get_rs_code(int k, int n);
+static RSCode* get_rs_code(int k, int n);
 
 /**
  * @brief                          Frees an RSTable
  *
  * @param opaque                   The RSTable* to free
  */
-void free_rs_code_table(void* opaque);
+static void free_rs_code_table(void* opaque);
 
 /*
 ============================
@@ -113,7 +113,7 @@ Public Function Implementations
 ============================
 */
 
-void init_fec() {
+void init_fec(void) {
     rs_table_tls_id = SDL_TLSCreate();
     init_rs();
 }
@@ -346,7 +346,7 @@ Private Function Implementations
 ============================
 */
 
-RSCode* get_rs_code(int k, int n) {
+static RSCode* get_rs_code(int k, int n) {
     FATAL_ASSERT(k <= n);
 
     // Get the rs code table for this thread
@@ -369,7 +369,7 @@ RSCode* get_rs_code(int k, int n) {
     // We make a redundant (RSCode*) because cppcheck parses the type wrong
 }
 
-void free_rs_code_table(void* raw_rs_code_table) {
+static void free_rs_code_table(void* raw_rs_code_table) {
     RSTable* rs_code_table = (RSTable*)raw_rs_code_table;
 
     // If the table was never created, we have nothing to free

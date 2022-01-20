@@ -55,12 +55,9 @@ Public Functions
 /**
  * @brief                          Creates an nvidia capture device
  *
- * @param device                   Capture device struct to hold the capture
- *                                 device
- *
- * @returns                        0 on success, -1 on failure
+ * @returns                        The new capture device.
  */
-NvidiaCaptureDevice* create_nvidia_capture_device();
+NvidiaCaptureDevice* create_nvidia_capture_device(void);
 
 /**
  * @brief                          Captures the screen into GPU pointers.

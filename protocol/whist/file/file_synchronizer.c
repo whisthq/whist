@@ -52,8 +52,8 @@ Defines
 ============================
 */
 
-TransferringFile transferring_files[NUM_TRANSFERRING_FILES];
-WhistMutex file_synchrony_update_mutex;  // used to protect the global file synchrony
+static TransferringFile transferring_files[NUM_TRANSFERRING_FILES];
+static WhistMutex file_synchrony_update_mutex;  // used to protect the global file synchrony
 static bool is_initialized = false;
 static FileTransferType enabled_actions = 0;
 
@@ -63,7 +63,7 @@ Private Functions
 ============================
 */
 
-void reset_transferring_file(int file_index) {
+static void reset_transferring_file(int file_index) {
     /*
         Reset the transferring file info at index `index`
 
@@ -98,7 +98,7 @@ void reset_transferring_file(int file_index) {
     current_file->direction = FILE_UNUSED;
 }
 
-bool is_file_index_valid(int file_index) {
+static bool is_file_index_valid(int file_index) {
     /*
         Check whether the file index falls in the range of
         indices for the `transferring_files` array.
@@ -115,7 +115,7 @@ bool is_file_index_valid(int file_index) {
     return file_index >= 0 && file_index < NUM_TRANSFERRING_FILES;
 }
 
-int find_free_transferring_file_index() {
+static int find_free_transferring_file_index(void) {
     /*
         Find an available transferring file array index.
 
@@ -514,7 +514,7 @@ void file_synchronizer_read_next_file_chunk(int file_index, FileData** file_chun
     whist_unlock_mutex(file_synchrony_update_mutex);
 }
 
-void reset_all_transferring_files() {
+void reset_all_transferring_files(void) {
     /*
         Reset all transferring files
     */
@@ -524,7 +524,7 @@ void reset_all_transferring_files() {
     }
 }
 
-void destroy_file_synchronizer() {
+void destroy_file_synchronizer(void) {
     /*
         Clean up the file synchronizer
     */

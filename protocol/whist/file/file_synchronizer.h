@@ -190,11 +190,11 @@ void file_synchronizer_read_next_file_chunk(int file_index, FileData** file_chun
 /**
  * @brief                          Reset all transferring files
  */
-void reset_all_transferring_files();
+void reset_all_transferring_files(void);
 
 /**
  * @brief                          Cleanup the file synchronizer
  */
-void destroy_file_synchronizer();
+void destroy_file_synchronizer(void);
 
 #endif  // FILE_SYNCHRONIZER_H

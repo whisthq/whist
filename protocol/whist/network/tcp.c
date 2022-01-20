@@ -51,7 +51,7 @@ Private Functions
  *
  * @returns                        The socket file descriptor, -1 on failure
  */
-SOCKET socketp_tcp();
+static SOCKET socketp_tcp(void);
 
 /**
  * @brief                           Perform accept syscall and set fd to use flag
@@ -63,7 +63,7 @@ SOCKET socketp_tcp();
  *
  * @returns                         The new socket file descriptor, -1 on failure
  */
-SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len);
+static SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len);
 
 /**
  * @brief                           Connect to a TCP Server
@@ -74,7 +74,7 @@ SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len);
  *
  * @returns                         Returns true on success, false on failure.
  */
-bool tcp_connect(SOCKET sock_fd, struct sockaddr_in sock_addr, int timeout_ms);
+static bool tcp_connect(SOCKET sock_fd, struct sockaddr_in sock_addr, int timeout_ms);
 
 /*
 ============================
@@ -82,12 +82,12 @@ TCP Implementation of Network.h Interface
 ============================
 */
 
-int tcp_ack(void* raw_context) {
+static int tcp_ack(void* raw_context) {
     SocketContextData* context = raw_context;
     return send(context->socket, NULL, 0, 0);
 }
 
-WhistPacket* tcp_read_packet(void* raw_context, bool should_recv) {
+static WhistPacket* tcp_read_packet(void* raw_context, bool should_recv) {
     SocketContextData* context = raw_context;
 
     // The dynamically sized buffer to read into
@@ -181,9 +181,11 @@ WhistPacket* tcp_read_packet(void* raw_context, bool should_recv) {
     return NULL;
 }
 
-void tcp_free_packet(void* raw_context, WhistPacket* tcp_packet) { deallocate_region(tcp_packet); }
+static void tcp_free_packet(void* raw_context, WhistPacket* tcp_packet) {
+    deallocate_region(tcp_packet);
+}
 
-int tcp_send_constructed_packet(void* raw_context, WhistPacket* packet) {
+static int tcp_send_constructed_packet(void* raw_context, WhistPacket* packet) {
     SocketContextData* context = raw_context;
 
     int packet_size = get_packet_size(packet);
@@ -232,7 +234,7 @@ int tcp_send_constructed_packet(void* raw_context, WhistPacket* packet) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, int len, int id) {
+static int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, int len, int id) {
     SocketContextData* context = raw_context;
 
     if (id != -1) {
@@ -266,7 +268,7 @@ int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, int len
     return ret;
 }
 
-void tcp_destroy_socket_context(void* raw_context) {
+static void tcp_destroy_socket_context(void* raw_context) {
     SocketContextData* context = raw_context;
 
     closesocket(context->socket);
@@ -281,7 +283,7 @@ Private Function Implementations
 ============================
 */
 
-SOCKET socketp_tcp() {
+static SOCKET socketp_tcp(void) {
     /*
         Create a TCP socket and set the FD_CLOEXEC flag.
         Linux permits atomic FD_CLOEXEC definition via SOCK_CLOEXEC,
@@ -319,7 +321,7 @@ SOCKET socketp_tcp() {
     return sock_fd;
 }
 
-SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len) {
+static SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len) {
     /*
         Accept a connection on `sock_fd` and return a new socket fd
 
@@ -355,7 +357,7 @@ SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len) 
     return new_socket;
 }
 
-bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
+static bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
     /*
         Connect to TCP server
 
@@ -424,8 +426,8 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
     return true;
 }
 
-int create_tcp_server_context(SocketContextData* context, int port, int recvfrom_timeout_ms,
-                              int stun_timeout_ms) {
+static int create_tcp_server_context(SocketContextData* context, int port, int recvfrom_timeout_ms,
+                                     int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -474,8 +476,8 @@ int create_tcp_server_context(SocketContextData* context, int port, int recvfrom
     return 0;
 }
 
-int create_tcp_server_context_stun(SocketContextData* context, int port, int recvfrom_timeout_ms,
-                                   int stun_timeout_ms) {
+static int create_tcp_server_context_stun(SocketContextData* context, int port,
+                                          int recvfrom_timeout_ms, int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -612,8 +614,8 @@ int create_tcp_server_context_stun(SocketContextData* context, int port, int rec
     return 0;
 }
 
-int create_tcp_client_context(SocketContextData* context, char* destination, int port,
-                              int recvfrom_timeout_ms, int stun_timeout_ms) {
+static int create_tcp_client_context(SocketContextData* context, char* destination, int port,
+                                     int recvfrom_timeout_ms, int stun_timeout_ms) {
     UNUSED(stun_timeout_ms);
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
@@ -652,8 +654,8 @@ int create_tcp_client_context(SocketContextData* context, char* destination, int
     return 0;
 }
 
-int create_tcp_client_context_stun(SocketContextData* context, char* destination, int port,
-                                   int recvfrom_timeout_ms, int stun_timeout_ms) {
+static int create_tcp_client_context_stun(SocketContextData* context, char* destination, int port,
+                                          int recvfrom_timeout_ms, int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;

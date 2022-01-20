@@ -15,6 +15,7 @@ whether you grab them or not. Once you are done, you need to destroy the audio
 device via DestroyAudioDevice.
 */
 
+#include "audiocapture.h"
 #include "alsacapture.h"
 
 /*
@@ -23,7 +24,7 @@ Public Function Implementations
 ============================
 */
 
-AudioDevice *create_audio_device() {
+AudioDevice *create_audio_device(void) {
     /*
         Create an audio device to capture audio on Linux Ubuntu
 

@@ -42,7 +42,7 @@ Public Functions
  *
  * @returns                        The initialized audio device struct
  */
-AudioDevice* create_audio_device();
+AudioDevice* create_audio_device(void);
 
 /**
  * @brief                          Set the audio device to start capturing audio

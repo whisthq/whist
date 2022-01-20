@@ -317,7 +317,7 @@ Private Function Implementations
 */
 
 // Get the page size
-int get_page_size() {
+static int get_page_size(void) {
     /*
         Get the system page size
 

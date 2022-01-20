@@ -84,7 +84,7 @@ void init_clipboard_synchronizer(bool is_client);
  * @returns                        Pointer to the latest clipboard chunk
  *
  */
-ClipboardData* pull_clipboard_chunk();
+ClipboardData* pull_clipboard_chunk(void);
 
 /**
  * @brief                          When called, push the given chunk onto the active
@@ -98,6 +98,6 @@ void push_clipboard_chunk(ClipboardData* cb_chunk);
 /**
  * @brief                          Cleanup the clipboard synchronizer
  */
-void destroy_clipboard_synchronizer();
+void destroy_clipboard_synchronizer(void);
 
 #endif  // CLIPBOARD_SYNCHRONIZER_H

@@ -22,7 +22,7 @@ input (keystrokes, mouse clicks, etc.) via CreateInputDevice.
  * @brief Windows keycodes for replaying Whist user inputs on server
  * @details index is Whist keycode, value is Windows keycode
  */
-const int windows_keycodes[KEYCODE_UPPERBOUND] = {
+static const int windows_keycodes[KEYCODE_UPPERBOUND] = {
     0,                       // Whist keycodes start at index 4
     0,                       // Whist keycodes start at index 4
     0,                       // Whist keycodes start at index 4
@@ -289,7 +289,7 @@ const int windows_keycodes[KEYCODE_UPPERBOUND] = {
     VK_LAUNCH_MEDIA_SELECT  // 263 -> Media Select
 };
 
-InputDevice* create_input_device() {
+InputDevice* create_input_device(void) {
     InputDevice* input_device = safe_malloc(sizeof(InputDevice));
     memset(input_device, 0, sizeof(InputDevice));
     return input_device;

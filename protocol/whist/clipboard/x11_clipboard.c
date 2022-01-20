@@ -69,9 +69,9 @@ Private Functions
 ============================
 */
 
-bool start_tracking_clipboard_updates();
-bool clipboard_has_target(Atom property_atom, Atom target_atom);
-ClipboardData* get_os_clipboard_data(Atom property_atom, int header_size);
+static bool start_tracking_clipboard_updates(void);
+static bool clipboard_has_target(Atom property_atom, Atom target_atom);
+static ClipboardData* get_os_clipboard_data(Atom property_atom, int header_size);
 
 /*
 ============================
@@ -79,7 +79,7 @@ Private Function Implementations
 ============================
 */
 
-void unsafe_init_clipboard() {
+void unsafe_init_clipboard(void) {
     /*
         Initialize the clipboard by starting tracking clipboard updates
     */
@@ -87,7 +87,7 @@ void unsafe_init_clipboard() {
     start_tracking_clipboard_updates();
 }
 
-void unsafe_destroy_clipboard() {
+void unsafe_destroy_clipboard(void) {
     /*
         Destroy clipboard by closing associated X display
     */
@@ -97,7 +97,7 @@ void unsafe_destroy_clipboard() {
     }
 }
 
-ClipboardData* get_os_clipboard_picture() {
+static ClipboardData* get_os_clipboard_picture(void) {
     /*
         Get an image from the Linux OS clipboard
         NOTE: Assume that clipboard stores pictures in png format when getting
@@ -125,7 +125,7 @@ ClipboardData* get_os_clipboard_picture() {
     return NULL;
 }
 
-ClipboardData* get_os_clipboard_string() {
+ClipboardData* get_os_clipboard_string(void) {
     /*
         Get a string from the Linux OS clipboard
 
@@ -151,7 +151,7 @@ ClipboardData* get_os_clipboard_string() {
     return NULL;
 }
 
-ClipboardData* get_os_clipboard_files() {
+ClipboardData* get_os_clipboard_files(void) {
     /*
         Get files from the Linux OS clipboard
 
@@ -223,7 +223,7 @@ void unsafe_free_clipboard_buffer(ClipboardData* cb) {
     }
 }
 
-ClipboardData* unsafe_get_os_clipboard() {
+ClipboardData* unsafe_get_os_clipboard(void) {
     /*
         Get and return the current contents of the Linux clipboard
 
@@ -304,7 +304,7 @@ void unsafe_set_os_clipboard(ClipboardData* cb) {
     return;
 }
 
-bool start_tracking_clipboard_updates() {
+static bool start_tracking_clipboard_updates(void) {
     /*
         Open X display and begin tracking clipboard updates
 
@@ -334,7 +334,7 @@ bool start_tracking_clipboard_updates() {
     return true;
 }
 
-bool unsafe_has_os_clipboard_updated() {
+bool unsafe_has_os_clipboard_updated(void) {
     /*
         Whether the clipboard has updated since this function was last called
         or since start_tracking_clipboard_updates was last called.
@@ -365,7 +365,7 @@ bool unsafe_has_os_clipboard_updated() {
     return false;
 }
 
-bool clipboard_has_target(Atom property_atom, Atom target_atom) {
+static bool clipboard_has_target(Atom property_atom, Atom target_atom) {
     /*
         Check whether `property_atom` contains content of type `target_atom`.
         Typically, `property_atom` will be "XSEL_DATA" because this refers

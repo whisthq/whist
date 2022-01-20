@@ -41,10 +41,10 @@ Defines
 */
 
 #ifdef _WIN32
-WCHAR* lget_os_clipboard_directory();
-WCHAR* lset_os_clipboard_directory();
-char* get_os_clipboard_directory();
-char* set_os_clipboard_directory();
+WCHAR* lget_os_clipboard_directory(void);
+WCHAR* lset_os_clipboard_directory(void);
+char* get_os_clipboard_directory(void);
+char* set_os_clipboard_directory(void);
 #define LGET_OS_CLIPBOARD (lget_os_clipboard_directory())
 #define GET_OS_CLIPBOARD (get_cos_lipboard_directory())
 #define LSET_OS_CLIPBOARD (lset_os_clipboard_directory())
@@ -122,7 +122,7 @@ void init_clipboard(bool is_client);
  *
  * @returns                        True if client, false if server
  */
-bool should_preserve_local_clipboard();
+bool should_preserve_local_clipboard(void);
 
 /**
  * @brief                          Get the current OS clipboard data
@@ -130,7 +130,7 @@ bool should_preserve_local_clipboard();
  * @returns                        Pointer to the current clipboard data as a
  *                                 ClipboardData struct
  */
-ClipboardData* get_os_clipboard();
+ClipboardData* get_os_clipboard(void);
 
 /**
  * @brief                         Set the OS clipboard to the given clipboard data
@@ -153,12 +153,12 @@ void free_clipboard_buffer(ClipboardData* clipboard);
  *
  * @returns                        True if new clipboard data, false if else
  */
-bool has_os_clipboard_updated();
+bool has_os_clipboard_updated(void);
 
 /**
  * @brief                          Destroy current clipboard
  *
  */
-void destroy_clipboard();
+void destroy_clipboard(void);
 
 #endif  // CLIPBOARD_H

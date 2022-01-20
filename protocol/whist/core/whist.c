@@ -26,7 +26,7 @@ Private Function Implementations
 ============================
 */
 
-int multithreaded_print_system_info(void *opaque) {
+static int multithreaded_print_system_info(void *opaque) {
     /*
         Thread function to print system info to log
     */
@@ -51,14 +51,14 @@ Public Function Implementations
 ============================
 */
 
-void whist_init_subsystems() {
+void whist_init_subsystems(void) {
     whist_init_multithreading();
     whist_init_logger();
     init_fec();
     whist_init_networking();
 }
 
-void print_system_info() {
+void print_system_info(void) {
     /*
         Print the system info of the computer
     */
@@ -550,7 +550,7 @@ int bit_array_test_bit(const BitArray *const ba, const unsigned int bit) {
 // Defines to stringize a macro
 #define xstr(s) str(s)
 #define str(s) #s
-char *whist_git_revision() {
+const char *whist_git_revision(void) {
     /*
         Returns git revision if found
 

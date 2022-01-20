@@ -85,7 +85,7 @@ double get_timer(const WhistTimer* timer_opaque) {
     return ret;
 }
 
-char* current_time_str() {
+char* current_time_str(void) {
     static char buffer[64];
     //    time_t rawtime;
     //
@@ -119,7 +119,7 @@ char* current_time_str() {
     return buffer;
 }
 
-timestamp_us current_time_us() {
+timestamp_us current_time_us(void) {
     uint64_t output;
 #if defined(_WIN32)
 /* Windows epoch starts on 1601-01-01T00:00:00Z. But UNIX/Linux epoch starts on

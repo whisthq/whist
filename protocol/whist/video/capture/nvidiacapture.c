@@ -40,7 +40,7 @@ Includes
 Public Function Implementations
 ============================
 */
-NvidiaCaptureDevice* create_nvidia_capture_device() {
+NvidiaCaptureDevice* create_nvidia_capture_device(void) {
     /*
         Create an Nvidia capture device that attaches to the current display via gl_init. This will
        capture to OpenGL textures, and each capture is stored in the texture at index

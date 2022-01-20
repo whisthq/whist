@@ -12,18 +12,18 @@
 #include <X11/Xutil.h>
 #include <stdbool.h>
 
-Display* display;
-char last_window_name[WINDOW_NAME_MAXLEN + 1];
-bool last_window_name_valid;
+static Display* display;
+static char last_window_name[WINDOW_NAME_MAXLEN + 1];
+static bool last_window_name_valid;
 
-void init_window_info_getter() {
+void init_window_info_getter(void) {
     if (display == NULL) {
         display = XOpenDisplay(NULL);
     }
     last_window_name_valid = false;
 }
 
-Window get_focused_window() {
+static Window get_focused_window(void) {
     Window w;
     // TODO: Is this needed, or can we pass in NULL?
     int revert;
@@ -92,7 +92,7 @@ bool get_focused_window_name(char** name_return) {
     return false;
 }
 
-bool is_focused_window_fullscreen() {
+bool is_focused_window_fullscreen(void) {
     /*
      * Query whether the focused window is fullscreen or not.
      *
@@ -130,7 +130,7 @@ bool is_focused_window_fullscreen() {
     return false;
 }
 
-void destroy_window_info_getter() {
+void destroy_window_info_getter(void) {
     if (display != NULL) {
         XCloseDisplay(display);
         display = NULL;

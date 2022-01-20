@@ -30,7 +30,7 @@ typedef CUresult (*CUCTXPOPCURRENTPROC)(CUcontext* pctx);
 extern CUCTXPOPCURRENTPROC cu_ctx_pop_current_ptr;
 typedef CUresult (*CUCTXPUSHCURRENTPROC)(CUcontext ctx);
 extern CUCTXPUSHCURRENTPROC cu_ctx_push_current_ptr;
-typedef CUresult (*CUCTXSYNCHRONIZEPROC)();
+typedef CUresult (*CUCTXSYNCHRONIZEPROC)(void);
 extern CUCTXSYNCHRONIZEPROC cu_ctx_synchronize_ptr;
 
 /*
@@ -53,14 +53,14 @@ NVFBC_BOOL cuda_init(CUcontext* cuda_context);
  *
  * @returns                        Pointer to the video thread CUDA context
  */
-CUcontext* get_video_thread_cuda_context_ptr();
+CUcontext* get_video_thread_cuda_context_ptr(void);
 /**
  * @brief                           Returns a pointer to the CUDA context that will be used next by
  * the Nvidia device manager thread
  *
  * @returns                         Pointer to nvidia thread CUDA context
  */
-CUcontext* get_nvidia_thread_cuda_context_ptr();
+CUcontext* get_nvidia_thread_cuda_context_ptr(void);
 
 /**
  * @brief                           Destroys the CUDA context given.
