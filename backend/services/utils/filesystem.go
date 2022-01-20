@@ -103,8 +103,8 @@ func waitForErrorOrCreation(timeout time.Duration, targetFileName string, watche
 func WriteToNewFile(filePath string, content string) error {
 	// If file already exists return an error
 	_, err := os.Stat(filePath)
-	if err != nil {
-		return MakeError("Could not make file %s because it already exists", filePath)
+	if err == nil {
+		return MakeError("Could not make file %s because it already exists!", filePath)
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return MakeError("Could not make file %s. Error: %s", filePath, err)
 	}
