@@ -109,7 +109,7 @@ void udp_register_ring_buffer(SocketContext* context, WhistPacketType type, int 
 int udp_nack(SocketContext* context, WhistPacketType type, int id, int index);
 
 /**
- * @brief   Get the number of consecutive fully received frames of the given type available. Use this e.g. to predict how many ms of audio we have buffered.
+ * @brief       Get the number of consecutive fully received frames of the given type available. Use this e.g. to predict how many ms of audio we have buffered.
  * 
  * @param type The type of frames to query for
  */

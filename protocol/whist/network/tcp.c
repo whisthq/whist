@@ -44,7 +44,7 @@ extern unsigned short port_mappings[USHRT_MAX + 1];
 Custom Types
 ===========================
 */
-struct SocketContextData {
+struct TCPContext {
     int timeout;
     SOCKET socket;
     struct sockaddr_in addr;
@@ -94,19 +94,38 @@ static SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* soc
  */
 static bool tcp_connect(SOCKET sock_fd, struct sockaddr_in sock_addr, int timeout_ms);
 
+/**
+ * @brief                          Send a 0-length packet over the socket. Used
+ *                                 to keep-alive over NATs, and to check on the
+ *                                 validity of the socket
+ *
+ * @param context                  The socket context
+ *
+ * @returns                        Will return -1 on failure, and 0 on success
+ *                                 Failure implies that the socket is
+ *                                 broken or the TCP connection has ended, use
+ *                                 get_last_network_error() to learn more about the
+ *                                 error
+ */
+int tcp_ack(TCPContext* context) {
+    return send(context->socket, NULL, 0, 0);
+}
+
 /*
 ============================
 TCP Implementation of Network.h Interface
 ============================
 */
 
-static int tcp_ack(void* raw_context) {
-    SocketContextData* context = raw_context;
-    return send(context->socket, NULL, 0, 0);
+void tcp_update(void* raw_context, bool should_recv) {
+    TCPContext* context = raw_context;
+
+    // Keep the tcp connection alive
+    tcp_ack(context);
 }
 
-static WhistPacket* tcp_read_packet(void* raw_context, bool should_recv) {
-    SocketContextData* context = raw_context;
+WhistPacket* tcp_read_packet(void* raw_context, bool should_recv) {
+    TCPContext* context = raw_context;
 
     // The dynamically sized buffer to read into
     DynamicBuffer* encrypted_tcp_packet_buffer = context->encrypted_tcp_packet_buffer;
@@ -199,12 +218,13 @@ static WhistPacket* tcp_read_packet(void* raw_context, bool should_recv) {
     return NULL;
 }
 
-static void tcp_free_packet(void* raw_context, WhistPacket* tcp_packet) {
+void tcp_free_packet(void* raw_context, WhistPacket* tcp_packet) {
+    UNUSED(raw_context);
     deallocate_region(tcp_packet);
 }
 
-static int tcp_send_constructed_packet(void* raw_context, WhistPacket* packet) {
-    SocketContextData* context = raw_context;
+int tcp_send_constructed_packet(void* raw_context, WhistPacket* packet) {
+    TCPContext* context = raw_context;
 
     int packet_size = get_packet_size(packet);
 
@@ -252,8 +272,8 @@ static int tcp_send_constructed_packet(void* raw_context, WhistPacket* packet) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-static int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, int len, int id) {
-    SocketContextData* context = raw_context;
+int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, int len, int id) {
+    TCPContext* context = raw_context;
 
     if (id != -1) {
         LOG_ERROR("ID should be -1 when sending over TCP!");
@@ -286,8 +306,8 @@ static int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, 
     return ret;
 }
 
-static void tcp_destroy_socket_context(void* raw_context) {
-    SocketContextData* context = raw_context;
+void tcp_destroy_socket_context(void* raw_context) {
+    TCPContext* context = raw_context;
 
     closesocket(context->socket);
     whist_destroy_mutex(context->mutex);
@@ -444,8 +464,8 @@ static bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) 
     return true;
 }
 
-static int create_tcp_server_context(SocketContextData* context, int port, int recvfrom_timeout_ms,
-                                     int stun_timeout_ms) {
+int create_tcp_server_context(TCPContext* context, int port, int recvfrom_timeout_ms,
+                              int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -494,8 +514,8 @@ static int create_tcp_server_context(SocketContextData* context, int port, int r
     return 0;
 }
 
-static int create_tcp_server_context_stun(SocketContextData* context, int port,
-                                          int recvfrom_timeout_ms, int stun_timeout_ms) {
+int create_tcp_server_context_stun(TCPContext* context, int port, int recvfrom_timeout_ms,
+                                   int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -632,8 +652,8 @@ static int create_tcp_server_context_stun(SocketContextData* context, int port,
     return 0;
 }
 
-static int create_tcp_client_context(SocketContextData* context, char* destination, int port,
-                                     int recvfrom_timeout_ms, int stun_timeout_ms) {
+int create_tcp_client_context(TCPContext* context, char* destination, int port,
+                              int recvfrom_timeout_ms, int stun_timeout_ms) {
     UNUSED(stun_timeout_ms);
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
@@ -672,8 +692,8 @@ static int create_tcp_client_context(SocketContextData* context, char* destinati
     return 0;
 }
 
-static int create_tcp_client_context_stun(SocketContextData* context, char* destination, int port,
-                                          int recvfrom_timeout_ms, int stun_timeout_ms) {
+int create_tcp_client_context_stun(TCPContext* context, char* destination, int port,
+                                   int recvfrom_timeout_ms, int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -849,15 +869,15 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
     */
 
     // Populate function pointer table
-    network_context->ack = tcp_ack;
+    network_context->update = tcp_update;
     network_context->read_packet = tcp_read_packet;
     network_context->free_packet = tcp_free_packet;
     network_context->send_packet = tcp_send_packet;
     network_context->destroy_socket_context = tcp_destroy_socket_context;
 
-    // Create the SocketContextData, and set to zero
-    SocketContextData* context = safe_malloc(sizeof(SocketContextData));
-    memset(context, 0, sizeof(SocketContextData));
+    // Create the TCPContext, and set to zero
+    TCPContext* context = safe_malloc(sizeof(TCPContext));
+    memset(context, 0, sizeof(TCPContext));
     network_context->context = context;
 
     // if dest is NULL, it means the context will be listening for income connections
@@ -867,8 +887,8 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
             return false;
         }
         /*
-            for tcp, just make a copy of the socket, do not transfer ownership to SocketContextData.
-            when SocketContextData is destoryed, the copied listen_socket should NOT be closed.
+            for tcp, just make a copy of the socket, do not transfer ownership to TCPContext.
+            when TCPContext is destoryed, the copied listen_socket should NOT be closed.
         */
         context->socket = *network_context->listen_socket;
     }

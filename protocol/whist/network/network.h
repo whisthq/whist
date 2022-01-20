@@ -239,7 +239,6 @@ typedef struct {
     void* context;
 
     // Function table
-    int (*ack)(void* context);
     void (*update)(void* context, bool should_recv);
     WhistPacket* (*read_packet)(void* context, bool should_recv);
     void* (*get_packet)(void* context, WhistPacketType type);
@@ -257,21 +256,6 @@ typedef struct SocketContextData SocketContextData;
 SocketContext Interface
 ============================
 */
-
-/**
- * @brief                          Send a 0-length packet over the socket. Used
- *                                 to keep-alive over NATs, and to check on the
- *                                 validity of the socket
- *
- * @param context                  The socket context
- *
- * @returns                        Will return -1 on failure, and 0 on success
- *                                 Failure implies that the socket is
- *                                 broken or the TCP connection has ended, use
- *                                 get_last_network_error() to learn more about the
- *                                 error
- */
-int ack(SocketContext* context);
 
 /**
  * @brief   Receive the next WhistPacket from the given SocketContext of given WhistPacketType
