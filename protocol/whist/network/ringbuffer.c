@@ -338,7 +338,7 @@ FrameData* set_rendering(RingBuffer* ring_buffer, int id) {
     return &ring_buffer->currently_rendering_frame;
 }
 
-int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
+int receive_packet(RingBuffer* ring_buffer, UDPPacket* packet) {
     /*
         Process a WhistPacket and add it to the ring buffer. If the packet belongs to an existing
         frame, copy its data into the frame; if it belongs to a new frame, initialize the frame and
@@ -354,26 +354,32 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
     */
 
     // Sanity check the packet's metadata
-    FATAL_ASSERT(0 <= packet->index && packet->index < packet->num_indices);
-    FATAL_ASSERT(packet->num_indices <= MAX_PACKETS);
-    FATAL_ASSERT(packet->num_fec_indices < packet->num_indices);
+    WhistPacketType type = packet->udp_whist_segment_data.whist_type;
+    int segment_id = packet->udp_whist_segment_data.id;
+    unsigned short segment_index = packet->udp_whist_segment_data.index;
+    unsigned short num_indices = packet->udp_whist_segment_data.num_indices;
+    unsigned short num_fec_indices = packet->udp_whist_segment_data.num_fec_indices;
+    unsigned short segment_size = packet->udp_whist_segment_data.segment_size;
+    FATAL_ASSERT(0 <= segment_index && segment_index < num_indices);
+    FATAL_ASSERT(num_indices <= MAX_PACKETS);
+    FATAL_ASSERT(num_fec_indices < num_indices);
 
-    FrameData* frame_data = get_frame_at_id(ring_buffer, packet->id);
+    FrameData* frame_data = get_frame_at_id(ring_buffer, segment_id);
 
     ring_buffer->num_packets_received++;
 
-    // If packet->id != frame_data->id, handle the situation
-    if (packet->id < frame_data->id) {
+    // If segment_id != frame_data->id, handle the situation
+    if (segment_id < frame_data->id) {
         // This packet must be from a very stale frame,
         // because the current ringbuffer occupant already contains packets with a newer ID in it
         LOG_WARNING("Very stale packet (ID %d) received, current ringbuffer occupant's ID %d",
-                    packet->id, frame_data->id);
+                    segment_id, frame_data->id);
         return -1;
-    } else if (packet->id <= ring_buffer->currently_rendering_id) {
+    } else if (segment_id <= ring_buffer->currently_rendering_id) {
         // This packet won't help us render any new packets,
         // So we can safely just ignore it
         return 0;
-    } else if (packet->id > frame_data->id) {
+    } else if (segment_id > frame_data->id) {
         // This packet is newer than the resident,
         // so it's time to overwrite the resident if such a resident exists
         if (frame_data->id != -1) {
@@ -388,7 +394,7 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
                     "But we can't overwrite that frame, since our renderer has only gotten to ID "
                     "%d!\n"
                     "Resetting the entire ringbuffer...",
-                    packet->type == PACKET_VIDEO ? "video" : "audio", packet->id, frame_data->id,
+                    type == PACKET_VIDEO ? "video" : "audio", segment_id, frame_data->id,
                     ring_buffer->currently_rendering_id);
                 // TODO: log a FPS skip
                 reset_ring_buffer(ring_buffer);
@@ -397,68 +403,68 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
                 // So we can just reset the undesired frame
                 LOG_ERROR(
                     "Trying to allocate Frame ID %d, but Frame ID %d has not been destroyed yet!",
-                    packet->id, frame_data->id);
+                    segment_id, frame_data->id);
                 reset_frame(ring_buffer, frame_data);
             }
         }
 
         // Initialize the frame now, so that it can hold the packet we just received
-        int num_original_packets = packet->num_indices - packet->num_fec_indices;
-        init_frame(ring_buffer, packet->id, num_original_packets, packet->num_fec_indices);
+        int num_original_packets = num_indices - num_fec_indices;
+        init_frame(ring_buffer, segment_id, num_original_packets, num_fec_indices);
 
         // Update the ringbuffer's max id, with this new frame's ID
         ring_buffer->max_id = max(ring_buffer->max_id, frame_data->id);
     }
 
     // Now, the frame_data should be ready to accept the packet
-    FATAL_ASSERT(packet->id == frame_data->id);
+    FATAL_ASSERT(segment_id == frame_data->id);
 
     // Verify that the packet metadata matches frame_data metadata
-    FATAL_ASSERT(frame_data->num_fec_packets == packet->num_fec_indices);
+    FATAL_ASSERT(frame_data->num_fec_packets == num_fec_indices);
     FATAL_ASSERT(frame_data->num_original_packets + frame_data->num_fec_packets ==
-                 packet->num_indices);
+                 num_indices);
 
     // LOG the the nacking situation
-    if (packet->is_a_nack) {
+    if (packet->udp_whist_segment_data.is_a_nack) {
         // Server simulates a nack for audio all the time. Hence log only for video.
-        if (packet->type == PACKET_VIDEO) {
-            if (!frame_data->received_indices[packet->index]) {
-                LOG_INFO("NACK for video ID %d, Index %d received!", packet->id, packet->index);
+        if (type == PACKET_VIDEO) {
+            if (!frame_data->received_indices[segment_index]) {
+                LOG_INFO("NACK for video ID %d, Index %d received!", segment_id, segment_index);
             } else {
-                LOG_INFO("NACK for video ID %d, Index %d received, but didn't need it.", packet->id,
-                         packet->index);
+                LOG_INFO("NACK for video ID %d, Index %d received, but didn't need it.", segment_id,
+                         segment_index);
             }
         }
     } else {
         // Reset timer since the last time we received a non-nack packet
         start_timer(&frame_data->last_nonnack_packet_timer);
-        if (frame_data->num_times_index_nacked[packet->index] > 0) {
+        if (frame_data->num_times_index_nacked[segment_index] > 0) {
             LOG_INFO("Received original %s ID %d, Index %d, but we had NACK'ed for it.",
-                     packet->type == PACKET_VIDEO ? "video" : "audio", packet->id, packet->index);
+                     type == PACKET_VIDEO ? "video" : "audio", segment_id, segment_index);
         }
     }
 
     // If we have already received this packet anyway, just drop this packet
-    if (frame_data->received_indices[packet->index]) {
+    if (frame_data->received_indices[segment_index]) {
         // The only way it should possible to receive a packet twice, is if nacking got involved
-        if (packet->type == PACKET_VIDEO &&
-            frame_data->num_times_index_nacked[packet->index] == 0) {
+        if (type == PACKET_VIDEO &&
+            frame_data->num_times_index_nacked[segment_index] == 0) {
             LOG_ERROR(
                 "We received a video packet (ID %d / index %d) twice, but we had never nacked for "
                 "it?",
-                packet->id, packet->index);
+                segment_id, segment_index);
             return -1;
         }
         return 0;
     }
 
     // Remember whether or not this frame was ready to render
-    bool was_already_ready = is_ready_to_render(ring_buffer, packet->id);
+    bool was_already_ready = is_ready_to_render(ring_buffer, segment_id);
 
     // Track whether the index we received is one of the N original packets,
     // or one of the M FEC packets
-    frame_data->received_indices[packet->index] = true;
-    if (packet->index < frame_data->num_original_packets) {
+    frame_data->received_indices[segment_index] = true;
+    if (segment_index < frame_data->num_original_packets) {
         frame_data->original_packets_received++;
         FATAL_ASSERT(frame_data->original_packets_received <= frame_data->num_original_packets);
     } else {
@@ -466,25 +472,25 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
     }
 
     // Copy the packet's payload into the correct location in frame_data's frame buffer
-    int buffer_offset = packet->index * MAX_PAYLOAD_SIZE;
-    if (buffer_offset + packet->payload_size >= ring_buffer->largest_frame_size) {
+    int buffer_offset = segment_index * MAX_PAYLOAD_SIZE;
+    if (buffer_offset + segment_size >= ring_buffer->largest_frame_size) {
         LOG_ERROR("Packet payload too large for frame buffer! Dropping the packet...");
         return -1;
     }
-    memcpy(frame_data->packet_buffer + buffer_offset, packet->data, packet->payload_size);
+    memcpy(frame_data->packet_buffer + buffer_offset, packet->udp_whist_segment_data.segment_data, segment_size);
 
     // If this frame isn't an fec frame, the frame_buffer_size is just the sum of the payload sizes
     if (frame_data->num_fec_packets == 0) {
-        frame_data->frame_buffer_size += packet->payload_size;
+        frame_data->frame_buffer_size += segment_size;
     }
 
     // If this is an FEC frame, and we haven't yet decoded the frame successfully,
     // Try decoding the FEC frame
     if (frame_data->num_fec_packets > 0 && !frame_data->successful_fec_recovery) {
         // Register this packet into the FEC decoder
-        fec_decoder_register_buffer(frame_data->fec_decoder, packet->index,
+        fec_decoder_register_buffer(frame_data->fec_decoder, segment_index,
                                     frame_data->packet_buffer + buffer_offset,
-                                    packet->payload_size);
+                                    segment_size);
 
         // Using the newly registered packet, try to decode the frame using FEC
         int frame_size =
@@ -504,7 +510,7 @@ int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet) {
         }
     }
 
-    if (is_ready_to_render(ring_buffer, packet->id) && !was_already_ready) {
+    if (is_ready_to_render(ring_buffer, segment_id) && !was_already_ready) {
         ring_buffer->frames_received++;
     }
 
