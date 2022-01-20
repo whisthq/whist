@@ -350,7 +350,7 @@ jobs:
       - name: Run End-to-End Streaming Test
         id: e2e_streaming_test
         working-directory: protocol/test
-        run: python3 streaming_e2e_tester.py --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" --ssh-key-path "/home/runner/.ssh/id_rsa" --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" --use-existing-server-instance i-0a6d434cc397b1dc3
+        run: python3 streaming_e2e_tester.py --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" --ssh-key-path "/home/runner/.ssh/id_rsa" --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" --use-existing-server-instance i-0a6d434cc397b1dc3 --use-two-instances=true
 
       # need one more section like this to ensure the S3 command works in case of failure/timeout of the Python script above
       - name: Upload logs to S3 for debugging purposes
@@ -369,7 +369,7 @@ jobs:
         working-directory: protocol/test
         shell: python3 {0}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
           GITHUB_ISSUE: ${{ github.event.number }}
           GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
           SLACK_WEBHOOK: ${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}
@@ -542,7 +542,6 @@ jobs:
           slack_post(slack_webhook, body=body, slack_username="Whist Bot", title=title)
 
           # Post updates as a GitHub Gist
-          #os.system("cat streaming_e2e_test_results.info | gh gist create -f performance_results.md")
           from github import Github, InputFileContent
           client = Github(github_token)
           gh_auth_user = client.get_user()
