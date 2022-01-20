@@ -368,6 +368,10 @@ bool handshake_private_key(SocketContextData* context) {
     // Wait for and verify their signed private key request data
     recv_size = recv_no_intr(context->socket, (char*)&our_signed_priv_key_data,
                              sizeof(our_signed_priv_key_data), 0);
+    if (recv_size < 0) {
+        LOG_WARNING("Did not receive our signed private key request: %d", get_last_network_error());
+        return false;
+    }
     if (!confirm_private_key(&our_priv_key_data, &our_signed_priv_key_data, recv_size,
                              context->binary_aes_private_key)) {
         // we LOG_ERROR and its context within the confirm_private_key function
