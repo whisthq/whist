@@ -32,7 +32,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	// Explicitly set the result to what we expect
 	testFileContent := utils.Sprintf(`{"cookiesJSON":"%s","extensions":"%s"}`, cookiesJSON, extensions)
 
-	testMbox, _, _ := createTestMandelbox()
+	testMbox, _, _ := createTestMandelboxData()
 	defer os.RemoveAll(testMbox.GetUserConfigDir())
 
 	if err := testMbox.WriteUserInitialBrowserData(userInitialBrowserData); err != nil {
@@ -61,7 +61,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 
 // TestUserInitialBrowserWriteEmpty checks if passing empty browser data will result in an empty json file
 func TestUserInitialBrowserWriteEmpty(t *testing.T) {
-	testMbox, _, _ := createTestMandelbox()
+	testMbox, _, _ := createTestMandelboxData()
 	defer os.RemoveAll(testMbox.GetUserConfigDir())
 
 	// Empty browser data will generate an empty json file

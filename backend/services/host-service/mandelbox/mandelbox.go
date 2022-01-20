@@ -128,8 +128,14 @@ type Mandelbox interface {
 	Close()
 }
 
-// New creates a new Mandelbox given a parent context and a whist ID.
+// New creates a new Mandelbox given a parent context and a whist ID. It is
+// simply a wrapper around new() to avoid exposing the underlying type to
+// non-testing packages.
 func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.MandelboxID) Mandelbox {
+	return new(baseCtx, goroutineTracker, fid)
+}
+
+func new(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid types.MandelboxID) *mandelboxData {
 	// We create a context for this mandelbox specifically.
 	ctx, cancel := context.WithCancel(baseCtx)
 

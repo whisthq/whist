@@ -453,7 +453,8 @@ func (mandelbox *mandelboxData) cleanUserConfigDir() {
 }
 
 // GetUserConfigDir returns the absolute path to the user config directory. It
-// is exported for testing reasons.
+// is exported for testing reasons and is not defined in the mandelbox
+// interface.
 func (mandelbox *mandelboxData) GetUserConfigDir() string {
 	return utils.Sprintf("%s%v/%s", utils.WhistDir, mandelbox.GetID(), "userConfigs")
 }
