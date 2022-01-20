@@ -10,7 +10,7 @@ import (
 )
 
 func TestNewMandelbox(t *testing.T) {
-	mandelbox, cancel, goroutineTracker := createTestMandelbox()
+	mandelbox, cancel, goroutineTracker := createTestMandelboxData()
 
 	// Defer the wait first since deferred functions are executed in LIFO order.
 	defer goroutineTracker.Wait()
@@ -24,7 +24,7 @@ func TestNewMandelbox(t *testing.T) {
 	}
 
 	// Verify that the fuse mounts are correct
-	mandelboxMappings := mandelbox.(*mandelboxData).otherDeviceMappings
+	mandelboxMappings := mandelbox.otherDeviceMappings
 	deviceMappings := mandelboxMappings[0]
 
 	if deviceMappings.PathOnHost != "/dev/fuse" {
@@ -53,7 +53,7 @@ func TestRegisterCreation(t *testing.T) {
 
 	for _, tt := range registerTests {
 		t.Run(tt.testName, func(t *testing.T) {
-			mandelbox, cancel, goroutineTracker := createTestMandelbox()
+			mandelbox, cancel, goroutineTracker := createTestMandelboxData()
 
 			// Defer the wait first since deferred functions are executed in LIFO order.
 			defer goroutineTracker.Wait()
@@ -86,7 +86,7 @@ func TestSetAppName(t *testing.T) {
 
 	for _, tt := range registerTests {
 		t.Run(tt.testName, func(t *testing.T) {
-			mandelbox, cancel, goroutineTracker := createTestMandelbox()
+			mandelbox, cancel, goroutineTracker := createTestMandelboxData()
 
 			// Defer the wait first since deferred functions are executed in LIFO order.
 			defer goroutineTracker.Wait()
@@ -107,11 +107,11 @@ func TestSetAppName(t *testing.T) {
 	}
 }
 
-// setTestMandelbox is a utility function to create a test mandelbox.
-func createTestMandelbox() (Mandelbox, context.CancelFunc, *sync.WaitGroup) {
+// createTestMandelboxData is a utility function to create a test mandelbox.
+func createTestMandelboxData() (*mandelboxData, context.CancelFunc, *sync.WaitGroup) {
 	ctx, cancel := context.WithCancel(context.Background())
 	routineTracker := sync.WaitGroup{}
-	mandelbox := New(ctx, &routineTracker, types.MandelboxID(utils.PlaceholderTestUUID()))
+	mandelbox := new(ctx, &routineTracker, types.MandelboxID(utils.PlaceholderTestUUID()))
 
 	return mandelbox, cancel, &routineTracker
 }

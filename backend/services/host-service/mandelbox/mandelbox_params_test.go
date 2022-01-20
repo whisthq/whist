@@ -10,7 +10,7 @@ import (
 )
 
 func TestWriteMandelboxParams(t *testing.T) {
-	mandelbox, cancel, goroutineTracker := createTestMandelbox()
+	mandelbox, cancel, goroutineTracker := createTestMandelboxData()
 
 	// Defer the wait first since deferred functions are executed in LIFO order.
 	defer goroutineTracker.Wait()
