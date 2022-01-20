@@ -1,5 +1,5 @@
 import { fromEvent, merge } from "rxjs"
-import { switchMap, mapTo, startWith, filter } from "rxjs/operators"
+import { switchMap, map, mapTo, startWith, filter } from "rxjs/operators"
 import { ChildProcess } from "child_process"
 
 import { WhistTrigger } from "@app/constants/triggers"
@@ -19,7 +19,11 @@ createTrigger(
 createTrigger(
   WhistTrigger.protocolClosed,
   fromEvent(protocol, "launched").pipe(
-    switchMap((p) => fromEvent(p as ChildProcess, "close"))
+    switchMap((p) =>
+      fromEvent(p as ChildProcess, "close").pipe(
+        map((code) => ({ crashed: (code ?? 0) === 1 }))
+      )
+    )
   )
 )
 

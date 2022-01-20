@@ -4,12 +4,11 @@
  * @brief This file contains subscriptions to Observables related to protocol launching.
  */
 
-import Sentry from "@sentry/electron"
 import fs from "fs"
 import path from "path"
 import { ChildProcess } from "child_process"
 import { of } from "rxjs"
-import { map, filter, withLatestFrom } from "rxjs/operators"
+import { filter, withLatestFrom } from "rxjs/operators"
 
 import config, { loggingFiles } from "@app/config/environment"
 import { fromTrigger } from "@app/main/utils/flows"
@@ -102,3 +101,18 @@ fromTrigger(WhistTrigger.protocolStdoutEnd).subscribe(() => {
     stdoutBuffer.buffer = ""
   }
 })
+
+// Keeps track of how many times we've tried to relaunch the protocol
+const MAX_RETRIES = 3
+let protocolLaunchRetries = 0
+
+fromTrigger(WhistTrigger.protocolClosed)
+  .pipe(
+    filter((args: { crashed: boolean }) => args.crashed),
+    filter(() => protocolLaunchRetries < MAX_RETRIES),
+    withLatestFrom(fromTrigger(WhistTrigger.mandelboxFlowSuccess))
+  )
+  .subscribe(([, info]: [any, any]) => {
+    protocolLaunchRetries = protocolLaunchRetries + 1
+    launchProtocol(info)
+  })
