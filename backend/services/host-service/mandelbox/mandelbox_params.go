@@ -35,6 +35,13 @@ func (mandelbox *mandelboxData) WriteMandelboxParams() error {
 		return err
 	}
 
+	// Write Session ID. Note that we use `mandelbox.GetSessionID()` instead of `mandelbox.sessionID` for
+	// the locking.
+	if err := mandelbox.writeResourceMappingToFile("session_id", utils.Sprintf("%d", mandelbox.GetSessionID())); err != nil {
+		// Don't need to wrap err here because it already contains the relevant info
+		return err
+	}
+
 	return nil
 }
 

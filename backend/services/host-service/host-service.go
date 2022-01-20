@@ -554,6 +554,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		mandelboxSubscription.SessionID = sessionID
 	}
 
+	mandelbox.SetSessionID(mandelboxtypes.SessionID(mandelboxSubscription.SessionID))
+
 	hostConfig := dockercontainer.HostConfig{
 		Binds: []string{
 			"/sys/fs/cgroup:/sys/fs/cgroup:ro",

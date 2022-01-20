@@ -33,6 +33,9 @@ type AppName string
 // orders, etc. more effectively.
 type UserID string
 
+// SessionID is defined as its own type for similar reasons.
+type SessionID string
+
 // ConfigEncryptionToken is defined as its own type for similar reasons.
 type ConfigEncryptionToken string
 
