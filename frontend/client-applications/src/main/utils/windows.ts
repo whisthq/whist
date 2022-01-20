@@ -1,3 +1,4 @@
+import path from "path"
 import {
   app,
   BrowserView,
@@ -5,9 +6,19 @@ import {
   BrowserWindowConstructorOptions,
 } from "electron"
 
-import { base } from "@app/constants/windows"
+import config from "@app/config/environment"
 
 // Helper functions
+const base = {
+  webPreferences: {
+    preload: path.join(config.buildRoot, "preload.js"),
+  },
+  resizable: false,
+  titleBarStyle: "default",
+  frame: false,
+  border: false,
+  show: false,
+}
 
 const replaceUserAgent = (userAgent: string) =>
   userAgent.replace(/Electron\/*/, "").replace(/Chrome\/*/, "")
@@ -73,6 +84,9 @@ const createElectronWindow = (args: {
 
   // Some websites don't like Electron in the user agent, so we remove it
   win.webContents.userAgent = replaceUserAgent(win.webContents.userAgent)
+
+  // When the window is ready to be shown, show it
+  win.on("ready-to-show", () => args.show && win.show())
 
   if (args.customURL !== undefined) {
     // If we want to load a URL into a BrowserWindow, we first load it into a

@@ -10,7 +10,7 @@ createTrigger(
   WhistTrigger.protocol,
   fromEvent(protocol, "launched").pipe(
     switchMap((p) =>
-      fromEvent(p as ChildProcess, "close").pipe(mapTo(undefined))
+      fromEvent(p as ChildProcess, "close").pipe(mapTo(undefined), startWith(p))
     ),
     startWith(undefined)
   )
@@ -30,6 +30,7 @@ createTrigger(
 createTrigger(
   WhistTrigger.protocolStdoutData,
   fromTrigger(WhistTrigger.protocol).pipe(
+    filter((p) => p !== undefined),
     switchMap((p) => fromEvent(p.stdout, "data"))
   )
 )
@@ -37,6 +38,7 @@ createTrigger(
 createTrigger(
   WhistTrigger.protocolStdoutEnd,
   fromTrigger(WhistTrigger.protocol).pipe(
+    filter((p) => p !== undefined),
     switchMap((p) => fromEvent(p.stdout, "end"))
   )
 )
