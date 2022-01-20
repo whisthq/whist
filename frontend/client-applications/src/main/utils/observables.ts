@@ -44,7 +44,7 @@ export const emitOnSignal = (obs: Observable<any>, signal: Observable<any>) =>
     map(([, obs]) => obs)
   )
 
-export const withAppReady = (obs: Observable<any>) =>
+export const withAppActivated = (obs: Observable<any>) =>
   waitForSignal(
     obs,
     zip(

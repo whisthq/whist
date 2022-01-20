@@ -12,7 +12,7 @@ import { fromTrigger, createTrigger } from "@app/main/utils/flows"
 import {
   waitForSignal,
   emitOnSignal,
-  withAppReady,
+  withAppActivated,
 } from "@app/main/utils/observables"
 import { persistGet } from "@app/main/utils/persist"
 import { WhistTrigger } from "@app/constants/triggers"
@@ -140,7 +140,7 @@ const launchTrigger = emitOnSignal(
 ).pipe(share())
 
 // Mandelbox creation flow
-const mandelbox = mandelboxFlow(withAppReady(launchTrigger))
+const mandelbox = mandelboxFlow(withAppActivated(launchTrigger))
 
 // After the mandelbox flow is done, run the refresh flow so the tokens are being refreshed
 // every time but don't impede startup time

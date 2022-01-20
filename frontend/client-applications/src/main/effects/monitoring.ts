@@ -8,7 +8,7 @@ import { HEARTBEAT_INTERVAL_IN_MS, SENTRY_DSN } from "@app/constants/app"
 import { networkAnalyze } from "@app/main/utils/networkAnalysis"
 import { fromTrigger } from "@app/main/utils/flows"
 import { WhistTrigger } from "@app/constants/triggers"
-import { withAppReady } from "@app/main/utils/observables"
+import { withAppActivated } from "@app/main/utils/observables"
 
 // Initialize and report Sentry errors in prod
 if (appEnvironment === WhistEnvironments.PRODUCTION) {
@@ -23,6 +23,6 @@ fromTrigger(WhistTrigger.startNetworkAnalysis).subscribe(() => {
   networkAnalyze()
 })
 
-withAppReady(interval(HEARTBEAT_INTERVAL_IN_MS)).subscribe(() => {
+withAppActivated(interval(HEARTBEAT_INTERVAL_IN_MS)).subscribe(() => {
   logBase("heartbeat", {})
 })

@@ -86,8 +86,6 @@ export const flow = <T>(
   }
 }
 
-const triggerLogsBlacklist = ["networkUnstable"]
-
 export const createTrigger = <A>(name: string, obs: Observable<A>) => {
   /*
       Description:
@@ -104,9 +102,7 @@ export const createTrigger = <A>(name: string, obs: Observable<A>) => {
   const startTime = Date.now()
 
   obs.pipe(share()).subscribe((x: any) => {
-    if (!triggerLogsBlacklist.includes(name)) {
-      logBase(`${name}`, { payload: x }, LogLevel.DEBUG, Date.now() - startTime)
-    }
+    logBase(`${name}`, { payload: x }, LogLevel.DEBUG, Date.now() - startTime)
 
     TriggerChannel.next({
       name: `${name}`,

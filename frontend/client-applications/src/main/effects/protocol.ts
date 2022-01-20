@@ -5,47 +5,39 @@
  */
 
 import Sentry from "@sentry/electron"
-import { app } from "electron"
-import { map, startWith, withLatestFrom } from "rxjs/operators"
+import fs from "fs"
+import path from "path"
+import { ChildProcess } from "child_process"
+import { of } from "rxjs"
+import { map, filter, withLatestFrom } from "rxjs/operators"
 
+import config, { loggingFiles } from "@app/config/environment"
 import { fromTrigger } from "@app/main/utils/flows"
 import {
-  protocolStreamInfo,
-  childProcess,
-  protocolOpenUrl,
-  protocolStreamKill,
+  pipeNetworkInfo,
+  pipeURLToProtocol,
+  destroyProtocol,
+  launchProtocol,
 } from "@app/main/utils/protocol"
-import { createProtocolWindow } from "@app/main/utils/windows"
-import { persistSet } from "@app/main/utils/persist"
-import {
-  RESTORE_LAST_SESSION,
-  WHIST_IS_DEFAULT_BROWSER,
-} from "@app/constants/store"
 import { WhistTrigger } from "@app/constants/triggers"
-import { logBase } from "@app/main/utils/logging"
+import { withAppActivated } from "@app/main/utils/observables"
+import {
+  electronLogPath,
+  protocolToLogz,
+  logBase,
+} from "@app/main/utils/logging"
 
-// The current implementation of the protocol process shows its own loading
-// screen while a mandelbox is created and configured. To do this, we need it
-// the protocol to start and appear before its mandatory arguments are available.
+// When launched from node.js, the protocol can take several seconds to spawn,
+// which we want to avoid.
 
-// We solve this streaming the ip, secret_key, and ports info to the protocol
-// they become available from when a successful mandelbox status response.
+// We solve this by starting the protocol ahead of time and piping the network info
+// (IP, ports, private key) to the protocol when they become available
+withAppActivated(of(null)).subscribe(() => launchProtocol())
 
 fromTrigger(WhistTrigger.mandelboxFlowSuccess)
-  .pipe(
-    withLatestFrom(
-      fromTrigger(WhistTrigger.beginImport).pipe(
-        startWith(undefined),
-        map(
-          (
-            payload: undefined | { importBrowserDataFrom: string | undefined }
-          ) => payload?.importBrowserDataFrom
-        )
-      )
-    )
-  )
+  .pipe(withLatestFrom(fromTrigger(WhistTrigger.protocol)))
   .subscribe(
-    ([info, importBrowserDataFrom]: [
+    ([info, protocol]: [
       {
         mandelboxIP: string
         mandelboxSecret: string
@@ -55,55 +47,58 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess)
           port_32273: number
         }
       },
-      string | undefined
+      ChildProcess | undefined
     ]) => {
-      setTimeout(
-        () => {
-          if (childProcess === undefined) {
-            createProtocolWindow()
-              .then(() => {
-                protocolStreamInfo(info)
-              })
-              .catch((err) => Sentry.captureException(err))
-          } else {
-            protocolStreamInfo(info)
-          }
-        },
-        importBrowserDataFrom !== undefined ? 5000 : 0
-      )
+      protocol === undefined
+        ? launchProtocol(info)
+        : pipeNetworkInfo(protocol, info)
     }
   )
 
-fromTrigger(WhistTrigger.restoreLastSession).subscribe(
-  (body: { restore: boolean }) => {
-    persistSet(RESTORE_LAST_SESSION, body.restore)
-  }
-)
+// When the protocol is launched, pipe stdout to a .log file in the user's cache
+fromTrigger(WhistTrigger.protocol)
+  .pipe(filter((p) => p !== undefined))
+  .subscribe(async (p) => {
+    // Create a pipe to the protocol logs file
+    if (!fs.existsSync(electronLogPath))
+      fs.mkdirSync(electronLogPath, { recursive: true })
 
-fromTrigger(WhistTrigger.setDefaultBrowser).subscribe(
-  (body: { default: boolean }) => {
-    persistSet(WHIST_IS_DEFAULT_BROWSER, body.default)
+    const protocolLogFile = fs.createWriteStream(
+      path.join(electronLogPath, loggingFiles.protocol)
+    )
 
-    // if the value changed to true, then we need to set Whist as the default browser now.
-    if (body.default) {
-      app.setAsDefaultProtocolClient("http")
-      app.setAsDefaultProtocolClient("https")
-    } else {
-      app.removeAsDefaultProtocolClient("http")
-      app.removeAsDefaultProtocolClient("https")
-    }
-  }
-)
+    // In order to pipe a child process to this stream, we must wait until an underlying file
+    // descriptor is created. This corresponds to the "open" event in the stream.
+    await new Promise<void>((resolve) => {
+      protocolLogFile.on("open", () => resolve())
+    })
 
-fromTrigger(WhistTrigger.appReady).subscribe(() => {
-  // Intercept URLs (Mac version)
-  app.on("open-url", function (event, url: string) {
-    event.preventDefault()
-    protocolOpenUrl(url)
-    logBase(`Captured url ${url} after setting Whist as default browser!\n`, {})
+    p.stdout.pipe(protocolLogFile)
+
+    // Also print protocol logs in terminal if requested by the developer
+    if (process.env.SHOW_PROTOCOL_LOGS === "true") p.stdout.pipe(process.stdout)
   })
+
+// Also send protocol logs to logz.io
+let stdoutBuffer = {
+  buffer: "",
+}
+
+fromTrigger(WhistTrigger.protocolStdoutData).subscribe((data: string) => {
+  // Combine the previous line with the current msg
+  const newmsg = `${stdoutBuffer.buffer}${data}`
+  // Split on newline
+  const lines = newmsg.split(/\r?\n/)
+  // Leave the last line in the buffer to be appended to later
+  stdoutBuffer.buffer = lines.length === 0 ? "" : (lines.pop() as string)
+  // Print the rest of the lines
+  lines.forEach((line: string) => protocolToLogz(line))
 })
 
-fromTrigger(WhistTrigger.beginImport).subscribe(() => {
-  protocolStreamKill()
+fromTrigger(WhistTrigger.protocolStdoutEnd).subscribe(() => {
+  // Send the last line, so long as it's not empty
+  if (stdoutBuffer.buffer !== "") {
+    protocolToLogz(stdoutBuffer.buffer)
+    stdoutBuffer.buffer = ""
+  }
 })

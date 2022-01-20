@@ -10,10 +10,10 @@ import { merge } from "rxjs"
 import { take } from "rxjs/operators"
 import Sentry from "@sentry/electron"
 
-import { relaunch, createOnboardingWindow } from "@app/main/utils/windows"
+import { relaunch, createOnboardingWindow } from "@app/main/utils/renderer"
 import { fromTrigger } from "@app/main/utils/flows"
 import { persistGet, persistClear } from "@app/main/utils/persist"
-import { withAppReady } from "@app/main/utils/observables"
+import { withAppActivated } from "@app/main/utils/observables"
 import { ONBOARDED } from "@app/constants/store"
 import { WhistTrigger } from "@app/constants/triggers"
 import { networkAnalyze } from "@app/main/utils/networkAnalysis"
@@ -40,7 +40,7 @@ merge(fromTrigger(WhistTrigger.relaunchAction)).subscribe(() => {
   relaunch()
 })
 
-withAppReady(fromTrigger(WhistTrigger.authFlowSuccess))
+withAppActivated(fromTrigger(WhistTrigger.authFlowSuccess))
   .pipe(take(1))
   .subscribe(() => {
     const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
@@ -55,5 +55,35 @@ fromTrigger(WhistTrigger.appReady).subscribe(() => {
 
   app.on("second-instance", (e) => {
     e.preventDefault()
+  })
+})
+
+fromTrigger(WhistTrigger.restoreLastSession).subscribe(
+  (body: { restore: boolean }) => {
+    persistSet(RESTORE_LAST_SESSION, body.restore)
+  }
+)
+
+fromTrigger(WhistTrigger.setDefaultBrowser).subscribe(
+  (body: { default: boolean }) => {
+    persistSet(WHIST_IS_DEFAULT_BROWSER, body.default)
+
+    // if the value changed to true, then we need to set Whist as the default browser now.
+    if (body.default) {
+      app.setAsDefaultProtocolClient("http")
+      app.setAsDefaultProtocolClient("https")
+    } else {
+      app.removeAsDefaultProtocolClient("http")
+      app.removeAsDefaultProtocolClient("https")
+    }
+  }
+)
+
+fromTrigger(WhistTrigger.appReady).subscribe(() => {
+  // Intercept URLs (Mac version)
+  app.on("open-url", function (event, url: string) {
+    event.preventDefault()
+    pipeURLToProtocol(url)
+    logBase(`Captured url ${url} after setting Whist as default browser!\n`, {})
   })
 })
