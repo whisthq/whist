@@ -226,17 +226,17 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 		return
 	}
 
-	// Do some basic sanity checks.
-	if correctConfigKey != mandelbox.getS3ConfigKey(hash(encryptionInfo.Token)) && correctConfigKey != path.Join(mandelbox.getS3ConfigKeyPrefix(), EncryptedArchiveFilename) {
-		// If not one of those file paths, then we're about to try to decrypt the wrong file.
-		errorChan <- utils.MakeError("Corrected config key %s for user %s for mandelbox %s does not match any expected format (prefix/filename or prefix/token/filename)!", correctConfigKey, mandelbox.GetUserID(), mandelbox.GetID())
-		return
-	}
-
 	// Check for the client app's indication that this is a fresh config before
 	// we do any more expensive operations.
 	if encryptionInfo.IsNewTokenAccordingToClientApp {
 		logger.Warningf("Client-app says the hashed config encryption token %s for user %s and mandelbox %s is new. Therefore, we will not try to decrypt any configs.", hash(encryptionInfo.Token), mandelbox.GetUserID(), mandelbox.GetID())
+		return
+	}
+
+	// Do some basic sanity checks.
+	if correctConfigKey != mandelbox.getS3ConfigKey(hash(encryptionInfo.Token)) && correctConfigKey != path.Join(mandelbox.getS3ConfigKeyPrefix(), EncryptedArchiveFilename) {
+		// If not one of those file paths, then we're about to try to decrypt the wrong file.
+		errorChan <- utils.MakeError("Corrected config key %s for user %s for mandelbox %s does not match any expected format (prefix/filename or prefix/token/filename)!", correctConfigKey, mandelbox.GetUserID(), mandelbox.GetID())
 		return
 	}
 

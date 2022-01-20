@@ -100,9 +100,10 @@ func TestUserConfigIntegration(t *testing.T) {
 				IsNewTokenAccordingToClientApp: isNewToken,
 			}
 
-			// Verify errors (or their absence) depending on provided params
+			// Verify errors (or their absence) and config directory file paths depending on provided params
 			errCount := 0
-			for _ = range errChan {
+			for err := range errChan {
+				t.Log(err)
 				errCount++
 			}
 
