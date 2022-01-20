@@ -99,7 +99,6 @@ func TestUserConfigIntegration(t *testing.T) {
 				Token:                          tokenToUse,
 				IsNewTokenAccordingToClientApp: isNewToken,
 			}
-			close(infoChan)
 
 			// Verify errors (or their absence) depending on provided params
 			errCount := 0
