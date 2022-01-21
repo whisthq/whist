@@ -7,14 +7,7 @@
 import { app } from "electron"
 import { ChildProcess } from "child_process"
 import { fromEvent, of } from "rxjs"
-import {
-  filter,
-  withLatestFrom,
-  map,
-  take,
-  count,
-  switchMap,
-} from "rxjs/operators"
+import { filter, withLatestFrom, take, count, switchMap } from "rxjs/operators"
 
 import { createTrigger, fromTrigger } from "@app/main/utils/flows"
 import {
@@ -28,10 +21,6 @@ import { WhistTrigger } from "@app/constants/triggers"
 import { withAppActivated, emitOnSignal } from "@app/main/utils/observables"
 import { protocolToLogz } from "@app/main/utils/logging"
 
-fromTrigger(WhistTrigger.protocol).subscribe((x) => {
-  console.log("PROTOCOL IS", x)
-})
-
 const threeProtocolFailures = fromTrigger(WhistTrigger.protocolClosed).pipe(
   filter((args: { crashed: boolean }) => args.crashed),
   withLatestFrom(fromTrigger(WhistTrigger.mandelboxFlowSuccess)),
@@ -43,7 +32,7 @@ const threeProtocolFailures = fromTrigger(WhistTrigger.protocolClosed).pipe(
 
 // We solve this by starting the protocol ahead of time and piping the network info
 // (IP, ports, private key) to the protocol when they become available
-withAppActivated(of(null)).subscribe(() => launchProtocol())
+withAppActivated(of(null)).subscribe(async () => await launchProtocol())
 
 fromTrigger(WhistTrigger.mandelboxFlowSuccess)
   .pipe(withLatestFrom(fromTrigger(WhistTrigger.protocol)))
@@ -74,7 +63,7 @@ fromTrigger(WhistTrigger.protocol)
   })
 
 // Also send protocol logs to logz.io
-let stdoutBuffer = {
+const stdoutBuffer = {
   buffer: "",
 }
 
@@ -127,3 +116,10 @@ fromTrigger(WhistTrigger.protocolConnected)
     event.preventDefault()
     pipeURLToProtocol(p, url)
   })
+
+emitOnSignal(
+  fromTrigger(WhistTrigger.protocol),
+  fromTrigger(WhistTrigger.beginImport)
+).subscribe((p) => {
+  destroyProtocol(p)
+})

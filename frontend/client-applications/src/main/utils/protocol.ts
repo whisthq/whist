@@ -53,20 +53,21 @@ const launchProtocol = async (info?: {
   const protocolParameters = {
     ...(appEnvironment !== WhistEnvironments.LOCAL && {
       environment: config.deployEnv,
-      ...(info !== undefined && {
-        ports: serializePorts(info.mandelboxPorts),
-        ip: info.mandelboxIP,
-        "private-key": info.mandelboxSecret,
-      }),
+    }),
+    ...(info !== undefined && {
+      ports: serializePorts(info.mandelboxPorts),
+      "private-key": info.mandelboxSecret,
     }),
   }
 
   const protocolArguments = [
+    ...(info === undefined ? ["--read-pipe"] : [info.mandelboxIP]),
     ...Object.entries(protocolParameters)
       .map(([flag, arg]) => [`--${flag}`, arg])
       .flat(),
-    ...(info === undefined ? ["--read-pipe"] : []),
   ]
+
+  console.log("protocol arguments are", protocolArguments)
 
   const child = spawn(protocolPath, protocolArguments, {
     detached: false,
