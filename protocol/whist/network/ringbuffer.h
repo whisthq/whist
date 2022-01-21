@@ -13,14 +13,28 @@ receive_packet to process the packet and modify or create ring buffer entries as
 packet, call nack_single_packet.
 */
 
+/*
+============================
+Includes
+============================
+*/
+
 #include <whist/core/whist.h>
 #include <whist/utils/fec.h>
+
+/*
+============================
+Defines
+============================
+*/
 
 /**
  * @brief FrameData struct containing content and metadata of encoded frames.
  * @details This is used to handle reconstruction of encoded frames from UDP packets. It contains
  * metadata to keep track of what packets we have received and nacked for, as well as a buffer for
  * holding the concatenated UDP packets.
+ * 
+ * TODO: Pull this into RingBuffer.c, and stop exposing it to the client
  */
 typedef struct FrameData {
     WhistPacketType type;
@@ -71,7 +85,7 @@ typedef struct RingBuffer {
     int largest_frame_size;
 
     // networking interface
-    SocketContext* context;
+    SocketContext* socket_context;
     NackPacketFn nack_packet;
     StreamResetFn request_stream_reset;
 
@@ -98,20 +112,45 @@ typedef struct RingBuffer {
     WhistTimer last_stream_reset_request_timer;
 } RingBuffer;
 
+/*
+============================
+Public Functions
+============================
+*/
+
 /**
  * @brief Initializes a ring buffer of the specified size and type.
  *
  * @param type Either an audio or video ring buffer.
  *
  * @param ring_buffer_size The desired size of the ring buffer
+ * 
+ * @param socket_context A temporary parameter to call the lambda functions without std::bind
  *
  * @param nack_packet A lambda function that will be called when the ring buffer wants to nack.
  *                    NULL will disable nacking.
+ * 
+ * @param request_stream_reset A temporary lambda function to make the refactor work
  *
  * @returns A pointer to the newly created ring buffer. All frames in the new ring buffer have ID
  * -1.
  */
-RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_buffer_size, NackPacketFn nack_packet, StreamResetFn request_stream_reset);
+RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_buffer_size, SocketContext* socket_context, NackPacketFn nack_packet, StreamResetFn request_stream_reset);
+
+/**
+ * @brief Add a packet to the ring buffer, and initialize the corresponding frame if necessary. Also
+ * nacks for missing packets or frames.
+ *
+ * @param ring_buffer Ring buffer to place packet into
+ *
+ * @param segment The segment of an audio or video WhistPacket
+ *
+ * @returns 0 on success, -1 on failure
+ * 
+ * TODO: Remove returning 1 when overwriting a valid frame
+ * (int): 1 if we overwrote a valid frame, 0 on success, -1 on failure
+ */
+int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment);
 
 /**
  * @brief Retrives the frame at the given ID in the ring buffer.
@@ -123,47 +162,6 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
  * @returns Pointer to the FrameData at ID id in ring_buffer.
  */
 FrameData* get_frame_at_id(RingBuffer* ring_buffer, int id);
-
-/**
- * @brief Add a packet to the ring buffer, and initialize the corresponding frame if necessary. Also
- * nacks for missing packets or frames.
- *
- * @param ring_buffer Ring buffer to place packet into
- *
- * @param packet An audio or video UDP packet
- *
- * @returns 0 on success, -1 on failure
- */
-int receive_packet(RingBuffer* ring_buffer, WhistPacket* packet);
-
-/**
- * @brief Free the ring buffer and all its constituent frames.
- *
- * @param ring_buffer Ring buffer to destroy
- */
-void destroy_ring_buffer(RingBuffer* ring_buffer);
-
-/**
- * @brief If any packets are still missing, and it's been too long, try nacking for them.
- *        Ideally, this gets called quite rapidly, it has internal timers to throttle nacks.
- *        The more rapidly the better, just need to balance CPU usage, 5-10ms should be fine.
- *
- * @param ring_buffer The ring buffer to try nacking with
- *
- * @param latency The round-trip latency of the connection. Helpful with nacking logic
- *
- * @returns     True if nacking succeded,
- *              False if we've bandwidth saturated our ability to nack.
- */
-bool try_nacking(RingBuffer* ring_buffer, double latency);
-
-/**
- * @brief Reset the frame, both metadata and frame buffer.
- *
- * @param ring_buffer Ring buffer containing the frame.
- * @param frame_data Frame to "clear" from the ring buffer.
- */
-void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data);
 
 /**
  * @brief       Indicate that the frame with ID id is currently rendering, and free the frame buffer
@@ -194,10 +192,36 @@ bool is_ready_to_render(RingBuffer* ring_buffer, int id);
 FrameData* set_rendering(RingBuffer* ring_buffer, int id);
 
 /**
- * @brief    Skip the ring buffer to ID id. This should be used when the client receives a stream reset request.
+ * @brief                          Skip the ring buffer to ID id,
+ *                                 dropping all packets prior to that id
+ * 
+ * @param id                       The ID to skip to
  */
 void reset_stream(RingBuffer* ring_buffer, int id);
 
+/**
+ * @brief                          Try nacking or requesting a stream reset
+ * 
+ * @param id                       The latency, used in figuring out when to nack / stream reset
+ * 
+ * @note                           This will call the lambda nack_packet and request_stream_reset
+ *                                 TODO: Just make this return an array of nacked packets,
+ *                                       or a stream reset request with last failed ID
+ */
 void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double latency);
+
+/**
+ * @brief                         Get network statistics from the ringbuffer
+ * 
+ * @param ring_buffer             The ringbuffer to get network statistics from
+ */
+NetworkStatistics get_network_statistics(RingBuffer* ring_buffer);
+
+/**
+ * @brief Destroy the ringbuffer and all associated memory
+ *
+ * @param ring_buffer Ring buffer to destroy
+ */
+void destroy_ring_buffer(RingBuffer* ring_buffer);
 
 #endif

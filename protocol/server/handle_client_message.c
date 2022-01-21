@@ -186,8 +186,6 @@ static int handle_streaming_toggle_message(whist_server_state *state, WhistClien
         LOG_INFO("Received message to start streaming again.");
         state->stop_streaming = false;
         state->wants_iframe = true;
-        state->last_failed_id = -1;
-        state->last_iframe_id = -1;
     } else {
         LOG_WARNING("Received streaming message to %s streaming, but we're already in that state!",
                     state->stop_streaming ? "stop" : "start");

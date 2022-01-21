@@ -243,7 +243,7 @@ typedef struct {
     WhistPacket* (*read_packet)(void* context, bool should_recv);
     void* (*get_packet)(void* context, WhistPacketType type);
     void (*free_packet)(void* context, WhistPacket* packet);
-    int (*send_packet)(void* context, WhistPacketType type, void* data, int len, int id);
+    int (*send_packet)(void* context, WhistPacketType type, void* data, int len, int id, bool start_of_stream);
     bool (*needs_stream_reset)(void* context);
     void (*destroy_socket_context)(void* context);
 } SocketContext;
@@ -305,12 +305,13 @@ void free_packet(SocketContext* context, WhistPacket* packet);
  * @param payload                  A pointer to the payload that is to be sent
  * @param payload_size             The size of the payload
  * @param packet_id                A Packet ID for the packet.
+ * @param start_of_stream          Whether or not the client may "skip" to this ID (UDP only)
  *
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
  */
 int send_packet(SocketContext* context, WhistPacketType packet_type, void* payload,
-                int payload_size, int packet_id);
+                int payload_size, int packet_id, bool start_of_stream);
 
 /**
  * @brief                          Destroys an allocated and initialized SocketContext
@@ -393,14 +394,21 @@ SOCKET socketp_udp(void);
  */
 
 /**
- * @brief                          Given a SocketContextData, this will perform a private key
- *                                 handshake with the other side of the connection
+ * @brief                          Given a socket, this will perform a private key
+ *                                 handshake with the other side of the connection,
+ *                                 to verify their authenticity
  *
- * @param context                  The SocketContextData that the handshake will happen over
+ * @param socket                   The socket to handshake over
+ * @param connection_timeout_ms    How long to try to handshake before giving up
+ * @param private_key              The private key to use for the handshake
+ * 
+ * @returns                        True on success, False on failure
+ * 
+ * @note                           The timeout for the socket may be overwritten
+ *                                 after this call, please call set_timeout to restore it
  */
-bool handshake_private_key(SocketContextData* context);
+bool handshake_private_key(SOCKET socket, int connection_timeout_ms, const void* private_key);
 
-#if !defined(_WIN32)
 /**
  * @brief Call recv() while ignoring EINTR returns.
  *
@@ -415,18 +423,6 @@ ssize_t recv_no_intr(int sockfd, void* buf, size_t len, int flags);
  */
 ssize_t recvfrom_no_intr(int sockfd, void* buf, size_t len, int flags, struct sockaddr* src_addr,
                          socklen_t* addrlen);
-#else
-// EINTR does happen happen on Windows, so pass calls through directly.
-
-static inline int recv_no_intr(SOCKET s, char* buf, int len, int flags) {
-    return recv(s, buf, len, flags);
-}
-
-static inline int recvfrom_no_intr(SOCKET s, char* buf, int len, int flags, struct sockaddr* from,
-                                   int* fromlen) {
-    return recvfrom(s, buf, len, flags, from, fromlen);
-}
-#endif
 
 // TODO: Move
 #include <whist/network/tcp.h>

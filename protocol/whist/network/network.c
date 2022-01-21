@@ -54,14 +54,6 @@ Public Function Implementations
 ============================
 */
 
-int ack(SocketContext* context) {
-    if (context->context == NULL) {
-        LOG_ERROR("The given SocketContext has not been initialized!");
-        return -1;
-    }
-    return context->ack(context->context);
-}
-
 WhistPacket* read_packet(SocketContext* context, bool should_recv) {
     if (context->context == NULL) {
         LOG_ERROR("The given SocketContext has not been initialized!");
@@ -95,12 +87,12 @@ void free_packet(SocketContext* context, WhistPacket* packet) {
 }
 
 int send_packet(SocketContext* context, WhistPacketType packet_type, void* payload,
-                int payload_size, int packet_id) {
+                int payload_size, int packet_id, bool start_of_stream) {
     if (context->context == NULL) {
         LOG_ERROR("The given SocketContext has not been initialized!");
         return -1;
     }
-    return context->send_packet(context->context, packet_type, payload, payload_size, packet_id);
+    return context->send_packet(context->context, packet_type, payload, payload_size, packet_id, start_of_stream);
 }
 
 void destroy_socket_context(SocketContext* context) {
@@ -324,7 +316,7 @@ int get_packet_size(WhistPacket* packet) {
     return PACKET_HEADER_SIZE + packet->payload_size;
 }
 
-bool handshake_private_key(SocketContextData* context) {
+bool handshake_private_key(SOCKET socket, int connection_timeout_ms, const void* private_key) {
     /*
         Perform a private key handshake with a peer.
 
@@ -335,17 +327,25 @@ bool handshake_private_key(SocketContextData* context) {
             (bool): True on success, False on failure
     */
 
-    set_timeout(context->socket, 1000);
+    // Set the timeout
+    set_timeout(socket, connection_timeout_ms);
 
     PrivateKeyData our_priv_key_data;
     PrivateKeyData our_signed_priv_key_data;
     PrivateKeyData their_priv_key_data;
     int recv_size;
-    socklen_t slen = sizeof(context->addr);
+    socklen_t slen;
+    struct sockaddr received_addr;
+    // TODO: We ignore received_addr,
+    // So the addr that signed the private key, might not be
+    // The addr that originally tried to connect
+    // #4785 for the fix on this issue
+    // This is not a private issue, since we still encrypt the transmission
+    // and presume all received packets are malicious until successfully decrypted
 
     // Generate and send private key request data
     prepare_private_key_request(&our_priv_key_data);
-    if (send(context->socket, (const char*)&our_priv_key_data, sizeof(our_priv_key_data), 0) < 0) {
+    if (send(socket, (const char*)&our_priv_key_data, sizeof(our_priv_key_data), 0) < 0) {
         LOG_ERROR("send(3) failed! Could not send private key request data! %d",
                   get_last_network_error());
         return false;
@@ -353,9 +353,10 @@ bool handshake_private_key(SocketContextData* context) {
 
     // Receive, sign, and send back their private key request data
     int cnt = 0;
-    while ((recv_size = recvfrom_no_intr(context->socket, (char*)&their_priv_key_data,
+    slen = sizeof(received_addr);
+    while ((recv_size = recvfrom_no_intr(socket, (char*)&their_priv_key_data,
                                          sizeof(their_priv_key_data), 0,
-                                         (struct sockaddr*)(&context->addr), &slen)) == 0) {
+                                         &received_addr, &slen)) == 0) {
         if (cnt >= 3)  // we are (very likely) getting a dead loop casued by stream socket closed
         {              // the loop should be okay to be removed, just kept for debugging.
             return false;
@@ -370,7 +371,7 @@ bool handshake_private_key(SocketContextData* context) {
         return false;
     }
     LOG_INFO("Private key request received");
-    if (!sign_private_key(&their_priv_key_data, recv_size, context->binary_aes_private_key)) {
+    if (!sign_private_key(&their_priv_key_data, recv_size, private_key)) {
         LOG_ERROR("signPrivateKey failed!");
         return false;
     }
@@ -382,19 +383,18 @@ bool handshake_private_key(SocketContextData* context) {
     }
 
     // Wait for and verify their signed private key request data
-    recv_size = recv_no_intr(context->socket, (char*)&our_signed_priv_key_data,
-                             sizeof(our_signed_priv_key_data), 0);
+    slen = sizeof(received_addr);
+    recv_size = recvfrom_no_intr(socket, (char*)&our_signed_priv_key_data,
+                             sizeof(our_signed_priv_key_data), 0, &received_addr, &slen);
     if (recv_size < 0) {
         LOG_WARNING("Did not receive our signed private key request: %d", get_last_network_error());
         return false;
     }
     if (!confirm_private_key(&our_priv_key_data, &our_signed_priv_key_data, recv_size,
-                             context->binary_aes_private_key)) {
+                             private_key)) {
         // we LOG_ERROR and its context within the confirm_private_key function
         return false;
     } else {
-        LOG_INFO("Private key confirmed");
-        set_timeout(context->socket, context->timeout);
         return true;
     }
 }
@@ -433,6 +433,10 @@ static int get_timeout(SOCKET socket) {
 }
 
 ssize_t recv_no_intr(int sockfd, void* buf, size_t len, int flags) {
+#ifdef _WIN32
+    // EINTR doesn't happen on windows, so just use the system call
+    return recv(s, buf, len, flags);
+#else
     ssize_t ret;
     bool got_timeout = false;
     int original_timeout, current_timeout;
@@ -488,12 +492,17 @@ ssize_t recv_no_intr(int sockfd, void* buf, size_t len, int flags) {
             // and go around again.
         }
     }
+#endif
 }
 
 // This is identical to the previous function except for the recv() call.
 // Any changes should be kept in sync between them.
 ssize_t recvfrom_no_intr(int sockfd, void* buf, size_t len, int flags, struct sockaddr* src_addr,
                          socklen_t* addrlen) {
+#ifdef _WIN32
+    // EINTR doesn't happen on windows, so just use the system call
+    return recvfrom(s, buf, len, flags, from, fromlen);
+#else
     ssize_t ret;
     bool got_timeout = false;
     int original_timeout, current_timeout;
@@ -549,6 +558,7 @@ ssize_t recvfrom_no_intr(int sockfd, void* buf, size_t len, int flags, struct so
             // and go around again.
         }
     }
+#endif
 }
 #endif
 

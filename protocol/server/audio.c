@@ -138,15 +138,15 @@ int32_t multithreaded_send_audio(void* opaque) {
                                 &state->client.udp_context, PACKET_AUDIO, frame,
                                 MAX_AUDIOFRAME_METADATA_SIZE + audio_encoder->encoded_frame_size,
                                 id);
-                            int i;
                             // Simulate nacks to trigger re-sending of previous frames.
-                            for (i = 1; i <= NUM_PREVIOUS_FRAMES_RESEND && id > i; i++) {
+                            // TODO: Move into udp.c
+                            for (int i = 1; i <= NUM_PREVIOUS_FRAMES_RESEND && id - i > 0; i++) {
                                 // Audio is always only one UDP packet per audio frame.
                                 // Average bytes per audio frame = (Samples_per_frame * Bitrate) /
                                 //                                 (BITS_IN_BYTE * Sampling freq)
                                 //                               = (480 * 128000) / (8 * 48000)
                                 //                               = 160 bytes only
-                                udp_nack(&state->client.udp_context, PACKET_AUDIO, id - i, 0);
+                                udp_nack_packet(&state->client.udp_context, PACKET_AUDIO, id - i, 0);
                             }
                             id++;
                         }

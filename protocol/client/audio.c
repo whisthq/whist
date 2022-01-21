@@ -85,6 +85,10 @@ struct AudioContext {
 
     // The last ID we've processed for rendering
     int last_played_id;
+
+    // Overflow/underflow state
+    bool is_flushing_audio;
+    bool is_buffering_audio;
 };
 
 /*
@@ -95,40 +99,41 @@ Private Functions
 
 /**
  * @brief                          Initialize the SDL audio device,
- *                                 and the ffmpeg audio decoder
+ *                                 and the ffmpeg audio decoder.
+ *                                 They must not already exist.
  *
  * @param audio_context            The audio context to use
+ * 
+ * @note                           On failure, audio_context->dev will remain 0,
+ *                                 and audio_context->audio_decoder will remain NULL.
  */
 static void init_audio_device(AudioContext* audio_context);
 
 /**
  * @brief                          Destroy the SDL audio device,
- *                                 and the ffmpeg audio decoder
+ *                                 and the ffmpeg audio decoder,
+ *                                 if they exist.
  *
  * @param audio_context            The audio context to use
+ * 
+ * @note                           If SDL audio device / ffmpeg have not been initialized,
+ *                                 this function will simply do nothing
  */
 static void destroy_audio_device(AudioContext* audio_context);
 
 /**
- * @brief                          If the ringbuffer has accumulated too many
- *                                 frames, this will catch up to the most recent
- *                                 ID and invalidate the old ones.
+ * @brief                          Checks if the system queue is overflowing 
  *
- * @param audio_context            The audio context to use
- */
-static void catchup_audio(AudioContext* audio_context);
-
-/**
- * @brief   Checks if the system queue is overflowing 
- *
- * @returns     If True, we can receive more audio frames, but they will just be discarded.
+ * @returns                        If True, we can receive more audio frames,
+ *                                 but they will just be discarded.
  */
 static bool is_overflowing_audio(AudioContext* audio_context);
 
 /**
- * @brief   Checks if we don't have enough audio in queue
+ * @brief                          Checks if we don't have enough audio in queue / ringbuffer
  *
- * @returns If True, we should not receive more audio frames until is_underflowing_audio returns false.
+ * @returns                        If True, we should not drain from the ringbuffer
+ *                                 until is_underflowing_audio returns false.
  */
 static bool is_underflowing_audio(AudioContext* audio_context, int num_frame_buffered);
 
@@ -152,6 +157,8 @@ AudioContext* init_audio() {
     audio_context->last_played_id = -1;
     audio_context->dev = 0;
     audio_context->audio_decoder = NULL;
+    audio_context->is_flushing_audio = false;
+    audio_context->is_buffering_audio = false;
 
     // Return the audio context
     return audio_context;
@@ -186,7 +193,7 @@ void receive_audio(AudioContext* audio_context, WhistPacket* packet) {
         LOG_WARNING("Audio queue full, skipping ID %d", audio_context->last_played_id);
         return;
     }
-    // otherwise, send the frame to the audio queue
+    // otherwise, push the audio frame to the render context
     if (!audio_context->pending_render_context) {
         // send a frame to the renderer and set audio_context->pending_render_context to true to signal readiness
         if (audio_context->last_played_id != -1) {
@@ -230,32 +237,35 @@ void render_audio(AudioContext* audio_context) {
             init_audio_device(audio_context);
         }
 
-        // Send the encoded frame to the decoder
-        if (audio_decoder_send_packets(audio_context->audio_decoder, audio_frame->data,
-                                       audio_frame->data_length) < 0) {
-            LOG_FATAL("Failed to send packets to decoder!");
-        }
+        // If we have a valid audio device to render with...
+        if (audio_context->dev != 0) {
+            // Send the encoded frame to the decoder
+            if (audio_decoder_send_packets(audio_context->audio_decoder, audio_frame->data,
+                                        audio_frame->data_length) < 0) {
+                LOG_FATAL("Failed to send packets to decoder!");
+            }
 
-        // While there are frames to decode...
-        while (true) {
-            // Decode the frame
-            int res = audio_decoder_get_frame(audio_context->audio_decoder);
-            if (res == 0) {
-                // Buffer to hold the decoded data
-                static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
-                // Get the decoded data
-                audio_decoder_packet_readout(audio_context->audio_decoder, decoded_data);
+            // While there are frames to decode...
+            while (true) {
+                // Decode the frame
+                int res = audio_decoder_get_frame(audio_context->audio_decoder);
+                if (res == 0) {
+                    // Buffer to hold the decoded data
+                    static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
+                    // Get the decoded data
+                    audio_decoder_packet_readout(audio_context->audio_decoder, decoded_data);
 
-                // Queue the decoded_data into the audio device
-                res =
-                    SDL_QueueAudio(audio_context->dev, decoded_data,
-                                   audio_decoder_get_frame_data_size(audio_context->audio_decoder));
+                    // Queue the decoded_data into the audio device
+                    res =
+                        SDL_QueueAudio(audio_context->dev, decoded_data,
+                                    audio_decoder_get_frame_data_size(audio_context->audio_decoder));
 
-                if (res < 0) {
-                    LOG_WARNING("Could not play audio!");
+                    if (res < 0) {
+                        LOG_WARNING("Could not play audio!");
+                    }
+                } else {
+                    break;
                 }
-            } else {
-                break;
             }
         }
 
@@ -311,13 +321,13 @@ static void init_audio_device(AudioContext* audio_context) {
 
 static void destroy_audio_device(AudioContext* audio_context) {
     // Destroy the SDL audio device, if any exists
-    if (audio_context->dev) {
+    if (audio_context->dev != 0) {
         SDL_CloseAudioDevice(audio_context->dev);
         audio_context->dev = 0;
     }
 
     // Destroy the audio decoder, if any exists
-    if (audio_context->audio_decoder) {
+    if (audio_context->audio_decoder != NULL) {
         destroy_audio_decoder(audio_context->audio_decoder);
         audio_context->audio_decoder = NULL;
     }
@@ -336,31 +346,36 @@ int safe_get_audio_queue(AudioContext* audio_context) {
 }
 
 bool is_overflowing_audio(AudioContext* audio_context) {
-    static bool is_flushing_audio = false;;
     int audio_device_queue = safe_get_audio_queue(audio_context);
-    if (!is_flushing_audio && audio_device_queue > AUDIO_QUEUE_UPPER_LIMIT) {
+
+    // Check if we're overflowing the audio buffer
+    if (!audio_context->is_flushing_audio && audio_device_queue > AUDIO_QUEUE_UPPER_LIMIT) {
+        // Yes, we are! We should flush the audio buffer
         LOG_INFO("Audio queue has overflowed %d!", AUDIO_QUEUE_UPPER_LIMIT);
-        return is_flushing_audio = true;
+        audio_context->is_flushing_audio = true;
+    } else if (audio_context->is_flushing_audio && audio_device_queue <= TARGET_AUDIO_QUEUE_LIMIT) {
+        // Okay, we're done flushing the audio buffer
+        audio_context->is_flushing_audio = false;
     }
-    if (flushing_audio && audio_device_queue <= TARGET_AUDIO_QUEUE_LIMIT) {
-        return is_flushing_audio = false;
-    }
-    return is_flushing_audio;
+
+    return audio_context->is_flushing_audio;
 }
 
 bool is_underflowing_audio(AudioContext* audio_context, int num_frames_buffered) {
-    static bool is_buffering_audio = false;
     int buffered_bytes = safe_get_audio_queue(audio_context) + num_frames_buffered * DECODED_BYTES_PER_FRAME;
-    if (!is_buffering_audio && buffered_bytes < AUDIO_QUEUE_LOWER_LIMIT) {
+
+    // Check if we're underflowing the audio buffer
+    if (!audio_context->is_buffering_audio && buffered_bytes < AUDIO_QUEUE_LOWER_LIMIT) {
+        // Yes, we are! We should buffer for some more audio then
         LOG_INFO("Audio Queue too low: only %d bytes left!", buffered_bytes);
-        return is_buffering_audio = true;
-    }
-    if (is_buffering_audio && buffered_bytes >= TARGET_AUDIO_QUEUE_LIMIT) {
+        audio_context->is_buffering_audio = true;
+    } else if (audio_context->is_buffering_audio && buffered_bytes >= TARGET_AUDIO_QUEUE_LIMIT) {
+        // Okay, we're done buffering audio
         LOG_INFO("Done catching up! Now have %d bytes in queue", buffered_bytes);
-        is_buffering_audio = false;
-        return is_buffering_audio = false;
+        audio_context->is_buffering_audio = false;
     }
-    return is_buffering_audio;
+
+    return audio_context->is_buffering_audio;
 }
 
 bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered) {

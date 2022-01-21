@@ -214,7 +214,7 @@ void send_populated_frames(whist_server_state* state, WhistTimer* statistics_tim
     // Send the video frame
     if (state->client.is_active) {
         send_packet(&state->client.udp_context, PACKET_VIDEO, frame, get_total_frame_size(frame),
-                    id);
+                    id, frame->is_iframe);
     }
 }
 
@@ -519,25 +519,12 @@ int32_t multithreaded_send_video(void* opaque) {
                                  get_timer(&statistics_timer) * MS_IN_SECOND);
         }
 
-        timestamp_us client_input_timestamp;
-        timestamp_us server_timestamp = current_time_us();
-
-        // Theoretical client timestamp of user input, for E2E Latency Calculation
-        udp_lock_timestamp_mutex(&state->client.udp_context);
-        // The client timestamp from a ping,
-        // is the timestamp of theoretical client input we're responding to
-        client_input_timestamp = udp_get_ping_client_time(&state->client.udp_context);
-        client_last_server_timestamp = udp_get_ping_server_time(&state->client.udp_context);
-        // But we should adjust for the time between when we received the ping, and now,
-        // To only extract the client->server network latency
-        client_input_timestamp += (server_timestamp - client_last_server_timestamp);
-        udp_unlock_timestamp_mutex(&state->client.udp_context);
+        timestamp_us client_input_timestamp = udp_get_client_input_timestamp(&state->client.udp_context);
 
         // check if the client has sent any stream reset requests for video
-        StreamResetData stream_reset_data = udp_get_pending_stream_reset_request(&state->client.udp_context, PACKET_VIDEO);
-        if (stream_reset_data.pending_stream_reset) {
+        bool pending_stream_reset = udp_get_pending_stream_reset(&state->client.udp_context, PACKET_VIDEO);
+        if (pending_stream_reset) {
             state->wants_iframe = true;
-            state->last_failed_id = stream_reset_data.greatest_failed_id;
         }
 
         // SENDING LOGIC:
@@ -587,12 +574,6 @@ int32_t multithreaded_send_video(void* opaque) {
 
         // This outer loop potentially runs 10s of thousands of times per second, every ~1usec
 
-        // If it's a start-of-stream, or an id beyond the last sent iframe has failed,
-        // Only then we send a new iframe.
-        if (state->last_failed_id != -1 && state->last_failed_id <= state->last_iframe_id) {
-            state->wants_iframe = false;
-        }
-
         // Send a frame if we have a real frame to send, or we need to keep up with min_fps
         if (state->client.is_active && (accumulated_frames > 0 || state->wants_iframe ||
                                         get_timer(&last_frame_capture) > 1.0 / min_fps)) {
@@ -633,7 +614,6 @@ int32_t multithreaded_send_video(void* opaque) {
 
                 if (state->wants_iframe) {
                     video_encoder_set_iframe(encoder);
-                    state->last_iframe_id = id;
                     state->wants_iframe = false;
                 }
 

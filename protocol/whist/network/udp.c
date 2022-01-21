@@ -24,10 +24,6 @@ Defines
 ============================
 */
 
-// We should be able to fix a normal-sized WhistPacket,
-// in just a single segment
-#define MAX_PACKET_SEGMENT_SIZE ((int)sizeof(WhistPacket))
-
 typedef enum {
     UDP_WHIST_SEGMENT,
     UDP_NACK,
@@ -49,17 +45,7 @@ typedef struct {
     union {
         // UDP_WHIST_SEGMENT
         // A segment of a WhistPacket
-        struct {
-            WhistPacketType whist_type;
-            int id;
-            unsigned short index;
-            unsigned short num_indices;
-            unsigned short num_fec_indices;
-            unsigned short segment_size;
-            bool is_a_nack;
-            // Must be last, since only the first segment_size bytes will be sent
-            char segment_data[MAX_PACKET_SEGMENT_SIZE];
-        } udp_whist_segment_data;
+        WhistSegment udp_whist_segment_data;
 
         // UDP_NACK
         struct {
@@ -111,10 +97,10 @@ typedef struct {
 // Size of the UDPPacket header, excluding the payload
 #define UDPNETWORKPACKET_HEADER_SIZE ((int)sizeof(UDPNetworkPacket) - (int)sizeof((UDPNetworkPacket){0}.payload))
 
-struct StreamResetData {
+typedef struct {
     bool pending_stream_reset;
     int greatest_failed_id;
-};
+} StreamResetData;
 
 // An instance of the UDP Context
 typedef struct {
@@ -142,6 +128,8 @@ typedef struct {
     timestamp_us last_ping_server_time;
     WhistMutex timestamp_mutex;
 
+    int last_start_of_stream_id[NUM_PACKET_TYPES];
+
     // Nack Buffer Data
     UDPPacket** nack_buffers[NUM_PACKET_TYPES];
     // This mutex will protect the data in nack_buffers
@@ -152,7 +140,6 @@ typedef struct {
     RingBuffer* ring_buffers[NUM_PACKET_TYPES];
     // because we don't need to buffer messages
     WhistPacket last_packets[NUM_PACKET_TYPES];
-    // Stream reset data for each type
     StreamResetData reset_data[NUM_PACKET_TYPES];
 } UDPContext;
 
@@ -184,7 +171,44 @@ Private Functions
 */
 
 /**
+ * @brief                          Create a UDP Server Context,
+ *                                 which will wait connection_timeout_ms
+ *                                 for a client to connect.
+ *
+ * @param context                  The UDP context to connect with
+ * @param port                     The port to open up
+ * @param connection_timeout_ms    The amount of time to wait for a client
+ *
+ * @returns                        -1 on failure, 0 on success
+ *
+ * @note                           This may overwrite the timeout on context->socket,
+ *                                 Use set_timeout to restore it
+ */
+int create_udp_server_context(UDPContext* context, int port, int recvfrom_timeout_ms,
+                              int connection_timeout_ms);
+
+/**
+ * @brief                          Create a UDP Client Context,
+ *                                 which will try to connect for connection_timeout_ms
+ *
+ * @param context                  The UDP context to connect with
+ * @param destination              The IP address to connect to
+ * @param port                     The port to connect to
+ * @param connection_timeout_ms    The amount of time to try to connect
+ *
+ * @returns                        -1 on failure, 0 on success
+ *
+ * @note                           This may overwrite the timeout on context->socket,
+ *                                 Use set_timeout to restore it
+ */
+int create_udp_client_context(UDPContext* context, char* destination, int port,
+                              int connection_timeout_ms);
+
+
+/**
  * @brief                        Encrypts and Sends a payload of size at most MAX_UDP_PAYLOAD_SIZE through the network.
+ * 
+ * @param udp_packet             The UDPPacket to send. This buffer is expected to be of size sizeof(UDPPacket)
  */
 static int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet);
 
@@ -198,7 +222,7 @@ static int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet);
  * @param index                    The index of the nack'ed packet
  *                                 (The UDP packet index into the larger WhistPacket)
  */
-static int udp_nack(SocketContext* context, WhistPacketType type, int id, int index);
+static int udp_handle_nack(SocketContext* context, WhistPacketType type, int id, int index);
 
 /**
  * @brief                   Handle any UDPPacket that's not a Whist segment, e.g. nack messages and network setting updates
@@ -236,6 +260,40 @@ static int get_udp_packet_size(UDPPacket* udp_packet);
 static int udp_ack(UDPContext* context);
 
 static void udp_update_ping(UDPContext* context);
+
+/*
+============================
+RingBuffer Lambda Functions
+============================
+*/
+
+/**
+ * @brief       Send a nack to the server indicating that the client is missing the packet with given type, ID, and index
+ * @param socket_context     the context we're sending the nack over
+ * @param type      type of packet
+ * @param ID       ID of packet
+ * @param index     index of packet
+ */
+void udp_nack_packet(SocketContext* socket_context, WhistPacketType type, int id, int index) {
+    UDPContext* context = (UDPContext*)socket_context->context;
+    // Nack for the given packet by sending a UDPPacket of type UDP_NACK
+    UDPPacket packet = {0};
+    packet.type = UDP_NACK;
+    packet.udp_nack_data.whist_type = type;
+    packet.udp_nack_data.id = id;
+    packet.udp_nack_data.index = index;
+    udp_send_udp_packet(context, &packet);
+}
+
+void udp_request_stream_reset(SocketContext* socket_context, WhistPacketType type, int greatest_failed_id) {
+    UDPContext* context = (UDPContext*)socket_context->context;
+    // Tell the server the client fell too far behind
+    UDPPacket packet = {0};
+    packet.type = UDP_STREAM_RESET;
+    packet.udp_stream_reset_data.whist_type = type;
+    packet.udp_stream_reset_data.greatest_failed_id = greatest_failed_id;
+    return udp_send_udp_packet(context, &packet);
+}
 
 /*
 ============================
@@ -378,7 +436,7 @@ void* udp_get_packet(void* raw_context, WhistPacketType type) {
         case PACKET_AUDIO: {
             // first, catch up audio if we're behind
             if ((ring_buffer->last_rendered_id == -1 && ring_buffer->max_id > 0) || (ring_buffer->last_rendered_id != -1 && ring_buffer->max_id - ring_buffer->last_rendered_id > MAX_NUM_AUDIO_FRAMES)) {
-                ring_buffer->last_rendered_id = ring_buffer->max_id - 1;
+                reset_stream(ring_buffer, ring_buffer->max_id);
             }
             break;
         }
@@ -430,7 +488,7 @@ void udp_free_packet(void* raw_context, WhistPacket* udp_packet) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet, size_t udp_packet_size) {
+int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
     /*
      * Send a WhistPacket over UDP.
      * TODO: rename this function and emphasize that it handles networking only, any packet encryption, etc. is handled by udp_send_packet.
@@ -438,7 +496,7 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet, size_t udp_p
 
     FATAL_ASSERT(context != NULL);
     FATAL_ASSERT(segment_size <= sizeof(UDPPacket));
-    FATAL_ASSERT(udp_packet_size == get_udp_packet_size(udp_packet));
+    int udp_packet_size = get_udp_packet_size(udp_packet);
 
     UDPNetworkPacket udp_network_packet;
     void* data_to_send = NULL;
@@ -446,32 +504,32 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet, size_t udp_p
         // Encrypt the packet during normal operation
         int encrypted_len =
             (int)encrypt_packet(udp_network_packet.payload, &udp_network_packet.aes_metadata, udp_packet,
-                                (int)udp_packet_size, context->binary_aes_private_key);
+                                udp_packet_size, context->binary_aes_private_key);
         udp_network_packet.payload_size = encrypted_len;
     } else {
         // Or, just memcpy the segment if ENCRYPTING_PACKETS is disabled
         memcpy(udp_network_packet.payload, udp_packet, udp_packet_size);
-        udp_network_packet.payload_size = (int)udp_packet_size;
+        udp_network_packet.payload_size = udp_packet_size;
     }
 
     // The size of the udp packet that actually needs to be sent over the network
-    int udp_packet_network_size =
+    int udp_network_packet_size =
         UDPNETWORKPACKET_HEADER_SIZE + udp_network_packet.payload_size;
 
     // NOTE: This doesn't interfere with clientside hotpath,
     // since the throttler only throttles the serverside
     network_throttler_wait_byte_allocation(context->network_throttler,
-                                           (size_t)udp_packet_network_size);
+                                           (size_t)udp_network_packet_size);
 
     // If sending fails because of no buffer space available on the system, retry a few times.
     for (int i = 0; i < RETRIES_ON_BUFFER_FULL; i++) {
         whist_lock_mutex(context->mutex);
         int ret;
 #if LOG_NETWORKING
-        LOG_INFO("Sending a WhistPacket of size %d over UDP", (int)packet_size);
+        LOG_INFO("Sending a WhistPacket of size %d (Total %d) over UDP", udp_packet_size, udp_network_packet_size);
 #endif
         // Send the UDPPacket over the network
-        ret = send(context->socket, (const char*)&udp_network_packet, udp_packet_network_size, 0);
+        ret = send(context->socket, (const char*)&udp_network_packet, (size_t)udp_network_packet_size, 0);
         whist_unlock_mutex(context->mutex);
         if (ret < 0) {
             int error = get_last_network_error();
@@ -494,7 +552,7 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet, size_t udp_p
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
 int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payload, int payload_size,
-                    int packet_id) {
+                    int packet_id, bool start_of_stream) {
     /*
      * Send data of type packet_type and ID packet_id over UDP. This breaks up the data into WhistPackets (TODO: WhistUDPPackets) small enough to be sent over UDP, applies any other transforms (e.g. encryption, error correction), and calls udp_send_udp_packet on the transformed WhistPackets (TODO: WhistUDPPackets).
      * It also updates a nack buffer to handle client nacks for lost data if necessary.
@@ -508,7 +566,7 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payloa
     }
 
     // Get the nack_buffer, if there is one for this type of packet
-    WhistPacket* nack_buffer = NULL;
+    UDPPacket* nack_buffer = NULL;
 
     int type_index = (int)packet_type;
     if (type_index >= NUM_PACKET_TYPES) {
@@ -599,7 +657,7 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payloa
         // Send the packet,
         // We don't need to propagate the return code if a subset of them drop,
         // The client will just have to nack
-        udp_send_udp_packet(context, packet, get_udp_packet_size(packet));
+        udp_send_udp_packet(context, packet);
 
         if (nack_buffer) {
             whist_unlock_mutex(context->nack_mutex[type_index]);
@@ -645,7 +703,7 @@ void udp_register_ring_buffer(SocketContext* socket_context, WhistPacketType typ
         return;
     }
 
-    context->ring_buffers[type_index] = init_ring_buffer(type, max_frame_size, num_buffers, udp_nack_packet, udp_request_stream_reset);
+    context->ring_buffers[type_index] = init_ring_buffer(type, max_frame_size, num_buffers, socket_context, udp_nack_packet, udp_request_stream_reset);
 }
 
 void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType type,
@@ -697,7 +755,8 @@ void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType typ
 int udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, int packet_index) {
     /*
      * Respond to a client nack by sending the requested packet from the nack buffer if possible.
-     */
+    */
+
     // Sanity check the request metadata
     int type_index = (int)type;
     if (type_index >= NUM_PACKET_TYPES) {
@@ -717,26 +776,26 @@ int udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, in
     // retrieve the WhistPacket from the nack buffer and send using `udp_send_udp_packet`
     // TODO: change to WhistUDPPacket
     whist_lock_mutex(context->nack_mutex[type_index]);
-    WhistPacket* packet =
+    UDPPacket* packet =
         &context->nack_buffers[type_index][packet_id % context->nack_num_buffers[type_index]]
                               [packet_index];
 
     int ret;
-    if (packet->id == packet_id) {
-        int len = get_packet_size(packet);
-        packet->is_a_nack = true;
+    if (packet->udp_whist_segment_data.id == packet_id) {
+        packet->udp_whist_segment_data.is_a_nack = true;
         // We will NACK audio all the time(See NUM_PREVIOUS_FRAMES_RESEND in audio.c). Hence logging
         // this only for video.
+        // TODO: Move that networking code in audio.c into udp.c
         if (type == PACKET_VIDEO) {
             LOG_INFO("NACKed video packet ID %d Index %d found of length %d. Relaying!", packet_id,
-                     packet_index, len);
+                     packet_index, packet->udp_whist_segment_data.segment_size);
         }
-        ret = udp_send_udp_packet(context, packet, len);
+        ret = udp_send_udp_packet(context, packet);
     } else {
         LOG_WARNING(
             "NACKed %s packet %d %d not found, ID %d was "
             "located instead.",
-            type == PACKET_VIDEO ? "video" : "audio", packet_id, packet_index, packet->id);
+            type == PACKET_VIDEO ? "video" : "audio", packet_id, packet_index, packet->udp_whist_segment_data.id);
         ret = -1;
     }
 
@@ -779,84 +838,9 @@ Private Function Implementations
 ============================
 */
 
-int create_udp_server_context(void* raw_context, int port, int recvfrom_timeout_ms,
-                              int stun_timeout_ms) {
-    UDPContext* context = raw_context;
-
-    socklen_t slen = sizeof(context->addr);
-    int recv_size;
-    if ((recv_size = recvfrom_no_intr(context->socket, NULL, 0, 0,
-                                      (struct sockaddr*)(&context->addr), &slen)) != 0) {
-        LOG_WARNING("Failed to receive ack! %d %d", recv_size, get_last_network_error());
-        closesocket(context->socket);
-        return -1;
-    }
-
-    if (connect(context->socket, (struct sockaddr*)&context->addr, sizeof(context->addr)) == -1) {
-        LOG_WARNING("Failed to connect()!");
-        closesocket(context->socket);
-        return -1;
-    }
-
-    if (!handshake_private_key(context)) {
-        LOG_WARNING("Could not complete handshake!");
-        closesocket(context->socket);
-        return -1;
-    }
-
-    LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
-             ntohs(context->addr.sin_port));
-
-    set_timeout(context->socket, recvfrom_timeout_ms);
-
-    return 0;
-}
-
-int create_udp_client_context(UDPContext* context, char* destination, int port,
-                              int recvfrom_timeout_ms, int stun_timeout_ms) {
-    // Create UDP socket
-    if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
-        return -1;
-    }
-
-    set_timeout(context->socket, stun_timeout_ms);
-
-    // Client connection protocol
-    context->addr.sin_family = AF_INET;
-    context->addr.sin_addr.s_addr = inet_addr(destination);
-    context->addr.sin_port = htons((unsigned short)port);
-    if (connect(context->socket, (struct sockaddr*)&context->addr, sizeof(context->addr)) == -1) {
-        LOG_WARNING("Failed to connect()!");
-        closesocket(context->socket);
-        return -1;
-    }
-
-    LOG_INFO("Connecting to server...");
-
-    // Send Ack
-    if (udp_ack(context) < 0) {
-        LOG_WARNING("Could not send ack to server %d\n", get_last_network_error());
-        closesocket(context->socket);
-        return -1;
-    }
-
-    if (!handshake_private_key(context)) {
-        LOG_WARNING("Could not complete handshake!");
-        closesocket(context->socket);
-        return -1;
-    }
-
-    LOG_INFO("Connected to server on %s:%d! (Private %d)\n", inet_ntoa(context->addr.sin_addr),
-             port, ntohs(context->addr.sin_port));
-
-    set_timeout(context->socket, recvfrom_timeout_ms);
-
-    return 0;
-}
-
 // TODO: move stream reset function here too
 //
-void nack_packet(SocketContext* socket_context, WhistPacketType frame_type, int id, int index) {
+void ring_buffer_nack_packet(SocketContext* socket_context, WhistPacketType frame_type, int id, int index) {
     /*
         Nack the packet at ID id and index index.
 
@@ -898,6 +882,9 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
         Returns:
             (int): -1 on failure, 0 on success
     */
+
+    // STUN isn't implemented
+    FATAL_ASSERT(using_stun == false);
 
     // Populate function pointer table
     network_context->get_packet = udp_get_packet;
@@ -952,21 +939,16 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     }
 
     int ret;
-    if (using_stun) {
-        if (destination == NULL)
-            ret = create_udp_server_context_stun(context, port, recvfrom_timeout_ms,
-                                                 connection_timeout_ms);
-        else
-            ret = create_udp_client_context_stun(context, destination, port, recvfrom_timeout_ms,
-                                                 connection_timeout_ms);
+    if (destination == NULL) {
+        ret = create_udp_server_context(context, port, recvfrom_timeout_ms,
+                                        connection_timeout_ms);
     } else {
-        if (destination == NULL)
-            ret = create_udp_server_context(context, port, recvfrom_timeout_ms,
-                                            connection_timeout_ms);
-        else
-            ret = create_udp_client_context(context, destination, port, recvfrom_timeout_ms,
-                                            connection_timeout_ms);
+        ret = create_udp_client_context(context, destination, port, recvfrom_timeout_ms,
+                                        connection_timeout_ms);
     }
+
+    // Restore the socket's timeout
+    set_timeout(context->socket, context->timeout);
 
     if (ret == 0) {
         // socket options = TCP_NODELAY IPTOS_LOWDELAY SO_RCVBUF=65536
@@ -1014,11 +996,101 @@ int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms) {
     return 0;
 }
 
+bool udp_get_pending_stream_reset(SocketContext* socket_context, WhistPacketType type) {
+    UDPContext* context = (UDPContext*)socket_context->context;
+    if (reset_data[type].pending_stream_reset) {
+        int greatest_failed_id = reset_data[type].greatest_failed_id;
+        // If it's the start-of-stream,
+        // Or we've failed an ID > the last start-of-stream,
+        // Then we should propagate the stream reset
+        // TODO: Also do this when we haven't received an ACK from the client in a while
+        return greatest_failed_id == -1 || greatest_failed_id > data.last_start_of_stream_id[type];
+        // We only need to propagate a stream reset once
+        reset_data[type].pending_stream_reset = false;
+    } else {
+        return false;
+    }
+}
+
 /*
 ============================
 Private Function Implementation
 ============================
 */
+
+int create_udp_server_context(UDPContext* context, int port,
+                              int connection_timeout_ms) {
+    // Set the timeout to connection_timeout_ms
+    set_timeout(context->socket, connection_timeout_ms);
+
+    socklen_t slen = sizeof(context->addr);
+    int recv_size;
+    if ((recv_size = recvfrom_no_intr(context->socket, NULL, 0, 0,
+                                      (struct sockaddr*)(&context->addr), &slen)) != 0) {
+        LOG_WARNING("Failed to receive ack! %d %d", recv_size, get_last_network_error());
+        closesocket(context->socket);
+        return -1;
+    }
+
+    if (connect(context->socket, (struct sockaddr*)&context->addr, sizeof(context->addr)) == -1) {
+        LOG_WARNING("Failed to connect()!");
+        closesocket(context->socket);
+        return -1;
+    }
+
+    // Handshake
+    if (!handshake_private_key(context->socket, connection_timeout_ms, context->binary_aes_private_key)) {
+        LOG_WARNING("Could not complete handshake!");
+        closesocket(context->socket);
+        return -1;
+    }
+
+    LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
+             ntohs(context->addr.sin_port));
+
+    return 0;
+}
+
+int create_udp_client_context(UDPContext* context, char* destination, int port,
+                              int connection_timeout_ms) {
+    // Create UDP socket
+    if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
+        return -1;
+    }
+
+    set_timeout(context->socket, connection_timeout_ms);
+
+    // Client connection protocol
+    context->addr.sin_family = AF_INET;
+    context->addr.sin_addr.s_addr = inet_addr(destination);
+    context->addr.sin_port = htons((unsigned short)port);
+    if (connect(context->socket, (const struct sockaddr*)&context->addr, sizeof(context->addr)) == -1) {
+        LOG_WARNING("Failed to connect()!");
+        closesocket(context->socket);
+        return -1;
+    }
+
+    LOG_INFO("Connecting to server at %s:%d over UDP...", destination, port);
+
+    // Send Ack
+    if (udp_ack(context) < 0) {
+        LOG_WARNING("Could not send ack to server %d\n", get_last_network_error());
+        closesocket(context->socket);
+        return -1;
+    }
+
+    // Handshake
+    if (!handshake_private_key(context->socket, connection_timeout_ms, context->binary_aes_private_key)) {
+        LOG_WARNING("Could not complete handshake!");
+        closesocket(context->socket);
+        return -1;
+    }
+
+    LOG_INFO("Connected to %s:%d over UDP! (Private %d)\n", inet_ntoa(context->addr.sin_addr),
+             port, ntohs(context->addr.sin_port));
+
+    return 0;
+}
 
 #include <stddef.h>
 int get_udp_packet_size(UDPPacket* udp_packet) {
@@ -1049,80 +1121,48 @@ int udp_ack(UDPContext* context) {
 int udp_handle_message(UDPContext* context, UDPPacket* packet) {
     switch (packet->type) {
         case UDP_NACK: {
-                           // we received a nack from the client, respond
-                           return udp_handle_nack(context, packet->udp_nack_data.whist_type, packet->udp_nack_data.id, packet->udp_nack_data.index);
-                       }
+            // we received a nack from the client, respond
+            return udp_handle_nack(context, packet->udp_nack_data.whist_type, packet->udp_nack_data.id, packet->udp_nack_data.index);
+        }
         case UDP_BITARRAY_NACK: {
-                                    // nack for everything
-                                    BitArray *bit_arr = bit_array_create(packet->udp_bitarray_nack_data.numBits);
-                                    bit_array_clear_all(bit_arr);
+            // nack for everything
+            BitArray *bit_arr = bit_array_create(packet->udp_bitarray_nack_data.numBits);
+            bit_array_clear_all(bit_arr);
 
-                                    memcpy(bit_array_get_bits(bit_arr), packet->udp_bitarray_nack_data.ba_raw,
-                                            BITS_TO_CHARS(packet->udp_bitarray_nack_data.numBits));
+            memcpy(bit_array_get_bits(bit_arr), packet->udp_bitarray_nack_data.ba_raw,
+                    BITS_TO_CHARS(packet->udp_bitarray_nack_data.numBits));
 
-                                    for (int i = packet->udp_bitarray_nack_data.index; i < packet->udp_bitarray_nack_data.numBits; i++) {
-                                        if (bit_array_test_bit(bit_arr, i)) {
-                                            udp_handle_nack(context, packet->udp_bitarray_nack_data.type, packet->udp_bitarray_nack_data.id,
-                                                    i);
-                                        }
-                                    }
-                                    bit_array_free(bit_arr);
-                                    return 0;
-                                }
+            for (int i = packet->udp_bitarray_nack_data.index; i < packet->udp_bitarray_nack_data.numBits; i++) {
+                if (bit_array_test_bit(bit_arr, i)) {
+                    udp_handle_nack(context, packet->udp_bitarray_nack_data.type, packet->udp_bitarray_nack_data.id,
+                            i);
+                }
+            }
+            bit_array_free(bit_arr);
+            return 0;
+        }
         case UDP_STREAM_RESET: {
-                                   udp_handle_stream_reset(context, packet->udp_stream_reset_data.whist_type, packet->udp_stream_reset_data.greatest_failed_id);
-                                   return 0;
-                               }
+            udp_handle_stream_reset(context, packet->udp_stream_reset_data.whist_type, packet->udp_stream_reset_data.greatest_failed_id);
+            return 0;
+        }
         case UDP_PING: {
-                           // currently unimplemented
-                           return 0;
-                       }
+            // currently unimplemented
+            return 0;
+        }
         case UDP_NETWORK_SETTINGS: {
-                                       udp_update_network_settings(context, packet->udp_network_settings_data.network_settings);
-                                       return 0;
-                                   }
+            udp_update_network_settings(context, packet->udp_network_settings_data.network_settings);
+            return 0;
+        }
         default: {
-                     LOG_ERROR("Packet of unknown type!");
-                 }
+            LOG_ERROR("Packet of unknown type! %d", (int)packet->type);
+        }
     }
 }
-
-StreamResetData udp_get_pending_stream_reset_request(SocketContext* socket_context, WhistPacketType type) {
-    UDPContext* context = (UDPContext*)socket_context->context;
-    StreamResetData data = {0};
-    data.pending_stream_reset = reset_data[type].pending_stream_reset;
-    data.greatest_failed_id = reset_data[type].greatest_failed_id;
-    if (reset_data[type].pending_stream_reset) {
-        // server has receeived the stream reset request
-        reset_data[type].pending_stream_reset = false;
-    }
-    return data;
 }
 
 void udp_handle_stream_reset(UDPContext* context, WhistPacketType type, int greatest_failed_id) {
-    context->reset_data[type].pending_stream_reset = true;
     context->reset_data[type].greatest_failed_id = max(greatest_failed_id, context->reset_data[type].greatest_failed_id);
-}
-
-int udp_nack_packet(SocketContext* socket_context, WhistPacketType type, int id, int index) {
-    UDPContext* context = (UDPContext*)socket_context->context;
-    // Nack for the given packet by sending a UDPPacket of type UDP_NACK
-    UDPPacket packet = {0};
-    packet.type = UDP_NACK;
-    packet.udp_nack_data.whist_type = type;
-    packet.id = id;
-    packet.index = index;
-    return udp_send_udp_packet(context, &packet, get_udp_packet_size(&packet));
-}
-
-int udp_request_stream_reset(SocketContext* socket_context, WhistPacketType type, int greatest_failed_id) {
-    UDPContext* context = (UDPContext*)socket_context->context;
-    // Tell the server the client fell too far behind
-    UDPPacket packet = {0};
-    packet.type = UDP_STREAM_RESET;
-    packet.udp_stream_reset_data.whist_type = type;
-    packet.udp_stream_reset_data.greatest_failed_id = greatest_failed_id;
-    return udp_send_udp_packet(context, &packet, get_udp_packet_size(&packet));
+    context->reset_data[type].pending_stream_reset = true;
 }
 
 void udp_handle_pong(UDPContext* context, int id) {
@@ -1187,7 +1227,7 @@ void udp_send_ping(UDPContext* context, int id) {
     ping.udp_ping_data.original_timestamp = current_time_us();
 
     LOG_INFO("Ping! %d", id);
-    if (udp_send_udp_packet(context, &ping, get_udp_packet_size(&ping)) != 0) {
+    if (udp_send_udp_packet(context, &ping) != 0) {
         LOG_WARNING("Failed to ping server! (ID: %d)", id);
     }
     context->last_ping_id = id;
@@ -1212,25 +1252,25 @@ int udp_handle_ping(UDPContext* context, int id, timestamp_us timestamp) {
     context->last_ping_client_time = timestamp;
     context->last_ping_server_time = server_time;
     whist_unlock_mutex(context->timestamp_mutex);
-    return udp_send_udp_packet(context, &pong, get_udp_packet_size(&pong));
+    return udp_send_udp_packet(context, &pong);
 }
 
-void udp_lock_timestamp_mutex(SocketContext* socket_context) {
-    UDPContext* context = (UDPContext*)socket_context->context;
+// TODO: REMOVE
+timestamp_us udp_get_client_input_timestamp(SocketContext* socket_context) {
     whist_lock_mutex(context->timestamp_mutex);
-}
 
-void udp_unlock_timestamp_mutex(SocketContext* socket_context) {
-    UDPContext* context = (UDPContext*)socket_context->context;
+    timestamp_us server_timestamp = current_time_us();
+
+    // Theoretical client timestamp of user input, for E2E Latency Calculation
+    // The client timestamp from a ping,
+    // is the timestamp of theoretical client input we're responding to
+    timestamp_us client_input_timestamp = context->last_ping_client_time;
+    client_last_server_timestamp = context->last_ping_server_time;
+    // But we should adjust for the time between when we received the ping, and now,
+    // To only extract the client->server network latency
+    client_input_timestamp += (server_timestamp - client_last_server_timestamp);
+    
     whist_unlock_mutex(context->timestamp_mutex);
-}
 
-timestamp_us udp_get_ping_client_time(SocketContext* socket_context) {
-    UDPContext* context = (UDPContext*)socket_context->context;
-    return context->last_ping_client_time;
-}
-
-timestamp_us udp_get_ping_server_time(SocketContext* socket_context) {
-    UDPContext* context = (UDPContext*)socket_context->context;
-    return context->last_ping_server_time;
+    return client_input_timestamp;
 }
