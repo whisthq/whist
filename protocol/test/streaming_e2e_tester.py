@@ -117,6 +117,14 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--simulate-scrolling",
+    help="Whether to simulate mouse scrolling on the client side",
+    type=str,
+    choices=["false", "true"],
+    default="false",
+)
+
+parser.add_argument(
     "--testing-url",
     help="The URL to visit for testing",
     type=str,
@@ -164,6 +172,7 @@ if __name__ == "__main__":
     testing_time = args.testing_time
     region_name = args.region_name
     use_two_instances = True if args.use_two_instances == "true" else False
+    simulate_scrolling = True if args.simulate_scrolling == "true" else False
 
     # Load the SSH key
     if not os.path.isfile(ssh_key_path):
@@ -305,7 +314,7 @@ if __name__ == "__main__":
     json_data["initial_url"] = testing_url
 
     # Run the dev client
-    client_docker_id = run_client_on_instance(client_pexpect_process, json_data)
+    client_docker_id = run_client_on_instance(client_pexpect_process, json_data, simulate_scrolling)
 
     # Wait <testing_time> seconds to generate enough data
     time.sleep(testing_time)

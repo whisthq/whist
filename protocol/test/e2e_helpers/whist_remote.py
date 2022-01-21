@@ -3,6 +3,7 @@
 import pexpect
 import json
 import platform
+import time
 
 # Get tools to run operations on a dev instance via SSH
 from dev_instance_tools import (
@@ -171,7 +172,7 @@ def build_client_on_instance(
     print("Finished building the dev client mandelbox on the EC2 instance")
 
 
-def run_client_on_instance(pexpect_process, json_data):
+def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
     """
     Run the Whist dev client (development/client mandelbox) on a remote machine accessible via a SSH connection within a pexpect process.
 
@@ -198,6 +199,15 @@ def run_client_on_instance(pexpect_process, json_data):
     print(
         "Whist dev client started on EC2 instance, on Docker container {}!".format(client_docker_id)
     )
+
+    if simulate_scrolling:
+        # Sleep for sometime so that the webpage can load.
+        time.sleep(5)
+        print("Simulating the mouse scroll events in the client")
+        command = "python3 /usr/share/whist/mouse_events.py"
+        pexpect_process.sendline(command)
+        pexpect_process.expect(":/#")
+
     return client_docker_id
 
 
