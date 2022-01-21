@@ -55,7 +55,21 @@ static void reset_ring_buffer(RingBuffer* ring_buffer);
 /**
  * @brief                         Nack all of the missing packets up to end_index
  *
- * @param ring_buffer             Ring buffer to reset
+ * @param ring_buffer             Ring buffer to nack with
+ * @param id                      The ID of the packet we're nacking for
+ * @param index                   The index of the UDPPacket we're nacking for
+ */
+static void nack_single_packet(RingBuffer* ring_buffer, int id, int index);
+
+/**
+ * @brief                         Nack all of the missing packets up to end_index
+ *
+ * @param ring_buffer             Ring buffer to nack with
+ * @param frame_data              The frame whose indices we will be nacking
+ * @param end_index               The last index that's considered "missing"
+ * @param max_packets_to_nack     The maximum number of packets that we can nack for
+ *
+ * @returns                       The number of packets that have been nacked
  */
 static int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_data,
                                             int end_index, int max_packets_to_nack);
@@ -440,7 +454,7 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
 }
 
 NetworkStatistics get_network_statistics(RingBuffer* ring_buffer) {
-
+    // TODO: Return the network statistics
 }
 
 void destroy_ring_buffer(RingBuffer* ring_buffer) {
@@ -466,16 +480,6 @@ Private Function Implementations
 */
 
 void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int num_fec_indices) {
-    /*
-        Initialize a frame with num_indices indices and ID id. This allocates the frame buffer and
-        the arrays we use for metadata.
-
-        Arguments:
-            ring_buffer (RingBuffer*): ring buffer containing the frame
-            id (int): desired frame ID
-            num_indices (int): number of indices in the frame
-    */
-
     FrameData* frame_data = get_frame_at_id(ring_buffer, id);
 
     // Confirm that the frame is uninitialized
@@ -529,11 +533,6 @@ void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data) {
 }
 
 void reset_ring_buffer(RingBuffer* ring_buffer) {
-    /*
-        Reset the ring buffer, making it forget about all of the packets that it has received.
-        This will bring it to the state that it was originally initialized into
-    */
-
     // Note that we do not wipe currently_rendering_frame,
     // since someone else might still be using it
     for (int i = 0; i < ring_buffer->ring_buffer_size; i++) {
@@ -547,7 +546,7 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
 }
 
 // Get a pointer to a framebuffer for that id, if such a framebuffer is possible to construct
-static char* get_framebuffer(RingBuffer* ring_buffer, FrameData* current_frame) {
+char* get_framebuffer(RingBuffer* ring_buffer, FrameData* current_frame) {
     if (current_frame->num_fec_packets > 0) {
         if (current_frame->successful_fec_recovery) {
             return current_frame->fec_frame_buffer;
