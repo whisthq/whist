@@ -55,6 +55,11 @@ func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Durat
 		return MakeError("Error adding dir %s to fsnotify.Watcher: %s", absParentDirectory, err)
 	}
 
+	// Check if the file has already been created before watcher watches for file
+	if _, err := os.Stat(targetFileName); err == nil {
+		return nil
+	}
+
 	if err = waitForErrorOrCreation(timeout, targetFileName, watcher.Events, watcher.Errors); err != nil {
 		return MakeError("Error waiting for file creation: %v", err)
 	}
