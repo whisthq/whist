@@ -51,6 +51,9 @@ type Mandelbox interface {
 	AssignToUser(types.UserID)
 	GetUserID() types.UserID
 
+	GetSessionID() types.SessionID
+	SetSessionID(session types.SessionID)
+
 	GetHostPort(mandelboxPort uint16, protocol portbindings.TransportProtocol) (uint16, error)
 	GetIdentifyingHostPort() (uint16, error)
 
@@ -243,11 +246,12 @@ type mandelboxData struct {
 	// We use rwlock to protect all the below fields.
 	rwlock sync.RWMutex
 
-	dockerID types.DockerID
-	appName  types.AppName
-	userID   types.UserID
-	tty      ttys.TTY
-	gpuIndex gpus.Index
+	dockerID  types.DockerID
+	appName   types.AppName
+	userID    types.UserID
+	sessionID types.SessionID
+	tty       ttys.TTY
+	gpuIndex  gpus.Index
 
 	configEncryptionToken types.ConfigEncryptionToken
 	clientAppAccessToken  types.ClientAppAccessToken
@@ -284,6 +288,20 @@ func (mandelbox *mandelboxData) GetUserID() types.UserID {
 	mandelbox.rwlock.RLock()
 	defer mandelbox.rwlock.RUnlock()
 	return mandelbox.userID
+}
+
+// GetSessionID returns the ID of the session running on the mandelbox.
+func (mandelbox *mandelboxData) GetSessionID() types.SessionID {
+	mandelbox.rwlock.RLock()
+	defer mandelbox.rwlock.RUnlock()
+	return mandelbox.sessionID
+}
+
+// SetSessionID sets the ID of the session running on the mandelbox.
+func (mandelbox *mandelboxData) SetSessionID(session types.SessionID) {
+	mandelbox.rwlock.RLock()
+	defer mandelbox.rwlock.RUnlock()
+	mandelbox.sessionID = session
 }
 
 // GetConfigEncryptionToken returns the config encryption token.
