@@ -17,6 +17,7 @@ import { logBase } from "@app/main/utils/logging"
 import { persistClear } from "@app/main/utils/persist"
 import { destroyProtocol } from "@app/main/utils/protocol"
 import { emitOnSignal } from "@app/main/utils/observables"
+import { destroyElectronWindow } from "@app/main/utils/windows"
 
 // Handles the application quit logic
 // When we detect that all windows have been closed, we put the application to sleep
@@ -68,7 +69,8 @@ emitOnSignal(
   session.defaultSession
     .clearStorageData()
     .catch((err) => Sentry.captureException(err))
-  // Restart the app
+
+  // Restart the app  
   destroyProtocol(p)
   relaunch()
 })
