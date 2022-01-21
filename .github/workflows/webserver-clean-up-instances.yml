@@ -63,6 +63,7 @@ jobs:
 
           environments = [{"app": a, "environment": env_mapping(a)} for a in heroku_apps]
           print(f"::set-output name=environments::{json.dumps(environments)}")
+          print(json.dumps(environments))
 
   # Run the following commands against each Heroku app in the whist-server
   # pipeline in a one-off dyno:
