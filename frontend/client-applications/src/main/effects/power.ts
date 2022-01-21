@@ -64,6 +64,7 @@ fromTrigger(WhistTrigger.clearCacheAction).subscribe(() => {
   relaunch()
 })
 
+// If the user requests a relaunch
 merge(fromTrigger(WhistTrigger.relaunchAction)).subscribe(() => {
   relaunch()
 })

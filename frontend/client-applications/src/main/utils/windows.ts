@@ -14,7 +14,7 @@ const base = {
     preload: path.join(config.buildRoot, "preload.js"),
   },
   resizable: false,
-  titleBarStyle: "default",
+  titleBarStyle: "hidden",
   frame: false,
   border: false,
   show: false,
@@ -45,6 +45,7 @@ const getElectronWindow = (hash: string) => {
   for (const win of BrowserWindow.getAllWindows()) {
     if (win.webContents.getURL()?.split("show=")?.[1] === hash) return win
   }
+
   return undefined
 }
 
@@ -73,6 +74,12 @@ const createElectronWindow = (args: {
   customURL?: string
   show?: boolean
 }) => {
+  const winAlreadyExists = getElectronWindow(args.hash)
+  if (winAlreadyExists !== undefined) {
+    winAlreadyExists.focus()
+    return { win: winAlreadyExists, view: undefined }
+  }
+
   // Create the BrowserWindow
   const win = new BrowserWindow({
     ...(base as BrowserWindowConstructorOptions),
@@ -86,7 +93,7 @@ const createElectronWindow = (args: {
   win.webContents.userAgent = replaceUserAgent(win.webContents.userAgent)
 
   // When the window is ready to be shown, show it
-  win.on("ready-to-show", () => args.show && win.show())
+  win.once("ready-to-show", () => (args?.show ?? true) && win.show())
 
   if (args.customURL !== undefined) {
     // If we want to load a URL into a BrowserWindow, we first load it into a

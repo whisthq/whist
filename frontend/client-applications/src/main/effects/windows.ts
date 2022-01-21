@@ -4,9 +4,15 @@ import Sentry from "@sentry/electron"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
 
-import { withAppActivated, waitForSignal } from "@app/main/utils/observables"
+import { withAppActivated } from "@app/main/utils/observables"
 import { fromTrigger } from "@app/main/utils/flows"
-import { WindowHashPayment, WindowHashOmnibar } from "@app/constants/windows"
+import {
+  WindowHashPayment,
+  WindowHashOmnibar,
+  WindowHashLoading,
+  WindowHashOnboarding,
+  WindowHashImport,
+} from "@app/constants/windows"
 import {
   createAuthWindow,
   createLoadingWindow,
@@ -30,12 +36,6 @@ import {
 import { networkAnalyze } from "@app/main/utils/networkAnalysis"
 import { accessToken } from "@whist/core-ts"
 import { destroyElectronWindow, hideElectronWindow } from "../utils/windows"
-
-// When the protocol closes, also destroy the omnibar so it doesn't take up space
-// in the background
-fromTrigger(WhistTrigger.protocolClosed).subscribe(() => {
-  destroyElectronWindow(WindowHashOmnibar)
-})
 
 // Show the auth window if the user has not logged in yet
 withAppActivated(
@@ -104,7 +104,6 @@ withAppActivated(fromTrigger(WhistTrigger.showPaymentWindow)).subscribe(() => {
   }).catch((err) => Sentry.captureException(err))
 })
 
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
 withAppActivated(fromTrigger(WhistTrigger.checkPaymentFlowFailure)).subscribe(
   ({ accessToken }: accessToken) => {
     createPaymentWindow({
@@ -113,12 +112,28 @@ withAppActivated(fromTrigger(WhistTrigger.checkPaymentFlowFailure)).subscribe(
   }
 )
 
-withAppActivated(fromTrigger(WhistTrigger.authFlowSuccess))
-  .pipe(take(1))
-  .subscribe(() => {
-    const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
-    if (!onboarded) {
-      networkAnalyze()
-      createOnboardingWindow()
-    }
-  })
+withAppActivated(fromTrigger(WhistTrigger.authFlowSuccess)).subscribe(() => {
+  const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
+  if (!onboarded) {
+    networkAnalyze()
+    createOnboardingWindow()
+  }
+})
+
+// When the protocol launches, destroy the loading window and onboarding window
+// if they are open
+withAppActivated(
+  fromTrigger(WhistTrigger.protocolConnected).pipe(
+    filter((connected) => connected)
+  )
+).subscribe(() => {
+  destroyElectronWindow(WindowHashLoading)
+  destroyElectronWindow(WindowHashOnboarding)
+  destroyElectronWindow(WindowHashImport)
+})
+
+// When the protocol closes, also destroy the omnibar so it doesn't take up space
+// in the background
+fromTrigger(WhistTrigger.protocolClosed).subscribe(() => {
+  destroyElectronWindow(WindowHashOmnibar)
+})

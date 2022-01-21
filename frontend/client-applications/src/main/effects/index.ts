@@ -1,12 +1,13 @@
 import "@app/main/effects/app"
 import "@app/main/effects/autoupdate"
-import "@app/main/effects/power"
+import "@app/main/effects/dock"
 import "@app/main/effects/error"
 import "@app/main/effects/ipc"
+import "@app/main/effects/monitoring"
 import "@app/main/effects/persist"
+import "@app/main/effects/power"
 import "@app/main/effects/protocol"
 import "@app/main/effects/windows"
-import "@app/main/effects/monitoring"
 import "@app/main/effects/shortcuts"
 
 // Effects are subscriptions that cause side effects throughout

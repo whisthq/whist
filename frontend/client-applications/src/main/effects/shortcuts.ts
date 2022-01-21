@@ -19,7 +19,7 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess).subscribe(() => {
   createGlobalShortcut("CommandorControl+J", () => {
     const visible = isElectronWindowVisible(WindowHashOmnibar)
     visible
-      ? showElectronWindow(WindowHashOmnibar)
-      : hideElectronWindow(WindowHashOmnibar)
+      ? hideElectronWindow(WindowHashOmnibar)
+      : showElectronWindow(WindowHashOmnibar)
   })
 })

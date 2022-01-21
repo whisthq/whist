@@ -102,7 +102,9 @@ export const createTrigger = <A>(name: string, obs: Observable<A>) => {
   const startTime = Date.now()
 
   obs.pipe(share()).subscribe((x: any) => {
-    logBase(`${name}`, { payload: x }, LogLevel.DEBUG, Date.now() - startTime)
+    if (!["protocolStdoutData"].includes(name)) {
+      logBase(`${name}`, { payload: x }, LogLevel.DEBUG, Date.now() - startTime)
+    }
 
     TriggerChannel.next({
       name: `${name}`,

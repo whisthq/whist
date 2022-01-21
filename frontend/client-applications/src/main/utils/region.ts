@@ -6,9 +6,12 @@
 
 import fetch from "node-fetch"
 import sortBy from "lodash.sortby"
+import find from "lodash.find"
 
+import { AWS_REGIONS_SORTED_BY_PROXIMITY } from "@app/constants/store"
 import { AWSRegion } from "@app/@types/aws"
 import { logBase } from "@app/main/utils/logging"
+import { persistGet } from "@app/main/utils/persist"
 
 const whistPingTime = async (host: string, numberPings: number) => {
   /*
@@ -76,4 +79,33 @@ const sortRegionByProximity = async (regions: AWSRegion[]) => {
   return sortedResults
 }
 
-export { sortRegionByProximity }
+const closestRegionHasChanged = (
+  regions: Array<{ region: AWSRegion; pingTime: number }>
+) => {
+  const previousCachedRegions = persistGet(
+    AWS_REGIONS_SORTED_BY_PROXIMITY
+  ) as Array<{ region: AWSRegion }>
+
+  const previousClosestRegion = previousCachedRegions?.[0]?.region
+  const currentClosestRegion = regions?.[0]?.region
+
+  if (previousClosestRegion === undefined || currentClosestRegion === undefined)
+    return false
+
+  // If the cached closest AWS region and new closest AWS region are the same, don't do anything
+  if (previousClosestRegion === currentClosestRegion) return false
+
+  // If the difference in ping time to the cached closest AWS region vs. ping time
+  // to the new closest AWS region is less than 25ms, don't do anything
+  const previousClosestRegionPingTime =
+    find(regions, (r) => r.region === previousClosestRegion)?.pingTime ?? 0
+
+  const currentClosestRegionPingTime = regions?.[0]?.pingTime
+
+  if (previousClosestRegionPingTime - currentClosestRegionPingTime < 25)
+    return false
+
+  return true
+}
+
+export { sortRegionByProximity, closestRegionHasChanged }

@@ -159,6 +159,7 @@ const createOmnibar = () =>
       minimizable: false,
       closable: false,
     },
+    show: false,
   })
 
 export {

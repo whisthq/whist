@@ -1,5 +1,5 @@
-import { fromEvent, Observable, of } from "rxjs"
-import { map, startWith, switchMap, mapTo } from "rxjs/operators"
+import { Observable, of } from "rxjs"
+import { map, startWith } from "rxjs/operators"
 import { nativeTheme } from "electron"
 
 import { fromTrigger } from "@app/main/utils/flows"
@@ -13,7 +13,6 @@ import {
 import { WhistTrigger } from "@app/constants/triggers"
 import { withAppActivated } from "@app/main/utils/observables"
 import { getInitialKeyRepeat, getKeyRepeat } from "@app/main/utils/keyRepeat"
-import { launchProtocol } from "@app/main/utils/protocol"
 
 const sleep = of(process.argv[process.argv.length - 1] === "--sleep")
 
