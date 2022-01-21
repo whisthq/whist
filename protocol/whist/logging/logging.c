@@ -121,8 +121,9 @@ void destroy_logger(void) {
     //If there is a read lock in internal_logging_printf we will block here until there are
     //no more read locks to ensure we can finish any logs occuring in any other threads.
     write_lock(&destroy_logger_rwlock);
-
     run_multithreaded_printf = false;
+    write_unlock(&destroy_logger_rwlock);
+
     whist_post_semaphore(logger_semaphore);
 
     whist_wait_thread(mprintf_thread, NULL);
@@ -136,8 +137,6 @@ void destroy_logger(void) {
     whist_destroy_mutex(logger_cache_mutex);
 
     whist_destroy_mutex(crash_handler_mutex);
-
-    write_unlock(&destroy_logger_rwlock);
 }
 
 static int multithreaded_printf(void* opaque) {
@@ -279,15 +278,20 @@ void internal_logging_printf(const char* tag, const char* fmt_str, ...) {
     va_list args;
     va_start(args, fmt_str);
 
-    if (mprintf_thread != NULL) {
+    bool ran_mprintf = false;
+
+    if (run_multithreaded_printf) {
         read_lock(&destroy_logger_rwlock);
-        if (mprintf_thread != NULL) {
+        if (run_multithreaded_printf) {
             mprintf(tag, fmt_str, args);
+            ran_mprintf = true;
         }
         read_unlock(&destroy_logger_rwlock);
     }
 
-    if (mprintf_thread == NULL) {
+    if (!ran_mprintf) {
+        // Still push the log to stdout,
+        // Even if the logger thread didn't exist
         vprintf(fmt_str, args);
         fflush(stdout);
     }
