@@ -44,10 +44,10 @@ createTrigger(
 )
 
 createTrigger(
-  WhistTrigger.protocolConnected,
+  WhistTrigger.protocolConnection,
   merge(
     fromTrigger(WhistTrigger.protocolStdoutData).pipe(
-      filter((data: string) => data.includes("Connected on")),
+      filter((data: string) => (data.includes("Connected on") && data.includes("tcp"))),
       mapTo(true),
       startWith(false)
     ),

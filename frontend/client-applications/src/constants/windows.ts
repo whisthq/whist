@@ -20,10 +20,12 @@ export const width = {
   sm: { width: 16 * 32 },
   md: { width: 16 * 40 },
   lg: { width: 16 * 48 },
+  xl: { width: 16 * 56 }
 }
 
 export const height = {
   sm: { height: 16 * 20 },
   md: { height: 16 * 32 },
   lg: { height: 16 * 44 },
+  xl: { height: 16 * 56}
 }

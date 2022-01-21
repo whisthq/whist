@@ -45,7 +45,7 @@ const WhistTrigger = {
   protocolClosed: "protocolClosed",
   protocolStdoutData: "protocolStdoutData",
   protocolStdoutEnd: "protocolStdoutEnd",
-  protocolConnected: "protocolConnected",
+  protocolConnection: "protocolConnection",
 
   // Renderer triggers
   loginAction: "loginAction",

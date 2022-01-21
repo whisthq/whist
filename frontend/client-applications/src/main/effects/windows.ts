@@ -51,17 +51,15 @@ withAppActivated(
   }
 })
 
-withAppActivated(fromTrigger(WhistTrigger.mandelboxFlowStart))
-  .pipe(take(1))
-  .subscribe(() => {
-    if (persistGet(ONBOARDED) as boolean) {
-      networkAnalyze()
-      createLoadingWindow()
-    }
-  })
+withAppActivated(fromTrigger(WhistTrigger.mandelboxFlowStart)).subscribe(() => {
+  if (persistGet(ONBOARDED) ?? false) {
+    networkAnalyze()
+    createLoadingWindow()
+  }
+})
 
 withAppActivated(
-  fromTrigger(WhistTrigger.protocolConnected).pipe(
+  fromTrigger(WhistTrigger.protocolConnection).pipe(
     filter((connected: boolean) => connected)
   )
 ).subscribe(() => {
@@ -123,7 +121,7 @@ withAppActivated(fromTrigger(WhistTrigger.authFlowSuccess)).subscribe(() => {
 // When the protocol launches, destroy the loading window and onboarding window
 // if they are open
 withAppActivated(
-  fromTrigger(WhistTrigger.protocolConnected).pipe(
+  fromTrigger(WhistTrigger.protocolConnection).pipe(
     filter((connected) => connected)
   )
 ).subscribe(() => {

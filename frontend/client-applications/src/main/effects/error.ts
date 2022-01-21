@@ -13,6 +13,12 @@ import {
   PROTOCOL_ERROR,
   LOCATION_CHANGED_ERROR,
 } from "@app/constants/error"
+import {
+  WindowHashPayment,
+  WindowHashLoading,
+  WindowHashImport,
+  WindowHashAuth,
+} from "@app/constants/windows"
 
 import {
   mandelboxCreateErrorNoAccess,
@@ -20,6 +26,7 @@ import {
   mandelboxCreateErrorMaintenance,
 } from "@app/main/utils/mandelbox"
 import { createErrorWindow } from "@app/main/utils/renderer"
+import { destroyElectronWindow } from "@app/main/utils/windows"
 import { fromTrigger } from "@app/main/utils/flows"
 import {
   withAppActivated,
@@ -42,18 +49,25 @@ untilUpdateAvailable(
   } else {
     createErrorWindow(MANDELBOX_INTERNAL_ERROR)
   }
+
+  destroyElectronWindow(WindowHashLoading)
+  destroyElectronWindow(WindowHashImport)
 })
 
 untilUpdateAvailable(
   withAppActivated(fromTrigger(WhistTrigger.authFlowFailure))
 ).subscribe(() => {
   createErrorWindow(AUTH_ERROR)
+
+  destroyElectronWindow(WindowHashAuth)
 })
 
 untilUpdateAvailable(
   withAppActivated(fromTrigger(WhistTrigger.stripePaymentError))
 ).subscribe(() => {
   createErrorWindow(NO_PAYMENT_ERROR)
+
+  destroyElectronWindow(WindowHashPayment)
 })
 
 untilUpdateAvailable(
