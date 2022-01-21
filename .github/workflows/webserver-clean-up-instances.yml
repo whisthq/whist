@@ -65,6 +65,15 @@ jobs:
           print(f"::set-output name=environments::{json.dumps(environments)}")
           print(json.dumps(environments))
 
+
+  echo:
+    name: echo
+    needs: webserver-clean-up-instances-matrix
+    runs-on: ubuntu-20.04
+    steps:
+      - name: hihihi
+        run: echo "${{ needs.webserver-clean-up-instances-matrix.outputs.environments }}"
+
   # Run the following commands against each Heroku app in the whist-server
   # pipeline in a one-off dyno:
   #  * flask compute scale-down-instances
