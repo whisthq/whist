@@ -62,7 +62,7 @@ func (c ConfigEncryptionInfo) String() string {
 // report. The error channel will close to signify the completion of loading
 // user configs. This design allows the config decryption to occur in parallel
 // with the other steps to spinning up a mandelbox, while also providing the
-// synchronization necessary.
+// necessary synchronization.
 func (mandelbox *mandelboxData) StartLoadingUserConfigs(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) (chan<- ConfigEncryptionInfo, <-chan error) {
 	// We buffer both channels to prevent blocking.
 	encryptionInfoChan := make(chan ConfigEncryptionInfo, 1)
@@ -209,7 +209,7 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 
 	// Now that we have a prediction for the config file we need, we want to
 	// download it into a buffer for decrypting.
-	// TODO: Don't block on this unless we know that the config is indeed the one
+	// TODO: Don't wait on this unless we know that the config is indeed the one
 	// we need. This is not a big deal now, but will be more important as configs
 	// grow in size, if we see users alternating between encryption tokens
 	// frequently (which should never happen with the current setup).
