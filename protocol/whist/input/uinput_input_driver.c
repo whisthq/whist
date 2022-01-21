@@ -3,16 +3,26 @@
  *
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
  **/
-
-#include "input_driver.h"
-
-#if INPUT_DRIVER == UINPUT_INPUT_DRIVER
-
 #include <fcntl.h>
 #include <linux/uinput.h>
 #include <dirent.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+
+#include "input.h"
+
+typedef struct {
+    InputDevice base;
+
+    int fd_absmouse;
+    int fd_relmouse;
+    int fd_keyboard;
+    int keyboard_state[KEYCODE_UPPERBOUND];
+    bool caps_lock;
+    bool num_lock;
+    // Internal
+    bool mouse_has_moved;
+} InputDeviceUInput;
 
 // we control this to specify the normalization to uinput during device creation; we run into
 // annoying overflow issues if this is on the order of magnitude 0xffff
@@ -340,57 +350,7 @@ static int recv_fds(int sock, int* fds, unsigned n_fds) {
     return n_fds;
 }
 
-InputDevice* create_input_device(void) {
-    LOG_INFO("creating uinput input driver");
-
-    struct sockaddr_un addr;
-    int fd_socket = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (fd_socket == -1) {
-        LOG_ERROR("Failed to initialize unix socket for uinput input driver.");
-        return NULL;
-    }
-
-    memset(&addr, 0, sizeof(addr));
-    addr.sun_family = AF_UNIX;
-    char* socket_path = "/tmp/sockets/uinput.sock";
-    safe_strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path) - 1);
-
-    if (connect(fd_socket, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-        char buf[1024] = {0};
-        LOG_ERROR("Failed to connect to unix socket: %s", strerror_r(errno, buf, 1024));
-        return NULL;
-    }
-
-    int fds[3];
-    int n = recv_fds(fd_socket, fds, 3);
-    if (n != 3) {
-        LOG_ERROR(
-            "Uinput input driver received incorrect number of file descriptors, expected 3, "
-            "got %d",
-            n);
-        return NULL;
-    }
-    LOG_INFO("Uinput input driver received %d file descriptors: %d, %d, %d", n, fds[0], fds[1],
-             fds[2]);
-
-    InputDevice* input_device = safe_malloc(sizeof(InputDevice));
-    input_device->fd_absmouse = fds[0];
-    input_device->fd_relmouse = fds[1];
-    input_device->fd_keyboard = fds[2];
-    memset(input_device->keyboard_state, 0, sizeof(input_device->keyboard_state));
-    input_device->caps_lock = false;
-    input_device->num_lock = false;
-    input_device->mouse_has_moved = false;
-
-    return input_device;
-}
-
-void destroy_input_device(InputDevice* input_device) {
-    if (!input_device) {
-        LOG_INFO("destroy_input_device: Nothing to do, device is null!");
-        return;
-    }
-
+static void uinput_destroy_input_device(InputDeviceUInput* input_device) {
     // We close without emitting `ioctl(fd, UI_DEV_DESTROY)`.
     // This is because we let the host service maintain this responsibility.
     // When we close the protocol's file descriptors, the host service still
@@ -418,7 +378,8 @@ static void emit_input_event(int fd, int type, int code, int val) {
     write(fd, &ie, sizeof(ie));
 }
 
-int get_keyboard_modifier_state(InputDevice* input_device, WhistKeycode whist_keycode) {
+static int uinput_get_keyboard_modifier_state(InputDeviceUInput* input_device,
+                                              WhistKeycode whist_keycode) {
     switch (whist_keycode) {
         case FK_CAPSLOCK:
             return input_device->caps_lock;
@@ -430,15 +391,17 @@ int get_keyboard_modifier_state(InputDevice* input_device, WhistKeycode whist_ke
     }
 }
 
-int get_keyboard_key_state(InputDevice* input_device, WhistKeycode whist_keycode) {
+static int uinput_get_keyboard_key_state(InputDeviceUInput* input_device,
+                                         WhistKeycode whist_keycode) {
     if ((int)whist_keycode >= KEYCODE_UPPERBOUND) {
         return 0;
-    } else {
-        return input_device->keyboard_state[whist_keycode];
     }
+
+    return input_device->keyboard_state[whist_keycode];
 }
 
-int ignore_key_state(InputDevice* input_device, WhistKeycode whist_keycode, bool active_pinch) {
+static int uinput_ignore_key_state(InputDeviceUInput* input_device, WhistKeycode whist_keycode,
+                                   bool active_pinch) {
     /*
         Determine whether to ignore the client key state
 
@@ -459,7 +422,8 @@ int ignore_key_state(InputDevice* input_device, WhistKeycode whist_keycode, bool
     return 0;
 }
 
-int emit_key_event(InputDevice* input_device, WhistKeycode whist_keycode, int pressed) {
+static int uinput_emit_key_event(InputDeviceUInput* input_device, WhistKeycode whist_keycode,
+                                 int pressed) {
     emit_input_event(input_device->fd_keyboard, EV_KEY, GetLinuxKeyCode(whist_keycode), pressed);
     emit_input_event(input_device->fd_keyboard, EV_SYN, SYN_REPORT, 0);
     input_device->keyboard_state[whist_keycode] = pressed;
@@ -474,7 +438,8 @@ int emit_key_event(InputDevice* input_device, WhistKeycode whist_keycode, int pr
     return 0;
 }
 
-int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int relative) {
+static int uinput_emit_mouse_motion_event(InputDeviceUInput* input_device, int32_t x, int32_t y,
+                                          int relative) {
     if (relative) {
         emit_input_event(input_device->fd_relmouse, EV_REL, REL_X, x);
         emit_input_event(input_device->fd_relmouse, EV_REL, REL_Y, y);
@@ -493,12 +458,15 @@ int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int
     return 0;
 }
 
-int emit_mouse_button_event(InputDevice* input_device, WhistMouseButton button, int pressed) {
+static int uinput_emit_mouse_button_event(InputDeviceUInput* input_device, WhistMouseButton button,
+                                          int pressed) {
     emit_input_event(input_device->fd_relmouse, EV_KEY, GetLinuxMouseButton(button), pressed);
     emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
     return 0;
 }
-int emit_low_res_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
+
+static int uinput_emit_low_res_mouse_wheel_event(InputDeviceUInput* input_device, int32_t x,
+                                                 int32_t y) {
     emit_input_event(input_device->fd_relmouse, EV_REL, REL_WHEEL, y);
     emit_input_event(input_device->fd_relmouse, EV_REL, REL_HWHEEL, x);
     emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
@@ -510,7 +478,8 @@ int emit_low_res_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t
 // and all smaller values represent high-resolution, smaller scrolls.
 #define LIBINPUT_WHEEL_DELTA 120
 
-int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y) {
+static int uinput_emit_high_res_mouse_wheel_event(InputDeviceUInput* input_device, float x,
+                                                  float y) {
     emit_input_event(input_device->fd_relmouse, EV_REL, REL_WHEEL_HI_RES, y * LIBINPUT_WHEEL_DELTA);
     emit_input_event(input_device->fd_relmouse, EV_REL, REL_HWHEEL_HI_RES,
                      x * LIBINPUT_WHEEL_DELTA);
@@ -518,8 +487,9 @@ int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y)
     return 0;
 }
 
-int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist,
-                            WhistMultigestureType gesture_type, bool active_gesture) {
+static int uinput_emit_multigesture_event(InputDeviceUInput* input_device, float d_theta,
+                                          float d_dist, WhistMultigestureType gesture_type,
+                                          bool active_gesture) {
     /*
         Emit a trackpad multigesture event. Only handles pinch events
         for now by holding the LCTRL key and scrolling.
@@ -539,17 +509,82 @@ int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_di
     if (gesture_type == MULTIGESTURE_PINCH_OPEN || gesture_type == MULTIGESTURE_PINCH_CLOSE) {
         // If the gesture is not active yet, then start holding the LCTRL key
         if (!active_gesture) {
-            emit_key_event(input_device, FK_LCTRL, true);
+            uinput_emit_key_event(input_device, FK_LCTRL, true);
         }
 
         // Pass a scroll event equivalent to the pinch distance
-        emit_high_res_mouse_wheel_event(input_device, d_dist * sin(d_theta), d_dist * cos(d_theta));
+        uinput_emit_high_res_mouse_wheel_event(input_device, d_dist * sin(d_theta),
+                                               d_dist * cos(d_theta));
     } else if (gesture_type == MULTIGESTURE_CANCEL) {
         // When the pinch action has been changed, then release the lctrl key
-        emit_key_event(input_device, FK_LCTRL, false);
+        uinput_emit_key_event(input_device, FK_LCTRL, false);
     }
 
     return 0;
 }
 
-#endif  // INPUT_DRIVER == UINPUT_INPUT_DRIVER
+InputDevice* uinput_create_input_device(void) {
+    LOG_INFO("creating uinput input driver");
+
+    int fds[3];
+    struct sockaddr_un addr;
+    int fd_socket = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (fd_socket == -1) {
+        LOG_ERROR("Failed to initialize unix socket for uinput input driver.");
+        return NULL;
+    }
+
+    memset(&addr, 0, sizeof(addr));
+    addr.sun_family = AF_UNIX;
+    char* socket_path = "/tmp/sockets/uinput.sock";
+    safe_strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path) - 1);
+
+    if (connect(fd_socket, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
+        char buf[1024] = {0};
+        strerror_r(errno, buf, 1024);
+        LOG_ERROR("Failed to connect to unix socket: %s", buf);
+        return NULL;
+    }
+
+    int n = recv_fds(fd_socket, fds, 3);
+    if (n != 3) {
+        LOG_ERROR(
+            "Uinput input driver received incorrect number of file descriptors, expected 3, "
+            "got %d",
+            n);
+        return NULL;
+    }
+    LOG_INFO("Uinput input driver received %d file descriptors: %d, %d, %d", n, fds[0], fds[1],
+             fds[2]);
+
+    InputDeviceUInput* ret = safe_malloc(sizeof(*ret));
+    ret->fd_absmouse = fds[0];
+    ret->fd_relmouse = fds[1];
+    ret->fd_keyboard = fds[2];
+    memset(ret->keyboard_state, 0, sizeof(ret->keyboard_state));
+    ret->caps_lock = false;
+    ret->num_lock = false;
+    ret->mouse_has_moved = false;
+
+    InputDevice* base = &ret->base;
+    base->device_type = WHIST_INPUT_DEVICE_UINPUT;
+    base->get_keyboard_key_state =
+        (InputDeviceGetKeyboardModifierStateFn)uinput_get_keyboard_key_state;
+    base->get_keyboard_modifier_state =
+        (InputDeviceGetKeyboardModifierStateFn)uinput_get_keyboard_modifier_state;
+    base->ignore_key_state = (InputDeviceIgnoreKeyStateFn)uinput_ignore_key_state;
+    base->emit_key_event = (InputDeviceEmitKeyEventFn)uinput_emit_key_event;
+    base->emit_mouse_motion_event =
+        (InputDeviceEmitMouseMotionEventFn)uinput_emit_mouse_motion_event;
+    base->emit_mouse_button_event =
+        (InputDeviceEmitMouseButtonEventFn)uinput_emit_mouse_button_event;
+    base->emit_low_res_mouse_wheel_event =
+        (InputDeviceEmitLowResMouseWheelEventFn)uinput_emit_low_res_mouse_wheel_event;
+    base->emit_high_res_mouse_wheel_event =
+        (InputDeviceEmitHighResMouseWheelEventFn)uinput_emit_high_res_mouse_wheel_event;
+    base->emit_multigesture_event =
+        (InputDeviceEmitMultiGestureEventFn)uinput_emit_multigesture_event;
+    base->destroy = (InputDeviceDestroyFn)uinput_destroy_input_device;
+
+    return base;
+}

@@ -1,14 +1,28 @@
-#include "input_driver.h"
-
-#if INPUT_DRIVER == XTEST_INPUT_DRIVER
+#include "input.h"
 
 #define XK_LATIN1
 #define XK_MISCELLANY
 #define XK_3270
 
+#include <X11/Xlib.h>
 #include <X11/XF86keysym.h>
 #include <X11/extensions/XTest.h>
 #include <X11/keysymdef.h>
+
+/*
+============================
+Custom Types
+============================
+*/
+
+typedef struct InputDeviceXTest {
+    InputDevice base;
+    Display* display;
+    Window root;
+    int keyboard_state[KEYCODE_UPPERBOUND];
+    bool caps_lock;
+    bool num_lock;
+} InputDeviceXTest;
 
 // @brief Linux keycodes for replaying Whist user inputs on server
 // @details index is Whist keycode, value is Linux keycode
@@ -280,18 +294,7 @@ static const int x11_keysyms[KEYCODE_UPPERBOUND] = {
     XF86XK_AudioMedia         // 263 -> Media Select
 };
 
-InputDevice* create_input_device(void) {
-    LOG_INFO("creating xtest input driver");
-    InputDevice* input_device = safe_malloc(sizeof(InputDevice));
-    memset(input_device, 0, sizeof(InputDevice));
-
-    input_device->display = XOpenDisplay(NULL);
-    input_device->root = DefaultRootWindow(input_device->display);
-
-    return input_device;
-}
-
-void get_input_dimensions(InputDevice* input_device, int32_t* w, int32_t* h) {
+static void get_input_dimensions(InputDeviceXTest* input_device, int32_t* w, int32_t* h) {
     XWindowAttributes window_attributes;
     if (!XGetWindowAttributes(input_device->display, input_device->root, &window_attributes)) {
         *w = 0;
@@ -303,13 +306,15 @@ void get_input_dimensions(InputDevice* input_device, int32_t* w, int32_t* h) {
     *h = window_attributes.height;
 }
 
-void destroy_input_device(InputDevice* input_device) {
-    XCloseDisplay(input_device->display);
-    free(input_device);
-    return;
+static void xtest_destroy_input_device(InputDeviceXTest* input_device) {
+    if (input_device) {
+        XCloseDisplay(input_device->display);
+        free(input_device);
+    }
 }
 
-int get_keyboard_modifier_state(InputDevice* input_device, WhistKeycode whist_keycode) {
+static int xtest_get_keyboard_modifier_state(InputDeviceXTest* input_device,
+                                             WhistKeycode whist_keycode) {
     switch (whist_keycode) {
         case FK_CAPSLOCK:
             return input_device->caps_lock;
@@ -321,7 +326,8 @@ int get_keyboard_modifier_state(InputDevice* input_device, WhistKeycode whist_ke
     }
 }
 
-int get_keyboard_key_state(InputDevice* input_device, WhistKeycode whist_keycode) {
+static int xtest_get_keyboard_key_state(InputDeviceXTest* input_device,
+                                        WhistKeycode whist_keycode) {
     if ((int)whist_keycode >= KEYCODE_UPPERBOUND) {
         return 0;
     } else {
@@ -329,11 +335,13 @@ int get_keyboard_key_state(InputDevice* input_device, WhistKeycode whist_keycode
     }
 }
 
-int ignore_key_state(InputDevice* input_device, WhistKeycode whist_keycode, bool active_pinch) {
+static int xtest_ignore_key_state(InputDeviceXTest* input_device, WhistKeycode whist_keycode,
+                                  bool active_pinch) {
     return 0;
 }
 
-int emit_key_event(InputDevice* input_device, WhistKeycode whist_keycode, int pressed) {
+static int xtest_emit_key_event(InputDeviceXTest* input_device, WhistKeycode whist_keycode,
+                                int pressed) {
     XLockDisplay(input_device->display);
     KeyCode kcode = XKeysymToKeycode(input_device->display, GetX11KeySym(whist_keycode));
     if (!kcode) {
@@ -355,7 +363,8 @@ int emit_key_event(InputDevice* input_device, WhistKeycode whist_keycode, int pr
     return 0;
 }
 
-int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int relative) {
+static int xtest_emit_mouse_motion_event(InputDeviceXTest* input_device, int32_t x, int32_t y,
+                                         int relative) {
     XLockDisplay(input_device->display);
     if (relative) {
         XTestFakeRelativeMotionEvent(input_device->display, x, y, CurrentTime);
@@ -370,7 +379,8 @@ int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int
     return 0;
 }
 
-int emit_mouse_button_event(InputDevice* input_device, WhistMouseButton button, int pressed) {
+static int xtest_emit_mouse_button_event(InputDeviceXTest* input_device, WhistMouseButton button,
+                                         int pressed) {
     XLockDisplay(input_device->display);
     XTestFakeButtonEvent(input_device->display, button, pressed, CurrentTime);
     XSync(input_device->display, false);
@@ -378,7 +388,8 @@ int emit_mouse_button_event(InputDevice* input_device, WhistMouseButton button, 
     return 0;
 }
 
-int emit_low_res_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
+static int xtest_emit_low_res_mouse_wheel_event(InputDeviceXTest* input_device, int32_t x,
+                                                int32_t y) {
     XLockDisplay(input_device->display);
 
     if (y > 0) {
@@ -405,16 +416,9 @@ int emit_low_res_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t
     return 0;
 }
 
-int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y) {
-    UNUSED(input_device, x, y);
-    LOG_WARNING(
-        "High resolution scroll not implemented for the XTest driver! "
-        "Falling back to low-resolution scroll.");
-    return -1;
-}
-
-int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist,
-                            WhistMultigestureType gesture_type, bool active_gesture) {
+static int xtest_emit_multigesture_event(InputDeviceXTest* input_device, float d_theta,
+                                         float d_dist, WhistMultigestureType gesture_type,
+                                         bool active_gesture) {
     UNUSED(input_device);
     UNUSED(d_theta);
     UNUSED(d_dist);
@@ -425,4 +429,31 @@ int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_di
     return -1;
 }
 
-#endif  // INPUT_DRIVER == XTEST_INPUT_DRIVER
+InputDevice* xtest_create_input_device(void) {
+    LOG_INFO("creating xtest input driver");
+
+    InputDeviceXTest* ret = safe_malloc(sizeof(*ret));
+    ret->display = XOpenDisplay(NULL);
+    ret->root = DefaultRootWindow(ret->display);
+
+    InputDevice* base = &ret->base;
+    base->device_type = WHIST_INPUT_DEVICE_XTEST;
+    base->get_keyboard_key_state =
+        (InputDeviceGetKeyboardModifierStateFn)xtest_get_keyboard_key_state;
+    base->get_keyboard_modifier_state =
+        (InputDeviceGetKeyboardModifierStateFn)xtest_get_keyboard_modifier_state;
+    base->ignore_key_state = (InputDeviceIgnoreKeyStateFn)xtest_ignore_key_state;
+    base->emit_key_event = (InputDeviceEmitKeyEventFn)xtest_emit_key_event;
+    base->emit_mouse_motion_event =
+        (InputDeviceEmitMouseMotionEventFn)xtest_emit_mouse_motion_event;
+    base->emit_mouse_button_event =
+        (InputDeviceEmitMouseButtonEventFn)xtest_emit_mouse_button_event;
+    base->emit_low_res_mouse_wheel_event =
+        (InputDeviceEmitLowResMouseWheelEventFn)xtest_emit_low_res_mouse_wheel_event;
+    base->emit_high_res_mouse_wheel_event = NULL;
+    base->emit_multigesture_event =
+        (InputDeviceEmitMultiGestureEventFn)xtest_emit_multigesture_event;
+    base->destroy = (InputDeviceDestroyFn)xtest_destroy_input_device;
+
+    return base;
+}

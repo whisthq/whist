@@ -28,7 +28,6 @@ using namespace std;
 extern "C" {
 #include <whist/core/whist.h>
 #include "keyboard_mapping.h"
-#include "input_driver.h"
 #include "input.h"
 }
 

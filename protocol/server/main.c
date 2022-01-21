@@ -346,7 +346,14 @@ static void whist_server_state_init(whist_server_state* state, whist_server_conf
     state->udp_listen = INVALID_SOCKET;
 }
 
+#ifdef _WIN32
+#define INPUT_TYPE WHIST_INPUT_DEVICE_WIN32
+#else
+#define INPUT_TYPE WHIST_INPUT_DEVICE_UINPUT
+#endif
+
 int main(int argc, char* argv[]) {
+    InputDeviceType input_type = INPUT_TYPE;
     whist_server_config config;
 
     whist_init_subsystems();
@@ -381,9 +388,9 @@ int main(int argc, char* argv[]) {
 
     LOG_INFO("Whist server revision %s", whist_git_revision());
 
-    server_state.input_device = create_input_device();
+    server_state.input_device = create_input_device(input_type);
     if (!server_state.input_device) {
-        LOG_FATAL("Failed to create input device for playback.");
+        LOG_FATAL("Failed to create input device.");
     }
 
     if (init_client(&server_state.client) != 0) {
@@ -575,6 +582,7 @@ int main(int argc, char* argv[]) {
     }
 
     destroy_input_device(server_state.input_device);
+    server_state.input_device = NULL;
 
     destroy_window_info_getter();
 
