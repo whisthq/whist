@@ -102,15 +102,22 @@ dev_server_metrics2 = {}
 if github_ref_name != "dev":
 
     client = boto3.client("s3")
-    result = client.list_objects(Bucket="whist-e2e-protocol-test-logs", Prefix="dev", Delimiter="/")
+    result = client.list_objects(
+        Bucket="whist-e2e-protocol-test-logs", Prefix="dev/", Delimiter="/"
+    )
     subfolder_name = result.get("CommonPrefixes")[-1].get("Prefix").split("/")[-2]
-    s3_resource = boto3.resource("s3")
-    bucket = s3_resource.Bucket(bucket_name)
-    os.mkdir("dev")
-    dev_client_log_path = os.path.join("dev", "client.log")
-    dev_server_log_path = os.path.join("dev", "client.log")
 
-    for obj in bucket.objects.filter(Prefix="{}{}".format("dev", subfolder_name)):
+    s3_resource = boto3.resource("s3")
+    bucket = s3_resource.Bucket("whist-e2e-protocol-test-logs")
+
+    if os.path.exists("dev"):
+        os.system("rm -rf dev")
+    os.mkdir("dev")
+
+    dev_client_log_path = os.path.join(".", "dev", "client.log")
+    dev_server_log_path = os.path.join(".", "dev", "server.log")
+
+    for obj in bucket.objects.filter(Prefix="{}/{}".format("dev", subfolder_name)):
         if "client.log" in obj.key:
             bucket.download_file(obj.key, dev_client_log_path)
         elif "server.log" in obj.key:
@@ -159,8 +166,7 @@ if github_ref_name != "dev":
 
     for k in dev_server_metrics:
         dev_server_metrics[k] = np.array(dev_server_metrics[k])
-        dev_server_metrics2 = {
-            "metric": k,
+        dev_server_metrics2[k] = {
             "entries": len(dev_server_metrics[k]),
             "avg": np.mean(dev_server_metrics[k]),
             "std": np.std(dev_server_metrics[k]),
@@ -225,24 +231,28 @@ with redirect_stdout(results_file):
     else:
         # Augment dictionaries with deltas wrt to dev, if available
         for k in client_metrics2:
-            if k in dev_client_metrics:
-                client_metrics2[k]["dev_avg"] = dev_client_metrics[k]["avg"]
-                client_metrics2[k]["dev_std"] = dev_client_metrics[k]["std"]
+            if k in dev_client_metrics2:
+                client_metrics2[k]["dev_avg"] = dev_client_metrics2[k]["avg"]
+                client_metrics2[k]["dev_std"] = dev_client_metrics2[k]["std"]
                 client_metrics2[k]["delta"] = (
                     client_metrics2[k]["avg"] - client_metrics2[k]["dev_avg"]
                 )
                 client_metrics2[k]["delta_pctg"] = (
-                    client_metrics2[k]["delta"] / client_metrics2[k]["dev_avg"]
+                    (client_metrics2[k]["delta"] / client_metrics2[k]["dev_avg"])
+                    if client_metrics2[k]["delta"] >= 0.0001 and client_metrics2[k]["dev_avg"] != 0
+                    else -1
                 )
         for k in server_metrics2:
-            if k in dev_server_metrics:
-                server_metrics2[k]["dev_avg"] = dev_server_metrics[k]["avg"]
-                server_metrics2[k]["dev_std"] = dev_server_metrics[k]["std"]
+            if k in dev_server_metrics2:
+                server_metrics2[k]["dev_avg"] = dev_server_metrics2[k]["avg"]
+                server_metrics2[k]["dev_std"] = dev_server_metrics2[k]["std"]
                 server_metrics2[k]["delta"] = (
                     server_metrics2[k]["avg"] - server_metrics2[k]["dev_avg"]
                 )
                 server_metrics2[k]["delta_pctg"] = (
-                    server_metrics2[k]["delta"] / server_metrics2[k]["dev_avg"]
+                    (server_metrics2[k]["delta"] / server_metrics2[k]["dev_avg"])
+                    if server_metrics2[k]["delta"] >= 0.0001 and server_metrics2[k]["dev_avg"] != 0
+                    else -1
                 )
 
         if len(client_metrics) == 0:
@@ -254,7 +264,7 @@ with redirect_stdout(results_file):
             # table_name="Client metrics",
             headers=[
                 "Metric",
-                "Entries",
+                "Entries (this branch)",
                 "Average ± Standard Deviation (this branch)",
                 "Average ± Standard Deviation (dev)",
                 "Delta",
@@ -264,13 +274,29 @@ with redirect_stdout(results_file):
                 [
                     k,
                     client_metrics2[k]["entries"],
-                    "{} ± {}".format(client_metrics2[k]["avg"], client_metrics2[k]["std"]),
-                    "{} ± {}".format(client_metrics2[k]["dev_avg"], client_metrics2[k]["dev_std"])
+                    "{:.4f} ± {:.4f}".format(client_metrics2[k]["avg"], client_metrics2[k]["std"])
+                    if client_metrics2[k]["entries"] > 1
+                    else client_metrics2[k]["avg"],
+                    "{:.4f} ± {:.4f}".format(
+                        client_metrics2[k]["dev_avg"], client_metrics2[k]["dev_std"]
+                    )
+                    if (
+                        "dev_avg" in client_metrics2[k]
+                        and "dev_std" in client_metrics2[k]
+                        and client_metrics2[k]["entries"] > 1
+                    )
+                    else client_metrics2[k]["avg"]
                     if ("dev_avg" in client_metrics2[k] and "dev_std" in client_metrics2[k])
                     else "N/A",
                     "{} ({}%)".format(
                         client_metrics2[k]["delta"], client_metrics2[k]["delta_pctg"] * 100.0
                     )
+                    if (
+                        "delta" in client_metrics2[k]
+                        and "delta_pctg" in client_metrics2[k]
+                        and client_metrics2[k]["delta"] >= 0.0001
+                    )
+                    else "-"
                     if ("delta" in client_metrics2[k] and "delta_pctg" in client_metrics2[k])
                     else "N/A",
                     ""
@@ -295,18 +321,41 @@ with redirect_stdout(results_file):
 
         writer = MarkdownTableWriter(
             # table_name="Client metrics",
-            headers=["Metric", "Entries", "Average ± Standard Deviation", "Min", "Max"],
+            headers=[
+                "Metric",
+                "Entries (this branch)",
+                "Average ± Standard Deviation (this branch)",
+                "Average ± Standard Deviation (dev)",
+                "Delta",
+                "",
+            ],
             value_matrix=[
                 [
                     k,
                     server_metrics2[k]["entries"],
-                    "{} ± {}".format(server_metrics2[k]["avg"], server_metrics2[k]["std"]),
-                    "{} ± {}".format(server_metrics2[k]["dev_avg"], server_metrics2[k]["dev_std"])
+                    "{:.4f} ± {:.4f}".format(server_metrics2[k]["avg"], server_metrics2[k]["std"])
+                    if server_metrics2[k]["entries"] > 1
+                    else server_metrics2[k]["avg"],
+                    "{:.4f} ± {:.4f}".format(
+                        server_metrics2[k]["dev_avg"], server_metrics2[k]["dev_std"]
+                    )
+                    if (
+                        "dev_avg" in server_metrics2[k]
+                        and "dev_std" in server_metrics2[k]
+                        and server_metrics2[k]["entries"] > 1
+                    )
+                    else server_metrics2[k]["avg"]
                     if ("dev_avg" in server_metrics2[k] and "dev_std" in server_metrics2[k])
                     else "N/A",
                     "{} ({}%)".format(
                         server_metrics2[k]["delta"], server_metrics2[k]["delta_pctg"] * 100.0
                     )
+                    if (
+                        "delta" in server_metrics2[k]
+                        and "delta_pctg" in server_metrics2[k]
+                        and server_metrics2[k]["delta"] >= 0.0001
+                    )
+                    else "-"
                     if ("delta" in server_metrics2[k] and "delta_pctg" in server_metrics2[k])
                     else "N/A",
                     ""
