@@ -375,7 +375,7 @@ jobs:
           GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
           SLACK_WEBHOOK: ${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}
         run: |
-          import os, sys, time
+          import os, sys, time, boto3
           import numpy as np
           from pytablewriter import MarkdownTableWriter
           from contextlib import redirect_stdout
