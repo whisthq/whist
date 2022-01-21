@@ -41,6 +41,7 @@ type mockClient struct {
 	browserImage string
 
 	started bool
+	stopped bool
 }
 
 // ImageList mocks the ImageAPIClient interface's ImageList method and returns
@@ -61,6 +62,7 @@ func (m *mockClient) ImageList(ctx context.Context, options types.ImageListOptio
 		Size:        1234,
 		VirtualSize: 1234,
 	}
+	logger.Infof("%v", options)
 	images := []types.ImageSummary{testAppImage}
 	return images, nil
 }
@@ -88,6 +90,209 @@ func (m *mockClient) ContainerStart(ctx context.Context, container string, optio
 	time.Sleep(3 * time.Second)
 	m.started = true
 	return nil
+}
+
+// ContainerStop mocks the ContainerAPIClient's ContainerStop method and returns
+// nil, simulating successful container stopping. The method will sleep for 1 seconds
+// to simulate (+ exaggerate) the behaviour of a real container stop.
+func (m *mockClient) ContainerStop(ctx context.Context, id string, timeout *time.Duration) error {
+	logger.Infof("Called mock ContainerStop method.")
+	time.Sleep(1 * time.Second)
+	m.stopped = true
+	return nil
+}
+
+// ContainerRemove mocks the ContainerAPIClient's ContainerRemove method and returns
+// nil, simulating successful container removal. The method will sleep for 1 seconds
+// to simulate (+ exaggerate) the behaviour of a real container being removed.
+func (m *mockClient) ContainerRemove(ctx context.Context, id string, options types.ContainerRemoveOptions) error {
+	logger.Infof("Called mock ContainerRemove method.")
+	time.Sleep(1 * time.Second)
+	return nil
+}
+
+// TestCreateDockerClient will check if a valid docker client is created without error
+func TestCreateDockerClient(t *testing.T) {
+	dockerClient, err := createDockerClient()
+
+	if err != nil {
+		t.Fatalf("error creating docker client. Error: %v", err)
+	}
+
+	if dockerClient == nil {
+		t.Fatal("error creating docker client. Expected client, got nil")
+	}
+
+	if _, ok := interface{}(dockerClient).(*client.Client); !ok {
+		t.Fatalf("error creating docker client. Expected docker client")
+	}
+}
+
+func TestMandelboxDieHandler(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	dockerClient := mockClient{
+		browserImage: "whisthq",
+	}
+
+	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
+	testMux := &sync.Mutex{}
+	tracker := &sync.WaitGroup{}
+
+	testMux.Lock()
+	testTransportRequestMap[mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())] = make(chan *JSONTransportRequest)
+	testMux.Unlock()
+
+	m := mandelbox.New(ctx, tracker, mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()))
+	m.RegisterCreation(mandelboxtypes.DockerID("test-docker-id"))
+
+	mandelboxDieHandler("test-docker-id", testTransportRequestMap, testMux, &dockerClient)
+
+	// Check transport map to verify mandelbox key was removed.
+	testMux.Lock()
+	request := testTransportRequestMap[mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID())]
+	testMux.Unlock()
+
+	if request != nil {
+		t.Errorf("Expected mandelbox %v to be removed from JSON transport map, but it still exists.", utils.PlaceholderTestUUID())
+	}
+
+	// Check the container stopped method was called successfully.
+	if dockerClient.started || !dockerClient.stopped {
+		t.Errorf("Expected docker client to be stopped, got started value %v and stopped value %v", dockerClient.started, dockerClient.stopped)
+	}
+
+}
+
+func TestInitializeFilesystem(t *testing.T) {
+	_, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := os.RemoveAll(utils.WhistDir)
+	if err != nil {
+		t.Fatalf("Failed to delete directory %s for tests: error: %v\n", utils.WhistPrivateDir, err)
+	}
+
+	initializeFilesystem(cancel)
+
+	if _, err := os.Stat(utils.WhistDir); os.IsNotExist(err) {
+		t.Errorf("Whist directory was not created by initializeFilesystem")
+	}
+
+	if _, err := os.Stat(utils.WhistPrivateDir); os.IsNotExist(err) {
+		t.Errorf("Whist private directory was not created by initializeFilesystem")
+	}
+
+	if _, err := os.Stat(utils.TempDir); os.IsNotExist(err) {
+		t.Errorf("Whist temp directory was not created by initializeFilesystem")
+	}
+}
+
+func TestUninitializeFilesystem(t *testing.T) {
+	uninitializeFilesystem()
+
+	if _, err := os.Stat(utils.WhistDir); os.IsExist(err) {
+		t.Errorf("Whist directory was not removed by uninitializeFilesystem")
+	}
+
+	if _, err := os.Stat(utils.WhistPrivateDir); os.IsExist(err) {
+		t.Errorf("Whist private directory was not removed by uninitializeFilesystem")
+	}
+
+	if _, err := os.Stat(utils.TempDir); os.IsExist(err) {
+		t.Errorf("Whist temp directory was not removed by uninitializeFilesystem")
+	}
+}
+
+// TestwarmUpDockerClient calls warmUpDockerClient and checks if the setup steps
+// are performed correctly
+func TestWarmUpDockerClient(t *testing.T) {
+	var browserImages = []string{"whisthq/browsers/chrome:current-build", "whisthq/browsers/brave:current-build"}
+	for _, browserImage := range browserImages {
+		t.Run(browserImage, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			goroutineTracker := sync.WaitGroup{}
+
+			// Defer the wait first since deferred functions are executed in LIFO order.
+			defer goroutineTracker.Wait()
+			defer cancelMandelboxContextByID(mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()))
+			defer cancel()
+
+			// We always want to start with a clean slate
+			uninitializeFilesystem()
+			initializeFilesystem(cancel)
+			defer uninitializeFilesystem()
+
+			dockerClient := mockClient{
+				browserImage: browserImage,
+			}
+
+			resourceMappingDir := path.Join(utils.WhistDir, utils.PlaceholderWarmupUUID().String(), "mandelboxResourceMappings")
+			filePath := path.Join(resourceMappingDir, "done_sleeping_until_X_clients")
+			if _, err := os.Stat(resourceMappingDir); os.IsNotExist(err) {
+				if err := os.MkdirAll(resourceMappingDir, 0777); err != nil {
+					t.Fatalf("Could not make dir %s. Error: %s", resourceMappingDir, err)
+				}
+
+				defer os.RemoveAll(resourceMappingDir)
+
+			}
+
+			go utils.WriteToNewFile(filePath, "test")
+			// We need to write the file a second time because warm up runs twice
+			go func() {
+				time.Sleep(1 * time.Minute)
+				for {
+					if _, err := os.Stat(filePath); err != nil {
+						utils.WriteToNewFile(filePath, "test")
+						break
+					}
+					time.Sleep(1 * time.Second)
+				}
+			}()
+
+			// Should succeed
+			err := warmUpDockerClient(ctx, cancel, &goroutineTracker, &dockerClient)
+
+			if err != nil {
+				t.Fatalf("error calling warmUpDockerClient. Error: %v", err)
+			}
+		})
+	}
+}
+
+// TestWarmUpDockerClientUnsupportedImage will check if no suitable image is handled correctly
+func TestWarmUpDockerClientUnsupportedImage(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// Defer the wait first since deferred functions are executed in LIFO order.
+	defer cancelMandelboxContextByID(mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()))
+	defer cancel()
+
+	dockerClient := mockClient{
+		browserImage: "unsupported_image",
+	}
+
+	// Should succeed
+	result := warmUpDockerClient(ctx, cancel, nil, &dockerClient)
+
+	if result == nil {
+		t.Errorf("error calling warmUpDockerClient with an unsupported image. Expected err, got nil")
+	}
+}
+
+// TestDrainAndShutdown will check if shutdownInstanceOnExit is set to false
+func TestDrainAndShutdown(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	shutdownInstanceOnExit = false
+
+	//  Should update the global variable to be true
+	drainAndShutdown(ctx, cancel, nil)
+
+	if !shutdownInstanceOnExit {
+		t.Fatalf("error draining and shutting down. Expected shutdownInstanceOnExit = `true`, got `false`")
+	}
 }
 
 // TestSpinUpMandelbox calls SpinUpMandelbox and checks if the setup steps
