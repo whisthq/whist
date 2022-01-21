@@ -29,8 +29,8 @@ const window = new events.EventEmitter()
 
 const createAuthWindow = () => {
   const { win, view } = createElectronWindow({
-    ...width.sm,
-    ...height.md,
+    ...width.md,
+    ...height.lg,
     hash: WindowHashAuth,
     customURL: authPortalURL(),
   })
@@ -95,7 +95,7 @@ const createSpeedtestWindow = () =>
 
 const createLicenseWindow = () =>
   createElectronWindow({
-    ...width.md,
+    ...width.lg,
     ...height.lg,
     hash: WindowHashLicense,
     customURL:
@@ -114,7 +114,7 @@ const createErrorWindow = (hash: string) =>
 
 const createSignoutWindow = () =>
   createElectronWindow({
-    ...width.sm,
+    ...width.md,
     ...height.sm,
     hash: WindowHashSignout,
   })

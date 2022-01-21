@@ -1,5 +1,12 @@
 import { of } from "rxjs"
-import { take, filter, withLatestFrom } from "rxjs/operators"
+import {
+  take,
+  filter,
+  withLatestFrom,
+  map,
+  mapTo,
+  startWith,
+} from "rxjs/operators"
 import Sentry from "@sentry/electron"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
@@ -12,6 +19,7 @@ import {
   WindowHashLoading,
   WindowHashOnboarding,
   WindowHashImport,
+  WindowHashAuth,
 } from "@app/constants/windows"
 import {
   createAuthWindow,
@@ -52,8 +60,15 @@ withAppActivated(
   }
 })
 
-withAppActivated(fromTrigger(WhistTrigger.mandelboxFlowStart)).subscribe(() => {
-  if (persistGet(ONBOARDED) ?? false) {
+withAppActivated(
+  fromTrigger(WhistTrigger.mandelboxFlowStart).pipe(
+    withLatestFrom(
+      fromTrigger(WhistTrigger.beginImport).pipe(mapTo(true), startWith(false))
+    ),
+    map((x) => ({ import: x[1] }))
+  )
+).subscribe((args: { import: boolean }) => {
+  if (!args.import) {
     networkAnalyze()
     createLoadingWindow()
   }
@@ -67,10 +82,12 @@ withAppActivated(
   createOmnibar()
 })
 
-withAppActivated(fromTrigger(WhistTrigger.stripeAuthRefresh).pipe(
-  withLatestFrom(fromTrigger(WhistTrigger.protocolConnection))
-)).subscribe(([, connected]: [any, boolean]) => {
-  if(!connected) createLoadingWindow()
+withAppActivated(
+  fromTrigger(WhistTrigger.stripeAuthRefresh).pipe(
+    withLatestFrom(fromTrigger(WhistTrigger.protocolConnection))
+  )
+).subscribe(([, connected]: [any, boolean]) => {
+  if (!connected) createLoadingWindow()
 
   destroyElectronWindow(WindowHashPayment)
 })
@@ -114,6 +131,7 @@ withAppActivated(fromTrigger(WhistTrigger.authFlowSuccess)).subscribe(() => {
   if (!onboarded) {
     networkAnalyze()
     createOnboardingWindow()
+    destroyElectronWindow(WindowHashAuth)
   }
 })
 

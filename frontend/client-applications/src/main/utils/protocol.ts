@@ -67,8 +67,6 @@ const launchProtocol = async (info?: {
       .flat(),
   ]
 
-  console.log("protocol arguments are", protocolArguments)
-
   const child = spawn(protocolPath, protocolArguments, {
     detached: false,
     // options are for [stdin, stdout, stderr]. pipe creates a pipe, ignore will ignore the

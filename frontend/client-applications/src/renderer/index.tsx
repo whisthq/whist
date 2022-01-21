@@ -15,6 +15,7 @@ import Update from "@app/renderer/pages/update"
 import Network from "@app/renderer/pages/network"
 import Loading from "@app/renderer/pages/loading"
 import Omnibar from "@app/renderer/pages/omnibar"
+import Background from "@app/renderer/pages/background"
 import { Provider } from "@app/renderer/context/omnibar"
 
 import {
@@ -27,6 +28,8 @@ import {
   WindowHashLoading,
   WindowHashOmnibar,
   WindowHashPayment,
+  WindowHashSpeedtest,
+  WindowHashLicense,
 } from "@app/constants/windows"
 import {
   whistError,
@@ -98,18 +101,16 @@ const RootComponent = () => {
         <Omnibar />
       </Provider>
     )
-  if (show === WindowHashAuth)
-    return (
-      <div className="bg-gray-100 w-screen h-screen">
-        <div className="w-full h-6 draggable"></div>
-      </div>
-    )
-  if (show === WindowHashPayment)
-    return (
-      <div className="bg-white w-screen h-screen">
-        <div className="w-full h-6 draggable"></div>
-      </div>
-    )
+  if (
+    [
+      WindowHashOmnibar,
+      WindowHashAuth,
+      WindowHashPayment,
+      WindowHashSpeedtest,
+      WindowHashLicense,
+    ].includes(show)
+  )
+    return <Background />
   if (show === WindowHashSignout) return <Signout onClick={handleSignout} />
   if (show === WindowHashUpdate) return <Update />
   if (show === WindowHashImport)

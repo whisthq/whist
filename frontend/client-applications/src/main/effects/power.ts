@@ -7,6 +7,7 @@
 import { BrowserWindow, session } from "electron"
 import { merge } from "rxjs"
 import { withLatestFrom, filter, takeUntil } from "rxjs/operators"
+import ChildProcess from "child_process"
 import Sentry from "@sentry/electron"
 
 import { fromTrigger } from "@app/main/utils/flows"
@@ -14,6 +15,8 @@ import { relaunch } from "@app/main/utils/app"
 import { WhistTrigger } from "@app/constants/triggers"
 import { logBase } from "@app/main/utils/logging"
 import { persistClear } from "@app/main/utils/persist"
+import { destroyProtocol } from "@app/main/utils/protocol"
+import { emitOnSignal } from "@app/main/utils/observables"
 
 // Handles the application quit logic
 // When we detect that all windows have been closed, we put the application to sleep
@@ -53,9 +56,12 @@ fromTrigger(WhistTrigger.powerResume).subscribe(() => {
   relaunch({ sleep: true })
 })
 
-// On signout or relaunch, clear the cache (so the user can log in again) and restart
+// On signout, clear the cache (so the user can log in again) and restart
 // the app
-fromTrigger(WhistTrigger.clearCacheAction).subscribe(() => {
+emitOnSignal(
+  fromTrigger(WhistTrigger.protocol),
+  fromTrigger(WhistTrigger.clearCacheAction)
+).subscribe((p: ChildProcess) => {
   persistClear()
   // Clear the Auth0 cache. In window.ts, we tell Auth0 to store session info in
   // a partition called "auth0", so we clear the "auth0" partition here
@@ -63,10 +69,15 @@ fromTrigger(WhistTrigger.clearCacheAction).subscribe(() => {
     .clearStorageData()
     .catch((err) => Sentry.captureException(err))
   // Restart the app
+  destroyProtocol(p)
   relaunch()
 })
 
 // If the user requests a relaunch
-merge(fromTrigger(WhistTrigger.relaunchAction)).subscribe(() => {
+emitOnSignal(
+  fromTrigger(WhistTrigger.protocol),
+  fromTrigger(WhistTrigger.relaunchAction)
+).subscribe((p: ChildProcess) => {
+  destroyProtocol(p)
   relaunch()
 })
