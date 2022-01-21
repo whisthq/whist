@@ -240,7 +240,7 @@ with redirect_stdout(results_file):
                 client_metrics2[k]["delta_pctg"] = (
                     (client_metrics2[k]["delta"] / client_metrics2[k]["dev_avg"])
                     if client_metrics2[k]["delta"] >= 0.0001 and client_metrics2[k]["dev_avg"] != 0
-                    else -1
+                    else -1000
                 )
         for k in server_metrics2:
             if k in dev_server_metrics2:
@@ -252,7 +252,7 @@ with redirect_stdout(results_file):
                 server_metrics2[k]["delta_pctg"] = (
                     (server_metrics2[k]["delta"] / server_metrics2[k]["dev_avg"])
                     if server_metrics2[k]["delta"] >= 0.0001 and server_metrics2[k]["dev_avg"] != 0
-                    else -1
+                    else -1000
                 )
 
         if len(client_metrics) == 0:
@@ -303,6 +303,7 @@ with redirect_stdout(results_file):
                     if (
                         "delta_pctg" not in client_metrics2[k]
                         or abs(client_metrics2[k]["delta_pctg"]) < 0.01
+                        or abs(client_metrics2[k]["delta_pctg"]) > 100
                     )
                     else ("⬆️" if client_metrics2[k]["delta_pctg"] > 0.0 else "⬇️"),
                 ]
@@ -362,6 +363,7 @@ with redirect_stdout(results_file):
                     if (
                         "delta_pctg" not in server_metrics2[k]
                         or abs(server_metrics2[k]["delta_pctg"]) < 0.01
+                        or abs(server_metrics2[k]["delta_pctg"]) > 100
                     )
                     else ("⬆️" if server_metrics2[k]["delta_pctg"] > 0.0 else "⬇️"),
                 ]
