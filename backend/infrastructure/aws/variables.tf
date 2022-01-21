@@ -1,7 +1,6 @@
 variable "regions" {
   type = set(string)
-  default = ["us-west-2",
-  "us-east-2"]
+  default = ["us-west-2", "us-east-2"]
 
 }
 

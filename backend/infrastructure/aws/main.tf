@@ -13,7 +13,7 @@ provider "aws" {
   region = "us-west-1"
 }
 
-# Gloabl resources
+# Global resources
 
 module "iam" {
   source          = "./resources/iam"

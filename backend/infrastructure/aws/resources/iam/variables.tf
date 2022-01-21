@@ -4,8 +4,8 @@ variable "region" {}
 variable "employee_emails" {}
 
 variable "admin_emails" {}
-variable "fractal-engineering-managed-policies" {
-  description = "FractalEngineering-managed-policies"
+variable "whist-engineering-managed-policies" {
+  description = "WhistEngineering-managed-policies"
   type        = set(string)
   default = [
     "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
@@ -16,8 +16,8 @@ variable "fractal-engineering-managed-policies" {
   ]
 }
 
-variable "fractal-aws-admins-managed-policies" {
-  description = "FractalAWSAdmins-managed-policies"
+variable "whist-aws-admins-managed-policies" {
+  description = "WhistAWSAdmins-managed-policies"
   type        = set(string)
   default     = ["arn:aws:iam::aws:policy/AdministratorAccess"]
 }

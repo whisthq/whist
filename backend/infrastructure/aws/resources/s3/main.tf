@@ -7,8 +7,8 @@
 #   region = var.region
 # }
 
-# resource "aws_s3_bucket" "fractal-user-app-configs" {
-#   bucket = "fractal-user-app-configs-asdasdasd"
+# resource "aws_s3_bucket" "whist-user-app-configs" {
+#   bucket = "whist-user-app-configs-asdasdasd"
 
 #   server_side_encryption_configuration {
 #     rule {
@@ -24,8 +24,8 @@
 #   }
 # }
 
-# resource "aws_s3_bucket" "fractal-chromium-macos-arm64-prod" {
-#   bucket = "fractal-chromium-macos-arm64-prod"
+# resource "aws_s3_bucket" "whist-chromium-macos-arm64-prod" {
+#   bucket = "whist-chromium-macos-arm64-prod"
 
 #   server_side_encryption_configuration {
 #     rule {
@@ -38,8 +38,8 @@
 
 # }
 
-# resource "aws_s3_bucket" "fractal-chromium-macos-arm64-staging" {
-#   bucket = "fractal-chromium-macos-arm64-staging"
+# resource "aws_s3_bucket" "whist-chromium-macos-arm64-staging" {
+#   bucket = "whist-chromium-macos-arm64-staging"
 
 #   server_side_encryption_configuration {
 #     rule {
@@ -52,8 +52,8 @@
 
 # }
 
-# resource "aws_s3_bucket" "fractal-chromium-macos-arm64-dev" {
-#   bucket = "fractal-chromium-macos-arm64-dev"
+# resource "aws_s3_bucket" "whist-chromium-macos-arm64-dev" {
+#   bucket = "whist-chromium-macos-arm64-dev"
 
 #   server_side_encryption_configuration {
 #     rule {
@@ -66,8 +66,8 @@
 
 # }
 
-# resource "aws_s3_bucket" "fractal-chromium-macos-dev" {
-#   bucket = "fractal-chromium-macos-dev"
+# resource "aws_s3_bucket" "whist-chromium-macos-dev" {
+#   bucket = "whist-chromium-macos-dev"
 
 #   server_side_encryption_configuration {
 #     rule {
@@ -80,8 +80,8 @@
 
 # }
 
-# resource "aws_s3_bucket" "fractal-chromium-macos-prod" {
-#   bucket = "fractal-chromium-macos-prod"
+# resource "aws_s3_bucket" "whist-chromium-macos-prod" {
+#   bucket = "whist-chromium-macos-prod"
 
 #   server_side_encryption_configuration {
 #     rule {
@@ -94,8 +94,8 @@
 
 # }
 
-# resource "aws_s3_bucket" "fractal-chromium-macos-staging" {
-#   bucket = "fractal-chromium-macos-staging"
+# resource "aws_s3_bucket" "whist-chromium-macos-staging" {
+#   bucket = "whist-chromium-macos-staging"
 
 #   server_side_encryption_configuration {
 #     rule {
@@ -108,12 +108,12 @@
 
 # }
 
-# resource "aws_s3_bucket" "fractal-test-assets" {
-#   bucket = "fractal-test-assets"
+# resource "aws_s3_bucket" "whist-test-assets" {
+#   bucket = "whist-test-assets"
 # }
 
-# resource "aws_s3_bucket" "fractal-shared-libs" {
-#   bucket = "fractal-shared-libs"
+# resource "aws_s3_bucket" "whist-shared-libs" {
+#   bucket = "whist-shared-libs"
 
 #   server_side_encryption_configuration {
 #     rule {
