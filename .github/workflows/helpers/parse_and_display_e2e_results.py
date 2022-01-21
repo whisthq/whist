@@ -288,7 +288,7 @@ with redirect_stdout(results_file):
                     else client_metrics2[k]["avg"]
                     if ("dev_avg" in client_metrics2[k] and "dev_std" in client_metrics2[k])
                     else "N/A",
-                    "{} ({}%)".format(
+                    "{:.4f} ({:.4f}%)".format(
                         client_metrics2[k]["delta"], client_metrics2[k]["delta_pctg"] * 100.0
                     )
                     if (
@@ -348,7 +348,7 @@ with redirect_stdout(results_file):
                     else server_metrics2[k]["avg"]
                     if ("dev_avg" in server_metrics2[k] and "dev_std" in server_metrics2[k])
                     else "N/A",
-                    "{} ({}%)".format(
+                    "{:.4f} ({:.4f}%)".format(
                         server_metrics2[k]["delta"], server_metrics2[k]["delta_pctg"] * 100.0
                     )
                     if (
