@@ -141,5 +141,6 @@ withAppActivated(
 // When the protocol closes, also destroy the omnibar so it doesn't take up space
 // in the background
 fromTrigger(WhistTrigger.protocolClosed).subscribe(() => {
+  console.log("DESTROY OMNIBAR")
   destroyElectronWindow(WindowHashOmnibar)
 })
