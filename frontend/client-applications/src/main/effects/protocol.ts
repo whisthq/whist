@@ -56,11 +56,11 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess)
     }))
   )
   .subscribe((args: any) => {
+    if (args.import) destroyProtocol(args.protocol)
+
     args.protocol === undefined || args.import
       ? launchProtocol(args.info)
       : pipeNetworkInfo(args.protocol, args.info)
-
-    if (args.import) destroyProtocol(args.protocol)
   })
 
 // When the protocol is launched, pipe stdout to a .log file in the user's cache

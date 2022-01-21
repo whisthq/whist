@@ -54,17 +54,13 @@ const launchProtocol = async (info?: {
     ...(appEnvironment !== WhistEnvironments.LOCAL && {
       environment: config.deployEnv,
     }),
-    ...(info !== undefined && {
-      ports: serializePorts(info.mandelboxPorts),
-      "private-key": info.mandelboxSecret,
-    }),
   }
 
   const protocolArguments = [
-    ...(info === undefined ? ["--read-pipe"] : [info.mandelboxIP]),
     ...Object.entries(protocolParameters)
       .map(([flag, arg]) => [`--${flag}`, arg])
       .flat(),
+    "--read-pipe"
   ]
 
   const child = spawn(protocolPath, protocolArguments, {
@@ -88,6 +84,8 @@ const launchProtocol = async (info?: {
   })
 
   protocol.emit("launched", child)
+
+  if(info !== undefined) pipeNetworkInfo(child, info)
 }
 
 // Stream the rest of the info that the protocol needs
