@@ -371,11 +371,11 @@ bool handshake_private_key(SOCKET socket, int connection_timeout_ms, const void*
         return false;
     }
     LOG_INFO("Private key request received");
-    if (!sign_private_key(&their_priv_key_data, recv_size, private_key)) {
+    if (!sign_private_key(&their_priv_key_data, recv_size, (void*)private_key)) {
         LOG_ERROR("signPrivateKey failed!");
         return false;
     }
-    if (send(context->socket, (const char*)&their_priv_key_data, sizeof(their_priv_key_data), 0) <
+    if (send(socket, (const char*)&their_priv_key_data, sizeof(their_priv_key_data), 0) <
         0) {
         LOG_ERROR("send(3) failed! Could not send signed private key data! %d",
                   get_last_network_error());
@@ -391,7 +391,7 @@ bool handshake_private_key(SOCKET socket, int connection_timeout_ms, const void*
         return false;
     }
     if (!confirm_private_key(&our_priv_key_data, &our_signed_priv_key_data, recv_size,
-                             private_key)) {
+                             (void*)private_key)) {
         // we LOG_ERROR and its context within the confirm_private_key function
         return false;
     } else {

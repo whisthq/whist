@@ -114,6 +114,9 @@ typedef struct {
 
     double fec_packet_ratios[NUM_PACKET_TYPES];
 
+    // to keep track of "freed" packets
+    void** decrypted_packets[NUM_PACKET_TYPES];
+
     // ping information
     int last_ping_id;
     int ping_failures;
@@ -259,7 +262,14 @@ static int get_udp_packet_size(UDPPacket* udp_packet);
  */
 static int udp_ack(UDPContext* context);
 
+// TODO: document
 static void udp_update_ping(UDPContext* context);
+
+// TODO: document
+void udp_handle_stream_reset(UDPContext* context, WhistPacketType type, int greatest_failed_id);
+
+// TODO: document
+void udp_send_ping(UDPContext* context, int id);
 
 /*
 ============================
@@ -292,7 +302,7 @@ void udp_request_stream_reset(SocketContext* socket_context, WhistPacketType typ
     packet.type = UDP_STREAM_RESET;
     packet.udp_stream_reset_data.whist_type = type;
     packet.udp_stream_reset_data.greatest_failed_id = greatest_failed_id;
-    return udp_send_udp_packet(context, &packet);
+    udp_send_udp_packet(context, &packet);
 }
 
 /*
@@ -384,20 +394,15 @@ void udp_update(void* raw_context, bool should_recv) {
 
         // if the packet is a whist_segment, put the packet in a ringbuffer. Otherwise, pass it to udp_handle_message
         if (udp_packet.type == UDP_WHIST_SEGMENT) {
-            WhistPacketType packet_type = udp_packet.whist_segment_data.whist_type;
+            WhistPacketType packet_type = udp_packet.udp_whist_segment_data.whist_type;
 
             // put the decrypted packet in the correct ringbuffer
             if (context->ring_buffers[packet_type] != NULL) {
-                receive_packet(context->ring_buffers[packet_type], &udp_packet);
+                ring_buffer_receive_segment(context->ring_buffers[packet_type], &udp_packet);
             } else {
                 // if there is no ring buffer (packet is message), store it in the 1-packet buffer instead
-                // first, free the old packet there
-                WhistPacket* whist_packet = (WhistPacket*)udp_packet.udp_whist_segment_data;
-                FATAL_ASSERT()
-                    if (context->last_packets[packet_type] != NULL) {
-                        udp_free_packet(raw_context, context->last_packets[packet_type]);
-                    }
-                context->last_packets[packet_type] = *whist_packet;
+                // memcpy the segment_data (WhistPacket) into last_packets
+                memcpy(&context->last_packets[packet_type], &udp_packet.udp_whist_segment_data.segment_data, udp_packet.udp_whist_segment_data.segment_size);
             }
             return;
         } else {
@@ -428,10 +433,16 @@ void udp_update(void* raw_context, bool should_recv) {
 void* udp_get_packet(void* raw_context, WhistPacketType type) {
     UDPContext* context = raw_context;
     RingBuffer* ring_buffer = context->ring_buffers[type];
+    // first, "free" the previous packet
+    if (context->decrypted_packets[type] != NULL) {
+        LOG_ERROR("Client didn't free last packet!");
+        udp_free_packet(raw_context, context->decrypted_packets[type]);
+    }
 
     switch (type) {
         case PACKET_MESSAGE: {
-            return context->last_packets[PACKET_MESSAGE];
+            context->decrypted_packets[type] = &context->last_packets[PACKET_MESSAGE];
+            return &context->last_packets[PACKET_MESSAGE];
         }
         case PACKET_AUDIO: {
             // first, catch up audio if we're behind
@@ -463,26 +474,27 @@ void* udp_get_packet(void* raw_context, WhistPacketType type) {
     // then, set_rendering the next frame and give it to the decoder
     int next_to_play_id = ring_buffer->last_rendered_id + 1;
     if (is_ready_to_render(ring_buffer, next_to_play_id)) {
-        return set_rendering(ring_buffer, next_to_play_id);
+        FrameData* frame = set_rendering(ring_buffer, next_to_play_id);
+        context->decrypted_packets[type] = frame;
+        return frame;
     } else {
         // no frame ready yet
         return NULL;
     }
 }
 
-void udp_free_packet(void* raw_context, WhistPacket* udp_packet) {
+void udp_free_packet(void* raw_context, void* udp_packet) {
     UDPContext* context = raw_context;
 
-    if (!context->decrypted_packet_used) {
-        LOG_ERROR("Called udp_free_packet, but there was no udp_packet to free!");
-        return;
+    // go through context->decrypted_packets, I guess
+    for (int i = 0; i < NUM_PACKET_TYPES; i++) {
+        if (context->decrypted_packets[i] == udp_packet) {
+            context->decrypted_packets[i] = NULL;
+            return;
+        }
     }
-    if (udp_packet != &context->decrypted_packet) {
-        LOG_ERROR("The wrong pointer was passed into udp_free_packet!");
-    }
-
-    // Free the one buffer
-    context->decrypted_packet_used = false;
+    LOG_ERROR("Tried to udp_free_packet, but couldn't find the packet!");
+    return;
 }
 
 // NOTE that this function is in the hotpath.
@@ -1000,13 +1012,13 @@ bool udp_get_pending_stream_reset(SocketContext* socket_context, WhistPacketType
     UDPContext* context = (UDPContext*)socket_context->context;
     if (reset_data[type].pending_stream_reset) {
         int greatest_failed_id = reset_data[type].greatest_failed_id;
+        // We only need to propagate a stream reset once
+        reset_data[type].pending_stream_reset = false;
         // If it's the start-of-stream,
         // Or we've failed an ID > the last start-of-stream,
         // Then we should propagate the stream reset
         // TODO: Also do this when we haven't received an ACK from the client in a while
         return greatest_failed_id == -1 || greatest_failed_id > data.last_start_of_stream_id[type];
-        // We only need to propagate a stream reset once
-        reset_data[type].pending_stream_reset = false;
     } else {
         return false;
     }
@@ -1155,9 +1167,9 @@ int udp_handle_message(UDPContext* context, UDPPacket* packet) {
         }
         default: {
             LOG_ERROR("Packet of unknown type! %d", (int)packet->type);
+            return -1;
         }
     }
-}
 }
 
 void udp_handle_stream_reset(UDPContext* context, WhistPacketType type, int greatest_failed_id) {
@@ -1245,18 +1257,20 @@ int udp_handle_ping(UDPContext* context, int id, timestamp_us timestamp) {
     // construct a reply
     UDPPacket pong_packet = {0};
     pong_packet.type = UDP_PONG;
-    pong_packet.ping_data.id = id;
+    pong_packet.udp_ping_data.id = id;
     // not actually necessary, handle_pong will discard this
-    pong_packet.ping_data.original_timestamp = server_time;
+    pong_packet.udp_ping_data.original_timestamp = server_time;
     whist_lock_mutex(context->timestamp_mutex);
     context->last_ping_client_time = timestamp;
     context->last_ping_server_time = server_time;
     whist_unlock_mutex(context->timestamp_mutex);
-    return udp_send_udp_packet(context, &pong);
+    return udp_send_udp_packet(context, &pong_packet);
 }
 
 // TODO: REMOVE
 timestamp_us udp_get_client_input_timestamp(SocketContext* socket_context) {
+    UDPContext* context = (UDPContext*)socket_context->context;
+
     whist_lock_mutex(context->timestamp_mutex);
 
     timestamp_us server_timestamp = current_time_us();
@@ -1265,7 +1279,7 @@ timestamp_us udp_get_client_input_timestamp(SocketContext* socket_context) {
     // The client timestamp from a ping,
     // is the timestamp of theoretical client input we're responding to
     timestamp_us client_input_timestamp = context->last_ping_client_time;
-    client_last_server_timestamp = context->last_ping_server_time;
+    timestamp_us client_last_server_timestamp = context->last_ping_server_time;
     // But we should adjust for the time between when we received the ping, and now,
     // To only extract the client->server network latency
     client_input_timestamp += (server_timestamp - client_last_server_timestamp);

@@ -118,8 +118,9 @@ int multithreaded_sync_udp_packets(void* opaque) {
 
     WhistTimer last_ack;
     WhistTimer statistics_timer;
-    WhistPacket* last_video_packet;
-    WhistPacket* last_audio_packet;
+    WhistPacket* last_message_packet = NULL;
+    FrameData* last_video_packet = NULL;
+    FrameData* last_audio_packet = NULL;
     start_timer(&last_ack);
 
     // Initialize dimensions prior to update_video and receive_video calls
@@ -145,24 +146,37 @@ int multithreaded_sync_udp_packets(void* opaque) {
         // Try to read data from the socket
         TIME_RUN(update(socket_context, true), NETWORK_READ_PACKET_UDP, statistics_timer);
         // Handle any messages we've received
+        // first, free the last_message_packet
+        if (last_message_packet != NULL) {
+            free_packet(socket_context, last_message_packet);
+        }
         WhistPacket* message_packet = (WhistPacket*)get_packet(socket_context, PACKET_MESSAGE);
         if (message_packet) {
             handle_server_message(message_packet);
+            last_message_packet = message_packet;
         }
         // check if video can process the next frame
         if (video_ready_for_frame(whist_renderer->video_context)) {
+            if (last_video_packet != NULL) {
+                free_packet(socket_context, last_video_packet);
+            }
             FrameData* video_frame = (FrameData*)get_packet(socket_context, PACKET_VIDEO);
             if (video_frame) {
                 receive_video(whist_renderer->video_context, video_frame);
                 // after this call to until rendering finishes, video_ready_for_frame must return false
+                last_video_packet = video_frame;
             }
         }
         // same for audio
         if (audio_ready_for_frame(whist_renderer->audio_context, udp_get_num_pending_frames(socket_context, PACKET_AUDIO)) {
+            if (last_audio_packet != NULL) {
+                free_packet(socket_context, last_audio_packet);
+            }
             FrameData* audio_frame = (FrameData*)get_packet(socket_context, PACKET_VIDEO);
             if (audio_frame) {
                 receive_audio(whist_renderer->audio_context, audio_frame->frame_buffer);
                 // after this call to until rendering finishes, audio_ready_for_frame must return false
+                last_audio_packet = audio_frame;
             }
         }
     }
