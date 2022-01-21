@@ -57,7 +57,7 @@ const createPaymentWindow = async (accessToken: accessToken) => {
   const { paymentPortalURL } = paymentPortalParse(response)
 
   const { win, view } = createElectronWindow({
-    ...width.md,
+    ...width.xl,
     ...height.lg,
     hash: WindowHashPayment,
     customURL: paymentPortalURL ?? "",

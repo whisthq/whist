@@ -21,7 +21,7 @@ import { persistClear } from "@app/main/utils/persist"
 merge(
   // If all Electron windows have closed and the protocol isn't connected
   fromTrigger(WhistTrigger.electronWindowsAllClosed).pipe(
-    withLatestFrom(fromTrigger(WhistTrigger.protocolConnected)),
+    withLatestFrom(fromTrigger(WhistTrigger.protocolConnection)),
     filter(([, connected]) => !connected)
   ),
   // If the protocol was closed gracefully and all Electron windows are closed

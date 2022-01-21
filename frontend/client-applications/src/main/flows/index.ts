@@ -84,7 +84,7 @@ const checkPayment = checkPaymentFlow(
 // If the payment is invalid, they'll be redirect to the Stripe window. After that they'll
 // get new auth credentials
 const refreshAfterPaying = authRefreshFlow(
-  waitForSignal(
+  emitOnSignal(
     combineLatest({ refreshToken }),
     fromTrigger(WhistTrigger.stripeAuthRefresh)
   )

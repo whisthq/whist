@@ -92,33 +92,31 @@ const createElectronWindow = (args: {
   // Some websites don't like Electron in the user agent, so we remove it
   win.webContents.userAgent = replaceUserAgent(win.webContents.userAgent)
 
+  // Electron doesn't have a API for passing data to renderer windows. We need
+  // to pass "init" data for a variety of reasons, but mainly so we can decide
+  // which React component to render into the window. We're forced to do this
+  // using query parameters in the URL that we pass. The alternative would
+  // be to use separate index.html files for each window, which we want to avoid.
+  const params = `?show=${args.hash}`
+  if (app.isPackaged) {
+    win
+      .loadFile("build/index.html", { search: params })
+      .catch((err) => console.error(err))
+  } else {
+    win
+      .loadURL(`http://localhost:8080${params}`)
+      .catch((err) => console.error(err))
+  }
+
   // When the window is ready to be shown, show it
   win.once("ready-to-show", () => (args?.show ?? true) && win.show())
+  
+  // If we want to load a URL into a BrowserWindow, we first load it into a
+  // BrowserView and attach it to the BrowserWindow. This is our trick to make the
+  // window both frameless and draggable.
+  if (args.customURL !== undefined) return { win, view: createView(args.customURL, win) }
 
-  if (args.customURL !== undefined) {
-    // If we want to load a URL into a BrowserWindow, we first load it into a
-    // BrowserView and attach it to the BrowserWindow. This is our trick to make the
-    // window both frameless and draggable.
-    return { win, view: createView(args.customURL, win) }
-  } else {
-    // Electron doesn't have a API for passing data to renderer windows. We need
-    // to pass "init" data for a variety of reasons, but mainly so we can decide
-    // which React component to render into the window. We're forced to do this
-    // using query parameters in the URL that we pass. The alternative would
-    // be to use separate index.html files for each window, which we want to avoid.
-    const params = `?show=${args.hash}`
-    if (app.isPackaged) {
-      win
-        .loadFile("build/index.html", { search: params })
-        .catch((err) => console.error(err))
-    } else {
-      win
-        .loadURL(`http://localhost:8080${params}`)
-        .catch((err) => console.error(err))
-    }
-
-    return { win, view: undefined }
-  }
+  return { win, view: undefined }
 }
 
 export {

@@ -4,7 +4,7 @@
  * @brief This file contains effects that deal with electron-store
  */
 
-import { merge } from "rxjs"
+import { merge, filter } from "rxjs"
 import toPairs from "lodash.topairs"
 
 import { fromTrigger } from "@app/main/utils/flows"
@@ -56,9 +56,11 @@ fromTrigger(WhistTrigger.setDefaultBrowser).subscribe(
 
 // If the user is not onboarded but is requesting a mandelbox, this means
 // they completed onboarding
-fromTrigger(WhistTrigger.mandelboxFlowStart).subscribe(() => {
-  if (!persistGet(ONBOARDED)) {
-    persistSet(ONBOARDED, true)
-    persistSet(RESTORE_LAST_SESSION, true)
-  }
-})
+fromTrigger(WhistTrigger.protocolConnection)
+  .pipe(filter((connected) => connected))
+  .subscribe(() => {
+    if (!persistGet(ONBOARDED)) {
+      persistSet(ONBOARDED, true)
+      persistSet(RESTORE_LAST_SESSION, true)
+    }
+  })

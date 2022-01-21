@@ -106,7 +106,7 @@ emitOnSignal(
 ).subscribe((p: ChildProcess) => destroyProtocol(p))
 
 // Redirect URLs to the protocol
-fromTrigger(WhistTrigger.protocolConnected)
+fromTrigger(WhistTrigger.protocolConnection)
   .pipe(
     filter((connected: boolean) => connected),
     switchMap(() => fromEvent(app, "open-url")),

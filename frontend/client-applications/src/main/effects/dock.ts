@@ -5,10 +5,14 @@
  */
 
 import { app } from "electron"
+import { filter } from "rxjs/operators"
+
 import { fromTrigger } from "@app/main/utils/flows"
 import { WhistTrigger } from "@app/constants/triggers"
 
 // Hide the Electron icon when the protocol connects to avoid the double icon issue
-fromTrigger(WhistTrigger.protocolConnected).subscribe(() => {
-  app?.dock?.hide()
-})
+fromTrigger(WhistTrigger.protocolConnection)
+  .pipe(filter((connected) => connected))
+  .subscribe(() => {
+    app?.dock?.hide()
+  })
