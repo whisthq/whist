@@ -6,6 +6,8 @@ import { WhistTrigger } from "@app/constants/triggers"
 import { createTrigger, fromTrigger } from "@app/main/utils/flows"
 import { protocol } from "@app/main/utils/protocol"
 
+// Observable that returns the active ChildProcess is protocol is running and undefined
+// if the protocol is not running
 createTrigger(
   WhistTrigger.protocol,
   fromEvent(protocol, "launched").pipe(
@@ -16,6 +18,7 @@ createTrigger(
   )
 )
 
+// Fires whenever the protocol closes
 createTrigger(
   WhistTrigger.protocolClosed,
   fromEvent(protocol, "launched").pipe(
@@ -27,6 +30,7 @@ createTrigger(
   )
 )
 
+// Fires whenever the protocol emits stdout
 createTrigger(
   WhistTrigger.protocolStdoutData,
   fromTrigger(WhistTrigger.protocol).pipe(
@@ -35,6 +39,7 @@ createTrigger(
   )
 )
 
+// Fires whenever the protocol stdout ends
 createTrigger(
   WhistTrigger.protocolStdoutEnd,
   fromTrigger(WhistTrigger.protocol).pipe(
@@ -43,6 +48,8 @@ createTrigger(
   )
 )
 
+// Observable that returns true if the protocol is successfully connected to the server
+// (i.e. stream has successfully started) and false otherwise
 createTrigger(
   WhistTrigger.protocolConnection,
   merge(

@@ -4,6 +4,7 @@
  * @brief This file contains effects that deal with electron-updater
  */
 
+import { BrowserWindow } from "electron"
 import { autoUpdater } from "electron-updater"
 import { timer } from "rxjs"
 import { takeUntil } from "rxjs/operators"

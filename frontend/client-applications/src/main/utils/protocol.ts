@@ -60,7 +60,7 @@ const launchProtocol = async (info?: {
     ...Object.entries(protocolParameters)
       .map(([flag, arg]) => [`--${flag}`, arg])
       .flat(),
-    "--read-pipe"
+    "--read-pipe",
   ]
 
   const child = spawn(protocolPath, protocolArguments, {
@@ -85,7 +85,7 @@ const launchProtocol = async (info?: {
 
   protocol.emit("launched", child)
 
-  if(info !== undefined) pipeNetworkInfo(child, info)
+  if (info !== undefined) pipeNetworkInfo(child, info)
 }
 
 // Stream the rest of the info that the protocol needs
