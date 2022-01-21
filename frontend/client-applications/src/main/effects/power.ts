@@ -7,7 +7,7 @@
 import { BrowserWindow, session } from "electron"
 import { merge } from "rxjs"
 import { withLatestFrom, filter, takeUntil } from "rxjs/operators"
-import ChildProcess from "child_process"
+import { ChildProcess } from "child_process"
 import Sentry from "@sentry/electron"
 
 import { fromTrigger } from "@app/main/utils/flows"
@@ -17,7 +17,6 @@ import { logBase } from "@app/main/utils/logging"
 import { persistClear } from "@app/main/utils/persist"
 import { destroyProtocol } from "@app/main/utils/protocol"
 import { emitOnSignal } from "@app/main/utils/observables"
-import { destroyElectronWindow } from "@app/main/utils/windows"
 
 // Handles the application quit logic
 // When we detect that all windows have been closed, we put the application to sleep
@@ -26,7 +25,7 @@ merge(
   // If all Electron windows have closed and the protocol isn't connected
   fromTrigger(WhistTrigger.electronWindowsAllClosed).pipe(
     withLatestFrom(fromTrigger(WhistTrigger.protocolConnection)),
-    filter(([, connected]) => !connected)
+    filter(([, connected]: [any, boolean]) => !connected)
   ),
   // If the protocol was closed gracefully and all Electron windows are closed
   fromTrigger(WhistTrigger.protocolClosed).pipe(
@@ -70,7 +69,7 @@ emitOnSignal(
     .clearStorageData()
     .catch((err) => Sentry.captureException(err))
 
-  // Restart the app  
+  // Restart the app
   destroyProtocol(p)
   relaunch()
 })

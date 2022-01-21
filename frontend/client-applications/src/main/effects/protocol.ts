@@ -17,6 +17,7 @@ import {
   mapTo,
   startWith,
 } from "rxjs/operators"
+import Sentry from "@sentry/electron"
 
 import { createTrigger, fromTrigger } from "@app/main/utils/flows"
 import {
@@ -41,7 +42,9 @@ const threeProtocolFailures = fromTrigger(WhistTrigger.protocolClosed).pipe(
 
 // We solve this by starting the protocol ahead of time and piping the network info
 // (IP, ports, private key) to the protocol when they become available
-withAppActivated(of(null)).subscribe(async () => await launchProtocol())
+withAppActivated(of(null)).subscribe(() => {
+  launchProtocol().catch((err) => Sentry.captureException(err))
+})
 
 fromTrigger(WhistTrigger.mandelboxFlowSuccess)
   .pipe(
@@ -55,19 +58,19 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess)
       import: x[2],
     }))
   )
-  .subscribe((args: any) => {
+  .subscribe((args: { info: any; protocol: ChildProcess; import: boolean }) => {
     if (args.import) destroyProtocol(args.protocol)
 
     args.protocol === undefined || args.import
-      ? launchProtocol(args.info)
+      ? launchProtocol(args.info).catch((err) => Sentry.captureException(err))
       : pipeNetworkInfo(args.protocol, args.info)
   })
 
 // When the protocol is launched, pipe stdout to a .log file in the user's cache
 fromTrigger(WhistTrigger.protocol)
   .pipe(filter((p) => p !== undefined))
-  .subscribe(async (p) => {
-    logProtocolStdoutLocally(p)
+  .subscribe((p) => {
+    logProtocolStdoutLocally(p).catch((err) => Sentry.captureException(err))
   })
 
 // Also send protocol logs to logz.io
@@ -95,7 +98,7 @@ fromTrigger(WhistTrigger.protocolStdoutEnd).subscribe(() => {
 })
 
 threeProtocolFailures.subscribe(([, info]: [any, any]) => {
-  launchProtocol(info)
+  launchProtocol(info).catch((err) => Sentry.captureException(err))
 })
 
 threeProtocolFailures

@@ -59,7 +59,7 @@ fromTrigger(WhistTrigger.setDefaultBrowser).subscribe(
 fromTrigger(WhistTrigger.protocolConnection)
   .pipe(filter((connected) => connected))
   .subscribe(() => {
-    if (!persistGet(ONBOARDED)) {
+    if (!((persistGet(ONBOARDED) as boolean) ?? false)) {
       persistSet(ONBOARDED, true)
       persistSet(RESTORE_LAST_SESSION, true)
     }

@@ -35,6 +35,7 @@ const createAuthWindow = () => {
     customURL: authPortalURL(),
   })
 
+  /* eslint-disable @typescript-eslint/no-misused-promises */
   view?.webContents.session.webRequest.onBeforeRequest(
     {
       urls: [WhistCallbackUrls.authCallBack],
@@ -63,6 +64,7 @@ const createPaymentWindow = async (accessToken: accessToken) => {
     customURL: paymentPortalURL ?? "",
   })
 
+  /* eslint-disable @typescript-eslint/no-misused-promises */
   view?.webContents.session.webRequest.onBeforeRequest(
     {
       urls: [WhistCallbackUrls.paymentCallBack],
@@ -121,7 +123,7 @@ const createSignoutWindow = () =>
 
 const createOnboardingWindow = () =>
   createElectronWindow({
-    ...width.lg,
+    ...width.md,
     ...height.lg,
     hash: WindowHashOnboarding,
   })

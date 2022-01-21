@@ -1,12 +1,5 @@
 import { of } from "rxjs"
-import {
-  take,
-  filter,
-  withLatestFrom,
-  map,
-  mapTo,
-  startWith,
-} from "rxjs/operators"
+import { filter, withLatestFrom, map, mapTo, startWith } from "rxjs/operators"
 import Sentry from "@sentry/electron"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
@@ -43,7 +36,6 @@ import {
 } from "@app/constants/store"
 import { NO_PAYMENT_ERROR } from "@app/constants/error"
 import { networkAnalyze } from "@app/main/utils/networkAnalysis"
-import { accessToken } from "@whist/core-ts"
 import { destroyElectronWindow, hideElectronWindow } from "../utils/windows"
 
 // Show the auth window if the user has not logged in yet
@@ -114,7 +106,6 @@ withAppActivated(fromTrigger(WhistTrigger.showLicenseWindow)).subscribe(() => {
   createLicenseWindow()
 })
 
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
 withAppActivated(fromTrigger(WhistTrigger.showPaymentWindow)).subscribe(() => {
   const accessToken = persistGet(CACHED_ACCESS_TOKEN) as string
 
