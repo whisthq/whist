@@ -32,9 +32,9 @@ const createView = (url: string, win?: BrowserWindow) => {
     win.setBrowserView(view)
     view.setBounds({
       x: 20,
-      y: 20,
+      y: 30,
       width: win.getSize()[0] - 40,
-      height: win.getSize()[1] - 40,
+      height: win.getSize()[1] - 60,
     })
   }
 

@@ -7,7 +7,16 @@
 import { app } from "electron"
 import { ChildProcess } from "child_process"
 import { fromEvent, of } from "rxjs"
-import { filter, withLatestFrom, take, count, switchMap } from "rxjs/operators"
+import {
+  filter,
+  withLatestFrom,
+  take,
+  count,
+  switchMap,
+  map,
+  mapTo,
+  startWith,
+} from "rxjs/operators"
 
 import { createTrigger, fromTrigger } from "@app/main/utils/flows"
 import {
@@ -35,25 +44,24 @@ const threeProtocolFailures = fromTrigger(WhistTrigger.protocolClosed).pipe(
 withAppActivated(of(null)).subscribe(async () => await launchProtocol())
 
 fromTrigger(WhistTrigger.mandelboxFlowSuccess)
-  .pipe(withLatestFrom(fromTrigger(WhistTrigger.protocol)))
-  .subscribe(
-    ([info, protocol]: [
-      {
-        mandelboxIP: string
-        mandelboxSecret: string
-        mandelboxPorts: {
-          port_32262: number
-          port_32263: number
-          port_32273: number
-        }
-      },
-      ChildProcess | undefined
-    ]) => {
-      protocol === undefined
-        ? launchProtocol(info)
-        : pipeNetworkInfo(protocol, info)
-    }
+  .pipe(
+    withLatestFrom(
+      fromTrigger(WhistTrigger.protocol),
+      fromTrigger(WhistTrigger.beginImport).pipe(mapTo(true), startWith(false))
+    ),
+    map((x) => ({
+      info: x[0],
+      protocol: x[1],
+      import: x[2],
+    }))
   )
+  .subscribe((args: any) => {
+    args.protocol === undefined || args.import
+      ? launchProtocol(args.info)
+      : pipeNetworkInfo(args.protocol, args.info)
+
+    if (args.import) destroyProtocol(args.protocol)
+  })
 
 // When the protocol is launched, pipe stdout to a .log file in the user's cache
 fromTrigger(WhistTrigger.protocol)
@@ -116,10 +124,3 @@ fromTrigger(WhistTrigger.protocolConnection)
     event.preventDefault()
     pipeURLToProtocol(p, url)
   })
-
-emitOnSignal(
-  fromTrigger(WhistTrigger.protocol),
-  fromTrigger(WhistTrigger.beginImport)
-).subscribe((p) => {
-  destroyProtocol(p)
-})

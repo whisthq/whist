@@ -17,6 +17,7 @@ export const WindowHashSpeedtest = "SPEEDTEST"
 export const WindowHashLicense = "LICENSE"
 
 export const width = {
+  xs: { width: 16 * 24 },
   sm: { width: 16 * 32 },
   md: { width: 16 * 40 },
   lg: { width: 16 * 48 },
@@ -24,6 +25,7 @@ export const width = {
 }
 
 export const height = {
+  xs: { height: 16 * 8 },
   sm: { height: 16 * 20 },
   md: { height: 16 * 32 },
   lg: { height: 16 * 44 },
