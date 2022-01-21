@@ -602,6 +602,19 @@ TEST_F(ProtocolTest, LoggerTest) {
     LOG_INFO("CCC");
     LOG_INFO("DDD");
     LOG_INFO("EEE");
+
+    // Check that very long lines are truncated.
+    char very_long_line[LOGGER_BUF_SIZE * 2];
+    memset(very_long_line, 'X', sizeof(very_long_line));
+    very_long_line[sizeof(very_long_line) - 1] = '\0';
+    LOG_INFO("%s", very_long_line);
+
+    // Check that line continuations work as expected.
+    LOG_INFO("First\nSecond\nThird");
+
+    // Check escape codes.
+    LOG_INFO("B\b F\f R\r T\t Q\" B\\");
+
     destroy_logger();
 
     // Validate stdout, line-by-line
@@ -615,6 +628,11 @@ TEST_F(ProtocolTest, LoggerTest) {
     check_stdout_line(::testing::EndsWith("CCC"));
     check_stdout_line(::testing::EndsWith("DDD"));
     check_stdout_line(::testing::EndsWith("EEE"));
+    check_stdout_line(::testing::EndsWith("XXX..."));
+    check_stdout_line(::testing::EndsWith("| First"));
+    check_stdout_line(::testing::EndsWith("|    Second"));
+    check_stdout_line(::testing::EndsWith("|    Third"));
+    check_stdout_line(::testing::EndsWith("B\\b F\\f R\\r T\\t Q\" B\\"));
 }
 
 /**
