@@ -213,6 +213,7 @@ func (mandelbox *mandelboxData) loadUserConfigs(tokenChan <-chan ConfigEncryptio
 	// we need. This is not a big deal now, but will be more important as configs
 	// grow in size, if we see users alternating between encryption tokens
 	// frequently (which should never happen with the current setup).
+	// (https://github.com/whisthq/whist/issues/5287)
 	predictedConfigHeadObj, err := configutils.GetHeadObject(s3Client, UserConfigS3Bucket, *predictedConfigObj.Key)
 	if err != nil {
 		errorChan <- utils.MakeError("Could not get head object for predicted key %s for user %s for mandelbox %s: %s", *predictedConfigObj.Key, mandelbox.GetUserID(), mandelbox.GetID(), err)
