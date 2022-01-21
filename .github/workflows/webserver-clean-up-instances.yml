@@ -29,7 +29,7 @@ jobs:
     name: Create Job Matrix
     runs-on: ubuntu-20.04
     outputs:
-      matrix: ${{ steps.matrix.outputs.matrix }}
+      environments: ${{ steps.matrix.outputs.environments}}
     steps:
       - name: Get Heroku pipeline info
         id: pipeline
@@ -58,13 +58,11 @@ jobs:
           import json
           import os
 
-          apps = filter(lambda app: "-ci-" not in app, os.environ["APPS"].split(","))
-          commands = ["flask compute prune-lingering-instances", "flask compute scale-down-instances", "flask compute clean-old-commit-hash-instances"]
-          lookup = {"whist-prod-server": "prod", "whist-staging-server": "staging"}
-          include = [{"app": a, "command": c, "environment": lookup.get(a, "dev")} for a in apps for c in commands]
-          matrix = {"include": include}
+          heroku_apps = filter(lambda app: "-ci-" not in app and "scaling-service" not in app, os.environ["APPS"].split(","))
+          env_mapping = lambda app: {"whist-prod-server": "prod", "whist-staging-server": "staging"}.get(app, "dev")
 
-          print(f"::set-output name=matrix::{json.dumps(matrix)}")
+          environments = [{"app": a, "environment": env_mapping(a)} for a in heroku_apps]
+          print(f"::set-output name=environments::{json.dumps(environments)}")
 
   # Run the following commands against each Heroku app in the whist-server
   # pipeline in a one-off dyno:
@@ -78,7 +76,12 @@ jobs:
     strategy:
       fail-fast: false
       max-parallel: 2
-      matrix: ${{ fromJSON(needs.webserver-clean-up-instances-matrix.outputs.matrix) }}
+      matrix:
+        command:
+          - prune-lingering-instances
+          - scale-down-instances
+          - clean-old-commit-hash-instances
+        target: ${{ fromJSON(needs.webserver-clean-up-instances-matrix.outputs.environments) }}
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
@@ -94,7 +97,7 @@ jobs:
       - name: Restore cached Whist access token
         uses: actions/cache@v2
         with:
-          key: access-token-${{ matrix.environment }}-${{ steps.date.outputs.date }}-${{ secrets.cache_salt }}
+          key: access-token-${{ matrix.target.environment }}-${{ steps.date.outputs.date }}-${{ secrets.cache_salt }}
           path: ${{ env.TOKEN_FILE }}
 
       - name: Clean up Compute Instances
@@ -107,7 +110,7 @@ jobs:
         # status is nonzero if the file does not exist.
         run: >-
           [ -f "$TOKEN_FILE" ] &&
-              heroku run --exit-code --env=WHIST_ACCESS_TOKEN="$(cat "$TOKEN_FILE")" --app=${{ matrix.app }} -- ${{ matrix.command }}
+              heroku run --exit-code --env=WHIST_ACCESS_TOKEN="$(cat "$TOKEN_FILE")" --app=${{ matrix.target.app }} -- flask compute ${{ matrix.command }}
 
       - name: Notify Slack on Failure
         if: failure()
