@@ -29,7 +29,7 @@ jobs:
     name: Create Job Matrix
     runs-on: ubuntu-20.04
     outputs:
-      matrix: ${{ steps.matrix.outputs.environments}}
+      environments: ${{ steps.matrix.outputs.environments}}
     steps:
       - name: Get Heroku pipeline info
         id: pipeline
@@ -63,16 +63,6 @@ jobs:
 
           environments = [{"app": a, "environment": env_mapping(a)} for a in heroku_apps]
           print(f"::set-output name=environments::{json.dumps(environments)}")
-          print(json.dumps(environments))
-
-
-  echo:
-    name: echo
-    needs: webserver-clean-up-instances-matrix
-    runs-on: ubuntu-20.04
-    steps:
-      - name: hihihi
-        run: echo "${{ needs.webserver-clean-up-instances-matrix.outputs.environments }}"
 
   # Run the following commands against each Heroku app in the whist-server
   # pipeline in a one-off dyno:
