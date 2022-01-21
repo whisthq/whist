@@ -48,7 +48,8 @@ format strings.
 #include <stdio.h>
 
 #include <whist/core/whist.h>
-#include <whist/network/network.h>
+#include "whist/utils/atomic.h"
+#include "whist/utils/linked_list.h"
 #include "logging.h"
 #include "error_monitor.h"
 
@@ -62,288 +63,290 @@ const char* const warning_tag = "WARNING";
 const char* const error_tag = "ERROR";
 const char* const fatal_error_tag = "FATAL_ERROR";
 
-// logger Semaphores and Mutexes
-static WhistSemaphore logger_semaphore;
-static WhistMutex logger_queue_mutex;
-static WhistMutex logger_cache_mutex;
-static WhistMutex crash_handler_mutex;
-
-// logger queue
-typedef struct LoggerQueueItem {
+/**
+ * Type for a single log item in the logger queue.
+ */
+typedef struct {
+    LINKED_LIST_HEADER;
     const char* tag;
     char buf[LOGGER_BUF_SIZE];
 } LoggerQueueItem;
-static volatile LoggerQueueItem logger_queue[LOGGER_QUEUE_SIZE];
-static volatile LoggerQueueItem logger_queue_cache[LOGGER_QUEUE_SIZE];
-static volatile int logger_queue_index = 0;
-static volatile int logger_queue_size = 0;
 
-// logger global variables
-static WhistThread mprintf_thread = NULL;
-static volatile bool run_multithreaded_printf;
-static int multithreaded_printf(void* opaque);
-static void mprintf(const char* tag, const char* fmt_str, va_list args);
+/**
+ * List of free LoggerQueueItems to be used for carrying logs.
+ *
+ * Items are both inserted and removed at the head, to maximise cache
+ * locality.
+ *
+ * Protected by logger_queue_mutex.
+ */
+static LinkedList logger_freelist;
+/**
+ * Queue of pending log lines.
+ *
+ * Log messages are added at the tail.  The logger thread removes them
+ * from the head.
+ *
+ * Protected by logger_queue_mutex.
+ */
+static LinkedList logger_queue;
+/**
+ * Active flag for the logger thread.
+ *
+ * When set to false, the logger thread will exit.
+ *
+ * This is atomic because it is checked without synchronisation to
+ * shortcut log message creation when the logger thread is inactive.
+ */
+static atomic_int logger_thread_active = ATOMIC_VAR_INIT(0);
+/**
+ * Number of threads which are going to write to the queue.
+ *
+ * We can only destroy the logger once this reaches zero.
+ */
+static atomic_int logger_thread_writers = ATOMIC_VAR_INIT(0);
+/**
+ * Mutex protecting the logger queue, freelist and thread-active.
+ */
+static WhistMutex logger_queue_mutex;
+/**
+ * Condition variable: set when logging exiting or when the logger queue
+ * is nonempty.
+ */
+static WhistCondition logger_queue_cond;
+/**
+ * Logger thread handle.
+ */
+static WhistThread logger_thread = NULL;
+/**
+ * Mutex protecting crash handling code.
+ */
+static WhistMutex crash_handler_mutex;
 
-// This is written to in MultiThreaderPrintf
-#define LOG_CACHE_SIZE 1000000
+static void log_single_line(const char* tag, const char* line) {
+    // Log to stdout.
+    fputs(line, stdout);
 
-void whist_init_logger(void) {
-    /*
-        Initializes the Whist logger.
-
-        Arguments:
-            None
-
-        Returns:
-            None
-    */
-
-    init_backtrace_handler();
-
-    run_multithreaded_printf = true;
-    logger_queue_mutex = whist_create_mutex();
-    logger_cache_mutex = whist_create_mutex();
-    logger_semaphore = whist_create_semaphore(0);
-    mprintf_thread =
-        whist_create_thread((WhistThreadFunction)multithreaded_printf, "MultiThreadedPrintf", NULL);
-    LOG_INFO("Logging initialized!");
+    // Log to the error monitor.
+    if (tag == WARNING_TAG) {
+        whist_error_monitor_log_breadcrumb(tag, line);
+    } else if (tag == ERROR_TAG || tag == FATAL_ERROR_TAG) {
+        whist_error_monitor_log_error(line);
+    }
 }
 
-void destroy_logger(void) {
-    // Flush out any remaining logs
-    flush_logs();
-
-    run_multithreaded_printf = false;
-    whist_post_semaphore(logger_semaphore);
-
-    whist_wait_thread(mprintf_thread, NULL);
-    mprintf_thread = NULL;
-
-    // Once these logger structures are destroyed it is no longer safe to crash (ha).
-    // Hopefully Sentry will be able to pick this up anyway.
-
-    whist_destroy_semaphore(logger_semaphore);
-    whist_destroy_mutex(logger_queue_mutex);
-    whist_destroy_mutex(logger_cache_mutex);
-
-    whist_destroy_mutex(crash_handler_mutex);
+static void log_flush_output(void) {
+    // Only the log to stdout needs an explicit flush.
+    fflush(stdout);
 }
 
-static int multithreaded_printf(void* opaque) {
-    UNUSED(opaque);
+static int logger_thread_function(void* ignored) {
+    // Logger thread: while active, repeatedly fetch a single item from
+    // the logger queue and log it.
+    whist_lock_mutex(logger_queue_mutex);
+    while (1) {
+        int thread_active, queue_size;
+        while (1) {
+            thread_active = atomic_load(&logger_thread_active);
+            queue_size = linked_list_size(&logger_queue);
+            if (!thread_active || queue_size > 0) break;
+            whist_wait_cond(logger_queue_cond, logger_queue_mutex);
+        }
+        if (!thread_active) break;
+        LoggerQueueItem* log = linked_list_extract_head(&logger_queue);
+        whist_unlock_mutex(logger_queue_mutex);
 
-    while (true) {
-        // Wait until signaled by printf to begin running
-        whist_wait_semaphore(logger_semaphore);
-
-        if (!run_multithreaded_printf) {
-            break;
+        log_single_line(log->tag, log->buf);
+        if (queue_size > 1) {
+            // We will be printing another line immediately, so don't
+            // want an explicit flush.
+        } else {
+            // Flush on the last log line.
+            log_flush_output();
         }
 
-        flush_logs();
+        whist_lock_mutex(logger_queue_mutex);
+        linked_list_add_head(&logger_freelist, log);
     }
-
+    whist_unlock_mutex(logger_queue_mutex);
     return 0;
 }
 
 void flush_logs(void) {
-    if (run_multithreaded_printf) {
-        // Clear the queue into the cache, and then let go of `logger_queue_mutex` as soon as
-        // possible so that mprintf can continue to accumulate.
-
-        // We must protect the cache using its own `logger_cache_mutex`, as it is a global cache and
-        // needs to be protected from concurrent `flush_logs` calls that may happen during debugging
-        // or shutdown.
-        whist_lock_mutex(logger_cache_mutex);
+    // Flush the whole log queue.
+    bool locked = false;
+    if (atomic_load(&logger_thread_active)) {
+        // If the logger thread is active then we need to avoid it
+        // colliding with our indepdently emptying the queue.
         whist_lock_mutex(logger_queue_mutex);
-        int cache_size = 0;
-        cache_size = logger_queue_size;
-        for (int i = 0; i < logger_queue_size; i++) {
-            safe_strncpy((char*)logger_queue_cache[i].buf,
-                         (const char*)logger_queue[logger_queue_index].buf, LOGGER_BUF_SIZE);
-            logger_queue_cache[i].tag = logger_queue[logger_queue_index].tag;
-            logger_queue[logger_queue_index].buf[0] = '\0';
-            logger_queue_index++;
-            logger_queue_index %= LOGGER_QUEUE_SIZE;
-            if (i != 0) {
-                whist_wait_semaphore(logger_semaphore);
-            }
-        }
-        logger_queue_size = 0;
+        locked = true;
+    } else {
+        // If the logger thread isn't active then we can empty the
+        // queue without taking the mutex.
+    }
+
+    LoggerQueueItem* log;
+    while ((log = linked_list_extract_head(&logger_queue))) {
+        log_single_line(log->tag, log->buf);
+        linked_list_add_head(&logger_freelist, log);
+    }
+
+    if (locked) {
         whist_unlock_mutex(logger_queue_mutex);
-
-        // Print all of the data into the cache
-        for (int i = 0; i < cache_size; i++) {
-            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 5] = '.';
-            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 4] = '.';
-            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 3] = '.';
-            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 2] = '\n';
-            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 1] = '\0';
-
-            // Log to stdout
-            fprintf(stdout, "%s", logger_queue_cache[i].buf);
-
-            // Log to the error monitor
-            const char* tag = logger_queue_cache[i].tag;
-            if (tag == WARNING_TAG) {
-                whist_error_monitor_log_breadcrumb(tag, (const char*)logger_queue_cache[i].buf);
-            } else if (tag == ERROR_TAG || tag == FATAL_ERROR_TAG) {
-                whist_error_monitor_log_error((const char*)logger_queue_cache[i].buf);
-            }
-        }
-        whist_unlock_mutex(logger_cache_mutex);
     }
 
-    // Flush the logs
-    fflush(stdout);
+    log_flush_output();
 }
 
-/**
- * This function escapes certain escape sequences in a log. It allocates heap
- * memory that must be later freed. Specifically, it by-default escapes "\b", "\f", "\r", "\t"
- * (Note: This comment is finicky with doxygen when it comes to escape sequences,
- * so double-check the doxygen docs if you're changing this documentation comment)
- *
- * @param old_string               A string with sequences we want escaped,
- *                                 e.g "some\tstring\r\n\r\n"
- * @param escape_all               If true, also escapes ", \, and newlines
- * @return                         The same string, escaped using only basic ASCII,
- *                                 "some\\\tstuff\\\r\n\\\r\n"
- *                                 "some\\\tstuff\\\r\\\n\\\r\\\n" <- escape_all=true
- */
-static char* escape_string(const char* old_string, bool escape_all) {
-    size_t old_string_len = strlen(old_string);
-    char* new_string = safe_malloc(2 * (old_string_len + 1));
-    int new_str_len = 0;
-    for (size_t i = 0; i < old_string_len; i++) {
-        switch (old_string[i]) {
-            case '\b':
-                new_string[new_str_len++] = '\\';
-                new_string[new_str_len++] = 'b';
-                break;
-            case '\f':
-                new_string[new_str_len++] = '\\';
-                new_string[new_str_len++] = 'f';
-                break;
-            case '\r':
-                new_string[new_str_len++] = '\\';
-                new_string[new_str_len++] = 'r';
-                break;
-            case '\t':
-                new_string[new_str_len++] = '\\';
-                new_string[new_str_len++] = 't';
-                break;
-            case '\"':
-                if (escape_all) {
-                    new_string[new_str_len++] = '\\';
-                    new_string[new_str_len++] = '\"';
-                    break;
-                }
-                // fall through
-            case '\\':
-                if (escape_all) {
-                    new_string[new_str_len++] = '\\';
-                    new_string[new_str_len++] = '\\';
-                    break;
-                }
-                // fall through
-            case '\n':
-                if (escape_all) {
-                    new_string[new_str_len++] = '\\';
-                    new_string[new_str_len++] = 'n';
-                    break;
-                }
-                // fall through
-            default:
-                new_string[new_str_len++] = old_string[i];
-                break;
+static size_t copy_and_escape(char* dst, size_t dst_size, const char* src) {
+    size_t d, s;
+
+    // Table of escape codes.
+    static const unsigned char escape_list[256] = {
+        ['\b'] = 'b',
+        ['\f'] = 'f',
+        ['\r'] = 'r',
+        ['\t'] = 't',
+    };
+
+    for (d = s = 0; src[s]; s++) {
+        unsigned char esc = escape_list[(int)src[s]];
+        if (esc) {
+            if (d >= dst_size - 2) break;
+            dst[d++] = '\\';
+            dst[d++] = esc;
+        } else {
+            if (d >= dst_size - 1) break;
+            dst[d++] = src[s];
         }
     }
-    new_string[new_str_len++] = '\0';
-    return new_string;
+
+    dst[d] = '\0';
+    return d;
 }
 
-// Our vararg function that gets called from LOG_INFO, LOG_WARNING, etc macros
-void internal_logging_printf(const char* tag, const char* fmt_str, ...) {
-    va_list args;
-    va_start(args, fmt_str);
+static void logger_queue_line(const char* tag, const char* prefix, const char* line) {
+    LoggerQueueItem* log;
+    bool overflow = false;
 
-    if (mprintf_thread == NULL) {
-        // If the logger isn't initialized yet, just write to stdout
-        vprintf(fmt_str, args);
-        fflush(stdout);
-    } else {
-        // Otherwise, use mprintf
-        mprintf(tag, fmt_str, args);
-    }
-
-    va_end(args);
-}
-
-static void mprintf_queue_line(const char* line_fmt, const char* tag, const char* line) {
-    /*
-        Queues a line of a log message to be printed by the logger thread. Warns the
-        user if this queued line is overwriting an existing entry on the queue or if
-        the queue is full.
-
-        Note:
-            This should be called from `mprintf`, with a lock on `logger_queue_mutex` held.
-
-        Arguments:
-            line_fmt (const char*): How to format the line (for the first line of a
-                message, this can just be "%s\n". For subsequent lines, we need to
-                indent the line by a few spaces for clarity.)
-            tag (const char*): The tag to use for the log message
-            line (const char*): The (unsanitized) log message itself
-    */
-
-    if (logger_queue_size >= LOGGER_QUEUE_SIZE - 1 || tag == NULL || line == NULL ||
-        line_fmt == NULL) {
-        // If the queue is full, we just drop the log
-        return;
-    }
-    int index = (logger_queue_index + logger_queue_size) % LOGGER_QUEUE_SIZE;
-    char* dest = (char*)logger_queue[index].buf;
-
-    char* sanitized_line = escape_string(line, false);
-
-    if (logger_queue_size == LOGGER_QUEUE_SIZE - 2) {
-        // If the queue is becoming full, warn the user
-        // Technically we should check if we are overwriting an existing message,
-        // but the only really important thing is that the queue is full.
-        snprintf(dest, LOGGER_QUEUE_SIZE, "%s\nLog buffer maxed out!\n", sanitized_line);
-
-        // Automatically make queue fills a warning
-        logger_queue[index].tag = WARNING_TAG;
-    } else if (logger_queue[index].buf[0] != '\0') {
-        // If we are overwriting an existing message, warn the user
-        // We ignore `line_fmt` here because indenting make it hard to read
-        char old_message[LOGGER_BUF_SIZE];
-        memcpy(old_message, dest, LOGGER_BUF_SIZE);
-        int written = snprintf(dest, LOGGER_BUF_SIZE, "Log overwrite!\nOLD | %s\nNEW | %s\n",
-                               old_message, sanitized_line);
-        if (written < 0 || written >= LOGGER_BUF_SIZE) {
-            // This should never happen, but just in case...
-            dest[LOGGER_BUF_SIZE - 1] = '\0';
+    // Get a free queue item to write to.
+    whist_lock_mutex(logger_queue_mutex);
+    log = linked_list_extract_head(&logger_freelist);
+    if (!log) {
+        // Logger queue has overflowed: steal the oldest unwritten
+        // message from the queue and replace it.
+        log = linked_list_extract_head(&logger_queue);
+        if (!log) {
+            // Each thread can only hold one queue item at a time, so
+            // this implies that at least LOGGER_QUEUE_SIZE threads are
+            // running and all of them are acting on queue items right
+            // now.  Something has gone very wrong if that is true, so
+            // just send our message to stdout and give up.
+            whist_unlock_mutex(logger_queue_mutex);
+            printf("%s\n", line);
+            return;
         }
-        // Automatically make overwrites a warning
-        logger_queue[index].tag = WARNING_TAG;
-    } else {
-        // Normally, just copy the message according to the line format
-        snprintf(dest, LOGGER_BUF_SIZE, line_fmt, sanitized_line);
-        logger_queue[index].tag = tag;
+        overflow = true;
+    }
+    whist_unlock_mutex(logger_queue_mutex);
+
+    // Write queue item.
+    char* buf = log->buf;
+    size_t buf_size = sizeof(log->buf);
+    size_t pos = 0;
+    if (prefix) {
+        size_t prefix_size = strlen(prefix);
+        strcpy(buf, prefix);
+        pos += prefix_size;
+    }
+    pos += copy_and_escape(buf + pos, buf_size - pos, line);
+
+    // If we overflowed, note after the message that it happened.
+    if (overflow) {
+        int ret = snprintf(buf + pos, buf_size - pos, "\nLog buffer overflowing!");
+        if (ret > 0) pos += ret;
+        // Overflowing is always at least a warning.
+        if (tag != ERROR_TAG) tag = WARNING_TAG;
     }
 
-    free(sanitized_line);
+    // If we truncated, add ellipses to indicate that.
+    if (pos >= buf_size - 5) {
+        pos = buf_size - 2;
+        buf[pos - 3] = '.';
+        buf[pos - 2] = '.';
+        buf[pos - 1] = '.';
+    }
+    // Add trailing newline.
+    buf[pos++] = '\n';
+    buf[pos] = '\0';
 
-    ++logger_queue_size;
-    whist_post_semaphore(logger_semaphore);
+    log->tag = tag;
+
+    // Add the item to the back of the logger queue.
+    whist_lock_mutex(logger_queue_mutex);
+    linked_list_add_tail(&logger_queue, log);
+    whist_broadcast_cond(logger_queue_cond);
+    whist_unlock_mutex(logger_queue_mutex);
+}
+
+void whist_init_logger(void) {
+    init_backtrace_handler();
+
+    linked_list_init(&logger_queue);
+    linked_list_init(&logger_freelist);
+
+    // Fill message freelist with our static array of empty items.
+    static LoggerQueueItem logger_queue_items[LOGGER_QUEUE_SIZE];
+    for (int i = 0; i < LOGGER_QUEUE_SIZE; i++)
+        linked_list_add_tail(&logger_freelist, &logger_queue_items[i]);
+
+    logger_queue_mutex = whist_create_mutex();
+    logger_queue_cond = whist_create_cond();
+
+    // Enable threaded logging so other threads can use it now.
+    atomic_store(&logger_thread_active, 1);
+
+    // Create the logger thread to handle log messages.
+    logger_thread = whist_create_thread(&logger_thread_function, "Logger Thread", NULL);
+
+    LOG_INFO("Logging initialized!");
+}
+
+void destroy_logger(void) {
+    // Signal the logger thread to exit, then join it.
+    whist_lock_mutex(logger_queue_mutex);
+    atomic_store(&logger_thread_active, 0);
+    whist_broadcast_cond(logger_queue_cond);
+    whist_unlock_mutex(logger_queue_mutex);
+    whist_wait_thread(logger_thread, NULL);
+
+    // Ensure that all outstanding writers have completed.
+    while (atomic_load(&logger_thread_writers) > 0) {
+        whist_sleep(1);
+    }
+
+    // Flush any outstanding logs from the queue.
+    flush_logs();
+
+    // Destroy mutexes.
+    whist_destroy_mutex(logger_queue_mutex);
+    whist_destroy_cond(logger_queue_cond);
+
+    // Once this mutext is destroyed it is no longer safe to crash (ha).
+    // Hopefully Sentry will be able to pick this up anyway.
+    whist_destroy_mutex(crash_handler_mutex);
+
+    // Debug check: if we get here and the logger queue is not empty
+    // and the freelist full then something has gone wrong.
+    if (linked_list_size(&logger_queue) != 0 ||
+        linked_list_size(&logger_freelist) != LOGGER_QUEUE_SIZE) {
+        LOG_WARNING("Logger queue was not emptied correctly (%d, %d).",
+                    linked_list_size(&logger_queue), linked_list_size(&logger_freelist));
+    }
 }
 
 // Core multithreaded printf function, that accepts va_list and log boolean
 static void mprintf(const char* tag, const char* fmt_str, va_list args) {
-    whist_lock_mutex(logger_queue_mutex);
-
     // After calls to function which invoke VA args, the args are
     // undefined so we copy
     va_list args_copy;
@@ -366,21 +369,38 @@ static void mprintf(const char* tag, const char* fmt_str, va_list args) {
     // the full log formatting time | type | file | log_msg
     // subsequent lines start with | followed by 4 spaces
     char* current_line = strtok_r(full_message, "\n", &strtok_context);
-    mprintf_queue_line("%s\n", tag, current_line);
+    logger_queue_line(tag, NULL, current_line);
 
     // Now, log the rest of the lines with the indent of 4 spaces
     current_line = strtok_r(NULL, "\n", &strtok_context);
     while (current_line != NULL) {
-        mprintf_queue_line("|    %s\n", tag, current_line);
+        logger_queue_line(tag, "|    ", current_line);
         current_line = strtok_r(NULL, "\n", &strtok_context);
     }
 
     // Free the temp buf, making sure to do it after we're done with `strtok_r`
     free(full_message);
-
-    whist_unlock_mutex(logger_queue_mutex);
 }
 
+// Our vararg function that gets called from LOG_INFO, LOG_WARNING, etc macros
+void internal_logging_printf(const char* tag, const char* fmt_str, ...) {
+    va_list args;
+    va_start(args, fmt_str);
+
+    atomic_fetch_add(&logger_thread_writers, 1);
+
+    if (atomic_load(&logger_thread_active)) {
+        mprintf(tag, fmt_str, args);
+    } else {
+        // Logger is not running, just write to stdout.
+        vprintf(fmt_str, args);
+        fflush(stdout);
+    }
+
+    va_end(args);
+
+    atomic_fetch_sub(&logger_thread_writers, 1);
+}
 void print_stacktrace(void) {
     /*
         Prints the stacktrace that led to the point at which this function was called.
