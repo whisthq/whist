@@ -1,5 +1,5 @@
-import { take, filter } from "rxjs/operators"
 import { of } from "rxjs"
+import { take, filter, withLatestFrom } from "rxjs/operators"
 import Sentry from "@sentry/electron"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
@@ -33,6 +33,7 @@ import {
   CACHED_USER_EMAIL,
   ONBOARDED,
 } from "@app/constants/store"
+import { NO_PAYMENT_ERROR } from "@app/constants/error"
 import { networkAnalyze } from "@app/main/utils/networkAnalysis"
 import { accessToken } from "@whist/core-ts"
 import { destroyElectronWindow, hideElectronWindow } from "../utils/windows"
@@ -66,7 +67,11 @@ withAppActivated(
   createOmnibar()
 })
 
-withAppActivated(fromTrigger(WhistTrigger.stripeAuthRefresh)).subscribe(() => {
+withAppActivated(fromTrigger(WhistTrigger.stripeAuthRefresh).pipe(
+  withLatestFrom(fromTrigger(WhistTrigger.protocolConnection))
+)).subscribe(([, connected]: [any, boolean]) => {
+  if(!connected) createLoadingWindow()
+
   destroyElectronWindow(WindowHashPayment)
 })
 
@@ -99,16 +104,10 @@ withAppActivated(fromTrigger(WhistTrigger.showPaymentWindow)).subscribe(() => {
   hideElectronWindow(WindowHashOmnibar)
   createPaymentWindow({
     accessToken,
-  }).catch((err) => Sentry.captureException(err))
+  })
+    .then(() => destroyElectronWindow(NO_PAYMENT_ERROR))
+    .catch((err) => Sentry.captureException(err))
 })
-
-withAppActivated(fromTrigger(WhistTrigger.checkPaymentFlowFailure)).subscribe(
-  ({ accessToken }: accessToken) => {
-    createPaymentWindow({
-      accessToken,
-    }).catch((err) => Sentry.captureException(err))
-  }
-)
 
 withAppActivated(fromTrigger(WhistTrigger.authFlowSuccess)).subscribe(() => {
   const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
