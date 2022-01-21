@@ -110,11 +110,12 @@ const createElectronWindow = (args: {
 
   // When the window is ready to be shown, show it
   win.once("ready-to-show", () => (args?.show ?? true) && win.show())
-  
+
   // If we want to load a URL into a BrowserWindow, we first load it into a
   // BrowserView and attach it to the BrowserWindow. This is our trick to make the
   // window both frameless and draggable.
-  if (args.customURL !== undefined) return { win, view: createView(args.customURL, win) }
+  if (args.customURL !== undefined)
+    return { win, view: createView(args.customURL, win) }
 
   return { win, view: undefined }
 }

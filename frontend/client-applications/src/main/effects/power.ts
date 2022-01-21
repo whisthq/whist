@@ -35,7 +35,9 @@ merge(
       merge(
         fromTrigger(WhistTrigger.relaunchAction),
         fromTrigger(WhistTrigger.clearCacheAction),
-        fromTrigger(WhistTrigger.updateDownloaded),
+        fromTrigger(WhistTrigger.updateDownloaded).pipe(
+          takeUntil(fromTrigger(WhistTrigger.mandelboxFlowSuccess))
+        ),
         fromTrigger(WhistTrigger.userRequestedQuit)
       )
     )
