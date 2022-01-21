@@ -172,7 +172,6 @@ def build_client_on_instance(
     print("Finished building the dev client mandelbox on the EC2 instance")
 
 
-
 def setup_network_conditions_client(
     pexpect_process, pexpect_prompt, network_conditions, running_in_ci
 ):
@@ -240,7 +239,6 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
     command2 = "dnctl -q flush"
     pexpect_process.sendline(command2)
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
-
 
 
 def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
