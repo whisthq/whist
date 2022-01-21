@@ -9,7 +9,6 @@ import ReactDOM from "react-dom"
 
 import { OneButtonError, TwoButtonError } from "@app/renderer/pages/error"
 import Signout from "@app/renderer/pages/signout"
-import Typeform from "@app/renderer/pages/typeform"
 import Importer from "@app/renderer/pages/importer"
 import Update from "@app/renderer/pages/update"
 import Network from "@app/renderer/pages/network"
@@ -20,7 +19,6 @@ import { Provider } from "@app/renderer/context/omnibar"
 
 import {
   WindowHashSignout,
-  WindowHashBugTypeform,
   WindowHashUpdate,
   WindowHashImport,
   WindowHashOnboarding,
@@ -133,10 +131,6 @@ const RootComponent = () => {
   if (show === WindowHashLoading) {
     return <Loading networkInfo={mainState.networkInfo} />
   }
-  if (show === WindowHashBugTypeform)
-    return (
-      <Typeform onSubmit={() => {}} id="VMWBFgGc" email={mainState.userEmail} />
-    )
   if (show === NO_PAYMENT_ERROR)
     return (
       <TwoButtonError
