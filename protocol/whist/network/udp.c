@@ -13,6 +13,7 @@ Includes
 #include <whist/utils/aes.h>
 #include <whist/utils/fec.h>
 #include <whist/network/ringbuffer.h>
+#include <whist/logging/log_statistic.h>
 
 #ifndef _WIN32
 #include <fcntl.h>
@@ -115,7 +116,7 @@ typedef struct {
     double fec_packet_ratios[NUM_PACKET_TYPES];
 
     // to keep track of "freed" packets
-    void** decrypted_packets[NUM_PACKET_TYPES];
+    void* decrypted_packets[NUM_PACKET_TYPES];
 
     // ping information
     int last_ping_id;
@@ -187,7 +188,7 @@ Private Functions
  * @note                           This may overwrite the timeout on context->socket,
  *                                 Use set_timeout to restore it
  */
-int create_udp_server_context(UDPContext* context, int port, int recvfrom_timeout_ms,
+int create_udp_server_context(UDPContext* context, int port,
                               int connection_timeout_ms);
 
 /**
@@ -225,7 +226,7 @@ static int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet);
  * @param index                    The index of the nack'ed packet
  *                                 (The UDP packet index into the larger WhistPacket)
  */
-static int udp_handle_nack(SocketContext* context, WhistPacketType type, int id, int index);
+static int udp_handle_nack(UDPContext* context, WhistPacketType type, int id, int index);
 
 /**
  * @brief                   Handle any UDPPacket that's not a Whist segment, e.g. nack messages and network setting updates
@@ -334,11 +335,6 @@ void udp_update(void* raw_context, bool should_recv) {
     // should_recv is only for TCP
     FATAL_ASSERT(should_recv == false);
 
-    if (context->decrypted_packet_used) {
-        LOG_ERROR("Cannot use context->decrypted_packet buffer! Still being used somewhere else!");
-        return;
-    }
-
     // Wait to receive packet over TCP, until timing out
     UDPNetworkPacket udp_network_packet;
     int recv_len = recv_no_intr(context->socket, (char*)&udp_network_packet, sizeof(udp_network_packet), 0);
@@ -355,7 +351,7 @@ void udp_update(void* raw_context, bool should_recv) {
         //  the addition check on payload_size doesn't maliciously overflow
         // ~ We make an addition check, to ensure that the payload_size matches recv_len
         if (recv_len < UDPNETWORKPACKET_HEADER_SIZE ||
-            udp_network_packet.payload_size < 0 || sizeof(udp_network_packet.payload) < udp_network_packet.payload_size ||
+            udp_network_packet.payload_size < 0 || (int)sizeof(udp_network_packet.payload) < udp_network_packet.payload_size ||
             UDPNETWORKPACKET_HEADER_SIZE + udp_network_packet.payload_size != recv_len) {
             LOG_WARNING("The UDPPacket's payload size %d doesn't agree with recv_len %d!",
                         udp_network_packet.payload_size, recv_len);
@@ -398,7 +394,7 @@ void udp_update(void* raw_context, bool should_recv) {
 
             // put the decrypted packet in the correct ringbuffer
             if (context->ring_buffers[packet_type] != NULL) {
-                ring_buffer_receive_segment(context->ring_buffers[packet_type], &udp_packet);
+                ring_buffer_receive_segment(context->ring_buffers[packet_type], &udp_packet.udp_whist_segment_data);
             } else {
                 // if there is no ring buffer (packet is message), store it in the 1-packet buffer instead
                 // memcpy the segment_data (WhistPacket) into last_packets
@@ -430,6 +426,21 @@ void udp_update(void* raw_context, bool should_recv) {
     }
 }
 
+void udp_free_packet(void* raw_context, void* udp_packet) {
+    UDPContext* context = raw_context;
+
+    // go through context->decrypted_packets, I guess
+    for (int i = 0; i < NUM_PACKET_TYPES; i++) {
+        if (context->decrypted_packets[i] == udp_packet) {
+            context->decrypted_packets[i] = NULL;
+            return;
+        }
+    }
+    LOG_ERROR("Tried to udp_free_packet, but couldn't find the packet!");
+    return;
+}
+
+
 void* udp_get_packet(void* raw_context, WhistPacketType type) {
     UDPContext* context = raw_context;
     RingBuffer* ring_buffer = context->ring_buffers[type];
@@ -441,7 +452,7 @@ void* udp_get_packet(void* raw_context, WhistPacketType type) {
 
     switch (type) {
         case PACKET_MESSAGE: {
-            context->decrypted_packets[type] = &context->last_packets[PACKET_MESSAGE];
+            context->decrypted_packets[type] = (void*)&context->last_packets[PACKET_MESSAGE];
             return &context->last_packets[PACKET_MESSAGE];
         }
         case PACKET_AUDIO: {
@@ -475,26 +486,12 @@ void* udp_get_packet(void* raw_context, WhistPacketType type) {
     int next_to_play_id = ring_buffer->last_rendered_id + 1;
     if (is_ready_to_render(ring_buffer, next_to_play_id)) {
         FrameData* frame = set_rendering(ring_buffer, next_to_play_id);
-        context->decrypted_packets[type] = frame;
+        context->decrypted_packets[type] = (void*)frame;
         return frame;
     } else {
         // no frame ready yet
         return NULL;
     }
-}
-
-void udp_free_packet(void* raw_context, void* udp_packet) {
-    UDPContext* context = raw_context;
-
-    // go through context->decrypted_packets, I guess
-    for (int i = 0; i < NUM_PACKET_TYPES; i++) {
-        if (context->decrypted_packets[i] == udp_packet) {
-            context->decrypted_packets[i] = NULL;
-            return;
-        }
-    }
-    LOG_ERROR("Tried to udp_free_packet, but couldn't find the packet!");
-    return;
 }
 
 // NOTE that this function is in the hotpath.
@@ -507,7 +504,9 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
      */
 
     FATAL_ASSERT(context != NULL);
-    FATAL_ASSERT(segment_size <= sizeof(UDPPacket));
+    // TODO: I don't know where we're supposed to get the size, 
+    // leaving this line of code in for now
+    // FATAL_ASSERT(segment_size <= sizeof(UDPPacket));
     int udp_packet_size = get_udp_packet_size(udp_packet);
 
     UDPNetworkPacket udp_network_packet;
@@ -683,7 +682,9 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* payloa
     return 0;
 }
 
-void udp_update_network_settings(UDPContext* context, NetworkSettings network_settings) {
+void udp_update_network_settings(SocketContext* socket_context, NetworkSettings network_settings) {
+    UDPContext* context = (UDPContext*)socket_context->context;
+
     int burst_bitrate = network_settings.burst_bitrate;
     double video_fec_ratio = network_settings.video_fec_ratio;
     double audio_fec_ratio = network_settings.audio_fec_ratio;
@@ -702,7 +703,7 @@ void udp_update_network_settings(UDPContext* context, NetworkSettings network_se
     context->fec_packet_ratios[PACKET_AUDIO] = audio_fec_ratio;
 }
 
-void udp_register_ring_buffer(SocketContext* socket_context, WhistPacketType type, int max_frame_size, int num_buffers, NackPacketFn nack_packet, StreamResetFn request_stream_reset) {
+void udp_register_ring_buffer(SocketContext* socket_context, WhistPacketType type, int max_frame_size, int num_buffers) {
     UDPContext* context = socket_context->context;
 
     int type_index = (int)type;
@@ -759,7 +760,8 @@ void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType typ
         // Set just the ID, but don't memset the entire region to 0,
         // Or you'll make the kernel allocate all of the memory
         for (int j = 0; j < max_num_ids; j++) {
-            context->nack_buffers[type_index][i][j].id = 0;
+            // TODO: is this correct >_<
+            context->nack_buffers[type_index][i][j].udp_whist_segment_data.id = 0;
         }
     }
 }
@@ -818,8 +820,10 @@ int udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, in
 void udp_destroy_socket_context(void* raw_context) {
     UDPContext* context = raw_context;
 
-    if (context->decrypted_packet_used) {
-        LOG_ERROR("Destroyed the socket context, but didn't free the most recent UDP packet!");
+    for (int i = 0; i <= NUM_PACKET_TYPES; i++) {
+        if (context->decrypted_packets[i] != NULL) {
+            LOG_ERROR("Destroyed the socket context, but didn't free the most recent UDP packet!");
+        }
     }
 
     // Deallocate the nack buffers
@@ -849,26 +853,6 @@ void udp_destroy_socket_context(void* raw_context) {
 Private Function Implementations
 ============================
 */
-
-// TODO: move stream reset function here too
-//
-void ring_buffer_nack_packet(SocketContext* socket_context, WhistPacketType frame_type, int id, int index) {
-    /*
-        Nack the packet at ID id and index index.
-
-        Arguments:
-            frame_type (WhistPacketType): the packet type
-            id (int): Frame ID of the packet
-            index (int): index of the packet
-    */
-    WhistClientMessage wcmsg = {0};
-    wcmsg.type = MESSAGE_NACK;
-    wcmsg.simple_nack.type = frame_type;
-    wcmsg.simple_nack.id = id;
-    wcmsg.simple_nack.index = index;
-    // TODO: send this over the given socket_context using udp_send_packet
-    send_wcmsg(&wcmsg);
-}
 
 /*
 ============================
@@ -952,10 +936,10 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
 
     int ret;
     if (destination == NULL) {
-        ret = create_udp_server_context(context, port, recvfrom_timeout_ms,
+        ret = create_udp_server_context(context, port,
                                         connection_timeout_ms);
     } else {
-        ret = create_udp_client_context(context, destination, port, recvfrom_timeout_ms,
+        ret = create_udp_client_context(context, destination, port,
                                         connection_timeout_ms);
     }
 
@@ -1010,18 +994,17 @@ int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms) {
 
 bool udp_get_pending_stream_reset(SocketContext* socket_context, WhistPacketType type) {
     UDPContext* context = (UDPContext*)socket_context->context;
-    if (reset_data[type].pending_stream_reset) {
-        int greatest_failed_id = reset_data[type].greatest_failed_id;
+    if (context->reset_data[type].pending_stream_reset) {
+        int greatest_failed_id = context->reset_data[type].greatest_failed_id;
         // We only need to propagate a stream reset once
-        reset_data[type].pending_stream_reset = false;
+        context->reset_data[type].pending_stream_reset = false;
         // If it's the start-of-stream,
         // Or we've failed an ID > the last start-of-stream,
         // Then we should propagate the stream reset
         // TODO: Also do this when we haven't received an ACK from the client in a while
-        return greatest_failed_id == -1 || greatest_failed_id > data.last_start_of_stream_id[type];
-    } else {
-        return false;
+        return greatest_failed_id == -1 || greatest_failed_id > context->last_start_of_stream_id[type];
     }
+    return false;
 }
 
 /*
@@ -1107,19 +1090,19 @@ int create_udp_client_context(UDPContext* context, char* destination, int port,
 #include <stddef.h>
 int get_udp_packet_size(UDPPacket* udp_packet) {
     switch(udp_packet->type) {
-    UDP_WHIST_SEGMENT: {
+    case UDP_WHIST_SEGMENT: {
         return offsetof(UDPPacket, udp_whist_segment_data.segment_data) + udp_packet->udp_whist_segment_data.segment_size;
     }
-    UDP_NACK:
+    case UDP_NACK:
         return offsetof(UDPPacket, udp_nack_data) + sizeof(udp_packet->udp_nack_data);
-    UDP_BITARRAY_NACK:
+    case UDP_BITARRAY_NACK:
         return offsetof(UDPPacket, udp_bitarray_nack_data) + sizeof(udp_packet->udp_bitarray_nack_data);
-    UDP_STREAM_RESET:
+    case UDP_STREAM_RESET:
         return offsetof(UDPPacket, udp_stream_reset_data) + sizeof(udp_packet->udp_stream_reset_data);
-    UDP_PING:
-    UDP_PONG:
+    case UDP_PING:
+    case UDP_PONG:
         return offsetof(UDPPacket, udp_ping_data) + sizeof(udp_packet->udp_ping_data);
-    UDP_NETWORK_SETTINGS:
+    case UDP_NETWORK_SETTINGS:
         return offsetof(UDPPacket, udp_network_settings_data) + sizeof(udp_packet->udp_network_settings_data);
     default:
         LOG_FATAL("Unknown UDP Packet Type: %d", udp_packet->type);

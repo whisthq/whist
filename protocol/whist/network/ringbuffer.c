@@ -88,6 +88,9 @@ static int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* 
  */
 static bool try_nacking(RingBuffer* ring_buffer, double latency);
 
+// TODO: document this
+char* get_framebuffer(RingBuffer* ring_buffer, FrameData* current_frame);
+
 /*
 ============================
 Public Function Implementations
