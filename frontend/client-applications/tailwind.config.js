@@ -10,7 +10,7 @@ module.exports = {
     // override some of the default utilities.
     extend: {
       fontFamily: {
-        body: ["Myriad-Pro"],
+        body: ["Josefin-Sans"],
       },
       colors: {
         transparent: "transparent",
