@@ -74,6 +74,9 @@ untilUpdateAvailable(
   withAppActivated(fromTrigger(WhistTrigger.protocolError))
 ).subscribe(() => {
   createErrorWindow(PROTOCOL_ERROR)
+  destroyElectronWindow(WindowHashLoading)
+  destroyElectronWindow(WindowHashOnboarding)
+  destroyElectronWindow(WindowHashImport)
 })
 
 // If we detect that the user to a location where another datacenter is closer
