@@ -8,7 +8,7 @@ import { configGet, configPost, configPut } from "@whist/core-ts"
 import config from "@app/config/environment"
 import { sessionID } from "@app/constants/app"
 
-import { logBase } from "@app/main/utils/logging"
+import { logging } from "@app/main/utils/logging"
 
 /*
  * @whist/core-ts http functions like "get" and "post"
@@ -40,18 +40,18 @@ export const withSessionID = (body: object) => {
 }
 
 export const get = (...args: any) => {
-  logBase("GET request sent", args)
+  logging("GET request sent", args)
   return configGet(httpConfig)(...args)
 }
 
 export const post = (...args: any) => {
-  logBase("POST request sent", args)
+  logging("POST request sent", args)
   return configPost(httpConfig)(...args)
 }
 export const hostPut =
   (server: string) =>
   (...args: any) => {
-    logBase("PUT request sent", args)
+    logging("PUT request sent", args)
     return configPut({
       server,
     })(...args)

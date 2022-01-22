@@ -31,10 +31,10 @@ const createView = (url: string, win?: BrowserWindow) => {
   if (win !== undefined) {
     win.setBrowserView(view)
     view.setBounds({
-      x: 20,
+      x: 0,
       y: 30,
-      width: win.getSize()[0] - 40,
-      height: win.getSize()[1] - 60,
+      width: win.getSize()[0],
+      height: win.getSize()[1] - 30,
     })
   }
 
@@ -60,7 +60,8 @@ const showElectronWindow = (hash: string) => {
 }
 
 const destroyElectronWindow = (hash: string) => {
-  getElectronWindow(hash)?.destroy()
+  const win = getElectronWindow(hash)
+  win?.destroy()
 }
 
 const isElectronWindowVisible = (hash: string) =>

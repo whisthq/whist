@@ -12,7 +12,9 @@ const relaunch = (options?: { sleep: boolean }) => {
   options?.sleep ?? false
     ? app.relaunch({ args: process.argv.slice(1).concat(["--sleep"]) })
     : app.relaunch()
-  app.quit()
+  // Because the omnibar is not closable by the user, we call app.exit() to force it to close as a
+  // last resort
+  app.exit()
 }
 
 export { relaunch }
