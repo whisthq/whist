@@ -150,6 +150,8 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
     ring_buffer->num_packets_received = 0;
     ring_buffer->num_frames_rendered = 0;
 
+    start_timer(&ring_buffer->network_statistics_timer);
+
     return ring_buffer;
 }
 
@@ -457,7 +459,26 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
 }
 
 NetworkStatistics get_network_statistics(RingBuffer* ring_buffer) {
-    // TODO: Return the network statistics
+    // Get the time since last `get_network_statistics` call
+    double statistics_time = get_timer(&ring_buffer->network_statistics_timer);
+
+    // Calculate network statistics over that time interval
+    NetworkStatistics network_statistics = {0};
+    network_statistics.num_nacks_per_second =
+        ring_buffer->num_packets_nacked / statistics_time;
+    network_statistics.num_received_packets_per_second =
+        ring_buffer->num_packets_received / statistics_time;
+    network_statistics.num_rendered_frames_per_second =
+        ring_buffer->num_frames_rendered / statistics_time;
+
+    // Reset the ringbuffer statistics' tracking, and the statistics timer
+    ring_buffer->num_packets_nacked = 0;
+    ring_buffer->num_packets_received = 0;
+    ring_buffer->num_frames_rendered = 0;
+    start_timer(&ring_buffer->network_statistics_timer);
+
+    // Return the calculated network statistics
+    return network_statistics;
 }
 
 void destroy_ring_buffer(RingBuffer* ring_buffer) {

@@ -72,7 +72,6 @@ struct AudioContext {
     // True if the audio device is pending a refresh
     bool pending_refresh;
 
-    RingBuffer* ring_buffer;
     SDL_AudioDeviceID dev;
     AudioDecoder* audio_decoder;
 
@@ -82,9 +81,6 @@ struct AudioContext {
     AudioFrame* render_context;
     // true if and only if the audio packet in render_context should be played
     bool pending_render_context;
-
-    // The last ID we've processed for rendering
-    int last_played_id;
 
     // Overflow/underflow state
     bool is_flushing_audio;
@@ -154,7 +150,6 @@ AudioContext* init_audio() {
     audio_context->audio_frequency = -1;
     audio_context->pending_refresh = true;
     audio_context->pending_render_context = false;
-    audio_context->last_played_id = -1;
     audio_context->dev = 0;
     audio_context->audio_decoder = NULL;
     audio_context->is_flushing_audio = false;
@@ -171,7 +166,6 @@ void destroy_audio(AudioContext* audio_context) {
     destroy_audio_device(audio_context);
 
     // Free the audio struct
-    destroy_ring_buffer(audio_context->ring_buffer);
     free(audio_context);
 }
 
@@ -183,28 +177,23 @@ void refresh_audio_device(AudioContext* audio_context) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-void receive_audio(AudioContext* audio_context, WhistPacket* packet) {
+void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
     // ===========================
     // BEGIN NEW CODE
     // ===========================
     if (is_overflowing_audio(audio_context)) {
         // if we're overflowing, discard the packet but pretend we played it
-        audio_context->last_played_id = packet->id;
-        LOG_WARNING("Audio queue full, skipping ID %d", audio_context->last_played_id);
+        LOG_WARNING("Audio queue full, skipping it!");
         return;
     }
     // otherwise, push the audio frame to the render context
     if (!audio_context->pending_render_context) {
-        // send a frame to the renderer and set audio_context->pending_render_context to true to signal readiness
-        if (audio_context->last_played_id != -1) {
-            // give data pointer to the audio context
-            audio_context->render_context = packet->data;
-            // increment last_rendered_id
-            LOG_DEBUG("received packet with ID %d, audio last played %d", packet->id, audio_context->last_played_id);
-            audio_context->last_played_id = packet->id;
-            // signal to the renderer that we're ready
-            audio_context->pending_render_context = true;
-        }
+        // give data pointer to the audio context
+        audio_context->render_context = audio_frame;
+        // increment last_rendered_id
+        // LOG_DEBUG("received packet with ID %d, audio last played %d", packet->id, audio_context->last_played_id);
+        // signal to the renderer that we're ready
+        audio_context->pending_render_context = true;
     } else {
         LOG_ERROR("We tried to send the audio context a frame when it wasn't ready!");
     }

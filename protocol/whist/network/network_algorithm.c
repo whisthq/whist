@@ -67,10 +67,6 @@ Public Function Implementations
 */
 
 NetworkSettings get_desired_network_settings(NetworkStatistics stats) {
-    // If there are no statistics stored, just return the default network settings
-    if (!stats.statistics_gathered) {
-        return default_network_settings;
-    }
     NetworkSettings network_settings = timed_ewma_ratio_bitrate(stats);
     network_settings.fps = default_network_settings.fps;
     network_settings.audio_fec_ratio = default_network_settings.audio_fec_ratio;

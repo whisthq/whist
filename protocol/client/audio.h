@@ -62,14 +62,14 @@ void refresh_audio_device(AudioContext* audio_context);
 /**
  * @brief                          Receive audio packet
  *
- * @param audio_context            The audio context to give the audio packet to
+ * @param audio_context            The audio context to give the audio frame to
  *
- * @param packet                   Packet as received from the server
+ * @param audio_frame              Audio Frame to give to the audio context
  *
  * @note                           This function is guaranteed to return virtually instantly.
  *                                 It may be used in any hotpaths.
  */
-void receive_audio(AudioContext* audio_context, WhistPacket* packet);
+void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame);
 
 /**
  * @brief                          Does any pending work the audio context

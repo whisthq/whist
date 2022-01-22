@@ -21,6 +21,7 @@ Includes
 
 #include <whist/core/whist.h>
 #include <whist/utils/fec.h>
+#include <whist/network/network_algorithm.h>
 
 /*
 ============================
@@ -94,11 +95,13 @@ typedef struct RingBuffer {
     int currently_rendering_id;
     FrameData currently_rendering_frame;
 
-    // *** START FOR BITRATE STAT CALCULATIONS ***
+    // *** START OF BITRATE STAT CALCULATIONS ***
+    WhistTimer network_statistics_timer;
     int num_packets_nacked;
     int num_packets_received;
     int num_frames_rendered;
-    // *** DONE FOR BITRATE STAT CALCULATIONS ***
+    // *** END OF BITRATE STAT CALCULATIONS ***
+
     int frames_received;
     int max_id;
 
@@ -214,6 +217,10 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
  * @brief                         Get network statistics from the ringbuffer
  * 
  * @param ring_buffer             The ringbuffer to get network statistics from
+ * 
+ * @note                          Statistics will be taken from the time between the current time,
+ *                                and the last call to get_network_statistics
+ *                                (Or, from init_ring_buffer, on the first call)
  */
 NetworkStatistics get_network_statistics(RingBuffer* ring_buffer);
 

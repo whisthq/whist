@@ -85,44 +85,44 @@ WhistRenderer* init_renderer() {
     return whist_renderer;
 }
 
-void renderer_receive_packet(WhistRenderer* whist_renderer, WhistPacket* packet) {
+bool renderer_wants_frame(WhistRenderer* renderer, WhistPacketType packet_type, int num_buffered_frames) {
+    switch (packet_type) {
+        case PACKET_VIDEO: {
+            return video_ready_for_frame(renderer->video_context);
+        }
+        case PACKET_AUDIO: {
+            return audio_ready_for_frame(renderer->audio_context, num_buffered_frames);
+        }
+        default: {
+            LOG_FATAL("Unknown packet type! %d", (int)packet_type);
+        }
+    }
+
+}
+
+void renderer_receive_frame(WhistRenderer* whist_renderer, WhistPacketType packet_type, void* frame) {
     WhistTimer statistics_timer;
 
     // Pass the receive packet into the video or audio context
-    switch (packet->type) {
-        case PACKET_AUDIO: {
-            TIME_RUN(receive_audio(whist_renderer->audio_context, packet), AUDIO_RECEIVE_TIME,
+    switch (packet_type) {
+        case PACKET_VIDEO: {
+            TIME_RUN(receive_video(whist_renderer->video_context, (VideoFrame*)frame), VIDEO_RECEIVE_TIME,
                      statistics_timer);
             break;
         }
-        case PACKET_VIDEO: {
-            TIME_RUN(receive_video(whist_renderer->video_context, packet), VIDEO_RECEIVE_TIME,
+        case PACKET_AUDIO: {
+            TIME_RUN(receive_audio(whist_renderer->audio_context, (AudioFrame*)frame), AUDIO_RECEIVE_TIME,
                      statistics_timer);
             break;
         }
         default: {
-            LOG_FATAL("Unknown packet type! %d", packet->type);
+            LOG_FATAL("Unknown packet type! %d", (int)packet_type);
         }
     }
 }
 
 void renderer_update(WhistRenderer* whist_renderer) {
     WhistTimer statistics_timer;
-
-    // Update video/audio
-    // NOTE: this is now done in the UDP context
-
-    // Get any network statistics,
-    // Calculate desired network settings from them, and if new network settings are desired,
-    // simply request the server to match those desired network settings
-    NetworkStatistics network_statistics =
-        get_video_network_statistics(whist_renderer->video_context);
-    NetworkSettings desired_network_settings = get_desired_network_settings(network_statistics);
-    if (memcmp(&desired_network_settings, &whist_renderer->last_network_settings,
-               sizeof(NetworkSettings)) != 0) {
-        send_desired_network_settings(desired_network_settings);
-        whist_renderer->last_network_settings = desired_network_settings;
-    }
 
     // If it's been 2 ms since the last time someone else called try_render,
     // let's ping our renderer thread to do the work instead

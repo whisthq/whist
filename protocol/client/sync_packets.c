@@ -108,78 +108,60 @@ int multithreaded_sync_udp_packets(void* opaque) {
        messages, pings, audio and video packets.
     */
     WhistRenderer* whist_renderer = (WhistRenderer*)opaque;
-    SocketContext* socket_context = &packet_udp_context;
+    SocketContext* udp_context = &packet_udp_context;
 
     // we initialize latency here because on macOS, latency would not initialize properly in
     // its global declaration. We start at 25ms before the first ping.
     latency = 25.0 / MS_IN_SECOND;
-    last_udp_ping_id = 0;
-    udp_ping_failures = 0;
 
-    WhistTimer last_ack;
     WhistTimer statistics_timer;
-    WhistPacket* last_message_packet = NULL;
-    FrameData* last_video_packet = NULL;
-    FrameData* last_audio_packet = NULL;
-    start_timer(&last_ack);
 
     // Initialize dimensions prior to update_video and receive_video calls
-    if (server_width != output_width || server_height != output_height ||
-        server_codec_type != output_codec_type) {
-        send_message_dimensions();
-    }
+    send_message_dimensions();
     
     // For now, manually make ring buffers for audio and video
-    udp_register_ring_buffer(socket_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE, VIDEO_RING_BUFFER_SIZE);
-    udp_register_ring_buffer(socket_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE, AUDIO_RING_BUFFER_SIZE);
+    // TODO: Make udp.c do this automatically
+    // The magic numbers will be handled later
+    udp_register_ring_buffer(udp_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE, 275);
+    udp_register_ring_buffer(udp_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE, 16);
 
+    WhistPacket* last_whist_packet[NUM_PACKET_TYPES] = {0};
     while (run_sync_packets_threads) {
-        // Ack the connection every 5 seconds
-        if (get_timer(&last_ack) > 5.0) {
-            ack(socket_context);
-            start_timer(&last_ack);
-        }
-
-        update_ping();
         // Update the renderer
         renderer_update(whist_renderer);
-        // Try to read data from the socket
-        TIME_RUN(update(socket_context, true), NETWORK_READ_PACKET_UDP, statistics_timer);
+        // Update the UDP socket
+        TIME_RUN(socket_update(udp_context), NETWORK_READ_PACKET_UDP, statistics_timer);
+
         // Handle any messages we've received
-        // first, free the last_message_packet
-        if (last_message_packet != NULL) {
-            free_packet(socket_context, last_message_packet);
-        }
-        WhistPacket* message_packet = (WhistPacket*)get_packet(socket_context, PACKET_MESSAGE);
+        WhistPacket* message_packet = (WhistPacket*)get_packet(udp_context, PACKET_MESSAGE);
         if (message_packet) {
-            handle_server_message(message_packet);
-            last_message_packet = message_packet;
+            handle_server_message((WhistServerMessage*)message_packet->data, message_packet->payload_size);
+            free_packet(udp_context, message_packet);
         }
-        // check if video can process the next frame
-        if (video_ready_for_frame(whist_renderer->video_context)) {
-            if (last_video_packet != NULL) {
-                free_packet(socket_context, last_video_packet);
-            }
-            FrameData* video_frame = (FrameData*)get_packet(socket_context, PACKET_VIDEO);
-            if (video_frame) {
-                receive_video(whist_renderer->video_context, video_frame);
-                // after this call to until rendering finishes, video_ready_for_frame must return false
-                last_video_packet = video_frame;
-            }
-        }
-        // same for audio
-        if (audio_ready_for_frame(whist_renderer->audio_context, udp_get_num_pending_frames(socket_context, PACKET_AUDIO)) {
-            if (last_audio_packet != NULL) {
-                free_packet(socket_context, last_audio_packet);
-            }
-            FrameData* audio_frame = (FrameData*)get_packet(socket_context, PACKET_VIDEO);
-            if (audio_frame) {
-                receive_audio(whist_renderer->audio_context, audio_frame->frame_buffer);
-                // after this call to until rendering finishes, audio_ready_for_frame must return false
-                last_audio_packet = audio_frame;
+
+        // Loop over both VIDEO and AUDIO
+        WhistPacketType video_audio_types[2] = {PACKET_VIDEO, PACKET_AUDIO};
+        for(int i = 0; i < 2; i++) {
+            WhistPacketType packet_type = video_audio_types[i];
+            // If the renderer wants the frame of that type,
+            // Knowing how many frames are pending a render...
+            if (renderer_wants_frame(whist_renderer, packet_type, udp_get_num_pending_frames(udp_context, packet_type))) {
+                // If the renderer wants a new frame, it must be done with the old frame, so we can free it now
+                // TODO: Make the renderer memcpy so this logic don't have to be weird
+                if (last_whist_packet[packet_type] != NULL) {
+                    free_packet(udp_context, last_whist_packet[packet_type]);
+                }
+                // Now, we try to get the packet from UDP,
+                // And pass it to the renderer if one exists
+                WhistPacket* frame = (WhistPacket*)get_packet(udp_context, packet_type);
+                if (frame) {
+                    renderer_receive_frame(whist_renderer, packet_type, frame);
+                    last_whist_packet[packet_type] = frame;
+                }
             }
         }
     }
+
     return 0;
 }
 
@@ -254,16 +236,6 @@ void create_and_send_tcp_wcmsg(WhistClientMessageType message_type, char* payloa
     deallocate_region(wcmsg_tcp);
 }
 
-// TODO: this should move into udp.c
-void request_stream_reset(WhistPacketType type, int last_failed_id) {
-    // currently, this just sends a WhistClientMessage. Eventually, it will be internal to UDP.
-    WhistClientMessage wcmsg = {0};
-    wcmsg.type = MESSAGE_STREAM_RESET_REQUEST;
-    wcmsg.stream_reset_data.type = PACKET_VIDEO;
-    wcmsg.stream_reset_data.last_failed_id = last_failed_id;
-    send_wcmsg(&wcmsg);
-}
-
 int multithreaded_sync_tcp_packets(void* opaque) {
     /*
         Thread to send and receive all TCP packets (clipboard and file)
@@ -274,7 +246,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         Return:
             (int): 0 on success
     */
-    SocketContext* socket_context = &packet_tcp_context;
+    SocketContext* tcp_context = &packet_tcp_context;
 
     last_tcp_ping_id = 0;
 
@@ -284,29 +256,25 @@ int multithreaded_sync_tcp_packets(void* opaque) {
     bool successful_read_or_pull = false;
 
     while (run_sync_packets_threads) {
-        // Ack the connection every 50 ms
-        if (get_timer(&last_ack) > 0.05) {
-            int ret = ack(socket_context);
-            if (ret != 0) {
-                LOG_WARNING("Lost TCP Connection (Error: %d)", get_last_network_error());
-                send_tcp_reconnect_message();
-            }
-            start_timer(&last_ack);
+        // TODO: Pull this into tcp.c
+        if (!socket_update(tcp_context)) {
+            send_tcp_reconnect_message();
         }
+
+        // Update TCP ping and reconnect TCP if needed (TODO: does that function do too much?)
+        // TODO: Move into tcp.c
+        update_tcp_ping();
 
         successful_read_or_pull = false;
 
-        // Update TCP ping and reconnect TCP if needed (TODO: does that function do too much?)
-        update_tcp_ping();
-
-        TIME_RUN(WhistPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_TCP,
+        TIME_RUN(WhistPacket* packet = get_packet(tcp_context, PACKET_MESSAGE), NETWORK_READ_PACKET_TCP,
                  statistics_timer);
 
         if (packet) {
             TIME_RUN(handle_server_message((WhistServerMessage*)packet->data,
                                            (size_t)packet->payload_size),
                      SERVER_HANDLE_MESSAGE_TCP, statistics_timer);
-            free_packet(socket_context, packet);
+            free_packet(tcp_context, packet);
         }
 
         // PULL CLIPBOARD HANDLER

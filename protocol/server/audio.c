@@ -137,7 +137,7 @@ int32_t multithreaded_send_audio(void* opaque) {
                             send_packet(
                                 &state->client.udp_context, PACKET_AUDIO, frame,
                                 MAX_AUDIOFRAME_METADATA_SIZE + audio_encoder->encoded_frame_size,
-                                id);
+                                id, false);
                             // Simulate nacks to trigger re-sending of previous frames.
                             // TODO: Move into udp.c
                             for (int i = 1; i <= NUM_PREVIOUS_FRAMES_RESEND && id - i > 0; i++) {
@@ -155,7 +155,7 @@ int32_t multithreaded_send_audio(void* opaque) {
 #else
                 if (state->client.is_active) {
                     send_packet(&state->client.udp_context, PACKET_AUDIO, audio_device->buffer,
-                                audio_device->buffer_size, id);
+                                audio_device->buffer_size, id, false);
                     id++;
                 }
 #endif

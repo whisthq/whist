@@ -237,18 +237,6 @@ typedef enum CodecType {
     CODEC_TYPE_MAKE_32 = 0x7FFFFFFF
 } CodecType;
 
-// TODO: Move to <whist/network/network_algorithm.h>
-typedef struct {
-    int fps;
-    int bitrate;
-    int burst_bitrate;
-    double audio_fec_ratio;
-    double video_fec_ratio;
-    CodecType desired_codec;
-} NetworkSettings;
-
-// These things need NetworkSettings
-#include <whist/network/network_algorithm.h>
 #include <whist/network/network.h>
 
 /**
@@ -601,7 +589,6 @@ typedef enum WhistClientMessageType {
     MESSAGE_STOP_STREAMING = 105,    ///< Message asking server to stop encoding/sending frames
     MESSAGE_START_STREAMING = 106,   ///< Message asking server to resume encoding/sending frames
     MESSAGE_NETWORK_SETTINGS = 107,  ///< `network_settings` struct is valid in FractClientMessage.
-    MESSAGE_UDP_PING = 108,
     MESSAGE_TCP_PING = 109,
     MESSAGE_DIMENSIONS = 110,  ///< `dimensions.width` int and `dimensions.height`
                                ///< int is valid in FractClientMessage
@@ -675,43 +662,17 @@ typedef struct WhistClientMessage {
         // MESSAGE_MULTIGESTURE
         WhistMultigestureMessage multigesture;  ///< Multigesture message.
 
-        // MESSAGE_NETWORK_SETTINGS
-        NetworkSettings network_settings;
-
-        // MESSAGE_UDP_PING or MESSAGE_TCP_PING
-        struct {
-            int id;
-            timestamp_us original_timestamp;
-        } ping_data;
-
         // MESSAGE_DIMENSIONS
         struct {
             int width;
             int height;
             int dpi;
         } dimensions;
-
-        // MESSAGE_STREAM_RESET_REQUEST
+        
+        // MESSAGE_TCP_PING
         struct {
-            WhistPacketType type;
-            int last_failed_id;
-        } stream_reset_data;
-
-        // MESSAGE_NACK
-        struct {
-            WhistPacketType type;
             int id;
-            int index;
-        } simple_nack;
-
-        // MESSAGE_BITARRAY_NACK
-        struct {
-            WhistPacketType type;
-            int id;
-            int index;
-            int numBits;
-            unsigned char ba_raw[BITS_TO_CHARS(max(MAX_VIDEO_PACKETS, MAX_AUDIO_PACKETS))];
-        } bitarray_nack;
+        } ping_data;
 
         // MESSAGE_KEYBOARD_STATE
         WhistKeyboardState keyboard_state;

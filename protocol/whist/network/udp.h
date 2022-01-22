@@ -102,20 +102,9 @@ bool create_udp_socket_context(SocketContext* context, char* destination, int po
 void udp_register_nack_buffer(SocketContext* context, WhistPacketType type, int max_frame_size,
                               int num_buffers);
 
-/**
- * @brief                   Check if the context's stream has been reset,
- *                          implying a potential loss for that WhistPacketType
- *
- * @param socket_context    The socket context to check for reset requests
- * @param type              The type of the packet stream
- *
- * @returns                 True if a stream reset is needed
- */
-bool udp_get_pending_stream_reset(SocketContext* socket_context, WhistPacketType type);
-
 /*
 ============================
-Questionable Functions, potentially try to remove in future organizations
+Questionable Public Functions, potentially try to remove in future organizations
 ============================
 */
 
@@ -128,27 +117,18 @@ Questionable Functions, potentially try to remove in future organizations
  * @return                          0 on success, otherwise failure.
  */
 // TODO: There's some weird global state-type stuff happening here
-// This should be removed
+// This should be removed, something weird and confusing is happening here
 int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms);
 
 /**
- * @brief       Get the number of consecutive fully received frames of the given type available. Use this e.g. to predict how many ms of audio we have buffered.
+ * @brief       Get the number of consecutive fully received frames of the given type available.
+ *              Use this to figure out how many frames are pending to render
  * 
- * @param type The type of frames to query for
+ * @param type  The type of frames to query for
  */
 int udp_get_num_pending_frames(SocketContext* context, WhistPacketType type);
 
-/**
- * @brief                          Sets the burst bitrate for the given UDP SocketContext
- *
- * @param context                  The SocketContext that we'll be adjusting the burst bitrate for
- * @param network_settings         The new network settings
- */
-// TODO: Make udp handle congestion algorithm internally,
-// And just have udp expose the average bitrate that it's capable of taking in
-void udp_update_network_settings(SocketContext* context, NetworkSettings network_settings);
-
-// TODO: Is needed for audio.c redundancy, but should be pulled into udp.c
+// TODO: Is needed for audio.c redundancy, but should be pulled into udp.c somehow
 void udp_nack_packet(SocketContext* socket_context, WhistPacketType type, int id, int index);
 
 /**

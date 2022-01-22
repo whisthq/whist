@@ -78,12 +78,12 @@ VideoContext* init_video();
  *
  * @param video_context            The video context to give a video packet to
  *
- * @param packet                   Packet as received from the server
+ * @param video_frame              The video frame
  *
  * @note                           This function is guaranteed to return virtually instantly.
  *                                 It may be used in any hotpaths.
  */
-void receive_video(VideoContext* video_context, FrameData* packet);
+void receive_video(VideoContext* video_context, VideoFrame* video_frame);
 
 /**
  * @brief                          Render the video frame (If any are available to render)
@@ -110,15 +110,6 @@ int render_video(VideoContext* video_context);
  *                                 (NOT including any "loading animation" frames)
  */
 bool has_video_rendered_yet(VideoContext* video_context);
-
-/**
- * @brief                          Gets any networking statistics from the video
- *
- * @param video_context            The video context
- *
- * @returns                        Any networking statistics from the video context
- */
-NetworkStatistics get_video_network_statistics(VideoContext* video_context);
 
 /**
  * @brief                          Destroy the video context

@@ -303,7 +303,7 @@ void send_empty_frame(whist_server_state* state, int id) {
 
     // Send the empty frame
     if (state->client.is_active) {
-        send_packet(&state->client.udp_context, PACKET_VIDEO, frame, sizeof(VideoFrame), id);
+        send_packet(&state->client.udp_context, PACKET_VIDEO, frame, sizeof(VideoFrame), id, false);
     }
 }
 

@@ -4,6 +4,7 @@
 #include <whist/logging/log_statistic.h>
 #include "throttle.h"
 #include <server/server_statistic.h>
+#include <whist/network/network_algorithm.h>
 
 #define BITS_IN_BYTE 8.0
 

@@ -55,9 +55,16 @@ typedef struct {
     int num_skipped_frames_per_second;
     int num_rendered_frames_per_second;
     int throughput_per_second;
-    // True so that a NetworkStatistics struct can be marked as valid/invalid
-    bool statistics_gathered;
 } NetworkStatistics;
+
+typedef struct {
+    int fps;
+    int bitrate;
+    int burst_bitrate;
+    double audio_fec_ratio;
+    double video_fec_ratio;
+    CodecType desired_codec;
+} NetworkSettings;
 
 /*
 ============================

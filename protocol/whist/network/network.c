@@ -54,52 +54,29 @@ Public Function Implementations
 ============================
 */
 
-WhistPacket* read_packet(SocketContext* context, bool should_recv) {
-    if (context->context == NULL) {
-        LOG_ERROR("The given SocketContext has not been initialized!");
-        return NULL;
-    }
-    return context->read_packet(context->context, should_recv);
-}
-
-void update(SocketContext* context, bool should_recv) {
-    if (context->context == NULL) {
-        LOG_ERROR("The given SocketContext has not been initialized!");
-        return;
-    }
-    context->update(context->context, should_recv);
-}
-
-void* get_packet(SocketContext* context, WhistPacketType type) {
-    if (context->context == NULL) {
-        LOG_ERROR("The given SocketContext has not been initialized!");
-        return NULL;
-    }
-    return context->get_packet(context->context, type);
-}
-
-void free_packet(SocketContext* context, WhistPacket* packet) {
-    if (context->context == NULL) {
-        LOG_ERROR("The given SocketContext has not been initialized!");
-        return;
-    }
-    context->free_packet(context->context, packet);
+bool socket_update(SocketContext* context) {
+    FATAL_ASSERT(context != NULL);
+    return context->socket_update(context->context);
 }
 
 int send_packet(SocketContext* context, WhistPacketType packet_type, void* payload,
                 int payload_size, int packet_id, bool start_of_stream) {
-    if (context->context == NULL) {
-        LOG_ERROR("The given SocketContext has not been initialized!");
-        return -1;
-    }
+    FATAL_ASSERT(context != NULL);
     return context->send_packet(context->context, packet_type, payload, payload_size, packet_id, start_of_stream);
 }
 
+void* get_packet(SocketContext* context, WhistPacketType type) {
+    FATAL_ASSERT(context != NULL);
+    return context->get_packet(context->context, type);
+}
+
+void free_packet(SocketContext* context, WhistPacket* packet) {
+    FATAL_ASSERT(context != NULL);
+    context->free_packet(context->context, packet);
+}
+
 void destroy_socket_context(SocketContext* context) {
-    if (context->context == NULL) {
-        LOG_ERROR("The given SocketContext has not been initialized!");
-        return;
-    }
+    FATAL_ASSERT(context != NULL);
     context->destroy_socket_context(context->context);
     memset(context, 0, sizeof(*context));
 }

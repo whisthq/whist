@@ -11,6 +11,7 @@ Includes
 
 #include "tcp.h"
 #include <whist/utils/aes.h>
+#include <whist/utils/clock.h>
 
 #ifndef _WIN32
 #include <fcntl.h>
@@ -36,13 +37,14 @@ typedef struct {
     int timeout;
     SOCKET socket;
     struct sockaddr_in addr;
-    int ack;
     WhistMutex mutex;
     char binary_aes_private_key[16];
     // Used for reading TCP packets
     int reading_packet_len;
     DynamicBuffer* encrypted_tcp_packet_buffer;
     NetworkThrottleContext* network_throttler;
+
+    WhistTimer last_ack_timer;
 } TCPContext;
 
 /*
@@ -59,54 +61,6 @@ extern unsigned short port_mappings[USHRT_MAX + 1];
 Private Functions
 ============================
 */
-
-/**
- * @brief                          Perform socket() syscall and set fds to
- *                                 use flag FD_CLOEXEC
- *
- * @returns                        The socket file descriptor, -1 on failure
- */
-static SOCKET socketp_tcp(void);
-
-/**
- * @brief                           Perform accept syscall and set fd to use flag
- *                                  FD_CLOEXEC
- *
- * @param sock_fd                   The socket file descriptor
- * @param sock_addr                 The socket address
- * @param sock_len                  The size of the socket address
- *
- * @returns                         The new socket file descriptor, -1 on failure
- */
-static SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len);
-
-/**
- * @brief                           Connect to a TCP Server
- *
- * @param sock_fd                   The socket file descriptor
- * @param sock_addr                 The socket address
- * @param timeout_ms                The timeout for the connection attempt
- *
- * @returns                         Returns true on success, false on failure.
- */
-static bool tcp_connect(SOCKET sock_fd, struct sockaddr_in sock_addr, int timeout_ms);
-
-/**
- * @brief                          Send a 0-length packet over the socket. Used
- *                                 to keep-alive over NATs, and to check on the
- *                                 validity of the socket
- *
- * @param context                  The socket context
- *
- * @returns                        Will return -1 on failure, and 0 on success
- *                                 Failure implies that the socket is
- *                                 broken or the TCP connection has ended, use
- *                                 get_last_network_error() to learn more about the
- *                                 error
- */
-int tcp_ack(TCPContext* context) {
-    return send(context->socket, NULL, 0, 0);
-}
 
 /**
  * @brief                          Create a TCP Server Context,
@@ -141,20 +95,110 @@ int create_tcp_server_context(TCPContext* context, int port, int connection_time
 int create_tcp_client_context(TCPContext* context, char* destination, int port,
                               int connection_timeout_ms);
 
+/**
+ * @brief                          Sends a fully constructed WhistPacket
+ *
+ * @param context                  The TCP Context
+ * 
+ * @param packet                   The packet to send
+ *
+ * @returns                        Will return -1 on failure, and 0 on success
+ *                                 Failure implies that the socket is
+ *                                 broken or the TCP connection has ended, use
+ *                                 get_last_network_error() to learn more about the
+ *                                 error
+ */
+int tcp_send_constructed_packet(TCPContext* context, WhistPacket* packet);
+
+/**
+ * @brief                          Perform socket() syscall and set fds to
+ *                                 use flag FD_CLOEXEC
+ *
+ * @returns                        The socket file descriptor, -1 on failure
+ */
+static SOCKET socketp_tcp(void);
+
+/**
+ * @brief                           Perform accept syscall and set fd to use flag
+ *                                  FD_CLOEXEC
+ *
+ * @param sock_fd                   The socket file descriptor
+ * @param sock_addr                 The socket address
+ * @param sock_len                  The size of the socket address
+ *
+ * @returns                         The new socket file descriptor, -1 on failure
+ */
+static SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len);
+
+/**
+ * @brief                           Connect to a TCP Server
+ *
+ * @param sock_fd                   The socket file descriptor
+ * @param sock_addr                 The socket address
+ * @param timeout_ms                The timeout for the connection attempt
+ *
+ * @returns                         Returns true on success, false on failure.
+ */
+static bool tcp_connect(SOCKET sock_fd, struct sockaddr_in sock_addr, int timeout_ms);
+
 /*
 ============================
 TCP Implementation of Network.h Interface
 ============================
 */
 
-void tcp_update(void* raw_context, bool should_recv) {
+bool tcp_update(void* raw_context) {
     TCPContext* context = raw_context;
 
-    // Keep the tcp connection alive
-    tcp_ack(context);
+    int ret = 0;
+
+    // Keep sending a length-0 packet every 50 ms,
+    // To keep the TCP connection alive and additionally check
+    // whether or not it is still alive
+    if (get_timer(&context->last_ack_timer) > 50.0 / MS_IN_SECOND) {
+        ret = send(context->socket, NULL, 0, 0);
+        start_timer(&context->last_ack_timer);
+    }
+
+    return ret >= 0;
 }
 
-WhistPacket* tcp_read_packet(void* raw_context, bool should_recv) {
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
+int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, int len, int id, bool start_of_stream) {
+    TCPContext* context = raw_context;
+    UNUSED(start_of_stream);
+
+    if (id != -1) {
+        LOG_ERROR("ID should be -1 when sending over TCP!");
+    }
+
+    // Use our block allocator
+    // This function fragments the heap too much to use malloc here
+    int packet_size = PACKET_HEADER_SIZE + len;
+    WhistPacket* packet = allocate_region(packet_size);
+
+    // Contruct packet metadata
+    packet->id = id;
+    packet->type = type;
+    packet->payload_size = len;
+
+    // Copy packet data, verifying the packetsize first
+    FATAL_ASSERT(get_packet_size(packet) == packet_size);
+    memcpy(packet->data, data, len);
+
+    // Send the packet
+    int ret = tcp_send_constructed_packet(context, packet);
+
+    // Free the packet
+    deallocate_region(packet);
+
+    // Return success code
+    return ret;
+}
+
+void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
     TCPContext* context = raw_context;
 
     // The dynamically sized buffer to read into
@@ -163,7 +207,7 @@ WhistPacket* tcp_read_packet(void* raw_context, bool should_recv) {
 #define TCP_SEGMENT_SIZE 4096
 
     int len = TCP_SEGMENT_SIZE;
-    while (should_recv && len == TCP_SEGMENT_SIZE) {
+    while (len == TCP_SEGMENT_SIZE) {
         // Make the tcp buffer larger if needed
         resize_dynamic_buffer(encrypted_tcp_packet_buffer,
                               context->reading_packet_len + TCP_SEGMENT_SIZE);
@@ -241,7 +285,13 @@ WhistPacket* tcp_read_packet(void* raw_context, bool should_recv) {
             resize_dynamic_buffer(encrypted_tcp_packet_buffer, context->reading_packet_len);
 
             // Return the whist_packet, which will be NULL if decoding failed
-            return whist_packet;
+            if (whist_packet->type == packet_type) {
+                return whist_packet;
+            } else {
+                deallocate_region(whist_packet);
+                LOG_ERROR("Got a TCP whist packet of type that didn't match %d! %d", (int)packet_type, (int)whist_packet->type);
+                return NULL;
+            }
         }
     }
 
@@ -253,88 +303,9 @@ void tcp_free_packet(void* raw_context, WhistPacket* tcp_packet) {
     deallocate_region(tcp_packet);
 }
 
-int tcp_send_constructed_packet(void* raw_context, WhistPacket* packet) {
+bool tcp_get_pending_stream_reset(void* raw_context, WhistPacketType packet_type) {
     TCPContext* context = raw_context;
-
-    int packet_size = get_packet_size(packet);
-
-    // Allocate a buffer for the encrypted packet
-    TCPPacket* tcp_packet =
-        allocate_region(sizeof(TCPPacket) + packet_size + MAX_ENCRYPTION_SIZE_INCREASE);
-
-    if (ENCRYPTING_PACKETS) {
-        // If we're encrypting packets, encrypt the packet into tcp_packet
-        int encrypted_len = encrypt_packet(tcp_packet->payload, &tcp_packet->aes_metadata, packet,
-                                           packet_size, context->binary_aes_private_key);
-        tcp_packet->payload_size = encrypted_len;
-    } else {
-        // Otherwise, just write it to tcp_packet directly
-        tcp_packet->payload_size = packet_size;
-        memcpy(tcp_packet->payload, packet, packet_size);
-    }
-
-    int tcp_packet_size = get_tcp_packet_size(tcp_packet);
-
-    // For now, the TCP network throttler is NULL, so this is a no-op.
-    network_throttler_wait_byte_allocation(context->network_throttler, tcp_packet_size);
-
-    //#if LOG_NETWORKING
-    // This is useful enough to print, even outside of LOG_NETWORKING GUARDS
-    LOG_INFO("Sending a WhistPacket of size %d (Total %d bytes), over TCP", packet_size,
-             tcp_packet_size);
-    //#endif
-
-    // Send the packet
-    bool failed = false;
-    int ret = send(context->socket, (const char*)tcp_packet, tcp_packet_size, 0);
-    if (ret < 0) {
-        int error = get_last_network_error();
-        LOG_WARNING("Unexpected TCP Packet Error: %d", error);
-        failed = true;
-    }
-
-    // Free the encrypted allocation
-    deallocate_region(tcp_packet);
-
-    return failed ? -1 : 0;
-}
-
-// NOTE that this function is in the hotpath.
-// The hotpath *must* return in under ~10000 assembly instructions.
-// Please pass this comment into any non-trivial function that this function calls.
-int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, int len, int id, bool start_of_stream) {
-    TCPContext* context = raw_context;
-    UNUSED(start_of_stream);
-
-    if (id != -1) {
-        LOG_ERROR("ID should be -1 when sending over TCP!");
-    }
-
-    // Use our block allocator
-    // This function fragments the heap too much to use malloc here
-    int packet_size = PACKET_HEADER_SIZE + len;
-    WhistPacket* packet = allocate_region(packet_size);
-
-    // Contruct packet metadata
-    packet->id = id;
-    packet->type = type;
-    packet->index = 0;
-    packet->payload_size = len;
-    packet->num_indices = 1;
-    packet->is_a_nack = false;
-
-    // Copy packet data, verifying the packetsize first
-    FATAL_ASSERT(get_packet_size(packet) == packet_size);
-    memcpy(packet->data, data, len);
-
-    // Send the packet
-    int ret = tcp_send_constructed_packet(context, packet);
-
-    // Free the packet
-    deallocate_region(packet);
-
-    // Return success code
-    return ret;
+    LOG_FATAL("Not implemented for TCP yet!");
 }
 
 void tcp_destroy_socket_context(void* raw_context) {
@@ -375,10 +346,11 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
     FATAL_ASSERT(using_stun == false);
 
     // Populate function pointer table
-    network_context->update = tcp_update;
-    network_context->read_packet = tcp_read_packet;
-    network_context->free_packet = tcp_free_packet;
+    network_context->socket_update = tcp_update;
     network_context->send_packet = tcp_send_packet;
+    network_context->get_packet = tcp_get_packet;
+    network_context->free_packet = tcp_free_packet;
+    network_context->get_pending_stream_reset = tcp_get_pending_stream_reset;
     network_context->destroy_socket_context = tcp_destroy_socket_context;
 
     // Create the TCPContext, and set to zero
@@ -413,6 +385,7 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
     context->encrypted_tcp_packet_buffer = init_dynamic_buffer(true);
     resize_dynamic_buffer(context->encrypted_tcp_packet_buffer, 0);
     context->network_throttler = NULL;
+    start_timer(&context->last_ack_timer);
 
     int ret;
 
@@ -480,149 +453,6 @@ int create_tcp_listen_socket(SOCKET* sock, int port, int timeout_ms) {
 Private Function Implementations
 ============================
 */
-
-static SOCKET socketp_tcp(void) {
-    /*
-        Create a TCP socket and set the FD_CLOEXEC flag.
-        Linux permits atomic FD_CLOEXEC definition via SOCK_CLOEXEC,
-        but this is not available on other operating systems yet.
-
-        Return:
-            SOCKET: socket fd on success; INVALID_SOCKET on failure
-    */
-
-#ifdef SOCK_CLOEXEC
-    // Create socket
-    SOCKET sock_fd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
-    if (sock_fd <= 0) {
-        LOG_WARNING("Could not create socket %d\n", get_last_network_error());
-        return INVALID_SOCKET;
-    }
-#else
-    // Create socket
-    SOCKET sock_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (sock_fd <= 0) {  // Windows & Unix cases
-        LOG_WARNING("Could not create socket %d\n", get_last_network_error());
-        return INVALID_SOCKET;
-    }
-
-#ifndef _WIN32
-    // Set socket to close on child exec
-    // Not necessary for windows because CreateProcessA creates an independent process
-    if (fcntl(sock_fd, F_SETFD, fcntl(sock_fd, F_GETFD) | FD_CLOEXEC) < 0) {
-        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
-        return INVALID_SOCKET;
-    }
-#endif
-#endif
-
-    return sock_fd;
-}
-
-static SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len) {
-    /*
-        Accept a connection on `sock_fd` and return a new socket fd
-
-        Arguments:
-            sock_fd (SOCKET): file descriptor of socket that we are accepting a connection on
-            sock_addr (struct sockaddr*): the address of the socket
-            sock_len (socklen_t*): the length of the socket address struct
-
-        Return:
-            SOCKET: new fd for socket on success; INVALID_SOCKET on failure
-    */
-
-#if defined(_GNU_SOURCE) && defined(SOCK_CLOEXEC)
-    SOCKET new_socket = accept4(sock_fd, sock_addr, sock_len, SOCK_CLOEXEC);
-#else
-    // Accept connection from client
-    SOCKET new_socket = accept(sock_fd, sock_addr, sock_len);
-    if (new_socket < 0) {
-        LOG_WARNING("Did not receive response from client! %d\n", get_last_network_error());
-        return INVALID_SOCKET;
-    }
-
-#ifndef _WIN32
-    // Set socket to close on child exec
-    // Not necessary for windows because CreateProcessA creates an independent process
-    if (fcntl(new_socket, F_SETFD, fcntl(new_socket, F_GETFD) | FD_CLOEXEC) < 0) {
-        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
-        return INVALID_SOCKET;
-    }
-#endif
-#endif
-
-    return new_socket;
-}
-
-static bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
-    /*
-        Connect to TCP server
-
-        Arguments:
-            socket (SOCKET): socket to connect over
-            addr (struct sockaddr_in): connection address information
-            timeout_ms (int): timeout in milliseconds
-
-        Returns:
-            (bool): true on success, false on failure
-    */
-
-    // Connect to TCP server
-    int ret;
-    // Set to nonblocking
-    set_timeout(socket, 0);
-    // Following instructions here: https://man7.org/linux/man-pages/man2/connect.2.html
-    // Observe the paragraph under EINPROGRESS for how to nonblocking connect over TCP
-    if ((ret = connect(socket, (struct sockaddr*)(&addr), sizeof(addr))) < 0) {
-        // EINPROGRESS is a valid error, anything else is invalid
-        if (get_last_network_error() != WHIST_EINPROGRESS) {
-            LOG_WARNING(
-                "Could not connect() over TCP to server: Returned %d, Error "
-                "Code %d",
-                ret, get_last_network_error());
-            closesocket(socket);
-            return false;
-        }
-    }
-
-    // Select connection
-    fd_set set;
-    FD_ZERO(&set);
-    FD_SET(socket, &set);
-    struct timeval tv;
-    tv.tv_sec = timeout_ms / MS_IN_SECOND;
-    tv.tv_usec = (timeout_ms % MS_IN_SECOND) * MS_IN_SECOND;
-    if ((ret = select((int)socket + 1, NULL, &set, NULL, &tv)) <= 0) {
-        if (ret == 0) {
-            LOG_INFO("No TCP Connection Retrieved, ending TCP connection attempt.");
-        } else {
-            LOG_WARNING(
-                "Could not select() over TCP to server: Returned %d, Error Code "
-                "%d\n",
-                ret, get_last_network_error());
-        }
-        closesocket(socket);
-        return false;
-    }
-
-    // Check for errors that may have happened during the select()
-    int error;
-    socklen_t len = sizeof(error);
-    if (getsockopt(socket, SOL_SOCKET, SO_ERROR, (void*)&error, &len) < 0) {
-        LOG_WARNING("Could not getsockopt SO_ERROR");
-        closesocket(socket);
-        return false;
-    }
-    if (error != 0) {
-        LOG_WARNING("getsockopt has captured the following error: %d", error);
-        closesocket(socket);
-        return false;
-    }
-
-    set_timeout(socket, timeout_ms);
-    return true;
-}
 
 int create_tcp_server_context(TCPContext* context, int port,
                               int connection_timeout_ms) {
@@ -709,4 +539,159 @@ int create_tcp_client_context(TCPContext* context, char* destination, int port,
     LOG_INFO("Connected to %s:%d over TCP!", destination, port);
 
     return 0;
+}
+
+
+int tcp_send_constructed_packet(TCPContext* context, WhistPacket* packet) {
+    int packet_size = get_packet_size(packet);
+
+    // Allocate a buffer for the encrypted packet
+    TCPPacket* tcp_packet =
+        allocate_region(sizeof(TCPPacket) + packet_size + MAX_ENCRYPTION_SIZE_INCREASE);
+
+    if (ENCRYPTING_PACKETS) {
+        // If we're encrypting packets, encrypt the packet into tcp_packet
+        int encrypted_len = encrypt_packet(tcp_packet->payload, &tcp_packet->aes_metadata, packet,
+                                           packet_size, context->binary_aes_private_key);
+        tcp_packet->payload_size = encrypted_len;
+    } else {
+        // Otherwise, just write it to tcp_packet directly
+        tcp_packet->payload_size = packet_size;
+        memcpy(tcp_packet->payload, packet, packet_size);
+    }
+
+    int tcp_packet_size = get_tcp_packet_size(tcp_packet);
+
+    // For now, the TCP network throttler is NULL, so this is a no-op.
+    network_throttler_wait_byte_allocation(context->network_throttler, tcp_packet_size);
+
+    //#if LOG_NETWORKING
+    // This is useful enough to print, even outside of LOG_NETWORKING GUARDS
+    LOG_INFO("Sending a WhistPacket of size %d (Total %d bytes), over TCP", packet_size,
+             tcp_packet_size);
+    //#endif
+
+    // Send the packet
+    bool failed = false;
+    int ret = send(context->socket, (const char*)tcp_packet, tcp_packet_size, 0);
+    if (ret < 0) {
+        int error = get_last_network_error();
+        LOG_WARNING("Unexpected TCP Packet Error: %d", error);
+        failed = true;
+    }
+
+    // Free the encrypted allocation
+    deallocate_region(tcp_packet);
+
+    return failed ? -1 : 0;
+}
+
+SOCKET socketp_tcp(void) {
+#ifdef SOCK_CLOEXEC
+    // Create socket
+    SOCKET sock_fd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
+    if (sock_fd <= 0) {
+        LOG_WARNING("Could not create socket %d\n", get_last_network_error());
+        return INVALID_SOCKET;
+    }
+#else
+    // Create socket
+    SOCKET sock_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (sock_fd <= 0) {  // Windows & Unix cases
+        LOG_WARNING("Could not create socket %d\n", get_last_network_error());
+        return INVALID_SOCKET;
+    }
+
+#ifndef _WIN32
+    // Set socket to close on child exec
+    // Not necessary for windows because CreateProcessA creates an independent process
+    if (fcntl(sock_fd, F_SETFD, fcntl(sock_fd, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return INVALID_SOCKET;
+    }
+#endif
+#endif
+
+    return sock_fd;
+}
+
+SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len) {
+#if defined(_GNU_SOURCE) && defined(SOCK_CLOEXEC)
+    SOCKET new_socket = accept4(sock_fd, sock_addr, sock_len, SOCK_CLOEXEC);
+#else
+    // Accept connection from client
+    SOCKET new_socket = accept(sock_fd, sock_addr, sock_len);
+    if (new_socket < 0) {
+        LOG_WARNING("Did not receive response from client! %d\n", get_last_network_error());
+        return INVALID_SOCKET;
+    }
+
+#ifndef _WIN32
+    // Set socket to close on child exec
+    // Not necessary for windows because CreateProcessA creates an independent process
+    if (fcntl(new_socket, F_SETFD, fcntl(new_socket, F_GETFD) | FD_CLOEXEC) < 0) {
+        LOG_WARNING("Could not set fcntl to set socket to close on child exec");
+        return INVALID_SOCKET;
+    }
+#endif
+#endif
+
+    return new_socket;
+}
+
+bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
+    // Connect to TCP server
+    int ret;
+    // Set to nonblocking
+    set_timeout(socket, 0);
+    // Following instructions here: https://man7.org/linux/man-pages/man2/connect.2.html
+    // Observe the paragraph under EINPROGRESS for how to nonblocking connect over TCP
+    if ((ret = connect(socket, (struct sockaddr*)(&addr), sizeof(addr))) < 0) {
+        // EINPROGRESS is a valid error, anything else is invalid
+        if (get_last_network_error() != WHIST_EINPROGRESS) {
+            LOG_WARNING(
+                "Could not connect() over TCP to server: Returned %d, Error "
+                "Code %d",
+                ret, get_last_network_error());
+            closesocket(socket);
+            return false;
+        }
+    }
+
+    // Select connection
+    fd_set set;
+    FD_ZERO(&set);
+    FD_SET(socket, &set);
+    struct timeval tv;
+    tv.tv_sec = timeout_ms / MS_IN_SECOND;
+    tv.tv_usec = (timeout_ms % MS_IN_SECOND) * MS_IN_SECOND;
+    if ((ret = select((int)socket + 1, NULL, &set, NULL, &tv)) <= 0) {
+        if (ret == 0) {
+            LOG_INFO("No TCP Connection Retrieved, ending TCP connection attempt.");
+        } else {
+            LOG_WARNING(
+                "Could not select() over TCP to server: Returned %d, Error Code "
+                "%d\n",
+                ret, get_last_network_error());
+        }
+        closesocket(socket);
+        return false;
+    }
+
+    // Check for errors that may have happened during the select()
+    int error;
+    socklen_t len = sizeof(error);
+    if (getsockopt(socket, SOL_SOCKET, SO_ERROR, (void*)&error, &len) < 0) {
+        LOG_WARNING("Could not getsockopt SO_ERROR");
+        closesocket(socket);
+        return false;
+    }
+    if (error != 0) {
+        LOG_WARNING("getsockopt has captured the following error: %d", error);
+        closesocket(socket);
+        return false;
+    }
+
+    set_timeout(socket, timeout_ms);
+    return true;
 }

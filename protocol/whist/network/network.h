@@ -50,7 +50,7 @@ send_packet(&context, PACKET_MESSAGE, msg, strlen(msg) + 1);
 
 WhistPacket* packet = NULL;
 while(packet == NULL) {
-    update(context);
+    socket_update(context);
     packet = get_packet(&context, PACKET_MESSAGE);
 }
 
@@ -69,7 +69,7 @@ create_tcp_socket_context(&context, NULL, 5055, 500, 250);
 
 WhistPacket* packet = NULL;
 while(packet == NULL) {
-    update(context);
+    socket_update(context);
     packet = get_packet(&context, PACKET_MESSAGE);
 }
 
@@ -183,11 +183,6 @@ typedef struct {
     WhistPacketType type;   // Video, Audio, or Message
     int id;                 // Unique identifier (Two packets with the same type and id, from
                             // the same IP, will be the same)
-    short index;            // Handle separation of large datagrams
-    short num_indices;      // The total number of packets that the datagram
-                            // was broken down into, including FEC packets.
-    short num_fec_indices;  // The # of indices that are only for FEC data
-    bool is_a_nack;         // True if this is a replay'ed packet
     int payload_size;       // size of this packet's data[], in bytes
 
     // Data
@@ -239,12 +234,11 @@ typedef struct {
     void* context;
 
     // Function table
-    void (*update)(void* context, bool should_recv);
-    WhistPacket* (*read_packet)(void* context, bool should_recv);
+    bool (*socket_update)(void* context);
+    int (*send_packet)(void* context, WhistPacketType type, void* data, int len, int id, bool start_of_stream);
     void* (*get_packet)(void* context, WhistPacketType type);
     void (*free_packet)(void* context, WhistPacket* packet);
-    int (*send_packet)(void* context, WhistPacketType type, void* data, int len, int id, bool start_of_stream);
-    bool (*needs_stream_reset)(void* context);
+    bool (*get_pending_stream_reset)(void* context, WhistPacketType type);
     void (*destroy_socket_context)(void* context);
 } SocketContext;
 
@@ -258,40 +252,20 @@ SocketContext Interface
 */
 
 /**
- * @brief   Receive the next WhistPacket from the given SocketContext of given WhistPacketType
+ * @brief          Keeps the socket alive.
+ *                 Failing to call this function periodically
+ *                 will cause the connection to drop.
  *
- * @param context     The socket context
- * @param type   Type of packet to pop
- *
- * @returns  A pointer to the next set of data. If type is PACKET_AUDIO or PACKET_VIDEO, this will return a FrameData*; if the type is a MESSAGE, it will be WhistServerMessage*.
+ * @param context  The socket context to update
+ * 
+ * @returns        True on success,
+ *                 False if the connection has been lost
+ * 
+ * @note           After calling socket_update, you must try to call get_packet,
+ *                 otherwise a consecutive call to socket_update
+ *                 may overwrite the buffered packet.
  */
-void* get_packet(SocketContext* context, WhistPacketType type);
-
-/**
- * @brief   Read the next packet from the socket if one is available and buffer it.
- *
- * @param context  The socket context to read from
- * @param should_recv  Whether to call recv (which could take a while over TCP) or immediately return if no new data is available.
- */
-void update(SocketContext* context, bool should_recv);
-
-/**
- * @brief    Determine whether or not context's stream of packets of the given type needs to be reset, e.g. sending an iframe.
- *
- * @param context   The socket context to read from
- * @param type   The type of data that needs resetting
- *
- * @returns   true if the stream needs a reset, false otherwise. 
- */
-bool needs_stream_reset(SocketContext context, WhistPacketType type);
-
-/**
- * @brief                          Frees a WhistPacket created by read_packet
- *
- * @param context                  The socket context that created the packet
- * @param packet                   The WhistPacket to free
- */
-void free_packet(SocketContext* context, WhistPacket* packet);
+bool socket_update(SocketContext* context);
 
 /**
  * @brief                          Given a WhistPacket's type, payload, payload_len, and id,
@@ -307,11 +281,45 @@ void free_packet(SocketContext* context, WhistPacket* packet);
  * @param packet_id                A Packet ID for the packet.
  * @param start_of_stream          Whether or not the client may "skip" to this ID (UDP only)
  *
- * @returns                        Will return -1 on failure, will return 0 on
- *                                 success
+ * @returns                        Will return -1 on failure,
+ *                                 will return 0 on success
+ *                                 TODO: Make this either return bool or void
  */
 int send_packet(SocketContext* context, WhistPacketType packet_type, void* payload,
                 int payload_size, int packet_id, bool start_of_stream);
+
+/**
+ * @brief             Receive the next WhistPacket from the given SocketContext of given WhistPacketType
+ *
+ * @param context     The socket context
+ * @param type        Type of packet to pop
+ *
+ * @returns           A pointer to the next set of data.
+ *                    This will point to the same data of the `payload` that was
+ *                    passed into `send_packet` on the other side.
+ * 
+ * @note              socket_update must be called for get_packet to return non-NULL
+ */
+void* get_packet(SocketContext* context, WhistPacketType type);
+
+/**
+ * @brief                          Frees a WhistPacket created by get_packet
+ *
+ * @param context                  The socket context that created the packet
+ * @param packet                   The WhistPacket to free
+ */
+void free_packet(SocketContext* context, WhistPacket* packet);
+
+/**
+ * @brief           Determine whether or not context's stream of packets of the given type
+ *                  has been reset during the connection, e.g. due to irrecoverable packet loss
+ *
+ * @param context   The socket context to read from
+ * @param type      The type of data that needs resetting
+ *
+ * @returns         True if the stream has been reset
+ */
+bool get_pending_stream_reset(SocketContext context, WhistPacketType type);
 
 /**
  * @brief                          Destroys an allocated and initialized SocketContext

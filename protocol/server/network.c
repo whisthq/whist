@@ -167,7 +167,7 @@ int do_discovery_handshake(whist_server_state *state, SocketContext *context,
 
     LOG_INFO("Sending discovery packet");
     LOG_INFO("wsmsg size is %d", (int)wsmsg_size);
-    if (send_packet(context, PACKET_MESSAGE, (uint8_t *)wsmsg, (int)wsmsg_size, -1) < 0) {
+    if (send_packet(context, PACKET_MESSAGE, (uint8_t *)wsmsg, (int)wsmsg_size, -1, false) < 0) {
         LOG_ERROR("Failed to send discovery reply message.");
         free(wsmsg);
         return -1;
@@ -233,7 +233,7 @@ int broadcast_udp_packet(Client *client, WhistPacketType type, void *data, int l
     }
 
     if (client->is_active) {
-        if (send_packet(&(client->udp_context), type, data, len, packet_id) < 0) {
+        if (send_packet(&(client->udp_context), type, data, len, packet_id, false) < 0) {
             LOG_WARNING("Failed to send UDP packet to client");
             return -1;
         }
@@ -244,7 +244,7 @@ int broadcast_udp_packet(Client *client, WhistPacketType type, void *data, int l
 int broadcast_tcp_packet(Client *client, WhistPacketType type, void *data, int len) {
     if (client->is_active) {
         read_lock(&client->tcp_rwlock);
-        if (send_packet(&(client->tcp_context), type, (uint8_t *)data, len, -1) < 0) {
+        if (send_packet(&(client->tcp_context), type, (uint8_t *)data, len, -1, false) < 0) {
             LOG_WARNING("Failed to send TCP packet to client");
             return -1;
         }

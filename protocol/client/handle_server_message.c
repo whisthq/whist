@@ -43,7 +43,6 @@ Private Functions
 ============================
 */
 
-static int handle_pong_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_tcp_pong_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_quit_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_clipboard_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
@@ -75,8 +74,6 @@ int handle_server_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
     */
 
     switch (wsmsg->type) {
-        case MESSAGE_PONG:
-            return handle_pong_message(wsmsg, wsmsg_size);
         case MESSAGE_TCP_PONG:
             return handle_tcp_pong_message(wsmsg, wsmsg_size);
         case SMESSAGE_QUIT:

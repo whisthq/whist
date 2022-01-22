@@ -56,7 +56,6 @@ Custom Types
 
 struct VideoContext {
     // Variables needed for rendering
-    RingBuffer* ring_buffer;
     VideoDecoder* decoder;
     struct SwsContext* sws;
 
@@ -67,12 +66,8 @@ struct VideoContext {
     int last_frame_height;
     CodecType last_frame_codec;
 
-    FrameData* pending_ctx;
     int frames_received;
     int bytes_transferred;
-    int last_statistics_id;
-    int last_rendered_id;
-    int most_recent_iframe;
 
     WhistTimer last_iframe_request_timer;
 
@@ -82,13 +77,8 @@ struct VideoContext {
     bool has_video_rendered_yet;
 
     // Context of the frame that is currently being rendered
-    FrameData* render_context;
+    VideoFrame* render_context;
     bool pending_render_context;
-
-    // Statistics calculator
-    WhistTimer network_statistics_timer;
-    NetworkStatistics network_statistics;
-    bool statistics_initialized;
 };
 
 /*
@@ -128,10 +118,6 @@ static void sync_decoder_parameters(VideoContext* video_context, VideoFrame* fra
 static void update_sws_context(VideoContext* video_context, Uint8** data, int* linesize, int width,
                                int height, enum AVPixelFormat input_format);
 
-// TODO: Refactor into ringbuffer.c, so that ringbuffer.h
-// is what exposes theese functions
-static void calculate_statistics(VideoContext* video_context);
-
 /**
  * @brief                          Destroys an ffmpeg decoder on another thread
  *
@@ -154,15 +140,10 @@ VideoContext* init_video() {
     video_context->last_frame_codec = CODEC_TYPE_UNKNOWN;
     video_context->has_video_rendered_yet = false;
     video_context->sws = NULL;
-    video_context->pending_ctx = NULL;
     video_context->frames_received = 0;
     video_context->bytes_transferred = 0;
-    video_context->last_statistics_id = 1;
-    video_context->last_rendered_id = 0;
-    video_context->most_recent_iframe = -1;
     video_context->render_context = NULL;
     video_context->pending_render_context = false;
-    video_context->statistics_initialized = false;
 
     start_timer(&video_context->last_iframe_request_timer);
 
@@ -180,10 +161,6 @@ VideoContext* init_video() {
 }
 
 void destroy_video(VideoContext* video_context) {
-    // Destroy the ring buffer
-    destroy_ring_buffer(video_context->ring_buffer);
-    video_context->ring_buffer = NULL;
-
     // Destroy the ffmpeg decoder, if any exists
     if (video_context->decoder) {
         WhistThread destroy_decoder_thread = whist_create_thread(
@@ -205,7 +182,7 @@ void destroy_video(VideoContext* video_context) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-void receive_video(VideoContext* video_context, FrameData* frame_data) {
+void receive_video(VideoContext* video_context, VideoFrame* video_frame) {
     // The next two lines are commented out, but left in the codebase to be
     // easily toggled back and forth during development. We considered putting
     // this under the LOG_VIDEO ifdef, but decided not to, since these lines
@@ -219,22 +196,12 @@ void receive_video(VideoContext* video_context, FrameData* frame_data) {
     // ===========================
     if (!video_context->pending_render_context) {
         // send a frame to the renderer and set video_context->pending_render_context to true to signal readiness
-        if (video_context->last_rendered_id >= 0) {
-            // give data pointer to the video context
-            video_context->render_context = frame_data;
-            log_double_statistic(VIDEO_FPS_RENDERED, 1.0);
-            // increment last_rendered_id
-            LOG_DEBUG("received packet with ID %d, video last rendered %d", frame_data->id, video_context->last_rendered_id);
-            video_context->last_rendered_id = frame_data->id;
-            VideoFrame* frame = (VideoFrame*)frame_data->frame_buffer;
-            // record that we got an iframe
-            if (frame->is_iframe) {
-                video_context->most_recent_iframe =
-                    max(video_context->most_recent_iframe, frame_data->id);
-            }
-            // signal to the renderer that we're ready
-            video_context->pending_render_context = true;
-        }
+        
+        // give data pointer to the video context
+        video_context->render_context = video_frame;
+        log_double_statistic(VIDEO_FPS_RENDERED, 1.0);
+        // signal to the renderer that we're ready
+        video_context->pending_render_context = true;
     } else {
         LOG_ERROR("We tried to send the video context a frame when it wasn't ready!");
     }
@@ -259,11 +226,8 @@ int render_video(VideoContext* video_context) {
 
     // Receive and process a render context that's being pushed
     if (video_context->pending_render_context) {
-        // in our new setup, the video context just receives the frame as it was sent from the server and can render it - no need to look at frame_data->frame.
-        // Save frame data, drop volatile
-        frame_data = *(FrameData*)video_context->render_context;
         // Grab and consume the actual frame
-        VideoFrame* frame = (VideoFrame*)frame_data.frame_buffer;
+        VideoFrame* frame = video_context->render_context;
 
         // If server thinks the window isn't visible, but the window is visible now,
         // Send a START_STREAMING message
@@ -404,8 +368,8 @@ int render_video(VideoContext* video_context) {
         declare_user_activity();
 
 #if LOG_VIDEO
-        LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", frame_data.id, frame_data.frame_buffer_size,
-                  get_timer(&frame_data.frame_creation_timer));
+        // LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", frame_data.id, frame_data.frame_buffer_size,
+        //          get_timer(&frame_data.frame_creation_timer));
 #endif
 
         static timestamp_us last_rendered_time = 0;
@@ -457,10 +421,6 @@ int render_video(VideoContext* video_context) {
 
 bool has_video_rendered_yet(VideoContext* video_context) {
     return video_context->has_video_rendered_yet;
-}
-
-NetworkStatistics get_video_network_statistics(VideoContext* video_context) {
-    return video_context->network_statistics;
 }
 
 /*
@@ -574,34 +534,6 @@ void update_sws_context(VideoContext* video_context, Uint8** data, int* linesize
     if (video_context->sws) {
         memcpy(data, static_data, sizeof(static_data));
         memcpy(linesize, static_linesize, sizeof(static_linesize));
-    }
-}
-
-void calculate_statistics(VideoContext* video_context) {
-    if (!video_context->statistics_initialized) {
-        start_timer(&video_context->network_statistics_timer);
-        video_context->statistics_initialized = true;
-    }
-
-    RingBuffer* ring_buffer = video_context->ring_buffer;
-    // do some calculation
-    // Update mbps every STATISTICS_SECONDS seconds
-#define STATISTICS_SECONDS 5
-    if (get_timer(&video_context->network_statistics_timer) > STATISTICS_SECONDS) {
-        NetworkStatistics network_statistics = {0};
-        network_statistics.num_nacks_per_second =
-            ring_buffer->num_packets_nacked / STATISTICS_SECONDS;
-        network_statistics.num_received_packets_per_second =
-            ring_buffer->num_packets_received / STATISTICS_SECONDS;
-        network_statistics.num_rendered_frames_per_second =
-            ring_buffer->num_frames_rendered / STATISTICS_SECONDS;
-        network_statistics.statistics_gathered = true;
-        video_context->network_statistics = network_statistics;
-
-        ring_buffer->num_packets_nacked = 0;
-        ring_buffer->num_packets_received = 0;
-        ring_buffer->num_frames_rendered = 0;
-        start_timer(&video_context->network_statistics_timer);
     }
 }
 

@@ -118,20 +118,4 @@ void send_message_dimensions();
  */
 void send_new_tab_url_if_needed();
 
-/**
- * @brief                          Sends message to server with our desired network settings
- *
- * @param desired_network_settings The desired network settings
- */
-void send_desired_network_settings(NetworkSettings desired_network_settings);
-
-/**
- * @brief                          Nack handler for the ring buffer
- *
- * @param frame_type               The packet type
- * @param id                       The ID of the packet
- * @param index                    The index of the packet
- */
-void nack_packet(WhistPacketType frame_type, int id, int index);
-
 #endif  // CLIENT_UTILS_H
