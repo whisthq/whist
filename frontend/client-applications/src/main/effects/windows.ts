@@ -36,7 +36,10 @@ import {
 } from "@app/constants/store"
 import { NO_PAYMENT_ERROR } from "@app/constants/error"
 import { networkAnalyze } from "@app/main/utils/networkAnalysis"
-import { destroyElectronWindow, hideElectronWindow } from "../utils/windows"
+import {
+  destroyElectronWindow,
+  hideElectronWindow,
+} from "@app/main/utils/windows"
 
 // Show the auth window if the user has not logged in yet
 withAppActivated(
@@ -136,11 +139,4 @@ withAppActivated(
   destroyElectronWindow(WindowHashLoading)
   destroyElectronWindow(WindowHashOnboarding)
   destroyElectronWindow(WindowHashImport)
-})
-
-// When the protocol closes, also destroy the omnibar so it doesn't take up space
-// in the background
-fromTrigger(WhistTrigger.protocolClosed).subscribe(() => {
-  console.log("DESTROY OMNIBAR")
-  destroyElectronWindow(WindowHashOmnibar)
 })

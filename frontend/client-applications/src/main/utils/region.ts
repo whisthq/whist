@@ -10,7 +10,7 @@ import find from "lodash.find"
 
 import { AWS_REGIONS_SORTED_BY_PROXIMITY } from "@app/constants/store"
 import { AWSRegion } from "@app/@types/aws"
-import { logBase } from "@app/main/utils/logging"
+import { logging } from "@app/main/utils/logging"
 import { persistGet } from "@app/main/utils/persist"
 
 const whistPingTime = async (host: string, numberPings: number) => {
@@ -74,7 +74,7 @@ const sortRegionByProximity = async (regions: AWSRegion[]) => {
 
   const sortedResults = sortBy(pingResults, ["pingTime"])
 
-  logBase(`Sorted AWS regions are [${sortedResults.toString()}]`, {})
+  logging(`Sorted AWS regions are [${sortedResults.toString()}]`, {})
 
   return sortedResults
 }

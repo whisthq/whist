@@ -4,7 +4,7 @@
  * @brief This file contains miscellaneous effects that deal with monitoring/logging the app
  */
 
-import { logBase } from "@app/main/utils/logging"
+import { logging } from "@app/main/utils/logging"
 import Sentry from "@sentry/electron"
 import { interval } from "rxjs"
 
@@ -30,5 +30,5 @@ fromTrigger(WhistTrigger.startNetworkAnalysis).subscribe(() => {
 })
 
 withAppActivated(interval(HEARTBEAT_INTERVAL_IN_MS)).subscribe(() => {
-  logBase("heartbeat", {})
+  logging("heartbeat", {})
 })

@@ -106,7 +106,7 @@ const amplitudeLog = (
       .catch((err) => console.error(err))
 }
 
-export const logBase = (
+export const logging = (
   title: string,
   data: object,
   level?: LogLevel,

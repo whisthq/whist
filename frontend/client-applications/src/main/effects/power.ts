@@ -4,16 +4,16 @@
  * @brief This file contains effects that deal with the app lifecycle (e.g. relaunching, quitting, etc.)
  */
 
-import { BrowserWindow, session } from "electron"
+import { session } from "electron"
 import { merge } from "rxjs"
-import { withLatestFrom, filter, takeUntil } from "rxjs/operators"
+import { withLatestFrom, filter, take, takeUntil } from "rxjs/operators"
 import { ChildProcess } from "child_process"
 import Sentry from "@sentry/electron"
 
 import { fromTrigger } from "@app/main/utils/flows"
 import { relaunch } from "@app/main/utils/app"
 import { WhistTrigger } from "@app/constants/triggers"
-import { logBase } from "@app/main/utils/logging"
+import { logging } from "@app/main/utils/logging"
 import { persistClear } from "@app/main/utils/persist"
 import { destroyProtocol } from "@app/main/utils/protocol"
 import { emitOnSignal } from "@app/main/utils/observables"
@@ -29,9 +29,9 @@ merge(
   ),
   // If the protocol was closed gracefully and all Electron windows are closed
   fromTrigger(WhistTrigger.protocolClosed).pipe(
-    filter((args: { crashed: boolean }) => !args.crashed),
-    filter(() => BrowserWindow.getAllWindows()?.length === 0)
-  )
+    filter((args: { crashed: boolean }) => !args.crashed)
+  ),
+  fromTrigger(WhistTrigger.powerResume)
 )
   .pipe(
     takeUntil(
@@ -43,18 +43,13 @@ merge(
         ),
         fromTrigger(WhistTrigger.userRequestedQuit)
       )
-    )
+    ),
+    take(1) // When we relaunch we reset the application; this ensures we don't relaunch multiple times
   )
   .subscribe(() => {
-    logBase("Application sleeping", {})
+    logging("Application sleeping", {})
     relaunch({ sleep: true })
   })
-
-// If your computer wakes up from sleep, re-launch Whist on standby
-// i.e. don't show any windows but stay active in the dock
-fromTrigger(WhistTrigger.powerResume).subscribe(() => {
-  relaunch({ sleep: true })
-})
 
 // On signout, clear the cache (so the user can log in again) and restart
 // the app
