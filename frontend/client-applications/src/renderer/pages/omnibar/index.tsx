@@ -22,7 +22,8 @@ const Omnibar = () => {
     if (e.key === "Enter") options[activeIndex].onClick()
     if (e.key === "ArrowDown") {
       if ((activeIndex + 1) % 4 === 0 && activeIndex < options.length - 1) {
-        refs[activeIndex + 1].current.scrollIntoView({ block: "start" })
+        if (refs[activeIndex + 1] !== null)
+          refs[activeIndex + 1].current.scrollIntoView({ block: "start" })
       }
       setActiveIndex(Math.min(activeIndex + 1, options.length - 1))
     }
@@ -32,7 +33,8 @@ const Omnibar = () => {
         activeIndex < options.length - 1 &&
         activeIndex > 1
       ) {
-        refs[activeIndex - 1].current.scrollIntoView({ block: "end" })
+        if (refs[activeIndex + 1] !== null)
+          refs[activeIndex - 1].current.scrollIntoView({ block: "end" })
       }
       setActiveIndex(Math.max(0, activeIndex - 1))
     }
