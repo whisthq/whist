@@ -163,9 +163,10 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
     unsigned short num_indices = segment->num_indices;
     unsigned short num_fec_indices = segment->num_fec_indices;
     unsigned short segment_size = segment->segment_size;
-    FATAL_ASSERT(0 <= segment_index && segment_index < num_indices);
+    FATAL_ASSERT(segment_index < num_indices);
     FATAL_ASSERT(num_indices <= MAX_PACKETS);
     FATAL_ASSERT(num_fec_indices < num_indices);
+    FATAL_ASSERT(segment_size <= MAX_PACKET_SEGMENT_SIZE);
 
     FrameData* frame_data = get_frame_at_id(ring_buffer, segment_id);
 

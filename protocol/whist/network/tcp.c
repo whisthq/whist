@@ -284,13 +284,16 @@ void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
             // Realloc the buffer smaller if we have room to
             resize_dynamic_buffer(encrypted_tcp_packet_buffer, context->reading_packet_len);
 
-            // Return the whist_packet, which will be NULL if decoding failed
-            if (whist_packet->type == packet_type) {
-                return whist_packet;
-            } else {
-                deallocate_region(whist_packet);
-                LOG_ERROR("Got a TCP whist packet of type that didn't match %d! %d", (int)packet_type, (int)whist_packet->type);
-                return NULL;
+            // Return the whist_packet,
+            // but it might be NULL if decrypting failed
+            if (whist_packet != NULL) {
+                if (whist_packet->type == packet_type) {
+                    return whist_packet;
+                } else {
+                    deallocate_region(whist_packet);
+                    LOG_ERROR("Got a TCP whist packet of type that didn't match %d! %d", (int)packet_type, (int)whist_packet->type);
+                    return NULL;
+                }
             }
         }
     }
