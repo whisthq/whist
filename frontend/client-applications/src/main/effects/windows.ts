@@ -66,6 +66,7 @@ withAppActivated(
   if (!args.import) {
     networkAnalyze()
     createLoadingWindow()
+    destroyElectronWindow(WindowHashPayment)
   }
 })
 
@@ -75,16 +76,6 @@ withAppActivated(
   )
 ).subscribe(() => {
   createOmnibar()
-})
-
-withAppActivated(
-  fromTrigger(WhistTrigger.stripeAuthRefresh).pipe(
-    withLatestFrom(fromTrigger(WhistTrigger.protocolConnection))
-  )
-).subscribe(([, connected]: [any, boolean]) => {
-  if (!connected) createLoadingWindow()
-
-  destroyElectronWindow(WindowHashPayment)
 })
 
 withAppActivated(fromTrigger(WhistTrigger.showSignoutWindow)).subscribe(() => {
@@ -120,14 +111,16 @@ withAppActivated(fromTrigger(WhistTrigger.showPaymentWindow)).subscribe(() => {
     .catch((err) => Sentry.captureException(err))
 })
 
-withAppActivated(fromTrigger(WhistTrigger.authFlowSuccess)).subscribe(() => {
-  const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
-  if (!onboarded) {
-    networkAnalyze()
-    createOnboardingWindow()
-    destroyElectronWindow(WindowHashAuth)
+withAppActivated(fromTrigger(WhistTrigger.checkPaymentFlowSuccess)).subscribe(
+  () => {
+    const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
+    if (!onboarded) {
+      networkAnalyze()
+      createOnboardingWindow()
+      destroyElectronWindow(WindowHashAuth)
+    }
   }
-})
+)
 
 // When the protocol launches, destroy the loading window and onboarding window
 // if they are open

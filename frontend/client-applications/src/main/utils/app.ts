@@ -8,8 +8,9 @@ const relaunch = (options?: { sleep: boolean }) => {
     destroyElectronWindow(hash)
   })
 
+  const sleep = options?.sleep ?? false
   // Then quit/relaunch the app
-  options?.sleep ?? false
+  sleep
     ? app.relaunch({ args: process.argv.slice(1).concat(["--sleep"]) })
     : app.relaunch()
   // Because the omnibar is not closable by the user, we call app.exit() to force it to close as a
