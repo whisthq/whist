@@ -87,7 +87,7 @@ const createElectronWindow = (args: {
     ...(args.options !== undefined && args.options),
     width: args.width,
     height: args.height,
-    show: args.show ?? true,
+    show: false, // If this is not set to false, the window will show too early as a white scren
   })
 
   // Some websites don't like Electron in the user agent, so we remove it

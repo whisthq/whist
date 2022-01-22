@@ -35,7 +35,6 @@ import {
 } from "@app/main/utils/observables"
 import { WhistTrigger } from "@app/constants/triggers"
 import { closestRegionHasChanged } from "@app/main/utils/region"
-import { accessToken } from "@whist/core-ts"
 
 // For any failure, close all windows and display error window
 untilUpdateAvailable(
@@ -93,7 +92,8 @@ waitForSignal(
 })
 
 withAppActivated(fromTrigger(WhistTrigger.checkPaymentFlowFailure)).subscribe(
-  ({ accessToken }: accessToken) => {
+  () => {
     createErrorWindow(NO_PAYMENT_ERROR)
+    destroyElectronWindow(WindowHashAuth)
   }
 )

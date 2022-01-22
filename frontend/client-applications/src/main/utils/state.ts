@@ -13,8 +13,11 @@ import {
 import { WhistTrigger } from "@app/constants/triggers"
 import { withAppActivated } from "@app/main/utils/observables"
 import { getInitialKeyRepeat, getKeyRepeat } from "@app/main/utils/keyRepeat"
+import { logging } from "@app/main/utils/logging"
 
 const sleep = of(process.argv[process.argv.length - 1] === "--sleep")
+
+sleep.subscribe((s) => logging("Sleep is", { sleep: s }))
 
 const accessToken = fromTrigger(WhistTrigger.storeDidChange).pipe(
   map(() => (persistGet(CACHED_ACCESS_TOKEN) as string) ?? ""),

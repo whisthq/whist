@@ -65,7 +65,7 @@ const auth = authFlow(
 )
 
 // Onboarding flow
-const onboarded = waitForSignal(
+waitForSignal(
   merge(
     fromTrigger(WhistTrigger.beginImport),
     of(persistGet(ONBOARDED)).pipe(filter((onboarded) => onboarded as boolean))
@@ -76,7 +76,7 @@ const onboarded = waitForSignal(
 // Unpack the access token to see if their payment is valid
 const checkPayment = checkPaymentFlow(
   emitOnSignal(
-    waitForSignal(combineLatest({ accessToken }), onboarded),
+    combineLatest({ accessToken: accessToken.pipe(filter((t) => t !== "")) }),
     fromTrigger(WhistTrigger.authFlowSuccess)
   )
 )
@@ -134,7 +134,6 @@ const launchTrigger = emitOnSignal(
         filter((onboarded) => onboarded as boolean)
       )
     ), // On a normal launch
-    zip(checkPayment.failure, refreshAfterPaying.success), // If you had an invalid subscription but now paid
     importedData // On onboarding or import
   )
 ).pipe(share())
@@ -148,6 +147,7 @@ const refreshAtEnd = authRefreshFlow(
   emitOnSignal(combineLatest({ refreshToken }), mandelbox.success)
 )
 
+createTrigger(WhistTrigger.checkPaymentFlowSuccess, checkPayment.success)
 createTrigger(WhistTrigger.checkPaymentFlowFailure, checkPayment.failure)
 
 createTrigger(WhistTrigger.mandelboxFlowStart, launchTrigger)
