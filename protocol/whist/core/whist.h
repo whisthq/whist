@@ -227,6 +227,16 @@ Custom Types
 #define CHUNK_SIZE 1000000
 
 /**
+ * @brief                          Data packet description
+ */
+typedef enum {
+    PACKET_AUDIO = 0,
+    PACKET_VIDEO = 1,
+    PACKET_MESSAGE = 2,
+    NUM_PACKET_TYPES = 3,
+} WhistPacketType;
+
+/**
  * @brief   Codec types.
  * @details The codec type being used for video encoding.
  */

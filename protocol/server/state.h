@@ -74,13 +74,6 @@ struct _whist_server_state {
     bool client_joined_after_window_name_broadcast;
     Client client;
 
-    // TODO: Replace the below 4 variables, with
-    // a function that video.h exposes
-
-    // Requested parameters
-    volatile int requested_video_bitrate;
-    volatile CodecType requested_video_codec;
-    volatile int requested_video_fps;
     // This `update_encoder` should be set to true,
     // when the above "requested" variables have changed
     volatile bool update_encoder;

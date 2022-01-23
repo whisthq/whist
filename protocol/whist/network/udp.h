@@ -143,6 +143,9 @@ void udp_nack_packet(SocketContext* socket_context, WhistPacketType type, int id
 // TODO: Try to remove by making the client detect a nack buffer
 void udp_register_ring_buffer(SocketContext* context, WhistPacketType type, int max_frame_size, int num_buffers);
 
+// TODO: Move to network.h, and make it more generic (E.g., "avg bitrate" / "fec ratio")
+NetworkSettings udp_get_network_settings(SocketContext* context);
+
 // TODO: Remove this by pulling network-side of E2E into udp.c
 timestamp_us udp_get_client_input_timestamp(SocketContext* socket_context);
 

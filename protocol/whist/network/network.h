@@ -90,6 +90,8 @@ Includes
 ============================
 */
 
+#include <whist/core/whist.h>
+
 // In order to use accept4 we have to allow non-standard extensions
 #if !defined(_GNU_SOURCE) && defined(__linux__)
 #define _GNU_SOURCE
@@ -106,8 +108,6 @@ Includes
 #include <netinet/in.h>
 #include <sys/socket.h>
 #endif
-
-#include <whist/network/throttle.h>
 
 /*
 ============================
@@ -163,16 +163,17 @@ Custom types
 // TODO: INC integer that must not be used twice
 
 /**
- * @brief                          Data packet description
+ * @brief                          The networking state of a socket
  */
-typedef enum {
-    PACKET_AUDIO = 0,
-    PACKET_VIDEO = 1,
-    PACKET_MESSAGE = 2,
-    NUM_PACKET_TYPES = 3,
-} WhistPacketType;
-
-#include <whist/core/whist.h>
+// TODO: audio/video seems too specific
+typedef struct {
+    int fps;
+    int bitrate;
+    int burst_bitrate;
+    double audio_fec_ratio;
+    double video_fec_ratio;
+    CodecType desired_codec;
+} NetworkSettings;
 
 /**
  * @brief                          Packet of data to be sent over a

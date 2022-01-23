@@ -12,6 +12,7 @@ Includes
 #include "tcp.h"
 #include <whist/utils/aes.h>
 #include <whist/utils/clock.h>
+#include <whist/network/throttle.h>
 
 #ifndef _WIN32
 #include <fcntl.h>

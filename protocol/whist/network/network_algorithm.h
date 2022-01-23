@@ -57,15 +57,6 @@ typedef struct {
     int throughput_per_second;
 } NetworkStatistics;
 
-typedef struct {
-    int fps;
-    int bitrate;
-    int burst_bitrate;
-    double audio_fec_ratio;
-    double video_fec_ratio;
-    CodecType desired_codec;
-} NetworkSettings;
-
 /*
 ============================
 Public Functions

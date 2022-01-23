@@ -40,6 +40,7 @@ Includes
 #include <whist/video/codec/encode.h>
 #include <whist/utils/avpacket_buffer.h>
 #include <whist/logging/log_statistic.h>
+#include <whist/network/throttle.h>
 #include "client.h"
 #include "network.h"
 #include "video.h"
@@ -509,6 +510,15 @@ int32_t multithreaded_send_video(void* opaque) {
             }
         }
 
+        NetworkSettings network_settings = udp_get_network_settings(&state->client.udp_context);
+
+        int video_bitrate = (network_settings.bitrate - AUDIO_BITRATE) * (1.0 - network_settings.video_fec_ratio);
+
+    // Requested parameters
+    volatile int requested_video_bitrate;
+    volatile CodecType requested_video_codec;
+    volatile int requested_video_fps;
+
         // Update encoder with new parameters
         if (state->update_encoder) {
             start_timer(&statistics_timer);
@@ -519,9 +529,12 @@ int32_t multithreaded_send_video(void* opaque) {
                                  get_timer(&statistics_timer) * MS_IN_SECOND);
         }
 
+        // Get this timestamp before we capture the screen,
+        // To measure the full pre-capture to post-render E2E latency
+        timestamp_us server_timestamp = current_time_us();
         timestamp_us client_input_timestamp = udp_get_client_input_timestamp(&state->client.udp_context);
 
-        // check if the client has sent any stream reset requests for video
+        // Check if the udp connection's stream has been reset
         bool pending_stream_reset = udp_get_pending_stream_reset(&state->client.udp_context, PACKET_VIDEO);
         if (pending_stream_reset) {
             state->wants_iframe = true;

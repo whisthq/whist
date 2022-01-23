@@ -15,6 +15,7 @@ Includes
 #include <whist/network/network_algorithm.h>
 #include <whist/network/ringbuffer.h>
 #include <whist/logging/log_statistic.h>
+#include <whist/network/throttle.h>
 
 #ifndef _WIN32
 #include <fcntl.h>
@@ -152,6 +153,9 @@ typedef struct {
     WhistPacket pending_packets[NUM_PACKET_TYPES];
     // Whether or not pending_packets[i] contains a pending packet
     bool has_pending_packet[NUM_PACKET_TYPES];
+
+    // The current network settings
+    NetworkSettings current_network_settings;
 } UDPContext;
 
 // Define how many times to retry sending a UDP packet in case of Error 55 (buffer full). The
@@ -863,6 +867,12 @@ void udp_register_ring_buffer(SocketContext* socket_context, WhistPacketType typ
     context->ring_buffers[type_index] = init_ring_buffer(type, max_frame_size, num_buffers, socket_context, udp_nack_packet, udp_request_stream_reset);
 }
 
+NetworkSettings udp_get_network_settings(SocketContext* socket_context) {
+    UDPContext* context = (UDPContext*)socket_context->context;
+
+    return context->current_network_settings;
+}
+
 // TODO: Pull E2E calculations inside of udp.c
 timestamp_us udp_get_client_input_timestamp(SocketContext* socket_context) {
     UDPContext* context = (UDPContext*)socket_context->context;
@@ -1270,10 +1280,16 @@ void udp_handle_pong(UDPContext* context, int id) {
 }
 
 void udp_handle_network_settings(UDPContext* context, NetworkSettings network_settings) {
-
+    int avg_bitrate = network_settings.bitrate;
     int burst_bitrate = network_settings.burst_bitrate;
-    double video_fec_ratio = network_settings.video_fec_ratio;
     double audio_fec_ratio = network_settings.audio_fec_ratio;
+    double video_fec_ratio = network_settings.video_fec_ratio;
+
+    // Check bounds
+    FATAL_ASSERT(MINIMUM_BITRATE <= avg_bitrate && avg_bitrate <= MAXIMUM_BITRATE);
+    FATAL_ASSERT(MINIMUM_BURST_BITRATE <= burst_bitrate && burst_bitrate <= MAXIMUM_BURST_BITRATE);
+    FATAL_ASSERT(0.0 <= audio_fec_ratio && audio_fec_ratio <= MAX_FEC_RATIO);
+    FATAL_ASSERT(0.0 <= video_fec_ratio && video_fec_ratio <= MAX_FEC_RATIO);
 
     // Set burst bitrate, if possible
     if (context->network_throttler == NULL) {
@@ -1282,9 +1298,25 @@ void udp_handle_network_settings(UDPContext* context, NetworkSettings network_se
         network_throttler_set_burst_bitrate(context->network_throttler, burst_bitrate);
     }
 
-    // Set fec packet ratio
-    FATAL_ASSERT(0.0 <= video_fec_ratio && video_fec_ratio <= MAX_FEC_RATIO);
-    FATAL_ASSERT(0.0 <= audio_fec_ratio && audio_fec_ratio <= MAX_FEC_RATIO);
+    // Set FEC Packet Ratios
     context->fec_packet_ratios[PACKET_VIDEO] = video_fec_ratio;
     context->fec_packet_ratios[PACKET_AUDIO] = audio_fec_ratio;
+
+    // Set internal network settings, so that it can be requested for later
+    context->current_network_settings = network_settings;
+
+    // Set the new video encoding parameters,
+    // using only the bandwidth that isn't already meant for audio,
+    // Or reserved for the audio's FEC packets
+    state->requested_video_bitrate = (avg_bitrate - AUDIO_BITRATE) * (1.0 - video_fec_ratio);
+    FATAL_ASSERT(state->requested_video_bitrate > 0);
+    state->requested_video_codec = wcmsg->network_settings.desired_codec;
+    state->requested_video_fps = wcmsg->network_settings.fps;
+    // TODO: Implement custom FPS properly
+    if (state->requested_video_fps != MAX_FPS) {
+        LOG_ERROR("Custom FPS of %d is not possible! %d will be used instead.",
+                  state->requested_video_fps, MAX_FPS);
+    }
+    // Mark the encoder for update using the new video encoding parameters
+    state->update_encoder = true;
 }
