@@ -1,6 +1,7 @@
 import React from "react"
 import classNames from "classnames"
 
+import Logo from "@app/components/icons/logo.svg"
 import { Progress } from "@app/components/progress"
 import { WhistButton, WhistButtonState } from "@app/components/button"
 
@@ -44,16 +45,14 @@ const Icon = (props: { state: NetworkTestState }) => {
       return (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-12 w-12 text-mint m-auto"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
+          className="h-10 w-10 text-mint m-auto animate-pulse"
+          viewBox="0 0 20 20"
+          fill="currentColor"
         >
           <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"
+            fill-rule="evenodd"
+            d="M5.05 3.636a1 1 0 010 1.414 7 7 0 000 9.9 1 1 0 11-1.414 1.414 9 9 0 010-12.728 1 1 0 011.414 0zm9.9 0a1 1 0 011.414 0 9 9 0 010 12.728 1 1 0 11-1.414-1.414 7 7 0 000-9.9 1 1 0 010-1.414zM7.879 6.464a1 1 0 010 1.414 3 3 0 000 4.243 1 1 0 11-1.415 1.414 5 5 0 010-7.07 1 1 0 011.415 0zm4.242 0a1 1 0 011.415 0 5 5 0 010 7.072 1 1 0 01-1.415-1.415 3 3 0 000-4.242 1 1 0 010-1.415zM10 9a1 1 0 011 1v.01a1 1 0 11-2 0V10a1 1 0 011-1z"
+            clip-rule="evenodd"
           />
         </svg>
       )
@@ -61,7 +60,7 @@ const Icon = (props: { state: NetworkTestState }) => {
       return (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-12 w-12 text-mint m-auto"
+          className="h-10 w-10 text-mint m-auto"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -78,7 +77,7 @@ const Icon = (props: { state: NetworkTestState }) => {
       return (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-12 w-12 text-red-500 m-auto"
+          className="h-10 w-10 text-red-400 m-auto"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -98,19 +97,19 @@ const Text = (props: { state: NetworkTestState }) => {
   switch (props.state) {
     case NetworkTestState.IN_PROGRESS:
       return (
-        <div className="text-gray-300 font-semibold text-xl">
+        <div className="text-gray-100 font-bold text-lg mt-4">
           Testing your Internet strength
         </div>
       )
     case NetworkTestState.NETWORK_GOOD:
       return (
-        <div className="text-gray-300 font-semibold text-xl">
-          Your Internet is strong enough for Whist
+        <div className="text-gray-100 font-bold text-lg mt-4">
+          Your Internet is ready for Whist
         </div>
       )
     default:
       return (
-        <div className="text-gray-300 font-semibold text-xl">
+        <div className="text-gray-100 font-bold text-lg mt-4">
           Your Internet may not be strong enough
         </div>
       )
@@ -143,7 +142,7 @@ const NetworkStats = (props: {
 
   return (
     <div>
-      <dl className="grid grid-cols-1 rounded rounded-b-none bg-gray-900 overflow-hidden divide-gray-800 grid-cols-2 divide-y-0">
+      <dl className="grid grid-cols-1 rounded rounded-b-none bg-gray-800 overflow-hidden divide-gray-800 grid-cols-2 divide-y-0">
         {stats.map((item) => {
           const warning =
             item.operator === "greater"
@@ -151,14 +150,14 @@ const NetworkStats = (props: {
               : item.stat > item.required
           return (
             <div key={item.name} className="px-4 py-2 sm:py-5 sm:p-6">
-              <dt className="text-base font-normal text-gray-300 text-left">
+              <dt className="text-base font-normal text-gray-300 text-left pl-2">
                 <div className="text-xs sm:text-md">{item.name}</div>
               </dt>
-              <dd className="mt-1 flex items-baseline">
+              <dd className="mt-1 flex items-baseline pl-2">
                 <div
                   className={classNames(
                     "items-baseline text-lg sm:text-2xl font-semibold justify-between",
-                    warning ? "text-red-500" : "text-mint"
+                    warning ? "text-red-400" : "text-mint"
                   )}
                 >
                   {item.stat}
@@ -176,7 +175,14 @@ const NetworkStats = (props: {
 const Button = (props: { state: NetworkTestState; onSubmit: () => void }) => {
   switch (props.state) {
     case NetworkTestState.IN_PROGRESS:
-      return <></>
+      return (
+        <WhistButton
+          contents="Continue"
+          state={WhistButtonState.DISABLED}
+          className="w-96 text-gray-900 bg-mint-light bg-opacity-20"
+          onClick={props.onSubmit}
+        />
+      )
     case NetworkTestState.NETWORK_GOOD:
       return (
         <WhistButton
@@ -206,6 +212,7 @@ const Network = (props: {
   }
   onSubmit?: () => void
   withText?: boolean
+  withButton?: boolean
 }) => {
   const testState = getNetworkTestState(props.networkInfo)
 
@@ -213,23 +220,32 @@ const Network = (props: {
     <div className="w-full max-w-sm m-auto font-body text-center">
       {(props.withText ?? false) && (
         <>
-          <Icon state={testState} />
-          <div className="mt-4 mb-8">
+          <div className="animate-fade-in-up opacity-0">
+            <Icon state={testState} />
+          </div>
+          <div
+            className="mt-6 animate-fade-in-up opacity-0"
+            style={{ animationDelay: "400ms" }}
+          >
             <Text state={testState} />
           </div>
         </>
       )}
-      <div>
+      <div
+        className="mt-8 animate-fade-in-up opacity-0"
+        style={{ animationDelay: "800ms" }}
+      >
         <NetworkStats networkInfo={props.networkInfo} />
-      </div>
-      <div>
         <Progress
-          percent={Math.min(props.networkInfo?.progress ?? 1, 98)}
+          percent={Math.min(props.networkInfo?.progress ?? 1, 100)}
           className="rounded-t-none h-1"
         />
       </div>
-      {props.onSubmit !== undefined && (
-        <div className="mt-6 h-12">
+      {props.onSubmit !== undefined && (props.withButton ?? false) && (
+        <div
+          className="mt-6 h-12 animate-fade-in-up opacity-0"
+          style={{ animationDelay: "800ms" }}
+        >
           <Button state={testState} onSubmit={props.onSubmit} />
         </div>
       )}

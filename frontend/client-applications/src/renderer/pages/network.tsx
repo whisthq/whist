@@ -10,14 +10,25 @@ const Network = (props: {
   }
   onSubmit?: () => void
 }) => {
+  const onKeyDown = (evt: any) => {
+    if (evt.key === "Enter" && props?.onSubmit !== undefined) props.onSubmit()
+  }
+
   return (
-    <div className="flex flex-col justify-center items-center bg-gray-800 h-screen text-center">
+    <div
+      onKeyDown={onKeyDown}
+      tabIndex={0}
+      className="flex flex-col h-screen w-full font-body outline-none bg-gray-900"
+    >
       <div className="absolute top-0 left-0 w-full h-6 draggable"></div>
-      <NetworkComponent
-        networkInfo={props.networkInfo}
-        onSubmit={props.onSubmit}
-        withText={true}
-      />
+      <div className="mt-24">
+        <NetworkComponent
+          networkInfo={props.networkInfo}
+          onSubmit={props.onSubmit}
+          withText={true}
+          withButton={true}
+        />
+      </div>
     </div>
   )
 }

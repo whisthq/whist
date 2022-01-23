@@ -9,13 +9,13 @@ export const Progress = (props: {
   <div className="relative border-none">
     <div
       className={classNames(
-        `overflow-hidden mb-4 text-xs flex rounded bg-green-100`,
+        `overflow-hidden mb-4 text-xs flex rounded`,
         props.className ?? ""
       )}
     >
       <div
         style={{ width: `${props.percent.toString()}%` }}
-        className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-mint`}
+        className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient`}
       ></div>
     </div>
   </div>

@@ -13,7 +13,7 @@ import {
   WindowHashLicense,
   WindowHashImport,
   WindowHashOmnibar,
-  WindowHashWelcome
+  WindowHashWelcome,
 } from "@app/constants/windows"
 import {
   authPortalURL,
@@ -111,7 +111,7 @@ const createWelcomeWindow = () =>
     ...height.lg,
     hash: WindowHashWelcome,
     options: {
-      trafficLightPosition: { x: 22, y: 22 }
+      trafficLightPosition: { x: 22, y: 22 },
     },
   })
 
@@ -135,7 +135,7 @@ const createSignoutWindow = () =>
 const createOnboardingWindow = () =>
   createElectronWindow({
     ...width.md,
-    ...height.lg,
+    ...height.md,
     hash: WindowHashOnboarding,
   })
 
@@ -190,4 +190,3 @@ export {
   createUpdateWindow,
   createOmnibar,
 }
-

@@ -17,9 +17,6 @@ module.exports = {
         current: "currentColor",
         blue: {
           DEFAULT: "#4F35DE",
-          light: "#e3defa",
-          lightest: "#f6f9ff",
-          darkest: "#060217",
         },
         mint: {
           DEFAULT: "#00FFA2",
@@ -27,20 +24,20 @@ module.exports = {
         },
       },
       keyframes: {
-          'fade-in-up': {
-              '0%': {
-                  opacity: '0.0',
-                  transform: 'translateY(10px)'
-              },
-              '100%': {
-                  opacity: '1.0',
-                  transform: 'translateY(0)'
-              },
+        "fade-in-up": {
+          "0%": {
+            opacity: "0.0",
+            transform: "translateY(10px)",
           },
+          "100%": {
+            opacity: "1.0",
+            transform: "translateY(0)",
+          },
+        },
       },
       animation: {
-          'fade-in-up': 'fade-in-up 1s ease-out forwards',
-      }
+        "fade-in-up": "fade-in-up 1s ease-out forwards",
+      },
     },
   },
 }
