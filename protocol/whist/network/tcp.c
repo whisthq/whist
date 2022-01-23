@@ -34,6 +34,9 @@ typedef struct {
 // Get tcp packet size from a TCPPacket*
 #define get_tcp_packet_size(tcp_packet) ((size_t)(sizeof(TCPPacket) + (tcp_packet)->payload_size))
 
+// How often to poll recv
+#define RECV_INTERVAL_MS 30
+
 typedef struct {
     int timeout;
     SOCKET socket;
@@ -46,6 +49,10 @@ typedef struct {
     NetworkThrottleContext* network_throttler;
 
     WhistTimer last_ack_timer;
+
+    // Only recvp every RECV_INTERVAL_MS, to keep CPU usage low.
+    // This is because a recvp takes ~8ms sometimes
+    WhistTimer last_recvp;
 } TCPContext;
 
 /*
@@ -201,6 +208,13 @@ int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, int len
 
 void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
     TCPContext* context = raw_context;
+
+    if (get_timer(&context->last_recvp) < RECV_INTERVAL_MS / (double)MS_IN_SECOND) {
+        // Return early if it's been too soon since the last recv
+        return NULL;
+    }
+
+    start_timer(&context->last_recvp);
 
     // The dynamically sized buffer to read into
     DynamicBuffer* encrypted_tcp_packet_buffer = context->encrypted_tcp_packet_buffer;
@@ -390,6 +404,7 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
     resize_dynamic_buffer(context->encrypted_tcp_packet_buffer, 0);
     context->network_throttler = NULL;
     start_timer(&context->last_ack_timer);
+    start_timer(&context->last_recvp);
 
     int ret;
 

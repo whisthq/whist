@@ -115,6 +115,10 @@ Defines
 ============================
 */
 
+// TODO: Move somewhere else
+// The subset of the bitrate that will be audio
+#define AUDIO_BITRATE 128000
+
 #if defined(_WIN32)
 #define WHIST_ETIMEDOUT WSAETIMEDOUT
 #define WHIST_EWOULDBLOCK WSAEWOULDBLOCK
@@ -320,7 +324,7 @@ void free_packet(SocketContext* context, WhistPacket* packet);
  *
  * @returns         True if the stream has been reset
  */
-bool get_pending_stream_reset(SocketContext context, WhistPacketType type);
+bool get_pending_stream_reset(SocketContext* context, WhistPacketType type);
 
 /**
  * @brief                          Destroys an allocated and initialized SocketContext

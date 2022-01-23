@@ -75,6 +75,11 @@ void free_packet(SocketContext* context, WhistPacket* packet) {
     context->free_packet(context->context, packet);
 }
 
+bool get_pending_stream_reset(SocketContext* context, WhistPacketType type) {
+    FATAL_ASSERT(context != NULL);
+    return context->get_pending_stream_reset(context->context, type);
+}
+
 void destroy_socket_context(SocketContext* context) {
     FATAL_ASSERT(context != NULL);
     context->destroy_socket_context(context->context);

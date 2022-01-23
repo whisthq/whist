@@ -40,9 +40,6 @@ Defines
 #define STARTING_BURST_BITRATE \
     (min(max(STARTING_BURST_BITRATE_RAW, MINIMUM_BURST_BITRATE), MAXIMUM_BURST_BITRATE))
 
-// The subset of the bitrate that will be audio
-#define AUDIO_BITRATE 128000
-
 // The FEC Ratio to use on video/audio packets respectively
 // (Only used for testing phase of FEC)
 // This refers to the percentage of packets that will be FEC packets

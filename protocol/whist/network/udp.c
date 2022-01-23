@@ -1205,6 +1205,7 @@ void udp_update_ping(UDPContext* context) {
                 // If we've failed too many times consecutively, mark as disconnected
                 if (context->consecutive_ping_failures == 3) {
                     LOG_WARNING("Server disconnected: 3 consecutive ping failures.");
+                    // TODO: Remove ugly extern global logic
                     connected = false;
                 }
             }
@@ -1304,19 +1305,4 @@ void udp_handle_network_settings(UDPContext* context, NetworkSettings network_se
 
     // Set internal network settings, so that it can be requested for later
     context->current_network_settings = network_settings;
-
-    // Set the new video encoding parameters,
-    // using only the bandwidth that isn't already meant for audio,
-    // Or reserved for the audio's FEC packets
-    state->requested_video_bitrate = (avg_bitrate - AUDIO_BITRATE) * (1.0 - video_fec_ratio);
-    FATAL_ASSERT(state->requested_video_bitrate > 0);
-    state->requested_video_codec = wcmsg->network_settings.desired_codec;
-    state->requested_video_fps = wcmsg->network_settings.fps;
-    // TODO: Implement custom FPS properly
-    if (state->requested_video_fps != MAX_FPS) {
-        LOG_ERROR("Custom FPS of %d is not possible! %d will be used instead.",
-                  state->requested_video_fps, MAX_FPS);
-    }
-    // Mark the encoder for update using the new video encoding parameters
-    state->update_encoder = true;
 }

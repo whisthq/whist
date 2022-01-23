@@ -31,8 +31,11 @@ Globals
 static WhistMutex packet_mutex;
 
 // This variable should always be an array - we call sizeof()
-
+// TODO: Remove ugly global state
 whist_server_state server_state;
+
+// TODO: Remove connected
+volatile bool connected;
 
 /*
 ============================
@@ -335,10 +338,7 @@ static void whist_server_state_init(whist_server_state* state, whist_server_conf
     state->client_dpi = 192;
     state->update_device = true;
 
-    // Mark initial bitrate/codec/fps request
-    state->requested_video_bitrate = STARTING_BITRATE;
-    state->requested_video_codec = CODEC_TYPE_H264;
-    state->requested_video_fps = 60;
+    // Mark initial update encoder
     state->update_encoder = true;
 
     state->discovery_listen = INVALID_SOCKET;
@@ -429,9 +429,6 @@ int main(int argc, char* argv[]) {
 
     init_window_info_getter();
 
-    WhistTimer ack_timer;
-    start_timer(&ack_timer);
-
     WhistTimer window_name_timer;
     start_timer(&window_name_timer);
 
@@ -457,16 +454,6 @@ int main(int argc, char* argv[]) {
 
         // Get UDP messages
         get_whist_udp_client_messages(&server_state);
-
-        if (get_timer(&ack_timer) > 5) {
-            if (get_using_stun()) {
-                // Broadcast ack
-                if (broadcast_ack(&server_state.client) != 0) {
-                    LOG_ERROR("Failed to broadcast acks.");
-                }
-            }
-            start_timer(&ack_timer);
-        }
 
         if (get_timer(&window_fullscreen_timer) > 50.0 / MS_IN_SECOND) {
             // This is the cached fullscreen state. We only send state change events

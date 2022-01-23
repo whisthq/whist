@@ -68,7 +68,8 @@ int handle_discovery_port_message(whist_server_state *state, SocketContext *cont
     WhistTimer timer;
     start_timer(&timer);
     do {
-        tcp_packet = read_packet(context, true);
+        socket_update(context);
+        tcp_packet = get_packet(context, PACKET_MESSAGE);
         whist_sleep(5);
     } while (tcp_packet == NULL && get_timer(&timer) < CLIENT_PING_TIMEOUT_SEC);
     // Exit on null tcp packet, otherwise analyze the resulting WhistClientMessage
@@ -112,13 +113,12 @@ int handle_discovery_port_message(whist_server_state *state, SocketContext *cont
             // We wouldn't have called closesocket on this socket before, so we can safely call
             //     close regardless of what caused the socket failure without worrying about
             //     undefined behavior.
-            SocketContextData *socket_context_data = (SocketContextData *)context->context;
             write_lock(&state->client.tcp_rwlock);
             destroy_socket_context(&state->client.tcp_context);
             state->client.tcp_context.listen_socket = &state->tcp_listen;
             if (!create_tcp_socket_context(&state->client.tcp_context, NULL, state->client.tcp_port,
                                            1, TCP_CONNECTION_WAIT, get_using_stun(),
-                                           socket_context_data->binary_aes_private_key)) {
+                                           state->config->binary_aes_private_key)) {
                 LOG_WARNING("Failed TCP connection with client");
             }
             write_unlock(&state->client.tcp_rwlock);
@@ -211,21 +211,6 @@ int disconnect_client(Client *client) {
     return 0;
 }
 
-int broadcast_ack(Client *client) {
-    int ret = 0;
-    if (client->is_active) {
-        read_lock(&client->tcp_rwlock);
-        if (ack(&(client->tcp_context)) < 0) {
-            ret = -1;
-        }
-        if (ack(&(client->udp_context)) < 0) {
-            ret = -1;
-        }
-        read_unlock(&client->tcp_rwlock);
-    }
-    return ret;
-}
-
 int broadcast_udp_packet(Client *client, WhistPacketType type, void *data, int len, int packet_id) {
     if (packet_id <= 0) {
         LOG_WARNING("Packet IDs must be positive!");
@@ -258,15 +243,8 @@ bool has_read = false;
 int try_get_next_message_tcp(Client *client, WhistPacket **p_tcp_packet) {
     *p_tcp_packet = NULL;
 
-    // Check if 20ms has passed since last TCP recvp, since each TCP recvp read takes 8ms
-    bool should_recvp = false;
-    if (!has_read || get_timer(&last_tcp_read) * MS_IN_SECOND > 20.0) {
-        should_recvp = true;
-        start_timer(&last_tcp_read);
-        has_read = true;
-    }
-
-    WhistPacket *tcp_packet = read_packet(&client->tcp_context, should_recvp);
+    socket_update(&client->tcp_context);
+    WhistPacket *tcp_packet = get_packet(&client->tcp_context, PACKET_MESSAGE);
     if (tcp_packet) {
         LOG_INFO("Received TCP Packet: Size %d", tcp_packet->payload_size);
         *p_tcp_packet = tcp_packet;
@@ -279,7 +257,8 @@ int try_get_next_message_udp(Client *client, WhistClientMessage *wcmsg, size_t *
 
     memset(wcmsg, 0, sizeof(*wcmsg));
 
-    WhistPacket *packet = read_packet(&(client->udp_context), true);
+    socket_update(&client->udp_context);
+    WhistPacket *packet = get_packet(&client->udp_context, PACKET_MESSAGE);
     if (packet) {
         memcpy(wcmsg, packet->data, max(sizeof(*wcmsg), (size_t)packet->payload_size));
         if (packet->payload_size != get_wcmsg_size(wcmsg)) {
