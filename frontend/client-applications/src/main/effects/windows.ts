@@ -13,6 +13,7 @@ import {
   WindowHashOnboarding,
   WindowHashImport,
   WindowHashAuth,
+  WindowHashWelcome,
 } from "@app/constants/windows"
 import {
   createAuthWindow,
@@ -23,6 +24,7 @@ import {
   createLicenseWindow,
   createImportWindow,
   createOnboardingWindow,
+  createWelcomeWindow,
   createOmnibar,
 } from "@app/main/utils/renderer"
 import { persistGet } from "@app/main/utils/persist"
@@ -51,8 +53,13 @@ withAppActivated(
   })
 ).subscribe((authCache) => {
   if (!isEmpty(pickBy(authCache, (x) => x === ""))) {
-    createAuthWindow()
+    createWelcomeWindow()
   }
+})
+
+withAppActivated(fromTrigger(WhistTrigger.showAuthWindow)).subscribe(() => {
+  createAuthWindow()
+  destroyElectronWindow(WindowHashWelcome)
 })
 
 withAppActivated(

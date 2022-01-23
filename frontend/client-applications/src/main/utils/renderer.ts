@@ -13,6 +13,7 @@ import {
   WindowHashLicense,
   WindowHashImport,
   WindowHashOmnibar,
+  WindowHashWelcome,
 } from "@app/constants/windows"
 import {
   authPortalURL,
@@ -32,7 +33,7 @@ const createAuthWindow = () => {
     ...width.md,
     ...height.lg,
     hash: WindowHashAuth,
-    customURL: authPortalURL(),
+    customURL: `${authPortalURL()}&connection=google-oauth2`,
   })
 
   /* eslint-disable @typescript-eslint/no-misused-promises */
@@ -104,6 +105,16 @@ const createLicenseWindow = () =>
       "https://whisthq.notion.site/Whist-Open-Source-Licenses-ea120824f105494bb721841e53a1d126",
   })
 
+const createWelcomeWindow = () =>
+  createElectronWindow({
+    ...width.md,
+    ...height.lg,
+    hash: WindowHashWelcome,
+    options: {
+      trafficLightPosition: { x: 22, y: 22 },
+    },
+  })
+
 const createErrorWindow = (hash: string) =>
   createElectronWindow({
     ...width.md,
@@ -124,7 +135,7 @@ const createSignoutWindow = () =>
 const createOnboardingWindow = () =>
   createElectronWindow({
     ...width.md,
-    ...height.lg,
+    ...height.md,
     hash: WindowHashOnboarding,
   })
 
@@ -170,6 +181,7 @@ export {
   createPaymentWindow,
   createSpeedtestWindow,
   createLicenseWindow,
+  createWelcomeWindow,
   createErrorWindow,
   createImportWindow,
   createLoadingWindow,

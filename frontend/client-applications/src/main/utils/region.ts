@@ -29,10 +29,12 @@ const whistPingTime = async (host: string, numberPings: number) => {
   const pingResults = []
   for (let i = 0; i < numberPings; i += 1) {
     const startTime = Date.now()
-
-    await fetch(host)
-
-    pingResults.push(Date.now() - startTime)
+    try {
+      await fetch(host)
+      pingResults.push(Date.now() - startTime)
+    } catch (err) {
+      console.error(err)
+    }
   }
 
   // Resolve list of Promises synchronously to get a list of ping outputs

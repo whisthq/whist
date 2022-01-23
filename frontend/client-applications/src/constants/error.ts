@@ -69,11 +69,11 @@ export const whistError = {
     text: "If you believe this is a mistake, we deeply apologize. Please contact support@whist.com for help.",
   },
   [COMMIT_HASH_MISMATCH]: {
-    title: "Your Whist version is out of date :(",
+    title: "Whist version is out of date :(",
     text: "Please allow a few seconds for an update to download. If nothing happens, we deeply apologize and ask you contact support@whist.com for help.",
   },
   [MANDELBOX_INTERNAL_ERROR]: {
-    title: "There was an unexpected error with our servers :(",
+    title: "Unexpected server error :(",
     text: "This is likely a temporary bug and we deeply apologize for the inconvenience.",
   },
   [LOCATION_CHANGED_ERROR]: {

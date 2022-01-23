@@ -10,21 +10,33 @@ module.exports = {
     // override some of the default utilities.
     extend: {
       fontFamily: {
-        body: ["Myriad-Pro"],
+        body: ["Josefin-Sans"],
       },
       colors: {
         transparent: "transparent",
         current: "currentColor",
         blue: {
           DEFAULT: "#4F35DE",
-          light: "#e3defa",
-          lightest: "#f6f9ff",
-          darkest: "#060217",
         },
         mint: {
           DEFAULT: "#00FFA2",
           light: "#c9ffeb",
         },
+      },
+      keyframes: {
+        "fade-in-up": {
+          "0%": {
+            opacity: "0.0",
+            transform: "translateY(10px)",
+          },
+          "100%": {
+            opacity: "1.0",
+            transform: "translateY(0)",
+          },
+        },
+      },
+      animation: {
+        "fade-in-up": "fade-in-up 1s ease-out forwards",
       },
     },
   },

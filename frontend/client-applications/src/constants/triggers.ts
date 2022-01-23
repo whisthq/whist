@@ -55,6 +55,7 @@ const WhistTrigger = {
   startNetworkAnalysis: "startNetworkAnalysis",
 
   // Omnibar triggers
+  showAuthWindow: "showAuthWindow",
   showSignoutWindow: "showSignoutWindow",
   showPaymentWindow: "showPaymentWindow",
   showSupportWindow: "showSupportWindow",
