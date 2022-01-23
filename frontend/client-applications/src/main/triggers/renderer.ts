@@ -18,6 +18,7 @@ const filterByName = (
 ;[
   WhistTrigger.relaunchAction, // Fires when "Continue" button is clicked on error window popup
   WhistTrigger.clearCacheAction, // Fires when "Signout" button is clicked on signout window popup
+  WhistTrigger.showAuthWindow,
   WhistTrigger.showSignoutWindow,
   WhistTrigger.showPaymentWindow,
   WhistTrigger.showSupportWindow,

@@ -18,7 +18,7 @@ const base = {
   frame: false,
   border: false,
   show: false,
-  opacity: 0.0
+  opacity: 0.0,
 }
 
 const replaceUserAgent = (userAgent: string) =>
@@ -51,28 +51,27 @@ const getElectronWindow = (hash: string) => {
 }
 
 const fadeElectronWindowIn = (
-    browserWindowToFadeIn,
-    step = 0.1,
-    fadeEveryXSeconds = 25
-  )  => {
-    browserWindowToFadeIn.show()
+  browserWindowToFadeIn,
+  step = 0.1,
+  fadeEveryXSeconds = 25
+) => {
+  browserWindowToFadeIn.show()
 
-    // Get the opacity of the window.
-    let opacity = browserWindowToFadeIn.getOpacity();
-  
-    // Increase the opacity of the window by `step` every `fadeEveryXSeconds`
-    // seconds.
-    const interval = setInterval(() => {
-      
-      // Stop fading if window's opacity is 1 or greater.
-      if (opacity >= 1) clearInterval(interval);
-      browserWindowToFadeIn.setOpacity(opacity);
-      opacity += step;
-    }, fadeEveryXSeconds);
-  
-    // Return the interval. Useful if we want to stop fading at will.
-    return interval;
-  }
+  // Get the opacity of the window.
+  let opacity = browserWindowToFadeIn.getOpacity()
+
+  // Increase the opacity of the window by `step` every `fadeEveryXSeconds`
+  // seconds.
+  const interval = setInterval(() => {
+    // Stop fading if window's opacity is 1 or greater.
+    if (opacity >= 1) clearInterval(interval)
+    browserWindowToFadeIn.setOpacity(opacity)
+    opacity += step
+  }, fadeEveryXSeconds)
+
+  // Return the interval. Useful if we want to stop fading at will.
+  return interval
+}
 
 // Main functions
 
@@ -135,7 +134,10 @@ const createElectronWindow = (args: {
   }
 
   // When the window is ready to be shown, show it
-  win.once("ready-to-show", () => (args?.show ?? true) && fadeElectronWindowIn(win))
+  win.once(
+    "ready-to-show",
+    () => (args?.show ?? true) && fadeElectronWindowIn(win)
+  )
 
   // If we want to load a URL into a BrowserWindow, we first load it into a
   // BrowserView and attach it to the BrowserWindow. This is our trick to make the

@@ -15,6 +15,7 @@ import Network from "@app/renderer/pages/network"
 import Loading from "@app/renderer/pages/loading"
 import Omnibar from "@app/renderer/pages/omnibar"
 import Background from "@app/renderer/pages/background"
+import Welcome from "@app/renderer/pages/welcome"
 import { Provider } from "@app/renderer/context/omnibar"
 
 import {
@@ -28,6 +29,7 @@ import {
   WindowHashPayment,
   WindowHashSpeedtest,
   WindowHashLicense,
+  WindowHashWelcome
 } from "@app/constants/windows"
 import {
   whistError,
@@ -84,6 +86,14 @@ const RootComponent = () => {
 
   const handleNetworkSubmit = () => setShow(WindowHashImport)
 
+  const handleWelcomeSubmit = () => 
+    setMainState({
+      trigger: {
+        name: WhistTrigger.showAuthWindow,
+        payload: undefined,
+      },
+    })
+
   useEffect(() => {
     // We need to ask the main thread to re-emit the current StateIPC because
     // useMainState() only subscribes to state updates after the function is
@@ -99,6 +109,7 @@ const RootComponent = () => {
         <Omnibar />
       </Provider>
     )
+  if (show === WindowHashWelcome) return <Welcome onSubmit={handleWelcomeSubmit}/>
   if (
     [
       WindowHashOmnibar,

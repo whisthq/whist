@@ -18,6 +18,7 @@ import {
   WindowHashLoading,
   WindowHashImport,
   WindowHashAuth,
+  WindowHashOnboarding,
 } from "@app/constants/windows"
 
 import {
