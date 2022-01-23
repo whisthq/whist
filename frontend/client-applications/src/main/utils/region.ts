@@ -32,7 +32,7 @@ const whistPingTime = async (host: string, numberPings: number) => {
     try {
       await fetch(host)
       pingResults.push(Date.now() - startTime)
-    } catch(err) {
+    } catch (err) {
       console.error(err)
     }
   }

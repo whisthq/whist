@@ -13,7 +13,7 @@ import {
   WindowHashOnboarding,
   WindowHashImport,
   WindowHashAuth,
-  WindowHashWelcome
+  WindowHashWelcome,
 } from "@app/constants/windows"
 import {
   createAuthWindow,
@@ -57,9 +57,7 @@ withAppActivated(
   }
 })
 
-withAppActivated(
-  fromTrigger(WhistTrigger.showAuthWindow)
-).subscribe(() => {
+withAppActivated(fromTrigger(WhistTrigger.showAuthWindow)).subscribe(() => {
   createAuthWindow()
   destroyElectronWindow(WindowHashWelcome)
 })

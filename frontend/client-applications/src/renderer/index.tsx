@@ -29,7 +29,7 @@ import {
   WindowHashPayment,
   WindowHashSpeedtest,
   WindowHashLicense,
-  WindowHashWelcome
+  WindowHashWelcome,
 } from "@app/constants/windows"
 import {
   whistError,
@@ -86,7 +86,7 @@ const RootComponent = () => {
 
   const handleNetworkSubmit = () => setShow(WindowHashImport)
 
-  const handleWelcomeSubmit = () => 
+  const handleWelcomeSubmit = () =>
     setMainState({
       trigger: {
         name: WhistTrigger.showAuthWindow,
@@ -109,7 +109,8 @@ const RootComponent = () => {
         <Omnibar />
       </Provider>
     )
-  if (show === WindowHashWelcome) return <Welcome onSubmit={handleWelcomeSubmit}/>
+  if (show === WindowHashWelcome)
+    return <Welcome onSubmit={handleWelcomeSubmit} />
   if (
     [
       WindowHashOmnibar,

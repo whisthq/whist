@@ -107,7 +107,7 @@ const destroyElectronWindow = (hash: string) => {
   try {
     const win = getElectronWindow(hash)
     win?.destroy()
-  } catch(err) {
+  } catch (err) {
     console.error(err)
   }
 }
