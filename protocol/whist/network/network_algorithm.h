@@ -54,6 +54,8 @@ typedef struct {
     int throughput_per_second;
 } NetworkStatistics;
 
+extern const NetworkSettings default_network_settings;
+
 /*
 ============================
 Public Functions

@@ -33,7 +33,7 @@ Defines
 ============================
 */
 
-static NetworkSettings default_network_settings = {
+const NetworkSettings default_network_settings = {
     .bitrate = STARTING_BITRATE,
     .burst_bitrate = STARTING_BURST_BITRATE,
     .desired_codec = CODEC_TYPE_H264,

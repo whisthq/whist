@@ -123,13 +123,13 @@ int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms);
 /**
  * @brief       Get the number of consecutive fully received frames of the given type available.
  *              Use this to figure out how many frames are pending to render
- * 
+ *
  * @param type  The type of frames to query for
  */
 int udp_get_num_pending_frames(SocketContext* context, WhistPacketType type);
 
 // TODO: Is needed for audio.c redundancy, but should be pulled into udp.c somehow
-void udp_nack_packet(SocketContext* socket_context, WhistPacketType type, int id, int index);
+void udp_resend_packet(SocketContext* socket_context, WhistPacketType type, int id, int index);
 
 /**
  * @brief                          Registers a ring buffer to reconstruct WhistPackets that can be split into smaller WhistPackets, e.g. video frames. This will hold up to num_buffer IDs for the given type.

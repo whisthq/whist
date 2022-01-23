@@ -66,11 +66,6 @@ struct VideoContext {
     int last_frame_height;
     CodecType last_frame_codec;
 
-    int frames_received;
-    int bytes_transferred;
-
-    WhistTimer last_iframe_request_timer;
-
     // Loading animation data
     int loading_index;
     WhistTimer last_loading_frame_timer;
@@ -140,12 +135,8 @@ VideoContext* init_video() {
     video_context->last_frame_codec = CODEC_TYPE_UNKNOWN;
     video_context->has_video_rendered_yet = false;
     video_context->sws = NULL;
-    video_context->frames_received = 0;
-    video_context->bytes_transferred = 0;
     video_context->render_context = NULL;
     video_context->pending_render_context = false;
-
-    start_timer(&video_context->last_iframe_request_timer);
 
     // Init loading animation variables
     video_context->loading_index = 0;
@@ -183,19 +174,13 @@ void destroy_video(VideoContext* video_context) {
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
 void receive_video(VideoContext* video_context, VideoFrame* video_frame) {
-    // The next two lines are commented out, but left in the codebase to be
-    // easily toggled back and forth during development. We considered putting
-    // this under the LOG_VIDEO ifdef, but decided not to, since these lines
-    // log every single packet, which is too verbose for standard video
-    // logging.
+    // TODO: Move to ringbuffer.c
     // LOG_INFO("Video Packet ID %d, Index %d (Packets: %d) (Size: %d)",
     // packet->id, packet->index, packet->num_indices, packet->payload_size);
-    // Find frame in ring buffer that matches the id
-    // ===========================
-    // BEGIN NEW CODE
-    // ===========================
+
     if (!video_context->pending_render_context) {
-        // send a frame to the renderer and set video_context->pending_render_context to true to signal readiness
+        // Send a frame to the renderer,
+        // then set video_context->pending_render_context to true to signal readiness
         
         // give data pointer to the video context
         video_context->render_context = video_frame;
@@ -205,9 +190,6 @@ void receive_video(VideoContext* video_context, VideoFrame* video_frame) {
     } else {
         LOG_ERROR("We tried to send the video context a frame when it wasn't ready!");
     }
-    // ===========================
-    // END NEW CODE -  DELETE CODE AFTER THIS
-    // ===========================
 }
 
 int render_video(VideoContext* video_context) {
@@ -430,13 +412,6 @@ Private Function Implementations
 */
 
 void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame) {
-    /*
-        Update decoder parameters to match the server's width, height, and codec
-        of the VideoFrame* that is currently being received
-
-        Arguments:
-            frame (VideoFrame*): next frame to render
-    */
     if (frame->width == video_context->last_frame_width &&
         frame->height == video_context->last_frame_height &&
         frame->codec_type == video_context->last_frame_codec) {
@@ -476,20 +451,6 @@ void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame) {
 
 void update_sws_context(VideoContext* video_context, Uint8** data, int* linesize, int width,
                         int height, enum AVPixelFormat input_format) {
-    /*
-        Create an SWS context as needed to perform pixel format
-        conversions, destroying any existing context first. If no
-        context is needed, return false. If the existing context is
-        still valid, return true. This function also updates the
-        data and linesize arrays by properly allocating/maintaining
-        an av_image to house the converted data.
-
-        Arguments:
-            data (Uint8**): pointer to the data array to be filled in
-            linesize (int*): pointer to the linesize array to be filled in
-            input_format (AVPixelFormat): the pixel format that the data is in
-    */
-
     static enum AVPixelFormat cached_format = AV_PIX_FMT_NONE;
     static int cached_width = -1;
     static int cached_height = -1;

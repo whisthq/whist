@@ -113,6 +113,13 @@ typedef struct RingBuffer {
     int last_missing_frame_nack;
     int most_recent_reset_id;
     WhistTimer last_stream_reset_request_timer;
+
+    // Nacking bandwidth tracker
+    WhistTimer burst_timer;
+    WhistTimer avg_timer;
+    int burst_counter;
+    int avg_counter;
+    bool last_nack_possibility;
 } RingBuffer;
 
 /*

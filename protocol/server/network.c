@@ -191,9 +191,9 @@ int connect_client(Client *client, bool using_stun, char *binary_aes_private_key
         LOG_ERROR("Failed UDP connection with client");
         return -1;
     }
-    udp_register_nack_buffer(&client->udp_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE,
+    udp_register_nack_buffer(&client->udp_context, PACKET_VIDEO, PACKET_HEADER_SIZE + LARGEST_VIDEOFRAME_SIZE,
                              VIDEO_NACKBUFFER_SIZE);
-    udp_register_nack_buffer(&client->udp_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE,
+    udp_register_nack_buffer(&client->udp_context, PACKET_AUDIO, PACKET_HEADER_SIZE + LARGEST_AUDIOFRAME_SIZE,
                              AUDIO_NACKBUFFER_SIZE);
 
     if (!create_tcp_socket_context(&client->tcp_context, NULL, client->tcp_port, 1,

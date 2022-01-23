@@ -109,15 +109,9 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
         Returns:
             (RingBuffer*): pointer to the created ring buffer
     */
-    if (ring_buffer_size > MAX_RING_BUFFER_SIZE) {
-        LOG_ERROR("Requested ring buffer size %d too large - ensure size is at most %d",
-                  ring_buffer_size, MAX_RING_BUFFER_SIZE);
-        return NULL;
-    }
+    FATAL_ASSERT(ring_buffer_size <= MAX_RING_BUFFER_SIZE);
+
     RingBuffer* ring_buffer = safe_malloc(sizeof(RingBuffer));
-    if (!ring_buffer) {
-        return NULL;
-    }
 
     ring_buffer->type = type;
     ring_buffer->ring_buffer_size = ring_buffer_size;
@@ -125,9 +119,6 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
     ring_buffer->socket_context = socket_context;
     ring_buffer->nack_packet = nack_packet;
     ring_buffer->request_stream_reset = request_stream_reset;
-    if (!ring_buffer->receiving_frames) {
-        return NULL;
-    }
 
     // Mark all the frames as uninitialized
     for (int i = 0; i < ring_buffer_size; i++) {
@@ -151,6 +142,13 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
     ring_buffer->num_frames_rendered = 0;
 
     start_timer(&ring_buffer->network_statistics_timer);
+
+    // Nack bandwidth tracking
+    ring_buffer->burst_counter = 0;
+    start_timer(&ring_buffer->burst_timer);
+    ring_buffer->avg_counter = 0;
+    start_timer(&ring_buffer->avg_timer);
+    ring_buffer->last_nack_possibility = true;
 
     return ring_buffer;
 }
@@ -276,7 +274,7 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
     }
 
     // Copy the packet's payload into the correct location in frame_data's frame buffer
-    int buffer_offset = segment_index * MAX_PAYLOAD_SIZE;
+    int buffer_offset = segment_index * MAX_PACKET_SEGMENT_SIZE;
     if (buffer_offset + segment_size >= ring_buffer->largest_frame_size) {
         LOG_ERROR("Packet payload too large for frame buffer! Dropping the packet...");
         return -1;
@@ -331,8 +329,10 @@ bool is_ready_to_render(RingBuffer* ring_buffer, int id) {
     if (current_frame->id != id) {
         return false;
     }
+    // Set the frame buffer so that others can read from it
+    current_frame->frame_buffer = get_framebuffer(ring_buffer, current_frame);
     // and if getting a framebuffer out of it is possible
-    return get_framebuffer(ring_buffer, current_frame) != NULL;
+    return current_frame->frame_buffer != NULL;
 }
 
 FrameData* set_rendering(RingBuffer* ring_buffer, int id) {
@@ -389,29 +389,36 @@ void reset_stream(RingBuffer* ring_buffer, int id) {
         "Skip" to the frame at ID id by setting last_rendered_id = id - 1 (if the skip is valid).
     */
 
-    // sanity check
-    if (ring_buffer->last_rendered_id >= id || id <= 0) {
-        LOG_INFO("Received stale stream reset request - told to skip to ID %d but at ID %d", id, ring_buffer->last_rendered_id);
+    FATAL_ASSERT(0 <= id);
+
+    // Check that we're not trying to reset to a frame that's been rendered already
+    if (id <= ring_buffer->last_rendered_id) {
+        LOG_INFO("Received stale stream reset request - told to skip to ID %d but already at ID %d", id, ring_buffer->last_rendered_id);
     } else {
         if (ring_buffer->last_rendered_id != -1) {
             // Loudly log if we're dropping frames
             LOG_INFO("Skipping from frame %d to frame %d", ring_buffer->last_rendered_id, id);
-            // Drop frames
-            for (int i = max(ring_buffer->last_rendered_id + 1, ring_buffer->most_recent_reset_id - ring_buffer->frames_received); i < ring_buffer->most_recent_reset_id; i++) {
+            // Drop frames up until id
+            // We also use id - frames_received, to prevent printing a jump from 0 to 50,000
+            for (int i = max(ring_buffer->last_rendered_id + 1, id - ring_buffer->frames_received + 1); i < id; i++) {
                 FrameData* frame_data = get_frame_at_id(ring_buffer, i);
                 if (frame_data->id == i) {
-                    LOG_WARNING("Frame dropped with ID %d: %d/%d", i, frame_data->original_packets_received, frame_data->num_original_packets);
-                    for (int j = 0; j < frame_data->num_original_packets; j++) {
-                        if (!frame_data->received_indices[j]) {
-                            LOG_WARNING("Did not receive ID %d, Index %d", i, j);
+                    // Only verbosely log reset_stream for VIDEO frames
+                    if (ring_buffer->type == PACKET_VIDEO) {
+                        LOG_WARNING("Frame dropped with ID %d: %d/%d", i, frame_data->original_packets_received, frame_data->num_original_packets);
+                        for (int j = 0; j < frame_data->num_original_packets; j++) {
+                            if (!frame_data->received_indices[j]) {
+                                LOG_WARNING("Did not receive ID %d, Index %d", i, j);
+                            }
                         }
                     }
+                    reset_frame(ring_buffer, frame_data);
                 } else if (frame_data->id != -1) {
                     LOG_WARNING("Bad ID? %d instead of %d", frame_data->id, i);
+                    reset_frame(ring_buffer, frame_data);
                 }
             }
         }
-        ring_buffer->most_recent_reset_id = id;
         ring_buffer->last_rendered_id = id - 1;
     }
 }
@@ -443,11 +450,12 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
         // THEN, we should send an iframe request
 
         // Throttle the requests to prevent network upload saturation, however
-        // TODO: change this to a UDP stream reset request
         if (get_timer(&ring_buffer->last_stream_reset_request_timer) >
                 STREAM_RESET_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
             ring_buffer->request_stream_reset(ring_buffer->socket_context, ring_buffer->type, max(next_render_id, ring_buffer->max_id - 1));
         }
+
+        /*
         LOG_INFO(
                 "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
                 "and the frame we're trying to render has been alive for %fms. "
@@ -455,6 +463,7 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
                 ring_buffer->max_id,
                 ring_buffer->max_id - ring_buffer->last_rendered_id,
                 next_to_render_staleness * MS_IN_SECOND);
+                */
         start_timer(&ring_buffer->last_stream_reset_request_timer);
     }
 }
@@ -655,28 +664,17 @@ bool try_nacking(RingBuffer* ring_buffer, double latency) {
         // Return true, our nacking vacuously succeeded
         return true;
     }
-    if (ring_buffer->last_rendered_id == -1) {
-        ring_buffer->last_rendered_id = ring_buffer->max_id - 1;
+
+    const double burst_interval = 5.0 / MS_IN_SECOND;
+    const double avg_interval = 100.0 / MS_IN_SECOND;
+
+    if (get_timer(&ring_buffer->burst_timer) > burst_interval) {
+        ring_buffer->burst_counter = 0;
+        start_timer(&ring_buffer->burst_timer);
     }
-
-    // TODO: Pull these into the ringbuffer struct
-    static bool first_call = true;
-    static WhistTimer burst_timer;
-    static WhistTimer avg_timer;
-    static int burst_counter;
-    static int avg_counter;
-
-    double burst_interval = 5.0 / MS_IN_SECOND;
-    double avg_interval = 100.0 / MS_IN_SECOND;
-
-    if (first_call || get_timer(&burst_timer) > burst_interval) {
-        burst_counter = 0;
-        start_timer(&burst_timer);
-    }
-    if (first_call || get_timer(&avg_timer) > avg_interval) {
-        avg_counter = 0;
-        start_timer(&avg_timer);
-        first_call = false;
+    if (get_timer(&ring_buffer->avg_timer) > avg_interval) {
+        ring_buffer->avg_counter = 0;
+        start_timer(&ring_buffer->avg_timer);
     }
 
     // MAX_MBPS * interval / MAX_PAYLOAD_SIZE is the amount of nack payloads allowed in each
@@ -684,25 +682,24 @@ bool try_nacking(RingBuffer* ring_buffer, double latency) {
     // subtract the two, to get the max nacks that we're allowed to send at this point in time We
     // min to take the stricter restriction of either burst or average
     int max_nacks_remaining =
-        MAX_NACK_BURST_MBPS * burst_interval / MAX_PAYLOAD_SIZE - burst_counter;
-    int avg_nacks_remaining = MAX_NACK_AVG_MBPS * avg_interval / MAX_PAYLOAD_SIZE - avg_counter;
+        MAX_NACK_BURST_MBPS * burst_interval / MAX_PAYLOAD_SIZE - ring_buffer->burst_counter;
+    int avg_nacks_remaining = MAX_NACK_AVG_MBPS * avg_interval / MAX_PAYLOAD_SIZE - ring_buffer->avg_counter;
     int max_nacks = (int)min(max_nacks_remaining, avg_nacks_remaining);
     // Note how the order-of-ops ensures arithmetic is done with double's for higher accuracy
 
-    static bool last_nack_possibility = true;
     if (max_nacks <= 0) {
         // We can't nack, so just exit. Also takes care of negative case from above calculation.
-        if (last_nack_possibility) {
+        if (ring_buffer->last_nack_possibility) {
             LOG_INFO("Can't nack anymore! Hit NACK bitrate limit. Try increasing NACK bitrate?");
-            last_nack_possibility = false;
+            ring_buffer->last_nack_possibility = false;
         }
         // Nacking has failed when avg_nacks has been saturated.
         // If max_nacks has been saturated, that's just burst bitrate distribution
         return avg_nacks_remaining > 0;
     } else {
-        if (!last_nack_possibility) {
+        if (!ring_buffer->last_nack_possibility) {
             LOG_INFO("NACKing is possible again.");
-            last_nack_possibility = true;
+            ring_buffer->last_nack_possibility = true;
         }
     }
 
@@ -714,9 +711,9 @@ bool try_nacking(RingBuffer* ring_buffer, double latency) {
     // Recovery mode cycles through trying to nack, and we throttle to ~latency,
     // longer during consecutive cycles
 
-    // Nack all the packets we might want to nack about, from oldest to newest,
-    // up to max_nacks times
-    for (int id = ring_buffer->last_rendered_id + 1;
+    // Nack all the packets we might want to nack about,
+    // from oldest to newest, up to max_nacks times
+    for (int id = ring_buffer->last_rendered_id == -1 ? 1 : ring_buffer->last_rendered_id + 1;
          id <= ring_buffer->max_id && num_packets_nacked < max_nacks; id++) {
         FrameData* frame_data = get_frame_at_id(ring_buffer, id);
         // If this frame doesn't exist, skip it
@@ -725,10 +722,12 @@ bool try_nacking(RingBuffer* ring_buffer, double latency) {
             // let's try nacking for index 0 of it
             if (ring_buffer->last_missing_frame_nack < id) {
                 // Nack the first set of indices of the missing frame
-                // Frames 10-15 packets in size, we'd like to recover in one RTT,
+                // Frames 10-20 packets in size, we'd like to recover in one RTT,
                 // But we don't want to try to recover 200 packet frames so quickly
                 for (int index = 0; index <= 20; index++) {
                     nack_single_packet(ring_buffer, id, index);
+                    // Track out-of-bounds nacks anyway in bitrate,
+                    // To ensure the upper-bound on bandwidth usage
                     num_packets_nacked++;
                 }
                 LOG_INFO("NACKing for missing Frame ID %d", id);
@@ -828,8 +827,8 @@ bool try_nacking(RingBuffer* ring_buffer, double latency) {
 #endif
 
     // Update the counters to track max nack bitrate
-    burst_counter += num_packets_nacked;
-    avg_counter += num_packets_nacked;
+    ring_buffer->burst_counter += num_packets_nacked;
+    ring_buffer->avg_counter += num_packets_nacked;
 
     // Nacking succeeded
     return true;

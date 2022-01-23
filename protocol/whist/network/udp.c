@@ -275,7 +275,7 @@ RingBuffer Lambda Functions
  * @param ID       ID of packet
  * @param index     index of packet
  */
-void udp_nack_packet(SocketContext* socket_context, WhistPacketType type, int id, int index) {
+static void udp_nack_packet(SocketContext* socket_context, WhistPacketType type, int id, int index) {
     UDPContext* context = (UDPContext*)socket_context->context;
     // Nack for the given packet by sending a UDPPacket of type UDP_NACK
     UDPPacket packet = {0};
@@ -286,7 +286,7 @@ void udp_nack_packet(SocketContext* socket_context, WhistPacketType type, int id
     udp_send_udp_packet(context, &packet);
 }
 
-void udp_request_stream_reset(SocketContext* socket_context, WhistPacketType type, int greatest_failed_id) {
+static void udp_request_stream_reset(SocketContext* socket_context, WhistPacketType type, int greatest_failed_id) {
     UDPContext* context = (UDPContext*)socket_context->context;
     // Tell the server the client fell too far behind
     UDPPacket packet = {0};
@@ -367,26 +367,28 @@ bool udp_update(void* raw_context) {
         // Verify the UDP Packet's size
         FATAL_ASSERT(decrypted_len == get_udp_packet_size(&udp_packet));
 
-        // if the packet is a whist_segment, put the packet in a ringbuffer. Otherwise, pass it to udp_handle_message
+        // if the packet is a whist_segment, store the data to give later via get_packet
+        // Otherwise, pass it to udp_handle_message
         if (udp_packet.type == UDP_WHIST_SEGMENT) {
             WhistPacketType packet_type = udp_packet.udp_whist_segment_data.whist_type;
 
-            // put the decrypted packet in the correct ringbuffer
+            // If there's a ringbuffer, store in the ringbuffer to reconstruct the original packet
             if (context->ring_buffers[packet_type] != NULL) {
                 ring_buffer_receive_segment(context->ring_buffers[packet_type], &udp_packet.udp_whist_segment_data);
             } else {
                 FATAL_ASSERT(udp_packet.udp_whist_segment_data.num_indices == 1);
                 FATAL_ASSERT(udp_packet.udp_whist_segment_data.num_fec_indices == 0);
                 // if there is no ring buffer (packet is message), store it in the 1-packet buffer instead
-                // memcpy the segment_data (WhistPacket) into pending_packets
+                // memcpy the segment_data (WhistPacket*) into pending_packets
                 memcpy(&context->pending_packets[packet_type], &udp_packet.udp_whist_segment_data.segment_data, udp_packet.udp_whist_segment_data.segment_size);
                 if (context->has_pending_packet[packet_type]) {
-                    LOG_ERROR("We failed to receive a pending packet!");
+                    LOG_ERROR("get_packet has not been called, unclaimed PACKET_MESSAGE being overwritten!");
                 } else {
                     context->has_pending_packet[packet_type] = true;
                 }
             }
         } else {
+            // Handle the UDP message
             udp_handle_message(context, &udp_packet);
         }
     } else {
@@ -422,17 +424,12 @@ bool udp_update(void* raw_context) {
 // Please pass this comment into any non-trivial function that this function calls.
 int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* whist_packet_payload, int whist_packet_payload_size,
                     int packet_id, bool start_of_stream) {
-    /*
-     * Send data of type packet_type and ID packet_id over UDP. This breaks up the data into WhistPackets (TODO: WhistUDPPackets) small enough to be sent over UDP, applies any other transforms (e.g. encryption, error correction), and calls udp_send_udp_packet on the transformed WhistPackets (TODO: WhistUDPPackets).
-     * It also updates a nack buffer to handle client nacks for lost data if necessary.
-     * TODO: wrap each step of the transform (splitting, encryption, FEC) into separate functions
-     * TODO: possibly make `udp_send_udp_packet` not necessarily send data over the network
-     */
     UDPContext* context = (UDPContext*)raw_context;
-    if (context == NULL) {
-        LOG_ERROR("UDPContext is NULL");
-        return -1;
-    }
+    FATAL_ASSERT(context != NULL);
+
+    // The caller should either start counting at 1,
+    // Or use -1 for a packet without an ID
+    FATAL_ASSERT(packet_id != 0);
 
     // Get the nack_buffer, if there is one for this type of packet
     UDPPacket* nack_buffer = NULL;
@@ -442,11 +439,14 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* whist_
     if (context->nack_buffers[type_index] != NULL) {
         // Sending payloads that must be split into multiple packets,
         // is only allowed for WhistPacketType's that have a nack buffer
-        // This includes allowing the application of fec_ratio at all
+        // This includes allowing the application to fec_ratio at all
         nack_buffer =
             context->nack_buffers[type_index][packet_id % context->nack_num_buffers[type_index]];
+        // Packets that are using a nack buffer need a positive ID
+        FATAL_ASSERT(packet_id > 0);
     }
 
+    // Construct the WhistPacket based on the parameters given
     WhistPacket* whist_packet = allocate_region(PACKET_HEADER_SIZE + whist_packet_payload_size);
     whist_packet->id = packet_id;
     whist_packet->type = packet_type;
@@ -459,6 +459,8 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* whist_
                                         : (int)(whist_packet_size / MAX_PACKET_SEGMENT_SIZE +
                                                 (whist_packet_size % MAX_PACKET_SEGMENT_SIZE == 0 ? 0 : 1));
 
+    // Calculate the number of FEC packets we'll be using, if any
+    // A nack buffer is required to use FEC
     int num_fec_packets = 0;
     double fec_packet_ratio = context->fec_packet_ratios[packet_type];
     if (nack_buffer && fec_packet_ratio > 0.0) {
@@ -467,13 +469,11 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* whist_
 
     int num_total_packets = num_indices + num_fec_packets;
 
-// Should be something much larger than it needs to be
+// Feel free to increase this #define if the fatal assert gets triggered
 #define MAX_TOTAL_PACKETS 4096
     char* buffers[MAX_TOTAL_PACKETS];
     int buffer_sizes[MAX_TOTAL_PACKETS];
-    if (num_total_packets > MAX_TOTAL_PACKETS) {
-        LOG_FATAL("MAX_TOTAL_PACKETS is too small! Double it!");
-    }
+    FATAL_ASSERT(num_total_packets < MAX_TOTAL_PACKETS);
 
     // If nack buffer can't hold a packet with that many indices,
     // OR the original buffer is illegally large
@@ -492,19 +492,20 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* whist_
         fec_encoder = create_fec_encoder(num_indices, num_fec_packets, MAX_PACKET_SEGMENT_SIZE);
         // Pass the buffer that we'll be encoding with FEC
         fec_encoder_register_buffer(fec_encoder, (char*)whist_packet, whist_packet_size);
-        // If using FEC, populate the UDP buffers with the FEC encoded buffers
+        // If using FEC, populate the UDP payload buffers with the FEC encoded buffers
         fec_get_encoded_buffers(fec_encoder, (void**)buffers, buffer_sizes);
     } else {
         // When not using FEC, split up the packets using MAX_PACKET_SEGMENT_SIZE
         int current_position = 0;
         for (int packet_index = 0; packet_index < num_indices; packet_index++) {
             // Populate the buffers directly when not using FEC
-            int udp_packet_payload_size = (int)min(whist_packet_size - current_position, MAX_PACKET_SEGMENT_SIZE);
+            int udp_packet_payload_size = min(whist_packet_size - current_position, MAX_PACKET_SEGMENT_SIZE);
             buffers[packet_index] = (char*)whist_packet + current_position;
             buffer_sizes[packet_index] = udp_packet_payload_size;
             // Progress the pointer by this payload's size
             current_position += udp_packet_payload_size;
         }
+        FATAL_ASSERT(current_position == whist_packet_size);
     }
 
     // Send all the packets, and write them into the nack buffer if there is one
@@ -514,7 +515,7 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* whist_
             whist_lock_mutex(context->nack_mutex[type_index]);
         }
 
-        // Construct the packet, potentially into the nack buffer
+        // Construct the UDPPacket, potentially into the nack buffer
         UDPPacket local_packet;
         UDPPacket* packet = nack_buffer ? &nack_buffer[packet_index] : &local_packet;
         packet->type = UDP_WHIST_SEGMENT;
@@ -529,8 +530,8 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* whist_
         FATAL_ASSERT(packet->udp_whist_segment_data.segment_size <= sizeof(packet->udp_whist_segment_data.segment_data));
         memcpy(packet->udp_whist_segment_data.segment_data, buffers[packet_index], buffer_sizes[packet_index]);
 
-        // Send the packet,
-        // We don't need to propagate the return code if a subset of them drop,
+        // Send the packet
+        // We don't need to propagate the return code because it's lossy anyway,
         // The client will just have to nack
         udp_send_udp_packet(context, packet);
 
@@ -539,11 +540,12 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* whist_
         }
     }
 
+    // Cleanup
     if (fec_encoder) {
         destroy_fec_encoder(fec_encoder);
     }
-
     deallocate_region(whist_packet);
+
     return 0;
 }
 
@@ -552,19 +554,24 @@ void* udp_get_packet(void* raw_context, WhistPacketType type) {
     UDPContext* context = (UDPContext*)raw_context;
     RingBuffer* ring_buffer = context->ring_buffers[type];
 
+    // TODO: This function is a bit too audio/video specific,
+    // Rather than data-agnostic
+
     switch (type) {
         case PACKET_MESSAGE: {
             // If there's a pending whist packet,
             if (context->has_pending_packet[PACKET_MESSAGE]) {
-                // Give them a copy
+                // Give them a copy, consuming the pending packet in the process
                 WhistPacket* pending_whist_packet = &context->pending_packets[PACKET_MESSAGE];
                 WhistPacket* whist_packet = (WhistPacket*)malloc(get_packet_size(pending_whist_packet));
                 memcpy(whist_packet, pending_whist_packet, get_packet_size(pending_whist_packet));
+                context->has_pending_packet[PACKET_MESSAGE] = false;
                 return whist_packet;
             } else {
                 // Otherwise, return NULL
                 return NULL;
             }
+            break;
         }
         case PACKET_AUDIO: {
             // First, catch up audio if we're behind
@@ -575,29 +582,34 @@ void* udp_get_packet(void* raw_context, WhistPacketType type) {
         }
         case PACKET_VIDEO: {
             // Skip to the most recent iframe if necessary
-            for (int i = ring_buffer->max_id; i > max(0, ring_buffer->last_rendered_id); i--) {
+            // Bound between max_id and ring_buffer_size, in-case max_id is e.g. 50k and last_renderered_id is 5
+            for (int i = ring_buffer->max_id; i >= max(max(0, ring_buffer->last_rendered_id + 1), ring_buffer->max_id - ring_buffer->ring_buffer_size - 10); i--) {
                 if (is_ready_to_render(ring_buffer, i)) {
                     FrameData* frame_data = get_frame_at_id(ring_buffer, i);
-                    VideoFrame* frame = (VideoFrame*)frame_data->frame_buffer;
-                    if (frame->is_iframe) {
-                        reset_stream(ring_buffer, frame_data->id);
+                    WhistPacket* whist_packet = (WhistPacket*)frame_data->frame_buffer;
+                    VideoFrame* video_frame = (VideoFrame*)whist_packet->data;
+                    if (video_frame->is_iframe) {
+                        LOG_INFO("Catching up to I-Frame at ID %d", i);
+                        reset_stream(ring_buffer, i);
                         break;
                     }
                 }
                 // possibly skip to the next iframe
                 break;
             }
+            break;
         }
         default: {
-            LOG_ERROR("Received a packet that was of unknown type %d!", type);
+            LOG_FATAL("Received a packet that was of unknown type %d!", type);
         }
     }
 
-    // then, set_rendering the next frame and give it to the decoder
+    // Then, set_rendering the next frame and return the frame_buffer
     int next_to_play_id = ring_buffer->last_rendered_id + 1;
     if (is_ready_to_render(ring_buffer, next_to_play_id)) {
         FrameData* frame = set_rendering(ring_buffer, next_to_play_id);
-        return frame;
+        // Return the framebuffer that the ringbuffer created
+        return frame->frame_buffer;
     } else {
         // no frame ready yet
         return NULL;
@@ -687,6 +699,8 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     // Create the mutex
     context->timestamp_mutex = whist_create_mutex();
     context->last_ping_id = -1;
+    context->current_network_settings = default_network_settings;
+
     network_context->context = context;
 
     // if dest is NULL, it means the context will be listening for income connections
@@ -713,6 +727,10 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     context->mutex = whist_create_mutex();
     memcpy(context->binary_aes_private_key, binary_aes_private_key,
            sizeof(context->binary_aes_private_key));
+    for(int i = 0; i < NUM_PACKET_TYPES; i++) {
+        context->reset_data[i].greatest_failed_id = -1;
+        context->reset_data[i].pending_stream_reset = true;
+    }
 
     if (destination == NULL) {
         // On the server, we create a network throttler to limit the
@@ -765,26 +783,21 @@ void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType typ
     UDPContext* context = socket_context->context;
 
     int type_index = (int)type;
-    if (type_index >= NUM_PACKET_TYPES) {
-        LOG_ERROR("Type is out of bounds! Something wrong happened");
-        return;
-    }
-    if (context->nack_buffers[type_index] != NULL) {
-        LOG_ERROR("Nack Buffer has already been initialized!");
-        return;
-    }
+    FATAL_ASSERT(0 <= type_index && type_index < NUM_PACKET_TYPES);
+    FATAL_ASSERT(context->nack_buffers[type_index] == NULL);
 
-    int max_num_ids = max_payload_size / MAX_PAYLOAD_SIZE + 1;
-    // get max FEC ids possible, based on MAX_FEC_RATIO
-    int max_fec_ids = get_num_fec_packets(max_num_ids, MAX_FEC_RATIO);
+    // Get max original IDs possible, based off of max payload size and segment size
+    int max_original_ids = max_payload_size / MAX_PACKET_SEGMENT_SIZE + 1;
+    // Get max FEC ids possible, based on MAX_FEC_RATIO
+    int max_fec_ids = get_num_fec_packets(max_original_ids, MAX_FEC_RATIO);
 
-    // Adjust max ids for the maximum number of fec ids
-    max_num_ids += max_fec_ids;
+    // Get the max IDs for the transmission
+    int max_num_ids = max_original_ids + max_fec_ids;
 
     // Allocate buffers than can handle the above maximum sizes
     // Memory isn't an issue here, because we'll use our region allocator,
     // so unused memory never gets allocated by the kernel
-    context->nack_buffers[type_index] = malloc(sizeof(WhistPacket*) * num_buffers);
+    context->nack_buffers[type_index] = malloc(sizeof(UDPPacket*) * num_buffers);
     context->nack_mutex[type_index] = whist_create_mutex();
     context->nack_num_buffers[type_index] = num_buffers;
     // This is just used to sanitize the pre-FEC buffer that's passed into send_packet
@@ -794,12 +807,9 @@ void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType typ
     // Allocate each nack buffer, based on num_buffers
     for (int i = 0; i < num_buffers; i++) {
         // Allocate a buffer of max_num_ids WhistPacket's
-        context->nack_buffers[type_index][i] = allocate_region(sizeof(WhistPacket) * max_num_ids);
-        // Set just the ID, but don't memset the entire region to 0,
-        // Or you'll make the kernel allocate all of the memory
+        context->nack_buffers[type_index][i] = allocate_region(sizeof(UDPPacket) * max_num_ids);
         for (int j = 0; j < max_num_ids; j++) {
-            // TODO: is this correct >_<
-            context->nack_buffers[type_index][i][j].udp_whist_segment_data.id = 0;
+            context->nack_buffers[type_index][i][j].udp_whist_segment_data.id = -1;
         }
     }
 }
@@ -889,10 +899,15 @@ timestamp_us udp_get_client_input_timestamp(SocketContext* socket_context) {
     // But we should adjust for the time between when we received the ping, and now,
     // To only extract the client->server network latency
     client_input_timestamp += (server_timestamp - client_last_server_timestamp);
-    
+
     whist_unlock_mutex(context->timestamp_mutex);
 
     return client_input_timestamp;
+}
+
+void udp_resend_packet(SocketContext* socket_context, WhistPacketType type, int id, int index) {
+    // Treat this the same as a nack
+    udp_handle_nack((UDPContext*)socket_context->context, type, id, index);
 }
 
 /*
@@ -1016,15 +1031,7 @@ int get_udp_packet_size(UDPPacket* udp_packet) {
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
 int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
-    /*
-     * Send a WhistPacket over UDP.
-     * TODO: rename this function and emphasize that it handles networking only, any packet encryption, etc. is handled by udp_send_packet.
-     */
-
     FATAL_ASSERT(context != NULL);
-    // TODO: I don't know where we're supposed to get the size, 
-    // leaving this line of code in for now
-    // FATAL_ASSERT(segment_size <= sizeof(UDPPacket));
     int udp_packet_size = get_udp_packet_size(udp_packet);
 
     UDPNetworkPacket udp_network_packet;
@@ -1052,6 +1059,7 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
 
     // If sending fails because of no buffer space available on the system, retry a few times.
     for (int i = 0; i < RETRIES_ON_BUFFER_FULL; i++) {
+        // TODO: Remove this mutex? send() is already thread-safe
         whist_lock_mutex(context->mutex);
         int ret;
 #if LOG_NETWORKING
@@ -1088,6 +1096,7 @@ void udp_handle_message(UDPContext* context, UDPPacket* packet) {
         case UDP_NACK: {
             // we received a nack from the client, respond
             udp_handle_nack(context, packet->udp_nack_data.whist_type, packet->udp_nack_data.id, packet->udp_nack_data.index);
+            break;
         }
         case UDP_BITARRAY_NACK: {
             // nack for everything in the bitarray
@@ -1104,18 +1113,23 @@ void udp_handle_message(UDPContext* context, UDPPacket* packet) {
                 }
             }
             bit_array_free(bit_arr);
+            break;
         }
         case UDP_PING: {
             udp_handle_ping(context, packet->udp_ping_data.id, packet->udp_ping_data.original_timestamp);
+            break;
         }
         case UDP_PONG: {
             udp_handle_pong(context, packet->udp_pong_data.id);
+            break;
         }
         case UDP_STREAM_RESET: {
             udp_handle_stream_reset(context, packet->udp_stream_reset_data.whist_type, packet->udp_stream_reset_data.greatest_failed_id);
+            break;
         }
         case UDP_NETWORK_SETTINGS: {
             udp_handle_network_settings(context, packet->udp_network_settings_data.network_settings);
+            break;
         }
         default: {
             LOG_FATAL("Packet of unknown type! %d", (int)packet->type);
@@ -1131,10 +1145,15 @@ void udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, i
     int type_index = (int)type;
     FATAL_ASSERT(type_index < NUM_PACKET_TYPES);
     FATAL_ASSERT(context->nack_buffers[type_index] != NULL);
+    // Check that the ID they're asking about could even exist
+    FATAL_ASSERT(packet_id > 0);
+    FATAL_ASSERT(0 <= packet_index);
 
     if (packet_index >= context->nack_buffer_max_indices[type_index]) {
-        LOG_ERROR("Nacked Index %d is >= max indices %d!", packet_index,
-                  context->nack_buffer_max_indices[type_index]);
+        // Silence error bc nacking unknown frames causes this
+        // TODO: Nack for unknown frames in a cleaner way
+        // LOG_ERROR("Nacked Index %d is >= max indices %d!", packet_index,
+        //          context->nack_buffer_max_indices[type_index]);
         return;
     }
 
@@ -1146,6 +1165,7 @@ void udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, i
                               [packet_index];
 
     int ret;
+    // This will be -1 for an uninitialized nack_buffer entry, but packet_id > 0 anyway 
     if (packet->udp_whist_segment_data.id == packet_id) {
         packet->udp_whist_segment_data.is_a_nack = true;
         // We will NACK audio all the time(See NUM_PREVIOUS_FRAMES_RESEND in audio.c). Hence logging
@@ -1162,7 +1182,6 @@ void udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, i
             "located instead.",
             type == PACKET_VIDEO ? "video" : "audio", packet_id, packet_index, packet->udp_whist_segment_data.id);
     }
-
     whist_unlock_mutex(context->nack_mutex[type_index]);
 }
 

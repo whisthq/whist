@@ -40,6 +40,7 @@ Includes
 #include <whist/video/codec/encode.h>
 #include <whist/utils/avpacket_buffer.h>
 #include <whist/logging/log_statistic.h>
+#include <whist/network/network_algorithm.h>
 #include <whist/network/throttle.h>
 #include "client.h"
 #include "network.h"
@@ -466,11 +467,12 @@ int32_t multithreaded_send_video(void* opaque) {
 
     add_thread_to_client_active_dependents();
 
-    NetworkSettings last_network_settings = udp_get_network_settings(&state->client.udp_context);
+    NetworkSettings last_network_settings = {0};
 
     NetworkThrottleContext* network_throttler =
         network_throttler_create((double)VBV_BUF_SIZE_IN_MS, true);
-    network_throttler_set_burst_bitrate(network_throttler, last_network_settings.bitrate);
+    // Don't bitrate limit in the beginning
+    network_throttler_set_burst_bitrate(network_throttler, 100000000);
     int last_frame_size = 0;
 
     int consecutive_identical_frames = 0;
@@ -517,7 +519,7 @@ int32_t multithreaded_send_video(void* opaque) {
             }
         }
 
-        NetworkSettings network_settings = udp_get_network_settings(&state->client.udp_context);
+        NetworkSettings network_settings = state->client.is_active ? udp_get_network_settings(&state->client.udp_context) : default_network_settings;
 
         int video_bitrate = (network_settings.bitrate - AUDIO_BITRATE) * (1.0 - network_settings.video_fec_ratio);
         FATAL_ASSERT(video_bitrate > 0);
@@ -544,10 +546,10 @@ int32_t multithreaded_send_video(void* opaque) {
         // Get this timestamp before we capture the screen,
         // To measure the full pre-capture to post-render E2E latency
         timestamp_us server_timestamp = current_time_us();
-        timestamp_us client_input_timestamp = udp_get_client_input_timestamp(&state->client.udp_context);
+        timestamp_us client_input_timestamp = state->client.is_active ? udp_get_client_input_timestamp(&state->client.udp_context) : 0;
 
         // Check if the udp connection's stream has been reset
-        bool pending_stream_reset = get_pending_stream_reset(&state->client.udp_context, PACKET_VIDEO);
+        bool pending_stream_reset = state->client.is_active && get_pending_stream_reset(&state->client.udp_context, PACKET_VIDEO);
         if (pending_stream_reset) {
             state->wants_iframe = true;
         }

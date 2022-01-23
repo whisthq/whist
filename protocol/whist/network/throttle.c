@@ -49,8 +49,6 @@ NetworkThrottleContext* network_throttler_create(double coin_bucket_ms,
     ctx->fill_bucket_initially = fill_bucket_initially;
     start_timer(&ctx->coin_bucket_last_fill);
 
-    LOG_INFO("Created network throttler %p", ctx);
-
     return ctx;
 }
 

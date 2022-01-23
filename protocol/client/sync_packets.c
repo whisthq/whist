@@ -115,9 +115,6 @@ int multithreaded_sync_udp_packets(void* opaque) {
     latency = 25.0 / MS_IN_SECOND;
 
     WhistTimer statistics_timer;
-
-    // Initialize dimensions prior to update_video and receive_video calls
-    send_message_dimensions();
     
     // For now, manually make ring buffers for audio and video
     // TODO: Make udp.c do this automatically
@@ -153,10 +150,12 @@ int multithreaded_sync_udp_packets(void* opaque) {
                 }
                 // Now, we try to get the packet from UDP,
                 // And pass it to the renderer if one exists
-                WhistPacket* frame = (WhistPacket*)get_packet(udp_context, packet_type);
-                if (frame) {
-                    renderer_receive_frame(whist_renderer, packet_type, frame);
-                    last_whist_packet[packet_type] = frame;
+                WhistPacket* whist_packet = (WhistPacket*)get_packet(udp_context, packet_type);
+                if (whist_packet) {
+                    renderer_receive_frame(whist_renderer, packet_type, whist_packet->data);
+                    // Store the pointer so we can free it later,
+                    // While still keeping it alive for the renderer to render it
+                    last_whist_packet[packet_type] = whist_packet;
                 }
             }
         }
