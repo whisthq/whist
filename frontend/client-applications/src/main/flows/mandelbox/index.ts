@@ -10,6 +10,7 @@ import { RESTORE_LAST_SESSION } from "@app/constants/store"
 import { AWSRegion } from "@app/@types/aws"
 import { appEnvironment } from "config/build"
 import { WhistEnvironments } from "config/constants"
+import { getUserAgent } from "@app/main/utils/userAgent"
 
 export default flow(
   "mandelboxFlow",
@@ -51,6 +52,7 @@ export default flow(
           jsonData: JSON.stringify({
             dark_mode: t.darkMode,
             desired_timezonetime: t.timezone,
+            user_agent: getUserAgent(),
             client_dpi: screen.getPrimaryDisplay()?.scaleFactor * 96,
             restore_last_session: persistGet(RESTORE_LAST_SESSION) ?? true,
             initial_key_repeat: t.initialKeyRepeat,

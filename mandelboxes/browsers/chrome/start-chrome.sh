@@ -55,10 +55,16 @@ fi
 flags+=(--enable-features=$features)
 flags+=(--flag-switches-end)
 
+# Pass user agent corresponding to user's OS from JSON-transport
+if [[ $USER_AGENT -ne "" ]]; then
+  flags+=(--user-agent=$USER_AGENT)
+fi
+
 # Passing the initial url from json transport as a parameter to the google-chrome command. If the url is not
 # empty, Chrome will open the url as an additional tab at start time. The other tabs will be restored depending
 # on the user settings.
 flags+=($INITIAL_URL)
+
 
 # Start Chrome
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features

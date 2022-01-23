@@ -54,6 +54,11 @@ fi
 flags+=(--enable-features=$features)
 flags+=(--flag-switches-end)
 
+# Pass user agent corresponding to user's OS from JSON-transport
+if [[ $USER_AGENT -ne "" ]]; then
+  flags+=(--user-agent=$USER_AGENT)
+fi
+
 # Passing the initial url from json transport as a parameter to the brave-browser command. If the url is not
 # empty, Brave will open the url as an additional tab at start time. The other tabs will be restored depending
 # on the user settings.

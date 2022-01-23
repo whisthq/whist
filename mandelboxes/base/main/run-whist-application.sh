@@ -30,6 +30,7 @@ export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
 #TZ variable automatically adjusts the timezone (https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html)
 export TZ=$TZ
 export INITIAL_URL=$INITIAL_URL
+export USER_AGENT=$USER_AGENT
 
 # Start the application that this mandelbox runs
 exec whist-application
