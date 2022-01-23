@@ -10,11 +10,6 @@ import {
   CACHED_USER_EMAIL,
   CACHED_CONFIG_TOKEN,
 } from "@app/constants/store"
-import {
-  DEFAULT_LINUX_USER_AGENT,
-  DEFAULT_MAC_USER_AGENT,
-  DEFAULT_WINDOWS_USER_AGENT,
-} from "@app/constants/app"
 import { WhistTrigger } from "@app/constants/triggers"
 import { withAppReady } from "@app/main/utils/observables"
 import { getInitialKeyRepeat, getKeyRepeat } from "@app/main/utils/keyRepeat"
@@ -45,24 +40,11 @@ const isNewConfigToken = of(persistGet(CACHED_CONFIG_TOKEN) ?? "").pipe(
   map((x) => x === "")
 )
 
-const getUserAgent = () => {
-  if (process.platform === "linux") {
-    return DEFAULT_LINUX_USER_AGENT
-  } else if (process.platform === "darwin") {
-    return DEFAULT_MAC_USER_AGENT
-  } else {
-    // Windows!
-    return DEFAULT_WINDOWS_USER_AGENT
-  }
-}
-
 // JSON transport state e.g. system settings
 const darkMode = withAppReady(of(nativeTheme.shouldUseDarkColors))
 const timezone = of(Intl.DateTimeFormat().resolvedOptions().timeZone)
 const keyRepeat = of(getKeyRepeat())
 const initialKeyRepeat = of(getInitialKeyRepeat())
-
-const userAgent = of(getUserAgent())
 
 export {
   sleep,
@@ -75,5 +57,4 @@ export {
   timezone,
   keyRepeat,
   initialKeyRepeat,
-  userAgent,
 }
