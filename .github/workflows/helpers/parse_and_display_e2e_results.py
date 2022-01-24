@@ -229,32 +229,181 @@ with redirect_stdout(results_file):
         )
         writer.write_table()
     else:
-
         # Augment dictionaries with deltas wrt to dev, if available
         for k in client_metrics2:
             if k in dev_client_metrics2:
-                client_metrics2[k]["dev_avg"] = dev_client_metrics2[k]["avg"]
-                client_metrics2[k]["dev_std"] = dev_client_metrics2[k]["std"]
-                client_metrics2[k]["delta"] = (
-                    client_metrics2[k]["avg"] - client_metrics2[k]["dev_avg"]
+                client_metrics2[k]["dev_entries"] = dev_client_metrics2[k]["entries"]
+                client_metrics2[k]["dev_avg"] = round(dev_client_metrics2[k]["avg"], 4)
+                client_metrics2[k]["dev_std"] = round(dev_client_metrics2[k]["std"], 4)
+                client_metrics2[k]["delta"] = round(
+                    client_metrics2[k]["avg"] - client_metrics2[k]["dev_avg"], 4
                 )
-                client_metrics2[k]["delta_pctg"] = (
-                    (client_metrics2[k]["delta"] / client_metrics2[k]["dev_avg"])
-                    if client_metrics2[k]["delta"] >= 0.0001 and client_metrics2[k]["dev_avg"] != 0
-                    else -1000
+                if client_metrics2[k]["delta"] == 0:
+                    client_metrics2[k]["delta"] = "-"
+                    client_metrics2[k]["delta_pctg"] = "-"
+                elif client_metrics2[k]["dev_avg"] == 0:
+                    client_metrics2[k]["delta_pctg"] = "nan"
+                else:
+                    client_metrics2[k]["delta_pctg"] = round(
+                        (client_metrics2[k]["delta"] / client_metrics2[k]["dev_avg"]), 4
+                    )
+            else:
+                client_metrics2[k]["dev_avg"] = "N/A"
+                client_metrics2[k]["dev_std"] = "N/A"
+                client_metrics2[k]["delta"] = "N/A"
+                client_metrics2[k]["delta_pctg"] = "N/A"
+
+        # Create client table entries with the desired format
+        client_table_entries = []
+        for k in client_metrics2:
+            new_entry = [k, client_metrics2[k]["entries"]]
+
+            avg_stdv_this_branch = ""
+            if client_metrics2[k]["entries"] > 1:
+                avg_stdv_this_branch = "{:.4f} ± {:.4f}".format(
+                    client_metrics2[k]["avg"], client_metrics2[k]["std"]
                 )
+            else:
+                avg_stdv_this_branch = "{:.4f}".format(client_metrics2[k]["avg"])
+
+            new_entry.append(avg_stdv_this_branch)
+
+            avg_stdv_dev = ""
+            if client_metrics2[k]["dev_avg"] == "N/A" or client_metrics2[k]["dev_std"] == "N/A":
+                avg_stdv_dev = "N/A"
+            elif client_metrics2[k]["dev_entries"] > 1:
+                avg_stdv_dev = "{:.4f} ± {:.4f}".format(
+                    client_metrics2[k]["dev_avg"], client_metrics2[k]["dev_std"]
+                )
+            else:
+                avg_stdv_dev = "{:.4f}".format(client_metrics2[k]["dev_avg"])
+
+            new_entry.append(avg_stdv_dev)
+
+            delta_formatted = client_metrics2[k]["delta"]
+            if client_metrics2[k]["delta"] != "-" and client_metrics2[k]["delta"] != "N/A":
+                delta_formatted = "{:.4f}".format(delta_formatted)
+
+            delta_pctg_formatted = client_metrics2[k]["delta_pctg"]
+            if (
+                client_metrics2[k]["delta_pctg"] != "-"
+                and client_metrics2[k]["delta_pctg"] != "nan"
+                and client_metrics2[k]["delta_pctg"] != "N/A"
+            ):
+                delta_pctg_formatted = "{:.4f}".format(delta_pctg_formatted)
+            new_entry.append("{} ({})".format(delta_formatted, delta_pctg_formatted))
+
+            emoji_delta = ""
+            if (
+                client_metrics2[k]["delta"] != "-"
+                and client_metrics2[k]["delta"] != "N/A"
+                and client_metrics2[k]["delta_pctg"] != "-"
+                and client_metrics2[k]["delta_pctg"] != "nan"
+                and client_metrics2[k]["delta_pctg"] != "N/A"
+            ):
+                if client_metrics2[k]["delta"] > 0:
+                    emoji_delta = "⬆️"
+                else:
+                    emoji_delta = "⬇️"
+
+            new_entry.append(emoji_delta)
+            client_table_entries.append(new_entry)
+
         for k in server_metrics2:
             if k in dev_server_metrics2:
-                server_metrics2[k]["dev_avg"] = dev_server_metrics2[k]["avg"]
-                server_metrics2[k]["dev_std"] = dev_server_metrics2[k]["std"]
-                server_metrics2[k]["delta"] = (
-                    server_metrics2[k]["avg"] - server_metrics2[k]["dev_avg"]
+                server_metrics2[k]["dev_entries"] = dev_server_metrics2[k]["entries"]
+                server_metrics2[k]["dev_avg"] = round(dev_server_metrics2[k]["avg"], 4)
+                server_metrics2[k]["dev_std"] = round(dev_server_metrics2[k]["std"], 4)
+                server_metrics2[k]["delta"] = round(
+                    server_metrics2[k]["avg"] - server_metrics2[k]["dev_avg"], 4
                 )
-                server_metrics2[k]["delta_pctg"] = (
-                    (server_metrics2[k]["delta"] / server_metrics2[k]["dev_avg"])
-                    if server_metrics2[k]["delta"] >= 0.0001 and server_metrics2[k]["dev_avg"] != 0
-                    else -1000
+                if server_metrics2[k]["delta"] == 0:
+                    server_metrics2[k]["delta"] = "-"
+                    server_metrics2[k]["delta_pctg"] = "-"
+                elif server_metrics2[k]["dev_avg"] == 0:
+                    server_metrics2[k]["delta_pctg"] = "nan"
+                else:
+                    server_metrics2[k]["delta_pctg"] = round(
+                        (server_metrics2[k]["delta"] / server_metrics2[k]["dev_avg"]), 4
+                    )
+            else:
+                server_metrics2[k]["dev_avg"] = "N/A"
+                server_metrics2[k]["dev_std"] = "N/A"
+                server_metrics2[k]["delta"] = "N/A"
+                server_metrics2[k]["delta_pctg"] = "N/A"
+
+        # Create server table entries with the desired format
+        server_table_entries = []
+        for k in server_metrics2:
+            new_entry = [k, server_metrics2[k]["entries"]]
+
+            avg_stdv_this_branch = ""
+            if server_metrics2[k]["entries"] > 1:
+                avg_stdv_this_branch = "{:.4f} ± {:.4f}".format(
+                    server_metrics2[k]["avg"], server_metrics2[k]["std"]
                 )
+            else:
+                avg_stdv_this_branch = "{:.4f}".format(server_metrics2[k]["avg"])
+
+            new_entry.append(avg_stdv_this_branch)
+
+            avg_stdv_dev = ""
+            if server_metrics2[k]["dev_avg"] == "N/A" or server_metrics2[k]["dev_std"] == "N/A":
+                avg_stdv_dev = "N/A"
+            elif server_metrics2[k]["dev_entries"] > 1:
+                avg_stdv_dev = "{:.4f} ± {:.4f}".format(
+                    server_metrics2[k]["dev_avg"], server_metrics2[k]["dev_std"]
+                )
+            else:
+                avg_stdv_dev = "{:.4f}".format(server_metrics2[k]["dev_avg"])
+
+            new_entry.append(avg_stdv_dev)
+
+            delta_formatted = server_metrics2[k]["delta"]
+            if server_metrics2[k]["delta"] != "-" and server_metrics2[k]["delta"] != "N/A":
+                delta_formatted = "{:.4f}".format(delta_formatted)
+
+            delta_pctg_formatted = server_metrics2[k]["delta_pctg"]
+            if (
+                server_metrics2[k]["delta_pctg"] != "-"
+                and server_metrics2[k]["delta_pctg"] != "nan"
+                and server_metrics2[k]["delta_pctg"] != "N/A"
+            ):
+                delta_pctg_formatted = "{:.4f}".format(delta_pctg_formatted)
+            new_entry.append("{} ({})".format(delta_formatted, delta_pctg_formatted))
+
+            emoji_delta = ""
+            if (
+                server_metrics2[k]["delta"] != "-"
+                and server_metrics2[k]["delta"] != "N/A"
+                and server_metrics2[k]["delta_pctg"] != "-"
+                and server_metrics2[k]["delta_pctg"] != "nan"
+                and server_metrics2[k]["delta_pctg"] != "N/A"
+            ):
+                if server_metrics2[k]["delta"] > 0:
+                    emoji_delta = "⬆️"
+                else:
+                    emoji_delta = "⬇️"
+
+            new_entry.append(emoji_delta)
+            server_table_entries.append(new_entry)
+
+        with open("debug_info.log", "w+") as debugfile:
+            debugfile.write("Dumping client_table_entries:\n")
+            for k in client_metrics2:
+                debugfile.write(str(client_metrics2[k]) + "\n")
+
+            debugfile.write("\n\nDumping dev_client_metrics2:\n")
+            for k in dev_client_metrics2:
+                debugfile.write(str(dev_client_metrics2[k]) + "\n")
+
+            debugfile.write("\n\nDumping server_metrics:\n")
+            for k in server_metrics2:
+                debugfile.write(str(server_metrics2[k]) + "\n")
+
+            debugfile.write("\n\nDumping dev_server_metrics2:\n")
+            for k in dev_server_metrics2:
+                debugfile.write(str(dev_server_metrics2[k]) + "\n")
 
         if len(client_metrics) == 0:
             print("NO CLIENT METRICS\n")
@@ -271,45 +420,7 @@ with redirect_stdout(results_file):
                 "Delta",
                 "",
             ],
-            value_matrix=[
-                [
-                    k,
-                    client_metrics2[k]["entries"],
-                    "{:.4f} ± {:.4f}".format(client_metrics2[k]["avg"], client_metrics2[k]["std"])
-                    if client_metrics2[k]["entries"] > 1
-                    else client_metrics2[k]["avg"],
-                    "{:.4f} ± {:.4f}".format(
-                        client_metrics2[k]["dev_avg"], client_metrics2[k]["dev_std"]
-                    )
-                    if (
-                        "dev_avg" in client_metrics2[k]
-                        and "dev_std" in client_metrics2[k]
-                        and client_metrics2[k]["entries"] > 1
-                    )
-                    else client_metrics2[k]["dev_avg"]
-                    if ("dev_avg" in client_metrics2[k] and "dev_std" in client_metrics2[k])
-                    else "N/A",
-                    "{:.4f} ({:.4f}%)".format(
-                        client_metrics2[k]["delta"], (client_metrics2[k]["delta_pctg"] * 100.0)
-                    )
-                    if (
-                        "delta" in client_metrics2[k]
-                        and "delta_pctg" in client_metrics2[k]
-                        and client_metrics2[k]["delta"] >= 0.0001
-                    )
-                    else "-"
-                    if ("delta" in client_metrics2[k] and "delta_pctg" in client_metrics2[k])
-                    else "N/A",
-                    ""
-                    if (
-                        "delta_pctg" not in client_metrics2[k]
-                        or abs(client_metrics2[k]["delta_pctg"]) < 0.01
-                        or abs(client_metrics2[k]["delta_pctg"]) > 100
-                    )
-                    else ("⬆️" if client_metrics2[k]["delta_pctg"] > 0.0 else "⬇️"),
-                ]
-                for k in client_metrics2
-            ],
+            value_matrix=[i for i in client_table_entries],
             margin=1,  # add a whitespace for both sides of each cell
             max_precision=4,
         )
@@ -322,7 +433,7 @@ with redirect_stdout(results_file):
             print("###### SERVER METRICS: ######\n")
 
         writer = MarkdownTableWriter(
-            # table_name="Client metrics",
+            # table_name="Server metrics",
             headers=[
                 "Metric",
                 "Entries (this branch)",
@@ -331,45 +442,7 @@ with redirect_stdout(results_file):
                 "Delta",
                 "",
             ],
-            value_matrix=[
-                [
-                    k,
-                    server_metrics2[k]["entries"],
-                    "{:.4f} ± {:.4f}".format(server_metrics2[k]["avg"], server_metrics2[k]["std"])
-                    if server_metrics2[k]["entries"] > 1
-                    else server_metrics2[k]["avg"],
-                    "{:.4f} ± {:.4f}".format(
-                        server_metrics2[k]["dev_avg"], server_metrics2[k]["dev_std"]
-                    )
-                    if (
-                        "dev_avg" in server_metrics2[k]
-                        and "dev_std" in server_metrics2[k]
-                        and server_metrics2[k]["entries"] > 1
-                    )
-                    else server_metrics2[k]["dev_avg"]
-                    if ("dev_avg" in server_metrics2[k] and "dev_std" in server_metrics2[k])
-                    else "N/A",
-                    "{:.4f} ({:.4f}%)".format(
-                        server_metrics2[k]["delta"], (server_metrics2[k]["delta_pctg"] * 100.0)
-                    )
-                    if (
-                        "delta" in server_metrics2[k]
-                        and "delta_pctg" in server_metrics2[k]
-                        and server_metrics2[k]["delta"] >= 0.0001
-                    )
-                    else "-"
-                    if ("delta" in server_metrics2[k] and "delta_pctg" in server_metrics2[k])
-                    else "N/A",
-                    ""
-                    if (
-                        "delta_pctg" not in server_metrics2[k]
-                        or abs(server_metrics2[k]["delta_pctg"]) < 0.01
-                        or abs(server_metrics2[k]["delta_pctg"]) > 100
-                    )
-                    else ("⬆️" if server_metrics2[k]["delta_pctg"] > 0.0 else "⬇️"),
-                ]
-                for k in server_metrics2
-            ],
+            value_matrix=[i for i in server_table_entries],
             margin=1,  # add a whitespace for both sides of each cell
             max_precision=4,
         )
@@ -387,6 +460,10 @@ f = open("streaming_e2e_test_results.info", "r")
 body = f.read()
 f.close()
 
+f = open("debug_info.log", "r")
+body_debugging = f.read()
+f.close()
+
 
 # Display the results as a Github Gist
 from github import Github, InputFileContent
@@ -397,6 +474,7 @@ gist = gh_auth_user.create_gist(
     public=False,
     files={
         "performance_results.md": InputFileContent(body),
+        "debugging_info.txt": InputFileContent(body_debugging),
     },
     description=title,
 )
