@@ -332,7 +332,7 @@ bool is_overflowing_audio(AudioContext* audio_context) {
     // Check if we're overflowing the audio buffer
     if (!audio_context->is_flushing_audio && audio_device_queue > AUDIO_QUEUE_UPPER_LIMIT) {
         // Yes, we are! We should flush the audio buffer
-        LOG_INFO("Audio queue has overflowed %d!", AUDIO_QUEUE_UPPER_LIMIT);
+        LOG_INFO("Audio queue has overflowed, is now %d bytes!", audio_device_queue);
         audio_context->is_flushing_audio = true;
     } else if (audio_context->is_flushing_audio && audio_device_queue <= TARGET_AUDIO_QUEUE_LIMIT) {
         // Okay, we're done flushing the audio buffer
@@ -353,7 +353,7 @@ bool is_underflowing_audio(AudioContext* audio_context, int num_frames_buffered)
         audio_context->is_buffering_audio = true;
     } else if (audio_context->is_buffering_audio && buffered_bytes >= TARGET_AUDIO_QUEUE_LIMIT) {
         // Okay, we're done buffering audio
-        LOG_INFO("Done catching up! Now have %d bytes in queue", buffered_bytes);
+        LOG_INFO("Done catching up! Now have %d bytes, %d frames in queue", buffered_bytes, num_frames_buffered);
         audio_context->is_buffering_audio = false;
     }
 
