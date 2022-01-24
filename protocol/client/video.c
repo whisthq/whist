@@ -126,17 +126,24 @@ Public Function Implementations
 ============================
 */
 
-VideoContext* init_video() {
+VideoContext* init_video(int initial_width, int initial_height) {
     VideoContext* video_context = safe_malloc(sizeof(*video_context));
     memset(video_context, 0, sizeof(*video_context));
 
-    video_context->last_frame_width = -1;
-    video_context->last_frame_height = -1;
-    video_context->last_frame_codec = CODEC_TYPE_UNKNOWN;
     video_context->has_video_rendered_yet = false;
     video_context->sws = NULL;
     video_context->render_context = NULL;
     video_context->pending_render_context = false;
+    VideoDecoder* decoder =
+        create_video_decoder(initial_width, initial_height, USE_HARDWARE, CODEC_TYPE_H264);
+    if (!decoder) {
+        LOG_FATAL("ERROR: Decoder could not be created!");
+    }
+    video_context->decoder = decoder;
+
+    video_context->last_frame_width = initial_width;
+    video_context->last_frame_height = initial_height;
+    video_context->last_frame_codec = CODEC_TYPE_H264;
 
     // Init loading animation variables
     video_context->loading_index = 0;

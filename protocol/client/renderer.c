@@ -59,13 +59,13 @@ Public Function Implementations
 ============================
 */
 
-WhistRenderer* init_renderer() {
+WhistRenderer* init_renderer(int initial_width, int initial_height) {
     WhistRenderer* whist_renderer = (WhistRenderer*)safe_malloc(sizeof(WhistRenderer));
     memset(whist_renderer, 0, sizeof(WhistRenderer));
 
     // Initialize audio and video systems
     whist_renderer->audio_context = init_audio();
-    whist_renderer->video_context = init_video();
+    whist_renderer->video_context = init_video(initial_width, initial_height);
 
     // These mutex/sem/timer pass work to the renderer thread when necessary
     start_timer(&whist_renderer->last_try_render_timer);

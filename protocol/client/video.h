@@ -71,7 +71,7 @@ Public Functions
  *
  * @returns                        The new video context
  */
-VideoContext* init_video();
+VideoContext* init_video(int initial_width, int initial_height);
 
 /**
  * @brief                          Receive video packet

@@ -403,7 +403,7 @@ int main(int argc, char* argv[]) {
 
         is_timing_latency = false;
         // Initialize audio and video renderer system
-        WhistRenderer* whist_renderer = init_renderer();
+        WhistRenderer* whist_renderer = init_renderer(output_width, output_height);
 
         // reset because now connected
         try_amount = 0;

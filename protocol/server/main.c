@@ -325,14 +325,11 @@ static void whist_server_state_init(whist_server_state* state, whist_server_conf
     state->input_device = NULL;
     state->client_joined_after_window_name_broadcast = false;
 
-    // If we've just started, capture at a common width, height, and DPI
-    // when a client connects, they'll request a dimension change to the correct dimensions
-    // + DPI. The height, width, and DPI all match the default on a 2020 M1 MacBook Pro.
-    // A cross-platform default DPI would be 192; width and height depend on things like
-    // the Windows Start Bar, the macOS Dock and Menu Bar, and window controls.
-    state->client_width = 2880;
-    state->client_height = 1524;
-    state->client_dpi = 192;
+    // Set width and height to -1. Video thread will start once correct dimensions are received from
+    // client
+    state->client_width = -1;
+    state->client_height = -1;
+    state->client_dpi = -1;
     state->update_device = true;
 
     // Mark initial update encoder

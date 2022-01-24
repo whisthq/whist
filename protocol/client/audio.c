@@ -144,13 +144,14 @@ AudioContext* init_audio() {
     memset(audio_context, 0, sizeof(*audio_context));
 
     // Initialize everything
-    audio_context->audio_frequency = -1;
-    audio_context->pending_refresh = true;
+    audio_context->audio_frequency = AUDIO_FREQUENCY;
+    audio_context->pending_refresh = false;
     audio_context->pending_render_context = false;
     audio_context->dev = 0;
     audio_context->audio_decoder = NULL;
     audio_context->is_flushing_audio = false;
     audio_context->is_buffering_audio = false;
+    init_audio_device(audio_context);
 
     // Return the audio context
     return audio_context;

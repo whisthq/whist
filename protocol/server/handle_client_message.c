@@ -235,7 +235,7 @@ static int handle_dimensions_message(whist_server_state *state, WhistClientMessa
         state->update_device = true;
     } else {
         LOG_INFO(
-            "No need to update the decoder as the requested parameters are the same as the "
+            "No need to update the encoder as the requested parameters are the same as the "
             "currently chosen parameters");
     }
     return 0;

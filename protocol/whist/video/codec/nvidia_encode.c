@@ -238,7 +238,7 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
         encoder->registered_resource = encoder->resource_cache[0];
     }
 #if LOG_VIDEO
-    LOG_DEBUG("Registered resource data: texture %x, width %d, height %d, pitch %d, device %s",
+    LOG_DEBUG("Registered resource data: texture %p, width %d, height %d, pitch %d, device %s",
               encoder->registered_resource.texture_pointer, encoder->registered_resource.width,
               encoder->registered_resource.height, encoder->registered_resource.pitch,
               encoder->registered_resource.device_type == NVIDIA_DEVICE ? "Nvidia" : "X11");
@@ -261,7 +261,7 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
         LOG_DEBUG("width: %d, height: %d, pitch: %d (lock pitch %d)",
                   encoder->registered_resource.width, encoder->registered_resource.height,
                   encoder->registered_resource.pitch, lock_params.pitch);
-        LOG_DEBUG("Buffer data ptr: %x, texture pointer: %x", lock_params.bufferDataPtr,
+        LOG_DEBUG("Buffer data ptr: %p, texture pointer: %p", lock_params.bufferDataPtr,
                   encoder->registered_resource.texture_pointer);
 #endif
         // memcpy input data

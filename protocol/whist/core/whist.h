@@ -188,6 +188,8 @@ Defines
 
 #define MAX_URL_LENGTH 2048
 
+#define AUDIO_FREQUENCY 48000
+
 /*
 ============================
 Constants
