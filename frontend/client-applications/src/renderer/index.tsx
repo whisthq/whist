@@ -9,17 +9,17 @@ import ReactDOM from "react-dom"
 
 import { OneButtonError, TwoButtonError } from "@app/renderer/pages/error"
 import Signout from "@app/renderer/pages/signout"
-import Typeform from "@app/renderer/pages/typeform"
 import Importer from "@app/renderer/pages/importer"
 import Update from "@app/renderer/pages/update"
 import Network from "@app/renderer/pages/network"
 import Loading from "@app/renderer/pages/loading"
 import Omnibar from "@app/renderer/pages/omnibar"
+import Background from "@app/renderer/pages/background"
+import Welcome from "@app/renderer/pages/welcome"
 import { Provider } from "@app/renderer/context/omnibar"
 
 import {
   WindowHashSignout,
-  WindowHashBugTypeform,
   WindowHashUpdate,
   WindowHashImport,
   WindowHashOnboarding,
@@ -27,6 +27,9 @@ import {
   WindowHashLoading,
   WindowHashOmnibar,
   WindowHashPayment,
+  WindowHashSpeedtest,
+  WindowHashLicense,
+  WindowHashWelcome,
 } from "@app/constants/windows"
 import {
   whistError,
@@ -83,6 +86,14 @@ const RootComponent = () => {
 
   const handleNetworkSubmit = () => setShow(WindowHashImport)
 
+  const handleWelcomeSubmit = () =>
+    setMainState({
+      trigger: {
+        name: WhistTrigger.showAuthWindow,
+        payload: undefined,
+      },
+    })
+
   useEffect(() => {
     // We need to ask the main thread to re-emit the current StateIPC because
     // useMainState() only subscribes to state updates after the function is
@@ -98,18 +109,18 @@ const RootComponent = () => {
         <Omnibar />
       </Provider>
     )
-  if (show === WindowHashAuth)
-    return (
-      <div className="bg-gray-100 w-screen h-screen">
-        <div className="w-full h-6 draggable"></div>
-      </div>
-    )
-  if (show === WindowHashPayment)
-    return (
-      <div className="bg-white w-screen h-screen">
-        <div className="w-full h-6 draggable"></div>
-      </div>
-    )
+  if (show === WindowHashWelcome)
+    return <Welcome onSubmit={handleWelcomeSubmit} />
+  if (
+    [
+      WindowHashOmnibar,
+      WindowHashAuth,
+      WindowHashPayment,
+      WindowHashSpeedtest,
+      WindowHashLicense,
+    ].includes(show)
+  )
+    return <Background />
   if (show === WindowHashSignout) return <Signout onClick={handleSignout} />
   if (show === WindowHashUpdate) return <Update />
   if (show === WindowHashImport)
@@ -132,10 +143,6 @@ const RootComponent = () => {
   if (show === WindowHashLoading) {
     return <Loading networkInfo={mainState.networkInfo} />
   }
-  if (show === WindowHashBugTypeform)
-    return (
-      <Typeform onSubmit={() => {}} id="VMWBFgGc" email={mainState.userEmail} />
-    )
   if (show === NO_PAYMENT_ERROR)
     return (
       <TwoButtonError
@@ -189,7 +196,7 @@ const RootComponent = () => {
 // TODO: actually pass version number through IPC.
 const WindowBackground = (props: any) => {
   return (
-    <div className="relative w-full h-full bg-opacity-0 select-none">
+    <div className="relative w-full h-full bg-gray-800 select-none">
       {props.children}
     </div>
   )

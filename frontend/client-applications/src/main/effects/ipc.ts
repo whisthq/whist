@@ -1,15 +1,17 @@
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file ipc.ts
- * @brief This file contains subscriptions to Observables related to state persistence.
+ * @brief This file contains effects that use IPC to communicate with the renderer
  */
+
+import { BrowserWindow } from "electron"
+
 import { combineLatest, concat, of, merge } from "rxjs"
 import { ipcBroadcast } from "@app/main/utils/ipc"
 import { StateIPC } from "@app/@types/state"
 import { map, startWith, filter, withLatestFrom } from "rxjs/operators"
 import mapValues from "lodash.mapvalues"
 
-import { getElectronWindows } from "@app/main/utils/windows"
 import { fromTrigger } from "@app/main/utils/flows"
 import { appEnvironment } from "../../../config/configs"
 import { getInstalledBrowsers } from "@app/main/utils/importer"
@@ -73,7 +75,7 @@ finalState.subscribe(
   ([subs, state]: [Partial<StateIPC>, Partial<StateIPC>]) => {
     ipcBroadcast(
       { ...state, ...subs } as Partial<StateIPC>,
-      getElectronWindows()
+      BrowserWindow.getAllWindows()
     )
   }
 )
@@ -84,7 +86,7 @@ fromTrigger(WhistTrigger.emitIPC)
     ([, [subs, state]]: [any, [Partial<StateIPC>, Partial<StateIPC>]]) => {
       ipcBroadcast(
         { ...state, ...subs } as Partial<StateIPC>,
-        getElectronWindows()
+        BrowserWindow.getAllWindows()
       )
     }
   )

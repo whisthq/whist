@@ -1,109 +1,129 @@
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file app.ts
- * @brief This file contains subscriptions to Observables related to protocol launching.
+ * @brief This file contains effects that deal with the protocol
  */
 
-import Sentry from "@sentry/electron"
 import { app } from "electron"
-import { map, startWith, withLatestFrom } from "rxjs/operators"
-
-import { fromTrigger } from "@app/main/utils/flows"
+import { ChildProcess } from "child_process"
+import { fromEvent, of } from "rxjs"
 import {
-  protocolStreamInfo,
-  childProcess,
-  protocolOpenUrl,
-  protocolStreamKill,
+  filter,
+  withLatestFrom,
+  take,
+  count,
+  switchMap,
+  map,
+  mapTo,
+  startWith,
+} from "rxjs/operators"
+import Sentry from "@sentry/electron"
+
+import { createTrigger, fromTrigger } from "@app/main/utils/flows"
+import {
+  pipeNetworkInfo,
+  pipeURLToProtocol,
+  destroyProtocol,
+  launchProtocol,
+  logProtocolStdoutLocally,
 } from "@app/main/utils/protocol"
-import { createProtocolWindow } from "@app/main/utils/windows"
-import { persistSet } from "@app/main/utils/persist"
-import {
-  RESTORE_LAST_SESSION,
-  WHIST_IS_DEFAULT_BROWSER,
-} from "@app/constants/store"
 import { WhistTrigger } from "@app/constants/triggers"
-import { logBase } from "@app/main/utils/logging"
+import { withAppActivated, emitOnSignal } from "@app/main/utils/observables"
+import { protocolToLogz } from "@app/main/utils/logging"
 
-// The current implementation of the protocol process shows its own loading
-// screen while a mandelbox is created and configured. To do this, we need it
-// the protocol to start and appear before its mandatory arguments are available.
+const threeProtocolFailures = fromTrigger(WhistTrigger.protocolClosed).pipe(
+  filter((args: { crashed: boolean }) => args.crashed),
+  withLatestFrom(fromTrigger(WhistTrigger.mandelboxFlowSuccess)),
+  take(3)
+)
 
-// We solve this streaming the ip, secret_key, and ports info to the protocol
-// they become available from when a successful mandelbox status response.
+// When launched from node.js, the protocol can take several seconds to spawn,
+// which we want to avoid.
+
+// We solve this by starting the protocol ahead of time and piping the network info
+// (IP, ports, private key) to the protocol when they become available
+withAppActivated(of(null)).subscribe(() => {
+  launchProtocol().catch((err) => Sentry.captureException(err))
+})
 
 fromTrigger(WhistTrigger.mandelboxFlowSuccess)
   .pipe(
     withLatestFrom(
-      fromTrigger(WhistTrigger.beginImport).pipe(
-        startWith(undefined),
-        map(
-          (
-            payload: undefined | { importBrowserDataFrom: string | undefined }
-          ) => payload?.importBrowserDataFrom
-        )
-      )
-    )
+      fromTrigger(WhistTrigger.protocol),
+      fromTrigger(WhistTrigger.beginImport).pipe(mapTo(true), startWith(false))
+    ),
+    map((x) => ({
+      info: x[0],
+      protocol: x[1],
+      import: x[2],
+    }))
   )
-  .subscribe(
-    ([info, importBrowserDataFrom]: [
-      {
-        mandelboxIP: string
-        mandelboxSecret: string
-        mandelboxPorts: {
-          port_32262: number
-          port_32263: number
-          port_32273: number
-        }
-      },
-      string | undefined
-    ]) => {
-      setTimeout(
-        () => {
-          if (childProcess === undefined) {
-            createProtocolWindow()
-              .then(() => {
-                protocolStreamInfo(info)
-              })
-              .catch((err) => Sentry.captureException(err))
-          } else {
-            protocolStreamInfo(info)
-          }
-        },
-        importBrowserDataFrom !== undefined ? 5000 : 0
-      )
-    }
-  )
+  .subscribe((args: { info: any; protocol: ChildProcess; import: boolean }) => {
+    if (args.import) destroyProtocol(args.protocol)
 
-fromTrigger(WhistTrigger.restoreLastSession).subscribe(
-  (body: { restore: boolean }) => {
-    persistSet(RESTORE_LAST_SESSION, body.restore)
-  }
-)
-
-fromTrigger(WhistTrigger.setDefaultBrowser).subscribe(
-  (body: { default: boolean }) => {
-    persistSet(WHIST_IS_DEFAULT_BROWSER, body.default)
-
-    // if the value changed to true, then we need to set Whist as the default browser now.
-    if (body.default) {
-      app.setAsDefaultProtocolClient("http")
-      app.setAsDefaultProtocolClient("https")
-    } else {
-      app.removeAsDefaultProtocolClient("http")
-      app.removeAsDefaultProtocolClient("https")
-    }
-  }
-)
-
-fromTrigger(WhistTrigger.appReady).subscribe(() => {
-  // Intercept URLs (Mac version)
-  app.on("open-url", function (event, url: string) {
-    event.preventDefault()
-    protocolOpenUrl(url)
-    logBase(`Captured url ${url} after setting Whist as default browser!\n`, {})
+    args.protocol === undefined || args.import
+      ? launchProtocol(args.info).catch((err) => Sentry.captureException(err))
+      : pipeNetworkInfo(args.protocol, args.info)
   })
+
+// When the protocol is launched, pipe stdout to a .log file in the user's cache
+fromTrigger(WhistTrigger.protocol)
+  .pipe(filter((p) => p !== undefined))
+  .subscribe((p) => {
+    logProtocolStdoutLocally(p).catch((err) => Sentry.captureException(err))
+  })
+
+// Also send protocol logs to logz.io
+const stdoutBuffer = {
+  buffer: "",
+}
+
+fromTrigger(WhistTrigger.protocolStdoutData).subscribe((data: string) => {
+  // Combine the previous line with the current msg
+  const newmsg = `${stdoutBuffer.buffer}${data}`
+  // Split on newline
+  const lines = newmsg.split(/\r?\n/)
+  // Leave the last line in the buffer to be appended to later
+  stdoutBuffer.buffer = lines.length === 0 ? "" : (lines.pop() as string)
+  // Print the rest of the lines
+  lines.forEach((line: string) => protocolToLogz(line))
 })
 
-fromTrigger(WhistTrigger.beginImport).subscribe(() => {
-  protocolStreamKill()
+fromTrigger(WhistTrigger.protocolStdoutEnd).subscribe(() => {
+  // Send the last line, so long as it's not empty
+  if (stdoutBuffer.buffer !== "") {
+    protocolToLogz(stdoutBuffer.buffer)
+    stdoutBuffer.buffer = ""
+  }
 })
+
+threeProtocolFailures.subscribe(([, info]: [any, any]) => {
+  launchProtocol(info).catch((err) => Sentry.captureException(err))
+})
+
+threeProtocolFailures
+  .pipe(
+    count(), // count() emits when the piped observable finishes i.e. when the protocol has failed three times
+    switchMap(() => fromTrigger(WhistTrigger.protocolClosed)), // this catches the fourth failure
+    take(1)
+  )
+  .subscribe(() => createTrigger(WhistTrigger.protocolError, of(undefined)))
+
+// If you put your computer to sleep, kill the protocol so we don't keep your mandelbox
+// running unnecessarily
+emitOnSignal(
+  fromTrigger(WhistTrigger.protocol),
+  fromTrigger(WhistTrigger.powerSuspend)
+).subscribe((p: ChildProcess) => destroyProtocol(p))
+
+// Redirect URLs to the protocol
+fromTrigger(WhistTrigger.protocolConnection)
+  .pipe(
+    filter((connected: boolean) => connected),
+    switchMap(() => fromEvent(app, "open-url")),
+    withLatestFrom(fromTrigger(WhistTrigger.protocol))
+  )
+  .subscribe(([[event, url], p]: any) => {
+    event.preventDefault()
+    pipeURLToProtocol(p, url)
+  })

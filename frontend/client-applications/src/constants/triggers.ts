@@ -7,10 +7,10 @@
 const WhistTrigger = {
   // App triggers
   appReady: "appReady",
-  windowInfo: "windowInfo",
-  windowsAllClosed: "windowsAllClosed",
+  electronWindowsAllClosed: "electronWindowsAllClosed",
   networkUnstable: "networkUnstable",
   reactivated: "reactivated", // When all windows are closed and the user clicks the dock icon
+  userRequestedQuit: "userRequestedQuit",
 
   // Auth triggers
   authInfo: "authInfo",
@@ -40,6 +40,13 @@ const WhistTrigger = {
   beginImport: "beginImport",
   storeDidChange: "storeDidChange",
 
+  // Protocol triggers
+  protocol: "protocol",
+  protocolClosed: "protocolClosed",
+  protocolStdoutData: "protocolStdoutData",
+  protocolStdoutEnd: "protocolStdoutEnd",
+  protocolConnection: "protocolConnection",
+
   // Renderer triggers
   loginAction: "loginAction",
   signupAction: "signupAction",
@@ -48,6 +55,7 @@ const WhistTrigger = {
   startNetworkAnalysis: "startNetworkAnalysis",
 
   // Omnibar triggers
+  showAuthWindow: "showAuthWindow",
   showSignoutWindow: "showSignoutWindow",
   showPaymentWindow: "showPaymentWindow",
   showSupportWindow: "showSupportWindow",
@@ -64,6 +72,7 @@ const WhistTrigger = {
   authFlowSuccess: "authFlowSuccess",
   authFlowFailure: "authFlowFailure",
   authRefreshSuccess: "authRefreshSuccess",
+  checkPaymentFlowSuccess: "checkPaymentFlowSuccess",
   checkPaymentFlowFailure: "checkPaymentFlowFailure",
   awsPingCached: "awsPingCached",
   awsPingRefresh: "awsPingRefresh",

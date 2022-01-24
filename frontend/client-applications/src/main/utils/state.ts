@@ -1,5 +1,5 @@
-import { map, startWith } from "rxjs/operators"
 import { Observable, of } from "rxjs"
+import { map, startWith } from "rxjs/operators"
 import { nativeTheme } from "electron"
 
 import { fromTrigger } from "@app/main/utils/flows"
@@ -11,10 +11,10 @@ import {
   CACHED_CONFIG_TOKEN,
 } from "@app/constants/store"
 import { WhistTrigger } from "@app/constants/triggers"
-import { withAppReady } from "@app/main/utils/observables"
+import { withAppActivated } from "@app/main/utils/observables"
 import { getInitialKeyRepeat, getKeyRepeat } from "@app/main/utils/keyRepeat"
 
-const sleep = of(process.argv[process.argv.length - 1] === "--sleep")
+const sleep = of(process.argv.includes("--sleep"))
 
 const accessToken = fromTrigger(WhistTrigger.storeDidChange).pipe(
   map(() => (persistGet(CACHED_ACCESS_TOKEN) as string) ?? ""),
@@ -41,7 +41,7 @@ const isNewConfigToken = of(persistGet(CACHED_CONFIG_TOKEN) ?? "").pipe(
 )
 
 // JSON transport state e.g. system settings
-const darkMode = withAppReady(of(nativeTheme.shouldUseDarkColors))
+const darkMode = withAppActivated(of(nativeTheme.shouldUseDarkColors))
 const timezone = of(Intl.DateTimeFormat().resolvedOptions().timeZone)
 const keyRepeat = of(getKeyRepeat())
 const initialKeyRepeat = of(getInitialKeyRepeat())

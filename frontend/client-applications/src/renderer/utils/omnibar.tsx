@@ -1,6 +1,5 @@
 import React from "react"
 
-import Mail from "@app/components/icons/mail"
 import Globe from "@app/components/icons/globe"
 import Document from "@app/components/icons/document"
 import Dollar from "@app/components/icons/dollar"
@@ -88,15 +87,6 @@ const createOptions = (mainState: StateIPC, setMainState: any) => {
       onClick: () =>
         setMainState({
           trigger: { name: WhistTrigger.showSignoutWindow, payload: undefined },
-        }),
-    },
-    {
-      icon: Mail,
-      text: "Contact Support",
-      keywords: ["Help", "Feedback", "Report Bug"],
-      onClick: () =>
-        setMainState({
-          trigger: { name: WhistTrigger.showSupportWindow, payload: undefined },
         }),
     },
     {

@@ -16,9 +16,6 @@
   --light-text-color: #efefef;
   --dark-text-color: #555555;
   --black-text-color: #000000;
-
-  --font-family-primary: "Josefin Sans";
-  --font-family-secondary: "Myriad Pro";
 }
 
 ::-webkit-scrollbar {
@@ -30,33 +27,40 @@
 }
 
 @font-face {
-  font-family: --font-family-primary;
-  src: url("../assets/fonts/JosefinSans-VariableFont_wght.ttf");
+  font-family: "Josefin-Sans";
+  src: url("../assets/fonts/JosefinSans-Regular.ttf");
   font-weight: normal; /* normal == 400 */
   font-style: normal;
 }
 
 @font-face {
-  font-family: --font-family-primary;
-  src: url("../assets/fonts/JosefinSans-VariableFont_wght.ttf");
+  font-family: "Josefin-Sans";
+  src: url("../assets/fonts/JosefinSans-SemiBold.ttf");
   font-weight: bold; /* bold == 700 */
   font-style: bold;
 }
 
 @font-face {
-  font-family: "Myriad-Pro";
-  src: url("../assets/fonts/MyriadPro-Light.otf");
-  font-weight: 300;
+  font-family: "Josefin-Sans";
+  src: url("../assets/fonts/JosefinSans-Light.ttf");
+  font-weight: lighter;
+  font-style: lighter;
 }
 
-@font-face {
-  font-family: "Myriad-Pro";
-  src: url("../assets/fonts/MyriadPro-Semibold.otf");
-  font-weight: 600;
+.bg-gradient {
+  background: linear-gradient(-45deg, #00ffa2, #25d4f7);
+  background-size: 400% 400%;
+  animation: gradient 15s ease infinite;
 }
 
-@font-face {
-  font-family: "Myriad-Pro";
-  src: url("../assets/fonts/MyriadPro-Bold.otf");
-  font-weight: 800;
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
