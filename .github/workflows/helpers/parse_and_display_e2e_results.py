@@ -127,52 +127,52 @@ if github_ref_name != "dev":
         print(
             "Could not get dev client/server logs. Unable to compare performance results to latest dev measurements."
         )
+    else:
+        # Extract the metric values and save them in a dictionary
+        dev_client_metrics = {}
+        dev_server_metrics = {}
 
-    # Extract the metric values and save them in a dictionary
-    dev_client_metrics = {}
-    dev_server_metrics = {}
+        with open(dev_client_log_path, "r") as f:
+            for line in f.readlines():
+                if line[0] == "{":
+                    l = line.strip().split()
+                    metric_name = l[1].strip('"')
+                    metric_value = float(l[3].strip('"'))
+                    if metric_name not in dev_client_metrics:
+                        dev_client_metrics[metric_name] = [metric_value]
+                    else:
+                        dev_client_metrics[metric_name].append(metric_value)
 
-    with open(dev_client_log_path, "r") as f:
-        for line in f.readlines():
-            if line[0] == "{":
-                l = line.strip().split()
-                metric_name = l[1].strip('"')
-                metric_value = float(l[3].strip('"'))
-                if metric_name not in dev_client_metrics:
-                    dev_client_metrics[metric_name] = [metric_value]
-                else:
-                    dev_client_metrics[metric_name].append(metric_value)
+        with open(dev_server_log_path, "r") as f:
+            for line in f.readlines():
+                if line[0] == "{":
+                    l = line.strip().split()
+                    metric_name = l[1].strip('"')
+                    metric_value = float(l[3].strip('"'))
+                    if metric_name not in dev_server_metrics:
+                        dev_server_metrics[metric_name] = [metric_value]
+                    else:
+                        dev_server_metrics[metric_name].append(metric_value)
 
-    with open(dev_server_log_path, "r") as f:
-        for line in f.readlines():
-            if line[0] == "{":
-                l = line.strip().split()
-                metric_name = l[1].strip('"')
-                metric_value = float(l[3].strip('"'))
-                if metric_name not in dev_server_metrics:
-                    dev_server_metrics[metric_name] = [metric_value]
-                else:
-                    dev_server_metrics[metric_name].append(metric_value)
+        for k in dev_client_metrics:
+            dev_client_metrics[k] = np.array(dev_client_metrics[k])
+            dev_client_metrics2[k] = {
+                "entries": len(dev_client_metrics[k]),
+                "avg": np.mean(dev_client_metrics[k]),
+                "std": np.std(dev_client_metrics[k]),
+                "max": np.max(dev_client_metrics[k]),
+                "min": np.min(dev_client_metrics[k]),
+            }
 
-    for k in dev_client_metrics:
-        dev_client_metrics[k] = np.array(dev_client_metrics[k])
-        dev_client_metrics2[k] = {
-            "entries": len(dev_client_metrics[k]),
-            "avg": np.mean(dev_client_metrics[k]),
-            "std": np.std(dev_client_metrics[k]),
-            "max": np.max(dev_client_metrics[k]),
-            "min": np.min(dev_client_metrics[k]),
-        }
-
-    for k in dev_server_metrics:
-        dev_server_metrics[k] = np.array(dev_server_metrics[k])
-        dev_server_metrics2[k] = {
-            "entries": len(dev_server_metrics[k]),
-            "avg": np.mean(dev_server_metrics[k]),
-            "std": np.std(dev_server_metrics[k]),
-            "max": np.max(dev_server_metrics[k]),
-            "min": np.min(dev_server_metrics[k]),
-        }
+        for k in dev_server_metrics:
+            dev_server_metrics[k] = np.array(dev_server_metrics[k])
+            dev_server_metrics2[k] = {
+                "entries": len(dev_server_metrics[k]),
+                "avg": np.mean(dev_server_metrics[k]),
+                "std": np.std(dev_server_metrics[k]),
+                "max": np.max(dev_server_metrics[k]),
+                "min": np.min(dev_server_metrics[k]),
+            }
 
 
 # Generate the report
@@ -229,6 +229,24 @@ with redirect_stdout(results_file):
         )
         writer.write_table()
     else:
+
+        with open("debug_info.log", "w+") as debugfile:
+            debugfile.write("Dumping client_metrics:\n")
+            for k in client_metrics2:
+                debugfile.write(client_metrics2[k])
+
+            debugfile.write("\nDumping dev_client_metrics2:\n")
+            for k in dev_client_metrics2:
+                debugfile.write(dev_client_metrics2[k])
+
+            debugfile.write("\nDumping server_metrics:\n")
+            for k in server_metrics2:
+                debugfile.write(server_metrics2[k])
+
+            debugfile.write("\nDumping dev_server_metrics2:\n")
+            for k in dev_server_metrics2:
+                debugfile.write(dev_server_metrics2[k])
+
         # Augment dictionaries with deltas wrt to dev, if available
         for k in client_metrics2:
             if k in dev_client_metrics2:
@@ -254,6 +272,15 @@ with redirect_stdout(results_file):
                     if server_metrics2[k]["delta"] >= 0.0001 and server_metrics2[k]["dev_avg"] != 0
                     else -1000
                 )
+
+        with open("debug_info.log", "a+") as debugfile:
+            debugfile.write("\nDumping client_metrics:\n")
+            for k in client_metrics2:
+                debugfile.write(client_metrics2[k])
+
+            debugfile.write("\nDumping server_metrics:\n")
+            for k in server_metrics2:
+                debugfile.write(server_metrics2[k])
 
         if len(client_metrics) == 0:
             print("NO CLIENT METRICS\n")
@@ -289,7 +316,7 @@ with redirect_stdout(results_file):
                     if ("dev_avg" in client_metrics2[k] and "dev_std" in client_metrics2[k])
                     else "N/A",
                     "{:.4f} ({:.4f}%)".format(
-                        client_metrics2[k]["delta"], client_metrics2[k]["delta_pctg"] * 100.0
+                        client_metrics2[k]["delta"], (client_metrics2[k]["delta_pctg"] * 100.0)
                     )
                     if (
                         "delta" in client_metrics2[k]
@@ -349,7 +376,7 @@ with redirect_stdout(results_file):
                     if ("dev_avg" in server_metrics2[k] and "dev_std" in server_metrics2[k])
                     else "N/A",
                     "{:.4f} ({:.4f}%)".format(
-                        server_metrics2[k]["delta"], server_metrics2[k]["delta_pctg"] * 100.0
+                        server_metrics2[k]["delta"], (server_metrics2[k]["delta_pctg"] * 100.0)
                     )
                     if (
                         "delta" in server_metrics2[k]
@@ -386,13 +413,23 @@ body = f.read()
 f.close()
 
 
+f = open("debug_info.log", "r")
+body_debugging = f.read()
+f.close()
+
+
 # Display the results as a Github Gist
 from github import Github, InputFileContent
 
 client = Github(github_gist_token)
 gh_auth_user = client.get_user()
 gist = gh_auth_user.create_gist(
-    public=False, files={"performance_results.md": InputFileContent(body)}, description=title
+    public=False,
+    files={
+        "performance_results.md": InputFileContent(body),
+        "debugging_info.txt": InputFileContent(body_debugging),
+    },
+    description=title,
 )
 print("Posted performance results to secret gist: {}".format(gist.html_url))
 
