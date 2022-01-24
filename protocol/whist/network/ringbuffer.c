@@ -697,7 +697,8 @@ bool try_nacking(RingBuffer* ring_buffer, double latency) {
         // We can't nack, so just exit. Also takes care of negative case from above calculation.
         if (ring_buffer->last_nack_possibility) {
             if (ring_buffer->type == PACKET_VIDEO) {
-                LOG_INFO("Can't nack anymore! Hit NACK bitrate limit. Try increasing NACK bitrate?");
+                LOG_INFO(
+                    "Can't nack anymore! Hit NACK bitrate limit. Try increasing NACK bitrate?");
             }
             ring_buffer->last_nack_possibility = false;
         }
