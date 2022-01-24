@@ -221,10 +221,7 @@ void create_and_send_tcp_wcmsg(WhistClientMessageType message_type, char* payloa
             break;
         }
         default: {
-            // This is unreachable code, only here for consistency's sake
-            deallocate_region(wcmsg_tcp);
-            LOG_ERROR("Not a valid server wcmsg type");
-            return;
+            LOG_FATAL("Invalid wcmsg type!");
         }
     }
 
@@ -233,8 +230,10 @@ void create_and_send_tcp_wcmsg(WhistClientMessageType message_type, char* payloa
     memset(wcmsg_tcp, 0, sizeof(*wcmsg_tcp));
     wcmsg_tcp->type = message_type;
     memcpy(copy_location, payload, type_size + data_size);
+
     // Send wcmsg
     send_wcmsg(wcmsg_tcp);
+
     // Free wcmsg
     deallocate_region(wcmsg_tcp);
 }
