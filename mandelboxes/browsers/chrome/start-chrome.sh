@@ -30,6 +30,7 @@ fi
 features="VaapiVideoDecoder,Vulkan,CanvasOopRasterization,OverlayScrollbar"
 flags=(
   --use-gl=desktop
+  --password-store=gnome
   --flag-switches-begin
   --enable-gpu-rasterization
   --enable-zero-copy
@@ -38,7 +39,6 @@ flags=(
   --disable-font-subpixel-positioning
   --force-color-profile=display-p3-d65
   --disable-gpu-process-crash-limit
-  --disable-notifications #This is tech debt, remove when notification redirection is implemented
   --no-default-browser-check
   --load-extension=/opt/teleport/chrome-extension
 )
@@ -65,6 +65,12 @@ fi
 # on the user settings.
 flags+=($INITIAL_URL)
 
+# Load D-Bus configurations; necessary for Chrome
+# The -10 comes from the display ID
+dbus_config_file="/home/whist/.dbus/session-bus/$(cat /etc/machine-id)-10"
+. $dbus_config_file
+export DBUS_SESSION_BUS_ADDRESS
+echo "loaded d-bus address in start-chrome.sh: $DBUS_SESSION_BUS_ADDRESS"
 
 # Start Chrome
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features

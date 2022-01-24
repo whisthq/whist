@@ -25,15 +25,29 @@ echo "playerctld daemon started as PID: $playerctld_pid"
 # but not in-between as this can lead to a race condition between AwesomeWM and DPI setting
 /usr/share/whist/update-whist-dpi.sh
 
+# Start D-Bus
+dbus_result=$($RUN_AS_WHIST "dbus-launch --sh-syntax --exit-with-x11")
+
+# Extract environment variables for D-Bus configuration
+# The -10 comes from the display ID
+dbus_config_file="/home/whist/.dbus/session-bus/$(cat /etc/machine-id)-10"
+block-until-file-exists.sh $dbus_config_file >&1
+. $dbus_config_file
+export DBUS_SESSION_BUS_ADDRESS
+echo "d-bus address: $DBUS_SESSION_BUS_ADDRESS"
+
+# Unlock gnome keyring
+$RUN_AS_WHIST "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS echo tmp_password | /usr/bin/gnome-keyring-daemon --replace --unlock --components=secrets"
+
 # Start the AwesomeWM window manager and get the PID of the backgrounded process
 echo "Starting AwesomeWM in the background..."
-$RUN_AS_WHIST "awesome" &
+$RUN_AS_WHIST "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS awesome" &
 awesome_pid=$!
 echo "AwesomeWM started as PID: $awesome_pid"
 
 # Start the XSettings daemon to make DPI changes responsive and get the PID of the backgrounded process
-echo "Starting 'xsettingsd' in the background..."
-$RUN_AS_WHIST "xsettingsd" &
+echo "Starting xsettingsd in the background..."
+$RUN_AS_WHIST "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS xsettingsd" &
 xsettingsd_pid=$!
 echo "xsettingsd started as PID: $xsettingsd_pid"
 
