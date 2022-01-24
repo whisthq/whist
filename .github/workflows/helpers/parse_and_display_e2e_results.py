@@ -233,19 +233,19 @@ with redirect_stdout(results_file):
         with open("debug_info.log", "w+") as debugfile:
             debugfile.write("Dumping client_metrics:\n")
             for k in client_metrics2:
-                debugfile.write(client_metrics2[k])
+                debugfile.write(str(client_metrics2[k]))
 
             debugfile.write("\nDumping dev_client_metrics2:\n")
             for k in dev_client_metrics2:
-                debugfile.write(dev_client_metrics2[k])
+                debugfile.write(str(dev_client_metrics2[k]))
 
             debugfile.write("\nDumping server_metrics:\n")
             for k in server_metrics2:
-                debugfile.write(server_metrics2[k])
+                debugfile.write(str(server_metrics2[k]))
 
             debugfile.write("\nDumping dev_server_metrics2:\n")
             for k in dev_server_metrics2:
-                debugfile.write(dev_server_metrics2[k])
+                debugfile.write(str(dev_server_metrics2[k]))
 
         # Augment dictionaries with deltas wrt to dev, if available
         for k in client_metrics2:
@@ -276,11 +276,11 @@ with redirect_stdout(results_file):
         with open("debug_info.log", "a+") as debugfile:
             debugfile.write("\nDumping client_metrics:\n")
             for k in client_metrics2:
-                debugfile.write(client_metrics2[k])
+                debugfile.write(str(client_metrics2[k]))
 
             debugfile.write("\nDumping server_metrics:\n")
             for k in server_metrics2:
-                debugfile.write(server_metrics2[k])
+                debugfile.write(str(server_metrics2[k]))
 
         if len(client_metrics) == 0:
             print("NO CLIENT METRICS\n")
