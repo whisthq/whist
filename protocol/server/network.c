@@ -238,8 +238,6 @@ int broadcast_tcp_packet(Client *client, WhistPacketType type, void *data, int l
     return 0;
 }
 
-static WhistTimer last_tcp_read;
-bool has_read = false;
 int try_get_next_message_tcp(Client *client, WhistPacket **p_tcp_packet) {
     *p_tcp_packet = NULL;
 

@@ -336,7 +336,8 @@ void tcp_free_packet(void* raw_context, WhistPacket* tcp_packet) {
 }
 
 bool tcp_get_pending_stream_reset(void* raw_context, WhistPacketType packet_type) {
-    TCPContext* context = raw_context;
+    UNUSED(raw_context);
+    UNUSED(packet_type);
     LOG_FATAL("Not implemented for TCP yet!");
 }
 

@@ -202,7 +202,6 @@ int render_video(VideoContext* video_context) {
     static WhistRGBColor window_color = {0};
     static WhistCursorImage cursor_image = {0};
     static bool has_cursor_image = false;
-    static FrameData frame_data = {0};
     static timestamp_us server_timestamp = 0;
     static timestamp_us client_input_timestamp = 0;
 
