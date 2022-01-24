@@ -213,4 +213,14 @@ void flush_logs(void);
  */
 void destroy_logger(void);
 
+/**
+ * Set pause state on logging thread.
+ *
+ * While pause is set, the logging thread will not process any messages.
+ * This should only be used for test purposes.
+ *
+ * @param pause  Pause state to set.
+ */
+void test_set_pause_state_on_logger_thread(bool pause);
+
 #endif  // LOGGING_H
