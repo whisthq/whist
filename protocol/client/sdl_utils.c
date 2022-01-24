@@ -194,6 +194,8 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         LOG_FATAL("SDL: could not create renderer - exiting: %s", SDL_GetError());
     }
     SDL_SetRenderDrawBlendMode(sdl_renderer, SDL_BLENDMODE_BLEND);
+    // Start window invisible
+    SDL_SetWindowOpacity(sdl_window, 0.0);
 
     // Render a black screen before anything else,
     // To prevent being exposed to random colors
