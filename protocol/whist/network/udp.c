@@ -824,10 +824,10 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
         ret = create_udp_client_context(context, destination, port, connection_timeout_ms);
     }
 
-    // Restore the socket's timeout
-    set_timeout(context->socket, context->timeout);
-
     if (ret == 0) {
+        // Restore the socket's timeout
+        set_timeout(context->socket, context->timeout);
+
         // socket options = TCP_NODELAY IPTOS_LOWDELAY SO_RCVBUF=65536
         // Windows Socket 65535 Socket options apply to all sockets.
         // this is set to stop the kernel from buffering too much, thereby
