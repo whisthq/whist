@@ -156,7 +156,7 @@ const createLoadingWindow = () =>
 const createImportWindow = () =>
   createElectronWindow({
     ...width.md,
-    ...height.lg,
+    ...height.md,
     hash: WindowHashImport,
   })
 

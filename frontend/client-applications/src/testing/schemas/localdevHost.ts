@@ -4,7 +4,7 @@
  * client app and the host service.
  *
  * Usage:
- *   TESTING_LOCALDEV_HOST_IP=[ip address] yarn test:manual localdevHost
+ *   HOST_IP=[ip address] yarn test:manual localdevHost
  *
  * Note:
  *   If you want to actually work with the mandelbox, make sure to build
@@ -21,15 +21,15 @@ const localdevHost: MockSchema = {
   mandelboxCreateFlow: (trigger) => ({
     success: trigger.pipe(
       tap(() => {
-        if (process.env?.TESTING_LOCALDEV_HOST_IP == null) {
+        if (process.env?.HOST_IP == null) {
           const message =
-            "Host IP address not set! Set the `TESTING_LOCALDEV_HOST_IP` environment variable to use this schema."
+            "Host IP address not set! Set the `HOST_IP` environment variable to use this schema."
           throw new Error(message)
         }
       }),
       mapTo({
         mandelboxID: crypto.randomUUID(),
-        ip: process.env.TESTING_LOCALDEV_HOST_IP,
+        ip: process.env.HOST_IP,
       })
     ),
   }),

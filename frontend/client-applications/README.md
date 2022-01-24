@@ -41,7 +41,7 @@ We use `yarn` as the package manager for this project. All of the commands requi
 
 `yarn start --help` and `yarn start:lite --help` display custom options. In particular, the `--show-protocol-logs` and `--use-local-server` can be used to `console.log` protocol logs and use localhost instead of the dev server, respectively.
 
-`yarn test:manual localdevHost` connects directly to a host service running on a development ec2 instance. Make sure to first export `TESTING_LOCALDEV_HOST_IP=<your instance ip>`.
+`yarn test:manual localdevHost` connects directly to a host service running on a development ec2 instance. Make sure to first export `HOST_IP=<your instance ip>`.
 
 ## How To Contribute
 
@@ -72,7 +72,7 @@ In order to test the interaction between the client app and the server, you may 
 - On your AWS instance, build the protocol and the Chrome mandelbox with `cd ~/whist/mandelboxes && ./build.sh browsers/chrome`. Then, run the host-service with cd `~/whist/backend/services && make run_host_service`.
   - If you want to use brave instead of chrome run `./build.sh browsers/brave`.
   - If you run into any issues getting the `host-service` to run, make sure to stop and remove any Docker containers that are running and delete the /whist folder with `sudo rm -rf /whist/`.
-- On your computer, after initializing yarn by running `yarn`, set the `TESTING_LOCALDEV_HOST_IP` environment variable to the public IP of the AWS instance. Then, from the `client-applications` folder, call `yarn test:manual localdevHost`. If you get errors, try removing the `node_modules` folder and the `yarn.lock` file with `rm -rf node_modules yarn.lock` and then re-initialize with `yarn`.
+- On your computer, after initializing yarn by running `yarn`, set the `HOST_IP` environment variable to the public IP of the AWS instance. Then, from the `client-applications` folder, call `yarn test:manual localdevHost`. If you get errors, try removing the `node_modules` folder and the `yarn.lock` file with `rm -rf node_modules yarn.lock` and then re-initialize with `yarn`.
 - After closing the client-application on your machine, you need to stop and remove all Docker containers on the AWS instance before you can quit the `host-service` (`Ctrl+C` won't work while the Docker containers are still running). To see all running/recently stopped containers, use `docker ps -a`. From the results, you can find the container IDs which you can then use to stop/remove containers with `docker stop <container ID>` and `docker rm <container ID>`. A quicker way to stop/remove all containers is `docker stop $(docker ps -aq) && docker rm $(docker ps -aq)`. Once you are done with this step, press (`Ctrl+C`) to stop the `host-service`.
 
 If errors/crashes occur, the best thing to do is to check the client-side and server-side logs as described in the section below ([App State and Logging](#app-state-and-logging)).

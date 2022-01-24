@@ -53,6 +53,7 @@ untilUpdateAvailable(
 
   destroyElectronWindow(WindowHashLoading)
   destroyElectronWindow(WindowHashImport)
+  destroyElectronWindow(WindowHashOnboarding)
 })
 
 untilUpdateAvailable(

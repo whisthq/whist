@@ -1,3 +1,4 @@
+import { BrowserWindow } from "electron"
 import { of } from "rxjs"
 import { filter, withLatestFrom, map, mapTo, startWith } from "rxjs/operators"
 import Sentry from "@sentry/electron"
@@ -88,6 +89,14 @@ withAppActivated(
 withAppActivated(fromTrigger(WhistTrigger.showSignoutWindow)).subscribe(() => {
   hideElectronWindow(WindowHashOmnibar)
   createSignoutWindow()
+
+  BrowserWindow.getAllWindows().forEach((win) => {
+    const hash = win.webContents.getURL()?.split("show=")?.[1]
+
+    if (hash?.includes("error")) {
+      destroyElectronWindow(hash)
+    }
+  })
 })
 
 withAppActivated(fromTrigger(WhistTrigger.showSpeedtestWindow)).subscribe(

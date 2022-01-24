@@ -4,20 +4,19 @@
  * @brief This file contains various error messages.
  */
 
-export const NO_PAYMENT_ERROR = "NO_PAYMENT_ERROR"
-export const UNAUTHORIZED_ERROR = "UNAUTHORIZED_ERROR"
-export const PROTOCOL_ERROR = "PROTOCOL_ERROR"
-export const MANDELBOX_INTERNAL_ERROR = "MANDELBOX_INTERNAL_ERROR"
-export const COMMIT_HASH_MISMATCH = "COMMIT_HASH_MISMATCH"
-export const COULD_NOT_LOCK_INSTANCE = "COULD_NOT_LOCK_INSTANCE"
-export const NO_INSTANCE_AVAILABLE = "NO_INSTANCE_AVAILABLE"
-export const REGION_NOT_ENABLED = "REGION_NOT_ENABLED"
-export const USER_ALREADY_ACTIVE = "USER_ALREADY_ACTIVE"
-export const AUTH_ERROR = "AUTH_ERROR"
-export const NAVIGATION_ERROR = "NAVIGATION_ERROR"
-export const MAINTENANCE_ERROR = "MAINTENANCE_ERROR"
-export const INTERNET_ERROR = "INTERNET_ERROR"
-export const LOCATION_CHANGED_ERROR = "LOCATION_CHANGED_ERROR"
+export const NO_PAYMENT_ERROR = "error&type=NO_PAYMENT_ERROR"
+export const UNAUTHORIZED_ERROR = "error&type=UNAUTHORIZED_ERROR"
+export const PROTOCOL_ERROR = "error&type=PROTOCOL_ERROR"
+export const MANDELBOX_INTERNAL_ERROR = "error&type=MANDELBOX_INTERNAL_ERROR"
+export const COMMIT_HASH_MISMATCH = "error&type=COMMIT_HASH_MISMATCH"
+export const COULD_NOT_LOCK_INSTANCE = "error&type=COULD_NOT_LOCK_INSTANCE"
+export const NO_INSTANCE_AVAILABLE = "error&type=NO_INSTANCE_AVAILABLE"
+export const REGION_NOT_ENABLED = "error&type=REGION_NOT_ENABLED"
+export const USER_ALREADY_ACTIVE = "error&type=USER_ALREADY_ACTIVE"
+export const AUTH_ERROR = "error&type=AUTH_ERROR"
+export const NAVIGATION_ERROR = "error&type=NAVIGATION_ERROR"
+export const MAINTENANCE_ERROR = "error&type=MAINTENANCE_ERROR"
+export const LOCATION_CHANGED_ERROR = "error&type=LOCATION_CHANGED_ERROR"
 
 export const whistError = {
   [NO_PAYMENT_ERROR]: {
@@ -47,10 +46,6 @@ export const whistError = {
   [MAINTENANCE_ERROR]: {
     title: "Whist is currently pushing out an update.",
     text: "We apologize for the inconvenience. Please check back in a few minutes!",
-  },
-  [INTERNET_ERROR]: {
-    title: "Please check your Internet connection.",
-    text: "We were unable to ping our servers, which is likely a result of weak Internet.",
   },
   [COULD_NOT_LOCK_INSTANCE]: {
     title: "Whist encountered an unexpected database error :(",

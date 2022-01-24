@@ -95,12 +95,12 @@ const fadeElectronWindowOut = (
 
 const hideElectronWindow = (hash: string) => {
   const win = getElectronWindow(hash)
-  fadeElectronWindowOut(win)
+  if (win !== undefined) fadeElectronWindowOut(win)
 }
 
 const showElectronWindow = (hash: string) => {
   const win = getElectronWindow(hash)
-  fadeElectronWindowIn(win)
+  if (win !== undefined) fadeElectronWindowIn(win)
 }
 
 const destroyElectronWindow = (hash: string) => {
