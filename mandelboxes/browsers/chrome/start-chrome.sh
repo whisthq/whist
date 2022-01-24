@@ -57,7 +57,7 @@ flags+=(--flag-switches-end)
 
 # Pass user agent corresponding to user's OS from JSON-transport
 if [[ $USER_AGENT -ne "" ]]; then
-  flags+=(--user-agent=$USER_AGENT)
+  flags+=(--user-agent="$USER_AGENT")
 fi
 
 # Passing the initial url from json transport as a parameter to the google-chrome command. If the url is not

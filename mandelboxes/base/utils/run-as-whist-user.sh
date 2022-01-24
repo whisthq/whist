@@ -63,7 +63,7 @@ export RESTORE_LAST_SESSION=$RESTORE_LAST_SESSION
 # in order to automatically adjust the timezone at the lower layers
 export TZ=$DESIRED_TIMEZONE
 export INITIAL_URL=$INITIAL_URL
-export USER_AGENT=$USER_AGENT
+export USER_AGENT="$USER_AGENT"
 export SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT:-}
 
 exec runuser --login whist --whitelist-environment=TZ,DARK_MODE,RESTORE_LAST_SESSION,INITIAL_URL,USER_AGENT,SENTRY_ENVIRONMENT -c \
