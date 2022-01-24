@@ -437,7 +437,8 @@ int main(int argc, char* argv[]) {
         // there are no events queued
         while (connected && !client_exiting && exit_code == WHIST_EXIT_SUCCESS) {
             if (get_timer(&window_fade_timer) * MS_IN_SECOND < 300.0) {
-                SDL_SetWindowOpacity((SDL_Window*)window, get_timer(&window_fade_timer) * MS_IN_SECOND / 300.0);
+                SDL_SetWindowOpacity((SDL_Window*)window,
+                                     get_timer(&window_fade_timer) * MS_IN_SECOND / 300.0);
             } else {
                 SDL_SetWindowOpacity((SDL_Window*)window, 1.0);
             }
