@@ -52,6 +52,13 @@ typedef struct {
     int num_skipped_frames_per_second;
     int num_rendered_frames_per_second;
     int throughput_per_second;
+    // goog_cc stats
+    bool goog_cc_ready;
+    double delay_gradient;
+    double client_side_delay;
+    int one_way_trip_time;
+    // True so that a NetworkStatistics struct can be marked as valid/invalid
+    bool statistics_gathered;
 } NetworkStatistics;
 
 extern const NetworkSettings default_network_settings;

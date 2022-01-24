@@ -45,6 +45,8 @@ const NetworkSettings default_network_settings = {
 #define BAD_BITRATE 10400000
 #define BAD_BURST_BITRATE 31800000
 #define EWMA_STATS_SECONDS 5
+#define BITS_IN_BYTE 8
+#define GOOG_CC_MINIMUM_BITRATE 5500000
 
 /*
 ============================
@@ -341,5 +343,244 @@ NetworkSettings ewma_ratio_bitrate(NetworkStatistics stats) {
             network_settings.burst_bitrate = MINIMUM_BITRATE;
         }
     }
+    return network_settings;
+}
+
+int goog_cc_loss_controller(NetworkStatistics stats, int receiver_estimated_maximum_bitrate) {
+    /* Loss controller from google congestion control spec. Uses the receiver estimated 
+       maximum bitrate and loss statistics time to calculate a loss bitrate per the spec.
+       This (along with sending the bitrate msg) should be called every 1 second.
+    */
+
+    static const double loss_controller_increase_threshold = 0.1;
+    static const double loss_controller_decrease_threshold = 0.02;
+
+    // Loss based controller
+    double loss_percentage = (double)stats.num_nacks_per_second /
+                             (stats.num_received_packets_per_second +
+                              stats.num_nacks_per_second);  // Approximate lost packets
+
+    if (loss_percentage > loss_controller_increase_threshold) {
+        return receiver_estimated_maximum_bitrate * (1 - 0.5 * loss_percentage);
+    } else if (loss_percentage < loss_controller_decrease_threshold) {
+        return receiver_estimated_maximum_bitrate * 1.05;
+    }
+
+    return receiver_estimated_maximum_bitrate;
+}
+
+int goog_cc_delay_controller(NetworkStatistics stats) { 
+    /* Delay controller from google congestion control spec. Uses the delay 
+       gradient and round trip time to calculate receiver_estimated_maximum_bitrate
+       according to the goog_cc spec. Should be called per received frame.
+    */
+
+    static WhistTimer overuse_timer;
+    static bool delay_controller_initialized = false;
+
+    static const double system_error_variance = 0.1;
+    static double kalman_gain = 0;
+    static double measurement_variance = 0.5;
+    static double filtered_delay_gradient = 0.0;
+    static double prev_filtered_delay_gradient = 0.0;
+    static double var_v_hat = 0;
+    static const double chi = 0.01;
+
+    static const double adaptive_threshold_overuse_gain = 0.01;      // K_u
+    static const double adaptive_threshold_underuse_gain = 0.00018;  // K_d
+    static const int adaptive_threshold_diff_limit = 15;
+    static double overuse_threshold = 12.5;
+    static const double overuse_threshold_min = 1;
+    static const double overuse_threshold_max = 600;
+
+    static const double delay_controller_eta = 1.05;
+    static const double delay_controller_alpha = 0.85;
+
+    static const double overuse_time_th = 0.1;
+
+    static int receiver_estimated_maximum_bitrate = MINIMUM_BITRATE;
+    static double average_decrease_remb = 0;
+    static double decrease_remb_variance = 0;
+    static const double num_std_devs_threshold = 1.8;
+    static int decrease_remb_cnt = 0;
+
+
+    if(!delay_controller_initialized) {
+        start_timer(&overuse_timer);
+        delay_controller_initialized = true;
+    }
+
+    static enum {
+        OVERUSE_DETECTOR_UNDERUSE_SIGNAL,
+        OVERUSE_DETECTOR_NORMAL_SIGNAL,
+        OVERUSE_DETECTOR_OVERUSE_SIGNAL,
+    } overuse_detector_signal = OVERUSE_DETECTOR_NORMAL_SIGNAL;
+
+    static enum {
+        DELAY_CONTROLLER_INCREASE,
+        DELAY_CONTROLLER_HOLD,
+        DELAY_CONTROLLER_DECREASE
+    } delay_controller_state = DELAY_CONTROLLER_HOLD;
+
+    // Arrival filter
+    double residual = stats.delay_gradient - filtered_delay_gradient;
+    double aggregate_variance = system_error_variance + measurement_variance;
+    double variance_alpha =
+        pow((1 - chi), 30 / (1000 * max(stats.num_received_packets_per_second, 1)));
+    var_v_hat = max(variance_alpha * var_v_hat + (1 - variance_alpha) * residual * residual, 0.5);
+    kalman_gain = aggregate_variance / (aggregate_variance + var_v_hat);  // gain update
+    filtered_delay_gradient =
+        filtered_delay_gradient + residual * kalman_gain;             // filter state update
+    measurement_variance = (1 - kalman_gain) * (aggregate_variance);  // measurement variance update
+
+    // Adaptive threshold update for overuse detector
+    if ((fabs(filtered_delay_gradient) - overuse_threshold) < adaptive_threshold_diff_limit) {
+        double threshold_gain = (fabs(filtered_delay_gradient) < overuse_threshold)
+                                    ? adaptive_threshold_underuse_gain
+                                    : adaptive_threshold_overuse_gain;
+        overuse_threshold =
+            overuse_threshold + stats.client_side_delay * threshold_gain *
+                                    (fabs(filtered_delay_gradient) - overuse_threshold);
+        // Clamp dynamic threshold to reccomended range by spec
+        overuse_threshold =
+            min(max(overuse_threshold, overuse_threshold_min), overuse_threshold_max);
+    }
+
+    // Detect over/under use using state machine outlined in spec
+    if (overuse_threshold < filtered_delay_gradient) {
+        if (get_timer(&overuse_timer) > overuse_time_th &&
+            filtered_delay_gradient >= prev_filtered_delay_gradient) {
+            // Signal clear overuse
+            overuse_detector_signal = OVERUSE_DETECTOR_OVERUSE_SIGNAL;
+            start_timer(&overuse_timer);
+        }
+    } else if (-overuse_threshold > filtered_delay_gradient) {
+        overuse_detector_signal = OVERUSE_DETECTOR_UNDERUSE_SIGNAL;
+    } else {
+        overuse_detector_signal = OVERUSE_DETECTOR_NORMAL_SIGNAL;
+    }
+
+    // update delay-based controller state
+    if (overuse_detector_signal == OVERUSE_DETECTOR_OVERUSE_SIGNAL) {
+        delay_controller_state = DELAY_CONTROLLER_DECREASE;
+    } else if (overuse_detector_signal == OVERUSE_DETECTOR_NORMAL_SIGNAL) {
+        if (delay_controller_state == DELAY_CONTROLLER_HOLD) {
+            delay_controller_state = DELAY_CONTROLLER_INCREASE;
+        } else if (delay_controller_state == DELAY_CONTROLLER_DECREASE) {
+            delay_controller_state = DELAY_CONTROLLER_HOLD;
+        }
+    } else if (overuse_detector_signal == OVERUSE_DETECTOR_UNDERUSE_SIGNAL) {
+        // Double checked this - underuse always translates to hold
+        delay_controller_state = DELAY_CONTROLLER_HOLD;
+    }
+
+    // Delay-based controller selects based on overuse signal
+    if (delay_controller_state == DELAY_CONTROLLER_INCREASE) {
+        // Calculate standard deviation of REMB from decrease state
+        double std_dev = sqrt(decrease_remb_variance);
+        int incoming_bitrate =
+            stats.num_received_packets_per_second * BITS_IN_BYTE * MAX_PAYLOAD_SIZE;
+        if (fabs(average_decrease_remb - incoming_bitrate) >= num_std_devs_threshold * std_dev) {
+            // Multiplicative increase state, reset running averages and multiply bitrate
+            decrease_remb_variance = 0;
+            average_decrease_remb = 0;
+            decrease_remb_cnt = 0;
+            receiver_estimated_maximum_bitrate *= delay_controller_eta;
+        } else {
+            // Additive increase use estimated packet size for linear increase in bitrate
+            int response_time_ms = stats.one_way_trip_time * 2 + 100;
+            // Estimate RTT has 2 * one way trip time
+            double additive_alpha = 0.5 * min(MS_IN_SECOND / response_time_ms, 1);
+            int bits_per_frame = receiver_estimated_maximum_bitrate / 60.0;
+            int packets_per_frame = ceil(bits_per_frame / (MAX_PAYLOAD_SIZE * 8));
+            int expected_packet_size_bits = bits_per_frame / packets_per_frame;
+            receiver_estimated_maximum_bitrate +=
+                max(1000, additive_alpha * expected_packet_size_bits);
+        }
+    } else if (delay_controller_state == DELAY_CONTROLLER_DECREASE) {
+        // Update decrease remb statistics
+        double variance_residual =
+            (decrease_remb_cnt) ? receiver_estimated_maximum_bitrate - average_decrease_remb : 0;
+        decrease_remb_variance = ((decrease_remb_variance * decrease_remb_cnt) +
+                                  (variance_residual * variance_residual)) /
+                                 (decrease_remb_cnt + 1);
+        average_decrease_remb =
+            ((average_decrease_remb * decrease_remb_cnt) + receiver_estimated_maximum_bitrate) /
+            (decrease_remb_cnt + 1);
+        decrease_remb_cnt++;
+        // Decay delay-based bitrate
+        receiver_estimated_maximum_bitrate *= delay_controller_alpha;
+    }
+
+
+    // Store for use with next overuse signal condition
+    prev_filtered_delay_gradient = filtered_delay_gradient;
+
+    return receiver_estimated_maximum_bitrate;
+}
+
+
+NetworkSettings goog_cc_bitrate(NetworkStatistics stats) {
+    /*
+        Calculate bitrate based on google congestion protocol
+        This does the steps of the the delay-based controller and loss-based controller as described
+        per the google congestion protocol. However, instead of sending an RTCP packet every second
+        to the server (after the delay controller) we just implement the loss controller here and
+        rate limit it with a timer. The output of the loss controller is returned as a new value.
+        Arguments:
+            stats (BitrateStatistics): struct containing the throughput per second of the client
+                - delay_gradient: This is the queuing delay gradient as described by the spec
+                - goog_cc_ready: Since we do not have complete control over when the feedback is
+                  called this flag should be set true when a packet is received with enough
+                  information to make the proper gradient delay measurements
+                - one_way_trip: Latency between server/client used to approximate round trip time
+                - client_side_delay: The arrival difference between the current group of packets in
+                  the complete frame and the previous group
+                - nacked_packets and received_packets are used to approximate loss percentage
+                - other reception/throughput values are also used for computing volume stats
+    */
+    static bool goog_cc_initialized = false;
+    static const double delay_remb_bound_multiplier = 1.5;
+
+    static WhistTimer goog_cc_loss_timer;
+    static NetworkSettings network_settings = {.bitrate = GOOG_CC_MINIMUM_BITRATE,
+                                               .burst_bitrate = MINIMUM_BURST_BITRATE};
+
+    // Start timers and return starting bitrate on first run
+    if (!goog_cc_initialized) {
+        start_timer(&goog_cc_loss_timer);
+        goog_cc_initialized = true;
+        return network_settings;
+    }
+
+    // Prevent goog_cc delay controller from when new frame has not been received
+    if (!stats.goog_cc_ready) {
+        return network_settings;
+    }
+
+    int receiver_estimated_maximum_bitrate = goog_cc_delay_controller(stats);
+
+    // Delay controller should run every received frame, but loss controller is limited to every 1
+    // second unless there is congestion detected by the delay controller
+    if (get_timer(&goog_cc_loss_timer) < 1 && receiver_estimated_maximum_bitrate >= network_settings.bitrate) {
+        return network_settings;
+    }
+
+    // Don't let delay-based bitrate estimate stray too far from current bitrate per spec
+    if (receiver_estimated_maximum_bitrate >
+        network_settings.bitrate * delay_remb_bound_multiplier) {
+        receiver_estimated_maximum_bitrate = network_settings.bitrate * delay_remb_bound_multiplier;
+    }
+
+    int loss_controller_bitrate = goog_cc_loss_controller(stats, receiver_estimated_maximum_bitrate);
+    int target_bitrate = min(receiver_estimated_maximum_bitrate, loss_controller_bitrate);
+
+    // Clamp and set bitrate for new network settings
+    target_bitrate = min(max(target_bitrate, GOOG_CC_MINIMUM_BITRATE), MAXIMUM_BITRATE);
+    network_settings.bitrate = target_bitrate;
+    network_settings.burst_bitrate = target_bitrate;
+    start_timer(&goog_cc_loss_timer);
+
+
     return network_settings;
 }
