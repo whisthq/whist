@@ -476,7 +476,7 @@ bool udp_update(void* raw_context) {
         if (context->ring_buffers[i] != NULL) {
             // At the moment we only nack for video
             // TODO: Make this not packet-type-dependent
-            if(i == (int)PACKET_VIDEO) {
+            if (i == (int)PACKET_VIDEO) {
                 try_recovering_missing_packets_or_frames(context->ring_buffers[i], latency);
             }
         }
@@ -1386,7 +1386,6 @@ void udp_handle_pong(UDPContext* context, int id) {
             latency = PING_LAMBDA * latency + (1 - PING_LAMBDA) * ping_time;
             context->last_pong_id = id;
         }
-
     } else {
         // TODO: Uncomment this FATAL_ASSERT after we have session_id's,
         // since then data will only be from this fresh connection,
