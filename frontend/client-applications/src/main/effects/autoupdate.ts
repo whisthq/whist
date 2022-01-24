@@ -58,14 +58,14 @@ withAppActivated(
     takeUntil(fromTrigger(WhistTrigger.mandelboxFlowSuccess))
   )
 ).subscribe(() => {
+  createUpdateWindow()
+
   BrowserWindow.getAllWindows().forEach((win) => {
     const hash = win.webContents.getURL()?.split("show=")?.[1]
-    if (hash !== WindowHashUpdate) {
+    if (hash !== WindowHashUpdate && hash !== undefined) {
       destroyElectronWindow(hash)
     }
   })
-
-  createUpdateWindow()
 })
 
 fromTrigger(WhistTrigger.updateDownloaded)

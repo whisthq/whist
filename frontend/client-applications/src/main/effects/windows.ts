@@ -44,7 +44,7 @@ import {
   hideElectronWindow,
 } from "@app/main/utils/windows"
 
-// Show the auth window if the user has not logged in yet
+// Show the welcome window if the user has not logged in yet
 withAppActivated(
   of({
     accessToken: (persistGet(CACHED_ACCESS_TOKEN) ?? "") as string,
@@ -58,11 +58,13 @@ withAppActivated(
   }
 })
 
+// Show the auth window after the user passes the welcome window
 withAppActivated(fromTrigger(WhistTrigger.showAuthWindow)).subscribe(() => {
   createAuthWindow()
   destroyElectronWindow(WindowHashWelcome)
 })
 
+// Show the loading window whenever we start the mandelbox flow
 withAppActivated(
   fromTrigger(WhistTrigger.mandelboxFlowStart).pipe(
     withLatestFrom(
@@ -79,6 +81,15 @@ withAppActivated(
 })
 
 withAppActivated(
+  fromTrigger(WhistTrigger.stripeAuthRefresh).pipe(
+    withLatestFrom(fromTrigger(WhistTrigger.protocolConnection))
+  )
+).subscribe(([, connected]: [any, boolean]) => {
+  console.log("connected is", connected)
+  if (connected) destroyElectronWindow(WindowHashPayment)
+})
+
+withAppActivated(
   fromTrigger(WhistTrigger.protocolConnection).pipe(
     filter((connected: boolean) => connected)
   )
@@ -92,10 +103,7 @@ withAppActivated(fromTrigger(WhistTrigger.showSignoutWindow)).subscribe(() => {
 
   BrowserWindow.getAllWindows().forEach((win) => {
     const hash = win.webContents.getURL()?.split("show=")?.[1]
-
-    if (hash?.includes("error")) {
-      destroyElectronWindow(hash)
-    }
+    if (hash?.includes("error")) destroyElectronWindow(hash)
   })
 })
 

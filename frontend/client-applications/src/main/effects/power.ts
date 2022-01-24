@@ -70,7 +70,7 @@ emitOnSignal(
 
   // Restart the app
   destroyProtocol(p)
-  relaunch()
+  relaunch({ sleep: false })
 })
 
 // If the user requests a relaunch
@@ -79,12 +79,12 @@ emitOnSignal(
   fromTrigger(WhistTrigger.relaunchAction)
 ).subscribe((p: ChildProcess) => {
   destroyProtocol(p)
-  relaunch()
+  relaunch({ sleep: false })
 })
 
 waitForSignal(
   fromTrigger(WhistTrigger.authRefreshSuccess),
   fromTrigger(WhistTrigger.checkPaymentFlowFailure)
 ).subscribe(() => {
-  relaunch()
+  relaunch({ sleep: false })
 })
