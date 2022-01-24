@@ -283,15 +283,16 @@ with redirect_stdout(results_file):
             delta_formatted = client_metrics2[k]["delta"]
             if client_metrics2[k]["delta"] != "-" and client_metrics2[k]["delta"] != "N/A":
                 delta_formatted = "{:.4f}".format(delta_formatted)
-
-            delta_pctg_formatted = client_metrics2[k]["delta_pctg"]
-            if (
-                client_metrics2[k]["delta_pctg"] != "-"
-                and client_metrics2[k]["delta_pctg"] != "nan"
-                and client_metrics2[k]["delta_pctg"] != "N/A"
-            ):
-                delta_pctg_formatted = "{:.4f}".format(delta_pctg_formatted)
-            new_entry.append("{} ({})".format(delta_formatted, delta_pctg_formatted))
+                delta_pctg_formatted = client_metrics2[k]["delta_pctg"]
+                if (
+                    client_metrics2[k]["delta_pctg"] != "-"
+                    and client_metrics2[k]["delta_pctg"] != "nan"
+                    and client_metrics2[k]["delta_pctg"] != "N/A"
+                ):
+                    delta_pctg_formatted = "{:.4f}".format(delta_pctg_formatted * 100.0)
+                new_entry.append("{} ({}%)".format(delta_formatted, delta_pctg_formatted))
+            else:
+                new_entry.append(delta_formatted)
 
             emoji_delta = ""
             if (
@@ -362,15 +363,16 @@ with redirect_stdout(results_file):
             delta_formatted = server_metrics2[k]["delta"]
             if server_metrics2[k]["delta"] != "-" and server_metrics2[k]["delta"] != "N/A":
                 delta_formatted = "{:.4f}".format(delta_formatted)
-
-            delta_pctg_formatted = server_metrics2[k]["delta_pctg"]
-            if (
-                server_metrics2[k]["delta_pctg"] != "-"
-                and server_metrics2[k]["delta_pctg"] != "nan"
-                and server_metrics2[k]["delta_pctg"] != "N/A"
-            ):
-                delta_pctg_formatted = "{:.4f}".format(delta_pctg_formatted)
-            new_entry.append("{} ({})".format(delta_formatted, delta_pctg_formatted))
+                delta_pctg_formatted = server_metrics2[k]["delta_pctg"]
+                if (
+                    server_metrics2[k]["delta_pctg"] != "-"
+                    and server_metrics2[k]["delta_pctg"] != "nan"
+                    and server_metrics2[k]["delta_pctg"] != "N/A"
+                ):
+                    delta_pctg_formatted = "{:.4f}".format(delta_pctg_formatted * 100.0)
+                new_entry.append("{} ({}%)".format(delta_formatted, delta_pctg_formatted))
+            else:
+                new_entry.append(delta_formatted)
 
             emoji_delta = ""
             if (
