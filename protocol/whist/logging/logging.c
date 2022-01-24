@@ -100,6 +100,13 @@ static LinkedList logger_queue;
  */
 static atomic_int logger_thread_active = ATOMIC_VAR_INIT(0);
 /**
+ * Pause flag for the logger thread.
+ *
+ * While true, the logger thread will not process any messages.  This
+ * is probably only useful for testing.
+ */
+static bool logger_thread_pause;
+/**
  * Number of threads which are going to write to the queue.
  *
  * We can only destroy the logger once this reaches zero.
@@ -149,7 +156,7 @@ static int logger_thread_function(void* ignored) {
         while (1) {
             thread_active = atomic_load(&logger_thread_active);
             queue_size = linked_list_size(&logger_queue);
-            if (!thread_active || queue_size > 0) break;
+            if (!logger_thread_pause && (!thread_active || queue_size > 0)) break;
             whist_wait_cond(logger_queue_cond, logger_queue_mutex);
         }
         if (!thread_active) break;
@@ -196,6 +203,13 @@ void flush_logs(void) {
     }
 
     log_flush_output();
+}
+
+void test_set_pause_state_on_logger_thread(bool pause) {
+    whist_lock_mutex(logger_queue_mutex);
+    logger_thread_pause = pause;
+    whist_broadcast_cond(logger_queue_cond);
+    whist_unlock_mutex(logger_queue_mutex);
 }
 
 static size_t copy_and_escape(char* dst, size_t dst_size, const char* src) {

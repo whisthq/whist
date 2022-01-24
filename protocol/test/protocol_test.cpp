@@ -730,6 +730,35 @@ TEST_F(ProtocolTest, LoggerTest) {
     check_stdout_line(::testing::EndsWith("B\\b F\\f R\\r T\\t Q\" B\\"));
 }
 
+// Test for log overflow.
+TEST_F(ProtocolTest, LoggerOverflowTest) {
+    whist_init_logger();
+
+    test_set_pause_state_on_logger_thread(true);
+
+    flush_logs();
+
+    // Log twice as many lines as the queue has.
+    for (int i = 0; i < 2 * LOGGER_QUEUE_SIZE; i++) {
+        LOG_INFO("Test %d", i);
+    }
+
+    test_set_pause_state_on_logger_thread(false);
+
+    destroy_logger();
+
+    check_stdout_line(::testing::HasSubstr("Logging initialized!"));
+
+    // We should have the last LOGGER_QUEUE_SIZE messages along with the
+    // overflow notifications (the older messages are discarded).
+    for (int i = 0; i < LOGGER_QUEUE_SIZE; i++) {
+        char tmp[64];
+        snprintf(tmp, sizeof(tmp), "Test %d", i + LOGGER_QUEUE_SIZE);
+        check_stdout_line(::testing::EndsWith(tmp));
+        check_stdout_line(::testing::EndsWith("Log buffer overflowing!"));
+    }
+}
+
 /**
  * logging/log_statistic.c
  **/
