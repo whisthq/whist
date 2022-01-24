@@ -9,6 +9,7 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
       target_sources(whistInput PRIVATE xtest_input_driver.c
         uinput_input_driver.c
+        weston_input_driver.c
       )
 
     elseif(${WIN32})

@@ -44,22 +44,23 @@ Public Function Implementations
 ============================
 */
 
-InputDevice* create_input_device(InputDeviceType kind) {
+InputDevice* create_input_device(InputDeviceType kind, void* data) {
     switch (kind) {
 #if defined(__linux__)
         case WHIST_INPUT_DEVICE_XTEST:
-            return xtest_create_input_device();
+            return xtest_create_input_device(data);
 
         case WHIST_INPUT_DEVICE_UINPUT:
-            return uinput_create_input_device();
+            return uinput_create_input_device(data);
+        case WHIST_INPUT_DEVICE_WESTON:
+            return weston_create_input_device(data);
 #endif
 
 #ifdef _WIN32
         case WHIST_INPUT_DEVICE_WIN32:
-            return win_create_input_device();
+            return win_create_input_device(data);
 #endif
 
-        case WHIST_INPUT_DEVICE_WESTON:
         default:
             return NULL;
     }

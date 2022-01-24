@@ -41,8 +41,9 @@ struct InputDevice {
 };
 
 // Type-specific create functions for different input devices.
-InputDevice* xtest_create_input_device(void);
-InputDevice* uinput_create_input_device(void);
-InputDevice* win_create_input_device(void);
+InputDevice* xtest_create_input_device(void* data);
+InputDevice* uinput_create_input_device(void* data);
+InputDevice* win_create_input_device(void* data);
+InputDevice* weston_create_input_device(void* data);
 
 #endif /* WHIST_INPUT_INPUT_INTERNAL_H */

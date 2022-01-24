@@ -37,9 +37,26 @@ void* safe_malloc(size_t size) {
     void* ret = malloc(size);
     if (ret == NULL) {
         LOG_FATAL("Malloc of size %zu failed!", size);
-    } else {
-        return ret;
     }
+
+    return ret;
+}
+
+void* safe_zalloc(size_t size) {
+    /*
+        Wrapper around malloc that will correctly exit the
+        protocol when malloc fails
+
+        Return:
+            (void*): `malloc` allocated memory space
+    */
+
+    void* ret = calloc(size, 1);
+    if (ret == NULL) {
+        LOG_FATAL("Malloc of size %zu failed!", size);
+    }
+
+    return ret;
 }
 
 void* safe_realloc(void* buffer, size_t new_size) {

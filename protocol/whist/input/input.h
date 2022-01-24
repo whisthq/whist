@@ -45,12 +45,15 @@ typedef enum {
  * @brief                          Create an input device struct to receive user
  *                                 actions to be replayed on a server
  *
- * @param kind					   type of input device to create
+ * @param kind                     type of input device to create
+ *
+ * @param data                     an opaque data to pass to the input device creation
+ *                                 routine, highly dependent on the type of input
  *
  * @returns                        Initialized input device struct defining
  *                                 mouse and keyboard states
  */
-InputDevice* create_input_device(InputDeviceType kind);
+InputDevice* create_input_device(InputDeviceType kind, void* data);
 
 /**
  * @brief                          Destroy and free the memory of an input
