@@ -474,7 +474,11 @@ bool udp_update(void* raw_context) {
     // Now, try recovering any packets we seem to be missing
     for (int i = 0; i < NUM_PACKET_TYPES; i++) {
         if (context->ring_buffers[i] != NULL) {
-            try_recovering_missing_packets_or_frames(context->ring_buffers[i], latency);
+            // At the moment we only nack for video
+            // TODO: Make this not packet-type-dependent
+            if(i == (int)PACKET_VIDEO) {
+                try_recovering_missing_packets_or_frames(context->ring_buffers[i], latency);
+            }
         }
     }
 
@@ -1370,14 +1374,19 @@ void udp_handle_ping(UDPContext* context, int id, timestamp_us timestamp) {
 void udp_handle_pong(UDPContext* context, int id) {
     // If we've received the pong we're expecting, process it
     if (id == context->last_ping_id) {
-        double ping_time = get_timer(&context->last_new_ping_timer);
-        LOG_INFO("Pong %d received: took %f milliseconds", id, ping_time * MS_IN_SECOND);
-        // TODO: Make this work for client and server
-        // log_double_statistic(NETWORK_RTT_UDP, ping_time * MS_IN_SECOND);
+        // Only do work if it's a newly received pong
+        if (id != context->last_pong_id) {
+            double ping_time = get_timer(&context->last_new_ping_timer);
+            // TODO: Make this work for client and server
+            // log_double_statistic(NETWORK_RTT_UDP, ping_time * MS_IN_SECOND);
 
-        // Calculate latency, and mark the last pong
-        latency = PING_LAMBDA * latency + (1 - PING_LAMBDA) * ping_time;
-        context->last_pong_id = id;
+            LOG_INFO("Pong %d received: took %f milliseconds", id, ping_time * MS_IN_SECOND);
+
+            // Calculate latency, and mark the last pong
+            latency = PING_LAMBDA * latency + (1 - PING_LAMBDA) * ping_time;
+            context->last_pong_id = id;
+        }
+
     } else {
         // TODO: Uncomment this FATAL_ASSERT after we have session_id's,
         // since then data will only be from this fresh connection,
