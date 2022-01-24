@@ -359,11 +359,12 @@ void terminate_protocol(WhistExitCode exit_code) {
     }
 
     LOG_INFO("Terminating Protocol");
-    destroy_logger();
 
     if (exit_code != WHIST_EXIT_SUCCESS) {
         print_stacktrace();
     }
+
+    destroy_logger();
 
     exit(exit_code);
 }
