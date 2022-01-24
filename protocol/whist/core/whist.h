@@ -84,8 +84,6 @@ Defines
 
 #define UNUSED(var) (void)(var)
 
-#define USING_SENTRY true
-
 #define CAPTURE_SPECIAL_WINDOWS_KEYS false
 
 #define PORT_DISCOVERY 32262

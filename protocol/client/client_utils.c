@@ -90,6 +90,7 @@ const struct option client_cmd_options[] = {
     {"read-pipe", no_argument, NULL, 'r'},
     {"loading", required_argument, NULL, 'l'},
     {"skip-taskbar", no_argument, NULL, 's'},
+    {"session-id", required_argument, NULL, 'd'},
     {"new-tab-url", required_argument, NULL, 'x'},
     // these are standard for POSIX programs
     {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
@@ -100,7 +101,7 @@ const char *usage;
 
 #define INCOMING_MAXLEN 127
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
-#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:n:rl:sx:o:"
+#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:n:rl:sd:x:o:"
 
 /*
 ============================
@@ -211,7 +212,7 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
             break;
         }
         case 'e': {  // environment
-            whist_error_monitor_set_environment(optarg);
+            whist_error_monitor_set_environment(eval_optarg);
             break;
         }
         case 'i': {  // protocol window icon
@@ -267,6 +268,10 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
         }
         case 's': {  // skip taskbar
             skip_taskbar = true;
+            break;
+        }
+        case 'd': {  // session id
+            whist_error_monitor_set_session_id(eval_optarg);
             break;
         }
         case 'x': {
@@ -348,6 +353,7 @@ int client_parse_args(int argc, char *argv[]) {
         "  -l, --loading                 Custom loading screen message\n"
         "  -s, --skip-taskbar            Launch the protocol without displaying an icon\n"
         "                                  in the taskbar\n"
+        "  -d, --session-id=ID           Set the session ID for the protocol's error logging\n"
         "  -x, --new-tab-url             URL to open in new tab \n"
         // special options should be indented further to the left
         "      --help     Display this help and exit\n"

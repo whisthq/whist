@@ -61,7 +61,18 @@ Public Functions
  * @note                           This should only be called before calling
  *                                 `error_monitor_initialize()`.
  */
-void whist_error_monitor_set_environment(char *environment);
+void whist_error_monitor_set_environment(const char *environment);
+
+/**
+ * @brief                          Configures the error monitor to report
+ *                                 the provided session-id on logs.
+ *
+ * @param session_id               The session id to set.
+ *
+ * @note                           This should only be called before calling
+ *                                 `error_monitor_initialize()`.
+ */
+void whist_error_monitor_set_session_id(const char *session_id);
 
 /**
  * @brief                          Configures the username tag for error
@@ -73,7 +84,7 @@ void whist_error_monitor_set_environment(char *environment);
  * @note                           This should only be called after calling
  *                                 `error_monitor_initialize()`.
  */
-void whist_error_monitor_set_username(char *username);
+void whist_error_monitor_set_username(const char *username);
 
 /**
  * @brief                          Configures the connection id tag for error
