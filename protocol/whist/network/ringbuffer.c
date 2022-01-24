@@ -696,7 +696,9 @@ bool try_nacking(RingBuffer* ring_buffer, double latency) {
     if (max_nacks <= 0) {
         // We can't nack, so just exit. Also takes care of negative case from above calculation.
         if (ring_buffer->last_nack_possibility) {
-            LOG_INFO("Can't nack anymore! Hit NACK bitrate limit. Try increasing NACK bitrate?");
+            if (ring_buffer->type == PACKET_VIDEO) {
+                LOG_INFO("Can't nack anymore! Hit NACK bitrate limit. Try increasing NACK bitrate?");
+            }
             ring_buffer->last_nack_possibility = false;
         }
         // Nacking has failed when avg_nacks has been saturated.
@@ -704,7 +706,9 @@ bool try_nacking(RingBuffer* ring_buffer, double latency) {
         return avg_nacks_remaining > 0;
     } else {
         if (!ring_buffer->last_nack_possibility) {
-            LOG_INFO("NACKing is possible again.");
+            if (ring_buffer->type == PACKET_VIDEO) {
+                LOG_INFO("NACKing is possible again.");
+            }
             ring_buffer->last_nack_possibility = true;
         }
     }
