@@ -138,14 +138,6 @@ const launchTrigger = emitOnSignal(
   )
 ).pipe(share())
 
-merge(
-  zip(
-    checkPayment.success,
-    of(persistGet(ONBOARDED)).pipe(filter((onboarded) => onboarded as boolean))
-  ), // On a normal launch
-  importedData // On onboarding or import
-).subscribe(() => console.log("EMITTED"))
-
 // Mandelbox creation flow
 const mandelbox = mandelboxFlow(withAppActivated(launchTrigger))
 
