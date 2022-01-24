@@ -383,7 +383,7 @@ int main(int argc, char* argv[]) {
 
     LOG_INFO("Whist server revision %s", whist_git_revision());
 
-    server_state.input_device = create_input_device();
+    server_state.input_device = create_input_device(input_type);
     if (!server_state.input_device) {
         LOG_FATAL("Failed to create input device.");
     }
