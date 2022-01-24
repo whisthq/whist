@@ -52,8 +52,8 @@ if [[ -f $WHIST_JSON_FILE ]]; then
   if [ "$( jq -rc 'has("initial_url")' < $WHIST_JSON_FILE )" == "true"  ]; then
     RECEIVED_URL="$(jq -rc '.initial_url' < $WHIST_JSON_FILE)"
   fi
-  if [ "$( jq 'has("user_agent")' < $WHIST_JSON_FILE )" == "true"  ]; then
-    USER_AGENT="$(jq '.user_agent' < $WHIST_JSON_FILE)"
+  if [ "$( jq -rc 'has("user_agent")' < $WHIST_JSON_FILE )" == "true"  ]; then
+    USER_AGENT="$(jq -rc '.user_agent' < $WHIST_JSON_FILE)"
   fi
 fi
 
