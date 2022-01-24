@@ -93,13 +93,6 @@ void send_ping(int ping_id);
 void send_tcp_ping(int ping_id);
 
 /**
- * @brief                           Handle a pong (ping acknowledgement) with ID pong_id
- *
- * @param pong_id                   ID of the received pong
- */
-void receive_pong(int pong_id);
-
-/**
  * @brief                           Handle a TCP pong (ping acknowledgement) with ID pong_id
  *
  * @param pong_id                   ID of the received TCP pong

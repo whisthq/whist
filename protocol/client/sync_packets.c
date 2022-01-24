@@ -31,12 +31,8 @@ Includes
 // Updater variables
 extern SocketContext packet_udp_context;
 extern SocketContext packet_tcp_context;
-bool connected = true;  // The state of the client, i.e. whether it's connected to a server or not
-// Ping variables
-WhistTimer last_ping_timer;
-volatile int last_udp_ping_id;
-volatile int last_udp_pong_id;
-volatile int udp_ping_failures;
+extern volatile bool
+    connected;  // The state of the client, i.e. whether it's connected to a server or not
 // TCP ping variables
 WhistTimer last_tcp_ping_timer;
 volatile int last_tcp_ping_id;
@@ -53,54 +49,6 @@ static bool run_sync_packets_threads;
 Private Function Implementations
 ============================
 */
-
-void update_ping() {
-    /*
-       Check if we should send more pings, disconnect, etc. If no valid pong has been received for
-       600ms, we mark that as a ping failure. If we successfully received a pong and it has been
-       500ms since the last ping, we send the next ping. Otherwise, if we haven't yet received a
-       pong and it has been 210 ms, resend the ping.
-    */
-
-    static WhistTimer last_new_ping_timer;
-    static bool timer_initialized = false;
-    if (!timer_initialized) {
-        start_timer(&last_new_ping_timer);
-        timer_initialized = true;
-    }
-
-    // If it's been 1 second since the last ping, we should warn
-    if (get_timer(&last_ping_timer) > 1.0) {
-        LOG_WARNING("No ping sent or pong received in over a second");
-    }
-
-    // If we're waiting for a ping, and it's been 600ms, then that ping will be
-    // noted as failed
-    if (last_udp_ping_id != last_udp_pong_id && get_timer(&last_new_ping_timer) > 0.6) {
-        LOG_WARNING("Ping received no response: %d", last_udp_ping_id);
-        // Keep track of failures, and exit if too many failures
-        last_udp_pong_id = last_udp_ping_id;
-        ++udp_ping_failures;
-        if (udp_ping_failures == 3) {
-            // we make this a LOG_WARNING so it doesn't clog up Sentry, as this
-            // error happens periodically but we have recovery systems in place
-            // for streaming interruption/connection loss
-            LOG_WARNING("Server disconnected: 3 consecutive ping failures.");
-            connected = false;
-        }
-    }
-
-    // if we've received the last ping, send another
-    if (last_udp_ping_id == last_udp_pong_id && get_timer(&last_ping_timer) > 0.5) {
-        send_ping(last_udp_ping_id + 1);
-        start_timer(&last_new_ping_timer);
-    }
-
-    // if we haven't received the last ping, send the same ping
-    if (last_udp_ping_id != last_udp_pong_id && get_timer(&last_ping_timer) > 0.21) {
-        send_ping(last_udp_ping_id);
-    }
-}
 
 void update_tcp_ping() {
     /*
@@ -161,54 +109,62 @@ int multithreaded_sync_udp_packets(void* opaque) {
        messages, pings, audio and video packets.
     */
     WhistRenderer* whist_renderer = (WhistRenderer*)opaque;
-    SocketContext* socket_context = &packet_udp_context;
+    SocketContext* udp_context = &packet_udp_context;
 
     // we initialize latency here because on macOS, latency would not initialize properly in
     // its global declaration. We start at 25ms before the first ping.
     latency = 25.0 / MS_IN_SECOND;
-    last_udp_ping_id = 0;
-    udp_ping_failures = 0;
 
-    WhistTimer last_ack;
     WhistTimer statistics_timer;
-    start_timer(&last_ack);
 
+    // For now, manually make ring buffers for audio and video
+    // TODO: Make udp.c do this automatically
+    // The magic numbers will be handled later
+    udp_register_ring_buffer(udp_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE, 275);
+    udp_register_ring_buffer(udp_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE, 16);
+
+    WhistPacket* last_whist_packet[NUM_PACKET_TYPES] = {0};
     while (run_sync_packets_threads) {
-        // Ack the connection every 5 seconds
-        if (get_timer(&last_ack) > 5.0) {
-            ack(socket_context);
-            start_timer(&last_ack);
-        }
-
-        update_ping();
         // Update the renderer
         renderer_update(whist_renderer);
-        TIME_RUN(WhistPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_UDP,
-                 statistics_timer);
+        // Update the UDP socket
+        TIME_RUN(socket_update(udp_context), NETWORK_READ_PACKET_UDP, statistics_timer);
 
-        if (!packet) {
-            continue;
+        // Handle any messages we've received
+        WhistPacket* message_packet = (WhistPacket*)get_packet(udp_context, PACKET_MESSAGE);
+        if (message_packet) {
+            handle_server_message((WhistServerMessage*)message_packet->data,
+                                  message_packet->payload_size);
+            free_packet(udp_context, message_packet);
         }
 
-        switch (packet->type) {
-            case PACKET_AUDIO:
-            case PACKET_VIDEO: {
-                // Pass the audio/video packet into the renderer
-                renderer_receive_packet(whist_renderer, packet);
-                break;
+        // Loop over both VIDEO and AUDIO
+        WhistPacketType video_audio_types[2] = {PACKET_VIDEO, PACKET_AUDIO};
+        for (int i = 0; i < 2; i++) {
+            WhistPacketType packet_type = video_audio_types[i];
+            // If the renderer wants the frame of that type,
+            // Knowing how many frames are pending a render...
+            if (renderer_wants_frame(whist_renderer, packet_type,
+                                     udp_get_num_pending_frames(udp_context, packet_type))) {
+                // If the renderer wants a new frame, it must be done with the old frame, so we can
+                // free it now
+                // TODO: Make the renderer memcpy so this logic don't have to be weird
+                if (last_whist_packet[packet_type] != NULL) {
+                    free_packet(udp_context, last_whist_packet[packet_type]);
+                }
+                // Now, we try to get the packet from UDP,
+                // And pass it to the renderer if one exists
+                WhistPacket* whist_packet = (WhistPacket*)get_packet(udp_context, packet_type);
+                if (whist_packet) {
+                    renderer_receive_frame(whist_renderer, packet_type, whist_packet->data);
+                    // Store the pointer so we can free it later,
+                    // While still keeping it alive for the renderer to render it
+                    last_whist_packet[packet_type] = whist_packet;
+                }
             }
-            case PACKET_MESSAGE: {
-                TIME_RUN(handle_server_message((WhistServerMessage*)packet->data,
-                                               (size_t)packet->payload_size),
-                         SERVER_HANDLE_MESSAGE_UDP, statistics_timer);
-                break;
-            }
-            default:
-                LOG_ERROR("Unknown packet type: %d", packet->type);
-                break;
         }
-        free_packet(socket_context, packet);
     }
+
     return 0;
 }
 
@@ -293,7 +249,7 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         Return:
             (int): 0 on success
     */
-    SocketContext* socket_context = &packet_tcp_context;
+    SocketContext* tcp_context = &packet_tcp_context;
 
     last_tcp_ping_id = 0;
 
@@ -303,29 +259,25 @@ int multithreaded_sync_tcp_packets(void* opaque) {
     bool successful_read_or_pull = false;
 
     while (run_sync_packets_threads) {
-        // Ack the connection every 50 ms
-        if (get_timer(&last_ack) > 0.05) {
-            int ret = ack(socket_context);
-            if (ret != 0) {
-                LOG_WARNING("Lost TCP Connection (Error: %d)", get_last_network_error());
-                send_tcp_reconnect_message();
-            }
-            start_timer(&last_ack);
+        // TODO: Pull this into tcp.c
+        if (!socket_update(tcp_context)) {
+            send_tcp_reconnect_message();
         }
+
+        // Update TCP ping and reconnect TCP if needed (TODO: does that function do too much?)
+        // TODO: Move into tcp.c
+        update_tcp_ping();
 
         successful_read_or_pull = false;
 
-        // Update TCP ping and reconnect TCP if needed (TODO: does that function do too much?)
-        update_tcp_ping();
-
-        TIME_RUN(WhistPacket* packet = read_packet(socket_context, true), NETWORK_READ_PACKET_TCP,
-                 statistics_timer);
+        TIME_RUN(WhistPacket* packet = get_packet(tcp_context, PACKET_MESSAGE),
+                 NETWORK_READ_PACKET_TCP, statistics_timer);
 
         if (packet) {
             TIME_RUN(handle_server_message((WhistServerMessage*)packet->data,
                                            (size_t)packet->payload_size),
                      SERVER_HANDLE_MESSAGE_TCP, statistics_timer);
-            free_packet(socket_context, packet);
+            free_packet(tcp_context, packet);
         }
 
         // PULL CLIPBOARD HANDLER

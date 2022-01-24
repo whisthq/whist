@@ -44,16 +44,11 @@ extern char *server_ip;
 int uid;
 extern bool using_stun;
 
-volatile double latency;
-extern WhistTimer last_ping_timer;
-extern volatile int last_udp_ping_id;
-extern volatile int udp_ping_failures;
-extern volatile int last_udp_pong_id;
-const double ping_lambda = 0.8;
-
 extern WhistTimer last_tcp_ping_timer;
 extern volatile int last_tcp_ping_id;
 extern volatile int last_tcp_pong_id;
+
+volatile bool connected = false;
 
 #define TCP_CONNECTION_WAIT 300  // ms
 #define UDP_CONNECTION_WAIT 300  // ms
@@ -107,7 +102,8 @@ int discover_ports(bool *with_stun) {
 
     prepare_init_to_server(&wcmsg.discoveryRequest, user_email);
 
-    if (send_packet(&context, PACKET_MESSAGE, (uint8_t *)&wcmsg, (int)sizeof(wcmsg), -1) < 0) {
+    if (send_packet(&context, PACKET_MESSAGE, (uint8_t *)&wcmsg, (int)sizeof(wcmsg), -1, false) <
+        0) {
         LOG_ERROR("Failed to send discovery request message.");
         destroy_socket_context(&context);
         return -1;
@@ -119,7 +115,7 @@ int discover_ports(bool *with_stun) {
     WhistTimer timer;
     start_timer(&timer);
     do {
-        tcp_packet = read_packet(&context, true);
+        tcp_packet = get_packet(&context, PACKET_MESSAGE);
         SDL_Delay(5);
     } while (tcp_packet == NULL && get_timer(&timer) < 5.0);
 
@@ -167,26 +163,6 @@ int discover_ports(bool *with_stun) {
     return 0;
 }
 
-void send_ping(int ping_id) {
-    /*
-        Send a ping to the server with the given ping_id.
-
-        Arguments:
-            ping_id (int): Ping ID to send to the server
-    */
-    WhistClientMessage wcmsg = {0};
-    wcmsg.type = MESSAGE_UDP_PING;
-    wcmsg.ping_data.id = ping_id;
-    wcmsg.ping_data.original_timestamp = current_time_us();
-
-    LOG_INFO("Ping! %d", ping_id);
-    if (send_wcmsg(&wcmsg) != 0) {
-        LOG_WARNING("Failed to ping server! (ID: %d)", ping_id);
-    }
-    last_udp_ping_id = ping_id;
-    start_timer(&last_ping_timer);
-}
-
 void send_tcp_ping(int ping_id) {
     /*
         Send a TCP ping to the server with the given ping_id.
@@ -205,28 +181,6 @@ void send_tcp_ping(int ping_id) {
     }
     last_tcp_ping_id = ping_id;
     start_timer(&last_tcp_ping_timer);
-}
-
-void receive_pong(int pong_id) {
-    /*
-        Mark the ping with ID pong_id as received, and warn if pong_id is outdated.
-
-        Arguments:
-            pong_id (int): ID of pong to receive
-    */
-    if (pong_id == last_udp_ping_id) {
-        // the server received the last ping we sent!
-        double ping_time = get_timer(&last_ping_timer);
-        LOG_INFO("Pong %d received: took %f milliseconds", pong_id, ping_time * MS_IN_SECOND);
-        log_double_statistic(NETWORK_RTT_UDP, ping_time * MS_IN_SECOND);
-
-        latency = ping_lambda * latency + (1 - ping_lambda) * ping_time;
-        udp_ping_failures = 0;
-
-        last_udp_pong_id = pong_id;
-    } else {
-        LOG_WARNING("Received old pong (ID %d), expected ID %d", pong_id, last_udp_ping_id);
-    }
 }
 
 void receive_tcp_pong(int pong_id) {
@@ -309,8 +263,8 @@ int send_tcp_reconnect_message() {
         return -1;
     }
 
-    if (send_packet(&discovery_context, PACKET_MESSAGE, (uint8_t *)&wcmsg, (int)sizeof(wcmsg), -1) <
-        0) {
+    if (send_packet(&discovery_context, PACKET_MESSAGE, (uint8_t *)&wcmsg, (int)sizeof(wcmsg), -1,
+                    false) < 0) {
         LOG_ERROR("Failed to send discovery request message.");
         destroy_socket_context(&discovery_context);
         return -1;
@@ -393,13 +347,17 @@ int send_wcmsg(WhistClientMessage *wcmsg) {
     wcmsg->id = wcmsg_id;
     wcmsg_id++;
 
+    if (!connected) {
+        return -1;
+    }
+
     // Please be careful when editing this list!
     // Please ask the maintainers of each CMESSAGE_ type
     // before adding/removing from this list
     if (wcmsg->type == MESSAGE_DISCOVERY_REQUEST || wcmsg->type == MESSAGE_TCP_PING ||
         wcmsg->type == CMESSAGE_FILE_DATA || wcmsg->type == CMESSAGE_FILE_METADATA ||
         wcmsg->type == CMESSAGE_CLIPBOARD || (size_t)wcmsg_size > sizeof(*wcmsg)) {
-        return send_packet(&packet_tcp_context, PACKET_MESSAGE, wcmsg, wcmsg_size, -1);
+        return send_packet(&packet_tcp_context, PACKET_MESSAGE, wcmsg, wcmsg_size, -1, false);
     } else {
         if ((size_t)wcmsg_size > MAX_PACKET_SIZE) {
             LOG_ERROR("Attempting to send WMSG of type %d over UDP, but message is too large.",
@@ -409,6 +367,7 @@ int send_wcmsg(WhistClientMessage *wcmsg) {
         static int sent_packet_id = 0;
         sent_packet_id++;
 
-        return send_packet(&packet_udp_context, PACKET_MESSAGE, wcmsg, wcmsg_size, sent_packet_id);
+        return send_packet(&packet_udp_context, PACKET_MESSAGE, wcmsg, wcmsg_size, sent_packet_id,
+                           false);
     }
 }

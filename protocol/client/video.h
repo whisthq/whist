@@ -78,28 +78,12 @@ VideoContext* init_video();
  *
  * @param video_context            The video context to give a video packet to
  *
- * @param packet                   Packet as received from the server
+ * @param video_frame              The video frame
  *
  * @note                           This function is guaranteed to return virtually instantly.
  *                                 It may be used in any hotpaths.
  */
-void receive_video(VideoContext* video_context, WhistPacket* packet);
-
-/**
- * @brief                          Does any pending work the video context
- *                                 wants to do. (Including decoding frames,
- *                                 and calculating statistics)
- *
- * @param video_context            The video context to update
- *
- * @note                           This function is guaranteed to return virtually instantly.
- *                                 It may be used in any hotpaths.
- *
- * @note                           In order for video to be responsive,
- *                                 this function *MUST* be called in a tight loop,
- *                                 at least once every millisecond.
- */
-void update_video(VideoContext* video_context);
+void receive_video(VideoContext* video_context, VideoFrame* video_frame);
 
 /**
  * @brief                          Render the video frame (If any are available to render)
@@ -128,19 +112,17 @@ int render_video(VideoContext* video_context);
 bool has_video_rendered_yet(VideoContext* video_context);
 
 /**
- * @brief                          Gets any networking statistics from the video
- *
- * @param video_context            The video context
- *
- * @returns                        Any networking statistics from the video context
- */
-NetworkStatistics get_video_network_statistics(VideoContext* video_context);
-
-/**
  * @brief                          Destroy the video context
  *
  * @param video_context            The video context to destroy
  */
 void destroy_video(VideoContext* video_context);
+
+/**
+ * @brief          Whether or not the video context is ready to render a new frame
+ *
+ * @param video_context       The video context to query
+ */
+bool video_ready_for_frame(VideoContext* video_context);
 
 #endif  // CLIENT_VIDEO_H

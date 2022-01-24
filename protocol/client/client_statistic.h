@@ -12,6 +12,7 @@
 Public enums
 ============================
 */
+
 typedef enum {
     AUDIO_RECEIVE_TIME,
     AUDIO_UPDATE_TIME,
@@ -41,6 +42,7 @@ typedef enum {
 External Variables
 ============================
 */
+
 extern StatisticInfo client_statistic_info[CLIENT_NUM_METRICS];
 
 /*

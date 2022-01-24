@@ -231,9 +231,6 @@ TEST_F(ProtocolTest, InitSDL) {
                 adjusted_height);
         check_stdout_line(::testing::HasSubstr(buffer));
 
-        check_stdout_line(
-            ::testing::HasSubstr("The given SocketContext has not been initialized!"));
-
         sdl_utils_check_private_vars(&pending_resize_message, NULL, NULL, NULL, NULL, NULL, NULL,
                                      NULL);
         EXPECT_TRUE(pending_resize_message);
@@ -371,98 +368,6 @@ TEST_F(ProtocolTest, InitSDL) {
     whist_destroy_mutex(window_resize_mutex);
 
     check_stdout_line(::testing::HasSubstr("Destroying SDL"));
-}
-
-/**
- * client/ringbuffer.c
- **/
-
-// Constants for ringbuffer tests
-#define NUM_AUDIO_TEST_FRAMES 25
-#define MAX_RING_BUFFER_SIZE 500
-
-// Tests that an initialized ring buffer is correct size and has
-// frame IDs initialized to -1
-TEST_F(ProtocolTest, InitRingBuffer) {
-    RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, NUM_AUDIO_TEST_FRAMES, NULL);
-
-    EXPECT_EQ(rb->ring_buffer_size, NUM_AUDIO_TEST_FRAMES);
-    for (int frame_num = 0; frame_num < NUM_AUDIO_TEST_FRAMES; frame_num++)
-        EXPECT_EQ(rb->receiving_frames[frame_num].id, -1);
-
-    destroy_ring_buffer(rb);
-}
-
-// Tests that an initialized ring buffer with a bad size returns NULL
-TEST_F(ProtocolTest, InitRingBufferBadSize) {
-    RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, MAX_RING_BUFFER_SIZE + 1, NULL);
-    EXPECT_TRUE(rb == NULL);
-    check_stdout_line(LOG_ERROR_MATCHER);
-}
-
-// Tests adding packets into ringbuffer
-TEST_F(ProtocolTest, AddingPacketsToRingBuffer) {
-    // initialize ringbuffer
-    const size_t num_packets = 1;
-    RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, num_packets, NULL);
-
-    // setup packets to add to ringbuffer
-    // note that = {} in C++ is the same as = {0} in C
-    WhistPacket pkt1 = {};
-    pkt1.type = PACKET_VIDEO;
-    pkt1.id = 0;
-    pkt1.index = 0;
-    pkt1.is_a_nack = false;
-    pkt1.num_indices = 1;
-    pkt1.num_fec_indices = 0;
-
-    WhistPacket pkt2 = {};
-    pkt2.type = PACKET_VIDEO;
-    pkt2.id = 1;
-    pkt2.index = 0;
-    pkt2.is_a_nack = false;
-    pkt2.num_indices = 1;
-    pkt2.num_fec_indices = 0;
-
-    // checks that everything goes well when adding to an empty ringbuffer
-    EXPECT_EQ(receive_packet(rb, &pkt1), 0);
-    EXPECT_EQ(get_frame_at_id(rb, pkt1.id)->id, pkt1.id);
-
-    // checks that 1 is returned when overwriting a valid frame
-    EXPECT_EQ(receive_packet(rb, &pkt2), 1);
-    EXPECT_EQ(get_frame_at_id(rb, pkt2.id)->id, pkt2.id);
-
-    // check that -1 is returned when we get a duplicate
-    EXPECT_EQ(receive_packet(rb, &pkt2), -1);
-
-    destroy_ring_buffer(rb);
-
-    // For now we use the ProtocolTest fixture to simply suppress stdout;
-    // eventually we should validate output.
-}
-
-// Test that resetting the ringbuffer resets the values
-TEST_F(ProtocolTest, ResetRingBufferFrame) {
-    // initialize ringbuffer
-    const size_t num_packets = 1;
-    RingBuffer* rb = init_ring_buffer(PACKET_VIDEO, num_packets, NULL);
-
-    // fill ringbuffer
-    WhistPacket pkt1;
-    pkt1.type = PACKET_VIDEO;
-    pkt1.id = 0;
-    pkt1.index = 0;
-    pkt1.is_a_nack = false;
-    pkt1.payload_size = 0;
-    pkt1.num_indices = 1;
-    pkt1.num_fec_indices = 0;
-
-    receive_packet(rb, &pkt1);
-    reset_frame(rb, get_frame_at_id(rb, pkt1.id));
-
-    EXPECT_EQ(receive_packet(rb, &pkt1), 0);
-
-    destroy_ring_buffer(rb);
 }
 
 // Test network calls ignoring EINTR.
@@ -826,10 +731,7 @@ TEST_F(ProtocolTest, EncryptAndDecrypt) {
     // Contruct packet metadata
     original_packet.id = -1;
     original_packet.type = PACKET_MESSAGE;
-    original_packet.index = 0;
     original_packet.payload_size = (int)len;
-    original_packet.num_indices = 1;
-    original_packet.is_a_nack = false;
 
     // Copy packet data
     memcpy(original_packet.data, data, len);
@@ -870,10 +772,7 @@ TEST_F(ProtocolTest, BadDecrypt) {
     // Contruct packet metadata
     original_packet.id = -1;
     original_packet.type = PACKET_MESSAGE;
-    original_packet.index = 0;
     original_packet.payload_size = (int)len;
-    original_packet.num_indices = 1;
-    original_packet.is_a_nack = false;
 
     // Copy packet data
     memcpy(original_packet.data, data, len);
@@ -1038,7 +937,7 @@ TEST_F(ProtocolTest, BitArrayMemCpyTest) {
             }
         }
 
-        unsigned char ba_raw[BITS_TO_CHARS(MAX_RING_BUFFER_SIZE)];
+        char* ba_raw = (char*)safe_malloc(BITS_TO_CHARS(test_size));
         memcpy(ba_raw, bit_array_get_bits(bit_arr), BITS_TO_CHARS(test_size));
         bit_array_free(bit_arr);
 
@@ -1047,7 +946,6 @@ TEST_F(ProtocolTest, BitArrayMemCpyTest) {
 
         EXPECT_TRUE(bit_arr_recovered->array);
         EXPECT_TRUE(bit_arr_recovered->array != NULL);
-        EXPECT_TRUE(ba_raw);
         EXPECT_TRUE(ba_raw != NULL);
         memcpy(bit_array_get_bits(bit_arr_recovered), ba_raw, BITS_TO_CHARS(test_size));
 
@@ -1060,6 +958,7 @@ TEST_F(ProtocolTest, BitArrayMemCpyTest) {
         }
 
         bit_array_free(bit_arr_recovered);
+        free(ba_raw);
     }
 }
 

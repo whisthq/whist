@@ -68,7 +68,8 @@ int handle_discovery_port_message(whist_server_state *state, SocketContext *cont
     WhistTimer timer;
     start_timer(&timer);
     do {
-        tcp_packet = read_packet(context, true);
+        socket_update(context);
+        tcp_packet = get_packet(context, PACKET_MESSAGE);
         whist_sleep(5);
     } while (tcp_packet == NULL && get_timer(&timer) < CLIENT_PING_TIMEOUT_SEC);
     // Exit on null tcp packet, otherwise analyze the resulting WhistClientMessage
@@ -112,13 +113,12 @@ int handle_discovery_port_message(whist_server_state *state, SocketContext *cont
             // We wouldn't have called closesocket on this socket before, so we can safely call
             //     close regardless of what caused the socket failure without worrying about
             //     undefined behavior.
-            SocketContextData *socket_context_data = (SocketContextData *)context->context;
             write_lock(&state->client.tcp_rwlock);
             destroy_socket_context(&state->client.tcp_context);
             state->client.tcp_context.listen_socket = &state->tcp_listen;
             if (!create_tcp_socket_context(&state->client.tcp_context, NULL, state->client.tcp_port,
                                            1, TCP_CONNECTION_WAIT, get_using_stun(),
-                                           socket_context_data->binary_aes_private_key)) {
+                                           state->config->binary_aes_private_key)) {
                 LOG_WARNING("Failed TCP connection with client");
             }
             write_unlock(&state->client.tcp_rwlock);
@@ -167,7 +167,7 @@ int do_discovery_handshake(whist_server_state *state, SocketContext *context,
 
     LOG_INFO("Sending discovery packet");
     LOG_INFO("wsmsg size is %d", (int)wsmsg_size);
-    if (send_packet(context, PACKET_MESSAGE, (uint8_t *)wsmsg, (int)wsmsg_size, -1) < 0) {
+    if (send_packet(context, PACKET_MESSAGE, (uint8_t *)wsmsg, (int)wsmsg_size, -1, false) < 0) {
         LOG_ERROR("Failed to send discovery reply message.");
         free(wsmsg);
         return -1;
@@ -191,10 +191,10 @@ int connect_client(Client *client, bool using_stun, char *binary_aes_private_key
         LOG_ERROR("Failed UDP connection with client");
         return -1;
     }
-    udp_register_nack_buffer(&client->udp_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE,
-                             VIDEO_NACKBUFFER_SIZE);
-    udp_register_nack_buffer(&client->udp_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE,
-                             AUDIO_NACKBUFFER_SIZE);
+    udp_register_nack_buffer(&client->udp_context, PACKET_VIDEO,
+                             PACKET_HEADER_SIZE + LARGEST_VIDEOFRAME_SIZE, VIDEO_NACKBUFFER_SIZE);
+    udp_register_nack_buffer(&client->udp_context, PACKET_AUDIO,
+                             PACKET_HEADER_SIZE + LARGEST_AUDIOFRAME_SIZE, AUDIO_NACKBUFFER_SIZE);
 
     if (!create_tcp_socket_context(&client->tcp_context, NULL, client->tcp_port, 1,
                                    TCP_CONNECTION_WAIT, using_stun, binary_aes_private_key_input)) {
@@ -211,21 +211,6 @@ int disconnect_client(Client *client) {
     return 0;
 }
 
-int broadcast_ack(Client *client) {
-    int ret = 0;
-    if (client->is_active) {
-        read_lock(&client->tcp_rwlock);
-        if (ack(&(client->tcp_context)) < 0) {
-            ret = -1;
-        }
-        if (ack(&(client->udp_context)) < 0) {
-            ret = -1;
-        }
-        read_unlock(&client->tcp_rwlock);
-    }
-    return ret;
-}
-
 int broadcast_udp_packet(Client *client, WhistPacketType type, void *data, int len, int packet_id) {
     if (packet_id <= 0) {
         LOG_WARNING("Packet IDs must be positive!");
@@ -233,7 +218,7 @@ int broadcast_udp_packet(Client *client, WhistPacketType type, void *data, int l
     }
 
     if (client->is_active) {
-        if (send_packet(&(client->udp_context), type, data, len, packet_id) < 0) {
+        if (send_packet(&(client->udp_context), type, data, len, packet_id, false) < 0) {
             LOG_WARNING("Failed to send UDP packet to client");
             return -1;
         }
@@ -244,7 +229,7 @@ int broadcast_udp_packet(Client *client, WhistPacketType type, void *data, int l
 int broadcast_tcp_packet(Client *client, WhistPacketType type, void *data, int len) {
     if (client->is_active) {
         read_lock(&client->tcp_rwlock);
-        if (send_packet(&(client->tcp_context), type, (uint8_t *)data, len, -1) < 0) {
+        if (send_packet(&(client->tcp_context), type, (uint8_t *)data, len, -1, false) < 0) {
             LOG_WARNING("Failed to send TCP packet to client");
             return -1;
         }
@@ -253,20 +238,11 @@ int broadcast_tcp_packet(Client *client, WhistPacketType type, void *data, int l
     return 0;
 }
 
-static WhistTimer last_tcp_read;
-bool has_read = false;
 int try_get_next_message_tcp(Client *client, WhistPacket **p_tcp_packet) {
     *p_tcp_packet = NULL;
 
-    // Check if 20ms has passed since last TCP recvp, since each TCP recvp read takes 8ms
-    bool should_recvp = false;
-    if (!has_read || get_timer(&last_tcp_read) * MS_IN_SECOND > 20.0) {
-        should_recvp = true;
-        start_timer(&last_tcp_read);
-        has_read = true;
-    }
-
-    WhistPacket *tcp_packet = read_packet(&client->tcp_context, should_recvp);
+    socket_update(&client->tcp_context);
+    WhistPacket *tcp_packet = get_packet(&client->tcp_context, PACKET_MESSAGE);
     if (tcp_packet) {
         LOG_INFO("Received TCP Packet: Size %d", tcp_packet->payload_size);
         *p_tcp_packet = tcp_packet;
@@ -279,9 +255,16 @@ int try_get_next_message_udp(Client *client, WhistClientMessage *wcmsg, size_t *
 
     memset(wcmsg, 0, sizeof(*wcmsg));
 
-    WhistPacket *packet = read_packet(&(client->udp_context), true);
+    socket_update(&client->udp_context);
+    WhistPacket *packet = get_packet(&client->udp_context, PACKET_MESSAGE);
     if (packet) {
-        memcpy(wcmsg, packet->data, max(sizeof(*wcmsg), (size_t)packet->payload_size));
+        if (packet->payload_size < 0 || (int)sizeof(WhistClientMessage) < packet->payload_size) {
+            LOG_INFO("Packet payload is out-of-bounds! %d instead of %d", packet->payload_size,
+                     (int)sizeof(WhistClientMessage));
+            free_packet(&client->udp_context, packet);
+            return -1;
+        }
+        memcpy(wcmsg, packet->data, min(sizeof(*wcmsg), (size_t)packet->payload_size));
         if (packet->payload_size != get_wcmsg_size(wcmsg)) {
             LOG_WARNING("Packet is of the wrong size!: %d", packet->payload_size);
             LOG_WARNING("Type: %d", wcmsg->type);

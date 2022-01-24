@@ -56,7 +56,6 @@ Custom Types
 
 struct VideoContext {
     // Variables needed for rendering
-    RingBuffer* ring_buffer;
     VideoDecoder* decoder;
     struct SwsContext* sws;
 
@@ -67,28 +66,14 @@ struct VideoContext {
     int last_frame_height;
     CodecType last_frame_codec;
 
-    FrameData* pending_ctx;
-    int frames_received;
-    int bytes_transferred;
-    int last_statistics_id;
-    int last_rendered_id;
-    int most_recent_iframe;
-
-    WhistTimer last_iframe_request_timer;
-
     // Loading animation data
     int loading_index;
     WhistTimer last_loading_frame_timer;
     bool has_video_rendered_yet;
 
     // Context of the frame that is currently being rendered
-    FrameData* render_context;
-    bool pushing_render_context;
-
-    // Statistics calculator
-    WhistTimer network_statistics_timer;
-    NetworkStatistics network_statistics;
-    bool statistics_initialized;
+    VideoFrame* render_context;
+    bool pending_render_context;
 };
 
 /*
@@ -128,12 +113,6 @@ static void sync_decoder_parameters(VideoContext* video_context, VideoFrame* fra
 static void update_sws_context(VideoContext* video_context, Uint8** data, int* linesize, int width,
                                int height, enum AVPixelFormat input_format);
 
-// TODO: Refactor into ringbuffer.c, so that ringbuffer.h
-// is what exposes theese functions
-static void calculate_statistics(VideoContext* video_context);
-static void try_recovering_missing_packets_or_frames(VideoContext* video_context);
-static void skip_to_next_iframe(VideoContext* video_context);
-
 /**
  * @brief                          Destroys an ffmpeg decoder on another thread
  *
@@ -151,25 +130,13 @@ VideoContext* init_video() {
     VideoContext* video_context = safe_malloc(sizeof(*video_context));
     memset(video_context, 0, sizeof(*video_context));
 
-    // Initialize everything
-    video_context->ring_buffer =
-        init_ring_buffer(PACKET_VIDEO, RECV_FRAMES_BUFFER_SIZE, nack_packet);
     video_context->last_frame_width = -1;
     video_context->last_frame_height = -1;
     video_context->last_frame_codec = CODEC_TYPE_UNKNOWN;
     video_context->has_video_rendered_yet = false;
     video_context->sws = NULL;
-    video_context->pending_ctx = NULL;
-    video_context->frames_received = 0;
-    video_context->bytes_transferred = 0;
-    video_context->last_statistics_id = 1;
-    video_context->last_rendered_id = 0;
-    video_context->most_recent_iframe = -1;
     video_context->render_context = NULL;
-    video_context->pushing_render_context = false;
-    video_context->statistics_initialized = false;
-
-    start_timer(&video_context->last_iframe_request_timer);
+    video_context->pending_render_context = false;
 
     // Init loading animation variables
     video_context->loading_index = 0;
@@ -185,10 +152,6 @@ VideoContext* init_video() {
 }
 
 void destroy_video(VideoContext* video_context) {
-    // Destroy the ring buffer
-    destroy_ring_buffer(video_context->ring_buffer);
-    video_context->ring_buffer = NULL;
-
     // Destroy the ffmpeg decoder, if any exists
     if (video_context->decoder) {
         WhistThread destroy_decoder_thread = whist_create_thread(
@@ -207,81 +170,25 @@ void destroy_video(VideoContext* video_context) {
     free(video_context);
 }
 
-void update_video(VideoContext* video_context) {
-    calculate_statistics(video_context);
-
-    if (!video_context->pushing_render_context) {
-        // Try to skip up to the next iframe, if possible
-        // This function will log the skip verbosely
-        skip_to_next_iframe(video_context);
-
-        // Try to render out the next frame, if possible
-        if (video_context->last_rendered_id >= 0) {
-            int next_render_id = video_context->last_rendered_id + 1;
-
-            // When we receive a packet that is a part of the next_render_id, and we have received
-            // every packet for that frame, we set rendering=true
-            if (is_ready_to_render(video_context->ring_buffer, next_render_id)) {
-                // The following line invalidates the information stored at the pointer ctx
-                video_context->render_context =
-                    set_rendering(video_context->ring_buffer, next_render_id);
-                log_double_statistic(VIDEO_FPS_RENDERED, 1.0);
-                // Progress the videodata last rendered pointer
-                video_context->last_rendered_id = next_render_id;
-
-                // Render out current_render_id
-                video_context->pushing_render_context = true;
-            }
-        }
-    }
-
-    // Try to recover missing information, via nacks / iframe requests
-    try_recovering_missing_packets_or_frames(video_context);
-}
-
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-void receive_video(VideoContext* video_context, WhistPacket* packet) {
-    // The next two lines are commented out, but left in the codebase to be
-    // easily toggled back and forth during development. We considered putting
-    // this under the LOG_VIDEO ifdef, but decided not to, since these lines
-    // log every single packet, which is too verbose for standard video
-    // logging.
+void receive_video(VideoContext* video_context, VideoFrame* video_frame) {
+    // TODO: Move to ringbuffer.c
     // LOG_INFO("Video Packet ID %d, Index %d (Packets: %d) (Size: %d)",
     // packet->id, packet->index, packet->num_indices, packet->payload_size);
-    // Find frame in ring buffer that matches the id
-    video_context->bytes_transferred += packet->payload_size;
-    int res = receive_packet(video_context->ring_buffer, packet);
-    if (res < 0) {
-        LOG_ERROR("Ringbuffer packet error!");
+
+    if (!video_context->pending_render_context) {
+        // Send a frame to the renderer,
+        // then set video_context->pending_render_context to true to signal readiness
+
+        // give data pointer to the video context
+        video_context->render_context = video_frame;
+        log_double_statistic(VIDEO_FPS_RENDERED, 1.0);
+        // signal to the renderer that we're ready
+        video_context->pending_render_context = true;
     } else {
-        // If we received all of the packets
-        if (is_ready_to_render(video_context->ring_buffer, packet->id)) {
-            FrameData* ctx = get_frame_at_id(video_context->ring_buffer, packet->id);
-
-            // TODO: Clean this up by moving iframe logic into ringbuffer.c
-            VideoFrame* video_frame;
-            if (ctx->successful_fec_recovery) {
-                video_frame = (VideoFrame*)ctx->fec_frame_buffer;
-            } else {
-                video_frame = (VideoFrame*)ctx->packet_buffer;
-            }
-            bool is_iframe = video_frame->is_iframe;
-
-#if LOG_VIDEO
-            LOG_INFO("Received Video Frame ID %d (Original Packets: %d) (Size: %d) %s", ctx->id,
-                     ctx->num_original_packets, sizeof(VideoFrame) + video_frame->videodata_length,
-                     is_iframe ? "(I-Frame)" : "");
-#endif
-
-            // If it's an I-frame, then just skip right to it, if the id is ahead of
-            // the next to render id
-            if (is_iframe) {
-                video_context->most_recent_iframe =
-                    max(video_context->most_recent_iframe, packet->id);
-            }
-        }
+        LOG_ERROR("We tried to send the video context a frame when it wasn't ready!");
     }
 }
 
@@ -295,16 +202,13 @@ int render_video(VideoContext* video_context) {
     static WhistRGBColor window_color = {0};
     static WhistCursorImage cursor_image = {0};
     static bool has_cursor_image = false;
-    static FrameData frame_data = {0};
     static timestamp_us server_timestamp = 0;
     static timestamp_us client_input_timestamp = 0;
 
     // Receive and process a render context that's being pushed
-    if (video_context->pushing_render_context) {
-        // Save frame data, drop volatile
-        frame_data = *(FrameData*)video_context->render_context;
+    if (video_context->pending_render_context) {
         // Grab and consume the actual frame
-        VideoFrame* frame = (VideoFrame*)frame_data.frame_buffer;
+        VideoFrame* frame = video_context->render_context;
 
         // If server thinks the window isn't visible, but the window is visible now,
         // Send a START_STREAMING message
@@ -331,7 +235,7 @@ int render_video(VideoContext* video_context) {
                 VIDEO_DECODE_SEND_PACKET_TIME, statistics_timer);
             if (ret < 0) {
                 LOG_ERROR("Failed to send packets to decoder, unable to render frame");
-                video_context->pushing_render_context = false;
+                video_context->pending_render_context = false;
                 return -1;
             }
 
@@ -347,7 +251,7 @@ int render_video(VideoContext* video_context) {
         }
 
         // Mark as received so render_context can be overwritten again
-        video_context->pushing_render_context = false;
+        video_context->pending_render_context = false;
     }
 
     // Try to keep decoding frames from the decoder, if we can
@@ -376,7 +280,7 @@ int render_video(VideoContext* video_context) {
         // until the renderer is done rendering the previously decoded frame data.
         // So, we skip renders until after the previous render is done.
 
-        // However, We only skip a render after setting `pushing_render_context = false`,
+        // However, We only skip a render after setting `pending_render_context = false`,
         // To make sure we can keep consuming frames and keep up-to-date.
 
         // And, We only skip a render after calling `video_decoder_decode_frame`, because the
@@ -445,8 +349,8 @@ int render_video(VideoContext* video_context) {
         declare_user_activity();
 
 #if LOG_VIDEO
-        LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", frame_data.id, frame_data.frame_buffer_size,
-                  get_timer(&frame_data.frame_creation_timer));
+        // LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", frame_data.id, frame_data.frame_buffer_size,
+        //          get_timer(&frame_data.frame_creation_timer));
 #endif
 
         static timestamp_us last_rendered_time = 0;
@@ -500,10 +404,6 @@ bool has_video_rendered_yet(VideoContext* video_context) {
     return video_context->has_video_rendered_yet;
 }
 
-NetworkStatistics get_video_network_statistics(VideoContext* video_context) {
-    return video_context->network_statistics;
-}
-
 /*
 ============================
 Private Function Implementations
@@ -511,13 +411,6 @@ Private Function Implementations
 */
 
 void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame) {
-    /*
-        Update decoder parameters to match the server's width, height, and codec
-        of the VideoFrame* that is currently being received
-
-        Arguments:
-            frame (VideoFrame*): next frame to render
-    */
     if (frame->width == video_context->last_frame_width &&
         frame->height == video_context->last_frame_height &&
         frame->codec_type == video_context->last_frame_codec) {
@@ -557,20 +450,6 @@ void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame) {
 
 void update_sws_context(VideoContext* video_context, Uint8** data, int* linesize, int width,
                         int height, enum AVPixelFormat input_format) {
-    /*
-        Create an SWS context as needed to perform pixel format
-        conversions, destroying any existing context first. If no
-        context is needed, return false. If the existing context is
-        still valid, return true. This function also updates the
-        data and linesize arrays by properly allocating/maintaining
-        an av_image to house the converted data.
-
-        Arguments:
-            data (Uint8**): pointer to the data array to be filled in
-            linesize (int*): pointer to the linesize array to be filled in
-            input_format (AVPixelFormat): the pixel format that the data is in
-    */
-
     static enum AVPixelFormat cached_format = AV_PIX_FMT_NONE;
     static int cached_width = -1;
     static int cached_height = -1;
@@ -618,133 +497,10 @@ void update_sws_context(VideoContext* video_context, Uint8** data, int* linesize
     }
 }
 
-void calculate_statistics(VideoContext* video_context) {
-    if (!video_context->statistics_initialized) {
-        start_timer(&video_context->network_statistics_timer);
-        video_context->statistics_initialized = true;
-    }
-
-    RingBuffer* ring_buffer = video_context->ring_buffer;
-    // do some calculation
-    // Update mbps every STATISTICS_SECONDS seconds
-#define STATISTICS_SECONDS 5
-    if (get_timer(&video_context->network_statistics_timer) > STATISTICS_SECONDS) {
-        NetworkStatistics network_statistics = {0};
-        network_statistics.num_nacks_per_second =
-            ring_buffer->num_packets_nacked / STATISTICS_SECONDS;
-        network_statistics.num_received_packets_per_second =
-            ring_buffer->num_packets_received / STATISTICS_SECONDS;
-        network_statistics.num_rendered_frames_per_second =
-            ring_buffer->num_frames_rendered / STATISTICS_SECONDS;
-        network_statistics.statistics_gathered = true;
-        video_context->network_statistics = network_statistics;
-
-        ring_buffer->num_packets_nacked = 0;
-        ring_buffer->num_packets_received = 0;
-        ring_buffer->num_frames_rendered = 0;
-        start_timer(&video_context->network_statistics_timer);
-    }
-}
-
-void try_recovering_missing_packets_or_frames(VideoContext* video_context) {
-// If we want an iframe, this is how often we keep asking for it
-#define IFRAME_REQUEST_INTERVAL_MS 5.0
-// Number of frames ahead we can be before asking for iframe
-#define MAX_UNSYNCED_FRAMES 4
-// How stale the next-to-render-frame can be before asking for an iframe
-#define MAX_TO_RENDER_STALENESS 100.0
-
-    // Try to nack for any missing packets
-    bool nacking_succeeded = try_nacking(video_context->ring_buffer, latency);
-
-    // Get how stale the frame we're trying to render is
-    double next_to_render_staleness = -1.0;
-    int next_render_id = video_context->last_rendered_id + 1;
-    FrameData* ctx = get_frame_at_id(video_context->ring_buffer, next_render_id);
-    if (ctx->id == next_render_id) {
-        next_to_render_staleness = get_timer(&ctx->frame_creation_timer);
-    }
-
-    static bool already_logged_iframe_request = false;
-
-    // If nacking has failed to recover the packets we need,
-    if (!nacking_succeeded
-        // Or if we're more than MAX_UNSYNCED_FRAMES frames out-of-sync,
-        ||
-        video_context->ring_buffer->max_id > video_context->last_rendered_id + MAX_UNSYNCED_FRAMES
-        // Or we've spent MAX_TO_RENDER_STALENESS trying to render this one frame
-        || (next_to_render_staleness > MAX_TO_RENDER_STALENESS / MS_IN_SECOND)) {
-        // THEN, we should send an iframe request
-
-        // Throttle the requests to prevent network upload saturation, however
-        if (get_timer(&video_context->last_iframe_request_timer) >
-            IFRAME_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
-            int last_failed_id = max(next_render_id, video_context->ring_buffer->max_id - 1);
-            // Send a video packet stream reset request
-            WhistClientMessage wcmsg = {0};
-            wcmsg.type = MESSAGE_STREAM_RESET_REQUEST;
-            wcmsg.stream_reset_data.type = PACKET_VIDEO;
-            wcmsg.stream_reset_data.last_failed_id = last_failed_id;
-            send_wcmsg(&wcmsg);
-
-            // If we haven't already logged the iframe request,
-            // Logged the iframe request
-            if (!already_logged_iframe_request) {
-                LOG_INFO(
-                    "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
-                    "and the frame we're trying to render has been alive for %fms. "
-                    "An I-Frame is now being requested to catch-up.",
-                    video_context->ring_buffer->max_id,
-                    video_context->ring_buffer->max_id - video_context->last_rendered_id,
-                    next_to_render_staleness * MS_IN_SECOND);
-#if !LOG_VIDEO
-                // Prevent logging every iframe requests, when LOG_VIDEO is false
-                already_logged_iframe_request = true;
-#endif
-            }
-
-            start_timer(&video_context->last_iframe_request_timer);
-        }
-    } else {
-        already_logged_iframe_request = false;
-    }
-}
-
-void skip_to_next_iframe(VideoContext* video_context) {
-    // Only run if we're not rendering or we haven't rendered anything yet
-    if (video_context->most_recent_iframe > 0 && video_context->last_rendered_id == -1) {
-        // Silently skip to next iframe if it's the start of the stream
-        video_context->last_rendered_id = video_context->most_recent_iframe - 1;
-    } else if (video_context->most_recent_iframe - 1 > video_context->last_rendered_id) {
-        // Loudly declare the skip and log which frames we dropped
-        LOG_INFO("Skipping from %d to I-Frame %d", video_context->last_rendered_id,
-                 video_context->most_recent_iframe);
-        for (int i = max(video_context->last_rendered_id + 1,
-                         video_context->most_recent_iframe -
-                             video_context->ring_buffer->frames_received + 1);
-             i < video_context->most_recent_iframe; i++) {
-            FrameData* frame_data = get_frame_at_id(video_context->ring_buffer, i);
-            if (frame_data->id == i) {
-                LOG_WARNING("Frame dropped with ID %d: %d/%d", i,
-                            frame_data->original_packets_received,
-                            frame_data->num_original_packets);
-
-                for (int j = 0; j < frame_data->num_original_packets; j++) {
-                    if (!frame_data->received_indices[j]) {
-                        LOG_WARNING("Did not receive ID %d, Index %d", i, j);
-                    }
-                }
-                reset_frame(video_context->ring_buffer, frame_data);
-            } else if (frame_data->id != -1) {
-                LOG_WARNING("Bad ID? %d instead of %d", frame_data->id, i);
-            }
-        }
-        video_context->last_rendered_id = video_context->most_recent_iframe - 1;
-    }
-}
-
 int32_t multithreaded_destroy_decoder(void* opaque) {
     VideoDecoder* decoder = (VideoDecoder*)opaque;
     destroy_video_decoder(decoder);
     return 0;
 }
+
+bool video_ready_for_frame(VideoContext* context) { return !context->pending_render_context; }

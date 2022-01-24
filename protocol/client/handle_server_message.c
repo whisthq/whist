@@ -43,7 +43,6 @@ Private Functions
 ============================
 */
 
-static int handle_pong_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_tcp_pong_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_quit_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_clipboard_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
@@ -75,8 +74,6 @@ int handle_server_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
     */
 
     switch (wsmsg->type) {
-        case MESSAGE_PONG:
-            return handle_pong_message(wsmsg, wsmsg_size);
         case MESSAGE_TCP_PONG:
             return handle_tcp_pong_message(wsmsg, wsmsg_size);
         case SMESSAGE_QUIT:
@@ -97,28 +94,6 @@ int handle_server_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
             LOG_WARNING("Unknown WhistServerMessage Received (type: %d)", wsmsg->type);
             return -1;
     }
-}
-
-static int handle_pong_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
-    /*
-        Handle server pong message
-
-        Arguments:
-            wsmsg (WhistServerMessage*): server pong message
-            wsmsg_size (size_t): size of the packet message contents
-
-        Return:
-            (int): 0 on success, -1 on failure
-    */
-
-    if (wsmsg_size != sizeof(WhistServerMessage)) {
-        LOG_ERROR(
-            "Incorrect message size for a server message"
-            " (type: pong message)!");
-        return -1;
-    }
-    receive_pong(wsmsg->ping_id);
-    return 0;
 }
 
 static int handle_tcp_pong_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {

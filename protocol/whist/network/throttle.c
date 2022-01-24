@@ -4,6 +4,7 @@
 #include <whist/logging/log_statistic.h>
 #include "throttle.h"
 #include <server/server_statistic.h>
+#include <whist/network/network_algorithm.h>
 
 #define BITS_IN_BYTE 8.0
 
@@ -47,8 +48,6 @@ NetworkThrottleContext* network_throttler_create(double coin_bucket_ms,
     ctx->destroying = false;
     ctx->fill_bucket_initially = fill_bucket_initially;
     start_timer(&ctx->coin_bucket_last_fill);
-
-    LOG_INFO("Created network throttler %p", ctx);
 
     return ctx;
 }

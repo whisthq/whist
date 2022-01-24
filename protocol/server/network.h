@@ -27,13 +27,6 @@ Public Functions
 */
 
 /**
- * @brief                          Broadcasts acks to all active clients
- *
- * @returns                        Returns -1 on failure, 0 on success
- */
-int broadcast_ack(Client *client);
-
-/**
  * @brief                          Sends a WhistPacket and accompanying
  *                                 WhistPacketType to all active clients,
  *                                 over UDP.

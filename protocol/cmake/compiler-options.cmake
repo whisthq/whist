@@ -10,11 +10,12 @@ else() # GCC and Clang base flags
     "-Wall"
     "-Wextra"
     "-Werror"
+    # "-Wunreachable-code"
     "-Wno-missing-braces"
     "-Wno-unused-value"
     "-Wno-unused-parameter"
     "-Wno-unused-result"
-    "-Wno-unused-variable"
+    "-Wno-unused-variable" # Maybe we should bring this back?
     "-Wno-parentheses"
     "-Wno-missing-field-initializers"
     "-Wno-implicit-fallthrough" # We use switch/case fallthrough intentionally a lot, it should be allowed

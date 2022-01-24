@@ -40,6 +40,8 @@ Includes
 #include <whist/video/codec/encode.h>
 #include <whist/utils/avpacket_buffer.h>
 #include <whist/logging/log_statistic.h>
+#include <whist/network/network_algorithm.h>
+#include <whist/network/throttle.h>
 #include "client.h"
 #include "network.h"
 #include "video.h"
@@ -214,7 +216,7 @@ void send_populated_frames(whist_server_state* state, WhistTimer* statistics_tim
     // Send the video frame
     if (state->client.is_active) {
         send_packet(&state->client.udp_context, PACKET_VIDEO, frame, get_total_frame_size(frame),
-                    id);
+                    id, frame->is_iframe);
     }
 }
 
@@ -303,7 +305,7 @@ void send_empty_frame(whist_server_state* state, int id) {
 
     // Send the empty frame
     if (state->client.is_active) {
-        send_packet(&state->client.udp_context, PACKET_VIDEO, frame, sizeof(VideoFrame), id);
+        send_packet(&state->client.udp_context, PACKET_VIDEO, frame, sizeof(VideoFrame), id, false);
     }
 }
 
@@ -311,32 +313,35 @@ void send_empty_frame(whist_server_state* state, int id) {
  * @brief           Updates the encoder upon request. Note that this function
  *                  _returns_ the updated encoder, due to the encoder factory.
  *
- * @param state		the Whist server state
- * @param encoder   VideoEncoder pointer
- *
- * @param device    CaptureDevice pointer
+ * @param state		The Whist server state
+ * @param encoder   The previous VideoEncoder
+ * @param device    The CaptureDevice
+ * @param bitrate   The bitrate to encode at
+ * @param codec     The codec to use
+ * @param fps       The FPS to use
  *
  * @returns         The new encoder
  */
-VideoEncoder* do_update_encoder(whist_server_state* state, VideoEncoder* encoder,
-                                CaptureDevice* device) {
+VideoEncoder* update_video_encoder(whist_server_state* state, VideoEncoder* encoder,
+                                   CaptureDevice* device, int bitrate, CodecType codec, int fps) {
     // If this is a new update encoder request, log it
     if (!state->pending_encoder) {
         LOG_INFO("Update encoder request received, will update the encoder now!");
     }
 
+    // TODO: Make the encode take in a variable FPS
+    if (fps != MAX_FPS) {
+        LOG_ERROR("Setting FPS to anything but %d is not supported yet!", MAX_FPS);
+    }
+
     // First, try to simply reconfigure the encoder to
     // handle the update_encoder event
     if (encoder != NULL) {
-        // store it to prevent race conditions if bitrate is updated
-        int new_bitrate = state->requested_video_bitrate;
         // TODO: Use requested_video_fps as well
-        if (reconfigure_encoder(encoder, device->width, device->height, new_bitrate,
-                                (CodecType)state->requested_video_codec)) {
+        if (reconfigure_encoder(encoder, device->width, device->height, bitrate, codec)) {
             // If we could update the encoder in-place, then we're done updating the encoder
-            LOG_INFO("Reconfigured Encoder to %dx%d using Bitrate: %d from %f, and Codec %d",
-                     device->width, device->height, new_bitrate, new_bitrate / 1024.0 / 1024.0,
-                     state->requested_video_codec);
+            LOG_INFO("Reconfigured Encoder to %dx%d using Bitrate: %d, and Codec %d", device->width,
+                     device->height, bitrate, (int)codec);
             state->update_encoder = false;
         } else {
             // TODO: Make LOG_ERROR after ffmpeg reconfiguration is implemented
@@ -364,20 +369,19 @@ VideoEncoder* do_update_encoder(whist_server_state* state, VideoEncoder* encoder
         } else {
             // Starting making new encoder. This will set pending_encoder=true, but won't
             // actually update it yet, we'll still use the old one for a bit
-            int new_bitrate = state->requested_video_bitrate;
+
             // TODO: Use requested_video_fps
             LOG_INFO(
-                "Creating a new Encoder of dimensions %dx%d using Bitrate: %d from %f, and "
+                "Creating a new Encoder of dimensions %dx%d using Bitrate: %d, and "
                 "Codec %d",
-                device->width, device->height, new_bitrate, new_bitrate / 1024.0 / 1024.0,
-                (int)state->requested_video_codec);
+                device->width, device->height, bitrate, (int)codec);
             state->encoder_finished = false;
             state->encoder_factory_server_w = device->width;
             state->encoder_factory_server_h = device->height;
             state->encoder_factory_client_w = (int)state->client_width;
             state->encoder_factory_client_h = (int)state->client_height;
-            state->encoder_factory_codec_type = (CodecType)state->requested_video_codec;
-            state->encoder_factory_bitrate = new_bitrate;
+            state->encoder_factory_codec_type = codec;
+            state->encoder_factory_bitrate = bitrate;
 
             // If using nvidia, then we must destroy the existing encoder first
             // We can't have two nvidia encoders active or the 2nd attempt to
@@ -460,9 +464,12 @@ int32_t multithreaded_send_video(void* opaque) {
 
     add_thread_to_client_active_dependents();
 
+    NetworkSettings last_network_settings = {0};
+
     NetworkThrottleContext* network_throttler =
         network_throttler_create((double)VBV_BUF_SIZE_IN_MS, true);
-    network_throttler_set_burst_bitrate(network_throttler, state->requested_video_bitrate);
+    // Don't bitrate limit in the beginning
+    network_throttler_set_burst_bitrate(network_throttler, 100000000);
     int last_frame_size = 0;
 
     int consecutive_identical_frames = 0;
@@ -509,28 +516,48 @@ int32_t multithreaded_send_video(void* opaque) {
             }
         }
 
+        NetworkSettings network_settings =
+            state->client.is_active ? udp_get_network_settings(&state->client.udp_context)
+                                    : default_network_settings;
+
+        int video_bitrate =
+            (network_settings.bitrate - AUDIO_BITRATE) * (1.0 - network_settings.video_fec_ratio);
+        FATAL_ASSERT(video_bitrate > 0);
+        CodecType video_codec = network_settings.desired_codec;
+        // TODO: Use video_fps instead of max_fps, also see update_video_encoder when doing this
+        int video_fps = network_settings.fps;
+
+        if (memcmp(&network_settings, &last_network_settings, sizeof(NetworkSettings)) != 0) {
+            // Mark to update the encode, if the network settings have been updated
+            state->update_encoder = true;
+            last_network_settings = network_settings;
+        }
+
         // Update encoder with new parameters
         if (state->update_encoder) {
             start_timer(&statistics_timer);
-            encoder = do_update_encoder(state, encoder, device);
+            encoder =
+                update_video_encoder(state, encoder, device, video_bitrate, video_codec, video_fps);
             // Update throttler bitrate too
-            network_throttler_set_burst_bitrate(network_throttler, state->requested_video_bitrate);
+            network_throttler_set_burst_bitrate(network_throttler, video_bitrate);
             log_double_statistic(VIDEO_ENCODER_UPDATE_TIME,
                                  get_timer(&statistics_timer) * MS_IN_SECOND);
         }
 
-        timestamp_us client_input_timestamp;
+        // Get this timestamp before we capture the screen,
+        // To measure the full pre-capture to post-render E2E latency
         timestamp_us server_timestamp = current_time_us();
+        timestamp_us client_input_timestamp =
+            state->client.is_active ? udp_get_client_input_timestamp(&state->client.udp_context)
+                                    : 0;
 
-        // Theoretical client timestamp of user input, for E2E Latency Calculation
-        whist_lock_mutex(state->client.timestamp_mutex);
-        // The client timestamp from a ping,
-        // is the timestamp of theoretical client input we're responding to
-        client_input_timestamp = state->client.last_ping_client_time;
-        // But we should adjust for the time between when we received the ping, and now,
-        // To only extract the client->server network latency
-        client_input_timestamp += (server_timestamp - state->client.last_ping_server_time);
-        whist_unlock_mutex(state->client.timestamp_mutex);
+        // Check if the udp connection's stream has been reset
+        bool pending_stream_reset =
+            state->client.is_active &&
+            get_pending_stream_reset(&state->client.udp_context, PACKET_VIDEO);
+        if (pending_stream_reset) {
+            state->wants_iframe = true;
+        }
 
         // SENDING LOGIC:
         // first, we call capture_screen, which returns how many frames have passed since the last
@@ -579,12 +606,6 @@ int32_t multithreaded_send_video(void* opaque) {
 
         // This outer loop potentially runs 10s of thousands of times per second, every ~1usec
 
-        // If it's a start-of-stream, or an id beyond the last sent iframe has failed,
-        // Only then we send a new iframe.
-        if (state->last_failed_id != -1 && state->last_failed_id <= state->last_iframe_id) {
-            state->wants_iframe = false;
-        }
-
         // Send a frame if we have a real frame to send, or we need to keep up with min_fps
         if (state->client.is_active && (accumulated_frames > 0 || state->wants_iframe ||
                                         get_timer(&last_frame_capture) > 1.0 / min_fps)) {
@@ -625,7 +646,6 @@ int32_t multithreaded_send_video(void* opaque) {
 
                 if (state->wants_iframe) {
                     video_encoder_set_iframe(encoder);
-                    state->last_iframe_id = id;
                     state->wants_iframe = false;
                 }
 

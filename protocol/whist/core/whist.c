@@ -315,9 +315,6 @@ int get_wcmsg_size(WhistClientMessage *wcmsg) {
         return sizeof(*wcmsg);
     } else if (wcmsg->type == CMESSAGE_CLIPBOARD) {
         return sizeof(*wcmsg) + wcmsg->clipboard.size;
-    } else if (wcmsg->type == MESSAGE_BITARRAY_NACK) {
-        // Use numBits for size
-        return sizeof(wcmsg->type) + sizeof(wcmsg->id) + 40 + wcmsg->bitarray_nack.numBits / 8;
     } else if (wcmsg->type == CMESSAGE_FILE_METADATA) {
         return (int)(sizeof(*wcmsg) + wcmsg->file_metadata.filename_len);
     } else if (wcmsg->type == CMESSAGE_FILE_DATA) {

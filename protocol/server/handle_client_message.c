@@ -39,19 +39,16 @@ Private Functions
 static int handle_user_input_message(whist_server_state *state, WhistClientMessage *wcmsg);
 static int handle_keyboard_state_message(whist_server_state *state, WhistClientMessage *wcmsg);
 static int handle_streaming_toggle_message(whist_server_state *state, WhistClientMessage *wcmsg);
-static int handle_network_settings_message(whist_server_state *state, WhistClientMessage *wcmsg);
-static int handle_ping_message(Client *client, WhistClientMessage *wcmsg);
-static int handle_tcp_ping_message(Client *client, WhistClientMessage *wcmsg);
 static int handle_dimensions_message(whist_server_state *state, WhistClientMessage *wcmsg);
 static int handle_clipboard_message(WhistClientMessage *wcmsg);
-static int handle_nack_message(Client *client, WhistClientMessage *wcmsg);
-static int handle_stream_reset_request_message(whist_server_state *state,
-                                               WhistClientMessage *wcmsg);
 static int handle_quit_message(whist_server_state *state, WhistClientMessage *wcmsg);
 static int handle_init_message(whist_server_state *state, WhistClientMessage *wcmsg);
 static int handle_file_metadata_message(WhistClientMessage *wcmsg);
 static int handle_file_chunk_message(WhistClientMessage *wcmsg);
 static int handle_open_url_message(whist_server_state *state, WhistClientMessage *wcmsg);
+
+// TODO: Do this in tcp.c
+static int handle_tcp_ping_message(Client *client, WhistClientMessage *wcmsg);
 
 /*
 ============================
@@ -87,21 +84,12 @@ int handle_client_message(whist_server_state *state, WhistClientMessage *wcmsg) 
         case MESSAGE_START_STREAMING:
         case MESSAGE_STOP_STREAMING:
             return handle_streaming_toggle_message(state, wcmsg);
-        case MESSAGE_NETWORK_SETTINGS:
-            return handle_network_settings_message(state, wcmsg);
-        case MESSAGE_UDP_PING:
-            return handle_ping_message(&state->client, wcmsg);
         case MESSAGE_TCP_PING:
             return handle_tcp_ping_message(&state->client, wcmsg);
         case MESSAGE_DIMENSIONS:
             return handle_dimensions_message(state, wcmsg);
         case CMESSAGE_CLIPBOARD:
             return handle_clipboard_message(wcmsg);
-        case MESSAGE_NACK:
-        case MESSAGE_BITARRAY_NACK:
-            return handle_nack_message(&state->client, wcmsg);
-        case MESSAGE_STREAM_RESET_REQUEST:
-            return handle_stream_reset_request_message(state, wcmsg);
         case CMESSAGE_FILE_METADATA:
             return handle_file_metadata_message(wcmsg);
         case CMESSAGE_FILE_DATA:
@@ -186,115 +174,10 @@ static int handle_streaming_toggle_message(whist_server_state *state, WhistClien
         LOG_INFO("Received message to start streaming again.");
         state->stop_streaming = false;
         state->wants_iframe = true;
-        state->last_failed_id = -1;
-        state->last_iframe_id = -1;
     } else {
         LOG_WARNING("Received streaming message to %s streaming, but we're already in that state!",
                     state->stop_streaming ? "stop" : "start");
     }
-    return 0;
-}
-
-static int handle_network_settings_message(whist_server_state *state, WhistClientMessage *wcmsg) {
-    /*
-        Handle a user bitrate change message and update MBPS.
-
-        NOTE: idk how to handle this
-
-        Arguments:
-            wcmsg (WhistClientMessage*): message package from client
-
-        Returns:
-            (int): Returns -1 on failure, 0 on success
-    */
-
-    // TODO: udp.c will handle this function internally at some point,
-    // So that it is not a WhistClientMessage anymore
-
-    int requested_avg_bitrate = wcmsg->network_settings.bitrate;
-    int requested_burst_bitrate = wcmsg->network_settings.burst_bitrate;
-    double requested_audio_fec_ratio = wcmsg->network_settings.audio_fec_ratio;
-    double requested_video_fec_ratio = wcmsg->network_settings.video_fec_ratio;
-
-    LOG_INFO("Network Settings Message: %fmbps avg/%fmbps burst/%f%% audio FEC/%f%% video FEC",
-             requested_avg_bitrate / 1024.0 / 1024.0, requested_burst_bitrate / 1024.0 / 1024.0,
-             requested_audio_fec_ratio * 100.0, requested_video_fec_ratio * 100.0);
-
-    // Clamp the bitrates & fec ratio, preferring to clamp at MAX
-    int avg_bitrate = min(max(requested_avg_bitrate, MINIMUM_BITRATE), MAXIMUM_BITRATE);
-    int burst_bitrate =
-        min(max(requested_burst_bitrate, MINIMUM_BURST_BITRATE), MAXIMUM_BURST_BITRATE);
-    double audio_fec_ratio = min(max(requested_audio_fec_ratio, 0.0), MAX_FEC_RATIO);
-    double video_fec_ratio = min(max(requested_video_fec_ratio, 0.0), MAX_FEC_RATIO);
-    // Log an error if clamping was necessary
-    if (avg_bitrate != requested_avg_bitrate || burst_bitrate != requested_burst_bitrate ||
-        audio_fec_ratio != requested_audio_fec_ratio ||
-        video_fec_ratio != requested_video_fec_ratio) {
-        LOG_ERROR(
-            "Network Settings msg FORCEFULLY CLAMPED: %fmbps avg/%fmbps burst/%f%% audio FEC/%f%% "
-            "video FEC",
-            avg_bitrate / 1024.0 / 1024.0, burst_bitrate / 1024.0 / 1024.0, audio_fec_ratio * 100.0,
-            video_fec_ratio * 100.0);
-        wcmsg->network_settings.bitrate = avg_bitrate;
-        wcmsg->network_settings.burst_bitrate = burst_bitrate;
-        wcmsg->network_settings.audio_fec_ratio = audio_fec_ratio;
-        wcmsg->network_settings.video_fec_ratio = video_fec_ratio;
-    }
-
-    // Update the UDP Context's burst bitrate and fec ratio
-    // TODO: Handle audio_fec_ratio correctly
-    udp_update_network_settings(&state->client.udp_context, wcmsg->network_settings);
-
-    // Set the new video encoding parameters,
-    // using only the bandwidth that isn't already meant for audio,
-    // Or reserved for the audio's FEC packets
-    state->requested_video_bitrate = (avg_bitrate - AUDIO_BITRATE) * (1.0 - video_fec_ratio);
-    FATAL_ASSERT(state->requested_video_bitrate > 0);
-    state->requested_video_codec = wcmsg->network_settings.desired_codec;
-    state->requested_video_fps = wcmsg->network_settings.fps;
-    // TODO: Implement custom FPS properly
-    if (state->requested_video_fps != MAX_FPS) {
-        LOG_ERROR("Custom FPS of %d is not possible! %d will be used instead.",
-                  state->requested_video_fps, MAX_FPS);
-    }
-    // Mark the encoder for update using the new video encoding parameters
-    state->update_encoder = true;
-
-    return 0;
-}
-
-static int handle_ping_message(Client *client, WhistClientMessage *wcmsg) {
-    /*
-        Handle a client ping (alive) message.
-
-        Arguments:
-            wcmsg (WhistClientMessage*): message package from client
-
-        Returns:
-            (int): Returns -1 on failure, 0 on success
-    */
-
-    LOG_INFO("Ping Received - Ping ID %d", wcmsg->ping_data.id);
-
-    // Update ping timer
-    start_timer(&client->last_ping);
-
-    // Send pong reply
-    WhistServerMessage fsmsg_response = {0};
-    fsmsg_response.type = MESSAGE_PONG;
-    fsmsg_response.ping_id = wcmsg->ping_data.id;
-    timestamp_us server_time = current_time_us();
-    whist_lock_mutex(client->timestamp_mutex);
-    client->last_ping_client_time = wcmsg->ping_data.original_timestamp;
-    client->last_ping_server_time = server_time;
-    whist_unlock_mutex(client->timestamp_mutex);
-
-    if (send_packet(&client->udp_context, PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
-                    sizeof(fsmsg_response), 1) < 0) {
-        LOG_WARNING("Failed to send UDP pong");
-        return -1;
-    }
-
     return 0;
 }
 
@@ -320,7 +203,7 @@ static int handle_tcp_ping_message(Client *client, WhistClientMessage *wcmsg) {
     fsmsg_response.ping_id = wcmsg->ping_data.id;
 
     if (send_packet(&client->tcp_context, PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
-                    sizeof(fsmsg_response), -1) < 0) {
+                    sizeof(fsmsg_response), -1, false) < 0) {
         LOG_WARNING("Failed to send TCP pong");
         return -1;
     }
@@ -402,66 +285,6 @@ static int handle_file_chunk_message(WhistClientMessage *wcmsg) {
 
     file_synchronizer_write_file_chunk(&wcmsg->file);
 
-    return 0;
-}
-
-static int handle_nack_message(Client *client, WhistClientMessage *wcmsg) {
-    /*
-        Handle a video nack message and relay the packet
-
-        Arguments:
-            wcmsg (WhistClientMessage*): message package from client
-
-        Returns:
-            (int): Returns -1 on failure, 0 on success
-    */
-
-    // TODO: udp.c will handle this function internally at some point,
-    // So that it is not a WhistClientMessage anymore
-
-    if (wcmsg->type == MESSAGE_NACK) {
-        udp_nack(&client->udp_context, wcmsg->simple_nack.type, wcmsg->simple_nack.id,
-                 wcmsg->simple_nack.index);
-    } else {
-        // wcmsg->type == MESSAGE_VIDEO_BITARRAY_NACK
-        BitArray *bit_arr = bit_array_create(wcmsg->bitarray_nack.numBits);
-        bit_array_clear_all(bit_arr);
-
-        memcpy(bit_array_get_bits(bit_arr), wcmsg->bitarray_nack.ba_raw,
-               BITS_TO_CHARS(wcmsg->bitarray_nack.numBits));
-
-        for (int i = wcmsg->bitarray_nack.index; i < wcmsg->bitarray_nack.numBits; i++) {
-            if (bit_array_test_bit(bit_arr, i)) {
-                udp_nack(&client->udp_context, wcmsg->bitarray_nack.type, wcmsg->bitarray_nack.id,
-                         i);
-            }
-        }
-        bit_array_free(bit_arr);
-    }
-
-    return 0;
-}
-
-static int handle_stream_reset_request_message(whist_server_state *state,
-                                               WhistClientMessage *wcmsg) {
-    /*
-        Handle an IFrame request message
-
-        Arguments:
-            wcmsg (WhistClientMessage*): message package from client
-
-        Returns:
-            (int): Returns -1 on failure, 0 on success
-    */
-
-    LOG_INFO("Request for i-frame found");
-    if (wcmsg->stream_reset_data.type == PACKET_VIDEO) {
-        // Mark as wanting an iframe, since that will reset the udp video stream
-        state->wants_iframe = true;
-        state->last_failed_id = wcmsg->stream_reset_data.last_failed_id;
-    } else {
-        LOG_ERROR("Can't reset the stream for other types of packets");
-    }
     return 0;
 }
 

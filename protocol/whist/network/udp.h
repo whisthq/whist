@@ -23,7 +23,42 @@ To free a packet:
 udp_context->free_packet(...);
  */
 
+/*
+============================
+Includes
+============================
+*/
+
 #include <whist/core/whist.h>
+
+/*
+============================
+Defines
+============================
+*/
+
+// We should be able to fix a normal-sized WhistPacket,
+// in just a single segment
+#define MAX_PACKET_SEGMENT_SIZE ((int)sizeof(WhistPacket))
+
+// Represents a WhistSegment, which will be managed by the ringbuffer
+typedef struct {
+    WhistPacketType whist_type;
+    int id;
+    unsigned short index;
+    unsigned short num_indices;
+    unsigned short num_fec_indices;
+    unsigned short segment_size;
+    bool is_a_nack;
+    // Must be last, since only the first segment_size bytes will be sent
+    char segment_data[MAX_PACKET_SEGMENT_SIZE];
+} WhistSegment;
+
+/*
+============================
+Public Functions
+============================
+*/
 
 /**
  * @brief Creates a udp network context and initializes a UDP connection
@@ -54,24 +89,6 @@ bool create_udp_socket_context(SocketContext* context, char* destination, int po
                                char* binary_aes_private_key);
 
 /**
- * @brief Creates a udp listen socket, that can be used in SocketContext
- *
- * @param sock                      The socket that will be initialized
- * @param port                      The port to listen on
- * @param timeout_ms                The timeout for socket
- * @return                          0 on success, otherwise failure.
- */
-int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms);
-
-/**
- * @brief                          Sets the burst bitrate for the given UDP SocketContext
- *
- * @param context                  The SocketContext that we'll be adjusting the burst bitrate for
- * @param network_settings         The new network settings
- */
-void udp_update_network_settings(SocketContext* context, NetworkSettings network_settings);
-
-/**
  * @brief                          Registers a nack buffer, so that future nacks can be handled.
  *                                 It will be able to respond to nacks from the most recent
  *                                 `buffer_size` ID's that have been send via send_packet
@@ -79,22 +96,65 @@ void udp_update_network_settings(SocketContext* context, NetworkSettings network
  *
  * @param context                  The SocketContext that will have a nack buffer
  * @param type                     The WhistPacketType that this nack buffer will be used for
- * @param max_payload_size         The largest payload that will be saved in the nack buffer
+ * @param max_frame_size           The largest frame that can be saved in the nack buffer
  * @param num_buffers              The number of buffers that will be stored in the nack buffer
  */
-void udp_register_nack_buffer(SocketContext* context, WhistPacketType type, int max_payload_size,
+void udp_register_nack_buffer(SocketContext* context, WhistPacketType type, int max_frame_size,
                               int num_buffers);
 
+/*
+============================
+Questionable Public Functions, potentially try to remove in future organizations
+============================
+*/
+
+// TODO: There's some weird global state-type stuff happening here
+// This should be removed, something weird and confusing is happening here
 /**
- * @brief                          Respond to a nack for a given ID/Index
- *                                 NOTE: This function is thread-safe with send_packet
+ * @brief Creates a udp listen socket, that can be used in SocketContext
  *
- * @param context                  The SocketContext to nack from
- * @param type                     The WhistPacketType of the nack'ed packet
- * @param id                       The ID of the nack'ed packet
- * @param index                    The index of the nack'ed packet
- *                                 (The UDP packet index into the larger WhistPacket)
+ * @param sock                      The socket that will be initialized
+ * @param port                      The port to listen on
+ * @param timeout_ms                The timeout for socket
+ *
+ * @returns                         0 on success, otherwise failure.
  */
-int udp_nack(SocketContext* context, WhistPacketType type, int id, int index);
+int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms);
+
+/**
+ * @brief                          Get the number of consecutive fully received frames of
+ *                                 the given type are available
+ *                                 Use this to figure out how many frames are pending to render
+ *
+ * @param context                  The UDP Socket Context
+ * @param type                     The type of frames to query for
+ *
+ * @returns                        The number of pending frames of that type
+ */
+int udp_get_num_pending_frames(SocketContext* context, WhistPacketType type);
+
+// TODO: Is needed for audio.c redundancy, but should be pulled into udp.c somehow
+void udp_resend_packet(SocketContext* socket_context, WhistPacketType type, int id, int index);
+
+// TODO: Try to remove by making the client detect a nack buffer
+/**
+ * @brief                          Registers a ring buffer to reconstruct WhistPackets
+ *                                 that can be split into smaller WhistPackets
+ *
+ * @param context                  The SocketContext that will have a ring buffer
+ * @param type                     The WhistPacketType that this ring buffer will be used for
+ * @param max_frame_size           The largest frame that can be saved in the ring buffer
+ * @param num_buffers              The number of frames that will be stored in the ring buffer
+ *
+ * @note                           This function is not thread-safe on SocketContext
+ */
+void udp_register_ring_buffer(SocketContext* context, WhistPacketType type, int max_frame_size,
+                              int num_buffers);
+
+// TODO: Move to network.h, and make it more generic (E.g., "avg bitrate" / "fec ratio")
+NetworkSettings udp_get_network_settings(SocketContext* context);
+
+// TODO: Remove this by pulling network-side of E2E into udp.c
+timestamp_us udp_get_client_input_timestamp(SocketContext* socket_context);
 
 #endif  // WHIST_UDP_H
