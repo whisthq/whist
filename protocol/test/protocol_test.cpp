@@ -937,7 +937,7 @@ TEST_F(ProtocolTest, BitArrayMemCpyTest) {
             }
         }
 
-        unsigned char ba_raw[BITS_TO_CHARS(500)];
+        char* ba_raw = (char*)safe_malloc(BITS_TO_CHARS(test_size));
         memcpy(ba_raw, bit_array_get_bits(bit_arr), BITS_TO_CHARS(test_size));
         bit_array_free(bit_arr);
 
@@ -946,7 +946,6 @@ TEST_F(ProtocolTest, BitArrayMemCpyTest) {
 
         EXPECT_TRUE(bit_arr_recovered->array);
         EXPECT_TRUE(bit_arr_recovered->array != NULL);
-        EXPECT_TRUE(ba_raw);
         EXPECT_TRUE(ba_raw != NULL);
         memcpy(bit_array_get_bits(bit_arr_recovered), ba_raw, BITS_TO_CHARS(test_size));
 
@@ -959,6 +958,7 @@ TEST_F(ProtocolTest, BitArrayMemCpyTest) {
         }
 
         bit_array_free(bit_arr_recovered);
+        free(ba_raw);
     }
 }
 
