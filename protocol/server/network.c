@@ -258,7 +258,7 @@ int try_get_next_message_udp(Client *client, WhistClientMessage *wcmsg, size_t *
     socket_update(&client->udp_context);
     WhistPacket *packet = get_packet(&client->udp_context, PACKET_MESSAGE);
     if (packet) {
-        if (packet->payload_size < 0 || sizeof(WhistClientMessage) < packet->payload_size) {
+        if (packet->payload_size < 0 || (int)sizeof(WhistClientMessage) < packet->payload_size) {
             LOG_INFO("Packet payload is out-of-bounds! %d instead of %d", packet->payload_size,
                      (int)sizeof(WhistClientMessage));
             free_packet(&client->udp_context, packet);
