@@ -10,7 +10,7 @@ import { RESTORE_LAST_SESSION } from "@app/constants/store"
 import { AWSRegion } from "@app/@types/aws"
 import { appEnvironment } from "config/build"
 import { WhistEnvironments } from "config/constants"
-import { getUserAgent } from "@app/main/utils/userAgent"
+// import { getUserAgent } from "@app/main/utils/userAgent"
 
 export default flow(
   "mandelboxFlow",
