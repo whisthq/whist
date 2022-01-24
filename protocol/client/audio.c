@@ -353,7 +353,8 @@ bool is_underflowing_audio(AudioContext* audio_context, int num_frames_buffered)
         audio_context->is_buffering_audio = true;
     } else if (audio_context->is_buffering_audio && buffered_bytes >= TARGET_AUDIO_QUEUE_LIMIT) {
         // Okay, we're done buffering audio
-        LOG_INFO("Done catching up! Now have %d bytes, %d frames in queue", buffered_bytes, num_frames_buffered);
+        LOG_INFO("Done catching up! Now have %d bytes, %d frames in queue", buffered_bytes,
+                 num_frames_buffered);
         audio_context->is_buffering_audio = false;
     }
 
