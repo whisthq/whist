@@ -24,7 +24,7 @@ Includes
 #include "state.h"
 
 // i: means --identifier MUST take an argument
-#define OPTION_STRING "k:i:w:e:t:d"
+#define OPTION_STRING "k:i:w:e:t:"
 
 /*
 ============================
@@ -37,7 +37,6 @@ const struct option cmd_options[] = {{"private-key", required_argument, NULL, 'k
                                      {"identifier", required_argument, NULL, 'i'},
                                      {"environment", required_argument, NULL, 'e'},
                                      {"timeout", required_argument, NULL, 't'},
-                                     {"dbus-address", required_argument, NULL, 'd'},
                                      // these are standard for POSIX programs
                                      {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
                                      {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
@@ -69,7 +68,6 @@ int server_parse_args(whist_server_config* config, int argc, char* argv[]) {
         "                                  e.g production, staging, development. Default: none\n"
         "  -t, --timeout=TIME            Tell the server to give up after TIME seconds. If TIME\n"
         "                                  is -1, disable auto exit completely. Default: 60\n"
-        "  -d, --dbus-address=DBUS       Pass in the address where the D-Bus connection lives\n"
         // special options should be indented further to the left
         "      --help     Display this help and exit\n"
         "      --version  Output version information and exit\n";
@@ -119,15 +117,6 @@ int server_parse_args(whist_server_config* config, int argc, char* argv[]) {
                 if (sscanf(optarg, "%d", &config->begin_time_to_exit) != 1 ||
                     (config->begin_time_to_exit <= 0 && config->begin_time_to_exit != -1)) {
                     printf("Timeout should be a positive integer or -1\n");
-                }
-                break;
-            }
-            case 'd': {
-                printf("Got D-Bus address: %s\n", optarg);
-                if (!safe_strncpy(config->dbus_address, optarg, sizeof(config->dbus_address))) {
-                    printf("D-Bus address passed in is too long! Has length %lu but max is %d.\n",
-                           (unsigned long)strlen(optarg), DBUS_ADDRESS_MAXLEN);
-                    return -1;
                 }
                 break;
             }

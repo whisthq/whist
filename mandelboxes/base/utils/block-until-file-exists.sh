@@ -11,11 +11,11 @@ while read -r line; do
   echo "inotify event: $line"
   case $line in
     "Watches established.")
-      echo "inotify event: Checking if $FILE_NAME already exists in $DIR_NAME..."
-      [[ -f $DIR_NAME/$FILE_NAME ]] && echo "inotify event: $FILE_NAME exists!" && break
+      echo "Checking if $FILE_NAME already exists in $DIR_NAME..."
+      [[ -f $DIR_NAME/$FILE_NAME ]] && echo "Yes, it does!" && break
       ;;
     $FILE_NAME)
-      echo "inotify event: $FILE_NAME has been created!"
+      echo "$FILE_NAME has been created!"
       break
       ;;
   esac

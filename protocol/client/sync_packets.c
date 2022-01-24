@@ -20,7 +20,6 @@ Includes
 #include <whist/network/network.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/logging/logging.h>
-
 #include "handle_server_message.h"
 #include "network.h"
 #include "audio.h"
@@ -28,7 +27,6 @@ Includes
 #include "sync_packets.h"
 #include "client_utils.h"
 #include "client_statistic.h"
-#include "notifications.h"
 
 // Updater variables
 extern SocketContext packet_udp_context;
@@ -203,11 +201,6 @@ int multithreaded_sync_udp_packets(void* opaque) {
                 TIME_RUN(handle_server_message((WhistServerMessage*)packet->data,
                                                (size_t)packet->payload_size),
                          SERVER_HANDLE_MESSAGE_UDP, statistics_timer);
-                break;
-            }
-            case PACKET_NOTIFICATION: {
-                display_notification(packet);
-                log_double_statistic(NOTIFICATIONS_RECEIVED, 1.);
                 break;
             }
             default:

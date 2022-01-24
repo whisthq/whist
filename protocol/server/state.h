@@ -57,7 +57,6 @@ struct _whist_server_config {
     char hex_aes_private_key[33];
     char identifier[WHIST_IDENTIFIER_MAXLEN + 1];
     int begin_time_to_exit;
-    char dbus_address[DBUS_ADDRESS_MAXLEN + 1];
 };
 
 typedef struct _whist_server_config whist_server_config;
