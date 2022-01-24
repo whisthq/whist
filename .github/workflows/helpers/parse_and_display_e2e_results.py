@@ -28,9 +28,9 @@ for folder_name in os.listdir("./perf_logs"):
         logs_root_dir = os.path.join(logs_root_dir, folder_name)
         test_time = folder_name
         break
-    if logs_root_dir == "perf_logs":
-        print("Error: protocol logs not found!")
-        exit(-1)
+if logs_root_dir == "perf_logs":
+    print("Error: protocol logs not found!")
+    exit(-1)
 
 
 # Check if the log files with metrics are present
@@ -390,23 +390,6 @@ with redirect_stdout(results_file):
             new_entry.append(emoji_delta)
             server_table_entries.append(new_entry)
 
-        with open("debug_info.log", "w+") as debugfile:
-            debugfile.write("Dumping client_table_entries:\n")
-            for k in client_metrics2:
-                debugfile.write(str(client_metrics2[k]) + "\n")
-
-            debugfile.write("\n\nDumping dev_client_metrics2:\n")
-            for k in dev_client_metrics2:
-                debugfile.write(str(dev_client_metrics2[k]) + "\n")
-
-            debugfile.write("\n\nDumping server_metrics:\n")
-            for k in server_metrics2:
-                debugfile.write(str(server_metrics2[k]) + "\n")
-
-            debugfile.write("\n\nDumping dev_server_metrics2:\n")
-            for k in dev_server_metrics2:
-                debugfile.write(str(dev_server_metrics2[k]) + "\n")
-
         if len(client_metrics) == 0:
             print("NO CLIENT METRICS\n")
         else:
@@ -462,10 +445,6 @@ f = open("streaming_e2e_test_results.info", "r")
 body = f.read()
 f.close()
 
-f = open("debug_info.log", "r")
-body_debugging = f.read()
-f.close()
-
 
 # Display the results as a Github Gist
 from github import Github, InputFileContent
@@ -476,7 +455,6 @@ gist = gh_auth_user.create_gist(
     public=False,
     files={
         "performance_results.md": InputFileContent(body),
-        "debugging_info.txt": InputFileContent(body_debugging),
     },
     description=title,
 )
