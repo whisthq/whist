@@ -230,23 +230,6 @@ with redirect_stdout(results_file):
         writer.write_table()
     else:
 
-        with open("debug_info.log", "w+") as debugfile:
-            debugfile.write("Dumping client_metrics:\n")
-            for k in client_metrics2:
-                debugfile.write(str(client_metrics2[k]))
-
-            debugfile.write("\nDumping dev_client_metrics2:\n")
-            for k in dev_client_metrics2:
-                debugfile.write(str(dev_client_metrics2[k]))
-
-            debugfile.write("\nDumping server_metrics:\n")
-            for k in server_metrics2:
-                debugfile.write(str(server_metrics2[k]))
-
-            debugfile.write("\nDumping dev_server_metrics2:\n")
-            for k in dev_server_metrics2:
-                debugfile.write(str(dev_server_metrics2[k]))
-
         # Augment dictionaries with deltas wrt to dev, if available
         for k in client_metrics2:
             if k in dev_client_metrics2:
@@ -272,15 +255,6 @@ with redirect_stdout(results_file):
                     if server_metrics2[k]["delta"] >= 0.0001 and server_metrics2[k]["dev_avg"] != 0
                     else -1000
                 )
-
-        with open("debug_info.log", "a+") as debugfile:
-            debugfile.write("\nDumping client_metrics:\n")
-            for k in client_metrics2:
-                debugfile.write(str(client_metrics2[k]))
-
-            debugfile.write("\nDumping server_metrics:\n")
-            for k in server_metrics2:
-                debugfile.write(str(server_metrics2[k]))
 
         if len(client_metrics) == 0:
             print("NO CLIENT METRICS\n")
@@ -312,7 +286,7 @@ with redirect_stdout(results_file):
                         and "dev_std" in client_metrics2[k]
                         and client_metrics2[k]["entries"] > 1
                     )
-                    else client_metrics2[k]["avg"]
+                    else client_metrics2[k]["dev_avg"]
                     if ("dev_avg" in client_metrics2[k] and "dev_std" in client_metrics2[k])
                     else "N/A",
                     "{:.4f} ({:.4f}%)".format(
@@ -372,7 +346,7 @@ with redirect_stdout(results_file):
                         and "dev_std" in server_metrics2[k]
                         and server_metrics2[k]["entries"] > 1
                     )
-                    else server_metrics2[k]["avg"]
+                    else server_metrics2[k]["dev_avg"]
                     if ("dev_avg" in server_metrics2[k] and "dev_std" in server_metrics2[k])
                     else "N/A",
                     "{:.4f} ({:.4f}%)".format(
@@ -407,14 +381,10 @@ results_file.close()
 
 title = "Protocol End-to-End Streaming Test Results - {}".format(test_time)
 github_repo = "whisthq/whist"
-identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE"
+# Adding timestamp to prevent overwrite of message
+identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE - {}".format(test_time)
 f = open("streaming_e2e_test_results.info", "r")
 body = f.read()
-f.close()
-
-
-f = open("debug_info.log", "r")
-body_debugging = f.read()
 f.close()
 
 
@@ -427,7 +397,6 @@ gist = gh_auth_user.create_gist(
     public=False,
     files={
         "performance_results.md": InputFileContent(body),
-        "debugging_info.txt": InputFileContent(body_debugging),
     },
     description=title,
 )
