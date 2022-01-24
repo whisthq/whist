@@ -181,7 +181,7 @@ static void try_update_dimensions(CaptureDevice* device, uint32_t width, uint32_
     // This script must be built in to the Mandelbox. It writes new DPI for X11 and
     // AwesomeWM, and uses SIGHUP to XSettingsd to trigger application and window
     // manager refreshes to use the new DPI.
-    static uint32_t last_set_dpi = 96;
+    static uint32_t last_set_dpi = -1;
     if (dpi != last_set_dpi) {
         snprintf(cmd, sizeof(cmd), "/usr/share/whist/update-whist-dpi.sh %d", dpi);
         runcmd(cmd, NULL);

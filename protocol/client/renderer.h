@@ -46,7 +46,7 @@ Public Functions
  *
  * @returns                        The newly created whist renderer
  */
-WhistRenderer* init_renderer();
+WhistRenderer* init_renderer(int initial_width, int initial_height);
 
 /**
  * @brief                          Does any pending work the renderer

@@ -17,6 +17,7 @@ device via DestroyAudioDevice.
 
 #include "audiocapture.h"
 #include "alsacapture.h"
+#include <whist/core/whist.h>
 
 /*
 ============================
@@ -105,7 +106,7 @@ AudioDevice *create_audio_device(void) {
     }
 
     // set stream rate
-    audio_device->sample_rate = 48000;  // Hertz
+    audio_device->sample_rate = AUDIO_FREQUENCY;  // Hertz
     int dir = 0;
     res = snd_pcm_hw_params_set_rate_near(audio_device->handle, params, &audio_device->sample_rate,
                                           &dir);
