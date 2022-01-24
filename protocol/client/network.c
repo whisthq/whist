@@ -44,14 +44,11 @@ extern char *server_ip;
 int uid;
 extern bool using_stun;
 
-extern WhistTimer last_ping_timer;
-extern volatile int last_udp_ping_id;
-extern volatile int udp_ping_failures;
-extern volatile int last_udp_pong_id;
-
 extern WhistTimer last_tcp_ping_timer;
 extern volatile int last_tcp_ping_id;
 extern volatile int last_tcp_pong_id;
+
+volatile bool connected = false;
 
 #define TCP_CONNECTION_WAIT 300  // ms
 #define UDP_CONNECTION_WAIT 300  // ms
@@ -105,7 +102,8 @@ int discover_ports(bool *with_stun) {
 
     prepare_init_to_server(&wcmsg.discoveryRequest, user_email);
 
-    if (send_packet(&context, PACKET_MESSAGE, (uint8_t *)&wcmsg, (int)sizeof(wcmsg), -1, false) < 0) {
+    if (send_packet(&context, PACKET_MESSAGE, (uint8_t *)&wcmsg, (int)sizeof(wcmsg), -1, false) <
+        0) {
         LOG_ERROR("Failed to send discovery request message.");
         destroy_socket_context(&context);
         return -1;
@@ -265,8 +263,8 @@ int send_tcp_reconnect_message() {
         return -1;
     }
 
-    if (send_packet(&discovery_context, PACKET_MESSAGE, (uint8_t *)&wcmsg, (int)sizeof(wcmsg), -1, false) <
-        0) {
+    if (send_packet(&discovery_context, PACKET_MESSAGE, (uint8_t *)&wcmsg, (int)sizeof(wcmsg), -1,
+                    false) < 0) {
         LOG_ERROR("Failed to send discovery request message.");
         destroy_socket_context(&discovery_context);
         return -1;
@@ -349,6 +347,10 @@ int send_wcmsg(WhistClientMessage *wcmsg) {
     wcmsg->id = wcmsg_id;
     wcmsg_id++;
 
+    if (!connected) {
+        return -1;
+    }
+
     // Please be careful when editing this list!
     // Please ask the maintainers of each CMESSAGE_ type
     // before adding/removing from this list
@@ -365,6 +367,7 @@ int send_wcmsg(WhistClientMessage *wcmsg) {
         static int sent_packet_id = 0;
         sent_packet_id++;
 
-        return send_packet(&packet_udp_context, PACKET_MESSAGE, wcmsg, wcmsg_size, sent_packet_id, false);
+        return send_packet(&packet_udp_context, PACKET_MESSAGE, wcmsg, wcmsg_size, sent_packet_id,
+                           false);
     }
 }

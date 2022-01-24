@@ -62,7 +62,8 @@ bool socket_update(SocketContext* context) {
 int send_packet(SocketContext* context, WhistPacketType packet_type, void* payload,
                 int payload_size, int packet_id, bool start_of_stream) {
     FATAL_ASSERT(context != NULL);
-    return context->send_packet(context->context, packet_type, payload, payload_size, packet_id, start_of_stream);
+    return context->send_packet(context->context, packet_type, payload, payload_size, packet_id,
+                                start_of_stream);
 }
 
 void* get_packet(SocketContext* context, WhistPacketType type) {
@@ -337,8 +338,8 @@ bool handshake_private_key(SOCKET socket, int connection_timeout_ms, const void*
     int cnt = 0;
     slen = sizeof(received_addr);
     while ((recv_size = recvfrom_no_intr(socket, (char*)&their_priv_key_data,
-                                         sizeof(their_priv_key_data), 0,
-                                         &received_addr, &slen)) == 0) {
+                                         sizeof(their_priv_key_data), 0, &received_addr, &slen)) ==
+           0) {
         if (cnt >= 3)  // we are (very likely) getting a dead loop casued by stream socket closed
         {              // the loop should be okay to be removed, just kept for debugging.
             return false;
@@ -357,8 +358,7 @@ bool handshake_private_key(SOCKET socket, int connection_timeout_ms, const void*
         LOG_ERROR("signPrivateKey failed!");
         return false;
     }
-    if (send(socket, (const char*)&their_priv_key_data, sizeof(their_priv_key_data), 0) <
-        0) {
+    if (send(socket, (const char*)&their_priv_key_data, sizeof(their_priv_key_data), 0) < 0) {
         LOG_ERROR("send(3) failed! Could not send signed private key data! %d",
                   get_last_network_error());
         return false;
@@ -367,7 +367,7 @@ bool handshake_private_key(SOCKET socket, int connection_timeout_ms, const void*
     // Wait for and verify their signed private key request data
     slen = sizeof(received_addr);
     recv_size = recvfrom_no_intr(socket, (char*)&our_signed_priv_key_data,
-                             sizeof(our_signed_priv_key_data), 0, &received_addr, &slen);
+                                 sizeof(our_signed_priv_key_data), 0, &received_addr, &slen);
     if (recv_size < 0) {
         LOG_WARNING("Did not receive our signed private key request: %d", get_last_network_error());
         return false;
@@ -381,7 +381,7 @@ bool handshake_private_key(SOCKET socket, int connection_timeout_ms, const void*
     }
 }
 
-#if !defined(_WIN32)
+#ifndef _WIN32
 // Receive implementations avoiding EINTR.
 
 // Note that this get_timeout() implementation will not work on Windows
@@ -413,11 +413,12 @@ static int get_timeout(SOCKET socket) {
     else
         return read_timeout.tv_sec * MS_IN_SECOND + read_timeout.tv_usec / US_IN_MS;
 }
+#endif
 
-ssize_t recv_no_intr(int sockfd, void* buf, size_t len, int flags) {
+int recv_no_intr(SOCKET sockfd, void* buf, size_t len, int flags) {
 #ifdef _WIN32
     // EINTR doesn't happen on windows, so just use the system call
-    return recv(s, buf, len, flags);
+    return recv(sockfd, buf, (int)len, flags);
 #else
     ssize_t ret;
     bool got_timeout = false;
@@ -479,11 +480,11 @@ ssize_t recv_no_intr(int sockfd, void* buf, size_t len, int flags) {
 
 // This is identical to the previous function except for the recv() call.
 // Any changes should be kept in sync between them.
-ssize_t recvfrom_no_intr(int sockfd, void* buf, size_t len, int flags, struct sockaddr* src_addr,
-                         socklen_t* addrlen) {
+int recvfrom_no_intr(SOCKET sockfd, void* buf, size_t len, int flags, struct sockaddr* src_addr,
+                     socklen_t* addrlen) {
 #ifdef _WIN32
     // EINTR doesn't happen on windows, so just use the system call
-    return recvfrom(s, buf, len, flags, from, fromlen);
+    return recvfrom(sockfd, buf, (int)len, flags, src_addr, addrlen);
 #else
     ssize_t ret;
     bool got_timeout = false;
@@ -542,7 +543,6 @@ ssize_t recvfrom_no_intr(int sockfd, void* buf, size_t len, int flags, struct so
     }
 #endif
 }
-#endif
 
 /*
 ============================

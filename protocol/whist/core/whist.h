@@ -678,7 +678,7 @@ typedef struct WhistClientMessage {
             int height;
             int dpi;
         } dimensions;
-        
+
         // MESSAGE_TCP_PING
         struct {
             int id;

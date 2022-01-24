@@ -31,7 +31,8 @@ Includes
 // Updater variables
 extern SocketContext packet_udp_context;
 extern SocketContext packet_tcp_context;
-volatile bool connected = true;  // The state of the client, i.e. whether it's connected to a server or not
+extern volatile bool
+    connected;  // The state of the client, i.e. whether it's connected to a server or not
 // TCP ping variables
 WhistTimer last_tcp_ping_timer;
 volatile int last_tcp_ping_id;
@@ -115,7 +116,7 @@ int multithreaded_sync_udp_packets(void* opaque) {
     latency = 25.0 / MS_IN_SECOND;
 
     WhistTimer statistics_timer;
-    
+
     // For now, manually make ring buffers for audio and video
     // TODO: Make udp.c do this automatically
     // The magic numbers will be handled later
@@ -132,18 +133,21 @@ int multithreaded_sync_udp_packets(void* opaque) {
         // Handle any messages we've received
         WhistPacket* message_packet = (WhistPacket*)get_packet(udp_context, PACKET_MESSAGE);
         if (message_packet) {
-            handle_server_message((WhistServerMessage*)message_packet->data, message_packet->payload_size);
+            handle_server_message((WhistServerMessage*)message_packet->data,
+                                  message_packet->payload_size);
             free_packet(udp_context, message_packet);
         }
 
         // Loop over both VIDEO and AUDIO
         WhistPacketType video_audio_types[2] = {PACKET_VIDEO, PACKET_AUDIO};
-        for(int i = 0; i < 2; i++) {
+        for (int i = 0; i < 2; i++) {
             WhistPacketType packet_type = video_audio_types[i];
             // If the renderer wants the frame of that type,
             // Knowing how many frames are pending a render...
-            if (renderer_wants_frame(whist_renderer, packet_type, udp_get_num_pending_frames(udp_context, packet_type))) {
-                // If the renderer wants a new frame, it must be done with the old frame, so we can free it now
+            if (renderer_wants_frame(whist_renderer, packet_type,
+                                     udp_get_num_pending_frames(udp_context, packet_type))) {
+                // If the renderer wants a new frame, it must be done with the old frame, so we can
+                // free it now
                 // TODO: Make the renderer memcpy so this logic don't have to be weird
                 if (last_whist_packet[packet_type] != NULL) {
                     free_packet(udp_context, last_whist_packet[packet_type]);
@@ -266,8 +270,8 @@ int multithreaded_sync_tcp_packets(void* opaque) {
 
         successful_read_or_pull = false;
 
-        TIME_RUN(WhistPacket* packet = get_packet(tcp_context, PACKET_MESSAGE), NETWORK_READ_PACKET_TCP,
-                 statistics_timer);
+        TIME_RUN(WhistPacket* packet = get_packet(tcp_context, PACKET_MESSAGE),
+                 NETWORK_READ_PACKET_TCP, statistics_timer);
 
         if (packet) {
             TIME_RUN(handle_server_message((WhistServerMessage*)packet->data,

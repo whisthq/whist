@@ -35,29 +35,26 @@ Defines
 // Verbose audio logs
 #define LOG_AUDIO false
 
-// Used to prevent audio from playing before video has played
-extern bool has_video_rendered_yet;
-
+// TODO: Automatically deduce this from (ms_per_frame / MS_IN_SECOND) * audio_frequency
+// TODO: Add ms_per_frame to AudioFrame*
 #define SAMPLES_PER_FRAME 480
 #define BYTES_PER_SAMPLE 4
 #define NUM_CHANNELS 2
 #define DECODED_BYTES_PER_FRAME (SAMPLES_PER_FRAME * BYTES_PER_SAMPLE * NUM_CHANNELS)
 
-// Audio frames in the audio ringbuffer
+// Number of audio frames that must pass before we skip ahead
+// NOTE: Catching up logic is in udp.c, but has to be moved out in a future PR
+//       See udp.c's MAX_NUM_AUDIO_FRAMES when changing the value
 #define MAX_NUM_AUDIO_FRAMES 8
 
 // system audio queue + our buffer limits, in number of frames and decompressed bytes
+// TODO: Make these limits into "ms"
 #define AUDIO_QUEUE_LOWER_LIMIT_FRAMES 1
 #define AUDIO_QUEUE_UPPER_LIMIT_FRAMES MAX_NUM_AUDIO_FRAMES
 #define TARGET_AUDIO_QUEUE_LIMIT_FRAMES 5
 #define AUDIO_QUEUE_LOWER_LIMIT (AUDIO_QUEUE_LOWER_LIMIT_FRAMES * DECODED_BYTES_PER_FRAME)
 #define AUDIO_QUEUE_UPPER_LIMIT (AUDIO_QUEUE_UPPER_LIMIT_FRAMES * DECODED_BYTES_PER_FRAME)
 #define TARGET_AUDIO_QUEUE_LIMIT (TARGET_AUDIO_QUEUE_LIMIT_FRAMES * DECODED_BYTES_PER_FRAME)
-
-#define SDL_AUDIO_BUFFER_SIZE SAMPLES_PER_FRAME
-
-// Maximum valid audio frequency
-#define MAX_FREQ 128000
 
 /*
 ============================
@@ -99,7 +96,7 @@ Private Functions
  *                                 They must not already exist.
  *
  * @param audio_context            The audio context to use
- * 
+ *
  * @note                           On failure, audio_context->dev will remain 0,
  *                                 and audio_context->audio_decoder will remain NULL.
  */
@@ -111,14 +108,14 @@ static void init_audio_device(AudioContext* audio_context);
  *                                 if they exist.
  *
  * @param audio_context            The audio context to use
- * 
+ *
  * @note                           If SDL audio device / ffmpeg have not been initialized,
  *                                 this function will simply do nothing
  */
 static void destroy_audio_device(AudioContext* audio_context);
 
 /**
- * @brief                          Checks if the system queue is overflowing 
+ * @brief                          Checks if the system queue is overflowing
  *
  * @returns                        If True, we can receive more audio frames,
  *                                 but they will just be discarded.
@@ -191,8 +188,8 @@ void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
         // give data pointer to the audio context
         audio_context->render_context = audio_frame;
         // increment last_rendered_id
-        // LOG_DEBUG("received packet with ID %d, audio last played %d", packet->id, audio_context->last_played_id);
-        // signal to the renderer that we're ready
+        // LOG_DEBUG("received packet with ID %d, audio last played %d", packet->id,
+        // audio_context->last_played_id); signal to the renderer that we're ready
         audio_context->pending_render_context = true;
     } else {
         LOG_ERROR("We tried to send the audio context a frame when it wasn't ready!");
@@ -230,7 +227,7 @@ void render_audio(AudioContext* audio_context) {
         if (audio_context->dev != 0) {
             // Send the encoded frame to the decoder
             if (audio_decoder_send_packets(audio_context->audio_decoder, audio_frame->data,
-                                        audio_frame->data_length) < 0) {
+                                           audio_frame->data_length) < 0) {
                 LOG_FATAL("Failed to send packets to decoder!");
             }
 
@@ -245,9 +242,9 @@ void render_audio(AudioContext* audio_context) {
                     audio_decoder_packet_readout(audio_context->audio_decoder, decoded_data);
 
                     // Queue the decoded_data into the audio device
-                    res =
-                        SDL_QueueAudio(audio_context->dev, decoded_data,
-                                    audio_decoder_get_frame_data_size(audio_context->audio_decoder));
+                    res = SDL_QueueAudio(
+                        audio_context->dev, decoded_data,
+                        audio_decoder_get_frame_data_size(audio_context->audio_decoder));
 
                     if (res < 0) {
                         LOG_WARNING("Could not play audio!");
@@ -277,28 +274,23 @@ static void init_audio_device(AudioContext* audio_context) {
     FATAL_ASSERT(audio_context->audio_decoder == NULL);
 
     // Initialize the SDL audio device
-    SDL_AudioSpec wanted_spec = {0}, audio_spec = {0};
+    SDL_AudioSpec wanted_spec = {0}, actual_spec = {0};
 
+    // See https://wiki.libsdl.org/SDL_OpenAudioDevice
     SDL_zero(wanted_spec);
-    SDL_zero(audio_spec);
-    wanted_spec.channels = 2;
+    SDL_zero(actual_spec);
     wanted_spec.freq = audio_context->audio_frequency;
+    wanted_spec.channels = 2;
     wanted_spec.format = AUDIO_F32SYS;
-    wanted_spec.silence = 0;
-    wanted_spec.samples = SDL_AUDIO_BUFFER_SIZE;
+    wanted_spec.callback = NULL;
+    wanted_spec.userdata = NULL;
+    // Unknown Meaning, so we give it a power of 2 like the docs ask
+    wanted_spec.samples = 512;
 
-    audio_context->dev =
-        SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &audio_spec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
+    audio_context->dev = SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &actual_spec, 0);
     if (audio_context->dev == 0) {
         LOG_ERROR("Failed to open audio: %s", SDL_GetError());
         return;
-    }
-
-    if (wanted_spec.freq != audio_spec.freq) {
-        LOG_ERROR("Got Frequency %d, But Wanted Frequency %d...", audio_spec.freq,
-                  wanted_spec.freq);
-    } else {
-        LOG_INFO("Using Audio Freqency: %d", audio_spec.freq);
     }
 
     // Unpause the audio device, to allow playing
@@ -351,7 +343,8 @@ bool is_overflowing_audio(AudioContext* audio_context) {
 }
 
 bool is_underflowing_audio(AudioContext* audio_context, int num_frames_buffered) {
-    int buffered_bytes = safe_get_audio_queue(audio_context) + num_frames_buffered * DECODED_BYTES_PER_FRAME;
+    int buffered_bytes =
+        safe_get_audio_queue(audio_context) + num_frames_buffered * DECODED_BYTES_PER_FRAME;
 
     // Check if we're underflowing the audio buffer
     if (!audio_context->is_buffering_audio && buffered_bytes < AUDIO_QUEUE_LOWER_LIMIT) {
@@ -368,5 +361,6 @@ bool is_underflowing_audio(AudioContext* audio_context, int num_frames_buffered)
 }
 
 bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered) {
-    return !audio_context->pending_render_context && !is_underflowing_audio(audio_context, num_frames_buffered);
+    return !audio_context->pending_render_context &&
+           !is_underflowing_audio(audio_context, num_frames_buffered);
 }

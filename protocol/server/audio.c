@@ -146,7 +146,8 @@ int32_t multithreaded_send_audio(void* opaque) {
                                 //                                 (BITS_IN_BYTE * Sampling freq)
                                 //                               = (480 * 128000) / (8 * 48000)
                                 //                               = 160 bytes only
-                                udp_resend_packet(&state->client.udp_context, PACKET_AUDIO, id - i, 0);
+                                udp_resend_packet(&state->client.udp_context, PACKET_AUDIO, id - i,
+                                                  0);
                             }
                             id++;
                         }

@@ -28,14 +28,11 @@ Globals
 ============================
 */
 
-static WhistMutex packet_mutex;
-
-// This variable should always be an array - we call sizeof()
 // TODO: Remove ugly global state
 whist_server_state server_state;
 
-// TODO: Remove connected
-volatile bool connected;
+// TODO: Remove, needed by udp.c temporarily
+volatile bool connected = false;
 
 /*
 ============================
@@ -577,8 +574,6 @@ int main(int argc, char* argv[]) {
     whist_wait_thread(send_audio_thread, NULL);
     whist_wait_thread(sync_tcp_packets_thread, NULL);
     whist_wait_thread(manage_clients_thread, NULL);
-
-    whist_destroy_mutex(packet_mutex);
 
     // This is safe to call here because all other threads have been waited and destroyed
     if (quit_client(&server_state.client) != 0) {

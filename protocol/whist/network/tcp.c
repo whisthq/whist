@@ -24,6 +24,10 @@ Defines
 ============================
 */
 
+// Create a hard-cap on the size of a TCP Packet,
+// Currently set to the "large enough" 1GB
+#define MAX_TCP_PAYLOAD 1000000000
+
 // A TCPPacket that gets sent over the network
 typedef struct {
     AESMetadata aes_metadata;
@@ -107,7 +111,7 @@ int create_tcp_client_context(TCPContext* context, char* destination, int port,
  * @brief                          Sends a fully constructed WhistPacket
  *
  * @param context                  The TCP Context
- * 
+ *
  * @param packet                   The packet to send
  *
  * @returns                        Will return -1 on failure, and 0 on success
@@ -174,7 +178,8 @@ bool tcp_update(void* raw_context) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, int len, int id, bool start_of_stream) {
+int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, int len, int id,
+                    bool start_of_stream) {
     TCPContext* context = raw_context;
     UNUSED(start_of_stream);
 
@@ -209,7 +214,7 @@ int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, int len
 void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
     TCPContext* context = raw_context;
 
-    if (get_timer(&context->last_recvp) < RECV_INTERVAL_MS / (double)MS_IN_SECOND) {
+    if (get_timer(&context->last_recvp) * MS_IN_SECOND < RECV_INTERVAL_MS) {
         // Return early if it's been too soon since the last recv
         return NULL;
     }
@@ -246,14 +251,22 @@ void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
         // then try pulling some more from recv
     };
 
-    // If we haven't decoded a packet,
-    // and we have enough bytes to read another TCPPacket header...
+    // If we have enough bytes to read a TCPPacket header,
     if ((unsigned long)context->reading_packet_len >= sizeof(TCPPacket)) {
         // Get a pointer to the tcp_packet
         TCPPacket* tcp_packet = (TCPPacket*)encrypted_tcp_packet_buffer->buf;
 
-        // TODO: An untrusted party could make tcp_packet->payload_size so large that it overflows
-        // This should be fixed
+        // An untrusted party could've injected bytes, so we ensure payload_size is valid and won't
+        // overflow
+        if (tcp_packet->payload_size < 0 || MAX_TCP_PAYLOAD < tcp_packet->payload_size) {
+            // Reset the connection and try reading bytes again
+            context->reading_packet_len = 0;
+            resize_dynamic_buffer(encrypted_tcp_packet_buffer, 0);
+            LOG_WARNING("Could not parse packet: %d", tcp_packet->payload_size);
+            return NULL;
+        }
+
+        // Now that we know get_tcp_packet_size will be a reasonable number, so we calculate it
         int tcp_packet_size = get_tcp_packet_size(tcp_packet);
 
         // If the target len is valid (Checking because this is an untrusted network),
@@ -306,7 +319,8 @@ void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
                     return whist_packet;
                 } else {
                     deallocate_region(whist_packet);
-                    LOG_ERROR("Got a TCP whist packet of type that didn't match %d! %d", (int)packet_type, (int)whist_packet->type);
+                    LOG_ERROR("Got a TCP whist packet of type that didn't match %d! %d",
+                              (int)packet_type, (int)whist_packet->type);
                     return NULL;
                 }
             }
@@ -473,8 +487,7 @@ Private Function Implementations
 ============================
 */
 
-int create_tcp_server_context(TCPContext* context, int port,
-                              int connection_timeout_ms) {
+int create_tcp_server_context(TCPContext* context, int port, int connection_timeout_ms) {
     FATAL_ASSERT(context != NULL);
 
     fd_set fd_read, fd_write;
@@ -511,14 +524,15 @@ int create_tcp_server_context(TCPContext* context, int port,
     context->socket = new_socket;
 
     // Handshake
-    if (!handshake_private_key(context->socket, connection_timeout_ms, context->binary_aes_private_key)) {
+    if (!handshake_private_key(context->socket, connection_timeout_ms,
+                               context->binary_aes_private_key)) {
         LOG_WARNING("Could not complete handshake!");
         closesocket(context->socket);
         return -1;
     }
 
-    LOG_INFO("Client received on %d from %s:%d over TCP!\n", port, inet_ntoa(context->addr.sin_addr),
-             ntohs(context->addr.sin_port));
+    LOG_INFO("Client received on %d from %s:%d over TCP!\n", port,
+             inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
     return 0;
 }
@@ -549,7 +563,8 @@ int create_tcp_client_context(TCPContext* context, char* destination, int port,
     }
 
     // Handshake
-    if (!handshake_private_key(context->socket, connection_timeout_ms, context->binary_aes_private_key)) {
+    if (!handshake_private_key(context->socket, connection_timeout_ms,
+                               context->binary_aes_private_key)) {
         LOG_WARNING("Could not complete handshake!");
         closesocket(context->socket);
         return -1;
@@ -559,7 +574,6 @@ int create_tcp_client_context(TCPContext* context, char* destination, int port,
 
     return 0;
 }
-
 
 int tcp_send_constructed_packet(TCPContext* context, WhistPacket* packet) {
     int packet_size = get_packet_size(packet);

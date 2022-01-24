@@ -69,17 +69,18 @@ void renderer_update(WhistRenderer* renderer);
  * @param renderer                 The renderer context to give a packet to
  *
  * @param packet_type              The type of packet that the renderer may or may not want
- * 
+ *
  * @param num_buffered_frames      The number of frames of type packet_type,
  *                                 that are waiting in the network buffer
  *
  * @returns                        True if the renderer wants a frame of that type,
  *                                 False otherwise
- * 
+ *
  * @note                           This function is guaranteed to return virtually instantly.
  *                                 It may be used in any hotpaths.
  */
-bool renderer_wants_frame(WhistRenderer* renderer, WhistPacketType packet_type, int num_buffered_frames);
+bool renderer_wants_frame(WhistRenderer* renderer, WhistPacketType packet_type,
+                          int num_buffered_frames);
 
 /**
  * @brief                          Receive video or audio frame
@@ -87,18 +88,19 @@ bool renderer_wants_frame(WhistRenderer* renderer, WhistPacketType packet_type, 
  * @param renderer                 The renderer context to give a frame to
  *
  * @param packet_type              Packet type, either Video or Audio
- * 
+ *
  * @param frame                    The VideoFrame* / AudioFrame*
  *
  * @note                           This function is guaranteed to return virtually instantly.
  *                                 It may be used in any hotpaths.
- * 
+ *
  * @note                           The whist_renderer needs you to keep the data in frame
  *                                 alive, until renderer_wants_frame later returns True,
- *                                 since that implies it's done with the old packet and wants a new one
+ *                                 since that implies it's done with the old packet and wants a new
+ * one
  *                                 TODO: Use a memcpy to simplify this logic
  */
-void renderer_receive_frame(WhistRenderer* whist_renderer, WhistPacketType packet_type, void* frame);
+void renderer_receive_frame(WhistRenderer* renderer, WhistPacketType packet_type, void* frame);
 
 /**
  * @brief                          Render the video/audio frames (If any are available to render)

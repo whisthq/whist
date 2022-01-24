@@ -108,40 +108,48 @@ Questionable Public Functions, potentially try to remove in future organizations
 ============================
 */
 
+// TODO: There's some weird global state-type stuff happening here
+// This should be removed, something weird and confusing is happening here
 /**
  * @brief Creates a udp listen socket, that can be used in SocketContext
  *
  * @param sock                      The socket that will be initialized
  * @param port                      The port to listen on
  * @param timeout_ms                The timeout for socket
- * @return                          0 on success, otherwise failure.
+ *
+ * @returns                         0 on success, otherwise failure.
  */
-// TODO: There's some weird global state-type stuff happening here
-// This should be removed, something weird and confusing is happening here
 int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms);
 
 /**
- * @brief       Get the number of consecutive fully received frames of the given type available.
- *              Use this to figure out how many frames are pending to render
+ * @brief                          Get the number of consecutive fully received frames of
+ *                                 the given type are available
+ *                                 Use this to figure out how many frames are pending to render
  *
- * @param type  The type of frames to query for
+ * @param context                  The UDP Socket Context
+ * @param type                     The type of frames to query for
+ *
+ * @returns                        The number of pending frames of that type
  */
 int udp_get_num_pending_frames(SocketContext* context, WhistPacketType type);
 
 // TODO: Is needed for audio.c redundancy, but should be pulled into udp.c somehow
 void udp_resend_packet(SocketContext* socket_context, WhistPacketType type, int id, int index);
 
+// TODO: Try to remove by making the client detect a nack buffer
 /**
- * @brief                          Registers a ring buffer to reconstruct WhistPackets that can be split into smaller WhistPackets, e.g. video frames. This will hold up to num_buffer IDs for the given type.
- *                                 NOTE: This function is not thread-safe on SocketContext
+ * @brief                          Registers a ring buffer to reconstruct WhistPackets
+ *                                 that can be split into smaller WhistPackets
  *
  * @param context                  The SocketContext that will have a ring buffer
  * @param type                     The WhistPacketType that this ring buffer will be used for
  * @param max_frame_size           The largest frame that can be saved in the ring buffer
  * @param num_buffers              The number of frames that will be stored in the ring buffer
+ *
+ * @note                           This function is not thread-safe on SocketContext
  */
-// TODO: Try to remove by making the client detect a nack buffer
-void udp_register_ring_buffer(SocketContext* context, WhistPacketType type, int max_frame_size, int num_buffers);
+void udp_register_ring_buffer(SocketContext* context, WhistPacketType type, int max_frame_size,
+                              int num_buffers);
 
 // TODO: Move to network.h, and make it more generic (E.g., "avg bitrate" / "fec ratio")
 NetworkSettings udp_get_network_settings(SocketContext* context);

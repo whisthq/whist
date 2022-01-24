@@ -34,7 +34,7 @@ Defines
  * @details This is used to handle reconstruction of encoded frames from UDP packets. It contains
  * metadata to keep track of what packets we have received and nacked for, as well as a buffer for
  * holding the concatenated UDP packets.
- * 
+ *
  * TODO: Pull this into RingBuffer.c, and stop exposing it to the client
  */
 typedef struct FrameData {
@@ -70,8 +70,10 @@ typedef struct FrameData {
 } FrameData;
 
 // Handler that gets called when the ring buffer wants to nack for a packet
-typedef void (*NackPacketFn)(SocketContext* socket_context, WhistPacketType frame_type, int id, int index);
-typedef void (*StreamResetFn)(SocketContext* socket_context, WhistPacketType frame_type, int last_failed_id);
+typedef void (*NackPacketFn)(SocketContext* socket_context, WhistPacketType frame_type, int id,
+                             int index);
+typedef void (*StreamResetFn)(SocketContext* socket_context, WhistPacketType frame_type,
+                              int last_failed_id);
 
 /**
  * @brief	RingBuffer struct for abstracting away frame reconstruction and frame retrieval.
@@ -129,23 +131,30 @@ Public Functions
 */
 
 /**
- * @brief Initializes a ring buffer of the specified size and type.
+ * @brief                           Initializes a ring buffer of the specified size and type.
  *
- * @param type Either an audio or video ring buffer.
+ * @param type                      Either an audio or video ring buffer.
  *
- * @param ring_buffer_size The desired size of the ring buffer
- * 
- * @param socket_context A temporary parameter to call the lambda functions without std::bind
+ * @param max_frame_size            The largest a frame can get
  *
- * @param nack_packet A lambda function that will be called when the ring buffer wants to nack.
- *                    NULL will disable nacking.
- * 
- * @param request_stream_reset A temporary lambda function to make the refactor work
+ * @param ring_buffer_size          The desired size of the ring buffer
  *
- * @returns A pointer to the newly created ring buffer. All frames in the new ring buffer have ID
- * -1.
+ * @param socket_context            A temporary parameter to call the lambda functions
+ *                                  without std::bind
+ *                                  TODO: Remove
+ *
+ * @param nack_packet               A lambda function that will be called when the ring buffer
+ *                                  wants to nack for something. NULL will disable nacking.
+ *
+ * @param request_stream_reset      A temporary lambda function to make the refactor work
+ *                                  NULL to disable
+ *                                  TODO: Remove
+ *
+ * @returns                         A pointer to the newly created and now empty ring buffer
  */
-RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_buffer_size, SocketContext* socket_context, NackPacketFn nack_packet, StreamResetFn request_stream_reset);
+RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_buffer_size,
+                             SocketContext* socket_context, NackPacketFn nack_packet,
+                             StreamResetFn request_stream_reset);
 
 /**
  * @brief Add a packet to the ring buffer, and initialize the corresponding frame if necessary. Also
@@ -156,7 +165,7 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
  * @param segment The segment of an audio or video WhistPacket
  *
  * @returns 0 on success, -1 on failure
- * 
+ *
  * TODO: Remove returning 1 when overwriting a valid frame
  * (int): 1 if we overwrote a valid frame, 0 on success, -1 on failure
  */
@@ -204,16 +213,18 @@ FrameData* set_rendering(RingBuffer* ring_buffer, int id);
 /**
  * @brief                          Skip the ring buffer to ID id,
  *                                 dropping all packets prior to that id
- * 
+ *
+ * @param ring_buffer              Ring buffer to use
  * @param id                       The ID to skip to
  */
 void reset_stream(RingBuffer* ring_buffer, int id);
 
 /**
  * @brief                          Try nacking or requesting a stream reset
- * 
- * @param id                       The latency, used in figuring out when to nack / stream reset
- * 
+ *
+ * @param ring_buffer              Ring buffer to use
+ * @param latency                  The latency, used in figuring out when to nack / stream reset
+ *
  * @note                           This will call the lambda nack_packet and request_stream_reset
  *                                 TODO: Just make this return an array of nacked packets,
  *                                       or a stream reset request with last failed ID
@@ -222,9 +233,9 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
 
 /**
  * @brief                         Get network statistics from the ringbuffer
- * 
+ *
  * @param ring_buffer             The ringbuffer to get network statistics from
- * 
+ *
  * @note                          Statistics will be taken from the time between the current time,
  *                                and the last call to get_network_statistics
  *                                (Or, from init_ring_buffer, on the first call)

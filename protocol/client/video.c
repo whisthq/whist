@@ -181,7 +181,7 @@ void receive_video(VideoContext* video_context, VideoFrame* video_frame) {
     if (!video_context->pending_render_context) {
         // Send a frame to the renderer,
         // then set video_context->pending_render_context to true to signal readiness
-        
+
         // give data pointer to the video context
         video_context->render_context = video_frame;
         log_double_statistic(VIDEO_FPS_RENDERED, 1.0);
@@ -504,6 +504,4 @@ int32_t multithreaded_destroy_decoder(void* opaque) {
     return 0;
 }
 
-bool video_ready_for_frame(VideoContext* context) {
-    return !context->pending_render_context;
-}
+bool video_ready_for_frame(VideoContext* context) { return !context->pending_render_context; }

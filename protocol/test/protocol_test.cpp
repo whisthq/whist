@@ -231,9 +231,6 @@ TEST_F(ProtocolTest, InitSDL) {
                 adjusted_height);
         check_stdout_line(::testing::HasSubstr(buffer));
 
-        check_stdout_line(
-            ::testing::HasSubstr("The given SocketContext has not been initialized!"));
-
         sdl_utils_check_private_vars(&pending_resize_message, NULL, NULL, NULL, NULL, NULL, NULL,
                                      NULL);
         EXPECT_TRUE(pending_resize_message);

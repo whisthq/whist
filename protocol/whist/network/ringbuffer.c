@@ -30,6 +30,7 @@ Private Function Declarations
 /**
  * @brief                          Initialize the frame with the given parameters
  *
+ * @param ring_buffer              Ring buffer containing the frame
  * @param id                       The ID of the frame to initialize
  * @param num_original_indices     The number of original indices
  * @param num_fec_indices          The number of FEC indices
@@ -37,16 +38,17 @@ Private Function Declarations
 void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int num_fec_indices);
 
 /**
- * @brief                          Reset the given frame, freeing all of its data
+ * @brief                          Reset the given frame, freeing all of its data,
+ *                                 and marking it as freed
  *
- * @param ring_buffer              Ring buffer containing the frame.
- * @param frame_data               Frame to free from the ring buffer.
+ * @param ring_buffer              Ring buffer containing the frame
+ * @param frame_data               Frame to reset from the ring buffer
  */
 static void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data);
 
 /**
  * @brief                         Reset the ringbuffer to be identical to a
- *                                newly initialized ringbuffer
+ *                                newly initialized ringbuffer, with all frames freed
  *
  * @param ring_buffer             Ring buffer to reset
  */
@@ -97,7 +99,9 @@ Public Function Implementations
 ============================
 */
 
-RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_buffer_size, SocketContext* socket_context, NackPacketFn nack_packet, StreamResetFn request_stream_reset) {
+RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_buffer_size,
+                             SocketContext* socket_context, NackPacketFn nack_packet,
+                             StreamResetFn request_stream_reset) {
     /*
         Initialize the ring buffer; malloc space for all the frames and set their IDs to -1.
 
@@ -126,8 +130,8 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
         frame_data->id = -1;
     }
 
-    // determine largest frame size
-    ring_buffer->largest_frame_size = max_frame_size;
+    // determine largest frame size, including the WhistPacket header
+    ring_buffer->largest_frame_size = sizeof(WhistPacket) - MAX_PAYLOAD_SIZE + max_frame_size;
 
     ring_buffer->packet_buffer_allocator = create_block_allocator(ring_buffer->largest_frame_size);
     ring_buffer->currently_rendering_id = -1;
@@ -223,8 +227,7 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
 
     // Verify that the packet metadata matches frame_data metadata
     FATAL_ASSERT(frame_data->num_fec_packets == num_fec_indices);
-    FATAL_ASSERT(frame_data->num_original_packets + frame_data->num_fec_packets ==
-                 num_indices);
+    FATAL_ASSERT(frame_data->num_original_packets + frame_data->num_fec_packets == num_indices);
 
     // LOG the the nacking situation
     if (segment->is_a_nack) {
@@ -249,8 +252,7 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
     // If we have already received this packet anyway, just drop this packet
     if (frame_data->received_indices[segment_index]) {
         // The only way it should possible to receive a packet twice, is if nacking got involved
-        if (type == PACKET_VIDEO &&
-            frame_data->num_times_index_nacked[segment_index] == 0) {
+        if (type == PACKET_VIDEO && frame_data->num_times_index_nacked[segment_index] == 0) {
             LOG_ERROR(
                 "We received a video packet (ID %d / index %d) twice, but we had never nacked for "
                 "it?",
@@ -291,8 +293,7 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
     if (frame_data->num_fec_packets > 0 && !frame_data->successful_fec_recovery) {
         // Register this packet into the FEC decoder
         fec_decoder_register_buffer(frame_data->fec_decoder, segment_index,
-                                    frame_data->packet_buffer + buffer_offset,
-                                    segment_size);
+                                    frame_data->packet_buffer + buffer_offset, segment_size);
 
         // Using the newly registered packet, try to decode the frame using FEC
         int frame_size =
@@ -393,19 +394,24 @@ void reset_stream(RingBuffer* ring_buffer, int id) {
 
     // Check that we're not trying to reset to a frame that's been rendered already
     if (id <= ring_buffer->last_rendered_id) {
-        LOG_INFO("Received stale stream reset request - told to skip to ID %d but already at ID %d", id, ring_buffer->last_rendered_id);
+        LOG_INFO("Received stale stream reset request - told to skip to ID %d but already at ID %d",
+                 id, ring_buffer->last_rendered_id);
     } else {
         if (ring_buffer->last_rendered_id != -1) {
             // Loudly log if we're dropping frames
             LOG_INFO("Skipping from frame %d to frame %d", ring_buffer->last_rendered_id, id);
             // Drop frames up until id
             // We also use id - frames_received, to prevent printing a jump from 0 to 50,000
-            for (int i = max(ring_buffer->last_rendered_id + 1, id - ring_buffer->frames_received + 1); i < id; i++) {
+            for (int i =
+                     max(ring_buffer->last_rendered_id + 1, id - ring_buffer->frames_received + 1);
+                 i < id; i++) {
                 FrameData* frame_data = get_frame_at_id(ring_buffer, i);
                 if (frame_data->id == i) {
                     // Only verbosely log reset_stream for VIDEO frames
                     if (ring_buffer->type == PACKET_VIDEO) {
-                        LOG_WARNING("Frame dropped with ID %d: %d/%d", i, frame_data->original_packets_received, frame_data->num_original_packets);
+                        LOG_WARNING("Frame dropped with ID %d: %d/%d", i,
+                                    frame_data->original_packets_received,
+                                    frame_data->num_original_packets);
                         for (int j = 0; j < frame_data->num_original_packets; j++) {
                             if (!frame_data->received_indices[j]) {
                                 LOG_WARNING("Did not receive ID %d, Index %d", i, j);
@@ -443,16 +449,16 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
     // If nacking has failed to recover the packets we need,
     if (!nacking_succeeded
         // Or if we're more than MAX_UNSYNCED_FRAMES frames out-of-sync,
-        ||
-        ring_buffer->max_id > ring_buffer->last_rendered_id + MAX_UNSYNCED_FRAMES
+        || ring_buffer->max_id > ring_buffer->last_rendered_id + MAX_UNSYNCED_FRAMES
         // Or we've spent MAX_TO_RENDER_STALENESS trying to render this one frame
         || (next_to_render_staleness > MAX_TO_RENDER_STALENESS / MS_IN_SECOND)) {
         // THEN, we should send an iframe request
 
         // Throttle the requests to prevent network upload saturation, however
         if (get_timer(&ring_buffer->last_stream_reset_request_timer) >
-                STREAM_RESET_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
-            ring_buffer->request_stream_reset(ring_buffer->socket_context, ring_buffer->type, max(next_render_id, ring_buffer->max_id - 1));
+            STREAM_RESET_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
+            ring_buffer->request_stream_reset(ring_buffer->socket_context, ring_buffer->type,
+                                              max(next_render_id, ring_buffer->max_id - 1));
         }
 
         /*
@@ -474,8 +480,7 @@ NetworkStatistics get_network_statistics(RingBuffer* ring_buffer) {
 
     // Calculate network statistics over that time interval
     NetworkStatistics network_statistics = {0};
-    network_statistics.num_nacks_per_second =
-        ring_buffer->num_packets_nacked / statistics_time;
+    network_statistics.num_nacks_per_second = ring_buffer->num_packets_nacked / statistics_time;
     network_statistics.num_received_packets_per_second =
         ring_buffer->num_packets_received / statistics_time;
     network_statistics.num_rendered_frames_per_second =
@@ -614,8 +619,8 @@ void nack_single_packet(RingBuffer* ring_buffer, int id, int index) {
 // This is calculated per 5ms interval
 #define MAX_NACK_BURST_MBPS 4800000
 
-int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_data,
-                                            int end_index, int max_packets_to_nack) {
+int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_data, int end_index,
+                                     int max_packets_to_nack) {
     /*
         Nack up to 1 missing packet up to index
 
@@ -683,7 +688,8 @@ bool try_nacking(RingBuffer* ring_buffer, double latency) {
     // min to take the stricter restriction of either burst or average
     int max_nacks_remaining =
         MAX_NACK_BURST_MBPS * burst_interval / MAX_PAYLOAD_SIZE - ring_buffer->burst_counter;
-    int avg_nacks_remaining = MAX_NACK_AVG_MBPS * avg_interval / MAX_PAYLOAD_SIZE - ring_buffer->avg_counter;
+    int avg_nacks_remaining =
+        MAX_NACK_AVG_MBPS * avg_interval / MAX_PAYLOAD_SIZE - ring_buffer->avg_counter;
     int max_nacks = (int)min(max_nacks_remaining, avg_nacks_remaining);
     // Note how the order-of-ops ensures arithmetic is done with double's for higher accuracy
 
@@ -713,7 +719,10 @@ bool try_nacking(RingBuffer* ring_buffer, double latency) {
 
     // Nack all the packets we might want to nack about,
     // from oldest to newest, up to max_nacks times
-    for (int id = ring_buffer->last_rendered_id == -1 ? 1 : ring_buffer->last_rendered_id + 1;
+    // If we haven't rendered yet, we'll only nack for the most recent 5 frames when looking for an
+    // I-Frame
+    for (int id = ring_buffer->last_rendered_id == -1 ? max(ring_buffer->max_id - 5, 1)
+                                                      : ring_buffer->last_rendered_id + 1;
          id <= ring_buffer->max_id && num_packets_nacked < max_nacks; id++) {
         FrameData* frame_data = get_frame_at_id(ring_buffer, id);
         // If this frame doesn't exist, skip it

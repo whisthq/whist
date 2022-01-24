@@ -67,11 +67,28 @@ Public Function Implementations
 */
 
 NetworkSettings get_desired_network_settings(NetworkStatistics stats) {
+    // Get the network settings we want, based on those statistics
     NetworkSettings network_settings = timed_ewma_ratio_bitrate(stats);
     network_settings.fps = default_network_settings.fps;
     network_settings.audio_fec_ratio = default_network_settings.audio_fec_ratio;
     network_settings.video_fec_ratio = default_network_settings.video_fec_ratio;
     network_settings.desired_codec = default_network_settings.desired_codec;
+
+    // Clamp to bounds
+    if (network_settings.bitrate < MINIMUM_BITRATE) {
+        network_settings.bitrate = MINIMUM_BITRATE;
+    }
+    if (network_settings.bitrate > MAXIMUM_BITRATE) {
+        network_settings.bitrate = MAXIMUM_BITRATE;
+    }
+    if (network_settings.burst_bitrate < MINIMUM_BURST_BITRATE) {
+        network_settings.burst_bitrate = MINIMUM_BURST_BITRATE;
+    }
+    if (network_settings.burst_bitrate > MAXIMUM_BURST_BITRATE) {
+        network_settings.burst_bitrate = MAXIMUM_BURST_BITRATE;
+    }
+
+    // Return the network settings
     return network_settings;
 }
 

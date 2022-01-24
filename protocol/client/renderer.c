@@ -85,7 +85,8 @@ WhistRenderer* init_renderer() {
     return whist_renderer;
 }
 
-bool renderer_wants_frame(WhistRenderer* renderer, WhistPacketType packet_type, int num_buffered_frames) {
+bool renderer_wants_frame(WhistRenderer* renderer, WhistPacketType packet_type,
+                          int num_buffered_frames) {
     switch (packet_type) {
         case PACKET_VIDEO: {
             return video_ready_for_frame(renderer->video_context);
@@ -97,22 +98,22 @@ bool renderer_wants_frame(WhistRenderer* renderer, WhistPacketType packet_type, 
             LOG_FATAL("Unknown packet type! %d", (int)packet_type);
         }
     }
-
 }
 
-void renderer_receive_frame(WhistRenderer* whist_renderer, WhistPacketType packet_type, void* frame) {
+void renderer_receive_frame(WhistRenderer* whist_renderer, WhistPacketType packet_type,
+                            void* frame) {
     WhistTimer statistics_timer;
 
     // Pass the receive packet into the video or audio context
     switch (packet_type) {
         case PACKET_VIDEO: {
-            TIME_RUN(receive_video(whist_renderer->video_context, (VideoFrame*)frame), VIDEO_RECEIVE_TIME,
-                     statistics_timer);
+            TIME_RUN(receive_video(whist_renderer->video_context, (VideoFrame*)frame),
+                     VIDEO_RECEIVE_TIME, statistics_timer);
             break;
         }
         case PACKET_AUDIO: {
-            TIME_RUN(receive_audio(whist_renderer->audio_context, (AudioFrame*)frame), AUDIO_RECEIVE_TIME,
-                     statistics_timer);
+            TIME_RUN(receive_audio(whist_renderer->audio_context, (AudioFrame*)frame),
+                     AUDIO_RECEIVE_TIME, statistics_timer);
             break;
         }
         default: {
@@ -122,8 +123,6 @@ void renderer_receive_frame(WhistRenderer* whist_renderer, WhistPacketType packe
 }
 
 void renderer_update(WhistRenderer* whist_renderer) {
-    WhistTimer statistics_timer;
-
     // If it's been 2 ms since the last time someone else called try_render,
     // let's ping our renderer thread to do the work instead
 

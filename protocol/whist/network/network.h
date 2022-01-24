@@ -9,22 +9,16 @@
 Usage
 ============================
 
-SocketContextData: This type represents a socket.
-   - To use a socket, call CreateUDPContext or CreateTCPContext with the desired
+SocketContext: This type represents the context of an open socket.
+   - To use a socket, call create_udp_socket_context or create_tcp_socket_context with the desired
      parameters
    - To send data over a socket, call send_packet
-   - To receive data over a socket, call update and then get_packet to receive packets of a certain type.
+   - To receive data over a socket, call update and then get_packet to receive packets of a certain
+type.
 
 WhistPacket: This type represents a packet of information
    - Unique packets of a given type will be given unique IDs. IDs are expected
      to be increasing monotonically, with a gap implying that a packet was lost
-   - WhistPackets that were thought to have been sent may not arrive, and
-     WhistPackets may arrive out-of-order, in the case of UDP. This will not
-     be the case for TCP, however TCP sockets may lose connection if there is a
-     problem.
-   - A given block of data will, during transmission, be split up into packets
-     with the same type and ID, but indicies ranging from 0 to num_indices - 1
-   - A missing index implies that a packet was lost
    - A WhistPacket is only guaranteed to have data information from 0 to
      payload_size - 1 data[] occurs at the end of the packet, so extra bytes may
      in-fact point to invalid memory to save space and bandwidth
@@ -32,11 +26,8 @@ WhistPacket: This type represents a packet of information
      two WhistPackets found that are of the same type and ID will be expected
      to have the same data (To be specific, the Client should never legally send
      two distinct packets with same ID/Type, and neither should the Server, but
-if the Client and Server happen to both make a PACKET_MESSAGE packet with ID 1
-     they can be different)
-   - To reconstruct the original datagram from a sequence of WhistPackets,
-     concatenated the data[] streams (From 0 to payload_size - 1) for each index
-     from 0 to num_indices - 1
+     if the Client and Server happen to both make a PACKET_MESSAGE packet
+     with ID 1, they can be different)
 
 -----
 Client
@@ -185,10 +176,10 @@ typedef struct {
  */
 typedef struct {
     // Metadata
-    WhistPacketType type;   // Video, Audio, or Message
-    int id;                 // Unique identifier (Two packets with the same type and id, from
-                            // the same IP, will be the same)
-    int payload_size;       // size of this packet's data[], in bytes
+    WhistPacketType type;  // Video, Audio, or Message
+    int id;                // Unique identifier (Two packets with the same type and id, from
+                           // the same IP, will be the same)
+    int payload_size;      // size of this packet's data[], in bytes
 
     // Data
     uint8_t data[MAX_PAYLOAD_SIZE];  // data at the end of the struct, with invalid
@@ -240,15 +231,13 @@ typedef struct {
 
     // Function table
     bool (*socket_update)(void* context);
-    int (*send_packet)(void* context, WhistPacketType type, void* data, int len, int id, bool start_of_stream);
+    int (*send_packet)(void* context, WhistPacketType type, void* data, int len, int id,
+                       bool start_of_stream);
     void* (*get_packet)(void* context, WhistPacketType type);
     void (*free_packet)(void* context, WhistPacket* packet);
     bool (*get_pending_stream_reset)(void* context, WhistPacketType type);
     void (*destroy_socket_context)(void* context);
 } SocketContext;
-
-// needed for handshake_private_key
-typedef struct SocketContextData SocketContextData;
 
 /*
 ============================
@@ -262,13 +251,14 @@ SocketContext Interface
  *                 will cause the connection to drop.
  *
  * @param context  The socket context to update
- * 
+ *
  * @returns        True on success,
  *                 False if the connection has been lost
- * 
- * @note           After calling socket_update, you must try to call get_packet,
- *                 otherwise a consecutive call to socket_update
- *                 may overwrite the buffered packet.
+ *
+ * @note           After calling socket_update,
+ *                 you should try to call get_packet on every non-nack packet type.
+ *                 Otherwise, a consecutive call to socket_update
+ *                 may overwrite the buffered packet leading to packet loss.
  */
 bool socket_update(SocketContext* context);
 
@@ -294,7 +284,8 @@ int send_packet(SocketContext* context, WhistPacketType packet_type, void* paylo
                 int payload_size, int packet_id, bool start_of_stream);
 
 /**
- * @brief             Receive the next WhistPacket from the given SocketContext of given WhistPacketType
+ * @brief             Receive the next WhistPacket from the given SocketContext of given
+ * WhistPacketType
  *
  * @param context     The socket context
  * @param type        Type of packet to pop
@@ -302,7 +293,7 @@ int send_packet(SocketContext* context, WhistPacketType packet_type, void* paylo
  * @returns           A pointer to the next set of data.
  *                    This will point to the same data of the `payload` that was
  *                    passed into `send_packet` on the other side.
- * 
+ *
  * @note              socket_update must be called for get_packet to return non-NULL
  */
 void* get_packet(SocketContext* context, WhistPacketType type);
@@ -414,9 +405,9 @@ SOCKET socketp_udp(void);
  * @param socket                   The socket to handshake over
  * @param connection_timeout_ms    How long to try to handshake before giving up
  * @param private_key              The private key to use for the handshake
- * 
+ *
  * @returns                        True on success, False on failure
- * 
+ *
  * @note                           The timeout for the socket may be overwritten
  *                                 after this call, please call set_timeout to restore it
  */
@@ -427,15 +418,15 @@ bool handshake_private_key(SOCKET socket, int connection_timeout_ms, const void*
  *
  * The function signature is identical to the host recv() call.
  */
-ssize_t recv_no_intr(int sockfd, void* buf, size_t len, int flags);
+int recv_no_intr(SOCKET sockfd, void* buf, size_t len, int flags);
 
 /**
  * @brief Call recvfrom() while ignoring EINTR returns.
  *
  * The function signature is identical to the host recv() call.
  */
-ssize_t recvfrom_no_intr(int sockfd, void* buf, size_t len, int flags, struct sockaddr* src_addr,
-                         socklen_t* addrlen);
+int recvfrom_no_intr(SOCKET sockfd, void* buf, size_t len, int flags, struct sockaddr* src_addr,
+                     socklen_t* addrlen);
 
 // TODO: Move
 #include <whist/network/tcp.h>
