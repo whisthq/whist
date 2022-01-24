@@ -1,4 +1,7 @@
-import os, sys, time, boto3
+import os
+import sys
+import time
+import boto3
 import numpy as np
 from pytablewriter import MarkdownTableWriter
 from contextlib import redirect_stdout
