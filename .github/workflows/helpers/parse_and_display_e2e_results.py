@@ -190,7 +190,7 @@ with redirect_stdout(results_file):
                 [
                     k,
                     client_metrics2[k]["entries"],
-                    "{:.4f} ± {:.4f}".format(client_metrics2[k]["avg"], client_metrics2[k]["std"])
+                    "{:.3f} ± {:.3f}".format(client_metrics2[k]["avg"], client_metrics2[k]["std"])
                     if client_metrics2[k]["entries"] > 1
                     else client_metrics2[k]["avg"],
                     client_metrics2[k]["min"],
@@ -199,7 +199,7 @@ with redirect_stdout(results_file):
                 for k in client_metrics2
             ],
             margin=1,  # add a whitespace for both sides of each cell
-            max_precision=4,
+            max_precision=3,
         )
         writer.write_table()
         print("\n")
@@ -216,7 +216,7 @@ with redirect_stdout(results_file):
                 [
                     k,
                     server_metrics2[k]["entries"],
-                    "{:.4f} ± {:.4f}".format(server_metrics2[k]["avg"], server_metrics2[k]["std"])
+                    "{:.3f} ± {:.3f}".format(server_metrics2[k]["avg"], server_metrics2[k]["std"])
                     if server_metrics2[k]["entries"] > 1
                     else server_metrics2[k]["avg"],
                     server_metrics2[k]["min"],
@@ -225,7 +225,7 @@ with redirect_stdout(results_file):
                 for k in server_metrics2
             ],
             margin=1,  # add a whitespace for both sides of each cell
-            max_precision=4,
+            max_precision=3,
         )
         writer.write_table()
     else:
@@ -233,10 +233,10 @@ with redirect_stdout(results_file):
         for k in client_metrics2:
             if k in dev_client_metrics2:
                 client_metrics2[k]["dev_entries"] = dev_client_metrics2[k]["entries"]
-                client_metrics2[k]["dev_avg"] = round(dev_client_metrics2[k]["avg"], 4)
-                client_metrics2[k]["dev_std"] = round(dev_client_metrics2[k]["std"], 4)
+                client_metrics2[k]["dev_avg"] = round(dev_client_metrics2[k]["avg"], 3)
+                client_metrics2[k]["dev_std"] = round(dev_client_metrics2[k]["std"], 3)
                 client_metrics2[k]["delta"] = round(
-                    client_metrics2[k]["avg"] - client_metrics2[k]["dev_avg"], 4
+                    client_metrics2[k]["avg"] - client_metrics2[k]["dev_avg"], 3
                 )
                 if client_metrics2[k]["delta"] == 0:
                     client_metrics2[k]["delta"] = "-"
@@ -245,7 +245,7 @@ with redirect_stdout(results_file):
                     client_metrics2[k]["delta_pctg"] = "nan"
                 else:
                     client_metrics2[k]["delta_pctg"] = round(
-                        (client_metrics2[k]["delta"] / client_metrics2[k]["dev_avg"]), 4
+                        (client_metrics2[k]["delta"] / client_metrics2[k]["dev_avg"]), 3
                     )
             else:
                 client_metrics2[k]["dev_avg"] = "N/A"
@@ -260,11 +260,11 @@ with redirect_stdout(results_file):
 
             avg_stdv_this_branch = ""
             if client_metrics2[k]["entries"] > 1:
-                avg_stdv_this_branch = "{:.4f} ± {:.4f}".format(
+                avg_stdv_this_branch = "{:.3f} ± {:.3f}".format(
                     client_metrics2[k]["avg"], client_metrics2[k]["std"]
                 )
             else:
-                avg_stdv_this_branch = "{:.4f}".format(client_metrics2[k]["avg"])
+                avg_stdv_this_branch = "{:.3f}".format(client_metrics2[k]["avg"])
 
             new_entry.append(avg_stdv_this_branch)
 
@@ -272,24 +272,24 @@ with redirect_stdout(results_file):
             if client_metrics2[k]["dev_avg"] == "N/A" or client_metrics2[k]["dev_std"] == "N/A":
                 avg_stdv_dev = "N/A"
             elif client_metrics2[k]["dev_entries"] > 1:
-                avg_stdv_dev = "{:.4f} ± {:.4f}".format(
+                avg_stdv_dev = "{:.3f} ± {:.3f}".format(
                     client_metrics2[k]["dev_avg"], client_metrics2[k]["dev_std"]
                 )
             else:
-                avg_stdv_dev = "{:.4f}".format(client_metrics2[k]["dev_avg"])
+                avg_stdv_dev = "{:.3f}".format(client_metrics2[k]["dev_avg"])
 
             new_entry.append(avg_stdv_dev)
 
             delta_formatted = client_metrics2[k]["delta"]
             if client_metrics2[k]["delta"] != "-" and client_metrics2[k]["delta"] != "N/A":
-                delta_formatted = "{:.4f}".format(delta_formatted)
+                delta_formatted = "{:.3f}".format(delta_formatted)
                 delta_pctg_formatted = client_metrics2[k]["delta_pctg"]
                 if (
                     client_metrics2[k]["delta_pctg"] != "-"
                     and client_metrics2[k]["delta_pctg"] != "nan"
                     and client_metrics2[k]["delta_pctg"] != "N/A"
                 ):
-                    delta_pctg_formatted = "{:.4f}".format(delta_pctg_formatted * 100.0)
+                    delta_pctg_formatted = "{:.3f}".format(delta_pctg_formatted * 100.0)
                 new_entry.append("{} ({}%)".format(delta_formatted, delta_pctg_formatted))
             else:
                 new_entry.append(delta_formatted)
@@ -313,10 +313,10 @@ with redirect_stdout(results_file):
         for k in server_metrics2:
             if k in dev_server_metrics2:
                 server_metrics2[k]["dev_entries"] = dev_server_metrics2[k]["entries"]
-                server_metrics2[k]["dev_avg"] = round(dev_server_metrics2[k]["avg"], 4)
-                server_metrics2[k]["dev_std"] = round(dev_server_metrics2[k]["std"], 4)
+                server_metrics2[k]["dev_avg"] = round(dev_server_metrics2[k]["avg"], 3)
+                server_metrics2[k]["dev_std"] = round(dev_server_metrics2[k]["std"], 3)
                 server_metrics2[k]["delta"] = round(
-                    server_metrics2[k]["avg"] - server_metrics2[k]["dev_avg"], 4
+                    server_metrics2[k]["avg"] - server_metrics2[k]["dev_avg"], 3
                 )
                 if server_metrics2[k]["delta"] == 0:
                     server_metrics2[k]["delta"] = "-"
@@ -325,7 +325,7 @@ with redirect_stdout(results_file):
                     server_metrics2[k]["delta_pctg"] = "nan"
                 else:
                     server_metrics2[k]["delta_pctg"] = round(
-                        (server_metrics2[k]["delta"] / server_metrics2[k]["dev_avg"]), 4
+                        (server_metrics2[k]["delta"] / server_metrics2[k]["dev_avg"]), 3
                     )
             else:
                 server_metrics2[k]["dev_avg"] = "N/A"
@@ -340,11 +340,11 @@ with redirect_stdout(results_file):
 
             avg_stdv_this_branch = ""
             if server_metrics2[k]["entries"] > 1:
-                avg_stdv_this_branch = "{:.4f} ± {:.4f}".format(
+                avg_stdv_this_branch = "{:.3f} ± {:.3f}".format(
                     server_metrics2[k]["avg"], server_metrics2[k]["std"]
                 )
             else:
-                avg_stdv_this_branch = "{:.4f}".format(server_metrics2[k]["avg"])
+                avg_stdv_this_branch = "{:.3f}".format(server_metrics2[k]["avg"])
 
             new_entry.append(avg_stdv_this_branch)
 
@@ -352,24 +352,24 @@ with redirect_stdout(results_file):
             if server_metrics2[k]["dev_avg"] == "N/A" or server_metrics2[k]["dev_std"] == "N/A":
                 avg_stdv_dev = "N/A"
             elif server_metrics2[k]["dev_entries"] > 1:
-                avg_stdv_dev = "{:.4f} ± {:.4f}".format(
+                avg_stdv_dev = "{:.3f} ± {:.3f}".format(
                     server_metrics2[k]["dev_avg"], server_metrics2[k]["dev_std"]
                 )
             else:
-                avg_stdv_dev = "{:.4f}".format(server_metrics2[k]["dev_avg"])
+                avg_stdv_dev = "{:.3f}".format(server_metrics2[k]["dev_avg"])
 
             new_entry.append(avg_stdv_dev)
 
             delta_formatted = server_metrics2[k]["delta"]
             if server_metrics2[k]["delta"] != "-" and server_metrics2[k]["delta"] != "N/A":
-                delta_formatted = "{:.4f}".format(delta_formatted)
+                delta_formatted = "{:.3f}".format(delta_formatted)
                 delta_pctg_formatted = server_metrics2[k]["delta_pctg"]
                 if (
                     server_metrics2[k]["delta_pctg"] != "-"
                     and server_metrics2[k]["delta_pctg"] != "nan"
                     and server_metrics2[k]["delta_pctg"] != "N/A"
                 ):
-                    delta_pctg_formatted = "{:.4f}".format(delta_pctg_formatted * 100.0)
+                    delta_pctg_formatted = "{:.3f}".format(delta_pctg_formatted * 100.0)
                 new_entry.append("{} ({}%)".format(delta_formatted, delta_pctg_formatted))
             else:
                 new_entry.append(delta_formatted)
@@ -407,7 +407,7 @@ with redirect_stdout(results_file):
             ],
             value_matrix=[i for i in client_table_entries],
             margin=1,  # add a whitespace for both sides of each cell
-            max_precision=4,
+            max_precision=3,
         )
         writer.write_table()
         print("\n")
@@ -429,7 +429,7 @@ with redirect_stdout(results_file):
             ],
             value_matrix=[i for i in server_table_entries],
             margin=1,  # add a whitespace for both sides of each cell
-            max_precision=4,
+            max_precision=3,
         )
         writer.write_table()
 
