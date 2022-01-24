@@ -55,7 +55,7 @@ createTrigger(
   merge(
     fromTrigger(WhistTrigger.protocolStdoutData).pipe(
       filter(
-        (data: string) => data.includes("Connected on") && data.includes("tcp")
+        (data: string) => data.includes("Connected to") && data.includes("UDP")
       ),
       mapTo(true),
       startWith(false)
