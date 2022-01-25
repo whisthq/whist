@@ -210,7 +210,7 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
                 // Here, the frame is older than where our renderer is,
                 // So we can just reset the undesired frame
                 LOG_ERROR(
-                    "Trying to allocate Frame ID %d, but Frame ID %d has not been destroyed yet!",
+                    "Trying to allocate Frame ID %d, but Frame ID %d has not been destroyed yet! Destroying it now...",
                     segment_id, frame_data->id);
                 reset_frame(ring_buffer, frame_data);
             }
@@ -426,6 +426,14 @@ void reset_stream(RingBuffer* ring_buffer, int id) {
                     reset_frame(ring_buffer, frame_data);
                 }
             }
+        } else {
+            LOG_INFO("Restarting stream at frame %d", id);
+            for (int i = id - ring_buffer->ring_buffer_size; i < id; i++) {
+                FrameData* frame_data = get_frame_at_id(ring_buffer, i);
+                if (frame_data->id == i) {
+                    reset_frame(ring_buffer, frame_data);
+                }
+            }
         }
         ring_buffer->last_rendered_id = id - 1;
     }
@@ -580,6 +588,7 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
     }
     ring_buffer->max_id = -1;
     ring_buffer->frames_received = 0;
+    ring_buffer->last_rendered_id = -1;
 }
 
 // Get a pointer to a framebuffer for that id, if such a framebuffer is possible to construct
