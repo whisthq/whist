@@ -20,7 +20,7 @@ const Network = (props: {
       tabIndex={0}
       className="flex flex-col h-screen w-full font-body outline-none bg-gray-900"
     >
-      <div className="absolute top-0 left-0 w-full h-6 draggable"></div>
+      <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
       <div className="mt-24">
         <NetworkComponent
           networkInfo={props.networkInfo}

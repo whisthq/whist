@@ -56,6 +56,7 @@ const fadeElectronWindowIn = (
   fadeEveryXSeconds = 25
 ) => {
   win.show()
+  if (win.isMinimized()) win.restore()
 
   // Get the opacity of the window.
   let opacity = win.getOpacity()
@@ -125,7 +126,7 @@ const createElectronWindow = (args: {
 }) => {
   const winAlreadyExists = getElectronWindow(args.hash)
   if (winAlreadyExists !== undefined) {
-    winAlreadyExists.focus()
+    fadeElectronWindowIn(winAlreadyExists)
     return { win: winAlreadyExists, view: undefined }
   }
 

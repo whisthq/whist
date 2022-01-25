@@ -16,7 +16,7 @@ module.exports = {
         transparent: "transparent",
         current: "currentColor",
         blue: {
-          DEFAULT: "#4F35DE",
+          DEFAULT: "#4f35de",
         },
         mint: {
           DEFAULT: "#00FFA2",

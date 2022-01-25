@@ -1,6 +1,12 @@
 import React from "react"
+import sample from "lodash.sample"
 
 import { Network as NetworkComponent } from "@app/components/network"
+
+const loadingMessage = sample([
+  "to view settings when launched",
+  "for live chat support when launched",
+])
 
 const Loading = (props: {
   networkInfo: {
@@ -11,7 +17,7 @@ const Loading = (props: {
 }) => {
   return (
     <div className="flex flex-col h-screen bg-gray-900 w-full font-body">
-      <div className="absolute top-0 left-0 w-full h-6 draggable"></div>
+      <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
       <div className="w-full text-center pt-10">
         <div className="mt-4 font-semibold text-xl text-gray-300">
           Whist is connecting to servers
@@ -29,9 +35,7 @@ const Loading = (props: {
             J
           </kbd>
         </div>
-        <div className="text-gray-500 text-sm mt-2">
-          to view settings when connected
-        </div>
+        <div className="text-gray-500 text-sm mt-2">{loadingMessage}</div>
       </div>
     </div>
   )
