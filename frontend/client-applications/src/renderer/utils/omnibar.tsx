@@ -17,7 +17,7 @@ const createOptions = (mainState: StateIPC, setMainState: any) => {
   return [
     {
       icon: Chat,
-      text: "Live Chat with Whist Engineer",
+      text: "Live Chat Support with Whist Engineer",
       keywords: ["Support", "Help", "Feedback", "Report", "Bug", "Customer"],
       onClick: () =>
         setMainState({

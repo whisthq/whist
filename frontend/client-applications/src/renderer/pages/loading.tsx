@@ -1,6 +1,12 @@
 import React from "react"
+import sample from "lodash.sample"
 
 import { Network as NetworkComponent } from "@app/components/network"
+
+const loadingMessage = sample([
+  "to view settings when launched",
+  "for live chat support when launched",
+])
 
 const Loading = (props: {
   networkInfo: {
@@ -29,9 +35,7 @@ const Loading = (props: {
             J
           </kbd>
         </div>
-        <div className="text-gray-500 text-sm mt-2">
-          to view settings when connected
-        </div>
+        <div className="text-gray-500 text-sm mt-2">{loadingMessage}</div>
       </div>
     </div>
   )
