@@ -37,6 +37,9 @@ echo "Created systemd service for host-service"
 # Reload daemon files
 sudo /bin/systemctl daemon-reload
 
+# Warm Up EBS Volume
+sudo fio --filename=/dev/nvme0n1 --rw=read --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize
+
 # Enable Host Service
 sudo systemctl enable --now host-service.service
 
