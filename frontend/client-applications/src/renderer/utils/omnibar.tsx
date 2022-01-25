@@ -1,5 +1,6 @@
 import React from "react"
 
+import Chat from "@app/components/icons/chat"
 import Globe from "@app/components/icons/globe"
 import Document from "@app/components/icons/document"
 import Dollar from "@app/components/icons/dollar"
@@ -14,6 +15,18 @@ import { WhistTrigger } from "@app/constants/triggers"
 
 const createOptions = (mainState: StateIPC, setMainState: any) => {
   return [
+    {
+      icon: Chat,
+      text: "Live Chat with Whist Engineer",
+      keywords: ["Support", "Help", "Feedback", "Report", "Bug", "Customer"],
+      onClick: () =>
+        setMainState({
+          trigger: {
+            name: WhistTrigger.showSupportWindow,
+            payload: undefined,
+          },
+        }),
+    },
     {
       icon: Globe,
       text: "Make Whist My Default Browser",
@@ -74,7 +87,7 @@ const createOptions = (mainState: StateIPC, setMainState: any) => {
     {
       icon: Dollar,
       text: "Manage My Subscription",
-      keywords: ["Billing", "Payment"],
+      keywords: ["Billing", "Payment", "Cancel"],
       onClick: () =>
         setMainState({
           trigger: { name: WhistTrigger.showPaymentWindow, payload: undefined },

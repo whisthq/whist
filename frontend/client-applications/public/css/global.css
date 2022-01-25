@@ -64,3 +64,9 @@
     background-position: 0% 50%;
   }
 }
+
+#hubspot-conversations-inline-iframe {
+  width: 384px;
+  height: 508px;
+  border: none;
+}

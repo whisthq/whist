@@ -78,7 +78,7 @@ const Importer = (props: {
         "justify-center font-body text-center px-12"
       )}
     >
-      <div className="absolute top-0 left-0 w-full h-6 draggable"></div>
+      <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
       <DownloadIcon />
       <div className="mt-8">
         <SelectBrowser

@@ -16,6 +16,7 @@ import Loading from "@app/renderer/pages/loading"
 import Omnibar from "@app/renderer/pages/omnibar"
 import Background from "@app/renderer/pages/background"
 import Welcome from "@app/renderer/pages/welcome"
+import Chatbot from "@app/renderer/pages/chatbot"
 import { Provider } from "@app/renderer/context/omnibar"
 
 import {
@@ -30,6 +31,7 @@ import {
   WindowHashSpeedtest,
   WindowHashLicense,
   WindowHashWelcome,
+  WindowHashSupport,
 } from "@app/constants/windows"
 import {
   whistError,
@@ -121,6 +123,7 @@ const RootComponent = () => {
     ].includes(show)
   )
     return <Background />
+  if (show === WindowHashSupport) return <Chatbot />
   if (show === WindowHashSignout) return <Signout onClick={handleSignout} />
   if (show === WindowHashUpdate) return <Update />
   if (show === WindowHashImport)
