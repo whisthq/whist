@@ -1,13 +1,16 @@
 import { app, BrowserWindow } from "electron"
 import remove from "lodash.remove"
 
-import { destroyElectronWindow } from "@app/main/utils/windows"
+import {
+  destroyElectronWindow,
+  getElectronWindowHash,
+} from "@app/main/utils/windows"
 
 const relaunch = (options: { sleep: boolean }) => {
   // First destroy all Electron windows
   BrowserWindow.getAllWindows().forEach((win) => {
-    const hash = win.webContents.getURL()?.split("show=")?.[1]
-    destroyElectronWindow(hash)
+    const hash = getElectronWindowHash(win)
+    if (hash !== undefined) destroyElectronWindow(hash)
   })
 
   let args = process.argv.slice(1)

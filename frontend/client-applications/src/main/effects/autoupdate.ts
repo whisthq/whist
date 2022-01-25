@@ -18,7 +18,10 @@ import { fromTrigger } from "@app/main/utils/flows"
 import { WhistTrigger } from "@app/constants/triggers"
 import { createUpdateWindow } from "@app/main/utils/renderer"
 import { withAppActivated } from "@app/main/utils/observables"
-import { destroyElectronWindow } from "@app/main/utils/windows"
+import {
+  destroyElectronWindow,
+  getElectronWindowHash,
+} from "@app/main/utils/windows"
 
 // If an update is available, show the update window and download the update
 fromTrigger(WhistTrigger.updateAvailable).subscribe(() => {
@@ -61,7 +64,7 @@ withAppActivated(
   createUpdateWindow()
 
   BrowserWindow.getAllWindows().forEach((win) => {
-    const hash = win.webContents.getURL()?.split("show=")?.[1]
+    const hash = getElectronWindowHash(win)
     if (hash !== WindowHashUpdate && hash !== undefined) {
       destroyElectronWindow(hash)
     }
