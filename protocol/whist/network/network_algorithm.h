@@ -80,4 +80,28 @@ Public Functions
  */
 NetworkSettings get_desired_network_settings(NetworkStatistics stats);
 
+/**
+ * @brief               This function simulates the google congestion control
+ *                      loss controller given network stats and delay estimated bitrate
+ *
+ * @param stats         A struct containing any information we might need
+ *                      when deciding what bitrate we want
+ *
+ * @param receiver_estimated_maximum_bitrate    Output of the goog_cc delay controller
+ *
+ * @returns             Integer representing loss controller set bitrate
+ */
+int goog_cc_loss_controller(NetworkStatistics stats, int receiver_estimated_maximum_bitrate);
+
+/**
+ * @brief               This function simulates the google congestion control
+ *                      delay controller given network stats
+ *
+ * @param stats         A struct containing network information including
+ *                      delay gradient, one-way trip time, and packets per second
+ *
+ * @returns             Integer representing delay controller estimated maximum bitrate
+ */
+int goog_cc_delay_controller(NetworkStatistics stats);
+
 #endif

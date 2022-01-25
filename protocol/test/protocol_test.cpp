@@ -39,6 +39,7 @@ extern "C" {
 #include "whist/utils/color.h"
 #include <whist/core/whist.h>
 #include <whist/network/ringbuffer.h>
+#include <whist/network/network_algorithm.h>
 
 #include <client/native_window_utils.h>
 
@@ -1310,6 +1311,70 @@ TEST_F(ProtocolTest, LinkedListTest) {
     EXPECT_EQ(linked_list_size(&list), 0);
     EXPECT_TRUE(linked_list_extract_head(&list) == NULL);
     EXPECT_TRUE(linked_list_extract_tail(&list) == NULL);
+}
+
+/**
+ * network/network_algorithms.c
+ **/
+
+TEST_F(ProtocolTest, GoogCCDelayControllerStateTest) {
+#define HOLD_DURATION 5
+    NetworkStatistics stats;
+    stats.client_side_delay = 5;
+    stats.one_way_trip_time = 5;
+    // Test state transitions for the delay controller
+    stats.delay_gradient = 0.0;
+    int remb = goog_cc_delay_controller(stats);
+    int prev_remb = remb;
+    // Hold State -- Normal Use --> Increase State
+    for (int i = 0; i < MAX_FPS; i++) {
+        // Increase State --- Normal Use -> Increase State
+        remb = goog_cc_delay_controller(stats);
+        EXPECT_GE(remb, prev_remb);
+        prev_remb = remb;
+    }
+
+    // Increase State -- Over use --> Decrease State
+    stats.delay_gradient = 30;
+    goog_cc_delay_controller(stats);
+    // Need to register some amount of time in overuse state
+    whist_sleep(250);
+    remb = goog_cc_delay_controller(stats);
+    EXPECT_LE(remb, prev_remb);
+    prev_remb = remb;
+
+    // Decrease -- Normal use --> Hold
+    stats.delay_gradient = 0;
+    remb = goog_cc_delay_controller(stats);
+    EXPECT_EQ(remb, prev_remb);
+    prev_remb = remb;
+    for (int i = 0; i < MAX_FPS * HOLD_DURATION; i++) {
+        remb = goog_cc_delay_controller(stats);
+        prev_remb = remb;
+    }
+
+    // Any State -- Under use --> Hold
+    stats.delay_gradient = -30;
+    remb = goog_cc_delay_controller(stats);
+    // EXPECT_EQ(remb, prev_remb);
+}
+
+TEST_F(ProtocolTest, GoogCCLossControllerStateTest) {
+#define REMB STARTING_BITRATE
+    NetworkStatistics stats;
+
+    // Loss hold
+    stats.num_nacks_per_second = 5;
+    stats.num_received_packets_per_second = 100;
+    EXPECT_EQ(goog_cc_loss_controller(stats, REMB), REMB);
+
+    // Loss decrease
+    stats.num_received_packets_per_second = 10;
+    EXPECT_LE(goog_cc_loss_controller(stats, REMB), REMB);
+
+    // Loss decrease
+    stats.num_nacks_per_second = 0;
+    EXPECT_GE(goog_cc_loss_controller(stats, REMB), REMB);
 }
 
 /*

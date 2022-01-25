@@ -347,7 +347,7 @@ NetworkSettings ewma_ratio_bitrate(NetworkStatistics stats) {
 }
 
 int goog_cc_loss_controller(NetworkStatistics stats, int receiver_estimated_maximum_bitrate) {
-    /* Loss controller from google congestion control spec. Uses the receiver estimated 
+    /* Loss controller from google congestion control spec. Uses the receiver estimated
        maximum bitrate and loss statistics time to calculate a loss bitrate per the spec.
        This (along with sending the bitrate msg) should be called every 1 second.
     */
@@ -369,8 +369,8 @@ int goog_cc_loss_controller(NetworkStatistics stats, int receiver_estimated_maxi
     return receiver_estimated_maximum_bitrate;
 }
 
-int goog_cc_delay_controller(NetworkStatistics stats) { 
-    /* Delay controller from google congestion control spec. Uses the delay 
+int goog_cc_delay_controller(NetworkStatistics stats) {
+    /* Delay controller from google congestion control spec. Uses the delay
        gradient and round trip time to calculate receiver_estimated_maximum_bitrate
        according to the goog_cc spec. Should be called per received frame.
     */
@@ -396,7 +396,7 @@ int goog_cc_delay_controller(NetworkStatistics stats) {
     static const double delay_controller_eta = 1.05;
     static const double delay_controller_alpha = 0.85;
 
-    static const double overuse_time_th = 0.1;
+    static const double overuse_time_th = 0.01;
 
     static int receiver_estimated_maximum_bitrate = MINIMUM_BITRATE;
     static double average_decrease_remb = 0;
@@ -404,8 +404,7 @@ int goog_cc_delay_controller(NetworkStatistics stats) {
     static const double num_std_devs_threshold = 1.8;
     static int decrease_remb_cnt = 0;
 
-
-    if(!delay_controller_initialized) {
+    if (!delay_controller_initialized) {
         start_timer(&overuse_timer);
         delay_controller_initialized = true;
     }
@@ -512,13 +511,11 @@ int goog_cc_delay_controller(NetworkStatistics stats) {
         receiver_estimated_maximum_bitrate *= delay_controller_alpha;
     }
 
-
     // Store for use with next overuse signal condition
     prev_filtered_delay_gradient = filtered_delay_gradient;
 
     return receiver_estimated_maximum_bitrate;
 }
-
 
 NetworkSettings goog_cc_bitrate(NetworkStatistics stats) {
     /*
@@ -562,7 +559,8 @@ NetworkSettings goog_cc_bitrate(NetworkStatistics stats) {
 
     // Delay controller should run every received frame, but loss controller is limited to every 1
     // second unless there is congestion detected by the delay controller
-    if (get_timer(&goog_cc_loss_timer) < 1 && receiver_estimated_maximum_bitrate >= network_settings.bitrate) {
+    if (get_timer(&goog_cc_loss_timer) < 1 &&
+        receiver_estimated_maximum_bitrate >= network_settings.bitrate) {
         return network_settings;
     }
 
@@ -572,7 +570,8 @@ NetworkSettings goog_cc_bitrate(NetworkStatistics stats) {
         receiver_estimated_maximum_bitrate = network_settings.bitrate * delay_remb_bound_multiplier;
     }
 
-    int loss_controller_bitrate = goog_cc_loss_controller(stats, receiver_estimated_maximum_bitrate);
+    int loss_controller_bitrate =
+        goog_cc_loss_controller(stats, receiver_estimated_maximum_bitrate);
     int target_bitrate = min(receiver_estimated_maximum_bitrate, loss_controller_bitrate);
 
     // Clamp and set bitrate for new network settings
@@ -580,7 +579,6 @@ NetworkSettings goog_cc_bitrate(NetworkStatistics stats) {
     network_settings.bitrate = target_bitrate;
     network_settings.burst_bitrate = target_bitrate;
     start_timer(&goog_cc_loss_timer);
-
 
     return network_settings;
 }
