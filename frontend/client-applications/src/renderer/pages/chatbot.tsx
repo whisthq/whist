@@ -3,7 +3,7 @@ import React, { useEffect } from "react"
 const Chatbot = () => {
   useEffect(() => {
     const script = document.createElement("script")
-    script.src = `//js.hs-scripts.com/20509395.js`
+    script.src = `https://js.hs-scripts.com/20509395.js`
     script.async = true
 
     document.body.appendChild(script)
