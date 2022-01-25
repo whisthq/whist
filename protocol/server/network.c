@@ -75,7 +75,6 @@ int handle_discovery_port_message(whist_server_state *state, SocketContext *cont
     // Exit on null tcp packet, otherwise analyze the resulting WhistClientMessage
     if (tcp_packet == NULL) {
         LOG_WARNING("Did not receive request over discovery port from client.");
-        destroy_socket_context(context);
         return -1;
     }
 
