@@ -17,6 +17,7 @@ passed through the D-Bus, and send them via the Whist Protocol to the client.
 
 NotificationsHandler *init_notifications_handler(whist_server_state *server_state) {
     LOG_INFO("Cannot initialize notifications thread; feature only supported on Linux");
+    return NULL;
 }
 
 void destroy_notifications_handler(NotificationsHandler *notifications_handler) {
