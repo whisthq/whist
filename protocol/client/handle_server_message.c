@@ -288,7 +288,7 @@ static int handle_notification_message(WhistServerMessage *wsmsg, size_t wsmsg_s
             (int): Returns -1 on failure, 0 on success
     */
 
-    native_show_notification(wsmsg->notif.title, wsmsg->notif.message);
+    display_notification(wsmsg->notif.title, wsmsg->notif.message);
     log_double_statistic(NOTIFICATIONS_RECEIVED, 1.);
 
     return 0;
