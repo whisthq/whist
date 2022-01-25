@@ -13,8 +13,6 @@ Includes
 ============================
 */
 
-#import "../display_notifs.h"
-
 #import <stdio.h>
 #import <Cocoa/Cocoa.h>
 #import <UserNotifications/UserNotifications.h>

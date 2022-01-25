@@ -26,11 +26,11 @@ Includes
 #include <whist/logging/logging.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/utils/window_info.h>
+#include <whist/utils/os_utils.h>
 #include "client_utils.h"
 #include "audio.h"
 #include "network.h"
 #include "sdl_utils.h"
-#include "display_notifs.h"
 #include "client_statistic.h"
 
 #include <stddef.h>

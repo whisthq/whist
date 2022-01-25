@@ -13,8 +13,6 @@ Includes
 ============================
 */
 
-#include "display_notifs.h"
-
 #include <whist/logging/logging.h>
 
 /*
