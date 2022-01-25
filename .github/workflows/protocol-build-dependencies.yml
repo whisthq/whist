@@ -490,7 +490,7 @@ jobs:
           ls $env:CUDA_PATH
           ls $env:CUDA_PATH\bin
           ls $env:CUDA_PATH\include
-      
+
       - name: On Windows, Move Preconfigured media-autobuild_suite Config Files Over to C:\media-autobuild_suite/build
         if: runner.os == 'Windows'
         working-directory: C:\media-autobuild_suite
@@ -504,7 +504,7 @@ jobs:
           build/ffmpeg/.github/workflows/helpers/mingw.sh \
           build/ffmpeg/.github/workflows/helpers/pacman.sh \
           build/
-      
+
       - name: On Windows, build FFmpeg via media-autobuild_suite from C:\ drive
         if: runner.os == 'Windows'
         working-directory: C:\media-autobuild_suite
@@ -528,7 +528,7 @@ jobs:
           sudo chown -R `whoami`:admin /usr/local/bin
           sudo chown -R `whoami`:admin /usr/local/share
           sudo chown -R `whoami`:admin /usr/local/opt
-      
+
       - name: On macOS, Install FFmpeg macOS Dependencies & macdylibbundler for packaging
         if: runner.os == 'macOS'
         run: |
@@ -556,7 +556,7 @@ jobs:
             && make -j install
             echo "Successfully cross-compiled libopus for arm64 on macOS..."
           fi
-      
+
       # We disable command-line programs and SDL2 since we have our own SDL2 static build
       - name: On macOS, Configure and Make FFmpeg
         if: runner.os == 'macOS'
@@ -603,7 +603,7 @@ jobs:
             echo "Unsupported compilation attempt on macOS"
             exit
           fi
-      
+
       ###################################################################################
       ############################# Ubuntu Linux STEPS START ############################
 
@@ -864,13 +864,18 @@ jobs:
           SLACK_CHANNEL = "#alerts-prod"
           BODY = f"@releases :rotating_light: Failed to deploy Whist `FFmpeg ${{ matrix.config.name }}` Shared Library to AWS S3, investigate immediately :rotating_light: (<https://github.com/whisthq/FFmpeg/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
-          
+
   #######################################################################################
   #######################################################################################
 
   notify-slack:
     name: Notify Slack
-    needs: [build-and-publish-openssl, build-and-publish-sentry, build-and-publish-ffmpeg]
+    needs:
+      [
+        build-and-publish-openssl,
+        build-and-publish-sentry,
+        build-and-publish-ffmpeg,
+      ]
     if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && success() }}
     runs-on: ubuntu-20.04
     steps:
