@@ -487,6 +487,7 @@ VideoDecoder* create_video_decoder(int width, int height, bool use_hardware, Cod
     decoder->can_use_hardware = use_hardware;
     decoder->type = DECODE_TYPE_NONE;
     decoder->codec_type = codec_type;
+    decoder->received_a_frame = false;
 
     // Try all decoders until we find one that works
     if (!try_next_decoder(decoder)) {
@@ -541,6 +542,8 @@ int video_decoder_send_packets(VideoDecoder* decoder, void* buffer, int buffer_s
             return -1;
         }
     }
+
+    decoder->received_a_frame = true;
     return 0;
 }
 
@@ -556,6 +559,13 @@ int video_decoder_decode_frame(VideoDecoder* decoder) {
             (int): 0 on success (can call this function again), 1 on EAGAIN (must send more input
        before calling again), -1 on failure
             */
+
+    // get_format doesn't get called until after video_decoder_send_packets,
+    // so we exit early if we haven't received a frame,
+    // to ensure that get_format has been called first
+    if (!decoder->received_a_frame) {
+        return 1;
+    }
 
     static WhistTimer latency_clock;
 

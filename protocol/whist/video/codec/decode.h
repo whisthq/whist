@@ -84,6 +84,8 @@ typedef struct VideoDecoder {
     enum AVHWDeviceType device_type;
 
     bool using_hw;
+
+    bool received_a_frame;
 } VideoDecoder;
 
 /*
