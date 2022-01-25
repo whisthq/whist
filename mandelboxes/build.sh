@@ -45,7 +45,8 @@ done
 # This will ensure that instances don't run out of space as fast!
 if [[ "$mode" == "dev" ]]; then
   echo "Pruning stale dangling docker images..."
-  docker image prune --filter "until=168h" --force
+  docker image prune --filter "until=48h" --force
+  docker builder prune --filter "until=48h" --force
 fi
 
 # Nuke the build-assets temp directory
