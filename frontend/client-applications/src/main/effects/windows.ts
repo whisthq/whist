@@ -105,7 +105,8 @@ withAppActivated(fromTrigger(WhistTrigger.showSignoutWindow)).subscribe(() => {
 
   BrowserWindow.getAllWindows().forEach((win) => {
     const hash = getElectronWindowHash(win)
-    if (hash?.includes("error")) destroyElectronWindow(hash)
+    if ((hash?.includes("error") ?? false) && hash !== undefined)
+      destroyElectronWindow(hash)
   })
 })
 

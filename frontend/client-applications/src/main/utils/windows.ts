@@ -7,6 +7,7 @@ import {
 } from "electron"
 
 import config from "@app/config/environment"
+import { logging } from "@app/main/utils/logging"
 
 // Helper functions
 const base = {
@@ -30,13 +31,15 @@ const createView = (url: string, win?: BrowserWindow) => {
   view.webContents.userAgent = replaceUserAgent(view.webContents.userAgent)
 
   if (win !== undefined) {
-    win.setBrowserView(view)
-    view.setBounds({
-      x: 0,
-      y: 30,
-      width: win.getSize()[0],
-      height: win.getSize()[1] - 30,
-    })
+    try {
+      win.setBrowserView(view)
+      view.setBounds({
+        x: 0,
+        y: 30,
+        width: win.getSize()[0],
+        height: win.getSize()[1] - 30,
+      })
+    } catch (err) {}
   }
 
   return view
@@ -146,47 +149,52 @@ const createElectronWindow = (args: {
     return { win: winAlreadyExists, view: undefined }
   }
 
-  // Create the BrowserWindow
-  const win = new BrowserWindow({
-    ...(base as BrowserWindowConstructorOptions),
-    ...(args.options !== undefined && args.options),
-    width: args.width,
-    height: args.height,
-    show: false, // If this is not set to false, the window will show too early as a white scren
-  })
+  try {
+    // Create the BrowserWindow
+    const win = new BrowserWindow({
+      ...(base as BrowserWindowConstructorOptions),
+      ...(args.options !== undefined && args.options),
+      width: args.width,
+      height: args.height,
+      show: false, // If this is not set to false, the window will show too early as a white scren
+    })
 
-  // Some websites don't like Electron in the user agent, so we remove it
-  win.webContents.userAgent = replaceUserAgent(win.webContents.userAgent)
+    // Some websites don't like Electron in the user agent, so we remove it
+    win.webContents.userAgent = replaceUserAgent(win.webContents.userAgent)
 
-  // Electron doesn't have a API for passing data to renderer windows. We need
-  // to pass "init" data for a variety of reasons, but mainly so we can decide
-  // which React component to render into the window. We're forced to do this
-  // using query parameters in the URL that we pass. The alternative would
-  // be to use separate index.html files for each window, which we want to avoid.
-  const params = `?show=${args.hash}`
-  if (app.isPackaged) {
-    win
-      .loadFile("build/index.html", { search: params })
-      .catch((err) => console.error(err))
-  } else {
-    win
-      .loadURL(`http://localhost:8080${params}`)
-      .catch((err) => console.error(err))
+    // Electron doesn't have a API for passing data to renderer windows. We need
+    // to pass "init" data for a variety of reasons, but mainly so we can decide
+    // which React component to render into the window. We're forced to do this
+    // using query parameters in the URL that we pass. The alternative would
+    // be to use separate index.html files for each window, which we want to avoid.
+    const params = `?show=${args.hash}`
+    if (app.isPackaged) {
+      win
+        .loadFile("build/index.html", { search: params })
+        .catch((err) => console.error(err))
+    } else {
+      win
+        .loadURL(`http://localhost:8080${params}`)
+        .catch((err) => console.error(err))
+    }
+
+    // When the window is ready to be shown, show it
+    win.once(
+      "ready-to-show",
+      () => (args?.show ?? true) && fadeElectronWindowIn(win)
+    )
+
+    // If we want to load a URL into a BrowserWindow, we first load it into a
+    // BrowserView and attach it to the BrowserWindow. This is our trick to make the
+    // window both frameless and draggable.
+    if (args.customURL !== undefined)
+      return { win, view: createView(args.customURL, win) }
+
+    return { win, view: undefined }
+  } catch (err) {
+    logging.error(`Error creating window ${args.hash}`, {})
+    return { win: undefined, view: undefined }
   }
-
-  // When the window is ready to be shown, show it
-  win.once(
-    "ready-to-show",
-    () => (args?.show ?? true) && fadeElectronWindowIn(win)
-  )
-
-  // If we want to load a URL into a BrowserWindow, we first load it into a
-  // BrowserView and attach it to the BrowserWindow. This is our trick to make the
-  // window both frameless and draggable.
-  if (args.customURL !== undefined)
-    return { win, view: createView(args.customURL, win) }
-
-  return { win, view: undefined }
 }
 
 export {
