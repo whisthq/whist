@@ -56,7 +56,7 @@ const getElectronWindow = (hash: string) => {
 const fadeElectronWindowIn = (
   win: BrowserWindow,
   step = 0.1,
-  fadeEveryXSeconds = 25
+  fadeEveryXSeconds = 15
 ) => {
   try {
     win.show()
@@ -68,10 +68,12 @@ const fadeElectronWindowIn = (
     // Increase the opacity of the window by `step` every `fadeEveryXSeconds`
     // seconds.
     const interval = setInterval(() => {
-      // Stop fading if window's opacity is 1 or greater.
-      if (opacity >= 1) clearInterval(interval)
-      win.setOpacity(opacity)
-      opacity += step
+      try {
+        // Stop fading if window's opacity is 1 or greater.
+        if (opacity >= 1) clearInterval(interval)
+        win?.setOpacity(opacity)
+        opacity += step
+      } catch (err) {}
     }, fadeEveryXSeconds)
   } catch (err) {}
 }
@@ -79,7 +81,7 @@ const fadeElectronWindowIn = (
 const fadeElectronWindowOut = (
   win: BrowserWindow,
   step = 0.1,
-  fadeEveryXSeconds = 25
+  fadeEveryXSeconds = 15
 ) => {
   try {
     // Get the opacity of the window.
@@ -88,13 +90,15 @@ const fadeElectronWindowOut = (
     // Increase the opacity of the window by `step` every `fadeEveryXSeconds`
     // seconds.
     const interval = setInterval(() => {
-      // Stop fading if window's opacity is 1 or greater.
-      if (opacity <= 0) {
-        win.hide()
-        clearInterval(interval)
-      }
-      win.setOpacity(opacity)
-      opacity -= step
+      try {
+        // Stop fading if window's opacity is 1 or greater.
+        if (opacity <= 0) {
+          win.hide()
+          clearInterval(interval)
+        }
+        win.setOpacity(opacity)
+        opacity -= step
+      } catch (err) {}
     }, fadeEveryXSeconds)
   } catch (err) {}
 }

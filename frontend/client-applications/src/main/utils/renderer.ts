@@ -161,8 +161,8 @@ const createImportWindow = () =>
     hash: WindowHashImport,
   })
 
-const createSupportWindow = () =>
-  createElectronWindow({
+const createSupportWindow = () => {
+  const { win } = createElectronWindow({
     ...width.xs,
     ...height.md,
     hash: WindowHashSupport,
@@ -170,6 +170,8 @@ const createSupportWindow = () =>
       alwaysOnTop: true,
     },
   })
+  win.webContents.toggleDevTools()
+}
 
 const createOmnibar = () =>
   createElectronWindow({
