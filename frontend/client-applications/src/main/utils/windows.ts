@@ -141,13 +141,12 @@ const createElectronWindow = (args: {
   customURL?: string
   show?: boolean
 }) => {
-  const winAlreadyExists = getElectronWindow(args.hash)
-  if (winAlreadyExists !== undefined) {
-    fadeElectronWindowIn(winAlreadyExists)
-    return { win: winAlreadyExists, view: undefined }
-  }
-
   try {
+    const winAlreadyExists = getElectronWindow(args.hash)
+    if (winAlreadyExists !== undefined) {
+      fadeElectronWindowIn(winAlreadyExists)
+      return { win: winAlreadyExists, view: undefined }
+    }
     // Create the BrowserWindow
     const win = new BrowserWindow({
       ...(base as BrowserWindowConstructorOptions),
