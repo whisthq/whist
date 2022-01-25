@@ -468,10 +468,7 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
         // Throttle the requests to prevent network upload saturation, however
         if (get_timer(&ring_buffer->last_stream_reset_request_timer) >
             STREAM_RESET_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
-            int greatest_failed_id = ring_buffer->max_id - 1;
-            if (ring_buffer->last_rendered_id != -1) {
-                greatest_failed_id = next_render_id;
-            }
+            int greatest_failed_id = max(ring_buffer->max_id - 1, next_render_id);
             ring_buffer->request_stream_reset(ring_buffer->socket_context, ring_buffer->type,
                                               greatest_failed_id);
             LOG_INFO(
