@@ -460,7 +460,7 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
     // If nacking has failed to recover the packets we need,
     if (!nacking_succeeded
         // Or if we're more than MAX_UNSYNCED_FRAMES frames out-of-sync,
-        || ring_buffer->max_id > ring_buffer->last_rendered_id + MAX_UNSYNCED_FRAMES
+        || (ring_buffer->last_rendered_id != -1 && ring_buffer->max_id > ring_buffer->last_rendered_id + MAX_UNSYNCED_FRAMES)
         // Or we've spent MAX_TO_RENDER_STALENESS trying to render this one frame
         || (next_to_render_staleness > MAX_TO_RENDER_STALENESS / MS_IN_SECOND)) {
         // THEN, we should send an iframe request
