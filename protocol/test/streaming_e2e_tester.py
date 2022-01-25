@@ -31,6 +31,8 @@ from e2e_helpers.whist_remote import (
     start_host_service_on_instance,
     run_server_on_instance,
     run_client_on_instance,
+    setup_network_conditions_client,
+    restore_network_conditions_client,
 )
 
 # Get tools to programmatically run Whist components on a remote machine
@@ -43,7 +45,7 @@ from e2e_helpers.remote_exp_tools import (
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 DESCRIPTION = """
-This script will spin a g4dn.2xlarge EC2 instance with two Docker containers
+This script will spin a g4dn.xlarge EC2 instance with two Docker containers
 and run a protocol streaming performance test between the two of them. 
 """
 
@@ -153,6 +155,13 @@ parser.add_argument(
     default="~/.aws/credentials",
 )
 
+parser.add_argument(
+    "--network-conditions",
+    help="The network condition for the experiment. The input is in the form of three comma-separated floats indicating the max bandwidth, delay (in ms), and percentage of packet drops (in the range [0.0,1.0]). 'normal' will allow the network to run with no degradation.",
+    type=str,
+    default="normal",
+)
+
 args = parser.parse_args()
 
 
@@ -173,6 +182,8 @@ if __name__ == "__main__":
     region_name = args.region_name
     use_two_instances = True if args.use_two_instances == "true" else False
     simulate_scrolling = True if args.simulate_scrolling == "true" else False
+
+    network_conditions = args.network_conditions
 
     # Load the SSH key
     if not os.path.isfile(ssh_key_path):
@@ -197,16 +208,21 @@ if __name__ == "__main__":
 
     # Save to 'new_instances.txt' file names of new instances that were created. These will have to be terminated by a successive Github action in case this script crashes before being able to terminate them itself.
     instances_to_be_terminated = []
+    instances_to_be_stopped = []
     if server_instance_id != args.use_existing_server_instance:
         instances_to_be_terminated.append(server_instance_id)
-    if (
-        client_instance_id != server_instance_id
-        and client_instance_id != args.use_existing_client_instance
-    ):
-        instances_to_be_terminated.append(client_instance_id)
-    instances_file = open("new_instances.txt", "a+")
+    else:
+        instances_to_be_stopped.append(server_instance_id)
+    if client_instance_id != server_instance_id:
+        if client_instance_id != args.use_existing_client_instance:
+            instances_to_be_terminated.append(client_instance_id)
+        else:
+            instances_to_be_stopped.append(client_instance_id)
+    instances_file = open("instances_to_clean.txt", "a+")
     for i in instances_to_be_terminated:
-        instances_file.write(i)
+        instances_file.write("terminate {} {}".format(region_name, i))
+    for i in instances_to_be_stopped:
+        instances_file.write("stop {} {}".format(region_name, i))
     instances_file.close()
 
     # Get the IP address of the instance(s)
@@ -313,11 +329,21 @@ if __name__ == "__main__":
     server_docker_id, json_data = run_server_on_instance(server_pexpect_process)
     json_data["initial_url"] = testing_url
 
+    # Set up the network degradation conditions
+    setup_network_conditions_client(
+        client_pexpect_process, pexpect_prompt_client, network_conditions, running_in_ci
+    )
     # Run the dev client
     client_docker_id = run_client_on_instance(client_pexpect_process, json_data, simulate_scrolling)
 
     # Wait <testing_time> seconds to generate enough data
     time.sleep(testing_time)
+
+    # Restore un-degradated network conditions in case the instance is reused later on
+    if network_conditions != "normal":
+        restore_network_conditions_client(
+            client_pexpect_process, pexpect_prompt_client, running_in_ci
+        )
 
     # Extract the client/server perf logs from the two docker containers
     print("Initiating LOG GRABBING ssh connection(s) with the AWS instance(s)...")
@@ -408,6 +434,6 @@ if __name__ == "__main__":
     print("Instance successfully stopped/terminated, goodbye")
 
     # No longer need the new_instances.txt file because the script has already terminated (if needed) the instances itself
-    os.remove("new_instances.txt")
+    os.remove("instances_to_clean.txt")
 
     print("Done")
