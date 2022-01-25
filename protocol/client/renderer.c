@@ -13,7 +13,7 @@ Includes
 #include "renderer.h"
 #include "client_statistic.h"
 #include "sdl_event_handler.h"
-
+#include "whist/tools/debug_console.h"
 /*
 ============================
 Defines
@@ -64,6 +64,7 @@ WhistRenderer* init_renderer(int initial_width, int initial_height) {
     memset(whist_renderer, 0, sizeof(WhistRenderer));
 
     // Initialize audio and video systems
+
     whist_renderer->audio_context = init_audio();
     whist_renderer->video_context = init_video(initial_width, initial_height);
 
@@ -161,6 +162,10 @@ void renderer_try_render(WhistRenderer* whist_renderer) {
         whist_renderer->using_renderer_thread = false;
     }
 #endif
+
+    if (get_forced_values()->simulate_freeze) {
+        // whist_sleep(10);
+    }
 
     // If the audio device is pending an update,
     // refresh the audio device

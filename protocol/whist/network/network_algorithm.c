@@ -26,6 +26,7 @@ Includes
 */
 
 #include "network_algorithm.h"
+#include "whist/tools/debug_console.h"
 
 /*
 ============================
@@ -137,6 +138,24 @@ NetworkSettings get_desired_network_settings(NetworkStatistics stats) {
     network_settings.audio_fec_ratio = default_network_settings.audio_fec_ratio;
     network_settings.video_fec_ratio = default_network_settings.video_fec_ratio;
     network_settings.desired_codec = default_network_settings.desired_codec;
+
+    if (get_forced_values()->verbose_log) {
+        LOG_INFO("[current_rates] bitrate=%d burst_bitrate=%d", network_settings.bitrate,
+                 network_settings.burst_bitrate);
+    }
+
+    if (get_forced_values()->force_bitrate) {
+        network_settings.bitrate = get_forced_values()->force_bitrate;
+    }
+    if (get_forced_values()->force_burst_bitrate) {
+        network_settings.burst_bitrate = get_forced_values()->force_burst_bitrate;
+    }
+    if (get_forced_values()->force_audio_fec_ratio) {
+        network_settings.audio_fec_ratio = get_forced_values()->force_audio_fec_ratio;
+    }
+    if (get_forced_values()->force_video_fec_ratio) {
+        network_settings.video_fec_ratio = get_forced_values()->force_video_fec_ratio;
+    }
 
     // Clamp to bounds
     if (network_settings.bitrate < MINIMUM_BITRATE) {

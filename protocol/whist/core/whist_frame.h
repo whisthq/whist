@@ -31,6 +31,7 @@ typedef struct VideoFrame {
     timestamp_us server_timestamp;        // Server timestamp during capture of this frame
 
     unsigned char data[];
+
 } VideoFrame;
 
 typedef struct AudioFrame {

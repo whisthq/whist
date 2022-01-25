@@ -25,6 +25,8 @@ Includes
 #include <whist/network/network.h>
 #include <whist/network/ringbuffer.h>
 #include <whist/core/whist_frame.h>
+#include <whist/tools/protocol_analyzer.h>
+#include <whist/tools/debug_console.h>
 
 /*
 ============================
@@ -180,6 +182,7 @@ void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
     // BEGIN NEW CODE
     // ===========================
     if (is_overflowing_audio(audio_context)) {
+        whist_analyzer_record_audio_queue_full();
         // if we're overflowing, discard the packet but pretend we played it
         log_double_statistic(AUDIO_FPS_SKIPPED, 1.0);
         LOG_WARNING("Audio queue full, skipping it!");
@@ -187,6 +190,7 @@ void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
     }
     // otherwise, push the audio frame to the render context
     if (!audio_context->pending_render_context) {
+        whist_analyzer_record_pending_rendering(PACKET_AUDIO);
         // give data pointer to the audio context
         audio_context->render_context = audio_frame;
         // increment last_rendered_id
@@ -224,9 +228,9 @@ void render_audio(AudioContext* audio_context) {
             destroy_audio_device(audio_context);
             init_audio_device(audio_context);
         }
-
         // If we have a valid audio device to render with...
         if (audio_context->dev != 0) {
+            whist_analyzer_record_decode_audio();
             // Send the encoded frame to the decoder
             if (audio_decoder_send_packets(audio_context->audio_decoder, audio_frame->data,
                                            audio_frame->data_length) < 0) {
@@ -361,11 +365,16 @@ bool is_underflowing_audio(AudioContext* audio_context, int num_frames_buffered)
                  num_frames_buffered);
         audio_context->is_buffering_audio = false;
     }
-
+    if (get_forced_values()->verbose_log) {
+        LOG_INFO("is_under_flowing= %d", (int)audio_context->is_buffering_audio);
+    }
     return audio_context->is_buffering_audio;
 }
 
 bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered) {
+    if (get_forced_values()->verbose_log) {
+        LOG_INFO("pending_render_context= %d", (int)audio_context->pending_render_context);
+    }
     return !audio_context->pending_render_context &&
            !is_underflowing_audio(audio_context, num_frames_buffered);
 }

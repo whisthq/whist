@@ -7,6 +7,8 @@ Includes
 #include "ringbuffer.h"
 #include <assert.h>
 #include <whist/utils/fec.h>
+#include <whist/tools/protocol_analyzer.h>
+#include <whist/tools/debug_console.h>
 
 /*
 ============================
@@ -183,6 +185,7 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
 }
 
 int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) {
+    whist_analyzer_record_segment(segment);
     // Sanity check the packet's metadata
     WhistPacketType type = segment->whist_type;
     int segment_id = segment->id;
@@ -217,6 +220,8 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
         // so it's time to overwrite the resident if such a resident exists
         if (frame_data->id != -1) {
             if (frame_data->id > ring_buffer->currently_rendering_id) {
+                whist_analyzer_record_reset_ringbuffer(
+                    ring_buffer->type, ring_buffer->currently_rendering_id, segment_id);
                 // We have received a packet which will overwrite a frame that needs to be rendered
                 // in the future. In other words, the ring buffer is full, so we should wipe the
                 // whole ring buffer.
@@ -350,6 +355,7 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
                 LOG_INFO("Successfully recovered %d/%d Packet %d, using %d FEC packets",
                          frame_data->original_packets_received, frame_data->num_original_packets,
                          frame_data->id, frame_data->fec_packets_received);
+                whist_analyzer_record_fec_used(type, segment_id);
             }
             // Save the frame buffer size of the fec frame,
             // And mark the fec recovery as succeeded
@@ -378,6 +384,9 @@ bool is_ready_to_render(RingBuffer* ring_buffer, int id) {
     // Set the frame buffer so that others can read from it
     current_frame->frame_buffer = get_framebuffer(ring_buffer, current_frame);
     // and if getting a framebuffer out of it is possible
+
+    whist_analyzer_record_ready_to_render(ring_buffer->type, id, current_frame->frame_buffer);
+
     return current_frame->frame_buffer != NULL;
 }
 
@@ -408,6 +417,9 @@ FrameData* set_rendering(RingBuffer* ring_buffer, int id) {
 
     // Move Frame ID "id", from the ring buffer and into currently_rendering_frame
     FATAL_ASSERT(is_ready_to_render(ring_buffer, id));
+
+    whist_analyzer_record_current_rendering(ring_buffer->type, id,
+                                            ring_buffer->currently_rendering_id);
 
     // Move frame from current_frame, to currently_rendering_frame
     FrameData* current_frame = get_frame_at_id(ring_buffer, id);
@@ -449,6 +461,7 @@ void reset_stream(RingBuffer* ring_buffer, int id) {
             LOG_INFO("Skipping from %s frame %d to frame %d",
                      ring_buffer->type == PACKET_VIDEO ? "video" : "audio",
                      ring_buffer->last_rendered_id, id);
+            whist_analyzer_record_skip(ring_buffer->type, ring_buffer->last_rendered_id, id);
             // Drop frames up until id
             // We also use id - frames_received, to prevent printing a jump from 0 to 50,000
             for (int i =
@@ -600,6 +613,7 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
         // Throttle the requests to prevent network upload saturation, however
         if (get_timer(&ring_buffer->last_stream_reset_request_timer) >
             STREAM_RESET_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
+            whist_analyzer_record_stream_reset(ring_buffer->type, greatest_failed_id);
             ring_buffer->request_stream_reset(ring_buffer->socket_context, ring_buffer->type,
                                               greatest_failed_id);
 
@@ -760,6 +774,7 @@ void nack_single_packet(RingBuffer* ring_buffer, int id, int index) {
     ring_buffer->num_packets_nacked++;
     // If a nacking function was passed in, use it
     if (ring_buffer->nack_packet) {
+        whist_analyzer_record_nack(ring_buffer->type, id, index);
         ring_buffer->nack_packet(ring_buffer->socket_context, ring_buffer->type, id, index);
     }
 }

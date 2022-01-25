@@ -28,6 +28,7 @@ Includes
 #include <whist/logging/logging.h>
 #include <whist/logging/error_monitor.h>
 #include <whist/core/whistgetopt.h>
+#include <whist/tools/debug_console.h>
 
 /*
 ============================
@@ -88,6 +89,7 @@ static const struct option client_cmd_options[] = {
     {"skip-taskbar", no_argument, NULL, 's'},
     {"session-id", required_argument, NULL, 'd'},
     {"new-tab-url", required_argument, NULL, 'x'},
+    {"debug-console", required_argument, NULL, 0},
     // these are standard for POSIX programs
     {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
     {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
@@ -105,7 +107,7 @@ Private Function Implementations
 ============================
 */
 
-static int evaluate_arg(int eval_opt, char *eval_optarg) {
+static int evaluate_arg(const char *eval_opt_name, int eval_opt, char *eval_optarg) {
     /*
         Evaluate an option given the optcode and the argument
 
@@ -264,6 +266,23 @@ static int evaluate_arg(int eval_opt, char *eval_optarg) {
 
             break;
         }
+        case 0: {
+            if (eval_opt_name == NULL) {
+                break;
+            }
+            if (strcmp(eval_opt_name, "debug-console") == 0) {
+                ret = strtol(eval_optarg, &endptr, 10);
+                if (errno != 0 || *endptr != '\0' || ret > 65535 || ret < 0) {
+                    printf("parameter for debug-console is invalid, %s", usage);
+                    return -1;
+                }
+                enable_debug_console((int)ret);
+            } else if (strcmp(eval_opt_name, "your-new-options") ==
+                       0)  // add new options like this,
+            {
+            }
+            break;
+        }
         default: {
             if (eval_opt != -1) {
                 // illegal option
@@ -332,6 +351,9 @@ int client_parse_args(int argc, char *argv[]) {
         "                                  in the taskbar\n"
         "  -d, --session-id=ID           Set the session ID for the protocol's error logging\n"
         "  -x, --new-tab-url             URL to open in new tab \n"
+#ifdef USE_DEBUG_CONSOLE
+        "      --debug-console=PORT      Enable debug_console and related tools\n"
+#endif
         // special options should be indented further to the left
         "      --help     Display this help and exit\n"
         "      --version  Output version information and exit\n";
@@ -348,12 +370,12 @@ int client_parse_args(int argc, char *argv[]) {
     // default icon filename
     safe_strncpy(icon_png_filename, "", sizeof(icon_png_filename));
 
-    int opt;
+    int opt, opt_index = -1;
     bool ip_set = false;
     using_piped_arguments = false;
 
     while (true) {
-        opt = getopt_long(argc, argv, OPTION_STRING, client_cmd_options, NULL);
+        opt = getopt_long(argc, argv, OPTION_STRING, client_cmd_options, &opt_index);
         if (opt != -1 && optarg && strlen(optarg) > WHIST_ARGS_MAXLEN) {
             printf("Option passed into %c is too long! Length of %zd when max is %d\n", opt,
                    strlen(optarg), WHIST_ARGS_MAXLEN);
@@ -372,7 +394,11 @@ int client_parse_args(int argc, char *argv[]) {
                 return 1;
             }
             default: {
-                if (evaluate_arg(opt, optarg) < 0) {
+                const char *opt_name = NULL;
+                if (opt_index >= 0) {
+                    opt_name = client_cmd_options[opt_index].name;
+                }
+                if (evaluate_arg(opt_name, opt, optarg) < 0) {
                     return -1;
                 }
             }
@@ -527,7 +553,8 @@ int read_piped_arguments(bool *keep_waiting, bool run_only_once) {
 
             if (opt_index >= 0) {
                 // Evaluate the passed argument, if a valid opt
-                if (evaluate_arg(client_cmd_options[opt_index].val, arg_value) < 0) {
+                if (evaluate_arg(client_cmd_options[opt_index].name,
+                                 client_cmd_options[opt_index].val, arg_value) < 0) {
                     LOG_ERROR("Piped arg %s with value %s wasn't accepted", arg_name,
                               arg_value ? arg_value : "NULL");
                     return -1;

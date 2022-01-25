@@ -37,6 +37,7 @@ Includes
 #include "network.h"
 #include "client_utils.h"
 #include "client_statistic.h"
+#include <whist/tools/protocol_analyzer.h>
 
 #define USE_HARDWARE true
 #define NO_NACKS_DURING_IFRAME false
@@ -185,6 +186,7 @@ void receive_video(VideoContext* video_context, VideoFrame* video_frame) {
         // Send a frame to the renderer,
         // then set video_context->pending_render_context to true to signal readiness
 
+        whist_analyzer_record_pending_rendering(PACKET_VIDEO);
         // give data pointer to the video context
         video_context->render_context = video_frame;
         log_double_statistic(VIDEO_FPS_RENDERED, 1.0);
@@ -225,7 +227,7 @@ int render_video(VideoContext* video_context) {
             wcmsg.type = MESSAGE_START_STREAMING;
             send_wcmsg(&wcmsg);
         }
-
+        whist_analyzer_record_decode_video();
         if (!frame->is_empty_frame) {
             if (USE_LONG_TERM_REFERENCE_FRAMES) {
                 // Indicate to the server that this frame is received
