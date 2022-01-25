@@ -471,7 +471,7 @@ with redirect_stdout(results_file):
                 margin=1,  # add a whitespace for both sides of each cell
                 max_precision=3,
             )
-            writer.write_tab()
+            writer.write_table()
             print("\n")
 
         # Generate client table
