@@ -493,6 +493,11 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* whist_
     UDPContext* context = (UDPContext*)raw_context;
     FATAL_ASSERT(context != NULL);
 
+    // Update what the most recent start of stream ID was
+    if (start_of_stream) {
+        context->last_start_of_stream_id[packet_type] = packet_id;
+    }
+
     // The caller should either start counting at 1,
     // Or use -1 for a packet without an ID
     FATAL_ASSERT(packet_id != 0);
