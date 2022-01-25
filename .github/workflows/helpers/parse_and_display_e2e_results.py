@@ -548,6 +548,12 @@ gist = gh_auth_user.create_gist(
 print("Posted performance results to secret gist: {}".format(gist.html_url))
 
 
+
+
+
+
+
+
 sys.path.append(".github/workflows/helpers")
 
 # Post updates to Slack channel if we are on dev
@@ -576,20 +582,21 @@ else:
     else:
         branch_name = os.getenv("GITHUB_HEAD_REF")
 
+
     # Search for an open PR connected to the current branch. If found, post results as a comment on that PR's page.
     result = ""
     if len(branch_name) > 0:
-        gh_cmd = "gh pr list -H {}".format(branch_name)
+        gh_cmd="gh pr list -H {}".format(branch_name)
         result = subprocess.check_output(gh_cmd, shell=True).decode("utf-8").strip().split()
     pr_number = -1
     if len(result) >= 3 and branch_name in result and result[0].isnumeric():
         pr_number = int(result[0])
-
+    
     if pr_number != -1:
         github_comment_update(
             github_token,
             github_repo,
-            github_issue,
+            pr_number,
             identifier,
             body,
             title=title,
