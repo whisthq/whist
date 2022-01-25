@@ -429,7 +429,7 @@ void reset_stream(RingBuffer* ring_buffer, int id) {
             }
         } else {
             LOG_INFO("Restarting stream at frame %d", id);
-            for (int i = id - ring_buffer->ring_buffer_size; i < id; i++) {
+            for (int i = max(0, id - ring_buffer->ring_buffer_size); i < id; i++) {
                 FrameData* frame_data = get_frame_at_id(ring_buffer, i);
                 if (frame_data->id == i) {
                     reset_frame(ring_buffer, frame_data);
