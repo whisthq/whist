@@ -43,6 +43,7 @@ import { networkAnalyze } from "@app/main/utils/networkAnalysis"
 import {
   destroyElectronWindow,
   hideElectronWindow,
+  getElectronWindowHash,
 } from "@app/main/utils/windows"
 
 // Show the welcome window if the user has not logged in yet
@@ -103,7 +104,7 @@ withAppActivated(fromTrigger(WhistTrigger.showSignoutWindow)).subscribe(() => {
   createSignoutWindow()
 
   BrowserWindow.getAllWindows().forEach((win) => {
-    const hash = win.webContents.getURL()?.split("show=")?.[1]
+    const hash = getElectronWindowHash(win)
     if (hash?.includes("error")) destroyElectronWindow(hash)
   })
 })
