@@ -87,7 +87,6 @@ withAppActivated(
     withLatestFrom(fromTrigger(WhistTrigger.protocolConnection))
   )
 ).subscribe(([, connected]: [any, boolean]) => {
-  console.log("connected is", connected)
   if (connected) destroyElectronWindow(WindowHashPayment)
 })
 

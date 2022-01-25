@@ -126,7 +126,7 @@ const launchTrigger = emitOnSignal(
     timezone,
     keyRepeat,
     initialKeyRepeat,
-  }),
+  }).pipe(share()),
   merge(
     zip(
       checkPayment.success,
@@ -135,7 +135,7 @@ const launchTrigger = emitOnSignal(
       )
     ), // On a normal launch
     importedData // On onboarding or import
-  )
+  ).pipe(share())
 ).pipe(share())
 
 // Mandelbox creation flow
