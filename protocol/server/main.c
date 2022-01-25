@@ -415,8 +415,7 @@ int main(int argc, char* argv[]) {
     WhistThread send_audio_thread =
         whist_create_thread(multithreaded_send_audio, "multithreaded_send_audio", &server_state);
 
-    void* notifs_evbase = create_event_base();
-    init_notifications_thread(&server_state, notifs_evbase);
+    NotificationsHandler* notifications_handler = init_notifications_handler(&server_state);
 
     WhistThread manage_clients_thread = whist_create_thread(
         multithreaded_manage_client, "multithreaded_manage_client", &server_state);
@@ -580,9 +579,7 @@ int main(int argc, char* argv[]) {
     whist_wait_thread(send_audio_thread, NULL);
     whist_wait_thread(sync_tcp_packets_thread, NULL);
     whist_wait_thread(manage_clients_thread, NULL);
-#ifdef __linux__
-    destroy_notifications_thread(notifs_evbase);
-#endif
+    destroy_notifications_handler(notifications_handler);
 
     // This is safe to call here because all other threads have been waited and destroyed
     if (quit_client(&server_state.client) != 0) {

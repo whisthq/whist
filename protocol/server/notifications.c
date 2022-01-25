@@ -15,13 +15,11 @@ passed through the D-Bus, and send them via the Whist Protocol to the client.
 
 #ifndef __linux__
 
-void *create_event_base() { return NULL; }
-
-void init_notifications_thread(whist_server_state *state, void *eb) {
+NotificationsHandler *init_notifications_handler(whist_server_state *server_state) {
     LOG_INFO("Cannot initialize notifications thread; feature only supported on Linux");
 }
 
-void destroy_notifications_thread(void *eb) {
+void destroy_notifications_handler(NotificationsHandler *notifications_handler) {
     LOG_INFO("Cannot destroy notifications thread; feature only supported on Linux");
 }
 
@@ -67,10 +65,10 @@ typedef struct DbusCtx {
     void *extra;
 } DbusCtx;
 
-typedef struct NotifsThreadArgs {
+typedef struct NotificationsHandler {
     whist_server_state *state;
     struct event_base *eb;
-} NotifsThreadArgs;
+} NotificationsHandler;
 
 /*
 ============================
@@ -109,17 +107,20 @@ Public Function Implementations
 ============================
 */
 
-void *create_event_base() { return event_base_new(); }
-
-void init_notifications_thread(whist_server_state *state, void *eb) {
-    NotifsThreadArgs *args = malloc(sizeof(NotifsThreadArgs));
-    args->state = state;
-    args->eb = eb;
+NotificationsHandler *init_notifications_handler(whist_server_state *state) {
+    NotificationsHandler *handler = malloc(sizeof(NotificationsHandler));
+    handler->state = state;
+    handler->eb = event_base_new();
     whist_create_thread(multithreaded_process_notifications, "multithreaded_process_notifications",
-                        (void *)args);
+                        (void *)handler);
+
+    return handler;
 }
 
-void destroy_notifications_thread(void *eb) { event_base_loopbreak(eb); }
+void destroy_notifications_handler(NotificationsHandler *handler) {
+    event_base_loopbreak(handler->eb);
+    free(handler);
+}
 
 /*
 ============================
@@ -134,10 +135,9 @@ Private Function Implementations
  * @return int32_t  0 upon successful completion, -1 if failure.
  */
 int32_t multithreaded_process_notifications(void *opaque) {
-    NotifsThreadArgs *args = (NotifsThreadArgs *)opaque;
+    NotificationsHandler *args = (NotificationsHandler *)opaque;
     whist_server_state *state = args->state;
     struct event_base *eb = args->eb;
-    free(args);
 
     whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
     whist_sleep(500);
