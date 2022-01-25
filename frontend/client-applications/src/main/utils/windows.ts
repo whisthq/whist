@@ -47,9 +47,7 @@ const createView = (url: string, win?: BrowserWindow) => {
 
 const getElectronWindow = (hash: string) => {
   for (const win of BrowserWindow.getAllWindows()) {
-    try {
-      if (win.webContents.getURL()?.split("show=")?.[1] === hash) return win
-    } catch (err) {}
+    if (getElectronWindowHash(win) === hash) return win
   }
 
   return undefined
