@@ -27,7 +27,7 @@ const localdevHost: MockSchema = {
           throw new Error(message)
         }
       }),
-      delay(2000),
+      delay(2000), // Tech debt: Not sure why this makes it work but it does
       mapTo({
         mandelboxID: crypto.randomUUID(),
         ip: process.env.HOST_IP,
