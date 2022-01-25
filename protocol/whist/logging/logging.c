@@ -183,8 +183,33 @@ void flush_logs(void) {
     // Flush the whole log queue.
     bool locked = false;
     if (atomic_load(&logger_thread_active)) {
-        // If the logger thread is active then we need to avoid it
-        // colliding with our indepdently emptying the queue.
+        // If the logger thread is active then wait until it has flushed
+        // the queue itself.  If it looks like we are waiting too long,
+        // then assume the logger thread is stuck somehow and do the
+        // flush ourselves.  (Trying to write at the same time as the
+        // logger thread leads to messages being reordered.)
+
+        WhistTimer timer;
+        start_timer(&timer);
+        while (1) {
+            int queued_messages;
+
+            whist_lock_mutex(logger_queue_mutex);
+            queued_messages = linked_list_size(&logger_queue);
+            whist_unlock_mutex(logger_queue_mutex);
+
+            if (queued_messages == 0) {
+                // Logger thread has flushed all outstanding logs, done.
+                return;
+            }
+
+            if (get_timer(&timer) > 1.0) {
+                // We've waited too long, give up.
+                break;
+            }
+            whist_sleep(10);
+        }
+
         whist_lock_mutex(logger_queue_mutex);
         locked = true;
     } else {
