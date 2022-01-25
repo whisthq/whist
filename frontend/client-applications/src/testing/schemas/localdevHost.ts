@@ -13,7 +13,7 @@
  *   as this will create a new mandelbox with the correct protocol build
  *   instead of an outdated one.
  */
-import { mapTo, tap } from "rxjs/operators"
+import { mapTo, delay, tap } from "rxjs/operators"
 import { MockSchema } from "@app/@types/schema"
 import crypto from "crypto"
 
@@ -27,6 +27,7 @@ const localdevHost: MockSchema = {
           throw new Error(message)
         }
       }),
+      delay(2000), // Tech debt: Not sure why this makes it work but it does
       mapTo({
         mandelboxID: crypto.randomUUID(),
         ip: process.env.HOST_IP,
