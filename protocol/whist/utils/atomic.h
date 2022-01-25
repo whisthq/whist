@@ -8,6 +8,9 @@
 
 #elif defined(_MSC_VER)
 
+#include <stdbool.h>
+#include <windows.h>
+
 // This is a simple implementation of the default sequentially-consistent
 // C11 atomic operations on int using the MSVC Interlocked* functions.
 // (It works on MSVC LONG, which  is 32-bit like int elsewhere.)
