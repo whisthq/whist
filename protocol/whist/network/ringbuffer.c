@@ -154,6 +154,8 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
     start_timer(&ring_buffer->avg_timer);
     ring_buffer->last_nack_possibility = true;
 
+    start_timer(&ring_buffer->last_stream_reset_request_timer);
+
     return ring_buffer;
 }
 
@@ -459,18 +461,14 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
             STREAM_RESET_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
             ring_buffer->request_stream_reset(ring_buffer->socket_context, ring_buffer->type,
                                               max(next_render_id, ring_buffer->max_id - 1));
-        }
-
-        /*
-        LOG_INFO(
+            LOG_INFO(
                 "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
                 "and the frame we're trying to render has been alive for %fms. "
                 "A stream reset is now being requested to catch-up.",
-                ring_buffer->max_id,
-                ring_buffer->max_id - ring_buffer->last_rendered_id,
+                ring_buffer->max_id, ring_buffer->max_id - ring_buffer->last_rendered_id,
                 next_to_render_staleness * MS_IN_SECOND);
-                */
-        start_timer(&ring_buffer->last_stream_reset_request_timer);
+            start_timer(&ring_buffer->last_stream_reset_request_timer);
+        }
     }
 }
 
