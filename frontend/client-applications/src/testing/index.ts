@@ -92,8 +92,11 @@ export const withMocking = <
   // Return channels unchanged if not found
   const mockFn = get(getMocks(), name) ?? undefined
 
+  if (mockFn === undefined) console.log("No mocking for", name)
+
   if (mockFn === undefined) return flowFn(trigger)
 
+  console.log("Yes mocking for", name)
   // We want any channels that are not defined in the DebugSchema to be
   // empty observables, so we don't cause errors for subscribers.
   return {
