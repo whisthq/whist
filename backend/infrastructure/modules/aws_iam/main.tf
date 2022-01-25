@@ -1,7 +1,3 @@
-provider "aws" {
-  region = var.region
-}
-
 resource "aws_iam_user" "whist-employees" {
   for_each = var.employee_emails
   name = each.value
