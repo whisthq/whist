@@ -47,6 +47,7 @@ import (
 
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
 	mandelboxData "github.com/whisthq/whist/backend/services/host-service/mandelbox"
+	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
 	"github.com/whisthq/whist/backend/services/host-service/metrics"
 	"github.com/whisthq/whist/backend/services/metadata"
@@ -705,6 +706,17 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		// We don't want these user config errors to be fatal, so we log them as
 		// errors and move on.
 		logger.Error(err)
+	}
+
+	// Read any existing imported extensions
+	savedExtensions := mandelbox.GetSavedExtensions()
+
+	// If the new request contains additional imported extensions, add them to the existing list
+	if len(req.Extensions) > 0 {
+		importedExtensions := configutils.UpdateImportedExtensions(savedExtensions, req.Extensions)
+		if err = mandelbox.WriteSavedExtensions(importedExtensions); err != nil {
+			logger.Errorf("Error writing imported extensions for mandelbox %s: %s", mandelbox.GetID(), err)
+		}
 	}
 
 	// Write the user's initial browser data
