@@ -88,8 +88,12 @@ def create_ec2_instance(
 
     branch_name = ""
     if running_in_ci:
-        # In CI, the PR branch name is saved in the GITHUB_HEAD_REF environment variable
-        branch_name = os.getenv("GITHUB_HEAD_REF")
+        # In CI, the PR branch name is saved in GITHUB_REF_NAME, or in the GITHUB_HEAD_REF environment variable (in case this script is being run as part of a PR)
+        b = os.getenv("GITHUB_REF_NAME").split("/")
+        if len(b) != 2 or not b[0].isnumeric() or b[1] != "merge":
+            branch_name = os.getenv("GITHUB_REF_NAME")
+        else:
+            branch_name = os.getenv("GITHUB_HEAD_REF")
     else:
         # Locally, we can find the branch using the 'git branch' command.
         # WARNING: this command will fail on detached HEADS.
