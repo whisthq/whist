@@ -55,7 +55,7 @@ flags+=(--enable-features=$features)
 flags+=(--flag-switches-end)
 
 # Pass user agent corresponding to user's OS from JSON-transport
-if [[ $USER_AGENT -ne "" ]]; then
+if [[ ! -z "$USER_AGENT" ]]; then
   flags+=(--user-agent="$USER_AGENT")
 fi
 
