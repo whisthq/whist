@@ -94,7 +94,6 @@ export const withMocking = <
 
   if (mockFn === undefined) return flowFn(trigger)
 
-  console.log("Yes mocking for", name)
   // We want any channels that are not defined in the DebugSchema to be
   // empty observables, so we don't cause errors for subscribers.
   return {
