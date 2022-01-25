@@ -442,17 +442,18 @@ jobs:
       - name: On macOS and Ubuntu Linux, Checkout this Git Repository Directly
         if: runner.os == 'macOS' || runner.os == 'Linux'
         uses: actions/checkout@v2
+        with:
+          repository: FFmpeg/FFmpeg
+          ref: release/5.0 # Latest stable FFmpeg branch
 
       # media-autobuild_suite needs to be directly in the C:\ drive, as it is very finicky with paths
       - name: On Windows, Git Clone whisthq/FFmpeg and whisthq/media-autobuild_suite (FFmpeg Windows Compilation Helper Tools) to C:\
         if: runner.os == 'Windows'
-        shell: cmd
-        run: |
-          REM first, clone whisthq/media-autobuild_suite to C:\media-autobuild_suite
-          git clone "https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/whisthq/media-autobuild_suite.git" C:\media-autobuild_suite
-          REM then, clone whisthq/FFmpeg to C:\media-autobuild_suite\build\ffmpeg
-          git clone "https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/whisthq/ffmpeg.git" C:\media-autobuild_suite\build\ffmpeg
-      
+        uses: actions/checkout@v2
+        with:
+          repository: m-ab-s/media-autobuild_suite
+          ref: master # Latest stable FFmpeg branch
+
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -480,6 +481,7 @@ jobs:
               echo "$env:CUDA_PATH_VX_Y=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
               echo "$env:CUDA_PATH/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
             }
+
       - name: On Windows, Verify that NVCC is Installed
         if: runner.os == 'Windows'
         shell: powershell
@@ -488,6 +490,7 @@ jobs:
           ls $env:CUDA_PATH
           ls $env:CUDA_PATH\bin
           ls $env:CUDA_PATH\include
+      
       - name: On Windows, Move Preconfigured media-autobuild_suite Config Files Over to C:\media-autobuild_suite/build
         if: runner.os == 'Windows'
         working-directory: C:\media-autobuild_suite
@@ -501,6 +504,7 @@ jobs:
           build/ffmpeg/.github/workflows/helpers/mingw.sh \
           build/ffmpeg/.github/workflows/helpers/pacman.sh \
           build/
+      
       - name: On Windows, build FFmpeg via media-autobuild_suite from C:\ drive
         if: runner.os == 'Windows'
         working-directory: C:\media-autobuild_suite
@@ -524,6 +528,7 @@ jobs:
           sudo chown -R `whoami`:admin /usr/local/bin
           sudo chown -R `whoami`:admin /usr/local/share
           sudo chown -R `whoami`:admin /usr/local/opt
+      
       - name: On macOS, Install FFmpeg macOS Dependencies & macdylibbundler for packaging
         if: runner.os == 'macOS'
         run: |
@@ -551,6 +556,7 @@ jobs:
             && make -j install
             echo "Successfully cross-compiled libopus for arm64 on macOS..."
           fi
+      
       # We disable command-line programs and SDL2 since we have our own SDL2 static build
       - name: On macOS, Configure and Make FFmpeg
         if: runner.os == 'macOS'
@@ -597,6 +603,7 @@ jobs:
             echo "Unsupported compilation attempt on macOS"
             exit
           fi
+      
       ###################################################################################
       ############################# Ubuntu Linux STEPS START ############################
 
@@ -678,6 +685,7 @@ jobs:
               exit
             fi
           fi
+
       # Only upload headers once, as they are identical on every OS (on macOS sice version headers don't generate on Linux)
       - name: Tar FFmpeg headers and Upload to AWS S3 (Only on Push Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && matrix.config.name == 'macOS (x64)' }}
@@ -831,6 +839,7 @@ jobs:
           # tar and upload
           tar -zcvf ${{ env.headers-tar-name }} include
           aws s3 cp ${{ env.headers-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.headers-tar-name }}
+
       ###################################################################################
 
       - name: Checkout Whist Git Repository
@@ -855,11 +864,7 @@ jobs:
           SLACK_CHANNEL = "#alerts-prod"
           BODY = f"@releases :rotating_light: Failed to deploy Whist `FFmpeg ${{ matrix.config.name }}` Shared Library to AWS S3, investigate immediately :rotating_light: (<https://github.com/whisthq/FFmpeg/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
-
-
-
-
-
+          
   #######################################################################################
   #######################################################################################
 
