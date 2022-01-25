@@ -40,10 +40,10 @@ Public Functions
 */
 
 /**
- * @brief           Initializes a notification processing handler
+ * @brief                   Initializes a notification processing handler
  *
- * @param state     Server state. Must be specified to interface with the Whist protocol.
- * @return          Notification handler struct containing thread and event base variables.
+ * @param server_state      Server state. Must be specified to interface with the Whist protocol.
+ * @return                  Notification handler struct containing thread and event base variables.
  */
 NotificationsHandler *init_notifications_handler(whist_server_state *server_state);
 
