@@ -28,7 +28,6 @@ Includes
 #include "sync_packets.h"
 #include "client_utils.h"
 #include "client_statistic.h"
-#include "notifications.h"
 
 // Updater variables
 extern SocketContext packet_udp_context;

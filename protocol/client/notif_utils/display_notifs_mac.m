@@ -13,7 +13,7 @@ Includes
 ============================
 */
 
-#import "display_notifs.h"
+#import "../display_notifs.h"
 
 #import <stdio.h>
 #import <Cocoa/Cocoa.h>

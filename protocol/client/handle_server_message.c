@@ -31,6 +31,7 @@ Includes
 #include "network.h"
 #include "sdl_utils.h"
 #include "display_notifs.h"
+#include "client_statistic.h"
 
 #include <stddef.h>
 
@@ -53,6 +54,7 @@ static int handle_open_uri_message(WhistServerMessage *wsmsg, size_t wsmsg_size)
 static int handle_fullscreen_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_file_metadata_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_file_chunk_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+static int handle_notification_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 
 /*
 ============================
@@ -276,7 +278,7 @@ static int handle_file_chunk_message(WhistServerMessage *wsmsg, size_t wsmsg_siz
     return 0;
 }
 
-static int handle_file_chunk_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
+static int handle_notification_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
     /*
         Handle a file chunk message.
 
@@ -286,7 +288,7 @@ static int handle_file_chunk_message(WhistServerMessage *wsmsg, size_t wsmsg_siz
             (int): Returns -1 on failure, 0 on success
     */
 
-    display_native_notification(wsmsg->notif.title, wsmsg->notif.message);
+    native_show_notification(wsmsg->notif.title, wsmsg->notif.message);
     log_double_statistic(NOTIFICATIONS_RECEIVED, 1.);
 
     return 0;
