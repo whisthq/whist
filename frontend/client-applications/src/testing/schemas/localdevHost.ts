@@ -18,24 +18,22 @@ import { MockSchema } from "@app/@types/schema"
 import crypto from "crypto"
 
 const localdevHost: MockSchema = {
-  mandelboxCreateFlow: (trigger) => {
-    return {
-      success: trigger.pipe(
-        tap(() => {
-          if (process.env?.HOST_IP == null) {
-            const message =
-              "Host IP address not set! Set the `HOST_IP` environment variable to use this schema."
-            throw new Error(message)
-          }
-        }),
-        delay(2000),
-        mapTo({
-          mandelboxID: crypto.randomUUID(),
-          ip: process.env.HOST_IP,
-        })
-      ),
-    }
-  },
+  mandelboxCreateFlow: (trigger) => ({
+    success: trigger.pipe(
+      tap(() => {
+        if (process.env?.HOST_IP == null) {
+          const message =
+            "Host IP address not set! Set the `HOST_IP` environment variable to use this schema."
+          throw new Error(message)
+        }
+      }),
+      delay(2000),
+      mapTo({
+        mandelboxID: crypto.randomUUID(),
+        ip: process.env.HOST_IP,
+      })
+    ),
+  }),
 }
 
 export default localdevHost
