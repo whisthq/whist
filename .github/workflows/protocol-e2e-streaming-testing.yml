@@ -9,22 +9,6 @@ on:
   schedule:
     # Run dev benchmarking once per day at 00:01 UTC.
     - cron: "1 0 * * *"
-  # MANDATORYTODO: remove stuff here below (this is just for testing)
-  push:
-    # Trigger runs on our default branch, `dev`, to upload code coverage reports to Codecov
-    branches:
-      - dev
-    paths:
-      - "protocol/**"
-      - "!protocol/**/README.md"
-      - ".github/workflows/protocol-check-pr.yml"
-      - "mandelboxes/helper_scripts/copy_protocol_build.sh"
-  pull_request:
-    paths:
-      - "protocol/**"
-      - "!protocol/**/README.md"
-      - ".github/workflows/protocol-check-pr.yml"
-      - "mandelboxes/helper_scripts/copy_protocol_build.sh"
   workflow_dispatch:
 
 jobs:
@@ -77,7 +61,7 @@ jobs:
       - name: Run End-to-End Streaming Test
         id: e2e_streaming_test
         working-directory: protocol/test
-        run: python3 streaming_e2e_tester.py --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" --ssh-key-path "/home/runner/.ssh/id_rsa" --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" --use-two-instances=true --use-existing-server-instance=i-017a85b27c9f40bf3 --use-existing-client-instance=i-0750eecd2c674b1a9
+        run: python3 streaming_e2e_tester.py --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" --ssh-key-path "/home/runner/.ssh/id_rsa" --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" --use-two-instances=true
 
       # need one more section like this to ensure the S3 command works in case of failure/timeout of the Python script above
       - name: Upload logs to S3 for debugging purposes
