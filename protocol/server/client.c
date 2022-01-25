@@ -14,14 +14,15 @@ Includes
 ============================
 */
 
+#include <whist/utils/atomic.h>
 #include <whist/utils/rwlock.h>
 #include "client.h"
 #include "network.h"
 
-volatile int threads_needing_active = 0;  // Threads dependent on client being active
-volatile int threads_holding_active = 0;  // Threads currently assuming client is active
-WhistMutex active_holding_write_mutex;    // Protects writes to the above two variables
-                                          //     (protecting reads not necessary)
+// Threads dependent on client being active
+static atomic_int threads_needing_active = ATOMIC_VAR_INIT(0);
+// Threads currently assuming client is active
+static atomic_int threads_holding_active = ATOMIC_VAR_INIT(0);
 
 /*
 ============================
@@ -44,7 +45,6 @@ int init_client(Client *client) {
     client->udp_port = BASE_UDP_PORT;
     client->tcp_port = BASE_TCP_PORT;
     init_rw_lock(&client->tcp_rwlock);
-    active_holding_write_mutex = whist_create_mutex();
 
     return 0;
 }
@@ -136,9 +136,7 @@ void add_thread_to_client_active_dependents(void) {
         Add thread to count of those dependent on client being active
     */
 
-    whist_lock_mutex(active_holding_write_mutex);
-    threads_needing_active++;
-    whist_unlock_mutex(active_holding_write_mutex);
+    atomic_fetch_add(&threads_needing_active, 1);
 }
 
 void remove_thread_from_holding_active_count(void) {
@@ -146,9 +144,7 @@ void remove_thread_from_holding_active_count(void) {
         Remove thread from those currently assuming that client is active
     */
 
-    whist_lock_mutex(active_holding_write_mutex);
-    threads_holding_active--;
-    whist_unlock_mutex(active_holding_write_mutex);
+    atomic_fetch_sub(&threads_holding_active, 1);
 }
 
 void reset_threads_holding_active_count(Client *client) {
@@ -161,10 +157,8 @@ void reset_threads_holding_active_count(Client *client) {
         NOTE: Should only be called from `multithreaded_manage_client`
     */
 
-    whist_lock_mutex(active_holding_write_mutex);
-    threads_holding_active = threads_needing_active;
+    atomic_store(&threads_holding_active, atomic_load(&threads_needing_active));
     client->is_deactivating = false;
-    whist_unlock_mutex(active_holding_write_mutex);
 }
 
 void update_client_active_status(Client *client, bool *is_thread_assuming_active) {
@@ -201,5 +195,5 @@ bool threads_still_holding_active(void) {
             (bool): whether any threads need the client to still be active
     */
 
-    return threads_holding_active > 0;
+    return atomic_load(&threads_holding_active) > 0;
 }
