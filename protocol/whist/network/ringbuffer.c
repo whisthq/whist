@@ -210,7 +210,8 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
                 // Here, the frame is older than where our renderer is,
                 // So we can just reset the undesired frame
                 LOG_ERROR(
-                    "Trying to allocate Frame ID %d, but Frame ID %d has not been destroyed yet! Destroying it now...",
+                    "Trying to allocate Frame ID %d, but Frame ID %d has not been destroyed yet! "
+                    "Destroying it now...",
                     segment_id, frame_data->id);
                 reset_frame(ring_buffer, frame_data);
             }
