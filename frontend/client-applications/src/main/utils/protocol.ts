@@ -53,7 +53,7 @@ const launchProtocol = async (info?: {
     // If non-local, send the environment and session id for sentry
     ...(appEnvironment !== WhistEnvironments.LOCAL && {
       environment: config.deployEnv,
-      "session-id": sessionID,
+      "session-id": sessionID.toString(),
     }),
   }
 
