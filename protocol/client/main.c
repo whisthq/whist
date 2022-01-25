@@ -149,7 +149,10 @@ int sync_keyboard_state(void) {
     wcmsg.keyboard_state.state[FK_RGUI] = rgui_pressed;
 
     wcmsg.keyboard_state.caps_lock = SDL_GetModState() & KMOD_CAPS;
+#ifndef __APPLE__
+    // On macs, the num lock has no functionality, so we should always have it disabled
     wcmsg.keyboard_state.num_lock = SDL_GetModState() & KMOD_NUM;
+#endif
 
     wcmsg.keyboard_state.active_pinch = active_pinch;
 
