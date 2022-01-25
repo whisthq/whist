@@ -9,6 +9,22 @@ on:
   schedule:
     # Run dev benchmarking once per day at 00:01 UTC.
     - cron: "1 0 * * *"
+  # MANDATORYTODO: remove stuff here below (this is just for testing)
+  push:
+    # Trigger runs on our default branch, `dev`, to upload code coverage reports to Codecov
+    branches:
+      - dev
+    paths:
+      - "protocol/**"
+      - "!protocol/**/README.md"
+      - ".github/workflows/protocol-check-pr.yml"
+      - "mandelboxes/helper_scripts/copy_protocol_build.sh"
+  pull_request:
+    paths:
+      - "protocol/**"
+      - "!protocol/**/README.md"
+      - ".github/workflows/protocol-check-pr.yml"
+      - "mandelboxes/helper_scripts/copy_protocol_build.sh"
   workflow_dispatch:
 
 jobs:

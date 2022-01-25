@@ -18,6 +18,19 @@ github_ref_name = os.environ["GITHUB_REF_NAME"]
 github_gist_token = os.environ["GITHUB_GIST_TOKEN"]
 github_token = os.environ["GITHUB_TOKEN"]
 
+# A list of metrics to display (if found) in main table
+most_interesting_metrics = {
+    "VIDEO_FPS_RENDERED",
+    "VIDEO_END_TO_END_LATENCY",
+    "MAX_VIDEO_END_TO_END_LATENCY",
+    "VIDEO_INTER_FRAME_QP",
+    "MAX_VIDEO_INTER_FRAME_QP",
+    "VIDEO_INTRA_FRAME_QP",
+    "MAX_VIDEO_INTRA_FRAME_QP",
+    "AUDIO_FPS_SKIPPED",
+    "MAX_AUDIO_FPS_SKIPPED",
+}
+
 
 # Here, we parse the test results into a .info file, which can be read and displayed on the GitHub PR
 # Create output .info file
@@ -181,6 +194,44 @@ if github_ref_name != "dev":
 # Generate the report
 with redirect_stdout(results_file):
     if os.environ.get("GITHUB_REF_NAME") == "dev":
+
+        # Generate most interesting metric table
+        interesting_metrics = {}
+        for k in client_metrics2:
+            if k in most_interesting_metrics:
+                interesting_metrics[k] = client_metrics2[k]
+        for k in server_metrics2:
+            if k in most_interesting_metrics:
+                interesting_metrics[k] = server_metrics2[k]
+        if len(interesting_metrics) == 0:
+            print("NO INTERESTING METRICS\n")
+        else:
+            print("###### SUMMARY OF MOST INTERESTING METRICS: ######\n")
+
+            writer = MarkdownTableWriter(
+                # table_name="Interesting metrics",
+                headers=["Metric", "Entries", "Average ± Standard Deviation", "Min", "Max"],
+                value_matrix=[
+                    [
+                        k,
+                        interesting_metrics[k]["entries"],
+                        "{:.3f} ± {:.3f}".format(
+                            interesting_metrics[k]["avg"], interesting_metrics[k]["std"]
+                        )
+                        if interesting_metrics[k]["entries"] > 1
+                        else interesting_metrics[k]["avg"],
+                        interesting_metrics[k]["min"],
+                        interesting_metrics[k]["max"],
+                    ]
+                    for k in interesting_metrics
+                ],
+                margin=1,  # add a whitespace for both sides of each cell
+                max_precision=3,
+            )
+            writer.write_tab()
+            print("\n")
+
+        # Generate client metric
         if len(client_metrics) == 0:
             print("NO CLIENT METRICS\n")
         else:
@@ -393,6 +444,37 @@ with redirect_stdout(results_file):
             new_entry.append(emoji_delta)
             server_table_entries.append(new_entry)
 
+        # Generate most interesting metric table
+        interesting_metrics = []
+        for row in client_table_entries:
+            if row[0] in most_interesting_metrics:
+                interesting_metrics.append(row)
+        for row in server_table_entries:
+            if row[0] in most_interesting_metrics:
+                interesting_metrics.append(row)
+        if len(interesting_metrics) == 0:
+            print("NO INTERESTING METRICS\n")
+        else:
+            print("###### SUMMARY OF MOST INTERESTING METRICS: ######\n")
+
+            writer = MarkdownTableWriter(
+                # table_name="Interesting metrics",
+                headers=[
+                    "Metric",
+                    "Entries (this branch)",
+                    "Average ± Standard Deviation (this branch)",
+                    "Average ± Standard Deviation (dev)",
+                    "Delta",
+                    "",
+                ],
+                value_matrix=[i for i in interesting_metrics],
+                margin=1,  # add a whitespace for both sides of each cell
+                max_precision=3,
+            )
+            writer.write_tab()
+            print("\n")
+
+        # Generate client table
         if len(client_metrics) == 0:
             print("NO CLIENT METRICS\n")
         else:
@@ -420,6 +502,7 @@ with redirect_stdout(results_file):
         else:
             print("###### SERVER METRICS: ######\n")
 
+        # Generate server table
         writer = MarkdownTableWriter(
             # table_name="Server metrics",
             headers=[
