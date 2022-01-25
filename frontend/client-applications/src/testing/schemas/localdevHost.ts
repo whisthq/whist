@@ -13,7 +13,7 @@
  *   as this will create a new mandelbox with the correct protocol build
  *   instead of an outdated one.
  */
-import { mapTo, delay } from "rxjs/operators"
+import { mapTo, delay, tap } from "rxjs/operators"
 import { MockSchema } from "@app/@types/schema"
 import crypto from "crypto"
 
@@ -21,6 +21,13 @@ const localdevHost: MockSchema = {
   mandelboxCreateFlow: (trigger) => {
     return {
       success: trigger.pipe(
+        tap(() => {
+          if (process.env?.HOST_IP == null) {
+            const message =
+              "Host IP address not set! Set the `HOST_IP` environment variable to use this schema."
+            throw new Error(message)
+          }
+        }),
         delay(2000),
         mapTo({
           mandelboxID: crypto.randomUUID(),
