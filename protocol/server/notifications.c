@@ -333,9 +333,14 @@ DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *
     Client *server_state_client = (Client *)user_data;
 
     // Send notification over server
+
+    WhistServerMessage wsmsg_notif;
+    wsmsg_notif.type = SMESSAGE_NOTIFICATION;
+    wsmsg_notif.notif = notif;
+
     if (server_state_client->is_active &&
-        send_packet(&server_state_client->udp_context, PACKET_NOTIFICATION, &notif,
-                    sizeof(WhistNotification), 0) >= 0) {
+        broadcast_udp_packet(server_state_client, PACKET_MESSAGE, &wsmsg_notif,
+                             sizeof(WhistServerMessage), 1) >= 0) {
         LOG_INFO("Notification packet sent");
     } else {
         LOG_ERROR("Notification packet send failed");

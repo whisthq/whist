@@ -63,6 +63,7 @@ Includes
 #include <whist/utils/threads.h>
 #include <whist/clipboard/clipboard_synchronizer.h>
 #include <whist/file/file_synchronizer.h>
+#include <whist/utils/whist_notification.h>
 #include <whist/utils/color.h>
 #include <whist/utils/clock.h>
 #include <whist/logging/logging.h>
@@ -710,6 +711,7 @@ typedef enum WhistServerMessageType {
     SMESSAGE_FULLSCREEN = 8,
     SMESSAGE_FILE_METADATA = 9,
     SMESSAGE_FILE_DATA = 10,
+    SMESSAGE_NOTIFICATION = 11,
     SMESSAGE_QUIT = 100,
 } WhistServerMessageType;
 
@@ -731,6 +733,7 @@ typedef struct WhistServerMessage {
         char discovery_reply[0];
         char init_msg[0];
         char requested_uri[0];
+        WhistNotification notif;
     };
 } WhistServerMessage;
 
