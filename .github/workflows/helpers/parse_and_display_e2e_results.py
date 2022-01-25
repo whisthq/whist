@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import boto3
+import subprocess
 import numpy as np
 from pytablewriter import MarkdownTableWriter
 from contextlib import redirect_stdout
@@ -228,7 +229,7 @@ with redirect_stdout(results_file):
                 margin=1,  # add a whitespace for both sides of each cell
                 max_precision=3,
             )
-            writer.write_tab()
+            writer.write_table()
             print("\n")
 
         # Generate client metric
@@ -566,13 +567,30 @@ if github_ref_name == "dev":
 else:
     from notifications.github_bot import github_comment_update
 
-    github_issue = int(os.environ["GITHUB_REF_NAME"].split("/")[0])
+    branch_name = ""
 
-    github_comment_update(
-        github_token,
-        github_repo,
-        github_issue,
-        identifier,
-        body,
-        title=title,
-    )
+    # In CI, the PR branch name is saved in GITHUB_REF_NAME, or in the GITHUB_HEAD_REF environment variable (in case this script is being run as part of a PR)
+    b = os.getenv("GITHUB_REF_NAME").split("/")
+    if len(b) != 2 or not b[0].isnumeric() or b[1] != "merge":
+        branch_name = os.getenv("GITHUB_REF_NAME")
+    else:
+        branch_name = os.getenv("GITHUB_HEAD_REF")
+
+    # Search for an open PR connected to the current branch. If found, post results as a comment on that PR's page.
+    result = ""
+    if len(branch_name) > 0:
+        gh_cmd = "gh pr list -H {}".format(branch_name)
+        result = subprocess.check_output(gh_cmd, shell=True).decode("utf-8").strip().split()
+    pr_number = -1
+    if len(result) >= 3 and branch_name in result and result[0].isnumeric():
+        pr_number = int(result[0])
+
+    if pr_number != -1:
+        github_comment_update(
+            github_token,
+            github_repo,
+            pr_number,
+            identifier,
+            body,
+            title=title,
+        )
