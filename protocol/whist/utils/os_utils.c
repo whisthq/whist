@@ -58,39 +58,53 @@ static const char linux_supported_layouts[][5] = {"us", "it",    "ara", "de", "f
 #endif
 
 WhistKeyboardLayout get_keyboard_layout(void) {
-    WhistKeyboardLayout whist_layout = {0};
-    // Set the default layout, in-case the code below fails to set the keyboard layout
-    safe_strncpy(whist_layout.layout_name, WHIST_KB_DEFAULT_LAYOUT,
-                 sizeof(whist_layout.layout_name));
+    static WhistKeyboardLayout whist_layout = {0};
 
 #ifdef __APPLE__
     TISInputSourceRef source = TISCopyCurrentKeyboardInputSource();
     // get input source id - kTISPropertyInputSourceID
     // get layout name - kTISPropertyLocalizedName
     CFStringRef layout_id = TISGetInputSourceProperty(source, kTISPropertyInputSourceID);
+    static char old_layout[128] = {0};
     char layout[128] = {0};
     Boolean res = CFStringGetCString(layout_id, layout, sizeof(layout), kCFStringEncodingUTF8);
     if (!res) {
         LOG_ERROR("CFStringGetCString failed!");
+        // Use the default layout if we can't get the layout
+        safe_strncpy(whist_layout.layout_name, WHIST_KB_DEFAULT_LAYOUT,
+                     sizeof(whist_layout.layout_name));
+        return whist_layout;
+    }
+    // if the layout hasn't changed, just return our old whist_layout
+    if (strncmp(layout, old_layout, sizeof(layout)) == 0) {
         return whist_layout;
     }
 
+    // otherwise, look for the keyboard layout and set whist_layout
     bool found = false;
     for (int i = 0; i < NUM_APPLE_KEYBOARD_MAPPINGS; i++) {
         if (strncmp(apple_keyboard_mappings[i][0], layout, sizeof(layout)) == 0) {
             // Copy new name
             safe_strncpy(whist_layout.layout_name, apple_keyboard_mappings[i][1],
                          sizeof(whist_layout.layout_name));
+            LOG_INFO("Recognized keyboard layout %s", whist_layout.layout_name);
             found = true;
             break;
         }
     }
 
+    // if we couldn't find the new layout, log an error
     if (!found) {
         // Log the unrecognized keyboard layout,
         // so we can add support for it if we see usage of it
-        LOG_ERROR("Mac Keyboard Layout was not recognized! %s", layout);
+        safe_strncpy(whist_layout.layout_name, WHIST_KB_DEFAULT_LAYOUT,
+                     sizeof(whist_layout.layout_name));
+        LOG_ERROR("Mac Keyboard Layout %s was not recognized! Defaulting to %s", layout,
+                  WHIST_KB_DEFAULT_LAYOUT);
     }
+
+    // then copy layout into old_layout
+    safe_strncpy(old_layout, layout, sizeof(layout));
 #elif __linux__
     // Convenience function to check compatibility and intitialize the xkb lib
     Display* dpy = XkbOpenDisplay(NULL, NULL, NULL, NULL, NULL, NULL);
