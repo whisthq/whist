@@ -210,7 +210,8 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
                 // Here, the frame is older than where our renderer is,
                 // So we can just reset the undesired frame
                 LOG_ERROR(
-                    "Trying to allocate Frame ID %d, but Frame ID %d has not been destroyed yet!",
+                    "Trying to allocate Frame ID %d, but Frame ID %d has not been destroyed yet! "
+                    "Destroying it now...",
                     segment_id, frame_data->id);
                 reset_frame(ring_buffer, frame_data);
             }
@@ -426,6 +427,14 @@ void reset_stream(RingBuffer* ring_buffer, int id) {
                     reset_frame(ring_buffer, frame_data);
                 }
             }
+        } else {
+            LOG_INFO("Restarting stream at frame %d", id);
+            for (int i = max(1, id - ring_buffer->ring_buffer_size); i < id; i++) {
+                FrameData* frame_data = get_frame_at_id(ring_buffer, i);
+                if (frame_data->id == i) {
+                    reset_frame(ring_buffer, frame_data);
+                }
+            }
         }
         ring_buffer->last_rendered_id = id - 1;
     }
@@ -459,8 +468,9 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
         // Throttle the requests to prevent network upload saturation, however
         if (get_timer(&ring_buffer->last_stream_reset_request_timer) >
             STREAM_RESET_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
+            int greatest_failed_id = max(ring_buffer->max_id - 1, next_render_id);
             ring_buffer->request_stream_reset(ring_buffer->socket_context, ring_buffer->type,
-                                              max(next_render_id, ring_buffer->max_id - 1));
+                                              greatest_failed_id);
             LOG_INFO(
                 "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
                 "and the frame we're trying to render has been alive for %fms. "
@@ -580,6 +590,7 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
     }
     ring_buffer->max_id = -1;
     ring_buffer->frames_received = 0;
+    ring_buffer->last_rendered_id = -1;
 }
 
 // Get a pointer to a framebuffer for that id, if such a framebuffer is possible to construct
