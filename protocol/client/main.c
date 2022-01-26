@@ -440,10 +440,16 @@ int main(int argc, char* argv[]) {
         // there are no events queued
         while (connected && !client_exiting && exit_code == WHIST_EXIT_SUCCESS) {
             if (get_timer(&window_fade_timer) * MS_IN_SECOND < 300.0) {
-                SDL_SetWindowOpacity((SDL_Window*)window,
-                                     get_timer(&window_fade_timer) * MS_IN_SECOND / 300.0);
+                ret = SDL_SetWindowOpacity((SDL_Window*)window,
+                                           get_timer(&window_fade_timer) * MS_IN_SECOND / 300.0);
+                if (ret != 0) {
+                    LOG_WARNING("Failed to set window opacity: %s", SDL_GetError());
+                }
             } else {
-                SDL_SetWindowOpacity((SDL_Window*)window, 1.0);
+                ret = SDL_SetWindowOpacity((SDL_Window*)window, 1.0);
+                if (ret != 0) {
+                    LOG_WARNING("Failed to set window opacity: %s", SDL_GetError());
+                }
             }
 
             // This should be called BEFORE the call to read_piped_arguments,
