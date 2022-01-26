@@ -210,6 +210,8 @@ int video_encoder_encode(VideoEncoder *encoder) {
     switch (encoder->active_encoder) {
         case NVIDIA_ENCODER:
 #ifdef __linux__
+            encoder->nvidia_encoders[encoder->active_encoder_idx]->ltr_action =
+                encoder->next_ltr_action;
             nvidia_encoder_encode(encoder->nvidia_encoders[encoder->active_encoder_idx]);
             transfer_nvidia_data(encoder);
             return 0;
@@ -292,6 +294,11 @@ void video_encoder_set_iframe(VideoEncoder *encoder) {
             LOG_ERROR("Unknown encoder type: %d!", encoder->active_encoder);
             return;
     }
+}
+
+void video_encoder_set_ltr_action(VideoEncoder *encoder, const LTRAction *action) {
+    FATAL_ASSERT(encoder && action);
+    encoder->next_ltr_action = *action;
 }
 
 void destroy_video_encoder(VideoEncoder *encoder) {

@@ -163,6 +163,8 @@ Defines
 #define CONSECUTIVE_IDENTICAL_FRAMES 300
 // FPS to send when the encoder is off
 #define DISABLED_ENCODER_FPS 10
+// Enable use of long-term reference frames.
+#define USE_LONG_TERM_REFERENCE_FRAMES false
 
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720

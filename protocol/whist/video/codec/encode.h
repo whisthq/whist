@@ -23,6 +23,7 @@ Includes
 */
 
 #include <whist/core/whist.h>
+#include "whist/video/ltr.h"
 #include "nvidia_encode.h"
 #include "ffmpeg_encode.h"
 
@@ -57,6 +58,8 @@ typedef struct VideoEncoder {
     CodecType codec_type;
     NvidiaEncoder* nvidia_encoders[NUM_ENCODERS];
     FFmpegEncoder* ffmpeg_encoder;
+
+    LTRAction next_ltr_action;
 } VideoEncoder;
 
 /*
@@ -121,6 +124,14 @@ bool reconfigure_encoder(VideoEncoder* encoder, int width, int height, int bitra
  * @param encoder                  Encoder to be updated
  */
 void video_encoder_set_iframe(VideoEncoder* encoder);
+
+/**
+ * @brief                          Set LTR action for the next frame.
+ *
+ * @param encoder                  Encoder to set action on.
+ * @param action                   LTR action to use with next frame.
+ */
+void video_encoder_set_ltr_action(VideoEncoder* encoder, const LTRAction* action);
 
 /**
  * @brief                          Destroy encoder

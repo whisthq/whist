@@ -432,8 +432,29 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     // frame_idx starts at -1, so first frame has idx 0
     enc_params.frameIdx = ++encoder->frame_idx;
     enc_params.outputBitstream = encoder->output_buffer;
-    if (encoder->wants_iframe) {
+
+    encoder->frame_type = encoder->ltr_action.frame_type;
+    if (encoder->wants_iframe || encoder->ltr_action.frame_type == VIDEO_FRAME_TYPE_INTRA) {
+        encoder->frame_type = VIDEO_FRAME_TYPE_INTRA;
         enc_params.encodePicFlags = NV_ENC_PIC_FLAG_FORCEIDR | NV_ENC_PIC_FLAG_OUTPUT_SPSPPS;
+        if (USE_LONG_TERM_REFERENCE_FRAMES) {
+            // In H.264 IDR frames must go in long-term slot 0.
+            FATAL_ASSERT(encoder->ltr_action.long_term_frame_index == 0);
+            enc_params.codecPicParams.h264PicParams.ltrMarkFrame = 1;
+            enc_params.codecPicParams.h264PicParams.ltrMarkFrameIdx = 0;
+        }
+    } else if (encoder->ltr_action.frame_type == VIDEO_FRAME_TYPE_NORMAL) {
+        // Normal encode, don't set any extra options.
+    } else if (encoder->ltr_action.frame_type == VIDEO_FRAME_TYPE_CREATE_LONG_TERM) {
+        enc_params.codecPicParams.h264PicParams.ltrMarkFrame = 1;
+        enc_params.codecPicParams.h264PicParams.ltrMarkFrameIdx =
+            encoder->ltr_action.long_term_frame_index;
+    } else if (encoder->ltr_action.frame_type == VIDEO_FRAME_TYPE_REFER_LONG_TERM) {
+        enc_params.codecPicParams.h264PicParams.ltrUseFrames = 1;
+        enc_params.codecPicParams.h264PicParams.ltrUseFrameBitmap =
+            1 << encoder->ltr_action.long_term_frame_index;
+    } else {
+        FATAL_ASSERT(false && "Invalid frame_type in LTR action");
     }
 
     // Encode the frame
@@ -477,11 +498,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
 
     encoder->frame_size = lock_params.bitstreamSizeInBytes;
     encoder->frame = lock_params.bitstreamBufferPtr;
-    if (encoder->wants_iframe || encoder->frame_idx == 0) {
-        encoder->frame_type = VIDEO_FRAME_TYPE_INTRA;
-    } else {
-        encoder->frame_type = VIDEO_FRAME_TYPE_NORMAL;
-    }
+
     // encoder->is_reference_frame = lock_params.pictureType != NV_ENC_PIC_TYPE_NONREF_P;
     // LOG_INFO("Is Reference Frame: %d", lock_params.pictureType != NV_ENC_PIC_TYPE_NONREF_P);
 
@@ -556,6 +573,22 @@ static int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, int vbv
     p_preset_config->presetCfg.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
     p_preset_config->presetCfg.rcParams.averageBitRate = bitrate;
     p_preset_config->presetCfg.rcParams.vbvBufferSize = vbv_size;
+
+    if (USE_LONG_TERM_REFERENCE_FRAMES) {
+        // Enable long-term reference frames.
+        // This blindly assumes that NV_ENC_CAPS_NUM_MAX_LTR_FRAMES is
+        // at least two, which is true on the Nvidia cards we use but
+        // might not be true on older ones.
+        if (codec == CODEC_TYPE_H264) {
+            NV_ENC_CONFIG_H264* h264 = &p_preset_config->presetCfg.encodeCodecConfig.h264Config;
+            h264->enableLTR = 1;
+            h264->ltrNumFrames = 2;
+        } else if (codec == CODEC_TYPE_H265) {
+            NV_ENC_CONFIG_HEVC* h265 = &p_preset_config->presetCfg.encodeCodecConfig.hevcConfig;
+            h265->enableLTR = 1;
+            h265->ltrNumFrames = 2;
+        }
+    }
 
     return 0;
 }
