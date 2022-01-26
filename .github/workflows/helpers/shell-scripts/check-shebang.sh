@@ -3,9 +3,9 @@
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-while read file
+while read -r file
 do
-    if [[ "`head -c 11 $file`" = "#!/bin/bash" ]]
+    if [[ "$(head -c 11 "$file")" = "#!/bin/bash" ]]
     then
         echo "[#!/bin/bash -> Present] $file"
     else

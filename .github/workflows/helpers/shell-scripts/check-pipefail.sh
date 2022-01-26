@@ -3,7 +3,7 @@
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-while read file
+while read -r file
 do
     if grep -q \
         -e "^set -Eeuo pipefail$" \
