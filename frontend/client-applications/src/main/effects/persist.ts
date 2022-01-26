@@ -40,7 +40,6 @@ merge(
 fromTrigger(WhistTrigger.awsPingRefresh).subscribe((regions) => {
   const validPingTimes =
     find(regions, (r) => r.pingTime === undefined) === undefined
-  console.log("valid is", validPingTimes)
 
   if (regions?.length > 0 && validPingTimes)
     persistSet(AWS_REGIONS_SORTED_BY_PROXIMITY, regions)
