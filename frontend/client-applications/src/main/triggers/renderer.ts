@@ -27,6 +27,7 @@ const filterByName = (
   WhistTrigger.showImportWindow,
   WhistTrigger.setDefaultBrowser,
   WhistTrigger.restoreLastSession,
+  WhistTrigger.closeSupportWindow,
   WhistTrigger.beginImport,
   WhistTrigger.emitIPC,
   WhistTrigger.startNetworkAnalysis,
