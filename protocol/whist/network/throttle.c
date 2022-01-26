@@ -1,4 +1,5 @@
 #include <whist/core/whist.h>
+#include <whist/utils/atomic.h>
 #include <whist/utils/clock.h>
 #include <whist/utils/threads.h>
 #include <whist/logging/log_statistic.h>
@@ -17,8 +18,8 @@ struct NetworkThrottleContext {
     WhistMutex queue_lock;   //<<< The lock to protect the queue.
     WhistCondition queue_cond;         //<<< The condition variable which regulates the queue.
     WhistTimer coin_bucket_last_fill;  //<<< The timer for the coin bucket's last fill.
-    unsigned int next_queue_id;        //<<< The next queue id to use.
-    unsigned int current_queue_id;     //<<< The currently-processed queue id.
+    atomic_int next_queue_id;          //<<< The next queue id to use.
+    atomic_int current_queue_id;       //<<< The currently-processed queue id.
     bool destroying;                   //<<< Whether the context is being destroyed.
     bool fill_bucket_initially;        //<<< Whether the coin bucket should be filled up initially
 };
@@ -43,8 +44,8 @@ NetworkThrottleContext* network_throttler_create(double coin_bucket_ms,
     ctx->burst_bitrate = STARTING_BURST_BITRATE;
     ctx->queue_lock = whist_create_mutex();
     ctx->queue_cond = whist_create_cond();
-    ctx->next_queue_id = 0;
-    ctx->current_queue_id = 0;
+    atomic_init(&ctx->next_queue_id, 0);
+    atomic_init(&ctx->current_queue_id, 0);
     ctx->destroying = false;
     ctx->fill_bucket_initially = fill_bucket_initially;
     start_timer(&ctx->coin_bucket_last_fill);
@@ -65,7 +66,7 @@ void network_throttler_destroy(NetworkThrottleContext* ctx) {
 
     ctx->destroying = true;
 
-    while (ctx->current_queue_id != ctx->next_queue_id) {
+    while (atomic_load(&ctx->current_queue_id) != atomic_load(&ctx->next_queue_id)) {
         // Wait until the packet queue is empty
         whist_sleep(10);
     }
@@ -139,9 +140,9 @@ void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t 
     */
     if (!ctx || ctx->burst_bitrate <= 0 || ctx->destroying) return;
 
+    int queue_id = atomic_fetch_add(&ctx->next_queue_id, 1);
     whist_lock_mutex(ctx->queue_lock);
-    unsigned int queue_id = ctx->next_queue_id++;
-    while (queue_id > ctx->current_queue_id) {
+    while (queue_id > atomic_load(&ctx->current_queue_id)) {
         whist_wait_cond(ctx->queue_cond, ctx->queue_lock);
     }
     whist_unlock_mutex(ctx->queue_lock);
@@ -185,7 +186,7 @@ void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t 
     log_double_statistic(NETWORK_THROTTLED_PACKET_DELAY, time * MS_IN_SECOND);
     log_double_statistic(NETWORK_THROTTLED_PACKET_DELAY_RATE, time * MS_IN_SECOND / (double)bytes);
     log_double_statistic(NETWORK_THROTTLED_PACKET_DELAY_LOOPS, (double)loops);
-    ++ctx->current_queue_id;
+    atomic_fetch_add(&ctx->current_queue_id, 1);
     whist_lock_mutex(ctx->queue_lock);
     whist_broadcast_cond(ctx->queue_cond);
     whist_unlock_mutex(ctx->queue_lock);
