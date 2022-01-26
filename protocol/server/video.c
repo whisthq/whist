@@ -536,6 +536,7 @@ int32_t multithreaded_send_video(void* opaque) {
 
         if (!assuming_client_active || !state->client.is_active) {
             whist_sleep(1);
+            state->stream_needs_restart = true;
             continue;
         }
 
@@ -555,6 +556,7 @@ int32_t multithreaded_send_video(void* opaque) {
         if (state->update_device) {
             update_current_device(state, &statistics_timer, device, encoder, true_width,
                                   true_height);
+            state->stream_needs_restart = true;
         }
 
         // If no device is set, we need to create one
@@ -563,6 +565,7 @@ int32_t multithreaded_send_video(void* opaque) {
                                   true_height) < 0) {
                 continue;
             }
+            state->stream_needs_restart = true;
         }
 
         network_settings = udp_get_network_settings(&state->client.udp_context);
@@ -606,7 +609,7 @@ int32_t multithreaded_send_video(void* opaque) {
             state->client.is_active &&
             get_pending_stream_reset(&state->client.udp_context, PACKET_VIDEO);
         if (pending_stream_reset) {
-            state->wants_iframe = true;
+            state->stream_needs_recovery = true;
         }
 
         // SENDING LOGIC:
@@ -620,7 +623,7 @@ int32_t multithreaded_send_video(void* opaque) {
         // Accumulated_frames is equal to how many frames have passed since the
         // last call to CaptureScreen
         int accumulated_frames = 0;
-        if ((!state->stop_streaming || state->wants_iframe)) {
+        if ((!state->stop_streaming || state->stream_needs_restart)) {
             start_timer(&statistics_timer);
             accumulated_frames = capture_screen(device);
             if (accumulated_frames > 1) {
@@ -649,8 +652,8 @@ int32_t multithreaded_send_video(void* opaque) {
         // And no iframe is being requested at this time.
         // When the encoder is disabled, we only wake the client CPU,
         // DISABLED_ENCODER_FPS times per second, for just a usec at a time.
-        bool disable_encoder =
-            consecutive_identical_frames > CONSECUTIVE_IDENTICAL_FRAMES && !state->wants_iframe;
+        bool disable_encoder = consecutive_identical_frames > CONSECUTIVE_IDENTICAL_FRAMES &&
+                               !state->stream_needs_restart;
         // Lower the min_fps to DISABLED_ENCODER_FPS when the encoder is disabled
         int min_fps = disable_encoder ? DISABLED_ENCODER_FPS : MIN_FPS;
 
@@ -667,7 +670,7 @@ int32_t multithreaded_send_video(void* opaque) {
 
         // Send a frame if we have a real frame to send, or we need to keep up with min_fps
         if (state->client.is_active &&
-            (accumulated_frames > 0 || state->wants_iframe ||
+            (accumulated_frames > 0 || state->stream_needs_restart ||
              get_timer(&start_frame_timer) > (double)(id - start_frame_id) / min_fps)) {
             // This loop only runs ~1/current_fps times per second, every 16-100ms
 
@@ -702,9 +705,37 @@ int32_t multithreaded_send_video(void* opaque) {
                 log_double_statistic(VIDEO_CAPTURE_TRANSFER_TIME,
                                      get_timer(&statistics_timer) * MS_IN_SECOND);
 
-                if (state->wants_iframe) {
-                    video_encoder_set_iframe(encoder);
-                    state->wants_iframe = false;
+                VideoFrameType frame_type;
+                if (USE_LONG_TERM_REFERENCE_FRAMES) {
+                    if (state->stream_needs_restart || state->stream_needs_recovery) {
+                        if (state->stream_needs_restart) {
+                            ltr_force_intra(state->ltr_context);
+                        } else {
+                            ltr_mark_stream_broken(state->ltr_context);
+                        }
+                        state->stream_needs_restart = false;
+                        state->stream_needs_recovery = false;
+                    }
+
+                    LTRAction ltr_action;
+                    ltr_get_next_action(state->ltr_context, &ltr_action, id);
+
+                    // TODO: demote this log message once this is stable.
+                    LOG_INFO("LTR action for frame ID %d: { %s, %d }", id,
+                             video_frame_type_string(ltr_action.frame_type),
+                             ltr_action.long_term_frame_index);
+
+                    video_encoder_set_ltr_action(encoder, &ltr_action);
+                    frame_type = ltr_action.frame_type;
+                } else {
+                    if (state->stream_needs_restart || state->stream_needs_recovery) {
+                        video_encoder_set_iframe(encoder);
+                        frame_type = VIDEO_FRAME_TYPE_INTRA;
+                    } else {
+                        frame_type = VIDEO_FRAME_TYPE_NORMAL;
+                    }
+                    state->stream_needs_restart = false;
+                    state->stream_needs_recovery = false;
                 }
 
                 start_timer(&statistics_timer);
@@ -720,6 +751,12 @@ int32_t multithreaded_send_video(void* opaque) {
                     LOG_ERROR("video_encoder_encode filter graph failed! Exiting!");
                     state->exiting = true;
                     break;
+                }
+                if (USE_LONG_TERM_REFERENCE_FRAMES) {
+                    // Ensure that the encoder actually generated the
+                    // frame type we expected.  If it didn't then
+                    // something has gone horribly wrong.
+                    FATAL_ASSERT(encoder->frame_type == frame_type);
                 }
                 log_double_statistic(VIDEO_ENCODE_TIME,
                                      get_timer(&statistics_timer) * MS_IN_SECOND);

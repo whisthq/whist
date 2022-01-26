@@ -35,6 +35,7 @@ Includes
 #include <whist/logging/error_monitor.h>
 #include <whist/video/transfercapture.h>
 #include <whist/logging/log_statistic.h>
+#include "whist/video/ltr.h"
 #include "client.h"
 #include "network.h"
 #include "video.h"
@@ -87,8 +88,15 @@ struct _whist_server_state {
 
     InputDevice* input_device;
 
-    /* iframe */
-    volatile bool wants_iframe;
+    // Whether the stream needs to be restarted with new parameter sets
+    // and an intra frame.
+    bool stream_needs_restart;
+    // Whether the stream needs to be recovered (but does not require
+    // new parameter sets and an intra frame).
+    bool stream_needs_recovery;
+
+    // Long-term reference state.
+    LTRState* ltr_context;
 
     /* video */
     volatile int client_width;
