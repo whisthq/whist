@@ -49,25 +49,25 @@ jobs:
 
     steps:
       - name: Run ShellCheck on frontend folder
-        working-directory: ./frontend
+        working-directory: frontend
         run: shellcheck -e ./client-applications/* **/**.sh
 
       - name: Run ShellCheck on backend folder
-        working-directory: ./backend
+        working-directory: backend
         run: shellcheck **/**.sh
 
       - name: Run ShellCheck on protocol folder
-        working-directory: ./protocol
+        working-directory: protocol
         run: shellcheck **/**.sh
 
       - name: Run ShellCheck on .github folder
-        working-directory: ./.github
+        working-directory: .github
         run: shellcheck **/**.sh
 
       - name: Run ShellCheck on host-setup folder
-        working-directory: ./host-setup
+        working-directory: host-setup
         run: shellcheck **/**.sh
 
       - name: Run ShellCheck on mandelboxes folder
-        working-directory: ./mandelboxes
+        working-directory: mandelboxes
         run: shellcheck **/**.sh
