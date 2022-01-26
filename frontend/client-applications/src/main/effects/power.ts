@@ -4,7 +4,7 @@
  * @brief This file contains effects that deal with the app lifecycle (e.g. relaunching, quitting, etc.)
  */
 
-import { session } from "electron"
+import { app, session } from "electron"
 import { merge } from "rxjs"
 import { withLatestFrom, filter, take, takeUntil } from "rxjs/operators"
 import { ChildProcess } from "child_process"
@@ -93,4 +93,12 @@ waitForSignal(
 ).subscribe(([, p]: [any, ChildProcess]) => {
   destroyProtocol(p)
   relaunch({ sleep: false })
+})
+
+emitOnSignal(
+  fromTrigger(WhistTrigger.protocol),
+  fromTrigger(WhistTrigger.userRequestedQuit)
+).subscribe((p: ChildProcess) => {
+  destroyProtocol(p)
+  app.exit()
 })
