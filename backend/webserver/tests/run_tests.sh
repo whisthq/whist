@@ -24,14 +24,16 @@ else
   echo "=== Make sure to run tests/setup/setup_tests.sh once prior to this ==="
 
   # add env vars to current env. these tell us the host, db, role, pwd
-  export $(cat ../docker/.env | xargs)
+  export "$(xargs < ../docker/.env)"
 
   # override POSTGRES_HOST and POSTGRES_PORT to be local
   export POSTGRES_HOST="localhost"
   export POSTGRES_PORT="9999"
 
-  export APP_GIT_BRANCH="$(git branch --show-current)"
-  export APP_GIT_COMMIT="$(git rev-parse --short HEAD)"
+  APP_GIT_BRANCH="$(git branch --show-current)"
+  APP_GIT_COMMIT="$(git rev-parse --short HEAD)"
+  export APP_GIT_BRANCH
+  export APP_GIT_COMMIT
 
   # we use the remote user and remote db to make ephemeral db look as close to dev as possible
   # but of course, host and port are local
@@ -46,11 +48,11 @@ cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report xml --cov=.
 
 # pass args to pytest, including Codecov flags for relevant webserver folders, and ignore the scripts/
 # folder as it is irrelevant to unit/integration testing
-(cd .. && pytest --ignore=scripts/ $cov "$@")
+(cd .. && pytest --ignore=scripts/ "$cov" "$@")
 
 # Download the Codecov uploader
 (cd .. && curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov)
 
 # Upload the Codecov XML coverage report to Codecov, using the environment variable CODECOV_TOKEN
 # stored as a Heroku config variable
-test "$IN_CI" = "false" || (cd .. && ./codecov --branch $HEROKU_TEST_RUN_BRANCH --sha $HEROKU_TEST_RUN_COMMIT_VERSION --slug whisthq/whist -t ${CODECOV_TOKEN} -c -F backend/webserver)
+test "$IN_CI" = "false" || (cd .. && ./codecov --branch "$HEROKU_TEST_RUN_BRANCH" --sha "$HEROKU_TEST_RUN_COMMIT_VERSION" --slug whisthq/whist -t "${CODECOV_TOKEN}" -c -F backend/webserver)
