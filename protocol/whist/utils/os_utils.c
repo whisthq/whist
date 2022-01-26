@@ -59,9 +59,6 @@ static const char linux_supported_layouts[][5] = {"us", "it",    "ara", "de", "f
 
 WhistKeyboardLayout get_keyboard_layout(void) {
     static WhistKeyboardLayout whist_layout = {0};
-    // Set the default layout, in-case the code below fails to set the keyboard layout
-    safe_strncpy(whist_layout.layout_name, WHIST_KB_DEFAULT_LAYOUT,
-                 sizeof(whist_layout.layout_name));
 
 #ifdef __APPLE__
     TISInputSourceRef source = TISCopyCurrentKeyboardInputSource();
@@ -73,9 +70,12 @@ WhistKeyboardLayout get_keyboard_layout(void) {
     Boolean res = CFStringGetCString(layout_id, layout, sizeof(layout), kCFStringEncodingUTF8);
     if (!res) {
         LOG_ERROR("CFStringGetCString failed!");
+        // Use the default layout if we can't get the layout
+        safe_strncpy(whist_layout.layout_name, WHIST_KB_DEFAULT_LAYOUT,
+                     sizeof(whist_layout.layout_name));
         return whist_layout;
     }
-    // if the layout hasn't changed, just return whist_layout
+    // if the layout hasn't changed, just return our old whist_layout
     if (strncmp(layout, old_layout, sizeof(layout)) == 0) {
         return whist_layout;
     }
@@ -97,7 +97,9 @@ WhistKeyboardLayout get_keyboard_layout(void) {
     if (!found) {
         // Log the unrecognized keyboard layout,
         // so we can add support for it if we see usage of it
-        LOG_ERROR("Mac Keyboard Layout was not recognized! %s", layout);
+        safe_strncpy(whist_layout.layout_name, WHIST_KB_DEFAULT_LAYOUT,
+                     sizeof(whist_layout.layout_name));
+        LOG_ERROR("Mac Keyboard Layout %s was not recognized! Defaulting to %s", layout, WHIST_KB_DEFAULT_LAYOUT);
     }
 
     // then copy layout into old_layout
