@@ -50,10 +50,10 @@ jobs:
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
-      
+
       - name: Run ShellCheck on frontend folder
         working-directory: frontend
-        run: shellcheck -e ./client-applications/* **/**.sh
+        run: shellcheck -e client-applications/**/**.sh **/**.sh
 
       - name: Run ShellCheck on backend folder
         working-directory: backend
