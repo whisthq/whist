@@ -35,6 +35,8 @@ static bool clipboard_has_string = false;
 static bool clipboard_has_files = false;
 static int last_clipboard_sequence_number = -1;
 
+#define CHECK_CLIPBOARD_IMAGE_MAX_ATTEMPTS 100
+
 /*
 ============================
 Private Function Implementations
@@ -62,12 +64,24 @@ bool unsafe_has_os_clipboard_updated(void) {
         clipboard_has_image = check_clipboard_has_image();
         clipboard_has_string = check_clipboard_has_string();
         clipboard_has_files = check_clipboard_has_files();
+
+        // Edge case if copying an image from chrome
+        if (!(clipboard_has_string || clipboard_has_files)) {
+            int attempts = CHECK_CLIPBOARD_IMAGE_MAX_ATTEMPTS;
+            WhistTimer max_attempt_timer;
+            while (attempts-- && !clipboard_has_image) {
+                clipboard_has_image = check_clipboard_has_image();
+                whist_usleep(500);
+            }
+        }
+
         if (should_preserve_local_clipboard()) {
             has_updated = (clipboard_has_image || clipboard_has_string ||
                            clipboard_has_files);  // should be always set to true in here
         }
         last_clipboard_sequence_number = new_clipboard_sequence_number;
     }
+
     return has_updated;
 }
 
