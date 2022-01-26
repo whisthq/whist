@@ -17,4 +17,4 @@ echo "Linting the following files:"
 echo "$CMAKELISTS_FILES"
 echo "$CMAKE_HELPER_FILES"
 
-cmakelint --config=".cmakelintrc" $CMAKELISTS_FILES $CMAKE_HELPER_FILES
+cmakelint --config=".cmakelintrc" "$CMAKELISTS_FILES" "$CMAKE_HELPER_FILES"

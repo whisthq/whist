@@ -30,7 +30,7 @@ EOF
 
 # Parse arguments (derived from https://stackoverflow.com/a/7948533/2378475)
 # I'd prefer not to have the short arguments at all, but getopt only uses short arguments
-TEMP=`getopt -o h --long help,usage,cmakebuildtype:,nodownloadbinaries,cmakesetCI,sanitize: -n 'build_protocol_targets.sh' -- "$@"`
+TEMP=$(getopt -o h --long help,usage,cmakebuildtype:,nodownloadbinaries,cmakesetCI,sanitize: -n 'build_protocol_targets.sh' -- "$@")
 eval set -- "$TEMP"
 
 CMAKE_BUILD_TYPE=Debug
@@ -45,10 +45,10 @@ while true; do
     --cmakesetCI ) CMAKE_SET_CI=TRUE; shift ;;
     --sanitize ) CMAKE_SANITIZE="$2"; shift 2 ;;
     -- ) shift; break ;;
-    * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit -1 ;;
+    * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit 1 ;;
   esac
 done
-TARGETS="$@"
+TARGETS="$*"
 
 if [[ -z "$TARGETS" ]]; then
   usage
@@ -59,7 +59,7 @@ USER=$(whoami)
 
 # Build protocol-builder Docker image
 docker build . \
-  --build-arg uid=$(id -u ${USER}) \
+  --build-arg uid='$(id -u "${USER}")' \
   -f Dockerfile \
   -t whisthq/protocol-builder
 
@@ -84,9 +84,9 @@ docker run \
   --rm \
   $DOCKER_IT_FLAG \
   --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION --env AWS_DEFAULT_OUTPUT --env GITHUB_SHA --env CODECOV_TOKEN \
-  --mount type=bind,source=$(cd ..; pwd),destination=/workdir \
-  $MOUNT_AWS \
-  --name whist-protocol-builder-$(date +"%s") \
+  --mount type=bind,source='$(cd ..; pwd)',destination=/workdir \
+  "$MOUNT_AWS" \
+  --name whist-protocol-builder-'$(date +"%s")' \
   --user "$DOCKER_USER" \
   whisthq/protocol-builder \
   bash -c "\
