@@ -12,6 +12,8 @@ import {
   MAINTENANCE_ERROR,
   PROTOCOL_ERROR,
   LOCATION_CHANGED_ERROR,
+  SERVER_TIMEOUT_ERROR,
+  NO_INSTANCE_AVAILABLE,
 } from "@app/constants/error"
 import {
   WindowHashPayment,
@@ -25,6 +27,7 @@ import {
   mandelboxCreateErrorNoAccess,
   mandelboxCreateErrorUnauthorized,
   mandelboxCreateErrorMaintenance,
+  mandelboxCreateErrorUnavailable,
 } from "@app/main/utils/mandelbox"
 import { createErrorWindow } from "@app/main/utils/renderer"
 import { destroyElectronWindow } from "@app/main/utils/windows"
@@ -47,6 +50,8 @@ untilUpdateAvailable(
     createErrorWindow(UNAUTHORIZED_ERROR)
   } else if (mandelboxCreateErrorMaintenance(x)) {
     createErrorWindow(MAINTENANCE_ERROR)
+  } else if (mandelboxCreateErrorUnavailable(x)) {
+    createErrorWindow(NO_INSTANCE_AVAILABLE)
   } else {
     createErrorWindow(MANDELBOX_INTERNAL_ERROR)
   }
@@ -102,3 +107,13 @@ withAppActivated(fromTrigger(WhistTrigger.checkPaymentFlowFailure)).subscribe(
     destroyElectronWindow(WindowHashAuth)
   }
 )
+
+untilUpdateAvailable(
+  withAppActivated(fromTrigger(WhistTrigger.mandelboxFlowTimeout))
+).subscribe(() => {
+  createErrorWindow(SERVER_TIMEOUT_ERROR)
+
+  destroyElectronWindow(WindowHashLoading)
+  destroyElectronWindow(WindowHashImport)
+  destroyElectronWindow(WindowHashOnboarding)
+})

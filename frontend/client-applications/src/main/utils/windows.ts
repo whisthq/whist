@@ -148,7 +148,7 @@ const createElectronWindow = (args: {
   try {
     const winAlreadyExists = getElectronWindow(args.hash)
     if (winAlreadyExists !== undefined) {
-      winAlreadyExists?.restore()
+      if (winAlreadyExists?.isMinimized()) winAlreadyExists?.restore()
       winAlreadyExists?.focus()
       return { win: winAlreadyExists, view: undefined }
     }
@@ -194,7 +194,7 @@ const createElectronWindow = (args: {
 
     return { win, view: undefined }
   } catch (err) {
-    logging.error(`Error creating window ${args.hash}`, {})
+    logging(`Error creating window ${args.hash}`, {})
     return { win: undefined, view: undefined }
   }
 }

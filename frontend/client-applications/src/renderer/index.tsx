@@ -39,7 +39,6 @@ import {
   UNAUTHORIZED_ERROR,
   AUTH_ERROR,
   NAVIGATION_ERROR,
-  LOCATION_CHANGED_ERROR,
 } from "@app/constants/error"
 import { useMainState } from "@app/renderer/utils/ipc"
 import { WhistTrigger } from "@app/constants/triggers"
@@ -62,6 +61,11 @@ const RootComponent = () => {
   const showPaymentWindow = () =>
     setMainState({
       trigger: { name: WhistTrigger.showPaymentWindow, payload: undefined },
+    })
+
+  const showSupportWindow = () =>
+    setMainState({
+      trigger: { name: WhistTrigger.showSupportWindow, payload: undefined },
     })
 
   const handleSignout = () =>
@@ -166,43 +170,36 @@ const RootComponent = () => {
         secondaryButtonText="Sign Out"
         onPrimaryClick={showPaymentWindow}
         onSecondaryClick={showSignoutWindow}
+        onRequestHelp={showSupportWindow}
       />
     )
-  if (
-    [
-      UNAUTHORIZED_ERROR,
-      AUTH_ERROR,
-      NAVIGATION_ERROR,
-      LOCATION_CHANGED_ERROR,
-    ].includes(show)
-  )
+  if ([UNAUTHORIZED_ERROR, AUTH_ERROR, NAVIGATION_ERROR].includes(show))
     return (
       <OneButtonError
         title={whistError[show].title}
         text={whistError[show].text}
         primaryButtonText="Sign Out"
         onPrimaryClick={showSignoutWindow}
+        onRequestHelp={showSupportWindow}
       />
     )
   if (Object.keys(whistError).includes(show))
     return (
-      <TwoButtonError
+      <OneButtonError
         title={whistError[show].title}
         text={whistError[show].text}
         primaryButtonText="Try Again"
-        secondaryButtonText="Sign Out"
         onPrimaryClick={relaunch}
-        onSecondaryClick={showSignoutWindow}
+        onRequestHelp={showSupportWindow}
       />
     )
   return (
-    <TwoButtonError
-      title={whistError.NAVIGATION_ERROR.title}
-      text={whistError.NAVIGATION_ERROR.text}
-      primaryButtonText="Try Again"
-      secondaryButtonText="Sign Out"
-      onPrimaryClick={relaunch}
-      onSecondaryClick={showSignoutWindow}
+    <OneButtonError
+      title={whistError[NAVIGATION_ERROR].title}
+      text={whistError[NAVIGATION_ERROR].text}
+      primaryButtonText="Sign out"
+      onPrimaryClick={showSignoutWindow}
+      onRequestHelp={showSupportWindow}
     />
   )
 }
