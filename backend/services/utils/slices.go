@@ -30,3 +30,13 @@ func SliceRemove(s []interface{}, val interface{}) []interface{} {
 	}
 	return s
 }
+
+// StringSliceContains returns true if the given string slice contains string val, and false otherwise.
+func StringSliceContains(slice []string, val string) bool {
+	for _, v := range slice {
+		if v == val {
+			return true
+		}
+	}
+	return false
+}
