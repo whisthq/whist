@@ -4,6 +4,7 @@
 #include "whist.h"
 #include <whist/cursor/cursor.h>
 #include <whist/utils/color.h>
+#include "whist/video/video.h"
 
 /**
  * @brief   VideoFrame struct.
@@ -16,7 +17,7 @@ typedef struct VideoFrame {
     int width;
     int height;
     CodecType codec_type;
-    bool is_iframe;
+    VideoFrameType frame_type;
 
     bool has_cursor;
     bool is_empty_frame;     // indicates whether this frame is identical to the one last sent

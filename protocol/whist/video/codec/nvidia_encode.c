@@ -477,7 +477,11 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
 
     encoder->frame_size = lock_params.bitstreamSizeInBytes;
     encoder->frame = lock_params.bitstreamBufferPtr;
-    encoder->is_iframe = encoder->wants_iframe || encoder->frame_idx == 0;
+    if (encoder->wants_iframe || encoder->frame_idx == 0) {
+        encoder->frame_type = VIDEO_FRAME_TYPE_INTRA;
+    } else {
+        encoder->frame_type = VIDEO_FRAME_TYPE_NORMAL;
+    }
     // encoder->is_reference_frame = lock_params.pictureType != NV_ENC_PIC_TYPE_NONREF_P;
     // LOG_INFO("Is Reference Frame: %d", lock_params.pictureType != NV_ENC_PIC_TYPE_NONREF_P);
 

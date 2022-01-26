@@ -177,10 +177,14 @@ TEST_F(CodecTest, EncodeDecodeTest) {
 
     int ret;
     for (int frame = 0; frame < 100; frame++) {
-        if (frame == 60) {
-            // The first frame is implicitly an intra frame, also ask for one
+        VideoFrameType frame_type = VIDEO_FRAME_TYPE_NORMAL;
+        if (frame == 0 || frame == 60) {
+            // The first frame is implicitly an intra frame; also ask for one
             // partway through (and check below to make sure it was generated).
-            video_encoder_set_iframe(enc);
+            frame_type = VIDEO_FRAME_TYPE_INTRA;
+            if (frame == 60) {
+                video_encoder_set_iframe(enc);
+            }
         }
 
         test_write_image(image_rgb_in, width, height, pitch, frame);
@@ -190,6 +194,7 @@ TEST_F(CodecTest, EncodeDecodeTest) {
 
         ret = video_encoder_encode(enc);
         EXPECT_EQ(ret, 0);
+        EXPECT_EQ(enc->frame_type, frame_type);
         EXPECT_LT(enc->encoded_frame_size, packet_buffer_size);
 
         write_avpackets_to_buffer(enc->num_packets, enc->packets, (int *)packet_buffer);
@@ -206,7 +211,7 @@ TEST_F(CodecTest, EncodeDecodeTest) {
         EXPECT_EQ(frame_out->format, AV_PIX_FMT_YUV420P);
         EXPECT_EQ(frame_out->width, width);
         EXPECT_EQ(frame_out->height, height);
-        if (frame == 0 || frame == 60)
+        if (frame_type == VIDEO_FRAME_TYPE_INTRA)
             EXPECT_EQ(frame_out->pict_type, AV_PICTURE_TYPE_I);
         else
             EXPECT_EQ(frame_out->pict_type, AV_PICTURE_TYPE_P);

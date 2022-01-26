@@ -39,7 +39,7 @@ typedef struct {
     // Output
     void* frame;
     unsigned int frame_size;
-    bool is_iframe;
+    VideoFrameType frame_type;
 } NvidiaEncoder;
 
 /**

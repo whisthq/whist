@@ -196,7 +196,9 @@ static void send_populated_frames(whist_server_state* state, WhistTimer* statist
     log_double_statistic(VIDEO_GET_CURSOR_TIME, get_timer(statistics_timer) * MS_IN_SECOND);
 
     // On I-frames or new cursors, we want to pack the new cursor into the frame
-    if ((encoder->is_iframe || current_cursor->hash != last_cursor_hash) && current_cursor) {
+    if ((VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame->frame_type) ||
+         current_cursor->hash != last_cursor_hash) &&
+        current_cursor) {
         set_frame_cursor_info(frame, current_cursor);
         last_cursor_hash = current_cursor->hash;
     } else {
@@ -207,9 +209,8 @@ static void send_populated_frames(whist_server_state* state, WhistTimer* statist
         free(current_cursor);
     }
 
-    // frame is an iframe if this frame does not require previous frames to
-    // render
-    frame->is_iframe = encoder->is_iframe;
+    // Client needs to know about frame type to find recovery points.
+    frame->frame_type = encoder->frame_type;
 
     frame->videodata_length = encoder->encoded_frame_size;
 
@@ -219,9 +220,9 @@ static void send_populated_frames(whist_server_state* state, WhistTimer* statist
     send_frame_id = id;
     currently_sending_index = 1 - currently_sending_index;
 
-    if (frame->is_iframe || LOG_VIDEO) {
+    if (VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame->frame_type) || LOG_VIDEO) {
         LOG_INFO("Sent video packet %d (Size: %d) %s", id, encoder->encoded_frame_size,
-                 frame->is_iframe ? "(I-frame)" : "");
+                 video_frame_type_string(frame->frame_type));
     }
 
     whist_post_semaphore(producer);
@@ -443,7 +444,8 @@ static int32_t multithreaded_send_video_packets(void* opaque) {
         // Send the video frame
         if (state->client.is_active && !state->exiting) {
             send_packet(&state->client.udp_context, PACKET_VIDEO, frame,
-                        get_total_frame_size(frame), send_frame_id, frame->is_iframe);
+                        get_total_frame_size(frame), send_frame_id,
+                        VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame->frame_type));
         }
         whist_post_semaphore(consumer);
         log_double_statistic(VIDEO_SEND_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);

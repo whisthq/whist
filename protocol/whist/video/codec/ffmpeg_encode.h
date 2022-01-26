@@ -62,7 +62,7 @@ typedef struct FFmpegEncoder {
     int in_width, in_height;
     int out_width, out_height;
     int gop_size;
-    bool is_iframe;
+    VideoFrameType frame_type;
     void* sw_frame_buffer;
     int encoded_frame_size;  /// <size of encoded frame in bytes
 

@@ -52,7 +52,7 @@ typedef struct VideoEncoder {
     // frame metadata + data
     int in_width, in_height;
     int out_width, out_height;
-    bool is_iframe;
+    VideoFrameType frame_type;
     int encoded_frame_size;  /// <size of encoded frame in bytes
     CodecType codec_type;
     NvidiaEncoder* nvidia_encoders[NUM_ENCODERS];

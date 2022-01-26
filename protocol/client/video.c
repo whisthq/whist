@@ -426,7 +426,7 @@ void sync_decoder_parameters(VideoContext* video_context, VideoFrame* frame) {
         return;
     }
 
-    if (!frame->is_iframe) {
+    if (frame->frame_type != VIDEO_FRAME_TYPE_INTRA) {
         LOG_INFO("Wants to change resolution, but not an I-Frame!");
         return;
     }

@@ -1,5 +1,6 @@
 add_library(whistVideo STATIC
         codec/decode.c
+        video.c
         )
 
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
