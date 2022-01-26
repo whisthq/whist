@@ -9,7 +9,7 @@ FIND_ARGS=${1:-$ALL_SH_FILES}
 
 while read file
 do
-  if shellcheck $file; then
+  if shellcheck -e SC2028 $file; then
     echo "[Shellcheck passed] $file"
   else
     echo "[Shellcheck did not pass] $file" && exit 1
