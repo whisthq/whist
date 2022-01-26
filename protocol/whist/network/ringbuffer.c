@@ -554,7 +554,7 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int n
     // Initialize FEC-related things, if we need to
     if (num_fec_indices > 0) {
         frame_data->fec_decoder =
-            create_fec_decoder(num_original_indices, num_fec_indices, MAX_PAYLOAD_SIZE);
+            create_fec_decoder(num_original_indices, num_fec_indices, MAX_PACKET_SEGMENT_SIZE);
         frame_data->fec_frame_buffer = allocate_block(ring_buffer->packet_buffer_allocator);
         frame_data->successful_fec_recovery = false;
     }
