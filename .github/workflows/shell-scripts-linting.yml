@@ -42,3 +42,39 @@ jobs:
 
       - name: Check that All Bash Scripts Contain "set -Eeuo pipefail"
         run: .github/workflows/helpers/shell-scripts/check-pipefail.sh
+
+  shell-scripts-shellcheck:
+    name: Run ShellCheck on Shell Scripts
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Run ShellCheck on frontend folder
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: "./frontend"
+          ignore_paths: "./frontend/client-applications/node_modules/"
+
+      - name: Run ShellCheck on backend folder
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: "./backend/"
+
+      - name: Run ShellCheck on protocol folder
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: "./protocol/"
+
+      - name: Run ShellCheck on .github folder
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: "./.github/"
+
+      - name: Run ShellCheck on host-setup folder
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: "./host-setup/"
+
+      - name: Run ShellCheck on mandelboxes folder
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: "./mandelboxes/"
