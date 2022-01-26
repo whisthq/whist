@@ -6,6 +6,7 @@
 
 import { merge, filter } from "rxjs"
 import toPairs from "lodash.topairs"
+import find from "lodash.find"
 
 import { fromTrigger } from "@app/main/utils/flows"
 import { persistGet, persistSet } from "@app/main/utils/persist"
@@ -37,7 +38,12 @@ merge(
 
 // Cache the closest AWS regions so we don't have to wait on AWS ping on subsequent launches
 fromTrigger(WhistTrigger.awsPingRefresh).subscribe((regions) => {
-  if (regions?.length > 0) persistSet(AWS_REGIONS_SORTED_BY_PROXIMITY, regions)
+  const validPingTimes =
+    find(regions, (r) => r.pingTime === undefined) === undefined
+  console.log("valid is", validPingTimes)
+
+  if (regions?.length > 0 && validPingTimes)
+    persistSet(AWS_REGIONS_SORTED_BY_PROXIMITY, regions)
 })
 
 // Cache whether the user wants their tabs to be restored on launch
