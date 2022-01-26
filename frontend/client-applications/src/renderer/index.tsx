@@ -12,7 +12,8 @@ import Signout from "@app/renderer/pages/signout"
 import Importer from "@app/renderer/pages/importer"
 import Update from "@app/renderer/pages/update"
 import Network from "@app/renderer/pages/network"
-import Loading from "@app/renderer/pages/loading"
+import Launching from "@app/renderer/pages/launching"
+import Importing from "@app/renderer/pages/importing"
 import Omnibar from "@app/renderer/pages/omnibar"
 import Background from "@app/renderer/pages/background"
 import Welcome from "@app/renderer/pages/welcome"
@@ -25,7 +26,8 @@ import {
   WindowHashImport,
   WindowHashOnboarding,
   WindowHashAuth,
-  WindowHashLoading,
+  WindowHashLaunchLoading,
+  WindowHashImportLoading,
   WindowHashOmnibar,
   WindowHashPayment,
   WindowHashSpeedtest,
@@ -150,17 +152,16 @@ const RootComponent = () => {
         }
       />
     )
-  if (show === WindowHashOnboarding) {
+  if (show === WindowHashOnboarding)
     return (
       <Network
         networkInfo={mainState.networkInfo}
         onSubmit={handleNetworkSubmit}
       />
     )
-  }
-  if (show === WindowHashLoading) {
-    return <Loading networkInfo={mainState.networkInfo} />
-  }
+  if (show === WindowHashLaunchLoading)
+    return <Launching networkInfo={mainState.networkInfo} />
+  if (show === WindowHashImportLoading) return <Importing />
   if (show === NO_PAYMENT_ERROR)
     return (
       <TwoButtonError

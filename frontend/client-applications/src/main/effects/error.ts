@@ -17,7 +17,7 @@ import {
 } from "@app/constants/error"
 import {
   WindowHashPayment,
-  WindowHashLoading,
+  WindowHashLaunchLoading,
   WindowHashImport,
   WindowHashAuth,
   WindowHashOnboarding,
@@ -56,7 +56,7 @@ untilUpdateAvailable(
     createErrorWindow(MANDELBOX_INTERNAL_ERROR)
   }
 
-  destroyElectronWindow(WindowHashLoading)
+  destroyElectronWindow(WindowHashLaunchLoading)
   destroyElectronWindow(WindowHashImport)
   destroyElectronWindow(WindowHashOnboarding)
 })
@@ -81,7 +81,7 @@ untilUpdateAvailable(
   withAppActivated(fromTrigger(WhistTrigger.protocolError))
 ).subscribe(() => {
   createErrorWindow(PROTOCOL_ERROR)
-  destroyElectronWindow(WindowHashLoading)
+  destroyElectronWindow(WindowHashLaunchLoading)
   destroyElectronWindow(WindowHashOnboarding)
   destroyElectronWindow(WindowHashImport)
 })

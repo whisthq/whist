@@ -10,7 +10,7 @@ import { fromTrigger } from "@app/main/utils/flows"
 import {
   WindowHashPayment,
   WindowHashOmnibar,
-  WindowHashLoading,
+  WindowHashLaunchLoading,
   WindowHashOnboarding,
   WindowHashImport,
   WindowHashAuth,
@@ -19,7 +19,8 @@ import {
 } from "@app/constants/windows"
 import {
   createAuthWindow,
-  createLoadingWindow,
+  createLaunchLoadingWindow,
+  createImportLoadingWindow,
   createSignoutWindow,
   createSpeedtestWindow,
   createPaymentWindow,
@@ -68,9 +69,17 @@ withAppActivated(fromTrigger(WhistTrigger.showAuthWindow)).subscribe(() => {
 })
 
 // Show the loading window whenever we start the mandelbox flow
-withAppActivated(fromTrigger(WhistTrigger.mandelboxFlowStart)).subscribe(() => {
+withAppActivated(
+  fromTrigger(WhistTrigger.mandelboxFlowStart).pipe(
+    withLatestFrom(
+      fromTrigger(WhistTrigger.beginImport).pipe(mapTo(true), startWith(false))
+    ),
+    map((x) => ({ import: x[1] }))
+  )
+).subscribe((args: { import: boolean }) => {
   networkAnalyze()
-  createLoadingWindow()
+
+  args.import ? createImportLoadingWindow() : createLaunchLoadingWindow()
 
   destroyElectronWindow(WindowHashPayment)
   destroyElectronWindow(WindowHashImport)
@@ -159,7 +168,7 @@ withAppActivated(
     filter((connected) => connected)
   )
 ).subscribe(() => {
-  destroyElectronWindow(WindowHashLoading)
+  destroyElectronWindow(WindowHashLaunchLoading)
   destroyElectronWindow(WindowHashOnboarding)
   destroyElectronWindow(WindowHashImport)
 })
