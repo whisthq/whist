@@ -25,7 +25,7 @@ install_brave_extension () {
 
 # Allow developers to install extensions by calling this function
 if [ "$#" -eq 1 ]; then
-  install_brave_extension $1
+  install_brave_extension "$1"
 else
   echo "Could not install brave extension $1. Expected 1 arg, got $#"
 fi

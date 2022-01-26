@@ -61,7 +61,7 @@ elif [[ "$mode" == "metrics" ]]; then
 else
   cmake_build_type=Release
 fi
-if [[ ! -z "$cmake_build_type_opt" ]]; then
+if [[ -n "$cmake_build_type_opt" ]]; then
   cmake_build_type=$cmake_build_type_opt
 fi
 

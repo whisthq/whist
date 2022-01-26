@@ -9,7 +9,7 @@ FIND_ARGS=${1:-$ALL_SH_FILES}
 
 while read -r file
 do
-  if shellcheck -e SC2028 "$file"; then
+  if shellcheck -e SC2028,SC2154 "$file"; then
     echo "[Shellcheck passed] $file"
   else
     echo "[Shellcheck did not pass] $file" && exit 1

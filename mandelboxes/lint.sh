@@ -11,4 +11,4 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # Working directory is whist
 cd "$DIR/.."
 
-exec docker run -v $PWD:/whist:ro --workdir=/whist --rm -i hadolint/hadolint:2.8.0-debian hadolint mandelboxes/*/{.,*}/Dockerfile.20
+exec docker run -v "$PWD":/whist:ro --workdir=/whist --rm -i hadolint/hadolint:2.8.0-debian hadolint mandelboxes/*/{.,*}/Dockerfile.20

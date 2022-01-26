@@ -19,4 +19,4 @@ while read -r line; do
       break
       ;;
   esac
-done < <(inotifywait -me create,moved_to --format="%f" $DIR_NAME 2>&1)
+done < <(inotifywait -me create,moved_to --format="%f" "$DIR_NAME" 2>&1)
