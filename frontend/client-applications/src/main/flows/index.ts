@@ -168,3 +168,4 @@ createTrigger(
 
 createTrigger(WhistTrigger.mandelboxFlowSuccess, mandelbox.success)
 createTrigger(WhistTrigger.mandelboxFlowFailure, mandelbox.failure)
+createTrigger(WhistTrigger.mandelboxFlowTimeout, mandelbox.timeout)

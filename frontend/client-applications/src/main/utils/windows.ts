@@ -194,7 +194,7 @@ const createElectronWindow = (args: {
 
     return { win, view: undefined }
   } catch (err) {
-    logging.error(`Error creating window ${args.hash}`, {})
+    logging(`Error creating window ${args.hash}`, {})
     return { win: undefined, view: undefined }
   }
 }

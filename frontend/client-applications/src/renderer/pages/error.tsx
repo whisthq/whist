@@ -1,6 +1,8 @@
 import React, { useState } from "react"
 
 import { WhistButton, WhistButtonState } from "@app/components/button"
+import Right from "@app/components/icons/right"
+import Left from "@app/components/icons/left"
 import classNames from "classnames"
 
 const BaseError = (props: { title: string; text: string }) => {
@@ -26,6 +28,7 @@ export const OneButtonError = (props: {
   text: string
   primaryButtonText: string
   onPrimaryClick: () => void
+  onRequestHelp?: () => void
 }) => {
   /*
         Description:
@@ -50,15 +53,33 @@ export const OneButtonError = (props: {
     >
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
       <BaseError title={props.title} text={props.text} />
-      <div className="mt-4 mb-10 w-full text-center text-black">
+      <div className="mt-4 mb-10 w-full text-center text-gray-900 flex justify-center space-x-4">
         <WhistButton
-          contents={props.primaryButtonText}
-          className="px-12 mx-auto bg-mint py-3"
+          contents={
+            <div className="flex space-x-1">
+              <Left />
+              <div>{props.primaryButtonText}</div>
+            </div>
+          }
+          className="px-12 bg-mint py-3"
           state={
             processing ? WhistButtonState.PROCESSING : WhistButtonState.DEFAULT
           }
           onClick={onClick}
         />
+        {props.onRequestHelp !== undefined && (
+          <WhistButton
+            contents={
+              <div className="flex space-x-1">
+                <Right />
+                <div>Report A Bug</div>
+              </div>
+            }
+            className="px-10 bg-mint py-3 bg-opacity-0 border border-gray-700 text-gray-300 hover:bg-opacity-0"
+            state={WhistButtonState.DEFAULT}
+            onClick={props.onRequestHelp}
+          />
+        )}
       </div>
     </div>
   )
@@ -71,6 +92,7 @@ export const TwoButtonError = (props: {
   secondaryButtonText: string
   onPrimaryClick: () => void
   onSecondaryClick: () => void
+  onRequestHelp: () => void
 }) => {
   /*
         Description:
@@ -97,18 +119,34 @@ export const TwoButtonError = (props: {
     >
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
       <BaseError title={props.title} text={props.text} />
-      <div className="mt-3 mb-1 w-full text-center">
+      <div className="mt-4 mb-4 w-full text-center text-gray-900 flex justify-center space-x-4">
         <WhistButton
-          contents={props.primaryButtonText}
-          className="px-12 mx-auto py-3 bg-mint text-black"
+          contents={
+            <div className="flex space-x-1">
+              <Left />
+              <div>{props.primaryButtonText}</div>
+            </div>
+          }
+          className="px-12 bg-mint py-3"
           state={
             processing ? WhistButtonState.PROCESSING : WhistButtonState.DEFAULT
           }
           onClick={onClick}
         />
+        <WhistButton
+          contents={
+            <div className="flex space-x-1">
+              <Right />
+              <div>Report A Bug</div>
+            </div>
+          }
+          className="px-10 bg-mint py-3 bg-opacity-0 border border-gray-700 text-gray-300 hover:bg-opacity-0"
+          state={WhistButtonState.DEFAULT}
+          onClick={props.onRequestHelp}
+        />
       </div>
       <button
-        className="mx-auto mb-6 py-2 bg-none border-none text-gray-300 underline outline-none"
+        className="mx-auto mb-6 py-2 bg-none border-none text-gray-500 underline outline-none"
         onClick={props.onSecondaryClick}
         style={{ outline: "none" }}
       >

@@ -17,6 +17,7 @@ export const AUTH_ERROR = "error&type=AUTH_ERROR"
 export const NAVIGATION_ERROR = "error&type=NAVIGATION_ERROR"
 export const MAINTENANCE_ERROR = "error&type=MAINTENANCE_ERROR"
 export const LOCATION_CHANGED_ERROR = "error&type=LOCATION_CHANGED_ERROR"
+export const SERVER_TIMEOUT_ERROR = "error&type=SERVER_TIMEOUT_ERROR"
 
 export const whistError = {
   [NO_PAYMENT_ERROR]: {
@@ -25,11 +26,11 @@ export const whistError = {
   },
   [UNAUTHORIZED_ERROR]: {
     title: "There was an error authenticating you with Whist.",
-    text: "Please try logging in again or contact support@whist.com for help.",
+    text: "Please try logging in again.",
   },
   [PROTOCOL_ERROR]: {
     title: "The Whist browser lost connection.",
-    text: "This could be due to inactivity or weak Internet. Please try again or contact support@whist.com for help.",
+    text: "This could be due to inactivity or weak Internet.",
   },
   [MANDELBOX_INTERNAL_ERROR]: {
     title: "There was an error connecting to the Whist servers.",
@@ -37,11 +38,11 @@ export const whistError = {
   },
   [AUTH_ERROR]: {
     title: "We've added extra security measures to our login system.",
-    text: "Please sign out and sign back in. If this doesn't work, please contact support@whist.com to report a bug.",
+    text: "Please sign out and sign back in.",
   },
   [NAVIGATION_ERROR]: {
     title: "There was an error loading the Whist window.",
-    text: "Please try logging in again or contact support@whist.com for help.",
+    text: "Please try logging in.",
   },
   [MAINTENANCE_ERROR]: {
     title: "Whist is currently pushing out an update.",
@@ -57,15 +58,15 @@ export const whistError = {
   },
   [REGION_NOT_ENABLED]: {
     title: "You are in a region that is not currently supported by Whist :(",
-    text: "If you are located in North America, this may be our mistake. Please contact support@whist.com for help.",
+    text: "If you are located in North America, this may be our mistake.",
   },
   [USER_ALREADY_ACTIVE]: {
     title: "You are connected to Whist on another device :(",
-    text: "If you believe this is a mistake, we deeply apologize. Please contact support@whist.com for help.",
+    text: "If you believe this is a mistake, we deeply apologize.",
   },
   [COMMIT_HASH_MISMATCH]: {
     title: "Whist version is out of date :(",
-    text: "Please allow a few seconds for an update to download. If nothing happens, we deeply apologize and ask you contact support@whist.com for help.",
+    text: "Please allow a few seconds for an update to download.",
   },
   [MANDELBOX_INTERNAL_ERROR]: {
     title: "Unexpected server error :(",
@@ -74,6 +75,10 @@ export const whistError = {
   [LOCATION_CHANGED_ERROR]: {
     title: "Your location seems to have changed",
     text: "Since the last time you opened Whist. We recommend restarting Whist to avoid higher network latency.",
+  },
+  [SERVER_TIMEOUT_ERROR]: {
+    title: "Our servers are unresponsive :(",
+    text: "You have encountered a rare bug and we deeply apologize. Sometimes this bug will disappear if you try again.",
   },
 } as {
   [key: string]: {

@@ -70,6 +70,7 @@ const WhistTrigger = {
   mandelboxFlowStart: "mandelboxFlowStart",
   mandelboxFlowSuccess: "mandelboxFlowSuccess",
   mandelboxFlowFailure: "mandelboxFlowFailure",
+  mandelboxFlowTimeout: "mandelboxFlowTimeout",
   authFlowSuccess: "authFlowSuccess",
   authFlowFailure: "authFlowFailure",
   authRefreshSuccess: "authRefreshSuccess",
