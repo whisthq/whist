@@ -22,6 +22,7 @@ resource "aws_default_subnet" "default-subnets" {
 }
 
 # Create default Internet Gateways
+
 resource "aws_internet_gateway" "default-gateways" {
   for_each = aws_default_vpc.default-vpcs
   vpc_id   = each.value.id
@@ -37,6 +38,7 @@ locals {
 }
 
 # Create default route tables
+
 resource "aws_default_route_table" "whist-route-tables" {
   count                  = length(local.vpc_ids)
   default_route_table_id = local.vpc_ids[count.index]
@@ -48,5 +50,63 @@ resource "aws_default_route_table" "whist-route-tables" {
 
   tags = {
     Name = format("Route table for VPC: %s", local.vpc_ids[count.index])
+  }
+}
+
+# Security groups
+
+resource "aws_default_security_group" "default" {
+  for_each = aws_default_vpc.default-vpcs
+  vpc_id = each.value.id
+
+  ingress {
+    protocol  = -1
+    self      = true
+    from_port = 0
+    to_port   = 0
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_security_group" "container-tester" {
+  for_each = aws_default_vpc.default-vpcs
+  vpc_id = each.value.id
+
+  ingress {
+    description = "whist-http-rule"
+    protocol    = "tcp"
+    from_port   = 80
+    to_port     = 80
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "whist-udp-rule"
+    protocol    = "udp"
+    from_port   = 1025
+    to_port     = 49150
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "whist-tcp-rule"
+    protocol    = "tcp"
+    from_port   = 1025
+    to_port     = 49150
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "whist-ipv4-rule"
+    protocol    = "-1"
+    to_port     = 0
+    from_port   = 0
+    cidr_blocks = ["0.0.0.0/0"]
   }
 }
