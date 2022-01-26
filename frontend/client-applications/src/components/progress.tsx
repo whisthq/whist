@@ -9,7 +9,7 @@ export const Progress = (props: {
   <div className="relative border-none">
     <div
       className={classNames(
-        `overflow-hidden mb-4 text-xs flex rounded`,
+        `overflow-hidden mb-4 text-xs flex rounded bg-gray-800`,
         props.className ?? ""
       )}
     >
