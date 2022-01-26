@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/whisthq/whist/backend/services/types"
+	"github.com/whisthq/whist/backend/services/utils"
 )
 
 // TestGetImportedExtensions tests the helper function that finds
@@ -64,7 +65,7 @@ func TestGetImportedExtensions(t *testing.T) {
 
 		expectedExtensions := []string{"extension1", "extension2"}
 		for _, extension := range expectedExtensions {
-			if !sliceContainsString(extensions, extension) {
+			if !utils.StringSliceContains(extensions, extension) {
 				t.Errorf("expected extension %s not found", extension)
 			}
 		}
@@ -86,7 +87,7 @@ func TestUpdateImportedExtensions(t *testing.T) {
 
 		expectedExtensions := []string{"extension1", "extension2", "extension3"}
 		for _, extension := range expectedExtensions {
-			if !sliceContainsString(updatedExtensions, extension) {
+			if !utils.StringSliceContains(updatedExtensions, extension) {
 				t.Errorf("expected extension %s not found", extension)
 			}
 		}
@@ -102,7 +103,7 @@ func TestUpdateImportedExtensions(t *testing.T) {
 
 		expectedExtensions := []string{"extension1", "extension2", "extension3", "extension4"}
 		for _, extension := range expectedExtensions {
-			if !sliceContainsString(updatedExtensions, extension) {
+			if !utils.StringSliceContains(updatedExtensions, extension) {
 				t.Errorf("expected extension %s not found", extension)
 			}
 		}
@@ -136,14 +137,4 @@ func TestSaveImportedExtensions(t *testing.T) {
 	if string(extensionsFileContents) != expectedExtensionsFileContents {
 		t.Errorf("expected saved extensions file to be %s, got %s", expectedExtensionsFileContents, extensionsFileContents)
 	}
-}
-
-// sliceContainsString checks if a string slice contains a target string.
-func sliceContainsString(slice []string, target string) bool {
-	for _, s := range slice {
-		if s == target {
-			return true
-		}
-	}
-	return false
 }
