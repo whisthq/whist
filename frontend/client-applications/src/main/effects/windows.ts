@@ -68,19 +68,13 @@ withAppActivated(fromTrigger(WhistTrigger.showAuthWindow)).subscribe(() => {
 })
 
 // Show the loading window whenever we start the mandelbox flow
-withAppActivated(
-  fromTrigger(WhistTrigger.mandelboxFlowStart).pipe(
-    withLatestFrom(
-      fromTrigger(WhistTrigger.beginImport).pipe(mapTo(true), startWith(false))
-    ),
-    map((x) => ({ import: x[1] }))
-  )
-).subscribe((args: { import: boolean }) => {
-  if (!args.import) {
-    networkAnalyze()
-    createLoadingWindow()
-    destroyElectronWindow(WindowHashPayment)
-  }
+withAppActivated(fromTrigger(WhistTrigger.mandelboxFlowStart)).subscribe(() => {
+  networkAnalyze()
+  createLoadingWindow()
+
+  destroyElectronWindow(WindowHashPayment)
+  destroyElectronWindow(WindowHashImport)
+  destroyElectronWindow(WindowHashOnboarding)
 })
 
 withAppActivated(
