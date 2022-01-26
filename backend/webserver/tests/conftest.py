@@ -107,7 +107,9 @@ def authorized(
 
 
 @pytest.fixture
-def bulk_instance() -> Generator[
+def bulk_instance(  # type: ignore[no-untyped-def]
+    db_session,  # pylint: disable=unused-argument
+) -> Generator[
     Callable[[int, Optional[str], Optional[str], Optional[int]], InstanceInfo], None, None
 ]:
     """Add 1+ rows to the instance_info table for testing.
@@ -116,7 +118,6 @@ def bulk_instance() -> Generator[
         A function that populates the instanceInfo table with a test
         row whose columns are set as arguments to the function.
     """
-    instances = []
 
     def _instance(
         associated_mandelboxes: int = 0,
@@ -158,7 +159,7 @@ def bulk_instance() -> Generator[
         )
 
         db.session.add(new_instance)
-        db.session.commit()
+
         for _ in range(associated_mandelboxes):
             new_mandelbox = MandelboxInfo(
                 mandelbox_id=str(randint(0, 10000000)),
@@ -169,22 +170,12 @@ def bulk_instance() -> Generator[
                 creation_time_utc_unix_ms=int(time.time() * 1000),
             )
             db.session.add(new_mandelbox)
-            db.session.commit()
 
-        instances.append(new_instance)
+        db.session.commit()
 
         return new_instance
 
     yield _instance
-
-    for instance in instances:
-        if InstanceInfo.query.get(instance.instance_name) is not None:
-            db.session.delete(instance)
-    # We only need to delete the instances for cleanup. mandelboxes have a foreign key
-    # relationship with instances on instance_name column and due to cascade on delete/update
-    # the mandelboxes will be deleted on deletion of corresponding instances.
-
-    db.session.commit()
 
 
 @pytest.fixture
