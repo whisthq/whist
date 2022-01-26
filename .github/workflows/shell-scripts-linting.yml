@@ -53,24 +53,24 @@ jobs:
 
       - name: Run ShellCheck on frontend folder
         working-directory: frontend
-        run: shellcheck $(find . -name '*.sh' -not -path "client-applications/*")
+        run: ../.github/workflows/helpers/shell-scripts/check-shellcheck.sh "-name '*.sh' -not -path './client-applications/*'"
 
       - name: Run ShellCheck on backend folder
         working-directory: backend
-        run: shellcheck **/**.sh
+        run: ../.github/workflows/helpers/shell-scripts/check-shellcheck.sh
 
       - name: Run ShellCheck on protocol folder
         working-directory: protocol
-        run: shellcheck **/**.sh
+        run: ../.github/workflows/helpers/shell-scripts/check-shellcheck.sh
 
       - name: Run ShellCheck on .github folder
         working-directory: .github
-        run: shellcheck **/**.sh
+        run: ../.github/workflows/helpers/shell-scripts/check-shellcheck.sh
 
       - name: Run ShellCheck on host-setup folder
         working-directory: host-setup
-        run: shellcheck **/**.sh
+        run: ../.github/workflows/helpers/shell-scripts/check-shellcheck.sh
 
       - name: Run ShellCheck on mandelboxes folder
         working-directory: mandelboxes
-        run: shellcheck **/**.sh
+        run: ../.github/workflows/helpers/shell-scripts/check-shellcheck.sh
