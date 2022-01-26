@@ -11,6 +11,7 @@ import {
   WindowHashPayment,
   WindowHashOmnibar,
   WindowHashLaunchLoading,
+  WindowHashImportLoading,
   WindowHashOnboarding,
   WindowHashImport,
   WindowHashAuth,
@@ -169,6 +170,7 @@ withAppActivated(
   )
 ).subscribe(() => {
   destroyElectronWindow(WindowHashLaunchLoading)
+  destroyElectronWindow(WindowHashImportLoading)
   destroyElectronWindow(WindowHashOnboarding)
   destroyElectronWindow(WindowHashImport)
 })
