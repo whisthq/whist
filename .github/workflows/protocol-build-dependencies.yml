@@ -453,6 +453,7 @@ jobs:
         with:
           repository: m-ab-s/media-autobuild_suite
           ref: master # Latest stable FFmpeg branch
+          path: C:\media-autobuild_suite
 
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
