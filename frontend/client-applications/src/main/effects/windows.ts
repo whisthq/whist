@@ -15,6 +15,7 @@ import {
   WindowHashImport,
   WindowHashAuth,
   WindowHashWelcome,
+  WindowHashSupport,
 } from "@app/constants/windows"
 import {
   createAuthWindow,
@@ -151,6 +152,10 @@ withAppActivated(fromTrigger(WhistTrigger.checkPaymentFlowSuccess)).subscribe(
 withAppActivated(fromTrigger(WhistTrigger.showSupportWindow)).subscribe(() => {
   hideElectronWindow(WindowHashOmnibar)
   createSupportWindow()
+})
+
+withAppActivated(fromTrigger(WhistTrigger.closeSupportWindow)).subscribe(() => {
+  destroyElectronWindow(WindowHashSupport)
 })
 
 // When the protocol launches, destroy the loading window and onboarding window

@@ -16,7 +16,7 @@ import Loading from "@app/renderer/pages/loading"
 import Omnibar from "@app/renderer/pages/omnibar"
 import Background from "@app/renderer/pages/background"
 import Welcome from "@app/renderer/pages/welcome"
-import Chatbot from "@app/renderer/pages/chatbot"
+import Support from "@app/renderer/pages/support"
 import { Provider } from "@app/renderer/context/omnibar"
 
 import {
@@ -96,6 +96,14 @@ const RootComponent = () => {
       },
     })
 
+  const handleSupportClose = () =>
+    setMainState({
+      trigger: {
+        name: WhistTrigger.closeSupportWindow,
+        payload: undefined,
+      },
+    })
+
   useEffect(() => {
     // We need to ask the main thread to re-emit the current StateIPC because
     // useMainState() only subscribes to state updates after the function is
@@ -123,7 +131,10 @@ const RootComponent = () => {
     ].includes(show)
   )
     return <Background />
-  if (show === WindowHashSupport) return <Chatbot />
+  if (show === WindowHashSupport)
+    return (
+      <Support onClose={handleSupportClose} userEmail={mainState.userEmail} />
+    )
   if (show === WindowHashSignout) return <Signout onClick={handleSignout} />
   if (show === WindowHashUpdate) return <Update />
   if (show === WindowHashImport)
