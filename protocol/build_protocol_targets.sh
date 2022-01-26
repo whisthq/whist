@@ -30,7 +30,7 @@ EOF
 
 # Parse arguments (derived from https://stackoverflow.com/a/7948533/2378475)
 # I'd prefer not to have the short arguments at all, but getopt only uses short arguments
-TEMP=`getopt -o h --long help,usage,cmakebuildtype:,nodownloadbinaries,cmakesetCI,sanitize: -n 'build_protocol_targets.sh' -- "$@"`
+TEMP=$(getopt -o h --long help,usage,cmakebuildtype:,nodownloadbinaries,cmakesetCI,sanitize: -n 'build_protocol_targets.sh' -- "$@")
 eval set -- "$TEMP"
 
 CMAKE_BUILD_TYPE=Debug

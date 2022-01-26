@@ -55,12 +55,12 @@ jobs:
         working-directory: frontend
         run: ../.github/workflows/helpers/shell-scripts/check-shellcheck.sh "-name '*.sh' -not -path './client-applications/*'"
 
-      - name: Run ShellCheck on backend folder
-        working-directory: backend
-        run: ../.github/workflows/helpers/shell-scripts/check-shellcheck.sh
-
       - name: Run ShellCheck on protocol folder
         working-directory: protocol
+        run: ../.github/workflows/helpers/shell-scripts/check-shellcheck.sh
+      
+      - name: Run ShellCheck on backend folder
+        working-directory: backend
         run: ../.github/workflows/helpers/shell-scripts/check-shellcheck.sh
 
       - name: Run ShellCheck on .github folder
