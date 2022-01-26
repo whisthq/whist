@@ -1,3 +1,3 @@
-variable enabled_regions {
-    type = map
+variable "enabled_regions" {
+  type = map(any)
 }
