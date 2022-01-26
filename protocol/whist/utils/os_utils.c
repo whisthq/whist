@@ -99,7 +99,8 @@ WhistKeyboardLayout get_keyboard_layout(void) {
         // so we can add support for it if we see usage of it
         safe_strncpy(whist_layout.layout_name, WHIST_KB_DEFAULT_LAYOUT,
                      sizeof(whist_layout.layout_name));
-        LOG_ERROR("Mac Keyboard Layout %s was not recognized! Defaulting to %s", layout, WHIST_KB_DEFAULT_LAYOUT);
+        LOG_ERROR("Mac Keyboard Layout %s was not recognized! Defaulting to %s", layout,
+                  WHIST_KB_DEFAULT_LAYOUT);
     }
 
     // then copy layout into old_layout
