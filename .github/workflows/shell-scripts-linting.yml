@@ -49,32 +49,25 @@ jobs:
 
     steps:
       - name: Run ShellCheck on frontend folder
-        uses: ludeeus/action-shellcheck@master
-        with:
-          scandir: "./frontend"
-          ignore_paths: "./frontend/client-applications/node_modules/"
+        working-directory: ./frontend
+        run: shellcheck -e ./client-applications/* **/**.sh
 
       - name: Run ShellCheck on backend folder
-        uses: ludeeus/action-shellcheck@master
-        with:
-          scandir: "./backend/"
+        working-directory: ./backend
+        run: shellcheck **/**.sh
 
       - name: Run ShellCheck on protocol folder
-        uses: ludeeus/action-shellcheck@master
-        with:
-          scandir: "./protocol/"
+        working-directory: ./protocol
+        run: shellcheck **/**.sh
 
       - name: Run ShellCheck on .github folder
-        uses: ludeeus/action-shellcheck@master
-        with:
-          scandir: "./.github/"
+        working-directory: ./.github
+        run: shellcheck **/**.sh
 
       - name: Run ShellCheck on host-setup folder
-        uses: ludeeus/action-shellcheck@master
-        with:
-          scandir: "./host-setup/"
+        working-directory: ./host-setup
+        run: shellcheck **/**.sh
 
       - name: Run ShellCheck on mandelboxes folder
-        uses: ludeeus/action-shellcheck@master
-        with:
-          scandir: "./mandelboxes/"
+        working-directory: ./mandelboxes
+        run: shellcheck **/**.sh
