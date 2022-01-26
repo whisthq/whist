@@ -713,8 +713,8 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// If the new request contains additional imported extensions, add them to the existing list
 	if len(req.Extensions) > 0 {
-		importedExtensions := configutils.UpdateImportedExtensions(savedExtensions, req.Extensions)
-		if err = mandelbox.WriteSavedExtensions(importedExtensions); err != nil {
+		savedExtensions = configutils.UpdateImportedExtensions(savedExtensions, req.Extensions)
+		if err = mandelbox.WriteSavedExtensions(savedExtensions); err != nil {
 			logger.Errorf("Error writing imported extensions for mandelbox %s: %s", mandelbox.GetID(), err)
 		}
 	}
@@ -724,7 +724,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	err = mandelbox.WriteUserInitialBrowserData(mandelboxData.BrowserData{
 		CookiesJSON:   req.CookiesJSON,
 		BookmarksJSON: req.BookmarksJSON,
-		Extensions:    req.Extensions,
+		Extensions:    mandelboxtypes.Extensions(strings.Join(savedExtensions, ",")),
 	})
 	if err != nil {
 		logger.Errorf("Error writing initial browser data for user %s for mandelbox %s: %s", mandelbox.GetUserID(), mandelboxSubscription.ID, err)
