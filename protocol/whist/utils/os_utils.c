@@ -42,7 +42,9 @@ static const char* const apple_keyboard_mappings[][2] = {
     {"com.apple.keylayout.Spanish", "es"},     {"com.apple.keylayout.Hebrew", "il"},
     {"com.apple.keylayout.Canadian", "ca"},    {"com.apple.keylayout.DVORAK-QWERTYCMD", "dvorak"},
     {"com.apple.keylayout.ABC-India", "us"},   {"com.apple.keylayout.Dvorak", "dvorak"},
-    {"com.apple.keylayout.British", "uk"}};
+    {"com.apple.keylayout.British", "uk"},     {"com.apple.inputmethod.SCIM.ITABC", "altgr-pinyin"},
+    {"com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese", "kana"}
+};
 
 #define NUM_APPLE_KEYBOARD_MAPPINGS \
     ((int)sizeof(apple_keyboard_mappings) / (int)sizeof(apple_keyboard_mappings[0]))
@@ -51,7 +53,8 @@ static const char* const apple_keyboard_mappings[][2] = {
 #ifdef __linux__
 
 static const char linux_supported_layouts[][5] = {"us", "it",    "ara", "de", "fr",
-                                                  "es", "latam", "il",  "ca", "uk"};
+                                                  "es", "latam", "il",  "ca", "uk",
+                                                  "cn", "jp"};
 
 #define NUM_LINUX_SUPPORTED_LAYOUTS \
     ((int)sizeof(linux_supported_layouts) / (int)sizeof(linux_supported_layouts[0]))
