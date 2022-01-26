@@ -53,7 +53,7 @@ jobs:
 
       - name: Run ShellCheck on frontend folder
         working-directory: frontend
-        run: shellcheck -e client-applications/**/**.sh **/**.sh
+        run: shellcheck $(find . -name '*.sh' -not -path "client-applications/*")
 
       - name: Run ShellCheck on backend folder
         working-directory: backend
