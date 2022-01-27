@@ -44,15 +44,25 @@ Defines
 // Represents a WhistSegment, which will be managed by the ringbuffer
 typedef struct {
     WhistPacketType whist_type;
+    timestamp_us departure_time;
     int id;
     unsigned short index;
     unsigned short num_indices;
     unsigned short num_fec_indices;
     unsigned short segment_size;
+    unsigned short prev_frame_num_duplicates;
     bool is_a_nack;
+    bool is_a_duplicate;
     // Must be last, since only the first segment_size bytes will be sent
     char segment_data[MAX_PACKET_SEGMENT_SIZE];
 } WhistSegment;
+
+// Represents the group id and other related stats required for congestion control algorithms
+typedef struct {
+    int group_id;
+    timestamp_us departure_time;  // This time is measured in server's clock
+    timestamp_us arrival_time;    // This time is measured in client's clock
+} GroupStats;
 
 /*
 ============================
@@ -133,8 +143,39 @@ int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms);
  */
 int udp_get_num_pending_frames(SocketContext* context, WhistPacketType type);
 
-// TODO: Is needed for audio.c redundancy, but should be pulled into udp.c somehow
-void udp_resend_packet(SocketContext* socket_context, WhistPacketType type, int id, int index);
+// TODO: Is needed for audio.c, video.c redundancy, but should be pulled into udp.c somehow
+/**
+ * @brief                          Resends the audio/video packet of specified frame id and packet
+ *                                 index
+ *
+ * @param context                  The UDP Socket Context
+ * @param type                     The type of frames to resend
+ * @param id                       Frame ID
+ * @param index                    Packet index
+ *
+ */
+void udp_resend_packet(SocketContext* context, WhistPacketType type, int id, int index);
+
+/**
+ * @brief                          Resets the duplicate packet counter for the specified frame type
+ *
+ * @param context                  The UDP Socket Context
+ * @param type                     The type of frames to reset
+ *
+ */
+void udp_reset_duplicate_packet_counter(SocketContext* context, WhistPacketType type);
+
+/**
+ * @brief                          Get the number of indices(packets) for the specified frame type
+ *                                 and id
+ *
+ * @param context                  The UDP Socket Context
+ * @param type                     The type of frames to query for
+ * @param id                       Frame ID
+ *
+ * @returns                        The number of indices(packets)
+ */
+int udp_get_num_indices(SocketContext* context, WhistPacketType type, int id);
 
 // TODO: Try to remove by making the client detect a nack buffer
 /**
@@ -158,5 +199,7 @@ NetworkSettings udp_get_network_settings(SocketContext* context);
 timestamp_us udp_get_client_input_timestamp(SocketContext* socket_context);
 
 void udp_handle_network_settings(void* raw_context, NetworkSettings network_settings);
+
+size_t udp_packet_max_size(void);
 
 #endif  // WHIST_UDP_H

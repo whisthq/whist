@@ -131,6 +131,8 @@ int32_t multithreaded_send_audio(void* opaque) {
                                 id, false);
                             // Simulate nacks to trigger re-sending of previous frames.
                             // TODO: Move into udp.c
+                            udp_reset_duplicate_packet_counter(&state->client.udp_context,
+                                                               PACKET_AUDIO);
                             for (int i = 1; i <= NUM_PREV_AUDIO_FRAMES_RESEND && id - i > 0; i++) {
                                 // Audio is always only one UDP packet per audio frame.
                                 // Average bytes per audio frame = (Samples_per_frame * Bitrate) /

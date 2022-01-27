@@ -157,4 +157,6 @@ void whist_wait_semaphore(WhistSemaphore semaphore) {
     }
 }
 
+uint32_t whist_semaphore_value(WhistSemaphore semaphore) { return SDL_SemValue(semaphore); }
+
 void whist_destroy_semaphore(WhistSemaphore semaphore) { SDL_DestroySemaphore(semaphore); }

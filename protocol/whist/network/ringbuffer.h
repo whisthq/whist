@@ -41,9 +41,11 @@ typedef struct FrameData {
     WhistPacketType type;
     int num_original_packets;
     int num_fec_packets;
+    int prev_frame_num_duplicate_packets;
     int id;
     int original_packets_received;
     int fec_packets_received;
+    int redundant_packets_received;
     bool* received_indices;
     char* packet_buffer;
 
@@ -193,6 +195,15 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment);
  * @returns Pointer to the FrameData at ID id in ring_buffer.
  */
 FrameData* get_frame_at_id(RingBuffer* ring_buffer, int id);
+
+/**
+ * @brief Calculates the packet loss ratio of non-rendered frames in the last 250ms.
+ *
+ * @param ring_buffer Ring buffer to access
+ *
+ * @returns Packet loss ratio of non-rendered frames in the last 250ms.
+ */
+double get_packet_loss_ratio(RingBuffer* ring_buffer);
 
 /**
  * @brief       Indicate that the frame with ID id is currently rendering, and free the frame buffer

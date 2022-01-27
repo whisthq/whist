@@ -98,6 +98,16 @@ void start_timer(WhistTimer* timer);
 double get_timer(const WhistTimer* timer);
 
 /**
+ * @brief                          Add the value of the timer by a configurable number of seconds
+ *
+ * @param timer                    Pointer to the timer to query.
+ *
+ * @param num_seconds              Number of seconds to be added to the timer value. This parameter
+ *                                 can be negative as well.
+ */
+void adjust_timer(WhistTimer* timer, int num_seconds);
+
+/**
  * @brief                          Write a string representing the current time.
  *
  * The format is "yyyy-MM-dd'T'HH:mm:ss.uuuuuu", giving twenty-six bytes including the terminator.

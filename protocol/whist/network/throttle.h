@@ -40,7 +40,10 @@ void network_throttler_set_burst_bitrate(NetworkThrottleContext* ctx, int burst_
  *
  * @param ctx                The network throttler context.
  * @param bytes              The number of bytes that will be sent.
+ *
+ * @return                   Returns if ID of group of packets that are being sent in the current
+ *                           burst interval
  */
-void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t bytes);
+int network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t bytes);
 
 #endif  // WHIST_NETWORK_THROTTLE_H

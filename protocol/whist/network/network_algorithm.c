@@ -50,6 +50,7 @@ static NetworkSettings default_network_settings = {
     .audio_fec_ratio = AUDIO_FEC_RATIO,
     .video_fec_ratio = VIDEO_FEC_RATIO,
     .fps = 60,
+    .saturate_bandwidth = true,
 };
 
 #define DPI_BITRATE_PER_PIXEL 192
@@ -389,4 +390,209 @@ NetworkSettings ewma_ratio_bitrate(NetworkStatistics stats) {
         }
     }
     return network_settings;
+}
+
+// The theory behind all the code in this function is documented in WCC.md file. Please go thru that
+// document before reviewing this file. Also if you make any modifications to this algo, remember to
+// update the WCC.md file as well so that the documentation remains upto date.
+bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_group_stats,
+                                 int incoming_bitrate, double packet_loss_ratio,
+                                 NetworkSettings *network_settings) {
+#define INITIAL_PRE_BURST_MODE_COUNT 5.0
+#define INITIAL_INCREASE_PERCENTAGE 1.0
+// Latest delay variation gets this weightage. Older value gets a weightage of (1 - EWMA_FACTOR)
+#define EWMA_FACTOR 0.3
+#define DELAY_VARIATION_THRESHOLD_IN_SEC 0.01  // 10ms
+#define OVERUSE_TIME_THRESHOLD_IN_SEC 0.01     // 10ms
+#define NEW_BITRATE_DURATION_IN_SEC 1.0
+#define CONVERGENCE_THRESHOLD_LOW 0.8
+#define CONVERGENCE_THRESHOLD_HIGH 1.1
+#define DECREASE_RATIO 0.95
+#define BANDWITH_USED_THRESHOLD 0.9
+
+    static WhistTimer overuse_timer;
+    static WhistTimer last_update_timer;
+    static WhistTimer last_decrease_timer;
+    static bool delay_controller_initialized = false;
+
+    static double filtered_delay_variation;
+    static double increase_percentage = INITIAL_INCREASE_PERCENTAGE;
+    static bool burst_mode = false;
+    static double pre_burst_mode_count = INITIAL_PRE_BURST_MODE_COUNT;
+    static int last_increase_bitrate;
+    static int last_failed_bitrate;
+    static int max_bitrate_count = 0;
+
+    if (!delay_controller_initialized) {
+        start_timer(&overuse_timer);
+        start_timer(&last_update_timer);
+        start_timer(&last_decrease_timer);
+        // Adjust the last decrease timer, to respond immediately for congestion during startup.
+        adjust_timer(&last_decrease_timer, (int)-NEW_BITRATE_DURATION_IN_SEC);
+        last_failed_bitrate = last_increase_bitrate = network_settings->bitrate;
+    }
+    int max_bitrate = MAXIMUM_BITRATE;
+    int new_bitrate = network_settings->bitrate;
+
+    enum {
+        UNDERUSE_SIGNAL,
+        NORMAL_SIGNAL,
+        OVERUSE_SIGNAL,
+    } overuse_detector_signal = NORMAL_SIGNAL;
+
+    static enum {
+        DELAY_CONTROLLER_INCREASE,
+        DELAY_CONTROLLER_HOLD,
+        DELAY_CONTROLLER_DECREASE
+    } delay_controller_state = DELAY_CONTROLLER_HOLD;
+
+    double inter_departure_time =
+        (double)(curr_group_stats->departure_time - prev_group_stats->departure_time) /
+        US_IN_SECOND;
+    double inter_arrival_time =
+        (double)(curr_group_stats->arrival_time - prev_group_stats->arrival_time) / US_IN_SECOND;
+    double delay_variation = inter_arrival_time - inter_departure_time;
+
+    if (!delay_controller_initialized) {
+        filtered_delay_variation = delay_variation;
+    } else {
+        filtered_delay_variation =
+            filtered_delay_variation * (1.0 - EWMA_FACTOR) + delay_variation * EWMA_FACTOR;
+    }
+
+    delay_controller_initialized = true;
+
+    static bool maybe_overuse = false;
+    // Detect over/under use using state machine outlined in spec
+    if (DELAY_VARIATION_THRESHOLD_IN_SEC < filtered_delay_variation) {
+        if (!maybe_overuse) {
+            start_timer(&overuse_timer);
+            maybe_overuse = true;
+        }
+        // A definitive over-use will be signaled only if over-use has been
+        // detected for at least overuse_time_th milliseconds.  However, if m(i)
+        // < m(i-1), over-use will not be signaled even if all the above
+        // conditions are met.
+        if (get_timer(&overuse_timer) > OVERUSE_TIME_THRESHOLD_IN_SEC /* &&
+            filtered_delay_variation >= prev_filtered_delay_variation*/) {
+            overuse_detector_signal = OVERUSE_SIGNAL;
+        } else {
+            // If neither over-use nor under-use is detected, the detector will be in the normal
+            // state.
+            overuse_detector_signal = NORMAL_SIGNAL;
+        }
+
+    } else if (-DELAY_VARIATION_THRESHOLD_IN_SEC > filtered_delay_variation) {
+        overuse_detector_signal = UNDERUSE_SIGNAL;
+        maybe_overuse = false;
+    } else {
+        overuse_detector_signal = NORMAL_SIGNAL;
+        maybe_overuse = false;
+    }
+
+    if (packet_loss_ratio > 0.1) {
+        overuse_detector_signal = OVERUSE_SIGNAL;
+    }
+
+    // The state transitions (with blank fields meaning "remain in state")
+    // are:
+    // +----+--------+-----------+------------+--------+
+    // |     \ State |   Hold    |  Increase  |Decrease|
+    // |      \      |           |            |        |
+    // | Signal\     |           |            |        |
+    // +--------+----+-----------+------------+--------+
+    // |  Over-use   | Decrease  |  Decrease  |        |
+    // +-------------+-----------+------------+--------+
+    // |  Normal     | Increase  |            |  Hold  |
+    // +-------------+-----------+------------+--------+
+    // |  Under-use  |           |   Hold     |  Hold  |
+    // +-------------+-----------+------------+--------+
+    if (overuse_detector_signal == OVERUSE_SIGNAL) {
+        delay_controller_state = DELAY_CONTROLLER_DECREASE;
+    } else if (overuse_detector_signal == NORMAL_SIGNAL) {
+        if (delay_controller_state == DELAY_CONTROLLER_HOLD) {
+            delay_controller_state = DELAY_CONTROLLER_INCREASE;
+        } else if (delay_controller_state == DELAY_CONTROLLER_DECREASE) {
+            delay_controller_state = DELAY_CONTROLLER_HOLD;
+        }
+    } else if (overuse_detector_signal == UNDERUSE_SIGNAL) {
+        delay_controller_state = DELAY_CONTROLLER_HOLD;
+    }
+
+    // Delay-based controller selects based on overuse signal
+    // It is RECOMMENDED to send the REMB message as soon
+    // as congestion is detected, and otherwise at least once every second.
+    // It is RECOMMENDED that the routine to update A_hat(i) is run at least
+    // once every response_time interval.
+    if (delay_controller_state == DELAY_CONTROLLER_INCREASE &&
+        get_timer(&last_update_timer) > NEW_BITRATE_DURATION_IN_SEC &&
+        incoming_bitrate > (network_settings->bitrate * BANDWITH_USED_THRESHOLD)) {
+        LOG_INFO("Increase bitrate by %.2f percent", increase_percentage);
+        new_bitrate = network_settings->bitrate * (1.0 + increase_percentage / 100.0);
+        last_increase_bitrate = new_bitrate;
+        // Looks like the network has recovered. Reset the counters.
+        if (new_bitrate > last_failed_bitrate * CONVERGENCE_THRESHOLD_HIGH) {
+            network_settings->saturate_bandwidth = true;
+            increase_percentage = INITIAL_INCREASE_PERCENTAGE;
+        }
+
+    } else if ((delay_controller_state == DELAY_CONTROLLER_DECREASE) &&
+               get_timer(&last_decrease_timer) > NEW_BITRATE_DURATION_IN_SEC) {
+        LOG_INFO("Decrease bitrate filtered_delay_variation = %.2f packet_loss_ratio = %.2f",
+                 filtered_delay_variation, packet_loss_ratio);
+        new_bitrate = incoming_bitrate * DECREASE_RATIO;
+        start_timer(&last_decrease_timer);
+        if (burst_mode && max_bitrate_count < 2 * pre_burst_mode_count) {
+            // If the burst mode couldn't sustain pre_burst_mode_count, then the current congestion
+            // could be because of burst mode. So we make it difficult to get into burst mode.
+            pre_burst_mode_count *= 2;
+        } else if (network_settings->bitrate < max_bitrate) {
+            // If congestion is detected even at bitrates lesser than max_bitrate then reset the
+            // burst mode related thresholds to its original values.
+            pre_burst_mode_count = INITIAL_PRE_BURST_MODE_COUNT;
+        }
+        if (new_bitrate < last_increase_bitrate * CONVERGENCE_THRESHOLD_LOW) {
+            network_settings->saturate_bandwidth = true;
+            increase_percentage = INITIAL_INCREASE_PERCENTAGE;
+        } else {
+            network_settings->saturate_bandwidth = false;
+            increase_percentage /= 2.0;
+        }
+        last_failed_bitrate = network_settings->bitrate;
+    }
+
+    if (new_bitrate != network_settings->bitrate) {
+        start_timer(&last_update_timer);
+        int min_bitrate = MINIMUM_BITRATE;
+        if (new_bitrate < min_bitrate) {
+            LOG_WARNING("Requested bitrate %d bps is lesser than minimum acceptable bitrate %d bps",
+                        new_bitrate, min_bitrate);
+            new_bitrate = min_bitrate;
+        }
+        if (new_bitrate > max_bitrate) {
+            network_settings->saturate_bandwidth = false;
+            LOG_INFO("Reached the maximum bitrate limit : %d bps", max_bitrate);
+            if (max_bitrate_count >= pre_burst_mode_count) {
+                if (!burst_mode) {
+                    LOG_INFO("Switching to burst mode to reduce latency");
+                    burst_mode = true;
+                }
+            }
+            new_bitrate = max_bitrate;
+            max_bitrate_count++;
+        } else {
+            burst_mode = false;
+            max_bitrate_count = 0;
+        }
+        int burst_bitrate = new_bitrate;
+        if (burst_mode) burst_bitrate *= BURST_BITRATE_RATIO;
+        network_settings->burst_bitrate = burst_bitrate;
+        network_settings->bitrate = new_bitrate;
+        LOG_INFO("New bitrate = %d, burst_bitrate = %d, saturate bandwidth = %d",
+                 network_settings->bitrate, network_settings->burst_bitrate,
+                 network_settings->saturate_bandwidth);
+        return true;
+    }
+
+    return false;
 }

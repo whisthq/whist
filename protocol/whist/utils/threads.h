@@ -291,6 +291,15 @@ void whist_post_semaphore(WhistSemaphore semaphore);
 void whist_wait_semaphore(WhistSemaphore semaphore);
 
 /**
+ * Value of a semaphore.
+ *
+ * @param semaphore  Semaphore to find value of.
+ *
+ * @return  Value of the semaphore.
+ */
+uint32_t whist_semaphore_value(WhistSemaphore semaphore);
+
+/**
  * Destroy a semaphore.
  *
  * @param semaphore  Semaphore to destroy.

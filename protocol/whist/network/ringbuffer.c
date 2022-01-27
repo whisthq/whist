@@ -46,8 +46,11 @@ Private Function Declarations
  * @param id                       The ID of the frame to initialize
  * @param num_original_indices     The number of original indices
  * @param num_fec_indices          The number of FEC indices
+ * @param prev_frame_num_duplicates The number of duplicate filler packets that were sent for
+ *                                  previous frame
  */
-void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int num_fec_indices);
+void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int num_fec_indices,
+                int prev_frame_num_duplicates);
 
 /**
  * @brief                          Reset the given frame, freeing all of its data,
@@ -249,7 +252,8 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
 
         // Initialize the frame now, so that it can hold the packet we just received
         int num_original_packets = num_indices - num_fec_indices;
-        init_frame(ring_buffer, segment_id, num_original_packets, num_fec_indices);
+        init_frame(ring_buffer, segment_id, num_original_packets, num_fec_indices,
+                   segment->prev_frame_num_duplicates);
 
         // Update the ringbuffer's min/max id, with this new frame's ID
         ring_buffer->max_id = max(ring_buffer->max_id, frame_data->id);
@@ -301,8 +305,10 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
 
     // If we have already received this packet anyway, just drop this packet
     if (frame_data->received_indices[segment_index]) {
+        frame_data->redundant_packets_received++;
         // The only way it should possible to receive a packet twice, is if nacking got involved
-        if (type == PACKET_VIDEO && frame_data->num_times_index_nacked[segment_index] == 0) {
+        if (type == PACKET_VIDEO && frame_data->num_times_index_nacked[segment_index] == 0 &&
+            !segment->is_a_duplicate) {
             LOG_ERROR(
                 "We received a video packet (ID %d / index %d) twice, but we had never nacked for "
                 "it?",
@@ -373,6 +379,43 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
 
 FrameData* get_frame_at_id(RingBuffer* ring_buffer, int id) {
     return &ring_buffer->receiving_frames[id % ring_buffer->ring_buffer_size];
+}
+
+double get_packet_loss_ratio(RingBuffer* ring_buffer) {
+    int num_packets_received = 0;
+    int num_packets_sent = 0;
+    bool is_first_iteration = true;
+    // Don't include max_id frame for computing packet loss as it could be in progress
+    // Using (MAX_FPS / 4) to limit our computation to last 250ms
+    for (int id = max(ring_buffer->max_id - (MAX_FPS / 4), 0); id < ring_buffer->max_id; id++) {
+        FrameData* frame = get_frame_at_id(ring_buffer, id);
+        if (id != frame->id) {
+            continue;
+        }
+        num_packets_sent += frame->num_original_packets;
+        num_packets_sent += frame->num_fec_packets;
+        num_packets_received += frame->original_packets_received;
+        num_packets_received += frame->fec_packets_received;
+        num_packets_received += frame->redundant_packets_received;
+        for (int j = 0; j < frame->num_original_packets; j++) {
+            num_packets_sent += frame->num_times_index_nacked[j];
+        }
+        // Don't count the prev_frame_num_duplicate_packets in the first iteration
+        if (is_first_iteration) {
+            is_first_iteration = false;
+            continue;
+        }
+        num_packets_sent += frame->prev_frame_num_duplicate_packets;
+    }
+    FrameData* frame = get_frame_at_id(ring_buffer, ring_buffer->max_id);
+    if (ring_buffer->max_id == frame->id)
+        num_packets_sent += frame->prev_frame_num_duplicate_packets;
+    double packet_loss_ratio = 0.0;
+    if (num_packets_sent > 0 && num_packets_received > 0) {
+        packet_loss_ratio =
+            (double)(num_packets_sent - num_packets_received) / (double)num_packets_sent;
+    }
+    return packet_loss_ratio;
 }
 
 bool is_ready_to_render(RingBuffer* ring_buffer, int id) {
@@ -685,7 +728,8 @@ Private Function Implementations
 ============================
 */
 
-void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int num_fec_indices) {
+void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int num_fec_indices,
+                int prev_frame_num_duplicates) {
     FrameData* frame_data = get_frame_at_id(ring_buffer, id);
 
     // Confirm that the frame is uninitialized
@@ -699,6 +743,7 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int n
     frame_data->fec_packets_received = 0;
     frame_data->num_original_packets = num_original_indices;
     frame_data->num_fec_packets = num_fec_indices;
+    frame_data->prev_frame_num_duplicate_packets = prev_frame_num_duplicates;
     frame_data->received_indices = safe_malloc(MAX_PACKETS * sizeof(bool));
     frame_data->num_times_index_nacked = safe_malloc(MAX_PACKETS * sizeof(int));
     memset(frame_data->received_indices, 0, MAX_PACKETS * sizeof(bool));
