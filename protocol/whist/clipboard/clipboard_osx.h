@@ -72,6 +72,21 @@ int get_clipboard_changecount();
 bool check_clipboard_has_string();
 
 /**
+ * @brief                          Check if the clipboard is storing anything. When the clipboard
+ *                                 has items in it this will always return true! However, when some
+ *                                 other applications writes to the clipboard they will first claim
+ *                                 ownership and change the clipboard change_count which will be
+ *                                 reflected in get_clipboard_changecount(). This also clears all of
+ *                                 the data on the clipboard - this is when it returns false. We
+ *                                 use this to wait out the delay between an ownership change and
+ * the actual writing/availability of the data on that clipboard.
+ *
+ *
+ * @returns                        True if clipboard has resident(s), false otherwise
+ */
+bool check_clipboard_has_data_ready();
+
+/**
  * @brief                          Check if the clipboard has an image stored
  *
  *
