@@ -7,6 +7,7 @@ import {
   timeout,
   catchError,
   takeUntil,
+  switchMap,
 } from "rxjs/operators"
 import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
 import hostSpinUpFlow from "@app/main/flows/mandelbox/host"
@@ -77,10 +78,14 @@ export default flow(
     return {
       success: host.success,
       failure: merge(create.failure, host.failure),
-      timeout: merge(host.success, create.failure, host.failure).pipe(
-        timeout(20000), // If nothing is emitted for 20s, we assume a timeout so that an error can be shown
-        catchError(() => of(undefined)),
-        takeUntil(merge(host.success, create.failure, host.failure))
+      timeout: trigger.pipe(
+        switchMap(() =>
+          merge(host.success, create.failure, host.failure).pipe(
+            timeout(20000), // If nothing is emitted for 20s, we assume a timeout so that an error can be shown
+            catchError(() => of(undefined)),
+            takeUntil(merge(host.success, create.failure, host.failure))
+          )
+        )
       ),
     }
   }

@@ -117,7 +117,8 @@ untilUpdateAvailable(
 ).subscribe(() => {
   createErrorWindow(SERVER_TIMEOUT_ERROR)
 
-  destroyElectronWindow(WindowHashLoading)
+  destroyElectronWindow(WindowHashImportLoading)
+  destroyElectronWindow(WindowHashLaunchLoading)
   destroyElectronWindow(WindowHashImport)
   destroyElectronWindow(WindowHashOnboarding)
 })

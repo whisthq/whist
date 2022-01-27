@@ -54,7 +54,7 @@ export const whistError = {
   },
   [NO_INSTANCE_AVAILABLE]: {
     title: "Our servers are at capacity :(",
-    text: "We deeply apologize for the inconvenience. We may have more capacity if you try again in a few moments.",
+    text: "We deeply apologize for the inconvenience. We may have more capacity if you try again in a minute.",
   },
   [REGION_NOT_ENABLED]: {
     title: "You are in a region that is not currently supported by Whist :(",
