@@ -45,10 +45,10 @@ while true; do
     --cmakesetCI ) CMAKE_SET_CI=TRUE; shift ;;
     --sanitize ) CMAKE_SANITIZE="$2"; shift 2 ;;
     -- ) shift; break ;;
-    * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit -1 ;;
+    * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit 1 ;;
   esac
 done
-TARGETS="$@"
+TARGETS="$*"
 
 if [[ -z "$TARGETS" ]]; then
   usage
