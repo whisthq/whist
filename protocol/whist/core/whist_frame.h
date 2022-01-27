@@ -18,6 +18,7 @@ typedef struct VideoFrame {
     int height;
     CodecType codec_type;
     VideoFrameType frame_type;
+    uint32_t frame_id;
 
     bool has_cursor;
     bool is_empty_frame;     // indicates whether this frame is identical to the one last sent

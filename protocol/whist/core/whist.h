@@ -619,6 +619,8 @@ typedef enum WhistClientMessageType {
     CMESSAGE_FILE_METADATA = 119,  ///< file metadata
     CMESSAGE_FILE_DATA = 120,      ///< file chunk
 
+    MESSAGE_FRAME_ACK = 121,  ///< Frame has been received.
+
     CMESSAGE_QUIT = 999,
 } WhistClientMessageType;
 
@@ -640,6 +642,20 @@ typedef struct {
     bool active_pinch;
     WhistKeyboardLayout layout;
 } WhistKeyboardState;
+
+/**
+ * Frame acknowledgement message.
+ *
+ * The client sends this to indicate that it has received the frame with
+ * the given ID, and also all of its transitive dependencies.  If it is
+ * lost there is little value in resending it because it will be
+ * superseded by an ack of any later frame (since either that frame will
+ * depend on this one and therefore imply its presence, or it won't and
+ * this frame is useless).
+ */
+typedef struct {
+    uint32_t frame_id;  ///< ID of frame we are acking.
+} WhistFrameAckMessage;
 
 /* position of bit within character */
 #define BIT_CHAR(bit) ((bit) / CHAR_BIT)
@@ -686,6 +702,9 @@ typedef struct WhistClientMessage {
 
         // MESSAGE_KEYBOARD_STATE
         WhistKeyboardState keyboard_state;
+
+        // MESSAGE_FRAME_ACK
+        WhistFrameAckMessage frame_ack;
     };
 
     // Any type of message that has an additional `data[]` (or equivalent)

@@ -227,6 +227,17 @@ int render_video(VideoContext* video_context) {
         }
 
         if (!frame->is_empty_frame) {
+            if (USE_LONG_TERM_REFERENCE_FRAMES) {
+                // Indicate to the server that this frame is received
+                // in full and will be decoded.
+                LOG_INFO("LTR: send frame ack for frame ID %d (%s).", frame->frame_id,
+                         video_frame_type_string(frame->frame_type));
+                WhistClientMessage wcmsg = {0};
+                wcmsg.type = MESSAGE_FRAME_ACK;
+                wcmsg.frame_ack.frame_id = frame->frame_id;
+                send_wcmsg(&wcmsg);
+            }
+
             sync_decoder_parameters(video_context, frame);
             int ret;
             server_timestamp = frame->server_timestamp;

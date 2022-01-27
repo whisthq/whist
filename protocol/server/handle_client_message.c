@@ -46,6 +46,7 @@ static int handle_init_message(whist_server_state *state, WhistClientMessage *wc
 static int handle_file_metadata_message(WhistClientMessage *wcmsg);
 static int handle_file_chunk_message(WhistClientMessage *wcmsg);
 static int handle_open_url_message(whist_server_state *state, WhistClientMessage *wcmsg);
+static int handle_frame_ack_message(whist_server_state *state, WhistClientMessage *wcmsg);
 
 /*
 ============================
@@ -95,6 +96,8 @@ int handle_client_message(whist_server_state *state, WhistClientMessage *wcmsg) 
             return handle_init_message(state, wcmsg);
         case MESSAGE_OPEN_URL:
             return handle_open_url_message(state, wcmsg);
+        case MESSAGE_FRAME_ACK:
+            return handle_frame_ack_message(state, wcmsg);
         default:
             LOG_ERROR(
                 "Failed to handle message from client: Unknown WhistClientMessage Received "
@@ -349,6 +352,18 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
 
     free(open_url_result);
     free(command);
+
+    return 0;
+}
+
+static int handle_frame_ack_message(whist_server_state *state, WhistClientMessage *wcmsg) {
+    FATAL_ASSERT(USE_LONG_TERM_REFERENCE_FRAMES &&
+                 "Received frame ack but long-term reference frames "
+                 "are not enabled.");
+
+    LOG_INFO("Received frame ack for frame ID %d.", wcmsg->frame_ack.frame_id);
+    state->frame_ack_id = wcmsg->frame_ack.frame_id;
+    state->update_frame_ack = true;
 
     return 0;
 }

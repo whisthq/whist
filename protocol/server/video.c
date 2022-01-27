@@ -212,6 +212,8 @@ static void send_populated_frames(whist_server_state* state, WhistTimer* statist
     // Client needs to know about frame type to find recovery points.
     frame->frame_type = encoder->frame_type;
 
+    frame->frame_id = id;
+
     frame->videodata_length = encoder->encoded_frame_size;
 
     write_avpackets_to_buffer(encoder->num_packets, encoder->packets,
@@ -595,6 +597,15 @@ int32_t multithreaded_send_video(void* opaque) {
                                            video_fps, vbv_size);
             log_double_statistic(VIDEO_ENCODER_UPDATE_TIME,
                                  get_timer(&statistics_timer) * MS_IN_SECOND);
+        }
+
+        if (USE_LONG_TERM_REFERENCE_FRAMES) {
+            // If any frame acks have been received, tell the frame type
+            // decision logic about them.
+            if (state->update_frame_ack) {
+                ltr_mark_frame_received(state->ltr_context, state->frame_ack_id);
+                state->update_frame_ack = false;
+            }
         }
 
         // Get this timestamp before we capture the screen,

@@ -98,6 +98,10 @@ struct _whist_server_state {
     // Long-term reference state.
     LTRState* ltr_context;
 
+    // Frame acks for LTR input.
+    uint32_t frame_ack_id;
+    bool update_frame_ack;
+
     /* video */
     volatile int client_width;
     volatile int client_height;
