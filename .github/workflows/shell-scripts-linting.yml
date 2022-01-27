@@ -61,7 +61,7 @@ jobs:
 
       - name: Run ShellCheck on protocol folder
         working-directory: protocol
-        run: python3 ../.github/workflows/helpers/shell-scripts/check-shellcheck.py --exclude-codes="build_protocol_targets.sh:SC2046,SC2086"
+        run: python3 ../.github/workflows/helpers/shell-scripts/check-shellcheck.py --exclude-codes="build_protocol_targets.sh:SC2046,SC2086 lint-cmake.sh:SC2086"
 
       - name: Run ShellCheck on .github folder
         working-directory: .github
