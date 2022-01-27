@@ -9,7 +9,8 @@ import {
   WindowHashOnboarding,
   WindowHashSpeedtest,
   WindowHashUpdate,
-  WindowHashLoading,
+  WindowHashImportLoading,
+  WindowHashLaunchLoading,
   WindowHashLicense,
   WindowHashImport,
   WindowHashOmnibar,
@@ -147,11 +148,18 @@ const createUpdateWindow = () =>
     hash: WindowHashUpdate,
   })
 
-const createLoadingWindow = () =>
+const createLaunchLoadingWindow = () =>
   createElectronWindow({
     ...width.md,
     ...height.sm,
-    hash: WindowHashLoading,
+    hash: WindowHashLaunchLoading,
+  })
+
+const createImportLoadingWindow = () =>
+  createElectronWindow({
+    ...width.md,
+    ...height.sm,
+    hash: WindowHashImportLoading,
   })
 
 const createImportWindow = () =>
@@ -195,7 +203,8 @@ export {
   createWelcomeWindow,
   createErrorWindow,
   createImportWindow,
-  createLoadingWindow,
+  createImportLoadingWindow,
+  createLaunchLoadingWindow,
   createOnboardingWindow,
   createSignoutWindow,
   createUpdateWindow,

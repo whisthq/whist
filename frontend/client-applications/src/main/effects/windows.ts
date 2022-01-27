@@ -10,7 +10,8 @@ import { fromTrigger } from "@app/main/utils/flows"
 import {
   WindowHashPayment,
   WindowHashOmnibar,
-  WindowHashLoading,
+  WindowHashLaunchLoading,
+  WindowHashImportLoading,
   WindowHashOnboarding,
   WindowHashImport,
   WindowHashAuth,
@@ -19,7 +20,8 @@ import {
 } from "@app/constants/windows"
 import {
   createAuthWindow,
-  createLoadingWindow,
+  createLaunchLoadingWindow,
+  createImportLoadingWindow,
   createSignoutWindow,
   createSpeedtestWindow,
   createPaymentWindow,
@@ -76,11 +78,13 @@ withAppActivated(
     map((x) => ({ import: x[1] }))
   )
 ).subscribe((args: { import: boolean }) => {
-  if (!args.import) {
-    networkAnalyze()
-    createLoadingWindow()
-    destroyElectronWindow(WindowHashPayment)
-  }
+  networkAnalyze()
+
+  args.import ? createImportLoadingWindow() : createLaunchLoadingWindow()
+
+  destroyElectronWindow(WindowHashPayment)
+  destroyElectronWindow(WindowHashImport)
+  destroyElectronWindow(WindowHashOnboarding)
 })
 
 withAppActivated(
@@ -165,7 +169,8 @@ withAppActivated(
     filter((connected) => connected)
   )
 ).subscribe(() => {
-  destroyElectronWindow(WindowHashLoading)
+  destroyElectronWindow(WindowHashLaunchLoading)
+  destroyElectronWindow(WindowHashImportLoading)
   destroyElectronWindow(WindowHashOnboarding)
   destroyElectronWindow(WindowHashImport)
 })
