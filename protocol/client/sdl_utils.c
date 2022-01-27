@@ -44,10 +44,6 @@ static WhistMutex renderer_mutex;
 // pending render Update
 static volatile bool pending_render = false;
 
-// Loading screen framebuffer update
-static volatile bool pending_loadingscreen = false;
-static int pending_loadingscreen_idx;
-
 // NV12 framebuffer update
 static volatile bool pending_nv12data = false;
 static Uint8* pending_nv12data_data[4];
@@ -71,6 +67,9 @@ static volatile bool should_update_window_title = false;
 // Full Screen Update
 static volatile bool fullscreen_trigger = false;
 static volatile bool fullscreen_value = false;
+
+// Background color (for loading screen, etc.)
+static const WhistRGBColor background_color = {17, 24, 39};  // #111827 (thanks copilot)
 
 /*
 ============================
@@ -200,7 +199,6 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     // Render a black screen before anything else,
     // To prevent being exposed to random colors
     pending_nv12data = false;
-    pending_loadingscreen = false;
     pending_render = true;
     sdl_present_pending_framebuffer();
 
@@ -219,9 +217,10 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         sdl_free_png_file_rgb_surface(icon_surface);
     }
 
-    // Initialize the window color to white
-    const WhistRGBColor white = {255, 255, 255};
-    set_native_window_color(sdl_window, white);
+    // Initialize the renderer and the window color to the background color
+    SDL_SetRenderDrawColor(sdl_renderer, background_color.red, background_color.green,
+                           background_color.blue, SDL_ALPHA_OPAQUE);
+    set_native_window_color(sdl_window, background_color);
 
     SDL_Event cur_event;
     while (SDL_PollEvent(&cur_event)) {
@@ -347,24 +346,6 @@ void sdl_renderer_resize_window(int width, int height) {
     LOG_INFO("Window resized to %dx%d (Actual %dx%d)", width, height, output_width, output_height);
 }
 
-void sdl_update_framebuffer_loading_screen(int idx) {
-    /*
-        Make the screen black and show the loading screen
-        Arguments:
-            idx (int): the index of the loading frame
-    */
-
-    whist_lock_mutex(renderer_mutex);
-
-    // Clear any other pending framebuffer
-    pending_nv12data = false;
-    // Mark the pending framebuffer as the loading screen
-    pending_loadingscreen_idx = idx;
-    pending_loadingscreen = true;
-
-    whist_unlock_mutex(renderer_mutex);
-}
-
 void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int height) {
     whist_lock_mutex(renderer_mutex);
 
@@ -372,8 +353,6 @@ void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int heig
     if (width < 0 || width > MAX_SCREEN_WIDTH || height < 0 || height > MAX_SCREEN_HEIGHT) {
         LOG_ERROR("Invalid Dimensions! %dx%d. nv12 update dropped", width, height);
     } else {
-        // Clear any other pending framebuffer
-        pending_loadingscreen = false;
         // Overwrite the pending framebuffer metadata,
         // And mark the nv12 framebuffer as pending
         memcpy(pending_nv12data_data, data, sizeof(pending_nv12data_data));
@@ -648,8 +627,7 @@ void sdl_present_pending_framebuffer() {
         return;
     }
 
-    // Wipes the renderer to all-black before we present
-    SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    // Wipes the renderer to background color before we present
     SDL_RenderClear(sdl_renderer);
 
     WhistTimer statistics_timer;
@@ -686,48 +664,6 @@ void sdl_present_pending_framebuffer() {
 
         // No longer pending nv12 data
         pending_nv12data = false;
-    }
-
-    // Copy loading screen texture, if any pending one exists
-    if (pending_loadingscreen) {
-#define NUMBER_LOADING_FRAMES 50
-        int gif_frame_index = pending_loadingscreen_idx % NUMBER_LOADING_FRAMES;
-
-        char frame_filename[256];
-        snprintf(frame_filename, sizeof(frame_filename), "loading/frame_%02d.png", gif_frame_index);
-
-        SDL_Surface* loading_screen = sdl_surface_from_png_file(frame_filename);
-        if (loading_screen == NULL) {
-            LOG_ERROR("Loading screen image failed to load: %s", frame_filename);
-        } else {
-            SDL_Texture* loading_screen_texture =
-                SDL_CreateTextureFromSurface(sdl_renderer, loading_screen);
-
-            // The surface can now be freed
-            sdl_free_png_file_rgb_surface(loading_screen);
-
-            // Position the rectangle such that the texture will be centered
-            int w, h;
-            SDL_QueryTexture(loading_screen_texture, NULL, NULL, &w, &h);
-            SDL_Rect centered_rect = {
-                .x = output_width / 2 - w / 2,
-                .y = output_height / 2 - h / 2,
-                .w = w,
-                .h = h,
-            };
-
-            // The texture is semi-transparent, so we clear to white first
-            SDL_SetRenderDrawColor(sdl_renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-            SDL_RenderClear(sdl_renderer);
-            // Now, we write the texture out to the renderer
-            SDL_RenderCopy(sdl_renderer, loading_screen_texture, NULL, &centered_rect);
-
-            // The loading screen texture may now be destroyed
-            SDL_DestroyTexture(loading_screen_texture);
-        }
-
-        // The loading screen render is no longer pending
-        pending_loadingscreen = false;
     }
 
     log_double_statistic(VIDEO_RENDER_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);

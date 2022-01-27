@@ -27,7 +27,6 @@ The option flags are as follows:
   -n, --name=NAME               Set the window title. Default: Whist
   -r, --read-pipe               Read arguments from stdin until EOF. Don't need to pass
                                   in IP if using this argument and passing with arg `ip`
-  -l, --loading                 Custom loading screen message
   -s, --skip-taskbar            Launch the protocol without displaying an icon
                                   in the taskbar
   -x, --new-tab-url             URL to open in new tab

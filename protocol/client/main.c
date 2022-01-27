@@ -294,7 +294,7 @@ int main(int argc, char* argv[]) {
     client_exiting = false;
     WhistExitCode exit_code = WHIST_EXIT_SUCCESS;
 
-    // While showing the SDL loading screen, read in any piped arguments
+    // While running in the background, read in any piped arguments
     //    If the arguments are bad, then skip to the destruction phase
     continue_pumping = true;
     bool keep_piping = true;

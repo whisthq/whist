@@ -88,7 +88,6 @@ const struct option client_cmd_options[] = {
     {"ports", required_argument, NULL, 'p'},
     {"name", required_argument, NULL, 'n'},
     {"read-pipe", no_argument, NULL, 'r'},
-    {"loading", required_argument, NULL, 'l'},
     {"skip-taskbar", no_argument, NULL, 's'},
     {"session-id", required_argument, NULL, 'd'},
     {"new-tab-url", required_argument, NULL, 'x'},
@@ -101,7 +100,7 @@ const char *usage;
 
 #define INCOMING_MAXLEN 127
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
-#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:n:rl:sd:x:o:"
+#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:n:rsd:x:o:"
 
 /*
 ============================
@@ -262,10 +261,6 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
             using_piped_arguments = true;
             break;
         }
-        case 'l': {  // loading message
-            LOG_INFO("LOADING: %s", eval_optarg);
-            break;
-        }
         case 's': {  // skip taskbar
             skip_taskbar = true;
             break;
@@ -350,7 +345,6 @@ int client_parse_args(int argc, char *argv[]) {
         "  -n, --name=NAME               Set the window title. Default: Whist\n"
         "  -r, --read-pipe               Read arguments from stdin until EOF. Don't need to pass\n"
         "                                  in IP if using this argument and passing with arg `ip`\n"
-        "  -l, --loading                 Custom loading screen message\n"
         "  -s, --skip-taskbar            Launch the protocol without displaying an icon\n"
         "                                  in the taskbar\n"
         "  -d, --session-id=ID           Set the session ID for the protocol's error logging\n"
@@ -572,8 +566,6 @@ int read_piped_arguments(bool *keep_waiting, bool run_only_once) {
                 LOG_INFO("Finished piping arguments");
                 keep_reading = false;
                 goto end_of_eval_loop;
-            } else if (strlen(arg_name) == 7 && !strncmp(arg_name, "loading", strlen(arg_name))) {
-                LOG_INFO("Loading message found %s", arg_value);
             } else {
                 // If arg_name is invalid, then log a warning, but continue
                 LOG_WARNING("Piped arg %s not available", arg_name);

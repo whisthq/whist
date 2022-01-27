@@ -69,12 +69,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             $<TARGET_FILE_DIR:WhistClient>)
 endif()
 
-# move necessary files into the build directory
-add_custom_command(TARGET WhistClient PRE_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/client/loading
-        $<TARGET_FILE_DIR:WhistClient>/loading)
-
 # Print out compile flags in verbose mode of CMake
 message(VERBOSE "client C base flags: ${CMAKE_C_FLAGS}")
 message(VERBOSE "client C release flags: ${CMAKE_C_FLAGS_RELEASE}")
