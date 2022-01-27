@@ -272,7 +272,7 @@ local_development_steps () {
   find ./mandelboxes -name 'requirements.txt' | sed 's/^/-r /g' | xargs sudo pip install
   cd host-setup
 
-  if which go &>/dev/null; then
+  if command -v go &>/dev/null; then
     echo "================================================"
     echo "Go Installation: Found"
     echo "================================================"
@@ -293,7 +293,7 @@ local_development_steps () {
     echo "Go Binaries Directory: Not Found in \$PATH"
     echo "Installing \$HOME/go/bin to \$PATH"
     echo "================================================"
-    echo "export PATH=\"\$PATH:\$HOME/go/bin\"" >> $HOME/.bashrc
+    echo "export PATH=\"\$PATH:\$HOME/go/bin\"" >> "$HOME"/.bashrc
   fi
 
   echo "================================================"
@@ -404,7 +404,7 @@ common_steps_post () {
 # Parse arguments (derived from https://stackoverflow.com/a/7948533/2378475)
 # I'd prefer not to have the short arguments at all, but it looks like getopt
 # chokes without them.
-TEMP=`getopt -o hld --long help,usage,localdevelopment,deployment -n 'setup_host.sh' -- "$@"`
+TEMP=$(getopt -o hld --long help,usage,localdevelopment,deployment -n 'setup_host.sh' -- "$@")
 eval set -- "$TEMP"
 
 LOCAL_DEVELOPMENT=
@@ -415,7 +415,7 @@ while true; do
     -l | --localdevelopment ) LOCAL_DEVELOPMENT=true; shift ;;
     -d | --deployment ) DEPLOYMENT=true; shift ;;
     -- ) shift; break ;;
-    * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit -1 ;;
+    * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit 1 ;;
   esac
 done
 
@@ -424,8 +424,8 @@ if [[ -z "$LOCAL_DEVELOPMENT" && -z "$DEPLOYMENT" ]]; then
 fi
 
 if [[ -n "$LOCAL_DEVELOPMENT" && -n "$DEPLOYMENT" ]]; then
-  echo 'Both `--localdevelopment` and `--deployment` were passed in. Make up your mind!'
-  exit -1
+  echo "Both '--localdevelopment' and '--deployment' were passed in. Make up your mind!"
+  exit 1
 fi
 
 if [[ -n "$LOCAL_DEVELOPMENT" ]]; then

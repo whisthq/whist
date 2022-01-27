@@ -34,7 +34,8 @@ touch "$CACHE_FILE"
 function has_updated {
   # Memoize AWS_LIST, which includes filenames and timestamps
   if [[ -z "${AWS_LIST+x}" ]]; then
-    export AWS_LIST="$(aws s3 ls s3://fractal-protocol-shared-libs)"
+    AWS_LIST="$(aws s3 ls s3://fractal-protocol-shared-libs)"
+    export AWS_LIST
   fi
   TIMESTAMP_LINE=$(echo "$AWS_LIST" | grep " $1" | awk '{print $4, $1, $2}')
   if grep "$TIMESTAMP_LINE" "$CACHE_FILE" &>/dev/null; then

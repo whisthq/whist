@@ -14,9 +14,9 @@ while read -r line; do
       echo "Checking if $FILE_NAME already exists in $DIR_NAME..."
       [[ -f $DIR_NAME/$FILE_NAME ]] && echo "Yes, it does!" && break
       ;;
-    $FILE_NAME)
+    "$FILE_NAME")
       echo "$FILE_NAME has been created!"
       break
       ;;
   esac
-done < <(inotifywait -me create,moved_to --format="%f" $DIR_NAME 2>&1)
+done < <(inotifywait -me create,moved_to --format="%f" "$DIR_NAME" 2>&1)

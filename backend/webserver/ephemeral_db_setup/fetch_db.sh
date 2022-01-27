@@ -22,7 +22,7 @@ POSTGRES_URI=${POSTGRES_URI:=""}
 
 # retrieve db info depending on if a URI is given or host/db/user. we check the prefix for a URI
 if [[ ^$POSTGRES_URI =~ "postgres://" ]]; then
-  echo "===  Retrieving DB data  === \n"
+  printf "===  Retrieving DB data  === \n"
   (pg_dump -d $POSTGRES_URI --data-only --column-inserts -t cloud.region_to_ami) > db_data.sql
 
 else

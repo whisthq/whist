@@ -38,7 +38,7 @@ if [[ -f $WHIST_JSON_FILE ]]; then
   if [ "$( jq -rc 'has("desired_timezone")' < $WHIST_JSON_FILE )" == "true"  ]; then
     DESIRED_TIMEZONE="$(jq -rc '.desired_timezone' < $WHIST_JSON_FILE)"
     # Set the system-wide timezone
-    timedatectl set-timezone $DESIRED_TIMEZONE
+    timedatectl set-timezone "$DESIRED_TIMEZONE"
   fi
   if [ "$( jq -rc 'has("initial_key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
     if [ "$( jq -rc 'has("key_repeat")' < $WHIST_JSON_FILE )" == "true"  ]; then
@@ -46,11 +46,11 @@ if [[ -f $WHIST_JSON_FILE ]]; then
       KEY_REPEAT=$( jq -rc '.key_repeat' < $WHIST_JSON_FILE )
 
       # Set the key repeat rates
-      xset r rate $INITIAL_KEY_REPEAT $KEY_REPEAT
+      xset r rate "$INITIAL_KEY_REPEAT" "$KEY_REPEAT"
     fi
   fi
   if [ "$( jq -rc 'has("initial_url")' < $WHIST_JSON_FILE )" == "true"  ]; then
-    RECEIVED_URL="$(jq -rc '.initial_url' < $WHIST_JSON_FILE)"
+    INITIAL_URL="$(jq -rc '.initial_url' < $WHIST_JSON_FILE)"
   fi
   if [ "$( jq -rc 'has("user_agent")' < $WHIST_JSON_FILE )" == "true"  ]; then
     USER_AGENT="$(jq -rc '.user_agent' < $WHIST_JSON_FILE)"

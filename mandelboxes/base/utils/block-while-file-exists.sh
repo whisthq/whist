@@ -14,9 +14,9 @@ while read -r line; do
       echo "Checking if $FILE_NAME already does NOT exist in $DIR_NAME..."
       [[ ! -f $DIR_NAME/$FILE_NAME ]] && echo "This file does not exist!" && break
       ;;
-    $FILE_NAME)
+    "$FILE_NAME")
       echo "$FILE_NAME has been deleted!"
       break
       ;;
   esac
-done < <(inotifywait -me delete,moved_from --format="%f" $DIR_NAME 2>&1)
+done < <(inotifywait -me delete,moved_from --format="%f" "$DIR_NAME" 2>&1)

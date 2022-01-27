@@ -6,7 +6,6 @@
 set -Eeuo pipefail
 
 #WHIST_MAPPINGS_DIR=/whist/resourceMappings
-JSON_TRANSPORT_FILE=config.json
 PROTOCOL_LOG_FILENAME=/usr/share/whist/client.log
 SERVER_IP_ADDRESS=127.0.0.1
 SERVER_PORT_32262=""
