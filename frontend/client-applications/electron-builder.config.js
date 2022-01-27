@@ -39,8 +39,6 @@ const bundleConfig = {
     schemes: ["whist"],
   },
 
-  extraFiles: ["loading/"],
-
   extraResources: ["env_overrides.json"],
 
   mac: {

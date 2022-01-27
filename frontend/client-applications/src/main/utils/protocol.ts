@@ -71,9 +71,7 @@ const launchProtocol = async (info?: {
     // and later use that pipe to write logs to `protocol.log` and potentially stdout.
     stdio: ["pipe", "pipe", "ignore"],
 
-    // On packaged macOS, the protocol is moved to the MacOS folder,
-    // but expects to be in the Whist.app root alongside the loading
-    // animation PNG files.
+    // Set the CWD to the application root
     ...(app.isPackaged &&
       process.platform === "darwin" && {
         cwd: path.join(protocolFolder, ".."),
