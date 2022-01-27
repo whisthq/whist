@@ -290,6 +290,8 @@ void whist_post_semaphore(WhistSemaphore semaphore);
  */
 void whist_wait_semaphore(WhistSemaphore semaphore);
 
+uint32_t whist_value_semapore(WhistSemaphore semaphore);
+
 /**
  * Destroy a semaphore.
  *

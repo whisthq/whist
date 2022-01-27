@@ -180,6 +180,7 @@ typedef struct {
     double audio_fec_ratio;
     double video_fec_ratio;
     CodecType desired_codec;
+    bool saturate_bandwidth;
 } NetworkSettings;
 
 /**

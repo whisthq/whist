@@ -63,6 +63,15 @@ double get_timer(const WhistTimer* timer_opaque) {
     return ret;
 }
 
+void adjust_timer(WhistTimer* timer_opaque, int num_seconds) {
+    struct WhistTimerInternal* timer = (struct WhistTimerInternal*)timer_opaque;
+#if defined(_WIN32)
+    timer->pc.QuadPart += (frequency.QuadPart * num_seconds);
+#else
+    timer->ts.tv_sec += num_seconds;
+#endif
+}
+
 int current_time_str(char* buffer, size_t size) {
 #if defined(_WIN32)
     SYSTEMTIME time_now;

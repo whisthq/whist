@@ -22,6 +22,7 @@ struct NetworkThrottleContext {
     WhistTimer coin_bucket_last_fill;  //<<< The timer for the coin bucket's last fill.
     atomic_int next_queue_id;          //<<< The next queue id to use.
     atomic_int current_queue_id;       //<<< The currently-processed queue id.
+    unsigned int group_id;     //<<< The currently-processed queue id.
     bool destroying;                   //<<< Whether the context is being destroyed.
     bool fill_bucket_initially;        //<<< Whether the coin bucket should be filled up initially
 };
@@ -48,6 +49,7 @@ NetworkThrottleContext* network_throttler_create(double coin_bucket_ms,
     ctx->queue_cond = whist_create_cond();
     atomic_init(&ctx->next_queue_id, 0);
     atomic_init(&ctx->current_queue_id, 0);
+    ctx->group_id = 0;
     ctx->destroying = false;
     ctx->fill_bucket_initially = fill_bucket_initially;
     start_timer(&ctx->coin_bucket_last_fill);
@@ -114,25 +116,7 @@ void network_throttler_set_burst_bitrate(NetworkThrottleContext* ctx, int burst_
     ctx->coin_bucket_max = coin_bucket_max;
 }
 
-static int network_throttler_get_burst_bitrate(NetworkThrottleContext* ctx) {
-    /*
-        Get the bandwidth for the network throttler.
-
-        Arguments:
-            ctx (NetworkThrottlerContext*): The network throttler context.
-
-        Returns:
-            (int): The burst bandwidth in bits per second.
-
-        Note:
-            This function is file-internal for the time being.
-    */
-    if (!ctx) return -1;
-
-    return ctx->burst_bitrate;
-}
-
-void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t bytes) {
+int network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t bytes) {
     /*
         Block the current thread until the network throttler can accept more data.
 
@@ -140,7 +124,7 @@ void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t 
             ctx (NetworkThrottlerContext*): The network throttler context.
             bytes (size_t): The number of bytes that will be sent.
     */
-    if (!ctx || ctx->burst_bitrate <= 0 || ctx->destroying) return;
+    if (!ctx || ctx->burst_bitrate <= 0 || ctx->destroying) return -1;
 
     int queue_id = atomic_fetch_add(&ctx->next_queue_id, 1);
     whist_lock_mutex(ctx->queue_lock);
@@ -157,39 +141,30 @@ void network_throttler_wait_byte_allocation(NetworkThrottleContext* ctx, size_t 
     WhistTimer start;
     start_timer(&start);
     int loops = 0;
-    while (true) {
-        ++loops;
-        if (ctx->destroying) {
-            // If we are in destruction mode, simply break
-            break;
+    do {
+        if ((get_timer(&ctx->coin_bucket_last_fill) * MS_IN_SECOND) > ctx->coin_bucket_ms) {
+            // If the previous bucket is almost consumed(less than one UDP packet available), then
+            // add remaining coins to the next bucket. Otherwise ignore the remaining coins.
+            if (ctx->coin_bucket < udp_packet_max_size())
+                ctx->coin_bucket += ctx->coin_bucket_max;
+            else
+                ctx->coin_bucket = ctx->coin_bucket_max;
+            ctx->group_id++;
+            start_timer(&ctx->coin_bucket_last_fill);
+        } else if (bytes > ctx->coin_bucket) {
+            whist_usleep((ctx->coin_bucket_ms * US_IN_MS) -
+                         (get_timer(&ctx->coin_bucket_last_fill) * US_IN_SECOND));
         }
-
-        double elapsed_seconds = get_timer(&ctx->coin_bucket_last_fill);
-        start_timer(&ctx->coin_bucket_last_fill);
-        int burst_bitrate = network_throttler_get_burst_bitrate(ctx);
-        const size_t coin_bucket_max = ctx->coin_bucket_max;
-        const size_t coin_bucket_update =
-            (size_t)((double)elapsed_seconds * burst_bitrate / BITS_IN_BYTE);
-        ctx->coin_bucket = min(ctx->coin_bucket + coin_bucket_update, coin_bucket_max);
-
-        // We don't want to block the current thread forever if the packet is larger than
-        // the max coin bucket, so cap it as well.
-        size_t effective_bytes = min(bytes, coin_bucket_max);
-        if (ctx->coin_bucket >= effective_bytes) {
-            ctx->coin_bucket -= effective_bytes;
-            break;
-        }
-
-        whist_usleep(50);
-    }
+    } while (bytes > ctx->coin_bucket);
+    ctx->coin_bucket -= bytes;
 
     // Wake up the next waiter in the queue.
     double time = get_timer(&start);
     log_double_statistic(NETWORK_THROTTLED_PACKET_DELAY, time * MS_IN_SECOND);
     log_double_statistic(NETWORK_THROTTLED_PACKET_DELAY_RATE, time * MS_IN_SECOND / (double)bytes);
-    log_double_statistic(NETWORK_THROTTLED_PACKET_DELAY_LOOPS, (double)loops);
     atomic_fetch_add(&ctx->current_queue_id, 1);
     whist_lock_mutex(ctx->queue_lock);
     whist_broadcast_cond(ctx->queue_cond);
     whist_unlock_mutex(ctx->queue_lock);
+    return ctx->group_id;
 }

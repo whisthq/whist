@@ -97,6 +97,8 @@ void start_timer(WhistTimer* timer);
  */
 double get_timer(const WhistTimer* timer);
 
+void adjust_timer(WhistTimer* timer_opaque, int num_seconds);
+
 /**
  * @brief                          Write a string representing the current time.
  *

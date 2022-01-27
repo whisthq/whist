@@ -107,6 +107,7 @@ struct _whist_server_state {
     volatile int client_height;
     volatile int client_dpi;
     volatile bool update_device;
+    bool saturate_bandwidth;
 
     bool pending_encoder;
     bool encoder_finished;

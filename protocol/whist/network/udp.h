@@ -44,12 +44,15 @@ Defines
 // Represents a WhistSegment, which will be managed by the ringbuffer
 typedef struct {
     WhistPacketType whist_type;
+    timestamp_us departure_time;
     int id;
     unsigned short index;
     unsigned short num_indices;
     unsigned short num_fec_indices;
     unsigned short segment_size;
+    unsigned short prev_frame_num_duplicates;
     bool is_a_nack;
+    bool is_a_duplicate;
     // Must be last, since only the first segment_size bytes will be sent
     char segment_data[MAX_PACKET_SEGMENT_SIZE];
 } WhistSegment;
@@ -133,8 +136,10 @@ int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms);
  */
 int udp_get_num_pending_frames(SocketContext* context, WhistPacketType type);
 
-// TODO: Is needed for audio.c redundancy, but should be pulled into udp.c somehow
+// TODO: Is needed for audio.c, video.c redundancy, but should be pulled into udp.c somehow
 void udp_resend_packet(SocketContext* socket_context, WhistPacketType type, int id, int index);
+void udp_reset_duplicate_packet_counter(SocketContext* socket_context, WhistPacketType type);
+int udp_get_num_indices(SocketContext* socket_context, WhistPacketType type, int id);
 
 // TODO: Try to remove by making the client detect a nack buffer
 /**
@@ -158,5 +163,7 @@ NetworkSettings udp_get_network_settings(SocketContext* context);
 timestamp_us udp_get_client_input_timestamp(SocketContext* socket_context);
 
 void udp_handle_network_settings(void* raw_context, NetworkSettings network_settings);
+
+size_t udp_packet_max_size(void);
 
 #endif  // WHIST_UDP_H

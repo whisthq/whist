@@ -443,14 +443,23 @@ static int32_t multithreaded_send_video_packets(void* opaque) {
         whist_wait_semaphore(producer);
         start_timer(&statistics_timer);
         VideoFrame* frame = (VideoFrame*)encoded_frame_buf[currently_sending_index];
-        // Send the video frame
+        int id = send_frame_id;
         if (state->client.is_active && !state->exiting) {
             send_packet(&state->client.udp_context, PACKET_VIDEO, frame,
-                        get_total_frame_size(frame), send_frame_id,
+                        get_total_frame_size(frame), id,
                         VIDEO_FRAME_TYPE_IS_RECOVERY_POINT(frame->frame_type));
         }
         whist_post_semaphore(consumer);
         log_double_statistic(VIDEO_SEND_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);
+        int index = 0;
+        // Keep sending packets to fill the video bitrate, till a new frame is available.
+        udp_reset_duplicate_packet_counter(&state->client.udp_context, PACKET_VIDEO);
+        while (state->client.is_active && !state->exiting && whist_value_semapore(producer) == 0 &&
+               network_settings.saturate_bandwidth) {
+            udp_resend_packet(&state->client.udp_context, PACKET_VIDEO, id, index++);
+            if (index == udp_get_num_indices(&state->client.udp_context, PACKET_VIDEO, id))
+                index = 0;
+        }
     }
     return 0;
 }

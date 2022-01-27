@@ -17,6 +17,7 @@ Includes
 #include <whist/logging/log_statistic.h>
 #include <whist/network/throttle.h>
 #include <stddef.h>
+#include "whist/utils/linked_list.h"
 
 #ifndef _WIN32
 #include <fcntl.h>
@@ -100,6 +101,8 @@ typedef struct {
     AESMetadata aes_metadata;
     // Size of the payload
     int payload_size;
+
+    int group_id;
     // The data getting transmitted within the UDPNetworkPacket,
     // Which will be an encrypted UDPPacket
     char payload[sizeof(UDPPacket) + MAX_ENCRYPTION_SIZE_INCREASE];
@@ -155,6 +158,7 @@ typedef struct {
     int nack_num_buffers[NUM_PACKET_TYPES];
     int nack_buffer_max_indices[NUM_PACKET_TYPES];
     int nack_buffer_max_payload_size[NUM_PACKET_TYPES];
+    int num_duplicate_packets[NUM_PACKET_TYPES];
     RingBuffer* ring_buffers[NUM_PACKET_TYPES];
 
     StreamResetData reset_data[NUM_PACKET_TYPES];
@@ -171,12 +175,27 @@ typedef struct {
     WhistTimer last_network_settings_time;
 } UDPContext;
 
+typedef struct {
+    int group_id;
+    timestamp_us departure_time;
+    timestamp_us arrival_time;
+} PerGroupStats;
+
+#define MAX_GROUP_STATS 8
+typedef struct {
+    PerGroupStats per_group_stats[MAX_GROUP_STATS];
+    int prev_group_id;
+    int curr_group_id;
+} GroupStats;
+
+static GroupStats group_stats = {0};
+
 // Define how many times to retry sending a UDP packet in case of Error 55 (buffer full). The
 // current value (5) is an arbitrary choice that was found to work well in practice.
 #define RETRIES_ON_BUFFER_FULL 5
 
 // Define the bitrate specified to be maintained for each and every 0.5 ms internal.
-#define UDP_NETWORK_THROTTLER_BUCKET_MS 0.5
+#define UDP_NETWORK_THROTTLER_BUCKET_MS 5.0
 // The time in seconds between network statistics requests
 #define STATISTICS_SECONDS 5.0
 // TODO: Get this out of udp.c somehow
@@ -203,11 +222,51 @@ Globals
 extern unsigned short port_mappings[USHRT_MAX + 1];
 volatile double latency;
 
+// Choose power-of-two only for an efficient computations
+#define INCOMING_BITRATE_WINDOW_MS 256
+#define INCOMING_BITRATE_NUM_BUCKETS 16
+typedef struct IncomingBitrate {
+    uint64_t bucket_id;
+    int num_bits;
+} IncomingBitrate;
+
+static IncomingBitrate incoming_bitrate_buckets[INCOMING_BITRATE_NUM_BUCKETS] = {0};
+
+#define get_bucket_id(time) ((time) / US_IN_MS) / (INCOMING_BITRATE_WINDOW_MS / INCOMING_BITRATE_NUM_BUCKETS);
+
 /*
 ============================
 Private Functions
 ============================
 */
+
+static void add_incoming_bits(timestamp_us arrival_time, int num_bytes) {
+    int num_bits = num_bytes * BITS_IN_BYTE;
+    uint64_t bucket_id = get_bucket_id(arrival_time);
+    IncomingBitrate* bucket = &incoming_bitrate_buckets[bucket_id % INCOMING_BITRATE_NUM_BUCKETS];
+    if (bucket_id > bucket->bucket_id) {
+        bucket->bucket_id = bucket_id;
+        bucket->num_bits = num_bits;
+    } else {
+        bucket->num_bits += num_bits;
+    }
+}
+
+static int get_incoming_bitrate(int duration_ms) {
+    uint64_t current_bucket_id = get_bucket_id(current_time_us());
+    int duration_per_bucket = INCOMING_BITRATE_WINDOW_MS / INCOMING_BITRATE_NUM_BUCKETS;
+    int num_buckets = duration_ms / duration_per_bucket;
+    num_buckets = min(num_buckets, INCOMING_BITRATE_NUM_BUCKETS);
+    int total_bits = 0;
+    for (uint64_t i = current_bucket_id - num_buckets + 1; i <= current_bucket_id; i++)
+    {
+        IncomingBitrate* bucket = &incoming_bitrate_buckets[i % INCOMING_BITRATE_NUM_BUCKETS];
+        if (i == bucket->bucket_id) {
+            total_bits += bucket->num_bits;
+        }
+    }
+    return (int)(((uint64_t)total_bits * MS_IN_SECOND) / (num_buckets * duration_per_bucket));
+}
 
 /**
  * @brief                          Create a UDP Server Context,
@@ -262,7 +321,8 @@ static int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet);
  * @note                         This will call recv on context->socket, which will
  *                               wait for as long as the socket's most recent set_timeout
  */
-static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet);
+static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
+                               timestamp_us* arrival_time, int *group_id);
 
 /**
  * @brief                        Returns the size, in bytes, of the relevant part of
@@ -295,7 +355,8 @@ UDP Message Handling
 static void udp_handle_message(UDPContext* context, UDPPacket* packet);
 
 // Handler functions for the various UDP messages
-static void udp_handle_nack(UDPContext* context, WhistPacketType type, int id, int index);
+static void udp_handle_nack(UDPContext* context, WhistPacketType type, int id, int index,
+                            bool is_duplicate);
 static void udp_handle_ping(UDPContext* context, int id, timestamp_us timestamp);
 static void udp_handle_pong(UDPContext* context, int id);
 static void udp_handle_stream_reset(UDPContext* context, WhistPacketType type,
@@ -345,6 +406,14 @@ UDP Implementation of Network.h Interface
 ============================
 */
 
+static void udp_send_network_settings(void* raw_context) {
+    UDPContext* context = (UDPContext*)raw_context;
+    UDPPacket network_settings_packet;
+    network_settings_packet.type = UDP_NETWORK_SETTINGS;
+    network_settings_packet.udp_network_settings_data.network_settings = context->current_network_settings;
+    udp_send_udp_packet(context, &network_settings_packet);
+}
+
 static bool udp_update(void* raw_context) {
     /*
      * Read a WhistPacket from the socket, decrypt it if necessary, and store the decrypted data for
@@ -382,45 +451,85 @@ static bool udp_update(void* raw_context) {
     // TODO: Make this not PACKET_VIDEO specific
     // TODO: Probably move statistics calculations into udp.c as well,
     //       but it depends on how much statistics are per-frame-specific
-    if (context->ring_buffers[PACKET_VIDEO] != NULL) {
-        // Initialize desired_network_settings if it is not done yet.
-        if (context->desired_network_settings.bitrate == 0) {
-            context->desired_network_settings = get_starting_network_settings();
-        }
-        if (get_timer(&context->last_network_settings_time) > STATISTICS_SECONDS) {
-            // Get network statistics and desired network settings
-            NetworkStatistics network_statistics =
-                get_network_statistics(context->ring_buffers[PACKET_VIDEO]);
-            NetworkSettings desired_network_settings =
-                get_desired_network_settings(network_statistics);
-            // If we have new desired network settings for the other socket,
-            if (memcmp(&context->desired_network_settings, &desired_network_settings,
-                       sizeof(NetworkSettings)) != 0) {
-                context->desired_network_settings = desired_network_settings;
-                // Ask for the other socket to match our desires
-                UDPPacket network_settings_packet;
-                network_settings_packet.type = UDP_NETWORK_SETTINGS;
-                network_settings_packet.udp_network_settings_data.network_settings =
-                    desired_network_settings;
-                udp_send_udp_packet(context, &network_settings_packet);
-            }
-            start_timer(&context->last_network_settings_time);
-        }
-    }
+    // if (context->ring_buffers[PACKET_VIDEO] != NULL) {
+    //     // Initialize desired_network_settings if it is not done yet.
+    //     if (context->desired_network_settings.bitrate == 0) {
+    //         context->desired_network_settings = get_starting_network_settings();
+    //     }
+    //     if (get_timer(&context->last_network_settings_time) > STATISTICS_SECONDS) {
+    //         // Get network statistics and desired network settings
+    //         NetworkStatistics network_statistics =
+    //             get_network_statistics(context->ring_buffers[PACKET_VIDEO]);
+    //         NetworkSettings desired_network_settings =
+    //             get_desired_network_settings(network_statistics);
+    //         // If we have new desired network settings for the other socket,
+    //         if (memcmp(&context->desired_network_settings, &desired_network_settings,
+    //                    sizeof(NetworkSettings)) != 0) {
+    //             context->desired_network_settings = desired_network_settings;
+    //             // Ask for the other socket to match our desires
+    //             UDPPacket network_settings_packet;
+    //             network_settings_packet.type = UDP_NETWORK_SETTINGS;
+    //             network_settings_packet.udp_network_settings_data.network_settings =
+    //                 desired_network_settings;
+    //             udp_send_udp_packet(context, &network_settings_packet);
+    //         }
+    //         start_timer(&context->last_network_settings_time);
+    //     }
+    // }
 
     // *************
     // Pull a packet from the network, if any is there
     // *************
 
     UDPPacket udp_packet;
-    bool received_packet = udp_get_udp_packet(context, &udp_packet);
+    timestamp_us arrival_time;
+    int group_id;
+    bool received_packet = udp_get_udp_packet(context, &udp_packet, &arrival_time, &group_id);
 
     if (received_packet) {
+        add_incoming_bits(arrival_time,
+                          UDPNETWORKPACKET_HEADER_SIZE + get_udp_packet_size(&udp_packet));
         // if the packet is a whist_segment, store the data to give later via get_packet
         // Otherwise, pass it to udp_handle_message
         if (udp_packet.type == UDP_WHIST_SEGMENT) {
             WhistPacketType packet_type = udp_packet.udp_whist_segment_data.whist_type;
 
+            if (packet_type == PACKET_VIDEO &&
+                !udp_packet.udp_whist_segment_data.is_a_nack &&
+                group_id >= group_stats.curr_group_id) {
+                static timestamp_us first_video_arrival_time = 0;
+                if (first_video_arrival_time == 0) {
+                    first_video_arrival_time = arrival_time;
+                }
+
+                PerGroupStats *per_group_stats = &group_stats.per_group_stats[group_id % MAX_GROUP_STATS];
+                // As per draft-ietf-rmcat-gcc-02 spec,
+                // An inter-departure time is computed between consecutive groups as T(i) - T(i-1),
+                // where T(i) is the departure timestamp of the last packet in the current packet
+                // group being processed.  Any packets received out of order are ignored by the
+                // arrival-time model.
+                if (udp_packet.udp_whist_segment_data.departure_time > per_group_stats->departure_time) {
+                    per_group_stats->departure_time = udp_packet.udp_whist_segment_data.departure_time;
+                    per_group_stats->arrival_time = arrival_time;
+                }
+                if (group_id > group_stats.curr_group_id) {
+                    if (group_stats.prev_group_id != 0) {
+                        PerGroupStats *curr_group_stats = &group_stats.per_group_stats[group_stats.curr_group_id % MAX_GROUP_STATS];
+                        PerGroupStats *prev_group_stats = &group_stats.per_group_stats[group_stats.prev_group_id % MAX_GROUP_STATS];
+                        double inter_departure_time = (double)(curr_group_stats->departure_time - prev_group_stats->departure_time) / US_IN_SECOND;
+                        double inter_arrival_time = (double)(curr_group_stats->arrival_time - prev_group_stats->arrival_time) / US_IN_SECOND;
+                        double delay_gradient = inter_arrival_time - inter_departure_time;
+                        if (goog_cc_delay_controller(delay_gradient,
+                                                     get_incoming_bitrate(min((arrival_time - first_video_arrival_time) / US_IN_MS, INCOMING_BITRATE_WINDOW_MS)),
+                                                     get_packet_loss_ratio(context->ring_buffers[packet_type]),
+                                                     &context->current_network_settings)) {
+                            udp_send_network_settings(context);
+                        }
+                    }
+                    group_stats.prev_group_id = group_stats.curr_group_id;
+                    group_stats.curr_group_id = group_id;
+                }
+            }
             // If there's a ringbuffer, store in the ringbuffer to reconstruct the original packet
             if (context->ring_buffers[packet_type] != NULL) {
                 ring_buffer_receive_segment(context->ring_buffers[packet_type],
@@ -567,6 +676,7 @@ static int udp_send_packet(void* raw_context, WhistPacketType packet_type,
         FATAL_ASSERT(current_position == whist_packet_size);
     }
 
+    int prev_frame_num_duplicates = context->num_duplicate_packets[packet_type];
     // Send all the packets, and write them into the nack buffer if there is one
     for (int packet_index = 0; packet_index < num_total_packets; packet_index++) {
         if (nack_buffer) {
@@ -593,6 +703,7 @@ static int udp_send_packet(void* raw_context, WhistPacketType packet_type,
         packet->udp_whist_segment_data.index = (unsigned short)packet_index;
         packet->udp_whist_segment_data.num_indices = (unsigned short)num_total_packets;
         packet->udp_whist_segment_data.num_fec_indices = (unsigned short)num_fec_packets;
+        packet->udp_whist_segment_data.prev_frame_num_duplicates = (unsigned short)prev_frame_num_duplicates;
         packet->udp_whist_segment_data.is_a_nack = false;
         packet->udp_whist_segment_data.segment_size = buffer_sizes[packet_index];
 
@@ -818,7 +929,7 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
         // On the server, we create a network throttler to limit the
         // outgoing bitrate.
         context->network_throttler =
-            network_throttler_create(UDP_NETWORK_THROTTLER_BUCKET_MS, false);
+            network_throttler_create(UDP_NETWORK_THROTTLER_BUCKET_MS, true);
         // Create the server context
         ret = create_udp_server_context(context, port, connection_timeout_ms);
     } else {
@@ -1001,8 +1112,28 @@ void udp_resend_packet(SocketContext* socket_context, WhistPacketType type, int 
         return;
     }
 
-    // Treat this the same as a nack
-    udp_handle_nack(context, type, id, index);
+    context->num_duplicate_packets[type]++;
+    // Treat this the same as a nack, but set duplicate flag as true
+    udp_handle_nack(context, type, id, index, true);
+}
+
+void udp_reset_duplicate_packet_counter(SocketContext* socket_context, WhistPacketType type) {
+    UDPContext* context = (UDPContext*)socket_context->context;
+    context->num_duplicate_packets[type] = 0;
+}
+
+int udp_get_num_indices(SocketContext* socket_context, WhistPacketType type, int packet_id) {
+    UDPContext* context = (UDPContext*)socket_context->context;
+    UDPPacket* packet =
+        &context->nack_buffers[type][packet_id % context->nack_num_buffers[type]][0];
+    if (packet->udp_whist_segment_data.id == packet_id) {
+        return packet->udp_whist_segment_data.num_indices;
+    } else {
+        LOG_WARNING("%s packet %d not found, ID %d was located instead.",
+                    type == PACKET_VIDEO ? "video" : "audio", packet_id,
+                    packet->udp_whist_segment_data.id);
+        return 0;
+    }
 }
 
 /*
@@ -1038,7 +1169,7 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
         }
         // Check to see if we received a UDP_CONNECTION_ATTEMPT
         UDPPacket client_packet;
-        if (udp_get_udp_packet(context, &client_packet)) {
+        if (udp_get_udp_packet(context, &client_packet, NULL, NULL)) {
             if (client_packet.type == UDP_CONNECTION_ATTEMPT) {
                 received_connection_attempt = true;
             }
@@ -1127,7 +1258,7 @@ int create_udp_client_context(UDPContext* context, char* destination, int port,
         }
         // Check to see if we received a UDP_CONNECTION_CONFIRMATION
         UDPPacket server_response;
-        if (udp_get_udp_packet(context, &server_response)) {
+        if (udp_get_udp_packet(context, &server_response, NULL, NULL)) {
             if (server_response.type == UDP_CONNECTION_CONFIRMATION) {
                 connection_succeeded = true;
             }
@@ -1195,7 +1326,9 @@ int get_udp_packet_size(UDPPacket* udp_packet) {
 int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
     FATAL_ASSERT(context != NULL);
     int udp_packet_size = get_udp_packet_size(udp_packet);
-
+    if (udp_packet->type == UDP_WHIST_SEGMENT) {
+        udp_packet->udp_whist_segment_data.departure_time = current_time_us();
+    }
     UDPNetworkPacket udp_network_packet;
     if (ENCRYPTING_PACKETS) {
         // Encrypt the packet during normal operation
@@ -1214,8 +1347,8 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
 
     // NOTE: This doesn't interfere with clientside hotpath,
     // since the throttler only throttles the serverside
-    network_throttler_wait_byte_allocation(context->network_throttler,
-                                           (size_t)udp_network_packet_size);
+    udp_network_packet.group_id = network_throttler_wait_byte_allocation(
+        context->network_throttler, (size_t)udp_network_packet_size);
 
     // If sending fails because of no buffer space available on the system, retry a few times.
     for (int i = 0; i < RETRIES_ON_BUFFER_FULL; i++) {
@@ -1255,7 +1388,8 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
     return 0;
 }
 
-static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
+static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
+                               timestamp_us* arrival_time, int* group_id) {
     // Wait to receive a packet over UDP, until timing out
     UDPNetworkPacket udp_network_packet;
     socklen_t slen = sizeof(context->last_addr);
@@ -1271,6 +1405,11 @@ static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
     // If the packet was successfully received, decrypt and process it it
     if (recv_len > 0) {
         int decrypted_len;
+
+        if (arrival_time)
+            *arrival_time = current_time_us();
+        if (group_id)
+            *group_id = udp_network_packet.group_id;
 
         // Verify the reported packet length
         // This is before the `decrypt_packet` call, so the packet might be malicious
@@ -1356,7 +1495,7 @@ void udp_handle_message(UDPContext* context, UDPPacket* packet) {
         case UDP_NACK: {
             // we received a nack from the client, respond
             udp_handle_nack(context, packet->udp_nack_data.whist_type, packet->udp_nack_data.id,
-                            packet->udp_nack_data.index);
+                            packet->udp_nack_data.index, false);
             break;
         }
         case UDP_BITARRAY_NACK: {
@@ -1371,7 +1510,7 @@ void udp_handle_message(UDPContext* context, UDPPacket* packet) {
                  i < packet->udp_bitarray_nack_data.numBits; i++) {
                 if (bit_array_test_bit(bit_arr, i)) {
                     udp_handle_nack(context, packet->udp_bitarray_nack_data.type,
-                                    packet->udp_bitarray_nack_data.id, i);
+                                    packet->udp_bitarray_nack_data.id, i, false);
                 }
             }
             bit_array_free(bit_arr);
@@ -1407,7 +1546,8 @@ void udp_handle_message(UDPContext* context, UDPPacket* packet) {
     }
 }
 
-void udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, int packet_index) {
+void udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, int packet_index,
+                     bool is_duplicate) {
     /*
      * Respond to a client nack by sending the requested packet from the nack buffer if possible.
      */
@@ -1442,6 +1582,7 @@ void udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, i
         // Check that the nack buffer ID's match
         if (packet->udp_whist_segment_data.id == packet_id) {
             packet->udp_whist_segment_data.is_a_nack = true;
+            packet->udp_whist_segment_data.is_a_duplicate = is_duplicate;
             // Wrap in PACKET_VIDEO to prevent verbose audio.c logs
             // TODO: Fix this by making resend_packet not trigger nack logs
 #if LOG_NACKING
@@ -1619,4 +1760,8 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
 
     // Set internal network settings, so that it can be requested for later
     context->current_network_settings = network_settings;
+}
+
+size_t udp_packet_max_size(void) {
+    return(sizeof(UDPNetworkPacket));
 }

@@ -58,6 +58,9 @@ Public Functions
  */
 NetworkSettings get_desired_network_settings(NetworkStatistics stats);
 
+bool goog_cc_delay_controller(double delay_gradient, int incoming_bitrate, double packet_loss_ratio,
+                              NetworkSettings *network_settings);
+
 /**
  * @brief               This function will return the default network settings for a given video
  *                      resolution
