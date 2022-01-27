@@ -80,6 +80,7 @@ export default flow(
       failure: merge(create.failure, host.failure),
       timeout: trigger.pipe(
         switchMap(() =>
+          // We use switchmap so that the timer starts only when the trigger fires vs. when the flow is run
           merge(host.success, create.failure, host.failure).pipe(
             timeout(20000), // If nothing is emitted for 20s, we assume a timeout so that an error can be shown
             catchError(() => of(undefined)),
