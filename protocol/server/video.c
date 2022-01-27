@@ -59,6 +59,10 @@ Includes
 
 #define BITS_IN_BYTE 8.0
 
+static WhistSemaphore consumer;
+static WhistSemaphore producer;
+static char buf[LARGEST_VIDEOFRAME_SIZE];
+static int send_frame_id;
 /*
 ============================
 Private Functions
@@ -166,7 +170,8 @@ void send_populated_frames(whist_server_state* state, WhistTimer* statistics_tim
 
     // Create frame struct with compressed frame data and
     // metadata
-    static char buf[LARGEST_VIDEOFRAME_SIZE];
+    whist_wait_semaphore(consumer);
+
     VideoFrame* frame = (VideoFrame*)buf;
     frame->width = encoder->out_width;
     frame->height = encoder->out_height;
@@ -206,18 +211,14 @@ void send_populated_frames(whist_server_state* state, WhistTimer* statistics_tim
 
     write_avpackets_to_buffer(encoder->num_packets, encoder->packets,
                               (void*)get_frame_videodata(frame));
+    send_frame_id = id;
 
 #if LOG_VIDEO
     LOG_INFO("Sent video packet %d (Size: %d) %s", id, encoder->encoded_frame_size,
              frame->is_iframe ? "(I-frame)" : "");
 #endif  // LOG_VIDEO
-    start_timer(statistics_timer);
 
-    // Send the video frame
-    if (state->client.is_active) {
-        send_packet(&state->client.udp_context, PACKET_VIDEO, frame, get_total_frame_size(frame),
-                    id, frame->is_iframe);
-    }
+    whist_post_semaphore(producer);
 }
 
 /**
@@ -412,6 +413,26 @@ VideoEncoder* update_video_encoder(whist_server_state* state, VideoEncoder* enco
     return encoder;
 }
 
+// Video packet sending over UDP is done a separate thread to maximally utilize the available
+// bandwidth, without dropping frames.
+static int32_t multithreaded_send_video_packets(void* opaque) {
+    whist_server_state* state = (whist_server_state*)opaque;
+    VideoFrame* frame = (VideoFrame*)buf;
+    WhistTimer statistics_timer;
+    while (!state->exiting) {
+        whist_wait_semaphore(producer);
+        start_timer(&statistics_timer);
+        // Send the video frame
+        if (state->client.is_active && !state->exiting) {
+            send_packet(&state->client.udp_context, PACKET_VIDEO, frame,
+                        get_total_frame_size(frame), send_frame_id, frame->is_iframe);
+        }
+        whist_post_semaphore(consumer);
+        log_double_statistic(VIDEO_SEND_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);
+    }
+    return 0;
+}
+
 /*
 ============================
 Public Function Implementations
@@ -470,6 +491,13 @@ int32_t multithreaded_send_video(void* opaque) {
         network_throttler_create((double)VBV_BUF_SIZE_IN_MS, true);
     // Don't bitrate limit in the beginning
     network_throttler_set_burst_bitrate(network_throttler, 100000000);
+
+    // Create producer-consumer semaphore pair with queue size of 1
+    producer = whist_create_semaphore(0);
+    consumer = whist_create_semaphore(1);
+    WhistThread video_send_packets = whist_create_thread(multithreaded_send_video_packets,
+                                                         "multithreaded_send_video_packets", state);
+
     int last_frame_size = 0;
 
     int consecutive_identical_frames = 0;
@@ -690,8 +718,6 @@ int32_t multithreaded_send_video(void* opaque) {
                         last_frame_size = encoder->encoded_frame_size;
 
                         log_double_statistic(VIDEO_FPS_SENT, 1.0);
-                        log_double_statistic(VIDEO_SEND_TIME,
-                                             get_timer(&statistics_timer) * MS_IN_SECOND);
                         log_double_statistic(VIDEO_FRAME_SIZE, encoder->encoded_frame_size);
                         log_double_statistic(VIDEO_FRAME_PROCESSING_TIME,
                                              get_timer(&server_frame_timer) * 1000);
@@ -705,6 +731,10 @@ int32_t multithreaded_send_video(void* opaque) {
 #if SAVE_VIDEO_OUTPUT
     fclose(fp);
 #endif
+    whist_post_semaphore(producer);  // Post this to unblock the video_send_packets thread
+    whist_wait_thread(video_send_packets, NULL);
+    whist_destroy_semaphore(consumer);
+    whist_destroy_semaphore(producer);
     // The Nvidia Encoder must be wrapped in the lifetime of the capture device,
     // So we destroy the encoder first
     if (encoder) {
