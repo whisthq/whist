@@ -651,7 +651,8 @@ void sdl_present_pending_framebuffer() {
     }
 
     // Wipes the renderer to initial_color before we present
-    SDL_SetRenderDrawColor(sdl_renderer, initial_color.red, initial_color.green, initial_color.blue, SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(sdl_renderer, initial_color.red, initial_color.green, initial_color.blue,
+                           SDL_ALPHA_OPAQUE);
     SDL_RenderClear(sdl_renderer);
 
     WhistTimer statistics_timer;
