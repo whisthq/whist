@@ -53,7 +53,7 @@ if __name__ == "__main__":
 				exit(1)
 		else:
 			codes = codes_to_exclude[file]
-			subprocess.run("shellcheck -e {} {}".format(codes, file), shell=True, capture_output=True)
+			p = subprocess.run("shellcheck -e {} {}".format(codes, file), shell=True, capture_output=True)
 			print(p.stdout.decode())
 			if p.returncode != 0:
 				print("[Shellcheck did not pass] {}".format(file))
