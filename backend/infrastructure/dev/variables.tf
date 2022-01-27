@@ -1,3 +1,9 @@
+variable "env" {
+  type    = string
+  default = ""
+}
+
 variable "enabled_regions" {
-  type = map(any)
+  type    = set(string)
+  default = []
 }

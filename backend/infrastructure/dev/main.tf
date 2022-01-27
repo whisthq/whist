@@ -9,11 +9,29 @@ terraform {
   required_version = ">= 0.14.9"
 }
 
-provider "aws" {
+# Global modules, use default provider
 
+module "iam" {
+  source = "../modules/aws_iam"
+  env    = var.env
 }
 
 module "s3" {
   source = "../modules/aws_s3"
-  env    = "dev"
+  env    = var.env
+}
+
+# Region specific modules
+
+module "us-east-1" {
+  source = "../modules/aws_multi_region"
+  env = var.env
+}
+
+module "us-east-2" {
+  source = "../modules/aws_multi_region"
+  env = var.env
+  providers = {
+    aws = aws.use2
+  }
 }
