@@ -40,12 +40,6 @@ case "${unameOut}" in
   MINGW*)     isWindows=1 ;;
 esac
 
-# array of all folders to be checked and modified
-declare -a includeFolders=(
-  "whist"
-  "client"
-  "server"
-)
 
 # set clang-tidy-fixes file
 yamlFolder="$BUILD_DIR/fixes"
@@ -71,7 +65,7 @@ if [[ ! -f "$compileCommands" ]]; then
 fi
 filesToFix=()
 IFS=$'\n' # Break for-loop on newline rather than any whitespace
-for line in $(cat "$compileCommands" | jq -r '.[].file' | grep -Ev "($FILES_EXCLUDE)"); do
+for line in $(< "$compileCommands" jq -r '.[].file' | grep -Ev "($FILES_EXCLUDE)"); do
   if [[ -n "$isWindows" ]]; then
     # Replace Windows path with Linux path
     line="$(echo "$line" | sed "s/\([^:]*\):/\/\1/g")"
@@ -115,9 +109,9 @@ else
       # run clang-tidy noted replacements
       if command -v clang-apply-replacements &> /dev/null
       then
-        clang-apply-replacements $yamlFolder
+        clang-apply-replacements "$yamlFolder"
       else
-        clang-apply-replacements-10 $yamlFolder
+        clang-apply-replacements-10 "$yamlFolder"
       fi
     else
       exit

@@ -1,0 +1,76 @@
+# workflows/shell-scripts-linting-and-checking.yml
+#
+# Shell Scripts: Linting and Checking
+# Lint and enforce good practices for shell scripts.
+
+name: "Shell Scripts: Linting and Checking"
+
+on:
+  pull_request:
+    paths:
+      - "**/*.sh"
+      - ".github/workflows/shell-scripts-linting-and-checking.yml"
+  workflow_dispatch:
+
+jobs:
+  shell-scripts-linting-main:
+    name: Lint Shell Scripts
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python 3.10.0
+        uses: actions/setup-python@v2.3.0
+        with:
+          python-version: "3.10.0"
+
+      - name: Install beautysh
+        working-directory: mandelboxes/helper_scripts
+        run: pip install -r requirements.txt
+
+      - name: Run Beautysh to Check Scripts Formatting
+        run: |
+          # We need to use globstar for glob expansion on bash
+          shopt -s globstar
+          beautysh **/*.sh --indent-size 2 --check
+          shopt -u globstar
+
+      - name: Check that All Bash Scripts Start with "#!/bin/bash"
+        run: .github/workflows/helpers/shell-scripts/check-shebang.sh
+
+      - name: Check that All Bash Scripts Contain "set -Eeuo pipefail"
+        run: .github/workflows/helpers/shell-scripts/check-pipefail.sh
+
+  shell-scripts-shellcheck:
+    name: Run ShellCheck on Shell Scripts
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Run ShellCheck on frontend folder
+        working-directory: frontend
+        run: python3 ../.github/workflows/helpers/shell-scripts/check-shellcheck.py --exclude-dirs="client-applications/node_modules/"
+
+      - name: Run ShellCheck on .github folder
+        working-directory: .github
+        run: python3 ../.github/workflows/helpers/shell-scripts/check-shellcheck.py
+
+      - name: Run ShellCheck on host-setup folder
+        working-directory: host-setup
+        run: python3 ../.github/workflows/helpers/shell-scripts/check-shellcheck.py
+
+      - name: Run ShellCheck on backend folder
+        working-directory: backend
+        run: python3 ../.github/workflows/helpers/shell-scripts/check-shellcheck.py --exclude-codes="webserver/ephemeral_db_setup/fetch_db.sh:SC2028"
+
+      - name: Run ShellCheck on protocol folder
+        working-directory: protocol
+        run: python3 ../.github/workflows/helpers/shell-scripts/check-shellcheck.py --exclude-codes="build_protocol_targets.sh:SC2046,SC2086 lint-cmake.sh:SC2086"
+
+      - name: Run ShellCheck on mandelboxes folder
+        working-directory: mandelboxes
+        run: python3 ../.github/workflows/helpers/shell-scripts/check-shellcheck.py --exclude-codes="base/display/whist-display.sh:SC2154 base/utils/run-as-whist-user.sh:SC1004 development/client/run-whist-client.sh:SC2086 base/main/run-whist-server.sh:SC2086,SC2046"
