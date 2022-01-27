@@ -1,15 +1,15 @@
-# workflows/shell-scripts-linting.yml
+# workflows/shell-scripts-linting-and-checking.yml
 #
-# Shell Scripts: Linting
+# Shell Scripts: Linting and Checking
 # Lint and enforce good practices for shell scripts.
 
-name: "Shell Scripts: Linting"
+name: "Shell Scripts: Linting and Checking"
 
 on:
   pull_request:
     paths:
       - "**/*.sh"
-      - ".github/workflows/shell-scripts-linting.yml"
+      - ".github/workflows/shell-scripts-linting-and-checking.yml"
   workflow_dispatch:
 
 jobs:
