@@ -44,11 +44,11 @@ fi
 # https://unix.stackexchange.com/a/640599
 echo "Xft.dpi: $WHIST_DPI" | xrdb -merge
 cat << EOF > /home/whist/.xsettingsd
-Xft/DPI $((1024*WHIST_DPI))
-Gtk/CursorThemeSize $((24*WHIST_DPI/96))
+Xft/DPI $((1024*$WHIST_DPI))
+Gtk/CursorThemeSize $((24*$WHIST_DPI/96))
 EOF
 
-echo "$WHIST_DPI" > $WHIST_DPI_CACHE_FILE
+echo $WHIST_DPI > $WHIST_DPI_CACHE_FILE
 
 # Succeed even if these are not yet running, as we have successfully pre-initialized them
 killall -HUP xsettingsd awesome || true

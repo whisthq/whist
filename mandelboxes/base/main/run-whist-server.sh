@@ -35,9 +35,9 @@ block-until-file-exists.sh $WHIST_MAPPINGS_DIR/.configReady >&1
 #   and the original location is the destination
 # Iterate through the possible configuration locations and copy
 for row in $(jq -rc '.[]' < $APP_CONFIG_MAP_FILENAME); do
-  SOURCE_CONFIG_SUBPATH=$(echo "${row}" | jq -rc '.source')
+  SOURCE_CONFIG_SUBPATH=$(echo ${row} | jq -rc '.source')
   SOURCE_CONFIG_PATH=$USER_CONFIGS_DIR/$SOURCE_CONFIG_SUBPATH
-  DEST_CONFIG_PATH=$(echo "${row}" | jq -rc '.destination')
+  DEST_CONFIG_PATH=$(echo ${row} | jq -rc '.destination')
 
   # If original config path does not exist, then continue
   if [ ! -f "$DEST_CONFIG_PATH" ] && [ ! -d "$DEST_CONFIG_PATH" ]; then
@@ -46,13 +46,13 @@ for row in $(jq -rc '.[]' < $APP_CONFIG_MAP_FILENAME); do
 
   # If the source path doesn't exist, then copy default configs to the synced app config folder
   if [ ! -f "$SOURCE_CONFIG_PATH" ] && [ ! -d "$SOURCE_CONFIG_PATH" ]; then
-    cp -rT "$DEST_CONFIG_PATH" "$SOURCE_CONFIG_PATH"
+    cp -rT $DEST_CONFIG_PATH $SOURCE_CONFIG_PATH
   fi
 
   # Remove the original configs and symlink the new ones to the original locations
-  rm -rf "$DEST_CONFIG_PATH"
-  ln -sfnT "$SOURCE_CONFIG_PATH" "$DEST_CONFIG_PATH"
-  chown -R whist "$SOURCE_CONFIG_PATH"
+  rm -rf $DEST_CONFIG_PATH
+  ln -sfnT $SOURCE_CONFIG_PATH $DEST_CONFIG_PATH
+  chown -R whist $SOURCE_CONFIG_PATH
 done
 
 # Delete broken symlinks from config
@@ -88,23 +88,20 @@ OPTIONS=""
 
 # Send in AES private key, if set
 if [ -f "$PRIVATE_KEY_FILENAME" ]; then
-  WHIST_AES_KEY=$(cat $PRIVATE_KEY_FILENAME)
-  export WHIST_AES_KEY
+  export WHIST_AES_KEY=$(cat $PRIVATE_KEY_FILENAME)
   OPTIONS="$OPTIONS --private-key=$WHIST_AES_KEY"
 fi
 
 # Send in Sentry environment, if set, except for the LOCAL_CLIENT case,
 # since local clients might be in a version mismatch with server protocol
 if [ -f "$SENTRY_ENV_FILENAME" ] && [ "$LOCAL_CLIENT" == "false" ]; then
-  SENTRY_ENV=$(cat $SENTRY_ENV_FILENAME)
-  export SENTRY_ENV
+  export SENTRY_ENV=$(cat $SENTRY_ENV_FILENAME)
   OPTIONS="$OPTIONS --environment=$SENTRY_ENV"
 fi
 
 # Send in timeout, if set
 if [ -f "$TIMEOUT_FILENAME" ]; then
-  TIMEOUT=$(cat $TIMEOUT_FILENAME)
-  export TIMEOUT
+  export TIMEOUT=$(cat $TIMEOUT_FILENAME)
   OPTIONS="$OPTIONS --timeout=$TIMEOUT"
 fi
 
@@ -122,8 +119,7 @@ function cleanup {
   sudo shutdown now
 }
 
-ENV_NAME=$(cat $SENTRY_ENV_FILENAME)
-export ENV_NAME
+export ENV_NAME=$(cat $SENTRY_ENV_FILENAME)
 if [ "$ENV_NAME" != "localdev" ]; then
   # Make sure `cleanup` gets called on script exit in all environments except localdev.
   trap cleanup EXIT ERR
@@ -132,10 +128,10 @@ fi
 # Set user upload target, if file exists
 if [ -f "$USER_DEST_BROWSER_FILENAME" ] && [ -f "$BROWSER_DATA_FILE_FILENAME" ]; then
   # Imports user browser data if file exists
-  python3 /usr/share/whist/import_user_browser_data.py "$(cat $USER_DEST_BROWSER_FILENAME)" "$(cat $BROWSER_DATA_FILE_FILENAME)"
+  python3 /usr/share/whist/import_user_browser_data.py $(cat $USER_DEST_BROWSER_FILENAME) $(cat $BROWSER_DATA_FILE_FILENAME)
 
   # Remove temporary files
-  rm -f "$(cat $BROWSER_DATA_FILE_FILENAME)"
+  rm -f $(cat $BROWSER_DATA_FILE_FILENAME)
   rm $BROWSER_DATA_FILE_FILENAME
   rm $USER_DEST_BROWSER_FILENAME
 fi
@@ -157,7 +153,7 @@ echo "Now sleeping until there are X clients..."
 
 # Wait until the application has created its display before launching WhistServer.
 # This prevents a black no input window from appearing when a user connects.
-until [ "$(xlsclients -display :10 | wc -l)" != 0 ]
+until [ $(xlsclients -display :10 | wc -l) != 0 ]
 do
   sleep 0.1
 done
@@ -170,7 +166,7 @@ sync # Necessary so that even if the container exits very soon the host service 
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
 # The point of the named pipe redirection is so that $! will give us the PID of WhistServer, not of tee.
-/usr/share/whist/WhistServer "$OPTIONS" &> >(tee $PROTOCOL_LOG_FILENAME) &
+/usr/share/whist/WhistServer $OPTIONS &> >(tee $PROTOCOL_LOG_FILENAME) &
 whist_server_pid=$!
 
 # Wait for either whist-application or WhistServer to exit (both backgrounded processes).
@@ -185,7 +181,7 @@ echo "whist-application PID: $whist_application_pid"
 echo "Remaining job PIDs: $(jobs -p)"
 
 # Kill whatever is still running of WhistServer and whist-application, with SIGTERM.
-kill "$whist_application_pid" ||:
+kill $whist_application_pid ||:
 kill $whist_server_pid ||:
 
 # Wait for whist-application to finish terminating, ignoring exit code (since

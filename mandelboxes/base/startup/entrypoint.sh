@@ -10,7 +10,7 @@ SENTRY_ENV_FILENAME=/usr/share/whist/private/sentry_env
 # If SENTRY_ENV is set, then create file
 if [ -n "${SENTRY_ENV+1}" ]
 then
-  echo "$SENTRY_ENV" > $SENTRY_ENV_FILENAME
+  echo $SENTRY_ENV > $SENTRY_ENV_FILENAME
 fi
 
 # Enable Sentry bash error handler, this will `set -e` and catch errors in a bash script
@@ -32,7 +32,7 @@ WHIST_PRIVATE_DIR=/usr/share/whist/private
 # If WHIST_AES_KEY is set, then create file
 if [ -n "${WHIST_AES_KEY+1}" ]
 then
-  echo "$WHIST_AES_KEY" > $WHIST_PRIVATE_DIR/aes_key
+  echo $WHIST_AES_KEY > $WHIST_PRIVATE_DIR/aes_key
 fi
 
 # Unset the AWS key to make sure that this environment variable does not
@@ -41,13 +41,13 @@ unset WHIST_AES_KEY
 
 # If WHIST_INITIAL_USER_DATA_FILE is set, then create file
 if [ -n "${WHIST_INITIAL_USER_DATA_FILE+1}" ]; then
-  echo "$WHIST_INITIAL_USER_DATA_FILE" > $WHIST_PRIVATE_DIR/user_browser_data_file
+  echo $WHIST_INITIAL_USER_DATA_FILE > $WHIST_PRIVATE_DIR/user_browser_data_file
 fi
 
 # If WHIST_DEST_BROWSER is set, then create file
 if [ -n "${WHIST_DEST_BROWSER+1}" ]
 then
-  echo "$WHIST_DEST_BROWSER" > $WHIST_PRIVATE_DIR/user_dest_browser
+  echo $WHIST_DEST_BROWSER > $WHIST_PRIVATE_DIR/user_dest_browser
 fi
 
 

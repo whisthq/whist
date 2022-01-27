@@ -24,7 +24,7 @@ else
 fi
 
 # Verify that the WhistServer/WhistClient is there
-cp -r "$BUILD_DIR"/"${2:-WhistServer}" "$destdir/protocol"
+cp -r "$BUILD_DIR"/${2:-WhistServer} "$destdir/protocol"
 
 # Copy all of the accompanying files
 cp -r "$BUILD_DIR"/* "$destdir/protocol"
