@@ -327,6 +327,7 @@ bool udp_update(void* raw_context) {
      * TODO: handle nacking by creating ring buffers for packet types that require nacking (audio
      * and video)
      */
+    FATAL_ASSERT(raw_context != NULL);
     UDPContext* context = (UDPContext*)raw_context;
 
     // *************
@@ -490,6 +491,7 @@ bool udp_update(void* raw_context) {
 // Please pass this comment into any non-trivial function that this function calls.
 int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* whist_packet_payload,
                     int whist_packet_payload_size, int packet_id, bool start_of_stream) {
+    FATAL_ASSERT(raw_context != NULL);
     UDPContext* context = (UDPContext*)raw_context;
     FATAL_ASSERT(context != NULL);
 
@@ -625,6 +627,7 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* whist_
 }
 
 void* udp_get_packet(void* raw_context, WhistPacketType type) {
+    FATAL_ASSERT(raw_context != NULL);
     UDPContext* context = (UDPContext*)raw_context;
     RingBuffer* ring_buffer = context->ring_buffers[type];
 
@@ -696,6 +699,7 @@ void* udp_get_packet(void* raw_context, WhistPacketType type) {
 }
 
 void udp_free_packet(void* raw_context, WhistPacket* whist_packet) {
+    FATAL_ASSERT(raw_context != NULL);
     UDPContext* context = (UDPContext*)raw_context;
 
     RingBuffer* ring_buffer = context->ring_buffers[(int)whist_packet->type];
@@ -711,6 +715,7 @@ void udp_free_packet(void* raw_context, WhistPacket* whist_packet) {
 }
 
 bool udp_get_pending_stream_reset(void* raw_context, WhistPacketType type) {
+    FATAL_ASSERT(raw_context != NULL);
     UDPContext* context = (UDPContext*)raw_context;
 
     if (context->reset_data[type].pending_stream_reset) {
@@ -728,6 +733,7 @@ bool udp_get_pending_stream_reset(void* raw_context, WhistPacketType type) {
 }
 
 void udp_destroy_socket_context(void* raw_context) {
+    FATAL_ASSERT(raw_context != NULL);
     UDPContext* context = (UDPContext*)raw_context;
 
     // Deallocate the nack buffers
@@ -901,7 +907,9 @@ Questionable Public Function Implementations
 */
 
 int udp_get_num_pending_frames(SocketContext* socket_context, WhistPacketType type) {
+    FATAL_ASSERT(socket_context != NULL);
     UDPContext* context = (UDPContext*)socket_context->context;
+    FATAL_ASSERT(context != NULL);
 
     RingBuffer* ring_buffer = context->ring_buffers[(int)type];
 
@@ -949,7 +957,9 @@ int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms) {
 // TODO: Make this private by making ringbuffers once we notice we should make one
 void udp_register_ring_buffer(SocketContext* socket_context, WhistPacketType type,
                               int max_frame_size, int num_buffers) {
+    FATAL_ASSERT(socket_context != NULL);
     UDPContext* context = socket_context->context;
+    FATAL_ASSERT(context != NULL);
 
     int type_index = (int)type;
     FATAL_ASSERT(type_index < NUM_PACKET_TYPES);
@@ -968,7 +978,9 @@ NetworkSettings udp_get_network_settings(SocketContext* socket_context) {
 
 // TODO: Pull E2E calculations inside of udp.c
 timestamp_us udp_get_client_input_timestamp(SocketContext* socket_context) {
+    FATAL_ASSERT(socket_context != NULL);
     UDPContext* context = (UDPContext*)socket_context->context;
+    FATAL_ASSERT(context != NULL);
 
     whist_lock_mutex(context->timestamp_mutex);
 
@@ -989,6 +1001,8 @@ timestamp_us udp_get_client_input_timestamp(SocketContext* socket_context) {
 }
 
 void udp_resend_packet(SocketContext* socket_context, WhistPacketType type, int id, int index) {
+    FATAL_ASSERT(socket_context != NULL);
+    FATAL_ASSERT(socket_context->context != NULL);
     // Treat this the same as a nack
     udp_handle_nack((UDPContext*)socket_context->context, type, id, index);
 }
