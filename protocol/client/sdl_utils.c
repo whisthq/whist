@@ -36,6 +36,9 @@ HHOOK g_h_keyboard_hook;
 LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_param);
 #endif
 
+// Color to initialize SDL renderer to; corresponds to ##111827
+const WhistRGBColor initial_color = {17, 24, 39};
+
 // on macOS, we must initialize the renderer in `init_sdl()` instead of video.c
 static SDL_Renderer* sdl_renderer = NULL;
 static SDL_Texture* frame_buffer = NULL;
@@ -219,9 +222,8 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         sdl_free_png_file_rgb_surface(icon_surface);
     }
 
-    // Initialize the window color to white
-    const WhistRGBColor white = {255, 255, 255};
-    set_native_window_color(sdl_window, white);
+    // Initialize the window color
+    set_native_window_color(sdl_window, initial_color);
 
     SDL_Event cur_event;
     while (SDL_PollEvent(&cur_event)) {
@@ -648,8 +650,8 @@ void sdl_present_pending_framebuffer() {
         return;
     }
 
-    // Wipes the renderer to all-black before we present
-    SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    // Wipes the renderer to initial_color before we present
+    SDL_SetRenderDrawColor(sdl_renderer, initial_color.red, initial_color.green, initial_color.blue, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(sdl_renderer);
 
     WhistTimer statistics_timer;
@@ -686,48 +688,6 @@ void sdl_present_pending_framebuffer() {
 
         // No longer pending nv12 data
         pending_nv12data = false;
-    }
-
-    // Copy loading screen texture, if any pending one exists
-    if (pending_loadingscreen) {
-#define NUMBER_LOADING_FRAMES 50
-        int gif_frame_index = pending_loadingscreen_idx % NUMBER_LOADING_FRAMES;
-
-        char frame_filename[256];
-        snprintf(frame_filename, sizeof(frame_filename), "loading/frame_%02d.png", gif_frame_index);
-
-        SDL_Surface* loading_screen = sdl_surface_from_png_file(frame_filename);
-        if (loading_screen == NULL) {
-            LOG_ERROR("Loading screen image failed to load: %s", frame_filename);
-        } else {
-            SDL_Texture* loading_screen_texture =
-                SDL_CreateTextureFromSurface(sdl_renderer, loading_screen);
-
-            // The surface can now be freed
-            sdl_free_png_file_rgb_surface(loading_screen);
-
-            // Position the rectangle such that the texture will be centered
-            int w, h;
-            SDL_QueryTexture(loading_screen_texture, NULL, NULL, &w, &h);
-            SDL_Rect centered_rect = {
-                .x = output_width / 2 - w / 2,
-                .y = output_height / 2 - h / 2,
-                .w = w,
-                .h = h,
-            };
-
-            // The texture is semi-transparent, so we clear to white first
-            SDL_SetRenderDrawColor(sdl_renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-            SDL_RenderClear(sdl_renderer);
-            // Now, we write the texture out to the renderer
-            SDL_RenderCopy(sdl_renderer, loading_screen_texture, NULL, &centered_rect);
-
-            // The loading screen texture may now be destroyed
-            SDL_DestroyTexture(loading_screen_texture);
-        }
-
-        // The loading screen render is no longer pending
-        pending_loadingscreen = false;
     }
 
     log_double_statistic(VIDEO_RENDER_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);
