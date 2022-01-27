@@ -82,10 +82,10 @@ fi
 # We also mount entire ./whist directory so that git works for git revision
 docker run \
   --rm \
-  "$DOCKER_IT_FLAG" \
+  $DOCKER_IT_FLAG \
   --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION --env AWS_DEFAULT_OUTPUT --env GITHUB_SHA --env CODECOV_TOKEN \
   --mount type=bind,source=$(cd ..; pwd),destination=/workdir \
-  "$MOUNT_AWS" \
+  $MOUNT_AWS \
   --name whist-protocol-builder-$(date +"%s") \
   --user "$DOCKER_USER" \
   whisthq/protocol-builder \
