@@ -48,7 +48,7 @@ while true; do
     * ) echo "We should never be able to get into this argument case! Unknown argument passed in: $1"; exit 1 ;;
   esac
 done
-TARGETS="$*"
+TARGETS=$*
 
 if [[ -z "$TARGETS" ]]; then
   usage
@@ -85,9 +85,9 @@ docker run \
   "${DOCKER_IT_FLAG}" \
   --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION --env AWS_DEFAULT_OUTPUT --env GITHUB_SHA --env CODECOV_TOKEN \
   --mount type=bind,source=$(cd ..; pwd),destination=/workdir \
-  "${MOUNT_AWS}" \
+  $MOUNT_AWS \
   --name whist-protocol-builder-$(date +"%s") \
-  --user "${DOCKER_USER}" \
+  --user "$DOCKER_USER" \
   whisthq/protocol-builder \
   bash -c "\
     cd protocol &&                                      \
