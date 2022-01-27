@@ -154,7 +154,7 @@ EOF
   echo "Installing General Utilities..."
   echo "================================================"
 
-  sudo apt-get install -y lsof jq tar lz4
+  sudo apt-get install -y lsof jq tar lz4 fio
 
   echo "================================================"
   echo "Disabling Automatic Package Upgrades..."
