@@ -61,9 +61,13 @@ struct _whist_server_config {
 
 typedef struct _whist_server_config whist_server_config;
 
+// NOTE: PLEASE DO NOT ADD MORE TO THIS STRUCT
+// See code standards, this counts as "extern global state".
+// Instead, make classes with init/destroy and getters/setters.
+
 /** @brief internal state of the whist server */
-// TODO: Mutex usage of this state
 struct _whist_server_state {
+    // TODO: Mutex usage of this state
     whist_server_config* config;
 
     volatile int connection_id;

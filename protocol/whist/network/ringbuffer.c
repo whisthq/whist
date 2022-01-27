@@ -393,16 +393,20 @@ void reset_stream(RingBuffer* ring_buffer, int id) {
         "Skip" to the frame at ID id by setting last_rendered_id = id - 1 (if the skip is valid).
     */
 
-    FATAL_ASSERT(0 <= id);
+    FATAL_ASSERT(1 <= id);
 
     // Check that we're not trying to reset to a frame that's been rendered already
     if (id <= ring_buffer->last_rendered_id) {
-        LOG_INFO("Received stale stream reset request - told to skip to ID %d but already at ID %d",
-                 id, ring_buffer->last_rendered_id);
+        LOG_INFO(
+            "Received stale %s stream reset request - told to skip to ID %d but already at ID %d",
+            ring_buffer->type == PACKET_VIDEO ? "video" : "audio", id,
+            ring_buffer->last_rendered_id);
     } else {
         if (ring_buffer->last_rendered_id != -1) {
             // Loudly log if we're dropping frames
-            LOG_INFO("Skipping from frame %d to frame %d", ring_buffer->last_rendered_id, id);
+            LOG_INFO("Skipping from %s frame %d to frame %d",
+                     ring_buffer->type == PACKET_VIDEO ? "video" : "audio",
+                     ring_buffer->last_rendered_id, id);
             // Drop frames up until id
             // We also use id - frames_received, to prevent printing a jump from 0 to 50,000
             for (int i =
@@ -428,7 +432,8 @@ void reset_stream(RingBuffer* ring_buffer, int id) {
                 }
             }
         } else {
-            LOG_INFO("Restarting stream at frame %d", id);
+            LOG_INFO("Restarting %s stream at frame %d",
+                     ring_buffer->type == PACKET_VIDEO ? "video" : "audio", id);
             for (int i = max(1, id - ring_buffer->ring_buffer_size); i < id; i++) {
                 FrameData* frame_data = get_frame_at_id(ring_buffer, i);
                 if (frame_data->id == i) {

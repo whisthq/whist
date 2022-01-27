@@ -221,7 +221,7 @@ void create_and_send_tcp_wcmsg(WhistClientMessageType message_type, char* payloa
             break;
         }
         default: {
-            LOG_FATAL("Invalid wcmsg type!");
+            LOG_FATAL("Invalid wcmsg type! %d", (int)message_type);
         }
     }
 
