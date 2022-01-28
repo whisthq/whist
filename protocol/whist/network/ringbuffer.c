@@ -472,13 +472,12 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
     for (int id = next_render_id; id <= ring_buffer->max_id; id++) {
         FrameData* ctx = get_frame_at_id(ring_buffer, id);
 
-        double frame_staleness = -1.0;
         if (ctx->id == id) {
-            frame_staleness = get_timer(&ctx->frame_creation_timer);
-        }
+            double frame_staleness = get_timer(&ctx->frame_creation_timer);
 
-        if (frame_staleness * MS_IN_SECOND > MAX_ACCEPTABLE_STALENESS_MS) {
-            greatest_failed_id = max(greatest_failed_id, id);
+            if (frame_staleness * MS_IN_SECOND > MAX_ACCEPTABLE_STALENESS_MS) {
+                greatest_failed_id = max(greatest_failed_id, id);
+            }
         }
     }
 
