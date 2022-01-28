@@ -155,6 +155,7 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
     ring_buffer->last_nack_possibility = true;
 
     start_timer(&ring_buffer->last_stream_reset_request_timer);
+    ring_buffer->last_stream_reset_request_id = -1;
 
     return ring_buffer;
 }
@@ -450,38 +451,64 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
     // and sends stream reset requests if needed
 #define STREAM_RESET_REQUEST_INTERVAL_MS 5.0
 #define MAX_UNSYNCED_FRAMES 4
-#define MAX_TO_RENDER_STALENESS 100.0
+#define MAX_ACCEPTABLE_STALENESS_MS 100.0
     // Try to nack for any missing packets
     bool nacking_succeeded = try_nacking(ring_buffer, latency);
 
-    // Get how stale the frame we're trying to render is
-    double next_to_render_staleness = -1.0;
+    // Track the greatest ID of any "failed" frames
+    // Failed is a frame that's so far behind that we think we probably won't get it
+    int greatest_failed_id = -1;
     int next_render_id = ring_buffer->last_rendered_id + 1;
-    FrameData* ctx = get_frame_at_id(ring_buffer, next_render_id);
-    if (ctx->id == next_render_id) {
-        next_to_render_staleness = get_timer(&ctx->frame_creation_timer);
+
+    // If nacking failed to succeed, or next_render_id is MAX_UNSYNCED_FRAMES behind,
+    // we consider at _least_ the next_render_id to have failed
+    if (!nacking_succeeded ||
+        ring_buffer->max_id > ring_buffer->last_rendered_id + MAX_UNSYNCED_FRAMES) {
+        greatest_failed_id = max(greatest_failed_id, next_render_id);
     }
 
-    // If nacking has failed to recover the packets we need,
-    if (!nacking_succeeded
-        // Or if we're more than MAX_UNSYNCED_FRAMES frames out-of-sync,
-        || ring_buffer->max_id > ring_buffer->last_rendered_id + MAX_UNSYNCED_FRAMES
-        // Or we've spent MAX_TO_RENDER_STALENESS trying to render this one frame
-        || (next_to_render_staleness > MAX_TO_RENDER_STALENESS / MS_IN_SECOND)) {
-        // THEN, we should send an iframe request
+    // Check if there are any newer frames that are also so stale that they're considered failed,
+    // This is so that the server knows if an iframe has dropped too
+    for (int id = next_render_id; id <= ring_buffer->max_id; id++) {
+        FrameData* ctx = get_frame_at_id(ring_buffer, id);
 
+        double frame_staleness = -1.0;
+        if (ctx->id == id) {
+            frame_staleness = get_timer(&ctx->frame_creation_timer);
+        }
+
+        if (frame_staleness * MS_IN_SECOND > MAX_ACCEPTABLE_STALENESS_MS) {
+            greatest_failed_id = max(greatest_failed_id, id);
+        }
+    }
+
+    // If we have any failed IDs, we tell the server,
+    // So that it can try to give us an I-Frame
+    if (greatest_failed_id != -1) {
         // Throttle the requests to prevent network upload saturation, however
         if (get_timer(&ring_buffer->last_stream_reset_request_timer) >
             STREAM_RESET_REQUEST_INTERVAL_MS / MS_IN_SECOND) {
-            int greatest_failed_id = max(ring_buffer->max_id - 1, next_render_id);
             ring_buffer->request_stream_reset(ring_buffer->socket_context, ring_buffer->type,
                                               greatest_failed_id);
-            LOG_INFO(
-                "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
-                "and the frame we're trying to render has been alive for %fms. "
-                "A stream reset is now being requested to catch-up.",
-                ring_buffer->max_id, ring_buffer->max_id - ring_buffer->last_rendered_id,
-                next_to_render_staleness * MS_IN_SECOND);
+
+            // If a newer frame has failed, log it
+            if (greatest_failed_id != ring_buffer->last_stream_reset_request_id) {
+                double next_render_staleness = -1.0;
+                FrameData* ctx = get_frame_at_id(ring_buffer, next_render_id);
+                if (ctx->id == next_render_id) {
+                    next_render_staleness = get_timer(&ctx->frame_creation_timer);
+                }
+
+                LOG_INFO(
+                    "The most recent ID %d is %d frames ahead of the most recently rendered frame, "
+                    "and frame %d has been failing to render for %fms. "
+                    "A stream reset is now being requested to catch-up, ID's <= %d are considered "
+                    "lost.",
+                    ring_buffer->max_id, ring_buffer->max_id - ring_buffer->last_rendered_id,
+                    next_render_id, next_render_staleness * MS_IN_SECOND, greatest_failed_id);
+            }
+
+            ring_buffer->last_stream_reset_request_id = greatest_failed_id;
             start_timer(&ring_buffer->last_stream_reset_request_timer);
         }
     }
