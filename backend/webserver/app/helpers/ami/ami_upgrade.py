@@ -46,7 +46,7 @@ def insert_new_amis(
             ami_active=False,
         )
         new_amis.append(new_ami)
-    db.session.add_all(new_amis)
+        db.session.merge(new_ami)
     db.session.commit()
     return new_amis
 
