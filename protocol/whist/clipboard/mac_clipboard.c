@@ -57,17 +57,29 @@ bool unsafe_has_os_clipboard_updated(void) {
     bool has_updated = false;
 
     int new_clipboard_sequence_number = get_clipboard_changecount();
+
+    // Do not update last_clipboard_sequence_number until we have parsed the clipboard after the
+    // clipboard has data ready. Otherwise this condition will be erroneously affected.
     if (new_clipboard_sequence_number > last_clipboard_sequence_number) {
-        // check if new clipboard is an image or a string
+        // If latest clipboard changed ownership but there's no items on it yet return false
+        if (!check_clipboard_has_data_ready()) {
+            return false;
+        }
+
+        // Check if new clipboard is an image/string/file after clipboard has been populated
         clipboard_has_image = check_clipboard_has_image();
         clipboard_has_string = check_clipboard_has_string();
         clipboard_has_files = check_clipboard_has_files();
+
         if (should_preserve_local_clipboard()) {
             has_updated = (clipboard_has_image || clipboard_has_string ||
                            clipboard_has_files);  // should be always set to true in here
         }
+
+        // Only update last_clipboard_sequence_number if we have parsed the clipboard!
         last_clipboard_sequence_number = new_clipboard_sequence_number;
     }
+
     return has_updated;
 }
 

@@ -59,6 +59,11 @@ bool check_clipboard_has_string() {
     return [pasteboard canReadObjectForClasses:class_array options:options];
 }
 
+bool check_clipboard_has_data_ready() {
+    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+    return [pasteboard.pasteboardItems count] > 0;
+}
+
 bool check_clipboard_has_image() {
     /*
         Check if the clipboard has an image stored
