@@ -96,6 +96,21 @@ jobs:
           echo "webserver_url is set to: $WEBSERVER_URL"
           echo "::set-output name=webserver_url::$WEBSERVER_URL"
 
+      - name: Set scaling service URL based on Git Branch (prod, staging, dev)
+        id: set-scaling-service-url
+        run: |
+          # Grab the name of the deployment environment from set-deploy-environment
+          BRANCH_NAME=${{ steps.set-deploy-environment.outputs.environment }}
+          if [ "$BRANCH_NAME" == "prod" ]; then
+            SCALING_SERVICE_URL=https://whist-prod-scaling-service.herokuapp.com/
+          elif [ "$BRANCH_NAME" == "staging" ]; then
+            SCALING_SERVICE_URL=https://whist-staging-scaling-service.herokuapp.com/
+          else
+            SCALING_SERVICE_URL=https://whist-dev-scaling-service.herokuapp.com/
+          fi
+          echo "scaling_service_url is set to: $SCALING_SERVICE_URL"
+          echo "::set-output name=scaling_service_url::$SCALING_SERVICE_URL"
+
       # This will create a "jobs" variable, containing the list of jobs to run (Each wrapped in a |)
       - name: Detect Job(s)
         id: detect-jobs
@@ -1353,102 +1368,69 @@ jobs:
   #######################################################################################
   #######################################################################################
 
-  # Uses webserver's cli command to update AMIs if new AMIs have been built
-  webserver-swap-active-amis:
-    name: "Swap over active AMIs using Webserver"
+  # Scaling service: Deploy & Upgrade Image
+  # Push the scaling service subtree to the appropriate Heroku app. This will also
+  # automatically start the image swapover event on the scaling service.
+  scaling-service-deploy:
+    name: "Scaling service: Deploy & Upgrade Image"
     runs-on: ubuntu-20.04
-    concurrency: webserver-swap-active-amis-${{ github.ref }}
+    concurrency: scaling-service-deploy-${{ github.ref }}
     needs:
       [
         whist-publish-build-config,
         whist-build-monorepo-config,
-        webserver-spin-up-new-buffer,
-        client-applications-update-version-number,
-      ]
-    if: always() && (needs.client-applications-publish-build-x64-s3.result == 'success' && needs.client-applications-publish-build-arm64-s3.result == 'success') && (needs.webserver-spin-up-new-buffer.result == 'success')
-    env:
-      TOKEN_FILE: .access_token
+        mandelboxes-and-amis-publish-ghcr-and-aws,
+        webserver-deploy-heroku,
+      ]    
+    if: contains(needs.whist-publish-build-config.outputs.jobs, '|scaling-service-deploy-heroku|')
+
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
-
-      - name: Set up Python 3.10.0
-        uses: actions/setup-python@v2.3.0
         with:
-          python-version: "3.10.0"
-
-      - name: Format the current date
-        id: date
-        run: echo ::set-output name=date::$(date -u +%Y%m%d%p)
-
-      - name: Restore cached Webserver access token file
-        uses: actions/cache@v2
-        with:
-          key: access-token-${{ needs.whist-publish-build-config.outputs.branch }}-${{ steps.date.outputs.date }}-${{ secrets.cache_salt }}
-          path: ${{ env.TOKEN_FILE }}
-
-      # We need to put quotes around this step's run command because it
-      # contains the special YAML characters [, ], and &. We check for the
-      # existence of $TOKEN_FILE before reading it to ensure that the
-      # command line returns 1 on failure. If the command was just
-      #
-      #     echo ::set-output name=access-token::$(cat "$TOKEN_FILE")
-      #
-      # the step would succeed even if $TOKEN_FILE didn't exist because
-      # cat "$TOKEN_FILE" runs in a subshell and its exit status has no
-      # effect on the parent shell, in which the -e (errexit) option is
-      # set.
-      - name: Read cached Webserver access token
-        id: get-token
-        run: '[ -f "$TOKEN_FILE" ] && echo ::set-output name=access-token::$(cat "$TOKEN_FILE")'
-
-      - name: Set heroku app name and DB URLs
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-        run: |
-          if [[ ${{ needs.whist-publish-build-config.outputs.branch }} == dev ]]; then
-            HEROKU_APP_NAME=whist-dev-server
-          elif [[ ${{ needs.whist-publish-build-config.outputs.branch }} == staging ]]; then
-            HEROKU_APP_NAME=whist-staging-server
-          elif [[ ${{ needs.whist-publish-build-config.outputs.branch }} == prod ]]; then
-            HEROKU_APP_NAME=whist-prod-server
-          else
-              echo 'Error: Invalid branch' && false
-          fi
-          echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
-          DATABASE_URL=$(heroku config:get DATABASE_URL --app=$HEROKU_APP_NAME)
-          CONFIG_DB_URL=$(heroku config:get CONFIG_DB_URL --app=$HEROKU_APP_NAME)
-          echo "DATABASE_URL=$DATABASE_URL" >> $GITHUB_ENV
-          echo "CONFIG_DB_URL=$CONFIG_DB_URL" >> $GITHUB_ENV
+          fetch-depth: 0 # need to get full history for splitsh-lite
 
       - name: Setup Python-based notifications
         working-directory: .github/workflows/helpers
         run: ./notifications/setup_notifications.sh
 
-      - name: Install webserver dependencies for running the flask cli
-        working-directory: backend/webserver
-        run: pip install -r requirements.txt
+      - name: Authenticate Heroku
+        run: |
+          cat > ~/.netrc << EOF
+          machine api.heroku.com
+            login developers@whist.com
+            password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+          machine git.heroku.com
+            login developers@whist.com
+            password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+          EOF
 
-      - name: Run flask cli to swap over to the new instance buffers
-        id: run-webserver-cli-ami-swap-over
-        working-directory: backend/webserver
+      - name: Add Heroku Remote
         env:
-          AUTH0_DOMAIN: ${{ needs.whist-publish-build-config.outputs.auth0-domain }}
-          AUTH0_WEBSERVER_CLIENT_ID: ${{ needs.whist-publish-build-config.outputs.auth0-client-id }}
-          AUTH0_WEBSERVER_CLIENT_SECRET: ${{ secrets[needs.whist-publish-build-config.outputs.auth0-client-secret-key] }}
-          CONFIG_DB_URL: ${{ env.CONFIG_DB_URL }}
-          DATABASE_URL: ${{ env.DATABASE_URL }}
-          HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
-          APP_GIT_BRANCH: ${{ needs.whist-publish-build-config.outputs.branch }}
-          APP_GIT_COMMIT: ${{ github.sha }}
-          WHIST_ACCESS_TOKEN: ${{ steps.get-token.outputs.access-token }}
-        shell: bash --noprofile --norc -eo pipefail {0}
-        run: flask ami swap_over_buffers '${{ needs.webserver-spin-up-new-buffer.outputs.new_amis_str }}' '${{ needs.webserver-spin-up-new-buffer.outputs.amis_failed }}'
+          HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+        run: |
+          if [[ ${{ needs.whist-publish-build-config.outputs.branch }} == dev ]]; then
+            HEROKU_APP_NAME=whist-dev-scaling-service
+          elif [[ ${{ needs.whist-publish-build-config.outputs.branch }} == staging ]]; then
+            HEROKU_APP_NAME=whist-staging-scaling-service
+          elif [[ ${{ needs.whist-publish-build-config.outputs.branch }} == prod ]]; then
+            HEROKU_APP_NAME=whist-prod-scaling-service
+          else
+            echo 'Error: Invalid branch' && false
+          fi
+          echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
 
-      - name: Notify Slack that AMI upgrade has completed succesfully
-        if: always() && (steps.run-webserver-cli-ami-swap-over.outcome == 'success')
+          heroku git:remote --app $HEROKU_APP_NAME --remote heroku-whist-server
+
+      - name: Deploy the Scaling Service & Start image upgrade
+        if: needs.whist-publish-build-config.outputs.publish == 'true'
+        env:
+          HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
+        shell: bash --noprofile --norc -eo pipefail {0}
+        run: backend/services make run_scaling_service_dev ${{ github.sha }} "${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}"
+
+      - name: Notify Slack on Successful Scaling Service Deploy
+        if: needs.whist-publish-build-config.outputs.publish == 'true'
         shell: python3 {0}
         run: |
           # Retrieve Slack webhook
@@ -1459,13 +1441,14 @@ jobs:
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
 
+          import os
           from notifications.slack_bot import slack_post
           WEBSERVER_URL = "${{ needs.whist-publish-build-config.outputs.webserver_url }}"
           TITLE = ":bezos: Webserver Successfully Swapped to New AMIs :bezos:"
           BODY = f"Webserver at {WEBSERVER_URL} swapped over active AMIs to new AMIs on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
 
-      - name: Notify Slack that AMI upgrade has failed
+      - name: Notify Slack on Job Error
         if: failure()
         shell: python3 {0}
         run: |
