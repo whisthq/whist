@@ -106,10 +106,8 @@ func StartSchedulerEvents(scheduledEvents chan sa.ScalingEvent) {
 }
 
 func StartDeploy(scheduledEvents chan sa.ScalingEvent) {
-	// TODO: get map from arguments.
-	regionImageMap := map[string]string{
-		"us-east-1": "",
-	}
+	// Get arguments
+	regionImageMap := os.Args[1:]
 
 	// Send image upgrade event to scheduled chan.
 	scheduledEvents <- sa.ScalingEvent{
