@@ -9,7 +9,7 @@ import pytest
 
 from app.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
 from app.constants.env_names import DEVELOPMENT, PRODUCTION
-from app.models import Instance
+from app.models import db, Instance
 from tests.client import WhistAPITestClient
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
 from tests.helpers.utils import get_allowed_region_names
@@ -135,7 +135,8 @@ def test_client_commit_hash_local_dev_override_success(
 
     override_environment(DEVELOPMENT)
     region_names = get_allowed_region_names()
-    bulk_instance(instance_name="mock_instance_name", location=region_names[0])
+    instance = bulk_instance(instance_name="mock_instance_name", location=region_names[0])
+    capacity = instance.remaining_capacity
 
     args = {
         "regions": region_names,
@@ -145,6 +146,9 @@ def test_client_commit_hash_local_dev_override_success(
     }
     response = client.post("/mandelbox/assign", json=args)
 
+    db.session.refresh(instance)
+
+    assert instance.remaining_capacity == capacity - 1
     assert response.status_code == HTTPStatus.ACCEPTED
 
 
