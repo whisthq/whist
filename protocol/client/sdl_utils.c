@@ -698,6 +698,15 @@ void sdl_present_pending_framebuffer() {
 void sdl_render_loading_screen() {
     FATAL_ASSERT(pending_loadingscreen == true);
 
+#define LOADING_SOLID_COLOR true
+
+#if LOADING_SOLID_COLOR
+    // The color to show when loading
+    const WhistRGBColor background_color = {17, 24, 39};  // #111827 (thanks copilot)
+
+    SDL_SetRenderDrawColor(sdl_renderer, background_color.red, background_color.green,
+                           background_color.blue, SDL_ALPHA_OPAQUE);
+#else
 #define NUMBER_LOADING_FRAMES 50
     int gif_frame_index = pending_loadingscreen_idx % NUMBER_LOADING_FRAMES;
 
@@ -733,6 +742,7 @@ void sdl_render_loading_screen() {
         // The loading screen texture may now be destroyed
         SDL_DestroyTexture(loading_screen_texture);
     }
+#endif
 
     // The loading screen render is no longer pending
     pending_loadingscreen = false;
