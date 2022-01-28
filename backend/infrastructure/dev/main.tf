@@ -12,8 +12,9 @@ terraform {
 # Global modules, use default provider
 
 module "iam" {
-  source = "../modules/aws_iam"
-  env    = var.env
+  source                     = "../modules/aws_iam"
+  env                        = var.env
+  whist-env-managed-policies = var.whist-env-managed-policies
 }
 
 module "s3" {
@@ -25,12 +26,12 @@ module "s3" {
 
 module "us-east-1" {
   source = "../modules/aws_multi_region"
-  env = var.env
+  env    = var.env
 }
 
 module "us-east-2" {
   source = "../modules/aws_multi_region"
-  env = var.env
+  env    = var.env
   providers = {
     aws = aws.use2
   }
