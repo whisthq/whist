@@ -84,6 +84,8 @@ Private Function Declarations
  * @param filename                 The filename of the png file that will be used
  *
  * @returns                        The SDL_Surface that got created from the png file
+ *
+ * @note                           `sdl_free_png_file_rgb_surface` must eventually be called!
  */
 SDL_Surface* sdl_surface_from_png_file(char* filename);
 
@@ -99,6 +101,20 @@ void sdl_free_png_file_rgb_surface(SDL_Surface* surface);
  *                                 Then RenderPresent if sdl_render_framebuffer is pending.
  */
 void sdl_present_pending_framebuffer();
+
+/**
+ * @brief                          Renders out the loading screen
+ *
+ * @note                           Must be called on the main thread
+ */
+void sdl_render_loading_screen();
+
+/**
+ * @brief                          Renders out any pending nv12 data
+ *
+ * @note                           Must be called on the main thread
+ */
+void sdl_render_nv12data();
 
 /*
 ============================
@@ -655,79 +671,14 @@ void sdl_present_pending_framebuffer() {
     WhistTimer statistics_timer;
     start_timer(&statistics_timer);
 
-    // Copy nv12 data, if any pending nv12 data exists
+    // Render the nv12data, if any exists
     if (pending_nv12data) {
-        // The texture object we allocate is larger than the frame,
-        // so we only copy the valid section of the frame into the texture.
-        SDL_Rect texture_rect = {
-            .x = 0,
-            .y = 0,
-            .w = pending_nv12data_width,
-            .h = pending_nv12data_height,
-        };
-
-        // Update the SDLTexture with the given nvdata
-        int res = SDL_UpdateNVTexture(frame_buffer, &texture_rect, pending_nv12data_data[0],
-                                      pending_nv12data_linesize[0], pending_nv12data_data[1],
-                                      pending_nv12data_linesize[1]);
-        if (res < 0) {
-            LOG_ERROR("SDL_UpdateNVTexture failed: %s", SDL_GetError());
-        } else {
-            // Take the subsection of texture that should be rendered to screen,
-            // And draw it on the renderer
-            SDL_Rect output_rect = {
-                .x = 0,
-                .y = 0,
-                .w = output_width,
-                .h = output_height,
-            };
-            SDL_RenderCopy(sdl_renderer, frame_buffer, &output_rect, NULL);
-        }
-
-        // No longer pending nv12 data
-        pending_nv12data = false;
+        sdl_render_nv12data();
     }
 
-    // Copy loading screen texture, if any pending one exists
+    // Render the loading screen, if any exists
     if (pending_loadingscreen) {
-#define NUMBER_LOADING_FRAMES 50
-        int gif_frame_index = pending_loadingscreen_idx % NUMBER_LOADING_FRAMES;
-
-        char frame_filename[256];
-        snprintf(frame_filename, sizeof(frame_filename), "loading/frame_%02d.png", gif_frame_index);
-
-        SDL_Surface* loading_screen = sdl_surface_from_png_file(frame_filename);
-        if (loading_screen == NULL) {
-            LOG_ERROR("Loading screen image failed to load: %s", frame_filename);
-        } else {
-            SDL_Texture* loading_screen_texture =
-                SDL_CreateTextureFromSurface(sdl_renderer, loading_screen);
-
-            // The surface can now be freed
-            sdl_free_png_file_rgb_surface(loading_screen);
-
-            // Position the rectangle such that the texture will be centered
-            int w, h;
-            SDL_QueryTexture(loading_screen_texture, NULL, NULL, &w, &h);
-            SDL_Rect centered_rect = {
-                .x = output_width / 2 - w / 2,
-                .y = output_height / 2 - h / 2,
-                .w = w,
-                .h = h,
-            };
-
-            // The texture is semi-transparent, so we clear to white first
-            SDL_SetRenderDrawColor(sdl_renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-            SDL_RenderClear(sdl_renderer);
-            // Now, we write the texture out to the renderer
-            SDL_RenderCopy(sdl_renderer, loading_screen_texture, NULL, &centered_rect);
-
-            // The loading screen texture may now be destroyed
-            SDL_DestroyTexture(loading_screen_texture);
-        }
-
-        // The loading screen render is no longer pending
-        pending_loadingscreen = false;
+        sdl_render_loading_screen();
     }
 
     log_double_statistic(VIDEO_RENDER_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);
@@ -744,21 +695,94 @@ void sdl_present_pending_framebuffer() {
     whist_unlock_mutex(renderer_mutex);
 }
 
+void sdl_render_loading_screen() {
+    FATAL_ASSERT(pending_loadingscreen == true);
+
+#define LOADING_SOLID_COLOR true
+
+#if LOADING_SOLID_COLOR
+    // The color to show when loading
+    const WhistRGBColor background_color = {17, 24, 39};  // #111827 (thanks copilot)
+
+    SDL_SetRenderDrawColor(sdl_renderer, background_color.red, background_color.green,
+                           background_color.blue, SDL_ALPHA_OPAQUE);
+#else
+#define NUMBER_LOADING_FRAMES 50
+    int gif_frame_index = pending_loadingscreen_idx % NUMBER_LOADING_FRAMES;
+
+    char frame_filename[256];
+    snprintf(frame_filename, sizeof(frame_filename), "loading/frame_%02d.png", gif_frame_index);
+
+    SDL_Surface* loading_screen = sdl_surface_from_png_file(frame_filename);
+    if (loading_screen == NULL) {
+        LOG_ERROR("Loading screen image failed to load: %s", frame_filename);
+    } else {
+        SDL_Texture* loading_screen_texture =
+            SDL_CreateTextureFromSurface(sdl_renderer, loading_screen);
+
+        // The surface can now be freed
+        sdl_free_png_file_rgb_surface(loading_screen);
+
+        // Position the rectangle such that the texture will be centered
+        int w, h;
+        SDL_QueryTexture(loading_screen_texture, NULL, NULL, &w, &h);
+        SDL_Rect centered_rect = {
+            .x = output_width / 2 - w / 2,
+            .y = output_height / 2 - h / 2,
+            .w = w,
+            .h = h,
+        };
+
+        // The texture is semi-transparent, so we clear to white first
+        SDL_SetRenderDrawColor(sdl_renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+        SDL_RenderClear(sdl_renderer);
+        // Now, we write the texture out to the renderer
+        SDL_RenderCopy(sdl_renderer, loading_screen_texture, NULL, &centered_rect);
+
+        // The loading screen texture may now be destroyed
+        SDL_DestroyTexture(loading_screen_texture);
+    }
+#endif
+
+    // The loading screen render is no longer pending
+    pending_loadingscreen = false;
+}
+
+void sdl_render_nv12data() {
+    FATAL_ASSERT(pending_nv12data == true);
+
+    // The texture object we allocate is larger than the frame,
+    // so we only copy the valid section of the frame into the texture.
+    SDL_Rect texture_rect = {
+        .x = 0,
+        .y = 0,
+        .w = pending_nv12data_width,
+        .h = pending_nv12data_height,
+    };
+
+    // Update the SDLTexture with the given nvdata
+    int res = SDL_UpdateNVTexture(frame_buffer, &texture_rect, pending_nv12data_data[0],
+                                  pending_nv12data_linesize[0], pending_nv12data_data[1],
+                                  pending_nv12data_linesize[1]);
+    if (res < 0) {
+        LOG_ERROR("SDL_UpdateNVTexture failed: %s", SDL_GetError());
+    } else {
+        // Take the subsection of texture that should be rendered to screen,
+        // And draw it on the renderer
+        SDL_Rect output_rect = {
+            .x = 0,
+            .y = 0,
+            .w = output_width,
+            .h = output_height,
+        };
+        SDL_RenderCopy(sdl_renderer, frame_buffer, &output_rect, NULL);
+    }
+
+    // No longer pending nv12 data
+    pending_nv12data = false;
+}
+
 SDL_Surface* sdl_surface_from_png_file(char* filename) {
-    /*
-        Load a PNG file to an SDL surface using lodepng.
-
-        Arguments:
-            filename (char*): PNG image file path
-
-        Returns:
-            surface (SDL_Surface*): the loaded surface on success, and NULL on failure
-
-        NOTE:
-            After a successful call to sdl_surface_from_png_file, remember to call
-            `sdl_free_png_file_rgb_surface(surface)` to free the memory later!
-    */
-
     unsigned int w, h, error;
     unsigned char* image;
 
