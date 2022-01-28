@@ -139,7 +139,7 @@ int multithreaded_sync_udp_packets(void* opaque) {
         }
 
         // Loop over both VIDEO and AUDIO
-        WhistPacketType video_audio_types[2] = {PACKET_VIDEO, PACKET_AUDIO};
+        static const WhistPacketType video_audio_types[2] = {PACKET_VIDEO, PACKET_AUDIO};
         for (int i = 0; i < 2; i++) {
             WhistPacketType packet_type = video_audio_types[i];
             // If the renderer wants the frame of that type,
@@ -238,6 +238,7 @@ void create_and_send_tcp_wcmsg(WhistClientMessageType message_type, char* payloa
     deallocate_region(wcmsg_tcp);
 }
 
+#define SYNC_TCP_LOOP_TARGET_PERIOD_MS 25.0
 int multithreaded_sync_tcp_packets(void* opaque) {
     /*
         Thread to send and receive all TCP packets (clipboard and file)
@@ -252,12 +253,13 @@ int multithreaded_sync_tcp_packets(void* opaque) {
 
     last_tcp_ping_id = 0;
 
-    WhistTimer last_ack;
+    WhistTimer last_loop_start;
     WhistTimer statistics_timer;
-    start_timer(&last_ack);
     bool successful_read_or_pull = false;
 
     while (run_sync_packets_threads) {
+        start_timer(&last_loop_start);
+
         // TODO: Pull this into tcp.c
         if (!socket_update(tcp_context)) {
             send_tcp_reconnect_message();
@@ -318,8 +320,10 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         //     file_synchronizer_read_next_file_chunk
         //     without sleeping if either of them are currently pulling/reading chunks. Otherwise,
         //     sleep to target one loop every 25 ms.
-        if (!successful_read_or_pull && get_timer(&last_ack) * MS_IN_SECOND < 25.0) {
-            whist_sleep(max(1, (int)(25.0 - get_timer(&last_ack) * MS_IN_SECOND)));
+        if (!successful_read_or_pull &&
+            get_timer(&last_loop_start) * MS_IN_SECOND < SYNC_TCP_LOOP_TARGET_PERIOD_MS) {
+            whist_sleep(max(1, (int)(SYNC_TCP_LOOP_TARGET_PERIOD_MS -
+                                     get_timer(&last_loop_start) * MS_IN_SECOND)));
         }
     }
     return 0;

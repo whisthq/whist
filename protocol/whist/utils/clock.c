@@ -23,8 +23,6 @@ relate different events across server and client.
 struct WhistTimerInternal {
 #if defined(_WIN32)
     LARGE_INTEGER pc;
-#elif defined(__APPLE__)
-    struct timeval tv;
 #else
     struct timespec ts;
 #endif
@@ -34,9 +32,6 @@ void start_timer(WhistTimer* timer_opaque) {
     struct WhistTimerInternal* timer = (struct WhistTimerInternal*)timer_opaque;
 #if defined(_WIN32)
     QueryPerformanceCounter(&timer->pc);
-#elif defined(__APPLE__)
-    // start timer
-    gettimeofday(&timer->tv, NULL);
 #else
     clock_gettime(CLOCK_MONOTONIC, &timer->ts);
 #endif
@@ -57,21 +52,6 @@ double get_timer(const WhistTimer* timer_opaque) {
     QueryPerformanceFrequency(&frequency);
     QueryPerformanceCounter(&end);
     double ret = (double)(end.QuadPart - timer->pc.QuadPart) / frequency.QuadPart;
-#elif defined(__APPLE__)
-    // Apple doesn't have clock_gettime, so we use gettimeofday
-    // stop timer
-    struct timeval t2;
-    gettimeofday(&t2, NULL);
-
-    // compute and print the elapsed time in millisec
-    double elapsed_time = (t2.tv_sec - timer->tv.tv_sec) * MS_IN_SECOND;  // sec to ms
-    elapsed_time += (t2.tv_usec - timer->tv.tv_usec) / (double)US_IN_MS;  // us to ms
-
-    // LOG_INFO("elapsed time in ms is: %f\n", elapsedTime);
-
-    // standard var to return and convert to seconds since it gets converted to
-    // ms in function call
-    double ret = elapsed_time / MS_IN_SECOND;
 #else
     struct timespec t2;
     // use CLOCK_MONOTONIC for relative time
@@ -96,14 +76,6 @@ char* current_time_str(void) {
     GetSystemTime(&time_now);
     snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i.%06li", time_now.wHour, time_now.wMinute,
              time_now.wSecond, (long)time_now.wMilliseconds);
-#elif defined(__APPLE__)
-    struct tm* time_str_tm;
-    struct timeval time_now;
-    gettimeofday(&time_now, NULL);
-
-    time_str_tm = gmtime(&time_now.tv_sec);
-    snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i.%06li", time_str_tm->tm_hour,
-             time_str_tm->tm_min, time_str_tm->tm_sec, (long)time_now.tv_usec);
 #else
     struct tm* time_str_tm;
     struct timespec time_now;
@@ -132,11 +104,6 @@ timestamp_us current_time_us(void) {
     output = ((uint64_t)file_time.dwHighDateTime << 32) | file_time.dwLowDateTime;
     output /= 10;  // To bring it to microseconds
     output -= (EPOCH_DIFFERENCE * (uint64_t)1000000);
-#elif defined(__APPLE__)
-    struct timeval time_now;
-    gettimeofday(&time_now, NULL);
-    // TODO: change to US_IN_SEC and NS_IN_US
-    output = ((uint64_t)time_now.tv_sec * US_IN_SECOND) + time_now.tv_usec;
 #else
     struct timespec time_now;
     clock_gettime(CLOCK_REALTIME, &time_now);
