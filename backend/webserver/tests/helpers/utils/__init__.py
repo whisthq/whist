@@ -1,6 +1,6 @@
 from random import sample
 from typing import Any, List, Optional
-from app.database.models.cloud import InstanceStatusChanges, RegionToAmi, db
+from app.models import db, Image
 from app.helpers.aws.aws_instance_post import find_enabled_regions
 
 
@@ -13,7 +13,7 @@ def get_allowed_regions() -> Any:
     Returns:
             Specified number of random region objects or None
     """
-    return RegionToAmi.query.filter_by(ami_active=True).all()
+    return Image.query.all()
 
 
 def get_allowed_region_names() -> List[str]:
@@ -24,8 +24,7 @@ def get_allowed_region_names() -> List[str]:
     Returns:
             Specified number of random region names or None
     """
-    allowed_regions = find_enabled_regions()
-    return [region.region_name for region in allowed_regions]
+    return find_enabled_regions()
 
 
 def get_random_region_name() -> Optional[str]:

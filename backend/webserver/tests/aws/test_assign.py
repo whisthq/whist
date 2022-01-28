@@ -9,7 +9,7 @@ import pytest
 
 from app.constants import CLIENT_COMMIT_HASH_DEV_OVERRIDE
 from app.constants.env_names import DEVELOPMENT, PRODUCTION
-from app.database.models.cloud import InstanceInfo
+from app.models import Instance
 from tests.client import WhistAPITestClient
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
 from tests.helpers.utils import get_allowed_region_names
@@ -39,13 +39,13 @@ def test_no_region(client: WhistAPITestClient) -> None:
 @pytest.mark.usefixtures("authorized")
 def test_assign(
     client: WhistAPITestClient,
-    bulk_instance: Callable[..., InstanceInfo],
+    bulk_instance: Callable[..., Instance],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    instance = bulk_instance(instance_name="mock_instance_name", ip="123.456.789")
+    instance = bulk_instance(instance_name="mock_instance_name")
 
     def patched_find(*args: Any, **kwargs: Any) -> Any:  # pylint: disable=unused-argument
-        return instance.instance_name
+        return instance.id
 
     monkeypatch.setattr(
         "app.api.mandelbox.find_instance",
@@ -60,7 +60,7 @@ def test_assign(
     }
     response = client.post("/mandelbox/assign", json=args)
 
-    assert response.json["ip"] == instance.ip
+    assert response.json["ip"] == instance.ip_addr
     assert response.json["mandelbox_id"] != "" and response.json["mandelbox_id"] != "None"
 
 
@@ -68,13 +68,13 @@ def test_assign(
 @pytest.mark.usefixtures("authorized")
 def test_assign_active(
     client: WhistAPITestClient,
-    bulk_instance: Callable[..., InstanceInfo],
+    bulk_instance: Callable[..., Instance],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """
     Ensures we 503 a user with active mandelboxes
     """
-    bulk_instance(instance_name="mock_instance_name", ip="123.456.789")
+    bulk_instance(instance_name="mock_instance_name")
 
     def patched_active(*args: Any, **kwargs: Any) -> bool:  # pylint: disable=unused-argument
         return True
@@ -98,7 +98,7 @@ def test_assign_active(
 def test_client_commit_hash_local_dev_override_fail(
     app: Flask,  # pylint: disable=unused-argument
     client: WhistAPITestClient,
-    bulk_instance: Callable[..., InstanceInfo],
+    bulk_instance: Callable[..., Instance],
     override_environment: Callable[[str], None],
 ) -> None:
     """
@@ -108,7 +108,7 @@ def test_client_commit_hash_local_dev_override_fail(
 
     override_environment(PRODUCTION)
     region_names = get_allowed_region_names()
-    bulk_instance(instance_name="mock_instance_name", ip="123.456.789", location=region_names[0])
+    bulk_instance(instance_name="mock_instance_name", location=region_names[0])
 
     args = {
         "regions": region_names,
@@ -125,7 +125,7 @@ def test_client_commit_hash_local_dev_override_fail(
 def test_client_commit_hash_local_dev_override_success(
     app: Flask,  # pylint: disable=unused-argument
     client: WhistAPITestClient,
-    bulk_instance: Callable[..., InstanceInfo],
+    bulk_instance: Callable[..., Instance],
     override_environment: Callable[[str], None],
 ) -> None:
     """
@@ -135,7 +135,7 @@ def test_client_commit_hash_local_dev_override_success(
 
     override_environment(DEVELOPMENT)
     region_names = get_allowed_region_names()
-    bulk_instance(instance_name="mock_instance_name", ip="123.456.789", location=region_names[0])
+    bulk_instance(instance_name="mock_instance_name", location=region_names[0])
 
     args = {
         "regions": region_names,

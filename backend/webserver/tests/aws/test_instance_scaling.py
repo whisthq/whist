@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, List, Tuple
 from flask import Flask
 
 import app.helpers.aws.aws_instance_post as aws_funcs
-from app.database.models.cloud import InstanceInfo, MandelboxHostState, RegionToAmi
+from app.models import Image, Instance, MandelboxHostState
 
 from tests.helpers.utils import get_allowed_regions
 
@@ -23,12 +23,10 @@ def test_scale_up_single(
     """
     call_list = hijack_ec2_calls
     mock_get_num_new_instances(1)
-    random_region_image_obj = RegionToAmi.query.filter_by(
-        region_name=region_name, ami_active=True
-    ).one_or_none()
-    aws_funcs.do_scale_up_if_necessary(region_name, random_region_image_obj.ami_id, flask_app=app)
+    random_region_image_obj = Image.query.filter_by(region=region_name).first()
+    aws_funcs.do_scale_up_if_necessary(region_name, random_region_image_obj.image_id, flask_app=app)
     assert len(call_list) == 1
-    assert call_list[0]["kwargs"]["image_id"] == random_region_image_obj.ami_id
+    assert call_list[0]["kwargs"]["image_id"] == random_region_image_obj.image_id
 
 
 def test_scale_up_multiple(
@@ -45,12 +43,10 @@ def test_scale_up_multiple(
     desired_num = randint(2, 10)
     call_list = hijack_ec2_calls
     mock_get_num_new_instances(desired_num)
-    us_east_1_image_obj = RegionToAmi.query.filter_by(
-        region_name=region_name, ami_active=True
-    ).one_or_none()
-    aws_funcs.do_scale_up_if_necessary(region_name, us_east_1_image_obj.ami_id, flask_app=app)
+    us_east_1_image_obj = Image.query.filter_by(region=region_name).first()
+    aws_funcs.do_scale_up_if_necessary(region_name, us_east_1_image_obj.image_id, flask_app=app)
     assert len(call_list) == desired_num
-    assert all(elem["kwargs"]["image_id"] == us_east_1_image_obj.ami_id for elem in call_list)
+    assert all(elem["kwargs"]["image_id"] == us_east_1_image_obj.image_id for elem in call_list)
 
 
 def test_buffer_wrong_region() -> None:
@@ -90,7 +86,7 @@ def test_buffer_empty(app: Flask, region_ami_pair: Tuple[str, str]) -> None:
 
 
 def test_buffer_part_full(
-    app: Flask, bulk_instance: Callable[..., InstanceInfo], region_ami_pair: Tuple[str, str]
+    app: Flask, bulk_instance: Callable[..., Instance], region_ami_pair: Tuple[str, str]
 ) -> None:
     """
     Tests that we ask for a new instance when there's only a full instance running
@@ -107,7 +103,7 @@ def test_buffer_part_full(
 
 
 def test_buffer_good(
-    app: Flask, bulk_instance: Callable[..., InstanceInfo], region_ami_pair: Tuple[str, str]
+    app: Flask, bulk_instance: Callable[..., Instance], region_ami_pair: Tuple[str, str]
 ) -> None:
     """
     Tests that we don't ask for a new instance when there's an empty instance running with capacity
@@ -125,7 +121,7 @@ def test_buffer_good(
 
 
 def test_buffer_with_multiple(
-    app: Flask, bulk_instance: Callable[..., InstanceInfo], region_ami_pair: Tuple[str, str]
+    app: Flask, bulk_instance: Callable[..., Instance], region_ami_pair: Tuple[str, str]
 ) -> None:
     """
     Tests that we don't ask for a new instance when we have enough space in multiple instances
@@ -151,7 +147,7 @@ def test_buffer_with_multiple(
 
 
 def test_buffer_with_multiple_draining(
-    app: Flask, bulk_instance: Callable[..., InstanceInfo], region_ami_pair: Tuple[str, str]
+    app: Flask, bulk_instance: Callable[..., Instance], region_ami_pair: Tuple[str, str]
 ) -> None:
     """
     Tests that we don't ask for a new instance when we have enough space in multiple instances
@@ -193,7 +189,7 @@ def test_buffer_with_multiple_draining(
 
 
 def test_buffer_overfull(
-    app: Flask, bulk_instance: Callable[..., InstanceInfo], region_ami_pair: Tuple[str, str]
+    app: Flask, bulk_instance: Callable[..., Instance], region_ami_pair: Tuple[str, str]
 ) -> None:
     """
     Tests that we ask to scale down an instance when we have too much free space
@@ -223,7 +219,7 @@ def test_buffer_overfull(
 
 
 def test_buffer_not_too_full(
-    app: Flask, bulk_instance: Callable[..., InstanceInfo], region_ami_pair: Tuple[str, str]
+    app: Flask, bulk_instance: Callable[..., Instance], region_ami_pair: Tuple[str, str]
 ) -> None:
     """
     Tests that we don't ask to scale down an instance when we have free space, less than our
@@ -256,7 +252,7 @@ def test_buffer_not_too_full(
 
 
 def test_buffer_overfull_split(
-    app: Flask, bulk_instance: Callable[..., InstanceInfo], region_ami_pair: Tuple[str, str]
+    app: Flask, bulk_instance: Callable[..., Instance], region_ami_pair: Tuple[str, str]
 ) -> None:
     """
     Tests that we ask to scale down an instance when we have too much free space
@@ -290,7 +286,7 @@ def test_buffer_overfull_split(
 
 
 def test_buffer_not_too_full_split(
-    app: Flask, bulk_instance: Callable[..., InstanceInfo], region_ami_pair: Tuple[str, str]
+    app: Flask, bulk_instance: Callable[..., Instance], region_ami_pair: Tuple[str, str]
 ) -> None:
     """
     Tests that we don't ask to scale down an instance when we have some free space
@@ -329,7 +325,7 @@ def test_buffer_not_too_full_split(
     )
 
 
-def test_buffer_region_sensitive(app: Flask, bulk_instance: Callable[..., InstanceInfo]) -> None:
+def test_buffer_region_sensitive(app: Flask, bulk_instance: Callable[..., Instance]) -> None:
     """
     Tests that our buffer is based on region. In this test case, we pick two regions randomly.
 
@@ -344,9 +340,7 @@ def test_buffer_region_sensitive(app: Flask, bulk_instance: Callable[..., Instan
     assert len(randomly_picked_ami_objs) >= 2
     randomly_picked_ami_objs = randomly_picked_ami_objs[0:2]
 
-    region_ami_pairs = [
-        (ami_obj.region_name, ami_obj.ami_id) for ami_obj in randomly_picked_ami_objs
-    ]
+    region_ami_pairs = [(ami_obj.region, ami_obj.image_id) for ami_obj in randomly_picked_ami_objs]
     region_ami_with_buffer, region_ami_without_buffer = region_ami_pairs
 
     desired_free_mandelboxes = int(app.config["DESIRED_FREE_MANDELBOXES"])
