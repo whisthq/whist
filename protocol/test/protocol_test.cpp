@@ -615,6 +615,10 @@ TEST_F(ProtocolTest, LoggerTest) {
     // Check escape codes.
     LOG_INFO("B\b F\f R\r T\t Q\" B\\");
 
+    // Check non-ASCII.
+    LOG_INFO("T\xc3\xa9st");
+    LOG_INFO("\xf0\x9f\x98\xb1");
+
     destroy_logger();
 
     // Validate stdout, line-by-line
@@ -633,6 +637,8 @@ TEST_F(ProtocolTest, LoggerTest) {
     check_stdout_line(::testing::EndsWith("|    Second"));
     check_stdout_line(::testing::EndsWith("|    Third"));
     check_stdout_line(::testing::EndsWith("B\\b F\\f R\\r T\\t Q\" B\\"));
+    check_stdout_line(::testing::EndsWith("T\xc3\xa9st"));
+    check_stdout_line(::testing::EndsWith("\xf0\x9f\x98\xb1"));
 }
 
 // Test for log overflow.

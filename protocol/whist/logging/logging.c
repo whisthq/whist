@@ -249,7 +249,7 @@ static size_t copy_and_escape(char* dst, size_t dst_size, const char* src) {
     };
 
     for (d = s = 0; src[s]; s++) {
-        unsigned char esc = escape_list[(int)src[s]];
+        unsigned char esc = escape_list[src[s] & 0xff];
         if (esc) {
             if (d >= dst_size - 2) break;
             dst[d++] = '\\';
