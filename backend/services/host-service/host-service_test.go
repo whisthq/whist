@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"io/ioutil"
-	"os"
 	"path"
 	"strconv"
 	"sync"
@@ -16,6 +15,8 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/spf13/afero"
+
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
 	"github.com/whisthq/whist/backend/services/metadata"
@@ -129,6 +130,9 @@ func TestCreateDockerClient(t *testing.T) {
 }
 
 func TestMandelboxDieHandler(t *testing.T) {
+	// Use a mock in-memory filesystem to avoid writing files to disk
+	fs = afero.NewMemMapFs()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -165,42 +169,44 @@ func TestMandelboxDieHandler(t *testing.T) {
 
 }
 
-func TestInitializeFilesystem(t *testing.T) {
+// TestFilesystem tests both the initialize and uninitialize filsystem functions.
+func TestFilesystem(t *testing.T) {
+	// Use a mock in-memory filesystem to avoid writing files to disk
+	fs = afero.NewMemMapFs()
+
 	_, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := os.RemoveAll(utils.WhistDir)
+	err := fs.RemoveAll(utils.WhistDir)
 	if err != nil {
 		t.Fatalf("Failed to delete directory %s for tests: error: %v\n", utils.WhistPrivateDir, err)
 	}
 
 	initializeFilesystem(cancel)
 
-	if _, err := os.Stat(utils.WhistDir); os.IsNotExist(err) {
+	if exists, _ := afero.DirExists(fs, utils.WhistDir); !exists {
 		t.Errorf("Whist directory was not created by initializeFilesystem")
 	}
 
-	if _, err := os.Stat(utils.WhistPrivateDir); os.IsNotExist(err) {
+	if exists, _ := afero.DirExists(fs, utils.WhistPrivateDir); !exists {
 		t.Errorf("Whist private directory was not created by initializeFilesystem")
 	}
 
-	if _, err := os.Stat(utils.TempDir); os.IsNotExist(err) {
+	if exists, _ := afero.DirExists(fs, utils.TempDir); !exists {
 		t.Errorf("Whist temp directory was not created by initializeFilesystem")
 	}
-}
 
-func TestUninitializeFilesystem(t *testing.T) {
 	uninitializeFilesystem()
 
-	if _, err := os.Stat(utils.WhistDir); os.IsExist(err) {
+	if exists, _ := afero.DirExists(fs, utils.WhistDir); exists {
 		t.Errorf("Whist directory was not removed by uninitializeFilesystem")
 	}
 
-	if _, err := os.Stat(utils.WhistPrivateDir); os.IsExist(err) {
+	if exists, _ := afero.DirExists(fs, utils.WhistPrivateDir); exists {
 		t.Errorf("Whist private directory was not removed by uninitializeFilesystem")
 	}
 
-	if _, err := os.Stat(utils.TempDir); os.IsExist(err) {
+	if exists, _ := afero.DirExists(fs, utils.TempDir); exists {
 		t.Errorf("Whist temp directory was not removed by uninitializeFilesystem")
 	}
 }
@@ -224,6 +230,9 @@ func TestSpinUpMandelbox(t *testing.T) {
 	var browserImages = []string{"browsers/chrome", "browsers/brave"}
 	for _, browserImage := range browserImages {
 		t.Run(browserImage, func(t *testing.T) {
+			// Start each test with a new in-memory filesystem
+			fs = afero.NewMemMapFs()
+
 			ctx, cancel := context.WithCancel(context.Background())
 			goroutineTracker := sync.WaitGroup{}
 
@@ -245,8 +254,6 @@ func TestSpinUpMandelbox(t *testing.T) {
 				userID = mandelboxtypes.UserID(utils.Sprintf("localdev_host_service_user_%s", instanceName))
 			}
 
-			// We always want to start with a clean slate
-			uninitializeFilesystem()
 			initializeFilesystem(cancel)
 			defer uninitializeFilesystem()
 

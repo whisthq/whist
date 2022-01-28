@@ -43,6 +43,7 @@ import (
 	// to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
 
+	"github.com/spf13/afero"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver"
@@ -68,6 +69,7 @@ import (
 )
 
 var shutdownInstanceOnExit bool = !metadata.IsLocalEnv()
+var fs = afero.NewOsFs()
 
 func init() {
 	// Initialize random number generator for all subpackages
@@ -596,18 +598,18 @@ func initializeAppArmor(globalCancel context.CancelFunc) {
 func initializeFilesystem(globalCancel context.CancelFunc) {
 	// check if "/whist" already exists --- if so, panic, since
 	// we don't know why it's there or if it's valid
-	if _, err := os.Lstat(utils.WhistDir); !os.IsNotExist(err) {
-		if err == nil {
-			logger.Panicf(globalCancel, "Directory %s already exists!", utils.WhistDir)
-		} else {
-			logger.Panicf(globalCancel, "Could not make directory %s because of error %v", utils.WhistDir, err)
-		}
+	exists, err := afero.DirExists(fs, utils.WhistDir)
+	if err != nil {
+		logger.Panicf(globalCancel, "Failed to check if directory %s exists: %v", utils.WhistDir, err)
+	}
+	if exists {
+		logger.Panicf(globalCancel, "Directory %s already exists!", utils.WhistDir)
 	}
 
 	// Create the whist directory and make it non-root user owned so that
 	// non-root users in mandelboxes can access files within (especially user
 	// configs).
-	err := os.MkdirAll(utils.WhistDir, 0777)
+	err = fs.MkdirAll(utils.WhistDir, 0777)
 	if err != nil {
 		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", utils.WhistDir, err)
 	}
@@ -615,14 +617,14 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	cmd.Run()
 
 	// Create whist-private directory
-	err = os.MkdirAll(utils.WhistPrivateDir, 0777)
+	err = fs.MkdirAll(utils.WhistPrivateDir, 0777)
 	if err != nil {
 		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", utils.WhistPrivateDir, err)
 	}
 
 	// Create whist temp directory (only let root read and write this, since it
 	// contains logs and uinput sockets).
-	err = os.MkdirAll(utils.TempDir, 0600)
+	err = fs.MkdirAll(utils.TempDir, 0600)
 	if err != nil {
 		logger.Panicf(globalCancel, "Could not mkdir path %s. Error: %s", utils.TempDir, err)
 	}
@@ -633,7 +635,7 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 // use for the httpserver, and our temporary directory.
 func uninitializeFilesystem() {
 	logger.Infof("removing all files")
-	err := os.RemoveAll(utils.WhistDir)
+	err := fs.RemoveAll(utils.WhistDir)
 	if err != nil {
 		logger.Errorf("Failed to delete directory %s: error: %v\n", utils.WhistDir, err)
 		metrics.Increment("ErrorRate")
@@ -641,7 +643,7 @@ func uninitializeFilesystem() {
 		logger.Infof("Successfully deleted directory %s\n", utils.WhistDir)
 	}
 
-	err = os.RemoveAll(utils.WhistPrivateDir)
+	err = fs.RemoveAll(utils.WhistPrivateDir)
 	if err != nil {
 		logger.Errorf("Failed to delete directory %s: error: %v\n", utils.WhistPrivateDir, err)
 		metrics.Increment("ErrorRate")
@@ -649,7 +651,7 @@ func uninitializeFilesystem() {
 		logger.Infof("Successfully deleted directory %s\n", utils.WhistPrivateDir)
 	}
 
-	err = os.RemoveAll(utils.TempDir)
+	err = fs.RemoveAll(utils.TempDir)
 	if err != nil {
 		logger.Errorf("Failed to delete directory %s: error: %v\n", utils.TempDir, err)
 		metrics.Increment("ErrorRate")
