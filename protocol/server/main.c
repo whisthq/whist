@@ -312,9 +312,6 @@ int multithreaded_sync_tcp_packets(void* opaque) {
         if (!data_transferred) whist_usleep(100);
     }
 
-    destroy_clipboard_synchronizer();
-    destroy_file_synchronizer();
-
     return 0;
 }
 
@@ -392,7 +389,14 @@ int main(int argc, char* argv[]) {
     }
 
 #ifdef __linux__
-    signal(SIGTERM, sig_handler);
+    struct sigaction sa = {0};
+    sa.sa_handler = sig_handler;
+    sa.sa_flags = SA_SIGINFO;
+
+    if (sigaction(SIGTERM, &sa, NULL) == -1) {
+        LOG_FATAL("Establishing SIGTERM signal handler failed.");
+    }
+
     XSetIOErrorHandler(xioerror_handler);
 #endif
 
@@ -561,6 +565,9 @@ int main(int argc, char* argv[]) {
         }
 #endif  // ! _WIN32
     }
+
+    destroy_clipboard_synchronizer();
+    destroy_file_synchronizer();
 
     destroy_input_device(server_state.input_device);
     server_state.input_device = NULL;

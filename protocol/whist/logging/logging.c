@@ -604,7 +604,11 @@ static void unix_crash_handler(int sig) {
         // We reset the signal handler to default to allow the error monitor
         // to handle the crash without getting stuck in an infinite loop of
         // crash signal handling
-        signal(sig, SIG_DFL);
+        struct sigaction sa = {0};
+        sa.sa_handler = SIG_DFL;
+        sa.sa_flags = SA_SIGINFO;
+        sigaction(sig, &sa, NULL);
+        //signal(sig, SIG_DFL);
     } else {
         // If the error monitor isn't initialized, we just exit
         exit(1);
