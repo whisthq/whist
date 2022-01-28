@@ -12,9 +12,6 @@ node_modules
 # testing
 coverage
 
-# production
-build
-
 # dynamically generated css
 public/css/tailwind.css
 
