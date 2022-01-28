@@ -4,7 +4,7 @@ import pytest
 
 import app.helpers.aws.aws_instance_post as aws_funcs
 from app.utils.aws.base_ec2_client import EC2Client
-from app.database.models.cloud import db
+from app.models import db
 
 
 @pytest.fixture
