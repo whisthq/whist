@@ -606,9 +606,7 @@ static void unix_crash_handler(int sig) {
         // crash signal handling
         struct sigaction sa = {0};
         sa.sa_handler = SIG_DFL;
-        sa.sa_flags = SA_SIGINFO;
         sigaction(sig, &sa, NULL);
-        //signal(sig, SIG_DFL);
     } else {
         // If the error monitor isn't initialized, we just exit
         exit(1);
@@ -624,7 +622,6 @@ static void init_backtrace_handler(void) {
     // Try to catch all the signals
     struct sigaction sa = {0};
     sa.sa_handler = &unix_crash_handler;
-    sa.sa_flags = SA_SIGINFO;
     for (int i = 1; i < NSIG; i++) {
         // TODO: We should gracefully exit on SIGTERM
         // We do nothing on SIGCHLD, SIGPIPE, and SIGWINCH
