@@ -21,7 +21,7 @@ import { emitOnSignal, waitForSignal } from "@app/main/utils/observables"
 // Handles the application quit logic
 // When we detect that all windows have been closed, we put the application to sleep
 // i.e. keep it active in the user's dock but don't show any windows
-merge(
+const shouldSleep = merge(
   // If all Electron windows have closed and the protocol isn't connected
   fromTrigger(WhistTrigger.electronWindowsAllClosed).pipe(
     withLatestFrom(fromTrigger(WhistTrigger.protocolConnection)),
@@ -32,25 +32,28 @@ merge(
     filter((args: { crashed: boolean }) => !args.crashed)
   ),
   fromTrigger(WhistTrigger.powerResume)
-)
-  .pipe(
-    takeUntil(
-      merge(
-        fromTrigger(WhistTrigger.relaunchAction),
-        fromTrigger(WhistTrigger.clearCacheAction),
-        fromTrigger(WhistTrigger.updateDownloaded).pipe(
-          takeUntil(fromTrigger(WhistTrigger.mandelboxFlowSuccess))
-        ),
-        fromTrigger(WhistTrigger.userRequestedQuit),
-        waitForSignal(
-          fromTrigger(WhistTrigger.authRefreshSuccess),
-          fromTrigger(WhistTrigger.checkPaymentFlowFailure)
-        )
+).pipe(
+  takeUntil(
+    merge(
+      fromTrigger(WhistTrigger.relaunchAction),
+      fromTrigger(WhistTrigger.clearCacheAction),
+      fromTrigger(WhistTrigger.updateDownloaded).pipe(
+        takeUntil(fromTrigger(WhistTrigger.mandelboxFlowSuccess))
+      ),
+      fromTrigger(WhistTrigger.userRequestedQuit),
+      waitForSignal(
+        fromTrigger(WhistTrigger.authRefreshSuccess),
+        fromTrigger(WhistTrigger.checkPaymentFlowFailure)
       )
-    ),
-    take(1) // When we relaunch we reset the application; this ensures we don't relaunch multiple times
-  )
-  .subscribe(() => {
+    )
+  ),
+  take(1) // When we relaunch we reset the application; this ensures we don't relaunch multiple times
+)
+
+shouldSleep
+  .pipe(withLatestFrom(fromTrigger(WhistTrigger.protocol)))
+  .subscribe(([, p]: [any, ChildProcess]) => {
+    destroyProtocol(p)
     logging("Application sleeping", {})
     relaunch({ sleep: true })
   })
@@ -83,8 +86,11 @@ emitOnSignal(
 })
 
 waitForSignal(
-  fromTrigger(WhistTrigger.authRefreshSuccess),
+  fromTrigger(WhistTrigger.authRefreshSuccess).pipe(
+    withLatestFrom(fromTrigger(WhistTrigger.protocol))
+  ),
   fromTrigger(WhistTrigger.checkPaymentFlowFailure)
-).subscribe(() => {
+).subscribe(([, p]: [any, ChildProcess]) => {
+  destroyProtocol(p)
   relaunch({ sleep: false })
 })

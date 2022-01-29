@@ -42,9 +42,12 @@ const threeProtocolFailures = fromTrigger(WhistTrigger.protocolClosed).pipe(
 
 // We solve this by starting the protocol ahead of time and piping the network info
 // (IP, ports, private key) to the protocol when they become available
-withAppActivated(of(null)).subscribe(() => {
-  launchProtocol().catch((err) => Sentry.captureException(err))
-})
+withAppActivated(fromTrigger(WhistTrigger.protocol))
+  .pipe(take(1))
+  .subscribe((p) => {
+    if (p === undefined)
+      launchProtocol().catch((err) => Sentry.captureException(err))
+  })
 
 fromTrigger(WhistTrigger.mandelboxFlowSuccess)
   .pipe(
