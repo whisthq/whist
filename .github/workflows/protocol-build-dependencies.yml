@@ -449,11 +449,13 @@ jobs:
       # media-autobuild_suite needs to be directly in the C:\ drive, as it is very finicky with paths
       - name: On Windows, Git Clone whisthq/FFmpeg and whisthq/media-autobuild_suite (FFmpeg Windows Compilation Helper Tools) to C:\
         if: runner.os == 'Windows'
-        uses: actions/checkout@v2
-        with:
-          repository: m-ab-s/media-autobuild_suite
-          ref: master # Latest stable FFmpeg branch
-          path: C:\media-autobuild_suite
+        shell: cmd
+        run: |
+          REM first, clone whisthq/media-autobuild_suite to C:\media-autobuild_suite
+          git clone "https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/m-ab-s/media-autobuild_suite.git" C:\media-autobuild_suite
+          
+          REM then, clone whisthq/FFmpeg to C:\media-autobuild_suite\build\ffmpeg
+          git clone "https://${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}@github.com/FFmpeg/FFmpeg.git" C:\media-autobuild_suite\build\ffmpeg
 
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
@@ -610,6 +612,7 @@ jobs:
 
       - name: On Linux, Build FFmpeg through Docker
         if: runner.os == 'Linux'
+        working-directory: .github/workflows/helpers/ffmpeg
         run: ./docker-build.sh 20
 
       ###################################################################################
