@@ -27,14 +27,14 @@ app.setPath("userData", loggingBaseFilePath)
 const amplitude = Amplitude.init(config.keys.AMPLITUDE_KEY)
 export const electronLogPath = path.join(loggingBaseFilePath, "logs")
 
-// Initialize log rotation
+// Initialize protocol log rotation
 logRotate(
   path.join(electronLogPath, loggingFiles.protocol),
   { count: 4 },
   (err: any) => console.error(err)
 )
 
-// Initialize log rotation
+// Initialize Electron log rotation
 logRotate(
   path.join(electronLogPath, loggingFiles.client),
   { count: 4 },
