@@ -47,6 +47,9 @@ static const char* const apple_keyboard_mappings[][2] = {
 };
 */
 
+// To add a new keyboard layout, run ibus list-engine in a mandelbox and find the appropriate one
+// for foreign characters, use https://wiki.archlinux.org/title/Input_method or something similar to locate a package
+// and sudo apt install METHOD in the Dockerfile, then add the ibus engine to this mapping
 static const char* const apple_keyboard_mappings[][2] = {
     {"com.apple.keylayout.USExtended", "xkb:us::eng"},  {"com.apple.keylayout.US", "xkb:us::eng"},
     {"com.apple.keylayout.Italian-Pro", "xkb:it::ita"}, {"com.apple.keylayout.Italian", "xkb:it::ita"},
