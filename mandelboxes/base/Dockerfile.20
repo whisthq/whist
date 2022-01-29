@@ -506,6 +506,12 @@ RUN wget -q https://github.com/altdesktop/playerctl/releases/download/v2.3.1/pla
     && dpkg -i ./playerctl-2.3.1_amd64.deb \
     && rm ./playerctl-2.3.1_amd64.deb
 
+RUN apt-get update && apt-get install -y ibus ibus-pinyin at-spi2-core
+
+#COPY yancey/xprofile /home/whist/.xprofile
+#COPY yancey/xprofile /home/whist/.bashrc
+#COPY yancey/xprofile /root/.bashrc
+
 # Set up Whist service to launch X11 display
 COPY display/whist-display-config.env /usr/share/whist
 COPY display/xinitrc /root/.xinitrc
@@ -519,6 +525,8 @@ COPY --chmod=550 display/update-whist-dpi.sh /usr/share/whist/update-whist-dpi.s
 # Set display environment variable
 ENV DISPLAY :10
 
+
+
 #########################
 # Theme
 #########################
@@ -527,6 +535,7 @@ ENV DISPLAY :10
 RUN apt-get update && apt-get install --no-install-recommends -y \
     awesome \
     awesome-extra \
+    xfce4 \
     lxappearance \
     materia-gtk-theme \
     yaru-theme-gtk \
