@@ -11,6 +11,7 @@ import util from "util"
 import * as Amplitude from "@amplitude/node"
 import cloneDeep from "lodash.clonedeep"
 import mapValuesDeep from "deepdash/mapValuesDeep"
+import logRotate from "log-rotate"
 
 import config, {
   loggingBaseFilePath,
@@ -25,6 +26,20 @@ app.setPath("userData", loggingBaseFilePath)
 
 const amplitude = Amplitude.init(config.keys.AMPLITUDE_KEY)
 export const electronLogPath = path.join(loggingBaseFilePath, "logs")
+
+// Initialize protocol log rotation
+logRotate(
+  path.join(electronLogPath, loggingFiles.protocol),
+  { count: 4 },
+  (err: any) => console.error(err)
+)
+
+// Initialize Electron log rotation
+logRotate(
+  path.join(electronLogPath, loggingFiles.client),
+  { count: 4 },
+  (err: any) => console.error(err)
+)
 
 // Open a file handle to append to the logs file.
 // Create the loggingBaseFilePath directory if it does not exist.

@@ -7,7 +7,8 @@
 import { BrowserWindow } from "electron"
 import { autoUpdater } from "electron-updater"
 import { timer } from "rxjs"
-import { takeUntil } from "rxjs/operators"
+import { takeUntil, withLatestFrom } from "rxjs/operators"
+import { ChildProcess } from "child_process"
 import Sentry from "@sentry/electron"
 
 import { CHECK_UPDATE_INTERVAL_IN_MS } from "@app/constants/app"
@@ -22,6 +23,7 @@ import {
   destroyElectronWindow,
   getElectronWindowHash,
 } from "@app/main/utils/windows"
+import { destroyProtocol } from "@app/main/utils/protocol"
 
 // If an update is available, show the update window and download the update
 fromTrigger(WhistTrigger.updateAvailable).subscribe(() => {
@@ -72,7 +74,11 @@ withAppActivated(
 })
 
 fromTrigger(WhistTrigger.updateDownloaded)
-  .pipe(takeUntil(fromTrigger(WhistTrigger.mandelboxFlowSuccess)))
-  .subscribe(() => {
+  .pipe(
+    withLatestFrom(fromTrigger(WhistTrigger.protocol)),
+    takeUntil(fromTrigger(WhistTrigger.mandelboxFlowSuccess))
+  )
+  .subscribe(([, p]: [any, ChildProcess]) => {
+    destroyProtocol(p)
     autoUpdater.quitAndInstall()
   })
