@@ -77,6 +77,7 @@ func RegisterInstance() error {
 
 	// Check if there's a row for us in the database already
 	q := queries.NewQuerier(tx)
+
 	rows, err := q.FindInstanceByID(context.Background(), string(instanceID))
 	if err != nil {
 		return utils.MakeError("RegisterInstance(): Error running query: %s", err)
@@ -189,6 +190,7 @@ func markDraining() error {
 		String: string(InstanceStatusDraining),
 		Status: pgtype.Present,
 	}, string(instanceID))
+
 	if err != nil {
 		return utils.MakeError("Couldn't mark instance as draining: error updating existing row in table `cloud.instance_info`: %s", err)
 	} else if result.RowsAffected() == 0 {

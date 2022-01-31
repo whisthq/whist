@@ -6,17 +6,16 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
+	"github.com/go-co-op/gocron"
 	sa "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default" // Import as sa, short for scaling_algorithms
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
 func main() {
-	// The first thing we want to do is to initialize logzio and Sentry so that
-	// we can catch any errors that might occur, or logs if we print them.
-	logger.InitScalingLogging()
-
 	globalCtx, globalCancel := context.WithCancel(context.Background())
 	goroutineTracker := &sync.WaitGroup{}
 
@@ -38,15 +37,23 @@ func main() {
 
 	// Start scheduler and setup scheduler event chan
 	scheduledEvents := make(chan sa.ScalingEvent, 100)
-	StartSchedulerEvents(globalCtx, goroutineTracker, scheduledEvents)
+	StartSchedulerEvents(scheduledEvents)
+
+	// Start the deploy events once since we are starting the scaling service.
+	StartDeploy(scheduledEvents)
 
 	// algorithmByRegionMap holds all of the scaling algorithms mapped by region.
 	// Use a sync map since we only write the keys once but will be reading multiple
 	// times by different goroutines.
 	algorithmByRegionMap := &sync.Map{}
-	algorithmByRegionMap.Store("default", &sa.DefaultScalingAlgorithm{
-		Region: "us-east",
-	})
+
+	// Load default scaling algorithm for all enabled regions.
+	for _, region := range sa.BundledRegions {
+		name := utils.Sprintf("default-sa-%s", region)
+		algorithmByRegionMap.Store(name, &sa.DefaultScalingAlgorithm{
+			Region: region,
+		})
+	}
 
 	// Instantiate scaling algorithms on allowed regions
 	algorithmByRegionMap.Range(func(key, value interface{}) bool {
@@ -76,6 +83,7 @@ func main() {
 	}
 }
 
+// StartDatabaseSubscriptions sets up the database subscriptions and starts the subscription client.
 func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan subscriptions.SubscriptionEvent) {
 	subscriptionClient := &subscriptions.SubscriptionClient{}
 	subscriptions.SetupScalingSubscriptions(subscriptionClient)
@@ -87,28 +95,50 @@ func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *syn
 
 }
 
-func StartSchedulerEvents(globalCtx context.Context, goroutineTracker *sync.WaitGroup, scheduledEvents chan sa.ScalingEvent) {
+// StartSchedulerEvents starts the scheduler and its events without blocking the main thread.
+func StartSchedulerEvents(scheduledEvents chan sa.ScalingEvent) {
+	s := gocron.NewScheduler(time.UTC)
+
+	// Schedule scale down routine every 10 minutes, start 10 minutes from now.
+	t := time.Now().Add(10 * time.Minute)
+	s.Every(10).Minutes().StartAt(t).Do(func() {
+		// Send to scheduling channel
+		scheduledEvents <- sa.ScalingEvent{
+			Type: "SCHEDULED_SCALE_DOWN",
+		}
+	})
+
+	s.StartAsync()
 }
 
+func StartDeploy(scheduledEvents chan sa.ScalingEvent) {
+	// Get arguments
+	regionImageMap := os.Args[1:]
+
+	// Send image upgrade event to scheduled chan.
+	scheduledEvents <- sa.ScalingEvent{
+		Type: "SCHEDULED_IMAGE_UPGRADE",
+		Data: regionImageMap,
+	}
+}
+
+// getScalingAlgorithm is a helper function that returns the scaling algorithm from the sync map.
 func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent sa.ScalingEvent) sa.ScalingAlgorithm {
-	// Try to get the scaling algoithm on the region the
-	// scaling event was requested.
-	algorithm, ok := algorithmByRegion.Load(scalingEvent.Region)
+	// Try to get the scaling algorithm on the region the scaling event was requested.
+	// TODO: figure out how to get non-default scaling algorihtms.
+	name := utils.Sprintf("default-sa-%s", scalingEvent.Region)
+	algorithm, ok := algorithmByRegion.Load(name)
 	if ok {
 		return algorithm.(sa.ScalingAlgorithm)
 	}
 
-	logger.Warningf("%v not found on algorithm map. Using default.", scalingEvent.Region)
-
-	// Try to get the default scaling algorithm
-	algorithm, ok = algorithmByRegion.Load("default")
-	if ok {
-		return algorithm.(sa.ScalingAlgorithm)
-	}
+	logger.Errorf("Failed to get scaling algorithm in %v", scalingEvent.Region)
 
 	return nil
 }
 
+// eventLoop is the main loop of the scaling service which will receive events from different sources
+// and send them to the appropiate channels.
 func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup,
 	subscriptionEvents <-chan subscriptions.SubscriptionEvent, scheduledEvents <-chan sa.ScalingEvent, algorithmByRegion *sync.Map) {
 
@@ -139,37 +169,19 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 				case *sa.DefaultScalingAlgorithm:
 					algorithm.InstanceEventChan <- scalingEvent
 				}
-
-			case *subscriptions.ImageEvent:
-				var scalingEvent sa.ScalingEvent
-
-				scalingEvent.Type = "IMAGE_DATABASE_EVENT"
-
-				if len(subscriptionEvent.Images) > 0 {
-					image := subscriptionEvent.Images[0]
-
-					scalingEvent.Data = image
-					scalingEvent.Region = image.Region
-				}
-
-				// Start scaling algorithm based on region
-				logger.Infof("Received database event.")
-				algorithm := getScalingAlgorithm(algorithmByRegion, scalingEvent)
-
-				switch algorithm := algorithm.(type) {
-				case *sa.DefaultScalingAlgorithm:
-					algorithm.ImageEventChan <- scalingEvent
-				}
 			}
 		case scheduledEvent := <-scheduledEvents:
 			// Start scaling algorithm based on region
-			logger.Infof("Received scheduled event.")
-			algorithm := getScalingAlgorithm(algorithmByRegion, scheduledEvent)
+			logger.Infof("Received scheduled event. %v", scheduledEvent)
 
-			switch algorithm := algorithm.(type) {
-			case *sa.DefaultScalingAlgorithm:
-				logger.Infof("Sending to scheduled event chan")
-				algorithm.ScheduledEventChan <- scheduledEvent
+			for _, region := range sa.BundledRegions {
+				scheduledEvent.Region = region
+				algorithm := getScalingAlgorithm(algorithmByRegion, scheduledEvent)
+				switch algorithm := algorithm.(type) {
+				case *sa.DefaultScalingAlgorithm:
+					logger.Infof("Sending to scheduled event chan")
+					algorithm.ScheduledEventChan <- scheduledEvent
+				}
 			}
 		}
 	}

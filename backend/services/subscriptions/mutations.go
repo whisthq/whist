@@ -29,3 +29,17 @@ var DeleteInstanceById struct {
 		AffectedRows graphql.Int `graphql:"affected_rows"`
 	} `graphql:"delete_whist_instances(where: {id: {_eq: $id}})"`
 }
+
+// InsertOneImage inserts one image to the database.
+var InsertOneImage struct {
+	MutationResponse struct {
+		AffectedRows graphql.Int `graphql:"affected_rows"`
+	} `graphql:"insert_whist_images_one(objects: $objects)"`
+}
+
+// UpdateImage updates the row of an image to the given values.
+var UpdateImage struct {
+	MutationResponse struct {
+		AffectedRows graphql.Int `graphql:"affected_rows"`
+	} `graphql:"update_whist_images(where: {region: {_eq: $region}, _and: {provider: {_eq: $provider}}}, _set: {client_sha: $client_sha, image_id: $image_id, provider: $provider, region: $region, updated_at: $updated_at})"`
+}

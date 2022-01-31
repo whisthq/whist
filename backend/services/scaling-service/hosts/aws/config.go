@@ -2,8 +2,8 @@ package hosts
 
 import ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 
-// We want to have multiple attempts at starting an instance
-// if it fails due to insufficient capacity.
+// Configuration for retry logic
+
 const (
 	WAIT_TIME_BEFORE_RETRY_IN_SECONDS = 15
 	MAX_WAIT_TIME_IN_SECONDS          = 200
@@ -11,7 +11,12 @@ const (
 )
 
 // Configuration for instances
+
 const (
+	// The minimum of instances to launch. Necessary for the AWS sdk.
 	MIN_INSTANCE_COUNT = 1
-	INSTANCE_TYPE      = ec2Types.InstanceTypeG4dn2xlarge
+
+	// The type of instances we want to launch. TODO: change data structure when
+	// different instance types are added.
+	INSTANCE_TYPE = ec2Types.InstanceTypeG4dn2xlarge
 )

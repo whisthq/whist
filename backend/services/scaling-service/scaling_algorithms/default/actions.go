@@ -2,61 +2,392 @@ package scaling_algorithms
 
 import (
 	"context"
+	"time"
 
-	"github.com/whisthq/whist/backend/services/scaling-service/hosts"
+	"github.com/hasura/go-graphql-client"
+	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/utils"
+	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
-func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Context, host hosts.HostHandler, event ScalingEvent, instance subscriptions.Instance) error {
+// VerifyInstanceScaleDown is a scaling action which fires when an instace is marked as DRAINING
+// on the database. Its purpose is to verify and wait until the instance is terminated from the
+// cloud provider and removed from the database, if it doesn't it takes the necessary steps to
+// notify and ensure the database and the cloud provider don't get out of sync.
+func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Context, event ScalingEvent, instance subscriptions.Instance) error {
+	logger.Infof("Starting verify scale down action for event: %v", event)
+	defer logger.Infof("Finished verify scale down action.")
+
 	// First, verify if the draining instance has mandelboxes running
+	mandelboxesRunningQuery := subscriptions.QueryInstanceById
+	queryParams := map[string]interface{}{
+		"id": graphql.String(instance.ID),
+	}
 
-	// If instance has active mandelboxes, leave it alone
+	for _, instance := range mandelboxesRunningQuery.WhistInstances {
+		// Check if lingering instance is safe to terminate
+		if len(instance.Mandelboxes) > 0 {
+			logger.Infof("Not scaling down draining instance because it has active associated mandelboxes.")
+			return nil
+		}
+	}
 
-	// If not, wait until the instance is terminated from the cloud provider
+	// If not, wait until the host service terminates the instance.
+	err := s.Host.WaitForInstanceTermination(scalingCtx, []string{instance.ID})
+	if err != nil {
+		// Err is already wrapped here.
+		// TODO: Notify that the instance didn't terminate itself, should be investigated.
+		message := `Instance %v failed to terminate correctly, either the instance doesn't exist
+		on AWS or something is blocking the shut down procedure. Investigate immediately.`
+		logger.Errorf(message, instance.ID)
+	}
 
 	// Once its terminated, verify that it was removed from the database
+	instanceExistsQuery := subscriptions.QueryInstanceById
+	queryParams = map[string]interface{}{
+		"id": graphql.String(instance.ID),
+	}
+
+	err = s.GraphQLClient.Query(scalingCtx, &instanceExistsQuery, queryParams)
+	if err != nil {
+		return utils.MakeError("failed to query database for instance with params: %v. Error: %v", queryParams, err)
+	}
 
 	// Verify that instance removed itself from the database
+	instanceResult := instanceExistsQuery.WhistInstances
+	if len(instanceResult) == 0 {
+		logger.Info("Instance %v was successfully removed from database.", instance.ID)
+		return nil
+	}
 
-	// If instance still exists on the database, forcefully delete as it no longer exists on cloud provider
+	// If instance still exists on the database, delete as it no longer exists on cloud provider
+	logger.Info("Removing instance %v from database as it no longer exists on cloud provider.", instance.ID)
+
+	instanceDeleteMutation := &subscriptions.DeleteInstanceById
+	deleteParams := map[string]interface{}{
+		"id": graphql.String(instance.ID),
+	}
+
+	err = s.GraphQLClient.Mutate(scalingCtx, instanceDeleteMutation, deleteParams)
+	if err != nil {
+		return utils.MakeError("failed to delete instance from database with params: %v. Error: %v", queryParams, err)
+	}
+
+	logger.Infof("Deleted %v rows from database.", instanceDeleteMutation.MutationResponse.AffectedRows)
+
 	return nil
-
 }
 
-func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Context, host hosts.HostHandler, event ScalingEvent) error {
+// VerifyCapacity is a scaling action which checks the database to verify if we have the desired
+// capacity (instance buffer). This action is run at the end of the other actions.
+func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, event ScalingEvent) error {
+	logger.Infof("Starting verify capacity action for event: %v", event)
+	defer logger.Infof("Finished verify capacity action.")
+
+	activeInstancesQuery := subscriptions.QueryInstancesByStatusOnRegion
+	queryParams := map[string]interface{}{
+		"status": graphql.String("ACTIVE"),
+		"region": graphql.String(event.Region),
+	}
+
+	err := s.GraphQLClient.Query(scalingCtx, &activeInstancesQuery, queryParams)
+	if err != nil {
+		return utils.MakeError("failed to query database for active instances. Err: %v", err)
+	}
+
+	currentlyActive := activeInstancesQuery.WhistInstances
+	if len(currentlyActive) < DEFAULT_INSTANCE_BUFFER {
+		logger.Infof("Current number of instances on %v is less than desired %v. Scaling up to match.", event.Region, DEFAULT_INSTANCE_BUFFER)
+
+		// Query for the current image id
+		latestImageQuery := subscriptions.QueryLatestImage
+		queryParams := map[string]interface{}{
+			"provider": graphql.String("aws"), // TODO: set different provider when doing multi-cloud.
+			"region":   graphql.String(event.Region),
+		}
+
+		err := s.GraphQLClient.Query(scalingCtx, &latestImageQuery, queryParams)
+		if err != nil {
+			return utils.MakeError("failed to query database for current image. Err: %v", err)
+		}
+
+		if len(latestImageQuery.WhistImages) == 0 {
+			return utils.MakeError("current image doesn't exist on %v", event.Region)
+		}
+
+		latestImageId := string(latestImageQuery.WhistImages[0].ImageID)
+
+		// Start scale up action for desired number of instances
+		wantedInstances := DEFAULT_INSTANCE_BUFFER - len(currentlyActive)
+		err = s.ScaleUpIfNecessary(wantedInstances, scalingCtx, event, latestImageId)
+		if err != nil {
+			// err is already wrapped here
+			return err
+		}
+	} else {
+		logger.Infof("Number of active instances in %v matches desired capacity of %v.", event.Region, DEFAULT_INSTANCE_BUFFER)
+	}
+
+	return nil
+}
+
+// ScaleDownIfNecessary is a scaling action which runs every 10 minutes and scales down free and
+// lingering innstances, respecting the buffer defined for each region. Free instances will be
+// marked as draining, and lingering instances will be terminated and removed from the database.
+func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Context, event ScalingEvent) error {
+	logger.Infof("Starting scale down action for event: %v", event)
+	defer logger.Infof("Finished scale down action.")
+
+	var (
+		freeInstances, lingeringInstances subscriptions.WhistInstances
+		lingeringIds                      []string
+		err                               error
+	)
+
 	// check database for active instances without mandelboxes
+	activeInstancesQuery := subscriptions.QueryInstancesByStatusOnRegion
+	queryParams := map[string]interface{}{
+		"status": graphql.String("ACTIVE"),
+		"region": graphql.String(event.Region),
+	}
+
+	err = s.GraphQLClient.Query(scalingCtx, &activeInstancesQuery, queryParams)
+	if err != nil {
+		return utils.MakeError("failed to query database for active instances. Err: %v", err)
+	}
+
+	instancesToScaleDown := len(activeInstancesQuery.WhistInstances)
+	for _, instance := range activeInstancesQuery.WhistInstances {
+		associatedMandelboxes := len(instance.Mandelboxes)
+		wantedInstances := DEFAULT_INSTANCE_BUFFER
+
+		if associatedMandelboxes == 0 &&
+			instancesToScaleDown > wantedInstances {
+			freeInstances = append(freeInstances, instance)
+			instancesToScaleDown--
+		}
+	}
+
+	// check database for draining instances without running mandelboxes
+	lingeringInstancesQuery := subscriptions.QueryInstancesByStatusOnRegion
+	queryParams = map[string]interface{}{
+		"status": graphql.String("DRAINING"),
+		"region": graphql.String(event.Region),
+	}
+
+	err = s.GraphQLClient.Query(scalingCtx, &lingeringInstancesQuery, queryParams)
+	if err != nil {
+		return utils.MakeError("failed to query database for lingering instances. Err: %v", err)
+	}
+
+	for _, instance := range lingeringInstancesQuery.WhistInstances {
+		// Check if lingering instance is safe to terminate
+		if len(instance.Mandelboxes) == 0 {
+			lingeringInstances = append(lingeringInstances, instance)
+			lingeringIds = append(lingeringIds, string(instance.ID))
+		} else {
+
+			// If not, notify, could be a stuck mandelbox (check if mandelbox is > day old?)
+			logger.Warningf("Instance %v has %v associated mandelboxes and is marked as Draining.", instance.ID, len(instance.Mandelboxes))
+		}
+	}
+
+	// We want to verify if we have the desired capacity after scaling down.
+	defer func() {
+		err = s.VerifyCapacity(scalingCtx, event)
+	}()
+
+	// Verify if there are lingering instances and notify.
+	if len(lingeringInstances) > 0 {
+		logger.Errorf("There are %v lingering instances on %v. Investigate immediately! Their IDs are %v", len(lingeringInstances), event.Region, lingeringIds)
+
+	} else {
+		logger.Info("There are no lingering instances in %v.", event.Region)
+	}
 
 	// Verify if there are free instances that can be scaled down
+	if len(freeInstances) == 0 {
+		logger.Info("There are no free instances to scale down in %v.", event.Region)
+		return nil
+	}
 
-	// check database for draining instances without mandelboxes
+	logger.Info("Scaling down %v free instances on %v.", len(freeInstances), event.Region)
 
-	// Verify if there are lingering instances that can be scaled down
+	drainMutation := subscriptions.UpdateInstanceStatus
+	for _, instance := range freeInstances {
+		mutationParams := map[string]interface{}{
+			"id":     graphql.String(instance.ID),
+			"status": graphql.String("DRAINING"),
+		}
 
-	// If so, forcefully remove terminnate and remove from database
+		err = s.GraphQLClient.Mutate(scalingCtx, &drainMutation, mutationParams)
+		if err != nil {
+			logger.Errorf("Failed to mark instance %v as draining. Err: %v", instance, err)
+		}
 
-	// If we have less instances than desired, try to scale up
+		logger.Info("Marked instance %v as draining on database.", instance.ID)
+	}
 
-	return nil
+	return err
 }
 
-func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scalingCtx context.Context, host hosts.HostHandler, event ScalingEvent, imageID string) error {
-	// Try scale up in given region
+// ScaleUpIfNecessary is a scaling action that launched the received number of instances on
+// the cloud provider and registers them on the database with the initial values.
+func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scalingCtx context.Context, event ScalingEvent, imageID string) error {
+	logger.Infof("Starting scale up action for event: %v", event)
+	defer logger.Infof("Finished scale up action.")
 
-	// Wait for instances to be ready on cloud provider
+	// Try scale up in given region
+	instanceNum := int32(instancesToScale)
+
+	createdInstances, err := s.Host.SpinUpInstances(scalingCtx, instanceNum, imageID)
+	if err != nil {
+		return utils.MakeError("Failed to spin up instances, created %v, err: %v", createdInstances, err)
+	}
 
 	// Check if we could create the desired number of instances
+	if len(createdInstances) != instancesToScale {
+		return utils.MakeError("Could not scale up %v instances, only scaled up %v.", instancesToScale, len(createdInstances))
+	}
+
+	// Create slice with newly created instance ids
+	var (
+		createdInstanceIds []string
+		instancesForDb     []whist_instances_insert_input
+	)
+
+	for _, instance := range createdInstances {
+		createdInstanceIds = append(createdInstanceIds, instance.ID)
+		instancesForDb = append(instancesForDb, whist_instances_insert_input{
+			ID:                graphql.String(instance.ID),
+			IPAddress:         instance.IPAddress,
+			Provider:          graphql.String(instance.Provider),
+			Region:            graphql.String(instance.Region),
+			ImageID:           graphql.String(instance.ImageID),
+			ClientSHA:         graphql.String(instance.ClientSHA),
+			Type:              graphql.String(instance.Type),
+			RemainingCapacity: graphql.Int(instanceCapacity[instance.Type]),
+			Status:            graphql.String(instance.Status),
+			CreatedAt:         instance.CreatedAt,
+			UpdatedAt:         instance.UpdatedAt,
+		})
+		logger.Infof("Created tagged instance with ID %v", instance.ID)
+	}
+
+	// Wait for new instances to be ready before adding to db
+	err = s.Host.WaitForInstanceReady(scalingCtx, createdInstanceIds)
+	if err != nil {
+		return utils.MakeError("error waiting for new instances to be ready. Err: %v", err)
+	}
+
+	logger.Infof("Inserting newly created instances to database.")
 
 	// If successful, write to db
+	insertMutation := subscriptions.InsertInstances
+	mutationParams := map[string]interface{}{
+		"objects": instancesForDb,
+	}
+
+	err = s.GraphQLClient.Mutate(scalingCtx, &insertMutation, mutationParams)
+	if err != nil {
+		return utils.MakeError("Failed to insert instances into database. Error: %v", err)
+	}
+
+	logger.Infof("Inserted %v rows to database.", insertMutation.MutationResponse.AffectedRows)
+
 	return nil
 }
 
-func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, host hosts.HostHandler, event ScalingEvent, image subscriptions.Image) error {
-	// create instance buffer with new image
+// UpgradeImage is a scaling action which runs when a new version is deployed. Its responsible of
+// starting a buffer of instances with the new image and scaling down instances with the previous
+// image.
+func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event ScalingEvent, newImageID string) error {
+	logger.Infof("Starting upgrade image action for event: %v", event)
+	defer logger.Infof("Finished upgrade image action.")
 
-	// wait for buffer to be ready
+	// Query for the current image id
+	latestImageQuery := subscriptions.QueryLatestImage
+	queryParams := map[string]interface{}{
+		"provider": graphql.String("aws"), // TODO: set different provider when doing multi-cloud.
+		"region":   graphql.String(event.Region),
+	}
+
+	err := s.GraphQLClient.Query(scalingCtx, &latestImageQuery, queryParams)
+	if err != nil {
+		return utils.MakeError("failed to query database for current image on %v. Err: %v", event.Region, err)
+	}
+
+	if len(latestImageQuery.WhistImages) == 0 {
+		return utils.MakeError("current image doesn't exist on %v", event.Region)
+	}
+
+	oldImageID := string(latestImageQuery.WhistImages[0].ImageID)
+
+	// create instance buffer with new image
+	logger.Infof("Creating new instance buffer for image %v", newImageID)
+	bufferInstances, err := s.Host.SpinUpInstances(scalingCtx, DEFAULT_INSTANCE_BUFFER, newImageID)
+	if err != nil {
+		return utils.MakeError("failed to create instance buffer for image %v. Error: %v", newImageID, err)
+	}
+
+	// create slice of newly created instance ids
+	var bufferIDs []string
+	for _, instance := range bufferInstances {
+		bufferIDs = append(bufferIDs, instance.ID)
+	}
+
+	// wait for buffer to be ready.
+	err = s.Host.WaitForInstanceReady(scalingCtx, bufferIDs)
+	if err != nil {
+		return utils.MakeError("error waiting for instances to be ready. Error: %v", err)
+	}
+
+	// get old instances from database
+	oldInstancesQuery := subscriptions.QueryInstancesByImageID
+	queryParams = map[string]interface{}{
+		"image_id": graphql.String(oldImageID),
+	}
+
+	err = s.GraphQLClient.Query(scalingCtx, &oldInstancesQuery, queryParams)
+	if err != nil {
+		return utils.MakeError("failed to query database for instances with image %v. Err: %v", oldImageID, err)
+	}
 
 	// drain instances with old image
+	logger.Infof("Scaling down %v instances from previous image %v.", len(oldInstancesQuery.WhistInstances), oldImageID)
+
+	drainMutation := subscriptions.UpdateInstanceStatus
+	for _, instance := range oldInstancesQuery.WhistInstances {
+		mutationParams := map[string]interface{}{
+			"id":     graphql.String(instance.ID),
+			"status": graphql.String("DRAINING"),
+		}
+
+		err = s.GraphQLClient.Mutate(scalingCtx, &drainMutation, mutationParams)
+		if err != nil {
+			logger.Errorf("Failed to mark instance %v as draining. Err: %v", instance, err)
+		}
+
+		logger.Info("Marked instance %v as draining on database.", instance.ID)
+	}
 
 	// swapover active image on database
+	logger.Infof("Updating old %v image %v to new image %v on database.", event.Region, oldImageID, newImageID)
+
+	insertMutation := subscriptions.UpdateImage
+	mutationParams := map[string]interface{}{
+		"provider":   graphql.String("aws"),
+		"region":     graphql.String(event.Region),
+		"image_id":   graphql.String(newImageID),
+		"client_sha": graphql.String(metadata.GetGitCommit()),
+		"updated_at": timestamptz{time.Now()},
+	}
+
+	err = s.GraphQLClient.Mutate(scalingCtx, &insertMutation, mutationParams)
+	if err != nil {
+		return utils.MakeError("Failed to insert image %v into database. Error: %v", newImageID, err)
+	}
+
 	return nil
 }

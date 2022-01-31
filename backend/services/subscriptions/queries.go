@@ -68,6 +68,11 @@ var QueryInstancesByStatus struct {
 	WhistInstances `graphql:"whist_instances(where: {status: {_eq: $status}})"`
 }
 
+// QueryInstancesByImageID returns any instance with the given image id.
+var QueryInstancesByImageID struct {
+	WhistInstances `graphql:"whist_instances(where: {image_id: {_eq: $image_id}})"`
+}
+
 // QueryInstancesByStatusOnRegion returns any instance that matches the given status and
 // is located on the given region.
 var QueryInstancesByStatusOnRegion struct {
@@ -83,4 +88,9 @@ var QueryMandelboxesByInstanceId struct {
 // QueryMandelboxStatus returns every mandelbox that matches the given status.
 var QueryMandelboxByStatus struct {
 	WhistMandelboxes `graphql:"whist_mandelboxes(where: {status: {_eq: $status}})"`
+}
+
+// QueryLatestImage returns the latest image from the database for the specified provider/region pair.
+var QueryLatestImage struct {
+	WhistImages `graphql:"  whist_images(where: {provider: {_eq: $provider}, _and: {region: {_eq: $region}}}, order_by: {updated_at: desc})"`
 }

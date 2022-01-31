@@ -1,6 +1,7 @@
 package scaling_algorithms
 
 import (
+	"context"
 	"sync"
 
 	"github.com/whisthq/whist/backend/services/scaling-service/hosts"
@@ -89,21 +90,79 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 	goroutineTracker.Add(1)
 	go func() {
 
+		defer goroutineTracker.Done()
+
 		for {
 			logger.Infof("Scaling algorithm listening for events...")
 
 			select {
 			case instanceEvent := <-s.InstanceEventChan:
 				logger.Infof("Scaling algorithm received an instance database event with value: %v", instanceEvent)
-			case imageEvent := <-s.ImageEventChan:
-				logger.Infof("Scaling algorithm received an image database event with value: %v", imageEvent)
+				instance := instanceEvent.Data.(subscriptions.Instance)
+
+				if instance.Status == "DRAINING" {
+
+					goroutineTracker.Add(1)
+					go func() {
+						defer goroutineTracker.Done()
+
+						// Create context for scaling operation
+						scalingCtx, scalingCancel := context.WithCancel(context.Background())
+						err := s.VerifyInstanceScaleDown(scalingCtx, instanceEvent, instance)
+
+						// Cancel context once the operation is done
+						scalingCancel()
+
+						if err != nil {
+							logger.Errorf("Error verifying instance scale down. Error: %v", err)
+						}
+					}()
+				}
 			case scheduledEvent := <-s.ScheduledEventChan:
 				switch scheduledEvent.Type {
 				case "SCHEDULED_SCALE_DOWN":
 					logger.Infof("Scaling algorithm received a scheduled scale down event with value: %v", scheduledEvent)
+
+					goroutineTracker.Add(1)
+					go func() {
+						defer goroutineTracker.Done()
+
+						scalingCtx, scalingCancel := context.WithCancel(context.Background())
+						err := s.ScaleDownIfNecessary(scalingCtx, scheduledEvent)
+						if err != nil {
+							logger.Errorf("Error running scale down job on region %v. Err: %v", scheduledEvent.Region, err)
+						}
+
+						scalingCancel()
+					}()
+				case "SCHEDULED_IMAGE_UPGRADE":
+					logger.Infof("Scaling algorithm received an image upgrade event with value: %v", scheduledEvent)
+
+					goroutineTracker.Add(1)
+					go func() {
+						defer goroutineTracker.Done()
+
+						logger.Infof("%v", scheduledEvent)
+
+						if scheduledEvent.Data == nil {
+							logger.Errorf("Error running image upgrade, event data is nil.")
+							return
+						}
+
+						scalingCtx, scalingCancel := context.WithCancel(context.Background())
+
+						// Get arguments from scheduled event
+						regionImageMap := scheduledEvent.Data.(map[string]string)
+
+						err := s.UpgradeImage(scalingCtx, scheduledEvent, regionImageMap[scheduledEvent.Region])
+						if err != nil {
+							logger.Errorf("Error running image upgrade on region %v. Err: %v", scheduledEvent.Region, err)
+						}
+
+						scalingCancel()
+					}()
 				}
 			}
 		}
 	}()
-
 }
