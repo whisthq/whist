@@ -15,7 +15,6 @@ type GraphQLQuery interface{}
 // with the GraphQL client, which marshals/unmarshals using this type. Only use for GraphQL
 // operations.
 type WhistInstances []struct {
-<<<<<<< HEAD
 	ID                graphql.String   `graphql:"id"`
 	Provider          graphql.String   `graphql:"provider"`
 	Region            graphql.String   `graphql:"region"`
@@ -28,19 +27,6 @@ type WhistInstances []struct {
 	CreatedAt         time.Time        `graphql:"created_at"`
 	UpdatedAt         time.Time        `graphql:"updated_at"`
 	Mandelboxes       WhistMandelboxes `graphql:"mandelboxes"`
-=======
-	ID                graphql.String `graphql:"id"`
-	Provider          graphql.String `graphql:"provider"`
-	Region            graphql.String `graphql:"region"`
-	ImageID           graphql.String `graphql:"image_id"`
-	ClientSHA         graphql.String `graphql:"client_sha"`
-	IPAddress         graphql.String `graphql:"ip_addr"`
-	Type              graphql.String `graphql:"instance_type"`
-	RemainingCapacity graphql.Int    `graphql:"remaining_capacity"`
-	Status            graphql.String `graphql:"status"`
-	CreatedAt         graphql.String `graphql:"created_at"`
-	UpdatedAt         graphql.String `graphql:"updated_at"`
->>>>>>> ad367b0de (Add instance type field, update refs on host service)
 }
 
 // WhistMandelboxes is the mapping of the `whist.mandelboxes` table. This type interacts directly
@@ -53,11 +39,7 @@ type WhistMandelboxes []struct {
 	UserID     graphql.String `graphql:"user_id"`
 	SessionID  graphql.String `graphql:"session_id"`
 	Status     graphql.String `graphql:"status"`
-<<<<<<< HEAD
 	CreatedAt  time.Time      `graphql:"created_at"`
-=======
-	CreatedAt  graphql.String `graphql:"created_at"`
->>>>>>> ad367b0de (Add instance type field, update refs on host service)
 }
 
 // WhistImages is the mapping of the `whist.images` table. This type interacts directly

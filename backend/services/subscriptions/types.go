@@ -1,14 +1,10 @@
 package subscriptions // import "github.com/whisthq/whist/backend/services/subscriptions"
 
-<<<<<<< HEAD
 import (
 	"time"
 
 	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
 )
-=======
-import mandelboxtypes "github.com/whisthq/whist/backend/core-go/types"
->>>>>>> ad367b0de (Add instance type field, update refs on host service)
 
 // HasuraParams contains the Heroku URL and Admin AccessKey to pass
 // to the client during initialization.
@@ -20,7 +16,6 @@ type HasuraParams struct {
 // Instance represents a host from the "whist_instances" table. This type is
 // meant to be used for development purposes.
 type Instance struct {
-<<<<<<< HEAD
 	ID                string    `json:"id"`
 	Provider          string    `json:"provider"`
 	Region            string    `json:"region"`
@@ -32,19 +27,6 @@ type Instance struct {
 	Status            string    `json:"status"`
 	CreatedAt         time.Time `json:"created_at"`
 	UpdatedAt         time.Time `json:"updated_at"`
-=======
-	ID                string `json:"id"`
-	Provider          string `json:"provider"`
-	Region            string `json:"region"`
-	ImageID           string `json:"image_id"`
-	ClientSHA         string `json:"client_sha"`
-	IPAddress         string `json:"ip_addr"`
-	Type              string `json:"instance_type"`
-	RemainingCapacity int64  `json:"remaining_capacity"`
-	Status            string `json:"status"`
-	CreatedAt         string `json:"created_at"`
-	UpdatedAt         string `json:"updated_at"`
->>>>>>> ad367b0de (Add instance type field, update refs on host service)
 }
 
 // Mandelbox represents a host from the "whist_mandelboxes" table. This type is
@@ -56,11 +38,7 @@ type Mandelbox struct {
 	UserID     mandelboxtypes.UserID      `json:"user_id"`
 	SessionID  string                     `json:"session_id"`
 	Status     string                     `json:"status"`
-<<<<<<< HEAD
 	CreatedAt  time.Time                  `json:"created_at"`
-=======
-	CreatedAt  string                     `json:"created_at"`
->>>>>>> ad367b0de (Add instance type field, update refs on host service)
 }
 
 // Image represents a host from the "whist_images" table. This type is

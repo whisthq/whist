@@ -917,30 +917,14 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 						metrics.Increment("ErrorRate")
 					}
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 					instanceID, err := aws.GetInstanceID()
-=======
-					instanceId, err := aws.GetInstanceID()
->>>>>>> ad367b0de (Add instance type field, update refs on host service)
-=======
-					instanceID, err := aws.GetInstanceID()
->>>>>>> b58275b09 (Update queries and files in dbdriver)
 					if err != nil {
 						logger.Errorf("Error getting instance name from AWS, %v", err)
 						metrics.Increment("ErrorRate")
 					}
 					// Create a mandelbox object as would be received from a Hasura subscription.
 					mandelbox := subscriptions.Mandelbox{
-<<<<<<< HEAD
-<<<<<<< HEAD
 						InstanceID: string(instanceID),
-=======
-						InstanceID: string(instanceId),
->>>>>>> ad367b0de (Add instance type field, update refs on host service)
-=======
-						InstanceID: string(instanceID),
->>>>>>> b58275b09 (Update queries and files in dbdriver)
 						ID:         jsonReq.MandelboxID,
 						SessionID:  "1234",
 						UserID:     userID,
