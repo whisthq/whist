@@ -130,14 +130,14 @@ jobs:
 
       - name: Determine heroku app name
         run: |
-          if [[ -z ${GITHUB_BASE_REF} ]]; then
+          if [[ ${GITHUB_BASE_REF} == dev || ${GITHUB_REF_NAME} == dev ]]; then
               HEROKU_APP_NAME=whist-dev-server
-          elif [[ ${GITHUB_BASE_REF} == dev ]]; then
-              HEROKU_APP_NAME=whist-dev-server
-          elif [[ ${GITHUB_BASE_REF} == staging ]]; then
+          elif [[ ${GITHUB_BASE_REF} == staging || ${GITHUB_REF_NAME} == staging ]]; then
               HEROKU_APP_NAME=whist-staging-server
-          elif [[ ${GITHUB_BASE_REF} == prod ]]; then
+          elif [[ ${GITHUB_BASE_REF} == prod || ${GITHUB_REF_NAME} == prod ]]; then
               HEROKU_APP_NAME=whist-prod-server
+          elif [[ -z ${GITHUB_BASE_REF} ]]; then
+              HEROKU_APP_NAME=whist-dev-server
           else
               echo 'Error: Invalid branch' && false
           fi
