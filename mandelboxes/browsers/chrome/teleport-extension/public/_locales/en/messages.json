@@ -1,10 +1,10 @@
 {
-    "extName": {
-        "message": "Whist Teleport",
-        "description": "Extension name"
-    },
-    "extDesc": {
-        "message": "",
-        "description": "Teleport allows you to seamlessly upload and download files to your streamed browser."
-    }
+  "extName": {
+    "message": "Whist Teleport",
+    "description": "Extension name"
+  },
+  "extDesc": {
+    "message": "",
+    "description": "Teleport allows you to seamlessly upload and download files to your streamed browser."
+  }
 }

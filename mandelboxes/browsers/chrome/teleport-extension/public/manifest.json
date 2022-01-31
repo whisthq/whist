@@ -1,13 +1,13 @@
 {
-    "name": "__MSG_extName__",
-    "version": "1.0.0",
-    "manifest_version": 2,
-    "description": "__MSG_extDesc__",
-    "icons": {},
-    "background": {
-        "persistent": false,
-        "scripts": ["js/downloadHandler.js"]
-    },
-    "default_locale": "en",
-    "permissions": ["downloads", "downloads.shelf", "nativeMessaging"]
+  "name": "__MSG_extName__",
+  "version": "1.0.0",
+  "manifest_version": 3,
+  "description": "__MSG_extDesc__",
+  "icons": {},
+  "background": {
+    "service_worker": "js/serviceWorker.js"
+  },
+  "default_locale": "en",
+  "permissions": ["downloads", "downloads.shelf", "nativeMessaging", "tabs"],
+  "host_permissions": ["*://*/*"]
 }
