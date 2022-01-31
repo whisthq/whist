@@ -63,3 +63,11 @@ createTrigger(
     fromTrigger(WhistTrigger.protocolClosed).pipe(mapTo(false))
   )
 )
+
+// Observable that fires if the user force quits with Cmd+Q
+createTrigger(
+  WhistTrigger.userRequestedQuit,
+  fromTrigger(WhistTrigger.protocolStdoutData).pipe(
+    filter((data: string) => data.includes("QUIT_APPLICATION"))
+  )
+)
