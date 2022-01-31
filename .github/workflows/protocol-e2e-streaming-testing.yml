@@ -7,8 +7,8 @@ name: "Protocol: End-to-End Streaming Testing"
 
 on:
   schedule:
-    # Run dev benchmarking once per day at 00:01 UTC.
-    - cron: "1 0 * * *"
+    # Run dev benchmarking once per day on weekdays (days of the week 1-5) at 00:01 UTC.
+    - cron: "1 0 * * 1,2,3,4,5"
   workflow_dispatch:
 
 jobs:
