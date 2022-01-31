@@ -392,7 +392,12 @@ int main(int argc, char* argv[]) {
     }
 
 #ifdef __linux__
-    signal(SIGTERM, sig_handler);
+    struct sigaction sa = {0};
+    sa.sa_handler = sig_handler;
+    if (sigaction(SIGTERM, &sa, NULL) == -1) {
+        LOG_FATAL("Establishing SIGTERM signal handler failed.");
+    }
+
     XSetIOErrorHandler(xioerror_handler);
 #endif
 

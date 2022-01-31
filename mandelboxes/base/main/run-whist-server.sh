@@ -184,8 +184,13 @@ echo "Remaining job PIDs: $(jobs -p)"
 kill $whist_application_pid ||:
 kill $whist_server_pid ||:
 
-# Wait for whist-application to finish terminating, ignoring exit code (since
+# Wait for whist-application to finish terminating, ignoring exit code
+echo "Waiting for Whist Application Runner to finish"
 wait $whist_application_runuser_pid ||:
+
+# Wait for WhistServer to gracefully exit
+echo "Waiting on WhistServer to exit"
+wait $whist_server_pid ||:
 
 echo "Both whist-application and WhistServer have exited."
 
