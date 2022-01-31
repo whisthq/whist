@@ -13,6 +13,8 @@ import (
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
+var fs = utils.Fs
+
 // NewS3Client returns a new S3 client.
 func NewS3Client(region string) (*s3.Client, error) {
 	cfg, err := config.LoadDefaultConfig(context.Background())

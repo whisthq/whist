@@ -2,14 +2,17 @@ package utils // import "github.com/whisthq/whist/backend/services/utils"
 
 import (
 	"context"
-	"errors"
 	"log"
 	"os"
 	"path"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/spf13/afero"
 )
+
+// Fs is the package-wide filesystem interface.
+var Fs = afero.NewOsFs()
 
 // WaitForFileCreation blocks until the provided filename is created in the
 // provided directory, or the timeout duration elapses. If the target file is
@@ -47,7 +50,7 @@ func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Durat
 	}
 
 	// Check if the file has already been created before watcher watches for file
-	if _, err := os.Stat(targetFileName); err == nil {
+	if exists, _ := afero.Exists(Fs, targetFileName); exists {
 		return nil
 	}
 
@@ -56,7 +59,7 @@ func WaitForFileCreation(absParentDirectory, fileName string, timeout time.Durat
 	}
 
 	// Check if the file has already been created before watcher watches for file
-	if _, err := os.Stat(targetFileName); err == nil {
+	if exists, _ := afero.Exists(Fs, targetFileName); exists {
 		return nil
 	}
 
@@ -102,14 +105,15 @@ func waitForErrorOrCreation(timeout time.Duration, targetFileName string, watche
 // writeToNewFile creates a file then writes the content
 func WriteToNewFile(filePath string, content string) error {
 	// If file already exists return an error
-	_, err := os.Stat(filePath)
-	if err == nil {
-		return MakeError("Could not make file %s because it already exists!", filePath)
-	} else if !errors.Is(err, os.ErrNotExist) {
-		return MakeError("Could not make file %s. Error: %s", filePath, err)
+	exists, err := afero.Exists(Fs, filePath)
+	if err != nil {
+		return MakeError("Error checking if file %s exists: %s", filePath, err)
+	}
+	if exists {
+		return MakeError("File %s already exists", filePath)
 	}
 
-	newFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0777)
+	newFile, err := Fs.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0777)
 	if err != nil {
 		return MakeError("Could not make file %s. Error: %s", filePath, err)
 	}
@@ -117,4 +121,9 @@ func WriteToNewFile(filePath string, content string) error {
 	newFile.WriteString(content)
 
 	return nil
+}
+
+// SetFs sets the host-service wide filesystem.
+func SetFs(newFs afero.Fs) {
+	Fs = newFs
 }

@@ -2,10 +2,10 @@ package mandelbox
 
 import (
 	"bytes"
-	"os"
 	"path"
 	"testing"
 
+	"github.com/spf13/afero"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 )
@@ -14,10 +14,8 @@ import (
 // calling the write function and comparing results with a manually generated cookie file
 func TestUserInitialBrowserWrite(t *testing.T) {
 	testMbox, _, _ := createTestMandelboxData()
-
-	// Reset filesystem now, and at the end of this test
-	os.RemoveAll(testMbox.GetUserConfigDir())
-	defer os.RemoveAll(testMbox.GetUserConfigDir())
+	oldFs := utils.Fs
+	utils.SetFs(afero.NewMemMapFs())
 
 	// Define browser data
 	testCookie1 := "{'creation_utc': 13280861983875934, 'host_key': 'test_host_key_1.com'}"
@@ -45,7 +43,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	// Get browser data file path
 	browserDataFile := path.Join(testMbox.GetUserConfigDir(), UnpackedConfigsDirectoryName, UserInitialBrowserFile)
 
-	matchingFile, err := os.Open(browserDataFile)
+	matchingFile, err := fs.Open(browserDataFile)
 	if err != nil {
 		t.Fatalf("error opening matching file %s: %v", browserDataFile, err)
 	}
@@ -60,15 +58,15 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	if string(testFileContent) != matchingFileBuf.String() {
 		t.Fatalf("file contents don't match for file %s: '%s' vs '%s'", browserDataFile, testFileContent, matchingFileBuf.Bytes())
 	}
+
+	utils.SetFs(oldFs)
 }
 
 // TestUserInitialBrowserWriteEmpty checks if passing empty browser data will result in an empty json file
 func TestUserInitialBrowserWriteEmpty(t *testing.T) {
 	testMbox, _, _ := createTestMandelboxData()
-
-	// Reset filesystem now, and at the end of this test
-	os.RemoveAll(testMbox.GetUserConfigDir())
-	defer os.RemoveAll(testMbox.GetUserConfigDir())
+	oldFs := utils.Fs
+	utils.SetFs(afero.NewMemMapFs())
 
 	// Empty browser data will generate an empty json file
 	if err := testMbox.WriteUserInitialBrowserData(BrowserData{}); err != nil {
@@ -78,7 +76,7 @@ func TestUserInitialBrowserWriteEmpty(t *testing.T) {
 	// Get browser data file path
 	browserDataFile := path.Join(testMbox.GetUserConfigDir(), UnpackedConfigsDirectoryName, UserInitialBrowserFile)
 
-	matchingFile, err := os.Open(browserDataFile)
+	matchingFile, err := fs.Open(browserDataFile)
 	if err != nil {
 		t.Fatalf("error opening matching file %s: %v", browserDataFile, err)
 	}
@@ -93,4 +91,6 @@ func TestUserInitialBrowserWriteEmpty(t *testing.T) {
 	if matchingFileBuf.String() != "{}" {
 		t.Fatalf("file contents don't match for file %s: '{}' vs '%s'", browserDataFile, matchingFileBuf.Bytes())
 	}
+
+	utils.SetFs(oldFs)
 }

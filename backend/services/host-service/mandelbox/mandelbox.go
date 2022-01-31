@@ -42,6 +42,9 @@ import (
 	dockercontainer "github.com/docker/docker/api/types/container"
 )
 
+// Declare package-wide filesystem
+var fs = utils.Fs
+
 // Mandelbox represents a mandelbox as it is kept track of in this
 // package. Higher layers of the host service use this interface.
 type Mandelbox interface {

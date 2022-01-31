@@ -1,11 +1,10 @@
 package configutils
 
 import (
-	"io/ioutil"
-	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/spf13/afero"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 )
@@ -26,7 +25,7 @@ func TestGetImportedExtensions(t *testing.T) {
 	// Test that an empty list is returned when the imported-extensions.json file is invalid.
 	t.Run("invalid imported-extensions.json file", func(t *testing.T) {
 		extensionsFilePath := filepath.Join(testDir, ImportedExtensionFileName)
-		extensionsFile, err := os.Create(extensionsFilePath)
+		extensionsFile, err := fs.Create(extensionsFilePath)
 		if err != nil {
 			t.Fatalf("failed to create extensions file %s: %v", extensionsFilePath, err)
 		}
@@ -47,7 +46,7 @@ func TestGetImportedExtensions(t *testing.T) {
 	// imported-extensions.json file is valid.
 	t.Run("valid imported-extensions.json file", func(t *testing.T) {
 		extensionsFilePath := filepath.Join(testDir, ImportedExtensionFileName)
-		extensionsFile, err := os.Create(extensionsFilePath)
+		extensionsFile, err := fs.Create(extensionsFilePath)
 		if err != nil {
 			t.Fatalf("failed to create extensions file %s: %v", extensionsFilePath, err)
 		}
@@ -122,13 +121,13 @@ func TestSaveImportedExtensions(t *testing.T) {
 	}
 
 	extensionsFilePath := filepath.Join(testDir, ImportedExtensionFileName)
-	extensionsFile, err := os.Open(extensionsFilePath)
+	extensionsFile, err := fs.Open(extensionsFilePath)
 	if err != nil {
 		t.Fatalf("failed to open extensions file %s: %v", extensionsFilePath, err)
 	}
 	defer extensionsFile.Close()
 
-	extensionsFileContents, err := ioutil.ReadAll(extensionsFile)
+	extensionsFileContents, err := afero.ReadAll(extensionsFile)
 	if err != nil {
 		t.Fatalf("failed to read extensions file %s: %v", extensionsFilePath, err)
 	}

@@ -2,11 +2,12 @@ package utils
 
 import (
 	"math/rand"
-	"os"
 	"path"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/spf13/afero"
 )
 
 func TestPlaceholderUUIDs(t *testing.T) {
@@ -149,7 +150,7 @@ func TestSliceUtils(t *testing.T) {
 
 // setupTestDirs creates a test directory on the received path
 func setupTestDirs(testDir string) error {
-	if err := os.MkdirAll(testDir, 0777); err != nil {
+	if err := Fs.MkdirAll(testDir, 0777); err != nil {
 		return MakeError("failed to create test dir %s: %v", testDir, err)
 	}
 
@@ -161,7 +162,7 @@ func writeTestFile(testDir string) error {
 	filePath := path.Join(testDir, Sprintf("test-file.txt"))
 	fileContents := Sprintf("This is test-file with path %s", filePath)
 
-	err := os.WriteFile(filePath, []byte(fileContents), 0777)
+	err := afero.WriteFile(Fs, filePath, []byte(fileContents), 0777)
 	if err != nil {
 		return MakeError("failed to write to file %s: %v", filePath, err)
 	}
@@ -173,5 +174,5 @@ func writeTestFile(testDir string) error {
 // test. This allows the test to be runnable multiple times without
 // creation errors.
 func cleanupTestDirs() error {
-	return os.RemoveAll(WhistDir)
+	return Fs.RemoveAll(WhistDir)
 }

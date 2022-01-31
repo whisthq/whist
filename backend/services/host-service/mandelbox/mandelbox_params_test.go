@@ -1,16 +1,18 @@
 package mandelbox
 
 import (
-	"os"
 	"path"
 	"testing"
 
+	"github.com/spf13/afero"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
 func TestWriteMandelboxParams(t *testing.T) {
 	mandelbox, cancel, goroutineTracker := createTestMandelboxData()
+	oldFs := utils.Fs
+	utils.SetFs(afero.NewMemMapFs())
 
 	// Defer the wait first since deferred functions are executed in LIFO order.
 	defer goroutineTracker.Wait()
@@ -62,10 +64,12 @@ func TestWriteMandelboxParams(t *testing.T) {
 			}
 		})
 	}
+
+	utils.SetFs(oldFs)
 }
 
 func verifyResourceMappingFileCreation(file string) error {
 	resourceDir := utils.Sprintf("%s%s/mandelboxResourceMappings/", utils.WhistDir, utils.PlaceholderTestUUID())
-	_, err := os.Stat(path.Join(resourceDir, file))
+	_, err := fs.Stat(path.Join(resourceDir, file))
 	return err
 }

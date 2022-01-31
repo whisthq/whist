@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"io/ioutil"
 	"path"
 	"strconv"
 	"sync"
@@ -131,7 +130,8 @@ func TestCreateDockerClient(t *testing.T) {
 
 func TestMandelboxDieHandler(t *testing.T) {
 	// Use a mock in-memory filesystem to avoid writing files to disk
-	fs = afero.NewMemMapFs()
+	oldFs := utils.Fs
+	utils.SetFs(afero.NewMemMapFs())
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -167,12 +167,14 @@ func TestMandelboxDieHandler(t *testing.T) {
 		t.Errorf("Expected docker client to be stopped, got started value %v and stopped value %v", dockerClient.started, dockerClient.stopped)
 	}
 
+	utils.SetFs(oldFs)
 }
 
 // TestFilesystem tests both the initialize and uninitialize filsystem functions.
 func TestFilesystem(t *testing.T) {
 	// Use a mock in-memory filesystem to avoid writing files to disk
-	fs = afero.NewMemMapFs()
+	oldFs := utils.Fs
+	utils.SetFs(afero.NewMemMapFs())
 
 	_, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -209,6 +211,8 @@ func TestFilesystem(t *testing.T) {
 	if exists, _ := afero.DirExists(fs, utils.TempDir); exists {
 		t.Errorf("Whist temp directory was not removed by uninitializeFilesystem")
 	}
+
+	utils.SetFs(oldFs)
 }
 
 // TestDrainAndShutdown will check if shutdownInstanceOnExit is set to false
@@ -231,7 +235,8 @@ func TestSpinUpMandelbox(t *testing.T) {
 	for _, browserImage := range browserImages {
 		t.Run(browserImage, func(t *testing.T) {
 			// Start each test with a new in-memory filesystem
-			fs = afero.NewMemMapFs()
+			oldFs := utils.Fs
+			utils.SetFs(afero.NewMemMapFs())
 
 			ctx, cancel := context.WithCancel(context.Background())
 			goroutineTracker := sync.WaitGroup{}
@@ -360,7 +365,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 			resourceMappingDir := path.Join(utils.WhistDir, utils.PlaceholderTestUUID().String(), "mandelboxResourceMappings")
 
 			hostPortFile := path.Join(resourceMappingDir, "hostPort_for_my_32262_tcp")
-			hostPortFileContents, err := ioutil.ReadFile(hostPortFile)
+			hostPortFileContents, err := afero.ReadFile(fs, hostPortFile)
 			if err != nil {
 				t.Fatalf("Failed to read resource file %s: %v", hostPortFile, err)
 			}
@@ -369,7 +374,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 			}
 
 			ttyFile := path.Join(resourceMappingDir, "tty")
-			ttyFileContents, err := ioutil.ReadFile(ttyFile)
+			ttyFileContents, err := afero.ReadFile(fs, ttyFile)
 			if err != nil {
 				t.Fatalf("Failed to read resource file %s: %v", ttyFile, err)
 			}
@@ -378,7 +383,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 			}
 
 			gpuFile := path.Join(resourceMappingDir, "gpu_index")
-			gpuFileContents, err := ioutil.ReadFile(gpuFile)
+			gpuFileContents, err := afero.ReadFile(fs, gpuFile)
 			if err != nil {
 				t.Fatalf("Failed to read resource file %s: %v", gpuFile, err)
 			}
@@ -387,7 +392,7 @@ func TestSpinUpMandelbox(t *testing.T) {
 			}
 
 			paramsReadyFile := path.Join(resourceMappingDir, ".paramsReady")
-			paramsReadyFileContents, err := ioutil.ReadFile(paramsReadyFile)
+			paramsReadyFileContents, err := afero.ReadFile(fs, paramsReadyFile)
 			if err != nil {
 				t.Fatalf("Failed to read resource file %s: %v", paramsReadyFile, err)
 			}
@@ -396,13 +401,15 @@ func TestSpinUpMandelbox(t *testing.T) {
 			}
 
 			configReadyFile := path.Join(resourceMappingDir, ".configReady")
-			configReadyFileContents, err := ioutil.ReadFile(configReadyFile)
+			configReadyFileContents, err := afero.ReadFile(fs, configReadyFile)
 			if err != nil {
 				t.Fatalf("Failed to read resource file %s: %v", configReadyFile, err)
 			}
 			if string(configReadyFileContents) != ".configReady" {
 				t.Errorf("Config ready file contains invalid contents: %s", string(configReadyFileContents))
 			}
+
+			utils.SetFs(oldFs)
 		})
 	}
 }

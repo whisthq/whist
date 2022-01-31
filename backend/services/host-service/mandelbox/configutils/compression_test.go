@@ -1,11 +1,11 @@
 package configutils
 
 import (
-	"io/ioutil"
-	"os"
 	"os/exec"
 	"path"
 	"testing"
+
+	"github.com/spf13/afero"
 )
 
 // TestExtraction creates a small tar.lz4 file using system's tar program
@@ -27,7 +27,7 @@ func TestExtraction(t *testing.T) {
 	}
 
 	// Read the tar file into memory
-	tarFile, err := ioutil.ReadFile(tarOutputFile)
+	tarFile, err := afero.ReadFile(fs, tarOutputFile)
 	if err != nil {
 		t.Fatalf("error reading tar file: %v", err)
 	}
@@ -60,7 +60,7 @@ func TestCompression(t *testing.T) {
 	// Write the compressed lz4 to a file
 	tarOutputDir := t.TempDir()
 	tarOutputFile := path.Join(tarOutputDir, "/test.tar.lz4")
-	err = os.WriteFile(tarOutputFile, compressedDir, 0777)
+	err = afero.WriteFile(fs, tarOutputFile, compressedDir, 0777)
 	if err != nil {
 		t.Fatalf("error writing tar file: %v", err)
 	}

@@ -2,11 +2,10 @@ package configutils // import "github.com/whisthq/whist/backend/services/host-se
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/spf13/afero"
 	types "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -24,7 +23,18 @@ type ImportedExtensions struct {
 func GetImportedExtensions(dir string) []string {
 	// Read the extensions file from the config directory
 	extensionsFilePath := filepath.Join(dir, ImportedExtensionFileName)
-	extensionsFile, err := os.Open(extensionsFilePath)
+
+	// If the extensions file doesn't exist, return an empty list
+	exists, err := afero.Exists(fs, extensionsFilePath)
+	if err != nil {
+		logger.Infof("failed to check existence of extensions file %s: %v", extensionsFilePath, err)
+		return []string{}
+	}
+	if !exists {
+		logger.Infof("no extensions file found at: %s", extensionsFilePath)
+	}
+
+	extensionsFile, err := fs.Open(extensionsFilePath)
 	if err != nil {
 		logger.Infof("failed to open extensions file %s: %v", extensionsFilePath, err)
 		return []string{}
@@ -32,7 +42,7 @@ func GetImportedExtensions(dir string) []string {
 	defer extensionsFile.Close()
 
 	// Unmarshal the extensions file into a list of strings
-	extensionsFileBytes, err := ioutil.ReadAll(extensionsFile)
+	extensionsFileBytes, err := afero.ReadAll(extensionsFile)
 	if err != nil {
 		logger.Infof("failed to read extensions file %s: %v", extensionsFilePath, err)
 		return []string{}
@@ -81,7 +91,7 @@ func SaveImportedExtensions(dir string, extensions []string) error {
 
 	// Write the extensions to a file in the config directory
 	extensionsFilePath := filepath.Join(dir, ImportedExtensionFileName)
-	if err := ioutil.WriteFile(extensionsFilePath, extensionsBytes, 0777); err != nil {
+	if err := afero.WriteFile(fs, extensionsFilePath, extensionsBytes, 0777); err != nil {
 		return utils.MakeError("failed to write extensions file %s: %v", extensionsFilePath, err)
 	}
 

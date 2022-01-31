@@ -69,7 +69,7 @@ import (
 )
 
 var shutdownInstanceOnExit bool = !metadata.IsLocalEnv()
-var fs = afero.NewOsFs()
+var fs = utils.Fs
 
 func init() {
 	// Initialize random number generator for all subpackages

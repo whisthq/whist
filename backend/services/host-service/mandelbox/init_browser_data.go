@@ -2,10 +2,10 @@ package mandelbox
 
 import (
 	"encoding/json"
-	"os"
 	"os/exec"
 	"path"
 
+	"github.com/spf13/afero"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -34,8 +34,8 @@ func (mandelbox *mandelboxData) WriteUserInitialBrowserData(initialBrowserData B
 	destDir := path.Join(mandelbox.GetUserConfigDir(), UnpackedConfigsDirectoryName)
 
 	// Create destination directory if not exists
-	if _, err := os.Stat(destDir); os.IsNotExist(err) {
-		if err := os.MkdirAll(destDir, 0777); err != nil {
+	if exists, _ := afero.DirExists(fs, destDir); !exists {
+		if err := fs.MkdirAll(destDir, 0777); err != nil {
 			return utils.MakeError("Could not make dir %s. Error: %s", destDir, err)
 		}
 

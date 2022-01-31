@@ -2,12 +2,12 @@ package mandelbox
 
 import (
 	"context"
-	"os"
 	"os/exec"
 	"path"
 	"sync"
 	"testing"
 
+	"github.com/spf13/afero"
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -33,7 +33,7 @@ func TestUserConfigIntegration(t *testing.T) {
 	}
 
 	// Start with a clean slate
-	os.RemoveAll(utils.WhistDir)
+	fs = afero.NewMemMapFs()
 
 	err := uploaderMandelboxData.setupUserConfigDirs()
 	if err != nil {
@@ -42,7 +42,7 @@ func TestUserConfigIntegration(t *testing.T) {
 
 	mandelboxDir := path.Join(utils.WhistDir, uploaderMandelboxData.ID.String())
 	sourceDir := path.Join(mandelboxDir, "testBase")
-	if err := os.MkdirAll(sourceDir, 0777); err != nil {
+	if err := fs.MkdirAll(sourceDir, 0777); err != nil {
 		t.Fatalf("failed to create source directory: %v", err)
 	}
 
@@ -50,10 +50,9 @@ func TestUserConfigIntegration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to set up test directories: %v", err)
 	}
-	defer cleanupTestDirs()
 
 	unpackedConfigPath := path.Join(uploaderMandelboxData.GetUserConfigDir(), UnpackedConfigsDirectoryName)
-	if err := os.MkdirAll(unpackedConfigPath, 0777); err != nil {
+	if err := fs.MkdirAll(unpackedConfigPath, 0777); err != nil {
 		t.Fatalf("failed to create config dir %s: %v", unpackedConfigPath, err)
 	}
 
@@ -74,7 +73,7 @@ func TestUserConfigIntegration(t *testing.T) {
 			// reuse `unpackedConfigPath` between the uploader and downloader
 			// mandelboxes, so we rely on the userIDs and mandelboxIDs being the
 			// same.
-			os.RemoveAll(unpackedConfigPath)
+			fs.RemoveAll(unpackedConfigPath)
 
 			dCtx, dCancel := context.WithCancel(context.Background())
 			downloaderMandelboxData := mandelboxData{
@@ -136,7 +135,7 @@ func TestUserConfigIntegration(t *testing.T) {
 
 			// In all but the happy-path case, we expect to have set up the
 			// "last-resort" empty config dirs.
-			contents, err := os.ReadDir(unpackedConfigPath)
+			contents, err := afero.ReadDir(fs, unpackedConfigPath)
 			if err != nil {
 				t.Fatalf("Last-resort user config directories not created properly!")
 			}
@@ -152,11 +151,4 @@ func TestUserConfigIntegration(t *testing.T) {
 	// With a new token, anything is valid. But we want to make sure
 	t.Run("new repeated token", downloadTestNotNewToken(true, true))
 	t.Run("new non-repeated token", downloadTestNotNewToken(false, true))
-}
-
-// cleanupTestDirs removes the created directories created by the integration
-// test. This allows the test to be runnable multiple times without
-// creation errors.
-func cleanupTestDirs() error {
-	return os.RemoveAll(utils.WhistDir)
 }

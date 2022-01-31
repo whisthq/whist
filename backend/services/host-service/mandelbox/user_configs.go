@@ -8,7 +8,6 @@ import (
 	"crypto/md5"
 	"encoding/base32"
 	"errors"
-	"os"
 	"os/exec"
 	"path"
 	"strings"
@@ -446,12 +445,12 @@ func (mandelbox *mandelboxData) setupUserConfigDirs() error {
 	logger.Infof("Creating user config directories for mandelbox %s", mandelbox.GetID())
 
 	configDir := mandelbox.GetUserConfigDir()
-	if err := os.MkdirAll(configDir, 0777); err != nil {
+	if err := fs.MkdirAll(configDir, 0777); err != nil {
 		return utils.MakeError("Could not make dir %s. Error: %s", configDir, err)
 	}
 
 	unpackedConfigDir := path.Join(configDir, UnpackedConfigsDirectoryName)
-	if err := os.MkdirAll(unpackedConfigDir, 0777); err != nil {
+	if err := fs.MkdirAll(unpackedConfigDir, 0777); err != nil {
 		return utils.MakeError("Could not make dir %s. Error: %s", unpackedConfigDir, err)
 	}
 
@@ -460,7 +459,7 @@ func (mandelbox *mandelboxData) setupUserConfigDirs() error {
 
 // cleanUserConfigDir removes all user config related files and directories from the host.
 func (mandelbox *mandelboxData) cleanUserConfigDir() {
-	err := os.RemoveAll(mandelbox.GetUserConfigDir())
+	err := fs.RemoveAll(mandelbox.GetUserConfigDir())
 	if err != nil {
 		logger.Errorf("Failed to remove dir %s. Error: %s", mandelbox.GetUserConfigDir(), err)
 	}

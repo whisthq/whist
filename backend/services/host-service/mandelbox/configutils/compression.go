@@ -4,13 +4,13 @@ import (
 	"archive/tar"
 	"bytes"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/pierrec/lz4/v4"
+	"github.com/spf13/afero"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
@@ -19,14 +19,13 @@ import (
 // Returns the total number of bytes extracted or an error.
 func ExtractTarLz4(file []byte, dir string) (int64, error) {
 	// Create the destination directory if it doesn't exist.
-	_, err := os.Stat(dir)
+	exists, err := afero.DirExists(fs, dir)
 	if err != nil {
-		if os.IsNotExist(err) {
-			if err := os.MkdirAll(dir, 0755); err != nil {
-				return 0, utils.MakeError("failed to create directory %s: %v", dir, err)
-			}
-		} else {
-			return 0, utils.MakeError("failed to stat directory %s: %v", dir, err)
+		return 0, utils.MakeError("error checking if directory %s exists: %v", dir, err)
+	}
+	if !exists {
+		if err := fs.MkdirAll(dir, 0755); err != nil {
+			return 0, utils.MakeError("failed to create directory %s: %v", dir, err)
 		}
 	}
 
@@ -70,14 +69,14 @@ func ExtractTarLz4(file []byte, dir string) (int64, error) {
 
 		// Create directory if it doesn't exist, otherwise go next
 		if info.IsDir() {
-			if err = os.MkdirAll(path, info.Mode()); err != nil {
+			if err = fs.MkdirAll(path, info.Mode()); err != nil {
 				return totalBytes, utils.MakeError("error creating directory: %v", err)
 			}
 			continue
 		}
 
 		// Create file and copy contents
-		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
+		file, err := fs.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
 		if err != nil {
 			return totalBytes, utils.MakeError("error opening file: %v", err)
 		}
@@ -103,7 +102,7 @@ func ExtractTarLz4(file []byte, dir string) (int64, error) {
 // CompressTarLz4 takes a directory and compresses it into a tar.lz4 file in memory.
 func CompressTarLz4(dir string) ([]byte, error) {
 	// Check that the directory exists and is a directory
-	info, err := os.Stat(dir)
+	info, err := fs.Stat(dir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, utils.MakeError("directory %s does not exist", dir)
@@ -124,7 +123,7 @@ func CompressTarLz4(dir string) ([]byte, error) {
 	tarWriter := tar.NewWriter(lz4Writer)
 
 	// Walk the directory and add all files to the tar
-	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	err = afero.Walk(fs, dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return utils.MakeError("error walking directory: %v", err)
 		}
@@ -158,7 +157,7 @@ func CompressTarLz4(dir string) ([]byte, error) {
 		}
 
 		// Open the file and copy its contents to the tar
-		file, err := os.Open(path)
+		file, err := fs.Open(path)
 		if err != nil {
 			return utils.MakeError("error opening file %s: %v", path, err)
 		}
@@ -193,14 +192,14 @@ func SetupTestDir(testDir string) error {
 	// Write some directories with text files
 	for i := 0; i < 300; i++ {
 		tempDir := path.Join(testDir, utils.Sprintf("dir%d", i))
-		if err := os.Mkdir(tempDir, 0777); err != nil {
+		if err := fs.Mkdir(tempDir, 0777); err != nil {
 			return utils.MakeError("failed to create temp dir %s: %v", tempDir, err)
 		}
 
 		for j := 0; j < 3; j++ {
 			filePath := path.Join(tempDir, utils.Sprintf("file-%d.txt", j))
 			fileContents := utils.Sprintf("This is file %d in directory %d.", j, i)
-			err := os.WriteFile(filePath, []byte(fileContents), 0777)
+			err := afero.WriteFile(fs, filePath, []byte(fileContents), 0777)
 			if err != nil {
 				return utils.MakeError("failed to write to file %s: %v", filePath, err)
 			}
@@ -209,12 +208,12 @@ func SetupTestDir(testDir string) error {
 
 	// Write a nested directory with files inside
 	nestedDir := path.Join(testDir, "dir10", "nested")
-	if err := os.Mkdir(nestedDir, 0777); err != nil {
+	if err := fs.Mkdir(nestedDir, 0777); err != nil {
 		return utils.MakeError("failed to create nested dir %s: %v", nestedDir, err)
 	}
 	nestedFile := path.Join(nestedDir, "nested-file.txt")
 	fileContents := utils.Sprintf("This is a nested file.")
-	err := os.WriteFile(nestedFile, []byte(fileContents), 0777)
+	err := afero.WriteFile(fs, nestedFile, []byte(fileContents), 0777)
 	if err != nil {
 		return utils.MakeError("failed to write to file %s: %v", nestedFile, err)
 	}
@@ -223,7 +222,7 @@ func SetupTestDir(testDir string) error {
 	for i := 0; i < 5; i++ {
 		filePath := path.Join(testDir, utils.Sprintf("file-%d.txt", i))
 		fileContents := utils.Sprintf("This is file %d in directory %s.", i, "none")
-		err := os.WriteFile(filePath, []byte(fileContents), 0777)
+		err := afero.WriteFile(fs, filePath, []byte(fileContents), 0777)
 		if err != nil {
 			return utils.MakeError("failed to write to file %s: %v", filePath, err)
 		}
@@ -235,7 +234,7 @@ func SetupTestDir(testDir string) error {
 // ValidateDirectoryContents checks if all directories and files in the
 // old directory are present in the new directory and have the same contents.
 func ValidateDirectoryContents(oldDir, newDir string) error {
-	return filepath.Walk(oldDir, func(filePath string, info os.FileInfo, err error) error {
+	return afero.Walk(fs, oldDir, func(filePath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -246,7 +245,7 @@ func ValidateDirectoryContents(oldDir, newDir string) error {
 		}
 
 		newFilePath := filepath.Join(newDir, relativePath)
-		matchingFile, err := os.Open(newFilePath)
+		matchingFile, err := fs.Open(newFilePath)
 		if err != nil {
 			return utils.MakeError("error opening matching file %s: %v", newFilePath, err)
 		}
@@ -263,7 +262,7 @@ func ValidateDirectoryContents(oldDir, newDir string) error {
 				return utils.MakeError("expected %s to be a directory", newFilePath)
 			}
 		} else {
-			testFileContents, err := ioutil.ReadFile(filePath)
+			testFileContents, err := afero.ReadFile(fs, filePath)
 			if err != nil {
 				return utils.MakeError("error reading test file %s: %v", filePath, err)
 			}

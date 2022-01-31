@@ -5,12 +5,15 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/spf13/afero"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
 func TestNewMandelbox(t *testing.T) {
 	mandelbox, cancel, goroutineTracker := createTestMandelboxData()
+	oldFs := utils.Fs
+	utils.SetFs(afero.NewMemMapFs())
 
 	// Defer the wait first since deferred functions are executed in LIFO order.
 	defer goroutineTracker.Wait()
@@ -36,6 +39,8 @@ func TestNewMandelbox(t *testing.T) {
 	if deviceMappings.CgroupPermissions != "rwm" {
 		t.Errorf("received incorrect CgroupPermissions: got %s, expected %s", deviceMappings.CgroupPermissions, "rwm")
 	}
+
+	utils.SetFs(oldFs)
 }
 
 func TestRegisterCreation(t *testing.T) {
