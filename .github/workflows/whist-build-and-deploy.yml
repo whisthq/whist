@@ -61,7 +61,7 @@ jobs:
       auth0-client-secret-key: ${{ steps.set-deploy-environment.outputs.auth0-client-secret-key }}
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
         with:
           fetch-depth: 0 # Get the whole git history
 
@@ -277,7 +277,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
 
       - name: Build Monorepo Configuration for macOS
         id: config-macos
@@ -336,7 +336,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
 
       - name: Install Dependencies
         working-directory: frontend/website
@@ -401,7 +401,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
 
       - name: Setup Python-based notifications
         working-directory: .github/workflows/helpers
@@ -477,7 +477,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
 
       - name: Configure AWS CLI # To get and install GRID driver
         uses: aws-actions/configure-aws-credentials@v1
@@ -743,7 +743,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
         with:
           fetch-depth: 0 # need to get full history for splitsh-lite
 
@@ -880,7 +880,7 @@ jobs:
       TOKEN_FILE: .access_token
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
 
       - name: Set up Python 3.10.0
         uses: actions/setup-python@v2.3.0
@@ -1034,7 +1034,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
 
       - name: Retrieve Desktop App Version from Config Database
         id: generate-release-version
@@ -1161,7 +1161,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
         with:
           # Get the whole git history. We must do this because the
           # client app calls `git describe` in order to bake the
@@ -1311,7 +1311,7 @@ jobs:
       # client app calls `git describe` in order to bake the
       # version number into the React frontend.
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
         with:
           fetch-depth: 0
 
@@ -1423,7 +1423,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
 
       - name: Setup Python-based notifications
         working-directory: .github/workflows/helpers
@@ -1512,7 +1512,7 @@ jobs:
       TOKEN_FILE: .access_token
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
 
       - name: Set up Python 3.10.0
         uses: actions/setup-python@v2.3.0
@@ -1650,7 +1650,7 @@ jobs:
     if: needs.whist-publish-build-config.outputs.publish == 'true' && contains(fromJSON('["prod"]'), needs.whist-publish-build-config.outputs.branch)
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
 
       - name: Setup Python-based notifications
         working-directory: .github/workflows/helpers

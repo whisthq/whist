@@ -43,12 +43,12 @@ jobs:
       ################################# CONFIG STEPS ###############################
 
       - name: Checkout the whisthq/whist Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
         with:
           path: whist
 
       - name: Checkout the whisthq/docs Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
         with:
           repository: whisthq/docs
           token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}

@@ -34,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
 
         # We are testing this configuration against deployable branches dev/staging/prod only
       - name: Set Workflow Environment
@@ -71,7 +71,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
 
         # We are testing this configuration against deployable branches dev/staging/prod only
       - name: Set Workflow Environment

@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
 
       - name: Set up Python 3.10.0
         uses: actions/setup-python@v2.3.0

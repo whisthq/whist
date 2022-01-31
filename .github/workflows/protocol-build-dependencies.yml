@@ -54,7 +54,7 @@ jobs:
       ################################# CONFIG STEPS START ###############################
 
       - name: Checkout OpenSSL Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
         with:
           repository: openssl/openssl
           ref: OpenSSL_1_1_1m # GitHub Tag of latest stable OpenSSL release
@@ -170,7 +170,7 @@ jobs:
 
       - name: Checkout whisthq/whist Git Repository
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
 
       - name: Setup Python-based notifications
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
@@ -222,7 +222,7 @@ jobs:
       ################################# CONFIG STEPS START ###############################
 
       - name: Checkout Sentry Native Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
         with:
           repository: getsentry/sentry-native
           ref: "0.4.13" # GitHub Tag of the Sentry release we use
@@ -384,7 +384,7 @@ jobs:
 
       - name: Checkout whisthq/whist Git Repository
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
 
       - name: Setup Python-based notifications
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
@@ -413,7 +413,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
 
       - name: Setup Python-based notifications
         working-directory: .github/workflows/helpers

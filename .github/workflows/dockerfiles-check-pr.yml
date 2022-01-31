@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2.3.4
 
       # Start from top-level folder to use .hadolint.yaml config
       - name: Check if Development Dockerfiles Follow Hadolint Standards
