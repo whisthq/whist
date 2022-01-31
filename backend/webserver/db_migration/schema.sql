@@ -17,55 +17,26 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: cloud; Type: SCHEMA; Schema: -; Owner: -
+-- Name: whist; Type: SCHEMA; Schema: -; Owner: -
 --
 
-CREATE SCHEMA cloud;
-
-
---
--- Name: logging; Type: SCHEMA; Schema: -; Owner: -
---
-
-CREATE SCHEMA logging;
+CREATE SCHEMA whist;
 
 
 --
--- Name: change_trigger(); Type: FUNCTION; Schema: cloud; Owner: -
+-- Name: set_current_timestamp_updated_at(); Type: FUNCTION; Schema: whist; Owner: -
 --
 
-CREATE FUNCTION cloud.change_trigger() RETURNS trigger
+CREATE FUNCTION whist.set_current_timestamp_updated_at() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
-       BEGIN
-         IF TG_OP = 'INSERT'
-         THEN INSERT INTO logging.t_instance_history (
-                tabname, schemaname, operation, new_val
-              ) VALUES (
-                TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(NEW)
-              );
-           RETURN NEW;
-         ELSIF  TG_OP = 'UPDATE' AND NEW.status <> OLD.status
-         THEN
-           INSERT INTO logging.t_instance_history (
-             tabname, schemaname, operation, new_val, old_val
-           )
-           VALUES (TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(NEW),
-row_to_json(OLD));
-           RETURN NEW;
-         ELSIF  TG_OP = 'UPDATE'
-         THEN
-           RETURN NEW;
-         ELSIF TG_OP = 'DELETE'
-         THEN
-           INSERT INTO logging.t_instance_history
-             (tabname, schemaname, operation, old_val)
-             VALUES (
-               TG_RELNAME, TG_TABLE_SCHEMA, TG_OP, row_to_json(OLD)
-             );
-             RETURN OLD;
-         END IF;
-       END;
+DECLARE
+  _new record;
+BEGIN
+  _new := NEW;
+  _new."updated_at" = NOW();
+  RETURN _new;
+END;
 $$;
 
 
@@ -74,220 +45,96 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: instance_info; Type: TABLE; Schema: cloud; Owner: -
+-- Name: images; Type: TABLE; Schema: whist; Owner: -
 --
 
-CREATE TABLE cloud.instance_info (
-    ip character varying NOT NULL,
-    location character varying NOT NULL,
-    aws_ami_id character varying NOT NULL,
-    aws_instance_type character varying NOT NULL,
-    cloud_provider_id character varying NOT NULL,
-    commit_hash character varying NOT NULL,
-    creation_time_utc_unix_ms bigint NOT NULL,
-    gpu_vram_remaining_kb bigint DEFAULT 1024 NOT NULL,
-    instance_name character varying NOT NULL,
-    last_updated_utc_unix_ms bigint DEFAULT '-1'::integer NOT NULL,
-    mandelbox_capacity bigint DEFAULT 0 NOT NULL,
-    memory_remaining_kb bigint DEFAULT 2000 NOT NULL,
-    nanocpus_remaining bigint DEFAULT 1024 NOT NULL,
-    status character varying NOT NULL
+CREATE TABLE whist.images (
+    provider character varying NOT NULL,
+    region character varying NOT NULL,
+    image_id character varying NOT NULL,
+    client_sha character varying NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
 --
--- Name: t_instance_history; Type: TABLE; Schema: logging; Owner: -
+-- Name: instances; Type: TABLE; Schema: whist; Owner: -
 --
 
-CREATE TABLE logging.t_instance_history (
-    id integer NOT NULL,
-    tstamp timestamp without time zone DEFAULT now(),
-    schemaname text,
-    tabname text,
-    operation text,
-    who text DEFAULT CURRENT_USER,
-    new_val json,
-    old_val json
-);
-
-
---
--- Name: instance_status_changes; Type: VIEW; Schema: cloud; Owner: -
---
-
-CREATE VIEW cloud.instance_status_changes AS
- SELECT t_instance_history.tstamp AS "timestamp",
-    COALESCE((t_instance_history.new_val ->> 'instance_name'::text), (t_instance_history.old_val ->> 'instance_name'::text)) AS instance_name,
-    COALESCE((t_instance_history.new_val ->> 'status'::text), 'deleted'::text) AS new_status,
-    COALESCE((t_instance_history.old_val ->> 'status'::text), 'newly 
-added'::text) AS old_status
-   FROM logging.t_instance_history
-  WHERE ((t_instance_history.new_val IS NULL) OR (t_instance_history.old_val IS NULL) OR ((t_instance_history.new_val ->> 'status'::text) <> (t_instance_history.old_val ->> 'status'::text)))
-  ORDER BY t_instance_history.tstamp;
-
-
---
--- Name: mandelbox_info; Type: TABLE; Schema: cloud; Owner: -
---
-
-CREATE TABLE cloud.mandelbox_info (
-    mandelbox_id character varying NOT NULL,
-    user_id character varying NOT NULL,
-    instance_name character varying NOT NULL,
+CREATE TABLE whist.instances (
+    id character varying NOT NULL,
+    provider character varying NOT NULL,
+    region character varying NOT NULL,
+    image_id character varying NOT NULL,
+    client_sha character varying NOT NULL,
+    ip_addr inet,
+    instance_type character varying NOT NULL,
+    remaining_capacity integer NOT NULL,
     status character varying NOT NULL,
-    creation_time_utc_unix_ms bigint NOT NULL,
-    session_id character varying NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
 --
--- Name: instances_with_room_for_mandelboxes; Type: VIEW; Schema: cloud; Owner: -
+-- Name: mandelboxes; Type: TABLE; Schema: whist; Owner: -
 --
 
-CREATE VIEW cloud.instances_with_room_for_mandelboxes AS
- SELECT sub_with_running.instance_name,
-    sub_with_running.aws_ami_id,
-    sub_with_running.commit_hash,
-    sub_with_running.location,
-    sub_with_running.status,
-    sub_with_running.mandelbox_capacity,
-    sub_with_running.num_running_mandelboxes
-   FROM ( SELECT base_table.instance_name,
-            base_table.aws_ami_id,
-            base_table.location,
-            base_table.commit_hash,
-            base_table.status,
-            base_table.mandelbox_capacity,
-            COALESCE(base_table.count, (0)::bigint) AS num_running_mandelboxes
-           FROM (( SELECT instance_info.instance_name,
-                    instance_info.aws_ami_id,
-                    instance_info.location,
-                    instance_info.commit_hash,
-                    instance_info.status,
-                    instance_info.mandelbox_capacity
-                   FROM cloud.instance_info
-                  WHERE (((instance_info.status)::text <> 'DRAINING'::text) AND ((instance_info.status)::text <> 'HOST_SERVICE_UNRESPONSIVE'::text))) instances
-             LEFT JOIN ( SELECT count(*) AS count,
-                    mandelbox_info.instance_name AS cont_inst
-                   FROM cloud.mandelbox_info
-                  GROUP BY mandelbox_info.instance_name) mandelboxes ON (((instances.instance_name)::text = (mandelboxes.cont_inst)::text))) base_table) sub_with_running
-  WHERE (sub_with_running.num_running_mandelboxes < sub_with_running.mandelbox_capacity)
-  ORDER BY sub_with_running.location, sub_with_running.num_running_mandelboxes DESC;
-
-
---
--- Name: lingering_instances; Type: VIEW; Schema: cloud; Owner: -
---
-
-CREATE VIEW cloud.lingering_instances AS
- SELECT instance_info.instance_name,
-    instance_info.cloud_provider_id,
-    instance_info.status
-   FROM cloud.instance_info
-  WHERE ((((((date_part('epoch'::text, now()) * (1000)::double precision))::bigint - instance_info.last_updated_utc_unix_ms) > 120000) AND ((instance_info.status)::text <> 'PRE_CONNECTION'::text)) OR (((((date_part('epoch'::text, now()) * (1000)::double precision))::bigint - instance_info.last_updated_utc_unix_ms) > 900000) AND ((((date_part('epoch'::text, now()) * (1000)::double precision))::bigint - instance_info.creation_time_utc_unix_ms) > 900000) AND ((instance_info.status)::text <> 'DRAINING'::text) AND ((instance_info.status)::text <> 'HOST_SERVICE_UNRESPONSIVE'::text)) OR ((((instance_info.status)::text = 'DRAINING'::text) OR ((instance_info.status)::text = 'HOST_SERVICE_UNRESPONSIVE'::text)) AND (NOT ((instance_info.instance_name)::text IN ( SELECT mandelbox_info.instance_name
-           FROM cloud.mandelbox_info))) AND ((((date_part('epoch'::text, now()) * (1000)::double precision))::bigint - ((date_part('epoch'::text, ( SELECT instance_status_changes."timestamp"
-           FROM cloud.instance_status_changes
-          WHERE (instance_status_changes.instance_name = (instance_info.instance_name)::text)
-          ORDER BY instance_status_changes."timestamp" DESC
-         LIMIT 1)) * (1000)::double precision))::bigint) > 120000)));
-
-
---
--- Name: region_to_ami; Type: TABLE; Schema: cloud; Owner: -
---
-
-CREATE TABLE cloud.region_to_ami (
-    region_name character varying NOT NULL,
-    ami_id character varying NOT NULL,
-    ami_active boolean DEFAULT false NOT NULL,
-    client_commit_hash character varying NOT NULL,
-    protected_from_scale_down boolean DEFAULT false NOT NULL
+CREATE TABLE whist.mandelboxes (
+    id character varying NOT NULL,
+    app character varying NOT NULL,
+    instance_id character varying NOT NULL,
+    user_id character varying,
+    session_id character varying,
+    status character varying NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
 --
--- Name: instance_status_change; Type: VIEW; Schema: logging; Owner: -
+-- Name: images images_pkey; Type: CONSTRAINT; Schema: whist; Owner: -
 --
 
-CREATE VIEW logging.instance_status_change AS
- SELECT t_instance_history.tstamp,
-    t_instance_history.old_val,
-    t_instance_history.new_val
-   FROM logging.t_instance_history
-  WHERE ((t_instance_history.old_val ->> 'status'::text) <> (t_instance_history.new_val ->> 'status'::text));
+ALTER TABLE ONLY whist.images
+    ADD CONSTRAINT images_pkey PRIMARY KEY (provider, region);
 
 
 --
--- Name: t_instance_history_id_seq; Type: SEQUENCE; Schema: logging; Owner: -
+-- Name: instances instances_pkey; Type: CONSTRAINT; Schema: whist; Owner: -
 --
 
-CREATE SEQUENCE logging.t_instance_history_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
+ALTER TABLE ONLY whist.instances
+    ADD CONSTRAINT instances_pkey PRIMARY KEY (id);
 
 
 --
--- Name: t_instance_history_id_seq; Type: SEQUENCE OWNED BY; Schema: logging; Owner: -
+-- Name: mandelboxes mandelboxes_pkey; Type: CONSTRAINT; Schema: whist; Owner: -
 --
 
-ALTER SEQUENCE logging.t_instance_history_id_seq OWNED BY logging.t_instance_history.id;
-
-
---
--- Name: t_instance_history id; Type: DEFAULT; Schema: logging; Owner: -
---
-
-ALTER TABLE ONLY logging.t_instance_history ALTER COLUMN id SET DEFAULT nextval('logging.t_instance_history_id_seq'::regclass);
+ALTER TABLE ONLY whist.mandelboxes
+    ADD CONSTRAINT mandelboxes_pkey PRIMARY KEY (id);
 
 
 --
--- Name: region_to_ami _region_name_ami_id_unique_constraint; Type: CONSTRAINT; Schema: cloud; Owner: -
+-- Name: images set_whist_images_updated_at; Type: TRIGGER; Schema: whist; Owner: -
 --
 
-ALTER TABLE ONLY cloud.region_to_ami
-    ADD CONSTRAINT _region_name_ami_id_unique_constraint UNIQUE (region_name, ami_id);
-
-
---
--- Name: instance_info instance_info_pkey; Type: CONSTRAINT; Schema: cloud; Owner: -
---
-
-ALTER TABLE ONLY cloud.instance_info
-    ADD CONSTRAINT instance_info_pkey PRIMARY KEY (instance_name);
+CREATE TRIGGER set_whist_images_updated_at BEFORE UPDATE ON whist.images FOR EACH ROW EXECUTE FUNCTION whist.set_current_timestamp_updated_at();
 
 
 --
--- Name: mandelbox_info mandelbox_info_pkey; Type: CONSTRAINT; Schema: cloud; Owner: -
+-- Name: instances set_whist_instances_updated_at; Type: TRIGGER; Schema: whist; Owner: -
 --
 
-ALTER TABLE ONLY cloud.mandelbox_info
-    ADD CONSTRAINT mandelbox_info_pkey PRIMARY KEY (mandelbox_id);
-
-
---
--- Name: region_to_ami region_to_ami_pkey; Type: CONSTRAINT; Schema: cloud; Owner: -
---
-
-ALTER TABLE ONLY cloud.region_to_ami
-    ADD CONSTRAINT region_to_ami_pkey PRIMARY KEY (region_name, client_commit_hash);
+CREATE TRIGGER set_whist_instances_updated_at BEFORE UPDATE ON whist.instances FOR EACH ROW EXECUTE FUNCTION whist.set_current_timestamp_updated_at();
 
 
 --
--- Name: instance_info t; Type: TRIGGER; Schema: cloud; Owner: -
+-- Name: mandelboxes mandelboxes_instance_id_fkey; Type: FK CONSTRAINT; Schema: whist; Owner: -
 --
 
-CREATE TRIGGER t BEFORE INSERT OR DELETE OR UPDATE ON cloud.instance_info FOR EACH ROW EXECUTE FUNCTION cloud.change_trigger();
-
-
---
--- Name: mandelbox_info instance_name_fk; Type: FK CONSTRAINT; Schema: cloud; Owner: -
---
-
-ALTER TABLE ONLY cloud.mandelbox_info
-    ADD CONSTRAINT instance_name_fk FOREIGN KEY (instance_name) REFERENCES cloud.instance_info(instance_name) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY whist.mandelboxes
+    ADD CONSTRAINT mandelboxes_instance_id_fkey FOREIGN KEY (instance_id) REFERENCES whist.instances(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 
 
 --

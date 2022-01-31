@@ -2,7 +2,6 @@ import os
 import sys
 from typing import Any, Callable, Dict, Generator, List, Optional, Tuple
 import uuid
-import time
 
 from random import randint
 import platform
@@ -14,19 +13,21 @@ from flask_jwt_extended import create_access_token
 from flask_jwt_extended.default_callbacks import default_decode_key_callback
 
 from app.utils.flask.factory import create_app
-from app.database.models.cloud import (
-    MandelboxInfo,
+from app.models import (
+    CloudProvider,
     db,
-    InstanceInfo,
-    RegionToAmi,
+    Image,
+    Instance,
+    Mandelbox,
     MandelboxHostState,
+    MandelboxState,
+    WhistApplication,
 )
 from app.utils.flask.flask_handlers import set_web_requests_status
 from app.utils.signal_handler.signals import WebSignalHandler
 from app.utils.general.logs import whist_logger
 from app.utils.general.limiter import limiter
 from tests.client import WhistAPITestClient
-from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
 from tests.helpers.utils import (
     get_allowed_regions,
     get_random_region_name,
@@ -107,16 +108,15 @@ def authorized(
 
 
 @pytest.fixture
-def bulk_instance() -> Generator[
-    Callable[[int, Optional[str], Optional[str], Optional[int]], InstanceInfo], None, None
-]:
+def bulk_instance(  # type: ignore[no-untyped-def]
+    db_session,  # pylint: disable=unused-argument
+) -> Generator[Callable[[int, Optional[str], Optional[str], Optional[int]], Instance], None, None]:
     """Add 1+ rows to the instance_info table for testing.
 
     Returns:
         A function that populates the instanceInfo table with a test
         row whose columns are set as arguments to the function.
     """
-    instances = []
 
     def _instance(
         associated_mandelboxes: int = 0,
@@ -124,7 +124,7 @@ def bulk_instance() -> Generator[
         location: Optional[str] = None,
         mandelbox_capacity: Optional[int] = None,
         **kwargs: Any,
-    ) -> InstanceInfo:
+    ) -> Instance:
         """Create a dummy instance for testing.
 
         Arguments:
@@ -138,53 +138,48 @@ def bulk_instance() -> Generator[
                 defaults to 10
 
         Yields:
-            An instance of the InstanceInfo model.
+            An instance of the Instance model.
         """
         inst_name = (
             instance_name if instance_name is not None else f"instance-{os.urandom(16).hex()}"
         )
-        new_instance = InstanceInfo(
-            instance_name=inst_name,
-            cloud_provider_id=f"aws-{inst_name}",
-            location=location if location is not None else "us-east-1",
-            creation_time_utc_unix_ms=kwargs.get("creation_time_utc_unix_ms", time.time() * 1000),
-            mandelbox_capacity=mandelbox_capacity if mandelbox_capacity is not None else 10,
-            ip=kwargs.get("ip", "123.456.789"),
-            aws_ami_id=kwargs.get("aws_ami_id", "test"),
-            aws_instance_type=kwargs.get("aws_instance_type", "test_type"),
-            last_updated_utc_unix_ms=kwargs.get("last_updated_utc_unix_ms", 10),
+        region = location if location is not None else "us-east-1"
+        image = Image.query.get((CloudProvider.AWS, region))
+        new_instance = Instance(
+            id=inst_name,
+            provider=CloudProvider.AWS,
+            region=region,
+            image_id=image.image_id,
+            client_sha=image.client_sha,
+            ip_addr="192.168.1.1",
+            instance_type=kwargs.get("aws_instance_type", "test_type"),
+            remaining_capacity=mandelbox_capacity if mandelbox_capacity is not None else 10,
             status=kwargs.get("status", MandelboxHostState.ACTIVE),
-            commit_hash=kwargs.get("commit_hash", CLIENT_COMMIT_HASH_FOR_TESTING),
         )
 
         db.session.add(new_instance)
-        db.session.commit()
+
         for _ in range(associated_mandelboxes):
-            new_mandelbox = MandelboxInfo(
-                mandelbox_id=str(randint(0, 10000000)),
-                instance_name=new_instance.instance_name,
+            # pylint: disable=no-member
+            assert new_instance.remaining_capacity > 0
+            new_instance.remaining_capacity -= 1
+            # pylint: enable=no-member
+
+            new_mandelbox = Mandelbox(
+                id=str(randint(0, 10000000)),
+                app=WhistApplication.CHROME,
+                instance_id=new_instance.id,
                 user_id=kwargs.get("user_for_mandelboxes", "test-user"),
                 session_id=str(randint(1600000000, 9999999999)),
-                status="Running",
-                creation_time_utc_unix_ms=int(time.time() * 1000),
+                status=MandelboxState.RUNNING,
             )
             db.session.add(new_mandelbox)
-            db.session.commit()
 
-        instances.append(new_instance)
+        db.session.commit()
 
         return new_instance
 
     yield _instance
-
-    for instance in instances:
-        if InstanceInfo.query.get(instance.instance_name) is not None:
-            db.session.delete(instance)
-    # We only need to delete the instances for cleanup. mandelboxes have a foreign key
-    # relationship with instances on instance_name column and due to cascade on delete/update
-    # the mandelboxes will be deleted on deletion of corresponding instances.
-
-    db.session.commit()
 
 
 @pytest.fixture
@@ -194,8 +189,10 @@ def region_to_ami_map(
     """
     Returns a dict of active <Region:AMI> pairs.
     """
-    all_regions = RegionToAmi.query.all()
-    region_map = {region.region_name: region.ami_id for region in all_regions if region.ami_active}
+
+    aws_images = Image.query.filter_by(provider=CloudProvider.AWS).all()
+    region_map = {image.region: image.image_id for image in aws_images}
+
     return region_map
 
 
@@ -206,7 +203,7 @@ def region_ami_pair() -> Optional[Tuple[str, str]]:
     """
     region_ami_pair = get_allowed_regions()  # pylint: disable=redefined-outer-name
     if region_ami_pair:
-        return region_ami_pair[0].region_name, region_ami_pair[0].ami_id
+        return region_ami_pair[0].region, region_ami_pair[0].image_id
     return None
 
 

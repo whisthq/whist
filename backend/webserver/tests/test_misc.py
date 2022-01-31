@@ -1,22 +1,14 @@
 """Tests for miscellaneous helper functions."""
 
-import time
-import concurrent.futures
 import platform
 import os
 import signal
-from typing import Callable, Optional
+from typing import Callable
 
 import pytest
-from sqlalchemy.exc import OperationalError
-
-from flask import current_app, Flask
+from flask import current_app
 from app.config import _callback_webserver_hostname
-from app.database.models.cloud import RegionToAmi
 from app.utils.flask.flask_handlers import can_process_requests, set_web_requests_status
-from app.utils.general.logs import whist_logger
-from app.utils.db.db_utils import set_local_lock_timeout
-from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING
 from tests.client import WhistAPITestClient
 
 
@@ -68,44 +60,3 @@ def test_webserver_sigterm(client: WhistAPITestClient, make_user: Callable[..., 
 
     # re-enable web requests
     assert set_web_requests_status(True)
-
-
-def test_local_lock_timeout(app: Flask, region_name: Optional[str]) -> None:
-    """
-    Test the function `set_local_lock_timeout` by running concurrent threads that try to grab
-    the lock. One should time out.
-    """
-
-    def acquire_lock(lock_timeout: int, hold_time: int) -> bool:
-        try:
-            with app.app_context():
-                set_local_lock_timeout(lock_timeout)
-                _ = RegionToAmi.query.with_for_update().get(
-                    (region_name, CLIENT_COMMIT_HASH_FOR_TESTING)
-                )
-                whist_logger.info("Got lock and data")
-                time.sleep(hold_time)
-            return True
-        except OperationalError as op_err:
-            if "lock timeout" in str(op_err):
-                return False
-            else:
-                # if we get an unexpected error, this test will fail
-                raise op_err
-
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        whist_logger.info("Starting threads...")
-        thread_one = executor.submit(acquire_lock, 5, 10)
-        thread_two = executor.submit(acquire_lock, 5, 10)
-
-        whist_logger.info("Getting thread results...")
-        thread_one_result = thread_one.result()
-        thread_two_result = thread_two.result()
-
-        if thread_one_result is True and thread_two_result is True:
-            whist_logger.error("Both threads got the lock! Locking failed.")
-            assert False
-        elif thread_one_result is False and thread_two_result is False:
-            whist_logger.error("Neither thread got the lock! Invesigate..")
-            assert False
-        # here, only one thread got the lock so this test succeeds
