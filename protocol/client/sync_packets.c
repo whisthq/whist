@@ -50,7 +50,7 @@ Private Function Implementations
 ============================
 */
 
-void update_tcp_ping() {
+static void update_tcp_ping(void) {
     /*
        If no valid TCP pong has been received or sending a TCP ping is failing, then
        send a TCP reconnection request to the server. This is agnostic of whether
@@ -103,7 +103,7 @@ Public Function Implementations
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int multithreaded_sync_udp_packets(void* opaque) {
+static int multithreaded_sync_udp_packets(void* opaque) {
     /*
         Send, receive, and process UDP packets - dimension messages, bitrate messages, nack
        messages, pings, audio and video packets.
@@ -168,7 +168,7 @@ int multithreaded_sync_udp_packets(void* opaque) {
     return 0;
 }
 
-void create_and_send_tcp_wcmsg(WhistClientMessageType message_type, char* payload) {
+static void create_and_send_tcp_wcmsg(WhistClientMessageType message_type, char* payload) {
     /*
         Create and send a TCP wcmsg according to the given payload, and then
         deallocate once finished.
@@ -239,7 +239,7 @@ void create_and_send_tcp_wcmsg(WhistClientMessageType message_type, char* payloa
 }
 
 #define SYNC_TCP_LOOP_TARGET_PERIOD_MS 25.0
-int multithreaded_sync_tcp_packets(void* opaque) {
+static int multithreaded_sync_tcp_packets(void* opaque) {
     /*
         Thread to send and receive all TCP packets (clipboard and file)
 
@@ -349,7 +349,7 @@ void init_packet_synchronizers(WhistRenderer* whist_renderer) {
         whist_create_thread(multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", NULL);
 }
 
-void destroy_packet_synchronizers() {
+void destroy_packet_synchronizers(void) {
     /*
         Destroy and wait on the packet synchronizer threads for UDP and TCP.
     */

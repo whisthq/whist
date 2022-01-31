@@ -38,6 +38,6 @@ void init_packet_synchronizers(WhistRenderer* whist_renderer);
  * @brief                          Destroy the packet synchronizer
  *                                 threads for UDP and TCP
  */
-void destroy_packet_synchronizers();
+void destroy_packet_synchronizers(void);
 
 #endif

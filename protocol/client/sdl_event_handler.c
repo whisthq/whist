@@ -66,13 +66,13 @@ Private Functions Declarations
 ============================
 */
 
-int handle_sdl_event(SDL_Event *event);
-int handle_key_up_down(SDL_Event *event);
-int handle_mouse_motion(SDL_Event *event);
-int handle_mouse_wheel(SDL_Event *event);
-int handle_mouse_button_up_down(SDL_Event *event);
-int handle_multi_gesture(SDL_Event *event);
-int handle_pinch(SDL_Event *event);
+static int handle_sdl_event(SDL_Event *event);
+static int handle_key_up_down(SDL_Event *event);
+static int handle_mouse_motion(SDL_Event *event);
+static int handle_mouse_wheel(SDL_Event *event);
+static int handle_mouse_button_up_down(SDL_Event *event);
+static int handle_multi_gesture(SDL_Event *event);
+static int handle_pinch(SDL_Event *event);
 
 /*
 ============================
@@ -80,7 +80,7 @@ Public Function Implementations
 ============================
 */
 
-bool sdl_handle_events() {
+bool sdl_handle_events(void) {
     // We cannot use SDL_WaitEventTimeout here, because
     // Linux seems to treat a 1ms timeout as an infinite timeout
     SDL_Event sdl_event;
@@ -105,7 +105,7 @@ bool sdl_handle_events() {
     return true;
 }
 
-bool sdl_pending_audio_device_update() {
+bool sdl_pending_audio_device_update(void) {
     // Mark as no longer pending "0",
     // and return whether or not it was pending since the last time we called this function
     int num_pending_audio_device_updates = atomic_exchange(&g_num_pending_audio_device_updates, 0);
@@ -118,7 +118,7 @@ Private Function Implementations
 ============================
 */
 
-int handle_key_up_down(SDL_Event *event) {
+static int handle_key_up_down(SDL_Event *event) {
     /*
         Handle the SDL key press or release event
 
@@ -169,7 +169,7 @@ int handle_key_up_down(SDL_Event *event) {
     return 0;
 }
 
-int handle_mouse_motion(SDL_Event *event) {
+static int handle_mouse_motion(SDL_Event *event) {
     /*
         Handle the SDL mouse motion event
 
@@ -208,7 +208,7 @@ int handle_mouse_motion(SDL_Event *event) {
     return 0;
 }
 
-int handle_mouse_button_up_down(SDL_Event *event) {
+static int handle_mouse_button_up_down(SDL_Event *event) {
     /*
         Handle the SDL mouse button press/release event
 
@@ -232,7 +232,7 @@ int handle_mouse_button_up_down(SDL_Event *event) {
     return 0;
 }
 
-int handle_mouse_wheel(SDL_Event *event) {
+static int handle_mouse_wheel(SDL_Event *event) {
     /*
         Handle the SDL mouse wheel event
 
@@ -274,7 +274,7 @@ int handle_mouse_wheel(SDL_Event *event) {
     return 0;
 }
 
-int handle_pinch(SDL_Event *event) {
+static int handle_pinch(SDL_Event *event) {
     /*
         Handle the SDL pinch event
 
@@ -312,7 +312,7 @@ int handle_pinch(SDL_Event *event) {
     return 0;
 }
 
-int handle_multi_gesture(SDL_Event *event) {
+static int handle_multi_gesture(SDL_Event *event) {
     WhistClientMessage wcmsg = {0};
     wcmsg.type = MESSAGE_MULTIGESTURE;
     wcmsg.multigesture = (WhistMultigestureMessage){.d_theta = event->mgesture.dTheta,
@@ -326,7 +326,7 @@ int handle_multi_gesture(SDL_Event *event) {
     return 0;
 }
 
-int handle_file_drop(SDL_Event *event) {
+static int handle_file_drop(SDL_Event *event) {
     int mouse_x, mouse_y;
     SDL_CaptureMouse(true);
     SDL_GetMouseState(&mouse_x, &mouse_y);
@@ -341,7 +341,7 @@ int handle_file_drop(SDL_Event *event) {
     return 0;
 }
 
-int handle_sdl_event(SDL_Event *event) {
+static int handle_sdl_event(SDL_Event *event) {
     /*
         Handle SDL event based on type
 

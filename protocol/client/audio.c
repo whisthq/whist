@@ -136,7 +136,7 @@ Public Function Implementations
 ============================
 */
 
-AudioContext* init_audio() {
+AudioContext* init_audio(void) {
     LOG_INFO("Initializing audio system");
 
     // Allocate the audio context
@@ -316,7 +316,7 @@ static void destroy_audio_device(AudioContext* audio_context) {
     }
 }
 
-int safe_get_audio_queue(AudioContext* audio_context) {
+static int safe_get_audio_queue(AudioContext* audio_context) {
     int audio_device_queue = 0;
     if (audio_context->dev) {
         // If we have a device, get the queue size

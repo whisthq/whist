@@ -17,9 +17,6 @@ Includes
 ============================
 */
 
-#if defined(_WIN32)
-#define _CRT_SECURE_NO_WARNINGS
-#endif
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,8 +66,8 @@ Private Functions
 ============================
 */
 
-int32_t multithreaded_encoder_factory(void* opaque);
-int32_t multithreaded_destroy_encoder(void* opaque);
+static int32_t multithreaded_encoder_factory(void* opaque);
+static int32_t multithreaded_destroy_encoder(void* opaque);
 
 /*
 ============================
@@ -78,7 +75,7 @@ Private Function Implementations
 ============================
 */
 
-int32_t multithreaded_encoder_factory(void* opaque) {
+static int32_t multithreaded_encoder_factory(void* opaque) {
     whist_server_state* state = (whist_server_state*)opaque;
 
     state->encoder_factory_result =
@@ -92,7 +89,7 @@ int32_t multithreaded_encoder_factory(void* opaque) {
     return 0;
 }
 
-int32_t multithreaded_destroy_encoder(void* opaque) {
+static int32_t multithreaded_destroy_encoder(void* opaque) {
     VideoEncoder* encoder = (VideoEncoder*)opaque;
     destroy_video_encoder(encoder);
     return 0;
@@ -110,9 +107,10 @@ int32_t multithreaded_destroy_encoder(void* opaque) {
  * @param true_height       True height of client screen
  * @return                  On success, 0. On failure, -1.
  */
-int32_t create_new_device(whist_server_state* state, WhistTimer* statistics_timer,
-                          CaptureDevice** device, CaptureDevice* rdevice, VideoEncoder** encoder,
-                          uint32_t true_width, uint32_t true_height) {
+static int32_t create_new_device(whist_server_state* state, WhistTimer* statistics_timer,
+                                 CaptureDevice** device, CaptureDevice* rdevice,
+                                 VideoEncoder** encoder, uint32_t true_width,
+                                 uint32_t true_height) {
     start_timer(statistics_timer);
     *device = rdevice;
     if (create_capture_device(*device, true_width, true_height, state->client_dpi) < 0) {
@@ -159,10 +157,11 @@ int32_t create_new_device(whist_server_state* state, WhistTimer* statistics_time
  * @param client_input_timestamp    Estimated client timestamp at which user input is sent
  * @param server_timestamp          Server timestamp at which this frame is captured
  */
-void send_populated_frames(whist_server_state* state, WhistTimer* statistics_timer,
-                           WhistTimer* server_frame_timer, CaptureDevice* device,
-                           VideoEncoder* encoder, int id, timestamp_us client_input_timestamp,
-                           timestamp_us server_timestamp) {
+static void send_populated_frames(whist_server_state* state, WhistTimer* statistics_timer,
+                                  WhistTimer* server_frame_timer, CaptureDevice* device,
+                                  VideoEncoder* encoder, int id,
+                                  timestamp_us client_input_timestamp,
+                                  timestamp_us server_timestamp) {
     // transfer the capture of the latest frame from the device to
     // the encoder,
     // This function will try to CUDA/OpenGL optimize the transfer by
@@ -229,7 +228,8 @@ void send_populated_frames(whist_server_state* state, WhistTimer* statistics_tim
  * @param device    CaptureDevice pointer
  * @param encoder   VideoEncoder pointer
  */
-void retry_capture_screen(whist_server_state* state, CaptureDevice* device, VideoEncoder* encoder) {
+static void retry_capture_screen(whist_server_state* state, CaptureDevice* device,
+                                 VideoEncoder* encoder) {
     LOG_WARNING("Failed to capture screen");
     // The Nvidia Encoder must be wrapped in the lifetime of the capture device
     if (encoder != NULL && encoder->active_encoder == NVIDIA_ENCODER) {
@@ -254,9 +254,9 @@ void retry_capture_screen(whist_server_state* state, CaptureDevice* device, Vide
  * @param true_width       True width of client screen
  * @param true_height      True height of client screen
  */
-void update_current_device(whist_server_state* state, WhistTimer* statistics_timer,
-                           CaptureDevice* device, VideoEncoder* encoder, uint32_t true_width,
-                           uint32_t true_height) {
+static void update_current_device(whist_server_state* state, WhistTimer* statistics_timer,
+                                  CaptureDevice* device, VideoEncoder* encoder, uint32_t true_width,
+                                  uint32_t true_height) {
     state->update_device = false;
     start_timer(statistics_timer);
 
@@ -293,7 +293,7 @@ void update_current_device(whist_server_state* state, WhistTimer* statistics_tim
  * @param state		the Whist server state
  * @param id        Pointer to the frame id
  */
-void send_empty_frame(whist_server_state* state, int id) {
+static void send_empty_frame(whist_server_state* state, int id) {
     // If we don't have a new frame to send, let's just send an empty one
     static char mini_buf[sizeof(VideoFrame)];
     VideoFrame* frame = (VideoFrame*)mini_buf;
@@ -323,8 +323,9 @@ void send_empty_frame(whist_server_state* state, int id) {
  *
  * @returns         The new encoder
  */
-VideoEncoder* update_video_encoder(whist_server_state* state, VideoEncoder* encoder,
-                                   CaptureDevice* device, int bitrate, CodecType codec, int fps) {
+static VideoEncoder* update_video_encoder(whist_server_state* state, VideoEncoder* encoder,
+                                          CaptureDevice* device, int bitrate, CodecType codec,
+                                          int fps) {
     // If this is a new update encoder request, log it
     if (!state->pending_encoder) {
         LOG_INFO("Update encoder request received, will update the encoder now!");

@@ -44,7 +44,7 @@ Public Functions
  *                                 To see more information on this issue, and my related rant,
  *                                 go to https://github.com/libsdl-org/SDL/issues/1059
  */
-bool sdl_handle_events();
+bool sdl_handle_events(void);
 
 /**
  * @brief                          The function will let you know if an audio device has
@@ -57,6 +57,6 @@ bool sdl_handle_events();
  *
  * @note                           This function is thread-safe with any other sdl function call.
  */
-bool sdl_pending_audio_device_update();
+bool sdl_pending_audio_device_update(void);
 
 #endif  // SDL_EVENT_HANDLER_H

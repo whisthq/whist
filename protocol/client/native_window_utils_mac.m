@@ -33,7 +33,7 @@ Public Function Implementations
 ============================
 */
 
-void hide_native_window_taskbar() {
+void hide_native_window_taskbar(void) {
     /*
         Hide the taskbar icon for the app. This only works on macOS (for Window and Linux,
         SDL already implements this in the `SDL_WINDOW_SKIP_TASKBAR` flag).
@@ -48,7 +48,7 @@ void hide_native_window_taskbar() {
     [NSMenu setMenuBarVisible:YES];
 }
 
-NSWindow *get_native_window(SDL_Window *window) {
+static NSWindow *get_native_window(SDL_Window *window) {
     SDL_SysWMinfo sys_info = {0};
     SDL_GetWindowWMInfo(window, &sys_info);
     return sys_info.info.cocoa.window;
@@ -132,7 +132,7 @@ static bool assertion_set = false;
 // Their own screensaver timer will pick up the rest of the time
 #define SCREENSAVER_TIMEOUT_SECONDS (1 * 60)
 
-int user_activity_deactivator(void *unique) {
+static int user_activity_deactivator(void *unique) {
     UNUSED(unique);
 
     while (true) {
@@ -152,7 +152,7 @@ int user_activity_deactivator(void *unique) {
     return 0;
 }
 
-void declare_user_activity() {
+void declare_user_activity(void) {
     if (!last_user_activity_timer_mutex) {
         last_user_activity_timer_mutex = whist_create_mutex();
         start_timer(&last_user_activity_timer);

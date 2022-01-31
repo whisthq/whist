@@ -7,6 +7,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+// These functions have no visible prototype - they are only called by
+// the memory allocation code for FFmpeg in libavutil/mem.c.  Their
+// symbols must be global because they are resolved at runtime by the
+// dynamic linker.
+#pragma clang diagnostic ignored "-Wmissing-prototypes"
+
 void *whist_ffmpeg_malloc(size_t size) {
     size_t page_size = sysconf(_SC_PAGESIZE);
     size_t align;

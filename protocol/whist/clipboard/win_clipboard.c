@@ -29,6 +29,7 @@ Includes
 #include <whist/core/whist.h>
 #include "../utils/png.h"
 #include "clipboard.h"
+#include "clipboard_internal.h"
 
 #include "shlwapi.h"
 #pragma comment(lib, "Shlwapi.lib")

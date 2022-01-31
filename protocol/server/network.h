@@ -132,7 +132,7 @@ int disconnect_client(Client *client);
  * @returns                        Returns true if server is using stun,
  *                                 false otherwise.
  */
-bool get_using_stun();
+bool get_using_stun(void);
 
 /**
  * @brief                          Should be run in its own thread. Loops

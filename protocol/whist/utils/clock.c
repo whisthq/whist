@@ -10,8 +10,6 @@ You can use start_timer and get_timer to time specific pieces of code, or to
 relate different events across server and client.
 */
 
-#define _CRT_SECURE_NO_WARNINGS  // stupid Windows warnings
-
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>

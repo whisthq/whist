@@ -36,7 +36,7 @@ Public Functions
  *                                 macOS (for Windows and Linux, SDL already implements this in
  *                                 the `SDL_WINDOW_SKIP_TASKBAR` flag).
  */
-void hide_native_window_taskbar();
+void hide_native_window_taskbar(void);
 
 /**
  * @brief                          Initialize the customized native window. This is called from
@@ -71,6 +71,6 @@ int get_native_window_dpi(SDL_Window* window);
  * @brief                          Declares that UserActivity has occured,
  *                                 resetting the timer for screensavers/sleepmode
  */
-void declare_user_activity();
+void declare_user_activity(void);
 
 #endif  // NATIVE_WINDOW_UTILS_H

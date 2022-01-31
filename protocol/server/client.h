@@ -116,7 +116,7 @@ int reap_timed_out_client(Client* client, double timeout);
  * @brief                          Add thread to count of those dependent on
  *                                 client being active.
  */
-void add_thread_to_client_active_dependents();
+void add_thread_to_client_active_dependents(void);
 
 /**
  * @brief                          Set the thread count regarding a client as
@@ -125,7 +125,7 @@ void add_thread_to_client_active_dependents();
  *                                 made active after the previous one has been
  *                                 deactivated and quit.
  */
-void reset_threads_holding_active_count();
+void reset_threads_holding_active_count(Client* client);
 
 /**
  * @brief                          Allows a thread to update its status on
@@ -148,6 +148,6 @@ void update_client_active_status(Client* client, bool* is_thread_assuming_active
  * @returns                        Whether any threads need the client to still be
  *                                 active
  */
-bool threads_still_holding_active();
+bool threads_still_holding_active(void);
 
 #endif  // SERVER_CLIENT_H

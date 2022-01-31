@@ -44,7 +44,7 @@ Public Functions
  *
  * @returns                        The new audio context
  */
-AudioContext* init_audio();
+AudioContext* init_audio(void);
 
 /**
  * @brief                          This will refresh the audio device

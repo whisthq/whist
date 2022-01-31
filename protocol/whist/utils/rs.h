@@ -56,7 +56,7 @@ Public Functions
 void rs_free(RSCode* rs_code) ;
 RSCode* rs_new(int k, int n) ;//n>=k
 
-void init_rs();  //if you never called this,it will be automatically called in fec_new()
+void init_rs(void);  //if you never called this,it will be automatically called in fec_new()
 void rs_encode(RSCode* rs_code, void* src[], void* dst, int index, int sz) ;
 int rs_decode(RSCode* rs_code, void* pkt[], int index[], int sz) ;
 

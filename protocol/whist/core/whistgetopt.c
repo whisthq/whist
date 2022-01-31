@@ -56,7 +56,7 @@ char *optarg;   /* argument associated with option */
 #define _DIAGASSERT(x) assert(x)
 
 static char *progname __P((char *));
-int getopt_internal __P((int, char *const *, const char *));
+static int getopt_internal __P((int, char *const *, const char *));
 
 static char *progname(char *nargv0) {
     char *tmp;
@@ -79,7 +79,7 @@ static char *progname(char *nargv0) {
  * getopt --
  *	Parse argc/argv argument vector.
  */
-int getopt_internal(int nargc, char *const *nargv, const char *ostr) {
+static int getopt_internal(int nargc, char *const *nargv, const char *ostr) {
     static char *place = EMSG; /* option letter processing */
     char *oli;                 /* option letter list index */
 

@@ -10,10 +10,6 @@ Call these functions from anywhere within client where they're
 needed.
 */
 
-#ifdef _WIN32
-#define _CRT_SECURE_NO_WARNINGS  // stupid Windows warnings
-#endif
-
 /*
 ============================
 Includes
@@ -109,26 +105,7 @@ Private Function Implementations
 ============================
 */
 
-char *dupstring(char *s1) {
-    /*
-        Generate a copy of a string
-
-        Arguments:
-            s1 (char*): String to be copied
-
-        Return:
-            (char*): Copy of string, as a new pointer
-    */
-
-    size_t len = strlen(s1);
-    char *s2 = safe_malloc(len * sizeof *s2);
-    char *ret = s2;
-    for (; *s1; s1++, s2++) *s2 = *s1;
-    *s2 = *s1;
-    return ret;
-}
-
-int evaluate_arg(int eval_opt, char *eval_optarg) {
+static int evaluate_arg(int eval_opt, char *eval_optarg) {
     /*
         Evaluate an option given the optcode and the argument
 
@@ -669,7 +646,7 @@ int prepare_init_to_server(WhistDiscoveryRequestMessage *wcmsg, char *email) {
     return 0;
 }
 
-int update_mouse_motion() {
+int update_mouse_motion(void) {
     /*
         Update mouse location if the mouse state has updated since the last call
         to this function.
@@ -727,7 +704,7 @@ int update_mouse_motion() {
     return 0;
 }
 
-void send_message_dimensions() {
+void send_message_dimensions(void) {
     // Let the server know the new dimensions so that it
     // can change native dimensions for monitor
     WhistClientMessage wcmsg = {0};
@@ -740,7 +717,7 @@ void send_message_dimensions() {
     send_wcmsg(&wcmsg);
 }
 
-void send_new_tab_url_if_needed() {
+void send_new_tab_url_if_needed(void) {
     // Send any new URL to the server
     if (new_tab_url) {
         LOG_INFO("Sending message to open URL in new tab");

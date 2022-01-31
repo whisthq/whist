@@ -38,7 +38,7 @@ int get_window_virtual_height(SDL_Window *window) {
     return h;
 }
 
-int get_virtual_screen_width() {
+int get_virtual_screen_width(void) {
     SDL_DisplayMode dm;
     //    int res = SDL_GetCurrentDisplayMode(0, &DM);
     int res = SDL_GetDesktopDisplayMode(0, &dm);
@@ -46,7 +46,7 @@ int get_virtual_screen_width() {
     return dm.w;
 }
 
-int get_virtual_screen_height() {
+int get_virtual_screen_height(void) {
     SDL_DisplayMode dm;
     //    int res = SDL_GetCurrentDisplayMode(0, &DM);
     int res = SDL_GetDesktopDisplayMode(0, &dm);

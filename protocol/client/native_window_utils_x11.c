@@ -24,7 +24,7 @@ Includes
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL_syswm.h>
 
-void hide_native_window_taskbar() { LOG_INFO("Not implemented on X11."); }
+void hide_native_window_taskbar(void) { LOG_INFO("Not implemented on X11."); }
 
 int set_native_window_color(SDL_Window* window, WhistRGBColor color) {
     LOG_INFO("Not implemented on X11.");
@@ -51,7 +51,7 @@ int get_native_window_dpi(SDL_Window* window) {
     return (int)dpi;
 }
 
-void declare_user_activity() {
+void declare_user_activity(void) {
     // TODO: Implement actual wake-up code
     // For now, we'll just disable the screensaver
     SDL_DisableScreenSaver();

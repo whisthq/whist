@@ -14,10 +14,6 @@ Includes
 ============================
 */
 
-#ifdef _WIN32
-#define _CRT_SECURE_NO_WARNINGS
-#endif
-
 // In order to use accept4 we have to allow non-standard extensions
 #if !defined(_GNU_SOURCE) && defined(__linux__)
 #define _GNU_SOURCE
@@ -71,10 +67,6 @@ Includes
 #include <whist/utils/clock.h>
 #include <whist/logging/logging.h>
 #include <whist/utils/os_utils.h>
-
-#ifdef _WIN32
-#pragma warning(disable : 4200)
-#endif
 
 /*
 ============================

@@ -23,6 +23,7 @@ Includes
 */
 
 #include "clipboard_osx.h"
+#include "clipboard_internal.h"
 #include <AppKit/AppKit.h>
 
 /*
@@ -31,7 +32,7 @@ Public Function Implementations
 ============================
 */
 
-int get_clipboard_changecount() {
+int get_clipboard_changecount(void) {
     /*
         Check if the clipboard has updated since last time we checked it
 
@@ -45,7 +46,7 @@ int get_clipboard_changecount() {
     return (int)change_count;
 }
 
-bool check_clipboard_has_string() {
+bool check_clipboard_has_string(void) {
     /*
         Check if the clipboard has a string stored
 
@@ -59,12 +60,12 @@ bool check_clipboard_has_string() {
     return [pasteboard canReadObjectForClasses:class_array options:options];
 }
 
-bool check_clipboard_has_data_ready() {
+bool check_clipboard_has_data_ready(void) {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     return [pasteboard.pasteboardItems count] > 0;
 }
 
-bool check_clipboard_has_image() {
+bool check_clipboard_has_image(void) {
     /*
         Check if the clipboard has an image stored
 
@@ -78,7 +79,7 @@ bool check_clipboard_has_image() {
     return [pasteboard canReadObjectForClasses:class_array options:options];
 }
 
-const char *clipboard_get_string() {
+const char *clipboard_get_string(void) {
     /*
         Get a string from the clipboard
 
@@ -178,7 +179,7 @@ void clipboard_set_image(char *img, int len) {
     return;
 }
 
-bool check_clipboard_has_files() {
+bool check_clipboard_has_files(void) {
     /*
         Check if the clipboard has files stored
 

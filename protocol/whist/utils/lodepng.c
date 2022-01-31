@@ -594,30 +594,6 @@ static unsigned readBits(LodePNGBitReader* reader, size_t nbits) {
     advanceBits(reader, nbits);
     return result;
 }
-
-/* Public for testing only. steps and result must have numsteps values. */
-unsigned lode_png_test_bitreader(const unsigned char* data, size_t size, size_t numsteps,
-                                 const size_t* steps, unsigned* result) {
-    size_t i;
-    LodePNGBitReader reader;
-    unsigned error = LodePNGBitReader_init(&reader, data, size);
-    if (error) return 0;
-    for (i = 0; i < numsteps; i++) {
-        size_t step = steps[i];
-        unsigned ok;
-        if (step > 25)
-            ok = ensureBits32(&reader, step);
-        else if (step > 17)
-            ok = ensureBits25(&reader, step);
-        else if (step > 9)
-            ok = ensureBits17(&reader, step);
-        else
-            ok = ensureBits9(&reader, step);
-        if (!ok) return 0;
-        result[i] = readBits(&reader, step);
-    }
-    return 1;
-}
 #endif /*LODEPNG_COMPILE_DECODER*/
 
 static unsigned reverseBits(unsigned bits, unsigned num) {
@@ -3786,9 +3762,10 @@ function, do not use to process all pixels of an image. Alpha channel not suppor
 this is for bKGD, supporting alpha may prevent it from finding a color in the palette, from the
 specification it looks like bKGD should ignore the alpha values of the palette since it can use
 any palette index but doesn't have an alpha channel. Idem with ignoring color key. */
-unsigned lodepng_convert_rgb(unsigned* r_out, unsigned* g_out, unsigned* b_out, unsigned r_in,
-                             unsigned g_in, unsigned b_in, const LodePNGColorMode* mode_out,
-                             const LodePNGColorMode* mode_in) {
+static unsigned lodepng_convert_rgb(unsigned* r_out, unsigned* g_out, unsigned* b_out,
+                                    unsigned r_in, unsigned g_in, unsigned b_in,
+                                    const LodePNGColorMode* mode_out,
+                                    const LodePNGColorMode* mode_in) {
     unsigned r = 0, g = 0, b = 0;
     unsigned mul = 65535 / ((1u << mode_in->bitdepth) - 1u); /*65535, 21845, 4369, 257, 1*/
     unsigned shift = 16 - mode_out->bitdepth;

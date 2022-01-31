@@ -23,6 +23,7 @@ Includes
 
 #include <whist/utils/os_utils.h>
 #include "input.h"
+#include "input_internal.h"
 #include "keyboard_mapping.h"
 
 /*
@@ -42,15 +43,6 @@ static WhistOSType input_os_type = WHIST_UNKNOWN_OS;
 Public Function Implementations
 ============================
 */
-
-#if defined(__linux__)
-InputDevice* xtest_create_input_device(void);
-InputDevice* uinput_create_input_device(void);
-#endif
-
-#ifdef WIN32
-InputDevice* win_create_input_device(void);
-#endif
 
 InputDevice* create_input_device(InputDeviceType kind) {
     switch (kind) {

@@ -3,7 +3,7 @@ if(MSVC) # Windows MSVC compiler base flags
   # better stack traces.  MT is for release, MTd is for debug, and for RELEASE
   # we should compile against the release version.
   add_compile_options(
-    "$<$<OR:$<COMPILE_LANGUAGE:C>,$<COMPILE_LANGUAGE:CXX>>:-DWIN32;-DWIN32_LEAN_AND_MEAN;-DUNICODE;/W4;/wd4189;/wd4100;/wd4127;/wd4244;/MP;/WX;$<$<CONFIG:DEBUG>:/MTd;/Od>;$<$<CONFIG:RELEASE>:/MT;/O2>>"
+    "$<$<OR:$<COMPILE_LANGUAGE:C>,$<COMPILE_LANGUAGE:CXX>>:-DWIN32;-DWIN32_LEAN_AND_MEAN;-DUNICODE;-D_CRT_SECURE_NO_WARNINGS;/W4;/wd4189;/wd4100;/wd4127;/wd4200;/wd4244;/MP;/WX;$<$<CONFIG:DEBUG>:/MTd;/Od>;$<$<CONFIG:RELEASE>:/MT;/O2>>"
   )
 else() # GCC and Clang base flags
   add_compile_options(
@@ -22,6 +22,8 @@ else() # GCC and Clang base flags
     "-fno-common" # Error when two global variables have the same name, which would overlap them
     "-Wshadow" # Warn when a variable gets shadowed
     "$<$<COMPILE_LANGUAGE:C>:-Wincompatible-pointer-types>"
+    "$<$<COMPILE_LANGUAGE:C>:-Wstrict-prototypes>" # Warn when a function is declared as having unknown arguments.
+    "$<$<COMPILE_LANGUAGE:C>:-Wmissing-prototypes>" # Warn when a global function has no prototype.
     "$<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,C>:-Werror=implicit-function-declaration>" # Error on implicit function declaration with C
     "$<$<CONFIG:DEBUG>:-Og;-g3;-O0>"
     "$<$<CONFIG:RELEASE>:-g3;-O2>")
