@@ -1381,7 +1381,7 @@ jobs:
         whist-build-monorepo-config,
         mandelboxes-and-amis-publish-ghcr-and-aws,
         webserver-deploy-heroku,
-      ]    
+      ]
     if: contains(needs.whist-publish-build-config.outputs.jobs, '|scaling-service-deploy-heroku|')
 
     steps:
