@@ -26,6 +26,7 @@ Includes
 
 #include "clipboard.h"
 #include <whist/core/whist.h>
+#include "clipboard_internal.h"
 
 // A Mutex to ensure unsafe commands don't overlap
 static WhistMutex clipboard_mutex;
@@ -35,22 +36,6 @@ static bool preserve_local_clipboard = false;
 //     This is to prevent Peer 2 from sending a copy event back to
 //     Peer 1 when Peer 1 sends an updated clipboard to Peer 2
 static bool skip_next_has_updated = false;
-
-/*
-============================
-Private Functions
-============================
-*/
-
-// These clipboard primitives are defined in {x11,win,mac}_clipboard.c
-// CMake will only link one of those C files, depending on the OS
-
-void unsafe_init_clipboard(void);
-ClipboardData* unsafe_get_os_clipboard(void);
-void unsafe_set_os_clipboard(ClipboardData* cb);
-void unsafe_free_clipboard_buffer(ClipboardData* cb);
-bool unsafe_has_os_clipboard_updated(void);
-void unsafe_destroy_clipboard(void);
 
 /*
 ============================

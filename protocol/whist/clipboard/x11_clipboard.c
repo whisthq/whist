@@ -36,6 +36,7 @@ Includes
 
 #include <whist/core/whist.h>
 #include "clipboard.h"
+#include "clipboard_internal.h"
 #include "../utils/png.h"
 
 /* #define CLOSE_FDS \
@@ -125,7 +126,7 @@ static ClipboardData* get_os_clipboard_picture(void) {
     return NULL;
 }
 
-ClipboardData* get_os_clipboard_string(void) {
+static ClipboardData* get_os_clipboard_string(void) {
     /*
         Get a string from the Linux OS clipboard
 
@@ -149,65 +150,6 @@ ClipboardData* get_os_clipboard_string(void) {
     // request failed, e.g. owner can't convert to the target format
     LOG_WARNING("Can't convert clipboard string to target format");
     return NULL;
-}
-
-ClipboardData* get_os_clipboard_files(void) {
-    /*
-        Get files from the Linux OS clipboard
-
-        Returns:
-            (ClipboardData*): clipboard data buffer into which files are loaded
-    */
-
-    Atom target_atom = XInternAtom(display, "x-special/gnome-copied-files", False);
-    Atom property_atom = XInternAtom(display, "XSEL_DATA", False);
-
-    if (clipboard_has_target(property_atom, target_atom)) {
-        ClipboardData* cb = NULL;
-        if ((cb = get_os_clipboard_data(property_atom, 0)) == NULL) {
-            LOG_WARNING("Failed to get clipboard data");
-            return NULL;
-        }
-
-        // Increase size by 1 for the null terminator
-        cb = realloc_region(cb, sizeof(ClipboardData) + cb->size + 1);
-
-        // Add null terminator
-        cb->data[cb->size] = '\0';
-        cb->size++;
-
-        char command[100] = "rm -rf ";
-        strcat(command, GET_OS_CLIPBOARD);
-        system(command);
-        mkdir(GET_OS_CLIPBOARD, 0777);
-
-        char* file = strtok(cb->data, "\n\r");
-        if (file != NULL) {
-            file = strtok(NULL, "\n\r");
-        }
-
-        while (file != NULL) {
-            char file_prefix[] = "file://";
-            if (memcmp(file, file_prefix, sizeof(file_prefix) - 1) == 0) {
-                char final_filename[1000] = "";
-                strcat(final_filename, GET_OS_CLIPBOARD);
-                strcat(final_filename, "/");
-                strcat(final_filename, basename(file));
-                LOG_INFO("NAME: %s %s %s", final_filename, file, basename(file));
-                symlink(file + sizeof(file_prefix) - 1, final_filename);
-            } else {
-                LOG_WARNING("Not a file: %s", file);
-            }
-            file = strtok(NULL, "\n\r");
-        }
-
-        cb->type = CLIPBOARD_FILES;
-        cb->size = 0;
-        return cb;
-    } else {  // request failed, e.g. owner can't convert to the target format
-        LOG_WARNING("Can't convert clipboard to target format");
-        return NULL;
-    }
 }
 
 void unsafe_free_clipboard_buffer(ClipboardData* cb) {

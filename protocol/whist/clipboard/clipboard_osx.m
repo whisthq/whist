@@ -23,6 +23,7 @@ Includes
 */
 
 #include "clipboard_osx.h"
+#include "clipboard_internal.h"
 #include <AppKit/AppKit.h>
 
 /*

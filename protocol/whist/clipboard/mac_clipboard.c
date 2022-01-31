@@ -23,6 +23,7 @@ Includes
 
 #include <whist/core/whist.h>
 #include "clipboard.h"
+#include "clipboard_internal.h"
 
 #include <sys/syslimits.h>
 #include <unistd.h>
