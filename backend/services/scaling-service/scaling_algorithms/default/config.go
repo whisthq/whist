@@ -12,4 +12,4 @@ var instanceCapacity = map[string]int{
 // bundledRegions is a list of the enabled regions on the cloud providers.
 // TODO: when adding multi-cloud support, figure out how to bundle regions
 // for different cloud providers.
-var bundledRegions = []string{"us-east-1", "us-east-2", "us-west-1", "us-west-2", "ca-central-1"}
+var BundledRegions = []string{"us-east-1", "us-east-2", "us-west-1", "us-west-2", "ca-central-1"}

@@ -128,12 +128,9 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 						defer goroutineTracker.Done()
 
 						scalingCtx, scalingCancel := context.WithCancel(context.Background())
-						for _, region := range bundledRegions {
-							scheduledEvent.Region = region
-							err := s.ScaleDownIfNecessary(scalingCtx, scheduledEvent)
-							if err != nil {
-								logger.Errorf("Error running scale down job on region %v. Err: %v", region, err)
-							}
+						err := s.ScaleDownIfNecessary(scalingCtx, scheduledEvent)
+						if err != nil {
+							logger.Errorf("Error running scale down job on region %v. Err: %v", scheduledEvent.Region, err)
 						}
 
 						scalingCancel()
@@ -157,12 +154,9 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 						// Get arguments from scheduled event
 						regionImageMap := scheduledEvent.Data.(map[string]string)
 
-						for _, region := range bundledRegions {
-							scheduledEvent.Region = "us-east-1"
-							err := s.UpgradeImage(scalingCtx, scheduledEvent, regionImageMap[region])
-							if err != nil {
-								logger.Errorf("Error running image upgrade on region %v. Err: %v", region, err)
-							}
+						err := s.UpgradeImage(scalingCtx, scheduledEvent, regionImageMap[scheduledEvent.Region])
+						if err != nil {
+							logger.Errorf("Error running image upgrade on region %v. Err: %v", scheduledEvent.Region, err)
 						}
 
 						scalingCancel()

@@ -11,6 +11,7 @@ import (
 	"github.com/go-co-op/gocron"
 	sa "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default" // Import as sa, short for scaling_algorithms
 	"github.com/whisthq/whist/backend/services/subscriptions"
+	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 )
 
@@ -45,9 +46,14 @@ func main() {
 	// Use a sync map since we only write the keys once but will be reading multiple
 	// times by different goroutines.
 	algorithmByRegionMap := &sync.Map{}
-	algorithmByRegionMap.Store("default", &sa.DefaultScalingAlgorithm{
-		Region: "us-east-1",
-	})
+
+	// Load default scaling algorithm for all enabled regions.
+	for _, region := range sa.BundledRegions {
+		name := utils.Sprintf("default-sa-%s", region)
+		algorithmByRegionMap.Store(name, &sa.DefaultScalingAlgorithm{
+			Region: region,
+		})
+	}
 
 	// Instantiate scaling algorithms on allowed regions
 	algorithmByRegionMap.Range(func(key, value interface{}) bool {
@@ -118,18 +124,15 @@ func StartDeploy(scheduledEvents chan sa.ScalingEvent) {
 
 // getScalingAlgorithm is a helper function that returns the scaling algorithm from the sync map.
 func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent sa.ScalingEvent) sa.ScalingAlgorithm {
-	// Try to get the scaling algorithm on the region the
-	// scaling event was requested.
-	algorithm, ok := algorithmByRegion.Load(scalingEvent.Region)
+	// Try to get the scaling algorithm on the region the scaling event was requested.
+	// TODO: figure out how to get non-default scaling algorihtms.
+	name := utils.Sprintf("default-sa-%s", scalingEvent.Region)
+	algorithm, ok := algorithmByRegion.Load(name)
 	if ok {
 		return algorithm.(sa.ScalingAlgorithm)
 	}
 
-	// Try to get the default scaling algorithm
-	algorithm, ok = algorithmByRegion.Load("default")
-	if ok {
-		return algorithm.(sa.ScalingAlgorithm)
-	}
+	logger.Errorf("Failed to get scaling algorithm in %v", scalingEvent.Region)
 
 	return nil
 }
@@ -170,12 +173,15 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 		case scheduledEvent := <-scheduledEvents:
 			// Start scaling algorithm based on region
 			logger.Infof("Received scheduled event. %v", scheduledEvent)
-			algorithm := getScalingAlgorithm(algorithmByRegion, scheduledEvent)
 
-			switch algorithm := algorithm.(type) {
-			case *sa.DefaultScalingAlgorithm:
-				logger.Infof("Sending to scheduled event chan")
-				algorithm.ScheduledEventChan <- scheduledEvent
+			for _, region := range sa.BundledRegions {
+				scheduledEvent.Region = region
+				algorithm := getScalingAlgorithm(algorithmByRegion, scheduledEvent)
+				switch algorithm := algorithm.(type) {
+				case *sa.DefaultScalingAlgorithm:
+					logger.Infof("Sending to scheduled event chan")
+					algorithm.ScheduledEventChan <- scheduledEvent
+				}
 			}
 		}
 	}
