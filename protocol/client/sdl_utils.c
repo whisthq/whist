@@ -55,6 +55,15 @@ static int pending_nv12data_linesize[4];
 static int pending_nv12data_width;
 static int pending_nv12data_height;
 
+#define LOADING_SOLID_COLOR true
+
+// The background color for the loading screen
+#if LOADING_SOLID_COLOR
+static const WhistRGBColor background_color = {17, 24, 39};  // #111827 (thanks copilot)
+#else
+static const WhistRGBColor background_color = {255, 255, 255};  // white
+#endif  // LOADING_SOLID_COLOR
+
 // Window Color Update
 static volatile WhistRGBColor* native_window_color = NULL;
 static volatile bool native_window_color_update = false;
@@ -235,9 +244,8 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         sdl_free_png_file_rgb_surface(icon_surface);
     }
 
-    // Initialize the window color to white
-    const WhistRGBColor white = {255, 255, 255};
-    set_native_window_color(sdl_window, white);
+    // Initialize the window color to the loading background color
+    set_native_window_color(sdl_window, background_color);
 
     SDL_Event cur_event;
     while (SDL_PollEvent(&cur_event)) {
@@ -698,12 +706,7 @@ static void sdl_present_pending_framebuffer(void) {
 static void sdl_render_loading_screen(void) {
     FATAL_ASSERT(pending_loadingscreen == true);
 
-#define LOADING_SOLID_COLOR true
-
 #if LOADING_SOLID_COLOR
-    // The color to show when loading
-    const WhistRGBColor background_color = {17, 24, 39};  // #111827 (thanks copilot)
-
     SDL_SetRenderDrawColor(sdl_renderer, background_color.red, background_color.green,
                            background_color.blue, SDL_ALPHA_OPAQUE);
 #else
