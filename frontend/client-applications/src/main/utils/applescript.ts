@@ -15,8 +15,6 @@ const getNumberOfBrowserWindows = async (browser: string) => {
 }
 
 const installedBrowserToApplescript = (browser: string) => {
-  console.log("looking for match for", browser)
-  console.log("is it a match for", InstalledBrowser.OPERA)
   switch (browser) {
     case InstalledBrowser.CHROME:
       return "Google Chrome"
