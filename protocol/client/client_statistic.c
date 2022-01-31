@@ -14,7 +14,7 @@ void init_client_statistics() {
     client_statistic_info[AUDIO_UPDATE_TIME] =
         (StatisticInfo){"AUDIO_UPDATE_TIME", true, false, false};
     client_statistic_info[AUDIO_FPS_SKIPPED] =
-        (StatisticInfo){"AUDIO_FPS_SKIPPED", true, false, true};
+        (StatisticInfo){"AUDIO_FPS_SKIPPED", false, false, true};
     client_statistic_info[NETWORK_READ_PACKET_TCP] =
         (StatisticInfo){"READ_PACKET_TIME_TCP", true, false, false};
     client_statistic_info[NETWORK_READ_PACKET_UDP] =
