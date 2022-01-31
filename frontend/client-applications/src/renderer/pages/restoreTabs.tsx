@@ -119,8 +119,8 @@ const Importer = (props: {
           Select Window
         </div>
         <div className="m-auto mt-2 mb-8 text-gray-400 max-w-sm ">
-          Which of your currently open {browser} windows would you like to
-          import tabs from?
+          Which of your currently open windows would you like to import tabs
+          from?
         </div>
         <div className="flex space-x-6 max-w-lg overflow-x-auto flex-nowrap">
           {props.windows === undefined && (
@@ -197,11 +197,11 @@ const Importer = (props: {
         )}
       >
         <div className="font-semibold text-2xl text-gray-300 mt-8">
-          Unable to import {browser} tabs
+          Unable to import tabs
         </div>
         <div className="m-auto mt-2 mb-8 text-gray-400 max-w-sm ">
-          In order to import tabs from {browser}, you need to have {browser}{" "}
-          open on your computer.
+          In order to import tabs, you need to have your browser open on your
+          computer.
         </div>
       </div>
     )
