@@ -181,6 +181,7 @@ void receive_audio(AudioContext* audio_context, AudioFrame* audio_frame) {
     // ===========================
     if (is_overflowing_audio(audio_context)) {
         // if we're overflowing, discard the packet but pretend we played it
+        log_double_statistic(AUDIO_FPS_SKIPPED, 1.0);
         LOG_WARNING("Audio queue full, skipping it!");
         return;
     }
