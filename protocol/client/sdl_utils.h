@@ -97,7 +97,7 @@ void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int heig
  * @note                           Will make `sdl_render_pending` return true, up until
  *                                 `update_pending_sdl_tasks` is called on the main thread.
  */
-void sdl_render_framebuffer();
+void sdl_render_framebuffer(void);
 
 /**
  * @brief                          Returns whether or not
@@ -106,7 +106,7 @@ void sdl_render_framebuffer();
  * @returns                        True if `sdl_render_framebuffer` has been called,
  *                                 but `update_pending_sdl_tasks` has not been called.
  */
-bool sdl_render_pending();
+bool sdl_render_pending(void);
 
 /**
  * @brief                          Update the cursor
@@ -153,7 +153,7 @@ void sdl_set_fullscreen(bool is_fullscreen);
  *
  * @note                           This function is virtually instantaneous
  */
-bool sdl_is_window_visible();
+bool sdl_is_window_visible(void);
 
 /**
  * @brief                          The above functions may be expensive, and thus may
@@ -165,7 +165,7 @@ bool sdl_is_window_visible();
  *                                 This will also render out any pending framebuffer,
  *                                 thereby setting `sdl_render_pending` to false.
  */
-void sdl_update_pending_tasks();
+void sdl_update_pending_tasks(void);
 
 /**
  * @brief                          Copies private variable values to the variables pointed by the

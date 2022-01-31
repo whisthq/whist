@@ -7,7 +7,7 @@
 
 StatisticInfo client_statistic_info[CLIENT_NUM_METRICS];
 
-void init_client_statistics() {
+void init_client_statistics(void) {
     // (StatisticInfo){"key", is_max_needed, is_min_needed, average_over_time};
     client_statistic_info[AUDIO_RECEIVE_TIME] =
         (StatisticInfo){"AUDIO_RECEIVE_TIME", true, false, false};

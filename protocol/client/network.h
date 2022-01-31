@@ -54,7 +54,7 @@ int connect_to_server(bool using_stun);
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int send_tcp_reconnect_message();
+int send_tcp_reconnect_message(void);
 
 int close_connections(void);
 

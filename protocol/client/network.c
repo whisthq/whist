@@ -244,7 +244,7 @@ int connect_to_server(bool with_stun) {
     return 0;
 }
 
-int send_tcp_reconnect_message() {
+int send_tcp_reconnect_message(void) {
     /*
         Send a TCP socket reset message to the server, regardless of the initiator of the lost
         connection.

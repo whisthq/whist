@@ -32,8 +32,8 @@ extern volatile SDL_Window* window;
 extern bool skip_taskbar;
 
 #if defined(_WIN32)
-HHOOK g_h_keyboard_hook;
-LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_param);
+static HHOOK g_h_keyboard_hook;
+static LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_param);
 #endif
 
 // on macOS, we must initialize the renderer in `init_sdl()` instead of video.c
@@ -87,34 +87,34 @@ Private Function Declarations
  *
  * @note                           `sdl_free_png_file_rgb_surface` must eventually be called!
  */
-SDL_Surface* sdl_surface_from_png_file(char* filename);
+static SDL_Surface* sdl_surface_from_png_file(char* filename);
 
 /**
  * @brief                          Destroys an SDL_Surface created by sdl_surface_from_png_file
  *
  * @param surface                  The SDL_Surface to free
  */
-void sdl_free_png_file_rgb_surface(SDL_Surface* surface);
+static void sdl_free_png_file_rgb_surface(SDL_Surface* surface);
 
 /**
  * @brief                          Updates the framebuffer from any pending framebuffer call,
  *                                 Then RenderPresent if sdl_render_framebuffer is pending.
  */
-void sdl_present_pending_framebuffer();
+static void sdl_present_pending_framebuffer(void);
 
 /**
  * @brief                          Renders out the loading screen
  *
  * @note                           Must be called on the main thread
  */
-void sdl_render_loading_screen();
+static void sdl_render_loading_screen(void);
 
 /**
  * @brief                          Renders out any pending nv12 data
  *
  * @note                           Must be called on the main thread
  */
-void sdl_render_nv12data();
+static void sdl_render_nv12data(void);
 
 /*
 ============================
@@ -144,10 +144,12 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
 #endif
 
-#if defined(_WIN32) && CAPTURE_SPECIAL_WINDOWS_KEYS
-    // Hook onto windows keyboard to intercept windows special key combinations
-    g_hKeyboardHook =
-        SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, GetModuleHandle(NULL), 0);
+#if defined(_WIN32)
+    if (CAPTURE_SPECIAL_WINDOWS_KEYS) {
+        // Hook onto windows keyboard to intercept windows special key combinations
+        g_h_keyboard_hook =
+            SetWindowsHookEx(WH_KEYBOARD_LL, low_level_keyboard_proc, GetModuleHandle(NULL), 0);
+    }
 #endif
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
@@ -404,14 +406,14 @@ void sdl_update_framebuffer(Uint8* data[4], int linesize[4], int width, int heig
     whist_unlock_mutex(renderer_mutex);
 }
 
-void sdl_render_framebuffer() {
+void sdl_render_framebuffer(void) {
     whist_lock_mutex(renderer_mutex);
     // Mark a render as pending
     pending_render = true;
     whist_unlock_mutex(renderer_mutex);
 }
 
-bool sdl_render_pending() {
+bool sdl_render_pending(void) {
     whist_lock_mutex(renderer_mutex);
     bool pending_render_val = pending_render;
     whist_unlock_mutex(renderer_mutex);
@@ -538,12 +540,12 @@ void sdl_set_fullscreen(bool is_fullscreen) {
     fullscreen_value = is_fullscreen;
 }
 
-bool sdl_is_window_visible() {
+bool sdl_is_window_visible(void) {
     return !(SDL_GetWindowFlags((SDL_Window*)window) &
              (SDL_WINDOW_OCCLUDED | SDL_WINDOW_MINIMIZED));
 }
 
-void sdl_update_pending_tasks() {
+void sdl_update_pending_tasks(void) {
     // Handle any pending window title updates
     if (should_update_window_title) {
         if (window_title) {
@@ -653,7 +655,7 @@ Private Function Implementations
 ============================
 */
 
-void sdl_present_pending_framebuffer() {
+static void sdl_present_pending_framebuffer(void) {
     // Render out the current framebuffer, if there's a pending render
     whist_lock_mutex(renderer_mutex);
 
@@ -695,7 +697,7 @@ void sdl_present_pending_framebuffer() {
     whist_unlock_mutex(renderer_mutex);
 }
 
-void sdl_render_loading_screen() {
+static void sdl_render_loading_screen(void) {
     FATAL_ASSERT(pending_loadingscreen == true);
 
 #define LOADING_SOLID_COLOR true
@@ -748,7 +750,7 @@ void sdl_render_loading_screen() {
     pending_loadingscreen = false;
 }
 
-void sdl_render_nv12data() {
+static void sdl_render_nv12data(void) {
     FATAL_ASSERT(pending_nv12data == true);
 
     // The texture object we allocate is larger than the frame,
@@ -782,7 +784,7 @@ void sdl_render_nv12data() {
     pending_nv12data = false;
 }
 
-SDL_Surface* sdl_surface_from_png_file(char* filename) {
+static SDL_Surface* sdl_surface_from_png_file(char* filename) {
     unsigned int w, h, error;
     unsigned char* image;
 
@@ -816,7 +818,7 @@ SDL_Surface* sdl_surface_from_png_file(char* filename) {
     return surface;
 }
 
-void sdl_free_png_file_rgb_surface(SDL_Surface* surface) {
+static void sdl_free_png_file_rgb_surface(SDL_Surface* surface) {
     // Specified to call `SDL_FreeSurface` on the surface, and `free` on the pixels array
     char* pixels = surface->pixels;
     SDL_FreeSurface(surface);
@@ -824,7 +826,7 @@ void sdl_free_png_file_rgb_surface(SDL_Surface* surface) {
 }
 
 #if defined(_WIN32)
-void send_captured_key(SDL_Keycode key, int type, int time) {
+static void send_captured_key(SDL_Keycode key, int type, int time) {
     /*
         Send a key to SDL event queue, presumably one that is captured and wouldn't
         naturally make it to the event queue by itself
@@ -844,7 +846,7 @@ void send_captured_key(SDL_Keycode key, int type, int time) {
 }
 
 HHOOK mule;
-LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_param) {
+static LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_param) {
     /*
         Function to capture keyboard strokes and block them if they encode special
         key combinations, with intent to redirect them to send_captured_key so that the

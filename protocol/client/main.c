@@ -106,7 +106,7 @@ extern volatile char* new_tab_url;
 // Defines
 #define APP_PATH_MAXLEN 1023
 
-int sync_keyboard_state(void) {
+static int sync_keyboard_state(void) {
     /*
         Synchronize the keyboard state of the host machine with
         that of the server by grabbing the host keyboard state and
@@ -160,9 +160,9 @@ int sync_keyboard_state(void) {
     return 0;
 }
 
-volatile bool continue_pumping = false;
+static volatile bool continue_pumping = false;
 
-int multithreaded_read_piped_arguments(void* keep_piping) {
+static int multithreaded_read_piped_arguments(void* keep_piping) {
     /*
         Thread function to read piped arguments from stdin
 
@@ -178,7 +178,7 @@ int multithreaded_read_piped_arguments(void* keep_piping) {
     return ret;
 }
 
-void handle_single_icon_launch_client_app(int argc, char* argv[]) {
+static void handle_single_icon_launch_client_app(int argc, char* argv[]) {
     // This function handles someone clicking the protocol icon as a means of starting Whist by
     // instead launching the client app
     // If argc == 1 (no args passed), then check if client app path exists

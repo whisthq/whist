@@ -81,7 +81,7 @@ int get_window_virtual_height(SDL_Window* window);
  * @returns                        The virtual width of the monitor/screen, in
  *                                 pixels
  */
-int get_virtual_screen_width();
+int get_virtual_screen_width(void);
 
 /**
  * @brief                          Get the virtual height of a monitor/screen,
@@ -91,7 +91,7 @@ int get_virtual_screen_width();
  * @returns                        The virtual height of the monitor/screen, in
  *                                 pixels
  */
-int get_virtual_screen_height();
+int get_virtual_screen_height(void);
 
 /**
  * @brief                          Get the physical width of a monitor/screen,

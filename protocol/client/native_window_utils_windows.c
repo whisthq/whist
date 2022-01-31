@@ -32,7 +32,7 @@ HWND get_native_window(SDL_Window* window) {
     return sys_info.info.win.window;
 }
 
-void hide_native_window_taskbar() { LOG_INFO("Not implemented on Windows."); }
+void hide_native_window_taskbar(void) { LOG_INFO("Not implemented on Windows."); }
 
 void init_native_window_options(SDL_Window* window) { return; }
 
@@ -56,7 +56,7 @@ int get_native_window_dpi(SDL_Window* window) {
     return (int)GetDpiForWindow(native_window);
 }
 
-void declare_user_activity() {
+void declare_user_activity(void) {
     // TODO: Implement actual wake-up code
     // For now, we'll just disable the screensaver
     SDL_DisableScreenSaver();
