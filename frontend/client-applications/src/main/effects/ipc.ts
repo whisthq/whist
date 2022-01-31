@@ -70,7 +70,11 @@ const subscribed = combineLatest(
       ),
       otherBrowserWindows: fromTrigger(
         WhistTrigger.getOtherBrowserWindows
-      ).pipe(switchMap((browser) => from(getOtherBrowserWindows(browser)))),
+      ).pipe(
+        switchMap((payload: { browser: string }) =>
+          from(getOtherBrowserWindows(payload.browser))
+        )
+      ),
     },
     (obs) => concat(of(undefined), obs)
   )

@@ -3,7 +3,7 @@ import classNames from "classnames"
 
 import { WhistButton, WhistButtonState } from "@app/components/button"
 
-const SelectBrowser = (props: {
+const BrowserInput = (props: {
   browsers: string[]
   onSelect: (browser: string) => void
 }) => {
@@ -49,6 +49,38 @@ const DownloadIcon = () => (
   </svg>
 )
 
+const SelectBrowser = (props: { browsers: string }) => {
+  const [processing, setProcessing] = useState(false)
+
+  return (
+    <div
+      className={classNames(
+        "flex flex-col h-screen items-center bg-gray-900",
+        "justify-center font-body text-center px-12"
+      )}
+    >
+      <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
+      <DownloadIcon />
+      <div className="mt-8">
+        <BrowserInput
+          browsers={props.browsers}
+          onSelect={(browser: string) => onSelect(browser)}
+        />
+      </div>
+      <div>
+        <WhistButton
+          contents="Continue"
+          className="mt-4 px-12 w-96 mx-auto py-2 text-gray-300 text-gray-900 bg-mint"
+          state={
+            processing ? WhistButtonState.PROCESSING : WhistButtonState.DEFAULT
+          }
+          onClick={() => onSubmit(browser)}
+        />
+      </div>
+    </div>
+  )
+}
+
 const Importer = (props: {
   windows: any[] | undefined
   browsers: string[]
@@ -80,11 +112,15 @@ const Importer = (props: {
   }
 
   useEffect(() => {
+    setBrowser(props.browsers?.[0])
+  }, [props.browsers])
+
+  useEffect(() => {
     if (props.windows !== undefined && props.windows.length === 1)
       props.onSubmitWindow(props.windows?.[selectedWindow - 1]?.urls)
   }, [props.windows])
 
-  if (!browserSelected) {
+  if (!browserSelected || (props.windows?.length ?? 0) <= 1) {
     return (
       <div
         className={classNames(
@@ -95,7 +131,7 @@ const Importer = (props: {
         <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
         <DownloadIcon />
         <div className="mt-8">
-          <SelectBrowser
+          <BrowserInput
             browsers={props.browsers}
             onSelect={(browser: string) => onSelect(browser)}
           />

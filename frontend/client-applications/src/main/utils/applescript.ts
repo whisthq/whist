@@ -15,6 +15,8 @@ const getNumberOfBrowserWindows = async (browser: string) => {
 }
 
 const installedBrowserToApplescript = (browser: string) => {
+  console.log("looking for match for", browser)
+  console.log("is it a match for", InstalledBrowser.OPERA)
   switch (browser) {
     case InstalledBrowser.CHROME:
       return "Google Chrome"
@@ -23,17 +25,21 @@ const installedBrowserToApplescript = (browser: string) => {
     case InstalledBrowser.OPERA:
       return "Opera"
     default:
-      return "Google Chrome"
+      return ""
   }
 }
 
 const getOtherBrowserWindows = async (browser: string) => {
-  browser = installedBrowserToApplescript(browser)
-  const numberOfWindows = await getNumberOfBrowserWindows(browser)
-  const windows = []
+  try {
+    browser = installedBrowserToApplescript(browser)
 
-  for (const i of range(1, Number(numberOfWindows) + 1)) {
-    const getUrls = `
+    if (browser === "") return []
+
+    const numberOfWindows = await getNumberOfBrowserWindows(browser)
+    const windows = []
+
+    for (const i of range(1, Number(numberOfWindows) + 1)) {
+      const getUrls = `
         set urls to ""
 
         tell application "${browser}"
@@ -49,7 +55,7 @@ const getOtherBrowserWindows = async (browser: string) => {
         end tell
     `
 
-    const getTitle = `
+      const getTitle = `
         set the_title to ""
 
         tell application "${browser}"
@@ -59,30 +65,33 @@ const getOtherBrowserWindows = async (browser: string) => {
         end tell
     `
 
-    const urls = await new Promise((resolve, reject) => {
-      applescript.execString(getUrls, (err: any, raw: string) => {
-        if (err !== undefined) reject(err)
+      const urls = await new Promise((resolve, reject) => {
+        applescript.execString(getUrls, (err: any, raw: string) => {
+          if (err !== undefined) reject(err)
 
-        const urls = []
+          const urls = []
 
-        for (const url of raw?.split("\n")) {
-          if (url !== "") urls.push(url)
-        }
+          for (const url of raw?.split("\n")) {
+            if (url !== "") urls.push(url)
+          }
 
-        resolve(urls)
+          resolve(urls)
+        })
       })
-    })
 
-    const title = await new Promise((resolve, reject) => {
-      applescript.execString(getTitle, (err: any, title: string) => {
-        if (err !== undefined) reject(err)
-        resolve(title)
+      const title = await new Promise((resolve, reject) => {
+        applescript.execString(getTitle, (err: any, title: string) => {
+          if (err !== undefined) reject(err)
+          resolve(title)
+        })
       })
-    })
 
-    windows.push({ id: i, urls, title })
+      windows.push({ id: i, urls, title })
+    }
+    return windows
+  } catch (err) {
+    return []
   }
-  return windows
 }
 
 export { getOtherBrowserWindows }
