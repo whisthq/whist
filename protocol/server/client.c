@@ -139,7 +139,7 @@ void add_thread_to_client_active_dependents(void) {
     atomic_fetch_add(&threads_needing_active, 1);
 }
 
-void remove_thread_from_holding_active_count(void) {
+static void remove_thread_from_holding_active_count(void) {
     /*
         Remove thread from those currently assuming that client is active
     */

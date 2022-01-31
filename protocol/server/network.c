@@ -51,8 +51,8 @@ Private Function Implementations
 ============================
 */
 
-int handle_discovery_port_message(whist_server_state *state, SocketContext *context,
-                                  bool *new_client) {
+static int handle_discovery_port_message(whist_server_state *state, SocketContext *context,
+                                         bool *new_client) {
     /*
         Handle a message from the client over received over the discovery port.
 
@@ -295,7 +295,7 @@ int try_get_next_message_udp(Client *client, WhistClientMessage *wcmsg, size_t *
 #undef TCP_CONNECTION_WAIT
 #define TCP_CONNECTION_WAIT 5000
 
-bool get_using_stun() {
+bool get_using_stun(void) {
     // decide whether the server is using stun.
     return false;
 }

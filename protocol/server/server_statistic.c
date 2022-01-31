@@ -7,7 +7,7 @@
 
 StatisticInfo server_statistic_info[SERVER_NUM_METRICS];
 
-void whist_init_server_statistics() {
+void whist_init_server_statistics(void) {
     // (StatisticInfo){"key", is_max_needed, is_min_needed, average_over_time};
     server_statistic_info[AUDIO_ENCODE_TIME] =
         (StatisticInfo){"AUDIO_ENCODE_TIME", true, false, false};

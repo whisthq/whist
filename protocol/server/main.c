@@ -112,7 +112,7 @@ void sig_handler(int sig_num) {
 }
 #endif
 
-void handle_whist_client_message(whist_server_state* state, WhistClientMessage* wcmsg) {
+static void handle_whist_client_message(whist_server_state* state, WhistClientMessage* wcmsg) {
     /*
         Handles a Whist client message
 
@@ -127,7 +127,7 @@ void handle_whist_client_message(whist_server_state* state, WhistClientMessage* 
 }
 
 // Gets all pending Whist UDP messages
-void get_whist_udp_client_messages(whist_server_state* state) {
+static void get_whist_udp_client_messages(whist_server_state* state) {
     if (!state->client.is_active) {
         return;
     }
@@ -142,7 +142,7 @@ void get_whist_udp_client_messages(whist_server_state* state) {
 }
 
 // Gets all pending Whist TCP messages
-bool get_whist_tcp_client_messages(whist_server_state* state) {
+static bool get_whist_tcp_client_messages(whist_server_state* state) {
     bool ret = false;
     if (!state->client.is_active) {
         return ret;
@@ -165,7 +165,7 @@ bool get_whist_tcp_client_messages(whist_server_state* state) {
     return ret;
 }
 
-void create_and_send_tcp_wmsg(WhistServerMessageType message_type, char* payload) {
+static void create_and_send_tcp_wmsg(WhistServerMessageType message_type, char* payload) {
     /*
         Create and send a TCP wmsg according to the given payload, and then
         deallocate once finished.
@@ -239,7 +239,7 @@ void create_and_send_tcp_wmsg(WhistServerMessageType message_type, char* payload
     deallocate_region(wmsg_tcp);
 }
 
-int multithreaded_sync_tcp_packets(void* opaque) {
+static int multithreaded_sync_tcp_packets(void* opaque) {
     /*
         Thread to send and receive all TCP packets (clipboard and file)
 
