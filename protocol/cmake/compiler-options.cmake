@@ -22,6 +22,8 @@ else() # GCC and Clang base flags
     "-fno-common" # Error when two global variables have the same name, which would overlap them
     "-Wshadow" # Warn when a variable gets shadowed
     "$<$<COMPILE_LANGUAGE:C>:-Wincompatible-pointer-types>"
+    "$<$<COMPILE_LANGUAGE:C>:-Wstrict-prototypes>" # Warn when a function is declared as having unknown arguments.
+    "$<$<COMPILE_LANGUAGE:C>:-Wmissing-prototypes>" # Warn when a global function has no prototype.
     "$<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,C>:-Werror=implicit-function-declaration>" # Error on implicit function declaration with C
     "$<$<CONFIG:DEBUG>:-Og;-g3;-O0>"
     "$<$<CONFIG:RELEASE>:-g3;-O2>")
