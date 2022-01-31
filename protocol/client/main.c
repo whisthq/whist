@@ -11,10 +11,6 @@ Follow main() to see a Whist video streaming client being created and creating
 its threads.
 */
 
-#ifdef _WIN32
-#define _CRT_SECURE_NO_WARNINGS
-#endif
-
 /*
 ============================
 Includes

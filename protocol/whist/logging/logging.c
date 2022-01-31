@@ -26,10 +26,6 @@ Note that these macros do not need an additional \n character at the end of your
 format strings.
 */
 
-#if defined(_WIN32)
-#define _CRT_SECURE_NO_WARNINGS
-#endif
-
 #ifdef _WIN32
 #define _NO_CVCONST_H
 #include <Windows.h>

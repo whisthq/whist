@@ -8,7 +8,6 @@
 #ifdef _WIN32
 #define _WINSOCK_DEPRECATED_NO_WARNINGS  // unportable Windows warnings, needs to
                                          // be at the very top
-#define _CRT_SECURE_NO_WARNINGS
 #endif
 
 /*
