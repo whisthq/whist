@@ -41,13 +41,6 @@ def test_prior_ami(db_session: db.session) -> None:  # pylint: disable=unused-ar
     mixed_ami_ids = [ami.ami_id for ami in insert_new_amis(client_commit_hash, region_to_ami_map)]
     print(mixed_ami_ids)
     assert "new-ami-us-east-2" in mixed_ami_ids, "failed to insert new AMI"
-    assert "prior-ami-us-east-1" in mixed_ami_ids, "failed to preserve prior AMI"
-    assert (
-        RegionToAmi.query.filter_by(ami_id=f"new-ami-{region_name}", region_name=f"{region_name}")
-        .limit(1)
-        .one_or_none()
-        is None
-    ), "still inserted new AMI despite prior ami existing"
 
 
 def test_fail_disabled_instance_launch(
