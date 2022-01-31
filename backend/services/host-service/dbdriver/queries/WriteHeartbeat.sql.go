@@ -6,26 +6,16 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgconn"
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 )
 
-const writeHeartbeatSQL = `UPDATE cloud.instance_info
-  SET (memory_remaining_kb, nanocpus_remaining, gpu_vram_remaining_kb, last_updated_utc_unix_ms)
-  = ($1, $2, $3, $4)
-  WHERE instance_name = $5;`
-
-type WriteHeartbeatParams struct {
-	MemoryRemainingKB    int
-	NanoCPUsRemainingKB  int
-	GpuVramRemainingKb   int
-	LastUpdatedUtcUnixMs int
-	InstanceName         string
-}
+const writeHeartbeatSQL = `UPDATE whist.instances SET (updated_at) = row($1) WHERE id = $2;`
 
 // WriteHeartbeat implements Querier.WriteHeartbeat.
-func (q *DBQuerier) WriteHeartbeat(ctx context.Context, params WriteHeartbeatParams) (pgconn.CommandTag, error) {
+func (q *DBQuerier) WriteHeartbeat(ctx context.Context, updatedAt pgtype.Timestamptz, instanceID string) (pgconn.CommandTag, error) {
 	ctx = context.WithValue(ctx, "pggen_query_name", "WriteHeartbeat")
-	cmdTag, err := q.conn.Exec(ctx, writeHeartbeatSQL, params.MemoryRemainingKB, params.NanoCPUsRemainingKB, params.GpuVramRemainingKb, params.LastUpdatedUtcUnixMs, params.InstanceName)
+	cmdTag, err := q.conn.Exec(ctx, writeHeartbeatSQL, updatedAt, instanceID)
 	if err != nil {
 		return cmdTag, fmt.Errorf("exec query WriteHeartbeat: %w", err)
 	}
@@ -33,8 +23,8 @@ func (q *DBQuerier) WriteHeartbeat(ctx context.Context, params WriteHeartbeatPar
 }
 
 // WriteHeartbeatBatch implements Querier.WriteHeartbeatBatch.
-func (q *DBQuerier) WriteHeartbeatBatch(batch genericBatch, params WriteHeartbeatParams) {
-	batch.Queue(writeHeartbeatSQL, params.MemoryRemainingKB, params.NanoCPUsRemainingKB, params.GpuVramRemainingKb, params.LastUpdatedUtcUnixMs, params.InstanceName)
+func (q *DBQuerier) WriteHeartbeatBatch(batch genericBatch, updatedAt pgtype.Timestamptz, instanceID string) {
+	batch.Queue(writeHeartbeatSQL, updatedAt, instanceID)
 }
 
 // WriteHeartbeatScan implements Querier.WriteHeartbeatScan.

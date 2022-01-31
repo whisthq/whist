@@ -138,7 +138,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 
 	// mandelboxSubscription is the pubsub event received from Hasura.
-	mandelboxSubscription := sub.MandelboxInfo[0]
+	mandelboxSubscription := sub.Mandelboxes[0]
 	req, AppName := getAppName(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
 
 	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", mandelboxSubscription.ID)
@@ -659,6 +659,10 @@ func uninitializeFilesystem() {
 }
 
 func main() {
+	// The first thing we want to do is to initialize logzio and Sentry so that
+	// we can catch any errors that might occur, or logs if we print them.
+	logger.InitHostLogging()
+
 	// We create a global context (i.e. for the entire host service) that can be
 	// cancelled if the entire program needs to terminate. We also create a
 	// WaitGroup for all goroutines to tell us when they've stopped (if the
@@ -767,9 +771,8 @@ func main() {
 		// draining, the webserver doesn't want it anymore so we should shut down.
 
 		// TODO: make this a bit more robust
-		if !metadata.IsLocalEnv() && (strings.Contains(err.Error(), string(dbdriver.InstanceStatusUnresponsive)) ||
-			strings.Contains(err.Error(), string(dbdriver.InstanceStatusDraining))) {
-			logger.Infof("Instance wasn't registered in database because we found ourselves already marked draining or unresponsive. Shutting down.... Error: %s", err)
+		if !metadata.IsLocalEnv() && strings.Contains(err.Error(), string(dbdriver.InstanceStatusDraining)) {
+			logger.Infof("Instance wasn't registered in database because we found ourselves already marked draining. Shutting down.... Error: %s", err)
 			shutdownInstanceOnExit = true
 			globalCancel()
 		} else {
@@ -786,7 +789,7 @@ func main() {
 	}
 
 	// Start database subscription client
-	instanceName, err = aws.GetInstanceName()
+	instanceID, err := aws.GetInstanceID()
 	if err != nil {
 		logger.Errorf("Can't get AWS Instance Name to start database subscriptions. Error: %s", err)
 		metrics.Increment("ErrorRate")
@@ -794,7 +797,7 @@ func main() {
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
 
 	subscriptionClient := &subscriptions.SubscriptionClient{}
-	subscriptions.SetupHostSubscriptions(string(instanceName), subscriptionClient)
+	subscriptions.SetupHostSubscriptions(string(instanceID), subscriptionClient)
 	subscriptions.Start(subscriptionClient, globalCtx, &goroutineTracker, subscriptionEvents)
 	if err != nil {
 		logger.Errorf("Failed to start database subscriptions. Error: %s", err)
@@ -914,20 +917,20 @@ func eventLoopGoroutine(globalCtx context.Context, globalCancel context.CancelFu
 						metrics.Increment("ErrorRate")
 					}
 
-					instanceName, err := aws.GetInstanceName()
+					instanceID, err := aws.GetInstanceID()
 					if err != nil {
 						logger.Errorf("Error getting instance name from AWS, %v", err)
 						metrics.Increment("ErrorRate")
 					}
 					// Create a mandelbox object as would be received from a Hasura subscription.
 					mandelbox := subscriptions.Mandelbox{
-						InstanceName: string(instanceName),
-						ID:           jsonReq.MandelboxID,
-						SessionID:    "1234",
-						UserID:       userID,
+						InstanceID: string(instanceID),
+						ID:         jsonReq.MandelboxID,
+						SessionID:  "1234",
+						UserID:     userID,
 					}
 					subscriptionEvent := subscriptions.MandelboxEvent{
-						MandelboxInfo: []subscriptions.Mandelbox{mandelbox},
+						Mandelboxes: []subscriptions.Mandelbox{mandelbox},
 					}
 
 					// Launch both the JSON transport handler and the SpinUpMandelbox goroutines.

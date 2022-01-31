@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/whisthq/whist/backend/services/host-service/metrics"
+	"github.com/jackc/pgtype"
 	"github.com/whisthq/whist/backend/services/metadata/aws"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -67,30 +67,22 @@ func writeHeartbeat() error {
 
 	q := queries.NewQuerier(dbpool)
 
-	instanceName, err := aws.GetInstanceName()
+	instanceID, err := aws.GetInstanceID()
 	if err != nil {
 		return utils.MakeError("Couldn't write heartbeat: couldn't get instance name: %s", err)
 	}
-	latestMetrics, errs := metrics.GetLatest()
-	if len(errs) != 0 {
-		return utils.MakeError("Couldn't write heartbeat: errors getting metrics: %+v", errs)
-	}
 
-	params := queries.WriteHeartbeatParams{
-		MemoryRemainingKB:    int(latestMetrics.AvailableMemoryKB),
-		NanoCPUsRemainingKB:  int(latestMetrics.NanoCPUsRemaining),
-		GpuVramRemainingKb:   int(latestMetrics.FreeVideoMemoryKB),
-		LastUpdatedUtcUnixMs: int(time.Now().UnixNano() / 1_000_000),
-		InstanceName:         string(instanceName),
-	}
-	result, err := q.WriteHeartbeat(context.Background(), params)
+	result, err := q.WriteHeartbeat(context.Background(), pgtype.Timestamptz{
+		Time:   time.Now(),
+		Status: pgtype.Present,
+	}, string(instanceID))
 	if err != nil {
 		return utils.MakeError("Couldn't write heartbeat: error updating existing row in table `cloud.instance_info`: %s", err)
 	} else if result.RowsAffected() == 0 {
 		return utils.MakeError("Writing heartbeat updated zero rows in database! Instance row seems to be missing.")
 	}
 	// TODO: re-enable this once we can send to logz but not print to standard output
-	// logger.Infof("Wrote heartbeat %+v with result %s", params, result)
+	// logger.SilentInfof("Wrote heartbeat %+v with result %s", params, result)
 
 	return nil
 }

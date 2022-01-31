@@ -1,6 +1,10 @@
 package subscriptions // import "github.com/whisthq/whist/backend/services/subscriptions"
 
-import mandelboxtypes "github.com/whisthq/whist/backend/services/types"
+import (
+	"time"
+
+	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
+)
 
 // HasuraParams contains the Heroku URL and Admin AccessKey to pass
 // to the client during initialization.
@@ -9,42 +13,42 @@ type HasuraParams struct {
 	AccessKey string
 }
 
-// Instance represents a row from the "instance_info" table
-// in the database. These fields are defined in queries.go
+// Instance represents a host from the "whist_instances" table. This type is
+// meant to be used for development purposes.
 type Instance struct {
-	IP                string `json:"ip"`
-	Location          string `json:"location"`
-	ImageID           string `json:"aws_ami_id"`
-	Type              string `json:"aws_instance_type"`
-	CloudProviderID   string `json:"cloud_provider_id"`
-	CommitHash        string `json:"commit_hash"`
-	CreationTimeMS    int64  `json:"creation_time_utc_unix_ms"`
-	GPUVramRemaing    int64  `json:"gpu_vram_remaining_kb"`
-	Name              string `json:"instance_name"`
-	LastUpdatedMS     int64  `json:"last_updated_utc_unix_ms"`
-	MandelboxCapacity int64  `json:"mandelbox_capacity"`
-	MemoryRemainingKB int64  `json:"memory_remaining_kb"`
-	NanoCPUsRemaining int64  `json:"nanocpus_remaining"`
-	Status            string `json:"status"`
+	ID                string    `json:"id"`
+	Provider          string    `json:"provider"`
+	Region            string    `json:"region"`
+	ImageID           string    `json:"image_id"`
+	ClientSHA         string    `json:"client_sha"`
+	IPAddress         string    `json:"ip_addr"`
+	Type              string    `json:"instance_type"`
+	RemainingCapacity int64     `json:"remaining_capacity"`
+	Status            string    `json:"status"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
 }
 
-// Mandelbox represents a row from the "mandelbox_info" table
-// in the database. These fields are defined in queries.go
+// Mandelbox represents a host from the "whist_mandelboxes" table. This type is
+// meant to be used for development purposes.
 type Mandelbox struct {
-	ID             mandelboxtypes.MandelboxID `json:"mandelbox_id"`
-	UserID         mandelboxtypes.UserID      `json:"user_id"`
-	InstanceName   string                     `json:"instance_name"`
-	SessionID      string                     `json:"session_id"`
-	CreationTimeMS int64                      `json:"creation_time_utc_unix_ms"`
-	Status         string                     `json:"status"`
+	ID         mandelboxtypes.MandelboxID `json:"id"`
+	App        string                     `json:"app"`
+	InstanceID string                     `json:"instance_id"`
+	UserID     mandelboxtypes.UserID      `json:"user_id"`
+	SessionID  string                     `json:"session_id"`
+	Status     string                     `json:"status"`
+	CreatedAt  time.Time                  `json:"created_at"`
 }
 
+// Image represents a host from the "whist_images" table. This type is
+// meant to be used for development purposes.
 type Image struct {
-	ID         string `json:"ami_id"`
-	Region     string `json:"region_name"`
-	Active     bool   `json:"ami_active"`
-	CommitHash string `json:"client_commit_hash"`
-	Protected  bool   `json:"protected_from_scale_down"`
+	Provider  string    `json:"provider"`
+	Region    string    `json:"region"`
+	ImageID   string    `json:"image_id"`
+	ClientSHA string    `json:"client_sha"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // handlerfn is used to send subscription handlers to the Subscribe function.
@@ -60,21 +64,24 @@ type HasuraSubscription struct {
 }
 
 // InstanceResult is a struct used to hold results for any
-// subscription to the "instance_info" table. The CloudInstanceInfo
-// interface represents the table `instance_info` from the `cloud` schema on the database.
+// subscription to the "instance_info" table. The Instances
+// interface represents the table `hosts` from the `whist` schema on the database.
 type InstanceResult struct {
-	CloudInstanceInfo interface{} `json:"cloud_instance_info"`
+	WhistInstances interface{} `json:"whist_instances"`
 }
 
 // MandelboxResult is a struct used to hold results for any
-// subscription to the "mandelbox_info" table. The CloudMandelboxInfo
-// interface represents the table `mandelbox_info` from the `cloud` schema on the database.
+// subscription to the "mandelboxes" table. The WhistMandelboxes
+// interface represents the table `mandelboxes` from the `whist` schema on the database.
 type MandelboxResult struct {
-	CloudMandelboxInfo interface{} `json:"cloud_mandelbox_info"`
+	WhistMandelboxes interface{} `json:"whist_mandelboxes"`
 }
 
+// ImageResult is a struct used to hold results for any
+// subscription to the "whist_images" table. The WhistImages
+// interface represents the table `images` from the `whist` schema on the database.
 type ImageResult struct {
-	CloudImageInfo interface{} `json:"cloud_region_to_ami"`
+	WhistImages interface{} `json:"whist_images"`
 }
 
 // SubscriptionEvent represents any event received from Hasura
@@ -83,21 +90,25 @@ type ImageResult struct {
 type SubscriptionEvent interface{}
 
 // InstanceEvent represents an occurred event on the
-// `cloud.instance_info` database table. This struct is
+// `whist.hosts` database table. This struct is
 // meant to be used by any event that operates on the
 // instance_info database table.
 type InstanceEvent struct {
-	InstanceInfo []Instance `json:"cloud_instance_info"`
+	Instances []Instance `json:"whist_instances"`
 }
 
-// MandelboxInfoEvent represents an occurred event on the
-// `cloud.mandelbox_info` database table.This struct is
+// MandelboxEvent represents an occurred event on the
+// `whist.mandelbox` database table.This struct is
 // meant to be used by any event that operates on the
-// mandelbox_info database table.
+// whist_mandelbox database table.
 type MandelboxEvent struct {
-	MandelboxInfo []Mandelbox `json:"cloud_mandelbox_info"`
+	Mandelboxes []Mandelbox `json:"whist_madelboxes"`
 }
 
+// ImageEvent represents an occurred event on the
+// `whist.image` database table.This struct is
+// meant to be used by any event that operates on the
+// whist_images database table.
 type ImageEvent struct {
-	ImageInfo []Image `json:"cloud_region_to_ami"`
+	Images []Image `json:"whist_images"`
 }

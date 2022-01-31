@@ -1,5 +1,5 @@
 -- name: RegisterInstance :exec
-UPDATE cloud.instance_info
-  SET (cloud_provider_id, memory_remaining_kb, nanocpus_remaining, gpu_vram_remaining_kb, mandelbox_capacity, last_updated_utc_unix_ms, ip, status)
-  = (pggen.arg('cloudProviderID'), pggen.arg('memoryRemainingKB'), pggen.arg('nanoCPUsRemainingKB'), pggen.arg('gpuVramRemainingKb'), pggen.arg('mandelboxCapacity'), pggen.arg('lastUpdatedUtcUnixMs'), pggen.arg('ip'), pggen.arg('status'))
-  WHERE instance_name = pggen.arg('instanceName');
+UPDATE whist.instances
+  SET (provider, region, image_id, client_sha, ip_addr, instance_type, remaining_capacity, status, created_at, updated_at)
+  = (pggen.arg('provider'), pggen.arg('region'), pggen.arg('image_id'), pggen.arg('client_sha'), pggen.arg('ip_addr'), pggen.arg('instance_type'), pggen.arg('remaining_capacity'), pggen.arg('status'), pggen.arg('created_at'), pggen.arg('updated_at'))
+  WHERE id = pggen.arg('instanceID');

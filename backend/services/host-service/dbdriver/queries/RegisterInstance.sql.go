@@ -10,27 +10,29 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-const registerInstanceSQL = `UPDATE cloud.instance_info
-  SET (cloud_provider_id, memory_remaining_kb, nanocpus_remaining, gpu_vram_remaining_kb, mandelbox_capacity, last_updated_utc_unix_ms, ip, status)
-  = ($1, $2, $3, $4, $5, $6, $7, $8)
-  WHERE instance_name = $9;`
+const registerInstanceSQL = `UPDATE whist.instances
+  SET (provider, region, image_id, client_sha, ip_addr, instance_type, remaining_capacity, status, created_at, updated_at)
+  = ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+  WHERE id = $11;`
 
 type RegisterInstanceParams struct {
-	CloudProviderID      pgtype.Varchar
-	MemoryRemainingKB    int
-	NanoCPUsRemainingKB  int
-	GpuVramRemainingKb   int
-	MandelboxCapacity    int
-	LastUpdatedUtcUnixMs int
-	Ip                   pgtype.Varchar
-	Status               pgtype.Varchar
-	InstanceName         string
+	Provider          pgtype.Varchar
+	Region            pgtype.Varchar
+	ImageID           pgtype.Varchar
+	ClientSha         pgtype.Varchar
+	IpAddr            pgtype.Inet
+	InstanceType      pgtype.Varchar
+	RemainingCapacity int32
+	Status            pgtype.Varchar
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+	InstanceID        string
 }
 
 // RegisterInstance implements Querier.RegisterInstance.
 func (q *DBQuerier) RegisterInstance(ctx context.Context, params RegisterInstanceParams) (pgconn.CommandTag, error) {
 	ctx = context.WithValue(ctx, "pggen_query_name", "RegisterInstance")
-	cmdTag, err := q.conn.Exec(ctx, registerInstanceSQL, params.CloudProviderID, params.MemoryRemainingKB, params.NanoCPUsRemainingKB, params.GpuVramRemainingKb, params.MandelboxCapacity, params.LastUpdatedUtcUnixMs, params.Ip, params.Status, params.InstanceName)
+	cmdTag, err := q.conn.Exec(ctx, registerInstanceSQL, params.Provider, params.Region, params.ImageID, params.ClientSha, params.IpAddr, params.InstanceType, params.RemainingCapacity, params.Status, params.CreatedAt, params.UpdatedAt, params.InstanceID)
 	if err != nil {
 		return cmdTag, fmt.Errorf("exec query RegisterInstance: %w", err)
 	}
@@ -39,7 +41,7 @@ func (q *DBQuerier) RegisterInstance(ctx context.Context, params RegisterInstanc
 
 // RegisterInstanceBatch implements Querier.RegisterInstanceBatch.
 func (q *DBQuerier) RegisterInstanceBatch(batch genericBatch, params RegisterInstanceParams) {
-	batch.Queue(registerInstanceSQL, params.CloudProviderID, params.MemoryRemainingKB, params.NanoCPUsRemainingKB, params.GpuVramRemainingKb, params.MandelboxCapacity, params.LastUpdatedUtcUnixMs, params.Ip, params.Status, params.InstanceName)
+	batch.Queue(registerInstanceSQL, params.Provider, params.Region, params.ImageID, params.ClientSha, params.IpAddr, params.InstanceType, params.RemainingCapacity, params.Status, params.CreatedAt, params.UpdatedAt, params.InstanceID)
 }
 
 // RegisterInstanceScan implements Querier.RegisterInstanceScan.

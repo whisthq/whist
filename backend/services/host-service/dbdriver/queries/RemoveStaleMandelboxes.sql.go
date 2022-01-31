@@ -6,33 +6,34 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgconn"
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 )
 
-const removeStaleMandelboxesSQL = `DELETE FROM cloud.mandelbox_info
+const removeStaleMandelboxesSQL = `DELETE FROM whist.mandelboxes
   WHERE
-    instance_name = $1
+    instance_id = $1
     AND (
       (status = $2
-        AND creation_time_utc_unix_ms < $3)
+        AND created_at < $3)
       OR (
       (status = $4
-        AND creation_time_utc_unix_ms < $5)
+        AND created_at < $5)
       )
     );`
 
 type RemoveStaleMandelboxesParams struct {
-	InstanceName                    string
+	InstanceID                      string
 	AllocatedStatus                 string
-	AllocatedCreationTimeThreshold  int
+	AllocatedCreationTimeThreshold  pgtype.Timestamptz
 	ConnectingStatus                string
-	ConnectingCreationTimeThreshold int
+	ConnectingCreationTimeThreshold pgtype.Timestamptz
 }
 
 // RemoveStaleMandelboxes implements Querier.RemoveStaleMandelboxes.
 func (q *DBQuerier) RemoveStaleMandelboxes(ctx context.Context, params RemoveStaleMandelboxesParams) (pgconn.CommandTag, error) {
 	ctx = context.WithValue(ctx, "pggen_query_name", "RemoveStaleMandelboxes")
-	cmdTag, err := q.conn.Exec(ctx, removeStaleMandelboxesSQL, params.InstanceName, params.AllocatedStatus, params.AllocatedCreationTimeThreshold, params.ConnectingStatus, params.ConnectingCreationTimeThreshold)
+	cmdTag, err := q.conn.Exec(ctx, removeStaleMandelboxesSQL, params.InstanceID, params.AllocatedStatus, params.AllocatedCreationTimeThreshold, params.ConnectingStatus, params.ConnectingCreationTimeThreshold)
 	if err != nil {
 		return cmdTag, fmt.Errorf("exec query RemoveStaleMandelboxes: %w", err)
 	}
@@ -41,7 +42,7 @@ func (q *DBQuerier) RemoveStaleMandelboxes(ctx context.Context, params RemoveSta
 
 // RemoveStaleMandelboxesBatch implements Querier.RemoveStaleMandelboxesBatch.
 func (q *DBQuerier) RemoveStaleMandelboxesBatch(batch genericBatch, params RemoveStaleMandelboxesParams) {
-	batch.Queue(removeStaleMandelboxesSQL, params.InstanceName, params.AllocatedStatus, params.AllocatedCreationTimeThreshold, params.ConnectingStatus, params.ConnectingCreationTimeThreshold)
+	batch.Queue(removeStaleMandelboxesSQL, params.InstanceID, params.AllocatedStatus, params.AllocatedCreationTimeThreshold, params.ConnectingStatus, params.ConnectingCreationTimeThreshold)
 }
 
 // RemoveStaleMandelboxesScan implements Querier.RemoveStaleMandelboxesScan.

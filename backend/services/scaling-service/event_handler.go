@@ -13,6 +13,10 @@ import (
 )
 
 func main() {
+	// The first thing we want to do is to initialize logzio and Sentry so that
+	// we can catch any errors that might occur, or logs if we print them.
+	logger.InitScalingLogging()
+
 	globalCtx, globalCancel := context.WithCancel(context.Background())
 	goroutineTracker := &sync.WaitGroup{}
 
@@ -120,11 +124,11 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 
 				scalingEvent.Type = "INSTANCE_DATABASE_EVENT"
 
-				if len(subscriptionEvent.InstanceInfo) > 0 {
-					instance := subscriptionEvent.InstanceInfo[0]
+				if len(subscriptionEvent.Instances) > 0 {
+					instance := subscriptionEvent.Instances[0]
 
 					scalingEvent.Data = instance
-					scalingEvent.Region = instance.Location
+					scalingEvent.Region = instance.Region
 				}
 
 				// Start scaling algorithm based on region
@@ -141,8 +145,8 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 
 				scalingEvent.Type = "IMAGE_DATABASE_EVENT"
 
-				if len(subscriptionEvent.ImageInfo) > 0 {
-					image := subscriptionEvent.ImageInfo[0]
+				if len(subscriptionEvent.Images) > 0 {
+					image := subscriptionEvent.Images[0]
 
 					scalingEvent.Data = image
 					scalingEvent.Region = image.Region
