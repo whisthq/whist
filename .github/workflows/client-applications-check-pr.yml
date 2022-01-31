@@ -313,9 +313,9 @@ jobs:
       # Clean the self-hosted runner, since it is stateful
       - name: Clean working directory
         run: |
-         cd $RUNNER_WORKSPACE
-         cd ..
-         rm -r *
+          cd $RUNNER_WORKSPACE
+          cd ..
+          rm -r *
 
   #######################################################################################
   #######################################################################################
