@@ -30,7 +30,6 @@ Includes
 
 #ifdef _WIN32
 #define _CRT_SECURE_NO_WARNINGS
-#pragma warning(disable : 4200)
 #include <windows.h>
 #endif
 

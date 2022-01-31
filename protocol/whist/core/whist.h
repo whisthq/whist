@@ -72,10 +72,6 @@ Includes
 #include <whist/logging/logging.h>
 #include <whist/utils/os_utils.h>
 
-#ifdef _WIN32
-#pragma warning(disable : 4200)
-#endif
-
 /*
 ============================
 Defines
