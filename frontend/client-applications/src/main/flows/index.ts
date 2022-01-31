@@ -114,58 +114,58 @@ const importedData = fromTrigger(WhistTrigger.beginImport).pipe(
 )
 
 // Observable that fires when Whist is ready to be launched
-// const launchTrigger = emitOnSignal(
-//   combineLatest({
-//     userEmail,
-//     accessToken,
-//     configToken,
-//     isNewConfigToken,
-//     importedData: merge(importedData, dontImportBrowserData),
-//     regions: merge(awsPing.cached, awsPing.refresh),
-//     darkMode,
-//     timezone,
-//     keyRepeat,
-//     initialKeyRepeat,
-//   }),
-//   merge(
-//     zip(
-//       checkPayment.success,
-//       of(persistGet(ONBOARDED)).pipe(
-//         filter((onboarded) => onboarded as boolean)
-//       )
-//     ), // On a normal launch
-//     importedData // On onboarding or import
-//   )
-// ).pipe(share())
+const launchTrigger = emitOnSignal(
+  combineLatest({
+    userEmail,
+    accessToken,
+    configToken,
+    isNewConfigToken,
+    importedData: merge(importedData, dontImportBrowserData),
+    regions: merge(awsPing.cached, awsPing.refresh),
+    darkMode,
+    timezone,
+    keyRepeat,
+    initialKeyRepeat,
+  }),
+  merge(
+    zip(
+      checkPayment.success,
+      of(persistGet(ONBOARDED)).pipe(
+        filter((onboarded) => onboarded as boolean)
+      )
+    ), // On a normal launch
+    importedData // On onboarding or import
+  )
+).pipe(share())
 
-// // Mandelbox creation flow
-// const mandelbox = mandelboxFlow(withAppActivated(launchTrigger))
+// Mandelbox creation flow
+const mandelbox = mandelboxFlow(withAppActivated(launchTrigger))
 
-// // After the mandelbox flow is done, run the refresh flow so the tokens are being refreshed
-// // every time but don't impede startup time
-// const refreshAtEnd = authRefreshFlow(
-//   emitOnSignal(combineLatest({ refreshToken }), mandelbox.success)
-// )
+// After the mandelbox flow is done, run the refresh flow so the tokens are being refreshed
+// every time but don't impede startup time
+const refreshAtEnd = authRefreshFlow(
+  emitOnSignal(combineLatest({ refreshToken }), mandelbox.success)
+)
 
-// createTrigger(WhistTrigger.checkPaymentFlowSuccess, checkPayment.success)
-// createTrigger(WhistTrigger.checkPaymentFlowFailure, checkPayment.failure)
+createTrigger(WhistTrigger.checkPaymentFlowSuccess, checkPayment.success)
+createTrigger(WhistTrigger.checkPaymentFlowFailure, checkPayment.failure)
 
-// createTrigger(WhistTrigger.mandelboxFlowStart, launchTrigger)
+createTrigger(WhistTrigger.mandelboxFlowStart, launchTrigger)
 
-// createTrigger(WhistTrigger.awsPingCached, awsPing.cached)
-// createTrigger(WhistTrigger.awsPingRefresh, awsPing.refresh)
+createTrigger(WhistTrigger.awsPingCached, awsPing.cached)
+createTrigger(WhistTrigger.awsPingRefresh, awsPing.refresh)
 
-// createTrigger(WhistTrigger.authFlowSuccess, auth.success)
-// createTrigger(WhistTrigger.authFlowFailure, auth.failure)
+createTrigger(WhistTrigger.authFlowSuccess, auth.success)
+createTrigger(WhistTrigger.authFlowFailure, auth.failure)
 
-// createTrigger(WhistTrigger.updateDownloaded, update.downloaded)
-// createTrigger(WhistTrigger.downloadProgress, update.progress)
+createTrigger(WhistTrigger.updateDownloaded, update.downloaded)
+createTrigger(WhistTrigger.downloadProgress, update.progress)
 
-// createTrigger(
-//   WhistTrigger.authRefreshSuccess,
-//   merge(refreshAtEnd.success, refreshAfterPaying.success)
-// )
+createTrigger(
+  WhistTrigger.authRefreshSuccess,
+  merge(refreshAtEnd.success, refreshAfterPaying.success)
+)
 
-// createTrigger(WhistTrigger.mandelboxFlowSuccess, mandelbox.success)
-// createTrigger(WhistTrigger.mandelboxFlowFailure, mandelbox.failure)
-// createTrigger(WhistTrigger.mandelboxFlowTimeout, mandelbox.timeout)
+createTrigger(WhistTrigger.mandelboxFlowSuccess, mandelbox.success)
+createTrigger(WhistTrigger.mandelboxFlowFailure, mandelbox.failure)
+createTrigger(WhistTrigger.mandelboxFlowTimeout, mandelbox.timeout)

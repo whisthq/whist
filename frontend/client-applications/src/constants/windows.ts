@@ -16,6 +16,7 @@ export const WindowHashSpeedtest = "SPEEDTEST"
 export const WindowHashLicense = "LICENSE"
 export const WindowHashWelcome = "WELCOME"
 export const WindowHashSupport = "SUPPORT"
+export const WindowHashRestoreTabs = "RESTORE_TABS"
 
 export const width = {
   xs: { width: 16 * 24 },

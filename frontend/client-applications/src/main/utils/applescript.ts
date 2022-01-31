@@ -1,47 +1,71 @@
 import applescript from "applescript"
 import range from "lodash.range"
 
-const getNumberOfBrowserWindows = (browser: string) => {
-  const script = `
-        tell application "${browser}" to get number of windows
-    `
+import { InstalledBrowser } from "@app/constants/importer"
 
-  return new Promise((resolve, reject) => {
+const getNumberOfBrowserWindows = async (browser: string) => {
+  const script = `tell application "${browser}" to get number of windows`
+
+  return await new Promise((resolve, reject) => {
     applescript.execString(script, (err: any, raw: string) => {
-      if (err) reject(err)
+      if (err !== undefined) reject(err)
       resolve(raw)
     })
   })
 }
 
-const getAllBrowserWindows = async (browser: string) => {
+const installedBrowserToApplescript = (browser: string) => {
+  switch (browser) {
+    case InstalledBrowser.CHROME:
+      return "Google Chrome"
+    case InstalledBrowser.BRAVE:
+      return "Brave"
+    case InstalledBrowser.OPERA:
+      return "Opera"
+    default:
+      return "Google Chrome"
+  }
+}
+
+const getOtherBrowserWindows = async (browser: string) => {
+  browser = installedBrowserToApplescript(browser)
   const numberOfWindows = await getNumberOfBrowserWindows(browser)
-  let windows = []
+  const windows = []
 
   for (const i of range(1, Number(numberOfWindows) + 1)) {
-    const script = `
-        set titleString to ""
+    const getUrls = `
+        set urls to ""
 
         tell application "${browser}"
-            set window_list to every window # get the windows
+            set window_list to every window
                 
             set the_window to item ${i} of window_list
-            set tab_list to every tab in the_window # get the tabs
+            set tab_list to every tab in the_window
             
-            repeat with the_tab in tab_list # for every tab
-                    set the_url to the URL of the_tab # grab the URL
-                    set titleString to titleString & the_url & "\n"
+            repeat with the_tab in tab_list 
+                    set the_url to the URL of the_tab
+                    set urls to urls & the_url & "\n"
             end repeat
         end tell
     `
 
+    const getTitle = `
+        set the_title to ""
+
+        tell application "${browser}"
+            set window_list to every window
+            set the_window to item ${i} of window_list
+            set the_title to the title of active tab of the_window
+        end tell
+    `
+
     const urls = await new Promise((resolve, reject) => {
-      applescript.execString(script, (err: any, raw: string) => {
-        if (err) reject(err)
+      applescript.execString(getUrls, (err: any, raw: string) => {
+        if (err !== undefined) reject(err)
 
-        let urls = []
+        const urls = []
 
-        for (const url of raw.split("\n")) {
+        for (const url of raw?.split("\n")) {
           if (url !== "") urls.push(url)
         }
 
@@ -49,10 +73,16 @@ const getAllBrowserWindows = async (browser: string) => {
       })
     })
 
-    windows.push({ id: i, urls })
-  }
+    const title = await new Promise((resolve, reject) => {
+      applescript.execString(getTitle, (err: any, title: string) => {
+        if (err !== undefined) reject(err)
+        resolve(title)
+      })
+    })
 
+    windows.push({ id: i, urls, title })
+  }
   return windows
 }
 
-export { getAllBrowserWindows }
+export { getOtherBrowserWindows }

@@ -6,10 +6,16 @@
 
 import { BrowserWindow } from "electron"
 
-import { combineLatest, concat, of, merge } from "rxjs"
+import { combineLatest, concat, of, merge, from } from "rxjs"
 import { ipcBroadcast } from "@app/main/utils/ipc"
 import { StateIPC } from "@app/@types/state"
-import { map, startWith, filter, withLatestFrom } from "rxjs/operators"
+import {
+  map,
+  startWith,
+  filter,
+  withLatestFrom,
+  switchMap,
+} from "rxjs/operators"
 import mapValues from "lodash.mapvalues"
 
 import { fromTrigger } from "@app/main/utils/flows"
@@ -21,6 +27,7 @@ import {
   WHIST_IS_DEFAULT_BROWSER,
 } from "@app/constants/store"
 import { persistGet } from "@app/main/utils/persist"
+import { getOtherBrowserWindows } from "@app/main/utils/applescript"
 
 // This file is responsible for broadcasting state to all renderer windows.
 // We use a single object and IPC channel for all windows, so here we set up a
@@ -61,6 +68,9 @@ const subscribed = combineLatest(
         map(() => persistGet(RESTORE_LAST_SESSION) ?? false),
         startWith(persistGet(RESTORE_LAST_SESSION) ?? false)
       ),
+      otherBrowserWindows: fromTrigger(
+        WhistTrigger.getOtherBrowserWindows
+      ).pipe(switchMap((browser) => from(getOtherBrowserWindows(browser)))),
     },
     (obs) => concat(of(undefined), obs)
   )

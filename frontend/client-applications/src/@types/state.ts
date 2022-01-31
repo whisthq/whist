@@ -12,4 +12,5 @@ export interface StateIPC {
   networkInfo: { jitter: number; downloadMbps: number; progress: number }
   isDefaultBrowser: boolean
   restoreLastSession: boolean
+  otherBrowserWindows: string[][]
 }

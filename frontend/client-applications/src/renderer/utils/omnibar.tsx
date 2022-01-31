@@ -8,6 +8,7 @@ import Logout from "@app/components/icons/logout"
 import Rewind from "@app/components/icons/rewind"
 import Signal from "@app/components/icons/signal"
 import Download from "@app/components/icons/download"
+import Left from "@app/components/icons/left"
 import Toggle from "@app/components/toggle"
 
 import { StateIPC } from "@app/@types/state"
@@ -30,7 +31,7 @@ const createOptions = (mainState: StateIPC, setMainState: any) => {
     {
       icon: Globe,
       text: "Make Whist My Default Browser",
-      keywords: ["Set Default", "Set As Default"],
+      keywords: ["Set As Default"],
       rightElement: (
         <Toggle
           onChecked={(checked: boolean) => {
@@ -80,6 +81,18 @@ const createOptions = (mainState: StateIPC, setMainState: any) => {
         setMainState({
           trigger: {
             name: WhistTrigger.showImportWindow,
+            payload: undefined,
+          },
+        }),
+    },
+    {
+      icon: Left,
+      text: "Restore Tabs from Another Browser",
+      keywords: ["Import", "Google Chrome", "Recover"],
+      onClick: () =>
+        setMainState({
+          trigger: {
+            name: WhistTrigger.showRestoreTabsWindow,
             payload: undefined,
           },
         }),

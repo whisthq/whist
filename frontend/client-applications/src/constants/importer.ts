@@ -1,3 +1,12 @@
+export enum InstalledBrowser {
+  BRAVE = "Brave",
+  OPERA = "Opera",
+  CHROME = "Chrome",
+  FIREFOX = "Firefox",
+  CHROMIUM = "Chromium",
+  EDGE = "Edge",
+}
+
 // File paths for each browser
 export const ChromeLinuxDefaultDir = [
   "~/.config/google-chrome/Default/",

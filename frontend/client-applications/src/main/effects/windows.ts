@@ -17,6 +17,7 @@ import {
   WindowHashAuth,
   WindowHashWelcome,
   WindowHashSupport,
+  WindowHashRestoreTabs,
 } from "@app/constants/windows"
 import {
   createAuthWindow,
@@ -31,6 +32,7 @@ import {
   createWelcomeWindow,
   createOmnibar,
   createSupportWindow,
+  createRestoreTabsWindow,
 } from "@app/main/utils/renderer"
 import { persistGet } from "@app/main/utils/persist"
 import { WhistTrigger } from "@app/constants/triggers"
@@ -158,10 +160,20 @@ withAppActivated(fromTrigger(WhistTrigger.showSupportWindow)).subscribe(() => {
   createSupportWindow()
 })
 
+withAppActivated(fromTrigger(WhistTrigger.showRestoreTabsWindow)).subscribe(
+  () => {
+    hideElectronWindow(WindowHashOmnibar)
+    createRestoreTabsWindow()
+  }
+)
+
 withAppActivated(fromTrigger(WhistTrigger.closeSupportWindow)).subscribe(() => {
   destroyElectronWindow(WindowHashSupport)
 })
 
+withAppActivated(fromTrigger(WhistTrigger.importTabs)).subscribe(() => {
+  destroyElectronWindow(WindowHashRestoreTabs)
+})
 // When the protocol launches, destroy the loading window and onboarding window
 // if they are open
 withAppActivated(

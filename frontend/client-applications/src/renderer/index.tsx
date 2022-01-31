@@ -18,6 +18,7 @@ import Omnibar from "@app/renderer/pages/omnibar"
 import Background from "@app/renderer/pages/background"
 import Welcome from "@app/renderer/pages/welcome"
 import Support from "@app/renderer/pages/support"
+import RestoreTabs from "@app/renderer/pages/restoreTabs"
 import { Provider } from "@app/renderer/context/omnibar"
 
 import {
@@ -34,6 +35,7 @@ import {
   WindowHashLicense,
   WindowHashWelcome,
   WindowHashSupport,
+  WindowHashRestoreTabs,
 } from "@app/constants/windows"
 import {
   whistError,
@@ -83,6 +85,14 @@ const RootComponent = () => {
       trigger: { name: WhistTrigger.showSignoutWindow, payload: undefined },
     })
 
+  const getOtherBrowserWindows = (browser: string) =>
+    setMainState({
+      trigger: {
+        name: WhistTrigger.getOtherBrowserWindows,
+        payload: { browser },
+      },
+    })
+
   const handleImporterSubmit = (browser: string | undefined) => {
     setMainState({
       trigger: {
@@ -107,6 +117,14 @@ const RootComponent = () => {
       trigger: {
         name: WhistTrigger.closeSupportWindow,
         payload: undefined,
+      },
+    })
+
+  const handleRestoreTabs = (urls: string[]) =>
+    setMainState({
+      trigger: {
+        name: WhistTrigger.importTabs,
+        payload: { urls },
       },
     })
 
@@ -152,6 +170,20 @@ const RootComponent = () => {
         }
       />
     )
+  if (show === WindowHashRestoreTabs)
+    return (
+      <RestoreTabs
+        windows={mainState.otherBrowserWindows ?? undefined}
+        browsers={mainState.browsers ?? []}
+        onSubmitBrowser={(browser: string) => {
+          getOtherBrowserWindows(browser)
+        }}
+        onSubmitWindow={(urls: string) => {
+          handleRestoreTabs(urls)
+        }}
+      />
+    )
+
   if (show === WindowHashOnboarding)
     return (
       <Network
