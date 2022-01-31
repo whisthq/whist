@@ -19,6 +19,8 @@ if [[ $OS == "Darwin" ]]; then
 else
   MACOS_ARCH="x86_64"
 fi
+POSITION_INDEPENDENT_CODE="${1:-OFF}"
+shift
 CLIENT_DIR="$DEST_DIR/client/build64"
 SERVER_DIR="$DEST_DIR/server/build64"
 CACHE_DIR="$DEST_DIR/download-binaries-cache"
@@ -76,16 +78,22 @@ fi
 # Select SDL lib dir and SDL lib targz name based on OS and hardware architecture (macOS)
 SDL_LIB_DIR="$DEST_DIR/lib/64/SDL2/$OS"
 SDL_HEADERS_DIR="$DEST_DIR/include/SDL2"
+if [[ "$POSITION_INDEPENDENT_CODE" = "ON" ]]; then
+  SDL_LIB_SUFFIX="-pic"
+else
+  SDL_LIB_SUFFIX=""
+fi
+
 if [[ "$OS" =~ "Windows" ]]; then
-  SDL_LIB="fractal-windows-sdl2-static-lib.tar.gz"
+  SDL_LIB="fractal-windows-sdl2-static-lib${SDL_LIB_SUFFIX}.tar.gz"
 elif [[ "$OS" == "Darwin" ]]; then
   if [[ "$MACOS_ARCH" == "arm64" ]]; then
-    SDL_LIB="fractal-macos-arm64-sdl2-static-lib.tar.gz"
+    SDL_LIB="fractal-macos-arm64-sdl2-static-lib${SDL_LIB_SUFFIX}.tar.gz"
   else
-    SDL_LIB="fractal-macos-x64-sdl2-static-lib.tar.gz"
+    SDL_LIB="fractal-macos-x64-sdl2-static-lib${SDL_LIB_SUFFIX}.tar.gz"
   fi
 elif [[ "$OS" == "Linux" ]]; then
-  SDL_LIB="fractal-linux-sdl2-static-lib.tar.gz"
+  SDL_LIB="fractal-linux-sdl2-static-lib${SDL_LIB_SUFFIX}.tar.gz"
 fi
 
 # Check if SDL_LIB has updated, and if so, create the dir and copy the libs/headers into the source dir
