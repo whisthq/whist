@@ -11,6 +11,7 @@ input (keystrokes, mouse clicks, etc.) via CreateInputDevice.
 */
 
 #include "input.h"
+#include "input_internal.h"
 
 typedef struct {
     InputDevice base;

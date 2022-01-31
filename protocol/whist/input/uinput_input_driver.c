@@ -10,6 +10,7 @@
 #include <sys/un.h>
 
 #include "input.h"
+#include "input_internal.h"
 
 typedef struct {
     InputDevice base;

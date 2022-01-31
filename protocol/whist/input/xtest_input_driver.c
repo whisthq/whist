@@ -1,4 +1,5 @@
 #include "input.h"
+#include "input_internal.h"
 
 #define XK_LATIN1
 #define XK_MISCELLANY
