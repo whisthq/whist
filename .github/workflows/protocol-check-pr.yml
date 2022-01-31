@@ -298,5 +298,12 @@ jobs:
 
       # Note that we don't run clang-tidy on arm64 macOS, since we already run it on x64 macOS
 
+      # Clean the self-hosted runner, since it is stateful
+      - name: Clean working directory
+        run: |
+          cd $RUNNER_WORKSPACE
+          cd ..
+          rm -r *
+
   #######################################################################################
   #######################################################################################

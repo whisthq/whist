@@ -1396,6 +1396,13 @@ jobs:
           sentry-cli upload-dif ./protocol-build/client/WhistClient
           sentry-cli upload-dif ./protocol-build/client/WhistClient.debug
 
+      # Clean the self-hosted runner, since it is stateful
+      - name: Clean working directory
+        run: |
+          cd $RUNNER_WORKSPACE
+          cd ..
+          rm -r *
+
   #######################################################################################
   #######################################################################################
 

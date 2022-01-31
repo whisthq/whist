@@ -309,3 +309,13 @@ jobs:
           yarn cache clean
           yarn install
           yarn package:notarize --config $CONFIG --version 1.0.0 --commit ${{ github.sha }}
+
+      # Clean the self-hosted runner, since it is stateful
+      - name: Clean working directory
+        run: |
+         cd $RUNNER_WORKSPACE
+         cd ..
+         rm -r *
+
+  #######################################################################################
+  #######################################################################################
