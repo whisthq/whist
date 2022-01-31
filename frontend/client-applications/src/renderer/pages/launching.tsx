@@ -6,6 +6,7 @@ import { Network as NetworkComponent } from "@app/components/network"
 const loadingMessage = sample([
   "to view settings when launched",
   "for live chat support when launched",
+  "to import tabs from another browser",
 ])
 
 const Loading = (props: {

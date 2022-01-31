@@ -16,6 +16,7 @@ import {
   WindowHashOmnibar,
   WindowHashWelcome,
   WindowHashSupport,
+  WindowHashRestoreTabs,
 } from "@app/constants/windows"
 import {
   authPortalURL,
@@ -194,6 +195,13 @@ const createOmnibar = () =>
     show: false,
   })
 
+const createRestoreTabsWindow = () =>
+  createElectronWindow({
+    ...width.md,
+    ...height.md,
+    hash: WindowHashRestoreTabs,
+  })
+
 export {
   window,
   createAuthWindow,
@@ -209,5 +217,6 @@ export {
   createSignoutWindow,
   createUpdateWindow,
   createSupportWindow,
+  createRestoreTabsWindow,
   createOmnibar,
 }

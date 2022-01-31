@@ -7,8 +7,9 @@ import "@app/main/effects/monitoring"
 import "@app/main/effects/persist"
 import "@app/main/effects/power"
 import "@app/main/effects/protocol"
-import "@app/main/effects/windows"
 import "@app/main/effects/shortcuts"
+import "@app/main/effects/tabs"
+import "@app/main/effects/windows"
 
 // Effects are subscriptions that cause side effects throughout
 // the program. Any observable from any other file in the application

@@ -53,6 +53,8 @@ const WhistTrigger = {
   relaunchAction: "relaunchAction",
   clearCacheAction: "clearCacheAction",
   startNetworkAnalysis: "startNetworkAnalysis",
+  getOtherBrowserWindows: "getOtherBrowserWindows",
+  importTabs: "importTabs",
 
   // Omnibar triggers
   showAuthWindow: "showAuthWindow",
@@ -62,6 +64,7 @@ const WhistTrigger = {
   showSpeedtestWindow: "showSpeedtestWindow",
   showLicenseWindow: "showLicenseWindow",
   showImportWindow: "showImportWindow",
+  showRestoreTabsWindow: "showRestoreTabsWindow",
   setDefaultBrowser: "setDefaultBrowser",
   restoreLastSession: "restoreLastSession",
   closeSupportWindow: "closeSupportWindow",

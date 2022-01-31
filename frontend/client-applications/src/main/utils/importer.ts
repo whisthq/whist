@@ -24,18 +24,10 @@ import {
   OperaLinuxDefaultDir,
   OperaOSXDefaultDir,
   SecretServiceName,
+  InstalledBrowser,
 } from "@app/constants/importer"
 
 const DEFAULT_ENCRYPTION_KEY = "peanuts"
-
-enum InstalledBrowser {
-  BRAVE = "Brave",
-  OPERA = "Opera",
-  CHROME = "Chrome",
-  FIREFOX = "Firefox",
-  CHROMIUM = "Chromium",
-  EDGE = "Edge",
-}
 
 interface Cookie {
   [key: string]: Buffer | string | number

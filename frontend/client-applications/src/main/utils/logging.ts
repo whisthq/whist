@@ -147,6 +147,7 @@ export const logging = (
         "bookmarks",
         "extensions",
         "importedData",
+        "urls",
       ].includes(k) &&
       (v ?? undefined) !== undefined
     ) {

@@ -34,3 +34,4 @@ declare module "*.css" {
 declare module "deepdash/mapValuesDeep"
 declare module "@m-lab/ndt7"
 declare module "log-rotate"
+declare module "applescript"

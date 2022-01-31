@@ -119,7 +119,8 @@ const pipeURLToProtocol = (childProcess: ChildProcess, message: string) => {
   if (
     message === undefined ||
     message === "" ||
-    message.length > MAX_URL_LENGTH
+    message.length > MAX_URL_LENGTH ||
+    !(message.startsWith("http://") || message.startsWith("https://"))
   )
     return
   pipeToProtocol(childProcess, `new-tab-url?${message}\n`)
