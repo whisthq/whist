@@ -11,6 +11,7 @@ import { ipcBroadcast } from "@app/main/utils/ipc"
 import { StateIPC } from "@app/@types/state"
 import {
   map,
+  mapTo,
   startWith,
   filter,
   withLatestFrom,
@@ -68,12 +69,13 @@ const subscribed = combineLatest(
         map(() => persistGet(RESTORE_LAST_SESSION) ?? false),
         startWith(persistGet(RESTORE_LAST_SESSION) ?? false)
       ),
-      otherBrowserWindows: fromTrigger(
-        WhistTrigger.getOtherBrowserWindows
-      ).pipe(
-        switchMap((payload: { browser: string }) =>
-          from(getOtherBrowserWindows(payload.browser))
-        )
+      otherBrowserWindows: merge(
+        fromTrigger(WhistTrigger.getOtherBrowserWindows).pipe(
+          switchMap((payload: { browser: string }) =>
+            from(getOtherBrowserWindows(payload.browser))
+          )
+        ),
+        fromTrigger(WhistTrigger.importTabs).pipe(mapTo(undefined))
       ),
     },
     (obs) => concat(of(undefined), obs)

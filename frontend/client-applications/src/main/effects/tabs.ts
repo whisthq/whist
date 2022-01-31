@@ -14,6 +14,6 @@ fromTrigger(WhistTrigger.importTabs)
       // too tight so we do 1.5 seconds between each URL to be safe
       setTimeout(() => {
         pipeURLToProtocol(p, url)
-      }, payload.urls.indexOf(url) * 1500)
+      }, payload.urls.indexOf(url) * 1250)
     }
   })

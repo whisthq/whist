@@ -178,7 +178,7 @@ const RootComponent = () => {
         onSubmitBrowser={(browser: string) => {
           getOtherBrowserWindows(browser)
         }}
-        onSubmitWindow={(urls: string) => {
+        onSubmitWindow={(urls: string[]) => {
           handleRestoreTabs(urls)
         }}
       />

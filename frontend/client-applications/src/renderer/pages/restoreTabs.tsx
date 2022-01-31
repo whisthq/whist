@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react"
 import classNames from "classnames"
 
+import Duplicate from "@app/components/icons/duplicate"
 import { WhistButton, WhistButtonState } from "@app/components/button"
 
 const BrowserInput = (props: {
@@ -29,53 +30,6 @@ const BrowserInput = (props: {
             ))}
           </select>
         </div>
-      </div>
-    </div>
-  )
-}
-
-const DownloadIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="h-6 w-6 text-mint animate-pulse"
-    viewBox="0 0 20 20"
-    fill="currentColor"
-  >
-    <path
-      fillRule="evenodd"
-      d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
-      clipRule="evenodd"
-    />
-  </svg>
-)
-
-const SelectBrowser = (props: { browsers: string }) => {
-  const [processing, setProcessing] = useState(false)
-
-  return (
-    <div
-      className={classNames(
-        "flex flex-col h-screen items-center bg-gray-900",
-        "justify-center font-body text-center px-12"
-      )}
-    >
-      <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
-      <DownloadIcon />
-      <div className="mt-8">
-        <BrowserInput
-          browsers={props.browsers}
-          onSelect={(browser: string) => onSelect(browser)}
-        />
-      </div>
-      <div>
-        <WhistButton
-          contents="Continue"
-          className="mt-4 px-12 w-96 mx-auto py-2 text-gray-300 text-gray-900 bg-mint"
-          state={
-            processing ? WhistButtonState.PROCESSING : WhistButtonState.DEFAULT
-          }
-          onClick={() => onSubmit(browser)}
-        />
       </div>
     </div>
   )
@@ -120,7 +74,7 @@ const Importer = (props: {
       props.onSubmitWindow(props.windows?.[selectedWindow - 1]?.urls)
   }, [props.windows])
 
-  if (!browserSelected || (props.windows?.length ?? 0) <= 1) {
+  if (!browserSelected || props.windows === undefined)
     return (
       <div
         className={classNames(
@@ -129,7 +83,6 @@ const Importer = (props: {
         )}
       >
         <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
-        <DownloadIcon />
         <div className="mt-8">
           <BrowserInput
             browsers={props.browsers}
@@ -150,7 +103,8 @@ const Importer = (props: {
         </div>
       </div>
     )
-  } else {
+
+  if (browserSelected && (props.windows?.length ?? 0) > 1)
     return (
       <div
         className={classNames(
@@ -186,21 +140,14 @@ const Importer = (props: {
               key={i}
             >
               <div className="flex space-x-2 justify-center">
-                <div>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className={classNames(
-                      "h-5 w-5 duration-100",
-                      selectedWindow === window.id
-                        ? "text-gray-300"
-                        : "text-gray-500"
-                    )}
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z" />
-                    <path d="M5 3a2 2 0 00-2 2v6a2 2 0 002 2V5h8a2 2 0 00-2-2H5z" />
-                  </svg>
+                <div
+                  className={classNames(
+                    selectedWindow === window.id
+                      ? "text-gray-300"
+                      : "text-gray-500"
+                  )}
+                >
+                  <Duplicate />
                 </div>
                 <div
                   className={classNames(
@@ -231,16 +178,47 @@ const Importer = (props: {
           }}
         >
           <div>
-            Press{" "}
+            Click{" "}
             <kbd className="bg-gray-700 rounded px-2 py-1 text-xs mx-1 text-gray-300">
-              Enter
+              here
             </kbd>{" "}
             to import selected tabs
           </div>
         </button>
       </div>
     )
-  }
+
+  if (browserSelected && props.windows?.length === 0)
+    return (
+      <div
+        className={classNames(
+          "flex flex-col h-screen items-center bg-gray-900",
+          "justify-center font-body text-center px-12"
+        )}
+      >
+        <div className="font-semibold text-2xl text-gray-300 mt-8">
+          Unable to import {browser} tabs
+        </div>
+        <div className="m-auto mt-2 mb-8 text-gray-400 max-w-sm ">
+          In order to import tabs from {browser}, you need to have {browser}{" "}
+          open on your computer.
+        </div>
+      </div>
+    )
+
+  return (
+    <div
+      className={classNames(
+        "flex flex-col h-screen items-center bg-gray-900",
+        "justify-center font-body text-center px-12"
+      )}
+    >
+      <div className="font-semibold text-2xl text-gray-300 mt-8">
+        Something went wrong :(
+      </div>
+      <div className="m-auto mt-2 mb-8 text-gray-400 max-w-sm "></div>
+    </div>
+  )
 }
 
 export default Importer
