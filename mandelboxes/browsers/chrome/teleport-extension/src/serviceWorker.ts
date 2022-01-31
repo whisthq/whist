@@ -40,22 +40,17 @@ const tryRestoreTabLocation = async (
       index: detachInfo.oldPosition,
       windowId: detachInfo.oldWindowId,
     })
-    console.log("Success!")
   } catch (err) {
-    console.log("Failure!")
-    console.log(err)
     if (
       err ==
       "Error: Tabs cannot be edited right now (user may be dragging a tab)."
     ) {
-      console.log("Setting timeout")
       await new Promise<void>((resolve) =>
         setTimeout(() => {
           tryRestoreTabLocation(tabId, detachInfo)
           resolve()
         }, 50)
       )
-      console.log("Done")
     }
   }
 }
