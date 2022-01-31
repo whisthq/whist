@@ -1,0 +1,11 @@
+{
+  "devDependencies": {
+    "prettier": "2.5.1"
+  },
+  "name": "whist",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:whisthq/whist.git",
+  "author": "Gabriele Oliaro <gabriele_oliaro@college.harvard.edu>",
+  "license": "MIT"
+}
