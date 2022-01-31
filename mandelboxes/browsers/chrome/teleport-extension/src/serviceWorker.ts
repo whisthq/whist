@@ -1,4 +1,5 @@
-// Listen for file download state changes.
+// Listen for file download state changes and propagate
+// to the filesystem.
 const initDownloadHandler = () => {
   // Disable the downloads shelf at the bottom.
   chrome.downloads.setShelfEnabled(false)
@@ -29,4 +30,41 @@ const initDownloadHandler = () => {
   )
 }
 
+// Try to cancel or undo a tab drag-out
+const tryRestoreTabLocation = async (
+  tabId: number,
+  detachInfo: chrome.tabs.TabDetachInfo
+) => {
+  try {
+    await chrome.tabs.move(tabId, {
+      index: detachInfo.oldPosition,
+      windowId: detachInfo.oldWindowId,
+    })
+    console.log("Success!")
+  } catch (err) {
+    console.log("Failure!")
+    console.log(err)
+    if (
+      err ==
+      "Error: Tabs cannot be edited right now (user may be dragging a tab)."
+    ) {
+      console.log("Setting timeout")
+      await new Promise<void>((resolve) =>
+        setTimeout(() => {
+          tryRestoreTabLocation(tabId, detachInfo)
+          resolve()
+        }, 50)
+      )
+      console.log("Done")
+    }
+  }
+}
+
+// Listen for tab drag-out detach events and instantly
+// cancel/undo them.
+const initTabDetachSuppressor = () => {
+  chrome.tabs.onDetached.addListener(tryRestoreTabLocation)
+}
+
 initDownloadHandler()
+initTabDetachSuppressor()
