@@ -27,7 +27,7 @@ def insert_new_amis(
     Inserts new AMIs (but doesn't mark them as active) into the RegionToAmi table.
     Will be invoked from the Flask CLI command to upgrade the AMIs for regions.
     We should mark the new AMIs as active only after we cleanup the existing instances and AMIs.
-    If an AMI is already present, returns its row.
+    If an AMI is already present, update its value.
     Args:
         client_commit_hash: Commit hash of the client that is compatible with the AMIs
                             that are going to be passed in as the other argument.
@@ -37,6 +37,12 @@ def insert_new_amis(
     Returns:
         A list of the regionToAmi objects for this set of regions and commit hashes.
     """
+
+    # Note: we use `merge` here because we always want the most recent AMI, even if the
+    # commit hash still exists in the database. However, this creates a small edge case
+    # in case the entry already exists on the database and the deploy fails. If this event
+    # happens, there will be no entries for that commit hash on the database, which can be
+    # solved by re-running the deploy workflow.
     new_amis = []
     for region_name, ami_id in region_to_ami_id_mapping.items():
         new_ami = RegionToAmi(
@@ -264,6 +270,10 @@ def swapover_amis(new_amis_str: List[str], amis_failed: bool) -> None:
 
         whist_logger.info("Finished performing AMI upgrade.")
     else:
+        # Note: if you see this on the logs and the webserver can't find an AMI,
+        # it's probable that the commit hash entry was removed from the database
+        # due to a small edge case (See the note on insert_new_amis for more details).
+        # Re-run the deploy workflow for that commit hash and a new entry should be created.
         whist_logger.info(
             "Failed to create buffer for some AMIs, so not performing swapover operation. Rolling "
             "back new AMIs from database."
