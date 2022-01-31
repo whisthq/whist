@@ -8,7 +8,7 @@ import Logout from "@app/components/icons/logout"
 import Rewind from "@app/components/icons/rewind"
 import Signal from "@app/components/icons/signal"
 import Download from "@app/components/icons/download"
-import Left from "@app/components/icons/left"
+import Duplicate from "@app/components/icons/duplicate"
 import Toggle from "@app/components/toggle"
 
 import { StateIPC } from "@app/@types/state"
@@ -86,8 +86,8 @@ const createOptions = (mainState: StateIPC, setMainState: any) => {
         }),
     },
     {
-      icon: Left,
-      text: "Restore Tabs from Another Browser",
+      icon: Duplicate,
+      text: "Import Tabs from Another Browser",
       keywords: ["Import", "Google Chrome", "Recover"],
       onClick: () =>
         setMainState({
