@@ -159,7 +159,7 @@ TCP Implementation of Network.h Interface
 ============================
 */
 
-bool tcp_update(void* raw_context) {
+static bool tcp_update(void* raw_context) {
     FATAL_ASSERT(raw_context != NULL);
     TCPContext* context = raw_context;
 
@@ -179,8 +179,8 @@ bool tcp_update(void* raw_context) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, int len, int id,
-                    bool start_of_stream) {
+static int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, int len, int id,
+                           bool start_of_stream) {
     FATAL_ASSERT(raw_context != NULL);
     TCPContext* context = raw_context;
     UNUSED(start_of_stream);
@@ -213,7 +213,7 @@ int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, int len
     return ret;
 }
 
-void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
+static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
     FATAL_ASSERT(raw_context != NULL);
     TCPContext* context = raw_context;
 
@@ -333,18 +333,18 @@ void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
     return NULL;
 }
 
-void tcp_free_packet(void* raw_context, WhistPacket* tcp_packet) {
+static void tcp_free_packet(void* raw_context, WhistPacket* tcp_packet) {
     FATAL_ASSERT(raw_context != NULL);
     deallocate_region(tcp_packet);
 }
 
-bool tcp_get_pending_stream_reset(void* raw_context, WhistPacketType packet_type) {
+static bool tcp_get_pending_stream_reset(void* raw_context, WhistPacketType packet_type) {
     FATAL_ASSERT(raw_context != NULL);
     UNUSED(packet_type);
     LOG_FATAL("Not implemented for TCP yet!");
 }
 
-void tcp_destroy_socket_context(void* raw_context) {
+static void tcp_destroy_socket_context(void* raw_context) {
     FATAL_ASSERT(raw_context != NULL);
     TCPContext* context = raw_context;
 

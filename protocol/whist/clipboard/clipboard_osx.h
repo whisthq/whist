@@ -62,14 +62,14 @@ Public Functions
  *
  * @returns                        The integer count of clipboard updates
  */
-int get_clipboard_changecount();
+int get_clipboard_changecount(void);
 
 /**
  * @brief                          Check if the clipboard has a string stored
  *
  * @returns                        True if it contains a string, else False
  */
-bool check_clipboard_has_string();
+bool check_clipboard_has_string(void);
 
 /**
  * @brief                          Check if the clipboard is storing anything. When the clipboard
@@ -84,7 +84,7 @@ bool check_clipboard_has_string();
  *
  * @returns                        True if clipboard has resident(s), false otherwise
  */
-bool check_clipboard_has_data_ready();
+bool check_clipboard_has_data_ready(void);
 
 /**
  * @brief                          Check if the clipboard has an image stored
@@ -92,21 +92,21 @@ bool check_clipboard_has_data_ready();
  *
  * @returns                        True if it contains an image, else False
  */
-bool check_clipboard_has_image();
+bool check_clipboard_has_image(void);
 
 /**
  * @brief                          Check if the clipboard has files stored
  *
  * @returns                        True if it contains files, else False
  */
-bool check_clipboard_has_files();
+bool check_clipboard_has_files(void);
 
 /**
  * @brief                          Get a string from the clipboard
  *
  * @returns                        The string retrieved from the clipboard
  */
-const char* clipboard_get_string();
+const char* clipboard_get_string(void);
 
 /**
  * @brief                          Set the clipboard to a specific string

@@ -220,7 +220,7 @@ static gf gf_mul_table[GF_SIZE + 1][GF_SIZE + 1];
 #define GF_ADDMULC(dst, x) dst ^= __gf_mulc_[x]
 
 static void
-init_mul_table()
+init_mul_table(void)
 {
     int i, j;
     for (i=0; i< GF_SIZE+1; i++)
@@ -580,7 +580,7 @@ fail:
  * q = values of the polynomial (known)
  */
 
-int
+static int
 invert_vdm(gf *src, int k)
 {
     int i, j, row, col ;
@@ -895,14 +895,6 @@ rs_decode(RSCode* code, void *pkt0[], int index[], int sz)
     free(m_dec);
 
     return 0;
-}
-int rs_get_n(RSCode* code)
-{
-	return code->n;
-}
-int rs_get_k(RSCode* code)
-{
-	return code->k;
 }
 /*********** end of FEC code -- beginning of test code ************/
 

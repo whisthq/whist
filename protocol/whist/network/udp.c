@@ -317,7 +317,7 @@ UDP Implementation of Network.h Interface
 ============================
 */
 
-bool udp_update(void* raw_context) {
+static bool udp_update(void* raw_context) {
     /*
      * Read a WhistPacket from the socket, decrypt it if necessary, and store the decrypted data for
      * the next get_packet call.
@@ -489,8 +489,9 @@ bool udp_update(void* raw_context) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* whist_packet_payload,
-                    int whist_packet_payload_size, int packet_id, bool start_of_stream) {
+static int udp_send_packet(void* raw_context, WhistPacketType packet_type,
+                           void* whist_packet_payload, int whist_packet_payload_size, int packet_id,
+                           bool start_of_stream) {
     FATAL_ASSERT(raw_context != NULL);
     UDPContext* context = (UDPContext*)raw_context;
     FATAL_ASSERT(context != NULL);
@@ -626,7 +627,7 @@ int udp_send_packet(void* raw_context, WhistPacketType packet_type, void* whist_
     return 0;
 }
 
-void* udp_get_packet(void* raw_context, WhistPacketType type) {
+static void* udp_get_packet(void* raw_context, WhistPacketType type) {
     FATAL_ASSERT(raw_context != NULL);
     UDPContext* context = (UDPContext*)raw_context;
     RingBuffer* ring_buffer = context->ring_buffers[type];
@@ -698,7 +699,7 @@ void* udp_get_packet(void* raw_context, WhistPacketType type) {
     }
 }
 
-void udp_free_packet(void* raw_context, WhistPacket* whist_packet) {
+static void udp_free_packet(void* raw_context, WhistPacket* whist_packet) {
     FATAL_ASSERT(raw_context != NULL);
     UDPContext* context = (UDPContext*)raw_context;
 
@@ -714,7 +715,7 @@ void udp_free_packet(void* raw_context, WhistPacket* whist_packet) {
     return;
 }
 
-bool udp_get_pending_stream_reset(void* raw_context, WhistPacketType type) {
+static bool udp_get_pending_stream_reset(void* raw_context, WhistPacketType type) {
     FATAL_ASSERT(raw_context != NULL);
     UDPContext* context = (UDPContext*)raw_context;
 
@@ -732,7 +733,7 @@ bool udp_get_pending_stream_reset(void* raw_context, WhistPacketType type) {
     return false;
 }
 
-void udp_destroy_socket_context(void* raw_context) {
+static void udp_destroy_socket_context(void* raw_context) {
     FATAL_ASSERT(raw_context != NULL);
     UDPContext* context = (UDPContext*)raw_context;
 
