@@ -38,9 +38,9 @@ def insert_new_amis(
         A list of the regionToAmi objects for this set of regions and commit hashes.
     """
 
-    # Note: we use `merge` here because we always want the most recent AMI, even if the 
-    # commit hash still exists in the database. However, this creates a small edge case 
-    # in case the entry already exists on the database and the deploy fails. If this event 
+    # Note: we use `merge` here because we always want the most recent AMI, even if the
+    # commit hash still exists in the database. However, this creates a small edge case
+    # in case the entry already exists on the database and the deploy fails. If this event
     # happens, there will be no entries for that commit hash on the database, which can be
     # solved by re-running the deploy workflow.
     new_amis = []
