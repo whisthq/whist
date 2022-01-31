@@ -63,7 +63,6 @@ Includes
 #include <whist/utils/threads.h>
 #include <whist/clipboard/clipboard_synchronizer.h>
 #include <whist/file/file_synchronizer.h>
-#include <whist/utils/whist_notification.h>
 #include <whist/utils/color.h>
 #include <whist/utils/clock.h>
 #include <whist/logging/logging.h>

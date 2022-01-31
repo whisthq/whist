@@ -21,6 +21,16 @@ typedef struct {
     char layout_name[WHIST_KB_LAYOUT_NAME_MAX_LENGTH];
 } WhistKeyboardLayout;
 
+// Hand-chosen numbers that approximate (slightly overestimate) the maximum
+// display size of an OSX notification. Strings are truncated at these lengths.
+#define MAX_NOTIF_TITLE_LEN 50
+#define MAX_NOTIF_MSG_LEN 150
+
+typedef struct WhistNotification {
+    char title[MAX_NOTIF_TITLE_LEN];
+    char message[MAX_NOTIF_MSG_LEN];
+} WhistNotification;
+
 /*
 ============================
 Public Functions

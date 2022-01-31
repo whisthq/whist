@@ -47,7 +47,7 @@ Includes
 
 #include <whist/logging/log_statistic.h>
 #include <whist/core/whist.h>
-#include <whist/utils/whist_notification.h>
+#include <whist/utils/os_utils.h>
 #include <whist/utils/threads.h>
 #include "client.h"
 #include "server_statistic.h"
