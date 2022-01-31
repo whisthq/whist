@@ -200,7 +200,7 @@ void set_keyboard_layout(WhistKeyboardLayout requested_layout) {
 
 #ifndef __APPLE__
 
-int display_notification(char *title, char *msg) {
+int display_notification(WhistNotification notif) {
     LOG_WARNING("Notification display not implemented on your OS");
     return -1;
 }

@@ -55,13 +55,12 @@ void set_keyboard_layout(WhistKeyboardLayout requested_layout);
  * @brief       Displays notification on the client side.
  *              Specific implementation depends on operating system (OSX/Windows/Linux).
  *
- * @param title Notification title
- * @param msg   Notification body
+ * @param notif A WhistNotification: contains the content of a notification.
  *
  * @return int  0 if success, -1 if failure
  *
  * @note This function is ONLY implemented for MacOS. Linux and Windows impls are stubs.
  */
-int display_notification(char *title, char *msg);
+int display_notification(WhistNotification notif);
 
 #endif
