@@ -69,6 +69,7 @@ typedef struct DbusCtx {
 typedef struct NotificationsHandler {
     whist_server_state *state;
     struct event_base *eb;
+    WhistThread *thread;
 } NotificationsHandler;
 
 /*
@@ -112,14 +113,15 @@ NotificationsHandler *init_notifications_handler(whist_server_state *state) {
     NotificationsHandler *handler = malloc(sizeof(NotificationsHandler));
     handler->state = state;
     handler->eb = event_base_new();
-    whist_create_thread(multithreaded_process_notifications, "multithreaded_process_notifications",
-                        (void *)handler);
+    handler->thread = whist_create_thread(multithreaded_process_notifications,
+                                          "multithreaded_process_notifications", (void *)handler);
 
     return handler;
 }
 
 void destroy_notifications_handler(NotificationsHandler *handler) {
     event_base_loopbreak(handler->eb);
+    whist_wait_thread(handler->thread, NULL);
     free(handler);
 }
 
