@@ -68,6 +68,6 @@ createTrigger(
 createTrigger(
   WhistTrigger.userRequestedQuit,
   fromTrigger(WhistTrigger.protocolStdoutData).pipe(
-    filter((data: string) => data.includes("USER_REQUESTED_QUIT"))
+    filter((data: string) => data.includes("QUIT_APPLICATION"))
   )
 )
