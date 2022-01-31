@@ -156,9 +156,12 @@ Defines
 
 // Set max FPS to 60, or 16ms
 #define MAX_FPS 60
-// Once 22ms has passed, we can presume no frame will be coming anymore,
-// so this starts to send identical frames to keep up with the min fps
-#define MIN_FPS 45
+// We need to maintain a constant FPS for the video encoder to produce the bitrate requested by the
+// client. Maintaining the requested video encoder bitrate is very important for any congestion
+// control algorithm to work correctly.
+#define MIN_FPS MAX_FPS
+// The MIN_FPS mentioned will be enforced over an average of 1 second.
+#define AVG_FPS_DURATION 1.0  // In seconds
 // Number of identical frames to send before turning the encoder off
 #define CONSECUTIVE_IDENTICAL_FRAMES 300
 // FPS to send when the encoder is off
