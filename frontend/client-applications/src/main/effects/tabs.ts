@@ -21,6 +21,6 @@ fromTrigger(WhistTrigger.importTabs)
       // so we add a delay in between each one
       setTimeout(() => {
         pipeURLToProtocol(p, url)
-      }, payload.urls.indexOf(url) * 250)
+      }, payload.urls.indexOf(url) * 500)
     }
   })

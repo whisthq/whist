@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import classNames from "classnames"
 
 import { WhistButton, WhistButtonState } from "@app/components/button"
@@ -78,6 +78,11 @@ const Importer = (props: {
     if (evt.key === "Enter")
       props.onSubmitWindow(props.windows?.[selectedWindow - 1]?.urls)
   }
+
+  useEffect(() => {
+    if (props.windows !== undefined && props.windows.length === 1)
+      props.onSubmitWindow(props.windows?.[selectedWindow - 1]?.urls)
+  }, [props.windows])
 
   if (!browserSelected) {
     return (
