@@ -478,8 +478,9 @@ int32_t multithreaded_send_video(void* opaque) {
     int id = 1;
     state->update_device = true;
 
-    WhistTimer last_frame_capture;
-    start_timer(&last_frame_capture);
+    int start_frame_id = id;
+    WhistTimer start_frame_timer;
+    start_timer(&start_frame_timer);
 
     state->pending_encoder = false;
     state->encoder_finished = false;
@@ -508,6 +509,7 @@ int32_t multithreaded_send_video(void* opaque) {
     while (state->client_width == -1 || state->client_height == -1 || state->client_dpi == -1) {
         whist_sleep(1);
     }
+    bool encoder_running = false;
 
     while (!state->exiting) {
         // If we sent a frame, throttle the bytes of the last frame,
@@ -520,6 +522,7 @@ int32_t multithreaded_send_video(void* opaque) {
         update_client_active_status(&state->client, &assuming_client_active);
 
         if (!assuming_client_active) {
+            encoder_running = false;
             whist_sleep(1);
             continue;
         }
@@ -638,14 +641,30 @@ int32_t multithreaded_send_video(void* opaque) {
         // Lower the min_fps to DISABLED_ENCODER_FPS when the encoder is disabled
         int min_fps = disable_encoder ? DISABLED_ENCODER_FPS : MIN_FPS;
 
+        if (!state->client.is_active) {
+            encoder_running = false;
+        }
+
+        // Whenever encoder toggles from running state to non-running state and vice-versa, reset
+        // the relevant timers and other variables to maintain FPS throughput.
+        // Also reset the same regularly at every AVG_FPS_DURATION, to prevent any overcompensation
+        // in the current fps due to a past low fps (which could occur due to any unpredictable
+        // situation, such as network throttling)
+        if ((!encoder_running && accumulated_frames) || (encoder_running && disable_encoder) ||
+            get_timer(&start_frame_timer) > AVG_FPS_DURATION) {
+            LOG_INFO("Reset encoder FPS timer encoder_running = %d", encoder_running);
+            start_timer(&start_frame_timer);
+            start_frame_id = id;
+            encoder_running = !encoder_running;
+        }
+
         // This outer loop potentially runs 10s of thousands of times per second, every ~1usec
 
         // Send a frame if we have a real frame to send, or we need to keep up with min_fps
-        if (state->client.is_active && (accumulated_frames > 0 || state->wants_iframe ||
-                                        get_timer(&last_frame_capture) > 1.0 / min_fps)) {
+        if (state->client.is_active &&
+            (accumulated_frames > 0 || state->wants_iframe ||
+             get_timer(&start_frame_timer) > (double)(id - start_frame_id) / min_fps)) {
             // This loop only runs ~1/current_fps times per second, every 16-100ms
-            // LOG_INFO("Frame Time: %f\n", get_timer(&last_frame_capture));
-            start_timer(&last_frame_capture);
 
             if (accumulated_frames == 0) {
                 // Slowly increment while receiving identical frames
