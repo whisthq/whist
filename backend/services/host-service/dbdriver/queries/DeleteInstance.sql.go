@@ -65,12 +65,10 @@ type Querier interface {
 	// WriteHeartbeatScan scans the result of an executed WriteHeartbeatBatch query.
 	WriteHeartbeatScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
-
 	WriteInstanceStatus(ctx context.Context, status pgtype.Varchar, instanceID string) (pgconn.CommandTag, error)
 	// WriteInstanceStatusBatch enqueues a WriteInstanceStatus query into batch to be executed
 	// later by the batch.
 	WriteInstanceStatusBatch(batch genericBatch, status pgtype.Varchar, instanceID string)
-
 	// WriteInstanceStatusScan scans the result of an executed WriteInstanceStatusBatch query.
 	WriteInstanceStatusScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
