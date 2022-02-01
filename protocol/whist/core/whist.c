@@ -214,8 +214,12 @@ int runcmd(const char *cmdline, char **response) {
          * like a text file.
          */
 
+        LOG_INFO("1");
+
         char *cmd = safe_malloc(strlen(cmdline) + 128);
         snprintf(cmd, strlen(cmdline) + 128, "%s 2>/dev/null", cmdline);
+
+        LOG_INFO("2");
 
         if ((p_pipe = popen(cmd, "r")) == NULL) {
             LOG_WARNING("Failed to popen %s", cmd);
@@ -224,10 +228,13 @@ int runcmd(const char *cmdline, char **response) {
         }
         free(cmd);
 
+        LOG_INFO("3");
+
         /* Read pipe until end of file, or an error occurs. */
 
         int current_len = 0;
         DynamicBuffer *db = init_dynamic_buffer(false);
+        LOG_INFO("4");
 
         while (true) {
             char c = (char)fgetc(p_pipe);
@@ -242,12 +249,17 @@ int runcmd(const char *cmdline, char **response) {
                 current_len++;
             }
         }
+        LOG_INFO("5");
 
         // The caller will have to free this later
         *response = db->buf;
 
+        LOG_INFO("6");
+
         // Free the DynamicBuffer struct
         free(db);
+
+        LOG_INFO("7");
 
         /* Close pipe and print return value of pPipe. */
         if (feof(p_pipe)) {
