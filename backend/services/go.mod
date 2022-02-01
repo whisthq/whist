@@ -5,12 +5,12 @@ go 1.17
 require (
 	github.com/MicahParks/keyfunc v1.0.1
 	github.com/NVIDIA/go-nvml v0.11.1-0
-	github.com/aws/aws-sdk-go-v2 v1.12.0
+	github.com/aws/aws-sdk-go-v2 v1.13.0
 	github.com/aws/aws-sdk-go-v2/config v1.12.0
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.8.0
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.27.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.23.0
-	github.com/aws/smithy-go v1.9.1
+	github.com/aws/smithy-go v1.10.0
 	github.com/bgentry/heroku-go v0.0.0-20150810151148-ee4032d686ae
 	github.com/docker/docker v20.10.12+incompatible
 	github.com/docker/go-connections v0.4.0
