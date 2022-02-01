@@ -4,5 +4,5 @@ pytest==6.2.4
 pytest-mock==3.6.1
 pytest-watch==4.2.0
 PyYAML==6.0
-rich==10.15.1
+rich==11.1.0
 toolz==0.11.1
