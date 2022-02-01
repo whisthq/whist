@@ -113,13 +113,3 @@ RUN chmod +x /usr/bin/start-chrome && ln -sf /usr/bin/start-chrome /usr/bin/whis
 
 # Install Whist Protocol binaries and helper files (if necessary)
 COPY --from=build-assets protocol/* /usr/share/whist/bin/
-
-#COPY --chmod=550 yancey/run-whist-server.sh /usr/share/whist/run-whist-server.sh
-
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    ibus-anthy \
-    && apt-get autoremove -y \
-    && apt-get clean
-
-COPY --chmod=777 yancey/run_ibus.sh /home/whist/run_ibus.sh
-COPY yancey/xinitrc /root/.xinitrc
