@@ -60,7 +60,7 @@
     "history": "^5.0.1",
     "jwt-decode": "^3.1.2",
     "keytar": "^7.7.0",
-    "knex": "^0.95.11",
+    "knex": "^1.0.1",
     "lodash.clonedeep": "^4.5.0",
     "lodash.find": "^4.6.0",
     "lodash.get": "^4.4.2",
