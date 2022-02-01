@@ -48,6 +48,7 @@ if(MSVC)
 endif()
 
 option(SANITIZE "Enable sanitizer during build (address, thread, undefined)." OFF)
+option(CLIENT_SHARED_LIB "Build the client as a shared library" OFF)
 
 # Add our compiler flags
 include(cmake/compiler-options.cmake)
@@ -95,7 +96,6 @@ elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
     add_definitions(-DLOG_LEVEL=5)
 endif()
 add_definitions(-D__ROOT_FILE__="${PROJECT_SOURCE_DIR}")
-
 option(CHECK_CI "Run checks for the CI environment" OFF)
 if(CHECK_CI)
     message(STATUS "Automatically enabling checks for the CI environment")
@@ -207,12 +207,12 @@ option(DOWNLOAD_BINARIES "download binaries from S3 via AWS CLI" ON)
 if(DOWNLOAD_BINARIES)
     message(STATUS "Downloading Whist Protocol binaries from AWS S3")
     if(WSL)
-        set(download_args ${CMAKE_SYSTEM_NAME} "`wslpath ${CMAKE_BINARY_DIR}`")
+        set(download_args ${CMAKE_SYSTEM_NAME} "`wslpath ${CMAKE_BINARY_DIR}`" ${CLIENT_SHARED_LIB})
         execute_process(COMMAND ${WSL} ${BASH} "`wslpath ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh`" ${download_args}
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                         RESULT_VARIABLE download_result)
     else()
-        set(download_args ${CMAKE_SYSTEM_NAME} ${CMAKE_BINARY_DIR} ${MACOS_ARCHITECTURE})
+        set(download_args ${CMAKE_SYSTEM_NAME} ${CMAKE_BINARY_DIR} ${MACOS_ARCHITECTURE} ${CLIENT_SHARED_LIB})
         execute_process(COMMAND ${BASH} ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh ${download_args}
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                         RESULT_VARIABLE download_result)
