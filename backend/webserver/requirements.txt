@@ -15,5 +15,5 @@ python-dotenv==0.19.0
 requests==2.27.1
 sentry-sdk==1.5.0
 sqlalchemy==1.4.20
-stripe==2.64.0
+stripe==2.65.0
 waitress==2.0.0
