@@ -59,9 +59,7 @@ const fadeElectronWindowIn = (
   fadeEveryXSeconds = 15
 ) => {
   try {
-    win.on("show", () => {
-      win.focusOnWebView()
-    })
+    win.webContents.send("window-focus")
     win.show()
     if (win.isMinimized()) win.restore()
 

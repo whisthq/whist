@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect, useRef } from "react"
 
 import { withContext } from "@app/renderer/context/omnibar"
 
@@ -8,6 +8,23 @@ const Search = () => {
   const onChange = (e: any) => {
     context.setSearch(e.target.value)
   }
+
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    // @ts-expect-error
+    const ipc = window.ipcRenderer
+
+    const listener = () => {
+      inputRef.current?.focus()
+    }
+    ipc.on("window-focus", listener)
+
+    // destructor
+    return () => {
+      ipc.removeListener?.("window-focus", listener)
+    }
+  })
 
   return (
     <div className="relative mb-6">
@@ -21,10 +38,11 @@ const Search = () => {
       </div>
       <input
         className="block w-full text-md rounded-md bg-transparent pt-1 focus:outline-none placeholder-gray-600"
-        autoFocus
+        autoFocus={true}
         placeholder="Search Whist Commands"
         value={context.search}
         onChange={onChange}
+        ref={inputRef}
       />
     </div>
   )
