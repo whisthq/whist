@@ -375,8 +375,9 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
     // resulting stdout in the open_url_result string.
     char *open_url_result;
     int ret = runcmd(command, &open_url_result);
-    if (ret != 0) {
+    if (ret == -1) {
         LOG_ERROR("Error opening URL in new tab: %s", open_url_result);
+        free(command);
         free(open_url_result);
         return -1;
     }
