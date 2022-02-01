@@ -8,5 +8,5 @@ export QT_IM_MODULE=ibus
 set -Eeuo pipefail
 
 #gsettings set org.freedesktop.ibus.general preload-engines "['xkb:us::eng', 'anthy', 'pinyin']"
-#gsettings set org.freedesktop.ibus.general.hotkey triggers "['<Control>space']"
+gsettings set org.freedesktop.ibus.general.hotkey triggers "[]"
 ibus-daemon -drx
