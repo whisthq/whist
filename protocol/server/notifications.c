@@ -87,6 +87,9 @@ static void dbus_close(DbusCtx *ctx);
 static DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *message,
                                               void *user_data);
 
+// Notification packaging helper
+static bool package_notification(WhistNotification *notif, const char *title, const char *message);
+
 // Functions required for D-Bus listening
 static dbus_bool_t become_monitor(DBusConnection *connection);
 
@@ -325,22 +328,16 @@ DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *
 
     // Create notification. Careful not to access OOB memory!
     WhistNotification notif;
-    strncpy(notif.title, title, MAX_NOTIF_TITLE_LEN - 1);
-    notif.title[min(strlen(title), MAX_NOTIF_TITLE_LEN - 1)] = '\0';
-    strncpy(notif.message, n_message, MAX_NOTIF_MSG_LEN - 1);
-    notif.message[min(strlen(n_message), MAX_NOTIF_MSG_LEN - 1)] = '\0';
-
+    package_notification(&notif, title, n_message);
     LOG_INFO("WhistNotification consists of: title=%s, message=%s", notif.title, notif.message);
 
     // Parse protocol client from void pointer
     Client *server_state_client = (Client *)user_data;
 
     // Send notification over server
-
     WhistServerMessage wsmsg_notif;
     wsmsg_notif.type = SMESSAGE_NOTIFICATION;
     wsmsg_notif.notif = notif;
-
     if (server_state_client->is_active &&
         broadcast_udp_packet(server_state_client, PACKET_MESSAGE, &wsmsg_notif,
                              sizeof(WhistServerMessage), 1) >= 0) {
@@ -350,6 +347,22 @@ DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *
     }
 
     return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+/**
+ * @brief               Package title and message strings into notification.
+ *
+ * @param notif         Pointer to notification.
+ * @param title         Notification title.
+ * @param message       Notification message.
+ * @return bool         Boolean indicating success of operation.
+ */
+bool package_notification(WhistNotification *notif, const char *title, const char *message) {
+    // The logic is currently very simple, but this function is factored out in case
+    // we would like to add more complicated parsing rules in the future.
+    bool title_success = safe_strncpy(notif->title, title, MAX_NOTIF_TITLE_LEN);
+    bool msg_success = safe_strncpy(notif->message, message, MAX_NOTIF_MSG_LEN);
+    return title_success && msg_success;
 }
 
 /**
