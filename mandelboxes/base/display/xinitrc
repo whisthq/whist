@@ -58,6 +58,7 @@ echo "$xinitrc_pid" > /usr/share/whist/xinit-pid
 echo "Successfully wrote to /usr/share/whist/xinit-pid"
 
 $RUN_AS_WHIST "/home/whist/run_ibus.sh"
+echo "ibus started at address $($RUN_AS_WHIST 'ibus address')"
 
 # Wait for AwesomeWM process
 # Note: this never finishes, but leaves the X server open indefinitely
