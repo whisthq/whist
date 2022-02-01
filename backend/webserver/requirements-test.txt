@@ -8,7 +8,7 @@ pytest-dotenv==0.5.2
 pytest-flask==1.2.0
 Sphinx==4.3.0
 types-Flask==1.1.1
-black==21.11b0
+black==22.1.0
 types-Jinja2==2.11.2
 types-requests==2.27.8
 git+https://github.com/jeancochrane/pytest-flask-sqlalchemy@ea5c5ee935ed2d9cdc56061c243a6004d7c8fe7e
