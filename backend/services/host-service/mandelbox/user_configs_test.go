@@ -33,7 +33,8 @@ func TestUserConfigIntegration(t *testing.T) {
 	}
 
 	// Start with a clean slate
-	fs = afero.NewMemMapFs()
+	oldFs := utils.Fs
+	utils.SetFs(afero.NewMemMapFs())
 
 	err := uploaderMandelboxData.setupUserConfigDirs()
 	if err != nil {
@@ -151,4 +152,6 @@ func TestUserConfigIntegration(t *testing.T) {
 	// With a new token, anything is valid. But we want to make sure
 	t.Run("new repeated token", downloadTestNotNewToken(true, true))
 	t.Run("new non-repeated token", downloadTestNotNewToken(false, true))
+
+	utils.SetFs(oldFs)
 }

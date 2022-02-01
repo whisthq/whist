@@ -86,7 +86,7 @@ test: build
 # This ensures that tests that use the file system do not conflict or race with each other
 #
 # Set AWS credentials to allow user config integration tests to run
-	sudo env "PATH=$(PATH)" "CI=$(CI)" "AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID)" "AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY)" $(GOCMD) test -v -p 1 ./... -race -covermode=atomic -coverprofile=$(BUILD_FOLDER)/coverage.out
+	sudo env "PATH=$(PATH)" "CI=$(CI)" "AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID)" "AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY)" $(GOCMD) test ./... -race -covermode=atomic -coverprofile=$(BUILD_FOLDER)/coverage.out
 
 ifeq ($(CI),true)
 	@echo "Running in CI, uploading code coverage results to Codecov..."
