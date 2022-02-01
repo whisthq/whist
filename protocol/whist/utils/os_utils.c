@@ -46,7 +46,7 @@ static const char* const apple_keyboard_mappings[][2] = {
     {"com.apple.keylayout.Spanish", "xkb:es::spa"},     {"com.apple.keylayout.Hebrew", "xkb:il::heb"},
     {"com.apple.keylayout.Canadian", "xkb:ca:eng:eng"},    {"com.apple.keylayout.DVORAK-QWERTYCMD", "xkb:us:dvorak:eng"},
     {"com.apple.keylayout.ABC-India", "xkb:us:intl:eng"},   {"com.apple.keylayout.Dvorak", "xkb:us:dvorak:eng"},
-    {"com.apple.keylayout.British", "xkb:gb:extd:eng"},
+    {"com.apple.keylayout.British", "xkb:gb:extd:eng"}, {"com.apple.keylayout.ABC", "xkb:us:intl:eng"},
     {"com.apple.inputmethod.SCIM.ITABC", "pinyin"}, {"com.sogou.inputmethod.sogou.pinyin", "pinyin"},
     {"com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese", "anthy"}, {"com.apple.inputmethod.Kotoeri.RomajiTyping.Roman", "anthy"},
 };
