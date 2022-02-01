@@ -2,7 +2,7 @@
 
 # Enable Sentry bash error handler, this will catch errors if `set -e` is set in a Bash script
 # This is called via `./run-as-whist-user.sh`, which passes sentry environment in.
-case $(cat $SENTRY_ENVIRONMENT) in
+case $(cat "$SENTRY_ENVIRONMENT") in
   dev|staging|prod)
     export SENTRY_ENVIRONMENT=${SENTRY_ENV}
     eval "$(sentry-cli bash-hook)"
@@ -22,25 +22,25 @@ set -Eeuo pipefail
 GOOGLE_CHROME_SINGLETON_LOCK=/home/whist/.config/google-chrome/SingletonLock
 WHIST_CHROME_SINGLETON_LOCK=/home/whist/.config/WhistChromeSingletonLock
 
-if [[ ! -f $WHIST_CHROME_SINGLETON_LOCK ]]; then
+if [[ -n $WHIST_CHROME_SINGLETON_LOCK ]]; then
   touch $WHIST_CHROME_SINGLETON_LOCK
   rm -f $GOOGLE_CHROME_SINGLETON_LOCK
 fi
 
 features="VaapiVideoDecoder,Vulkan,CanvasOopRasterization,OverlayScrollbar"
 flags=(
-  --use-gl=desktop
-  --flag-switches-begin
-  --enable-gpu-rasterization
-  --enable-zero-copy
-  --double-buffer-compositing
-  --disable-smooth-scrolling
-  --disable-font-subpixel-positioning
-  --force-color-profile=display-p3-d65
-  --disable-gpu-process-crash-limit
-  --disable-notifications #This is tech debt, remove when notification redirection is implemented
-  --no-default-browser-check
-  --load-extension=/opt/teleport/chrome-extension
+  "--use-gl=desktop"
+  "--flag-switches-begin"
+  "--enable-gpu-rasterization"
+  "--enable-zero-copy"
+  "--double-buffer-compositing"
+  "--disable-smooth-scrolling"
+  "--disable-font-subpixel-positioning"
+  "--force-color-profile=display-p3-d65"
+  "--disable-gpu-process-crash-limit"
+  "--disable-notifications" #This is tech debt, remove when notification redirection is implemented
+  "--no-default-browser-check"
+  "--load-extension=/opt/teleport/chrome-extension"
 )
 
 if [[ $DARK_MODE == true ]]; then
@@ -49,21 +49,21 @@ if [[ $DARK_MODE == true ]]; then
 fi
 
 if [[ $RESTORE_LAST_SESSION == true ]]; then
-  flags+=(--restore-last-session)
+  flags+=("--restore-last-session")
 fi
 
-flags+=(--enable-features=$features)
-flags+=(--flag-switches-end)
+flags+=("--enable-features=$features")
+flags+=("--flag-switches-end")
 
 # Pass user agent corresponding to user's OS from JSON-transport
-if [[ ! -z "$USER_AGENT" ]]; then
-  flags+=(--user-agent="$USER_AGENT")
+if [[ -n "$USER_AGENT" ]]; then
+  flags+=("--user-agent=$USER_AGENT")
 fi
 
 # Passing the initial url from json transport as a parameter to the google-chrome command. If the url is not
 # empty, Chrome will open the url as an additional tab at start time. The other tabs will be restored depending
 # on the user settings.
-flags+=($INITIAL_URL)
+flags+=("$INITIAL_URL")
 
 
 # Start Chrome

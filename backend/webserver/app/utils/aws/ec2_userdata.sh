@@ -15,7 +15,7 @@ cd /home/ubuntu
 # tell the status of the existing cloud storage directories. We just need to
 # wait for them to unmount (that is an asynchronous process) and the webserver
 # should declare the host dead and prune it.
-sudo cat << EOF > /etc/systemd/system/host-service.service
+cat << EOF | sudo tee /etc/systemd/system/host-service.service
 [Unit]
 Description=Host Service
 Requires=docker.service

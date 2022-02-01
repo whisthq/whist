@@ -22,7 +22,7 @@ cd "$DIR"
 DB_EXISTS=${DB_EXISTS:=false} # default: false
 if [ $DB_EXISTS == true ]; then
   # copy schema
-  psql -d $POSTGRES_URI -f ../db_migration/schema.sql
+  psql -d "$POSTGRES_URI" -f ../db_migration/schema.sql
 
   # copy specifically chosen data
   echo "===             Putting data into db             ==="
@@ -40,13 +40,13 @@ echo "===            Initializing db                  ==="
 
 # make user. initially just "postgres" user exists
 cmds="CREATE ROLE $POSTGRES_USER WITH LOGIN CREATEDB;\q"
-psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U postgres -d postgres <<< $cmds
+psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U postgres -d postgres <<< "$cmds"
 
 # Get rid of 0 width spaces.
-POSTGRES_DB=$( (echo $POSTGRES_DB) | sed $'s/[^[:print:]\t]//g')
+POSTGRES_DB=$( (echo "$POSTGRES_DB") | sed $'s/[^[:print:]\t]//g')
 
 cmds="CREATE DATABASE $POSTGRES_DB;\q"
-psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d postgres <<< $cmds
+psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d postgres <<< "$cmds"
 
 # copy schema
 psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f ../db_migration/schema.sql
