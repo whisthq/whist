@@ -87,7 +87,7 @@ func initializeLogzIO() (*logzioSender, error) {
 	}
 
 	logzioShippingToken := os.Getenv("LOGZIO_SHIPPING_TOKEN")
-	log.Print(logzioShippingToken)
+
 	if logzioShippingToken == "" {
 		return nil, utils.MakeError("Error initializing logz.io integration: logzioShippingToken is uninitialized")
 	}
