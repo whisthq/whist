@@ -69,7 +69,7 @@ typedef struct DbusCtx {
 typedef struct NotificationsHandler {
     whist_server_state *state;
     struct event_base *eb;
-    WhistThread *thread;
+    WhistThread thread;
 } NotificationsHandler;
 
 /*
