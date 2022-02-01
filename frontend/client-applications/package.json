@@ -104,7 +104,7 @@
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
     "autoprefixer": "^10.3.1",
-    "electron": "14.0.0",
+    "electron": "17.0.0",
     "electron-builder": "22.11.7",
     "electron-notarize": "github:whisthq/electron-notarize#main",
     "esbuild": "^0.14.0",
