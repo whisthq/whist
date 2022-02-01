@@ -6,7 +6,7 @@ import os
 import subprocess
 
 DESCRIPTION = """
-This script will run shellcheck on all .sh files in this folder and
+This script will run shellcheck on all .sh files in the folder the script is called from and
 all subfolders. 
 """
 
