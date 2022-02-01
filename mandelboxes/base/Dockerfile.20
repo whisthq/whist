@@ -9,6 +9,7 @@
 # make it easier to iterate, but in prod mode we want
 # to copy the protocol as early as possible to share
 # layers between images.
+# See stage 0 of the base Dockerfile for an explanation of this build stage.
 ARG BuildAssetPackage "protocol"
 FROM whist/build-assets:$BuildAssetPackage as build-assets
 
@@ -545,8 +546,6 @@ COPY --chmod=550 display/update-whist-dpi.sh /usr/share/whist/update-whist-dpi.s
 # Set display environment variable
 ENV DISPLAY :10
 
-
-
 #########################
 # Theme
 #########################
@@ -555,7 +554,6 @@ ENV DISPLAY :10
 RUN apt-get update && apt-get install --no-install-recommends -y \
     awesome \
     awesome-extra \
-    xfce4 \
     lxappearance \
     materia-gtk-theme \
     yaru-theme-gtk \
