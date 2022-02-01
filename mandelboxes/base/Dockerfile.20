@@ -529,7 +529,10 @@ RUN wget -q https://github.com/altdesktop/playerctl/releases/download/v2.3.1/pla
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
     ibus ibus-pinyin ibus-anthy \
-    at-spi2-core dbus-x11
+    at-spi2-core dbus-x11 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
 COPY --chmod=555 display/run_ibus.sh /home/whist/run_ibus.sh
 
