@@ -51,5 +51,17 @@ jobs:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
 
+      # Disabled the following codes in some files because fixing the scripts according Shellcheck wishes was either causing crashes or it was too cumbersome:
+      # * SC2028: echo won't expand escape sequences. Consider printf
+      # * SC2046: Quote this to prevent word splitting.
+      # * SC2086: Double quote to prevent globbing and word splitting.
+      # * SC2154: var is referenced but not assigned.
+      # * SC1004: This backslash+linefeed is literal. Break outside single quotes if you just want to break the line.
       - name: Run ShellCheck on all folders
-        run: python3 .github/workflows/helpers/shell-scripts/check-shellcheck.py --exclude-dirs="frontend/client-applications/node_modules/" --exclude-codes="backend/webserver/ephemeral_db_setup/fetch_db.sh:SC2028 protocol/build_protocol_targets.sh:SC2046,SC2086 protocol/lint-cmake.sh:SC2086 mandelboxes/base/display/whist-display.sh:SC2154 mandelboxes/base/utils/run-as-whist-user.sh:SC1004 mandelboxes/development/client/run-whist-client.sh:SC2086 mandelboxes/base/main/run-whist-server.sh:SC2086,SC2046"
+        run: |
+          python3 .github/workflows/helpers/shell-scripts/check-shellcheck.py \
+            --exclude-dirs="frontend/client-applications/node_modules/" \
+            --exclude-codes="backend/webserver/ephemeral_db_setup/fetch_db.sh:SC2028 \
+            protocol/build_protocol_targets.sh:SC2046,SC2086 protocol/lint-cmake.sh:SC2086 \
+            mandelboxes/base/display/whist-display.sh:SC2154 mandelboxes/base/utils/run-as-whist-user.sh:SC1004 \
+            mandelboxes/development/client/run-whist-client.sh:SC2086 mandelboxes/base/main/run-whist-server.sh:SC2086,SC2046"
