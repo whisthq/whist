@@ -12,8 +12,8 @@ import (
 type GraphQLQuery interface{}
 
 // WhistInstances is the mapping of the `whist.hosts` table. This type interacts directly
-// with the GraphQL client, which marshals/unmarshals using this type. Only use for GraphQL
-// operations.
+// with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal. Only use for GraphQL
+// operations. For operations that do not interact with the client, use the `Instance` type instead.
 type WhistInstances []struct {
 	ID                graphql.String   `graphql:"id"`
 	Provider          graphql.String   `graphql:"provider"`
@@ -30,8 +30,8 @@ type WhistInstances []struct {
 }
 
 // WhistMandelboxes is the mapping of the `whist.mandelboxes` table. This type interacts directly
-// with the GraphQL client, which marshals/unmarshals using this type. Only use for GraphQL
-// operations.
+// with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal. Only use for GraphQL
+// operations. For operations that do not interact with the client, use the `Mandelbox` type instead.
 type WhistMandelboxes []struct {
 	ID         graphql.String `graphql:"id"`
 	App        graphql.String `graphql:"app"`
@@ -43,8 +43,8 @@ type WhistMandelboxes []struct {
 }
 
 // WhistImages is the mapping of the `whist.images` table. This type interacts directly
-// with the GraphQL client, which marshals/unmarshals using this type. Only use for GraphQL
-// operations.
+// with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal. Only use for GraphQL
+// operations. For operations that do not interact with the client, use the `Image` type instead.
 type WhistImages []struct {
 	Provider  graphql.String `graphql:"provider"`
 	Region    graphql.String `graphql:"region"`
