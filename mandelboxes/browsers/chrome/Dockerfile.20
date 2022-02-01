@@ -1,4 +1,4 @@
-# See stage 0 of the base Dockerfile for an explanation of this build stage.
+
 ARG BuildAssetPackage "protocol"
 FROM whist/build-assets:$BuildAssetPackage as build-assets
 

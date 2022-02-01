@@ -32,17 +32,24 @@ Defines
 #ifdef __APPLE__
 // If this array gets any longer than 1000 or so,
 // we should probably swap to a C++ std::map<string, string>
-static const char *const apple_keyboard_mappings[][2] = {
-    {"com.apple.keylayout.USExtended", "us"},  {"com.apple.keylayout.US", "us"},
-    {"com.apple.keylayout.Italian-Pro", "it"}, {"com.apple.keylayout.Italian", "it"},
-    {"com.apple.keylayout.Arabic", "ara"},     {"com.apple.keylayout.ABC-QWERTZ", "de"},
-    {"com.apple.keylayout.German", "de"},      {"com.apple.keylayout.Canadian-CSA", "ca"},
-    {"com.apple.keylayout.ABC-AZERTY", "fr"},  {"com.apple.keylayout.French", "fr"},
-    {"com.apple.keylayout.SwissFrench", "fr"}, {"com.apple.keylayout.LatinAmerican", "latam"},
-    {"com.apple.keylayout.Spanish", "es"},     {"com.apple.keylayout.Hebrew", "il"},
-    {"com.apple.keylayout.Canadian", "ca"},    {"com.apple.keylayout.DVORAK-QWERTYCMD", "dvorak"},
-    {"com.apple.keylayout.ABC-India", "us"},   {"com.apple.keylayout.Dvorak", "dvorak"},
-    {"com.apple.keylayout.British", "uk"}};
+
+// To add a new keyboard layout, run ibus list-engine in a mandelbox and find the appropriate one
+// for foreign characters, use https://wiki.archlinux.org/title/Input_method or something similar to locate a package
+// and sudo apt install METHOD in the Dockerfile, then add the ibus engine to this mapping
+static const char* const apple_keyboard_mappings[][2] = {
+    {"com.apple.keylayout.USExtended", "xkb:us::eng"},  {"com.apple.keylayout.US", "xkb:us::eng"},
+    {"com.apple.keylayout.Italian-Pro", "xkb:it::ita"}, {"com.apple.keylayout.Italian", "xkb:it::ita"},
+    {"com.apple.keylayout.Arabic","xkb:ara::ara"},     {"com.apple.keylayout.ABC-QWERTZ", "xkb:de:nodeadkeys:ger"},
+    {"com.apple.keylayout.German", "xkb:de::ger"},      {"com.apple.keylayout.Canadian-CSA", "xkb:ca:eng:eng"},
+    {"com.apple.keylayout.ABC-AZERTY", "xkb:fr::fra"},  {"com.apple.keylayout.French", "xkb:fr::fra"},
+    {"com.apple.keylayout.SwissFrench", "xkb:ch:fr:fra"}, {"com.apple.keylayout.LatinAmerican", "xkb:latam::spa"},
+    {"com.apple.keylayout.Spanish", "xkb:es::spa"},     {"com.apple.keylayout.Hebrew", "xkb:il::heb"},
+    {"com.apple.keylayout.Canadian", "xkb:ca:eng:eng"},    {"com.apple.keylayout.DVORAK-QWERTYCMD", "xkb:us:dvorak:eng"},
+    {"com.apple.keylayout.ABC-India", "xkb:us:intl:eng"},   {"com.apple.keylayout.Dvorak", "xkb:us:dvorak:eng"},
+    {"com.apple.keylayout.British", "xkb:gb:extd:eng"},
+    {"com.apple.inputmethod.SCIM.ITABC", "pinyin"}, {"com.sogou.inputmethod.sogou.pinyin", "pinyin"},
+    // {"com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese", "anthy"}
+};
 
 #define NUM_APPLE_KEYBOARD_MAPPINGS \
     ((int)sizeof(apple_keyboard_mappings) / (int)sizeof(apple_keyboard_mappings[0]))
@@ -188,7 +195,7 @@ void set_keyboard_layout(WhistKeyboardLayout requested_layout) {
 #ifdef __linux__
     char cmd_buf[1024];
     int bytes_written =
-        snprintf(cmd_buf, sizeof(cmd_buf), "setxkbmap -layout %s", current_layout_name);
+        snprintf(cmd_buf, sizeof(cmd_buf), "/usr/share/whist/run-as-whist-user.sh 'ibus engine %s'", current_layout_name);
 
     if (bytes_written >= 0) {
         runcmd(cmd_buf, NULL);
