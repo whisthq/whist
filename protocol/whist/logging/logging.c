@@ -42,6 +42,7 @@ format strings.
 #endif
 
 #include <stdio.h>
+#include <stdbool.h>
 
 #include <whist/core/whist.h>
 #include "whist/utils/atomic.h"
@@ -324,8 +325,8 @@ static void logger_queue_line(const char* tag, const char* prefix, const char* l
     whist_unlock_mutex(logger_queue_mutex);
 }
 
-void whist_init_logger(void) {
-    init_backtrace_handler();
+void whist_init_logger(bool catch_segfaults) {
+    if (catch_segfaults) init_backtrace_handler();
 
     linked_list_init(&logger_queue);
     linked_list_init(&logger_freelist);

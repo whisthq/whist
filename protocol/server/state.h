@@ -54,6 +54,7 @@ struct _whist_server_config {
     char identifier[WHIST_IDENTIFIER_MAXLEN + 1];
     int begin_time_to_exit;
     char dbus_address[DBUS_ADDRESS_MAXLEN + 1];
+    WhistSubsystemParams susbsystems_params;
 };
 
 typedef struct _whist_server_config whist_server_config;

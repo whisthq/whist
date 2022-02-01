@@ -587,7 +587,7 @@ Whist Library Tests
  * logging/logging.c
  **/
 TEST_F(ProtocolTest, LoggerTest) {
-    whist_init_logger();
+    whist_init_logger(true);
     LOG_DEBUG("This is a debug log!");
     LOG_INFO("This is an info log!");
     flush_logs();
@@ -640,7 +640,7 @@ TEST_F(ProtocolTest, LoggerTest) {
 
 // Test for log overflow.
 TEST_F(ProtocolTest, LoggerOverflowTest) {
-    whist_init_logger();
+    whist_init_logger(true);
 
     test_set_pause_state_on_logger_thread(true);
 
@@ -676,7 +676,7 @@ TEST_F(ProtocolTest, LogStatistic) {
         {"TEST2", false, false, true},
         {"TEST3", true, true, false},  // Don't log this. Want to check for "count == 0" condition
     };
-    whist_init_logger();
+    whist_init_logger(true);
     whist_init_statistic_logger(3, NULL, 2);
     flush_logs();
     check_stdout_line(::testing::HasSubstr("Logging initialized!"));
@@ -727,7 +727,7 @@ static int log_test_thread(void* arg) {
 }
 
 TEST_F(ProtocolTest, LogThreadTest) {
-    whist_init_logger();
+    whist_init_logger(true);
 
     WhistThread threads[4];
     for (int i = 0; i < 4; i++) {

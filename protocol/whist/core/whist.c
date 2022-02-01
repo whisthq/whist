@@ -51,9 +51,9 @@ Public Function Implementations
 ============================
 */
 
-void whist_init_subsystems(void) {
+void whist_init_subsystems(WhistSubsystemParams *params) {
     whist_init_multithreading();
-    whist_init_logger();
+    whist_init_logger(params->catch_segfaults);
     init_fec();
     whist_init_networking();
 }
@@ -74,7 +74,7 @@ int runcmd(const char *cmdline, char **response) {
 
         Arguments:
             cmdline (const char*): String of the system command to run
-            repsonse (char**): Terminal output from the cmdline
+            response (char**): Terminal output from the cmdline
 
         Returns:
             (int): 0 or value of pipe if success, else -1
