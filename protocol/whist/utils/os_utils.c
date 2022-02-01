@@ -195,7 +195,8 @@ void set_keyboard_layout(WhistKeyboardLayout requested_layout) {
 #ifdef __linux__
     char cmd_buf[1024];
     int bytes_written =
-        snprintf(cmd_buf, sizeof(cmd_buf), "/usr/share/whist/run-as-whist-user.sh 'ibus engine %s'", current_layout_name);
+        snprintf(cmd_buf, sizeof(cmd_buf), "/usr/share/whist/run-as-whist-user.sh 'ibus engine %s'",
+                current_layout_name);
 
     if (bytes_written >= 0) {
         runcmd(cmd_buf, NULL);
