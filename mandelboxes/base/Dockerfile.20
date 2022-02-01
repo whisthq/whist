@@ -778,11 +778,3 @@ RUN systemctl enable whist-main
 # to make it easier to modify the protocol and rebuild the base
 # Dockerfile without needing to redo many steps
 COPY --from=build-assets protocol/* /usr/share/whist/bin/
-
-# Install keyboard layout packages
-
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    ibus ibus-pinyin ibus-anthy \
-    at-spi2-core
-
-COPY --chmod=777 input/run_ibus.sh /home/whist/run_ibus.sh
