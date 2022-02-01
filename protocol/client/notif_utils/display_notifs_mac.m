@@ -30,7 +30,7 @@ Public Function Implementations
 int display_notification(WhistNotification notif) {
     NSUserNotification *n = [[NSUserNotification alloc] init];
 
-    char *title, *msg = notif->title, notif->message;
+    char *title, *msg = notif.title, notif.message;
     LOG_INFO("Trying to display notif on OSX: %s | %s", title, msg);
 
     n.title = [NSString stringWithUTF8String:title];
