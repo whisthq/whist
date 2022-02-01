@@ -51,7 +51,7 @@ jobs:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
 
-      # Disabled the following codes in some files because fixing the scripts according Shellcheck wishes was either causing crashes or it was too cumbersome:
+      # Disabled the following codes in some files because fixing the scripts according to the Shellcheck wishes was either causing crashes or it was too cumbersome:
       # * SC2028: echo won't expand escape sequences. Consider printf
       # * SC2046: Quote this to prevent word splitting.
       # * SC2086: Double quote to prevent globbing and word splitting.
