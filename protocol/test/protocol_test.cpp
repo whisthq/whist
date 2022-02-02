@@ -1331,9 +1331,6 @@ TEST_F(ProtocolTest, PackageNotificationTest) {
     // Check that the notif is a valid string
     EXPECT_TRUE(strlen(notif.title) < MAX_NOTIF_TITLE_LEN);
     EXPECT_TRUE(strlen(notif.message) < MAX_NOTIF_MSG_LEN);
-
-    std::cerr << strlen(notif.title) << ' ' << MAX_NOTIF_TITLE_LEN << std::endl;
-    std::cerr << strlen(notif.message) << ' ' << MAX_NOTIF_MSG_LEN << std::endl;
 }
 
 // Test notification display
