@@ -506,7 +506,8 @@ int32_t multithreaded_send_video(void* opaque) {
 
     bool assuming_client_active = false;
     // Wait till client dimensions are available, so that we know the capture resolution
-    while (state->client_width == -1 || state->client_height == -1 || state->client_dpi == -1) {
+    while (!state->exiting &&
+           (state->client_width == -1 || state->client_height == -1 || state->client_dpi == -1)) {
         whist_sleep(1);
     }
     bool encoder_running = false;
