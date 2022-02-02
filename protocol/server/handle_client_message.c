@@ -370,11 +370,23 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
     sprintf(command, "/usr/share/whist/run-as-whist-user.sh \"exec google-chrome %s\"",
             received_url);
 
-    LOG_INFO("About to run command `%s`", command);
-    // Step 3: Execute the command created in step 2 (which consists of a call to the
-    // run-as-whist-user.sh script with the appropriate parameter) in the mandelbox, and save the
-    // resulting stdout in the open_url_result string.
+    // LOG_INFO("About to run command `%s`", command);
+    //  Step 3: Execute the command created in step 2 (which consists of a call to the
+    //  run-as-whist-user.sh script with the appropriate parameter) in the mandelbox, and save the
+    //  resulting stdout in the open_url_result string.
     char *open_url_result;
+
+    for (int i = 0; i < 10; i++) {
+        LOG_INFO("About to run command `%s` (%i/10)", command, i);
+        int ret = runcmd(command, &open_url_result);
+        if (ret == -1) {
+            LOG_ERROR("Error opening URL in new tab: %s", open_url_result);
+            free(command);
+            free(open_url_result);
+            return -1;
+        }
+    }
+
     int ret = runcmd(command, &open_url_result);
     if (ret == -1) {
         LOG_ERROR("Error opening URL in new tab: %s", open_url_result);
