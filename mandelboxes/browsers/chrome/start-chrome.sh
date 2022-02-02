@@ -67,7 +67,8 @@ flags+=("$INITIAL_URL")
 # Load D-Bus configurations; necessary for Chrome
 # The -10 comes from the display ID
 dbus_config_file="/home/whist/.dbus/session-bus/$(cat /etc/machine-id)-10"
-. $dbus_config_file
+# shellcheck source=/dev/null
+. "$dbus_config_file"
 export DBUS_SESSION_BUS_ADDRESS
 echo "loaded d-bus address in start-chrome.sh: $DBUS_SESSION_BUS_ADDRESS"
 

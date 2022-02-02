@@ -32,7 +32,8 @@ dbus_result=$($RUN_AS_WHIST "dbus-launch --sh-syntax --exit-with-x11")
 # The -10 comes from the display ID
 dbus_config_file="/home/whist/.dbus/session-bus/$(cat /etc/machine-id)-10"
 block-until-file-exists.sh $dbus_config_file >&1
-. $dbus_config_file
+# shellcheck source=/dev/null
+. "$dbus_config_file"
 export DBUS_SESSION_BUS_ADDRESS
 echo "d-bus address: $DBUS_SESSION_BUS_ADDRESS"
 

@@ -132,7 +132,8 @@ fi
 # WhistServer and cookie authentication require that the D-Bus environment variables be set
 # The -10 comes from the display ID
 dbus_config_file="/home/whist/.dbus/session-bus/$(cat /etc/machine-id)-10"
-. $dbus_config_file
+# shellcheck source=/dev/null
+. "$dbus_config_file"
 export DBUS_SESSION_BUS_ADDRESS
 echo "loaded d-bus address in run-whist-server.sh: $DBUS_SESSION_BUS_ADDRESS"
 
