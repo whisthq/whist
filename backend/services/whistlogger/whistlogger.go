@@ -39,7 +39,6 @@ func init() {
 	// imagine we would use local tags for) we just add in the text of the
 	// respective error message sent to Sentry. Alternatively, we might just be
 	// able to use sentry.WithScope(), but that is future work.
-	// sentryTransport, err = initializeSentry()
 }
 
 func InitHostLogging() {

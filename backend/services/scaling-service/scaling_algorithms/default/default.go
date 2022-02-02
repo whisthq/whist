@@ -21,7 +21,7 @@ type ScalingAlgorithm interface {
 
 // ScalingEvent is an event that contains all the relevant information
 // to make scaling decisions.
-// Idea: We could use UUIDs for each event so we can improve our logging
+// IDea: We could use UUIDs for each event so we can improve our logging
 // and debugging capabilities.
 type ScalingEvent struct {
 	Type   interface{} // The type of event (database, timing, etc.)
@@ -120,7 +120,7 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 				}
 			case scheduledEvent := <-s.ScheduledEventChan:
 				switch scheduledEvent.Type {
-				case "SCHEDULED_SCALE_DOWN":
+				case "SCHEDULED_SCALE_DOWN_EVENT":
 					logger.Infof("Scaling algorithm received a scheduled scale down event with value: %v", scheduledEvent)
 
 					goroutineTracker.Add(1)
@@ -135,7 +135,7 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 
 						scalingCancel()
 					}()
-				case "SCHEDULED_IMAGE_UPGRADE":
+				case "SCHEDULED_IMAGE_UPGRADE_EVENT":
 					logger.Infof("Scaling algorithm received an image upgrade event with value: %v", scheduledEvent)
 
 					goroutineTracker.Add(1)

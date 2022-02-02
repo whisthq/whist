@@ -81,8 +81,6 @@ func writeHeartbeat() error {
 	} else if result.RowsAffected() == 0 {
 		return utils.MakeError("Writing heartbeat updated zero rows in database! Instance row seems to be missing.")
 	}
-	// TODO: re-enable this once we can send to logz but not print to standard output
-	// logger.SilentInfof("Wrote heartbeat %+v with result %s", params, result)
 
 	return nil
 }

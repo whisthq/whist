@@ -104,7 +104,11 @@ func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent) {
 	s.Every(10).Minutes().StartAt(t).Do(func() {
 		// Send to scheduling channel
 		scheduledEvents <- algos.ScalingEvent{
-			Type: "SCHEDULED_SCALE_DOWN",
+			// We set the event type to SCHEDULED_SCALE_DOWN_EVENT
+			// here so that we have more information about the event.
+			// SCHEDULED means the source of the event is the scheduler
+			// and SCALE_DOWN means it will perform a scale down action.
+			Type: "SCHEDULED_SCALE_DOWN_EVENT",
 		}
 	})
 
@@ -117,7 +121,11 @@ func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
 
 	// Send image upgrade event to scheduled chan.
 	scheduledEvents <- algos.ScalingEvent{
-		Type: "SCHEDULED_IMAGE_UPGRADE",
+		// We set the event type to SCHEDULED_IMAGE_UPGRADE_EVENT
+		// here so that we have more information about the event.
+		// SCHEDULED means the source of the event is the scheduler
+		// and IMAGE_UPGRADE means it will perform an image upgrade action.
+		Type: "SCHEDULED_IMAGE_UPGRADE_EVENT",
 		Data: regionImageMap,
 	}
 }
@@ -152,7 +160,12 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 			case *subscriptions.InstanceEvent:
 				var scalingEvent algos.ScalingEvent
 
-				scalingEvent.Type = "INSTANCE_DATABASE_EVENT"
+				// We set the event type to DATABASE_INSTANCE_EVENT
+				// here so that we have more information about the event.
+				// DATABASE means the source of the event is the database
+				// and INSTANCE_EVENT means it will perform an action with
+				// the instance information received from the database.
+				scalingEvent.Type = "DATABASE_INSTANCE_EVENT"
 
 				if len(subscriptionEvent.Instances) > 0 {
 					instance := subscriptionEvent.Instances[0]

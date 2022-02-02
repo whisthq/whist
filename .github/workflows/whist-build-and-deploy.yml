@@ -1441,11 +1441,10 @@ jobs:
           else:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
 
-          import os
           from notifications.slack_bot import slack_post
-          WEBSERVER_URL = "${{ needs.whist-publish-build-config.outputs.webserver_url }}"
-          TITLE = ":bezos: Webserver Successfully Swapped to New AMIs :bezos:"
-          BODY = f"Webserver at {WEBSERVER_URL} swapped over active AMIs to new AMIs on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          SCALING_SERVICE_URL = "${{ needs.whist-publish-build-config.outputs.scaling_service_url }}"
+          TITLE = ":party_parrot: Scaling Service Successfully Deployed :party_parrot:"
+          BODY = f"Webserver at {SCALING_SERVICE_URL} swapped over active AMIs to new AMIs on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error
@@ -1461,8 +1460,8 @@ jobs:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
 
           from notifications.slack_bot import slack_post
-          WEBSERVER_URL = "${{ needs.whist-publish-build-config.outputs.webserver_url }}"
-          BODY = f"@releases :rotating_light: Webserver at {WEBSERVER_URL} failed to swap over active AMIs, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          SCALING_SERVICE_URL = "${{ needs.whist-publish-build-config.outputs.scaling_service_url }}"
+          BODY = f"@releases :rotating_light: Scaling Service at {SCALING_SERVICE_URL} failed to deploy, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   #######################################################################################

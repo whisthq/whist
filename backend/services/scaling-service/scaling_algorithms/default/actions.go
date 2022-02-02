@@ -18,7 +18,7 @@ import (
 // notify and ensure the database and the cloud provider don't get out of sync.
 func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Context, event ScalingEvent, instance subscriptions.Instance) error {
 	logger.Infof("Starting verify scale down action for event: %v", event)
-	defer logger.Infof("Finished verify scale down action.")
+	defer logger.Infof("Finished verify scale down action for event: %v.", event)
 
 	// First, verify if the draining instance has mandelboxes running
 	instanceResult, err := dbclient.QueryInstance(scalingCtx, s.GraphQLClient, instance.ID)
@@ -35,12 +35,12 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	}
 
 	// If not, wait until the host service terminates the instance.
-	err = s.Host.WaitForInstanceTermination(scalingCtx, []string{instance.ID})
+	err = s.Host.WaitForInstanceTermination(scalingCtx, maxWaitTimeTerminated, []string{instance.ID})
 	if err != nil {
 		// Err is already wrapped here.
 		// TODO: Notify that the instance didn't terminate itself, should be investigated.
 		message := `Instance %v failed to terminate correctly, either the instance doesn't exist
-		on AWS or something is blocking the shut down procedure. Investigate immediately.`
+		on AWS or something is blocking the shut down procedure.`
 		logger.Errorf(message, instance.ID)
 	}
 
@@ -59,8 +59,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	// If instance still exists on the database, delete as it no longer exists on cloud provider
 	logger.Info("Removing instance %v from database as it no longer exists on cloud provider.", instance.ID)
 
-	var affectedRows int
-	affectedRows, err = dbclient.DeleteInstance(scalingCtx, s.GraphQLClient, instance.ID)
+	affectedRows, err := dbclient.DeleteInstance(scalingCtx, s.GraphQLClient, instance.ID)
 	if err != nil {
 		return utils.MakeError("failed to delete instance %v from database. Error: %v", instance.ID, err)
 	}
@@ -74,7 +73,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 // capacity (instance buffer). This action is run at the end of the other actions.
 func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, event ScalingEvent) error {
 	logger.Infof("Starting verify capacity action for event: %v", event)
-	defer logger.Infof("Finished verify capacity action.")
+	defer logger.Infof("Finished verify capacity action for event: %v", event)
 
 	currentlyActive, err := dbclient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "ACTIVE", event.Region)
 	if err != nil {
@@ -94,11 +93,11 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 			return utils.MakeError("current image doesn't exist on %v", event.Region)
 		}
 
-		latestImageId := string(imageResult[0].ImageID)
+		latestImageID := string(imageResult[0].ImageID)
 
 		// Start scale up action for desired number of instances
 		wantedInstances := DEFAULT_INSTANCE_BUFFER - len(currentlyActive)
-		err = s.ScaleUpIfNecessary(wantedInstances, scalingCtx, event, latestImageId)
+		err = s.ScaleUpIfNecessary(wantedInstances, scalingCtx, event, latestImageID)
 		if err != nil {
 			// err is already wrapped here
 			return err
@@ -115,11 +114,11 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 // marked as draining, and lingering instances will be terminated and removed from the database.
 func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Context, event ScalingEvent) error {
 	logger.Infof("Starting scale down action for event: %v", event)
-	defer logger.Infof("Finished scale down action.")
+	defer logger.Infof("Finished scale down action for event: %v", event)
 
 	var (
 		freeInstances, lingeringInstances subscriptions.WhistInstances
-		lingeringIds                      []string
+		lingeringIDs                      []string
 		err                               error
 	)
 
@@ -151,9 +150,8 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		// Check if lingering instance is safe to terminate
 		if len(instance.Mandelboxes) == 0 {
 			lingeringInstances = append(lingeringInstances, instance)
-			lingeringIds = append(lingeringIds, string(instance.ID))
+			lingeringIDs = append(lingeringIDs, string(instance.ID))
 		} else {
-
 			// If not, notify, could be a stuck mandelbox (check if mandelbox is > day old?)
 			logger.Warningf("Instance %v has %v associated mandelboxes and is marked as Draining.", instance.ID, len(instance.Mandelboxes))
 		}
@@ -166,7 +164,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 
 	// Verify if there are lingering instances and notify.
 	if len(lingeringInstances) > 0 {
-		logger.Errorf("There are %v lingering instances on %v. Investigate immediately! Their IDs are %v", len(lingeringInstances), event.Region, lingeringIds)
+		logger.Errorf("There are %v lingering instances on %v. Investigate immediately! Their IDs are %v", len(lingeringInstances), event.Region, lingeringIDs)
 
 	} else {
 		logger.Info("There are no lingering instances in %v.", event.Region)
@@ -201,7 +199,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 // the cloud provider and registers them on the database with the initial values.
 func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scalingCtx context.Context, event ScalingEvent, imageID string) error {
 	logger.Infof("Starting scale up action for event: %v", event)
-	defer logger.Infof("Finished scale up action.")
+	defer logger.Infof("Finished scale up action for event: %v", event)
 
 	// Try scale up in given region
 	instanceNum := int32(instancesToScale)
@@ -218,12 +216,12 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 
 	// Create slice with newly created instance ids
 	var (
-		createdInstanceIds []string
+		createdInstanceIDs []string
 		instancesForDb     []subscriptions.Instance
 	)
 
 	for _, instance := range createdInstances {
-		createdInstanceIds = append(createdInstanceIds, instance.ID)
+		createdInstanceIDs = append(createdInstanceIDs, instance.ID)
 		instancesForDb = append(instancesForDb, subscriptions.Instance{
 			ID:                instance.ID,
 			IPAddress:         instance.IPAddress,
@@ -241,7 +239,7 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 	}
 
 	// Wait for new instances to be ready before adding to db
-	err = s.Host.WaitForInstanceReady(scalingCtx, createdInstanceIds)
+	err = s.Host.WaitForInstanceReady(scalingCtx, maxWaitTimeReady, createdInstanceIDs)
 	if err != nil {
 		return utils.MakeError("error waiting for new instances to be ready. Err: %v", err)
 	}
@@ -264,7 +262,7 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 // image.
 func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event ScalingEvent, newImageID string) error {
 	logger.Infof("Starting upgrade image action for event: %v", event)
-	defer logger.Infof("Finished upgrade image action.")
+	defer logger.Infof("Finished upgrade image action for event: %v", event)
 
 	// Query for the current image id
 	imageResult, err := dbclient.QueryImage(scalingCtx, s.GraphQLClient, "aws", event.Region)
@@ -293,7 +291,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	}
 
 	// wait for buffer to be ready.
-	err = s.Host.WaitForInstanceReady(scalingCtx, bufferIDs)
+	err = s.Host.WaitForInstanceReady(scalingCtx, maxWaitTimeReady, bufferIDs)
 	if err != nil {
 		return utils.MakeError("error waiting for instances to be ready. Error: %v", err)
 	}

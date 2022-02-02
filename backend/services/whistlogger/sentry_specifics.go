@@ -21,7 +21,8 @@ func (*sentrySender) send(err error) {
 	sentry.CaptureException(err)
 }
 
-// InitializeSentry initializes Sentry for use.
+// InitializeSentry initializes Sentry for use. It requires a configuration function `f`
+// as an argument where the Sentry tags and messages should be set.
 func initializeSentry(f func(scope *sentry.Scope)) (*sentrySender, error) {
 	if usingProdLogging() {
 		log.Print("Setting up Sentry.")

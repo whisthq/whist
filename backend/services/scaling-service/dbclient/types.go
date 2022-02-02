@@ -7,10 +7,10 @@ import (
 )
 
 // The following types are not idiomatic go, but are necessary so that Hasura
-// can properly recognize mutation inputs and enum types. Since they nanme must
-// be lowercase, they have to exist in the `scaling_algorithms` package.
+// can properly recognize mutation inputs and enum types.
 
-// whist_instances_insert_input is a type for used for the GraphQL mutations.
+// whist_instances_insert_input is a type for used for the GraphQL mutations
+// that insert to the `whist.instances` database table.
 type whist_instances_insert_input struct {
 	ID                graphql.String `json:"id"`
 	Provider          graphql.String `json:"provider"`

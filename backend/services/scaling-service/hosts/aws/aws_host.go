@@ -128,7 +128,7 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 		}
 
 		// Only append instance to output slice if we have created
-		// and tagged su
+		// and tagged successfully.
 		outputInstances = append(outputInstances, subscriptions.Instance{
 			ID:        InstanceID,
 			IPAddress: "0.0.0.0", // Use dummy, will be set by host-service.
@@ -187,7 +187,7 @@ func (host *AWSHost) SpinDownInstances(scalingCtx context.Context, instanceIDs [
 }
 
 // WaitForInstanceTermination waits until the given instance has been terminated on AWS.
-func (host *AWSHost) WaitForInstanceTermination(scalingCtx context.Context, instanceIds []string) error {
+func (host *AWSHost) WaitForInstanceTermination(scalingCtx context.Context, maxWaitTime time.Duration, instanceIds []string) error {
 	ctx, cancel := context.WithCancel(scalingCtx)
 	defer cancel()
 
@@ -199,7 +199,7 @@ func (host *AWSHost) WaitForInstanceTermination(scalingCtx context.Context, inst
 		InstanceIds: instanceIds,
 	}
 
-	err := waiter.Wait(ctx, waitParams, 5*time.Minute)
+	err := waiter.Wait(ctx, waitParams, maxWaitTime)
 	if err != nil {
 		return utils.MakeError("failed waiting for instances %v to terminate from AWS: %v", instanceIds, err)
 	}
@@ -208,7 +208,7 @@ func (host *AWSHost) WaitForInstanceTermination(scalingCtx context.Context, inst
 }
 
 // WaitForInstanceReady waits until the given instance is running on AWS.
-func (host *AWSHost) WaitForInstanceReady(scalingCtx context.Context, instanceIds []string) error {
+func (host *AWSHost) WaitForInstanceReady(scalingCtx context.Context, maxWaitTime time.Duration, instanceIds []string) error {
 	ctx, cancel := context.WithCancel(scalingCtx)
 	defer cancel()
 
@@ -220,7 +220,7 @@ func (host *AWSHost) WaitForInstanceReady(scalingCtx context.Context, instanceId
 		InstanceIds: instanceIds,
 	}
 
-	err := waiter.Wait(ctx, waitParams, 5*time.Minute)
+	err := waiter.Wait(ctx, waitParams, maxWaitTime)
 	if err != nil {
 		return utils.MakeError("failed waiting for instances %v to be ready from AWS: %v", instanceIds, err)
 	}
