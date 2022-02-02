@@ -87,8 +87,13 @@ static void dbus_close(DbusCtx *ctx);
 static DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *message,
                                               void *user_data);
 
-// Notification packaging helper
+// Notification packaging helper. Since we unit-test this method with gtest,
+// it can only be static ifndef GOOGLE_TEST.
+#ifndef GOOGLE_TEST
 static void package_notification(WhistNotification *notif, const char *title, const char *message);
+#else
+void package_notification(WhistNotification *notif, const char *title, const char *message);
+#endif
 
 // Functions required for D-Bus listening
 static dbus_bool_t become_monitor(DBusConnection *connection);
