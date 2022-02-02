@@ -88,7 +88,7 @@ static DBusHandlerResult notification_handler(DBusConnection *connection, DBusMe
                                               void *user_data);
 
 // Notification packaging helper
-static bool package_notification(WhistNotification *notif, const char *title, const char *message);
+static void package_notification(WhistNotification *notif, const char *title, const char *message);
 
 // Functions required for D-Bus listening
 static dbus_bool_t become_monitor(DBusConnection *connection);
@@ -358,14 +358,12 @@ DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *
  * @param notif         Pointer to notification.
  * @param title         Notification title.
  * @param message       Notification message.
- * @return bool         Boolean indicating success of operation.
  */
-bool package_notification(WhistNotification *notif, const char *title, const char *message) {
+void package_notification(WhistNotification *notif, const char *title, const char *message) {
     // The logic is currently very simple, but this function is factored out in case
     // we would like to add more complicated parsing rules in the future.
     bool title_success = safe_strncpy(notif->title, title, MAX_NOTIF_TITLE_LEN);
     bool msg_success = safe_strncpy(notif->message, message, MAX_NOTIF_MSG_LEN);
-    return title_success && msg_success;
 }
 
 /**
