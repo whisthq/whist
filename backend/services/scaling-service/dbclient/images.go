@@ -19,6 +19,31 @@ func QueryImage(scalingCtx context.Context, graphQLClient *subscriptions.GraphQL
 	return latestImageQuery.WhistImages, err
 }
 
+// InsertInstances adds the received instances to the database.
+func InsertImages(scalingCtx context.Context, graphQLClient *subscriptions.GraphQLClient, insertParams []subscriptions.Image) (int, error) {
+	insertMutation := subscriptions.InsertImages
+
+	var imagesForDb []whist_images_insert_input
+
+	// Due to some quirks with the Hasura client, we have to convert the
+	// slice of instances to a slice of `whist_instances_insert_input`.
+	for _, image := range insertParams {
+		imagesForDb = append(imagesForDb, whist_images_insert_input{
+			Provider:  graphql.String(image.Provider),
+			Region:    graphql.String(image.Region),
+			ImageID:   graphql.String(image.ImageID),
+			ClientSHA: graphql.String(image.ClientSHA),
+			UpdatedAt: image.UpdatedAt,
+		})
+	}
+
+	mutationParams := map[string]interface{}{
+		"objects": imagesForDb,
+	}
+	err := graphQLClient.Mutate(scalingCtx, &insertMutation, mutationParams)
+	return int(insertMutation.MutationResponse.AffectedRows), err
+}
+
 // UpdateImage updates the received fields on the database.
 func UpdateImage(scalingCtx context.Context, graphQLClient *subscriptions.GraphQLClient, image subscriptions.Image) (int, error) {
 	updateMutation := subscriptions.UpdateImage

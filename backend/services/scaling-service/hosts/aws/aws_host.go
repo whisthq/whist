@@ -133,7 +133,7 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 			ID:        InstanceID,
 			IPAddress: "0.0.0.0", // Use dummy, will be set by host-service.
 			Region:    Region,
-			Provider:  "aws",
+			Provider:  "AWS",
 			ImageID:   ImageID,
 			Type:      Type,
 			Status:    Status,

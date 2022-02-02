@@ -25,5 +25,15 @@ type whist_instances_insert_input struct {
 	UpdatedAt         time.Time      `json:"updated_at"`
 }
 
+// whist_images_insert_input is a type for used for the GraphQL mutations
+// that insert to the `whist.images` database table.
+type whist_images_insert_input struct {
+	Provider  graphql.String `json:"provider"`
+	Region    graphql.String `json:"region"`
+	ImageID   graphql.String `json:"image_id"`
+	ClientSHA graphql.String `json:"client_sha"`
+	UpdatedAt time.Time      `json:"updated_at"`
+}
+
 // timestamptz is a type used for updating graphql fields of type Time.
 type timestamptz struct{ time.Time }

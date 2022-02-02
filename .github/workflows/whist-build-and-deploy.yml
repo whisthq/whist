@@ -55,7 +55,7 @@ jobs:
       branch: ${{ steps.set-deploy-environment.outputs.environment }}
       jobs: ${{ steps.detect-jobs.outputs.jobs }}
       publish: ${{ steps.detect-publish.outputs.publish }}
-      webserver_url: ${{ steps.set-webserver-url.outputs.webserver_url }}
+      webserver_url: ${{ steps.set-backend-services-urls.outputs.webserver_url }}
       auth0-domain: ${{ steps.set-deploy-environment.outputs.auth0-domain }}
       auth0-client-id: ${{ steps.set-deploy-environment.outputs.auth0-client-id }}
       auth0-client-secret-key: ${{ steps.set-deploy-environment.outputs.auth0-client-secret-key }}
@@ -81,33 +81,23 @@ jobs:
           # deployed.
           ref: ${{ github.event.inputs.target || github.ref }}
 
-      - name: Set webserver URL based on Git Branch (prod, staging, dev)
-        id: set-webserver-url
+      - name: Set backend services URL based on Git Branch (prod, staging, dev)
+        id: set-backend-services-urls
         run: |
           # Grab the name of the deployment environment from set-deploy-environment
           BRANCH_NAME=${{ steps.set-deploy-environment.outputs.environment }}
           if [ "$BRANCH_NAME" == "prod" ]; then
             WEBSERVER_URL=https://prod-server.whist.com
+            SCALING_SERVICE_URL=https://whist-prod-scaling-service.herokuapp.com/
           elif [ "$BRANCH_NAME" == "staging" ]; then
             WEBSERVER_URL=https://staging-server.whist.com
+            SCALING_SERVICE_URL=https://whist-staging-scaling-service.herokuapp.com/
           else
             WEBSERVER_URL=https://dev-server.whist.com
+            SCALING_SERVICE_URL=https://whist-dev-scaling-service.herokuapp.com/
           fi
           echo "webserver_url is set to: $WEBSERVER_URL"
           echo "::set-output name=webserver_url::$WEBSERVER_URL"
-
-      - name: Set scaling service URL based on Git Branch (prod, staging, dev)
-        id: set-scaling-service-url
-        run: |
-          # Grab the name of the deployment environment from set-deploy-environment
-          BRANCH_NAME=${{ steps.set-deploy-environment.outputs.environment }}
-          if [ "$BRANCH_NAME" == "prod" ]; then
-            SCALING_SERVICE_URL=https://whist-prod-scaling-service.herokuapp.com/
-          elif [ "$BRANCH_NAME" == "staging" ]; then
-            SCALING_SERVICE_URL=https://whist-staging-scaling-service.herokuapp.com/
-          else
-            SCALING_SERVICE_URL=https://whist-dev-scaling-service.herokuapp.com/
-          fi
           echo "scaling_service_url is set to: $SCALING_SERVICE_URL"
           echo "::set-output name=scaling_service_url::$SCALING_SERVICE_URL"
 
@@ -143,10 +133,9 @@ jobs:
           # If "" is given, then the whole repo will be a dependency
           job_dependencies[mandelboxes-and-amis-publish-ghcr-and-aws]="host-setup host-service protocol mandelboxes"
           job_dependencies[webserver-deploy-heroku]="webserver"
-          job_dependencies[webserver-spin-up-new-buffer]="webserver host-setup host-service protocol mandelboxes"
+          job_dependencies[scaling-service-deploy]="scaling-service"
           job_dependencies[client-applications-publish-build-x64-s3]="protocol client-applications core-ts"
           job_dependencies[client-applications-publish-build-arm64-s3]="protocol client-applications core-ts"
-          job_dependencies[webserver-swap-active-amis]="webserver host-setup host-service protocol mandelboxes"
           job_dependencies[microservices-deploy-auth0-rules]="microservices"
 
           # The jobs `whist-publish-build-config`, `whist-build-monorepo-config`,
@@ -1368,11 +1357,11 @@ jobs:
   #######################################################################################
   #######################################################################################
 
-  # Scaling service: Deploy & Upgrade Image
+  # Scaling Service: Deploy & Upgrade Image
   # Push the scaling service subtree to the appropriate Heroku app. This will also
   # automatically start the image swapover event on the scaling service.
   scaling-service-deploy:
-    name: "Scaling service: Deploy & Upgrade Image"
+    name: "Scaling Service: Deploy & Upgrade Image"
     runs-on: ubuntu-20.04
     concurrency: scaling-service-deploy-${{ github.ref }}
     needs:
@@ -1382,7 +1371,7 @@ jobs:
         mandelboxes-and-amis-publish-ghcr-and-aws,
         webserver-deploy-heroku,
       ]
-    if: contains(needs.whist-publish-build-config.outputs.jobs, '|scaling-service-deploy-heroku|')
+    if: contains(needs.whist-publish-build-config.outputs.jobs, '|scaling-service-deploy|')
 
     steps:
       - name: Checkout Git Repository
@@ -1427,7 +1416,8 @@ jobs:
         env:
           HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
         shell: bash --noprofile --norc -eo pipefail {0}
-        run: backend/services make run_scaling_service_dev REGION_IMAGE_MAP=${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}
+        run:  backend/services make build
+        REGION_IMAGE_MAP=${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}
 
       - name: Notify Slack on Successful Scaling Service Deploy
         if: needs.whist-publish-build-config.outputs.publish == 'true'

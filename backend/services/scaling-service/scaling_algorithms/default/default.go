@@ -93,8 +93,6 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 		defer goroutineTracker.Done()
 
 		for {
-			logger.Infof("Scaling algorithm listening for events...")
-
 			select {
 			case instanceEvent := <-s.InstanceEventChan:
 				logger.Infof("Scaling algorithm received an instance database event with value: %v", instanceEvent)

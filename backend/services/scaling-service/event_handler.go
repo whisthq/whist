@@ -192,7 +192,6 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 				algorithm := getScalingAlgorithm(algorithmByRegion, scheduledEvent)
 				switch algorithm := algorithm.(type) {
 				case *algos.DefaultScalingAlgorithm:
-					logger.Infof("Sending to scheduled event chan")
 					algorithm.ScheduledEventChan <- scheduledEvent
 				}
 			}

@@ -20,6 +20,14 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	logger.Infof("Starting verify scale down action for event: %v", event)
 	defer logger.Infof("Finished verify scale down action for event: %v.", event)
 
+	// We want to verify if we have the desired capacity after verifying scale down.
+	defer func() {
+		err := s.VerifyCapacity(scalingCtx, event)
+		if err != nil {
+			logger.Errorf("Error verifying capacity on %v. Err: %v", event.Region, err)
+		}
+	}()
+
 	// First, verify if the draining instance has mandelboxes running
 	instanceResult, err := dbclient.QueryInstance(scalingCtx, s.GraphQLClient, instance.ID)
 	if err != nil {
@@ -39,9 +47,8 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	if err != nil {
 		// Err is already wrapped here.
 		// TODO: Notify that the instance didn't terminate itself, should be investigated.
-		message := `Instance %v failed to terminate correctly, either the instance doesn't exist
-		on AWS or something is blocking the shut down procedure.`
-		logger.Errorf(message, instance.ID)
+		message := `Instance %v failed to terminate correctly, either the instance doesn't exist on AWS or something is blocking the shut down procedure.`
+		return utils.MakeError(message, instance.ID)
 	}
 
 	// Once its terminated, verify that it was removed from the database
@@ -84,7 +91,7 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 		logger.Infof("Current number of instances on %v is less than desired %v. Scaling up to match.", event.Region, DEFAULT_INSTANCE_BUFFER)
 
 		// Query for the current image id
-		imageResult, err := dbclient.QueryImage(scalingCtx, s.GraphQLClient, "aws", event.Region) // TODO: set different provider when doing multi-cloud.
+		imageResult, err := dbclient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region) // TODO: set different provider when doing multi-cloud.
 		if err != nil {
 			return utils.MakeError("failed to query database for current image. Err: %v", err)
 		}
@@ -115,6 +122,14 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Context, event ScalingEvent) error {
 	logger.Infof("Starting scale down action for event: %v", event)
 	defer logger.Infof("Finished scale down action for event: %v", event)
+
+	// We want to verify if we have the desired capacity after scaling down.
+	defer func() {
+		err := s.VerifyCapacity(scalingCtx, event)
+		if err != nil {
+			logger.Errorf("Error verifying capacity on %v. Err: %v", event.Region, err)
+		}
+	}()
 
 	var (
 		freeInstances, lingeringInstances subscriptions.WhistInstances
@@ -156,11 +171,6 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 			logger.Warningf("Instance %v has %v associated mandelboxes and is marked as Draining.", instance.ID, len(instance.Mandelboxes))
 		}
 	}
-
-	// We want to verify if we have the desired capacity after scaling down.
-	defer func() {
-		err = s.VerifyCapacity(scalingCtx, event)
-	}()
 
 	// Verify if there are lingering instances and notify.
 	if len(lingeringInstances) > 0 {
@@ -264,18 +274,26 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	logger.Infof("Starting upgrade image action for event: %v", event)
 	defer logger.Infof("Finished upgrade image action for event: %v", event)
 
+	var oldImageID string
+
+	// Check if we received a valid image before performing more
+	// expensive operations.
+	if newImageID == "" {
+		return utils.MakeError("new image ID is empty. Not performing upgrade.")
+	}
+
 	// Query for the current image id
-	imageResult, err := dbclient.QueryImage(scalingCtx, s.GraphQLClient, "aws", event.Region)
+	imageResult, err := dbclient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region)
 	if err != nil {
 		return utils.MakeError("failed to query database for current image on %v. Err: %v", event.Region, err)
 	}
 
 	if len(imageResult) == 0 {
-		return utils.MakeError("current image doesn't exist on %v", event.Region)
+		logger.Warningf("Image doesn't exist on %v. Creating a new entry with image %v.", event.Region, newImageID)
+	} else {
+		// We now consider the "current" image as the "old" image
+		oldImageID = string(imageResult[0].ImageID)
 	}
-
-	// We now consider the "current" image as the "old" image
-	oldImageID := string(imageResult[0].ImageID)
 
 	// create instance buffer with new image
 	logger.Infof("Creating new instance buffer for image %v", newImageID)
@@ -285,9 +303,25 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	}
 
 	// create slice of newly created instance ids
-	var bufferIDs []string
+	var (
+		bufferIDs      []string
+		instancesForDb []subscriptions.Instance
+	)
 	for _, instance := range bufferInstances {
 		bufferIDs = append(bufferIDs, instance.ID)
+		instancesForDb = append(instancesForDb, subscriptions.Instance{
+			ID:                instance.ID,
+			IPAddress:         instance.IPAddress,
+			Provider:          instance.Provider,
+			Region:            instance.Region,
+			ImageID:           instance.ImageID,
+			ClientSHA:         instance.ClientSHA,
+			Type:              instance.Type,
+			RemainingCapacity: int64(instanceCapacity[instance.Type]),
+			Status:            instance.Status,
+			CreatedAt:         instance.CreatedAt,
+			UpdatedAt:         instance.UpdatedAt,
+		})
 	}
 
 	// wait for buffer to be ready.
@@ -295,6 +329,16 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	if err != nil {
 		return utils.MakeError("error waiting for instances to be ready. Error: %v", err)
 	}
+
+	logger.Infof("Inserting newly created instances to database.")
+
+	// If successful, write to db
+	affectedRows, err := dbclient.InsertInstances(scalingCtx, s.GraphQLClient, instancesForDb)
+	if err != nil {
+		return utils.MakeError("Failed to insert instances into database. Error: %v", err)
+	}
+
+	logger.Infof("Inserted %v rows to database.", affectedRows)
 
 	// get old instances from database
 	instanceResult, err := dbclient.QueryInstancesByImage(scalingCtx, s.GraphQLClient, oldImageID)
@@ -322,16 +366,23 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	// swapover active image on database
 	logger.Infof("Updating old %v image %v to new image %v on database.", event.Region, oldImageID, newImageID)
 	updateParams := subscriptions.Image{
-		Provider:  "aws",
+		Provider:  "AWS",
 		Region:    event.Region,
 		ImageID:   newImageID,
 		ClientSHA: metadata.GetGitCommit(),
 		UpdatedAt: time.Now(),
 	}
 
-	_, err = dbclient.UpdateImage(scalingCtx, s.GraphQLClient, updateParams)
-	if err != nil {
-		return utils.MakeError("Failed to insert image %v into database. Error: %v", newImageID, err)
+	if oldImageID == "" {
+		_, err = dbclient.InsertImages(scalingCtx, s.GraphQLClient, []subscriptions.Image{updateParams})
+		if err != nil {
+			return utils.MakeError("Failed to insert image %v into database. Error: %v", newImageID, err)
+		}
+	} else {
+		_, err = dbclient.UpdateImage(scalingCtx, s.GraphQLClient, updateParams)
+		if err != nil {
+			return utils.MakeError("Failed to update image %v to image %v in database. Error: %v", oldImageID, newImageID, err)
+		}
 	}
 
 	return nil

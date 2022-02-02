@@ -30,11 +30,11 @@ var DeleteInstanceById struct {
 	} `graphql:"delete_whist_instances(where: {id: {_eq: $id}})"`
 }
 
-// InsertOneImage inserts one image to the database.
-var InsertOneImage struct {
+// InsertOneImage inserts multiple images to the database.
+var InsertImages struct {
 	MutationResponse struct {
 		AffectedRows graphql.Int `graphql:"affected_rows"`
-	} `graphql:"insert_whist_images_one(objects: $objects)"`
+	} `graphql:"insert_whist_images(objects: $objects)"`
 }
 
 // UpdateImage updates the row of an image to the given values.
