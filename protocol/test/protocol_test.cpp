@@ -32,7 +32,6 @@ Includes
 extern "C" {
 #include <client/sdl_utils.h>
 #include "client/client_utils.h"
-#include "server/notifications.h"
 #include "whist/utils/color.h"
 #include <whist/core/whist.h>
 #include <whist/utils/os_utils.h>

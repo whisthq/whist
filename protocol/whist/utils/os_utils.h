@@ -63,4 +63,13 @@ void set_keyboard_layout(WhistKeyboardLayout requested_layout);
  */
 int display_notification(WhistNotification notif);
 
+/**
+ * @brief               Package title and message strings into notification.
+ *
+ * @param notif         Pointer to notification.
+ * @param title         Notification title.
+ * @param message       Notification message.
+ */
+void package_notification(WhistNotification *notif, const char *title, const char *message);
+
 #endif
