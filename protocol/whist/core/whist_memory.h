@@ -13,6 +13,14 @@
 void* safe_malloc(size_t size);
 
 /**
+ * @brief                          Wrapper around calloc that will correctly exit the
+ *                                 protocol when calloc fails
+ *
+ * @returns                        Allocated memory space
+ */
+void* safe_zalloc(size_t size);
+
+/**
  * @brief                          Wrapper around realloc that will correctly exit the
  *                                 protocol when realloc fails
  *

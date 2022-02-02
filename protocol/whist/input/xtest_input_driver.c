@@ -430,11 +430,11 @@ static int xtest_emit_multigesture_event(InputDeviceXTest* input_device, float d
     return -1;
 }
 
-InputDevice* xtest_create_input_device(void) {
+InputDevice* xtest_create_input_device(void* data) {
     LOG_INFO("creating xtest input driver");
 
     InputDeviceXTest* ret = safe_malloc(sizeof(*ret));
-    ret->display = XOpenDisplay(NULL);
+    ret->display = XOpenDisplay((char*)data);
     ret->root = DefaultRootWindow(ret->display);
 
     InputDevice* base = &ret->base;

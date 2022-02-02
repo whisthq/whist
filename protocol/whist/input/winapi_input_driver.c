@@ -294,7 +294,7 @@ static const int windows_keycodes[KEYCODE_UPPERBOUND] = {
     VK_LAUNCH_MEDIA_SELECT  // 263 -> Media Select
 };
 
-void win_destroy_input_device(InputDeviceWin* input_device) { free(input_device); }
+static void win_destroy_input_device(InputDeviceWin* input_device) { free(input_device); }
 
 #define GetWindowsKeyCode(whist_keycode) windows_keycodes[whist_keycode]
 #define KEYPRESS_MASK 0x8000
@@ -521,10 +521,10 @@ void enter_win_string(enum WhistKeycode* keycodes, int len) {
     SendInput(index, event, sizeof(INPUT));
 }
 
-InputDevice* win_create_input_device(void) {
+InputDevice* win_create_input_device(void* data) {
     LOG_INFO("creating win input driver");
 
-    InputDeviceWin* ret = safe_malloc(sizeof(*ret));
+    InputDeviceWin* ret = safe_zalloc(sizeof(*ret));
     InputDevice* base = &ret->base;
     base->device_type = WHIST_INPUT_DEVICE_WIN32;
     base->get_keyboard_key_state =
@@ -537,7 +537,6 @@ InputDevice* win_create_input_device(void) {
     base->emit_mouse_button_event = (InputDeviceEmitMouseButtonEventFn)win_emit_mouse_button_event;
     base->emit_low_res_mouse_wheel_event =
         (InputDeviceEmitLowResMouseWheelEventFn)win_emit_low_res_mouse_wheel_event;
-    base->emit_high_res_mouse_wheel_event = NULL;
     base->emit_multigesture_event = (InputDeviceEmitMultiGestureEventFn)win_emit_multigesture_event;
     base->destroy = (InputDeviceDestroyFn)win_destroy_input_device;
 

@@ -524,7 +524,7 @@ static int uinput_emit_multigesture_event(InputDeviceUInput* input_device, float
     return 0;
 }
 
-InputDevice* uinput_create_input_device(void) {
+InputDevice* uinput_create_input_device(void* data) {
     LOG_INFO("creating uinput input driver");
 
     int fds[3];
