@@ -210,6 +210,6 @@ int display_notification(WhistNotification notif) {
 void package_notification(WhistNotification *notif, const char *title, const char *message) {
     // The logic is currently very simple, but this function is factored out in case
     // we would like to add more complicated parsing rules in the future.
-    bool title_success = safe_strncpy(notif->title, title, MAX_NOTIF_TITLE_LEN);
-    bool msg_success = safe_strncpy(notif->message, message, MAX_NOTIF_MSG_LEN);
+    safe_strncpy(notif->title, title, MAX_NOTIF_TITLE_LEN);
+    safe_strncpy(notif->message, message, MAX_NOTIF_MSG_LEN);
 }
