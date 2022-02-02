@@ -364,7 +364,7 @@ int whist_client_main(int argc, char* argv[]) {
         double discover_ports_time = get_timer(&handshake_time);
         LOG_INFO("Time elasped after discover_ports() = %f, current time = %s", discover_ports_time,
                  current_time_str());
-        LOG_METRIC("\"Handshake_discover_ports_time\" : %f", discover_ports_time);
+        LOG_METRIC("\"HANDSHAKE_DISCOVER_PORTS_TIME\" : %f", discover_ports_time);
 
         if (connect_to_server(using_stun) != 0) {
             LOG_WARNING("Failed to connect to server.");
@@ -375,7 +375,7 @@ int whist_client_main(int argc, char* argv[]) {
         double connect_to_server_time = get_timer(&handshake_time);
         LOG_INFO("Time elasped after connect_to_server() = %f, current time= %s",
                  connect_to_server_time, current_time_str());
-        LOG_METRIC("\"Handshake_connect_to_server_time\" : %f", connect_to_server_time);
+        LOG_METRIC("\"HANDSHAKE_CONNECT_TO_SERVER_TIME\" : %f", connect_to_server_time);
 
         if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
             client_exiting = true;

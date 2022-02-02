@@ -20,11 +20,15 @@ In order for this PR to be merged, all of the following items need to be tested 
 - [ ] Copy text from local clipboard to Whist
 - [ ] Copy image from Whist to local clipboard
 - [ ] Copy image from local clipboard to Whist
+- [ ] Resizing SDL window to minimum resolution works
+- [ ] Rapid resizing of SDL window works
+- [ ] Minimizing and maximizing SDL window works without interruptions
+- [ ] CPU usage is low (macOS)
 - [ ] Do 30 seconds of TypeRacer, no repeated characters, lag, etc.
 - [ ] Watch a 1 minute YouTube video with no video or audio stutters
 - [ ] Go to Figma and verify pinch-to-zoom works
 - [ ] Verify that smooth two-finger scrolling works
 - [ ] Log into any website, close Whist, and re-open. I am still logged in.
-- [ ] Sign out button on tray works
+- [ ] Sign out button on omnibar works
 - [ ] Session logs successfully uploaded to Amplitude
 - [ ] Website successfully deployed to Netlify
