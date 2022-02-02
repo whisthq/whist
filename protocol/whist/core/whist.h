@@ -218,6 +218,12 @@ Custom Types
 ============================
 */
 
+#define WhistPrivate static
+
+#ifdef GOOGLE_TEST
+#define WhistPrivate
+#endif
+
 // Limit chunk size to 1 megabyte.
 //     This is not because of limitations of TCP, but rather to
 //     keep the TCP thread from hanging
