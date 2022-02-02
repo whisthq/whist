@@ -3,7 +3,7 @@ package subscriptions // import "github.com/whisthq/whist/backend/services/subsc
 import (
 	"time"
 
-	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
+	"github.com/whisthq/whist/backend/services/types"
 )
 
 // HasuraParams contains the Heroku URL and Admin AccessKey to pass
@@ -36,13 +36,13 @@ type Instance struct {
 // not interact with the GraphQL client. For operations that interact
 // with it, use the `WhistMandelboxes` type.
 type Mandelbox struct {
-	ID         mandelboxtypes.MandelboxID `json:"id"`          // UUID of the mandelbox
-	App        string                     `json:"app"`         // App running on the mandelbox
-	InstanceID string                     `json:"instance_id"` // ID of the instance in which this mandelbox is running
-	UserID     mandelboxtypes.UserID      `json:"user_id"`     // ID of the user to which the mandelbox is assigned
-	SessionID  string                     `json:"session_id"`  // ID of the session which is assigned to the mandelbox
-	Status     string                     `json:"status"`      // Current status of the mandelbox
-	CreatedAt  time.Time                  `json:"created_at"`  // Timestamp when the mandelbox was created
+	ID         types.MandelboxID `json:"id"`          // UUID of the mandelbox
+	App        string            `json:"app"`         // App running on the mandelbox
+	InstanceID string            `json:"instance_id"` // ID of the instance in which this mandelbox is running
+	UserID     types.UserID      `json:"user_id"`     // ID of the user to which the mandelbox is assigned
+	SessionID  string            `json:"session_id"`  // ID of the session which is assigned to the mandelbox
+	Status     string            `json:"status"`      // Current status of the mandelbox
+	CreatedAt  time.Time         `json:"created_at"`  // Timestamp when the mandelbox was created
 }
 
 // Image is a custom type to represent an image. We use the cloud provider
@@ -70,27 +70,6 @@ type HasuraSubscription struct {
 	Handler   handlerfn
 }
 
-// InstanceResult is a struct used to hold results for any
-// subscription to the "instance_info" table. The Instances
-// interface represents the table `hosts` from the `whist` schema on the database.
-type InstanceResult struct {
-	WhistInstances interface{} `json:"whist_instances"`
-}
-
-// MandelboxResult is a struct used to hold results for any
-// subscription to the "mandelboxes" table. The WhistMandelboxes
-// interface represents the table `mandelboxes` from the `whist` schema on the database.
-type MandelboxResult struct {
-	WhistMandelboxes interface{} `json:"whist_mandelboxes"`
-}
-
-// ImageResult is a struct used to hold results for any
-// subscription to the "whist_images" table. The WhistImages
-// interface represents the table `images` from the `whist` schema on the database.
-type ImageResult struct {
-	WhistImages interface{} `json:"whist_images"`
-}
-
 // SubscriptionEvent represents any event received from Hasura
 // subscriptions. We define a custom (empty) interface to make the
 // main select on `host-service.go` cleaner.
@@ -109,7 +88,7 @@ type InstanceEvent struct {
 // meant to be used by any event that operates on the
 // whist_mandelbox database table.
 type MandelboxEvent struct {
-	Mandelboxes []Mandelbox `json:"whist_madelboxes"`
+	Mandelboxes []Mandelbox `json:"whist_mandelboxes"`
 }
 
 // ImageEvent represents an occurred event on the
