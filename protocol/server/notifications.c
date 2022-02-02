@@ -113,7 +113,7 @@ Public Function Implementations
 */
 
 NotificationsHandler *init_notifications_handler(whist_server_state *state) {
-    NotificationsHandler *handler = malloc(sizeof(NotificationsHandler));
+    NotificationsHandler *handler = (NotificationsHandler *)malloc(sizeof(NotificationsHandler));
     handler->state = state;
     handler->eb = event_base_new();
     handler->thread = whist_create_thread(multithreaded_process_notifications,
@@ -181,23 +181,26 @@ DbusCtx *dbus_init(struct event_base *eb, whist_server_state *server_state) {
     DBusError error;
     dbus_error_init(&error);
 
-    DbusCtx *ctx = calloc(1, sizeof(DbusCtx));
+    DbusCtx *ctx = (DbusCtx *)calloc(1, sizeof(DbusCtx));
     if (!ctx) {
         LOG_ERROR("Can't allocate DbusCtx");
         goto fail;
     }
 
     // Connect to appropriate d-bus daemon by reading configs
-    const char *dbus_addr = server_state->config->dbus_address;
-    LOG_INFO("Read D-Bus address from env vars: %s", dbus_addr);
+    // Scope is created to avoid "jump to label crosses initialization"
+    {
+        const char *dbus_addr = server_state->config->dbus_address;
+        LOG_INFO("Read D-Bus address from env vars: %s", dbus_addr);
 
-    // Use parsed address to open a private connection
-    conn = dbus_connection_open_private(dbus_addr, &error);
-    if (conn == NULL) {
-        LOG_ERROR("D-Bus connection to %s failed: %s", dbus_addr, error.message);
-        goto fail;
+        // Use parsed address to open a private connection
+        conn = dbus_connection_open_private(dbus_addr, &error);
+        if (conn == NULL) {
+            LOG_ERROR("D-Bus connection to %s failed: %s", dbus_addr, error.message);
+            goto fail;
+        }
+        LOG_INFO("D-Bus connection to %s established: %p", dbus_addr, conn);
     }
-    LOG_INFO("D-Bus connection to %s established: %p", dbus_addr, conn);
 
     dbus_connection_set_exit_on_disconnect(conn, FALSE);
 
@@ -287,7 +290,7 @@ DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *
     // Handle case of disconnect
     if (dbus_message_is_signal(message, DBUS_INTERFACE_LOCAL, "Disconnected")) {
         LOG_ERROR("D-Bus unexpectedly disconnected");
-        return -1;
+        return DBUS_HANDLER_RESULT_HANDLED;
     }
     const char *msg_str = dbus_message_get_member(message);
     LOG_INFO("D-Bus signal received: %s", msg_str);
@@ -310,7 +313,7 @@ DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *
         // This is bad if it occurs, so we will need to leave.
         if (type == DBUS_TYPE_INVALID) {
             LOG_ERROR("Got invalid argument type from D-Bus server");
-            return -1;
+            DBUS_HANDLER_RESULT_HANDLED;
         }
 
         if (type == DBUS_TYPE_STRING) {
@@ -420,7 +423,7 @@ dbus_bool_t become_monitor(DBusConnection *connection) {
  *              Connection struct.
  */
 void dispatch(int fd, short ev, void *x) {
-    DbusCtx *ctx = x;
+    DbusCtx *ctx = (DbusCtx *)x;
     DBusConnection *c = ctx->conn;
 
     while (dbus_connection_get_dispatch_status(c) == DBUS_DISPATCH_DATA_REMAINS)
@@ -437,7 +440,7 @@ void dispatch(int fd, short ev, void *x) {
  *                  D-Bus connection struct.
  */
 void handle_new_dispatch_status(DBusConnection *c, DBusDispatchStatus status, void *data) {
-    DbusCtx *ctx = data;
+    DbusCtx *ctx = (DbusCtx *)data;
 
     if (status == DBUS_DISPATCH_DATA_REMAINS) {
         struct timeval tv = {
@@ -457,8 +460,8 @@ void handle_new_dispatch_status(DBusConnection *c, DBusDispatchStatus status, vo
  * @param x         User data; contains the D-Bus Connection.
  */
 void handle_watch(int fd, short events, void *x) {
-    DbusCtx *ctx = x;
-    struct DBusWatch *watch = ctx->extra;
+    DbusCtx *ctx = (DbusCtx *)x;
+    struct DBusWatch *watch = (struct DBusWatch *)ctx->extra;
 
     unsigned int flags = 0;
     if (events & EV_READ) flags |= DBUS_WATCH_READABLE;
@@ -481,7 +484,7 @@ void handle_watch(int fd, short events, void *x) {
 dbus_bool_t add_watch(DBusWatch *w, void *data) {
     if (!dbus_watch_get_enabled(w)) return TRUE;
 
-    DbusCtx *ctx = data;
+    DbusCtx *ctx = (DbusCtx *)data;
     ctx->extra = w;
 
     int fd = dbus_watch_get_unix_fd(w);
@@ -508,7 +511,7 @@ dbus_bool_t add_watch(DBusWatch *w, void *data) {
  * @param data      User data; contains the D-Bus Connection.
  */
 void remove_watch(DBusWatch *w, void *data) {
-    struct event *event = dbus_watch_get_data(w);
+    struct event *event = (struct event *)dbus_watch_get_data(w);
 
     if (event) event_free(event);
 
@@ -541,8 +544,8 @@ void toggle_watch(DBusWatch *w, void *data) {
  * @param x     User data; contains the D-Bus Connection.
  */
 void handle_timeout(int fd, short ev, void *x) {
-    DbusCtx *ctx = x;
-    DBusTimeout *t = ctx->extra;
+    DbusCtx *ctx = (DbusCtx *)x;
+    DBusTimeout *t = (DBusTimeout *)ctx->extra;
 
     LOG_INFO("Got d-bus handle timeout event %p", t);
 
@@ -557,7 +560,7 @@ void handle_timeout(int fd, short ev, void *x) {
  * @return dbus_bool_t      TRUE on success, FALSE on failure.
  */
 dbus_bool_t add_timeout(DBusTimeout *t, void *data) {
-    DbusCtx *ctx = data;
+    DbusCtx *ctx = (DbusCtx *)data;
 
     if (!dbus_timeout_get_enabled(t)) return TRUE;
 
@@ -588,7 +591,7 @@ dbus_bool_t add_timeout(DBusTimeout *t, void *data) {
  * @param data      User data; contains the D-Bus Connection.
  */
 void remove_timeout(DBusTimeout *t, void *data) {
-    struct event *event = dbus_timeout_get_data(t);
+    struct event *event = (struct event *)dbus_timeout_get_data(t);
 
     LOG_INFO("Removing d-bus timeout %p", t);
 
