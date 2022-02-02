@@ -875,7 +875,6 @@ jobs:
       [
         whist-publish-build-config,
         whist-build-monorepo-config,
-        webserver-spin-up-new-buffer,
         microservices-deploy-auth0-rules,
       ]
     outputs:
@@ -1471,12 +1470,11 @@ jobs:
         microservices-deploy-auth0-rules,
         mandelboxes-and-amis-publish-ghcr-and-aws,
         webserver-deploy-heroku,
-        webserver-spin-up-new-buffer,
+        scaling-service-deploy,
         client-applications-retrieve-version-number,
         client-applications-publish-build-x64-s3,
         client-applications-publish-build-arm64-s3,
         client-applications-update-version-number,
-        webserver-swap-active-amis,
       ]
     if: needs.whist-publish-build-config.outputs.publish == 'true' && contains(fromJSON('["prod"]'), needs.whist-publish-build-config.outputs.branch)
     steps:
