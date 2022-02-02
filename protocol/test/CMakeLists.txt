@@ -46,6 +46,8 @@ else()
         ../server/parse_args.c
         ../server/handle_client_message.c
         ../server/network.c
+        ../server/network.c
+        ../server/notifications.c
 
         # Files needed for Whist Lib unit tests
         ../whist/utils/aes.c
