@@ -56,6 +56,7 @@ jobs:
       jobs: ${{ steps.detect-jobs.outputs.jobs }}
       publish: ${{ steps.detect-publish.outputs.publish }}
       webserver_url: ${{ steps.set-backend-services-urls.outputs.webserver_url }}
+      scaling_service_url: ${{ steps.set-backend-services-urls.outputs.scaling_service_url }}
       auth0-domain: ${{ steps.set-deploy-environment.outputs.auth0-domain }}
       auth0-client-id: ${{ steps.set-deploy-environment.outputs.auth0-client-id }}
       auth0-client-secret-key: ${{ steps.set-deploy-environment.outputs.auth0-client-secret-key }}
@@ -133,7 +134,7 @@ jobs:
           # If "" is given, then the whole repo will be a dependency
           job_dependencies[mandelboxes-and-amis-publish-ghcr-and-aws]="host-setup host-service protocol mandelboxes"
           job_dependencies[webserver-deploy-heroku]="webserver"
-          job_dependencies[scaling-service-deploy]="scaling-service"
+          job_dependencies[scaling-service-deploy]="scaling-service host-setup mandelboxes"
           job_dependencies[client-applications-publish-build-x64-s3]="protocol client-applications core-ts"
           job_dependencies[client-applications-publish-build-arm64-s3]="protocol client-applications core-ts"
           job_dependencies[microservices-deploy-auth0-rules]="microservices"
@@ -1420,7 +1421,8 @@ jobs:
         env:
           HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
         shell: bash --noprofile --norc -eo pipefail {0}
-        run: backend/services/scaling-service/deploy.sh ${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}
+        working-directory: backend/services/scaling-service
+        run: deploy.sh ${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}
 
       - name: Notify Slack on Successful Scaling Service Deploy
         if: needs.whist-publish-build-config.outputs.publish == 'true'
