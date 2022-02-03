@@ -28,6 +28,7 @@ Includes
 #include "state.h"
 #include "handle_client_message.h"
 
+#define TCP_DISCOVERY_CONNECTION_WAIT 5000
 #define UDP_CONNECTION_WAIT 1000
 #define TCP_CONNECTION_WAIT 1000
 #define BITS_IN_BYTE 8.0
@@ -273,11 +274,6 @@ int try_get_next_message_udp(Client *client, WhistClientMessage *wcmsg, size_t *
     return 0;
 }
 
-// TODO: Figure out if this value needs this redefinition to work well, or what single value this
-// should be
-#undef TCP_CONNECTION_WAIT
-#define TCP_CONNECTION_WAIT 5000
-
 bool get_using_stun(void) {
     // decide whether the server is using stun.
     return false;
@@ -335,7 +331,7 @@ int multithreaded_manage_client(void *opaque) {
         }
         // Even without multiclient, we need this for TCP recovery over the discovery port
         if (!create_tcp_socket_context(&discovery_context, NULL, PORT_DISCOVERY, 1,
-                                       TCP_CONNECTION_WAIT, get_using_stun(),
+                                       TCP_DISCOVERY_CONNECTION_WAIT, get_using_stun(),
                                        config->binary_aes_private_key)) {
             continue;
         }
