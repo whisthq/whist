@@ -71,7 +71,7 @@ typedef struct {
     struct sockaddr_in addr;
     WhistMutex mutex;
     char binary_aes_private_key[16];
-    // Used for reading TCP packets
+    // Used for ting TCP packets
     int reading_packet_len;
     DynamicBuffer* encrypted_tcp_packet_buffer;
     NetworkThrottleContext* network_throttler;
@@ -273,7 +273,7 @@ static int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, 
     int packet_size = PACKET_HEADER_SIZE + len;
     TCPPacket* tcp_packet = allocate_region(sizeof(TCPPacket) + packet_size);
     tcp_packet->type = TCP_WHIST_PACKET;
-    WhistPacket* packet = tcp_packet->whist_packet_data.whist_packet;
+    WhistPacket* packet = (WhistPacket*)&tcp_packet->whist_packet_data.whist_packet;
 
     // Contruct packet metadata
     packet->id = id;
@@ -338,47 +338,47 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
     // If we have enough bytes to read a TCPNetworkPacket header,
     if ((unsigned long)context->reading_packet_len >= sizeof(TCPNetworkPacket)) {
         // Get a pointer to the tcp_packet
-        TCPNetworkPacket* tcp_packet = (TCPNetworkPacket*)encrypted_tcp_packet_buffer->buf;
+        TCPNetworkPacket* tcp_network_packet = (TCPNetworkPacket*)encrypted_tcp_packet_buffer->buf;
 
         // An untrusted party could've injected bytes, so we ensure payload_size is valid and won't
         // overflow
-        if (tcp_packet->payload_size < 0 || MAX_TCP_PAYLOAD < tcp_packet->payload_size) {
+        if (tcp_network_packet->payload_size < 0 || MAX_TCP_PAYLOAD < tcp_network_packet->payload_size) {
             // Reset the connection and try reading bytes again
             context->reading_packet_len = 0;
             resize_dynamic_buffer(encrypted_tcp_packet_buffer, 0);
-            LOG_WARNING("Could not parse packet: %d", tcp_packet->payload_size);
+            LOG_WARNING("Could not parse packet: %d", tcp_network_packet->payload_size);
             return NULL;
         }
 
         // Now that we know get_tcp_network_packet_size will be a reasonable number, so we calculate it
-        int tcp_packet_size = get_tcp_network_packet_size(tcp_packet);
+        int tcp_network_packet_size = get_tcp_network_packet_size(tcp_network_packet);
 
         // If the target len is valid (Checking because this is an untrusted network),
         // and we've read enough bytes for the whole tcp packet,
         // we're ready to go
-        if (tcp_packet_size >= 0 && context->reading_packet_len >= tcp_packet_size) {
+        if (tcp_network_packet_size >= 0 && context->reading_packet_len >= tcp_network_packet_size) {
             // The resulting packet will be <= the encrypted size
-            WhistPacket* whist_packet = allocate_region(tcp_packet->payload_size);
+            TCPPacket* tcp_packet = allocate_region(tcp_network_packet->payload_size);
 
             if (ENCRYPTING_PACKETS) {
                 // Decrypt into whist_packet
                 int decrypted_len = decrypt_packet(
-                    whist_packet, tcp_packet->payload_size, tcp_packet->aes_metadata,
-                    tcp_packet->payload, tcp_packet->payload_size, context->binary_aes_private_key);
+                    tcp_packet, tcp_network_packet->payload_size, tcp_network_packet->aes_metadata,
+                    tcp_network_packet->payload, tcp_network_packet->payload_size, context->binary_aes_private_key);
                 if (decrypted_len == -1) {
                     // Deallocate and prepare to return NULL on decryption failure
                     LOG_WARNING("Could not decrypt TCP message");
-                    deallocate_region(whist_packet);
-                    whist_packet = NULL;
+                    deallocate_region(tcp_packet);
+                    tcp_packet = NULL;
                 } else {
-                    // Verify that the length matches what the WhistPacket's length should be
-                    FATAL_ASSERT(decrypted_len == get_packet_size(whist_packet));
+                    // Verify that the length matches what the TCPPacket's length should be
+                    FATAL_ASSERT(decrypted_len == get_tcp_packet_size(tcp_packet));
                 }
             } else {
                 // If we're not encrypting packets, just copy it over
-                memcpy(whist_packet, tcp_packet->payload, tcp_packet->payload_size);
-                // Verify that the length matches what the WhistPacket's length should be
-                FATAL_ASSERT(tcp_packet->payload_size == get_packet_size(whist_packet));
+                memcpy(tcp_packet, tcp_network_packet->payload, tcp_network_packet->payload_size);
+                // Verify that the length matches what the TCPPacket's length should be
+                FATAL_ASSERT(tcp_network_packet->payload_size == get_tcp_packet_size(tcp_packet));
             }
 
 #if LOG_NETWORKING
@@ -387,25 +387,36 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
 
             // Move the rest of the already read bytes,
             // to the beginning of the buffer to continue
-            for (int i = tcp_packet_size; i < context->reading_packet_len; i++) {
-                encrypted_tcp_packet_buffer->buf[i - tcp_packet_size] =
+            for (int i = tcp_network_packet_size; i < context->reading_packet_len; i++) {
+                encrypted_tcp_packet_buffer->buf[i - tcp_network_packet_size] =
                     encrypted_tcp_packet_buffer->buf[i];
             }
-            context->reading_packet_len -= tcp_packet_size;
+            context->reading_packet_len -= tcp_network_packet_size;
 
             // Realloc the buffer smaller if we have room to
             resize_dynamic_buffer(encrypted_tcp_packet_buffer, context->reading_packet_len);
 
-            // Return the whist_packet,
+            // Handle the TCPPacket,
             // but it might be NULL if decrypting failed
-            if (whist_packet != NULL) {
-                if (whist_packet->type == packet_type) {
+            if (tcp_packet != NULL) {
+                if (tcp_packet->type == TCP_WHIST_PACKET) {
+                    WhistPacket* whist_packet = (WhistPacket*)&tcp_packet->whist_packet_data.whist_packet;
+                    // Check that the type matches
+                    if (whist_packet->type != packet_type) {
+                        LOG_ERROR("Got a TCP whist packet of type that didn't match %d! %d",
+                                (int)packet_type, (int)whist_packet->type);
+                        deallocate_region(tcp_packet);
+                        return NULL;
+                    }
+                    // Return the whist packet
                     return whist_packet;
                 } else {
-                    deallocate_region(whist_packet);
-                    LOG_ERROR("Got a TCP whist packet of type that didn't match %d! %d",
-                              (int)packet_type, (int)whist_packet->type);
-                    return NULL;
+                    // Handle the TCPPacket message
+                    tcp_handle_message(context, tcp_packet);
+                    deallocate_region(tcp_packet);
+                    // There might still be a pending WhistPacket,
+                    // So we make a recursive call to check again
+                    return tcp_get_packet(raw_context, packet_type);
                 }
             }
         }
@@ -711,8 +722,8 @@ int get_tcp_packet_size(TCPPacket* tcp_packet) {
         case TCP_PONG: {
             return offsetof(TCPPacket, tcp_ping_data) + sizeof(tcp_packet->tcp_ping_data);
         }
-        case TCP_SEGMENT_SIZE: {
-            return offsetof(TCPPacket, whist_packet_data.whist_packet) + get_packet_size(tcp_packet->whist_packet_data.whist_packet);
+        case TCP_WHIST_PACKET: {
+            return offsetof(TCPPacket, whist_packet_data.whist_packet) + get_packet_size((WhistPacket*)&tcp_packet->whist_packet_data.whist_packet);
         }
         default: {
             LOG_FATAL("Unknown TCP Packet Type: %d", tcp_packet->type);
@@ -736,7 +747,7 @@ static void tcp_handle_message(TCPContext* context, TCPPacket* packet) {
             context->last_pong_id = max(context->last_pong_id, packet->tcp_ping_data.ping_id);
         }
         default: {
-            LOG_FATAL("Invalid TCP Packet Type: %d", tcp_packet->type);
+            LOG_FATAL("Invalid TCP Packet Type: %d", packet->type);
         }
     }
 }
