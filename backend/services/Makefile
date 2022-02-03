@@ -167,7 +167,7 @@ run_scaling_service_localdevwithdb: build
 
 run_scaling_service_dev: build
 	$(info running $(BUILD_FOLDER)/scaling-service with dev (deployed) configuration...)
-	APP_ENV=dev USE_PROD_LOGGING=0 $(BUILD_FOLDER)/scaling-service $(REGION_IMAGE_MAP)
+	APP_ENV=dev USE_PROD_LOGGING=0 $(BUILD_FOLDER)/scaling-service
 
 
 .PHONY: checkCI build format lint vet test test_local docs check clean clean_modcache run_host_service run_host_service_localdevwithdb run_host_service_dev run_scaling_service run_scaling_service_localdevwithdb run_scaling_service_dev
