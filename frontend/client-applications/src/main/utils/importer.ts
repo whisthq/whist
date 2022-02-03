@@ -239,6 +239,11 @@ const decryptCookies = async (
     cookie !== undefined && cookies.push(cookie)
   }
 
+  console.log(
+    "cookies are",
+    cookies.map((cookie) => cookie.host_key)
+  )
+
   return cookies
 }
 
@@ -287,6 +292,10 @@ const decryptCookie = async (
 
     const originalText = decodedBuffer
     cookie.decrypted_value = originalText
+
+    // We don't want to upload Google cookies because Google will detect that these are not coming
+    // from the right browser and prevent users from signing in
+    if (cookie.host_key?.toString()?.includes("google")) return undefined
 
     return cookie
   } catch (err) {
