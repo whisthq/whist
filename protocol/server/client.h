@@ -40,10 +40,6 @@ typedef struct Client {
     int udp_port;               // "protected" by global `is_deactivating`
     int tcp_port;               // "protected" by global `is_deactivating`
     RWLock tcp_rwlock;          // protects tcp_context for synchrony-sensitive sends and recvs
-
-    /* PING */
-    WhistTimer last_ping;      // not lock protected
-    WhistTimer last_tcp_ping;  // not lock protected
 } Client;
 
 /*

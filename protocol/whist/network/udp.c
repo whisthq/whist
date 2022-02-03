@@ -258,8 +258,8 @@ UDP Message Handling
 */
 
 /**
- * @brief                   Handle any UDPPacket that's not a Whist segment, e.g. nack messages and
- * network setting updates
+ * @brief                   Handle any UDPPacket that's not a Whist segment,
+ *                          e.g. nack messages and network setting updates
  *
  * @param context           The UDPContext to handle the message
  * @param packet            The UDPPacket to handle
@@ -281,12 +281,13 @@ RingBuffer Lambda Functions
 */
 
 /**
- * @brief       Send a nack to the server indicating that the client is missing the packet with
- * given type, ID, and index
+ * @brief                    Send a nack to the server indicating that the client
+ *                           is missing the packet with given type, ID, and index
+ *
  * @param socket_context     the context we're sending the nack over
- * @param type      type of packet
- * @param ID       ID of packet
- * @param index     index of packet
+ * @param type               type of packet
+ * @param ID                 ID of packet
+ * @param index              index of packet
  */
 static void udp_nack_packet(SocketContext* socket_context, WhistPacketType type, int id,
                             int index) {
@@ -791,26 +792,11 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
 
     network_context->context = context;
 
-    // if dest is NULL, it means the context will be listening for income connections
-    if (destination == NULL) {
-        if (network_context->listen_socket == NULL) {
-            LOG_ERROR("listen_socket not provided");
-            return false;
-        }
-        /*
-            for udp, transfer the ownership to UDPContext.
-            when UDPContext is destoryed, the transferred listen_socket should be closed.
-        */
-        context->socket = *network_context->listen_socket;
-        *network_context->listen_socket = INVALID_SOCKET;
-    }
-
     // Map Port
     if ((int)((unsigned short)port) != port) {
         LOG_ERROR("Port invalid: %d", port);
     }
     port = port_mappings[port];
-
     context->timeout = recvfrom_timeout_ms;
     context->mutex = whist_create_mutex();
     memcpy(context->binary_aes_private_key, binary_aes_private_key,
@@ -818,25 +804,21 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     for (int i = 0; i < NUM_PACKET_TYPES; i++) {
         context->reset_data[i].greatest_failed_id = -1;
         context->reset_data[i].pending_stream_reset = true;
-    }
-
-    if (destination == NULL) {
-        // On the server, we create a network throttler to limit the
-        // outgoing bitrate.
-        context->network_throttler =
-            network_throttler_create(UDP_NETWORK_THROTTLER_BUCKET_MS, false);
-    } else {
-        context->network_throttler = NULL;
-    }
-
-    for (int i = 0; i < NUM_PACKET_TYPES; i++) {
         context->fec_packet_ratios[i] = 0.0;
     }
 
     int ret;
     if (destination == NULL) {
+        // On the server, we create a network throttler to limit the
+        // outgoing bitrate.
+        context->network_throttler =
+            network_throttler_create(UDP_NETWORK_THROTTLER_BUCKET_MS, false);
+        // Create the server context
         ret = create_udp_server_context(context, port, connection_timeout_ms);
     } else {
+        // The client doesn't use a network throttler
+        context->network_throttler = NULL;
+        // Create the client context
         ret = create_udp_client_context(context, destination, port, connection_timeout_ms);
     }
 
@@ -1015,6 +997,9 @@ Private Function Implementation
 */
 
 int create_udp_server_context(UDPContext* context, int port, int connection_timeout_ms) {
+    // Create a new listening socket on that port
+    create_udp_listen_socket(&context->socket, port, connection_timeout_ms);
+
     // Set the timeout to connection_timeout_ms
     set_timeout(context->socket, connection_timeout_ms);
 

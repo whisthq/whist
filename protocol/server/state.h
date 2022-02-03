@@ -99,11 +99,6 @@ struct _whist_server_state {
     int encoder_factory_client_h;
     int encoder_factory_bitrate;
     CodecType encoder_factory_codec_type;
-
-    /* long term listen sockets */
-    SOCKET discovery_listen;
-    SOCKET tcp_listen;
-    SOCKET udp_listen;
 };
 
 typedef struct _whist_server_state whist_server_state;
