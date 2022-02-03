@@ -21,7 +21,7 @@ type ScalingAlgorithm interface {
 
 // ScalingEvent is an event that contains all the relevant information
 // to make scaling decisions.
-// IDea: We could use UUIDs for each event so we can improve our logging
+// TODO: We could use UUIDs for each event so we can improve our logging
 // and debugging capabilities.
 type ScalingEvent struct {
 	Type   interface{} // The type of event (database, timing, etc.)

@@ -1410,14 +1410,17 @@ jobs:
 
           heroku git:remote --app $HEROKU_APP_NAME --remote heroku-whist-server
 
+      - name: Install splitsh-lite for Subtree Split
+        run: >
+          wget -qO - https://github.com/splitsh/lite/releases/download/v1.0.1/lite_linux_amd64.tar.gz
+          | sudo tar -zxp --directory /usr/local/bin/
+
       - name: Deploy the Scaling Service & Start image upgrade
         if: needs.whist-publish-build-config.outputs.publish == 'true'
         env:
           HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
         shell: bash --noprofile --norc -eo pipefail {0}
-        run: |
-          backend/services make build 
-          backend/services/build/scaling-service REGION_IMAGE_MAP=${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}
+        run:  backend/services/scaling-service/deploy.sh REGION_IMAGE_MAP=${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}
 
       - name: Notify Slack on Successful Scaling Service Deploy
         if: needs.whist-publish-build-config.outputs.publish == 'true'
