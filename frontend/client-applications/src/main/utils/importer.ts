@@ -239,11 +239,6 @@ const decryptCookies = async (
     cookie !== undefined && cookies.push(cookie)
   }
 
-  console.log(
-    "cookies are",
-    cookies.map((cookie) => cookie.host_key)
-  )
-
   return cookies
 }
 
