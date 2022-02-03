@@ -17,16 +17,16 @@ cd "$DIR/../../.."
 
 HEROKU_APP_NAME=${1}
 REGION_IMAGE_MAP=${2}
-SCALING_SERVICE_DIR="/backend/services/scaling-service"
+SCALING_SERVICE_DIR="./backend/services/scaling-service"
 BUILD_DIR="$SCALING_SERVICE_DIR/build"
-ENV_FILE="$SCALING_SERVICE_DIR/.env"
+IMAGE_FILE="$SCALING_SERVICE_DIR/images.json"
 
 
 # Copy the binary to the scaling service dir. This is necessary because we will use as standalone repo.
-mkdir -p "$d" && cp file "$d"
+mkdir -p "$BUILD_DIR" && cp ./backend/services/build/scaling-service "$BUILD_DIR"
 
-# Write region image map to env file so the Procfile can read it.
-echo $REGION_IMAGE_MAP > $ENV_FILE
+# Write region image map to var file so the Procfile can read it.
+echo $REGION_IMAGE_MAP > $IMAGE_FILE
 
 # Use splitsh to checkout to standalone scaling service repo.
 echo "Checking out the scaling service folder as a standalone git repo..."

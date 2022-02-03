@@ -1,1 +1,1 @@
-web: bin/scaling-service $REGION_IMAGE_MAP
+web: bin/scaling-service

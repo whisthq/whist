@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"os/signal"
 	"sync"
@@ -116,8 +117,21 @@ func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent) {
 }
 
 func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
-	// Get arguments
-	regionImageMap := os.Args[1:]
+	var regionImageMap map[string]interface{}
+
+	// Read file which contains the region to image on JSON format
+	content, err := os.ReadFile("images.json")
+	if err != nil {
+		logger.Errorf("Failed to read region to image map from file. Not performing image upgrade. Err: %v", err)
+		return
+	}
+
+	// Try to unmarshal contents of file into a map
+	err = json.Unmarshal(content, &regionImageMap)
+	if err != nil {
+		logger.Errorf("Failed to unmarshal region to image map. Not performing image upgrade. Err: %v", err)
+		return
+	}
 
 	// Send image upgrade event to scheduled chan.
 	scheduledEvents <- algos.ScalingEvent{
