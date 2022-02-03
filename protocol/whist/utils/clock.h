@@ -69,11 +69,15 @@ void start_timer(WhistTimer* timer);
 double get_timer(const WhistTimer* timer);
 
 /**
- * @brief                          Returns the current time as a string
+ * @brief                          Write a string representing the current time.
  *
- * @returns						   The current time as a string
+ * The format is "hh:mm:ss.uuuuuu", giving sixteen bytes including the terminator.
+ *
+ * @param buffer                   Buffer to write to.
+ * @param size                     Size of the buffer.
+ * @returns                        Length of the time string, like snprintf().
  */
-char* current_time_str(void);
+int current_time_str(char* buffer, size_t size);
 
 /**
  * @brief                          Returns the number of microseconds elapsed since epoch
