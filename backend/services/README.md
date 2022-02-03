@@ -150,4 +150,4 @@ The scaling service can be run locally on your computer with the command `make r
 
 The following scaling algorithms are fully implemented on the scaling service:
 
-1. Default scaling algorithm: this is a general solution that works well on any region, and includes all of the functionalities the team has used in the past. It uses an instance buffer to maintain active instances on each region, includes retry logic when launching instances, and atomic image upgrades. It also verifies the correct termination of instances and notifies of any errors. 
+1. Default scaling algorithm: this is a general solution that works well on any region, and includes all of the functionalities the team has used in the past. It uses an instance buffer to maintain active instances on each region, includes retry logic when launching instances, and atomic image upgrades. It also verifies the correct termination of instances and notifies of any errors.
