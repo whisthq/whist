@@ -1420,7 +1420,7 @@ jobs:
         env:
           HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
         shell: bash --noprofile --norc -eo pipefail {0}
-        run:  backend/services/scaling-service/deploy.sh REGION_IMAGE_MAP=${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}
+        run:  backend/services/scaling-service/deploy.sh ${{ HEROKU_APP_NAME }} ${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}
 
       - name: Notify Slack on Successful Scaling Service Deploy
         if: needs.whist-publish-build-config.outputs.publish == 'true'
@@ -1437,7 +1437,7 @@ jobs:
           from notifications.slack_bot import slack_post
           SCALING_SERVICE_URL = "${{ needs.whist-publish-build-config.outputs.scaling_service_url }}"
           TITLE = ":party_parrot: Scaling Service Successfully Deployed :party_parrot:"
-          BODY = f"Webserver at {SCALING_SERVICE_URL} swapped over active AMIs to new AMIs on branch: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"Scaling Service at {SCALING_SERVICE_URL} deployed and started image upgrade on: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
 
       - name: Notify Slack on Job Error

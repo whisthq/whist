@@ -270,7 +270,7 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 // UpgradeImage is a scaling action which runs when a new version is deployed. Its responsible of
 // starting a buffer of instances with the new image and scaling down instances with the previous
 // image.
-func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event ScalingEvent, newImageID string) error {
+func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event ScalingEvent, imageID interface{}) error {
 	logger.Infof("Starting upgrade image action for event: %v", event)
 	defer logger.Infof("Finished upgrade image action for event: %v", event)
 
@@ -278,6 +278,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 
 	// Check if we received a valid image before performing more
 	// expensive operations.
+	newImageID := imageID.(string)
 	if newImageID == "" {
 		return utils.MakeError("new image ID is empty. Not performing upgrade.")
 	}

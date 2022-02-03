@@ -150,7 +150,7 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 						scalingCtx, scalingCancel := context.WithCancel(context.Background())
 
 						// Get arguments from scheduled event
-						regionImageMap := scheduledEvent.Data.(map[string]string)
+						regionImageMap := scheduledEvent.Data.(map[string]interface{})
 
 						err := s.UpgradeImage(scalingCtx, scheduledEvent, regionImageMap[scheduledEvent.Region])
 						if err != nil {

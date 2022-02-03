@@ -18,7 +18,7 @@ cd "$DIR/../../.."
 HEROKU_APP_NAME=${1}
 REGION_IMAGE_MAP=${2}
 SCALING_SERVICE_DIR="./backend/services/scaling-service"
-BUILD_DIR="$SCALING_SERVICE_DIR/build"
+BUILD_DIR="$SCALING_SERVICE_DIR/bin"
 IMAGE_FILE="$SCALING_SERVICE_DIR/images.json"
 
 
@@ -35,4 +35,4 @@ git checkout workflows-private/scaling-service
 
 # we are now in the scaling-service folder as a standalone git repo, push to Heroku.
 echo "Redeploying scaling service..."
-# git push -f heroku-whist-server workflows-private/scaling-service:master
+git push -f heroku-whist-server workflows-private/scaling-service:master

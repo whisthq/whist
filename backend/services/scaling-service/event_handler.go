@@ -34,11 +34,11 @@ func main() {
 
 	// Start database subscriptions
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
-	StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents)
+	// StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents)
 
 	// Start scheduler and setup scheduler event chan
 	scheduledEvents := make(chan algos.ScalingEvent, 100)
-	StartSchedulerEvents(scheduledEvents)
+	// StartSchedulerEvents(scheduledEvents)
 
 	// Start the deploy events once since we are starting the scaling service.
 	StartDeploy(scheduledEvents)
