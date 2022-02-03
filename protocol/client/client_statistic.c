@@ -48,4 +48,6 @@ void init_client_statistics(void) {
         (StatisticInfo){"VIDEO_TIME_BETWEEN_FRAMES", true, false, false};
     client_statistic_info[VIDEO_UPDATE_TIME] =
         (StatisticInfo){"VIDEO_UPDATE_TIME", true, false, false};
+    client_statistic_info[NOTIFICATIONS_RECEIVED] =
+        (StatisticInfo){"NOTIFICATIONS_RECEIVED", false, false, true};
 }

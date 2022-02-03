@@ -177,6 +177,8 @@ Defines
 // Therefore, whenever arrays are created or length of the string is compared, we should be
 // comparing to *MAXLEN + 1
 #define WHIST_IDENTIFIER_MAXLEN 31
+// Dynamically-created D-Bus addresses are typically less than 100 char.
+#define DBUS_ADDRESS_MAXLEN 100
 // this maxlen is the determined Whist environment max length (the upper bound on all flags passed
 // into the protocol)
 #define WHIST_ARGS_MAXLEN 255
@@ -708,6 +710,7 @@ typedef enum WhistServerMessageType {
     SMESSAGE_FULLSCREEN = 8,
     SMESSAGE_FILE_METADATA = 9,
     SMESSAGE_FILE_DATA = 10,
+    SMESSAGE_NOTIFICATION = 11,
     SMESSAGE_QUIT = 100,
 } WhistServerMessageType;
 
@@ -729,6 +732,7 @@ typedef struct WhistServerMessage {
         char discovery_reply[0];
         char init_msg[0];
         char requested_uri[0];
+        WhistNotification notif;
     };
 } WhistServerMessage;
 

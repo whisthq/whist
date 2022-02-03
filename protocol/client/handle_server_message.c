@@ -24,11 +24,14 @@ Includes
 #include <whist/core/whist.h>
 #include <whist/utils/clock.h>
 #include <whist/logging/logging.h>
+#include <whist/logging/log_statistic.h>
 #include <whist/utils/window_info.h>
+#include <whist/utils/os_utils.h>
 #include "client_utils.h"
 #include "audio.h"
 #include "network.h"
 #include "sdl_utils.h"
+#include "client_statistic.h"
 
 #include <stddef.h>
 
@@ -51,6 +54,7 @@ static int handle_open_uri_message(WhistServerMessage *wsmsg, size_t wsmsg_size)
 static int handle_fullscreen_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_file_metadata_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_file_chunk_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+static int handle_notification_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 
 /*
 ============================
@@ -90,6 +94,8 @@ int handle_server_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
             return handle_file_chunk_message(wsmsg, wsmsg_size);
         case SMESSAGE_FILE_METADATA:
             return handle_file_metadata_message(wsmsg, wsmsg_size);
+        case SMESSAGE_NOTIFICATION:
+            return handle_notification_message(wsmsg, wsmsg_size);
         default:
             LOG_WARNING("Unknown WhistServerMessage Received (type: %d)", wsmsg->type);
             return -1;
@@ -268,6 +274,22 @@ static int handle_file_chunk_message(WhistServerMessage *wsmsg, size_t wsmsg_siz
     */
 
     file_synchronizer_write_file_chunk(&wsmsg->file);
+
+    return 0;
+}
+
+static int handle_notification_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
+    /*
+        Handle a file chunk message.
+
+        Arguments:
+            wsmsg (WhistServerMessage*): message packet from client
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
+    display_notification(wsmsg->notif);
+    log_double_statistic(NOTIFICATIONS_RECEIVED, 1.);
 
     return 0;
 }

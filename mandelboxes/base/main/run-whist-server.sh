@@ -129,6 +129,25 @@ if [ "$ENV_NAME" != "localdev" ]; then
   trap cleanup EXIT ERR
 fi
 
+# WhistServer and cookie authentication require that the D-Bus environment variables be set
+# The -10 comes from the display ID
+dbus_config_file="/home/whist/.dbus/session-bus/$(cat /etc/machine-id)-10"
+# shellcheck source=/dev/null
+. "$dbus_config_file"
+export DBUS_SESSION_BUS_ADDRESS
+echo "loaded d-bus address in run-whist-server.sh: $DBUS_SESSION_BUS_ADDRESS"
+
+# Add D-Bus address to options
+OPTIONS="$OPTIONS --dbus-address=$DBUS_SESSION_BUS_ADDRESS"
+
+# Below is commented testing code that can be used in the future to debug cookie encryption.
+# It should NOT print out peanuts. Instead you should see a byte string similar to b'q6dj0uwi6luGvZ+2zisaMQ=='.
+# This is tech debt! Currently the cookies are still being encrypted with peanuts because Chrome is not registering with
+# the keyring until the application actually starts. Our goal is to make the below code output a secret in the desired format
+# BEFORE import_user_browser_data.py is called so that cookies can be encrypted more securely.
+
+# (while true; do DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS python3 -c "import os; os.seteuid(1000); import browser_cookie3; print('COOKIE:', browser_cookie3.get_linux_pass('chrome')); os.seteuid(0);" && sleep 1; done) &
+
 # Set user upload target, if file exists
 if [ -f "$USER_DEST_BROWSER_FILENAME" ] && [ -f "$BROWSER_DATA_FILE_FILENAME" ]; then
   # Imports user browser data if file exists

@@ -32,7 +32,7 @@ Defines
 #ifdef __APPLE__
 // If this array gets any longer than 1000 or so,
 // we should probably swap to a C++ std::map<string, string>
-static const char* const apple_keyboard_mappings[][2] = {
+static const char *const apple_keyboard_mappings[][2] = {
     {"com.apple.keylayout.USExtended", "us"},  {"com.apple.keylayout.US", "us"},
     {"com.apple.keylayout.Italian-Pro", "it"}, {"com.apple.keylayout.Italian", "it"},
     {"com.apple.keylayout.Arabic", "ara"},     {"com.apple.keylayout.ABC-QWERTZ", "de"},
@@ -56,6 +56,12 @@ static const char linux_supported_layouts[][5] = {"us", "it",    "ara", "de", "f
 #define NUM_LINUX_SUPPORTED_LAYOUTS \
     ((int)sizeof(linux_supported_layouts) / (int)sizeof(linux_supported_layouts[0]))
 #endif
+
+/*
+============================
+Public Function Implementations
+============================
+*/
 
 WhistKeyboardLayout get_keyboard_layout(void) {
     static WhistKeyboardLayout whist_layout = {0};
@@ -190,4 +196,20 @@ void set_keyboard_layout(WhistKeyboardLayout requested_layout) {
 #else
     LOG_FATAL("Unimplemented on Mac/Windows!");
 #endif
+}
+
+#ifndef __APPLE__
+
+int display_notification(WhistNotification notif) {
+    LOG_WARNING("Notification display not implemented on your OS");
+    return -1;
+}
+
+#endif
+
+void package_notification(WhistNotification *notif, const char *title, const char *message) {
+    // The logic is currently very simple, but this function is factored out in case
+    // we would like to add more complicated parsing rules in the future.
+    safe_strncpy(notif->title, title, MAX_NOTIF_TITLE_LEN);
+    safe_strncpy(notif->message, message, MAX_NOTIF_MSG_LEN);
 }

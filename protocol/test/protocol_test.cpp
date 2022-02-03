@@ -34,6 +34,7 @@ extern "C" {
 #include "client/client_utils.h"
 #include "whist/utils/color.h"
 #include <whist/core/whist.h>
+#include <whist/utils/os_utils.h>
 #include <whist/network/ringbuffer.h>
 
 #include <client/native_window_utils.h>
@@ -1312,6 +1313,37 @@ TEST_F(ProtocolTest, LinkedListTest) {
     EXPECT_EQ(linked_list_size(&list), 0);
     EXPECT_TRUE(linked_list_extract_head(&list) == NULL);
     EXPECT_TRUE(linked_list_extract_tail(&list) == NULL);
+}
+
+// Test notification packager (from string to WhistNotification).
+// Ensures no malformed strings, future OOB memory access, etc.
+TEST_F(ProtocolTest, PackageNotificationTest) {
+    const int add_chars = 30;
+    char title[MAX_NOTIF_TITLE_LEN + add_chars] = {0};
+    char msg[MAX_NOTIF_MSG_LEN + add_chars] = {0};
+    for (int i = 0; i < MAX_NOTIF_TITLE_LEN + add_chars - 1; i++) title[i] = 'A' + rand() % 50;
+    for (int i = 0; i < MAX_NOTIF_MSG_LEN + add_chars - 1; i++) msg[i] = 'A' + rand() % 50;
+
+    WhistNotification notif;
+    package_notification(&notif, title, msg);
+
+    // Check that the notif is a valid string
+    EXPECT_TRUE(strlen(notif.title) < MAX_NOTIF_TITLE_LEN);
+    EXPECT_TRUE(strlen(notif.message) < MAX_NOTIF_MSG_LEN);
+}
+
+// Test notification display
+TEST_F(ProtocolTest, NotificationDisplayTest) {
+    WhistNotification notif;
+    safe_strncpy(notif.title, "Title of Notification Here", MAX_NOTIF_TITLE_LEN);
+    safe_strncpy(notif.message, "Message of Notification Here!", MAX_NOTIF_MSG_LEN);
+    int result = display_notification(notif);
+
+#ifdef __APPLE__
+    EXPECT_EQ(result, 0);
+#else
+    EXPECT_EQ(result, -1);
+#endif
 }
 
 /*

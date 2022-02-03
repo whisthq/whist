@@ -21,6 +21,7 @@ Includes
 #include "parse_args.h"
 #include "handle_client_message.h"
 #include "server_statistic.h"
+#include "notifications.h"
 
 /*
 ============================
@@ -414,12 +415,14 @@ int main(int argc, char* argv[]) {
     WhistThread send_audio_thread =
         whist_create_thread(multithreaded_send_audio, "multithreaded_send_audio", &server_state);
 
+    NotificationsHandler* notifications_handler = init_notifications_handler(&server_state);
+
     WhistThread manage_clients_thread = whist_create_thread(
         multithreaded_manage_client, "multithreaded_manage_client", &server_state);
 
     WhistThread sync_tcp_packets_thread = whist_create_thread(
         multithreaded_sync_tcp_packets, "multithreaded_sync_tcp_packets", &server_state);
-    LOG_INFO("Sending video and audio...");
+    LOG_INFO("Sending video, audio, and notifications...");
 
     WhistTimer totaltime;
     start_timer(&totaltime);
@@ -576,6 +579,7 @@ int main(int argc, char* argv[]) {
     whist_wait_thread(send_audio_thread, NULL);
     whist_wait_thread(sync_tcp_packets_thread, NULL);
     whist_wait_thread(manage_clients_thread, NULL);
+    destroy_notifications_handler(notifications_handler);
 
     // This is safe to call here because all other threads have been waited and destroyed
     if (quit_client(&server_state.client) != 0) {
