@@ -7,6 +7,6 @@ export QT_IM_MODULE=ibus
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-#gsettings set org.freedesktop.ibus.general preload-engines "['xkb:us::eng', 'anthy', 'pinyin']"
+# Disable any triggers for switching keyboards on the mandelbox
 gsettings set org.freedesktop.ibus.general.hotkey triggers "[]"
 ibus-daemon -drx
