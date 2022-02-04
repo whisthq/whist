@@ -17,19 +17,16 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Data for Name: region_to_ami; Type: TABLE DATA; Schema: cloud; Owner: uap4ch2emueqo9
+-- Data for Name: images; Type: TABLE DATA; Schema: whist; Owner: -
 --
 
-
-INSERT INTO cloud.region_to_ami (region_name, ami_id, client_commit_hash, ami_active) VALUES ('eu-central-1', 'ami-04e791bf07624272e', 'dummy_client_hash', true);
-INSERT INTO cloud.region_to_ami (region_name, ami_id, client_commit_hash, ami_active) VALUES ('eu-west-1', 'ami-04b85bdd938419795', 'dummy_client_hash', true);
-INSERT INTO cloud.region_to_ami (region_name, ami_id, client_commit_hash, ami_active) VALUES ('us-east-1', 'ami-00c40082600650a9a', 'dummy_client_hash', true);
-INSERT INTO cloud.region_to_ami (region_name, ami_id, client_commit_hash, ami_active) VALUES ('us-east-1', 'ami-00c40082600650a9b', 'dummy_client_hash_2', false);
-INSERT INTO cloud.region_to_ami (region_name, ami_id, client_commit_hash, ami_active) VALUES ('us-east-2', 'ami-0a7da7479f37c924a', 'dummy_client_hash', true);
-INSERT INTO cloud.region_to_ami (region_name, ami_id, client_commit_hash, ami_active) VALUES ('us-east-2', 'ami-0a7da7479f37c924b', 'dummy_client_hash_2', false);
-INSERT INTO cloud.region_to_ami (region_name, ami_id, client_commit_hash, ami_active) VALUES ('us-west-1', 'ami-0bb9ea3cf997fb4ec', 'dummy_client_hash', true);
-INSERT INTO cloud.region_to_ami (region_name, ami_id, client_commit_hash, ami_active) VALUES ('us-west-2', 'ami-0a2e1892cafee19d4', 'dummy_client_hash', true);
-INSERT INTO cloud.region_to_ami (region_name, ami_id, client_commit_hash, ami_active) VALUES ('ca-central-1', 'ami-09b2b490cdf85f1f1', 'dummy_client_hash', true);
+INSERT INTO whist.images (provider, region, image_id, client_sha) VALUES ('AWS', 'eu-central-1', 'ami-04e791bf07624272e', 'dummy_client_hash');
+INSERT INTO whist.images (provider, region, image_id, client_sha) VALUES ('AWS', 'eu-west-1', 'ami-04b85bdd938419795', 'dummy_client_hash');
+INSERT INTO whist.images (provider, region, image_id, client_sha) VALUES ('AWS', 'us-east-1', 'ami-00c40082600650a9a', 'dummy_client_hash');
+INSERT INTO whist.images (provider, region, image_id, client_sha) VALUES ('AWS', 'us-east-2', 'ami-0a7da7479f37c924a', 'dummy_client_hash');
+INSERT INTO whist.images (provider, region, image_id, client_sha) VALUES ('AWS', 'us-west-1', 'ami-0bb9ea3cf997fb4ec', 'dummy_client_hash');
+INSERT INTO whist.images (provider, region, image_id, client_sha) VALUES ('AWS', 'us-west-2', 'ami-0a2e1892cafee19d4', 'dummy_client_hash');
+INSERT INTO whist.images (provider, region, image_id, client_sha) VALUES ('AWS', 'ca-central-1', 'ami-09b2b490cdf85f1f1', 'dummy_client_hash');
 
 
 --

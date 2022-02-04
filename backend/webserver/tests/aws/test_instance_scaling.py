@@ -1,25 +1,13 @@
 from random import randint
 from sys import maxsize
-from time import time
 from typing import Any, Callable, Dict, List, Tuple
-from datetime import date
-
-import requests
 
 from flask import Flask
-from pytest import MonkeyPatch
-import pytest
 
-from app.database.models.cloud import db, RegionToAmi, InstanceInfo, MandelboxHostState
 import app.helpers.aws.aws_instance_post as aws_funcs
-from app.utils.aws.base_ec2_client import EC2Client
-from app.helpers.aws.aws_instance_post import drain_instance
+from app.models import Image, Instance, MandelboxHostState
 
-from tests.helpers.utils import (
-    get_allowed_regions,
-    update_status_change_time,
-    set_protected_region_to_ami,
-)
+from tests.helpers.utils import get_allowed_regions
 
 
 def test_scale_up_single(
@@ -35,12 +23,10 @@ def test_scale_up_single(
     """
     call_list = hijack_ec2_calls
     mock_get_num_new_instances(1)
-    random_region_image_obj = RegionToAmi.query.filter_by(
-        region_name=region_name, ami_active=True
-    ).one_or_none()
-    aws_funcs.do_scale_up_if_necessary(region_name, random_region_image_obj.ami_id, flask_app=app)
+    random_region_image_obj = Image.query.filter_by(region=region_name).first()
+    aws_funcs.do_scale_up_if_necessary(region_name, random_region_image_obj.image_id, flask_app=app)
     assert len(call_list) == 1
-    assert call_list[0]["kwargs"]["image_id"] == random_region_image_obj.ami_id
+    assert call_list[0]["kwargs"]["image_id"] == random_region_image_obj.image_id
 
 
 def test_scale_up_multiple(
@@ -57,564 +43,10 @@ def test_scale_up_multiple(
     desired_num = randint(2, 10)
     call_list = hijack_ec2_calls
     mock_get_num_new_instances(desired_num)
-    us_east_1_image_obj = RegionToAmi.query.filter_by(
-        region_name=region_name, ami_active=True
-    ).one_or_none()
-    aws_funcs.do_scale_up_if_necessary(region_name, us_east_1_image_obj.ami_id, flask_app=app)
+    us_east_1_image_obj = Image.query.filter_by(region=region_name).first()
+    aws_funcs.do_scale_up_if_necessary(region_name, us_east_1_image_obj.image_id, flask_app=app)
     assert len(call_list) == desired_num
-    assert all(elem["kwargs"]["image_id"] == us_east_1_image_obj.ami_id for elem in call_list)
-
-
-def test_scale_down_single_available(
-    app: Flask,
-    monkeypatch: MonkeyPatch,
-    hijack_ec2_calls: List[Dict[str, Any]],  # pylint: disable=unused-argument
-    mock_get_num_new_instances: Callable[[Any], None],
-    bulk_instance: Callable[..., InstanceInfo],
-    region_name: str,
-) -> None:
-    """
-    Tests that we scale down an instance when desired
-    tests the correct requests, db, and ec2 calls are made.
-    """
-
-    monkeypatch.setitem(app.config, "WHIST_ACCESS_TOKEN", "dummy-access-token")
-
-    post_list: List[Dict[str, Any]] = []
-
-    def _helper(*args: Any, **kwargs: Any) -> None:
-        nonlocal post_list
-        post_list.append({"args": args, "kwargs": kwargs})
-        raise requests.exceptions.RequestException()
-
-    monkeypatch.setattr(requests, "post", _helper)
-    instance = bulk_instance(
-        instance_name="test_instance", aws_ami_id="test-AMI", location=region_name
-    )
-    assert instance.status != MandelboxHostState.DRAINING.value
-    mock_get_num_new_instances(-1)
-    aws_funcs.try_scale_down_if_necessary(region_name, "test-AMI")
-    db.session.refresh(instance)
-    assert instance.status == MandelboxHostState.DRAINING.value
-
-
-def test_terminate_single_available(
-    monkeypatch: MonkeyPatch,
-    hijack_ec2_calls: List[Dict[str, Any]],
-    mock_get_num_new_instances: Callable[[Any], None],
-    bulk_instance: Callable[..., InstanceInfo],
-    region_name: str,
-) -> None:
-    """
-    Tests that we scale down an instance when desired
-    tests the correct requests, db, and ec2 calls are made.
-    Also tests that preconnection is handled properly.
-    """
-    post_list = []
-    call_list = hijack_ec2_calls
-
-    def _helper(*args: Any, **kwargs: Any) -> None:
-        nonlocal post_list
-        post_list.append({"args": args, "kwargs": kwargs})
-        raise requests.exceptions.RequestException()
-
-    monkeypatch.setattr(requests, "post", _helper)
-    instance = bulk_instance(
-        instance_name="test_instance",
-        aws_ami_id="test-AMI",
-        location=region_name,
-        status=MandelboxHostState.PRE_CONNECTION,
-    )
-    assert instance.status != MandelboxHostState.DRAINING.value
-    mock_get_num_new_instances(-1)
-    aws_funcs.try_scale_down_if_necessary(region_name, "test-AMI")
-    assert len(post_list) == 0
-    assert len(call_list) == 1
-    assert call_list[0]["args"][1][0] == instance.instance_name
-
-
-def test_terminate_single_ec2_fails(
-    monkeypatch: MonkeyPatch,
-    mock_get_num_new_instances: Callable[[Any], None],
-    bulk_instance: Callable[..., InstanceInfo],
-    region_name: str,
-) -> None:
-    """
-    Tests that when we try and terminate an instance,
-    we do not delete from the db if the ec2 call is unsuccessfull.
-    """
-    db_call_list = []
-    ec2_call_list = []
-
-    def _set_state_helper_stop_instances(*args: Any, **kwargs: Any) -> Dict[Any, Any]:
-        ec2_call_list.append({"args": args, "kwargs": kwargs})
-        return {}
-
-    def _get_state_helper(
-        *args: Any, **kwargs: Any  # pylint: disable=unused-argument
-    ) -> List[str]:
-        # Pretend the instance is running when we call get_instance_states!
-        return ["running"]
-
-    monkeypatch.setattr(EC2Client, "stop_instances", _set_state_helper_stop_instances)
-    monkeypatch.setattr(EC2Client, "get_instance_states", _get_state_helper)
-
-    def _db_call(*args: Any, **kwargs: Any) -> None:
-        db_call_list.append({"args": args, "kwargs": kwargs})
-
-    monkeypatch.setattr(db.session, "delete", _db_call)
-
-    instance = bulk_instance(
-        instance_name="bad_instance",
-        aws_ami_id="bad-AMI",
-        location=region_name,
-        status=MandelboxHostState.PRE_CONNECTION,
-    )
-    assert instance.status != MandelboxHostState.DRAINING.value
-    mock_get_num_new_instances(-1)
-    drain_instance(instance)
-    assert len(ec2_call_list) == 1
-    assert len(db_call_list) == 0  # Never call db since ec2 call unsuccessful
-
-
-@pytest.mark.parametrize(
-    "status, answer, retval",
-    [
-        [MandelboxHostState.ACTIVE, 1, "does_not_exist"],
-        [MandelboxHostState.ACTIVE, 0, "running"],
-    ],
-)
-def test_drain_unreachable_does_not_exist(
-    app: Flask,
-    monkeypatch: MonkeyPatch,
-    mock_get_num_new_instances: Callable[[Any], None],
-    bulk_instance: Callable[..., InstanceInfo],
-    status: MandelboxHostState,
-    answer: int,
-    retval: str,
-    region_name: str,
-) -> None:
-    """
-    Tests that when we try and drain an instance, if it is
-    not in pre_condition, we always try to drain before
-    either terminating or marking unresponsive.
-    """
-    ec2_call_list = []
-
-    def _set_state_helper_stop_instances(*args: Any, **kwargs: Any) -> Dict[Any, Any]:
-        ec2_call_list.append({"args": args, "kwargs": kwargs})
-        return {}
-
-    def _get_state_helper(
-        *args: Any, **kwargs: Any  # pylint: disable=unused-argument
-    ) -> List[str]:
-        # Pretend the instance is not running
-        return [retval]
-
-    monkeypatch.setattr(EC2Client, "stop_instances", _set_state_helper_stop_instances)
-    monkeypatch.setattr(EC2Client, "get_instance_states", _get_state_helper)
-
-    app.config["WHIST_ACCESS_TOKEN"] = "dummy-access-token"
-
-    instance = bulk_instance(
-        aws_ami_id="test-AMI",
-        location=region_name,
-        status=status,
-    )
-    assert instance.status != MandelboxHostState.DRAINING.value
-    mock_get_num_new_instances(-1)
-    drain_instance(instance)
-    # We should have still tried to drain even though instance does not exist
-    # according to ec2
-    if answer == 0:
-        assert instance.status == MandelboxHostState.DRAINING.value
-
-
-@pytest.mark.parametrize("retval", ["stopping", "stopped", "shutting-down", "terminated"])
-def test_terminate_single_ec2_succeeds(
-    monkeypatch: MonkeyPatch,
-    mock_get_num_new_instances: Callable[[Any], None],
-    bulk_instance: Callable[..., InstanceInfo],
-    retval: str,
-    region_name: str,
-) -> None:
-    """
-    Tests that when we try and terminate an instance,
-    we delete from the db when the response is successful.
-    """
-    db_call_list = []
-    ec2_call_list = []
-
-    def _set_state_helper_stop_instances(*args: Any, **kwargs: Any) -> Dict[Any, Any]:
-        ec2_call_list.append({"args": args, "kwargs": kwargs})
-        return {
-            "TerminatingInstances": [
-                {
-                    "CurrentState": {
-                        "Name": retval,
-                    },
-                },
-            ],
-        }
-
-    def _get_state_helper(
-        *args: Any, **kwargs: Any  # pylint: disable=unused-argument
-    ) -> List[str]:
-        # Pretend the instance is running when we call get_instance_states!
-        return ["running"]
-
-    monkeypatch.setattr(EC2Client, "stop_instances", _set_state_helper_stop_instances)
-    monkeypatch.setattr(EC2Client, "get_instance_states", _get_state_helper)
-
-    def _db_call(*args: Any, **kwargs: Any) -> None:
-        db_call_list.append({"args": args, "kwargs": kwargs})
-
-    monkeypatch.setattr(db.session, "delete", _db_call)
-
-    instance = bulk_instance(
-        instance_name="good_instances-" + retval,
-        aws_ami_id="good-AMIs",
-        location=region_name,
-        status=MandelboxHostState.PRE_CONNECTION,
-    )
-    assert instance.status != MandelboxHostState.DRAINING.value
-    mock_get_num_new_instances(-1)
-    aws_funcs.drain_instance(instance)
-    assert len(ec2_call_list) == 1
-    assert len(db_call_list) == 1
-
-
-def test_scale_down_single_unavailable(
-    hijack_ec2_calls: List[Dict[str, Any]],  # pylint: disable=unused-argument
-    mock_get_num_new_instances: Callable[[Any], None],
-    bulk_instance: Callable[..., InstanceInfo],
-    region_name: str,
-) -> None:
-    """
-    Tests that we don't scale down an instance with running mandelboxes
-    """
-    instance = bulk_instance(
-        instance_name="test_instance",
-        associated_mandelboxes=1,
-        aws_ami_id="test-AMI",
-        location=region_name,
-    )
-    mock_get_num_new_instances(-1)
-    aws_funcs.try_scale_down_if_necessary(region_name, "test-AMI")
-    db.session.refresh(instance)
-    assert instance.status == MandelboxHostState.ACTIVE
-
-
-def test_scale_down_single_wrong_region(
-    hijack_ec2_calls: List[Dict[str, Any]],  # pylint: disable=unused-argument
-    mock_get_num_new_instances: Callable[[Any], None],
-    bulk_instance: Callable[..., InstanceInfo],
-    region_names: List[str],
-) -> None:
-    """
-    Tests that we don't scale down an instance in a different region
-    """
-    region_name_1, region_name_2 = region_names
-    instance = bulk_instance(
-        instance_name="test_instance",
-        associated_mandelboxes=1,
-        aws_ami_id="test-AMI",
-        location=region_name_1,
-    )
-    mock_get_num_new_instances(-1)
-    aws_funcs.try_scale_down_if_necessary(region_name_2, "test-AMI")
-    db.session.refresh(instance)
-    assert instance.status == MandelboxHostState.ACTIVE
-
-
-def test_check_instance_exists(region_name: str) -> None:
-    """
-    Tests to ensure that `check_instance_exists` returns `False` for a non-existent instance
-    (that is, for an instance whose ID is valid but does not exist on EC2). Note that we explicitly
-    do not want to use `hijack_ec2_calls` here, as that would replace the check with a trivial
-    `True`.
-    """
-    # A valid but fake EC2 ID
-    instance_name = "i-11235813213455891"
-    assert not aws_funcs.check_instance_exists(instance_name, region_name)
-
-
-def test_scale_down_single_wrong_ami(
-    hijack_ec2_calls: List[Dict[str, Any]],  # pylint: disable=unused-argument
-    mock_get_num_new_instances: Callable[[Any], None],
-    bulk_instance: Callable[..., InstanceInfo],
-    region_name: str,
-) -> None:
-    """
-    Tests that we don't scale down an instance with a different AMI
-    """
-    instance = bulk_instance(
-        instance_name="test_instance",
-        associated_mandelboxes=1,
-        aws_ami_id="test-AMI",
-        location=region_name,
-    )
-    mock_get_num_new_instances(-1)
-    aws_funcs.try_scale_down_if_necessary(region_name, "wrong-AMI")
-    db.session.refresh(instance)
-    assert instance.status == MandelboxHostState.ACTIVE
-
-
-def test_scale_down_multiple_available(
-    app: Flask,
-    bulk_instance: Callable[..., InstanceInfo],
-    hijack_ec2_calls: List[Dict[str, Any]],  # pylint: disable=unused-argument
-    mock_get_num_new_instances: Callable[[Any], None],
-    monkeypatch: MonkeyPatch,
-    region_name: str,
-) -> None:
-    """
-    Tests that we scale down multiple instances when desired
-    """
-
-    monkeypatch.setitem(app.config, "WHIST_ACCESS_TOKEN", "dummy-access-token")
-
-    desired_num = randint(2, 10)
-    instance_list = []
-    for instance_num in range(desired_num):
-        bulk_instance(
-            instance_name=f"test_instance_{instance_num}",
-            aws_ami_id="test-AMI",
-            location=region_name,
-        )
-        instance_list.append(f"test_instance_{instance_num}")
-    mock_get_num_new_instances(-desired_num)
-    aws_funcs.try_scale_down_if_necessary(region_name, "test-AMI")
-    for instance in instance_list:
-        instance_info = InstanceInfo.query.get(instance)
-        assert instance_info.status == MandelboxHostState.DRAINING
-
-
-def test_scale_down_multiple_partial_available(
-    app: Flask,
-    bulk_instance: Callable[..., InstanceInfo],
-    hijack_ec2_calls: List[Dict[str, Any]],  # pylint: disable=unused-argument
-    mock_get_num_new_instances: Callable[[Any], None],
-    monkeypatch: MonkeyPatch,
-    region_name: str,
-) -> None:
-    """
-    Tests that we only scale down inactive instances
-    """
-
-    monkeypatch.setitem(app.config, "WHIST_ACCESS_TOKEN", "dummy-access-token")
-
-    desired_num = randint(2, 10)
-    num_inactive = randint(1, desired_num - 1)
-    num_active = desired_num - num_inactive
-    instance_list = []
-    active_list = []
-    for instance_num in range(num_inactive):
-        bulk_instance(
-            instance_name=f"test_instance_{instance_num}",
-            aws_ami_id="test-AMI",
-            location=region_name,
-        )
-        instance_list.append(f"test_instance_{instance_num}")
-    for instance_num in range(num_active):
-        bulk_instance(
-            instance_name=f"test_active_instance_{instance_num}",
-            aws_ami_id="test-AMI",
-            associated_mandelboxes=1,
-            location=region_name,
-        )
-        active_list.append(f"test_active_instance_{instance_num}")
-    mock_get_num_new_instances(-desired_num)
-    aws_funcs.try_scale_down_if_necessary(region_name, "test-AMI")
-    for instance in instance_list:
-        instance_info = InstanceInfo.query.get(instance)
-        assert instance_info.status == MandelboxHostState.DRAINING
-    for instance in active_list:
-        instance_info = InstanceInfo.query.get(instance)
-        assert instance_info.status == MandelboxHostState.ACTIVE
-
-
-def test_lingering_instances(
-    monkeypatch: MonkeyPatch,
-    bulk_instance: Callable[..., InstanceInfo],
-    region_name: str,
-) -> None:
-    """
-    Tests that lingering_instances properly drains only those instances that are
-    inactive for the specified period of time:
-    2 min for running instances, 15 for preconnected instances
-    or (draining/host service unresponsive) instances that do not have an associated mandelbox and
-    status last changed > 2 mins
-
-    """
-    drain_call_set = set()
-
-    def _mock_drain_instance(instance: InstanceInfo) -> None:
-        drain_call_set.add(instance.instance_name)
-
-    monkeypatch.setattr(aws_funcs, "drain_instance", _mock_drain_instance)
-
-    # A draining instance which status last updated 2 mins ago and
-    # has NO associated mandelbox should be included to lingering_instances
-    # (we check instance status change table to not be mislead by heart beating)
-    instance_no_associated_mandelbox = bulk_instance(
-        instance_name="not_associated_mandelbox_instance",
-        aws_ami_id="test-AMI",
-        location=region_name,
-        status=MandelboxHostState.DRAINING,
-        last_updated_utc_unix_ms=time() * 1000,
-        creation_time_utc_unix_ms=time() * 1000,
-    )
-
-    # A draining instance which status last updated 2 mins ago and
-    # has associated mandelbox(es) should NOT be included to lingering_instances
-    bulk_instance(
-        instance_name="associated_mandelbox_instance",
-        aws_ami_id="test-AMI-2",
-        location=region_name,
-        associated_mandelboxes=1,
-        status=MandelboxHostState.DRAINING,
-        last_updated_utc_unix_ms=time() * 1000,
-        creation_time_utc_unix_ms=time() * 1000,
-    )
-
-    time_2_mins_ago = date.fromtimestamp(time() - 125)
-
-    update_status_change_time(time_2_mins_ago, "not_associated_mandelbox_instance")
-    update_status_change_time(time_2_mins_ago, "associated_mandelbox_instance")
-
-    bulk_instance(
-        instance_name="active_instance",
-        aws_ami_id="test-AMI",
-        location=region_name,
-        last_updated_utc_unix_ms=time() * 1000,
-        creation_time_utc_unix_ms=time() * 1000,
-    )
-    instance_bad_normal = bulk_instance(
-        instance_name="inactive_instance",
-        aws_ami_id="test-AMI",
-        location=region_name,
-        last_updated_utc_unix_ms=((time() - 121) * 1000),
-        creation_time_utc_unix_ms=((time() - 121) * 1000),
-    )
-    instance_bad_preconnect = bulk_instance(
-        instance_name="inactive_starting_instance",
-        aws_ami_id="test-AMI",
-        location=region_name,
-        status=MandelboxHostState.PRE_CONNECTION,
-        last_updated_utc_unix_ms=((time() - 1801) * 1000),
-        creation_time_utc_unix_ms=((time() - 1801) * 1000),
-    )
-    bulk_instance(
-        instance_name="still starting",
-        aws_ami_id="test-AMI",
-        location=region_name,
-        status=MandelboxHostState.PRE_CONNECTION,
-        last_updated_utc_unix_ms=((time() - 18000001) * 1000),
-    )
-    bulk_instance(
-        instance_name="active_starting_instance",
-        aws_ami_id="test-AMI",
-        location=region_name,
-        status=MandelboxHostState.PRE_CONNECTION,
-        last_updated_utc_unix_ms=((time() - 121) * 1000),
-        creation_time_utc_unix_ms=((time() - 121) * 1000),
-    )
-    bulk_instance(
-        instance_name="host_service_unrepsonsive_instance",
-        aws_ami_id="test-AMI",
-        location=region_name,
-        status=MandelboxHostState.HOST_SERVICE_UNRESPONSIVE,
-        last_updated_utc_unix_ms=((time() - 18000001) * 1000),
-    )
-    aws_funcs.check_and_handle_lingering_instances()
-    assert drain_call_set == {
-        instance_bad_normal.instance_name,
-        instance_bad_preconnect.instance_name,
-        instance_no_associated_mandelbox.instance_name,
-    }
-
-
-def test_get_current_commit_hash() -> None:
-    """
-    Tests if the current commit hash obtained is not empty
-    """
-    # Compare current commit hash with the first active ami client commit hash
-    assert aws_funcs.get_current_commit_hash() == get_allowed_regions()[0].client_commit_hash
-
-
-def test_old_commit_hash_instances(
-    monkeypatch: MonkeyPatch,
-    bulk_instance: Callable[..., InstanceInfo],
-    region_name: str,
-) -> None:
-    """
-    Tests that old_commit_hash_instances properly drains only those instances that are
-    associated with an old commit hash
-    """
-    drain_call_set = set()
-
-    def _mock_drain_instance(instance: InstanceInfo) -> None:
-        drain_call_set.add(instance.instance_name)
-
-    monkeypatch.setattr(aws_funcs, "drain_instance", _mock_drain_instance)
-
-    # Create an instance with an old commit hash but is protected
-    set_protected_region_to_ami(region_name, "inactive_ami_v2", "old_commit_hash_v2", False)
-    bulk_instance(
-        instance_name="active_instance_3",
-        aws_ami_id="inactive_ami_v2",
-        commit_hash="old_commit_hash_v2",
-        location=region_name,
-        last_updated_utc_unix_ms=time() * 1000,
-        creation_time_utc_unix_ms=time() * 1000,
-    )
-    bulk_instance(
-        instance_name="active_instance",
-        aws_ami_id="test-AMI",
-        commit_hash=aws_funcs.get_current_commit_hash(),
-        location=region_name,
-        last_updated_utc_unix_ms=time() * 1000,
-        creation_time_utc_unix_ms=time() * 1000,
-    )
-    bulk_instance(
-        instance_name="active_starting_instance",
-        aws_ami_id="test-AMI",
-        commit_hash=aws_funcs.get_current_commit_hash(),
-        location=region_name,
-        status=MandelboxHostState.PRE_CONNECTION,
-        last_updated_utc_unix_ms=((time() - 121) * 1000),
-        creation_time_utc_unix_ms=((time() - 121) * 1000),
-    )
-    bulk_instance(
-        instance_name="host_service_unrepsonsive_instance",
-        aws_ami_id="test-AMI",
-        commit_hash=aws_funcs.get_current_commit_hash(),
-        location=region_name,
-        status=MandelboxHostState.HOST_SERVICE_UNRESPONSIVE,
-        last_updated_utc_unix_ms=((time() - 18000001) * 1000),
-    )
-    instances_with_old_commit_hash = bulk_instance(
-        instance_name="active_instance_2",
-        aws_ami_id="inactive_ami",
-        commit_hash="old_commit_hash",
-        location=region_name,
-        last_updated_utc_unix_ms=time() * 1000,
-        creation_time_utc_unix_ms=time() * 1000,
-    )
-    bulk_instance(
-        instance_name="draining_instance",
-        aws_ami_id="inactive_ami",
-        commit_hash="old_commit_hash",
-        location=region_name,
-        status=MandelboxHostState.DRAINING,
-        last_updated_utc_unix_ms=time() * 1000,
-        creation_time_utc_unix_ms=time() * 1000,
-    )
-    aws_funcs.check_and_handle_instances_with_old_commit_hash()
-    assert drain_call_set == {
-        instances_with_old_commit_hash.instance_name,
-    }
+    assert all(elem["kwargs"]["image_id"] == us_east_1_image_obj.image_id for elem in call_list)
 
 
 def test_buffer_wrong_region() -> None:
@@ -654,7 +86,7 @@ def test_buffer_empty(app: Flask, region_ami_pair: Tuple[str, str]) -> None:
 
 
 def test_buffer_part_full(
-    app: Flask, bulk_instance: Callable[..., InstanceInfo], region_ami_pair: Tuple[str, str]
+    app: Flask, bulk_instance: Callable[..., Instance], region_ami_pair: Tuple[str, str]
 ) -> None:
     """
     Tests that we ask for a new instance when there's only a full instance running
@@ -671,7 +103,7 @@ def test_buffer_part_full(
 
 
 def test_buffer_good(
-    app: Flask, bulk_instance: Callable[..., InstanceInfo], region_ami_pair: Tuple[str, str]
+    app: Flask, bulk_instance: Callable[..., Instance], region_ami_pair: Tuple[str, str]
 ) -> None:
     """
     Tests that we don't ask for a new instance when there's an empty instance running with capacity
@@ -689,7 +121,7 @@ def test_buffer_good(
 
 
 def test_buffer_with_multiple(
-    app: Flask, bulk_instance: Callable[..., InstanceInfo], region_ami_pair: Tuple[str, str]
+    app: Flask, bulk_instance: Callable[..., Instance], region_ami_pair: Tuple[str, str]
 ) -> None:
     """
     Tests that we don't ask for a new instance when we have enough space in multiple instances
@@ -715,7 +147,7 @@ def test_buffer_with_multiple(
 
 
 def test_buffer_with_multiple_draining(
-    app: Flask, bulk_instance: Callable[..., InstanceInfo], region_ami_pair: Tuple[str, str]
+    app: Flask, bulk_instance: Callable[..., Instance], region_ami_pair: Tuple[str, str]
 ) -> None:
     """
     Tests that we don't ask for a new instance when we have enough space in multiple instances
@@ -757,7 +189,7 @@ def test_buffer_with_multiple_draining(
 
 
 def test_buffer_overfull(
-    app: Flask, bulk_instance: Callable[..., InstanceInfo], region_ami_pair: Tuple[str, str]
+    app: Flask, bulk_instance: Callable[..., Instance], region_ami_pair: Tuple[str, str]
 ) -> None:
     """
     Tests that we ask to scale down an instance when we have too much free space
@@ -787,7 +219,7 @@ def test_buffer_overfull(
 
 
 def test_buffer_not_too_full(
-    app: Flask, bulk_instance: Callable[..., InstanceInfo], region_ami_pair: Tuple[str, str]
+    app: Flask, bulk_instance: Callable[..., Instance], region_ami_pair: Tuple[str, str]
 ) -> None:
     """
     Tests that we don't ask to scale down an instance when we have free space, less than our
@@ -820,7 +252,7 @@ def test_buffer_not_too_full(
 
 
 def test_buffer_overfull_split(
-    app: Flask, bulk_instance: Callable[..., InstanceInfo], region_ami_pair: Tuple[str, str]
+    app: Flask, bulk_instance: Callable[..., Instance], region_ami_pair: Tuple[str, str]
 ) -> None:
     """
     Tests that we ask to scale down an instance when we have too much free space
@@ -854,7 +286,7 @@ def test_buffer_overfull_split(
 
 
 def test_buffer_not_too_full_split(
-    app: Flask, bulk_instance: Callable[..., InstanceInfo], region_ami_pair: Tuple[str, str]
+    app: Flask, bulk_instance: Callable[..., Instance], region_ami_pair: Tuple[str, str]
 ) -> None:
     """
     Tests that we don't ask to scale down an instance when we have some free space
@@ -893,7 +325,7 @@ def test_buffer_not_too_full_split(
     )
 
 
-def test_buffer_region_sensitive(app: Flask, bulk_instance: Callable[..., InstanceInfo]) -> None:
+def test_buffer_region_sensitive(app: Flask, bulk_instance: Callable[..., Instance]) -> None:
     """
     Tests that our buffer is based on region. In this test case, we pick two regions randomly.
 
@@ -908,9 +340,7 @@ def test_buffer_region_sensitive(app: Flask, bulk_instance: Callable[..., Instan
     assert len(randomly_picked_ami_objs) >= 2
     randomly_picked_ami_objs = randomly_picked_ami_objs[0:2]
 
-    region_ami_pairs = [
-        (ami_obj.region_name, ami_obj.ami_id) for ami_obj in randomly_picked_ami_objs
-    ]
+    region_ami_pairs = [(ami_obj.region, ami_obj.image_id) for ami_obj in randomly_picked_ami_objs]
     region_ami_with_buffer, region_ami_without_buffer = region_ami_pairs
 
     desired_free_mandelboxes = int(app.config["DESIRED_FREE_MANDELBOXES"])
@@ -944,39 +374,6 @@ def test_buffer_region_sensitive(app: Flask, bulk_instance: Callable[..., Instan
         )
         == default_increment
     )
-
-
-def test_scale_down_harness(
-    monkeypatch: MonkeyPatch, bulk_instance: Callable[..., InstanceInfo]
-) -> None:
-    """
-    tests that try_scale_down_if_necessary_all_regions
-    actually runs on every region/AMI pair in our db
-    """
-    call_list = []
-
-    def _helper(*args: Any, **kwargs: Any) -> None:
-        nonlocal call_list
-        call_list.append({"args": args, "kwargs": kwargs})
-
-    monkeypatch.setattr(aws_funcs, "try_scale_down_if_necessary", _helper)
-    region_ami_pairs_length = 2
-    randomly_picked_ami_objs = get_allowed_regions()
-    assert len(randomly_picked_ami_objs) >= 2
-    randomly_picked_ami_objs = randomly_picked_ami_objs[0:2]
-
-    region_ami_pairs = [
-        (ami_obj.region_name, ami_obj.ami_id) for ami_obj in randomly_picked_ami_objs
-    ]
-    for region, ami_id in region_ami_pairs:
-        num_instances = randint(1, 10)
-        for _ in range(num_instances):
-            bulk_instance(location=region, aws_ami_id=ami_id)
-
-    aws_funcs.try_scale_down_if_necessary_all_regions()
-    assert len(call_list) == region_ami_pairs_length
-    args = [called["args"] for called in call_list]
-    assert set(args) == set(region_ami_pairs)
 
 
 def test_get_num_mandelboxes() -> None:

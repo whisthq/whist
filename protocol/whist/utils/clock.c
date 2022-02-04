@@ -63,30 +63,21 @@ double get_timer(const WhistTimer* timer_opaque) {
     return ret;
 }
 
-char* current_time_str(void) {
-    static char buffer[64];
-    //    time_t rawtime;
-    //
-    //    time(&rawtime);
-    //    timeinfo = localtime(&rawtime);
+int current_time_str(char* buffer, size_t size) {
 #if defined(_WIN32)
     SYSTEMTIME time_now;
     GetSystemTime(&time_now);
-    snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i.%06li", time_now.wHour, time_now.wMinute,
-             time_now.wSecond, (long)time_now.wMilliseconds);
+    return snprintf(buffer, size, "%02i:%02i:%02i.%06li", time_now.wHour, time_now.wMinute,
+                    time_now.wSecond, (long)time_now.wMilliseconds);
 #else
     struct tm* time_str_tm;
     struct timespec time_now;
     // CLOCK_REALTIME gives time since Unix epoch
     clock_gettime(CLOCK_REALTIME, &time_now);
     time_str_tm = gmtime(&time_now.tv_sec);
-    snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i.%06li", time_str_tm->tm_hour,
-             time_str_tm->tm_min, time_str_tm->tm_sec, (long)time_now.tv_nsec / NS_IN_US);
+    return snprintf(buffer, size, "%02i:%02i:%02i.%06li", time_str_tm->tm_hour, time_str_tm->tm_min,
+                    time_str_tm->tm_sec, (long)time_now.tv_nsec / NS_IN_US);
 #endif
-
-    //    strftime(buffer, 64, "%Y-%m-%d %H:%M:%S", timeinfo);
-
-    return buffer;
 }
 
 timestamp_us current_time_us(void) {

@@ -1,10 +1,10 @@
 from typing import Callable
 
-from app.database.models.cloud import InstanceInfo
+from app.models import Instance
 from app.helpers.aws.aws_mandelbox_assign_post import is_user_active
 
 
-def test_inactive(bulk_instance: Callable[..., InstanceInfo]) -> None:
+def test_inactive(bulk_instance: Callable[..., Instance]) -> None:
     """
     tests that a user is correctly ruled inactive
     """
@@ -12,7 +12,7 @@ def test_inactive(bulk_instance: Callable[..., InstanceInfo]) -> None:
     assert not is_user_active("rando_user")
 
 
-def test_inactive_with_others(bulk_instance: Callable[..., InstanceInfo]) -> None:
+def test_inactive_with_others(bulk_instance: Callable[..., Instance]) -> None:
     """
     tests that even with mandelboxes for some user, a different user isn't active
     """
@@ -20,7 +20,7 @@ def test_inactive_with_others(bulk_instance: Callable[..., InstanceInfo]) -> Non
     assert not is_user_active("rando_user")
 
 
-def test_active(bulk_instance: Callable[..., InstanceInfo]) -> None:
+def test_active(bulk_instance: Callable[..., Instance]) -> None:
     """
     tests that a given user is detected as active
     """

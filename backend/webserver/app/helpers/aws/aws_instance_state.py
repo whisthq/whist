@@ -1,11 +1,6 @@
 import time
 
-from app.database.models.cloud import (
-    db,
-    InstanceInfo,
-    MandelboxHostState,
-)
-
+from app.models import db, Instance, MandelboxHostState
 from app.utils.general.logs import whist_logger
 
 MAX_POLL_TIME = 900  # seconds
@@ -24,11 +19,11 @@ def _poll(instance_name: str) -> bool:
         True if and only if the instance's starts with ACTIVE by the end of the polling period.
     """
 
-    instance = InstanceInfo.query.get(instance_name)
+    instance = Instance.query.get(instance_name)
     result = False
 
     for i in range(MAX_POLL_ITERATIONS):
-        if instance.status != str(MandelboxHostState.ACTIVE.value):
+        if instance.status != MandelboxHostState.ACTIVE:
             whist_logger.warning(
                 f"{instance.instance_name} deployment in progress. {i}/{MAX_POLL_ITERATIONS}"
             )

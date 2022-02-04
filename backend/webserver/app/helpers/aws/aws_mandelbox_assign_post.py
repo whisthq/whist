@@ -1,4 +1,4 @@
-from app.database.models.cloud import MandelboxInfo
+from app.models import Mandelbox
 from app.utils.general.timing import log_time
 
 
@@ -12,4 +12,4 @@ def is_user_active(username: str) -> bool:
 
     Returns: True if and only if the user has a mandelbox in the DB
     """
-    return MandelboxInfo.query.filter_by(user_id=username).one_or_none() is not None
+    return Mandelbox.query.filter_by(user_id=username).one_or_none() is not None

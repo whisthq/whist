@@ -18,7 +18,7 @@ from app.config import CONFIG_MATRIX
 from app.utils.flask.sentry import init_and_ensure_sentry_connection
 from app.utils.metrics.flask_view import register_flask_view_metrics_monitor
 from app.constants import env_names
-from app.database.models.cloud import db
+from app.models import db
 
 from app.utils.auth.auth0 import ScopeError
 from app.utils.stripe.payments import payment_portal_factory, get_customer_id, PaymentRequired
@@ -99,7 +99,6 @@ def create_app(testing: bool = False) -> Flask:
         DeferredReflection.prepare(db.engine)
 
     register_handlers(app)
-    register_commands(app)
     register_blueprints(app)
 
     return app
@@ -125,20 +124,6 @@ def register_handlers(app: Flask) -> None:
             jsonify(error="That resource is only available to Whist subscribers"),
             HTTPStatus.PAYMENT_REQUIRED,
         )
-
-
-def register_commands(app: Flask) -> None:
-    """
-    Registers all blueprints (cli commands) for the Flask app
-
-    Args:
-        - app: Flask object
-    """
-
-    from app.utils.flask.cli import command_bp, compute_bp
-
-    app.register_blueprint(command_bp)
-    app.register_blueprint(compute_bp)
 
 
 def register_blueprints(app: Flask) -> None:

@@ -65,22 +65,16 @@ func (wc *GraphQLClient) SetParams(params HasuraParams) {
 // Query executes the given GraphQL query and assigns the reeturned values to
 // the provided interface.
 func (wc *GraphQLClient) Query(ctx context.Context, query GraphQLQuery, variables map[string]interface{}) error {
-	err := wc.Hasura.Query(ctx, query, variables)
+	dbCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-	if err != nil {
-		return utils.MakeError("failed to get GraphQL query %v with variables %v. Error: %v", query, variables, err)
-	}
-
-	return nil
+	return wc.Hasura.Query(dbCtx, query, variables)
 }
 
 // Mutate executes the given GraphQL mutation and writes to the database.
 func (wc *GraphQLClient) Mutate(ctx context.Context, query GraphQLQuery, variables map[string]interface{}) error {
-	err := wc.Hasura.Mutate(ctx, query, variables)
+	dbCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-	if err != nil {
-		return utils.MakeError("failed to execute GraphQL mutation %v with variables %v. Error: %v", query, variables, err)
-	}
-
-	return nil
+	return wc.Hasura.Mutate(dbCtx, query, variables)
 }

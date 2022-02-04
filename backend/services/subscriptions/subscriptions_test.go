@@ -49,15 +49,15 @@ func (cl *mockWhistClient) Subscribe(query GraphQLQuery, variables map[string]in
 	conditionFn handlerfn, subscriptionEvents chan SubscriptionEvent) (string, error) {
 
 	// Create fake instance event
-	testInstanceEvent := InstanceEvent{InstanceInfo: []Instance{{
-		Name:   variables["instanceName"].(string),
+	testInstanceEvent := InstanceEvent{Instances: []Instance{{
+		ID:     variables["id"].(string),
 		Status: variables["status"].(string),
 	}}}
 
 	// Create fake mandelbox event
-	testMandelboxEvent := MandelboxEvent{MandelboxInfo: []Mandelbox{{
-		InstanceName: variables["instanceName"].(string),
-		Status:       "ALLOCATED",
+	testMandelboxEvent := MandelboxEvent{Mandelboxes: []Mandelbox{{
+		InstanceID: variables["instance_id"].(string),
+		Status:     "ALLOCATED",
 	}}}
 
 	// Send fake event through channel depending on the result type received
@@ -85,8 +85,8 @@ func (cl *mockWhistClient) Close(subscriptionIDs []string) error {
 }
 func TestInstanceStatusHandler(t *testing.T) {
 	var variables = map[string]interface{}{
-		"instance_name": graphql.String("test-instance-name"),
-		"status":        graphql.String("DRAINING"),
+		"id":     graphql.String("test-instance-id"),
+		"status": graphql.String("DRAINING"),
 	}
 
 	// Create different tests for the instance status handler,
@@ -96,15 +96,15 @@ func TestInstanceStatusHandler(t *testing.T) {
 		event    InstanceEvent
 		want     bool
 	}{
-		{"Empty event", InstanceEvent{InstanceInfo: []Instance{}}, false},
+		{"Empty event", InstanceEvent{Instances: []Instance{}}, false},
 		{"Wrong status event", InstanceEvent{
-			InstanceInfo: []Instance{
-				{Name: "test-instance-name", Status: "PRE_CONNECTION"},
+			Instances: []Instance{
+				{ID: "test-instance-id", Status: "PRE_CONNECTION"},
 			},
 		}, false},
 		{"Correct status event", InstanceEvent{
-			InstanceInfo: []Instance{
-				{Name: "test-instance-name", Status: "DRAINING"},
+			Instances: []Instance{
+				{ID: "test-instance-id", Status: "DRAINING"},
 			},
 		}, true},
 	}
@@ -122,8 +122,8 @@ func TestInstanceStatusHandler(t *testing.T) {
 }
 func TestMandelboxAllocatedHandler(t *testing.T) {
 	var variables = map[string]interface{}{
-		"instance_name": graphql.String("test-instance-name"),
-		"status":        graphql.String("ALLOCATED"),
+		"instance_id": graphql.String("test-instance-id"),
+		"status":      graphql.String("ALLOCATED"),
 	}
 
 	// Create different tests for the mandelbox allocated handler,
@@ -133,15 +133,15 @@ func TestMandelboxAllocatedHandler(t *testing.T) {
 		event    MandelboxEvent
 		want     bool
 	}{
-		{"Empty event", MandelboxEvent{MandelboxInfo: []Mandelbox{}}, false},
-		{"Wrong instance name event", MandelboxEvent{
-			MandelboxInfo: []Mandelbox{
-				{InstanceName: "test-instance-name-2", Status: "EXITED"},
+		{"Empty event", MandelboxEvent{Mandelboxes: []Mandelbox{}}, false},
+		{"Wrong instance id event", MandelboxEvent{
+			Mandelboxes: []Mandelbox{
+				{InstanceID: "test-instance-id-2", Status: "EXITED"},
 			},
 		}, false},
 		{"Correct status event", MandelboxEvent{
-			MandelboxInfo: []Mandelbox{
-				{InstanceName: "test-instance-name", Status: "ALLOCATED"},
+			Mandelboxes: []Mandelbox{
+				{InstanceID: "test-instance-id", Status: "ALLOCATED"},
 			},
 		}, true},
 	}
@@ -158,49 +158,12 @@ func TestMandelboxAllocatedHandler(t *testing.T) {
 	}
 }
 
-func TestMandelboxStatusHandler(t *testing.T) {
-	var variables = map[string]interface{}{
-		"status": graphql.String("ALLOCATED"),
-	}
-
-	// Create different tests for the mandelbox status handler,
-	// verify if it returns the appropiate response
-	var mandelboxTests = []struct {
-		testName string
-		event    MandelboxEvent
-		want     bool
-	}{
-		{"Empty event", MandelboxEvent{MandelboxInfo: []Mandelbox{}}, false},
-		{"Wrong status event", MandelboxEvent{
-			MandelboxInfo: []Mandelbox{
-				{Status: "EXITED"},
-			},
-		}, false},
-		{"Correct status event", MandelboxEvent{
-			MandelboxInfo: []Mandelbox{
-				{Status: "ALLOCATED"},
-			},
-		}, true},
-	}
-
-	for _, tt := range mandelboxTests {
-		testname := tt.testName
-		t.Run(testname, func(t *testing.T) {
-			got := MandelboxStatusHandler(tt.event, variables)
-
-			if got != tt.want {
-				t.Errorf("got %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestSetupHostSubscriptions(t *testing.T) {
-	instanceName := "test-instance-name"
+	instanceID := "test-instance-id"
 	whistClient := &mockWhistClient{}
 
 	// Create the host service specific subscriptions
-	SetupHostSubscriptions(instanceName, whistClient)
+	SetupHostSubscriptions(instanceID, whistClient)
 
 	if whistClient.Subscriptions == nil {
 		t.Errorf("Got nil subscriptions")
@@ -212,8 +175,8 @@ func TestSetupHostSubscriptions(t *testing.T) {
 
 	// Create a fake variables map that matches the host subscriptions variable map
 	var variables = map[string]interface{}{
-		"instance_name": graphql.String(instanceName),
-		"status":        graphql.String("DRAINING"),
+		"id":     graphql.String(instanceID),
+		"status": graphql.String("DRAINING"),
 	}
 
 	// Verify that the "variables" maps are deep equal for the first subscription
@@ -221,7 +184,10 @@ func TestSetupHostSubscriptions(t *testing.T) {
 		t.Errorf("Expected variable map to be %v, got: %v", whistClient.Subscriptions[0].Variables, variables)
 	}
 
-	variables["status"] = graphql.String("ALLOCATED")
+	variables = map[string]interface{}{
+		"instance_id": graphql.String(instanceID),
+		"status":      graphql.String("ALLOCATED"),
+	}
 
 	// Verify that the "variables" maps are deep equal for the second subscription
 	if !reflect.DeepEqual(whistClient.Subscriptions[1].Variables, variables) {
@@ -239,8 +205,8 @@ func TestSetupScalingSubscriptions(t *testing.T) {
 		t.Errorf("Got nil subscriptions")
 	}
 
-	if len(whistClient.Subscriptions) != 2 {
-		t.Errorf("Expected subscriptions lenght to be 2, got: %v", len(whistClient.Subscriptions))
+	if len(whistClient.Subscriptions) != 1 {
+		t.Errorf("Expected subscriptions lenght to be 1, got: %v", len(whistClient.Subscriptions))
 	}
 
 	// Create a fake variables map that matches the host subscriptions variable map
@@ -252,13 +218,6 @@ func TestSetupScalingSubscriptions(t *testing.T) {
 
 	if !reflect.DeepEqual(variables, whistClient.Subscriptions[0].Variables) {
 		t.Errorf("Expected variable map to be %v, got: %v", whistClient.Subscriptions[0].Variables, variables)
-	}
-
-	variables["status"] = graphql.String("ALLOCATED")
-
-	// Verify that the "variables" maps are deep equal for the second subscription
-	if !reflect.DeepEqual(variables, whistClient.Subscriptions[1].Variables) {
-		t.Errorf("Expected variable map to be %v, got: %v", whistClient.Subscriptions[1].Variables, variables)
 	}
 }
 

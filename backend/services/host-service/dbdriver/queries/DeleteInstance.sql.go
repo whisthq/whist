@@ -16,19 +16,19 @@ import (
 // calling SendBatch on pgx.Conn, pgxpool.Pool, or pgx.Tx, use the Scan methods
 // to parse the results.
 type Querier interface {
-	DeleteInstance(ctx context.Context, instanceName string) (pgconn.CommandTag, error)
+	DeleteInstance(ctx context.Context, instanceID string) (pgconn.CommandTag, error)
 	// DeleteInstanceBatch enqueues a DeleteInstance query into batch to be executed
 	// later by the batch.
-	DeleteInstanceBatch(batch genericBatch, instanceName string)
+	DeleteInstanceBatch(batch genericBatch, instanceID string)
 	// DeleteInstanceScan scans the result of an executed DeleteInstanceBatch query.
 	DeleteInstanceScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
-	FindInstanceByName(ctx context.Context, instanceName string) ([]FindInstanceByNameRow, error)
-	// FindInstanceByNameBatch enqueues a FindInstanceByName query into batch to be executed
+	FindInstanceByID(ctx context.Context, instanceID string) ([]FindInstanceByIDRow, error)
+	// FindInstanceByIDBatch enqueues a FindInstanceByID query into batch to be executed
 	// later by the batch.
-	FindInstanceByNameBatch(batch genericBatch, instanceName string)
-	// FindInstanceByNameScan scans the result of an executed FindInstanceByNameBatch query.
-	FindInstanceByNameScan(results pgx.BatchResults) ([]FindInstanceByNameRow, error)
+	FindInstanceByIDBatch(batch genericBatch, instanceID string)
+	// FindInstanceByIDScan scans the result of an executed FindInstanceByIDBatch query.
+	FindInstanceByIDScan(results pgx.BatchResults) ([]FindInstanceByIDRow, error)
 
 	FindMandelboxByID(ctx context.Context, mandelboxID string) ([]FindMandelboxByIDRow, error)
 	// FindMandelboxByIDBatch enqueues a FindMandelboxByID query into batch to be executed
@@ -58,17 +58,17 @@ type Querier interface {
 	// RemoveStaleMandelboxesScan scans the result of an executed RemoveStaleMandelboxesBatch query.
 	RemoveStaleMandelboxesScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
-	WriteHeartbeat(ctx context.Context, params WriteHeartbeatParams) (pgconn.CommandTag, error)
+	WriteHeartbeat(ctx context.Context, updatedAt pgtype.Timestamptz, instanceID string) (pgconn.CommandTag, error)
 	// WriteHeartbeatBatch enqueues a WriteHeartbeat query into batch to be executed
 	// later by the batch.
-	WriteHeartbeatBatch(batch genericBatch, params WriteHeartbeatParams)
+	WriteHeartbeatBatch(batch genericBatch, updatedAt pgtype.Timestamptz, instanceID string)
 	// WriteHeartbeatScan scans the result of an executed WriteHeartbeatBatch query.
 	WriteHeartbeatScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
-	WriteInstanceStatus(ctx context.Context, status pgtype.Varchar, instanceName string) (pgconn.CommandTag, error)
+	WriteInstanceStatus(ctx context.Context, status pgtype.Varchar, instanceID string) (pgconn.CommandTag, error)
 	// WriteInstanceStatusBatch enqueues a WriteInstanceStatus query into batch to be executed
 	// later by the batch.
-	WriteInstanceStatusBatch(batch genericBatch, status pgtype.Varchar, instanceName string)
+	WriteInstanceStatusBatch(batch genericBatch, status pgtype.Varchar, instanceID string)
 	// WriteInstanceStatusScan scans the result of an executed WriteInstanceStatusBatch query.
 	WriteInstanceStatusScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
@@ -158,8 +158,8 @@ func PrepareAllQueries(ctx context.Context, p preparer) error {
 	if _, err := p.Prepare(ctx, deleteInstanceSQL, deleteInstanceSQL); err != nil {
 		return fmt.Errorf("prepare query 'DeleteInstance': %w", err)
 	}
-	if _, err := p.Prepare(ctx, findInstanceByNameSQL, findInstanceByNameSQL); err != nil {
-		return fmt.Errorf("prepare query 'FindInstanceByName': %w", err)
+	if _, err := p.Prepare(ctx, findInstanceByIDSQL, findInstanceByIDSQL); err != nil {
+		return fmt.Errorf("prepare query 'FindInstanceByID': %w", err)
 	}
 	if _, err := p.Prepare(ctx, findMandelboxByIDSQL, findMandelboxByIDSQL); err != nil {
 		return fmt.Errorf("prepare query 'FindMandelboxByID': %w", err)
@@ -220,12 +220,12 @@ func (tr *typeResolver) setValue(vt pgtype.ValueTranscoder, val interface{}) pgt
 	return vt
 }
 
-const deleteInstanceSQL = `DELETE FROM cloud.instance_info WHERE instance_name = $1;`
+const deleteInstanceSQL = `DELETE FROM whist.instances WHERE id = $1;`
 
 // DeleteInstance implements Querier.DeleteInstance.
-func (q *DBQuerier) DeleteInstance(ctx context.Context, instanceName string) (pgconn.CommandTag, error) {
+func (q *DBQuerier) DeleteInstance(ctx context.Context, instanceID string) (pgconn.CommandTag, error) {
 	ctx = context.WithValue(ctx, "pggen_query_name", "DeleteInstance")
-	cmdTag, err := q.conn.Exec(ctx, deleteInstanceSQL, instanceName)
+	cmdTag, err := q.conn.Exec(ctx, deleteInstanceSQL, instanceID)
 	if err != nil {
 		return cmdTag, fmt.Errorf("exec query DeleteInstance: %w", err)
 	}
@@ -233,8 +233,8 @@ func (q *DBQuerier) DeleteInstance(ctx context.Context, instanceName string) (pg
 }
 
 // DeleteInstanceBatch implements Querier.DeleteInstanceBatch.
-func (q *DBQuerier) DeleteInstanceBatch(batch genericBatch, instanceName string) {
-	batch.Queue(deleteInstanceSQL, instanceName)
+func (q *DBQuerier) DeleteInstanceBatch(batch genericBatch, instanceID string) {
+	batch.Queue(deleteInstanceSQL, instanceID)
 }
 
 // DeleteInstanceScan implements Querier.DeleteInstanceScan.

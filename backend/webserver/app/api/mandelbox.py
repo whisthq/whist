@@ -20,7 +20,15 @@ from app.utils.general.logs import whist_logger
 from app.utils.general.sanitize import sanitize_email
 from app.utils.metrics.flask_app import app_record_metrics
 from app.helpers.aws.aws_instance_post import find_instance, find_enabled_regions
-from app.database.models.cloud import db, InstanceInfo, MandelboxInfo, RegionToAmi
+from app.models import (
+    CloudProvider,
+    db,
+    Image,
+    Instance,
+    Mandelbox,
+    MandelboxState,
+    WhistApplication,
+)
 from app.utils.stripe.payments import payment_required
 from app.constants.mandelbox_assign_error_names import MandelboxAssignError
 
@@ -63,7 +71,6 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
 
     # Of the regions provided in the request, filter out the ones that are not active
     enabled_regions = find_enabled_regions()
-    enabled_regions = [r.region_name for r in enabled_regions]
     allowed_regions = [r for r in body.regions if r in enabled_regions]
 
     if not allowed_regions:
@@ -92,11 +99,25 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
         # This condition is to accomodate the worflow for developers of client_apps
         # to test their changes without needing to update the development database with
         # commit_hashes on their local machines.
-        client_commit_hash = (
-            RegionToAmi.query.filter_by(region_name=region, ami_active=True)
-            .one_or_none()
-            .client_commit_hash
-        )
+        # TODO: Don't just choose AWS as the cloud provider every time.
+        image = Image.query.get((CloudProvider.AWS, region))
+
+        if image:
+            client_commit_hash = image.client_sha
+        else:
+            whist_logger.error(
+                f"No images for cloud provider {CloudProvider.AWS} available in region {region}"
+            )
+            return (
+                jsonify(
+                    {
+                        "ip": "None",
+                        "mandelbox_id": "None",
+                        "error": MandelboxAssignError.REGION_NOT_ENABLED,
+                    }
+                ),
+                HTTPStatus.SERVICE_UNAVAILABLE,
+            )
     else:
         client_commit_hash = body.client_commit_hash
 
@@ -122,9 +143,11 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
         if not current_app.testing:
             # If we're not testing, we want to scale up a new instance to handle this load
             # and we know what instance type we're missing from the request
-            ami = RegionToAmi.query.get(
-                {"region_name": region, "client_commit_hash": client_commit_hash}
-            )
+            # TODO: Don't just select the first virtual machine image. When we support multiple
+            # cloud providers, this may result in the cloud providers that sort ahead of others
+            # hosting a disproportionate amount of our capacity.
+            ami = Image.query.filter_by(region=region, client_sha=client_commit_hash).first()
+
             if ami is None:
                 whist_logger.warning(
                     f"No AMI found for region: {region}, commit hash: {client_commit_hash}"
@@ -137,7 +160,7 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
 
                 scaling_thread = Thread(
                     target=do_scale_up_if_necessary,
-                    args=(region, ami.ami_id),
+                    args=(region, ami.image_id),
                     kwargs={
                         "flask_app": current_app._get_current_object()  # pylint: disable=protected-access
                     },
@@ -152,15 +175,19 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
             HTTPStatus.SERVICE_UNAVAILABLE,
         )
 
-    instance = InstanceInfo.query.get(instance_or_error)
+    instance = Instance.query.with_for_update().get(instance_or_error)
+
+    assert instance.remaining_capacity > 0
+
+    instance.remaining_capacity -= 1
     mandelbox_id = str(uuid.uuid4())
-    obj = MandelboxInfo(
-        mandelbox_id=mandelbox_id,
-        instance_name=instance.instance_name,
+    obj = Mandelbox(
+        id=mandelbox_id,
+        app=WhistApplication.CHROME,
+        instance_id=instance.id,
         user_id=username,
         session_id=str(body.session_id),
-        status="ALLOCATED",
-        creation_time_utc_unix_ms=int(time.time() * 1000),
+        status=MandelboxState.ALLOCATED,
     )
     db.session.add(obj)
     db.session.commit()
@@ -176,14 +203,29 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
             f"Starting scale up thread for region: {region}, commit hash: {client_commit_hash}"
         )
 
+        # TODO: Don't just select the first virtual machine image. When we support multiple cloud
+        # providers, this may result in the cloud providers that sort ahead of others hosting a
+        # disproportionate amount of our capacity.
+        image = Image.query.filter_by(region=region, client_sha=client_commit_hash).first()
+
+        if image is None:
+            whist_logger.error(
+                f"No images from which to launch instances available in region {region}."
+            )
+            return (
+                jsonify(
+                    {
+                        "ip": "None",
+                        "mandelbox_id": "None",
+                        "error": MandelboxAssignError.REGION_NOT_ENABLED,
+                    }
+                ),
+                HTTPStatus.SERVICE_UNAVAILABLE,
+            )
+
         scaling_thread = Thread(
             target=do_scale_up_if_necessary,
-            args=(
-                region,
-                RegionToAmi.query.get(
-                    {"region_name": region, "client_commit_hash": client_commit_hash}
-                ).ami_id,
-            ),
+            args=(region, image.image_id),
             kwargs={
                 "flask_app": current_app._get_current_object()  # pylint: disable=protected-access
             },
@@ -200,4 +242,4 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
         },
         extra_dims={"task_name": "assign_mandelbox"},
     )
-    return jsonify({"ip": instance.ip, "mandelbox_id": mandelbox_id}), HTTPStatus.ACCEPTED
+    return jsonify({"ip": instance.ip_addr, "mandelbox_id": mandelbox_id}), HTTPStatus.ACCEPTED
