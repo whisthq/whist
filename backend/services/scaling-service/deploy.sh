@@ -27,6 +27,8 @@ cp ./backend/services/build/scaling-service "$BUILD_DIR"
 echo "$REGION_IMAGE_MAP" > "$IMAGE_FILE"
 
 # Persist changes on local repo so that they are read by splitsh
+git config --global user.name "Whist Developers"
+git config --global user.email "developers@whist.com"
 git add .
 git commit -m "Add scaling service build and images.json file for splitsh"
 
