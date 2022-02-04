@@ -1426,7 +1426,7 @@ jobs:
           fi
           echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
 
-          heroku git:remote --app $HEROKU_APP_NAME --remote heroku-whist-server
+          heroku git:remote --app $HEROKU_APP_NAME --remote heroku-whist-scaling-service
 
       - name: Install splitsh-lite for Subtree Split
         run: >
