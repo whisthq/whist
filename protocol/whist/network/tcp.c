@@ -26,7 +26,7 @@ Defines
 
 // Create a hard-cap on the size of a TCP Packet,
 // Currently set to the "large enough" 1GB
-#define MAX_TCP_PAYLOAD 1000000000
+#define MAX_TCP_PAYLOAD_SIZE 1000000000
 
 typedef enum {
     TCP_PING,
@@ -348,26 +348,31 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
         // Get a pointer to the tcp_packet
         TCPNetworkPacket* tcp_network_packet = (TCPNetworkPacket*)encrypted_tcp_packet_buffer->buf;
 
-        // An untrusted party could've injected bytes, so we ensure payload_size is valid and won't
-        // overflow
+        // An untrusted party could've injected bytes,
+        // so we ensure payload_size is valid and won't underflow/overflow
+        // NOTE: Not doing this check can cause someone to buffer overflow the later code,
+        // leading to security problems
         if (tcp_network_packet->payload_size < 0 ||
-            MAX_TCP_PAYLOAD < tcp_network_packet->payload_size) {
-            // Reset the connection and try reading bytes again
+            MAX_TCP_PAYLOAD_SIZE < tcp_network_packet->payload_size) {
+            // Wipe the reading packet buffer,
             context->reading_packet_len = 0;
             resize_dynamic_buffer(encrypted_tcp_packet_buffer, 0);
-            LOG_WARNING("Could not parse packet: %d", tcp_network_packet->payload_size);
+            // And mark the connection as lost
+            // NOTE: It's okay to drop the connection when this happens, without exposing us to DOS attacks.
+            //       It requires a MITM to interrupt a connection (Requires guessing the sequence number).
+            //       Even TLS/SSL will not safeguard us from this, it's fundamental to TCP.
+            LOG_WARNING("Invalid packet size: %d, connection dropping", tcp_network_packet->payload_size);
+            context->connection_lost = true;
             return NULL;
         }
 
-        // Now that we know get_tcp_network_packet_size will be a reasonable number, so we calculate
-        // it
+        // Now that we know payload_size will be a reasonable number,
+        // we can calculate tcp_network_packet_size
         int tcp_network_packet_size = get_tcp_network_packet_size(tcp_network_packet);
 
-        // If the target len is valid (Checking because this is an untrusted network),
-        // and we've read enough bytes for the whole tcp packet,
-        // we're ready to go
-        if (tcp_network_packet_size >= 0 &&
-            context->reading_packet_len >= tcp_network_packet_size) {
+        // Once we've read enough bytes for the whole tcp packet,
+        // we're ready to try to decrypt it
+        if (context->reading_packet_len >= tcp_network_packet_size) {
             // The resulting packet will be <= the encrypted size
             TCPPacket* tcp_packet = allocate_region(tcp_network_packet->payload_size);
 
@@ -379,7 +384,7 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
                     context->binary_aes_private_key);
                 if (decrypted_len == -1) {
                     // Deallocate and prepare to return NULL on decryption failure
-                    LOG_WARNING("Could not decrypt TCP message");
+                    LOG_WARNING("Could not decrypt TCP message!");
                     deallocate_region(tcp_packet);
                     tcp_packet = NULL;
                 } else {
