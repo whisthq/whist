@@ -78,7 +78,7 @@ static int multithreaded_sync_udp_packets(void* opaque) {
         // Disconnect if the UDP connection was lost
         if (!socket_update(udp_context)) {
             LOG_WARNING("UDP Connection Lost!");
-            for(int i = 0; i < NUM_PACKET_TYPES; i++) {
+            for (int i = 0; i < NUM_PACKET_TYPES; i++) {
                 if (last_whist_packet[i] != NULL) {
                     free_packet(udp_context, last_whist_packet[i]);
                 }

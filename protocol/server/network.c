@@ -329,7 +329,7 @@ int multithreaded_manage_client(void *opaque) {
                 state->exiting = true;
             }
         }
-        
+
         // Even without multiclient, we need this for TCP recovery over the discovery port
         if (!create_tcp_socket_context(&discovery_context, NULL, PORT_DISCOVERY, 1,
                                        TCP_DISCOVERY_CONNECTION_WAIT, get_using_stun(),

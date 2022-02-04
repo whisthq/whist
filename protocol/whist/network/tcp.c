@@ -59,7 +59,8 @@ typedef struct {
 } TCPNetworkPacket;
 
 // Get tcp packet size from a TCPNetworkPacket*
-#define get_tcp_network_packet_size(tcp_packet) ((size_t)(sizeof(TCPNetworkPacket) + (tcp_packet)->payload_size))
+#define get_tcp_network_packet_size(tcp_packet) \
+    ((size_t)(sizeof(TCPNetworkPacket) + (tcp_packet)->payload_size))
 
 // How often to poll recv
 #define RECV_INTERVAL_MS 30
@@ -349,7 +350,8 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
 
         // An untrusted party could've injected bytes, so we ensure payload_size is valid and won't
         // overflow
-        if (tcp_network_packet->payload_size < 0 || MAX_TCP_PAYLOAD < tcp_network_packet->payload_size) {
+        if (tcp_network_packet->payload_size < 0 ||
+            MAX_TCP_PAYLOAD < tcp_network_packet->payload_size) {
             // Reset the connection and try reading bytes again
             context->reading_packet_len = 0;
             resize_dynamic_buffer(encrypted_tcp_packet_buffer, 0);
@@ -357,13 +359,15 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
             return NULL;
         }
 
-        // Now that we know get_tcp_network_packet_size will be a reasonable number, so we calculate it
+        // Now that we know get_tcp_network_packet_size will be a reasonable number, so we calculate
+        // it
         int tcp_network_packet_size = get_tcp_network_packet_size(tcp_network_packet);
 
         // If the target len is valid (Checking because this is an untrusted network),
         // and we've read enough bytes for the whole tcp packet,
         // we're ready to go
-        if (tcp_network_packet_size >= 0 && context->reading_packet_len >= tcp_network_packet_size) {
+        if (tcp_network_packet_size >= 0 &&
+            context->reading_packet_len >= tcp_network_packet_size) {
             // The resulting packet will be <= the encrypted size
             TCPPacket* tcp_packet = allocate_region(tcp_network_packet->payload_size);
 
@@ -371,7 +375,8 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
                 // Decrypt into whist_packet
                 int decrypted_len = decrypt_packet(
                     tcp_packet, tcp_network_packet->payload_size, tcp_network_packet->aes_metadata,
-                    tcp_network_packet->payload, tcp_network_packet->payload_size, context->binary_aes_private_key);
+                    tcp_network_packet->payload, tcp_network_packet->payload_size,
+                    context->binary_aes_private_key);
                 if (decrypted_len == -1) {
                     // Deallocate and prepare to return NULL on decryption failure
                     LOG_WARNING("Could not decrypt TCP message");
@@ -407,16 +412,18 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
             // but it might be NULL if decrypting failed
             if (tcp_packet != NULL) {
                 if (tcp_packet->type == TCP_WHIST_PACKET) {
-                    WhistPacket* whist_packet = (WhistPacket*)&tcp_packet->whist_packet_data.whist_packet;
+                    WhistPacket* whist_packet =
+                        (WhistPacket*)&tcp_packet->whist_packet_data.whist_packet;
                     // Check that the type matches
                     if (whist_packet->type != packet_type) {
                         LOG_ERROR("Got a TCP whist packet of type that didn't match %d! %d",
-                                (int)packet_type, (int)whist_packet->type);
+                                  (int)packet_type, (int)whist_packet->type);
                         deallocate_region(tcp_packet);
                         return NULL;
                     }
                     // Return the whist packet
-                    // Note that the allocate_region is offset by offsetof(TCPPacket, whist_packet_data.whist_packet)
+                    // Note that the allocate_region is offset by offsetof(TCPPacket,
+                    // whist_packet_data.whist_packet)
                     return whist_packet;
                 } else {
                     // Handle the TCPPacket message
@@ -436,7 +443,8 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
 static void tcp_free_packet(void* raw_context, WhistPacket* whist_packet) {
     FATAL_ASSERT(raw_context != NULL);
     // Free the underlying TCP Packet
-    TCPPacket* tcp_packet = (TCPPacket*)((char*)whist_packet - offsetof(TCPPacket, whist_packet_data.whist_packet));
+    TCPPacket* tcp_packet =
+        (TCPPacket*)((char*)whist_packet - offsetof(TCPPacket, whist_packet_data.whist_packet));
     deallocate_region(tcp_packet);
 }
 
@@ -694,8 +702,8 @@ int tcp_send_constructed_packet(TCPContext* context, TCPPacket* packet) {
 
     if (ENCRYPTING_PACKETS) {
         // If we're encrypting packets, encrypt the packet into tcp_packet
-        int encrypted_len = encrypt_packet(network_packet->payload, &network_packet->aes_metadata, packet,
-                                           packet_size, context->binary_aes_private_key);
+        int encrypted_len = encrypt_packet(network_packet->payload, &network_packet->aes_metadata,
+                                           packet, packet_size, context->binary_aes_private_key);
         network_packet->payload_size = encrypted_len;
     } else {
         // Otherwise, just write it to tcp_packet directly
@@ -736,7 +744,8 @@ int get_tcp_packet_size(TCPPacket* tcp_packet) {
             return offsetof(TCPPacket, tcp_ping_data) + sizeof(tcp_packet->tcp_ping_data);
         }
         case TCP_WHIST_PACKET: {
-            return offsetof(TCPPacket, whist_packet_data.whist_packet) + get_packet_size((WhistPacket*)&tcp_packet->whist_packet_data.whist_packet);
+            return offsetof(TCPPacket, whist_packet_data.whist_packet) +
+                   get_packet_size((WhistPacket*)&tcp_packet->whist_packet_data.whist_packet);
         }
         default: {
             LOG_FATAL("Unknown TCP Packet Type: %d", tcp_packet->type);

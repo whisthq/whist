@@ -615,7 +615,9 @@ static int udp_send_packet(void* raw_context, WhistPacketType packet_type,
         // Potentially use the nack buffer instead though
         if (nack_buffer) {
             packet = &nack_buffer[packet_index];
-            context->nack_buffer_valid[type_index][packet_id % context->nack_num_buffers[type_index]][packet_index] = true;
+            context
+                ->nack_buffer_valid[type_index][packet_id % context->nack_num_buffers[type_index]]
+                                   [packet_index] = true;
         }
 
         // Construct the UDPPacket, potentially into the nack buffer
@@ -1079,8 +1081,8 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
     }
 
     // Connection successful!
-    LOG_INFO("Client received on %d from %s:%d over UDP!\n", port, inet_ntoa(context->addr.sin_addr),
-             ntohs(context->addr.sin_port));
+    LOG_INFO("Client received on %d from %s:%d over UDP!\n", port,
+             inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
 
     return 0;
 }
@@ -1307,10 +1309,10 @@ void udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, i
 
     // Check if the nack buffer we're looking for is valid
     if (context->nack_buffer_valid[type_index][packet_id % context->nack_num_buffers[type_index]]
-                              [packet_index]) {
+                                  [packet_index]) {
         UDPPacket* packet =
             &context->nack_buffers[type_index][packet_id % context->nack_num_buffers[type_index]]
-                                [packet_index];
+                                  [packet_index];
 
         // Check that the nack buffer ID's match
         if (packet->udp_whist_segment_data.id == packet_id) {
@@ -1318,8 +1320,8 @@ void udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, i
             // Wrap in PACKET_VIDEO to prevent verbose audio.c logs
             // TODO: Fix this by making resend_packet not trigger nack logs
             if (type == PACKET_VIDEO) {
-                LOG_INFO("NACKed video packet ID %d Index %d found of length %d. Relaying!", packet_id,
-                        packet_index, packet->udp_whist_segment_data.segment_size);
+                LOG_INFO("NACKed video packet ID %d Index %d found of length %d. Relaying!",
+                         packet_id, packet_index, packet->udp_whist_segment_data.segment_size);
             }
             udp_send_udp_packet(context, packet);
         } else {
@@ -1335,9 +1337,8 @@ void udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, i
         // TODO: Fix the ability to nack for an entire frame, using something like e.g. index -1
         // This will prevent this log from spamming, particularly on Audio
         if (type == PACKET_VIDEO) {
-            LOG_WARNING(
-                "NACKed %s packet %d %d not found",
-                type == PACKET_VIDEO ? "video" : "audio", packet_id, packet_index);
+            LOG_WARNING("NACKed %s packet %d %d not found",
+                        type == PACKET_VIDEO ? "video" : "audio", packet_id, packet_index);
         }
     }
 
@@ -1393,7 +1394,7 @@ void udp_update_ping(UDPContext* context) {
             // if we haven't received the pong we're waiting for, and it's been 75ms,
             // try sending the ping again. Maybe it was dropped.
             else if (context->last_ping_id != context->last_pong_id &&
-                get_timer(&context->last_ping_timer) * MS_IN_SECOND > 75.0) {
+                     get_timer(&context->last_ping_timer) * MS_IN_SECOND > 75.0) {
                 // Mark that we want to send the same ping ID
                 send_ping_id = context->last_ping_id;
             }
