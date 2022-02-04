@@ -746,7 +746,8 @@ int get_tcp_packet_size(TCPPacket* tcp_packet) {
 static void tcp_handle_message(TCPContext* context, TCPPacket* packet) {
     switch (packet->type) {
         case TCP_RECONNECT: {
-            // TODO:
+            // TODO: Do something about this message?
+            break;
         }
         case TCP_PING: {
             TCPPacket response = {0};
@@ -757,6 +758,7 @@ static void tcp_handle_message(TCPContext* context, TCPPacket* packet) {
         }
         case TCP_PONG: {
             context->last_pong_id = max(context->last_pong_id, packet->tcp_ping_data.ping_id);
+            break;
         }
         default: {
             LOG_FATAL("Invalid TCP Packet Type: %d", packet->type);
