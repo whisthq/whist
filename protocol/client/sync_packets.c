@@ -74,7 +74,21 @@ static int multithreaded_sync_udp_packets(void* opaque) {
         // Update the renderer
         renderer_update(whist_renderer);
         // Update the UDP socket
-        TIME_RUN(socket_update(udp_context), NETWORK_READ_PACKET_UDP, statistics_timer);
+        start_timer(&statistics_timer);
+        // Disconnect if the UDP connection was lost
+        if (!socket_update(udp_context)) {
+            LOG_WARNING("UDP Connection Lost!");
+            for(int i = 0; i < NUM_PACKET_TYPES; i++) {
+                if (last_whist_packet[i] != NULL) {
+                    free_packet(udp_context, last_whist_packet[i]);
+                }
+            }
+            // TODO: Remove global
+            connected = false;
+            whist_sleep(1);
+            continue;
+        }
+        log_double_statistic(NETWORK_READ_PACKET_UDP, get_timer(&statistics_timer) * MS_IN_SECOND);
 
         // Handle any messages we've received
         WhistPacket* message_packet = (WhistPacket*)get_packet(udp_context, PACKET_MESSAGE);
@@ -204,10 +218,12 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
     while (run_sync_packets_threads) {
         start_timer(&last_loop_start);
 
-        // TODO: Pull this into tcp.c
         if (!socket_update(tcp_context)) {
-            LOG_INFO("Failed to connect!");
-            // TODO: Handle the connection
+            LOG_WARNING("TCP Connection Lost!");
+            // TODO: Remove global
+            connected = false;
+            whist_sleep(1);
+            continue;
         }
 
         successful_read_or_pull = false;

@@ -130,6 +130,7 @@ typedef struct {
     WhistTimer last_ping_timer;
     WhistTimer last_new_ping_timer;
     WhistTimer last_received_ping_timer;
+    bool connection_lost;
 
     // Latency Calculation (Only used on server)
     WhistMutex timestamp_mutex;
@@ -333,6 +334,10 @@ static bool udp_update(void* raw_context) {
     FATAL_ASSERT(raw_context != NULL);
     UDPContext* context = (UDPContext*)raw_context;
 
+    if (context->connection_lost) {
+        return false;
+    }
+
     // *************
     // Keep the connection alive and check connection health with pings
     // *************
@@ -340,6 +345,11 @@ static bool udp_update(void* raw_context) {
     // Check if we need to ping
     // This implicitly keeps the connection alive as well
     udp_update_ping(context);
+
+    // udp_update_ping may have detected a newly lost connection
+    if (context->connection_lost) {
+        return false;
+    }
 
     // *************
     // Potentially ask for new network settings based on the current network statistics
@@ -499,6 +509,10 @@ static int udp_send_packet(void* raw_context, WhistPacketType packet_type,
     UDPContext* context = (UDPContext*)raw_context;
     FATAL_ASSERT(context != NULL);
 
+    if (context->connection_lost) {
+        return -1;
+    }
+
     // Update what the most recent start of stream ID was
     if (start_of_stream) {
         context->last_start_of_stream_id[packet_type] = packet_id;
@@ -643,6 +657,10 @@ static void* udp_get_packet(void* raw_context, WhistPacketType type) {
     UDPContext* context = (UDPContext*)raw_context;
     RingBuffer* ring_buffer = context->ring_buffers[type];
 
+    if (context->connection_lost) {
+        return NULL;
+    }
+
     // TODO: This function is a bit too audio/video specific,
     // Rather than data-agnostic
 
@@ -730,6 +748,10 @@ static bool udp_get_pending_stream_reset(void* raw_context, WhistPacketType type
     FATAL_ASSERT(raw_context != NULL);
     UDPContext* context = (UDPContext*)raw_context;
 
+    if (context->connection_lost) {
+        return false;
+    }
+
     if (context->reset_data[type].pending_stream_reset) {
         int greatest_failed_id = context->reset_data[type].greatest_failed_id;
         // We only need to propagate a stream reset once
@@ -798,6 +820,8 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     // Create the mutex
     context->timestamp_mutex = whist_create_mutex();
     context->last_ping_id = -1;
+    context->last_pong_id = -1;
+    context->connection_lost = false;
     context->current_network_settings = default_network_settings;
     context->desired_network_settings = default_network_settings;
     start_timer(&context->last_network_settings_time);
@@ -910,6 +934,10 @@ int udp_get_num_pending_frames(SocketContext* socket_context, WhistPacketType ty
     UDPContext* context = (UDPContext*)socket_context->context;
     FATAL_ASSERT(context != NULL);
 
+    if (context->connection_lost) {
+        return 0;
+    }
+
     RingBuffer* ring_buffer = context->ring_buffers[(int)type];
 
     if (ring_buffer == NULL) {
@@ -1002,8 +1030,14 @@ timestamp_us udp_get_client_input_timestamp(SocketContext* socket_context) {
 void udp_resend_packet(SocketContext* socket_context, WhistPacketType type, int id, int index) {
     FATAL_ASSERT(socket_context != NULL);
     FATAL_ASSERT(socket_context->context != NULL);
+    UDPContext* context = (UDPContext*)socket_context->context;
+
+    if (context->connection_lost) {
+        return false;
+    }
+
     // Treat this the same as a nack
-    udp_handle_nack((UDPContext*)socket_context->context, type, id, index);
+    udp_handle_nack(context, type, id, index);
 }
 
 /*
@@ -1351,14 +1385,14 @@ void udp_update_ping(UDPContext* context) {
                 // If we've failed too many times consecutively, mark as disconnected
                 if (context->consecutive_ping_failures == 4) {
                     LOG_WARNING("Server disconnected: 4 consecutive ping failures.");
-                    // TODO: Remove ugly extern global logic
-                    connected = false;
+                    context->connection_lost = true;
+                    send_ping_id = -1;
                 }
             }
 
             // if we haven't received the pong we're waiting for, and it's been 75ms,
             // try sending the ping again. Maybe it was dropped.
-            if (context->last_ping_id != context->last_pong_id &&
+            else if (context->last_ping_id != context->last_pong_id &&
                 get_timer(&context->last_ping_timer) * MS_IN_SECOND > 75.0) {
                 // Mark that we want to send the same ping ID
                 send_ping_id = context->last_ping_id;

@@ -31,7 +31,6 @@ Defines
 typedef enum {
     TCP_PING,
     TCP_PONG,
-    TCP_RECONNECT,
     TCP_WHIST_PACKET,
 } TCPPacketType;
 
@@ -221,7 +220,7 @@ static bool tcp_update(void* raw_context) {
     TCPContext* context = raw_context;
 
     if (context->is_server) {
-        // TODO: Check for new connections
+        // TODO: Check for new connections?
     } else {
         // Client-side TCP code
         if (context->last_ping_id == context->last_pong_id) {
@@ -248,12 +247,11 @@ static bool tcp_update(void* raw_context) {
         }
 
         if (context->connection_lost) {
-            // TODO: Try to reconnect for TCP_PING_MAX_RECONNECTION_TIME_SEC seconds
-            return false;
+            // TODO: Try to reconnect for TCP_PING_MAX_RECONNECTION_TIME_SEC seconds?
         }
     }
 
-    return true;
+    return !context->connection_lost;
 }
 
 // NOTE that this function is in the hotpath.
@@ -264,6 +262,10 @@ static int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, 
     FATAL_ASSERT(raw_context != NULL);
     TCPContext* context = raw_context;
     UNUSED(start_of_stream);
+
+    if (context->connection_lost) {
+        return -1;
+    }
 
     if (id != -1) {
         LOG_ERROR("ID should be -1 when sending over TCP!");
@@ -298,6 +300,10 @@ static int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, 
 static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
     FATAL_ASSERT(raw_context != NULL);
     TCPContext* context = raw_context;
+
+    if (context->connection_lost) {
+        return NULL;
+    }
 
     if (get_timer(&context->last_recvp) * MS_IN_SECOND < RECV_INTERVAL_MS) {
         // Return early if it's been too soon since the last recv
@@ -725,11 +731,6 @@ int tcp_send_constructed_packet(TCPContext* context, TCPPacket* packet) {
 
 int get_tcp_packet_size(TCPPacket* tcp_packet) {
     switch (tcp_packet->type) {
-        case TCP_RECONNECT: {
-            // We'll just take the offset to the union,
-            // Since there's no other data here
-            return offsetof(TCPPacket, tcp_ping_data);
-        }
         case TCP_PING:
         case TCP_PONG: {
             return offsetof(TCPPacket, tcp_ping_data) + sizeof(tcp_packet->tcp_ping_data);
@@ -745,10 +746,6 @@ int get_tcp_packet_size(TCPPacket* tcp_packet) {
 
 static void tcp_handle_message(TCPContext* context, TCPPacket* packet) {
     switch (packet->type) {
-        case TCP_RECONNECT: {
-            // TODO: Do something about this message?
-            break;
-        }
         case TCP_PING: {
             TCPPacket response = {0};
             response.type = TCP_PONG;
