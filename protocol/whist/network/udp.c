@@ -140,6 +140,8 @@ typedef struct {
 
     // Nack Buffer Data
     UDPPacket** nack_buffers[NUM_PACKET_TYPES];
+    // Whether or not a nack buffer is being used right now
+    bool** nack_buffer_valid[NUM_PACKET_TYPES];
     // This mutex will protect the data in nack_buffers
     WhistMutex nack_mutex[NUM_PACKET_TYPES];
     int nack_num_buffers[NUM_PACKET_TYPES];
@@ -592,9 +594,17 @@ static int udp_send_packet(void* raw_context, WhistPacketType packet_type,
             whist_lock_mutex(context->nack_mutex[type_index]);
         }
 
-        // Construct the UDPPacket, potentially into the nack buffer
+        // The UDPPacket that we will construct
         UDPPacket local_packet;
-        UDPPacket* packet = nack_buffer ? &nack_buffer[packet_index] : &local_packet;
+        UDPPacket* packet = &local_packet;
+
+        // Potentially use the nack buffer instead though
+        if (nack_buffer) {
+            packet = &nack_buffer[packet_index];
+            context->nack_buffer_valid[type_index][packet_id % context->nack_num_buffers[type_index]][packet_index] = true;
+        }
+
+        // Construct the UDPPacket, potentially into the nack buffer
         packet->type = UDP_WHIST_SEGMENT;
         packet->udp_whist_segment_data.whist_type = packet_type;
         packet->udp_whist_segment_data.id = packet_id;
@@ -743,8 +753,10 @@ static void udp_destroy_socket_context(void* raw_context) {
         if (context->nack_buffers[type_id] != NULL) {
             for (int i = 0; i < context->nack_num_buffers[type_id]; i++) {
                 deallocate_region(context->nack_buffers[type_id][i]);
+                free(context->nack_buffer_valid[type_id][i]);
             }
             free(context->nack_buffers[type_id]);
+            free(context->nack_buffer_valid[type_id]);
             context->nack_buffers[type_id] = NULL;
         }
     }
@@ -867,6 +879,7 @@ void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType typ
     // Memory isn't an issue here, because we'll use our region allocator,
     // so unused memory never gets allocated by the kernel
     context->nack_buffers[type_index] = malloc(sizeof(UDPPacket*) * num_buffers);
+    context->nack_buffer_valid[type_index] = malloc(sizeof(bool*) * num_buffers);
     context->nack_mutex[type_index] = whist_create_mutex();
     context->nack_num_buffers[type_index] = num_buffers;
     // This is just used to sanitize the pre-FEC buffer that's passed into send_packet
@@ -877,8 +890,11 @@ void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType typ
     for (int i = 0; i < num_buffers; i++) {
         // Allocate a buffer of max_num_ids WhistPacket's
         context->nack_buffers[type_index][i] = allocate_region(sizeof(UDPPacket) * max_num_ids);
+        // Allocate nack buffer validity
+        // We hold this separately, since writing anything to the region causes it to allocate
+        context->nack_buffer_valid[type_index][i] = malloc(sizeof(bool) * max_num_ids);
         for (int j = 0; j < max_num_ids; j++) {
-            context->nack_buffers[type_index][i][j].udp_whist_segment_data.id = -1;
+            context->nack_buffer_valid[type_index][i][j] = false;
         }
     }
 }
@@ -1254,31 +1270,43 @@ void udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, i
     // retrieve the WhistPacket from the nack buffer and send using `udp_send_udp_packet`
     // TODO: change to WhistUDPPacket
     whist_lock_mutex(context->nack_mutex[type_index]);
-    UDPPacket* packet =
-        &context->nack_buffers[type_index][packet_id % context->nack_num_buffers[type_index]]
-                              [packet_index];
 
-    // This will be -1 for an uninitialized nack_buffer entry, but packet_id > 0 anyway
-    if (packet->udp_whist_segment_data.id == packet_id) {
-        packet->udp_whist_segment_data.is_a_nack = true;
-        // Wrap in PACKET_VIDEO to prevent verbose audio.c logs
-        // TODO: Fix this by making resend_packet not trigger nack logs
-        if (type == PACKET_VIDEO) {
-            LOG_INFO("NACKed video packet ID %d Index %d found of length %d. Relaying!", packet_id,
-                     packet_index, packet->udp_whist_segment_data.segment_size);
+    // Check if the nack buffer we're looking for is valid
+    if (context->nack_buffer_valid[type_index][packet_id % context->nack_num_buffers[type_index]]
+                              [packet_index]) {
+        UDPPacket* packet =
+            &context->nack_buffers[type_index][packet_id % context->nack_num_buffers[type_index]]
+                                [packet_index];
+
+        // Check that the nack buffer ID's match
+        if (packet->udp_whist_segment_data.id == packet_id) {
+            packet->udp_whist_segment_data.is_a_nack = true;
+            // Wrap in PACKET_VIDEO to prevent verbose audio.c logs
+            // TODO: Fix this by making resend_packet not trigger nack logs
+            if (type == PACKET_VIDEO) {
+                LOG_INFO("NACKed video packet ID %d Index %d found of length %d. Relaying!", packet_id,
+                        packet_index, packet->udp_whist_segment_data.segment_size);
+            }
+            udp_send_udp_packet(context, packet);
+        } else {
+            if (type == PACKET_VIDEO) {
+                LOG_WARNING(
+                    "NACKed %s packet %d %d not found, ID %d was "
+                    "located instead.",
+                    type == PACKET_VIDEO ? "video" : "audio", packet_id, packet_index,
+                    packet->udp_whist_segment_data.id);
+            }
         }
-        udp_send_udp_packet(context, packet);
     } else {
-        // TODO: Fix the ability to nack for an entire frame, using index -1
+        // TODO: Fix the ability to nack for an entire frame, using something like e.g. index -1
         // This will prevent this log from spamming, particularly on Audio
         if (type == PACKET_VIDEO) {
             LOG_WARNING(
-                "NACKed %s packet %d %d not found, ID %d was "
-                "located instead.",
-                type == PACKET_VIDEO ? "video" : "audio", packet_id, packet_index,
-                packet->udp_whist_segment_data.id);
+                "NACKed %s packet %d %d not found",
+                type == PACKET_VIDEO ? "video" : "audio", packet_id, packet_index);
         }
     }
+
     whist_unlock_mutex(context->nack_mutex[type_index]);
 }
 
