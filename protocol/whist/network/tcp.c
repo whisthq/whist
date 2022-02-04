@@ -430,7 +430,7 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
 static void tcp_free_packet(void* raw_context, WhistPacket* whist_packet) {
     FATAL_ASSERT(raw_context != NULL);
     // Free the underlying TCP Packet
-    TCPPacket* tcp_packet = (char*)whist_packet - offsetof(TCPPacket, whist_packet_data.whist_packet);
+    TCPPacket* tcp_packet = (TCPPacket*)((char*)whist_packet - offsetof(TCPPacket, whist_packet_data.whist_packet));
     deallocate_region(tcp_packet);
 }
 
