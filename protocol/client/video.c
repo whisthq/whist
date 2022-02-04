@@ -41,10 +41,6 @@ Includes
 #define USE_HARDWARE true
 #define NO_NACKS_DURING_IFRAME false
 
-// Global Variables
-
-extern volatile double latency;
-
 // Number of videoframes to have in the ringbuffer
 #define RECV_FRAMES_BUFFER_SIZE 275
 

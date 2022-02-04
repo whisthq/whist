@@ -71,7 +71,7 @@ MouseMotionAccumulation mouse_state = {0};
 extern unsigned short port_mappings[USHRT_MAX + 1];
 
 volatile bool using_piped_arguments;
-const struct option client_cmd_options[] = {
+static const struct option client_cmd_options[] = {
     {"width", required_argument, NULL, 'w'},
     {"height", required_argument, NULL, 'h'},
     {"bitrate", required_argument, NULL, 'b'},
@@ -93,7 +93,7 @@ const struct option client_cmd_options[] = {
     {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
     // end with NULL-termination
     {0, 0, 0, 0}};
-const char *usage;
+static const char *usage;
 
 #define INCOMING_MAXLEN 127
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument

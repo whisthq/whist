@@ -35,8 +35,8 @@ extern "C" {
 
 // Set of modifiers, for detecting if a key is a modifier
 // CTRL = control, SHIFT = shift, ALT = alt/option, GUI = windows/command
-set<WhistKeycode> modifiers = {FK_LCTRL, FK_LSHIFT, FK_LALT, FK_LGUI,
-                               FK_RCTRL, FK_RSHIFT, FK_RALT, FK_RGUI};
+static const set<WhistKeycode> modifiers = {FK_LCTRL, FK_LSHIFT, FK_LALT, FK_LGUI,
+                                            FK_RCTRL, FK_RSHIFT, FK_RALT, FK_RGUI};
 
 // Will hash vectors so that we can make an hmap out of them
 struct VectorHasher {
@@ -50,7 +50,7 @@ struct VectorHasher {
 };
 
 // The modmap that occurs before the full keyboard mapping
-hmap<WhistKeycode, WhistKeycode> modmap = {
+static hmap<WhistKeycode, WhistKeycode> modmap = {
     // Swap gui and ctrl
     {FK_LGUI, FK_LCTRL},
     {FK_LCTRL, FK_LGUI},
@@ -139,12 +139,12 @@ void init_keyboard_mapping() {
     keyboard_mappings = new_keyboard_map;
 }
 
-bool initialized = false;
+static bool initialized = false;
 
 // Global state, when a keymap is being held
-bool holding_keymap = false;
-vector<WhistKeycode> currently_pressed;
-vector<WhistKeycode> new_key_combination;
+static bool holding_keymap = false;
+static vector<WhistKeycode> currently_pressed;
+static vector<WhistKeycode> new_key_combination;
 
 extern "C" int emit_mapped_key_event(InputDevice* input_device, WhistOSType os_type,
                                      WhistKeycode key_code, int pressed) {

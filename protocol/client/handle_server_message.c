@@ -37,8 +37,6 @@ Includes
 
 bool client_exiting = false;
 extern int audio_frequency;
-extern volatile double latency;
-extern volatile int try_amount;
 
 /*
 ============================
