@@ -214,7 +214,7 @@ int runcmd(const char *cmdline, char **response) {
          * like a text file.
          */
 
-        LOG_INFO("1: %s", cmdline);
+        LOG_INFO("1");
 
         char *cmd = safe_malloc(strlen(cmdline) + 128);
         snprintf(cmd, strlen(cmdline) + 128, "%s 2>/dev/null", cmdline);
