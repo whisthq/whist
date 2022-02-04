@@ -219,15 +219,13 @@ static bool tcp_update(void* raw_context) {
     FATAL_ASSERT(raw_context != NULL);
     TCPContext* context = raw_context;
 
-    int ret = 0;
-
     if (context->is_server) {
         // TODO: Check for new connections
     } else {
         // Client-side TCP code
-
-        // If we've received the last ping,
         if (context->last_ping_id == context->last_pong_id) {
+            // If we've received the last ping,
+
             // Send the next one after TCP_PING_INTERVAL_SEC
             if (get_timer(&context->last_ping_timer) > TCP_PING_INTERVAL_SEC) {
                 // Send the ping
@@ -240,6 +238,7 @@ static bool tcp_update(void* raw_context) {
                 start_timer(&context->last_ping_timer);
             }
         } else {
+            // If we haven't received the last ping,
             // If TCP_PING_MAX_WAIT_SEC has passed, the connection has been lost
             if (get_timer(&context->last_ping_timer) > TCP_PING_MAX_WAIT_SEC) {
                 LOG_WARNING("TCP Connection has been lost");
@@ -248,11 +247,12 @@ static bool tcp_update(void* raw_context) {
         }
 
         if (context->connection_lost) {
-            // Try to reconnect
+            // TODO: Try to reconnect for TCP_PING_MAX_RECONNECTION_TIME_SEC seconds
+            return false;
         }
     }
 
-    return ret >= 0;
+    return true;
 }
 
 // NOTE that this function is in the hotpath.

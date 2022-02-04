@@ -334,10 +334,6 @@ static void whist_server_state_init(whist_server_state* state, whist_server_conf
 
     // Mark initial update encoder
     state->update_encoder = true;
-
-    state->discovery_listen = INVALID_SOCKET;
-    state->tcp_listen = INVALID_SOCKET;
-    state->udp_listen = INVALID_SOCKET;
 }
 
 #ifdef _WIN32
