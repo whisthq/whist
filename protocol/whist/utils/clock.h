@@ -1,9 +1,11 @@
-#ifndef CLOCK_H
-#define CLOCK_H
 /**
- * Copyright (c) 2021-2022 Whist Technologies, Inc.
+ * @copyright Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file clock.h
  * @brief This file contains the helper functions for timing code.
+ */
+#ifndef WHIST_UTILS_CLOCK_H
+#define WHIST_UTILS_CLOCK_H
+/*
 ============================
 Usage
 ============================
@@ -26,6 +28,25 @@ Includes
 #include <time.h>
 #endif
 
+/**
+ * @defgroup timers Timers
+ *
+ * Whist API for timers.
+ *
+ * This provides a way to measure how long a section of code takes or
+ * how much real time has elapsed since some event.
+ *
+ * Example:
+ * @code{.c}
+ * WhistTimer timer;
+ * start_timer(&timer);
+ * foo();
+ * printf("foo() took %f seconds to run.", get_timer(&timer));
+ * @endcode
+ *
+ * @{
+ */
+
 /*
 ============================
 Custom Types
@@ -44,6 +65,12 @@ typedef struct WhistTimerOpaque {
     uint64_t opaque[2];
 } WhistTimer;
 
+/**
+ * Timestamp type.
+ *
+ * This represents a number of microseconds since the epoch.  Returned
+ * by current_time_us().
+ */
 typedef uint64_t timestamp_us;
 
 /*
@@ -65,13 +92,15 @@ void start_timer(WhistTimer* timer);
  *                                 the last start_timer
  *
  * @param timer		           Pointer to the timer to query.
+ *
+ * @return                         Seconds since the timer was started.
  */
 double get_timer(const WhistTimer* timer);
 
 /**
  * @brief                          Returns the current time as a string
  *
- * @returns						   The current time as a string
+ * @returns                        The current time as a string
  */
 char* current_time_str(void);
 
@@ -82,4 +111,6 @@ char* current_time_str(void);
  */
 timestamp_us current_time_us(void);
 
-#endif
+/** @} */
+
+#endif /* WHIST_UTILS_CLOCK_H */
