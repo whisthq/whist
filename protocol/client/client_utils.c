@@ -259,11 +259,8 @@ static int evaluate_arg(int eval_opt, char *eval_optarg) {
                     MAX_URL_LENGTH, strlen(eval_optarg));
                 break;
             }
-            LOG_INFO("Allocating new_tab_url string of size %lu", strlen(eval_optarg) + 1);
             new_tab_url = calloc(sizeof(char), strlen(eval_optarg) + 1);
             strcpy((char *)new_tab_url, eval_optarg);
-
-            LOG_INFO("new_tab_url: %s", new_tab_url);
 
             break;
         }
@@ -726,29 +723,18 @@ void send_new_tab_url_if_needed(void) {
         LOG_INFO("Sending message to open URL in new tab");
         const size_t url_length = strlen((const char *)new_tab_url);
         const size_t wcmsg_size = sizeof(WhistClientMessage) + url_length + 1;
-
-        LOG_INFO("url_length:%lu, wcmsg_size:%lu", url_length, wcmsg_size);
-
         WhistClientMessage *wcmsg = safe_malloc(wcmsg_size);
         memset(wcmsg, 0, sizeof(*wcmsg));
-        LOG_INFO("Created WhistClientMessage for new url and set it to 0");
         wcmsg->type = MESSAGE_OPEN_URL;
-        LOG_INFO("Set message type to MESSAGE_OPEN_URL");
         memcpy(&wcmsg->url_to_open, (const char *)new_tab_url, url_length + 1);
-        LOG_INFO("copied new url to WhistClientMessage");
         send_wcmsg(wcmsg);
-        LOG_INFO("sent WhistClientMessage");
         free(wcmsg);
-        LOG_INFO("freed WhistClientMessage");
 
         free((char *)new_tab_url);
-        LOG_INFO("freed new_tab_url");
         new_tab_url = NULL;
-        LOG_INFO("set new_tab_url to NULL");
 
         // Unmimimize the window if needed
         if (SDL_GetWindowFlags((SDL_Window *)window) & SDL_WINDOW_MINIMIZED) {
-            LOG_INFO("unminimizing window");
             SDL_RestoreWindow((SDL_Window *)window);
         }
     }
