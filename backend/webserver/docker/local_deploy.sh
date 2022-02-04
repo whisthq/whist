@@ -39,7 +39,8 @@ if [ ! -f .env ]; then
 fi
 
 # add env vars to current env. these tell us the host, db, role, pwd
-export "$(xargs < .env)"
+# shellcheck disable=SC2046
+export $(xargs -a .env)
 
 export AWS_INSTANCE_TYPE_TO_LAUNCH="g4dn.2xlarge"
 

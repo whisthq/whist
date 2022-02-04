@@ -24,7 +24,8 @@ else
   echo "=== Make sure to run tests/setup/setup_tests.sh once prior to this ==="
 
   # add env vars to current env. these tell us the host, db, role, pwd
-  export "$(xargs < ../docker/.env)"
+  # shellcheck disable=SC2046
+  export $(xargs -a ../docker/.env)
 
   # override POSTGRES_HOST and POSTGRES_PORT to be local
   export POSTGRES_HOST="localhost"
@@ -48,7 +49,12 @@ cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report xml --cov=.
 
 # pass args to pytest, including Codecov flags for relevant webserver folders, and ignore the scripts/
 # folder as it is irrelevant to unit/integration testing
-(cd .. && pytest --ignore=scripts/ "$cov" "$@")
+# NOTE: The variable cov contains whitespace-separated flags that should be
+# passed to the pytest command. We want these flags to be treated as separate
+# arguments rather than a single argument, so we do NOT enclose $cov in double
+# quotes.
+# shellcheck disable=SC2086
+(cd .. && pytest --ignore=scripts/ $cov "$@")
 
 # Download the Codecov uploader
 (cd .. && curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov)
