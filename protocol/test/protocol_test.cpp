@@ -709,6 +709,41 @@ TEST_F(ProtocolTest, LogStatistic) {
     destroy_logger();
 }
 
+// Test threaded logging.
+// This logs in a tight loop on four threads simultaneously for a second.
+
+static int log_test_thread(void* arg) {
+    int thr = (intptr_t)arg;
+    uint64_t k;
+
+    WhistTimer timer;
+    start_timer(&timer);
+    for (k = 0;; k++) {
+        LOG_INFO("Thread %d line %" PRIu64 "!", thr, k);
+        if (get_timer(&timer) >= 1.0) break;
+    }
+
+    return thr;
+}
+
+TEST_F(ProtocolTest, LogThreadTest) {
+    whist_init_logger();
+
+    WhistThread threads[4];
+    for (int i = 0; i < 4; i++) {
+        threads[i] = whist_create_thread(&log_test_thread, "Log Test Thread", (void*)(intptr_t)i);
+        EXPECT_TRUE(threads[i]);
+    }
+
+    for (int i = 0; i < 4; i++) {
+        int ret;
+        whist_wait_thread(threads[i], &ret);
+        EXPECT_EQ(ret, i);
+    }
+
+    destroy_logger();
+}
+
 /**
  * utils/color.c
  **/

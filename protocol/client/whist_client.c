@@ -353,7 +353,7 @@ int whist_client_main(int argc, char* argv[]) {
 
         WhistTimer handshake_time;
         start_timer(&handshake_time);  // start timer for measuring handshake time
-        LOG_INFO("Begin measuring handshake, current time = %s", current_time_str());
+        LOG_INFO("Begin measuring handshake");
 
         if (discover_ports(&using_stun) != 0) {
             LOG_WARNING("Failed to discover ports.");
@@ -362,8 +362,7 @@ int whist_client_main(int argc, char* argv[]) {
 
         // Log to METRIC for cross-session tracking and INFO for developer-facing logging
         double discover_ports_time = get_timer(&handshake_time);
-        LOG_INFO("Time elasped after discover_ports() = %f, current time = %s", discover_ports_time,
-                 current_time_str());
+        LOG_INFO("Time elasped after discover_ports() = %f", discover_ports_time);
         LOG_METRIC("\"HANDSHAKE_DISCOVER_PORTS_TIME\" : %f", discover_ports_time);
 
         if (connect_to_server(using_stun) != 0) {
@@ -373,8 +372,7 @@ int whist_client_main(int argc, char* argv[]) {
 
         // Log to METRIC for cross-session tracking and INFO for developer-facing logging
         double connect_to_server_time = get_timer(&handshake_time);
-        LOG_INFO("Time elasped after connect_to_server() = %f, current time= %s",
-                 connect_to_server_time, current_time_str());
+        LOG_INFO("Time elasped after connect_to_server() = %f", connect_to_server_time);
         LOG_METRIC("\"HANDSHAKE_CONNECT_TO_SERVER_TIME\" : %f", connect_to_server_time);
 
         if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {

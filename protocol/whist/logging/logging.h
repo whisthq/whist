@@ -52,7 +52,8 @@ Defines
 #ifndef __ROOT_FILE__
 #define __ROOT_FILE__ ""
 #endif
-#define _FILE ((sizeof(__ROOT_FILE__) < sizeof(__FILE__)) ? (&__FILE__[sizeof(__ROOT_FILE__)]) : "")
+#define LOG_FILE_NAME \
+    ((sizeof(__ROOT_FILE__) < sizeof(__FILE__)) ? (&__FILE__[sizeof(__ROOT_FILE__)]) : "")
 #define NO_LOG 0x00
 #define ERROR_LEVEL 0x01
 #define WARNING_LEVEL 0x02
@@ -65,8 +66,16 @@ Defines
 #define LOG_LEVEL DEBUG_LEVEL
 #endif
 
-#define LOG_FMT "%s | %-7s | %-35s | %-30s:%-5d | "
-#define LOG_ARGS(LOG_TAG) current_time_str(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
+//                     Timestamp    File name   Line number
+//                         |   Tag      |  Function  |
+//                         |    |       |       |    |
+#define LOG_CONTEXT_FORMAT " | %-7s | %-35s | %-30s:%-5d | "
+
+#define LOG_MESSAGE(tag, message, ...)                                                          \
+    do {                                                                                        \
+        internal_logging_printf(tag##_TAG, LOG_FILE_NAME, __FUNCTION__, __LINE__, message "\n", \
+                                ##__VA_ARGS__);                                                 \
+    } while (0)
 
 #define NEWLINE "\n"
 // Cast to const chars so that comparison against XYZ_TAG is defined
@@ -85,22 +94,14 @@ extern const char *const debug_tag,
 // so that `if(cond) LOG;` works as expected
 
 #if LOG_LEVEL >= DEBUG_LEVEL
-#define LOG_DEBUG(message, ...)                                                          \
-    do {                                                                                 \
-        internal_logging_printf(DEBUG_TAG, LOG_FMT message NEWLINE, LOG_ARGS(DEBUG_TAG), \
-                                ##__VA_ARGS__);                                          \
-    } while (0)
+#define LOG_DEBUG(message, ...) LOG_MESSAGE(DEBUG, message, ##__VA_ARGS__)
 #else
 #define LOG_DEBUG(message, ...)
 #endif
 
 // LOG_INFO refers to something that can happen, and does not imply that anything went wrong
 #if LOG_LEVEL >= INFO_LEVEL
-#define LOG_INFO(message, ...)                                                         \
-    do {                                                                               \
-        internal_logging_printf(INFO_TAG, LOG_FMT message NEWLINE, LOG_ARGS(INFO_TAG), \
-                                ##__VA_ARGS__);                                        \
-    } while (0)
+#define LOG_INFO(message, ...) LOG_MESSAGE(INFO, message, ##__VA_ARGS__)
 #else
 #define LOG_INFO(message, ...)
 #endif
@@ -110,10 +111,7 @@ extern const char *const debug_tag,
 // For example :
 // LOG_METRIC("\"Latency\" : %d", latency);
 #if LOG_LEVEL >= METRIC_LEVEL
-#define LOG_METRIC(message, ...)                                                       \
-    do {                                                                               \
-        internal_logging_printf(METRIC_TAG, "{ " message " }" NEWLINE, ##__VA_ARGS__); \
-    } while (0)
+#define LOG_METRIC(message, ...) LOG_MESSAGE(METRIC, message, ##__VA_ARGS__)
 #else
 #define LOG_METRIC(message, ...)
 #endif
@@ -123,11 +121,7 @@ extern const char *const debug_tag,
 // simply the host's situation (i.e. no audio device etc)
 // TLDR ~ Something dubious happened, but not sure if it's an issue or not though.
 #if LOG_LEVEL >= WARNING_LEVEL
-#define LOG_WARNING(message, ...)                                                            \
-    do {                                                                                     \
-        internal_logging_printf(WARNING_TAG, LOG_FMT message NEWLINE, LOG_ARGS(WARNING_TAG), \
-                                ##__VA_ARGS__);                                              \
-    } while (0)
+#define LOG_WARNING(message, ...) LOG_MESSAGE(WARNING, message, ##__VA_ARGS__)
 #else
 #define LOG_WARNING(message, ...)
 #endif
@@ -137,11 +131,7 @@ extern const char *const debug_tag,
 // For OS errors, use LOG_WARNING when we want to try to recover, and LOG_FATAL when we do not.
 // TLDR ~ Problems with *our code* that we can still and want to, recover from.
 #if LOG_LEVEL >= ERROR_LEVEL
-#define LOG_ERROR(message, ...)                                                          \
-    do {                                                                                 \
-        internal_logging_printf(ERROR_TAG, LOG_FMT message NEWLINE, LOG_ARGS(ERROR_TAG), \
-                                ##__VA_ARGS__);                                          \
-    } while (0)
+#define LOG_ERROR(message, ...) LOG_MESSAGE(ERROR, message, ##__VA_ARGS__)
 #else
 #define LOG_ERROR(message, ...)
 #endif
@@ -151,11 +141,10 @@ extern const char *const debug_tag,
 // If an OS-related error code is recoverable, but exceedingly unlikely or unheard of thusfar
 // (e.g. mutex creation failing), LOG_FATAL is highly preferred over attempting a recovery.
 // TLDR ~ Problems with *the OS* that are unexpected and not easily recoverable from.
-#define LOG_FATAL(message, ...)                                            \
-    do {                                                                   \
-        internal_logging_printf(FATAL_ERROR_TAG, LOG_FMT message NEWLINE,  \
-                                LOG_ARGS(FATAL_ERROR_TAG), ##__VA_ARGS__); \
-        terminate_protocol(WHIST_EXIT_FAILURE);                            \
+#define LOG_FATAL(message, ...)                           \
+    do {                                                  \
+        LOG_MESSAGE(FATAL_ERROR, message, ##__VA_ARGS__); \
+        terminate_protocol(WHIST_EXIT_FAILURE);           \
     } while (0)
 
 // FATAL_ASSERT will fatally exist when something absurd happens,
@@ -193,13 +182,16 @@ void whist_init_logger(void);
  *                                 please use the macros LOG_INFO, LOG_WARNING, etc
  *
  * @param tag                      The tag-level to log with
- *
+ * @param file_name                Name of the file this is being called from.
+ * @param function                 Name of the function this is being called from.
+ * @param line_number              Line number this is being called from.
  * @param fmt_str                  The format string to printf with
  */
 #ifdef __GNUC__
-__attribute__((format(printf, 2, 3)))
+__attribute__((format(printf, 5, 6)))
 #endif
-void internal_logging_printf(const char* tag, const char* fmt_str, ...);
+void internal_logging_printf(const char* tag, const char *file_name, const char *function,
+                             int line_number, const char* fmt_str, ...);
 
 /**
  * @brief                          This function will immediately flush all of the logs,

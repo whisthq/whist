@@ -380,30 +380,14 @@ void destroy_logger(void) {
     }
 }
 
-// Core multithreaded printf function, that accepts va_list and log boolean
-static void mprintf(const char* tag, const char* fmt_str, va_list args) {
-    // After calls to function which invoke VA args, the args are
-    // undefined so we copy
-    va_list args_copy;
-    va_copy(args_copy, args);
-
-    // Get the length of the formatted string with args replaced.
-    int len = vsnprintf(NULL, 0, fmt_str, args) + 1;
-
-    // Print to a temp buf so we can split on \n
-    char* full_message = safe_malloc(sizeof(char) * (len + 1));
-    vsnprintf(full_message, len, fmt_str, args_copy);
-
-    // Make sure to close the copied args
-    va_end(args_copy);
-
+static void logger_queue_multiple_lines(const char* tag, char* message) {
     // use strtok_r over strtok due to thread safety
     char* strtok_context = NULL;  // strtok_r context var
 
     // Log the first line out of the loop because we log it with
     // the full log formatting time | type | file | log_msg
     // subsequent lines start with | followed by 4 spaces
-    char* current_line = strtok_r(full_message, "\n", &strtok_context);
+    char* current_line = strtok_r(message, "\n", &strtok_context);
     logger_queue_line(tag, NULL, current_line);
 
     // Now, log the rest of the lines with the indent of 4 spaces
@@ -412,29 +396,77 @@ static void mprintf(const char* tag, const char* fmt_str, va_list args) {
         logger_queue_line(tag, "|    ", current_line);
         current_line = strtok_r(NULL, "\n", &strtok_context);
     }
-
-    // Free the temp buf, making sure to do it after we're done with `strtok_r`
-    free(full_message);
 }
 
 // Our vararg function that gets called from LOG_INFO, LOG_WARNING, etc macros
-void internal_logging_printf(const char* tag, const char* fmt_str, ...) {
-    va_list args;
-    va_start(args, fmt_str);
+void internal_logging_printf(const char* tag, const char* file_name, const char* function,
+                             int line_number, const char* fmt_str, ...) {
+    char stack_buffer[512];
+    char* heap_buffer = NULL;
+    char* buffer = stack_buffer;
+    int position = 0;
+    int remaining_size = sizeof(stack_buffer);
+    int ret;
+
+    // Attempt to construct the message on the stack, but if it is too
+    // long then allocate a heap buffer to use instead.  It is assumed
+    // here that the context information will not exceed the default
+    // size of the heap buffer - if this is not true then that section
+    // will be dropped but the rest should still be logged.
+
+    ret = current_time_str(buffer + position, remaining_size);
+    if (ret > 0 && ret <= remaining_size) {
+        position += ret;
+        remaining_size -= ret;
+    }
+
+    ret = snprintf(buffer + position, remaining_size, LOG_CONTEXT_FORMAT, tag, file_name, function,
+                   line_number);
+    if (ret > 0 && ret <= remaining_size) {
+        position += ret;
+        remaining_size -= ret;
+    }
+
+    va_list args1, args2;
+    va_start(args1, fmt_str);
+    va_copy(args2, args1);
+
+    ret = vsnprintf(buffer + position, remaining_size, fmt_str, args1);
+    if (ret < 0) {
+        // Message is invalid, but we can still try to print the context.
+        buffer[position] = '\0';
+    } else if (ret >= 0 && ret < remaining_size) {
+        // Message fits in stack buffer, yay.
+    } else {
+        // Message doesn't fit in stack buffer, allocate a new buffer on
+        // the heap to use instead.
+        remaining_size = ret + 1;
+        heap_buffer = safe_malloc(position + remaining_size);
+        memcpy(heap_buffer, buffer, position);
+        buffer = heap_buffer;
+        ret = vsnprintf(buffer + position, remaining_size, fmt_str, args2);
+        if (ret < 0) {
+            // Something has gone horribly wrong.
+            buffer[position] = '\0';
+        }
+    }
 
     atomic_fetch_add(&logger_thread_writers, 1);
 
     if (atomic_load(&logger_thread_active)) {
-        mprintf(tag, fmt_str, args);
+        logger_queue_multiple_lines(tag, buffer);
     } else {
         // Logger is not running, just write to stdout.
-        vprintf(fmt_str, args);
+        fputs(buffer, stdout);
         fflush(stdout);
     }
 
-    va_end(args);
-
     atomic_fetch_sub(&logger_thread_writers, 1);
+
+    va_end(args1);
+    va_end(args2);
+
+    free(heap_buffer);
 }
 void print_stacktrace(void) {
     /*
