@@ -289,7 +289,7 @@ static int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, 
     int ret = tcp_send_constructed_packet(context, tcp_packet);
 
     // Free the packet
-    deallocate_region(packet);
+    deallocate_region(tcp_packet);
 
     // Return success code
     return ret;
@@ -410,6 +410,7 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
                         return NULL;
                     }
                     // Return the whist packet
+                    // Note that the allocate_region is offset by offsetof(TCPPacket, whist_packet_data.whist_packet)
                     return whist_packet;
                 } else {
                     // Handle the TCPPacket message
@@ -426,8 +427,10 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
     return NULL;
 }
 
-static void tcp_free_packet(void* raw_context, WhistPacket* tcp_packet) {
+static void tcp_free_packet(void* raw_context, WhistPacket* whist_packet) {
     FATAL_ASSERT(raw_context != NULL);
+    // Free the underlying TCP Packet
+    TCPPacket* tcp_packet = (char*)whist_packet - offsetof(TCPPacket, whist_packet_data.whist_packet);
     deallocate_region(tcp_packet);
 }
 
@@ -613,7 +616,7 @@ int create_tcp_server_context(TCPContext* context, int port, int connection_time
     LOG_INFO("Waiting for TCP client on port %d...", port);
     socklen_t slen = sizeof(context->addr);
     SOCKET new_socket;
-    if ((new_socket = acceptp(context->socket, (struct sockaddr*)(&context->addr), &slen)) ==
+    if ((new_socket = acceptp(context->listen_socket, (struct sockaddr*)(&context->addr), &slen)) ==
         INVALID_SOCKET) {
         LOG_WARNING("Could not accept() over TCP! %d", get_last_network_error());
         closesocket(context->listen_socket);
