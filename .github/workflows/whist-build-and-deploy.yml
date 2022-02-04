@@ -890,7 +890,6 @@ jobs:
       ((contains(needs.whist-publish-build-config.outputs.jobs, '|client-applications-publish-build-x64-s3|')) ||
       (contains(needs.whist-publish-build-config.outputs.jobs, '|client-applications-publish-build-arm64-s3|'))) &&
       (needs.webserver-deploy-heroku.result == 'success') &&
-      (needs.webserver-spin-up-new-buffer.result == 'success') &&
       (needs.microservices-deploy-auth0-rules.result == 'success') &&
       (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success')
 
