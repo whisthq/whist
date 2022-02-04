@@ -1035,7 +1035,7 @@ void udp_resend_packet(SocketContext* socket_context, WhistPacketType type, int 
     UDPContext* context = (UDPContext*)socket_context->context;
 
     if (context->connection_lost) {
-        return false;
+        return;
     }
 
     // Treat this the same as a nack
