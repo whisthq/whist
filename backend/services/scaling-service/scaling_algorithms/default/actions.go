@@ -278,10 +278,13 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 
 	// Check if we received a valid image before performing more
 	// expensive operations.
-	newImageID := imageID.(string)
-	if newImageID == "" {
-		return utils.MakeError("new image ID is empty. Not performing upgrade.")
+
+	if imageID == nil {
+		logger.Warningf("Received an empty image ID on %v. Not performing upgrade.", event.Region)
+		return nil
 	}
+
+	newImageID := imageID.(string)
 
 	// Query for the current image id
 	imageResult, err := dbclient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region)

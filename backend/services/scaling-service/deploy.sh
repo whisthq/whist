@@ -16,12 +16,12 @@ cd "$DIR/../../.."
 
 REGION_IMAGE_MAP=${1}
 SCALING_SERVICE_DIR="./backend/services/scaling-service"
-BUILD_DIR="$SCALING_SERVICE_DIR/bin"
+BUILD_DIR="$SCALING_SERVICE_DIR"
 IMAGE_FILE="$SCALING_SERVICE_DIR/images.json"
 
 
 # Copy the binary to the scaling service dir. This is necessary because we will use as standalone repo.
-mkdir -p "$BUILD_DIR" && cp ./backend/services/build/scaling-service "$BUILD_DIR"
+cp ./backend/services/build/scaling-service "$BUILD_DIR"
 
 # Write region image map to var file so the Procfile can read it.
 echo "$REGION_IMAGE_MAP" > "$IMAGE_FILE"
