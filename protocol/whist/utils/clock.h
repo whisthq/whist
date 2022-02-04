@@ -71,7 +71,7 @@ double get_timer(const WhistTimer* timer);
 /**
  * @brief                          Write a string representing the current time.
  *
- * The format is "hh:mm:ss.uuuuuu", giving sixteen bytes including the terminator.
+ * The format is "yyyy-MM-dd'T'HH:mm:ss.uuuuuu", giving twenty-six bytes including the terminator.
  *
  * @param buffer                   Buffer to write to.
  * @param size                     Size of the buffer.
