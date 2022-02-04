@@ -43,7 +43,8 @@ if [ ! -f ../../docker/.env ]; then
 fi
 
 # load env vars, namely (POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB)
-export "$(xargs < ../../docker/.env)"
+# shellcheck disable=SC2046
+export $(xargs -a ../../docker/.env)
 
 BRANCH=$(git branch --show-current)
 COMMIT=$(git rev-parse --short HEAD)
