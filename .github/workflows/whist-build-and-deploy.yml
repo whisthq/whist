@@ -1433,6 +1433,21 @@ jobs:
           wget -qO - https://github.com/splitsh/lite/releases/download/v1.0.1/lite_linux_amd64.tar.gz
           | sudo tar -zxp --directory /usr/local/bin/
 
+      - name: Configure git for Scaling Service deploy script
+        run: |
+          # Set the author of the commit in whisthq/docs to be the user
+          # who just pushed to the dev branch of the monorepo.
+          git config user.name "${{ github.event.pusher.name }}"
+          git config user.email "${{ github.event.pusher.email }}"
+          # Authenticate Git as Phil with GitHub
+          git config credential.helper store
+          git credential approve <<EOF
+          protocol=https
+          host=github.com
+          username=phil@whist.com
+          password=${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+          EOF
+
       - name: Deploy the Scaling Service & Start image upgrade
         if: needs.whist-publish-build-config.outputs.publish == 'true'
         env:
