@@ -842,7 +842,7 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
     FD_SET(socket, &set);
     struct timeval tv;
     tv.tv_sec = timeout_ms / MS_IN_SECOND;
-    tv.tv_usec = (timeout_ms % MS_IN_SECOND) * MS_IN_SECOND;
+    tv.tv_usec = (timeout_ms % MS_IN_SECOND) * US_IN_MS;
     if ((ret = select((int)socket + 1, NULL, &set, NULL, &tv)) <= 0) {
         if (ret == 0) {
             LOG_INFO("No TCP Connection Retrieved, ending TCP connection attempt.");

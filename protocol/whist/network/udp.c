@@ -1029,7 +1029,7 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
     }
 
     // Connection successful!
-    LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
+    LOG_INFO("Client received on %d from %s:%d over UDP!\n", port, inet_ntoa(context->addr.sin_addr),
              ntohs(context->addr.sin_port));
 
     return 0;
