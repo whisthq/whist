@@ -99,9 +99,25 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
         # This condition is to accomodate the worflow for developers of client_apps
         # to test their changes without needing to update the development database with
         # commit_hashes on their local machines.
-        # TODO: Handle the case in which get() returns None.
         # TODO: Don't just choose AWS as the cloud provider every time.
-        client_commit_hash = Image.query.get((CloudProvider.AWS, region)).client_sha
+        image = Image.query.get((CloudProvider.AWS, region))
+
+        if image:
+            client_commit_hash = image.client_sha
+        else:
+            whist_logger.error(
+                f"No images for cloud provider {CloudProvider.AWS} available in region {region}"
+            )
+            return (
+                jsonify(
+                    {
+                        "ip": "None",
+                        "mandelbox_id": "None",
+                        "error": MandelboxAssignError.REGION_NOT_ENABLED,
+                    }
+                ),
+                HTTPStatus.SERVICE_UNAVAILABLE,
+            )
     else:
         client_commit_hash = body.client_commit_hash
 
@@ -187,18 +203,29 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
             f"Starting scale up thread for region: {region}, commit hash: {client_commit_hash}"
         )
 
+        # TODO: Don't just select the first virtual machine image. When we support multiple cloud
+        # providers, this may result in the cloud providers that sort ahead of others hosting a
+        # disproportionate amount of our capacity.
+        image = Image.query.filter_by(region=region, client_sha=client_commit_hash).first()
+
+        if image is None:
+            whist_logger.error(
+                f"No images from which to launch instances available in region {region}."
+            )
+            return (
+                jsonify(
+                    {
+                        "ip": "None",
+                        "mandelbox_id": "None",
+                        "error": MandelboxAssignError.REGION_NOT_ENABLED,
+                    }
+                ),
+                HTTPStatus.SERVICE_UNAVAILABLE,
+            )
+
         scaling_thread = Thread(
             target=do_scale_up_if_necessary,
-            args=(
-                region,
-                # TODO: Handle the case in which first() returns None
-                # TODO: Don't just select the first virtual machine image. When we support multiple
-                # cloud providers, this may result in the cloud providers that sort ahead of others
-                # hosting a disproportionate amount of our capacity.
-                Image.query.filter_by(region=region, client_sha=client_commit_hash)
-                .first()
-                .image_id,
-            ),
+            args=(region, image.image_id),
             kwargs={
                 "flask_app": current_app._get_current_object()  # pylint: disable=protected-access
             },
