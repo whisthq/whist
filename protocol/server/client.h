@@ -97,18 +97,6 @@ int start_quitting_client(Client* client);
 int quit_client(Client* client);
 
 /**
- * @brief                          Quit client if timed out.
- *
- * @param client				   Target client
- * @param timeout                  Duration (in seconds) after which a client
- *                                 is deemed timed out if the server has not
- *                                 received a ping from the client.
- *
- * @returns                        Returns -1 on failure, 0 on success.
- */
-int reap_timed_out_client(Client* client, double timeout);
-
-/**
  * @brief                          Add thread to count of those dependent on
  *                                 client being active.
  */

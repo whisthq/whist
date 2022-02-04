@@ -219,8 +219,8 @@ int try_get_next_message_tcp(Client *client, WhistPacket **p_tcp_packet) {
 
     if (!socket_update(&client->tcp_context)) {
         LOG_INFO("TCP socket connection lost!");
-        if (!client->is_deactivating) {
-            if (reap_timed_out_client(client, CLIENT_PING_TIMEOUT_SEC) != 0) {
+        if (client->is_active && !client->is_deactivating) {
+            if (start_quitting_client(client) != 0) {
                 LOG_ERROR("Failed to reap timed out clients.");
             }
         }
@@ -329,6 +329,7 @@ int multithreaded_manage_client(void *opaque) {
                 state->exiting = true;
             }
         }
+        
         // Even without multiclient, we need this for TCP recovery over the discovery port
         if (!create_tcp_socket_context(&discovery_context, NULL, PORT_DISCOVERY, 1,
                                        TCP_DISCOVERY_CONNECTION_WAIT, get_using_stun(),
