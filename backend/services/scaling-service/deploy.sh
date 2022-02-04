@@ -26,6 +26,10 @@ cp ./backend/services/build/scaling-service "$BUILD_DIR"
 # Write region image map to var file so the Procfile can read it.
 echo "$REGION_IMAGE_MAP" > "$IMAGE_FILE"
 
+# Persist changes on local repo so that they are read by splitsh
+git add .
+git commit -m "Add scaling service build and images.json file for splitsh"
+
 # Use splitsh to checkout to standalone scaling service repo.
 echo "Checking out the scaling service folder as a standalone git repo..."
 splitsh-lite --prefix backend/services/scaling-service --target refs/heads/workflows-private/scaling-service
