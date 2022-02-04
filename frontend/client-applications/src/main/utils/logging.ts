@@ -144,9 +144,9 @@ export const logging = (
         "configToken",
         "config_encryption_token",
         "cookies",
-        "bookmarks",
         "extensions",
         "importedData",
+        "bookmarks",
         "urls",
       ].includes(k) &&
       (v ?? undefined) !== undefined
