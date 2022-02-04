@@ -370,7 +370,6 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
     sprintf(command, "/usr/share/whist/run-as-whist-user.sh \"exec google-chrome %s\"",
             received_url);
 
-    LOG_INFO("About to run command `%s`", command);
     // Step 3: Execute the command created in step 2 (which consists of a call to the
     // run-as-whist-user.sh script with the appropriate parameter) in the mandelbox, and save the
     // resulting stdout in the open_url_result string.
