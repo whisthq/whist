@@ -1,12 +1,27 @@
 /**
- * Copyright (c) 2021-2022 Whist Technologies, Inc.
+ * @copyright Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file whist_memory.h
- * @brief This file contains custom memory handling for Whist.
+ * @brief API for memory allocation and management.
+ */
+#ifndef WHIST_CORE_WHIST_MEMORY_H
+#define WHIST_CORE_WHIST_MEMORY_H
+
+#include <stdbool.h>
+#include <stddef.h>
+
+/**
+ * @defgroup memory Memory
+ *
+ * Whist API for memory allocation and management.
+ *
+ * @{
  */
 
 /**
  * @brief                          Wrapper around malloc that will correctly exit the
  *                                 protocol when malloc fails
+ *
+ * @param size                     Number of bytes of memory to allocate.
  *
  * @returns                        Allocated memory space
  */
@@ -15,6 +30,8 @@ void* safe_malloc(size_t size);
 /**
  * @brief                          Wrapper around calloc that will correctly exit the
  *                                 protocol when calloc fails
+ *
+ * @param size                     Number of bytes of zeroed memory to allocate.
  *
  * @returns                        Allocated memory space
  */
@@ -72,9 +89,13 @@ void resize_dynamic_buffer(DynamicBuffer* db, size_t new_size);
  */
 void free_dynamic_buffer(DynamicBuffer* db);
 
-// Dummy typedef for block allocator since only pointers are used anyway
-// See whist.c for the real BlockAllocator struct
-struct BlockAllocator;
+/**
+ * @defgroup block_allocator Block Allocator
+ *
+ * Allocator to optimise allocation of many equal-sized blocks.
+ *
+ * @{
+ */
 typedef struct BlockAllocator BlockAllocator;
 
 /**
@@ -114,10 +135,12 @@ void free_block(BlockAllocator* block_allocator, void* block);
  */
 void destroy_block_allocator(BlockAllocator* block_allocator);
 
-/*
-==================
-Region Allocator
-==================
+/** @} */
+
+/**
+ * @defgroup region_allocator Region Allocator
+ *
+ * Region allocator wrapping mmap()/VirtualAlloc().
 
 Note: All of these functions are safe, and will FATAL_ERROR on failure
 
@@ -147,7 +170,8 @@ only be zero-ed out if it was actually necessary to zero it out.
 If we want to completely give the region back to the OS, call `deallocate_region`,
 and the RAM + address space will be freed.
 
-*/
+ * @{
+ */
 
 /**
  * @brief                          Allocates a region of memory, of the requested size.
@@ -211,3 +235,8 @@ void* realloc_region(void* region, size_t new_region_size);
  * @param region                   The region to deallocate
  */
 void deallocate_region(void* region);
+
+/** @} */
+/** @} */
+
+#endif /* WHIST_CORE_WHIST_MEMORY_H */
