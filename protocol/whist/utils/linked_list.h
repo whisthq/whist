@@ -13,7 +13,7 @@ Usage
 /**
  * @defgroup linked_list Linked Lists
  *
- * This is a generic C API for linked lists of structures.
+ * Generic C API for linked lists of structures.
  *
  * Example:
  * @code{.c}
