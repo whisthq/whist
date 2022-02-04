@@ -10,9 +10,9 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-const writeMandelboxStatusSQL = `UPDATE cloud.mandelbox_info
+const writeMandelboxStatusSQL = `UPDATE whist.mandelboxes
   SET status = $1
-  WHERE mandelbox_id = $2;`
+  WHERE id = $2;`
 
 // WriteMandelboxStatus implements Querier.WriteMandelboxStatus.
 func (q *DBQuerier) WriteMandelboxStatus(ctx context.Context, status pgtype.Varchar, mandelboxID string) (pgconn.CommandTag, error) {

@@ -23,40 +23,55 @@ type logzioSender logzio.LogzioSender
 
 type logzioMessageType string
 
+// message is a generic log message with basic data.
+type message struct {
+	Message      string                  `json:"message"`
+	Type         string                  `json:"type"`
+	Component    string                  `json:"component"`
+	SubComponent string                  `json:"sub_component"`
+	Environment  metadata.AppEnvironment `json:"environment"`
+}
+
+// hostMessage includes data specific for the host service logs.
+type hostMessage struct {
+	AWSInstanceID aws.InstanceID `json:"aws_instance_id"`
+	AWSAmiID      aws.AmiID      `json:"aws_ami_id"`
+	message
+}
+
 const (
 	logzioTypeInfo    logzioMessageType = "info"
 	logzioTypeWarning logzioMessageType = "warning"
 	logzioTypeError   logzioMessageType = "error"
 )
 
-func (sender *logzioSender) send(payload string, msgType logzioMessageType) {
-	instanceID, _ := aws.GetInstanceID()
-	amiID, _ := aws.GetAmiID()
+var hostMsg hostMessage
+var scalingMsg message
 
-	msg, err := json.Marshal(struct {
-		AWSInstanceID aws.InstanceID          `json:"aws_instance_id"`
-		AWSAmiID      aws.AmiID               `json:"aws_ami_id"`
-		Environment   metadata.AppEnvironment `json:"environment"`
-		Message       string                  `json:"message"`
-		Type          string                  `json:"type"`
-		Component     string                  `json:"component"`
-		SubComponent  string                  `json:"sub_component"`
-	}{
-		AWSInstanceID: instanceID,
-		AWSAmiID:      amiID,
-		Environment:   metadata.GetAppEnvironment(),
-		Message:       payload,
-		Type:          string(msgType),
-		Component:     "backend",
-		SubComponent:  "host-service",
-	})
+func (sender *logzioSender) send(payload string, msgType logzioMessageType) {
+	var (
+		byteMsg []byte
+		err     error
+	)
+
+	if hostMsg != (hostMessage{}) {
+		hostMsg.Message = payload
+		hostMsg.Type = string(msgType)
+		byteMsg, err = json.Marshal(hostMsg)
+	} else if scalingMsg != (message{}) {
+		scalingMsg.Message = payload
+		scalingMsg.Type = string(msgType)
+		byteMsg, err = json.Marshal(scalingMsg)
+	} else {
+		return
+	}
 
 	if err != nil {
 		log.Print(utils.ColorRed(utils.Sprintf("Couldn't marshal payload for logz.io. Error: %s", err)))
 		return
 	}
 
-	err = (*logzio.LogzioSender)(sender).Send(msg)
+	err = (*logzio.LogzioSender)(sender).Send(byteMsg)
 	if err != nil {
 		log.Print(utils.ColorRed(utils.Sprintf("Couldn't send payload to logz.io. Error: %s", err)))
 		return

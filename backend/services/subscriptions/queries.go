@@ -1,6 +1,8 @@
 package subscriptions // import "github.com/whisthq/whist/backend/services/subscriptions"
 
 import (
+	"time"
+
 	graphql "github.com/hasura/go-graphql-client"
 )
 
@@ -9,69 +11,86 @@ import (
 // as subscriptions and normal queries.
 type GraphQLQuery interface{}
 
-// CloudInstanceInfo is the mapping of the `cloud_instance_info` table.
-type CloudInstanceInfo []struct {
-	IP                graphql.String `graphql:"ip"`
-	Location          graphql.String `graphql:"location"`
-	ImageID           graphql.String `graphql:"aws_ami_id"`
-	Type              graphql.String `graphql:"aws_instance_type"`
-	CloudProviderID   graphql.String `graphql:"cloud_provider_id"`
-	CommitHash        graphql.String `graphql:"commit_hash"`
-	CreationTimeMS    graphql.Float  `graphql:"creation_time_utc_unix_ms"`
-	GPUVramRemaing    graphql.Float  `graphql:"gpu_vram_remaining_kb"`
-	Name              graphql.String `graphql:"instance_name"`
-	LastUpdatedMS     graphql.Float  `graphql:"last_updated_utc_unix_ms"`
-	MandelboxCapacity graphql.Float  `graphql:"mandelbox_capacity"`
-	MemoryRemainingKB graphql.Float  `graphql:"memory_remaining_kb"`
-	NanoCPUsRemaining graphql.Float  `graphql:"nanocpus_remaining"`
-	Status            graphql.String `graphql:"status"`
+// WhistInstances is the mapping of the `whist.hosts` table. This type interacts directly
+// with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal. Only use for GraphQL
+// operations. For operations that do not interact with the client, use the `Instance` type instead.
+type WhistInstances []struct {
+	ID                graphql.String   `graphql:"id"`
+	Provider          graphql.String   `graphql:"provider"`
+	Region            graphql.String   `graphql:"region"`
+	ImageID           graphql.String   `graphql:"image_id"`
+	ClientSHA         graphql.String   `graphql:"client_sha"`
+	IPAddress         string           `graphql:"ip_addr"`
+	Type              graphql.String   `graphql:"instance_type"`
+	RemainingCapacity graphql.Int      `graphql:"remaining_capacity"`
+	Status            graphql.String   `graphql:"status"`
+	CreatedAt         time.Time        `graphql:"created_at"`
+	UpdatedAt         time.Time        `graphql:"updated_at"`
+	Mandelboxes       WhistMandelboxes `graphql:"mandelboxes"`
 }
 
-// CloudMandelboxInfo is the mapping of the `cloud_mandelbox_info` table.
-type CloudMandelboxInfo []struct {
-	ID             graphql.String `graphql:"mandelbox_id"`
-	UserID         graphql.String `graphql:"user_id"`
-	InstanceName   graphql.String `graphql:"instance_name"`
-	SessionID      graphql.String `graphql:"session_id"`
-	CreationTimeMS graphql.Float  `graphql:"creation_time_utc_unix_ms"`
-	Status         graphql.String `graphql:"status"`
+// WhistMandelboxes is the mapping of the `whist.mandelboxes` table. This type interacts directly
+// with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal. Only use for GraphQL
+// operations. For operations that do not interact with the client, use the `Mandelbox` type instead.
+type WhistMandelboxes []struct {
+	ID         graphql.String `graphql:"id"`
+	App        graphql.String `graphql:"app"`
+	InstanceID graphql.String `graphql:"instance_id"`
+	UserID     graphql.String `graphql:"user_id"`
+	SessionID  graphql.String `graphql:"session_id"`
+	Status     graphql.String `graphql:"status"`
+	CreatedAt  time.Time      `graphql:"created_at"`
 }
 
-type CloudImageInfo []struct {
-	Region     graphql.String  `graphql:"region_name"`
-	ID         graphql.String  `graphql:"ami_id"`
-	Active     graphql.Boolean `graphql:"ami_active"`
-	CommitHash graphql.String  `graphql:"client_commit_hash"`
-	Protected  graphql.Boolean `graphql:"protected_from_scale_down"`
+// WhistImages is the mapping of the `whist.images` table. This type interacts directly
+// with the GraphQL client, and uses custom GraphQL types to marshal/unmarshal. Only use for GraphQL
+// operations. For operations that do not interact with the client, use the `Image` type instead.
+type WhistImages []struct {
+	Provider  graphql.String `graphql:"provider"`
+	Region    graphql.String `graphql:"region"`
+	ImageID   graphql.String `graphql:"image_id"`
+	ClientSHA graphql.String `graphql:"client_sha"`
+	UpdatedAt time.Time      `graphql:"updated_at"`
 }
 
-// QueryInstanceStatusByName returns an instance that matches the given instance_name and status.
-var QueryInstanceByNameWithStatus struct {
-	CloudInstanceInfo `graphql:"cloud_instance_info(where: {instance_name: {_eq: $instance_name}, _and: {status: {_eq: $status}}})"`
+// QueryInstanceByIdWithStatus returns an instance that matches the given instance_name and status.
+var QueryInstanceByIdWithStatus struct {
+	WhistInstances `graphql:"whist_instances(where: {id: {_eq: $id}, _and: {status: {_eq: $status}}})"`
 }
 
-// QueryInstanceStatusByName returns an instance that matches the given instance_name and status.
-var QueryInstanceByName struct {
-	CloudInstanceInfo `graphql:"cloud_instance_info(where: {instance_name: {_eq: $instance_name}})"`
+// QueryInstanceById returns an instance that matches the given instance_name and status.
+var QueryInstanceById struct {
+	WhistInstances `graphql:"whist_instances(where: {id: {_eq: $id}})"`
 }
 
 // QueryInstanceStatus returns any instance that matches the given status.
 var QueryInstancesByStatus struct {
-	CloudInstanceInfo `graphql:"cloud_instance_info(where: {status: {_eq: $status}})"`
+	WhistInstances `graphql:"whist_instances(where: {status: {_eq: $status}})"`
 }
 
-// QueryFreeInstances returns any instance that matches the given status.
-var QueryFreeInstances struct {
-	CloudInstanceInfo `graphql:"cloud_instance_info(where: {num_running_mandelboxes: {_eq: $num_mandelboxes}, _and {status: {_eq: $status}}})"`
+// QueryInstancesByImageID returns any instance with the given image id.
+var QueryInstancesByImageID struct {
+	WhistInstances `graphql:"whist_instances(where: {image_id: {_eq: $image_id}})"`
 }
 
-// QueryMandelboxesByInstanceName returns a mandelbox associated with the given instance
+// QueryInstancesByStatusOnRegion returns any instance that matches the given status and
+// is located on the given region.
+var QueryInstancesByStatusOnRegion struct {
+	WhistInstances `graphql:"whist_instances(where: {status: {_eq: $status} _and: {region: {_eq: $region}}})"`
+}
+
+// QueryMandelboxesById returns a mandelbox associated with the given instance
 // and that has the given status.
-var QueryMandelboxesByInstanceName struct {
-	CloudMandelboxInfo `graphql:"cloud_mandelbox_info(where: {instance_name: {_eq: $instance_name}, _and: {status: {_eq: $status}}})"`
+var QueryMandelboxesByInstanceId struct {
+	WhistMandelboxes `graphql:"whist_mandelboxes(where: {instance_id: {_eq: $instance_id}, _and: {status: {_eq: $status}}})"`
 }
 
 // QueryMandelboxStatus returns every mandelbox that matches the given status.
 var QueryMandelboxByStatus struct {
-	CloudMandelboxInfo `graphql:"cloud_mandelbox_info(where: {status: {_eq: $status}})"`
+	WhistMandelboxes `graphql:"whist_mandelboxes(where: {status: {_eq: $status}})"`
+}
+
+// QueryLatestImage returns the latest image from the database for the specified provider/region pair.
+var QueryLatestImage struct {
+	WhistImages `graphql:"  whist_images(where: {provider: {_eq: $provider}, _and: {region: {_eq: $region}}}, order_by: {updated_at: desc})"`
 }

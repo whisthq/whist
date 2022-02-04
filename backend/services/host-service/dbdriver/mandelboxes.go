@@ -53,7 +53,7 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID
 	// Safe to do even if committed -- see tx.Rollback() docs.
 	defer tx.Rollback(context.Background())
 
-	instanceName, err := aws.GetInstanceName()
+	instanceID, err := aws.GetInstanceID()
 	if err != nil {
 		return utils.MakeError("Couldn't verify mandelbox %s for user %s: couldn't get instance name: %s", mandelboxID, userID, err)
 	}
@@ -71,8 +71,8 @@ func VerifyAllocatedMandelbox(userID types.UserID, mandelboxID types.MandelboxID
 		return utils.MakeError("Couldn't verify mandelbox %s for user %s: didn't find matching row in the database.", mandelboxID, userID)
 	} else if rows[0].Status.String != string(MandelboxStatusAllocated) {
 		return utils.MakeError(`Couldn't verify mandelbox %s for user %s: found a mandelbox row in the database for this instance, but it's in the wrong state. Expected "%s", got "%s".`, mandelboxID, userID, MandelboxStatusAllocated, rows[0].Status.String)
-	} else if rows[0].InstanceName.String != string(instanceName) {
-		return utils.MakeError(`Couldn't verify mandelbox %s for user %s: found an allocated mandelbox row in the database, but it has the wrong instanceName. Expected "%s", got "%s".`, mandelboxID, userID, rows[0].InstanceName.String, instanceName)
+	} else if rows[0].InstanceID.String != string(instanceID) {
+		return utils.MakeError(`Couldn't verify mandelbox %s for user %s: found an allocated mandelbox row in the database, but it has the wrong instanceName. Expected "%s", got "%s".`, mandelboxID, userID, rows[0].InstanceID.String, instanceID)
 	}
 
 	// Mark the container as connecting. We can't just use WriteMandelboxStatus
@@ -150,18 +150,24 @@ func removeStaleMandelboxes(allocatedAge, connectingAge time.Duration) error {
 		return utils.MakeError("removeStaleMandelboxes() called but dbdriver is not initialized!")
 	}
 
-	instanceName, err := aws.GetInstanceName()
+	instanceID, err := aws.GetInstanceID()
 	if err != nil {
 		return utils.MakeError("Couldn't remove stale allocated mandelboxes: %s", err)
 	}
 
 	q := queries.NewQuerier(dbpool)
 	result, err := q.RemoveStaleMandelboxes(context.Background(), queries.RemoveStaleMandelboxesParams{
-		InstanceName:                    string(instanceName),
-		AllocatedStatus:                 string(MandelboxStatusAllocated),
-		AllocatedCreationTimeThreshold:  int(time.Now().Add(-1*allocatedAge).UnixNano() / 1_000_000),
-		ConnectingStatus:                string(MandelboxStatusConnecting),
-		ConnectingCreationTimeThreshold: int(time.Now().Add(-1*connectingAge).UnixNano() / 1_000_000),
+		InstanceID:      string(instanceID),
+		AllocatedStatus: string(MandelboxStatusAllocated),
+		AllocatedCreationTimeThreshold: pgtype.Timestamptz{
+			Time:   time.Now().Add(-1 * allocatedAge),
+			Status: pgtype.Present,
+		},
+		ConnectingStatus: string(MandelboxStatusConnecting),
+		ConnectingCreationTimeThreshold: pgtype.Timestamptz{
+			Time:   time.Now().Add(-1 * connectingAge),
+			Status: pgtype.Present,
+		},
 	})
 	if err != nil {
 		return utils.MakeError("Couldn't remove stale allocated mandelboxes from database: %s", err)

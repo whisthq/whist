@@ -10,14 +10,14 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-const writeInstanceStatusSQL = `UPDATE cloud.instance_info
+const writeInstanceStatusSQL = `UPDATE whist.instances
   SET status = $1
-  WHERE instance_name = $2;`
+  WHERE id = $2;`
 
 // WriteInstanceStatus implements Querier.WriteInstanceStatus.
-func (q *DBQuerier) WriteInstanceStatus(ctx context.Context, status pgtype.Varchar, instanceName string) (pgconn.CommandTag, error) {
+func (q *DBQuerier) WriteInstanceStatus(ctx context.Context, status pgtype.Varchar, instanceID string) (pgconn.CommandTag, error) {
 	ctx = context.WithValue(ctx, "pggen_query_name", "WriteInstanceStatus")
-	cmdTag, err := q.conn.Exec(ctx, writeInstanceStatusSQL, status, instanceName)
+	cmdTag, err := q.conn.Exec(ctx, writeInstanceStatusSQL, status, instanceID)
 	if err != nil {
 		return cmdTag, fmt.Errorf("exec query WriteInstanceStatus: %w", err)
 	}
@@ -25,8 +25,8 @@ func (q *DBQuerier) WriteInstanceStatus(ctx context.Context, status pgtype.Varch
 }
 
 // WriteInstanceStatusBatch implements Querier.WriteInstanceStatusBatch.
-func (q *DBQuerier) WriteInstanceStatusBatch(batch genericBatch, status pgtype.Varchar, instanceName string) {
-	batch.Queue(writeInstanceStatusSQL, status, instanceName)
+func (q *DBQuerier) WriteInstanceStatusBatch(batch genericBatch, status pgtype.Varchar, instanceID string) {
+	batch.Queue(writeInstanceStatusSQL, status, instanceID)
 }
 
 // WriteInstanceStatusScan implements Querier.WriteInstanceStatusScan.

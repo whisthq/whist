@@ -3,7 +3,7 @@ from typing import Callable
 
 import pytest
 
-from app.database.models.cloud import InstanceInfo, MandelboxHostState
+from app.models import Instance, MandelboxHostState
 from app.helpers.aws.aws_instance_post import find_instance, bundled_region
 from app.constants.mandelbox_assign_error_names import MandelboxAssignError
 from tests.constants import CLIENT_COMMIT_HASH_FOR_TESTING, INCORRECT_COMMIT_HASH_FOR_TESTING
@@ -19,28 +19,24 @@ def test_empty_instances(region_name: str) -> None:
     )
 
 
-def test_find_initial_instance(
-    bulk_instance: Callable[..., InstanceInfo], region_name: str
-) -> None:
+def test_find_initial_instance(bulk_instance: Callable[..., Instance], region_name: str) -> None:
     """
     Confirms that we find an empty instance
     """
     instance = bulk_instance(location=region_name)
-    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) == instance.instance_name
+    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) == instance.id
 
 
-def test_find_part_full_instance(
-    bulk_instance: Callable[..., InstanceInfo], region_name: str
-) -> None:
+def test_find_part_full_instance(bulk_instance: Callable[..., Instance], region_name: str) -> None:
     """
     Confirms that we find an in-use instance
     """
     instance = bulk_instance(location=region_name, associated_mandelboxes=3)
-    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) == instance.instance_name
+    assert find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) == instance.id
 
 
 def test_find_part_full_instance_order(
-    bulk_instance: Callable[..., InstanceInfo], region_name: str
+    bulk_instance: Callable[..., Instance], region_name: str
 ) -> None:
     """
     Confirms that we find an in-use instance with max occupancy
@@ -53,13 +49,12 @@ def test_find_part_full_instance_order(
         # Generating multiple instances with occupancy less than our max_occupied instance
         bulk_instance(location=region_name, associated_mandelboxes=randint(0, max_occupancy - 1))
     assert (
-        find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING)
-        == instance_with_max_occupancy.instance_name
+        find_instance(region_name, CLIENT_COMMIT_HASH_FOR_TESTING) == instance_with_max_occupancy.id
     )
 
 
 def test_no_find_instance_with_incorrect_commit_hash(
-    bulk_instance: Callable[..., InstanceInfo], region_name: str
+    bulk_instance: Callable[..., Instance], region_name: str
 ) -> None:
     """
     Confirms that we find an empty instance
@@ -71,9 +66,7 @@ def test_no_find_instance_with_incorrect_commit_hash(
     )
 
 
-def test_no_find_full_instance(
-    bulk_instance: Callable[..., InstanceInfo], region_name: str
-) -> None:
+def test_no_find_full_instance(bulk_instance: Callable[..., Instance], region_name: str) -> None:
     """
     Confirms that we don't find a full instance
     """
@@ -85,7 +78,7 @@ def test_no_find_full_instance(
 
 
 def test_no_find_pre_connected_instance(
-    bulk_instance: Callable[..., InstanceInfo], region_name: str
+    bulk_instance: Callable[..., Instance], region_name: str
 ) -> None:
     """
     Confirms that we don't find a pre-connection instance
@@ -100,7 +93,7 @@ def test_no_find_pre_connected_instance(
 
 
 def test_no_find_full_small_instance(
-    bulk_instance: Callable[..., InstanceInfo], region_name: str
+    bulk_instance: Callable[..., Instance], region_name: str
 ) -> None:
     """
     Confirms that we don't find a full instance with <10 max
@@ -116,7 +109,7 @@ def test_no_find_full_small_instance(
     "location",
     bundled_region.keys(),
 )
-def test_assignment_logic(bulk_instance: Callable[..., InstanceInfo], location: str) -> None:
+def test_assignment_logic(bulk_instance: Callable[..., Instance], location: str) -> None:
     # ensures that replacement will work for all regions
     """
     tests 4 properties of our find unassigned algorithm:
