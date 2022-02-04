@@ -67,6 +67,7 @@ typedef struct {
 
 typedef struct {
     int timeout;
+    SOCKET listen_socket;
     SOCKET socket;
     struct sockaddr_in addr;
     WhistMutex mutex;
@@ -441,6 +442,7 @@ static void tcp_destroy_socket_context(void* raw_context) {
     TCPContext* context = raw_context;
 
     closesocket(context->socket);
+    closesocket(context->listen_socket);
     whist_destroy_mutex(context->mutex);
     free_dynamic_buffer(context->encrypted_tcp_packet_buffer);
     free(context);
@@ -580,26 +582,30 @@ int create_tcp_server_context(TCPContext* context, int port, int connection_time
     FATAL_ASSERT(context != NULL);
 
     // Create the TCP listen socket
-    create_tcp_listen_socket(&context->socket, port, connection_timeout_ms);
+    if (create_tcp_listen_socket(&context->listen_socket, port, connection_timeout_ms) != 0) {
+        LOG_ERROR("Failed to create TCP listen socket");
+        return -1;
+    }
 
     fd_set fd_read, fd_write;
     FD_ZERO(&fd_read);
     FD_ZERO(&fd_write);
-    FD_SET(context->socket, &fd_read);
-    FD_SET(context->socket, &fd_write);
+    FD_SET(context->listen_socket, &fd_read);
+    FD_SET(context->listen_socket, &fd_write);
 
     struct timeval tv;
     tv.tv_sec = connection_timeout_ms / MS_IN_SECOND;
     tv.tv_usec = (connection_timeout_ms % MS_IN_SECOND) * 1000;
 
     int ret;
-    if ((ret = select((int)context->socket + 1, &fd_read, &fd_write, NULL,
+    if ((ret = select((int)context->listen_socket + 1, &fd_read, &fd_write, NULL,
                       connection_timeout_ms > 0 ? &tv : NULL)) <= 0) {
         if (ret == 0) {
             LOG_INFO("No TCP Connection Retrieved, ending TCP connection attempt.");
         } else {
             LOG_WARNING("Could not select! %d", get_last_network_error());
         }
+        closesocket(context->listen_socket);
         return -1;
     }
 
@@ -610,6 +616,7 @@ int create_tcp_server_context(TCPContext* context, int port, int connection_time
     if ((new_socket = acceptp(context->socket, (struct sockaddr*)(&context->addr), &slen)) ==
         INVALID_SOCKET) {
         LOG_WARNING("Could not accept() over TCP! %d", get_last_network_error());
+        closesocket(context->listen_socket);
         return -1;
     }
 
@@ -620,6 +627,7 @@ int create_tcp_server_context(TCPContext* context, int port, int connection_time
                                context->binary_aes_private_key)) {
         LOG_WARNING("Could not complete handshake!");
         closesocket(context->socket);
+        closesocket(context->listen_socket);
         return -1;
     }
 
@@ -659,6 +667,7 @@ int create_tcp_client_context(TCPContext* context, char* destination, int port,
                                context->binary_aes_private_key)) {
         LOG_WARNING("Could not complete handshake!");
         closesocket(context->socket);
+        closesocket(context->listen_socket);
         return -1;
     }
 
