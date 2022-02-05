@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"os/signal"
+	"path"
 	"sync"
 	"syscall"
 	"time"
@@ -119,8 +120,17 @@ func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent) {
 func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
 	var regionImageMap map[string]interface{}
 
-	// Read file which contains the region to image on JSON format
-	content, err := os.ReadFile("images.json")
+	// Get current working directory to read images file.
+	currentWorkingDirectory, err := os.Getwd()
+	if err != nil {
+		logger.Errorf("Failed to get working directory. Err: %v", err)
+		return
+	}
+
+	// Read file which contains the region to image on JSON format. This file will
+	// be read by the binary generated during deploy, located in the `bin` directory.
+	// The file is also generated during deploy and lives in the scaling service directory.
+	content, err := os.ReadFile(path.Join(currentWorkingDirectory, "scaling-service", "images.json"))
 	if err != nil {
 		logger.Errorf("Failed to read region to image map from file. Not performing image upgrade. Err: %v", err)
 		return
