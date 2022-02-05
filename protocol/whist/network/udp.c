@@ -915,8 +915,10 @@ int udp_get_num_pending_frames(SocketContext* socket_context, WhistPacketType ty
         // The pending frames are between max_id inclusive and last_rendered_id exclusive
         int max_id = ring_buffer->max_id;
         int last_rendered_id = ring_buffer->last_rendered_id;
-        // in case last rendered was set to -1 and we start overflowing
-        return min(max_id - last_rendered_id, ring_buffer->ring_buffer_size);
+        if (last_rendered_id == -1) {
+            last_rendered_id = max_id - ring_buffer->ring_buffer_size;
+        }
+        return max_id - last_rendered_id;
     }
 }
 
