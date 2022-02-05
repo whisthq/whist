@@ -49,6 +49,7 @@ static const char* const apple_keyboard_mappings[][2] = {
     {"com.apple.keylayout.British", "xkb:gb:extd:eng"},               {"com.apple.keylayout.ABC", "xkb:us:intl:eng"},
     {"com.apple.inputmethod.SCIM.ITABC", "pinyin"},                   {"com.sogou.inputmethod.sogou.pinyin", "pinyin"},
     {"com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese", "anthy"}, {"com.apple.inputmethod.Kotoeri.RomajiTyping.Roman", "anthy"},
+    {"com.apple.keylayout.Vietnamese", "unikey"},                     {"com.apple.inputmethod.Korean.2SetKorean", "hangul"},
 };
 
 #define NUM_APPLE_KEYBOARD_MAPPINGS \
