@@ -29,8 +29,8 @@ Includes
 #include <whist/utils/atomic.h>
 
 // Keyboard state variables
-bool alt_pressed = false;
-bool ctrl_pressed = false;
+static bool alt_pressed = false;
+static bool ctrl_pressed = false;
 bool lgui_pressed = false;
 bool rgui_pressed = false;
 

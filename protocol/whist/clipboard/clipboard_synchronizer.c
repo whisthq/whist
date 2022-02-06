@@ -47,7 +47,7 @@ Defines
 ============================
 */
 
-ClipboardActivity current_clipboard_activity;
+static ClipboardActivity current_clipboard_activity;
 
 // Need to be protected by current_clipboard_activity.clipboard_action_mutex
 // We don't include these in the struct because they are not specific to the
@@ -55,14 +55,14 @@ ClipboardActivity current_clipboard_activity;
 //     on whether those threads are the latest ones to need to set the OS
 //     clipboard with their buffers.
 // setting_os_clipboard indicates whether a thread is actively setting the OS clipboard
-bool setting_os_clipboard;
+static bool setting_os_clipboard;
 // queued_os_clipboard_setter_thread_id indicates which thread gets to set the OS clipboard next
-WhistThreadID queued_os_clipboard_setter_thread_id;
+static WhistThreadID queued_os_clipboard_setter_thread_id;
 // condvar to signal whenever the OS clipboard setting thread has updated to another thread
 //     (meaning that `queued_os_clipboard_setting_thread_id` is a new non-zero number) and also
 //     to signal when the OS clipboard is available for setting again (`setting_os_clipboard` is
 //     false)
-WhistCondition os_clipboard_setting_condvar;
+static WhistCondition os_clipboard_setting_condvar;
 
 typedef struct ClipboardThread {
     LINKED_LIST_HEADER;

@@ -62,8 +62,6 @@ Includes
 extern volatile char binary_aes_private_key[16];
 extern volatile char hex_aes_private_key[33];
 extern volatile SDL_Window* window;
-volatile bool is_timing_latency;
-extern volatile double latency;
 
 extern volatile int output_width;
 extern volatile int output_height;
@@ -80,8 +78,6 @@ extern int tcp_port;
 extern int uid;
 
 // Keyboard state variables
-extern bool alt_pressed;
-extern bool ctrl_pressed;
 extern bool lgui_pressed;
 extern bool rgui_pressed;
 
@@ -100,7 +96,7 @@ extern volatile bool pending_resize_message;
 extern volatile bool connected;
 
 extern volatile bool client_exiting;
-volatile int try_amount;
+static int try_amount;
 
 extern volatile char* new_tab_url;
 
@@ -399,7 +395,6 @@ int whist_client_main(int argc, char* argv[]) {
         // so it can synchronize with us
         send_message_dimensions();
 
-        is_timing_latency = false;
         // Initialize audio and video renderer system
         WhistRenderer* whist_renderer = init_renderer(output_width, output_height);
 

@@ -32,9 +32,7 @@ Includes
 #define TCP_CONNECTION_WAIT 1000
 #define BITS_IN_BYTE 8.0
 
-int begin_time_to_exit = 60;
-
-int last_input_id = -1;
+static int last_input_id = -1;
 
 /*
 ============================

@@ -33,17 +33,18 @@ Custom Types
 */
 
 // required_argument means --identifier MUST take an argument
-const struct option cmd_options[] = {{"private-key", required_argument, NULL, 'k'},
-                                     {"identifier", required_argument, NULL, 'i'},
-                                     {"environment", required_argument, NULL, 'e'},
-                                     {"timeout", required_argument, NULL, 't'},
-                                     {"session-id", required_argument, NULL, 'd'},
-                                     {"dbus-address", required_argument, NULL, 'b'},
-                                     // these are standard for POSIX programs
-                                     {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
-                                     {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
-                                     // end with NULL-termination
-                                     {0, 0, 0, 0}};
+static const struct option cmd_options[] = {
+    {"private-key", required_argument, NULL, 'k'},
+    {"identifier", required_argument, NULL, 'i'},
+    {"environment", required_argument, NULL, 'e'},
+    {"timeout", required_argument, NULL, 't'},
+    {"session-id", required_argument, NULL, 'd'},
+    {"dbus-address", required_argument, NULL, 'b'},
+    // these are standard for POSIX programs
+    {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
+    {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
+    // end with NULL-termination
+    {0, 0, 0, 0}};
 
 /*
 ============================
