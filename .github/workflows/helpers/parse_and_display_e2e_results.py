@@ -6,204 +6,323 @@ import subprocess
 import numpy as np
 from pytablewriter import MarkdownTableWriter
 from contextlib import redirect_stdout
+from github import Github, InputFileContent
 
-# Get params
-if not os.environ.get("GITHUB_REF_NAME"):
-    print("No GitHub branch/PR number! Skipping benchmark notification.")
-    sys.exit(-1)
-if not os.environ.get("GITHUB_GIST_TOKEN") or not os.environ.get("GITHUB_TOKEN"):
-    print("No GitHub tokens available to post the results to Gist/Github PR body!")
-    sys.exit(-1)
+sys.path.append(".github/workflows/helpers")
+from notifications.slack_bot import slack_post
+from notifications.github_bot import github_comment_update
 
-github_ref_name = os.environ["GITHUB_REF_NAME"]
-github_gist_token = os.environ["GITHUB_GIST_TOKEN"]
-github_token = os.environ["GITHUB_TOKEN"]
-
-# A list of metrics to display (if found) in main table
-most_interesting_metrics = {
-    "VIDEO_FPS_RENDERED",
-    "VIDEO_END_TO_END_LATENCY",
-    "MAX_VIDEO_END_TO_END_LATENCY",
-    "VIDEO_INTER_FRAME_QP",
-    "MAX_VIDEO_INTER_FRAME_QP",
-    "VIDEO_INTRA_FRAME_QP",
-    "MAX_VIDEO_INTRA_FRAME_QP",
-    "AUDIO_FPS_SKIPPED",
-    "MAX_AUDIO_FPS_SKIPPED",
-}
-
-
-# Here, we parse the test results into a .info file, which can be read and displayed on the GitHub PR
-# Create output .info file
-results_file = open("streaming_e2e_test_results.info", "w+")
-
-# Find the path to the folder with the most recent E2E protocol logs
-logs_root_dir = "perf_logs"
-test_time = ""
-for folder_name in os.listdir("./perf_logs"):
-    if time.strftime("%Y_%m_%d@") in folder_name:
-        logs_root_dir = os.path.join(logs_root_dir, folder_name)
-        test_time = folder_name
-        break
-if logs_root_dir == "perf_logs":
-    print("Error: protocol logs not found!")
-    exit(-1)
-
-
-# Check if the log files with metrics are present
-client_log_file = os.path.join(logs_root_dir, "client", "client.log")
-server_log_file = os.path.join(logs_root_dir, "server", "server.log")
-
-if not os.path.isfile(client_log_file):
-    print("Error, client log file {} does not exist".format(client_log_file))
-    exit(-1)
-if not os.path.isfile(server_log_file):
-    print("Error, server log file {} does not exist".format(server_log_file))
-    exit(-1)
 
 # Extract the metric values and save them in two dictionaries
-client_metrics = {}
-server_metrics = {}
+def extract_metrics(client_log_file, server_log_file):
+    client_metrics = {}
+    server_metrics = {}
 
-with open(client_log_file, "r") as f:
-    for line in f.readlines():
-        if "METRIC" in line:
-            l = line.strip().split()
-            metric_name = l[-3].strip('"')
-            metric_value = float(l[-1].strip('"'))
-            if metric_name not in client_metrics:
-                client_metrics[metric_name] = [metric_value]
+    with open(client_log_file, "r") as f:
+        for line in f.readlines():
+            if "METRIC" in line:
+                l = line.strip().split()
+                metric_name = l[-3].strip('"')
+                metric_value = float(l[-1].strip('"'))
+                if metric_name not in client_metrics:
+                    client_metrics[metric_name] = [metric_value]
+                else:
+                    client_metrics[metric_name].append(metric_value)
+
+    with open(server_log_file, "r") as f:
+        for line in f.readlines():
+            if "METRIC" in line:
+                l = line.strip().split()
+                metric_name = l[-3].strip('"')
+                metric_value = float(l[-1].strip('"'))
+                if metric_name not in server_metrics:
+                    server_metrics[metric_name] = [metric_value]
+                else:
+                    server_metrics[metric_name].append(metric_value)
+
+    client_metrics2 = {}
+    server_metrics2 = {}
+
+    for k in client_metrics:
+        client_metrics[k] = np.array(client_metrics[k])
+        client_metrics2[k] = {
+            "entries": len(client_metrics[k]),
+            "avg": np.mean(client_metrics[k]),
+            "std": np.std(client_metrics[k]),
+            "max": np.max(client_metrics[k]),
+            "min": np.min(client_metrics[k]),
+        }
+
+    for k in server_metrics:
+        server_metrics[k] = np.array(server_metrics[k])
+        server_metrics2[k] = {
+            "entries": len(server_metrics[k]),
+            "avg": np.mean(server_metrics[k]),
+            "std": np.std(server_metrics[k]),
+            "max": np.max(server_metrics[k]),
+            "min": np.min(server_metrics[k]),
+        }
+
+    return client_metrics2, server_metrics2
+
+
+# Extract metric values for the client-server pair to compare to current one, and add results to existing dictionaries
+def add_comparison_metrics(
+    compared_client_log_file, compared_server_log_file, client_dictionary, server_dictionary
+):
+    compared_client_metrics = {}
+    compared_server_metrics = {}
+
+    with open(compared_client_log_file, "r") as f:
+        for line in f.readlines():
+            if "METRIC" in line:
+                l = line.strip().split()
+                metric_name = l[-3].strip('"')
+                metric_value = float(l[-1].strip('"'))
+                if metric_name not in compared_client_metrics:
+                    compared_client_metrics[metric_name] = [metric_value]
+                else:
+                    compared_client_metrics[metric_name].append(metric_value)
+
+    with open(compared_server_log_file, "r") as f:
+        for line in f.readlines():
+            if "METRIC" in line:
+                l = line.strip().split()
+                metric_name = l[-3].strip('"')
+                metric_value = float(l[-1].strip('"'))
+                if metric_name not in compared_server_metrics:
+                    compared_server_metrics[metric_name] = [metric_value]
+                else:
+                    compared_server_metrics[metric_name].append(metric_value)
+
+    for k in compared_client_metrics:
+        compared_client_metrics[k] = np.array(compared_client_metrics[k])
+        client_dictionary[k] = {
+            "entries": len(compared_client_metrics[k]),
+            "avg": np.mean(compared_client_metrics[k]),
+            "std": np.std(compared_client_metrics[k]),
+            "max": np.max(compared_client_metrics[k]),
+            "min": np.min(compared_client_metrics[k]),
+        }
+
+    for k in compared_server_metrics:
+        compared_server_metrics[k] = np.array(compared_server_metrics[k])
+        server_dictionary[k] = {
+            "entries": len(compared_server_metrics[k]),
+            "avg": np.mean(compared_server_metrics[k]),
+            "std": np.std(compared_server_metrics[k]),
+            "max": np.max(compared_server_metrics[k]),
+            "min": np.min(compared_server_metrics[k]),
+        }
+
+    return client_dictionary, server_dictionary
+
+
+def compute_deltas(
+    client_dictionary, server_dictionary, compared_client_dictionary, compared_server_dictionary
+):
+    # Augment dictionaries with deltas wrt to other result, if available
+    for k in client_dictionary:
+        if k in compared_client_dictionary:
+            client_dictionary[k]["dev_entries"] = compared_client_dictionary[k]["entries"]
+            client_dictionary[k]["dev_avg"] = round(compared_client_dictionary[k]["avg"], 3)
+            client_dictionary[k]["dev_std"] = round(compared_client_dictionary[k]["std"], 3)
+            client_dictionary[k]["delta"] = round(
+                client_dictionary[k]["avg"] - client_dictionary[k]["dev_avg"], 3
+            )
+            if client_dictionary[k]["delta"] == 0:
+                client_dictionary[k]["delta"] = "-"
+                client_dictionary[k]["delta_pctg"] = "-"
+            elif client_dictionary[k]["dev_avg"] == 0:
+                client_dictionary[k]["delta_pctg"] = "nan"
             else:
-                client_metrics[metric_name].append(metric_value)
+                client_dictionary[k]["delta_pctg"] = round(
+                    (client_dictionary[k]["delta"] / client_dictionary[k]["dev_avg"]), 3
+                )
+        else:
+            client_dictionary[k]["dev_avg"] = "N/A"
+            client_dictionary[k]["dev_std"] = "N/A"
+            client_dictionary[k]["delta"] = "N/A"
+            client_dictionary[k]["delta_pctg"] = "N/A"
 
-with open(server_log_file, "r") as f:
-    for line in f.readlines():
-        if "METRIC" in line:
-            l = line.strip().split()
-            metric_name = l[-3].strip('"')
-            metric_value = float(l[-1].strip('"'))
-            if metric_name not in server_metrics:
-                server_metrics[metric_name] = [metric_value]
+    # Create client table entries with the desired format
+    client_table_entries = []
+    for k in client_dictionary:
+        new_entry = [k, client_dictionary[k]["entries"]]
+
+        avg_stdv_this_branch = ""
+        if client_dictionary[k]["entries"] > 1:
+            avg_stdv_this_branch = "{:.3f} ± {:.3f}".format(
+                client_dictionary[k]["avg"], client_dictionary[k]["std"]
+            )
+        else:
+            avg_stdv_this_branch = "{:.3f}".format(client_dictionary[k]["avg"])
+
+        new_entry.append(avg_stdv_this_branch)
+
+        avg_stdv_dev = ""
+        if client_dictionary[k]["dev_avg"] == "N/A" or client_dictionary[k]["dev_std"] == "N/A":
+            avg_stdv_dev = "N/A"
+        elif client_dictionary[k]["dev_entries"] > 1:
+            avg_stdv_dev = "{:.3f} ± {:.3f}".format(
+                client_dictionary[k]["dev_avg"], client_dictionary[k]["dev_std"]
+            )
+        else:
+            avg_stdv_dev = "{:.3f}".format(client_dictionary[k]["dev_avg"])
+
+        new_entry.append(avg_stdv_dev)
+
+        delta_formatted = client_dictionary[k]["delta"]
+        if client_dictionary[k]["delta"] != "-" and client_dictionary[k]["delta"] != "N/A":
+            delta_formatted = "{:.3f}".format(delta_formatted)
+            delta_pctg_formatted = client_dictionary[k]["delta_pctg"]
+            if (
+                client_dictionary[k]["delta_pctg"] != "-"
+                and client_dictionary[k]["delta_pctg"] != "nan"
+                and client_dictionary[k]["delta_pctg"] != "N/A"
+            ):
+                delta_pctg_formatted = "{:.3f}".format(delta_pctg_formatted * 100.0)
+            new_entry.append("{} ({}%)".format(delta_formatted, delta_pctg_formatted))
+        else:
+            new_entry.append(delta_formatted)
+
+        emoji_delta = ""
+        if (
+            client_dictionary[k]["delta"] != "-"
+            and client_dictionary[k]["delta"] != "N/A"
+            and client_dictionary[k]["delta_pctg"] != "-"
+            and client_dictionary[k]["delta_pctg"] != "nan"
+            and client_dictionary[k]["delta_pctg"] != "N/A"
+        ):
+            if client_dictionary[k]["delta"] > 0:
+                emoji_delta = "⬆️"
             else:
-                server_metrics[metric_name].append(metric_value)
+                emoji_delta = "⬇️"
 
-client_metrics2 = {}
-server_metrics2 = {}
+        new_entry.append(emoji_delta)
+        client_table_entries.append(new_entry)
 
-for k in client_metrics:
-    client_metrics[k] = np.array(client_metrics[k])
-    client_metrics2[k] = {
-        "entries": len(client_metrics[k]),
-        "avg": np.mean(client_metrics[k]),
-        "std": np.std(client_metrics[k]),
-        "max": np.max(client_metrics[k]),
-        "min": np.min(client_metrics[k]),
-    }
+    for k in server_dictionary:
+        if k in compared_server_dictionary:
+            server_dictionary[k]["dev_entries"] = compared_server_dictionary[k]["entries"]
+            server_dictionary[k]["dev_avg"] = round(compared_server_dictionary[k]["avg"], 3)
+            server_dictionary[k]["dev_std"] = round(compared_server_dictionary[k]["std"], 3)
+            server_dictionary[k]["delta"] = round(
+                server_dictionary[k]["avg"] - server_dictionary[k]["dev_avg"], 3
+            )
+            if server_dictionary[k]["delta"] == 0:
+                server_dictionary[k]["delta"] = "-"
+                server_dictionary[k]["delta_pctg"] = "-"
+            elif server_dictionary[k]["dev_avg"] == 0:
+                server_dictionary[k]["delta_pctg"] = "nan"
+            else:
+                server_dictionary[k]["delta_pctg"] = round(
+                    (server_dictionary[k]["delta"] / server_dictionary[k]["dev_avg"]), 3
+                )
+        else:
+            server_dictionary[k]["dev_avg"] = "N/A"
+            server_dictionary[k]["dev_std"] = "N/A"
+            server_dictionary[k]["delta"] = "N/A"
+            server_dictionary[k]["delta_pctg"] = "N/A"
+
+    # Create server table entries with the desired format
+    server_table_entries = []
+    for k in server_dictionary:
+        new_entry = [k, server_dictionary[k]["entries"]]
+
+        avg_stdv_this_branch = ""
+        if server_dictionary[k]["entries"] > 1:
+            avg_stdv_this_branch = "{:.3f} ± {:.3f}".format(
+                server_dictionary[k]["avg"], server_dictionary[k]["std"]
+            )
+        else:
+            avg_stdv_this_branch = "{:.3f}".format(server_dictionary[k]["avg"])
+
+        new_entry.append(avg_stdv_this_branch)
+
+        avg_stdv_dev = ""
+        if server_dictionary[k]["dev_avg"] == "N/A" or server_dictionary[k]["dev_std"] == "N/A":
+            avg_stdv_dev = "N/A"
+        elif server_dictionary[k]["dev_entries"] > 1:
+            avg_stdv_dev = "{:.3f} ± {:.3f}".format(
+                server_dictionary[k]["dev_avg"], server_dictionary[k]["dev_std"]
+            )
+        else:
+            avg_stdv_dev = "{:.3f}".format(server_dictionary[k]["dev_avg"])
+
+        new_entry.append(avg_stdv_dev)
+
+        delta_formatted = server_dictionary[k]["delta"]
+        if server_dictionary[k]["delta"] != "-" and server_dictionary[k]["delta"] != "N/A":
+            delta_formatted = "{:.3f}".format(delta_formatted)
+            delta_pctg_formatted = server_dictionary[k]["delta_pctg"]
+            if (
+                server_dictionary[k]["delta_pctg"] != "-"
+                and server_dictionary[k]["delta_pctg"] != "nan"
+                and server_dictionary[k]["delta_pctg"] != "N/A"
+            ):
+                delta_pctg_formatted = "{:.3f}".format(delta_pctg_formatted * 100.0)
+            new_entry.append("{} ({}%)".format(delta_formatted, delta_pctg_formatted))
+        else:
+            new_entry.append(delta_formatted)
+
+        emoji_delta = ""
+        if (
+            server_dictionary[k]["delta"] != "-"
+            and server_dictionary[k]["delta"] != "N/A"
+            and server_dictionary[k]["delta_pctg"] != "-"
+            and server_dictionary[k]["delta_pctg"] != "nan"
+            and server_dictionary[k]["delta_pctg"] != "N/A"
+        ):
+            if server_dictionary[k]["delta"] > 0:
+                emoji_delta = "⬆️"
+            else:
+                emoji_delta = "⬇️"
+
+        new_entry.append(emoji_delta)
+        server_table_entries.append(new_entry)
+
+    return client_table_entries, server_table_entries
 
 
-for k in server_metrics:
-    server_metrics[k] = np.array(server_metrics[k])
-    server_metrics2[k] = {
-        "entries": len(server_metrics[k]),
-        "avg": np.mean(server_metrics[k]),
-        "std": np.std(server_metrics[k]),
-        "max": np.max(server_metrics[k]),
-        "min": np.min(server_metrics[k]),
-    }
-
-
-dev_client_metrics2 = {}
-dev_server_metrics2 = {}
-
-# If we are not on dev, we need to compare the results with the latest dev run, so we need to download the relevant files
-if github_ref_name != "dev":
-
+def download_latest_logs(branch_name):
     client = boto3.client("s3")
     result = client.list_objects(
-        Bucket="whist-e2e-protocol-test-logs", Prefix="dev/", Delimiter="/"
+        Bucket="whist-e2e-protocol-test-logs", Prefix="{}/".format(branch_name), Delimiter="/"
     )
     subfolder_name = result.get("CommonPrefixes")[-1].get("Prefix").split("/")[-2]
 
     s3_resource = boto3.resource("s3")
     bucket = s3_resource.Bucket("whist-e2e-protocol-test-logs")
 
-    if os.path.exists("dev"):
-        os.system("rm -rf dev")
-    os.mkdir("dev")
+    if os.path.exists("{}".format(branch_name)):
+        os.system("rm -rf {}".format(branch_name))
+    os.mkdir("{}".format(branch_name))
 
-    dev_client_log_path = os.path.join(".", "dev", "client.log")
-    dev_server_log_path = os.path.join(".", "dev", "server.log")
+    dev_client_log_path = os.path.join(".", "{}".format(branch_name), "client.log")
+    dev_server_log_path = os.path.join(".", "{}".format(branch_name), "server.log")
 
-    for obj in bucket.objects.filter(Prefix="{}/{}".format("dev", subfolder_name)):
+    for obj in bucket.objects.filter(
+        Prefix="{}/{}".format("{}".format(branch_name), subfolder_name)
+    ):
         if "client.log" in obj.key:
             bucket.download_file(obj.key, dev_client_log_path)
         elif "server.log" in obj.key:
             bucket.download_file(obj.key, dev_server_log_path)
 
-    if not os.path.isfile(dev_client_log_path) or not os.path.isfile(dev_server_log_path):
-        print(
-            "Could not get dev client/server logs. Unable to compare performance results to latest dev measurements."
-        )
-    else:
-        # Extract the metric values and save them in a dictionary
-        dev_client_metrics = {}
-        dev_server_metrics = {}
 
-        with open(dev_client_log_path, "r") as f:
-            for line in f.readlines():
-                if "METRIC" in line:
-                    l = line.strip().split()
-                    metric_name = l[-3].strip('"')
-                    metric_value = float(l[-1].strip('"'))
-                    if metric_name not in dev_client_metrics:
-                        dev_client_metrics[metric_name] = [metric_value]
-                    else:
-                        dev_client_metrics[metric_name].append(metric_value)
-
-        with open(dev_server_log_path, "r") as f:
-            for line in f.readlines():
-                if "METRIC" in line:
-                    l = line.strip().split()
-                    metric_name = l[-3].strip('"')
-                    metric_value = float(l[-1].strip('"'))
-                    if metric_name not in dev_server_metrics:
-                        dev_server_metrics[metric_name] = [metric_value]
-                    else:
-                        dev_server_metrics[metric_name].append(metric_value)
-
-        for k in dev_client_metrics:
-            dev_client_metrics[k] = np.array(dev_client_metrics[k])
-            dev_client_metrics2[k] = {
-                "entries": len(dev_client_metrics[k]),
-                "avg": np.mean(dev_client_metrics[k]),
-                "std": np.std(dev_client_metrics[k]),
-                "max": np.max(dev_client_metrics[k]),
-                "min": np.min(dev_client_metrics[k]),
-            }
-
-        for k in dev_server_metrics:
-            dev_server_metrics[k] = np.array(dev_server_metrics[k])
-            dev_server_metrics2[k] = {
-                "entries": len(dev_server_metrics[k]),
-                "avg": np.mean(dev_server_metrics[k]),
-                "std": np.std(dev_server_metrics[k]),
-                "max": np.max(dev_server_metrics[k]),
-                "min": np.min(dev_server_metrics[k]),
-            }
-
-
-# Generate the report
-with redirect_stdout(results_file):
-    if os.environ.get("GITHUB_REF_NAME") == "dev":
-
+def generate_no_comparison_table(
+    results_file, most_interesting_metrics, client_metrics, server_metrics
+):
+    with redirect_stdout(results_file):
         # Generate most interesting metric table
         interesting_metrics = {}
-        for k in client_metrics2:
+        for k in client_metrics:
             if k in most_interesting_metrics:
-                interesting_metrics[k] = client_metrics2[k]
-        for k in server_metrics2:
+                interesting_metrics[k] = client_metrics[k]
+        for k in server_metrics:
             if k in most_interesting_metrics:
-                interesting_metrics[k] = server_metrics2[k]
+                interesting_metrics[k] = server_metrics[k]
         if len(interesting_metrics) == 0:
             print("NO INTERESTING METRICS\n")
         else:
@@ -244,14 +363,14 @@ with redirect_stdout(results_file):
             value_matrix=[
                 [
                     k,
-                    client_metrics2[k]["entries"],
-                    "{:.3f} ± {:.3f}".format(client_metrics2[k]["avg"], client_metrics2[k]["std"])
-                    if client_metrics2[k]["entries"] > 1
-                    else client_metrics2[k]["avg"],
-                    client_metrics2[k]["min"],
-                    client_metrics2[k]["max"],
+                    client_metrics[k]["entries"],
+                    "{:.3f} ± {:.3f}".format(client_metrics[k]["avg"], client_metrics[k]["std"])
+                    if client_metrics[k]["entries"] > 1
+                    else client_metrics[k]["avg"],
+                    client_metrics[k]["min"],
+                    client_metrics[k]["max"],
                 ]
-                for k in client_metrics2
+                for k in client_metrics
             ],
             margin=1,  # add a whitespace for both sides of each cell
             max_precision=3,
@@ -270,181 +389,30 @@ with redirect_stdout(results_file):
             value_matrix=[
                 [
                     k,
-                    server_metrics2[k]["entries"],
-                    "{:.3f} ± {:.3f}".format(server_metrics2[k]["avg"], server_metrics2[k]["std"])
-                    if server_metrics2[k]["entries"] > 1
-                    else server_metrics2[k]["avg"],
-                    server_metrics2[k]["min"],
-                    server_metrics2[k]["max"],
+                    server_metrics[k]["entries"],
+                    "{:.3f} ± {:.3f}".format(server_metrics[k]["avg"], server_metrics[k]["std"])
+                    if server_metrics[k]["entries"] > 1
+                    else server_metrics[k]["avg"],
+                    server_metrics[k]["min"],
+                    server_metrics[k]["max"],
                 ]
-                for k in server_metrics2
+                for k in server_metrics
             ],
             margin=1,  # add a whitespace for both sides of each cell
             max_precision=3,
         )
         writer.write_table()
-    else:
-        # Augment dictionaries with deltas wrt to dev, if available
-        for k in client_metrics2:
-            if k in dev_client_metrics2:
-                client_metrics2[k]["dev_entries"] = dev_client_metrics2[k]["entries"]
-                client_metrics2[k]["dev_avg"] = round(dev_client_metrics2[k]["avg"], 3)
-                client_metrics2[k]["dev_std"] = round(dev_client_metrics2[k]["std"], 3)
-                client_metrics2[k]["delta"] = round(
-                    client_metrics2[k]["avg"] - client_metrics2[k]["dev_avg"], 3
-                )
-                if client_metrics2[k]["delta"] == 0:
-                    client_metrics2[k]["delta"] = "-"
-                    client_metrics2[k]["delta_pctg"] = "-"
-                elif client_metrics2[k]["dev_avg"] == 0:
-                    client_metrics2[k]["delta_pctg"] = "nan"
-                else:
-                    client_metrics2[k]["delta_pctg"] = round(
-                        (client_metrics2[k]["delta"] / client_metrics2[k]["dev_avg"]), 3
-                    )
-            else:
-                client_metrics2[k]["dev_avg"] = "N/A"
-                client_metrics2[k]["dev_std"] = "N/A"
-                client_metrics2[k]["delta"] = "N/A"
-                client_metrics2[k]["delta_pctg"] = "N/A"
 
-        # Create client table entries with the desired format
-        client_table_entries = []
-        for k in client_metrics2:
-            new_entry = [k, client_metrics2[k]["entries"]]
 
-            avg_stdv_this_branch = ""
-            if client_metrics2[k]["entries"] > 1:
-                avg_stdv_this_branch = "{:.3f} ± {:.3f}".format(
-                    client_metrics2[k]["avg"], client_metrics2[k]["std"]
-                )
-            else:
-                avg_stdv_this_branch = "{:.3f}".format(client_metrics2[k]["avg"])
-
-            new_entry.append(avg_stdv_this_branch)
-
-            avg_stdv_dev = ""
-            if client_metrics2[k]["dev_avg"] == "N/A" or client_metrics2[k]["dev_std"] == "N/A":
-                avg_stdv_dev = "N/A"
-            elif client_metrics2[k]["dev_entries"] > 1:
-                avg_stdv_dev = "{:.3f} ± {:.3f}".format(
-                    client_metrics2[k]["dev_avg"], client_metrics2[k]["dev_std"]
-                )
-            else:
-                avg_stdv_dev = "{:.3f}".format(client_metrics2[k]["dev_avg"])
-
-            new_entry.append(avg_stdv_dev)
-
-            delta_formatted = client_metrics2[k]["delta"]
-            if client_metrics2[k]["delta"] != "-" and client_metrics2[k]["delta"] != "N/A":
-                delta_formatted = "{:.3f}".format(delta_formatted)
-                delta_pctg_formatted = client_metrics2[k]["delta_pctg"]
-                if (
-                    client_metrics2[k]["delta_pctg"] != "-"
-                    and client_metrics2[k]["delta_pctg"] != "nan"
-                    and client_metrics2[k]["delta_pctg"] != "N/A"
-                ):
-                    delta_pctg_formatted = "{:.3f}".format(delta_pctg_formatted * 100.0)
-                new_entry.append("{} ({}%)".format(delta_formatted, delta_pctg_formatted))
-            else:
-                new_entry.append(delta_formatted)
-
-            emoji_delta = ""
-            if (
-                client_metrics2[k]["delta"] != "-"
-                and client_metrics2[k]["delta"] != "N/A"
-                and client_metrics2[k]["delta_pctg"] != "-"
-                and client_metrics2[k]["delta_pctg"] != "nan"
-                and client_metrics2[k]["delta_pctg"] != "N/A"
-            ):
-                if client_metrics2[k]["delta"] > 0:
-                    emoji_delta = "⬆️"
-                else:
-                    emoji_delta = "⬇️"
-
-            new_entry.append(emoji_delta)
-            client_table_entries.append(new_entry)
-
-        for k in server_metrics2:
-            if k in dev_server_metrics2:
-                server_metrics2[k]["dev_entries"] = dev_server_metrics2[k]["entries"]
-                server_metrics2[k]["dev_avg"] = round(dev_server_metrics2[k]["avg"], 3)
-                server_metrics2[k]["dev_std"] = round(dev_server_metrics2[k]["std"], 3)
-                server_metrics2[k]["delta"] = round(
-                    server_metrics2[k]["avg"] - server_metrics2[k]["dev_avg"], 3
-                )
-                if server_metrics2[k]["delta"] == 0:
-                    server_metrics2[k]["delta"] = "-"
-                    server_metrics2[k]["delta_pctg"] = "-"
-                elif server_metrics2[k]["dev_avg"] == 0:
-                    server_metrics2[k]["delta_pctg"] = "nan"
-                else:
-                    server_metrics2[k]["delta_pctg"] = round(
-                        (server_metrics2[k]["delta"] / server_metrics2[k]["dev_avg"]), 3
-                    )
-            else:
-                server_metrics2[k]["dev_avg"] = "N/A"
-                server_metrics2[k]["dev_std"] = "N/A"
-                server_metrics2[k]["delta"] = "N/A"
-                server_metrics2[k]["delta_pctg"] = "N/A"
-
-        # Create server table entries with the desired format
-        server_table_entries = []
-        for k in server_metrics2:
-            new_entry = [k, server_metrics2[k]["entries"]]
-
-            avg_stdv_this_branch = ""
-            if server_metrics2[k]["entries"] > 1:
-                avg_stdv_this_branch = "{:.3f} ± {:.3f}".format(
-                    server_metrics2[k]["avg"], server_metrics2[k]["std"]
-                )
-            else:
-                avg_stdv_this_branch = "{:.3f}".format(server_metrics2[k]["avg"])
-
-            new_entry.append(avg_stdv_this_branch)
-
-            avg_stdv_dev = ""
-            if server_metrics2[k]["dev_avg"] == "N/A" or server_metrics2[k]["dev_std"] == "N/A":
-                avg_stdv_dev = "N/A"
-            elif server_metrics2[k]["dev_entries"] > 1:
-                avg_stdv_dev = "{:.3f} ± {:.3f}".format(
-                    server_metrics2[k]["dev_avg"], server_metrics2[k]["dev_std"]
-                )
-            else:
-                avg_stdv_dev = "{:.3f}".format(server_metrics2[k]["dev_avg"])
-
-            new_entry.append(avg_stdv_dev)
-
-            delta_formatted = server_metrics2[k]["delta"]
-            if server_metrics2[k]["delta"] != "-" and server_metrics2[k]["delta"] != "N/A":
-                delta_formatted = "{:.3f}".format(delta_formatted)
-                delta_pctg_formatted = server_metrics2[k]["delta_pctg"]
-                if (
-                    server_metrics2[k]["delta_pctg"] != "-"
-                    and server_metrics2[k]["delta_pctg"] != "nan"
-                    and server_metrics2[k]["delta_pctg"] != "N/A"
-                ):
-                    delta_pctg_formatted = "{:.3f}".format(delta_pctg_formatted * 100.0)
-                new_entry.append("{} ({}%)".format(delta_formatted, delta_pctg_formatted))
-            else:
-                new_entry.append(delta_formatted)
-
-            emoji_delta = ""
-            if (
-                server_metrics2[k]["delta"] != "-"
-                and server_metrics2[k]["delta"] != "N/A"
-                and server_metrics2[k]["delta_pctg"] != "-"
-                and server_metrics2[k]["delta_pctg"] != "nan"
-                and server_metrics2[k]["delta_pctg"] != "N/A"
-            ):
-                if server_metrics2[k]["delta"] > 0:
-                    emoji_delta = "⬆️"
-                else:
-                    emoji_delta = "⬇️"
-
-            new_entry.append(emoji_delta)
-            server_table_entries.append(new_entry)
-
+def generate_comparison_table(
+    results_file,
+    most_interesting_metrics,
+    client_metrics,
+    server_metrics,
+    client_table_entries,
+    server_table_entries,
+):
+    with redirect_stdout(results_file):
         # Generate most interesting metric table
         interesting_metrics = []
         for row in client_table_entries:
@@ -520,53 +488,33 @@ with redirect_stdout(results_file):
         )
         writer.write_table()
 
-results_file.close()
 
-#######################################################################################
-
-title = "Protocol End-to-End Streaming Test Results - {}".format(test_time)
-github_repo = "whisthq/whist"
-# Adding timestamp to prevent overwrite of message
-identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE - {}".format(test_time)
-f = open("streaming_e2e_test_results.info", "r")
-body = f.read()
-f.close()
-
-
-# Display the results as a Github Gist
-from github import Github, InputFileContent
-
-client = Github(github_gist_token)
-gh_auth_user = client.get_user()
-gist = gh_auth_user.create_gist(
-    public=False,
-    files={
-        "performance_results.md": InputFileContent(body),
-    },
-    description=title,
-)
-print("Posted performance results to secret gist: {}".format(gist.html_url))
+def create_github_gist_post(github_gist_token, title, body):
+    # Display the results as a Github Gist
+    client = Github(github_gist_token)
+    gh_auth_user = client.get_user()
+    gist = gh_auth_user.create_gist(
+        public=False,
+        files={
+            "performance_results.md": InputFileContent(body),
+        },
+        description=title,
+    )
+    print("Posted performance results to secret gist: {}".format(gist.html_url))
+    return gist.html_url
 
 
-sys.path.append(".github/workflows/helpers")
-
-# Post updates to Slack channel if we are on dev
-if github_ref_name == "dev":
-    from notifications.slack_bot import slack_post
-
-    if not os.environ.get("SLACK_WEBHOOK"):
-        print("Error, cannot post updates to Slack because SLACK_WEBHOOK was not set")
-    else:
-        slack_webhook = os.environ.get("SLACK_WEBHOOK")
+def create_slack_post(slack_webhook, title, gist_url):
+    if slack_webhook:
         slack_post(
             slack_webhook,
-            body="Daily E2E dev benchmark results: {}\n".format(gist.html_url),
+            body="Daily E2E dev benchmark results: {}\n".format(gist_url),
             slack_username="Whist Bot",
             title=title,
         )
-else:
-    from notifications.github_bot import github_comment_update
 
+
+def search_open_PR():
     branch_name = ""
 
     # In CI, the PR branch name is saved in GITHUB_REF_NAME, or in the GITHUB_HEAD_REF environment variable (in case this script is being run as part of a PR)
@@ -584,13 +532,128 @@ else:
     pr_number = -1
     if len(result) >= 3 and branch_name in result and result[0].isnumeric():
         pr_number = int(result[0])
+    return pr_number
 
-    if pr_number != -1:
-        github_comment_update(
-            github_token,
-            github_repo,
-            pr_number,
-            identifier,
-            body,
-            title=title,
+
+if __name__ == "__main__":
+    # Grab environmental variables of interest
+    if not os.environ.get("GITHUB_REF_NAME"):
+        print("GITHUB_REF_NAME is not set! Skipping benchmark notification.")
+        sys.exit(-1)
+    if not os.environ.get("GITHUB_GIST_TOKEN") or not os.environ.get("GITHUB_TOKEN"):
+        print("GITHUB_GIST_TOKEN and GITHUB_TOKEN not set. Cannot post results to Gist/GitHub!")
+        sys.exit(-1)
+    if not os.environ.get("SLACK_WEBHOOK"):
+        print("SLACK_WEBHOOK is not set. This means we won't be able to post the results on Slack.")
+
+    github_ref_name = os.environ["GITHUB_REF_NAME"]
+    github_gist_token = os.environ["GITHUB_GIST_TOKEN"]
+    github_token = os.environ["GITHUB_TOKEN"]
+    slack_webhook = os.environ.get("SLACK_WEBHOOK")
+
+    # A list of metrics to display (if found) in main table
+    most_interesting_metrics = {
+        "VIDEO_FPS_RENDERED",
+        "VIDEO_END_TO_END_LATENCY",
+        "MAX_VIDEO_END_TO_END_LATENCY",
+        "VIDEO_INTER_FRAME_QP",
+        "MAX_VIDEO_INTER_FRAME_QP",
+        "VIDEO_INTRA_FRAME_QP",
+        "MAX_VIDEO_INTRA_FRAME_QP",
+        "AUDIO_FPS_SKIPPED",
+        "MAX_AUDIO_FPS_SKIPPED",
+    }
+
+    # Find the path to the folder with the most recent E2E protocol logs
+    logs_root_dir = "perf_logs"
+    test_time = ""
+    for folder_name in os.listdir("./perf_logs"):
+        if time.strftime("%Y_%m_%d@") in folder_name:
+            logs_root_dir = os.path.join(logs_root_dir, folder_name)
+            test_time = folder_name
+            break
+    if logs_root_dir == "perf_logs":
+        print("Error: protocol logs not found!")
+        sys.exit(-1)
+
+    # Check if the log files with metrics are present
+    client_log_file = os.path.join(logs_root_dir, "client", "client.log")
+    server_log_file = os.path.join(logs_root_dir, "server", "server.log")
+
+    if not os.path.isfile(client_log_file):
+        print("Error, client log file {} does not exist".format(client_log_file))
+        sys.exit(-1)
+    if not os.path.isfile(server_log_file):
+        print("Error, server log file {} does not exist".format(server_log_file))
+        sys.exit(-1)
+
+    client_metrics2, server_metrics2 = extract_metrics(client_log_file, server_log_file)
+    dev_client_metrics2 = {}
+    dev_server_metrics2 = {}
+
+    # If we are not on dev, we need to compare the results with the latest dev run, so we need to download the relevant files
+    if github_ref_name != "dev":
+        download_latest_logs("dev")
+        dev_client_log_path = os.path.join(".", "dev", "client.log")
+        dev_server_log_path = os.path.join(".", "dev", "server.log")
+        if not os.path.isfile(dev_client_log_path) or not os.path.isfile(dev_server_log_path):
+            print(
+                "Could not get dev client/server logs. Unable to compare performance results to latest dev measurements."
+            )
+        else:
+            # Extract the metric values and save them in a dictionary
+            dev_client_metrics2, dev_server_metrics2 = add_comparison_metrics(
+                dev_client_log_path, dev_server_log_path, dev_client_metrics2, dev_server_metrics2
+            )
+
+    # Here, we parse the test results into a .info file, which can be read and displayed on the GitHub PR
+    # Create output .info file
+    results_file = open("streaming_e2e_test_results.info", "w+")
+
+    # Generate the report
+    if os.environ.get("GITHUB_REF_NAME") == "dev":
+        generate_no_comparison_table(
+            results_file, most_interesting_metrics, client_metrics2, server_metrics2
         )
+    else:
+        client_table_entries, server_table_entries = compute_deltas(
+            client_metrics2, server_metrics2, dev_client_metrics2, dev_server_metrics2
+        )
+        generate_comparison_table(
+            results_file,
+            most_interesting_metrics,
+            client_metrics2,
+            server_metrics2,
+            client_table_entries,
+            server_table_entries,
+        )
+
+    results_file.close()
+
+    #######################################################################################
+
+    title = "Protocol End-to-End Streaming Test Results - {} UTC".format(test_time)
+    github_repo = "whisthq/whist"
+    # Adding timestamp to prevent overwrite of message
+    identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE - {}".format(test_time)
+    f = open("streaming_e2e_test_results.info", "r")
+    body = f.read()
+    f.close()
+
+    gist_url = create_github_gist_post(github_gist_token, title, body)
+
+    # Post updates to Slack channel if we are on dev
+    if github_ref_name == "dev":
+        create_slack_post(slack_webhook, title, gist_url)
+    # Otherwise post on Github if the branch is tied to a open PR
+    else:
+        pr_number = search_open_PR()
+        if pr_number != -1:
+            github_comment_update(
+                github_token,
+                github_repo,
+                pr_number,
+                identifier,
+                body,
+                title=title,
+            )
