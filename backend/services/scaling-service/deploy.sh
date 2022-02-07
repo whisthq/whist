@@ -39,7 +39,7 @@ splitsh-lite --prefix backend/services/scaling-service/deploy --target refs/head
 git checkout workflows-private/scaling-service
 
 # Create null buildpack, see: https://elements.heroku.com/buildpacks/ryandotsmith/null-buildpack
-heroku buildpacks:set http://github.com/ryandotsmith/null-buildpack.git -a "$HEROKU_APP"
+heroku buildpacks:set http://github.com/ryandotsmith/null-buildpack.git -a "$HEROKU_APP_NAME"
 
 # Push deploy directory to Heroku
 echo "Deploying scaling service..."
