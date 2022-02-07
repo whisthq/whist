@@ -89,13 +89,13 @@ jobs:
           BRANCH_NAME=${{ steps.set-deploy-environment.outputs.environment }}
           if [ "$BRANCH_NAME" == "prod" ]; then
             WEBSERVER_URL=https://prod-server.whist.com
-            SCALING_SERVICE_URL=https://dev-scaling-service.whist.com
+            SCALING_SERVICE_URL=https://prod-scaling-service.whist.com
           elif [ "$BRANCH_NAME" == "staging" ]; then
             WEBSERVER_URL=https://staging-server.whist.com
             SCALING_SERVICE_URL=https://staging-scaling-service.whist.com
           else
             WEBSERVER_URL=https://dev-server.whist.com
-            SCALING_SERVICE_URL=https://prod-scaling-service.whist.com  
+            SCALING_SERVICE_URL=https://dev-scaling-service.whist.com  
           fi
           echo "webserver_url is set to: $WEBSERVER_URL"
           echo "::set-output name=webserver_url::$WEBSERVER_URL"
