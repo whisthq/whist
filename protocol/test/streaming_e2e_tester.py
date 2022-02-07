@@ -245,9 +245,9 @@ if __name__ == "__main__":
             instances_to_be_stopped.append(client_instance_id)
     instances_file = open("instances_to_clean.txt", "a+")
     for i in instances_to_be_terminated:
-        instances_file.write("terminate {} {}".format(region_name, i))
+        instances_file.write("terminate {} {}\n".format(region_name, i))
     for i in instances_to_be_stopped:
-        instances_file.write("stop {} {}".format(region_name, i))
+        instances_file.write("stop {} {}\n".format(region_name, i))
     instances_file.close()
 
     # Get the IP address of the instance(s)
