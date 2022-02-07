@@ -666,24 +666,31 @@ int create_tcp_client_context(TCPContext* context, char* destination, int port,
     FATAL_ASSERT(context != NULL);
     FATAL_ASSERT(destination != NULL);
 
+    // Track time left
+    WhistTimer connection_timer;
+    start_timer(&connection_timer);
+
     // Create TCP socket
     if ((context->socket = socketp_tcp()) == INVALID_SOCKET) {
         return -1;
     }
 
-    // Client connection protocol
+    // Keep trying to connect, as long as we have time to
+    while (get_timer(&connection_timer) * MS_IN_SECOND - connection_timeout_ms > 2) {
+        int remaining_connection_time = get_timer(&connection_timer) * MS_IN_SECOND - connection_timeout_ms;
 
-    context->addr.sin_family = AF_INET;
-    context->addr.sin_addr.s_addr = inet_addr(destination);
-    context->addr.sin_port = htons((unsigned short)port);
+        context->addr.sin_family = AF_INET;
+        context->addr.sin_addr.s_addr = inet_addr(destination);
+        context->addr.sin_port = htons((unsigned short)port);
 
-    LOG_INFO("Connecting to server at %s:%d over TCP...", destination, port);
+        LOG_INFO("Connecting to server at %s:%d over TCP...", destination, port);
 
-    // Connect to TCP server, waiting for connection_timeout_ms
-    set_timeout(context->socket, connection_timeout_ms);
-    if (!tcp_connect(context->socket, context->addr, connection_timeout_ms)) {
-        LOG_WARNING("Could not connect to server over TCP");
-        return -1;
+        // Connect to TCP server, waiting for connection_timeout_ms
+        set_timeout(context->socket, remaining_connection_time);
+        if (!tcp_connect(context->socket, context->addr, remaining_connection_time)) {
+            LOG_WARNING("Could not connect to server over TCP");
+            return -1;
+        }
     }
 
     // Handshake
