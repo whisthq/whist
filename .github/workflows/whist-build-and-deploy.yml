@@ -1455,7 +1455,7 @@ jobs:
           GITHUB_SHA: ${{ env.GITHUB_SHA }}
         shell: bash --noprofile --norc -eo pipefail {0}
         working-directory: backend/services/scaling-service
-        run: ./deploy.sh ${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }} ${{ env.HEROKU_APP_NAME }} ${{ env.GITHUB_SHA }}
+        run: ./deploy.sh ${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }} ${{ env.HEROKU_APP_NAME }} ${{ github.sha }}
 
       - name: Notify Slack on Successful Scaling Service Deploy
         if: needs.whist-publish-build-config.outputs.publish == 'true'
