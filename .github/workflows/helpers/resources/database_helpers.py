@@ -4,6 +4,8 @@ import sys
 import os
 import psycopg2
 
+from datetime import datetime
+
 
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -61,13 +63,12 @@ def get_lingering_instances(database_url, region):
     """
 
     query = (
-        "SELECT id, updated_at FROM instances WHERE status='DRAINING' AND region = '%s';"
-        % region
+        "SELECT id, updated_at FROM instances WHERE status='DRAINING' AND region = '%s';" % region
     )
     instances = execute_db_query(database_url, "whist", query)
 
     lingering_instances = []
-    
+
     for instance in instances:
         curr_time = datetime.now()
         last_updated_time = instance[1]
