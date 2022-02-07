@@ -42,36 +42,15 @@ def get_instance_ids(database_url, region):
     Returns:
         arr: array of instance ids
     """
-    query = "SELECT cloud_provider_id FROM instance_info WHERE location='%s';" % region
-    ids = execute_db_query(database_url, "cloud", query)
+    query = "SELECT id FROM instances WHERE region='%s';" % region
+    ids = execute_db_query(database_url, "whist", query)
 
     return [id[0] for id in ids]
 
 
-def get_host_service_unresponsive_instances(database_url, region):
-    """
-    Gets all aws instance ids and names using the database url and region which have the status HOST_SERVICE_UNRESPONSIVE
-
-    Args:
-        database_url (str): current database url
-        region (str): current region
-
-    Returns:
-        arr: array of tuples (name, id)
-    """
-
-    query = (
-        "SELECT instance_name, cloud_provider_id FROM instance_info WHERE status='HOST_SERVICE_UNRESPONSIVE' AND location = '%s';"
-        % region
-    )
-    instances = execute_db_query(database_url, "cloud", query)
-
-    return instances
-
-
 def get_lingering_instances(database_url, region):
     """
-    Gets all lingering instances name and id using the database url and region
+    Gets all aws instance ids and names using the database url and region which have the status DRAINING
 
     Args:
         database_url (str): current database url
@@ -82,9 +61,22 @@ def get_lingering_instances(database_url, region):
     """
 
     query = (
-        "SELECT instance_name, cloud_provider_id FROM lingering_instances WHERE instance_name IN (SELECT instance_name FROM instance_info WHERE location='%s');"
+        "SELECT id, updated_at FROM instances WHERE status='DRAINING' AND region = '%s';"
         % region
     )
-    instances = execute_db_query(database_url, "cloud", query)
+    instances = execute_db_query(database_url, "whist", query)
 
-    return instances
+    lingering_instances = []
+    
+    for instance in instances:
+        curr_time = datetime.now()
+        last_updated_time = instance[1]
+
+        # Get difference in minutes
+        minutes_diff = (curr_time - last_updated_time).total_seconds() / 60.0
+
+        # If the instance has been draining for more than 10 minutes, consider as lingering
+        if minutes_diff > 10:
+            lingering_instances.append(instance)
+
+    return lingering_instances
