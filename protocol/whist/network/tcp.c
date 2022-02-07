@@ -358,10 +358,12 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
             context->reading_packet_len = 0;
             resize_dynamic_buffer(encrypted_tcp_packet_buffer, 0);
             // And mark the connection as lost
-            // NOTE: It's okay to drop the connection when this happens, without exposing us to DOS attacks.
-            //       It requires a MITM to interrupt a connection (Requires guessing the sequence number).
-            //       Even TLS/SSL will not safeguard us from this, it's fundamental to TCP.
-            LOG_WARNING("Invalid packet size: %d, connection dropping", tcp_network_packet->payload_size);
+            // NOTE: It's okay to drop the connection when this happens,
+            //       without exposing us to DOS attacks.
+            //       It requires a MITM to interrupt a connection (Requires guessing the sequence
+            //       number). Even TLS/SSL will not safeguard us from this, it's fundamental to TCP.
+            LOG_WARNING("Invalid packet size: %d, connection dropping",
+                        tcp_network_packet->payload_size);
             context->connection_lost = true;
             return NULL;
         }
