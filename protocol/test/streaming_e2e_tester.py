@@ -375,6 +375,7 @@ if __name__ == "__main__":
         restore_network_conditions_client(
             client_restore_net_process, pexpect_prompt_client, running_in_ci
         )
+        client_restore_net_process.kill(0)
 
     # Extract the client/server perf logs from the two docker containers
     print("Initiating LOG GRABBING ssh connection(s) with the AWS instance(s)...")

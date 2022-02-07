@@ -203,18 +203,17 @@ def setup_network_conditions_client(
 
         # Install ifconfig
         command = "sudo apt install net-tools"
-        client_pexpect_process.sendline(command)
-        wait_until_cmd_done(client_pexpect_process, pexpect_prompt_client, running_in_ci)
+        pexpect_process.sendline(command)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
         # Get network interface names (excluding loopback)
         command = "sudo ifconfig -a | sed 's/[ \t].*//;/^\(lo:\|\)$/d'"
-        client_pexpect_process.sendline(command)
-        wait_until_cmd_done(client_pexpect_process, pexpect_prompt_client, running_in_ci)
+        pexpect_process.sendline(command)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
-        ifconfig_output = client_pexpect_process.before.decode("utf-8").strip().split("\n")
+        ifconfig_output = pexpect_process.before.decode("utf-8").strip().split("\n")
         ifconfig_output = [
             x.replace("\r", "").replace(":", "") for x in ifconfig_output[1:-1] if "docker" not in x
         ]
-        print(ifconfig_output)
 
         commands = []
 
@@ -244,10 +243,12 @@ def setup_network_conditions_client(
             )
         )
 
-        # Execute all commands:
-        for command in commands:
-            client_pexpect_process.sendline(command)
-            wait_until_cmd_done(client_pexpect_process, pexpect_prompt_client, running_in_ci)
+        # # Execute all commands:
+        # for command in commands:
+        #     pexpect_process.sendline(command)
+        #     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
+        print(commands)
 
 
 def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_in_ci):
@@ -275,7 +276,6 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
     ifconfig_output = [
         x.replace("\r", "").replace(":", "") for x in ifconfig_output[1:-1] if "docker" not in x
     ]
-    print(ifconfig_output)
 
     commands = []
 
@@ -287,10 +287,12 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
 
     commands.append("modprobe -r ifb")
 
-    # Execute all commands:
-    for command in commands:
-        pexpect_process.sendline(command)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    print(commands)
+
+    # # Execute all commands:
+    # for command in commands:
+    #     pexpect_process.sendline(command)
+    #     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
 
 def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
