@@ -1452,7 +1452,6 @@ jobs:
         if: needs.whist-publish-build-config.outputs.publish == 'true'
         env:
           HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
-          GITHUB_SHA: ${{ env.GITHUB_SHA }}
         shell: bash --noprofile --norc -eo pipefail {0}
         working-directory: backend/services/scaling-service
         run: ./deploy.sh ${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }} ${{ env.HEROKU_APP_NAME }} ${{ github.sha }}
