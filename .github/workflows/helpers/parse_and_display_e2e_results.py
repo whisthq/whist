@@ -67,10 +67,10 @@ server_metrics = {}
 
 with open(client_log_file, "r") as f:
     for line in f.readlines():
-        if line[0] == "{":
+        if "METRIC" in line:
             l = line.strip().split()
-            metric_name = l[1].strip('"')
-            metric_value = float(l[3].strip('"'))
+            metric_name = l[-3].strip('"')
+            metric_value = float(l[-1].strip('"'))
             if metric_name not in client_metrics:
                 client_metrics[metric_name] = [metric_value]
             else:
@@ -78,10 +78,10 @@ with open(client_log_file, "r") as f:
 
 with open(server_log_file, "r") as f:
     for line in f.readlines():
-        if line[0] == "{":
+        if "METRIC" in line:
             l = line.strip().split()
-            metric_name = l[1].strip('"')
-            metric_value = float(l[3].strip('"'))
+            metric_name = l[-3].strip('"')
+            metric_value = float(l[-1].strip('"'))
             if metric_name not in server_metrics:
                 server_metrics[metric_name] = [metric_value]
             else:
@@ -151,10 +151,10 @@ if github_ref_name != "dev":
 
         with open(dev_client_log_path, "r") as f:
             for line in f.readlines():
-                if line[0] == "{":
+                if "METRIC" in line:
                     l = line.strip().split()
-                    metric_name = l[1].strip('"')
-                    metric_value = float(l[3].strip('"'))
+                    metric_name = l[-3].strip('"')
+                    metric_value = float(l[-1].strip('"'))
                     if metric_name not in dev_client_metrics:
                         dev_client_metrics[metric_name] = [metric_value]
                     else:
@@ -162,10 +162,10 @@ if github_ref_name != "dev":
 
         with open(dev_server_log_path, "r") as f:
             for line in f.readlines():
-                if line[0] == "{":
+                if "METRIC" in line:
                     l = line.strip().split()
-                    metric_name = l[1].strip('"')
-                    metric_value = float(l[3].strip('"'))
+                    metric_name = l[-3].strip('"')
+                    metric_value = float(l[-1].strip('"'))
                     if metric_name not in dev_server_metrics:
                         dev_server_metrics[metric_name] = [metric_value]
                     else:
