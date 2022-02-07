@@ -310,7 +310,7 @@ DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *
         // This is bad if it occurs, so we will need to leave.
         if (type == DBUS_TYPE_INVALID) {
             LOG_ERROR("Got invalid argument type from D-Bus server");
-            DBUS_HANDLER_RESULT_HANDLED;
+            return DBUS_HANDLER_RESULT_HANDLED;
         }
 
         if (type == DBUS_TYPE_STRING) {
@@ -325,6 +325,11 @@ DBusHandlerResult notification_handler(DBusConnection *connection, DBusMessage *
         }
 
     } while (dbus_message_iter_next(&iter));
+
+    if (!title) {
+        LOG_WARNING("D-Bus Notify signal received without a title - ignoring!");
+        return DBUS_HANDLER_RESULT_HANDLED;
+    }
 
     // Create notification. Careful not to access OOB memory!
     WhistNotification notif;
