@@ -35,7 +35,7 @@ echo "$REGION_IMAGE_MAP" > "$IMAGE_FILE"
 echo -e "web: ./scaling-service" > "$PROCFILE"
 
 # populate the deploy/ directory
-mv deploy ..
+mv "$DEPLOY_DIR" ..
 git switch --orphan deploy-branch
 git clean -dfx # remove any .gitignored files that might remain
 mv ../deploy/* .
