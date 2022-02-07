@@ -583,7 +583,10 @@ if __name__ == "__main__":
     # Find the path to the folder with the most recent E2E protocol logs
     logs_root_dir = args.perf_logs_path
     test_time = ""
-    for folder_name in os.listdir(logs_root_dir):
+    if not os.path.isdir(logs_root_dir):
+        print("Error, logs folder {} does not exist!".format(logs_root_dir))
+        sys.exit(-1)
+    for folder_name in sorted(os.listdir(logs_root_dir), reverse=True):
         if time.strftime("%Y_%m_%d@") in folder_name:
             logs_root_dir = os.path.join(logs_root_dir, folder_name)
             test_time = folder_name
