@@ -71,9 +71,10 @@ The host service uses a pubsub architecture to fire the mandelbox spinup and to 
 
 1. Download the `docker-compose.yml` file with:
    `curl https://raw.githubusercontent.com/hasura/graphql-engine/stable/install-manifests/docker-compose/docker-compose.yaml -o docker-compose.yml`.
-2. Run the containers with `docker-compose up -d`.
-3. Open up the Hasura console on `http://localhost:8080/console` and add the postgres database (select the Database URL option) with the url `psql postgres://postgres:postgrespassword@127.0.0.1:5432/postgres`.
-4. Hasura should add the database and show the existing schemas on the console. Now you can dump the development database schema using the command provided in the [DB Migration README](../.github/actions/db-migration/README.md#command-to-dump-the-database-schema).
+2. Add a `ports` entry to the database service inside the `docker-compose.yml` file. This exposes the database so it can be accessed. For example: `ports: 5432:5432`
+3. Run the containers with `docker-compose up -d`.
+4. Open up the Hasura console on `http://localhost:8080/console` and add the postgres database (select the Database URL option) with the url `postgres://postgres:postgrespassword@postgres:5432/postgres`.
+5. Hasura should add the database and show the existing schemas on the console. Now you can dump the development database schema using the command provided in the [DB Migration README](https://github.com/whisthq/whist/blob/dev/.github/actions/db-migration/README.md#command-to-dump-the-database-schema).
 
 Once you have the schema on your local database and Hasura running, it's ready to test!
 
@@ -81,18 +82,18 @@ Once you have the schema on your local database and Hasura running, it's ready t
 
 **The steps below are only needed if you are testing the pubsub interaction on the host service**. Once you have Hasura and postgres on your development instance, the next thing to do is add your instance to the database. You can insert with this command:
 
-```
-INSERT INTO "cloud"."instance_info" ("ip","location","aws_ami_id","aws_instance_type","cloud_provider_id","commit_hash","creation_time_utc_unix_ms","gpu_vram_remaining_kb" "instance_name","last_updated_utc_unix_ms","mandelbox_capacity","memory_remaining_kb" "nanocpus_remaining","status") VALUES ('test-ip-addr','us-east-1' 'test-ami','g4dn.xlarge','test-aws-id','<the commit hash you are on>','1633366678649','15472256','<your instance name>','1633373119691','1' '31577212','7997643688','PRE_CONNECTION');
+```SQL
+INSERT INTO whist.instances VALUES ('<your instance id>', 'AWS', 'us-east-1', '<instance image id>', '<commit hash you are on>', '54.89.132.206', 'g4dn.xlarge', 2, 'PRE_CONNECTION', '2022-02-01T20:46:47.500Z', '2022-02-01T20:46:47.500Z');
 ```
 
-Make sure to change `<your instance name>` on the command to your actual instance name, `<the commit hash you are on>` to the actual commit hash, and verify the status is `PRE_CONNECTION`.
+Make sure to change `<your instance id>` on the command to your actual instance id, `<the commit hash you are on>` to the actual commit hash, `<instance image id>` to the image id your instance is running in, and verify the status is `PRE_CONNECTION`.
 
 Once you have added the row to the database, start the host service with `make run_host_service_localdevwithdb` and verify it starts the Hasura subscriptions and enters the event loop correctly.
 
 After this, if you want to test the `SpinUpMandelbox` function by "allocating" a mandelbox for your instance on the local database. Do this by adding a row to the `mandelbox_info` table with this command:
 
-```
-INSERT INTO "cloud"."mandelbox_info" ("mandelbox_id","user_id","instance_name","status","creation_time_utc_unix_ms","session_id") VALUES ('182cas8923jnckku023ind3','localdev_user_id','<your instance name>','ALLOCATED','1634241280','4389789vnuf2f32f3f');
+```SQL
+`INSERT INTO whist.mandelboxes VALUES ('<a valid UUID>', 'chrome', '<Your instance id>', 'test-user-id', 1234567890, 'ALLOCATED', '2022-02-01T20:46:47.500Z');`
 ```
 
 Again, verify that `<your instance name>` is your actual instance name, and that the status is `ALLOCATED`.
@@ -135,8 +136,11 @@ In overall, a scaling algorithm has the following structure:
 
 - The `actions` file, which contains code for the scaling actions (scaling up/down). This file is the most important one as the actions make the scaling decisons.
 - The `config` file contains constants and variables that are used by the scaling actions, such as the size of the buffer and bundled regions.
-- The `types` file has go types specific to the database that are necessary for Hasura.
 - The main file (in the default scaling algorithm its named `default`). Here are the method implementations to satisfy the `ScalingAlgorithm` interface. It also has the logic for starting actions based on the received events.
+
+#### DB Client
+
+This package is the equivalent of the `dbdriver` package from the host service. It interacts directly with the database by using a Hasura client. The intention behind doing a separate package is to abstract all the interactions with the database, such that the scaling algorithm simply calls a function with the necessary parameters and gets the result from the database, without interacting directly with it. The package also contains types necessary for parsing requests/responses from Hasura.
 
 #### Host Handler
 
@@ -144,10 +148,14 @@ Host handlers are abstracted on the `HostHandler` interface, which has the basic
 
 ## Running the scaling algorithm
 
-The scaling service can be run locally on your computer with the command `make run_scaling_service`. Make sure to have your AWS credentials configured so that the scaling service is able to start/stop instances.
+The scaling service can be run locally on your computer with the command `make run_scaling_service`. Make sure to have your AWS credentials configured with `aws configure` so that the scaling service is able to start/stop instances. Another thing to keep in mind is that for local testing you need to provide a database (follow the steps above) and add valid instance images to it.
 
 ## Implemented scaling algorithms
 
 The following scaling algorithms are fully implemented on the scaling service:
 
-1. Default scaling algorithm: this is a general solution that works well on any region, and includes all of the functionalities the team has used in the past. It uses an instance buffer to maintain active instances on each region, includes retry logic when launching instances, and atomic image upgrades. It also verifies the correct termination of instances and notifies of any errors.
+1. **Default scaling algorithm**: this is a general solution that works well on any region, and includes all of the functionalities the team has used in the past. It uses an instance buffer to maintain active instances on each region, includes retry logic when launching instances, and atomic image upgrades. It also verifies the correct termination of instances and notifies of any errors.
+
+## Publishing the scaling service
+
+The Whist host service gets deployed to Heroku during deployment. The logic for deploying can be found in the `deploy.sh` script, which is responsible of generating necessary files and pushing the new changes to Heroku.

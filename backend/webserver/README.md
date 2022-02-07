@@ -1,12 +1,14 @@
 # Whist Webserver
 
-This directory contains the source code for Whist's main web server. The Webserver is the central component of Whist's backend. Its primary responsibility is load-balancing requests across the other backend services.
+This directory contains the source code for Whist's main web server. Its primary responsibility is assigning instances to users, as well as handling payments. Eventually, the webserver will be fully replaced by the scaling service.
 
-![Whist Backend](https://user-images.githubusercontent.com/31637652/127786757-50ec9cde-fa93-4558-a7aa-432a21a2ae21.png)
+![Whist Backend drawio](https://user-images.githubusercontent.com/19579265/152873311-0c7095ce-368d-44a9-a256-00ede333af96.svg)
 
-The diagram above is a simplified representation of Whist's backend. Directional arrows between services represent requests. Arrows A and B represent requests that the backend receives from clients.
+The diagram above gives a general overview of Whist's backend. First, the user starts the client app and gets signed in. Once the user is authenticated, the client app sends a request to the webserver looking for a free instance it can connect to. The webserver queries the database for a free instance and registers the mandelbox, which in turn triggers a database event on the host service. The host service reacts to this event by starting the process of spinning up and preparing the mandelbox container.
 
-We can use this diagram to better understand the Webserver's load balancing responsibilities. When a user would like to start streaming an application, their client sends a request of type A to the backend followed immediately by a request of type B. The recipient of the first request is the Webserver. Included in the Webserver's response is the IP address of a compute instance running the Whist host service. Upon receipt of the Webserver's response, the client sends a request of type B to the host service running at the address specified in the response. The Webserver examines compute instance resource utilization metrics to determine which instance's IP address to send back to the client. In summary, the Webserver responds to requests of type A such that all compute instances running the Whist host service share the responsibility of handling requests of type B.
+Meanwhile, the client sends an http request to the JSON transport endpoint on the host service. Finally, the host service receives and validates the JSON transport request and marks the mandelbox as ready, returning the assigned ports to the client.
+
+This is a general description of the process which allows us to serve Whist to our users.
 
 Several other minor responsibilities of the Whist Webserver are documented in the [Webserver documentation](https://docs.whist.com/webserver/responsibilities.html).
 
