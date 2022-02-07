@@ -4,12 +4,11 @@ This directory contains the source code for Whist's main web server. Its primary
 
 ![Whist Backend drawio](https://user-images.githubusercontent.com/19579265/152873311-0c7095ce-368d-44a9-a256-00ede333af96.svg)
 
-The diagram above gives a general overview of Whist's backend. First, the user starts the client app and gets signed in. Once the user is authenticated, the client app sends a request to the webserver looking for a free instance it can connect to. The webserver queries the database for a free instance and registers the mandelbox, which in turn triggers a database event on the host service. The host service reacts to this event by starting the process of spinning up and preparing the mandelbox container. 
+The diagram above gives a general overview of Whist's backend. First, the user starts the client app and gets signed in. Once the user is authenticated, the client app sends a request to the webserver looking for a free instance it can connect to. The webserver queries the database for a free instance and registers the mandelbox, which in turn triggers a database event on the host service. The host service reacts to this event by starting the process of spinning up and preparing the mandelbox container.
 
-Meanwhile, the client sends an http request to the JSON transport endpoint on the host service. Finally, the host service receives and validates the JSON transport request and marks the mandelbox as ready, returning the assigned ports to the client. 
+Meanwhile, the client sends an http request to the JSON transport endpoint on the host service. Finally, the host service receives and validates the JSON transport request and marks the mandelbox as ready, returning the assigned ports to the client.
 
-This is a general description of the process which allows us to serve Whist to our users. 
-
+This is a general description of the process which allows us to serve Whist to our users.
 
 Several other minor responsibilities of the Whist Webserver are documented in the [Webserver documentation](https://docs.whist.com/webserver/responsibilities.html).
 
