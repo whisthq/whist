@@ -201,19 +201,53 @@ def setup_network_conditions_client(
             )
         )
 
-        command1 = "dnctl pipe 1 config bw {} delay {} plr {} noerror".format(
-            max_bandwidth, net_delay, pkt_drop_pctg
+        # Install ifconfig
+        command = "sudo apt install net-tools"
+        client_pexpect_process.sendline(command)
+        wait_until_cmd_done(client_pexpect_process, pexpect_prompt_client, running_in_ci)
+        # Get network interface names (excluding loopback)
+        command = "sudo ifconfig -a | sed 's/[ \t].*//;/^\(lo:\|\)$/d'"
+        client_pexpect_process.sendline(command)
+        wait_until_cmd_done(client_pexpect_process, pexpect_prompt_client, running_in_ci)
+
+        ifconfig_output = client_pexpect_process.before.decode("utf-8").strip().split("\n")
+        ifconfig_output = [
+            x.replace("\r", "").replace(":", "") for x in ifconfig_output[1:-1] if "docker" not in x
+        ]
+        print(ifconfig_output)
+
+        commands = []
+
+        # Set up infrastructure to apply degradations on incoming traffic (https://wiki.linuxfoundation.org/networking/netem#how_can_i_use_netem_on_incoming_traffic)
+        commands.append("sudo modprobe ifb")
+        commands.append("sudo ip link set dev ifb0 up")
+
+        for device in ifconfig_output:
+            # add devices to delay incoming packets
+            commands.append("sudo tc qdisc add dev {} ingress".format(device))
+            commands.append(
+                "sudo tc filter add dev {} parent ffff: protocol ip u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev ifb0".format(
+                    device
+                )
+            )
+            # Set outbound degradations
+            commands.append(
+                "tc qdisc add dev {} root netem delay {}ms loss {}% rate {}".format(
+                    device, net_delay, pkt_drop_pctg, max_bandwidth
+                )
+            )
+
+        # Set inbound degradations
+        commands.append(
+            "tc qdisc add dev ifb0 root netem delay {}ms loss {}% rate {}".format(
+                net_delay, pkt_drop_pctg, max_bandwidth
+            )
         )
-        pexpect_process.sendline(command1)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
-        command2 = 'echo "dummynet in proto {tcp,icmp} from any to any pipe 1" | pfctl -f -'
-        pexpect_process.sendline(command2)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
-
-        command3 = "pfctl -e"
-        pexpect_process.sendline(command3)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+        # Execute all commands:
+        for command in commands:
+            client_pexpect_process.sendline(command)
+            wait_until_cmd_done(client_pexpect_process, pexpect_prompt_client, running_in_ci)
 
 
 def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_in_ci):
@@ -232,13 +266,31 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
 
     """
 
-    command1 = "pfctl -f /etc/pf.conf"
-    pexpect_process.sendline(command1)
+    # Get network interface names (excluding loopback)
+    command = "sudo ifconfig -a | sed 's/[ \t].*//;/^\(lo:\|\)$/d'"
+    pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
-    command2 = "dnctl -q flush"
-    pexpect_process.sendline(command2)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    ifconfig_output = pexpect_process.before.decode("utf-8").strip().split("\n")
+    ifconfig_output = [
+        x.replace("\r", "").replace(":", "") for x in ifconfig_output[1:-1] if "docker" not in x
+    ]
+    print(ifconfig_output)
+
+    commands = []
+
+    for device in ifconfig_output:
+        # Inbound degradations
+        commands.append("sudo tc qdisc del dev {} handle ffff: ingress".format(device))
+        # Outbound degradations
+        commands.append("sudo tc qdisc del dev {} root netem".format(device))
+
+    commands.append("modprobe -r ifb")
+
+    # Execute all commands:
+    for command in commands:
+        pexpect_process.sendline(command)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
 
 def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
