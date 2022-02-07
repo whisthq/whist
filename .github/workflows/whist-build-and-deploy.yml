@@ -95,7 +95,7 @@ jobs:
             SCALING_SERVICE_URL=https://staging-scaling-service.whist.com
           else
             WEBSERVER_URL=https://dev-server.whist.com
-            SCALING_SERVICE_URL=https://dev-scaling-service.whist.com  
+            SCALING_SERVICE_URL=https://dev-scaling-service.whist.com
           fi
           echo "webserver_url is set to: $WEBSERVER_URL"
           echo "::set-output name=webserver_url::$WEBSERVER_URL"
@@ -1452,9 +1452,10 @@ jobs:
         if: needs.whist-publish-build-config.outputs.publish == 'true'
         env:
           HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
+          GITHUB_SHA: ${{ env.GITHUB_SHA }}
         shell: bash --noprofile --norc -eo pipefail {0}
         working-directory: backend/services/scaling-service
-        run: ./deploy.sh ${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}
+        run: ./deploy.sh ${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }} ${{ $HEROKU_APP_NAME }} ${{ $GITHUB_SHA }}
 
       - name: Notify Slack on Successful Scaling Service Deploy
         if: needs.whist-publish-build-config.outputs.publish == 'true'
