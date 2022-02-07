@@ -107,7 +107,7 @@ TEST_F(ProtocolTest, InitSDL) {
     char* very_long_title = generate_random_string(2000);
     size_t title_len = strlen(very_long_title);
     EXPECT_EQ(title_len, 2000);
-    char icon_filepath[] = "../../../frontend/client-applications/public/icon_dev.png";
+    char icon_filepath[] = "assets/icon_dev.png";
 
     int width = 500;
     int height = 375;

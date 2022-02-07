@@ -197,9 +197,15 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif()
 
 # Copy over test-related assets from s3
-
+# To change anything in the test assets, make a new tar file with the
+# next version number and upload it to the S3 bucket, then change the
+# version number here.  (This ensures that tests on previous branches
+# always continue to be usable.)
+set(PROTOCOL_TEST_ASSETS_VERSION 1)
 message(STATUS "Downloading test assets from AWS S3")
-execute_process(COMMAND aws s3 cp --recursive s3://fractal-test-assets/protocol-test-assets ${CMAKE_BINARY_DIR}/test/assets)
+execute_process(
+    COMMAND aws s3 cp s3://fractal-test-assets/protocol-test-assets-v${PROTOCOL_TEST_ASSETS_VERSION}.tar.gz -
+    COMMAND tar -C ${CMAKE_BINARY_DIR}/test -xzf -)
 message(STATUS "Downloading test assets from AWS S3 - Completed")
 
 # Run the tests
