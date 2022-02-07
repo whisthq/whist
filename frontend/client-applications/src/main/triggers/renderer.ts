@@ -29,6 +29,7 @@ const filterByName = (
   WhistTrigger.setDefaultBrowser,
   WhistTrigger.importTabs,
   WhistTrigger.restoreLastSession,
+  WhistTrigger.allowNonUSServers,
   WhistTrigger.getOtherBrowserWindows,
   WhistTrigger.closeSupportWindow,
   WhistTrigger.beginImport,

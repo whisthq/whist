@@ -68,6 +68,7 @@ const WhistTrigger = {
   setDefaultBrowser: "setDefaultBrowser",
   restoreLastSession: "restoreLastSession",
   closeSupportWindow: "closeSupportWindow",
+  allowNonUSServers: "allowNonUSServers",
 
   // Flow triggers
   mandelboxFlowStart: "mandelboxFlowStart",

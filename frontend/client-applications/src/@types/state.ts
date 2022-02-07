@@ -13,4 +13,5 @@ export interface StateIPC {
   isDefaultBrowser: boolean
   restoreLastSession: boolean
   otherBrowserWindows: string[][]
+  allowNonUSServers: boolean
 }
