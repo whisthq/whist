@@ -670,17 +670,17 @@ int create_tcp_client_context(TCPContext* context, char* destination, int port,
     WhistTimer connection_timer;
     start_timer(&connection_timer);
 
-    // Create TCP socket
-    if ((context->socket = socketp_tcp()) == INVALID_SOCKET) {
-        return -1;
-    }
-
     // Keep trying to connect, as long as we have time to
     bool connected = false;
-    while (connection_timeout_ms - get_timer(&connection_timer) * MS_IN_SECOND > 2) {
-        int remaining_connection_time =
-            connection_timeout_ms - get_timer(&connection_timer) * MS_IN_SECOND;
+    int remaining_connection_time;
+    while ((remaining_connection_time =
+                connection_timeout_ms - get_timer(&connection_timer) * MS_IN_SECOND) > 2) {
+        // Create TCP socket
+        if ((context->socket = socketp_tcp()) == INVALID_SOCKET) {
+            return -1;
+        }
 
+        // Setup the addr we want to connect to
         context->addr.sin_family = AF_INET;
         context->addr.sin_addr.s_addr = inet_addr(destination);
         context->addr.sin_port = htons((unsigned short)port);
@@ -692,11 +692,15 @@ int create_tcp_client_context(TCPContext* context, char* destination, int port,
         if (tcp_connect(context->socket, context->addr, remaining_connection_time)) {
             connected = true;
             break;
+        } else {
+            // Else, try again in a bit
+            closesocket(context->socket);
+            whist_sleep(1);
         }
     }
     if (!connected) {
         LOG_WARNING("Could not connect to server over TCP");
-        return 01;
+        return -1;
     }
 
     // Handshake
@@ -704,7 +708,6 @@ int create_tcp_client_context(TCPContext* context, char* destination, int port,
                                context->binary_aes_private_key)) {
         LOG_WARNING("Could not complete handshake!");
         closesocket(context->socket);
-        closesocket(context->listen_socket);
         return -1;
     }
 
@@ -859,7 +862,6 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
                 "Could not connect() over TCP to server: Returned %d, Error "
                 "Code %d",
                 ret, get_last_network_error());
-            closesocket(socket);
             return false;
         }
     }
@@ -880,7 +882,6 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
                 "%d\n",
                 ret, get_last_network_error());
         }
-        closesocket(socket);
         return false;
     }
 
@@ -889,12 +890,10 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
     socklen_t len = sizeof(error);
     if (getsockopt(socket, SOL_SOCKET, SO_ERROR, (void*)&error, &len) < 0) {
         LOG_WARNING("Could not getsockopt SO_ERROR");
-        closesocket(socket);
         return false;
     }
     if (error != 0) {
         LOG_WARNING("getsockopt has captured the following error: %d", error);
-        closesocket(socket);
         return false;
     }
 
