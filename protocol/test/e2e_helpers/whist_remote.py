@@ -233,22 +233,22 @@ def setup_network_conditions_client(
             )
             # Set outbound degradations
             commands.append(
-                "tc qdisc add dev {} root netem delay {}ms loss {}% rate {}".format(
+                "sudo tc qdisc add dev {} root netem delay {}ms loss {}% rate {}".format(
                     device, net_delay, pkt_drop_pctg, max_bandwidth
                 )
             )
 
         # Set inbound degradations
         commands.append(
-            "tc qdisc add dev ifb0 root netem delay {}ms loss {}% rate {}".format(
+            "sudo tc qdisc add dev ifb0 root netem delay {}ms loss {}% rate {}".format(
                 net_delay, pkt_drop_pctg, max_bandwidth
             )
         )
 
-        # # Execute all commands:
-        # for command in commands:
-        #     pexpect_process.sendline(command)
-        #     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+        # Execute all commands:
+        for command in commands:
+            pexpect_process.sendline(command)
+            wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
         print(commands)
 
@@ -278,7 +278,7 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
     ifconfig_output = [
         x.replace("\r", "").replace(":", "")
         for x in ifconfig_output[1:-1]
-        if "docker" not in x and "veth" not in x
+        if "docker" not in x and "veth" not in x and "ifb" not in x
     ]
 
     commands = []
@@ -289,14 +289,14 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
         # Outbound degradations
         commands.append("sudo tc qdisc del dev {} root netem".format(device))
 
-    commands.append("modprobe -r ifb")
+    commands.append("sudo modprobe -r ifb")
 
     print(commands)
 
-    # # Execute all commands:
-    # for command in commands:
-    #     pexpect_process.sendline(command)
-    #     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    # Execute all commands:
+    for command in commands:
+        pexpect_process.sendline(command)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
 
 def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
