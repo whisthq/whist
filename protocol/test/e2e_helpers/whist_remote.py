@@ -212,7 +212,9 @@ def setup_network_conditions_client(
 
         ifconfig_output = pexpect_process.before.decode("utf-8").strip().split("\n")
         ifconfig_output = [
-            x.replace("\r", "").replace(":", "") for x in ifconfig_output[1:-1] if "docker" not in x
+            x.replace("\r", "").replace(":", "")
+            for x in ifconfig_output[1:-1]
+            if "docker" not in x and "veth" not in x
         ]
 
         commands = []
@@ -274,7 +276,9 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
 
     ifconfig_output = pexpect_process.before.decode("utf-8").strip().split("\n")
     ifconfig_output = [
-        x.replace("\r", "").replace(":", "") for x in ifconfig_output[1:-1] if "docker" not in x
+        x.replace("\r", "").replace(":", "")
+        for x in ifconfig_output[1:-1]
+        if "docker" not in x and "veth" not in x
     ]
 
     commands = []
