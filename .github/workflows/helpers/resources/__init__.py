@@ -3,6 +3,5 @@
 from .heroku_config import heroku_config
 from .database_helpers import (
     get_instance_ids,
-    get_host_service_unresponsive_instances,
     get_lingering_instances,
 )
