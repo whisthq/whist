@@ -12,17 +12,12 @@ import { ChildProcess } from "child_process"
 import Sentry from "@sentry/electron"
 
 import { CHECK_UPDATE_INTERVAL_IN_MS } from "@app/constants/app"
-import { WindowHashUpdate } from "@app/constants/windows"
 
 import { appEnvironment, WhistEnvironments } from "../../../config/configs"
 import { fromTrigger } from "@app/main/utils/flows"
 import { WhistTrigger } from "@app/constants/triggers"
 import { createUpdateWindow } from "@app/main/utils/renderer"
 import { withAppActivated } from "@app/main/utils/observables"
-import {
-  destroyElectronWindow,
-  getElectronWindowHash,
-} from "@app/main/utils/windows"
 import { destroyProtocol } from "@app/main/utils/protocol"
 
 // If an update is available, show the update window and download the update
@@ -63,13 +58,12 @@ withAppActivated(
     takeUntil(fromTrigger(WhistTrigger.mandelboxFlowSuccess))
   )
 ).subscribe(() => {
+  const openWindows = BrowserWindow.getAllWindows()
+
   createUpdateWindow()
 
-  BrowserWindow.getAllWindows().forEach((win) => {
-    const hash = getElectronWindowHash(win)
-    if (hash !== WindowHashUpdate && hash !== undefined) {
-      destroyElectronWindow(hash)
-    }
+  openWindows.forEach((win) => {
+    win?.destroy()
   })
 })
 
