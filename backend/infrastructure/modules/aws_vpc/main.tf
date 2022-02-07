@@ -8,7 +8,9 @@ resource "aws_default_vpc" "main" {
   enable_dns_hostnames = true
   enable_dns_support   = true
   tags = {
-    Name = format("Whist %s Main VPC", data.aws_region.current.name)
+    Name      = format("Whist %s Main VPC", data.aws_region.current.name)
+    Env       = var.env
+    Terraform = true
   }
 }
 
@@ -18,7 +20,9 @@ resource "aws_default_subnet" "default-subnet" {
   availability_zone = data.aws_region.current.name
 
   tags = {
-    Name   = format("default-subnet-%s", data.aws_region.current.name)
+    Name      = format("default-subnet-%s", data.aws_region.current.name)
+    Env       = var.env
+    Terraform = true
   }
 }
 
@@ -40,20 +44,20 @@ resource "aws_default_security_group" "default" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = {
+    Name      = "default"
+    Env       = var.env
+    Terraform = true
+  }
 }
 
-resource "aws_security_group" "container-tester" {
-  name = "container-tester"
-  vpc_id = aws_default_vpc.main.id
+resource "aws_security_group" "allow-mandelbox-ports" {
+  name        = "container-tester"
+  description = "The security group used for instances which run mandelboxes. The ingress rules are the ports that can be allocated by Docker, and the egress rules allows all traffic."
+  vpc_id      = aws_default_vpc.main.id
 
-  ingress {
-    description = "whist-http-rule"
-    protocol    = "tcp"
-    from_port   = 80
-    to_port     = 80
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
+  # Port ranges that can be allocated to mandelboxes by Docker
   ingress {
     description = "whist-udp-rule"
     protocol    = "udp"
@@ -70,11 +74,18 @@ resource "aws_security_group" "container-tester" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # We allow all outgoing traffic
   egress {
     description = "whist-ipv4-rule"
     protocol    = "-1"
     to_port     = 0
     from_port   = 0
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name      = "allow-mandelbox-ports"
+    Env       = var.env
+    Terraform = true
   }
 }

@@ -3,5 +3,5 @@ variable "env" {
 }
 
 variable "whist-env-managed-policies" {
-  type        = set(string)
+  type = set(string)
 }

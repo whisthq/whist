@@ -26,18 +26,38 @@ data "aws_iam_policy_document" "ec2-assume-role-policy" {
 
 resource "aws_iam_service_linked_role" "ServiceRoleForSSM" {
   aws_service_name = "ssm.amazonaws.com"
+  tags = {
+    Name      = "ServiceRoleForSSM"
+    Env       = var.env
+    Terraform = true
+  }
 }
 
 resource "aws_iam_service_linked_role" "ServiceRoleForComputeOptimizer" {
   aws_service_name = "compute-optimizer.amazonaws.com"
+  tags = {
+    Name      = "ServiceRoleForComputeOptimizer"
+    Env       = var.env
+    Terraform = true
+  }
 }
 
 resource "aws_iam_service_linked_role" "ServiceRoleForEC2Spot" {
   aws_service_name = "spot.amazonaws.com"
+  tags = {
+    Name      = "ServiceRoleForEC2Spot"
+    Env       = var.env
+    Terraform = true
+  }
 }
 
 resource "aws_iam_service_linked_role" "ServiceRoleForServiceQuotas" {
-  aws_service_name = "servicequotas.amazonaws.com"  
+  aws_service_name = "servicequotas.amazonaws.com"
+  tags = {
+    Name      = "ServiceRoleForServiceQuotas"
+    Env       = var.env
+    Terraform = true
+  }
 }
 
 # Custom policies for IAM roles
@@ -63,7 +83,7 @@ data "aws_iam_policy_document" "DeploymentRoleInlinePolicy" {
 
   # This statement adds permissions to interact with instances
   statement {
-    actions = [  
+    actions = [
       "ec2:CreateTags",
       "ec2:RunInstances",
       "ec2:StopInstances",
@@ -73,7 +93,7 @@ data "aws_iam_policy_document" "DeploymentRoleInlinePolicy" {
       "ec2:TerminateInstances",
     ]
     effect = "Allow"
-    resources = [ 
+    resources = [
       "*"
     ]
   }
@@ -118,95 +138,106 @@ data "aws_iam_policy_document" "DeploymentRoleInlinePolicy" {
 # IAM roles
 
 resource "aws_iam_role" "PackerAMIBuilder" {
-  name = "PackerAMIBuilder"
-  assume_role_policy  = data.aws_iam_policy_document.ec2-assume-role-policy.json
+  name               = "PackerAMIBuilder"
+  assume_role_policy = data.aws_iam_policy_document.ec2-assume-role-policy.json
 
   managed_policy_arns = [
     "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
   ]
+  tags = {
+    Name      = "PackerAMIBuilder"
+    Env       = var.env
+    Terraform = true
+  }
 }
 
 resource "aws_iam_role" "DeploymentRole" {
-  name = "DeploymentRole"
-  assume_role_policy  = data.aws_iam_policy_document.ec2-assume-role-policy.json
+  name               = "DeploymentRole"
+  assume_role_policy = data.aws_iam_policy_document.ec2-assume-role-policy.json
 
   inline_policy {
-    name = "deployment-role-policy"
+    name   = "deployment-role-policy"
     policy = data.aws_iam_policy_document.DeploymentRoleInlinePolicy.json
+  }
+
+  tags = {
+    Name      = "DeploymentRole"
+    Env       = var.env
+    Terraform = true
   }
 }
 
 #IAM User groups
 
-resource "aws_iam_group" "whist-2FA" {
-  name = "Whist2FA"
+resource "aws_iam_group" "Whist2FA" {
+  name  = "Whist2FA"
 }
 
-resource "aws_iam_group" "whist-admins" {
-  name = "WhistAdmins"
+resource "aws_iam_group" "WhistAdmins" {
+  name  = "WhistAdmins"
 }
 
-resource "aws_iam_group" "whist-ci" {
-  name = "WhistCI"
+resource "aws_iam_group" "WhistCI" {
+  name  = "WhistCI"
 }
 
-resource "aws_iam_group" "whist-engineers" {
-  name = "WhistEngineers"
+resource "aws_iam_group" "WhistEngineers" {
+  name  = "WhistEngineers"
 }
 
-resource "aws_iam_group" "whist-env" {
-  name = "Whist${var.env}"
+resource "aws_iam_group" "WhistEC2Env" {
+  name  = "WhistEC2${var.env}"
 }
 
 # Custom group policies
 
-resource "aws_iam_group_policy" "MFA-policy" {
-  name   = "Force_MFA"
-  group  = aws_iam_group.whist-2FA.id
-  policy = jsonencode(aws_iam_group_policy.mfa-policy)
+resource "aws_iam_group_policy" "ForceMFA" {
+  name   = "ForceMFA"
+  group  = aws_iam_group.Whist2FA.id
+  policy = jsonencode(aws_iam_group_policy.MFAPolicy)
 }
 
 # AWS managed group policies
 
-resource "aws_iam_group_policy_attachment" "admin-policy" {
-  group      = aws_iam_group.whist-admins.name
+resource "aws_iam_group_policy_attachment" "AdminPolicy" {
+  group      = aws_iam_group.WhistAdmins.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 
-resource "aws_iam_group_policy_attachment" "ci-policy" {
-  group      = aws_iam_group.whist-engineers.name
-  for_each = toset([
+resource "aws_iam_group_policy_attachment" "CIPolicy" {
+  group = aws_iam_group.WhistCI.name
+  for_each = var.env == "prod" ? toset([
     "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
     "arn:aws:iam::aws:policy/IAMFullAccess",
     "arn:aws:iam::aws:policy/AmazonS3FullAccess",
-  ])
+  ]) : []
   policy_arn = each.value
 }
 
-resource "aws_iam_group_policy_attachment" "engineering-policy" {
-  group      = aws_iam_group.whist-engineers.name
-  for_each = toset([
+resource "aws_iam_group_policy_attachment" "EngineeringPolicy" {
+  group = aws_iam_group.WhistEngineers.name
+  for_each = var.env == "prod" ? toset([
     "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
     "arn:aws:iam::aws:policy/IAMFullAccess",
     "arn:aws:iam::aws:policy/AmazonS3FullAccess",
     "arn:aws:iam::aws:policy/AmazonSSMFullAccess",
     "arn:aws:iam::aws:policy/AWSSupportAccess",
-  ])
+  ]) : []
   policy_arn = each.value
 }
 
-resource "aws_iam_group_policy_attachment" "whist-env-policy" {
-  group      = aws_iam_group.whist-env.name
+resource "aws_iam_group_policy_attachment" "WhistEnvPolicy" {
+  group      = aws_iam_group.WhistEC2Env.name
   for_each   = var.whist-env-managed-policies
   policy_arn = each.value
 }
 
 # Custom group policies
 
-resource "aws_iam_group_policy" "mfa-policy" {
-    name = "ForceMFA"
-    group = aws_iam_group.whist-2FA.id
-    policy = jsonencode({
+resource "aws_iam_group_policy" "MFAPolicy" {
+  name  = "ForceMFA"
+  group = aws_iam_group.Whist2FA.id
+  policy = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
       {

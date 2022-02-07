@@ -9,6 +9,11 @@ resource "aws_s3_bucket" "chromium-macos-arm64" {
       bucket_key_enabled = false
     }
   }
+  tags = {
+    Name      = "chromium-macos-arm64"
+    Env       = var.env
+    Terraform = true
+  }
 }
 
 resource "aws_s3_bucket" "chromium-macos" {
@@ -21,6 +26,11 @@ resource "aws_s3_bucket" "chromium-macos" {
       }
       bucket_key_enabled = false
     }
+  }
+  tags = {
+    Name      = "chromium-macos"
+    Env       = var.env
+    Terraform = true
   }
 }
 
@@ -35,6 +45,11 @@ resource "aws_s3_bucket" "windows-macos" {
       bucket_key_enabled = false
     }
   }
+  tags = {
+    Name      = "windows-macos"
+    Env       = var.env
+    Terraform = true
+  }
 }
 
 resource "aws_s3_bucket" "user-config" {
@@ -47,5 +62,10 @@ resource "aws_s3_bucket" "user-config" {
       }
       bucket_key_enabled = false
     }
+  }
+  tags = {
+    Name      = "user-config"
+    Env       = var.env
+    Terraform = true
   }
 }

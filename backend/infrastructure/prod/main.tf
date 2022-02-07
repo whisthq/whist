@@ -22,6 +22,11 @@ module "s3" {
   env    = var.env
 }
 
+module "secrets-manager" {
+  source = "../modules/aws_secrets_manager"
+  env    = var.env
+}
+
 # Region specific modules
 
 module "us-east-1" {
