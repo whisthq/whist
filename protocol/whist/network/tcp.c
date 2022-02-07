@@ -677,7 +677,8 @@ int create_tcp_client_context(TCPContext* context, char* destination, int port,
 
     // Keep trying to connect, as long as we have time to
     while (get_timer(&connection_timer) * MS_IN_SECOND - connection_timeout_ms > 2) {
-        int remaining_connection_time = get_timer(&connection_timer) * MS_IN_SECOND - connection_timeout_ms;
+        int remaining_connection_time =
+            get_timer(&connection_timer) * MS_IN_SECOND - connection_timeout_ms;
 
         context->addr.sin_family = AF_INET;
         context->addr.sin_addr.s_addr = inet_addr(destination);
