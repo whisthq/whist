@@ -536,6 +536,22 @@ def search_open_PR():
     return pr_number
 
 
+def logs_contain_errors(logs_root_dir):
+    # Check if the log files with metrics are present
+    client_log_file = os.path.join(logs_root_dir, "client", "client.log")
+    server_log_file = os.path.join(logs_root_dir, "server", "server.log")
+
+    if not os.path.isfile(client_log_file) or not os.path.isfile(server_log_file):
+        return True
+    client_log_num_lines = sum(1 for x in open(client_log_file))
+    server_log_num_lines = sum(1 for x in open(server_log_file))
+
+    if client_log_num_lines < 500 or server_log_num_lines < 500:
+        return True
+
+    return False
+
+
 DESCRIPTION = """
 This script will parse and display the results of a protocol end-to-end streaming test.
 Optionally, it will also include a comparison with the latest results from another branch (e.g. dev)
@@ -587,7 +603,9 @@ if __name__ == "__main__":
         print("Error, logs folder {} does not exist!".format(logs_root_dir))
         sys.exit(-1)
     for folder_name in sorted(os.listdir(logs_root_dir), reverse=True):
-        if time.strftime("%Y_%m_%d@") in folder_name:
+        if time.strftime("%Y_%m_%d@") in folder_name and not logs_contain_errors(
+            os.path.join(logs_root_dir, folder_name)
+        ):
             logs_root_dir = os.path.join(logs_root_dir, folder_name)
             test_time = folder_name
             break
