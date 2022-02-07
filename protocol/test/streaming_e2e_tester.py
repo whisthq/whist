@@ -366,16 +366,14 @@ if __name__ == "__main__":
     # Wait <testing_time> seconds to generate enough data
     time.sleep(testing_time)
 
-    # Exit the server/client mandelboxes
-    server_pexpect_process.sendline("exit")
-    wait_until_cmd_done(server_pexpect_process, pexpect_prompt_server, running_in_ci)
-    client_pexpect_process.sendline("exit")
-    wait_until_cmd_done(client_pexpect_process, pexpect_prompt_client, running_in_ci)
-
-    # Restore un-degradated network conditions in case the instance is reused later on
+    # Restore un-degradated network conditions in case the instance is reused later on. Do this before downloading the logs to prevent the donwload from taking a long time.
     if network_conditions != "normal":
+        # Get new SSH connection because current ones are connected to the mandelboxes' bash, and we cannot exit them until we have copied over the logs
+        client_restore_net_process = attempt_ssh_connection(
+            client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
+        )
         restore_network_conditions_client(
-            client_pexpect_process, pexpect_prompt_client, running_in_ci
+            client_restore_net_process, pexpect_prompt_client, running_in_ci
         )
 
     # Extract the client/server perf logs from the two docker containers
@@ -421,6 +419,12 @@ if __name__ == "__main__":
     )
 
     # Clean up the instance(s)
+
+    # Exit the server/client mandelboxes
+    server_pexpect_process.sendline("exit")
+    wait_until_cmd_done(server_pexpect_process, pexpect_prompt_server, running_in_ci)
+    client_pexpect_process.sendline("exit")
+    wait_until_cmd_done(client_pexpect_process, pexpect_prompt_client, running_in_ci)
 
     # Delete all Docker containers
 
