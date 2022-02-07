@@ -1453,7 +1453,7 @@ jobs:
         env:
           HEROKU_APP_NAME: ${{ env.HEROKU_APP_NAME }}
         shell: bash --noprofile --norc -eo pipefail {0}
-        working-directory: backend/services
+        working-directory: backend/services/scaling-service
         run: ./deploy.sh ${{ needs.mandelboxes-and-amis-publish-ghcr-and-aws.outputs.region_to_ami_map }}
 
       - name: Notify Slack on Successful Scaling Service Deploy

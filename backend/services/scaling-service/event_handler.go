@@ -130,7 +130,7 @@ func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
 	// Read file which contains the region to image on JSON format. This file will
 	// be read by the binary generated during deploy, located in the `bin` directory.
 	// The file is also generated during deploy and lives in the scaling service directory.
-	content, err := os.ReadFile(path.Join(currentWorkingDirectory, "scaling-service", "images.json"))
+	content, err := os.ReadFile(path.Join(currentWorkingDirectory, "images.json"))
 	if err != nil {
 		logger.Errorf("Failed to read region to image map from file. Not performing image upgrade. Err: %v", err)
 		return
