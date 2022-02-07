@@ -26,7 +26,7 @@ mkdir -p "$DEPLOY_DIR" && cp ./backend/services/build/scaling-service "$DEPLOY_D
 # Write region image map to var file so the Procfile can read it.
 echo "$REGION_IMAGE_MAP" > "$IMAGE_FILE"
 
-# Write Procfile 
+# Write Procfile
 echo -e "web: ./scaling-service" > "$PROCFILE"
 
 # Persist changes on local repo so that they are read by splitsh
