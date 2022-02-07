@@ -119,6 +119,31 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--leave-instances-on",
+    help="This option allows you to avoid stopping/terminating the instances upon completion of the test",
+    type=str,
+    choices=["false", "true"],
+    default="false",
+)
+
+parser.add_argument(
+    "--skip-host-setup",
+    help="This option allows you to skip the host-setup on the instances to be used for the test",
+    type=str,
+    choices=["false", "true"],
+    default="false",
+)
+
+parser.add_argument(
+    "--skip-git-clone",
+    help="This option allows you to skip cloning the Whist repository on the instances to be used for the test",
+    type=str,
+    choices=["false", "true"],
+    default="false",
+)
+
+
+parser.add_argument(
     "--simulate-scrolling",
     help="Whether to simulate mouse scrolling on the client side",
     type=str,
@@ -281,6 +306,8 @@ if __name__ == "__main__":
     args_dict["aws_credentials_filepath"] = aws_credentials_filepath
     args_dict["cmake_build_type"] = args.cmake_build_type
     args_dict["running_in_ci"] = running_in_ci
+    args_dict["skip_git_clone"] = args.skip_git_clone
+    args_dict["skip_host_setup"] = args.skip_host_setup
 
     # If using two instances, parallelize the host-setup and building of the docker containers to save time
     p1 = multiprocessing.Process(target=server_setup_process, args=[args_dict])
@@ -422,14 +449,17 @@ if __name__ == "__main__":
     server_log.close()
     client_log.close()
 
-    # Terminate or stop AWS instance(s)
-    terminate_or_stop_aws_instance(
-        boto3client, server_instance_id, server_instance_id != args.use_existing_server_instance
-    )
-    if use_two_instances:
+    if args.leave_instances_on == "false":
+        # Terminate or stop AWS instance(s)
         terminate_or_stop_aws_instance(
-            boto3client, client_instance_id, client_instance_id != args.use_existing_client_instance
+            boto3client, server_instance_id, server_instance_id != args.use_existing_server_instance
         )
+        if use_two_instances:
+            terminate_or_stop_aws_instance(
+                boto3client,
+                client_instance_id,
+                client_instance_id != args.use_existing_client_instance,
+            )
 
     print("Instance successfully stopped/terminated, goodbye")
 

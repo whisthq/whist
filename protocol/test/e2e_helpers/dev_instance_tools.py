@@ -247,7 +247,7 @@ def clone_whist_repository_on_instance(
                 break
 
     print(
-        "Cloning branch {} of the whisthg/whist repository on the AWS instance ...".format(
+        "Cloning branch {} of the whisthq/whist repository on the AWS instance ...".format(
             branch_name
         )
     )

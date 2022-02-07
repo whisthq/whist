@@ -303,6 +303,8 @@ def server_setup_process(args_dict):
     aws_credentials_filepath = args_dict["aws_credentials_filepath"]
     cmake_build_type = args_dict["cmake_build_type"]
     running_in_ci = args_dict["running_in_ci"]
+    skip_git_clone = args_dict["skip_git_clone"]
+    skip_host_setup = args_dict["skip_host_setup"]
 
     server_log = open(server_log_filepath, "w")
 
@@ -320,15 +322,22 @@ def server_setup_process(args_dict):
         hs_process, pexpect_prompt_server, running_in_ci, aws_credentials_filepath
     )
 
-    clone_whist_repository_on_instance(
-        github_token, hs_process, pexpect_prompt_server, running_in_ci
-    )
-    apply_dpkg_locking_fixup(hs_process, pexpect_prompt_server, running_in_ci)
+    if skip_git_clone == "false":
+        clone_whist_repository_on_instance(
+            github_token, hs_process, pexpect_prompt_server, running_in_ci
+        )
+    else:
+        print("Skipping git clone whisthq/whist repository on server instance.")
 
-    # 1- run host-setup
-    hs_process = run_host_setup_on_instance(
-        hs_process, pexpect_prompt_server, server_cmd, aws_timeout, server_log, running_in_ci
-    )
+    if skip_host_setup == "false":
+        apply_dpkg_locking_fixup(hs_process, pexpect_prompt_server, running_in_ci)
+
+        # 1- run host-setup
+        hs_process = run_host_setup_on_instance(
+            hs_process, pexpect_prompt_server, server_cmd, aws_timeout, server_log, running_in_ci
+        )
+    else:
+        print("Skipping host setup on server instance.")
 
     # 2- reboot and wait for it to come back up
     print("Rebooting the server EC2 instance (required after running the host setup)...")
@@ -370,11 +379,14 @@ def client_setup_process(args_dict):
     aws_credentials_filepath = args_dict["aws_credentials_filepath"]
     cmake_build_type = args_dict["cmake_build_type"]
     running_in_ci = args_dict["running_in_ci"]
+    skip_git_clone = args_dict["skip_git_clone"]
+    skip_host_setup = args_dict["skip_host_setup"]
 
     client_log = open(client_log_filepath, "w")
 
     client_cmd = "ssh {}@{} -i {}".format(username, client_hostname, ssh_key_path)
 
+    # If we are using the same instance for client and server, all the operations in this if-statement have already been done by server_setup_process
     if use_two_instances:
         # Initiate the SSH connections with the client instance
         print("Initiating the SETUP ssh connection with the client AWS instance...")
@@ -388,15 +400,27 @@ def client_setup_process(args_dict):
             hs_process, pexpect_prompt_client, running_in_ci, aws_credentials_filepath
         )
 
-        clone_whist_repository_on_instance(
-            github_token, hs_process, pexpect_prompt_client, running_in_ci
-        )
-        apply_dpkg_locking_fixup(hs_process, pexpect_prompt_client, running_in_ci)
+        if skip_git_clone == "false":
+            clone_whist_repository_on_instance(
+                github_token, hs_process, pexpect_prompt_client, running_in_ci
+            )
+        else:
+            print("Skipping git clone whisthq/whist repository on client instance.")
 
-        # 1- run host-setup
-        hs_process = run_host_setup_on_instance(
-            hs_process, pexpect_prompt_client, client_cmd, aws_timeout, client_log, running_in_ci
-        )
+        if skip_host_setup == "false":
+            apply_dpkg_locking_fixup(hs_process, pexpect_prompt_client, running_in_ci)
+
+            # 1- run host-setup
+            hs_process = run_host_setup_on_instance(
+                hs_process,
+                pexpect_prompt_client,
+                client_cmd,
+                aws_timeout,
+                client_log,
+                running_in_ci,
+            )
+        else:
+            print("Skipping host setup on server instance.")
 
         # 2- reboot and wait for it to come back up
         print("Rebooting the server EC2 instance (required after running the host setup)...")
