@@ -366,6 +366,12 @@ if __name__ == "__main__":
     # Wait <testing_time> seconds to generate enough data
     time.sleep(testing_time)
 
+    # Exit the server/client mandelboxes
+    server_pexpect_process.sendline("exit")
+    wait_until_cmd_done(server_pexpect_process, pexpect_prompt_server, running_in_ci)
+    client_pexpect_process.sendline("exit")
+    wait_until_cmd_done(client_pexpect_process, pexpect_prompt_client, running_in_ci)
+
     # Restore un-degradated network conditions in case the instance is reused later on
     if network_conditions != "normal":
         restore_network_conditions_client(
@@ -415,11 +421,6 @@ if __name__ == "__main__":
     )
 
     # Clean up the instance(s)
-    # Exit the server/client mandelboxes
-    server_pexpect_process.sendline("exit")
-    wait_until_cmd_done(server_pexpect_process, pexpect_prompt_server, running_in_ci)
-    client_pexpect_process.sendline("exit")
-    wait_until_cmd_done(client_pexpect_process, pexpect_prompt_client, running_in_ci)
 
     # Delete all Docker containers
 

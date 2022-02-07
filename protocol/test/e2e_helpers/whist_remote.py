@@ -423,7 +423,7 @@ def client_setup_process(args_dict):
             print("Skipping host setup on server instance.")
 
         # 2- reboot and wait for it to come back up
-        print("Rebooting the server EC2 instance (required after running the host setup)...")
+        print("Rebooting the client EC2 instance (required after running the host setup)...")
         hs_process = reboot_instance(
             hs_process, client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5, running_in_ci
         )
