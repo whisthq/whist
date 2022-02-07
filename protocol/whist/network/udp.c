@@ -1094,6 +1094,10 @@ int create_udp_client_context(UDPContext* context, char* destination, int port,
         return -1;
     }
 
+    // Sleep for a little bit, to ensure that the server is listening
+    // NOTE: Will be removed when moving to stateful handshake
+    whist_sleep(connection_timeout_ms / 4);
+
     // Set the timeout to connection_timeout_ms
     set_timeout(context->socket, connection_timeout_ms);
 
