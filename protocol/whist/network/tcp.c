@@ -219,7 +219,7 @@ TCP Implementation of Network.h Interface
 static bool tcp_update(void* raw_context) {
     FATAL_ASSERT(raw_context != NULL);
     TCPContext* context = raw_context;
-    
+
     // NOTE: Reconnection isn't implemented,
     // because theoretically TCP should never disconnect.
     // If we see TCP disconnection in the future, we should try to investigate why.
