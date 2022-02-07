@@ -36,4 +36,4 @@ git checkout workflows-private/services
 
 # we are now in the scaling-service folder as a standalone git repo, push to Heroku.
 echo "Redeploying scaling service..."
-git push -f heroku-whist-scaling-service workflows-private/scaling-service:master
+git push -f heroku-whist-scaling-service workflows-private/services:master
