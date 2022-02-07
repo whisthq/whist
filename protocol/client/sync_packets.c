@@ -34,60 +34,11 @@ extern SocketContext packet_udp_context;
 extern SocketContext packet_tcp_context;
 extern volatile bool
     connected;  // The state of the client, i.e. whether it's connected to a server or not
-// TCP ping variables
-WhistTimer last_tcp_ping_timer;
-volatile int last_tcp_ping_id;
-volatile int last_tcp_pong_id;
-extern volatile double latency;
 
 // Threads
 static WhistThread sync_udp_packets_thread;
 static WhistThread sync_tcp_packets_thread;
 static bool run_sync_packets_threads;
-
-/*
-============================
-Private Function Implementations
-============================
-*/
-
-static void update_tcp_ping(void) {
-    /*
-       If no valid TCP pong has been received or sending a TCP ping is failing, then
-       send a TCP reconnection request to the server. This is agnostic of whether
-       the lost connection was caused by the client or the server.
-    */
-
-    static WhistTimer last_new_ping_timer;
-    static bool timer_initialized = false;
-    if (!timer_initialized) {
-        start_timer(&last_new_ping_timer);
-        timer_initialized = true;
-    }
-
-    // If it's been 10 seconds since the last TCP ping, we should warn
-    if (get_timer(&last_tcp_ping_timer) > 10.0) {
-        LOG_WARNING("No TCP ping sent or pong received in over 10 seconds");
-    }
-
-    // If we're waiting for a ping, and it's been 5s, then that ping will be
-    // noted as failed
-    if (last_tcp_ping_id != last_tcp_pong_id && get_timer(&last_new_ping_timer) > 5.0) {
-        LOG_WARNING("TCP ping received no response: %d", last_tcp_ping_id);
-
-        // Only if we successfully recover the TCP connection should we continue
-        //     as if the ping was successful.
-        if (send_tcp_reconnect_message() == 0) {
-            last_tcp_pong_id = last_tcp_ping_id;
-        }
-    }
-
-    // If we've received the last pong, send another if it's been 2s since last ping
-    if (last_tcp_ping_id == last_tcp_pong_id && get_timer(&last_tcp_ping_timer) > 2.0) {
-        send_tcp_ping(last_tcp_ping_id + 1);
-        start_timer(&last_new_ping_timer);
-    }
-}
 
 /*
 ============================
@@ -106,15 +57,10 @@ Public Function Implementations
 // Please pass this comment into any non-trivial function that this function calls.
 static int multithreaded_sync_udp_packets(void* opaque) {
     /*
-        Send, receive, and process UDP packets - dimension messages, bitrate messages, nack
-       messages, pings, audio and video packets.
+        Send, receive, and process UDP packets - dimension messages, audio/video packets.
     */
     WhistRenderer* whist_renderer = (WhistRenderer*)opaque;
     SocketContext* udp_context = &packet_udp_context;
-
-    // we initialize latency here because on macOS, latency would not initialize properly in
-    // its global declaration. We start at 25ms before the first ping.
-    latency = 25.0 / MS_IN_SECOND;
 
     WhistTimer statistics_timer;
 
@@ -129,7 +75,21 @@ static int multithreaded_sync_udp_packets(void* opaque) {
         // Update the renderer
         renderer_update(whist_renderer);
         // Update the UDP socket
-        TIME_RUN(socket_update(udp_context), NETWORK_READ_PACKET_UDP, statistics_timer);
+        start_timer(&statistics_timer);
+        // Disconnect if the UDP connection was lost
+        if (!socket_update(udp_context)) {
+            LOG_WARNING("UDP Connection Lost!");
+            for (int i = 0; i < NUM_PACKET_TYPES; i++) {
+                if (last_whist_packet[i] != NULL) {
+                    free_packet(udp_context, last_whist_packet[i]);
+                }
+            }
+            // TODO: Remove global
+            connected = false;
+            whist_sleep(1);
+            continue;
+        }
+        log_double_statistic(NETWORK_READ_PACKET_UDP, get_timer(&statistics_timer) * MS_IN_SECOND);
 
         // Handle any messages we've received
         WhistPacket* message_packet = (WhistPacket*)get_packet(udp_context, PACKET_MESSAGE);
@@ -252,8 +212,6 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
     */
     SocketContext* tcp_context = &packet_tcp_context;
 
-    last_tcp_ping_id = 0;
-
     WhistTimer last_loop_start;
     WhistTimer statistics_timer;
     bool successful_read_or_pull = false;
@@ -261,14 +219,13 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
     while (run_sync_packets_threads) {
         start_timer(&last_loop_start);
 
-        // TODO: Pull this into tcp.c
         if (!socket_update(tcp_context)) {
-            send_tcp_reconnect_message();
+            LOG_WARNING("TCP Connection Lost!");
+            // TODO: Remove global
+            connected = false;
+            whist_sleep(1);
+            continue;
         }
-
-        // Update TCP ping and reconnect TCP if needed (TODO: does that function do too much?)
-        // TODO: Move into tcp.c
-        update_tcp_ping();
 
         successful_read_or_pull = false;
 

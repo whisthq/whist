@@ -107,30 +107,6 @@ int quit_client(Client *client) {
     return 0;
 }
 
-int reap_timed_out_client(Client *client, double timeout) {
-    /*
-        Sets client to quit if timed out.
-
-        Arguments:
-            client (Client*): target client
-            timeout (double): Duration (in seconds) after which a
-                client is deemed timed out if the server has not received
-                a ping from the client.
-
-        Returns:
-            (int): Returns -1 on failure, 0 on success.
-    */
-
-    if (client->is_active && get_timer(&client->last_ping) > timeout) {
-        LOG_INFO("Dropping timed out client");
-        if (start_quitting_client(client) != 0) {
-            LOG_ERROR("Failed to start quitting client.");
-            return -1;
-        }
-    }
-    return 0;
-}
-
 void add_thread_to_client_active_dependents(void) {
     /*
         Add thread to count of those dependent on client being active

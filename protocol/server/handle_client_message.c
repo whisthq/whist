@@ -47,9 +47,6 @@ static int handle_file_metadata_message(WhistClientMessage *wcmsg);
 static int handle_file_chunk_message(WhistClientMessage *wcmsg);
 static int handle_open_url_message(whist_server_state *state, WhistClientMessage *wcmsg);
 
-// TODO: Do this in tcp.c
-static int handle_tcp_ping_message(Client *client, WhistClientMessage *wcmsg);
-
 /*
 ============================
 Public Function Implementations
@@ -84,8 +81,6 @@ int handle_client_message(whist_server_state *state, WhistClientMessage *wcmsg) 
         case MESSAGE_START_STREAMING:
         case MESSAGE_STOP_STREAMING:
             return handle_streaming_toggle_message(state, wcmsg);
-        case MESSAGE_TCP_PING:
-            return handle_tcp_ping_message(&state->client, wcmsg);
         case MESSAGE_DIMENSIONS:
             return handle_dimensions_message(state, wcmsg);
         case CMESSAGE_CLIPBOARD:
@@ -178,36 +173,6 @@ static int handle_streaming_toggle_message(whist_server_state *state, WhistClien
         LOG_WARNING("Received streaming message to %s streaming, but we're already in that state!",
                     state->stop_streaming ? "stop" : "start");
     }
-    return 0;
-}
-
-static int handle_tcp_ping_message(Client *client, WhistClientMessage *wcmsg) {
-    /*
-        Handle a client TCP ping message.
-
-        Arguments:
-            wcmsg (WhistClientMessage*): message package from client
-
-        Returns:
-            (int): Returns -1 on failure, 0 on success
-    */
-
-    LOG_INFO("TCP Ping Received - TCP Ping ID %d", wcmsg->ping_data.id);
-
-    // Update ping timer
-    start_timer(&client->last_ping);
-
-    // Send pong reply
-    WhistServerMessage fsmsg_response = {0};
-    fsmsg_response.type = MESSAGE_TCP_PONG;
-    fsmsg_response.ping_id = wcmsg->ping_data.id;
-
-    if (send_packet(&client->tcp_context, PACKET_MESSAGE, (uint8_t *)&fsmsg_response,
-                    sizeof(fsmsg_response), -1, false) < 0) {
-        LOG_WARNING("Failed to send TCP pong");
-        return -1;
-    }
-
     return 0;
 }
 

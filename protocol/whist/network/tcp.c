@@ -26,38 +26,74 @@ Defines
 
 // Create a hard-cap on the size of a TCP Packet,
 // Currently set to the "large enough" 1GB
-#define MAX_TCP_PAYLOAD 1000000000
+#define MAX_TCP_PAYLOAD_SIZE 1000000000
 
-// A TCPPacket that gets sent over the network
+typedef enum {
+    TCP_PING,
+    TCP_PONG,
+    TCP_WHIST_PACKET,
+} TCPPacketType;
+
+// A TCPPacket of data
+typedef struct {
+    TCPPacketType type;
+
+    union {
+        // TCP_PING / TCP_PONG
+        struct {
+            int ping_id;
+        } tcp_ping_data;
+
+        // TCP_WHIST_PACKET
+        struct {
+            char whist_packet[0];
+        } whist_packet_data;
+    };
+} TCPPacket;
+
+// An Encrypted TCPNetworkPacket that gets sent over the network
 typedef struct {
     AESMetadata aes_metadata;
     int payload_size;
     char payload[];
-} TCPPacket;
+} TCPNetworkPacket;
 
-// Get tcp packet size from a TCPPacket*
-#define get_tcp_packet_size(tcp_packet) ((size_t)(sizeof(TCPPacket) + (tcp_packet)->payload_size))
+// Get tcp packet size from a TCPNetworkPacket*
+#define get_tcp_network_packet_size(tcp_packet) \
+    ((size_t)(sizeof(TCPNetworkPacket) + (tcp_packet)->payload_size))
 
 // How often to poll recv
 #define RECV_INTERVAL_MS 30
 
 typedef struct {
     int timeout;
+    SOCKET listen_socket;
     SOCKET socket;
     struct sockaddr_in addr;
     WhistMutex mutex;
     char binary_aes_private_key[16];
-    // Used for reading TCP packets
+    // Used for ting TCP packets
     int reading_packet_len;
     DynamicBuffer* encrypted_tcp_packet_buffer;
     NetworkThrottleContext* network_throttler;
+    bool is_server;
 
-    WhistTimer last_ack_timer;
+    int last_ping_id;
+    int last_pong_id;
+    WhistTimer last_ping_timer;
+    bool connection_lost;
 
     // Only recvp every RECV_INTERVAL_MS, to keep CPU usage low.
     // This is because a recvp takes ~8ms sometimes
     WhistTimer last_recvp;
 } TCPContext;
+
+// Time between consecutive pings
+#define TCP_PING_INTERVAL_SEC 2.0
+// Time before a ping to be considered "lost", and reconnection starts
+#define TCP_PING_MAX_WAIT_SEC 5.0
+// Time spent during a reconnection, before the connection is considered "lost"
+#define TCP_PING_MAX_RECONNECTION_TIME_SEC 3.0
 
 /*
 ============================
@@ -120,7 +156,28 @@ int create_tcp_client_context(TCPContext* context, char* destination, int port,
  *                                 get_last_network_error() to learn more about the
  *                                 error
  */
-int tcp_send_constructed_packet(TCPContext* context, WhistPacket* packet);
+int tcp_send_constructed_packet(TCPContext* context, TCPPacket* packet);
+
+/**
+ * @brief                        Returns the size, in bytes, of the relevant part of
+ *                               the TCPPacket, that must be sent over the network
+ *
+ * @param tcp_packet             The tcp packet whose size we're interested in
+ *
+ * @returns                      The size N of the tcp packet. Only the first N
+ *                               bytes needs to be recovered on the receiving side,
+ *                               in order to read the contents of the tcp packet
+ */
+static int get_tcp_packet_size(TCPPacket* tcp_packet);
+
+/**
+ * @brief                   Handle any TCPPacket that's not a Whist packet,
+ *                          e.g. ping/pong/reconnection attempts
+ *
+ * @param context           The TCPContext to handle the message
+ * @param packet            The TCPPacket to handle
+ */
+static void tcp_handle_message(TCPContext* context, TCPPacket* packet);
 
 /**
  * @brief                          Perform socket() syscall and set fds to
@@ -163,17 +220,52 @@ static bool tcp_update(void* raw_context) {
     FATAL_ASSERT(raw_context != NULL);
     TCPContext* context = raw_context;
 
-    int ret = 0;
+    // NOTE: Reconnection isn't implemented,
+    // because theoretically TCP should never disconnect.
+    // If we see TCP disconnection in the future, we should try to investigate why.
 
-    // Keep sending a length-0 packet every 50 ms,
-    // To keep the TCP connection alive and additionally check
-    // whether or not it is still alive
-    if (get_timer(&context->last_ack_timer) > 50.0 / MS_IN_SECOND) {
-        ret = send(context->socket, NULL, 0, 0);
-        start_timer(&context->last_ack_timer);
+    if (context->is_server) {
+        // This is where we check for pending reconnction attempts, if any
+    } else {
+        // Client-side TCP code
+        int send_ping_id = -1;
+
+        if (context->last_ping_id == -1) {
+            // If we haven't send a ping yet, start on ID 1
+            send_ping_id = 1;
+        } else if (context->last_ping_id == context->last_pong_id) {
+            // If we've received the last ping,
+
+            // Send the next ping after TCP_PING_INTERVAL_SEC
+            if (get_timer(&context->last_ping_timer) > TCP_PING_INTERVAL_SEC) {
+                send_ping_id = context->last_ping_id + 1;
+            }
+        } else {
+            // If we haven't received the last ping,
+            // and TCP_PING_MAX_WAIT_SEC has passed, the connection has been lost
+            if (get_timer(&context->last_ping_timer) > TCP_PING_MAX_WAIT_SEC) {
+                LOG_WARNING("TCP Connection has been lost");
+                context->connection_lost = true;
+            }
+        }
+
+        if (send_ping_id != -1) {
+            // Send the ping
+            TCPPacket packet = {0};
+            packet.type = TCP_PING;
+            packet.tcp_ping_data.ping_id = send_ping_id;
+            tcp_send_constructed_packet(context, &packet);
+            // Track the ping status
+            context->last_ping_id = send_ping_id;
+            start_timer(&context->last_ping_timer);
+        }
+
+        if (context->connection_lost) {
+            // TODO: Try to reconnect for TCP_PING_MAX_RECONNECTION_TIME_SEC seconds?
+        }
     }
 
-    return ret >= 0;
+    return !context->connection_lost;
 }
 
 // NOTE that this function is in the hotpath.
@@ -185,6 +277,10 @@ static int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, 
     TCPContext* context = raw_context;
     UNUSED(start_of_stream);
 
+    if (context->connection_lost) {
+        return -1;
+    }
+
     if (id != -1) {
         LOG_ERROR("ID should be -1 when sending over TCP!");
     }
@@ -192,7 +288,9 @@ static int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, 
     // Use our block allocator
     // This function fragments the heap too much to use malloc here
     int packet_size = PACKET_HEADER_SIZE + len;
-    WhistPacket* packet = allocate_region(packet_size);
+    TCPPacket* tcp_packet = allocate_region(sizeof(TCPPacket) + packet_size);
+    tcp_packet->type = TCP_WHIST_PACKET;
+    WhistPacket* packet = (WhistPacket*)&tcp_packet->whist_packet_data.whist_packet;
 
     // Contruct packet metadata
     packet->id = id;
@@ -204,10 +302,10 @@ static int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, 
     memcpy(packet->data, data, len);
 
     // Send the packet
-    int ret = tcp_send_constructed_packet(context, packet);
+    int ret = tcp_send_constructed_packet(context, tcp_packet);
 
     // Free the packet
-    deallocate_region(packet);
+    deallocate_region(tcp_packet);
 
     // Return success code
     return ret;
@@ -216,6 +314,10 @@ static int tcp_send_packet(void* raw_context, WhistPacketType type, void* data, 
 static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
     FATAL_ASSERT(raw_context != NULL);
     TCPContext* context = raw_context;
+
+    if (context->connection_lost) {
+        return NULL;
+    }
 
     if (get_timer(&context->last_recvp) * MS_IN_SECOND < RECV_INTERVAL_MS) {
         // Return early if it's been too soon since the last recv
@@ -254,50 +356,61 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
         // then try pulling some more from recv
     };
 
-    // If we have enough bytes to read a TCPPacket header,
-    if ((unsigned long)context->reading_packet_len >= sizeof(TCPPacket)) {
+    // If we have enough bytes to read a TCPNetworkPacket header,
+    if ((unsigned long)context->reading_packet_len >= sizeof(TCPNetworkPacket)) {
         // Get a pointer to the tcp_packet
-        TCPPacket* tcp_packet = (TCPPacket*)encrypted_tcp_packet_buffer->buf;
+        TCPNetworkPacket* tcp_network_packet = (TCPNetworkPacket*)encrypted_tcp_packet_buffer->buf;
 
-        // An untrusted party could've injected bytes, so we ensure payload_size is valid and won't
-        // overflow
-        if (tcp_packet->payload_size < 0 || MAX_TCP_PAYLOAD < tcp_packet->payload_size) {
-            // Reset the connection and try reading bytes again
+        // An untrusted party could've injected bytes,
+        // so we ensure payload_size is valid and won't underflow/overflow
+        // NOTE: Not doing this check can cause someone to buffer overflow the later code,
+        // leading to security problems
+        if (tcp_network_packet->payload_size < 0 ||
+            MAX_TCP_PAYLOAD_SIZE < tcp_network_packet->payload_size) {
+            // Wipe the reading packet buffer,
             context->reading_packet_len = 0;
             resize_dynamic_buffer(encrypted_tcp_packet_buffer, 0);
-            LOG_WARNING("Could not parse packet: %d", tcp_packet->payload_size);
+            // And mark the connection as lost
+            // NOTE: It's okay to drop the connection when this happens,
+            //       without exposing us to DOS attacks.
+            //       It requires a MITM to interrupt a connection (Requires guessing the sequence
+            //       number). Even TLS/SSL will not safeguard us from this, it's fundamental to TCP.
+            LOG_WARNING("Invalid packet size: %d, connection dropping",
+                        tcp_network_packet->payload_size);
+            context->connection_lost = true;
             return NULL;
         }
 
-        // Now that we know get_tcp_packet_size will be a reasonable number, so we calculate it
-        int tcp_packet_size = get_tcp_packet_size(tcp_packet);
+        // Now that we know payload_size will be a reasonable number,
+        // we can calculate tcp_network_packet_size
+        int tcp_network_packet_size = get_tcp_network_packet_size(tcp_network_packet);
 
-        // If the target len is valid (Checking because this is an untrusted network),
-        // and we've read enough bytes for the whole tcp packet,
-        // we're ready to go
-        if (tcp_packet_size >= 0 && context->reading_packet_len >= tcp_packet_size) {
+        // Once we've read enough bytes for the whole tcp packet,
+        // we're ready to try to decrypt it
+        if (context->reading_packet_len >= tcp_network_packet_size) {
             // The resulting packet will be <= the encrypted size
-            WhistPacket* whist_packet = allocate_region(tcp_packet->payload_size);
+            TCPPacket* tcp_packet = allocate_region(tcp_network_packet->payload_size);
 
             if (ENCRYPTING_PACKETS) {
                 // Decrypt into whist_packet
                 int decrypted_len = decrypt_packet(
-                    whist_packet, tcp_packet->payload_size, tcp_packet->aes_metadata,
-                    tcp_packet->payload, tcp_packet->payload_size, context->binary_aes_private_key);
+                    tcp_packet, tcp_network_packet->payload_size, tcp_network_packet->aes_metadata,
+                    tcp_network_packet->payload, tcp_network_packet->payload_size,
+                    context->binary_aes_private_key);
                 if (decrypted_len == -1) {
                     // Deallocate and prepare to return NULL on decryption failure
-                    LOG_WARNING("Could not decrypt TCP message");
-                    deallocate_region(whist_packet);
-                    whist_packet = NULL;
+                    LOG_WARNING("Could not decrypt TCP message!");
+                    deallocate_region(tcp_packet);
+                    tcp_packet = NULL;
                 } else {
-                    // Verify that the length matches what the WhistPacket's length should be
-                    FATAL_ASSERT(decrypted_len == get_packet_size(whist_packet));
+                    // Verify that the length matches what the TCPPacket's length should be
+                    FATAL_ASSERT(decrypted_len == get_tcp_packet_size(tcp_packet));
                 }
             } else {
                 // If we're not encrypting packets, just copy it over
-                memcpy(whist_packet, tcp_packet->payload, tcp_packet->payload_size);
-                // Verify that the length matches what the WhistPacket's length should be
-                FATAL_ASSERT(tcp_packet->payload_size == get_packet_size(whist_packet));
+                memcpy(tcp_packet, tcp_network_packet->payload, tcp_network_packet->payload_size);
+                // Verify that the length matches what the TCPPacket's length should be
+                FATAL_ASSERT(tcp_network_packet->payload_size == get_tcp_packet_size(tcp_packet));
             }
 
 #if LOG_NETWORKING
@@ -306,25 +419,39 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
 
             // Move the rest of the already read bytes,
             // to the beginning of the buffer to continue
-            for (int i = tcp_packet_size; i < context->reading_packet_len; i++) {
-                encrypted_tcp_packet_buffer->buf[i - tcp_packet_size] =
+            for (int i = tcp_network_packet_size; i < context->reading_packet_len; i++) {
+                encrypted_tcp_packet_buffer->buf[i - tcp_network_packet_size] =
                     encrypted_tcp_packet_buffer->buf[i];
             }
-            context->reading_packet_len -= tcp_packet_size;
+            context->reading_packet_len -= tcp_network_packet_size;
 
             // Realloc the buffer smaller if we have room to
             resize_dynamic_buffer(encrypted_tcp_packet_buffer, context->reading_packet_len);
 
-            // Return the whist_packet,
+            // Handle the TCPPacket,
             // but it might be NULL if decrypting failed
-            if (whist_packet != NULL) {
-                if (whist_packet->type == packet_type) {
+            if (tcp_packet != NULL) {
+                if (tcp_packet->type == TCP_WHIST_PACKET) {
+                    WhistPacket* whist_packet =
+                        (WhistPacket*)&tcp_packet->whist_packet_data.whist_packet;
+                    // Check that the type matches
+                    if (whist_packet->type != packet_type) {
+                        LOG_ERROR("Got a TCP whist packet of type that didn't match %d! %d",
+                                  (int)packet_type, (int)whist_packet->type);
+                        deallocate_region(tcp_packet);
+                        return NULL;
+                    }
+                    // Return the whist packet
+                    // Note that the allocate_region is offset by offsetof(TCPPacket,
+                    // whist_packet_data.whist_packet)
                     return whist_packet;
                 } else {
-                    deallocate_region(whist_packet);
-                    LOG_ERROR("Got a TCP whist packet of type that didn't match %d! %d",
-                              (int)packet_type, (int)whist_packet->type);
-                    return NULL;
+                    // Handle the TCPPacket message
+                    tcp_handle_message(context, tcp_packet);
+                    deallocate_region(tcp_packet);
+                    // There might still be a pending WhistPacket,
+                    // So we make a recursive call to check again
+                    return tcp_get_packet(raw_context, packet_type);
                 }
             }
         }
@@ -333,8 +460,11 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
     return NULL;
 }
 
-static void tcp_free_packet(void* raw_context, WhistPacket* tcp_packet) {
+static void tcp_free_packet(void* raw_context, WhistPacket* whist_packet) {
     FATAL_ASSERT(raw_context != NULL);
+    // Free the underlying TCP Packet
+    TCPPacket* tcp_packet =
+        (TCPPacket*)((char*)whist_packet - offsetof(TCPPacket, whist_packet_data.whist_packet));
     deallocate_region(tcp_packet);
 }
 
@@ -349,6 +479,7 @@ static void tcp_destroy_socket_context(void* raw_context) {
     TCPContext* context = raw_context;
 
     closesocket(context->socket);
+    closesocket(context->listen_socket);
     whist_destroy_mutex(context->mutex);
     free_dynamic_buffer(context->encrypted_tcp_packet_buffer);
     free(context);
@@ -393,19 +524,8 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
     // Create the TCPContext, and set to zero
     TCPContext* context = safe_malloc(sizeof(TCPContext));
     memset(context, 0, sizeof(TCPContext));
-    network_context->context = context;
 
-    // if dest is NULL, it means the context will be listening for income connections
-    if (destination == NULL) {
-        FATAL_ASSERT(network_context->listen_socket != NULL);
-        /*
-            for tcp, just make a copy of the socket, do not transfer ownership to TCPContext.
-            when TCPContext is destoryed, the copied listen_socket should NOT be closed.
-        */
-        // TODO: This logic is very confusing,
-        // This should be fixed
-        context->socket = *network_context->listen_socket;
-    }
+    network_context->context = context;
 
     // Map Port
     if ((int)((unsigned short)port) != port) {
@@ -422,7 +542,10 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
     context->encrypted_tcp_packet_buffer = init_dynamic_buffer(true);
     resize_dynamic_buffer(context->encrypted_tcp_packet_buffer, 0);
     context->network_throttler = NULL;
-    start_timer(&context->last_ack_timer);
+    context->last_ping_id = -1;
+    context->last_pong_id = -1;
+    start_timer(&context->last_ping_timer);
+    context->connection_lost = false;
     start_timer(&context->last_recvp);
 
     int ret;
@@ -495,24 +618,31 @@ Private Function Implementations
 int create_tcp_server_context(TCPContext* context, int port, int connection_timeout_ms) {
     FATAL_ASSERT(context != NULL);
 
+    // Create the TCP listen socket
+    if (create_tcp_listen_socket(&context->listen_socket, port, connection_timeout_ms) != 0) {
+        LOG_ERROR("Failed to create TCP listen socket");
+        return -1;
+    }
+
     fd_set fd_read, fd_write;
     FD_ZERO(&fd_read);
     FD_ZERO(&fd_write);
-    FD_SET(context->socket, &fd_read);
-    FD_SET(context->socket, &fd_write);
+    FD_SET(context->listen_socket, &fd_read);
+    FD_SET(context->listen_socket, &fd_write);
 
     struct timeval tv;
     tv.tv_sec = connection_timeout_ms / MS_IN_SECOND;
     tv.tv_usec = (connection_timeout_ms % MS_IN_SECOND) * 1000;
 
     int ret;
-    if ((ret = select((int)context->socket + 1, &fd_read, &fd_write, NULL,
+    if ((ret = select((int)context->listen_socket + 1, &fd_read, &fd_write, NULL,
                       connection_timeout_ms > 0 ? &tv : NULL)) <= 0) {
         if (ret == 0) {
             LOG_INFO("No TCP Connection Retrieved, ending TCP connection attempt.");
         } else {
             LOG_WARNING("Could not select! %d", get_last_network_error());
         }
+        closesocket(context->listen_socket);
         return -1;
     }
 
@@ -520,9 +650,10 @@ int create_tcp_server_context(TCPContext* context, int port, int connection_time
     LOG_INFO("Waiting for TCP client on port %d...", port);
     socklen_t slen = sizeof(context->addr);
     SOCKET new_socket;
-    if ((new_socket = acceptp(context->socket, (struct sockaddr*)(&context->addr), &slen)) ==
+    if ((new_socket = acceptp(context->listen_socket, (struct sockaddr*)(&context->addr), &slen)) ==
         INVALID_SOCKET) {
         LOG_WARNING("Could not accept() over TCP! %d", get_last_network_error());
+        closesocket(context->listen_socket);
         return -1;
     }
 
@@ -533,6 +664,7 @@ int create_tcp_server_context(TCPContext* context, int port, int connection_time
                                context->binary_aes_private_key)) {
         LOG_WARNING("Could not complete handshake!");
         closesocket(context->socket);
+        closesocket(context->listen_socket);
         return -1;
     }
 
@@ -547,22 +679,39 @@ int create_tcp_client_context(TCPContext* context, char* destination, int port,
     FATAL_ASSERT(context != NULL);
     FATAL_ASSERT(destination != NULL);
 
-    // Create TCP socket
-    if ((context->socket = socketp_tcp()) == INVALID_SOCKET) {
-        return -1;
+    // Track time left
+    WhistTimer connection_timer;
+    start_timer(&connection_timer);
+
+    // Keep trying to connect, as long as we have time to
+    bool connected = false;
+    int remaining_connection_time;
+    while ((remaining_connection_time =
+                connection_timeout_ms - get_timer(&connection_timer) * MS_IN_SECOND) > 2) {
+        // Create TCP socket
+        if ((context->socket = socketp_tcp()) == INVALID_SOCKET) {
+            return -1;
+        }
+
+        // Setup the addr we want to connect to
+        context->addr.sin_family = AF_INET;
+        context->addr.sin_addr.s_addr = inet_addr(destination);
+        context->addr.sin_port = htons((unsigned short)port);
+
+        LOG_INFO("Connecting to server at %s:%d over TCP...", destination, port);
+
+        // Connect to TCP server
+        set_timeout(context->socket, remaining_connection_time);
+        if (tcp_connect(context->socket, context->addr, remaining_connection_time)) {
+            connected = true;
+            break;
+        } else {
+            // Else, try again in a bit
+            closesocket(context->socket);
+            whist_sleep(1);
+        }
     }
-
-    // Client connection protocol
-
-    context->addr.sin_family = AF_INET;
-    context->addr.sin_addr.s_addr = inet_addr(destination);
-    context->addr.sin_port = htons((unsigned short)port);
-
-    LOG_INFO("Connecting to server at %s:%d over TCP...", destination, port);
-
-    // Connect to TCP server, waiting for connection_timeout_ms
-    set_timeout(context->socket, connection_timeout_ms);
-    if (!tcp_connect(context->socket, context->addr, connection_timeout_ms)) {
+    if (!connected) {
         LOG_WARNING("Could not connect to server over TCP");
         return -1;
     }
@@ -580,25 +729,25 @@ int create_tcp_client_context(TCPContext* context, char* destination, int port,
     return 0;
 }
 
-int tcp_send_constructed_packet(TCPContext* context, WhistPacket* packet) {
-    int packet_size = get_packet_size(packet);
+int tcp_send_constructed_packet(TCPContext* context, TCPPacket* packet) {
+    int packet_size = get_tcp_packet_size(packet);
 
     // Allocate a buffer for the encrypted packet
-    TCPPacket* tcp_packet =
-        allocate_region(sizeof(TCPPacket) + packet_size + MAX_ENCRYPTION_SIZE_INCREASE);
+    TCPNetworkPacket* network_packet =
+        allocate_region(sizeof(TCPNetworkPacket) + packet_size + MAX_ENCRYPTION_SIZE_INCREASE);
 
     if (ENCRYPTING_PACKETS) {
         // If we're encrypting packets, encrypt the packet into tcp_packet
-        int encrypted_len = encrypt_packet(tcp_packet->payload, &tcp_packet->aes_metadata, packet,
-                                           packet_size, context->binary_aes_private_key);
-        tcp_packet->payload_size = encrypted_len;
+        int encrypted_len = encrypt_packet(network_packet->payload, &network_packet->aes_metadata,
+                                           packet, packet_size, context->binary_aes_private_key);
+        network_packet->payload_size = encrypted_len;
     } else {
         // Otherwise, just write it to tcp_packet directly
-        tcp_packet->payload_size = packet_size;
-        memcpy(tcp_packet->payload, packet, packet_size);
+        network_packet->payload_size = packet_size;
+        memcpy(network_packet->payload, packet, packet_size);
     }
 
-    int tcp_packet_size = get_tcp_packet_size(tcp_packet);
+    int tcp_packet_size = get_tcp_network_packet_size(network_packet);
 
     // For now, the TCP network throttler is NULL, so this is a no-op.
     network_throttler_wait_byte_allocation(context->network_throttler, tcp_packet_size);
@@ -611,7 +760,7 @@ int tcp_send_constructed_packet(TCPContext* context, WhistPacket* packet) {
 
     // Send the packet
     bool failed = false;
-    int ret = send(context->socket, (const char*)tcp_packet, tcp_packet_size, 0);
+    int ret = send(context->socket, (const char*)network_packet, tcp_packet_size, 0);
     if (ret < 0) {
         int error = get_last_network_error();
         LOG_WARNING("Unexpected TCP Packet Error: %d", error);
@@ -619,9 +768,44 @@ int tcp_send_constructed_packet(TCPContext* context, WhistPacket* packet) {
     }
 
     // Free the encrypted allocation
-    deallocate_region(tcp_packet);
+    deallocate_region(network_packet);
 
     return failed ? -1 : 0;
+}
+
+int get_tcp_packet_size(TCPPacket* tcp_packet) {
+    switch (tcp_packet->type) {
+        case TCP_PING:
+        case TCP_PONG: {
+            return offsetof(TCPPacket, tcp_ping_data) + sizeof(tcp_packet->tcp_ping_data);
+        }
+        case TCP_WHIST_PACKET: {
+            return offsetof(TCPPacket, whist_packet_data.whist_packet) +
+                   get_packet_size((WhistPacket*)&tcp_packet->whist_packet_data.whist_packet);
+        }
+        default: {
+            LOG_FATAL("Unknown TCP Packet Type: %d", tcp_packet->type);
+        }
+    }
+}
+
+static void tcp_handle_message(TCPContext* context, TCPPacket* packet) {
+    switch (packet->type) {
+        case TCP_PING: {
+            TCPPacket response = {0};
+            response.type = TCP_PONG;
+            response.tcp_ping_data.ping_id = packet->tcp_ping_data.ping_id;
+            tcp_send_constructed_packet(context, &response);
+            break;
+        }
+        case TCP_PONG: {
+            context->last_pong_id = max(context->last_pong_id, packet->tcp_ping_data.ping_id);
+            break;
+        }
+        default: {
+            LOG_FATAL("Invalid TCP Packet Type: %d", packet->type);
+        }
+    }
 }
 
 SOCKET socketp_tcp(void) {
@@ -691,7 +875,6 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
                 "Could not connect() over TCP to server: Returned %d, Error "
                 "Code %d",
                 ret, get_last_network_error());
-            closesocket(socket);
             return false;
         }
     }
@@ -702,7 +885,7 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
     FD_SET(socket, &set);
     struct timeval tv;
     tv.tv_sec = timeout_ms / MS_IN_SECOND;
-    tv.tv_usec = (timeout_ms % MS_IN_SECOND) * MS_IN_SECOND;
+    tv.tv_usec = (timeout_ms % MS_IN_SECOND) * US_IN_MS;
     if ((ret = select((int)socket + 1, NULL, &set, NULL, &tv)) <= 0) {
         if (ret == 0) {
             LOG_INFO("No TCP Connection Retrieved, ending TCP connection attempt.");
@@ -712,7 +895,6 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
                 "%d\n",
                 ret, get_last_network_error());
         }
-        closesocket(socket);
         return false;
     }
 
@@ -721,12 +903,10 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
     socklen_t len = sizeof(error);
     if (getsockopt(socket, SOL_SOCKET, SO_ERROR, (void*)&error, &len) < 0) {
         LOG_WARNING("Could not getsockopt SO_ERROR");
-        closesocket(socket);
         return false;
     }
     if (error != 0) {
         LOG_WARNING("getsockopt has captured the following error: %d", error);
-        closesocket(socket);
         return false;
     }
 

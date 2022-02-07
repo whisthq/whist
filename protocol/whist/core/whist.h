@@ -604,7 +604,6 @@ typedef enum WhistClientMessageType {
     CMESSAGE_CLIPBOARD = 113,
     MESSAGE_STREAM_RESET_REQUEST = 114,
     MESSAGE_DISCOVERY_REQUEST = 115,
-    MESSAGE_TCP_RECOVERY = 116,
 
     MESSAGE_OPEN_URL = 117,
 
@@ -675,11 +674,6 @@ typedef struct WhistClientMessage {
             int height;
             int dpi;
         } dimensions;
-
-        // MESSAGE_TCP_PING
-        struct {
-            int id;
-        } ping_data;
 
         // MESSAGE_KEYBOARD_STATE
         WhistKeyboardState keyboard_state;

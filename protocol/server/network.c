@@ -28,6 +28,7 @@ Includes
 #include "state.h"
 #include "handle_client_message.h"
 
+#define TCP_DISCOVERY_CONNECTION_WAIT 5000
 #define UDP_CONNECTION_WAIT 1000
 #define TCP_CONNECTION_WAIT 1000
 #define BITS_IN_BYTE 8.0
@@ -86,15 +87,7 @@ static int handle_discovery_port_message(whist_server_state *state, SocketContex
             if (!state->client.is_active) {
                 state->client.user_id = user_id;
 
-                if (state->udp_listen != INVALID_SOCKET) {
-                    closesocket(state->udp_listen);  // close and reopen later to clear packets in
-                                                     // the system buffer
-                    state->udp_listen = INVALID_SOCKET;
-                }
-                if (create_udp_listen_socket(&state->udp_listen, BASE_UDP_PORT,
-                                             UDP_CONNECTION_WAIT) != 0) {
-                    LOG_WARNING("Failed to create base udp listen socket");
-                } else if (do_discovery_handshake(state, context, wcmsg) != 0) {
+                if (do_discovery_handshake(state, context, wcmsg) != 0) {
                     LOG_WARNING("Discovery handshake failed.");
                 }
 
@@ -104,22 +97,6 @@ static int handle_discovery_port_message(whist_server_state *state, SocketContex
 
                 *new_client = true;
             }
-            break;
-        }
-        case MESSAGE_TCP_RECOVERY: {
-            // We wouldn't have called closesocket on this socket before, so we can safely call
-            //     close regardless of what caused the socket failure without worrying about
-            //     undefined behavior.
-            write_lock(&state->client.tcp_rwlock);
-            destroy_socket_context(&state->client.tcp_context);
-            state->client.tcp_context.listen_socket = &state->tcp_listen;
-            if (!create_tcp_socket_context(&state->client.tcp_context, NULL, state->client.tcp_port,
-                                           1, TCP_CONNECTION_WAIT, get_using_stun(),
-                                           state->config->binary_aes_private_key)) {
-                LOG_WARNING("Failed TCP connection with client");
-            }
-            write_unlock(&state->client.tcp_rwlock);
-
             break;
         }
         default: {
@@ -238,7 +215,14 @@ int broadcast_tcp_packet(Client *client, WhistPacketType type, void *data, int l
 int try_get_next_message_tcp(Client *client, WhistPacket **p_tcp_packet) {
     *p_tcp_packet = NULL;
 
-    socket_update(&client->tcp_context);
+    if (!socket_update(&client->tcp_context)) {
+        LOG_INFO("TCP socket connection lost!");
+        if (client->is_active && !client->is_deactivating) {
+            if (start_quitting_client(client) != 0) {
+                LOG_ERROR("Failed to reap timed out clients.");
+            }
+        }
+    }
     WhistPacket *tcp_packet = get_packet(&client->tcp_context, PACKET_MESSAGE);
     if (tcp_packet) {
         LOG_INFO("Received TCP Packet: Size %d", tcp_packet->payload_size);
@@ -288,11 +272,6 @@ int try_get_next_message_udp(Client *client, WhistClientMessage *wcmsg, size_t *
     return 0;
 }
 
-// TODO: Figure out if this value needs this redefinition to work well, or what single value this
-// should be
-#undef TCP_CONNECTION_WAIT
-#define TCP_CONNECTION_WAIT 5000
-
 bool get_using_stun(void) {
     // decide whether the server is using stun.
     return false;
@@ -321,19 +300,6 @@ int multithreaded_manage_client(void *opaque) {
     // start this now and then discard when first client has connected
     start_timer(&first_client_timer);
 
-    WhistTimer last_ping_check;
-    start_timer(&last_ping_check);
-
-    if (create_tcp_listen_socket(&state->discovery_listen, PORT_DISCOVERY, TCP_CONNECTION_WAIT) !=
-        0) {
-        LOG_WARNING("Failed to create discovery tcp listen socket");
-        state->exiting = true;
-    }
-    if (create_tcp_listen_socket(&state->tcp_listen, BASE_TCP_PORT, TCP_CONNECTION_WAIT) != 0) {
-        LOG_WARNING("Failed to create base tcp listen socket");
-        state->exiting = true;
-    }
-
     while (!state->exiting) {
         LOG_INFO("Is a client connected? %s", state->client.is_active ? "yes" : "no");
 
@@ -345,15 +311,6 @@ int multithreaded_manage_client(void *opaque) {
                 state->client.is_deactivating = false;
                 LOG_INFO("Successfully quit client.");
             }
-        }
-
-        // If there is an active client that is not actively deactivating that hasn't pinged
-        //     in a while, we should reap it.
-        if (state->client.is_active && !state->client.is_deactivating) {
-            if (reap_timed_out_client(&state->client, CLIENT_PING_TIMEOUT_SEC) != 0) {
-                LOG_ERROR("Failed to reap timed out clients.");
-            }
-            start_timer(&last_ping_check);
         }
 
         if (!state->client.is_active) {
@@ -370,10 +327,10 @@ int multithreaded_manage_client(void *opaque) {
                 state->exiting = true;
             }
         }
-        discovery_context.listen_socket = &state->discovery_listen;
+
         // Even without multiclient, we need this for TCP recovery over the discovery port
         if (!create_tcp_socket_context(&discovery_context, NULL, PORT_DISCOVERY, 1,
-                                       TCP_CONNECTION_WAIT, get_using_stun(),
+                                       TCP_DISCOVERY_CONNECTION_WAIT, get_using_stun(),
                                        config->binary_aes_private_key)) {
             continue;
         }
@@ -396,8 +353,6 @@ int multithreaded_manage_client(void *opaque) {
             continue;
         }
 
-        state->client.tcp_context.listen_socket = &state->tcp_listen;
-        state->client.udp_context.listen_socket = &state->udp_listen;
         // Client is not in use so we don't need to worry about anyone else
         // touching it
         if (connect_client(&state->client, get_using_stun(), config->binary_aes_private_key) != 0) {
@@ -416,9 +371,6 @@ int multithreaded_manage_client(void *opaque) {
 
         // We reset the input tracker when a new client connects
         reset_input(state->client_os);
-
-        // A client has connected and we want to start the ping timer
-        start_timer(&(state->client.last_ping));
 
         // When a new client has been connected, we want all threads to hold client active again
         reset_threads_holding_active_count(&state->client);

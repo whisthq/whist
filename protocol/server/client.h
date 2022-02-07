@@ -40,10 +40,6 @@ typedef struct Client {
     int udp_port;               // "protected" by global `is_deactivating`
     int tcp_port;               // "protected" by global `is_deactivating`
     RWLock tcp_rwlock;          // protects tcp_context for synchrony-sensitive sends and recvs
-
-    /* PING */
-    WhistTimer last_ping;      // not lock protected
-    WhistTimer last_tcp_ping;  // not lock protected
 } Client;
 
 /*
@@ -99,18 +95,6 @@ int start_quitting_client(Client* client);
  * @returns                        Returns -1 on failure, 0 on success
  */
 int quit_client(Client* client);
-
-/**
- * @brief                          Quit client if timed out.
- *
- * @param client				   Target client
- * @param timeout                  Duration (in seconds) after which a client
- *                                 is deemed timed out if the server has not
- *                                 received a ping from the client.
- *
- * @returns                        Returns -1 on failure, 0 on success.
- */
-int reap_timed_out_client(Client* client, double timeout);
 
 /**
  * @brief                          Add thread to count of those dependent on
