@@ -59,7 +59,7 @@ def get_lingering_instances(database_url, region):
         region (str): current region
 
     Returns:
-        arr: array of tuples (name, id)
+        arr: array of tuples (id, updated_at)
     """
 
     query = (
