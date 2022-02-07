@@ -676,9 +676,10 @@ int create_tcp_client_context(TCPContext* context, char* destination, int port,
     }
 
     // Keep trying to connect, as long as we have time to
-    while (get_timer(&connection_timer) * MS_IN_SECOND - connection_timeout_ms > 2) {
+    bool connected = false;
+    while (connection_timeout_ms - get_timer(&connection_timer) * MS_IN_SECOND > 2) {
         int remaining_connection_time =
-            get_timer(&connection_timer) * MS_IN_SECOND - connection_timeout_ms;
+            connection_timeout_ms - get_timer(&connection_timer) * MS_IN_SECOND;
 
         context->addr.sin_family = AF_INET;
         context->addr.sin_addr.s_addr = inet_addr(destination);
@@ -686,12 +687,16 @@ int create_tcp_client_context(TCPContext* context, char* destination, int port,
 
         LOG_INFO("Connecting to server at %s:%d over TCP...", destination, port);
 
-        // Connect to TCP server, waiting for connection_timeout_ms
+        // Connect to TCP server
         set_timeout(context->socket, remaining_connection_time);
-        if (!tcp_connect(context->socket, context->addr, remaining_connection_time)) {
-            LOG_WARNING("Could not connect to server over TCP");
-            return -1;
+        if (tcp_connect(context->socket, context->addr, remaining_connection_time)) {
+            connected = true;
+            break;
         }
+    }
+    if (!connected) {
+        LOG_WARNING("Could not connect to server over TCP");
+        return 01;
     }
 
     // Handshake
