@@ -10,6 +10,7 @@
 extern "C" {
 #include "whist/video/codec/encode.h"
 #include "whist/video/codec/decode.h"
+#include "whist/video/capture/capture.h"
 }
 
 class CodecTest : public CaptureStdoutFixture {};
@@ -151,9 +152,10 @@ TEST_F(CodecTest, DecodeTest) {
     destroy_video_decoder(dec);
 }
 
-// Run frames through an encode-decode pair and check the output.
+// Non-decode (i.e. server) tests only support Linux.
 #if __linux__
-// We only have encode support on Linux.
+
+// Run frames through an encode-decode pair and check the output.
 TEST_F(CodecTest, EncodeDecodeTest) {
     int width = 1280;
     int height = 720;
@@ -222,4 +224,69 @@ TEST_F(CodecTest, EncodeDecodeTest) {
     free(image_rgb_in);
     free(packet_buffer);
 }
-#endif
+
+// Capture a stream from an MP4 file.
+TEST_F(CodecTest, CaptureMP4Test) {
+    file_capture_set_input_filename("assets/100-frames-h264.mp4");
+
+    CaptureDevice cap;
+    int ret;
+
+    int width = 1280;
+    int height = 720;
+
+    ret = create_capture_device(&cap, width, height, 96);
+    EXPECT_EQ(ret, 0);
+
+    for (int frame = 0; frame < 20; frame++) {
+        if (frame == 10) {
+            // Reconfigure halfway through so that the scaler is used.
+            width = 640;
+            height = 480;
+            ret = reconfigure_capture_device(&cap, width, height, 96);
+            EXPECT_EQ(ret, true);
+        }
+
+        ret = capture_screen(&cap);
+        EXPECT_EQ(ret, 0);
+
+        ret = transfer_screen(&cap);
+        EXPECT_EQ(ret, 0);
+
+        int value =
+            test_read_image((const uint8_t *)cap.frame_data, width, height, cap.pitch, false);
+        EXPECT_EQ(value, frame);
+    }
+
+    destroy_capture_device(&cap);
+}
+
+// Capture using a single JPEG file repeatedly.
+TEST_F(CodecTest, CaptureJPEGTest) {
+    file_capture_set_input_filename("assets/1729.jpeg");
+
+    CaptureDevice cap;
+    int ret;
+
+    int width = 640;
+    int height = 480;
+
+    ret = create_capture_device(&cap, width, height, 96);
+    EXPECT_EQ(ret, 0);
+
+    for (int frame = 0; frame < 4; frame++) {
+        ret = capture_screen(&cap);
+        EXPECT_EQ(ret, 0);
+
+        ret = transfer_screen(&cap);
+        EXPECT_EQ(ret, 0);
+
+        int value =
+            test_read_image((const uint8_t *)cap.frame_data, width, height, cap.pitch, false);
+        EXPECT_EQ(value, 1729);
+    }
+
+    destroy_capture_device(&cap);
+}
+
+#endif /* __linux__ */

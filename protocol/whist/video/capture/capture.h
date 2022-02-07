@@ -120,4 +120,15 @@ int transfer_screen(CaptureDevice* device);
  */
 void destroy_capture_device(CaptureDevice* device);
 
+/**
+ * Set filename used by the file-capture test device.
+ *
+ * TODO: this should be passed via create_capture_device() rather than
+ * separately like this.
+ *
+ * @param filename  Filename to use the next time the file-capture
+ *                  device is opened.  Must be a static string.
+ */
+void file_capture_set_input_filename(const char* filename);
+
 #endif  // VIDEO_CAPTURE_H

@@ -55,6 +55,7 @@ else()
         ../whist/utils/avpacket_buffer.c
         ../whist/network/ringbuffer.c
         ../whist/network/network_algorithm.c
+        ../whist/video/capture/filecapture.c
 
         # Files needed for Client unit tests
         ../client/audio.c
