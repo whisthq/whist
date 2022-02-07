@@ -3,6 +3,7 @@ import sys
 import time
 import boto3
 import subprocess
+import argparse
 import numpy as np
 from pytablewriter import MarkdownTableWriter
 from contextlib import redirect_stdout
@@ -535,6 +536,19 @@ def search_open_PR():
     return pr_number
 
 
+DESCRIPTION = """
+This script will parse and display the results of a protocol end-to-end streaming test.
+Optionally, it will also include a comparison with the latest results from another branch (e.g. dev)
+"""
+
+parser = argparse.ArgumentParser(description=DESCRIPTION)
+parser.add_argument(
+    "--perf-logs-path",
+    help="The path to the folder containing the E2E streaming logs",
+    type=str,
+    default=os.path.join(".", "perf_logs"),
+)
+
 if __name__ == "__main__":
     # Grab environmental variables of interest
     if not os.environ.get("GITHUB_REF_NAME"):
@@ -551,6 +565,8 @@ if __name__ == "__main__":
     github_token = os.environ["GITHUB_TOKEN"]
     slack_webhook = os.environ.get("SLACK_WEBHOOK")
 
+    args = parser.parse_args()
+
     # A list of metrics to display (if found) in main table
     most_interesting_metrics = {
         "VIDEO_FPS_RENDERED",
@@ -565,14 +581,14 @@ if __name__ == "__main__":
     }
 
     # Find the path to the folder with the most recent E2E protocol logs
-    logs_root_dir = "perf_logs"
+    logs_root_dir = args.perf_logs_path
     test_time = ""
-    for folder_name in os.listdir("./perf_logs"):
+    for folder_name in os.listdir(logs_root_dir):
         if time.strftime("%Y_%m_%d@") in folder_name:
             logs_root_dir = os.path.join(logs_root_dir, folder_name)
             test_time = folder_name
             break
-    if logs_root_dir == "perf_logs":
+    if logs_root_dir == args.perf_logs_path:
         print("Error: protocol logs not found!")
         sys.exit(-1)
 
