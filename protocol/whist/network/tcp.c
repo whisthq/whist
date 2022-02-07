@@ -219,32 +219,45 @@ TCP Implementation of Network.h Interface
 static bool tcp_update(void* raw_context) {
     FATAL_ASSERT(raw_context != NULL);
     TCPContext* context = raw_context;
+    
+    // NOTE: Reconnection isn't implemented,
+    // because theoretically TCP should never disconnect.
+    // If we see TCP disconnection in the future, we should try to investigate why.
 
     if (context->is_server) {
-        // TODO: Check for new connections?
+        // This is where we check for pending reconnction attempts, if any
     } else {
         // Client-side TCP code
-        if (context->last_ping_id == context->last_pong_id) {
+        int send_ping_id = -1;
+
+        if (context->last_ping_id == -1) {
+            // If we haven't send a ping yet, start on ID 1
+            send_ping_id = 1;
+        } else if (context->last_ping_id == context->last_pong_id) {
             // If we've received the last ping,
 
-            // Send the next one after TCP_PING_INTERVAL_SEC
+            // Send the next ping after TCP_PING_INTERVAL_SEC
             if (get_timer(&context->last_ping_timer) > TCP_PING_INTERVAL_SEC) {
-                // Send the ping
-                TCPPacket packet = {0};
-                packet.type = TCP_PING;
-                packet.tcp_ping_data.ping_id = context->last_ping_id + 1;
-                tcp_send_constructed_packet(context, &packet);
-                // Track the ping status
-                context->last_ping_id++;
-                start_timer(&context->last_ping_timer);
+                send_ping_id = context->last_ping_id + 1;
             }
         } else {
             // If we haven't received the last ping,
-            // If TCP_PING_MAX_WAIT_SEC has passed, the connection has been lost
+            // and TCP_PING_MAX_WAIT_SEC has passed, the connection has been lost
             if (get_timer(&context->last_ping_timer) > TCP_PING_MAX_WAIT_SEC) {
                 LOG_WARNING("TCP Connection has been lost");
                 context->connection_lost = true;
             }
+        }
+
+        if (send_ping_id != -1) {
+            // Send the ping
+            TCPPacket packet = {0};
+            packet.type = TCP_PING;
+            packet.tcp_ping_data.ping_id = send_ping_id;
+            tcp_send_constructed_packet(context, &packet);
+            // Track the ping status
+            context->last_ping_id = send_ping_id;
+            start_timer(&context->last_ping_timer);
         }
 
         if (context->connection_lost) {
