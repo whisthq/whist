@@ -480,11 +480,18 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 		}
 	}
 
+	// Unmarshal bookmarks into proper format
+	importedBookmarks, err := configutils.UnmarshalBookmarks(req.BookmarksJSON)
+	if err != nil {
+		// Bookmark import errors are not fatal
+		logger.Errorf("Error unmarshalling bookmarks for mandelbox %s: %s", mandelbox.GetID(), err)
+	}
+
 	// Write the user's initial browser data
 	logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
 	err = mandelbox.WriteUserInitialBrowserData(mandelboxData.BrowserData{
 		CookiesJSON: req.CookiesJSON,
-		Bookmarks:   req.Bookmarks,
+		Bookmarks:   importedBookmarks,
 		Extensions:  mandelboxtypes.Extensions(strings.Join(savedExtensions, ",")),
 	})
 	if err != nil {

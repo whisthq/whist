@@ -1,5 +1,11 @@
 package configutils
 
+import (
+	"encoding/json"
+
+	"github.com/whisthq/whist/backend/services/types"
+)
+
 type Bookmark struct {
 	DateAdded string `json:"date_added,omitempty"`
 	Guid      string `json:"guid,omitempty"`
@@ -24,4 +30,13 @@ type Bookmarks struct {
 	Roots        []BookmarkFolder `json:"roots,omitempty"`
 	SyncMetadata string           `json:"sync_metadata,omitempty"`
 	Version      int              `json:"version,omitempty"`
+}
+
+// UnmarshalBookmarks take a JSON string containing bookmark data
+// and unmarshals it into a Bookmarks struct, returning the struct
+// and any errors encountered.
+func UnmarshalBookmarks(bookmarks types.Bookmarks) (Bookmarks, error) {
+	var bookmarksObj Bookmarks
+	err := json.Unmarshal([]byte(bookmarks), &bookmarksObj)
+	return bookmarksObj, err
 }

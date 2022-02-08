@@ -15,7 +15,6 @@ import (
 	"testing/iotest"
 	"time"
 
-	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 )
@@ -33,7 +32,7 @@ func TestSpinUpHandler(t *testing.T) {
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		JSONData:              "test_json_data",
 		CookiesJSON:           "[{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}]",
-		Bookmarks:             configutils.Bookmarks{},
+		BookmarksJSON:         "",
 		Extensions:            "not_real_extension_id,not_real_second_extension_id",
 		resultChan:            make(chan requestResult),
 	}
@@ -130,7 +129,7 @@ func TestHttpServerIntegration(t *testing.T) {
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		JSONData:              "test_json_data",
 		CookiesJSON:           "[{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}]",
-		Bookmarks:             configutils.Bookmarks{},
+		BookmarksJSON:         "",
 		Extensions:            "",
 		resultChan:            make(chan requestResult),
 	}
