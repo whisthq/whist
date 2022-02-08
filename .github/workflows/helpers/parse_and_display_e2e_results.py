@@ -125,24 +125,24 @@ def compute_deltas(
     # Augment dictionaries with deltas wrt to other result, if available
     for k in client_dictionary:
         if k in compared_client_dictionary:
-            client_dictionary[k]["dev_entries"] = compared_client_dictionary[k]["entries"]
-            client_dictionary[k]["dev_avg"] = round(compared_client_dictionary[k]["avg"], 3)
-            client_dictionary[k]["dev_std"] = round(compared_client_dictionary[k]["std"], 3)
+            client_dictionary[k]["compared_entries"] = compared_client_dictionary[k]["entries"]
+            client_dictionary[k]["compared_avg"] = round(compared_client_dictionary[k]["avg"], 3)
+            client_dictionary[k]["compared_std"] = round(compared_client_dictionary[k]["std"], 3)
             client_dictionary[k]["delta"] = round(
-                client_dictionary[k]["avg"] - client_dictionary[k]["dev_avg"], 3
+                client_dictionary[k]["avg"] - client_dictionary[k]["compared_avg"], 3
             )
             if client_dictionary[k]["delta"] == 0:
                 client_dictionary[k]["delta"] = "-"
                 client_dictionary[k]["delta_pctg"] = "-"
-            elif client_dictionary[k]["dev_avg"] == 0:
+            elif client_dictionary[k]["compared_avg"] == 0:
                 client_dictionary[k]["delta_pctg"] = "nan"
             else:
                 client_dictionary[k]["delta_pctg"] = round(
-                    (client_dictionary[k]["delta"] / client_dictionary[k]["dev_avg"]), 3
+                    (client_dictionary[k]["delta"] / client_dictionary[k]["compared_avg"]), 3
                 )
         else:
-            client_dictionary[k]["dev_avg"] = "N/A"
-            client_dictionary[k]["dev_std"] = "N/A"
+            client_dictionary[k]["compared_avg"] = "N/A"
+            client_dictionary[k]["compared_std"] = "N/A"
             client_dictionary[k]["delta"] = "N/A"
             client_dictionary[k]["delta_pctg"] = "N/A"
 
@@ -162,14 +162,17 @@ def compute_deltas(
         new_entry.append(avg_stdv_this_branch)
 
         avg_stdv_dev = ""
-        if client_dictionary[k]["dev_avg"] == "N/A" or client_dictionary[k]["dev_std"] == "N/A":
+        if (
+            client_dictionary[k]["compared_avg"] == "N/A"
+            or client_dictionary[k]["compared_std"] == "N/A"
+        ):
             avg_stdv_dev = "N/A"
-        elif client_dictionary[k]["dev_entries"] > 1:
+        elif client_dictionary[k]["compared_entries"] > 1:
             avg_stdv_dev = "{:.3f} ± {:.3f}".format(
-                client_dictionary[k]["dev_avg"], client_dictionary[k]["dev_std"]
+                client_dictionary[k]["compared_avg"], client_dictionary[k]["compared_std"]
             )
         else:
-            avg_stdv_dev = "{:.3f}".format(client_dictionary[k]["dev_avg"])
+            avg_stdv_dev = "{:.3f}".format(client_dictionary[k]["compared_avg"])
 
         new_entry.append(avg_stdv_dev)
 
@@ -205,24 +208,24 @@ def compute_deltas(
 
     for k in server_dictionary:
         if k in compared_server_dictionary:
-            server_dictionary[k]["dev_entries"] = compared_server_dictionary[k]["entries"]
-            server_dictionary[k]["dev_avg"] = round(compared_server_dictionary[k]["avg"], 3)
-            server_dictionary[k]["dev_std"] = round(compared_server_dictionary[k]["std"], 3)
+            server_dictionary[k]["compared_entries"] = compared_server_dictionary[k]["entries"]
+            server_dictionary[k]["compared_avg"] = round(compared_server_dictionary[k]["avg"], 3)
+            server_dictionary[k]["compared_std"] = round(compared_server_dictionary[k]["std"], 3)
             server_dictionary[k]["delta"] = round(
-                server_dictionary[k]["avg"] - server_dictionary[k]["dev_avg"], 3
+                server_dictionary[k]["avg"] - server_dictionary[k]["compared_avg"], 3
             )
             if server_dictionary[k]["delta"] == 0:
                 server_dictionary[k]["delta"] = "-"
                 server_dictionary[k]["delta_pctg"] = "-"
-            elif server_dictionary[k]["dev_avg"] == 0:
+            elif server_dictionary[k]["compared_avg"] == 0:
                 server_dictionary[k]["delta_pctg"] = "nan"
             else:
                 server_dictionary[k]["delta_pctg"] = round(
-                    (server_dictionary[k]["delta"] / server_dictionary[k]["dev_avg"]), 3
+                    (server_dictionary[k]["delta"] / server_dictionary[k]["compared_avg"]), 3
                 )
         else:
-            server_dictionary[k]["dev_avg"] = "N/A"
-            server_dictionary[k]["dev_std"] = "N/A"
+            server_dictionary[k]["compared_avg"] = "N/A"
+            server_dictionary[k]["compared_std"] = "N/A"
             server_dictionary[k]["delta"] = "N/A"
             server_dictionary[k]["delta_pctg"] = "N/A"
 
@@ -242,14 +245,17 @@ def compute_deltas(
         new_entry.append(avg_stdv_this_branch)
 
         avg_stdv_dev = ""
-        if server_dictionary[k]["dev_avg"] == "N/A" or server_dictionary[k]["dev_std"] == "N/A":
+        if (
+            server_dictionary[k]["compared_avg"] == "N/A"
+            or server_dictionary[k]["compared_std"] == "N/A"
+        ):
             avg_stdv_dev = "N/A"
-        elif server_dictionary[k]["dev_entries"] > 1:
+        elif server_dictionary[k]["compared_entries"] > 1:
             avg_stdv_dev = "{:.3f} ± {:.3f}".format(
-                server_dictionary[k]["dev_avg"], server_dictionary[k]["dev_std"]
+                server_dictionary[k]["compared_avg"], server_dictionary[k]["compared_std"]
             )
         else:
-            avg_stdv_dev = "{:.3f}".format(server_dictionary[k]["dev_avg"])
+            avg_stdv_dev = "{:.3f}".format(server_dictionary[k]["compared_avg"])
 
         new_entry.append(avg_stdv_dev)
 
@@ -294,16 +300,19 @@ def download_latest_logs(branch_name):
     if os.path.exists(branch_name):
         os.system("rm -rf {}".format(branch_name))
 
-    os.mkdirs(os.path.join(".", "{}".format(branch_name), "client"))
-    os.mkdirs(os.path.join(".", "{}".format(branch_name), "server"))
-    dev_client_log_path = os.path.join(".", "{}".format(branch_name), "client", "client.log")
-    dev_server_log_path = os.path.join(".", "{}".format(branch_name), "server", "server.log")
+    os.makedirs(os.path.join(".", "{}".format(branch_name), "client"))
+    os.makedirs(os.path.join(".", "{}".format(branch_name), "server"))
+    compared_client_log_path = os.path.join(".", "{}".format(branch_name), "client", "client.log")
+    compared_server_log_path = os.path.join(".", "{}".format(branch_name), "server", "server.log")
 
     result = client.list_objects(
         Bucket="whist-e2e-protocol-test-logs", Prefix="{}/".format(branch_name), Delimiter="/"
     )
 
     folders = result.get("CommonPrefixes")
+    if folders is None:
+        print("Warning, S3 does not contain logs for branch {}".format(branch_name))
+        return
     counter = 1
     for folder_name in reversed(folders):
         subfolder_name = folder_name.get("Prefix").split("/")[-2]
@@ -312,21 +321,21 @@ def download_latest_logs(branch_name):
             Prefix="{}/{}".format("{}".format(branch_name), subfolder_name)
         ):
             if "client.log" in obj.key:
-                bucket.download_file(obj.key, dev_client_log_path)
+                bucket.download_file(obj.key, compared_client_log_path)
             elif "server.log" in obj.key:
-                bucket.download_file(obj.key, dev_server_log_path)
+                bucket.download_file(obj.key, compared_server_log_path)
 
         # Check if logs are sane, if so stop
         if not logs_contain_errors(os.path.join(".", "{}".format(branch_name))):
             break
         else:
-            os.system("rm -rf {}".format(dev_client_log_path))
-            os.system("rm -rf {}".format(dev_server_log_path))
+            os.system("rm -rf {}".format(compared_client_log_path))
+            os.system("rm -rf {}".format(compared_server_log_path))
             counter += 1
     if counter > 1:
         print(
             "Warning, we are attempting to use {}° most recent logs from branch {}".format(
-                branch_name
+                counter, branch_name
             )
         )
 
@@ -431,6 +440,7 @@ def generate_comparison_table(
     server_metrics,
     client_table_entries,
     server_table_entries,
+    branch_name,
 ):
     with redirect_stdout(results_file):
         # Generate most interesting metric table
@@ -452,7 +462,7 @@ def generate_comparison_table(
                     "Metric",
                     "Entries (this branch)",
                     "Average ± Standard Deviation (this branch)",
-                    "Average ± Standard Deviation (dev)",
+                    "Average ± Standard Deviation ({})".format(branch_name),
                     "Delta",
                     "",
                 ],
@@ -475,7 +485,7 @@ def generate_comparison_table(
                 "Metric",
                 "Entries (this branch)",
                 "Average ± Standard Deviation (this branch)",
-                "Average ± Standard Deviation (dev)",
+                "Average ± Standard Deviation ({})".format(branch_name),
                 "Delta",
                 "",
             ],
@@ -498,7 +508,7 @@ def generate_comparison_table(
                 "Metric",
                 "Entries (this branch)",
                 "Average ± Standard Deviation (this branch)",
-                "Average ± Standard Deviation (dev)",
+                "Average ± Standard Deviation ({})".format(branch_name),
                 "Delta",
                 "",
             ],
@@ -584,6 +594,13 @@ parser.add_argument(
     default=os.path.join(".", "perf_logs"),
 )
 
+parser.add_argument(
+    "--compared-branch-name",
+    help="The branch to compare the results to. Empty branch name will result in no comparisons. Passing the current branch will result in a comparison with the previous results for the same branch",
+    type=str,
+    default="",
+)
+
 if __name__ == "__main__":
     # Grab environmental variables of interest
     if not os.environ.get("GITHUB_REF_NAME"):
@@ -646,22 +663,31 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     client_metrics2, server_metrics2 = extract_metrics(client_log_file, server_log_file)
-    dev_client_metrics2 = {}
-    dev_server_metrics2 = {}
+    compared_client_metrics2 = {}
+    compared_server_metrics2 = {}
 
-    # If we are not on dev, we need to compare the results with the latest dev run, so we need to download the relevant files
-    if github_ref_name != "dev":
-        download_latest_logs("dev")
-        dev_client_log_path = os.path.join(".", "dev", "client", "client.log")
-        dev_server_log_path = os.path.join(".", "dev", "server", "server.log")
-        if not os.path.isfile(dev_client_log_path) or not os.path.isfile(dev_server_log_path):
+    compared_branch_name = args.compared_branch_name
+
+    # If we are looking to compare the results with the latest run on a branch, we need to download the relevant files first
+    if compared_branch_name != "":
+        download_latest_logs(compared_branch_name)
+        compared_client_log_path = os.path.join(".", compared_branch_name, "client", "client.log")
+        compared_server_log_path = os.path.join(".", compared_branch_name, "server", "server.log")
+        if not os.path.isfile(compared_client_log_path) or not os.path.isfile(
+            compared_server_log_path
+        ):
             print(
-                "Could not get dev client/server logs. Unable to compare performance results to latest dev measurements."
+                "Could not get {} client/server logs. Unable to compare performance results to latest {} measurements.".format(
+                    compared_branch_name, compared_branch_name
+                )
             )
         else:
             # Extract the metric values and save them in a dictionary
-            dev_client_metrics2, dev_server_metrics2 = add_comparison_metrics(
-                dev_client_log_path, dev_server_log_path, dev_client_metrics2, dev_server_metrics2
+            compared_client_metrics2, compared_server_metrics2 = add_comparison_metrics(
+                compared_client_log_path,
+                compared_server_log_path,
+                compared_client_metrics2,
+                compared_server_metrics2,
             )
 
     # Here, we parse the test results into a .info file, which can be read and displayed on the GitHub PR
@@ -669,13 +695,13 @@ if __name__ == "__main__":
     results_file = open("streaming_e2e_test_results.info", "w+")
 
     # Generate the report
-    if os.environ.get("GITHUB_REF_NAME") == "dev":
+    if compared_branch_name == "":
         generate_no_comparison_table(
             results_file, most_interesting_metrics, client_metrics2, server_metrics2
         )
     else:
         client_table_entries, server_table_entries = compute_deltas(
-            client_metrics2, server_metrics2, dev_client_metrics2, dev_server_metrics2
+            client_metrics2, server_metrics2, compared_client_metrics2, compared_server_metrics2
         )
         generate_comparison_table(
             results_file,
@@ -684,6 +710,7 @@ if __name__ == "__main__":
             server_metrics2,
             client_table_entries,
             server_table_entries,
+            compared_branch_name,
         )
 
     results_file.close()
