@@ -55,7 +55,7 @@ func InsertInstances(scalingCtx context.Context, graphQLClient *subscriptions.Gr
 			ID:                graphql.String(instance.ID),
 			Provider:          graphql.String(instance.Provider),
 			Region:            graphql.String(instance.Region),
-			ImageID:           graphql.String(instance.ID),
+			ImageID:           graphql.String(instance.ImageID),
 			ClientSHA:         graphql.String(instance.ClientSHA),
 			IPAddress:         instance.IPAddress,
 			Type:              graphql.String(instance.Type),

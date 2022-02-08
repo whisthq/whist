@@ -2,6 +2,9 @@ package hosts
 
 import (
 	"context"
+	"encoding/base64"
+	"os"
+	"path"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -53,6 +56,12 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 	ctx, cancel := context.WithCancel(scalingCtx)
 	defer cancel()
 
+	// Get base64 encoded user data to start host service at launch
+	userData, err := getUserData()
+	if err != nil {
+		return nil, utils.MakeError("failed to encode userdata for launching instances. Err: %v", err)
+	}
+
 	// Set run input
 	input := &ec2.RunInstancesInput{
 		MinCount:                          aws.Int32(MIN_INSTANCE_COUNT),
@@ -60,12 +69,15 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 		ImageId:                           aws.String(imageID),
 		InstanceInitiatedShutdownBehavior: ec2Types.ShutdownBehaviorTerminate,
 		InstanceType:                      INSTANCE_TYPE,
+		IamInstanceProfile: &ec2Types.IamInstanceProfileSpecification{
+			Arn: aws.String("arn:aws:iam::747391415460:instance-profile/TestDeploymentRole"),
+		},
+		UserData: aws.String(userData),
 	}
 
 	var (
 		attempts int
 		result   *ec2.RunInstancesOutput
-		err      error
 	)
 	retryTicker := time.NewTicker(WAIT_TIME_BEFORE_RETRY_IN_SECONDS * time.Second)
 	retryDone := make(chan bool)
@@ -233,4 +245,20 @@ func (host *AWSHost) WaitForInstanceReady(scalingCtx context.Context, maxWaitTim
 func (host *AWSHost) GenerateName() string {
 	return utils.Sprintf("ec2-%v-%v-%v%v", host.Region, metadata.GetAppEnvironmentLowercase(),
 		metadata.GetGitCommit(), shortuuid.New())
+}
+
+func getUserData() (string, error) {
+	// Get current working directory to read ec2_userdata file.
+	currentWorkingDirectory, err := os.Getwd()
+	if err != nil {
+		return "", utils.MakeError("failed to get working directory. Err: %v", err)
+	}
+
+	data, err := os.ReadFile(path.Join(currentWorkingDirectory, "ec2_userdata.sh"))
+	if err != nil {
+		return "", utils.MakeError("failed to read ec2_userdata file. Err: %v", err)
+	}
+
+	// Return as a base64 encoded string to pass to the EC2 client
+	return base64.StdEncoding.EncodeToString(data), nil
 }

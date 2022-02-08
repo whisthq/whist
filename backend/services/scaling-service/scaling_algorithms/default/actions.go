@@ -238,7 +238,7 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 			Provider:          instance.Provider,
 			Region:            instance.Region,
 			ImageID:           instance.ImageID,
-			ClientSHA:         instance.ClientSHA,
+			ClientSHA:         metadata.GetGitCommit(),
 			Type:              instance.Type,
 			RemainingCapacity: int64(instanceCapacity[instance.Type]),
 			Status:            instance.Status,

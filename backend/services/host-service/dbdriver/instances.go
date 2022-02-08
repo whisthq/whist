@@ -15,7 +15,6 @@ import (
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
 
 	"github.com/whisthq/whist/backend/services/host-service/dbdriver/queries"
-	"github.com/whisthq/whist/backend/services/host-service/metrics"
 )
 
 // This file is concerned with database interactions at the instance-level
@@ -62,10 +61,6 @@ func RegisterInstance() error {
 	if err != nil {
 		return utils.MakeError("Couldn't register instance: couldn't get AWS Instance id: %s", err)
 	}
-	latestMetrics, errs := metrics.GetLatest()
-	if len(errs) != 0 {
-		return utils.MakeError("Couldn't register instance: errors getting metrics: %+v", errs)
-	}
 	// Create a transaction to register the instance, since we are querying and
 	// writing separately.
 	tx, err := dbpool.BeginTx(context.Background(), pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
@@ -83,7 +78,7 @@ func RegisterInstance() error {
 		return utils.MakeError("RegisterInstance(): Error running query: %s", err)
 	}
 
-	// Since the `instance_name` is the primary key of `cloud.instance_info`,
+	// Since the `instance_name` is the primary key of `whist.instances`,
 	// we know that `rows` ought to contain either 0 or 1 results.
 	if len(rows) == 0 {
 		return utils.MakeError("RegisterInstance(): Existing row for this instance not found in the database.")
@@ -110,7 +105,7 @@ func RegisterInstance() error {
 	// There is an existing row in the database for this instance --- we now "take over" and update it with the correct information.
 	result, err := q.RegisterInstance(context.Background(), queries.RegisterInstanceParams{
 		Provider: pgtype.Varchar{
-			String: string("aws"),
+			String: string("AWS"),
 			Status: pgtype.Present,
 		},
 		Region: pgtype.Varchar{
@@ -135,7 +130,7 @@ func RegisterInstance() error {
 			String: string(instanceType),
 			Status: pgtype.Present,
 		},
-		RemainingCapacity: int32(latestMetrics.NumberOfGPUs),
+		RemainingCapacity: rows[0].RemainingCapacity,
 		Status: pgtype.Varchar{
 			String: string(InstanceStatusActive),
 			Status: pgtype.Present,
@@ -192,7 +187,7 @@ func markDraining() error {
 	}, string(instanceID))
 
 	if err != nil {
-		return utils.MakeError("Couldn't mark instance as draining: error updating existing row in table `cloud.instance_info`: %s", err)
+		return utils.MakeError("Couldn't mark instance as draining: error updating existing row in table `whist.instances`: %s", err)
 	} else if result.RowsAffected() == 0 {
 		return utils.MakeError("Couldn't mark instance as draining: row in database went missing!")
 	}
@@ -201,8 +196,8 @@ func markDraining() error {
 }
 
 // unregisterInstance removes the row for the instance from the
-// `cloud.instance_info` table. Note that due to the `delete cascade`
-// constraint on `cloud.mandelbox_info` this automatically removes all the
+// `whist.instances` table. Note that due to the `delete cascade`
+// constraint on `whist.mandelboxes` this automatically removes all the
 // mandelboxes for the instance as well.
 func unregisterInstance() error {
 	if !enabled {

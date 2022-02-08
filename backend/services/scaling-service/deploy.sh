@@ -25,14 +25,17 @@ DEPLOY_DIR="$SCALING_SERVICE_DIR/deploy"
 IMAGE_FILE="$DEPLOY_DIR/images.json"
 PROCFILE="$DEPLOY_DIR/Procfile"
 
-# Copy the binary to the scaling service bin directory. This is necessary because we will use as standalone repo.
+# Copy the ec2_userdata file to the deploy directory so the scaling service can start the host service.
+cp "backend/webserver/app/utils/aws/ec2_userdata.sh" "$DEPLOY_DIR/ec2_userdata.sh"
+
+# Copy the binary to the scaling service deploy directory. This is necessary because we will use as standalone repo.
 mkdir -p "$DEPLOY_DIR" && cp ./backend/services/build/scaling-service "$DEPLOY_DIR"
 
 # Write region image map to var file so the Procfile can read it.
 echo "$REGION_IMAGE_MAP" > "$IMAGE_FILE"
 
 # Write Procfile
-echo -e "web: ./scaling-service" > "$PROCFILE"
+echo -e "scaling: ./scaling-service" > "$PROCFILE"
 
 # populate the deploy/ directory
 mv "$DEPLOY_DIR" ..
