@@ -119,39 +119,30 @@ void print_model_info(void) {
     char* response = NULL;
     int total_sz = runcmd("wmic computersystem get model,manufacturer", &response);
     if (response) {
-        // Get rid of leading whitespace, we jump until right after the \n
-        int find_newline = 0;
-        while (find_newline < total_sz && response[find_newline] != '\n') find_newline++;
-        find_newline++;
         char* make_model = response;
-        make_model += find_newline;
 
-        // Get rid of trailing whitespace
-        int sz = (int)strlen(make_model);
-        while (sz > 0 && (make_model[sz - 1] == ' ' || make_model[sz - 1] == '\n' ||
-                          make_model[sz - 1] == '\r')) {
-            sz--;
-        }
-        make_model[sz] = '\0';
-
-        // Get rid of consecutive spaces
-        char* tmp = safe_malloc(sz);
-        for (int i = 1; i < sz; i++) {
-            if (make_model[i] == ' ' && make_model[i - 1] == ' ') {
-                int target = i - 1;
-                int old_sz = sz;
-                sz--;
-                while (i + 1 < old_sz && make_model[i + 1] == ' ') {
-                    i++;
-                    sz--;
-                }
-                memcpy(tmp, &make_model[i], old_sz - i);
-                memcpy(&make_model[target], tmp, old_sz - i);
-                make_model[sz] = '\0';
-                i--;
+        // Ignore everything before the first newline, and collapse
+        // consecutive whitespace into a single space.
+        bool space = false;
+        bool first_newline = false;
+        int last_non_space = 0;
+        for (int s = 0, d = 0; s < total_sz; s++) {
+            if (!first_newline) {
+                if (make_model[s] == '\n') first_newline = true;
+                continue;
+            }
+            if (isspace((unsigned char)make_model[s])) {
+                if (!space) make_model[d++] = ' ';
+                space = true;
+            } else {
+                make_model[d++] = make_model[s];
+                last_non_space = d;
+                space = false;
             }
         }
-        free(tmp);
+
+        // Also ignore trailing whitespace.
+        make_model[last_non_space] = '\0';
 
         // And now we print the new string
         LOG_INFO("  Make and Model: %s", make_model);
