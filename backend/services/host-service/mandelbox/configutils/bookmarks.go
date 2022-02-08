@@ -18,10 +18,10 @@ type Bookmark struct {
 }
 
 type Bookmarks struct {
-	Checksum     string     `json:"checksum,omitempty"`
-	Roots        []Bookmark `json:"roots,omitempty"`
-	SyncMetadata string     `json:"sync_metadata,omitempty"`
-	Version      int        `json:"version,omitempty"`
+	Checksum     string              `json:"checksum,omitempty"`
+	Roots        map[string]Bookmark `json:"roots,omitempty"`
+	SyncMetadata string              `json:"sync_metadata,omitempty"`
+	Version      int                 `json:"version,omitempty"`
 }
 
 // UnmarshalBookmarks take a JSON string containing bookmark data
