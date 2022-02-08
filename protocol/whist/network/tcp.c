@@ -551,8 +551,10 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
     int ret;
 
     if (destination == NULL) {
+        context->is_server = true;
         ret = create_tcp_server_context(context, port, connection_timeout_ms);
     } else {
+        context->is_server = false;
         ret = create_tcp_client_context(context, destination, port, connection_timeout_ms);
     }
 
@@ -618,8 +620,6 @@ Private Function Implementations
 int create_tcp_server_context(TCPContext* context, int port, int connection_timeout_ms) {
     FATAL_ASSERT(context != NULL);
 
-    context->is_server = true;
-
     // Create the TCP listen socket
     if (create_tcp_listen_socket(&context->listen_socket, port, connection_timeout_ms) != 0) {
         LOG_ERROR("Failed to create TCP listen socket");
@@ -680,8 +680,6 @@ int create_tcp_client_context(TCPContext* context, char* destination, int port,
                               int connection_timeout_ms) {
     FATAL_ASSERT(context != NULL);
     FATAL_ASSERT(destination != NULL);
-
-    context->is_server = false;
 
     // Track time left
     WhistTimer connection_timer;
