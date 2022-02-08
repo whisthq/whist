@@ -36,6 +36,7 @@ Includes
 #include <stddef.h>
 
 bool client_exiting = false;
+bool upload_initiated = false;
 extern int audio_frequency;
 
 /*
@@ -52,6 +53,7 @@ static int handle_fullscreen_message(WhistServerMessage *wsmsg, size_t wsmsg_siz
 static int handle_file_metadata_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_file_chunk_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_notification_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+static int handle_upload_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 
 /*
 ============================
@@ -91,6 +93,8 @@ int handle_server_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
             return handle_file_metadata_message(wsmsg, wsmsg_size);
         case SMESSAGE_NOTIFICATION:
             return handle_notification_message(wsmsg, wsmsg_size);
+        case SMESSAGE_INITIATE_UPLOAD:
+            return handle_upload_message(wsmsg, wsmsg_size);
         default:
             LOG_WARNING("Unknown WhistServerMessage Received (type: %d)", wsmsg->type);
             return -1;
@@ -264,5 +268,11 @@ static int handle_notification_message(WhistServerMessage *wsmsg, size_t wsmsg_s
     display_notification(wsmsg->notif);
     log_double_statistic(NOTIFICATIONS_RECEIVED, 1.);
 
+    return 0;
+}
+
+static int handle_upload_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
+    LOG_INFO("Received upload message, presenting file picker");
+    upload_initiated = true;
     return 0;
 }

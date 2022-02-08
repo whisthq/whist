@@ -34,6 +34,7 @@ Includes
 #include <whist/logging/logging.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/logging/error_monitor.h>
+#include <whist/file/file_download.h>
 #include "sdlscreeninfo.h"
 #include "whist_client.h"
 #include "audio.h"
@@ -99,6 +100,10 @@ extern volatile bool client_exiting;
 static int try_amount;
 
 extern volatile char* new_tab_url;
+
+// See if we need to call filepicker from main thread
+extern bool upload_initiated;
+
 
 // Defines
 #define APP_PATH_MAXLEN 1023
@@ -244,6 +249,19 @@ static void handle_single_icon_launch_client_app(int argc, char* argv[]) {
 #endif
 
     // END OF CHECKING IF IN PROD MODE AND TRYING TO LAUNCH CLIENT APP IF NO ARGS
+}
+
+static void initiate_file_upload() {
+    const char* ns_picked_file_path = whist_file_upload_get_picked_file();
+    if(ns_picked_file_path) {
+        // TODO: fix this copy mutability issue with NSString
+        char* picked_file_path = strdup(ns_picked_file_path);
+        file_synchronizer_set_file_reading_basic_metadata(picked_file_path, FILE_TRANSFER_SERVER_UPLOAD, NULL);
+        LOG_INFO("Upload has been initiated");
+    } else {
+        LOG_INFO("No file selected");
+    }
+    upload_initiated = false;
 }
 
 int whist_client_main(int argc, char* argv[]) {
@@ -491,6 +509,12 @@ int whist_client_main(int argc, char* argv[]) {
                 // Otherwise, we sleep for a much shorter time to stay responsive,
                 // but we still don't let the loop be tight (in order to improve battery life)
                 whist_usleep(0.25 * US_IN_MS);
+            }
+
+
+            // Check if file picker has been prompted and send the resulting message
+            if(upload_initiated) {
+                initiate_file_upload();
             }
         }
 
