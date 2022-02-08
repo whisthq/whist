@@ -77,7 +77,7 @@ func writeHeartbeat() error {
 		Status: pgtype.Present,
 	}, string(instanceID))
 	if err != nil {
-		return utils.MakeError("Couldn't write heartbeat: error updating existing row in table `cloud.instances`: %s", err)
+		return utils.MakeError("Couldn't write heartbeat: error updating existing row in table `whist.instances`: %s", err)
 	} else if result.RowsAffected() == 0 {
 		return utils.MakeError("Writing heartbeat updated zero rows in database! Instance row seems to be missing.")
 	}
