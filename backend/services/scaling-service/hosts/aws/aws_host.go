@@ -2,9 +2,8 @@ package hosts
 
 import (
 	"context"
+	_ "embed"
 	"encoding/base64"
-	"os"
-	"path"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -24,6 +23,9 @@ type AWSHost struct {
 	Config aws.Config
 	EC2    *ec2.Client
 }
+
+//go:embed ec2_userdata.sh
+var userDataFile []byte
 
 // Initialize starts the AWS and EC2 clients.
 func (host *AWSHost) Initialize(region string) error {
@@ -248,17 +250,6 @@ func (host *AWSHost) GenerateName() string {
 }
 
 func getUserData() (string, error) {
-	// Get current working directory to read ec2_userdata file.
-	currentWorkingDirectory, err := os.Getwd()
-	if err != nil {
-		return "", utils.MakeError("failed to get working directory. Err: %v", err)
-	}
-
-	data, err := os.ReadFile(path.Join(currentWorkingDirectory, "ec2_userdata.sh"))
-	if err != nil {
-		return "", utils.MakeError("failed to read ec2_userdata file. Err: %v", err)
-	}
-
 	// Return as a base64 encoded string to pass to the EC2 client
-	return base64.StdEncoding.EncodeToString(data), nil
+	return base64.StdEncoding.EncodeToString(userDataFile), nil
 }
