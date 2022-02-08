@@ -324,7 +324,11 @@ def download_latest_logs(branch_name):
             os.system("rm -rf {}".format(dev_server_log_path))
             counter += 1
     if counter > 1:
-        print("Warning, we are attempting to use {}° most recent logs from {}".format(branch_name))
+        print(
+            "Warning, we are attempting to use {}° most recent logs from branch {}".format(
+                branch_name
+            )
+        )
 
 
 def generate_no_comparison_table(
@@ -648,8 +652,8 @@ if __name__ == "__main__":
     # If we are not on dev, we need to compare the results with the latest dev run, so we need to download the relevant files
     if github_ref_name != "dev":
         download_latest_logs("dev")
-        dev_client_log_path = os.path.join(".", "dev", "client.log")
-        dev_server_log_path = os.path.join(".", "dev", "server.log")
+        dev_client_log_path = os.path.join(".", "dev", "client", "client.log")
+        dev_server_log_path = os.path.join(".", "dev", "server", "server.log")
         if not os.path.isfile(dev_client_log_path) or not os.path.isfile(dev_server_log_path):
             print(
                 "Could not get dev client/server logs. Unable to compare performance results to latest dev measurements."
