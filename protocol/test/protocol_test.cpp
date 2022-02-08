@@ -36,6 +36,7 @@ extern "C" {
 #include <whist/core/whist.h>
 #include <whist/utils/os_utils.h>
 #include <whist/network/ringbuffer.h>
+#include <client/audio.h>
 
 #include <client/native_window_utils.h>
 
@@ -1389,6 +1390,7 @@ TEST_F(ProtocolTest, AudioTest) {
     EXPECT_TRUE(audio_ready_for_frame(audio_context, 15));
     // the ring buffer sent us an astronomically large number of buffered frames: something went wrong, ignore that frame count
     EXPECT_FALSE(audio_ready_for_frame(audio_context, 999999));
+    destroy_audio(audio_context);
 }
 
 /*
