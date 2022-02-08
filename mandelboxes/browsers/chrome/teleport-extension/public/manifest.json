@@ -9,5 +9,8 @@
   },
   "default_locale": "en",
   "permissions": ["downloads", "downloads.shelf", "nativeMessaging", "tabs"],
-  "host_permissions": ["*://*/*"]
+  "host_permissions": ["*://*/*"],
+  "action": {
+    "default_popup": "templates/popup.html"
+  }
 }

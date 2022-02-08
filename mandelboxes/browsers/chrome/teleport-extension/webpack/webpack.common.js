@@ -8,6 +8,7 @@ const outDir = path.join(__dirname, "..", "build", "js")
 module.exports = {
   entry: {
     serviceWorker: path.join(srcDir, "serviceWorker.ts"),
+    popup: path.join(srcDir, "popup.ts"),
   },
   output: {
     path: outDir,
