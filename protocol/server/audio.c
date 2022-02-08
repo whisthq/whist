@@ -42,12 +42,6 @@ Includes
 #include "state.h"
 #include "server_statistic.h"
 
-// Number of audio previous frames that will be resent along with the current frame.
-// Resending of audio is done pro-actively as audio packet loss doesn't have enough time for client
-// to send nack and recover. Since audio bitrate is just 128Kbps, the extra bandwidth used for
-// resending audio packets is still acceptable.
-#define NUM_PREVIOUS_FRAMES_RESEND 2
-
 #ifdef _WIN32
 #pragma comment(lib, "ws2_32.lib")
 #endif
@@ -137,7 +131,7 @@ int32_t multithreaded_send_audio(void* opaque) {
                                 id, false);
                             // Simulate nacks to trigger re-sending of previous frames.
                             // TODO: Move into udp.c
-                            for (int i = 1; i <= NUM_PREVIOUS_FRAMES_RESEND && id - i > 0; i++) {
+                            for (int i = 1; i <= NUM_PREV_AUDIO_FRAMES_RESEND && id - i > 0; i++) {
                                 // Audio is always only one UDP packet per audio frame.
                                 // Average bytes per audio frame = (Samples_per_frame * Bitrate) /
                                 //                                 (BITS_IN_BYTE * Sampling freq)

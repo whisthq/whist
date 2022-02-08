@@ -323,6 +323,7 @@ int get_wcmsg_size(WhistClientMessage *wcmsg) {
         return (int)(sizeof(*wcmsg) + strlen((const char *)&wcmsg->url_to_open) + 1);
     } else {
         // Send small wcmsg's when we don't need unnecessarily large ones
+        // TODO : Remove this hardcoded value.
         return sizeof(wcmsg->type) + sizeof(wcmsg->id) + 40;
     }
 }

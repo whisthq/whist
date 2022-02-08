@@ -29,22 +29,54 @@ Includes
 
 /*
 ============================
+Globals
+============================
+*/
+
+volatile int output_width;
+volatile int output_height;
+
+/*
+============================
 Defines
 ============================
 */
 
-const NetworkSettings default_network_settings = {
-    .bitrate = STARTING_BITRATE,
-    .burst_bitrate = STARTING_BURST_BITRATE,
+// bitrate and burst_bitrate doesn't have any compile-time default values as it depends on the
+// resolution
+static NetworkSettings default_network_settings = {
     .desired_codec = CODEC_TYPE_H264,
     .audio_fec_ratio = AUDIO_FEC_RATIO,
     .video_fec_ratio = VIDEO_FEC_RATIO,
     .fps = 60,
 };
 
-#define BAD_BITRATE 10400000
-#define BAD_BURST_BITRATE 31800000
 #define EWMA_STATS_SECONDS 5
+
+// The below values are roughly based on the "Low Bitrate" and "High Bitrate" values recommended in
+// https://www.videoproc.com/media-converter/bitrate-setting-for-h264.htm. Also confirmed visually
+// that these values produce reasonable output quality.
+#define MINIMUM_BITRATE_PER_PIXEL 1.0
+#define MAXIMUM_BITRATE_PER_PIXEL 4.0
+#define STARTING_BITRATE_PER_PIXEL 3.0
+
+// The value of 6 is chosen based on previously used constant values of STARTING_BURST_BITRATE_RAW,
+// STARTING_BITRATE_RAW. This is chosen, just for the sake of maintaining the status-quo.
+#define BURST_BITRATE_RATIO 6
+
+#define TOTAL_AUDIO_BITRATE ((NUM_PREV_AUDIO_FRAMES_RESEND + 1) * AUDIO_BITRATE)
+
+#define MINIMUM_VIDEO_BITRATE (output_width * output_height * MINIMUM_BITRATE_PER_PIXEL)
+#define MAXIMUM_VIDEO_BITRATE (output_width * output_height * MAXIMUM_BITRATE_PER_PIXEL)
+#define STARTING_VIDEO_BITRATE (output_width * output_height * STARTING_BITRATE_PER_PIXEL)
+
+#define MINIMUM_BITRATE (MINIMUM_VIDEO_BITRATE + TOTAL_AUDIO_BITRATE)
+#define MAXIMUM_BITRATE (MAXIMUM_VIDEO_BITRATE + TOTAL_AUDIO_BITRATE)
+#define STARTING_BITRATE (STARTING_VIDEO_BITRATE + TOTAL_AUDIO_BITRATE)
+
+#define MINIMUM_BURST_BITRATE (MINIMUM_BITRATE * BURST_BITRATE_RATIO)
+#define MAXIMUM_BURST_BITRATE (MAXIMUM_BITRATE * BURST_BITRATE_RATIO)
+#define STARTING_BURST_BITRATE (STARTING_BITRATE * BURST_BITRATE_RATIO)
 
 /*
 ============================
@@ -55,8 +87,6 @@ Private Function Declarations
 // These functions involve various potential
 // implementations of `calculate_new_bitrate`
 
-NetworkSettings fallback_bitrate(NetworkStatistics stats);
-NetworkSettings ewma_bitrate(NetworkStatistics stats);
 NetworkSettings ewma_ratio_bitrate(NetworkStatistics stats);
 NetworkSettings timed_ewma_ratio_bitrate(NetworkStatistics stats);
 
@@ -65,6 +95,15 @@ NetworkSettings timed_ewma_ratio_bitrate(NetworkStatistics stats);
 Public Function Implementations
 ============================
 */
+
+NetworkSettings get_default_network_settings(int width, int height) {
+    FATAL_ASSERT(width > 0 && height > 0);
+    int video_bitrate = width * height * STARTING_BITRATE_PER_PIXEL;
+    int starting_bitrate = video_bitrate + TOTAL_AUDIO_BITRATE;
+    default_network_settings.bitrate = starting_bitrate;
+    default_network_settings.burst_bitrate = starting_bitrate * BURST_BITRATE_RATIO;
+    return default_network_settings;
+}
 
 NetworkSettings get_desired_network_settings(NetworkStatistics stats) {
     // Get the network settings we want, based on those statistics
@@ -98,48 +137,6 @@ Private Function Implementations
 ============================
 */
 
-NetworkSettings fallback_bitrate(NetworkStatistics stats) {
-    /*
-        Switches between two sets of bitrate/burst bitrate: the default of 16mbps/100mbps and a
-        fallback of 10mbps/30mbps. We fall back if we've nacked a lot in the last second.
-    */
-    static NetworkSettings network_settings;
-    if (stats.num_nacks_per_second > 6) {
-        network_settings.bitrate = BAD_BITRATE;
-        network_settings.burst_bitrate = BAD_BURST_BITRATE;
-    } else {
-        network_settings.bitrate = STARTING_BITRATE;
-        network_settings.burst_bitrate = STARTING_BURST_BITRATE;
-    }
-    return network_settings;
-}
-
-NetworkSettings ewma_bitrate(NetworkStatistics stats) {
-    /*
-        Keeps an exponentially weighted moving average of the throughput per second the client is
-        getting, and uses that to predict a good bitrate to ask the server for.
-    */
-
-    // Constants
-    const double alpha = 0.8;
-    const double bitrate_throughput_ratio = 1.25;
-
-    FATAL_ASSERT(stats.throughput_per_second >= 0);
-
-    // Calculate throughput
-    static int throughput = -1;
-    if (throughput == -1) {
-        throughput = (int)(STARTING_BITRATE / bitrate_throughput_ratio);
-    }
-    throughput = (int)(alpha * throughput + (1 - alpha) * stats.throughput_per_second);
-
-    // Set network settings
-    NetworkSettings network_settings = default_network_settings;
-    network_settings.bitrate = (int)(bitrate_throughput_ratio * throughput);
-    network_settings.burst_bitrate = STARTING_BURST_BITRATE;
-    return network_settings;
-}
-
 NetworkSettings timed_ewma_ratio_bitrate(NetworkStatistics stats) {
     /* This is a stopgap to account for a recent change that calls the ewma_ratio_bitrate
        at a frequency for which it was not designed for. This should eventually be replaced
@@ -149,11 +146,11 @@ NetworkSettings timed_ewma_ratio_bitrate(NetworkStatistics stats) {
 
     static WhistTimer interval_timer;
     static bool timer_initialized = false;
-    static NetworkSettings network_settings = {.bitrate = STARTING_BITRATE,
-                                               .burst_bitrate = STARTING_BURST_BITRATE};
+    static NetworkSettings network_settings;
 
     if (!timer_initialized) {
         start_timer(&interval_timer);
+        network_settings = get_default_network_settings(output_width, output_height);
         timer_initialized = true;
     }
 

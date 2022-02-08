@@ -9,6 +9,10 @@
 
 #define BITS_IN_BYTE 8.0
 
+// Set this to something very low. Throttler will work as expected only if
+// network_throttler_set_burst_bitrate() is called with the required bitrate
+#define STARTING_THROTTLER_BITRATE 1000000
+
 struct NetworkThrottleContext {
     double coin_bucket_ms;   //<<< The size of the coin bucket in milliseconds.
     size_t coin_bucket_max;  //<<< The maximum size of the coin bucket for the current burst bitrate
@@ -34,14 +38,14 @@ NetworkThrottleContext* network_throttler_create(double coin_bucket_ms,
     */
     NetworkThrottleContext* ctx = safe_malloc(sizeof(NetworkThrottleContext));
     ctx->coin_bucket_ms = coin_bucket_ms;
-    ctx->coin_bucket_max =
-        (size_t)((ctx->coin_bucket_ms / MS_IN_SECOND) * (STARTING_BURST_BITRATE / BITS_IN_BYTE));
+    ctx->coin_bucket_max = (size_t)((ctx->coin_bucket_ms / MS_IN_SECOND) *
+                                    (STARTING_THROTTLER_BITRATE / BITS_IN_BYTE));
     if (fill_bucket_initially) {
         ctx->coin_bucket = ctx->coin_bucket_max;
     } else {
         ctx->coin_bucket = 0;
     }
-    ctx->burst_bitrate = STARTING_BURST_BITRATE;
+    ctx->burst_bitrate = STARTING_THROTTLER_BITRATE;
     ctx->queue_lock = whist_create_mutex();
     ctx->queue_cond = whist_create_cond();
     atomic_init(&ctx->next_queue_id, 0);

@@ -157,4 +157,6 @@ NetworkSettings udp_get_network_settings(SocketContext* context);
 // TODO: Remove this by pulling network-side of E2E into udp.c
 timestamp_us udp_get_client_input_timestamp(SocketContext* socket_context);
 
+void udp_handle_network_settings(void* raw_context, NetworkSettings network_settings);
+
 #endif  // WHIST_UDP_H
