@@ -876,6 +876,7 @@ jobs:
       [
         whist-publish-build-config,
         whist-build-monorepo-config,
+        scaling-service-deploy,
         microservices-deploy-auth0-rules,
       ]
     outputs:
@@ -889,6 +890,7 @@ jobs:
       always() &&
       ((contains(needs.whist-publish-build-config.outputs.jobs, '|client-applications-publish-build-x64-s3|')) ||
       (contains(needs.whist-publish-build-config.outputs.jobs, '|client-applications-publish-build-arm64-s3|'))) &&
+      (needs.scaling-service-deploy.result == 'success') &&
       (needs.webserver-deploy-heroku.result == 'success') &&
       (needs.microservices-deploy-auth0-rules.result == 'success') &&
       (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success')

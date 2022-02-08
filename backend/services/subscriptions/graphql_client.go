@@ -2,12 +2,12 @@ package subscriptions
 
 import (
 	"context"
+	"net/http"
 
 	graphql "github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
-	"golang.org/x/oauth2"
 )
 
 // WhistGraphQLClient is an interface used to abstract the interactions with
@@ -25,6 +25,20 @@ type GraphQLClient struct {
 	Params HasuraParams
 }
 
+// withAdminSecretTransport is a custom http transport to authenticate all
+// requests to Hasura using the admin secret.
+type withAdminSecretTransport struct {
+	AdminSecret string
+}
+
+// RoundTrip will inject the auth headers in each request to Hasura.
+func (t *withAdminSecretTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Add("content-type", "application/json")
+	req.Header.Add("x-hasura-admin-secret", t.AdminSecret)
+
+	return http.DefaultTransport.RoundTrip(req)
+}
+
 // Initialize creates the client. This function is respinsible from fetching the server
 // information from Heroku.
 func (wc *GraphQLClient) Initialize() error {
@@ -40,16 +54,15 @@ func (wc *GraphQLClient) Initialize() error {
 		// Error obtaining the connection parameters, we stop and don't setup the client
 		return utils.MakeError("error creating hasura client: %v", err)
 	}
-
 	wc.SetParams(params)
 
 	// Create http client for authenticating the GraphQL client
-	src := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: wc.GetParams().AccessKey},
-	)
-	httpClient := oauth2.NewClient(context.Background(), src)
-
-	wc.Hasura = graphql.NewClient(wc.GetParams().URL, httpClient)
+	httpClient := http.Client{
+		Transport: &withAdminSecretTransport{
+			AdminSecret: wc.GetParams().AccessKey,
+		},
+	}
+	wc.Hasura = graphql.NewClient(wc.GetParams().URL, &httpClient)
 
 	return nil
 }
