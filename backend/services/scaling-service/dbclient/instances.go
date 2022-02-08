@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/hasura/go-graphql-client"
+	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 )
 
@@ -56,7 +57,7 @@ func InsertInstances(scalingCtx context.Context, graphQLClient *subscriptions.Gr
 			Provider:          graphql.String(instance.Provider),
 			Region:            graphql.String(instance.Region),
 			ImageID:           graphql.String(instance.ImageID),
-			ClientSHA:         graphql.String(instance.ClientSHA),
+			ClientSHA:         graphql.String(metadata.GetGitCommit()),
 			IPAddress:         instance.IPAddress,
 			Type:              graphql.String(instance.Type),
 			RemainingCapacity: graphql.Int(instance.RemainingCapacity),

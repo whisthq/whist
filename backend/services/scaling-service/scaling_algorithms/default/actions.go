@@ -2,6 +2,7 @@ package scaling_algorithms
 
 import (
 	"context"
+	"time"
 
 	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/metadata"
@@ -237,7 +238,7 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 			Provider:          instance.Provider,
 			Region:            instance.Region,
 			ImageID:           instance.ImageID,
-			ClientSHA:         metadata.GetGitCommit(),
+			ClientSHA:         instance.ClientSHA,
 			Type:              instance.Type,
 			RemainingCapacity: int64(instanceCapacity[instance.Type]),
 			Status:            instance.Status,
@@ -270,10 +271,10 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 // starting a buffer of instances with the new image and scaling down instances with the previous
 // image.
 func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event ScalingEvent, imageID interface{}) error {
-	// logger.Infof("Starting upgrade image action for event: %v", event)
-	// defer logger.Infof("Finished upgrade image action for event: %v", event)
+	logger.Infof("Starting upgrade image action for event: %v", event)
+	defer logger.Infof("Finished upgrade image action for event: %v", event)
 
-	// var oldImageID string
+	var oldImageID string
 
 	// Check if we received a valid image before performing more
 	// expensive operations.
@@ -285,110 +286,108 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 
 	newImageID := imageID.(string)
 
-	// // Query for the current image id
-	// imageResult, err := dbclient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region)
-	// if err != nil {
-	// 	return utils.MakeError("failed to query database for current image on %v. Err: %v", event.Region, err)
-	// }
+	// Query for the current image id
+	imageResult, err := dbclient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region)
+	if err != nil {
+		return utils.MakeError("failed to query database for current image on %v. Err: %v", event.Region, err)
+	}
 
-	// if len(imageResult) == 0 {
-	// 	logger.Warningf("Image doesn't exist on %v. Creating a new entry with image %v.", event.Region, newImageID)
-	// } else {
-	// 	// We now consider the "current" image as the "old" image
-	// 	oldImageID = string(imageResult[0].ImageID)
-	// }
+	if len(imageResult) == 0 {
+		logger.Warningf("Image doesn't exist on %v. Creating a new entry with image %v.", event.Region, newImageID)
+	} else {
+		// We now consider the "current" image as the "old" image
+		oldImageID = string(imageResult[0].ImageID)
+	}
 
-	// // create instance buffer with new image
+	// create instance buffer with new image
 	logger.Infof("Creating new instance buffer for image %v", newImageID)
 	bufferInstances, err := s.Host.SpinUpInstances(scalingCtx, DEFAULT_INSTANCE_BUFFER, newImageID)
 	if err != nil {
 		return utils.MakeError("failed to create instance buffer for image %v. Error: %v", newImageID, err)
 	}
 
-	logger.Infof("%v", bufferInstances)
+	// create slice of newly created instance ids
+	var (
+		bufferIDs      []string
+		instancesForDb []subscriptions.Instance
+	)
+	for _, instance := range bufferInstances {
+		bufferIDs = append(bufferIDs, instance.ID)
+		instancesForDb = append(instancesForDb, subscriptions.Instance{
+			ID:                instance.ID,
+			IPAddress:         instance.IPAddress,
+			Provider:          instance.Provider,
+			Region:            instance.Region,
+			ImageID:           instance.ImageID,
+			ClientSHA:         instance.ClientSHA,
+			Type:              instance.Type,
+			RemainingCapacity: int64(instanceCapacity[instance.Type]),
+			Status:            instance.Status,
+			CreatedAt:         instance.CreatedAt,
+			UpdatedAt:         instance.UpdatedAt,
+		})
+	}
 
-	// // create slice of newly created instance ids
-	// var (
-	// 	bufferIDs      []string
-	// 	instancesForDb []subscriptions.Instance
-	// )
-	// for _, instance := range bufferInstances {
-	// 	bufferIDs = append(bufferIDs, instance.ID)
-	// 	instancesForDb = append(instancesForDb, subscriptions.Instance{
-	// 		ID:                instance.ID,
-	// 		IPAddress:         instance.IPAddress,
-	// 		Provider:          instance.Provider,
-	// 		Region:            instance.Region,
-	// 		ImageID:           instance.ImageID,
-	// 		ClientSHA:         instance.ClientSHA,
-	// 		Type:              instance.Type,
-	// 		RemainingCapacity: int64(instanceCapacity[instance.Type]),
-	// 		Status:            instance.Status,
-	// 		CreatedAt:         instance.CreatedAt,
-	// 		UpdatedAt:         instance.UpdatedAt,
-	// 	})
-	// }
+	// wait for buffer to be ready.
+	err = s.Host.WaitForInstanceReady(scalingCtx, maxWaitTimeReady, bufferIDs)
+	if err != nil {
+		return utils.MakeError("error waiting for instances to be ready. Error: %v", err)
+	}
 
-	// // wait for buffer to be ready.
-	// err = s.Host.WaitForInstanceReady(scalingCtx, maxWaitTimeReady, bufferIDs)
-	// if err != nil {
-	// 	return utils.MakeError("error waiting for instances to be ready. Error: %v", err)
-	// }
+	logger.Infof("Inserting newly created instances to database.")
 
-	// logger.Infof("Inserting newly created instances to database.")
+	// If successful, write to db
+	affectedRows, err := dbclient.InsertInstances(scalingCtx, s.GraphQLClient, instancesForDb)
+	if err != nil {
+		return utils.MakeError("Failed to insert instances into database. Error: %v", err)
+	}
 
-	// // If successful, write to db
-	// affectedRows, err := dbclient.InsertInstances(scalingCtx, s.GraphQLClient, instancesForDb)
-	// if err != nil {
-	// 	return utils.MakeError("Failed to insert instances into database. Error: %v", err)
-	// }
+	logger.Infof("Inserted %v rows to database.", affectedRows)
 
-	// logger.Infof("Inserted %v rows to database.", affectedRows)
+	// get old instances from database
+	instanceResult, err := dbclient.QueryInstancesByImage(scalingCtx, s.GraphQLClient, oldImageID)
+	if err != nil {
+		return utils.MakeError("failed to query database for instances with image %v. Err: %v", oldImageID, err)
+	}
 
-	// // get old instances from database
-	// instanceResult, err := dbclient.QueryInstancesByImage(scalingCtx, s.GraphQLClient, oldImageID)
-	// if err != nil {
-	// 	return utils.MakeError("failed to query database for instances with image %v. Err: %v", oldImageID, err)
-	// }
+	// drain instances with old image
+	logger.Infof("Scaling down %v instances from previous image %v.", len(instanceResult), oldImageID)
 
-	// // drain instances with old image
-	// logger.Infof("Scaling down %v instances from previous image %v.", len(instanceResult), oldImageID)
+	for _, instance := range instanceResult {
+		updateParams := map[string]interface{}{
+			"id":     graphql.String(instance.ID),
+			"status": graphql.String("DRAINING"),
+		}
 
-	// for _, instance := range instanceResult {
-	// 	updateParams := map[string]interface{}{
-	// 		"id":     graphql.String(instance.ID),
-	// 		"status": graphql.String("DRAINING"),
-	// 	}
+		_, err = dbclient.UpdateInstance(scalingCtx, s.GraphQLClient, updateParams)
+		if err != nil {
+			logger.Errorf("Failed to mark instance %v as draining. Err: %v", instance, err)
+		}
 
-	// 	_, err = dbclient.UpdateInstance(scalingCtx, s.GraphQLClient, updateParams)
-	// 	if err != nil {
-	// 		logger.Errorf("Failed to mark instance %v as draining. Err: %v", instance, err)
-	// 	}
+		logger.Info("Marked instance %v as draining on database.", instance.ID)
+	}
 
-	// 	logger.Info("Marked instance %v as draining on database.", instance.ID)
-	// }
+	// swapover active image on database
+	logger.Infof("Updating old %v image %v to new image %v on database.", event.Region, oldImageID, newImageID)
+	updateParams := subscriptions.Image{
+		Provider:  "AWS",
+		Region:    event.Region,
+		ImageID:   newImageID,
+		ClientSHA: metadata.GetGitCommit(),
+		UpdatedAt: time.Now(),
+	}
 
-	// // swapover active image on database
-	// logger.Infof("Updating old %v image %v to new image %v on database.", event.Region, oldImageID, newImageID)
-	// updateParams := subscriptions.Image{
-	// 	Provider:  "AWS",
-	// 	Region:    event.Region,
-	// 	ImageID:   newImageID,
-	// 	ClientSHA: metadata.GetGitCommit(),
-	// 	UpdatedAt: time.Now(),
-	// }
-
-	// if oldImageID == "" {
-	// 	_, err = dbclient.InsertImages(scalingCtx, s.GraphQLClient, []subscriptions.Image{updateParams})
-	// 	if err != nil {
-	// 		return utils.MakeError("Failed to insert image %v into database. Error: %v", newImageID, err)
-	// 	}
-	// } else {
-	// 	_, err = dbclient.UpdateImage(scalingCtx, s.GraphQLClient, updateParams)
-	// 	if err != nil {
-	// 		return utils.MakeError("Failed to update image %v to image %v in database. Error: %v", oldImageID, newImageID, err)
-	// 	}
-	// }
+	if oldImageID == "" {
+		_, err = dbclient.InsertImages(scalingCtx, s.GraphQLClient, []subscriptions.Image{updateParams})
+		if err != nil {
+			return utils.MakeError("Failed to insert image %v into database. Error: %v", newImageID, err)
+		}
+	} else {
+		_, err = dbclient.UpdateImage(scalingCtx, s.GraphQLClient, updateParams)
+		if err != nil {
+			return utils.MakeError("Failed to update image %v to image %v in database. Error: %v", oldImageID, newImageID, err)
+		}
+	}
 
 	return nil
 }
