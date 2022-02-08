@@ -24,7 +24,7 @@ type Bookmarks struct {
 	Version      int                 `json:"version,omitempty"`
 }
 
-// UnmarshalBookmarks take a JSON string containing bookmark data
+// UnmarshalBookmarks takes a JSON string containing bookmark data
 // and unmarshals it into a Bookmarks struct, returning the struct
 // and any errors encountered.
 func UnmarshalBookmarks(bookmarks types.Bookmarks) (Bookmarks, error) {
