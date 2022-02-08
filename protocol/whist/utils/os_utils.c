@@ -34,22 +34,36 @@ Defines
 // we should probably swap to a C++ std::map<string, string>
 
 // To add a new keyboard layout, run ibus list-engine in a mandelbox and find the appropriate one
-// for foreign characters, use https://wiki.archlinux.org/title/Input_method or something similar to locate a package
-// and sudo apt install METHOD in the Dockerfile, then add the ibus engine to this mapping
+// for foreign characters, use https://wiki.archlinux.org/title/Input_method or something similar
+// to locate a packageand sudo apt install METHOD in the Dockerfile, then add the ibus engine to this
+// mapping
 static const char* const apple_keyboard_mappings[][2] = {
-    {"com.apple.keylayout.USExtended", "xkb:us::eng"},                {"com.apple.keylayout.US", "xkb:us::eng"},
-    {"com.apple.keylayout.Italian-Pro", "xkb:it::ita"},               {"com.apple.keylayout.Italian", "xkb:it::ita"},
-    {"com.apple.keylayout.Arabic","xkb:ara::ara"},                    {"com.apple.keylayout.ABC-QWERTZ", "xkb:de:nodeadkeys:ger"},
-    {"com.apple.keylayout.German", "xkb:de::ger"},                    {"com.apple.keylayout.Canadian-CSA", "xkb:ca:eng:eng"},
-    {"com.apple.keylayout.ABC-AZERTY", "xkb:fr::fra"},                {"com.apple.keylayout.French", "xkb:fr::fra"},
-    {"com.apple.keylayout.SwissFrench", "xkb:ch:fr:fra"},             {"com.apple.keylayout.LatinAmerican", "xkb:latam::spa"},
-    {"com.apple.keylayout.Spanish", "xkb:es::spa"},                   {"com.apple.keylayout.Hebrew", "xkb:il::heb"},
-    {"com.apple.keylayout.Canadian", "xkb:ca:eng:eng"},               {"com.apple.keylayout.DVORAK-QWERTYCMD", "xkb:us:dvorak:eng"},
-    {"com.apple.keylayout.ABC-India", "xkb:us:intl:eng"},             {"com.apple.keylayout.Dvorak", "xkb:us:dvorak:eng"},
-    {"com.apple.keylayout.British", "xkb:gb:extd:eng"},               {"com.apple.keylayout.ABC", "xkb:us:intl:eng"},
-    {"com.apple.inputmethod.SCIM.ITABC", "pinyin"},                   {"com.sogou.inputmethod.sogou.pinyin", "pinyin"},
-    {"com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese", "anthy"}, {"com.apple.inputmethod.Kotoeri.RomajiTyping.Roman", "anthy"},
-    {"com.apple.keylayout.Vietnamese", "unikey"},                     {"com.apple.inputmethod.Korean.2SetKorean", "hangul"},
+    {"com.apple.keylayout.USExtended", "xkb:us::eng"},
+    {"com.apple.keylayout.US", "xkb:us::eng"},
+    {"com.apple.keylayout.Italian-Pro", "xkb:it::ita"},
+    {"com.apple.keylayout.Italian", "xkb:it::ita"},
+    {"com.apple.keylayout.Arabic","xkb:ara::ara"},
+    {"com.apple.keylayout.ABC-QWERTZ", "xkb:de:nodeadkeys:ger"},
+    {"com.apple.keylayout.German", "xkb:de::ger"},
+    {"com.apple.keylayout.Canadian-CSA", "xkb:ca:eng:eng"},
+    {"com.apple.keylayout.ABC-AZERTY", "xkb:fr::fra"},
+    {"com.apple.keylayout.French", "xkb:fr::fra"},
+    {"com.apple.keylayout.SwissFrench", "xkb:ch:fr:fra"},
+    {"com.apple.keylayout.LatinAmerican", "xkb:latam::spa"},
+    {"com.apple.keylayout.Spanish", "xkb:es::spa"},
+    {"com.apple.keylayout.Hebrew", "xkb:il::heb"},
+    {"com.apple.keylayout.Canadian", "xkb:ca:eng:eng"},
+    {"com.apple.keylayout.DVORAK-QWERTYCMD", "xkb:us:dvorak:eng"},
+    {"com.apple.keylayout.ABC-India", "xkb:us:intl:eng"},
+    {"com.apple.keylayout.Dvorak", "xkb:us:dvorak:eng"},
+    {"com.apple.keylayout.British", "xkb:gb:extd:eng"},
+    {"com.apple.keylayout.ABC", "xkb:us:intl:eng"},
+    {"com.apple.inputmethod.SCIM.ITABC", "pinyin"},
+    {"com.sogou.inputmethod.sogou.pinyin", "pinyin"},
+    {"com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese", "anthy"},
+    {"com.apple.inputmethod.Kotoeri.RomajiTyping.Roman", "anthy"},
+    {"com.apple.keylayout.Vietnamese", "unikey"},
+    {"com.apple.inputmethod.Korean.2SetKorean", "hangul"},
 };
 
 #define NUM_APPLE_KEYBOARD_MAPPINGS \
