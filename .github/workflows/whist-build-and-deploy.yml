@@ -876,6 +876,7 @@ jobs:
       [
         whist-publish-build-config,
         whist-build-monorepo-config,
+        scaling-service-deploy,
         microservices-deploy-auth0-rules,
       ]
     outputs:
