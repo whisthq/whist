@@ -268,14 +268,8 @@ def create_bookmark_file(target_browser_name, bookmarks_json, custom_bookmark_fi
         os.makedirs(directory)
         os.chmod(directory, 0o777)
 
-    # bookmarks_json is still a json string so we need to unmarshal it
-    try:
-        bookmarks = json.loads(bookmarks_json)
-    except Exception as err:
-        subprocess.run(["echo", f"Failed to unmarshal bookmarks json with error: {err}"])
-
     with open(path, "w") as browser_bookmark_file:
-        browser_bookmark_file.write(bookmarks)
+        browser_bookmark_file.write(bookmarks_json)
 
 
 def create_extension_files(extensions, custom_script=None):
@@ -311,8 +305,8 @@ if __name__ == "__main__":
             if "cookiesJSON" in browser_data and len(browser_data["cookiesJSON"]) > 0:
                 set_browser_cookies(browser, browser_data["cookiesJSON"])
 
-            if "bookmarksJSON" in browser_data and len(browser_data["bookmarksJSON"]) > 0:
-                create_bookmark_file(browser, browser_data["bookmarksJSON"])
+            if "bookmarks" in browser_data and len(browser_data["bookmarks"]) > 0:
+                create_bookmark_file(browser, browser_data["bookmarks"])
 
             if "extensions" in browser_data and len(browser_data["extensions"]) > 0:
                 create_extension_files(browser_data["extensions"])

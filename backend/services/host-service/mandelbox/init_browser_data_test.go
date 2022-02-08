@@ -6,6 +6,7 @@ import (
 	"path"
 	"testing"
 
+	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 )
@@ -25,14 +26,13 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 
 	// We will simulate a user with cookies but no bookmarks
 	cookiesJSON := "[" + testCookie1 + "," + testCookie2 + "]"
-	bookmarksJSON := ""
 	extensions := "not_real_extension_id,not_real_second_extension_id"
 
 	// Create browser data
 	userInitialBrowserData := BrowserData{
-		CookiesJSON:   types.Cookies(cookiesJSON),
-		BookmarksJSON: types.Bookmarks(bookmarksJSON),
-		Extensions:    types.Extensions(extensions),
+		CookiesJSON: types.Cookies(cookiesJSON),
+		Bookmarks:   configutils.Bookmarks{},
+		Extensions:  types.Extensions(extensions),
 	}
 
 	// Explicitly set the result to what we expect

@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path"
 
+	"github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 	"github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -21,8 +22,8 @@ const (
 type BrowserData struct {
 	// CookieJSON is the user's cookie sqlite3 file in a json string format
 	CookiesJSON types.Cookies `json:"cookiesJSON,omitempty"`
-	// BookmarkJSON is the user's bookmark json file using json string format
-	BookmarksJSON types.Bookmarks `json:"bookmarksJSON,omitempty"`
+	// Bookmarks is the user's bookmark json file
+	Bookmarks configutils.Bookmarks `json:"bookmarks,omitempty"`
 	// Extensions is a comma spliced string that represents the users browser extensions
 	Extensions types.Extensions `json:"extensions,omitempty"`
 }
