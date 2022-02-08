@@ -269,7 +269,7 @@ def create_bookmark_file(target_browser_name, bookmarks_json, custom_bookmark_fi
         os.chmod(directory, 0o777)
 
     with open(path, "w") as browser_bookmark_file:
-        browser_bookmark_file.write(bookmarks_json)
+        json.dump(bookmarks_json, browser_bookmark_file)
 
 
 def create_extension_files(extensions, custom_script=None):
