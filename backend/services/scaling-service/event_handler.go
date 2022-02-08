@@ -21,6 +21,9 @@ func main() {
 	globalCtx, globalCancel := context.WithCancel(context.Background())
 	goroutineTracker := &sync.WaitGroup{}
 
+	// Start Sentry and Logzio
+	logger.InitScalingLogging()
+
 	// goroutine that fires when the global context is canceled.
 	go func() {
 		<-globalCtx.Done()
