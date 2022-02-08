@@ -551,8 +551,10 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
     int ret;
 
     if (destination == NULL) {
+        context->is_server = true;
         ret = create_tcp_server_context(context, port, connection_timeout_ms);
     } else {
+        context->is_server = false;
         ret = create_tcp_client_context(context, destination, port, connection_timeout_ms);
     }
 
