@@ -711,6 +711,7 @@ typedef enum WhistServerMessageType {
     SMESSAGE_FILE_METADATA = 9,
     SMESSAGE_FILE_DATA = 10,
     SMESSAGE_NOTIFICATION = 11,
+    SMESSAGE_INITIATE_UPLOAD = 12,
     SMESSAGE_QUIT = 100,
 } WhistServerMessageType;
 

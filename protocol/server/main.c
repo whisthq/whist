@@ -255,7 +255,7 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
     LOG_INFO("multithreaded_sync_tcp_packets running on Thread %lu", SDL_GetThreadID(NULL));
 
     init_clipboard_synchronizer(false);
-    init_file_synchronizer(FILE_TRANSFER_SERVER_DROP);
+    init_file_synchronizer((FILE_TRANSFER_SERVER_DROP | FILE_TRANSFER_SERVER_UPLOAD));
 
     add_thread_to_client_active_dependents();
     bool assuming_client_active = false;
