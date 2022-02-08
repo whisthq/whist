@@ -164,6 +164,16 @@ jobs:
           make -j WhistClient
           make -j test
 
+      - name: Build the Protocol Client Library on macOS
+        if: runner.os == 'macOS'
+        working-directory: protocol
+        env:
+          WHIST_OSXSYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+        run: |
+          cmake -S . -B build-lib -D CMAKE_BUILD_TYPE=Debug -D CLIENT_SHARED_LIB=ON
+          cd build-lib
+          make -j WhistClient
+
       - name: Verify Builds with clang-tidy on macOS
         if: runner.os == 'macOS'
         working-directory: protocol
@@ -295,6 +305,15 @@ jobs:
           cmake .. -DCMAKE_BUILD_TYPE=Debug -DCHECK_CI=TRUE
           make -j WhistClient
           make -j test
+
+      - name: Build the Protocol Client Library
+        working-directory: protocol
+        env:
+          WHIST_OSXSYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+        run: |
+          cmake -S . -B build-lib -D CMAKE_BUILD_TYPE=Debug -D CLIENT_SHARED_LIB=ON
+          cd build-lib
+          make -j WhistClient
 
       # Note that we don't run clang-tidy on arm64 macOS, since we already run it on x64 macOS
 
