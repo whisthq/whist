@@ -48,8 +48,8 @@ Bad Globals [TODO: Remove these or give them `static`!]
 volatile char client_binary_aes_private_key[16];
 volatile char client_hex_aes_private_key[33];
 volatile char *server_ip;
-volatile int output_width;
-volatile int output_height;
+extern volatile int output_width;
+extern volatile int output_height;
 volatile char *program_name = NULL;
 volatile SDL_Window *window;
 

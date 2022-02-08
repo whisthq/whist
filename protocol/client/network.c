@@ -272,7 +272,7 @@ int send_wcmsg(WhistClientMessage *wcmsg) {
     // before adding/removing from this list
     if (wcmsg->type == MESSAGE_DISCOVERY_REQUEST || wcmsg->type == CMESSAGE_FILE_DATA ||
         wcmsg->type == CMESSAGE_FILE_METADATA || wcmsg->type == CMESSAGE_CLIPBOARD ||
-        (size_t)wcmsg_size > sizeof(*wcmsg)) {
+        wcmsg->type == MESSAGE_DIMENSIONS || (size_t)wcmsg_size > sizeof(*wcmsg)) {
         return send_packet(&packet_tcp_context, PACKET_MESSAGE, wcmsg, wcmsg_size, -1, false);
     } else {
         if ((size_t)wcmsg_size > MAX_PACKET_SIZE) {

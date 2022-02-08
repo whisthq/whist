@@ -161,9 +161,6 @@ Defines
 // VBV Buffer size in milliseconds
 #define VBV_BUF_SIZE_IN_MS 1000
 
-#define MAX_QP 40                  // Max QP value of video frames
-#define MAX_INTRA_QP (MAX_QP + 6)  // Higher QP value for intra frames if supported by the encoder
-
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
 
@@ -186,6 +183,12 @@ Defines
 #define MAX_URL_LENGTH 2048
 
 #define AUDIO_FREQUENCY 48000
+
+// Number of audio previous frames that will be resent along with the current frame.
+// Resending of audio is done pro-actively as audio packet loss doesn't have enough time for client
+// to send nack and recover. Since audio bitrate is just 128Kbps, the extra bandwidth used for
+// resending audio packets is still acceptable.
+#define NUM_PREV_AUDIO_FRAMES_RESEND 1
 
 /*
 ============================

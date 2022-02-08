@@ -489,18 +489,11 @@ int32_t multithreaded_send_video(void* opaque) {
 
     NetworkSettings last_network_settings = {0};
 
-    NetworkThrottleContext* network_throttler =
-        network_throttler_create((double)VBV_BUF_SIZE_IN_MS, true);
-    // Don't bitrate limit in the beginning
-    network_throttler_set_burst_bitrate(network_throttler, 100000000);
-
     // Create producer-consumer semaphore pair with queue size of 1
     producer = whist_create_semaphore(0);
     consumer = whist_create_semaphore(1);
     WhistThread video_send_packets = whist_create_thread(multithreaded_send_video_packets,
                                                          "multithreaded_send_video_packets", state);
-
-    int last_frame_size = 0;
 
     int consecutive_identical_frames = 0;
 
@@ -510,16 +503,12 @@ int32_t multithreaded_send_video(void* opaque) {
            (state->client_width == -1 || state->client_height == -1 || state->client_dpi == -1)) {
         whist_sleep(1);
     }
+    udp_handle_network_settings(
+        state->client.udp_context.context,
+        get_default_network_settings(state->client_width, state->client_height));
     bool encoder_running = false;
 
     while (!state->exiting) {
-        // If we sent a frame, throttle the bytes of the last frame,
-        // before doing anything else
-        if (last_frame_size > 0) {
-            network_throttler_wait_byte_allocation(network_throttler, last_frame_size);
-            last_frame_size = 0;
-        }
-
         update_client_active_status(&state->client, &assuming_client_active);
 
         if (!assuming_client_active) {
@@ -554,12 +543,11 @@ int32_t multithreaded_send_video(void* opaque) {
             }
         }
 
-        NetworkSettings network_settings =
-            state->client.is_active ? udp_get_network_settings(&state->client.udp_context)
-                                    : default_network_settings;
+        NetworkSettings network_settings = udp_get_network_settings(&state->client.udp_context);
 
         int video_bitrate =
-            (network_settings.bitrate - AUDIO_BITRATE) * (1.0 - network_settings.video_fec_ratio);
+            (network_settings.bitrate - (NUM_PREV_AUDIO_FRAMES_RESEND + 1) * AUDIO_BITRATE) *
+            (1.0 - network_settings.video_fec_ratio);
         FATAL_ASSERT(video_bitrate > 0);
         CodecType video_codec = network_settings.desired_codec;
         // TODO: Use video_fps instead of max_fps, also see update_video_encoder when doing this
@@ -576,8 +564,6 @@ int32_t multithreaded_send_video(void* opaque) {
             start_timer(&statistics_timer);
             encoder =
                 update_video_encoder(state, encoder, device, video_bitrate, video_codec, video_fps);
-            // Update throttler bitrate too
-            network_throttler_set_burst_bitrate(network_throttler, video_bitrate);
             log_double_statistic(VIDEO_ENCODER_UPDATE_TIME,
                                  get_timer(&statistics_timer) * MS_IN_SECOND);
         }
@@ -735,8 +721,6 @@ int32_t multithreaded_send_video(void* opaque) {
                         send_populated_frames(state, &statistics_timer, &server_frame_timer, device,
                                               encoder, id, client_input_timestamp,
                                               server_timestamp);
-                        // Remember the last frame size, so that we can throttle the bitrate
-                        last_frame_size = encoder->encoded_frame_size;
 
                         log_double_statistic(VIDEO_FPS_SENT, 1.0);
                         log_double_statistic(VIDEO_FRAME_SIZE, encoder->encoded_frame_size);
@@ -766,7 +750,6 @@ int32_t multithreaded_send_video(void* opaque) {
         destroy_capture_device(device);
         device = NULL;
     }
-    network_throttler_destroy(network_throttler);
 
     return 0;
 }

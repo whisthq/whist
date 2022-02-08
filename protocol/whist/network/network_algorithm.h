@@ -27,19 +27,6 @@ Defines
 ============================
 */
 
-// Max/Min/Starting Bitrates/Burst Bitrates
-
-#define MAXIMUM_BITRATE 30000000
-#define MINIMUM_BITRATE 2000000
-#define STARTING_BITRATE_RAW 15400000
-#define STARTING_BITRATE (min(max(STARTING_BITRATE_RAW, MINIMUM_BITRATE), MAXIMUM_BITRATE))
-
-#define MAXIMUM_BURST_BITRATE 200000000
-#define MINIMUM_BURST_BITRATE 4000000
-#define STARTING_BURST_BITRATE_RAW 100000000
-#define STARTING_BURST_BITRATE \
-    (min(max(STARTING_BURST_BITRATE_RAW, MINIMUM_BURST_BITRATE), MAXIMUM_BURST_BITRATE))
-
 // The FEC Ratio to use on video/audio packets respectively
 // (Only used for testing phase of FEC)
 // This refers to the percentage of packets that will be FEC packets
@@ -53,8 +40,6 @@ typedef struct {
     int num_rendered_frames_per_second;
     int throughput_per_second;
 } NetworkStatistics;
-
-extern const NetworkSettings default_network_settings;
 
 /*
 ============================
@@ -72,5 +57,17 @@ Public Functions
  * @returns             A network settings struct
  */
 NetworkSettings get_desired_network_settings(NetworkStatistics stats);
+
+/**
+ * @brief               This function will return the default network settings for a given video
+ *                      resolution
+ *
+ * @param width         Video width
+ *
+ * @param height        Video height
+ *
+ * @returns             A network settings struct
+ */
+NetworkSettings get_default_network_settings(int width, int height);
 
 #endif

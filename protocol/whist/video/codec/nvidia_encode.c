@@ -541,17 +541,6 @@ static int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecTy
     p_preset_config->presetCfg.rcParams.multiPass = NV_ENC_TWO_PASS_QUARTER_RESOLUTION;
     p_preset_config->presetCfg.rcParams.enableAQ = 1;
 
-    // Limiting the max Inter QP to 30 to avoid the video pixelation issue at low bitrates.
-    // Sometimes congestion control chooses a really low bitrate at which the visual quality is
-    // unbearable. To avoid that we set a lower bound on video quality and drop frames if they
-    // are going to exceed the bitrate chosen by congestion control algorithm.
-    // Higher the QP, Lower the bitrate and Lower the visual quality.
-    // Allowed QP range is 0-51 (for both all kind of frames)
-    p_preset_config->presetCfg.rcParams.enableMaxQP = 1;
-    p_preset_config->presetCfg.rcParams.maxQP.qpInterP = MAX_QP;
-    p_preset_config->presetCfg.rcParams.maxQP.qpInterB = MAX_QP;
-    // Max Intra QP is set to a higher value, to avoid really large single frame sizes.
-    p_preset_config->presetCfg.rcParams.maxQP.qpIntra = MAX_INTRA_QP;
     // p_preset_config->presetCfg.rcParams.enableTemporalAQ = 1;
     p_preset_config->presetCfg.rcParams.enableNonRefP = 1;
     // Only create IDRs when we request them
