@@ -7,15 +7,6 @@ import (
 )
 
 type Bookmark struct {
-	DateAdded string `json:"date_added,omitempty"`
-	Guid      string `json:"guid,omitempty"`
-	Id        string `json:"id,omitempty"`
-	Name      string `json:"name,omitempty"`
-	Type      string `json:"type,omitempty"`
-	Url       string `json:"url,omitempty"`
-}
-
-type BookmarkFolder struct {
 	Children     []Bookmark `json:"children,omitempty"`
 	DateAdded    string     `json:"date_added,omitempty"`
 	DateModified string     `json:"date_modified,omitempty"`
@@ -23,13 +14,14 @@ type BookmarkFolder struct {
 	Id           string     `json:"id,omitempty"`
 	Name         string     `json:"name,omitempty"`
 	Type         string     `json:"type,omitempty"`
+	Url          string     `json:"url,omitempty"`
 }
 
 type Bookmarks struct {
-	Checksum     string           `json:"checksum,omitempty"`
-	Roots        []BookmarkFolder `json:"roots,omitempty"`
-	SyncMetadata string           `json:"sync_metadata,omitempty"`
-	Version      int              `json:"version,omitempty"`
+	Checksum     string     `json:"checksum,omitempty"`
+	Roots        []Bookmark `json:"roots,omitempty"`
+	SyncMetadata string     `json:"sync_metadata,omitempty"`
+	Version      int        `json:"version,omitempty"`
 }
 
 // UnmarshalBookmarks take a JSON string containing bookmark data
