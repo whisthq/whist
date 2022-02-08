@@ -172,13 +172,13 @@ endif()
 
 # on macOS, detect if we are building arm64 or x86_64
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    option(MACOS_TARGET_ARCHITECTURE "The target architecture for macOS builds (arm64/x86_64/auto)" auto)
-    if(${MACOS_TARGET_ARCHITECTURE} MATCHES "auto")
+    set(MACOS_TARGET_ARCHITECTURE AUTO CACHE STRING "The target architecture for macOS builds (arm64/x86_64/auto)")
+    if(${MACOS_TARGET_ARCHITECTURE} MATCHES "auto|AUTO")
         # Detect from the current system
         # should return "arm64" or "x86_64"
         execute_process(COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE MACOS_ARCHITECTURE)
     else()
-        set(MACOS_ARCHITECTURE "${MACOS_TARGET_ARCHITECTURE}")
+        string(TOLOWER "${MACOS_TARGET_ARCHITECTURE}" MACOS_ARCHITECTURE)
     endif()
     set(CMAKE_OSX_ARCHITECTURES "${MACOS_ARCHITECTURE}")
     message(STATUS "Detecting macOS Architecture: ${MACOS_ARCHITECTURE}")
