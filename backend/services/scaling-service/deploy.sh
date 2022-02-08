@@ -43,7 +43,7 @@ git add .
 git commit -m "scaling-service deploy for $MONOREPO_COMMIT_HASH"
 
 # Create null buildpack, see: https://elements.heroku.com/buildpacks/ryandotsmith/null-buildpack
-heroku buildpacks:set http://github.com/ryandotsmith/null-buildpack.git -a "$HEROKU_APP_NAME"
+heroku buildpacks:set http://github.com/ryandotsmith/null-buildpack.git -a "$HEROKU_APP_NAME" || true
 
 # Push deploy directory to Heroku
 echo "Deploying scaling service..."
