@@ -483,9 +483,9 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 	// Write the user's initial browser data
 	logger.Infof("SpinUpMandelbox(): Beginning storing user initial browser data for mandelbox %s", mandelboxSubscription.ID)
 	err = mandelbox.WriteUserInitialBrowserData(mandelboxData.BrowserData{
-		CookiesJSON:   req.CookiesJSON,
-		BookmarksJSON: req.BookmarksJSON,
-		Extensions:    mandelboxtypes.Extensions(strings.Join(savedExtensions, ",")),
+		CookiesJSON: req.CookiesJSON,
+		Bookmarks:   req.Bookmarks,
+		Extensions:  mandelboxtypes.Extensions(strings.Join(savedExtensions, ",")),
 	})
 	if err != nil {
 		logger.Errorf("Error writing initial browser data for user %s for mandelbox %s: %s", mandelbox.GetUserID(), mandelboxSubscription.ID, err)
