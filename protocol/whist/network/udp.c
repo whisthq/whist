@@ -916,7 +916,8 @@ int udp_get_num_pending_frames(SocketContext* socket_context, WhistPacketType ty
         int max_id = ring_buffer->max_id;
         int last_rendered_id = ring_buffer->last_rendered_id;
         if (last_rendered_id == -1) {
-            last_rendered_id = max_id - ring_buffer->ring_buffer_size;
+            // The ring buffer just reset, cap the pending frames at the size of the ring buffer
+            return ring_buffer->ring_buffer_size;
         }
         return max_id - last_rendered_id;
     }

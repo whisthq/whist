@@ -1381,6 +1381,16 @@ TEST_F(ProtocolTest, NotificationDisplayTest) {
 #endif
 }
 
+TEST_F(ProtocolTest, AudioTest) {
+    AudioContext* audio_context = init_audio();
+    // no frames buffered: underflowing, need more frames
+    EXPECT_FALSE(audio_ready_for_frame(audio_context, 0));
+    // lots of frames buffered (maxed out ring buffer): ready to render
+    EXPECT_TRUE(audio_ready_for_frame(audio_context, 15));
+    // the ring buffer sent us an astronomically large number of buffered frames: something went wrong, ignore that frame count
+    EXPECT_FALSE(audio_ready_for_frame(audio_context, 999999));
+}
+
 /*
 ============================
 Run Tests
