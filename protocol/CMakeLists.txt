@@ -172,16 +172,22 @@ endif()
 
 # on macOS, detect if we are building arm64 or x86_64
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    # should return "arm64" or "x86_64"
-    execute_process(COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE MACOS_ARCHITECTURE)
+    option(MACOS_TARGET_ARCHITECTURE "The target architecture for macOS builds (arm64/x86_64/auto)" auto)
+    if(${MACOS_TARGET_ARCHITECTURE} MATCHES "auto")
+        # Detect from the current system
+        # should return "arm64" or "x86_64"
+        execute_process(COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE MACOS_ARCHITECTURE)
+    else()
+        set(MACOS_ARCHITECTURE "${MACOS_TARGET_ARCHITECTURE}")
+    endif()
+    set(CMAKE_OSX_ARCHITECTURES "${MACOS_ARCHITECTURE}")
     message(STATUS "Detecting macOS Architecture: ${MACOS_ARCHITECTURE}")
 endif()
 
-# Windows option to add icon (used primarily for client app compilation pipeline)
-option(USE_CLIENT_APP_ICON "use client app icon in exe" OFF)
-
 # Get Bash on all OSs
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    # Windows option to add icon (used primarily for client app compilation pipeline)
+    option(USE_CLIENT_APP_ICON "use client app icon in exe" OFF)
     # Find git
     find_program(GIT git REQUIRED)
     # Find git's path
@@ -312,20 +318,21 @@ fetchcontent_declare(
 # From GoogleTests' official README: prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-#Set OSX compiler and SDK globally
+#Set macOS SDK
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    if(DEFINED ENV{WHIST_OSXSYSROOT})
-        set(CMAKE_OSX_SYSROOT $ENV{WHIST_OSXSYSROOT})
+    # Use the latest sysroot
+    set(CMAKE_OSX_SYSROOT /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk)
+    # Use an older deployment target so all systems will be happy
+    if(MACOS_ARCHITECTURE MATCHES "arm64")
+      # We have to keep this 10.13 instead of 11.0 because of the deprecated
+      # notifications API usage.
+      set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13")
     else()
-        set(CMAKE_OSX_SYSROOT /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk)
+        set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13")
     endif()
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15) # deployment target must be <= than compiler SDK above
-    # GoogleTests should be included before we set CMAKE_C_COMPILER to 'clang'.
-    fetchcontent_makeavailable(googletest)
-    set(CMAKE_C_COMPILER clang)
-else()
-    fetchcontent_makeavailable(googletest)
 endif()
+
+fetchcontent_makeavailable(googletest)
 
 # Tell CMake where to look for includes
 # Use SYSTEM flag to not get warnings from their files
