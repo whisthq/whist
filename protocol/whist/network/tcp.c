@@ -618,6 +618,8 @@ Private Function Implementations
 int create_tcp_server_context(TCPContext* context, int port, int connection_timeout_ms) {
     FATAL_ASSERT(context != NULL);
 
+    context->is_server = true;
+
     // Create the TCP listen socket
     if (create_tcp_listen_socket(&context->listen_socket, port, connection_timeout_ms) != 0) {
         LOG_ERROR("Failed to create TCP listen socket");
@@ -678,6 +680,8 @@ int create_tcp_client_context(TCPContext* context, char* destination, int port,
                               int connection_timeout_ms) {
     FATAL_ASSERT(context != NULL);
     FATAL_ASSERT(destination != NULL);
+
+    context->is_server = false;
 
     // Track time left
     WhistTimer connection_timer;
