@@ -288,28 +288,43 @@ def compute_deltas(
 
 def download_latest_logs(branch_name):
     client = boto3.client("s3")
-    result = client.list_objects(
-        Bucket="whist-e2e-protocol-test-logs", Prefix="{}/".format(branch_name), Delimiter="/"
-    )
-    subfolder_name = result.get("CommonPrefixes")[-1].get("Prefix").split("/")[-2]
-
     s3_resource = boto3.resource("s3")
     bucket = s3_resource.Bucket("whist-e2e-protocol-test-logs")
 
-    if os.path.exists("{}".format(branch_name)):
+    if os.path.exists(branch_name):
         os.system("rm -rf {}".format(branch_name))
-    os.mkdir("{}".format(branch_name))
 
-    dev_client_log_path = os.path.join(".", "{}".format(branch_name), "client.log")
-    dev_server_log_path = os.path.join(".", "{}".format(branch_name), "server.log")
+    os.mkdirs(os.path.join(".", "{}".format(branch_name), "client"))
+    os.mkdirs(os.path.join(".", "{}".format(branch_name), "server"))
+    dev_client_log_path = os.path.join(".", "{}".format(branch_name), "client", "client.log")
+    dev_server_log_path = os.path.join(".", "{}".format(branch_name), "server", "server.log")
 
-    for obj in bucket.objects.filter(
-        Prefix="{}/{}".format("{}".format(branch_name), subfolder_name)
-    ):
-        if "client.log" in obj.key:
-            bucket.download_file(obj.key, dev_client_log_path)
-        elif "server.log" in obj.key:
-            bucket.download_file(obj.key, dev_server_log_path)
+    result = client.list_objects(
+        Bucket="whist-e2e-protocol-test-logs", Prefix="{}/".format(branch_name), Delimiter="/"
+    )
+
+    folders = result.get("CommonPrefixes")
+    counter = 1
+    for folder_name in reversed(folders):
+        subfolder_name = folder_name.get("Prefix").split("/")[-2]
+
+        for obj in bucket.objects.filter(
+            Prefix="{}/{}".format("{}".format(branch_name), subfolder_name)
+        ):
+            if "client.log" in obj.key:
+                bucket.download_file(obj.key, dev_client_log_path)
+            elif "server.log" in obj.key:
+                bucket.download_file(obj.key, dev_server_log_path)
+
+        # Check if logs are sane, if so stop
+        if not logs_contain_errors(os.path.join(".", "{}".format(branch_name))):
+            break
+        else:
+            os.system("rm -rf {}".format(dev_client_log_path))
+            os.system("rm -rf {}".format(dev_server_log_path))
+            counter += 1
+    if counter > 1:
+        print("Warning, we are attempting to use {}° most recent logs from {}".format(branch_name))
 
 
 def generate_no_comparison_table(
@@ -603,14 +618,16 @@ if __name__ == "__main__":
         print("Error, logs folder {} does not exist!".format(logs_root_dir))
         sys.exit(-1)
     for folder_name in sorted(os.listdir(logs_root_dir), reverse=True):
-        if time.strftime("%Y_%m_%d@") in folder_name and not logs_contain_errors(
-            os.path.join(logs_root_dir, folder_name)
-        ):
+        if time.strftime("%Y_%m_%d@") in folder_name:
             logs_root_dir = os.path.join(logs_root_dir, folder_name)
             test_time = folder_name
             break
     if logs_root_dir == args.perf_logs_path:
         print("Error: protocol logs not found!")
+        sys.exit(-1)
+
+    if logs_contain_errors(logs_root_dir):
+        print("Logs from latest run contains errors!")
         sys.exit(-1)
 
     # Check if the log files with metrics are present
