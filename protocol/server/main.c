@@ -441,6 +441,9 @@ int main(int argc, char* argv[]) {
 
     WhistTimer downloaded_file_timer;
     start_timer(&downloaded_file_timer);
+
+    WhistTimer uploaded_file_timer;
+    start_timer(&uploaded_file_timer);
 #endif  // ! _WIN32
 
     add_thread_to_client_active_dependents();
@@ -565,6 +568,24 @@ int main(int argc, char* argv[]) {
 
             start_timer(&downloaded_file_timer);
         }
+
+#define FILE_UPLOAD_TRIGGER_FILE "/home/whist/.teleport/uploaded-file"
+        if (get_timer(&uploaded_file_timer) > 50.0 / MS_IN_SECOND) {
+            if (!access(FILE_UPLOAD_TRIGGER_FILE, R_OK)) {
+                // If trigger file exists, request upload from client then delete the file
+                WhistServerMessage wsmsg = {0};
+                wsmsg.type = SMESSAGE_INITIATE_UPLOAD;
+                if (broadcast_tcp_packet(&server_state.client, PACKET_MESSAGE, &wsmsg,
+                                         sizeof(WhistServerMessage)) == 0) {
+                    LOG_INFO("Sent initiate upload message!");
+                } else {
+                    LOG_ERROR("Failed to broadcast initiate upload message.");
+                }
+                remove(FILE_UPLOAD_TRIGGER_FILE);
+            }
+            start_timer(&uploaded_file_timer);
+        }
+
 #endif  // ! _WIN32
     }
 
