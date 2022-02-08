@@ -212,10 +212,10 @@ static void send_populated_frames(whist_server_state* state, WhistTimer* statist
                               (void*)get_frame_videodata(frame));
     send_frame_id = id;
 
-#if LOG_VIDEO
-    LOG_INFO("Sent video packet %d (Size: %d) %s", id, encoder->encoded_frame_size,
-             frame->is_iframe ? "(I-frame)" : "");
-#endif  // LOG_VIDEO
+    if (frame->is_iframe || LOG_VIDEO) {
+        LOG_INFO("Sent video packet %d (Size: %d) %s", id, encoder->encoded_frame_size,
+                 frame->is_iframe ? "(I-frame)" : "");
+    }
 
     whist_post_semaphore(producer);
 }
