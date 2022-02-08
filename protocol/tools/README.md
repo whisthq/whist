@@ -47,6 +47,6 @@ Note that since the `WhistServer` command is inside the mandelbox, we use the ma
 For tools like `stackcollapse-perf.pl` which expect to be able to locate the binary at the command path associated with the process, you will need to use symlinks to fake the mandelbox binary location from the host. In particular, you may need to run on the host:
 
 ```bash
-mkdir -p /usr/share/whist
-sudo ln -sf /home/ubuntu/whist/protocol/build-docker/client/build64 /usr/share/whist
+mkdir -p /usr/share/whist/bin
+sudo ln -sf /home/ubuntu/whist/protocol/build-docker/server/build64 /usr/share/whist/bin
 ```
