@@ -62,7 +62,7 @@ jobs:
       ########################### BACKEND SERVICES STEPS ###########################
 
       - name: Setup Go environment
-        uses: actions/setup-go@v2.1.3
+        uses: actions/setup-go@v2.2.0
         with:
           go-version: "1.17"
 

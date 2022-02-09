@@ -17,14 +17,14 @@ jobs:
 
     steps:
       - name: Label Pull Request (.github, backend, and frontend subprojects)
-        uses: adamzolyak/monorepo-pr-labeler-action@3.1.0
+        uses: adamzolyak/monorepo-pr-labeler-action@3.1.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BASE_DIRS: ".github|frontend|backend"
         with:
           prefix: ${{ env.PR_LABEL_PREFIX }}
       - name: Label Pull Request (monorepo root)
-        uses: adamzolyak/monorepo-pr-labeler-action@3.1.0
+        uses: adamzolyak/monorepo-pr-labeler-action@3.1.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
