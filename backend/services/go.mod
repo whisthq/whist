@@ -19,6 +19,7 @@ require (
 	github.com/getsentry/sentry-go v0.12.0
 	github.com/go-co-op/gocron v1.11.0
 	github.com/golang-jwt/jwt/v4 v4.2.0
+	github.com/google/go-cmp v0.5.7
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/hasura/go-graphql-client v0.6.2
@@ -56,7 +57,6 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
