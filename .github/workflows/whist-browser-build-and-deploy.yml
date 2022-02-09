@@ -7,9 +7,18 @@
 name: "Whist Browser: Build & Deploy"
 
 on:
+  # On dev, we run a nightly build on weekdays (days of the week 1-5) at 00:01 UTC.
   schedule:
-    # Runs nightly on weekdays (days of the week 1-5) at 00:01 UTC.
     - cron: "1 0 * * 1,2,3,4,5"
+  # On staging & prod, we run a build for each promotion (push to branch).
+  push:
+  branches:
+    - prod
+    - staging
+  paths-ignore:
+    - "README.md"
+    - "**/README.md"
+    - ".github/workflows/README.md"
   workflow_dispatch:
 
 jobs:
@@ -35,6 +44,7 @@ jobs:
           repository: whisthq/brave-browser
           ref: main
           fetch-depth: 1 # Only fetch the latest commit, since the history is so large
+          token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
 
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
@@ -76,19 +86,23 @@ jobs:
         working-directory: brave-browser
         run: npm run init
 
-      # TODO: change this to Debug build, and Release for `prod` once we had dev/staging/prod
-      # This may require some Google keys, so I (Phil) need to look into that
+
       - name: Build Whist Browser
         working-directory: brave-browser
         run: npm run build
 
-      # TODO: change this to Debug build, and Release for `prod` once we had dev/staging/prod
+      # TODO: configure the Chrome keys and other configs for creating a Release build
       # This may require some Google keys, so I (Phil) need to look into that
       # We'll also need to update the path and name in the next step, once we rename the browser
       # and change the build type.
       - name: Build Whist Browser
         working-directory: brave-browser
-        run: npm run build
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
+            npm run build Release
+          else
+            npm run build Debug
+          fi
 
       - name: Tar & Upload Whist Browser to AWS S3
         working-directory: brave-browser/src/out
