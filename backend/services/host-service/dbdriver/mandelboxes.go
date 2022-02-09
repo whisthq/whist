@@ -177,6 +177,17 @@ func removeStaleMandelboxes(allocatedAge, connectingAge time.Duration) error {
 		logger.Infof("Removed %v stale mandelboxes", result.RowsAffected())
 		metrics.Add("CleanedStaleMandelboxes", result.RowsAffected())
 	}
+
+	// Update the remaining capacity to account the removed mandelboxes.
+	instanceResult, err := q.UpdateInstanceCapacity(context.Background(), int32(result.RowsAffected()), string(instanceID))
+	if err != nil {
+		return utils.MakeError("couldn't increment instance capacity after cleaning mandelbox. Err: %v", err)
+	}
+
+	if instanceResult.RowsAffected() != 0 {
+		logger.Infof("Updated capacity of %v instances.", instanceResult.RowsAffected())
+	}
+
 	return nil
 }
 
