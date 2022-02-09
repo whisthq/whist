@@ -1,7 +1,7 @@
 {
-  "name": "teleport-extension",
+  "name": "whist-extension",
   "version": "1.0.0",
-  "description": "Teleport is a chromium extension that allows the seamless transfer of files to and from streamed browsers.",
+  "description": "The Whist Extension enables cloud tabs",
   "repository": "https://github.com/whisthq/whist",
   "author": "Whist Technologies, Inc.",
   "license": "UNLICENSED",
