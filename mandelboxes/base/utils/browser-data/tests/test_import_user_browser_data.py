@@ -254,7 +254,9 @@ browser_bookmarks = [
 @pytest.mark.parametrize("browser,browser_bookmark_path", browser_bookmarks)
 def test_create_bookmark_file(browser, browser_bookmark_path):
 
-    bookmark_content = json.dumps("test_bookmark_content")
+    bookmark_content = {
+        "test": "value",
+    }
 
     # Upload bookmarks
     create_bookmark_file(browser, bookmark_content, browser_bookmark_path)
@@ -263,7 +265,7 @@ def test_create_bookmark_file(browser, browser_bookmark_path):
     bookmark_file = get_or_create_cookie_file(browser, browser_bookmark_path)
 
     with open(bookmark_file) as b_file:
-        assert b_file.read() == bookmark_content
+        assert b_file.read() == '{"test": "value"}'
 
     os.remove(bookmark_file)
 

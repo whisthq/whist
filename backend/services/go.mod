@@ -19,6 +19,7 @@ require (
 	github.com/getsentry/sentry-go v0.12.0
 	github.com/go-co-op/gocron v1.11.0
 	github.com/golang-jwt/jwt/v4 v4.2.0
+	github.com/google/go-cmp v0.5.7
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/hasura/go-graphql-client v0.6.2

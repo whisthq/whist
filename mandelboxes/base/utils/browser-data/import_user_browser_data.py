@@ -269,7 +269,7 @@ def create_bookmark_file(target_browser_name, bookmarks_json, custom_bookmark_fi
         os.chmod(directory, 0o777)
 
     with open(path, "w") as browser_bookmark_file:
-        browser_bookmark_file.write(bookmarks_json)
+        json.dump(bookmarks_json, browser_bookmark_file)
 
 
 def create_extension_files(extensions, custom_script=None):
@@ -305,8 +305,8 @@ if __name__ == "__main__":
             if "cookiesJSON" in browser_data and len(browser_data["cookiesJSON"]) > 0:
                 set_browser_cookies(browser, browser_data["cookiesJSON"])
 
-            if "bookmarksJSON" in browser_data and len(browser_data["bookmarksJSON"]) > 0:
-                create_bookmark_file(browser, browser_data["bookmarksJSON"])
+            if "bookmarks" in browser_data and len(browser_data["bookmarks"]) > 0:
+                create_bookmark_file(browser, browser_data["bookmarks"])
 
             if "extensions" in browser_data and len(browser_data["extensions"]) > 0:
                 create_extension_files(browser_data["extensions"])

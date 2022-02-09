@@ -457,7 +457,7 @@ const getBookmarks = async (
 
   if (bookmarks.length === 0) return undefined
 
-  return JSON.stringify(bookmarks)
+  return bookmarks
 }
 
 const getExtensions = async (

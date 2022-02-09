@@ -32,7 +32,7 @@ func TestSpinUpHandler(t *testing.T) {
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		JSONData:              "test_json_data",
 		CookiesJSON:           "[{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}]",
-		BookmarksJSON:         "{ 'test_bookmark': '1'}",
+		BookmarksJSON:         "{'roots': [{'date_added': 13280861983875934, 'children': [{'date_added': 13280861983875934, 'url': 'http://whist.com', 'name': 'whist.com'}]}]}",
 		Extensions:            "not_real_extension_id,not_real_second_extension_id",
 		resultChan:            make(chan requestResult),
 	}
@@ -129,7 +129,7 @@ func TestHttpServerIntegration(t *testing.T) {
 		MandelboxID:           mandelboxtypes.MandelboxID(utils.PlaceholderTestUUID()),
 		JSONData:              "test_json_data",
 		CookiesJSON:           "[{'creation_utc': 13280861983875934, 'host_key': 'whist.com'}]",
-		BookmarksJSON:         "{ 'test_bookmark': '1'}",
+		BookmarksJSON:         "{'roots': [{'date_added': 13280861983875934, 'children': [{'date_added': 13280861983875934, 'url': 'http://whist.com', 'name': 'whist.com'}]}]}",
 		Extensions:            "",
 		resultChan:            make(chan requestResult),
 	}
