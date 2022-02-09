@@ -555,6 +555,7 @@ bool create_tcp_socket_context(SocketContext* network_context, char* destination
         ret = create_tcp_server_context(context, port, connection_timeout_ms);
     } else {
         context->is_server = false;
+        whist_sleep(50);
         ret = create_tcp_client_context(context, destination, port, connection_timeout_ms);
     }
 
@@ -814,7 +815,7 @@ SOCKET socketp_tcp(void) {
 #ifdef SOCK_CLOEXEC
     // Create socket
     SOCKET sock_fd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
-    if (sock_fd <= 0) {
+    if (sock_fd < 0) {
         LOG_WARNING("Could not create socket %d\n", get_last_network_error());
         return INVALID_SOCKET;
     }

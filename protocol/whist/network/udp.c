@@ -857,6 +857,7 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
         // The client doesn't use a network throttler
         context->network_throttler = NULL;
         // Create the client context
+        whist_sleep(50);
         ret = create_udp_client_context(context, destination, port, connection_timeout_ms);
     }
 
