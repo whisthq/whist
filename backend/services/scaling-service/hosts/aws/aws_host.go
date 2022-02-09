@@ -245,8 +245,8 @@ func (host *AWSHost) WaitForInstanceReady(scalingCtx context.Context, maxWaitTim
 // GenerateName is a helper function for generating an instance
 // name using a random UUID.
 func (host *AWSHost) GenerateName() string {
-	return utils.Sprintf("ec2-%v-%v-%v%v", host.Region, metadata.GetAppEnvironmentLowercase(),
-		metadata.GetGitCommit(), shortuuid.New())
+	return utils.Sprintf("ec2-%v-%v-%v-%v", host.Region, metadata.GetAppEnvironmentLowercase(),
+		metadata.GetGitCommit()[0:7], shortuuid.New())
 }
 
 func getUserData() (string, error) {
