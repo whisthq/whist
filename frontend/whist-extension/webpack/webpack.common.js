@@ -27,6 +27,9 @@ module.exports = {
     fallback: {
       path: require.resolve("path-browserify"),
     },
+    alias: {
+      "@app": "./",
+    },
   },
   plugins: [
     new CopyPlugin({
