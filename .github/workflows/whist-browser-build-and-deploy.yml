@@ -32,9 +32,9 @@ jobs:
           - arch: "x86_64"
           - arch: "arm64"
     env:
-      x86-binary-tar-name: whist-browser-macos-x86.tar.gz
+      x86_64-binary-tar-name: whist-browser-macos-x86_64.tar.gz
       arm64-binary-tar-name: whist-browser-macos-arm64.tar.gz
-      x86-s3-bucket-uri: s3://whist-browser-macos-x86
+      x86_64-s3-bucket-uri: s3://whist-browser-macos-x86_64
       arm64-s3-bucket-uri: s3://whist-browser-macos-arm64
       s3-bucket-region: us-east-1
     steps:
@@ -72,20 +72,11 @@ jobs:
 
       - name: Set target architecture
         working-directory: brave-browser
-        run: |
-          if [[ "${{ matrix.config.arch }}" == "x86_64" ]]; then
-            npm config set target_arch x86_64
-          if [[ "${{ matrix.config.arch }}" == "arm64" ]]; then
-            npm config set target_arch arm64
-          else
-            echo "Invalid architecture: ${{ matrix.config.arch }}, aborting setting architecture in npm."
-            exit
-          fi
+        run: npm config set target_arch "${{ matrix.config.arch }}"
 
       - name: Fetch Chromium source & dependencies
         working-directory: brave-browser
         run: npm run init
-
 
       - name: Build Whist Browser
         working-directory: brave-browser
@@ -93,30 +84,22 @@ jobs:
 
       # TODO: configure the Chrome keys and other configs for creating a Release build
       # This may require some Google keys, so I (Phil) need to look into that
-      # We'll also need to update the path and name in the next step, once we rename the browser
-      # and change the build type.
       - name: Build Whist Browser
         working-directory: brave-browser
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
             npm run build Release
+            echo "build_type=Release" >> $GITHUB_ENV
           else
             npm run build Debug
+            echo "build_type=Debug" >> $GITHUB_ENV
           fi
 
       - name: Tar & Upload Whist Browser to AWS S3
         working-directory: brave-browser/src/out
         run: |
-          if [[ "${{ matrix.config.arch }}" == "x86_64" ]]; then
-            tar -zcvf ${{ env.x86-binary-tar-name }} "Component_x86_64/Brave Browser Development.app"
-            aws s3 cp ${{ env.x86-binary-tar-name }} ${{ env.x86-s3-bucket-uri }}/${{ env.x86-binary-tar-name }}
-          if [[ "${{ matrix.config.arch }}" == "arm64" ]]; then
-            tar -zcvf ${{ env.arm64-binary-tar-name }} "Component_arm64/Brave Browser Development.app"
-            aws s3 cp ${{ env.arm64-binary-tar-name }} ${{ env.arm64-s3-bucket-uri }}/${{ env.arm64-binary-tar-name }}
-          else
-            echo "Invalid architecture: ${{ matrix.config.arch }}, aborting AWS S3 upload."
-            exit
-          fi
+          tar -zcvf ${{ env.${{ matrix.config.arch }}-binary-tar-name }} "Component_${{ matrix.config.arch }}/Brave Browser ${{ env.build_type }}.app"
+          aws s3 cp ${{ env.${{ matrix.config.arch }}-binary-tar-name }} ${{ env.${{ matrix.config.arch }}-s3-bucket-uri }}/${{ env.${{ matrix.config.arch }}-binary-tar-name }}
 
       ###################################################################################
 
