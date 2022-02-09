@@ -294,7 +294,20 @@ def compute_deltas(
     return client_table_entries, server_table_entries
 
 
-def download_latest_logs(branch_name, before_date):
+def parse_metadata(folder_name):
+    metadata_filename = os.path.join(folder_name, "experiment_metadata.json")
+    experiment_metadata = None
+    if not os.path.isfile(metadata_filename):
+        print("Metadata file {} does not exist".format(metadata_filename))
+    else:
+        with open(metadata_filename, "r") as metadata_file:
+            experiment_metadata = json.load(metadata_file)
+    return experiment_metadata
+
+
+def download_latest_logs(
+    branch_name, before_date, network_conditions, network_conditions_matching_way
+):
     client = boto3.client("s3")
     s3_resource = boto3.resource("s3")
     bucket = s3_resource.Bucket("whist-e2e-protocol-test-logs")
@@ -341,6 +354,26 @@ def download_latest_logs(branch_name, before_date):
         if not logs_contain_errors(os.path.join(".", branch_name)):
             break
         else:
+            # Get the network conditions for the compared run. If the .json file does not exist, then assume it's 'normal'
+            compared_network_conditions = "normal"
+            if os.path.isfile(exp_meta_path):
+                compared_run_meta = parse_metadata(os.path.join(".", branch_name))
+                if compared_run_meta and "network_conditions" in compared_run_meta:
+                    compared_network_conditions = compared_run_meta["network_conditions"]
+            # If the network conditions of the run in question are what we want, we are done. Otherwise, try with another set of logs
+            if (
+                (
+                    network_conditions_matching_way == "match"
+                    and network_conditions == compared_network_conditions
+                )
+                or (
+                    network_conditions_matching_way == "normal_only"
+                    and compared_network_conditions == "normal"
+                )
+                or (network_conditions_matching_way == "do_not_care")
+            ):
+                break
+
             os.system("rm -rf {}".format(compared_client_log_path))
             os.system("rm -rf {}".format(compared_server_log_path))
             counter += 1
@@ -350,17 +383,6 @@ def download_latest_logs(branch_name, before_date):
                 counter, branch_name
             )
         )
-
-
-def parse_metadata(folder_name):
-    metadata_filename = os.path.join(folder_name, "experiment_metadata.json")
-    experiment_metadata = None
-    if not os.path.isfile(metadata_filename):
-        print("Metadata file {} does not exist".format(metadata_filename))
-    else:
-        with open(metadata_filename, "r") as metadata_file:
-            experiment_metadata = json.load(metadata_file)
-    return experiment_metadata
 
 
 def generate_no_comparison_table(
@@ -676,6 +698,18 @@ parser.add_argument(
     default="",
 )
 
+parser.add_argument(
+    "--network_conditions_matching_way",
+    help="Whether to only compare with runs with the same network conditions (match), only with those without degradation (normal_only) or don't care (do_not_care)",
+    type=str,
+    choices=[
+        "match",
+        "normal_only",
+        "do_not_care",
+    ],
+    default="normal_only",
+)
+
 if __name__ == "__main__":
     # Grab environmental variables of interest
     if not os.environ.get("GITHUB_REF_NAME"):
@@ -739,6 +773,13 @@ if __name__ == "__main__":
         print("Error, server log file {} does not exist".format(server_log_file))
         sys.exit(-1)
 
+    experiment_metadata = parse_metadata(logs_root_dir)
+    network_conditions = "normal"
+    if experiment_metadata and "network_conditions" in experiment_metadata:
+        network_conditions = experiment_metadata["network_conditions"]
+
+    network_conditions_matching_way = args.network_conditions_matching_way
+
     client_metrics2, server_metrics2 = extract_metrics(client_log_file, server_log_file)
     compared_client_metrics2 = {}
     compared_server_metrics2 = {}
@@ -748,7 +789,10 @@ if __name__ == "__main__":
     # If we are looking to compare the results with the latest run on a branch, we need to download the relevant files first
     if compared_branch_name != "":
         download_latest_logs(
-            compared_branch_name, datetime.strptime(test_time, "%Y_%m_%d@%H-%M-%S")
+            compared_branch_name,
+            datetime.strptime(test_time, "%Y_%m_%d@%H-%M-%S"),
+            network_conditions,
+            network_conditions_matching_way,
         )
         compared_client_log_path = os.path.join(".", compared_branch_name, "client", "client.log")
         compared_server_log_path = os.path.join(".", compared_branch_name, "server", "server.log")
@@ -772,8 +816,6 @@ if __name__ == "__main__":
     # Here, we parse the test results into a .info file, which can be read and displayed on the GitHub PR
     # Create output .info file
     results_file = open("streaming_e2e_test_results.info", "w+")
-
-    experiment_metadata = parse_metadata(logs_root_dir)
 
     # Generate the report
     if compared_branch_name == "":
