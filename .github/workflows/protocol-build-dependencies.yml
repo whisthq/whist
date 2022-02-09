@@ -34,12 +34,16 @@ jobs:
         config:
           - name: "OpenSSL (Windows)"
             os: windows-2019
+            arch: x86_64
           - name: "OpenSSL (macOS x64)"
             os: macos-10.15
+            arch: x86_64
           - name: "OpenSSL (macOS arm64)"
             os: macos-11
+            arch: arm64
           - name: "OpenSSL (Ubuntu Linux)"
             os: ubuntu-20.04
+            arch: x86_64
 
     env:
       windows-tar-name: fractal-windows-libcrypto-static-lib.tar.gz
@@ -91,7 +95,7 @@ jobs:
       - name: Build Whist OpenSSL on macOS
         if: runner.os == 'macOS'
         run: |
-          if [[ "${{ matrix.config.name }}" == "OpenSSL (macOS x64)" ]]; then
+          if [[ "${{ matrix.config.arch }}" == "x86_64" ]]; then
             # configure and build OpenSSL for native compilation on x64 systems
             export CFLAGS="-mmacosx-version-min=10.13 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
             export CXXFLAGS="-mmacosx-version-min=10.13 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
@@ -99,7 +103,7 @@ jobs:
             # configure and build OpenSSL with -O2/-O3 flag
             ./Configure darwin64-x86_64-cc --release
             make -j
-          elif [[ "${{ matrix.config.name }}" == "OpenSSL (macOS arm64)" ]]; then
+          elif [[ "${{ matrix.config.arch }}" == "arm64" ]]; then
             # configure and build OpenSSL for cross-compilation to arm64 from x64 systems
             export CFLAGS="-mmacosx-version-min=11.0 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
             export CXXFLAGS="-mmacosx-version-min=11.0 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
@@ -139,10 +143,10 @@ jobs:
             tar -zcvf ${{ env.windows-tar-name }} libcrypto-1_1-x64.dll libcrypto.lib
             aws s3 cp ${{ env.windows-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.windows-tar-name }}
           else
-            if [[ "${{ matrix.config.name }}" == "OpenSSL (macOS x64)" ]]; then
+            if [[ "${{ matrix.config.arch }}" == "x86_64" ]]; then
               tar -zcvf ${{ env.macos-x64-tar-name }} libcrypto.a
               aws s3 cp ${{ env.macos-x64-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-x64-tar-name }}
-            elif [[ "${{ matrix.config.name }}" == "OpenSSL (macOS arm64)" ]]; then
+            elif [[ "${{ matrix.config.arch }}" == "arm64" ]]; then
               tar -zcvf ${{ env.macos-arm64-tar-name }} libcrypto.a
               aws s3 cp ${{ env.macos-arm64-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-arm64-tar-name }}
             else
@@ -202,12 +206,16 @@ jobs:
         config:
           - name: "Sentry (Windows)"
             os: windows-2019
+            arch: x86_64
           - name: "Sentry (macOS x64)"
             os: macos-10.15
+            arch: x86_64
           - name: "Sentry (macOS arm64)"
             os: macos-11
+            arch: arm64
           - name: "Sentry (Ubuntu Linux)"
             os: ubuntu-20.04
+            arch: x86_64
 
     env:
       windows-tar-name: fractal-windows-sentry-shared-lib.tar.gz
@@ -278,7 +286,7 @@ jobs:
         env:
           CMAKE_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
         run: |
-          if [[ "${{ matrix.config.name }}" == "Sentry (macOS x64)" ]]; then
+          if [[ "${{ matrix.config.arch }}" == "x86_64" ]]; then
             # configure Cmake and build Sentry Native for native compilation on x64 systems
             cmake -S . \
                   -B build \
@@ -295,7 +303,7 @@ jobs:
             # move files to location for publish steps to tar
             mv crashpad_build/handler/crashpad_handler ..
             mv libsentry.dylib ..
-          elif [[ "${{ matrix.config.name }}" == "Sentry (macOS arm64)" ]]; then
+          elif [[ "${{ matrix.config.arch }}" == "arm64" ]]; then
             # configure Cmake and build Sentry Native for cross-compilation to arm64 from x64 systems
             cmake -S . \
                   -B build \
@@ -360,10 +368,10 @@ jobs:
             tar -zcvf ${{ env.windows-tar-name }} sentry.dll sentry.lib crashpad_handler.exe
             aws s3 cp ${{ env.windows-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.windows-tar-name }}
           else
-            if [[ "${{ matrix.config.name }}" == "Sentry (macOS x64)" ]]; then
+            if [[ "${{ matrix.config.arch }}" == "x86_64" ]]; then
               tar -zcvf ${{ env.macos-x64-tar-name }} libsentry.dylib crashpad_handler
               aws s3 cp ${{ env.macos-x64-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-x64-tar-name }}
-            elif [[ "${{ matrix.config.name }}" == "Sentry (macOS arm64)" ]]; then
+            elif [[ "${{ matrix.config.arch }}" == "arm64" ]]; then
               tar -zcvf ${{ env.macos-arm64-tar-name }} libsentry.dylib crashpad_handler
               aws s3 cp ${{ env.macos-arm64-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-arm64-tar-name }}
             else

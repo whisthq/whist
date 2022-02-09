@@ -107,7 +107,7 @@ jobs:
   #######################################################################################
   #######################################################################################
 
-  # Building (X64)
+  # Building (x64)
   # Check that the macOS and Windows client applications build
   client-applications-check-pr-building-x64:
     name: Building on ${{ matrix.config.name }}
@@ -119,8 +119,13 @@ jobs:
         config:
           - name: Windows
             os: windows-2019
-          - name: macOS (X64)
+            arch: x86_64
+          - name: macOS (x64)
             os: macos-10.15
+            arch: x86_64
+          - name: macOS (arm64)
+            os: macos-11.0
+            arch: arm64
 
     steps:
       ################################# CONFIG STEPS START ###############################
@@ -210,93 +215,7 @@ jobs:
         env:
           CONFIG: ${{ needs.build-monorepo-config.outputs.macos }}
           AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
-          MACOS_ARCH: "x86_64"
-          # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
-          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-          APPLE_API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER_ID }}
-        run: |
-          # Build the Whist protocol and package the Electron application, using a hardcoded test version
-          # We need to increase the timeout to deal with GHA's weak VMs.
-          yarn config set network-timeout 600000
-          yarn cache clean
-          yarn install
-          yarn package:notarize --config $CONFIG --version 1.0.0 --commit ${{ github.sha }}
-
-  #######################################################################################
-  #######################################################################################
-
-  # Building (ARM64)
-  # Check that the macOS client application builds
-  client-applications-check-pr-building-arm64:
-    name: Building on macOS (ARM64)
-    runs-on: [self-hosted, macOS, ARM64]
-    defaults:
-      run:
-        shell: "/usr/bin/arch -arch arm64e /bin/bash {0}"
-
-    steps:
-      ################################# CONFIG STEPS START ###############################
-
-      # Get the whole git history. We must do this because the
-      # client app calls `git describe` in order to bake the
-      # version number into the React frontend.
-      - name: Checkout Git Repository
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Install Node.js 16
-        uses: actions/setup-node@v2.5.0
-        with:
-          node-version: "16"
-          architecture: "arm64"
-
-      # To retrieve Whist protocol libraries from AWS S3
-      - name: Configure AWS S3 CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Set Deploy Environment Based on Git Branch
-        run: |
-          if [ "${GITHUB_REF##*/}" == "prod" ]; then
-              echo "DEPLOY_ENVIRONMENT=prod" >> $GITHUB_ENV
-          elif [ "${GITHUB_REF##*/}" == "staging" ]; then
-              echo "DEPLOY_ENVIRONMENT=staging" >> $GITHUB_ENV
-          else
-              echo "DEPLOY_ENVIRONMENT=dev" >> $GITHUB_ENV
-          fi
-          echo "deploy_environment is set to: $DEPLOY_ENVIRONMENT"
-
-      ###################################################################################
-      ################################# MACOS STEPS START ###############################
-
-      # This step must only be done once and permission must be granted to use the keychain
-      # manually, since the runner is self-hosted and its state persists across runs. It is
-      # left here for reference, in case you need to configure a new self-hosted runner
-      # - name: Install macOS Codesigning Certificates on macOS GHA Machine
-      #   uses: apple-actions/import-codesign-certs@v1
-      #   with:
-      #     p12-file-base64: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
-      #     p12-password: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
-
-      # This step follows the specs in https://github.com/electron/electron-notarize#notes-on-jwt-authentication
-      - name: Install macOS Notarization API Key
-        run: |
-          mkdir -p ~/private_keys
-          aws s3 cp s3://fractal-dev-secrets/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 ~/private_keys
-
-      # If you get the "unable to find utility "altool", not a developer tool or in PATH" error, VNC into the
-      # M1 runner, and run `sudo xcode-select -r`
-
-      - name: Build the macOS Electron Application
-        working-directory: frontend/client-applications
-        env:
-          CONFIG: ${{ needs.build-monorepo-config.outputs.macos }}
-          AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
-          MACOS_ARCH: "arm64"
+          MACOS_ARCH: "${{ matrix.config.arch }}"
           # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER_ID }}
