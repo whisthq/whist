@@ -1,0 +1,30 @@
+{
+  "name": "teleport-extension",
+  "version": "1.0.0",
+  "description": "Teleport is a chromium extension that allows the seamless transfer of files to and from streamed browsers.",
+  "repository": "https://github.com/whisthq/whist",
+  "author": "Whist Technologies, Inc.",
+  "license": "UNLICENSED",
+  "private": true,
+  "devDependencies": {
+    "@types/chrome": "^0.0.130",
+    "@types/simple-peer": "^9.6.1",
+    "copy-webpack-plugin": "^7.0.0",
+    "path-browserify": "^1.0.1",
+    "prettier": "^2.2.1",
+    "process": "^0.11.10",
+    "simple-peer": "^9.9.3",
+    "ts-loader": "^8.0.17",
+    "typescript": "^4.1.5",
+    "webpack": "^5.21.2",
+    "webpack-cli": "^4.5.0",
+    "webpack-merge": "^5.7.3"
+  },
+  "scripts": {
+    "watch": "webpack --config webpack/webpack.dev.js --watch",
+    "build": "webpack --config webpack/webpack.prod.js",
+    "format": "prettier --write .",
+    "format-check": "prettier --check ,"
+  },
+  "dependencies": {}
+}
