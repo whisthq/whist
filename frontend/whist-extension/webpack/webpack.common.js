@@ -1,9 +1,9 @@
-const path = require("path");
-const CopyPlugin = require("copy-webpack-plugin");
-const { ProvidePlugin } = require("webpack");
+const path = require("path")
+const CopyPlugin = require("copy-webpack-plugin")
+const { ProvidePlugin } = require("webpack")
 
-const srcDir = path.join(__dirname, "..", "src");
-const outDir = path.join(__dirname, "..", "build", "js");
+const srcDir = path.join(__dirname, "..", "src")
+const outDir = path.join(__dirname, "..", "build", "src")
 
 module.exports = {
   entry: {
@@ -36,4 +36,4 @@ module.exports = {
       process: "process/browser",
     }),
   ],
-};
+}
