@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import boto3
+import json
 import subprocess
 import argparse
 import numpy as np
@@ -340,10 +341,39 @@ def download_latest_logs(branch_name):
         )
 
 
+def parse_metadata(folder_name):
+    metadata_filename = os.path.join(folder_name, "experiment_metadata.json")
+    experiment_metadata = None
+    if not os.path.isfile(metadata_filename):
+        print("Could not get metadata for folder {}".format(folder_name))
+    else:
+        with open(metadata_filename, "w") as metadata_file:
+            experiment_metadata = json.load(metadata_file)
+    return experiment_metadata
+
+
 def generate_no_comparison_table(
-    results_file, most_interesting_metrics, client_metrics, server_metrics
+    results_file, most_interesting_metrics, experiment_metadata, client_metrics, server_metrics
 ):
     with redirect_stdout(results_file):
+        # Generate metadata table
+        print("###### Experiment metadata: ######\n")
+        writer = MarkdownTableWriter(
+            # table_name="Interesting metrics",
+            headers=["Key (this run)", "Value (this run)", "Value (compared run)"],
+            value_matrix=[
+                [
+                    k,
+                    experiment_metadata[k],
+                    "N/A",
+                ]
+                for k in experiment_metadata
+            ],
+            margin=1,  # add a whitespace for both sides of each cell
+        )
+        writer.write_table()
+        print("\n")
+
         # Generate most interesting metric table
         interesting_metrics = {}
         for k in client_metrics:
@@ -436,6 +466,8 @@ def generate_no_comparison_table(
 def generate_comparison_table(
     results_file,
     most_interesting_metrics,
+    experiment_metadata,
+    compared_experiment_metadata,
     client_metrics,
     server_metrics,
     client_table_entries,
@@ -443,6 +475,26 @@ def generate_comparison_table(
     branch_name,
 ):
     with redirect_stdout(results_file):
+        # Generate metadata table
+        print("###### Experiment metadata: ######\n")
+        writer = MarkdownTableWriter(
+            # table_name="Interesting metrics",
+            headers=["Key (this run)", "Value (this run)", "Value (compared run)"],
+            value_matrix=[
+                [
+                    k,
+                    experiment_metadata[k],
+                    "N/A"
+                    if k not in compared_experiment_metadata
+                    else compared_experiment_metadata[k],
+                ]
+                for k in experiment_metadata
+            ],
+            margin=1,  # add a whitespace for both sides of each cell
+        )
+        writer.write_table()
+        print("\n")
+
         # Generate most interesting metric table
         interesting_metrics = []
         for row in client_table_entries:
