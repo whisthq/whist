@@ -1,14 +1,14 @@
-# Get name of the current region
+# Get name of the current region to use across resources
 
 data "aws_region" "current" {}
 
 # Create default VPCs
 
-resource "aws_default_vpc" "main" {
+resource "aws_default_vpc" "MainVPC" {
   enable_dns_hostnames = true
   enable_dns_support   = true
   tags = {
-    Name      = format("Whist %s Main VPC", data.aws_region.current.name)
+    Name      = "MainVPC"
     Env       = var.env
     Terraform = true
   }
@@ -16,11 +16,11 @@ resource "aws_default_vpc" "main" {
 
 # Create default subnets
 
-resource "aws_default_subnet" "default-subnet" {
+resource "aws_default_subnet" "DefaultSubnet" {
   availability_zone = data.aws_region.current.name
 
   tags = {
-    Name      = format("default-subnet-%s", data.aws_region.current.name)
+    Name      = "DefaultSubnet"
     Env       = var.env
     Terraform = true
   }
@@ -28,7 +28,7 @@ resource "aws_default_subnet" "default-subnet" {
 
 # Security groups
 
-resource "aws_default_security_group" "default" {
+resource "aws_default_security_group" "DefaultSecurityGroup" {
   vpc_id = aws_default_vpc.main.id
 
   ingress {
@@ -46,14 +46,14 @@ resource "aws_default_security_group" "default" {
   }
 
   tags = {
-    Name      = "default"
+    Name      = "DefaultSecurityGroup"
     Env       = var.env
     Terraform = true
   }
 }
 
-resource "aws_security_group" "allow-mandelbox-ports" {
-  name        = "container-tester"
+resource "aws_security_group" "MandelboxesSecurityGroup" {
+  name        = "MandelboxesSecurityGroup"
   description = "The security group used for instances which run mandelboxes. The ingress rules are the ports that can be allocated by Docker, and the egress rules allows all traffic."
   vpc_id      = aws_default_vpc.main.id
 
@@ -84,7 +84,7 @@ resource "aws_security_group" "allow-mandelbox-ports" {
   }
 
   tags = {
-    Name      = "allow-mandelbox-ports"
+    Name      = "MandelboxesSecurityGroup"
     Env       = var.env
     Terraform = true
   }

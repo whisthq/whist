@@ -1,3 +1,5 @@
+# This secret will only be added on prod to avoid duplication of resources,
+# or potential terraform failures.
 resource "aws_secretsmanager_secret" "ghcrDockerAuthentication" {
   count               = var.env == "prod" ? 1 : 0
   name                = "ghcrDockerAuthentication"
