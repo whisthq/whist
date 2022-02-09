@@ -84,6 +84,11 @@ const launchProtocol = async (info?: {
       }),
   })
 
+  // The protocol ChildProcess can throw errors if we try to write to it as it is
+  // dying. We don't really care about these errors; we just want to try/catch them
+  // and adding this listener accomplishes that
+  child.on("error", (err: any) => console.error(err))
+
   protocol.emit("launched", child)
 
   if (info !== undefined) pipeNetworkInfo(child, info)

@@ -95,10 +95,6 @@ waitForSignal(
   relaunch({ sleep: false })
 })
 
-emitOnSignal(
-  fromTrigger(WhistTrigger.protocol),
-  fromTrigger(WhistTrigger.userRequestedQuit)
-).subscribe((p: ChildProcess) => {
-  destroyProtocol(p)
+fromTrigger(WhistTrigger.userRequestedQuit).subscribe(() => {
   app.exit()
 })
