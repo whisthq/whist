@@ -1,5 +1,10 @@
 {
   labels: ["dependencies"],
+
+  // We want at most 10 PRs per hour, at most 2 at a time
+  prHourlyLimit: 10,
+  prConcurrentLimit: 2,
+
   // We target various path prefixes to group those PRs together
   packageRules: [
     {
