@@ -22,6 +22,7 @@ sudo apt-get install --no-install-recommends -y \
 sudo apt-get install --no-install-recommends -y \
   dbus-x11 \
   libevent-dev \
+  libevent-pthreads-2.1-7 \
   libdbus-1-dev \
   libssl-dev \
   libgl1-mesa-dev \

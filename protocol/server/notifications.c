@@ -44,6 +44,7 @@ Includes
 #include <arpa/inet.h>
 #include <dbus/dbus.h>
 #include <event.h>
+#include <event2/thread.h>
 
 #include <whist/logging/log_statistic.h>
 #include <whist/core/whist.h>
@@ -112,6 +113,8 @@ Public Function Implementations
 NotificationsHandler *init_notifications_handler(whist_server_state *state) {
     NotificationsHandler *handler = (NotificationsHandler *)malloc(sizeof(NotificationsHandler));
     handler->state = state;
+    // Set up libevent to use pthreads - prevents event_base_loop from blocking on break
+    evthread_use_pthreads();
     handler->eb = event_base_new();
     handler->thread = whist_create_thread(multithreaded_process_notifications,
                                           "multithreaded_process_notifications", (void *)handler);
@@ -120,9 +123,11 @@ NotificationsHandler *init_notifications_handler(whist_server_state *state) {
 }
 
 void destroy_notifications_handler(NotificationsHandler *handler) {
+    LOG_INFO("Destroying notifications handler");
     event_base_loopbreak(handler->eb);
     whist_wait_thread(handler->thread, NULL);
     free(handler);
+    LOG_INFO("Finished destroying notifications handler");
 }
 
 /*
