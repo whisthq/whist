@@ -13,7 +13,7 @@ const packageNotarize = (env, config, version, commit) => {
     config = helpers.getConfig({ deploy: "dev" })
   }
   helpers.reinitializeYarn()
-  helpers.buildAndCopyProtocol()
+  helpers.buildAndCopyProtocol(true)
   helpers.buildTailwind()
 
   helpers.configureCodeSigning(true)

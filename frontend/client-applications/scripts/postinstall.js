@@ -2,6 +2,7 @@
 const execCommand = require("./execCommand").execCommand
 const path = require("path")
 const fs = require("fs")
+const helpers = require("./build-package-helpers")
 
 const patch = (pathToPatchedFile, oldContents, newContents) => {
   const oldFile = fs.readFileSync(pathToPatchedFile, "utf8")
@@ -70,8 +71,7 @@ const postInstall = (_env, ..._args) => {
   )
 
   // Recompile node native modules
-  console.log("Recompiling node modules for your computer...")
-  execCommand("electron-builder install-app-deps")
+  helpers.electronBuilderInstallAppDeps()
 }
 
 module.exports = postInstall

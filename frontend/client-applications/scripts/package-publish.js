@@ -10,7 +10,7 @@ const packageNotarize = (env, config, version, environment, commit) => {
   if (!config) config = helpers.buildConfigContainer({ deploy: environment })
 
   helpers.reinitializeYarn()
-  helpers.buildAndCopyProtocol()
+  helpers.buildAndCopyProtocol(true)
   helpers.buildTailwind()
 
   helpers.configureCodeSigning(true)
@@ -32,25 +32,7 @@ const packageNotarize = (env, config, version, environment, commit) => {
     COMMIT_SHA: commit,
   })
 
-  const getBucketName = () => {
-    switch (process.platform) {
-      case "darwin":
-        // on macOS, we have buckets for Intel silicon (X86_64) and Apple silicon (ARM64)
-        switch (process.env.MACOS_ARCH) {
-          case "x64":
-            return `fractal-chromium-macos-${environment}`
-          case "arm64":
-            return `fractal-chromium-macos-arm64-${environment}`
-        }
-        break
-      case "win32":
-        return `fractal-chromium-windows-${environment}`
-      case "linux":
-        return `fractal-chromium-ubuntu-${environment}`
-    }
-  }
-
-  helpers.electronPublish(getBucketName())
+  helpers.electronPublish(environment)
 
   helpers.removeEnvOverridesFile()
 }

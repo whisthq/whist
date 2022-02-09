@@ -13,7 +13,7 @@ const start = (env, config) => {
     config = helpers.getConfig({ deploy: "local" })
   }
 
-  helpers.buildAndCopyProtocol()
+  helpers.buildAndCopyProtocol(true)
   helpers.buildTailwind()
   helpers.snowpackDev({
     ...env,

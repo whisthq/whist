@@ -10,6 +10,7 @@ const start = (env, config) => {
   // // config value. If no --config argument, we'll parse the config ourselves.
   if (!config) config = helpers.getConfig({ deploy: "local" })
 
+  helpers.buildAndCopyProtocol(false)
   helpers.snowpackDev({
     ...env,
     CONFIG: config,
