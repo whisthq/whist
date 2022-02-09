@@ -9,9 +9,4 @@
  */
 void whist_file_download_notify_finished(const char* file_path);
 
-
-//TODO: Move to a separate file!
-
-const char *whist_file_upload_get_picked_file(void);
-
 #endif  // WHIST_FILE_DOWNLOAD_H

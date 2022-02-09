@@ -34,7 +34,7 @@ Includes
 #include <whist/logging/logging.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/logging/error_monitor.h>
-#include <whist/file/file_download.h>
+#include <whist/file/file_upload.h>
 #include "sdlscreeninfo.h"
 #include "whist_client.h"
 #include "audio.h"
