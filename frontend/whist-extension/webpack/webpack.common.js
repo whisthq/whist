@@ -1,5 +1,6 @@
 const path = require("path")
 const CopyPlugin = require("copy-webpack-plugin")
+const HtmlWebpackPlugin = require("html-webpack-plugin")
 const { ProvidePlugin } = require("webpack")
 
 const srcDir = path.join(__dirname, "..", "src")
@@ -7,7 +8,8 @@ const outDir = path.join(__dirname, "..", "build", "src")
 
 module.exports = {
   entry: {
-    index: path.join(srcDir, "index.ts"),
+    worker: path.join(srcDir, "index.ts"),
+    newtab: path.join(srcDir, "newtab", "index.tsx"),
   },
   output: {
     path: outDir,
@@ -28,7 +30,7 @@ module.exports = {
       path: require.resolve("path-browserify"),
     },
     alias: {
-      "@app": "./",
+      "@app": srcDir,
     },
   },
   plugins: [
@@ -37,6 +39,12 @@ module.exports = {
     }),
     new ProvidePlugin({
       process: "process/browser",
+    }),
+    new HtmlWebpackPlugin({
+      template: path.join(srcDir, "newtab", "index.html"),
+      filename: "newtab.html",
+      chunks: ["newtab"],
+      cache: false,
     }),
   ],
 }

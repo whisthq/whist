@@ -19,5 +19,5 @@ export const authPortalURL = () => {
 }
 
 chrome.tabs.create({
-  url: authPortalURL(),
+  url: chrome.runtime.getURL("src/newtab.html"),
 })
