@@ -292,8 +292,9 @@ if __name__ == "__main__":
     os.makedirs(os.path.join(perf_logs_folder_name, "client"))
 
     experiment_metadata = {
-        "start_time": experiment_start_time,
+        "start_time": experiment_start_time + " local time" if running_in_ci else " UTC",
         "network_conditions": network_conditions,
+        "using_two_instances": use_two_instances,
         "branch_name": get_whist_branch_name(running_in_ci),
         "github_sha": get_whist_github_sha(running_in_ci),
     }

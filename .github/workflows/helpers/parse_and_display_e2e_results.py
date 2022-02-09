@@ -9,6 +9,7 @@ import numpy as np
 from pytablewriter import MarkdownTableWriter
 from contextlib import redirect_stdout
 from github import Github, InputFileContent
+from datetime import datetime, timedelta
 
 sys.path.append(".github/workflows/helpers")
 from notifications.slack_bot import slack_post
@@ -293,7 +294,7 @@ def compute_deltas(
     return client_table_entries, server_table_entries
 
 
-def download_latest_logs(branch_name):
+def download_latest_logs(branch_name, before_date):
     client = boto3.client("s3")
     s3_resource = boto3.resource("s3")
     bucket = s3_resource.Bucket("whist-e2e-protocol-test-logs")
@@ -301,10 +302,13 @@ def download_latest_logs(branch_name):
     if os.path.exists(branch_name):
         os.system("rm -rf {}".format(branch_name))
 
-    os.makedirs(os.path.join(".", "{}".format(branch_name), "client"))
-    os.makedirs(os.path.join(".", "{}".format(branch_name), "server"))
-    compared_client_log_path = os.path.join(".", "{}".format(branch_name), "client", "client.log")
-    compared_server_log_path = os.path.join(".", "{}".format(branch_name), "server", "server.log")
+    os.makedirs(os.path.join(".", branch_name, "client"))
+    os.makedirs(os.path.join(".", branch_name, "server"))
+    compared_client_log_path = os.path.join(".", branch_name, "client", "client.log")
+    compared_server_log_path = os.path.join(".", branch_name, "server", "server.log")
+
+    local_timezone = int(time.timezone / 3600.0)
+    before_date = before_date + timedelta(hours=local_timezone)
 
     result = client.list_objects(
         Bucket="whist-e2e-protocol-test-logs", Prefix="{}/".format(branch_name), Delimiter="/"
@@ -318,16 +322,20 @@ def download_latest_logs(branch_name):
     for folder_name in reversed(folders):
         subfolder_name = folder_name.get("Prefix").split("/")[-2]
 
-        for obj in bucket.objects.filter(
-            Prefix="{}/{}".format("{}".format(branch_name), subfolder_name)
-        ):
+        # Make sure that we are comparing this run to a previous run
+        subfolder_date = datetime.strptime(subfolder_name, "%Y_%m_%d@%H-%M-%S")
+        if subfolder_date >= before_date:
+            counter += 1
+            continue
+
+        for obj in bucket.objects.filter(Prefix="{}/{}".format(branch_name, subfolder_name)):
             if "client.log" in obj.key:
                 bucket.download_file(obj.key, compared_client_log_path)
             elif "server.log" in obj.key:
                 bucket.download_file(obj.key, compared_server_log_path)
 
         # Check if logs are sane, if so stop
-        if not logs_contain_errors(os.path.join(".", "{}".format(branch_name))):
+        if not logs_contain_errors(os.path.join(".", branch_name)):
             break
         else:
             os.system("rm -rf {}".format(compared_client_log_path))
@@ -355,7 +363,6 @@ def parse_metadata(folder_name):
 def generate_no_comparison_table(
     results_file, experiment_metadata, most_interesting_metrics, client_metrics, server_metrics
 ):
-    print(experiment_metadata)
     with redirect_stdout(results_file):
         # Generate metadata table
         print("<details>")
@@ -669,7 +676,9 @@ parser.add_argument(
 if __name__ == "__main__":
     # Grab environmental variables of interest
     if not os.environ.get("GITHUB_REF_NAME"):
-        print("GITHUB_REF_NAME is not set! Skipping benchmark notification.")
+        print(
+            "GITHUB_REF_NAME is not set! If running locally, set GITHUB_REF_NAME to the name of the current git branch."
+        )
         sys.exit(-1)
     if not os.environ.get("GITHUB_GIST_TOKEN") or not os.environ.get("GITHUB_TOKEN"):
         print("GITHUB_GIST_TOKEN and GITHUB_TOKEN not set. Cannot post results to Gist/GitHub!")
@@ -735,7 +744,9 @@ if __name__ == "__main__":
 
     # If we are looking to compare the results with the latest run on a branch, we need to download the relevant files first
     if compared_branch_name != "":
-        download_latest_logs(compared_branch_name)
+        download_latest_logs(
+            compared_branch_name, datetime.strptime(test_time, "%Y_%m_%d@%H-%M-%S")
+        )
         compared_client_log_path = os.path.join(".", compared_branch_name, "client", "client.log")
         compared_server_log_path = os.path.join(".", compared_branch_name, "server", "server.log")
         if not os.path.isfile(compared_client_log_path) or not os.path.isfile(
@@ -791,7 +802,10 @@ if __name__ == "__main__":
 
     #######################################################################################
 
-    title = "Protocol End-to-End Streaming Test Results - {} UTC".format(test_time)
+    if experiment_metadata and "start_time" in experiment_metadata:
+        test_time = experiment_metadata["start_time"]
+
+    title = "Protocol End-to-End Streaming Test Results - {}".format(test_time)
     github_repo = "whisthq/whist"
     # Adding timestamp to prevent overwrite of message
     identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE - {}".format(test_time)
