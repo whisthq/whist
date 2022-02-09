@@ -36,7 +36,6 @@ Defines
 ============================
 */
 
-#define BITS_IN_BYTE 8.0
 #define MS_IN_SECOND 1000
 
 /*

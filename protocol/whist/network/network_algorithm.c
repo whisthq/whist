@@ -105,6 +105,10 @@ NetworkSettings get_default_network_settings(int width, int height) {
     return default_network_settings;
 }
 
+NetworkSettings get_starting_network_settings(void) {
+    return get_default_network_settings(output_width, output_height);
+}
+
 NetworkSettings get_desired_network_settings(NetworkStatistics stats) {
     // Get the network settings we want, based on those statistics
     NetworkSettings network_settings = timed_ewma_ratio_bitrate(stats);
@@ -150,7 +154,7 @@ NetworkSettings timed_ewma_ratio_bitrate(NetworkStatistics stats) {
 
     if (!timer_initialized) {
         start_timer(&interval_timer);
-        network_settings = get_default_network_settings(output_width, output_height);
+        network_settings = get_starting_network_settings();
         timer_initialized = true;
     }
 
