@@ -353,10 +353,15 @@ def parse_metadata(folder_name):
 
 
 def generate_no_comparison_table(
-    results_file, most_interesting_metrics, experiment_metadata, client_metrics, server_metrics
+    results_file, experiment_metadata, most_interesting_metrics, client_metrics, server_metrics
 ):
+    print(experiment_metadata)
     with redirect_stdout(results_file):
         # Generate metadata table
+        print("<details>")
+        print("<summary>Experiment metadata - Expand here</summary>")
+        print("\n")
+
         print("###### Experiment metadata: ######\n")
         writer = MarkdownTableWriter(
             # table_name="Interesting metrics",
@@ -372,6 +377,8 @@ def generate_no_comparison_table(
             margin=1,  # add a whitespace for both sides of each cell
         )
         writer.write_table()
+        print("\n")
+        print("</details>")
         print("\n")
 
         # Generate most interesting metric table
@@ -476,6 +483,10 @@ def generate_comparison_table(
 ):
     with redirect_stdout(results_file):
         # Generate metadata table
+        print("<details>")
+        print("<summary>Experiment metadata - Expand here</summary>")
+        print("\n")
+
         print("###### Experiment metadata: ######\n")
         writer = MarkdownTableWriter(
             # table_name="Interesting metrics",
@@ -484,8 +495,8 @@ def generate_comparison_table(
                 [
                     k,
                     experiment_metadata[k],
-                    "N/A"
-                    if k not in compared_experiment_metadata
+                    "not found"
+                    if not compared_experiment_metadata or k not in compared_experiment_metadata
                     else compared_experiment_metadata[k],
                 ]
                 for k in experiment_metadata
@@ -493,6 +504,8 @@ def generate_comparison_table(
             margin=1,  # add a whitespace for both sides of each cell
         )
         writer.write_table()
+        print("\n")
+        print("</details>")
         print("\n")
 
         # Generate most interesting metric table
