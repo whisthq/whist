@@ -7,6 +7,7 @@ from flask.json import jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_pydantic import validate
 from typing import Any, Tuple
+from netaddr import IPNetwork, IPAddress
 from app.utils.mandelbox.validation import MandelboxAssignBody
 
 from app import whist_pre_process
@@ -242,4 +243,9 @@ def aws_mandelbox_assign(body: MandelboxAssignBody, **_kwargs: Any) -> Tuple[Res
         },
         extra_dims={"task_name": "assign_mandelbox"},
     )
-    return jsonify({"ip": instance.ip_addr, "mandelbox_id": mandelbox_id}), HTTPStatus.ACCEPTED
+
+    # Parse the ip address so that we can extract the host part
+    # and remove the subnet mask for the client app.
+    net = IPNetwork(instance.ip_addr)
+
+    return jsonify({"ip": str(net.ip), "mandelbox_id": mandelbox_id}), HTTPStatus.ACCEPTED

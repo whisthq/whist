@@ -58,6 +58,13 @@ type Querier interface {
 	// RemoveStaleMandelboxesScan scans the result of an executed RemoveStaleMandelboxesBatch query.
 	RemoveStaleMandelboxesScan(results pgx.BatchResults) (pgconn.CommandTag, error)
 
+	UpdateInstanceCapacity(ctx context.Context, removedMandelboxes int32, instanceID string) (pgconn.CommandTag, error)
+	// UpdateInstanceCapacityBatch enqueues a UpdateInstanceCapacity query into batch to be executed
+	// later by the batch.
+	UpdateInstanceCapacityBatch(batch genericBatch, removedMandelboxes int32, instanceID string)
+	// UpdateInstanceCapacityScan scans the result of an executed UpdateInstanceCapacityBatch query.
+	UpdateInstanceCapacityScan(results pgx.BatchResults) (pgconn.CommandTag, error)
+
 	WriteHeartbeat(ctx context.Context, updatedAt pgtype.Timestamptz, instanceID string) (pgconn.CommandTag, error)
 	// WriteHeartbeatBatch enqueues a WriteHeartbeat query into batch to be executed
 	// later by the batch.
@@ -172,6 +179,9 @@ func PrepareAllQueries(ctx context.Context, p preparer) error {
 	}
 	if _, err := p.Prepare(ctx, removeStaleMandelboxesSQL, removeStaleMandelboxesSQL); err != nil {
 		return fmt.Errorf("prepare query 'RemoveStaleMandelboxes': %w", err)
+	}
+	if _, err := p.Prepare(ctx, updateInstanceCapacitySQL, updateInstanceCapacitySQL); err != nil {
+		return fmt.Errorf("prepare query 'UpdateInstanceCapacity': %w", err)
 	}
 	if _, err := p.Prepare(ctx, writeHeartbeatSQL, writeHeartbeatSQL); err != nil {
 		return fmt.Errorf("prepare query 'WriteHeartbeat': %w", err)

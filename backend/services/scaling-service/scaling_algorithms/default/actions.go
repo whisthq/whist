@@ -87,8 +87,15 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 		return utils.MakeError("failed to query database for active instances. Err: %v", err)
 	}
 
-	if len(currentlyActive) < DEFAULT_INSTANCE_BUFFER {
-		logger.Infof("Current number of instances on %v is less than desired %v. Scaling up to match.", event.Region, DEFAULT_INSTANCE_BUFFER)
+	currentlyStarting, err := dbclient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "PRE_CONNECTION", event.Region)
+	if err != nil {
+		return utils.MakeError("failed to query database for starting instances. Err: %v", err)
+	}
+
+	// Consider both active and preconnection instances
+	instancesOnRegion := len(currentlyActive) + len(currentlyStarting)
+	if instancesOnRegion < DEFAULT_INSTANCE_BUFFER {
+		logger.Infof("Current number of instances %v is less than desired %v. Scaling up to match.", instancesOnRegion, DEFAULT_INSTANCE_BUFFER)
 
 		// Query for the current image id
 		imageResult, err := dbclient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region) // TODO: set different provider when doing multi-cloud.
