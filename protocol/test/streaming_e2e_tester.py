@@ -484,6 +484,12 @@ if __name__ == "__main__":
                 client_instance_id,
                 client_instance_id != args.use_existing_client_instance,
             )
+    else:
+        # Save instance IDs to file for reuse by later runs
+        with open("instances_left_on.txt", "w+") as instances_file:
+            instances_file.write("{}\n".format(server_instance_id))
+            if client_instance_id != server_instance_id:
+                instances_file.write("{}\n".format(client_instance_id))
 
     print("Instance successfully stopped/terminated, goodbye")
 
