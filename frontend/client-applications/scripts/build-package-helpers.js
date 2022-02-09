@@ -40,6 +40,43 @@ const addEnvOverride = (envs) => {
   fs.writeFileSync(envOverrideFile, envString)
 }
 
+const getMacOSArchConfig = () => {
+  return {
+    "": {
+      electronBuilderFlag: "",
+      electronBuilderInstallAppDepsFlag: "",
+      publishS3BucketInfix: "",
+      cmakeArguments: "",
+    },
+    x86_64: {
+      electronBuilderFlag: "--x64",
+      electronBuilderInstallAppDepsFlag: "--arch x64",
+      publishS3BucketInfix: "",
+      cmakeArguments: "-D MACOS_TARGET_ARCHITECTURE=x86_64",
+    },
+    arm64: {
+      electronBuilderFlag: "--arm64",
+      electronBuilderInstallAppDepsFlag: "--arch arm64",
+      publishS3BucketInfix: "-arm64",
+      cmakeArguments: "-D MACOS_TARGET_ARCHITECTURE=arm64",
+    },
+  }[process.env.MACOS_ARCH ?? ""]
+}
+
+// This function gets the name of the publish bucket for AWS S3
+const getPublishS3BucketName = (environment) => {
+  switch (process.platform) {
+    case "darwin":
+      return `fractal-chromium-macos${
+        getMacOSArchConfig().publishS3BucketInfix
+      }-${environment}`
+    case "win32":
+      return `fractal-chromium-windows-${environment}`
+    case "linux":
+      return `fractal-chromium-ubuntu-${environment}`
+  }
+}
+
 const configOS = () => {
   if (process.platform === "win32") return "win32"
   if (process.platform === "darwin") return "macos"
@@ -84,31 +121,46 @@ module.exports = {
     return execSync(run, { encoding: "utf-8", stdio: "pipe" })
   },
   // Build the protocol and copy it into the expected location
-  buildAndCopyProtocol: () => {
+  buildAndCopyProtocol: (freshCmake) => {
     console.log("Building the protocol...")
 
-    fs.mkdirSync(path.join(protocolSourceDir, cmakeBuildDir), {
-      recursive: true,
-    })
+    if (
+      freshCmake &&
+      fs.existsSync(path.join(protocolSourceDir, cmakeBuildDir))
+    ) {
+      fs.rmSync(path.join(protocolSourceDir, cmakeBuildDir), {
+        recursive: true,
+        force: true,
+      })
+    }
 
-    if (process.platform === "win32") {
-      // On Windows, cmake wants rc.exe but is provided node_modules/.bin/rc.js
-      // Hence, we must modify the path to pop out the node_modules entries.
-      const pathArray = process.env.Path.split(";")
-      while (
-        ["node_modules", "yarn", "Yarn"].some((v) => pathArray[0].includes(v))
-      )
-        pathArray.shift()
-      const path = pathArray.join(";")
-      execCommand(
-        `cmake -S . -B ${cmakeBuildDir} -G Ninja`,
-        protocolSourceDir,
-        {
-          Path: path,
-        }
-      )
-    } else {
-      execCommand(`cmake -S . -B ${cmakeBuildDir}`, protocolSourceDir)
+    if (!fs.existsSync(path.join(protocolSourceDir, cmakeBuildDir))) {
+      if (process.platform === "win32") {
+        // On Windows, cmake wants rc.exe but is provided node_modules/.bin/rc.js
+        // Hence, we must modify the path to pop out the node_modules entries.
+        const pathArray = process.env.Path.split(";")
+        while (
+          ["node_modules", "yarn", "Yarn"].some((v) => pathArray[0].includes(v))
+        )
+          pathArray.shift()
+        const path = pathArray.join(";")
+        execCommand(
+          `cmake -S . -B ${cmakeBuildDir} -G Ninja`,
+          protocolSourceDir,
+          {
+            Path: path,
+          }
+        )
+      } else if (process.platform === "darwin") {
+        execCommand(
+          `cmake -S . -B ${cmakeBuildDir} ${
+            getMacOSArchConfig().cmakeArguments
+          }`,
+          protocolSourceDir
+        )
+      } else {
+        execCommand(`cmake -S . -B ${cmakeBuildDir}`, protocolSourceDir)
+      }
     }
 
     execCommand(
@@ -184,27 +236,42 @@ module.exports = {
     execCommand("snowpack build", ".", env)
   },
 
-  // Build via electron-build
-  // We add `--arm64` to the electron-builder command if running on a macOS ARM64 machine,
-  // as per: https://www.electron.build/cli.html
+  // Build via electron-builder
   electronBuild: () => {
     console.log("Running 'electron-builder build'...")
     execCommand(
       `electron-builder build --config electron-builder.config.js --publish never ${
-        (process.env.MACOS_ARCH ?? "") === "arm64" ? "--arm64" : ""
+        process.platform === "darwin"
+          ? getMacOSArchConfig().electronBuilderFlag
+          : ""
       }`,
       "."
     )
   },
 
+  // Build note native modules via electron-builder
+  electronBuilderInstallAppDeps: () => {
+    console.log("Recompiling node modules for your computer...")
+    execCommand(
+      `electron-builder install-app-deps ${
+        process.platform === "darwin"
+          ? getMacOSArchConfig().electronBuilderInstallAppDepsFlag
+          : ""
+      }`
+    )
+  },
+
   // Publish via electron-build
-  electronPublish: (bucket) => {
+  electronPublish: (environment) => {
+    const bucket = getPublishS3BucketName(environment)
     console.log(
       `Running 'electron-builder publish' and uploading to S3 bucket ${bucket}...`
     )
     execCommand(
       `electron-builder build --config electron-builder.config.js --publish always ${
-        (process.env.MACOS_ARCH ?? "") === "arm64" ? "--arm64" : ""
+        process.platform === "darwin"
+          ? getMacOSArchConfig().electronBuilderFlag
+          : ""
       }`,
       ".",
       { S3_BUCKET: bucket }

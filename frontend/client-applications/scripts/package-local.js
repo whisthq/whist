@@ -10,7 +10,7 @@ const packageLocal = (env, config) => {
     helpers.buildConfigContainer()
     config = helpers.getConfig({ deploy: "dev" })
   }
-  helpers.buildAndCopyProtocol()
+  helpers.buildAndCopyProtocol(true)
   helpers.buildTailwind()
   helpers.configureCodeSigning(false)
 
