@@ -1,0 +1,212 @@
+# workflows/whist-browser-build-and-deploy.yml
+#
+# Whist Browser: Build & Deploy
+# Build and deploy the Whist Browser, bundling the Whist monorepo and the Brave Chromium browser for
+# our dev environment, nightly. 
+
+name: "Whist Browser: Build & Deploy"
+
+on:
+  schedule:
+    # Runs nightly on weekdays (days of the week 1-5) at 00:01 UTC.
+    - cron: "1 0 * * 1,2,3,4,5"
+  workflow_dispatch:
+
+jobs:
+  # This job cross-compiles the Whist Browser to x86_64 from our NYC office M1 Mac Mini self-hosted runner.
+  whist-browser-build-macos-x86:
+    name: "Nightly: macOS (x86_64)"
+    runs-on: [self-hosted, macOS, ARM64]
+    env:
+      binary-tar-name: whist-browser-macos-x86.tar.gz
+      s3-bucket-uri: s3://whist-browser-macos-x86.tar.gz
+      s3-bucket-region: us-east-1
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+        with:
+          repository: whisthq/brave-browser
+          ref: main
+          fetch-depth: 1 # Only fetch the latest commit, since the history is so large
+
+      - name: Configure AWS S3 CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.s3-bucket-region }}
+
+      # Building Brave/Chromium requires specific Node & npm versions, and Xcode. For full
+      # details, see: https://github.com/whisthq/brave-browser#readme
+      - name: Log NodeJS, npm and Xcode versions
+        working-directory: brave-browser
+        run: |
+          echo "NodeJS & npm versions:\n"
+          node --version
+          npm --version
+
+          echo "Verify that Xcode is installed and up-to-date:\n"
+          xcode-select --install
+          xcodebuild -version
+
+      - name: Initialize the build environment
+        working-directory: brave-browser
+        run: npm install
+
+      - name: Set target architecture
+        working-directory: brave-browser
+        run: npm config set target_arch x86_64
+
+      - name: Fetch Chromium source & dependencies
+        working-directory: brave-browser
+        run: npm run init
+
+      # TODO: change this to Debug build, and Release for `prod` once we had dev/staging/prod
+      # This may require some Google keys, so I (Phil) need to look into that
+      - name: Build Whist Browser
+        working-directory: brave-browser
+        run: npm run build
+
+      # TODO: change this to Debug build, and Release for `prod` once we had dev/staging/prod
+      # This may require some Google keys, so I (Phil) need to look into that
+      # We'll also need to update the path and name in the next step, once we rename the browser
+      # and change the build type.
+      - name: Build Whist Browser
+        working-directory: brave-browser
+        run: npm run build
+
+      - name: Tar & Upload Whist Browser to AWS S3
+        working-directory: brave-browser/src/out
+        run: |
+          tar -zcvf ${{ env.binary-tar-name }} "Component_arm64/Brave Browser Development.app"
+          aws s3 cp ${{ env.binary-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.binary-tar-name }}
+
+      ###################################################################################
+
+      - name: Checkout whisthq/whist Git Repository
+        if: failure()
+        uses: actions/checkout@v2
+
+      - name: Setup Python-based notifications
+        if: failure()
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
+        if: failure()
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
+          BODY = f"@releases :rotating_light: Failed to deploy Whist Browser (Nightly macOS x86_64) to AWS S3, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
+
+  #######################################################################################
+  #######################################################################################
+
+  # This job compiles the Whist Browser to arm64 from our NYC office M1 Mac Mini self-hosted runner.
+  whist-browser-build-macos-arm64:
+    name: "Nightly: macOS (arm64)"
+    runs-on: [self-hosted, macOS, ARM64]
+    env:
+      binary-tar-name: whist-browser-macos-arm64.tar.gz
+      s3-bucket-uri: s3://whist-browser-macos-arm64.tar.gz
+      s3-bucket-region: us-east-1
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+        with:
+          repository: whisthq/brave-browser
+          ref: main
+          fetch-depth: 1 # Only fetch the latest commit, since the history is so large
+
+      - name: Configure AWS S3 CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.s3-bucket-region }}
+
+      # Building Brave/Chromium requires specific Node & npm versions, and Xcode. For full
+      # details, see: https://github.com/whisthq/brave-browser#readme
+      - name: Log NodeJS, npm and Xcode versions
+        working-directory: brave-browser
+        run: |
+          echo "NodeJS & npm versions:\n"
+          node --version
+          npm --version
+
+          echo "Verify that Xcode is installed and up-to-date:\n"
+          xcode-select --install
+          xcodebuild -version
+
+      - name: Initialize the build environment
+        working-directory: brave-browser
+        run: npm install
+
+      - name: Set target architecture
+        working-directory: brave-browser
+        run: npm config set target_arch x86_64
+
+      - name: Fetch Chromium source & dependencies
+        working-directory: brave-browser
+        run: npm run init
+
+      # TODO: change this to Debug build, and Release for `prod` once we had dev/staging/prod
+      # This may require some Google keys, so I (Phil) need to look into that
+      # We'll also need to update the path and name in the next step, once we rename the browser
+      # and change the build type.
+      - name: Build Whist Browser
+        working-directory: brave-browser
+        run: npm run build
+
+      - name: Tar & Upload Whist Browser to AWS S3
+        working-directory: brave-browser/src/out
+        run: |
+          tar -zcvf ${{ env.binary-tar-name }} "Component_arm64/Brave Browser Development.app"
+          aws s3 cp ${{ env.binary-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.binary-tar-name }}
+
+      ###################################################################################
+
+      - name: Checkout whisthq/whist Git Repository
+        if: failure()
+        uses: actions/checkout@v2
+
+      - name: Setup Python-based notifications
+        if: failure()
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
+        if: failure()
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
+          BODY = f"@releases :rotating_light: Failed to deploy Whist Browser (Nightly macOS arm64) to AWS S3, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
+
+  #######################################################################################
+  #######################################################################################
+
+  notify-slack:
+    name: Notify Slack
+    needs: [whist-browser-build-macos-x86, whist-browser-build-macos-arm64]
+    if: success()
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Setup Python-based notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Notify Slack on Success
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
+          TITLE = ":brave: Whist Chromium Browser (Nightly macOS) Deployed :brave:"
+          BODY = f"Whist Chromium Browser (Nightly macOS) deployed via upload to AWS S3 (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
