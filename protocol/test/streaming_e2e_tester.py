@@ -22,6 +22,7 @@ from e2e_helpers.aws_tools import (
 from e2e_helpers.dev_instance_tools import (
     attempt_ssh_connection,
     wait_until_cmd_done,
+    get_whist_branch_name,
 )
 
 # Get tools to programmatically run Whist components on a remote machine
@@ -39,6 +40,12 @@ from e2e_helpers.whist_remote import (
 from e2e_helpers.remote_exp_tools import (
     extract_server_logs_from_instance,
     extract_client_logs_from_instance,
+)
+
+# Get tools to run commands on local machine
+from e2e_helpers.local_tools import (
+    get_whist_branch_name,
+    get_whist_github_sha,
 )
 
 # add the current directory to the path no matter where this is called from
@@ -279,15 +286,23 @@ if __name__ == "__main__":
     )
     aws_timeout = 1200  # 10 mins is not enough to build the base mandelbox, so we'll go ahead with 20 mins to be safe
     # Create local folder for logs
-    perf_logs_folder_name = time.strftime("%Y_%m_%d@%H-%M-%S")
-    perf_logs_folder_name = "./perf_logs/{}".format(perf_logs_folder_name)
-    command = "mkdir -p {}/server {}/client".format(perf_logs_folder_name, perf_logs_folder_name)
-    local_process = pexpect.spawn(command, timeout=aws_timeout)
-    local_process.expect(["\$", "%", pexpect.EOF])
-    local_process.kill(0)
+    experiment_start_time = time.strftime("%Y_%m_%d@%H-%M-%S")
+    perf_logs_folder_name = os.path.join("perf_logs", experiment_start_time)
+    os.makedirs(os.path.join(perf_logs_folder_name, "server"))
+    os.makedirs(os.path.join(perf_logs_folder_name, "client"))
 
-    server_log_filepath = "{}/server_monitoring_log.txt".format(perf_logs_folder_name)
-    client_log_filepath = "{}/client_monitoring_log.txt".format(perf_logs_folder_name)
+    experiment_metadata = {
+        "start_time": experiment_start_time,
+        "network_conditions": network_conditions,
+        "branch_name": get_whist_branch_name(running_in_ci),
+        "github_sha": get_whist_github_sha(running_in_ci),
+    }
+    metadata_filename = os.path.join(perf_logs_folder_name, "experiment_metadata.json")
+    with open(metadata_filename, "w") as metadata_file:
+        json.dump(experiment_metadata, metadata_file)
+
+    server_log_filepath = os.path.join(perf_logs_folder_name, "server_monitoring_log.txt")
+    client_log_filepath = os.path.join(perf_logs_folder_name, "client_monitoring_log.txt")
 
     manager = multiprocessing.Manager()
     args_dict = manager.dict()
