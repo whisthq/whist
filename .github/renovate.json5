@@ -31,6 +31,11 @@
       groupName: "frontend/website",
     },
     {
+      // smh my head we must nuke this someday
+      matchPaths: ["config/"],
+      groupName: "config",
+    },
+    {
       matchPaths: [".github/workflows"],
       groupName: ".github/workflows",
     },
