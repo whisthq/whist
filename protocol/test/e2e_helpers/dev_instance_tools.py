@@ -7,6 +7,43 @@ import subprocess
 import platform
 
 
+def get_whist_branch_name(running_in_ci):
+    """
+    Retrieve the branch name of the repository to which the folder from which this script is run belongs to.
+    Args:
+        running_in_ci (bool): A boolean indicating whether this script is currently running in CI
+    Returns:
+        On success:
+            branch_name (string): The name of the branch
+        On failure:
+            empty string
+    """
+
+    branch_name = ""
+
+    if running_in_ci:
+        # In CI, the PR branch name is saved in GITHUB_REF_NAME, or in the GITHUB_HEAD_REF environment variable (in case this script is being run as part of a PR)
+        b = os.getenv("GITHUB_REF_NAME").split("/")
+        if len(b) != 2 or not b[0].isnumeric() or b[1] != "merge":
+            branch_name = os.getenv("GITHUB_REF_NAME")
+        else:
+            branch_name = os.getenv("GITHUB_HEAD_REF")
+    else:
+        # Locally, we can find the branch using the 'git branch' command.
+        # WARNING: this command will fail on detached HEADS.
+
+        subproc_handle = subprocess.Popen("git branch", shell=True, stdout=subprocess.PIPE)
+        subprocess_stdout = subproc_handle.stdout.readlines()
+
+        for line in subprocess_stdout:
+            converted_line = line.decode("utf-8").strip()
+            if "*" in converted_line:
+                branch_name = converted_line[2:]
+                break
+
+    return branch_name
+
+
 def attempt_ssh_connection(
     ssh_command, timeout_value, log_file_handle, pexpect_prompt, max_retries
 ):
@@ -224,27 +261,7 @@ def clone_whist_repository_on_instance(
     Returns:
         None
     """
-    branch_name = ""
-
-    if running_in_ci:
-        # In CI, the PR branch name is saved in GITHUB_REF_NAME, or in the GITHUB_HEAD_REF environment variable (in case this script is being run as part of a PR)
-        b = os.getenv("GITHUB_REF_NAME").split("/")
-        if len(b) != 2 or not b[0].isnumeric() or b[1] != "merge":
-            branch_name = os.getenv("GITHUB_REF_NAME")
-        else:
-            branch_name = os.getenv("GITHUB_HEAD_REF")
-    else:
-        # Locally, we can find the branch using the 'git branch' command.
-        # WARNING: this command will fail on detached HEADS.
-
-        subproc_handle = subprocess.Popen("git branch", shell=True, stdout=subprocess.PIPE)
-        subprocess_stdout = subproc_handle.stdout.readlines()
-
-        for line in subprocess_stdout:
-            converted_line = line.decode("utf-8").strip()
-            if "*" in converted_line:
-                branch_name = converted_line[2:]
-                break
+    branch_name = get_whist_branch_name(running_in_ci)
 
     print(
         "Cloning branch {} of the whisthq/whist repository on the AWS instance ...".format(
