@@ -79,6 +79,7 @@ RUN apt-get update \
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     libdbus-1-dev \
     libevent-dev \
+    libevent-pthreads-2.1-7 \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
