@@ -8,7 +8,7 @@ const outDir = path.join(__dirname, "..", "build", "src")
 
 module.exports = {
   entry: {
-    worker: path.join(srcDir, "index.ts"),
+    worker: path.join(srcDir, "worker", "index.ts"),
     newtab: path.join(srcDir, "newtab", "index.tsx"),
   },
   output: {
