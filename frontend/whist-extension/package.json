@@ -22,12 +22,9 @@
   },
   "scripts": {
     "watch": "webpack --config webpack/webpack.dev.js --watch",
-    "build:dev": "node ./scripts/build.js dev",
-    "build:staging": "node ./scripts/build.js staging",
-    "build:prod": "node ./scripts/build.js prod",
+    "build": "node ./scripts/build.js",
     "format": "prettier --write .",
-    "format-check": "prettier --check ,",
-    "postinstall": "node ./scripts/postinstall.js"
+    "format-check": "prettier --check ,"
   },
   "dependencies": {}
 }

@@ -5,7 +5,7 @@
   "description": "Whist extension to create cloud tabs",
   "icons": {},
   "background": {
-    "service_worker": "js/index.js"
+    "service_worker": "src/index.js"
   },
   "permissions": ["tabs", "runtime"],
   "host_permissions": ["*://*/*"]
