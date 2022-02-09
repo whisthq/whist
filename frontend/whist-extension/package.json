@@ -24,7 +24,8 @@
     "watch": "webpack --config webpack/webpack.dev.js --watch",
     "build": "node ./scripts/build.js",
     "format": "prettier --write .",
-    "format-check": "prettier --check ,"
+    "format-check": "prettier --check ,",
+    "postinstall": "node ./scripts/postinstall.js"
   },
   "dependencies": {}
 }

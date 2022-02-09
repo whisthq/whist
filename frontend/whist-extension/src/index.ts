@@ -1,1 +1,3 @@
-import config from "public/config.json"
+import config from "./config.json"
+
+console.log("Config is", config)

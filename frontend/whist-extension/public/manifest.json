@@ -7,6 +7,6 @@
   "background": {
     "service_worker": "src/index.js"
   },
-  "permissions": ["tabs", "runtime"],
+  "permissions": ["tabs"],
   "host_permissions": ["*://*/*"]
 }
