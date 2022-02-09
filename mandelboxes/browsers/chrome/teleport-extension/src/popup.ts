@@ -1,3 +1,4 @@
+// Set up pop upload button to trigger a whist file upload event
 const initUploadHandler = () => {
   let uploadFileButton = document.getElementById("uploadFileButton");
 
@@ -6,6 +7,7 @@ const initUploadHandler = () => {
     return;
   }
 
+  // When clicked notify the service worker to trigger a host application message
   uploadFileButton.addEventListener("click", () => {
     chrome.runtime.sendMessage('file-upload-trigger', (response) => {});
   });

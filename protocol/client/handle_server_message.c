@@ -272,7 +272,23 @@ static int handle_notification_message(WhistServerMessage *wsmsg, size_t wsmsg_s
 }
 
 static int handle_upload_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
-    LOG_INFO("Received upload message, presenting file picker");
+    /*
+        Handle initiate upload trigger message from server.
+        The macOS filepicker must be called from the main thread and this function does
+        not run on the main thread. This is why we use the global variable upload_initiated
+        which is monitored in the main thread in whist_client.c (instead of just handling
+        the upload here). When upload_initiated is true the main thread initiates a file
+        dialog and the corresponding transfer.
+
+        Arguments:
+            wsmsg (WhistServerMessage*): server clipboard message
+            wsmsg_size (size_t): size of the packet message contents
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
     upload_initiated = true;
+    LOG_INFO("Received upload trigger from server");
     return 0;
 }

@@ -1,5 +1,4 @@
 #include <Foundation/Foundation.h>
-#include <AppKit/AppKit.h>
 #include "file_download.h"
 
 void whist_file_download_notify_finished(const char* file_path) {
@@ -8,4 +7,3 @@ void whist_file_download_notify_finished(const char* file_path) {
         postNotificationName:@"com.apple.DownloadFileFinished"
                       object:[NSString stringWithUTF8String:file_path]];
 }
-

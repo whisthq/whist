@@ -2,30 +2,32 @@
 #include <Foundation/Foundation.h>
 #include "file_upload.h"
 
-const char *whist_file_upload_get_picked_file(void) {
+const char* whist_file_upload_get_picked_file(void) {
+    // Focus dialog window
     [NSApp activateIgnoringOtherApps:YES];
 
-    NSOpenPanel *openPanel = [NSOpenPanel openPanel];
-    [openPanel setLevel:NSFloatingWindowLevel];
-    [openPanel setAllowsMultipleSelection:NO];
-    [openPanel setCanChooseFiles:YES];
-    [openPanel setCanChooseDirectories:NO];
-    [openPanel setCanCreateDirectories:NO];
-    [openPanel setMessage:@"Upload File to Whist"];
-    [openPanel setPrompt:@"Upload"];
+    // Open file dialog window with options
+    NSOpenPanel* open_panel = [NSOpenPanel openPanel];
+    [open_panel setLevel:NSFloatingWindowLevel];
+    [open_panel setAllowsMultipleSelection:NO];
+    [open_panel setCanChooseFiles:YES];
+    [open_panel setCanChooseDirectories:NO];
+    [open_panel setCanCreateDirectories:NO];
+    [open_panel setMessage:@"Upload File to Whist"];
+    [open_panel setPrompt:@"Upload"];
 
-    NSString* fileName = nil;
-    if ([openPanel runModal] == NSModalResponseOK) {
-        for( NSURL* URL in [openPanel URLs])
-        {
-            fileName = [URL path];
+    // Choose last entry from url list after panel action
+    NSString* file_name = nil;
+    if ([open_panel runModal] == NSModalResponseOK) {
+        for (NSURL* url in [open_panel URLs]) {
+            file_name = [url path];
         }
     }
 
-    [openPanel close];
+    [open_panel close];
 
-    if (fileName) {
-        return [fileName UTF8String];
+    if (file_name) {
+        return [file_name UTF8String];
     }
 
     return NULL;

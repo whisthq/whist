@@ -1,5 +1,7 @@
+#include <stddef.h>
 #include "file_upload.h"
 
-void whist_file_upload_get_picked_file() {
-    // File upload not implemented on Windows/X11 yet.
+const char *whist_file_upload_get_picked_file() {
+    // File upload has not implemented on Windows/X11 yet.
+    return NULL;
 }

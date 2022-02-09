@@ -101,9 +101,8 @@ static int try_amount;
 
 extern volatile char* new_tab_url;
 
-// See if we need to call filepicker from main thread
+// Used to check if we need to call filepicker from main thread
 extern bool upload_initiated;
-
 
 // Defines
 #define APP_PATH_MAXLEN 1023
@@ -251,12 +250,15 @@ static void handle_single_icon_launch_client_app(int argc, char* argv[]) {
     // END OF CHECKING IF IN PROD MODE AND TRYING TO LAUNCH CLIENT APP IF NO ARGS
 }
 
-static void initiate_file_upload() {
+static void initiate_file_upload(void) {
+    /*
+        Pull up system file dialog and set selection as transfering file
+    */
+
     const char* ns_picked_file_path = whist_file_upload_get_picked_file();
-    if(ns_picked_file_path) {
-        // TODO: fix this copy mutability issue with NSString
-        char* picked_file_path = strdup(ns_picked_file_path);
-        file_synchronizer_set_file_reading_basic_metadata(picked_file_path, FILE_TRANSFER_SERVER_UPLOAD, NULL);
+    if (ns_picked_file_path) {
+        file_synchronizer_set_file_reading_basic_metadata(ns_picked_file_path,
+                                                          FILE_TRANSFER_SERVER_UPLOAD, NULL);
         LOG_INFO("Upload has been initiated");
     } else {
         LOG_INFO("No file selected");
@@ -511,9 +513,8 @@ int whist_client_main(int argc, char* argv[]) {
                 whist_usleep(0.25 * US_IN_MS);
             }
 
-
-            // Check if file picker has been prompted and send the resulting message
-            if(upload_initiated) {
+            // Check if file upload has been initiated and initiated selection dialog if so
+            if (upload_initiated) {
                 initiate_file_upload();
             }
         }

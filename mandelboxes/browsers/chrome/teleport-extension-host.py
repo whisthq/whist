@@ -19,7 +19,7 @@ while True:
 
     trigger_upload = message.get("fileUploadTrigger", False)
     trigger_download = message.get("downloadStatus", None)
-    file_name = message.get("filename", "unamed_file")
+    file_name = message.get("filename", "unnamed_file")
 
     if trigger_upload:
         trigger_file_path = FILE_UPLOAD_TRIGGER_PATH
@@ -32,4 +32,3 @@ while True:
             time.sleep(0.1)
         with open(trigger_file_path, "w") as file:
             file.write(file_contents)
-

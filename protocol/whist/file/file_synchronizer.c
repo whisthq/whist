@@ -330,7 +330,7 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
     return true;
 }
 
-void file_synchronizer_set_file_reading_basic_metadata(char* file_path,
+void file_synchronizer_set_file_reading_basic_metadata(const char* file_path,
                                                        FileTransferType transfer_type,
                                                        FileEventInfo* event_info) {
     /*
