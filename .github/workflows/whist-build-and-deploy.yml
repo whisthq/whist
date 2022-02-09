@@ -413,7 +413,7 @@ jobs:
         run: ./notifications/setup_notifications.sh
 
       - name: Install Node.js 16
-        uses: actions/setup-node@v2.5.0
+        uses: actions/setup-node@v2.5.1
         with:
           node-version: "16"
 
@@ -492,7 +492,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Set up Python 3.10.0
-        uses: actions/setup-python@v2.3.0
+        uses: actions/setup-python@v2.3.2
         with:
           python-version: "3.10.0"
 
@@ -547,7 +547,7 @@ jobs:
       ########################### Stage 2 - Build Backend Services #############################
 
       - name: Setup Go environment
-        uses: actions/setup-go@v2.1.3
+        uses: actions/setup-go@v2.2.0
         with:
           go-version: "1.17"
 
@@ -1032,7 +1032,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install Node.js 16
-        uses: actions/setup-node@v2.5.0
+        uses: actions/setup-node@v2.5.1
         with:
           node-version: "16"
 
@@ -1178,7 +1178,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install Node.js 16
-        uses: actions/setup-node@v2.5.0
+        uses: actions/setup-node@v2.5.1
         with:
           node-version: "16"
           architecture: "arm64"
@@ -1394,7 +1394,7 @@ jobs:
           EOF
 
       - name: Setup Go environment
-        uses: actions/setup-go@v2.1.3
+        uses: actions/setup-go@v2.2.0
         with:
           go-version: "1.17"
 
