@@ -27,9 +27,7 @@
       groupName: "frontend/website",
     },
     {
-      matchPaths: [
-
-      ]
-    }
+      matchPaths: [],
+    },
   ],
 }
