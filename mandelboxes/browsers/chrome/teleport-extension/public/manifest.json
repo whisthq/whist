@@ -11,6 +11,18 @@
   "permissions": ["downloads", "downloads.shelf", "nativeMessaging", "tabs"],
   "host_permissions": ["*://*/*"],
   "action": {
-    "default_popup": "templates/popup.html"
+    "default_popup": "templates/popup.html",
+    "default_icon": {
+      "16": "/icons/whist_logo_16.png",
+      "32": "/icons/whist_logo_32.png",
+      "48": "/icons/whist_logo_48.png",
+      "128": "/icons/whist_logo_128.png"
+    }
+  },
+  "icons": {
+      "16": "/icons/whist_logo_16.png",
+      "32": "/icons/whist_logo_32.png",
+      "48": "/icons/whist_logo_48.png",
+      "128": "/icons/whist_logo_128.png"
   }
 }
