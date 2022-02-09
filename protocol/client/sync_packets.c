@@ -71,25 +71,35 @@ static int multithreaded_sync_udp_packets(void* opaque) {
     udp_register_ring_buffer(udp_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE, 256);
 
     WhistPacket* last_whist_packet[NUM_PACKET_TYPES] = {0};
+
+    WhistTimer last_recvp_timer;
+    start_timer(&last_recvp_timer);
     while (run_sync_packets_threads) {
         // Update the renderer
         renderer_update(whist_renderer);
         // Update the UDP socket
         start_timer(&statistics_timer);
+        double last_recvp = get_timer(&last_recvp_timer);
+        if (connected && last_recvp * MS_IN_SECOND > 0.2) {
+            LOG_WARNING("UDP recvp() loop took a long time: %fms", last_recvp * MS_IN_SECOND);
+        }
         // Disconnect if the UDP connection was lost
         if (!socket_update(udp_context)) {
-            LOG_WARNING("UDP Connection Lost!");
             for (int i = 0; i < NUM_PACKET_TYPES; i++) {
                 if (last_whist_packet[i] != NULL) {
                     free_packet(udp_context, last_whist_packet[i]);
                 }
             }
             // TODO: Remove global
-            connected = false;
+            if (connected) {
+                LOG_WARNING("UDP Connection Lost!");
+                connected = false;
+            }
             whist_sleep(1);
             continue;
         }
         log_double_statistic(NETWORK_READ_PACKET_UDP, get_timer(&statistics_timer) * MS_IN_SECOND);
+        start_timer(&last_recvp_timer);
 
         // Handle any messages we've received
         WhistPacket* message_packet = (WhistPacket*)get_packet(udp_context, PACKET_MESSAGE);
