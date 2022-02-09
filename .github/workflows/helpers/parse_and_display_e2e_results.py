@@ -306,6 +306,7 @@ def download_latest_logs(branch_name, before_date):
     os.makedirs(os.path.join(".", branch_name, "server"))
     compared_client_log_path = os.path.join(".", branch_name, "client", "client.log")
     compared_server_log_path = os.path.join(".", branch_name, "server", "server.log")
+    exp_meta_path = os.path.join(".", branch_name, "experiment_metadata.json")
 
     local_timezone = int(time.timezone / 3600.0)
     before_date = before_date + timedelta(hours=local_timezone)
@@ -333,6 +334,8 @@ def download_latest_logs(branch_name, before_date):
                 bucket.download_file(obj.key, compared_client_log_path)
             elif "server.log" in obj.key:
                 bucket.download_file(obj.key, compared_server_log_path)
+            elif "experiment_metadata.json" in obj.key:
+                bucket.download_file(obj.key, exp_meta_path)
 
         # Check if logs are sane, if so stop
         if not logs_contain_errors(os.path.join(".", branch_name)):
