@@ -1,4 +1,0 @@
-{
-  "labels": ["dependencies"],
-  "extends": ["group:monorepos", "group:recommended"]
-}

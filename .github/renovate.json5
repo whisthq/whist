@@ -1,0 +1,35 @@
+{
+  labels: ["dependencies"],
+  extends: ["group:monorepos", "group:recommended"],
+  packageRules: [
+    {
+      matchPaths: ["backend/services/"],
+      groupName: "backend/services",
+    },
+    {
+      matchPaths: ["backend/webserver/"],
+      groupName: "backend/webserver",
+    },
+    {
+      matchPaths: ["mandelboxes/"],
+      groupName: "mandelboxes",
+    },
+    {
+      matchPaths: ["frontend/client-applications/"],
+      groupName: "frontend/client-applications",
+    },
+    {
+      matchPaths: ["frontend/core-ts/"],
+      groupName: "frontend/core-ts",
+    },
+    {
+      matchPaths: ["frontend/website/"],
+      groupName: "frontend/website",
+    },
+    {
+      matchPaths: [
+
+      ]
+    }
+  ],
+}
