@@ -450,8 +450,8 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
     // this nacks for missing packets
     // and sends stream reset requests if needed
 #define STREAM_RESET_REQUEST_INTERVAL_MS 5.0
-#define MAX_UNSYNCED_FRAMES 4
-#define MAX_ACCEPTABLE_STALENESS_MS 100.0
+#define MAX_UNSYNCED_FRAMES 6
+#define MAX_ACCEPTABLE_STALENESS_MS 150.0
     // Try to nack for any missing packets
     bool nacking_succeeded = try_nacking(ring_buffer, latency);
 
