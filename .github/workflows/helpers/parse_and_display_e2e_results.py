@@ -345,9 +345,9 @@ def parse_metadata(folder_name):
     metadata_filename = os.path.join(folder_name, "experiment_metadata.json")
     experiment_metadata = None
     if not os.path.isfile(metadata_filename):
-        print("Could not get metadata for folder {}".format(folder_name))
+        print("Metadata file {} does not exist".format(metadata_filename))
     else:
-        with open(metadata_filename, "w") as metadata_file:
+        with open(metadata_filename, "r") as metadata_file:
             experiment_metadata = json.load(metadata_file)
     return experiment_metadata
 
@@ -746,18 +746,27 @@ if __name__ == "__main__":
     # Create output .info file
     results_file = open("streaming_e2e_test_results.info", "w+")
 
+    experiment_metadata = parse_metadata(logs_root_dir)
+
     # Generate the report
     if compared_branch_name == "":
         generate_no_comparison_table(
-            results_file, most_interesting_metrics, client_metrics2, server_metrics2
+            results_file,
+            experiment_metadata,
+            most_interesting_metrics,
+            client_metrics2,
+            server_metrics2,
         )
     else:
         client_table_entries, server_table_entries = compute_deltas(
             client_metrics2, server_metrics2, compared_client_metrics2, compared_server_metrics2
         )
+        compared_experiment_metadata = parse_metadata(os.path.join(".", compared_branch_name))
         generate_comparison_table(
             results_file,
             most_interesting_metrics,
+            experiment_metadata,
+            compared_experiment_metadata,
             client_metrics2,
             server_metrics2,
             client_table_entries,
