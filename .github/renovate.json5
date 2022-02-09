@@ -1,6 +1,6 @@
 {
   labels: ["dependencies"],
-  extends: ["group:monorepos", "group:recommended"],
+  // We target various path prefixes to group those PRs together
   packageRules: [
     {
       matchPaths: ["backend/services/"],
@@ -9,6 +9,10 @@
     {
       matchPaths: ["backend/webserver/"],
       groupName: "backend/webserver",
+    },
+    {
+      matchPaths: ["backend/microservices/auth0/"],
+      groupName: "backend/microservices/auth0",
     },
     {
       matchPaths: ["mandelboxes/"],
@@ -27,7 +31,24 @@
       groupName: "frontend/website",
     },
     {
-      matchPaths: [],
+      matchPaths: [".github/workflows"],
+      groupName: ".github/workflows",
+    },
+    {
+      matchPaths: [".github/actions/db-migration"],
+      groupName: ".github/actions/db-migration",
+    },
+    {
+      matchPaths: [".github/actions/generate-auth0-token"],
+      groupName: ".github/actions/generate-auth0-token",
+    },
+    {
+      matchPaths: [".github/actions/monorepo-config"],
+      groupName: ".github/actions/monorepo-config",
+    },
+    {
+      matchPaths: [".github/actions/set-environment"],
+      groupName: ".github/actions/set-environment",
     },
   ],
 }
