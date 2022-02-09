@@ -31,7 +31,7 @@ func TestUserInitialBrowserWrite(t *testing.T) {
 	// Create browser data
 	userInitialBrowserData := BrowserData{
 		CookiesJSON: types.Cookies(cookiesJSON),
-		Bookmarks:   configutils.Bookmarks{},
+		Bookmarks:   &configutils.Bookmarks{},
 		Extensions:  types.Extensions(extensions),
 	}
 
