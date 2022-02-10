@@ -183,7 +183,10 @@ def configure_aws_credentials(
         running_in_ci (bool): A boolean indicating whether this script is currently running in CI
         aws_credentials_filepath(str): The path to the file where AWS stores the credentials on the machine where this script is run
     Returns:
-        None
+        On success:
+            0
+        On failure:
+            -1 on fatal error, -2 on error that will likely be gone if we retry
     """
 
     aws_access_key_id = ""
@@ -194,7 +197,7 @@ def configure_aws_credentials(
         aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
         aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
         if aws_access_key_id == None or aws_secret_access_key == None:
-            return
+            return -1
     else:
         aws_credentials_filepath_expanded = os.path.expanduser(aws_credentials_filepath)
 
@@ -204,7 +207,7 @@ def configure_aws_credentials(
                     aws_credentials_filepath
                 )
             )
-            return
+            return -1
         aws_credentials_file = open(aws_credentials_filepath_expanded, "r")
         for line in aws_credentials_file.readlines():
             if "aws_access_key_id" in line:
@@ -219,7 +222,7 @@ def configure_aws_credentials(
                     aws_credentials_filepath
                 )
             )
-            return
+            return -1
 
     pexpect_process.sendline("sudo apt-get update")
     result = pexpect_process.expect(["Do you want to continue?", pexpect_prompt])
@@ -228,13 +231,22 @@ def configure_aws_credentials(
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
     elif not running_in_ci:
         pexpect_process.expect(pexpect_prompt)
-    pexpect_process.sendline("sudo apt-get install awscli")
-    result = pexpect_process.expect(["Do you want to continue?", pexpect_prompt])
-    if result == 0:
-        pexpect_process.sendline("Y")
-        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
-    elif not running_in_ci:
-        pexpect_process.expect(pexpect_prompt)
+
+    # Download and install AWS cli manually to avoid frequent apt install outages
+    # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+    pexpect_process.sendline(
+        "curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip"
+    )
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    pexpect_process.sendline("sudo apt install -y unzip")
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    pexpect_process.sendline("unzip awscliv2.zip")
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    pexpect_process.sendline("rm awscliv2.zip")
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    pexpect_process.sendline("sudo ./aws/install")
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
     pexpect_process.sendline("aws configure")
     pexpect_process.expect("AWS Access Key ID")
     pexpect_process.sendline(aws_access_key_id)
@@ -245,6 +257,8 @@ def configure_aws_credentials(
     pexpect_process.expect("Default output format")
     pexpect_process.sendline("")
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
+    return 0
 
 
 def clone_whist_repository_on_instance(

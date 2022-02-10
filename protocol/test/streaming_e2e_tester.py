@@ -293,7 +293,7 @@ if __name__ == "__main__":
 
     experiment_metadata = {
         "start_time": experiment_start_time + " local time"
-        if running_in_ci
+        if not running_in_ci
         else experiment_start_time + " UTC",
         "network_conditions": network_conditions,
         "using_two_instances": use_two_instances,
