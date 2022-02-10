@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import os
-from aws_tools import terminate_or_stop_aws_instance
-from aws_tools import get_boto3client
+from e2e_helpers.aws_tools import terminate_or_stop_aws_instance
+from e2e_helpers.aws_tools import get_boto3client
 
 filepath = os.path.join("instances_to_clean.txt")
 
