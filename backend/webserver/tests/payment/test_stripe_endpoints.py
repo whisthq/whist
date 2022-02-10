@@ -14,7 +14,7 @@ from tests.client import WhistAPITestClient
 
 
 @pytest.mark.parametrize("subscription_status", (None, "canceled", "incomplete_expired", "unpaid"))
-def test_payment_portal_no_subscription(
+def test_create_checkout_session(
     client: WhistAPITestClient,
     make_user: Callable[[], str],
     monkeypatch: MonkeyPatch,
@@ -26,19 +26,26 @@ def test_payment_portal_no_subscription(
     url = f"http://localhost/{os.urandom(8).hex()}"
     user = make_user()
 
-    monkeypatch.setattr(stripe.Subscription, "list", function(raises=KeyError))
     monkeypatch.setattr(checkout_session, "url", url)
     monkeypatch.setattr(
-        "app.utils.stripe.payments.get_subscription_status", function(returns=subscription_status)
+        stripe.Subscription, "list", function(returns={"data": [{"status": subscription_status}]})
     )
-    monkeypatch.setattr(stripe.billing_portal.Session, "create", function(raises=Exception))
+    monkeypatch.setattr(
+        "app.utils.stripe.payments.get_subscription_status",
+        function(raises=Exception("This function should not have been called")),
+    )
+    monkeypatch.setattr(
+        stripe.billing_portal.Session,
+        "create",
+        function(raises=Exception("Should have created a checkout session for new customer")),
+    )
     monkeypatch.setattr(stripe.checkout.Session, "create", function(returns=checkout_session))
     client.login(
         user,
         admin=False,
         **{
             current_app.config["STRIPE_CUSTOMER_ID_CLAIM"]: "cus_test",
-            current_app.config["STRIPE_SUBSCRIPTION_STATUS_CLAIM"]: subscription_status,
+            current_app.config["STRIPE_SUBSCRIPTION_STATUS_CLAIM"]: None,
         },
     )
 
@@ -49,7 +56,7 @@ def test_payment_portal_no_subscription(
 
 
 @pytest.mark.parametrize("subscription_status", ("active", "past_due", "incomplete", "trialing"))
-def test_create_billing_portal_unauthorized(
+def test_create_billing_portal_session(
     client: WhistAPITestClient,
     make_user: Callable[..., str],
     monkeypatch: MonkeyPatch,
@@ -61,13 +68,22 @@ def test_create_billing_portal_unauthorized(
     url = f"http://localhost/{os.urandom(8).hex()}"
     user = make_user()
 
-    monkeypatch.setattr(stripe.Subscription, "list", function(raises=KeyError))
     monkeypatch.setattr(portal_session, "url", url)
     monkeypatch.setattr(
-        "app.utils.stripe.payments.get_subscription_status", function(returns=subscription_status)
+        stripe.Subscription, "list", function(returns={"data": [{"status": subscription_status}]})
+    )
+    monkeypatch.setattr(
+        "app.utils.stripe.payments.get_subscription_status",
+        function(raises=Exception("This function should not have been called")),
     )
     monkeypatch.setattr(stripe.billing_portal.Session, "create", function(returns=portal_session))
-    monkeypatch.setattr(stripe.checkout.Session, "create", function(raises=Exception))
+    monkeypatch.setattr(
+        stripe.checkout.Session,
+        "create",
+        function(
+            raises=Exception("Should have created a billing portal session for existing customer")
+        ),
+    )
     client.login(
         user,
         admin=False,
@@ -81,3 +97,29 @@ def test_create_billing_portal_unauthorized(
 
     assert response.status_code == HTTPStatus.OK
     assert response.json == {"url": url}
+
+
+def test_missing_customer_record(client, make_user, monkeypatch):  # type: ignore[no-untyped-def]
+    """Ensure that the server returns a descriptive error when it can't find a customer record."""
+
+    user = make_user()
+
+    monkeypatch.setattr(
+        stripe.Subscription,
+        "list",
+        function(raises=stripe.error.InvalidRequestError("No such customer", "id")),
+    )
+
+    client.login(
+        user,
+        admin=False,
+        **{
+            current_app.config["STRIPE_CUSTOMER_ID_CLAIM"]: "cus_test",
+            current_app.config["STRIPE_SUBSCRIPTION_STATUS_CLAIM"]: "active",
+        },
+    )
+
+    response = client.get("/payment_portal_url")
+
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert "error" in response.json

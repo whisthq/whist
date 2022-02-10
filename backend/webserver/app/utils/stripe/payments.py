@@ -33,7 +33,9 @@ Example usage::
 """
 
 import functools
-from typing import Any, Callable, Optional
+import logging
+from http import HTTPStatus
+from typing import Any, Callable, cast, Optional
 from time import time
 
 import stripe
@@ -41,6 +43,8 @@ from flask import current_app, jsonify
 from flask_jwt_extended import get_jwt, verify_jwt_in_request
 
 from app.utils.auth.auth0 import has_scope
+
+logger = logging.getLogger(__name__)
 
 
 class PaymentRequired(Exception):
@@ -106,35 +110,41 @@ def payment_portal_factory(customer_id: Callable[[], Optional[str]]) -> Callable
         # wrong.
         assert customer
 
-        if get_stripe_subscription_status(customer) in (
-            None,
-            "canceled",
-            "incomplete_expired",
-            "unpaid",
-        ):
-            # Any subscriptions that the user might have had are now in terminal states (e.g.
-            # "canceled", "unpaid", or "incomplete_expired") and cannot be renewed. Create a
-            # checkout session so the user can enroll in a new subscription.
-            session = stripe.checkout.Session.create(
-                customer=customer,
-                line_items=[
-                    {
-                        "price": current_app.config["STRIPE_PRICE_ID"],
-                        "quantity": 1,
-                    },
-                ],
-                payment_method_types=("card",),
-                success_url="http://localhost/callback/payment?success=true",
-                cancel_url="http://localhost/callback/payment?success=false",
-                mode="subscription",
-            )
-        else:
-            # The user has a subscription in a non-terminal state (e.g. "active", "trialing", or
-            # "incomplete"). Create a customer portal session so the user can update their billing
-            # and subscription information.
-            session = stripe.billing_portal.Session.create(
-                customer=customer,
-                return_url="http://localhost/callback/payment",
+        subscription_status = get_stripe_subscription_status(customer)
+
+        try:
+            if subscription_status in (None, "canceled", "incomplete_expired", "unpaid"):
+                # Any subscriptions that the user might have had are now in terminal states (e.g.
+                # "canceled", "unpaid", or "incomplete_expired") and cannot be renewed. Create a
+                # checkout session so the user can enroll in a new subscription.
+                session = stripe.checkout.Session.create(
+                    customer=customer,
+                    line_items=[
+                        {
+                            "price": current_app.config["STRIPE_PRICE_ID"],
+                            "quantity": 1,
+                        },
+                    ],
+                    payment_method_types=("card",),
+                    success_url="http://localhost/callback/payment?success=true",
+                    cancel_url="http://localhost/callback/payment?success=false",
+                    mode="subscription",
+                )
+            else:
+                # The user has a subscription in a non-terminal state (e.g. "active", "trialing", or
+                # "incomplete"). Create a customer portal session so the user can update their billing
+                # and subscription information.
+                session = stripe.billing_portal.Session.create(
+                    customer=customer,
+                    return_url="http://localhost/callback/payment",
+                )
+        except stripe.error.InvalidRequestError as e:
+            logger.error(e)
+            logger.error(f"Stripe returned an error. Does customer {customer} exist?")
+
+            return (
+                jsonify(error="Unable to locate your customer record"),
+                HTTPStatus.INTERNAL_SERVER_ERROR,
             )
 
         return jsonify(url=session.url)
@@ -155,7 +165,7 @@ def get_customer_id() -> Optional[str]:
     )
 
 
-def get_stripe_subscription_status(customer_id: Optional[str]) -> Optional[str]:
+def get_stripe_subscription_status(customer_id: str) -> Optional[str]:
     """Attempt to get subscription status from stripe but fallback to access token
 
     Returns:
@@ -164,13 +174,21 @@ def get_stripe_subscription_status(customer_id: Optional[str]) -> Optional[str]:
         non-cancelled subscriptions or the subscription status claim is missing. See
         https://stripe.com/docs/api/subscriptions/object#subscription_object-status.
     """
+
     try:
         customer = stripe.Subscription.list(
             customer=customer_id, current_period_end={"gt": int(time())}
         )
-        return str(customer["data"][0]["status"])
-    except:
-        return get_subscription_status()
+
+        # Cast to Optional[str] to please mypy.
+        return cast(Optional[str], customer["data"][0]["status"])
+    except stripe.error.InvalidRequestError as e:
+        logger.error(e)
+    except IndexError:
+        logger.warning("Stripe reports no current subscriptions for customer {customer_id}")
+
+    # Fall back to reading customer's subscription status from their access token.
+    return get_subscription_status()
 
 
 def get_subscription_status() -> Optional[str]:

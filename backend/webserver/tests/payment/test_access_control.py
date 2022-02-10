@@ -69,15 +69,31 @@ def test_get_missing_subscription_status() -> None:
 
 
 def test_get_no_subscription_status_stripe(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Return None from get_subscription_status() if the subscription status claim is omitted."""
+    """Ensure that get_stripe_subscription_status() returns None when no customer can be found."""
 
-    monkeypatch.setattr(stripe.Subscription, "list", function(raises=KeyError))
+    monkeypatch.setattr(
+        stripe.Subscription,
+        "list",
+        function(raises=stripe.error.InvalidRequestError("No such customer", "id")),
+    )
 
     token = create_access_token("test")
 
     with current_app.test_request_context(headers={"Authorization": f"Bearer {token}"}):
         verify_jwt_in_request()
         assert get_stripe_subscription_status("DNE") is None
+
+
+def test_no_active_subscriptions(monkeypatch):  # type: ignore[no-untyped-def]
+    """Ensure that get_stripe_subscription_status() returns None for no active subscriptions."""
+
+    monkeypatch.setattr(stripe.Subscription, "list", function(returns={"data": []}))
+
+    token = create_access_token("test")
+
+    with current_app.test_request_context(headers={"Authorization": f"Bearer {token}"}):
+        verify_jwt_in_request()
+        assert get_stripe_subscription_status("cus_test") is None
 
 
 def test_get_customer_id() -> None:
