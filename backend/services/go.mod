@@ -17,21 +17,21 @@ require (
 	github.com/docker/go-units v0.4.0
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/getsentry/sentry-go v0.12.0
-	github.com/go-co-op/gocron v1.11.0
-	github.com/golang-jwt/jwt/v4 v4.2.0
+	github.com/go-co-op/gocron v1.12.0
+	github.com/golang-jwt/jwt/v4 v4.3.0
 	github.com/google/go-cmp v0.5.7
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.4.2
-	github.com/hasura/go-graphql-client v0.6.2
-	github.com/jackc/pgconn v1.10.1
-	github.com/jackc/pgtype v1.9.1
-	github.com/jackc/pgx/v4 v4.14.1
+	github.com/hasura/go-graphql-client v0.6.3
+	github.com/jackc/pgconn v1.11.0
+	github.com/jackc/pgtype v1.10.0
+	github.com/jackc/pgx/v4 v4.15.0
 	github.com/lithammer/shortuuid/v3 v3.0.7
 	github.com/logzio/logzio-go v1.0.3
 	github.com/opencontainers/image-spec v1.0.2
-	github.com/pierrec/lz4/v4 v4.1.12
-	github.com/shirou/gopsutil v3.21.11+incompatible
-	golang.org/x/crypto v0.0.0-20220112180741-5e0467b6c7ce
+	github.com/pierrec/lz4/v4 v4.1.14
+	github.com/shirou/gopsutil v3.22.1+incompatible
+	golang.org/x/crypto f4118a5b28e2
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 )
 
