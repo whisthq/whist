@@ -2,8 +2,6 @@ import React from "react"
 import {
   FaLinkedinIn,
   FaTwitter,
-  FaInstagram,
-  FaMediumM,
   FaDiscord,
 } from "react-icons/fa"
 
@@ -41,11 +39,6 @@ const navigation = {
       icon: FaDiscord,
     },
     {
-      name: "Medium",
-      href: "https://whisthq.medium.com/",
-      icon: FaMediumM,
-    },
-    {
       name: "Twitter",
       href: "https://twitter.com/whisthq",
       icon: FaTwitter,
@@ -54,11 +47,6 @@ const navigation = {
       name: "LinkedIn",
       href: "https://www.linkedin.com/company/whisthq/",
       icon: FaLinkedinIn,
-    },
-    {
-      name: "Instagram",
-      href: "https://www.instagram.com/whisthq/",
-      icon: FaInstagram,
     },
   ],
 }
