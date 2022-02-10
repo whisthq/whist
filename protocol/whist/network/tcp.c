@@ -814,14 +814,14 @@ SOCKET socketp_tcp(void) {
 #ifdef SOCK_CLOEXEC
     // Create socket
     SOCKET sock_fd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
-    if (sock_fd <= 0) {
+    if (sock_fd == INVALID_SOCKET) {
         LOG_WARNING("Could not create socket %d\n", get_last_network_error());
         return INVALID_SOCKET;
     }
 #else
     // Create socket
     SOCKET sock_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (sock_fd <= 0) {  // Windows & Unix cases
+    if (sock_fd == INVALID_SOCKET) {  // Windows & Unix cases
         LOG_WARNING("Could not create socket %d\n", get_last_network_error());
         return INVALID_SOCKET;
     }
@@ -845,7 +845,7 @@ SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len) 
 #else
     // Accept connection from client
     SOCKET new_socket = accept(sock_fd, sock_addr, sock_len);
-    if (new_socket < 0) {
+    if (new_socket == INVALID_SOCKET) {
         LOG_WARNING("Did not receive response from client! %d\n", get_last_network_error());
         return INVALID_SOCKET;
     }
@@ -908,7 +908,9 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
         return false;
     }
     if (error != 0) {
-        LOG_WARNING("getsockopt has captured the following error: %d", error);
+        char error_str[1024] = {0};
+        strerror_r(error, error_str, sizeof(error_str));
+        LOG_WARNING("Failed to connect to TCP server (%d: %s)", error, error_str);
         return false;
     }
 

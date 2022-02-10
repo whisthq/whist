@@ -196,6 +196,10 @@ void set_timeout(SOCKET socket, int timeout_ms) {
             LOG_FATAL("Failed to make socket blocking.");
         }
 
+        // TODO: Do we have to set timeout to infinity?
+        // How do we solve:
+        // set_timeout(1);
+        // set_timeout(-1);
     } else if (timeout_ms == 0) {
         unsigned long mode = 1;
         if (WHIST_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
