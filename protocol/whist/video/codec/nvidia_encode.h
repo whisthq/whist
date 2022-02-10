@@ -30,6 +30,7 @@ typedef struct {
     CUcontext cuda_context;
     CodecType codec_type;
     int bitrate;
+    int vbv_size;
     uint32_t frame_idx;
     int width;
     int height;
@@ -48,18 +49,20 @@ typedef struct {
  * @param codec                    Which codec type (h264 or h265) to use
  * @param out_width                Width of the output frame
  * @param out_height               Height of the output frame
+ * @param vbv_size                 VBV size in bits
  * @param cuda_context             The CUDA context to use for the encoding session
  *
  * @returns                        The newly created nvidia encoder
  */
 NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height,
-                                     CUcontext cuda_context);
+                                     int vbv_size, CUcontext cuda_context);
 
 /**
  * @brief                          Will reconfigure an nvidia encoder
  *
  * @param encoder                  The nvidia encoder to reconfigure
  * @param bitrate                  The new bitrate
+ * @param vbv_size                 The new VBV size in bits
  * @param codec                    The new codec
  * @param out_width                The new output width
  * @param out_height               The new output height
@@ -67,7 +70,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
  * @returns                        true on success, false on failure
  */
 bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int out_width, int out_height, int bitrate,
-                                CodecType codec);
+                                int vbv_size, CodecType codec);
 
 /**
  * @brief                          Put the input data into the nvidia encoder

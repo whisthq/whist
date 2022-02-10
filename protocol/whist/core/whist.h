@@ -160,8 +160,6 @@ Defines
 #define CONSECUTIVE_IDENTICAL_FRAMES 300
 // FPS to send when the encoder is off
 #define DISABLED_ENCODER_FPS 10
-// VBV Buffer size in milliseconds
-#define VBV_BUF_SIZE_IN_MS 1000
 
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720

@@ -31,9 +31,10 @@ Private Functions
 */
 static bool set_opt(FFmpegEncoder *encoder, char *option, char *value);
 static FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width,
-                                           int out_height, int bitrate, CodecType codec_type);
+                                           int out_height, int bitrate, int vbv_size,
+                                           CodecType codec_type);
 static FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int out_height,
-                                        int bitrate, CodecType codec_type);
+                                        int bitrate, int vbv_size, CodecType codec_type);
 
 /*
 ============================
@@ -58,10 +59,11 @@ static bool set_opt(FFmpegEncoder *encoder, char *option, char *value) {
     }
 }
 
-typedef FFmpegEncoder *(*FFmpegEncoderCreator)(int, int, int, int, int, CodecType);
+typedef FFmpegEncoder *(*FFmpegEncoderCreator)(int, int, int, int, int, int, CodecType);
 
 static FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_width,
-                                           int out_height, int bitrate, CodecType codec_type) {
+                                           int out_height, int bitrate, int vbv_size,
+                                           CodecType codec_type) {
     /*
         Create an encoder using Nvidia's video encoding alorithms.
 
@@ -132,10 +134,8 @@ static FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_
     encoder->context = avcodec_alloc_context3(encoder->codec);
     encoder->context->width = encoder->out_width;
     encoder->context->height = encoder->out_height;
-    encoder->context->bit_rate = bitrate;  // averageBitRate
-    // encoder->context->rc_max_rate = 4 * bitrate;  // maxBitRate
-    encoder->context->rc_buffer_size =
-        (VBV_BUF_SIZE_IN_MS * bitrate) / MS_IN_SECOND;  // vbvBufferSize
+    encoder->context->bit_rate = bitrate;         // averageBitRate
+    encoder->context->rc_buffer_size = vbv_size;  // vbvBufferSize
     encoder->context->time_base.num = 1;
     encoder->context->time_base.den = MAX_FPS;
     encoder->context->gop_size = encoder->gop_size;
@@ -267,7 +267,7 @@ static FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_
 }
 
 static FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_width, int out_height,
-                                        int bitrate, CodecType codec_type) {
+                                        int bitrate, int vbv_size, CodecType codec_type) {
     /*
         Create an FFmpeg software encoder.
 
@@ -420,9 +420,7 @@ static FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_wid
     encoder->context->width = encoder->out_width;
     encoder->context->height = encoder->out_height;
     encoder->context->bit_rate = bitrate;
-    // encoder->context->rc_max_rate = 4 * bitrate;
-    encoder->context->rc_buffer_size =
-        (VBV_BUF_SIZE_IN_MS * bitrate) / MS_IN_SECOND;  // vbvBufferSize
+    encoder->context->rc_buffer_size = vbv_size;  // vbvBufferSize
     encoder->context->time_base.num = 1;
     encoder->context->time_base.den = MAX_FPS;
     encoder->context->gop_size = encoder->gop_size;
@@ -454,7 +452,7 @@ Public Function Implementations
 ============================
 */
 FFmpegEncoder *create_ffmpeg_encoder(int in_width, int in_height, int out_width, int out_height,
-                                     int bitrate, CodecType codec_type) {
+                                     int bitrate, int vbv_size, CodecType codec_type) {
     /*
         Create an FFmpeg encoder with the specified parameters. First try NVENC hardware encoding,
        then software encoding if that fails.
@@ -474,8 +472,8 @@ FFmpegEncoder *create_ffmpeg_encoder(int in_width, int in_height, int out_width,
     // TODO: Get QSV Encoder Working
     FFmpegEncoderCreator encoder_precedence[] = {create_nvenc_encoder, create_sw_encoder};
     for (unsigned int i = 0; i < sizeof(encoder_precedence) / sizeof(FFmpegEncoderCreator); ++i) {
-        ffmpeg_encoder =
-            encoder_precedence[i](in_width, in_height, out_width, out_height, bitrate, codec_type);
+        ffmpeg_encoder = encoder_precedence[i](in_width, in_height, out_width, out_height, bitrate,
+                                               vbv_size, codec_type);
 
         if (!ffmpeg_encoder) {
             LOG_WARNING("FFmpeg encoder: Failed, trying next encoder");

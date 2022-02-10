@@ -27,7 +27,8 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
                 if (encoder->nvidia_encoders[encoder->active_encoder_idx] == NULL) {
                     encoder->nvidia_encoders[encoder->active_encoder_idx] = create_nvidia_encoder(
                         old_encoder->bitrate, old_encoder->codec_type, old_encoder->width,
-                        old_encoder->height, *get_video_thread_cuda_context_ptr());
+                        old_encoder->height, old_encoder->vbv_size,
+                        *get_video_thread_cuda_context_ptr());
                 }
                 video_encoder_set_iframe(encoder);
             }

@@ -78,12 +78,14 @@ Public Functions
  *                                 output
  * @param bitrate                  The number of bits per second that this
  *                                 encoder will encode to
+ * @param vbv_size                 VBV Buffer size in bits
+ *
  * @param codec_type               Which codec type (h264 or h265) to use
  *
  * @returns                        The newly created encoder
  */
 VideoEncoder* create_video_encoder(int in_width, int in_height, int out_width, int out_height,
-                                   int bitrate, CodecType codec_type);
+                                   int bitrate, int vbv_size, CodecType codec_type);
 
 /**
  * @brief                       Encode a frame. This will call the necessary encoding functions
@@ -103,12 +105,13 @@ int video_encoder_encode(VideoEncoder* encoder);
  * @param width                    The new width
  * @param height                   The new height
  * @param bitrate                  The new bitrate
+ * @param vbv_size                 The new VBV Buffer size in bits
  * @param codec                    The new codec
  *
  * @returns                        true if the encoder was successfully reconfigured,
  *                                 false if no reconfiguration was possible
  */
-bool reconfigure_encoder(VideoEncoder* encoder, int width, int height, int bitrate,
+bool reconfigure_encoder(VideoEncoder* encoder, int width, int height, int bitrate, int vbv_size,
                          CodecType codec);
 
 /**

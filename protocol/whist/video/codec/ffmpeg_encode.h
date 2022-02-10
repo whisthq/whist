@@ -92,12 +92,14 @@ Public Functions
  *                                 output
  * @param bitrate                  The number of bits per second that this
  *                                 encoder will encode to
+ * @param vbv_size                 VBV Buffer size in bits
+ *
  * @param codec_type               Which codec type (h264 or h265) to use
  *
  * @returns                        The newly created encoder
  */
 FFmpegEncoder* create_ffmpeg_encoder(int in_width, int in_height, int out_width, int out_height,
-                                     int bitrate, CodecType codec_type);
+                                     int bitrate, int vbv_size, CodecType codec_type);
 
 // Reconfigure the encoder, with the same parameters as in create_ffmpeg_encoder
 bool ffmpeg_reconfigure_encoder(FFmpegEncoder* encoder, int in_width, int in_height, int out_width,
