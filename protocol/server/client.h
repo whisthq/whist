@@ -53,6 +53,7 @@ Public Functions
  *
  * @details                        Must be called before the client object
  *                                 can be used.
+ *
  * @param client				   the client context to initialize
  *
  * @returns                        Returns -1 on failure, 0 on success
@@ -90,7 +91,7 @@ int start_quitting_client(Client* client);
  *                                 not destroyed and may be made active in the
  *                                 future.
  *
- * @param client				   	  Target client
+ * @param client				   Target client
  *
  * @returns                        Returns -1 on failure, 0 on success
  */
@@ -99,6 +100,17 @@ int quit_client(Client* client);
 /**
  * @brief                          Add thread to count of those dependent on
  *                                 client being active.
+ *
+ * @details                        This function only needs to be called if the
+ *                                 thread depends on any members of `Client`. For
+ *                                 example, if a thread uses Client.udp_context,
+ *                                 we don't want the resource to be destroyed while
+ *                                 the thread continues to think that the client is
+ *                                 active. This also means that the thread has to
+ *                                 call `remove_thread_from_holding_active_count`
+ *                                 eventually to release its hold on the active
+ *                                 client. This is typically done through a call to
+ *                                 `update_client_active_status` in the thread loop.
  */
 void add_thread_to_client_active_dependents(void);
 
