@@ -1,9 +1,5 @@
 import React from "react"
-import {
-  FaLinkedinIn,
-  FaTwitter,
-  FaDiscord,
-} from "react-icons/fa"
+import { FaLinkedinIn, FaTwitter, FaDiscord } from "react-icons/fa"
 
 /* eslint-disable react/display-name */
 
