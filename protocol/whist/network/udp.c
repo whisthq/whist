@@ -253,6 +253,9 @@ static int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet);
  *
  * @returns                      True if a packet was received and written to,
  *                               False if no packet was received
+ *
+ * @note                         This will call recv on context->socket, which will
+ *                               wait for as long as the socket's most recent set_timeout
  */
 static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet);
 
