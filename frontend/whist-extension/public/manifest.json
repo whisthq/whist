@@ -7,6 +7,6 @@
   "background": {
     "service_worker": "src/worker.js"
   },
-  "permissions": ["tabs", "identity"],
+  "permissions": ["tabs", "identity", "storage"],
   "host_permissions": ["*://*/*"]
 }
