@@ -4,7 +4,7 @@
 # Check Terraform code for potential security
 # vulnerabilities and perform static analysis.
 
-name: Terraform Security Check
+name: "Terraform: Security Check"
 on:
   push:
     branches:
