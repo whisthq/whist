@@ -12,11 +12,6 @@ terraform {
 # Here we call the modules needed across every region
 
 module "vpc" {
-  source          = "../aws_vpc"
-  env             = var.env
-}
-
-module "ec2" {
-  source          = "../aws_ec2"
-  env             = var.env
+  source = "../aws_vpc"
+  env    = var.env
 }

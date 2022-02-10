@@ -29,7 +29,7 @@ resource "aws_default_subnet" "DefaultSubnet" {
 # Security groups
 
 resource "aws_default_security_group" "DefaultSecurityGroup" {
-  vpc_id = aws_default_vpc.main.id
+  vpc_id = aws_default_vpc.MainVPC.id
 
   ingress {
     protocol  = -1
@@ -55,7 +55,7 @@ resource "aws_default_security_group" "DefaultSecurityGroup" {
 resource "aws_security_group" "MandelboxesSecurityGroup" {
   name        = "MandelboxesSecurityGroup"
   description = "The security group used for instances which run mandelboxes. The ingress rules are the ports that can be allocated by Docker, and the egress rules allows all traffic."
-  vpc_id      = aws_default_vpc.main.id
+  vpc_id      = aws_default_vpc.MainVPC.id
 
   # Port ranges that can be allocated to mandelboxes by Docker
   ingress {

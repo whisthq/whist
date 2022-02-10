@@ -189,8 +189,6 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
 # This policy forces user to enable 2FA on their account, and
 # restricts access to resources otherwise.
 data "aws_iam_policy_document" "MFAPolicy" {
-  name = "ForceMFA"
-
   statement {
     sid = "AllowViewAccountInfo"
     actions = [
@@ -294,7 +292,7 @@ data "aws_iam_policy_document" "MFAPolicy" {
 
     condition {
       test     = "Bool"
-      values   = "false"
+      values   = ["false"]
       variable = "aws:MultiFactorAuthPresent"
     }
   }

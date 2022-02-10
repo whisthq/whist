@@ -1,4 +1,8 @@
 terraform {
+  # Use postgres database to store state
+  # Credentials will be filled in by CI.
+  # backend "pg" {}
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -24,6 +28,7 @@ module "s3" {
 
 # Region specific modules
 
+# US East
 module "us-east-1" {
   source = "../modules/aws_multi_region"
   env    = var.env
@@ -34,5 +39,31 @@ module "us-east-2" {
   env    = var.env
   providers = {
     aws = aws.use2
+  }
+}
+
+# US West
+module "us-west-1" {
+  source = "../modules/aws_multi_region"
+  env    = var.env
+  providers = {
+    aws = aws.usw1
+  }
+}
+
+module "us-west-2" {
+  source = "../modules/aws_multi_region"
+  env    = var.env
+  providers = {
+    aws = aws.usw2
+  }
+}
+
+# Canada central
+module "us-ca-central-1" {
+  source = "../modules/aws_multi_region"
+  env    = var.env
+  providers = {
+    aws = aws.usca1
   }
 }

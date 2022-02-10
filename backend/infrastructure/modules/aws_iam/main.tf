@@ -54,8 +54,8 @@ resource "aws_iam_role" "PackerAMIBuilder" {
   }
 }
 
-resource "aws_iam_role" "DeploymentRole" {
-  name               = "DeploymentRole"
+resource "aws_iam_role" "EC2DeploymentRole" {
+  name               = "EC2DeploymentRole"
   assume_role_policy = data.aws_iam_policy_document.EC2AssumeRolePolicy.json
 
   inline_policy {
@@ -64,7 +64,7 @@ resource "aws_iam_role" "DeploymentRole" {
   }
 
   tags = {
-    Name      = "DeploymentRole"
+    Name      = "EC2DeploymentRole"
     Env       = var.env
     Terraform = true
   }
@@ -88,16 +88,12 @@ resource "aws_iam_group" "WhistEngineers" {
   name = "WhistEngineers"
 }
 
-resource "aws_iam_group" "WhistEC2Env" {
-  name = "WhistEC2${var.env}"
-}
-
 # Custom group policies
 
 resource "aws_iam_group_policy" "ForceMFA" {
   name   = "ForceMFA"
   group  = aws_iam_group.Whist2FA.id
-  policy = aws_iam_policy_document.MFAPolicy.json
+  policy = data.aws_iam_policy_document.MFAPolicy.json
 }
 
 
@@ -127,11 +123,5 @@ resource "aws_iam_group_policy_attachment" "EngineeringPolicy" {
     "arn:aws:iam::aws:policy/AmazonSSMFullAccess",
     "arn:aws:iam::aws:policy/AWSSupportAccess",
   ]) : []
-  policy_arn = each.value
-}
-
-resource "aws_iam_group_policy_attachment" "WhistEnvPolicy" {
-  group      = aws_iam_group.WhistEC2Env.name
-  for_each   = var.whist-env-managed-policies
   policy_arn = each.value
 }
