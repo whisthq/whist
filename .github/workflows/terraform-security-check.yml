@@ -17,7 +17,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  tfsec:
+  terraform-security-check:
     name: Run tfsec
     runs-on: ubuntu-20.4
 
