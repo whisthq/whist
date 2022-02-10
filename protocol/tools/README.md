@@ -16,7 +16,7 @@ pidof WhistClient
 
 Next, run: `./dtrace-flamegraph.sh $PID`, which will use `dtrace` to profile the CPU time of the next 60 seconds of the protocol run and output to `graph.svg`.
 
-To inspect, open `graph.svg` in the browser! It is interacrtive, so try clicking on functions in the flamegraph to zoom in or using the search functionality in the top right.
+To inspect, open `graph.svg` in the browser! It is interactive, so try clicking on functions in the flamegraph to zoom in or using the search functionality in the top right.
 
 Note that in order for function symbols to properly be rendered, you may need to build the protocol in debug mode, using something like
 
@@ -28,9 +28,31 @@ make -j
 
 By default, `dtrace` is disabled on macOS -- mac users will need to disable system integrity protections for `dtrace` specifically. If you have trouble with the [online guide](https://poweruser.blog/using-dtrace-with-sip-enabled-3826a352e64bj) for doing this, then please reach out to @rpadaki who can help you to configure your system.
 
+### Perf Flamegraph
+
+The `perf` flamegraph is especially useful on the server side, but some setup is needed. Since the server protocol runs inside a mandelbox, we must follow the [guidelines below](#mandelbox-considerations). In particular, you will need to profile the mandelbox from the EC2 host, rather than working directly inside the mandelbox.
+
+When `perf` generates profiling data, it expects to locate the binary at the command path associated with the process _inside the mandelbox_. Therefore, you will need to use symlinks to fake the mandelbox binary location from the host. To do this, simply run on the host:
+```bash
+mkdir -p /usr/share/whist/bin
+sudo ln -sf /home/ubuntu/whist/protocol/build-docker/server/build64 /usr/share/whist/bin
+```
+Note that for the client side of the end-to-end testing framework, the above command is modified to match the client protocol. If you have cloned the monorepo to a different location in your instance, please modify the above command appropriately.
+
+If you want more detailed profiling into some of our dependencies, make sure that the relevant packages are installed on the host. For example, for ALSA shared objects to be installed in the correct location, you may need to run `apt install libasound2-plugins` on the host.
+
+And remember that in order for function symbols to properly be recorded, build the protocol in debug mode (which is the default for mandelbox builds).
+
+Once the setup is complete, the execution is once again simple! Run `pidof WhistServer` to get the PID, followed by
+```bash
+sudo ./perf-flamegraph.sh $PID`
+```
+
+As with the DTrace flamegraph, an interactive `graph.svg` will be generated.
+
 ### Other Flamegraphs
 
-We can also use flamegraphs with other profiling tools such as `perf`, probably by making slight modifications to the `dtrace-flamegraph.sh` script. If you end up doing something like this, please be sure to commit your new script to this folder!
+Flamegraphs are a very powerful tool and can be used with a number of other profilers. Feel free to add any more useful scripts you build! Again, see https://github.com/brendangregg/FlameGraph for utilities and inspiration.
 
 ## Mandelbox Considerations
 
@@ -40,13 +62,4 @@ For an example with `gdb`, one can run from the host:
 
 ```bash
 sudo gdb -p $(pidof /usr/share/whist/WhistServer)
-```
-
-Note that since the `WhistServer` command is inside the mandelbox, we use the mandelbox path in the `pidof` call.
-
-For tools like `stackcollapse-perf.pl` which expect to be able to locate the binary at the command path associated with the process, you will need to use symlinks to fake the mandelbox binary location from the host. In particular, you may need to run on the host:
-
-```bash
-mkdir -p /usr/share/whist/bin
-sudo ln -sf /home/ubuntu/whist/protocol/build-docker/server/build64 /usr/share/whist/bin
 ```
