@@ -526,8 +526,9 @@ int whist_client_main(int argc, char* argv[]) {
 
     // Destroy any resources being used by the client
     LOG_INFO("Closing Client...");
-    destroy_sdl((SDL_Window*)window);
-    free_parsed_args();
+    if (window) {
+        destroy_sdl((SDL_Window*)window);
+    }
     destroy_statistic_logger();
     destroy_logger();
 
@@ -535,6 +536,8 @@ int whist_client_main(int argc, char* argv[]) {
     // error monitor breadcrumbs and events can finish being reported
     // before we close the error monitor.
     whist_error_monitor_shutdown();
+
+    free_parsed_args();
 
     LOG_INFO("Protocol has shutdown gracefully");
 
