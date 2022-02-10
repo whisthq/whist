@@ -9,7 +9,7 @@ const outDir = path.join(__dirname, "..", "build", "src")
 module.exports = {
   entry: {
     worker: path.join(srcDir, "worker", "index.ts"),
-    newtab: path.join(srcDir, "newtab", "index.tsx"),
+    tabs: path.join(srcDir, "tabs", "index.tsx"),
   },
   output: {
     path: outDir,
@@ -41,9 +41,9 @@ module.exports = {
       process: "process/browser",
     }),
     new HtmlWebpackPlugin({
-      template: path.join(srcDir, "newtab", "index.html"),
-      filename: "newtab.html",
-      chunks: ["newtab"],
+      template: path.join(srcDir, "tabs", "index.html"),
+      filename: "tabs.html",
+      chunks: ["tabs"],
       cache: false,
     }),
   ],
