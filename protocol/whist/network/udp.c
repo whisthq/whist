@@ -187,6 +187,12 @@ typedef struct {
 // on the cumulative latency value
 #define PING_LAMBDA 0.75
 
+// How often should the client send connection attempts
+#define CONNECTION_ATTEMPT_INTERVAL_MS 5
+// How many confirmation packets the server should respond with,
+// When it receives a valid client connection attempt
+#define NUM_CONFIRMATION_MESSAGES 10
+
 /*
 ============================
 Globals
@@ -1057,8 +1063,7 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
     }
 
     // Send a confirmation message back to the client
-    // We send plenty, as a best attempt against the Two Generals' Problem
-#define NUM_CONFIRMATION_MESSAGES 10
+    // We send several, as a best attempt against the Two Generals' Problem
     for (int i = 0; i < NUM_CONFIRMATION_MESSAGES; i++) {
         UDPPacket confirmation_packet;
         confirmation_packet.type = UDP_CONNECTION_CONFIRMATION;
@@ -1103,8 +1108,6 @@ int create_udp_client_context(UDPContext* context, char* destination, int port,
     while ((connection_timeout_ms == -1 ||
             get_timer(&client_creation_timer) * MS_IN_SECOND <= connection_timeout_ms) &&
            !connection_succeeded) {
-        // How often to send connection attempts
-#define CONNECTION_ATTEMPT_INTERVAL_MS 10
         // Send a UDP_CONNECTION_ATTEMPT
         UDPPacket client_request;
         client_request.type = UDP_CONNECTION_ATTEMPT;
