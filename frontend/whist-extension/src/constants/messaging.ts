@@ -1,0 +1,1 @@
+export const OPEN_GOOGLE_AUTH = "OPEN_GOOGLE_AUTH"

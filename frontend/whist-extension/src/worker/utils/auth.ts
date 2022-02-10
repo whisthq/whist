@@ -144,22 +144,7 @@ export const authInfoRefreshRequest = async (refreshToken: string) => {
   })
 }
 
-export const refreshTokensIfNeeded = async () => {
+export const getCachedAuthInfo = async () => {
   const _authInfo = ((await getStorage(CACHED_AUTH_INFO)) as any) ?? {}
-  const authInfo = JSON.parse(JSON.stringify(_authInfo))
-  const isExpired = isTokenExpired(authInfo?.accessToken ?? "")
-
-  if (isExpired && authInfo?.refreshToken !== undefined) {
-    const response = await authInfoRefreshRequest(authInfo.refreshToken)
-    const json = await response.json()
-    const refreshedTokens = authInfoParse(json)
-    setStorage(
-      CACHED_AUTH_INFO,
-      JSON.stringify({
-        userEmail: refreshedTokens.userEmail,
-        accessToken: refreshedTokens.accessToken,
-        refreshToken: authInfo?.refreshToken,
-      })
-    )
-  }
+  return JSON.parse(JSON.stringify(_authInfo))
 }
