@@ -1,6 +1,9 @@
 {
   labels: ["dependencies"],
 
+  dependencyDashboard: true,
+  dependencyDashboardApproval: true,
+
   // We want at most 10 PRs per hour, at most 2 at a time
   prHourlyLimit: 10,
   prConcurrentLimit: 2,
