@@ -90,6 +90,8 @@ Finally, for brave_variations_server_url I think that https://variations.brave.c
 
 https://github.com/whisthq/brave-core/blob/main/build/commands/lib/config.js
 
+https://github.com/brave/brave-core/blob/master/build/commands/scripts/commands.js#L71
+
       - Configure build parameters
         run: |
           npm config set target_arch "${{ matrix.config.arch }}"
