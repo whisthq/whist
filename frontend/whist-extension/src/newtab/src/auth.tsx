@@ -6,7 +6,7 @@ const AuthProvider = (props: { children: JSX.Element | JSX.Element[] }) => (
   <Auth0Provider
     domain={config.AUTH_DOMAIN_URL}
     clientId={config.AUTH_CLIENT_ID}
-    redirectUri={config.CLIENT_CALLBACK_URL}
+    redirectUri={chrome.identity.getRedirectURL("auth0")}
   >
     {props.children}
   </Auth0Provider>

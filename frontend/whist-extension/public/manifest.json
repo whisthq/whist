@@ -7,9 +7,6 @@
   "background": {
     "service_worker": "src/worker.js"
   },
-  "chrome_url_overrides": {
-    "login": "src/newtab.html"
-  },
-  "permissions": ["tabs"],
+  "permissions": ["tabs", "identity"],
   "host_permissions": ["*://*/*"]
 }
