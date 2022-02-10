@@ -112,6 +112,7 @@ Defines
 
 #endif
 
+// Create platform-independent POSIX-style functions
 #if defined(_WIN32)
 #define STDOUT_FILENO _fileno(stdout)
 #define safe_mkdir(dir) _mkdir(dir)
@@ -119,6 +120,7 @@ Defines
 #define safe_dup2(fd1, fd2) _dup2(fd1, fd2)
 #define safe_open(path, flags) _open(path, flags, 0666)
 #define safe_close(fd) _close(fd)
+#define strerror_r(errno, buf, len) strerror_s(buf, len, errno)
 #else
 #define safe_mkdir(dir) mkdir(dir, 0777)
 #define safe_dup(fd) dup(fd)
