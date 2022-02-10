@@ -17,7 +17,7 @@ SRC_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 FREQUENCY=1001 # Hz
 PERF_FILE=perf.data # default
 
-perf record -F $FREQUENCY -p $1 -g --call-graph dwarf -- sleep 60
+perf record -F "$FREQUENCY" -p "$1" -g --call-graph dwarf -- sleep 60
 
 perf script \
   | "$SRC_DIR"/flamegraph-helpers/stackcollapse-perf.pl \
