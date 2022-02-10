@@ -18,9 +18,7 @@
     "jsx": "react-jsx",
     "baseUrl": "./",
     "paths": {
-      "@app/*": [
-        "src/*"
-      ]
+      "@app/*": ["src/*"]
     },
     "noEmit": true,
     "strict": true,
@@ -29,9 +27,6 @@
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "importsNotUsedAsValues": "remove",
-    "typeRoots": [
-      "./src/@types",
-      "./node_modules/@types"
-    ]
+    "typeRoots": ["./src/@types", "./node_modules/@types"]
   }
 }
