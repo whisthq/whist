@@ -33,10 +33,12 @@ By default, `dtrace` is disabled on macOS -- mac users will need to disable syst
 The `perf` flamegraph is especially useful on the server side, but some setup is needed. Since the server protocol runs inside a mandelbox, we must follow the [guidelines below](#mandelbox-considerations). In particular, you will need to profile the mandelbox from the EC2 host, rather than working directly inside the mandelbox.
 
 When `perf` generates profiling data, it expects to locate the binary at the command path associated with the process _inside the mandelbox_. Therefore, you will need to use symlinks to fake the mandelbox binary location from the host. To do this, simply run on the host:
+
 ```bash
 mkdir -p /usr/share/whist/bin
 sudo ln -sf /home/ubuntu/whist/protocol/build-docker/server/build64 /usr/share/whist/bin
 ```
+
 Note that for the client side of the end-to-end testing framework, the above command is modified to match the client protocol. If you have cloned the monorepo to a different location in your instance, please modify the above command appropriately.
 
 If you want more detailed profiling into some of our dependencies, make sure that the relevant packages are installed on the host. For example, for ALSA shared objects to be installed in the correct location, you may need to run `apt install libasound2-plugins` on the host.
@@ -44,6 +46,7 @@ If you want more detailed profiling into some of our dependencies, make sure tha
 And remember that in order for function symbols to properly be recorded, build the protocol in debug mode (which is the default for mandelbox builds).
 
 Once the setup is complete, the execution is once again simple! Run `pidof WhistServer` to get the PID, followed by
+
 ```bash
 sudo ./perf-flamegraph.sh $PID`
 ```
