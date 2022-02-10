@@ -1,7 +1,7 @@
 # ------------------------------ Buckets for Chromium builds ------------------------------ #
 
 resource "aws_s3_bucket" "whist-browser-chromium-macos-arm64" {
-  bucket = "whist-browser-macos-arm64-${var.env}"
+  bucket = "whist-browser-chromium-macos-arm64-${var.env}"
 
   server_side_encryption_configuration {
     rule {
@@ -19,7 +19,7 @@ resource "aws_s3_bucket" "whist-browser-chromium-macos-arm64" {
 }
 
 resource "aws_s3_bucket" "whist-browser-chromium-macos" {
-  bucket = "whist-browser-macos-${var.env}"
+  bucket = "whist-browser-chromium-macos-${var.env}"
 
   server_side_encryption_configuration {
     rule {
@@ -30,14 +30,14 @@ resource "aws_s3_bucket" "whist-browser-chromium-macos" {
     }
   }
   tags = {
-    Name      = "whist-browser-macos-${var.env}"
+    Name      = "whist-browser-chromium-macos-${var.env}"
     Env       = var.env
     Terraform = true
   }
 }
 
 resource "aws_s3_bucket" "whist-browser-chromium-windows" {
-  bucket = "whist-browser-windows-${var.env}"
+  bucket = "whist-browser-chromium-windows-${var.env}"
 
   server_side_encryption_configuration {
     rule {
@@ -48,7 +48,7 @@ resource "aws_s3_bucket" "whist-browser-chromium-windows" {
     }
   }
   tags = {
-    Name      = "whist-browser-windows-${var.env}"
+    Name      = "whist-browser-chromium-windows-${var.env}"
     Env       = var.env
     Terraform = true
   }
@@ -108,7 +108,7 @@ resource "aws_s3_bucket" "whist-browser-brave-macos-arm64" {
     }
   }
   tags = {
-    Name      = "whist-browser-windows-${var.env}"
+    Name      = "whist-browser-brave-macos-arm64-${var.env}"
     Env       = var.env
     Terraform = true
   }
@@ -126,7 +126,7 @@ resource "aws_s3_bucket" "whist-browser-brave-macos-x64" {
     }
   }
   tags = {
-    Name      = "whist-browser-windows-${var.env}"
+    Name      = "whist-browser-brave-macos-arm64-${var.env}"
     Env       = var.env
     Terraform = true
   }

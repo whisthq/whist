@@ -1,10 +1,7 @@
-# Get name of the current region to use across resources
-
-data "aws_region" "current" {}
-
 # Create default VPCs
 
-resource "aws_default_vpc" "MainVPC" {
+resource "aws_vpc" "MainVPC" {
+  cidr_block = "172.31.0.0/16"
   enable_dns_hostnames = true
   enable_dns_support   = true
   tags = {
@@ -16,9 +13,7 @@ resource "aws_default_vpc" "MainVPC" {
 
 # Create default subnets
 
-resource "aws_default_subnet" "DefaultSubnet" {
-  availability_zone = data.aws_region.current.name
-
+resource "aws_subnet" "DefaultSubnet" {
   tags = {
     Name      = "DefaultSubnet"
     Env       = var.env
@@ -42,7 +37,7 @@ resource "aws_default_security_group" "DefaultSecurityGroup" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [aws_default_vpc.MainVPC.cidr_block]
   }
 
   tags = {
@@ -63,7 +58,7 @@ resource "aws_security_group" "MandelboxesSecurityGroup" {
     protocol    = "udp"
     from_port   = 1025
     to_port     = 49150
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [aws_vpc.example.cidr_block]
   }
 
   ingress {
@@ -71,7 +66,7 @@ resource "aws_security_group" "MandelboxesSecurityGroup" {
     protocol    = "tcp"
     from_port   = 1025
     to_port     = 49150
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [aws_default_vpc.MainVPC.cidr_block]
   }
 
   # We allow all outgoing traffic
@@ -80,7 +75,7 @@ resource "aws_security_group" "MandelboxesSecurityGroup" {
     protocol    = "-1"
     to_port     = 0
     from_port   = 0
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [aws_default_vpc.MainVPC.cidr_block]
   }
 
   tags = {

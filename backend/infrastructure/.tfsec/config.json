@@ -1,0 +1,8 @@
+{
+    "exclude": [
+      "aws-s3-encryption-customer-key",
+      "aws-s3-enable-versioning",
+      "aws-s3-enable-bucket-logging",
+      "aws-ssm-secret-use-customer-key"
+    ]
+  }

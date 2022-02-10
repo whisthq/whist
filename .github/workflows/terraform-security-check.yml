@@ -1,0 +1,20 @@
+# workflows/terraform-security-check.yml
+#
+# Terraform: Security check and static analysis
+# Check Terraform code for potential security 
+# vulnerabilities and perform static analysis.
+
+name: Terraform Security Check
+on:
+  pull-request:
+jobs:
+  tfsec:
+  runs-on: ubuntu-latest
+
+  steps:
+  - name: Clone repo
+    uses: actions/checkout@master
+  - name: tfsec
+    uses: aquasecurity/tfsec-pr-commenter-action@v1.0.2
+    with:
+      github-token: ${{ github.token }}
