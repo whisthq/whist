@@ -13,6 +13,16 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
 def parse_metadata(folder_name):
+    """
+    Obtain the metadata for the E2E streaming test from the experiment_metadata.json file in the logs folder
+    Args:
+        folder_name (str): The path to the folder containing the logs and the experiment_metadata.json file
+    Returns:
+        On success:
+            experiment_metadata (dictionary): A dictionary with the key:value metadata pairs retrieved from the json file
+        On failure:
+            None
+    """
     metadata_filename = os.path.join(folder_name, "experiment_metadata.json")
     experiment_metadata = None
     if not os.path.isfile(metadata_filename):
@@ -24,6 +34,13 @@ def parse_metadata(folder_name):
 
 
 def logs_contain_errors(logs_root_dir):
+    """
+    Perform a coarse-grained sanity check on the logs from a E2E streaming test run
+    Args:
+        logs_root_dir (str): The path to the folder containing the logs
+    Returns:
+        False if the logs appear not to contain errors, True otherwise
+    """
     # Check if the log files with metrics are present
     client_log_file = os.path.join(logs_root_dir, "client", "client.log")
     server_log_file = os.path.join(logs_root_dir, "server", "server.log")
@@ -40,8 +57,28 @@ def logs_contain_errors(logs_root_dir):
 
 
 def download_latest_logs(
-    branch_name, before_date, network_conditions, network_conditions_matching_way
+    branch_name, before_timestamp, network_conditions, network_conditions_matching_way
 ):
+    """
+    Download from S3 the most recent logs from a E2E streaming test run. Filter out runs that
+    do not match the branch of interest, or that happened at or after a specific date/time.
+    In addition, filter out runs based on network conditions depending on the desired matching way.
+    If network_conditions_matching_way is 'match', then filter out all logs from runs whose network
+    conditions are not identical to the network_conditions parameter to this function.
+    If network_conditions_matching_way is 'normal_only', then filter out all logs from runs whose
+    network conditions are not set to 'normal'. If network_conditions_matching_way is 'do_not_care',
+    then do not filter out logs based on network conditions
+
+    Args:
+        branch_name (str): The name of the Whist branch whose logs we will download
+        before_timestamp (datetime): The earliest timestamp such that if a run started at that time,
+                                    we don't want to consider its logs
+        network_conditions (str): The network conditions of the run that we just completed.
+        network_conditions_matching_way (str): A parameter that controls what kind of matching we
+                                                need to do on the S3 logs wrt network conditions
+    Returns:
+        None
+    """
     client = boto3.client("s3")
     s3_resource = boto3.resource("s3")
     bucket = s3_resource.Bucket("whist-e2e-protocol-test-logs")
@@ -56,7 +93,7 @@ def download_latest_logs(
     exp_meta_path = os.path.join(".", branch_name, "experiment_metadata.json")
 
     local_timezone = int(time.timezone / 3600.0)
-    before_date = before_date + timedelta(hours=local_timezone)
+    before_timestamp = before_timestamp + timedelta(hours=local_timezone)
 
     result = client.list_objects(
         Bucket="whist-e2e-protocol-test-logs", Prefix="{}/".format(branch_name), Delimiter="/"
@@ -72,7 +109,7 @@ def download_latest_logs(
 
         # Make sure that we are comparing this run to a previous run
         subfolder_date = datetime.strptime(subfolder_name, "%Y_%m_%d@%H-%M-%S")
-        if subfolder_date >= before_date:
+        if subfolder_date >= before_timestamp:
             counter += 1
             continue
 

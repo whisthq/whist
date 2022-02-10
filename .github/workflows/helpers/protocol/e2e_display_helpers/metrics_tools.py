@@ -10,8 +10,22 @@ from datetime import datetime, timedelta
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
-# Extract the metric values and save them in two dictionaries
 def extract_metrics(client_log_file, server_log_file):
+    """
+    Extract all the available server-side and client-side performance metrics for a
+    given run and save the values two dictionaries. Each dictionary key corresponds
+    to a metric, and each value is itself a dictionary, containing the number of
+    entries for that metric and the mean, std,max,min aggregates
+
+    Args:
+        client_log_file (str): The path to the file (usually client.log) containing
+                                the client-side logs with the metrics
+        server_log_file (str): The path to the file (usually server.log) containing
+                                the server-side logs with the metrics
+    Returns:
+        client_metrics2 (dict): the dictionary containing all the client metrics.
+        server_metrics2 (dict): the dictionary containing all the server metrics.
+    """
     client_metrics = {}
     server_metrics = {}
 
@@ -63,62 +77,36 @@ def extract_metrics(client_log_file, server_log_file):
     return client_metrics2, server_metrics2
 
 
-# Extract metric values for the client-server pair to compare to current one, and add results to existing dictionaries
-def add_comparison_metrics(
-    compared_client_log_file, compared_server_log_file, client_dictionary, server_dictionary
-):
-    compared_client_metrics = {}
-    compared_server_metrics = {}
-
-    with open(compared_client_log_file, "r") as f:
-        for line in f.readlines():
-            if "METRIC" in line:
-                l = line.strip().split()
-                metric_name = l[-3].strip('"')
-                metric_value = float(l[-1].strip('"'))
-                if metric_name not in compared_client_metrics:
-                    compared_client_metrics[metric_name] = [metric_value]
-                else:
-                    compared_client_metrics[metric_name].append(metric_value)
-
-    with open(compared_server_log_file, "r") as f:
-        for line in f.readlines():
-            if "METRIC" in line:
-                l = line.strip().split()
-                metric_name = l[-3].strip('"')
-                metric_value = float(l[-1].strip('"'))
-                if metric_name not in compared_server_metrics:
-                    compared_server_metrics[metric_name] = [metric_value]
-                else:
-                    compared_server_metrics[metric_name].append(metric_value)
-
-    for k in compared_client_metrics:
-        compared_client_metrics[k] = np.array(compared_client_metrics[k])
-        client_dictionary[k] = {
-            "entries": len(compared_client_metrics[k]),
-            "avg": np.mean(compared_client_metrics[k]),
-            "std": np.std(compared_client_metrics[k]),
-            "max": np.max(compared_client_metrics[k]),
-            "min": np.min(compared_client_metrics[k]),
-        }
-
-    for k in compared_server_metrics:
-        compared_server_metrics[k] = np.array(compared_server_metrics[k])
-        server_dictionary[k] = {
-            "entries": len(compared_server_metrics[k]),
-            "avg": np.mean(compared_server_metrics[k]),
-            "std": np.std(compared_server_metrics[k]),
-            "max": np.max(compared_server_metrics[k]),
-            "min": np.min(compared_server_metrics[k]),
-        }
-
-    return client_dictionary, server_dictionary
-
-
 def compute_deltas(
     client_dictionary, server_dictionary, compared_client_dictionary, compared_server_dictionary
 ):
-    # Augment dictionaries with deltas wrt to other result, if available
+    """
+    Give the metric values for two runs, augment the client/server dictionaries of the current
+    run with the values from the compared run. Also compute difference (delta) and percentage
+    of change (delta pctg) for each metric. Handle corner cases such as when a key/value is
+    missing on the current or the compared run, when the difference is 0, or when the percentage
+    change is 0. Round all results to the third decimal place. Finally, create the entries
+    for the markdown comparison table
+
+    Args:
+        client_dictionary (dict): The dictionary containing the metrics key-value pairs for the
+                                    client from the current run
+        server_dictionary (dict): The dictionary containing the metrics key-value pairs for the
+                                    server from the current run
+        compared_client_dictionary (dict): The dictionary containing the metrics key-value pairs
+                                            for the client from the compared run
+        compared_server_dictionary (dict): The dictionary containing the metrics key-value pairs
+                                            for the server from the compared run
+    Returns:
+        client_table_entries (list): the list containing the entries for the client markdown
+                                    comparison table. Each element in the list of lists corresponds
+                                    to one row.
+        server_table_entries (list): the list containing the entries for the server markdown
+                                    comparison table. Each element in the list of lists corresponds
+                                    to one row.
+    """
+
+    # Augment client dictionary with metrics from client in compared run
     for k in client_dictionary:
         if k in compared_client_dictionary:
             client_dictionary[k]["compared_entries"] = compared_client_dictionary[k]["entries"]
@@ -202,6 +190,7 @@ def compute_deltas(
         new_entry.append(emoji_delta)
         client_table_entries.append(new_entry)
 
+    # Augment server dictionary with metrics from server in compared run
     for k in server_dictionary:
         if k in compared_server_dictionary:
             server_dictionary[k]["compared_entries"] = compared_server_dictionary[k]["entries"]

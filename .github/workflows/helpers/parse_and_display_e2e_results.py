@@ -88,6 +88,14 @@ if __name__ == "__main__":
     github_token = os.environ["GITHUB_TOKEN"]
     slack_webhook = os.environ.get("SLACK_WEBHOOK")
 
+    current_branch_name = ""
+    # In CI, the PR branch name is saved in GITHUB_REF_NAME, or in the GITHUB_HEAD_REF environment variable (in case this script is being run as part of a PR)
+    b = github_ref_name.split("/")
+    if len(b) != 2 or not b[0].isnumeric() or b[1] != "merge":
+        current_branch_name = github_ref_name
+    else:
+        current_branch_name = os.getenv("GITHUB_HEAD_REF")
+
     args = parser.parse_args()
 
     # A list of metrics to display (if found) in main table
@@ -166,11 +174,8 @@ if __name__ == "__main__":
             )
         else:
             # Extract the metric values and save them in a dictionary
-            compared_client_metrics2, compared_server_metrics2 = add_comparison_metrics(
-                compared_client_log_path,
-                compared_server_log_path,
-                compared_client_metrics2,
-                compared_server_metrics2,
+            compared_client_metrics2, compared_server_metrics2 = extract_metrics(
+                compared_client_log_path, compared_server_log_path
             )
 
     # Here, we parse the test results into a .info file, which can be read and displayed on the GitHub PR
@@ -196,8 +201,6 @@ if __name__ == "__main__":
             most_interesting_metrics,
             experiment_metadata,
             compared_experiment_metadata,
-            client_metrics2,
-            server_metrics2,
             client_table_entries,
             server_table_entries,
             compared_branch_name,
@@ -221,11 +224,11 @@ if __name__ == "__main__":
     gist_url = create_github_gist_post(github_gist_token, title, body)
 
     # Post updates to Slack channel if we are on dev
-    if github_ref_name == "dev":
+    if current_branch_name == "dev":
         create_slack_post(slack_webhook, title, gist_url)
     # Otherwise post on Github if the branch is tied to a open PR
     else:
-        pr_number = search_open_PR()
+        pr_number = search_open_PR(current_branch_name)
         if pr_number != -1:
             github_comment_update(
                 github_token,

@@ -13,6 +13,20 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 def generate_no_comparison_table(
     results_file, experiment_metadata, most_interesting_metrics, client_metrics, server_metrics
 ):
+    """
+    Create a Markdown table to display the client and server metrics for the current run.
+    Also include a table with the metadate of the run, and a table with the most interesting
+    metrics. Do not include comparisons with other runs.
+    Args:
+        results_file (file): The open file where we want to save the markdown table
+        experiment_metadata (dict): The metadata key-value pairs for the current run
+        most_interesting_metrics (list): list of metrics that we want to display at the top (if found)
+        client_metrics (dict): the client key-value pairs for the current run
+        server_metrics (dict): the server key-value pairs for the current run
+    Returns:
+        None
+    """
+
     with redirect_stdout(results_file):
         # Generate metadata table
         print("<details>")
@@ -132,12 +146,25 @@ def generate_comparison_table(
     most_interesting_metrics,
     experiment_metadata,
     compared_experiment_metadata,
-    client_metrics,
-    server_metrics,
     client_table_entries,
     server_table_entries,
     branch_name,
 ):
+    """
+    Create a Markdown table to display the client and server metrics for the current run,
+    as well as those from a compared run. Also include a table with the metadata of the run,
+    and a table with the most interesting metrics.
+    Args:
+        results_file (file): The open file where we want to save the markdown table
+        most_interesting_metrics (list): list of metrics that we want to display at the top (if found)
+        experiment_metadata (dict): The metadata key-value pairs for the current run
+        compared_experiment_metadata (dict): The metadata key-value pairs for the compared run
+        client_table_entries (list): the table entries for the client table
+        server_table_entries (list): the table entries for the server table
+        branch_name (str): the name of the branch for the compared run
+    Returns:
+        None
+    """
     with redirect_stdout(results_file):
         # Generate metadata table
         print("<details>")
@@ -196,7 +223,7 @@ def generate_comparison_table(
             print("\n")
 
         # Generate client table
-        if len(client_metrics) == 0:
+        if len(client_table_entries) == 0:
             print("NO CLIENT METRICS\n")
         else:
             print("###### CLIENT METRICS: ######\n")
@@ -218,7 +245,7 @@ def generate_comparison_table(
         writer.write_table()
         print("\n")
 
-        if len(server_metrics) == 0:
+        if len(server_table_entries) == 0:
             print("NO SERVER METRICS\n")
         else:
             print("###### SERVER METRICS: ######\n")

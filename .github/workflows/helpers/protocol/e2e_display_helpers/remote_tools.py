@@ -16,6 +16,17 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
 def create_github_gist_post(github_gist_token, title, body):
+    """
+    Create a secret Github Gist for the E2E results. Add a file called `performance_results.md`
+    for the results table and print the html url of the secret Gist.
+    Args:
+        github_gist_token (str): The Github Gist token to use for authentication
+        title (str): The title to give to the Gist
+        body (str): The contents of the Gist (the table(s) in markdown format)
+    Returns:
+        None
+
+    """
     # Display the results as a Github Gist
     client = Github(github_gist_token)
     gh_auth_user = client.get_user()
@@ -31,6 +42,16 @@ def create_github_gist_post(github_gist_token, title, body):
 
 
 def create_slack_post(slack_webhook, title, gist_url):
+    """
+    Create a Slack post with the link to the newly-created Gist with the E2E results.
+    The post is made in the channel pointed to by the Slack webhook
+    Args:
+        slack_webhook (str): The Slack token/url to use for posting
+        title (str): The title to give to the Slack post
+        gist_url (str): The contents of the Gist (the table(s) in markdown format)
+    Returns:
+        None
+    """
     if slack_webhook:
         slack_post(
             slack_webhook,
@@ -40,16 +61,18 @@ def create_slack_post(slack_webhook, title, gist_url):
         )
 
 
-def search_open_PR():
-    branch_name = ""
+def search_open_PR(branch_name):
+    """
+    Check if there is an open PR associated with the specified branch. If so, return the PR number
 
-    # In CI, the PR branch name is saved in GITHUB_REF_NAME, or in the GITHUB_HEAD_REF environment variable (in case this script is being run as part of a PR)
-    b = os.getenv("GITHUB_REF_NAME").split("/")
-    if len(b) != 2 or not b[0].isnumeric() or b[1] != "merge":
-        branch_name = os.getenv("GITHUB_REF_NAME")
-    else:
-        branch_name = os.getenv("GITHUB_HEAD_REF")
-
+    Args:
+        branch_name (str): The name of the branch for which we are looking for an open PR
+    Returns:
+        On success:
+            pr_number (int): The PR number of the open PR
+        On failure:
+            -1
+    """
     # Search for an open PR connected to the current branch. If found, post results as a comment on that PR's page.
     result = ""
     if len(branch_name) > 0:
