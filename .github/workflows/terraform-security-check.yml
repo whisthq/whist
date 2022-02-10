@@ -6,7 +6,16 @@
 
 name: Terraform Security Check
 on:
-  pull-request:
+  push:
+    branches:
+      - dev
+    paths:
+      - "backend/infrastructure/**"
+  pull_request:
+    paths:
+      - "backend/infrastructure/**"
+  workflow_dispatch:
+
 jobs:
   tfsec:
   runs-on: ubuntu-latest
