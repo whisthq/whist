@@ -170,6 +170,13 @@ int connect_client(Client *client, bool using_stun, char *binary_aes_private_key
     udp_register_nack_buffer(&client->udp_context, PACKET_AUDIO,
                              PACKET_HEADER_SIZE + LARGEST_AUDIOFRAME_SIZE, AUDIO_NACKBUFFER_SIZE);
 
+    // NOTE: The server-side create_udp_socket_context call will finish immediately after the
+    // handshake, But the UDP Client will be waiting until it gets a response. Thus, this TCP socket
+    // will be open immediately (Before the TCP client tries to connect)
+    // TODO #5539:
+    //    The goal is, if we open the TCP server while the TCP client is trying to connect,
+    //    the connection still succeeds. This is stronger, but unlike UDP, we can't
+    //    easily control TCP's handshake. Can we compel TCP to send multiple SYN's?
     if (!create_tcp_socket_context(&client->tcp_context, NULL, client->tcp_port, 1,
                                    TCP_CONNECTION_WAIT, using_stun, binary_aes_private_key_input)) {
         LOG_WARNING("Failed TCP connection with client");

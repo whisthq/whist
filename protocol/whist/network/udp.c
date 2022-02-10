@@ -16,6 +16,7 @@ Includes
 #include <whist/network/ringbuffer.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/network/throttle.h>
+#include <stddef.h>
 
 #ifndef _WIN32
 #include <fcntl.h>
@@ -35,6 +36,8 @@ typedef enum {
     UDP_PING,
     UDP_PONG,
     UDP_NETWORK_SETTINGS,
+    UDP_CONNECTION_ATTEMPT,
+    UDP_CONNECTION_CONFIRMATION,
 } UDPPacketType;
 
 // A struct for UDPPacket,
@@ -103,8 +106,7 @@ typedef struct {
 } UDPNetworkPacket;
 
 // Size of the UDPPacket header, excluding the payload
-#define UDPNETWORKPACKET_HEADER_SIZE \
-    ((int)sizeof(UDPNetworkPacket) - (int)sizeof((UDPNetworkPacket){0}.payload))
+#define UDPNETWORKPACKET_HEADER_SIZE ((int)(offsetof(UDPNetworkPacket, payload)))
 
 typedef struct {
     bool pending_stream_reset;
@@ -115,13 +117,18 @@ typedef struct {
 typedef struct {
     int timeout;
     SOCKET socket;
-    struct sockaddr_in addr;
     int ack;
     WhistMutex mutex;
     char binary_aes_private_key[16];
     NetworkThrottleContext* network_throttler;
 
     double fec_packet_ratios[NUM_PACKET_TYPES];
+
+    // last_addr is the last address we received a packet from.
+    // When connected == true, this must equal connection_addr
+    bool connected;
+    struct sockaddr_in last_addr;
+    struct sockaddr_in connection_addr;
 
     // Ping/Pong data and timers
     int consecutive_ping_failures;
@@ -180,6 +187,12 @@ typedef struct {
 // on the cumulative latency value
 #define PING_LAMBDA 0.75
 
+// How often should the client send connection attempts
+#define CONNECTION_ATTEMPT_INTERVAL_MS 5
+// How many confirmation packets the server should respond with,
+// When it receives a valid client connection attempt
+#define NUM_CONFIRMATION_MESSAGES 10
+
 /*
 ============================
 Globals
@@ -231,13 +244,26 @@ int create_udp_client_context(UDPContext* context, char* destination, int port,
                               int connection_timeout_ms);
 
 /**
- * @brief                        Encrypts and Sends a payload of size at most MAX_UDP_PAYLOAD_SIZE
- * through the network.
+ * @brief                        Encrypts and sends a UDPPacket over the network
  *
- * @param udp_packet             The UDPPacket to send. This buffer is expected to be of size
- * sizeof(UDPPacket)
+ * @param udp_packet             The UDPPacket to send.
+ *                               This buffer is expected to be of size sizeof(UDPPacket)
  */
 static int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet);
+
+/**
+ * @brief                        Gets and decrypts a UDPPacket over the network
+ *
+ * @param udp_packet             The UDPPacket buffer to write to.
+ *                               This buffer is expected to be of size sizeof(UDPPacket)
+ *
+ * @returns                      True if a packet was received and written to,
+ *                               False if no packet was received
+ *
+ * @note                         This will call recv on context->socket, which will
+ *                               wait for as long as the socket's most recent set_timeout
+ */
+static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet);
 
 /**
  * @brief                        Returns the size, in bytes, of the relevant part of
@@ -381,63 +407,13 @@ static bool udp_update(void* raw_context) {
     }
 
     // *************
-    // Pull a packet from the network
+    // Pull a packet from the network, if any is there
     // *************
 
-    // Wait to receive packet over UDP, until timing out
-    UDPNetworkPacket udp_network_packet;
-    int recv_len =
-        recv_no_intr(context->socket, (char*)&udp_network_packet, sizeof(udp_network_packet), 0);
+    UDPPacket udp_packet;
+    bool received_packet = udp_get_udp_packet(context, &udp_packet);
 
-    // If the packet was successfully received, decrypt and process it it
-    if (recv_len > 0) {
-        int decrypted_len;
-
-        // Verify the reported packet length
-        // This is before the `decrypt_packet` call, so the packet might be malicious
-        // ~ We check recv_len against UDPNETWORKPACKET_HEADER_SIZE first, to ensure that
-        //  the access to udp_network_packet.{payload_size/aes_metadata} is in-bounds
-        // ~ We check bounds on udp_network_packet.payload_size, so that the
-        //  the addition check on payload_size doesn't maliciously overflow
-        // ~ We make an addition check, to ensure that the payload_size matches recv_len
-        if (recv_len < UDPNETWORKPACKET_HEADER_SIZE || udp_network_packet.payload_size < 0 ||
-            (int)sizeof(udp_network_packet.payload) < udp_network_packet.payload_size ||
-            UDPNETWORKPACKET_HEADER_SIZE + udp_network_packet.payload_size != recv_len) {
-            LOG_WARNING("The UDPPacket's payload size %d doesn't agree with recv_len %d!",
-                        udp_network_packet.payload_size, recv_len);
-            return true;
-        }
-
-        UDPPacket udp_packet;
-
-        if (ENCRYPTING_PACKETS) {
-            // Decrypt the packet
-            decrypted_len =
-                decrypt_packet(&udp_packet, sizeof(udp_packet), udp_network_packet.aes_metadata,
-                               udp_network_packet.payload, udp_network_packet.payload_size,
-                               context->binary_aes_private_key);
-            // If there was an issue decrypting it, warn and return NULL
-            if (decrypted_len < 0) {
-                // This is warning, since it could just be someone else sending packets,
-                // Not necessarily our fault
-                LOG_WARNING("Failed to decrypt packet");
-                return true;
-            }
-            // AFTER THIS LINE,
-            // The contents of udp_packet are confirmed to be from the server,
-            // And thus can be trusted as not maliciously formed.
-        } else {
-            // The decrypted packet is just in the payload, during no-encryption dev mode
-            decrypted_len = udp_network_packet.payload_size;
-            memcpy(&udp_packet, udp_network_packet.payload, udp_network_packet.payload_size);
-        }
-#if LOG_NETWORKING
-        LOG_INFO("Received a WhistPacket of size %d over UDP", decrypted_len);
-#endif
-
-        // Verify the UDP Packet's size
-        FATAL_ASSERT(decrypted_len == get_udp_packet_size(&udp_packet));
-
+    if (received_packet) {
         // if the packet is a whist_segment, store the data to give later via get_packet
         // Otherwise, pass it to udp_handle_message
         if (udp_packet.type == UDP_WHIST_SEGMENT) {
@@ -467,25 +443,12 @@ static bool udp_update(void* raw_context) {
             // Handle the UDP message
             udp_handle_message(context, &udp_packet);
         }
-    } else {
-        // Network error or no packets to receive
-        if (recv_len < 0) {
-            int error = get_last_network_error();
-            switch (error) {
-                case WHIST_ETIMEDOUT:
-                case WHIST_EWOULDBLOCK:
-                    // Break on expected network errors
-                    break;
-                default:
-                    LOG_WARNING("Unexpected Packet Error: %d", error);
-                    break;
-            }
-        } else {
-            // Ignore packets of size 0
-        }
     }
 
-    // Now, try recovering any packets we seem to be missing
+    // *************
+    // Try nacking or requesting a stream reset
+    // *************
+
     for (int i = 0; i < NUM_PACKET_TYPES; i++) {
         if (context->ring_buffers[i] != NULL) {
             // At the moment we only nack for video
@@ -823,6 +786,7 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     context->timestamp_mutex = whist_create_mutex();
     context->last_ping_id = -1;
     context->last_pong_id = -1;
+    context->connected = false;
     context->connection_lost = false;
     context->current_network_settings = default_network_settings;
     context->desired_network_settings = default_network_settings;
@@ -1049,60 +1013,88 @@ Private Function Implementation
 */
 
 int create_udp_server_context(UDPContext* context, int port, int connection_timeout_ms) {
+    // Track the time we spend in this function, to keep it under connection_timeout_ms
+    WhistTimer server_creation_timer;
+    start_timer(&server_creation_timer);
+
     // Create a new listening socket on that port
     create_udp_listen_socket(&context->socket, port, connection_timeout_ms);
 
-    // Set the timeout to connection_timeout_ms
-    set_timeout(context->socket, connection_timeout_ms);
+    // While we still have some remaining connection time,
+    // wait for a connection attempt message from a client
+    bool received_connection_attempt = false;
+    while ((connection_timeout_ms == -1 ||
+            get_timer(&server_creation_timer) * MS_IN_SECOND <= connection_timeout_ms) &&
+           !received_connection_attempt) {
+        // Make udp_get_udp_packet wait for the remaining time available
+        if (connection_timeout_ms == -1) {
+            // Propagate blocking
+            set_timeout(context->socket, -1);
+        } else {
+            // We max the remaining time with zero,
+            // to prevent accidentally making a blocking -1 call
+            set_timeout(
+                context->socket,
+                max(connection_timeout_ms - get_timer(&server_creation_timer) * MS_IN_SECOND, 0));
+        }
+        // Check to see if we received a UDP_CONNECTION_ATTEMPT
+        UDPPacket client_packet;
+        if (udp_get_udp_packet(context, &client_packet)) {
+            if (client_packet.type == UDP_CONNECTION_ATTEMPT) {
+                received_connection_attempt = true;
+            }
+        }
+    }
 
-    // Wait to receive a 0-length-message from the client
-    socklen_t slen = sizeof(context->addr);
-    int recv_size;
-    if ((recv_size = recvfrom_no_intr(context->socket, NULL, 0, 0,
-                                      (struct sockaddr*)(&context->addr), &slen)) != 0) {
-        LOG_WARNING("Failed to receive ack! %d %d", recv_size, get_last_network_error());
+    // If a connection attempt wasn't received, cleanup and return -1
+    if (!received_connection_attempt) {
+        LOG_WARNING("No UDP client was found within the first %d ms", connection_timeout_ms);
         closesocket(context->socket);
         return -1;
     }
 
     // Connect to that addr, so we can use send instead of sendto
-    if (connect(context->socket, (struct sockaddr*)&context->addr, sizeof(context->addr)) == -1) {
+    context->connection_addr = context->last_addr;
+    if (connect(context->socket, (struct sockaddr*)&context->connection_addr,
+                sizeof(context->connection_addr)) == -1) {
         LOG_WARNING("Failed to connect()!");
         closesocket(context->socket);
         return -1;
     }
 
-    // Handshake
-    if (!handshake_private_key(context->socket, connection_timeout_ms,
-                               context->binary_aes_private_key)) {
-        LOG_WARNING("Could not complete handshake!");
-        closesocket(context->socket);
-        return -1;
+    // Send a confirmation message back to the client
+    // We send several, as a best attempt against the Two Generals' Problem
+    for (int i = 0; i < NUM_CONFIRMATION_MESSAGES; i++) {
+        UDPPacket confirmation_packet;
+        confirmation_packet.type = UDP_CONNECTION_CONFIRMATION;
+        udp_send_udp_packet(context, &confirmation_packet);
     }
 
     // Connection successful!
     LOG_INFO("Client received on %d from %s:%d over UDP!\n", port,
-             inet_ntoa(context->addr.sin_addr), ntohs(context->addr.sin_port));
+             inet_ntoa(context->connection_addr.sin_addr),
+             ntohs(context->connection_addr.sin_port));
 
     return 0;
 }
 
 int create_udp_client_context(UDPContext* context, char* destination, int port,
                               int connection_timeout_ms) {
+    // Track the time we spend in this function, to keep it under connection_timeout_ms
+    WhistTimer client_creation_timer;
+    start_timer(&client_creation_timer);
+
     // Create UDP socket
     if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
         return -1;
     }
 
-    // Set the timeout to connection_timeout_ms
-    set_timeout(context->socket, connection_timeout_ms);
-
     // Connect so we can use send instead of sendto
-    context->addr.sin_family = AF_INET;
-    context->addr.sin_addr.s_addr = inet_addr(destination);
-    context->addr.sin_port = htons((unsigned short)port);
-    if (connect(context->socket, (const struct sockaddr*)&context->addr, sizeof(context->addr)) ==
-        -1) {
+    context->connection_addr.sin_family = AF_INET;
+    context->connection_addr.sin_addr.s_addr = inet_addr(destination);
+    context->connection_addr.sin_port = htons((unsigned short)port);
+    if (connect(context->socket, (const struct sockaddr*)&context->connection_addr,
+                sizeof(context->connection_addr)) == -1) {
         LOG_WARNING("Failed to connect()!");
         closesocket(context->socket);
         return -1;
@@ -1110,29 +1102,55 @@ int create_udp_client_context(UDPContext* context, char* destination, int port,
 
     LOG_INFO("Connecting to server at %s:%d over UDP...", destination, port);
 
-    // Send 0-length-packet to the server, to notify them of the connection
-    if (send(context->socket, NULL, 0, 0) < 0) {
-        LOG_WARNING("Could not send ack to server %d\n", get_last_network_error());
-        closesocket(context->socket);
-        return -1;
+    // While we still have time left,
+    // Keep trying to connect to the server
+    bool connection_succeeded = false;
+    while ((connection_timeout_ms == -1 ||
+            get_timer(&client_creation_timer) * MS_IN_SECOND <= connection_timeout_ms) &&
+           !connection_succeeded) {
+        // Send a UDP_CONNECTION_ATTEMPT
+        UDPPacket client_request;
+        client_request.type = UDP_CONNECTION_ATTEMPT;
+        udp_send_udp_packet(context, &client_request);
+
+        // Wait for a connection confirmation, using the remaining time available,
+        // Up to CONNECTION_ATTEMPT_INTERVAL_MS
+        if (connection_timeout_ms == -1) {
+            set_timeout(context->socket, CONNECTION_ATTEMPT_INTERVAL_MS);
+        } else {
+            // Bound between [0, CONNECTION_ATTEMPT_INTERVAL_MS]
+            // Don't accidentally call with -1, or it'll block forever
+            set_timeout(
+                context->socket,
+                min(max(connection_timeout_ms - get_timer(&client_creation_timer) * MS_IN_SECOND,
+                        0),
+                    CONNECTION_ATTEMPT_INTERVAL_MS));
+        }
+        // Check to see if we received a UDP_CONNECTION_CONFIRMATION
+        UDPPacket server_response;
+        if (udp_get_udp_packet(context, &server_response)) {
+            if (server_response.type == UDP_CONNECTION_CONFIRMATION) {
+                connection_succeeded = true;
+            }
+        }
     }
 
-    // Handshake
-    if (!handshake_private_key(context->socket, connection_timeout_ms,
-                               context->binary_aes_private_key)) {
-        LOG_WARNING("Could not complete handshake!");
+    if (!connection_succeeded) {
+        LOG_WARNING(
+            "Connection Attempt Failed. No response was found from the UDP Server within %dms.",
+            connection_timeout_ms);
         closesocket(context->socket);
         return -1;
     }
 
     // Mark as successfully connected
-    LOG_INFO("Connected to %s:%d over UDP! (Private %d)\n", inet_ntoa(context->addr.sin_addr), port,
-             ntohs(context->addr.sin_port));
+    LOG_INFO("Connected to %s:%d over UDP! (Private %d)\n",
+             inet_ntoa(context->connection_addr.sin_addr), port,
+             ntohs(context->connection_addr.sin_port));
 
     return 0;
 }
 
-#include <stddef.h>
 int get_udp_packet_size(UDPPacket* udp_packet) {
     switch (udp_packet->type) {
         case UDP_WHIST_SEGMENT: {
@@ -1160,6 +1178,11 @@ int get_udp_packet_size(UDPPacket* udp_packet) {
         case UDP_NETWORK_SETTINGS: {
             return offsetof(UDPPacket, udp_network_settings_data) +
                    sizeof(udp_packet->udp_network_settings_data);
+        }
+        case UDP_CONNECTION_ATTEMPT:
+        case UDP_CONNECTION_CONFIRMATION: {
+            // This should include only the MetaData
+            return offsetof(UDPPacket, udp_whist_segment_data);
         }
         default: {
             LOG_FATAL("Unknown UDP Packet Type: %d", udp_packet->type);
@@ -1225,6 +1248,88 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
     return 0;
 }
 
+static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
+    // Wait to receive a packet over UDP, until timing out
+    UDPNetworkPacket udp_network_packet;
+    socklen_t slen = sizeof(context->last_addr);
+    int recv_len =
+        recvfrom_no_intr(context->socket, &udp_network_packet, sizeof(udp_network_packet), 0,
+                         (struct sockaddr*)(&context->last_addr), &slen);
+
+    if (connected) {
+        // TODO: Compare last_addr, with connection_addr, more accurately than memcmp
+        // Not really necessary, since we validate decryption anyway
+    }
+
+    // If the packet was successfully received, decrypt and process it it
+    if (recv_len > 0) {
+        int decrypted_len;
+
+        // Verify the reported packet length
+        // This is before the `decrypt_packet` call, so the packet might be malicious
+        // ~ We check recv_len against UDPNETWORKPACKET_HEADER_SIZE first, to ensure that
+        //  the access to udp_network_packet.{payload_size/aes_metadata} is in-bounds
+        // ~ We check bounds on udp_network_packet.payload_size, so that the
+        //  the addition check on payload_size doesn't maliciously overflow
+        // ~ We make an addition check, to ensure that the payload_size matches recv_len
+        if (recv_len < UDPNETWORKPACKET_HEADER_SIZE || udp_network_packet.payload_size < 0 ||
+            (int)sizeof(udp_network_packet.payload) < udp_network_packet.payload_size ||
+            UDPNETWORKPACKET_HEADER_SIZE + udp_network_packet.payload_size != recv_len) {
+            LOG_WARNING("The UDPPacket's payload size %d doesn't agree with recv_len %d!",
+                        udp_network_packet.payload_size, recv_len);
+            return false;
+        }
+
+        if (ENCRYPTING_PACKETS) {
+            // Decrypt the packet, into udp_packet
+            decrypted_len =
+                decrypt_packet(udp_packet, sizeof(UDPPacket), udp_network_packet.aes_metadata,
+                               udp_network_packet.payload, udp_network_packet.payload_size,
+                               context->binary_aes_private_key);
+            // If there was an issue decrypting it, warn and return NULL
+            if (decrypted_len < 0) {
+                // This is warning, since it could just be someone else sending packets,
+                // Not necessarily our fault
+                LOG_WARNING("Failed to decrypt packet");
+                return false;
+            }
+            // AFTER THIS LINE,
+            // The contents of udp_packet are confirmed to be from the server,
+            // And thus can be trusted as not maliciously formed.
+        } else {
+            // The decrypted packet is just in the payload, during no-encryption dev mode
+            decrypted_len = udp_network_packet.payload_size;
+            memcpy(udp_packet, udp_network_packet.payload, udp_network_packet.payload_size);
+        }
+#if LOG_NETWORKING
+        LOG_INFO("Received a WhistPacket of size %d over UDP", decrypted_len);
+#endif
+
+        // Verify the UDP Packet's size
+        FATAL_ASSERT(decrypted_len == get_udp_packet_size(udp_packet));
+
+        return true;
+    } else {
+        // Network error or no packets to receive
+        if (recv_len < 0) {
+            int error = get_last_network_error();
+            switch (error) {
+                case WHIST_ETIMEDOUT:
+                case WHIST_EWOULDBLOCK:
+                    // Break on expected network errors
+                    break;
+                default:
+                    LOG_WARNING("Unexpected Packet Error: %d", error);
+                    break;
+            }
+        } else {
+            // Ignore packets of size 0
+        }
+
+        return false;
+    }
+}
+
 /*
 ============================
 UDP Message Handling
@@ -1274,6 +1379,11 @@ void udp_handle_message(UDPContext* context, UDPPacket* packet) {
         case UDP_NETWORK_SETTINGS: {
             udp_handle_network_settings(context,
                                         packet->udp_network_settings_data.network_settings);
+            break;
+        }
+        // Ignore handshake packets after the handshake happens
+        case UDP_CONNECTION_ATTEMPT:
+        case UDP_CONNECTION_CONFIRMATION: {
             break;
         }
         default: {
