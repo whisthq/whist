@@ -22,21 +22,24 @@ on:
   workflow_dispatch:
 
 jobs:
-  # This job cross-compiles the Whist Browser to x86_64 from our NYC office M1 Mac Mini self-hosted runner.
+  # This job cross-compiles the Whist Browser to x64 from our NYC office M1 Mac Mini self-hosted runner.
   whist-browser-build-macos:
     name: "Nightly: macOS (${{ matrix.config.arch}})"
     runs-on: [self-hosted, macOS, ARM64]
+
     strategy:
       matrix:
         config:
-          - arch: "x86_64"
+          - arch: "x64"
           - arch: "arm64"
+
     env:
-      x86_64-binary-tar-name: whist-browser-macos-x86_64.tar.gz
+      x64-binary-tar-name: whist-browser-macos-x64.tar.gz
+      x64-s3-bucket-uri: s3://whist-browser-macos-x64
       arm64-binary-tar-name: whist-browser-macos-arm64.tar.gz
-      x86_64-s3-bucket-uri: s3://whist-browser-macos-x86_64
       arm64-s3-bucket-uri: s3://whist-browser-macos-arm64
       s3-bucket-region: us-east-1
+
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
@@ -56,7 +59,6 @@ jobs:
       # Building Brave/Chromium requires specific Node & npm versions, and Xcode. For full
       # details, see: https://github.com/whisthq/brave-browser#readme
       - name: Log NodeJS, npm and Xcode versions
-        working-directory: brave-browser
         run: |
           echo "NodeJS & npm versions:\n"
           node --version
@@ -66,37 +68,69 @@ jobs:
           xcode-select --install
           xcodebuild -version
 
-      - name: Initialize the build environment
-        working-directory: brave-browser
-        run: npm install
-
-      - name: Set target architecture
-        working-directory: brave-browser
-        run: npm config set target_arch "${{ matrix.config.arch }}"
-
-      - name: Fetch Chromium source & dependencies
-        working-directory: brave-browser
-        run: npm run init
-
-      - name: Build Whist Browser
-        working-directory: brave-browser
-        run: npm run build
-
-      # TODO: configure the Chrome keys and other configs for creating a Release build
-      # This may require some Google keys, so I (Phil) need to look into that
-      - name: Build Whist Browser
-        working-directory: brave-browser
+      - name: Configure build type
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
-            npm run build Release
             echo "build_type=Release" >> $GITHUB_ENV
           else
-            npm run build Debug
             echo "build_type=Debug" >> $GITHUB_ENV
           fi
 
+      - name: Initialize the build environment
+        run: npm install
+
+      # TODO: configure the Chrome keys and other configs for creating a Release build
+      # This may require some Google keys, so I (Phil) need to look into that
+      # https://github.com/brave/brave-browser/pull/20481/files
+
+You probably want to leave updater_* blank so it doesn't try pulling updates from our servers.  
+Also you should be good to leave brave_stats_updater_url blank.  If you want to host your own 
+server for sync (brave_sync_endpoint) you can find the code here: https://github.com/brave/go-sync.  
+Finally, for brave_variations_server_url I think that https://variations.brave.com/seed should work.
+
+https://github.com/whisthq/brave-core/blob/main/build/commands/lib/config.js
+
+      - Configure build parameters
+        run: |
+          npm config set target_arch "${{ matrix.config.arch }}"
+          # npm config set target_os=linux
+          # npm config set target_arch=x64
+          # npm config set is_official_build=false 
+          # npm config set brave_services_key=somefakekey
+          # npm config set updater_dev_endpoint=https://
+          # npm config set updater_prod_endpoint=https://
+          # npm config set brave_stats_updater_url=https://
+          # npm config set brave_sync_endpoint=https://
+          # npm config set brave_variations_server_url=https://
+          # npm config set uphold_client_id=fake
+          # npm config set uphold_client_secret=fake
+          # npm config set gemini_api_url=https://
+          # npm config set gemini_oauth_url=https://
+          # npm config set gemini_wallet_client_id=fake
+          # npm config set gemini_wallet_client_secret=fake
+          # npm config set rewards_grant_dev_endpoint=https://
+          # npm config set rewards_grant_staging_endpoint=https://
+          # npm config set rewards_grant_prod_endpoint=https://
+
+      - name: Fetch Chromium source & dependencies
+        run: npm run init
+
+      # TODO: I'm not sure this is needed (?)
+      # I got this from: https://github.com/brave/brave-browser/pull/20481/files
+      - name: Confirm dependencies installation
+        if: "${{ env.build_type }}" == "Release"
+        run: echo "Y" | ./src/build/install-build-deps.sh
+
+      - name: Build Whist Browser
+        run: npm run build ${{ env.build_type }}
+
+      # TODO: We'll need to grab the version from the config DB instead, I can just reuse
+      # the code in whist-build-and-deploy.yml here
+      - name: Add our own version stamp
+        if: "${{ env.build_type }}" == "Release"
+        run: echo "0.0.0" > out/Release/version
+
       - name: Tar & Upload Whist Browser to AWS S3
-        working-directory: brave-browser/src/out
         run: |
           tar -zcvf ${{ env.${{ matrix.config.arch }}-binary-tar-name }} "Component_${{ matrix.config.arch }}/Brave Browser ${{ env.build_type }}.app"
           aws s3 cp ${{ env.${{ matrix.config.arch }}-binary-tar-name }} ${{ env.${{ matrix.config.arch }}-s3-bucket-uri }}/${{ env.${{ matrix.config.arch }}-binary-tar-name }}
