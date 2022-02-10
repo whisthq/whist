@@ -84,6 +84,6 @@ jobs:
           GITHUB_ISSUE: ${{ github.event.number }}
           GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
           SLACK_WEBHOOK: ${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}
-        run: python3 ../../.github/workflows/helpers/parse_and_display_e2e_results.py
+        run: python3 ../../.github/workflows/helpers/parse_and_display_e2e_results.py --compared-branch-name=dev
 
   #######################################################################################
