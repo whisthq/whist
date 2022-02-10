@@ -150,8 +150,6 @@ int32_t multithreaded_process_notifications(void *opaque) {
     whist_set_thread_priority(WHIST_THREAD_PRIORITY_REALTIME);
     whist_sleep(500);
 
-    add_thread_to_client_active_dependents();
-
     DbusCtx *ctx = dbus_init(eb, state);
 
     if (ctx == NULL) {
