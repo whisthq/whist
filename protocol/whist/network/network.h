@@ -119,7 +119,7 @@ Defines
 #define WHIST_IOCTL_SOCKET ioctlsocket
 #define WHIST_CLOSE_SOCKET closesocket
 #else
-// NOTE: SOCKET/INVALID_SOCKET/closesocket are defined on Win32
+// Note: SOCKET, INVALID_SOCKET, and closesocket are already defined on Windows
 #define SOCKET int
 #define INVALID_SOCKET (-1)
 #define closesocket close
