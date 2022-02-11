@@ -49,7 +49,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #pragma warning(disable : 4267) /* WHIST: size_t to unsigned conversion */
 #endif                          /*_MSC_VER */
 
-#ifdef WHIST_LODEPNG_CPP_SKIP_DUPLICATE_GLOBALS
+#ifndef WHIST_LODEPNG_CPP_SKIP_DUPLICATE_GLOBALS
 const char* LODEPNG_VERSION_STRING = "20201017";
 #endif  // WHIST_LODEPNG_CPP_SKIP_DUPLICATE_GLOBALS
 
@@ -2439,7 +2439,7 @@ void lodepng_compress_settings_init(LodePNGCompressSettings* settings) {
     settings->custom_context = 0;
 }
 
-#ifdef WHIST_LODEPNG_CPP_SKIP_DUPLICATE_GLOBALS
+#ifndef WHIST_LODEPNG_CPP_SKIP_DUPLICATE_GLOBALS
 const LodePNGCompressSettings lodepng_default_compress_settings = {
     2, 1, DEFAULT_WINDOWSIZE, 3, 128, 1, 0, 0, 0};
 #endif  // WHIST_LODEPNG_CPP_SKIP_DUPLICATE_GLOBALS
@@ -2458,7 +2458,7 @@ void lodepng_decompress_settings_init(LodePNGDecompressSettings* settings) {
     settings->custom_context = 0;
 }
 
-#ifdef WHIST_LODEPNG_CPP_SKIP_DUPLICATE_GLOBALS
+#ifndef WHIST_LODEPNG_CPP_SKIP_DUPLICATE_GLOBALS
 const LodePNGDecompressSettings lodepng_default_decompress_settings = {0, 0, 0, 0, 0, 0};
 #endif  // WHIST_LODEPNG_CPP_SKIP_DUPLICATE_GLOBALS
 
