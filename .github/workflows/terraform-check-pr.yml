@@ -21,7 +21,7 @@ on:
 jobs:
   terraform-validate-and-plan:
     name: Terraform validate and plan
-    runs-on: ubuntu-20.4
+    runs-on: ubuntu-20.04
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
