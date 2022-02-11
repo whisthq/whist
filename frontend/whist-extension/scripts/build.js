@@ -9,5 +9,8 @@ if (require.main === module) {
   )
   helpers.createConfigFileFromJSON(helpers.createConfigJSON(env))
 
+  // Build Tailwind CSS file
+  helpers.buildTailwind()
+
   execCommand("webpack --config webpack/webpack.prod.js")
 }

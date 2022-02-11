@@ -1,8 +1,8 @@
 const helpers = require("./helpers")
 
 const postInstall = () => {
+  // Create config file
   helpers.createConfigFileFromJSON(helpers.createConfigJSON("dev"))
-  helpers.buildTailwind()
 }
 
 module.exports = postInstall
