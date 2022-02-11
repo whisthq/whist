@@ -40,42 +40,21 @@ jobs:
         id: init
         working-directory: backend/infrastructure
         run: |
-          if [ "$BRANCH_NAME" == "prod" ]; then
-            cd prod
-          elif [ "$BRANCH_NAME" == "staging" ]; then
-            cd staging
-          else
-            cd dev
-          fi
-
+          cd "$BRANCH_NAME"
           terraform init
 
       - name: Validate Terraform code
         id: validate
         working-directory: backend/infrastructure
         run: |
-          if [ "$BRANCH_NAME" == "prod" ]; then
-            cd prod
-          elif [ "$BRANCH_NAME" == "staging" ]; then
-            cd staging
-          else
-            cd dev
-          fi
-
+          cd "$BRANCH_NAME"
           terraform validate -no-color
 
       - name: Terraform Plan
         id: plan
         working-directory: backend/infrastructure
         run: |
-          if [ "$BRANCH_NAME" == "prod" ]; then
-            cd prod
-          elif [ "$BRANCH_NAME" == "staging" ]; then
-            cd staging
-          else
-            cd dev
-          fi
-
+          cd "$BRANCH_NAME"
           terraform plan -no-color
 
       - uses: actions/github-script@0.9.0
