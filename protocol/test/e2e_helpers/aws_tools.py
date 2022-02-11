@@ -8,6 +8,10 @@ import paramiko
 import subprocess
 from operator import itemgetter
 
+from e2e_helpers.local_tools import (
+    get_whist_branch_name,
+)
+
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
@@ -86,25 +90,7 @@ def create_ec2_instance(
         instance_id (str): The ID of the created instance
     """
 
-    branch_name = ""
-    if running_in_ci:
-        # In CI, the PR branch name is saved in GITHUB_REF_NAME, or in the GITHUB_HEAD_REF environment variable (in case this script is being run as part of a PR)
-        b = os.getenv("GITHUB_REF_NAME").split("/")
-        if len(b) != 2 or not b[0].isnumeric() or b[1] != "merge":
-            branch_name = os.getenv("GITHUB_REF_NAME")
-        else:
-            branch_name = os.getenv("GITHUB_HEAD_REF")
-    else:
-        # Locally, we can find the branch using the 'git branch' command.
-        # WARNING: this command will fail on detached HEADS.
-        subproc_handle = subprocess.Popen("git branch", shell=True, stdout=subprocess.PIPE)
-        subprocess_stdout = subproc_handle.stdout.readlines()
-
-        for line in subprocess_stdout:
-            converted_line = line.decode("utf-8").strip()
-            if "*" in converted_line:
-                branch_name = converted_line[2:]
-                break
+    branch_name = get_whist_branch_name(running_in_ci)
     instance_name = "protocol-e2e-benchmarking-{}".format(branch_name)
 
     kwargs = {

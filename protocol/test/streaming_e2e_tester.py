@@ -22,6 +22,7 @@ from e2e_helpers.aws_tools import (
 from e2e_helpers.dev_instance_tools import (
     attempt_ssh_connection,
     wait_until_cmd_done,
+    get_whist_branch_name,
 )
 
 # Get tools to programmatically run Whist components on a remote machine
@@ -39,6 +40,12 @@ from e2e_helpers.whist_remote import (
 from e2e_helpers.remote_exp_tools import (
     extract_server_logs_from_instance,
     extract_client_logs_from_instance,
+)
+
+# Get tools to run commands on local machine
+from e2e_helpers.local_tools import (
+    get_whist_branch_name,
+    get_whist_github_sha,
 )
 
 # add the current directory to the path no matter where this is called from
@@ -117,6 +124,31 @@ parser.add_argument(
     choices=["false", "true"],
     default="false",
 )
+
+parser.add_argument(
+    "--leave-instances-on",
+    help="This option allows you to avoid stopping/terminating the instances upon completion of the test",
+    type=str,
+    choices=["false", "true"],
+    default="false",
+)
+
+parser.add_argument(
+    "--skip-host-setup",
+    help="This option allows you to skip the host-setup on the instances to be used for the test",
+    type=str,
+    choices=["false", "true"],
+    default="false",
+)
+
+parser.add_argument(
+    "--skip-git-clone",
+    help="This option allows you to skip cloning the Whist repository on the instances to be used for the test",
+    type=str,
+    choices=["false", "true"],
+    default="false",
+)
+
 
 parser.add_argument(
     "--simulate-scrolling",
@@ -220,9 +252,9 @@ if __name__ == "__main__":
             instances_to_be_stopped.append(client_instance_id)
     instances_file = open("instances_to_clean.txt", "a+")
     for i in instances_to_be_terminated:
-        instances_file.write("terminate {} {}".format(region_name, i))
+        instances_file.write("terminate {} {}\n".format(region_name, i))
     for i in instances_to_be_stopped:
-        instances_file.write("stop {} {}".format(region_name, i))
+        instances_file.write("stop {} {}\n".format(region_name, i))
     instances_file.close()
 
     # Get the IP address of the instance(s)
@@ -254,15 +286,26 @@ if __name__ == "__main__":
     )
     aws_timeout = 1200  # 10 mins is not enough to build the base mandelbox, so we'll go ahead with 20 mins to be safe
     # Create local folder for logs
-    perf_logs_folder_name = time.strftime("%Y_%m_%d@%H-%M-%S")
-    perf_logs_folder_name = "./perf_logs/{}".format(perf_logs_folder_name)
-    command = "mkdir -p {}/server {}/client".format(perf_logs_folder_name, perf_logs_folder_name)
-    local_process = pexpect.spawn(command, timeout=aws_timeout)
-    local_process.expect(["\$", "%", pexpect.EOF])
-    local_process.kill(0)
+    experiment_start_time = time.strftime("%Y_%m_%d@%H-%M-%S")
+    perf_logs_folder_name = os.path.join("perf_logs", experiment_start_time)
+    os.makedirs(os.path.join(perf_logs_folder_name, "server"))
+    os.makedirs(os.path.join(perf_logs_folder_name, "client"))
 
-    server_log_filepath = "{}/server_monitoring_log.txt".format(perf_logs_folder_name)
-    client_log_filepath = "{}/client_monitoring_log.txt".format(perf_logs_folder_name)
+    experiment_metadata = {
+        "start_time": experiment_start_time + " local time"
+        if not running_in_ci
+        else experiment_start_time + " UTC",
+        "network_conditions": network_conditions,
+        "using_two_instances": use_two_instances,
+        "branch_name": get_whist_branch_name(running_in_ci),
+        "github_sha": get_whist_github_sha(running_in_ci),
+    }
+    metadata_filename = os.path.join(perf_logs_folder_name, "experiment_metadata.json")
+    with open(metadata_filename, "w") as metadata_file:
+        json.dump(experiment_metadata, metadata_file)
+
+    server_log_filepath = os.path.join(perf_logs_folder_name, "server_monitoring_log.txt")
+    client_log_filepath = os.path.join(perf_logs_folder_name, "client_monitoring_log.txt")
 
     manager = multiprocessing.Manager()
     args_dict = manager.dict()
@@ -281,6 +324,8 @@ if __name__ == "__main__":
     args_dict["aws_credentials_filepath"] = aws_credentials_filepath
     args_dict["cmake_build_type"] = args.cmake_build_type
     args_dict["running_in_ci"] = running_in_ci
+    args_dict["skip_git_clone"] = args.skip_git_clone
+    args_dict["skip_host_setup"] = args.skip_host_setup
 
     # If using two instances, parallelize the host-setup and building of the docker containers to save time
     p1 = multiprocessing.Process(target=server_setup_process, args=[args_dict])
@@ -339,11 +384,16 @@ if __name__ == "__main__":
     # Wait <testing_time> seconds to generate enough data
     time.sleep(testing_time)
 
-    # Restore un-degradated network conditions in case the instance is reused later on
+    # Restore un-degradated network conditions in case the instance is reused later on. Do this before downloading the logs to prevent the donwload from taking a long time.
     if network_conditions != "normal":
-        restore_network_conditions_client(
-            client_pexpect_process, pexpect_prompt_client, running_in_ci
+        # Get new SSH connection because current ones are connected to the mandelboxes' bash, and we cannot exit them until we have copied over the logs
+        client_restore_net_process = attempt_ssh_connection(
+            client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5
         )
+        restore_network_conditions_client(
+            client_restore_net_process, pexpect_prompt_client, running_in_ci
+        )
+        client_restore_net_process.kill(0)
 
     # Extract the client/server perf logs from the two docker containers
     print("Initiating LOG GRABBING ssh connection(s) with the AWS instance(s)...")
@@ -388,6 +438,7 @@ if __name__ == "__main__":
     )
 
     # Clean up the instance(s)
+
     # Exit the server/client mandelboxes
     server_pexpect_process.sendline("exit")
     wait_until_cmd_done(server_pexpect_process, pexpect_prompt_server, running_in_ci)
@@ -422,14 +473,23 @@ if __name__ == "__main__":
     server_log.close()
     client_log.close()
 
-    # Terminate or stop AWS instance(s)
-    terminate_or_stop_aws_instance(
-        boto3client, server_instance_id, server_instance_id != args.use_existing_server_instance
-    )
-    if use_two_instances:
+    if args.leave_instances_on == "false":
+        # Terminate or stop AWS instance(s)
         terminate_or_stop_aws_instance(
-            boto3client, client_instance_id, client_instance_id != args.use_existing_client_instance
+            boto3client, server_instance_id, server_instance_id != args.use_existing_server_instance
         )
+        if use_two_instances:
+            terminate_or_stop_aws_instance(
+                boto3client,
+                client_instance_id,
+                client_instance_id != args.use_existing_client_instance,
+            )
+    else:
+        # Save instance IDs to file for reuse by later runs
+        with open("instances_left_on.txt", "w+") as instances_file:
+            instances_file.write("{}\n".format(server_instance_id))
+            if client_instance_id != server_instance_id:
+                instances_file.write("{}\n".format(client_instance_id))
 
     print("Instance successfully stopped/terminated, goodbye")
 

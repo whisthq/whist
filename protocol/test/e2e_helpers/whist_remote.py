@@ -201,19 +201,56 @@ def setup_network_conditions_client(
             )
         )
 
-        command1 = "dnctl pipe 1 config bw {} delay {} plr {} noerror".format(
-            max_bandwidth, net_delay, pkt_drop_pctg
+        # Install ifconfig
+        command = "sudo apt install net-tools"
+        pexpect_process.sendline(command)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+        # Get network interface names (excluding loopback)
+        command = "sudo ifconfig -a | sed 's/[ \t].*//;/^\(lo:\|\)$/d'"
+        pexpect_process.sendline(command)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+
+        ifconfig_output = pexpect_process.before.decode("utf-8").strip().split("\n")
+        ifconfig_output = [
+            x.replace("\r", "").replace(":", "")
+            for x in ifconfig_output[1:-1]
+            if "docker" not in x and "veth" not in x
+        ]
+
+        commands = []
+
+        # Set up infrastructure to apply degradations on incoming traffic (https://wiki.linuxfoundation.org/networking/netem#how_can_i_use_netem_on_incoming_traffic)
+        commands.append("sudo modprobe ifb")
+        commands.append("sudo ip link set dev ifb0 up")
+
+        for device in ifconfig_output:
+            # add devices to delay incoming packets
+            commands.append("sudo tc qdisc add dev {} ingress".format(device))
+            commands.append(
+                "sudo tc filter add dev {} parent ffff: protocol ip u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev ifb0".format(
+                    device
+                )
+            )
+            # Set outbound degradations
+            commands.append(
+                "sudo tc qdisc add dev {} root netem delay {}ms loss {}% rate {}".format(
+                    device, net_delay, pkt_drop_pctg, max_bandwidth
+                )
+            )
+
+        # Set inbound degradations
+        commands.append(
+            "sudo tc qdisc add dev ifb0 root netem delay {}ms loss {}% rate {}".format(
+                net_delay, pkt_drop_pctg, max_bandwidth
+            )
         )
-        pexpect_process.sendline(command1)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
-        command2 = 'echo "dummynet in proto {tcp,icmp} from any to any pipe 1" | pfctl -f -'
-        pexpect_process.sendline(command2)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+        # Execute all commands:
+        for command in commands:
+            pexpect_process.sendline(command)
+            wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
-        command3 = "pfctl -e"
-        pexpect_process.sendline(command3)
-        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+        print(commands)
 
 
 def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_in_ci):
@@ -232,13 +269,34 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
 
     """
 
-    command1 = "pfctl -f /etc/pf.conf"
-    pexpect_process.sendline(command1)
+    # Get network interface names (excluding loopback)
+    command = "sudo ifconfig -a | sed 's/[ \t].*//;/^\(lo:\|\)$/d'"
+    pexpect_process.sendline(command)
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
-    command2 = "dnctl -q flush"
-    pexpect_process.sendline(command2)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    ifconfig_output = pexpect_process.before.decode("utf-8").strip().split("\n")
+    ifconfig_output = [
+        x.replace("\r", "").replace(":", "")
+        for x in ifconfig_output[1:-1]
+        if "docker" not in x and "veth" not in x and "ifb" not in x
+    ]
+
+    commands = []
+
+    for device in ifconfig_output:
+        # Inbound degradations
+        commands.append("sudo tc qdisc del dev {} handle ffff: ingress".format(device))
+        # Outbound degradations
+        commands.append("sudo tc qdisc del dev {} root netem".format(device))
+
+    commands.append("sudo modprobe -r ifb")
+
+    print(commands)
+
+    # Execute all commands:
+    for command in commands:
+        pexpect_process.sendline(command)
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
 
 def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
@@ -303,6 +361,8 @@ def server_setup_process(args_dict):
     aws_credentials_filepath = args_dict["aws_credentials_filepath"]
     cmake_build_type = args_dict["cmake_build_type"]
     running_in_ci = args_dict["running_in_ci"]
+    skip_git_clone = args_dict["skip_git_clone"]
+    skip_host_setup = args_dict["skip_host_setup"]
 
     server_log = open(server_log_filepath, "w")
 
@@ -320,15 +380,22 @@ def server_setup_process(args_dict):
         hs_process, pexpect_prompt_server, running_in_ci, aws_credentials_filepath
     )
 
-    clone_whist_repository_on_instance(
-        github_token, hs_process, pexpect_prompt_server, running_in_ci
-    )
-    apply_dpkg_locking_fixup(hs_process, pexpect_prompt_server, running_in_ci)
+    if skip_git_clone == "false":
+        clone_whist_repository_on_instance(
+            github_token, hs_process, pexpect_prompt_server, running_in_ci
+        )
+    else:
+        print("Skipping git clone whisthq/whist repository on server instance.")
 
-    # 1- run host-setup
-    hs_process = run_host_setup_on_instance(
-        hs_process, pexpect_prompt_server, server_cmd, aws_timeout, server_log, running_in_ci
-    )
+    if skip_host_setup == "false":
+        apply_dpkg_locking_fixup(hs_process, pexpect_prompt_server, running_in_ci)
+
+        # 1- run host-setup
+        hs_process = run_host_setup_on_instance(
+            hs_process, pexpect_prompt_server, server_cmd, aws_timeout, server_log, running_in_ci
+        )
+    else:
+        print("Skipping host setup on server instance.")
 
     # 2- reboot and wait for it to come back up
     print("Rebooting the server EC2 instance (required after running the host setup)...")
@@ -370,11 +437,14 @@ def client_setup_process(args_dict):
     aws_credentials_filepath = args_dict["aws_credentials_filepath"]
     cmake_build_type = args_dict["cmake_build_type"]
     running_in_ci = args_dict["running_in_ci"]
+    skip_git_clone = args_dict["skip_git_clone"]
+    skip_host_setup = args_dict["skip_host_setup"]
 
     client_log = open(client_log_filepath, "w")
 
     client_cmd = "ssh {}@{} -i {}".format(username, client_hostname, ssh_key_path)
 
+    # If we are using the same instance for client and server, all the operations in this if-statement have already been done by server_setup_process
     if use_two_instances:
         # Initiate the SSH connections with the client instance
         print("Initiating the SETUP ssh connection with the client AWS instance...")
@@ -388,18 +458,30 @@ def client_setup_process(args_dict):
             hs_process, pexpect_prompt_client, running_in_ci, aws_credentials_filepath
         )
 
-        clone_whist_repository_on_instance(
-            github_token, hs_process, pexpect_prompt_client, running_in_ci
-        )
-        apply_dpkg_locking_fixup(hs_process, pexpect_prompt_client, running_in_ci)
+        if skip_git_clone == "false":
+            clone_whist_repository_on_instance(
+                github_token, hs_process, pexpect_prompt_client, running_in_ci
+            )
+        else:
+            print("Skipping git clone whisthq/whist repository on client instance.")
 
-        # 1- run host-setup
-        hs_process = run_host_setup_on_instance(
-            hs_process, pexpect_prompt_client, client_cmd, aws_timeout, client_log, running_in_ci
-        )
+        if skip_host_setup == "false":
+            apply_dpkg_locking_fixup(hs_process, pexpect_prompt_client, running_in_ci)
+
+            # 1- run host-setup
+            hs_process = run_host_setup_on_instance(
+                hs_process,
+                pexpect_prompt_client,
+                client_cmd,
+                aws_timeout,
+                client_log,
+                running_in_ci,
+            )
+        else:
+            print("Skipping host setup on server instance.")
 
         # 2- reboot and wait for it to come back up
-        print("Rebooting the server EC2 instance (required after running the host setup)...")
+        print("Rebooting the client EC2 instance (required after running the host setup)...")
         hs_process = reboot_instance(
             hs_process, client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5, running_in_ci
         )
