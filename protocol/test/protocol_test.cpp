@@ -43,13 +43,15 @@ extern "C" {
 #include "server/parse_args.h"
 #endif
 
-#include <whist/file/file_synchronizer.h>
+// Signal handling
+#include <signal.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/utils/aes.h>
 #include <whist/utils/png.h>
 #include <whist/utils/avpacket_buffer.h>
 #include <whist/utils/atomic.h>
 #include <whist/fec/fec.h>
+#include <whist/file/file_synchronizer.h>
 #include <whist/utils/linked_list.h>
 #include <whist/utils/queue.h>
 #include <whist/utils/command_line.h>
@@ -639,6 +641,33 @@ TEST_F(ProtocolTest, LoggerOverflowTest) {
         check_stdout_line(::testing::EndsWith("Log buffer overflowing!"));
     }
 }
+
+#ifndef _WIN32
+// Import WhistPrivate function from logging.c
+extern "C" {
+extern void unix_crash_handler(int sig);
+extern bool error_monitor_initialized;
+}
+// Test unix crash handler.
+TEST_F(ProtocolTest, CrashHandlerTest) {
+    // Init logger to init backtrace handler mutexes
+    whist_init_logger();
+
+    // Expect the signal handler to crash
+    EXPECT_EXIT(unix_crash_handler(SIGTERM), ::testing::ExitedWithCode(1), ".*");
+
+    // Pretend that the error monitor is initialized.
+    error_monitor_initialized = true;
+
+    EXPECT_EXIT(unix_crash_handler(SIGKILL), ::testing::KilledBySignal(SIGKILL), ".*");
+
+    // Stop pretending that the error monitor is initialized.
+    error_monitor_initialized = false;
+
+    // Destroy logger
+    destroy_logger();
+}
+#endif  // _WIN32
 
 /**
  * logging/log_statistic.c

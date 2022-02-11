@@ -59,7 +59,7 @@ Global Variables
 static char error_monitor_environment[WHIST_ARGS_MAXLEN + 1];
 static bool error_monitor_environment_set = false;
 static char error_monitor_session_id[WHIST_ARGS_MAXLEN + 1] = {0};
-static bool error_monitor_initialized = false;
+WhistPrivate bool error_monitor_initialized = false;
 static WhistTimer last_error_event_timer;
 
 /*

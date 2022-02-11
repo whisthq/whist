@@ -635,7 +635,7 @@ static LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS* ExceptionInfo) 
     return EXCEPTION_EXECUTE_HANDLER;
 }
 #else
-static void unix_crash_handler(int sig) {
+WhistPrivate void unix_crash_handler(int sig) {
     fprintf(stdout, "\nError: signal %d:%s\n", sig, strsignal(sig));
     print_stacktrace();
     if (whist_error_monitor_is_initialized()) {

@@ -74,6 +74,23 @@ Defines
 ============================
 */
 
+// Modifier for symbols which should be exported only
+// for use in our GTest unit tests.
+#ifndef GOOGLE_TEST
+// Since these functions are not static here, there will
+// be missing prototypes in the unit test build that we
+// expect. Hence, ignore the warning.
+#ifdef __APPLE__
+#pragma clang diagnostic ignored "-Wmissing-prototypes"
+#elif defined(__linux__)
+#pragma GCC diagnostic ignored "-Wmissing-prototypes"
+#endif  // OS
+
+#define WhistPrivate
+#else
+#define WhistPrivate static
+#endif  // GOOGLE_TEST
+
 #define UNUSED(var) (void)(var)
 
 #define CAPTURE_SPECIAL_WINDOWS_KEYS false
