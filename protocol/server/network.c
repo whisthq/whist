@@ -224,7 +224,6 @@ int try_get_next_message_tcp(Client *client, WhistPacket **p_tcp_packet) {
     *p_tcp_packet = NULL;
 
     if (!socket_update(&client->tcp_context)) {
-        LOG_INFO("TCP socket connection lost!");
         if (client->is_active && !client->is_deactivating) {
             if (start_quitting_client(client) != 0) {
                 LOG_ERROR("Failed to reap timed out clients.");
@@ -244,7 +243,13 @@ int try_get_next_message_udp(Client *client, WhistClientMessage *wcmsg, size_t *
 
     memset(wcmsg, 0, sizeof(*wcmsg));
 
-    socket_update(&client->udp_context);
+    if (!socket_update(&client->udp_context)) {
+        if (client->is_active && !client->is_deactivating) {
+            if (start_quitting_client(client) != 0) {
+                LOG_ERROR("Failed to reap timed out clients.");
+            }
+        }
+    }
     WhistPacket *packet = get_packet(&client->udp_context, PACKET_MESSAGE);
     if (packet) {
         if (packet->payload_size < 0 || (int)sizeof(WhistClientMessage) < packet->payload_size) {
