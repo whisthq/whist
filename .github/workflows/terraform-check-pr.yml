@@ -1,0 +1,81 @@
+# workflows/terraform-check-pt.yml
+#
+# Terraform: Check PR
+# Check Terraform code for potential security vulnerabilities
+# perform static analysis, format, validate and output plan.
+
+name: "Terraform: Check PR"
+on:
+  push:
+    branches:
+      - dev
+      - staging
+      - prod
+    paths:
+      - "backend/infrastructure/**"
+  pull_request:
+    paths:
+      - "backend/infrastructure/**"
+  workflow_dispatch:
+
+jobs:
+
+  terraform-validate-and-plan:
+    name: Terraform validate and plan
+    runs-on: ubuntu-20.4
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
+
+    steps:
+      - uses: hashicorp/setup-terraform@v1
+
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Format Terraform code
+        id: fmt
+        run: terraform fmt -check
+        continue-on-error: true
+
+      - name: Initialize Terraform
+        id: init
+        run: terraform init
+
+      - name: Validate Terraform code
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color
+        continue-on-error: true
+
+      - uses: actions/github-script@0.9.0
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Validation 🤖\`${{ steps.validate.outputs.stdout }}\`
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`\n
+            ${process.env.PLAN}
+            \`\`\`
+
+            </details>
+
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*`;
+
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })

@@ -1,7 +1,11 @@
 terraform {
-  # Use postgres database to store state
-  # Credentials will be filled in by CI.
-  # backend "pg" {}
+  # Use an S3 bucket to store state
+  # AWS credentials will be filled in by CI.
+  backend "s3" {
+    bucket = "whist-terraform-state"
+    key = "dev/terraform.tfstate"
+    region = "us-east-1"
+  }
 
   required_providers {
     aws = {
@@ -18,7 +22,6 @@ terraform {
 module "iam" {
   source                     = "../modules/aws_iam"
   env                        = var.env
-  whist-env-managed-policies = var.whist-env-managed-policies
 }
 
 module "s3" {
@@ -34,36 +37,11 @@ module "us-east-1" {
   env    = var.env
 }
 
-module "us-east-2" {
-  source = "../modules/aws_multi_region"
-  env    = var.env
-  providers = {
-    aws = aws.use2
-  }
-}
-
 # US West
 module "us-west-1" {
   source = "../modules/aws_multi_region"
   env    = var.env
   providers = {
     aws = aws.usw1
-  }
-}
-
-module "us-west-2" {
-  source = "../modules/aws_multi_region"
-  env    = var.env
-  providers = {
-    aws = aws.usw2
-  }
-}
-
-# Canada central
-module "us-ca-central-1" {
-  source = "../modules/aws_multi_region"
-  env    = var.env
-  providers = {
-    aws = aws.usca1
   }
 }

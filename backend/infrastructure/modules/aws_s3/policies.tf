@@ -17,7 +17,7 @@ resource "aws_s3_bucket_public_access_block" "whist-browser-chromium-macos" {
 }
 
 resource "aws_s3_bucket_public_access_block" "whist-browser-chromium-windows" {
-  bucket              = aws_s3_bucket.whist-browser-chromium-windows
+  bucket              = aws_s3_bucket.whist-browser-chromium-windows.id
   block_public_acls   = true
   block_public_policy = true
   restrict_public_buckets = true
@@ -27,7 +27,8 @@ resource "aws_s3_bucket_public_access_block" "whist-browser-chromium-windows" {
 # Bucket for Chromium debug build
 
 resource "aws_s3_bucket_public_access_block" "whist-browser-chromium-debug-build" {
-  bucket              = aws_s3_bucket.whist-browser-chromium-debug-build.id
+  count  = var.env == "prod" ? 1 : 0
+  bucket              = aws_s3_bucket.whist-browser-chromium-debug-build[0].id
   block_public_acls   = true
   block_public_policy = true
   restrict_public_buckets = true
@@ -63,7 +64,8 @@ resource "aws_s3_bucket_public_access_block" "whist-browser-brave-macos-x64" {
 # Policy for Brave cache
 
 resource "aws_s3_bucket_public_access_block" "whist-brave-sscache" {
-  bucket              = aws_s3_bucket.whist-brave-sscache.id
+  count  = var.env == "prod" ? 1 : 0
+  bucket              = aws_s3_bucket.whist-brave-sscache[0].id
   block_public_acls   = true
   block_public_policy = true
   restrict_public_buckets = true
@@ -83,7 +85,8 @@ resource "aws_s3_bucket_public_access_block" "whist-user-app-config" {
 # ------------------------------ Policies for assets ------------------------------ #
 
 resource "aws_s3_bucket_public_access_block" "whist-brand-assets" {
-  bucket              = aws_s3_bucket.whist-brand-assets.id
+  count  = var.env == "prod" ? 1 : 0
+  bucket              = aws_s3_bucket.whist-brand-assets[0].id
   block_public_acls   = true
   block_public_policy = true
   restrict_public_buckets = true
@@ -91,15 +94,17 @@ resource "aws_s3_bucket_public_access_block" "whist-brand-assets" {
 }
 
 resource "aws_s3_bucket_public_access_block" "whist-website-assets" {
-  bucket              = aws_s3_bucket.whist-website-assets.id
-  block_public_acls   = false #tfsec:ignore:aws-s3-block-public-acls
-  block_public_policy = false #tfsec:ignore:aws-s3-block-public-policy
-  restrict_public_buckets = false #tfsec:ignore:aws-s3-no-public-buckets
-  ignore_public_acls = false #tfsec:ignore:aws-s3-ignore-public-acls
+  count  = var.env == "prod" ? 1 : 0
+  bucket              = aws_s3_bucket.whist-website-assets[0].id
+  block_public_acls   = false
+  block_public_policy = false
+  restrict_public_buckets = false
+  ignore_public_acls = false
 }
 
 resource "aws_s3_bucket_public_access_block" "whist-test-assets" {
-  bucket              = aws_s3_bucket.whist-test-assets.id
+  count  = var.env == "prod" ? 1 : 0
+  bucket              = aws_s3_bucket.whist-test-assets[0].id
   block_public_acls   = true
   block_public_policy = true
   restrict_public_buckets = true
@@ -109,7 +114,8 @@ resource "aws_s3_bucket_public_access_block" "whist-test-assets" {
 # ------------------------------ Policies for protocol ------------------------------ #
 
 resource "aws_s3_bucket_public_access_block" "whist-e2e-protocol-test-logs" {
-  bucket              = aws_s3_bucket.whist-e2e-protocol-test-logs.id
+  count  = var.env == "prod" ? 1 : 0
+  bucket              = aws_s3_bucket.whist-e2e-protocol-test-logs[0].id
   block_public_acls   = true
   block_public_policy = true
   restrict_public_buckets = true
@@ -117,7 +123,8 @@ resource "aws_s3_bucket_public_access_block" "whist-e2e-protocol-test-logs" {
 }
 
 resource "aws_s3_bucket_public_access_block" "whist-protocol-shared-libs" {
-  bucket = aws_s3_bucket.whist-protocol-shared-libs.id
+  count  = var.env == "prod" ? 1 : 0
+  bucket = aws_s3_bucket.whist-protocol-shared-libs[0].id
   block_public_acls   = true
   block_public_policy = true
   restrict_public_buckets = true
@@ -127,7 +134,8 @@ resource "aws_s3_bucket_public_access_block" "whist-protocol-shared-libs" {
 # ------------------------------ Policies for other data ------------------------------ #
 
 resource "aws_s3_bucket_public_access_block" "whist-technical-interview-data" {
-  bucket              = aws_s3_bucket.whist-technical-interview-data.id
+  count  = var.env == "prod" ? 1 : 0
+  bucket              = aws_s3_bucket.whist-technical-interview-data[0].id
   block_public_acls   = true
   block_public_policy = true
   restrict_public_buckets = true
@@ -137,7 +145,8 @@ resource "aws_s3_bucket_public_access_block" "whist-technical-interview-data" {
 # Policy for dev secrets
 
 resource "aws_s3_bucket_public_access_block" "whist-dev-secrets" {
-  bucket              = aws_s3_bucket.whist-dev-secrets.id
+  count  = var.env == "prod" ? 1 : 0
+  bucket              = aws_s3_bucket.whist-dev-secrets[0].id
   block_public_acls   = true
   block_public_policy = true
   restrict_public_buckets = true

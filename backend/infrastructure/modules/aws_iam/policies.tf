@@ -17,7 +17,7 @@ data "aws_iam_policy_document" "EC2AssumeRolePolicy" {
 
 # This policy is meant to have S3 read only access, EC2 read access
 # and permissions to start and terminate instances (on-demand and spot)
-data "aws_iam_policy_document" "DeploymentRoleInlinePolicy" {
+data "aws_iam_policy_document" "WhistEC2PassRoleUserPolicy" {
   statement {
     # This statement represents the EC2ReadOnlyAccess permissions
     actions = [
@@ -42,7 +42,9 @@ data "aws_iam_policy_document" "DeploymentRoleInlinePolicy" {
     ]
     effect = "Allow"
     resources = [
-      "*"
+      "image*",
+      "instance*",
+      "spot-instances-request*"
     ]
   }
 
@@ -79,6 +81,16 @@ data "aws_iam_policy_document" "DeploymentRoleInlinePolicy" {
       ]
     }
   }
+
+  statement {
+    actions = [ 
+      "iam:PassRole"
+    ]
+    effect = "Allow"
+    resources = [
+      aws_iam_role.EC2DeploymentRole.arn
+    ]
+  }
 }
 
 # This policy gives Packer the minimum amount of permissions to work. 
@@ -99,7 +111,9 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
     ]
     effect = "Allow"
     resources = [
-      "*"
+      "image*",
+      "instance*",
+      "snapshot"
     ]
   }
 
@@ -113,7 +127,8 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
     ]
     effect = "Allow"
     resources = [
-      "*"
+      "snapshot*",
+      "volume*",
     ]
   }
 
@@ -128,7 +143,8 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
     ]
     effect = "Allow"
     resources = [
-      "*"
+      "volume*",
+      "instance*",
     ]
   }
 
@@ -142,12 +158,13 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
     ]
     effect = "Allow"
     resources = [
-      "*"
+      "security-group*",
+      "vpc",
     ]
   }
 
   statement {
-    sid = "PackerMiscAccess"
+    sid = "PackerSecurityAccess"
     actions = [
       "ec2:CreateKeypair",
       "ec2:CreateTags",
@@ -159,7 +176,8 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
     ]
     effect = "Allow"
     resources = [
-      "*"
+      "key-pair*",
+      "instance*"
     ]
   }
 
@@ -168,7 +186,6 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
     actions = [
       "ec2:DescribeInstances",
       "ec2:DescribeInstanceStatus",
-      "ec2:RegisterImage",
       "ec2:RunInstances",
       "ec2:StopInstances",
       "ec2:TerminateInstances",
@@ -179,7 +196,9 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
     ]
     effect = "Allow"
     resources = [
-      "*"
+      "image*",
+      "instance*",
+      "spot-instances-request*"
     ]
   }
 }
@@ -207,18 +226,9 @@ data "aws_iam_policy_document" "MFAPolicy" {
       "iam:GetUser"
     ]
     effect    = "Allow"
-    resources = ["*"]
-  }
-
-  statement {
-    sid = "AllowManageOwnPasswords"
-    actions = [
-      "iam:ChangePassword",
-      "iam:GetUser"
-    ]
-    effect    = "Allow"
     resources = ["arn:aws:iam::*:user/$${aws:username}"]
   }
+
   statement {
     sid = "AllowManageOwnSigningCertificates"
     actions = [
