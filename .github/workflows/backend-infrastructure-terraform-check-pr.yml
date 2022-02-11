@@ -46,6 +46,7 @@ jobs:
             cd staging
           else
             cd dev
+          fi
 
           terraform init
 
@@ -59,6 +60,7 @@ jobs:
             cd staging
           else
             cd dev
+          fi
 
           terraform validate -no-color
 
@@ -72,6 +74,7 @@ jobs:
             cd staging
           else
             cd dev
+          fi
 
           terraform plan -no-color
 
