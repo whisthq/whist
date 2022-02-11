@@ -26,7 +26,8 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
 
     steps:
-      - uses: hashicorp/setup-terraform@v1
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
 
       - name: Checkout Git Repository
         uses: actions/checkout@v2
