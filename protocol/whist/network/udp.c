@@ -179,9 +179,6 @@ typedef struct {
 #define UDP_NETWORK_THROTTLER_BUCKET_MS 0.5
 // The time in seconds between network statistics requests
 #define STATISTICS_SECONDS 5.0
-// TODO: Get this out of udp.c somehow
-// NOTE that this is matching ./client/audio.c
-#define MAX_NUM_AUDIO_FRAMES 8
 
 // The amount to weigh a new ping's latency,
 // on the cumulative latency value

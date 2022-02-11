@@ -42,11 +42,6 @@ Defines
 #define NUM_CHANNELS 2
 #define DECODED_BYTES_PER_FRAME (SAMPLES_PER_FRAME * BYTES_PER_SAMPLE * NUM_CHANNELS)
 
-// Number of audio frames that must pass before we skip ahead
-// NOTE: Catching up logic is in udp.c, but has to be moved out in a future PR
-//       See udp.c's MAX_NUM_AUDIO_FRAMES when changing the value
-#define MAX_NUM_AUDIO_FRAMES 8
-
 // system audio queue + our buffer limits, in number of frames and decompressed bytes
 // TODO: Make these limits into "ms"
 #define AUDIO_QUEUE_LOWER_LIMIT_FRAMES 1

@@ -185,6 +185,9 @@ Defines
 #define MAX_URL_LENGTH 2048
 
 #define AUDIO_FREQUENCY 48000
+// Number of audio frames that must pass before we skip ahead
+// NOTE: Catching up logic is in udp.c, but has to be moved out in a future PR
+#define MAX_NUM_AUDIO_FRAMES 8
 
 // Number of audio previous frames that will be resent along with the current frame.
 // Resending of audio is done pro-actively as audio packet loss doesn't have enough time for client
