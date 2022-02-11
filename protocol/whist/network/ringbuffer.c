@@ -222,8 +222,15 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
         int num_original_packets = num_indices - num_fec_indices;
         init_frame(ring_buffer, segment_id, num_original_packets, num_fec_indices);
 
-        // Update the ringbuffer's max id, with this new frame's ID
+        // Update the ringbuffer's min/max id, with this new frame's ID
         ring_buffer->max_id = max(ring_buffer->max_id, frame_data->id);
+        if (ring_buffer->min_id == -1) {
+            // Initialize min_id
+            ring_buffer->min_id = frame_data->id;
+        } else {
+            // Update min_id
+            ring_buffer->min_id = min(ring_buffer->min_id, frame_data->id);
+        }
     }
 
     // Now, the frame_data should be ready to accept the packet
@@ -620,6 +627,7 @@ void reset_ring_buffer(RingBuffer* ring_buffer) {
         }
     }
     ring_buffer->max_id = -1;
+    ring_buffer->min_id = -1;
     ring_buffer->frames_received = 0;
     ring_buffer->last_rendered_id = -1;
 }
@@ -704,7 +712,7 @@ int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_d
 }
 
 bool try_nacking(RingBuffer* ring_buffer, double latency) {
-    if (ring_buffer->max_id == -1) {
+    if (ring_buffer->min_id == -1) {
         // Don't nack if we haven't received anything yet
         // Return true, our nacking vacuously succeeded
         return true;
@@ -766,8 +774,9 @@ bool try_nacking(RingBuffer* ring_buffer, double latency) {
     // from oldest to newest, up to max_nacks times
     // If we haven't rendered yet, we'll only nack for the most recent 5 frames when looking for an
     // I-Frame
-    for (int id = ring_buffer->last_rendered_id == -1 ? max(ring_buffer->max_id - 5, 1)
-                                                      : ring_buffer->last_rendered_id + 1;
+    for (int id = ring_buffer->last_rendered_id == -1
+                      ? max(ring_buffer->max_id - 5, ring_buffer->min_id)
+                      : ring_buffer->last_rendered_id + 1;
          id <= ring_buffer->max_id && num_packets_nacked < max_nacks; id++) {
         FrameData* frame_data = get_frame_at_id(ring_buffer, id);
         // If this frame doesn't exist, skip it
