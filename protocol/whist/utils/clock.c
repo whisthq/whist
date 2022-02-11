@@ -69,7 +69,7 @@ int current_time_str(char* buffer, size_t size) {
     GetSystemTime(&time_now);
     return snprintf(buffer, size, "%04i-%02i-%02iT%02i:%02i:%02i.%06li", time_now.wYear,
                     time_now.wMonth, time_now.wDay, time_now.wHour, time_now.wMinute,
-                    time_now.wSecond, (long)time_now.wMilliseconds);
+                    time_now.wSecond, (long)time_now.wMilliseconds * US_IN_MS);
 #else
     struct tm* time_str_tm;
     struct timespec time_now;
