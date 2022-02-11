@@ -104,7 +104,9 @@ typedef struct RingBuffer {
     int num_frames_rendered;
     // *** END OF BITRATE STAT CALCULATIONS ***
 
+    // Data ranges for frames
     int frames_received;
+    int min_id;
     int max_id;
 
     // Nack variables
