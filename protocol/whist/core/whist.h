@@ -82,7 +82,7 @@ Defines
 // expect. Hence, ignore the warning.
 #ifdef __APPLE__
 #pragma clang diagnostic ignored "-Wmissing-prototypes"
-#elif defined(__linux__)
+#elif defined(__linux__) && !defined(__cplusplus)
 #pragma GCC diagnostic ignored "-Wmissing-prototypes"
 #endif  // OS
 
