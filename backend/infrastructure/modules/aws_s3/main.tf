@@ -348,7 +348,7 @@ resource "aws_s3_bucket" "whist-terraform-state" {
   }
 
   tags = {
-    Name      = "whist-dev-secrets"
+    Name      = "whist-terraform-state"
     Description = "Bucket for storing Terraform state files."
     Env       = var.env
     Terraform = true
