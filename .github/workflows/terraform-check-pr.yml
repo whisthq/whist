@@ -19,7 +19,6 @@ on:
   workflow_dispatch:
 
 jobs:
-
   terraform-validate-and-plan:
     name: Terraform validate and plan
     runs-on: ubuntu-20.4
