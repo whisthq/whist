@@ -512,12 +512,32 @@ def client_setup_process(args_dict):
 
 
 def shutdown_and_wait_server_exit(pexpect_process, exit_confirm_exp, timeout_value=20):
+    """
+    Initiate shutdown and wait for server exit by
+    - killing chrome application
+    - tailing out log output until one of the two happens
+        - exit line is detected
+        - timeout occurs
+
+    Args:
+        pexpect_process (pexpect.pty_spawn.spawn): Server pexpect process - MUST BE AFTER DOCKER COMMAND WAS RUN - otherwise behavior is undefined
+        exit_confirm_exp (str): Target expression to expect on a graceful server exit
+
+    Return:
+        server_has_exited (bool): True if server has exited gracefully, false otherwise
+
+    """
+
     pexpect_process.sendline("pkill chrome")
     pexpect_process.sendline("tail -f /var/log/whist/protocol-out.log")
+
     try:
         pexpect_process.expect(exit_confirm_exp, timeout=timeout_value)
         server_has_exited = True
     except pexpect.exceptions.TIMEOUT:
         server_has_exited = False
+
+    # Kill tail process
     pexpect_process.sendcontrol("c")
+
     return server_has_exited

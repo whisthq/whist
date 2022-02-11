@@ -236,16 +236,12 @@ def configure_aws_credentials(
     elif not running_in_ci:
         pexpect_process.expect(pexpect_prompt)
 
-    if use_apt:
-        # Download and install AWS cli using apt-get
-        pexpect_process.sendline("sudo apt-get install awscli")
-        result = pexpect_process.expect(["Do you want to continue?", pexpect_prompt])
-        if result == 0:
-            pexpect_process.sendline("Y")
-            wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
-        elif not running_in_ci:
-            pexpect_process.expect(pexpect_prompt)
-    else:
+    pexpect_process.sendline("which aws")
+    try:
+        pexpect_process.expect(r"/usr(.*?)aws", timeout=5)
+        print("AWS-CLI is already installed")
+    except pexpect.exceptions.TIMEOUT:
+        print("Installing AWS-CLI manually")
         # Download and install AWS cli manually to avoid frequent apt install outages
         # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
         pexpect_process.sendline(
@@ -254,12 +250,13 @@ def configure_aws_credentials(
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
         pexpect_process.sendline("sudo apt install -y unzip")
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
-        pexpect_process.sendline("unzip awscliv2.zip")
+        pexpect_process.sendline("unzip -o awscliv2.zip")
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
         pexpect_process.sendline("rm awscliv2.zip")
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
         pexpect_process.sendline("sudo ./aws/install")
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+        print("AWS-CLI installed")
 
     pexpect_process.sendline("aws configure")
     pexpect_process.expect("AWS Access Key ID")
