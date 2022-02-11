@@ -653,12 +653,16 @@ TEST_F(ProtocolTest, CrashHandlerTest) {
     // Init logger to init backtrace handler mutexes
     whist_init_logger();
 
-    // Expect the signal handler to crash
+    // Expect the signal handler to crash for a variety of signals
     EXPECT_EXIT(unix_crash_handler(SIGTERM), ::testing::ExitedWithCode(1), ".*");
+    EXPECT_EXIT(unix_crash_handler(SIGPIPE), ::testing::ExitedWithCode(1), ".*");
+    EXPECT_EXIT(unix_crash_handler(SIGKILL), ::testing::ExitedWithCode(1), ".*");
 
     // Pretend that the error monitor is initialized.
     error_monitor_initialized = true;
 
+    EXPECT_EXIT(unix_crash_handler(SIGTERM), ::testing::KilledBySignal(SIGTERM), ".*");
+    EXPECT_EXIT(unix_crash_handler(SIGPIPE), ::testing::KilledBySignal(SIGPIPE), ".*");
     EXPECT_EXIT(unix_crash_handler(SIGKILL), ::testing::KilledBySignal(SIGKILL), ".*");
 
     // Stop pretending that the error monitor is initialized.
