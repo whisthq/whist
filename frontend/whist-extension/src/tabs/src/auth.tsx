@@ -1,46 +1,27 @@
 import React from "react"
-import { Auth0Provider, useAuth0 } from "@auth0/auth0-react"
-import { config } from "@app/constants/app"
-
-const AuthProvider = (props: { children: JSX.Element | JSX.Element[] }) => (
-  <Auth0Provider
-    domain={config.AUTH_DOMAIN_URL}
-    clientId={config.AUTH_CLIENT_ID}
-    redirectUri={chrome.identity.getRedirectURL("auth0")}
-  >
-    {props.children}
-  </Auth0Provider>
-)
-
-const LogoutButton = (props: {
-  logout: (args: { returnTo: string }) => void
-}) => (
-  <button
-    onClick={() => {
-      props.logout({ returnTo: window.location.origin })
-    }}
-  >
-    Log out
-  </button>
-)
 
 const LoginButton = (props: { login: () => void }) => (
   <button onClick={props.login}>Log in</button>
 )
 
-const IsLoggedIn = (props: {
-  logout: (args: { returnTo: string }) => void
-}) => <LogoutButton logout={props.logout} />
+const LoginTitle = () => <div>Welcome to Whist</div>
 
-const NotLoggedIn = (props: { login: () => void }) => (
-  <LoginButton login={props.login} />
+const LoginSubtitle = () => (
+  <div>To unlock cloud tabs, please sign in or create an account</div>
 )
 
-const AuthRenderer = () => {
-  const { isAuthenticated, logout, loginWithRedirect } = useAuth0()
-
-  if (isAuthenticated) return <IsLoggedIn logout={logout} />
-  return <NotLoggedIn login={loginWithRedirect} />
+const LoginComponent = () => {
+  return (
+    <div>
+      <LoginTitle />
+      <LoginSubtitle />
+      <LoginButton login={() => {}} />
+    </div>
+  )
 }
 
-export default () => <AuthProvider children={<AuthRenderer />} />
+export default () => (
+  <>
+    <LoginComponent />
+  </>
+)

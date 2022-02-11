@@ -67,7 +67,7 @@ const googleAuth = () => {
 }
 
 const authenticate = async () => {
-  const wasLoggedIn = isEmpty(await getCachedAuthInfo())
+  const wasLoggedIn = !isEmpty(await getCachedAuthInfo())
 
   if (!wasLoggedIn) {
     createAuthTab()

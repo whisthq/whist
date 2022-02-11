@@ -28,7 +28,6 @@
     "postinstall": "node ./scripts/postinstall.js"
   },
   "dependencies": {
-    "@auth0/auth0-react": "^1.9.0",
     "@types/lodash.has": "^4.5.6",
     "@types/lodash.isempty": "^4.4.6",
     "@types/react": "^17.0.39",
