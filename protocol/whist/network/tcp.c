@@ -345,11 +345,18 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
             int err = get_last_network_error();
             if (err == WHIST_ETIMEDOUT || err == WHIST_EAGAIN) {
             } else {
-                LOG_WARNING("Network Error %d", err);
+                LOG_WARNING("TCP Network Error %d", err);
             }
         } else if (len > 0) {
             // LOG_INFO( "READ LEN: %d", len );
             context->reading_packet_len += len;
+        } else {
+            // https://man7.org/linux/man-pages/man2/recv.2.html
+            //   When a stream socket peer has performed an orderly shutdown,
+            //   the return value will be 0 (the traditional "end-of-file" return)
+            LOG_WARNING("TCP Socket closed by peer");
+            context->connection_lost = true;
+            return NULL;
         }
 
         // If the previous recv was maxed out, ie == TCP_SEGMENT_SIZE,
@@ -765,7 +772,12 @@ int tcp_send_constructed_packet(TCPContext* context, TCPPacket* packet) {
     int ret = send(context->socket, (const char*)network_packet, tcp_packet_size, 0);
     if (ret < 0) {
         int error = get_last_network_error();
-        LOG_WARNING("Unexpected TCP Packet Error: %d", error);
+        if (error == ECONNRESET) {
+            LOG_WARNING("TCP Connection reset by peer");
+            context->connection_lost = true;
+        } else {
+            LOG_WARNING("Unexpected TCP Packet Error: %d", error);
+        }
         failed = true;
     }
 

@@ -310,6 +310,8 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
         // Sleep for a small duration to avoid busy looping when idle
         // 100us is just a low enough number to not affect the latency significantly. And it is also
         // reduces CPU usage significantly.
+
+        // TODO: This should be set to a TCP socket timeout, not a manual sleep
         if (!data_transferred) whist_usleep(100);
     }
 
