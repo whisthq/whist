@@ -14,11 +14,6 @@ import { createAuthTab } from "@app/worker/utils/tabs"
 
 import { CACHED_AUTH_INFO } from "@app/constants/storage"
 
-const shouldRefresh = async (authInfo: any) => {
-  const isExpired = isTokenExpired(authInfo?.accessToken ?? "")
-  return isExpired && authInfo?.refreshToken !== undefined
-}
-
 const refreshFlow = async (authInfo: any) => {
   const response = await authInfoRefreshRequest(authInfo?.refreshToken)
   const json = await response.json()
@@ -28,7 +23,9 @@ const refreshFlow = async (authInfo: any) => {
 const authenticateCachedAuthInfo = async () => {
   let authInfo = await getCachedAuthInfo()
 
-  if (await shouldRefresh(authInfo)) {
+  if (authInfo?.refreshToken === undefined) return false
+
+  if (await isTokenExpired(authInfo?.accessToken ?? "")) {
     authInfo = await refreshFlow(authInfo)
 
     if (has(authInfo, "error")) return false
