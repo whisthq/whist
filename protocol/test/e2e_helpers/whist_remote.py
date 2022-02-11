@@ -363,6 +363,7 @@ def server_setup_process(args_dict):
     running_in_ci = args_dict["running_in_ci"]
     skip_git_clone = args_dict["skip_git_clone"]
     skip_host_setup = args_dict["skip_host_setup"]
+    aws_install_use_apt = args_dict["aws_install_use_apt"]
 
     server_log = open(server_log_filepath, "w")
 
@@ -377,7 +378,11 @@ def server_setup_process(args_dict):
 
     print("Configuring AWS credentials on server instance...")
     configure_aws_credentials(
-        hs_process, pexpect_prompt_server, running_in_ci, aws_credentials_filepath
+        hs_process,
+        pexpect_prompt_server,
+        running_in_ci,
+        aws_install_use_apt,
+        aws_credentials_filepath,
     )
 
     if skip_git_clone == "false":
@@ -439,6 +444,7 @@ def client_setup_process(args_dict):
     running_in_ci = args_dict["running_in_ci"]
     skip_git_clone = args_dict["skip_git_clone"]
     skip_host_setup = args_dict["skip_host_setup"]
+    aws_install_use_apt = args_dict["aws_install_use_apt"]
 
     client_log = open(client_log_filepath, "w")
 
@@ -455,7 +461,11 @@ def client_setup_process(args_dict):
             hs_process.expect(pexpect_prompt_client)
         print("Configuring AWS credentials on client instance...")
         configure_aws_credentials(
-            hs_process, pexpect_prompt_client, running_in_ci, aws_credentials_filepath
+            hs_process,
+            pexpect_prompt_client,
+            running_in_ci,
+            aws_install_use_apt,
+            aws_credentials_filepath,
         )
 
         if skip_git_clone == "false":
@@ -499,3 +509,15 @@ def client_setup_process(args_dict):
     client_pexpect_process.kill(0)
 
     client_log.close()
+
+
+def shutdown_and_wait_server_exit(pexpect_process, exit_confirm_exp, timeout_value=20):
+    pexpect_process.sendline("pkill chrome")
+    pexpect_process.sendline("tail -f /var/log/whist/protocol-out.log")
+    try:
+        pexpect_process.expect(exit_confirm_exp, timeout=timeout_value)
+        server_has_exited = True
+    except pexpect.exceptions.TIMEOUT:
+        server_has_exited = False
+    pexpect_process.sendcontrol("c")
+    return server_has_exited
