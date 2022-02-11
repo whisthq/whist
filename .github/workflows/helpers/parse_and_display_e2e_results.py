@@ -117,8 +117,8 @@ if __name__ == "__main__":
         print("Error, logs folder {} does not exist!".format(logs_root_dir))
         sys.exit(-1)
     # Look for the most recent logs folder created on the same day (or the day before in case the test ran right before midnight). If multiple logs folder are present, take the most recent one
-    current_time = datetime.datetime.now()
-    last_hour = current_time - datetime.timedelta(hours=1)
+    current_time = datetime.now()
+    last_hour = current_time - timedelta(hours=1)
 
     for folder_name in sorted(os.listdir(logs_root_dir), reverse=True):
         if (
