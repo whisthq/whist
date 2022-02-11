@@ -130,6 +130,8 @@ Defines
 #define safe_close(fd) close(fd)
 #endif
 
+#define ARRAY_LENGTH(array) (sizeof(array) / sizeof(array[0]))
+
 #define VSYNC_ON false
 
 // Milliseconds between sending resize events from client to server
