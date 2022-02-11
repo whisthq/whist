@@ -912,6 +912,10 @@ int udp_get_num_pending_frames(SocketContext* socket_context, WhistPacketType ty
         // The only pending packet is in the pending packet buffer
         return context->has_pending_packet[(int)type] ? 1 : 0;
     } else {
+        // TODO: this is a rough estimate, it assumes that all frames between last_rendered_id
+        // and max_id are ready. A more precise check would iterate through them and
+        // only count the number of ready frames.
+        
         // The pending frames are between max_id inclusive and last_rendered_id exclusive
         int max_id = ring_buffer->max_id;
         int last_rendered_id = ring_buffer->last_rendered_id;
