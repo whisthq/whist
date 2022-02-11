@@ -12,13 +12,13 @@ on:
     - cron: "1 0 * * 1,2,3,4,5"
   # On staging & prod, we run a build for each promotion (push to branch).
   push:
-  branches:
-    - prod
-    - staging
-  paths-ignore:
-    - "README.md"
-    - "**/README.md"
-    - ".github/workflows/README.md"
+    branches:
+      - prod
+      - staging
+    paths-ignore:
+      - "README.md"
+      - "**/README.md"
+      - ".github/workflows/README.md"
   workflow_dispatch:
 
 jobs:
@@ -79,24 +79,22 @@ jobs:
       - name: Initialize the build environment
         run: npm install
 
-      # TODO: configure the Chrome keys and other configs for creating a Release build
-      # This may require some Google keys, so I (Phil) need to look into that
-      # https://github.com/brave/brave-browser/pull/20481/files
-
-You probably want to leave updater_* blank so it doesn't try pulling updates from our servers.  
-Also you should be good to leave brave_stats_updater_url blank.  If you want to host your own 
-server for sync (brave_sync_endpoint) you can find the code here: https://github.com/brave/go-sync.  
-Finally, for brave_variations_server_url I think that https://variations.brave.com/seed should work.
-
-https://github.com/whisthq/brave-core/blob/main/build/commands/lib/config.js
-
-https://github.com/brave/brave-core/blob/master/build/commands/scripts/commands.js#L71
-
-      - Configure build parameters
+      # We need to configure build parameters, to build for the proper architecture and with
+      # the relevant flags for he build type. Note that we cannot/don't want to use a lot of 
+      # Brave-specific services, which are either omitted or filled-in blank.
+      #
+      # List of potential flags can be found here:
+      # https://github.com/whisthq/brave-core/blob/main/build/commands/lib/config.js#L77
+      # https://github.com/brave/brave-core/blob/master/build/commands/scripts/commands.js#L71
+      - name: Configure build parameters
         run: |
+
+
+
           npm config set target_arch "${{ matrix.config.arch }}"
-          # npm config set target_os=linux
-          # npm config set target_arch=x64
+
+
+
           # npm config set is_official_build=false 
           # npm config set brave_services_key=somefakekey
           # npm config set updater_dev_endpoint=https://
@@ -113,6 +111,41 @@ https://github.com/brave/brave-core/blob/master/build/commands/scripts/commands.
           # npm config set rewards_grant_dev_endpoint=https://
           # npm config set rewards_grant_staging_endpoint=https://
           # npm config set rewards_grant_prod_endpoint=https://
+
+
+npm config set brave_google_api_key=
+npm config set google_default_client_id
+npm config set google_default_client_secret
+npm config set brave_sync_endpoint
+npm config set safebrowsing_api_endpoint
+npm config set updater_prod_endpoint
+npm config set updater_dev_endpoint
+
+
+    this.webcompatReportApiEndpoint = getNPMConfig(['webcompat_report_api_endpoint']) || 'https://webcompat.brave.com/1/webcompat'
+npm config set version
+
+
+npm config set notary_user
+npm config set notary_password
+  this.mac_signing_keychain = getNPMConfig(['mac_signing_keychain']) || 'login'
+npm config set mac_signing_identifier
+npm config set mac_installer_signing_identifier
+npm config set brave_safetynet_api_key
+npm config set brave_variations_server_url         https://variations.brave.com/seed
+npm config set uphold_client_id
+npm config set uphold_client_secret
+npm config set uphold_staging_client_id
+npm config set uphold_staging_client_secret
+
+      # TODO: configure the Chrome keys and other configs for creating a Release build
+      # This may require some Google keys, so I (Phil) need to look into that
+      # https://github.com/brave/brave-browser/pull/20481/files
+
+
+
+
+
 
       - name: Fetch Chromium source & dependencies
         run: npm run init
