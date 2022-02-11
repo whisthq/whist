@@ -4,8 +4,8 @@ import { config } from "@app/constants/app"
 import { getStorage, setStorage } from "@app/worker/utils/storage"
 import { CACHED_AUTH_INFO } from "@app/constants/storage"
 
-export const authPortalURL = () =>
-  [
+export const authPortalURL = () => {
+  return [
     `https://${config.AUTH_DOMAIN_URL}/authorize`,
     `?audience=${config.AUTH_API_IDENTIFIER}`,
     // We need to request the admin scope here. If the user is enabled for the admin scope
@@ -14,11 +14,13 @@ export const authPortalURL = () =>
     // the webserver. If the user is not enabled for the admin scope, then the JWT token
     // will be generated but will not have the admin scope, as documented by Auth0 in
     // https://auth0.com/docs/scopes#requested-scopes-versus-granted-scopes
-    "&scope=openid profile offline_access email admin",
-    "&response_type=code",
     `&client_id=${config.AUTH_CLIENT_ID}`,
     `&redirect_uri=${chrome.identity.getRedirectURL("auth0")}`,
+    `&connection=google-oauth2`,
+    "&scope=openid profile offline_access email admin",
+    "&response_type=code",
   ].join("")
+}
 
 export const authInfoCallbackRequest = async (
   callbackURL: string | undefined
