@@ -1,10 +1,9 @@
 # workflows/terraform-check-pr.yml
 #
-# Terraform: Check PR
-# Check Terraform code for potential security vulnerabilities
-# perform static analysis, format, validate and output plan.
+# Infrastructure: Check PR
+# Check Terraform code, format, validate and output plan.
 
-name: "Terraform: Check PR"
+name: "Infrastructure: Check PR"
 on:
   push:
     branches:
@@ -40,21 +39,42 @@ jobs:
         id: init
         working-directory: backend/infrastructure
         run: |
-          cd "$BRANCH_NAME"
+          if [ "$BRANCH_NAME" == "prod" ]; then
+            cd prod
+          elif [ "$BRANCH_NAME" == "staging" ]; then
+            cd staging
+          else
+            cd dev
+            fi
+
           terraform init
 
       - name: Validate Terraform code
         id: validate
         working-directory: backend/infrastructure
         run: |
-          cd "$BRANCH_NAME"
+          if [ "$BRANCH_NAME" == "prod" ]; then
+            cd prod
+          elif [ "$BRANCH_NAME" == "staging" ]; then
+            cd staging
+          else
+            cd dev
+          fi
+
           terraform validate -no-color
 
       - name: Terraform Plan
         id: plan
         working-directory: backend/infrastructure
         run: |
-          cd "$BRANCH_NAME"
+          if [ "$BRANCH_NAME" == "prod" ]; then
+            cd prod
+          elif [ "$BRANCH_NAME" == "staging" ]; then
+            cd staging
+          else
+            cd dev
+          fi
+
           terraform plan -no-color
 
       - uses: actions/github-script@0.9.0
