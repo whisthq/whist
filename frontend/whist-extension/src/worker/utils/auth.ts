@@ -4,8 +4,8 @@ import { config } from "@app/constants/app"
 import { getStorage, setStorage } from "@app/worker/utils/storage"
 import { CACHED_AUTH_INFO } from "@app/constants/storage"
 
-export const authPortalURL = () => {
-  return [
+export const authPortalURL = () =>
+  [
     `https://${config.AUTH_DOMAIN_URL}/authorize`,
     `?audience=${config.AUTH_API_IDENTIFIER}`,
     // We need to request the admin scope here. If the user is enabled for the admin scope
@@ -14,15 +14,15 @@ export const authPortalURL = () => {
     // the webserver. If the user is not enabled for the admin scope, then the JWT token
     // will be generated but will not have the admin scope, as documented by Auth0 in
     // https://auth0.com/docs/scopes#requested-scopes-versus-granted-scopes
-    `&client_id=${config.AUTH_CLIENT_ID}`,
-    `&redirect_uri=${chrome.identity.getRedirectURL("auth0")}`,
-    `&connection=google-oauth2`,
     "&scope=openid profile offline_access email admin",
     "&response_type=code",
+    `&client_id=${config.AUTH_CLIENT_ID}`,
+    `&redirect_uri=${chrome.identity.getRedirectURL("auth0")}`,
   ].join("")
-}
 
-export const authInfoCallbackRequest = async (callbackURL: string) => {
+export const authInfoCallbackRequest = async (
+  callbackURL: string | undefined
+) => {
   /*
   Description:
     Given a callback URL, generates an {email, accessToken, refreshToken} response
@@ -32,19 +32,25 @@ export const authInfoCallbackRequest = async (callbackURL: string) => {
     {email, accessToken, refreshToken}
   */
 
-  const url = new URL(callbackURL)
-  const code = url.searchParams.get("code")
+  if (callbackURL === undefined) return
 
-  return await fetch(`https://${config.AUTH_DOMAIN_URL}/oauth/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      grant_type: "authorization_code",
-      client_id: config.AUTH_CLIENT_ID,
-      code,
-      redirect_uri: config.CLIENT_CALLBACK_URL,
-    }),
-  })
+  try {
+    const url = new URL(callbackURL)
+    const code = url.searchParams.get("code")
+
+    return await fetch(`https://${config.AUTH_DOMAIN_URL}/oauth/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        grant_type: "authorization_code",
+        client_id: config.AUTH_CLIENT_ID,
+        code,
+        redirect_uri: config.CLIENT_CALLBACK_URL,
+      }),
+    })
+  } catch (err) {
+    return
+  }
 }
 
 export const authInfoParse = (res: {
