@@ -5,7 +5,7 @@ import { message } from "@app/worker/utils/messaging"
 import { OPEN_GOOGLE_AUTH } from "@app/constants/messaging"
 
 const openGoogleAuth = message.pipe(
-  filter(({ request }) => request.message === OPEN_GOOGLE_AUTH)
+  filter(({ request }) => request === OPEN_GOOGLE_AUTH)
 )
 
 const shouldAuthenticate = of(undefined)

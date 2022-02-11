@@ -50,8 +50,8 @@ const googleAuth = () => {
       interactive: true,
     },
     async (callbackUrl) => {
-      const response = await authInfoCallbackRequest(callbackUrl ?? "")
-      const json = await response.json()
+      const response = await authInfoCallbackRequest(callbackUrl)
+      const json = await response?.json()
       const authInfo = authInfoParse(json)
 
       await setStorage(

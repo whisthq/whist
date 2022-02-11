@@ -102,7 +102,7 @@ clients:
     app_type: native
     allowed_clients: []
     client_aliases: []
-    callbacks: @@WHIST_ELECTRON_APP_CALLBACK@@
+    callbacks: @@WHIST_AUTH0_ALLOWED_CALLBACK_URLS@@
     cross_origin_auth: false
     custom_login_page_on: true
     grant_types:
