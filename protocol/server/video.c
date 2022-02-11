@@ -511,7 +511,7 @@ int32_t multithreaded_send_video(void* opaque) {
     while (!state->exiting) {
         update_client_active_status(&state->client, &assuming_client_active);
 
-        if (!assuming_client_active) {
+        if (!assuming_client_active || !state->client.is_active) {
             encoder_running = false;
             whist_sleep(1);
             continue;
