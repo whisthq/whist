@@ -4,6 +4,8 @@ import { config } from "@app/constants/app"
 import { getStorage, setStorage } from "@app/worker/utils/storage"
 import { CACHED_AUTH_INFO } from "@app/constants/storage"
 
+const redirectURL = chrome.identity.getRedirectURL("auth0")
+
 export const authPortalURL = () => {
   return [
     `https://${config.AUTH_DOMAIN_URL}/authorize`,
@@ -15,7 +17,7 @@ export const authPortalURL = () => {
     // will be generated but will not have the admin scope, as documented by Auth0 in
     // https://auth0.com/docs/scopes#requested-scopes-versus-granted-scopes
     `&client_id=${config.AUTH_CLIENT_ID}`,
-    `&redirect_uri=${chrome.identity.getRedirectURL("auth0")}`,
+    `&redirect_uri=${redirectURL}`,
     `&connection=google-oauth2`,
     "&scope=openid profile offline_access email admin",
     "&response_type=code",
@@ -47,7 +49,7 @@ export const authInfoCallbackRequest = async (
         grant_type: "authorization_code",
         client_id: config.AUTH_CLIENT_ID,
         code,
-        redirect_uri: config.CLIENT_CALLBACK_URL,
+        redirect_uri: redirectURL,
       }),
     })
   } catch (err) {
@@ -152,6 +154,8 @@ export const authInfoRefreshRequest = async (refreshToken: string) => {
 }
 
 export const getCachedAuthInfo = async () => {
-  const _authInfo = ((await getStorage(CACHED_AUTH_INFO)) as any) ?? {}
+  const _authInfo = (await getStorage(CACHED_AUTH_INFO)) as any
+
+  if (_authInfo === undefined) return {}
   return JSON.parse(JSON.stringify(_authInfo))
 }

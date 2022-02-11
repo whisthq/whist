@@ -13,7 +13,7 @@ const LoginTitle = () => (
 
 const LoginSubtitle = () => (
   <div
-    className="text-gray-400 text-xl animate-fade-in-up opacity-0"
+    className="text-gray-300 text-xl animate-fade-in-up opacity-0"
     style={{ animationDelay: "800ms" }}
   >
     To unlock cloud tabs, please sign in or create an account
@@ -30,7 +30,7 @@ const LoginButton = (props: { login: () => void }) => (
   </button>
 )
 
-const LoginComponent = () => {
+export default () => {
   return (
     <div className="w-screen h-screen bg-gray-800 font-body">
       <div className="flex flex-col h-screen justify-center items-center">
@@ -47,5 +47,3 @@ const LoginComponent = () => {
     </div>
   )
 }
-
-export default LoginComponent

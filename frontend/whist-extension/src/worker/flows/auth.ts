@@ -50,7 +50,7 @@ const googleAuth = () => {
       interactive: true,
     },
     async (callbackUrl) => {
-      const response = await authInfoCallbackRequest(callbackUrl)
+      const response = (await authInfoCallbackRequest(callbackUrl)) as any
       const json = await response?.json()
       const authInfo = authInfoParse(json)
 
@@ -59,7 +59,7 @@ const googleAuth = () => {
         JSON.stringify({
           userEmail: authInfo.userEmail,
           accessToken: authInfo.accessToken,
-          refreshToken: json?.json.refreshToken,
+          refreshToken: response?.json?.refresh_token,
         })
       )
     }
@@ -71,9 +71,16 @@ const authenticate = async () => {
 
   if (!wasLoggedIn) {
     createAuthTab()
+    return false
   } else {
     const authenticated = authenticateCachedAuthInfo()
-    if (!authenticated) createAuthTab()
+
+    if (!authenticated) {
+      createAuthTab()
+      return false
+    }
+
+    return true
   }
 }
 
