@@ -1,5 +1,4 @@
 import jwtDecode from "jwt-decode"
-import { randomBytes } from "crypto"
 
 import { config } from "@app/constants/app"
 import { getStorage, setStorage } from "@app/worker/utils/storage"
@@ -103,8 +102,8 @@ export const generateRandomConfigToken = () => {
   Returns:
     string: Config token
   */
-
-  const buffer = randomBytes(48)
+  const crypto = new Crypto()
+  const buffer = Buffer.from(crypto.getRandomValues(new Uint32Array(48)))
   return buffer.toString("base64")
 }
 
@@ -119,7 +118,7 @@ export const isTokenExpired = (accessToken: string) => {
     const secondsBuffer = 10
     return currentTime + secondsBuffer > profile.exp
   } catch (err) {
-    console.error(`Failed to decode access token: ${err}`)
+    console.log(`Failed to decode access token: ${err}`)
     return true
   }
 }

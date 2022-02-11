@@ -1,9 +1,13 @@
 import { fromEventPattern } from "rxjs"
 
 const message = fromEventPattern(
-  (handler) => chrome.runtime.onMessage.addListener(handler),
-  (handler) => chrome.runtime.onMessage.removeListener(handler),
-  (request, sender, sendResponse) => ({ request, sender, sendResponse })
+  (handler: any) => chrome.runtime.onMessage.addListener(handler),
+  (handler: any) => chrome.runtime.onMessage.removeListener(handler),
+  (request: any, sender: any, sendResponse: any) => ({
+    request,
+    sender,
+    sendResponse,
+  })
 )
 
 export { message }
