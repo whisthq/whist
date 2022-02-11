@@ -1,5 +1,5 @@
 import has from "lodash.has"
-import isEmpty from "lodash.isEmpty"
+import isEmpty from "lodash.isempty"
 
 import { setStorage } from "@app/worker/utils/storage"
 import {

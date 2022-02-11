@@ -47,4 +47,7 @@ module.exports = {
       cache: false,
     }),
   ],
+  externals: {
+    modules: [path.join(srcDir, "..", "node_modules")],
+  },
 }
