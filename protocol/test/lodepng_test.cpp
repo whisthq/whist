@@ -173,6 +173,8 @@ git difftool -y
 #ifdef _WIN32
 #pragma warning(disable : 4334) /* WHIST: bit shift warning */
 #pragma warning(disable : 4267) /* WHIST: size_t to unsigned conversion */
+#pragma warning(disable : 4805) /* WHIST: implicit conversions */
+#pragma warning(disable : 4389) /* WHIST: signed/unsigned mismatch */
 #endif
 
 class LodePNGTest : public CaptureStdoutFixture {};
