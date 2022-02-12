@@ -45,7 +45,7 @@ Defines
 // Number of audio frames that must pass before we skip ahead
 // NOTE: Catching up logic is in udp.c, but has to be moved out in a future PR
 //       See udp.c's MAX_NUM_AUDIO_FRAMES when changing the value
-#define MAX_NUM_AUDIO_FRAMES 8
+#define MAX_NUM_AUDIO_FRAMES 10
 
 // system audio queue + our buffer limits, in number of frames and decompressed bytes
 // TODO: Make these limits into "ms"
