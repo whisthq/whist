@@ -150,6 +150,10 @@ NetworkSettings get_desired_network_settings(NetworkStatistics stats) {
         network_settings.burst_bitrate = MAXIMUM_BURST_BITRATE;
     }
 
+    // Clamp burst bitrate to within ratio of avg bitrate
+    network_settings.burst_bitrate =
+        min(network_settings.burst_bitrate, network_settings.bitrate * BURST_BITRATE_RATIO);
+
     // Return the network settings
     return network_settings;
 }
