@@ -34,6 +34,7 @@ from e2e_helpers.whist_remote import (
     run_client_on_instance,
     setup_network_conditions_client,
     restore_network_conditions_client,
+    shutdown_and_wait_server_exit,
 )
 
 # Get tools to programmatically run Whist components on a remote machine
@@ -194,6 +195,14 @@ parser.add_argument(
     default="normal",
 )
 
+parser.add_argument(
+    "--aws-install-use-apt",
+    help="Whether to manually install or use apt for aws cli",
+    type=str,
+    choices=["false", "true"],
+    default="false",
+)
+
 args = parser.parse_args()
 
 
@@ -214,6 +223,7 @@ if __name__ == "__main__":
     region_name = args.region_name
     use_two_instances = True if args.use_two_instances == "true" else False
     simulate_scrolling = True if args.simulate_scrolling == "true" else False
+    aws_install_use_apt = True if args.aws_install_use_apt == "true" else False
 
     network_conditions = args.network_conditions
 
@@ -326,6 +336,7 @@ if __name__ == "__main__":
     args_dict["running_in_ci"] = running_in_ci
     args_dict["skip_git_clone"] = args.skip_git_clone
     args_dict["skip_host_setup"] = args.skip_host_setup
+    args_dict["aws_install_use_apt"] = aws_install_use_apt
 
     # If using two instances, parallelize the host-setup and building of the docker containers to save time
     p1 = multiprocessing.Process(target=server_setup_process, args=[args_dict])
@@ -412,6 +423,15 @@ if __name__ == "__main__":
         if not running_in_ci:
             log_grabber_client_process.expect(pexpect_prompt_client)
 
+    server_hang_detected = False
+    if shutdown_and_wait_server_exit(
+        server_pexpect_process, "Both whist-application and WhistServer have exited."
+    ):
+        print("Server has exited gracefully.")
+    else:
+        print("Server has not exited gracefully!")
+        server_hang_detected = True
+
     extract_server_logs_from_instance(
         log_grabber_server_process,
         pexpect_prompt_server,
@@ -496,4 +516,8 @@ if __name__ == "__main__":
     # No longer need the new_instances.txt file because the script has already terminated (if needed) the instances itself
     os.remove("instances_to_clean.txt")
 
-    print("Done")
+    if server_hang_detected:
+        print("Exiting with failure due to server hang!")
+        exit(-1)
+    else:
+        print("Done")
