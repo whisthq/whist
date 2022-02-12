@@ -66,9 +66,9 @@ static int multithreaded_sync_udp_packets(void* opaque) {
 
     // For now, manually make ring buffers for audio and video
     // TODO: Make udp.c do this automatically
-    // The magic numbers will be handled later
-    udp_register_ring_buffer(udp_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE, 275);
-    udp_register_ring_buffer(udp_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE, 16);
+    //   These buffers should be set to something extremely large (Several seconds)
+    udp_register_ring_buffer(udp_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE, 256);
+    udp_register_ring_buffer(udp_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE, 256);
 
     WhistPacket* last_whist_packet[NUM_PACKET_TYPES] = {0};
     while (run_sync_packets_threads) {
