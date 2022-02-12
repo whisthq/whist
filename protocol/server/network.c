@@ -32,7 +32,6 @@ Includes
 #define TCP_DISCOVERY_CONNECTION_WAIT 5000
 #define UDP_CONNECTION_WAIT 1000
 #define TCP_CONNECTION_WAIT 1000
-#define BITS_IN_BYTE 8.0
 
 static int last_input_id = -1;
 

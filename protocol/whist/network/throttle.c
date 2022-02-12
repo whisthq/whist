@@ -7,8 +7,6 @@
 #include <server/server_statistic.h>
 #include <whist/network/network_algorithm.h>
 
-#define BITS_IN_BYTE 8.0
-
 // Set this to something very low. Throttler will work as expected only if
 // network_throttler_set_burst_bitrate() is called with the required bitrate
 #define STARTING_THROTTLER_BITRATE 1000000

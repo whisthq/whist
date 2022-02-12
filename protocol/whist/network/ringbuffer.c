@@ -85,10 +85,13 @@ static int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* 
  *
  * @param latency The round-trip latency of the connection. Helpful with nacking logic
  *
+ * @param network_settings Pointer to NetworkSettings structure for accessing the bitrate and
+ *                         burst_bitrate
+ *
  * @returns     True if nacking succeded,
  *              False if we've bandwidth saturated our ability to nack.
  */
-static bool try_nacking(RingBuffer* ring_buffer, double latency);
+static bool try_nacking(RingBuffer* ring_buffer, double latency, NetworkSettings* network_settings);
 
 // TODO: document this
 char* get_framebuffer(RingBuffer* ring_buffer, FrameData* current_frame);
@@ -453,14 +456,15 @@ void reset_stream(RingBuffer* ring_buffer, int id) {
     }
 }
 
-void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double latency) {
+void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double latency,
+                                              NetworkSettings* network_settings) {
     // We should wait to receive even a single packet before trying to recover anything
     if (ring_buffer->min_id == -1) {
         return;
     }
 
     // Try to nack for any missing packets
-    bool nacking_succeeded = try_nacking(ring_buffer, latency);
+    bool nacking_succeeded = try_nacking(ring_buffer, latency, network_settings);
 
     // =============
     // Stream Reset Logic
@@ -686,12 +690,8 @@ void nack_single_packet(RingBuffer* ring_buffer, int id, int index) {
 // The max number of times we can nack a packet: limited to 2 times right now so that we don't get
 // stuck on a packet that never arrives
 #define MAX_PACKET_NACKS 2
-// Maximum amount of mbps that can be used by nacking
-// This is calculated per 100ms interval
-#define MAX_NACK_AVG_MBPS 2200000
-// Maximum burst mbps that can be used by nacking
-// This is calculated per 5ms interval
-#define MAX_NACK_BURST_MBPS 4800000
+// Maximum nack bitrate in terms of ratio of stream bitrate
+#define MAX_NACK_BITRATE_RATIO 0.8
 
 int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_data, int end_index,
                                      int max_packets_to_nack) {
@@ -737,7 +737,7 @@ int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_d
     return num_packets_nacked;
 }
 
-bool try_nacking(RingBuffer* ring_buffer, double latency) {
+bool try_nacking(RingBuffer* ring_buffer, double latency, NetworkSettings* network_settings) {
     // We should receive at least one packet for nacking to make sense
     FATAL_ASSERT(ring_buffer->min_id != -1);
 
@@ -753,15 +753,21 @@ bool try_nacking(RingBuffer* ring_buffer, double latency) {
         start_timer(&ring_buffer->avg_timer);
     }
 
+    int max_nack_burst_mbps = (int)(network_settings->burst_bitrate * MAX_NACK_BITRATE_RATIO);
+    int max_nack_avg_mbps = (int)(network_settings->bitrate * MAX_NACK_BITRATE_RATIO);
+
     // MAX_MBPS * interval / MAX_PAYLOAD_SIZE is the amount of nack payloads allowed in each
     // interval The XYZ_counter is the amount of packets we've already sent in that interval We
     // subtract the two, to get the max nacks that we're allowed to send at this point in time We
     // min to take the stricter restriction of either burst or average
-    int max_nacks_remaining =
-        MAX_NACK_BURST_MBPS * burst_interval / MAX_PAYLOAD_SIZE - ring_buffer->burst_counter;
-    int avg_nacks_remaining =
-        MAX_NACK_AVG_MBPS * avg_interval / MAX_PAYLOAD_SIZE - ring_buffer->avg_counter;
-    int max_nacks = (int)min(max_nacks_remaining, avg_nacks_remaining);
+    // Ensure burst_nacks is atleast 1. If burst_nacks gets truncated to 0, then nacking will never
+    // happen
+    int burst_nacks =
+        max((int)(max_nack_burst_mbps * burst_interval / (MAX_PAYLOAD_SIZE * BITS_IN_BYTE)), 1);
+    int avg_nacks = max_nack_avg_mbps * avg_interval / (MAX_PAYLOAD_SIZE * BITS_IN_BYTE);
+    int burst_nacks_remaining = burst_nacks - ring_buffer->burst_counter;
+    int avg_nacks_remaining = avg_nacks - ring_buffer->avg_counter;
+    int max_nacks = (int)min(burst_nacks_remaining, avg_nacks_remaining);
     // Note how the order-of-ops ensures arithmetic is done with double's for higher accuracy
 
     if (max_nacks <= 0) {
@@ -810,7 +816,7 @@ bool try_nacking(RingBuffer* ring_buffer, double latency) {
                 // Nack the first set of indices of the missing frame
                 // Frames 10-20 packets in size, we'd like to recover in one RTT,
                 // But we don't want to try to recover 200 packet frames so quickly
-                for (int index = 0; index <= 20; index++) {
+                for (int index = 0; index <= 20 && max_nacks - num_packets_nacked > 0; index++) {
                     nack_single_packet(ring_buffer, id, index);
                     // Track out-of-bounds nacks anyway in bitrate,
                     // To ensure the upper-bound on bandwidth usage
@@ -843,7 +849,7 @@ bool try_nacking(RingBuffer* ring_buffer, double latency) {
         // If too much time has passed since the last packet received,
         // we swap into *recovery mode*, since something is probably wrong with this packet
         if ((id < ring_buffer->max_id ||
-             get_timer(&frame_data->last_nonnack_packet_timer) > 0.2 * latency) &&
+             get_timer(&frame_data->last_nonnack_packet_timer) > 0.3 * latency) &&
             !frame_data->recovery_mode) {
 #if LOG_NACKING
             LOG_INFO("Too long since last non-nack packet from ID %d. Entering recovery mode...",

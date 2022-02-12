@@ -70,4 +70,15 @@ NetworkSettings get_desired_network_settings(NetworkStatistics stats);
  */
 NetworkSettings get_default_network_settings(int width, int height);
 
+/**
+ * @brief               This function will return the default network settings for the current
+ *                      SDL window resolution.
+ *                      This function will work only in client. Since server doesn't use SDL it
+ *                      should use the earlier function get_default_network_settings by passing
+ *                      relevant width and height.
+ *
+ * @returns             A network settings struct
+ */
+NetworkSettings get_starting_network_settings(void);
+
 #endif

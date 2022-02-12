@@ -54,8 +54,6 @@ Includes
 #define USE_MONITOR 0
 #define SAVE_VIDEO_OUTPUT 0
 
-#define BITS_IN_BYTE 8.0
-
 static WhistSemaphore consumer;
 static WhistSemaphore producer;
 static char buf[LARGEST_VIDEOFRAME_SIZE];

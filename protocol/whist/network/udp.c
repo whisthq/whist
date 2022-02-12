@@ -183,9 +183,9 @@ typedef struct {
 // NOTE that this is matching ./client/audio.c
 #define MAX_NUM_AUDIO_FRAMES 8
 
-// The amount to weigh a new ping's latency,
-// on the cumulative latency value
-#define PING_LAMBDA 0.75
+// The amount to weigh a older pings' latency,
+// on the ewma latency value
+#define PING_LAMBDA 0.6
 
 // How often should the client send connection attempts
 #define CONNECTION_ATTEMPT_INTERVAL_MS 5
@@ -384,6 +384,10 @@ static bool udp_update(void* raw_context) {
     // TODO: Probably move statistics calculations into udp.c as well,
     //       but it depends on how much statistics are per-frame-specific
     if (context->ring_buffers[PACKET_VIDEO] != NULL) {
+        // Initialize desired_network_settings if it is not done yet.
+        if (context->desired_network_settings.bitrate == 0) {
+            context->desired_network_settings = get_starting_network_settings();
+        }
         if (get_timer(&context->last_network_settings_time) > STATISTICS_SECONDS) {
             // Get network statistics and desired network settings
             NetworkStatistics network_statistics =
@@ -453,7 +457,8 @@ static bool udp_update(void* raw_context) {
             // At the moment we only nack for video
             // TODO: Make this not packet-type-dependent
             if (i == (int)PACKET_VIDEO) {
-                try_recovering_missing_packets_or_frames(context->ring_buffers[i], latency);
+                try_recovering_missing_packets_or_frames(context->ring_buffers[i], latency,
+                                                         &context->desired_network_settings);
             }
         }
     }

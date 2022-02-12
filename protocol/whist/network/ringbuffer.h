@@ -227,12 +227,15 @@ void reset_stream(RingBuffer* ring_buffer, int id);
  *
  * @param ring_buffer              Ring buffer to use
  * @param latency                  The latency, used in figuring out when to nack / stream reset
+ * @param network_settings         NetworkSettings structure containing the current bitrate and
+ *                                 burst bitrate
  *
  * @note                           This will call the lambda nack_packet and request_stream_reset
  *                                 TODO: Just make this return an array of nacked packets,
  *                                       or a stream reset request with last failed ID
  */
-void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double latency);
+void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double latency,
+                                              NetworkSettings* network_settings);
 
 /**
  * @brief                         Get network statistics from the ringbuffer
