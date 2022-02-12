@@ -1,6 +1,10 @@
 # Note that we can't set "o" or "pipefail" or "eval '$(sentry-cli bash-hook)'" since xinitrc is run as a non-compatible shell script.
 set -Eeu
 
+export GTK_IM_MODULE=ibus
+export XMODIFIERS=@im=ibus
+export QT_IM_MODULE=ibus
+
 xinitrc_pid=$$
 echo "xinitrc PID: $xinitrc_pid"
 
@@ -8,6 +12,10 @@ echo "xinitrc PID: $xinitrc_pid"
 # and starts the mandelbox's application (i.e. Google Chrome)
 
 RUN_AS_WHIST=/usr/share/whist/run-as-whist-user.sh
+
+$RUN_AS_WHIST "export GTK_IM_MODULE=ibus"
+$RUN_AS_WHIST "export XMODIFIERS=@im=ibus"
+$RUN_AS_WHIST "export QT_IM_MODULE=ibus"
 
 # Install keymappings
 xmodmap /root/.Xmodmap
@@ -52,13 +60,14 @@ $RUN_AS_WHIST "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS xsettingsd" &
 xsettingsd_pid=$!
 echo "xsettingsd started as PID: $xsettingsd_pid"
 
+# start ibus daemon 
+$RUN_AS_WHIST "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS /home/whist/run_ibus.sh"
+echo "ibus started at address $($RUN_AS_WHIST 'ibus address')"
+
 # Let everyone know that xinit is initialized
 echo "Writing xinitrc PID to /usr/share/whist/xinit-pid to complete whist-display.service initialization..."
 echo "$xinitrc_pid" > /usr/share/whist/xinit-pid
 echo "Successfully wrote to /usr/share/whist/xinit-pid"
-
-$RUN_AS_WHIST "/home/whist/run_ibus.sh"
-echo "ibus started at address $($RUN_AS_WHIST 'ibus address')"
 
 # Wait for AwesomeWM process
 # Note: this never finishes, but leaves the X server open indefinitely
