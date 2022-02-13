@@ -1443,12 +1443,15 @@ void udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, i
             packet->udp_whist_segment_data.is_a_nack = true;
             // Wrap in PACKET_VIDEO to prevent verbose audio.c logs
             // TODO: Fix this by making resend_packet not trigger nack logs
+#if LOG_NACKING
             if (type == PACKET_VIDEO) {
                 LOG_INFO("NACKed video packet ID %d Index %d found of length %d. Relaying!",
                          packet_id, packet_index, packet->udp_whist_segment_data.segment_size);
             }
+#endif
             udp_send_udp_packet(context, packet);
         } else {
+#if LOG_NACKING
             if (type == PACKET_VIDEO) {
                 LOG_WARNING(
                     "NACKed %s packet %d %d not found, ID %d was "
@@ -1456,14 +1459,17 @@ void udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, i
                     type == PACKET_VIDEO ? "video" : "audio", packet_id, packet_index,
                     packet->udp_whist_segment_data.id);
             }
+#endif
         }
     } else {
+#if LOG_NACKING
         // TODO: Fix the ability to nack for an entire frame, using something like e.g. index -1
         // This will prevent this log from spamming, particularly on Audio
         if (type == PACKET_VIDEO) {
             LOG_WARNING("NACKed %s packet %d %d not found",
                         type == PACKET_VIDEO ? "video" : "audio", packet_id, packet_index);
         }
+#endif
     }
 
     whist_unlock_mutex(context->nack_mutex[type_index]);

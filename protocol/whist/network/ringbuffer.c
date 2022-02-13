@@ -249,6 +249,7 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
     // LOG the the nacking situation
     if (segment->is_a_nack) {
         // Server simulates a nack for audio all the time. Hence log only for video.
+#if LOG_NACKING
         if (type == PACKET_VIDEO) {
             if (!frame_data->received_indices[segment_index]) {
                 LOG_INFO("NACK for video ID %d, Index %d received!", segment_id, segment_index);
@@ -257,13 +258,16 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
                          segment_index);
             }
         }
+#endif
     } else {
         // Reset timer since the last time we received a non-nack packet
         start_timer(&frame_data->last_nonnack_packet_timer);
+#if LOG_NACKING
         if (frame_data->num_times_index_nacked[segment_index] > 0) {
             LOG_INFO("Received original %s ID %d, Index %d, but we had NACK'ed for it.",
                      type == PACKET_VIDEO ? "video" : "audio", segment_id, segment_index);
         }
+#endif
     }
 
     // If we have already received this packet anyway, just drop this packet
@@ -746,9 +750,11 @@ int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_d
         }
     }
 
+#if LOG_NACKING
     if (num_packets_nacked > 0) {
         LOG_INFO("%s", nack_log_buffer);
     }
+#endif
 
     return num_packets_nacked;
 }
@@ -789,10 +795,12 @@ bool try_nacking(RingBuffer* ring_buffer, double latency, NetworkSettings* netwo
     if (max_nacks <= 0) {
         // We can't nack, so just exit. Also takes care of negative case from above calculation.
         if (ring_buffer->last_nack_possibility) {
+#if LOG_NACKING
             if (ring_buffer->type == PACKET_VIDEO) {
                 LOG_INFO(
                     "Can't nack anymore! Hit NACK bitrate limit. Try increasing NACK bitrate?");
             }
+#endif
             ring_buffer->last_nack_possibility = false;
         }
         // Nacking has failed when avg_nacks has been saturated.
@@ -800,9 +808,11 @@ bool try_nacking(RingBuffer* ring_buffer, double latency, NetworkSettings* netwo
         return avg_nacks_remaining > 0;
     } else {
         if (!ring_buffer->last_nack_possibility) {
+#if LOG_NACKING
             if (ring_buffer->type == PACKET_VIDEO) {
                 LOG_INFO("NACKing is possible again.");
             }
+#endif
             ring_buffer->last_nack_possibility = true;
         }
     }
@@ -901,9 +911,11 @@ bool try_nacking(RingBuffer* ring_buffer, double latency, NetworkSettings* netwo
             if (get_timer(&frame_data->last_nacked_timer) >
                 1.2 * latency * frame_data->num_times_nacked) {
 #if LOG_NACKING
+                // Prints the number of frames we received,
+                // over the number of frames we need to recover the packet
                 LOG_INFO("Attempting to recover Frame ID %d, %d/%d indices received.", id,
                          frame_data->original_packets_received + frame_data->fec_packets_received,
-                         frame_data->num_original_packets + frame_data->num_fec_packets);
+                         frame_data->num_original_packets);
 #endif
                 packets_nacked_this_frame = nack_missing_packets_up_to_index(
                     ring_buffer, frame_data, frame_data->num_original_packets - 1,
