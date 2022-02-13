@@ -24,6 +24,8 @@ Defines
 // TODO: Use actual recorded jitter here
 #define ESTIMATED_JITTER_LATENCY_RATIO 0.3
 
+#define NACK_STATISTICS_SEC 5.0
+
 /*
 ============================
 Private Function Declarations
@@ -163,6 +165,14 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
     start_timer(&ring_buffer->last_stream_reset_request_timer);
     ring_buffer->last_stream_reset_request_id = -1;
 
+    // Nack statistics tracking
+    ring_buffer->num_nacks_received = 0;
+    ring_buffer->num_original_packets_received = 0;
+    ring_buffer->num_unnecessary_original_packets_received = 0;
+    ring_buffer->num_unnecessary_nacks_received = 0;
+    ring_buffer->num_times_nacking_saturated = 0;
+    start_timer(&ring_buffer->last_nack_statistics_timer);
+
     return ring_buffer;
 }
 
@@ -189,10 +199,12 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
         // because the current ringbuffer occupant already contains packets with a newer ID in it
         LOG_WARNING("Very stale packet (ID %d) received, current ringbuffer occupant's ID %d",
                     segment_id, frame_data->id);
+        ring_buffer->num_unnecessary_original_packets_received++;
         return -1;
     } else if (segment_id <= ring_buffer->currently_rendering_id) {
         // This packet won't help us render any new packets,
         // So we can safely just ignore it
+        ring_buffer->num_unnecessary_original_packets_received++;
         return 0;
     } else if (segment_id > frame_data->id) {
         // This packet is newer than the resident,
@@ -248,26 +260,32 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
 
     // LOG the the nacking situation
     if (segment->is_a_nack) {
+        ring_buffer->num_nacks_received++;
         // Server simulates a nack for audio all the time. Hence log only for video.
-#if LOG_NACKING
         if (type == PACKET_VIDEO) {
             if (!frame_data->received_indices[segment_index]) {
+#if LOG_NACKING
                 LOG_INFO("NACK for video ID %d, Index %d received!", segment_id, segment_index);
+#endif
             } else {
+                ring_buffer->num_unnecessary_nacks_received++;
+#if LOG_NACKING
                 LOG_INFO("NACK for video ID %d, Index %d received, but didn't need it.", segment_id,
                          segment_index);
+#endif
             }
         }
-#endif
     } else {
+        ring_buffer->num_original_packets_received++;
         // Reset timer since the last time we received a non-nack packet
         start_timer(&frame_data->last_nonnack_packet_timer);
-#if LOG_NACKING
         if (frame_data->num_times_index_nacked[segment_index] > 0) {
+            ring_buffer->num_unnecessary_original_packets_received++;
+#if LOG_NACKING
             LOG_INFO("Received original %s ID %d, Index %d, but we had NACK'ed for it.",
                      type == PACKET_VIDEO ? "video" : "audio", segment_id, segment_index);
-        }
 #endif
+        }
     }
 
     // If we have already received this packet anyway, just drop this packet
@@ -439,7 +457,8 @@ void reset_stream(RingBuffer* ring_buffer, int id) {
                                     frame_data->num_original_packets);
                         for (int j = 0; j < frame_data->num_original_packets; j++) {
                             if (!frame_data->received_indices[j]) {
-                                LOG_WARNING("Did not receive ID %d, Index %d", i, j);
+                                LOG_WARNING("Did not receive ID %d, Index %d. Nacked %d times.", i,
+                                            j, frame_data->num_times_index_nacked[j]);
                             }
                         }
                     }
@@ -465,6 +484,28 @@ void reset_stream(RingBuffer* ring_buffer, int id) {
 
 void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double latency,
                                               NetworkSettings* network_settings) {
+    // Track NACKing statistics
+    if (get_timer(&ring_buffer->last_nack_statistics_timer) > NACK_STATISTICS_SEC) {
+        LOG_INFO("Current Latency: %fms", latency * MS_IN_SECOND);
+        // The percentage of NACKs that actually improved the stream
+        LOG_INFO("NACK Efficiency: %f%%", (1.0 - ring_buffer->num_unnecessary_nacks_received /
+                                                     (double)ring_buffer->num_nacks_received) *
+                                              100);
+        // The percentage of the Bandwidth that consists of NACKing
+        int num_total_packets_received =
+            ring_buffer->num_nacks_received + ring_buffer->num_original_packets_received;
+        LOG_INFO("NACK Bandwidth Ratio: %f%%",
+                 ring_buffer->num_nacks_received / (double)num_total_packets_received * 100);
+        // The number of times we've hit the NACKing limit
+        LOG_INFO("NACKing was saturated: %d times", ring_buffer->num_times_nacking_saturated);
+        ring_buffer->num_nacks_received = 0;
+        ring_buffer->num_original_packets_received = 0;
+        ring_buffer->num_unnecessary_original_packets_received = 0;
+        ring_buffer->num_unnecessary_nacks_received = 0;
+        ring_buffer->num_times_nacking_saturated = 0;
+        start_timer(&ring_buffer->last_nack_statistics_timer);
+    }
+
     // We should wait to receive even a single packet before trying to recover anything
     if (ring_buffer->min_id == -1) {
         return;
@@ -548,6 +589,7 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
 
             // If a newer frame has failed, log it
             if (greatest_failed_id > ring_buffer->last_stream_reset_request_id) {
+#if LOG_NACKING
                 LOG_INFO(
                     "The most recent ID %d is %d frames ahead of currently pending %d. "
                     "A stream reset is now being requested to catch-up, ID's <= %d are considered "
@@ -561,6 +603,7 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
                     LOG_INFO("We've been trying to receive Frame %d for %fms.",
                              currently_pending_id, next_render_staleness * MS_IN_SECOND);
                 }
+#endif
 
                 ring_buffer->last_stream_reset_request_id = greatest_failed_id;
             }
@@ -775,7 +818,9 @@ bool try_nacking(RingBuffer* ring_buffer, double latency, NetworkSettings* netwo
         start_timer(&ring_buffer->avg_timer);
     }
 
+    // This throttles NACKing to this instantaneous bitrate
     int max_nack_burst_mbps = (int)(network_settings->burst_bitrate * MAX_NACK_BITRATE_RATIO);
+    // This is the fundamental NACKing limit
     int max_nack_avg_mbps = (int)(network_settings->bitrate * MAX_NACK_BITRATE_RATIO);
 
     // MAX_MBPS * interval / MAX_PAYLOAD_SIZE is the amount of nack payloads allowed in each
@@ -794,7 +839,13 @@ bool try_nacking(RingBuffer* ring_buffer, double latency, NetworkSettings* netwo
 
     if (max_nacks <= 0) {
         // We can't nack, so just exit. Also takes care of negative case from above calculation.
-        if (ring_buffer->last_nack_possibility) {
+
+        // However, if we also have no average nacks remaining,
+        // That means that we've fundamentally saturated NACKing,
+        // Rather than simply throttling NACKing
+        double saturated_nacking = avg_nacks_remaining <= 0;
+
+        if (ring_buffer->last_nack_possibility && saturated_nacking) {
 #if LOG_NACKING
             if (ring_buffer->type == PACKET_VIDEO) {
                 LOG_INFO(
@@ -802,10 +853,11 @@ bool try_nacking(RingBuffer* ring_buffer, double latency, NetworkSettings* netwo
             }
 #endif
             ring_buffer->last_nack_possibility = false;
+            ring_buffer->num_times_nacking_saturated++;
         }
         // Nacking has failed when avg_nacks has been saturated.
         // If max_nacks has been saturated, that's just burst bitrate distribution
-        return avg_nacks_remaining > 0;
+        return !saturated_nacking;
     } else {
         if (!ring_buffer->last_nack_possibility) {
 #if LOG_NACKING

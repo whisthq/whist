@@ -125,6 +125,14 @@ typedef struct RingBuffer {
     int burst_counter;
     int avg_counter;
     bool last_nack_possibility;
+
+    // NACKing statistics
+    int num_nacks_received;
+    int num_original_packets_received;
+    int num_unnecessary_original_packets_received;
+    int num_unnecessary_nacks_received;
+    int num_times_nacking_saturated;
+    WhistTimer last_nack_statistics_timer;
 } RingBuffer;
 
 /*
