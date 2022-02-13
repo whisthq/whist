@@ -145,6 +145,7 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
     ring_buffer->currently_rendering_id = -1;
     ring_buffer->last_rendered_id = -1;
     ring_buffer->last_missing_frame_nack = -1;
+    ring_buffer->last_missing_frame_nack_index = -1;
 
     // set all additional metadata for frames and ring buffer
     reset_ring_buffer(ring_buffer);
@@ -875,22 +876,41 @@ bool try_nacking(RingBuffer* ring_buffer, double latency, NetworkSettings* netwo
                       : ring_buffer->last_rendered_id + 1;
          id <= ring_buffer->max_id && num_packets_nacked < max_nacks; id++) {
         FrameData* frame_data = get_frame_at_id(ring_buffer, id);
-        // If this frame doesn't exist, skip it
+        // If this frame doesn't exist, NACK for the missing frame and then continue
         if (frame_data->id != id) {
-            // If we've received nothing from a frame before max_id,
-            // let's try nacking for index 0 of it
+            // If a frame is totally missing, this is how many packets we'll NACK for
+            // in that missing frame.
+            // Frames of size <= NACK_PACKETS_MISSING_FRAME, will be able to recover in a single RTT
+#define NACK_PACKETS_MISSING_FRAME 20
+            // If this ID is larger than the last missing frame nack,
+            // Start nacking for this ID
             if (ring_buffer->last_missing_frame_nack < id) {
-                // Nack the first set of indices of the missing frame
-                // Frames 10-20 packets in size, we'd like to recover in one RTT,
-                // But we don't want to try to recover 200 packet frames so quickly
-                for (int index = 0; index <= 20 && max_nacks - num_packets_nacked > 0; index++) {
+#if LOG_NACKING
+                LOG_INFO("NACKing for missing Frame ID %d", id);
+#endif
+                ring_buffer->last_missing_frame_nack = id;
+                ring_buffer->last_missing_frame_nack_index = -1;
+            }
+            // If there's still indices to NACK for in this ID,
+            // Then NACK for them
+            if (ring_buffer->last_missing_frame_nack == id &&
+                ring_buffer->last_missing_frame_nack_index < NACK_PACKETS_MISSING_FRAME) {
+                // This starts at 0, when ring_buffer->last_missing_frame_nack_index is -1
+                for (int index = ring_buffer->last_missing_frame_nack_index + 1;
+                     index <= NACK_PACKETS_MISSING_FRAME && max_nacks - num_packets_nacked > 0;
+                     index++) {
                     nack_single_packet(ring_buffer, id, index);
+                    ring_buffer->last_missing_frame_nack_index = index;
                     // Track out-of-bounds nacks anyway in bitrate,
                     // To ensure the upper-bound on bandwidth usage
                     num_packets_nacked++;
                 }
-                LOG_INFO("NACKing for missing Frame ID %d", id);
-                ring_buffer->last_missing_frame_nack = id;
+#if LOG_NACKING
+                // Log the finished NACK
+                if (ring_buffer->last_missing_frame_nack_index == NACK_PACKETS_MISSING_FRAME) {
+                    LOG_INFO("Finished NACKing for missing Frame ID %d", id);
+                }
+#endif
             }
             continue;
         }
