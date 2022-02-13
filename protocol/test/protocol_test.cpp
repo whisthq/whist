@@ -1405,7 +1405,7 @@ TEST_F(ProtocolTest, RingBufferTest) {
     EXPECT_FALSE(video_buffer == NULL);
     EXPECT_EQ(video_buffer->ring_buffer_size, size);
     EXPECT_EQ(video_buffer->type, PACKET_VIDEO);
-    EXPECT_EQ(video_buffer->largest_frame_size, LARGEST_VIDEOFRAME_SIZE);
+    EXPECT_EQ(video_buffer->largest_frame_size, sizeof(WhistPacket) - MAX_PAYLOAD_SIZE + LARGEST_VIDEOFRAME_SIZE);
     EXPECT_FALSE(video_buffer->receiving_frames == NULL);
     EXPECT_EQ(video_buffer->frames_received, 0);
 
@@ -1434,14 +1434,14 @@ TEST_F(ProtocolTest, RingBufferTest) {
     EXPECT_EQ(video_buffer->min_id, min_id);
     // Check packets and frames received
     EXPECT_EQ(video_buffer->num_packets_received, (num_frames * (num_frames + 1)) / 2);
-    EXPECT_EQ(video_buffer->num_frames_received, num_frames);
+    EXPECT_EQ(video_buffer->frames_received, num_frames);
     for (int id = min_id; id < max_id + 1; id++) {
         int expected_indices = id - (min_id - 1);
         // check that all frames are ready
         EXPECT_TRUE(is_ready_to_render(video_buffer, id));
         FrameData* frame_data = get_frame_at_id(video_buffer, id);
         // check that frames have been concatenated properly
-        EXPECT_EQ(frame_data->frame_buffer_size, expected_indices * exepcted_indices);
+        EXPECT_EQ(frame_data->frame_buffer_size, expected_indices * expected_indices);
     }
     
     // send an old frame, check ring buffer doesn't change
@@ -1461,7 +1461,7 @@ TEST_F(ProtocolTest, RingBufferTest) {
     // check that last_rendered_id is correct
     EXPECT_EQ(video_buffer->last_rendered_id, render_id);
     EXPECT_EQ(video_buffer->currently_rendering_id, render_id);
-    EXPECT_EQ(frame_to_render, render_id);
+    EXPECT_EQ(frame_to_render->id, render_id);
     // check that the old frame has been reset
     EXPECT_EQ(get_frame_at_id(video_buffer, render_id)->id, -1);
 
