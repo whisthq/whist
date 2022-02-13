@@ -769,15 +769,17 @@ int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_d
 
     int num_packets_nacked = 0;
     for (int i = start_index; i <= end_index && num_packets_nacked < max_packets_to_nack; i++) {
+        // If we can NACK for i, NACK for i
         if (!frame_data->received_indices[i] &&
             frame_data->num_times_index_nacked[i] < MAX_PACKET_NACKS) {
             nack_single_packet(ring_buffer, frame_data->id, i);
             log_len += snprintf(nack_log_buffer + log_len, sizeof(nack_log_buffer) - log_len,
                                 "%s%d", num_packets_nacked == 0 ? "" : ", ", i);
             frame_data->num_times_index_nacked[i]++;
-            frame_data->last_nacked_index = i;
             num_packets_nacked++;
         }
+        // Report that i has been NACK'ed (Presuming we could have NACK'ed it)
+        frame_data->last_nacked_index = i;
     }
 
 #if LOG_NACKING
