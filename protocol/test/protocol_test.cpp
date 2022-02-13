@@ -1386,6 +1386,98 @@ TEST_F(ProtocolTest, Atomics) {
     EXPECT_EQ(atomic_load(&atomic_test_xor), 0);
 }
 
+// Dummy nack and stream reset functions
+
+void dummy_nack(SocketContext* socket_context, WhistPacketType frame_type, int id, int index) {
+    // Eventually I guess this should record a nack for testing purposes
+    return;
+}
+
+void dummy_stream_reset(SocketContext* socket_context, WhistPacketType frame_type, int last_failed_id) {
+    return;
+}
+
+TEST_F(ProtocolTest, RingBufferTest) {
+    int size = 275;
+    // Initialize a ring buffer
+    RingBuffer* video_buffer = init_ring_buffer(PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE, size, NULL, dummy_nack, dummy_stream_reset);
+
+    EXPECT_FALSE(video_buffer == NULL);
+    EXPECT_EQ(video_buffer->ring_buffer_size, size);
+    EXPECT_EQ(video_buffer->type, PACKET_VIDEO);
+    EXPECT_EQ(video_buffer->largest_frame_size, LARGEST_VIDEOFRAME_SIZE);
+    EXPECT_FALSE(video_buffer->receiving_frames == NULL);
+    EXPECT_EQ(video_buffer->frames_received, 0);
+
+    int min_id = size + 1;
+    int max_id = size + 5;
+    int num_frames = max_id - min_id + 1;
+    // Let's produce some sample segments starting from 100
+    for (int id = min_id; id < max_id + 1; id++) {
+        int num_indices = id - (min_id - 1);
+        for (int index = 0; index < num_indices; index++) {
+            WhistSegment sample_segment = {};
+            sample_segment.id = id;
+            sample_segment.index = index;
+            sample_segment.num_indices = num_indices;
+            sample_segment.num_fec_indices = 0;
+            sample_segment.segment_size = num_indices;
+            sample_segment.is_a_nack = false;
+            memset(sample_segment.segment_data, index, sample_segment.segment_size);
+
+            ring_buffer_receive_segment(video_buffer, &sample_segment);
+        }
+    }
+
+    // Check correct max and min IDs
+    EXPECT_EQ(video_buffer->max_id, max_id);
+    EXPECT_EQ(video_buffer->min_id, min_id);
+    // Check packets and frames received
+    EXPECT_EQ(video_buffer->num_packets_received, (num_frames * (num_frames + 1)) / 2);
+    EXPECT_EQ(video_buffer->num_frames_received, num_frames);
+    for (int id = min_id; id < max_id + 1; id++) {
+        int expected_indices = id - (min_id - 1);
+        // check that all frames are ready
+        EXPECT_TRUE(is_ready_to_render(video_buffer, id));
+        FrameData* frame_data = get_frame_at_id(video_buffer, id);
+        // check that frames have been concatenated properly
+        EXPECT_EQ(frame_data->frame_buffer_size, expected_indices * exepcted_indices);
+    }
+    
+    // send an old frame, check ring buffer doesn't change
+    WhistSegment old_segment = {};
+    old_segment.id = min_id - size;
+    old_segment.index = 0;
+    old_segment.num_indices = 1;
+    old_segment.segment_size = 1;
+    ring_buffer_receive_segment(video_buffer, &old_segment);
+
+    EXPECT_EQ(video_buffer->min_id, min_id);
+    EXPECT_EQ(get_frame_at_id(video_buffer, min_id)->id, min_id);
+
+    // render a frame
+    int render_id = min_id;
+    FrameData* frame_to_render = set_rendering(video_buffer, min_id);
+    // check that last_rendered_id is correct
+    EXPECT_EQ(video_buffer->last_rendered_id, render_id);
+    EXPECT_EQ(video_buffer->currently_rendering_id, render_id);
+    EXPECT_EQ(frame_to_render, render_id);
+    // check that the old frame has been reset
+    EXPECT_EQ(get_frame_at_id(video_buffer, render_id)->id, -1);
+
+    // reset a stream
+    reset_stream(video_buffer, max_id + 1);
+    EXPECT_EQ(video_buffer->last_rendered_id, max_id);
+    
+    // stale reset - should be a noop
+    reset_stream(video_buffer, min_id);
+    EXPECT_EQ(video_buffer->last_rendered_id, max_id);
+
+    // TODO: nacking
+
+    destroy_ring_buffer(video_buffer);
+}
+
 TEST_F(ProtocolTest, FECTest) {
 #define NUM_FEC_PACKETS 4
 
