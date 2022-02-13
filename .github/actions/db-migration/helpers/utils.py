@@ -10,8 +10,6 @@ def dump_schema(url):
             "--no-comment",
             "--no-owner",
             "--no-privileges",
-            "--schema=cloud",
-            "--schema=logging",
             "--schema=whist",
             url,
         ],
