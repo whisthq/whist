@@ -758,19 +758,6 @@ void nack_single_packet(RingBuffer* ring_buffer, int id, int index) {
 
 int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_data, int end_index,
                                      int max_packets_to_nack) {
-    /*
-        Nack up to 1 missing packet up to index
-
-        Arguments:
-            ring_buffer (RingBuffer*): ring buffer missing packets
-            frame_data (FrameData*): frame missing packets
-            end_index (int): the index up to which to nack missing packets
-            max_packets_to_nack (int): Most amount of packets we want to nack for
-
-        Returns:
-            The number of packets Nacked
-    */
-
     // Note that an invalid last_nacked_index is set to -1, correctly starting us at 0
     int start_index = frame_data->last_nacked_index + 1;
 
