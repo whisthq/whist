@@ -122,32 +122,41 @@ def download_latest_logs(
                 bucket.download_file(obj.key, exp_meta_path)
 
         # Check if logs are sane, if so stop
-        if not logs_contain_errors(os.path.join(".", branch_name)):
-            break
-        else:
-            # Get the network conditions for the compared run. If the .json file does not exist, then assume it's 'normal'
-            compared_network_conditions = "normal"
-            if os.path.isfile(exp_meta_path):
-                compared_run_meta = parse_metadata(os.path.join(".", branch_name))
-                if compared_run_meta and "network_conditions" in compared_run_meta:
-                    compared_network_conditions = compared_run_meta["network_conditions"]
-            # If the network conditions of the run in question are what we want, we are done. Otherwise, try with another set of logs
-            if (
-                (
-                    network_conditions_matching_way == "match"
-                    and network_conditions == compared_network_conditions
+        if logs_contain_errors(os.path.join(".", branch_name)):
+            os.system(
+                "rm -f {} {} {}".format(
+                    compared_client_log_path, compared_server_log_path, exp_meta_path
                 )
-                or (
-                    network_conditions_matching_way == "normal_only"
-                    and compared_network_conditions == "normal"
-                )
-                or (network_conditions_matching_way == "do_not_care")
-            ):
-                break
-
-            os.system("rm -rf {}".format(compared_client_log_path))
-            os.system("rm -rf {}".format(compared_server_log_path))
+            )
             counter += 1
+            continue
+
+        # Get the network conditions for the compared run. If the .json file does not exist, then assume it's 'normal'
+        compared_network_conditions = "normal"
+        if os.path.isfile(exp_meta_path):
+            compared_run_meta = parse_metadata(os.path.join(".", branch_name))
+            if compared_run_meta and "network_conditions" in compared_run_meta:
+                compared_network_conditions = compared_run_meta["network_conditions"]
+        # If the network conditions of the run in question are what we want, we are done. Otherwise, try with another set of logs
+        if (
+            (
+                network_conditions_matching_way == "match"
+                and network_conditions == compared_network_conditions
+            )
+            or (
+                network_conditions_matching_way == "normal_only"
+                and compared_network_conditions == "normal"
+            )
+            or (network_conditions_matching_way == "do_not_care")
+        ):
+            break
+
+        os.system(
+            "rm -f {} {} {}".format(
+                compared_client_log_path, compared_server_log_path, exp_meta_path
+            )
+        )
+        counter += 1
     if counter > 1:
         print(
             "Warning, we are attempting to use {}° most recent logs from branch {}".format(
