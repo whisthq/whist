@@ -503,7 +503,7 @@ int32_t multithreaded_send_video(void* opaque) {
     }
     udp_handle_network_settings(
         state->client.udp_context.context,
-        get_default_network_settings(state->client_width, state->client_height));
+        get_default_network_settings(state->client_width, state->client_height, state->client_dpi));
     bool encoder_running = false;
 
     while (!state->exiting) {

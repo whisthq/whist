@@ -51,11 +51,12 @@ static NetworkSettings default_network_settings = {
     .fps = 60,
 };
 
+#define DPI_BITRATE_PER_PIXEL 192
+
 #define EWMA_STATS_SECONDS 5
 
-// The below values are roughly based on the "Low Bitrate" and "High Bitrate" values recommended in
-// https://www.videoproc.com/media-converter/bitrate-setting-for-h264.htm. Also confirmed visually
-// that these values produce reasonable output quality.
+// Confirmed visually that these values produce reasonable output quality for DPI of 192. For other
+// DPIs they need to scaled accordingly.
 #define MINIMUM_BITRATE_PER_PIXEL 1.0
 #define MAXIMUM_BITRATE_PER_PIXEL 4.0
 #define STARTING_BITRATE_PER_PIXEL 3.0
@@ -66,9 +67,14 @@ static NetworkSettings default_network_settings = {
 
 #define TOTAL_AUDIO_BITRATE ((NUM_PREV_AUDIO_FRAMES_RESEND + 1) * AUDIO_BITRATE)
 
-#define MINIMUM_VIDEO_BITRATE (output_width * output_height * MINIMUM_BITRATE_PER_PIXEL)
-#define MAXIMUM_VIDEO_BITRATE (output_width * output_height * MAXIMUM_BITRATE_PER_PIXEL)
-#define STARTING_VIDEO_BITRATE (output_width * output_height * STARTING_BITRATE_PER_PIXEL)
+#define DPI_RATIO ((double)DPI_BITRATE_PER_PIXEL / dpi)
+#define DPI_RATIO_SQUARED (DPI_RATIO * DPI_RATIO)
+#define MINIMUM_VIDEO_BITRATE \
+    (int)(output_width * output_height * MINIMUM_BITRATE_PER_PIXEL * DPI_RATIO_SQUARED)
+#define MAXIMUM_VIDEO_BITRATE \
+    (int)(output_width * output_height * MAXIMUM_BITRATE_PER_PIXEL * DPI_RATIO_SQUARED)
+#define STARTING_VIDEO_BITRATE \
+    (int)(output_width * output_height * STARTING_BITRATE_PER_PIXEL * DPI_RATIO_SQUARED)
 
 #define MINIMUM_BITRATE (MINIMUM_VIDEO_BITRATE + TOTAL_AUDIO_BITRATE)
 #define MAXIMUM_BITRATE (MAXIMUM_VIDEO_BITRATE + TOTAL_AUDIO_BITRATE)
@@ -77,6 +83,8 @@ static NetworkSettings default_network_settings = {
 #define MINIMUM_BURST_BITRATE (MINIMUM_BITRATE * BURST_BITRATE_RATIO)
 #define MAXIMUM_BURST_BITRATE (MAXIMUM_BITRATE * BURST_BITRATE_RATIO)
 #define STARTING_BURST_BITRATE (STARTING_BITRATE * BURST_BITRATE_RATIO)
+
+static int dpi = -1;
 
 /*
 ============================
@@ -96,9 +104,11 @@ Public Function Implementations
 ============================
 */
 
-NetworkSettings get_default_network_settings(int width, int height) {
-    FATAL_ASSERT(width > 0 && height > 0);
-    int video_bitrate = width * height * STARTING_BITRATE_PER_PIXEL;
+NetworkSettings get_default_network_settings(int width, int height, int screen_dpi) {
+    FATAL_ASSERT(width > 0 && height > 0 && screen_dpi > 0);
+    double dpi_ratio = (double)screen_dpi / DPI_BITRATE_PER_PIXEL;
+    double dpi_ratio_squared = dpi_ratio * dpi_ratio;
+    int video_bitrate = width * height * dpi_ratio_squared * STARTING_BITRATE_PER_PIXEL;
     int starting_bitrate = video_bitrate + TOTAL_AUDIO_BITRATE;
     default_network_settings.bitrate = starting_bitrate;
     default_network_settings.burst_bitrate = starting_bitrate * BURST_BITRATE_RATIO;
@@ -106,7 +116,7 @@ NetworkSettings get_default_network_settings(int width, int height) {
 }
 
 NetworkSettings get_starting_network_settings(void) {
-    return get_default_network_settings(output_width, output_height);
+    return get_default_network_settings(output_width, output_height, dpi);
 }
 
 NetworkSettings get_desired_network_settings(NetworkStatistics stats) {
@@ -134,6 +144,8 @@ NetworkSettings get_desired_network_settings(NetworkStatistics stats) {
     // Return the network settings
     return network_settings;
 }
+
+void network_algo_set_dpi(int new_dpi) { dpi = new_dpi; }
 
 /*
 ============================
