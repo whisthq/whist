@@ -712,6 +712,7 @@ void send_message_dimensions(void) {
     wcmsg.dimensions.width = output_width;
     wcmsg.dimensions.height = output_height;
     wcmsg.dimensions.dpi = get_native_window_dpi((SDL_Window *)window);
+    network_algo_set_dpi(wcmsg.dimensions.dpi);
     LOG_INFO("Sending MESSAGE_DIMENSIONS: output=%dx%d, DPI=%d", wcmsg.dimensions.width,
              wcmsg.dimensions.height, wcmsg.dimensions.dpi);
     send_wcmsg(&wcmsg);

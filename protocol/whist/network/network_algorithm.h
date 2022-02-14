@@ -66,9 +66,11 @@ NetworkSettings get_desired_network_settings(NetworkStatistics stats);
  *
  * @param height        Video height
  *
+ * @param dpi           Screen dpi
+ *
  * @returns             A network settings struct
  */
-NetworkSettings get_default_network_settings(int width, int height);
+NetworkSettings get_default_network_settings(int width, int height, int dpi);
 
 /**
  * @brief               This function will return the default network settings for the current
@@ -80,5 +82,13 @@ NetworkSettings get_default_network_settings(int width, int height);
  * @returns             A network settings struct
  */
 NetworkSettings get_starting_network_settings(void);
+
+/**
+ * @brief               This function will set the DPI of the screen/display.
+ *                      DPI value is required to calculate bitrate limits.
+ *
+ * @param dpi           Screen dpi
+ */
+void network_algo_set_dpi(int dpi);
 
 #endif

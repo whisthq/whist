@@ -388,10 +388,11 @@ int multithreaded_manage_client(void *opaque) {
         reset_threads_holding_active_count(&state->client);
 
         // Fill the network settings with default value, if we have a valid width and height
-        if (state->client_width > 0 && state->client_height > 0) {
+        if (state->client_width > 0 && state->client_height > 0 && state->client_dpi > 0) {
             udp_handle_network_settings(
                 state->client.udp_context.context,
-                get_default_network_settings(state->client_width, state->client_height));
+                get_default_network_settings(state->client_width, state->client_height,
+                                             state->client_dpi));
         }
         state->client.is_active = true;
     }
