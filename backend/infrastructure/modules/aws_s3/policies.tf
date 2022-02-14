@@ -107,8 +107,7 @@ resource "aws_s3_bucket_public_access_block" "whist-terraform-state" {
 
 # ------------------------------ Lifecycle policies for bucket versioning ------------------------------ #
 
-resource "aws_s3_bucket_lifecycle_configuration" "whst-user-app-config-lifecycle" {
-  depends_on = [aws_s3_bucket_versioning.versioning]
+resource "aws_s3_bucket_lifecycle_configuration" "whist-user-app-config-lifecycle" {
   bucket = aws_s3_bucket.whist-user-app-config.id
 
   # This rule keeps only the 3 most recent nonexpired objects
