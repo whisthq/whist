@@ -1,6 +1,6 @@
 click==8.0.3
-hypothesis==6.36.1
-pytest==7.0.0
+hypothesis==6.36.2
+pytest==7.0.1
 pytest-mock==3.7.0
 pytest-watch==4.2.0
 PyYAML==6.0
