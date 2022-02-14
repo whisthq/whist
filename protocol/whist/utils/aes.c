@@ -103,8 +103,7 @@ static void hmac_aes_data(void* hash_buffer, const AESMetadata* aes_metadata,
                           const void* ciphertext, int ciphertext_len, const void* private_key);
 
 /**
- * @brief                          Writes any OpenSSL errors to stderr,
- *                                 and then fatally terminates the protocol
+ * @brief                          Log any OpenSSL errors
  */
 static void print_ssl_errors(void);
 
