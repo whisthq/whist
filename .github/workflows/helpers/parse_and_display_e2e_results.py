@@ -69,27 +69,27 @@ parser.add_argument(
     default="normal_only",
 )
 
-# Acknowledged to https://stackoverflow.com/questions/15008758/parsing-boolean-values-with-argparse
-def string_bool_arg(v):
-    if isinstance(v, bool):
-        return v
-    if v.lower() in ("yes", "true", "t", "y", "1"):
-        return True
-    elif v.lower() in ("no", "false", "f", "n", "0"):
-        return False
-    else:
-        raise argparse.ArgumentTypeError("Boolean value expected.")
-
-
 parser.add_argument(
-    "--e2e-script-failure",
-    help="Whether or not the E2E testing script failed. This should be filled in automatically by Github CI",
-    type=string_bool_arg,
-    default="false",
+    "--e2e-script-outcome",
+    help="The outcome of the E2E testing script run. This should be filled in automatically by Github CI",
+    type=str,
+    choices=[
+        "success",
+        "failure",
+        "cancelled",
+        "skipped",
+    ],
+    default="success",
 )
 
 
 if __name__ == "__main__":
+    # Check if the E2E run was skipped or cancelled, in which case we skip this
+    e2e_script_failure = args.e2e_script_failure
+    if e2e_script_failure == "cancelled" or e2e_script_failure == "skipped":
+        print("E2E run was {}! No results to parse/display.".format(e2e_script_failure))
+        sys.exit(-1)
+
     # Grab environmental variables of interest
     if not os.environ.get("GITHUB_REF_NAME"):
         print(
@@ -204,12 +204,10 @@ if __name__ == "__main__":
                 compared_client_log_path, compared_server_log_path
             )
 
-    e2e_script_failure = args.e2e_script_failure
-
     # Here, we parse the test results into a .info file, which can be read and displayed on the GitHub PR
     # Create output .info file
     results_file = open("streaming_e2e_test_results.info", "w")
-    if e2e_script_failure:
+    if e2e_script_failure == "failure":
         with redirect_stdout(results_file):
             print(
                 "‼️⚠️🔴 WARNING: the E2E streaming test script failed and the results below might be inaccurate! This could also be due to a server hang. 🔴⚠️‼️"
