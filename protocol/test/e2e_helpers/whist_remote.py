@@ -399,7 +399,6 @@ def server_setup_process(args_dict):
         # 2 - Fix DPKG issue in case it comes up
         apply_dpkg_locking_fixup(hs_process, pexpect_prompt_server, running_in_ci)
 
-
         # 3- run host-setup
         hs_process = run_host_setup_on_instance(
             hs_process, pexpect_prompt_server, server_cmd, aws_timeout, server_log, running_in_ci
@@ -481,7 +480,13 @@ def client_setup_process(args_dict):
         if skip_host_setup == "false":
             # 1- Reboot instance for extra robustness
             hs_process = reboot_instance(
-                hs_process, client_cmd, aws_timeout, client_log, pexpect_prompt_client, 5, running_in_ci
+                hs_process,
+                client_cmd,
+                aws_timeout,
+                client_log,
+                pexpect_prompt_client,
+                5,
+                running_in_ci,
             )
 
             # 2 - Fix DPKG issue in case it comes up
