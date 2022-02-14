@@ -38,10 +38,6 @@ resource "aws_s3_bucket" "whist-chromium-windows" {
 resource "aws_s3_bucket" "whist-user-app-configs" {
   bucket = "whist-user-app-configs-${var.env}"
 
-  versioning {
-    enabled = true
-  }
-
   # Ignore the internal lifecycle rules because we have
   # a separate lifecycle resource. 
   # See: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration#usage-notes

@@ -26,8 +26,8 @@ resource "aws_s3_bucket_public_access_block" "whist-chromium-windows" {
 
 # ------------------------------ Policies for user app configs ------------------------------ #
 
-resource "aws_s3_bucket_public_access_block" "whist-user-app-config" {
-  bucket = aws_s3_bucket.whist-user-app-config.id
+resource "aws_s3_bucket_public_access_block" "whist-user-app-configs" {
+  bucket = aws_s3_bucket.whist-user-app-configs.id
   block_public_acls   = true
   block_public_policy = true
   restrict_public_buckets = true
@@ -234,7 +234,8 @@ resource "aws_s3_bucket_versioning" "whist-user-app-configs-versioning" {
 }
 
 resource "aws_s3_bucket_versioning" "whist-terraform-state-versioning" {
-  bucket = aws_s3_bucket.whist-terraform-state.id
+  count  = var.env == "prod" ? 1 : 0
+  bucket = aws_s3_bucket.whist-terraform-state[0].id
   versioning_configuration {
     status = "Enabled"
   }
