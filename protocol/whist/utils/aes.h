@@ -21,7 +21,7 @@ Includes
 */
 
 #include <whist/core/whist.h>
-#include "../network/network.h"
+#include <whist/network/network.h>
 
 /*
 ============================
