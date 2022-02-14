@@ -104,6 +104,8 @@ def download_latest_logs(
         print("Warning, S3 does not contain logs for branch {}".format(branch_name))
         return
     counter = 1
+    reason_for_discarding = []
+    subfolder_date = ""
     for folder_name in reversed(folders):
         subfolder_name = folder_name.get("Prefix").split("/")[-2]
 
@@ -111,6 +113,7 @@ def download_latest_logs(
         subfolder_date = datetime.strptime(subfolder_name, "%Y_%m_%d@%H-%M-%S")
         if subfolder_date >= before_timestamp:
             counter += 1
+            reason_for_discarding.append((subfolder_date, "logs with timestamp in future"))
             continue
 
         for obj in bucket.objects.filter(Prefix="{}/{}".format(branch_name, subfolder_name)):
@@ -129,6 +132,7 @@ def download_latest_logs(
                 )
             )
             counter += 1
+            reason_for_discarding.append((subfolder_date, "errors in logs"))
             continue
 
         # Get the network conditions for the compared run. If the .json file does not exist, then assume it's 'normal'
@@ -137,6 +141,8 @@ def download_latest_logs(
             compared_run_meta = parse_metadata(os.path.join(".", branch_name))
             if compared_run_meta and "network_conditions" in compared_run_meta:
                 compared_network_conditions = compared_run_meta["network_conditions"]
+        else:
+            print("Warning, logs from compared run do not have metadata!")
         # If the network conditions of the run in question are what we want, we are done. Otherwise, try with another set of logs
         if (
             (
@@ -157,9 +163,18 @@ def download_latest_logs(
             )
         )
         counter += 1
+        reason_for_discarding.append((subfolder_date, "network conditions mismatch"))
+
     if counter > 1:
         print(
-            "Warning, we are attempting to use {}° most recent logs from branch {}".format(
-                counter, branch_name
+            "Warning, we are attempting to use {}° most recent logs (time: {}) from branch {}".format(
+                counter, subfolder_date, branch_name
             )
         )
+        assert counter == len(reason_for_discarding) + 1
+        for i in range(len(reason_for_discarding)):
+            print(
+                "\t {}° most recent logs (time: {}) discarded due to {}".format(
+                    i + 1, reason_for_discarding[i][0], reason_for_discarding[i][1]
+                )
+            )
