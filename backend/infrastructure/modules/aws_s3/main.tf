@@ -75,6 +75,15 @@ resource "aws_s3_bucket" "whist-user-app-config" {
     enabled = true
   }
 
+  # Ignore the internal lifecycle rules because we have
+  # a separate lifecycle resource. 
+  # See: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration#usage-notes
+  lifecycle {
+    ignore_changes = [
+      lifecycle_rule
+    ]
+  }
+
   tags = {
     Name      = "whist-user-app-configs-${var.env}"
     Description = "Bucket for storing user configurations"
