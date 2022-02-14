@@ -107,7 +107,7 @@ resource "aws_s3_bucket_public_access_block" "whist-dev-secrets" {
   ignore_public_acls = true
 }
 
-resource "aws_s3_bucket_public_access_block" "whist-dev-secrets" {
+resource "aws_s3_bucket_public_access_block" "whist-terraform-state" {
   count  = var.env == "prod" ? 1 : 0
   bucket              = aws_s3_bucket.whist-terraform-state[0].id
   block_public_acls   = true

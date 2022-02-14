@@ -46,7 +46,7 @@ jobs:
       - name: Terraform Plan
         working-directory: backend/infrastructure
         run: cd "dev" && cd "$BRANCH_NAME" && terraform plan -no-color
-      
+
       - name: Send Alerts for Terraform result
         shell: python3 {0}
         run: |
