@@ -16,6 +16,7 @@ import {
   RESTORE_LAST_SESSION,
   WHIST_IS_DEFAULT_BROWSER,
   ONBOARDED,
+  ALLOW_NON_US_SERVERS,
 } from "@app/constants/store"
 
 // On a successful auth, store the auth credentials in Electron store
@@ -67,5 +68,12 @@ fromTrigger(WhistTrigger.protocolConnection)
     if (!((persistGet(ONBOARDED) as boolean) ?? false)) {
       persistSet(ONBOARDED, true)
       persistSet(RESTORE_LAST_SESSION, true)
+      persistSet(ALLOW_NON_US_SERVERS, false)
     }
   })
+
+fromTrigger(WhistTrigger.allowNonUSServers).subscribe(
+  (body: { allow: boolean }) => {
+    persistSet(ALLOW_NON_US_SERVERS, body.allow)
+  }
+)
