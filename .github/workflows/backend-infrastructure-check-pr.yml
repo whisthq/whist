@@ -1,4 +1,4 @@
-# workflows/terraform-check-pr.yml
+# workflows/backend-infrastructure-check-pr.yml
 #
 # Infrastructure: Check PR
 # Check Terraform code, format, validate and output plan.
@@ -33,59 +33,39 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Format Terraform code
-        id: fmt
         run: terraform fmt -check
 
       - name: Initialize Terraform
-        id: init
         working-directory: backend/infrastructure
-        run: |
-          if [ "$BRANCH_NAME" == "prod" ]; then
-            cd prod
-          elif [ "$BRANCH_NAME" == "staging" ]; then
-            cd staging
-          else
-            cd dev
-            fi
-
-          terraform init
+        run: cd "dev" && cd "$BRANCH_NAME" && terraform init
 
       - name: Validate Terraform code
-        id: validate
         working-directory: backend/infrastructure
-        run: |
-          if [ "$BRANCH_NAME" == "prod" ]; then
-            cd prod
-          elif [ "$BRANCH_NAME" == "staging" ]; then
-            cd staging
-          else
-            cd dev
-          fi
-
-          terraform validate -no-color
+        run: cd "dev" && cd "$BRANCH_NAME" && terraform validate -no-color
 
       - name: Terraform Plan
-        id: plan
         working-directory: backend/infrastructure
+        run: cd "dev" && cd "$BRANCH_NAME" && terraform plan -no-color
+      
+      - name: Send Alerts for Terraform result
+        shell: python3 {0}
         run: |
-          if [ "$BRANCH_NAME" == "prod" ]; then
-            cd prod
-          elif [ "$BRANCH_NAME" == "staging" ]; then
-            cd staging
-          else
-            cd dev
-          fi
+          import os
+          import sys
+          sys.path.append(".github/workflows/helpers")
+          from notifications.github_bot import github_comment_update
 
-          terraform plan -no-color
+          if not os.environ.get("GITHUB_ISSUE"):
+            print("No GitHub Issue number! Skipping PR notification.")
+            sys.exit(0)
 
-      - uses: actions/github-script@0.9.0
-        if: github.event_name == 'pull_request'
-        env:
-          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+          github_token = os.environ["GITHUB_TOKEN"]
+          github_issue = int(os.environ["GITHUB_ISSUE"])
+          github_repo = "whisthq/whist"
+
+          identifier = "AUTOMATED_DB_MIGRATION_MESSAGE"
+
+          body = f"""#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
             #### Terraform Validation 🤖\`${{ steps.validate.outputs.stdout }}\`
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
@@ -98,11 +78,12 @@ jobs:
 
             </details>
 
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*`;
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*"""
 
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
+          github_comment_update(
+            github_token,
+            github_repo,
+            github_issue,
+            identifier,
+            body,
+          )
