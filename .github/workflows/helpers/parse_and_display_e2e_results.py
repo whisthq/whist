@@ -84,6 +84,8 @@ parser.add_argument(
 
 
 if __name__ == "__main__":
+    args = parser.parse_args()
+
     # Check if the E2E run was skipped or cancelled, in which case we skip this
     e2e_script_failure = args.e2e_script_failure
     if e2e_script_failure == "cancelled" or e2e_script_failure == "skipped":
@@ -114,8 +116,6 @@ if __name__ == "__main__":
         current_branch_name = github_ref_name
     else:
         current_branch_name = os.getenv("GITHUB_HEAD_REF")
-
-    args = parser.parse_args()
 
     # A list of metrics to display (if found) in main table
     most_interesting_metrics = {

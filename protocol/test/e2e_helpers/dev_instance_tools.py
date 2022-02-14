@@ -104,7 +104,7 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci):
     Returns:
         None
     """
-    result = pexpect_process.expect(pexpect_prompt, pexpect.exceptions.TIMEOUT)
+    result = pexpect_process.expect([pexpect_prompt, pexpect.exceptions.TIMEOUT])
     if result == 1:
         print("Error, testing script hanged! Check the logs for troubleshooting.")
         exit(-1)
