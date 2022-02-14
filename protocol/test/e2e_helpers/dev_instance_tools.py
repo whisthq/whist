@@ -104,7 +104,10 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci):
     Returns:
         None
     """
-    pexpect_process.expect(pexpect_prompt)
+    result = pexpect_process.expect(pexpect_prompt, pexpect.exceptions.TIMEOUT)
+    if result == 1:
+        print("Error, testing script hanged! Check the logs for troubleshooting.")
+        exit(-1)
     # On a SSH connection, the prompt is printed two times on Mac (because of some obscure reason related to encoding and/or color printing on terminal)
     if not running_in_ci:
         pexpect_process.expect(pexpect_prompt)
