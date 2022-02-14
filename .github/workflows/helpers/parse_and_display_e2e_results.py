@@ -87,9 +87,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Check if the E2E run was skipped or cancelled, in which case we skip this
-    e2e_script_failure = args.e2e_script_failure
-    if e2e_script_failure == "cancelled" or e2e_script_failure == "skipped":
-        print("E2E run was {}! No results to parse/display.".format(e2e_script_failure))
+    e2e_script_outcome = args.e2e_script_outcome
+    if e2e_script_outcome == "cancelled" or e2e_script_outcome == "skipped":
+        print("E2E run was {}! No results to parse/display.".format(e2e_script_outcome))
         sys.exit(-1)
 
     # Grab environmental variables of interest
@@ -207,7 +207,7 @@ if __name__ == "__main__":
     # Here, we parse the test results into a .info file, which can be read and displayed on the GitHub PR
     # Create output .info file
     results_file = open("streaming_e2e_test_results.info", "w")
-    if e2e_script_failure == "failure":
+    if e2e_script_outcome == "failure":
         with redirect_stdout(results_file):
             print(
                 "‼️⚠️🔴 WARNING: the E2E streaming test script failed and the results below might be inaccurate! This could also be due to a server hang. 🔴⚠️‼️"
