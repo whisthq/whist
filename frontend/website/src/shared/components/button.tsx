@@ -40,7 +40,7 @@ const BaseButton: FC<BaseButtonProps> = (props: BaseButtonProps) => (
 
   <button
     className={classNames(
-      "text-md rounded text-gray-300 duration-500 focus:outline-none py-3 px-12 font-body tracking-wide font-semibold bg-gray-800",
+      "text-md rounded text-gray-900 duration-500 focus:outline-none py-3 px-12 font-body tracking-wide font-semibold bg-mint",
       "transition-colors",
       props.className
     )}

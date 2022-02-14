@@ -65,7 +65,7 @@ export const Hero = () => {
           <a href="/download#top">
             <WhistButton
               className="mt-12"
-              contents="Download Now"
+              contents="Get Started"
               state={WhistButtonState.DEFAULT}
             />
           </a>
