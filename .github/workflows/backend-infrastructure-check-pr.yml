@@ -47,7 +47,7 @@ jobs:
       - name: Initialize Terraform
         id: init
         working-directory: backend/infrastructure
-        run: cd "dev" && cd "$BRANCH_NAME" && terraform init
+        run: cd "dev" && cd "$BRANCH_NAME" && terraform init -upgrade
 
       - name: Validate Terraform code
         id: validate
