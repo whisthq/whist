@@ -46,8 +46,13 @@ jobs:
       - name: Terraform Plan
         working-directory: backend/infrastructure
         run: cd "dev" && cd "$BRANCH_NAME" && terraform plan -no-color
+      
+      # Need to install this dependency for the notification step.
+      - name: Install Python Dependencies
+        working-directory: backend/webserver
+        run: pip install PyGithub
 
-      - name: Send Alerts for Terraform result
+      - name: Notify Terraform result
         shell: python3 {0}
         run: |
           import os
