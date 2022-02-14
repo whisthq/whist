@@ -13,6 +13,10 @@ on:
     paths:
       - "backend/infrastructure/**"
   pull_request:
+    branches:
+      - dev
+      - staging
+      - prod
     paths:
       - "backend/infrastructure/**"
   workflow_dispatch:
