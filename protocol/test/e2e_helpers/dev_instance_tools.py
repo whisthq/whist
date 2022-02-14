@@ -77,7 +77,7 @@ def attempt_ssh_connection(
         if result_index == 0:
             print("\tSSH connection refused by host (retry {}/{})".format(retries + 1, max_retries))
             child.kill(0)
-            time.sleep(10)
+            time.sleep(30)
         elif result_index == 1 or result_index == 2:
             if result_index == 1:
                 child.sendline("yes")
@@ -87,9 +87,9 @@ def attempt_ssh_connection(
         elif result_index >= 3:
             print("\tSSH connection timed out (retry {}/{})".format(retries + 1, max_retries))
             child.kill(0)
-            time.sleep(10)
+            time.sleep(30)
     print("SSH connection refused by host {} times. Giving up now.".format(max_retries))
-    exit(-1)
+    sys.exit(-1)
 
 
 def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci):
