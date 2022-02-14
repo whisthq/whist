@@ -19,8 +19,8 @@ resource "aws_s3_bucket" "whist-browser-chromium-macos-arm64" {
   }
 }
 
-resource "aws_s3_bucket" "whist-browser-chromium-macos" {
-  bucket = "whist-browser-chromium-macos-${var.env}"
+resource "aws_s3_bucket" "whist-browser-chromium-macos-x64" {
+  bucket = "whist-browser-chromium-macos-x64-${var.env}"
 
   server_side_encryption_configuration {
     rule {
@@ -32,7 +32,7 @@ resource "aws_s3_bucket" "whist-browser-chromium-macos" {
   }
   tags = {
     Name      = "whist-browser-chromium-macos-${var.env}"
-    Description = "Bucket for storing Chromium builds for MacOS"
+    Description = "Bucket for storing Chromium builds for MacOS x64"
     Env       = var.env
     Terraform = true
   }
@@ -74,88 +74,6 @@ resource "aws_s3_bucket" "whist-browser-chromium-debug-build" {
   tags = {
     Name      = "whist-browser-chromium-debug-build"
     Description = "Bucket for storing Chromium debug builds"
-    Env       = var.env
-    Terraform = true
-  }
-}
-
-
-# ------------------------------ Buckets for Brave builds ------------------------------ #
-
-resource "aws_s3_bucket" "whist-browser-brave-linux-x64" {
-  bucket = "whist-browser-brave-linux-x64-${var.env}"
-
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-      bucket_key_enabled = false
-    }
-  }
-  tags = {
-    Name      = "whist-browser-brave-linux-x64-${var.env}"
-    Description = "Bucket for storing Brave builds for Linux x64"
-    Env       = var.env
-    Terraform = true
-  }
-}
-
-resource "aws_s3_bucket" "whist-browser-brave-macos-arm64" {
-  bucket = "whist-browser-brave-macos-arm64-${var.env}"
-
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-      bucket_key_enabled = false
-    }
-  }
-  tags = {
-    Name      = "whist-browser-brave-macos-arm64-${var.env}"
-    Description = "Bucket for storing Brave builds for MacOS arm64"
-    Env       = var.env
-    Terraform = true
-  }
-}
-
-resource "aws_s3_bucket" "whist-browser-brave-macos-x64" {
-  bucket = "whist-browser-brave-macos-arm64-${var.env}"
-
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-      bucket_key_enabled = false
-    }
-  }
-  tags = {
-    Name      = "whist-browser-brave-macos-arm64-${var.env}"
-    Description = "Bucket for storing Brave builds for MacOS x64"
-    Env       = var.env
-    Terraform = true
-  }
-}
-
-# Bucket for Brave cache
-
-resource "aws_s3_bucket" "whist-brave-sscache" {
-  count  = var.env == "prod" ? 1 : 0
-  bucket = "whist-brave-sscache"
-
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-      bucket_key_enabled = false
-    }
-  }
-  tags = {
-    Name      = "whist-brave-sscache"
-    Description = "Bucket for storing Brave sscache"
     Env       = var.env
     Terraform = true
   }
@@ -287,26 +205,6 @@ resource "aws_s3_bucket" "whist-protocol-shared-libs" {
 }
 
 # ------------------------------ Buckets for other data ------------------------------ #
-
-resource "aws_s3_bucket" "whist-technical-interview-data" {
-  count  = var.env == "prod" ? 1 : 0
-  bucket = "whist-technical-interview-data"
-
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-      bucket_key_enabled = false
-    }
-  }
-  tags = {
-    Name      = "whist-technical-interview-data"
-    Description = "Bucket for storing interview data"
-    Env       = var.env
-    Terraform = true
-  }
-}
 
 # Bucket for dev secrets
 

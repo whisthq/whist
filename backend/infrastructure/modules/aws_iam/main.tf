@@ -148,7 +148,7 @@ resource "aws_iam_group_policy_attachment" "EngineeringPolicy" {
 
 resource "aws_iam_policy" "WhistEC2PassRoleUserPolicy" {
   name = "WhistEC2PassRoleUserPolicy"
-  description = "This policy gives the necessary permissions to start, stop and terminate on-demand ans spot instances. It is meant to be used by the WhistEC2PassRoleUser."
+  description = "This policy gives the necessary permissions to start, stop and terminate on-demand and spot instances. It is meant to be used by the WhistEC2PassRoleUser."
   policy = data.aws_iam_policy_document.WhistEC2PassRoleUserPolicy.json
 }
 
