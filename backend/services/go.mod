@@ -30,7 +30,7 @@ require (
 	github.com/logzio/logzio-go v1.0.3
 	github.com/opencontainers/image-spec v1.0.2
 	github.com/pierrec/lz4/v4 v4.1.14
-	github.com/shirou/gopsutil v3.21.11+incompatible
+	github.com/shirou/gopsutil v3.22.1+incompatible
 	golang.org/x/crypto v0.0.0-20220213190939-1e6e3497d506
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 )
