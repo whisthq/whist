@@ -75,7 +75,7 @@ def attempt_ssh_connection(
             ]
         )
         if result_index == 0:
-            print("\tSSH connection refused by host (retry {}/{})".format(retries, max_retries))
+            print("\tSSH connection refused by host (retry {}/{})".format(retries + 1, max_retries))
             child.kill(0)
             time.sleep(10)
         elif result_index == 1 or result_index == 2:
@@ -85,11 +85,11 @@ def attempt_ssh_connection(
             print(f"SSH connection established with EC2 instance!")
             return child
         elif result_index >= 3:
-            print("\tSSH connection timed out (retry {}/{})".format(retries, max_retries))
+            print("\tSSH connection timed out (retry {}/{})".format(retries + 1, max_retries))
             child.kill(0)
             time.sleep(10)
     print("SSH connection refused by host {} times. Giving up now.".format(max_retries))
-    exit()
+    exit(-1)
 
 
 def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci):
