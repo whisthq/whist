@@ -8,8 +8,8 @@ resource "aws_s3_bucket_public_access_block" "whist-browser-chromium-macos-arm64
   ignore_public_acls = true
 }
 
-resource "aws_s3_bucket_public_access_block" "whist-browser-chromium-macos" {
-  bucket              = aws_s3_bucket.whist-browser-chromium-macos.id
+resource "aws_s3_bucket_public_access_block" "whist-browser-chromium-macos-x64" {
+  bucket              = aws_s3_bucket.whist-browser-chromium-macos-x64.id
   block_public_acls   = true
   block_public_policy = true
   restrict_public_buckets = true
