@@ -35,43 +35,6 @@ resource "aws_s3_bucket_public_access_block" "whist-browser-chromium-debug-build
   ignore_public_acls = true
 }
 
-# ------------------------------ Policies for Brave builds ------------------------------ #
-
-resource "aws_s3_bucket_public_access_block" "whist-browser-brave-linux-x64" {
-  bucket              = aws_s3_bucket.whist-browser-brave-linux-x64.id
-  block_public_acls   = true
-  block_public_policy = true
-  restrict_public_buckets = true
-  ignore_public_acls = true
-}
-
-resource "aws_s3_bucket_public_access_block" "whist-browser-brave-macos-arm64" {
-  bucket              = aws_s3_bucket.whist-browser-brave-macos-arm64.id
-  block_public_acls   = true
-  block_public_policy = true
-  restrict_public_buckets = true
-  ignore_public_acls = true
-}
-
-resource "aws_s3_bucket_public_access_block" "whist-browser-brave-macos-x64" {
-  bucket              = aws_s3_bucket.whist-browser-brave-macos-x64.id
-  block_public_acls   = true
-  block_public_policy = true
-  restrict_public_buckets = true
-  ignore_public_acls = true
-}
-
-# Policy for Brave cache
-
-resource "aws_s3_bucket_public_access_block" "whist-brave-sscache" {
-  count  = var.env == "prod" ? 1 : 0
-  bucket              = aws_s3_bucket.whist-brave-sscache[0].id
-  block_public_acls   = true
-  block_public_policy = true
-  restrict_public_buckets = true
-  ignore_public_acls = true
-}
-
 # ------------------------------ Policies for user app configs ------------------------------ #
 
 resource "aws_s3_bucket_public_access_block" "whist-user-app-config" {
@@ -133,20 +96,20 @@ resource "aws_s3_bucket_public_access_block" "whist-protocol-shared-libs" {
 
 # ------------------------------ Policies for other data ------------------------------ #
 
-resource "aws_s3_bucket_public_access_block" "whist-technical-interview-data" {
+# Policy for dev secrets
+
+resource "aws_s3_bucket_public_access_block" "whist-dev-secrets" {
   count  = var.env == "prod" ? 1 : 0
-  bucket              = aws_s3_bucket.whist-technical-interview-data[0].id
+  bucket              = aws_s3_bucket.whist-dev-secrets[0].id
   block_public_acls   = true
   block_public_policy = true
   restrict_public_buckets = true
   ignore_public_acls = true
 }
 
-# Policy for dev secrets
-
 resource "aws_s3_bucket_public_access_block" "whist-dev-secrets" {
   count  = var.env == "prod" ? 1 : 0
-  bucket              = aws_s3_bucket.whist-dev-secrets[0].id
+  bucket              = aws_s3_bucket.whist-terraform-state[0].id
   block_public_acls   = true
   block_public_policy = true
   restrict_public_buckets = true
