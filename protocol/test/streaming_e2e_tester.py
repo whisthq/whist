@@ -195,14 +195,6 @@ parser.add_argument(
     default="normal",
 )
 
-parser.add_argument(
-    "--aws-install-use-apt",
-    help="Whether to manually install or use apt for aws cli",
-    type=str,
-    choices=["false", "true"],
-    default="false",
-)
-
 args = parser.parse_args()
 
 
@@ -223,7 +215,6 @@ if __name__ == "__main__":
     region_name = args.region_name
     use_two_instances = True if args.use_two_instances == "true" else False
     simulate_scrolling = True if args.simulate_scrolling == "true" else False
-    aws_install_use_apt = True if args.aws_install_use_apt == "true" else False
 
     network_conditions = args.network_conditions
 
@@ -336,7 +327,6 @@ if __name__ == "__main__":
     args_dict["running_in_ci"] = running_in_ci
     args_dict["skip_git_clone"] = args.skip_git_clone
     args_dict["skip_host_setup"] = args.skip_host_setup
-    args_dict["aws_install_use_apt"] = aws_install_use_apt
 
     # If using two instances, parallelize the host-setup and building of the docker containers to save time
     p1 = multiprocessing.Process(target=server_setup_process, args=[args_dict])

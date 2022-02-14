@@ -175,7 +175,6 @@ def configure_aws_credentials(
     pexpect_process,
     pexpect_prompt,
     running_in_ci,
-    use_apt,
     aws_credentials_filepath="~/.aws/credentials",
 ):
     """

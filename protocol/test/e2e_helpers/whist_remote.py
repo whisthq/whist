@@ -363,7 +363,6 @@ def server_setup_process(args_dict):
     running_in_ci = args_dict["running_in_ci"]
     skip_git_clone = args_dict["skip_git_clone"]
     skip_host_setup = args_dict["skip_host_setup"]
-    aws_install_use_apt = args_dict["aws_install_use_apt"]
 
     server_log = open(server_log_filepath, "w")
 
@@ -381,7 +380,6 @@ def server_setup_process(args_dict):
         hs_process,
         pexpect_prompt_server,
         running_in_ci,
-        aws_install_use_apt,
         aws_credentials_filepath,
     )
 
@@ -444,7 +442,6 @@ def client_setup_process(args_dict):
     running_in_ci = args_dict["running_in_ci"]
     skip_git_clone = args_dict["skip_git_clone"]
     skip_host_setup = args_dict["skip_host_setup"]
-    aws_install_use_apt = args_dict["aws_install_use_apt"]
 
     client_log = open(client_log_filepath, "w")
 
@@ -464,7 +461,6 @@ def client_setup_process(args_dict):
             hs_process,
             pexpect_prompt_client,
             running_in_ci,
-            aws_install_use_apt,
             aws_credentials_filepath,
         )
 
