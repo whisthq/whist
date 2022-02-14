@@ -3,14 +3,6 @@
 resource "aws_s3_bucket" "whist-chromium-macos-arm64" {
   bucket = "whist-chromium-macos-arm64-${var.env}"
 
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-      bucket_key_enabled = false
-    }
-  }
   tags = {
     Name      = "whist-chromium-macos-arm64-${var.env}"
     Description = "Bucket for storing Chromium builds for MacOS Arm64"
@@ -22,14 +14,6 @@ resource "aws_s3_bucket" "whist-chromium-macos-arm64" {
 resource "aws_s3_bucket" "whist-chromium-macos-x64" {
   bucket = "whist-chromium-macos-x64-${var.env}"
 
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-      bucket_key_enabled = false
-    }
-  }
   tags = {
     Name      = "whist-chromium-macos-${var.env}"
     Description = "Bucket for storing Chromium builds for MacOS x64"
@@ -41,14 +25,6 @@ resource "aws_s3_bucket" "whist-chromium-macos-x64" {
 resource "aws_s3_bucket" "whist-chromium-windows" {
   bucket = "whist-chromium-windows-${var.env}"
 
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-      bucket_key_enabled = false
-    }
-  }
   tags = {
     Name      = "whist-chromium-windows-${var.env}"
     Description = "Bucket for storing Chromium builds for Windows"
@@ -59,17 +35,8 @@ resource "aws_s3_bucket" "whist-chromium-windows" {
 
 # ------------------------------ Buckets for user app configs ------------------------------ #
 
-resource "aws_s3_bucket" "whist-user-app-config" {
+resource "aws_s3_bucket" "whist-user-app-configs" {
   bucket = "whist-user-app-configs-${var.env}"
-
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-      bucket_key_enabled = false
-    }
-  }
 
   versioning {
     enabled = true
@@ -98,14 +65,6 @@ resource "aws_s3_bucket" "whist-brand-assets" {
   count  = var.env == "prod" ? 1 : 0
   bucket = "whist-brand-assets"
 
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-      bucket_key_enabled = false
-    }
-  }
   tags = {
     Name      = "whist-brand-assets"
     Description = "Bucket for storing Whist brand assets"
@@ -118,14 +77,6 @@ resource "aws_s3_bucket" "whist-website-assets" {
   count  = var.env == "prod" ? 1 : 0
   bucket = "whist-website-assets"
 
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-      bucket_key_enabled = false
-    }
-  }
   tags = {
     Name      = "whist-website-assets"
     Description = "Bucket for storing Whist website assets"
@@ -138,14 +89,6 @@ resource "aws_s3_bucket" "whist-test-assets" {
   count  = var.env == "prod" ? 1 : 0
   bucket = "whist-test-assets"
 
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-      bucket_key_enabled = false
-    }
-  }
   tags = {
     Name      = "whist-test-assets"
     Description = "Bucket for storing Whist test assets"
@@ -160,14 +103,6 @@ resource "aws_s3_bucket" "whist-e2e-protocol-test-logs" {
   count  = var.env == "prod" ? 1 : 0
   bucket = "whist-e2e-protocol-test-logs"
 
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-      bucket_key_enabled = false
-    }
-  }
   tags = {
     Name      = "whist-e2e-protocol-test-logs"
     Description = "Bucket for storing protocol E2E test logs"
@@ -180,14 +115,6 @@ resource "aws_s3_bucket" "whist-protocol-shared-libs" {
   count  = var.env == "prod" ? 1 : 0
   bucket = "whist-protocol-shared-libs"
 
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-      bucket_key_enabled = false
-    }
-  }
   tags = {
     Name      = "whist-protocol-shared-libs"
     Description = "Bucket for storing protocol shared libs"
@@ -204,14 +131,6 @@ resource "aws_s3_bucket" "whist-dev-secrets" {
   count  = var.env == "prod" ? 1 : 0
   bucket = "whist-dev-secrets"
 
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-      bucket_key_enabled = false
-    }
-  }
   tags = {
     Name      = "whist-dev-secrets"
     Description = "Bucket for storing Whist dev secrets"
@@ -226,15 +145,6 @@ resource "aws_s3_bucket" "whist-terraform-state" {
 
   versioning {
     enabled = true
-  }
-
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-      bucket_key_enabled = false
-    }
   }
 
   tags = {

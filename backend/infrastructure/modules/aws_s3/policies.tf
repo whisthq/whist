@@ -105,10 +105,129 @@ resource "aws_s3_bucket_public_access_block" "whist-terraform-state" {
   ignore_public_acls = true
 }
 
+# ------------------------------ Configure server side encryption ------------------------------ #
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-chromium-macos-arm64-encryption" {
+  bucket = aws_s3_bucket.whist-chromium-macos-arm64.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-chromium-macos-x64-encryption" {
+  bucket = aws_s3_bucket.whist-chromium-macos-x64.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-chromium-windows-encryption" {
+  bucket = aws_s3_bucket.whist-chromium-windows.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-user-app-configs-encryption" {
+  bucket = aws_s3_bucket.whist-user-app-configs.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-brand-assets-encryption" {
+  count  = var.env == "prod" ? 1 : 0
+  bucket = aws_s3_bucket.whist-brand-assets[0].id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-website-assets-encryption" {
+  count  = var.env == "prod" ? 1 : 0
+  bucket = aws_s3_bucket.whist-website-assets[0].id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-test-assets-encryption" {
+  count  = var.env == "prod" ? 1 : 0
+  bucket = aws_s3_bucket.whist-test-assets[0].id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-e2e-protocol-test-logs-encryption" {
+  count  = var.env == "prod" ? 1 : 0
+  bucket = aws_s3_bucket.whist-e2e-protocol-test-logs[0].id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-protocol-shared-libs-encryption" {
+  count  = var.env == "prod" ? 1 : 0
+  bucket = aws_s3_bucket.whist-protocol-shared-libs[0].id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-dev-secrets-encryption" {
+  count  = var.env == "prod" ? 1 : 0
+  bucket = aws_s3_bucket.whist-dev-secrets[0].id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-terraform-state-encryption" {
+  count  = var.env == "prod" ? 1 : 0
+  bucket = aws_s3_bucket.whist-terraform-state[0].id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "AES256"
+    }
+  }
+}
+
 # ------------------------------ Lifecycle policies for bucket versioning ------------------------------ #
 
-resource "aws_s3_bucket_lifecycle_configuration" "whist-user-app-config-lifecycle" {
-  bucket = aws_s3_bucket.whist-user-app-config.id
+resource "aws_s3_bucket_lifecycle_configuration" "whist-user-app-configs-lifecycle" {
+  bucket = aws_s3_bucket.whist-user-app-configs.id
 
   # This rule keeps only the 3 most recent nonexpired objects
   # on the bucket. This applies to objects 5 days after becoming
