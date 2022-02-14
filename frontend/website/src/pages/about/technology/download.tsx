@@ -16,7 +16,7 @@ const Download = () => {
       <div className="text-center mt-12">
         <a href="/download#top">
           <WhistButton
-            contents="Download Now"
+            contents="Get Started"
             state={WhistButtonState.DEFAULT}
           />
         </a>

@@ -6,7 +6,6 @@ import { FaLinkedinIn, FaTwitter, FaDiscord } from "react-icons/fa"
 const navigation = {
   home: [
     { name: "Product", href: "/" },
-    { name: "Pricing", href: "/#pricing" },
     { name: "Download", href: "/download#top" },
   ],
   about: [
