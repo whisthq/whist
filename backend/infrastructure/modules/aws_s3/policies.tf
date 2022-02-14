@@ -224,6 +224,22 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "whist-terraform-s
   }
 }
 
+# ------------------------------ Configure bucket versioning ------------------------------ #
+
+resource "aws_s3_bucket_versioning" "whist-user-app-configs-versioning" {
+  bucket = aws_s3_bucket.whist-user-app-configs.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_versioning" "whist-terraform-state-versioning" {
+  bucket = aws_s3_bucket.whist-terraform-state.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
 # ------------------------------ Lifecycle policies for bucket versioning ------------------------------ #
 
 resource "aws_s3_bucket_lifecycle_configuration" "whist-user-app-configs-lifecycle" {

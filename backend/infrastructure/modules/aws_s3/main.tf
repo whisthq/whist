@@ -143,10 +143,6 @@ resource "aws_s3_bucket" "whist-terraform-state" {
   count  = var.env == "prod" ? 1 : 0
   bucket = "whist-terraform-state"
 
-  versioning {
-    enabled = true
-  }
-
   tags = {
     Name      = "whist-terraform-state"
     Description = "Bucket for storing Terraform state files."
