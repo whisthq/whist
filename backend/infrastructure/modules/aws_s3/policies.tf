@@ -251,6 +251,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "whist-user-app-configs-lifecyc
   # noncurrent. It is also necessary to provide a filter or AWS will
   # return an error.
   rule {
+    id = "userConfigCleanRule"
+    status = "Enabled"
+
     # To apply the rule to all user configs, add a filter using a range 
     # of size up to 1Gb.
     filter {
