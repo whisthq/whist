@@ -195,14 +195,6 @@ parser.add_argument(
     default="normal",
 )
 
-parser.add_argument(
-    "--aws-install-use-apt",
-    help="Whether to manually install or use apt for aws cli",
-    type=str,
-    choices=["false", "true"],
-    default="false",
-)
-
 args = parser.parse_args()
 
 
@@ -223,7 +215,6 @@ if __name__ == "__main__":
     region_name = args.region_name
     use_two_instances = True if args.use_two_instances == "true" else False
     simulate_scrolling = True if args.simulate_scrolling == "true" else False
-    aws_install_use_apt = True if args.aws_install_use_apt == "true" else False
 
     network_conditions = args.network_conditions
 
@@ -309,6 +300,7 @@ if __name__ == "__main__":
         "using_two_instances": use_two_instances,
         "branch_name": get_whist_branch_name(running_in_ci),
         "github_sha": get_whist_github_sha(running_in_ci),
+        "server_hang_detected": False,
     }
     metadata_filename = os.path.join(perf_logs_folder_name, "experiment_metadata.json")
     with open(metadata_filename, "w") as metadata_file:
@@ -336,7 +328,6 @@ if __name__ == "__main__":
     args_dict["running_in_ci"] = running_in_ci
     args_dict["skip_git_clone"] = args.skip_git_clone
     args_dict["skip_host_setup"] = args.skip_host_setup
-    args_dict["aws_install_use_apt"] = aws_install_use_apt
 
     # If using two instances, parallelize the host-setup and building of the docker containers to save time
     p1 = multiprocessing.Process(target=server_setup_process, args=[args_dict])
@@ -506,7 +497,7 @@ if __name__ == "__main__":
             )
     else:
         # Save instance IDs to file for reuse by later runs
-        with open("instances_left_on.txt", "w+") as instances_file:
+        with open("instances_left_on.txt", "w") as instances_file:
             instances_file.write("{}\n".format(server_instance_id))
             if client_instance_id != server_instance_id:
                 instances_file.write("{}\n".format(client_instance_id))
@@ -518,6 +509,12 @@ if __name__ == "__main__":
 
     if server_hang_detected:
         print("Exiting with failure due to server hang!")
+
+        # Update experiment metadata
+        experiment_metadata["server_hang_detected"] = server_hang_detected
+        with open(metadata_filename, "w") as metadata_file:
+            json.dump(experiment_metadata, metadata_file)
+
         exit(-1)
     else:
         print("Done")

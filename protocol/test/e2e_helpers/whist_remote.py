@@ -363,7 +363,6 @@ def server_setup_process(args_dict):
     running_in_ci = args_dict["running_in_ci"]
     skip_git_clone = args_dict["skip_git_clone"]
     skip_host_setup = args_dict["skip_host_setup"]
-    aws_install_use_apt = args_dict["aws_install_use_apt"]
 
     server_log = open(server_log_filepath, "w")
 
@@ -381,7 +380,6 @@ def server_setup_process(args_dict):
         hs_process,
         pexpect_prompt_server,
         running_in_ci,
-        aws_install_use_apt,
         aws_credentials_filepath,
     )
 
@@ -393,9 +391,15 @@ def server_setup_process(args_dict):
         print("Skipping git clone whisthq/whist repository on server instance.")
 
     if skip_host_setup == "false":
+        # 1- Reboot instance for extra robustness
+        hs_process = reboot_instance(
+            hs_process, server_cmd, aws_timeout, server_log, pexpect_prompt_server, 5, running_in_ci
+        )
+
+        # 2 - Fix DPKG issue in case it comes up
         apply_dpkg_locking_fixup(hs_process, pexpect_prompt_server, running_in_ci)
 
-        # 1- run host-setup
+        # 3- run host-setup
         hs_process = run_host_setup_on_instance(
             hs_process, pexpect_prompt_server, server_cmd, aws_timeout, server_log, running_in_ci
         )
@@ -444,7 +448,6 @@ def client_setup_process(args_dict):
     running_in_ci = args_dict["running_in_ci"]
     skip_git_clone = args_dict["skip_git_clone"]
     skip_host_setup = args_dict["skip_host_setup"]
-    aws_install_use_apt = args_dict["aws_install_use_apt"]
 
     client_log = open(client_log_filepath, "w")
 
@@ -464,7 +467,6 @@ def client_setup_process(args_dict):
             hs_process,
             pexpect_prompt_client,
             running_in_ci,
-            aws_install_use_apt,
             aws_credentials_filepath,
         )
 
@@ -476,9 +478,21 @@ def client_setup_process(args_dict):
             print("Skipping git clone whisthq/whist repository on client instance.")
 
         if skip_host_setup == "false":
+            # 1- Reboot instance for extra robustness
+            hs_process = reboot_instance(
+                hs_process,
+                client_cmd,
+                aws_timeout,
+                client_log,
+                pexpect_prompt_client,
+                5,
+                running_in_ci,
+            )
+
+            # 2 - Fix DPKG issue in case it comes up
             apply_dpkg_locking_fixup(hs_process, pexpect_prompt_client, running_in_ci)
 
-            # 1- run host-setup
+            # 3- run host-setup
             hs_process = run_host_setup_on_instance(
                 hs_process,
                 pexpect_prompt_client,

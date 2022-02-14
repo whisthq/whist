@@ -129,7 +129,7 @@ def create_ec2_instance(
     return instance_id
 
 
-def start_instance(boto3client: botocore.client, instance_id: str) -> bool:
+def start_instance(boto3client: botocore.client, instance_id: str, max_retries: int) -> bool:
     """
     Attempt to turn on an existing EC2 instance. Return a bool indicating whether the operation succeeded.
 
@@ -139,12 +139,22 @@ def start_instance(boto3client: botocore.client, instance_id: str) -> bool:
     Returns:
         success (bool): indicates whether the start succeeded.
     """
-    try:
-        response = boto3client.start_instances(InstanceIds=[instance_id], DryRun=False)
-        print(response)
-    except ClientError as e:
-        print("Could not start instance. Caught error: ", e)
-        return False
+
+    for retry in range(max_retries):
+        try:
+            response = boto3client.start_instances(InstanceIds=[instance_id], DryRun=False)
+            print(response)
+        except botocore.exceptions.ClientError as e:
+            print(
+                "Could not start instance (retry {}/{}). Caught exception: {}".format(
+                    retry + 1, max_retries, e
+                )
+            )
+            if e.response["Error"]["Code"] == "IncorrectInstanceState" and retry < max_retries - 1:
+                time.sleep(60)
+                continue
+            else:
+                return False
     return True
 
 
@@ -162,7 +172,7 @@ def stop_instance(boto3client: botocore.client, instance_id: str) -> bool:
     try:
         response = boto3client.stop_instances(InstanceIds=[instance_id], DryRun=False)
         print(response)
-    except ClientError as e:
+    except botocore.exceptions.ClientError as e:
         print("Could not stop instance. Caught error: ", e)
         return False
     return True
@@ -245,7 +255,7 @@ def create_or_start_aws_instance(
     # Attempt to start existing instance
     if existing_instance_id != "":
         instance_id = existing_instance_id
-        result = start_instance(boto3client, instance_id)
+        result = start_instance(boto3client, instance_id, 5)
         if result is True:
             # Wait for the instance to be running
             wait_for_instance_to_start_or_stop(boto3client, instance_id, stopping=False)

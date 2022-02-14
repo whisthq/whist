@@ -69,7 +69,29 @@ parser.add_argument(
     default="normal_only",
 )
 
+parser.add_argument(
+    "--e2e-script-outcome",
+    help="The outcome of the E2E testing script run. This should be filled in automatically by Github CI",
+    type=str,
+    choices=[
+        "success",
+        "failure",
+        "cancelled",
+        "skipped",
+    ],
+    default="success",
+)
+
+
 if __name__ == "__main__":
+    args = parser.parse_args()
+
+    # Check if the E2E run was skipped or cancelled, in which case we skip this
+    e2e_script_outcome = args.e2e_script_outcome
+    if e2e_script_outcome == "cancelled" or e2e_script_outcome == "skipped":
+        print("E2E run was {}! No results to parse/display.".format(e2e_script_outcome))
+        sys.exit(-1)
+
     # Grab environmental variables of interest
     if not os.environ.get("GITHUB_REF_NAME"):
         print(
@@ -94,8 +116,6 @@ if __name__ == "__main__":
         current_branch_name = github_ref_name
     else:
         current_branch_name = os.getenv("GITHUB_HEAD_REF")
-
-    args = parser.parse_args()
 
     # A list of metrics to display (if found) in main table
     most_interesting_metrics = {
@@ -186,7 +206,13 @@ if __name__ == "__main__":
 
     # Here, we parse the test results into a .info file, which can be read and displayed on the GitHub PR
     # Create output .info file
-    results_file = open("streaming_e2e_test_results.info", "w+")
+    results_file = open("streaming_e2e_test_results.info", "w")
+    if e2e_script_outcome == "failure":
+        with redirect_stdout(results_file):
+            print(
+                "‼️⚠️🔴 WARNING: the E2E streaming test script failed and the results below might be inaccurate! This could also be due to a server hang. 🔴⚠️‼️"
+            )
+            print()
 
     # Generate the report
     if compared_branch_name == "":

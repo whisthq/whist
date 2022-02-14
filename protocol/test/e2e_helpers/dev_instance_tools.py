@@ -75,9 +75,9 @@ def attempt_ssh_connection(
             ]
         )
         if result_index == 0:
-            print("\tSSH connection refused by host (retry {}/{})".format(retries, max_retries))
+            print("\tSSH connection refused by host (retry {}/{})".format(retries + 1, max_retries))
             child.kill(0)
-            time.sleep(10)
+            time.sleep(30)
         elif result_index == 1 or result_index == 2:
             if result_index == 1:
                 child.sendline("yes")
@@ -85,11 +85,11 @@ def attempt_ssh_connection(
             print(f"SSH connection established with EC2 instance!")
             return child
         elif result_index >= 3:
-            print("\tSSH connection timed out (retry {}/{})".format(retries, max_retries))
+            print("\tSSH connection timed out (retry {}/{})".format(retries + 1, max_retries))
             child.kill(0)
-            time.sleep(10)
+            time.sleep(30)
     print("SSH connection refused by host {} times. Giving up now.".format(max_retries))
-    exit()
+    sys.exit(-1)
 
 
 def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci):
@@ -104,7 +104,10 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci):
     Returns:
         None
     """
-    pexpect_process.expect(pexpect_prompt)
+    result = pexpect_process.expect([pexpect_prompt, pexpect.exceptions.TIMEOUT])
+    if result == 1:
+        print("Error, testing script hanged! Check the logs for troubleshooting.")
+        exit(-1)
     # On a SSH connection, the prompt is printed two times on Mac (because of some obscure reason related to encoding and/or color printing on terminal)
     if not running_in_ci:
         pexpect_process.expect(pexpect_prompt)
@@ -175,7 +178,6 @@ def configure_aws_credentials(
     pexpect_process,
     pexpect_prompt,
     running_in_ci,
-    use_apt,
     aws_credentials_filepath="~/.aws/credentials",
 ):
     """
