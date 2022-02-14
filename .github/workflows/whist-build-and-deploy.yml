@@ -138,6 +138,7 @@ jobs:
           job_dependencies[client-applications-publish-build-x64-s3]="protocol client-applications core-ts"
           job_dependencies[client-applications-publish-build-arm64-s3]="protocol client-applications core-ts"
           job_dependencies[microservices-deploy-auth0-rules]="microservices"
+          job_dependencies[terraform-deploy]="infrastructure"
 
           # The jobs `whist-publish-build-config`, `whist-build-monorepo-config`,
           # `client-applications-retrieve-version-number`, `client-applications-update-version-number`,
@@ -465,6 +466,38 @@ jobs:
   #######################################################################################
   #######################################################################################
 
+  # Terraform: Deploy infrastructure
+  # 1 - Setup Terraform and plan
+  # 2 - Run Terraform apply to deploy infrastructure.
+  terraform-deploy:
+    name: Terraform validate and plan
+    runs-on: ubuntu-20.04
+    env:
+      # Set AWS credentials for Terraform
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
+    steps:
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Initialize Terraform
+        working-directory: backend/infrastructure
+        run: cd "dev" && cd "$BRANCH_NAME" && terraform init -input-false
+
+      - name: Terraform Plan
+        working-directory: backend/infrastructure
+        run: cd "dev" && cd "$BRANCH_NAME" && terraform plan -input=false -out=tfplan
+
+      - name: Terraform Apply
+        working-directory: backend/infrastructure
+        run: cd "dev" && cd "$BRANCH_NAME" && terraform apply -input=false -auto-approve tfplan
+
+  #######################################################################################
+  #######################################################################################
+
   # Mandelbox Infrastructure: Build & Publish Whist Mandelboxes and AMIs
   # This job does:
   # 1- Build and publish the mandelboxes to a GitHub Container Registry repository
@@ -475,7 +508,12 @@ jobs:
     name: "Mandelbox Infrastructure: Build & Publish Whist Mandelboxes and AMIs"
     runs-on: ubuntu-20.04
     concurrency: mandelboxes-and-amis-publish-ghcr-and-aws-${{ github.ref }}
-    needs: [whist-publish-build-config, whist-build-monorepo-config]
+    needs:
+      [
+        whist-publish-build-config,
+        whist-build-monorepo-config,
+        terraform-deploy,
+      ]
     outputs:
       region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
     if: contains(needs.whist-publish-build-config.outputs.jobs, '|mandelboxes-and-amis-publish-ghcr-and-aws|')
@@ -743,7 +781,12 @@ jobs:
     name: "Webserver: Deploy to Heroku"
     runs-on: ubuntu-20.04
     concurrency: webserver-deploy-heroku-${{ github.ref }}
-    needs: [whist-publish-build-config, whist-build-monorepo-config]
+    needs:
+      [
+        whist-publish-build-config,
+        whist-build-monorepo-config,
+        terraform-deploy,
+      ]
     if: contains(needs.whist-publish-build-config.outputs.jobs, '|webserver-deploy-heroku|')
 
     steps:
@@ -878,6 +921,7 @@ jobs:
         whist-build-monorepo-config,
         scaling-service-deploy,
         microservices-deploy-auth0-rules,
+        terraform-deploy,
       ]
     outputs:
       release_version: ${{ steps.generate-release-version.outputs.release_version }}
@@ -1006,6 +1050,7 @@ jobs:
         whist-publish-build-config,
         whist-build-monorepo-config,
         client-applications-retrieve-version-number,
+        terraform-deploy,
       ]
 
     # Only run client-apps deployment if none of the previous steps failed
@@ -1160,6 +1205,7 @@ jobs:
         whist-publish-build-config,
         whist-build-monorepo-config,
         client-applications-retrieve-version-number,
+        terraform-deploy,
       ]
 
     # Only run client-apps deployment if none of the previous steps failed
@@ -1370,6 +1416,7 @@ jobs:
         mandelboxes-and-amis-publish-ghcr-and-aws,
         webserver-deploy-heroku,
         microservices-deploy-auth0-rules,
+        terraform-deploy,
       ]
     if: contains(needs.whist-publish-build-config.outputs.jobs, '|scaling-service-deploy|')
 
@@ -1499,6 +1546,7 @@ jobs:
         whist-publish-build-config,
         whist-build-monorepo-config,
         microservices-deploy-auth0-rules,
+        terraform-deploy,
         mandelboxes-and-amis-publish-ghcr-and-aws,
         webserver-deploy-heroku,
         scaling-service-deploy,
