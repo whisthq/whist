@@ -74,20 +74,16 @@ jobs:
 
           identifier = "AUTOMATED_DB_MIGRATION_MESSAGE"
 
-          body = f"""#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terraform Validation 🤖\`${{ steps.validate.outputs.stdout }}\`
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+          body = f"""#### Terraform Format and Style 🖌 ${{ steps.fmt.outcome }}
+            #### Terraform Initialization ⚙️ ${{ steps.init.outcome }}
+            #### Terraform Validation 🤖 ${{ steps.validate.outputs.stdout }}
+            #### Terraform Plan 📖 ${{ steps.plan.outcome }}
 
             <details><summary>Show Plan</summary>
-
-            \`\`\`\n
             ${{ steps.plan.outputs.stdout }}
-            \`\`\`
-
             </details>
 
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*"""
+            *Pusher: @${{ github.actor }}, Action: ${{ github.event_name }}, Working Directory: ${{ env.tf_actions_working_dir }}, Workflow: ${{ github.workflow }}*"""
 
           github_comment_update(
             github_token,
