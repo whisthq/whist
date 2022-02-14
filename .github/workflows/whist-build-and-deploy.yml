@@ -485,19 +485,53 @@ jobs:
 
       - name: Initialize Terraform
         working-directory: backend/infrastructure
-        run: cd "dev" && cd "$BRANCH_NAME" && terraform init -input-false
+        run: cd "$BRANCH_NAME" && terraform init -input-false
 
       - name: Terraform Plan
         working-directory: backend/infrastructure
-        run: cd "dev" && cd "$BRANCH_NAME" && terraform plan -input=false -out=tfplan
+        run: cd "$BRANCH_NAME" && terraform plan -input=false -out=tfplan
 
       - name: Terraform Apply
+        if: needs.whist-publish-build-config.outputs.publish == 'true'
         working-directory: backend/infrastructure
-        run: cd "dev" && cd "$BRANCH_NAME" && terraform apply -input=false -auto-approve tfplan
+        run: cd "$BRANCH_NAME" && terraform apply -input=false -auto-approve tfplan
+
+      - name: Notify Slack on Successful Terraform Apply
+        if: needs.whist-publish-build-config.outputs.publish == 'true'
+        shell: python3 {0}
+        run: |
+          # Retrieve Slack webhook
+          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
+          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
+          else:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
+
+          from notifications.slack_bot import slack_post
+          TITLE = ":earth_americas: Infrastructure successfully deployed :earth_americas:"
+          BODY = f"Infrastructure deployed with Terraform: `${{ needs.whist-publish-build-config.outputs.branch }}` (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)
+
+      - name: Notify Slack on Job Error
+        if: failure()
+        shell: python3 {0}
+        run: |
+          # Retrieve Slack webhook
+          if "prod" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
+          elif "staging" in "${{ needs.whist-publish-build-config.outputs.branch }}":
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_STAGING }}"
+          else:
+            SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
+
+          from notifications.slack_bot import slack_post
+          SCALING_SERVICE_URL = "${{ needs.whist-publish-build-config.outputs.scaling_service_url }}"
+          BODY = f"@releases :nuke: Infrastructure failed to deploy, investigate immediately :nuke: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   #######################################################################################
   #######################################################################################
-
   # Mandelbox Infrastructure: Build & Publish Whist Mandelboxes and AMIs
   # This job does:
   # 1- Build and publish the mandelboxes to a GitHub Container Registry repository

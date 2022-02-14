@@ -1,7 +1,7 @@
 # ------------------------------ Buckets for Chromium builds ------------------------------ #
 
-resource "aws_s3_bucket" "whist-browser-chromium-macos-arm64" {
-  bucket = "whist-browser-chromium-macos-arm64-${var.env}"
+resource "aws_s3_bucket" "whist-chromium-macos-arm64" {
+  bucket = "whist-chromium-macos-arm64-${var.env}"
 
   server_side_encryption_configuration {
     rule {
@@ -12,15 +12,15 @@ resource "aws_s3_bucket" "whist-browser-chromium-macos-arm64" {
     }
   }
   tags = {
-    Name      = "whist-browser-chromium-macos-arm64-${var.env}"
+    Name      = "whist-chromium-macos-arm64-${var.env}"
     Description = "Bucket for storing Chromium builds for MacOS Arm64"
     Env       = var.env
     Terraform = true
   }
 }
 
-resource "aws_s3_bucket" "whist-browser-chromium-macos-x64" {
-  bucket = "whist-browser-chromium-macos-x64-${var.env}"
+resource "aws_s3_bucket" "whist-chromium-macos-x64" {
+  bucket = "whist-chromium-macos-x64-${var.env}"
 
   server_side_encryption_configuration {
     rule {
@@ -31,15 +31,15 @@ resource "aws_s3_bucket" "whist-browser-chromium-macos-x64" {
     }
   }
   tags = {
-    Name      = "whist-browser-chromium-macos-${var.env}"
+    Name      = "whist-chromium-macos-${var.env}"
     Description = "Bucket for storing Chromium builds for MacOS x64"
     Env       = var.env
     Terraform = true
   }
 }
 
-resource "aws_s3_bucket" "whist-browser-chromium-windows" {
-  bucket = "whist-browser-chromium-windows-${var.env}"
+resource "aws_s3_bucket" "whist-chromium-windows" {
+  bucket = "whist-chromium-windows-${var.env}"
 
   server_side_encryption_configuration {
     rule {
@@ -50,30 +50,8 @@ resource "aws_s3_bucket" "whist-browser-chromium-windows" {
     }
   }
   tags = {
-    Name      = "whist-browser-chromium-windows-${var.env}"
+    Name      = "whist-chromium-windows-${var.env}"
     Description = "Bucket for storing Chromium builds for Windows"
-    Env       = var.env
-    Terraform = true
-  }
-}
-
-# Bucket for Chromium debug build
-
-resource "aws_s3_bucket" "whist-browser-chromium-debug-build" {
-  count  = var.env == "prod" ? 1 : 0
-  bucket = "whist-browser-chromium-debug-build"
-
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-      bucket_key_enabled = false
-    }
-  }
-  tags = {
-    Name      = "whist-browser-chromium-debug-build"
-    Description = "Bucket for storing Chromium debug builds"
     Env       = var.env
     Terraform = true
   }
@@ -92,6 +70,11 @@ resource "aws_s3_bucket" "whist-user-app-config" {
       bucket_key_enabled = false
     }
   }
+
+  versioning {
+    enabled = true
+  }
+
   tags = {
     Name      = "whist-user-app-configs-${var.env}"
     Description = "Bucket for storing user configurations"
