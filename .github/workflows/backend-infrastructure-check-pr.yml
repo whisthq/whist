@@ -37,17 +37,21 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Format Terraform code
+        id: fmt
         run: terraform fmt -check
 
       - name: Initialize Terraform
+        id: init
         working-directory: backend/infrastructure
         run: cd "dev" && cd "$BRANCH_NAME" && terraform init
 
       - name: Validate Terraform code
+        id: validate
         working-directory: backend/infrastructure
         run: cd "dev" && cd "$BRANCH_NAME" && terraform validate -no-color
 
       - name: Terraform Plan
+        id: plan
         working-directory: backend/infrastructure
         run: cd "dev" && cd "$BRANCH_NAME" && terraform plan -no-color
 
