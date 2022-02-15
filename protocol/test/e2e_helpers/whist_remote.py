@@ -194,12 +194,30 @@ def setup_network_conditions_client(
     if network_conditions == "normal":
         print("Setting up client to run on a instance with no degradation on network conditions")
     else:
-        max_bandwidth, net_delay, pkt_drop_pctg = network_conditions.split(",")
-        print(
-            "Setting up client to run on a instance with max bandwidth of {}, delay of {} ms and packet drop rate {}".format(
-                max_bandwidth, net_delay, pkt_drop_pctg
+
+        # Apply conditions below only for values that are actually set
+        if len(network_conditions.split(",")) != 3:
+            print(
+                "Network conditions passed in incorrect format. Setting up client to run on a instance with no degradation on network conditions"
             )
-        )
+            return
+
+        max_bandwidth, net_delay, pkt_drop_pctg = network_conditions.split(",")
+        if max_bandwidth == "none" and net_delay == "none" and pkt_drop_pctg == "none":
+            print(
+                "Setting up client to run on a instance with no degradation on network conditions"
+            )
+            return
+        else:
+            print(
+                "Setting up client to run on a instance with the following networking conditions:"
+            )
+            if max_bandwidth != "none":
+                print("\t* Max bandwidth: {}".format(max_bandwidth))
+            if net_delay != "none":
+                print("\t* Delay: {}ms".format(net_delay))
+            if pkt_drop_pctg != "none":
+                print("\t* Packet drop rate: {}".format(pkt_drop_pctg))
 
         # Install ifconfig
         command = "sudo apt install net-tools"
@@ -223,6 +241,14 @@ def setup_network_conditions_client(
         commands.append("sudo modprobe ifb")
         commands.append("sudo ip link set dev ifb0 up")
 
+        degradation_command = ""
+        if net_delay != "none":
+            degradation_command += "delay {}ms ".format(net_delay)
+        if pkt_drop_pctg != "none":
+            degradation_command += "loss {}% ".format(pkt_drop_pctg)
+        if max_bandwidth != "none":
+            degradation_command += "rate {}".format(max_bandwidth)
+
         for device in ifconfig_output:
             # add devices to delay incoming packets
             commands.append("sudo tc qdisc add dev {} ingress".format(device))
@@ -231,19 +257,16 @@ def setup_network_conditions_client(
                     device
                 )
             )
+
             # Set outbound degradations
-            commands.append(
-                "sudo tc qdisc add dev {} root netem delay {}ms loss {}% rate {}".format(
-                    device, net_delay, pkt_drop_pctg, max_bandwidth
-                )
-            )
+            command = "sudo tc qdisc add dev {}root netem ".format(device)
+            command += degradation_command
+            commands.append(command)
 
         # Set inbound degradations
-        commands.append(
-            "sudo tc qdisc add dev ifb0 root netem delay {}ms loss {}% rate {}".format(
-                net_delay, pkt_drop_pctg, max_bandwidth
-            )
-        )
+        command = "sudo tc qdisc add dev ifb0 root netem "
+        command += degradation_command
+        commands.append(command)
 
         # Execute all commands:
         for command in commands:
