@@ -194,7 +194,7 @@ if __name__ == "__main__":
             compared_server_log_path
         ):
             print(
-                "Could not get {} client/server logs. Unable to compare performance results to latest {} measurements.".format(
+                "Could not parse {} client/server logs. Unable to compare performance results to latest {} measurements.".format(
                     compared_branch_name, compared_branch_name
                 )
             )

@@ -166,11 +166,18 @@ def download_latest_logs(
         reason_for_discarding.append((subfolder_date, "network conditions mismatch"))
 
     if counter > 1:
-        print(
-            "Warning, we are attempting to use {}° most recent logs (time: {}) from branch {}".format(
-                counter, subfolder_date, branch_name
+        if counter > len(folders):
+            print(
+                "Error: could not find any logs from branch {} with the required properties for comparison.".format(
+                    branch_name
+                )
             )
-        )
+        else:
+            print(
+                "Warning, we are attempting to use {}° most recent logs (time: {}) from branch {}".format(
+                    counter, subfolder_date, branch_name
+                )
+            )
         assert counter == len(reason_for_discarding) + 1
         for i in range(len(reason_for_discarding)):
             print(

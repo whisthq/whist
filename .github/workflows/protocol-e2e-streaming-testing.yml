@@ -13,13 +13,13 @@ on:
       - "protocol/**"
       - "!protocol/**/README.md"
       - ".github/workflows/protocol-e2e-streaming-testing.yml"
-      - "mandelboxes/**"
+      - "mandelboxes/helper_scripts/copy_protocol_build.sh"
   pull_request:
     paths:
       - "protocol/**"
       - "!protocol/**/README.md"
       - ".github/workflows/protocol-e2e-streaming-testing.yml"
-      - "mandelboxes/**"
+      - "mandelboxes/helper_scripts/copy_protocol_build.sh"
   workflow_dispatch:
 
 jobs:
