@@ -100,6 +100,7 @@ struct _whist_server_state {
     int encoder_factory_client_w;
     int encoder_factory_client_h;
     int encoder_factory_bitrate;
+    int encoder_factory_vbv_size;
     CodecType encoder_factory_codec_type;
 };
 

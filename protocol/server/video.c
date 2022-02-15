@@ -54,6 +54,12 @@ Includes
 #define USE_MONITOR 0
 #define SAVE_VIDEO_OUTPUT 0
 
+// VBV Buffer size in seconds / Burst ratio. Setting it to a very low number as recomended for Ultra
+// low latency applications
+// https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/#recommended-nvenc-settings
+// Please note that this number will be multiplied by BURST_BITRATE_RATIO to get the VBV size in sec
+#define VBV_IN_SEC_BY_BURST_BITRATE_RATIO 0.1
+
 static WhistSemaphore consumer;
 static WhistSemaphore producer;
 static char buf[LARGEST_VIDEOFRAME_SIZE];
@@ -79,7 +85,8 @@ static int32_t multithreaded_encoder_factory(void* opaque) {
     state->encoder_factory_result =
         create_video_encoder(state->encoder_factory_server_w, state->encoder_factory_server_h,
                              state->encoder_factory_client_w, state->encoder_factory_client_h,
-                             state->encoder_factory_bitrate, state->encoder_factory_codec_type);
+                             state->encoder_factory_bitrate, state->encoder_factory_vbv_size,
+                             state->encoder_factory_codec_type);
     if (state->encoder_factory_result == NULL) {
         LOG_FATAL("Could not create an encoder, giving up!");
     }
@@ -323,7 +330,7 @@ static void send_empty_frame(whist_server_state* state, int id) {
  */
 static VideoEncoder* update_video_encoder(whist_server_state* state, VideoEncoder* encoder,
                                           CaptureDevice* device, int bitrate, CodecType codec,
-                                          int fps) {
+                                          int fps, int vbv_size) {
     // If this is a new update encoder request, log it
     if (!state->pending_encoder) {
         LOG_INFO("Update encoder request received, will update the encoder now!");
@@ -338,7 +345,7 @@ static VideoEncoder* update_video_encoder(whist_server_state* state, VideoEncode
     // handle the update_encoder event
     if (encoder != NULL) {
         // TODO: Use requested_video_fps as well
-        if (reconfigure_encoder(encoder, device->width, device->height, bitrate, codec)) {
+        if (reconfigure_encoder(encoder, device->width, device->height, bitrate, vbv_size, codec)) {
             // If we could update the encoder in-place, then we're done updating the encoder
             LOG_INFO("Reconfigured Encoder to %dx%d using Bitrate: %d, and Codec %d", device->width,
                      device->height, bitrate, (int)codec);
@@ -382,6 +389,7 @@ static VideoEncoder* update_video_encoder(whist_server_state* state, VideoEncode
             state->encoder_factory_client_h = (int)state->client_height;
             state->encoder_factory_codec_type = codec;
             state->encoder_factory_bitrate = bitrate;
+            state->encoder_factory_vbv_size = vbv_size;
 
             // If using nvidia, then we must destroy the existing encoder first
             // We can't have two nvidia encoders active or the 2nd attempt to
@@ -560,8 +568,12 @@ int32_t multithreaded_send_video(void* opaque) {
         // Update encoder with new parameters
         if (state->update_encoder) {
             start_timer(&statistics_timer);
-            encoder =
-                update_video_encoder(state, encoder, device, video_bitrate, video_codec, video_fps);
+            double burst_bitrate_ratio =
+                (double)network_settings.burst_bitrate / network_settings.bitrate;
+            int vbv_size =
+                (VBV_IN_SEC_BY_BURST_BITRATE_RATIO * video_bitrate * burst_bitrate_ratio);
+            encoder = update_video_encoder(state, encoder, device, video_bitrate, video_codec,
+                                           video_fps, vbv_size);
             log_double_statistic(VIDEO_ENCODER_UPDATE_TIME,
                                  get_timer(&statistics_timer) * MS_IN_SECOND);
         }

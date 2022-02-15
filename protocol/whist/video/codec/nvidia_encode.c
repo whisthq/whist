@@ -11,8 +11,8 @@
 #define WHIST_PRESET NV_ENC_PRESET_P2_GUID
 #define WHIST_TUNING NV_ENC_TUNING_INFO_LOW_LATENCY
 
-static int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType codec,
-                                    NV_ENC_PRESET_CONFIG* p_preset_config);
+static int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, int vbv_size,
+                                    CodecType codec, NV_ENC_PRESET_CONFIG* p_preset_config);
 static GUID get_codec_guid(CodecType codec);
 static int register_resource(NvidiaEncoder* encoder, RegisteredResource* resource_to_register);
 static void unregister_resource(NvidiaEncoder* encoder, RegisteredResource registered_resource);
@@ -43,7 +43,7 @@ static void try_free_frame(NvidiaEncoder* encoder) {
 }
 
 NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width, int out_height,
-                                     CUcontext cuda_context) {
+                                     int vbv_size, CUcontext cuda_context) {
     /*
         Create an Nvidia encoder with the given settings. The encoder will have reconfigurable
        bitrate, codec, width, and height.
@@ -70,6 +70,7 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
     encoder->height = out_height;
     encoder->cuda_context = cuda_context;
     encoder->bitrate = bitrate;
+    encoder->vbv_size = vbv_size;
 
     // Set initial frame pointer to NULL, nvidia will overwrite this later with the framebuffer
     // pointer
@@ -131,7 +132,8 @@ NvidiaEncoder* create_nvidia_encoder(int bitrate, CodecType codec, int out_width
 
     // Initialize the preset config
     NV_ENC_PRESET_CONFIG preset_config;
-    status = initialize_preset_config(encoder, bitrate, encoder->codec_type, &preset_config);
+    status =
+        initialize_preset_config(encoder, bitrate, vbv_size, encoder->codec_type, &preset_config);
     if (status < 0) {
         LOG_ERROR("custom_preset_config failed");
         free(encoder);
@@ -196,7 +198,7 @@ int nvidia_encoder_frame_intake(NvidiaEncoder* encoder, RegisteredResource resou
         // reconfigure the encoder
         if (!nvidia_reconfigure_encoder(encoder, resource_to_register.width,
                                         resource_to_register.height, encoder->bitrate,
-                                        encoder->codec_type)) {
+                                        encoder->vbv_size, encoder->codec_type)) {
             LOG_ERROR("Reconfigure failed!");
             return -1;
         }
@@ -506,8 +508,8 @@ static GUID get_codec_guid(CodecType codec) {
     return codec_guid;
 }
 
-static int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecType codec,
-                                    NV_ENC_PRESET_CONFIG* p_preset_config) {
+static int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, int vbv_size,
+                                    CodecType codec, NV_ENC_PRESET_CONFIG* p_preset_config) {
     /*
         Modify the encoder preset configuration with our desired bitrate and 0 iframes. Right now,
        we are using the low latency high performance preset.
@@ -549,16 +551,13 @@ static int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, CodecTy
     // sticking with CBR.
     p_preset_config->presetCfg.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
     p_preset_config->presetCfg.rcParams.averageBitRate = bitrate;
-    // Experimentally found to give good results,
-    // Smaller values reduce bitrate spikes but increase blurriness spikes
-    p_preset_config->presetCfg.rcParams.vbvBufferSize =
-        (VBV_BUF_SIZE_IN_MS * bitrate) / MS_IN_SECOND;
+    p_preset_config->presetCfg.rcParams.vbvBufferSize = vbv_size;
 
     return 0;
 }
 
 bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, int bitrate,
-                                CodecType codec) {
+                                int vbv_size, CodecType codec) {
     /*
         Using Nvidia's Reconfigure API, update encoder bitrate and codec without
        destruction/recreation.
@@ -601,7 +600,7 @@ bool nvidia_reconfigure_encoder(NvidiaEncoder* encoder, int width, int height, i
     // parameters and modify the width, height, codec, and bitrate accordingly. Initialize
     // preset_config
     NV_ENC_PRESET_CONFIG preset_config;
-    if (initialize_preset_config(encoder, bitrate, codec, &preset_config) < 0) {
+    if (initialize_preset_config(encoder, bitrate, vbv_size, codec, &preset_config) < 0) {
         LOG_ERROR("Failed to reconfigure encoder!");
         return false;
     }
