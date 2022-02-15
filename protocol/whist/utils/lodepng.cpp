@@ -13,4 +13,5 @@
 #ifndef _WIN32
 #define WHIST_LODEPNG_CPP_SKIP_DUPLICATE_GLOBALS
 #endif  // _WIN32
+#define LODEPNG_MAX_ALLOC 100000000
 #include "lodepng.c"
