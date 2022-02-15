@@ -434,10 +434,12 @@ void sdl_update_cursor(WhistCursorInfo* cursor) {
      */
     // Set cursor to frame's desired cursor type
     // Only update the cursor, if a cursor image is even embedded in the frame at all.
-#define CURSORIMAGE_A 0xff000000
-#define CURSORIMAGE_R 0x00ff0000
-#define CURSORIMAGE_G 0x0000ff00
-#define CURSORIMAGE_B 0x000000ff
+
+    // The PNG decodes to RGBA
+#define CURSORIMAGE_R 0xff000000
+#define CURSORIMAGE_G 0x00ff0000
+#define CURSORIMAGE_B 0x0000ff00
+#define CURSORIMAGE_A 0x000000ff
 
     LOG_INFO("UPDATING CURSOR %p", cursor);
 
