@@ -128,6 +128,17 @@ func RemoveMandelbox(mandelboxID types.MandelboxID) error {
 	}
 
 	q := queries.NewQuerier(dbpool)
+	// Get mandelbox row from database
+	mandelboxResult, err := q.FindMandelboxByID(context.Background(), mandelboxID.String())
+	if err != nil {
+		return utils.MakeError("failed to query mandelbox %v from database. Err: %v", mandelboxID, err)
+	}
+
+	if len(mandelboxResult) == 0 {
+		return utils.MakeError("mandelbox %v not found in database.", mandelboxID)
+	}
+
+	// Remove mandelbox row from database
 	result, err := q.RemoveMandelbox(context.Background(), mandelboxID.String())
 	if err != nil {
 		return utils.MakeError("Couldn't remove mandelbox %s from database: %s", mandelboxID, err)
@@ -135,6 +146,16 @@ func RemoveMandelbox(mandelboxID types.MandelboxID) error {
 		return utils.MakeError("Tried to remove mandelbox %s from database, but it was already gone!", mandelboxID)
 	}
 	logger.Infof("Removed row in database for mandelbox %s: %s", mandelboxID, result)
+
+	// Update the remaining capacity to account for the removed mandelbox.
+	instanceResult, err := q.UpdateInstanceCapacity(context.Background(), int32(result.RowsAffected()), mandelboxResult[0].InstanceID.String)
+	if err != nil {
+		return utils.MakeError("couldn't increment instance capacity after cleaning mandelbox. Err: %v", err)
+	}
+
+	if instanceResult.RowsAffected() != 0 {
+		logger.Infof("Updated capacity of %v instances.", instanceResult.RowsAffected())
+	}
 
 	return nil
 }
@@ -176,16 +197,6 @@ func removeStaleMandelboxes(allocatedAge, connectingAge time.Duration) error {
 		// We avoid logging this every time to avoid polluting the logs.
 		logger.Infof("Removed %v stale mandelboxes", result.RowsAffected())
 		metrics.Add("CleanedStaleMandelboxes", result.RowsAffected())
-	}
-
-	// Update the remaining capacity to account the removed mandelboxes.
-	instanceResult, err := q.UpdateInstanceCapacity(context.Background(), int32(result.RowsAffected()), string(instanceID))
-	if err != nil {
-		return utils.MakeError("couldn't increment instance capacity after cleaning mandelbox. Err: %v", err)
-	}
-
-	if instanceResult.RowsAffected() != 0 {
-		logger.Infof("Updated capacity of %v instances.", instanceResult.RowsAffected())
 	}
 
 	return nil
