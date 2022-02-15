@@ -57,7 +57,7 @@ Private Functions
 ============================
 */
 
-static WhistCursorInfo get_cursor_image(PCURSORINFO pci);
+static WhistCursorInfo* get_cursor_image(PCURSORINFO pci);
 
 static void load_cursors(void);
 
