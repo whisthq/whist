@@ -18,10 +18,20 @@ WhistCursorInfo* get_frame_cursor_info(VideoFrame* frame) {
 }
 
 unsigned char* get_frame_videodata(VideoFrame* frame) {
-    return frame->data + get_cursor_info_size(get_frame_cursor_info(frame));
+    unsigned char* data = frame->data;
+    if (frame->has_cursor) {
+        data += get_cursor_info_size(get_frame_cursor_info(frame));
+    }
+    return data;
 }
 
 int get_total_frame_size(VideoFrame* frame) {
-    return (int)(sizeof(VideoFrame) + get_cursor_info_size(get_frame_cursor_info(frame)) +
-                 frame->videodata_length);
+    // Size of static content
+    int size = (int)sizeof(VideoFrame);
+    // Size of dynamic content
+    if (frame->has_cursor) {
+        size += get_cursor_info_size(get_frame_cursor_info(frame));
+    }
+    size += frame->videodata_length;
+    return size;
 }

@@ -66,11 +66,14 @@ Defines
 #define LOG_LEVEL DEBUG_LEVEL
 #endif
 
-//                     Timestamp    File name   Line number
-//                         |   Tag      |  Function  |
-//                         |    |       |       |    |
+//                              Tag  File name   Line number
+//                               |      |   Function  |
+//                               |      |        |    |
 #define LOG_CONTEXT_FORMAT " | %-7s | %-35s | %-30s:%-5d | "
 
+// We use do/while(0) to force the user to ";" the end of the LOG,
+// While still keeping the statement inside a contiguous single block,
+// so that `if(cond) LOG;` works as expected
 #define LOG_MESSAGE(tag, message, ...)                                                          \
     do {                                                                                        \
         internal_logging_printf(tag##_TAG, LOG_FILE_NAME, __FUNCTION__, __LINE__, message "\n", \
@@ -88,10 +91,6 @@ extern const char *const debug_tag,
 #define WARNING_TAG warning_tag
 #define ERROR_TAG error_tag
 #define FATAL_ERROR_TAG fatal_error_tag
-
-// We use do/while(0) to force the user to ";" the end of the LOG,
-// While still keeping the statement inside a contiguous single block,
-// so that `if(cond) LOG;` works as expected
 
 #if LOG_LEVEL >= DEBUG_LEVEL
 #define LOG_DEBUG(message, ...) LOG_MESSAGE(DEBUG, message, ##__VA_ARGS__)
