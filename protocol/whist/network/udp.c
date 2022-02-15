@@ -1451,7 +1451,8 @@ void udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, i
 #endif
             udp_send_udp_packet(context, packet);
         } else {
-#if LOG_NACKING
+            // TODO: Calculate an aggregate and LOG_WARNING that,
+            // Insteads of per-packet logging
             if (type == PACKET_VIDEO) {
                 LOG_WARNING(
                     "NACKed %s packet %d %d not found, ID %d was "
@@ -1459,7 +1460,6 @@ void udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, i
                     type == PACKET_VIDEO ? "video" : "audio", packet_id, packet_index,
                     packet->udp_whist_segment_data.id);
             }
-#endif
         }
     } else {
 #if LOG_NACKING
