@@ -72,16 +72,16 @@ static int multithreaded_sync_udp_packets(void* opaque) {
 
     WhistPacket* last_whist_packet[NUM_PACKET_TYPES] = {0};
 
-    WhistTimer last_recvp_timer;
-    start_timer(&last_recvp_timer);
+    WhistTimer last_recv_timer;
+    start_timer(&last_recv_timer);
     while (run_sync_packets_threads) {
         // Update the renderer
         renderer_update(whist_renderer);
         // Update the UDP socket
         start_timer(&statistics_timer);
-        double last_recvp = get_timer(&last_recvp_timer);
-        if (connected && last_recvp * MS_IN_SECOND > 0.2) {
-            LOG_WARNING("UDP recvp() loop took a long time: %fms", last_recvp * MS_IN_SECOND);
+        double last_recv = get_timer(&last_recv_timer);
+        if (connected && last_recv * MS_IN_SECOND > 0.2) {
+            LOG_WARNING("Time between recv() calls is too long: %fms", last_recv * MS_IN_SECOND);
         }
         // Disconnect if the UDP connection was lost
         if (!socket_update(udp_context)) {
@@ -99,7 +99,7 @@ static int multithreaded_sync_udp_packets(void* opaque) {
             continue;
         }
         log_double_statistic(NETWORK_READ_PACKET_UDP, get_timer(&statistics_timer) * MS_IN_SECOND);
-        start_timer(&last_recvp_timer);
+        start_timer(&last_recv_timer);
 
         // Handle any messages we've received
         WhistPacket* message_packet = (WhistPacket*)get_packet(udp_context, PACKET_MESSAGE);
