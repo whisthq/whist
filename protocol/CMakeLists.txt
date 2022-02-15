@@ -152,6 +152,7 @@ if(RUN_CPPCHECK)
                 "--suppress=shiftTooManyBitsSigned"
                 "--suppress=*:${CMAKE_SOURCE_DIR}/whist/clipboard/clipboard_osx.m" # suppress all warnings for clipboard_osx.m since cppcheck isn't supported on Objective-C
                 "--suppress=*:${CMAKE_SOURCE_DIR}/whist/utils/lodepng.*" # suppress all lodepng warnings, since this is an external library that we should not touch
+                "--suppress=*:${CMAKE_SOURCE_DIR}/test/lodepng_test.*" # suppress all lodepng warnings, since this is an external library that we should not touch
                 "--inline-suppr" # Allow cppcheck-suppress comments in code
                 )
     else()

@@ -13,6 +13,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
         protocol_test.cpp
         codec_test.cpp
+        lodepng_test.cpp
 
         # Files needed for Whist Lib unit tests
         ../whist/utils/aes.c
@@ -32,12 +33,16 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../client/sdlscreeninfo.c
         ../client/sync_packets.c
         ../client/renderer.c
+
+        # Files needed for LodePNG unit tests
+        ../whist/utils/lodepng.cpp
     )
 # Server & Client files, for Windows/Linux (supported on both client and server)
 else()
     add_executable(${PROTOCOL_TEST_BINARY}
         protocol_test.cpp
         codec_test.cpp
+        lodepng_test.cpp
 
         # Files needed for Server unit tests
         ../server/client.c
@@ -68,6 +73,9 @@ else()
         ../client/sdlscreeninfo.c
         ../client/sync_packets.c
         ../client/renderer.c
+
+        # Files needed for LodePNG unit tests
+        ../whist/utils/lodepng.cpp
 )
 endif()
 
