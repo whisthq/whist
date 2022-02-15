@@ -485,16 +485,16 @@ jobs:
 
       - name: Initialize Terraform
         working-directory: backend/infrastructure
-        run: cd "$BRANCH_NAME" && terraform init -input-false
+        run: cd "$GITHUB_BASE_REF" && terraform init -input-false
 
       - name: Terraform Plan
         working-directory: backend/infrastructure
-        run: cd "$BRANCH_NAME" && terraform plan -input=false -out=tfplan
+        run: cd "$GITHUB_BASE_REF" && terraform plan -input=false -out=tfplan
 
       - name: Terraform Apply
         if: needs.whist-publish-build-config.outputs.publish == 'true'
         working-directory: backend/infrastructure
-        run: cd "$BRANCH_NAME" && terraform apply -input=false -auto-approve tfplan
+        run: cd "$GITHUB_BASE_REF" && terraform apply -input=false -auto-approve tfplan
 
       - name: Notify Slack on Successful Terraform Apply
         if: needs.whist-publish-build-config.outputs.publish == 'true'

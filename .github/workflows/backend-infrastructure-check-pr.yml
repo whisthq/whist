@@ -47,17 +47,17 @@ jobs:
       - name: Initialize Terraform
         id: init
         working-directory: backend/infrastructure
-        run: cd "$BRANCH_NAME" && terraform init -upgrade
+        run: cd "$GITHUB_BASE_REF" && terraform init -upgrade
 
       - name: Validate Terraform code
         id: validate
         working-directory: backend/infrastructure
-        run: cd "$BRANCH_NAME" && terraform validate -no-color
+        run: cd "$GITHUB_BASE_REF" && terraform validate -no-color
 
       - name: Terraform Plan
         id: plan
         working-directory: backend/infrastructure
-        run: cd "$BRANCH_NAME" && terraform plan -no-color
+        run: cd "$GITHUB_BASE_REF" && terraform plan -no-color
 
       # Need to install this dependency for the notification step.
       - name: Install Python Dependencies
