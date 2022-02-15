@@ -36,6 +36,7 @@ extern "C" {
 #include <whist/core/whist.h>
 #include <whist/utils/os_utils.h>
 #include <whist/network/ringbuffer.h>
+#include <client/audio.h>
 
 #include <client/native_window_utils.h>
 
@@ -1379,6 +1380,15 @@ TEST_F(ProtocolTest, NotificationDisplayTest) {
 #else
     EXPECT_EQ(result, -1);
 #endif
+}
+
+TEST_F(ProtocolTest, AudioTest) {
+    AudioContext* audio_context = init_audio();
+    // no frames buffered: underflowing, need more frames
+    EXPECT_FALSE(audio_ready_for_frame(audio_context, 0));
+    // lots of frames buffered (maxed out ring buffer): ready to render
+    EXPECT_TRUE(audio_ready_for_frame(audio_context, 15));
+    destroy_audio(audio_context);
 }
 
 /*

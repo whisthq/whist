@@ -912,10 +912,15 @@ int udp_get_num_pending_frames(SocketContext* socket_context, WhistPacketType ty
         // The only pending packet is in the pending packet buffer
         return context->has_pending_packet[(int)type] ? 1 : 0;
     } else {
-        // The pending frames are between max_id inclusive and last_rendered_id exclusive
-        int max_id = ring_buffer->max_id;
-        int last_rendered_id = ring_buffer->last_rendered_id;
-        return max_id - last_rendered_id;
+        // All frames are pending,
+        int num_pending_frames = ring_buffer->max_id - ring_buffer->min_id + 1;
+        // But if we've rendered, only frames after the last render ID are pending render
+        if (ring_buffer->last_rendered_id != -1) {
+            num_pending_frames = ring_buffer->max_id - ring_buffer->last_rendered_id;
+        }
+        // Min with max possible frames in the buffer. If rendering is way behind,
+        // Then the ring_buffer_size is still an upper bound on pending frames
+        return min(num_pending_frames, ring_buffer->ring_buffer_size);
     }
 }
 
