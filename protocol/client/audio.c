@@ -346,7 +346,7 @@ bool is_overflowing_audio(AudioContext* audio_context) {
 
 bool is_underflowing_audio(AudioContext* audio_context, int num_frames_buffered) {
     // invalid argument check
-    FATAL_ASSERT(0 <= num_frames_buffered && num_frames_buffered <= 1000);
+    FATAL_ASSERT(0 <= num_frames_buffered);
 
     int buffered_bytes = num_frames_buffered * DECODED_BYTES_PER_FRAME + safe_get_audio_queue(audio_context);
     // Check if we're underflowing the audio buffer
