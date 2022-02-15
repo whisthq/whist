@@ -2,26 +2,26 @@
 
 resource "aws_s3_bucket_public_access_block" "whist-chromium-macos-arm64" {
   bucket              = aws_s3_bucket.whist-chromium-macos-arm64.id
-  block_public_acls   = true
-  block_public_policy = true
-  restrict_public_buckets = true
-  ignore_public_acls = true
+  block_public_acls   = false
+  block_public_policy = false
+  restrict_public_buckets = false
+  ignore_public_acls = false
 }
 
 resource "aws_s3_bucket_public_access_block" "whist-chromium-macos-x64" {
   bucket              = aws_s3_bucket.whist-chromium-macos-x64.id
-  block_public_acls   = true
-  block_public_policy = true
-  restrict_public_buckets = true
-  ignore_public_acls = true
+  block_public_acls   = false
+  block_public_policy = false
+  restrict_public_buckets = false
+  ignore_public_acls = false
 }
 
 resource "aws_s3_bucket_public_access_block" "whist-chromium-windows" {
   bucket              = aws_s3_bucket.whist-chromium-windows.id
-  block_public_acls   = true
-  block_public_policy = true
-  restrict_public_buckets = true
-  ignore_public_acls = true
+  block_public_acls   = false
+  block_public_policy = false
+  restrict_public_buckets = false
+  ignore_public_acls = false
 }
 
 # ------------------------------ Policies for user app configs ------------------------------ #
@@ -39,10 +39,10 @@ resource "aws_s3_bucket_public_access_block" "whist-user-app-configs" {
 resource "aws_s3_bucket_public_access_block" "whist-brand-assets" {
   count  = var.env == "prod" ? 1 : 0
   bucket              = aws_s3_bucket.whist-brand-assets[0].id
-  block_public_acls   = true
-  block_public_policy = true
-  restrict_public_buckets = true
-  ignore_public_acls = true
+  block_public_acls   = false
+  block_public_policy = false
+  restrict_public_buckets = false
+  ignore_public_acls = false
 }
 
 resource "aws_s3_bucket_public_access_block" "whist-website-assets" {
@@ -57,10 +57,34 @@ resource "aws_s3_bucket_public_access_block" "whist-website-assets" {
 resource "aws_s3_bucket_public_access_block" "whist-test-assets" {
   count  = var.env == "prod" ? 1 : 0
   bucket              = aws_s3_bucket.whist-test-assets[0].id
-  block_public_acls   = true
-  block_public_policy = true
-  restrict_public_buckets = true
-  ignore_public_acls = true
+  block_public_acls   = false
+  block_public_policy = false
+  restrict_public_buckets = false
+  ignore_public_acls = false
+}
+
+# This policy will allow all objects in the whist-website-assets to
+# be accessible by anyone on the internet.
+data "aws_iam_policy_document" "whist-website-assets-policy" {
+  count  = var.env == "prod" ? 1 : 0
+  statement {
+    sid = "AllowPublicAccess"
+    effect = "Allow"
+    
+    principals {
+      type = "AWS"
+      identifiers = [
+        "*"
+      ]
+    }
+
+    actions = [ 
+      "s3:GetObject" 
+    ]
+    resources = [
+      "${aws_s3_bucket.whist-website-assets[0].arn}/*",
+    ]
+  }
 }
 
 # ------------------------------ Policies for protocol ------------------------------ #
@@ -77,10 +101,10 @@ resource "aws_s3_bucket_public_access_block" "whist-e2e-protocol-test-logs" {
 resource "aws_s3_bucket_public_access_block" "whist-protocol-shared-libs" {
   count  = var.env == "prod" ? 1 : 0
   bucket = aws_s3_bucket.whist-protocol-shared-libs[0].id
-  block_public_acls   = true
-  block_public_policy = true
-  restrict_public_buckets = true
-  ignore_public_acls = true
+  block_public_acls   = false
+  block_public_policy = false
+  restrict_public_buckets = false
+  ignore_public_acls = false
 }
 
 # ------------------------------ Policies for other data ------------------------------ #

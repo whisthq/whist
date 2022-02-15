@@ -42,9 +42,7 @@ data "aws_iam_policy_document" "WhistEC2PassRoleUserPolicy" {
     ]
     effect = "Allow"
     resources = [
-      "image*",
-      "instance*",
-      "spot-instances-request*"
+      "*",
     ]
   }
 
@@ -66,18 +64,14 @@ data "aws_iam_policy_document" "WhistEC2PassRoleUserPolicy" {
     for_each = var.env != "prod" ? [1] : []
     content {
       actions = [
-        "ssm:DescribeSession",
+        "ssm:DescribeSessions",
         "ssm:StartSession",
         "ssm:TerminateSession",
         "ssm:ResumeSession",
       ]
       effect = "Allow"
       resources = [
-        "session*",
-        "document",
-        "instance",
-        "managed-instance",
-        "task",
+        "*",
       ]
     }
   }
@@ -111,9 +105,7 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
     ]
     effect = "Allow"
     resources = [
-      "image*",
-      "instance*",
-      "snapshot"
+      "*",
     ]
   }
 
@@ -127,8 +119,7 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
     ]
     effect = "Allow"
     resources = [
-      "snapshot*",
-      "volume*",
+      "*",
     ]
   }
 
@@ -143,8 +134,7 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
     ]
     effect = "Allow"
     resources = [
-      "volume*",
-      "instance*",
+      "*",
     ]
   }
 
@@ -158,8 +148,7 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
     ]
     effect = "Allow"
     resources = [
-      "security-group*",
-      "vpc",
+      "*",
     ]
   }
 
@@ -176,8 +165,7 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
     ]
     effect = "Allow"
     resources = [
-      "key-pair*",
-      "instance*"
+      "*",
     ]
   }
 
@@ -196,9 +184,7 @@ data "aws_iam_policy_document" "PackerAMIBuilderInlinePolicy" {
     ]
     effect = "Allow"
     resources = [
-      "image*",
-      "instance*",
-      "spot-instances-request*"
+      "*",
     ]
   }
 }
