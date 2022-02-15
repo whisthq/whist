@@ -470,7 +470,7 @@ jobs:
   # 1 - Setup Terraform and plan
   # 2 - Run Terraform apply to deploy infrastructure.
   terraform-deploy:
-    name: Terraform validate and plan
+    name: Deploy Terraform
     runs-on: ubuntu-20.04
     env:
       # Set AWS credentials for Terraform
@@ -527,7 +527,7 @@ jobs:
 
           from notifications.slack_bot import slack_post
           SCALING_SERVICE_URL = "${{ needs.whist-publish-build-config.outputs.scaling_service_url }}"
-          BODY = f"@releases :nuke: Infrastructure failed to deploy, investigate immediately :nuke: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = f"@releases :rotating_light: Infrastructure failed to deploy, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   #######################################################################################
