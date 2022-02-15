@@ -439,6 +439,8 @@ void sdl_update_cursor(WhistCursorInfo* cursor) {
 #define CURSORIMAGE_G 0x0000ff00
 #define CURSORIMAGE_B 0x000000ff
 
+    LOG_INFO("UPDATING CURSOR %p", cursor);
+
     if (cursor) {
         if ((WhistCursorID)cursor->cursor_id != last_cursor || cursor->using_png) {
             if (sdl_cursor) {

@@ -203,8 +203,7 @@ int render_video(VideoContext* video_context) {
     // a later call to render_video can still access the data
     // from the most recently consumed render context.
     static WhistRGBColor window_color = {0};
-    static WhistCursorInfo cursor_image = {0};
-    static bool has_cursor_image = false;
+    WhistCursorInfo* cursor_image = NULL;
     static timestamp_us server_timestamp = 0;
     static timestamp_us client_input_timestamp = 0;
 
@@ -244,12 +243,10 @@ int render_video(VideoContext* video_context) {
 
             window_color = frame->corner_color;
 
-            WhistCursorInfo* cursor_image_ptr = get_frame_cursor_info(frame);
-            if (cursor_image_ptr) {
-                cursor_image = *cursor_image_ptr;
-                has_cursor_image = true;
-            } else {
-                has_cursor_image = false;
+            WhistCursorInfo* frame_cursor_image = get_frame_cursor_info(frame);
+            if (frame_cursor_image) {
+                cursor_image = safe_malloc(get_cursor_info_size(frame_cursor_image));
+                memcpy(cursor_image, frame_cursor_image, get_cursor_info_size(frame_cursor_image));
             }
         }
 
@@ -334,8 +331,9 @@ int render_video(VideoContext* video_context) {
         video_context->loading_index = -1;
 
         // Render out the cursor image
-        if (has_cursor_image) {
-            TIME_RUN(sdl_update_cursor(&cursor_image), VIDEO_CURSOR_UPDATE_TIME, statistics_timer);
+        if (cursor_image) {
+            TIME_RUN(sdl_update_cursor(cursor_image), VIDEO_CURSOR_UPDATE_TIME, statistics_timer);
+            free(cursor_image);
         }
 
         // Update the window titlebar color

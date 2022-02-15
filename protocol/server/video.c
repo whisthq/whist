@@ -195,9 +195,9 @@ static void send_populated_frames(whist_server_state* state, WhistTimer* statist
     // If the current cursor is the same as the last cursor or we failed to retrieve it,
     // just don't send any cursor
     if (!current_cursor || current_cursor->hash == last_cursor_hash) {
-        set_frame_cursor_image(frame, NULL);
+        set_frame_cursor_info(frame, NULL);
     } else {
-        set_frame_cursor_image(frame, current_cursor);
+        set_frame_cursor_info(frame, current_cursor);
         last_cursor_hash = current_cursor->hash;
     }
     free(current_cursor);
