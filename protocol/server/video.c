@@ -494,17 +494,22 @@ int32_t multithreaded_send_video(void* opaque) {
                                                          "multithreaded_send_video_packets", state);
 
     int consecutive_identical_frames = 0;
-
     bool assuming_client_active = false;
+    bool encoder_running = false;
+
     // Wait till client dimensions are available, so that we know the capture resolution
     while (!state->exiting &&
            (state->client_width == -1 || state->client_height == -1 || state->client_dpi == -1)) {
         whist_sleep(1);
     }
-    udp_handle_network_settings(
-        state->client.udp_context.context,
-        get_default_network_settings(state->client_width, state->client_height, state->client_dpi));
-    bool encoder_running = false;
+
+    // If we're exiting, then no need to do anything
+    if (!state->exiting) {
+        udp_handle_network_settings(
+            state->client.udp_context.context,
+            get_default_network_settings(state->client_width, state->client_height,
+                                         state->client_dpi));
+    }
 
     while (!state->exiting) {
         update_client_active_status(&state->client, &assuming_client_active);
