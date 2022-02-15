@@ -293,7 +293,7 @@ module.exports = {
       if (process.platform === "darwin") {
         console.log(`Codesigning everything in ${protocolTargetBuild}...`)
         execCommand(
-          `find ${protocolTargetBuild} -type f -exec codesign -f -v -s "Fractal Computers, Inc." {} \\;`,
+          `find ${protocolTargetBuild} -type f -exec codesign -f -v -s "Whist Technologies, Inc." {} \\;`,
           "."
         )
       } else {
