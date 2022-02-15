@@ -111,11 +111,11 @@ bool sdl_render_pending(void);
 /**
  * @brief                          Update the cursor
  *
- * @param cursor_image             The WhistCursorImage to use for the new cursor
+ * @param cursor                   The WhistCursorInfo to use for the new cursor
  *
  * @note                           This function is virtually instantaneous
  */
-void sdl_update_cursor(WhistCursorImage* cursor_image);
+void sdl_update_cursor(WhistCursorInfo* cursor);
 
 /**
  * @brief                          Update the color of the window's titlebar

@@ -46,7 +46,7 @@ typedef struct AudioFrame {
 #define LARGEST_AUDIOFRAME_SIZE 9000
 
 // The maximum frame size, excluding the embedded videodata
-#define MAX_VIDEOFRAME_METADATA_SIZE (sizeof(VideoFrame) + sizeof(WhistCursorImage))
+#define MAX_VIDEOFRAME_METADATA_SIZE (sizeof(VideoFrame) + sizeof(WhistCursorInfo))
 
 // The maximum allowed videodata size that can be embedded in a VideoFrame*
 // Setting frame->videodata_length to anything larger than this is invalid and will cause bugs
@@ -64,27 +64,27 @@ typedef struct AudioFrame {
  *
  * @param frame                    The frame who's data buffer should be written to
  *
- * @param cursor                   The WhistCursorImage who's cursor data should be embedded in
+ * @param cursor                   The WhistCursorInfo who's cursor data should be embedded in
  *                                 the given frame. Pass NULL to embed no cursor whatsoever.
  *                                 Default of a 0'ed VideoFrame* is already a NULL cursor.
  */
-void set_frame_cursor_image(VideoFrame* frame, WhistCursorImage* cursor);
+void set_frame_cursor_info(VideoFrame* frame, WhistCursorInfo* cursor);
 
 /**
- * @brief                          Get a pointer to the WhistCursorImage inside of the VideoFrame*
+ * @brief                          Get a pointer to the WhistCursorInfo inside of the VideoFrame*
  *
  * @param frame                    The VideoFrame who's data buffer is being used
  *
- * @returns                        A pointer to the internal WhistCursorImage. May return NULL if
+ * @returns                        A pointer to the internal WhistCursorInfo. May return NULL if
  *                                 no cursor was embedded.
  */
-WhistCursorImage* get_frame_cursor_image(VideoFrame* frame);
+WhistCursorInfo* get_frame_cursor_info(VideoFrame* frame);
 
 /**
  * @brief                          Get a pointer to the videodata inside of the VideoFrame*
  *                                 Prerequisites for writing to the returned buffer pointer:
  *                                     frame->videodata_length must be set
- *                                     set_frame_cursor_image must be called
+ *                                     set_frame_cursor_info must be called
  *                                 Please only read/write up to frame->videodata_length bytes from
  *                                 the returned buffer
  *

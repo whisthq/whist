@@ -426,7 +426,7 @@ bool sdl_render_pending(void) {
     return pending_render_val;
 }
 
-void sdl_update_cursor(WhistCursorImage* cursor) {
+void sdl_update_cursor(WhistCursorInfo* cursor) {
     /*
       Update the cursor image on the screen. If the cursor hasn't changed since the last frame we
       received, we don't do anything. Otherwise, we either use the provided bitmap or  update the
@@ -440,16 +440,28 @@ void sdl_update_cursor(WhistCursorImage* cursor) {
 #define CURSORIMAGE_B 0x000000ff
 
     if (cursor) {
-        if ((WhistCursorID)cursor->cursor_id != last_cursor || cursor->using_bmp) {
+        if ((WhistCursorID)cursor->cursor_id != last_cursor || cursor->using_png) {
             if (sdl_cursor) {
                 SDL_FreeCursor((SDL_Cursor*)sdl_cursor);
             }
-            if (cursor->using_bmp) {
-                // use bitmap data to set cursor
+            if (cursor->using_png) {
+                unsigned char* bmp;
+                unsigned int bmp_width, bmp_height;
+                unsigned int ret =
+                    lodepng_decode32(&bmp, &bmp_width, &bmp_height, cursor->png, cursor->png_size);
+                if (ret) {
+                    LOG_ERROR("Failed to decode cursor png: %s", lodepng_error_text(ret));
+                    return;
+                }
+
+                FATAL_ASSERT(bmp_width == cursor->png_width);
+                FATAL_ASSERT(bmp_height == cursor->png_height);
+
+                // use png data to set cursor
                 SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
-                    cursor->bmp, cursor->bmp_width, cursor->bmp_height, sizeof(uint32_t) * 8,
-                    sizeof(uint32_t) * cursor->bmp_width, CURSORIMAGE_R, CURSORIMAGE_G,
-                    CURSORIMAGE_B, CURSORIMAGE_A);
+                    bmp, bmp_width, bmp_height, sizeof(uint32_t) * 8, sizeof(uint32_t) * bmp_width,
+                    CURSORIMAGE_R, CURSORIMAGE_G, CURSORIMAGE_B, CURSORIMAGE_A);
+                free(bmp);
 
                 // Use BLENDMODE_NONE to allow for proper cursor blit-resize
                 SDL_SetSurfaceBlendMode(cursor_surface, SDL_BLENDMODE_NONE);
@@ -464,7 +476,7 @@ void sdl_update_cursor(WhistCursorImage* cursor) {
 
                 // Create the scaled cursor surface which takes DPI into account
                 SDL_Surface* scaled_cursor_surface = SDL_CreateRGBSurface(
-                    0, cursor->bmp_width * 96 / cursor_dpi, cursor->bmp_height * 96 / cursor_dpi,
+                    0, cursor->png_width * 96 / cursor_dpi, cursor->png_height * 96 / cursor_dpi,
                     cursor_surface->format->BitsPerPixel, cursor_surface->format->Rmask,
                     cursor_surface->format->Gmask, cursor_surface->format->Bmask,
                     cursor_surface->format->Amask);
@@ -475,8 +487,8 @@ void sdl_update_cursor(WhistCursorImage* cursor) {
                 // Potentially SDL_SetSurfaceBlendMode here since X11 cursor BMPs are
                 // pre-alpha multplied. Remember to adjust hot_x/y by the DPI scaling.
                 sdl_cursor = SDL_CreateColorCursor(scaled_cursor_surface,
-                                                   cursor->bmp_hot_x * 96 / cursor_dpi,
-                                                   cursor->bmp_hot_y * 96 / cursor_dpi);
+                                                   cursor->png_hot_x * 96 / cursor_dpi,
+                                                   cursor->png_hot_y * 96 / cursor_dpi);
                 SDL_FreeSurface(cursor_surface);
                 SDL_FreeSurface(scaled_cursor_surface);
             } else {

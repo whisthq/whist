@@ -203,7 +203,7 @@ int render_video(VideoContext* video_context) {
     // a later call to render_video can still access the data
     // from the most recently consumed render context.
     static WhistRGBColor window_color = {0};
-    static WhistCursorImage cursor_image = {0};
+    static WhistCursorInfo cursor_image = {0};
     static bool has_cursor_image = false;
     static timestamp_us server_timestamp = 0;
     static timestamp_us client_input_timestamp = 0;
@@ -244,7 +244,7 @@ int render_video(VideoContext* video_context) {
 
             window_color = frame->corner_color;
 
-            WhistCursorImage* cursor_image_ptr = get_frame_cursor_image(frame);
+            WhistCursorInfo* cursor_image_ptr = get_frame_cursor_info(frame);
             if (cursor_image_ptr) {
                 cursor_image = *cursor_image_ptr;
                 has_cursor_image = true;

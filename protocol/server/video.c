@@ -186,26 +186,21 @@ static void send_populated_frames(whist_server_state* state, WhistTimer* statist
     frame->server_timestamp = server_timestamp;
     frame->client_input_timestamp = client_input_timestamp;
 
-    static WhistCursorImage cursor_cache[2];
-    static int last_cursor_id = 0;
-    int current_cursor_id = (last_cursor_id + 1) % 2;
-
-    WhistCursorImage* last_cursor = &cursor_cache[last_cursor_id];
-    WhistCursorImage* current_cursor = &cursor_cache[current_cursor_id];
+    static uint32_t last_cursor_hash = 0;
 
     start_timer(statistics_timer);
-    get_current_cursor(current_cursor);
+    WhistCursorInfo* current_cursor = get_current_cursor();
     log_double_statistic(VIDEO_GET_CURSOR_TIME, get_timer(statistics_timer) * MS_IN_SECOND);
 
-    // If the current cursor is the same as the last cursor,
+    // If the current cursor is the same as the last cursor or we failed to retrieve it,
     // just don't send any cursor
-    if (memcmp(last_cursor, current_cursor, sizeof(WhistCursorImage)) == 0) {
+    if (!current_cursor || current_cursor->hash == last_cursor_hash) {
         set_frame_cursor_image(frame, NULL);
     } else {
         set_frame_cursor_image(frame, current_cursor);
+        last_cursor_hash = current_cursor->hash;
     }
-
-    last_cursor_id = current_cursor_id;
+    free(current_cursor);
 
     // frame is an iframe if this frame does not require previous frames to
     // render
