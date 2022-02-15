@@ -421,7 +421,7 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
             }
 
 #if LOG_NETWORKING
-            LOG_INFO("Received a WhistPacket of size %d over TCP", decrypted_len);
+            LOG_INFO("Received a WhistPacket of size %d over TCP", tcp_network_packet_size);
 #endif
 
             // Move the rest of the already read bytes,
