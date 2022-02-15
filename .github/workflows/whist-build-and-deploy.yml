@@ -1174,11 +1174,11 @@ jobs:
       # This step must only be done once and permission must be granted to use the keychain
       # manually, since the runner is self-hosted and its state persists across runs. It is
       # left here for reference, in case you need to configure a new self-hosted runner
-      # - name: Install macOS Codesigning Certificates on macOS GHA Machine
-      #   uses: apple-actions/import-codesign-certs@v1
-      #   with:
-      #     p12-file-base64: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED }}
-      #     p12-password: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED_PASSWORD }}
+      - name: Install macOS Codesigning Certificates on macOS GHA Machine
+        uses: apple-actions/import-codesign-certs@v1
+        with:
+          p12-file-base64: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED }}
+          p12-password: ${{ secrets.MACOS_SIGNING_P12_CERTIFICATES_BASE64_ENCODED_PASSWORD }}
 
       # This step follows the specs in https://github.com/electron/electron-notarize#notes-on-jwt-authentication
       - name: Install macOS Notarization API Key
