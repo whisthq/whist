@@ -886,7 +886,8 @@ bool try_nacking(RingBuffer* ring_buffer, double latency, NetworkSettings* netwo
                 1.2 * latency * frame_data->num_times_nacked) {
 #if LOG_NACKING
                 LOG_INFO("Attempting to recover Frame ID %d, %d/%d indices received.", id,
-                         frame_data->packets_received, frame_data->num_packets);
+                         frame_data->original_packets_received + frame_data->fec_packets_received,
+                         frame_data->num_original_packets + frame_data->num_fec_packets);
 #endif
                 packets_nacked_this_frame = nack_missing_packets_up_to_index(
                     ring_buffer, frame_data, frame_data->num_original_packets - 1,
