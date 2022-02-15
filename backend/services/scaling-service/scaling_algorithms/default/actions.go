@@ -202,6 +202,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// Don't scale down free instances if there are instances in pre connection to avoid downtimes
 	if len(currentlyStarting) > 0 {
 		logger.Infof("Not scaling down free instances as there are %v instances on preconnection state.", len(currentlyStarting))
+		return nil
 	}
 
 	logger.Info("Scaling down %v free instances on %v.", len(freeInstances), event.Region)
