@@ -201,7 +201,6 @@ Globals
 
 // TODO: Remove bad globals
 extern unsigned short port_mappings[USHRT_MAX + 1];
-extern volatile bool connected;
 volatile double latency;
 
 /*
@@ -790,7 +789,9 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     context->timestamp_mutex = whist_create_mutex();
     context->last_ping_id = -1;
     context->last_pong_id = -1;
+    // Whether or not we've ever connected
     context->connected = false;
+    // Whether or not we've connected, but then lost the connection
     context->connection_lost = false;
     start_timer(&context->last_network_settings_time);
 
@@ -827,20 +828,10 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     }
 
     if (ret == 0) {
+        // Mark as connected
+        context->connected = true;
         // Restore the socket's timeout
         set_timeout(context->socket, context->timeout);
-
-        // socket options = TCP_NODELAY IPTOS_LOWDELAY SO_RCVBUF=65536
-        // Windows Socket 65535 Socket options apply to all sockets.
-        // this is set to stop the kernel from buffering too much, thereby
-        // getting the data to us faster for lower latency
-        int a = 65535;
-        if (setsockopt(context->socket, SOL_SOCKET, SO_RCVBUF, (const char*)&a, sizeof(int)) ==
-            -1) {
-            LOG_ERROR("Error setting socket opts: %d", get_last_network_error());
-            closesocket(context->socket);
-            return false;
-        }
         return true;
     } else {
         return false;
@@ -1238,6 +1229,14 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
             if (error == ENOBUFS) {
                 LOG_WARNING("Unexpected UDP Packet Error: %d, retrying to send packet!", error);
                 continue;
+            } else if (error == ECONNREFUSED) {
+                if (context->connected) {
+                    // The connection has been lost
+                    LOG_WARNING("UDP connection Lost: ECONNREFUSED");
+                    context->connection_lost = true;
+                    return -1;
+                }
+                break;
             } else {
                 LOG_WARNING("Unexpected UDP Packet Error: %d", error);
                 return -1;
@@ -1258,9 +1257,9 @@ static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
         recvfrom_no_intr(context->socket, &udp_network_packet, sizeof(udp_network_packet), 0,
                          (struct sockaddr*)(&context->last_addr), &slen);
 
-    if (connected) {
+    if (context->connected) {
         // TODO: Compare last_addr, with connection_addr, more accurately than memcmp
-        // Not really necessary, since we validate decryption anyway
+        // Not strictly necessary, since we validate decryption anyway
     }
 
     // If the packet was successfully received, decrypt and process it it
@@ -1320,6 +1319,14 @@ static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
                 case WHIST_EWOULDBLOCK:
                     // Break on expected network errors
                     break;
+                case ECONNREFUSED: {
+                    if (context->connected) {
+                        // The connection has been lost
+                        LOG_WARNING("UDP connection Lost: ECONNREFUSED");
+                        context->connection_lost = true;
+                    }
+                    break;
+                }
                 default:
                     LOG_WARNING("Unexpected Packet Error: %d", error);
                     break;
