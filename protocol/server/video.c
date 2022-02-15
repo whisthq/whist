@@ -62,8 +62,9 @@ Includes
 
 static WhistSemaphore consumer;
 static WhistSemaphore producer;
-static char buf[LARGEST_VIDEOFRAME_SIZE];
+static char buf[2][LARGEST_VIDEOFRAME_SIZE];
 static int send_frame_id;
+static NetworkSettings network_settings;
 /*
 ============================
 Private Functions
@@ -174,9 +175,8 @@ static void send_populated_frames(whist_server_state* state, WhistTimer* statist
 
     // Create frame struct with compressed frame data and
     // metadata
-    whist_wait_semaphore(consumer);
 
-    VideoFrame* frame = (VideoFrame*)buf;
+    VideoFrame* frame = (VideoFrame*)buf[id % 2];
     frame->width = encoder->out_width;
     frame->height = encoder->out_height;
     frame->codec_type = encoder->codec_type;
@@ -212,6 +212,7 @@ static void send_populated_frames(whist_server_state* state, WhistTimer* statist
 
     write_avpackets_to_buffer(encoder->num_packets, encoder->packets,
                               (void*)get_frame_videodata(frame));
+    whist_wait_semaphore(consumer);
     send_frame_id = id;
 
     if (frame->is_iframe || LOG_VIDEO) {
@@ -220,6 +221,14 @@ static void send_populated_frames(whist_server_state* state, WhistTimer* statist
     }
 
     whist_post_semaphore(producer);
+    timestamp_us time_to_transmit = (get_total_frame_size(frame) * BITS_IN_BYTE * US_IN_SECOND) /
+                                    network_settings.burst_bitrate;
+    // If the time to transmit this frame is more than one frame duration, then sleep for remaining
+    // time to reduce the latency of next frame. If we capture the next frame early anyways network
+    // throttler will make us wait thus increasing its latency(time from capture to render).
+    if (time_to_transmit > AVG_FRAME_DURATION_IN_US) {
+        whist_usleep((uint32_t)(time_to_transmit - AVG_FRAME_DURATION_IN_US));
+    }
 }
 
 /**
@@ -297,8 +306,8 @@ static void update_current_device(whist_server_state* state, WhistTimer* statist
  */
 static void send_empty_frame(whist_server_state* state, int id) {
     // If we don't have a new frame to send, let's just send an empty one
-    static char mini_buf[sizeof(VideoFrame)];
-    VideoFrame* frame = (VideoFrame*)mini_buf;
+    VideoFrame* frame = (VideoFrame*)buf[id % 2];
+    memset(frame, 0, sizeof(*frame));
     frame->is_empty_frame = true;
     // This signals that the screen hasn't changed, so don't bother rendering
     // this frame and just keep showing the last one.
@@ -306,10 +315,9 @@ static void send_empty_frame(whist_server_state* state, int id) {
     // We don't need to fill out the rest of the fields of the VideoFrame because
     // is_empty_frame is true, so it will just be ignored by the client.
 
-    // Send the empty frame
-    if (state->client.is_active) {
-        send_packet(&state->client.udp_context, PACKET_VIDEO, frame, sizeof(VideoFrame), id, false);
-    }
+    whist_wait_semaphore(consumer);
+    send_frame_id = id;
+    whist_post_semaphore(producer);
 }
 
 /**
@@ -421,11 +429,11 @@ static VideoEncoder* update_video_encoder(whist_server_state* state, VideoEncode
 // bandwidth, without dropping frames.
 static int32_t multithreaded_send_video_packets(void* opaque) {
     whist_server_state* state = (whist_server_state*)opaque;
-    VideoFrame* frame = (VideoFrame*)buf;
     WhistTimer statistics_timer;
     while (!state->exiting) {
         whist_wait_semaphore(producer);
         start_timer(&statistics_timer);
+        VideoFrame* frame = (VideoFrame*)buf[send_frame_id % 2];
         // Send the video frame
         if (state->client.is_active && !state->exiting) {
             send_packet(&state->client.udp_context, PACKET_VIDEO, frame,
@@ -500,7 +508,6 @@ int32_t multithreaded_send_video(void* opaque) {
 
     int consecutive_identical_frames = 0;
     bool assuming_client_active = false;
-    bool encoder_running = false;
 
     // Wait till client dimensions are available, so that we know the capture resolution
     while (!state->exiting &&
@@ -520,7 +527,6 @@ int32_t multithreaded_send_video(void* opaque) {
         update_client_active_status(&state->client, &assuming_client_active);
 
         if (!assuming_client_active || !state->client.is_active) {
-            encoder_running = false;
             whist_sleep(1);
             continue;
         }
@@ -551,7 +557,7 @@ int32_t multithreaded_send_video(void* opaque) {
             }
         }
 
-        NetworkSettings network_settings = udp_get_network_settings(&state->client.udp_context);
+        network_settings = udp_get_network_settings(&state->client.udp_context);
 
         int video_bitrate =
             (network_settings.bitrate - (NUM_PREV_AUDIO_FRAMES_RESEND + 1) * AUDIO_BITRATE) *
@@ -640,21 +646,13 @@ int32_t multithreaded_send_video(void* opaque) {
         // Lower the min_fps to DISABLED_ENCODER_FPS when the encoder is disabled
         int min_fps = disable_encoder ? DISABLED_ENCODER_FPS : MIN_FPS;
 
-        if (!state->client.is_active) {
-            encoder_running = false;
-        }
-
-        // Whenever encoder toggles from running state to non-running state and vice-versa, reset
-        // the relevant timers and other variables to maintain FPS throughput.
-        // Also reset the same regularly at every AVG_FPS_DURATION, to prevent any overcompensation
-        // in the current fps due to a past low fps (which could occur due to any unpredictable
+        // Reset the same regularly at every AVG_FPS_DURATION, to prevent any overcompensation in
+        // the current fps due to a past low fps (which could occur due to any unpredictable
         // situation, such as network throttling)
-        if ((!encoder_running && accumulated_frames) || (encoder_running && disable_encoder) ||
-            get_timer(&start_frame_timer) > AVG_FPS_DURATION) {
-            LOG_INFO("Reset encoder FPS timer encoder_running = %d", encoder_running);
+        if (get_timer(&start_frame_timer) > AVG_FPS_DURATION) {
+            LOG_INFO("Reset encoder FPS timer");
             start_timer(&start_frame_timer);
             start_frame_id = id;
-            encoder_running = !encoder_running;
         }
 
         // This outer loop potentially runs 10s of thousands of times per second, every ~1usec

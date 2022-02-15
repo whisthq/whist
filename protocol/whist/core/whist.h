@@ -156,6 +156,8 @@ Defines
 #define MIN_FPS MAX_FPS
 // The MIN_FPS mentioned will be enforced over an average of 1 second.
 #define AVG_FPS_DURATION 1.0  // In seconds
+// Average duration of one video frame in microseconds
+#define AVG_FRAME_DURATION_IN_US (US_IN_SECOND / MIN_FPS)
 // Number of identical frames to send before turning the encoder off
 #define CONSECUTIVE_IDENTICAL_FRAMES 300
 // FPS to send when the encoder is off
