@@ -40,7 +40,7 @@ static const struct option cmd_options[] = {
     {"timeout", required_argument, NULL, 't'},
     {"session-id", required_argument, NULL, 'd'},
     {"dbus-address", required_argument, NULL, 'b'},
-    {"developper-mode", no_argument, NULL, 'D'},
+    {"developer-mode", no_argument, NULL, 'D'},
     // these are standard for POSIX programs
     {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
     {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
@@ -74,7 +74,7 @@ int server_parse_args(whist_server_config* config, int argc, char* argv[]) {
         "                                  is -1, disable auto exit completely. Default: 60\n"
         "  -d, --session-id=ID           Set the session ID for the protocol's error logging\n"
         "  -b, --dbus-address=DBUS       Pass in the address where the D-Bus connection lives\n"
-        "  -D, --developper-mode         Run the server in developper mode(don't catch segfaults)\n"
+        "  -D, --developer-mode         Run the server in developper mode(don't catch segfaults)\n"
         // special options should be indented further to the left
         "      --help     Display this help and exit\n"
         "      --version  Output version information and exit\n";
