@@ -101,7 +101,7 @@ jobs:
         run: aws s3 cp perf_logs s3://whist-e2e-protocol-test-logs/"$GITHUB_REF_NAME" --recursive
 
       - name: Stop or terminate leftover AWS instances
-        if: ${{ always() && (steps.e2e_streaming_test.outcome != 'success') }}
+        if: ${{ always() && (steps.e2e_streaming_test0.outcome != 'success') }}
         working-directory: protocol/test
         run: python3 clean_leftover_instances.py
 
@@ -116,6 +116,6 @@ jobs:
           GITHUB_ISSUE: ${{ github.event.number }}
           GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
           SLACK_WEBHOOK: ${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}
-        run: python3 ../../.github/workflows/helpers/parse_and_display_e2e_results.py --compared-branch-name=dev --e2e-script-outcome "${{ steps.e2e_streaming_test.outcome }}"
+        run: python3 ../../.github/workflows/helpers/parse_and_display_e2e_results.py --compared-branch-name=dev --e2e-script-outcome "${{ steps.e2e_streaming_test0.outcome }}"
 
   #######################################################################################
