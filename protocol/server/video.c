@@ -54,9 +54,11 @@ Includes
 #define USE_MONITOR 0
 #define SAVE_VIDEO_OUTPUT 0
 
-// VBV Buffer size in seconds. It is set to 1 frame duration to avoid big frames and reduce latency
+// VBV Buffer size in seconds / Burst ratio. Setting it to a very low number as recomended for Ultra
+// low latency applications
 // https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/#recommended-nvenc-settings
-#define VBV_BUF_SIZE_IN_SEC (1.0 / MIN_FPS)
+// Please note that this number will be multiplied by BURST_BITRATE_RATIO to get the VBV size in sec
+#define VBV_IN_SEC_BY_BURST_BITRATE_RATIO 0.016666
 
 static WhistSemaphore consumer;
 static WhistSemaphore producer;
@@ -568,7 +570,8 @@ int32_t multithreaded_send_video(void* opaque) {
             start_timer(&statistics_timer);
             double burst_bitrate_ratio =
                 (double)network_settings.burst_bitrate / network_settings.bitrate;
-            int vbv_size = (VBV_BUF_SIZE_IN_SEC * video_bitrate * burst_bitrate_ratio);
+            int vbv_size =
+                (VBV_IN_SEC_BY_BURST_BITRATE_RATIO * video_bitrate * burst_bitrate_ratio);
             encoder = update_video_encoder(state, encoder, device, video_bitrate, video_codec,
                                            video_fps, vbv_size);
             log_double_statistic(VIDEO_ENCODER_UPDATE_TIME,
