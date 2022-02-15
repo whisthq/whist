@@ -18,6 +18,8 @@ Includes
 */
 
 #include <windows.h>
+#include <whist/core/whist_memory.h>
+#include <whist/utils/aes.h>
 
 #include "cursor.h"
 
@@ -101,7 +103,7 @@ WhistCursorInfo* get_cursor_image(PCURSORINFO pci) {
     */
 
     HCURSOR cursor = pci->hCursor;
-    WhistCursorInfo* image = malloc(sizeof(WhistCursorInfo));
+    WhistCursorInfo* image = safe_malloc(sizeof(WhistCursorInfo));
 
     if (cursor == types->CursorArrow) {
         image->cursor_id = WHIST_CURSOR_ARROW;

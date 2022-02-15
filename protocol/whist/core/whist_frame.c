@@ -22,6 +22,6 @@ unsigned char* get_frame_videodata(VideoFrame* frame) {
 }
 
 int get_total_frame_size(VideoFrame* frame) {
-    return sizeof(VideoFrame) + get_cursor_info_size(get_frame_cursor_info(frame)) +
-           frame->videodata_length;
+    return (int)(sizeof(VideoFrame) + get_cursor_info_size(get_frame_cursor_info(frame)) +
+                 frame->videodata_length);
 }
