@@ -1,6 +1,5 @@
-// Listen for file download state changes and propagate
-// to the filesystem.
-const initDownloadHandler = () => {
+// Listen for file state changes and propagate to the filesystem.
+const initFileSyncHandler = () => {
   // Disable the downloads shelf at the bottom.
   chrome.downloads.setShelfEnabled(false)
 
@@ -26,6 +25,14 @@ const initDownloadHandler = () => {
           hostPort.postMessage({ downloadStatus: "complete", filename })
         }
       )
+    }
+  )
+
+  // Run when popup signals an upload button click
+  chrome.runtime.onMessage.addListener(
+    (msg: string, sender: chrome.runtime.MessageSender, sendResponse: any) => {
+      hostPort.postMessage({ fileUploadTrigger: true})
+      sendResponse({});
     }
   )
 }
@@ -61,5 +68,5 @@ const initTabDetachSuppressor = () => {
   chrome.tabs.onDetached.addListener(tryRestoreTabLocation)
 }
 
-initDownloadHandler()
+initFileSyncHandler()
 initTabDetachSuppressor()

@@ -7,6 +7,7 @@ import os
 import time
 
 FILE_DOWNLOAD_TRIGGER_PATH = "/home/whist/.teleport/downloaded-file"
+FILE_UPLOAD_TRIGGER_PATH = "/home/whist/.teleport/uploaded-file"
 
 while True:
     bytes = sys.stdin.buffer.read(4)
@@ -15,7 +16,19 @@ while True:
     # Wait until we have consumed any existing trigger
     # TODO: Use inotify instead of polling. Probably not
     #       worth it unless and until we ditch python3.
-    while os.path.exists(FILE_DOWNLOAD_TRIGGER_PATH):
-        time.sleep(0.1)
-    with open(FILE_DOWNLOAD_TRIGGER_PATH, "w") as file:
-        file.write(message["filename"].rsplit("/")[-1])
+
+    trigger_upload = message.get("fileUploadTrigger", False)
+    trigger_download = message.get("downloadStatus", None)
+    file_name = message.get("filename", "unnamed_file")
+
+    if trigger_upload:
+        trigger_file_path = FILE_UPLOAD_TRIGGER_PATH
+        file_contents = "upload-trigger"
+    elif trigger_download:
+        trigger_file_path = FILE_DOWNLOAD_TRIGGER_PATH
+        file_contents = file_name.rsplit("/")[-1]
+    if trigger_upload or trigger_download:
+        while os.path.exists(trigger_file_path):
+            time.sleep(0.1)
+        with open(trigger_file_path, "w") as file:
+            file.write(file_contents)

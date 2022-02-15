@@ -5,8 +5,10 @@ add_library(whistFile STATIC
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_sources(whistFile PRIVATE file_download_macos.m)
+    target_sources(whistFile PRIVATE file_upload_macos.m)
 else()
     target_sources(whistFile PRIVATE file_download.c)
+    target_sources(whistFile PRIVATE file_upload.c)
 endif()
 
 set_property(TARGET whistFile PROPERTY

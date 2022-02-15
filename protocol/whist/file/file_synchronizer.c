@@ -164,6 +164,9 @@ void init_file_synchronizer(FileTransferType requested_actions) {
     if ((requested_actions & FILE_TRANSFER_CLIENT_DOWNLOAD)) {
         enabled_actions |= FILE_TRANSFER_CLIENT_DOWNLOAD;
     }
+    if ((requested_actions & FILE_TRANSFER_SERVER_UPLOAD)) {
+        enabled_actions |= FILE_TRANSFER_SERVER_UPLOAD;
+    }
     is_initialized = true;
 }
 
@@ -209,6 +212,9 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
             file_dir = file_drop_prepare(active_file->id, file_metadata);
             break;
         }
+        case FILE_TRANSFER_SERVER_UPLOAD:
+            file_dir = "/home/whist";
+            break;
         case FILE_TRANSFER_CLIENT_DOWNLOAD: {
             const char* home_dir = getenv(HOME_ENV_VAR);
             const char* downloads = "Downloads";
@@ -324,7 +330,7 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
     return true;
 }
 
-void file_synchronizer_set_file_reading_basic_metadata(char* file_path,
+void file_synchronizer_set_file_reading_basic_metadata(const char* file_path,
                                                        FileTransferType transfer_type,
                                                        FileEventInfo* event_info) {
     /*

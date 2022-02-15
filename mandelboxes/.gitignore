@@ -4,3 +4,6 @@ tags
 # Build
 build.log
 base/build-assets/build-temp
+
+# Vim swap files
+*.swp

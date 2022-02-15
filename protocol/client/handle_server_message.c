@@ -36,6 +36,7 @@ Includes
 #include <stddef.h>
 
 bool client_exiting = false;
+bool upload_initiated = false;
 extern int audio_frequency;
 
 /*
@@ -52,6 +53,7 @@ static int handle_fullscreen_message(WhistServerMessage *wsmsg, size_t wsmsg_siz
 static int handle_file_metadata_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_file_chunk_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 static int handle_notification_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
+static int handle_upload_message(WhistServerMessage *wsmsg, size_t wsmsg_size);
 
 /*
 ============================
@@ -91,6 +93,8 @@ int handle_server_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
             return handle_file_metadata_message(wsmsg, wsmsg_size);
         case SMESSAGE_NOTIFICATION:
             return handle_notification_message(wsmsg, wsmsg_size);
+        case SMESSAGE_INITIATE_UPLOAD:
+            return handle_upload_message(wsmsg, wsmsg_size);
         default:
             LOG_WARNING("Unknown WhistServerMessage Received (type: %d)", wsmsg->type);
             return -1;
@@ -264,5 +268,27 @@ static int handle_notification_message(WhistServerMessage *wsmsg, size_t wsmsg_s
     display_notification(wsmsg->notif);
     log_double_statistic(NOTIFICATIONS_RECEIVED, 1.);
 
+    return 0;
+}
+
+static int handle_upload_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
+    /*
+        Handle initiate upload trigger message from server.
+        The macOS filepicker must be called from the main thread and this function does
+        not run on the main thread. This is why we use the global variable upload_initiated
+        which is monitored in the main thread in whist_client.c (instead of just handling
+        the upload here). When upload_initiated is true the main thread initiates a file
+        dialog and the corresponding transfer.
+
+        Arguments:
+            wsmsg (WhistServerMessage*): server clipboard message
+            wsmsg_size (size_t): size of the packet message contents
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
+    upload_initiated = true;
+    LOG_INFO("Received upload trigger from server");
     return 0;
 }
