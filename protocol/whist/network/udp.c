@@ -181,7 +181,7 @@ typedef struct {
 #define STATISTICS_SECONDS 5.0
 // TODO: Get this out of udp.c somehow
 // NOTE that this is matching ./client/audio.c
-#define MAX_NUM_AUDIO_FRAMES 8
+#define MAX_NUM_AUDIO_FRAMES 10
 
 // The amount to weigh a older pings' latency,
 // on the ewma latency value
