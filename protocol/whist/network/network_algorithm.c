@@ -67,14 +67,22 @@ static NetworkSettings default_network_settings = {
 
 #define TOTAL_AUDIO_BITRATE ((NUM_PREV_AUDIO_FRAMES_RESEND + 1) * AUDIO_BITRATE)
 
-#define DPI_RATIO ((double)DPI_BITRATE_PER_PIXEL / dpi)
-#define DPI_RATIO_SQUARED (DPI_RATIO * DPI_RATIO)
+// We have to scale-up the bitrates for lower DPI screens. This is because Chrome renders more
+// content in lower DPI screens and hence higher level of details. So the same bitrate cannot be
+// used for screens of different DPIs
+// Also limit the DPI ratio, so that we don't get crazy values
+#define DPI_RATIO max(min((double)DPI_BITRATE_PER_PIXEL / dpi, 2.0), 0.5)
+// This value was decided heuristically by visually comparing similar resolution windows in 192 DPI
+// and 96 DPI screens. This translates to 96 DPI screens having a bitrate ~3x more than 192 DPI
+// screen for same resolution.
+#define DPI_RATIO_EXPONENT 1.6
+#define DPI_SCALING_FACTOR pow(DPI_RATIO, DPI_RATIO_EXPONENT)
 #define MINIMUM_VIDEO_BITRATE \
-    (int)(output_width * output_height * MINIMUM_BITRATE_PER_PIXEL * DPI_RATIO_SQUARED)
+    (int)(output_width * output_height * MINIMUM_BITRATE_PER_PIXEL * DPI_SCALING_FACTOR)
 #define MAXIMUM_VIDEO_BITRATE \
-    (int)(output_width * output_height * MAXIMUM_BITRATE_PER_PIXEL * DPI_RATIO_SQUARED)
+    (int)(output_width * output_height * MAXIMUM_BITRATE_PER_PIXEL * DPI_SCALING_FACTOR)
 #define STARTING_VIDEO_BITRATE \
-    (int)(output_width * output_height * STARTING_BITRATE_PER_PIXEL * DPI_RATIO_SQUARED)
+    (int)(output_width * output_height * STARTING_BITRATE_PER_PIXEL * DPI_SCALING_FACTOR)
 
 #define MINIMUM_BITRATE (MINIMUM_VIDEO_BITRATE + TOTAL_AUDIO_BITRATE)
 #define MAXIMUM_BITRATE (MAXIMUM_VIDEO_BITRATE + TOTAL_AUDIO_BITRATE)
