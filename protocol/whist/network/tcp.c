@@ -772,7 +772,7 @@ int tcp_send_constructed_packet(TCPContext* context, TCPPacket* packet) {
     int ret = send(context->socket, (const char*)network_packet, tcp_packet_size, 0);
     if (ret < 0) {
         int error = get_last_network_error();
-        if (error == ECONNRESET) {
+        if (error == WHIST_ECONNRESET) {
             LOG_WARNING("TCP Connection reset by peer");
             context->connection_lost = true;
         } else {
