@@ -129,6 +129,12 @@ void whist_wait_cond(WhistCondition cond, WhistMutex mutex) {
     }
 }
 
+void whist_wait_cond_timeout(WhistCondition cond, WhistMutex mutex, int timeout_ms) {
+    if (SDL_CondWaitTimeout(cond, mutex, timeout_ms) < 0) {
+        LOG_FATAL("Failure waiting on condition variable: %s", SDL_GetError());
+    }
+}
+
 void whist_broadcast_cond(WhistCondition cond) {
     if (SDL_CondBroadcast(cond) < 0) {
         LOG_FATAL("Failure broadcasting condition variable: %s", SDL_GetError());

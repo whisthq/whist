@@ -244,6 +244,23 @@ WhistCondition whist_create_cond(void);
 void whist_wait_cond(WhistCondition cond, WhistMutex mutex);
 
 /**
+ * Wait for the given time for a condition to change.
+ *
+ * This atomically unlocks the mutex and starts waiting for a change in
+ * the condition to the signalled.  When it either receives such a
+ * signal or the given time elapses it re-locks the mutex and returns.
+ *
+ * It can also return at any time for any reason - it must be called in
+ * a loop which checks whether the condition has actually changed.
+ *
+ * @param cond        Condition variable to wait for.
+ * @param mutex       Mutex protecting the condition, which must be held
+ *                    by the calling thread on entry.
+ * @param timeout_ms  Time to wait for the condition, in milliseconds.
+ */
+void whist_wait_cond_timeout(WhistCondition cond, WhistMutex mutex, int timeout_ms);
+
+/**
  * Signal to all waiters that a condition may have changed.
  *
  * To avoid race conditions the caller should hold the mutex associated
