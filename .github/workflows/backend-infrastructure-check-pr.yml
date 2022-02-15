@@ -34,7 +34,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GITHUB_ISSUE: ${{ github.event.number }}
     steps:
-      - name: Setup Terraform
+      - name: Setup Terraform CLI
         uses: hashicorp/setup-terraform@v1
 
       - name: Checkout Git Repository
@@ -47,17 +47,17 @@ jobs:
       - name: Initialize Terraform
         id: init
         working-directory: backend/infrastructure
-        run: cd "dev" && cd "$BRANCH_NAME" && terraform init -upgrade
+        run: cd "$BRANCH_NAME" && terraform init -upgrade
 
       - name: Validate Terraform code
         id: validate
         working-directory: backend/infrastructure
-        run: cd "dev" && cd "$BRANCH_NAME" && terraform validate -no-color
+        run: cd "$BRANCH_NAME" && terraform validate -no-color
 
       - name: Terraform Plan
         id: plan
         working-directory: backend/infrastructure
-        run: cd "dev" && cd "$BRANCH_NAME" && terraform plan -no-color
+        run: cd "$BRANCH_NAME" && terraform plan -no-color
 
       # Need to install this dependency for the notification step.
       - name: Install Python Dependencies
