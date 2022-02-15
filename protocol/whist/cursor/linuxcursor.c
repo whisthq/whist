@@ -202,11 +202,13 @@ WhistCursorInfo* get_current_cursor(void) {
             uint32_t* rgba =
                 safe_malloc(sizeof(uint32_t) * cursor_image->width * cursor_image->height);
             for (int i = 0; i < cursor_image->width * cursor_image->height; i++) {
-                rgba[i] = cursor_image->pixels[i] << 8 | cursor_image->pixels[i] >> 24;
+                uint32_t argb = (uint32_t) cursor_image->pixels[i];
+                rgba[i] = argb << 8 | argb >> 24;
             }
 
             unsigned int ret =
-                lodepng_encode32(&png, &png_size, rgba, cursor_image->width, cursor_image->height);
+                lodepng_encode32(&png, &png_size, (unsigned char*)rgba, cursor_image->width, cursor_image->height);
+            free(rgba);
             if (ret) {
                 LOG_WARNING("Failed to encode PNG cursor: %s", lodepng_error_text(ret));
                 XFree(cursor_image);
