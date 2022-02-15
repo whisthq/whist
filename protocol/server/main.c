@@ -347,13 +347,7 @@ static void whist_server_state_init(whist_server_state* state, whist_server_conf
 
 int main(int argc, char* argv[]) {
     InputDeviceType input_type = INPUT_TYPE;
-    whist_server_config config;
-
-    whist_init_subsystems();
-
-    whist_init_server_statistics();
-    whist_init_statistic_logger(SERVER_NUM_METRICS, server_statistic_info,
-                                STATISTICS_FREQUENCY_IN_SEC);
+    whist_server_config config = {0};
 
     int ret = server_parse_args(&config, argc, argv);
     if (ret == -1) {
@@ -363,6 +357,12 @@ int main(int argc, char* argv[]) {
         // --help or --version
         return 0;
     }
+
+    whist_init_subsystems(&config.susbsystems_params);
+
+    whist_init_server_statistics();
+    whist_init_statistic_logger(SERVER_NUM_METRICS, server_statistic_info,
+                                STATISTICS_FREQUENCY_IN_SEC);
 
     whist_server_state_init(&server_state, &config);
 

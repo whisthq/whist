@@ -267,6 +267,7 @@ static void initiate_file_upload(void) {
 }
 
 int whist_client_main(int argc, char* argv[]) {
+    WhistSubsystemParams subsystem_params = {true};
     if (alloc_parsed_args() != 0) {
         return -1;
     }
@@ -282,7 +283,7 @@ int whist_client_main(int argc, char* argv[]) {
         return 0;
     }
 
-    whist_init_subsystems();
+    whist_init_subsystems(&subsystem_params);
 
     init_client_statistics();
     whist_init_statistic_logger(CLIENT_NUM_METRICS, client_statistic_info,

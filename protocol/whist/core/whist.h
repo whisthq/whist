@@ -753,6 +753,10 @@ typedef struct BitArray {
     unsigned int numBits;  // number of bits in array
 } BitArray;
 
+typedef struct WhistSubsystemParams {
+    bool catch_segfaults;
+} WhistSubsystemParams;
+
 /*
 ============================
 Public Functions
@@ -762,13 +766,14 @@ Public Functions
 /**
  * @brief                          Initialize any and all static state
  *                                 that needs to be initialized
+ * @param params                   subsystems parameters
  *
  * @note                           This must be called after parsing arguments
  *
  * @note                           TODO: Make this function take in parsed arguments as a struct,
  *                                 rather than having parse_arguments manipulate `extern` globals
  */
-void whist_init_subsystems(void);
+void whist_init_subsystems(WhistSubsystemParams* params);
 
 /**
  * @brief                          Print the memory trace of a process

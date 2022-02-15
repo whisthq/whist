@@ -40,6 +40,7 @@ static const struct option cmd_options[] = {
     {"timeout", required_argument, NULL, 't'},
     {"session-id", required_argument, NULL, 'd'},
     {"dbus-address", required_argument, NULL, 'b'},
+    {"developer-mode", no_argument, NULL, 'D'},
     // these are standard for POSIX programs
     {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
     {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
@@ -73,6 +74,7 @@ int server_parse_args(whist_server_config* config, int argc, char* argv[]) {
         "                                  is -1, disable auto exit completely. Default: 60\n"
         "  -d, --session-id=ID           Set the session ID for the protocol's error logging\n"
         "  -b, --dbus-address=DBUS       Pass in the address where the D-Bus connection lives\n"
+        "  -D, --developer-mode         Run the server in developper mode(don't catch segfaults)\n"
         // special options should be indented further to the left
         "      --help     Display this help and exit\n"
         "      --version  Output version information and exit\n";
@@ -83,6 +85,7 @@ int server_parse_args(whist_server_config* config, int argc, char* argv[]) {
            sizeof(config->binary_aes_private_key));
     memcpy(config->hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY,
            sizeof(config->hex_aes_private_key));
+    config->susbsystems_params.catch_segfaults = true;
 
     int opt;
 
@@ -104,6 +107,9 @@ int server_parse_args(whist_server_config* config, int argc, char* argv[]) {
                 }
                 break;
             }
+            case 'D':
+                config->susbsystems_params.catch_segfaults = false;
+                break;
             case 'i': {
                 printf("Identifier passed in: %s\n", optarg);
                 if (!safe_strncpy(config->identifier, optarg, sizeof(config->identifier))) {
