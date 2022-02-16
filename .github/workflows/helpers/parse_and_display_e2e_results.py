@@ -8,6 +8,7 @@ import json
 import subprocess
 import argparse
 import numpy as np
+import glob
 from datetime import datetime, timedelta
 
 sys.path.append(".github/workflows/helpers")
@@ -51,8 +52,9 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--compared-branch-name",
-    help="The branch to compare the results to. Empty branch name will result in no comparisons. Passing the current branch will result in a comparison with the previous results for the same branch",
+    "--compared-branch-names",
+    nargs="*",
+    help="The branches to compare the results to. Empty branch name will result in no comparisons. Passing the current branch will result in a comparison with the previous results for the same branch",
     type=str,
     default="",
 )
@@ -66,12 +68,13 @@ parser.add_argument(
         "normal_only",
         "do_not_care",
     ],
-    default="normal_only",
+    default="match",
 )
 
 parser.add_argument(
-    "--e2e-script-outcome",
-    help="The outcome of the E2E testing script run. This should be filled in automatically by Github CI",
+    "--e2e-script-outcomes",
+    nargs="+",
+    help="The outcomes of the E2E testing script runs. This should be filled in automatically by Github CI",
     type=str,
     choices=[
         "success",
@@ -87,9 +90,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Check if the E2E run was skipped or cancelled, in which case we skip this
-    e2e_script_outcome = args.e2e_script_outcome
-    if e2e_script_outcome == "cancelled" or e2e_script_outcome == "skipped":
-        print("E2E run was {}! No results to parse/display.".format(e2e_script_outcome))
+    e2e_script_outcomes = args.e2e_script_outcomes
+    if "success" not in e2e_script_outcomes and "failure" not in e2e_script_outcome:
+        print("E2E run was {}! No results to parse/display.".format(e2e_script_outcome[0]))
         sys.exit(-1)
 
     # Grab environmental variables of interest
@@ -130,9 +133,11 @@ if __name__ == "__main__":
         "MAX_AUDIO_FPS_SKIPPED",
     }
 
+    network_conditions_matching_way = args.network_conditions_matching_way
+
     # Find the path to the folder with the most recent E2E protocol logs
     logs_root_dir = args.perf_logs_path
-    test_time = ""
+    test_start_time = ""
     if not os.path.isdir(logs_root_dir):
         print("Error, logs folder {} does not exist!".format(logs_root_dir))
         sys.exit(-1)
@@ -140,124 +145,168 @@ if __name__ == "__main__":
     current_time = datetime.now()
     last_hour = current_time - timedelta(hours=1)
 
-    for folder_name in sorted(os.listdir(logs_root_dir), reverse=True):
+    # Convert to list
+    logs_root_dirs = [logs_root_dir]
+
+    for folder_name in sorted(os.listdir(logs_root_dirs[0]), reverse=True):
         if (
             current_time.strftime("%Y_%m_%d@") in folder_name
             or last_hour.strftime("%Y_%m_%d@") in folder_name
         ):
-            logs_root_dir = os.path.join(logs_root_dir, folder_name)
-            test_time = folder_name
-            break
-    if logs_root_dir == args.perf_logs_path:
+            logs_root_dirs.append(os.path.join(logs_root_dirs[0], folder_name))
+            test_start_time = folder_name
+    if len(logs_root_dirs) == 1:
         print("Error: protocol logs not found!")
         sys.exit(-1)
 
-    if logs_contain_errors(logs_root_dir):
-        print("Logs from latest run contains errors!")
-        sys.exit(-1)
+    # Convert to set to automatically remove duplicates
+    compared_branch_names = set(args.compared_branch_names)
 
-    # Check if the log files with metrics are present
-    client_log_file = os.path.join(logs_root_dir, "client", "client.log")
-    server_log_file = os.path.join(logs_root_dir, "server", "server.log")
+    # Remove first element
+    logs_root_dirs = logs_root_dirs[1:]
+    # logs_dirs_with_errors = []
 
-    if not os.path.isfile(client_log_file):
-        print("Error, client log file {} does not exist".format(client_log_file))
-        sys.exit(-1)
-    if not os.path.isfile(server_log_file):
-        print("Error, server log file {} does not exist".format(server_log_file))
-        sys.exit(-1)
+    experiments = []
+    for log_dir in logs_root_dirs:
+        if logs_contain_errors(log_dir):
+            print("Logs from latest run in folder {} contain errors. Discarding.".format(log_dir))
+            continue
 
-    experiment_metadata = parse_metadata(logs_root_dir)
-    network_conditions = "normal"
-    if experiment_metadata and "network_conditions" in experiment_metadata:
-        network_conditions = experiment_metadata["network_conditions"]
+        # Check if the log files with metrics are present
+        client_log_file = os.path.join(log_dir, "client", "client.log")
+        server_log_file = os.path.join(log_dir, "server", "server.log")
 
-    network_conditions_matching_way = args.network_conditions_matching_way
-
-    client_metrics2, server_metrics2 = extract_metrics(client_log_file, server_log_file)
-    compared_client_metrics2 = {}
-    compared_server_metrics2 = {}
-
-    compared_branch_name = args.compared_branch_name
-
-    # If we are looking to compare the results with the latest run on a branch, we need to download the relevant files first
-    if compared_branch_name != "":
-        download_latest_logs(
-            compared_branch_name,
-            datetime.strptime(test_time, "%Y_%m_%d@%H-%M-%S"),
-            network_conditions,
-            network_conditions_matching_way,
-        )
-        compared_client_log_path = os.path.join(".", compared_branch_name, "client", "client.log")
-        compared_server_log_path = os.path.join(".", compared_branch_name, "server", "server.log")
-        if not os.path.isfile(compared_client_log_path) or not os.path.isfile(
-            compared_server_log_path
-        ):
+        if not os.path.isfile(client_log_file):
             print(
-                "Could not parse {} client/server logs. Unable to compare performance results to latest {} measurements.".format(
-                    compared_branch_name, compared_branch_name
+                "Error, client log file {} does not exist in folder {}".format(
+                    client_log_file, log_dir
                 )
             )
-        else:
-            # Extract the metric values and save them in a dictionary
-            compared_client_metrics2, compared_server_metrics2 = extract_metrics(
-                compared_client_log_path, compared_server_log_path
-            )
-
-    # Here, we parse the test results into a .info file, which can be read and displayed on the GitHub PR
-    # Create output .info file
-    results_file = open("streaming_e2e_test_results.info", "w")
-    if e2e_script_outcome == "failure":
-        with redirect_stdout(results_file):
+            continue
+        if not os.path.isfile(server_log_file):
             print(
-                "‼️⚠️🔴 WARNING: the E2E streaming test script failed and the results below might be inaccurate! This could also be due to a server hang. 🔴⚠️‼️"
+                "Error, server log file {} does not exist in folder {}".format(
+                    server_log_file, log_dir
+                )
             )
-            print()
+            continue
 
-    # Generate the report
-    if compared_branch_name == "":
-        generate_no_comparison_table(
-            results_file,
-            experiment_metadata,
-            most_interesting_metrics,
-            client_metrics2,
-            server_metrics2,
-        )
-    else:
-        client_table_entries, server_table_entries = compute_deltas(
-            client_metrics2, server_metrics2, compared_client_metrics2, compared_server_metrics2
-        )
-        compared_experiment_metadata = parse_metadata(os.path.join(".", compared_branch_name))
-        generate_comparison_table(
-            results_file,
-            most_interesting_metrics,
-            experiment_metadata,
-            compared_experiment_metadata,
-            client_table_entries,
-            server_table_entries,
-            compared_branch_name,
-        )
+        experiment_metadata = parse_metadata(log_dir)
+        network_conditions = "normal"
+        if experiment_metadata and "network_conditions" in experiment_metadata:
+            network_conditions = experiment_metadata["network_conditions"]
 
-    results_file.close()
+        client_metrics, server_metrics = extract_metrics(client_log_file, server_log_file)
+
+        experiment_entry = {
+            "experiment_metadata": experiment_metadata,
+            "client_metrics": client_metrics,
+            "server_metrics": server_metrics,
+            "network_conditions": network_conditions,
+        }
+
+        experiments.append(experiment_entry)
+
+    for i, compared_branch_name in enumerate(compared_branch_names):
+        # Create output Markdown file with comparisons to this branch
+        results_file = open("streaming_e2e_test_results_{}.md".format(i), "w")
+        results_file.write("## Results compared to branch {}\n".format(compared_branch_name))
+        for j, experiment in enumerate(experiments):
+            results_file.write("### Experiment {}".format(j))
+            if e2e_script_outcome[j] == "failure":
+                results_file.write(
+                    "‼️⚠️🔴 WARNING: the E2E streaming test script failed and the results below might be inaccurate! This could also be due to a server hang. 🔴⚠️‼️\n\n"
+                )
+            # If we are looking to compare the results with the latest run on a branch, we need to download the relevant files first
+            if compared_branch_name != "":
+                download_latest_logs(
+                    compared_branch_name,
+                    datetime.strptime(test_start_time, "%Y_%m_%d@%H-%M-%S"),
+                    experiment["network_conditions"],
+                    network_conditions_matching_way,
+                )
+                compared_client_log_path = os.path.join(
+                    ".", compared_branch_name, "client", "client.log"
+                )
+                compared_server_log_path = os.path.join(
+                    ".", compared_branch_name, "server", "server.log"
+                )
+                if not os.path.isfile(compared_client_log_path) or not os.path.isfile(
+                    compared_server_log_path
+                ):
+                    print(
+                        "Could not parse {} client/server logs. Unable to compare performance results to latest {} measurements.".format(
+                            compared_branch_name, compared_branch_name
+                        )
+                    )
+                    continue
+
+                # Extract the metric values and save them in a dictionary
+                compared_client_metrics, compared_server_metrics = extract_metrics(
+                    compared_client_log_path, compared_server_log_path
+                )
+
+                client_table_entries, server_table_entries = compute_deltas(
+                    experiment["client_metrics"],
+                    experiment["server_metrics"],
+                    compared_client_metrics,
+                    compared_server_metrics,
+                )
+                compared_experiment_metadata = parse_metadata(
+                    os.path.join(".", compared_branch_name)
+                )
+                generate_comparison_table(
+                    results_file,
+                    most_interesting_metrics,
+                    experiment["experiment_metadata"],
+                    compared_experiment_metadata,
+                    client_table_entries,
+                    server_table_entries,
+                    compared_branch_name,
+                )
+            else:
+                generate_no_comparison_table(
+                    results_file,
+                    experiment["experiment_metadata"],
+                    most_interesting_metrics,
+                    experiment["client_metrics"],
+                    experiment["server_metrics"],
+                )
+        results_file.write("\n\n")
+        results_file.close()
 
     #######################################################################################
 
-    if experiment_metadata and "start_time" in experiment_metadata:
-        test_time = experiment_metadata["start_time"]
+    if (
+        "experiment_metadata" in experiments[0]
+        and "start_time" in experiments[0]["experiment_metadata"]
+    ):
+        test_start_time = experiments[0]["experiment_metadata"]["start_time"]
 
-    title = "Protocol End-to-End Streaming Test Results - {}".format(test_time)
+    title = "Protocol End-to-End Streaming Test Results - {}".format(test_start_time)
     github_repo = "whisthq/whist"
     # Adding timestamp to prevent overwrite of message
-    identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE - {}".format(test_time)
-    f = open("streaming_e2e_test_results.info", "r")
-    body = f.read()
-    f.close()
+    identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE - {}".format(test_start_time)
+
+    # Create one file for each branch
+
+    md_files = glob.glob("*.md")
+    body = []
+    merged_body = ""
+    for fn in md_files:
+        with open(fn, "r") as f:
+            contents = f.read()
+            body.append((fn, contents))
+            merged_body.append(contents)
 
     gist_url = create_github_gist_post(github_gist_token, title, body)
 
     # Post updates to Slack channel if we are on dev
     if current_branch_name == "dev":
-        create_slack_post(slack_webhook, title, gist_url)
+        slack_catchy_title = ":rocket::face_with_cowboy_hat::bar_chart: {} :rocket::face_with_cowboy_hat::bar_chart:".format(
+            title
+        )
+        create_slack_post(slack_webhook, slack_catchy_title, gist_url)
     # Otherwise post on Github if the branch is tied to a open PR
     else:
         pr_number = search_open_PR(current_branch_name)
@@ -267,6 +316,6 @@ if __name__ == "__main__":
                 github_repo,
                 pr_number,
                 identifier,
-                body,
+                merged_body,
                 title=title,
             )

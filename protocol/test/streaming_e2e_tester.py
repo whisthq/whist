@@ -201,6 +201,13 @@ args = parser.parse_args()
 # This main loop creates two AWS EC2 instances, one client, one server, and sets up
 # a protocol streaming test between them
 if __name__ == "__main__":
+
+    # Create local folder for logs
+    experiment_start_time = time.strftime("%Y_%m_%d@%H-%M-%S")
+    perf_logs_folder_name = os.path.join("perf_logs", experiment_start_time)
+    os.makedirs(os.path.join(perf_logs_folder_name, "server"))
+    os.makedirs(os.path.join(perf_logs_folder_name, "client"))
+
     # Retrieve args
     ssh_key_name = args.ssh_key_name  # In CI, this is "protocol_performance_testing_sshkey"
     ssh_key_path = args.ssh_key_path
@@ -286,11 +293,6 @@ if __name__ == "__main__":
         else pexpect_prompt_server
     )
     aws_timeout = 1200  # 10 mins is not enough to build the base mandelbox, so we'll go ahead with 20 mins to be safe
-    # Create local folder for logs
-    experiment_start_time = time.strftime("%Y_%m_%d@%H-%M-%S")
-    perf_logs_folder_name = os.path.join("perf_logs", experiment_start_time)
-    os.makedirs(os.path.join(perf_logs_folder_name, "server"))
-    os.makedirs(os.path.join(perf_logs_folder_name, "client"))
 
     experiment_metadata = {
         "start_time": experiment_start_time + " local time"

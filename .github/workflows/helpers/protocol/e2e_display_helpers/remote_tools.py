@@ -17,12 +17,13 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 def create_github_gist_post(github_gist_token, title, body):
     """
-    Create a secret Github Gist for the E2E results. Add a file called `performance_results.md`
-    for the results table and print the html url of the secret Gist.
+    Create a secret Github Gist for the E2E results. Add one file for each tuple
+    in the body parameter. Print the html url of the secret Gist.
     Args:
         github_gist_token (str): The Github Gist token to use for authentication
         title (str): The title to give to the Gist
-        body (str): The contents of the Gist (the table(s) in markdown format)
+        body (str): A list of tuples, where each tuple contains the name of a file
+                    to add to the Gist and the desired contents of the file
     Returns:
         None
 
@@ -30,11 +31,12 @@ def create_github_gist_post(github_gist_token, title, body):
     # Display the results as a Github Gist
     client = Github(github_gist_token)
     gh_auth_user = client.get_user()
+    files_dict = {}
+    for t in body:
+        files_dict[t[0]] = t[1]
     gist = gh_auth_user.create_gist(
         public=False,
-        files={
-            "performance_results.md": InputFileContent(body),
-        },
+        files=files_dict,
         description=title,
     )
     print("Posted performance results to secret gist: {}".format(gist.html_url))
@@ -55,7 +57,9 @@ def create_slack_post(slack_webhook, title, gist_url):
     if slack_webhook:
         slack_post(
             slack_webhook,
-            body="Daily E2E dev benchmark results: {}\n".format(gist_url),
+            body="New E2E dev benchmark results available! Check them out here: {}\n".format(
+                gist_url
+            ),
             slack_username="Whist Bot",
             title=title,
         )
