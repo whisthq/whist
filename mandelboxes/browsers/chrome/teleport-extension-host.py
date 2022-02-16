@@ -11,6 +11,13 @@ FILE_UPLOAD_TRIGGER_PATH = "/home/whist/.teleport/uploaded-file"
 
 
 def send_message(message):
+    """
+    Send message to connected chrome extension by writing to stdout buffer
+
+    Args:
+        message: Dict to encode as a json stream and send
+
+    """
     encoded_content = json.dumps(message).encode("utf-8")
     # Write message size then the message itself
     sys.stdout.buffer.write(struct.pack("=I", len(encoded_content)))
