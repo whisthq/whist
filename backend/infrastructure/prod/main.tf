@@ -1,11 +1,11 @@
 terraform {
   # Use an S3 bucket to store state
   # AWS credentials will be filled in by CI.
-  backend "s3" {
-    bucket = "whist-terraform-state"
-    key = "prod/terraform.tfstate"
-    region = "us-east-1"
-  }
+  # backend "s3" {
+  #   bucket = "whist-terraform-state"
+  #   key = "prod/terraform.tfstate"
+  #   region = "us-east-1"
+  # }
 
   required_providers {
     aws = {
