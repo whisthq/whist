@@ -27,11 +27,11 @@ unsigned char* get_frame_videodata(VideoFrame* frame) {
 
 int get_total_frame_size(VideoFrame* frame) {
     // Size of static content
-    int size = (int)sizeof(VideoFrame);
+    size_t size = sizeof(VideoFrame);
     // Size of dynamic content
     if (frame->has_cursor) {
         size += get_cursor_info_size(get_frame_cursor_info(frame));
     }
     size += frame->videodata_length;
-    return size;
+    return (int)size;
 }
