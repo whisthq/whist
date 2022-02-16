@@ -14,4 +14,5 @@ terraform {
 module "vpc" {
   source = "../aws_vpc"
   env    = var.env
+  cidr_block = var.cidr_block
 }
