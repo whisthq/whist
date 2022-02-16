@@ -130,6 +130,6 @@ jobs:
           GITHUB_ISSUE: ${{ github.event.number }}
           GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
           SLACK_WEBHOOK: ${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}
-        run: python3 ../../.github/workflows/helpers/parse_and_display_e2e_results.py --compared-branch-name "dev" "${{ env.BRANCH_NAME }}"" --e2e-script-outcome "${{ steps.e2e_streaming_test0.outcome }}" "${{ steps.e2e_streaming_test1.outcome }}" "${{ steps.e2e_streaming_test2.outcome }}" "${{ steps.e2e_streaming_test3.outcome }}"
+        run: python3 ../../.github/workflows/helpers/parse_and_display_e2e_results.py --compared-branch-name "dev" "${{ env.BRANCH_NAME }}" --e2e-script-outcome "${{ steps.e2e_streaming_test0.outcome }}" "${{ steps.e2e_streaming_test1.outcome }}" "${{ steps.e2e_streaming_test2.outcome }}" "${{ steps.e2e_streaming_test3.outcome }}"
 
   #######################################################################################
