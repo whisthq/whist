@@ -82,7 +82,7 @@ jobs:
 
           identifier = "AUTOMATED_TERRAFORM_RESULT_MESSAGE"
 
-          body = """#### Terraform Format and Style 🖌 ${{ steps.fmt.outcome }}
+          plan = """#### Terraform Format and Style 🖌 ${{ steps.fmt.outcome }}
             #### Terraform Initialization ⚙️ ${{ steps.init.outcome }}
             #### Terraform Validation 🤖 ${{ steps.validate.outputs.stdout }}
             #### Terraform Plan 📖 ${{ steps.plan.outcome }}
@@ -100,5 +100,7 @@ jobs:
             github_repo,
             github_issue,
             identifier,
-            body,
+            "",
+            code=plan
+            lang="hcl"
           )
