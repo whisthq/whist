@@ -10,8 +10,6 @@ Use get_cursor_info_size() to get the size of the cursor info struct,
 including a potential embedded PNG.
 */
 
-
-
 #include <whist/core/whist.h>
 
 #include "cursor.h"
