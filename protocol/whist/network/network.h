@@ -111,21 +111,32 @@ Defines
 #define AUDIO_BITRATE 128000
 
 #if defined(_WIN32)
+// Note: SOCKET, INVALID_SOCKET, and closesocket are already defined on Windows
+#define WHIST_IOCTL_SOCKET ioctlsocket
+#define WHIST_CLOSE_SOCKET closesocket
+#define socklen_t int
+
+// Error Defines
 #define WHIST_ETIMEDOUT WSAETIMEDOUT
+#define WHIST_ENOBUFS WSAENOBUFS
+#define WHIST_ECONNRESET WSAECONNRESET
+#define WHIST_ECONNREFUSED WSAECONNREFUSED
 #define WHIST_EWOULDBLOCK WSAEWOULDBLOCK
 #define WHIST_EAGAIN WSAEWOULDBLOCK
 #define WHIST_EINPROGRESS WSAEWOULDBLOCK
-#define socklen_t int
-#define WHIST_IOCTL_SOCKET ioctlsocket
-#define WHIST_CLOSE_SOCKET closesocket
 #else
-// Note: SOCKET, INVALID_SOCKET, and closesocket are already defined on Windows
 #define SOCKET int
 #define INVALID_SOCKET (-1)
 #define closesocket close
 #define WHIST_IOCTL_SOCKET ioctl
 #define WHIST_CLOSE_SOCKET close
+// Note: socklen_t is already defined on Linux
+
+// Error Defines
 #define WHIST_ETIMEDOUT ETIMEDOUT
+#define WHIST_ENOBUFS ENOBUFS
+#define WHIST_ECONNRESET ECONNRESET
+#define WHIST_ECONNREFUSED ECONNREFUSED
 #define WHIST_EWOULDBLOCK EWOULDBLOCK
 #define WHIST_EAGAIN EAGAIN
 #define WHIST_EINPROGRESS EINPROGRESS
