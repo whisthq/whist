@@ -1226,10 +1226,7 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
         whist_unlock_mutex(context->mutex);
         if (ret < 0) {
             int error = get_last_network_error();
-            if (error == WHIST_ENOBUFS) {
-                LOG_WARNING("Unexpected UDP Packet Error: %d, retrying to send packet!", error);
-                continue;
-            } else if (error == WHIST_ECONNREFUSED) {
+            if (error == WHIST_ECONNREFUSED) {
                 if (context->connected) {
                     // The connection has been lost
                     LOG_WARNING("UDP connection Lost: ECONNREFUSED");
@@ -1237,6 +1234,9 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
                     return -1;
                 }
                 break;
+            } else if (error == WHIST_ENOBUFS) {
+                LOG_WARNING("Unexpected UDP Packet Error: %d (Retrying to send packet!)", error);
+                continue;
             } else {
                 LOG_WARNING("Unexpected UDP Packet Error: %d", error);
                 return -1;
