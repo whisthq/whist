@@ -110,7 +110,9 @@ const getPreferencesFilePath = (browser: InstalledBrowser): string[] => {
 
 const getLocalStorageDir = (browser: InstalledBrowser): string[] => {
   const browserDirectories = getBrowserDefaultDirectory(browser)
-  return browserDirectories.map((dir) => path.join(dir, "Local Storage"))
+  return browserDirectories.map((dir) =>
+    path.join(dir, "Local Storage", "leveldb")
+  )
 }
 
 const getOsCryptName = (browser: InstalledBrowser): string => {
@@ -339,6 +341,7 @@ const getCookiesFromFile = async (
 
 const getBookmarksFromFile = (browser: InstalledBrowser): string => {
   const bookmarkFile = expandPaths(getBookmarkFilePath(browser))
+  console.log("bookmarks import started")
 
   try {
     const bookmarks = fs.readFileSync(bookmarkFile, "utf8")
@@ -356,22 +359,27 @@ const getBookmarksFromFile = (browser: InstalledBrowser): string => {
 
 const getLocalStorageFromFiles = (browser: InstalledBrowser): string => {
   const localStorageDir = expandPaths(getLocalStorageDir(browser))
+  console.log("localstorage import started ", localStorageDir)
 
   try {
     // We are only interested in .ldb, .log, and MANIFEST files
     const relevantFiles = fs
       .readdirSync(localStorageDir, { withFileTypes: true })
-      .filter(
-        (dirent) =>
+      .filter((dirent) => {
+        console.log(dirent.isFile, dirent.name)
+        return (
           dirent.isFile() &&
-          (path.extname(dirent.name) === "." ||
+          (path.extname(dirent.name) === ".ldb" ||
             path.extname(dirent.name) === ".log" ||
             dirent.name.startsWith("MANIFEST"))
-      )
+        )
+      })
       .map((dirent) => dirent.name)
+    console.log("relevant files ", relevantFiles)
 
     const data: LocalStorageMap = {}
     for (const file of relevantFiles) {
+      console.log(`local storage file: ${file}`)
       const filePath = path.join(localStorageDir, file)
       const fileData = fs.readFileSync(filePath)
 
