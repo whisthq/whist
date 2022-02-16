@@ -45,6 +45,7 @@ import {
   getDecryptedCookies,
   getBookmarks,
   getExtensions,
+  getLocalStorage,
   InstalledBrowser,
   getPreferences,
 } from "@app/main/utils/importer"
@@ -107,14 +108,16 @@ const importedData = fromTrigger(WhistTrigger.beginImport).pipe(
       from(getDecryptedCookies(t?.importBrowserDataFrom as InstalledBrowser)),
       from(getBookmarks(t?.importBrowserDataFrom as InstalledBrowser)),
       from(getExtensions(t?.importBrowserDataFrom as InstalledBrowser)),
-      from(getPreferences(t?.importBrowserDataFrom as InstalledBrowser))
+      from(getPreferences(t?.importBrowserDataFrom as InstalledBrowser)),
+      from(getLocalStorage(t?.importBrowserDataFrom as InstalledBrowser))
     )
   ),
-  map(([cookies, bookmarks, extensions, preferences]) => ({
+  map(([cookies, bookmarks, extensions, preferences, localStorage]) => ({
     cookies,
     bookmarks,
     extensions,
     preferences,
+    localStorage,
   })),
   share()
 )
