@@ -59,10 +59,13 @@ Includes
 // https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/#recommended-nvenc-settings
 // Please note that this number will be multiplied by BURST_BITRATE_RATIO to get the VBV size in sec
 #define VBV_IN_SEC_BY_BURST_BITRATE_RATIO 0.1
+#define PING_PONG_SIZE 2
 
 static WhistSemaphore consumer;
 static WhistSemaphore producer;
-static char buf[2][LARGEST_VIDEOFRAME_SIZE];
+// Using a ping-pong buffer so that video encode thread and network send thread can perform all its
+// tasks simultaneously for frame 'n' and 'n-1'
+static char encoded_frame_buf[PING_PONG_SIZE][LARGEST_VIDEOFRAME_SIZE];
 static int send_frame_id;
 static NetworkSettings network_settings;
 /*
@@ -176,7 +179,7 @@ static void send_populated_frames(whist_server_state* state, WhistTimer* statist
     // Create frame struct with compressed frame data and
     // metadata
 
-    VideoFrame* frame = (VideoFrame*)buf[id % 2];
+    VideoFrame* frame = (VideoFrame*)encoded_frame_buf[id % PING_PONG_SIZE];
     frame->width = encoder->out_width;
     frame->height = encoder->out_height;
     frame->codec_type = encoder->codec_type;
@@ -221,8 +224,9 @@ static void send_populated_frames(whist_server_state* state, WhistTimer* statist
     }
 
     whist_post_semaphore(producer);
-    timestamp_us time_to_transmit = (get_total_frame_size(frame) * BITS_IN_BYTE * US_IN_SECOND) /
-                                    network_settings.burst_bitrate;
+    timestamp_us time_to_transmit =
+        ((uint64_t)get_total_frame_size(frame) * BITS_IN_BYTE * US_IN_SECOND) /
+        network_settings.burst_bitrate;
     // If the time to transmit this frame is more than one frame duration, then sleep for remaining
     // time to reduce the latency of next frame. If we capture the next frame early anyways network
     // throttler will make us wait thus increasing its latency(time from capture to render).
@@ -306,7 +310,7 @@ static void update_current_device(whist_server_state* state, WhistTimer* statist
  */
 static void send_empty_frame(whist_server_state* state, int id) {
     // If we don't have a new frame to send, let's just send an empty one
-    VideoFrame* frame = (VideoFrame*)buf[id % 2];
+    VideoFrame* frame = (VideoFrame*)encoded_frame_buf[id % PING_PONG_SIZE];
     memset(frame, 0, sizeof(*frame));
     frame->is_empty_frame = true;
     // This signals that the screen hasn't changed, so don't bother rendering
@@ -433,7 +437,7 @@ static int32_t multithreaded_send_video_packets(void* opaque) {
     while (!state->exiting) {
         whist_wait_semaphore(producer);
         start_timer(&statistics_timer);
-        VideoFrame* frame = (VideoFrame*)buf[send_frame_id % 2];
+        VideoFrame* frame = (VideoFrame*)encoded_frame_buf[send_frame_id % PING_PONG_SIZE];
         // Send the video frame
         if (state->client.is_active && !state->exiting) {
             send_packet(&state->client.udp_context, PACKET_VIDEO, frame,
