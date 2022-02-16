@@ -472,6 +472,7 @@ jobs:
   terraform-deploy:
     name: Deploy Terraform
     runs-on: ubuntu-20.04
+    needs: [whist-publish-build-config, whist-build-monorepo-config]
     env:
       # Set AWS credentials for Terraform
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
