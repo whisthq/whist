@@ -1,0 +1,93 @@
+# workflows/backend-infrastructure-check-pr.yml
+#
+# Infrastructure: Check PR
+# Check Terraform code, format, validate and output plan.
+
+name: "Infrastructure: Check PR"
+on:
+  pull_request:
+    branches:
+      - dev
+      - staging
+      - prod
+    paths:
+      - "backend/infrastructure/**"
+  workflow_dispatch:
+
+jobs:
+  terraform-validate-and-plan:
+    name: Terraform validate and plan
+    runs-on: ubuntu-20.04
+    env:
+      # Set AWS credentials for Terraform
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
+
+      # Set github metadata for notification
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_ISSUE: ${{ github.event.number }}
+    steps:
+      - name: Setup Terraform CLI
+        uses: hashicorp/setup-terraform@v1
+
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Format Terraform code
+        id: fmt
+        run: terraform fmt -check
+
+      - name: Initialize Terraform
+        id: init
+        working-directory: backend/infrastructure
+        run: cd "$GITHUB_BASE_REF" && terraform init -upgrade
+
+      - name: Validate Terraform code
+        id: validate
+        working-directory: backend/infrastructure
+        run: cd "$GITHUB_BASE_REF" && terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: backend/infrastructure
+        run: cd "$GITHUB_BASE_REF" && terraform plan -no-color
+
+      # Need to install this dependency for the notification step.
+      - name: Install Python Dependencies
+        working-directory: backend/webserver
+        run: pip install PyGithub
+
+      - name: Notify Terraform result
+        shell: python3 {0}
+        run: |
+          import os
+          import sys
+          sys.path.append(".github/workflows/helpers")
+          from notifications.github_bot import github_comment_update
+
+          if not os.environ.get("GITHUB_ISSUE"):
+            print("No GitHub Issue number! Skipping PR notification.")
+            sys.exit(0)
+
+          github_token = os.environ["GITHUB_TOKEN"]
+          github_issue = int(os.environ["GITHUB_ISSUE"])
+          github_repo = "whisthq/whist"
+
+          identifier = "AUTOMATED_TERRAFORM_RESULT_MESSAGE"
+
+          body = """#### Terraform Format and Style 🖌 ${{ steps.fmt.outcome }}
+            #### Terraform Initialization ⚙️ ${{ steps.init.outcome }}
+            #### Terraform Validation 🤖 ${{ steps.validate.outputs.stdout }}
+
+            *Pusher: @${{ github.actor }}, Action: ${{ github.event_name }}, Workflow: ${{ github.workflow }}*"""
+          plan = """${{ steps.plan.outputs.stdout }}"""
+
+          github_comment_update(
+            github_token,
+            github_repo,
+            github_issue,
+            identifier,
+            body,
+            code=plan,
+            lang="hcl",
+          )
