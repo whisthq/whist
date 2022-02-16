@@ -1,15 +1,28 @@
 # Whist Application Streaming
 
-[![Whist: Build & Deploy](https://github.com/whisthq/whist/actions/workflows/whist-build-and-deploy.yml/badge.svg)](https://github.com/whisthq/whist/actions/workflows/whist-build-and-deploy.yml) [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj)](https://codecov.io/gh/whisthq/whist) [![Netlify Status](https://api.netlify.com/api/v1/badges/f65a863e-37d0-4407-babd-09b2b4802661/deploy-status)](https://app.netlify.com/sites/whist-prod/deploys)
-
 This repository contains the end-to-end code for the Whist Application Streaming product, following a [Monorepo](https://en.wikipedia.org/wiki/Monorepo) structure.
+
+## Repository Status
+
+[![Whist: Build & Deploy](https://github.com/whisthq/whist/actions/workflows/whist-build-and-deploy.yml/badge.svg)](https://github.com/whisthq/whist/actions/workflows/whist-build-and-deploy.yml) [![Netlify Status](https://api.netlify.com/api/v1/badges/f65a863e-37d0-4407-babd-09b2b4802661/deploy-status)](https://app.netlify.com/sites/whist-prod/deploys)
+
+[![Whist: Build & Deploy](https://github.com/whisthq/whist/actions/workflows/whist-build-and-deploy.yml/badge.svg)](https://github.com/whisthq/whist/actions/workflows/whist-build-and-deploy.yml) [![Netlify Status](https://api.netlify.com/api/v1/badges/f65a863e-37d0-4407-babd-09b2b4802661/deploy-status)](https://app.netlify.com/sites/whist-prod/deploys)
+
+|             Project | Code Coverage                                                                                                                                             |
+| ------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|          `protocol` | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj&flag=protocol)](https://codecov.io/gh/whisthq/whist)          |
+|  `backend/services` | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj&flag=backend-services)](https://codecov.io/gh/whisthq/whist)  |
+| `backend/webserver` | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj&flag=backend-webserver)](https://codecov.io/gh/whisthq/whist) |
+|  `frontend/core-ts` | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj&flag=frontend-core-ts)](https://codecov.io/gh/whisthq/whist)  |
+|             Overall | [![codecov](https://codecov.io/gh/whisthq/whist/branch/dev/graph/badge.svg?token=QB0c3c2NBj)](https://codecov.io/gh/whisthq/whist)                        |
 
 ## Table of Contents
 
+- [Repository Status](#repository-status)
 - [Introduction](#introduction)
   - [Repository Structure](#repository-structure)
 - [Development](#introduction)
-  - [Branch Conventions](#branches-convention)
+  - [Branch Conventions](#branch-conventions)
     - [`prod` is for releases only; `staging` is "almost `prod`"](#prod-is-for-releases-only-staging-is-almost-prod)
     - [`dev` is for development](#dev-is-for-development)
     - [Your branch is yours; our branches are _ours_](#your-branch-is-yours-our-branches-are-ours)
