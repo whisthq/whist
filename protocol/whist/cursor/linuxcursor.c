@@ -20,7 +20,8 @@ Includes
 #include <X11/Xlib.h>
 #include <X11/extensions/Xfixes.h>
 #include <whist/logging/logging.h>
-#include "../utils/aes.h"
+#include <whist/utils/aes.h>
+#include <whist/utils/lodepng.h>
 #include "cursor.h"
 #include "string.h"
 
@@ -179,41 +180,59 @@ static WhistCursorID get_cursor_id(XFixesCursorImage* cursor_image) {
     return id;
 }
 
-void get_current_cursor(WhistCursorImage* image) {
-    /*
-        Returns the current cursor image
-
-        Returns:
-            (WhistCursorImage): Current WhistCursorImage
-    */
-
-    memset(image, 0, sizeof(WhistCursorImage));
-    image->cursor_id = WHIST_CURSOR_ARROW;
-    image->cursor_state = CURSOR_STATE_VISIBLE;
+WhistCursorInfo* get_current_cursor(void) {
+    WhistCursorInfo* image = NULL;
     if (disp) {
         XFixesCursorImage* cursor_image = XFixesGetCursorImage(disp);
 
         if (cursor_image->width > MAX_CURSOR_WIDTH || cursor_image->height > MAX_CURSOR_HEIGHT) {
-            LOG_WARNING(
-                "whist/cursor/linuxcursor.c::GetCurrentCursor(): cursor width or height exceeds "
-                "maximum dimensions. Truncating cursor from %hu by %hu to %d by %d.",
-                cursor_image->width, cursor_image->height, MAX_CURSOR_WIDTH, MAX_CURSOR_HEIGHT);
+            LOG_WARNING("Cursor is too large; rejecting capture: %hux%hu", cursor_image->width,
+                        cursor_image->height);
+            XFree(cursor_image);
+            return NULL;
         }
-        image->cursor_id = get_cursor_id(cursor_image);
-        if (image->cursor_id == INVALID) {
-            image->using_bmp = true;
-            image->bmp_width = min(MAX_CURSOR_WIDTH, cursor_image->width);
-            image->bmp_height = min(MAX_CURSOR_HEIGHT, cursor_image->height);
-            image->bmp_hot_x = cursor_image->xhot;
-            image->bmp_hot_y = cursor_image->yhot;
 
-            for (int k = 0; k < image->bmp_width * image->bmp_height; ++k) {
-                // we need to do this in case cursor_image->pixels uses 8 bytes per pixel
-                uint32_t argb = (uint32_t)cursor_image->pixels[k];
-                image->bmp[k] = argb;
+        WhistCursorID whist_id = get_cursor_id(cursor_image);
+        if (whist_id == INVALID) {
+            // Use PNG cursor
+            unsigned char* png;
+            size_t png_size;
+
+            // Convert argb to rgba
+            uint32_t rgba[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT];
+            for (int i = 0; i < cursor_image->width * cursor_image->height; i++) {
+                const uint32_t argb = (uint32_t)cursor_image->pixels[i];
+                rgba[i] = argb << 8 | argb >> 24;
             }
-        }
 
+            unsigned int ret = lodepng_encode32(&png, &png_size, (unsigned char*)&rgba,
+                                                cursor_image->width, cursor_image->height);
+            if (ret) {
+                LOG_WARNING("Failed to encode PNG cursor: %s", lodepng_error_text(ret));
+                XFree(cursor_image);
+                return NULL;
+            }
+
+            image = safe_malloc(sizeof(WhistCursorInfo) + png_size);
+            image->using_png = true;
+            image->png_width = cursor_image->width;
+            image->png_height = cursor_image->height;
+            image->png_size = png_size;
+            image->png_hot_x = cursor_image->xhot;
+            image->png_hot_y = cursor_image->yhot;
+            memcpy(image->png, png, png_size);
+            image->hash = hash(png, png_size);
+            free(png);
+        } else {
+            // Use system cursor from WhistCursorID
+            image = safe_malloc(sizeof(WhistCursorInfo));
+            memset(image, 0, sizeof(WhistCursorInfo));
+            image->cursor_id = whist_id;
+            image->using_png = false;
+            image->hash = hash(&whist_id, sizeof(WhistCursorID));
+        }
         XFree(cursor_image);
     }
+
+    return image;
 }

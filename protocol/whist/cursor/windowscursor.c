@@ -18,6 +18,8 @@ Includes
 */
 
 #include <windows.h>
+#include <whist/core/whist_memory.h>
+#include <whist/utils/aes.h>
 
 #include "cursor.h"
 
@@ -55,7 +57,7 @@ Private Functions
 ============================
 */
 
-static WhistCursorImage get_cursor_image(PCURSORINFO pci);
+static WhistCursorInfo* get_cursor_image(PCURSORINFO pci);
 
 static void load_cursors(void);
 
@@ -88,7 +90,7 @@ void load_cursors(void) {
     types->CursorWait = LoadCursor(NULL, IDC_WAIT);
 }
 
-WhistCursorImage get_cursor_image(PCURSORINFO pci) {
+WhistCursorInfo* get_cursor_image(PCURSORINFO pci) {
     /*
         Get the corresponding cursor image for by cursor type
 
@@ -96,38 +98,43 @@ WhistCursorImage get_cursor_image(PCURSORINFO pci) {
             pci (PCURSORINFO): Windows cursor info
 
         Returns:
-            (WhistCursorImage): the corresponding WhistCursorImage
+            (WhistCursorInfo*): the corresponding WhistCursorInfo
                 for the `pci` cursor type
     */
 
     HCURSOR cursor = pci->hCursor;
-    WhistCursorImage image = {0};
+    WhistCursorInfo* image = safe_malloc(sizeof(WhistCursorInfo));
 
     if (cursor == types->CursorArrow) {
-        image.cursor_id = WHIST_CURSOR_ARROW;
+        image->cursor_id = WHIST_CURSOR_ARROW;
     } else if (cursor == types->CursorCross) {
-        image.cursor_id = WHIST_CURSOR_CROSSHAIR;
+        image->cursor_id = WHIST_CURSOR_CROSSHAIR;
     } else if (cursor == types->CursorHand) {
-        image.cursor_id = WHIST_CURSOR_HAND;
+        image->cursor_id = WHIST_CURSOR_HAND;
     } else if (cursor == types->CursorIBeam) {
-        image.cursor_id = WHIST_CURSOR_IBEAM;
+        image->cursor_id = WHIST_CURSOR_IBEAM;
     } else if (cursor == types->CursorNo) {
-        image.cursor_id = WHIST_CURSOR_NO;
+        image->cursor_id = WHIST_CURSOR_NO;
     } else if (cursor == types->CursorSizeAll) {
-        image.cursor_id = WHIST_CURSOR_SIZEALL;
+        image->cursor_id = WHIST_CURSOR_SIZEALL;
     } else if (cursor == types->CursorSizeNESW) {
-        image.cursor_id = WHIST_CURSOR_SIZENESW;
+        image->cursor_id = WHIST_CURSOR_SIZENESW;
     } else if (cursor == types->CursorSizeNS) {
-        image.cursor_id = WHIST_CURSOR_SIZENS;
+        image->cursor_id = WHIST_CURSOR_SIZENS;
     } else if (cursor == types->CursorSizeNWSE) {
-        image.cursor_id = WHIST_CURSOR_SIZENWSE;
+        image->cursor_id = WHIST_CURSOR_SIZENWSE;
     } else if (cursor == types->CursorSizeWE) {
-        image.cursor_id = WHIST_CURSOR_SIZEWE;
+        image->cursor_id = WHIST_CURSOR_SIZEWE;
     } else if (cursor == types->CursorWait) {
-        image.cursor_id = WHIST_CURSOR_WAITARROW;
+        image->cursor_id = WHIST_CURSOR_WAITARROW;
     } else {
-        image.cursor_id = WHIST_CURSOR_ARROW;
+        image->cursor_id = WHIST_CURSOR_ARROW;
     }
+
+    image->using_png = false;
+    image->hash = hash(&image->cursor_id, sizeof(image->cursor_id));
+
+    image->cursor_state = pci->flags;
 
     return image;
 }
@@ -146,19 +153,9 @@ void init_cursors(void) {
     load_cursors();
 }
 
-void get_current_cursor(WhistCursorImage* image) {
-    /*
-        Returns the current cursor image
-
-        Returns:
-            (WhistCursorImage): Current WhistCursorImage
-    */
-
+WhistCursorInfo* get_current_cursor(void) {
     CURSORINFO pci;
     pci.cbSize = sizeof(CURSORINFO);
     GetCursorInfo(&pci);
-
-    *image = get_cursor_image(&pci);
-
-    image->cursor_state = pci.flags;
+    return get_cursor_image(&pci);
 }

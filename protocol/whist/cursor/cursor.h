@@ -21,6 +21,7 @@ Includes
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 
 /*
 ============================
@@ -70,16 +71,18 @@ typedef enum WhistCursorID {
  * @brief   Cursor image.
  * @details The image used for the rendered cursor.
  */
-typedef struct WhistCursorImage {
+typedef struct WhistCursorInfo {
     WhistCursorID cursor_id;
     WhistCursorState cursor_state;
-    bool using_bmp;
-    unsigned short bmp_width;
-    unsigned short bmp_height;
-    unsigned short bmp_hot_x;
-    unsigned short bmp_hot_y;
-    uint32_t bmp[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT];
-} WhistCursorImage;
+    uint32_t hash;
+    bool using_png;
+    size_t png_size;
+    unsigned short png_width;
+    unsigned short png_height;
+    unsigned short png_hot_x;
+    unsigned short png_hot_y;
+    unsigned char png[];
+} WhistCursorInfo;
 
 /*
 ============================
@@ -95,8 +98,17 @@ void init_cursors(void);
 /**
  * @brief                          Returns the current cursor image
  *
- * @param image                    WhistCursorImage buffer to write to
+ * @returns                       The current cursor image
  */
-void get_current_cursor(WhistCursorImage* image);
+WhistCursorInfo* get_current_cursor(void);
+
+/**
+ * @brief                          Returns the size of the WhistCursorInfo struct
+ *
+ * @param image                    The WhistCursorInfo struct
+ *
+ * @returns                       The size of the WhistCursorInfo struct
+ */
+size_t get_cursor_info_size(WhistCursorInfo* image);
 
 #endif  // CURSOR_H

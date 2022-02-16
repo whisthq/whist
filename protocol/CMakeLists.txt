@@ -350,6 +350,7 @@ set(PLATFORM_INDEPENDENT_LIBS   whistCore
     whistAudio
     whistVideo
     whistClipboard
+    whistCursor
     whistFile
     whistNetwork
     whistLogging
