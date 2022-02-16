@@ -61,9 +61,10 @@ static NetworkSettings default_network_settings = {
 #define MAXIMUM_BITRATE_PER_PIXEL 4.0
 #define STARTING_BITRATE_PER_PIXEL 3.0
 
-// The value of 6 is chosen based on previously used constant values of STARTING_BURST_BITRATE_RAW,
-// STARTING_BITRATE_RAW. This is chosen, just for the sake of maintaining the status-quo.
-#define BURST_BITRATE_RATIO 6
+// This value directly impacts the time to transmit big frames. Also this value indirectly impacts
+// the video quality as the VBV buffer size is based on this ratio. Also if this value is set too
+// high then we will observe packet loss. So it is tradeoff between packet loss vs latency/quality
+#define BURST_BITRATE_RATIO 4
 
 #define TOTAL_AUDIO_BITRATE ((NUM_PREV_AUDIO_FRAMES_RESEND + 1) * AUDIO_BITRATE)
 
