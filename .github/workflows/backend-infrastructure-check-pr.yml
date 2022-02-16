@@ -82,16 +82,10 @@ jobs:
 
           identifier = "AUTOMATED_TERRAFORM_RESULT_MESSAGE"
 
-          plan = """#### Terraform Format and Style 🖌 ${{ steps.fmt.outcome }}
+          body = """#### Terraform Format and Style 🖌 ${{ steps.fmt.outcome }}
             #### Terraform Initialization ⚙️ ${{ steps.init.outcome }}
             #### Terraform Validation 🤖 ${{ steps.validate.outputs.stdout }}
             #### Terraform Plan 📖 ${{ steps.plan.outcome }}
-
-            <details><summary>Show Plan</summary>
-            
-            ${{ steps.plan.outputs.stdout }}
-
-            </details>
 
             *Pusher: @${{ github.actor }}, Action: ${{ github.event_name }}, Workflow: ${{ github.workflow }}*"""
 
@@ -100,7 +94,7 @@ jobs:
             github_repo,
             github_issue,
             identifier,
-            "",
-            code=plan
+            body,
+            code=${{ steps.plan.outputs.stdout }}
             lang="hcl"
           )
