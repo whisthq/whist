@@ -107,12 +107,12 @@ jobs:
 
       # Steps below acknowledged to https://stackoverflow.com/questions/58033366/how-to-get-the-current-branch-within-github-actions
       - name: Get branch name (merge)
-        if: ${{ always() && github.event_name != 'pull_request'}
+        if: ${{ always() && github.event_name != 'pull_request' }}
         shell: bash
         run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | tr / -)" >> $GITHUB_ENV
 
       - name: Get branch name (pull request)
-        if: ${{ always() && github.event_name == 'pull_request'}
+        if: ${{ always() && github.event_name == 'pull_request' }}
         shell: bash
         run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} | tr / -)" >> $GITHUB_ENV
 
@@ -127,6 +127,6 @@ jobs:
           GITHUB_ISSUE: ${{ github.event.number }}
           GITHUB_PR_URL: "https://github.com/whisthq/whist/pull/"
           SLACK_WEBHOOK: ${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}
-        run: python3 ../../.github/workflows/helpers/parse_and_display_e2e_results.py --compared-branch-name "dev" ${{ env.BRANCH_NAME }} --e2e-script-outcome "${{ steps.e2e_streaming_test0.outcome }}" "${{ steps.e2e_streaming_test1.outcome }}" "${{ steps.e2e_streaming_test2.outcome }}" "${{ steps.e2e_streaming_test3.outcome }}"
+        run: python3 ../../.github/workflows/helpers/parse_and_display_e2e_results.py --compared-branch-name "dev" "${{ env.BRANCH_NAME }}"" --e2e-script-outcome "${{ steps.e2e_streaming_test0.outcome }}" "${{ steps.e2e_streaming_test1.outcome }}" "${{ steps.e2e_streaming_test2.outcome }}" "${{ steps.e2e_streaming_test3.outcome }}"
 
   #######################################################################################
