@@ -199,7 +199,7 @@ WhistCursorInfo* get_current_cursor(void) {
             size_t png_size;
 
             // Convert argb to rgba
-            static uint32_t rgba[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT] = {0};
+            uint32_t rgba[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT] = {0};
             for (int i = 0; i < cursor_image->width * cursor_image->height; i++) {
                 const uint32_t argb = (uint32_t)cursor_image->pixels[i];
                 rgba[i] = argb << 8 | argb >> 24;
@@ -213,7 +213,7 @@ WhistCursorInfo* get_current_cursor(void) {
                 return NULL;
             }
 
-            image = malloc(sizeof(WhistCursorInfo) + png_size);
+            image = safe_malloc(sizeof(WhistCursorInfo) + png_size);
             image->using_png = true;
             image->png_width = cursor_image->width;
             image->png_height = cursor_image->height;
@@ -225,7 +225,7 @@ WhistCursorInfo* get_current_cursor(void) {
             free(png);
         } else {
             // Use system cursor from WhistCursorID
-            image = malloc(sizeof(WhistCursorInfo));
+            image = safe_malloc(sizeof(WhistCursorInfo));
             memset(image, 0, sizeof(WhistCursorInfo));
             image->cursor_id = whist_id;
             image->using_png = false;
