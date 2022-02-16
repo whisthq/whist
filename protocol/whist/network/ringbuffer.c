@@ -20,6 +20,8 @@ Defines
 #define MAX_UNORDERED_PACKETS 10
 
 #define MAX_PACKETS (get_num_fec_packets(max(MAX_VIDEO_PACKETS, MAX_AUDIO_PACKETS), MAX_FEC_RATIO))
+// Ratio of network jitter to latency
+#define JITTER_LATENCY_RATIO 0.3
 
 /*
 ============================
@@ -474,11 +476,13 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
 #define STREAM_RESET_REQUEST_INTERVAL_MS 5.0
     // The moment we're MAX_UNSYNCED_FRAMES ahead of the renderer,
     // Ask for some new I-Frame "X" to catch-up.
-#define MAX_UNSYNCED_FRAMES 4
-    // If any Frame is MAX_ACCEPTABLE_STALENESS_MS or older,
+#define MAX_UNSYNCED_FRAMES 6
+    // If any Frame is acceptable_staleness_ms or older,
     // Request yet another I-Frame on top of "X".
     // This recovers from the situation where we fail to receive "X".
-#define MAX_ACCEPTABLE_STALENESS_MS 100.0
+    // The below constants are limits for acceptable staleness.
+#define MIN_ACCEPTABLE_STALENESS_MS 100.0
+#define MAX_ACCEPTABLE_STALENESS_MS 200.0
 
     // The Frame that we're currently trying our best to receive and make progress,
     // Either the next-to-render frame, or the very first frame if we haven't rendered yet.
@@ -510,8 +514,16 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
 
         if (ctx->id == id) {
             double frame_staleness = get_timer(&ctx->frame_creation_timer);
+            double time_to_transmit = ((ctx->num_original_packets + ctx->num_fec_packets) *
+                                       MAX_PAYLOAD_SIZE * BITS_IN_BYTE) /
+                                      (double)network_settings->burst_bitrate;
+            // Adding Network Jitter + One round-trip latency to account for nack response time
+            double acceptable_staleness_ms =
+                (time_to_transmit + (1.0 + JITTER_LATENCY_RATIO) * latency) * MS_IN_SECOND;
+            acceptable_staleness_ms = max(acceptable_staleness_ms, MIN_ACCEPTABLE_STALENESS_MS);
+            acceptable_staleness_ms = min(acceptable_staleness_ms, MAX_ACCEPTABLE_STALENESS_MS);
 
-            if (frame_staleness * MS_IN_SECOND > MAX_ACCEPTABLE_STALENESS_MS) {
+            if (frame_staleness * MS_IN_SECOND > acceptable_staleness_ms) {
                 greatest_failed_id = max(greatest_failed_id, id);
             }
         }
@@ -849,7 +861,7 @@ bool try_nacking(RingBuffer* ring_buffer, double latency, NetworkSettings* netwo
         // If too much time has passed since the last packet received,
         // we swap into *recovery mode*, since something is probably wrong with this packet
         if ((id < ring_buffer->max_id ||
-             get_timer(&frame_data->last_nonnack_packet_timer) > 0.3 * latency) &&
+             get_timer(&frame_data->last_nonnack_packet_timer) > JITTER_LATENCY_RATIO * latency) &&
             !frame_data->recovery_mode) {
 #if LOG_NACKING
             LOG_INFO("Too long since last non-nack packet from ID %d. Entering recovery mode...",
