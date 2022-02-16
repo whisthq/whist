@@ -232,8 +232,12 @@ def setup_network_conditions_client(
         print(ifconfig_output)
         ifconfig_output = [
             x.replace("\r", "").replace(":", "")
-            for x in ifconfig_output[1:-1]
-            if "docker" not in x and "veth" not in x
+            for x in ifconfig_output
+            if "docker" not in x
+            and "veth" not in x
+            and "ifb" not in x
+            and "sudo ifconfig -a" not in x
+            and pexpect_prompt not in x
         ]
         print(ifconfig_output)
 
@@ -305,8 +309,12 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
     print(ifconfig_output)
     ifconfig_output = [
         x.replace("\r", "").replace(":", "")
-        for x in ifconfig_output[1:-1]
-        if "docker" not in x and "veth" not in x and "ifb" not in x
+        for x in ifconfig_output
+        if "docker" not in x
+        and "veth" not in x
+        and "ifb" not in x
+        and "sudo ifconfig -a" not in x
+        and pexpect_prompt not in x
     ]
     print(ifconfig_output)
 
