@@ -16,6 +16,7 @@
 /frontend/core-ts/                  @mingy98 @owenniles @sardination
 /backend/services/                  @djsavvy @rpadaki @mauaraujo
 /backend/microservices/             @owenniles @rpadaki @philippemnoel
+/backend/infrastructure/            @philippemnoel @djsavvy @mauaraujo
 /backend/webserver/                 @djsavvy @owenniles @mauaraujo
 /host-setup/                        @rpadaki @djsavvy @philippemnoel
 /mandelboxes/                       @djsavvy @rpadaki @philippemnoel
