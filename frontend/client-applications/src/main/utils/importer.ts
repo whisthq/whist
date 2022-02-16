@@ -360,7 +360,7 @@ const getLocalStorageFromFiles = (browser: InstalledBrowser): string => {
   const localStorageDir = expandPaths(getLocalStorageDir(browser))
 
   try {
-    // We are only interested in .ldb, .log, and MANIFEST files
+    // We are only interested in .ldb, .log, CURRENT, and MANIFEST files
     const relevantFiles = fs
       .readdirSync(localStorageDir, { withFileTypes: true })
       .filter(
@@ -368,6 +368,7 @@ const getLocalStorageFromFiles = (browser: InstalledBrowser): string => {
           dirent.isFile() &&
           (path.extname(dirent.name) === ".ldb" ||
             path.extname(dirent.name) === ".log" ||
+            dirent.name === "CURRENT" ||
             dirent.name.startsWith("MANIFEST"))
       )
       .map((dirent) => dirent.name)
