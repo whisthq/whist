@@ -342,7 +342,7 @@ def create_local_storage_files(target_browser_name, local_storage_json):
 
     # Write localstorage data to corresponding files
     for filename, contents in local_storage.items():
-        with open(os.path.join(path, filename), "w") as local_storage_file:
+        with open(os.path.join(path, filename), "wb") as local_storage_file:
             # Decode the base64 string back to raw bytes
             content_bytes = base64.b64decode(contents)
             local_storage_file.write(content_bytes)
