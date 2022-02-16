@@ -199,16 +199,14 @@ WhistCursorInfo* get_current_cursor(void) {
             size_t png_size;
 
             // Convert argb to rgba
-            uint32_t* rgba =
-                safe_malloc(sizeof(uint32_t) * cursor_image->width * cursor_image->height);
+            static uint32_t rgba[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT] = {0};
             for (int i = 0; i < cursor_image->width * cursor_image->height; i++) {
-                uint32_t argb = (uint32_t)cursor_image->pixels[i];
+                const uint32_t argb = (uint32_t)cursor_image->pixels[i];
                 rgba[i] = argb << 8 | argb >> 24;
             }
 
-            unsigned int ret = lodepng_encode32(&png, &png_size, (unsigned char*)rgba,
+            unsigned int ret = lodepng_encode32(&png, &png_size, (unsigned char*)&rgba,
                                                 cursor_image->width, cursor_image->height);
-            free(rgba);
             if (ret) {
                 LOG_WARNING("Failed to encode PNG cursor: %s", lodepng_error_text(ret));
                 XFree(cursor_image);

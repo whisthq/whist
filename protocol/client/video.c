@@ -203,7 +203,7 @@ int render_video(VideoContext* video_context) {
     // a later call to render_video can still access the data
     // from the most recently consumed render context.
     static WhistRGBColor window_color = {0};
-    WhistCursorInfo* cursor_image = NULL;
+    static WhistCursorInfo* cursor_image = NULL;
     static timestamp_us server_timestamp = 0;
     static timestamp_us client_input_timestamp = 0;
 
@@ -245,6 +245,11 @@ int render_video(VideoContext* video_context) {
 
             WhistCursorInfo* frame_cursor_image = get_frame_cursor_info(frame);
             if (frame_cursor_image) {
+                if (cursor_image) {
+                    free(cursor_image);
+                    cursor_image = NULL;
+                }
+
                 cursor_image = safe_malloc(get_cursor_info_size(frame_cursor_image));
                 memcpy(cursor_image, frame_cursor_image, get_cursor_info_size(frame_cursor_image));
             }
@@ -333,7 +338,9 @@ int render_video(VideoContext* video_context) {
         // Render out the cursor image
         if (cursor_image) {
             TIME_RUN(sdl_update_cursor(cursor_image), VIDEO_CURSOR_UPDATE_TIME, statistics_timer);
+            // Cursors need not be double-rendered, so we just unset the cursor image here
             free(cursor_image);
+            cursor_image = NULL;
         }
 
         // Update the window titlebar color

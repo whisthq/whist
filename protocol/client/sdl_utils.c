@@ -68,11 +68,6 @@ static const WhistRGBColor background_color = {255, 255, 255};  // white
 static volatile WhistRGBColor* native_window_color = NULL;
 static volatile bool native_window_color_update = false;
 
-// Cursor Image Update
-static volatile WhistCursorState cursor_state = CURSOR_STATE_VISIBLE;
-static volatile SDL_Cursor* sdl_cursor = NULL;
-static volatile WhistCursorID last_cursor = (WhistCursorID)SDL_SYSTEM_CURSOR_ARROW;
-
 // Window Title Update
 static volatile char* window_title = NULL;
 static volatile bool should_update_window_title = false;
@@ -429,7 +424,7 @@ bool sdl_render_pending(void) {
 void sdl_update_cursor(WhistCursorInfo* cursor) {
     /*
       Update the cursor image on the screen. If the cursor hasn't changed since the last frame we
-      received, we don't do anything. Otherwise, we either use the provided bitmap or  update the
+      received, we don't do anything. Otherwise, we either use the provided bitmap or update the
       cursor ID to tell SDL which cursor to render.
      */
     // Set cursor to frame's desired cursor type
@@ -441,11 +436,13 @@ void sdl_update_cursor(WhistCursorInfo* cursor) {
 #define CURSORIMAGE_B 0x0000ff00
 #define CURSORIMAGE_A 0x000000ff
 
+    static WhistCursorState last_cursor_state = CURSOR_STATE_VISIBLE;
+    static uint32_t last_cursor_hash = 0;
+
     if (cursor) {
-        if ((WhistCursorID)cursor->cursor_id != last_cursor || cursor->using_png) {
-            if (sdl_cursor) {
-                SDL_FreeCursor((SDL_Cursor*)sdl_cursor);
-            }
+        if (cursor->hash != last_cursor_hash) {
+            SDL_Cursor* sdl_cursor = NULL;
+            // Render new cursor
             if (cursor->using_png) {
                 unsigned char* bmp;
                 unsigned int bmp_width, bmp_height;
@@ -497,19 +494,18 @@ void sdl_update_cursor(WhistCursorInfo* cursor) {
                 // use cursor id to set cursor
                 sdl_cursor = SDL_CreateSystemCursor((SDL_SystemCursor)cursor->cursor_id);
             }
-            SDL_SetCursor((SDL_Cursor*)sdl_cursor);
-
-            last_cursor = (WhistCursorID)cursor->cursor_id;
+            SDL_SetCursor(sdl_cursor);
+            SDL_FreeCursor(sdl_cursor);
+            last_cursor_hash = cursor->hash;
         }
 
-        if (cursor->cursor_state != cursor_state) {
+        if (cursor->cursor_state != last_cursor_state) {
+            bool hide_cursor = false;
             if (cursor->cursor_state == CURSOR_STATE_HIDDEN) {
-                SDL_SetRelativeMouseMode(SDL_TRUE);
-            } else {
-                SDL_SetRelativeMouseMode(SDL_FALSE);
+                hide_cursor = true;
             }
-
-            cursor_state = cursor->cursor_state;
+            SDL_SetRelativeMouseMode(hide_cursor);
+            last_cursor_state = cursor->cursor_state;
         }
     }
 }
