@@ -1,7 +1,7 @@
 # Create default VPCs
 
 resource "aws_vpc" "MainVPC" {
-  cidr_block = var.cidr_block
+  cidr_block           = var.cidr_block
   enable_dns_hostnames = true
   enable_dns_support   = true
 
@@ -15,15 +15,15 @@ resource "aws_vpc" "MainVPC" {
 # Create default subnets
 
 resource "aws_subnet" "DefaultSubnet" {
-  vpc_id = aws_vpc.MainVPC.id
-  cidr_block = var.cidr_block
+  vpc_id                  = aws_vpc.MainVPC.id
+  cidr_block              = var.cidr_block
   map_public_ip_on_launch = true
 
   tags = {
-    Name      = "DefaultSubnet${var.env}"
+    Name        = "DefaultSubnet${var.env}"
     Description = "Default subnet for the MainVPC."
-    Env       = var.env
-    Terraform = true
+    Env         = var.env
+    Terraform   = true
   }
 }
 

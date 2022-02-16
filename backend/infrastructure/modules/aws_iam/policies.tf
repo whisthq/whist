@@ -82,7 +82,7 @@ data "aws_iam_policy_document" "WhistEC2PassRoleUserPolicy" {
   }
 
   statement {
-    actions = [ 
+    actions = [
       "iam:PassRole"
     ]
     effect = "Allow"

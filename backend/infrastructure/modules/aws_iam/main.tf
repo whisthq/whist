@@ -2,7 +2,7 @@
 
 # This role is linked to Systems Manager service, and includes all of the permissions required by that service.
 resource "aws_iam_service_linked_role" "ServiceRoleForSSM" {
-  count  = var.env == "prod" ? 1 : 0
+  count            = var.env == "prod" ? 1 : 0
   aws_service_name = "ssm.amazonaws.com"
   tags = {
     Name      = "ServiceRoleForSSM"
@@ -13,7 +13,7 @@ resource "aws_iam_service_linked_role" "ServiceRoleForSSM" {
 
 # This role is linked to Compute Optimizer service, and includes all of the permissions required by that service.
 resource "aws_iam_service_linked_role" "ServiceRoleForComputeOptimizer" {
-  count  = var.env == "prod" ? 1 : 0
+  count            = var.env == "prod" ? 1 : 0
   aws_service_name = "compute-optimizer.amazonaws.com"
   tags = {
     Name      = "ServiceRoleForComputeOptimizer"
@@ -24,7 +24,7 @@ resource "aws_iam_service_linked_role" "ServiceRoleForComputeOptimizer" {
 
 # This role is linked to EC2 Spot service, and includes all of the permissions required by that service.
 resource "aws_iam_service_linked_role" "ServiceRoleForEC2Spot" {
-  count  = var.env == "prod" ? 1 : 0
+  count            = var.env == "prod" ? 1 : 0
   aws_service_name = "spot.amazonaws.com"
   tags = {
     Name      = "ServiceRoleForEC2Spot"
@@ -35,7 +35,7 @@ resource "aws_iam_service_linked_role" "ServiceRoleForEC2Spot" {
 
 # This role is linked to Service Quotas service, and includes all of the permissions required by that service.
 resource "aws_iam_service_linked_role" "ServiceRoleForServiceQuotas" {
-  count  = var.env == "prod" ? 1 : 0
+  count            = var.env == "prod" ? 1 : 0
   aws_service_name = "servicequotas.amazonaws.com"
   tags = {
     Name      = "ServiceRoleForServiceQuotas"
@@ -48,7 +48,7 @@ resource "aws_iam_service_linked_role" "ServiceRoleForServiceQuotas" {
 
 # This role is used by Packer to build AMIs, its policy has the minimum amount of permissions to operate.
 resource "aws_iam_role" "PackerAMIBuilder" {
-  count  = var.env == "dev" ? 1 : 0
+  count              = var.env == "dev" ? 1 : 0
   name               = "PackerAMIBuilder"
   assume_role_policy = data.aws_iam_policy_document.EC2AssumeRolePolicy.json
 
@@ -79,23 +79,23 @@ resource "aws_iam_role" "EC2DeploymentRole" {
 #IAM User groups
 
 resource "aws_iam_group" "Whist2FA" {
-  count  = var.env == "prod" ? 1 : 0
-  name = "Whist2FA"
+  count = var.env == "prod" ? 1 : 0
+  name  = "Whist2FA"
 }
 
 resource "aws_iam_group" "WhistAdmins" {
-  count  = var.env == "prod" ? 1 : 0
-  name = "WhistAdmins"
+  count = var.env == "prod" ? 1 : 0
+  name  = "WhistAdmins"
 }
 
 resource "aws_iam_group" "WhistCI" {
-  count  = var.env == "prod" ? 1 : 0
-  name = "WhistCI"
+  count = var.env == "prod" ? 1 : 0
+  name  = "WhistCI"
 }
 
 resource "aws_iam_group" "WhistEngineers" {
-  count  = var.env == "prod" ? 1 : 0
-  name = "WhistEngineers"
+  count = var.env == "prod" ? 1 : 0
+  name  = "WhistEngineers"
 }
 
 # Users
@@ -105,8 +105,8 @@ resource "aws_iam_user" "WhistEC2PassRoleUser" {
   name = "WhistEC2PassRole${var.env}"
 
   tags = {
-    Name = "WhistEC2PassRoleUser${var.env}"
-    Env = var.env
+    Name      = "WhistEC2PassRoleUser${var.env}"
+    Env       = var.env
     Terraform = true
   }
 }
@@ -114,7 +114,7 @@ resource "aws_iam_user" "WhistEC2PassRoleUser" {
 # User access keys
 
 resource "aws_iam_access_key" "WhistEC2PassRoleUserAccessKey" {
-  user = aws_iam_user.WhistEC2PassRoleUser.name
+  user   = aws_iam_user.WhistEC2PassRoleUser.name
   status = "Active"
 }
 
@@ -131,7 +131,7 @@ resource "aws_iam_group_policy" "ForceMFA" {
 # AWS managed group policies
 
 resource "aws_iam_group_policy_attachment" "AdminPolicy" {
-  count  = var.env == "prod" ? 1 : 0
+  count      = var.env == "prod" ? 1 : 0
   group      = aws_iam_group.WhistAdmins[0].name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
@@ -161,12 +161,12 @@ resource "aws_iam_group_policy_attachment" "EngineeringPolicy" {
 # Policy and policy attachment for WhistEC2PassRoleUser
 
 resource "aws_iam_policy" "WhistEC2PassRoleUserPolicy" {
-  name = "WhistEC2PassRoleUserPolicy${var.env}"
+  name        = "WhistEC2PassRoleUserPolicy${var.env}"
   description = "This policy gives the necessary permissions to start, stop and terminate on-demand and spot instances. It is meant to be used by the WhistEC2PassRoleUser."
-  policy = data.aws_iam_policy_document.WhistEC2PassRoleUserPolicy.json
+  policy      = data.aws_iam_policy_document.WhistEC2PassRoleUserPolicy.json
 }
 
 resource "aws_iam_user_policy_attachment" "WhistEC2PassRoleUserPolicyAttachment" {
-  user = aws_iam_user.WhistEC2PassRoleUser.name
+  user       = aws_iam_user.WhistEC2PassRoleUser.name
   policy_arn = aws_iam_policy.WhistEC2PassRoleUserPolicy.arn
 }

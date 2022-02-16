@@ -4,6 +4,6 @@ variable "env" {
 }
 
 variable "cidr_block" {
-  type = string
+  type    = string
   default = ""
 }

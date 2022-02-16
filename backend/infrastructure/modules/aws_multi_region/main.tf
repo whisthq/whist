@@ -12,7 +12,7 @@ terraform {
 # Here we call the modules needed across every region
 
 module "vpc" {
-  source = "../aws_vpc"
-  env    = var.env
+  source     = "../aws_vpc"
+  env        = var.env
   cidr_block = var.cidr_block
 }

@@ -47,7 +47,7 @@ provider "aws" {
 # on the sa-east-1 region. The alias "sae1" is short for
 # sa-east-1. Location: Brazil.
 provider "aws" {
-  alias = "sae1"
+  alias  = "sae1"
   region = "sa-east-1"
 }
 
@@ -57,7 +57,7 @@ provider "aws" {
 # on the eu-central-1 region. The alias "euc1" is short for
 # eu-central-1. Location: Frankfurt. 
 provider "aws" {
-  alias = "euc1"
+  alias  = "euc1"
   region = "eu-central-1"
 }
 
@@ -65,7 +65,7 @@ provider "aws" {
 # on the eu-west-1 region. The alias "euw1" is short for
 # eu-west-1. Location: Ireland.
 provider "aws" {
-  alias = "euw1"
+  alias  = "euw1"
   region = "eu-west-1"
 }
 
@@ -73,7 +73,7 @@ provider "aws" {
 # on the eu-west-2 region. The alias "euw2" is short for
 # eu-west-2. Location: London.
 provider "aws" {
-  alias = "euw2"
+  alias  = "euw2"
   region = "eu-west-2"
 }
 
@@ -81,7 +81,7 @@ provider "aws" {
 # on the eu-west-3 region. The alias "euw3" is short for
 # eu-west-3. Location: Paris.
 provider "aws" {
-  alias = "euw3"
+  alias  = "euw3"
   region = "eu-west-3"
 }
 
@@ -89,7 +89,7 @@ provider "aws" {
 # on the eu-south-1 region. The alias "eus1" is short for
 # eu-south-1. Location: Milan.
 provider "aws" {
-  alias = "eus1"
+  alias  = "eus1"
   region = "eu-south-1"
 }
 
@@ -97,7 +97,7 @@ provider "aws" {
 # on the eu-north-1 region. The alias "eun1" is short for
 # eu-north-1. Location: Stockholm.
 provider "aws" {
-  alias = "eun1"
+  alias  = "eun1"
   region = "eu-north-1"
 }
 
@@ -107,7 +107,7 @@ provider "aws" {
 # on the af-south-1 region. The alias "afs1" is short for
 # af-south-1. Location: Cape Town.
 provider "aws" {
-  alias = "afs1"
+  alias  = "afs1"
   region = "af-south-1"
 }
 
@@ -117,7 +117,7 @@ provider "aws" {
 # on the me-south-1 region. The alias "mes1" is short for
 # me-south-1. Location: Bahrain.
 provider "aws" {
-  alias = "mes1"
+  alias  = "mes1"
   region = "me-south-1"
 }
 
@@ -127,7 +127,7 @@ provider "aws" {
 # on the ap-east-1 region. The alias "ape1" is short for
 # ap-east-1. Location: Hong Kong.
 provider "aws" {
-  alias = "ape1"
+  alias  = "ape1"
   region = "ap-east-1"
 }
 
@@ -135,7 +135,7 @@ provider "aws" {
 # on the ap-south-1 region. The alias "aps1" is short for
 # ap-south-1. Location: Mumbai.
 provider "aws" {
-  alias = "aps1"
+  alias  = "aps1"
   region = "ap-south-1"
 }
 
@@ -143,7 +143,7 @@ provider "aws" {
 # on the ap-southeast-1 region. The alias "apse1" is short for
 # ap-southeast-1. Location: Singapore.
 provider "aws" {
-  alias = "apse1"
+  alias  = "apse1"
   region = "ap-southeast-1"
 }
 
@@ -151,7 +151,7 @@ provider "aws" {
 # on the ap-southeast-2 region. The alias "apse2" is short for
 # ap-southeast-2. Location: Sydney.
 provider "aws" {
-  alias = "apse2"
+  alias  = "apse2"
   region = "ap-southeast-2"
 }
 
@@ -159,8 +159,8 @@ provider "aws" {
 # on the ap-southeast-3 region. The alias "apse3" is short for
 # ap-southeast-3. Location: Jakarta.
 provider "aws" {
-  alias = "apse3"
-  region = "ap-southeast-3"
+  alias                  = "apse3"
+  region                 = "ap-southeast-3"
   skip_region_validation = true
 }
 
@@ -168,7 +168,7 @@ provider "aws" {
 # on the ap-northeast-1 region. The alias "apne1" is short for
 # ap-northeast-1. Location: Tokyo.
 provider "aws" {
-  alias = "apne1"
+  alias  = "apne1"
   region = "ap-northeast-1"
 }
 
@@ -176,7 +176,7 @@ provider "aws" {
 # on the ap-northeast-2 region. The alias "apne2" is short for
 # ap-northeast-2. Location: Seoul.
 provider "aws" {
-  alias = "apne2"
+  alias  = "apne2"
   region = "ap-northeast-2"
 }
 
@@ -184,7 +184,7 @@ provider "aws" {
 # on the ap-northeast-3 region. The alias "apne3" is short for
 # ap-northeast-3. Location: Osaka.
 provider "aws" {
-  alias = "apne3"
-  region = "ap-northeast-3"
+  alias                  = "apne3"
+  region                 = "ap-northeast-3"
   skip_region_validation = true
 }
