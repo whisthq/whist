@@ -235,6 +235,8 @@ def setup_network_conditions_client(
             if "docker" not in x and "veth" not in x
         ]
 
+        print(ifconfig_output)
+
         commands = []
 
         # Set up infrastructure to apply degradations on incoming traffic (https://wiki.linuxfoundation.org/networking/netem#how_can_i_use_netem_on_incoming_traffic)
@@ -268,6 +270,8 @@ def setup_network_conditions_client(
         command += degradation_command
         commands.append(command)
 
+        print(commands)
+
         # Execute all commands:
         for command in commands:
             pexpect_process.sendline(command)
@@ -291,7 +295,7 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
         None
 
     """
-
+    print("Restoring network conditions to normal on client!")
     # Get network interface names (excluding loopback)
     command = "sudo ifconfig -a | sed 's/[ \t].*//;/^\(lo:\|\)$/d'"
     pexpect_process.sendline(command)
