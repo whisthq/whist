@@ -610,7 +610,6 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
 
             // If a newer frame has failed, log it
             if (greatest_failed_id > ring_buffer->last_stream_reset_request_id) {
-#if LOG_NACKING
                 LOG_INFO(
                     "The most recent ID %d is %d frames ahead of currently pending %d. "
                     "A stream reset is now being requested to catch-up, ID's <= %d are considered "
@@ -624,7 +623,6 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
                     LOG_INFO("We've been trying to receive Frame %d for %fms.",
                              currently_pending_id, next_render_staleness * MS_IN_SECOND);
                 }
-#endif
 
                 ring_buffer->last_stream_reset_request_id = greatest_failed_id;
             }
