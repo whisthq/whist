@@ -111,6 +111,13 @@ resource "aws_iam_user" "WhistEC2PassRoleUser" {
   }
 }
 
+# User access keys
+
+resource "aws_iam_access_key" "WhistEC2PassRoleUserAccessKey" {
+  user = aws_iam_user.WhistEC2PassRoleUser.name
+  status = "Active"
+}
+
 # Custom group policies
 
 resource "aws_iam_group_policy" "ForceMFA" {

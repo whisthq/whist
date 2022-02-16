@@ -4,6 +4,7 @@ resource "aws_vpc" "MainVPC" {
   cidr_block = var.cidr_block
   enable_dns_hostnames = true
   enable_dns_support   = true
+
   tags = {
     Name      = "MainVPC${var.env}"
     Env       = var.env
@@ -16,6 +17,8 @@ resource "aws_vpc" "MainVPC" {
 resource "aws_subnet" "DefaultSubnet" {
   vpc_id = aws_vpc.MainVPC.id
   cidr_block = var.cidr_block
+  map_public_ip_on_launch = true
+
   tags = {
     Name      = "DefaultSubnet${var.env}"
     Description = "Default subnet for the MainVPC."

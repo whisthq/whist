@@ -49,8 +49,13 @@ data "aws_iam_policy_document" "WhistEC2PassRoleUserPolicy" {
   # This statement represents S3ReadOnlyAccess permissions
   statement {
     actions = [
-      "s3:Get*",
-      "s3:List*",
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+      "s3:ListBucket",
+      "s3:ListBucketVersions",
+      "s3:ListMultiUploadParts",
+      "s3:PutObject",
+      "s3:AbortMultipartUpload"
     ]
     effect = "Allow"
     resources = [
