@@ -66,9 +66,9 @@ Defines
 #define LOG_LEVEL DEBUG_LEVEL
 #endif
 
-//                              Tag  File name   Line number
-//                               |      |   Function  |
-//                               |      |        |    |
+//                     Timestamp    File name   Line number
+//                         |   Tag      |  Function  |
+//                         |    |       |       |    |
 #define LOG_CONTEXT_FORMAT " | %-7s | %-35s | %-30s:%-5d | "
 
 // We use do/while(0) to force the user to ";" the end of the LOG,
