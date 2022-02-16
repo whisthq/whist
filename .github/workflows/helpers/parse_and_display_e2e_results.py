@@ -215,7 +215,7 @@ if __name__ == "__main__":
             results_file.write("### Experiment {}".format(j))
             if e2e_script_outcome[j] == "failure":
                 results_file.write(
-                    "‼️⚠️🔴 WARNING: the E2E streaming test script failed and the results below might be inaccurate! This could also be due to a server hang. 🔴⚠️‼️\n\n"
+                    ":bangbang::warning::red_circle: WARNING: the E2E streaming test script failed and the results below might be inaccurate! This could also be due to a server hang. :bangbang::warning::red_circle:\n\n"
                 )
             # If we are looking to compare the results with the latest run on a branch, we need to download the relevant files first
             if compared_branch_name != "":
