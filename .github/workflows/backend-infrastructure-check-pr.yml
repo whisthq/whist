@@ -89,13 +89,11 @@ jobs:
 
             <details><summary>Show Plan</summary>
             
-            \`\`\`\n
             ${{ steps.plan.outputs.stdout }}
-            \`\`\`
 
             </details>
 
-            *Pusher: @${{ github.actor }}, Action: ${{ github.event_name }}, Working Directory: ${{ env.tf_actions_working_dir }}, Workflow: ${{ github.workflow }}*"""
+            *Pusher: @${{ github.actor }}, Action: ${{ github.event_name }}, Workflow: ${{ github.workflow }}*"""
 
           github_comment_update(
             github_token,
