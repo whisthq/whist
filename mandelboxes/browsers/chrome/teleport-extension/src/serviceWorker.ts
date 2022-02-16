@@ -1,11 +1,23 @@
+// Message format for native application communication
+interface HostMessage {
+  action: string
+}
+
 // Listen for file state changes and propagate to the filesystem.
 const initFileSyncHandler = () => {
   // Disable the downloads shelf at the bottom.
   chrome.downloads.setShelfEnabled(false)
 
   const hostPort = chrome.runtime.connectNative("whist_teleport_extension_host")
-  hostPort.onMessage.addListener(console.log)
 
+  // Listen for exit indication from host application
+  hostPort.onMessage.addListener((msg: HostMessage) => {
+      if (msg.action == "exit") {
+          hostPort.disconnect();
+      }
+  });
+
+  // Listen for chrome downloads to notify teleport host about
   chrome.downloads.onChanged.addListener(
     (downloadDelta: chrome.downloads.DownloadDelta) => {
       if (downloadDelta?.state?.current !== "complete") {
@@ -28,13 +40,14 @@ const initFileSyncHandler = () => {
     }
   )
 
-  // Run when popup signals an upload button click
+  // Listen for popup upload button click
   chrome.runtime.onMessage.addListener(
     (msg: string, sender: chrome.runtime.MessageSender, sendResponse: any) => {
       hostPort.postMessage({ fileUploadTrigger: true})
       sendResponse({});
     }
   )
+
 }
 
 // Try to cancel or undo a tab drag-out

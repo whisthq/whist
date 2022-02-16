@@ -9,9 +9,21 @@ import time
 FILE_DOWNLOAD_TRIGGER_PATH = "/home/whist/.teleport/downloaded-file"
 FILE_UPLOAD_TRIGGER_PATH = "/home/whist/.teleport/uploaded-file"
 
+
+def send_message(message):
+    encoded_content = json.dumps(message).encode("utf-8")
+    # Write message size then the message itself
+    sys.stdout.buffer.write(struct.pack("=I", len(encoded_content)))
+    sys.stdout.buffer.write(encoded_content)
+    sys.stdout.buffer.flush()
+
+
 while True:
     bytes = sys.stdin.buffer.read(4)
     length = struct.unpack("I", bytes)[0]
+    if length == -1:
+        send_message({"action": "exit"})
+
     message = json.loads(sys.stdin.read(length))
     # Wait until we have consumed any existing trigger
     # TODO: Use inotify instead of polling. Probably not
