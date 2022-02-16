@@ -61,4 +61,4 @@ cov="$(test -z "${COV-}" -a "$IN_CI" = "false" || echo "--cov-report xml --cov=.
 
 # Upload the Codecov XML coverage report to Codecov, using the environment variable CODECOV_TOKEN
 # stored as a Heroku config variable
-test "$IN_CI" = "false" || (cd .. && ./codecov --branch "$HEROKU_TEST_RUN_BRANCH" --sha "$HEROKU_TEST_RUN_COMMIT_VERSION" --slug whisthq/whist -t "${CODECOV_TOKEN}" -c -F backend/webserver)
+test "$IN_CI" = "false" || (cd .. && ./codecov --branch "$HEROKU_TEST_RUN_BRANCH" --sha "$HEROKU_TEST_RUN_COMMIT_VERSION" --slug whisthq/whist -t "${CODECOV_TOKEN}" -c -F backend-webserver)
