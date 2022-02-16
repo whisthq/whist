@@ -440,79 +440,84 @@ void sdl_update_cursor(WhistCursorInfo* cursor) {
     static uint32_t last_cursor_hash = 0;
     static SDL_Cursor* cleanup_cursor = NULL;
 
-    if (cursor) {
-        if (cursor->hash != last_cursor_hash) {
-            SDL_Cursor* sdl_cursor = NULL;
-            // Render new cursor
-            if (cursor->using_png) {
-                unsigned char* bmp;
-                unsigned int bmp_width, bmp_height;
-                unsigned int ret =
-                    lodepng_decode32(&bmp, &bmp_width, &bmp_height, cursor->png, cursor->png_size);
-                if (ret) {
-                    LOG_ERROR("Failed to decode cursor png: %s", lodepng_error_text(ret));
-                    return;
-                }
+    if (cursor == NULL) {
+        return;
+    }
 
-                FATAL_ASSERT(bmp_width == cursor->png_width);
-                FATAL_ASSERT(bmp_height == cursor->png_height);
+    if (cursor->hash != last_cursor_hash) {
+        SDL_Cursor* sdl_cursor = NULL;
+        // Render new cursor
+        if (cursor->using_png) {
+            unsigned char* bmp;
+            unsigned int bmp_width, bmp_height;
+            unsigned int ret =
+                lodepng_decode32(&bmp, &bmp_width, &bmp_height, cursor->png, cursor->png_size);
+            if (ret) {
+                LOG_ERROR("Failed to decode cursor png: %s", lodepng_error_text(ret));
+                return;
+            }
 
-                // use png data to set cursor
-                SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
-                    bmp, bmp_width, bmp_height, sizeof(uint32_t) * 8, sizeof(uint32_t) * bmp_width,
-                    CURSORIMAGE_R, CURSORIMAGE_G, CURSORIMAGE_B, CURSORIMAGE_A);
-                free(bmp);
+            FATAL_ASSERT(bmp_width == cursor->png_width);
+            FATAL_ASSERT(bmp_height == cursor->png_height);
 
-                // Use BLENDMODE_NONE to allow for proper cursor blit-resize
-                SDL_SetSurfaceBlendMode(cursor_surface, SDL_BLENDMODE_NONE);
+            // use png data to set cursor
+            SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
+                bmp, bmp_width, bmp_height, sizeof(uint32_t) * 8, sizeof(uint32_t) * bmp_width,
+                CURSORIMAGE_R, CURSORIMAGE_G, CURSORIMAGE_B, CURSORIMAGE_A);
+            free(bmp);
+
+            // Use BLENDMODE_NONE to allow for proper cursor blit-resize
+            SDL_SetSurfaceBlendMode(cursor_surface, SDL_BLENDMODE_NONE);
 
 #ifdef _WIN32
-                // on Windows, the cursor DPI is unchanged
-                const int cursor_dpi = 96;
+            // on Windows, the cursor DPI is unchanged
+            const int cursor_dpi = 96;
 #else
-                // on other platforms, use the window DPI
-                const int cursor_dpi = get_native_window_dpi((SDL_Window*)window);
+            // on other platforms, use the window DPI
+            const int cursor_dpi = get_native_window_dpi((SDL_Window*)window);
 #endif  // _WIN32
 
-                // Create the scaled cursor surface which takes DPI into account
-                SDL_Surface* scaled_cursor_surface = SDL_CreateRGBSurface(
-                    0, cursor->png_width * 96 / cursor_dpi, cursor->png_height * 96 / cursor_dpi,
-                    cursor_surface->format->BitsPerPixel, cursor_surface->format->Rmask,
-                    cursor_surface->format->Gmask, cursor_surface->format->Bmask,
-                    cursor_surface->format->Amask);
+            // Create the scaled cursor surface which takes DPI into account
+            SDL_Surface* scaled_cursor_surface = SDL_CreateRGBSurface(
+                0, cursor->png_width * 96 / cursor_dpi, cursor->png_height * 96 / cursor_dpi,
+                cursor_surface->format->BitsPerPixel, cursor_surface->format->Rmask,
+                cursor_surface->format->Gmask, cursor_surface->format->Bmask,
+                cursor_surface->format->Amask);
 
-                // Copy the original cursor into the scaled surface
-                SDL_BlitScaled(cursor_surface, NULL, scaled_cursor_surface, NULL);
+            // Copy the original cursor into the scaled surface
+            SDL_BlitScaled(cursor_surface, NULL, scaled_cursor_surface, NULL);
 
-                // Potentially SDL_SetSurfaceBlendMode here since X11 cursor BMPs are
-                // pre-alpha multplied. Remember to adjust hot_x/y by the DPI scaling.
-                sdl_cursor = SDL_CreateColorCursor(scaled_cursor_surface,
-                                                   cursor->png_hot_x * 96 / cursor_dpi,
-                                                   cursor->png_hot_y * 96 / cursor_dpi);
-                SDL_FreeSurface(cursor_surface);
-                SDL_FreeSurface(scaled_cursor_surface);
-            } else {
-                // use cursor id to set cursor
-                sdl_cursor = SDL_CreateSystemCursor((SDL_SystemCursor)cursor->cursor_id);
-            }
-            SDL_SetCursor(sdl_cursor);
+            // Potentially SDL_SetSurfaceBlendMode here since X11 cursor BMPs are
+            // pre-alpha multplied. Remember to adjust hot_x/y by the DPI scaling.
+            sdl_cursor =
+                SDL_CreateColorCursor(scaled_cursor_surface, cursor->png_hot_x * 96 / cursor_dpi,
+                                      cursor->png_hot_y * 96 / cursor_dpi);
+            SDL_FreeSurface(cursor_surface);
+            SDL_FreeSurface(scaled_cursor_surface);
+        } else {
+            // use cursor id to set cursor
+            sdl_cursor = SDL_CreateSystemCursor((SDL_SystemCursor)cursor->cursor_id);
+        }
+        SDL_SetCursor(sdl_cursor);
 
-            if (cleanup_cursor) {
-                SDL_FreeCursor(cleanup_cursor);
-                cleanup_cursor = sdl_cursor;
-            }
-
-            last_cursor_hash = cursor->hash;
+        // SDL_SetCursor only works as long as the currently set cursor still exists.
+        // Hence, we maintain a reference to the currently set cursor and only clean it up
+        // after a new cursor is created.
+        if (cleanup_cursor) {
+            SDL_FreeCursor(cleanup_cursor);
+            cleanup_cursor = sdl_cursor;
         }
 
-        if (cursor->cursor_state != last_cursor_state) {
-            bool hide_cursor = false;
-            if (cursor->cursor_state == CURSOR_STATE_HIDDEN) {
-                hide_cursor = true;
-            }
-            SDL_SetRelativeMouseMode(hide_cursor);
-            last_cursor_state = cursor->cursor_state;
+        last_cursor_hash = cursor->hash;
+    }
+
+    if (cursor->cursor_state != last_cursor_state) {
+        bool hide_cursor = false;
+        if (cursor->cursor_state == CURSOR_STATE_HIDDEN) {
+            hide_cursor = true;
         }
+        SDL_SetRelativeMouseMode(hide_cursor);
+        last_cursor_state = cursor->cursor_state;
     }
 }
 
