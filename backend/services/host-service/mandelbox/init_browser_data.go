@@ -26,6 +26,8 @@ type BrowserData struct {
 	Bookmarks *configutils.Bookmarks `json:"bookmarks,omitempty"`
 	// Extensions is a comma spliced string that represents the users browser extensions
 	Extensions types.Extensions `json:"extensions,omitempty"`
+	// LocalStorage is the user's local storage files as a JSON string
+	LocalStorage types.LocalStorage `json:"local_storage,omitempty"`
 }
 
 // WriteUserInitialBrowserData writes the user's initial browser data received
