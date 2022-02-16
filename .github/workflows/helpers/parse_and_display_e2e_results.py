@@ -91,8 +91,8 @@ if __name__ == "__main__":
 
     # Check if the E2E run was skipped or cancelled, in which case we skip this
     e2e_script_outcomes = args.e2e_script_outcomes
-    if "success" not in e2e_script_outcomes and "failure" not in e2e_script_outcome:
-        print("E2E run was {}! No results to parse/display.".format(e2e_script_outcome[0]))
+    if "success" not in e2e_script_outcomes and "failure" not in e2e_script_outcomes:
+        print("E2E run was {}! No results to parse/display.".format(e2e_script_outcomes[0]))
         sys.exit(-1)
 
     # Grab environmental variables of interest
@@ -213,7 +213,7 @@ if __name__ == "__main__":
         results_file.write("## Results compared to branch {}\n".format(compared_branch_name))
         for j, experiment in enumerate(experiments):
             results_file.write("### Experiment {}".format(j))
-            if e2e_script_outcome[j] == "failure":
+            if e2e_script_outcomes[j] == "failure":
                 results_file.write(
                     ":bangbang::warning::red_circle: WARNING: the E2E streaming test script failed and the results below might be inaccurate! This could also be due to a server hang. :bangbang::warning::red_circle:\n\n"
                 )
