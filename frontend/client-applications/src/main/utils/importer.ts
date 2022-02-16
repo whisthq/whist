@@ -33,6 +33,10 @@ interface Cookie {
   [key: string]: Buffer | string | number
 }
 
+interface LocalStorageMap {
+  [key: string]: string
+}
+
 const getBrowserDefaultDirectory = (browser: InstalledBrowser): string[] => {
   switch (process.platform) {
     case "darwin": {
@@ -98,6 +102,11 @@ const getBookmarkFilePath = (browser: InstalledBrowser): string[] => {
 const getExtensionDir = (browser: InstalledBrowser): string[] => {
   const browserDirectories = getBrowserDefaultDirectory(browser)
   return browserDirectories.map((dir) => path.join(dir, "Extensions"))
+}
+
+const getLocalStorageDir = (browser: InstalledBrowser): string[] => {
+  const browserDirectories = getBrowserDefaultDirectory(browser)
+  return browserDirectories.map((dir) => path.join(dir, "Local Storage"))
 }
 
 const getOsCryptName = (browser: InstalledBrowser): string => {
@@ -341,6 +350,38 @@ const getBookmarksFromFile = (browser: InstalledBrowser): string => {
   }
 }
 
+const getLocalStorageFromFiles = (browser: InstalledBrowser): string => {
+  const localStorageDir = expandPaths(getLocalStorageDir(browser))
+
+  try {
+    // We are only interested in .ldb, .log, and MANIFEST files
+    const relevantFiles = fs
+      .readdirSync(localStorageDir, { withFileTypes: true })
+      .filter(
+        (dirent) =>
+          dirent.isFile() &&
+          (path.extname(dirent.name) === "." ||
+            path.extname(dirent.name) === ".log" ||
+            dirent.name.startsWith("MANIFEST"))
+      )
+      .map((dirent) => dirent.name)
+
+    const data: LocalStorageMap = {}
+    for (const file of relevantFiles) {
+      const filePath = path.join(localStorageDir, file)
+      const fileData = fs.readFileSync(filePath)
+
+      // Base64 encode the binary file data so we can pass as JSON
+      data[file] = fileData.toString("base64")
+    }
+
+    return JSON.stringify(data)
+  } catch (err) {
+    console.error("Could not get local storage from files. Error:", err)
+    return ""
+  }
+}
+
 const getExtensionIDs = (browser: InstalledBrowser): string => {
   const extensionsDir = expandPaths(getExtensionDir(browser))
 
@@ -487,10 +528,38 @@ const getExtensions = async (
   return extensions
 }
 
+const getLocalStorage = async (
+  browser: InstalledBrowser
+): Promise<string | undefined> => {
+  // If no browser is requested or the browser is not recognized, don't run anything
+  if (
+    browser === undefined ||
+    !Object.values(InstalledBrowser).includes(browser)
+  )
+    return undefined
+
+  // For now we only want to get local storage for browsers that are compatible
+  // with chrome extensions ie brave/chrome/chromium
+  if (
+    browser !== InstalledBrowser.CHROME &&
+    browser !== InstalledBrowser.BRAVE &&
+    browser !== InstalledBrowser.CHROMIUM
+  ) {
+    return undefined
+  }
+
+  const localStorage = getLocalStorageFromFiles(browser)
+
+  if (localStorage.length === 0) return undefined
+
+  return localStorage
+}
+
 export {
   InstalledBrowser,
   getInstalledBrowsers,
   getDecryptedCookies,
   getBookmarks,
   getExtensions,
+  getLocalStorage,
 }
