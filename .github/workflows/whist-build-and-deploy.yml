@@ -480,12 +480,16 @@ jobs:
       - name: Setup Terraform CLI
         uses: hashicorp/setup-terraform@v1
 
+      - name: Setup Python-based notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
       - name: Checkout Git Repository
         uses: actions/checkout@v2
 
       - name: Initialize Terraform
         working-directory: backend/infrastructure
-        run: cd "$GITHUB_BASE_REF" && terraform init -input-false
+        run: cd "$GITHUB_BASE_REF" && terraform init -input=false
 
       - name: Terraform Plan
         working-directory: backend/infrastructure
