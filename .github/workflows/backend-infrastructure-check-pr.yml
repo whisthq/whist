@@ -87,6 +87,7 @@ jobs:
             #### Terraform Validation 🤖 ${{ steps.validate.outputs.stdout }}
 
             *Pusher: @${{ github.actor }}, Action: ${{ github.event_name }}, Workflow: ${{ github.workflow }}*"""
+          plan = """${{ steps.plan.outputs.stdout }}"""
 
           github_comment_update(
             github_token,
@@ -94,6 +95,6 @@ jobs:
             github_issue,
             identifier,
             body,
-            code=${{ steps.plan.outputs.stdout }}
+            code=plan
             lang="hcl"
           )
