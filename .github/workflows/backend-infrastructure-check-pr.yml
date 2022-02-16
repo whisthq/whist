@@ -95,6 +95,6 @@ jobs:
             github_issue,
             identifier,
             body,
-            code=plan
-            lang="hcl"
+            code=plan,
+            lang="hcl",
           )
