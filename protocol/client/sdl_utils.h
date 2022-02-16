@@ -113,7 +113,8 @@ bool sdl_render_pending(void);
  *
  * @param cursor                   The WhistCursorInfo to use for the new cursor
  *
- * @note                           This function is virtually instantaneous
+ * @note                           This function is virtually instantaneous and
+ *                                 is not thread-safe
  */
 void sdl_update_cursor(WhistCursorInfo* cursor);
 

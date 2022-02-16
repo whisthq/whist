@@ -192,15 +192,17 @@ static void send_populated_frames(whist_server_state* state, WhistTimer* statist
     WhistCursorInfo* current_cursor = get_current_cursor();
     log_double_statistic(VIDEO_GET_CURSOR_TIME, get_timer(statistics_timer) * MS_IN_SECOND);
 
-    // If the current cursor is the same as the last cursor or we failed to retrieve it,
-    // just don't send any cursor
-    if (!current_cursor || current_cursor->hash == last_cursor_hash) {
-        set_frame_cursor_info(frame, NULL);
-    } else {
+    // On I-frames or new cursors, we want to pack the new cursor into the frame
+    if ((encoder->is_iframe || current_cursor->hash != last_cursor_hash) && current_cursor) {
         set_frame_cursor_info(frame, current_cursor);
         last_cursor_hash = current_cursor->hash;
+    } else {
+        set_frame_cursor_info(frame, NULL);
     }
-    free(current_cursor);
+
+    if (current_cursor) {
+        free(current_cursor);
+    }
 
     // frame is an iframe if this frame does not require previous frames to
     // render

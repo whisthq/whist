@@ -438,6 +438,7 @@ void sdl_update_cursor(WhistCursorInfo* cursor) {
 
     static WhistCursorState last_cursor_state = CURSOR_STATE_VISIBLE;
     static uint32_t last_cursor_hash = 0;
+    static SDL_Cursor* cleanup_cursor = NULL;
 
     if (cursor) {
         if (cursor->hash != last_cursor_hash) {
@@ -495,7 +496,12 @@ void sdl_update_cursor(WhistCursorInfo* cursor) {
                 sdl_cursor = SDL_CreateSystemCursor((SDL_SystemCursor)cursor->cursor_id);
             }
             SDL_SetCursor(sdl_cursor);
-            SDL_FreeCursor(sdl_cursor);
+
+            if (cleanup_cursor) {
+                SDL_FreeCursor(cleanup_cursor);
+                cleanup_cursor = sdl_cursor;
+            }
+
             last_cursor_hash = cursor->hash;
         }
 
