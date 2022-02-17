@@ -365,14 +365,14 @@ bool is_underflowing_audio(AudioContext* audio_context, int num_frames_buffered)
                  num_frames_buffered);
         audio_context->is_buffering_audio = false;
     }
-    if (get_forced_values()->verbose_log) {
+    if (get_debug_console_overrided_values()->verbose_log) {
         LOG_INFO("is_under_flowing= %d", (int)audio_context->is_buffering_audio);
     }
     return audio_context->is_buffering_audio;
 }
 
 bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered) {
-    if (get_forced_values()->verbose_log) {
+    if (get_debug_console_overrided_values()->verbose_log) {
         LOG_INFO("pending_render_context= %d", (int)audio_context->pending_render_context);
     }
     return !audio_context->pending_render_context &&

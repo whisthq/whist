@@ -377,7 +377,7 @@ static int handle_sdl_event(SDL_Event *event) {
                 WhistClientMessage wcmsg = {0};
                 wcmsg.type = MESSAGE_STOP_STREAMING;
                 whist_sleep(100);
-                if (get_forced_values()->force_no_minimize) {
+                if (get_debug_console_overrided_values()->no_minimize) {
                     break;
                 }
                 send_wcmsg(&wcmsg);
@@ -392,7 +392,7 @@ static int handle_sdl_event(SDL_Event *event) {
                 LOG_INFO("SDL_WINDOWEVENT_MINIMIZED - Stop Streaming");
                 WhistClientMessage wcmsg = {0};
                 wcmsg.type = MESSAGE_STOP_STREAMING;
-                if (get_forced_values()->force_no_minimize) {
+                if (get_debug_console_overrided_values()->no_minimize) {
                     break;
                 }
                 send_wcmsg(&wcmsg);

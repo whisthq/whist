@@ -32,21 +32,21 @@ Defines
 #endif
 
 typedef struct {
-    int force_bitrate;
-    int force_burst_bitrate;
-    double force_audio_fec_ratio;
-    double force_video_fec_ratio;
-    int force_no_minimize;
+    int bitrate;
+    int burst_bitrate;
+    double audio_fec_ratio;
+    double video_fec_ratio;
+    int no_minimize;
     int verbose_log;
     int simulate_freeze;
-} ForcedValues;
+} DebugConsoleOverridedValues;
 
 /*
 ============================
 Public Functions
 ============================
 */
-ForcedValues* get_forced_values(void);
+DebugConsoleOverridedValues* get_debug_console_overrided_values(void);
 void enable_debug_console(int port);
 int init_debug_console(void);
 

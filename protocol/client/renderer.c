@@ -163,7 +163,7 @@ void renderer_try_render(WhistRenderer* whist_renderer) {
     }
 #endif
 
-    if (get_forced_values()->simulate_freeze) {
+    if (get_debug_console_overrided_values()->simulate_freeze) {
         // whist_sleep(10);
     }
 
