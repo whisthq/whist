@@ -505,8 +505,8 @@ void sdl_update_cursor(WhistCursorInfo* cursor) {
         // after a new cursor is created.
         if (cleanup_cursor) {
             SDL_FreeCursor(cleanup_cursor);
-            cleanup_cursor = sdl_cursor;
         }
+        cleanup_cursor = sdl_cursor;
 
         last_cursor_hash = cursor->hash;
     }
