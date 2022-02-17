@@ -161,7 +161,7 @@ static string handle_set(vector<string> cmd) {
         } else if (cmd[1] == "verbose_log") {
             g_overrided_values.verbose_log = stoi(cmd[2]);
         } else if (cmd[1] == "verbose_log_audio") {
-            g_overrided_values.verbose_log = stoi(cmd[2]);
+            g_overrided_values.verbose_log_audio = stoi(cmd[2]);
         } else if (cmd[1] == "simulate_freeze") {
             g_overrided_values.simulate_freeze = stoi(cmd[2]);
         } else {
