@@ -278,7 +278,6 @@ static int evaluate_arg(const char *eval_opt_name, int eval_opt, char *eval_opta
                 }
                 enable_debug_console((int)ret);
             }
-
             // add new options like this
             /*else if (strcmp(eval_opt_name, "your-new-options") ==
                        0)
