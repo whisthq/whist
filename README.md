@@ -1,10 +1,8 @@
-# Whist Application Streaming
+# Whist Browser
 
 This repository contains the end-to-end code for the Whist Application Streaming product, following a [Monorepo](https://en.wikipedia.org/wiki/Monorepo) structure.
 
 ## Repository Status
-
-[![Whist: Build & Deploy](https://github.com/whisthq/whist/actions/workflows/whist-build-and-deploy.yml/badge.svg)](https://github.com/whisthq/whist/actions/workflows/whist-build-and-deploy.yml) [![Netlify Status](https://api.netlify.com/api/v1/badges/f65a863e-37d0-4407-babd-09b2b4802661/deploy-status)](https://app.netlify.com/sites/whist-prod/deploys)
 
 [![Whist: Build & Deploy](https://github.com/whisthq/whist/actions/workflows/whist-build-and-deploy.yml/badge.svg)](https://github.com/whisthq/whist/actions/workflows/whist-build-and-deploy.yml) [![Netlify Status](https://api.netlify.com/api/v1/badges/f65a863e-37d0-4407-babd-09b2b4802661/deploy-status)](https://app.netlify.com/sites/whist-prod/deploys)
 
