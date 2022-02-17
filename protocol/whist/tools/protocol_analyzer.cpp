@@ -519,6 +519,8 @@ string FrameLevelInfo::to_string(bool more_format) {
         ss << "}";
     }
     ss << "]}";
+#else
+    UNUSED(time_to_str);
 #endif
     return ss.str();
 }
@@ -698,5 +700,6 @@ string ProtocolAnalyzer::get_stat(int type, int num_of_records, int skip_last) {
            << "%" << endl;
     }
 #endif
+
     return ss.str();
 }
