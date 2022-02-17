@@ -40,8 +40,8 @@ Defines
 #define WHT "\x1B[37m"
 #define RESET "\x1B[0m"
 
-const int udp_packet_size_max = 65535;
-const int udp_packet_size_truncate = 65000;
+static const int udp_packet_size_max = 65535;
+static const int udp_packet_size_truncate = 65000;
 
 /*
 ============================
@@ -57,7 +57,7 @@ static int skip_last = 60;      // skip last few packets, since they might not h
                                 // arrived.
 static int num_records = 2000;  // num of records included in the report
 
-static DebugConsoleOverridedValues g_forced_values;
+static DebugConsoleOverridedValues g_overrided_values;
 
 /*
 ============================
@@ -65,9 +65,9 @@ Private Functions
 ============================
 */
 
-static void init_forced_values(void);
-int debug_console_thread(void *);
-int create_local_udp_listen_socket(SOCKET *sock, int port, int timeout_ms);
+static void init_overrided_values(void);
+static int debug_console_thread(void *);
+static int create_local_udp_listen_socket(SOCKET *sock, int port, int timeout_ms);
 
 /*
 ============================
@@ -75,17 +75,16 @@ Public Function Implementations
 ============================
 */
 
-DebugConsoleOverridedValues *get_debug_console_overrided_values() { return &g_forced_values; }
+DebugConsoleOverridedValues *get_debug_console_overrided_values() { return &g_overrided_values; }
 
 void enable_debug_console(int port) { debug_console_listen_port = port; }
 int init_debug_console() {
     if (debug_console_listen_port == -1) return 0;
-    init_forced_values();
+    init_overrided_values();
 #ifdef USE_DEBUG_CONSOLE
     FATAL_ASSERT(create_local_udp_listen_socket(&debug_console_listen_socket,
                                                 debug_console_listen_port, -1) == 0);
-    whist_create_thread((WhistThreadFunction)debug_console_thread, "MultiThreadedDebugConsole",
-                        NULL);
+    whist_create_thread(debug_console_thread, "MultiThreadedDebugConsole", NULL);
     whist_analyzer_init();
 #endif
     return 0;
@@ -97,9 +96,9 @@ Private Function Implementations
 ============================
 */
 
-static void init_forced_values(void) {
+static void init_overrided_values(void) {
     // if you need to force some value frequenly, you can set it here
-    // g_forced_values.no_minimize = 1;
+    // g_overrided_values.no_minimize = 1;
 }
 
 static vector<string> string_to_vec(const char *s, const char *sp) {
@@ -114,13 +113,13 @@ static vector<string> string_to_vec(const char *s, const char *sp) {
     return res;
 }
 
-string wrap_with_color(string str, string color) { return color + str + RESET; }
+static string wrap_with_color(string str, string color) { return color + str + RESET; }
 
 // this handler turns any exit() into abort() so that you can get the stack where exit() was called.
-void my_exit_handler(void) { abort(); }
+static void my_exit_handler(void) { abort(); }
 
 // handle inserting of the atexit handler
-string handle_insert_atexit_handler() {
+static string handle_insert_atexit_handler() {
     if (atexit_handler_inserted) {
         return "already inserted before!";
     } else {
@@ -131,28 +130,28 @@ string handle_insert_atexit_handler() {
 }
 
 // function to handle the set command
-string handle_set(vector<string> cmd) {
+static string handle_set(vector<string> cmd) {
     FATAL_ASSERT(cmd[0] == "set");
     if (cmd.size() == 3) {
         int ok = 1;
         if (cmd[1] == "bitrate") {
-            g_forced_values.bitrate = stoi(cmd[2]);
+            g_overrided_values.bitrate = stoi(cmd[2]);
         } else if (cmd[1] == "burst_bitrate") {
-            g_forced_values.burst_bitrate = stoi(cmd[2]);
+            g_overrided_values.burst_bitrate = stoi(cmd[2]);
         } else if (cmd[1] == "video_fec_ratio") {
-            g_forced_values.video_fec_ratio = stod(cmd[2]);
+            g_overrided_values.video_fec_ratio = stod(cmd[2]);
         } else if (cmd[1] == "audio_fec_ratio") {
-            g_forced_values.audio_fec_ratio = stod(cmd[2]);
+            g_overrided_values.audio_fec_ratio = stod(cmd[2]);
         } else if (cmd[1] == "skip_last") {
             skip_last = stoi(cmd[2]);
         } else if (cmd[1] == "report_num") {
             num_records = stoi(cmd[2]);
         } else if (cmd[1] == "no_minimize") {
-            g_forced_values.no_minimize = stoi(cmd[2]);
+            g_overrided_values.no_minimize = stoi(cmd[2]);
         } else if (cmd[1] == "verbose_log") {
-            g_forced_values.verbose_log = stoi(cmd[2]);
+            g_overrided_values.verbose_log = stoi(cmd[2]);
         } else if (cmd[1] == "simulate_freeze") {
-            g_forced_values.simulate_freeze = stoi(cmd[2]);
+            g_overrided_values.simulate_freeze = stoi(cmd[2]);
         } else {
             ok = 0;
         }
@@ -162,7 +161,7 @@ string handle_set(vector<string> cmd) {
 }
 
 // function to handle the report command
-string handle_report(vector<string> cmd) {
+static string handle_report(vector<string> cmd) {
     int type = 0;
     bool more_format = 0;
     FATAL_ASSERT(cmd[0] == "report_video" || cmd[0] == "report_audio" ||
@@ -192,21 +191,21 @@ string handle_report(vector<string> cmd) {
     }
 }
 
-string handle_info(vector<string> cmd) {
+static string handle_info(vector<string> cmd) {
     FATAL_ASSERT(cmd[0] == "info");
     stringstream ss;
-    ss << "bitrate=" << g_forced_values.bitrate << endl;
-    ss << "burst_bitrate=" << g_forced_values.burst_bitrate << endl;
-    ss << "audio_fec_ratio=" << g_forced_values.audio_fec_ratio << endl;
-    ss << "video_fec_ratio=" << g_forced_values.video_fec_ratio << endl;
-    ss << "no_minimize=" << g_forced_values.no_minimize << endl;
-    ss << "verbose_log=" << g_forced_values.verbose_log << endl;
+    ss << "bitrate=" << g_overrided_values.bitrate << endl;
+    ss << "burst_bitrate=" << g_overrided_values.burst_bitrate << endl;
+    ss << "audio_fec_ratio=" << g_overrided_values.audio_fec_ratio << endl;
+    ss << "video_fec_ratio=" << g_overrided_values.video_fec_ratio << endl;
+    ss << "no_minimize=" << g_overrided_values.no_minimize << endl;
+    ss << "verbose_log=" << g_overrided_values.verbose_log << endl;
     ss << "skip_last=" << skip_last << endl;
     ss << "report_num=" << num_records;
     return ss.str();
 }
 
-int debug_console_thread(void *) {
+static int debug_console_thread(void *) {
     char buf[udp_packet_size_max];
     struct sockaddr_in addr;
     socklen_t slen = sizeof(addr);
@@ -266,7 +265,7 @@ int debug_console_thread(void *) {
     return 0;
 }
 
-int create_local_udp_listen_socket(SOCKET *sock, int port, int timeout_ms) {
+static int create_local_udp_listen_socket(SOCKET *sock, int port, int timeout_ms) {
     LOG_INFO("Creating local listen UDP Socket");
     *sock = socketp_udp();
     if (*sock == INVALID_SOCKET) {

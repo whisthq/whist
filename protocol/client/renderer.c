@@ -64,7 +64,6 @@ WhistRenderer* init_renderer(int initial_width, int initial_height) {
     memset(whist_renderer, 0, sizeof(WhistRenderer));
 
     // Initialize audio and video systems
-
     whist_renderer->audio_context = init_audio();
     whist_renderer->video_context = init_video(initial_width, initial_height);
 
@@ -164,7 +163,7 @@ void renderer_try_render(WhistRenderer* whist_renderer) {
 #endif
 
     if (get_debug_console_overrided_values()->simulate_freeze) {
-        // whist_sleep(10);
+        whist_sleep(5);
     }
 
     // If the audio device is pending an update,

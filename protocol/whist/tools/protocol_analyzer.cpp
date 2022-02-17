@@ -47,7 +47,7 @@ Defines
 #endif
 
 // the analyzer only maintains this many records, stale ones will be kicked out
-const int max_maintained_records = 100000;
+static const int max_maintained_records = 100000;
 
 /*
 struct TimedID

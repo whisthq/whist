@@ -46,8 +46,28 @@ typedef struct {
 Public Functions
 ============================
 */
+
+/**
+ * @brief                          Ger overrided values from debug console
+ *
+ * @returns                        A pointer to the struct of all overrided values
+ */
 DebugConsoleOverridedValues* get_debug_console_overrided_values(void);
+
+/**
+ * @brief                          Enable debug console on the specific UDP port
+ *
+ * @param port                     The UDP port to let debug_console listen on
+ */
 void enable_debug_console(int port);
+
+/**
+ * @brief                          Enable debug console on the specific UDP port
+ *
+ * @param port                     The UDP port to let debug_console listen on
+ *
+ * @note                           should be called after, enable_debug_console()
+ */
 int init_debug_console(void);
 
 #endif  // DEBUG_CONSOLE_H

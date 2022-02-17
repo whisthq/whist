@@ -277,10 +277,13 @@ static int evaluate_arg(const char *eval_opt_name, int eval_opt, char *eval_opta
                     return -1;
                 }
                 enable_debug_console((int)ret);
-            } else if (strcmp(eval_opt_name, "your-new-options") ==
-                       0)  // add new options like this,
-            {
             }
+
+            // add new options like this
+            /*else if (strcmp(eval_opt_name, "your-new-options") ==
+                       0)
+            {
+            }*/
             break;
         }
         default: {
@@ -386,6 +389,7 @@ int client_parse_args(int argc, char *argv[]) {
         //    and argument via `evaluate_arg`
         switch (opt) {
             case WHIST_GETOPT_HELP_CHAR: {  // help
+                printf("[test]char=%d\n", (int)WHIST_GETOPT_HELP_CHAR);
                 printf("%s", usage_details);
                 return 1;
             }
