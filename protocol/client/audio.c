@@ -366,6 +366,7 @@ bool is_underflowing_audio(AudioContext* audio_context, int num_frames_buffered)
                  num_frames_buffered);
         audio_context->is_buffering_audio = false;
     }
+
     if (get_debug_console_overrided_values()->verbose_log_audio) {
         LOG_INFO("[audio]is_under_flowing= %d", (int)audio_context->is_buffering_audio);
     }
