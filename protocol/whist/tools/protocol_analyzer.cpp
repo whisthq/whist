@@ -28,6 +28,7 @@ Defines
 */
 
 #ifndef NDEBUG
+// make sure protocol analyzer is only enabled for DEBUG build
 // with this macro, we remove codes at compile, to avoid competitors enable the function in a hacky
 // way and get too much info of our product
 #define USE_PROTOCOL_ANALYZER
@@ -419,6 +420,7 @@ static string time_to_str(Timestamp t, bool more_format) {
 // TODO we can also output html code
 string FrameLevelInfo::to_string(bool more_format) {
     stringstream ss;
+#ifdef USE_PROTOCOL_ANALYZER
     ss << "{"
        << "id=" << id << ",";
     if (type == PACKET_VIDEO) {
@@ -517,6 +519,7 @@ string FrameLevelInfo::to_string(bool more_format) {
         ss << "}";
     }
     ss << "]}";
+#endif
     return ss.str();
 }
 
@@ -570,7 +573,7 @@ pair<FrameMap::iterator, FrameMap::iterator> ProtocolAnalyzer::get_range_it(int 
 // get high level stats
 string ProtocolAnalyzer::get_stat(int type, int num_of_records, int skip_last) {
     stringstream ss;
-
+#ifdef USE_PROTOCOL_ANALYZER
     auto range = get_range_it(type, num_of_records, skip_last);
 
     if (range.first == range.second) {
@@ -694,6 +697,6 @@ string ProtocolAnalyzer::get_stat(int type, int num_of_records, int skip_last) {
         ss << "estimated_network_loss=" << 100.0 - received_segments_nonack * 100.0 / total_segments
            << "%" << endl;
     }
-
+#endif
     return ss.str();
 }

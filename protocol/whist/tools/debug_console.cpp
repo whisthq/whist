@@ -83,7 +83,7 @@ DebugConsoleOverridedValues *get_debug_console_overrided_values() { return &g_ov
 void enable_debug_console(int port) { debug_console_listen_port = port; }
 int init_debug_console() {
     if (debug_console_listen_port == -1) return 0;
-#ifdef USE_DEBUG_CONSOLE
+#ifdef USE_DEBUG_CONSOLE  // only enable debug console for debug build
     init_overrided_values();
     FATAL_ASSERT(create_local_udp_listen_socket(&debug_console_listen_socket,
                                                 debug_console_listen_port, -1) == 0);

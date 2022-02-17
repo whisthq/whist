@@ -26,6 +26,7 @@ Defines
 */
 
 #ifndef NDEBUG
+// make sure debug console is only enabled for DEBUG build
 // with this macro, we remove codes at compile, to avoid competitors enable the function in a hacky
 // way and get too much info of our product
 #define USE_DEBUG_CONSOLE
@@ -66,6 +67,7 @@ void enable_debug_console(int port);
  * @brief                          Init the debug console, if enabled
  *
  * @note                           should be called after, enable_debug_console()
+ *                                 debug_console can be only enabled for a debug build
  */
 int init_debug_console(void);
 

@@ -285,6 +285,8 @@ int whist_client_main(int argc, char* argv[]) {
     }
 
     whist_init_subsystems(&subsystem_params);
+
+    // the logic inside guarantees debug console is only enabled for debug build
     init_debug_console();
 
     init_client_statistics();
