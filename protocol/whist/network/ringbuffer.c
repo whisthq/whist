@@ -467,7 +467,7 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
     }
 
     // Try to nack for any missing packets
-    bool nacking_succeeded = try_nacking(ring_buffer, latency, network_settings);
+    try_nacking(ring_buffer, latency, network_settings);
 
     // =============
     // Stream Reset Logic
@@ -496,11 +496,6 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
     // Track the greatest ID of any "failed" frames
     // Failed is a frame that's so far behind that we think we probably won't get it
     int greatest_failed_id = -1;
-
-    // If we failed to recover via nacking, request an I-Frame
-    if (!nacking_succeeded) {
-        greatest_failed_id = max(greatest_failed_id, currently_pending_id);
-    }
 
     // If our rendering is more than MAX_UNSYNCED_FRAMES behind,
     // request an I-Frame
