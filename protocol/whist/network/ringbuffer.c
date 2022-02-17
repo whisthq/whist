@@ -477,8 +477,10 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
 #define STREAM_RESET_REQUEST_INTERVAL_MS 5.0
     // The moment we're MAX_UNSYNCED_FRAMES ahead of the renderer,
     // Ask for some new I-Frame "X" to catch-up.
+    // The below value means we wait for 6x16.66ms = 100ms before requesting reset
 #define MAX_UNSYNCED_FRAMES 6
-    // If any Frame is acceptable_staleness_ms or older,
+    // Acceptable staleness = Time to transmit that frame + 1 RTT(for one nack) + Network Jitter
+    // If any Frame is "Acceptable staleness" or older,
     // Request yet another I-Frame on top of "X".
     // This recovers from the situation where we fail to receive "X".
     // The below constants are limits for acceptable staleness.
