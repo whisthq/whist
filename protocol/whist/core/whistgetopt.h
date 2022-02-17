@@ -26,6 +26,7 @@ struct option {
 // standard for POSIX programs
 #define WHIST_GETOPT_HELP_CHAR (CHAR_MIN - 2)
 #define WHIST_GETOPT_VERSION_CHAR (CHAR_MIN - 3)
+#define WHIST_GETOPT_DEBUG_CONSOLE_CHAR (CHAR_MIN - 4)
 
 // Globals used with getopt_long().
 extern char *optarg;
