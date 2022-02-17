@@ -40,7 +40,7 @@ const navigation = {
     },
     {
       name: "LinkedIn",
-      href: "https://www.linkedin.com/company/whisthq/",
+      href: "https://www.linkedin.com/company/whist/",
       icon: FaLinkedinIn,
     },
   ],
