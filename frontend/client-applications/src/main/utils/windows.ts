@@ -7,7 +7,6 @@ import {
 } from "electron"
 
 import config from "@app/config/environment"
-import { logging } from "@app/main/utils/logging"
 
 // Helper functions
 const base = {
@@ -200,7 +199,6 @@ const createElectronWindow = (args: {
 
     return { win, view: undefined }
   } catch (err) {
-    logging(`Error creating window ${args.hash}`, {})
     return { win: undefined, view: undefined }
   }
 }

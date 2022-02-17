@@ -5,6 +5,8 @@
  */
 
 import { app } from "electron"
+import { fromEvent, zip, merge, of } from "rxjs"
+import { filter, switchMap, take, map, startWith } from "rxjs/operators"
 import fs from "fs"
 import path from "path"
 import util from "util"
@@ -26,6 +28,23 @@ app.setPath("userData", loggingBaseFilePath)
 
 const amplitude = Amplitude.init(config.keys.AMPLITUDE_KEY)
 export const electronLogPath = path.join(loggingBaseFilePath, "logs")
+
+const sleep = of(process.argv.includes("--sleep"))
+
+export const shouldStoreLogs = zip(
+  fromEvent(app, "ready"),
+  merge(
+    sleep.pipe(filter((sleep) => !sleep)),
+    sleep.pipe(
+      filter((s) => s),
+      switchMap(() => fromEvent(app, "activate").pipe(take(1)))
+    )
+  )
+).pipe(
+  map(() => app.isPackaged),
+  filter((shouldLog) => shouldLog),
+  startWith(false)
+)
 
 // Initialize protocol log rotation
 logRotate(
@@ -74,29 +93,6 @@ const formatLogs = (title: string, data: object, level: LogLevel) => {
   )}`
 
   return `${util.format(template)} \n`
-}
-
-const localLog = (
-  title: string,
-  data: object,
-  level: LogLevel,
-  userEmail: string,
-  msElapsed?: number
-) => {
-  const logs = formatLogs(
-    `${title} -- ${userEmail} -- ${(msElapsed !== undefined
-      ? msElapsed
-      : 0
-    ).toString()} ms since flow/trigger was started and ${(
-      Date.now() - sessionID
-    ).toString()} ms since app was started`,
-    data,
-    level
-  )
-
-  if (!app.isPackaged) console.log(logs)
-
-  logFile.write(logs)
 }
 
 const amplitudeLog = (
@@ -157,16 +153,26 @@ export const logging = (
   })
 
   const userEmail = persistGet(CACHED_USER_EMAIL) ?? ""
-  localLog(
-    title,
-    dataClone,
-    level ?? LogLevel.DEBUG,
-    userEmail as string,
-    msElapsed
+
+  const logs = formatLogs(
+    `${title} -- ${userEmail as string} -- ${(msElapsed !== undefined
+      ? msElapsed
+      : 0
+    ).toString()} ms since flow/trigger was started and ${(
+      Date.now() - sessionID
+    ).toString()} ms since app was started`,
+    data,
+    LogLevel.DEBUG
   )
 
-  if (app.isPackaged)
-    amplitudeLog(title, dataClone, userEmail as string, msElapsed)
+  shouldStoreLogs.subscribe((shouldLog: boolean) => {
+    if (shouldLog) {
+      logFile.write(logs)
+      amplitudeLog(title, dataClone, userEmail as string, msElapsed)
+    }
+  })
+
+  if (!app.isPackaged) console.log(logs)
 }
 
 export const protocolToLogz = (line: string) => {
