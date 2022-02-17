@@ -779,11 +779,10 @@ void nack_single_packet(RingBuffer* ring_buffer, int id, int index) {
     }
 }
 
-// The max number of times we can nack a packet: limited to 2 times right now so that we don't get
-// stuck on a packet that never arrives
+// The max number of times we can NACK for a packet
 #define MAX_PACKET_NACKS 2
-// Maximum nack bitrate in terms of ratio of stream bitrate
-#define MAX_NACK_BITRATE_RATIO 0.8
+// Maximum nack bitrate in terms of ratio of total bitrate
+#define MAX_NACK_BITRATE_RATIO 0.5
 
 int nack_missing_packets_up_to_index(RingBuffer* ring_buffer, FrameData* frame_data, int end_index,
                                      int max_packets_to_nack) {
@@ -990,11 +989,12 @@ bool try_nacking(RingBuffer* ring_buffer, double latency, NetworkSettings* netwo
         } else {
             // *Recovery mode* means something is wrong with the network,
             // and we should keep trying to nack for those missing packets.
-            // On the first round, we finish up the work that the *normal nacking mode* did,
+            // On the first round, we immidiately finish up the work that *normal nacking mode* did,
             // i.e. we nack for everything after last_packet_received - MAX_UNORDERED_PACKETS.
-            // After an additional 1.2 * latency, we send another round of nacks
-            if (get_timer(&frame_data->last_nacked_timer) >
-                1.2 * latency * frame_data->num_times_nacked) {
+            // Then, after every additional latency + jitter, we send another round of nacks
+            if (frame_data->num_times_index_nacked == 0 ||
+                get_timer(&frame_data->last_nacked_timer) >
+                    latency + ESTIMATED_JITTER_LATENCY_RATIO * latency) {
 #if LOG_NACKING
                 // Prints the number of frames we received,
                 // over the number of frames we need to recover the packet
