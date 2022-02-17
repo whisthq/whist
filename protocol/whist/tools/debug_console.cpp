@@ -83,12 +83,18 @@ DebugConsoleOverridedValues *get_debug_console_overrided_values() { return &g_ov
 void enable_debug_console(int port) { debug_console_listen_port = port; }
 int init_debug_console() {
     if (debug_console_listen_port == -1) return 0;
+#ifdef USE_DEBUG_CONSOLE
     init_overrided_values();
     FATAL_ASSERT(create_local_udp_listen_socket(&debug_console_listen_socket,
                                                 debug_console_listen_port, -1) == 0);
     whist_create_thread(debug_console_thread, "MultiThreadedDebugConsole", NULL);
-#ifdef USE_DEBUG_CONSOLE
+
     whist_analyzer_init();
+#else
+    // supress ci error
+    (void)init_overrided_values;
+    (void)create_local_udp_listen_socket;
+    (void)debug_console_thread;
 #endif
     return 0;
 }
