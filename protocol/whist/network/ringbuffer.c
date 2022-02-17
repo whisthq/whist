@@ -20,8 +20,9 @@ Defines
 #define MAX_UNORDERED_PACKETS 10
 
 #define MAX_PACKETS (get_num_fec_packets(max(MAX_VIDEO_PACKETS, MAX_AUDIO_PACKETS), MAX_FEC_RATIO))
-// Ratio of network jitter to latency
-#define JITTER_LATENCY_RATIO 0.3
+// Estimated ratio of network jitter to latency
+// TODO: Use actual recorded jitter here
+#define ESTIMATED_JITTER_LATENCY_RATIO 0.3
 
 /*
 ============================
@@ -519,7 +520,8 @@ void try_recovering_missing_packets_or_frames(RingBuffer* ring_buffer, double la
                                       (double)network_settings->burst_bitrate;
             // Adding Network Jitter + One round-trip latency to account for nack response time
             double acceptable_staleness_ms =
-                (time_to_transmit + (1.0 + JITTER_LATENCY_RATIO) * latency) * MS_IN_SECOND;
+                (time_to_transmit + (1.0 + ESTIMATED_JITTER_LATENCY_RATIO) * latency) *
+                MS_IN_SECOND;
             acceptable_staleness_ms = max(acceptable_staleness_ms, MIN_ACCEPTABLE_STALENESS_MS);
             acceptable_staleness_ms = min(acceptable_staleness_ms, MAX_ACCEPTABLE_STALENESS_MS);
 
@@ -860,8 +862,8 @@ bool try_nacking(RingBuffer* ring_buffer, double latency, NetworkSettings* netwo
 
         // If too much time has passed since the last packet received,
         // we swap into *recovery mode*, since something is probably wrong with this packet
-        if ((id < ring_buffer->max_id ||
-             get_timer(&frame_data->last_nonnack_packet_timer) > JITTER_LATENCY_RATIO * latency) &&
+        if ((id < ring_buffer->max_id || get_timer(&frame_data->last_nonnack_packet_timer) >
+                                             ESTIMATED_JITTER_LATENCY_RATIO * latency) &&
             !frame_data->recovery_mode) {
 #if LOG_NACKING
             LOG_INFO("Too long since last non-nack packet from ID %d. Entering recovery mode...",
