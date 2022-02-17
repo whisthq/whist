@@ -229,7 +229,6 @@ def setup_network_conditions_client(
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
         ifconfig_output = pexpect_process.before.decode("utf-8").strip().split("\n")
-        print(ifconfig_output)
         ifconfig_output = [
             x.replace("\r", "").replace(":", "")
             for x in ifconfig_output
@@ -239,7 +238,6 @@ def setup_network_conditions_client(
             and "sudo ifconfig -a" not in x
             and pexpect_prompt not in x
         ]
-        print(ifconfig_output)
 
         commands = []
 
@@ -256,6 +254,7 @@ def setup_network_conditions_client(
             degradation_command += "rate {}".format(max_bandwidth)
 
         for device in ifconfig_output:
+            print("Applying network degradation to device {}".format(device))
             # add devices to delay incoming packets
             commands.append("sudo tc qdisc add dev {} ingress".format(device))
             commands.append(
@@ -274,14 +273,10 @@ def setup_network_conditions_client(
         command += degradation_command
         commands.append(command)
 
-        print(commands)
-
         # Execute all commands:
         for command in commands:
             pexpect_process.sendline(command)
             wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
-
-        print(commands)
 
 
 def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_in_ci):
@@ -306,7 +301,6 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
     ifconfig_output = pexpect_process.before.decode("utf-8").strip().split("\n")
-    print(ifconfig_output)
     ifconfig_output = [
         x.replace("\r", "").replace(":", "")
         for x in ifconfig_output
@@ -316,19 +310,17 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
         and "sudo ifconfig -a" not in x
         and pexpect_prompt not in x
     ]
-    print(ifconfig_output)
 
     commands = []
 
     for device in ifconfig_output:
+        print("Restoring normal network conditions on device {}".format(device))
         # Inbound degradations
         commands.append("sudo tc qdisc del dev {} handle ffff: ingress".format(device))
         # Outbound degradations
         commands.append("sudo tc qdisc del dev {} root netem".format(device))
 
     commands.append("sudo modprobe -r ifb")
-
-    print(commands)
 
     # Execute all commands:
     for command in commands:

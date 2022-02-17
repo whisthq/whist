@@ -33,7 +33,7 @@ def create_github_gist_post(github_gist_token, title, body):
     gh_auth_user = client.get_user()
     files_dict = {}
     for t in body:
-        files_dict[t[0]] = t[1]
+        files_dict[t[0]] = InputFileContent(t[1])
     gist = gh_auth_user.create_gist(
         public=False,
         files=files_dict,

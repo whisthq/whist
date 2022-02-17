@@ -120,6 +120,8 @@ if __name__ == "__main__":
     else:
         current_branch_name = os.getenv("GITHUB_HEAD_REF")
 
+    print(current_branch_name)
+
     # A list of metrics to display (if found) in main table
     most_interesting_metrics = {
         "VIDEO_FPS_RENDERED",
@@ -164,8 +166,8 @@ if __name__ == "__main__":
 
     # Remove first element
     logs_root_dirs = logs_root_dirs[1:]
-    # logs_dirs_with_errors = []
 
+    print("Found logs for the following experiments: ")
     experiments = []
     for log_dir in logs_root_dirs:
         if logs_contain_errors(log_dir):
@@ -206,13 +208,22 @@ if __name__ == "__main__":
         }
 
         experiments.append(experiment_entry)
+        print("\t+ Folder: {} with network_conditions: {}".format(log_dir, network_conditions))
 
     for i, compared_branch_name in enumerate(compared_branch_names):
+        print("Comparing to branch {}".format(compared_branch_name))
         # Create output Markdown file with comparisons to this branch
         results_file = open("streaming_e2e_test_results_{}.md".format(i), "w")
         results_file.write("## Results compared to branch {}\n".format(compared_branch_name))
-        for j, experiment in enumerate(experiments):
-            results_file.write("### Experiment {}".format(j))
+        for j, experiment in enumerate(reversed(experiments)):
+            results_file.write(
+                "### Experiment {} - Network conditions: {}\n".format(
+                    j,
+                    experiment["network_conditions"]
+                    if "network_conditions" in experiment
+                    else "normal",
+                )
+            )
             if e2e_script_outcomes[j] == "failure":
                 results_file.write(
                     ":bangbang::warning::red_circle: WARNING: the E2E streaming test script failed and the results below might be inaccurate! This could also be due to a server hang. :bangbang::warning::red_circle:\n\n"
@@ -231,6 +242,9 @@ if __name__ == "__main__":
                 compared_server_log_path = os.path.join(
                     ".", compared_branch_name, "server", "server.log"
                 )
+
+                compared_client_metrics = {}
+                compared_server_metrics = {}
                 if not os.path.isfile(compared_client_log_path) or not os.path.isfile(
                     compared_server_log_path
                 ):
@@ -239,12 +253,11 @@ if __name__ == "__main__":
                             compared_branch_name, compared_branch_name
                         )
                     )
-                    continue
-
-                # Extract the metric values and save them in a dictionary
-                compared_client_metrics, compared_server_metrics = extract_metrics(
-                    compared_client_log_path, compared_server_log_path
-                )
+                else:
+                    # Extract the metric values and save them in a dictionary
+                    compared_client_metrics, compared_server_metrics = extract_metrics(
+                        compared_client_log_path, compared_server_log_path
+                    )
 
                 client_table_entries, server_table_entries = compute_deltas(
                     experiment["client_metrics"],
@@ -297,7 +310,7 @@ if __name__ == "__main__":
         with open(fn, "r") as f:
             contents = f.read()
             body.append((fn, contents))
-            merged_body.append(contents)
+            merged_body += contents
 
     gist_url = create_github_gist_post(github_gist_token, title, body)
 

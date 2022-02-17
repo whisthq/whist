@@ -101,12 +101,12 @@ jobs:
       - name: Get branch name (merge)
         if: ${{ always() && github.event_name != 'pull_request' }}
         shell: bash
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | tr / -)" >> $GITHUB_ENV
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
 
       - name: Get branch name (pull request)
         if: ${{ always() && github.event_name == 'pull_request' }}
         shell: bash
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} | tr / -)" >> $GITHUB_ENV
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
 
       # need one more section like this to ensure the S3 command works in case of failure/timeout of the Python script above
       - name: Upload logs to S3 for debugging purposes
