@@ -179,11 +179,13 @@ You also need to have installed Xcode and installed the Xcode CLI tools, which y
 
 ##### Windows
 
-First, you will want to install Cmake with the latest binaries [here](https://cmake.org/download/), and cppcheck with Chocolatey by running `choco install cppcheck --force`. This will ensure you can properly debug the protocol.
+First, you will want to install Cmake with the latest binaries [here](https://cmake.org/download/), and cppcheck with Chocolatey by running `choco install cppcheck --force`. This will ensure you can properly debug the protocol. (Note that `winget` has gotten pretty mature, so you might just do `winget install cmake` and `winget install cppcheck`).
 
 Install the latest version of Ninja as well if you are compiling on Windows (this may come with your Visual Studio, depending on how you configured it).
 
 In order to compile it, you need to first install [Microsoft Visual Studio Community 2019](https://visualstudio.microsoft.com/downloads/) and select `Desktop Development with C++` add-on in the installer. This will install different Visual Studio Command Prompts for different architectures. **In order to compile the protocol, you need to make sure to be using x86_64 Visual Studio Developer Command Prompt.** In order to open the x86_64 Visual Studio Developer Command Prompt, you must First hit the "Windows Key", then you must type in "x86_64", and then the first result should indeed be the x86_64 Visual Studio Developer Command Prompt. **All future steps must be done using this terminal, otherwise compilation will not work**
+
+Note that if you're returning to Windows development after some time, you might have an old version of the Windows 10 SDK installed. In order to build the protocol, open the Visual Studio Installer, click "Modify" on your installation, navigate to "Individual Components", search for "Windows 10 SDK", and ensura that your installed version is at least `10.0.22000.0`. Otherwise, protocol builds will fail due to compiler warnings.
 
 ---
 
