@@ -227,6 +227,7 @@ int render_video(VideoContext* video_context) {
             wcmsg.type = MESSAGE_START_STREAMING;
             send_wcmsg(&wcmsg);
         }
+
         whist_analyzer_record_decode_video();
         if (!frame->is_empty_frame) {
             if (USE_LONG_TERM_REFERENCE_FRAMES) {

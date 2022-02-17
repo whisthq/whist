@@ -14,6 +14,7 @@ Includes
 #include "client_statistic.h"
 #include "sdl_event_handler.h"
 #include "whist/tools/debug_console.h"
+
 /*
 ============================
 Defines

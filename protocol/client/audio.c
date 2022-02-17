@@ -228,6 +228,7 @@ void render_audio(AudioContext* audio_context) {
             destroy_audio_device(audio_context);
             init_audio_device(audio_context);
         }
+
         // If we have a valid audio device to render with...
         if (audio_context->dev != 0) {
             whist_analyzer_record_decode_audio();
