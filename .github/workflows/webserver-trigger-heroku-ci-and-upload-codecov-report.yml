@@ -16,10 +16,12 @@ on:
       - dev
     paths:
       - "backend/webserver/**.py"
+      - "backend/webserver/tests"
       - ".github/workflows/webserver-trigger-heroku-ci-and-upload-codecov-report.yml"
   pull_request:
     paths:
       - "backend/webserver/**.py"
+      - "backend/webserver/tests"
       - ".github/workflows/webserver-trigger-heroku-ci-and-upload-codecov-report.yml"
   workflow_dispatch:
 

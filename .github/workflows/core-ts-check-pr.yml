@@ -79,5 +79,5 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: frontend/core-ts/coverage/clover.xml
-          flags: frontend/core-ts
+          flags: frontend-core-ts
           fail_ci_if_error: true # optional (default = false)
