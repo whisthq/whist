@@ -1222,7 +1222,10 @@ TEST_F(ProtocolTest, FECTest) {
 
 #define NUM_TOTAL_PACKETS (NUM_ORIGINAL_PACKETS + NUM_FEC_PACKETS)
 
-#define BUFFER_SIZE (NUM_ORIGINAL_PACKETS * MAX_PACKET_SIZE)
+//make the last packet shorter than others
+#define TAIL_MISSING_SIZE 100
+
+#define BUFFER_SIZE (NUM_ORIGINAL_PACKETS * (MAX_PACKET_SIZE - FEC_HEADER_SIZE)-TAIL_MISSING_SIZE)
 
     // Initialize FEC
     init_fec();
@@ -1266,7 +1269,7 @@ TEST_F(ProtocolTest, FECTest) {
     EXPECT_EQ(fec_get_decoded_buffer(fec_decoder, NULL), -1);
     // Given the FEC packets, it should be possible to reconstruct packet #2
     fec_decoder_register_buffer(fec_decoder, 2, encoded_buffers[2], encoded_buffer_sizes[2]);
-    fec_decoder_register_buffer(fec_decoder, 3, encoded_buffers[3], encoded_buffer_sizes[3]);
+    //fec_decoder_register_buffer(fec_decoder, 1, encoded_buffers[1], encoded_buffer_sizes[1]);
 
     // Decode the buffer using FEC
     char decoded_buffer[BUFFER_SIZE];
