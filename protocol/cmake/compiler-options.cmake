@@ -27,7 +27,7 @@ else() # GCC and Clang base flags
     "$<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,C>:-Werror=implicit-function-declaration>" # Error on implicit function declaration with C
     "$<$<CONFIG:DEBUG>:-Og;-g3;-O0>"
     "$<$<CONFIG:RELEASE>:-g3;-O2>"
-    "$<$<BOOL:CLIENT_SHARED_LIB>:-fPIC>")
+    "$<$<BOOL:${CLIENT_SHARED_LIB}>:-fPIC>")
   add_link_options("-pthread" "-rdynamic")
 
   if(NOT "${SANITIZE}" STREQUAL "OFF")
