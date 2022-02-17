@@ -563,6 +563,15 @@ static bool udp_update(void* raw_context) {
     return true;
 }
 
+static int get_num_indices(int whist_packet_size, int segment_size) {
+    // Calculate number of packets needed to send the payload, rounding up.
+    int num_indices = whist_packet_size == 0
+                          ? 1
+                          : (int)(whist_packet_size / segment_size +
+                                  (whist_packet_size % segment_size == 0 ? 0 : 1));
+    return num_indices;
+}
+
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
@@ -611,17 +620,23 @@ static int udp_send_packet(void* raw_context, WhistPacketType packet_type,
     int whist_packet_size = get_packet_size(whist_packet);
 
     // Calculate number of packets needed to send the payload, rounding up.
-    int num_indices = whist_packet_size == 0
-                          ? 1
-                          : (int)(whist_packet_size / MAX_PACKET_SEGMENT_SIZE +
-                                  (whist_packet_size % MAX_PACKET_SEGMENT_SIZE == 0 ? 0 : 1));
+    int num_indices_if_no_fec = get_num_indices(whist_packet_size, MAX_PACKET_SEGMENT_SIZE);
+    int num_indices_if_use_fec =
+        get_num_indices(whist_packet_size, MAX_PACKET_SEGMENT_SIZE - FEC_HEADER_SIZE);
 
     // Calculate the number of FEC packets we'll be using, if any
     // A nack buffer is required to use FEC
     int num_fec_packets = 0;
     double fec_packet_ratio = context->fec_packet_ratios[packet_type];
     if (nack_buffer && fec_packet_ratio > 0.0) {
-        num_fec_packets = get_num_fec_packets(num_indices, fec_packet_ratio);
+        num_fec_packets = get_num_fec_packets(num_indices_if_use_fec, fec_packet_ratio);
+    }
+
+    int num_indices;
+    if (num_fec_packets == 0) {
+        num_indices = num_indices_if_no_fec;
+    } else {
+        num_indices = num_indices_if_use_fec;
     }
 
     int num_total_packets = num_indices + num_fec_packets;
