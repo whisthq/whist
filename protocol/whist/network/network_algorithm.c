@@ -68,26 +68,17 @@ static NetworkSettings default_network_settings = {
 
 #define TOTAL_AUDIO_BITRATE ((NUM_PREV_AUDIO_FRAMES_RESEND + 1) * AUDIO_BITRATE)
 
-// We have to scale-up the bitrates for lower DPI screens. This is because Chrome renders more
-// content in lower DPI screens and hence higher level of details. So the same bitrate cannot be
-// used for screens of different DPIs
-// Also limit the DPI ratio, so that we don't get crazy values
-#define DPI_RATIO max(min((double)DPI_BITRATE_PER_PIXEL / dpi, 2.0), 0.5)
 // This value was decided heuristically by visually comparing similar resolution windows in 192 DPI
 // and 96 DPI screens. This translates to 96 DPI screens having a bitrate ~3x more than 192 DPI
 // screen for same resolution.
 #define DPI_RATIO_EXPONENT 1.6
-#define DPI_SCALING_FACTOR pow(DPI_RATIO, DPI_RATIO_EXPONENT)
-#define MINIMUM_VIDEO_BITRATE \
-    (int)(output_width * output_height * MINIMUM_BITRATE_PER_PIXEL * DPI_SCALING_FACTOR)
-#define MAXIMUM_VIDEO_BITRATE \
-    (int)(output_width * output_height * MAXIMUM_BITRATE_PER_PIXEL * DPI_SCALING_FACTOR)
-#define STARTING_VIDEO_BITRATE \
-    (int)(output_width * output_height * STARTING_BITRATE_PER_PIXEL * DPI_SCALING_FACTOR)
 
-#define MINIMUM_BITRATE (MINIMUM_VIDEO_BITRATE + TOTAL_AUDIO_BITRATE)
-#define MAXIMUM_BITRATE (MAXIMUM_VIDEO_BITRATE + TOTAL_AUDIO_BITRATE)
-#define STARTING_BITRATE (STARTING_VIDEO_BITRATE + TOTAL_AUDIO_BITRATE)
+#define MINIMUM_BITRATE \
+    get_total_bitrate(output_width, output_height, dpi, MINIMUM_BITRATE_PER_PIXEL)
+#define MAXIMUM_BITRATE \
+    get_total_bitrate(output_width, output_height, dpi, MAXIMUM_BITRATE_PER_PIXEL)
+#define STARTING_BITRATE \
+    get_total_bitrate(output_width, output_height, dpi, STARTING_BITRATE_PER_PIXEL)
 
 #define MINIMUM_BURST_BITRATE (MINIMUM_BITRATE * BURST_BITRATE_RATIO)
 #define MAXIMUM_BURST_BITRATE (MAXIMUM_BITRATE * BURST_BITRATE_RATIO)
@@ -107,6 +98,20 @@ Private Function Declarations
 NetworkSettings ewma_ratio_bitrate(NetworkStatistics stats);
 NetworkSettings timed_ewma_ratio_bitrate(NetworkStatistics stats);
 
+static int get_video_bitrate(int width, int height, int screen_dpi, double bitrate_per_pixel) {
+    // We have to scale-up the bitrates for lower DPI screens. This is because Chrome renders more
+    // content in lower DPI screens and hence higher level of details. So the same bitrate cannot be
+    // used for screens of different DPIs
+    // Also limit the DPI ratio, so that we don't get crazy values
+    double dpi_ratio = max(min((double)DPI_BITRATE_PER_PIXEL / screen_dpi, 2.0), 0.5);
+    double dpi_scaling_factor = pow(dpi_ratio, DPI_RATIO_EXPONENT);
+    return (int)(width * height * bitrate_per_pixel * dpi_scaling_factor);
+}
+
+static int get_total_bitrate(int width, int height, int screen_dpi, double bitrate_per_pixel) {
+    return get_video_bitrate(width, height, screen_dpi, bitrate_per_pixel) + TOTAL_AUDIO_BITRATE;
+}
+
 /*
 ============================
 Public Function Implementations
@@ -115,12 +120,9 @@ Public Function Implementations
 
 NetworkSettings get_default_network_settings(int width, int height, int screen_dpi) {
     FATAL_ASSERT(width > 0 && height > 0 && screen_dpi > 0);
-    double dpi_ratio = (double)screen_dpi / DPI_BITRATE_PER_PIXEL;
-    double dpi_ratio_squared = dpi_ratio * dpi_ratio;
-    int video_bitrate = width * height * dpi_ratio_squared * STARTING_BITRATE_PER_PIXEL;
-    int starting_bitrate = video_bitrate + TOTAL_AUDIO_BITRATE;
-    default_network_settings.bitrate = starting_bitrate;
-    default_network_settings.burst_bitrate = starting_bitrate * BURST_BITRATE_RATIO;
+    default_network_settings.bitrate =
+        get_total_bitrate(width, height, screen_dpi, STARTING_BITRATE_PER_PIXEL);
+    default_network_settings.burst_bitrate = default_network_settings.bitrate * BURST_BITRATE_RATIO;
     return default_network_settings;
 }
 
