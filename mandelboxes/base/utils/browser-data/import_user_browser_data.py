@@ -290,7 +290,9 @@ def create_extension_files(extensions, custom_script=None):
         subprocess.run([extension_install_script, extension])
 
 
-def create_local_storage_files(target_browser_name, local_storage_json, custom_local_storage_file_path=None):
+def create_local_storage_files(
+    target_browser_name, local_storage_json, custom_local_storage_file_path=None
+):
     """
     Create localstorage files for target browser
     Args:
@@ -306,9 +308,10 @@ def create_local_storage_files(target_browser_name, local_storage_json, custom_l
         local_storage_paths.append(custom_local_storage_file_path)
     else:
         local_storage_paths = [
-            os.path.join(directory, "Local Storage", "leveldb") for directory in get_browser_default_dir(target_browser_name)
+            os.path.join(directory, "Local Storage", "leveldb")
+            for directory in get_browser_default_dir(target_browser_name)
         ]
-        
+
     path = os.path.expanduser(local_storage_paths[0])
 
     # Remove existing leveldb directory if it exists and create new one
