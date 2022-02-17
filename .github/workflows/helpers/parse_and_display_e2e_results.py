@@ -120,8 +120,6 @@ if __name__ == "__main__":
     else:
         current_branch_name = os.getenv("GITHUB_HEAD_REF")
 
-    print(current_branch_name)
-
     # A list of metrics to display (if found) in main table
     most_interesting_metrics = {
         "VIDEO_FPS_RENDERED",
