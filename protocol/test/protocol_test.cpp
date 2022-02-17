@@ -50,10 +50,17 @@ extern "C" {
 #include <whist/utils/png.h>
 #include <whist/utils/avpacket_buffer.h>
 #include <whist/utils/atomic.h>
+<<<<<<< HEAD
 #include <whist/fec/fec.h>
 #include <whist/utils/linked_list.h>
 #include <whist/utils/queue.h>
 #include <whist/utils/command_line.h>
+=======
+#include <whist/utils/linked_list.h>
+#include <whist/utils/queue.h>
+#include <whist/FEC/fec.h>
+#include <whist/FEC/rs_wrapper.h>
+>>>>>>> af478ce7b... cm256 combined rebased new
 
 #include "whist/core/error_codes.h"
 #include <whist/core/features.h>
@@ -1676,10 +1683,132 @@ TEST_F(ProtocolTest, FECTest) {
     destroy_fec_decoder(fec_decoder);
 }
 
+#include <vector>
+#include <random>
+
+TEST_F(ProtocolTest, FECTest2) {
+    WhistTimer timer;
+    WhistTimer timer2;
+    const int verbose_print = 1;
+    init_fec();
+
+    // better random generator than rand()
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::uniform_int_distribution<> dis(1, 1000 * 1000 * 1000);
+
+    const int segment_size = 1000;
+    const int num_segments = 256;
+    const int large_buffer_size = num_segments * (segment_size - FEC_HEADER_SIZE) - 10;
+    const double fec_ratio = 0.5;
+    // std::vector<int> max_group_sizes = {32, 64, 128, 256};
+    std::vector<int> max_group_costs = {10, 100, 1000, 4000};
+
+    int saved_max_group_cost = rs_wrapper_set_max_group_cost(-1);
+
+    if (verbose_print) {
+        rs_wrapper_set_verbose_log(1);
+    }
+
+    for (int idx = 0; idx < (int)max_group_costs.size(); idx++) {
+        int max_group_cost = max_group_costs[idx];
+        rs_wrapper_set_max_group_cost(max_group_cost);
+
+        if (verbose_print) {
+            fprintf(stderr, "=====current max_group_cost=%d=====\n", max_group_cost);
+        }
+
+        char buf[large_buffer_size];
+
+        for (int i = 0; i < large_buffer_size; i++) {
+            buf[i] = i;
+        }
+
+        int num_real_buffers = num_segments;
+        int num_fec_buffers = get_num_fec_packets(num_real_buffers, fec_ratio);
+        int num_total_buffers = num_real_buffers + num_fec_buffers;
+
+        if (verbose_print) {
+            fprintf(stderr, "real=%d,fec=%d\n", num_real_buffers, num_fec_buffers);
+        }
+
+        FECEncoder* fec_encoder =
+            create_fec_encoder(num_real_buffers, num_fec_buffers, segment_size);
+
+        fec_encoder_register_buffer(fec_encoder, buf, sizeof(buf));
+
+        void** encoded_buffers = (void**)malloc(sizeof(void*) * num_total_buffers);
+        int* encoded_buffer_sizes = (int*)malloc(sizeof(int) * num_total_buffers);
+        int* indices = (int*)malloc(sizeof(int) * num_total_buffers);
+
+        start_timer(&timer);
+        // do encoding
+        fec_get_encoded_buffers(fec_encoder, encoded_buffers, encoded_buffer_sizes);
+        double t = get_timer(&timer);
+
+        if (verbose_print) {
+            fprintf(stderr, "encode used=%f\n", t);
+        }
+
+        FECDecoder* fec_decoder =
+            create_fec_decoder(num_real_buffers, num_fec_buffers, segment_size);
+        int decoded_size = -1;
+        char decoded_buffer[large_buffer_size + segment_size];
+
+        // an index array to simulate packet loss and out of order delivery
+        for (int i = 0; i < num_total_buffers; i++) {
+            indices[i] = i;
+        }
+
+        // shuffle the index array
+        for (int i = 0; i < num_total_buffers; i++) {
+            int j = dis(g) % num_total_buffers;
+            int tmp = indices[i];
+            indices[i] = indices[j];
+            indices[j] = tmp;
+        }
+
+        // feed buffer into the decoder according to the shuffle
+        for (int i = 0; i < num_total_buffers; i++) {
+            int index = indices[i];
+            fec_decoder_register_buffer(fec_decoder, index, encoded_buffers[index],
+                                        encoded_buffer_sizes[index]);
+            start_timer(&timer2);
+            decoded_size = fec_get_decoded_buffer(fec_decoder, decoded_buffer);
+            double t2 = get_timer(&timer2);
+            if (decoded_size != -1) {
+                if (verbose_print) {
+                    fprintf(stderr, "was able to decode after feeding %d buffers, t2=%f\n", i + 1,
+                            t2);
+                }
+                break;
+            }
+        }
+
+        EXPECT_EQ(decoded_size, large_buffer_size);
+        EXPECT_EQ(memcmp(decoded_buffer, buf, large_buffer_size), 0);
+
+        destroy_fec_decoder(fec_decoder);
+        destroy_fec_encoder(fec_encoder);
+
+        free(encoded_buffers);
+        free(encoded_buffer_sizes);
+        free(indices);
+    }
+    // restore the saved value
+    rs_wrapper_set_max_group_cost(saved_max_group_cost);
+}
+
 typedef struct {
     LINKED_LIST_HEADER;
     int id;
 } TestItem;
+
+TEST_F(ProtocolTest, LinkedListTest) {
+    typedef struct {
+        LINKED_LIST_HEADER;
+        int id;
+    } TestItem;
 
 static int test_linked_list_compare(const void* a, const void* b) {
     return ((const TestItem*)a)->id - ((const TestItem*)b)->id;

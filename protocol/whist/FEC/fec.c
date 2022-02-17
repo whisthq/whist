@@ -2,7 +2,7 @@
 
 #include "fec.h"
 #include "whist/core/whist.h"
-#include "whist/fec/rs_wrapper.h"
+#include "whist/FEC/rs_wrapper.h"
 
 // lugi's original library, Vandermonde Maxtrix, O(N^3+ N*X*L) decode
 // N is number of original packets, X is num of lost packets, L is max packet length

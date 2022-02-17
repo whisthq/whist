@@ -49,6 +49,11 @@ list(FILTER WHIST_DIR_C_FILES EXCLUDE REGEX "^.*/nvidia-linux/.*$")
 list(FILTER WHIST_DIR_H_FILES EXCLUDE REGEX ".*/fec/lugi_rs.h")
 list(FILTER WHIST_DIR_C_FILES EXCLUDE REGEX ".*/fec/lugi_rs.c")
 
+list(FILTER WHIST_DIR_H_FILES EXCLUDE REGEX ".*/fec/cm256.h")
+list(FILTER WHIST_DIR_H_FILES EXCLUDE REGEX ".*/fec/gf256.h")
+list(FILTER WHIST_DIR_CXX_FILES EXCLUDE REGEX ".*/fec/cm256.cpp")
+list(FILTER WHIST_DIR_CXX_FILES EXCLUDE REGEX ".*/fec/gf256.cpp")
+
 add_custom_target(
   clang-format
   COMMAND ${CLANG_FORMAT_EXE} -style=file -i ${CLIENT_SOURCE_FILES}

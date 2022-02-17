@@ -354,6 +354,7 @@ set(PLATFORM_INDEPENDENT_LIBS   whistCore
     whistFile
     whistNetwork
     whistLogging
+    whistFEC
     whistUtils
     whistDebug
     whistFEC
