@@ -115,6 +115,7 @@ typedef struct RingBuffer {
     // the lowest packet ID we're interested in nacking about
     int last_rendered_id;
     int last_missing_frame_nack;
+    int last_missing_frame_nack_index;
     int most_recent_reset_id;
     WhistTimer last_stream_reset_request_timer;
     int last_stream_reset_request_id;
@@ -125,6 +126,14 @@ typedef struct RingBuffer {
     int burst_counter;
     int avg_counter;
     bool last_nack_possibility;
+
+    // NACKing statistics
+    int num_nacks_received;
+    int num_original_packets_received;
+    int num_unnecessary_original_packets_received;
+    int num_unnecessary_nacks_received;
+    int num_times_nacking_saturated;
+    WhistTimer last_nack_statistics_timer;
 } RingBuffer;
 
 /*
