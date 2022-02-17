@@ -38,7 +38,8 @@ typedef struct {
     double video_fec_ratio;
     int no_minimize;
     int verbose_log;
-    int simulate_freeze;
+    int verbose_log_audio;  // you can add more log flags like this
+    int simulate_freeze;    // this is an expample rather than a out-of-box option
 } DebugConsoleOverridedValues;
 
 /*

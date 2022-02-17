@@ -73,9 +73,6 @@ void whist_analyzer_record_fec_used(int type, int id);
 // record a stream_reset, with the id as greatest_faild_id
 void whist_analyzer_record_stream_reset(int type, int id);
 
-// get the time elapsed since start in us
-long time_since_start(void);
-
 // only expose this function to c++
 #ifdef __cplusplus
 extern "C++" {

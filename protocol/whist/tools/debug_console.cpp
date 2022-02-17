@@ -49,6 +49,9 @@ Globals
 ============================
 */
 
+// the UDP port debug console listens on
+// if you use debug_console heavily, during developing you can set this to a positive
+// value, then debug console will start by default
 static int debug_console_listen_port = -1;
 static SOCKET debug_console_listen_socket = INVALID_SOCKET;
 
@@ -97,8 +100,9 @@ Private Function Implementations
 */
 
 static void init_overrided_values(void) {
-    // if you need to force some value frequenly, you can set it here
+    // if you need to force some value frequenly, you can set it here at compile time
     // g_overrided_values.no_minimize = 1;
+    // g_overridee_values.verbose_log = 1;
 }
 
 static vector<string> string_to_vec(const char *s, const char *sp) {
@@ -150,6 +154,8 @@ static string handle_set(vector<string> cmd) {
             g_overrided_values.no_minimize = stoi(cmd[2]);
         } else if (cmd[1] == "verbose_log") {
             g_overrided_values.verbose_log = stoi(cmd[2]);
+        } else if (cmd[1] == "verbose_log_audio") {
+            g_overrided_values.verbose_log = stoi(cmd[2]);
         } else if (cmd[1] == "simulate_freeze") {
             g_overrided_values.simulate_freeze = stoi(cmd[2]);
         } else {
@@ -200,6 +206,7 @@ static string handle_info(vector<string> cmd) {
     ss << "video_fec_ratio=" << g_overrided_values.video_fec_ratio << endl;
     ss << "no_minimize=" << g_overrided_values.no_minimize << endl;
     ss << "verbose_log=" << g_overrided_values.verbose_log << endl;
+    ss << "verbose_log_audio=" << g_overrided_values.verbose_log_audio << endl;
     ss << "skip_last=" << skip_last << endl;
     ss << "report_num=" << num_records;
     return ss.str();

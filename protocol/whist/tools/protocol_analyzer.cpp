@@ -35,16 +35,19 @@ Defines
 
 // a helper macro for wrapping C++ into C
 #ifdef USE_PROTOCOL_ANALYZER
-#define FUNC_WRAPPER(func, ...)            \
-    do {                                   \
-        if (!g_recorder) return;           \
-        whist_lock_mutex(recoder_mutex);   \
-        g_recorder->func(__VA_ARGS__);     \
-        whist_unlock_mutex(recoder_mutex); \
+#define FUNC_WRAPPER(func, ...)                  \
+    do {                                         \
+        if (!g_analyzer) return;                 \
+        whist_lock_mutex(g_analyzer->m_mutex);   \
+        g_analyzer->func(__VA_ARGS__);           \
+        whist_unlock_mutex(g_analyzer->m_mutex); \
     } while (0);
 #else
 #define FUNC_WRAPPER(func, ...)
 #endif
+
+// the internal timestamp used by protocol_analyzer, it's a signed value
+typedef int64_t Timestamp;
 
 // the analyzer only maintains this many records, stale ones will be kicked out
 static const int max_maintained_records = 100000;
@@ -53,29 +56,30 @@ static const int max_maintained_records = 100000;
 struct TimedID
 {
     int id;
-    long time;
+    Timestamp time;
 };*/
 
 // segment level info
 struct SegmentLevelInfo {
-    vector<long> time_us;  // the arrival time of segment, it's a vector since a segment can
-                           // arrive multiple times
-    vector<long> retrans_time_us;
-    vector<long> nack_time_us;  // the time we send a nack to server for this segment, also a vector
+    vector<Timestamp> time_us;  // the arrival time of segment, it's a vector since a segment can
+                                // arrive multiple times
+    vector<Timestamp> retrans_time_us;
+    vector<Timestamp>
+        nack_time_us;  // the time we send a nack to server for this segment, also a vector
 };
 
 // FrameLevelInfo
 struct FrameLevelInfo {
-    int id = -1;                   // id of frame
-    int type = -1;                 // whether it's audio or video
-    long ready_time = -1;          // the time when the frame becomes ready
-    long decode_time = -1;         // the time then the frame is feeded into decoder
-    long first_seen_time = -1;     // the first time we see the packet
-    int is_iframe = -1;            // whether iframe or not, only used for video
-    int is_empty = -1;             // whehter empty frame or not, only used for audio
-    int num_of_packets = -1;       // num of packets including fec
-    int num_of_fec_packets = 0;    // num of fec packets
-    int skip_to = -1;              // we got a frame skip from the current frame to this frame
+    int id = -1;                     // id of frame
+    int type = -1;                   // whether it's audio or video
+    Timestamp ready_time = -1;       // the time when the frame becomes ready
+    Timestamp decode_time = -1;      // the time then the frame is feeded into decoder
+    Timestamp first_seen_time = -1;  // the first time we see the packet
+    int is_iframe = -1;              // whether iframe or not, only used for video
+    int is_empty = -1;               // whehter empty frame or not, only used for audio
+    int num_of_packets = -1;         // num of packets including fec
+    int num_of_fec_packets = 0;      // num of fec packets
+    int skip_to = -1;                // we got a frame skip from the current frame to this frame
     int reset_ringbuffer_to = -1;  // we got a ringbutter reset from the current frame to this from
     int reset_ringbuffer_from =
         -1;  // we got a ringbuffer reset from this frame to the current frame
@@ -92,15 +96,15 @@ struct FrameLevelInfo {
         0;  // number of segments arrived without the is_nack flag, without counting duplicate
     // int num_fec_received = 0;  // number of fec segments arrived, without counting duplicate
 
-    long become_current_rending_time =
+    Timestamp become_current_rending_time =
         -1;  // the time this frame becomes the current_rendering inside ringbuffer
-    long become_pending_time =
+    Timestamp become_pending_time =
         -1;  // the time this frame become pending (waiting for decoder to take away)
 
-    int overwrite_id = -1;        // while this frame becomes the current_rending frame inside
-                                  // ringbuffer, it overwrites a frame that never becomes pending
-    long stream_reset_time = -1;  // there is a stream reset sending to server, with the current
-                                  // frame as greatest_failed_id, at the time
+    int overwrite_id = -1;  // while this frame becomes the current_rending frame inside
+                            // ringbuffer, it overwrites a frame that never becomes pending
+    Timestamp stream_reset_time = -1;  // there is a stream reset sending to server, with the
+                                       // current frame as greatest_failed_id, at the time
 
     int queue_full = -1;  // when we try to make the current frame pending, there is a
                           // decoder-queue-full stops us from doing this, only for audio
@@ -119,13 +123,23 @@ struct TypeLevelInfo {
     int pending_rending_id;  // current pending frame waiting to be take out by the decoder
 };
 
+// we put a duplicate forward declaration before ProtocolAnalyzer, so that we don't need
+// to move a lot of methods implementation out, this keeps code more readable
+static Timestamp get_timestamp(void);
+
+// the Protocol Analyzer class
 struct ProtocolAnalyzer {
+    WhistMutex m_mutex;  // an advisory mutex, that can be use for multithread
+
     map<int, TypeLevelInfo>
         type_level_infos;  // stores type level info, currently for PACKET_ADUIO and PACKET_VIDEO
 
     // get the begin and end iterator, for the range of records required
     pair<FrameMap::iterator, FrameMap::iterator> get_range_it(int type, int num_of_records,
                                                               int skip_last);
+
+    ProtocolAnalyzer() { m_mutex = whist_create_mutex(); }
+    ~ProtocolAnalyzer() { whist_destroy_mutex(m_mutex); }
 
     // get high level stats
     string get_stat(int type, int num_of_records, int skip_last);
@@ -178,7 +192,7 @@ struct ProtocolAnalyzer {
             info.num_received_nonack++;
         }
 
-        auto time_stamp = time_since_start();
+        auto time_stamp = get_timestamp();
         if (!segment.is_a_nack) {
             info.segments[index].time_us.push_back(time_stamp);
         } else {
@@ -207,7 +221,7 @@ struct ProtocolAnalyzer {
 
         if (info.ready_time != -1) return;
 
-        info.ready_time = time_since_start();
+        info.ready_time = get_timestamp();
         if (info.nack_cnt > 0) info.nack_used = 1;
 
         WhistPacket *whist_packet = (WhistPacket *)frame_buffer;
@@ -223,7 +237,7 @@ struct ProtocolAnalyzer {
 
     void record_nack(int type, int id, int index) {
         FrameLevelInfo &info = type_level_infos[type].frames[id];
-        info.segments[index].nack_time_us.push_back(time_since_start());
+        info.segments[index].nack_time_us.push_back(get_timestamp());
     }
 
     void record_skip(int type, int from_id, int to_id) {
@@ -239,7 +253,7 @@ struct ProtocolAnalyzer {
         assert(type_level_infos[type].frames.find(id) != type_level_infos[type].frames.end());
         FrameLevelInfo &info = type_level_infos[type].frames[id];
         assert(info.decode_time == -1);
-        info.decode_time = time_since_start();
+        info.decode_time = get_timestamp();
     }
     void record_decode_video() {
         int type = PACKET_VIDEO;
@@ -253,13 +267,13 @@ struct ProtocolAnalyzer {
 
     void record_stream_reset(int type, int id) {
         FrameLevelInfo &info = type_level_infos[type].frames[id];
-        if (info.stream_reset_time == -1) info.stream_reset_time = time_since_start();
+        if (info.stream_reset_time == -1) info.stream_reset_time = get_timestamp();
     }
 
     void record_current_rendering(int type, int id, int reset_id) {
         type_level_infos[type].current_rending_id = id;
         FrameLevelInfo &info = type_level_infos[type].frames[id];
-        info.become_current_rending_time = time_since_start();
+        info.become_current_rending_time = get_timestamp();
 
         if (reset_id != -1) {
             if (type_level_infos[type].frames.find(reset_id) !=
@@ -276,14 +290,14 @@ struct ProtocolAnalyzer {
         int id = type_level_infos[type].current_rending_id;
         type_level_infos[type].pending_rending_id = id;
         FrameLevelInfo &info = type_level_infos[type].frames[id];
-        info.become_pending_time = time_since_start();
+        info.become_pending_time = get_timestamp();
     }
 
     void record_audio_queue_full() {
         int type = PACKET_AUDIO;
         int id = type_level_infos[type].current_rending_id;
         FrameLevelInfo &info = type_level_infos[type].frames[id];
-        info.queue_full = time_since_start();
+        info.queue_full = get_timestamp();
     }
 
     void record_reset_ringbuffer(int type, int from_id, int to_id) {
@@ -300,8 +314,7 @@ Globals
 ============================
 */
 
-static WhistMutex recoder_mutex;
-static ProtocolAnalyzer *g_recorder;
+static ProtocolAnalyzer *g_analyzer;
 
 /*
 ============================
@@ -309,7 +322,8 @@ Private Functions
 ============================
 */
 
-string time_to_str(long t, bool more_format);
+static Timestamp get_timestamp(void);
+static string time_to_str(Timestamp t, bool more_format);
 
 /*
 ============================
@@ -317,16 +331,10 @@ Public Function Implementations
 ============================
 */
 
-long time_since_start(void) {
-    static long g_start_time = current_time_us();
-    return current_time_us() - g_start_time;
-}
-
 void whist_analyzer_init(void) {
 #ifdef USE_PROTOCOL_ANALYZER
-    recoder_mutex = whist_create_mutex();
-    time_since_start();
-    g_recorder = new ProtocolAnalyzer;
+    get_timestamp();
+    g_analyzer = new ProtocolAnalyzer;
 #endif
 }
 
@@ -369,14 +377,14 @@ void whist_analyzer_record_stream_reset(int type, int id) {
 void whist_analyzer_record_audio_queue_full(void) { FUNC_WRAPPER(record_audio_queue_full); }
 
 string whist_analyzer_get_report(int type, int num, int skip, bool more_format) {
-    assert(g_recorder != NULL);
-    whist_lock_mutex(recoder_mutex);
+    assert(g_analyzer != NULL);
+    whist_lock_mutex(g_analyzer->m_mutex);
     string s;
-    s += g_recorder->get_stat(type, num, skip);
+    s += g_analyzer->get_stat(type, num, skip);
     s += "\n";
     s += "frame_breakdown:\n";
-    s += g_recorder->get_frames_info(type, num, skip, more_format);
-    whist_unlock_mutex(recoder_mutex);
+    s += g_analyzer->get_frames_info(type, num, skip, more_format);
+    whist_unlock_mutex(g_analyzer->m_mutex);
     return s;
 }
 
@@ -386,8 +394,14 @@ Private Function Implementations
 ============================
 */
 
-// covert time from long to string
-string time_to_str(long t, bool more_format) {
+// get time in us since start
+static Timestamp get_timestamp(void) {
+    static Timestamp g_start_time = current_time_us();
+    return current_time_us() - g_start_time;
+}
+
+// covert time from Timestamp to string
+static string time_to_str(Timestamp t, bool more_format) {
     if (t == -1)
         return "null";
     else {
@@ -402,6 +416,7 @@ string time_to_str(long t, bool more_format) {
 
 // turn the info of frame to a json-like format
 // TODO add an option for full json format
+// TODO we can also output html code
 string FrameLevelInfo::to_string(bool more_format) {
     stringstream ss;
     ss << "{"
@@ -563,10 +578,10 @@ string ProtocolAnalyzer::get_stat(int type, int num_of_records, int skip_last) {
     }
 
     double first_seen_to_ready = 0.0;  // the sum of time of frame become ready from first seen
-    long first_seen_to_ready_cnt = 0;  // for how many frames, the data is valid
+    int first_seen_to_ready_cnt = 0;   // for how many frames, the data is valid
 
     double first_seen_to_decode = 0.0;  // the sum of time of frame feed into decode from first_seen
-    long first_seen_to_decode_cnt = 0;  // for how many frames, the data is valid
+    int first_seen_to_decode_cnt = 0;   // for how many frames, the data is valid
 
     int recovery_by_nack_cnt = 0;  // num of frames recovered by nack
     int recovery_by_fec_cnt = 0;   // num of frames recoverd by fec
@@ -585,8 +600,8 @@ string ProtocolAnalyzer::get_stat(int type, int num_of_records, int skip_last) {
     int frame_skip_cnt = 0;          // the total num of frames skipped
     int ringbuffer_reset_times = 0;  // num of ringbuffer reset times
 
-    long received_segments_nonack = 0;
-    long total_segments = 0;  // total
+    int received_segments_nonack = 0;
+    int total_segments = 0;  // total
 
     int begin_id = range.first->first;  // the id of first frame
     int end_id = -1;                    // the id last frame
