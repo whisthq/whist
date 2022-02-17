@@ -63,9 +63,7 @@ DebugConsoleOverridedValues* get_debug_console_overrided_values(void);
 void enable_debug_console(int port);
 
 /**
- * @brief                          Enable debug console on the specific UDP port
- *
- * @param port                     The UDP port to let debug_console listen on
+ * @brief                          Init the debug console, if enabled
  *
  * @note                           should be called after, enable_debug_console()
  */
