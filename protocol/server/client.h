@@ -37,8 +37,6 @@ typedef struct Client {
     /* NETWORK */
     SocketContext udp_context;  // "protected" by global `is_deactivating`
     SocketContext tcp_context;  // "protected" by global `is_deactivating`
-    int udp_port;               // "protected" by global `is_deactivating`
-    int tcp_port;               // "protected" by global `is_deactivating`
     RWLock tcp_rwlock;          // protects tcp_context for synchrony-sensitive sends and recvs
 } Client;
 
