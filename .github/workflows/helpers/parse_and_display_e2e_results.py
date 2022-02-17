@@ -159,8 +159,8 @@ if __name__ == "__main__":
         print("Error: protocol logs not found!")
         sys.exit(-1)
 
-    # Convert to set to automatically remove duplicates
-    compared_branch_names = set(args.compared_branch_names)
+    # Remove duplicates but maintain order
+    compared_branch_names = list(dict.fromkeys(args.compared_branch_names))
 
     # Remove first element
     logs_root_dirs = logs_root_dirs[1:]
