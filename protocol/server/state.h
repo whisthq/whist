@@ -65,7 +65,12 @@ typedef struct _whist_server_config whist_server_config;
 
 /** @brief internal state of the whist server */
 struct _whist_server_state {
-    // TODO: Mutex usage of this state
+    // TODO:  Currently it is possible for asynchronous updates to this
+    // structure to cause the video thread to see an inconsistent state
+    // (for example, an updated width without an updated height).  This
+    // is undefined behaviour and should be fixed by adding mutexes
+    // protecting parts which can be updated by other threads.
+
     whist_server_config* config;
 
     volatile int connection_id;
