@@ -110,38 +110,6 @@ void whist_cursor_capture_destroy(void);
 size_t whist_cursor_info_get_size(WhistCursorInfo* image);
 
 /**
- * @brief                          Returns WhistCursorInfo from a cursor id
- *
- * @param cursor_id                The WhistCursorID from which to generate the cursor info
- * @param state                    The cursor visibility state (visible or hidden)
- *
- * @returns                        The generated cursor info as a pointer to
- *                                 a WhistCursorInfo struct, which must be freed
- *                                 by the caller
- */
-WhistCursorInfo* whist_cursor_info_from_id(WhistCursorID id, WhistCursorState state);
-
-/**
- * @brief                          Returns WhistCursorInfo from RGBA pixel data
- *
- * @param rgba                     The RGBA pixel data from which to generate the cursor info as a
- *                                 uint32_t array
- *
- * @param width                    The width of the RGBA pixel data
- * @param height                   The height of the RGBA pixel data
- * @param hot_x                    The x-coordinate of the cursor hotspot
- * @param hot_y                    The y-coordinate of the cursor hotspot
- * @param state                    The cursor visibility state (visible or hidden)
- *
- * @returns                        The generated cursor info as a pointer to
- *                                 a WhistCursorInfo struct, which must be freed
- *                                 by the caller
- */
-WhistCursorInfo* whist_cursor_info_from_rgba(const uint32_t* rgba, unsigned short width,
-                                             unsigned short height, unsigned short hot_x,
-                                             unsigned short hot_y, WhistCursorState state);
-
-/**
  * @brief                          Return RGBA pixel data from a WhistCursorInfo struct
  *
  * @param info                     The WhistCursorInfo struct from which to generate the RGBA pixel

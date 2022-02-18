@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
- * @file linuxcursor.c
+ * @file linux_cursor_capture.c
  * @brief This file defines the cursor types, functions, init and get.
 ============================
 Usage
@@ -21,7 +21,7 @@ Includes
 #include <X11/extensions/Xfixes.h>
 #include <whist/logging/logging.h>
 #include <whist/utils/aes.h>
-#include "cursor.h"
+#include "cursor_internal.h"
 #include "string.h"
 
 /*
@@ -205,7 +205,7 @@ WhistCursorInfo* whist_cursor_capture(void) {
 
             // Convert argb to rgba
             uint32_t rgba[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT];
-            for (int i = 0; i < width * height; i++) {
+            for (int i = 0; i < cursor_image->width * cursor_image->height; i++) {
                 const uint32_t argb_pix = (uint32_t)cursor_image->pixels[i];
                 rgba[i] = argb_pix << 8 | argb_pix >> 24;
             }

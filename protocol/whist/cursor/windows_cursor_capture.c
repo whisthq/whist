@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
- * @file windowscursor.c
+ * @file windows_cursor_capture.c
  * @brief This file defines the cursor types, functions, init and get.
 ============================
 Usage
@@ -21,7 +21,7 @@ Includes
 #include <whist/core/whist_memory.h>
 #include <whist/utils/aes.h>
 
-#include "cursor.h"
+#include "cursor_internal.h"
 
 /*
 ============================
