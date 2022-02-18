@@ -1,7 +1,7 @@
-import React from "react"
+import React, { useState } from "react"
 import Logo from "@app/components/icons/logo.svg"
 
-const Welcome = (props: { onSubmit: () => void }) => {
+const Introduction = (props: { onSubmit: () => void }) => {
   const onKeyDown = (evt: any) => {
     if (evt.key === "Enter") props.onSubmit()
   }
@@ -13,22 +13,25 @@ const Welcome = (props: { onSubmit: () => void }) => {
       className="flex flex-col h-screen w-full font-body outline-none bg-gray-900"
     >
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
-      <div className="m-auto text-center mt-36">
+      <div className="m-auto text-center mt-18">
         <img
           src={Logo}
-          className="w-24 h-24 m-auto animate-fade-in-up opacity-0"
+          className="w-16 h-16 m-auto animate-fade-in-up opacity-0"
         />
         <div
           className="text-gray-100 text-4xl mt-8 animate-fade-in-up opacity-0"
           style={{ animationDelay: "400ms" }}
         >
-          Sign in to <span className="font-bold">Whist</span>
+          Welcome to{" "}
+          <span className="font-bold text-transparent bg-clip-text bg-gradient-to-br from-purple-400 to-blue-400">
+            Whist
+          </span>
         </div>
         <div
           className="text-gray-400 mt-2 animate-fade-in-up opacity-0"
           style={{ animationDelay: "800ms" }}
         >
-          A next-generation cloud-streamed browser
+          First, an introduction
         </div>
         <div
           className="h-px w-32 bg-gray-700 rounded m-auto mt-8 animate-fade-in-up opacity-0"
@@ -44,7 +47,7 @@ const Welcome = (props: { onSubmit: () => void }) => {
             <kbd className="bg-gray-700 rounded px-2 py-1 text-xs mx-1">
               here
             </kbd>{" "}
-            to create an account
+            to continue
           </div>
         </button>
       </div>
@@ -52,4 +55,15 @@ const Welcome = (props: { onSubmit: () => void }) => {
   )
 }
 
-export default Welcome
+export default (props: { onSubmit: () => void }) => {
+  const [count, setCount] = useState(0)
+  if (count === 0)
+    return (
+      <Introduction
+        onSubmit={() => {
+          setCount(1)
+        }}
+      />
+    )
+  return <></>
+}

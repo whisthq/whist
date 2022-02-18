@@ -18,6 +18,7 @@ import Omnibar from "@app/renderer/pages/omnibar"
 import Background from "@app/renderer/pages/background"
 import Welcome from "@app/renderer/pages/welcome"
 import Support from "@app/renderer/pages/support"
+import Onboarding from "@app/renderer/pages/onboarding"
 import RestoreTabs from "@app/renderer/pages/restoreTabs"
 import { Provider } from "@app/renderer/context/omnibar"
 
@@ -184,13 +185,7 @@ const RootComponent = () => {
       />
     )
 
-  if (show === WindowHashOnboarding)
-    return (
-      <Network
-        networkInfo={mainState.networkInfo}
-        onSubmit={handleNetworkSubmit}
-      />
-    )
+  if (show === WindowHashOnboarding) return <Onboarding onSubmit={() => {}} />
   if (show === WindowHashLaunchLoading)
     return <Launching networkInfo={mainState.networkInfo} />
   if (show === WindowHashImportLoading) return <Importing />
