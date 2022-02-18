@@ -770,7 +770,11 @@ double get_cpu_usage(void) {
 #elif defined(__linux__)
     LOG_INFO("detected Linux\n");
     // Format: %Cpu(s):  1.6 us,  1.6 sy,  0.0 ni, 96.9 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
-    runcmd("top -n 1 | grep 'Cpu(s):'", &cpu_usage);
+    int res = runcmd("top -n 1 | grep 'Cpu(s):'", &cpu_usage);
+    int cpu_usage_non_null = (!cpu_usage) ? 0 : 1;
+    LOG_INFO("res=%i cpu_usage_non_null: %i", res, cpu_usage_non_null);
+    LOG_INFO("strlen=%lu", strlen(cpu_usage));
+
     LOG_INFO(" %s", cpu_usage);
     cpu_usage[strlen(cpu_usage) - 1] = '\0';  // remove newline
     LOG_INFO(" %s", cpu_usage);
@@ -790,10 +794,10 @@ double get_cpu_usage(void) {
     cpu_usage[end_index] = '\0';
 
     LOG_INFO("cpu_usage: %s", cpu_usage);
-    LOG_INFO("start_index: %f, end_index:%f",start_index, end_index);
+    LOG_INFO("start_index: %f, end_index:%f", start_index, end_index);
     double cpu_idle_pct = atof(&cpu_usage[start_index]);
     cpu_usage_pct = 100.00 - cpu_idle_pct;
-    LOG_INFO("cpu_usage_pct: %f",cpu_usage_pct);
+    LOG_INFO("cpu_usage_pct: %f", cpu_usage_pct);
 
 #endif
     free(cpu_usage);
