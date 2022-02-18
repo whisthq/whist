@@ -151,12 +151,12 @@ Main Attributes(always showing):
 - `type`, type of frame. Possible values: `VIDEO` or `AUDIO`
 - `num`, the number of all packets inside the frame, including fec packets.
 - `fec`, the number of fec packets inside the frame.
-- `is_iframe`, whether the frame is iframe or not. Possible values: `1`, `0`. (Only for `Video`)
+- `frame_type`, the type of frame, e.g. intra frame or normal frame. (Only for `Video`)
 - `first_seen`, the time we first seen the frame, i.e. the first segment of the frame arrives
 - `ready_time`, the time when the frame becomes ready to render, correspond to the `is_ready_to_render()` insider `ringbuffer.c`
 - `pending_time`, the time when the frame becomes pending, i.e. in a state that is waiting to be taken by the decoder thread
 - `decode_time`, the time when the frame is fed into the decoder.
-- `segment`, a break down of segments info
+- `segments`, a break down of segments info
 
 (In addition to the possible values, the value can be `-1` or `null`, indicate there is no value available)
 
