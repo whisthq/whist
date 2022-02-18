@@ -408,6 +408,7 @@ def server_setup_process(args_dict):
     configure_aws_credentials(
         hs_process,
         pexpect_prompt_server,
+        aws_timeout,
         running_in_ci,
         aws_credentials_filepath,
     )
@@ -495,6 +496,7 @@ def client_setup_process(args_dict):
         configure_aws_credentials(
             hs_process,
             pexpect_prompt_client,
+            aws_timeout,
             running_in_ci,
             aws_credentials_filepath,
         )
