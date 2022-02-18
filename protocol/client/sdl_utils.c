@@ -464,7 +464,6 @@ void sdl_update_cursor(WhistCursorInfo* cursor) {
             SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
                 bmp, bmp_width, bmp_height, sizeof(uint32_t) * 8, sizeof(uint32_t) * bmp_width,
                 CURSORIMAGE_R, CURSORIMAGE_G, CURSORIMAGE_B, CURSORIMAGE_A);
-            free(bmp);
 
             // Use BLENDMODE_NONE to allow for proper cursor blit-resize
             SDL_SetSurfaceBlendMode(cursor_surface, SDL_BLENDMODE_NONE);
@@ -487,12 +486,15 @@ void sdl_update_cursor(WhistCursorInfo* cursor) {
             // Copy the original cursor into the scaled surface
             SDL_BlitScaled(cursor_surface, NULL, scaled_cursor_surface, NULL);
 
+            // Release the original cursor surface
+            SDL_FreeSurface(cursor_surface);
+            free(bmp);
+
             // Potentially SDL_SetSurfaceBlendMode here since X11 cursor BMPs are
             // pre-alpha multplied. Remember to adjust hot_x/y by the DPI scaling.
             sdl_cursor =
                 SDL_CreateColorCursor(scaled_cursor_surface, cursor->png_hot_x * 96 / cursor_dpi,
                                       cursor->png_hot_y * 96 / cursor_dpi);
-            SDL_FreeSurface(cursor_surface);
             SDL_FreeSurface(scaled_cursor_surface);
         } else {
             // use cursor id to set cursor
@@ -505,8 +507,8 @@ void sdl_update_cursor(WhistCursorInfo* cursor) {
         // after a new cursor is created.
         if (cleanup_cursor) {
             SDL_FreeCursor(cleanup_cursor);
-            cleanup_cursor = sdl_cursor;
         }
+        cleanup_cursor = sdl_cursor;
 
         last_cursor_hash = cursor->hash;
     }
