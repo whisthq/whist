@@ -214,6 +214,7 @@ WhistCursorInfo* get_current_cursor(void) {
             }
 
             image = safe_malloc(sizeof(WhistCursorInfo) + png_size);
+            image->cursor_state = CURSOR_STATE_VISIBLE;
             image->using_png = true;
             image->png_width = cursor_image->width;
             image->png_height = cursor_image->height;
@@ -228,6 +229,7 @@ WhistCursorInfo* get_current_cursor(void) {
             image = safe_malloc(sizeof(WhistCursorInfo));
             memset(image, 0, sizeof(WhistCursorInfo));
             image->cursor_id = whist_id;
+            image->cursor_state = CURSOR_STATE_VISIBLE;
             image->using_png = false;
             image->hash = hash(&whist_id, sizeof(WhistCursorID));
         }
