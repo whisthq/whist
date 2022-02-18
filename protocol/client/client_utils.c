@@ -754,6 +754,7 @@ double get_cpu_usage(void) {
 
     for (int i = 0; i < 2; i++) {
         while (cpu_usage[start_index] != ',') start_index++;
+        start_index++;
     }
     start_index++;
 
@@ -776,6 +777,7 @@ double get_cpu_usage(void) {
 
     for (int i = 0; i < 3; i++) {
         while (cpu_usage[start_index] != ',') start_index++;
+        start_index++;
     }
     start_index++;
 
