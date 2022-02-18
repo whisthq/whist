@@ -5,7 +5,7 @@ void set_frame_cursor_info(VideoFrame* frame, WhistCursorInfo* cursor) {
         frame->has_cursor = false;
     } else {
         frame->has_cursor = true;
-        memcpy(frame->data, cursor, get_cursor_info_size(cursor));
+        memcpy(frame->data, cursor, whist_cursor_info_get_size(cursor));
     }
 }
 
@@ -20,7 +20,7 @@ WhistCursorInfo* get_frame_cursor_info(VideoFrame* frame) {
 unsigned char* get_frame_videodata(VideoFrame* frame) {
     unsigned char* data = frame->data;
     if (frame->has_cursor) {
-        data += get_cursor_info_size(get_frame_cursor_info(frame));
+        data += whist_cursor_info_get_size(get_frame_cursor_info(frame));
     }
     return data;
 }
@@ -30,7 +30,7 @@ int get_total_frame_size(VideoFrame* frame) {
     size_t size = sizeof(VideoFrame);
     // Size of dynamic content
     if (frame->has_cursor) {
-        size += get_cursor_info_size(get_frame_cursor_info(frame));
+        size += whist_cursor_info_get_size(get_frame_cursor_info(frame));
     }
     size += frame->videodata_length;
     return (int)size;

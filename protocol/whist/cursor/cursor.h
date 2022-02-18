@@ -91,24 +91,74 @@ Public Functions
 */
 
 /**
- * @brief                          Initialize all cursors
+ * @brief                          Initialize cursor capturing
  */
-void init_cursors(void);
+void whist_cursor_capture_init(void);
 
 /**
- * @brief                          Returns the current cursor image
- *
- * @returns                       The current cursor image
+ * @brief                          Shut down cursor capturing
  */
-WhistCursorInfo* get_current_cursor(void);
+void whist_cursor_capture_destroy(void);
 
 /**
  * @brief                          Returns the size of the WhistCursorInfo struct
  *
  * @param image                    The WhistCursorInfo struct
  *
- * @returns                       The size of the WhistCursorInfo struct
+ * @returns                        The size of the WhistCursorInfo struct
  */
-size_t get_cursor_info_size(WhistCursorInfo* image);
+size_t whist_cursor_info_get_size(WhistCursorInfo* image);
+
+/**
+ * @brief                          Returns WhistCursorInfo from a cursor id
+ *
+ * @param cursor_id                The WhistCursorID from which to generate the cursor info
+ * @param state                    The cursor visibility state (visible or hidden)
+ *
+ * @returns                        The generated cursor info as a pointer to
+ *                                 a WhistCursorInfo struct, which must be freed
+ *                                 by the caller
+ */
+WhistCursorInfo* whist_cursor_info_from_id(WhistCursorID id, WhistCursorState state);
+
+/**
+ * @brief                          Returns WhistCursorInfo from RGBA pixel data
+ *
+ * @param rgba                     The RGBA pixel data from which to generate the cursor info as a
+ *                                 uint32_t array
+ *
+ * @param width                    The width of the RGBA pixel data
+ * @param height                   The height of the RGBA pixel data
+ * @param hot_x                    The x-coordinate of the cursor hotspot
+ * @param hot_y                    The y-coordinate of the cursor hotspot
+ * @param state                    The cursor visibility state (visible or hidden)
+ *
+ * @returns                        The generated cursor info as a pointer to
+ *                                 a WhistCursorInfo struct, which must be freed
+ *                                 by the caller
+ */
+WhistCursorInfo* whist_cursor_info_from_rgba(const uint32_t* rgba, unsigned short width,
+                                             unsigned short height, unsigned short hot_x,
+                                             unsigned short hot_y, WhistCursorState state);
+
+/**
+ * @brief                          Return RGBA pixel data from a WhistCursorInfo struct
+ *
+ * @param info                     The WhistCursorInfo struct from which to generate the RGBA pixel
+ * data
+ *
+ * @returns                        The RGBA pixel data as a pointer to a uint8_t array, which must
+ * be freed by the caller
+ */
+uint8_t* whist_cursor_info_to_rgba(const WhistCursorInfo* info);
+
+/**
+ * @brief                          Returns the current cursor image
+ *
+ * @returns                        The current cursor image as a pointer to a
+ *                                 WhistCursorInfo struct, which must be freed
+ *                                 by the caller.
+ */
+WhistCursorInfo* whist_cursor_capture(void);
 
 #endif  // CURSOR_H

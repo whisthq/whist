@@ -84,8 +84,8 @@ In an ideal world, we'd use the NVIDIA Capture SDK with the NVIDIA encoder. Howe
 │   │   ├── whistgetopt.c <- Cross-platform getopt
 │   │   └── whist_memory.c <- Memory handling
 │   ├── cursor
-│   │   ├── linuxcursor.c <- get_current_cursor for Linux
-│   │   └── windowscursor.c <- get_current_cursor for Windows
+│   │   ├── linuxcursor.c <- whist_cursor_capture for Linux
+│   │   └── windowscursor.c <- whist_cursor_capture for Windows
 │   ├── file
 │   │   ├── file_drop.c <- Handles dropping a file into window
 │   │   └── file_synchronizer.c.c <- Sync file transfer between client and server
