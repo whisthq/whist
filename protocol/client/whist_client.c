@@ -463,29 +463,11 @@ int whist_client_main(int argc, char* argv[]) {
             // Try rendering anything out, if there's something to render out
             renderer_try_render(whist_renderer);
 
-// Log cpu usage once per second
+            // Log cpu usage once per second
 #if defined(__APPLE__) || defined(__linux__)
             if (get_timer(&cpu_usage_statistics_timer) * MS_IN_SECOND > 1000.0) {
-                char* cpu_usage = NULL;
-                runcmd("top -l 1 | grep -E '^CPU'", &cpu_usage);
-                cpu_usage[strlen(cpu_usage) - 1] = '\0';  // remove newline
-                LOG_INFO("%s", cpu_usage);
-                if (strlen(cpu_usage) >= strlen("CPU usage: 0.00% user, 0.00% sys, 0.00% idle")) {
-                    int start_index = 0, end_index = 0;
-                    while (cpu_usage[start_index] != ',') start_index++;
-                    start_index++;
-                    while (cpu_usage[start_index] != ',') start_index++;
-                    start_index++;
-                    end_index = start_index;
-                    while (cpu_usage[end_index] != '%') end_index++;
-                    cpu_usage[end_index] = '\0';
-                    printf("cpu_usage: %s\n", cpu_usage);
-                    double cpu_idle_pct = atof(&cpu_usage[start_index]);
-                    double cpu_usage_pct = 100.00 - cpu_idle_pct;
-                    LOG_INFO("CPU USAGE: %f", cpu_usage_pct);
-                    log_double_statistic(CLIENT_CPU_USAGE, cpu_usage_pct);
-                }
-                free(cpu_usage);
+                double cpu_usage = get_cpu_usage();
+                log_double_statistic(CLIENT_CPU_USAGE, cpu_usage);
             }
 #endif
 

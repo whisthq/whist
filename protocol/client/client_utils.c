@@ -740,3 +740,56 @@ void send_new_tab_url_if_needed(void) {
         }
     }
 }
+
+double get_cpu_usage(void) {
+    char *cpu_usage = NULL;
+    double cpu_usage_pct = -1.0;
+#ifdef __APPLE__
+    // Format: CPU usage: 0.00% user, 0.00% sys, 0.00% idle"
+    runcmd("top -l 1 | grep -E '^CPU'", &cpu_usage);
+    cpu_usage[strlen(cpu_usage) - 1] = '\0';  // remove newline
+    LOG_INFO("%s", cpu_usage);
+
+    int start_index = 0, end_index = 0;
+
+    for (int i = 0; i < 2; i++) {
+        while (cpu_usage[start_index] != ',') start_index++;
+    }
+    start_index++;
+
+    end_index = start_index;
+    while (cpu_usage[end_index] != '%') end_index++;
+
+    cpu_usage[end_index] = '\0';
+
+    printf("cpu_usage: %s\n", cpu_usage);
+
+    double cpu_idle_pct = atof(&cpu_usage[start_index]);
+    cpu_usage_pct = 100.00 - cpu_idle_pct;
+#elif __linux__
+    // Format: %Cpu(s):  1.6 us,  1.6 sy,  0.0 ni, 96.9 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+    runcmd("top -n 1 | grep 'Cpu(s):'", &cpu_usage);
+    cpu_usage[strlen(cpu_usage) - 1] = '\0';  // remove newline
+    LOG_INFO("%s", cpu_usage);
+
+    int start_index = 0, end_index = 0;
+
+    for (int i = 0; i < 3; i++) {
+        while (cpu_usage[start_index] != ',') start_index++;
+    }
+    start_index++;
+
+    end_index = start_index;
+    while (cpu_usage[end_index] != ' ') end_index++;
+
+    cpu_usage[end_index] = '\0';
+
+    printf("cpu_usage: %s\n", cpu_usage);
+
+    double cpu_idle_pct = atof(&cpu_usage[start_index]);
+    cpu_usage_pct = 100.00 - cpu_idle_pct;
+
+#endif
+    free(cpu_usage);
+    return cpu_usage_pct;
+}
