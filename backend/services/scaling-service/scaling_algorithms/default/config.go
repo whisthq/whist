@@ -3,6 +3,7 @@ package scaling_algorithms
 import (
 	"time"
 
+	"github.com/whisthq/whist/backend/services/constants"
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
@@ -18,7 +19,6 @@ const (
 )
 
 const (
-	MandelboxesPerGPU = 3
 	VCPUSPerMandelbox = 4
 )
 
@@ -67,7 +67,7 @@ func generateInstanceCapacityMap() map[string]int {
 		if !ok {
 			continue
 		}
-		capacityMap[instanceType] = utils.Min(gpuNum*MandelboxesPerGPU, vcpuNum/VCPUSPerMandelbox)
+		capacityMap[instanceType] = utils.Min(gpuNum*constants.MaxMandelboxesPerGPU, vcpuNum/VCPUSPerMandelbox)
 	}
 	return capacityMap
 }
