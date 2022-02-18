@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/whisthq/whist/backend/services/metadata"
 	"github.com/whisthq/whist/backend/services/utils"
 )
 
@@ -24,6 +25,11 @@ func NewS3Client(region string) (*s3.Client, error) {
 	return s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.Region = region
 	}), nil
+}
+
+// GetConfigBucket returns name of the S3 bucket that contains the encrypted user configs.
+func GetConfigBucket() string {
+	return utils.Sprintf("whist-user-app-configs-%s", metadata.GetAppEnvironmentLowercase())
 }
 
 // GetHeadObject returns the head object of the given bucket and key.

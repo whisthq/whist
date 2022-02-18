@@ -12,7 +12,9 @@ import time
 from typing import Any, Dict, List, Optional
 import boto3
 
+from flask import current_app
 from app.constants.ec2_instance_states import EC2InstanceState
+from app.constants.env_names import PRODUCTION, STAGING, DEVELOPMENT
 from app.utils.aws.ec2_userdata import userdata_template
 from app.utils.cloud_interface.base_cloud_interface import CloudClient
 from app.utils.general.logs import whist_logger
@@ -72,6 +74,10 @@ class EC2Client(CloudClient):
         # instance parameters here, at call time.
         # Note that the IamInstanceProfile is set to one created in the
         # Console to allows read-only EC2 access and full S3 access.
+
+        # Get instance profile to launch instances.
+        profile = self.get_instance_profile()
+
         kwargs = {
             "ImageId": image_id,
             "InstanceType": instance_type,
@@ -87,7 +93,7 @@ class EC2Client(CloudClient):
             ],
             "UserData": userdata_template,
             "IamInstanceProfile": {
-                "Arn": "arn:aws:iam::747391415460:instance-profile/TestDeploymentRole"
+                "Arn": profile,
             },
             "InstanceInitiatedShutdownBehavior": "terminate",
         }
@@ -216,3 +222,16 @@ class EC2Client(CloudClient):
         for instance in instance_info:
             resdict[instance["InstanceId"]] = instance["PublicIpAddress"]
         return resdict
+
+    def get_instance_profile(self) -> str:
+        # TODO all all environment instance profiles
+        # once we promote Terraform to staging and prod.
+        if current_app.config["ENVIRONMENT"] == DEVELOPMENT:
+            return "arn:aws:iam::747391415460:instance-profile/EC2DeploymentRoleInstanceProfile"
+        elif current_app.config["ENVIRONMENT"] == STAGING:
+            return ""
+        elif current_app.config["ENVIRONMENT"] == PRODUCTION:
+            return ""
+        else:
+            # Default to dev
+            return "arn:aws:iam::747391415460:instance-profile/EC2DeploymentRoleInstanceProfile"

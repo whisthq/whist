@@ -64,6 +64,15 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 		return nil, utils.MakeError("failed to encode userdata for launching instances. Err: %v", err)
 	}
 
+	// Get instance profile to launch instances
+	profile := getInstanceProfile()
+
+	// Get main subnet for the current region and env
+	main, err := host.GetMainSubnet(scalingCtx)
+	if err != nil {
+		return nil, utils.MakeError("failed to get main subnet. Err: %v", err)
+	}
+
 	// Set run input
 	input := &ec2.RunInstancesInput{
 		MinCount:                          aws.Int32(MIN_INSTANCE_COUNT),
@@ -72,8 +81,9 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 		InstanceInitiatedShutdownBehavior: ec2Types.ShutdownBehaviorTerminate,
 		InstanceType:                      INSTANCE_TYPE,
 		IamInstanceProfile: &ec2Types.IamInstanceProfileSpecification{
-			Arn: aws.String("arn:aws:iam::747391415460:instance-profile/TestDeploymentRole"),
+			Arn: aws.String(profile),
 		},
+		SubnetId:     main.SubnetId,
 		UserData:     aws.String(userData),
 		EbsOptimized: aws.Bool(true), // This has to be set at launch time, otherwise AWS will disable the optimization
 	}
@@ -256,6 +266,36 @@ func (host *AWSHost) WaitForInstanceReady(scalingCtx context.Context, maxWaitTim
 	return nil
 }
 
+// GetMainSubnet returns the main subnet of the region for the current environment.
+func (host *AWSHost) GetMainSubnet(scalingCtx context.Context) (ec2Types.Subnet, error) {
+	ctx, cancel := context.WithCancel(scalingCtx)
+	defer cancel()
+
+	env := metadata.GetAppEnvironmentLowercase()
+	// find the main subnet for the current environment using tags.
+	input := &ec2.DescribeSubnetsInput{
+		Filters: []ec2Types.Filter{
+			{
+				Name:   aws.String("Env"),
+				Values: []string{env},
+			},
+			{
+				Name:   aws.String("Terraform"),
+				Values: []string{"true"},
+			},
+		},
+	}
+	output, err := host.EC2.DescribeSubnets(ctx, input)
+	if err != nil {
+		return ec2Types.Subnet{}, utils.MakeError("failed to get main subnet for env %v. Err: %v", env, err)
+	}
+
+	if len(output.Subnets) == 0 {
+		return ec2Types.Subnet{}, utils.MakeError("Couldn't find the main subnet for env %v", env)
+	}
+	return output.Subnets[0], nil
+}
+
 // GenerateName is a helper function for generating an instance
 // name using a random UUID.
 func (host *AWSHost) GenerateName() string {
@@ -263,6 +303,23 @@ func (host *AWSHost) GenerateName() string {
 		metadata.GetGitCommit()[0:7], shortuuid.New())
 }
 
+// getInstanceProfile returns the arn of the instance profile to use.
+func getInstanceProfile() string {
+	// TODO: fill out the cases with all environments
+	// once we promote Terraform.
+	switch metadata.GetAppEnvironmentLowercase() {
+	case "dev":
+		return "arn:aws:iam::747391415460:instance-profile/EC2DeploymentRoleInstanceProfile"
+	case "staging":
+		return ""
+	case "prod":
+		return ""
+	default:
+		return "arn:aws:iam::747391415460:instance-profile/EC2DeploymentRoleInstanceProfile"
+	}
+}
+
+// getUserData returns the base64 encoded userdata file to pass to instances.
 func getUserData() (string, error) {
 	// Return as a base64 encoded string to pass to the EC2 client
 	return base64.StdEncoding.EncodeToString(userDataFile), nil
