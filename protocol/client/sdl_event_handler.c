@@ -27,6 +27,7 @@ Includes
 #include "network.h"
 #include "native_window_utils.h"
 #include <whist/utils/atomic.h>
+#include <whist/tools/debug_console.h>
 
 // Keyboard state variables
 static bool alt_pressed = false;
@@ -376,6 +377,9 @@ static int handle_sdl_event(SDL_Event *event) {
                 WhistClientMessage wcmsg = {0};
                 wcmsg.type = MESSAGE_STOP_STREAMING;
                 whist_sleep(100);
+                if (get_debug_console_override_values()->no_minimize) {
+                    break;
+                }
                 send_wcmsg(&wcmsg);
             } else if (event->window.event == SDL_WINDOWEVENT_UNOCCLUDED) {
                 LOG_INFO("SDL_WINDOWEVENT_UNOCCLUDED - Start Streaming");
@@ -388,6 +392,9 @@ static int handle_sdl_event(SDL_Event *event) {
                 LOG_INFO("SDL_WINDOWEVENT_MINIMIZED - Stop Streaming");
                 WhistClientMessage wcmsg = {0};
                 wcmsg.type = MESSAGE_STOP_STREAMING;
+                if (get_debug_console_override_values()->no_minimize) {
+                    break;
+                }
                 send_wcmsg(&wcmsg);
             } else if (event->window.event == SDL_WINDOWEVENT_RESTORED) {
                 LOG_INFO("SDL_WINDOWEVENT_RESTORED - Start Streaming");

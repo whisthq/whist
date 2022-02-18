@@ -13,6 +13,7 @@ Includes
 #include "renderer.h"
 #include "client_statistic.h"
 #include "sdl_event_handler.h"
+#include "whist/tools/debug_console.h"
 
 /*
 ============================
@@ -161,6 +162,10 @@ void renderer_try_render(WhistRenderer* whist_renderer) {
         whist_renderer->using_renderer_thread = false;
     }
 #endif
+
+    if (get_debug_console_override_values()->simulate_freeze) {
+        whist_sleep(5);
+    }
 
     // If the audio device is pending an update,
     // refresh the audio device

@@ -355,6 +355,7 @@ set(PLATFORM_INDEPENDENT_LIBS   whistCore
     whistNetwork
     whistLogging
     whistUtils
+    whistTools
     ${STATIC_SDL2}
     ${LIB_SENTRY}
 )
@@ -448,6 +449,7 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile 
         whistNetwork
         whistLogging
         whistUtils
+        whistTools
         ${STATIC_SDL2}
         ${LIB_SENTRY}
         ${LIBMFX}

@@ -28,6 +28,7 @@ Includes
 #include <whist/logging/logging.h>
 #include <whist/logging/error_monitor.h>
 #include <whist/core/whistgetopt.h>
+#include <whist/tools/debug_console.h>
 
 /*
 ============================
@@ -88,6 +89,7 @@ static const struct option client_cmd_options[] = {
     {"skip-taskbar", no_argument, NULL, 's'},
     {"session-id", required_argument, NULL, 'd'},
     {"new-tab-url", required_argument, NULL, 'x'},
+    {"debug-console", required_argument, NULL, WHIST_GETOPT_DEBUG_CONSOLE_CHAR},
     // these are standard for POSIX programs
     {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
     {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
@@ -264,6 +266,15 @@ static int evaluate_arg(int eval_opt, char *eval_optarg) {
 
             break;
         }
+        case WHIST_GETOPT_DEBUG_CONSOLE_CHAR: {
+            ret = strtol(eval_optarg, &endptr, 10);
+            if (errno != 0 || *endptr != '\0' || ret > 65535 || ret < 0) {
+                printf("parameter for debug-console is invalid, %s", usage);
+                return -1;
+            }
+            enable_debug_console((int)ret);
+            break;
+        }
         default: {
             if (eval_opt != -1) {
                 // illegal option
@@ -332,6 +343,9 @@ int client_parse_args(int argc, char *argv[]) {
         "                                  in the taskbar\n"
         "  -d, --session-id=ID           Set the session ID for the protocol's error logging\n"
         "  -x, --new-tab-url             URL to open in new tab \n"
+#ifdef USE_DEBUG_CONSOLE
+        "      --debug-console=PORT      Enable debug_console and related tools\n"
+#endif
         // special options should be indented further to the left
         "      --help     Display this help and exit\n"
         "      --version  Output version information and exit\n";
