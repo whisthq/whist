@@ -50,4 +50,6 @@ void init_client_statistics(void) {
         (StatisticInfo){"VIDEO_UPDATE_TIME", true, false, false};
     client_statistic_info[NOTIFICATIONS_RECEIVED] =
         (StatisticInfo){"NOTIFICATIONS_RECEIVED", false, false, true};
+    client_statistic_info[CLIENT_CPU_USAGE] =
+        (StatisticInfo){"CLIENT_CPU_USAGE", true, false, true};
 }
