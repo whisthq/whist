@@ -18,9 +18,8 @@ const (
 	DESIRED_FREE_MANDELBOXES = 2
 )
 
-const (
-	VCPUSPerMandelbox = 4
-)
+// VCPUSPerMandelbox indicates the number of vCPUs allocated per mandelbox.
+const VCPUSPerMandelbox = 4
 
 var instanceTypeToGPUNum = map[string]int{
 	"g4dn.xlarge":   1,
