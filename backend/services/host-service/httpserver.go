@@ -239,8 +239,9 @@ func getAppName(mandelboxSubscription subscriptions.Mandelbox, transportRequestM
 		}
 
 	} else {
-		// If not on a local environment, we default to using the `browsers/chrome` image.
-		AppName = mandelboxtypes.AppName(mandelboxSubscription.App)
+		// If not on a local environment, we pull the app name from the database event.
+		// We need to append the "browsers/" prefix.
+		AppName = mandelboxtypes.AppName(utils.Sprintf("browsers/", mandelboxSubscription.App))
 	}
 
 	return req, AppName
