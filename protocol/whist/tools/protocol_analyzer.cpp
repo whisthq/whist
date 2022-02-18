@@ -65,8 +65,9 @@ struct SegmentLevelInfo {
     vector<Timestamp> time_us;  // the arrival time of segment, it's a vector since a segment can
                                 // arrive multiple times
     vector<Timestamp> retrans_time_us;
-    vector<Timestamp>
-        nack_time_us;  // the time we send a nack to server for this segment, also a vector
+
+    // the time we send a nack to server for this segment, also a vector
+    vector<Timestamp> nack_time_us;
 };
 
 // FrameLevelInfo
@@ -82,25 +83,29 @@ struct FrameLevelInfo {
     int num_of_fec_packets = 0;      // num of fec packets
     int skip_to = -1;                // we got a frame skip from the current frame to this frame
     int reset_ringbuffer_to = -1;  // we got a ringbutter reset from the current frame to this from
-    int reset_ringbuffer_from =
-        -1;  // we got a ringbuffer reset from this frame to the current frame
+
+    // we got a ringbuffer reset from this frame to the current frame
+    int reset_ringbuffer_from = -1;
+
     // vector<TimedID> reset_ringbuffer_vec;
 
     int nack_cnt = 0;    // how many received segments comes with is_nack flag, count duplicate
     bool nack_used = 0;  // nack is used for recovering the frame
-    bool fec_used =
-        0;  // fec is used for recovering the frame. fec_used and nack_used can be both true
+
+    // fec is used for recovering the frame. fec_used and nack_used can be both true
+    bool fec_used = 0;
     bool fec_used_after_nack = 0;  // fec is used after nack
 
     int num_received = 0;  // number of segments arrived in the frames, without counting duplicate
-    int num_received_nonack =
-        0;  // number of segments arrived without the is_nack flag, without counting duplicate
+
+    // number of segments arrived without the is_nack flag, without counting duplicate
+    int num_received_nonack = 0;
     // int num_fec_received = 0;  // number of fec segments arrived, without counting duplicate
 
-    Timestamp become_current_rending_time =
-        -1;  // the time this frame becomes the current_rendering inside ringbuffer
-    Timestamp become_pending_time =
-        -1;  // the time this frame become pending (waiting for decoder to take away)
+    // the time this frame becomes the current_rendering inside ringbuffer
+    Timestamp become_current_rending_time = -1;
+    // the time this frame become pending (waiting for decoder to take away)
+    Timestamp become_pending_time = -1;
 
     int overwrite_id = -1;  // while this frame becomes the current_rending frame inside
                             // ringbuffer, it overwrites a frame that never becomes pending
@@ -591,8 +596,9 @@ string ProtocolAnalyzer::get_stat(int type, int num_of_records, int skip_last) {
 
     int recovery_by_nack_cnt = 0;  // num of frames recovered by nack
     int recovery_by_fec_cnt = 0;   // num of frames recoverd by fec
-    int recovery_by_fec_after_nack_cnt =
-        0;  // num of frames recovered by fec after ack (or think it as both fec and ack)
+
+    // num of frames recovered by fec after ack (or think it as by both fec and ack)
+    int recovery_by_fec_after_nack_cnt = 0;
 
     int total_seen_cnt = 0;   // num of all frames that was seen
     int total_ready_cnt = 0;  // num of frames become ready
