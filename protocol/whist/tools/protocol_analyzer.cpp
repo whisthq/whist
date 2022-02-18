@@ -76,7 +76,7 @@ struct FrameLevelInfo {
     Timestamp ready_time = -1;       // the time when the frame becomes ready
     Timestamp decode_time = -1;      // the time then the frame is feeded into decoder
     Timestamp first_seen_time = -1;  // the first time we see the packet
-    int is_iframe = -1;              // whether iframe or not, only used for video
+    int frame_type = -1;             // the type of frame, e.g. iframe, only used for video
     int is_empty = -1;               // whehter empty frame or not, only used for audio
     int num_of_packets = -1;         // num of packets including fec
     int num_of_fec_packets = 0;      // num of fec packets
@@ -228,7 +228,7 @@ struct ProtocolAnalyzer {
         WhistPacket *whist_packet = (WhistPacket *)frame_buffer;
         if (type == PACKET_VIDEO) {
             VideoFrame *frame = (VideoFrame *)whist_packet->data;
-            info.is_iframe = frame->is_iframe;
+            info.frame_type = frame->frame_type;
             info.is_empty = frame->is_empty_frame;
         } else if (type == PACKET_AUDIO) {
             // AudioFrame *frame = (AudioFrame *)whist_packet->data;
@@ -325,6 +325,7 @@ Private Functions
 
 static Timestamp get_timestamp(void);
 static string time_to_str(Timestamp t, bool more_format);
+static string video_frame_type_to_str(int frame_type);
 
 /*
 ============================
@@ -433,7 +434,7 @@ string FrameLevelInfo::to_string(bool more_format) {
     ss << "num=" << num_of_packets << ",";
     ss << "fec=" << num_of_fec_packets << ",";
     if (type == PACKET_VIDEO) {
-        ss << "is_iframe=" << is_iframe << ",";
+        ss << "frame_type=" << video_frame_type_to_str(frame_type) << ",";
         // ss << "is_empty=" << is_empty << ",";
     }
     ss << "first_seen=" << time_to_str(first_seen_time, more_format) << ",";
@@ -702,4 +703,22 @@ string ProtocolAnalyzer::get_stat(int type, int num_of_records, int skip_last) {
 #endif
 
     return ss.str();
+}
+
+// a pretty print helper for video frame type, used only inside analyzer
+string video_frame_type_to_str(int frame_type) {
+    switch (frame_type) {
+        case VIDEO_FRAME_TYPE_NORMAL:
+            return "Normal";
+        case VIDEO_FRAME_TYPE_INTRA:
+            return "Intra";
+        case VIDEO_FRAME_TYPE_CREATE_LONG_TERM:
+            return "Create_LT";
+        case VIDEO_FRAME_TYPE_REFER_LONG_TERM:
+            return "Refer_LT";
+        case -1:
+            return "null";
+        default:
+            return "unknown";
+    }
 }
