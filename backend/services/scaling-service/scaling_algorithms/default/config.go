@@ -66,7 +66,7 @@ func generateInstanceCapacityMap() map[string]int {
 		if !ok {
 			continue
 		}
-		capacityMap[instanceType] = utils.Min(gpuNum*constants.MaxMandelboxesPerGPU, vcpuNum/VCPUSPerMandelbox)
+		capacityMap[instanceType] = utils.Min(gpuNum*constants.MaxMandelboxesPerGPU, vcpuNum/VCPUsPerMandelbox)
 	}
 	return capacityMap
 }
