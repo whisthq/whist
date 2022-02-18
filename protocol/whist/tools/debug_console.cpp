@@ -60,7 +60,7 @@ static int skip_last = 60;      // skip last few packets, since they might not h
                                 // arrived.
 static int num_records = 2000;  // num of records included in the report
 
-static DebugConsoleOverridedValues g_overrided_values;
+static DebugConsoleOverrideValues g_override_values;
 
 /*
 ============================
@@ -78,7 +78,7 @@ Public Function Implementations
 ============================
 */
 
-DebugConsoleOverridedValues *get_debug_console_overrided_values() { return &g_overrided_values; }
+DebugConsoleOverrideValues *get_debug_console_override_values() { return &g_override_values; }
 
 void enable_debug_console(int port) { debug_console_listen_port = port; }
 int init_debug_console() {
@@ -107,7 +107,7 @@ Private Function Implementations
 
 static void init_overrided_values(void) {
     // if you need to force some value frequenly, you can set it here at compile time
-    // g_overrided_values.no_minimize = 1;
+    // g_override_values.no_minimize = 1;
     // g_overridee_values.verbose_log = 1;
 }
 
@@ -145,25 +145,25 @@ static string handle_set(vector<string> cmd) {
     if (cmd.size() == 3) {
         int ok = 1;
         if (cmd[1] == "bitrate") {
-            g_overrided_values.bitrate = stoi(cmd[2]);
+            g_override_values.bitrate = stoi(cmd[2]);
         } else if (cmd[1] == "burst_bitrate") {
-            g_overrided_values.burst_bitrate = stoi(cmd[2]);
+            g_override_values.burst_bitrate = stoi(cmd[2]);
         } else if (cmd[1] == "video_fec_ratio") {
-            g_overrided_values.video_fec_ratio = stod(cmd[2]);
+            g_override_values.video_fec_ratio = stod(cmd[2]);
         } else if (cmd[1] == "audio_fec_ratio") {
-            g_overrided_values.audio_fec_ratio = stod(cmd[2]);
+            g_override_values.audio_fec_ratio = stod(cmd[2]);
         } else if (cmd[1] == "skip_last") {
             skip_last = stoi(cmd[2]);
         } else if (cmd[1] == "report_num") {
             num_records = stoi(cmd[2]);
         } else if (cmd[1] == "no_minimize") {
-            g_overrided_values.no_minimize = stoi(cmd[2]);
+            g_override_values.no_minimize = stoi(cmd[2]);
         } else if (cmd[1] == "verbose_log") {
-            g_overrided_values.verbose_log = stoi(cmd[2]);
+            g_override_values.verbose_log = stoi(cmd[2]);
         } else if (cmd[1] == "verbose_log_audio") {
-            g_overrided_values.verbose_log_audio = stoi(cmd[2]);
+            g_override_values.verbose_log_audio = stoi(cmd[2]);
         } else if (cmd[1] == "simulate_freeze") {
-            g_overrided_values.simulate_freeze = stoi(cmd[2]);
+            g_override_values.simulate_freeze = stoi(cmd[2]);
         } else {
             ok = 0;
         }
@@ -206,13 +206,13 @@ static string handle_report(vector<string> cmd) {
 static string handle_info(vector<string> cmd) {
     FATAL_ASSERT(cmd[0] == "info");
     stringstream ss;
-    ss << "bitrate=" << g_overrided_values.bitrate << endl;
-    ss << "burst_bitrate=" << g_overrided_values.burst_bitrate << endl;
-    ss << "audio_fec_ratio=" << g_overrided_values.audio_fec_ratio << endl;
-    ss << "video_fec_ratio=" << g_overrided_values.video_fec_ratio << endl;
-    ss << "no_minimize=" << g_overrided_values.no_minimize << endl;
-    ss << "verbose_log=" << g_overrided_values.verbose_log << endl;
-    ss << "verbose_log_audio=" << g_overrided_values.verbose_log_audio << endl;
+    ss << "bitrate=" << g_override_values.bitrate << endl;
+    ss << "burst_bitrate=" << g_override_values.burst_bitrate << endl;
+    ss << "audio_fec_ratio=" << g_override_values.audio_fec_ratio << endl;
+    ss << "video_fec_ratio=" << g_override_values.video_fec_ratio << endl;
+    ss << "no_minimize=" << g_override_values.no_minimize << endl;
+    ss << "verbose_log=" << g_override_values.verbose_log << endl;
+    ss << "verbose_log_audio=" << g_override_values.verbose_log_audio << endl;
     ss << "skip_last=" << skip_last << endl;
     ss << "report_num=" << num_records;
     return ss.str();

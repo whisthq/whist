@@ -139,22 +139,22 @@ NetworkSettings get_desired_network_settings(NetworkStatistics stats) {
     network_settings.video_fec_ratio = default_network_settings.video_fec_ratio;
     network_settings.desired_codec = default_network_settings.desired_codec;
 
-    if (get_debug_console_overrided_values()->verbose_log) {
+    if (get_debug_console_override_values()->verbose_log) {
         LOG_INFO("[current_rates] bitrate=%d burst_bitrate=%d", network_settings.bitrate,
                  network_settings.burst_bitrate);
     }
 
-    if (get_debug_console_overrided_values()->bitrate) {
-        network_settings.bitrate = get_debug_console_overrided_values()->bitrate;
+    if (get_debug_console_override_values()->bitrate) {
+        network_settings.bitrate = get_debug_console_override_values()->bitrate;
     }
-    if (get_debug_console_overrided_values()->burst_bitrate) {
-        network_settings.burst_bitrate = get_debug_console_overrided_values()->burst_bitrate;
+    if (get_debug_console_override_values()->burst_bitrate) {
+        network_settings.burst_bitrate = get_debug_console_override_values()->burst_bitrate;
     }
-    if (get_debug_console_overrided_values()->audio_fec_ratio) {
-        network_settings.audio_fec_ratio = get_debug_console_overrided_values()->audio_fec_ratio;
+    if (get_debug_console_override_values()->audio_fec_ratio) {
+        network_settings.audio_fec_ratio = get_debug_console_override_values()->audio_fec_ratio;
     }
-    if (get_debug_console_overrided_values()->video_fec_ratio) {
-        network_settings.video_fec_ratio = get_debug_console_overrided_values()->video_fec_ratio;
+    if (get_debug_console_override_values()->video_fec_ratio) {
+        network_settings.video_fec_ratio = get_debug_console_override_values()->video_fec_ratio;
     }
 
     // Clamp to bounds

@@ -41,7 +41,7 @@ typedef struct {
     int verbose_log;
     int verbose_log_audio;  // you can add more log flags like this
     int simulate_freeze;    // this is an expample rather than a out-of-box option
-} DebugConsoleOverridedValues;
+} DebugConsoleOverrideValues;
 
 /*
 ============================
@@ -52,9 +52,9 @@ Public Functions
 /**
  * @brief                          Ger overrided values from debug console
  *
- * @returns                        A pointer to the struct of all overrided values
+ * @returns                        A pointer to the struct of all override values
  */
-DebugConsoleOverridedValues* get_debug_console_overrided_values(void);
+DebugConsoleOverrideValues* get_debug_console_override_values(void);
 
 /**
  * @brief                          Enable debug console on the specific UDP port
