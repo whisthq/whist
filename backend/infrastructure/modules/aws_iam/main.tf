@@ -76,6 +76,13 @@ resource "aws_iam_role" "EC2DeploymentRole" {
   }
 }
 
+# Create an instance profile for the deployment role because 
+# Terraform doesn't create it by default.
+resource "aws_iam_instance_profile" "EC2DeploymentRoleInstanceProfile" {
+   name = "EC2DeploymentRoleInstanceProfile"
+   role = aws_iam_role.EC2DeploymentRole.name
+}
+
 #IAM User groups
 
 resource "aws_iam_group" "Whist2FA" {
