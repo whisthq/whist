@@ -708,17 +708,22 @@ string ProtocolAnalyzer::get_stat(int type, int num_of_records, int skip_last) {
 // a pretty print helper for video frame type, used only inside analyzer
 string video_frame_type_to_str(int frame_type) {
     switch (frame_type) {
-        case VIDEO_FRAME_TYPE_NORMAL:
+        case VIDEO_FRAME_TYPE_NORMAL: {
             return "Normal";
-        case VIDEO_FRAME_TYPE_INTRA:
+        }
+        case VIDEO_FRAME_TYPE_INTRA: {
             return "Intra";
-        case VIDEO_FRAME_TYPE_CREATE_LONG_TERM:
+        }
+        case VIDEO_FRAME_TYPE_CREATE_LONG_TERM: {
             return "Create_LT";
-        case VIDEO_FRAME_TYPE_REFER_LONG_TERM:
+        }
+        case VIDEO_FRAME_TYPE_REFER_LONG_TERM: {
             return "Refer_LT";
-        case -1:
-            return "null";
-        default:
-            return "unknown";
+        }
+        default: {
+            stringstream ss;
+            ss << frame_type;
+            return ss.str();
+        }
     }
 }
