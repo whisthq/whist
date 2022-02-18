@@ -35,6 +35,7 @@ Includes
 #include <whist/logging/error_monitor.h>
 #include <whist/video/transfercapture.h>
 #include <whist/logging/log_statistic.h>
+#include "whist/video/ltr.h"
 #include "client.h"
 #include "network.h"
 #include "video.h"
@@ -65,7 +66,12 @@ typedef struct _whist_server_config whist_server_config;
 
 /** @brief internal state of the whist server */
 struct _whist_server_state {
-    // TODO: Mutex usage of this state
+    // TODO:  Currently it is possible for asynchronous updates to this
+    // structure to cause the video thread to see an inconsistent state
+    // (for example, an updated width without an updated height).  This
+    // is undefined behaviour and should be fixed by adding mutexes
+    // protecting parts which can be updated by other threads.
+
     whist_server_config* config;
 
     volatile int connection_id;
@@ -82,8 +88,19 @@ struct _whist_server_state {
 
     InputDevice* input_device;
 
-    /* iframe */
-    volatile bool wants_iframe;
+    // Whether the stream needs to be restarted with new parameter sets
+    // and an intra frame.
+    bool stream_needs_restart;
+    // Whether the stream needs to be recovered (but does not require
+    // new parameter sets and an intra frame).
+    bool stream_needs_recovery;
+
+    // Long-term reference state.
+    LTRState* ltr_context;
+
+    // Frame acks for LTR input.
+    uint32_t frame_ack_id;
+    bool update_frame_ack;
 
     /* video */
     volatile int client_width;

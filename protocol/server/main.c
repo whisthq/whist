@@ -404,9 +404,13 @@ int main(int argc, char* argv[]) {
     start_timer(&startup_time);
 
     server_state.stop_streaming = false;
-    server_state.wants_iframe = false;
     server_state.update_encoder = false;
     server_state.exiting = false;
+
+    server_state.ltr_context = ltr_create();
+    server_state.stream_needs_restart = false;
+    server_state.stream_needs_recovery = false;
+    server_state.update_frame_ack = false;
 
     WhistThread send_video_thread =
         whist_create_thread(multithreaded_send_video, "multithreaded_send_video", &server_state);
@@ -599,6 +603,8 @@ int main(int argc, char* argv[]) {
     whist_wait_thread(sync_tcp_packets_thread, NULL);
     whist_wait_thread(manage_clients_thread, NULL);
     destroy_notifications_handler(notifications_handler);
+
+    ltr_destroy(server_state.ltr_context);
 
     // This is safe to call here because all other threads have been waited and destroyed
     if (quit_client(&server_state.client) != 0) {

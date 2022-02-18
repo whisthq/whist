@@ -90,6 +90,7 @@ Defines
 #define LOG_VIDEO false
 #define LOG_NACKING false
 #define LOG_NETWORKING false
+#define LOG_LONG_TERM_REFERENCE_FRAMES false
 
 #define WINAPI_INPUT_DRIVER 1
 #define XTEST_INPUT_DRIVER 2
@@ -162,6 +163,8 @@ Defines
 #define CONSECUTIVE_IDENTICAL_FRAMES 300
 // FPS to send when the encoder is off
 #define DISABLED_ENCODER_FPS 10
+// Enable use of long-term reference frames.
+#define USE_LONG_TERM_REFERENCE_FRAMES false
 
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
@@ -616,6 +619,8 @@ typedef enum WhistClientMessageType {
     CMESSAGE_FILE_METADATA = 119,  ///< file metadata
     CMESSAGE_FILE_DATA = 120,      ///< file chunk
 
+    MESSAGE_FRAME_ACK = 121,  ///< Frame has been received.
+
     CMESSAGE_QUIT = 999,
 } WhistClientMessageType;
 
@@ -637,6 +642,20 @@ typedef struct {
     bool active_pinch;
     WhistKeyboardLayout layout;
 } WhistKeyboardState;
+
+/**
+ * Frame acknowledgement message.
+ *
+ * The client sends this to indicate that it has received the frame with
+ * the given ID, and also all of its transitive dependencies.  If it is
+ * lost there is little value in resending it because it will be
+ * superseded by an ack of any later frame (since either that frame will
+ * depend on this one and therefore imply its presence, or it won't and
+ * this frame is useless).
+ */
+typedef struct {
+    uint32_t frame_id;  ///< ID of frame we are acking.
+} WhistFrameAckMessage;
 
 /* position of bit within character */
 #define BIT_CHAR(bit) ((bit) / CHAR_BIT)
@@ -683,6 +702,9 @@ typedef struct WhistClientMessage {
 
         // MESSAGE_KEYBOARD_STATE
         WhistKeyboardState keyboard_state;
+
+        // MESSAGE_FRAME_ACK
+        WhistFrameAckMessage frame_ack;
     };
 
     // Any type of message that has an additional `data[]` (or equivalent)

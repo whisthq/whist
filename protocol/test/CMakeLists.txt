@@ -61,6 +61,7 @@ else()
         ../whist/network/ringbuffer.c
         ../whist/network/network_algorithm.c
         ../whist/video/capture/filecapture.c
+        ../whist/video/ltr.c
 
         # Files needed for Client unit tests
         ../client/audio.c

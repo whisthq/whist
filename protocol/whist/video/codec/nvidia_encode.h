@@ -4,6 +4,7 @@
 #include "../nvidia-linux/NvFBCUtils.h"
 #include "../nvidia-linux/nvEncodeAPI.h"
 #include <whist/core/whist.h>
+#include "whist/video/ltr.h"
 #include "../cudacontext.h"
 
 #define RESOURCE_CACHE_SIZE 4
@@ -36,10 +37,11 @@ typedef struct {
     int height;
     int pitch;
     bool wants_iframe;
+    LTRAction ltr_action;
     // Output
     void* frame;
     unsigned int frame_size;
-    bool is_iframe;
+    VideoFrameType frame_type;
 } NvidiaEncoder;
 
 /**

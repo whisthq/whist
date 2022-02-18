@@ -650,16 +650,16 @@ int ffmpeg_encoder_send_frame(FFmpegEncoder *encoder) {
     }
     // If we're at the start of a GOP
     if (encoder->frames_since_last_iframe == 0) {
-        encoder->is_iframe = true;
+        encoder->frame_type = VIDEO_FRAME_TYPE_INTRA;
     } else {
-        encoder->is_iframe = false;
+        encoder->frame_type = VIDEO_FRAME_TYPE_NORMAL;
     }
     // Increment GOP counter
     encoder->frames_since_last_iframe++;
 
     // Note: We can't check active_frame->pict_type bc ffmpeg cobbles it for some reason
     if (encoder->wants_iframe) {
-        encoder->is_iframe = true;
+        encoder->frame_type = VIDEO_FRAME_TYPE_INTRA;
     }
     encoder->wants_iframe = false;
 
