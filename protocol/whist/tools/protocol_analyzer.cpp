@@ -527,6 +527,7 @@ string FrameLevelInfo::to_string(bool more_format) {
     ss << "]}";
 #else
     UNUSED(time_to_str);
+    UNUSED(video_frame_type_to_str);
 #endif
     return ss.str();
 }
