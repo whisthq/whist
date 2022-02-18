@@ -241,7 +241,7 @@ func getAppName(mandelboxSubscription subscriptions.Mandelbox, transportRequestM
 	} else {
 		// If not on a local environment, we pull the app name from the database event.
 		// We need to append the "browsers/" prefix.
-		AppName = mandelboxtypes.AppName(utils.Sprintf("browsers/", mandelboxSubscription.App))
+		AppName = mandelboxtypes.AppName(utils.Sprintf("browsers/%v", mandelboxSubscription.App))
 	}
 
 	return req, AppName
