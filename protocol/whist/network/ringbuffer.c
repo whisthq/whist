@@ -46,6 +46,8 @@ Private Function Declarations
  * @param id                       The ID of the frame to initialize
  * @param num_original_indices     The number of original indices
  * @param num_fec_indices          The number of FEC indices
+ * @param prev_frame_num_duplicates The number of duplicate filler packets that were sent for
+ *                                  previous frame
  */
 void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int num_fec_indices,
                 int prev_frame_num_duplicates);
@@ -380,42 +382,37 @@ FrameData* get_frame_at_id(RingBuffer* ring_buffer, int id) {
 
 double get_packet_loss_ratio(RingBuffer* ring_buffer) {
     int num_packets_received = 0;
-    int num_packets_nacked = 0;
-    int num_original_packets = 0;
-    int num_duplicate_packets_sent = -1;
-    int num_redundant_packets_received = 0;
+    int num_packets_sent = 0;
+    bool is_first_iteration = true;
     // Don't include max_id frame for computing packet loss as it could be in progress
-    for (int id = max(ring_buffer->max_id - ring_buffer->ring_buffer_size + 1, 0); id < ring_buffer->max_id; id++) {
+    // Using (MAX_FPS / 4) to limit our computation to last 250ms
+    for (int id = max(ring_buffer->max_id - (MAX_FPS / 4), 0); id < ring_buffer->max_id; id++) {
         FrameData* frame = get_frame_at_id(ring_buffer, id);
         if (id != frame->id) {
-            // LOG_INFO("Not found id = %d, frame->id = %d", id, frame->id);
             continue;
         }
-        num_original_packets += frame->num_original_packets;
+        num_packets_sent += frame->num_original_packets;
+        num_packets_sent += frame->num_fec_packets;
         num_packets_received += frame->original_packets_received;
+        num_packets_received += frame->fec_packets_received;
         num_packets_received += frame->redundant_packets_received;
         for (int j = 0; j < frame->num_original_packets; j++) {
-            num_packets_nacked += frame->num_times_index_nacked[j];
+            num_packets_sent += frame->num_times_index_nacked[j];
         }
-        if (num_duplicate_packets_sent == -1)
-            num_duplicate_packets_sent = 0;
-        else
-            num_duplicate_packets_sent += frame->prev_frame_num_duplicate_packets;
-        // LOG_INFO(
-        //     "id = %d, frame->num_original_packets = %d, frame->original_packets_received = %d, "
-        //     "frame->redundant_packets_received = %d, num_packets_nacked = %d, frame->prev_frame_num_duplicate_packets = %d",
-        //     id, frame->num_original_packets, frame->original_packets_received, frame->redundant_packets_received,
-        //     num_packets_nacked, frame->prev_frame_num_duplicate_packets);
+        // Don't count the prev_frame_num_duplicate_packets in the first iteration
+        if (is_first_iteration) {
+            is_first_iteration = false;
+            continue;
+        }
+        num_packets_sent += frame->prev_frame_num_duplicate_packets;
     }
     FrameData* frame = get_frame_at_id(ring_buffer, ring_buffer->max_id);
     if (ring_buffer->max_id == frame->id)
-        num_duplicate_packets_sent += frame->prev_frame_num_duplicate_packets;
-    int num_packets_sent = num_original_packets + num_packets_nacked + num_duplicate_packets_sent;
-    LOG_INFO("num_packets_received = %d, num_packets_sent = %d, ring_buffer->max_id = %d",
-            num_packets_received, num_packets_sent, ring_buffer->max_id);
+        num_packets_sent += frame->prev_frame_num_duplicate_packets;
     double packet_loss_ratio = 0.0;
     if (num_packets_sent > 0 && num_packets_received > 0) {
-        packet_loss_ratio = (double)(num_packets_sent - num_packets_received) / (double)num_packets_sent;
+        packet_loss_ratio =
+            (double)(num_packets_sent - num_packets_received) / (double)num_packets_sent;
     }
     return packet_loss_ratio;
 }

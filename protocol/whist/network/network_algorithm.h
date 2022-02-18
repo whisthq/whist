@@ -58,8 +58,29 @@ Public Functions
  */
 NetworkSettings get_desired_network_settings(NetworkStatistics stats);
 
-bool goog_cc_delay_controller(double delay_gradient, int incoming_bitrate, double packet_loss_ratio,
-                              NetworkSettings *network_settings);
+/**
+ * @brief               This function will estimate the new bitrate based on whist congestion
+ *                      control algo
+ *
+ * @param curr_group_stats Pointer to struct containing any current group of packets' departure time
+ *                         and arrival time
+ *
+ * @param prev_group_stats Pointer to struct containing any previous group of packets' departure
+ *                         time and arrival time
+ *
+ * @param incoming_bitrate Bitrate received over the last few hundred milliseconds. Exact duration
+ *                         is specified in WCC.md
+ *
+ * @param packet_loss_ratio Packet loss ratio over last 250ms or so
+ *
+ * @param network_settings Pointer to the struct containing previous network_settings. Also the new
+ *                         network settings will be updated in this struct.
+ *
+ * @returns             Whether network_settings struct was updated with new values or not
+ */
+bool whist_congestion_controller(PerGroupStats *curr_group_stats, PerGroupStats *prev_group_stats,
+                                 int incoming_bitrate, double packet_loss_ratio,
+                                 NetworkSettings *network_settings);
 
 /**
  * @brief               This function will return the default network settings for a given video

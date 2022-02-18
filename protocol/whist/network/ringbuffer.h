@@ -196,6 +196,13 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment);
  */
 FrameData* get_frame_at_id(RingBuffer* ring_buffer, int id);
 
+/**
+ * @brief Calculates the packet loss ratio of non-rendered frames in the last 250ms.
+ *
+ * @param ring_buffer Ring buffer to access
+ *
+ * @returns Packet loss ratio of non-rendered frames in the last 250ms.
+ */
 double get_packet_loss_ratio(RingBuffer* ring_buffer);
 
 /**

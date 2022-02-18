@@ -392,27 +392,26 @@ NetworkSettings ewma_ratio_bitrate(NetworkStatistics stats) {
     return network_settings;
 }
 
-bool goog_cc_delay_controller(double delay_gradient, int incoming_bitrate, double packet_loss_ratio,
-                              NetworkSettings *network_settings) {
-    /* Delay controller from google congestion control spec. Uses the delay
-       gradient and round trip time to calculate new_bitrate
-       according to the goog_cc spec. Should be called per received frame.
-    */
+// The theory behind all the code in this function is documented in WCC.md file. Please go thru that
+// document before reviewing this file. Also if you make any modifications to this algo, remember to
+// update the WCC.md file as well so that the documentation remains upto date.
+bool whist_congestion_controller(PerGroupStats *curr_group_stats, PerGroupStats *prev_group_stats,
+                                 int incoming_bitrate, double packet_loss_ratio,
+                                 NetworkSettings *network_settings) {
 #define INITIAL_PRE_BURST_MODE_COUNT 5.0
 #define INITIAL_INCREASE_PERCENTAGE 1.0
-// Latest delay gradient gets this weightage. Older value gets a weightage of (1 - EWMA_FACTOR)
+// Latest delay variation gets this weightage. Older value gets a weightage of (1 - EWMA_FACTOR)
 #define EWMA_FACTOR 0.3
-#define DELAY_GRADIENT_THRESHOLD_IN_SEC 0.01 // 10ms
-#define OVERUSE_TIME_THRESHOLD_IN_SEC 0.01 // 10ms
+#define DELAY_VARIATION_THRESHOLD_IN_SEC 0.01  // 10ms
+#define OVERUSE_TIME_THRESHOLD_IN_SEC 0.01     // 10ms
 #define NEW_BITRATE_DURATION_IN_SEC 1.0
 
     static WhistTimer overuse_timer;
     static WhistTimer last_update_timer;
     static WhistTimer last_decrease_timer;
-    static WhistTimer burst_mode_timer;
     static bool delay_controller_initialized = false;
 
-    static double filtered_delay_gradient;
+    static double filtered_delay_variation;
     static double increase_percentage = INITIAL_INCREASE_PERCENTAGE;
     static bool burst_mode = false;
     static double pre_burst_mode_count = INITIAL_PRE_BURST_MODE_COUNT;
@@ -424,8 +423,8 @@ bool goog_cc_delay_controller(double delay_gradient, int incoming_bitrate, doubl
         start_timer(&overuse_timer);
         start_timer(&last_update_timer);
         start_timer(&last_decrease_timer);
-        adjust_timer(&last_decrease_timer, (int)-NEW_BITRATE_DURATION_IN_SEC); // Adjust the last decrease timer, to respond immediately for congestion during startup.
-        *network_settings = get_starting_network_settings();
+        // Adjust the last decrease timer, to respond immediately for congestion during startup.
+        adjust_timer(&last_decrease_timer, (int)-NEW_BITRATE_DURATION_IN_SEC);
         last_failed_bitrate = last_increase_bitrate = network_settings->bitrate;
     }
     int max_bitrate = MAXIMUM_BITRATE;
@@ -443,18 +442,25 @@ bool goog_cc_delay_controller(double delay_gradient, int incoming_bitrate, doubl
         DELAY_CONTROLLER_DECREASE
     } delay_controller_state = DELAY_CONTROLLER_HOLD;
 
+    double inter_departure_time =
+        (double)(curr_group_stats->departure_time - prev_group_stats->departure_time) /
+        US_IN_SECOND;
+    double inter_arrival_time =
+        (double)(curr_group_stats->arrival_time - prev_group_stats->arrival_time) / US_IN_SECOND;
+    double delay_variation = inter_arrival_time - inter_departure_time;
+
     if (!delay_controller_initialized) {
-        filtered_delay_gradient = delay_gradient;
+        filtered_delay_variation = delay_variation;
     } else {
-        filtered_delay_gradient =
-            filtered_delay_gradient * (1.0 - EWMA_FACTOR) + delay_gradient * EWMA_FACTOR;
+        filtered_delay_variation =
+            filtered_delay_variation * (1.0 - EWMA_FACTOR) + delay_variation * EWMA_FACTOR;
     }
 
     delay_controller_initialized = true;
 
     static bool maybe_overuse = false;
     // Detect over/under use using state machine outlined in spec
-    if (DELAY_GRADIENT_THRESHOLD_IN_SEC < filtered_delay_gradient) {
+    if (DELAY_VARIATION_THRESHOLD_IN_SEC < filtered_delay_variation) {
         if (!maybe_overuse) {
             start_timer(&overuse_timer);
             maybe_overuse = true;
@@ -464,22 +470,24 @@ bool goog_cc_delay_controller(double delay_gradient, int incoming_bitrate, doubl
         // < m(i-1), over-use will not be signaled even if all the above
         // conditions are met.
         if (get_timer(&overuse_timer) > OVERUSE_TIME_THRESHOLD_IN_SEC /* &&
-            filtered_delay_gradient >= prev_filtered_delay_gradient*/) {
+            filtered_delay_variation >= prev_filtered_delay_variation*/) {
             overuse_detector_signal = OVERUSE_SIGNAL;
-            LOG_INFO("CLEAR overuse detected");
         } else {
             // If neither over-use nor under-use is detected, the detector will be in the normal
             // state.
-            LOG_INFO("Normal Signal for now");
             overuse_detector_signal = NORMAL_SIGNAL;
         }
 
-    } else if (-DELAY_GRADIENT_THRESHOLD_IN_SEC > filtered_delay_gradient) {
+    } else if (-DELAY_VARIATION_THRESHOLD_IN_SEC > filtered_delay_variation) {
         overuse_detector_signal = UNDERUSE_SIGNAL;
         maybe_overuse = false;
     } else {
         overuse_detector_signal = NORMAL_SIGNAL;
         maybe_overuse = false;
+    }
+
+    if (packet_loss_ratio > 0.1) {
+        overuse_detector_signal = OVERUSE_SIGNAL;
     }
 
     // The state transitions (with blank fields meaning "remain in state")
@@ -524,9 +532,10 @@ bool goog_cc_delay_controller(double delay_gradient, int incoming_bitrate, doubl
             increase_percentage = INITIAL_INCREASE_PERCENTAGE;
         }
 
-    } else if ((delay_controller_state == DELAY_CONTROLLER_DECREASE || packet_loss_ratio > 0.1) &&
+    } else if ((delay_controller_state == DELAY_CONTROLLER_DECREASE) &&
                get_timer(&last_decrease_timer) > NEW_BITRATE_DURATION_IN_SEC) {
-        LOG_INFO("Decrease bitrate filtered_delay_gradient = %.2f packet_loss_ratio = %.2f", filtered_delay_gradient, packet_loss_ratio);
+        LOG_INFO("Decrease bitrate filtered_delay_variation = %.2f packet_loss_ratio = %.2f",
+                 filtered_delay_variation, packet_loss_ratio);
         new_bitrate = incoming_bitrate * 0.95;
         start_timer(&last_decrease_timer);
         if (burst_mode && max_bitrate_count < 2 * pre_burst_mode_count) {
@@ -553,7 +562,7 @@ bool goog_cc_delay_controller(double delay_gradient, int incoming_bitrate, doubl
         int min_bitrate = MINIMUM_BITRATE;
         if (new_bitrate < min_bitrate) {
             LOG_WARNING("Requested bitrate %d bps is lesser than minimum acceptable bitrate %d bps",
-                     new_bitrate, min_bitrate);
+                        new_bitrate, min_bitrate);
             new_bitrate = min_bitrate;
         }
         if (new_bitrate > max_bitrate) {
@@ -562,7 +571,6 @@ bool goog_cc_delay_controller(double delay_gradient, int incoming_bitrate, doubl
             if (max_bitrate_count >= pre_burst_mode_count) {
                 if (!burst_mode) {
                     LOG_INFO("Switching to burst mode to reduce latency");
-                    start_timer(&burst_mode_timer);
                     burst_mode = true;
                 }
             }
@@ -573,12 +581,12 @@ bool goog_cc_delay_controller(double delay_gradient, int incoming_bitrate, doubl
             max_bitrate_count = 0;
         }
         int burst_bitrate = new_bitrate;
-        if (burst_mode)
-            burst_bitrate *= 3;
+        if (burst_mode) burst_bitrate *= BURST_BITRATE_RATIO;
         network_settings->burst_bitrate = burst_bitrate;
         network_settings->bitrate = new_bitrate;
         LOG_INFO("New bitrate = %d, burst_bitrate = %d, saturate bandwidth = %d",
-            network_settings->bitrate, network_settings->burst_bitrate, network_settings->saturate_bandwidth);
+                 network_settings->bitrate, network_settings->burst_bitrate,
+                 network_settings->saturate_bandwidth);
         return true;
     }
 

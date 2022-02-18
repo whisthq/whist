@@ -66,6 +66,8 @@ double get_timer(const WhistTimer* timer_opaque) {
 void adjust_timer(WhistTimer* timer_opaque, int num_seconds) {
     struct WhistTimerInternal* timer = (struct WhistTimerInternal*)timer_opaque;
 #if defined(_WIN32)
+    LARGE_INTEGER frequency;
+    QueryPerformanceFrequency(&frequency);
     timer->pc.QuadPart += (frequency.QuadPart * num_seconds);
 #else
     timer->ts.tv_sec += num_seconds;

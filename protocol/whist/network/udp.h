@@ -57,6 +57,13 @@ typedef struct {
     char segment_data[MAX_PACKET_SEGMENT_SIZE];
 } WhistSegment;
 
+// Represents the group id and other related stats required for congestion control algorithms
+typedef struct {
+    int group_id;
+    timestamp_us departure_time;  // This time is measured in server's clock
+    timestamp_us arrival_time;    // This time is measured in client's clock
+} PerGroupStats;
+
 /*
 ============================
 Public Functions

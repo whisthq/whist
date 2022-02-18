@@ -22,7 +22,7 @@ struct NetworkThrottleContext {
     WhistTimer coin_bucket_last_fill;  //<<< The timer for the coin bucket's last fill.
     atomic_int next_queue_id;          //<<< The next queue id to use.
     atomic_int current_queue_id;       //<<< The currently-processed queue id.
-    unsigned int group_id;     //<<< The currently-processed queue id.
+    unsigned int group_id;             //<<< id of the group of packets being sent in the current burst.
     bool destroying;                   //<<< Whether the context is being destroyed.
     bool fill_bucket_initially;        //<<< Whether the coin bucket should be filled up initially
 };

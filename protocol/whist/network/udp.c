@@ -17,7 +17,6 @@ Includes
 #include <whist/logging/log_statistic.h>
 #include <whist/network/throttle.h>
 #include <stddef.h>
-#include "whist/utils/linked_list.h"
 
 #ifndef _WIN32
 #include <fcntl.h>
@@ -28,6 +27,8 @@ Includes
 Defines
 ============================
 */
+
+#define WCC 1
 
 typedef enum {
     UDP_WHIST_SEGMENT,
@@ -101,7 +102,6 @@ typedef struct {
     AESMetadata aes_metadata;
     // Size of the payload
     int payload_size;
-
     int group_id;
     // The data getting transmitted within the UDPNetworkPacket,
     // Which will be an encrypted UDPPacket
@@ -175,12 +175,6 @@ typedef struct {
     WhistTimer last_network_settings_time;
 } UDPContext;
 
-typedef struct {
-    int group_id;
-    timestamp_us departure_time;
-    timestamp_us arrival_time;
-} PerGroupStats;
-
 #define MAX_GROUP_STATS 8
 typedef struct {
     PerGroupStats per_group_stats[MAX_GROUP_STATS];
@@ -194,7 +188,7 @@ static GroupStats group_stats = {0};
 // current value (5) is an arbitrary choice that was found to work well in practice.
 #define RETRIES_ON_BUFFER_FULL 5
 
-// Define the bitrate specified to be maintained for each and every 0.5 ms internal.
+// Burst interval of the network throttler
 #define UDP_NETWORK_THROTTLER_BUCKET_MS 5.0
 // The time in seconds between network statistics requests
 #define STATISTICS_SECONDS 5.0
@@ -225,6 +219,7 @@ volatile double latency;
 // Choose power-of-two only for an efficient computations
 #define INCOMING_BITRATE_WINDOW_MS 256
 #define INCOMING_BITRATE_NUM_BUCKETS 16
+#define DURATION_PER_BUCKET (INCOMING_BITRATE_WINDOW_MS / INCOMING_BITRATE_NUM_BUCKETS)
 typedef struct IncomingBitrate {
     uint64_t bucket_id;
     int num_bits;
@@ -232,7 +227,7 @@ typedef struct IncomingBitrate {
 
 static IncomingBitrate incoming_bitrate_buckets[INCOMING_BITRATE_NUM_BUCKETS] = {0};
 
-#define get_bucket_id(time) ((time) / US_IN_MS) / (INCOMING_BITRATE_WINDOW_MS / INCOMING_BITRATE_NUM_BUCKETS);
+#define get_bucket_id(time) ((time) / US_IN_MS) / DURATION_PER_BUCKET;
 
 /*
 ============================
@@ -252,20 +247,17 @@ static void add_incoming_bits(timestamp_us arrival_time, int num_bytes) {
     }
 }
 
-static int get_incoming_bitrate(int duration_ms) {
+static int get_incoming_bitrate(void) {
     uint64_t current_bucket_id = get_bucket_id(current_time_us());
-    int duration_per_bucket = INCOMING_BITRATE_WINDOW_MS / INCOMING_BITRATE_NUM_BUCKETS;
-    int num_buckets = duration_ms / duration_per_bucket;
-    num_buckets = min(num_buckets, INCOMING_BITRATE_NUM_BUCKETS);
     int total_bits = 0;
-    for (uint64_t i = current_bucket_id - num_buckets + 1; i <= current_bucket_id; i++)
-    {
+    for (uint64_t i = current_bucket_id - INCOMING_BITRATE_NUM_BUCKETS + 1; i <= current_bucket_id;
+         i++) {
         IncomingBitrate* bucket = &incoming_bitrate_buckets[i % INCOMING_BITRATE_NUM_BUCKETS];
         if (i == bucket->bucket_id) {
             total_bits += bucket->num_bits;
         }
     }
-    return (int)(((uint64_t)total_bits * MS_IN_SECOND) / (num_buckets * duration_per_bucket));
+    return (int)(((uint64_t)total_bits * MS_IN_SECOND) / INCOMING_BITRATE_WINDOW_MS);
 }
 
 /**
@@ -314,6 +306,12 @@ static int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet);
  *
  * @param udp_packet             The UDPPacket buffer to write to.
  *                               This buffer is expected to be of size sizeof(UDPPacket)
+ *
+ * @param arrival_time           Writes the arrival time of this packet in the pointed location (if
+ *                               non-NULL)
+ *
+ * @param group_id               Writes the group id of this packet in the pointed location (if
+ *                               non-NULL)
  *
  * @returns                      True if a packet was received and written to,
  *                               False if no packet was received
@@ -406,12 +404,67 @@ UDP Implementation of Network.h Interface
 ============================
 */
 
-static void udp_send_network_settings(void* raw_context) {
-    UDPContext* context = (UDPContext*)raw_context;
-    UDPPacket network_settings_packet;
-    network_settings_packet.type = UDP_NETWORK_SETTINGS;
-    network_settings_packet.udp_network_settings_data.network_settings = context->current_network_settings;
-    udp_send_udp_packet(context, &network_settings_packet);
+static void udp_congestion_control(UDPContext* context, timestamp_us departure_time,
+                                   timestamp_us arrival_time, int group_id) {
+    // Initialize desired_network_settings if it is not done yet.
+    if (context->desired_network_settings.bitrate == 0) {
+        context->desired_network_settings = get_starting_network_settings();
+    }
+    bool send_network_settings = false;
+#if !WCC
+    // *************
+    // Potentially ask for new network settings based on the current network statistics
+    // *************
+
+    // TODO: Probably move statistics calculations into udp.c as well,
+    //       but it depends on how much statistics are per-frame-specific
+    if (get_timer(&context->last_network_settings_time) > STATISTICS_SECONDS) {
+        // Get network statistics and desired network settings
+        NetworkStatistics network_statistics =
+            get_network_statistics(context->ring_buffers[PACKET_VIDEO]);
+        NetworkSettings desired_network_settings = get_desired_network_settings(network_statistics);
+        // If we have new desired network settings for the other socket,
+        if (memcmp(&context->desired_network_settings, &desired_network_settings,
+                   sizeof(NetworkSettings)) != 0) {
+            context->desired_network_settings = desired_network_settings;
+            send_network_settings = true;
+        }
+        start_timer(&context->last_network_settings_time);
+    }
+    UNUSED(get_incoming_bitrate);
+#else
+    PerGroupStats* per_group_stats = &group_stats.per_group_stats[group_id % MAX_GROUP_STATS];
+    // As per WCC.md,
+    // An inter-departure time is computed between consecutive groups as T(i) - T(i-1),
+    // where T(i) is the departure timestamp of the last packet in the current packet
+    // group being processed.  Any packets received out of order are ignored by the
+    // arrival-time model.
+    if (departure_time > per_group_stats->departure_time) {
+        per_group_stats->departure_time = departure_time;
+        per_group_stats->arrival_time = arrival_time;
+    }
+    if (group_id > group_stats.curr_group_id) {
+        if (group_stats.prev_group_id != 0) {
+            PerGroupStats* curr_group_stats =
+                &group_stats.per_group_stats[group_stats.curr_group_id % MAX_GROUP_STATS];
+            PerGroupStats* prev_group_stats =
+                &group_stats.per_group_stats[group_stats.prev_group_id % MAX_GROUP_STATS];
+            send_network_settings = whist_congestion_controller(
+                curr_group_stats, prev_group_stats, get_incoming_bitrate(),
+                get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO]),
+                &context->desired_network_settings);
+        }
+        group_stats.prev_group_id = group_stats.curr_group_id;
+        group_stats.curr_group_id = group_id;
+    }
+#endif
+    if (send_network_settings) {
+        UDPPacket network_settings_packet;
+        network_settings_packet.type = UDP_NETWORK_SETTINGS;
+        network_settings_packet.udp_network_settings_data.network_settings =
+            context->desired_network_settings;
+        udp_send_udp_packet(context, &network_settings_packet);
+    }
 }
 
 static bool udp_update(void* raw_context) {
@@ -445,39 +498,6 @@ static bool udp_update(void* raw_context) {
     }
 
     // *************
-    // Potentially ask for new network settings based on the current network statistics
-    // *************
-
-    // TODO: Make this not PACKET_VIDEO specific
-    // TODO: Probably move statistics calculations into udp.c as well,
-    //       but it depends on how much statistics are per-frame-specific
-    // if (context->ring_buffers[PACKET_VIDEO] != NULL) {
-    //     // Initialize desired_network_settings if it is not done yet.
-    //     if (context->desired_network_settings.bitrate == 0) {
-    //         context->desired_network_settings = get_starting_network_settings();
-    //     }
-    //     if (get_timer(&context->last_network_settings_time) > STATISTICS_SECONDS) {
-    //         // Get network statistics and desired network settings
-    //         NetworkStatistics network_statistics =
-    //             get_network_statistics(context->ring_buffers[PACKET_VIDEO]);
-    //         NetworkSettings desired_network_settings =
-    //             get_desired_network_settings(network_statistics);
-    //         // If we have new desired network settings for the other socket,
-    //         if (memcmp(&context->desired_network_settings, &desired_network_settings,
-    //                    sizeof(NetworkSettings)) != 0) {
-    //             context->desired_network_settings = desired_network_settings;
-    //             // Ask for the other socket to match our desires
-    //             UDPPacket network_settings_packet;
-    //             network_settings_packet.type = UDP_NETWORK_SETTINGS;
-    //             network_settings_packet.udp_network_settings_data.network_settings =
-    //                 desired_network_settings;
-    //             udp_send_udp_packet(context, &network_settings_packet);
-    //         }
-    //         start_timer(&context->last_network_settings_time);
-    //     }
-    // }
-
-    // *************
     // Pull a packet from the network, if any is there
     // *************
 
@@ -497,38 +517,8 @@ static bool udp_update(void* raw_context) {
             if (packet_type == PACKET_VIDEO &&
                 !udp_packet.udp_whist_segment_data.is_a_nack &&
                 group_id >= group_stats.curr_group_id) {
-                static timestamp_us first_video_arrival_time = 0;
-                if (first_video_arrival_time == 0) {
-                    first_video_arrival_time = arrival_time;
-                }
-
-                PerGroupStats *per_group_stats = &group_stats.per_group_stats[group_id % MAX_GROUP_STATS];
-                // As per draft-ietf-rmcat-gcc-02 spec,
-                // An inter-departure time is computed between consecutive groups as T(i) - T(i-1),
-                // where T(i) is the departure timestamp of the last packet in the current packet
-                // group being processed.  Any packets received out of order are ignored by the
-                // arrival-time model.
-                if (udp_packet.udp_whist_segment_data.departure_time > per_group_stats->departure_time) {
-                    per_group_stats->departure_time = udp_packet.udp_whist_segment_data.departure_time;
-                    per_group_stats->arrival_time = arrival_time;
-                }
-                if (group_id > group_stats.curr_group_id) {
-                    if (group_stats.prev_group_id != 0) {
-                        PerGroupStats *curr_group_stats = &group_stats.per_group_stats[group_stats.curr_group_id % MAX_GROUP_STATS];
-                        PerGroupStats *prev_group_stats = &group_stats.per_group_stats[group_stats.prev_group_id % MAX_GROUP_STATS];
-                        double inter_departure_time = (double)(curr_group_stats->departure_time - prev_group_stats->departure_time) / US_IN_SECOND;
-                        double inter_arrival_time = (double)(curr_group_stats->arrival_time - prev_group_stats->arrival_time) / US_IN_SECOND;
-                        double delay_gradient = inter_arrival_time - inter_departure_time;
-                        if (goog_cc_delay_controller(delay_gradient,
-                                                     get_incoming_bitrate(min((arrival_time - first_video_arrival_time) / US_IN_MS, INCOMING_BITRATE_WINDOW_MS)),
-                                                     get_packet_loss_ratio(context->ring_buffers[packet_type]),
-                                                     &context->current_network_settings)) {
-                            udp_send_network_settings(context);
-                        }
-                    }
-                    group_stats.prev_group_id = group_stats.curr_group_id;
-                    group_stats.curr_group_id = group_id;
-                }
+                udp_congestion_control(context, udp_packet.udp_whist_segment_data.departure_time,
+                                       arrival_time, group_id);
             }
             // If there's a ringbuffer, store in the ringbuffer to reconstruct the original packet
             if (context->ring_buffers[packet_type] != NULL) {

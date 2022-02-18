@@ -290,6 +290,13 @@ void whist_post_semaphore(WhistSemaphore semaphore);
  */
 void whist_wait_semaphore(WhistSemaphore semaphore);
 
+/**
+ * Value of a semaphore.
+ *
+ * @param semaphore  Semaphore to find value of.
+ *
+ * @return  Value of the semaphore.
+ */
 uint32_t whist_value_semapore(WhistSemaphore semaphore);
 
 /**
