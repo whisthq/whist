@@ -119,6 +119,15 @@ hmap<vector<WhistKeycode>, vector<WhistKeycode>, VectorHasher> keyboard_mappings
         {FK_LGUI, FK_LSHIFT, FK_TAB},
         {FK_LCTRL, FK_LSHIFT, FK_TAB},
     },
+    // Switch tabs with Cmd+Opt+Left/Right
+    {
+        {FK_LCTRL, FK_LALT, FK_RIGHT},
+        {FK_LCTRL, FK_TAB},
+    },
+    {
+        {FK_LCTRL, FK_LALT, FK_LEFT},
+        {FK_LCTRL, FK_LSHIFT, FK_TAB},
+    },
 };
 
 auto key_sorter = [](const WhistKeycode& a, const WhistKeycode& b) -> bool {
