@@ -161,4 +161,6 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer);
  */
 void destroy_fec_decoder(FECDecoder* fec_decoder);
 
+int fec_get_num_real_buffers(int data_len, int segment_size);
+
 #endif

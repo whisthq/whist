@@ -51,6 +51,7 @@ extern "C" {
 #include <whist/utils/avpacket_buffer.h>
 #include <whist/utils/atomic.h>
 #include <whist/utils/fec.h>
+#include <whist/utils/rs_wrapper.h>
 #include <whist/utils/linked_list.h>
 
 extern WhistMutex window_resize_mutex;
@@ -1223,12 +1224,14 @@ TEST_F(ProtocolTest, FECTest) {
 #define NUM_TOTAL_PACKETS (NUM_ORIGINAL_PACKETS + NUM_FEC_PACKETS)
 
 //make the last packet shorter than others
-#define TAIL_MISSING_SIZE 100
+#define TAIL_MISSING_SIZE 20
 
 #define BUFFER_SIZE (NUM_ORIGINAL_PACKETS * (MAX_PACKET_SIZE - FEC_HEADER_SIZE)-TAIL_MISSING_SIZE)
 
     // Initialize FEC
     init_fec();
+
+    rs_wrapper_test();
 
     // Initialize a buffer that's NUM_ORIGINAL_PACKETS packets large
     char original_buffer[BUFFER_SIZE] = {0};
@@ -1263,11 +1266,13 @@ TEST_F(ProtocolTest, FECTest) {
     FECDecoder* fec_decoder =
         create_fec_decoder(NUM_ORIGINAL_PACKETS, NUM_FEC_PACKETS, MAX_PACKET_SIZE);
 
+    
     // Register some sufficiently large subset of the encoded packets
     fec_decoder_register_buffer(fec_decoder, 0, encoded_buffers[0], encoded_buffer_sizes[0]);
     // It's not possible to reconstruct 2 packets, only being given 1 FEC packet
-    EXPECT_EQ(fec_get_decoded_buffer(fec_decoder, NULL), -1);
+    //EXPECT_EQ(fec_get_decoded_buffer(fec_decoder, NULL), -1);
     // Given the FEC packets, it should be possible to reconstruct packet #2
+
     fec_decoder_register_buffer(fec_decoder, 2, encoded_buffers[2], encoded_buffer_sizes[2]);
     //fec_decoder_register_buffer(fec_decoder, 1, encoded_buffers[1], encoded_buffer_sizes[1]);
 
@@ -1275,12 +1280,72 @@ TEST_F(ProtocolTest, FECTest) {
     char decoded_buffer[BUFFER_SIZE];
     int decoded_size = fec_get_decoded_buffer(fec_decoder, decoded_buffer);
 
+    fprintf(stderr, "<%d %d>", decoded_size,(int) BUFFER_SIZE );
     // Confirm that we correctly reconstructed the original data
     EXPECT_EQ(decoded_size, BUFFER_SIZE);
     EXPECT_EQ(memcmp(decoded_buffer, original_buffer, BUFFER_SIZE), 0);
 
     // Destroy the fec decoder when we're done looking at decoded_buffer
-    destroy_fec_decoder(fec_decoder);
+    //destroy_fec_decoder(fec_decoder);
+}
+
+
+TEST_F(ProtocolTest, FECTest2) {
+    init_fec();
+
+    const int  segment_size=1000;
+    const int  large_buffer_size=199999;
+    const double ratio=0.3;
+    const int drop_per=13;
+
+    char buf[large_buffer_size];
+    
+    for(int i=0;i<large_buffer_size;i++)
+    {
+        buf[i]=i;
+    }
+
+    int num_real_buffers= fec_get_num_real_buffers(large_buffer_size, segment_size);
+    int num_fec_buffers= get_num_fec_packets(num_real_buffers,ratio);
+    int num_total_buffers= num_real_buffers+ num_fec_buffers;
+
+    fprintf(stderr,"test2\n");
+    fprintf(stderr, "real=%d,fec=%d\n", num_real_buffers,num_fec_buffers);
+
+    FECEncoder* fec_encoder =
+        create_fec_encoder(num_real_buffers, num_fec_buffers, segment_size);
+
+    fec_encoder_register_buffer(fec_encoder, buf, sizeof(buf));
+
+    void** encoded_buffers=(void **)malloc( sizeof(void*) *num_total_buffers); 
+    int * encoded_buffer_sizes=(int *)malloc( sizeof(int) *num_total_buffers); 
+
+    fec_get_encoded_buffers(fec_encoder, encoded_buffers, encoded_buffer_sizes);
+
+    FECDecoder* fec_decoder = create_fec_decoder(num_real_buffers, num_fec_buffers, segment_size);
+    int cnt=0;
+    int decoded_size=-1;
+    char decoded_buffer[large_buffer_size+segment_size];
+
+    srand(1234);
+    for(int i=0;i<num_total_buffers;i++)
+    {
+        // Register some sufficiently large subset of the encoded 
+        //if(i%drop_per==0) continue;
+        if(rand()%drop_per==0) continue;
+        fec_decoder_register_buffer(fec_decoder, i, encoded_buffers[i], encoded_buffer_sizes[i]);
+        cnt++;
+        decoded_size = fec_get_decoded_buffer(fec_decoder, decoded_buffer);
+        if(decoded_size!=-1)
+        {
+            fprintf(stderr, "was able to decode after feeding %d buffers\n",cnt);
+            break;
+        }
+    }
+
+    EXPECT_EQ(decoded_size, large_buffer_size);
+    EXPECT_EQ(memcmp(decoded_buffer, buf, BUFFER_SIZE), 0);
+
 }
 
 TEST_F(ProtocolTest, LinkedListTest) {

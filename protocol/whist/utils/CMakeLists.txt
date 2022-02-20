@@ -14,6 +14,7 @@ add_library(whistUtils STATIC
         threads.c
         fec.c
         rs.c
+        rs_wrapper.c
         os_utils.c
         linked_list.c
         )
