@@ -21,7 +21,7 @@ Defines
 
 #define RS_TABLE_SIZE 256  // size of row and column
 
-#define MAX_RS_GROUP_SIZE 128
+#define MAX_RS_GROUP_SIZE 30
 #define OPTIMIZATION 0
 
 // This is the type for the rs_table we use for caching
