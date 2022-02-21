@@ -14,6 +14,7 @@ import (
 	"github.com/whisthq/whist/backend/services/host-service/mandelbox/portbindings"
 	"github.com/whisthq/whist/backend/services/host-service/metrics"
 	"github.com/whisthq/whist/backend/services/metadata"
+	"github.com/whisthq/whist/backend/services/subscriptions"
 	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -212,7 +213,7 @@ func getJSONTransportRequestChannel(mandelboxID mandelboxtypes.MandelboxID,
 	return transportRequestMap[mandelboxID]
 }
 
-func getAppName(mandelboxID mandelboxtypes.MandelboxID, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest,
+func getAppName(mandelboxSubscription subscriptions.Mandelbox, transportRequestMap map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest,
 	transportMapLock *sync.Mutex) (*JSONTransportRequest, mandelboxtypes.AppName) {
 
 	var AppName mandelboxtypes.AppName
@@ -220,7 +221,7 @@ func getAppName(mandelboxID mandelboxtypes.MandelboxID, transportRequestMap map[
 
 	if metadata.IsLocalEnvWithoutDB() {
 		// Receive the json transport request immediately when running on local env
-		jsonchan := getJSONTransportRequestChannel(mandelboxID, transportRequestMap, transportMapLock)
+		jsonchan := getJSONTransportRequestChannel(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
 
 		// We will wait 1 minute to get the transport request
 		select {
@@ -238,8 +239,10 @@ func getAppName(mandelboxID mandelboxtypes.MandelboxID, transportRequestMap map[
 		}
 
 	} else {
-		// If not on a local environment, we default to using the `browsers/chrome` image.
-		AppName = mandelboxtypes.AppName("browsers/chrome")
+		// If not on a local environment, we pull the app name from the database event.
+		// We need to append the "browsers/" prefix.
+		appName := utils.Sprintf("browsers/%s", mandelboxSubscription.App)
+		AppName = mandelboxtypes.AppName(appName)
 	}
 
 	return req, AppName

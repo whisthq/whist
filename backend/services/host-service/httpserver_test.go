@@ -15,6 +15,7 @@ import (
 	"testing/iotest"
 	"time"
 
+	"github.com/whisthq/whist/backend/services/subscriptions"
 	mandelboxtypes "github.com/whisthq/whist/backend/services/types"
 	"github.com/whisthq/whist/backend/services/utils"
 )
@@ -332,8 +333,17 @@ func TestGetAppNameEmpty(t *testing.T) {
 	testTransportRequestMap[mandelboxID] = make(chan *JSONTransportRequest, 1)
 	testTransportRequestMap[mandelboxID] <- &JSONTransportRequest{}
 
+	testMandelboxSubscription := subscriptions.Mandelbox{
+		ID:         mandelboxID,
+		App:        "",
+		InstanceID: "test-instance-id",
+		UserID:     "test-user-id",
+		SessionID:  "1234567890",
+		Status:     "ALLOCATED",
+		CreatedAt:  time.Now(),
+	}
 	// Should default name to browsers/chrome
-	_, appName := getAppName(mandelboxID, testTransportRequestMap, testmux)
+	_, appName := getAppName(testMandelboxSubscription, testTransportRequestMap, testmux)
 
 	if appName != mandelboxtypes.AppName("browsers/chrome") {
 		t.Fatalf("error getting app name. Expected %v, got %v", mandelboxtypes.AppName("browsers/chrome"), appName)
@@ -346,8 +356,18 @@ func TestGetAppNameNoRequest(t *testing.T) {
 	testmux := &sync.Mutex{}
 	testTransportRequestMap := make(map[mandelboxtypes.MandelboxID]chan *JSONTransportRequest)
 
+	testMandelboxSubscription := subscriptions.Mandelbox{
+		ID:         mandelboxID,
+		App:        "",
+		InstanceID: "test-instance-id",
+		UserID:     "test-user-id",
+		SessionID:  "1234567890",
+		Status:     "ALLOCATED",
+		CreatedAt:  time.Now(),
+	}
+
 	// Will take 1 minute to resolve and return nil request
-	req, _ := getAppName(mandelboxID, testTransportRequestMap, testmux)
+	req, _ := getAppName(testMandelboxSubscription, testTransportRequestMap, testmux)
 
 	if req != nil {
 		t.Fatalf("error getting app name with no transport request. Expected nil, got %v", req)
@@ -371,8 +391,18 @@ func TestGetAppName(t *testing.T) {
 		testTransportRequestMap[mandelboxID] = make(chan *JSONTransportRequest, 1)
 		testTransportRequestMap[mandelboxID] <- &testJSONTransportRequest
 
+		testMandelboxSubscription := subscriptions.Mandelbox{
+			ID:         mandelboxID,
+			App:        appName,
+			InstanceID: "test-instance-id",
+			UserID:     "test-user-id",
+			SessionID:  "1234567890",
+			Status:     "ALLOCATED",
+			CreatedAt:  time.Now(),
+		}
+
 		// getAppName should get an appName that matches AppName in testJSONTransportRequest
-		_, mandelboxAppName := getAppName(mandelboxID, testTransportRequestMap, testmux)
+		_, mandelboxAppName := getAppName(testMandelboxSubscription, testTransportRequestMap, testmux)
 
 		if mandelboxAppName != testJSONTransportRequest.AppName {
 			t.Fatalf("error getting app name. Expected %v, got %v", testJSONTransportRequest.AppName, appName)

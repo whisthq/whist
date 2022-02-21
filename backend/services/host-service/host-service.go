@@ -139,7 +139,7 @@ func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	// mandelboxSubscription is the pubsub event received from Hasura.
 	mandelboxSubscription := sub.Mandelboxes[0]
-	req, AppName := getAppName(mandelboxSubscription.ID, transportRequestMap, transportMapLock)
+	req, AppName := getAppName(mandelboxSubscription, transportRequestMap, transportMapLock)
 
 	logger.Infof("SpinUpMandelbox(): spinup started for mandelbox %s", mandelboxSubscription.ID)
 
