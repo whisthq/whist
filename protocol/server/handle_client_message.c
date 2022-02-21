@@ -24,6 +24,7 @@ Includes
 #include <whist/logging/logging.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/logging/error_monitor.h>
+#include "whist/core/features.h"
 #include "state.h"
 #include "client.h"
 #include "handle_client_message.h"
@@ -357,7 +358,7 @@ static int handle_open_url_message(whist_server_state *state, WhistClientMessage
 }
 
 static int handle_frame_ack_message(whist_server_state *state, WhistClientMessage *wcmsg) {
-    FATAL_ASSERT(USE_LONG_TERM_REFERENCE_FRAMES &&
+    FATAL_ASSERT(FEATURE_ENABLED(LONG_TERM_REFERENCE_FRAMES) &&
                  "Received frame ack but long-term reference frames "
                  "are not enabled.");
 

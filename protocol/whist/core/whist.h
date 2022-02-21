@@ -85,7 +85,6 @@ Defines
 // Various control flags
 #define USING_AUDIO_ENCODE_DECODE true
 #define USING_FFMPEG_IFRAME_FLAG false
-#define ENCRYPTING_PACKETS true
 // Toggle verbose logs
 #define LOG_VIDEO false
 #define LOG_NACKING false
@@ -163,8 +162,6 @@ Defines
 #define CONSECUTIVE_IDENTICAL_FRAMES 300
 // FPS to send when the encoder is off
 #define DISABLED_ENCODER_FPS 10
-// Enable use of long-term reference frames.
-#define USE_LONG_TERM_REFERENCE_FRAMES false
 
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720

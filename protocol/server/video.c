@@ -39,6 +39,7 @@ Includes
 #include <whist/logging/log_statistic.h>
 #include <whist/network/network_algorithm.h>
 #include <whist/network/throttle.h>
+#include "whist/core/features.h"
 #include "client.h"
 #include "network.h"
 #include "video.h"
@@ -625,7 +626,7 @@ int32_t multithreaded_send_video(void* opaque) {
                                  get_timer(&statistics_timer) * MS_IN_SECOND);
         }
 
-        if (USE_LONG_TERM_REFERENCE_FRAMES) {
+        if (FEATURE_ENABLED(LONG_TERM_REFERENCE_FRAMES)) {
             // If any frame acks have been received, tell the frame type
             // decision logic about them.
             if (state->update_frame_ack) {
@@ -743,7 +744,7 @@ int32_t multithreaded_send_video(void* opaque) {
                                      get_timer(&statistics_timer) * MS_IN_SECOND);
 
                 VideoFrameType frame_type;
-                if (USE_LONG_TERM_REFERENCE_FRAMES) {
+                if (FEATURE_ENABLED(LONG_TERM_REFERENCE_FRAMES)) {
                     if (state->stream_needs_restart || state->stream_needs_recovery) {
                         if (state->stream_needs_restart) {
                             ltr_force_intra(state->ltr_context);
@@ -789,7 +790,7 @@ int32_t multithreaded_send_video(void* opaque) {
                     state->exiting = true;
                     break;
                 }
-                if (USE_LONG_TERM_REFERENCE_FRAMES) {
+                if (FEATURE_ENABLED(LONG_TERM_REFERENCE_FRAMES)) {
                     // Ensure that the encoder actually generated the
                     // frame type we expected.  If it didn't then
                     // something has gone horribly wrong.

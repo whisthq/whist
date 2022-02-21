@@ -18,6 +18,7 @@ Includes
 #include <ctype.h>
 #include <stdio.h>
 
+#include "features.h"
 #include "../utils/sysinfo.h"
 
 /*
@@ -54,6 +55,7 @@ Public Function Implementations
 void whist_init_subsystems(WhistSubsystemParams *params) {
     whist_init_multithreading();
     whist_init_logger(params->catch_segfaults);
+    whist_init_features();
     init_fec();
     whist_init_networking();
 }

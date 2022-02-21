@@ -32,6 +32,7 @@ Includes
 #include <whist/utils/png.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/utils/rwlock.h>
+#include "whist/core/features.h"
 #include "sdlscreeninfo.h"
 #include "native_window_utils.h"
 #include "network.h"
@@ -230,7 +231,7 @@ int render_video(VideoContext* video_context) {
 
         whist_analyzer_record_decode_video();
         if (!frame->is_empty_frame) {
-            if (USE_LONG_TERM_REFERENCE_FRAMES) {
+            if (FEATURE_ENABLED(LONG_TERM_REFERENCE_FRAMES)) {
                 // Indicate to the server that this frame is received
                 // in full and will be decoded.
                 LOG_INFO("LTR: send frame ack for frame ID %d (%s).", frame->frame_id,
