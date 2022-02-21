@@ -76,7 +76,7 @@ class EC2Client(CloudClient):
         # Console to allows read-only EC2 access and full S3 access.
 
         # Get instance profile to launch instances.
-        profile = self.get_instance_profile()
+        profile = get_instance_profile()
 
         kwargs = {
             "ImageId": image_id,
@@ -223,15 +223,16 @@ class EC2Client(CloudClient):
             resdict[instance["InstanceId"]] = instance["PublicIpAddress"]
         return resdict
 
-    def get_instance_profile(self) -> str:
-        # TODO all all environment instance profiles
-        # once we promote Terraform to staging and prod.
-        if current_app.config["ENVIRONMENT"] == DEVELOPMENT:
-            return "arn:aws:iam::747391415460:instance-profile/EC2DeploymentRoleInstanceProfile"
-        elif current_app.config["ENVIRONMENT"] == STAGING:
-            return ""
-        elif current_app.config["ENVIRONMENT"] == PRODUCTION:
-            return ""
-        else:
-            # Default to dev
-            return "arn:aws:iam::747391415460:instance-profile/EC2DeploymentRoleInstanceProfile"
+
+def get_instance_profile() -> str:
+    # TODO all all environment instance profiles
+    # once we promote Terraform to staging and prod.
+    if current_app.config["ENVIRONMENT"] == DEVELOPMENT:
+        return "arn:aws:iam::747391415460:instance-profile/EC2DeploymentRoleInstanceProfile"
+    elif current_app.config["ENVIRONMENT"] == STAGING:
+        return ""
+    elif current_app.config["ENVIRONMENT"] == PRODUCTION:
+        return ""
+    else:
+        # Default to dev
+        return "arn:aws:iam::747391415460:instance-profile/EC2DeploymentRoleInstanceProfile"

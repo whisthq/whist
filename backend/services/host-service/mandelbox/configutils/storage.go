@@ -29,7 +29,14 @@ func NewS3Client(region string) (*s3.Client, error) {
 
 // GetConfigBucket returns name of the S3 bucket that contains the encrypted user configs.
 func GetConfigBucket() string {
-	return utils.Sprintf("whist-user-app-configs-%s", metadata.GetAppEnvironmentLowercase())
+	env := metadata.GetAppEnvironmentLowercase()
+	if env == "dev" || env == "staging" || env == "prod" {
+		// Return the appropiate bucket depending on current environment
+		return utils.Sprintf("whist-user-app-configs-%s", metadata.GetAppEnvironmentLowercase())
+	} else {
+		// Default to dev
+		return utils.Sprintf("whist-user-app-configs-dev")
+	}
 }
 
 // GetHeadObject returns the head object of the given bucket and key.
