@@ -578,6 +578,21 @@ typedef struct WhistDiscoveryReplyMessage {
     int udp_port;
     int tcp_port;
     int connection_id;
+
+    /**
+     * git revision of the server.
+     *
+     * In general, the client should match this exactly.  If it doesn't
+     * then there might be incompatibility.
+     */
+    char git_revision[16];
+    /**
+     * Feature mask being used by the server.
+     *
+     * The client will use this to set its own features.  If this is
+     * incompatible then the client will refuse to connect.
+     */
+    uint32_t feature_mask;
 } WhistDiscoveryReplyMessage;
 
 /**

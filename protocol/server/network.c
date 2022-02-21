@@ -22,6 +22,7 @@ Includes
 #include <whist/input/input.h>
 #include <whist/logging/error_monitor.h>
 #include <whist/utils/aes.h>
+#include "whist/core/features.h"
 #include <stdio.h>
 
 #include "network.h"
@@ -138,6 +139,10 @@ int do_discovery_handshake(whist_server_state *state, SocketContext *context,
 
     // Send connection ID to client
     reply_msg->connection_id = state->connection_id;
+
+    // Fill revision and feature information.
+    snprintf(reply_msg->git_revision, sizeof(reply_msg->git_revision), "%s", whist_git_revision());
+    reply_msg->feature_mask = whist_get_feature_mask();
 
     LOG_INFO("Sending discovery packet");
     LOG_INFO("wsmsg size is %d", (int)wsmsg_size);
