@@ -106,6 +106,9 @@ extern bool upload_initiated;
 
 // Defines
 #define APP_PATH_MAXLEN 1023
+#ifndef LOG_CPU_USAGE
+#define LOG_CPU_USAGE 0
+#endif
 
 static int sync_keyboard_state(void) {
     /*
@@ -463,11 +466,12 @@ int whist_client_main(int argc, char* argv[]) {
             // Try rendering anything out, if there's something to render out
             renderer_try_render(whist_renderer);
 
-            // Log cpu usage once per second
-#if defined(__APPLE__) || defined(__linux__)
-            if (get_timer(&cpu_usage_statistics_timer) * MS_IN_SECOND > 1000.0) {
+            // Log cpu usage once per 10 seconds. Do not use normal statistics collection because
+            // collecting CPU usage is expensive.
+#if defined(__linux__)
+            if (LOG_CPU_USAGE && get_timer(&cpu_usage_statistics_timer) * MS_IN_SECOND > 10000.0) {
                 double cpu_usage = get_cpu_usage();
-                log_double_statistic(CLIENT_CPU_USAGE, cpu_usage);
+                LOG_METRIC("\"CLIENT_CPU_USAGE\" : %f", cpu_usage);
             }
 #endif
 
