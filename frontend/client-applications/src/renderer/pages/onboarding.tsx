@@ -55,7 +55,7 @@ const Introduction = (props: { onSubmit: () => void }) => {
   )
 }
 
-const WhoIsWhistFor = (props: { onSubmit: () => void }) => {
+const WhatMakesWhistDifferent = (props: { onSubmit: () => void }) => {
   const onKeyDown = (evt: any) => {
     if (evt.key === "Enter") props.onSubmit()
   }
@@ -87,6 +87,44 @@ const WhoIsWhistFor = (props: { onSubmit: () => void }) => {
   )
 }
 
+const WhatIsWhist = (props: { onSubmit: () => void }) => {
+  const onKeyDown = (evt: any) => {
+    if (evt.key === "Enter") props.onSubmit()
+  }
+
+  return (
+    <div
+      onKeyDown={onKeyDown}
+      tabIndex={0}
+      className="flex flex-col h-screen w-full font-body outline-none bg-gray-900"
+    >
+      <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
+      <div className="m-auto text-center mt-18">
+        <div
+          className="mt-2 text-gray-900 text-2xl animate-fade-in-up opacity-0 leading-10"
+          style={{ animationDelay: "400ms" }}
+        >
+          Whist is a browser that
+        </div>
+        <button
+          className="relative top-32 mt-12 text-gray-900 outline-none animate-fade-in-up opacity-0"
+          onClick={props.onSubmit}
+          style={{ animationDelay: "1200ms" }}
+        >
+          <div className="animate-bounce">Click here to continue</div>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+const Shuffle = (props: { pages: JSX.Element[] }) => {
+  const maxPageIndex = props.pages.length - 1
+  const [pageToShow, setPageToShow] = useState(0)
+
+  return <div>{props.pages[pageToShow]}</div>
+}
+
 export default (props: { onSubmit: () => void }) => {
   const [count, setCount] = useState(0)
   if (count === 0)
@@ -98,7 +136,7 @@ export default (props: { onSubmit: () => void }) => {
       />
     )
   return (
-    <WhoIsWhistFor
+    <WhatMakesWhistDifferent
       onSubmit={() => {
         setCount(2)
       }}
