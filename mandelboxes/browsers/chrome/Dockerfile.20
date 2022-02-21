@@ -76,7 +76,7 @@ RUN mkdir -p /etc/opt/chrome/policies/managed \
     # indefinitely blocking mandelbox shutdown).
     | jq '.BackgroundModeEnabled=false' \
     # Disable the file selection dialog to hide the mandelbox filesystem
-    | jq '.AllowFileSelectionDialogs=false' \
+    #| jq '.AllowFileSelectionDialogs=false' \
     > /etc/opt/chrome/policies/managed/WhistPolicies.json
 
 # Configure teleport extension and native messaging
@@ -113,3 +113,12 @@ RUN chmod +x /usr/bin/start-chrome && ln -sf /usr/bin/start-chrome /usr/bin/whis
 
 # Install Whist Protocol binaries and helper files (if necessary)
 COPY --from=build-assets protocol/* /usr/share/whist/bin/
+
+# Install and configure our kde proxy
+COPY --chmod=755 teleport-kde-proxy.py /opt/teleport/teleport-kde-proxy.py
+
+RUN apt-get update && apt-get install -y kdialog \
+    && rm usr/bin/kdialog \
+    && ln -s /opt/teleport/teleport-kde-proxy.py /usr/bin/kdialog
+
+COPY TEST.txt /home/whist/uploads/kdialog_test.txt
