@@ -252,7 +252,8 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
 
         // Initialize the frame now, so that it can hold the packet we just received
         int num_original_packets = num_indices - num_fec_indices;
-        init_frame(ring_buffer, segment_id, num_original_packets, num_fec_indices, segment->prev_frame_num_duplicates);
+        init_frame(ring_buffer, segment_id, num_original_packets, num_fec_indices,
+                   segment->prev_frame_num_duplicates);
 
         // Update the ringbuffer's min/max id, with this new frame's ID
         ring_buffer->max_id = max(ring_buffer->max_id, frame_data->id);

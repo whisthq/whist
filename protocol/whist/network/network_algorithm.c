@@ -405,6 +405,10 @@ bool whist_congestion_controller(PerGroupStats *curr_group_stats, PerGroupStats 
 #define DELAY_VARIATION_THRESHOLD_IN_SEC 0.01  // 10ms
 #define OVERUSE_TIME_THRESHOLD_IN_SEC 0.01     // 10ms
 #define NEW_BITRATE_DURATION_IN_SEC 1.0
+#define CONVERGENCE_THRESHOLD_LOW 0.8
+#define CONVERGENCE_THRESHOLD_HIGH 1.1
+#define DECREASE_RATIO 0.95
+#define BANDWITH_USED_THRESHOLD 0.9
 
     static WhistTimer overuse_timer;
     static WhistTimer last_update_timer;
@@ -522,12 +526,12 @@ bool whist_congestion_controller(PerGroupStats *curr_group_stats, PerGroupStats 
     // once every response_time interval.
     if (delay_controller_state == DELAY_CONTROLLER_INCREASE &&
         get_timer(&last_update_timer) > NEW_BITRATE_DURATION_IN_SEC &&
-        incoming_bitrate > (network_settings->bitrate * 0.9)) {
+        incoming_bitrate > (network_settings->bitrate * BANDWITH_USED_THRESHOLD)) {
         LOG_INFO("Increase bitrate by %.2f percent", increase_percentage);
         new_bitrate = network_settings->bitrate * (1.0 + increase_percentage / 100.0);
         last_increase_bitrate = new_bitrate;
         // Looks like the network has recovered. Reset the counters.
-        if (new_bitrate > last_failed_bitrate * 1.1) {
+        if (new_bitrate > last_failed_bitrate * CONVERGENCE_THRESHOLD_HIGH) {
             network_settings->saturate_bandwidth = true;
             increase_percentage = INITIAL_INCREASE_PERCENTAGE;
         }
@@ -536,7 +540,7 @@ bool whist_congestion_controller(PerGroupStats *curr_group_stats, PerGroupStats 
                get_timer(&last_decrease_timer) > NEW_BITRATE_DURATION_IN_SEC) {
         LOG_INFO("Decrease bitrate filtered_delay_variation = %.2f packet_loss_ratio = %.2f",
                  filtered_delay_variation, packet_loss_ratio);
-        new_bitrate = incoming_bitrate * 0.95;
+        new_bitrate = incoming_bitrate * DECREASE_RATIO;
         start_timer(&last_decrease_timer);
         if (burst_mode && max_bitrate_count < 2 * pre_burst_mode_count) {
             // If the burst mode couldn't sustain pre_burst_mode_count, then the current congestion
@@ -547,7 +551,7 @@ bool whist_congestion_controller(PerGroupStats *curr_group_stats, PerGroupStats 
             // burst mode related thresholds to its original values.
             pre_burst_mode_count = INITIAL_PRE_BURST_MODE_COUNT;
         }
-        if (new_bitrate < last_increase_bitrate * 0.80) {
+        if (new_bitrate < last_increase_bitrate * CONVERGENCE_THRESHOLD_LOW) {
             network_settings->saturate_bandwidth = true;
             increase_percentage = INITIAL_INCREASE_PERCENTAGE;
         } else {

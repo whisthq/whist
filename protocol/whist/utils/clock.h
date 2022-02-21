@@ -101,10 +101,12 @@ double get_timer(const WhistTimer* timer);
  * @brief                          Adjust the value of the timer by configurable number of seconds
  *                                 a stopwatch
  *
- * @param num_seconds              Number of seconds to be added to the timer value. This parameter be
- *                                 negative as well.
+ * @param timer                    Pointer to the timer to query.
+ *
+ * @param num_seconds              Number of seconds to be added to the timer value. This parameter
+ *                                 can be negative as well.
  */
-void adjust_timer(WhistTimer* timer_opaque, int num_seconds);
+void adjust_timer(WhistTimer* timer, int num_seconds);
 
 /**
  * @brief                          Write a string representing the current time.

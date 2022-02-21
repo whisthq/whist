@@ -28,7 +28,8 @@ Defines
 ============================
 */
 
-#define WCC 1
+// Enable the use of Whist Congestion Control algorithm defined in WCC.md
+#define USE_WHIST_CONGESTION_CONTROL 1
 
 typedef enum {
     UDP_WHIST_SEGMENT,
@@ -102,6 +103,7 @@ typedef struct {
     AESMetadata aes_metadata;
     // Size of the payload
     int payload_size;
+    // id of the group of packets that are sent in one burst.
     int group_id;
     // The data getting transmitted within the UDPNetworkPacket,
     // Which will be an encrypted UDPPacket
@@ -320,7 +322,7 @@ static int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet);
  *                               wait for as long as the socket's most recent set_timeout
  */
 static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
-                               timestamp_us* arrival_time, int *group_id);
+                               timestamp_us* arrival_time, int* group_id);
 
 /**
  * @brief                        Returns the size, in bytes, of the relevant part of
@@ -411,7 +413,7 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
         context->desired_network_settings = get_starting_network_settings();
     }
     bool send_network_settings = false;
-#if !WCC
+#if !USE_WHIST_CONGESTION_CONTROL
     // *************
     // Potentially ask for new network settings based on the current network statistics
     // *************
@@ -514,8 +516,7 @@ static bool udp_update(void* raw_context) {
         if (udp_packet.type == UDP_WHIST_SEGMENT) {
             WhistPacketType packet_type = udp_packet.udp_whist_segment_data.whist_type;
 
-            if (packet_type == PACKET_VIDEO &&
-                !udp_packet.udp_whist_segment_data.is_a_nack &&
+            if (packet_type == PACKET_VIDEO && !udp_packet.udp_whist_segment_data.is_a_nack &&
                 group_id >= group_stats.curr_group_id) {
                 udp_congestion_control(context, udp_packet.udp_whist_segment_data.departure_time,
                                        arrival_time, group_id);
@@ -693,7 +694,8 @@ static int udp_send_packet(void* raw_context, WhistPacketType packet_type,
         packet->udp_whist_segment_data.index = (unsigned short)packet_index;
         packet->udp_whist_segment_data.num_indices = (unsigned short)num_total_packets;
         packet->udp_whist_segment_data.num_fec_indices = (unsigned short)num_fec_packets;
-        packet->udp_whist_segment_data.prev_frame_num_duplicates = (unsigned short)prev_frame_num_duplicates;
+        packet->udp_whist_segment_data.prev_frame_num_duplicates =
+            (unsigned short)prev_frame_num_duplicates;
         packet->udp_whist_segment_data.is_a_nack = false;
         packet->udp_whist_segment_data.segment_size = buffer_sizes[packet_index];
 
@@ -1122,7 +1124,7 @@ int udp_get_num_indices(SocketContext* socket_context, WhistPacketType type, int
         LOG_WARNING("%s packet %d not found, ID %d was located instead.",
                     type == PACKET_VIDEO ? "video" : "audio", packet_id,
                     packet->udp_whist_segment_data.id);
-        return 0;
+        return -1;
     }
 }
 
@@ -1396,10 +1398,12 @@ static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
     if (recv_len > 0) {
         int decrypted_len;
 
-        if (arrival_time)
+        if (arrival_time) {
             *arrival_time = current_time_us();
-        if (group_id)
+        }
+        if (group_id) {
             *group_id = udp_network_packet.group_id;
+        }
 
         // Verify the reported packet length
         // This is before the `decrypt_packet` call, so the packet might be malicious
@@ -1752,6 +1756,4 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
     context->current_network_settings = network_settings;
 }
 
-size_t udp_packet_max_size(void) {
-    return(sizeof(UDPNetworkPacket));
-}
+size_t udp_packet_max_size(void) { return (sizeof(UDPNetworkPacket)); }

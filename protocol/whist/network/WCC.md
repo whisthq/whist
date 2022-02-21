@@ -1,6 +1,6 @@
 # Whist Congestion Control(WCC)
 
-In this document we will describe the Whist Congestion Control algorithm. The primary requirement of this algorithm is to estimate the bandwidth available for AV streaming between the server and client as accurately as possible. This algorithm is heavily based on Google Congestion Control with some simplifications and modifications. This algorithm is based on the fact that there is a queue of unknown size between the sender and receiver, somewhere in the network. It tries to detect if the queues are filling-up, draining or empty and estimates the bandwidth accordingly. In addition to the queue length, it also takes into account the packet losses in the network to estimate the available bandwidth.
+In this document we will describe the Whist Congestion Control algorithm. The primary requirement of this algorithm is to estimate the bandwidth available for AV streaming between the server and client as accurately as possible. This algorithm is heavily based on [Google Congestion Control](#References) with some simplifications and modifications. This algorithm is based on the fact that there is a queue of unknown size between the sender and receiver, somewhere in the network. It tries to detect if the queues are filling-up, draining or empty and estimates the bandwidth accordingly. In addition to the queue length, it also takes into account the packet losses in the network to estimate the available bandwidth.
 
 # Terminology
 
@@ -9,7 +9,7 @@ In this document we will describe the Whist Congestion Control algorithm. The pr
 # Pacer (Network Throttler)
 
 Pacing is used to actuate the target bitrate computed by the congestion control algorithm. (This is called as Network Throttler inside Whist code).
-When media encoder produces data, this is fed into a Pacer queue. The Pacer sends a group of packets to the network every burst_time interval. RECOMMENDED value for burst_time is 5 ms.  The size of a group of packets is computed as the product between the target bitrate and the burst_time. The group of packets that are sent in a burst_time interval, should be assigned a group_id for easier reference on the client side. group_id could start with with 1 and is incremented for each burst.
+When media encoder produces data, this is fed into a Pacer queue. The Pacer sends a group of packets to the network every burst_time interval. RECOMMENDED value for burst_time is 5 ms.  The size of a group of packets is computed as the product between the target bitrate and the burst_time. The group of packets that are sent in a burst_time interval, should be assigned a group_id for easier reference on the client side. group_id could start with 1 and is incremented for each burst.
 
 # Algorithm
 
@@ -45,7 +45,7 @@ The inter-group delay variation estimate m(i), obtained as the output of the arr
 The RECOMMENDED value for del_var_th is 10 milliseconds.
 The RECOMMENDED value for overuse_time_th is 10 milliseconds.
 
-Also if the packet loss over last 250ms is observed to be higher than 10% then the delay-variation based signal is ignored and over-use is signalled.
+Also if the packet loss over last 250ms is observed to be higher than 10% then the delay-variation based signal is ignored and over-use is signaled.
 
 ## Rate control
 
@@ -68,7 +68,7 @@ The state transitions (with blank fields meaning "remain in state") are:
 
 New bitrate message is sent once every update_interval duration, except when switching from Increase state to Decrease state where a new bitrate message will be sent immediately. The RECOMMENDED value of update_interval is 1 second
 
-Herein we define incoming_bitrate R(i) as follows. It is the incoming bitrate measured over the last 256ms.
+Herein we define incoming_bitrate R(i) as follows. It is the incoming bitrate measured over the last 250ms.
 
 The new bitrate A(i) will be calculated as follows
 ### Increase bitrate
@@ -76,7 +76,7 @@ The new bitrate A(i) will be calculated as follows
 The bitrate is increased to a new value only if the following conditions are met.
     - System is currently in "Increase state"
     - update_interval duration has passed since we sent the last new bitrate message
-    - R(i) is greater than 90% of A(i-1)
+    - R(i) is greater than BANDWITH_USED_THRESHOLD times of A(i-1). The RECOMMENDED value of BANDWITH_USED_THRESHOLD is 0.9
 
 The bitrate A(i) is updated as per the below equation
 
@@ -92,15 +92,17 @@ The bitrate is decreased to a new value only if the following conditions are met
 
 The bitrate A(i) is updated as per the below equation
 
-    A(i) = R(i) * 0.95
+    A(i) = R(i) * DECREASE_RATIO
+
+The RECOMMENDED value of DECREASE_RATIO is 0.95
 
 ### Saturate Bandwidth
 
-As one can observe from the above equations, the bitrate will be increased to a new value only if the incoming bitrate is above a particular threshold. But the video encoder will not generate enough bits to utilize the entire video bitrate configured when the client is idle and simple video content is being encoded. During such cases the bitrate cannot be increased to the available bandwidth till the client becomes active. In order to converge to the available bandwidth quickly, the algo will send a "saturate_bandwidth" signal to the server, so that server can send filler packets and/or fec packets to send data as per the requested bitrate A(i). Once bitrate convergence is reached, "saturate_bandwidth" will be set to false so that we don't waste bandwidth unnecessarily.
+As one can observe from the above equations, the bitrate will be increased to a new value only if the incoming bitrate is above a particular threshold. But the video encoder will not generate enough bits to utilize the entire video bitrate configured when the client is idle and simple video content is being encoded. During such cases the bitrate cannot be increased to the available bandwidth till the client becomes active. In order to converge to the available bandwidth quickly, the algo will send a "saturate_bandwidth" signal to the server, so that server can send filler packets and/or FEC packets to send data as per the requested bitrate A(i). Once bitrate convergence is reached, "saturate_bandwidth" will be set to false so that we don't waste bandwidth unnecessarily.
 
 The value saturate_bandwidth is updated as per below
 
-    if (A(i) < A_inc(i-1) * 0.80 || A(i) > A_fail(i-1) * 1.1 || i = 0)) {
+    if (A(i) < A_inc(i-1) * CONVERGENCE_THRESHOLD_LOW || A(i) > A_fail(i-1) * CONVERGENCE_THRESHOLD_HIGH || i = 0)) {
         saturate_bandwidth = true;
     } else if (A(i) < A(i-1)) {
         saturate_bandwidth = false;
@@ -112,15 +114,19 @@ where,
 
     A_inc(i-1) = previous bitrate sent while in increase state.
 
-    A_fail(i-1) = previous bitrate that when there was a state transition from increase to decrease and a lower bitrate was sent.
+    A_fail(i-1) = previous bitrate used when there was a state transition from increase to decrease and a lower bitrate was sent.
 
     max_bitrate = maximum bitrate that the system can allot for this AV streaming. The method of computing max_bitrate can be decided independently by the system, based on the application, resolution etc., and is beyond the scope of this document.
+
+The RECOMMENDED value of CONVERGENCE_THRESHOLD_LOW is 0.80
+The RECOMMENDED value of CONVERGENCE_THRESHOLD_HIGH is 1.1
+
 
 ### Increase percentage
 
 The value increase_percent(i) is updated as per below. When the current bitrate appears to be far from convergence then INITIAL_INCREASE_PERCENTAGE is used. When we seem to approaching covergence then increase_percent(i) is reduced.
 
-    if (A(i) < A_inc(i-1) * 0.80 || A(i) > A_fail(i-1) * 1.1 || i == 0) {
+    if (A(i) < A_inc(i-1) * CONVERGENCE_THRESHOLD_LOW || A(i) > A_fail(i-1) * CONVERGENCE_THRESHOLD_HIGH || i == 0) {
         increase_percent(i) = INITIAL_INCREASE_PERCENTAGE;
     } else if (A(i) < A(i-1)) {
         increase_percent(i) = increase_percent(i - 1) / 2;
@@ -158,6 +164,23 @@ pre_burst_mode_count is increased if the burst mode causes the system to go into
     }
 
 The RECOMMENDED value of INITIAL_PRE_BURST_MODE_COUNT is 5
+
+## RECOMMENDED values and reasons
+
+| Parameter                     | RECOMMENDED value | Reason     |
+| ----------------------------- | ----------------- | ---------- |
+|  burst_time                   | 5ms               | From [Google Congestion control](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02#section-4)  |
+|  EWMA_FACTOR                  | 0.3               | Based on heuristics. Not sure if it will work for all cases. We might need to replace this with a kalman filter, where this factor is changed adaptively. TODO for future. |
+|  del_var_th                   | 10ms              | Based on heuristics. Google Congestion control recommends an adaptive threshold of [6ms to 600ms](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02#section-5.4), based on current network conditions. They mention that a static value will lead to starvation if there is a concurrent TCP flow. TODO for future. |
+|  overuse_time_th              | 10ms              | From [Google Congestion control](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02#section-5.4) |
+|  update_interval              | 1 second          | From [Google Congestion control](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02#section-3) |
+|  INITIAL_INCREASE_PERCENTAGE  | 1                 | Based on heuristics. A 1% increase every 1 second, will mean that we can double the bitrate in 70 seconds. This is quick enough to reach to available bandwidth. Also this is small enough to make sure that we don't lose a lot of packets when there is a congestion triggered due to this increase. Google Congestion control uses a different algorithm for increasing bitrate that didn't work for me very well. Maybe a TODO for future, if ppl find any limitations with this |
+|  DECREASE_RATIO               | 0.95              | Based on heuristics or faster convergence. [Google Congestion control](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02#section-5.5) suggests a value between 0.8 to 0.95  |
+|  CONVERGENCE_THRESHOLD_LOW    | 0.8               | Based on heuristics or faster convergence. Google Congestion control have such concepts such as conditional saturate bandwidth which uses this value. These are our improvisations |
+|  CONVERGENCE_THRESHOLD_HIGH   | 1.1               | Based on heuristics or faster convergence. Google Congestion control have such concepts such as conditional saturate bandwidth which uses this value. These are our improvisations |
+|  BANDWITH_USED_THRESHOLD      | 0.9               | Based on heuristics. Google Congestion control have a such concept of conditional saturate bandwidth. It always assumes bandwidth is fully used. These are our improvisations |
+|  BURST_BITRATE_RATIO          | 4                 | The current value being used in the dev branch, as of writing this document |
+| INITIAL_PRE_BURST_MODE_COUNT  | 5                 | Based on heuristics. Google Congestion control doesn't have a concept of burst bitrate |
 
 # References
 
