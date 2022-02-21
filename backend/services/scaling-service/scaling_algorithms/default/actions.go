@@ -95,18 +95,18 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 	// Consider both active and preconnection instances
 	instancesOnRegion := len(currentlyActive) + len(currentlyStarting)
 	if instancesOnRegion < DEFAULT_INSTANCE_BUFFER {
-		logger.Infof("Current number of instances %v is less than desired %v. Scaling up to match.", instancesOnRegion, DEFAULT_INSTANCE_BUFFER)
-
-		// Query for the current image id
+		// Query for the latest image id
 		imageResult, err := dbclient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region) // TODO: set different provider when doing multi-cloud.
 		if err != nil {
 			return utils.MakeError("failed to query database for current image. Err: %v", err)
 		}
 
 		if len(imageResult) == 0 {
-			return utils.MakeError("current image doesn't exist on %v", event.Region)
+			logger.Warningf("Image not found on %v. Not performing any scaling actions.", event.Region)
+			return nil
 		}
 
+		logger.Infof("Current number of instances %v is less than desired %v. Scaling up to match.", instancesOnRegion, DEFAULT_INSTANCE_BUFFER)
 		latestImageID := string(imageResult[0].ImageID)
 
 		// Start scale up action for desired number of instances
@@ -150,6 +150,12 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		return utils.MakeError("failed to query database for active instances. Err: %v", err)
 	}
 
+	// check database for preconnection instances
+	currentlyStarting, err := dbclient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "PRE_CONNECTION", event.Region)
+	if err != nil {
+		return utils.MakeError("failed to query database for starting instances. Err: %v", err)
+	}
+
 	instancesToScaleDown := len(activeInstances)
 	for _, instance := range activeInstances {
 		associatedMandelboxes := len(instance.Mandelboxes)
@@ -190,6 +196,12 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// Verify if there are free instances that can be scaled down
 	if len(freeInstances) == 0 {
 		logger.Info("There are no free instances to scale down in %v.", event.Region)
+		return nil
+	}
+
+	// Don't scale down free instances if there are instances in pre connection to avoid downtimes
+	if len(currentlyStarting) > 0 {
+		logger.Infof("Not scaling down free instances as there are %v instances on preconnection state.", len(currentlyStarting))
 		return nil
 	}
 
@@ -350,29 +362,6 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	}
 
 	logger.Infof("Inserted %v rows to database.", affectedRows)
-
-	// get old instances from database
-	instanceResult, err := dbclient.QueryInstancesByImage(scalingCtx, s.GraphQLClient, oldImageID)
-	if err != nil {
-		return utils.MakeError("failed to query database for instances with image %v. Err: %v", oldImageID, err)
-	}
-
-	// drain instances with old image
-	logger.Infof("Scaling down %v instances from previous image %v.", len(instanceResult), oldImageID)
-
-	for _, instance := range instanceResult {
-		updateParams := map[string]interface{}{
-			"id":     graphql.String(instance.ID),
-			"status": graphql.String("DRAINING"),
-		}
-
-		_, err = dbclient.UpdateInstance(scalingCtx, s.GraphQLClient, updateParams)
-		if err != nil {
-			logger.Errorf("Failed to mark instance %v as draining. Err: %v", instance, err)
-		}
-
-		logger.Info("Marked instance %v as draining on database.", instance.ID)
-	}
 
 	// swapover active image on database
 	logger.Infof("Updating old %v image %v to new image %v on database.", event.Region, oldImageID, newImageID)

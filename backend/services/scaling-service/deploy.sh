@@ -49,3 +49,6 @@ heroku buildpacks:set http://github.com/ryandotsmith/null-buildpack.git -a "$HER
 # Push deploy directory to Heroku
 echo "Deploying scaling service..."
 git push -f heroku-whist-scaling-service deploy-branch:master
+
+# Scale Heroku dyno to start the scaling process
+heroku ps:scale scaling=1 -a "$HEROKU_APP_NAME"
