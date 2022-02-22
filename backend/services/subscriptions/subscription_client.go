@@ -169,8 +169,10 @@ func (wc *SubscriptionClient) Close(subscriptionIDs []string) error {
 		err := wc.Hasura.Unsubscribe(id)
 
 		if err != nil {
-			logger.Errorf("Failed to unsubscribe from:%v, %v", id, err)
-			return err
+			// Only use a warning instead of an error because failure to unsubscribe
+			// is not fatal, as we have already started the host service
+			// shut down process and the client will get cleaned up.
+			logger.Warningf("Failed to unsubscribe from:%v, %v", id, err)
 		}
 	}
 
@@ -188,7 +190,6 @@ func (wc *SubscriptionClient) Close(subscriptionIDs []string) error {
 		// Hasura server is not fatal, as we have already started the host service
 		// shut down process and the client will get cleaned up.
 		logger.Warningf("Error closing connection with Hasura server: %v", err)
-		return err
 	}
 
 	// Once successfully close, set the Hasura field to nil
