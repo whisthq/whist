@@ -693,6 +693,7 @@ static int udp_send_packet(void* raw_context, WhistPacketType packet_type,
         packet->udp_whist_segment_data.prev_frame_num_duplicates =
             (unsigned short)prev_frame_num_duplicates;
         packet->udp_whist_segment_data.is_a_nack = false;
+        packet->udp_whist_segment_data.is_a_duplicate = false;
         packet->udp_whist_segment_data.segment_size = buffer_sizes[packet_index];
 
         FATAL_ASSERT(packet->udp_whist_segment_data.segment_size <=
