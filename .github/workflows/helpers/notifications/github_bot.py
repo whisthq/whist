@@ -19,6 +19,7 @@ def github_comment_update(
     code=None,
     lang=None,
     create=True,
+    update_date=False,
 ):
     """Updates and creates previous comments on a GitHub issue or PR
 
@@ -38,6 +39,7 @@ def github_comment_update(
         title: a optional string, formatted at the top of the comment
         code: a optional string, placed in a block at the bottom of the comment
         lang: a optional string, used to format the comment's code block
+        update_date: True if you want to update the date of comments with the same identifier
     Returns:
         None
     """
@@ -54,9 +56,13 @@ def github_comment_update(
         if fmt.startswith_id(identifier, comment.body):
             matching_comments.append(comment)
 
-    if not matching_comments and create:
+    if (not matching_comments or update_date) and create:
         # create a comment if none exist
         issue.create_comment(body)
-    else:
+    elif matching_comments and not update_date:
         for comment in matching_comments:
             comment.edit(body)
+
+    if matching_comments and update_date:
+        for comment in matching_comments:
+            comment.delete()

@@ -297,7 +297,7 @@ if __name__ == "__main__":
     title = "Protocol End-to-End Streaming Test Results - {}".format(test_start_time)
     github_repo = "whisthq/whist"
     # Adding timestamp to prevent overwrite of message
-    identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE - {}".format(test_start_time)
+    identifier = "AUTOMATED_STREAMING_E2E_TEST_RESULTS_MESSAGE"
 
     # Create one file for each branch
 
@@ -329,4 +329,5 @@ if __name__ == "__main__":
                 identifier,
                 merged_body,
                 title=title,
+                update_date=True,
             )
