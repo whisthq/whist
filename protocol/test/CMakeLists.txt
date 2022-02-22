@@ -43,6 +43,9 @@ else()
         protocol_test.cpp
         codec_test.cpp
         lodepng_test.cpp
+        network_test.cpp
+
+        socket_fake.c
 
         # Files needed for Server unit tests
         ../server/client.c
