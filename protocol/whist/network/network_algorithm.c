@@ -59,7 +59,7 @@ static NetworkSettings default_network_settings = {
 
 // Confirmed visually that these values produce reasonable output quality for DPI of 192. For other
 // DPIs they need to scaled accordingly.
-#define MINIMUM_BITRATE_PER_PIXEL 1.0
+#define MINIMUM_BITRATE_PER_PIXEL 0.75
 #define MAXIMUM_BITRATE_PER_PIXEL 4.0
 #define STARTING_BITRATE_PER_PIXEL 3.0
 
@@ -124,7 +124,12 @@ NetworkSettings get_default_network_settings(int width, int height, int screen_d
     FATAL_ASSERT(width > 0 && height > 0 && screen_dpi > 0);
     default_network_settings.bitrate =
         get_total_bitrate(width, height, screen_dpi, STARTING_BITRATE_PER_PIXEL);
+#if !USE_WHIST_CONGESTION_CONTROL
     default_network_settings.burst_bitrate = default_network_settings.bitrate * BURST_BITRATE_RATIO;
+#else
+    // Whist congestion control increases burst bitrate only after exceeding max bitrate
+    default_network_settings.burst_bitrate = default_network_settings.bitrate;
+#endif
     return default_network_settings;
 }
 
@@ -399,7 +404,7 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
                                  int incoming_bitrate, double packet_loss_ratio,
                                  NetworkSettings *network_settings) {
 #define INITIAL_PRE_BURST_MODE_COUNT 5.0
-#define INITIAL_INCREASE_PERCENTAGE 1.0
+#define INITIAL_INCREASE_PERCENTAGE 4.0
 // Latest delay variation gets this weightage. Older value gets a weightage of (1 - EWMA_FACTOR)
 #define EWMA_FACTOR 0.3
 #define DELAY_VARIATION_THRESHOLD_IN_SEC 0.01  // 10ms
@@ -408,7 +413,7 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
 #define CONVERGENCE_THRESHOLD_LOW 0.8
 #define CONVERGENCE_THRESHOLD_HIGH 1.1
 #define DECREASE_RATIO 0.95
-#define BANDWITH_USED_THRESHOLD 0.9
+#define BANDWITH_USED_THRESHOLD 0.95
 
     static WhistTimer overuse_timer;
     static WhistTimer last_update_timer;

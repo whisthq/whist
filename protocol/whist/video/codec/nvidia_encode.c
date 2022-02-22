@@ -565,6 +565,12 @@ static int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, int vbv
     p_preset_config->presetCfg.rcParams.multiPass = NV_ENC_TWO_PASS_QUARTER_RESOLUTION;
     p_preset_config->presetCfg.rcParams.enableAQ = 1;
 
+    // Limiting the maxQP to avoid the video pixelation issue at low bitrates.
+    p_preset_config->presetCfg.rcParams.enableMaxQP = 1;
+    p_preset_config->presetCfg.rcParams.maxQP.qpInterP = MAX_QP;
+    p_preset_config->presetCfg.rcParams.maxQP.qpInterB = MAX_QP;
+    // Max Intra QP is set to a higher value, to avoid really large single frame sizes.
+    p_preset_config->presetCfg.rcParams.maxQP.qpIntra = MAX_INTRA_QP;
     // p_preset_config->presetCfg.rcParams.enableTemporalAQ = 1;
     p_preset_config->presetCfg.rcParams.enableNonRefP = 1;
     // Only create IDRs when we request them

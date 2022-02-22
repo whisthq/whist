@@ -29,9 +29,6 @@ Defines
 ============================
 */
 
-// Enable the use of Whist Congestion Control algorithm defined in WCC.md
-#define USE_WHIST_CONGESTION_CONTROL true
-
 typedef enum {
     UDP_WHIST_SEGMENT,
     UDP_NACK,

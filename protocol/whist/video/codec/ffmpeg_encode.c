@@ -136,6 +136,7 @@ static FFmpegEncoder *create_nvenc_encoder(int in_width, int in_height, int out_
     encoder->context->height = encoder->out_height;
     encoder->context->bit_rate = bitrate;         // averageBitRate
     encoder->context->rc_buffer_size = vbv_size;  // vbvBufferSize
+    encoder->context->qmax = MAX_QP;
     encoder->context->time_base.num = 1;
     encoder->context->time_base.den = MAX_FPS;
     encoder->context->gop_size = encoder->gop_size;
@@ -421,6 +422,7 @@ static FFmpegEncoder *create_sw_encoder(int in_width, int in_height, int out_wid
     encoder->context->height = encoder->out_height;
     encoder->context->bit_rate = bitrate;
     encoder->context->rc_buffer_size = vbv_size;  // vbvBufferSize
+    encoder->context->qmax = MAX_QP;
     encoder->context->time_base.num = 1;
     encoder->context->time_base.den = MAX_FPS;
     encoder->context->gop_size = encoder->gop_size;

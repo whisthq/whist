@@ -76,7 +76,7 @@ The new bitrate A(i) will be calculated as follows
 The bitrate is increased to a new value only if the following conditions are met.
     - System is currently in "Increase state"
     - update_interval duration has passed since we sent the last new bitrate message
-    - R(i) is greater than BANDWITH_USED_THRESHOLD times of A(i-1). The RECOMMENDED value of BANDWITH_USED_THRESHOLD is 0.9
+    - R(i) is greater than BANDWITH_USED_THRESHOLD times of A(i-1). The RECOMMENDED value of BANDWITH_USED_THRESHOLD is 0.95
 
 The bitrate A(i) is updated as per the below equation
 
@@ -132,7 +132,7 @@ The value increase_percent(i) is updated as per below. When the current bitrate 
         increase_percent(i) = increase_percent(i - 1) / 2;
     }
 
-The RECOMMENDED value of INITIAL_INCREASE_PERCENTAGE is 1.
+The RECOMMENDED value of INITIAL_INCREASE_PERCENTAGE is 4.
 
 ### Burst Bitrate
 
@@ -174,11 +174,11 @@ The RECOMMENDED value of INITIAL_PRE_BURST_MODE_COUNT is 5
 |  del_var_th                   | 10ms              | Based on heuristics. Google Congestion control recommends an adaptive threshold of [6ms to 600ms](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02#section-5.4), based on current network conditions. They mention that a static value will lead to starvation if there is a concurrent TCP flow. TODO for future. |
 |  overuse_time_th              | 10ms              | From [Google Congestion control](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02#section-5.4) |
 |  update_interval              | 1 second          | From [Google Congestion control](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02#section-3) |
-|  INITIAL_INCREASE_PERCENTAGE  | 1                 | Based on heuristics. A 1% increase every 1 second, will mean that we can double the bitrate in 70 seconds. This is quick enough to reach to available bandwidth. Also this is small enough to make sure that we don't lose a lot of packets when there is a congestion triggered due to this increase. Google Congestion control uses a different algorithm for increasing bitrate that didn't work for me very well. Maybe a TODO for future, if ppl find any limitations with this |
+|  INITIAL_INCREASE_PERCENTAGE  | 4                 | Based on heuristics. A 4% increase every 1 second, will mean that we can double the bitrate in 18 seconds. This is quick enough to reach to available bandwidth. Also this is small enough to make sure that we don't lose a lot of packets when there is a congestion triggered due to this increase. Google Congestion control uses a different algorithm for increasing bitrate that didn't work for me very well. Maybe a TODO for future, if ppl find any limitations with this |
 |  DECREASE_RATIO               | 0.95              | Based on heuristics or faster convergence. [Google Congestion control](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02#section-5.5) suggests a value between 0.8 to 0.95  |
 |  CONVERGENCE_THRESHOLD_LOW    | 0.8               | Based on heuristics or faster convergence. Google Congestion control have such concepts such as conditional saturate bandwidth which uses this value. These are our improvisations |
 |  CONVERGENCE_THRESHOLD_HIGH   | 1.1               | Based on heuristics or faster convergence. Google Congestion control have such concepts such as conditional saturate bandwidth which uses this value. These are our improvisations |
-|  BANDWITH_USED_THRESHOLD      | 0.9               | Based on heuristics. Google Congestion control have a such concept of conditional saturate bandwidth. It always assumes bandwidth is fully used. These are our improvisations |
+|  BANDWITH_USED_THRESHOLD      | 0.95              | Based on heuristics. Google Congestion control have a such concept of conditional saturate bandwidth. It always assumes bandwidth is fully used. These are our improvisations |
 |  BURST_BITRATE_RATIO          | 4                 | The current value being used in the dev branch, as of writing this document |
 | INITIAL_PRE_BURST_MODE_COUNT  | 5                 | Based on heuristics. Google Congestion control doesn't have a concept of burst bitrate |
 
