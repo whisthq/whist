@@ -3,3 +3,4 @@ keyring
 pyaes
 pbkdf2
 sentry-sdk
+filelock

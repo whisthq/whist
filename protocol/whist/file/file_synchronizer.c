@@ -313,7 +313,7 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
                     break;
                 }
                 case FILE_TRANSFER_SERVER_UPLOAD: {
-                    FILE *fptr = fopen("/home/whist/.teleport/uploads/uploaded-file-confirm", "w");
+                    FILE *fptr = fopen("/home/whist/.teleport/uploaded-file-confirm", "w");
                     fprintf(fptr, "confirm-trigger");
                     fclose(fptr);
                     break;
