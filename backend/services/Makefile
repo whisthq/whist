@@ -62,6 +62,7 @@ build: checkCI $(queries_sql_go_files)
 		-X 'github.com/whisthq/whist/backend/services/metadata/heroku.email=$(HEROKU_USER)'\
 		-X 'github.com/whisthq/whist/backend/services/metadata/heroku.apiKey=$(HEROKU_APIKEY)'\
 		-X 'github.com/whisthq/whist/backend/services/metadata/heroku.appNameOverride=$(HEROKU_APP_NAME_OVERRIDE)'\
+		-X 'github.com/whisthq/whist/backend/services/scaling-service/host/aws.InstanceProfile=$(INSTANCE_PROFILE_ARN)'\
 		" -o $(BUILD_FOLDER)/ ./...
 
 format:

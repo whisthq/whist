@@ -20,3 +20,6 @@ const (
 	// different instance types are added.
 	INSTANCE_TYPE = ec2Types.InstanceTypeG4dn2xlarge
 )
+
+// The following variable will be filled in by the linker.
+var InstanceProfile string

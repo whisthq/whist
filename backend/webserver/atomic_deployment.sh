@@ -54,6 +54,9 @@ if [ "$MIGRA_EXIT_CODE" == "2" ] || [ "$MIGRA_EXIT_CODE" == "3" ]; then
   # this should redeploy the webserver with code that corresponds to the new schema
   git push -f heroku-whist-server workflows-private/webserver:master
 
+  # set the instance profile as an env var
+  heroku config:set INSTANCE_PROFILE="${INSTANCE_PROFILE_ARN}" --app "${HEROKU_APP_NAME}"
+
   # bring webserver back online
   heroku ps:scale web=1 --app "${HEROKU_APP_NAME}"
 

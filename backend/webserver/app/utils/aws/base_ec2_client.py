@@ -10,11 +10,11 @@ import itertools
 import time
 
 from typing import Any, Dict, List, Optional
+import os
 import boto3
 
 from flask import current_app
 from app.constants.ec2_instance_states import EC2InstanceState
-from app.constants.env_names import PRODUCTION, STAGING, DEVELOPMENT
 from app.utils.aws.ec2_userdata import userdata_template
 from app.utils.cloud_interface.base_cloud_interface import CloudClient
 from app.utils.general.logs import whist_logger
@@ -75,8 +75,8 @@ class EC2Client(CloudClient):
         # Note that the IamInstanceProfile is set to one created in the
         # Console to allows read-only EC2 access and full S3 access.
 
-        # Get instance profile to launch instances.
-        profile = get_instance_profile()
+        # Get main subnet
+        subnet = self.get_main_subnet()
 
         kwargs = {
             "ImageId": image_id,
@@ -92,8 +92,9 @@ class EC2Client(CloudClient):
                 },
             ],
             "UserData": userdata_template,
+            "SubnetID": subnet,
             "IamInstanceProfile": {
-                "Arn": profile,
+                "Arn": os.environ["INSTANCE_PROFILE"],
             },
             "InstanceInitiatedShutdownBehavior": "terminate",
         }
@@ -223,16 +224,22 @@ class EC2Client(CloudClient):
             resdict[instance["InstanceId"]] = instance["PublicIpAddress"]
         return resdict
 
+    def get_main_subnet(self) -> str:
+        """
+        Gets the ID of the main subnet on the current region.
+        Returns: a string representing the subnet id.
 
-def get_instance_profile() -> str:
-    # TODO all all environment instance profiles
-    # once we promote Terraform to staging and prod.
-    if current_app.config["ENVIRONMENT"] == DEVELOPMENT:
-        return "arn:aws:iam::747391415460:instance-profile/EC2DeploymentRoleInstanceProfile"
-    elif current_app.config["ENVIRONMENT"] == STAGING:
-        return ""
-    elif current_app.config["ENVIRONMENT"] == PRODUCTION:
-        return ""
-    else:
-        # Default to dev
-        return "arn:aws:iam::747391415460:instance-profile/EC2DeploymentRoleInstanceProfile"
+        """
+        resp = self.ec2_client.describe_subnets(
+            Filters=[
+                {"Name": "Env", "Value": current_app.config["ENVIRONMENT"]},
+                {"Name": "Terraform", "Value": "true"},
+            ]
+        )
+
+        subnet_ids = [subnet["SubnetId"] for subnet in resp["Subnets"]]
+
+        main_subnet = ""
+        if subnet_ids:
+            main_subnet = subnet_ids[0]
+        return main_subnet

@@ -64,9 +64,6 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 		return nil, utils.MakeError("failed to encode userdata for launching instances. Err: %v", err)
 	}
 
-	// Get instance profile to launch instances
-	profile := getInstanceProfile()
-
 	// Get main subnet for the current region and env
 	main, err := host.GetMainSubnet(scalingCtx)
 	if err != nil {
@@ -81,7 +78,7 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 		InstanceInitiatedShutdownBehavior: ec2Types.ShutdownBehaviorTerminate,
 		InstanceType:                      INSTANCE_TYPE,
 		IamInstanceProfile: &ec2Types.IamInstanceProfileSpecification{
-			Arn: aws.String(profile),
+			Arn: aws.String(InstanceProfile),
 		},
 		SubnetId:     main.SubnetId,
 		UserData:     aws.String(userData),
@@ -301,22 +298,6 @@ func (host *AWSHost) GetMainSubnet(scalingCtx context.Context) (ec2Types.Subnet,
 func (host *AWSHost) GenerateName() string {
 	return utils.Sprintf("ec2-%v-%v-%v-%v", host.Region, metadata.GetAppEnvironmentLowercase(),
 		metadata.GetGitCommit()[0:7], shortuuid.New())
-}
-
-// getInstanceProfile returns the arn of the instance profile to use.
-func getInstanceProfile() string {
-	// TODO: fill out the cases with all environments
-	// once we promote Terraform.
-	switch metadata.GetAppEnvironmentLowercase() {
-	case "dev":
-		return "arn:aws:iam::747391415460:instance-profile/EC2DeploymentRoleInstanceProfile"
-	case "staging":
-		return ""
-	case "prod":
-		return ""
-	default:
-		return "arn:aws:iam::747391415460:instance-profile/EC2DeploymentRoleInstanceProfile"
-	}
 }
 
 // getUserData returns the base64 encoded userdata file to pass to instances.
