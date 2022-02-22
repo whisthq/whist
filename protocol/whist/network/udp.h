@@ -144,9 +144,38 @@ int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms);
 int udp_get_num_pending_frames(SocketContext* context, WhistPacketType type);
 
 // TODO: Is needed for audio.c, video.c redundancy, but should be pulled into udp.c somehow
-void udp_resend_packet(SocketContext* socket_context, WhistPacketType type, int id, int index);
-void udp_reset_duplicate_packet_counter(SocketContext* socket_context, WhistPacketType type);
-int udp_get_num_indices(SocketContext* socket_context, WhistPacketType type, int id);
+/**
+ * @brief                          Resends the audio/video packet of specified frame id and packet
+ *                                 index
+ *
+ * @param context                  The UDP Socket Context
+ * @param type                     The type of frames to resend
+ * @param id                       Frame ID
+ * @param index                    Packet index
+ *
+ */
+void udp_resend_packet(SocketContext* context, WhistPacketType type, int id, int index);
+
+/**
+ * @brief                          Resets the duplicate packet counter for the specified frame type
+ *
+ * @param context                  The UDP Socket Context
+ * @param type                     The type of frames to reset
+ *
+ */
+void udp_reset_duplicate_packet_counter(SocketContext* context, WhistPacketType type);
+
+/**
+ * @brief                          Get the number of indices(packets) for the specified frame type
+ *                                 and id
+ *
+ * @param context                  The UDP Socket Context
+ * @param type                     The type of frames to query for
+ * @param id                       Frame ID
+ *
+ * @returns                        The number of indices(packets)
+ */
+int udp_get_num_indices(SocketContext* context, WhistPacketType type, int id);
 
 // TODO: Try to remove by making the client detect a nack buffer
 /**

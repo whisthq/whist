@@ -274,7 +274,7 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
     FATAL_ASSERT(frame_data->num_original_packets + frame_data->num_fec_packets == num_indices);
 
     // LOG the the nacking situation
-    if (segment->is_a_nack && !segment->is_a_duplicate) {
+    if (segment->is_a_nack) {
         ring_buffer->num_nacks_received++;
         // Server simulates a nack for audio all the time. Hence log only for video.
         if (type == PACKET_VIDEO) {
@@ -308,7 +308,7 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
         frame_data->redundant_packets_received++;
         // The only way it should possible to receive a packet twice, is if nacking got involved
         if (type == PACKET_VIDEO && frame_data->num_times_index_nacked[segment_index] == 0 &&
-            !segment->is_a_duplicate && segment->is_a_nack) {
+            !segment->is_a_duplicate) {
             LOG_ERROR(
                 "We received a video packet (ID %d / index %d) twice, but we had never nacked for "
                 "it?",

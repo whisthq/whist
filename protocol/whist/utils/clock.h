@@ -98,8 +98,7 @@ void start_timer(WhistTimer* timer);
 double get_timer(const WhistTimer* timer);
 
 /**
- * @brief                          Adjust the value of the timer by configurable number of seconds
- *                                 a stopwatch
+ * @brief                          Add the value of the timer by a configurable number of seconds
  *
  * @param timer                    Pointer to the timer to query.
  *

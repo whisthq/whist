@@ -29,7 +29,7 @@ Defines
 */
 
 // Enable the use of Whist Congestion Control algorithm defined in WCC.md
-#define USE_WHIST_CONGESTION_CONTROL 1
+#define USE_WHIST_CONGESTION_CONTROL true
 
 typedef enum {
     UDP_WHIST_SEGMENT,
@@ -49,7 +49,8 @@ typedef enum {
 typedef struct {
     // Metadata about the packet segment
     UDPPacketType type;
-
+    // id of the group of packets that are sent in one burst.
+    int group_id;
     // The data itself
     union {
         // UDP_WHIST_SEGMENT
@@ -103,8 +104,6 @@ typedef struct {
     AESMetadata aes_metadata;
     // Size of the payload
     int payload_size;
-    // id of the group of packets that are sent in one burst.
-    int group_id;
     // The data getting transmitted within the UDPNetworkPacket,
     // Which will be an encrypted UDPPacket
     char payload[sizeof(UDPPacket) + MAX_ENCRYPTION_SIZE_INCREASE];
@@ -312,9 +311,6 @@ static int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet);
  * @param arrival_time           Writes the arrival time of this packet in the pointed location (if
  *                               non-NULL)
  *
- * @param group_id               Writes the group id of this packet in the pointed location (if
- *                               non-NULL)
- *
  * @returns                      True if a packet was received and written to,
  *                               False if no packet was received
  *
@@ -322,7 +318,7 @@ static int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet);
  *                               wait for as long as the socket's most recent set_timeout
  */
 static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
-                               timestamp_us* arrival_time, int* group_id);
+                               timestamp_us* arrival_time);
 
 /**
  * @brief                        Returns the size, in bytes, of the relevant part of
@@ -505,8 +501,7 @@ static bool udp_update(void* raw_context) {
 
     UDPPacket udp_packet;
     timestamp_us arrival_time;
-    int group_id;
-    bool received_packet = udp_get_udp_packet(context, &udp_packet, &arrival_time, &group_id);
+    bool received_packet = udp_get_udp_packet(context, &udp_packet, &arrival_time);
 
     if (received_packet) {
         add_incoming_bits(arrival_time,
@@ -516,10 +511,11 @@ static bool udp_update(void* raw_context) {
         if (udp_packet.type == UDP_WHIST_SEGMENT) {
             WhistPacketType packet_type = udp_packet.udp_whist_segment_data.whist_type;
 
-            if (packet_type == PACKET_VIDEO && !udp_packet.udp_whist_segment_data.is_a_nack &&
-                group_id >= group_stats.curr_group_id) {
+            if (packet_type == PACKET_VIDEO && udp_packet.group_id >= group_stats.curr_group_id &&
+                !udp_packet.udp_whist_segment_data.is_a_nack &&
+                !udp_packet.udp_whist_segment_data.is_a_duplicate) {
                 udp_congestion_control(context, udp_packet.udp_whist_segment_data.departure_time,
-                                       arrival_time, group_id);
+                                       arrival_time, udp_packet.group_id);
             }
             // If there's a ringbuffer, store in the ringbuffer to reconstruct the original packet
             if (context->ring_buffers[packet_type] != NULL) {
@@ -1161,7 +1157,7 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
         }
         // Check to see if we received a UDP_CONNECTION_ATTEMPT
         UDPPacket client_packet;
-        if (udp_get_udp_packet(context, &client_packet, NULL, NULL)) {
+        if (udp_get_udp_packet(context, &client_packet, NULL)) {
             if (client_packet.type == UDP_CONNECTION_ATTEMPT) {
                 received_connection_attempt = true;
             }
@@ -1250,7 +1246,7 @@ int create_udp_client_context(UDPContext* context, char* destination, int port,
         }
         // Check to see if we received a UDP_CONNECTION_CONFIRMATION
         UDPPacket server_response;
-        if (udp_get_udp_packet(context, &server_response, NULL, NULL)) {
+        if (udp_get_udp_packet(context, &server_response, NULL)) {
             if (server_response.type == UDP_CONNECTION_CONFIRMATION) {
                 connection_succeeded = true;
             }
@@ -1321,6 +1317,12 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
     if (udp_packet->type == UDP_WHIST_SEGMENT) {
         udp_packet->udp_whist_segment_data.departure_time = current_time_us();
     }
+
+    // NOTE: This doesn't interfere with clientside hotpath,
+    // since the throttler only throttles the serverside
+    udp_packet->group_id = network_throttler_wait_byte_allocation(
+        context->network_throttler, (size_t)(UDPNETWORKPACKET_HEADER_SIZE + udp_packet_size));
+
     UDPNetworkPacket udp_network_packet;
     if (ENCRYPTING_PACKETS) {
         // Encrypt the packet during normal operation
@@ -1336,11 +1338,6 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
 
     // The size of the udp packet that actually needs to be sent over the network
     int udp_network_packet_size = UDPNETWORKPACKET_HEADER_SIZE + udp_network_packet.payload_size;
-
-    // NOTE: This doesn't interfere with clientside hotpath,
-    // since the throttler only throttles the serverside
-    udp_network_packet.group_id = network_throttler_wait_byte_allocation(
-        context->network_throttler, (size_t)udp_network_packet_size);
 
     // If sending fails because of no buffer space available on the system, retry a few times.
     for (int i = 0; i < RETRIES_ON_BUFFER_FULL; i++) {
@@ -1377,11 +1374,18 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
         }
     }
 
+    // If encryption has added any extra bytes due to padding, then network throttler should be
+    // called again to adjust for these extra bytes, so that the requested bitrate limit is not
+    // exceeded.
+    if (udp_network_packet.payload_size > udp_packet_size) {
+        network_throttler_wait_byte_allocation(context->network_throttler,
+                                               udp_network_packet.payload_size - udp_packet_size);
+    }
     return 0;
 }
 
 static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
-                               timestamp_us* arrival_time, int* group_id) {
+                               timestamp_us* arrival_time) {
     // Wait to receive a packet over UDP, until timing out
     UDPNetworkPacket udp_network_packet;
     socklen_t slen = sizeof(context->last_addr);
@@ -1398,11 +1402,9 @@ static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
     if (recv_len > 0) {
         int decrypted_len;
 
+        // Tracks arrival time for congestion control algo
         if (arrival_time) {
             *arrival_time = current_time_us();
-        }
-        if (group_id) {
-            *group_id = udp_network_packet.group_id;
         }
 
         // Verify the reported packet length
@@ -1575,7 +1577,7 @@ void udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, i
 
         // Check that the nack buffer ID's match
         if (packet->udp_whist_segment_data.id == packet_id) {
-            packet->udp_whist_segment_data.is_a_nack = true;
+            packet->udp_whist_segment_data.is_a_nack = !is_duplicate;
             packet->udp_whist_segment_data.is_a_duplicate = is_duplicate;
             // Wrap in PACKET_VIDEO to prevent verbose audio.c logs
             // TODO: Fix this by making resend_packet not trigger nack logs
