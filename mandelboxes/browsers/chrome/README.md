@@ -1,6 +1,6 @@
-# Whist Chrome Mandelbox 
+# Whist Chrome Mandelbox
 
-These are the files/resources used for the chrome mandelbox image. 
+These are the files/resources used for the chrome mandelbox image.
 
 ## Teleport
 

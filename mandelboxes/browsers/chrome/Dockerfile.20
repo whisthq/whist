@@ -116,6 +116,7 @@ COPY --from=build-assets protocol/* /usr/share/whist/bin/
 
 # Install and configure our kde proxy
 COPY --chmod=555 teleport-kde-proxy.py /opt/teleport/teleport-kde-proxy.py
-RUN apt-get update && apt-get install -y kdialog \
+RUN apt-get update && apt-get install -y --no-install-recommends kdialog \
     && rm usr/bin/kdialog \
-    && ln -s /opt/teleport/teleport-kde-proxy.py /usr/bin/kdialog
+    && ln -s /opt/teleport/teleport-kde-proxy.py /usr/bin/kdialog \
+    && rm -rf /var/lib/apt/lists/*
