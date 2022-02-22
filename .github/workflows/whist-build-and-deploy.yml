@@ -658,19 +658,6 @@ jobs:
         working-directory: .github/workflows/helpers
         run: ./notifications/setup_notifications.sh
 
-      - name: Set instance profile for staring instances
-        run: |
-          if [[ ${{ needs.whist-publish-build-config.outputs.branch }} == dev ]]; then
-            INSTANCE_PROFILE_ARN= ${{ secrets.INSTANCE_PROFILE_DEV }}
-          elif [[ ${{ needs.whist-publish-build-config.outputs.branch }} == staging ]]; then
-            INSTANCE_PROFILE_ARN= ${{ secrets.INSTANCE_PROFILE_STAGING }}
-          elif [[ ${{ needs.whist-publish-build-config.outputs.branch }} == prod ]]; then
-            INSTANCE_PROFILE_ARN= ${{ secrets.INSTANCE_PROFILE_PROD }}
-          else
-            echo 'Error: Invalid branch' && false
-          fi
-          echo "INSTANCE_PROFILE_ARN=$INSTANCE_PROFILE_ARN" >> $GITHUB_ENV
-
       - name: Authenticate Heroku
         run: |
           cat > ~/.netrc << EOF
@@ -1308,19 +1295,6 @@ jobs:
           GH_USERNAME: ${{ secrets.GHA_USERNAME }}
           GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
         run: git config --global url.https://$GH_USERNAME:$GH_PAT@github.com/.insteadOf https://github.com/
-
-      - name: Set instance profile for staring instances
-        run: |
-          if [[ ${{ needs.whist-publish-build-config.outputs.branch }} == dev ]]; then
-            INSTANCE_PROFILE_ARN= ${{ secrets.INSTANCE_PROFILE_DEV }}
-          elif [[ ${{ needs.whist-publish-build-config.outputs.branch }} == staging ]]; then
-            INSTANCE_PROFILE_ARN= ${{ secrets.INSTANCE_PROFILE_STAGING }}
-          elif [[ ${{ needs.whist-publish-build-config.outputs.branch }} == prod ]]; then
-            INSTANCE_PROFILE_ARN= ${{ secrets.INSTANCE_PROFILE_PROD }}
-          else
-            echo 'Error: Invalid branch' && false
-          fi
-          echo "INSTANCE_PROFILE_ARN=$INSTANCE_PROFILE_ARN" >> $GITHUB_ENV
 
       - name: Build Backend Services
         working-directory: backend/services

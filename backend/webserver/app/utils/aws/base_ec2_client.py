@@ -15,6 +15,7 @@ import boto3
 
 from flask import current_app
 from app.constants.ec2_instance_states import EC2InstanceState
+from app.constants.env_names import PRODUCTION, STAGING, DEVELOPMENT
 from app.utils.aws.ec2_userdata import userdata_template
 from app.utils.cloud_interface.base_cloud_interface import CloudClient
 from app.utils.general.logs import whist_logger
@@ -75,6 +76,9 @@ class EC2Client(CloudClient):
         # Note that the IamInstanceProfile is set to one created in the
         # Console to allows read-only EC2 access and full S3 access.
 
+        # Get instance profile to launch instances.
+        profile = get_instance_profile()
+
         # Get main subnet
         subnet = self.get_main_subnet()
 
@@ -94,7 +98,7 @@ class EC2Client(CloudClient):
             "UserData": userdata_template,
             "SubnetID": subnet,
             "IamInstanceProfile": {
-                "Arn": os.environ["INSTANCE_PROFILE"],
+                "Arn": profile,
             },
             "InstanceInitiatedShutdownBehavior": "terminate",
         }
@@ -243,3 +247,17 @@ class EC2Client(CloudClient):
         if subnet_ids:
             main_subnet = subnet_ids[0]
         return main_subnet
+
+
+def get_instance_profile() -> str:
+    # TODO all all environment instance profiles
+    # once we promote Terraform to staging and prod.
+    if current_app.config["ENVIRONMENT"] == DEVELOPMENT:
+        return os.environ["INSTANCE_PROFILE_DEV"]
+    elif current_app.config["ENVIRONMENT"] == STAGING:
+        return os.environ["INSTANCE_PROFILE_STAGING"]
+    elif current_app.config["ENVIRONMENT"] == PRODUCTION:
+        return os.environ["INSTANCE_PROFILE_PROD"]
+    else:
+        # Default to dev
+        return os.environ["INSTANCE_PROFILE_DEV"]

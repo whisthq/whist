@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"encoding/base64"
+	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -70,6 +71,9 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 		return nil, utils.MakeError("failed to get main subnet. Err: %v", err)
 	}
 
+	// Get the main subnet of the region
+	profile := getInstanceProfile()
+
 	// Set run input
 	input := &ec2.RunInstancesInput{
 		MinCount:                          aws.Int32(MIN_INSTANCE_COUNT),
@@ -78,7 +82,7 @@ func (host *AWSHost) SpinUpInstances(scalingCtx context.Context, numInstances in
 		InstanceInitiatedShutdownBehavior: ec2Types.ShutdownBehaviorTerminate,
 		InstanceType:                      INSTANCE_TYPE,
 		IamInstanceProfile: &ec2Types.IamInstanceProfileSpecification{
-			Arn: aws.String(InstanceProfile),
+			Arn: aws.String(profile),
 		},
 		SubnetId:     main.SubnetId,
 		UserData:     aws.String(userData),
@@ -298,6 +302,22 @@ func (host *AWSHost) GetMainSubnet(scalingCtx context.Context) (ec2Types.Subnet,
 func (host *AWSHost) GenerateName() string {
 	return utils.Sprintf("ec2-%v-%v-%v-%v", host.Region, metadata.GetAppEnvironmentLowercase(),
 		metadata.GetGitCommit()[0:7], shortuuid.New())
+}
+
+// getInstanceProfile returns the arn of the instance profile to use.
+func getInstanceProfile() string {
+	// TODO: fill out the cases with all environments
+	// once we promote Terraform.
+	switch metadata.GetAppEnvironmentLowercase() {
+	case "dev":
+		return os.Getenv("INSTANCE_PROFILE_DEV")
+	case "staging":
+		return os.Getenv("INSTANCE_PROFILE_STAGING")
+	case "prod":
+		return os.Getenv("INSTANCE_PROFILE_PROD")
+	default:
+		return os.Getenv("INSTANCE_PROFILE_DEV")
+	}
 }
 
 // getUserData returns the base64 encoded userdata file to pass to instances.
