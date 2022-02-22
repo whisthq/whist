@@ -1,5 +1,14 @@
 import { merge, of, combineLatest, zip, from } from "rxjs"
-import { map, take, filter, switchMap, share, mapTo } from "rxjs/operators"
+import {
+  map,
+  take,
+  filter,
+  switchMap,
+  share,
+  mapTo,
+  pluck,
+  withLatestFrom,
+} from "rxjs/operators"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
 
@@ -74,12 +83,7 @@ waitForSignal(
 )
 
 // Unpack the access token to see if their payment is valid
-const checkPayment = checkPaymentFlow(
-  emitOnSignal(
-    combineLatest({ accessToken: accessToken.pipe(filter((t) => t !== "")) }),
-    fromTrigger(WhistTrigger.authFlowSuccess)
-  )
-)
+const checkPayment = checkPaymentFlow(auth.success)
 
 // If the payment is invalid, they'll be redirect to the Stripe window. After that they'll
 // get new auth credentials
@@ -114,29 +118,30 @@ const importedData = fromTrigger(WhistTrigger.beginImport).pipe(
 )
 
 // Observable that fires when Whist is ready to be launched
-const launchTrigger = emitOnSignal(
-  combineLatest({
-    userEmail,
-    accessToken,
-    configToken,
-    isNewConfigToken,
-    importedData: merge(importedData, dontImportBrowserData),
-    regions: merge(awsPing.cached, awsPing.refresh),
-    darkMode,
-    timezone,
-    keyRepeat,
-    initialKeyRepeat,
-  }),
-  merge(
-    zip(
-      checkPayment.success,
-      of(persistGet(ONBOARDED)).pipe(
-        filter((onboarded) => onboarded as boolean)
-      )
-    ), // On a normal launch
-    importedData // On onboarding or import
-  )
-).pipe(share())
+const launchTrigger = merge(
+  zip(
+    checkPayment.success,
+    of(persistGet(ONBOARDED)).pipe(filter((onboarded) => onboarded as boolean))
+  ), // On a normal launch
+  importedData // On onboarding or import
+).pipe(
+  withLatestFrom(
+    combineLatest({
+      userEmail: auth.success.pipe(pluck("userEmail")),
+      accessToken: auth.success.pipe(pluck("accessToken")),
+      configToken: auth.success.pipe(pluck("configToken")),
+      isNewConfigToken,
+      importedData: merge(importedData, dontImportBrowserData),
+      regions: merge(awsPing.cached, awsPing.refresh),
+      darkMode,
+      timezone,
+      keyRepeat,
+      initialKeyRepeat,
+    })
+  ),
+  map(([, x]) => x),
+  share()
+)
 
 // Mandelbox creation flow
 const mandelbox = mandelboxFlow(withAppActivated(launchTrigger))

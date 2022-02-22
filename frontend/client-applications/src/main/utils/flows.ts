@@ -81,7 +81,7 @@ export const flow = <T>(
         )
       })
 
-      return obs.pipe(share())
+      return obs
     })
   }
 }
