@@ -748,7 +748,16 @@ static void udp_destroy_socket_context(void* raw_context) {
             }
             free(context->nack_buffers[type_id]);
             free(context->nack_buffer_valid[type_id]);
+            whist_destroy_mutex(context->nack_mutex[type_id]);
             context->nack_buffers[type_id] = NULL;
+        }
+    }
+
+    // Destroy ring buffers, if present.
+    for (int type_id = 0; type_id < NUM_PACKET_TYPES; type_id++) {
+        if (context->ring_buffers[type_id]) {
+            destroy_ring_buffer(context->ring_buffers[type_id]);
+            context->ring_buffers[type_id] = NULL;
         }
     }
 
