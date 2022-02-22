@@ -599,6 +599,8 @@ typedef enum WhistClientMessageType {
 
     MESSAGE_FRAME_ACK = 121,  ///< Frame has been received.
 
+    MESSAGE_FILE_UPLOAD_CANCEL = 122, ///< User has hit cancel on file upload dialog
+
     CMESSAGE_QUIT = 999,
 } WhistClientMessageType;
 

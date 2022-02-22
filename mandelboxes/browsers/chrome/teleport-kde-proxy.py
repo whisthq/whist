@@ -14,8 +14,10 @@ FILE_UPLOAD_LOCK_PATH = "/home/whist/.teleport/uploaded-file-lock"
 FILE_UPLOAD_DIRECTORY = "/home/whist/.teleport/uploads"
 LOG_PATH = "/home/whist/.teleport/logs/teleport-kde-proxy-err.out"
 
+
 def handle_version_request():
     print("kdialog 19.12.3")
+
 
 def handle_open_single_file():
     with FileLock(FILE_UPLOAD_LOCK_PATH):
@@ -28,7 +30,9 @@ def handle_open_single_file():
             file.write("upload-trigger")
 
         # Wait until upload confirmation or cancellation
-        while not os.path.exists(FILE_UPLOAD_CONFIRM_PATH):
+        while not (
+            os.path.exists(FILE_UPLOAD_CONFIRM_PATH) and os.path.exists(FILE_UPLOAD_CONFIRM_PATH)
+        ):
             time.sleep(0.1)
         os.remove(FILE_UPLOAD_CONFIRM_PATH)
 
@@ -39,11 +43,13 @@ def handle_open_single_file():
         # Output file path to stdout and chrome will handle the rest
         print(target_file)
 
+
 def handle_kdialog():
     if "--version" in sys.argv:
         handle_version_request()
     elif "--getopenfilename" in sys.argv:
         handle_open_single_file()
+
 
 try:
     handle_kdialog()

@@ -134,6 +134,17 @@ static int find_free_transferring_file_index(void) {
     return -1;
 }
 
+static void confirm_user_file_upload(void) {
+    /*
+        Confirm that the user file upload transer has by
+        writing a trigger file for the kdialog proxy to user 
+    */
+
+    FILE *fptr = fopen("/home/whist/.teleport/uploaded-file-confirm", "w");
+    fprintf(fptr, "confirm-trigger");
+    fclose(fptr);
+}
+
 /*
 ============================
 Public Function Implementations
@@ -313,9 +324,7 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
                     break;
                 }
                 case FILE_TRANSFER_SERVER_UPLOAD: {
-                    FILE *fptr = fopen("/home/whist/.teleport/uploaded-file-confirm", "w");
-                    fprintf(fptr, "confirm-trigger");
-                    fclose(fptr);
+                    confirm_user_file_upload();
                     break;
                 }
                 default: {
@@ -533,6 +542,12 @@ void reset_all_transferring_files(void) {
     for (int file_index = 0; file_index < NUM_TRANSFERRING_FILES; file_index++) {
         reset_transferring_file(file_index);
     }
+}
+
+void file_syncrhonizer_cancel_user_file_upload(void) {
+    FILE *fptr = fopen("/home/whist/.teleport/uploaded-file-cancel", "w");
+    fprintf(fptr, "cancel-trigger");
+    fclose(fptr);
 }
 
 void destroy_file_synchronizer(void) {

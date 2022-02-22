@@ -193,8 +193,17 @@ void file_synchronizer_read_next_file_chunk(int file_index, FileData** file_chun
 void reset_all_transferring_files(void);
 
 /**
+ * @brief                          Notify the kdialog proxy that the user
+ *                                 has canceled file selection by writing a trigger file
+ *
+ */
+void file_syncrhonizer_cancel_user_file_upload(void);
+
+/**
  * @brief                          Cleanup the file synchronizer
  */
 void destroy_file_synchronizer(void);
+
+
 
 #endif  // FILE_SYNCHRONIZER_H
