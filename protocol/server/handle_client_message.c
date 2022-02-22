@@ -48,7 +48,7 @@ static int handle_file_metadata_message(WhistClientMessage *wcmsg);
 static int handle_file_chunk_message(WhistClientMessage *wcmsg);
 static int handle_open_url_message(whist_server_state *state, WhistClientMessage *wcmsg);
 static int handle_frame_ack_message(whist_server_state *state, WhistClientMessage *wcmsg);
-static int handle_file_upload_cancel_message(whist_server_state*, WhistClientMessage *wcmsg);
+static int handle_file_upload_cancel_message(whist_server_state *, WhistClientMessage *wcmsg);
 
 /*
 ============================

@@ -204,6 +204,4 @@ void file_syncrhonizer_cancel_user_file_upload(void);
  */
 void destroy_file_synchronizer(void);
 
-
-
 #endif  // FILE_SYNCHRONIZER_H

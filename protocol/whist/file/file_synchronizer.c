@@ -137,10 +137,10 @@ static int find_free_transferring_file_index(void) {
 static void confirm_user_file_upload(void) {
     /*
         Confirm that the user file upload transer has by
-        writing a trigger file for the kdialog proxy to user 
+        writing a trigger file for the kdialog proxy to user
     */
 
-    FILE *fptr = fopen("/home/whist/.teleport/uploaded-file-confirm", "w");
+    FILE* fptr = fopen("/home/whist/.teleport/uploaded-file-confirm", "w");
     fprintf(fptr, "confirm-trigger");
     fclose(fptr);
 }
@@ -545,7 +545,12 @@ void reset_all_transferring_files(void) {
 }
 
 void file_syncrhonizer_cancel_user_file_upload(void) {
-    FILE *fptr = fopen("/home/whist/.teleport/uploaded-file-cancel", "w");
+    /*
+        Our kde proxy waits for the uploaded-file-cancel or the uploaded-file-confirm
+        trigger file to show up. Creates the one for cancellation.
+    */
+
+    FILE* fptr = fopen("/home/whist/.teleport/uploaded-file-cancel", "w");
     fprintf(fptr, "cancel-trigger");
     fclose(fptr);
 }

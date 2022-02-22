@@ -74,4 +74,5 @@ echo "loaded d-bus address in start-chrome.sh: $DBUS_SESSION_BUS_ADDRESS"
 
 # Start Chrome
 # flag-switches{begin,end} are no-ops but it's nice convention to use them to surround chrome://flags features
+# Run chrome with the KDE desktop environment
 exec env XDG_CURRENT_DESKTOP=KDE google-chrome "${flags[@]}"

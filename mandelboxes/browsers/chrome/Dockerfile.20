@@ -75,8 +75,8 @@ RUN mkdir -p /etc/opt/chrome/policies/managed \
     # Disable background apps (to prevent apps like Superhuman from
     # indefinitely blocking mandelbox shutdown).
     | jq '.BackgroundModeEnabled=false' \
-    # Disable the file selection dialog to hide the mandelbox filesystem
-    #| jq '.AllowFileSelectionDialogs=false' \
+    # Allow the file selection dialog to enable file uploads
+    | jq '.AllowFileSelectionDialogs=true' \
     > /etc/opt/chrome/policies/managed/WhistPolicies.json
 
 # Configure teleport extension and native messaging
