@@ -59,7 +59,7 @@ Includes
 // low latency applications
 // https://docs.nvidia.com/video-technologies/video-codec-sdk/nvenc-video-encoder-api-prog-guide/#recommended-nvenc-settings
 // Please note that this number will be multiplied by BURST_BITRATE_RATIO to get the VBV size in sec
-#define VBV_IN_SEC_BY_BURST_BITRATE_RATIO 0.1
+#define VBV_IN_SEC_BY_BURST_BITRATE_RATIO 0.2
 
 static WhistSemaphore consumer;
 static WhistSemaphore producer;
