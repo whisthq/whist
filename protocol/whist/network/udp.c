@@ -41,6 +41,7 @@ typedef enum {
     UDP_NETWORK_SETTINGS,
     UDP_CONNECTION_ATTEMPT,
     UDP_CONNECTION_CONFIRMATION,
+    UDP_CONNECTION_CLOSE,
 } UDPPacketType;
 
 // A struct for UDPPacket,
@@ -836,6 +837,18 @@ static void udp_destroy_socket_context(void* raw_context) {
     FATAL_ASSERT(raw_context != NULL);
     UDPContext* context = (UDPContext*)raw_context;
 
+    // If we are currently connected, signal the other end that we are
+    // closing and that they need not wait for a timeout.  (If this
+    // message is lost that doesn't matter - they'll just wait a bit
+    // longer to realise the connection has gone away.)
+    if (context->connected && !context->connection_lost) {
+        UDPPacket close_packet = {
+            .type = UDP_CONNECTION_CLOSE,
+        };
+        // Send failure is ignored.
+        udp_send_udp_packet(context, &close_packet);
+    }
+
     // Deallocate the nack buffers
     for (int type_id = 0; type_id < NUM_PACKET_TYPES; type_id++) {
         if (context->nack_buffers[type_id] != NULL) {
@@ -1309,6 +1322,9 @@ int get_udp_packet_size(UDPPacket* udp_packet) {
             // This should include only the MetaData
             return offsetof(UDPPacket, udp_whist_segment_data);
         }
+        case UDP_CONNECTION_CLOSE: {
+            return sizeof(udp_packet->type);
+        }
         default: {
             LOG_FATAL("Unknown UDP Packet Type: %d", udp_packet->type);
         }
@@ -1541,6 +1557,12 @@ void udp_handle_message(UDPContext* context, UDPPacket* packet) {
         // Ignore handshake packets after the handshake happens
         case UDP_CONNECTION_ATTEMPT:
         case UDP_CONNECTION_CONFIRMATION: {
+            break;
+        }
+        case UDP_CONNECTION_CLOSE: {
+            // Explicit close.  Receiving this allows us yto close the
+            // connection without waiting for a timeout.
+            context->connection_lost = true;
             break;
         }
         default: {
