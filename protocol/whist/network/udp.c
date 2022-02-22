@@ -522,7 +522,7 @@ static int udp_send_packet(void* raw_context, WhistPacketType packet_type,
 
     // Calculate number of packets needed to send the payload, rounding up.
     int num_indices_if_no_fec = get_num_indices(whist_packet_size, MAX_PACKET_SEGMENT_SIZE);
-    int num_indices_if_use_fec = fec_get_num_real_buffers(whist_packet_size, MAX_PACKET_SEGMENT_SIZE);
+    int num_indices_if_use_fec = get_num_indices(whist_packet_size, MAX_PACKET_SEGMENT_SIZE-FEC_HEADER_SIZE);
 
     // Calculate the number of FEC packets we'll be using, if any
     // A nack buffer is required to use FEC

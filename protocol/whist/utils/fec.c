@@ -224,6 +224,7 @@ void destroy_fec_encoder(FECEncoder* fec_encoder) {
     }
     free(fec_encoder->buffers);
     free(fec_encoder->buffer_sizes);
+    rs_wrapper_destory(fec_encoder->rs_code);
     free(fec_encoder);
 }
 
@@ -265,7 +266,7 @@ void fec_decoder_register_buffer(FECDecoder* fec_decoder, int index, void* buffe
     }
 
     fec_decoder->max_packet_size = max(fec_decoder->max_packet_size, buffer_size);
-    rs_wrapper_can_decode_register_index(fec_decoder->rs_code,index);
+    rs_wrapper_decode_helper_register_index(fec_decoder->rs_code,index);
 
 }
 
@@ -274,7 +275,7 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer) {
     if (fec_decoder->num_accepted_buffers < fec_decoder->num_real_buffers) {
         return -1;
     }*/
-    if(rs_wrapper_can_decode(fec_decoder->rs_code)==false)
+    if(rs_wrapper_decode_helper_can_decode(fec_decoder->rs_code)==false)
     {
         return -1;
     }
@@ -341,14 +342,10 @@ void destroy_fec_decoder(FECDecoder* fec_decoder) {
     }
     free(fec_decoder->buffers);
     free(fec_decoder->buffer_sizes);
+    rs_wrapper_destory(fec_decoder->rs_code);
     free(fec_decoder);
 }
 
-int fec_get_num_real_buffers(int data_len, int segment_size)
-{
-    int num_real_buffers = data_len == 0? 1 : int_div_roundup(data_len,segment_size-FEC_HEADER_SIZE);
-    return num_real_buffers;
-}
 /*
 ============================
 Private Function Implementations
