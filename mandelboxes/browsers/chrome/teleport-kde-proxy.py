@@ -31,17 +31,19 @@ def handle_open_single_file():
 
         # Wait until upload confirmation or cancellation
         while not (
-            os.path.exists(FILE_UPLOAD_CONFIRM_PATH) and os.path.exists(FILE_UPLOAD_CONFIRM_PATH)
+            os.path.exists(FILE_UPLOAD_CONFIRM_PATH) or os.path.exists(FILE_UPLOAD_CANCEL_PATH)
         ):
             time.sleep(0.1)
-        os.remove(FILE_UPLOAD_CONFIRM_PATH)
 
-        # Should only be one file but get latest file in case
-        file_glob = glob.glob(f"{FILE_UPLOAD_DIRECTORY}/*")
-        target_file = max(file_glob, key=os.path.getmtime)
-
-        # Output file path to stdout and chrome will handle the rest
-        print(target_file)
+        if os.path.exists(FILE_UPLOAD_CANCEL_PATH):
+            os.remove(FILE_UPLOAD_CANCEL_PATH)
+        else:
+            os.remove(FILE_UPLOAD_CONFIRM_PATH)
+            # Should only be one file but get latest file in case
+            file_glob = glob.glob(f"{FILE_UPLOAD_DIRECTORY}/*")
+            target_file = max(file_glob, key=os.path.getmtime)
+            # Output file path to stdout and chrome will handle the rest
+            print(target_file)
 
 
 def handle_kdialog():
