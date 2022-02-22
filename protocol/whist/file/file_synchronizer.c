@@ -213,7 +213,7 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
             break;
         }
         case FILE_TRANSFER_SERVER_UPLOAD:
-            file_dir = "/home/whist/uploads";
+            file_dir = "/home/whist/.teleport/uploads";
             break;
         case FILE_TRANSFER_CLIENT_DOWNLOAD: {
             const char* home_dir = getenv(HOME_ENV_VAR);
@@ -313,7 +313,7 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
                     break;
                 }
                 case FILE_TRANSFER_SERVER_UPLOAD: {
-                    FILE *fptr = fopen("/home/whist/uploads/uploaded-file-confirm", "w");
+                    FILE *fptr = fopen("/home/whist/.teleport/uploads/uploaded-file-confirm", "w");
                     fprintf(fptr, "confirm-trigger");
                     fclose(fptr);
                     break;

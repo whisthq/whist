@@ -115,10 +115,11 @@ RUN chmod +x /usr/bin/start-chrome && ln -sf /usr/bin/start-chrome /usr/bin/whis
 COPY --from=build-assets protocol/* /usr/share/whist/bin/
 
 # Install and configure our kde proxy
-COPY --chmod=755 teleport-kde-proxy.py /opt/teleport/teleport-kde-proxy.py
+COPY --chmod=555 teleport-kde-proxy.py /opt/teleport/teleport-kde-proxy.py
 
 RUN apt-get update && apt-get install -y kdialog \
     && rm usr/bin/kdialog \
     && ln -s /opt/teleport/teleport-kde-proxy.py /usr/bin/kdialog
 
+RUN mkdir /home/whist/uploads && chmod u+w /home/whist/uploads
 COPY TEST.txt /home/whist/uploads/kdialog_test.txt
