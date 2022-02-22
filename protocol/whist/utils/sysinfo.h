@@ -61,4 +61,12 @@ void print_hard_drive_info(void);
  */
 void print_memory_info(void);
 
+/**
+ * @brief                          Get the instantaneous CPU usage in percentage points.
+ *                                 The function only supports Linux. On other platforms, it
+ *                                 returns -1.
+ * @returns                        Returns -1 on failure, the CPU usage on success
+ */
+double get_cpu_usage(void);
+
 #endif  // SYS_INFO

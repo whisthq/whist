@@ -118,12 +118,4 @@ void send_message_dimensions(void);
  */
 void send_new_tab_url_if_needed(void);
 
-/**
- * @brief                          Get the instantaneous CPU usage in percentage points.
- *                                 The function only supports Linux and Mac. On Windows, it
- *                                 returns -1.
- * @returns                        Returns -1 on failure, the CPU usage on success
- */
-double get_cpu_usage(void);
-
 #endif  // CLIENT_UTILS_H

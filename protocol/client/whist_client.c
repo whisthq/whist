@@ -31,6 +31,7 @@ Includes
 #include <whist/utils/aes.h>
 #include <whist/utils/clock.h>
 #include <whist/utils/os_utils.h>
+#include <whist/utils/sysinfo.h>
 #include <whist/logging/logging.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/logging/error_monitor.h>
@@ -466,14 +467,13 @@ int whist_client_main(int argc, char* argv[]) {
             // Try rendering anything out, if there's something to render out
             renderer_try_render(whist_renderer);
 
-            // Log cpu usage once per 10 seconds. Do not use normal statistics collection because
-            // collecting CPU usage is expensive.
-#if defined(__linux__)
-            if (LOG_CPU_USAGE && get_timer(&cpu_usage_statistics_timer) * MS_IN_SECOND > 10000.0) {
+            // Log cpu usage once per second. Only enable this when LOG_CPU_USAGE flag is set
+            // because getting cpu usage statistics is expensive.
+            if (LOG_CPU_USAGE && get_timer(&cpu_usage_statistics_timer) > 1) {
                 double cpu_usage = get_cpu_usage();
-                LOG_METRIC("\"CLIENT_CPU_USAGE\" : %f", cpu_usage);
+                log_double_statistic(CLIENT_CPU_USAGE, cpu_usage);
+                start_timer(&cpu_usage_statistics_timer);
             }
-#endif
 
             // We _must_ keep make calling this function as much as we can,
             // or else the user will get beachball / "Whist Not Responding"
