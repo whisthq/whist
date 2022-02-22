@@ -42,6 +42,7 @@ Includes
 #include "audio.h"
 
 #include <whist/utils/window_info.h>
+#include <whist/utils/sysinfo.h>
 
 #ifdef _WIN32
 #pragma comment(lib, "ws2_32.lib")

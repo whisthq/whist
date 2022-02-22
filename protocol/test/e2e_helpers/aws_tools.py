@@ -155,6 +155,7 @@ def start_instance(boto3client: botocore.client, instance_id: str, max_retries: 
                 continue
             else:
                 return False
+        break
     return True
 
 

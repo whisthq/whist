@@ -52,10 +52,6 @@ Defines
 ============================
 */
 
-#ifndef RENDERING_IN_VIRTUAL_ENVIRONMENT
-#define RENDERING_IN_VIRTUAL_ENVIRONMENT 0
-#endif
-
 typedef struct VideoContext VideoContext;
 
 /*

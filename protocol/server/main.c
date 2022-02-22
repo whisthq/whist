@@ -25,6 +25,15 @@ Includes
 
 /*
 ============================
+Defines
+============================
+*/
+#ifndef LOG_CPU_USAGE
+#define LOG_CPU_USAGE 0
+#endif
+
+/*
+============================
 Globals
 ============================
 */
@@ -439,6 +448,9 @@ int main(int argc, char* argv[]) {
     WhistTimer window_fullscreen_timer;
     start_timer(&window_fullscreen_timer);
 
+    WhistTimer cpu_usage_statistics_timer;
+    start_timer(&cpu_usage_statistics_timer);
+
 #ifndef _WIN32
     WhistTimer uri_handler_timer;
     start_timer(&uri_handler_timer);
@@ -461,6 +473,14 @@ int main(int argc, char* argv[]) {
 
         // Get UDP messages
         get_whist_udp_client_messages(&server_state);
+
+        // Log cpu usage once per second. Only enable this when LOG_CPU_USAGE flag is set because
+        // getting cpu usage statistics is expensive.
+        if (LOG_CPU_USAGE && get_timer(&cpu_usage_statistics_timer) > 1) {
+            double cpu_usage = get_cpu_usage();
+            log_double_statistic(SERVER_CPU_USAGE, cpu_usage);
+            start_timer(&cpu_usage_statistics_timer);
+        }
 
         if (get_timer(&window_fullscreen_timer) > 50.0 / MS_IN_SECOND) {
             // This is the cached fullscreen state. We only send state change events

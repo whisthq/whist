@@ -52,6 +52,10 @@ def generate_no_comparison_table(
         print("</details>")
         print("\n")
 
+        print("<details>")
+        print("<summary>Experiment results - Expand here</summary>")
+        print("\n")
+
         # Generate most interesting metric table
         interesting_metrics = {}
         for k in client_metrics:
@@ -140,6 +144,10 @@ def generate_no_comparison_table(
         )
         writer.write_table()
 
+        print("\n")
+        print("</details>")
+        print("\n")
+
 
 def generate_comparison_table(
     results_file,
@@ -190,6 +198,10 @@ def generate_comparison_table(
         writer.write_table()
         print("\n")
         print("</details>")
+        print("\n")
+
+        print("<details>")
+        print("<summary>Experiment results - Expand here</summary>")
         print("\n")
 
         # Generate most interesting metric table
@@ -266,3 +278,7 @@ def generate_comparison_table(
             max_precision=3,
         )
         writer.write_table()
+
+        print("\n")
+        print("</details>")
+        print("\n")

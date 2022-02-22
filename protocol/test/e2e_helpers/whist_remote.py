@@ -194,12 +194,30 @@ def setup_network_conditions_client(
     if network_conditions == "normal":
         print("Setting up client to run on a instance with no degradation on network conditions")
     else:
-        max_bandwidth, net_delay, pkt_drop_pctg = network_conditions.split(",")
-        print(
-            "Setting up client to run on a instance with max bandwidth of {}, delay of {} ms and packet drop rate {}".format(
-                max_bandwidth, net_delay, pkt_drop_pctg
+
+        # Apply conditions below only for values that are actually set
+        if len(network_conditions.split(",")) != 3:
+            print(
+                "Network conditions passed in incorrect format. Setting up client to run on a instance with no degradation on network conditions"
             )
-        )
+            return
+
+        max_bandwidth, net_delay, pkt_drop_pctg = network_conditions.split(",")
+        if max_bandwidth == "none" and net_delay == "none" and pkt_drop_pctg == "none":
+            print(
+                "Setting up client to run on a instance with no degradation on network conditions"
+            )
+            return
+        else:
+            print(
+                "Setting up client to run on a instance with the following networking conditions:"
+            )
+            if max_bandwidth != "none":
+                print("\t* Max bandwidth: {}".format(max_bandwidth))
+            if net_delay != "none":
+                print("\t* Delay: {}ms".format(net_delay))
+            if pkt_drop_pctg != "none":
+                print("\t* Packet drop rate: {}".format(pkt_drop_pctg))
 
         # Install ifconfig
         command = "sudo apt install net-tools"
@@ -213,8 +231,12 @@ def setup_network_conditions_client(
         ifconfig_output = pexpect_process.before.decode("utf-8").strip().split("\n")
         ifconfig_output = [
             x.replace("\r", "").replace(":", "")
-            for x in ifconfig_output[1:-1]
-            if "docker" not in x and "veth" not in x
+            for x in ifconfig_output
+            if "docker" not in x
+            and "veth" not in x
+            and "ifb" not in x
+            and "sudo ifconfig -a" not in x
+            and pexpect_prompt not in x
         ]
 
         commands = []
@@ -223,7 +245,16 @@ def setup_network_conditions_client(
         commands.append("sudo modprobe ifb")
         commands.append("sudo ip link set dev ifb0 up")
 
+        degradation_command = ""
+        if net_delay != "none":
+            degradation_command += "delay {}ms ".format(net_delay)
+        if pkt_drop_pctg != "none":
+            degradation_command += "loss {}% ".format(pkt_drop_pctg)
+        if max_bandwidth != "none":
+            degradation_command += "rate {}".format(max_bandwidth)
+
         for device in ifconfig_output:
+            print("Applying network degradation to device {}".format(device))
             # add devices to delay incoming packets
             commands.append("sudo tc qdisc add dev {} ingress".format(device))
             commands.append(
@@ -231,26 +262,21 @@ def setup_network_conditions_client(
                     device
                 )
             )
+
             # Set outbound degradations
-            commands.append(
-                "sudo tc qdisc add dev {} root netem delay {}ms loss {}% rate {}".format(
-                    device, net_delay, pkt_drop_pctg, max_bandwidth
-                )
-            )
+            command = "sudo tc qdisc add dev {}root netem ".format(device)
+            command += degradation_command
+            commands.append(command)
 
         # Set inbound degradations
-        commands.append(
-            "sudo tc qdisc add dev ifb0 root netem delay {}ms loss {}% rate {}".format(
-                net_delay, pkt_drop_pctg, max_bandwidth
-            )
-        )
+        command = "sudo tc qdisc add dev ifb0 root netem "
+        command += degradation_command
+        commands.append(command)
 
         # Execute all commands:
         for command in commands:
             pexpect_process.sendline(command)
             wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
-
-        print(commands)
 
 
 def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_in_ci):
@@ -268,7 +294,7 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
         None
 
     """
-
+    print("Restoring network conditions to normal on client!")
     # Get network interface names (excluding loopback)
     command = "sudo ifconfig -a | sed 's/[ \t].*//;/^\(lo:\|\)$/d'"
     pexpect_process.sendline(command)
@@ -277,21 +303,24 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
     ifconfig_output = pexpect_process.before.decode("utf-8").strip().split("\n")
     ifconfig_output = [
         x.replace("\r", "").replace(":", "")
-        for x in ifconfig_output[1:-1]
-        if "docker" not in x and "veth" not in x and "ifb" not in x
+        for x in ifconfig_output
+        if "docker" not in x
+        and "veth" not in x
+        and "ifb" not in x
+        and "sudo ifconfig -a" not in x
+        and pexpect_prompt not in x
     ]
 
     commands = []
 
     for device in ifconfig_output:
+        print("Restoring normal network conditions on device {}".format(device))
         # Inbound degradations
         commands.append("sudo tc qdisc del dev {} handle ffff: ingress".format(device))
         # Outbound degradations
         commands.append("sudo tc qdisc del dev {} root netem".format(device))
 
     commands.append("sudo modprobe -r ifb")
-
-    print(commands)
 
     # Execute all commands:
     for command in commands:
@@ -379,6 +408,7 @@ def server_setup_process(args_dict):
     configure_aws_credentials(
         hs_process,
         pexpect_prompt_server,
+        aws_timeout,
         running_in_ci,
         aws_credentials_filepath,
     )
@@ -466,6 +496,7 @@ def client_setup_process(args_dict):
         configure_aws_credentials(
             hs_process,
             pexpect_prompt_client,
+            aws_timeout,
             running_in_ci,
             aws_credentials_filepath,
         )

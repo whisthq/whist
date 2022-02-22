@@ -31,6 +31,7 @@ Includes
 #include <whist/utils/aes.h>
 #include <whist/utils/clock.h>
 #include <whist/utils/os_utils.h>
+#include <whist/utils/sysinfo.h>
 #include <whist/logging/logging.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/logging/error_monitor.h>
@@ -107,6 +108,9 @@ extern bool upload_initiated;
 
 // Defines
 #define APP_PATH_MAXLEN 1023
+#ifndef LOG_CPU_USAGE
+#define LOG_CPU_USAGE 0
+#endif
 
 static int sync_keyboard_state(void) {
     /*
@@ -451,6 +455,9 @@ int whist_client_main(int argc, char* argv[]) {
         WhistTimer window_fade_timer;
         start_timer(&window_fade_timer);
 
+        WhistTimer cpu_usage_statistics_timer;
+        start_timer(&cpu_usage_statistics_timer);
+
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
         while (connected && !client_exiting && exit_code == WHIST_EXIT_SUCCESS) {
@@ -463,6 +470,14 @@ int whist_client_main(int argc, char* argv[]) {
 
             // Try rendering anything out, if there's something to render out
             renderer_try_render(whist_renderer);
+
+            // Log cpu usage once per second. Only enable this when LOG_CPU_USAGE flag is set
+            // because getting cpu usage statistics is expensive.
+            if (LOG_CPU_USAGE && get_timer(&cpu_usage_statistics_timer) > 1) {
+                double cpu_usage = get_cpu_usage();
+                log_double_statistic(CLIENT_CPU_USAGE, cpu_usage);
+                start_timer(&cpu_usage_statistics_timer);
+            }
 
             // We _must_ keep make calling this function as much as we can,
             // or else the user will get beachball / "Whist Not Responding"
