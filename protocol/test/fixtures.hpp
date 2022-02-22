@@ -35,9 +35,12 @@ class CaptureStdoutFixture : public ::testing::Test {
         */
         old_stdout = safe_dup(STDOUT_FILENO);
         safe_mkdir(TEST_OUTPUT_DIRNAME);
-        std::string filename = std::string(TEST_OUTPUT_DIRNAME) + "/" +
-                               ::testing::UnitTest::GetInstance()->current_test_info()->name() +
-                               ".log";
+        path = std::string(TEST_OUTPUT_DIRNAME) + "/" +
+               ::testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
+        safe_mkdir(path.c_str());
+        filename =
+            path + "/" + ::testing::UnitTest::GetInstance()->current_test_info()->name() + ".log";
+        safe_remove(filename.c_str());
         fd = safe_open(filename.c_str(), O_WRONLY | O_CREAT);
         EXPECT_GE(fd, 0);
         fflush(stdout);
@@ -53,9 +56,7 @@ class CaptureStdoutFixture : public ::testing::Test {
         fflush(stdout);
         safe_dup2(old_stdout, STDOUT_FILENO);
         safe_close(fd);
-        std::ifstream file(std::string(TEST_OUTPUT_DIRNAME) + "/" +
-                           ::testing::UnitTest::GetInstance()->current_test_info()->name() +
-                           ".log");
+        std::ifstream file(filename.c_str());
 
         for (::testing::Matcher<std::string> matcher : line_matchers) {
             std::string line;
@@ -92,6 +93,8 @@ class CaptureStdoutFixture : public ::testing::Test {
 
     int old_stdout;
     int fd;
+    std::string path;
+    std::string filename;
     std::vector<::testing::Matcher<std::string>> line_matchers;
 };
 

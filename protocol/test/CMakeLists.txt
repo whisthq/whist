@@ -22,6 +22,11 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../whist/network/ringbuffer.c
         ../whist/network/network_algorithm.c
 
+        # Files needed for Cursor unit tests
+        whist_cursor_test.cpp
+        ../whist/cursor/cursor.c
+        ../whist/cursor/cursor_internal.c
+
         # Files needed for Client unit tests
         ../client/audio.c
         ../client/client_utils.c
@@ -62,6 +67,11 @@ else()
         ../whist/network/network_algorithm.c
         ../whist/video/capture/filecapture.c
         ../whist/video/ltr.c
+
+        # Files needed for Cursor unit tests
+        whist_cursor_test.cpp
+        ../whist/cursor/cursor.c
+        ../whist/cursor/cursor_internal.c
 
         # Files needed for Client unit tests
         ../client/audio.c

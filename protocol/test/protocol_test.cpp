@@ -1,5 +1,3 @@
-
-
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
  * @file protocol_test.cpp

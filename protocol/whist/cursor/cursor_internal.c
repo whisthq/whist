@@ -37,13 +37,14 @@ WhistCursorInfo* whist_cursor_info_from_rgba(const uint32_t* rgba, unsigned shor
     unsigned char* png;
     size_t png_size;
 
-    unsigned int ret = lodepng_encode32(&png, &png_size, (unsigned char*)&rgba, width, height);
+    unsigned int ret = lodepng_encode32(&png, &png_size, (unsigned char*)rgba, width, height);
     if (ret) {
         LOG_WARNING("Failed to encode PNG cursor: %s", lodepng_error_text(ret));
         return NULL;
     }
 
     WhistCursorInfo* info = safe_malloc(sizeof(WhistCursorInfo) + png_size);
+    memset(info, 0, sizeof(WhistCursorInfo));
     info->using_png = true;
     info->png_width = width;
     info->png_height = height;
