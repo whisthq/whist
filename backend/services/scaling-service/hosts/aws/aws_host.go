@@ -273,11 +273,11 @@ func (host *AWSHost) GetMainSubnet(scalingCtx context.Context) (ec2Types.Subnet,
 	input := &ec2.DescribeSubnetsInput{
 		Filters: []ec2Types.Filter{
 			{
-				Name:   aws.String("Env"),
+				Name:   aws.String("tag:Env"),
 				Values: []string{env},
 			},
 			{
-				Name:   aws.String("Terraform"),
+				Name:   aws.String("tag:Terraform"),
 				Values: []string{"true"},
 			},
 		},

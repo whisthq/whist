@@ -232,8 +232,8 @@ class EC2Client(CloudClient):
         """
         resp = self.ec2_client.describe_subnets(
             Filters=[
-                {"Name": "Env", "Values": [current_app.config["ENVIRONMENT"]]},
-                {"Name": "Terraform", "Values": ["true"]},
+                {"Name": "tag:Env", "Values": [current_app.config["ENVIRONMENT"]]},
+                {"Name": "tag:Terraform", "Values": ["true"]},
             ]
         )
 
