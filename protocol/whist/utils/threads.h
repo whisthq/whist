@@ -297,7 +297,7 @@ void whist_wait_semaphore(WhistSemaphore semaphore);
  *
  * @return  Value of the semaphore.
  */
-uint32_t whist_value_semaphore(WhistSemaphore semaphore);
+uint32_t whist_semaphore_value(WhistSemaphore semaphore);
 
 /**
  * Destroy a semaphore.

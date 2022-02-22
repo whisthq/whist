@@ -455,7 +455,7 @@ static int32_t multithreaded_send_video_packets(void* opaque) {
         udp_reset_duplicate_packet_counter(&state->client.udp_context, PACKET_VIDEO);
         // If requested by the client, keep sending duplicate packets to saturate the network
         // bandwidth, till a new frame is available.
-        while (state->client.is_active && !state->exiting && whist_value_semaphore(producer) == 0 &&
+        while (state->client.is_active && !state->exiting && whist_semaphore_value(producer) == 0 &&
                network_settings.saturate_bandwidth) {
             // Re-send all indices of this video frame in a round-robin manner
             udp_resend_packet(&state->client.udp_context, PACKET_VIDEO, id, index++);
