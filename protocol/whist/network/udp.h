@@ -31,6 +31,8 @@ Includes
 
 #include <whist/core/whist.h>
 
+#include "socket.h"
+
 /*
 ============================
 Defines
@@ -94,9 +96,9 @@ Public Functions
  * @return                          The UDP network context on success, NULL
  *                                  on failure
  */
-bool create_udp_socket_context(SocketContext* context, char* destination, int port,
+bool create_udp_socket_context(SocketContext* context, const char* destination, int port,
                                int recvfrom_timeout_s, int connection_timeout_ms, bool using_stun,
-                               char* binary_aes_private_key);
+                               const char* binary_aes_private_key);
 
 /**
  * @brief                          Registers a nack buffer, so that future nacks can be handled.
@@ -129,7 +131,7 @@ Questionable Public Functions, potentially try to remove in future organizations
  *
  * @returns                         0 on success, otherwise failure.
  */
-int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms);
+int create_udp_listen_socket(WhistSocket** sock, int port, int timeout_ms);
 
 /**
  * @brief                          Get the number of consecutive fully received frames of

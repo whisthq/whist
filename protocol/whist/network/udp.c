@@ -131,7 +131,7 @@ typedef struct IncomingBitrate {
 // An instance of the UDP Context
 typedef struct {
     int timeout;
-    SOCKET socket;
+    WhistSocket* socket;
     int ack;
     WhistMutex mutex;
     char binary_aes_private_key[16];
@@ -289,7 +289,7 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
  * @note                           This may overwrite the timeout on context->socket,
  *                                 Use set_timeout to restore it
  */
-int create_udp_client_context(UDPContext* context, char* destination, int port,
+int create_udp_client_context(UDPContext* context, const char* destination, int port,
                               int connection_timeout_ms);
 
 /**
@@ -874,7 +874,7 @@ static void udp_destroy_socket_context(void* raw_context) {
     // Destroy the timestamp mutex
     whist_destroy_mutex(context->timestamp_mutex);
 
-    closesocket(context->socket);
+    socket_close(context->socket);
     if (context->network_throttler != NULL) {
         network_throttler_destroy(context->network_throttler);
     }
@@ -888,9 +888,9 @@ Public Function Implementations
 ============================
 */
 
-bool create_udp_socket_context(SocketContext* network_context, char* destination, int port,
+bool create_udp_socket_context(SocketContext* network_context, const char* destination, int port,
                                int recvfrom_timeout_ms, int connection_timeout_ms, bool using_stun,
-                               char* binary_aes_private_key) {
+                               const char* binary_aes_private_key) {
     // STUN isn't implemented
     FATAL_ASSERT(using_stun == false);
 
@@ -951,7 +951,12 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
         // Mark as connected
         context->connected = true;
         // Restore the socket's timeout
-        set_timeout(context->socket, context->timeout);
+        ret = socket_set_option(context->socket, SOCKET_OPTION_RECEIVE_TIMEOUT, context->timeout);
+        if (ret) {
+            LOG_ERROR("Error setting socket timeout: %d.", socket_get_last_error(context->socket));
+            socket_close(context->socket);
+            return false;
+        }
         return true;
     } else {
         return false;
@@ -1037,15 +1042,18 @@ int udp_get_num_pending_frames(SocketContext* socket_context, WhistPacketType ty
 
 // TODO: This is weird logic, connecting to higher-level structures
 // This should be fixed
-int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms) {
+int create_udp_listen_socket(WhistSocket** sock, int port, int timeout_ms) {
     LOG_INFO("Creating listen UDP Socket");
-    *sock = socketp_udp();
-    if (*sock == INVALID_SOCKET) {
+    *sock = socket_create(SOCKET_TYPE_UDP, "server UDP listen", NULL, NULL);
+    if (!*sock) {
         LOG_ERROR("Failed to create UDP listen socket");
         return -1;
     }
-    set_timeout(*sock, timeout_ms);
-    set_tos(*sock, TOS_DSCP_EXPEDITED_FORWARDING);
+    if (timeout_ms == 0)
+        socket_set_option(*sock, SOCKET_OPTION_NON_BLOCKING, 1);
+    else
+        socket_set_option(*sock, SOCKET_OPTION_RECEIVE_TIMEOUT, timeout_ms);
+    socket_set_option(*sock, SOCKET_OPTION_TYPE_OF_SERVICE, TOS_DSCP_EXPEDITED_FORWARDING);
     // Server connection protocol
 
     // Bind the server port to the advertized public port
@@ -1054,9 +1062,10 @@ int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms) {
     origin_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     origin_addr.sin_port = htons((unsigned short)port);
 
-    if (bind(*sock, (struct sockaddr*)(&origin_addr), sizeof(origin_addr)) < 0) {
-        LOG_ERROR("Failed to bind to port %d! errno=%d\n", port, get_last_network_error());
-        closesocket(*sock);
+    int ret = socket_bind(*sock, (struct sockaddr*)(&origin_addr), sizeof(origin_addr));
+    if (ret < 0) {
+        LOG_ERROR("Failed to bind to port %d! errno=%d\n", port, socket_get_last_error(*sock));
+        socket_close(*sock);
         return -1;
     }
 
@@ -1167,12 +1176,12 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
         // Make udp_get_udp_packet wait for the remaining time available
         if (connection_timeout_ms == -1) {
             // Propagate blocking
-            set_timeout(context->socket, -1);
+            socket_set_option(context->socket, SOCKET_OPTION_RECEIVE_TIMEOUT, 0);
         } else {
             // We max the remaining time with zero,
             // to prevent accidentally making a blocking -1 call
-            set_timeout(
-                context->socket,
+            socket_set_option(
+                context->socket, SOCKET_OPTION_RECEIVE_TIMEOUT,
                 max(connection_timeout_ms - get_timer(&server_creation_timer) * MS_IN_SECOND, 0));
         }
         // Check to see if we received a UDP_CONNECTION_ATTEMPT
@@ -1187,16 +1196,16 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
     // If a connection attempt wasn't received, cleanup and return -1
     if (!received_connection_attempt) {
         LOG_WARNING("No UDP client was found within the first %d ms", connection_timeout_ms);
-        closesocket(context->socket);
+        socket_close(context->socket);
         return -1;
     }
 
     // Connect to that addr, so we can use send instead of sendto
     context->connection_addr = context->last_addr;
-    if (connect(context->socket, (struct sockaddr*)&context->connection_addr,
-                sizeof(context->connection_addr)) == -1) {
+    if (socket_connect(context->socket, (struct sockaddr*)&context->connection_addr,
+                       sizeof(context->connection_addr)) == -1) {
         LOG_WARNING("Failed to connect()!");
-        closesocket(context->socket);
+        socket_close(context->socket);
         return -1;
     }
 
@@ -1216,14 +1225,15 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
     return 0;
 }
 
-int create_udp_client_context(UDPContext* context, char* destination, int port,
+int create_udp_client_context(UDPContext* context, const char* destination, int port,
                               int connection_timeout_ms) {
     // Track the time we spend in this function, to keep it under connection_timeout_ms
     WhistTimer client_creation_timer;
     start_timer(&client_creation_timer);
 
     // Create UDP socket
-    if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
+    context->socket = socket_create(SOCKET_TYPE_UDP, "client UDP", NULL, NULL);
+    if (!context->socket) {
         return -1;
     }
 
@@ -1231,10 +1241,10 @@ int create_udp_client_context(UDPContext* context, char* destination, int port,
     context->connection_addr.sin_family = AF_INET;
     context->connection_addr.sin_addr.s_addr = inet_addr(destination);
     context->connection_addr.sin_port = htons((unsigned short)port);
-    if (connect(context->socket, (const struct sockaddr*)&context->connection_addr,
-                sizeof(context->connection_addr)) == -1) {
+    if (socket_connect(context->socket, (const struct sockaddr*)&context->connection_addr,
+                       sizeof(context->connection_addr)) == -1) {
         LOG_WARNING("Failed to connect()!");
-        closesocket(context->socket);
+        socket_close(context->socket);
         return -1;
     }
 
@@ -1254,12 +1264,13 @@ int create_udp_client_context(UDPContext* context, char* destination, int port,
         // Wait for a connection confirmation, using the remaining time available,
         // Up to CONNECTION_ATTEMPT_INTERVAL_MS
         if (connection_timeout_ms == -1) {
-            set_timeout(context->socket, CONNECTION_ATTEMPT_INTERVAL_MS);
+            socket_set_option(context->socket, SOCKET_OPTION_RECEIVE_TIMEOUT,
+                              CONNECTION_ATTEMPT_INTERVAL_MS);
         } else {
             // Bound between [0, CONNECTION_ATTEMPT_INTERVAL_MS]
             // Don't accidentally call with -1, or it'll block forever
-            set_timeout(
-                context->socket,
+            socket_set_option(
+                context->socket, SOCKET_OPTION_RECEIVE_TIMEOUT,
                 min(max(connection_timeout_ms - get_timer(&client_creation_timer) * MS_IN_SECOND,
                         0),
                     CONNECTION_ATTEMPT_INTERVAL_MS));
@@ -1277,7 +1288,7 @@ int create_udp_client_context(UDPContext* context, char* destination, int port,
         LOG_WARNING(
             "Connection Attempt Failed. No response was found from the UDP Server within %dms.",
             connection_timeout_ms);
-        closesocket(context->socket);
+        socket_close(context->socket);
         return -1;
     }
 
@@ -1372,24 +1383,25 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
                  udp_network_packet_size);
 #endif
         // Send the UDPPacket over the network
-        ret = send(context->socket, (const char*)&udp_network_packet,
-                   (size_t)udp_network_packet_size, 0);
+        ret = socket_send(context->socket, (const char*)&udp_network_packet,
+                          (size_t)udp_network_packet_size, 0);
         whist_unlock_mutex(context->mutex);
         if (ret < 0) {
-            int error = get_last_network_error();
-            if (error == WHIST_ECONNREFUSED) {
+            int error = socket_get_last_error(context->socket);
+            if (error == SOCKET_ERROR_CONNECTION_RESET) {
                 if (context->connected) {
                     // The connection has been lost
-                    LOG_WARNING("UDP connection Lost: ECONNREFUSED");
+                    LOG_WARNING("UDP connection lost: connection reset.");
                     context->connection_lost = true;
                     return -1;
                 }
                 break;
-            } else if (error == WHIST_ENOBUFS) {
-                LOG_WARNING("Unexpected UDP Packet Error: %d (Retrying to send packet!)", error);
+            } else if (error == SOCKET_ERROR_NO_BUFFERS) {
+                LOG_WARNING("Unexpected UDP Packet Error: no buffers (Retrying to send packet!)");
                 continue;
             } else {
-                LOG_WARNING("Unexpected UDP Packet Error: %d", error);
+                LOG_WARNING("Unexpected UDP Packet Error: %d (%s)", error,
+                            socket_error_string(error));
                 return -1;
             }
         } else {
@@ -1412,9 +1424,8 @@ static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
     // Wait to receive a packet over UDP, until timing out
     UDPNetworkPacket udp_network_packet;
     socklen_t slen = sizeof(context->last_addr);
-    int recv_len =
-        recvfrom_no_intr(context->socket, &udp_network_packet, sizeof(udp_network_packet), 0,
-                         (struct sockaddr*)(&context->last_addr), &slen);
+    int recv_len = socket_recvfrom(context->socket, &udp_network_packet, sizeof(udp_network_packet),
+                                   0, (struct sockaddr*)(&context->last_addr), &slen);
 
     if (context->connected) {
         // TODO: Compare last_addr, with connection_addr, more accurately than memcmp
@@ -1477,13 +1488,12 @@ static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
     } else {
         // Network error or no packets to receive
         if (recv_len < 0) {
-            int error = get_last_network_error();
+            int error = socket_get_last_error(context->socket);
             switch (error) {
-                case WHIST_ETIMEDOUT:
-                case WHIST_EWOULDBLOCK:
+                case SOCKET_ERROR_WOULD_BLOCK:
                     // Break on expected network errors
                     break;
-                case WHIST_ECONNREFUSED: {
+                case SOCKET_ERROR_CONNECTION_REFUSED: {
                     if (context->connected) {
                         // The connection has been lost
                         LOG_WARNING("UDP connection Lost: ECONNREFUSED");
