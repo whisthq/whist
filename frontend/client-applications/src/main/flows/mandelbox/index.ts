@@ -57,7 +57,7 @@ export default flow(
           importedData: t.importedData,
           jsonData: JSON.stringify({
             dark_mode: t.darkMode,
-            desired_timezonetime: t.timezone,
+            desired_timezone: t.timezone,
             client_dpi: screen.getPrimaryDisplay()?.scaleFactor * 96,
             restore_last_session: persistGet(RESTORE_LAST_SESSION) ?? true,
             initial_key_repeat: t.initialKeyRepeat,
