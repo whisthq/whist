@@ -223,6 +223,18 @@ if __name__ == "__main__":
     use_two_instances = True if args.use_two_instances == "true" else False
     simulate_scrolling = True if args.simulate_scrolling == "true" else False
 
+    use_existing_client_instance = args.use_existing_client_instance
+    use_existing_server_instance = args.use_existing_server_instance
+
+    if use_existing_client_instance != "" and use_two_instances:
+        print(
+            "Error: the `use-two-instances` flag is set to `false` but a non-empty instance ID was passed with the `use-existing-client-instance` flag."
+        )
+        sys.exit(-1)
+
+    skip_git_clone = args.skip_git_clone
+    skip_host_setup = args.skip_host_setup
+
     network_conditions = args.network_conditions
 
     # Load the SSH key
@@ -236,26 +248,41 @@ if __name__ == "__main__":
     # Create a boto3 client, create or start the instance(s).
     boto3client = get_boto3client(region_name)
     server_instance_id = create_or_start_aws_instance(
-        boto3client, region_name, args.use_existing_server_instance, ssh_key_name, running_in_ci
+        boto3client, region_name, use_existing_server_instance, ssh_key_name, running_in_ci
     )
     client_instance_id = (
         create_or_start_aws_instance(
-            boto3client, region_name, args.use_existing_client_instance, ssh_key_name, running_in_ci
+            boto3client, region_name, use_existing_client_instance, ssh_key_name, running_in_ci
         )
         if use_two_instances
         else server_instance_id
     )
 
-    # Save to 'new_instances.txt' file names of new instances that were created. These will have to be terminated by a successive Github action in case this script crashes before being able to terminate them itself.
+    leave_instances_on = args.leave_instances_on
+
+    # Save to 'instances_to_clean.txt' file names of new instances that were created. These will have to be terminated
+    # by a successive Github action in case this script crashes before being able to terminate them itself.
     instances_to_be_terminated = []
     instances_to_be_stopped = []
-    if server_instance_id != args.use_existing_server_instance:
+    if server_instance_id != use_existing_server_instance:
         instances_to_be_terminated.append(server_instance_id)
+        # Turning off skipping git clone and host setup if we created a new instance
+        skip_git_clone = "false"
+        skip_host_setup = "false"
+        # If we didn't intend to get a new instance, then turn off option to leave instance off
+        if use_existing_server_instance != "":
+            leave_instances_on = "false"
     else:
         instances_to_be_stopped.append(server_instance_id)
     if client_instance_id != server_instance_id:
-        if client_instance_id != args.use_existing_client_instance:
+        if client_instance_id != use_existing_client_instance:
             instances_to_be_terminated.append(client_instance_id)
+            # Turning off skipping git clone and host setup if we created a new instance
+            skip_git_clone = "false"
+            skip_host_setup = "false"
+            # If we didn't intend to get a new instance, then turn off option to leave instance off
+            if use_existing_client_instance != "":
+                leave_instances_on = "false"
         else:
             instances_to_be_stopped.append(client_instance_id)
     instances_file = open("instances_to_clean.txt", "a+")
@@ -328,8 +355,8 @@ if __name__ == "__main__":
     args_dict["aws_credentials_filepath"] = aws_credentials_filepath
     args_dict["cmake_build_type"] = args.cmake_build_type
     args_dict["running_in_ci"] = running_in_ci
-    args_dict["skip_git_clone"] = args.skip_git_clone
-    args_dict["skip_host_setup"] = args.skip_host_setup
+    args_dict["skip_git_clone"] = skip_git_clone
+    args_dict["skip_host_setup"] = skip_host_setup
 
     # If using two instances, parallelize the host-setup and building of the docker containers to save time
     p1 = multiprocessing.Process(target=server_setup_process, args=[args_dict])
@@ -486,16 +513,16 @@ if __name__ == "__main__":
     server_log.close()
     client_log.close()
 
-    if args.leave_instances_on == "false":
+    if leave_instances_on == "false":
         # Terminate or stop AWS instance(s)
         terminate_or_stop_aws_instance(
-            boto3client, server_instance_id, server_instance_id != args.use_existing_server_instance
+            boto3client, server_instance_id, server_instance_id != use_existing_server_instance
         )
         if use_two_instances:
             terminate_or_stop_aws_instance(
                 boto3client,
                 client_instance_id,
-                client_instance_id != args.use_existing_client_instance,
+                client_instance_id != use_existing_client_instance,
             )
     else:
         # Save instance IDs to file for reuse by later runs
