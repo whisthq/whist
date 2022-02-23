@@ -438,8 +438,15 @@ static VideoEncoder* update_video_encoder(whist_server_state* state, VideoEncode
 // bandwidth, without dropping frames.
 static int32_t multithreaded_send_video_packets(void* opaque) {
     whist_server_state* state = (whist_server_state*)opaque;
+    add_thread_to_client_active_dependents();
+    bool assuming_client_active = false;
     WhistTimer statistics_timer;
     while (!state->exiting) {
+        update_client_active_status(&state->client, &assuming_client_active);
+        if (!assuming_client_active) {
+            whist_sleep(1);
+            continue;
+        }
         whist_wait_semaphore(producer);
         start_timer(&statistics_timer);
         VideoFrame* frame = (VideoFrame*)encoded_frame_buf[currently_sending_index];
@@ -457,6 +464,10 @@ static int32_t multithreaded_send_video_packets(void* opaque) {
         // bandwidth, till a new frame is available.
         while (state->client.is_active && !state->exiting && whist_semaphore_value(producer) == 0 &&
                network_settings.saturate_bandwidth) {
+            update_client_active_status(&state->client, &assuming_client_active);
+            if (!assuming_client_active) {
+                break;
+            }
             // Re-send all indices of this video frame in a round-robin manner
             udp_resend_packet(&state->client.udp_context, PACKET_VIDEO, id, index++);
             int num_indices = udp_get_num_indices(&state->client.udp_context, PACKET_VIDEO, id);
