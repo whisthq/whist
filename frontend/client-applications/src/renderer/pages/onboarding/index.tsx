@@ -6,14 +6,21 @@ import {
   WhatMakesWhistDifferent,
   WhatIsWhist,
   WhoIsWhistFor,
+  FasterLikeMagic,
+  LetsShowYouAround,
+  Privacy,
+  FeaturesUnderDevelopment,
+  LiveChatSupport,
+  FollowUsOnTwitter,
 } from "@app/renderer/pages/onboarding/pages"
 
 const Shuffle = (props: { pages: JSX.Element[] }) => {
   const maxPageIndex = props.pages.length - 1
   const [pageToShow, setPageToShow] = useState(0)
 
-  const nextPage = () => {
-    setPageToShow(Math.min(maxPageIndex, pageToShow + 1))
+  const nextPage = (evt: any) => {
+    if (evt.key === "Enter")
+      setPageToShow(Math.min(maxPageIndex, pageToShow + 1))
   }
 
   return (
@@ -57,7 +64,17 @@ export default (props: { onSubmit: () => void }) => {
     )
   return (
     <Shuffle
-      pages={[<WhatMakesWhistDifferent />, <WhatIsWhist />, <WhoIsWhistFor />]}
+      pages={[
+        <WhatMakesWhistDifferent />,
+        <WhatIsWhist />,
+        <WhoIsWhistFor />,
+        <FasterLikeMagic />,
+        <LetsShowYouAround />,
+        <Privacy />,
+        <FeaturesUnderDevelopment />,
+        <LiveChatSupport />,
+        <FollowUsOnTwitter />,
+      ]}
     />
   )
 }
