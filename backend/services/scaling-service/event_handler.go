@@ -46,9 +46,8 @@ func main() {
 	scheduledEvents := make(chan algos.ScalingEvent, 100)
 
 	// Set to run every 10 minutes, statring 10 minutes from now
-	schedule := time.Duration(10 * time.Minute)
-	after := time.Duration(10 * time.Minute)
-	StartSchedulerEvents(scheduledEvents, schedule, after)
+	start := time.Duration(10 * time.Minute)
+	StartSchedulerEvents(scheduledEvents, 10, start)
 
 	// Start the deploy events once since we are starting the scaling service.
 	StartDeploy(scheduledEvents)
@@ -106,15 +105,15 @@ func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *syn
 }
 
 // StartSchedulerEvents starts the scheduler and its events without blocking the main thread.
-// `schedule` sets the time when the event will run (i.e. every 10 minutes), and `start`
+// `interval` sets the time when the event will run (i.e. every 10 minutes), and `start`
 // sets the time when the first event will happen (i.e. 10 minutes from now).
-func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, schedule time.Duration, start time.Duration) {
+func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval interface{}, start time.Duration) {
 	s := gocron.NewScheduler(time.UTC)
 
 	// Schedule scale down routine every 10 minutes, start 10 minutes from now.
 	t := time.Now().Add(start)
-	s.Every(schedule).Minutes().StartAt(t).Do(func() {
-		// Send to scheduling channel
+	s.Every(interval).Minutes().StartAt(t).Do(func() {
+		// Send tinteo scheduling channel
 		scheduledEvents <- algos.ScalingEvent{
 			// Create a UUID so we can identify and search this event on our logs
 			ID: uuid.NewString(),

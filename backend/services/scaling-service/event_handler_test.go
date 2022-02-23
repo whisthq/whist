@@ -74,6 +74,9 @@ func TestStartDatabaseSubscriptions(t *testing.T) {
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent)
 	mockClient := &mockSubscriptionClient{}
 
+	// Override enabled condition
+	subscriptions.Enabled = true
+
 	// Start database subscriptions with mock client
 	StartDatabaseSubscriptions(ctx, goroutinetracker, subscriptionEvents, mockClient)
 
@@ -91,9 +94,22 @@ func TestStartDatabaseSubscriptions(t *testing.T) {
 	}
 
 	// First, verify that the scaling subscriptions were set correctly
-	ok := reflect.DeepEqual(mockClient.GetSubscriptions(), testScalingSubscriptions)
+	if len(mockClient.GetSubscriptions()) != 1 {
+		t.Fatalf("Got %v database subscriptions, want 1", len(mockClient.GetSubscriptions()))
+	}
+
+	gotSubscription := mockClient.GetSubscriptions()[0]
+	ok := reflect.DeepEqual(gotSubscription.Query, testScalingSubscriptions[0].Query)
 	if !ok {
-		t.Errorf("Scaling service subscriptions not set correctly. Got %v, want %v", mockClient.GetSubscriptions(), testScalingSubscriptions)
+		t.Errorf("Scaling service subscriptions query not set correctly. Got %v, want %v", gotSubscription.Query, testScalingSubscriptions[0].Query)
+	}
+	ok = reflect.DeepEqual(gotSubscription.Variables, testScalingSubscriptions[0].Variables)
+	if !ok {
+		t.Errorf("Scaling service subscriptions variables not set correctly. Got %v, want %v", gotSubscription.Variables, testScalingSubscriptions[0].Variables)
+	}
+	ok = reflect.DeepEqual(gotSubscription.Result, testScalingSubscriptions[0].Result)
+	if !ok {
+		t.Errorf("Scaling service subscriptions result not set correctly. Got %v, want %v", gotSubscription.Result, testScalingSubscriptions[0].Result)
 	}
 
 	// Check if the client was initialized
@@ -103,7 +119,7 @@ func TestStartDatabaseSubscriptions(t *testing.T) {
 
 	// Verify that the client subscribed
 	if len(mockClient.GetSubscriptionIDs()) != 1 {
-		t.Errorf("Got the wrong number of subscription IDs. Got %v, want 1", len(mockClient.SubscriptionIDs))
+		t.Fatalf("Got the wrong number of subscription IDs. Got %v, want 1", len(mockClient.SubscriptionIDs))
 	}
 
 	// Check if the subscription id is correct
@@ -120,9 +136,8 @@ func TestStartDatabaseSubscriptions(t *testing.T) {
 
 func TestStartSchedulerEvents(t *testing.T) {
 	scheduledEvents := make(chan algos.ScalingEvent)
-	schedule := time.Duration(1 * time.Second)
 	after := time.Duration(1 * time.Second)
-	StartSchedulerEvents(scheduledEvents, schedule, after)
+	StartSchedulerEvents(scheduledEvents, 1, after)
 
 	// Block scheduledEvents channel until we have received
 	// the scheduled event, timeout otherwise.
@@ -186,20 +201,20 @@ func TestGetScalingAlgorithm(t *testing.T) {
 	testRegions := []string{
 		"us-east-1-test",
 	}
-	testAlgorithm := algos.DefaultScalingAlgorithm{
+	testAlgorithm := &algos.DefaultScalingAlgorithm{
 		Region: "us-east-1-test",
 	}
 
 	// Load default scaling algorithm for all enabled regions.
 	for _, region := range testRegions {
-		name := utils.Sprintf("test-sa-%s", region)
+		name := utils.Sprintf("default-sa-%s", region)
 		algorithmByRegionMap.Store(name, &algos.DefaultScalingAlgorithm{
 			Region: region,
 		})
 	}
 
 	algorithm := getScalingAlgorithm(algorithmByRegionMap, algos.ScalingEvent{
-		Region: "us-west-1-test",
+		Region: "us-east-1-test",
 	})
 
 	ok := reflect.DeepEqual(algorithm, testAlgorithm)
