@@ -111,7 +111,7 @@ const createLicenseWindow = () =>
 const createWelcomeWindow = () =>
   createElectronWindow({
     ...width.md,
-    ...height.lg,
+    ...height.md,
     hash: WindowHashWelcome,
     options: {
       trafficLightPosition: { x: 22, y: 22 },

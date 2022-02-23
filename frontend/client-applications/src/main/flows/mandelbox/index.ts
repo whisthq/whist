@@ -62,9 +62,6 @@ export default flow(
             restore_last_session: persistGet(RESTORE_LAST_SESSION) ?? true,
             initial_key_repeat: t.initialKeyRepeat,
             key_repeat: t.keyRepeat,
-            ...(t.isNewConfigToken && {
-              initial_url: "https://whist.typeform.com/to/Oi21wwbg",
-            }),
             ...(appEnvironment === WhistEnvironments.LOCAL && {
               local_client: true,
             }),

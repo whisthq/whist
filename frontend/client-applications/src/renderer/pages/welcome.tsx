@@ -13,7 +13,7 @@ const Welcome = (props: { onSubmit: () => void }) => {
       className="flex flex-col h-screen w-full font-body outline-none bg-gray-900"
     >
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
-      <div className="m-auto text-center mt-36">
+      <div className="m-auto text-center mt-24">
         <img
           src={Logo}
           className="w-24 h-24 m-auto animate-fade-in-up opacity-0"
