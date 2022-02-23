@@ -113,7 +113,7 @@ func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval inte
 	// Schedule scale down routine every 10 minutes, start 10 minutes from now.
 	t := time.Now().Add(start)
 	s.Every(interval).Minutes().StartAt(t).Do(func() {
-		// Send tinteo scheduling channel
+		// Send into scheduling channel
 		scheduledEvents <- algos.ScalingEvent{
 			// Create a UUID so we can identify and search this event on our logs
 			ID: uuid.NewString(),
