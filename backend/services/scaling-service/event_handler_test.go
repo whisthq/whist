@@ -83,7 +83,9 @@ func TestStartDatabaseSubscriptions(t *testing.T) {
 			Variables: map[string]interface{}{
 				"status": graphql.String("DRAINING"),
 			},
-			Result:  subscriptions.InstanceEvent{[]subscriptions.Instance{}},
+			Result: subscriptions.InstanceEvent{
+				Instances: []subscriptions.Instance{},
+			},
 			Handler: subscriptions.InstancesStatusHandler,
 		},
 	}
