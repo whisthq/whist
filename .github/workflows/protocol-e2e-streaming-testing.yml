@@ -37,6 +37,8 @@ jobs:
 
       - name: Turnstyle
         uses: rpadaki/turnstyle@v1
+        with:
+          same-branch-only: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
