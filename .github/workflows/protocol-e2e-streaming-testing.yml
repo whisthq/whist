@@ -17,6 +17,10 @@ on:
       - "mandelboxes/helper_scripts/copy_protocol_build.sh"
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   # This job runs a protocol streaming session between two Docker containers on the same
   # AWS EC2 instance to test end-to-end networking performance in a controlled environment.
