@@ -11,12 +11,12 @@ import (
 	graphql "github.com/hasura/go-graphql-client"
 )
 
-// `enabled` is a flag denoting whether the functions in this package should do
+// `Enabled` is a flag denoting whether the functions in this package should do
 // anything, or simply be no-ops. This is necessary, since we want the subscription
 // operations to be meaningful in environments where we can expect the database
 // guarantees to hold (e.g. `metadata.EnvLocalDevWithDB` or `metadata.EnvDev`)
 // but no-ops in other environments.
-var enabled = (metadata.GetAppEnvironment() != metadata.EnvLocalDev)
+var Enabled = (metadata.GetAppEnvironment() != metadata.EnvLocalDev)
 
 // WhistSubscriptionClient is an interface used to abstract the interactions with
 // the official Hasura client.
