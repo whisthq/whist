@@ -81,19 +81,19 @@ jobs:
 
       - name: Run End-to-End Streaming Test (low bandwidth)
         id: e2e_streaming_test1
-        if: ${{ always() && (steps.e2e_streaming_test0.outcome != 'skipped') && (steps.e2e_streaming_test0.outcome != 'cancelled') }}
+        if: ${{ job.status != 'cancelled' && (steps.e2e_streaming_test0.outcome != 'skipped')}}
         working-directory: protocol/test
         run: python3 streaming_e2e_tester.py --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" --ssh-key-path "/home/runner/.ssh/id_rsa" --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" --use-two-instances=true --use-existing-client-instance "$CLIENT_INSTANCE_ID" --use-existing-server-instance "$SERVER_INSTANCE_ID" --leave-instances-on=true --skip-host-setup=true --skip-git-clone=true --network-conditions 1Mbit,none,none
 
       - name: Run End-to-End Streaming Test (low bandwidth + pkt drops)
         id: e2e_streaming_test2
-        if: ${{ always() && (steps.e2e_streaming_test1.outcome != 'skipped') && (steps.e2e_streaming_test1.outcome != 'cancelled') }}
+        if: ${{ job.status != 'cancelled' && (steps.e2e_streaming_test0.outcome != 'skipped' }}
         working-directory: protocol/test
         run: python3 streaming_e2e_tester.py --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" --ssh-key-path "/home/runner/.ssh/id_rsa" --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" --use-two-instances=true --use-existing-client-instance "$CLIENT_INSTANCE_ID" --use-existing-server-instance "$SERVER_INSTANCE_ID" --leave-instances-on=true --skip-host-setup=true --skip-git-clone=true --network-conditions 1Mbit,none,0.1
 
       - name: Run End-to-End Streaming Test (low bandwidth + pkt drops + delay)
         id: e2e_streaming_test3
-        if: ${{ always() && (steps.e2e_streaming_test2.outcome != 'skipped') && (steps.e2e_streaming_test2.outcome != 'cancelled') }}
+        if: ${{ job.status != 'cancelled' && (steps.e2e_streaming_test0.outcome != 'skipped' }}
         working-directory: protocol/test
         run: python3 streaming_e2e_tester.py --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" --ssh-key-path "/home/runner/.ssh/id_rsa" --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" --use-two-instances=true --use-existing-client-instance "$CLIENT_INSTANCE_ID" --use-existing-server-instance "$SERVER_INSTANCE_ID" --leave-instances-on=false --skip-host-setup=true --skip-git-clone=true --network-conditions 1Mbit,100,0.1
 
