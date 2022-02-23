@@ -1,13 +1,5 @@
 import { merge, of, combineLatest, zip, from } from "rxjs"
-import {
-  map,
-  take,
-  filter,
-  switchMap,
-  share,
-  mapTo,
-  pluck,
-} from "rxjs/operators"
+import { map, take, filter, switchMap, share, mapTo } from "rxjs/operators"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
 
@@ -124,9 +116,9 @@ const importedData = fromTrigger(WhistTrigger.beginImport).pipe(
 // Observable that fires when Whist is ready to be launched
 const launchTrigger = emitOnSignal(
   combineLatest({
-    userEmail: auth.success.pipe(pluck("userEmail")),
-    accessToken: auth.success.pipe(pluck("accessToken")),
-    configToken: auth.success.pipe(pluck("configToken")),
+    userEmail,
+    accessToken,
+    configToken,
     isNewConfigToken,
     importedData: merge(importedData, dontImportBrowserData),
     regions: merge(awsPing.cached, awsPing.refresh),
