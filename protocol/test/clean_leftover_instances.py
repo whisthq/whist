@@ -12,6 +12,15 @@ if not os.path.exists(filepath) or not os.path.isfile(filepath):
     print("No leftover instances need to be stopped or terminated")
     exit()
 
+# Do not stop or terminate the permanent instances protocol-integration-tester-server and protocol-integration-tester-client to prevent interfering with other jobs
+ignore_instances = []
+protocol_integration_tester_server = os.getenv("SERVER_INSTANCE_ID")
+protocol_integration_tester_client = os.getenv("CLIENT_INSTANCE_ID")
+if protocol_integration_tester_client is not None:
+    ignore_instances.append(protocol_integration_tester_client)
+if protocol_integration_tester_server is not None:
+    ignore_instances.append(protocol_integration_tester_server)
+
 # Terminate or stop the instances with the instance IDs from the file.
 # We terminate instances that were created anew by the
 # streaming_e2e_tester.py script. We stop instances that were reused by
@@ -22,6 +31,9 @@ for line in instances_file.readlines():
     action = i[0]
     region = i[1]
     instance_id = i[2]
+
+    if instance_id in ignore_instances:
+        continue
 
     # Connect to the E2 console
     bc = get_boto3client(region)

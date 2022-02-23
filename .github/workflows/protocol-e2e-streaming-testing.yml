@@ -113,7 +113,7 @@ jobs:
         run: aws s3 cp perf_logs s3://whist-e2e-protocol-test-logs/"${{ env.BRANCH_NAME }}" --recursive
 
       - name: Stop or terminate leftover AWS instances
-        if: ${{ always() && (steps.e2e_streaming_test3.outcome != 'success') }}
+        if: always()
         working-directory: protocol/test
         run: python3 clean_leftover_instances.py
 
