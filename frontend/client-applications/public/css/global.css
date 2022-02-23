@@ -26,6 +26,11 @@
   -webkit-app-region: drag;
 }
 
+.nondraggable {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
 @font-face {
   font-family: "Josefin-Sans";
   src: url("../assets/fonts/JosefinSans-Regular.ttf");

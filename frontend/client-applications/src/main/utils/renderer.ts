@@ -140,6 +140,9 @@ const createOnboardingWindow = () =>
     ...width.md,
     ...height.md,
     hash: WindowHashOnboarding,
+    options: {
+      fullscreenable: false,
+    },
   })
 
 const createUpdateWindow = () =>
