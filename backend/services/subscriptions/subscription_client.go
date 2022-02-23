@@ -28,7 +28,7 @@ type WhistSubscriptionClient interface {
 	SetSubscriptionsIDs([]string)
 	GetParams() HasuraParams
 	SetParams(HasuraParams)
-	Subscribe(GraphQLQuery, map[string]interface{}, SubscriptionEvent, handlerfn, chan SubscriptionEvent) (string, error)
+	Subscribe(GraphQLQuery, map[string]interface{}, SubscriptionEvent, Handlerfn, chan SubscriptionEvent) (string, error)
 	Run(*sync.WaitGroup)
 	Close([]string) error
 }
@@ -101,7 +101,7 @@ func (wc *SubscriptionClient) SetParams(params HasuraParams) {
 // Subscribe creates the subscriptions according to the received queries and conditions.
 // It passes results through the received channel if the received `conditionFn` is true.
 func (wc *SubscriptionClient) Subscribe(query GraphQLQuery, variables map[string]interface{}, result SubscriptionEvent,
-	conditionFn handlerfn, subscriptionEvents chan SubscriptionEvent) (string, error) {
+	conditionFn Handlerfn, subscriptionEvents chan SubscriptionEvent) (string, error) {
 
 	id, err := wc.Hasura.Subscribe(query, variables, func(data *json.RawMessage, err error) error {
 		if err != nil {

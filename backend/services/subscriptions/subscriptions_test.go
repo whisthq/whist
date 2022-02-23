@@ -46,7 +46,7 @@ func (cl *mockWhistClient) SetParams(params HasuraParams) {
 
 // Subscribe mocks creating subscriptions. For testing, only returned predefined test events.
 func (cl *mockWhistClient) Subscribe(query GraphQLQuery, variables map[string]interface{}, result SubscriptionEvent,
-	conditionFn handlerfn, subscriptionEvents chan SubscriptionEvent) (string, error) {
+	conditionFn Handlerfn, subscriptionEvents chan SubscriptionEvent) (string, error) {
 
 	// Create fake instance event
 	testInstanceEvent := InstanceEvent{Instances: []Instance{{

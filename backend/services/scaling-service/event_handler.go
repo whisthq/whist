@@ -39,11 +39,16 @@ func main() {
 
 	// Start database subscriptions
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
-	StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents)
+	subscriptionClient := &subscriptions.SubscriptionClient{}
+	StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents, subscriptionClient)
 
 	// Start scheduler and setup scheduler event chan
 	scheduledEvents := make(chan algos.ScalingEvent, 100)
-	StartSchedulerEvents(scheduledEvents)
+
+	// Set to run every 10 minutes, statring 10 minutes from now
+	schedule := time.Duration(10 * time.Minute)
+	after := time.Duration(10 * time.Minute)
+	StartSchedulerEvents(scheduledEvents, schedule, after)
 
 	// Start the deploy events once since we are starting the scaling service.
 	StartDeploy(scheduledEvents)
@@ -90,8 +95,7 @@ func main() {
 }
 
 // StartDatabaseSubscriptions sets up the database subscriptions and starts the subscription client.
-func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan subscriptions.SubscriptionEvent) {
-	subscriptionClient := &subscriptions.SubscriptionClient{}
+func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan subscriptions.SubscriptionEvent, subscriptionClient subscriptions.WhistSubscriptionClient) {
 	subscriptions.SetupScalingSubscriptions(subscriptionClient)
 
 	err := subscriptions.Start(subscriptionClient, globalCtx, goroutineTracker, subscriptionEvents)
@@ -102,12 +106,14 @@ func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *syn
 }
 
 // StartSchedulerEvents starts the scheduler and its events without blocking the main thread.
-func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent) {
+// `schedule` sets the time when the event will run (i.e. every 10 minutes), and `start`
+// sets the time when the first event will happen (i.e. 10 minutes from now).
+func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, schedule time.Duration, start time.Duration) {
 	s := gocron.NewScheduler(time.UTC)
 
 	// Schedule scale down routine every 10 minutes, start 10 minutes from now.
-	t := time.Now().Add(10 * time.Minute)
-	s.Every(10).Minutes().StartAt(t).Do(func() {
+	t := time.Now().Add(start)
+	s.Every(schedule).Minutes().StartAt(t).Do(func() {
 		// Send to scheduling channel
 		scheduledEvents <- algos.ScalingEvent{
 			// Create a UUID so we can identify and search this event on our logs
