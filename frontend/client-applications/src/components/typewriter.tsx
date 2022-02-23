@@ -69,7 +69,7 @@ export const TypeWriter = (props: {
     const iterate = cycle(charStreams(words, start, end, forw, back))
     times(startAt, () => iterate.next())
     const timeouts: Array<ReturnType<typeof setTimeout>> = []
-    let counter = 0
+    const counter = 0
     setTimeout(function run() {
       const [char, ms, blinking] = iterate.next().value
       setDisplay(char)

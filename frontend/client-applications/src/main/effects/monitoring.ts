@@ -26,6 +26,7 @@ if (appEnvironment === WhistEnvironments.PRODUCTION) {
 }
 
 fromTrigger(WhistTrigger.startNetworkAnalysis).subscribe(() => {
+  console.log("STARTING NETWORK ANALYSIS")
   networkAnalyze()
 })
 

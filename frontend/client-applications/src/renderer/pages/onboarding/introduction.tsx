@@ -11,8 +11,7 @@ export default (props: { onSubmit: () => void }) => {
     <div
       onKeyDown={onKeyDown}
       tabIndex={0}
-      className="flex flex-col h-screen w-full font-body outline-none"
-      style={{ background: "#202124" }}
+      className="flex flex-col h-screen w-full font-body outline-none bg-gray-900"
     >
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
       <div className="m-auto text-center mt-18">

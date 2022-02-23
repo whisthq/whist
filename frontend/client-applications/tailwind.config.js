@@ -22,6 +22,9 @@ module.exports = {
           DEFAULT: "#00FFA2",
           light: "#c9ffeb",
         },
+        gray: {
+          900: "#202124",
+        },
       },
       keyframes: {
         "fade-in-up": {

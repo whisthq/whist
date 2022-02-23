@@ -16,8 +16,7 @@ const Template = (props: { contents: JSX.Element; word: string }) => {
   return (
     <div
       tabIndex={0}
-      className="flex flex-col h-screen w-full font-body outline-none"
-      style={{ background: "#202124" }}
+      className="flex flex-col h-screen w-full font-body outline-none bg-gray-900"
     >
       <img src={ChromeHeader} className="w-screen nondraggable" />
       {props.word !== undefined && (
@@ -51,7 +50,12 @@ const WhatMakesWhistDifferent = () => {
     </div>
   )
 
-  return <Template contents={contents} word="You may be wondering . . ." />
+  return (
+    <Template
+      contents={contents}
+      word="Hey there! You may be wondering . . ."
+    />
+  )
 }
 
 const WhatIsWhist = () => {

@@ -37,6 +37,7 @@ import {
   WindowHashWelcome,
   WindowHashSupport,
   WindowHashRestoreTabs,
+  WindowHashNetwork,
 } from "@app/constants/windows"
 import {
   whistError,
@@ -129,6 +130,16 @@ const RootComponent = () => {
       },
     })
 
+  const handleOnboardingSubmit = () => {
+    setShow(WindowHashNetwork)
+    setMainState({
+      trigger: {
+        name: WhistTrigger.startNetworkAnalysis,
+        payload: undefined,
+      },
+    })
+  }
+
   useEffect(() => {
     // We need to ask the main thread to re-emit the current StateIPC because
     // useMainState() only subscribes to state updates after the function is
@@ -185,7 +196,15 @@ const RootComponent = () => {
       />
     )
 
-  if (show === WindowHashOnboarding) return <Onboarding onSubmit={() => {}} />
+  if (show === WindowHashOnboarding)
+    return <Onboarding onSubmit={handleOnboardingSubmit} />
+  if (show === WindowHashNetwork)
+    return (
+      <Network
+        networkInfo={mainState.networkInfo}
+        onSubmit={handleNetworkSubmit}
+      />
+    )
   if (show === WindowHashLaunchLoading)
     return <Launching networkInfo={mainState.networkInfo} />
   if (show === WindowHashImportLoading) return <Importing />

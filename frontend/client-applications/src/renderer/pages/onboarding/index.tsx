@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 
 import Steps from "@app/components/steps"
 import Introduction from "@app/renderer/pages/onboarding/introduction"
@@ -14,28 +14,25 @@ import {
   FollowUsOnTwitter,
 } from "@app/renderer/pages/onboarding/pages"
 
-const Shuffle = (props: { pages: JSX.Element[] }) => {
+const Shuffle = (props: { pages: JSX.Element[]; onSubmit: () => void }) => {
   const maxPageIndex = props.pages.length - 1
   const [pageToShow, setPageToShow] = useState(0)
 
-  const nextPage = (evt: any) => {
-    if (evt.key === "Enter")
-      setPageToShow(Math.min(maxPageIndex, pageToShow + 1))
-  }
+  useEffect(() => {
+    if (pageToShow > maxPageIndex) props.onSubmit()
+  }, [pageToShow])
 
   return (
     <div
-      onKeyDown={nextPage}
       tabIndex={0}
-      className="flex flex-col h-screen w-full font-body outline-none"
-      style={{ background: "#202124" }}
+      className="flex flex-col h-screen w-full font-body outline-none bg-gray-900"
     >
       {props.pages[pageToShow]}
       <div className="absolute bottom-4 w-full">
         <div className="m-auto text-center">
           <button
             className="text-gray-300 outline-none bg-blue rounded px-12 py-2 font-semibold text-gray-100 w-36 m-auto mb-8"
-            onClick={nextPage}
+            onClick={() => setPageToShow(pageToShow + 1)}
           >
             Next
           </button>
@@ -53,15 +50,17 @@ const Shuffle = (props: { pages: JSX.Element[] }) => {
 }
 
 export default (props: { onSubmit: () => void }) => {
-  const [count, setCount] = useState(0)
-  if (count === 0)
+  const [showIntro, setShowIntro] = useState(true)
+
+  if (showIntro)
     return (
       <Introduction
         onSubmit={() => {
-          setCount(1)
+          setShowIntro(false)
         }}
       />
     )
+
   return (
     <Shuffle
       pages={[
@@ -75,6 +74,7 @@ export default (props: { onSubmit: () => void }) => {
         <LiveChatSupport />,
         <FollowUsOnTwitter />,
       ]}
+      onSubmit={props.onSubmit}
     />
   )
 }
