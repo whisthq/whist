@@ -226,7 +226,7 @@ if __name__ == "__main__":
     use_existing_client_instance = args.use_existing_client_instance
     use_existing_server_instance = args.use_existing_server_instance
 
-    if use_existing_client_instance != "" and use_two_instances:
+    if use_existing_client_instance != "" and not use_two_instances:
         print(
             "Error: the `use-two-instances` flag is set to `false` but a non-empty instance ID was passed with the `use-existing-client-instance` flag."
         )
