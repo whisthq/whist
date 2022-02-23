@@ -202,8 +202,8 @@ module.exports = {
       )
     }
 
-    rimrafSync("loading")
-    fse.moveSync(path.join(protocolTargetBuild, "loading"), "loading")
+    rimrafSync("images")
+    fse.moveSync(path.join(protocolTargetBuild, "images"), "images")
   },
 
   // Build TailwindCSS

@@ -39,7 +39,7 @@ const bundleConfig = {
     schemes: ["whist"],
   },
 
-  extraFiles: ["loading/"],
+  extraFiles: ["images/"],
 
   extraResources: ["env_overrides.json"],
 
