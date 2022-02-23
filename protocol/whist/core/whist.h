@@ -117,7 +117,6 @@ Defines
 #if defined(_WIN32)
 #define STDOUT_FILENO _fileno(stdout)
 #define safe_mkdir(dir) _mkdir(dir)
-#define safe_remove(file) _remove(file)
 #define safe_dup(fd) _dup(fd)
 #define safe_dup2(fd1, fd2) _dup2(fd1, fd2)
 #define safe_open(path, flags) _open(path, flags, 0666)
@@ -125,7 +124,6 @@ Defines
 #define strerror_r(errno, buf, len) strerror_s(buf, len, errno)
 #else
 #define safe_mkdir(dir) mkdir(dir, 0777)
-#define safe_remove(file) remove(file)
 #define safe_dup(fd) dup(fd)
 #define safe_dup2(fd1, fd2) dup2(fd1, fd2)
 #define safe_open(path, flags) open(path, flags, 0666)

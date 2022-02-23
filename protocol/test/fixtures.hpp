@@ -40,7 +40,7 @@ class CaptureStdoutFixture : public ::testing::Test {
         safe_mkdir(path.c_str());
         filename =
             path + "/" + ::testing::UnitTest::GetInstance()->current_test_info()->name() + ".log";
-        safe_remove(filename.c_str());
+        remove(filename.c_str());
         fd = safe_open(filename.c_str(), O_WRONLY | O_CREAT);
         EXPECT_GE(fd, 0);
         fflush(stdout);
