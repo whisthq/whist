@@ -395,7 +395,7 @@ NetworkSettings ewma_ratio_bitrate(NetworkStatistics stats) {
 // The theory behind all the code in this function is documented in WCC.md file. Please go thru that
 // document before reviewing this file. Also if you make any modifications to this algo, remember to
 // update the WCC.md file as well so that the documentation remains upto date.
-bool whist_congestion_controller(PerGroupStats *curr_group_stats, PerGroupStats *prev_group_stats,
+bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_group_stats,
                                  int incoming_bitrate, double packet_loss_ratio,
                                  NetworkSettings *network_settings) {
 #define INITIAL_PRE_BURST_MODE_COUNT 5.0

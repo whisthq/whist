@@ -62,7 +62,7 @@ typedef struct {
     int group_id;
     timestamp_us departure_time;  // This time is measured in server's clock
     timestamp_us arrival_time;    // This time is measured in client's clock
-} PerGroupStats;
+} GroupStats;
 
 /*
 ============================

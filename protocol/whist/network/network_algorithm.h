@@ -78,7 +78,7 @@ NetworkSettings get_desired_network_settings(NetworkStatistics stats);
  *
  * @returns             Whether network_settings struct was updated with new values or not
  */
-bool whist_congestion_controller(PerGroupStats *curr_group_stats, PerGroupStats *prev_group_stats,
+bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_group_stats,
                                  int incoming_bitrate, double packet_loss_ratio,
                                  NetworkSettings *network_settings);
 

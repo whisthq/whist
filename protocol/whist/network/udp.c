@@ -111,11 +111,21 @@ typedef struct {
 
 // Size of the UDPPacket header, excluding the payload
 #define UDPNETWORKPACKET_HEADER_SIZE ((int)(offsetof(UDPNetworkPacket, payload)))
+#define MAX_GROUP_STATS 8
+// Choose power-of-two only for an efficient computations
+#define INCOMING_BITRATE_WINDOW_MS 256
+#define INCOMING_BITRATE_NUM_BUCKETS 16
+#define DURATION_PER_BUCKET (INCOMING_BITRATE_WINDOW_MS / INCOMING_BITRATE_NUM_BUCKETS)
 
 typedef struct {
     bool pending_stream_reset;
     int greatest_failed_id;
 } StreamResetData;
+
+typedef struct IncomingBitrate {
+    uint64_t bucket_id;
+    int num_bits;
+} IncomingBitrate;
 
 // An instance of the UDP Context
 typedef struct {
@@ -174,16 +184,12 @@ typedef struct {
     // The network settings we're asking the other side to follow
     NetworkSettings desired_network_settings;
     WhistTimer last_network_settings_time;
-} UDPContext;
-
-#define MAX_GROUP_STATS 8
-typedef struct {
-    PerGroupStats per_group_stats[MAX_GROUP_STATS];
+    // Group related stats and variables required for congestion control
+    GroupStats group_stats[MAX_GROUP_STATS];
     int prev_group_id;
     int curr_group_id;
-} GroupStats;
-
-static GroupStats group_stats = {0};
+    IncomingBitrate incoming_bitrate_buckets[INCOMING_BITRATE_NUM_BUCKETS];
+} UDPContext;
 
 // Define how many times to retry sending a UDP packet in case of Error 55 (buffer full). The
 // current value (5) is an arbitrary choice that was found to work well in practice.
@@ -207,6 +213,8 @@ static GroupStats group_stats = {0};
 // When it receives a valid client connection attempt
 #define NUM_CONFIRMATION_MESSAGES 10
 
+#define get_bucket_id(time) ((time) / US_IN_MS) / DURATION_PER_BUCKET;
+
 /*
 ============================
 Globals
@@ -217,29 +225,17 @@ Globals
 extern unsigned short port_mappings[USHRT_MAX + 1];
 volatile double latency;
 
-// Choose power-of-two only for an efficient computations
-#define INCOMING_BITRATE_WINDOW_MS 256
-#define INCOMING_BITRATE_NUM_BUCKETS 16
-#define DURATION_PER_BUCKET (INCOMING_BITRATE_WINDOW_MS / INCOMING_BITRATE_NUM_BUCKETS)
-typedef struct IncomingBitrate {
-    uint64_t bucket_id;
-    int num_bits;
-} IncomingBitrate;
-
-static IncomingBitrate incoming_bitrate_buckets[INCOMING_BITRATE_NUM_BUCKETS] = {0};
-
-#define get_bucket_id(time) ((time) / US_IN_MS) / DURATION_PER_BUCKET;
-
 /*
 ============================
 Private Functions
 ============================
 */
 
-static void add_incoming_bits(timestamp_us arrival_time, int num_bytes) {
+static void add_incoming_bits(UDPContext* context, timestamp_us arrival_time, int num_bytes) {
     int num_bits = num_bytes * BITS_IN_BYTE;
     uint64_t bucket_id = get_bucket_id(arrival_time);
-    IncomingBitrate* bucket = &incoming_bitrate_buckets[bucket_id % INCOMING_BITRATE_NUM_BUCKETS];
+    IncomingBitrate* bucket =
+        &context->incoming_bitrate_buckets[bucket_id % INCOMING_BITRATE_NUM_BUCKETS];
     if (bucket_id > bucket->bucket_id) {
         bucket->bucket_id = bucket_id;
         bucket->num_bits = num_bits;
@@ -248,12 +244,13 @@ static void add_incoming_bits(timestamp_us arrival_time, int num_bytes) {
     }
 }
 
-static int get_incoming_bitrate(void) {
+static int get_incoming_bitrate(UDPContext* context) {
     uint64_t current_bucket_id = get_bucket_id(current_time_us());
     int total_bits = 0;
     for (uint64_t i = current_bucket_id - INCOMING_BITRATE_NUM_BUCKETS + 1; i <= current_bucket_id;
          i++) {
-        IncomingBitrate* bucket = &incoming_bitrate_buckets[i % INCOMING_BITRATE_NUM_BUCKETS];
+        IncomingBitrate* bucket =
+            &context->incoming_bitrate_buckets[i % INCOMING_BITRATE_NUM_BUCKETS];
         if (i == bucket->bucket_id) {
             total_bits += bucket->num_bits;
         }
@@ -431,29 +428,29 @@ static void udp_congestion_control(UDPContext* context, timestamp_us departure_t
     }
     UNUSED(get_incoming_bitrate);
 #else
-    PerGroupStats* per_group_stats = &group_stats.per_group_stats[group_id % MAX_GROUP_STATS];
+    GroupStats* group_stats = &context->group_stats[group_id % MAX_GROUP_STATS];
     // As per WCC.md,
     // An inter-departure time is computed between consecutive groups as T(i) - T(i-1),
     // where T(i) is the departure timestamp of the last packet in the current packet
     // group being processed.  Any packets received out of order are ignored by the
     // arrival-time model.
-    if (departure_time > per_group_stats->departure_time) {
-        per_group_stats->departure_time = departure_time;
-        per_group_stats->arrival_time = arrival_time;
+    if (departure_time > group_stats->departure_time) {
+        group_stats->departure_time = departure_time;
+        group_stats->arrival_time = arrival_time;
     }
-    if (group_id > group_stats.curr_group_id) {
-        if (group_stats.prev_group_id != 0) {
-            PerGroupStats* curr_group_stats =
-                &group_stats.per_group_stats[group_stats.curr_group_id % MAX_GROUP_STATS];
-            PerGroupStats* prev_group_stats =
-                &group_stats.per_group_stats[group_stats.prev_group_id % MAX_GROUP_STATS];
+    if (group_id > context->curr_group_id) {
+        if (context->prev_group_id != 0) {
+            GroupStats* curr_group_stats =
+                &context->group_stats[context->curr_group_id % MAX_GROUP_STATS];
+            GroupStats* prev_group_stats =
+                &context->group_stats[context->prev_group_id % MAX_GROUP_STATS];
             send_network_settings = whist_congestion_controller(
-                curr_group_stats, prev_group_stats, get_incoming_bitrate(),
+                curr_group_stats, prev_group_stats, get_incoming_bitrate(context),
                 get_packet_loss_ratio(context->ring_buffers[PACKET_VIDEO]),
                 &context->desired_network_settings);
         }
-        group_stats.prev_group_id = group_stats.curr_group_id;
-        group_stats.curr_group_id = group_id;
+        context->prev_group_id = context->curr_group_id;
+        context->curr_group_id = group_id;
     }
 #endif
     if (send_network_settings) {
@@ -504,14 +501,14 @@ static bool udp_update(void* raw_context) {
     bool received_packet = udp_get_udp_packet(context, &udp_packet, &arrival_time);
 
     if (received_packet) {
-        add_incoming_bits(arrival_time,
+        add_incoming_bits(context, arrival_time,
                           UDPNETWORKPACKET_HEADER_SIZE + get_udp_packet_size(&udp_packet));
         // if the packet is a whist_segment, store the data to give later via get_packet
         // Otherwise, pass it to udp_handle_message
         if (udp_packet.type == UDP_WHIST_SEGMENT) {
             WhistPacketType packet_type = udp_packet.udp_whist_segment_data.whist_type;
 
-            if (packet_type == PACKET_VIDEO && udp_packet.group_id >= group_stats.curr_group_id &&
+            if (packet_type == PACKET_VIDEO && udp_packet.group_id >= context->curr_group_id &&
                 !udp_packet.udp_whist_segment_data.is_a_nack &&
                 !udp_packet.udp_whist_segment_data.is_a_duplicate) {
                 udp_congestion_control(context, udp_packet.udp_whist_segment_data.departure_time,
