@@ -33,6 +33,11 @@ for line in instances_file.readlines():
     instance_id = i[2]
 
     if instance_id in ignore_instances:
+        print(
+            "Skipping stop/termination of instance {} because it's a permanent testing instance.".format(
+                instance_id
+            )
+        )
         continue
 
     # Connect to the E2 console
