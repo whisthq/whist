@@ -48,5 +48,5 @@ void whist_init_server_statistics(void) {
     server_statistic_info[DBUS_MSGS_RECEIVED] =
         (StatisticInfo){"DBUS_MSGS_RECEIVED", false, false, true};
     server_statistic_info[SERVER_CPU_USAGE] =
-        (StatisticInfo){"SERVER_CPU_USAGE", false, false, true};
+        (StatisticInfo){"SERVER_CPU_USAGE", false, false, false};
 }
