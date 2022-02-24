@@ -101,7 +101,7 @@ const WhoIsWhistFor = () => {
       icon: Duplicate,
     },
     {
-      name: "Heavy, slow web apps",
+      name: "A sea of tabs or slow websites",
       icon: Globe,
     },
   ]
