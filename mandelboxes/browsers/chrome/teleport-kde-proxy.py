@@ -36,9 +36,9 @@ def handle_open_single_file():
     - Remove everything from our temporary/staging uploads directory
     - Write the upload trigger file to notify the server to initiate a transfer
     - Wait for the server transfer to complete by looking for a confirmation/cancellation file
-    - If confirmed - write the file name to stdoud.
+    - If confirmed - write the file name to stdout.
 
-    The file path that is written to stoud will be used by chrome as the "selected" upload file.
+    The file path that is written to stdout will be used by chrome as the "selected" upload file.
 
     """
 

@@ -136,7 +136,7 @@ static int find_free_transferring_file_index(void) {
 
 static void confirm_user_file_upload(void) {
     /*
-        Confirm that the user file upload transer has by
+        Confirm that the user file upload transfer has begun by
         writing a trigger file for the kdialog proxy to user
     */
 
