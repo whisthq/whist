@@ -1312,14 +1312,26 @@ int get_udp_packet_size(UDPPacket* udp_packet) {
 int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
     FATAL_ASSERT(context != NULL);
     int udp_packet_size = get_udp_packet_size(udp_packet);
+    bool throttle = true;
     if (udp_packet->type == UDP_WHIST_SEGMENT) {
         udp_packet->udp_whist_segment_data.departure_time = current_time_us();
+        // Don't throttle audio for the following reasons
+        // - Audio encoder runs on a reserved bandwidth for itself, unlike video encoder doesn't
+        //   exceed its reserved bitrate significantly.
+        // - Audio frame sizes are very small. At 128 Kbps, the average Audio frame size is only 160
+        //   bytes, much lesser than an average UDP packet size.
+        // - Audio frames at produced at a near constant interval of 10ms
+        if (udp_packet->udp_whist_segment_data.whist_type == PACKET_AUDIO) {
+            throttle = false;
+        }
     }
 
     // NOTE: This doesn't interfere with clientside hotpath,
     // since the throttler only throttles the serverside
-    udp_packet->group_id = network_throttler_wait_byte_allocation(
-        context->network_throttler, (size_t)(UDPNETWORKPACKET_HEADER_SIZE + udp_packet_size));
+    if (throttle) {
+        udp_packet->group_id = network_throttler_wait_byte_allocation(
+            context->network_throttler, (size_t)(UDPNETWORKPACKET_HEADER_SIZE + udp_packet_size));
+    }
 
     UDPNetworkPacket udp_network_packet;
     if (ENCRYPTING_PACKETS) {
@@ -1375,7 +1387,7 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
     // If encryption has added any extra bytes due to padding, then network throttler should be
     // called again to adjust for these extra bytes, so that the requested bitrate limit is not
     // exceeded.
-    if (udp_network_packet.payload_size > udp_packet_size) {
+    if (throttle && udp_network_packet.payload_size > udp_packet_size) {
         network_throttler_wait_byte_allocation(context->network_throttler,
                                                udp_network_packet.payload_size - udp_packet_size);
     }
@@ -1745,7 +1757,10 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
     if (context->network_throttler == NULL) {
         LOG_ERROR("Tried to set the burst bitrate, but there's no network throttler!");
     } else {
-        network_throttler_set_burst_bitrate(context->network_throttler, burst_bitrate);
+        // Subtract audio bitrate from burst bitrate as audio is not throttled
+        network_throttler_set_burst_bitrate(
+            context->network_throttler,
+            burst_bitrate - (NUM_PREV_AUDIO_FRAMES_RESEND + 1) * AUDIO_BITRATE);
     }
 
     // Set FEC Packet Ratios
