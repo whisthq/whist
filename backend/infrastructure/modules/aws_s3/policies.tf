@@ -224,9 +224,20 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "whist-e2e-protoco
   }
 }
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "whist-protocol-shared-libs-encryption" {
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-protocol-dependencies-encryption" {
   count  = var.env == "prod" ? 1 : 0
-  bucket = aws_s3_bucket.whist-protocol-shared-libs[0].id
+  bucket = aws_s3_bucket.whist-protocol-dependencies[0].id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-protocol-client-shared-lib-encryption" {
+  count  = var.env == "dev" ? 1 : 0
+  bucket = aws_s3_bucket.whist-protocol-client-shared-lib[0].id
 
   rule {
     apply_server_side_encryption_by_default {
