@@ -104,15 +104,28 @@ func SetupHostSubscriptions(instanceID string, whistClient WhistSubscriptionClie
 func SetupScalingSubscriptions(whistClient WhistSubscriptionClient) {
 	scalingSubscriptions := []HasuraSubscription{
 		{
-			Query: QueryInstancesByStatus,
-			Variables: map[string]interface{}{
-				"status": graphql.String("DRAINING"),
-			},
+			Query:   QueryClientAppVersionChange,
 			Result:  InstanceEvent{[]Instance{}},
 			Handler: InstancesStatusHandler,
 		},
 	}
 	whistClient.SetSubscriptions(scalingSubscriptions)
+}
+
+// SetupConfigSubscriptions creates a slice of HasuraSubscriptions to start the client. This
+// function is specific for the subscriptions used for the config database.
+func SetupConfigSubscriptions(whistClient WhistSubscriptionClient) {
+	configSubscriptions := []HasuraSubscription{
+		{
+			Query:     QueryInstancesByStatus,
+			Variables: map[string]interface{}{},
+			Result:    ClientAppVersionEvent{ClientAppVersions: []ClientAppVersion{}},
+			Handler: func(se SubscriptionEvent, m map[string]interface{}) bool {
+				return true
+			},
+		},
+	}
+	whistClient.SetSubscriptions(configSubscriptions)
 }
 
 // Start is the main function in the subscriptions package. It initializes a client, sets up the received subscriptions,

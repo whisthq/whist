@@ -17,6 +17,10 @@ var apiKey string
 // override the default logic used to determine which Heroku app to connect to.
 var appNameOverride string
 
+// This variable can be set to return connection parameters from the config
+// database instead of the main dev/stging/prod databases.
+var useConfigDatabase bool
+
 var client heroku.Client = heroku.Client{Username: email, Password: apiKey}
 
 // GetAppName provides the Heroku app name to use based on the app environment
@@ -57,6 +61,10 @@ func GetHasuraName() string {
 		return appNameOverride
 	}
 
+	if useConfigDatabase {
+		return "whist-config-hasura"
+	}
+
 	switch metadata.GetAppEnvironment() {
 	case metadata.EnvDev:
 		return "whist-dev-hasura"
@@ -84,4 +92,8 @@ func GetHasuraURL() (string, error) {
 		return "", err
 	}
 	return app.WebURL + "v1/graphql", nil
+}
+
+func UseConfigDatabase(s bool) {
+	useConfigDatabase = s
 }

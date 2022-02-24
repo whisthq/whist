@@ -36,8 +36,9 @@ func main() {
 	// Start database subscriptions
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
 	subscriptionClient := &subscriptions.SubscriptionClient{}
+	configClient := &subscriptions.SubscriptionClient{}
 	dbclient := &dbclient.DBClient{}
-	StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents, subscriptionClient)
+	StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents, subscriptionClient, configClient)
 
 	// Start scheduler and setup scheduler event chan
 	scheduledEvents := make(chan algos.ScalingEvent, 100)
@@ -91,14 +92,23 @@ func main() {
 }
 
 // StartDatabaseSubscriptions sets up the database subscriptions and starts the subscription client.
-func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan subscriptions.SubscriptionEvent, subscriptionClient subscriptions.WhistSubscriptionClient) {
+func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan subscriptions.SubscriptionEvent, subscriptionClient subscriptions.WhistSubscriptionClient, configClient subscriptions.WhistSubscriptionClient) {
 	subscriptions.SetupScalingSubscriptions(subscriptionClient)
+	subscriptions.SetupConfigSubscriptions(configClient)
 
+	// Setup and start subscriptions to main database
+	subscriptions.SetupScalingSubscriptions(subscriptionClient)
 	err := subscriptions.Start(subscriptionClient, globalCtx, goroutineTracker, subscriptionEvents)
 	if err != nil {
 		logger.Errorf("Failed to start database subscription client. Error: %s", err)
 	}
 
+	// Setup and start subscriptions to config database
+	subscriptions.SetupScalingSubscriptions(configClient)
+	err = subscriptions.Start(configClient, globalCtx, goroutineTracker, subscriptionEvents)
+	if err != nil {
+		logger.Errorf("Failed to start database subscription client. Error: %s", err)
+	}
 }
 
 // StartSchedulerEvents starts the scheduler and its events without blocking the main thread.

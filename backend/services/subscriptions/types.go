@@ -58,6 +58,21 @@ type Image struct {
 	UpdatedAt time.Time `json:"updated_at"` // Timestamp when the image was registered
 }
 
+// ClientAppVersion is a custom type to represent the client app version. This type is
+// meant to be used across the codebase for any operation that does not interact with
+// the GraphQL client. For operations that interact with it, use the `WhistClientAppVersions` type.
+type ClientAppVersion struct {
+	ID                int    `json:"id"`
+	Major             int    `json:"major"`
+	Minor             int    `json:"minor"`
+	Micro             int    `json:"micro"`
+	DevRC             int    `json:"dev_rc"`
+	StagingRC         int    `json:"staging_rc"`
+	DevCommitHash     string `json:"dev_commit_hash"`
+	StagingCommitHash string `json:"staging_commit_hash"`
+	ProdCommitHash    string `json:"prod_commit_hash"`
+}
+
 // Handlerfn is used to send subscription handlers to the Subscribe function.
 type Handlerfn func(SubscriptionEvent, map[string]interface{}) bool
 
@@ -97,4 +112,12 @@ type MandelboxEvent struct {
 // whist_images database table.
 type ImageEvent struct {
 	Images []Image `json:"whist_images"`
+}
+
+// ClientAppVersionEvent represents an occurred event on the
+// `dekstop_app_version` config database table.This struct is
+// meant to be used by any event that operates on the
+// desktop_app_version database table.
+type ClientAppVersionEvent struct {
+	ClientAppVersions []ClientAppVersion `json:"desktop_app_version"`
 }
