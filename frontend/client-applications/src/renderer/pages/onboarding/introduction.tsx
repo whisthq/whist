@@ -16,16 +16,16 @@ const Introduction = (props: { onSubmit: () => void }) => {
           className="w-24 h-24 m-auto animate-fade-in-up opacity-0"
         />
         <div
-          className="text-gray-100 text-4xl mt-8 animate-fade-in-up opacity-0"
+          className="text-gray-100 text-4xl mt-8 animate-fade-in-up opacity-0 font-bold"
           style={{ animationDelay: "400ms" }}
         >
           Welcome to{" "}
-          <span className="font-bold text-transparent bg-clip-text bg-gradient-to-br from-blue-light to-blue">
+          <span className="text-transparent bg-clip-text bg-gradient-to-br from-blue-light to-blue">
             Whist
           </span>
         </div>
         <div
-          className="text-gray-400 mt-2 animate-fade-in-up opacity-0"
+          className="text-gray-400 mt-4 animate-fade-in-up opacity-0"
           style={{ animationDelay: "800ms" }}
         >
           First, an introduction

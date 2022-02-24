@@ -30,7 +30,7 @@ const Template = (props: { contents: JSX.Element; word: string }) => {
           <TypeWriter
             words={[props.word]}
             classNameCursor="bg-gray-300"
-            classNameText="text-gray-300 text-xs font-semibold"
+            classNameText="text-gray-300 text-xs font-bold"
             startDelay={0}
           />
         </div>
@@ -80,8 +80,8 @@ const WhatIsWhist = () => {
   const contents = (
     <div className="m-auto text-center mt-18">
       <div className="mt-32 text-gray-300 text-3xl font-bold leading-10 max-w-md m-auto">
-        Whist uses <span className="text-blue-light">almost zero memory</span>
-        &nbsp; and loads websites at lightning speed
+        Whist uses <span className="text-blue-light">almost zero memory</span>{" "}
+        and loads websites at lightning speed
       </div>
     </div>
   )
@@ -116,9 +116,7 @@ const WhoIsWhistFor = () => {
             <div className="flex items-center justify-center h-10 w-10 rounded-md bg-blue-light text-gray-800">
               <feature.icon aria-hidden="true" />
             </div>
-            <p className="mt-5 text-sm text-gray-300 font-semibold">
-              {feature.name}
-            </p>
+            <p className="mt-5 text-sm text-gray-300">{feature.name}</p>
           </dt>
         </div>
       ))}
@@ -162,7 +160,7 @@ const LetsShowYouAround = () => {
   const contents = (
     <div className="m-auto text-center mt-18">
       <div className="mt-32 text-gray-300 text-3xl font-bold leading-10 max-w-sm m-auto">
-        Here are some important things to know about your <br />
+        Here are some important things to know about your{" "}
         <span className="text-blue-light">shiny new browser</span>
       </div>
     </div>
@@ -210,7 +208,7 @@ const Privacy = () => {
       <div className="text-gray-300 text-xl font-bold leading-10 max-w-xl m-auto text-center">
         Whist protects your online privacy as a human right
       </div>
-      <div className="max-w-xl m-auto px-10 py-6">{icons}</div>
+      <div className="max-w-2xl m-auto px-10 py-6">{icons}</div>
     </div>
   )
 
@@ -276,9 +274,10 @@ const FeaturesUnderDevelopment = () => {
 
 const TurnOffVPN = () => {
   const contents = (
-    <div className="m-auto text-center max-w-md mt-18">
-      <div className="mt-32 text-gray-300 text-2xl font-bold leading-10 m-auto">
-        If you use a VPN, please whitelist Whist
+    <div className="m-auto text-center max-w-md mt-14">
+      <div className="mt-28 text-gray-300 text-2xl font-bold leading-10 m-auto">
+        If you use a VPN, please whitelist{" "}
+        <span className="text-blue-light">Whist</span>
       </div>
       <div className="mt-2 text-md text-gray-500">
         VPNs will significantly degrade Whist&apos;s performance. From a privacy
@@ -326,7 +325,7 @@ const FollowUsOnTwitter = () => {
   }
   const contents = (
     <div className="m-auto text-center mt-18">
-      <div className="mt-20 text-gray-300 text-2xl font-bold leading-10 max-w-md m-auto">
+      <div className="mt-20 text-gray-300 text-xl font-bold leading-10 max-w-md m-auto">
         Please follow us on Twitter&nbsp;
         <div onClick={openTwitterURL} className="inline-block">
           <kbd className="px-2 py-1 rounded cursor-pointer bg-blue hover:bg-blue-dark duration-75">
@@ -403,10 +402,9 @@ const Pricing = () => {
     <div className="m-auto text-center mt-18 max-w-md m-auto">
       <div className="mt-24 text-gray-300 text-2xl font-bold leading-10">
         For the next two weeks,{" "}
-        <span className="text-blue-light">Whist is free</span>. Afterward, a
-        subscription is{" "}
-        <span className="text-xs relative bottom-2 pr-1">$</span>9
-        <span className="text-xs"> / mo</span>
+        <span className="text-blue-light">Whist is free</span>. Afterward, Whist
+        is <span className="text-xs relative bottom-2">$</span>9
+        <span className="text-xs">/mo</span>
       </div>
       <div className="mt-4 text-md text-gray-500">
         You can cancel at any time and we will refund you if you forget. After

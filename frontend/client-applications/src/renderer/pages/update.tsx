@@ -30,7 +30,7 @@ const Update = () => {
     <div className="flex flex-col justify-center items-center bg-gray-900 h-screen text-center">
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
       <div className="w-full max-w-xs m-auto font-body">
-        <div className="font-body text-xl font-semibold text-gray-300">
+        <div className="font-body text-xl font-bold text-gray-300">
           Please wait while we download the latest version of Whist
         </div>
         <div className="text-sm text-gray-400 mt-1">

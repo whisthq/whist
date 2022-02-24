@@ -133,7 +133,7 @@ const NetworkStats = (props: {
                 <div className="text-xs sm:text-md">{item.name}</div>
               </dt>
               <dd className="mt-1 flex items-baseline pl-2">
-                <div className="items-baseline text-lg sm:text-2xl font-semibold justify-between text-gray-300">
+                <div className="items-baseline text-lg sm:text-2xl font-bold justify-between text-gray-300">
                   {item.stat}
                 </div>
                 <div className="text-gray-500 text-xs ml-1">{item.units}</div>

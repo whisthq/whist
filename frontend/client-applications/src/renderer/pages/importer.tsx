@@ -29,7 +29,7 @@ const Importer = (props: {
     >
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
       <div className="max-w-md m-auto">
-        <div className="text-2xl text-gray-300 font-semibold">
+        <div className="text-2xl text-gray-300 font-bold">
           Do you want to import your bookmarks and settings?
         </div>
         <div className="text-gray-500 mt-2">
@@ -53,7 +53,7 @@ const Importer = (props: {
           />
         </div>
         <button
-          className="relative top-12 text-blue-light font-semibold outline-none bg-none"
+          className="relative top-12 text-blue-light font-bold outline-none bg-none"
           onClick={() => onSubmit("")}
         >
           Skip for now

@@ -10,7 +10,7 @@ module.exports = {
     // override some of the default utilities.
     extend: {
       fontFamily: {
-        body: ["Josefin-Sans"],
+        body: ["Whist"],
       },
       colors: {
         transparent: "transparent",

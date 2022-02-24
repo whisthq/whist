@@ -18,6 +18,11 @@
   --black-text-color: #000000;
 }
 
+div,
+p {
+  letter-spacing: 0.05em !important;
+}
+
 ::-webkit-scrollbar {
   display: none;
 }
@@ -32,24 +37,17 @@
 }
 
 @font-face {
-  font-family: "Josefin-Sans";
-  src: url("../assets/fonts/JosefinSans-Regular.ttf");
-  font-weight: normal; /* normal == 400 */
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "Josefin-Sans";
-  src: url("../assets/fonts/JosefinSans-SemiBold.ttf");
-  font-weight: bold; /* bold == 700 */
+  font-family: "Whist";
+  src: url("../assets/fonts/Futura.ttc");
+  font-weight: bold; /* normal == 400 */
   font-style: bold;
 }
 
 @font-face {
-  font-family: "Josefin-Sans";
-  src: url("../assets/fonts/JosefinSans-Light.ttf");
-  font-weight: lighter;
-  font-style: lighter;
+  font-family: "Whist";
+  src: url("../assets/fonts/Myriad.otf");
+  font-weight: normal; /* normal == 400 */
+  font-style: normal;
 }
 
 .bg-gradient {

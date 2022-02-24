@@ -21,7 +21,7 @@ const Loading = (props: {
     <div className="flex flex-col h-screen bg-gray-900 w-full font-body">
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
       <div className="w-full text-center pt-10">
-        <div className="mt-4 font-semibold text-xl text-gray-300">
+        <div className="mt-4 font-bold text-xl text-gray-300">
           Whist is connecting to servers
         </div>
         <div className="mt-6 w-full">

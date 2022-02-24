@@ -24,7 +24,7 @@ const Signout = (props: { onClick: () => void }) => {
       )}
     >
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
-      <div className="font-semibold text-2xl text-gray-300">
+      <div className="font-bold text-2xl text-gray-300">
         Are you sure you want to sign out?
       </div>
       <div className="mt-2 mb-4 text-gray-500">
