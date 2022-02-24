@@ -2,6 +2,7 @@
 #include "../cudacontext.h"
 #include <whist/logging/log_statistic.h>
 #include <server/server_statistic.h>
+#include "whist/core/features.h"
 
 #include <dlfcn.h>
 #include <string.h>
@@ -437,7 +438,7 @@ int nvidia_encoder_encode(NvidiaEncoder* encoder) {
     if (encoder->wants_iframe || encoder->ltr_action.frame_type == VIDEO_FRAME_TYPE_INTRA) {
         encoder->frame_type = VIDEO_FRAME_TYPE_INTRA;
         enc_params.encodePicFlags = NV_ENC_PIC_FLAG_FORCEIDR | NV_ENC_PIC_FLAG_OUTPUT_SPSPPS;
-        if (USE_LONG_TERM_REFERENCE_FRAMES) {
+        if (FEATURE_ENABLED(LONG_TERM_REFERENCE_FRAMES)) {
             // In H.264 IDR frames must go in long-term slot 0.
             FATAL_ASSERT(encoder->ltr_action.long_term_frame_index == 0);
             enc_params.codecPicParams.h264PicParams.ltrMarkFrame = 1;
@@ -574,7 +575,7 @@ static int initialize_preset_config(NvidiaEncoder* encoder, int bitrate, int vbv
     p_preset_config->presetCfg.rcParams.averageBitRate = bitrate;
     p_preset_config->presetCfg.rcParams.vbvBufferSize = vbv_size;
 
-    if (USE_LONG_TERM_REFERENCE_FRAMES) {
+    if (FEATURE_ENABLED(LONG_TERM_REFERENCE_FRAMES)) {
         // Enable long-term reference frames.
         // This blindly assumes that NV_ENC_CAPS_NUM_MAX_LTR_FRAMES is
         // at least two, which is true on the Nvidia cards we use but

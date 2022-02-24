@@ -13,6 +13,7 @@ Includes
 #include <whist/utils/aes.h>
 #include <whist/utils/clock.h>
 #include <whist/network/throttle.h>
+#include "whist/core/features.h"
 
 #ifndef _WIN32
 #include <fcntl.h>
@@ -398,7 +399,7 @@ static void* tcp_get_packet(void* raw_context, WhistPacketType packet_type) {
             // The resulting packet will be <= the encrypted size
             TCPPacket* tcp_packet = allocate_region(tcp_network_packet->payload_size);
 
-            if (ENCRYPTING_PACKETS) {
+            if (FEATURE_ENABLED(PACKET_ENCRYPTION)) {
                 // Decrypt into whist_packet
                 int decrypted_len = decrypt_packet(
                     tcp_packet, tcp_network_packet->payload_size, tcp_network_packet->aes_metadata,
@@ -745,7 +746,7 @@ int tcp_send_constructed_packet(TCPContext* context, TCPPacket* packet) {
     TCPNetworkPacket* network_packet =
         allocate_region(sizeof(TCPNetworkPacket) + packet_size + MAX_ENCRYPTION_SIZE_INCREASE);
 
-    if (ENCRYPTING_PACKETS) {
+    if (FEATURE_ENABLED(PACKET_ENCRYPTION)) {
         // If we're encrypting packets, encrypt the packet into tcp_packet
         int encrypted_len = encrypt_packet(network_packet->payload, &network_packet->aes_metadata,
                                            packet, packet_size, context->binary_aes_private_key);

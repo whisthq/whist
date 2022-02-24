@@ -85,7 +85,6 @@ Defines
 // Various control flags
 #define USING_AUDIO_ENCODE_DECODE true
 #define USING_FFMPEG_IFRAME_FLAG false
-#define ENCRYPTING_PACKETS true
 // Toggle verbose logs
 #define LOG_VIDEO false
 #define LOG_NACKING false
@@ -163,8 +162,6 @@ Defines
 #define CONSECUTIVE_IDENTICAL_FRAMES 300
 // FPS to send when the encoder is off
 #define DISABLED_ENCODER_FPS 10
-// Enable use of long-term reference frames.
-#define USE_LONG_TERM_REFERENCE_FRAMES false
 
 #define OUTPUT_WIDTH 1280
 #define OUTPUT_HEIGHT 720
@@ -547,6 +544,21 @@ typedef struct WhistDiscoveryReplyMessage {
     int udp_port;
     int tcp_port;
     int connection_id;
+
+    /**
+     * git revision of the server.
+     *
+     * In general, the client should match this exactly.  If it doesn't
+     * then there might be incompatibility.
+     */
+    char git_revision[16];
+    /**
+     * Feature mask being used by the server.
+     *
+     * The client will use this to set its own features.  If this is
+     * incompatible then the client will refuse to connect.
+     */
+    uint32_t feature_mask;
 } WhistDiscoveryReplyMessage;
 
 /**

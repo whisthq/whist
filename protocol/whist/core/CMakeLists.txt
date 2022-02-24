@@ -19,6 +19,7 @@ add_library(whistCore STATIC
         whistgetopt.c
         whist_frame.h
         whist_frame.c
+        features.c
         )
 
 # Ensure that whist.v is updated prior to compiling whistCore

@@ -16,6 +16,7 @@ Includes
 #include <whist/network/ringbuffer.h>
 #include <whist/logging/log_statistic.h>
 #include <whist/network/throttle.h>
+#include "whist/core/features.h"
 #include <stddef.h>
 
 #ifndef _WIN32
@@ -1342,14 +1343,14 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
     }
 
     UDPNetworkPacket udp_network_packet;
-    if (ENCRYPTING_PACKETS) {
+    if (FEATURE_ENABLED(PACKET_ENCRYPTION)) {
         // Encrypt the packet during normal operation
         int encrypted_len =
             (int)encrypt_packet(udp_network_packet.payload, &udp_network_packet.aes_metadata,
                                 udp_packet, udp_packet_size, context->binary_aes_private_key);
         udp_network_packet.payload_size = encrypted_len;
     } else {
-        // Or, just memcpy the segment if ENCRYPTING_PACKETS is disabled
+        // Or, just memcpy the segment if PACKET_ENCRYPTION is disabled
         memcpy(udp_network_packet.payload, udp_packet, udp_packet_size);
         udp_network_packet.payload_size = udp_packet_size;
     }
@@ -1440,7 +1441,7 @@ static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
             return false;
         }
 
-        if (ENCRYPTING_PACKETS) {
+        if (FEATURE_ENABLED(PACKET_ENCRYPTION)) {
             // Decrypt the packet, into udp_packet
             decrypted_len =
                 decrypt_packet(udp_packet, sizeof(UDPPacket), udp_network_packet.aes_metadata,

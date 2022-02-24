@@ -24,6 +24,7 @@ Includes
 
 #include <whist/core/whist.h>
 #include <whist/logging/error_monitor.h>
+#include "whist/core/features.h"
 #include "network.h"
 #include "client_utils.h"
 #include "client_statistic.h"
@@ -151,6 +152,14 @@ int discover_ports(bool *with_stun) {
     LOG_INFO("Using UDP Port: %d, TCP Port: %d", udp_port, tcp_port);
 
     whist_error_monitor_set_connection_id(reply_msg->connection_id);
+
+    const char *client_revision = whist_git_revision();
+    if (strncmp(client_revision, reply_msg->git_revision, sizeof(reply_msg->git_revision) - 1)) {
+        LOG_WARNING("Server git revision %s does not match client revision %s.",
+                    reply_msg->git_revision, client_revision);
+    }
+
+    whist_apply_feature_mask(reply_msg->feature_mask);
 
     free_packet(&context, tcp_packet);
     destroy_socket_context(&context);
