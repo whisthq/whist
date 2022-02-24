@@ -40,7 +40,7 @@ resource "aws_s3_bucket" "whist-user-app-configs" {
   bucket = "whist-user-app-configs-${var.env}"
 
   # Ignore the internal lifecycle rules because we have
-  # a separate lifecycle resource. 
+  # a separate lifecycle resource.
   # See: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration#usage-notes
   lifecycle {
     ignore_changes = [
@@ -107,13 +107,25 @@ resource "aws_s3_bucket" "whist-e2e-protocol-test-logs" {
   }
 }
 
-# Bucket for storing protocol shared libs
-resource "aws_s3_bucket" "whist-protocol-shared-libs" {
+# Bucket for storing protocol dependency builds
+resource "aws_s3_bucket" "whist-protocol-dependencies" {
   count  = var.env == "prod" ? 1 : 0
-  bucket = "whist-protocol-shared-libs"
+  bucket = "whist-protocol-dependencies"
 
   tags = {
-    Name      = "whist-protocol-shared-libs"
+    Name      = "whist-protocol-dependencies"
+    Env       = var.env
+    Terraform = true
+  }
+}
+
+# Bucket for storing arm64 macos client protocol shared library (dev only)
+resource "aws_s3_bucket" "whist-protocol-client-shared-lib-macos-arm64" {
+  count  = var.env == "dev" ? 1 : 0
+  bucket = "whist-protocol-client-shared-library"
+
+  tags = {
+    Name      = "whist-protocol-client-shared-lib-macos-arm64-${var.env}"
     Env       = var.env
     Terraform = true
   }
