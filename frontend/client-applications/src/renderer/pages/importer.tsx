@@ -28,16 +28,36 @@ const Importer = (props: {
       )}
     >
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
-      <Dropdown options={props.browsers} onSelect={onSelect} />
-      <div>
-        <WhistButton
-          contents="Continue"
-          className="mt-4 px-12 w-96 mx-auto py-2 text-gray-300 text-gray-900 bg-mint"
-          state={
-            processing ? WhistButtonState.PROCESSING : WhistButtonState.DEFAULT
-          }
-          onClick={() => onSubmit(browser)}
-        />
+      <div className="max-w-md m-auto">
+        <div className="text-2xl text-gray-300 font-semibold">
+          Do you want to import your bookmarks and settings?
+        </div>
+        <div className="text-gray-500 mt-2">
+          Please select which browser you would like to import your cookies,
+          bookmarks, passwords, and extensions from so you can pick up right
+          where you left off.
+        </div>
+        <div className="mt-8">
+          <Dropdown options={props.browsers} onSelect={onSelect} />
+        </div>
+        <div>
+          <WhistButton
+            contents="Continue"
+            className="mt-4 px-12 w-96 mx-auto py-2 text-gray-300 text-gray-900 bg-blue-light"
+            state={
+              processing
+                ? WhistButtonState.PROCESSING
+                : WhistButtonState.DEFAULT
+            }
+            onClick={() => onSubmit(browser)}
+          />
+        </div>
+        <button
+          className="relative top-12 text-blue-light font-semibold outline-none bg-none"
+          onClick={() => onSubmit("")}
+        >
+          Skip for now
+        </button>
       </div>
     </div>
   )

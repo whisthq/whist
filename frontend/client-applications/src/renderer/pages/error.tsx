@@ -61,7 +61,7 @@ export const OneButtonError = (props: {
               <div>{props.primaryButtonText}</div>
             </div>
           }
-          className="px-12 bg-mint py-3"
+          className="px-12 bg-blue-light py-3"
           state={
             processing ? WhistButtonState.PROCESSING : WhistButtonState.DEFAULT
           }
@@ -75,7 +75,7 @@ export const OneButtonError = (props: {
                 <div>Report A Bug</div>
               </div>
             }
-            className="px-10 bg-mint py-3 bg-opacity-0 border border-gray-700 text-gray-300 hover:bg-opacity-0"
+            className="px-10 bg-blue-light py-3 bg-opacity-0 border border-gray-700 text-gray-300 hover:bg-opacity-0"
             state={WhistButtonState.DEFAULT}
             onClick={props.onRequestHelp}
           />
@@ -127,7 +127,7 @@ export const TwoButtonError = (props: {
               <div>{props.primaryButtonText}</div>
             </div>
           }
-          className="px-12 bg-mint py-3"
+          className="px-12 bg-blue-light py-3"
           state={
             processing ? WhistButtonState.PROCESSING : WhistButtonState.DEFAULT
           }
@@ -140,7 +140,7 @@ export const TwoButtonError = (props: {
               <div>Report A Bug</div>
             </div>
           }
-          className="px-10 bg-mint py-3 bg-opacity-0 border border-gray-700 text-gray-300 hover:bg-opacity-0"
+          className="px-10 bg-blue-light py-3 bg-opacity-0 border border-gray-700 text-gray-300 hover:bg-opacity-0"
           state={WhistButtonState.DEFAULT}
           onClick={props.onRequestHelp}
         />

@@ -92,7 +92,7 @@ const Importer = (props: {
         <div>
           <WhistButton
             contents="Continue"
-            className="mt-4 px-12 w-96 mx-auto py-2 text-gray-300 text-gray-900 bg-mint"
+            className="mt-4 px-12 w-96 mx-auto py-2 text-gray-300 text-gray-900 bg-blue-light"
             state={
               processing
                 ? WhistButtonState.PROCESSING

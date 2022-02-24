@@ -24,7 +24,7 @@ const Toggle = (props: {
       <div
         className={className(
           "block w-12 h-6 rounded-full duration-100",
-          checked ? "bg-mint" : "bg-gray-600"
+          checked ? "bg-blue-light" : "bg-gray-600"
         )}
       ></div>
       <div

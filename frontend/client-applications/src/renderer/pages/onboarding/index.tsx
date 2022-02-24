@@ -16,6 +16,7 @@ import {
   NetworkTest,
   Pricing,
 } from "@app/renderer/pages/onboarding/pages"
+import { WhistButton, WhistButtonState } from "@app/components/button"
 
 const Shuffle = (props: { pages: JSX.Element[]; onSubmit: () => void }) => {
   const maxPageIndex = props.pages.length - 1
@@ -33,12 +34,12 @@ const Shuffle = (props: { pages: JSX.Element[]; onSubmit: () => void }) => {
       {props.pages[pageToShow]}
       <div className="absolute bottom-4 w-full">
         <div className="m-auto text-center">
-          <button
-            className="text-gray-300 outline-none bg-blue rounded px-12 py-2 font-semibold text-gray-100 w-36 m-auto mb-8 hover:bg-indigo-600"
+          <WhistButton
             onClick={() => setPageToShow(pageToShow + 1)}
-          >
-            Next
-          </button>
+            state={WhistButtonState.DEFAULT}
+            contents="Next"
+            className="mb-8 px-16"
+          />
           <div className="relative">
             <Steps
               total={maxPageIndex + 1}

@@ -61,9 +61,14 @@ const subscribed = combineLatest(
         map((obj) => JSON.stringify(obj))
       ),
       browsers: of(getInstalledBrowsers()),
-      networkInfo: merge(
+      networkInfo: combineLatest([
         fromTrigger(WhistTrigger.networkAnalysisEvent),
-        fromTrigger(WhistTrigger.startNetworkAnalysis).pipe(mapTo(undefined))
+        fromTrigger(WhistTrigger.awsPingRefresh),
+      ]).pipe(
+        map(([stats, regions]) => ({
+          ...stats,
+          ping: regions?.[0].pingTime,
+        }))
       ),
       isDefaultBrowser: fromTrigger(WhistTrigger.storeDidChange).pipe(
         map(() => persistGet(WHIST_IS_DEFAULT_BROWSER) ?? false),

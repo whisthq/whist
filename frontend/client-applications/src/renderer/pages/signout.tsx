@@ -35,7 +35,7 @@ const Signout = (props: { onClick: () => void }) => {
         <div>
           <WhistButton
             contents="Sign Out"
-            className="mt-8 px-12 mx-aut0 py-3 bg-mint text-black"
+            className="mt-8 px-12 mx-aut0 py-3 bg-blue-light text-black"
             state={WhistButtonState.DEFAULT}
             onClick={handleSignout}
           />

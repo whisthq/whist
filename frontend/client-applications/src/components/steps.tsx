@@ -1,7 +1,7 @@
 import React from "react"
 import range from "lodash.range"
 
-export default (props: {
+const Steps = (props: {
   total: number
   current: number
   onClick: (index: number) => void
@@ -18,7 +18,7 @@ export default (props: {
             {x < props.current ? (
               <div
                 onClick={() => props.onClick(x)}
-                className="block w-2.5 h-2.5 bg-indigo-600 rounded-full hover:bg-indigo-400 cursor-pointer"
+                className="block w-2.5 h-2.5 bg-blue rounded-full hover:bg-blue-light cursor-pointer"
               ></div>
             ) : x === props.current ? (
               <div
@@ -27,15 +27,15 @@ export default (props: {
                 aria-current="step"
               >
                 <span className="absolute w-5 h-5 p-px flex" aria-hidden="true">
-                  <span className="w-full h-full rounded-full bg-indigo-600 bg-opacity-50" />
+                  <span className="w-full h-full rounded-full bg-blue bg-opacity-50" />
                 </span>
                 <span
-                  className="relative block w-2.5 h-2.5 bg-indigo-600 rounded-full"
+                  className="relative block w-2.5 h-2.5 bg-blue rounded-full"
                   aria-hidden="true"
                 />
               </div>
             ) : (
-              <div className="block w-2.5 h-2.5 bg-indigo-400 rounded-full bg-opacity-20"></div>
+              <div className="block w-2.5 h-2.5 bg-blue-light rounded-full bg-opacity-20"></div>
             )}
           </li>
         ))}
@@ -43,3 +43,5 @@ export default (props: {
     </nav>
   )
 }
+
+export default Steps

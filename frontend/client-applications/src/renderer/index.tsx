@@ -131,13 +131,7 @@ const RootComponent = () => {
     })
 
   const handleOnboardingSubmit = () => {
-    setShow(WindowHashNetwork)
-    setMainState({
-      trigger: {
-        name: WhistTrigger.startNetworkAnalysis,
-        payload: undefined,
-      },
-    })
+    setShow(WindowHashImport)
   }
 
   useEffect(() => {

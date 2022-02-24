@@ -74,7 +74,7 @@ export const WhistButton: FC<WhistButtonProps> = (
 
   const enabledClassName = classNames(
     props.className,
-    "hover:bg-mint hover:text-gray"
+    "hover:bg-blue-light hover:text-gray"
   )
 
   switch (state) {

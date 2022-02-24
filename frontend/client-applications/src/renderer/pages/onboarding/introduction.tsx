@@ -1,6 +1,7 @@
 import React from "react"
 
 import Logo from "@app/components/icons/logo.svg"
+import { WhistButton, WhistButtonState } from "@app/components/button"
 
 export default (props: { onSubmit: () => void }) => {
   const onKeyDown = (evt: any) => {
@@ -17,14 +18,14 @@ export default (props: { onSubmit: () => void }) => {
       <div className="m-auto text-center mt-18">
         <img
           src={Logo}
-          className="w-16 h-16 m-auto animate-fade-in-up opacity-0"
+          className="w-24 h-24 m-auto animate-fade-in-up opacity-0"
         />
         <div
           className="text-gray-100 text-4xl mt-8 animate-fade-in-up opacity-0"
           style={{ animationDelay: "400ms" }}
         >
           Welcome to{" "}
-          <span className="font-bold text-transparent bg-clip-text bg-gradient-to-br from-purple-400 to-blue-400">
+          <span className="font-bold text-transparent bg-clip-text bg-gradient-to-br from-blue-light to-blue">
             Whist
           </span>
         </div>
@@ -38,19 +39,17 @@ export default (props: { onSubmit: () => void }) => {
           className="h-px w-32 bg-gray-700 rounded m-auto mt-8 animate-fade-in-up opacity-0"
           style={{ animationDelay: "1200ms" }}
         ></div>
-        <button
-          className="mt-12 text-gray-100 outline-none animate-fade-in-up opacity-0"
-          onClick={props.onSubmit}
-          style={{ animationDelay: "2200ms" }}
+        <div
+          className="animate-fade-in-up opacity-0 mt-20 relative top-1"
+          style={{ animationDelay: "2000ms" }}
         >
-          <div className="animate-pulse">
-            Click{" "}
-            <kbd className="bg-gray-700 rounded px-2 py-1 text-xs mx-1">
-              here
-            </kbd>{" "}
-            to continue
-          </div>
-        </button>
+          <WhistButton
+            onClick={props.onSubmit}
+            state={WhistButtonState.DEFAULT}
+            contents="Next"
+            className="px-16"
+          />
+        </div>
       </div>
     </div>
   )

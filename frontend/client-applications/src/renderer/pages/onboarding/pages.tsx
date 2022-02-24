@@ -32,14 +32,14 @@ const Template = (props: { contents: JSX.Element; word: string }) => {
             words={[props.word]}
             classNameCursor="bg-gray-300"
             classNameText="text-gray-300 text-xs font-semibold"
-            startDelay={50}
+            startDelay={0}
           />
         </div>
       )}
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
       <div
         className="animate-fade-in-up opacity-0"
-        style={{ animationDelay: `${props.word.length * 75}ms` }}
+        style={{ animationDelay: `${props.word.length * 70}ms` }}
       >
         {props.contents}
       </div>
@@ -48,10 +48,22 @@ const Template = (props: { contents: JSX.Element; word: string }) => {
 }
 
 const WhatMakesWhistDifferent = () => {
+  const [, setMainState] = useMainState()
+
+  useEffect(() => {
+    setMainState({
+      trigger: {
+        name: WhistTrigger.startNetworkAnalysis,
+        payload: undefined,
+      },
+    })
+  }, [])
+
   const contents = (
     <div className="m-auto text-center mt-18">
       <div className="mt-32 text-gray-300 text-3xl font-bold leading-10">
-        What makes Whist different <br />
+        What makes <span className="text-blue-light">Whist</span> different{" "}
+        <br />
         from other browsers?
       </div>
     </div>
@@ -69,8 +81,8 @@ const WhatIsWhist = () => {
   const contents = (
     <div className="m-auto text-center mt-18">
       <div className="mt-32 text-gray-300 text-3xl font-bold leading-10 max-w-md m-auto">
-        Whist uses <span className="text-mint">almost zero memory</span>&nbsp;
-        and loads websites at lightning speed
+        Whist uses <span className="text-blue-light">almost zero memory</span>
+        &nbsp; and loads websites at lightning speed
       </div>
     </div>
   )
@@ -102,7 +114,7 @@ const WhoIsWhistFor = () => {
           className="text-left bg-gray-800 p-4 rounded-md"
         >
           <dt>
-            <div className="flex items-center justify-center h-10 w-10 rounded-md bg-blue text-gray-300">
+            <div className="flex items-center justify-center h-10 w-10 rounded-md bg-blue-light text-gray-800">
               <feature.icon aria-hidden="true" />
             </div>
             <p className="mt-5 text-sm text-gray-300 font-semibold">
@@ -123,7 +135,7 @@ const WhoIsWhistFor = () => {
     </div>
   )
 
-  return <Template contents={contents} word="Who is Whist for?" />
+  return <Template contents={contents} word="Who is Whist built for?" />
 }
 
 const FasterLikeMagic = () => {
@@ -131,7 +143,8 @@ const FasterLikeMagic = () => {
     <div className="m-auto text-center mt-18">
       <div className="mt-32 text-gray-300 text-3xl font-bold leading-10 max-w-md m-auto">
         Using Whist will make your computer{" "}
-        <span className="text-mint">faster</span> like
+        <span className="text-blue-light">faster</span> and{" "}
+        <span className="text-blue-light">quieter</span> like
         <div className="inline-block pl-2 pr-1 text-yellow-200">
           <Star />
         </div>
@@ -151,7 +164,7 @@ const LetsShowYouAround = () => {
     <div className="m-auto text-center mt-18">
       <div className="mt-32 text-gray-300 text-3xl font-bold leading-10 max-w-sm m-auto">
         Here are some important things to know about your <br />
-        <span className="text-mint">shiny new browser</span>
+        <span className="text-blue-light">shiny new browser</span>
       </div>
     </div>
   )
@@ -166,11 +179,11 @@ const Privacy = () => {
       icon: Database,
     },
     {
-      name: "Your video and audio are encrypted, never stored, and cannot be seen by anyone but you.",
+      name: "Your video stream is encrypted, never stored, and cannot be seen by anyone.",
       icon: Play,
     },
     {
-      name: "Our encryption ensures that no one, not even our engineers, have access to your data.",
+      name: "Encryption ensures that no one, not even our engineers, can access your data.",
       icon: Lock,
     },
   ]
@@ -183,7 +196,7 @@ const Privacy = () => {
           className="text-left bg-gray-800 p-5 rounded-md"
         >
           <dt>
-            <div className="flex items-center justify-center h-8 w-8 rounded-md bg-blue text-gray-300 p-1">
+            <div className="flex items-center justify-center h-8 w-8 rounded-md bg-blue-light text-gray-800 p-1">
               <feature.icon aria-hidden="true" />
             </div>
             <p className="mt-6 text-sm text-gray-400">{feature.name}</p>
@@ -194,7 +207,7 @@ const Privacy = () => {
   )
 
   const contents = (
-    <div className="m-auto text-center mt-10">
+    <div className="m-auto text-center mt-8">
       <div className="text-gray-300 text-xl font-bold leading-10 max-w-xl m-auto text-center">
         Whist protects your online privacy as a human right
       </div>
@@ -217,7 +230,7 @@ const FeaturesUnderDevelopment = () => {
       icon: Duplicate,
     },
     {
-      name: "Support for Google Meets camera + microphone",
+      name: "Support for Google Meets camera + mic",
       icon: Camera,
     },
     {
@@ -234,7 +247,7 @@ const FeaturesUnderDevelopment = () => {
           className="text-left bg-gray-800 p-5 rounded-md"
         >
           <dt>
-            <div className="flex items-center justify-center h-8 w-8 rounded-md bg-blue text-gray-300 p-1">
+            <div className="flex items-center justify-center h-8 w-8 rounded-md bg-blue-light text-gray-800 p-1">
               <feature.icon aria-hidden="true" />
             </div>
             <p className="mt-6 text-sm text-gray-400">{feature.name}</p>
@@ -284,15 +297,15 @@ const TurnOffVPN = () => {
 const LiveChatSupport = () => {
   const contents = (
     <div className="m-auto text-center mt-18 max-w-md m-auto">
-      <div className="mt-32 text-gray-300 text-2xl font-bold leading-10">
-        After this onboarding, the{" "}
+      <div className="mt-28 text-gray-300 text-2xl font-bold leading-10">
+        After this onboarding,{" "}
         <kbd className="bg-gray-700 px-2 py-1 rounded">Cmd</kbd>&nbsp;
-        <kbd className="bg-gray-700 px-2 py-1 rounded">J</kbd> shortcut summons
-        the Whist menu.
+        <kbd className="bg-gray-700 px-2 py-1 rounded">J</kbd> summons the Whist
+        menu.
       </div>
       <div className="mt-2 text-md text-gray-500">
-        Here you&apos;ll find live chat support for bug reports in addition to
-        account settings, tab importing, and more.
+        Here you&apos;ll find live chat support for bug reports; account and
+        settings; helpful tools like tab and bookmark importing, and more!
       </div>
     </div>
   )
@@ -317,21 +330,30 @@ const FollowUsOnTwitter = () => {
       <div className="mt-20 text-gray-300 text-2xl font-bold leading-10 max-w-md m-auto">
         Please follow us on Twitter&nbsp;
         <div onClick={openTwitterURL} className="inline-block">
-          <kbd className="px-2 py-1 rounded cursor-pointer bg-blue hover:bg-indigo-600 duration-75">
+          <kbd className="px-2 py-1 rounded cursor-pointer bg-blue hover:bg-blue-dark duration-75">
             @whisthq
           </kbd>
         </div>
         . <br />
         Have a new feature request?{" "}
-        <span className="text-blue-400 cursor-pointer" onClick={openTwitterURL}>
+        <span
+          className="text-blue-light cursor-pointer"
+          onClick={openTwitterURL}
+        >
           Tweet us!
         </span>
         <br /> Want to write us a poem?{" "}
-        <span className="text-blue-400 cursor-pointer" onClick={openTwitterURL}>
+        <span
+          className="text-blue-light cursor-pointer"
+          onClick={openTwitterURL}
+        >
           Tweet us!
         </span>
         <br /> Want us to write you a poem?{" "}
-        <span className="text-blue-400 cursor-pointer" onClick={openTwitterURL}>
+        <span
+          className="text-blue-light cursor-pointer"
+          onClick={openTwitterURL}
+        >
           Tweet us!
         </span>
       </div>
@@ -353,18 +375,13 @@ const NetworkTest = () => {
   const [mainState, setMainState] = useMainState()
 
   useEffect(() => {
-    setTimeout(() => {
-      setMainState({
-        trigger: {
-          name: WhistTrigger.startNetworkAnalysis,
-          payload: undefined,
-        },
-      })
-    }, 1000)
+    setMainState({
+      trigger: { name: WhistTrigger.emitIPC, payload: undefined },
+    })
   }, [])
 
   const contents = (
-    <div className="mt-16">
+    <div className="mt-12">
       <Network
         networkInfo={mainState.networkInfo}
         onSubmit={() => {}}
@@ -377,7 +394,7 @@ const NetworkTest = () => {
   return (
     <Template
       contents={contents}
-      word="In order to use Whist we recommend good Internet."
+      word="You need good Internet for Whist. Let's test your Internet!"
     />
   )
 }
@@ -385,13 +402,19 @@ const NetworkTest = () => {
 const Pricing = () => {
   const contents = (
     <div className="m-auto text-center mt-18 max-w-md m-auto">
-      <div className="mt-32 text-gray-300 text-2xl font-bold leading-10">
-        For the next two weeks, Whist is free. Afterward, a subscription is{" "}
+      <div className="mt-24 text-gray-300 text-2xl font-bold leading-10">
+        For the next two weeks,{" "}
+        <span className="text-blue-light">Whist is free</span>. Afterward, a
+        subscription is{" "}
         <span className="text-xs relative bottom-2 pr-1 text-gray-400">$</span>9
-        <span className="text-xs text-gray-400"> / month</span>.
+        <span className="text-xs text-gray-400"> / month</span>
       </div>
       <div className="mt-4 text-md text-gray-500">
-        You can cancel at any time and we will refund you if you forget.
+        You can cancel at any time and we will refund you if you forget. After
+        this onboarding,{" "}
+        <kbd className="bg-gray-700 px-2 py-1 mx-1 rounded text-xs">Cmd</kbd>
+        <kbd className="bg-gray-700 px-2 py-1 mx-1 rounded text-xs">J</kbd> also
+        gives you access to billing info.
       </div>
     </div>
   )

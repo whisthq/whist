@@ -7,6 +7,7 @@ const Network = (props: {
     jitter: number
     progress: number
     downloadMbps: number
+    ping: number
   }
   onSubmit?: () => void
 }) => {

@@ -16,7 +16,7 @@ const Welcome = (props: { onSubmit: () => void }) => {
       <div className="m-auto text-center mt-24">
         <img
           src={Logo}
-          className="w-24 h-24 m-auto animate-fade-in-up opacity-0"
+          className="w-28 h-28 m-auto animate-fade-in-up opacity-0"
         />
         <div
           className="text-gray-100 text-4xl mt-8 animate-fade-in-up opacity-0"
