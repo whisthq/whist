@@ -15,7 +15,7 @@ def extract_metrics(client_log_file, server_log_file):
     Extract all the available server-side and client-side performance metrics for a
     given run and save the values two dictionaries. Each dictionary key corresponds
     to a metric, and each value is itself a dictionary, containing the number of
-    entries for that metric and the mean, std,max,min aggregates
+    entries for that metric and the mean and std aggregates
 
     Args:
         client_log_file (str): The path to the file (usually client.log) containing
@@ -34,7 +34,8 @@ def extract_metrics(client_log_file, server_log_file):
             if "METRIC" in line:
                 l = line.strip().split()
                 metric_name = l[-3].strip('"')
-                metric_value = float(l[-1].strip('"'))
+                metric_values = l[-1].strip('"')
+                #metric_value = float(l[-1].strip('"'))
                 if metric_name not in client_metrics:
                     client_metrics[metric_name] = [metric_value]
                 else:
@@ -45,7 +46,8 @@ def extract_metrics(client_log_file, server_log_file):
             if "METRIC" in line:
                 l = line.strip().split()
                 metric_name = l[-3].strip('"')
-                metric_value = float(l[-1].strip('"'))
+                #metric_value = float(l[-1].strip('"'))
+                metric_values = l[-1].strip('"')
                 if metric_name not in server_metrics:
                     server_metrics[metric_name] = [metric_value]
                 else:
@@ -60,8 +62,6 @@ def extract_metrics(client_log_file, server_log_file):
             "entries": len(client_metrics[k]),
             "avg": np.mean(client_metrics[k]),
             "std": np.std(client_metrics[k]),
-            "max": np.max(client_metrics[k]),
-            "min": np.min(client_metrics[k]),
         }
 
     for k in server_metrics:
@@ -70,8 +70,6 @@ def extract_metrics(client_log_file, server_log_file):
             "entries": len(server_metrics[k]),
             "avg": np.mean(server_metrics[k]),
             "std": np.std(server_metrics[k]),
-            "max": np.max(server_metrics[k]),
-            "min": np.min(server_metrics[k]),
         }
 
     return client_metrics2, server_metrics2

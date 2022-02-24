@@ -40,7 +40,8 @@ typedef struct StatisticData {
     double min;
     double max;
     double offset;
-    double sum_with_offset;
+    double sum_of_squares;
+    double square_of_sum;
 } StatisticData;
 
 typedef struct {
@@ -80,8 +81,11 @@ static void unsafe_print_statistics(void) {
             current_count = all_statistics[i].count;
         }
 
-        LOG_METRIC("\"%s\" : %d,%.2f,%.2f", statistic_info[i].key, current_count,
-                   all_statistics[i].sum, all_statistics[i].sum_with_offset);
+        all_statistics[i].square_of_sum *= all_statistics[i].square_of_sum;
+
+        LOG_METRIC("\"%s\" : %d,%.2f,%.2f,%.2f", statistic_info[i].key, current_count,
+                   all_statistics[i].sum, all_statistics[i].sum_of_squares,
+                   all_statistics[i].square_of_sum);
 
         if (statistic_info[i].is_max_needed)
             LOG_METRIC("\"MAX_%s\" : %.2f", statistic_info[i].key, all_statistics[i].max);
@@ -92,7 +96,8 @@ static void unsafe_print_statistics(void) {
         all_statistics[i].count = 0;
         all_statistics[i].min = 0;
         all_statistics[i].max = 0;
-        all_statistics[i].sum_with_offset = 0;
+        all_statistics[i].sum_of_squares = 0;
+        all_statistics[i].square_of_sum = 0;
     }
 
     start_timer(&print_statistic_clock);
@@ -128,7 +133,8 @@ void whist_init_statistic_logger(uint32_t num_metrics, StatisticInfo *statistic_
         statistic_context.all_statistics[i].max = 0;
         statistic_context.all_statistics[i].min = 0;
         statistic_context.all_statistics[i].offset = 0;
-        statistic_context.all_statistics[i].sum_with_offset = 0;
+        statistic_context.all_statistics[i].sum_of_squares = 0;
+        statistic_context.all_statistics[i].square_of_sum = 0;
     }
 }
 
@@ -150,14 +156,18 @@ void log_double_statistic(uint32_t index, double val) {
         all_statistics[index].offset = val;
     }
 
-    all_statistics[index].sum += val;
     all_statistics[index].count++;
+
     if (val > all_statistics[index].max) {
         all_statistics[index].max = val;
     } else if (val < all_statistics[index].min) {
         all_statistics[index].min = val;
     }
-    all_statistics[index].sum_with_offset += (val - all_statistics[index].offset);
+
+    all_statistics[index].sum += (val - all_statistics[index].offset);
+    all_statistics[index].sum_of_squares +=
+        (val - all_statistics[index].offset) * (val - all_statistics[index].offset);
+    all_statistics[index].square_of_sum += (val - all_statistics[index].offset);
 
     if (get_timer(&print_statistic_clock) > statistic_context.interval) {
         unsafe_print_statistics();
