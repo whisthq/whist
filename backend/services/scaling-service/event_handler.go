@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-co-op/gocron"
 	"github.com/google/uuid"
+	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default" // Import as algos, short for scaling_algorithms
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -25,11 +26,6 @@ func main() {
 	// Start Sentry and Logzio
 	logger.InitScalingLogging()
 
-	// goroutine that fires when the global context is canceled.
-	go func() {
-		<-globalCtx.Done()
-	}()
-
 	// Start GraphQL client for queries/mutations
 	graphqlClient := &subscriptions.GraphQLClient{}
 	err := graphqlClient.Initialize()
@@ -40,6 +36,7 @@ func main() {
 	// Start database subscriptions
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
 	subscriptionClient := &subscriptions.SubscriptionClient{}
+	dbclient := &dbclient.DBClient{}
 	StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents, subscriptionClient)
 
 	// Start scheduler and setup scheduler event chan
@@ -71,7 +68,8 @@ func main() {
 		scalingAlgorithm.CreateBuffer()
 		scalingAlgorithm.CreateEventChans()
 		scalingAlgorithm.CreateGraphQLClient(graphqlClient)
-		scalingAlgorithm.ProcessEvents(goroutineTracker)
+		scalingAlgorithm.CreateDBClient(dbclient)
+		scalingAlgorithm.ProcessEvents(globalCtx, goroutineTracker)
 
 		return true
 	})
@@ -232,6 +230,9 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 					algorithm.ScheduledEventChan <- scheduledEvent
 				}
 			}
+		case <-globalCtx.Done():
+			logger.Infof("Gloal context has been cancelled, exiting event loop...")
+			return
 		}
 	}
 }

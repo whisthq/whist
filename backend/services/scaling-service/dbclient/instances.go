@@ -9,7 +9,7 @@ import (
 )
 
 // QueryInstance queries the database for an instance with the received id.
-func QueryInstance(scalingCtx context.Context, graphQLClient *subscriptions.GraphQLClient, instanceID string) (subscriptions.WhistInstances, error) {
+func (client *DBClient) QueryInstance(scalingCtx context.Context, graphQLClient *subscriptions.GraphQLClient, instanceID string) (subscriptions.WhistInstances, error) {
 	instancesQuery := subscriptions.QueryInstanceById
 	queryParams := map[string]interface{}{
 		"id": graphql.String(instanceID),
@@ -20,7 +20,7 @@ func QueryInstance(scalingCtx context.Context, graphQLClient *subscriptions.Grap
 }
 
 // QueryInstancesByStatusOnRegion queries the database for all instances with the given status on the given region.
-func QueryInstancesByStatusOnRegion(scalingCtx context.Context, graphQLClient *subscriptions.GraphQLClient, status string, region string) (subscriptions.WhistInstances, error) {
+func (client *DBClient) QueryInstancesByStatusOnRegion(scalingCtx context.Context, graphQLClient *subscriptions.GraphQLClient, status string, region string) (subscriptions.WhistInstances, error) {
 	instancesQuery := subscriptions.QueryInstancesByStatusOnRegion
 	queryParams := map[string]interface{}{
 		"status": graphql.String(status),
@@ -32,7 +32,7 @@ func QueryInstancesByStatusOnRegion(scalingCtx context.Context, graphQLClient *s
 }
 
 // QueryInstancesByImage queries the database for instances that match the given image id.
-func QueryInstancesByImage(scalingCtx context.Context, graphQLClient *subscriptions.GraphQLClient, imageID string) (subscriptions.WhistInstances, error) {
+func (client *DBClient) QueryInstancesByImage(scalingCtx context.Context, graphQLClient *subscriptions.GraphQLClient, imageID string) (subscriptions.WhistInstances, error) {
 	instancesQuery := subscriptions.QueryInstancesByImageID
 	queryParams := map[string]interface{}{
 		"image_id": graphql.String(imageID),
@@ -44,7 +44,7 @@ func QueryInstancesByImage(scalingCtx context.Context, graphQLClient *subscripti
 }
 
 // InsertInstances adds the received instances to the database.
-func InsertInstances(scalingCtx context.Context, graphQLClient *subscriptions.GraphQLClient, insertParams []subscriptions.Instance) (int, error) {
+func (client *DBClient) InsertInstances(scalingCtx context.Context, graphQLClient *subscriptions.GraphQLClient, insertParams []subscriptions.Instance) (int, error) {
 	insertMutation := subscriptions.InsertInstances
 
 	var instancesForDb []whist_instances_insert_input
@@ -75,14 +75,14 @@ func InsertInstances(scalingCtx context.Context, graphQLClient *subscriptions.Gr
 }
 
 // UpdateInstance updates the received fields on the database.
-func UpdateInstance(scalingCtx context.Context, graphQLClient *subscriptions.GraphQLClient, updateParams map[string]interface{}) (int, error) {
+func (client *DBClient) UpdateInstance(scalingCtx context.Context, graphQLClient *subscriptions.GraphQLClient, updateParams map[string]interface{}) (int, error) {
 	updateMutation := subscriptions.UpdateInstanceStatus
 	err := graphQLClient.Mutate(scalingCtx, &updateMutation, updateParams)
 	return int(updateMutation.MutationResponse.AffectedRows), err
 }
 
 // DeleteInstance removes an instance with the given id from the database.
-func DeleteInstance(scalingCtx context.Context, graphQLClient *subscriptions.GraphQLClient, instanceID string) (int, error) {
+func (client *DBClient) DeleteInstance(scalingCtx context.Context, graphQLClient *subscriptions.GraphQLClient, instanceID string) (int, error) {
 	deleteMutation := &subscriptions.DeleteInstanceById
 	deleteParams := map[string]interface{}{
 		"id": graphql.String(instanceID),

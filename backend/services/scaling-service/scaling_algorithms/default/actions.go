@@ -30,7 +30,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	}()
 
 	// First, verify if the draining instance has mandelboxes running
-	instanceResult, err := dbclient.QueryInstance(scalingCtx, s.GraphQLClient, instance.ID)
+	instanceResult, err := s.DBClient.QueryInstance(scalingCtx, s.GraphQLClient, instance.ID)
 	if err != nil {
 		return utils.MakeError("failed to query database for instance %v. Error: %v", instance.ID, err)
 	}
@@ -53,7 +53,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	}
 
 	// Once its terminated, verify that it was removed from the database
-	instanceResult, err = dbclient.QueryInstance(scalingCtx, s.GraphQLClient, instance.ID)
+	instanceResult, err = s.DBClient.QueryInstance(scalingCtx, s.GraphQLClient, instance.ID)
 	if err != nil {
 		return utils.MakeError("failed to query database for instance %v. Error: %v", instance.ID, err)
 	}
@@ -67,7 +67,7 @@ func (s *DefaultScalingAlgorithm) VerifyInstanceScaleDown(scalingCtx context.Con
 	// If instance still exists on the database, delete as it no longer exists on cloud provider
 	logger.Info("Removing instance %v from database as it no longer exists on cloud provider.", instance.ID)
 
-	affectedRows, err := dbclient.DeleteInstance(scalingCtx, s.GraphQLClient, instance.ID)
+	affectedRows, err := s.DBClient.DeleteInstance(scalingCtx, s.GraphQLClient, instance.ID)
 	if err != nil {
 		return utils.MakeError("failed to delete instance %v from database. Error: %v", instance.ID, err)
 	}
@@ -206,7 +206,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	}
 
 	// check database for draining instances without running mandelboxes
-	drainingInstances, err := dbclient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "DRAINING", event.Region)
+	drainingInstances, err := s.DBClient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "DRAINING", event.Region)
 	if err != nil {
 		return utils.MakeError("failed to query database for lingering instances. Err: %v", err)
 	}
@@ -244,7 +244,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 			"status": graphql.String("DRAINING"),
 		}
 
-		_, err = dbclient.UpdateInstance(scalingCtx, s.GraphQLClient, updateParams)
+		_, err = s.DBClient.UpdateInstance(scalingCtx, s.GraphQLClient, updateParams)
 		if err != nil {
 			logger.Errorf("Failed to mark instance %v as draining. Err: %v", instance, err)
 		}
@@ -307,7 +307,7 @@ func (s *DefaultScalingAlgorithm) ScaleUpIfNecessary(instancesToScale int, scali
 	logger.Infof("Inserting newly created instances to database.")
 
 	// If successful, write to db
-	affectedRows, err := dbclient.InsertInstances(scalingCtx, s.GraphQLClient, instancesForDb)
+	affectedRows, err := s.DBClient.InsertInstances(scalingCtx, s.GraphQLClient, instancesForDb)
 	if err != nil {
 		return utils.MakeError("Failed to insert instances into database. Error: %v", err)
 	}
@@ -337,7 +337,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	newImageID := imageID.(string)
 
 	// Query for the current image id
-	imageResult, err := dbclient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region)
+	imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region)
 	if err != nil {
 		return utils.MakeError("failed to query database for current image on %v. Err: %v", event.Region, err)
 	}
@@ -387,7 +387,7 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	logger.Infof("Inserting newly created instances to database.")
 
 	// If successful, write to db
-	affectedRows, err := dbclient.InsertInstances(scalingCtx, s.GraphQLClient, instancesForDb)
+	affectedRows, err := s.DBClient.InsertInstances(scalingCtx, s.GraphQLClient, instancesForDb)
 	if err != nil {
 		return utils.MakeError("Failed to insert instances into database. Error: %v", err)
 	}
@@ -405,12 +405,12 @@ func (s *DefaultScalingAlgorithm) UpgradeImage(scalingCtx context.Context, event
 	}
 
 	if oldImageID == "" {
-		_, err = dbclient.InsertImages(scalingCtx, s.GraphQLClient, []subscriptions.Image{updateParams})
+		_, err = s.DBClient.InsertImages(scalingCtx, s.GraphQLClient, []subscriptions.Image{updateParams})
 		if err != nil {
 			return utils.MakeError("Failed to insert image %v into database. Error: %v", newImageID, err)
 		}
 	} else {
-		_, err = dbclient.UpdateImage(scalingCtx, s.GraphQLClient, updateParams)
+		_, err = s.DBClient.UpdateImage(scalingCtx, s.GraphQLClient, updateParams)
 		if err != nil {
 			return utils.MakeError("Failed to update image %v to image %v in database. Error: %v", oldImageID, newImageID, err)
 		}
