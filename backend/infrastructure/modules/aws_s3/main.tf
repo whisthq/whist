@@ -119,13 +119,13 @@ resource "aws_s3_bucket" "whist-protocol-dependencies" {
   }
 }
 
-# Bucket for storing arm64 macos client protocol shared library (dev only)
-resource "aws_s3_bucket" "whist-protocol-client-shared-lib-macos-arm64" {
+# Bucket for storing client protocol shared library
+resource "aws_s3_bucket" "whist-protocol-client-shared-lib" {
   count  = var.env == "dev" ? 1 : 0
-  bucket = "whist-protocol-client-shared-library"
+  bucket = "whist-protocol-client-shared-lib"
 
   tags = {
-    Name      = "whist-protocol-client-shared-lib-macos-arm64-${var.env}"
+    Name      = "whist-protocol-client-shared-lib-${var.env}"
     Env       = var.env
     Terraform = true
   }

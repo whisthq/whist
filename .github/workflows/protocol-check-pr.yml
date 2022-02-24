@@ -165,8 +165,6 @@ jobs:
       - name: Build the Protocol Client Library on macOS
         if: runner.os == 'macOS'
         working-directory: protocol
-        env:
-          WHIST_OSXSYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
         run: |
           cmake -S . -B build-lib -D CMAKE_BUILD_TYPE=Debug -D CLIENT_SHARED_LIB=ON
           cd build-lib
@@ -304,8 +302,6 @@ jobs:
 
       - name: Build the Protocol Client Library
         working-directory: protocol
-        env:
-          WHIST_OSXSYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
         run: |
           cmake -S . -B build-lib -D CMAKE_BUILD_TYPE=Debug -D CLIENT_SHARED_LIB=ON
           cd build-lib
