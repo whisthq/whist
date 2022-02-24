@@ -19,4 +19,7 @@ esac
 set -Eeuo pipefail
 
 mkdir -p /home/whist/.teleport/drag-drop/fuse
+mkdir -p /home/whist/.teleport/uploads
+mkdir -p /home/whist/.teleport/logs
+
 exec /opt/teleport/drag-drop /home/whist/.teleport/drag-drop/fuse -f

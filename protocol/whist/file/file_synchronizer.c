@@ -134,6 +134,17 @@ static int find_free_transferring_file_index(void) {
     return -1;
 }
 
+static void confirm_user_file_upload(void) {
+    /*
+        Confirm that the user file upload transfer has begun by
+        writing a trigger file for the kdialog proxy to user
+    */
+
+    FILE* fptr = fopen("/home/whist/.teleport/uploaded-file-confirm", "w");
+    fprintf(fptr, "confirm-trigger");
+    fclose(fptr);
+}
+
 /*
 ============================
 Public Function Implementations
@@ -213,7 +224,7 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
             break;
         }
         case FILE_TRANSFER_SERVER_UPLOAD:
-            file_dir = "/home/whist";
+            file_dir = "/home/whist/.teleport/uploads";
             break;
         case FILE_TRANSFER_CLIENT_DOWNLOAD: {
             const char* home_dir = getenv(HOME_ENV_VAR);
@@ -310,6 +321,10 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
                 }
                 case FILE_TRANSFER_CLIENT_DOWNLOAD: {
                     whist_file_download_notify_finished(active_file->file_path);
+                    break;
+                }
+                case FILE_TRANSFER_SERVER_UPLOAD: {
+                    confirm_user_file_upload();
                     break;
                 }
                 default: {
@@ -527,6 +542,17 @@ void reset_all_transferring_files(void) {
     for (int file_index = 0; file_index < NUM_TRANSFERRING_FILES; file_index++) {
         reset_transferring_file(file_index);
     }
+}
+
+void file_syncrhonizer_cancel_user_file_upload(void) {
+    /*
+        Our kde proxy waits for the uploaded-file-cancel or the uploaded-file-confirm
+        trigger file to show up. Creates the one for cancellation.
+    */
+
+    FILE* fptr = fopen("/home/whist/.teleport/uploaded-file-cancel", "w");
+    fprintf(fptr, "cancel-trigger");
+    fclose(fptr);
 }
 
 void destroy_file_synchronizer(void) {

@@ -267,6 +267,9 @@ static void initiate_file_upload(void) {
         LOG_INFO("Upload has been initiated");
     } else {
         LOG_INFO("No file selected");
+        WhistClientMessage wcmsg = {0};
+        wcmsg.type = MESSAGE_FILE_UPLOAD_CANCEL;
+        send_wcmsg(&wcmsg);
     }
     upload_initiated = false;
 }
