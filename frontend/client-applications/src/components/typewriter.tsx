@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react"
 import classNames from "classnames"
 import { last, concat, tail, zip, fill, times } from "lodash"
-import NoWorkResult from "postcss/lib/no-work-result"
 
 export const cycle = function* (array: any[]) {
   while (true) for (const i of array) yield i
@@ -69,7 +68,6 @@ export const TypeWriter = (props: {
     const iterate = cycle(charStreams(words, start, end, forw, back))
     times(startAt, () => iterate.next())
     const timeouts: Array<ReturnType<typeof setTimeout>> = []
-    const counter = 0
     setTimeout(function run() {
       const [char, ms, blinking] = iterate.next().value
       setDisplay(char)

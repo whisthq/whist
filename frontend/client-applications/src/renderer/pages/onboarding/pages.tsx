@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react"
+import React, { useEffect } from "react"
 
 import { TypeWriter } from "@app/components/typewriter"
 import { Network } from "@app/components/network"
-import Dropdown from "@app/components/dropdown"
 
 import Computer from "@app/components/icons/computer"
 import Duplicate from "@app/components/icons/duplicate"
@@ -127,8 +126,8 @@ const WhoIsWhistFor = () => {
   )
 
   const contents = (
-    <div className="m-auto text-center mt-20">
-      <div className="mt-16 text-gray-300 text-xl font-bold leading-10 max-w-lg m-auto text-center">
+    <div className="m-auto text-center mt-16">
+      <div className="mt-12 text-gray-300 text-xl font-bold leading-10 max-w-lg m-auto text-center">
         For those who struggle with:
       </div>
       <div className="max-w-lg m-auto px-10 py-6">{icons}</div>

@@ -3,7 +3,7 @@ import React from "react"
 import Logo from "@app/components/icons/logo.svg"
 import { WhistButton, WhistButtonState } from "@app/components/button"
 
-export default (props: { onSubmit: () => void }) => {
+const Introduction = (props: { onSubmit: () => void }) => {
   return (
     <div
       tabIndex={0}
@@ -49,3 +49,5 @@ export default (props: { onSubmit: () => void }) => {
     </div>
   )
 }
+
+export default Introduction

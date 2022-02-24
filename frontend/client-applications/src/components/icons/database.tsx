@@ -1,6 +1,6 @@
 import React from "react"
 
-export default () => (
+const Database = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     className="h-5 w-5"
@@ -12,3 +12,5 @@ export default () => (
     <path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z" />
   </svg>
 )
+
+export default Database

@@ -53,7 +53,7 @@ const Shuffle = (props: { pages: JSX.Element[]; onSubmit: () => void }) => {
   )
 }
 
-export default (props: { onSubmit: () => void }) => {
+const Onboarding = (props: { onSubmit: () => void }) => {
   const [showIntro, setShowIntro] = useState(true)
 
   if (showIntro)
@@ -68,20 +68,22 @@ export default (props: { onSubmit: () => void }) => {
   return (
     <Shuffle
       pages={[
-        <WhatMakesWhistDifferent />,
-        <WhatIsWhist />,
-        <WhoIsWhistFor />,
-        <FasterLikeMagic />,
-        <LetsShowYouAround />,
-        <Privacy />,
-        <FeaturesUnderDevelopment />,
-        <TurnOffVPN />,
-        <LiveChatSupport />,
-        <Pricing />,
-        <FollowUsOnTwitter />,
-        <NetworkTest />,
+        <WhatMakesWhistDifferent key={0} />,
+        <WhatIsWhist key={1} />,
+        <WhoIsWhistFor key={2} />,
+        <FasterLikeMagic key={3} />,
+        <LetsShowYouAround key={4} />,
+        <Privacy key={5} />,
+        <FeaturesUnderDevelopment key={6} />,
+        <TurnOffVPN key={7} />,
+        <LiveChatSupport key={8} />,
+        <Pricing key={9} />,
+        <FollowUsOnTwitter key={10} />,
+        <NetworkTest key={11} />,
       ]}
       onSubmit={props.onSubmit}
     />
   )
 }
+
+export default Onboarding
