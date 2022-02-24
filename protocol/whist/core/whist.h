@@ -423,40 +423,6 @@ typedef enum WhistMouseButton {
 } WhistMouseButton;
 
 /**
- * @brief   Cursor properties.
- * @details Track important information on cursor.
- */
-typedef struct WhistCursor {
-    uint32_t size;       ///< Size in bytes of the cursor image buffer.
-    uint32_t positionX;  ///< When leaving relative mode, the horizontal position
-                         ///< in screen coordinates where the cursor reappears.
-    uint32_t positionY;  ///< When leaving relative mode, the vertical position
-                         ///< in screen coordinates where the cursor reappears.
-    uint16_t width;      ///< Width of the cursor image in pixels.
-    uint16_t height;     ///< Height of the cursor position in pixels.
-    uint16_t hotX;       ///< Horizontal pixel position of the cursor hotspot within
-                         ///< the image.
-    uint16_t hotY;       ///< Vertical pixel position of the cursor hotspot within
-                         ///< the image.
-    bool modeUpdate;     ///< `true` if the cursor mode should be updated. The
-                         ///< `relative`, `positionX`, and `positionY` members are
-                         ///< valid.
-    bool imageUpdate;    ///< `true` if the cursor image should be updated. The
-                         ///< `width`, `height`, `hotX`, `hotY`, and `size`
-                         ///< members are valid.
-    bool relative;       ///< `true` if in relative mode, meaning the client should
-                         ///< submit mouse motion in relative distances rather than
-                         ///< absolute screen coordinates.
-    uint8_t __pad[1];
-} WhistCursor;
-
-/**
- * @brief   Interaction mode.
- * @details How a specified client will interact with the streaming session.
- */
-typedef enum InteractionMode { CONTROL = 1, SPECTATE = 2, EXCLUSIVE_CONTROL = 3 } InteractionMode;
-
-/**
  * @brief   Keyboard message.
  * @details Messages related to keyboard usage.
  */

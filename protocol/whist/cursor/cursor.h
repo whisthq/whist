@@ -91,24 +91,42 @@ Public Functions
 */
 
 /**
- * @brief                          Initialize all cursors
+ * @brief                          Initialize cursor capturing
  */
-void init_cursors(void);
+void whist_cursor_capture_init(void);
 
 /**
- * @brief                          Returns the current cursor image
- *
- * @returns                       The current cursor image
+ * @brief                          Shut down cursor capturing
  */
-WhistCursorInfo* get_current_cursor(void);
+void whist_cursor_capture_destroy(void);
 
 /**
  * @brief                          Returns the size of the WhistCursorInfo struct
  *
  * @param image                    The WhistCursorInfo struct
  *
- * @returns                       The size of the WhistCursorInfo struct
+ * @returns                        The size of the WhistCursorInfo struct
  */
-size_t get_cursor_info_size(WhistCursorInfo* image);
+size_t whist_cursor_info_get_size(WhistCursorInfo* image);
+
+/**
+ * @brief                          Return RGBA pixel data from a WhistCursorInfo struct
+ *
+ * @param info                     The WhistCursorInfo struct from which to generate the RGBA pixel
+ * data
+ *
+ * @returns                        The RGBA pixel data as a pointer to a uint8_t array, which must
+ * be freed by the caller
+ */
+uint8_t* whist_cursor_info_to_rgba(const WhistCursorInfo* info);
+
+/**
+ * @brief                          Returns the current cursor image
+ *
+ * @returns                        The current cursor image as a pointer to a
+ *                                 WhistCursorInfo struct, which must be freed
+ *                                 by the caller.
+ */
+WhistCursorInfo* whist_cursor_capture(void);
 
 #endif  // CURSOR_H

@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
- * @file windowscursor.c
+ * @file windows_cursor_capture.c
  * @brief This file defines the cursor types, functions, init and get.
 ============================
 Usage
@@ -21,7 +21,7 @@ Includes
 #include <whist/core/whist_memory.h>
 #include <whist/utils/aes.h>
 
-#include "cursor.h"
+#include "cursor_internal.h"
 
 /*
 ============================
@@ -48,18 +48,8 @@ typedef struct WhistCursorTypes {
     HCURSOR CursorWait;
 } WhistCursorTypes;
 
-struct WhistCursorTypes l_types = {0};
-struct WhistCursorTypes* types = &l_types;
-
-/*
-============================
-Private Functions
-============================
-*/
-
-static WhistCursorInfo* get_cursor_image(PCURSORINFO pci);
-
-static void load_cursors(void);
+static struct WhistCursorTypes l_types = {0};
+static struct WhistCursorTypes* types = &l_types;
 
 /*
 ============================
@@ -67,11 +57,10 @@ Private Function Implementations
 ============================
 */
 
-void load_cursors(void) {
-    /*
-        Load each cursor by type
-    */
-
+/**
+ * @brief   Load each cursor image by type.
+ */
+static void load_cursors(void) {
     types->CursorAppStarting = LoadCursor(NULL, IDC_APPSTARTING);
     types->CursorArrow = LoadCursor(NULL, IDC_ARROW);
     types->CursorCross = LoadCursor(NULL, IDC_CROSS);
@@ -90,53 +79,39 @@ void load_cursors(void) {
     types->CursorWait = LoadCursor(NULL, IDC_WAIT);
 }
 
-WhistCursorInfo* get_cursor_image(PCURSORINFO pci) {
-    /*
-        Get the corresponding cursor image for by cursor type
-
-        Arguments:
-            pci (PCURSORINFO): Windows cursor info
-
-        Returns:
-            (WhistCursorInfo*): the corresponding WhistCursorInfo
-                for the `pci` cursor type
-    */
-
+/**
+ * @brief       Get the Whist cursor ID from the cursor info struct
+ *
+ * @param pci   A pointer to the cursor info struct
+ */
+static WhistCursorID get_cursor_id(PCURSORINFO pci) {
     HCURSOR cursor = pci->hCursor;
-    WhistCursorInfo* image = safe_malloc(sizeof(WhistCursorInfo));
 
     if (cursor == types->CursorArrow) {
-        image->cursor_id = WHIST_CURSOR_ARROW;
+        return WHIST_CURSOR_ARROW;
     } else if (cursor == types->CursorCross) {
-        image->cursor_id = WHIST_CURSOR_CROSSHAIR;
+        return WHIST_CURSOR_CROSSHAIR;
     } else if (cursor == types->CursorHand) {
-        image->cursor_id = WHIST_CURSOR_HAND;
+        return WHIST_CURSOR_HAND;
     } else if (cursor == types->CursorIBeam) {
-        image->cursor_id = WHIST_CURSOR_IBEAM;
+        return WHIST_CURSOR_IBEAM;
     } else if (cursor == types->CursorNo) {
-        image->cursor_id = WHIST_CURSOR_NO;
+        return WHIST_CURSOR_NO;
     } else if (cursor == types->CursorSizeAll) {
-        image->cursor_id = WHIST_CURSOR_SIZEALL;
+        return WHIST_CURSOR_SIZEALL;
     } else if (cursor == types->CursorSizeNESW) {
-        image->cursor_id = WHIST_CURSOR_SIZENESW;
+        return WHIST_CURSOR_SIZENESW;
     } else if (cursor == types->CursorSizeNS) {
-        image->cursor_id = WHIST_CURSOR_SIZENS;
+        return WHIST_CURSOR_SIZENS;
     } else if (cursor == types->CursorSizeNWSE) {
-        image->cursor_id = WHIST_CURSOR_SIZENWSE;
+        return WHIST_CURSOR_SIZENWSE;
     } else if (cursor == types->CursorSizeWE) {
-        image->cursor_id = WHIST_CURSOR_SIZEWE;
+        return WHIST_CURSOR_SIZEWE;
     } else if (cursor == types->CursorWait) {
-        image->cursor_id = WHIST_CURSOR_WAITARROW;
+        return WHIST_CURSOR_WAITARROW;
     } else {
-        image->cursor_id = WHIST_CURSOR_ARROW;
+        return WHIST_CURSOR_ARROW;
     }
-
-    image->using_png = false;
-    image->hash = hash(&image->cursor_id, sizeof(image->cursor_id));
-
-    image->cursor_state = pci->flags;
-
-    return image;
 }
 
 /*
@@ -145,17 +120,13 @@ Public Function Implementations
 ============================
 */
 
-void init_cursors(void) {
-    /*
-        Initialize all cursors by loading cursors
-    */
+void whist_cursor_capture_init(void) { load_cursors(); }
 
-    load_cursors();
-}
+void whist_cursor_capture_destroy(void) {}
 
-WhistCursorInfo* get_current_cursor(void) {
-    CURSORINFO pci;
-    pci.cbSize = sizeof(CURSORINFO);
-    GetCursorInfo(&pci);
-    return get_cursor_image(&pci);
+WhistCursorInfo* whist_cursor_capture(void) {
+    CURSORINFO cursor_info;
+    cursor_info.cbSize = sizeof(CURSORINFO);
+    GetCursorInfo(&cursor_info);
+    return whist_cursor_info_from_id(get_cursor_id(&cursor_info), cursor_info.flags);
 }

@@ -264,8 +264,9 @@ int render_video(VideoContext* video_context) {
                     cursor_image = NULL;
                 }
 
-                cursor_image = safe_malloc(get_cursor_info_size(frame_cursor_image));
-                memcpy(cursor_image, frame_cursor_image, get_cursor_info_size(frame_cursor_image));
+                cursor_image = safe_malloc(whist_cursor_info_get_size(frame_cursor_image));
+                memcpy(cursor_image, frame_cursor_image,
+                       whist_cursor_info_get_size(frame_cursor_image));
             }
         }
 

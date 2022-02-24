@@ -192,7 +192,7 @@ static void send_populated_frames(whist_server_state* state, WhistTimer* statist
     static uint32_t last_cursor_hash = 0;
 
     start_timer(statistics_timer);
-    WhistCursorInfo* current_cursor = get_current_cursor();
+    WhistCursorInfo* current_cursor = whist_cursor_capture();
     log_double_statistic(VIDEO_GET_CURSOR_TIME, get_timer(statistics_timer) * MS_IN_SECOND);
 
     // On I-frames or new cursors, we want to pack the new cursor into the frame
@@ -513,7 +513,7 @@ int32_t multithreaded_send_video(void* opaque) {
     CaptureDevice rdevice;
     CaptureDevice* device = NULL;
 
-    init_cursors();
+    whist_cursor_capture_init();
 
     VideoEncoder* encoder = NULL;
 
@@ -825,6 +825,9 @@ int32_t multithreaded_send_video(void* opaque) {
             whist_usleep(100);  // Sleep for 0.1ms before trying again.
         }
     }
+
+    whist_cursor_capture_destroy();
+
 #if SAVE_VIDEO_OUTPUT
     fclose(fp);
 #endif

@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2021-2022 Whist Technologies, Inc.
- * @file linuxcursor.c
+ * @file linux_cursor_capture.c
  * @brief This file defines the cursor types, functions, init and get.
 ============================
 Usage
@@ -21,8 +21,7 @@ Includes
 #include <X11/extensions/Xfixes.h>
 #include <whist/logging/logging.h>
 #include <whist/utils/aes.h>
-#include <whist/utils/lodepng.h>
-#include "cursor.h"
+#include "cursor_internal.h"
 #include "string.h"
 
 /*
@@ -80,19 +79,27 @@ typedef enum ChromeCursorHash {
     CROSSHAIR_CURSOR_HASH = 1236176635
 } ChromeCursorHash;
 
-static Display* disp;
+static Display* disp = NULL;
+
 /*
 ============================
 Public Function Implementations
 ============================
 */
 
-void init_cursors(void) {
-    /*
-        Initialize all cursors by creating the display
-    */
+void whist_cursor_capture_init(void) {
+    if (disp == NULL) {
+        disp = XOpenDisplay(NULL);
+    } else {
+        LOG_ERROR("Cursor capture already initialized");
+    }
+}
 
-    disp = XOpenDisplay(NULL);
+void whist_cursor_capture_destroy(void) {
+    if (disp != NULL) {
+        XCloseDisplay(disp);
+        disp = NULL;
+    }
 }
 
 /**
@@ -180,7 +187,7 @@ static WhistCursorID get_cursor_id(XFixesCursorImage* cursor_image) {
     return id;
 }
 
-WhistCursorInfo* get_current_cursor(void) {
+WhistCursorInfo* whist_cursor_capture(void) {
     WhistCursorInfo* image = NULL;
     if (disp) {
         XFixesCursorImage* cursor_image = XFixesGetCursorImage(disp);
@@ -195,45 +202,23 @@ WhistCursorInfo* get_current_cursor(void) {
         WhistCursorID whist_id = get_cursor_id(cursor_image);
         if (whist_id == INVALID) {
             // Use PNG cursor
-            unsigned char* png;
-            size_t png_size;
 
             // Convert argb to rgba
             uint32_t rgba[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT];
             for (int i = 0; i < cursor_image->width * cursor_image->height; i++) {
-                const uint32_t argb = (uint32_t)cursor_image->pixels[i];
-                rgba[i] = argb << 8 | argb >> 24;
+                const uint32_t argb_pix = (uint32_t)cursor_image->pixels[i];
+                rgba[i] = argb_pix << 8 | argb_pix >> 24;
             }
-
-            unsigned int ret = lodepng_encode32(&png, &png_size, (unsigned char*)&rgba,
-                                                cursor_image->width, cursor_image->height);
-            if (ret) {
-                LOG_WARNING("Failed to encode PNG cursor: %s", lodepng_error_text(ret));
-                XFree(cursor_image);
-                return NULL;
-            }
-
-            image = safe_malloc(sizeof(WhistCursorInfo) + png_size);
-            image->cursor_state = CURSOR_STATE_VISIBLE;
-            image->using_png = true;
-            image->png_width = cursor_image->width;
-            image->png_height = cursor_image->height;
-            image->png_size = png_size;
-            image->png_hot_x = cursor_image->xhot;
-            image->png_hot_y = cursor_image->yhot;
-            memcpy(image->png, png, png_size);
-            image->hash = hash(png, png_size);
-            free(png);
+            image = whist_cursor_info_from_rgba(rgba, cursor_image->width, cursor_image->height,
+                                                cursor_image->xhot, cursor_image->yhot,
+                                                CURSOR_STATE_VISIBLE);
         } else {
             // Use system cursor from WhistCursorID
-            image = safe_malloc(sizeof(WhistCursorInfo));
-            memset(image, 0, sizeof(WhistCursorInfo));
-            image->cursor_id = whist_id;
-            image->cursor_state = CURSOR_STATE_VISIBLE;
-            image->using_png = false;
-            image->hash = hash(&whist_id, sizeof(WhistCursorID));
+            image = whist_cursor_info_from_id(whist_id, CURSOR_STATE_VISIBLE);
         }
         XFree(cursor_image);
+    } else {
+        LOG_ERROR("Cursor capture not initialized");
     }
 
     return image;
