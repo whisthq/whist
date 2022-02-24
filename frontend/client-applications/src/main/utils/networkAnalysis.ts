@@ -13,8 +13,7 @@ const config = { userAcceptedDataPolicy: true }
 
 // The download test emits results over a period of time; create variables
 // to track those results
-let iterations = 0
-let results = {
+const results = {
   jitter: 0,
   downloadMbps: 0,
   progress: 0,
@@ -34,21 +33,18 @@ const emitNetworkAnalysis = (_results: {
 }
 
 // Handles download measurements
-const handleDownloadMeasurements = (iterations: number) => {
+const handleDownloadMeasurements = () => {
   return (measurement: any) => {
     if (measurement.Source === "client") {
       results.downloadMbps = Math.round(measurement.Data.MeanClientMbps)
     } else {
-      iterations += 1
       results.progress = Math.ceil(
         (measurement.Data.TCPInfo.ElapsedTime /
           (TEST_DURATION_MILLISECONDS * 1000)) *
           100
       )
-      const jitterInMs = measurement.Data.TCPInfo.RTTVar / 1000
-      results.jitter = Math.round(
-        (results.jitter * (iterations - 1) + jitterInMs) / iterations
-      )
+      const jitterInMs = Math.ceil(measurement.Data.TCPInfo.RTTVar / 1000)
+      results.jitter = Math.max(results.jitter, jitterInMs)
     }
 
     emitNetworkAnalysis(results)
@@ -57,7 +53,7 @@ const handleDownloadMeasurements = (iterations: number) => {
 
 // Callbacks to pass into download speed test
 const callbacks = {
-  downloadMeasurement: handleDownloadMeasurements(iterations),
+  downloadMeasurement: handleDownloadMeasurements(),
   downloadComplete: () => {
     emitNetworkAnalysis({ ...results, progress: 100 })
   },

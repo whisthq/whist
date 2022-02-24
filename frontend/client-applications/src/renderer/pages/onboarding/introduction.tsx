@@ -4,13 +4,8 @@ import Logo from "@app/components/icons/logo.svg"
 import { WhistButton, WhistButtonState } from "@app/components/button"
 
 export default (props: { onSubmit: () => void }) => {
-  const onKeyDown = (evt: any) => {
-    if (evt.key === "Enter") props.onSubmit()
-  }
-
   return (
     <div
-      onKeyDown={onKeyDown}
       tabIndex={0}
       className="flex flex-col h-screen w-full font-body outline-none bg-gray-900"
     >

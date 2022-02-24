@@ -3,7 +3,6 @@ import classNames from "classnames"
 
 import { Progress } from "@app/components/progress"
 import { WhistButton, WhistButtonState } from "@app/components/button"
-import Check from "@app/components/icons/check"
 
 const MAX_ACCEPTABLE_PING_MS = 50
 const MAX_ACCEPTABLE_JITTER_MS = 20
@@ -190,8 +189,6 @@ const Network = (props: {
   withText?: boolean
   withButton?: boolean
 }) => {
-  console.log("network info", props.networkInfo)
-
   const testState = getNetworkTestState(props.networkInfo)
 
   return (

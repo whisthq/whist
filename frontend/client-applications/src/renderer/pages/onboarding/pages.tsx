@@ -39,7 +39,7 @@ const Template = (props: { contents: JSX.Element; word: string }) => {
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
       <div
         className="animate-fade-in-up opacity-0"
-        style={{ animationDelay: `${props.word.length * 70}ms` }}
+        style={{ animationDelay: `${props.word.length * 40}ms` }}
       >
         {props.contents}
       </div>
@@ -406,8 +406,8 @@ const Pricing = () => {
         For the next two weeks,{" "}
         <span className="text-blue-light">Whist is free</span>. Afterward, a
         subscription is{" "}
-        <span className="text-xs relative bottom-2 pr-1 text-gray-400">$</span>9
-        <span className="text-xs text-gray-400"> / month</span>
+        <span className="text-xs relative bottom-2 pr-1">$</span>9
+        <span className="text-xs"> / mo</span>
       </div>
       <div className="mt-4 text-md text-gray-500">
         You can cancel at any time and we will refund you if you forget. After
