@@ -12,6 +12,9 @@ import {
   FeaturesUnderDevelopment,
   LiveChatSupport,
   FollowUsOnTwitter,
+  TurnOffVPN,
+  NetworkTest,
+  Pricing,
 } from "@app/renderer/pages/onboarding/pages"
 
 const Shuffle = (props: { pages: JSX.Element[]; onSubmit: () => void }) => {
@@ -31,7 +34,7 @@ const Shuffle = (props: { pages: JSX.Element[]; onSubmit: () => void }) => {
       <div className="absolute bottom-4 w-full">
         <div className="m-auto text-center">
           <button
-            className="text-gray-300 outline-none bg-blue rounded px-12 py-2 font-semibold text-gray-100 w-36 m-auto mb-8"
+            className="text-gray-300 outline-none bg-blue rounded px-12 py-2 font-semibold text-gray-100 w-36 m-auto mb-8 hover:bg-indigo-600"
             onClick={() => setPageToShow(pageToShow + 1)}
           >
             Next
@@ -71,8 +74,11 @@ export default (props: { onSubmit: () => void }) => {
         <LetsShowYouAround />,
         <Privacy />,
         <FeaturesUnderDevelopment />,
+        <TurnOffVPN />,
         <LiveChatSupport />,
+        <Pricing />,
         <FollowUsOnTwitter />,
+        <NetworkTest />,
       ]}
       onSubmit={props.onSubmit}
     />

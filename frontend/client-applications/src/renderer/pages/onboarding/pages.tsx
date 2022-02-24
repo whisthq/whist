@@ -1,7 +1,9 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 
 import { TypeWriter } from "@app/components/typewriter"
-import ChromeHeader from "@app/components/assets/chromeHeader.svg"
+import { Network } from "@app/components/network"
+import Dropdown from "@app/components/dropdown"
+
 import Computer from "@app/components/icons/computer"
 import Duplicate from "@app/components/icons/duplicate"
 import Globe from "@app/components/icons/globe"
@@ -11,6 +13,11 @@ import Play from "@app/components/icons/play"
 import Lock from "@app/components/icons/lock"
 import Camera from "@app/components/icons/camera"
 import Server from "@app/components/icons/server"
+
+import { useMainState } from "@app/renderer/utils/ipc"
+import { WhistTrigger } from "@app/constants/triggers"
+
+import ChromeHeader from "@app/components/assets/chromeHeader.svg"
 
 const Template = (props: { contents: JSX.Element; word: string }) => {
   return (
@@ -32,7 +39,7 @@ const Template = (props: { contents: JSX.Element; word: string }) => {
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
       <div
         className="animate-fade-in-up opacity-0"
-        style={{ animationDelay: `${props.word.length * 95}ms` }}
+        style={{ animationDelay: `${props.word.length * 75}ms` }}
       >
         {props.contents}
       </div>
@@ -78,7 +85,7 @@ const WhoIsWhistFor = () => {
       icon: Computer,
     },
     {
-      name: "Hundreds of tabs",
+      name: "Conserving battery life",
       icon: Duplicate,
     },
     {
@@ -98,7 +105,9 @@ const WhoIsWhistFor = () => {
             <div className="flex items-center justify-center h-10 w-10 rounded-md bg-blue text-gray-300">
               <feature.icon aria-hidden="true" />
             </div>
-            <p className="mt-5 text-sm text-gray-300">{feature.name}</p>
+            <p className="mt-5 text-sm text-gray-300 font-semibold">
+              {feature.name}
+            </p>
           </dt>
         </div>
       ))}
@@ -147,12 +156,7 @@ const LetsShowYouAround = () => {
     </div>
   )
 
-  return (
-    <Template
-      contents={contents}
-      word="Anyway, enough with the sales pitch :)"
-    />
-  )
+  return <Template contents={contents} word="Now let's get you set up!" />
 }
 
 const Privacy = () => {
@@ -258,14 +262,37 @@ const FeaturesUnderDevelopment = () => {
   )
 }
 
+const TurnOffVPN = () => {
+  const contents = (
+    <div className="m-auto text-center max-w-md mt-18">
+      <div className="mt-32 text-gray-300 text-2xl font-bold leading-10 m-auto">
+        If you use a VPN, please whitelist Whist
+      </div>
+      <div className="mt-2 text-md text-gray-500">
+        VPNs will significantly degrade Whist&apos;s performance. From a privacy
+        perspective, Whist already acts as a VPN by sending all web requests
+        from a secure server instead of your computer.
+      </div>
+    </div>
+  )
+
+  return (
+    <Template contents={contents} word="Can I run my VPN on top of Whist?" />
+  )
+}
+
 const LiveChatSupport = () => {
   const contents = (
-    <div className="m-auto text-center mt-18">
-      <div className="mt-32 text-gray-300 text-2xl font-bold leading-10 max-w-md m-auto">
+    <div className="m-auto text-center mt-18 max-w-md m-auto">
+      <div className="mt-32 text-gray-300 text-2xl font-bold leading-10">
         After this onboarding, the{" "}
         <kbd className="bg-gray-700 px-2 py-1 rounded">Cmd</kbd>&nbsp;
         <kbd className="bg-gray-700 px-2 py-1 rounded">J</kbd> shortcut summons
-        the Whist menu, which features live chat support.
+        the Whist menu.
+      </div>
+      <div className="mt-2 text-md text-gray-500">
+        Here you&apos;ll find live chat support for bug reports in addition to
+        account settings, tab importing, and more.
       </div>
     </div>
   )
@@ -276,20 +303,37 @@ const LiveChatSupport = () => {
 }
 
 const FollowUsOnTwitter = () => {
+  const [, setMainState] = useMainState()
+  const openTwitterURL = () => {
+    setMainState({
+      trigger: {
+        name: WhistTrigger.openExternalURL,
+        payload: { url: "https://twitter.com/whisthq" },
+      },
+    })
+  }
   const contents = (
     <div className="m-auto text-center mt-18">
       <div className="mt-20 text-gray-300 text-2xl font-bold leading-10 max-w-md m-auto">
-        Follow us on Twitter&nbsp;
-        <div onClick={() => {}} className="inline-block">
-          <kbd className="bg-gray-700 px-2 py-1 rounded">@whisthq</kbd>
+        Please follow us on Twitter&nbsp;
+        <div onClick={openTwitterURL} className="inline-block">
+          <kbd className="px-2 py-1 rounded cursor-pointer bg-blue hover:bg-indigo-600 duration-75">
+            @whisthq
+          </kbd>
         </div>
         . <br />
         Have a new feature request?{" "}
-        <span className="text-blue-400">Tweet us!</span>
+        <span className="text-blue-400 cursor-pointer" onClick={openTwitterURL}>
+          Tweet us!
+        </span>
         <br /> Want to write us a poem?{" "}
-        <span className="text-blue-400">Tweet us!</span>
+        <span className="text-blue-400 cursor-pointer" onClick={openTwitterURL}>
+          Tweet us!
+        </span>
         <br /> Want us to write you a poem?{" "}
-        <span className="text-blue-400">Tweet us!</span>
+        <span className="text-blue-400 cursor-pointer" onClick={openTwitterURL}>
+          Tweet us!
+        </span>
       </div>
       <div className="mt-4 text-md text-gray-500">
         (Seriously, we&apos;ll write you one)
@@ -305,6 +349,56 @@ const FollowUsOnTwitter = () => {
   )
 }
 
+const NetworkTest = () => {
+  const [mainState, setMainState] = useMainState()
+
+  useEffect(() => {
+    setTimeout(() => {
+      setMainState({
+        trigger: {
+          name: WhistTrigger.startNetworkAnalysis,
+          payload: undefined,
+        },
+      })
+    }, 1000)
+  }, [])
+
+  const contents = (
+    <div className="mt-16">
+      <Network
+        networkInfo={mainState.networkInfo}
+        onSubmit={() => {}}
+        withText={true}
+        withButton={false}
+      />
+    </div>
+  )
+
+  return (
+    <Template
+      contents={contents}
+      word="In order to use Whist we recommend good Internet."
+    />
+  )
+}
+
+const Pricing = () => {
+  const contents = (
+    <div className="m-auto text-center mt-18 max-w-md m-auto">
+      <div className="mt-32 text-gray-300 text-2xl font-bold leading-10">
+        For the next two weeks, Whist is free. Afterward, a subscription is{" "}
+        <span className="text-xs relative bottom-2 pr-1 text-gray-400">$</span>9
+        <span className="text-xs text-gray-400"> / month</span>.
+      </div>
+      <div className="mt-4 text-md text-gray-500">
+        You can cancel at any time and we will refund you if you forget.
+      </div>
+    </div>
+  )
+
+  return <Template contents={contents} word="Whist is made with <3" />
+}
+
 export {
   WhatMakesWhistDifferent,
   WhatIsWhist,
@@ -315,4 +409,7 @@ export {
   FeaturesUnderDevelopment,
   LiveChatSupport,
   FollowUsOnTwitter,
+  NetworkTest,
+  TurnOffVPN,
+  Pricing,
 }

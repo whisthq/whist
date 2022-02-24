@@ -148,7 +148,6 @@ withAppActivated(fromTrigger(WhistTrigger.checkPaymentFlowSuccess)).subscribe(
   () => {
     const onboarded = (persistGet(ONBOARDED) as boolean) ?? false
     if (!onboarded) {
-      networkAnalyze()
       createOnboardingWindow()
       destroyElectronWindow(WindowHashAuth)
     }

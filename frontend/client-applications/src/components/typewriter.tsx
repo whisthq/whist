@@ -56,7 +56,7 @@ export const TypeWriter = (props: {
     words,
     startTick: start = 500,
     endTick: end = 1500,
-    forwardTick: forw = 50,
+    forwardTick: forw = 40,
     backwardTick: back = 50,
     startDelay = 100,
     startAt = 0,
