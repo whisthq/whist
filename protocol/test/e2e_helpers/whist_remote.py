@@ -492,6 +492,10 @@ def client_setup_process(args_dict):
         )
         if not running_in_ci:
             hs_process.expect(pexpect_prompt_client)
+
+        # Restore network conditions in case a previous run failed / was canceled before restoring the normal conditions.
+        restore_network_conditions_client(hs_process, pexpect_prompt_client, running_in_ci)
+
         print("Configuring AWS credentials on client instance...")
         configure_aws_credentials(
             hs_process,

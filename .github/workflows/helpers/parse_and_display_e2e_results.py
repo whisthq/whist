@@ -208,6 +208,8 @@ if __name__ == "__main__":
         experiments.append(experiment_entry)
         print("\t+ Folder: {} with network_conditions: {}".format(log_dir, network_conditions))
 
+    exit_with_error = False
+
     for i, compared_branch_name in enumerate(compared_branch_names):
         print("Comparing to branch {}".format(compared_branch_name))
         # Create output Markdown file with comparisons to this branch
@@ -224,8 +226,9 @@ if __name__ == "__main__":
             )
             if e2e_script_outcomes[j] == "failure":
                 results_file.write(
-                    ":bangbang::warning::red_circle: WARNING: the E2E streaming test script failed and the results below might be inaccurate! This could also be due to a server hang. :bangbang::warning::red_circle:\n\n"
+                    ":bangbang::warning: WARNING: the E2E streaming test script failed and the results below might be inaccurate! This could also be due to a server hang.\n\n"
                 )
+                exit_with_error = True
             # If we are looking to compare the results with the latest run on a branch, we need to download the relevant files first
             if compared_branch_name != "":
                 download_latest_logs(
@@ -331,3 +334,6 @@ if __name__ == "__main__":
                 title=title,
                 update_date=True,
             )
+
+    if exit_with_error:
+        sys.exit(-1)
