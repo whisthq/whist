@@ -41,7 +41,7 @@ typedef struct StatisticData {
     double max;
     double offset;
     double sum_of_squares;
-    double square_of_sum;
+    double sum_with_offset;
 } StatisticData;
 
 typedef struct {
@@ -81,11 +81,9 @@ static void unsafe_print_statistics(void) {
             current_count = all_statistics[i].count;
         }
 
-        all_statistics[i].square_of_sum *= all_statistics[i].square_of_sum;
-
         LOG_METRIC("\"%s\" : %d,%.2f,%.2f,%.2f", statistic_info[i].key, current_count,
                    all_statistics[i].sum, all_statistics[i].sum_of_squares,
-                   all_statistics[i].square_of_sum);
+                   all_statistics[i].sum_with_offset);
 
         if (statistic_info[i].is_max_needed)
             LOG_METRIC("\"MAX_%s\" : %.2f", statistic_info[i].key, all_statistics[i].max);
@@ -97,7 +95,7 @@ static void unsafe_print_statistics(void) {
         all_statistics[i].min = 0;
         all_statistics[i].max = 0;
         all_statistics[i].sum_of_squares = 0;
-        all_statistics[i].square_of_sum = 0;
+        all_statistics[i].sum_with_offset = 0;
     }
 
     start_timer(&print_statistic_clock);
@@ -134,7 +132,7 @@ void whist_init_statistic_logger(uint32_t num_metrics, StatisticInfo *statistic_
         statistic_context.all_statistics[i].min = 0;
         statistic_context.all_statistics[i].offset = 0;
         statistic_context.all_statistics[i].sum_of_squares = 0;
-        statistic_context.all_statistics[i].square_of_sum = 0;
+        statistic_context.all_statistics[i].sum_with_offset = 0;
     }
 }
 
@@ -167,7 +165,7 @@ void log_double_statistic(uint32_t index, double val) {
     all_statistics[index].sum += (val - all_statistics[index].offset);
     all_statistics[index].sum_of_squares +=
         (val - all_statistics[index].offset) * (val - all_statistics[index].offset);
-    all_statistics[index].square_of_sum += (val - all_statistics[index].offset);
+    all_statistics[index].sum_with_offset += (val - all_statistics[index].offset);
 
     if (get_timer(&print_statistic_clock) > statistic_context.interval) {
         unsafe_print_statistics();

@@ -34,42 +34,81 @@ def extract_metrics(client_log_file, server_log_file):
             if "METRIC" in line:
                 l = line.strip().split()
                 metric_name = l[-3].strip('"')
-                metric_values = l[-1].strip('"')
-                #metric_value = float(l[-1].strip('"'))
+                metric_values = l[-1].strip('"').split(",")
+
+                count = int(metric_values[0])
+                normal_sum = float(metric_values[1])
+                sum_of_squares = float(metric_values[2])
+                sum_with_offset = float(metric_values[3])
+
                 if metric_name not in client_metrics:
-                    client_metrics[metric_name] = [metric_value]
-                else:
-                    client_metrics[metric_name].append(metric_value)
+                    client_metrics[metric_name] = {
+                        "entries": 0,
+                        "sum": 0,
+                        "sum_of_squares": 0,
+                        "sum_with_offset": 0,
+                    }
+                client_metrics[metric_name]["entries"] += count
+                client_metrics[metric_name]["sum"] += normal_sum
+                client_metrics[metric_name]["sum_of_squares"] += sum_of_squares
+                client_metrics[metric_name]["sum_with_offset"] += sum_with_offset
 
     with open(server_log_file, "r") as f:
         for line in f.readlines():
             if "METRIC" in line:
                 l = line.strip().split()
                 metric_name = l[-3].strip('"')
-                #metric_value = float(l[-1].strip('"'))
+                # metric_value = float(l[-1].strip('"'))
                 metric_values = l[-1].strip('"')
+
+                count = int(metric_values[0])
+                normal_sum = float(metric_values[1])
+                sum_of_squares = float(metric_values[2])
+                sum_with_offset = float(metric_values[3])
+
                 if metric_name not in server_metrics:
-                    server_metrics[metric_name] = [metric_value]
-                else:
-                    server_metrics[metric_name].append(metric_value)
+                    server_metrics[metric_name] = {
+                        "entries": 0,
+                        "sum": 0,
+                        "sum_of_squares": 0,
+                        "sum_with_offset": 0,
+                    }
+
+                server_metrics[metric_name]["entries"] += count
+                server_metrics[metric_name]["sum"] += normal_sum
+                server_metrics[metric_name]["sum_of_squares"] += sum_of_squares
+                server_metrics[metric_name]["sum_with_offset"] += sum_with_offset
 
     client_metrics2 = {}
     server_metrics2 = {}
 
     for k in client_metrics:
-        client_metrics[k] = np.array(client_metrics[k])
+        # client_metrics[k] = np.array(client_metrics[k])
+        variance = client_metrics[metric_name]["sum_of_squares"] - (
+            (client_metrics[metric_name]["sum_of_squares"] ** 2) / client_metrics[k]["entries"]
+        )
+        variance /= client_metrics[k]["entries"]
+        standard_deviation = variance / variance
         client_metrics2[k] = {
-            "entries": len(client_metrics[k]),
-            "avg": np.mean(client_metrics[k]),
-            "std": np.std(client_metrics[k]),
+            "entries": client_metrics[k]["entries"],
+            "avg": client_metrics[k]["sum"] / client_metrics[k]["entries"],
+            "std": standard_deviation,
+            "max": np.max(client_metrics[k]),
+            "min": np.min(client_metrics[k]),
         }
 
     for k in server_metrics:
-        server_metrics[k] = np.array(server_metrics[k])
+        variance = server_metrics[metric_name]["sum_of_squares"] - (
+            (server_metrics[metric_name]["sum_of_squares"] ** 2) / server_metrics[k]["entries"]
+        )
+        variance /= server_metrics[k]["entries"]
+        standard_deviation = variance / variance
         server_metrics2[k] = {
-            "entries": len(server_metrics[k]),
-            "avg": np.mean(server_metrics[k]),
-            "std": np.std(server_metrics[k]),
+            "entries": server_metrics[k]["entries"],
+            "avg": server_metrics[k]["sum"] / server_metrics[k]["entries"],
+            "std": standard_deviation,
+            "max": np.max(server_metrics[k]),
+            "min": np.min(server_metrics[k]),
         }
 
     return client_metrics2, server_metrics2
