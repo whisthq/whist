@@ -81,24 +81,25 @@ jobs:
       - name: Run End-to-End Streaming Test (normal network conditions)
         id: e2e_streaming_test0
         working-directory: protocol/test
+        continue-on-error: true
         run: python3 streaming_e2e_tester.py --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" --ssh-key-path "/home/runner/.ssh/id_rsa" --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" --use-two-instances=true --use-existing-client-instance "$CLIENT_INSTANCE_ID" --use-existing-server-instance "$SERVER_INSTANCE_ID" --leave-instances-on=true
 
       - name: Run End-to-End Streaming Test (low bandwidth)
         id: e2e_streaming_test1
-        if: ${{ (job.status != 'cancelled') && (steps.e2e_streaming_test0.outcome != 'skipped') }}
         working-directory: protocol/test
+        continue-on-error: true
         run: python3 streaming_e2e_tester.py --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" --ssh-key-path "/home/runner/.ssh/id_rsa" --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" --use-two-instances=true --use-existing-client-instance "$CLIENT_INSTANCE_ID" --use-existing-server-instance "$SERVER_INSTANCE_ID" --leave-instances-on=true --skip-host-setup=true --skip-git-clone=true --network-conditions 1Mbit,none,none
 
       - name: Run End-to-End Streaming Test (low bandwidth + pkt drops)
         id: e2e_streaming_test2
-        if: ${{ (job.status != 'cancelled') && (steps.e2e_streaming_test0.outcome != 'skipped') }}
         working-directory: protocol/test
+        continue-on-error: true
         run: python3 streaming_e2e_tester.py --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" --ssh-key-path "/home/runner/.ssh/id_rsa" --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" --use-two-instances=true --use-existing-client-instance "$CLIENT_INSTANCE_ID" --use-existing-server-instance "$SERVER_INSTANCE_ID" --leave-instances-on=true --skip-host-setup=true --skip-git-clone=true --network-conditions 1Mbit,none,0.1
 
       - name: Run End-to-End Streaming Test (low bandwidth + pkt drops + delay)
         id: e2e_streaming_test3
-        if: ${{ (job.status != 'cancelled') && (steps.e2e_streaming_test0.outcome != 'skipped') }}
         working-directory: protocol/test
+        continue-on-error: true
         run: python3 streaming_e2e_tester.py --ssh-key-name "GITHUB_ACTIONS_E2E_PERFORMANCE_TEST_SSH_KEYPAIR" --ssh-key-path "/home/runner/.ssh/id_rsa" --github-token "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}" --use-two-instances=true --use-existing-client-instance "$CLIENT_INSTANCE_ID" --use-existing-server-instance "$SERVER_INSTANCE_ID" --leave-instances-on=false --skip-host-setup=true --skip-git-clone=true --network-conditions 1Mbit,100,0.1
 
       # Steps below acknowledged to https://stackoverflow.com/questions/58033366/how-to-get-the-current-branch-within-github-actions
