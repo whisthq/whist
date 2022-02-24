@@ -1,0 +1,137 @@
+# workflows/protocol-deploy-client-lib.yml
+#
+# Protocol: Deploy Client Library
+# Builds and deploys the protocol client as a shared library.
+
+name: "Protocol: Deploy Client Library"
+
+on:
+  push:
+    # Trigger runs on our default branch, `dev`, to upload code coverage reports to Codecov
+    branches:
+      - dev
+    paths:
+      - "protocol/**"
+      - "!protocol/**/README.md"
+      - ".github/workflows/protocol-deploy-client-lib.yml"
+  pull_request:
+    branches:
+      - dev
+    paths:
+      - "protocol/**"
+      - "!protocol/**/README.md"
+      - ".github/workflows/protocol-deploy-client-lib.yml"
+  workflow_dispatch:
+
+jobs:
+  # Build and deploy the protocol client library
+  protocol-deploy-client-lib-main:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+
+    strategy:
+      matrix:
+        config:
+          - name: macOS (arm64)
+            os: macos-11.0
+            arch: arm64
+
+    env:
+      windows-tar-name: windows.tar.gz
+      macos-x86_64-tar-name: macos-x86_64.tar.gz
+      macos-arm64-tar-name: macos-arm64.tar.gz
+      linux-tar-name: linux.tar.gz
+      s3-bucket-uri: s3://whist-protocol-client-shared-lib
+      s3-bucket-region: us-east-1
+
+    steps:
+      ################################## CONFIG STEPS START ##############################
+
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      # Necessary for downloading protocol libs and base Dockerfile NVIDIA GRID drivers from AWS S3
+      - name: Configure AWS S3 CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_GITHUB_ACTIONS_USER_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Build the Protocol Client Library on macOS
+        if: runner.os == 'macOS'
+        working-directory: protocol
+        run: |
+          cmake -S . \
+                -B build \
+                -D CMAKE_BUILD_TYPE=Release \
+                -D CLIENT_SHARED_LIB=ON \
+                -D MACOS_TARGET_ARCHITECTURE="${{ matrix.config.arch }}"
+          cd build
+          make -j WhistClient
+
+      # Only publish to AWS S3 on Push events (code merged into `dev`) or workflow dispatch
+      - name: Tar Sentry and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        shell: bash --noprofile --norc -eo pipefail {0}
+        working-directory: protocol/build/client
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+          tar -zcvf ${{ env.linux-tar-name }} build64
+            aws s3 cp ${{ env.linux-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.linux-tar-name }}
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+            tar -zcvf ${{ env.windows-tar-name }} build64
+            aws s3 cp ${{ env.windows-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.windows-tar-name }}
+          else
+            if [[ "${{ matrix.config.arch }}" == "x86_64" ]]; then
+              tar -zcvf ${{ env.macos-x64-tar-name }} build64
+              aws s3 cp ${{ env.macos-x64-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-x64-tar-name }}
+            elif [[ "${{ matrix.config.arch }}" == "arm64" ]]; then
+              tar -zcvf ${{ env.macos-arm64-tar-name }} build64
+              aws s3 cp ${{ env.macos-arm64-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-arm64-tar-name }}
+            else
+              echo "Tried to tar and upload to S3 for an unsupported OS"
+              exit
+            fi
+          fi
+
+      - name: Setup Python-based notifications
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        working-directory: .github/workflows/helpers
+        shell: bash --noprofile --norc -eo pipefail {0}
+        run: ./notifications/setup_notifications.sh
+
+      - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
+        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
+          BODY = f"@releases :rotating_light: Failed to deploy Whist protocol client Library to AWS S3, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
+
+  notify-slack:
+    name: Notify Slack
+    needs: [protocol-deploy-client-lib-main]
+    if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && success() }}
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v2
+
+      - name: Setup Python-based notifications
+        working-directory: .github/workflows/helpers
+        run: ./notifications/setup_notifications.sh
+
+      - name: Notify Slack on Success
+        shell: python3 {0}
+        run: |
+          from notifications.slack_bot import slack_post
+
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
+          TITLE = ":whist: Whist Protocol Client Library Deployed :whist:"
+          BODY = f"Whist protocol client library deployed via upload to AWS S3 (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+
+          slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY, title=TITLE)

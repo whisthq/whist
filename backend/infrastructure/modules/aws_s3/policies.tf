@@ -98,9 +98,18 @@ resource "aws_s3_bucket_public_access_block" "whist-e2e-protocol-test-logs" {
   ignore_public_acls      = true
 }
 
-resource "aws_s3_bucket_public_access_block" "whist-protocol-shared-libs" {
+resource "aws_s3_bucket_public_access_block" "whist-protocol-dependencies" {
   count                   = var.env == "prod" ? 1 : 0
-  bucket                  = aws_s3_bucket.whist-protocol-shared-libs[0].id
+  bucket                  = aws_s3_bucket.whist-protocol-dependencies[0].id
+  block_public_acls       = false
+  block_public_policy     = false
+  restrict_public_buckets = false
+  ignore_public_acls      = false
+}
+
+resource "aws_s3_bucket_public_access_block" "whist-protocol-client-shared-lib" {
+  count                   = var.env == "dev" ? 1 : 0
+  bucket                  = aws_s3_bucket.whist-protocol-client-shared-lib[0].id
   block_public_acls       = false
   block_public_policy     = false
   restrict_public_buckets = false
@@ -215,9 +224,20 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "whist-e2e-protoco
   }
 }
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "whist-protocol-shared-libs-encryption" {
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-protocol-dependencies-encryption" {
   count  = var.env == "prod" ? 1 : 0
-  bucket = aws_s3_bucket.whist-protocol-shared-libs[0].id
+  bucket = aws_s3_bucket.whist-protocol-dependencies[0].id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "whist-protocol-client-shared-lib-encryption" {
+  count  = var.env == "dev" ? 1 : 0
+  bucket = aws_s3_bucket.whist-protocol-client-shared-lib[0].id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -278,7 +298,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "whist-user-app-configs-lifecyc
     id     = "userConfigCleanRule"
     status = "Enabled"
 
-    # To apply the rule to all user configs, add a filter using a range 
+    # To apply the rule to all user configs, add a filter using a range
     # of size up to 1Gb.
     filter {
       # Represented in bytes
