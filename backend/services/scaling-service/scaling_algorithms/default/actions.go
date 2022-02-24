@@ -111,23 +111,26 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 		currentStarting int
 	)
 
-	// Get active instances with current image
+	// Get active instances (status ACTIVE) with current image
 	for _, instance := range allActive {
 		if instance.ImageID == graphql.String(latestImageID) {
 			currentActive++
 		}
 	}
 
-	// Get current starting instances with current image
+	// Get current starting instances (status PRE_CONNECTION) with current image
 	for _, instance := range allStarting {
 		if instance.ImageID == graphql.String(latestImageID) {
 			currentStarting++
 		}
 	}
 
-	// Consider only current instances for computing the buffer capacity
-	instancesOnRegion := currentActive + currentStarting
-	if instancesOnRegion < DEFAULT_INSTANCE_BUFFER {
+	// Compute the current capacity we have on the region
+	// Consider starting instances because otherwise we will
+	// find ourselves starting many instances unnecessarily.
+	capacity := currentActive + currentStarting
+
+	if capacity < DEFAULT_INSTANCE_BUFFER {
 
 		logger.Infof("Current number of instances %v is less than desired %v. Scaling up to match with image %v.", instancesOnRegion, DEFAULT_INSTANCE_BUFFER, latestImageID)
 
@@ -161,9 +164,10 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	}()
 
 	var (
-		currentStarting, freeInstances, lingeringInstances subscriptions.WhistInstances
-		lingeringIDs                                       []string
-		err                                                error
+		freeInstances, lingeringInstances subscriptions.WhistInstances
+		currentActive, currentStarting    int
+		lingeringIDs                      []string
+		err                               error
 	)
 
 	// Query for the latest image id
@@ -178,19 +182,45 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	}
 	latestImageID := string(imageResult[0].ImageID)
 
-	// check database for all active instances without mandelboxes
+	// query database for all active instances (status ACTIVE) without mandelboxes
 	allActive, err := dbclient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "ACTIVE", event.Region)
 	if err != nil {
 		return utils.MakeError("failed to query database for active instances. Err: %v", err)
 	}
 
-	// check database for all preconnection instances
+	// query database for all starting (status PRE_CONNECTION) instances
 	allStarting, err := dbclient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "PRE_CONNECTION", event.Region)
 	if err != nil {
 		return utils.MakeError("failed to query database for starting instances. Err: %v", err)
 	}
 
-	// First, check active instances
+	// Get active instances (status ACTIVE) with current image
+	for _, instance := range allActive {
+		if instance.ImageID == graphql.String(latestImageID) {
+			currentActive++
+		}
+	}
+
+	// Get current starting instances (status PRE_CONNECTION) with current image
+	for _, instance := range allStarting {
+		if instance.ImageID == graphql.String(latestImageID) {
+			currentStarting++
+		}
+	}
+
+	// Compute the current capacity we have on the region
+	// Consider starting instances because otherwise we will
+	// find ourselves starting many instances unnecessarily.
+	capacity := currentStarting + currentActive
+
+	// Create a list of instances that can be scaled down from the active instances list.
+	// For this, we have to consider the following conditions:
+	// 1. Does the instance have any running mandelboxes? If so, don't scale down.
+	// 2. Does the instance have the latest image, corresponding to the latest entry on the database?
+	// If so, check if we have more than the desired number of instances. In case we do, add the instance
+	// to the list that will be scaled down.
+	// 3. If the instance does not have the latest image, and is not running any mandelboxes, add to the
+	// list that will be scaled down.
 	for _, instance := range allActive {
 		if len(instance.Mandelboxes) > 0 {
 			// Instance has running mandelboxes
@@ -199,20 +229,13 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		}
 
 		if instance.ImageID == graphql.String(latestImageID) &&
-			len(allStarting) > DEFAULT_INSTANCE_BUFFER {
+			capacity > DEFAULT_INSTANCE_BUFFER {
 			// Only scale down free instances with the current
 			// image if we have more than desired instances
 			freeInstances = append(freeInstances, instance)
 		} else {
 			// Scale down all free instances with old images
 			freeInstances = append(freeInstances, instance)
-		}
-	}
-
-	// Then, check starting instances
-	for _, instance := range allStarting {
-		if instance.ImageID == graphql.String(latestImageID) {
-			currentStarting = append(currentStarting, instance)
 		}
 	}
 
@@ -223,7 +246,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	}
 
 	for _, instance := range drainingInstances {
-		// Check if lingering instance is safe to terminate
+		// Check if lingering instance is free from mandelboxes
 		if len(instance.Mandelboxes) == 0 {
 			lingeringInstances = append(lingeringInstances, instance)
 			lingeringIDs = append(lingeringIDs, string(instance.ID))
@@ -244,12 +267,6 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// Verify if there are free instances that can be scaled down
 	if len(freeInstances) == 0 {
 		logger.Info("There are no free instances to scale down in %v.", event.Region)
-		return nil
-	}
-
-	// Don't scale down free instances if there are instances in pre connection to avoid downtimes
-	if len(currentStarting) > 0 {
-		logger.Infof("Not scaling down free instances as there are %v instances on preconnection state.", len(currentStarting))
 		return nil
 	}
 
