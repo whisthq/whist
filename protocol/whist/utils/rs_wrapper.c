@@ -17,7 +17,7 @@ Defines
 #define RS_FIELD_SIZE 256
 
 // size of row and column of RSTable
-#define RS_TABLE_SIZE (RS_FIELD_SIZE)
+#define RS_TABLE_SIZE (RS_FIELD_SIZE+1)
 
 // This is the type for the rs_table we use for caching
 typedef RSCode *RSTable[RS_TABLE_SIZE][RS_TABLE_SIZE];
