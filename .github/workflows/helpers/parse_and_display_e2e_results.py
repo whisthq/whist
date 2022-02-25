@@ -141,20 +141,21 @@ if __name__ == "__main__":
     if not os.path.isdir(logs_root_dir):
         print("Error, logs folder {} does not exist!".format(logs_root_dir))
         sys.exit(-1)
-    # Look for the most recent logs folder created on the same day (or the day before in case the test ran right before midnight). If multiple logs folder are present, take the most recent one
+    # Look for the most recent logs folder created on the same day (or the day before in case the test ran right before midnight).
     current_time = datetime.now()
     last_hour = current_time - timedelta(hours=1)
 
     # Convert to list
     logs_root_dirs = [logs_root_dir]
 
-    for folder_name in sorted(os.listdir(logs_root_dirs[0]), reverse=True):
+    for folder_name in sorted(os.listdir(logs_root_dirs[0])):
         if (
             current_time.strftime("%Y_%m_%d@") in folder_name
             or last_hour.strftime("%Y_%m_%d@") in folder_name
         ):
             logs_root_dirs.append(os.path.join(logs_root_dirs[0], folder_name))
-            test_start_time = folder_name
+            if test_start_time == "":
+                test_start_time = folder_name
     if len(logs_root_dirs) == 1:
         print("Error: protocol logs not found!")
         sys.exit(-1)
@@ -167,68 +168,77 @@ if __name__ == "__main__":
 
     print("Found logs for the following experiments: ")
     experiments = []
-    for log_dir in logs_root_dirs:
-        if logs_contain_errors(log_dir):
-            print("Logs from latest run in folder {} contain errors. Discarding.".format(log_dir))
-            continue
+    for i, log_dir in enumerate(logs_root_dirs):
 
-        # Check if the log files with metrics are present
         client_log_file = os.path.join(log_dir, "client", "client.log")
         server_log_file = os.path.join(log_dir, "server", "server.log")
-
-        if not os.path.isfile(client_log_file):
-            print(
-                "Error, client log file {} does not exist in folder {}".format(
-                    client_log_file, log_dir
-                )
-            )
-            continue
-        if not os.path.isfile(server_log_file):
-            print(
-                "Error, server log file {} does not exist in folder {}".format(
-                    server_log_file, log_dir
-                )
-            )
-            continue
 
         experiment_metadata = parse_metadata(log_dir)
         network_conditions = "normal"
         if experiment_metadata and "network_conditions" in experiment_metadata:
             network_conditions = experiment_metadata["network_conditions"]
 
-        client_metrics, server_metrics = extract_metrics(client_log_file, server_log_file)
+        client_metrics = None
+        server_metrics = None
+
+        if logs_contain_errors(log_dir, verbose=True):
+            print(
+                "Logs from latest run in folder {} are incomplete or contain fatal errors. Discarding.".format(
+                    log_dir
+                )
+            )
+        else:
+            client_metrics, server_metrics = extract_metrics(client_log_file, server_log_file)
 
         experiment_entry = {
             "experiment_metadata": experiment_metadata,
             "client_metrics": client_metrics,
             "server_metrics": server_metrics,
-            "network_conditions": network_conditions,
+            "network_conditions": network_conditions
+            if (client_metrics is not None and server_metrics is not None)
+            else "unknown",
+            "outcome": e2e_script_outcomes[i],
         }
 
         experiments.append(experiment_entry)
-        print("\t+ Folder: {} with network_conditions: {}".format(log_dir, network_conditions))
+        print(
+            "\t+ Folder: {} with network_conditions: {}. Error: {}".format(
+                log_dir, network_conditions, client_metrics is None or server_metrics is None
+            )
+        )
 
-    exit_with_error = False
+    # Add entries for experiments that failed or were skipped
+    for i in range(len(experiments), len(e2e_script_outcomes)):
+        experiment_entry = {
+            "experiment_metadata": None,
+            "client_metrics": None,
+            "server_metrics": None,
+            "network_conditions": "unknown",
+            "outcome": e2e_script_outcomes[i],
+        }
+        experiments.append(experiment_entry)
+        print("\t+ Adding empty entry for failed/skipped experiment")
 
     for i, compared_branch_name in enumerate(compared_branch_names):
         print("Comparing to branch {}".format(compared_branch_name))
         # Create output Markdown file with comparisons to this branch
         results_file = open("streaming_e2e_test_results_{}.md".format(i), "w")
         results_file.write("## Results compared to branch {}\n".format(compared_branch_name))
-        for j, experiment in enumerate(reversed(experiments)):
+        for j, experiment in enumerate(experiments):
             results_file.write(
                 "### Experiment {} - Network conditions: {}\n".format(
                     j,
-                    experiment["network_conditions"]
-                    if "network_conditions" in experiment
-                    else "normal",
+                    experiment["network_conditions"],
                 )
             )
-            if e2e_script_outcomes[j] == "failure":
+            if experiment["outcome"] != "success":
                 results_file.write(
-                    ":bangbang::warning: WARNING: the E2E streaming test script failed and the results below might be inaccurate! This could also be due to a server hang.\n\n"
+                    ":bangbang::warning: WARNING: the outcome of the experiment below was: `{}` and the results below (if any) might be inaccurate!\n\n".format(
+                        experiment["outcome"]
+                    )
                 )
-                exit_with_error = True
+            if experiment["client_metrics"] is None or experiment["server_metrics"] is None:
+                continue
             # If we are looking to compare the results with the latest run on a branch, we need to download the relevant files first
             if compared_branch_name != "":
                 download_latest_logs(
@@ -334,6 +344,3 @@ if __name__ == "__main__":
                 title=title,
                 update_date=True,
             )
-
-    if exit_with_error:
-        sys.exit(-1)
