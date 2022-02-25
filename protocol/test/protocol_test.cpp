@@ -1223,10 +1223,10 @@ TEST_F(ProtocolTest, FECTest) {
 
 #define NUM_TOTAL_PACKETS (NUM_ORIGINAL_PACKETS + NUM_FEC_PACKETS)
 
-//make the last packet shorter than others
+// make the last packet shorter than others
 #define TAIL_SHORTER_SIZE 20
 
-#define BUFFER_SIZE (NUM_ORIGINAL_PACKETS * (MAX_PACKET_SIZE - FEC_HEADER_SIZE)-TAIL_SHORTER_SIZE)
+#define BUFFER_SIZE (NUM_ORIGINAL_PACKETS * (MAX_PACKET_SIZE - FEC_HEADER_SIZE) - TAIL_SHORTER_SIZE)
 
     // Initialize FEC
     init_fec();
@@ -1264,7 +1264,6 @@ TEST_F(ProtocolTest, FECTest) {
     FECDecoder* fec_decoder =
         create_fec_decoder(NUM_ORIGINAL_PACKETS, NUM_FEC_PACKETS, MAX_PACKET_SIZE);
 
-    
     // Register some sufficiently large subset of the encoded packets
     fec_decoder_register_buffer(fec_decoder, 0, encoded_buffers[0], encoded_buffer_sizes[0]);
     // It's not possible to reconstruct 2 packets, only being given 1 FEC packet
@@ -1290,55 +1289,47 @@ TEST_F(ProtocolTest, FECTest) {
 #include <random>
 
 TEST_F(ProtocolTest, FECTest2) {
-
     WhistTimer timer;
     WhistTimer timer2;
-    const int verbose_print=1;
+    const int verbose_print = 1;
     init_fec();
 
-    //better random generator than rand() 
+    // better random generator than rand()
     std::random_device rd;
     std::mt19937 g(rd());
-    std::uniform_int_distribution<> dis(1, 1000*1000*1000);
+    std::uniform_int_distribution<> dis(1, 1000 * 1000 * 1000);
 
-    const int  segment_size=1000;
-    const int num_segments=256;
-    const int  large_buffer_size=num_segments*(segment_size-FEC_HEADER_SIZE) -10;
-    const double fec_ratio=0.5;
-    std::vector<int> max_group_sizes={32,64,128,256};
-    int saved_max_group_size=rs_wrapper_set_max_group_size(32);
+    const int segment_size = 1000;
+    const int num_segments = 256;
+    const int large_buffer_size = num_segments * (segment_size - FEC_HEADER_SIZE) - 10;
+    const double fec_ratio = 0.5;
+    std::vector<int> max_group_sizes = {32, 64, 128, 256};
+    int saved_max_group_size = rs_wrapper_set_max_group_size(32);
 
-    if(verbose_print)
-    {
+    if (verbose_print) {
         rs_wrapper_set_verbose_log(1);
     }
 
-    for(int idx=0;idx<(int)max_group_sizes.size();idx++)
-    {
-
-        int max_group_size=max_group_sizes[idx];
+    for (int idx = 0; idx < (int)max_group_sizes.size(); idx++) {
+        int max_group_size = max_group_sizes[idx];
         rs_wrapper_set_max_group_size(max_group_size);
 
-        if(verbose_print)
-        {
-            fprintf(stderr,"=====current max_group_size=%d=====\n",max_group_size);
+        if (verbose_print) {
+            fprintf(stderr, "=====current max_group_size=%d=====\n", max_group_size);
         }
 
         char buf[large_buffer_size];
-        
-        for(int i=0;i<large_buffer_size;i++)
-        {
-            buf[i]=i;
+
+        for (int i = 0; i < large_buffer_size; i++) {
+            buf[i] = i;
         }
 
-        int num_real_buffers= num_segments;
-        int num_fec_buffers= get_num_fec_packets(num_real_buffers,fec_ratio);
-        int num_total_buffers= num_real_buffers+ num_fec_buffers;
+        int num_real_buffers = num_segments;
+        int num_fec_buffers = get_num_fec_packets(num_real_buffers, fec_ratio);
+        int num_total_buffers = num_real_buffers + num_fec_buffers;
 
-        if(verbose_print)
-        {
-            fprintf(stderr, "real=%d,fec=%d\n", num_real_buffers,num_fec_buffers);
-
+        if (verbose_print) {
+            fprintf(stderr, "real=%d,fec=%d\n", num_real_buffers, num_fec_buffers);
         }
 
         FECEncoder* fec_encoder =
@@ -1346,54 +1337,50 @@ TEST_F(ProtocolTest, FECTest2) {
 
         fec_encoder_register_buffer(fec_encoder, buf, sizeof(buf));
 
-        void** encoded_buffers=(void **)malloc( sizeof(void*) *num_total_buffers); 
-        int * encoded_buffer_sizes=(int *)malloc( sizeof(int) *num_total_buffers);
-        int * indices= (int *)malloc( sizeof(int) *num_total_buffers);
+        void** encoded_buffers = (void**)malloc(sizeof(void*) * num_total_buffers);
+        int* encoded_buffer_sizes = (int*)malloc(sizeof(int) * num_total_buffers);
+        int* indices = (int*)malloc(sizeof(int) * num_total_buffers);
 
         start_timer(&timer);
-        //do encoding
+        // do encoding
         fec_get_encoded_buffers(fec_encoder, encoded_buffers, encoded_buffer_sizes);
-        double t=get_timer(&timer);
+        double t = get_timer(&timer);
 
-        if(verbose_print)
-        {
-            fprintf(stderr, "encode used=%f\n",t);
+        if (verbose_print) {
+            fprintf(stderr, "encode used=%f\n", t);
         }
 
-        FECDecoder* fec_decoder = create_fec_decoder(num_real_buffers, num_fec_buffers, segment_size);
-        int cnt=0;
-        int decoded_size=-1;
-        char decoded_buffer[large_buffer_size+segment_size];
+        FECDecoder* fec_decoder =
+            create_fec_decoder(num_real_buffers, num_fec_buffers, segment_size);
+        int cnt = 0;
+        int decoded_size = -1;
+        char decoded_buffer[large_buffer_size + segment_size];
 
-
-        //an index array to simulate packet loss and out of order delivery
-        for(int i=0;i<num_total_buffers;i++)
-        {
-               indices[i]=i;
+        // an index array to simulate packet loss and out of order delivery
+        for (int i = 0; i < num_total_buffers; i++) {
+            indices[i] = i;
         }
 
-        //shuffle the index array
-        for(int i=0;i<num_total_buffers;i++)
-        {
-                int j=dis(g)%num_total_buffers;
-               int tmp=indices[i];
-               indices[i]=indices[j];
-               indices[j]=tmp;
+        // shuffle the index array
+        for (int i = 0; i < num_total_buffers; i++) {
+            int j = dis(g) % num_total_buffers;
+            int tmp = indices[i];
+            indices[i] = indices[j];
+            indices[j] = tmp;
         }
 
-        //feed buffer into the decoder according to the shuffle
-        for(int i=0;i<num_total_buffers;i++)
-        {
-            int index=indices[i];
-            fec_decoder_register_buffer(fec_decoder, index, encoded_buffers[index], encoded_buffer_sizes[index]);
+        // feed buffer into the decoder according to the shuffle
+        for (int i = 0; i < num_total_buffers; i++) {
+            int index = indices[i];
+            fec_decoder_register_buffer(fec_decoder, index, encoded_buffers[index],
+                                        encoded_buffer_sizes[index]);
             start_timer(&timer2);
             decoded_size = fec_get_decoded_buffer(fec_decoder, decoded_buffer);
-            double t2=get_timer(&timer2);
-            if(decoded_size!=-1)
-            {
-                if(verbose_print)
-                {
-                    fprintf(stderr, "was able to decode after feeding %d buffers, t2=%f\n",i+1,t2);
+            double t2 = get_timer(&timer2);
+            if (decoded_size != -1) {
+                if (verbose_print) {
+                    fprintf(stderr, "was able to decode after feeding %d buffers, t2=%f\n", i + 1,
+                            t2);
                 }
                 break;
             }

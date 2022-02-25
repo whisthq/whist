@@ -544,10 +544,7 @@ int bit_array_test_bit(const BitArray *const ba, const unsigned int bit) {
     return ((ba->array[BIT_CHAR(bit)] & BIT_IN_CHAR(bit)) != 0);
 }
 
-int int_div_roundup(int a,int b)
-{
-    return (a+b-1)/b;
-}
+int int_div_roundup(int a, int b) { return (a + b - 1) / b; }
 
 // Include WHIST_GIT_REVISION
 #include <whist.v>

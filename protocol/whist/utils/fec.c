@@ -80,13 +80,11 @@ Globals
 ============================
 */
 
-
 /*
 ============================
 Private Function Declarations
 ============================
 */
-
 
 void write_u16(char* p, u16_t w);
 u16_t read_u16(char* p);
@@ -97,9 +95,7 @@ Public Function Implementations
 ============================
 */
 
-void init_fec(void) {
-    init_rs_wrapper();
-}    
+void init_fec(void) { init_rs_wrapper(); }
 // num_fec_packets / (num_fec_packets + num_indices) = context->fec_packet_ratio
 // a / (a + b) = c
 // a = ac + bc
@@ -111,7 +107,7 @@ int get_num_fec_packets(int num_real_packets, double fec_packet_ratio) {
 }
 
 FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int max_buffer_size) {
-    //FATAL_ASSERT(num_real_buffers + num_fec_buffers <= MAX_RS_BUFFERS);
+    // FATAL_ASSERT(num_real_buffers + num_fec_buffers <= MAX_RS_BUFFERS);
     FATAL_ASSERT(max_buffer_size <= MAX_BUFFER_SIZE);
     FATAL_ASSERT(max_buffer_size > FEC_HEADER_SIZE);
 
@@ -196,7 +192,8 @@ void fec_get_encoded_buffers(FECEncoder* fec_encoder, void** buffers, int* buffe
             fec_encoder->buffers[i] = safe_malloc(fec_payload_size);
             fec_encoder->buffer_sizes[i] = fec_payload_size;
         }
-        rs_wrapper_encode(fec_encoder->rs_code, (void**)fec_encoder->buffers, fec_encoder->buffers+fec_encoder->num_real_buffers, fec_payload_size);
+        rs_wrapper_encode(fec_encoder->rs_code, (void**)fec_encoder->buffers,
+                          fec_encoder->buffers + fec_encoder->num_real_buffers, fec_payload_size);
         fec_encoder->encode_performed = true;
 
     }  // currently we allow fec_get_encoded_buffers to be called multiple times,
@@ -260,13 +257,11 @@ void fec_decoder_register_buffer(FECDecoder* fec_decoder, int index, void* buffe
     }
 
     fec_decoder->max_packet_size = max(fec_decoder->max_packet_size, buffer_size);
-    rs_wrapper_decode_helper_register_index(fec_decoder->rs_code,index);
-
+    rs_wrapper_decode_helper_register_index(fec_decoder->rs_code, index);
 }
 
 int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer) {
-    if(rs_wrapper_decode_helper_can_decode(fec_decoder->rs_code)==false)
-    {
+    if (rs_wrapper_decode_helper_can_decode(fec_decoder->rs_code) == false) {
         return -1;
     }
     bool need_recovery = false;
@@ -279,7 +274,7 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer) {
         int cnt = 0;
         int* index = safe_malloc(fec_decoder->num_accepted_buffers * sizeof(int));
 
-        for (int i = 0; i < fec_decoder->num_buffers ; i++) {
+        for (int i = 0; i < fec_decoder->num_buffers; i++) {
             if (fec_decoder->buffer_sizes[i] == -1) continue;
             index[cnt] = i;  // and array required by rs decoder, stores the index of input packets
             FATAL_ASSERT(cnt <= i);
@@ -296,11 +291,12 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer) {
         }
 
         FATAL_ASSERT(cnt >= fec_decoder->num_real_buffers);
-        FATAL_ASSERT(cnt== fec_decoder->num_accepted_buffers);
+        FATAL_ASSERT(cnt == fec_decoder->num_accepted_buffers);
 
         // decode
-        int res = rs_wrapper_decode(fec_decoder->rs_code, (void**)fec_decoder->buffers, index,fec_decoder->num_accepted_buffers,
-                            fec_decoder->max_packet_size);
+        int res =
+            rs_wrapper_decode(fec_decoder->rs_code, (void**)fec_decoder->buffers, index,
+                              fec_decoder->num_accepted_buffers, fec_decoder->max_packet_size);
         FATAL_ASSERT(
             res == 0);  // should always success if called correcly,  except malloc fail inside lib
         free(index);
