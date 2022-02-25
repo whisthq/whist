@@ -50,6 +50,11 @@ jobs:
       - name: Checkout Git Repository
         uses: actions/checkout@v2
 
+      - name: Setup Python-based notifications
+        working-directory: .github/workflows/helpers
+        shell: bash --noprofile --norc -eo pipefail {0}
+        run: ./notifications/setup_notifications.sh
+
       # Necessary for downloading protocol libs and base Dockerfile NVIDIA GRID drivers from AWS S3
       - name: Configure AWS S3 CLI
         uses: aws-actions/configure-aws-credentials@v1
@@ -94,12 +99,6 @@ jobs:
               exit
             fi
           fi
-
-      - name: Setup Python-based notifications
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
-        working-directory: .github/workflows/helpers
-        shell: bash --noprofile --norc -eo pipefail {0}
-        run: ./notifications/setup_notifications.sh
 
       - name: Notify Slack on Workflow Error (Only on Push/Workflow_dispatch Events)
         if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
