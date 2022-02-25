@@ -202,9 +202,11 @@ int x11_capture_screen(X11CaptureDevice* device) {
                 c.pixel = XGetPixel(device->image, 0, 0);
                 XQueryColor(device->display,
                             DefaultColormap(device->display, XDefaultScreen(device->display)), &c);
-                device->corner_color.red = c.red / 256;
-                device->corner_color.green = c.green / 256;
-                device->corner_color.blue = c.blue / 256;
+                // Color format is r/g/b 0x0000-0xffff
+                // We just need the leading byte
+                device->corner_color.red = c.red >> 8;
+                device->corner_color.green = c.green >> 8;
+                device->corner_color.blue = c.blue >> 8;
             }
             XSetErrorHandler(prev_handler);
         }
