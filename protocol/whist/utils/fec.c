@@ -249,6 +249,9 @@ void fec_decoder_register_buffer(FECDecoder* fec_decoder, int index, void* buffe
 
     FATAL_ASSERT(fec_decoder->buffer_sizes[index] == -1);
 
+    // no need to store new buffers anymore if recovery is already done
+    if (fec_decoder->recovery_performed) return;
+
     fec_decoder->buffers[index] = buffer;
     fec_decoder->buffer_sizes[index] = buffer_size;
     fec_decoder->num_accepted_buffers++;
@@ -290,6 +293,10 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer) {
             cnt++;
         }
 
+        for (int i = cnt; i < fec_decoder->num_buffers; i++) {
+            fec_decoder->buffers[i] = 0;
+        }
+
         FATAL_ASSERT(cnt >= fec_decoder->num_real_buffers);
         FATAL_ASSERT(cnt == fec_decoder->num_accepted_buffers);
 
@@ -300,6 +307,7 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer) {
         FATAL_ASSERT(
             res == 0);  // should always success if called correcly,  except malloc fail inside lib
         free(index);
+
         fec_decoder->recovery_performed = true;
 
     }  // currently we allow fec_get_decoded_buffer to be called again after succesfully recovered
@@ -322,7 +330,7 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer) {
 
 void destroy_fec_decoder(FECDecoder* fec_decoder) {
     if (fec_decoder->recovery_performed) {
-        for (int i = 0; i < fec_decoder->num_real_buffers; i++) {
+        for (int i = 0; i < fec_decoder->num_buffers; i++) {
             free(fec_decoder->buffers[i]);
         }
     }

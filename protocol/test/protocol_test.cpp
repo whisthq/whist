@@ -1394,6 +1394,7 @@ TEST_F(ProtocolTest, FECTest2) {
 
         free(encoded_buffers);
         free(encoded_buffer_sizes);
+        free(indices);
     }
     rs_wrapper_set_max_group_size(saved_max_group_size);
 }

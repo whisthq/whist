@@ -17,7 +17,7 @@ Defines
 #define RS_FIELD_SIZE 256
 
 // size of row and column of RSTable
-#define RS_TABLE_SIZE (RS_FIELD_SIZE+1)
+#define RS_TABLE_SIZE (RS_FIELD_SIZE + 1)
 
 // This is the type for the rs_table we use for caching
 typedef RSCode *RSTable[RS_TABLE_SIZE][RS_TABLE_SIZE];
@@ -219,22 +219,27 @@ int rs_wrapper_decode(RSWrapper *rs_wrapper, void **pkt, int *index, int num_pkt
         subgroup_offsets_cnt[i] = 0;
     }
 
+    // make a copy of the pkt array, since the underlying rs lib will reorder the input
+    void **pkt_copy = malloc(sizeof(void *) * num_pkt);
+    memcpy(pkt_copy, pkt, sizeof(void *) * num_pkt);
+
+    int unused_cnt = 0;
     // we run through the index arrary, to do the map mentioned above
     for (int i = 0; i < num_pkt; i++) {
         SubIndexInfo info = index_full_to_sub(rs_wrapper, index[i]);
 
-        // already have enough for this subgroup, then "drop" extra buffers
+        // already have enough for this subgroup, then ignore extra buffers.
+        // and simply put them to the end of pkt array
         if (subgroup_offsets_cnt[info.group_id] ==
-            rs_wrapper->group_infos[info.group_id].num_real_buffers)
+            rs_wrapper->group_infos[info.group_id].num_real_buffers) {
+            pkt[rs_wrapper->num_real_buffers + unused_cnt] = pkt_copy[i];
+            unused_cnt++;
             continue;
+        }
 
         subgroup_offsets[info.group_id][subgroup_offsets_cnt[info.group_id]] = i;
         subgroup_offsets_cnt[info.group_id]++;
     }
-
-    // make a copy of the pkt array, since the underlying rs lib will reorder the input
-    void **pkt_copy = malloc(sizeof(void *) * num_pkt);
-    memcpy(pkt_copy, pkt, sizeof(void *) * num_pkt);
 
     // two helper buffers to store subsets of pkt and index
     void **pkt_sub = malloc(sizeof(void *) * rs_wrapper->group_max_num_real_buffers);
@@ -266,11 +271,6 @@ int rs_wrapper_decode(RSWrapper *rs_wrapper, void **pkt, int *index, int num_pkt
             pkt[index_sub_to_full(rs_wrapper, i, j)] = pkt_sub[j];
         }
         free(subgroup_offsets[i]);  // we dont need the buffer for this group any more
-    }
-
-    // set extra pkt to NULL to avoid misuse
-    for (int i = rs_wrapper->num_real_buffers; i < num_pkt; i++) {
-        pkt[i] = NULL;
     }
 
     free(subgroup_offsets);
