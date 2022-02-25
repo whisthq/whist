@@ -1352,7 +1352,6 @@ TEST_F(ProtocolTest, FECTest2) {
 
         FECDecoder* fec_decoder =
             create_fec_decoder(num_real_buffers, num_fec_buffers, segment_size);
-        int cnt = 0;
         int decoded_size = -1;
         char decoded_buffer[large_buffer_size + segment_size];
 

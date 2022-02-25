@@ -137,7 +137,6 @@ RSWrapper *rs_wrapper_create(int num_real_buffers, int num_total_buffers) {
     FATAL_ASSERT(num_real_buffers > 0);
     FATAL_ASSERT(num_real_buffers <= num_real_buffers);
 
-    int num_fec_buffers = num_total_buffers - num_real_buffers;
     int num_groups =
         int_div_roundup(num_total_buffers, rs_wrapper_max_group_size);  // inter div, round up
 
@@ -322,7 +321,9 @@ void rs_wrapper_test(void) {
     for (int i = 0; i < num_real + num_fec; i++) {
         SubIndexInfo info = index_full_to_sub(rs_wrapper, i);
         int check = index_sub_to_full(rs_wrapper, info.group_id, info.sub_index);
+        fprintf(stderr, "<index=%d check=%d>", i, check);
     }
+    fprintf(stderr, "\n");
 }
 
 int rs_wrapper_set_max_group_size(int a) {
