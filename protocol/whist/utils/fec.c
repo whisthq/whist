@@ -37,12 +37,6 @@ Defines
 ============================
 */
 
-//TODO: remove in PR
-//temp solution for the spamming when FATAL_ASSERT fails in test
-#undef FATAL_ASSERT
-#include <assert.h>
-#define FATAL_ASSERT assert
-
 #define MAX_NUM_BUFFERS 1024
 
 // The most amount of buffers that RS accepts
@@ -271,10 +265,6 @@ void fec_decoder_register_buffer(FECDecoder* fec_decoder, int index, void* buffe
 }
 
 int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer) {
-    /*
-    if (fec_decoder->num_accepted_buffers < fec_decoder->num_real_buffers) {
-        return -1;
-    }*/
     if(rs_wrapper_decode_helper_can_decode(fec_decoder->rs_code)==false)
     {
         return -1;
@@ -289,7 +279,7 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer) {
         int cnt = 0;
         int* index = safe_malloc(fec_decoder->num_accepted_buffers * sizeof(int));
 
-        for (int i = 0; i < fec_decoder->num_buffers /*&& cnt < fec_decoder->num_real_buffers */ ; i++) {
+        for (int i = 0; i < fec_decoder->num_buffers ; i++) {
             if (fec_decoder->buffer_sizes[i] == -1) continue;
             index[cnt] = i;  // and array required by rs decoder, stores the index of input packets
             FATAL_ASSERT(cnt <= i);
