@@ -199,6 +199,25 @@ Defines
 // resending audio packets is still acceptable.
 #define NUM_PREV_AUDIO_FRAMES_RESEND 1
 
+/**
+ * Global constructor function.
+ *
+ * This defines a function which will run before main() is called
+ * whenever the object containing it has been built into a program.
+ */
+#if defined(__GNUC__)
+#define CONSTRUCTOR(func) static void __attribute__((constructor)) func(void)
+#elif defined(_MSC_VER)
+#pragma section(".CRT$XCU", read)
+#define CONSTRUCTOR(func)                                                   \
+    static void func(void);                                                 \
+    __declspec(allocate(".CRT$XCU")) void (*construct_##func)(void) = func; \
+    static void func(void)
+#else
+// cppcheck-suppress preprocessorErrorDirective
+#error "No constructor function implementation for this compiler."
+#endif
+
 /*
 ============================
 Constants
