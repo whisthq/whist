@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import numpy as np
+import math
 from datetime import datetime, timedelta
 
 # add the current directory to the path no matter where this is called from
@@ -36,10 +37,21 @@ def extract_metrics(client_log_file, server_log_file):
                 metric_name = l[-3].strip('"')
                 metric_values = l[-1].strip('"').split(",")
 
-                count = int(metric_values[0])
-                normal_sum = float(metric_values[1])
-                sum_of_squares = float(metric_values[2])
-                sum_with_offset = float(metric_values[3])
+                count = 0
+                normal_sum = 0.0
+                sum_of_squares = 0.0
+                sum_with_offset = 0.0
+
+                if len(metric_values) == 1:
+                    count = 1
+                    normal_sum = float(metric_values[0])
+                    sum_of_squares = 0
+                    sum_with_offset = 0
+                else:
+                    count = int(metric_values[0])
+                    normal_sum = float(metric_values[1])
+                    sum_of_squares = float(metric_values[2])
+                    sum_with_offset = float(metric_values[3])
 
                 if metric_name not in client_metrics:
                     client_metrics[metric_name] = {
@@ -59,12 +71,23 @@ def extract_metrics(client_log_file, server_log_file):
                 l = line.strip().split()
                 metric_name = l[-3].strip('"')
                 # metric_value = float(l[-1].strip('"'))
-                metric_values = l[-1].strip('"')
+                metric_values = l[-1].strip('"').split(",")
 
-                count = int(metric_values[0])
-                normal_sum = float(metric_values[1])
-                sum_of_squares = float(metric_values[2])
-                sum_with_offset = float(metric_values[3])
+                count = 0
+                normal_sum = 0.0
+                sum_of_squares = 0.0
+                sum_with_offset = 0.0
+
+                if len(metric_values) == 1:
+                    count = 1
+                    normal_sum = float(metric_values[0])
+                    sum_of_squares = 0
+                    sum_with_offset = 0
+                else:
+                    count = int(metric_values[0])
+                    normal_sum = float(metric_values[1])
+                    sum_of_squares = float(metric_values[2])
+                    sum_with_offset = float(metric_values[3])
 
                 if metric_name not in server_metrics:
                     server_metrics[metric_name] = {
@@ -82,33 +105,39 @@ def extract_metrics(client_log_file, server_log_file):
     client_metrics2 = {}
     server_metrics2 = {}
 
-    for k in client_metrics:
-        # client_metrics[k] = np.array(client_metrics[k])
+    # print(client_metrics)
+    for metric_name in client_metrics:
+        # print(metric_name)
+        # client_metrics[metric_name] = np.array(client_metrics[metric_name])
+        assert client_metrics[metric_name]["sum_of_squares"] >= 0.0
         variance = client_metrics[metric_name]["sum_of_squares"] - (
-            (client_metrics[metric_name]["sum_of_squares"] ** 2) / client_metrics[k]["entries"]
+            (client_metrics[metric_name]["sum_with_offset"] ** 2)
+            / client_metrics[metric_name]["entries"]
         )
-        variance /= client_metrics[k]["entries"]
-        standard_deviation = variance / variance
-        client_metrics2[k] = {
-            "entries": client_metrics[k]["entries"],
-            "avg": client_metrics[k]["sum"] / client_metrics[k]["entries"],
+        variance /= client_metrics[metric_name]["entries"]
+        standard_deviation = math.sqrt(variance)
+        client_metrics2[metric_name] = {
+            "entries": client_metrics[metric_name]["entries"],
+            "avg": client_metrics[metric_name]["sum"] / client_metrics[metric_name]["entries"],
             "std": standard_deviation,
-            "max": np.max(client_metrics[k]),
-            "min": np.min(client_metrics[k]),
+            "max": np.max(client_metrics[metric_name]),
+            "min": np.min(client_metrics[metric_name]),
         }
 
-    for k in server_metrics:
+    for metric_name in server_metrics:
+        assert server_metrics[metric_name]["sum_of_squares"] >= 0.0
         variance = server_metrics[metric_name]["sum_of_squares"] - (
-            (server_metrics[metric_name]["sum_of_squares"] ** 2) / server_metrics[k]["entries"]
+            (server_metrics[metric_name]["sum_with_offset"] ** 2)
+            / server_metrics[metric_name]["entries"]
         )
-        variance /= server_metrics[k]["entries"]
-        standard_deviation = variance / variance
-        server_metrics2[k] = {
-            "entries": server_metrics[k]["entries"],
-            "avg": server_metrics[k]["sum"] / server_metrics[k]["entries"],
+        variance /= server_metrics[metric_name]["entries"]
+        standard_deviation = math.sqrt(variance)
+        server_metrics2[metric_name] = {
+            "entries": server_metrics[metric_name]["entries"],
+            "avg": server_metrics[metric_name]["sum"] / server_metrics[metric_name]["entries"],
             "std": standard_deviation,
-            "max": np.max(server_metrics[k]),
-            "min": np.min(server_metrics[k]),
+            "max": np.max(server_metrics[metric_name]),
+            "min": np.min(server_metrics[metric_name]),
         }
 
     return client_metrics2, server_metrics2
