@@ -55,9 +55,9 @@ Globals
 static SDL_TLSID rs_table_tls_id;
 
 // the max size of group for encoding/decoding in rs_wrapper
-// if num of buffers is large then this, rs_wrapper will split the encoding/decoding into multiple
-// groups
-// it's stored in a int instead of a macro, for easy testing
+// if num of total buffers is large than this, rs_wrapper will split the encoding/decoding into
+// multiple groups, so that each group does not exceed the below size; it's stored in an int instead
+// of a macro, for easy testing; client and server should have same value
 static int rs_wrapper_max_group_size = 128;
 
 static int verbose_log = 0;
