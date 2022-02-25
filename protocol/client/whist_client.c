@@ -52,6 +52,7 @@ Includes
 #include "client_statistic.h"
 #include "renderer.h"
 #include <whist/tools/debug_console.h>
+#include "whist/utils/command_line.h"
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
@@ -68,10 +69,10 @@ extern volatile SDL_Window* window;
 
 extern volatile int output_width;
 extern volatile int output_height;
-extern volatile char* program_name;
+static const char* program_name;
 extern volatile char* server_ip;
-extern char user_email[WHIST_ARGS_MAXLEN + 1];
-extern char icon_png_filename[WHIST_ARGS_MAXLEN + 1];
+static char user_email[WHIST_ARGS_MAXLEN + 1] = "None";
+static char icon_png_filename[WHIST_ARGS_MAXLEN + 1];
 extern bool using_stun;
 
 // given by server protocol during port discovery.
@@ -98,7 +99,7 @@ extern volatile bool connected;
 extern volatile bool client_exiting;
 static int try_amount;
 
-extern volatile char* new_tab_url;
+static const char* new_tab_url;
 
 // Used to check if we need to call filepicker from main thread
 extern bool upload_initiated;
@@ -108,6 +109,33 @@ extern bool upload_initiated;
 #ifndef LOG_CPU_USAGE
 #define LOG_CPU_USAGE 0
 #endif
+
+// Command-line options.
+
+static bool set_user_email(const WhistCommandLineOption* opt, const char* value) {
+    if (!safe_strncpy(user_email, value, sizeof(user_email))) {
+        printf("User email is too long: %s\n", value);
+        return false;
+    }
+    return true;
+}
+
+static bool set_png_icon(const WhistCommandLineOption* opt, const char* value) {
+    if (!safe_strncpy(icon_png_filename, value, sizeof(icon_png_filename))) {
+        printf("Icon PNG filename is too long: %s\n", value);
+        return false;
+    }
+    return true;
+}
+
+COMMAND_LINE_CALLBACK_OPTION(set_user_email, 'u', "user", WHIST_OPTION_REQUIRED_ARGUMENT,
+                             "Tell Whist the user's email.  Default: None.")
+COMMAND_LINE_CALLBACK_OPTION(set_png_icon, 'i', "icon", WHIST_OPTION_REQUIRED_ARGUMENT,
+                             "Set the protocol window icon from a 64x64 pixel png file.")
+COMMAND_LINE_STRING_OPTION(program_name, 'n', "name", SIZE_MAX,
+                           "Set the window title.  Default: Whist.")
+COMMAND_LINE_STRING_OPTION(new_tab_url, 'x', "new-tab-url", MAX_URL_LENGTH,
+                           "URL to open in new tab.")
 
 static int sync_keyboard_state(void) {
     /*
@@ -269,6 +297,29 @@ static void initiate_file_upload(void) {
         send_wcmsg(&wcmsg);
     }
     upload_initiated = false;
+}
+
+static void send_new_tab_url_if_needed(void) {
+    // Send any new URL to the server
+    if (new_tab_url) {
+        LOG_INFO("Sending message to open URL in new tab");
+        const size_t url_length = strlen((const char*)new_tab_url);
+        const size_t wcmsg_size = sizeof(WhistClientMessage) + url_length + 1;
+        WhistClientMessage* wcmsg = safe_malloc(wcmsg_size);
+        memset(wcmsg, 0, sizeof(*wcmsg));
+        wcmsg->type = MESSAGE_OPEN_URL;
+        memcpy(&wcmsg->url_to_open, (const char*)new_tab_url, url_length + 1);
+        send_wcmsg(wcmsg);
+        free(wcmsg);
+
+        free((char*)new_tab_url);
+        new_tab_url = NULL;
+
+        // Unmimimize the window if needed
+        if (SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_MINIMIZED) {
+            SDL_RestoreWindow((SDL_Window*)window);
+        }
+    }
 }
 
 int whist_client_main(int argc, char* argv[]) {

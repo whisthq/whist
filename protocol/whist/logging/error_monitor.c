@@ -43,6 +43,7 @@ Includes
 
 #include <sentry/sentry.h>
 #include <whist/core/whist.h>
+#include "whist/utils/command_line.h"
 #include "error_monitor.h"
 
 /*
@@ -60,6 +61,31 @@ static bool error_monitor_environment_set = false;
 static char error_monitor_session_id[WHIST_ARGS_MAXLEN + 1] = {0};
 static bool error_monitor_initialized = false;
 static WhistTimer last_error_event_timer;
+
+/*
+============================
+Command-line options
+============================
+*/
+
+static bool set_environment_option(const WhistCommandLineOption *opt, const char *value) {
+    whist_error_monitor_set_environment(value);
+    return true;
+}
+
+static bool set_session_id_option(const WhistCommandLineOption *opt, const char *value) {
+    whist_error_monitor_set_session_id(value);
+    return true;
+}
+
+COMMAND_LINE_CALLBACK_OPTION(set_environment_option, 'e', "environment",
+                             WHIST_OPTION_REQUIRED_ARGUMENT,
+                             "The environment the protocol is running in, "
+                             "e.g production, staging, development.  Default: none.")
+
+COMMAND_LINE_CALLBACK_OPTION(set_session_id_option, 'd', "session-id",
+                             WHIST_OPTION_REQUIRED_ARGUMENT,
+                             "Set the session ID for the protocol's error logging.")
 
 /*
 ============================

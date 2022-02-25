@@ -21,6 +21,7 @@ Includes
 #include <whist/utils/png.h>
 #include <whist/utils/lodepng.h>
 #include "client_statistic.h"
+#include "whist/utils/command_line.h"
 
 #include <whist/utils/color.h>
 #include "native_window_utils.h"
@@ -30,7 +31,7 @@ extern volatile int output_width;
 extern volatile int output_height;
 extern volatile bool insufficient_bandwidth;
 extern volatile SDL_Window* window;
-extern bool skip_taskbar;
+static bool skip_taskbar;
 
 #if defined(_WIN32)
 static HHOOK g_h_keyboard_hook;
@@ -78,6 +79,15 @@ static volatile bool should_update_window_title = false;
 // Full Screen Update
 static volatile bool fullscreen_trigger = false;
 static volatile bool fullscreen_value = false;
+
+/*
+============================
+Command-line options
+============================
+*/
+
+COMMAND_LINE_BOOL_OPTION(skip_taskbar, 's', "skip-taskbar",
+                         "Launch the protocol without displaying an icon in the taskbar.")
 
 /*
 ============================

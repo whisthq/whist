@@ -30,7 +30,6 @@ Includes
 
 extern "C" {
 #include <client/sdl_utils.h>
-#include "client/client_utils.h"
 #include "whist/utils/color.h"
 #include <whist/core/whist.h>
 #include <whist/utils/os_utils.h>
@@ -59,26 +58,6 @@ extern volatile SDL_Window* window;
 }
 
 class ProtocolTest : public CaptureStdoutFixture {};
-
-/*
-============================
-Example Test
-============================
-*/
-
-// Example of a test using a function from the client module
-TEST_F(ProtocolTest, ClientParseArgsEmpty) {
-    int argc = 1;
-
-    char argv0[] = "./client/build64/WhistClient";
-    char* argv[] = {argv0, NULL};
-
-    int ret_val = client_parse_args(argc, argv);
-    EXPECT_EQ(ret_val, -1);
-
-    check_stdout_line(::testing::StartsWith("Usage:"));
-    check_stdout_line(::testing::HasSubstr("--help"));
-}
 
 /*
 ============================

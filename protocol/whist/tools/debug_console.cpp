@@ -18,6 +18,7 @@ extern "C" {
 #include <whist/network/udp.h>
 #include <whist/utils/threads.h>
 #include <whist/logging/logging.h>
+#include "whist/utils/command_line.h"
 #include "protocol_analyzer.h"
 };
 
@@ -62,6 +63,9 @@ static int num_records = 2000;  // num of records included in the report
 
 static DebugConsoleOverrideValues g_override_values;
 
+COMMAND_LINE_INT_OPTION(debug_console_listen_port, 0, "debug-console", 1024, 65535,
+                        "Enable debug_console and related tools on the given port.")
+
 /*
 ============================
 Private Functions
@@ -80,7 +84,6 @@ Public Function Implementations
 
 DebugConsoleOverrideValues *get_debug_console_override_values() { return &g_override_values; }
 
-void enable_debug_console(int port) { debug_console_listen_port = port; }
 int init_debug_console() {
     if (debug_console_listen_port == -1) return 0;
 #ifdef USE_DEBUG_CONSOLE  // only enable debug console for debug build

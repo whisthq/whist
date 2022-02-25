@@ -27,17 +27,8 @@ Includes
 #include "native_window_utils.h"
 #include <whist/logging/logging.h>
 #include <whist/logging/error_monitor.h>
-#include <whist/core/whistgetopt.h>
 #include <whist/tools/debug_console.h>
-
-/*
-============================
-Globals
-============================
-*/
-
-static CodecType override_codec_type = CODEC_TYPE_UNKNOWN;
-static int override_bitrate = -1;
+#include "whist/utils/command_line.h"
 
 /*
 ============================
@@ -49,21 +40,16 @@ Bad Globals [TODO: Remove these or give them `static`!]
 volatile char client_binary_aes_private_key[16];
 volatile char client_hex_aes_private_key[33];
 volatile char *server_ip;
-extern volatile int output_width;
-extern volatile int output_height;
-volatile char *program_name = NULL;
+extern int output_width;
+extern int output_height;
 volatile SDL_Window *window;
-
-volatile char *new_tab_url;
 
 // From main.c
 volatile bool update_bitrate = false;
 
 // This variables should stay as arrays - we call sizeof() on them
 char user_email[WHIST_ARGS_MAXLEN + 1];
-char icon_png_filename[WHIST_ARGS_MAXLEN + 1];
-
-bool skip_taskbar = false;
+static char icon_png_filename[WHIST_ARGS_MAXLEN + 1];
 
 bool using_stun = false;
 
@@ -71,220 +57,82 @@ MouseMotionAccumulation mouse_state = {0};
 
 extern unsigned short port_mappings[USHRT_MAX + 1];
 
-volatile bool using_piped_arguments;
-static const struct option client_cmd_options[] = {
-    {"width", required_argument, NULL, 'w'},
-    {"height", required_argument, NULL, 'h'},
-    {"bitrate", required_argument, NULL, 'b'},
-    {"override-bitrate", required_argument, NULL, 'o'},
-    {"codec", required_argument, NULL, 'c'},
-    {"private-key", required_argument, NULL, 'k'},
-    {"user", required_argument, NULL, 'u'},
-    {"environment", required_argument, NULL, 'e'},
-    {"icon", required_argument, NULL, 'i'},
-    {"ports", required_argument, NULL, 'p'},
-    {"name", required_argument, NULL, 'n'},
-    {"read-pipe", no_argument, NULL, 'r'},
-    {"loading", required_argument, NULL, 'l'},
-    {"skip-taskbar", no_argument, NULL, 's'},
-    {"session-id", required_argument, NULL, 'd'},
-    {"new-tab-url", required_argument, NULL, 'x'},
-    {"debug-console", required_argument, NULL, WHIST_GETOPT_DEBUG_CONSOLE_CHAR},
-    // these are standard for POSIX programs
-    {"help", no_argument, NULL, WHIST_GETOPT_HELP_CHAR},
-    {"version", no_argument, NULL, WHIST_GETOPT_VERSION_CHAR},
-    // end with NULL-termination
-    {0, 0, 0, 0}};
-static const char *usage;
+static bool using_piped_arguments;
 
 #define INCOMING_MAXLEN 127
-// Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
-#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:n:rl:sd:x:o:"
 
 /*
 ============================
-Private Function Implementations
+Command-line options
 ============================
 */
 
-static int evaluate_arg(int eval_opt, char *eval_optarg) {
-    /*
-        Evaluate an option given the optcode and the argument
-
-        Arguments:
-            eval_opt (int): optcode
-            eval_optarg (char*): argument (can be NULL) passed with opt
-
-        Returns:
-            (int): -1 on failure, 0 on success
-    */
-
-    long int ret;
-    char *endptr;
-
-    // reset errno so that previous timeouts and errors don't interfere with arg parsing
-    errno = 0;
-
-    switch (eval_opt) {
-        case 'w': {  // width
-            ret = strtol(eval_optarg, &endptr, 10);
-            if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
-                printf("%s", usage);
-                return -1;
-            }
-            output_width = (int)ret;
-            break;
-        }
-        case 'h': {  // height
-            ret = strtol(eval_optarg, &endptr, 10);
-            if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
-                printf("%s", usage);
-                return -1;
-            }
-            output_height = (int)ret;
-            break;
-        }
-        case 'b': {  // bitrate
-            ret = strtol(eval_optarg, &endptr, 10);
-            if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
-                printf("%s", usage);
-                return -1;
-            }
-            LOG_ERROR("-b option is currently unimplemented!");
-            break;
-        }
-        case 'o': {  // override bitrate
-            ret = strtol(eval_optarg, &endptr, 10);
-            if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
-                printf("%s", usage);
-                return -1;
-            }
-            override_bitrate = (int)ret;
-            break;
-        }
-        case 'c': {  // codec
-            if (!strcmp(eval_optarg, "h264")) {
-                override_codec_type = CODEC_TYPE_H264;
-            } else if (!strcmp(eval_optarg, "h265")) {
-                override_codec_type = CODEC_TYPE_H265;
-            } else {
-                printf("Invalid codec type: '%s'\n", eval_optarg);
-                printf("%s", usage);
-                return -1;
-            }
-            break;
-        }
-        case 'k': {  // private key
-            if (!read_hexadecimal_private_key(eval_optarg, (char *)client_binary_aes_private_key,
-                                              (char *)client_hex_aes_private_key)) {
-                printf("Invalid hexadecimal string: %s\n", eval_optarg);
-                printf("%s", usage);
-                return -1;
-            }
-            break;
-        }
-        case 'u': {  // user email
-            if (!safe_strncpy(user_email, eval_optarg, sizeof(user_email))) {
-                printf("User email is too long: %s\n", eval_optarg);
-                return -1;
-            }
-            break;
-        }
-        case 'e': {  // environment
-            whist_error_monitor_set_environment(eval_optarg);
-            break;
-        }
-        case 'i': {  // protocol window icon
-            if (!safe_strncpy(icon_png_filename, eval_optarg, sizeof(icon_png_filename))) {
-                printf("Icon PNG filename is too long: %s\n", eval_optarg);
-                return -1;
-            }
-            break;
-        }
-        case 'p': {  // port mappings
-            char separator = '.';
-            char c = separator;
-            unsigned short origin_port;
-            unsigned short destination_port;
-            const char *str = eval_optarg;
-            while (c == separator) {
-                int bytes_read;
-                int args_read =
-                    sscanf(str, "%hu:%hu%c%n", &origin_port, &destination_port, &c, &bytes_read);
-                // If we read port arguments, then map them
-                if (args_read >= 2) {
-                    LOG_INFO("Mapping port: origin=%hu, destination=%hu", origin_port,
-                             destination_port);
-                    port_mappings[origin_port] = destination_port;
-                } else {
-                    char invalid_s[13];
-                    unsigned short invalid_s_len = (unsigned short)min(bytes_read + 1, 13);
-                    safe_strncpy(invalid_s, str, invalid_s_len);
-                    printf("Unable to parse the port mapping \"%s\"", invalid_s);
-                    break;
-                }
-                // if %c was the end of the string, exit
-                if (args_read < 3) {
-                    break;
-                }
-                // Progress the string forwards
-                str += bytes_read;
-            }
-            break;
-        }
-        case 'n': {  // window title
-            program_name = calloc(sizeof(char), strlen(eval_optarg));
-            strcpy((char *)program_name, eval_optarg);
-            break;
-        }
-        case 'r': {  // use arguments piped from stdin
-            using_piped_arguments = true;
-            break;
-        }
-        case 'l': {  // loading message
-            LOG_INFO("LOADING: %s", eval_optarg);
-            break;
-        }
-        case 's': {  // skip taskbar
-            skip_taskbar = true;
-            break;
-        }
-        case 'd': {  // session id
-            whist_error_monitor_set_session_id(eval_optarg);
-            break;
-        }
-        case 'x': {
-            if (strlen(eval_optarg) > MAX_URL_LENGTH) {
-                LOG_ERROR(
-                    "Cannot open URLs of length greater than %d characters! URL passed has size "
-                    "%lu",
-                    MAX_URL_LENGTH, strlen(eval_optarg));
-                break;
-            }
-            new_tab_url = calloc(sizeof(char), strlen(eval_optarg) + 1);
-            strcpy((char *)new_tab_url, eval_optarg);
-
-            break;
-        }
-        case WHIST_GETOPT_DEBUG_CONSOLE_CHAR: {
-            ret = strtol(eval_optarg, &endptr, 10);
-            if (errno != 0 || *endptr != '\0' || ret > 65535 || ret < 0) {
-                printf("parameter for debug-console is invalid, %s", usage);
-                return -1;
-            }
-            enable_debug_console((int)ret);
-            break;
-        }
-        default: {
-            if (eval_opt != -1) {
-                // illegal option
-                printf("%s", usage);
-                return -1;
-            }
-            break;
-        }
+static bool set_private_key(const WhistCommandLineOption *opt, const char *value) {
+    if (!read_hexadecimal_private_key((char *)value, (char *)client_binary_aes_private_key,
+                                      (char *)client_hex_aes_private_key)) {
+        printf("Invalid hexadecimal string: %s\n", value);
+        return false;
     }
-    return 0;
+    return true;
+}
+
+static bool set_port_mapping(const WhistCommandLineOption *opt, const char *value) {
+    char separator = '.';
+    char c = separator;
+    unsigned short origin_port;
+    unsigned short destination_port;
+    const char *str = value;
+    while (c == separator) {
+        int bytes_read;
+        int args_read =
+            sscanf(str, "%hu:%hu%c%n", &origin_port, &destination_port, &c, &bytes_read);
+        // If we read port arguments, then map them
+        if (args_read >= 2) {
+            LOG_INFO("Mapping port: origin=%hu, destination=%hu", origin_port, destination_port);
+            port_mappings[origin_port] = destination_port;
+        } else {
+            char invalid_s[13];
+            unsigned short invalid_s_len = (unsigned short)min(bytes_read + 1, 13);
+            safe_strncpy(invalid_s, str, invalid_s_len);
+            printf("Unable to parse the port mapping \"%s\"", invalid_s);
+            return false;
+        }
+        // if %c was the end of the string, exit
+        if (args_read < 3) {
+            break;
+        }
+        // Progress the string forwards
+        str += bytes_read;
+    }
+    return true;
+}
+
+COMMAND_LINE_INT_OPTION(output_width, 'w', "width", MIN_SCREEN_WIDTH, MAX_SCREEN_WIDTH,
+                        "Set the width for the windowed-mode window, "
+                        "if both width and height are specified.")
+COMMAND_LINE_INT_OPTION(output_height, 'h', "height", MIN_SCREEN_HEIGHT, MAX_SCREEN_HEIGHT,
+                        "Set the height for the windowed-mode window, "
+                        "if both width and height are specified.")
+
+COMMAND_LINE_CALLBACK_OPTION(set_private_key, 'k', "private-key", WHIST_OPTION_REQUIRED_ARGUMENT,
+                             "Pass in the RSA Private Key as a hexadecimal string.")
+COMMAND_LINE_CALLBACK_OPTION(set_port_mapping, 'p', "ports", WHIST_OPTION_REQUIRED_ARGUMENT,
+                             "Pass in custom port:port mappings, period-separated.  "
+                             "Default: identity mapping.")
+
+COMMAND_LINE_BOOL_OPTION(using_piped_arguments, 'r', "read-pipe",
+                         "Read arguments from stdin until EOF.  Don't need to pass "
+                         "in IP if using this argument and passing with arg `ip`.")
+
+static bool parse_operand(int pos, const char *value) {
+    static bool ip_set = false;
+    if (!ip_set) {
+        safe_strncpy((char *)server_ip, value, IP_MAXLEN + 1);
+        ip_set = true;
+        return true;
+    } else {
+        return false;
+    }
 }
 
 /*
@@ -294,51 +142,6 @@ Public Function Implementations
 */
 
 int client_parse_args(int argc, char *argv[]) {
-    // TODO: replace `client` with argv[0]
-    usage =
-        "Usage: client [OPTION]... IP_ADDRESS\n"
-        "Try 'client --help' for more information.\n";
-    const char *usage_details =
-        "Usage: client [OPTION]... IP_ADDRESS\n"
-        "\n"
-        "All arguments to both long and short options are mandatory.\n"
-        // regular options should look nice, with 2-space indenting for multiple lines
-        "  -w, --width=WIDTH             Set the width for the windowed-mode\n"
-        "                                  window, if both width and height\n"
-        "                                  are specified\n"
-        "  -h, --height=HEIGHT           Set the height for the windowed-mode\n"
-        "                                  window, if both width and height\n"
-        "                                  are specified\n"
-        "  -b, --bitrate=BITRATE         Set the starting bitrate for the network algorithm.\n"
-        "                                  The algorithm may deviate from this over time.\n"
-        "  -o, --override-bitrate=BR     Set an explicit bitrate that the video steam will use.\n"
-        "                                  This will override the network algorithm's decision\n"
-        "  -c, --codec=CODEC             Launch the protocol using the codec specified.\n"
-        "                                  The options are h264, or h265\n"
-        "                                  This will override the network algorithm's decision\n"
-        "  -k, --private-key=PK          Pass in the RSA Private Key as a \n"
-        "                                  hexadecimal string\n"
-        "  -u, --user=EMAIL              Tell Whist the user's email. Default: None \n"
-        "  -e, --environment=ENV         The environment the protocol is running in,\n"
-        "                                  e.g production, staging, development. Default: none\n"
-        "  -i, --icon=PNG_FILE           Set the protocol window icon from a 64x64 pixel png file\n"
-        "  -p, --ports=PORTS             Pass in custom port:port mappings, period-separated.\n"
-        "                                  Default: identity mapping\n"
-        "  -n, --name=NAME               Set the window title. Default: Whist\n"
-        "  -r, --read-pipe               Read arguments from stdin until EOF. Don't need to pass\n"
-        "                                  in IP if using this argument and passing with arg `ip`\n"
-        "  -l, --loading                 Custom loading screen message\n"
-        "  -s, --skip-taskbar            Launch the protocol without displaying an icon\n"
-        "                                  in the taskbar\n"
-        "  -d, --session-id=ID           Set the session ID for the protocol's error logging\n"
-        "  -x, --new-tab-url             URL to open in new tab \n"
-#ifdef USE_DEBUG_CONSOLE
-        "      --debug-console=PORT      Enable debug_console and related tools\n"
-#endif
-        // special options should be indented further to the left
-        "      --help     Display this help and exit\n"
-        "      --version  Output version information and exit\n";
-
     // Initialize private key to default
     memcpy((char *)&client_binary_aes_private_key, DEFAULT_BINARY_PRIVATE_KEY,
            sizeof(client_binary_aes_private_key));
@@ -351,51 +154,12 @@ int client_parse_args(int argc, char *argv[]) {
     // default icon filename
     safe_strncpy(icon_png_filename, "", sizeof(icon_png_filename));
 
-    int opt;
-    bool ip_set = false;
     using_piped_arguments = false;
 
-    while (true) {
-        opt = getopt_long(argc, argv, OPTION_STRING, client_cmd_options, NULL);
-        if (opt != -1 && optarg && strlen(optarg) > WHIST_ARGS_MAXLEN) {
-            printf("Option passed into %c is too long! Length of %zd when max is %d\n", opt,
-                   strlen(optarg), WHIST_ARGS_MAXLEN);
-            return -1;
-        }
-
-        // For arguments that are not `help` and `version`, evaluate option
-        //    and argument via `evaluate_arg`
-        switch (opt) {
-            case WHIST_GETOPT_HELP_CHAR: {  // help
-                printf("%s", usage_details);
-                return 1;
-            }
-            case WHIST_GETOPT_VERSION_CHAR: {  // version
-                printf("Whist client revision %s\n", whist_git_revision());
-                return 1;
-            }
-            default: {
-                if (evaluate_arg(opt, optarg) < 0) {
-                    return -1;
-                }
-            }
-        }
-
-        if (opt == -1) {
-            if (optind < argc && !ip_set) {
-                // there's a valid non-option arg and ip is unset
-                safe_strncpy((char *)server_ip, argv[optind], IP_MAXLEN + 1);
-                ip_set = true;
-                ++optind;
-            } else if (optind < argc || (!ip_set && !using_piped_arguments)) {
-                // incorrect usage
-                printf("%s", usage);
-                return -1;
-            } else {
-                // we're done
-                break;
-            }
-        }
+    bool ret = whist_parse_command_line(argc, (const char **)argv, &parse_operand);
+    if (!ret) {
+        printf("Failed to parse command line!\n");
+        return -1;
     }
 
     return 0;
@@ -504,31 +268,9 @@ int read_piped_arguments(bool *keep_waiting, bool run_only_once) {
             arg_name[strcspn(arg_name, "\n")] = 0;  // removes trailing newline, if exists
             arg_name[strcspn(arg_name, "\r")] = 0;  // removes trailing carriage return, if exists
 
-            // Iterate through client_cmd_options to find the corresponding opt
-            int opt_index = -1;
-            for (int i = 0; client_cmd_options[i].name; i++) {
-                // Ignore help and version and read-pipe options here
-                if (client_cmd_options[i].val == WHIST_GETOPT_HELP_CHAR ||
-                    client_cmd_options[i].val == WHIST_GETOPT_VERSION_CHAR ||
-                    client_cmd_options[i].val == 'r') {
-                    continue;
-                }
-
-                if (strncmp(arg_name, client_cmd_options[i].name, strlen(arg_name))) continue;
-
-                if (strlen(client_cmd_options[i].name) == (unsigned)strlen(arg_name)) {
-                    opt_index = i;
-                    break;
-                }
-            }
-
-            if (opt_index >= 0) {
-                // Evaluate the passed argument, if a valid opt
-                if (evaluate_arg(client_cmd_options[opt_index].val, arg_value) < 0) {
-                    LOG_ERROR("Piped arg %s with value %s wasn't accepted", arg_name,
-                              arg_value ? arg_value : "NULL");
-                    return -1;
-                }
+            bool opt_set = whist_set_single_option(arg_name, arg_value);
+            if (opt_set) {
+                // Success, it was a normal option.
             } else if (strlen(arg_name) == 2 && !strncmp(arg_name, "ip", strlen(arg_name))) {
                 // If arg_name is `ip`, then set IP address
                 if (!arg_value) {
@@ -604,10 +346,6 @@ int free_parsed_args(void) {
         free((char *)server_ip);
     }
 
-    if (new_tab_url) {
-        free((char *)new_tab_url);
-    }
-
     return 0;
 }
 
@@ -681,27 +419,4 @@ void send_message_dimensions(void) {
     LOG_INFO("Sending MESSAGE_DIMENSIONS: output=%dx%d, DPI=%d", wcmsg.dimensions.width,
              wcmsg.dimensions.height, wcmsg.dimensions.dpi);
     send_wcmsg(&wcmsg);
-}
-
-void send_new_tab_url_if_needed(void) {
-    // Send any new URL to the server
-    if (new_tab_url) {
-        LOG_INFO("Sending message to open URL in new tab");
-        const size_t url_length = strlen((const char *)new_tab_url);
-        const size_t wcmsg_size = sizeof(WhistClientMessage) + url_length + 1;
-        WhistClientMessage *wcmsg = safe_malloc(wcmsg_size);
-        memset(wcmsg, 0, sizeof(*wcmsg));
-        wcmsg->type = MESSAGE_OPEN_URL;
-        memcpy(&wcmsg->url_to_open, (const char *)new_tab_url, url_length + 1);
-        send_wcmsg(wcmsg);
-        free(wcmsg);
-
-        free((char *)new_tab_url);
-        new_tab_url = NULL;
-
-        // Unmimimize the window if needed
-        if (SDL_GetWindowFlags((SDL_Window *)window) & SDL_WINDOW_MINIMIZED) {
-            SDL_RestoreWindow((SDL_Window *)window);
-        }
-    }
 }
