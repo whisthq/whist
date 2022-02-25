@@ -138,7 +138,7 @@ const createSignoutWindow = () =>
 const createOnboardingWindow = () =>
   createElectronWindow({
     ...width.md,
-    ...height.md,
+    ...height.lg,
     hash: WindowHashOnboarding,
     options: {
       fullscreenable: false,

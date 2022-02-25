@@ -10,7 +10,7 @@ const Introduction = (props: { onSubmit: () => void }) => {
       className="flex flex-col h-screen w-full font-body outline-none bg-gray-900"
     >
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
-      <div className="m-auto text-center mt-18">
+      <div className="m-auto text-center relative bottom-16">
         <img
           src={Logo}
           className="w-24 h-24 m-auto animate-fade-in-up opacity-0"
@@ -34,15 +34,17 @@ const Introduction = (props: { onSubmit: () => void }) => {
           className="h-px w-32 bg-gray-700 rounded m-auto mt-8 animate-fade-in-up opacity-0"
           style={{ animationDelay: "1200ms" }}
         ></div>
-        <div
-          className="animate-fade-in-up opacity-0 mt-20 relative top-1"
-          style={{ animationDelay: "2000ms" }}
-        >
+      </div>
+      <div
+        className="absolute bottom-8 left-0 w-full animate-fade-in-up opacity-0"
+        style={{ animationDelay: "2000ms" }}
+      >
+        <div className="m-auto text-center">
           <WhistButton
             onClick={props.onSubmit}
             state={WhistButtonState.DEFAULT}
             contents="Next"
-            className="px-16"
+            className="mb-8 px-16"
           />
         </div>
       </div>

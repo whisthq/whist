@@ -51,8 +51,8 @@ const Subtitle = (props: { state: NetworkTestState }) => {
     default:
       return (
         <div className="text-gray-500">
-          You may experience stutters and latency when typing or scrolling. If
-          possible, try moving closer to your router or switching networks.
+          You may experience stutters and typing/scrolling latency. If possible,
+          please move closer to your router or try again on different wifi.
         </div>
       )
   }
@@ -62,20 +62,21 @@ const Text = (props: { state: NetworkTestState }) => {
   switch (props.state) {
     case NetworkTestState.IN_PROGRESS:
       return (
-        <div className="text-gray-100 font-bold text-2xl mt-4">
+        <div className="text-gray-100 font-bold text-2xl mt-4 leading-10">
           Testing your Internet strength
         </div>
       )
     case NetworkTestState.NETWORK_GOOD:
       return (
-        <div className="text-gray-100 font-bold text-2xl mt-4">
+        <div className="text-gray-100 font-bold text-2xl mt-4 leading-10">
           Your Internet is ready for Whist
         </div>
       )
     default:
       return (
-        <div className="text-gray-100 font-bold text-2xl mt-4">
-          Your Internet may not be strong enough
+        <div className="text-gray-100 font-bold text-2xl mt-4 leading-10">
+          Your network may not be suitable for{" "}
+          <span className="text-blue-light">Whist</span>
         </div>
       )
   }
@@ -210,7 +211,7 @@ const Network = (props: {
         </>
       )}
       <div
-        className="mt-8 animate-fade-in-up opacity-0"
+        className="mt-6 animate-fade-in-up opacity-0"
         style={{ animationDelay: "800ms" }}
       >
         <NetworkStats networkInfo={props.networkInfo} />

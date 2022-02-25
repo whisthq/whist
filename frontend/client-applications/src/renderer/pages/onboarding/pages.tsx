@@ -59,8 +59,8 @@ const WhatMakesWhistDifferent = () => {
   }, [])
 
   const contents = (
-    <div className="m-auto text-center mt-18">
-      <div className="mt-32 text-gray-300 text-3xl font-bold leading-10">
+    <div className="m-auto text-center">
+      <div className="mt-44 text-gray-300 text-3xl font-bold leading-10">
         What makes <span className="text-blue-light">Whist</span> different{" "}
         <br />
         from other browsers?
@@ -79,7 +79,7 @@ const WhatMakesWhistDifferent = () => {
 const WhatIsWhist = () => {
   const contents = (
     <div className="m-auto text-center mt-18">
-      <div className="mt-32 text-gray-300 text-3xl font-bold leading-10 max-w-md m-auto">
+      <div className="mt-44 text-gray-300 text-3xl font-bold leading-10 max-w-md m-auto">
         Whist uses <span className="text-blue-light">almost zero memory</span>{" "}
         and loads websites at lightning speed
       </div>
@@ -125,8 +125,8 @@ const WhoIsWhistFor = () => {
 
   const contents = (
     <div className="m-auto text-center mt-16">
-      <div className="mt-12 text-gray-300 text-xl font-bold leading-10 max-w-lg m-auto text-center">
-        For those who struggle with:
+      <div className="mt-28 text-gray-300 text-2xl font-bold leading-10 max-w-lg m-auto text-center">
+        Whist is for you if you struggle with
       </div>
       <div className="max-w-lg m-auto px-10 py-6">{icons}</div>
     </div>
@@ -138,7 +138,7 @@ const WhoIsWhistFor = () => {
 const FasterLikeMagic = () => {
   const contents = (
     <div className="m-auto text-center mt-18">
-      <div className="mt-32 text-gray-300 text-3xl font-bold leading-10 max-w-md m-auto">
+      <div className="mt-44 text-gray-300 text-3xl font-bold leading-10 max-w-md m-auto">
         Using Whist will make your computer{" "}
         <span className="text-blue-light">faster</span> and{" "}
         <span className="text-blue-light">quieter</span> like
@@ -159,7 +159,7 @@ const FasterLikeMagic = () => {
 const LetsShowYouAround = () => {
   const contents = (
     <div className="m-auto text-center mt-18">
-      <div className="mt-32 text-gray-300 text-3xl font-bold leading-10 max-w-sm m-auto">
+      <div className="mt-44 text-gray-300 text-3xl font-bold leading-10 max-w-sm m-auto">
         Here are some important things to know about your{" "}
         <span className="text-blue-light">shiny new browser</span>
       </div>
@@ -204,11 +204,11 @@ const Privacy = () => {
   )
 
   const contents = (
-    <div className="m-auto text-center mt-8">
-      <div className="text-gray-300 text-xl font-bold leading-10 max-w-xl m-auto text-center">
+    <div className="m-auto text-center mt-24">
+      <div className="text-gray-300 text-2xl font-bold leading-10 max-w-lg m-auto text-center">
         Whist protects your online privacy as a human right
       </div>
-      <div className="max-w-2xl m-auto px-10 py-6">{icons}</div>
+      <div className="max-w-xl m-auto px-10 py-6">{icons}</div>
     </div>
   )
 
@@ -255,8 +255,8 @@ const FeaturesUnderDevelopment = () => {
   )
 
   const contents = (
-    <div className="m-auto text-center mt-10">
-      <div className="text-gray-300 text-xl font-bold leading-8 max-w-lg m-auto text-center">
+    <div className="m-auto text-center mt-28">
+      <div className="text-gray-300 text-2xl font-bold leading-8 max-w-lg m-auto text-center">
         These features are being developed and will become available in the
         coming months
       </div>
@@ -274,13 +274,13 @@ const FeaturesUnderDevelopment = () => {
 
 const TurnOffVPN = () => {
   const contents = (
-    <div className="m-auto text-center max-w-md mt-14">
-      <div className="mt-28 text-gray-300 text-2xl font-bold leading-10 m-auto">
+    <div className="m-auto text-center max-w-md mt-44">
+      <div className="text-gray-300 text-2xl font-bold leading-10 m-auto">
         If you use a VPN, please whitelist{" "}
         <span className="text-blue-light">Whist</span>
       </div>
       <div className="mt-2 text-md text-gray-500">
-        VPNs will significantly degrade Whist&apos;s performance. From a privacy
+        VPNs significantly degrade Whist&apos;s performance. From a privacy
         perspective, Whist already acts as a VPN by sending all web requests
         from a secure server instead of your computer.
       </div>
@@ -295,7 +295,7 @@ const TurnOffVPN = () => {
 const LiveChatSupport = () => {
   const contents = (
     <div className="m-auto text-center mt-18 max-w-md m-auto">
-      <div className="mt-28 text-gray-300 text-2xl font-bold leading-10">
+      <div className="mt-44 text-gray-300 text-2xl font-bold leading-10">
         After this onboarding,{" "}
         <kbd className="bg-gray-700 px-2 py-1 rounded">Cmd</kbd>&nbsp;
         <kbd className="bg-gray-700 px-2 py-1 rounded">J</kbd> summons the Whist
@@ -324,7 +324,7 @@ const FollowUsOnTwitter = () => {
     })
   }
   const contents = (
-    <div className="m-auto text-center mt-18">
+    <div className="m-auto text-center mt-44">
       <div className="mt-20 text-gray-300 text-xl font-bold leading-10 max-w-md m-auto">
         Please follow us on Twitter&nbsp;
         <div onClick={openTwitterURL} className="inline-block">
@@ -379,7 +379,7 @@ const NetworkTest = () => {
   }, [])
 
   const contents = (
-    <div className="mt-12">
+    <div className="mt-28">
       <Network
         networkInfo={mainState.networkInfo}
         onSubmit={() => {}}
@@ -399,8 +399,8 @@ const NetworkTest = () => {
 
 const Pricing = () => {
   const contents = (
-    <div className="m-auto text-center mt-18 max-w-md m-auto">
-      <div className="mt-24 text-gray-300 text-2xl font-bold leading-10">
+    <div className="m-auto text-center mt-44 max-w-md m-auto">
+      <div className="text-gray-300 text-2xl font-bold leading-10">
         For the next two weeks,{" "}
         <span className="text-blue-light">Whist is free</span>. Afterward, Whist
         is <span className="text-xs relative bottom-2">$</span>9
