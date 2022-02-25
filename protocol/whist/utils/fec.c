@@ -86,7 +86,10 @@ Private Function Declarations
 ============================
 */
 
+// write a 16bit uint into buffer
 void write_u16(char* p, u16_t w);
+
+// read a 16bit uint from buffer
 u16_t read_u16(char* p);
 
 /*
@@ -161,6 +164,7 @@ void fec_encoder_register_buffer(FECEncoder* fec_encoder, void* buffer, int buff
 void fec_get_encoded_buffers(FECEncoder* fec_encoder, void** buffers, int* buffer_sizes) {
     FATAL_ASSERT(fec_encoder->num_accepted_buffers == fec_encoder->num_real_buffers);
     if (!fec_encoder->encode_performed) {
+        // the size of actually data feed into fec_encoder
         int fec_payload_size = sizeof(u16_t) + fec_encoder->max_packet_size;
 
         // rs encoder requires packets to have equal length, so we pad packets to max_buffer_size
@@ -168,13 +172,13 @@ void fec_get_encoded_buffers(FECEncoder* fec_encoder, void** buffers, int* buffe
             char* original_buffer = fec_encoder->buffers[i];
             int original_size = fec_encoder->buffer_sizes[i];
 
-            FATAL_ASSERT(original_size <= MAX_BUFFER_SIZE);
-
             FATAL_ASSERT(fec_encoder->buffers[i] != NULL);
 
             fec_encoder->buffers[i] = safe_malloc(fec_payload_size);
             fec_encoder->buffer_sizes[i] = sizeof(u16_t) + original_size;
 
+            // write a small header infront of buffer, which is protected by FEC.
+            // so that even if this buffer got loss, we can recover the buffer length.
             write_u16(fec_encoder->buffers[i], (u16_t)original_size);
 
             memcpy((char*)fec_encoder->buffers[i] + sizeof(u16_t), original_buffer, original_size);
@@ -293,12 +297,12 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer) {
             cnt++;
         }
 
+        FATAL_ASSERT(cnt >= fec_decoder->num_real_buffers);
+        FATAL_ASSERT(cnt == fec_decoder->num_accepted_buffers);
+
         for (int i = cnt; i < fec_decoder->num_buffers; i++) {
             fec_decoder->buffers[i] = 0;
         }
-
-        FATAL_ASSERT(cnt >= fec_decoder->num_real_buffers);
-        FATAL_ASSERT(cnt == fec_decoder->num_accepted_buffers);
 
         // decode
         int res =

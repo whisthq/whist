@@ -465,12 +465,9 @@ static bool udp_update(void* raw_context) {
     return true;
 }
 
+// Calculate number of packets needed to send the payload, rounding up.
 static int get_num_indices(int whist_packet_size, int segment_size) {
-    // Calculate number of packets needed to send the payload, rounding up.
-    int num_indices = whist_packet_size == 0
-                          ? 1
-                          : (int)(whist_packet_size / segment_size +
-                                  (whist_packet_size % segment_size == 0 ? 0 : 1));
+    int num_indices = whist_packet_size == 0 ? 1 : int_div_roundup(whist_packet_size, segment_size);
     return num_indices;
 }
 

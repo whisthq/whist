@@ -1291,7 +1291,7 @@ TEST_F(ProtocolTest, FECTest) {
 TEST_F(ProtocolTest, FECTest2) {
     WhistTimer timer;
     WhistTimer timer2;
-    const int verbose_print = 1;
+    const int verbose_print = 0;
     init_fec();
 
     // better random generator than rand()
@@ -1304,6 +1304,7 @@ TEST_F(ProtocolTest, FECTest2) {
     const int large_buffer_size = num_segments * (segment_size - FEC_HEADER_SIZE) - 10;
     const double fec_ratio = 0.5;
     std::vector<int> max_group_sizes = {32, 64, 128, 256};
+
     int saved_max_group_size = rs_wrapper_set_max_group_size(32);
 
     if (verbose_print) {
@@ -1395,6 +1396,7 @@ TEST_F(ProtocolTest, FECTest2) {
         free(encoded_buffer_sizes);
         free(indices);
     }
+    // restore the saved value
     rs_wrapper_set_max_group_size(saved_max_group_size);
 }
 
