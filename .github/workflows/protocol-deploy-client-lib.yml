@@ -74,21 +74,21 @@ jobs:
       - name: Tar Sentry and Upload to AWS S3 (Only on Push/Workflow_dispatch Events)
         if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
         shell: bash --noprofile --norc -eo pipefail {0}
-        working-directory: protocol/build/client
+        working-directory: protocol/build/client/build64
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
-          tar -zcvf ${{ env.linux-tar-name }} build64
-            aws s3 cp ${{ env.linux-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.linux-tar-name }}
+          tar -zcvf ../${{ env.linux-tar-name }} .
+            aws s3 cp ../${{ env.linux-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.linux-tar-name }}
           elif [ "$RUNNER_OS" == "Windows" ]; then
-            tar -zcvf ${{ env.windows-tar-name }} build64
-            aws s3 cp ${{ env.windows-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.windows-tar-name }}
+            tar -zcvf ../${{ env.windows-tar-name }} .
+            aws s3 cp ../${{ env.windows-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.windows-tar-name }}
           else
             if [[ "${{ matrix.config.arch }}" == "x86_64" ]]; then
-              tar -zcvf ${{ env.macos-x64-tar-name }} build64
-              aws s3 cp ${{ env.macos-x64-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-x64-tar-name }}
+              tar -zcvf ../${{ env.macos-x64-tar-name }} .
+              aws s3 cp ../${{ env.macos-x64-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-x64-tar-name }}
             elif [[ "${{ matrix.config.arch }}" == "arm64" ]]; then
-              tar -zcvf ${{ env.macos-arm64-tar-name }} build64
-              aws s3 cp ${{ env.macos-arm64-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-arm64-tar-name }}
+              tar -zcvf ../${{ env.macos-arm64-tar-name }} .
+              aws s3 cp ../${{ env.macos-arm64-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-arm64-tar-name }}
             else
               echo "Tried to tar and upload to S3 for an unsupported OS"
               exit
