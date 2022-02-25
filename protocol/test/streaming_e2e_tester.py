@@ -537,12 +537,14 @@ if __name__ == "__main__":
     os.remove("instances_to_clean.txt")
 
     if server_hang_detected:
-        print("A server hang was detected!")
+        print("Exiting with failure due to server hang!")
 
         # Update experiment metadata
         experiment_metadata["server_hang_detected"] = server_hang_detected
         with open(metadata_filename, "w") as metadata_file:
             json.dump(experiment_metadata, metadata_file)
 
+        # Exit with error
+        sys.exit(-1)
     else:
         print("Done")
