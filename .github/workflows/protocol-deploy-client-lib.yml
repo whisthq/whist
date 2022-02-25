@@ -51,7 +51,6 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Setup Python-based notifications
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && failure() }}
         working-directory: .github/workflows/helpers
         shell: bash --noprofile --norc -eo pipefail {0}
         run: ./notifications/setup_notifications.sh
