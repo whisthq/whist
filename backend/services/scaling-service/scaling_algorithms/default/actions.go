@@ -125,18 +125,19 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 		}
 	}
 
-	// Compute the current capacity we have on the region
-	// Consider starting instances because otherwise we will
-	// find ourselves starting many instances unnecessarily.
-	capacity := currentActive + currentStarting
+	// Compute the expected capacity we have on the region (active and starting instances)
+	// Consider starting instances because otherwise we will find ourselves starting many
+	// instances unnecessarily.
+	expectedCapacity := currentActive + currentStarting
 
-	if capacity < DEFAULT_INSTANCE_BUFFER {
+	if expectedCapacity < DEFAULT_INSTANCE_BUFFER {
 
-		logger.Infof("Current number of instances %v is less than desired %v. Scaling up to match with image %v.", capacity, DEFAULT_INSTANCE_BUFFER, latestImageID)
+		logger.Infof("Current number of instances %v is less than desired %v. Scaling up to match with image %v.", expectedCapacity, DEFAULT_INSTANCE_BUFFER, latestImageID)
 
 		// Start scale up action for desired number of instances
 		wantedInstances := DEFAULT_INSTANCE_BUFFER - currentActive
-		err = s.ScaleUpIfNecessary(wantedInstances, scalingCtx, event, latestImageID)
+		logger.Infof("Wanted instances %v", wantedInstances)
+		// err = s.ScaleUpIfNecessary(wantedInstances, scalingCtx, event, latestImageID)
 		if err != nil {
 			// err is already wrapped here
 			return err
@@ -209,9 +210,9 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	}
 
 	// Compute the current capacity we have on the region
-	// Consider starting instances because otherwise we will
-	// find ourselves starting many instances unnecessarily.
-	capacity := currentStarting + currentActive
+	// Only consider the real capacity (active instances with
+	// the current image) this time.
+	realCapacity := currentActive
 
 	// Create a list of instances that can be scaled down from the active instances list.
 	// For this, we have to consider the following conditions:
@@ -223,18 +224,24 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	// list that will be scaled down.
 	for _, instance := range allActive {
 		if len(instance.Mandelboxes) > 0 {
-			// Instance has running mandelboxes
-			// don't scale down
+			// Don't scale down any instance that has running
+			// mandelboxes, regardless of the image it uses
+			logger.Infof("Not scaling down instance %v because it has %v mandelboxes running.", instance.ID, len(instance.Mandelboxes))
 			continue
 		}
 
-		if instance.ImageID == graphql.String(latestImageID) &&
-			capacity > DEFAULT_INSTANCE_BUFFER {
-			// Only scale down free instances with the current
-			// image if we have more than desired instances
-			freeInstances = append(freeInstances, instance)
+		if instance.ImageID == graphql.String(latestImageID) {
+			// Current instances
+			if realCapacity > DEFAULT_INSTANCE_BUFFER {
+				// Only scale down if there are more instances
+				// than necessary.
+				logger.Infof("Scaling down instance %v because we have more capacity of %v than desired %v.", instance.ID, realCapacity, DEFAULT_INSTANCE_BUFFER)
+				freeInstances = append(freeInstances, instance)
+				realCapacity--
+			}
 		} else {
-			// Scale down all free instances with old images
+			// Old instances
+			logger.Infof("Scaling down instance %v because it has an old image id %v.", instance.ID, instance.ImageID)
 			freeInstances = append(freeInstances, instance)
 		}
 	}
