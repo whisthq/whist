@@ -4,7 +4,12 @@
  * @brief Feature flag handling.
  */
 
+#include <ctype.h>
+#include <string.h>
+#include <stdio.h>
+
 #include "whist/logging/logging.h"
+#include "whist/utils/command_line.h"
 #include "features.h"
 
 typedef struct {
@@ -43,17 +48,97 @@ static const WhistFeatureDescriptor *get_feature_descriptor(WhistFeature feature
         return NULL;
 }
 
+static const WhistFeatureDescriptor *match_feature_name(const char *str, size_t len) {
+    // Match strings while ignoring case and non-alphabetic characters.
+    for (int f = 0; f < WHIST_FEATURE_COUNT; f++) {
+        const WhistFeatureDescriptor *feature = &feature_list[f];
+        bool match = true;
+        size_t s = 0, d = 0;
+        while (s < len) {
+            if (tolower(str[s]) != feature->name[d]) {
+                match = false;
+                break;
+            }
+            // Find the next alphabetic character in each string.
+            do
+                ++s;
+            while (s < len && str[s] && !isalpha(str[s]));
+            do
+                ++d;
+            while (feature->name[d] && !isalpha(feature->name[d]));
+        }
+        if (match) {
+            return feature;
+        }
+    }
+    return NULL;
+}
+
+static uint32_t command_line_override_values;
+static uint32_t command_line_override_mask;
+
+static bool command_line_feature_list(const char *value, bool enable) {
+    const WhistFeatureDescriptor *feature;
+    const char *start = value, *end;
+    size_t len;
+    while (1) {
+        end = strchr(start, ',');
+        if (end)
+            len = end - start;
+        else
+            len = strlen(start);
+
+        feature = match_feature_name(start, len);
+        if (feature) {
+            command_line_override_values |= enable << feature->feature;
+            command_line_override_mask |= 1 << feature->feature;
+        } else {
+            printf("Unable to enable unknown feature \"%.*s\".\n", (int)len, start);
+            return false;
+        }
+
+        if (end)
+            start = end + 1;
+        else
+            break;
+    }
+    return true;
+}
+
+static bool enable_features(const WhistCommandLineOption *opt, const char *value) {
+    return command_line_feature_list(value, true);
+}
+
+static bool disable_features(const WhistCommandLineOption *opt, const char *value) {
+    return command_line_feature_list(value, false);
+}
+
+COMMAND_LINE_CALLBACK_OPTION(enable_features, 0, "enable-features", WHIST_OPTION_REQUIRED_ARGUMENT,
+                             "List of features to enable, comma-separated.")
+COMMAND_LINE_CALLBACK_OPTION(disable_features, 0, "disable-features",
+                             WHIST_OPTION_REQUIRED_ARGUMENT,
+                             "List of features to disable, comma-separated.")
+
 static uint32_t current_feature_mask;
 
 void whist_init_features(void) {
     current_feature_mask = 0;
     for (int f = 0; f < WHIST_FEATURE_COUNT; f++) {
         const WhistFeatureDescriptor *desc = get_feature_descriptor(f);
-        if (desc->enabled) {
-            current_feature_mask |= 1 << f;
-            LOG_INFO("Feature %s is enabled.", desc->name);
+        if ((1 << f) & command_line_override_mask) {
+            if ((1 << f) & command_line_override_values) {
+                current_feature_mask |= 1 << f;
+                LOG_INFO("Feature %s is enabled from the comamnd-line.", desc->name);
+            } else {
+                LOG_INFO("Feature %s is disabled from the comamnd-line.", desc->name);
+            }
         } else {
-            LOG_INFO("Feature %s is disabled.", desc->name);
+            if (desc->enabled) {
+                current_feature_mask |= 1 << f;
+                LOG_INFO("Feature %s is enabled by default.", desc->name);
+            } else {
+                LOG_INFO("Feature %s is disabled by default..", desc->name);
+            }
         }
     }
 }
