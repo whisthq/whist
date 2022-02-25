@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-co-op/gocron"
+	"github.com/google/uuid"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default" // Import as algos, short for scaling_algorithms
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -109,6 +110,8 @@ func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent) {
 	s.Every(10).Minutes().StartAt(t).Do(func() {
 		// Send to scheduling channel
 		scheduledEvents <- algos.ScalingEvent{
+			// Create a UUID so we can identify and search this event on our logs
+			ID: uuid.NewString(),
 			// We set the event type to SCHEDULED_SCALE_DOWN_EVENT
 			// here so that we have more information about the event.
 			// SCHEDULED means the source of the event is the scheduler
@@ -148,6 +151,8 @@ func StartDeploy(scheduledEvents chan algos.ScalingEvent) {
 
 	// Send image upgrade event to scheduled chan.
 	scheduledEvents <- algos.ScalingEvent{
+		// Create a UUID so we can identify and search this event on our logs
+		ID: uuid.NewString(),
 		// We set the event type to SCHEDULED_IMAGE_UPGRADE_EVENT
 		// here so that we have more information about the event.
 		// SCHEDULED means the source of the event is the scheduler
@@ -196,7 +201,7 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 
 				if len(subscriptionEvent.Instances) > 0 {
 					instance := subscriptionEvent.Instances[0]
-
+					scalingEvent.ID = uuid.NewString()
 					scalingEvent.Data = instance
 					scalingEvent.Region = instance.Region
 				}
