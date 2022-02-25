@@ -13,7 +13,7 @@ const config = { userAcceptedDataPolicy: true }
 
 // The download test emits results over a period of time; create variables
 // to track those results
-const results = {
+let results = {
   jitter: 0,
   downloadMbps: 0,
   progress: 0,
@@ -64,6 +64,13 @@ const callbacks = {
 }
 
 const networkAnalyze = () => {
+  MAX_PROGRESS = 0
+  results = {
+    jitter: 0,
+    downloadMbps: 0,
+    progress: 0,
+  }
+
   const urlPromise = ndt7.discoverServerURLs(config, callbacks)
   ndt7.downloadTest(config, callbacks, urlPromise)
 

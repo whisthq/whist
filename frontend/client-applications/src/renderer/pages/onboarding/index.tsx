@@ -37,7 +37,7 @@ const Shuffle = (props: { pages: JSX.Element[]; onSubmit: () => void }) => {
           <WhistButton
             onClick={() => setPageToShow(pageToShow + 1)}
             state={WhistButtonState.DEFAULT}
-            contents="Next"
+            contents={"Continue"}
             className="mb-8 px-16"
           />
           <div className="relative">

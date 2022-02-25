@@ -1,7 +1,8 @@
-import React, { useEffect } from "react"
+import React, { useState, useEffect } from "react"
 
 import { TypeWriter } from "@app/components/typewriter"
 import { Network } from "@app/components/network"
+import Dropdown from "@app/components/dropdown"
 
 import Computer from "@app/components/icons/computer"
 import Duplicate from "@app/components/icons/duplicate"
@@ -17,6 +18,8 @@ import { useMainState } from "@app/renderer/utils/ipc"
 import { WhistTrigger } from "@app/constants/triggers"
 
 import ChromeHeader from "@app/components/assets/chromeHeader.svg"
+import { AWSRegion } from "@app/@types/aws"
+import classNames from "classnames"
 
 const Template = (props: { contents: JSX.Element; word: string }) => {
   return (
@@ -126,7 +129,7 @@ const WhoIsWhistFor = () => {
   const contents = (
     <div className="m-auto text-center mt-16">
       <div className="mt-28 text-gray-300 text-2xl font-bold leading-10 max-w-lg m-auto text-center">
-        Whist is for you if you struggle with
+        Whis is built for those who struggle with
       </div>
       <div className="max-w-lg m-auto px-10 py-6">{icons}</div>
     </div>
@@ -371,6 +374,7 @@ const FollowUsOnTwitter = () => {
 
 const NetworkTest = () => {
   const [mainState, setMainState] = useMainState()
+  const [networkTestEnabled, enableNetworkTest] = useState(true)
 
   useEffect(() => {
     setMainState({
@@ -378,14 +382,68 @@ const NetworkTest = () => {
     })
   }, [])
 
+  const rerun = () => {
+    if (networkTestEnabled) {
+      enableNetworkTest(false)
+      setTimeout(() => {
+        enableNetworkTest(true)
+      }, 8500)
+      setMainState({
+        trigger: {
+          name: WhistTrigger.startNetworkAnalysis,
+          payload: undefined,
+        },
+      })
+    }
+  }
+
+  const awsRegionName = (region: AWSRegion) => {
+    switch (region) {
+      case AWSRegion.US_EAST_1:
+        return "Virginia, US"
+      case AWSRegion.US_EAST_2:
+        return "Ohio, US"
+      case AWSRegion.US_WEST_1:
+        return "California, US"
+      case AWSRegion.US_WEST_2:
+        return "Oregon, US"
+      case AWSRegion.CA_CENTRAL_1:
+        return "Montreal, CA"
+      default:
+        return ""
+    }
+  }
+
   const contents = (
-    <div className="mt-28">
+    <div className="mt-24">
       <Network
         networkInfo={mainState.networkInfo}
         onSubmit={() => {}}
         withText={true}
         withButton={false}
       />
+      <div className="w-full max-w-md m-auto">
+        <div className="text-gray-400 mb-2 text-sm bg-gray-800 rounded px-12 py-4 text-center">
+          The closest server to you is in{" "}
+          <span className="font-bold text-gray-300 text-blue-light">
+            {awsRegionName(mainState?.regions?.[0]) ?? "- - -"}
+          </span>
+          . If your Internet conditions have changed, you can
+          <br />
+          <span
+            className={classNames(
+              "font-bold text-blue-light",
+              networkTestEnabled
+                ? "text-opacity-100 cursor-pointer"
+                : "text-opacity-50"
+            )}
+            onClick={rerun}
+          >
+            re-run the speed test
+          </span>
+          .
+        </div>
+      </div>
     </div>
   )
 

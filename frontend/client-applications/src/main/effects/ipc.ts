@@ -90,6 +90,9 @@ const subscribed = combineLatest(
         ),
         fromTrigger(WhistTrigger.importTabs).pipe(mapTo(undefined))
       ),
+      regions: fromTrigger(WhistTrigger.awsPingRefresh).pipe(
+        map((regions) => regions?.map((r: any) => r.region))
+      ),
     },
     (obs) => concat(of(undefined), obs)
   )

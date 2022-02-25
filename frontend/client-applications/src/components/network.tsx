@@ -29,7 +29,6 @@ const getNetworkTestState = (
 
   // Network test is finished and the network is good
   if (
-    networkInfo.progress >= 100 &&
     networkInfo.downloadMbps >= MIN_ACCEPTABLE_DOWNLAOD_MBPS &&
     networkInfo.jitter < MAX_ACCEPTABLE_JITTER_MS &&
     networkInfo.ping < MAX_ACCEPTABLE_PING_MS
@@ -51,8 +50,8 @@ const Subtitle = (props: { state: NetworkTestState }) => {
     default:
       return (
         <div className="text-gray-500">
-          You may experience stutters and typing/scrolling latency. If possible,
-          please move closer to your router or try again on different wifi.
+          You may experience stutters and latency. If possible, please move
+          closer to your router or try again on different wifi.
         </div>
       )
   }
@@ -75,8 +74,7 @@ const Text = (props: { state: NetworkTestState }) => {
     default:
       return (
         <div className="text-gray-100 font-bold text-2xl mt-4 leading-10">
-          Your network may not be suitable for{" "}
-          <span className="text-blue-light">Whist</span>
+          Whist may not perform well
         </div>
       )
   }

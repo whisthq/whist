@@ -1,4 +1,5 @@
 import { Trigger } from "@app/main/utils/flows"
+import { AWSRegion } from "@app/@types/aws"
 
 export type AsyncReturnType<T extends (...args: any) => Promise<any>> =
   T extends (...args: any) => Promise<infer R> ? R : any
@@ -19,4 +20,5 @@ export interface StateIPC {
   restoreLastSession: boolean
   otherBrowserWindows: string[][]
   allowNonUSServers: boolean
+  regions: AWSRegion[]
 }

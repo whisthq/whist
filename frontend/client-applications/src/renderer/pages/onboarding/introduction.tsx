@@ -43,8 +43,8 @@ const Introduction = (props: { onSubmit: () => void }) => {
           <WhistButton
             onClick={props.onSubmit}
             state={WhistButtonState.DEFAULT}
-            contents="Next"
-            className="mb-8 px-16"
+            contents="Continue"
+            className="mb-9 px-16"
           />
         </div>
       </div>
