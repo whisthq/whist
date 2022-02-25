@@ -52,6 +52,7 @@ extern "C" {
 #include <whist/utils/fec.h>
 #include <whist/utils/linked_list.h>
 #include <whist/utils/queue.h>
+#include <whist/utils/command_line.h>
 
 extern WhistMutex window_resize_mutex;
 extern volatile SDL_Window* window;
@@ -1467,6 +1468,176 @@ TEST_F(ProtocolTest, AudioTest) {
     // lots of frames buffered (maxed out ring buffer): ready to render
     EXPECT_TRUE(audio_ready_for_frame(audio_context, 15));
     destroy_audio(audio_context);
+}
+
+static int test_option_int;
+static bool test_option_bool_1, test_option_bool_2, test_option_bool_3;
+static const char* test_option_string;
+static const char* test_option_callback;
+static int test_operand_position;
+static const char* test_operand_value;
+
+static bool test_option_callback_function(const WhistCommandLineOption* opt, const char* value) {
+    test_option_callback = value;
+    return true;
+}
+
+static bool test_operand_callback_function(int pos, const char* value) {
+    test_operand_position = pos;
+    test_operand_value = value;
+    return true;
+}
+
+// These option names must not conflict with options anywhere else.
+COMMAND_LINE_INT_OPTION(test_option_int, '4', "test-int", INT_MIN, INT_MAX,
+                        "Integer option for testing.")
+COMMAND_LINE_BOOL_OPTION(test_option_bool_1, '5', "test-bool-1", "Boolean option for testing.")
+COMMAND_LINE_BOOL_OPTION(test_option_bool_2, '6', "test-bool-2",
+                         "Second boolean option for testing.")
+COMMAND_LINE_BOOL_OPTION(test_option_bool_3, '7', "test-bool-3",
+                         "Third boolean option for testing.")
+COMMAND_LINE_STRING_OPTION(test_option_string, '8', "test-string", 16, "String option for testing.")
+COMMAND_LINE_CALLBACK_OPTION(test_option_callback_function, '9', "test-callback",
+                             WHIST_OPTION_REQUIRED_ARGUMENT, "Callback option for testing.")
+
+TEST_F(ProtocolTest, CommandLineTest) {
+    const char* argv[10] = {"comamnd-line-test"};
+
+    // Empty command-line.
+    EXPECT_TRUE(whist_parse_command_line(1, argv, NULL));
+
+    // Single operand.
+    argv[1] = "foo";
+    EXPECT_TRUE(whist_parse_command_line(2, argv, &test_operand_callback_function));
+    EXPECT_EQ(test_operand_position, 1);
+    EXPECT_STREQ(test_operand_value, "foo");
+
+    // Single integer option in various forms.
+    argv[1] = "-417";
+    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_EQ(test_option_int, 17);
+    argv[1] = "--test-int=29";
+    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_EQ(test_option_int, 29);
+    argv[1] = "-4";
+    argv[2] = "42";
+    EXPECT_TRUE(whist_parse_command_line(3, argv, NULL));
+    EXPECT_EQ(test_option_int, 42);
+    argv[1] = "--test-int";
+    argv[2] = "53";
+    EXPECT_TRUE(whist_parse_command_line(3, argv, NULL));
+    EXPECT_EQ(test_option_int, 53);
+
+    // Single boolean in various forms
+    argv[1] = "-5";
+    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_EQ(test_option_bool_1, true);
+    argv[1] = "-5off";
+    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_EQ(test_option_bool_1, false);
+    argv[1] = "-5";
+    argv[2] = "TRUE";
+    EXPECT_TRUE(whist_parse_command_line(3, argv, NULL));
+    EXPECT_EQ(test_option_bool_1, true);
+    argv[1] = "-5";
+    argv[2] = "No";
+    EXPECT_TRUE(whist_parse_command_line(3, argv, NULL));
+    EXPECT_EQ(test_option_bool_1, false);
+    argv[1] = "--test-bool-1";
+    argv[2] = "-442";
+    EXPECT_TRUE(whist_parse_command_line(3, argv, NULL));
+    EXPECT_EQ(test_option_bool_1, true);
+    EXPECT_EQ(test_option_int, 42);
+    argv[1] = "--test-bool-1";
+    argv[2] = "0";
+    EXPECT_TRUE(whist_parse_command_line(3, argv, NULL));
+    EXPECT_EQ(test_option_bool_1, false);
+
+    // Multiple boolean flags.
+    argv[1] = "-5";
+    argv[2] = "-6";
+    argv[3] = "-7";
+    EXPECT_TRUE(whist_parse_command_line(4, argv, NULL));
+    EXPECT_EQ(test_option_bool_1, true);
+    EXPECT_EQ(test_option_bool_2, true);
+    EXPECT_EQ(test_option_bool_3, true);
+
+    // Single string option.
+    argv[1] = "-8foo";
+    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_STREQ(test_option_string, "foo");
+    argv[1] = "--test-string";
+    argv[2] = "bar";
+    EXPECT_TRUE(whist_parse_command_line(3, argv, NULL));
+    EXPECT_STREQ(test_option_string, "bar");
+
+    // Callback function.
+    argv[1] = "-9hello";
+    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_STREQ(test_option_callback, "hello");
+    argv[1] = "--test-callback";
+    argv[2] = "world";
+    EXPECT_TRUE(whist_parse_command_line(3, argv, NULL));
+    EXPECT_STREQ(test_option_callback, "world");
+
+    // Abbreviated names.
+    argv[1] = "--test-str=test";
+    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_STREQ(test_option_string, "test");
+    argv[1] = "--test-call";
+    argv[2] = "foo";
+    EXPECT_TRUE(whist_parse_command_line(3, argv, NULL));
+    EXPECT_STREQ(test_option_callback, "foo");
+
+    // Different integer formats.
+    argv[1] = "--test-int=-1";
+    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_EQ(test_option_int, -1);
+    argv[1] = "--test-int=0x1234";
+    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_EQ(test_option_int, 0x1234);
+
+    // Out-of-range integers.
+    argv[1] = "--test-int=2000000000";
+    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_EQ(test_option_int, 2000000000);
+    argv[1] = "--test-int=3000000000";
+    EXPECT_FALSE(whist_parse_command_line(2, argv, NULL));
+    argv[1] = "--test-int=-2000000000";
+    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_EQ(test_option_int, -2000000000);
+    argv[1] = "--test-int=-3000000000";
+    EXPECT_FALSE(whist_parse_command_line(2, argv, NULL));
+    argv[1] = "--test-int=0x7fffffff";
+    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_EQ(test_option_int, 2147483647);
+    argv[1] = "--test-int=0x80000000";
+    EXPECT_FALSE(whist_parse_command_line(2, argv, NULL));
+
+    // Too-long strings.
+    argv[1] = "--test-string=1234567890123456";
+    EXPECT_TRUE(whist_parse_command_line(2, argv, NULL));
+    EXPECT_STREQ(test_option_string, "1234567890123456");
+    argv[1] = "--test-string=12345678901234567";
+    EXPECT_FALSE(whist_parse_command_line(2, argv, NULL));
+
+    // Everything together.
+    argv[1] = "--test-int=-17";
+    argv[2] = "-6";
+    argv[3] = "-7";
+    argv[4] = "--test-bool-1";
+    argv[5] = "off";
+    argv[6] = "--test-str";
+    argv[7] = "foo";
+    argv[8] = "bar";
+    EXPECT_TRUE(whist_parse_command_line(9, argv, &test_operand_callback_function));
+    EXPECT_EQ(test_option_int, -17);
+    EXPECT_EQ(test_option_bool_1, false);
+    EXPECT_EQ(test_option_bool_2, true);
+    EXPECT_EQ(test_option_bool_3, true);
+    EXPECT_STREQ(test_option_string, "foo");
+    EXPECT_EQ(test_operand_position, 8);
+    EXPECT_STREQ(test_operand_value, "bar");
 }
 
 /*
