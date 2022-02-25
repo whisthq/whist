@@ -92,6 +92,32 @@ void *linked_list_extract_tail(LinkedList *list) {
     return item;
 }
 
+void linked_list_sort(LinkedList *list, int (*cmp)(const void *first, const void *second)) {
+    LinkedListHeader *a, *b, *next;
+    for (a = list->head; a; a = next) {
+        next = a->next;
+
+        // Find last b which is at least a.
+        for (b = a->prev; b; b = b->prev) {
+            if (cmp(a, b) > 0) {
+                break;
+            }
+        }
+
+        if (b == a->prev) {
+            // a is not moving.
+        } else if (b == NULL) {
+            // Move a to start of list.
+            linked_list_remove_internal(list, a);
+            linked_list_add_head_internal(list, a);
+        } else {
+            // Move a to after b.
+            linked_list_remove_internal(list, a);
+            linked_list_add_after_internal(list, b, a);
+        }
+    }
+}
+
 bool linked_list_check_validity(const LinkedList *list) {
     int count = 0;
     for (const LinkedListHeader *iter = list->head; iter; iter = iter->next) {

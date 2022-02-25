@@ -1300,12 +1300,16 @@ TEST_F(ProtocolTest, FECTest) {
     destroy_fec_decoder(fec_decoder);
 }
 
-TEST_F(ProtocolTest, LinkedListTest) {
-    typedef struct {
-        LINKED_LIST_HEADER;
-        int id;
-    } TestItem;
+typedef struct {
+    LINKED_LIST_HEADER;
+    int id;
+} TestItem;
 
+static int test_linked_list_compare(const void* a, const void* b) {
+    return ((const TestItem*)a)->id - ((const TestItem*)b)->id;
+}
+
+TEST_F(ProtocolTest, LinkedListTest) {
     LinkedList list;
     linked_list_init(&list);
     EXPECT_EQ(linked_list_size(&list), 0);
@@ -1369,6 +1373,22 @@ TEST_F(ProtocolTest, LinkedListTest) {
     EXPECT_EQ(linked_list_size(&list), 0);
     EXPECT_TRUE(linked_list_extract_head(&list) == NULL);
     EXPECT_TRUE(linked_list_extract_tail(&list) == NULL);
+
+    // Construct list with no order.
+    for (int i = 0; i < 16; i++) {
+        if (i % 2)
+            linked_list_add_tail(&list, &items[i]);
+        else
+            linked_list_add_head(&list, &items[i]);
+    }
+
+    // Sort and verify that list is now sorted.
+    linked_list_sort(&list, &test_linked_list_compare);
+    for (int i = 0; i < 16; i++) {
+        TestItem* test;
+        test = (TestItem*)linked_list_extract_head(&list);
+        EXPECT_EQ(test->id, i);
+    }
 }
 
 TEST_F(ProtocolTest, QueueTest) {
