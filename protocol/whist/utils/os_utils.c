@@ -83,6 +83,8 @@ static struct AppleKeyboardMapping apple_keyboard_mappings[] = {
 static const char linux_supported_layouts[][5] = {"us", "it",    "ara", "de", "fr",
                                                   "es", "latam", "il",  "ca", "uk"};
 
+void run_as_whist_user(const char* command);
+
 #define NUM_LINUX_SUPPORTED_LAYOUTS \
     ((int)sizeof(linux_supported_layouts) / (int)sizeof(linux_supported_layouts[0]))
 #endif
@@ -222,19 +224,8 @@ void set_keyboard_layout(WhistKeyboardLayout requested_layout) {
     int bytes_written;
     // first, run the additional command
     if (strlen(current_layout.additional_command) != 0) {
-        bytes_written = snprintf(cmd_buf, sizeof(cmd_buf), "/usr/share/whist/run-as-whist-user.sh '%s'",
-                     current_layout.additional_command);
-
-        if (bytes_written >= 0) {
-            LOG_INFO("Running %s", cmd_buf);
-            runcmd(cmd_buf, NULL);
-        }
-    // then, restart ibus
-        bytes_written = snprintf(cmd_buf, sizeof(cmd_buf), "/usr/share/whist/run-as-whist-user.sh 'ibus restart'");
-        if (bytes_written >= 0) {
-            LOG_INFO("Running %s", cmd_buf);
-            runcmd(cmd_buf, NULL);
-        }
+        run_as_whist_user(current_layout.additional_command);
+        run_as_whist_user("ibus restart");
     }
     // then, change the engine
     bytes_written =
@@ -242,7 +233,7 @@ void set_keyboard_layout(WhistKeyboardLayout requested_layout) {
                  current_layout.layout_name);
 
     if (bytes_written >= 0) {
-        LOG_INFO("Running %s", cmd_buf);
+        LOG_DEBUG("Running %s", cmd_buf);
         runcmd(cmd_buf, NULL);
     }
 #else
@@ -264,4 +255,13 @@ void package_notification(WhistNotification *notif, const char *title, const cha
     // we would like to add more complicated parsing rules in the future.
     safe_strncpy(notif->title, title, MAX_NOTIF_TITLE_LEN);
     safe_strncpy(notif->message, message, MAX_NOTIF_MSG_LEN);
+}
+
+void run_as_whist_user(const char* command) {
+    static char cmd_buf[1024];
+    int bytes_written = snprintf(cmd_buf, sizeof(cmd_buf), "/usr/share/whist/run-as-whist-user.sh '%s'", command);
+    if (bytes_written >= 0) {
+        LOG_DEBUG("Running command %s", cmd_buf);
+        runcmd(cmd_buf, NULL);
+    }
 }
