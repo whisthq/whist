@@ -67,8 +67,8 @@ static AppleKeyboardMapping apple_keyboard_mappings[] = {
     {"com.apple.keylayout.ABC", {"xkb:us:intl:eng", ""}},
     {"com.apple.inputmethod.SCIM.ITABC", {"pinyin", ""}},
     {"com.sogou.inputmethod.sogou.pinyin", {"pinyin", ""}},
-    {"com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese", {"anthy", "gsetting set org.freedesktop.ibus.engine.anthy.common input-mode 0"}},
-    {"com.apple.inputmethod.Kotoeri.RomajiTyping.Roman", {"anthy",  "gsetting set org.freedesktop.ibus.engine.anthy.common input-mode 3"}},
+    {"com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese", {"anthy", "gsettings set org.freedesktop.ibus.engine.anthy.common input-mode 0"}},
+    {"com.apple.inputmethod.Kotoeri.RomajiTyping.Roman", {"anthy",  "gsettings set org.freedesktop.ibus.engine.anthy.common input-mode 3"}},
     {"com.apple.keylayout.Vietnamese", {"unikey", ""}},
     {"com.apple.inputmethod.Korean.2SetKorean", {"hangul", ""}},
 };
