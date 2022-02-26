@@ -68,8 +68,9 @@ static struct AppleKeyboardMapping apple_keyboard_mappings[] = {
     {"com.apple.inputmethod.SCIM.ITABC", {"pinyin", ""}},
     {"com.sogou.inputmethod.sogou.pinyin", {"pinyin", ""}},
     {"com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese", {"anthy", "gsettings set org.freedesktop.ibus.engine.anthy.common input-mode 0"}},
+    {"com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese.Katakana", {"anthy", "gsettings set org.freedesktop.ibus.engine.anthy.common input-mode 1"}},
     {"com.apple.inputmethod.Kotoeri.RomajiTyping.Roman", {"anthy",  "gsettings set org.freedesktop.ibus.engine.anthy.common input-mode 3"}},
-    {"com.apple.keylayout.Vietnamese", {"unikey", ""}},
+    // {"com.apple.keylayout.Vietnamese", {"unikey", ""}},
     {"com.apple.inputmethod.Korean.2SetKorean", {"hangul", ""}},
 };
 
@@ -221,7 +222,7 @@ void set_keyboard_layout(WhistKeyboardLayout requested_layout) {
     int bytes_written;
     // first, run the additional command
     if (strlen(current_layout.additional_command) != 0) {
-        bytes_written = snprintf(cmd_buf, sizeof(cmd_buf), "/usr/share/whist/run-as-whist-user.sh %s",
+        bytes_written = snprintf(cmd_buf, sizeof(cmd_buf), "/usr/share/whist/run-as-whist-user.sh '%s'",
                      current_layout.additional_command);
 
         if (bytes_written >= 0) {
