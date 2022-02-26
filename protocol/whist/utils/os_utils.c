@@ -44,6 +44,7 @@ struct AppleKeyboardMapping {
 // for foreign characters, use https://wiki.archlinux.org/title/Input_method or something similar
 // to locate a packageand sudo apt install METHOD in the Dockerfile, then add the ibus engine to
 // this mapping
+// If additional configuration is needed, e.g. switching input methods within the same keyboard, use the third command
 static struct AppleKeyboardMapping apple_keyboard_mappings[] = {
     {"com.apple.keylayout.USExtended", {"xkb:us::eng", ""}},
     {"com.apple.keylayout.US", {"xkb:us::eng", ""}},
@@ -258,6 +259,7 @@ void package_notification(WhistNotification *notif, const char *title, const cha
 }
 
 void run_as_whist_user(const char* command) {
+    // Run a shell command as the whist user
     static char cmd_buf[1024];
     int bytes_written = snprintf(cmd_buf, sizeof(cmd_buf), "/usr/share/whist/run-as-whist-user.sh '%s'", command);
     if (bytes_written >= 0) {
