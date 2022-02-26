@@ -258,6 +258,7 @@ void package_notification(WhistNotification *notif, const char *title, const cha
     safe_strncpy(notif->message, message, MAX_NOTIF_MSG_LEN);
 }
 
+#ifdef __linux__
 void run_as_whist_user(const char* command) {
     // Run a shell command as the whist user
     static char cmd_buf[1024];
@@ -267,3 +268,4 @@ void run_as_whist_user(const char* command) {
         runcmd(cmd_buf, NULL);
     }
 }
+#endif
