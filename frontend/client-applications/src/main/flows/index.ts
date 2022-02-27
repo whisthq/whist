@@ -8,6 +8,7 @@ import {
   mapTo,
   pluck,
   withLatestFrom,
+  takeUntil,
 } from "rxjs/operators"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
@@ -51,9 +52,8 @@ const update = autoUpdateFlow(fromTrigger(WhistTrigger.updateAvailable))
 // AWS ping flow
 const awsPing = awsPingFlow(of(null))
 
-// Auth flow
 const auth = authFlow(
-  emitOnSignal(
+  waitForSignal(
     merge(
       fromTrigger(WhistTrigger.authInfo),
       combineLatest({
@@ -61,16 +61,13 @@ const auth = authFlow(
         refreshToken,
         userEmail,
         configToken,
-      }).pipe(
-        take(1),
-        filter((auth) => isEmpty(pickBy(auth, (x) => x === "")))
-      )
+      }).pipe(filter((auth) => isEmpty(pickBy(auth, (x) => x === ""))))
     ),
     merge(
       sleep.pipe(filter((sleep) => !sleep)),
       fromTrigger(WhistTrigger.reactivated)
     )
-  )
+  ).pipe(takeUntil(fromTrigger(WhistTrigger.authFlowSuccess)))
 )
 
 // Onboarding flow
