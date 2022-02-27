@@ -11,7 +11,6 @@ import { OneButtonError, TwoButtonError } from "@app/renderer/pages/error"
 import Signout from "@app/renderer/pages/signout"
 import Importer from "@app/renderer/pages/importer"
 import Update from "@app/renderer/pages/update"
-import Network from "@app/renderer/pages/network"
 import Launching from "@app/renderer/pages/launching"
 import Importing from "@app/renderer/pages/importing"
 import Omnibar from "@app/renderer/pages/omnibar"
@@ -103,8 +102,6 @@ const RootComponent = () => {
       },
     })
   }
-
-  const handleNetworkSubmit = () => setShow(WindowHashImportOnboarding)
 
   const handleWelcomeSubmit = () =>
     setMainState({

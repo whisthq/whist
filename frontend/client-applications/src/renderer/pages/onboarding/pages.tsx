@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react"
 
 import { TypeWriter } from "@app/components/typewriter"
 import { Network } from "@app/components/network"
-import Dropdown from "@app/components/dropdown"
 
 import Computer from "@app/components/icons/computer"
 import Duplicate from "@app/components/icons/duplicate"
