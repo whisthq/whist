@@ -12,7 +12,7 @@ const iconPath = () => {
   if (appEnvironment === WhistEnvironments.DEVELOPMENT)
     return path.join(buildRoot, "icon_dev.png")
 
-  return path.join(buildRoot, "icon.png")
+  return path.join(buildRoot, "icon_dev.png")
 }
 
 export { iconPath }
