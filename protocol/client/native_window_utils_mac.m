@@ -33,6 +33,45 @@ Public Function Implementations
 ============================
 */
 
+void initiate_out_of_window_drag_handlers(void) {
+    // Monitor change count and mouse press as state variables
+    static int current_change_count = -1;
+    static bool file_drag_mouse_down = false;
+
+    if (current_change_count == -1) {
+        NSPasteboard* pb = [NSPasteboard pasteboardWithName:NSPasteboardNameDrag];
+        current_change_count = (int) [pb changeCount];
+    }
+
+    // Set event handler for detecting when a new file is being dragged
+    [NSEvent addGlobalMonitorForEventsMatchingMask:NSEventMaskLeftMouseDragged handler:^(NSEvent* event) {
+        NSPasteboard* pb = [NSPasteboard pasteboardWithName:NSPasteboardNameDrag];
+        int change_count = (int) [pb changeCount];
+        NSLog(@"%d", change_count);
+        if (change_count > current_change_count) {
+            NSLog(@"%@", [pb propertyListForType:NSFilenamesPboardType]);
+            NSLog(@"%@", event);
+            current_change_count = change_count;
+            file_drag_mouse_down = true;
+        } else if (file_drag_mouse_down) {
+            NSLog(@"DRAGGING THIS SPECIFIC FILE!!");
+            //NSPoint xy = [event mouseLocation];
+            // TODO: The locationInWindow thing is throwing me off...
+            NSPoint event_location = [event locationInWindow];
+            NSRect e = [[NSScreen mainScreen] frame];
+            NSLog(@"%@", NSStringFromPoint(event_location));
+            int flipped_y = (int)e.size.height - event_location.y;
+            //int x = [[event loc] x];
+            sdl_handle_drag_event();
+        }
+    }];
+
+    // Mouse up event indicates that file is no longer being dragged
+    [NSEvent addGlobalMonitorForEventsMatchingMask:NSEventMaskLeftMouseUp handler:^(NSEvent* event) {
+         file_drag_mouse_down = false;
+    }];
+}
+
 void hide_native_window_taskbar(void) {
     /*
         Hide the taskbar icon for the app. This only works on macOS (for Window and Linux,

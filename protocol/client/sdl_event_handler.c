@@ -337,6 +337,7 @@ static int handle_file_drop(SDL_Event *event) {
     // Scale the mouse position for server-side compatibility
     drop_event_info.server_drop.x = mouse_x * get_native_window_dpi((SDL_Window *)window) / 96;
     drop_event_info.server_drop.y = mouse_y * get_native_window_dpi((SDL_Window *)window) / 96;
+    sdl_end_drag_event();
     file_synchronizer_set_file_reading_basic_metadata(event->drop.file, FILE_TRANSFER_SERVER_DROP,
                                                       &drop_event_info);
 
@@ -370,6 +371,11 @@ static int handle_sdl_event(SDL_Event *event) {
         case SDL_WINDOWEVENT: {
             if (event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
                 sdl_renderer_resize_window(event->window.data1, event->window.data2);
+            }
+            else if (event->window.event == SDL_WINDOWEVENT_ENTER) {
+            }
+            else if (event->window.event == SDL_WINDOWEVENT_LEAVE) {
+                initiate_out_of_window_drag_handlers();
             }
 #ifdef __APPLE__
             else if (event->window.event == SDL_WINDOWEVENT_OCCLUDED) {

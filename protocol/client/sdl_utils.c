@@ -79,6 +79,11 @@ static volatile bool should_update_window_title = false;
 static volatile bool fullscreen_trigger = false;
 static volatile bool fullscreen_value = false;
 
+// File Drag Icon Update
+static volatile bool pending_file_drag_update = false;
+static int file_drag_update_x = 0;
+static int file_drag_update_y = 0;
+
 /*
 ============================
 Private Function Declarations
@@ -129,6 +134,16 @@ static void sdl_render_insufficient_bandwidth(void);
  * @note                           Must be called on the main thread
  */
 static void sdl_render_nv12data(void);
+
+/**
+ * @brief                          Render a file drag indication icon
+ *
+ * @param x                        x position of the drag relative to the sdl window
+
+ * @param y                        y position of the drag relative to the sdl window
+ *
+ */
+static void sdl_render_file_drag_icon(int x, int y);
 
 /*
 ============================
@@ -678,6 +693,32 @@ void sdl_utils_check_private_vars(bool* pending_resize_message_ptr,
     }
 }
 
+void sdl_handle_drag_event() {
+    int x_window, y_window;
+    int w_window, h_window;
+    int x_mouse_global, y_mouse_global;
+    SDL_GetWindowPosition((SDL_Window*)window, &x_window, &y_window);
+    SDL_GetWindowSize((SDL_Window*)window, &w_window, &h_window);
+    SDL_GetGlobalMouseState(&x_mouse_global, &y_mouse_global);
+    LOG_INFO("WINDOW POSITION (%d, %d)", x_window, y_window);
+    LOG_INFO("MOUSE POSITION (%d, %d)", x_mouse_global, y_mouse_global);
+    if (x_window < x_mouse_global && x_mouse_global < x_window + w_window &&
+        y_window < y_mouse_global && y_mouse_global < y_window + h_window) {
+        //int x_mouse_relative = x_mouse_global - x_window;
+        //int y_mouse_relative = y_mouse_global - y_window;
+        file_drag_update_x = x_mouse_global - x_window;
+        file_drag_update_y = y_mouse_global - y_window;
+        pending_file_drag_update = true;
+        //LOG_INFO("DRAGGING INSIDE! (%d, %d)", x_mouse_relative, y_mouse_relative);
+    } else {
+        sdl_end_drag_event();
+    }
+}
+
+void sdl_end_drag_event() {
+    pending_file_drag_update = false;
+}
+
 /*
 ============================
 Private Function Implementations
@@ -726,6 +767,12 @@ static void sdl_present_pending_framebuffer(void) {
         sdl_render_insufficient_bandwidth();
     }
     prev_insufficient_bandwidth = insufficient_bandwidth;
+
+    if(pending_file_drag_update) {
+        sdl_render_file_drag_icon(file_drag_update_x, file_drag_update_y);
+    }
+
+    log_double_statistic(VIDEO_RENDER_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);
 
     log_double_statistic(VIDEO_RENDER_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);
     whist_unlock_mutex(renderer_mutex);
@@ -1006,3 +1053,25 @@ static LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPAR
     return CallNextHookEx(mule, n_code, w_param, l_param);
 }
 #endif
+
+#define DRAG_ICON_SIZE 75
+static void sdl_render_file_drag_icon(int x, int y) {
+    SDL_Surface* file_drop_icon_surface = sdl_surface_from_png_file("images/file_drag_icon.png");
+    SDL_Texture* file_drop_icon_texture = SDL_CreateTextureFromSurface(sdl_renderer, file_drop_icon_surface);
+    sdl_free_png_file_rgb_surface(file_drop_icon_surface);
+    LOG_INFO("AYO: %p", (void*)file_drop_icon_texture);
+    int w, h;
+    SDL_QueryTexture(file_drop_icon_texture, NULL, NULL, &w, &h);
+    int horizontal_direction = (x < output_width/2) ? 1:-2;
+    int vertical_direction = -1;
+    SDL_Rect file_drop_icon_rect = {
+        .x = x + horizontal_direction * DRAG_ICON_SIZE,
+        .y = y + vertical_direction * DRAG_ICON_SIZE/2,
+        .w = DRAG_ICON_SIZE,
+        .h = DRAG_ICON_SIZE
+    };
+
+    int res = SDL_RenderCopy(sdl_renderer, file_drop_icon_texture, NULL, &file_drop_icon_rect);
+    LOG_INFO("RES %d", res);
+    SDL_DestroyTexture(file_drop_icon_texture);
+}
