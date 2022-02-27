@@ -83,6 +83,7 @@ const WhistTrigger = {
   checkPaymentFlowFailure: "checkPaymentFlowFailure",
   awsPingCached: "awsPingCached",
   awsPingRefresh: "awsPingRefresh",
+  awsPingOffline: "awsPingOffline",
 
   // System triggers (power, Internet)
   powerResume: "powerResume",

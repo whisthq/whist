@@ -111,7 +111,7 @@ const createLicenseWindow = () =>
 const createWelcomeWindow = () =>
   createElectronWindow({
     ...width.md,
-    ...height.md,
+    ...height.lg,
     hash: WindowHashWelcome,
     options: {
       trafficLightPosition: { x: 22, y: 22 },
@@ -194,6 +194,7 @@ const createOmnibar = () =>
       fullscreenable: false,
       minimizable: false,
       closable: false,
+      transparent: true,
     },
     show: false,
   })

@@ -20,7 +20,7 @@ const Option = (props: {
         <div
           className={className(
             "relative",
-            props.active ? "text-gray-300" : "text-gray-600"
+            props.active ? "text-gray-100" : "text-gray-400"
           )}
         >
           {props.icon}

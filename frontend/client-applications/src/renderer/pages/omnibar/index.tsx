@@ -55,7 +55,7 @@ const Omnibar = () => {
     <div
       onKeyDown={onKeyDown}
       tabIndex={0}
-      className="w-screen h-screen text-gray-100 text-center bg-gray-800 p-3 relative font-body focus:outline-none py-6 px-8 overflow-hidden"
+      className="w-screen h-screen text-gray-100 text-center bg-gray-900 p-3 relative font-body focus:outline-none py-6 px-8 overflow-hidden"
     >
       <div>
         <Search />

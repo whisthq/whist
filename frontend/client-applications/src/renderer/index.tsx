@@ -26,6 +26,7 @@ import {
   WindowHashSignout,
   WindowHashUpdate,
   WindowHashImport,
+  WindowHashImportOnboarding,
   WindowHashOnboarding,
   WindowHashAuth,
   WindowHashLaunchLoading,
@@ -37,7 +38,6 @@ import {
   WindowHashWelcome,
   WindowHashSupport,
   WindowHashRestoreTabs,
-  WindowHashNetwork,
 } from "@app/constants/windows"
 import {
   whistError,
@@ -104,7 +104,7 @@ const RootComponent = () => {
     })
   }
 
-  const handleNetworkSubmit = () => setShow(WindowHashImport)
+  const handleNetworkSubmit = () => setShow(WindowHashImportOnboarding)
 
   const handleWelcomeSubmit = () =>
     setMainState({
@@ -131,7 +131,7 @@ const RootComponent = () => {
     })
 
   const handleOnboardingSubmit = () => {
-    setShow(WindowHashImport)
+    setShow(WindowHashImportOnboarding)
   }
 
   useEffect(() => {
@@ -174,6 +174,17 @@ const RootComponent = () => {
         onSubmit={(browser: string | undefined) =>
           handleImporterSubmit(browser)
         }
+        allowSkip={false}
+      />
+    )
+  if (show === WindowHashImportOnboarding)
+    return (
+      <Importer
+        browsers={mainState.browsers ?? []}
+        onSubmit={(browser: string | undefined) =>
+          handleImporterSubmit(browser)
+        }
+        allowSkip={true}
       />
     )
   if (show === WindowHashRestoreTabs)
@@ -192,13 +203,6 @@ const RootComponent = () => {
 
   if (show === WindowHashOnboarding)
     return <Onboarding onSubmit={handleOnboardingSubmit} />
-  if (show === WindowHashNetwork)
-    return (
-      <Network
-        networkInfo={mainState.networkInfo}
-        onSubmit={handleNetworkSubmit}
-      />
-    )
   if (show === WindowHashLaunchLoading)
     return <Launching networkInfo={mainState.networkInfo} />
   if (show === WindowHashImportLoading) return <Importing />

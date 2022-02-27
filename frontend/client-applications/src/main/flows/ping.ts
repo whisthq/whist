@@ -1,5 +1,7 @@
-import { from, of } from "rxjs"
-import { filter } from "rxjs/operators"
+import { of } from "rxjs"
+import { filter, switchMap } from "rxjs/operators"
+import isEmpty from "lodash.isempty"
+import pickBy from "lodash.pickby"
 
 import { sortRegionByProximity } from "@app/main/utils/region"
 import { flow } from "@app/main/utils/flows"
@@ -13,7 +15,7 @@ import {
   AWS_REGIONS_SORTED_BY_PROXIMITY,
 } from "@app/constants/store"
 
-export default flow("awsPingFlow", () => {
+export default flow("awsPingFlow", (trigger) => {
   const cachedRegions = of(persistGet(AWS_REGIONS_SORTED_BY_PROXIMITY)).pipe(
     filter((regions) => (regions ?? undefined) !== undefined)
   )
@@ -26,14 +28,26 @@ export default flow("awsPingFlow", () => {
   const nonUSRegionsAllowed =
     (persistGet(ALLOW_NON_US_SERVERS) as boolean) ?? false
 
-  const pingedRegions = from(
-    sortRegionByProximity(
-      nonUSRegionsAllowed ? defaultAllowedRegions : defaultUSRegions
+  const pingedRegions = trigger.pipe(
+    switchMap(
+      async () =>
+        await sortRegionByProximity(
+          nonUSRegionsAllowed ? defaultAllowedRegions : defaultUSRegions
+        )
     )
   )
 
   return {
     cached: cachedRegions,
-    refresh: pingedRegions,
+    refresh: pingedRegions.pipe(
+      filter((regions) =>
+        isEmpty(pickBy(regions, (x) => x.pingTime === undefined))
+      )
+    ),
+    offline: pingedRegions.pipe(
+      filter(
+        (regions) => !isEmpty(pickBy(regions, (x) => x.pingTime === undefined))
+      )
+    ),
   }
 })

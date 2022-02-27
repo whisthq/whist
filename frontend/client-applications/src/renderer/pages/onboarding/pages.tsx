@@ -129,7 +129,7 @@ const WhoIsWhistFor = () => {
   const contents = (
     <div className="m-auto text-center mt-16">
       <div className="mt-28 text-gray-300 text-2xl font-bold leading-10 max-w-lg m-auto text-center">
-        Whis is built for those who struggle with
+        Whist is built for those who struggle with
       </div>
       <div className="max-w-lg m-auto px-10 py-6">{icons}</div>
     </div>

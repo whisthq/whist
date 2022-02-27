@@ -18,6 +18,7 @@ export const NAVIGATION_ERROR = "error&type=NAVIGATION_ERROR"
 export const MAINTENANCE_ERROR = "error&type=MAINTENANCE_ERROR"
 export const LOCATION_CHANGED_ERROR = "error&type=LOCATION_CHANGED_ERROR"
 export const SERVER_TIMEOUT_ERROR = "error&type=SERVER_TIMEOUT_ERROR"
+export const OFFLINE_ERROR = "error&type=OFFLINE_ERROR"
 
 export const whistError = {
   [NO_PAYMENT_ERROR]: {
@@ -79,6 +80,10 @@ export const whistError = {
   [SERVER_TIMEOUT_ERROR]: {
     title: "Our servers are unresponsive :(",
     text: "You have encountered a rare bug and we deeply apologize. Sometimes this bug will disappear if you try again.",
+  },
+  [OFFLINE_ERROR]: {
+    title: "You appear to be offline :(",
+    text: "Please check your Internet connection and try again.",
   },
 } as {
   [key: string]: {

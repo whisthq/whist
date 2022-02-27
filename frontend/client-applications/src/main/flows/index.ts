@@ -156,6 +156,7 @@ createTrigger(WhistTrigger.mandelboxFlowStart, launchTrigger)
 
 createTrigger(WhistTrigger.awsPingCached, awsPing.cached)
 createTrigger(WhistTrigger.awsPingRefresh, awsPing.refresh)
+createTrigger(WhistTrigger.awsPingOffline, awsPing.offline)
 
 createTrigger(WhistTrigger.authFlowSuccess, auth.success)
 createTrigger(WhistTrigger.authFlowFailure, auth.failure)

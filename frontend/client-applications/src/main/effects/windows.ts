@@ -5,7 +5,10 @@ import Sentry from "@sentry/electron"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
 
-import { withAppActivated } from "@app/main/utils/observables"
+import {
+  withAppActivated,
+  untilUpdateAvailable,
+} from "@app/main/utils/observables"
 import { fromTrigger } from "@app/main/utils/flows"
 import {
   WindowHashPayment,
@@ -52,13 +55,15 @@ import {
 } from "@app/main/utils/windows"
 
 // Show the welcome window if the user has not logged in yet
-withAppActivated(
-  of({
-    accessToken: (persistGet(CACHED_ACCESS_TOKEN) ?? "") as string,
-    refreshToken: (persistGet(CACHED_REFRESH_TOKEN) ?? "") as string,
-    userEmail: (persistGet(CACHED_USER_EMAIL) ?? "") as string,
-    configToken: (persistGet(CACHED_CONFIG_TOKEN) ?? "") as string,
-  })
+untilUpdateAvailable(
+  withAppActivated(
+    of({
+      accessToken: (persistGet(CACHED_ACCESS_TOKEN) ?? "") as string,
+      refreshToken: (persistGet(CACHED_REFRESH_TOKEN) ?? "") as string,
+      userEmail: (persistGet(CACHED_USER_EMAIL) ?? "") as string,
+      configToken: (persistGet(CACHED_CONFIG_TOKEN) ?? "") as string,
+    })
+  )
 ).subscribe((authCache) => {
   if (!isEmpty(pickBy(authCache, (x) => x === ""))) {
     createWelcomeWindow()
@@ -72,12 +77,17 @@ withAppActivated(fromTrigger(WhistTrigger.showAuthWindow)).subscribe(() => {
 })
 
 // Show the loading window whenever we start the mandelbox flow
-withAppActivated(
-  fromTrigger(WhistTrigger.mandelboxFlowStart).pipe(
-    withLatestFrom(
-      fromTrigger(WhistTrigger.beginImport).pipe(mapTo(true), startWith(false))
-    ),
-    map((x) => ({ import: x[1] }))
+untilUpdateAvailable(
+  withAppActivated(
+    fromTrigger(WhistTrigger.mandelboxFlowStart).pipe(
+      withLatestFrom(
+        fromTrigger(WhistTrigger.beginImport).pipe(
+          mapTo(true),
+          startWith(false)
+        )
+      ),
+      map((x) => ({ import: x[1] }))
+    )
   )
 ).subscribe((args: { import: boolean }) => {
   networkAnalyze()
@@ -102,7 +112,10 @@ withAppActivated(
     filter((connected: boolean) => connected)
   )
 ).subscribe(() => {
-  createOmnibar()
+  const { win } = createOmnibar()
+  win?.on("blur", () => {
+    hideElectronWindow(WindowHashOmnibar)
+  })
 })
 
 withAppActivated(fromTrigger(WhistTrigger.showSignoutWindow)).subscribe(() => {

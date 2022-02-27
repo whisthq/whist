@@ -7,6 +7,7 @@ import { WhistButton, WhistButtonState } from "@app/components/button"
 const Importer = (props: {
   browsers: string[]
   onSubmit: (browser: string | undefined) => void
+  allowSkip: boolean
 }) => {
   const [browser, setBrowser] = useState("")
   const [processing, setProcessing] = useState(false)
@@ -52,12 +53,14 @@ const Importer = (props: {
             onClick={() => onSubmit(browser)}
           />
         </div>
-        <button
-          className="relative top-12 text-blue-light font-bold outline-none bg-none"
-          onClick={() => onSubmit("")}
-        >
-          Skip for now
-        </button>
+        {props.allowSkip && (
+          <button
+            className="relative top-12 text-blue-light font-bold outline-none bg-none"
+            onClick={() => onSubmit("")}
+          >
+            Skip for now
+          </button>
+        )}
       </div>
     </div>
   )

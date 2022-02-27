@@ -4,6 +4,8 @@
  * @brief This file contains effects that create error windows
  */
 
+import { BrowserWindow } from "electron"
+import { takeUntil } from "rxjs/operators"
 import {
   NO_PAYMENT_ERROR,
   UNAUTHORIZED_ERROR,
@@ -14,15 +16,9 @@ import {
   LOCATION_CHANGED_ERROR,
   SERVER_TIMEOUT_ERROR,
   NO_INSTANCE_AVAILABLE,
+  OFFLINE_ERROR,
 } from "@app/constants/error"
-import {
-  WindowHashPayment,
-  WindowHashLaunchLoading,
-  WindowHashImport,
-  WindowHashAuth,
-  WindowHashOnboarding,
-  WindowHashImportLoading,
-} from "@app/constants/windows"
+import { WindowHashPayment, WindowHashAuth } from "@app/constants/windows"
 
 import {
   mandelboxCreateErrorNoAccess,
@@ -43,8 +39,14 @@ import { closestRegionHasChanged } from "@app/main/utils/region"
 
 // For any failure, close all windows and display error window
 untilUpdateAvailable(
-  withAppActivated(fromTrigger(WhistTrigger.mandelboxFlowFailure))
+  withAppActivated(
+    fromTrigger(WhistTrigger.mandelboxFlowFailure).pipe(
+      takeUntil(fromTrigger(WhistTrigger.awsPingOffline))
+    )
+  )
 ).subscribe((x) => {
+  const openWindows = BrowserWindow.getAllWindows()
+
   if (mandelboxCreateErrorNoAccess(x)) {
     createErrorWindow(NO_PAYMENT_ERROR)
   } else if (mandelboxCreateErrorUnauthorized(x)) {
@@ -57,10 +59,9 @@ untilUpdateAvailable(
     createErrorWindow(MANDELBOX_INTERNAL_ERROR)
   }
 
-  destroyElectronWindow(WindowHashImportLoading)
-  destroyElectronWindow(WindowHashLaunchLoading)
-  destroyElectronWindow(WindowHashImport)
-  destroyElectronWindow(WindowHashOnboarding)
+  openWindows.forEach((win) => {
+    win?.destroy()
+  })
 })
 
 untilUpdateAvailable(
@@ -82,12 +83,13 @@ untilUpdateAvailable(
 untilUpdateAvailable(
   withAppActivated(fromTrigger(WhistTrigger.protocolError))
 ).subscribe(() => {
+  const openWindows = BrowserWindow.getAllWindows()
+
   createErrorWindow(PROTOCOL_ERROR)
 
-  destroyElectronWindow(WindowHashImportLoading)
-  destroyElectronWindow(WindowHashLaunchLoading)
-  destroyElectronWindow(WindowHashOnboarding)
-  destroyElectronWindow(WindowHashImport)
+  openWindows.forEach((win) => {
+    win?.destroy()
+  })
 })
 
 // If we detect that the user to a location where another datacenter is closer
@@ -115,10 +117,23 @@ withAppActivated(fromTrigger(WhistTrigger.checkPaymentFlowFailure)).subscribe(
 untilUpdateAvailable(
   withAppActivated(fromTrigger(WhistTrigger.mandelboxFlowTimeout))
 ).subscribe(() => {
+  const openWindows = BrowserWindow.getAllWindows()
+
   createErrorWindow(SERVER_TIMEOUT_ERROR)
 
-  destroyElectronWindow(WindowHashImportLoading)
-  destroyElectronWindow(WindowHashLaunchLoading)
-  destroyElectronWindow(WindowHashImport)
-  destroyElectronWindow(WindowHashOnboarding)
+  openWindows.forEach((win) => {
+    win?.destroy()
+  })
+})
+
+untilUpdateAvailable(
+  withAppActivated(fromTrigger(WhistTrigger.awsPingOffline))
+).subscribe(() => {
+  const openWindows = BrowserWindow.getAllWindows()
+
+  createErrorWindow(OFFLINE_ERROR)
+
+  openWindows.forEach((win) => {
+    win?.destroy()
+  })
 })
