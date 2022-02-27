@@ -54,12 +54,19 @@ const Importer = (props: {
           />
         </div>
         {props.allowSkip && (
-          <button
-            className="relative top-12 text-blue-light font-bold outline-none bg-none"
-            onClick={() => onSubmit("")}
-          >
-            Skip for now
-          </button>
+          <div className="relative top-12">
+            <button
+              className="text-blue-light font-bold outline-none bg-none"
+              onClick={() => onSubmit("")}
+            >
+              Skip for now
+            </button>
+            <div className="mt-2 text-xs text-gray-500">
+              You can import later from{" "}
+              <kbd className="bg-gray-700 rounded p-1 mx-1">Cmd</kbd>
+              <kbd className="bg-gray-700 rounded p-1">J</kbd>
+            </div>
+          </div>
         )}
       </div>
     </div>

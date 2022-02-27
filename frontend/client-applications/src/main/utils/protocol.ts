@@ -88,6 +88,8 @@ const launchProtocol = async (info?: {
   // dying. We don't really care about these errors; we just want to try/catch them
   // and adding this listener accomplishes that
   child.on("error", (err: any) => console.error(err))
+  child?.stdin?.on("error", (err) => console.error(err))
+  child?.stdout?.on("error", (err) => console.error(err))
 
   protocol.emit("launched", child)
 

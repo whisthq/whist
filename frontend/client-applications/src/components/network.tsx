@@ -50,8 +50,9 @@ const Subtitle = (props: { state: NetworkTestState }) => {
     default:
       return (
         <div className="text-gray-500">
-          You may experience stutters and latency. If possible, please move
-          closer to your router or try again on different wifi.
+          While you can still use Whist, you may experience stutters and
+          latency. If possible, please move closer to your router or try again
+          on different wifi.
         </div>
       )
   }
@@ -74,7 +75,7 @@ const Text = (props: { state: NetworkTestState }) => {
     default:
       return (
         <div className="text-gray-100 font-bold text-2xl mt-4 leading-10">
-          Your Internet may not perform well
+          Your Internet is not strong enough
         </div>
       )
   }
