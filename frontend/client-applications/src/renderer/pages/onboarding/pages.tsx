@@ -208,7 +208,7 @@ const Privacy = () => {
   const contents = (
     <div className="m-auto text-center mt-24">
       <div className="text-gray-300 text-2xl font-bold leading-10 max-w-lg m-auto text-center">
-        Whist protects your online privacy as a human right
+        Whist protects your fundamental right to online privacy
       </div>
       <div className="max-w-xl m-auto px-10 py-6">{icons}</div>
     </div>

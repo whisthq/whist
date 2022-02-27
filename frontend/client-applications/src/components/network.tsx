@@ -74,7 +74,7 @@ const Text = (props: { state: NetworkTestState }) => {
     default:
       return (
         <div className="text-gray-100 font-bold text-2xl mt-4 leading-10">
-          Whist may not perform well
+          Your Internet may not perform well
         </div>
       )
   }
