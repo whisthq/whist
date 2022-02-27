@@ -204,10 +204,8 @@ void sdl_utils_check_private_vars(bool* pending_resize_message_ptr,
                                   bool* should_update_window_title_ptr,
                                   bool* fullscreen_trigger_ptr, bool* fullscreen_value_ptr);
 
-
-
 /**
- * @brief                          Called when a drag event has been detected. Uses the 
+ * @brief                          Called when a drag event has been detected. Uses the
  *                                 sdl global mouse and window state to initiate dragging
  *                                 indication or emulation.
  *

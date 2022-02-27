@@ -73,7 +73,6 @@ int get_native_window_dpi(SDL_Window* window);
  */
 void initiate_out_of_window_drag_handlers(void);
 
-
 /**
  * @brief                          Declares that UserActivity has occured,
  *                                 resetting the timer for screensavers/sleepmode
