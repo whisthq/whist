@@ -124,7 +124,7 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 			return err
 		}
 	} else {
-		logger.Infof("Number of active instances in %v with image %v matches desired capacity of %v. We have capacity to run %v mandelboxes.", event.Region, latestImageID, DEFAULT_INSTANCE_BUFFER, mandelboxCapacity)
+		logger.Infof("Number of active instances in %v with image %v matches desired capacity of %v.", event.Region, latestImageID, DEFAULT_INSTANCE_BUFFER)
 	}
 
 	return nil
