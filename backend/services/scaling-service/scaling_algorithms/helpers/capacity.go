@@ -8,45 +8,29 @@ import (
 // ComputeRealCapacity is a helper function to compute the actual capacity on a given region-image
 // pair. This function takes into account the number of instances which can serve, as well as the
 // number of mandelboxes they can run. We define real capacity as the number of instances which have
-// space to run mandelboxes. This function returns the real capacity and the number of mandelboxes
-// which can be started with the instance buffer.
-func ComputeRealCapacity(imageID string, region string, activeInstances subscriptions.WhistInstances) (int, int) {
-	var (
-		realCapacity      int // The number of instances which are active and have space
-		mandelboxCapacity int // The total number of mandelboxes that can be started
-	)
+// space to run mandelboxes.
+func ComputeRealCapacity(imageID string, activeInstances subscriptions.WhistInstances) int {
+	var realCapacity int // The number of instances which are active and have space
 
 	// Loop over active instances (status ACTIVE), only consider the ones with the current image
 	for _, instance := range activeInstances {
 		if instance.ImageID == graphql.String(imageID) &&
 			instance.RemainingCapacity > 0 {
 			realCapacity++
-			mandelboxCapacity += int(instance.RemainingCapacity)
 		}
 	}
 
-	return realCapacity, mandelboxCapacity
+	return realCapacity
 }
 
 // ComputeExpectedCapacity is a helper function to compute the expected capacity on a given region-image
 // pair. This function takes into account the number of instances which can serve, as well as the number
 // of mandelboxes they can run. We define expected capacity as the number of instances in active state
-// which have space to run mandelboxes added to the number of starting instances (PRE_CONNECTION status). This function returns the expected capacity
-// and the number of mandelboxes which can be started with the instance buffer.
-func ComputeExpectedCapacity(imageID string, region string, activeInstances subscriptions.WhistInstances, startingInstances subscriptions.WhistInstances) (int, int) {
-	var (
-		expectedCapacity  int // The number of instances both in active and starting state
-		mandelboxCapacity int // The total number of mandelboxes that can be started
-	)
+// which have space to run mandelboxes added to the number of starting instances (PRE_CONNECTION status).
+func ComputeExpectedCapacity(imageID string, activeInstances subscriptions.WhistInstances, startingInstances subscriptions.WhistInstances) int {
+	var expectedCapacity int // The number of instances both in active and starting state
 
-	// Loop over active instances (status ACTIVE), only consider the ones with the current image
-	for _, instance := range activeInstances {
-		if instance.ImageID == graphql.String(imageID) &&
-			instance.RemainingCapacity > 0 {
-			expectedCapacity++
-			mandelboxCapacity += int(instance.RemainingCapacity)
-		}
-	}
+	realCapacity := ComputeRealCapacity(imageID, activeInstances)
 
 	// Loop over starting instances (status PRE_CONNECTION, only consider the ones with the current image
 	for _, instance := range startingInstances {
@@ -55,5 +39,5 @@ func ComputeExpectedCapacity(imageID string, region string, activeInstances subs
 		}
 	}
 
-	return expectedCapacity, mandelboxCapacity
+	return realCapacity + expectedCapacity
 }

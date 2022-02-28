@@ -107,12 +107,9 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 		return utils.MakeError("failed to query database for starting instances. Err: %v", err)
 	}
 
-	// The variables used here represent the following:
-	// real capacity - instances with space to run mandelboxes
-	// expected capacity - active instances and starting instances
-	// mandelbox capacity - number of mandelboxes we can run
-	realCapacity, _ := helpers.ComputeExpectedCapacity(latestImageID, event.Region, allActive, allStarting)
-	expectedCapacity, mandelboxCapacity := helpers.ComputeExpectedCapacity(latestImageID, event.Region, allActive, allStarting)
+	// Expected capacity represents active instances with space to run mandelboxes and
+	// starting instances
+	expectedCapacity := helpers.ComputeExpectedCapacity(latestImageID, allActive, allStarting)
 
 	// We consider the expected capacity here (active instances + starting instances)
 	// so that we don't scale up unnecessary instances.
@@ -121,23 +118,15 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 		logger.Infof("Current number of instances with capacity %v is less than desired %v. Scaling up to match with image %v.", expectedCapacity, DEFAULT_INSTANCE_BUFFER, latestImageID)
 
 		// Start scale up action for desired number of instances
-		wantedInstances := DEFAULT_INSTANCE_BUFFER - realCapacity
-		logger.Infof("Wanted instances %v", wantedInstances)
+		wantedInstances := DEFAULT_INSTANCE_BUFFER - expectedCapacity
 		err = s.ScaleUpIfNecessary(wantedInstances, scalingCtx, event, latestImageID)
 		if err != nil {
 			// err is already wrapped here
 			return err
 		}
 
-	} else if mandelboxCapacity < MINIMUM_MANDELBOX_CAPACITY {
-		logger.Infof("Current active instances in %v are almost full. Scaling up instance with image %v to satisfy capacity", event.Region, latestImageID)
-		err = s.ScaleUpIfNecessary(1, scalingCtx, event, latestImageID)
-		if err != nil {
-			// err is already wrapped here
-			return err
-		}
 	} else {
-		logger.Infof("Number of active instances in %v with image %v matches desired capacity of %v. We have capacity to run %v mandelboxes.", event.Region, latestImageID, DEFAULT_INSTANCE_BUFFER, mandelboxCapacity)
+		logger.Infof("Number of active instances in %v with image %v matches desired capacity of %v.", event.Region, latestImageID, DEFAULT_INSTANCE_BUFFER)
 	}
 
 	return nil
@@ -182,10 +171,8 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		return utils.MakeError("failed to query database for active instances. Err: %v", err)
 	}
 
-	// The variables used here represent the following:
-	// real capacity - instances with space to run mandelboxes
-	// mandelbox capacity - number of mandelboxes we can run
-	realCapacity, mandelboxCapacity := helpers.ComputeRealCapacity(latestImageID, event.Region, allActive)
+	// Real capacity represents active instances with space to run mandelboxes
+	realCapacity := helpers.ComputeRealCapacity(latestImageID, allActive)
 
 	// Create a list of instances that can be scaled down from the active instances list.
 	// For this, we have to consider the following conditions:
@@ -206,18 +193,12 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 
 		if instance.ImageID == graphql.String(latestImageID) {
 			// Current instances
-			if realCapacity > DEFAULT_INSTANCE_BUFFER &&
-				(mandelboxCapacity-int(instance.RemainingCapacity)) >= MINIMUM_MANDELBOX_CAPACITY {
+			if realCapacity > DEFAULT_INSTANCE_BUFFER {
 				// Only scale down if there are more instances
 				// than necessary.
 				logger.Infof("Scaling down instance %v because we have more capacity of %v than desired %v.", instance.ID, realCapacity, DEFAULT_INSTANCE_BUFFER)
 				freeInstances = append(freeInstances, instance)
 				realCapacity--
-				mandelboxCapacity -= int(instance.RemainingCapacity)
-			} else if instance.RemainingCapacity == 0 {
-				// Instance has no mandelboxes but still has a capacity of 0, some mandelboxes might have
-				// exited with errors or not exited at all.
-				logger.Errorf("Instance %v has no active mandelboxes but has remaining capacity of 0.", instance.ID)
 			}
 		} else {
 			// Old instances

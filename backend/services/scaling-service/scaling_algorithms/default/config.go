@@ -2,15 +2,9 @@ package scaling_algorithms
 
 import "time"
 
-const (
-	// DEFAULT_INSTANCE_BUFFER is the number of instances that should always
-	// be running on each region.
-	DEFAULT_INSTANCE_BUFFER = 1
-	// MINIMUM_MANDELBOX_CAPACITY is the minimum number of mandelboxes that
-	// we should always be able to run. This limit is used to make scaling decisions.
-	// It acts as a warning for when we have almost all of our instances full.
-	MINIMUM_MANDELBOX_CAPACITY = 2
-)
+// DEFAULT_INSTANCE_BUFFER is the number of instances that should always
+// be running on each region.
+const DEFAULT_INSTANCE_BUFFER = 1
 
 // instanceCapacity is a mapping of the mandelbox capacity each type of instance has.
 var instanceCapacity = map[string]int{
