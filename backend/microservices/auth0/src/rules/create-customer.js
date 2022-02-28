@@ -24,7 +24,7 @@ function createCustomer(user, context, callback) {
         stripe.subscriptions
           .create({
             customer: customer.id,
-            trial_period_days: 7,
+            trial_period_days: 14,
             items: [{ price: configuration.STRIPE_PRICE_ID }],
           })
           .then((_subscription) => {
