@@ -115,7 +115,7 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 	// so that we don't scale up unnecessary instances.
 	if expectedCapacity < DEFAULT_INSTANCE_BUFFER {
 
-		logger.Infof("Current number of instances with capacity %v is less than desired %v. Scaling up to match with image %v.", expectedCapacity, DEFAULT_INSTANCE_BUFFER, latestImageID)
+		logger.Infof("Current number of instances %v is less than desired %v. Scaling up to match with image %v.", expectedCapacity, DEFAULT_INSTANCE_BUFFER, latestImageID)
 
 		// Start scale up action for desired number of instances
 		wantedInstances := DEFAULT_INSTANCE_BUFFER - expectedCapacity
