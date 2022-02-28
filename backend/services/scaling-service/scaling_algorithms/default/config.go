@@ -9,7 +9,7 @@ const (
 	// MINIMUM_MANDELBOX_CAPACITY is the minimum number of mandelboxes that
 	// we should always be able to start. This limit is used to make scaling decisons
 	// when hit, it acts as a warning for when we have almost all of our instances full.
-	MINIMUM_MANDELBOX_CAPACITY = 3
+	MINIMUM_MANDELBOX_CAPACITY = 2
 )
 
 // instanceCapacity is a mapping of the mandelbox capacity each type of instance has.

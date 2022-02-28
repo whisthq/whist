@@ -125,7 +125,6 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 			return err
 		}
 	} else if mandelboxCapacity < MINIMUM_MANDELBOX_CAPACITY {
-
 		logger.Infof("Current active instances in %v are almost full. Scaling up instance with image %v to satisfy capacity", event.Region, latestImageID)
 		err = s.ScaleUpIfNecessary(1, scalingCtx, event, latestImageID)
 		if err != nil {
@@ -133,7 +132,7 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 			return err
 		}
 	} else {
-		logger.Infof("Number of active instances in %v with image %v matches desired capacity of %v.", event.Region, latestImageID, DEFAULT_INSTANCE_BUFFER)
+		logger.Infof("Number of active instances in %v with image %v matches desired capacity of %v. We have capacity to run %v mandelboxes.", event.Region, latestImageID, DEFAULT_INSTANCE_BUFFER, mandelboxCapacity)
 	}
 
 	return nil
@@ -200,7 +199,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		if instance.ImageID == graphql.String(latestImageID) {
 			// Current instances
 			if realCapacity > DEFAULT_INSTANCE_BUFFER &&
-				(mandelboxCapacity-int(instance.RemainingCapacity)) > MINIMUM_MANDELBOX_CAPACITY {
+				(mandelboxCapacity-int(instance.RemainingCapacity)) >= MINIMUM_MANDELBOX_CAPACITY {
 				// Only scale down if there are more instances
 				// than necessary.
 				logger.Infof("Scaling down instance %v because we have more capacity of %v than desired %v.", instance.ID, realCapacity, DEFAULT_INSTANCE_BUFFER)
