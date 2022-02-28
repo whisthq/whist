@@ -147,7 +147,11 @@ export const logging = (
       ].includes(k) &&
       (v ?? undefined) !== undefined
     ) {
-      return "***********"
+      const stringified = JSON.stringify(v)
+      return `${stringified.slice(
+        0,
+        Math.min(5, stringified.length)
+      )} **********`
     }
     return v
   })
