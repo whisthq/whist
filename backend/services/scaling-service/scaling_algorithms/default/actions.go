@@ -6,7 +6,6 @@ import (
 
 	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/metadata"
-	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/helpers"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -84,7 +83,7 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 	defer logger.Infof("Finished verify capacity action for event: %v", event)
 
 	// Query for the latest image id
-	imageResult, err := dbclient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region) // TODO: set different provider when doing multi-cloud.
+	imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region) // TODO: set different provider when doing multi-cloud.
 	if err != nil {
 		return utils.MakeError("failed to query database for current image. Err: %v", err)
 	}
@@ -96,13 +95,13 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 	latestImageID := string(imageResult[0].ImageID)
 
 	// This query will return all instances with the ACTIVE status
-	allActive, err := dbclient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "ACTIVE", event.Region)
+	allActive, err := s.DBClient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "ACTIVE", event.Region)
 	if err != nil {
 		return utils.MakeError("failed to query database for active instances. Err: %v", err)
 	}
 
 	// This query will return all instances with the PRE_CONNECTION status
-	allStarting, err := dbclient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "PRE_CONNECTION", event.Region)
+	allStarting, err := s.DBClient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "PRE_CONNECTION", event.Region)
 	if err != nil {
 		return utils.MakeError("failed to query database for starting instances. Err: %v", err)
 	}
@@ -152,7 +151,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	)
 
 	// Query for the latest image id
-	imageResult, err := dbclient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region) // TODO: set different provider when doing multi-cloud.
+	imageResult, err := s.DBClient.QueryImage(scalingCtx, s.GraphQLClient, "AWS", event.Region) // TODO: set different provider when doing multi-cloud.
 	if err != nil {
 		return utils.MakeError("failed to query database for current image. Err: %v", err)
 	}
@@ -164,7 +163,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	latestImageID := string(imageResult[0].ImageID)
 
 	// query database for all active instances (status ACTIVE) without mandelboxes
-	allActive, err := dbclient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "ACTIVE", event.Region)
+	allActive, err := s.DBClient.QueryInstancesByStatusOnRegion(scalingCtx, s.GraphQLClient, "ACTIVE", event.Region)
 	if err != nil {
 		return utils.MakeError("failed to query database for active instances. Err: %v", err)
 	}
