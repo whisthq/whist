@@ -7,8 +7,8 @@ const (
 	// be running on each region.
 	DEFAULT_INSTANCE_BUFFER = 1
 	// MINIMUM_MANDELBOX_CAPACITY is the minimum number of mandelboxes that
-	// we should always be able to start. This limit is used to make scaling decisons
-	// when hit, it acts as a warning for when we have almost all of our instances full.
+	// we should always be able to run. This limit is used to make scaling decisions.
+	// It acts as a warning for when we have almost all of our instances full.
 	MINIMUM_MANDELBOX_CAPACITY = 2
 )
 
