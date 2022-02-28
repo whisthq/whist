@@ -44,7 +44,8 @@ struct AppleKeyboardMapping {
 // for foreign characters, use https://wiki.archlinux.org/title/Input_method or something similar
 // to locate a packageand sudo apt install METHOD in the Dockerfile, then add the ibus engine to
 // this mapping
-// If additional configuration is needed, e.g. switching input methods within the same keyboard, use the third command
+// If additional configuration is needed, e.g. switching input methods within the same keyboard, use
+// the third command
 static struct AppleKeyboardMapping apple_keyboard_mappings[] = {
     {"com.apple.keylayout.USExtended", {"xkb:us::eng", ""}},
     {"com.apple.keylayout.US", {"xkb:us::eng", ""}},
@@ -68,9 +69,12 @@ static struct AppleKeyboardMapping apple_keyboard_mappings[] = {
     {"com.apple.keylayout.ABC", {"xkb:us:intl:eng", ""}},
     {"com.apple.inputmethod.SCIM.ITABC", {"pinyin", ""}},
     {"com.sogou.inputmethod.sogou.pinyin", {"pinyin", ""}},
-    {"com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese", {"anthy", "gsettings set org.freedesktop.ibus.engine.anthy.common input-mode 0"}},
-    {"com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese.Katakana", {"anthy", "gsettings set org.freedesktop.ibus.engine.anthy.common input-mode 1"}},
-    {"com.apple.inputmethod.Kotoeri.RomajiTyping.Roman", {"anthy",  "gsettings set org.freedesktop.ibus.engine.anthy.common input-mode 3"}},
+    {"com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese",
+     {"anthy", "gsettings set org.freedesktop.ibus.engine.anthy.common input-mode 0"}},
+    {"com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese.Katakana",
+     {"anthy", "gsettings set org.freedesktop.ibus.engine.anthy.common input-mode 1"}},
+    {"com.apple.inputmethod.Kotoeri.RomajiTyping.Roman",
+     {"anthy", "gsettings set org.freedesktop.ibus.engine.anthy.common input-mode 3"}},
     // {"com.apple.keylayout.Vietnamese", {"unikey", ""}},
     {"com.apple.inputmethod.Korean.2SetKorean", {"hangul", ""}},
 };
@@ -84,7 +88,7 @@ static struct AppleKeyboardMapping apple_keyboard_mappings[] = {
 static const char linux_supported_layouts[][5] = {"us", "it",    "ara", "de", "fr",
                                                   "es", "latam", "il",  "ca", "uk"};
 
-void run_as_whist_user(const char* command);
+void run_as_whist_user(const char *command);
 
 #define NUM_LINUX_SUPPORTED_LAYOUTS \
     ((int)sizeof(linux_supported_layouts) / (int)sizeof(linux_supported_layouts[0]))
@@ -218,7 +222,8 @@ void set_keyboard_layout(WhistKeyboardLayout requested_layout) {
 
     // Otherwise, copy into current_layout_name and handle the new current_layout_name
     memcpy(&current_layout, &requested_layout, sizeof(WhistKeyboardLayout));
-    LOG_INFO("Current layout: %s; Additional Command: %s", current_layout.layout_name, current_layout.additional_command);
+    LOG_INFO("Current layout: %s; Additional Command: %s", current_layout.layout_name,
+             current_layout.additional_command);
 
 #ifdef __linux__
     char cmd_buf[1024];
@@ -259,10 +264,11 @@ void package_notification(WhistNotification *notif, const char *title, const cha
 }
 
 #ifdef __linux__
-void run_as_whist_user(const char* command) {
+void run_as_whist_user(const char *command) {
     // Run a shell command as the whist user
     static char cmd_buf[1024];
-    int bytes_written = snprintf(cmd_buf, sizeof(cmd_buf), "/usr/share/whist/run-as-whist-user.sh '%s'", command);
+    int bytes_written =
+        snprintf(cmd_buf, sizeof(cmd_buf), "/usr/share/whist/run-as-whist-user.sh '%s'", command);
     if (bytes_written >= 0) {
         LOG_DEBUG("Running command %s", cmd_buf);
         runcmd(cmd_buf, NULL);
