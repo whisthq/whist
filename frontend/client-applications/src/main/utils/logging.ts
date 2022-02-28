@@ -147,7 +147,9 @@ export const logging = (
       ].includes(k) &&
       (v ?? undefined) !== undefined
     ) {
-      return "***********"
+      return `${v
+        .toString()
+        .slice(0, Math.min(5, v.toString().length))} **********`
     }
     return v
   })
@@ -161,7 +163,7 @@ export const logging = (
     ).toString()} ms since flow/trigger was started and ${(
       Date.now() - sessionID
     ).toString()} ms since app was started`,
-    data,
+    dataClone,
     LogLevel.DEBUG
   )
 

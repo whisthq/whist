@@ -102,7 +102,7 @@ export const createTrigger = <A>(name: string, obs: Observable<A>) => {
 
   const startTime = Date.now()
 
-  obs.pipe(share()).subscribe((x: any) => {
+  obs.subscribe((x: any) => {
     if (!["protocolStdoutData"].includes(name)) {
       logging(`${name}`, { payload: x }, LogLevel.DEBUG, Date.now() - startTime)
     }

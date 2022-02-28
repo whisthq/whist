@@ -38,13 +38,19 @@ import {
   keyRepeat,
   initialKeyRepeat,
 } from "@app/main/utils/state"
-import { ONBOARDED } from "@app/constants/store"
+import {
+  CACHED_CONFIG_TOKEN,
+  CACHED_REFRESH_TOKEN,
+  CACHED_USER_EMAIL,
+  ONBOARDED,
+} from "@app/constants/store"
 import {
   getDecryptedCookies,
   getBookmarks,
   getExtensions,
   InstalledBrowser,
 } from "@app/main/utils/importer"
+import { CACHED_ACCESS_TOKEN } from "@app/constants/store"
 
 // Autoupdate flow
 const update = autoUpdateFlow(fromTrigger(WhistTrigger.updateAvailable))
@@ -53,22 +59,24 @@ const update = autoUpdateFlow(fromTrigger(WhistTrigger.updateAvailable))
 const awsPing = awsPingFlow(of(null))
 
 const auth = authFlow(
-  waitForSignal(
+  emitOnSignal(
     merge(
       fromTrigger(WhistTrigger.authInfo),
-      combineLatest({
-        accessToken,
-        refreshToken,
-        userEmail,
-        configToken,
+      of({
+        accessToken: persistGet(CACHED_ACCESS_TOKEN) ?? "",
+        refreshToken: persistGet(CACHED_REFRESH_TOKEN) ?? "",
+        userEmail: persistGet(CACHED_USER_EMAIL) ?? "",
+        configToken: persistGet(CACHED_CONFIG_TOKEN) ?? "",
       }).pipe(filter((auth) => isEmpty(pickBy(auth, (x) => x === ""))))
     ),
     merge(
       sleep.pipe(filter((sleep) => !sleep)),
       fromTrigger(WhistTrigger.reactivated)
     )
-  ).pipe(takeUntil(fromTrigger(WhistTrigger.authFlowSuccess)))
+  )
 )
+
+auth.success.subscribe((x) => console.log("AUTH SUCCESS!", x))
 
 // Onboarding flow
 waitForSignal(
@@ -76,11 +84,13 @@ waitForSignal(
     fromTrigger(WhistTrigger.beginImport),
     of(persistGet(ONBOARDED)).pipe(filter((onboarded) => onboarded as boolean))
   ),
-  fromTrigger(WhistTrigger.authFlowSuccess)
+  auth.success
 )
 
 // Unpack the access token to see if their payment is valid
 const checkPayment = checkPaymentFlow(auth.success)
+
+auth.success.subscribe((x) => console.log("AUTH SUCCESS!!"))
 
 // If the payment is invalid, they'll be redirect to the Stripe window. After that they'll
 // get new auth credentials
