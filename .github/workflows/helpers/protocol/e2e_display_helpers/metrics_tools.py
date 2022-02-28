@@ -107,13 +107,15 @@ def extract_metrics(client_log_file, server_log_file):
 
     # print(client_metrics)
     for metric_name in client_metrics:
-        # print(metric_name)
+        print(metric_name)
+        print(client_metrics[metric_name])
         # client_metrics[metric_name] = np.array(client_metrics[metric_name])
         assert client_metrics[metric_name]["sum_of_squares"] >= 0.0
         variance = client_metrics[metric_name]["sum_of_squares"] - (
             (client_metrics[metric_name]["sum_with_offset"] ** 2)
             / client_metrics[metric_name]["entries"]
         )
+        print(variance)
         variance /= client_metrics[metric_name]["entries"]
         standard_deviation = math.sqrt(variance)
         client_metrics2[metric_name] = {

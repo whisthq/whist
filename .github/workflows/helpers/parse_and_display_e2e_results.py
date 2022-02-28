@@ -143,7 +143,7 @@ if __name__ == "__main__":
         sys.exit(-1)
     # Look for the most recent logs folder created on the same day (or the day before in case the test ran right before midnight).
     current_time = datetime.now()
-    last_hour = current_time - timedelta(hours=1)
+    last_hour = current_time - timedelta(hours=72)
 
     # Convert to list
     logs_root_dirs = [logs_root_dir]

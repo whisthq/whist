@@ -84,6 +84,9 @@ static void unsafe_print_statistics(void) {
         LOG_METRIC("\"%s\" : %d,%.2f,%.2f,%.2f", statistic_info[i].key, current_count,
                    all_statistics[i].sum, all_statistics[i].sum_of_squares,
                    all_statistics[i].sum_with_offset);
+        assert(current_count >= 0);
+        assert(all_statistics[i].sum >= 0);
+        assert(all_statistics[i].sum_of_squares >= 0);
 
         if (statistic_info[i].is_max_needed)
             LOG_METRIC("\"MAX_%s\" : %.2f", statistic_info[i].key, all_statistics[i].max);
@@ -162,7 +165,7 @@ void log_double_statistic(uint32_t index, double val) {
         all_statistics[index].min = val;
     }
 
-    all_statistics[index].sum += (val - all_statistics[index].offset);
+    all_statistics[index].sum += val;
     all_statistics[index].sum_of_squares +=
         (val - all_statistics[index].offset) * (val - all_statistics[index].offset);
     all_statistics[index].sum_with_offset += (val - all_statistics[index].offset);
