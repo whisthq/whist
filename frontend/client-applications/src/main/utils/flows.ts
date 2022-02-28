@@ -5,7 +5,7 @@
  */
 
 import { Observable, ReplaySubject } from "rxjs"
-import { filter, share, map, tap } from "rxjs/operators"
+import { filter, share, map } from "rxjs/operators"
 import { withMocking } from "@app/testing"
 import { logging, LogLevel } from "@app/main/utils/logging"
 import { WhistTrigger } from "@app/constants/triggers"
@@ -69,20 +69,19 @@ export const flow = <T>(
     })
 
     return mapValues(withMocking(name, trigger, flowFn), (obs, key) => {
-      return obs.pipe(
-        tap((value) => {
-          logging(
-            `${name}.${key}`, // e.g. authFlow.success
-            {
-              input: triggerPayload,
-              output: value,
-            }, // Log both the flow input (trigger) and output
-            LogLevel.DEBUG,
-            Date.now() - startTime // This is how long the flow took run
-          )
-        }),
-        share()
-      )
+      obs.subscribe((value: object) => {
+        logging(
+          `${name}.${key}`, // e.g. authFlow.success
+          {
+            input: triggerPayload,
+            output: value,
+          }, // Log both the flow input (trigger) and output
+          LogLevel.DEBUG,
+          Date.now() - startTime // This is how long the flow took run
+        )
+      })
+
+      return obs.pipe(share())
     })
   }
 }
@@ -102,7 +101,7 @@ export const createTrigger = <A>(name: string, obs: Observable<A>) => {
 
   const startTime = Date.now()
 
-  obs.subscribe((x: any) => {
+  obs.pipe(share()).subscribe((x: any) => {
     if (!["protocolStdoutData"].includes(name)) {
       logging(`${name}`, { payload: x }, LogLevel.DEBUG, Date.now() - startTime)
     }

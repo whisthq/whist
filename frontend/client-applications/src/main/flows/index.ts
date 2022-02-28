@@ -7,8 +7,7 @@ import {
   share,
   mapTo,
   pluck,
-  withLatestFrom,
-  takeUntil,
+  startWith,
 } from "rxjs/operators"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
@@ -58,17 +57,14 @@ const update = autoUpdateFlow(fromTrigger(WhistTrigger.updateAvailable))
 // AWS ping flow
 const awsPing = awsPingFlow(of(null))
 
-const auth = authFlow(
+const loggedInAuth = authFlow(
   emitOnSignal(
-    merge(
-      fromTrigger(WhistTrigger.authInfo),
-      of({
-        accessToken: persistGet(CACHED_ACCESS_TOKEN) ?? "",
-        refreshToken: persistGet(CACHED_REFRESH_TOKEN) ?? "",
-        userEmail: persistGet(CACHED_USER_EMAIL) ?? "",
-        configToken: persistGet(CACHED_CONFIG_TOKEN) ?? "",
-      }).pipe(filter((auth) => isEmpty(pickBy(auth, (x) => x === ""))))
-    ),
+    of({
+      accessToken: persistGet(CACHED_ACCESS_TOKEN) ?? "",
+      refreshToken: persistGet(CACHED_REFRESH_TOKEN) ?? "",
+      userEmail: persistGet(CACHED_USER_EMAIL) ?? "",
+      configToken: persistGet(CACHED_CONFIG_TOKEN) ?? "",
+    }).pipe(filter((auth) => isEmpty(pickBy(auth, (x) => x === "")))),
     merge(
       sleep.pipe(filter((sleep) => !sleep)),
       fromTrigger(WhistTrigger.reactivated)
@@ -76,21 +72,21 @@ const auth = authFlow(
   )
 )
 
-auth.success.subscribe((x) => console.log("AUTH SUCCESS!", x))
+const firstAuth = authFlow(fromTrigger(WhistTrigger.authInfo))
 
-// Onboarding flow
+// Import all bookmarks and settings
 waitForSignal(
   merge(
     fromTrigger(WhistTrigger.beginImport),
     of(persistGet(ONBOARDED)).pipe(filter((onboarded) => onboarded as boolean))
   ),
-  auth.success
+  merge(loggedInAuth.success, firstAuth.success)
 )
 
 // Unpack the access token to see if their payment is valid
-const checkPayment = checkPaymentFlow(auth.success)
-
-auth.success.subscribe((x) => console.log("AUTH SUCCESS!!"))
+const checkPayment = checkPaymentFlow(
+  merge(loggedInAuth.success, firstAuth.success)
+)
 
 // If the payment is invalid, they'll be redirect to the Stripe window. After that they'll
 // get new auth credentials
@@ -125,30 +121,38 @@ const importedData = fromTrigger(WhistTrigger.beginImport).pipe(
 )
 
 // Observable that fires when Whist is ready to be launched
-const launchTrigger = merge(
-  zip(
-    checkPayment.success,
-    of(persistGet(ONBOARDED)).pipe(filter((onboarded) => onboarded as boolean))
-  ), // On a normal launch
-  importedData // On onboarding or import
-).pipe(
-  withLatestFrom(
-    combineLatest({
-      userEmail: auth.success.pipe(pluck("userEmail")),
-      accessToken: auth.success.pipe(pluck("accessToken")),
-      configToken: auth.success.pipe(pluck("configToken")),
-      isNewConfigToken,
-      importedData: merge(importedData, dontImportBrowserData),
-      regions: merge(awsPing.cached, awsPing.refresh),
-      darkMode,
-      timezone,
-      keyRepeat,
-      initialKeyRepeat,
-    })
-  ),
-  map(([, x]) => x),
-  share()
-)
+const launchTrigger = emitOnSignal(
+  combineLatest({
+    userEmail: merge(
+      loggedInAuth.success.pipe(pluck("userEmail")),
+      firstAuth.success.pipe(pluck("userEmail"))
+    ),
+    accessToken: merge(
+      loggedInAuth.success.pipe(pluck("accessToken")),
+      firstAuth.success.pipe(pluck("accessToken"))
+    ),
+    configToken: merge(
+      loggedInAuth.success.pipe(pluck("configToken")),
+      firstAuth.success.pipe(pluck("configToken"))
+    ),
+    isNewConfigToken,
+    importedData: merge(importedData, dontImportBrowserData),
+    regions: merge(awsPing.cached, awsPing.refresh),
+    darkMode,
+    timezone,
+    keyRepeat,
+    initialKeyRepeat,
+  }),
+  merge(
+    zip(
+      checkPayment.success,
+      of(persistGet(ONBOARDED)).pipe(
+        filter((onboarded) => onboarded as boolean)
+      )
+    ), // On a normal launch
+    importedData // On onboarding or import
+  )
+).pipe(share())
 
 // Mandelbox creation flow
 const mandelbox = mandelboxFlow(withAppActivated(launchTrigger))
@@ -167,8 +171,14 @@ createTrigger(WhistTrigger.mandelboxFlowStart, launchTrigger)
 createTrigger(WhistTrigger.awsPingCached, awsPing.cached)
 createTrigger(WhistTrigger.awsPingRefresh, awsPing.refresh)
 
-createTrigger(WhistTrigger.authFlowSuccess, auth.success)
-createTrigger(WhistTrigger.authFlowFailure, auth.failure)
+createTrigger(
+  WhistTrigger.authFlowSuccess,
+  merge(loggedInAuth.success, firstAuth.success)
+)
+createTrigger(
+  WhistTrigger.authFlowFailure,
+  merge(loggedInAuth.failure, firstAuth.failure)
+)
 
 createTrigger(WhistTrigger.updateDownloaded, update.downloaded)
 createTrigger(WhistTrigger.downloadProgress, update.progress)
