@@ -15,8 +15,6 @@ add_library(whistCore STATIC
         whist_memory.c
         whist.h
         whist.c
-        whistgetopt.h
-        whistgetopt.c
         whist_frame.h
         whist_frame.c
         features.c
