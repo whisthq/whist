@@ -672,7 +672,8 @@ TEST_F(ProtocolTest, LoggerOverflowTest) {
 TEST_F(ProtocolTest, LogStatistic) {
     StatisticInfo statistic_info[] = {
         {"TEST1", true, true, false},
-        {"TEST2", false, false, true},
+        {"TEST2", false, false,
+         true},  // Turn on averaging over time, so the count will measure time elapsed.
         {"TEST3", true, true, false},  // Don't log this. Want to check for "count == 0" condition
     };
     whist_init_logger(true);
@@ -699,10 +700,13 @@ TEST_F(ProtocolTest, LogStatistic) {
     whist_sleep(2010);
     log_double_statistic(1, 60.0);
     flush_logs();
-    check_stdout_line(::testing::HasSubstr("\"TEST1\" : 15.75"));
+    // Log format is: "NAME": count,sum,sum_of_squares,sum_with_offset where the offset is the first
+    // value, sum_with_offset is just the sum of differences between each value and the offset, and
+    // the sum of squares is the sum of all the squares: (val - offset)^2
+    check_stdout_line(::testing::HasSubstr("\"TEST1\" : 2,31.50,132.25,11.50"));
     check_stdout_line(::testing::HasSubstr("\"MAX_TEST1\" : 21.50"));
     check_stdout_line(::testing::HasSubstr("\"MIN_TEST1\" : 10.00"));
-    check_stdout_line(::testing::HasSubstr("\"TEST2\" : 55.00"));
+    check_stdout_line(::testing::HasSubstr("\"TEST2\" : 2,110.00,1000.00,20.00"));
 
     destroy_statistic_logger();
     destroy_logger();
