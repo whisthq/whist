@@ -524,6 +524,18 @@ RUN wget -q https://github.com/altdesktop/playerctl/releases/download/v2.3.1/pla
     && dpkg -i ./playerctl-2.3.1_amd64.deb \
     && rm ./playerctl-2.3.1_amd64.deb
 
+# ibus support
+
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    ibus ibus-pinyin ibus-anthy ibus-hangul ibus-unikey \
+    ibus-gtk ibus-gtk3 \
+    at-spi2-core \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+COPY --chmod=555 display/run_ibus.sh /home/whist/run_ibus.sh
+
 # Set up Whist service to launch X11 display
 COPY display/whist-display-config.env /usr/share/whist
 COPY display/xinitrc /root/.xinitrc

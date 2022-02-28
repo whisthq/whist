@@ -16,9 +16,11 @@ Defines
 */
 
 #define WHIST_KB_LAYOUT_NAME_MAX_LENGTH 24
+#define MAX_ADDITIONAL_COMMAND_LENGTH 100
 
 typedef struct {
     char layout_name[WHIST_KB_LAYOUT_NAME_MAX_LENGTH];
+    char additional_command[MAX_ADDITIONAL_COMMAND_LENGTH];
 } WhistKeyboardLayout;
 
 // Hand-chosen numbers that approximate (slightly overestimate) the maximum
