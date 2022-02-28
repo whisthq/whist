@@ -84,7 +84,6 @@ static void unsafe_print_statistics(void) {
         LOG_METRIC("\"%s\" : %u,%.2f,%.2f,%.2f", statistic_info[i].key, current_count,
                    all_statistics[i].sum, all_statistics[i].sum_of_squares,
                    all_statistics[i].sum_with_offset);
-        assert(current_count >= 0);
         assert(all_statistics[i].sum >= 0);
         assert(all_statistics[i].sum_of_squares >= 0);
 
