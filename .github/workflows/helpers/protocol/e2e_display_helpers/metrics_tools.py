@@ -41,17 +41,25 @@ def extract_metrics(client_log_file, server_log_file):
                 normal_sum = 0.0
                 sum_of_squares = 0.0
                 sum_with_offset = 0.0
+                min_val = np.inf
+                max_val = -np.inf
 
                 if len(metric_values) == 1:
                     count = 1
-                    normal_sum = float(metric_values[0])
                     sum_of_squares = 0
                     sum_with_offset = 0
+                    if metric_name[0:4] == "MAX_":
+                        max_val = float(metric_values[0])
+                    elif metric_name[0:4] == "MIN_":
+                        min_val = float(metric_values[0])
+                    else:
+                        normal_sum = float(metric_values[0])
                 else:
                     count = int(metric_values[0])
                     normal_sum = float(metric_values[1])
                     sum_of_squares = float(metric_values[2])
                     sum_with_offset = float(metric_values[3])
+
                 assert count >= 0
                 assert normal_sum >= 0
                 assert sum_of_squares >= 0
@@ -60,10 +68,19 @@ def extract_metrics(client_log_file, server_log_file):
                     client_metrics[metric_name] = {
                         "entries": 0,
                         "sum": 0,
+                        "min_val": min_val,
+                        "max_val": max_val,
                         "sum_of_squares": 0,
                         "sum_with_offset": 0,
                     }
+
                 client_metrics[metric_name]["entries"] += count
+                client_metrics[metric_name]["min_val"] = min(
+                    client_metrics[metric_name]["min_val"], min_val
+                )
+                client_metrics[metric_name]["max_val"] = max(
+                    client_metrics[metric_name]["max_val"], max_val
+                )
                 client_metrics[metric_name]["sum"] += normal_sum
                 client_metrics[metric_name]["sum_of_squares"] += sum_of_squares
                 client_metrics[metric_name]["sum_with_offset"] += sum_with_offset
@@ -80,12 +97,19 @@ def extract_metrics(client_log_file, server_log_file):
                 normal_sum = 0.0
                 sum_of_squares = 0.0
                 sum_with_offset = 0.0
+                min_val = np.inf
+                max_val = -np.inf
 
                 if len(metric_values) == 1:
                     count = 1
-                    normal_sum = float(metric_values[0])
                     sum_of_squares = 0
                     sum_with_offset = 0
+                    if metric_name[0:4] == "MAX_":
+                        max_val = float(metric_values[0])
+                    elif metric_name[0:4] == "MIN_":
+                        min_val = float(metric_values[0])
+                    else:
+                        normal_sum = float(metric_values[0])
                 else:
                     count = int(metric_values[0])
                     normal_sum = float(metric_values[1])
@@ -99,12 +123,20 @@ def extract_metrics(client_log_file, server_log_file):
                 if metric_name not in server_metrics:
                     server_metrics[metric_name] = {
                         "entries": 0,
+                        "min_val": min_val,
+                        "max_val": max_val,
                         "sum": 0,
                         "sum_of_squares": 0,
                         "sum_with_offset": 0,
                     }
 
                 server_metrics[metric_name]["entries"] += count
+                server_metrics[metric_name]["min_val"] = min(
+                    server_metrics[metric_name]["min_val"], min_val
+                )
+                server_metrics[metric_name]["max_val"] = max(
+                    server_metrics[metric_name]["max_val"], max_val
+                )
                 server_metrics[metric_name]["sum"] += normal_sum
                 server_metrics[metric_name]["sum_of_squares"] += sum_of_squares
                 server_metrics[metric_name]["sum_with_offset"] += sum_with_offset
@@ -113,41 +145,64 @@ def extract_metrics(client_log_file, server_log_file):
     server_metrics2 = {}
 
     for metric_name in client_metrics:
-        assert client_metrics[metric_name]["sum_of_squares"] >= 0.0
-        variance = (
-            client_metrics[metric_name]["sum_of_squares"]
-            - (
-                (client_metrics[metric_name]["sum_with_offset"] ** 2)
-                / client_metrics[metric_name]["entries"]
-            )
-        ) / client_metrics[metric_name]["entries"]
-        variance = round(variance, 2)
-        standard_deviation = math.sqrt(variance)
-        client_metrics2[metric_name] = {
-            "entries": client_metrics[metric_name]["entries"],
-            "avg": client_metrics[metric_name]["sum"] / client_metrics[metric_name]["entries"],
-            "std": standard_deviation,
-            "max": np.max(client_metrics[metric_name]),
-            "min": np.min(client_metrics[metric_name]),
-        }
+        if client_metrics[metric_name]["min_val"] < np.inf:
+            client_metrics2[metric_name] = {
+                "entries": client_metrics[metric_name]["entries"],
+                "avg": client_metrics[metric_name]["min_val"],
+                "std": 0.0,
+            }
+        elif client_metrics[metric_name]["max_val"] > -np.inf:
+            client_metrics2[metric_name] = {
+                "entries": client_metrics[metric_name]["entries"],
+                "avg": client_metrics[metric_name]["max_val"],
+                "std": 0.0,
+            }
+        else:
+            assert client_metrics[metric_name]["sum_of_squares"] >= 0.0
+            variance = (
+                client_metrics[metric_name]["sum_of_squares"]
+                - (
+                    (client_metrics[metric_name]["sum_with_offset"] ** 2)
+                    / client_metrics[metric_name]["entries"]
+                )
+            ) / client_metrics[metric_name]["entries"]
+            variance = round(variance, 2)
+            standard_deviation = math.sqrt(variance)
+            client_metrics2[metric_name] = {
+                "entries": client_metrics[metric_name]["entries"],
+                "avg": client_metrics[metric_name]["sum"] / client_metrics[metric_name]["entries"],
+                "std": standard_deviation,
+            }
 
     for metric_name in server_metrics:
-        variance = (
-            server_metrics[metric_name]["sum_of_squares"]
-            - (
-                (server_metrics[metric_name]["sum_with_offset"] ** 2)
-                / server_metrics[metric_name]["entries"]
-            )
-        ) / server_metrics[metric_name]["entries"]
-        variance = round(variance, 2)
-        standard_deviation = math.sqrt(variance)
-        server_metrics2[metric_name] = {
-            "entries": server_metrics[metric_name]["entries"],
-            "avg": server_metrics[metric_name]["sum"] / server_metrics[metric_name]["entries"],
-            "std": standard_deviation,
-            "max": np.max(server_metrics[metric_name]),
-            "min": np.min(server_metrics[metric_name]),
-        }
+        if server_metrics[metric_name]["min_val"] < np.inf:
+            server_metrics2[metric_name] = {
+                "entries": server_metrics[metric_name]["entries"],
+                "avg": server_metrics[metric_name]["min_val"],
+                "std": 0.0,
+            }
+        elif server_metrics[metric_name]["max_val"] > -np.inf:
+            server_metrics2[metric_name] = {
+                "entries": server_metrics[metric_name]["entries"],
+                "avg": server_metrics[metric_name]["max_val"],
+                "std": 0.0,
+            }
+        else:
+            # assert server_metrics[metric_name]["sum_of_squares"] >= 0.0
+            variance = (
+                server_metrics[metric_name]["sum_of_squares"]
+                - (
+                    (server_metrics[metric_name]["sum_with_offset"] ** 2)
+                    / server_metrics[metric_name]["entries"]
+                )
+            ) / server_metrics[metric_name]["entries"]
+            variance = round(variance, 2)
+            standard_deviation = math.sqrt(variance)
+            server_metrics2[metric_name] = {
+                "entries": server_metrics[metric_name]["entries"],
+                "avg": server_metrics[metric_name]["sum"] / server_metrics[metric_name]["entries"],
+                "std": standard_deviation,
+            }
 
     return client_metrics2, server_metrics2
 
@@ -211,7 +266,7 @@ def compute_deltas(
         new_entry = [k, client_dictionary[k]["entries"]]
 
         avg_stdv_this_branch = ""
-        if client_dictionary[k]["entries"] > 1:
+        if client_dictionary[k]["entries"] > 1 and k[0:4] != "MAX_" and k[0:4] != "MIN_":
             avg_stdv_this_branch = "{:.3f} ± {:.3f}".format(
                 client_dictionary[k]["avg"], client_dictionary[k]["std"]
             )
@@ -226,7 +281,7 @@ def compute_deltas(
             or client_dictionary[k]["compared_std"] == "N/A"
         ):
             avg_stdv_dev = "N/A"
-        elif client_dictionary[k]["compared_entries"] > 1:
+        elif client_dictionary[k]["compared_entries"] > 1 and k[0:4] != "MAX_" and k[0:4] != "MIN_":
             avg_stdv_dev = "{:.3f} ± {:.3f}".format(
                 client_dictionary[k]["compared_avg"], client_dictionary[k]["compared_std"]
             )
@@ -295,7 +350,7 @@ def compute_deltas(
         new_entry = [k, server_dictionary[k]["entries"]]
 
         avg_stdv_this_branch = ""
-        if server_dictionary[k]["entries"] > 1:
+        if server_dictionary[k]["entries"] > 1 and k[0:4] != "MAX_" and k[0:4] != "MIN_":
             avg_stdv_this_branch = "{:.3f} ± {:.3f}".format(
                 server_dictionary[k]["avg"], server_dictionary[k]["std"]
             )
@@ -310,7 +365,7 @@ def compute_deltas(
             or server_dictionary[k]["compared_std"] == "N/A"
         ):
             avg_stdv_dev = "N/A"
-        elif server_dictionary[k]["compared_entries"] > 1:
+        elif server_dictionary[k]["compared_entries"] > 1 and k[0:4] != "MAX_" and k[0:4] != "MIN_":
             avg_stdv_dev = "{:.3f} ± {:.3f}".format(
                 server_dictionary[k]["compared_avg"], server_dictionary[k]["compared_std"]
             )
