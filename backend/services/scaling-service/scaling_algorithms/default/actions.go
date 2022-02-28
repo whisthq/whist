@@ -199,7 +199,6 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 
 		if instance.ImageID == graphql.String(latestImageID) {
 			// Current instances
-			logger.Errorf("Test2: mandelboxCapacity %v", mandelboxCapacity)
 			if realCapacity > DEFAULT_INSTANCE_BUFFER &&
 				(mandelboxCapacity-int(instance.RemainingCapacity)) > MINIMUM_MANDELBOX_CAPACITY {
 				// Only scale down if there are more instances
