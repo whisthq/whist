@@ -277,18 +277,18 @@ static void initiate_file_upload(void) {
 int whist_client_main(int argc, char* argv[]) {
     WhistSubsystemParams subsystem_params = {true};
     if (alloc_parsed_args() != 0) {
-        return -1;
+        return WHIST_EXIT_FAILURE;
     }
 
     int ret = client_parse_args(argc, argv);
     if (ret == -1) {
         // invalid usage
         free_parsed_args();
-        return -1;
+        return WHIST_EXIT_CLI;
     } else if (ret == 1) {
         // --help or --version
         free_parsed_args();
-        return 0;
+        return WHIST_EXIT_SUCCESS;
     }
 
     whist_init_subsystems(&subsystem_params);
@@ -326,7 +326,7 @@ int whist_client_main(int argc, char* argv[]) {
     WhistThread pipe_arg_thread =
         whist_create_thread(multithreaded_read_piped_arguments, "PipeArgThread", &keep_piping);
     if (pipe_arg_thread == NULL) {
-        exit_code = WHIST_EXIT_CLI;
+        exit_code = WHIST_EXIT_FAILURE;
     } else {
         SDL_Event event;
         while (continue_pumping) {
@@ -354,8 +354,30 @@ int whist_client_main(int argc, char* argv[]) {
         }
         int pipe_arg_ret;
         whist_wait_thread(pipe_arg_thread, &pipe_arg_ret);
-        if (pipe_arg_ret != 0) {
-            exit_code = WHIST_EXIT_CLI;
+        switch (pipe_arg_ret) {
+            case -2: {
+                // Fatal reading pipe or similar
+                LOG_ERROR("Failed to read piped arguments -- exiting");
+                exit_code = WHIST_EXIT_FAILURE;
+                break;
+            }
+            case -1: {
+                // Invalid arguments
+                LOG_ERROR("Invalid piped arguments -- exiting");
+                exit_code = WHIST_EXIT_CLI;
+                break;
+            }
+            case 1: {
+                // Arguments prompt graceful exit
+                LOG_INFO("Piped argument prompts graceful exit");
+                exit_code = WHIST_EXIT_SUCCESS;
+                client_exiting = true;
+                break;
+            }
+            default: {
+                // Success, so nothing to do
+                break;
+            }
         }
     }
 
@@ -494,11 +516,30 @@ int whist_client_main(int argc, char* argv[]) {
             if (get_timer(&new_tab_url_timer) * MS_IN_SECOND > 50.0) {
                 bool keep_piping2 = true;
                 int piped_args_ret = read_piped_arguments(&keep_piping2, /*run_only_one=*/true);
-                if (piped_args_ret == -1) {
-                    LOG_ERROR("Failed to read piped arguments - exiting client");
-                    exit_code = WHIST_EXIT_FAILURE;
-                } else if (piped_args_ret == 1) {
-                    exit_code = WHIST_EXIT_CLI;
+                switch (piped_args_ret) {
+                    case -2: {
+                        // Fatal reading pipe or similar
+                        LOG_ERROR("Failed to read piped arguments -- exiting");
+                        exit_code = WHIST_EXIT_FAILURE;
+                        break;
+                    }
+                    case -1: {
+                        // Invalid arguments
+                        LOG_ERROR("Invalid piped arguments -- exiting");
+                        exit_code = WHIST_EXIT_CLI;
+                        break;
+                    }
+                    case 1: {
+                        // Arguments prompt graceful exit
+                        LOG_INFO("Piped argument prompts graceful exit");
+                        exit_code = WHIST_EXIT_SUCCESS;
+                        client_exiting = true;
+                        break;
+                    }
+                    default: {
+                        // Success, so nothing to do
+                        break;
+                    }
                 }
                 start_timer(&new_tab_url_timer);
             }

@@ -55,7 +55,8 @@ Public Functions
  *
  * @param argv                     List of arguments
  *
- * @returns                        Returns -1 on failure, 0 on success
+ * @returns                        Returns -1 on failure, 0 on success, 1 on args prompting
+ *                                 graceful exit (help, version, etc.)
  */
 int client_parse_args(int argc, char* argv[]);
 
@@ -68,8 +69,8 @@ int client_parse_args(int argc, char* argv[]);
  * or read from stdin only one time. Must use 'true' if this function is being called in a while
  * loop.
  *
- * @returns                        Returns -1 on failure, 0 on success, 1 on args prompting graceful
- * exit
+ * @returns                        -2 on read pipe failure, -1 on invalid arguments, 0 on success,
+ *                                 1 on args prompting graceful exit (kill, etc.)
  */
 int read_piped_arguments(bool* keep_waiting, bool run_only_once);
 
