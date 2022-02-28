@@ -31,7 +31,7 @@ func ComputeRealCapacity(imageID string, region string, activeInstances subscrip
 // ComputeExpectedCapacity is a helper function to compute the expected capacity on a given region-image
 // pair. This function takes into account the number of instances which can serve, as well as the number
 // of mandelboxes they can run. We define expected capacity as the number of instances in active state
-// which have space to run mandelboxes and starting instances. This function returns the expected capacity
+// which have space to run mandelboxes added to the number of starting instances (PRE_CONNECTION status). This function returns the expected capacity
 // and the number of mandelboxes which can be started with the instance buffer.
 func ComputeExpectedCapacity(imageID string, region string, activeInstances subscriptions.WhistInstances, startingInstances subscriptions.WhistInstances) (int, int) {
 	var (

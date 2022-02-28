@@ -107,11 +107,15 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 		return utils.MakeError("failed to query database for starting instances. Err: %v", err)
 	}
 
-	// We consider the expected capacity here (active instances + starting instances)
-	// so that we don't scale up unnecessary instances.
+	// The following variables represent the following:
+	// real capacity - instances with space to run mandelboxes
+	// expected capacity - active instances and starting instances
+	// mandelbox capacity - number of mandelboxes we can run
 	realCapacity, _ := helpers.ComputeExpectedCapacity(latestImageID, event.Region, allActive, allStarting)
 	expectedCapacity, mandelboxCapacity := helpers.ComputeExpectedCapacity(latestImageID, event.Region, allActive, allStarting)
 
+	// We consider the expected capacity here (active instances + starting instances)
+	// so that we don't scale up unnecessary instances.
 	if expectedCapacity < DEFAULT_INSTANCE_BUFFER {
 
 		logger.Infof("Current number of instances with capacity %v is less than desired %v. Scaling up to match with image %v.", expectedCapacity, DEFAULT_INSTANCE_BUFFER, latestImageID)
@@ -124,6 +128,7 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 			// err is already wrapped here
 			return err
 		}
+
 	} else if mandelboxCapacity < MINIMUM_MANDELBOX_CAPACITY {
 		logger.Infof("Current active instances in %v are almost full. Scaling up instance with image %v to satisfy capacity", event.Region, latestImageID)
 		err = s.ScaleUpIfNecessary(1, scalingCtx, event, latestImageID)
@@ -177,6 +182,9 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		return utils.MakeError("failed to query database for active instances. Err: %v", err)
 	}
 
+	// The following variables represent the following:
+	// real capacity - instances with space to run mandelboxes
+	// mandelbox capacity - number of mandelboxes we can run
 	realCapacity, mandelboxCapacity := helpers.ComputeRealCapacity(latestImageID, event.Region, allActive)
 
 	// Create a list of instances that can be scaled down from the active instances list.
