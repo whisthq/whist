@@ -544,6 +544,7 @@ if __name__ == "__main__":
         with open(metadata_filename, "w") as metadata_file:
             json.dump(experiment_metadata, metadata_file)
 
-        exit(-1)
+        # Exit with error
+        sys.exit(-1)
     else:
         print("Done")

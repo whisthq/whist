@@ -33,7 +33,7 @@ def parse_metadata(folder_name):
     return experiment_metadata
 
 
-def logs_contain_errors(logs_root_dir):
+def logs_contain_errors(logs_root_dir, verbose=False):
     """
     Perform a coarse-grained sanity check on the logs from a E2E streaming test run
     Args:
@@ -46,11 +46,23 @@ def logs_contain_errors(logs_root_dir):
     server_log_file = os.path.join(logs_root_dir, "server", "server.log")
 
     if not os.path.isfile(client_log_file) or not os.path.isfile(server_log_file):
+        if verbose:
+            print(
+                "Error, either file {} or file {} do not exist!".format(
+                    client_log_file, server_log_file
+                )
+            )
         return True
     client_log_num_lines = sum(1 for x in open(client_log_file))
     server_log_num_lines = sum(1 for x in open(server_log_file))
 
     if client_log_num_lines < 500 or server_log_num_lines < 500:
+        if verbose:
+            print(
+                "Error: client log file {} contains {} lines and server log file {} contains {} lines, one of which is less than 500.".format(
+                    client_log_file, client_log_num_lines, server_log_file, server_log_num_lines
+                )
+            )
         return True
 
     return False
