@@ -7,6 +7,7 @@ import {
 } from "electron"
 
 import config from "@app/config/environment"
+import { amplitudeLog } from "@app/main/utils/logging"
 
 // Helper functions
 const base = {
@@ -151,6 +152,8 @@ const createElectronWindow = (args: {
   show?: boolean
 }) => {
   try {
+    amplitudeLog(`Creating window ${args.hash}`)
+
     const winAlreadyExists = getElectronWindow(args.hash)
     if (winAlreadyExists !== undefined) {
       if (winAlreadyExists?.isMinimized()) winAlreadyExists?.restore()

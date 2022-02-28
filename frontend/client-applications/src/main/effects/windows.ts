@@ -92,7 +92,11 @@ untilUpdateAvailable(
 ).subscribe((args: { import: boolean }) => {
   networkAnalyze()
 
-  args.import ? createImportLoadingWindow() : createLaunchLoadingWindow()
+  if (args.import) {
+    createImportLoadingWindow()
+  } else {
+    createLaunchLoadingWindow()
+  }
 
   destroyElectronWindow(WindowHashPayment)
   destroyElectronWindow(WindowHashImport)

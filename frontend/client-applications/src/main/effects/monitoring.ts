@@ -4,7 +4,6 @@
  * @brief This file contains miscellaneous effects that deal with monitoring/logging the app
  */
 
-import { logging } from "@app/main/utils/logging"
 import Sentry from "@sentry/electron"
 import { interval } from "rxjs"
 
@@ -15,6 +14,7 @@ import { networkAnalyze } from "@app/main/utils/networkAnalysis"
 import { fromTrigger } from "@app/main/utils/flows"
 import { WhistTrigger } from "@app/constants/triggers"
 import { withAppActivated } from "@app/main/utils/observables"
+import { amplitudeLog } from "@app/main/utils/logging"
 
 // Initialize and report Sentry errors in prod
 if (appEnvironment === WhistEnvironments.PRODUCTION) {
@@ -30,5 +30,5 @@ fromTrigger(WhistTrigger.startNetworkAnalysis).subscribe(() => {
 })
 
 withAppActivated(interval(HEARTBEAT_INTERVAL_IN_MS)).subscribe(() => {
-  logging("heartbeat", {})
+  amplitudeLog("heartbeat")
 })
