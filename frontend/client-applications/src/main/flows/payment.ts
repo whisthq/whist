@@ -1,4 +1,4 @@
-import { filter, map, tap } from "rxjs/operators"
+import { filter, map } from "rxjs/operators"
 import {
   accessToken,
   subscriptionStatus,

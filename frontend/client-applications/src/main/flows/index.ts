@@ -7,7 +7,7 @@ import {
   share,
   mapTo,
   pluck,
-  startWith,
+  withLatestFrom,
 } from "rxjs/operators"
 import isEmpty from "lodash.isempty"
 import pickBy from "lodash.pickby"
@@ -27,10 +27,7 @@ import { persistGet } from "@app/main/utils/persist"
 import { WhistTrigger } from "@app/constants/triggers"
 import {
   sleep,
-  accessToken,
   refreshToken,
-  userEmail,
-  configToken,
   isNewConfigToken,
   darkMode,
   timezone,
@@ -42,6 +39,7 @@ import {
   CACHED_REFRESH_TOKEN,
   CACHED_USER_EMAIL,
   ONBOARDED,
+  CACHED_ACCESS_TOKEN,
 } from "@app/constants/store"
 import {
   getDecryptedCookies,
@@ -49,7 +47,6 @@ import {
   getExtensions,
   InstalledBrowser,
 } from "@app/main/utils/importer"
-import { CACHED_ACCESS_TOKEN } from "@app/constants/store"
 
 // Autoupdate flow
 const update = autoUpdateFlow(fromTrigger(WhistTrigger.updateAvailable))
@@ -91,9 +88,14 @@ const checkPayment = checkPaymentFlow(
 // If the payment is invalid, they'll be redirect to the Stripe window. After that they'll
 // get new auth credentials
 const refreshAfterPaying = authRefreshFlow(
-  emitOnSignal(
-    combineLatest({ refreshToken }),
-    fromTrigger(WhistTrigger.stripeAuthRefresh)
+  fromTrigger(WhistTrigger.stripeAuthRefresh).pipe(
+    withLatestFrom(
+      merge(
+        loggedInAuth.success.pipe(pluck("refreshToken")),
+        firstAuth.success.pipe(pluck("refreshToken"))
+      )
+    ),
+    map(([, r]) => r)
   )
 )
 
