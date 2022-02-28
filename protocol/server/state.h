@@ -29,7 +29,6 @@ Includes
 #endif
 #include <time.h>
 
-#include <whist/core/whistgetopt.h>
 #include <whist/core/whist.h>
 #include <whist/input/input.h>
 #include <whist/logging/error_monitor.h>
@@ -55,8 +54,6 @@ struct _whist_server_config {
     char hex_aes_private_key[33];
     char identifier[WHIST_IDENTIFIER_MAXLEN + 1];
     int begin_time_to_exit;
-    char dbus_address[DBUS_ADDRESS_MAXLEN + 1];
-    WhistSubsystemParams susbsystems_params;
 };
 
 typedef struct _whist_server_config whist_server_config;

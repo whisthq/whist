@@ -773,10 +773,6 @@ typedef struct BitArray {
     unsigned int numBits;  // number of bits in array
 } BitArray;
 
-typedef struct WhistSubsystemParams {
-    bool catch_segfaults;
-} WhistSubsystemParams;
-
 /*
 ============================
 Public Functions
@@ -786,14 +782,13 @@ Public Functions
 /**
  * @brief                          Initialize any and all static state
  *                                 that needs to be initialized
- * @param params                   subsystems parameters
  *
  * @note                           This must be called after parsing arguments
  *
  * @note                           TODO: Make this function take in parsed arguments as a struct,
  *                                 rather than having parse_arguments manipulate `extern` globals
  */
-void whist_init_subsystems(WhistSubsystemParams* params);
+void whist_init_subsystems(void);
 
 /**
  * @brief                          Print the memory trace of a process
@@ -828,7 +823,7 @@ int runcmd(const char* cmdline, char** response);
  * @returns                        True if hex_string was a 16-byte hexadecimal
  *                                 value, otherwise false
  */
-bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
+bool read_hexadecimal_private_key(const char* hex_string, char* binary_private_key,
                                   char* hex_private_key);
 
 /**

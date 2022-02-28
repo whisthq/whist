@@ -50,6 +50,7 @@ Includes
 #include <whist/core/whist.h>
 #include <whist/utils/os_utils.h>
 #include <whist/utils/threads.h>
+#include "whist/utils/command_line.h"
 #include "client.h"
 #include "server_statistic.h"
 #include "network.h"
@@ -72,6 +73,16 @@ typedef struct NotificationsHandler {
     struct event_base *eb;
     WhistThread thread;
 } NotificationsHandler;
+
+/*
+============================
+Command-line options
+============================
+*/
+
+static const char *dbus_addr;
+COMMAND_LINE_STRING_OPTION(dbus_addr, 'b', "dbus-address", PATH_MAX,
+                           "Pass in the address where the D-Bus connection lives.")
 
 /*
 ============================
@@ -190,7 +201,6 @@ DbusCtx *dbus_init(struct event_base *eb, whist_server_state *server_state) {
     // Connect to appropriate d-bus daemon by reading configs
     // Scope is created to avoid "jump to label crosses initialization"
     {
-        const char *dbus_addr = server_state->config->dbus_address;
         LOG_INFO("Read D-Bus address from env vars: %s", dbus_addr);
 
         // Use parsed address to open a private connection

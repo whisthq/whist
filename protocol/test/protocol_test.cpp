@@ -531,35 +531,6 @@ TEST_F(ProtocolTest, RecvNoIntr) {
 
 /*
 ============================
-Server Tests
-============================
-*/
-
-#ifndef __APPLE__  // Server tests do not compile on macOS
-
-/**
- * server/main.c
- **/
-
-// Testing that good values passed into server_parse_args returns success
-TEST_F(ProtocolTest, ServerParseArgsUsage) {
-    whist_server_config config;
-    int argc = 2;
-
-    char argv0[] = "./server/build64/WhistServer";
-    char argv1[] = "--help";
-    char* argv[] = {argv0, argv1, NULL};
-
-    int ret_val = server_parse_args(&config, argc, argv);
-    EXPECT_EQ(ret_val, 1);
-
-    check_stdout_line(::testing::HasSubstr("Usage:"));
-}
-
-#endif
-
-/*
-============================
 Whist Library Tests
 ============================
 */
@@ -568,7 +539,7 @@ Whist Library Tests
  * logging/logging.c
  **/
 TEST_F(ProtocolTest, LoggerTest) {
-    whist_init_logger(true);
+    whist_init_logger();
     LOG_DEBUG("This is a debug log!");
     LOG_INFO("This is an info log!");
     flush_logs();
@@ -621,7 +592,7 @@ TEST_F(ProtocolTest, LoggerTest) {
 
 // Test for log overflow.
 TEST_F(ProtocolTest, LoggerOverflowTest) {
-    whist_init_logger(true);
+    whist_init_logger();
 
     test_set_pause_state_on_logger_thread(true);
 
@@ -658,7 +629,7 @@ TEST_F(ProtocolTest, LogStatistic) {
          true},  // Turn on averaging over time, so the count will measure time elapsed.
         {"TEST3", true, true, false},  // Don't log this. Want to check for "count == 0" condition
     };
-    whist_init_logger(true);
+    whist_init_logger();
     whist_init_statistic_logger(3, NULL, 2);
     flush_logs();
     check_stdout_line(::testing::HasSubstr("Logging initialized!"));
@@ -712,7 +683,7 @@ static int log_test_thread(void* arg) {
 }
 
 TEST_F(ProtocolTest, LogThreadTest) {
-    whist_init_logger(true);
+    whist_init_logger();
 
     WhistThread threads[4];
     for (int i = 0; i < 4; i++) {

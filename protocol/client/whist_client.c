@@ -323,7 +323,6 @@ static void send_new_tab_url_if_needed(void) {
 }
 
 int whist_client_main(int argc, char* argv[]) {
-    WhistSubsystemParams subsystem_params = {true};
     if (alloc_parsed_args() != 0) {
         return WHIST_EXIT_FAILURE;
     }
@@ -339,7 +338,7 @@ int whist_client_main(int argc, char* argv[]) {
         return WHIST_EXIT_SUCCESS;
     }
 
-    whist_init_subsystems(&subsystem_params);
+    whist_init_subsystems();
 
     // the logic inside guarantees debug console is only enabled for debug build
     init_debug_console();

@@ -46,6 +46,7 @@ format strings.
 
 #include <whist/core/whist.h>
 #include "whist/utils/atomic.h"
+#include "whist/utils/command_line.h"
 #include "whist/utils/linked_list.h"
 #include "logging.h"
 #include "error_monitor.h"
@@ -325,7 +326,11 @@ static void logger_queue_line(const char* tag, const char* prefix, const char* l
     whist_unlock_mutex(logger_queue_mutex);
 }
 
-void whist_init_logger(bool catch_segfaults) {
+static bool catch_segfaults;
+COMMAND_LINE_BOOL_OPTION(catch_segfaults, 'D', "developer-mode",
+                         "Run the server in developer mode (don't catch segfaults).")
+
+void whist_init_logger(void) {
     if (catch_segfaults) init_backtrace_handler();
 
     linked_list_init(&logger_queue);

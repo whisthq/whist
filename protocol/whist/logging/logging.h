@@ -171,10 +171,9 @@ void print_stacktrace(void);
 
 /**
  * @brief                          Initialize the logger.
- * @param catch_segfaults          Shall we install a segfault/backtrace handler
  *
  */
-void whist_init_logger(bool catch_segfaults);
+void whist_init_logger(void);
 
 /**
  * @brief                          Log the given format string

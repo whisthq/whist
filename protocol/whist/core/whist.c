@@ -52,9 +52,9 @@ Public Function Implementations
 ============================
 */
 
-void whist_init_subsystems(WhistSubsystemParams *params) {
+void whist_init_subsystems(void) {
     whist_init_multithreading();
-    whist_init_logger(params->catch_segfaults);
+    whist_init_logger();
     whist_init_features();
     init_fec();
     whist_init_networking();
@@ -263,7 +263,7 @@ int runcmd(const char *cmdline, char **response) {
 #endif
 }
 
-bool read_hexadecimal_private_key(char *hex_string, char *binary_private_key,
+bool read_hexadecimal_private_key(const char *hex_string, char *binary_private_key,
                                   char *hex_private_key) {
     /*
         Reads a 16-byte hexadecimal string and copies it into private_key

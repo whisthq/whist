@@ -367,7 +367,7 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    whist_init_subsystems(&config.susbsystems_params);
+    whist_init_subsystems();
 
     whist_init_server_statistics();
     whist_init_statistic_logger(SERVER_NUM_METRICS, server_statistic_info,
