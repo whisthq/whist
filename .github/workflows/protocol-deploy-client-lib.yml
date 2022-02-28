@@ -106,7 +106,7 @@ jobs:
         run: |
           from notifications.slack_bot import slack_post
 
-          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
           BODY = f"@releases :rotating_light: Failed to deploy Whist protocol client Library to AWS S3, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
 
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
@@ -129,7 +129,7 @@ jobs:
         run: |
           from notifications.slack_bot import slack_post
 
-          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_PROD }}"
+          SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
           TITLE = ":whist: Whist Protocol Client Library Deployed :whist:"
           BODY = f"Whist protocol client library deployed via upload to AWS S3 (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
 
