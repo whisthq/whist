@@ -54,9 +54,6 @@ const handleDownloadMeasurements = () => {
 // Callbacks to pass into download speed test
 const callbacks = {
   downloadMeasurement: handleDownloadMeasurements(),
-  // downloadComplete: () => {
-  //   emitNetworkAnalysis({ ...results, progress: 100 })
-  // },
   error: (err: { message: string }) => {
     console.error(err.message)
     emitNetworkAnalysis({ ...results, progress: 100 })
@@ -75,7 +72,6 @@ const networkAnalyze = () => {
   ndt7.downloadTest(config, callbacks, urlPromise)
 
   setTimeout(() => {
-    console.log("TIMEOUT")
     emitNetworkAnalysis({ ...results, progress: 100 })
   }, TEST_DURATION_MILLISECONDS)
 }

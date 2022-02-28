@@ -52,7 +52,7 @@ const Subtitle = (props: { state: NetworkTestState }) => {
         <div className="text-gray-500">
           While you can still use Whist, you may experience stutters and
           latency. If possible, please move closer to your router or try again
-          on different wifi.
+          on different WiFi.
         </div>
       )
   }

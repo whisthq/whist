@@ -77,8 +77,6 @@ const sortRegionByProximity = async (regions: AWSRegion[]) => {
 
   const sortedResults = sortBy(pingResults, ["pingTime"])
 
-  console.log(sortedResults)
-
   return sortedResults
 }
 
