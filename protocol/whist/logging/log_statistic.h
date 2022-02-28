@@ -16,7 +16,6 @@ about the stored values for each key and flush the data.
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <assert.h>
 
 /*
 ============================
