@@ -34,9 +34,9 @@ const Importer = (props: {
           Do you want to import your bookmarks and settings?
         </div>
         <div className="text-gray-500 mt-4">
-          Please select which browser you would like to import your cookies,
-          bookmarks, passwords, and extensions from so you can pick up right
-          where you left off.
+          Pick up right where you left off by importing your bookmarks,
+          extensions, and passwords from another browser. We currently support
+          Chrome, Brave, and Opera.
         </div>
         <div className="mt-8 max-w-sm m-auto">
           <Dropdown options={props.browsers} onSelect={onSelect} />
