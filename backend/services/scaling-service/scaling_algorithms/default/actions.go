@@ -107,7 +107,7 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 		return utils.MakeError("failed to query database for starting instances. Err: %v", err)
 	}
 
-	// The following variables represent the following:
+	// The variables used here represent the following:
 	// real capacity - instances with space to run mandelboxes
 	// expected capacity - active instances and starting instances
 	// mandelbox capacity - number of mandelboxes we can run
@@ -182,7 +182,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		return utils.MakeError("failed to query database for active instances. Err: %v", err)
 	}
 
-	// The following variables represent the following:
+	// The variables used here represent the following:
 	// real capacity - instances with space to run mandelboxes
 	// mandelbox capacity - number of mandelboxes we can run
 	realCapacity, mandelboxCapacity := helpers.ComputeRealCapacity(latestImageID, event.Region, allActive)
