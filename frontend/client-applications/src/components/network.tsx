@@ -5,8 +5,8 @@ import { Progress } from "@app/components/progress"
 import { WhistButton, WhistButtonState } from "@app/components/button"
 
 const MAX_ACCEPTABLE_PING_MS = 50
-const MAX_ACCEPTABLE_JITTER_MS = 20
-const MIN_ACCEPTABLE_DOWNLAOD_MBPS = 30
+const MAX_ACCEPTABLE_JITTER_MS = 15
+const MIN_ACCEPTABLE_DOWNLOAD_MBPS = 30
 
 enum NetworkTestState {
   IN_PROGRESS,
@@ -29,7 +29,7 @@ const getNetworkTestState = (
 
   // Network test is finished and the network is good
   if (
-    networkInfo.downloadMbps >= MIN_ACCEPTABLE_DOWNLAOD_MBPS &&
+    networkInfo.downloadMbps >= MIN_ACCEPTABLE_DOWNLOAD_MBPS &&
     networkInfo.jitter < MAX_ACCEPTABLE_JITTER_MS &&
     networkInfo.ping < MAX_ACCEPTABLE_PING_MS
   )
@@ -94,7 +94,7 @@ const NetworkStats = (props: {
       name: "Download Speed",
       stat: props.networkInfo?.downloadMbps ?? 0,
       units: "Mbps",
-      required: MIN_ACCEPTABLE_DOWNLAOD_MBPS,
+      required: MIN_ACCEPTABLE_DOWNLOAD_MBPS,
       operator: "greater",
     },
     {
