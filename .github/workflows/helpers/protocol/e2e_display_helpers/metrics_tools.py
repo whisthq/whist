@@ -52,6 +52,9 @@ def extract_metrics(client_log_file, server_log_file):
                     normal_sum = float(metric_values[1])
                     sum_of_squares = float(metric_values[2])
                     sum_with_offset = float(metric_values[3])
+                assert count >= 0
+                assert normal_sum >= 0
+                assert sum_of_squares >= 0
 
                 if metric_name not in client_metrics:
                     client_metrics[metric_name] = {
@@ -89,6 +92,10 @@ def extract_metrics(client_log_file, server_log_file):
                     sum_of_squares = float(metric_values[2])
                     sum_with_offset = float(metric_values[3])
 
+                assert count >= 0
+                assert normal_sum >= 0
+                assert sum_of_squares >= 0
+
                 if metric_name not in server_metrics:
                     server_metrics[metric_name] = {
                         "entries": 0,
@@ -105,18 +112,16 @@ def extract_metrics(client_log_file, server_log_file):
     client_metrics2 = {}
     server_metrics2 = {}
 
-    # print(client_metrics)
     for metric_name in client_metrics:
-        print(metric_name)
-        print(client_metrics[metric_name])
-        # client_metrics[metric_name] = np.array(client_metrics[metric_name])
         assert client_metrics[metric_name]["sum_of_squares"] >= 0.0
-        variance = client_metrics[metric_name]["sum_of_squares"] - (
-            (client_metrics[metric_name]["sum_with_offset"] ** 2)
-            / client_metrics[metric_name]["entries"]
-        )
-        print(variance)
-        variance /= client_metrics[metric_name]["entries"]
+        variance = (
+            client_metrics[metric_name]["sum_of_squares"]
+            - (
+                (client_metrics[metric_name]["sum_with_offset"] ** 2)
+                / client_metrics[metric_name]["entries"]
+            )
+        ) / client_metrics[metric_name]["entries"]
+        variance = round(variance, 2)
         standard_deviation = math.sqrt(variance)
         client_metrics2[metric_name] = {
             "entries": client_metrics[metric_name]["entries"],
@@ -127,12 +132,14 @@ def extract_metrics(client_log_file, server_log_file):
         }
 
     for metric_name in server_metrics:
-        assert server_metrics[metric_name]["sum_of_squares"] >= 0.0
-        variance = server_metrics[metric_name]["sum_of_squares"] - (
-            (server_metrics[metric_name]["sum_with_offset"] ** 2)
-            / server_metrics[metric_name]["entries"]
-        )
-        variance /= server_metrics[metric_name]["entries"]
+        variance = (
+            server_metrics[metric_name]["sum_of_squares"]
+            - (
+                (server_metrics[metric_name]["sum_with_offset"] ** 2)
+                / server_metrics[metric_name]["entries"]
+            )
+        ) / server_metrics[metric_name]["entries"]
+        variance = round(variance, 2)
         standard_deviation = math.sqrt(variance)
         server_metrics2[metric_name] = {
             "entries": server_metrics[metric_name]["entries"],
