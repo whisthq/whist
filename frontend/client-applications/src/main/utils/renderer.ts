@@ -138,8 +138,11 @@ const createSignoutWindow = () =>
 const createOnboardingWindow = () =>
   createElectronWindow({
     ...width.md,
-    ...height.md,
+    ...height.lg,
     hash: WindowHashOnboarding,
+    options: {
+      fullscreenable: false,
+    },
   })
 
 const createUpdateWindow = () =>
@@ -191,6 +194,7 @@ const createOmnibar = () =>
       fullscreenable: false,
       minimizable: false,
       closable: false,
+      transparent: true,
     },
     show: false,
   })

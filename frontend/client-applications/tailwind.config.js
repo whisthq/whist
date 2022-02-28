@@ -10,17 +10,19 @@ module.exports = {
     // override some of the default utilities.
     extend: {
       fontFamily: {
-        body: ["Josefin-Sans"],
+        body: ["Whist"],
       },
       colors: {
         transparent: "transparent",
         current: "currentColor",
         blue: {
-          DEFAULT: "#4f35de",
+          DEFAULT: "#0092FF",
+          light: "#71D9FF",
+          dark: "#0000CE",
         },
-        mint: {
-          DEFAULT: "#00FFA2",
-          light: "#c9ffeb",
+        gray: {
+          800: "#363641",
+          900: "#202124",
         },
       },
       keyframes: {
@@ -34,9 +36,18 @@ module.exports = {
             transform: "translateY(0)",
           },
         },
+        "fade-in": {
+          "0%": {
+            opacity: "0.0",
+          },
+          "100%": {
+            opacity: "1.0",
+          },
+        },
       },
       animation: {
         "fade-in-up": "fade-in-up 1s ease-out forwards",
+        "fade-in": "fade-in 1s ease-out forwards",
       },
     },
   },

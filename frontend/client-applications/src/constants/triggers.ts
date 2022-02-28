@@ -55,6 +55,7 @@ const WhistTrigger = {
   startNetworkAnalysis: "startNetworkAnalysis",
   getOtherBrowserWindows: "getOtherBrowserWindows",
   importTabs: "importTabs",
+  openExternalURL: "openExternalURL",
 
   // Omnibar triggers
   showAuthWindow: "showAuthWindow",
@@ -82,6 +83,7 @@ const WhistTrigger = {
   checkPaymentFlowFailure: "checkPaymentFlowFailure",
   awsPingCached: "awsPingCached",
   awsPingRefresh: "awsPingRefresh",
+  awsPingOffline: "awsPingOffline",
 
   // System triggers (power, Internet)
   powerResume: "powerResume",

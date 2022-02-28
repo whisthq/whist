@@ -40,7 +40,9 @@ import {
 const update = autoUpdateFlow(fromTrigger(WhistTrigger.updateAvailable))
 
 // AWS ping flow
-const awsPing = awsPingFlow(of(null))
+const awsPing = awsPingFlow(
+  merge(of(null), fromTrigger(WhistTrigger.startNetworkAnalysis))
+)
 
 // Auth flow
 const auth = authFlow(
@@ -154,6 +156,7 @@ createTrigger(WhistTrigger.mandelboxFlowStart, launchTrigger)
 
 createTrigger(WhistTrigger.awsPingCached, awsPing.cached)
 createTrigger(WhistTrigger.awsPingRefresh, awsPing.refresh)
+createTrigger(WhistTrigger.awsPingOffline, awsPing.offline)
 
 createTrigger(WhistTrigger.authFlowSuccess, auth.success)
 createTrigger(WhistTrigger.authFlowFailure, auth.failure)

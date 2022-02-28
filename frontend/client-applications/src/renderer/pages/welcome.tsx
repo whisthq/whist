@@ -13,16 +13,16 @@ const Welcome = (props: { onSubmit: () => void }) => {
       className="flex flex-col h-screen w-full font-body outline-none bg-gray-900"
     >
       <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
-      <div className="m-auto text-center mt-36">
+      <div className="m-auto text-center mt-24">
         <img
           src={Logo}
-          className="w-24 h-24 m-auto animate-fade-in-up opacity-0"
+          className="w-28 h-28 m-auto animate-fade-in-up opacity-0"
         />
         <div
           className="text-gray-100 text-4xl mt-8 animate-fade-in-up opacity-0"
           style={{ animationDelay: "400ms" }}
         >
-          Welcome to <span className="font-bold">Whist</span>
+          Sign in to <span className="font-bold">Whist</span>
         </div>
         <div
           className="text-gray-400 mt-2 animate-fade-in-up opacity-0"
@@ -40,9 +40,9 @@ const Welcome = (props: { onSubmit: () => void }) => {
           style={{ animationDelay: "2200ms" }}
         >
           <div className="animate-pulse">
-            Press{" "}
+            Click{" "}
             <kbd className="bg-gray-700 rounded px-2 py-1 text-xs mx-1">
-              Enter
+              here
             </kbd>{" "}
             to create an account
           </div>

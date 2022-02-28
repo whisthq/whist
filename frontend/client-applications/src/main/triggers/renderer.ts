@@ -35,6 +35,7 @@ const filterByName = (
   WhistTrigger.beginImport,
   WhistTrigger.emitIPC,
   WhistTrigger.startNetworkAnalysis,
+  WhistTrigger.openExternalURL,
 ].forEach((trigger: string) => {
   createTrigger(
     trigger,

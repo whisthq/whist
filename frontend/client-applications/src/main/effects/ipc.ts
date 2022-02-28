@@ -61,7 +61,15 @@ const subscribed = combineLatest(
         map((obj) => JSON.stringify(obj))
       ),
       browsers: of(getInstalledBrowsers()),
-      networkInfo: fromTrigger(WhistTrigger.networkAnalysisEvent),
+      networkInfo: combineLatest([
+        fromTrigger(WhistTrigger.networkAnalysisEvent),
+        fromTrigger(WhistTrigger.awsPingRefresh),
+      ]).pipe(
+        map(([stats, regions]) => ({
+          ...stats,
+          ping: regions?.[0].pingTime,
+        }))
+      ),
       isDefaultBrowser: fromTrigger(WhistTrigger.storeDidChange).pipe(
         map(() => persistGet(WHIST_IS_DEFAULT_BROWSER) ?? false),
         startWith(persistGet(WHIST_IS_DEFAULT_BROWSER) ?? false)
@@ -81,6 +89,9 @@ const subscribed = combineLatest(
           )
         ),
         fromTrigger(WhistTrigger.importTabs).pipe(mapTo(undefined))
+      ),
+      regions: fromTrigger(WhistTrigger.awsPingRefresh).pipe(
+        map((regions) => regions?.map((r: any) => r.region))
       ),
     },
     (obs) => concat(of(undefined), obs)

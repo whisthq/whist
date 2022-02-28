@@ -10,14 +10,14 @@ const BrowserInput = (props: {
 }) => {
   return (
     <div className="w-full">
-      <div className="font-semibold text-2xl text-gray-300">Import Tabs</div>
+      <div className="font-bold text-2xl text-gray-300">Import Tabs</div>
       <div className="m-auto mt-4 mb-4 text-gray-400 max-w-sm">
         Which browser would you like to import your tabs from?
       </div>
       <div className="mt-8">
         <div className="bg-gray-800 px-4 py-2 rounded w-96 m-auto">
           <select
-            className="bg-gray-800 font-semibold text-gray-300 outline-none mt-1 block w-full py-2 text-base border-gray-300 sm:text-sm"
+            className="bg-gray-800 font-bold text-gray-300 outline-none mt-1 block w-full py-2 text-base border-gray-300 sm:text-sm"
             defaultValue={props.browsers[0]}
             onChange={(evt: any) => {
               props.onSelect(evt.target.value)
@@ -92,7 +92,7 @@ const Importer = (props: {
         <div>
           <WhistButton
             contents="Continue"
-            className="mt-4 px-12 w-96 mx-auto py-2 text-gray-300 text-gray-900 bg-mint"
+            className="mt-4 px-12 w-96 mx-auto py-2 text-gray-300 text-gray-900 bg-blue-light"
             state={
               processing
                 ? WhistButtonState.PROCESSING
@@ -115,7 +115,7 @@ const Importer = (props: {
         tabIndex={0}
       >
         <div className="absolute top-0 left-0 w-full h-8 draggable"></div>
-        <div className="font-semibold text-2xl text-gray-300 mt-8">
+        <div className="font-bold text-2xl text-gray-300 mt-8">
           Select Window
         </div>
         <div className="m-auto mt-2 mb-8 text-gray-400 max-w-sm ">
@@ -196,7 +196,7 @@ const Importer = (props: {
           "justify-center font-body text-center px-12"
         )}
       >
-        <div className="font-semibold text-2xl text-gray-300 mt-8">
+        <div className="font-bold text-2xl text-gray-300 mt-8">
           Unable to import tabs
         </div>
         <div className="m-auto mt-2 mb-8 text-gray-400 max-w-sm ">
@@ -213,7 +213,7 @@ const Importer = (props: {
         "justify-center font-body text-center px-12"
       )}
     >
-      <div className="font-semibold text-2xl text-gray-300 mt-8">
+      <div className="font-bold text-2xl text-gray-300 mt-8">
         Something went wrong :(
       </div>
       <div className="m-auto mt-2 mb-8 text-gray-400 max-w-sm "></div>

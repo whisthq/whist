@@ -161,7 +161,7 @@ export const logging = (
     ).toString()} ms since flow/trigger was started and ${(
       Date.now() - sessionID
     ).toString()} ms since app was started`,
-    data,
+    dataClone,
     LogLevel.DEBUG
   )
 

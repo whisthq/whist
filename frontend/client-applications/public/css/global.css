@@ -18,6 +18,11 @@
   --black-text-color: #000000;
 }
 
+div,
+p {
+  letter-spacing: 0.05em !important;
+}
+
 ::-webkit-scrollbar {
   display: none;
 }
@@ -26,29 +31,28 @@
   -webkit-app-region: drag;
 }
 
-@font-face {
-  font-family: "Josefin-Sans";
-  src: url("../assets/fonts/JosefinSans-Regular.ttf");
-  font-weight: normal; /* normal == 400 */
-  font-style: normal;
+.nondraggable,
+img {
+  -webkit-user-drag: none;
+  user-drag: none;
 }
 
 @font-face {
-  font-family: "Josefin-Sans";
-  src: url("../assets/fonts/JosefinSans-SemiBold.ttf");
-  font-weight: bold; /* bold == 700 */
+  font-family: "Whist";
+  src: url("../assets/fonts/Futura.ttc");
+  font-weight: bold; /* normal == 400 */
   font-style: bold;
 }
 
 @font-face {
-  font-family: "Josefin-Sans";
-  src: url("../assets/fonts/JosefinSans-Light.ttf");
-  font-weight: lighter;
-  font-style: lighter;
+  font-family: "Whist";
+  src: url("../assets/fonts/Myriad.otf");
+  font-weight: normal; /* normal == 400 */
+  font-style: normal;
 }
 
 .bg-gradient {
-  background: linear-gradient(-45deg, #00ffa2, #25d4f7);
+  background: linear-gradient(-45deg, #71d9ff, #0092ff);
   background-size: 400% 400%;
   animation: gradient 15s ease infinite;
 }

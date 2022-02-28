@@ -11,13 +11,13 @@ import { OneButtonError, TwoButtonError } from "@app/renderer/pages/error"
 import Signout from "@app/renderer/pages/signout"
 import Importer from "@app/renderer/pages/importer"
 import Update from "@app/renderer/pages/update"
-import Network from "@app/renderer/pages/network"
 import Launching from "@app/renderer/pages/launching"
 import Importing from "@app/renderer/pages/importing"
 import Omnibar from "@app/renderer/pages/omnibar"
 import Background from "@app/renderer/pages/background"
 import Welcome from "@app/renderer/pages/welcome"
 import Support from "@app/renderer/pages/support"
+import Onboarding from "@app/renderer/pages/onboarding"
 import RestoreTabs from "@app/renderer/pages/restoreTabs"
 import { Provider } from "@app/renderer/context/omnibar"
 
@@ -25,6 +25,7 @@ import {
   WindowHashSignout,
   WindowHashUpdate,
   WindowHashImport,
+  WindowHashImportOnboarding,
   WindowHashOnboarding,
   WindowHashAuth,
   WindowHashLaunchLoading,
@@ -102,8 +103,6 @@ const RootComponent = () => {
     })
   }
 
-  const handleNetworkSubmit = () => setShow(WindowHashImport)
-
   const handleWelcomeSubmit = () =>
     setMainState({
       trigger: {
@@ -127,6 +126,10 @@ const RootComponent = () => {
         payload: { urls },
       },
     })
+
+  const handleOnboardingSubmit = () => {
+    setShow(WindowHashImportOnboarding)
+  }
 
   useEffect(() => {
     // We need to ask the main thread to re-emit the current StateIPC because
@@ -168,6 +171,17 @@ const RootComponent = () => {
         onSubmit={(browser: string | undefined) =>
           handleImporterSubmit(browser)
         }
+        allowSkip={false}
+      />
+    )
+  if (show === WindowHashImportOnboarding)
+    return (
+      <Importer
+        browsers={mainState.browsers ?? []}
+        onSubmit={(browser: string | undefined) =>
+          handleImporterSubmit(browser)
+        }
+        allowSkip={true}
       />
     )
   if (show === WindowHashRestoreTabs)
@@ -185,12 +199,7 @@ const RootComponent = () => {
     )
 
   if (show === WindowHashOnboarding)
-    return (
-      <Network
-        networkInfo={mainState.networkInfo}
-        onSubmit={handleNetworkSubmit}
-      />
-    )
+    return <Onboarding onSubmit={handleOnboardingSubmit} />
   if (show === WindowHashLaunchLoading)
     return <Launching networkInfo={mainState.networkInfo} />
   if (show === WindowHashImportLoading) return <Importing />
