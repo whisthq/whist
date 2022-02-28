@@ -206,6 +206,10 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 				freeInstances = append(freeInstances, instance)
 				realCapacity--
 				mandelboxCapacity -= int(instance.RemainingCapacity)
+			} else if instance.RemainingCapacity == 0 {
+				// Instance has no mandelboxes but still has a capacity of 0, some mandelboxes might have
+				// exited with errors or not exited at all.
+				logger.Errorf("Instance %v has no active mandelboxes but has remaining capacity of 0.", instance.ID)
 			}
 		} else {
 			// Old instances
