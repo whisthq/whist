@@ -45,7 +45,7 @@ typedef struct FrameData {
     int id;
     int original_packets_received;
     int fec_packets_received;
-    int redundant_packets_received;
+    int duplicate_packets_received;
     bool* received_indices;
     char* packet_buffer;
 

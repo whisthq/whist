@@ -305,7 +305,9 @@ int ring_buffer_receive_segment(RingBuffer* ring_buffer, WhistSegment* segment) 
 
     // If we have already received this packet anyway, just drop this packet
     if (frame_data->received_indices[segment_index]) {
-        frame_data->redundant_packets_received++;
+        if (!segment->is_a_nack) {
+            frame_data->duplicate_packets_received++;
+        }
         // The only way it should possible to receive a packet twice, is if nacking got involved
         if (type == PACKET_VIDEO && frame_data->num_times_index_nacked[segment_index] == 0 &&
             !segment->is_a_duplicate) {
@@ -384,7 +386,6 @@ FrameData* get_frame_at_id(RingBuffer* ring_buffer, int id) {
 double get_packet_loss_ratio(RingBuffer* ring_buffer) {
     int num_packets_received = 0;
     int num_packets_sent = 0;
-    bool is_first_iteration = true;
     // Don't include max_id frame for computing packet loss as it could be in progress
     // Using (MAX_FPS / 4) to limit our computation to last 250ms
     for (int id = max(ring_buffer->max_id - (MAX_FPS / 4), 0); id < ring_buffer->max_id; id++) {
@@ -392,24 +393,23 @@ double get_packet_loss_ratio(RingBuffer* ring_buffer) {
         if (id != frame->id) {
             continue;
         }
+        // Nack packets sent and received are not considered in packet loss calcuation, as the nack
+        // requests are sent from client, there is inherent ambiguity on when the nack request be
+        // considered as lost. Hence not considering them nack packets will provide a more accurate
+        // value for packet loss than trying to deal with the nack ambiguity.
         num_packets_sent += frame->num_original_packets;
         num_packets_sent += frame->num_fec_packets;
         num_packets_received += frame->original_packets_received;
         num_packets_received += frame->fec_packets_received;
-        num_packets_received += frame->redundant_packets_received;
-        for (int j = 0; j < frame->num_original_packets; j++) {
-            num_packets_sent += frame->num_times_index_nacked[j];
+        num_packets_received += frame->duplicate_packets_received;
+        FrameData* next_frame = get_frame_at_id(ring_buffer, id + 1);
+        if (id + 1 != next_frame->id) {
+            // This error means code/logic is wrong. If it occurs fix it asap.
+            LOG_ERROR("Could not find the count of duplicate packets sent for ID %d!", id);
+        } else {
+            num_packets_sent += next_frame->prev_frame_num_duplicate_packets;
         }
-        // Don't count the prev_frame_num_duplicate_packets in the first iteration
-        if (is_first_iteration) {
-            is_first_iteration = false;
-            continue;
-        }
-        num_packets_sent += frame->prev_frame_num_duplicate_packets;
     }
-    FrameData* frame = get_frame_at_id(ring_buffer, ring_buffer->max_id);
-    if (ring_buffer->max_id == frame->id)
-        num_packets_sent += frame->prev_frame_num_duplicate_packets;
     double packet_loss_ratio = 0.0;
     if (num_packets_sent > 0 && num_packets_received > 0) {
         packet_loss_ratio =
