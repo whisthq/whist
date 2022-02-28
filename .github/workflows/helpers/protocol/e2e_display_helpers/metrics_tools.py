@@ -240,10 +240,10 @@ def compute_deltas(
     for k in client_dictionary:
         if k in compared_client_dictionary:
             client_dictionary[k]["compared_entries"] = compared_client_dictionary[k]["entries"]
-            client_dictionary[k]["compared_avg"] = round(compared_client_dictionary[k]["avg"], 3)
-            client_dictionary[k]["compared_std"] = round(compared_client_dictionary[k]["std"], 3)
+            client_dictionary[k]["compared_avg"] = round(compared_client_dictionary[k]["avg"], 2)
+            client_dictionary[k]["compared_std"] = round(compared_client_dictionary[k]["std"], 2)
             client_dictionary[k]["delta"] = round(
-                client_dictionary[k]["avg"] - client_dictionary[k]["compared_avg"], 3
+                client_dictionary[k]["avg"] - client_dictionary[k]["compared_avg"], 2
             )
             if client_dictionary[k]["delta"] == 0:
                 client_dictionary[k]["delta"] = "-"
@@ -252,7 +252,7 @@ def compute_deltas(
                 client_dictionary[k]["delta_pctg"] = "nan"
             else:
                 client_dictionary[k]["delta_pctg"] = round(
-                    (client_dictionary[k]["delta"] / client_dictionary[k]["compared_avg"]), 3
+                    (client_dictionary[k]["delta"] / client_dictionary[k]["compared_avg"]), 2
                 )
         else:
             client_dictionary[k]["compared_avg"] = "N/A"
@@ -267,11 +267,11 @@ def compute_deltas(
 
         avg_stdv_this_branch = ""
         if client_dictionary[k]["entries"] > 1 and k[0:4] != "MAX_" and k[0:4] != "MIN_":
-            avg_stdv_this_branch = "{:.3f} ± {:.3f}".format(
+            avg_stdv_this_branch = "{:.2f} ± {:.2f}".format(
                 client_dictionary[k]["avg"], client_dictionary[k]["std"]
             )
         else:
-            avg_stdv_this_branch = "{:.3f}".format(client_dictionary[k]["avg"])
+            avg_stdv_this_branch = "{:.2f}".format(client_dictionary[k]["avg"])
 
         new_entry.append(avg_stdv_this_branch)
 
@@ -282,24 +282,24 @@ def compute_deltas(
         ):
             avg_stdv_dev = "N/A"
         elif client_dictionary[k]["compared_entries"] > 1 and k[0:4] != "MAX_" and k[0:4] != "MIN_":
-            avg_stdv_dev = "{:.3f} ± {:.3f}".format(
+            avg_stdv_dev = "{:.2f} ± {:.2f}".format(
                 client_dictionary[k]["compared_avg"], client_dictionary[k]["compared_std"]
             )
         else:
-            avg_stdv_dev = "{:.3f}".format(client_dictionary[k]["compared_avg"])
+            avg_stdv_dev = "{:.2f}".format(client_dictionary[k]["compared_avg"])
 
         new_entry.append(avg_stdv_dev)
 
         delta_formatted = client_dictionary[k]["delta"]
         if client_dictionary[k]["delta"] != "-" and client_dictionary[k]["delta"] != "N/A":
-            delta_formatted = "{:.3f}".format(delta_formatted)
+            delta_formatted = "{:.2f}".format(delta_formatted)
             delta_pctg_formatted = client_dictionary[k]["delta_pctg"]
             if (
                 client_dictionary[k]["delta_pctg"] != "-"
                 and client_dictionary[k]["delta_pctg"] != "nan"
                 and client_dictionary[k]["delta_pctg"] != "N/A"
             ):
-                delta_pctg_formatted = "{:.3f}".format(delta_pctg_formatted * 100.0)
+                delta_pctg_formatted = "{:.2f}".format(delta_pctg_formatted * 100.0)
             new_entry.append("{} ({}%)".format(delta_formatted, delta_pctg_formatted))
         else:
             new_entry.append(delta_formatted)
@@ -324,10 +324,10 @@ def compute_deltas(
     for k in server_dictionary:
         if k in compared_server_dictionary:
             server_dictionary[k]["compared_entries"] = compared_server_dictionary[k]["entries"]
-            server_dictionary[k]["compared_avg"] = round(compared_server_dictionary[k]["avg"], 3)
-            server_dictionary[k]["compared_std"] = round(compared_server_dictionary[k]["std"], 3)
+            server_dictionary[k]["compared_avg"] = round(compared_server_dictionary[k]["avg"], 2)
+            server_dictionary[k]["compared_std"] = round(compared_server_dictionary[k]["std"], 2)
             server_dictionary[k]["delta"] = round(
-                server_dictionary[k]["avg"] - server_dictionary[k]["compared_avg"], 3
+                server_dictionary[k]["avg"] - server_dictionary[k]["compared_avg"], 2
             )
             if server_dictionary[k]["delta"] == 0:
                 server_dictionary[k]["delta"] = "-"
@@ -336,7 +336,7 @@ def compute_deltas(
                 server_dictionary[k]["delta_pctg"] = "nan"
             else:
                 server_dictionary[k]["delta_pctg"] = round(
-                    (server_dictionary[k]["delta"] / server_dictionary[k]["compared_avg"]), 3
+                    (server_dictionary[k]["delta"] / server_dictionary[k]["compared_avg"]), 2
                 )
         else:
             server_dictionary[k]["compared_avg"] = "N/A"
@@ -351,11 +351,11 @@ def compute_deltas(
 
         avg_stdv_this_branch = ""
         if server_dictionary[k]["entries"] > 1 and k[0:4] != "MAX_" and k[0:4] != "MIN_":
-            avg_stdv_this_branch = "{:.3f} ± {:.3f}".format(
+            avg_stdv_this_branch = "{:.2f} ± {:.2f}".format(
                 server_dictionary[k]["avg"], server_dictionary[k]["std"]
             )
         else:
-            avg_stdv_this_branch = "{:.3f}".format(server_dictionary[k]["avg"])
+            avg_stdv_this_branch = "{:.2f}".format(server_dictionary[k]["avg"])
 
         new_entry.append(avg_stdv_this_branch)
 
@@ -366,24 +366,24 @@ def compute_deltas(
         ):
             avg_stdv_dev = "N/A"
         elif server_dictionary[k]["compared_entries"] > 1 and k[0:4] != "MAX_" and k[0:4] != "MIN_":
-            avg_stdv_dev = "{:.3f} ± {:.3f}".format(
+            avg_stdv_dev = "{:.2f} ± {:.2f}".format(
                 server_dictionary[k]["compared_avg"], server_dictionary[k]["compared_std"]
             )
         else:
-            avg_stdv_dev = "{:.3f}".format(server_dictionary[k]["compared_avg"])
+            avg_stdv_dev = "{:.2f}".format(server_dictionary[k]["compared_avg"])
 
         new_entry.append(avg_stdv_dev)
 
         delta_formatted = server_dictionary[k]["delta"]
         if server_dictionary[k]["delta"] != "-" and server_dictionary[k]["delta"] != "N/A":
-            delta_formatted = "{:.3f}".format(delta_formatted)
+            delta_formatted = "{:.2f}".format(delta_formatted)
             delta_pctg_formatted = server_dictionary[k]["delta_pctg"]
             if (
                 server_dictionary[k]["delta_pctg"] != "-"
                 and server_dictionary[k]["delta_pctg"] != "nan"
                 and server_dictionary[k]["delta_pctg"] != "N/A"
             ):
-                delta_pctg_formatted = "{:.3f}".format(delta_pctg_formatted * 100.0)
+                delta_pctg_formatted = "{:.2f}".format(delta_pctg_formatted * 100.0)
             new_entry.append("{} ({}%)".format(delta_formatted, delta_pctg_formatted))
         else:
             new_entry.append(delta_formatted)

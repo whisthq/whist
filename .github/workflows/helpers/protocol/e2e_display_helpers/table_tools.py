@@ -76,7 +76,7 @@ def generate_no_comparison_table(
                     [
                         k,
                         interesting_metrics[k]["entries"],
-                        "{:.3f} ± {:.3f}".format(
+                        "{:.2f} ± {:.2f}".format(
                             interesting_metrics[k]["avg"], interesting_metrics[k]["std"]
                         )
                         if interesting_metrics[k]["entries"] > 1
@@ -87,7 +87,7 @@ def generate_no_comparison_table(
                     for k in interesting_metrics
                 ],
                 margin=1,  # add a whitespace for both sides of each cell
-                max_precision=3,
+                max_precision=2,
             )
             writer.write_table()
             print("\n")
@@ -105,7 +105,7 @@ def generate_no_comparison_table(
                 [
                     k,
                     client_metrics[k]["entries"],
-                    "{:.3f} ± {:.3f}".format(client_metrics[k]["avg"], client_metrics[k]["std"])
+                    "{:.2f} ± {:.2f}".format(client_metrics[k]["avg"], client_metrics[k]["std"])
                     if client_metrics[k]["entries"] > 1
                     else client_metrics[k]["avg"],
                     client_metrics[k]["min"],
@@ -114,7 +114,7 @@ def generate_no_comparison_table(
                 for k in client_metrics
             ],
             margin=1,  # add a whitespace for both sides of each cell
-            max_precision=3,
+            max_precision=2,
         )
         writer.write_table()
         print("\n")
@@ -131,7 +131,7 @@ def generate_no_comparison_table(
                 [
                     k,
                     server_metrics[k]["entries"],
-                    "{:.3f} ± {:.3f}".format(server_metrics[k]["avg"], server_metrics[k]["std"])
+                    "{:.2f} ± {:.2f}".format(server_metrics[k]["avg"], server_metrics[k]["std"])
                     if server_metrics[k]["entries"] > 1
                     else server_metrics[k]["avg"],
                     server_metrics[k]["min"],
@@ -140,7 +140,7 @@ def generate_no_comparison_table(
                 for k in server_metrics
             ],
             margin=1,  # add a whitespace for both sides of each cell
-            max_precision=3,
+            max_precision=2,
         )
         writer.write_table()
 
@@ -229,7 +229,7 @@ def generate_comparison_table(
                 ],
                 value_matrix=[i for i in interesting_metrics],
                 margin=1,  # add a whitespace for both sides of each cell
-                max_precision=3,
+                max_precision=2,
             )
             writer.write_table()
             print("\n")
@@ -252,7 +252,7 @@ def generate_comparison_table(
             ],
             value_matrix=[i for i in client_table_entries],
             margin=1,  # add a whitespace for both sides of each cell
-            max_precision=3,
+            max_precision=2,
         )
         writer.write_table()
         print("\n")
@@ -275,7 +275,7 @@ def generate_comparison_table(
             ],
             value_matrix=[i for i in server_table_entries],
             margin=1,  # add a whitespace for both sides of each cell
-            max_precision=3,
+            max_precision=2,
         )
         writer.write_table()
 
