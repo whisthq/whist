@@ -84,6 +84,9 @@ static volatile bool pending_file_drag_update = false;
 static int file_drag_update_x = 0;
 static int file_drag_update_y = 0;
 
+// Overlay removals
+static volatile bool pending_overlay_removal = false;
+
 /*
 ============================
 Private Function Declarations
@@ -730,6 +733,8 @@ void sdl_end_drag_event() {
     */
 
     pending_file_drag_update = false;
+    // Render the next frame to remove the file drag icon
+    pending_overlay_removal = true;
 }
 
 /*
@@ -747,9 +752,9 @@ static void sdl_present_pending_framebuffer(void) {
         pending_render = true;
     }
 
-    // If there's no pending render, just do nothing,
+    // If there's no pending render or overlay visualizations, just do nothing,
     // Don't consume and discard any pending nv12 or loading screen.
-    if (!pending_render) {
+    if (!pending_render && !pending_file_drag_update && !pending_overlay_removal) {
         whist_unlock_mutex(renderer_mutex);
         return;
     }
@@ -761,8 +766,8 @@ static void sdl_present_pending_framebuffer(void) {
     WhistTimer statistics_timer;
     start_timer(&statistics_timer);
 
-    // Ensure that a video frame is there as a background for insufficient bandwidth error message
-    if (insufficient_bandwidth) {
+    // If any overlays need to be updated make sure a background is rendered
+    if (insufficient_bandwidth || pending_file_drag_update || pending_overlay_removal) {
         pending_nv12data = true;
     }
 
@@ -798,6 +803,7 @@ static void sdl_present_pending_framebuffer(void) {
 
     whist_lock_mutex(renderer_mutex);
     pending_render = false;
+    pending_overlay_removal = false;
     whist_unlock_mutex(renderer_mutex);
 }
 
@@ -1068,7 +1074,7 @@ static LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPAR
 }
 #endif
 
-#define DRAG_ICON_SIZE 75
+#define DRAG_ICON_SIZE 50
 static void sdl_render_file_drag_icon(int x, int y) {
     SDL_Surface* drop_icon_surface = sdl_surface_from_png_file("images/file_drag_icon.png");
     SDL_Texture* drop_icon_texture = SDL_CreateTextureFromSurface(sdl_renderer, drop_icon_surface);
