@@ -577,6 +577,8 @@ def shutdown_and_wait_server_exit(pexpect_process, exit_confirm_exp, timeout_val
 
     """
 
+    pexpect_process.sendline("sleep 1")
+    pexpect_process.expect(":/#")
     pexpect_process.sendline("pkill chrome")
     pexpect_process.sendline("tail -f /var/log/whist/protocol-out.log")
 
