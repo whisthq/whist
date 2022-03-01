@@ -107,11 +107,10 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 		return utils.MakeError("failed to query database for starting instances. Err: %v", err)
 	}
 
-	// Expected capacity represents active instances with space to run mandelboxes and
-	// starting instances
+	// The sum of active instances with space to run mandelboxes and starting instances
 	expectedInstances := helpers.GetExpectedInstances(latestImageID, allActive, allStarting)
 
-	// We consider the expected capacity here (active instances + starting instances)
+	// We consider the expected instances here (active instances + starting instances)
 	// so that we don't scale up unnecessary instances.
 	if expectedInstances < DEFAULT_INSTANCE_BUFFER {
 
@@ -133,7 +132,7 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 }
 
 // ScaleDownIfNecessary is a scaling action which runs every 10 minutes and scales down free and
-// lingering innstances, respecting the buffer defined for each region. Free instances will be
+// lingering instances, respecting the buffer defined for each region. Free instances will be
 // marked as draining, and lingering instances will be terminated and removed from the database.
 func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Context, event ScalingEvent) error {
 	logger.Infof("Starting scale down action for event: %v", event)
@@ -171,7 +170,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 		return utils.MakeError("failed to query database for active instances. Err: %v", err)
 	}
 
-	// Real capacity represents active instances with space to run mandelboxes
+	// Active instances with space to run mandelboxes
 	availableInstances := helpers.GetAvailableInstances(latestImageID, allActive)
 
 	// Create a list of instances that can be scaled down from the active instances list.
