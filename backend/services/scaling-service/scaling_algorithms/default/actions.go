@@ -6,6 +6,7 @@ import (
 
 	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/metadata"
+	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/helpers"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -145,7 +146,6 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 
 	var (
 		freeInstances, lingeringInstances subscriptions.WhistInstances
-		currentActive, currentStarting    int
 		lingeringIDs                      []string
 		err                               error
 	)
