@@ -4,13 +4,13 @@
     <style>
       .text-box {
          padding: 50px;
+         padding-top: 0px;
          border-radius: 5px;
          color: #111111;
          margin: auto;
          max-width: 550px;
-         background: white;
          text-align: left;
-         font-family: serif;
+         font-family: Arial;
       }
 
       .section-header {
@@ -27,7 +27,7 @@
         letter-spacing: 1.7px; 
         font-size: 24px;
         color: black;
-        font-family: serif;
+        font-family: Arial;
       }
 
       .text-md {
@@ -51,32 +51,53 @@
         font-family: Arial;
       }
 
+      h1 {
+        font-size: 2.5em;
+      }
+
     </style>
   </head>
-  <body style="overflow-x:hidden;">
-    <div style="width: 100%; height: 100%; padding: 40px 20px; text-align: center;">
-        <img 
-            src = "https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png" 
-            alt="" 
-            width="85" 
-            height="85" 
-            title="Logo"
-            style="margin: auto; display: block;"
-        />
+  <body style="overflow-x:hidden">
+    <div style="width: 100%; height: 100%; padding: 40px 20px; text-align: center; background: #fafafa; border-radius: 10px">
+    <img 
+        src = "https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png" 
+        alt="" 
+        width="150" 
+        height="150" 
+        title="Logo"
+        style="margin: auto; display: block;"
+    />
     <div class="text-box">
-        <h1 style="text-align: center;">Hi, and welcome to Whist!</h1>
+        <h1 style="text-align: center;">Welcome to Whist!</h1>
         <p class="text-md">
-            By signing up, you’ve taken your first step towards a faster, lighter, and more private browser. 
-          	We hope you’re ready to supercharge your browsing experience.
+          Hey {{ user.name }}! We're super excited to have you on board.
         </p>
-	<p class="text-md">
-          We're excited to hear your feedback and see what you'll accomplish with Whist. 
-          If you'd like to chat with us, <a href="https://discord.gg/HjPpDGvEeA">join our Discord</a> or tweet us <a href="https://twitter.com/whisthq">@whisthq</a>. 
-          You can also reach us at <a href="mailto:support@whist.com">support@whist.com</a> to report any issue you encounter or request new features.
+        <h3>🥳&nbsp;&nbsp;You&apos;re part of the Whist family</h3>
+	      <p class="text-md">
+          For the latest product updates, please follow us on Twitter <a style="color: blue" href="https://twitter.com/whisthq">@whisthq</a>. To chat with other Whist users, please
+          <a href="https://discord.gg/HjPpDGvEeA">join our Discord</a>. Finally, if you encounter any bugs while using Whist and need immediate support, live chat support is available
+          in the <kbd style="background: #dddddd; border-radius: 4px; padding: 4px">Cmd</kbd> <kbd style="background: #dddddd; border-radius: 4px; padding: 4px">J</kbd> menu.
+      	</p>
+        <h3>💸&nbsp;&nbsp;Whist is free to use for two weeks</h3>
+	      <p class="text-md">
+          To help you decide if Whist is right for you, Whist is free for the next two weeks. You&apos;ll receive a payment reminder email a few days before your trial expires. You can also subscribe from the <kbd style="background: #dddddd; border-radius: 4px; padding: 4px">Cmd</kbd> <kbd style="background: #dddddd; border-radius: 4px; padding: 4px">J</kbd> menu. If you forget to cancel, please contact
+          <span style="color: blue">support@whist.com</span> and we will refund you fully.
+      	</p>
+          <p class="text-md">
+           After your free trial, a subscription is $9/mo. The reason we to charge is for our server costs — every time you use Whist, 
+          a dedicated server with GPUs powers your browser.
+        </p>
+        <h3>👨🏽‍💻&nbsp;&nbsp;We&apos;re hiring!</h3>
+	      <p class="text-md">
+          If building a next-generation browser sounds exciting to you, please check out our <a style="color: blue" href="https://whisthq.notion.site/Whist-Job-Board-a39b64712f094c7785f588053fc283a9" target="_blank">job board</a>! If you refer a friend and we hire them, we&apos;ll give you $5K.
+      	</p>
+	      <p class="text-md">
+          That&apos;s all for now. Enjoy Whist :)
       	</p>
       	<p class="text-md">
-          Cheers!
+          Warmly,<br/>The Whist Team
         </p>
+        
         <div class="text-xs" style="margin-top: 10px;">
             You&lsquo;re receiving this email because you recently created a new Whist account. 
             If this wasn&lsquo;t you, please ignore this email.        
