@@ -70,18 +70,20 @@ static void unsafe_print_statistics(void) {
     StatisticInfo *statistic_info = statistic_context.statistic_info;
     // Flush all stored statistics
     for (uint32_t i = 0; i < statistic_context.num_metrics; i++) {
-        float avg;
+        unsigned current_count;
         if (statistic_info[i].average_over_time) {
-            avg = all_statistics[i].sum / statistic_context.interval;
+            current_count = statistic_context.interval;
         } else {
             if (all_statistics[i].count == 0) continue;
-            avg = all_statistics[i].sum / all_statistics[i].count;
+            current_count = all_statistics[i].count;
         }
-        LOG_METRIC("\"%s\" : %.2f", statistic_info[i].key, avg);
+
+        LOG_METRIC("\"%s\" : %u,%.3f", statistic_info[i].key, current_count, all_statistics[i].sum);
+
         if (statistic_info[i].is_max_needed)
-            LOG_METRIC("\"MAX_%s\" : %.2f", statistic_info[i].key, all_statistics[i].max);
+            LOG_METRIC("\"MAX_%s\" : %.3f", statistic_info[i].key, all_statistics[i].max);
         if (statistic_info[i].is_min_needed)
-            LOG_METRIC("\"MIN_%s\" : %.2f", statistic_info[i].key, all_statistics[i].min);
+            LOG_METRIC("\"MIN_%s\" : %.3f", statistic_info[i].key, all_statistics[i].min);
 
         all_statistics[i].sum = 0;
         all_statistics[i].count = 0;
@@ -141,13 +143,15 @@ void log_double_statistic(uint32_t index, double val) {
         all_statistics[index].max = val;
     }
 
-    all_statistics[index].sum += val;
     all_statistics[index].count++;
+
     if (val > all_statistics[index].max) {
         all_statistics[index].max = val;
     } else if (val < all_statistics[index].min) {
         all_statistics[index].min = val;
     }
+
+    all_statistics[index].sum += val;
 
     if (get_timer(&print_statistic_clock) > statistic_context.interval) {
         unsafe_print_statistics();

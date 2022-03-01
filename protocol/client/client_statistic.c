@@ -51,5 +51,5 @@ void init_client_statistics(void) {
     client_statistic_info[NOTIFICATIONS_RECEIVED] =
         (StatisticInfo){"NOTIFICATIONS_RECEIVED", false, false, true};
     client_statistic_info[CLIENT_CPU_USAGE] =
-        (StatisticInfo){"CLIENT_CPU_USAGE", false, false, true};
+        (StatisticInfo){"CLIENT_CPU_USAGE", false, false, false};
 }
