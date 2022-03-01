@@ -48,20 +48,3 @@ func TestCreateEventChans(t *testing.T) {
 		t.Errorf("Got the wrong event from the scheduled event chan. Got %v, want %v", gotInstanceEvent, instanceEvent)
 	}
 }
-
-func TestCreateBuffer(t *testing.T) {
-	testAlgo := DefaultScalingAlgorithm{}
-
-	// Check that the buffer is in its zero value
-	ok := reflect.DeepEqual(testAlgo.InstanceBuffer, 0)
-	if !ok {
-		t.Errorf("Instance buffer is not zero value. Got %v, want %v", testAlgo.InstanceBuffer, 0)
-	}
-
-	testAlgo.CreateBuffer()
-	ok = reflect.DeepEqual(testAlgo.InstanceBuffer, DEFAULT_INSTANCE_BUFFER)
-	if !ok {
-		t.Errorf("Instance buffer was not set correctly. Got %v, want %v", testAlgo.InstanceBuffer, DEFAULT_INSTANCE_BUFFER)
-	}
-
-}

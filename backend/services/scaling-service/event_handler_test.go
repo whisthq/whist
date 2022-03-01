@@ -143,7 +143,9 @@ func TestStartSchedulerEvents(t *testing.T) {
 	// the scheduled event, timeout otherwise.
 	select {
 	case event := <-scheduledEvents:
+		event.ID = utils.PlaceholderTestUUID().String()
 		testEvent := algos.ScalingEvent{
+			ID:   utils.PlaceholderTestUUID().String(),
 			Type: "SCHEDULED_SCALE_DOWN_EVENT",
 		}
 		ok := reflect.DeepEqual(event, testEvent)
@@ -182,7 +184,9 @@ func TestStartDeploy(t *testing.T) {
 	// Verify that event has contents of file
 	select {
 	case event := <-scheduledEvents:
+		event.ID = utils.PlaceholderTestUUID().String()
 		testEvent := algos.ScalingEvent{
+			ID:   utils.PlaceholderTestUUID().String(),
 			Data: imageRegionMap,
 			Type: "SCHEDULED_IMAGE_UPGRADE_EVENT",
 		}
