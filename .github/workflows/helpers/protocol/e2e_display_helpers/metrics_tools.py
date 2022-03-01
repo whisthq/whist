@@ -134,7 +134,6 @@ def extract_metrics(client_log_file, server_log_file):
                 "avg": client_metrics[metric_name]["max_val"],
             }
         else:
-            assert client_metrics[metric_name]["sum_of_squares"] >= 0.0
             client_metrics2[metric_name] = {
                 "entries": client_metrics[metric_name]["entries"],
                 "avg": client_metrics[metric_name]["sum"] / client_metrics[metric_name]["entries"],
