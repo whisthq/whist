@@ -6,7 +6,7 @@
 
 import { app } from "electron"
 import { fromEvent, zip, merge, of } from "rxjs"
-import { filter, switchMap, take, map, startWith } from "rxjs/operators"
+import { filter, switchMap, take, mapTo, startWith } from "rxjs/operators"
 import fs from "fs"
 import path from "path"
 import util from "util"
@@ -40,11 +40,7 @@ export const shouldStoreLogs = zip(
       switchMap(() => fromEvent(app, "activate").pipe(take(1)))
     )
   )
-).pipe(
-  map(() => app.isPackaged),
-  filter((shouldLog) => shouldLog),
-  startWith(false)
-)
+).pipe(mapTo(true), startWith(false))
 
 // Initialize protocol log rotation
 logRotate(
@@ -95,12 +91,9 @@ const formatLogs = (title: string, data: object, level: LogLevel) => {
   return `${util.format(template)} \n`
 }
 
-const amplitudeLog = (
-  title: string,
-  data: object,
-  userEmail: string,
-  msElapsed?: number
-) => {
+export const amplitudeLog = (title: string, data?: object) => {
+  const userEmail = persistGet(CACHED_USER_EMAIL) ?? ""
+
   if (userEmail !== "")
     amplitude
       .logEvent({
@@ -108,11 +101,8 @@ const amplitudeLog = (
           (config.appEnvironment as string) ?? "LOCAL"
         }] ${title}`,
         session_id: sessionID,
-        user_id: userEmail,
-        event_properties: {
-          ...data,
-          msElapsed: msElapsed !== undefined ? msElapsed : 0,
-        },
+        user_id: userEmail as string,
+        event_properties: data ?? {},
       })
       .catch((err) => console.error(err))
 }
@@ -172,14 +162,14 @@ export const logging = (
   shouldStoreLogs.subscribe((shouldLog: boolean) => {
     if (shouldLog) {
       logFile.write(logs)
-      amplitudeLog(title, dataClone, userEmail as string, msElapsed)
+      if (app.isPackaged) logToLogz(logs, "electron")
     }
   })
 
   if (!app.isPackaged) console.log(logs)
 }
 
-export const protocolToLogz = (line: string) => {
+export const logToLogz = (line: string, subComponent: string) => {
   // This function will push to logz.io on each log line received from the protocol
 
   // If a line starts with {, then we check if it is in JSON format. If yes, we post
@@ -190,6 +180,7 @@ export const protocolToLogz = (line: string) => {
       output.level = "METRIC"
       output.session_id = sessionID
       output.component = "clientapp"
+      output.sub_component = subComponent
       logzio.log(output)
       return
     } catch (err) {
@@ -204,5 +195,6 @@ export const protocolToLogz = (line: string) => {
     message: line,
     session_id: sessionID,
     component: "clientapp",
+    sub_component: subComponent,
   })
 }

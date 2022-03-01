@@ -29,7 +29,9 @@ import {
 } from "@app/main/utils/protocol"
 import { WhistTrigger } from "@app/constants/triggers"
 import { withAppActivated, emitOnSignal } from "@app/main/utils/observables"
-import { protocolToLogz } from "@app/main/utils/logging"
+import { amplitudeLog, logToLogz } from "@app/main/utils/logging"
+import { persistGet } from "../utils/persist"
+import { AWS_REGIONS_SORTED_BY_PROXIMITY } from "@app/constants/store"
 
 const threeProtocolFailures = fromTrigger(WhistTrigger.protocolClosed).pipe(
   filter((args: { crashed: boolean }) => args.crashed),
@@ -62,6 +64,13 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess)
     }))
   )
   .subscribe((args: { info: any; protocol: ChildProcess; import: boolean }) => {
+    amplitudeLog("Creating window PROTOCOL", {
+      ...args.info,
+      region: JSON.stringify(
+        ((persistGet(AWS_REGIONS_SORTED_BY_PROXIMITY) as any[]) ?? [])[0]
+      ),
+    })
+
     if (args.import) destroyProtocol(args.protocol)
 
     args.protocol === undefined || args.import
@@ -89,13 +98,13 @@ fromTrigger(WhistTrigger.protocolStdoutData).subscribe((data: string) => {
   // Leave the last line in the buffer to be appended to later
   stdoutBuffer.buffer = lines.length === 0 ? "" : (lines.pop() as string)
   // Print the rest of the lines
-  lines.forEach((line: string) => protocolToLogz(line))
+  lines.forEach((line: string) => logToLogz(line, "protocol"))
 })
 
 fromTrigger(WhistTrigger.protocolStdoutEnd).subscribe(() => {
   // Send the last line, so long as it's not empty
   if (stdoutBuffer.buffer !== "") {
-    protocolToLogz(stdoutBuffer.buffer)
+    logToLogz(stdoutBuffer.buffer, "protocol")
     stdoutBuffer.buffer = ""
   }
 })
