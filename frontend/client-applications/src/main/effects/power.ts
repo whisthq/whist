@@ -99,6 +99,5 @@ waitForSignal(
 
 fromTrigger(WhistTrigger.userRequestedQuit).subscribe(() => {
   amplitudeLog("Whist force quit")
-
   app.exit()
 })

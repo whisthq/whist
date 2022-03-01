@@ -30,6 +30,8 @@ import {
 import { WhistTrigger } from "@app/constants/triggers"
 import { withAppActivated, emitOnSignal } from "@app/main/utils/observables"
 import { amplitudeLog, logToLogz } from "@app/main/utils/logging"
+import { persistGet } from "../utils/persist"
+import { AWS_REGIONS_SORTED_BY_PROXIMITY } from "@app/constants/store"
 
 const threeProtocolFailures = fromTrigger(WhistTrigger.protocolClosed).pipe(
   filter((args: { crashed: boolean }) => args.crashed),
@@ -62,7 +64,12 @@ fromTrigger(WhistTrigger.mandelboxFlowSuccess)
     }))
   )
   .subscribe((args: { info: any; protocol: ChildProcess; import: boolean }) => {
-    amplitudeLog("Creating window PROTOCOL")
+    amplitudeLog("Creating window PROTOCOL", {
+      ...args.info,
+      region: JSON.stringify(
+        ((persistGet(AWS_REGIONS_SORTED_BY_PROXIMITY) as any[]) ?? [])[0]
+      ),
+    })
 
     if (args.import) destroyProtocol(args.protocol)
 

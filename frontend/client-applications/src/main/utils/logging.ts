@@ -91,7 +91,7 @@ const formatLogs = (title: string, data: object, level: LogLevel) => {
   return `${util.format(template)} \n`
 }
 
-export const amplitudeLog = (title: string) => {
+export const amplitudeLog = (title: string, data?: object) => {
   const userEmail = persistGet(CACHED_USER_EMAIL) ?? ""
 
   if (userEmail !== "")
@@ -102,6 +102,7 @@ export const amplitudeLog = (title: string) => {
         }] ${title}`,
         session_id: sessionID,
         user_id: userEmail as string,
+        event_properties: data ?? {},
       })
       .catch((err) => console.error(err))
 }
