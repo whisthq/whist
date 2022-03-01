@@ -253,16 +253,13 @@ void join_outstanding_threads(bool join_all) {
             destruction) then not necessary.
     */
 
-    LOG_INFO("Joining outstanding threads.");
+    LOG_INFO("Joining outstanding clipboard threads");
 
     linked_list_for_each(&clipboard_thread_list, ClipboardThread, thr) {
         if (join_all || atomic_load(&thr->finished)) {
-            LOG_INFO("Joining %p.", thr->thread);
             whist_wait_thread(thr->thread, NULL);
             linked_list_remove(&clipboard_thread_list, thr);
             free(thr);
-        } else {
-            LOG_INFO("Not joining %p.", thr->thread);
         }
     }
 }
