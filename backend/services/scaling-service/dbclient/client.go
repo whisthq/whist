@@ -11,15 +11,15 @@ import (
 // the `whist.instances` and `whist.images` table. By abstracting the methods
 // we can easily test and mock the scaling algorithm actions.
 type WhistDBClient interface {
-	QueryInstance(context.Context, *subscriptions.GraphQLClient, string) (subscriptions.WhistInstances, error)
-	QueryInstancesByStatusOnRegion(context.Context, *subscriptions.GraphQLClient, string) (subscriptions.WhistInstances, error)
-	QueryInstancesByImage(context.Context, *subscriptions.GraphQLClient, string) (subscriptions.WhistInstances, error)
-	InsertInstances(context.Context, *subscriptions.GraphQLClient, []subscriptions.Instance) (int, error)
-	UpdateInstance(context.Context, *subscriptions.GraphQLClient, map[string]interface{}) (int, error)
-	DeleteInstance(context.Context, *subscriptions.GraphQLClient, string) (int, error)
-	QueryImage(context.Context, *subscriptions.GraphQLClient, string, string) (subscriptions.WhistImages, error)
-	InsertImages(context.Context, *subscriptions.GraphQLClient, []subscriptions.Image) (int, error)
-	UpdateImage(context.Context, *subscriptions.GraphQLClient, subscriptions.Image) (int, error)
+	QueryInstance(context.Context, subscriptions.WhistGraphQLClient, string) (subscriptions.WhistInstances, error)
+	QueryInstancesByStatusOnRegion(context.Context, subscriptions.WhistGraphQLClient, string, string) (subscriptions.WhistInstances, error)
+	QueryInstancesByImage(context.Context, subscriptions.WhistGraphQLClient, string) (subscriptions.WhistInstances, error)
+	InsertInstances(context.Context, subscriptions.WhistGraphQLClient, []subscriptions.Instance) (int, error)
+	UpdateInstance(context.Context, subscriptions.WhistGraphQLClient, map[string]interface{}) (int, error)
+	DeleteInstance(context.Context, subscriptions.WhistGraphQLClient, string) (int, error)
+	QueryImage(context.Context, subscriptions.WhistGraphQLClient, string, string) (subscriptions.WhistImages, error)
+	InsertImages(context.Context, subscriptions.WhistGraphQLClient, []subscriptions.Image) (int, error)
+	UpdateImage(context.Context, subscriptions.WhistGraphQLClient, subscriptions.Image) (int, error)
 }
 
 // DBClient implements `WhistDBClient`, it is the default database

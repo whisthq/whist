@@ -8,7 +8,7 @@ import (
 )
 
 // QueryImage queries the database for an instance image that matches the given id.
-func (client *DBClient) QueryImage(scalingCtx context.Context, graphQLClient *subscriptions.GraphQLClient, provider string, region string) (subscriptions.WhistImages, error) {
+func (client *DBClient) QueryImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, provider string, region string) (subscriptions.WhistImages, error) {
 	latestImageQuery := subscriptions.QueryLatestImage
 	queryParams := map[string]interface{}{
 		"provider": graphql.String(provider),
@@ -20,7 +20,7 @@ func (client *DBClient) QueryImage(scalingCtx context.Context, graphQLClient *su
 }
 
 // InsertInstances adds the received instances to the database.
-func (client *DBClient) InsertImages(scalingCtx context.Context, graphQLClient *subscriptions.GraphQLClient, insertParams []subscriptions.Image) (int, error) {
+func (client *DBClient) InsertImages(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, insertParams []subscriptions.Image) (int, error) {
 	insertMutation := subscriptions.InsertImages
 
 	var imagesForDb []whist_images_insert_input
@@ -45,7 +45,7 @@ func (client *DBClient) InsertImages(scalingCtx context.Context, graphQLClient *
 }
 
 // UpdateImage updates the received fields on the database.
-func (client *DBClient) UpdateImage(scalingCtx context.Context, graphQLClient *subscriptions.GraphQLClient, image subscriptions.Image) (int, error) {
+func (client *DBClient) UpdateImage(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, image subscriptions.Image) (int, error) {
 	updateMutation := subscriptions.UpdateImage
 
 	mutationParams := map[string]interface{}{

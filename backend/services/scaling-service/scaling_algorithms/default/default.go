@@ -17,8 +17,8 @@ type ScalingAlgorithm interface {
 	ProcessEvents(context.Context, *sync.WaitGroup)
 	CreateEventChans()
 	CreateBuffer()
-	CreateGraphQLClient(*subscriptions.GraphQLClient)
-	CreateDBClient(*dbclient.DBClient)
+	CreateGraphQLClient(subscriptions.WhistGraphQLClient)
+	CreateDBClient(dbclient.WhistDBClient)
 }
 
 // ScalingEvent is an event that contains all the relevant information
@@ -34,8 +34,8 @@ type ScalingEvent struct {
 // by all of the different, region-based scaling algorithms.
 type DefaultScalingAlgorithm struct {
 	Host               hosts.HostHandler
-	GraphQLClient      *subscriptions.GraphQLClient
-	DBClient           *dbclient.DBClient
+	GraphQLClient      subscriptions.WhistGraphQLClient
+	DBClient           dbclient.WhistDBClient
 	InstanceBuffer     *int32
 	Region             string
 	InstanceEventChan  chan ScalingEvent
@@ -65,14 +65,14 @@ func (s *DefaultScalingAlgorithm) CreateBuffer() {
 }
 
 // CreateGraphQLClient sets the graphqlClient to be used by the DBClient for queries and mutations.
-func (s *DefaultScalingAlgorithm) CreateGraphQLClient(client *subscriptions.GraphQLClient) {
+func (s *DefaultScalingAlgorithm) CreateGraphQLClient(client subscriptions.WhistGraphQLClient) {
 	if s.GraphQLClient == nil {
 		s.GraphQLClient = client
 	}
 }
 
 // CreateDBClient sets the DBClient to be used when interacting with the database.
-func (s *DefaultScalingAlgorithm) CreateDBClient(dbClient *dbclient.DBClient) {
+func (s *DefaultScalingAlgorithm) CreateDBClient(dbClient dbclient.WhistDBClient) {
 	if s.DBClient == nil {
 		s.DBClient = dbClient
 	}
