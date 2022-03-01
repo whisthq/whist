@@ -479,6 +479,9 @@ static int32_t multithreaded_send_video_packets(void* opaque) {
             }
         }
     }
+
+    // Post this to unblock `multithreaded_send_video()` semaphore waits
+    whist_post_semaphore(consumer);
     return 0;
 }
 
@@ -832,7 +835,8 @@ int32_t multithreaded_send_video(void* opaque) {
 #if SAVE_VIDEO_OUTPUT
     fclose(fp);
 #endif
-    whist_post_semaphore(producer);  // Post this to unblock the video_send_packets thread
+    // Post this to unblock `multithreaded_send_video_packets()` semaphore waits
+    whist_post_semaphore(producer);
     whist_wait_thread(video_send_packets, NULL);
     whist_destroy_semaphore(consumer);
     whist_destroy_semaphore(producer);
