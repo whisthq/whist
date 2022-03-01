@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-The file, given a session id parameter, will obtain all the logs present in 
+The file, given a session id parameter, will obtain all the logs present in
 logz.io for that session id.
 
 This file uses the Logz.io SCROLL API, whose documentation is below:
@@ -10,9 +10,9 @@ This file uses the Logz.io SCROLL API, whose documentation is below:
 Basically, using this API, we can send an initial POST request with a query
 for the logs we desire.
 
-In the initial request, we need to provide a header and a body. 
+In the initial request, we need to provide a header and a body.
 
-The header will be our "X_API_TOKEN", which is the `logz-to-text.py-token` API token, and the 
+The header will be our "X_API_TOKEN", which is the `logz-to-text.py-token` API token, and the
 "Content-Type", which will always be "application/json".
 
 The body will contatin the meat of the request. There are 3 fields we need
@@ -21,7 +21,7 @@ to fill in the body:
 1. query: This describes what kind of logs you want to recieve. The docs
 on how to make this are terrible, so I recommend that you do the search manually
 on logz.io and then navigate to the "Inpect" tab. This will show you the resulting
-query that the website made. Now, copy that over. More detail provided in the 
+query that the website made. Now, copy that over. More detail provided in the
 comments inside the "init_scrolling" function in this file.
 
 2. _sources: What fields from the logs we want to recieve. Here, we only
@@ -30,17 +30,17 @@ the timestamp (timestamp logz.io provides to the logs when they recieve them),
 and component (which is either clientapp or mandlebox, which indicates that
 this is a log for the client or server, respectively).
 
-3. size: How many logs per pagination to recieve. 
+3. size: How many logs per pagination to recieve.
 
 In the initial reply, we will recieve 2 bigs pieces of info:
 
-1. "hits": These are the total number of logs we will recieve. This will be 
+1. "hits": These are the total number of logs we will recieve. This will be
 used to determine how many times we need to paginate
 2. "scroll_id": This is required in following POST requests to get the next
 page of results (where the number of logs in each POST is LOGS_PER_PAGE long).
 
 Then, we will paginate with that same SCROLL_ID until the logs recieved is
-equal to the number of logs Logz.io has. Note, we do not need to resend the query 
+equal to the number of logs Logz.io has. Note, we do not need to resend the query
 each time. Only the header and the scroll_id.
 
 """
@@ -209,7 +209,7 @@ def write_logs_to_files(parsed_logs, session_id, account):
 
     # Get download directory, relative to the protocol directory
     # If not filled in, then it will default to the /protocol folder
-    download_folder = os.getenv("LOGS_DOWNLOAD_FOLDER")
+    download_folder = os.getenv("LOGS_DOWNLOAD_FOLDER", os.getcwd())
 
     client_file_path = (
         os.path.join(download_folder, client_logs_file_name)
