@@ -109,16 +109,16 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 
 	// Expected capacity represents active instances with space to run mandelboxes and
 	// starting instances
-	expectedCapacity := helpers.ComputeExpectedCapacity(latestImageID, allActive, allStarting)
+	expectedInstances := helpers.GetExpectedInstances(latestImageID, allActive, allStarting)
 
 	// We consider the expected capacity here (active instances + starting instances)
 	// so that we don't scale up unnecessary instances.
-	if expectedCapacity < DEFAULT_INSTANCE_BUFFER {
+	if expectedInstances < DEFAULT_INSTANCE_BUFFER {
 
-		logger.Infof("Current number of instances %v is less than desired %v. Scaling up to match with image %v.", expectedCapacity, DEFAULT_INSTANCE_BUFFER, latestImageID)
+		logger.Infof("Current number of instances %v is less than desired %v. Scaling up to match with image %v.", expectedInstances, DEFAULT_INSTANCE_BUFFER, latestImageID)
 
 		// Start scale up action for desired number of instances
-		wantedInstances := DEFAULT_INSTANCE_BUFFER - expectedCapacity
+		wantedInstances := DEFAULT_INSTANCE_BUFFER - expectedInstances
 		err = s.ScaleUpIfNecessary(wantedInstances, scalingCtx, event, latestImageID)
 		if err != nil {
 			// err is already wrapped here
@@ -172,7 +172,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	}
 
 	// Real capacity represents active instances with space to run mandelboxes
-	realCapacity := helpers.ComputeRealCapacity(latestImageID, allActive)
+	availableInstances := helpers.GetAvailableInstances(latestImageID, allActive)
 
 	// Create a list of instances that can be scaled down from the active instances list.
 	// For this, we have to consider the following conditions:
@@ -193,12 +193,12 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 
 		if instance.ImageID == graphql.String(latestImageID) {
 			// Current instances
-			if realCapacity > DEFAULT_INSTANCE_BUFFER {
+			if availableInstances > DEFAULT_INSTANCE_BUFFER {
 				// Only scale down if there are more instances
 				// than necessary.
-				logger.Infof("Scaling down instance %v because we have more capacity of %v than desired %v.", instance.ID, realCapacity, DEFAULT_INSTANCE_BUFFER)
+				logger.Infof("Scaling down instance %v because we have more capacity of %v than desired %v.", instance.ID, availableInstances, DEFAULT_INSTANCE_BUFFER)
 				freeInstances = append(freeInstances, instance)
-				realCapacity--
+				availableInstances--
 			}
 		} else {
 			// Old instances
