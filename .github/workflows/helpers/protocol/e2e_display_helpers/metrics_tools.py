@@ -16,7 +16,7 @@ def extract_metrics(client_log_file, server_log_file):
     Extract all the available server-side and client-side performance metrics for a
     given run and save the values two dictionaries. Each dictionary key corresponds
     to a metric, and each value is itself a dictionary, containing the number of
-    entries for that metric and the mean and std aggregates
+    entries for that metric and the mean (or max/min).
 
     Args:
         client_log_file (str): The path to the file (usually client.log) containing
@@ -39,15 +39,11 @@ def extract_metrics(client_log_file, server_log_file):
 
                 count = 0
                 normal_sum = 0.0
-                sum_of_squares = 0.0
-                sum_with_offset = 0.0
                 min_val = np.inf
                 max_val = -np.inf
 
                 if len(metric_values) == 1:
                     count = 1
-                    sum_of_squares = 0
-                    sum_with_offset = 0
                     if metric_name[0:4] == "MAX_":
                         max_val = float(metric_values[0])
                     elif metric_name[0:4] == "MIN_":
@@ -57,12 +53,9 @@ def extract_metrics(client_log_file, server_log_file):
                 else:
                     count = int(metric_values[0])
                     normal_sum = float(metric_values[1])
-                    sum_of_squares = float(metric_values[2])
-                    sum_with_offset = float(metric_values[3])
 
                 assert count >= 0
                 assert normal_sum >= 0
-                assert sum_of_squares >= 0
 
                 if metric_name not in client_metrics:
                     client_metrics[metric_name] = {
@@ -70,8 +63,6 @@ def extract_metrics(client_log_file, server_log_file):
                         "sum": 0,
                         "min_val": min_val,
                         "max_val": max_val,
-                        "sum_of_squares": 0,
-                        "sum_with_offset": 0,
                     }
 
                 client_metrics[metric_name]["entries"] += count
@@ -82,8 +73,6 @@ def extract_metrics(client_log_file, server_log_file):
                     client_metrics[metric_name]["max_val"], max_val
                 )
                 client_metrics[metric_name]["sum"] += normal_sum
-                client_metrics[metric_name]["sum_of_squares"] += sum_of_squares
-                client_metrics[metric_name]["sum_with_offset"] += sum_with_offset
 
     with open(server_log_file, "r") as f:
         for line in f.readlines():
@@ -95,15 +84,11 @@ def extract_metrics(client_log_file, server_log_file):
 
                 count = 0
                 normal_sum = 0.0
-                sum_of_squares = 0.0
-                sum_with_offset = 0.0
                 min_val = np.inf
                 max_val = -np.inf
 
                 if len(metric_values) == 1:
                     count = 1
-                    sum_of_squares = 0
-                    sum_with_offset = 0
                     if metric_name[0:4] == "MAX_":
                         max_val = float(metric_values[0])
                     elif metric_name[0:4] == "MIN_":
@@ -113,12 +98,9 @@ def extract_metrics(client_log_file, server_log_file):
                 else:
                     count = int(metric_values[0])
                     normal_sum = float(metric_values[1])
-                    sum_of_squares = float(metric_values[2])
-                    sum_with_offset = float(metric_values[3])
 
                 assert count >= 0
                 assert normal_sum >= 0
-                assert sum_of_squares >= 0
 
                 if metric_name not in server_metrics:
                     server_metrics[metric_name] = {
@@ -126,8 +108,6 @@ def extract_metrics(client_log_file, server_log_file):
                         "min_val": min_val,
                         "max_val": max_val,
                         "sum": 0,
-                        "sum_of_squares": 0,
-                        "sum_with_offset": 0,
                     }
 
                 server_metrics[metric_name]["entries"] += count
@@ -138,8 +118,6 @@ def extract_metrics(client_log_file, server_log_file):
                     server_metrics[metric_name]["max_val"], max_val
                 )
                 server_metrics[metric_name]["sum"] += normal_sum
-                server_metrics[metric_name]["sum_of_squares"] += sum_of_squares
-                server_metrics[metric_name]["sum_with_offset"] += sum_with_offset
 
     client_metrics2 = {}
     server_metrics2 = {}
@@ -149,29 +127,17 @@ def extract_metrics(client_log_file, server_log_file):
             client_metrics2[metric_name] = {
                 "entries": client_metrics[metric_name]["entries"],
                 "avg": client_metrics[metric_name]["min_val"],
-                "std": 0.0,
             }
         elif client_metrics[metric_name]["max_val"] > -np.inf:
             client_metrics2[metric_name] = {
                 "entries": client_metrics[metric_name]["entries"],
                 "avg": client_metrics[metric_name]["max_val"],
-                "std": 0.0,
             }
         else:
             assert client_metrics[metric_name]["sum_of_squares"] >= 0.0
-            variance = (
-                client_metrics[metric_name]["sum_of_squares"]
-                - (
-                    (client_metrics[metric_name]["sum_with_offset"] ** 2)
-                    / client_metrics[metric_name]["entries"]
-                )
-            ) / client_metrics[metric_name]["entries"]
-            variance = round(variance, 2)
-            standard_deviation = math.sqrt(variance)
             client_metrics2[metric_name] = {
                 "entries": client_metrics[metric_name]["entries"],
                 "avg": client_metrics[metric_name]["sum"] / client_metrics[metric_name]["entries"],
-                "std": standard_deviation,
             }
 
     for metric_name in server_metrics:
@@ -179,29 +145,16 @@ def extract_metrics(client_log_file, server_log_file):
             server_metrics2[metric_name] = {
                 "entries": server_metrics[metric_name]["entries"],
                 "avg": server_metrics[metric_name]["min_val"],
-                "std": 0.0,
             }
         elif server_metrics[metric_name]["max_val"] > -np.inf:
             server_metrics2[metric_name] = {
                 "entries": server_metrics[metric_name]["entries"],
                 "avg": server_metrics[metric_name]["max_val"],
-                "std": 0.0,
             }
         else:
-            # assert server_metrics[metric_name]["sum_of_squares"] >= 0.0
-            variance = (
-                server_metrics[metric_name]["sum_of_squares"]
-                - (
-                    (server_metrics[metric_name]["sum_with_offset"] ** 2)
-                    / server_metrics[metric_name]["entries"]
-                )
-            ) / server_metrics[metric_name]["entries"]
-            variance = round(variance, 2)
-            standard_deviation = math.sqrt(variance)
             server_metrics2[metric_name] = {
                 "entries": server_metrics[metric_name]["entries"],
                 "avg": server_metrics[metric_name]["sum"] / server_metrics[metric_name]["entries"],
-                "std": standard_deviation,
             }
 
     return client_metrics2, server_metrics2
@@ -240,10 +193,9 @@ def compute_deltas(
     for k in client_dictionary:
         if k in compared_client_dictionary:
             client_dictionary[k]["compared_entries"] = compared_client_dictionary[k]["entries"]
-            client_dictionary[k]["compared_avg"] = round(compared_client_dictionary[k]["avg"], 2)
-            client_dictionary[k]["compared_std"] = round(compared_client_dictionary[k]["std"], 2)
+            client_dictionary[k]["compared_avg"] = round(compared_client_dictionary[k]["avg"], 3)
             client_dictionary[k]["delta"] = round(
-                client_dictionary[k]["avg"] - client_dictionary[k]["compared_avg"], 2
+                client_dictionary[k]["avg"] - client_dictionary[k]["compared_avg"], 3
             )
             if client_dictionary[k]["delta"] == 0:
                 client_dictionary[k]["delta"] = "-"
@@ -252,54 +204,37 @@ def compute_deltas(
                 client_dictionary[k]["delta_pctg"] = "nan"
             else:
                 client_dictionary[k]["delta_pctg"] = round(
-                    (client_dictionary[k]["delta"] / client_dictionary[k]["compared_avg"]), 2
+                    (client_dictionary[k]["delta"] / client_dictionary[k]["compared_avg"]), 3
                 )
         else:
             client_dictionary[k]["compared_avg"] = "N/A"
-            client_dictionary[k]["compared_std"] = "N/A"
             client_dictionary[k]["delta"] = "N/A"
             client_dictionary[k]["delta_pctg"] = "N/A"
 
     # Create client table entries with the desired format
     client_table_entries = []
     for k in client_dictionary:
-        new_entry = [k, client_dictionary[k]["entries"]]
+        new_entry = [
+            k,
+            client_dictionary[k]["entries"],
+            "{:.3f}".format(client_dictionary[k]["avg"]),
+        ]
 
-        avg_stdv_this_branch = ""
-        if client_dictionary[k]["entries"] > 1 and k[0:4] != "MAX_" and k[0:4] != "MIN_":
-            avg_stdv_this_branch = "{:.2f} ± {:.2f}".format(
-                client_dictionary[k]["avg"], client_dictionary[k]["std"]
-            )
+        if client_dictionary[k]["compared_avg"] == "N/A":
+            new_entry.append("N/A")
         else:
-            avg_stdv_this_branch = "{:.2f}".format(client_dictionary[k]["avg"])
-
-        new_entry.append(avg_stdv_this_branch)
-
-        avg_stdv_dev = ""
-        if (
-            client_dictionary[k]["compared_avg"] == "N/A"
-            or client_dictionary[k]["compared_std"] == "N/A"
-        ):
-            avg_stdv_dev = "N/A"
-        elif client_dictionary[k]["compared_entries"] > 1 and k[0:4] != "MAX_" and k[0:4] != "MIN_":
-            avg_stdv_dev = "{:.2f} ± {:.2f}".format(
-                client_dictionary[k]["compared_avg"], client_dictionary[k]["compared_std"]
-            )
-        else:
-            avg_stdv_dev = "{:.2f}".format(client_dictionary[k]["compared_avg"])
-
-        new_entry.append(avg_stdv_dev)
+            new_entry.append("{:.3f}".format(client_dictionary[k]["compared_avg"]))
 
         delta_formatted = client_dictionary[k]["delta"]
         if client_dictionary[k]["delta"] != "-" and client_dictionary[k]["delta"] != "N/A":
-            delta_formatted = "{:.2f}".format(delta_formatted)
+            delta_formatted = "{:.3f}".format(delta_formatted)
             delta_pctg_formatted = client_dictionary[k]["delta_pctg"]
             if (
                 client_dictionary[k]["delta_pctg"] != "-"
                 and client_dictionary[k]["delta_pctg"] != "nan"
                 and client_dictionary[k]["delta_pctg"] != "N/A"
             ):
-                delta_pctg_formatted = "{:.2f}".format(delta_pctg_formatted * 100.0)
+                delta_pctg_formatted = "{:.3f}".format(delta_pctg_formatted * 100.0)
             new_entry.append("{} ({}%)".format(delta_formatted, delta_pctg_formatted))
         else:
             new_entry.append(delta_formatted)
@@ -324,10 +259,9 @@ def compute_deltas(
     for k in server_dictionary:
         if k in compared_server_dictionary:
             server_dictionary[k]["compared_entries"] = compared_server_dictionary[k]["entries"]
-            server_dictionary[k]["compared_avg"] = round(compared_server_dictionary[k]["avg"], 2)
-            server_dictionary[k]["compared_std"] = round(compared_server_dictionary[k]["std"], 2)
+            server_dictionary[k]["compared_avg"] = round(compared_server_dictionary[k]["avg"], 3)
             server_dictionary[k]["delta"] = round(
-                server_dictionary[k]["avg"] - server_dictionary[k]["compared_avg"], 2
+                server_dictionary[k]["avg"] - server_dictionary[k]["compared_avg"], 3
             )
             if server_dictionary[k]["delta"] == 0:
                 server_dictionary[k]["delta"] = "-"
@@ -336,54 +270,37 @@ def compute_deltas(
                 server_dictionary[k]["delta_pctg"] = "nan"
             else:
                 server_dictionary[k]["delta_pctg"] = round(
-                    (server_dictionary[k]["delta"] / server_dictionary[k]["compared_avg"]), 2
+                    (server_dictionary[k]["delta"] / server_dictionary[k]["compared_avg"]), 3
                 )
         else:
             server_dictionary[k]["compared_avg"] = "N/A"
-            server_dictionary[k]["compared_std"] = "N/A"
             server_dictionary[k]["delta"] = "N/A"
             server_dictionary[k]["delta_pctg"] = "N/A"
 
     # Create server table entries with the desired format
     server_table_entries = []
     for k in server_dictionary:
-        new_entry = [k, server_dictionary[k]["entries"]]
+        new_entry = [
+            k,
+            server_dictionary[k]["entries"],
+            "{:.3f}".format(server_dictionary[k]["avg"]),
+        ]
 
-        avg_stdv_this_branch = ""
-        if server_dictionary[k]["entries"] > 1 and k[0:4] != "MAX_" and k[0:4] != "MIN_":
-            avg_stdv_this_branch = "{:.2f} ± {:.2f}".format(
-                server_dictionary[k]["avg"], server_dictionary[k]["std"]
-            )
+        if server_dictionary[k]["compared_avg"] == "N/A":
+            new_entry.append("N/A")
         else:
-            avg_stdv_this_branch = "{:.2f}".format(server_dictionary[k]["avg"])
-
-        new_entry.append(avg_stdv_this_branch)
-
-        avg_stdv_dev = ""
-        if (
-            server_dictionary[k]["compared_avg"] == "N/A"
-            or server_dictionary[k]["compared_std"] == "N/A"
-        ):
-            avg_stdv_dev = "N/A"
-        elif server_dictionary[k]["compared_entries"] > 1 and k[0:4] != "MAX_" and k[0:4] != "MIN_":
-            avg_stdv_dev = "{:.2f} ± {:.2f}".format(
-                server_dictionary[k]["compared_avg"], server_dictionary[k]["compared_std"]
-            )
-        else:
-            avg_stdv_dev = "{:.2f}".format(server_dictionary[k]["compared_avg"])
-
-        new_entry.append(avg_stdv_dev)
+            new_entry.append("{:.3f}".format(server_dictionary[k]["compared_avg"]))
 
         delta_formatted = server_dictionary[k]["delta"]
         if server_dictionary[k]["delta"] != "-" and server_dictionary[k]["delta"] != "N/A":
-            delta_formatted = "{:.2f}".format(delta_formatted)
+            delta_formatted = "{:.3f}".format(delta_formatted)
             delta_pctg_formatted = server_dictionary[k]["delta_pctg"]
             if (
                 server_dictionary[k]["delta_pctg"] != "-"
                 and server_dictionary[k]["delta_pctg"] != "nan"
                 and server_dictionary[k]["delta_pctg"] != "N/A"
             ):
-                delta_pctg_formatted = "{:.2f}".format(delta_pctg_formatted * 100.0)
+                delta_pctg_formatted = "{:.3f}".format(delta_pctg_formatted * 100.0)
             new_entry.append("{} ({}%)".format(delta_formatted, delta_pctg_formatted))
         else:
             new_entry.append(delta_formatted)

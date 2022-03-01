@@ -71,23 +71,19 @@ def generate_no_comparison_table(
 
             writer = MarkdownTableWriter(
                 # table_name="Interesting metrics",
-                headers=["Metric", "Entries", "Average ± Standard Deviation", "Min", "Max"],
+                headers=["Metric", "Entries", "Average", "Min", "Max"],
                 value_matrix=[
                     [
                         k,
                         interesting_metrics[k]["entries"],
-                        "{:.2f} ± {:.2f}".format(
-                            interesting_metrics[k]["avg"], interesting_metrics[k]["std"]
-                        )
-                        if interesting_metrics[k]["entries"] > 1
-                        else interesting_metrics[k]["avg"],
+                        "{:.3f}".format(interesting_metrics[k]["avg"]),
                         interesting_metrics[k]["min"],
                         interesting_metrics[k]["max"],
                     ]
                     for k in interesting_metrics
                 ],
                 margin=1,  # add a whitespace for both sides of each cell
-                max_precision=2,
+                max_precision=3,
             )
             writer.write_table()
             print("\n")
@@ -100,21 +96,19 @@ def generate_no_comparison_table(
 
         writer = MarkdownTableWriter(
             # table_name="Client metrics",
-            headers=["Metric", "Entries", "Average ± Standard Deviation", "Min", "Max"],
+            headers=["Metric", "Entries", "Average", "Min", "Max"],
             value_matrix=[
                 [
                     k,
                     client_metrics[k]["entries"],
-                    "{:.2f} ± {:.2f}".format(client_metrics[k]["avg"], client_metrics[k]["std"])
-                    if client_metrics[k]["entries"] > 1
-                    else client_metrics[k]["avg"],
+                    "{:.3f}".format(client_metrics[k]["avg"]),
                     client_metrics[k]["min"],
                     client_metrics[k]["max"],
                 ]
                 for k in client_metrics
             ],
             margin=1,  # add a whitespace for both sides of each cell
-            max_precision=2,
+            max_precision=3,
         )
         writer.write_table()
         print("\n")
@@ -126,21 +120,19 @@ def generate_no_comparison_table(
 
         writer = MarkdownTableWriter(
             # table_name="Client metrics",
-            headers=["Metric", "Entries", "Average ± Standard Deviation", "Min", "Max"],
+            headers=["Metric", "Entries", "Average", "Min", "Max"],
             value_matrix=[
                 [
                     k,
                     server_metrics[k]["entries"],
-                    "{:.2f} ± {:.2f}".format(server_metrics[k]["avg"], server_metrics[k]["std"])
-                    if server_metrics[k]["entries"] > 1
-                    else server_metrics[k]["avg"],
+                    server_metrics[k]["avg"],
                     server_metrics[k]["min"],
                     server_metrics[k]["max"],
                 ]
                 for k in server_metrics
             ],
             margin=1,  # add a whitespace for both sides of each cell
-            max_precision=2,
+            max_precision=3,
         )
         writer.write_table()
 
@@ -222,14 +214,14 @@ def generate_comparison_table(
                 headers=[
                     "Metric",
                     "Entries (this branch)",
-                    "Average ± Standard Deviation (this branch)",
-                    "Average ± Standard Deviation ({})".format(branch_name),
+                    "Average (this branch)",
+                    "Average ({})".format(branch_name),
                     "Delta",
                     "",
                 ],
                 value_matrix=[i for i in interesting_metrics],
                 margin=1,  # add a whitespace for both sides of each cell
-                max_precision=2,
+                max_precision=3,
             )
             writer.write_table()
             print("\n")
@@ -245,14 +237,14 @@ def generate_comparison_table(
             headers=[
                 "Metric",
                 "Entries (this branch)",
-                "Average ± Standard Deviation (this branch)",
-                "Average ± Standard Deviation ({})".format(branch_name),
+                "Average (this branch)",
+                "Average ({})".format(branch_name),
                 "Delta",
                 "",
             ],
             value_matrix=[i for i in client_table_entries],
             margin=1,  # add a whitespace for both sides of each cell
-            max_precision=2,
+            max_precision=3,
         )
         writer.write_table()
         print("\n")
@@ -268,14 +260,14 @@ def generate_comparison_table(
             headers=[
                 "Metric",
                 "Entries (this branch)",
-                "Average ± Standard Deviation (this branch)",
-                "Average ± Standard Deviation ({})".format(branch_name),
+                "Average (this branch)",
+                "Average ({})".format(branch_name),
                 "Delta",
                 "",
             ],
             value_matrix=[i for i in server_table_entries],
             margin=1,  # add a whitespace for both sides of each cell
-            max_precision=2,
+            max_precision=3,
         )
         writer.write_table()
 
