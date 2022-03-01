@@ -3,7 +3,7 @@
 tenant:
   # Settings
   friendly_name: "Whist Technologies, Inc."
-  picture_url: https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2.png
+  picture_url: https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
   support_email: support@whist.com
   support_url: "https://whist.com/contact"
 
@@ -76,7 +76,7 @@ prompts:
 
 branding:
   # Whist Auth0 Branding
-  logo_url: https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2.png
+  logo_url: https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
   colors:
     page_background: "#ffffff"
     primary: "#4f35de"
@@ -98,7 +98,7 @@ clients:
   # Configuration for the Whist desktop application(s) (Electron) to interact with Auth0
   - name: Whist
     description: The Whist desktop application(s)
-    logo_uri: https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2.png
+    logo_uri: https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
     app_type: native
     allowed_clients: []
     client_aliases: []
@@ -165,7 +165,7 @@ clients:
   # Configuration for the Whist webserver(s) to interact with Auth0
   - name: Webserver
     description: The Whist backend webserver(s)
-    logo_uri: https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2.png
+    logo_uri: https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
     app_type: non_interactive
     allowed_clients: []
     client_aliases: []
