@@ -6,7 +6,6 @@ import (
 
 	"github.com/hasura/go-graphql-client"
 	"github.com/whisthq/whist/backend/services/metadata"
-	"github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/helpers"
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
 	logger "github.com/whisthq/whist/backend/services/whistlogger"
@@ -146,6 +145,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 
 	var (
 		freeInstances, lingeringInstances subscriptions.WhistInstances
+		currentActive, currentStarting    int
 		lingeringIDs                      []string
 		err                               error
 	)
@@ -238,6 +238,7 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	logger.Info("Scaling down %v free instances on %v.", len(freeInstances), event.Region)
 
 	for _, instance := range freeInstances {
+		logger.Infof("Scaling down instance %v.", instance.ID)
 		updateParams := map[string]interface{}{
 			"id":     instance.ID,
 			"status": graphql.String("DRAINING"),
