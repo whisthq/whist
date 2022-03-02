@@ -119,7 +119,7 @@ func SetupScalingSubscriptions(whistClient WhistSubscriptionClient) {
 // and starts a goroutine for the client. It also has a goroutine to close the client and subscriptions when the global
 // context gets cancelled.
 func Start(whistClient WhistSubscriptionClient, globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan SubscriptionEvent) error {
-	if !enabled {
+	if !Enabled {
 		logger.Infof("Running in app environment %s so not enabling Subscription client code.", metadata.GetAppEnvironment())
 		return nil
 	}

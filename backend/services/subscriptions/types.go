@@ -58,8 +58,8 @@ type Image struct {
 	UpdatedAt time.Time `json:"updated_at"` // Timestamp when the image was registered
 }
 
-// handlerfn is used to send subscription handlers to the Subscribe function.
-type handlerfn func(SubscriptionEvent, map[string]interface{}) bool
+// Handlerfn is used to send subscription handlers to the Subscribe function.
+type Handlerfn func(SubscriptionEvent, map[string]interface{}) bool
 
 // HasuraSubscription holds the graphql query and parameters to start the subscription.
 // It represents a generic subscription.
@@ -67,7 +67,7 @@ type HasuraSubscription struct {
 	Query     GraphQLQuery
 	Variables map[string]interface{}
 	Result    SubscriptionEvent
-	Handler   handlerfn
+	Handler   Handlerfn
 }
 
 // SubscriptionEvent represents any event received from Hasura

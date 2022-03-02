@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-co-op/gocron"
 	"github.com/google/uuid"
+	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	algos "github.com/whisthq/whist/backend/services/scaling-service/scaling_algorithms/default" // Import as algos, short for scaling_algorithms
 	"github.com/whisthq/whist/backend/services/subscriptions"
 	"github.com/whisthq/whist/backend/services/utils"
@@ -25,11 +26,6 @@ func main() {
 	// Start Sentry and Logzio
 	logger.InitScalingLogging()
 
-	// goroutine that fires when the global context is canceled.
-	go func() {
-		<-globalCtx.Done()
-	}()
-
 	// Start GraphQL client for queries/mutations
 	graphqlClient := &subscriptions.GraphQLClient{}
 	err := graphqlClient.Initialize()
@@ -39,11 +35,16 @@ func main() {
 
 	// Start database subscriptions
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
-	StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents)
+	subscriptionClient := &subscriptions.SubscriptionClient{}
+	dbclient := &dbclient.DBClient{}
+	StartDatabaseSubscriptions(globalCtx, goroutineTracker, subscriptionEvents, subscriptionClient)
 
 	// Start scheduler and setup scheduler event chan
 	scheduledEvents := make(chan algos.ScalingEvent, 100)
-	StartSchedulerEvents(scheduledEvents)
+
+	// Set to run every 10 minutes, starting 10 minutes from now
+	start := time.Duration(10 * time.Minute)
+	StartSchedulerEvents(scheduledEvents, 10, start)
 
 	// Start the deploy events once since we are starting the scaling service.
 	StartDeploy(scheduledEvents)
@@ -67,7 +68,8 @@ func main() {
 		scalingAlgorithm.CreateBuffer()
 		scalingAlgorithm.CreateEventChans()
 		scalingAlgorithm.CreateGraphQLClient(graphqlClient)
-		scalingAlgorithm.ProcessEvents(goroutineTracker)
+		scalingAlgorithm.CreateDBClient(dbclient)
+		scalingAlgorithm.ProcessEvents(globalCtx, goroutineTracker)
 
 		return true
 	})
@@ -90,8 +92,7 @@ func main() {
 }
 
 // StartDatabaseSubscriptions sets up the database subscriptions and starts the subscription client.
-func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan subscriptions.SubscriptionEvent) {
-	subscriptionClient := &subscriptions.SubscriptionClient{}
+func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *sync.WaitGroup, subscriptionEvents chan subscriptions.SubscriptionEvent, subscriptionClient subscriptions.WhistSubscriptionClient) {
 	subscriptions.SetupScalingSubscriptions(subscriptionClient)
 
 	err := subscriptions.Start(subscriptionClient, globalCtx, goroutineTracker, subscriptionEvents)
@@ -102,13 +103,15 @@ func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *syn
 }
 
 // StartSchedulerEvents starts the scheduler and its events without blocking the main thread.
-func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent) {
+// `interval` sets the time when the event will run in minutes (i.e. every 10 minutes), and `start`
+// sets the time when the first event will happen (i.e. 10 minutes from now).
+func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval interface{}, start time.Duration) {
 	s := gocron.NewScheduler(time.UTC)
 
 	// Schedule scale down routine every 10 minutes, start 10 minutes from now.
-	t := time.Now().Add(10 * time.Minute)
-	s.Every(10).Minutes().StartAt(t).Do(func() {
-		// Send to scheduling channel
+	t := time.Now().Add(start)
+	s.Every(interval).Minutes().StartAt(t).Do(func() {
+		// Send into scheduling channel
 		scheduledEvents <- algos.ScalingEvent{
 			// Create a UUID so we can identify and search this event on our logs
 			ID: uuid.NewString(),
@@ -227,6 +230,9 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, gorou
 					algorithm.ScheduledEventChan <- scheduledEvent
 				}
 			}
+		case <-globalCtx.Done():
+			logger.Infof("Gloal context has been cancelled, exiting event loop...")
+			return
 		}
 	}
 }

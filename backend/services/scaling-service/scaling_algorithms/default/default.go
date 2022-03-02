@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/whisthq/whist/backend/services/scaling-service/dbclient"
 	"github.com/whisthq/whist/backend/services/scaling-service/hosts"
 	aws "github.com/whisthq/whist/backend/services/scaling-service/hosts/aws"
 	"github.com/whisthq/whist/backend/services/subscriptions"
@@ -13,10 +14,11 @@ import (
 // ScalingAlgorithm is the basic abstraction of the scaling service
 // that receives a stream of events and makes calls to the host handler.
 type ScalingAlgorithm interface {
-	ProcessEvents(*sync.WaitGroup)
+	ProcessEvents(context.Context, *sync.WaitGroup)
 	CreateEventChans()
 	CreateBuffer()
-	CreateGraphQLClient(*subscriptions.GraphQLClient)
+	CreateGraphQLClient(subscriptions.WhistGraphQLClient)
+	CreateDBClient(dbclient.WhistDBClient)
 }
 
 // ScalingEvent is an event that contains all the relevant information
@@ -32,7 +34,8 @@ type ScalingEvent struct {
 // by all of the different, region-based scaling algorithms.
 type DefaultScalingAlgorithm struct {
 	Host               hosts.HostHandler
-	GraphQLClient      *subscriptions.GraphQLClient
+	GraphQLClient      subscriptions.WhistGraphQLClient
+	DBClient           dbclient.WhistDBClient
 	InstanceBuffer     *int32
 	Region             string
 	InstanceEventChan  chan ScalingEvent
@@ -61,17 +64,24 @@ func (s *DefaultScalingAlgorithm) CreateBuffer() {
 	s.InstanceBuffer = &buff
 }
 
-// CreateGraphQLClient sets the graphqlClient to be used on queries.
-func (s *DefaultScalingAlgorithm) CreateGraphQLClient(client *subscriptions.GraphQLClient) {
+// CreateGraphQLClient sets the graphqlClient to be used by the DBClient for queries and mutations.
+func (s *DefaultScalingAlgorithm) CreateGraphQLClient(client subscriptions.WhistGraphQLClient) {
 	if s.GraphQLClient == nil {
 		s.GraphQLClient = client
+	}
+}
+
+// CreateDBClient sets the DBClient to be used when interacting with the database.
+func (s *DefaultScalingAlgorithm) CreateDBClient(dbClient dbclient.WhistDBClient) {
+	if s.DBClient == nil {
+		s.DBClient = dbClient
 	}
 }
 
 // ProcessEvents is the main function of the scaling algorithm, it is responsible of processing
 // events and executing the appropiate scaling actions. This function is specific for each region
 // scaling algorithm to be able to implement different strategies on each region.
-func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup) {
+func (s *DefaultScalingAlgorithm) ProcessEvents(globalCtx context.Context, goroutineTracker *sync.WaitGroup) {
 	if s.Host == nil {
 		// TODO when multi-cloud support is introduced, figure out a way to
 		// decide which host to use. For now default to AWS.
@@ -159,6 +169,9 @@ func (s *DefaultScalingAlgorithm) ProcessEvents(goroutineTracker *sync.WaitGroup
 						scalingCancel()
 					}()
 				}
+			case <-globalCtx.Done():
+				logger.Info("Global context has been cancelled. Exiting from default scaling algorithm event loop...")
+				return
 			}
 		}
 	}()

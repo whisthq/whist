@@ -42,7 +42,7 @@ func (t *withAdminSecretTransport) RoundTrip(req *http.Request) (*http.Response,
 // Initialize creates the client. This function is respinsible from fetching the server
 // information from Heroku.
 func (wc *GraphQLClient) Initialize() error {
-	if !enabled {
+	if !Enabled {
 		logger.Infof("Running in app environment %s so not enabling GraphQL client code.", metadata.GetAppEnvironment())
 		return nil
 	}

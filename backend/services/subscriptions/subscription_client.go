@@ -11,12 +11,12 @@ import (
 	graphql "github.com/hasura/go-graphql-client"
 )
 
-// `enabled` is a flag denoting whether the functions in this package should do
+// `Enabled` is a flag denoting whether the functions in this package should do
 // anything, or simply be no-ops. This is necessary, since we want the subscription
 // operations to be meaningful in environments where we can expect the database
 // guarantees to hold (e.g. `metadata.EnvLocalDevWithDB` or `metadata.EnvDev`)
 // but no-ops in other environments.
-var enabled = (metadata.GetAppEnvironment() != metadata.EnvLocalDev)
+var Enabled = (metadata.GetAppEnvironment() != metadata.EnvLocalDev)
 
 // WhistSubscriptionClient is an interface used to abstract the interactions with
 // the official Hasura client.
@@ -28,7 +28,7 @@ type WhistSubscriptionClient interface {
 	SetSubscriptionsIDs([]string)
 	GetParams() HasuraParams
 	SetParams(HasuraParams)
-	Subscribe(GraphQLQuery, map[string]interface{}, SubscriptionEvent, handlerfn, chan SubscriptionEvent) (string, error)
+	Subscribe(GraphQLQuery, map[string]interface{}, SubscriptionEvent, Handlerfn, chan SubscriptionEvent) (string, error)
 	Run(*sync.WaitGroup)
 	Close([]string) error
 }
@@ -101,7 +101,7 @@ func (wc *SubscriptionClient) SetParams(params HasuraParams) {
 // Subscribe creates the subscriptions according to the received queries and conditions.
 // It passes results through the received channel if the received `conditionFn` is true.
 func (wc *SubscriptionClient) Subscribe(query GraphQLQuery, variables map[string]interface{}, result SubscriptionEvent,
-	conditionFn handlerfn, subscriptionEvents chan SubscriptionEvent) (string, error) {
+	conditionFn Handlerfn, subscriptionEvents chan SubscriptionEvent) (string, error) {
 
 	id, err := wc.Hasura.Subscribe(query, variables, func(data *json.RawMessage, err error) error {
 		if err != nil {
