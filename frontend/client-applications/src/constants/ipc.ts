@@ -1,4 +1,5 @@
 export const StateChannel = "MAIN_STATE_CHANNEL"
+export const UIEventChannel = "UI_EVENT_CHANNEL"
 
 export const ErrorIPC = [
   "Before you call useMainState(),",

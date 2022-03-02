@@ -18,16 +18,18 @@ const Omnibar = () => {
 
   const refs = range(0, numOptions).map(() => useRef(null))
 
-  const onKeyDown = (e: any) => {
-    if (e.key === "Enter") options[activeIndex].onClick()
-    if (e.key === "ArrowDown") {
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      options[activeIndex].onClick()
+      e.preventDefault()
+    } else if (e.key === "ArrowDown") {
       if ((activeIndex + 1) % 4 === 0 && activeIndex < options.length - 1) {
         const ref = refs[activeIndex + 1].current
         if (ref !== null) (ref as any).scrollIntoView({ block: "start" })
       }
       setActiveIndex(Math.min(activeIndex + 1, options.length - 1))
-    }
-    if (e.key === "ArrowUp") {
+      e.preventDefault()
+    } else if (e.key === "ArrowUp") {
       if (
         (activeIndex + 2) % 4 === 0 &&
         activeIndex < options.length - 1 &&
@@ -37,6 +39,7 @@ const Omnibar = () => {
         if (ref !== null) (ref as any).scrollIntoView({ block: "end" })
       }
       setActiveIndex(Math.max(0, activeIndex - 1))
+      e.preventDefault()
     }
   }
 

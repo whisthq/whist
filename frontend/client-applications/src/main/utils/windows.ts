@@ -8,6 +8,8 @@ import {
 
 import config from "@app/config/environment"
 import { amplitudeLog } from "@app/main/utils/logging"
+import { ipcBroadcastUIEvent } from "@app/main/utils/ipc"
+import { UIEvent } from "@app/@types/uiEvent"
 
 // Helper functions
 const base = {
@@ -59,7 +61,11 @@ const fadeElectronWindowIn = (
   fadeEveryXSeconds = 15
 ) => {
   try {
+    // Order matters here -- WINDOW_FOCUS doesn't do anything
+    // unless we call window.show() first.
     win.show()
+    ipcBroadcastUIEvent(UIEvent.WINDOW_FOCUS, [win])
+
     if (win.isMinimized()) win.restore()
 
     // Get the opacity of the window.
@@ -189,10 +195,9 @@ const createElectronWindow = (args: {
     }
 
     // When the window is ready to be shown, show it
-    win.once(
-      "ready-to-show",
-      () => (args?.show ?? true) && fadeElectronWindowIn(win)
-    )
+    if (args?.show ?? true) {
+      win.once("ready-to-show", () => fadeElectronWindowIn(win))
+    }
 
     // If we want to load a URL into a BrowserWindow, we first load it into a
     // BrowserView and attach it to the BrowserWindow. This is our trick to make the

@@ -9,7 +9,8 @@
 import { useEffect, useState } from "react"
 import { IpcRendererEvent } from "electron"
 import { StateIPC } from "@app/@types/state"
-import { StateChannel } from "@app/constants/ipc"
+import { UIEvent } from "@app/@types/uiEvent"
+import { StateChannel, UIEventChannel } from "@app/constants/ipc"
 
 // This function should only be called from the renderer process. It's a React
 // hook that simplifies our IPC coordination with the main process.
@@ -27,7 +28,7 @@ export const useMainState = ():
   const [mainState, setState] = useState({} as StateIPC)
 
   useEffect(() => {
-    // We're using a single IPC channel for all communication in this app.
+    // We're using a state IPC channel for state communication in this app.
     // We import it here as a constant and pass it to the event listener.
     const listener = (_: IpcRendererEvent, state: StateIPC) => setState(state)
     ipc.on(StateChannel, listener)
@@ -50,4 +51,23 @@ export const useMainState = ():
   }
 
   return [mainState, setMainState]
+}
+
+export const onUIEvent = (listener: (event?: UIEvent) => void) => {
+  useEffect(() => {
+    // The window type doesn't have ipcRenderer, but we've manually
+    // added that in preload.js with electron.contextBridge
+    // so we ignore the type error in the next line
+    // @ts-expect-error
+    const ipc = window.ipcRenderer
+    ipc.on(UIEventChannel, (_: IpcRendererEvent, event: UIEvent) =>
+      listener(event)
+    )
+
+    // useEffect allows you to return a function that will be called to perform
+    // "cleanup". In our case, we'll use it to remove our event listener.
+    return () => {
+      ipc.removeListener?.(UIEventChannel, listener)
+    }
+  }, [])
 }

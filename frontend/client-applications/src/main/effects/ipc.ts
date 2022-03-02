@@ -7,7 +7,7 @@
 import { BrowserWindow } from "electron"
 
 import { combineLatest, concat, of, merge, from } from "rxjs"
-import { ipcBroadcast } from "@app/main/utils/ipc"
+import { ipcBroadcastState } from "@app/main/utils/ipc"
 import { StateIPC } from "@app/@types/state"
 import {
   map,
@@ -33,11 +33,11 @@ import { getOtherBrowserWindows } from "@app/main/utils/applescript"
 
 // This file is responsible for broadcasting state to all renderer windows.
 // We use a single object and IPC channel for all windows, so here we set up a
-// single observable subscription that calls ipcBroadcast whenever it emits.
+// single observable subscription that calls ipcBroadcastState whenever it emits.
 //
 // This subscription takes the latest object sent back from the renderer thread,
 // and merges it with the latest data from the observables in the "subscribed"
-// map below. It sends the result to all windows with ipcBroadcast.
+// map below. It sends the result to all windows with ipcBroadcastState.
 //
 // Note that combineLatest doesn't emit until each of its observable arguments
 // emits an initial value. To get the state broadcasting right away, we pipe
@@ -105,7 +105,7 @@ const finalState = combineLatest([
 
 finalState.subscribe(
   ([subs, state]: [Partial<StateIPC>, Partial<StateIPC>]) => {
-    ipcBroadcast(
+    ipcBroadcastState(
       { ...state, ...subs } as Partial<StateIPC>,
       BrowserWindow.getAllWindows()
     )
@@ -116,7 +116,7 @@ fromTrigger(WhistTrigger.emitIPC)
   .pipe(withLatestFrom(finalState))
   .subscribe(
     ([, [subs, state]]: [any, [Partial<StateIPC>, Partial<StateIPC>]]) => {
-      ipcBroadcast(
+      ipcBroadcastState(
         { ...state, ...subs } as Partial<StateIPC>,
         BrowserWindow.getAllWindows()
       )

@@ -38,6 +38,7 @@ const Welcome = (props: { onSubmit: () => void }) => {
           className="mt-12 text-gray-100 outline-none animate-fade-in-up opacity-0"
           onClick={props.onSubmit}
           style={{ animationDelay: "2200ms" }}
+          autoFocus={true}
         >
           <div className="animate-pulse">
             Click{" "}
