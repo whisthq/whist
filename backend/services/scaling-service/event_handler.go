@@ -42,7 +42,7 @@ func main() {
 	// Start scheduler and setup scheduler event chan
 	scheduledEvents := make(chan algos.ScalingEvent, 100)
 
-	// Set to run every 10 minutes, statring 10 minutes from now
+	// Set to run every 10 minutes, starting 10 minutes from now
 	start := time.Duration(10 * time.Minute)
 	StartSchedulerEvents(scheduledEvents, 10, start)
 
@@ -103,7 +103,7 @@ func StartDatabaseSubscriptions(globalCtx context.Context, goroutineTracker *syn
 }
 
 // StartSchedulerEvents starts the scheduler and its events without blocking the main thread.
-// `interval` sets the time when the event will run (i.e. every 10 minutes), and `start`
+// `interval` sets the time when the event will run in minutes (i.e. every 10 minutes), and `start`
 // sets the time when the first event will happen (i.e. 10 minutes from now).
 func StartSchedulerEvents(scheduledEvents chan algos.ScalingEvent, interval interface{}, start time.Duration) {
 	s := gocron.NewScheduler(time.UTC)
