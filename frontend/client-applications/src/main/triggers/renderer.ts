@@ -7,14 +7,13 @@ import { WhistTrigger } from "@app/constants/triggers"
 const filterByName = (
   observable: Observable<{ name: string; payload: any }>,
   name: string
-) => {
-  return observable.pipe(
+) =>
+  observable.pipe(
     filter(
       (x: { name: string; payload: any }) => x !== undefined && x.name === name
     ),
     map((x: { name: string; payload: any }) => x.payload)
   )
-}
 
 ;[
   WhistTrigger.relaunchAction, // Fires when "Continue" button is clicked on error window popup

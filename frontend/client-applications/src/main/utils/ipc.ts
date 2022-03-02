@@ -8,11 +8,12 @@
 
 import { BrowserWindow } from "electron"
 import { StateIPC } from "@app/@types/state"
-import { StateChannel } from "@app/constants/ipc"
+import { UIEvent } from "@app/@types/uiEvent"
+import { StateChannel, UIEventChannel } from "@app/constants/ipc"
 
 // This function should only be called by the main process. We use it to pass
 // a "state" object over to a list of BrowserWindows through IPC.
-export const ipcBroadcast = (
+export const ipcBroadcastState = (
   state: Partial<StateIPC>,
   windows: BrowserWindow[]
 ) => {
@@ -25,5 +26,21 @@ export const ipcBroadcast = (
     c.isLoading()
       ? c.on("did-finish-load", () => c.send(StateChannel, state))
       : c.send(StateChannel, state)
+  })
+}
+
+export const ipcBroadcastUIEvent = (
+  event: UIEvent,
+  windows: BrowserWindow[]
+) => {
+  const contents = windows.map((win) => win.webContents)
+  // Sometimes we might broadcast an update while a window is being created.
+  // If the window hasn't finished loading, the React component inside it will
+  // not receive the update. If we see that the window object is still loading,
+  // we wait for it to finish before sending the update.
+  contents.forEach((c) => {
+    c.isLoading()
+      ? c.on("did-finish-load", () => c.send(StateChannel, event))
+      : c.send(UIEventChannel, event)
   })
 }

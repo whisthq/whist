@@ -1,6 +1,8 @@
-import React, { useEffect, useRef } from "react"
+import React, { useRef } from "react"
 
 import { withContext } from "@app/renderer/context/omnibar"
+import { onUIEvent } from "@app/renderer/utils/ipc"
+import { UIEvent } from "@app/@types/uiEvent"
 
 const Search = () => {
   const context = withContext()
@@ -11,18 +13,13 @@ const Search = () => {
 
   const inputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    // @ts-expect-error
-    const ipc = window.ipcRenderer
-
-    const listener = () => {
+  onUIEvent((event) => {
+    if (event === UIEvent.WINDOW_FOCUS) {
+      // When the omnibar shows up, focus the search bar
+      // and select any existing text (so the user can just
+      // start typing to overwrite)
       inputRef.current?.focus()
-    }
-    ipc.on("window-focus", listener)
-
-    // destructor
-    return () => {
-      ipc.removeListener?.("window-focus", listener)
+      inputRef.current?.select()
     }
   })
 
@@ -37,7 +34,7 @@ const Search = () => {
         </kbd>
       </div>
       <input
-        className="block w-full text-md rounded-md bg-transparent pt-1 focus:outline-none placeholder-gray-600"
+        className="block w-full text-md bg-transparent p-1 focus:outline-none placeholder-gray-600"
         autoFocus={true}
         placeholder="Search Whist Commands"
         value={context.search}
