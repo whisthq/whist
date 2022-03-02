@@ -468,6 +468,8 @@ int main(int argc, char* argv[]) {
         update_client_active_status(&server_state.client, &assuming_client_active);
 
         if (!assuming_client_active) {
+            // We must sleep here to avoid a busy loop holding the CPU
+            whist_sleep(10);
             continue;
         }
 
