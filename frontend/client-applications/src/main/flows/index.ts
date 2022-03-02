@@ -26,7 +26,7 @@ import {
 import { persistGet } from "@app/main/utils/persist"
 import { WhistTrigger } from "@app/constants/triggers"
 import {
-  sleep,
+  quietLaunch,
   refreshToken,
   isNewConfigToken,
   darkMode,
@@ -65,7 +65,7 @@ const loggedInAuth = authFlow(
       configToken: persistGet(CACHED_CONFIG_TOKEN) ?? "",
     }).pipe(filter((auth) => isEmpty(pickBy(auth, (x) => x === "")))),
     merge(
-      sleep.pipe(filter((sleep) => !sleep)),
+      quietLaunch.pipe(filter((quietLaunch) => !quietLaunch)),
       fromTrigger(WhistTrigger.reactivated)
     )
   )

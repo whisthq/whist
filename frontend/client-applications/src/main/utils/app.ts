@@ -1,28 +1,17 @@
-import { app, BrowserWindow } from "electron"
+import { app } from "electron"
 import remove from "lodash.remove"
 
-import {
-  destroyElectronWindow,
-  getElectronWindowHash,
-} from "@app/main/utils/windows"
-
-const relaunch = (options: { sleep: boolean }) => {
+const relaunch = (options: { quietLaunch: boolean }) => {
   // First destroy all Electron windows
-  BrowserWindow.getAllWindows().forEach((win) => {
-    const hash = getElectronWindowHash(win)
-    if (hash !== undefined) destroyElectronWindow(hash)
-  })
-
   let args = process.argv.slice(1)
-  remove(args, (arg) => arg === "--sleep")
-  args = options.sleep ? args.concat(["--sleep"]) : args
+  remove(args, (arg) => arg === "--quietLaunch")
+  args = options.quietLaunch ? args.concat(["--quietLaunch"]) : args
 
   // Then quit/relaunch the app
   app.relaunch({ args })
 
-  // Because the omnibar is not closable by the user, we call app.exit() to force it to close as a
-  // last resort
-  app.exit()
+  // Finally quit the app
+  app.quit()
 }
 
 export { relaunch }

@@ -10,7 +10,7 @@ import { map, withLatestFrom, take, takeUntil, filter } from "rxjs/operators"
 
 import { fromTrigger } from "@app/main/utils/flows"
 import { WhistTrigger } from "@app/constants/triggers"
-import { sleep } from "@app/main/utils/state"
+import { quietLaunch } from "@app/main/utils/state"
 
 export const waitForSignal = (obs: Observable<any>, signal: Observable<any>) =>
   /*
@@ -50,7 +50,7 @@ export const withAppActivated = (obs: Observable<any>) =>
     zip(
       fromTrigger(WhistTrigger.appReady),
       merge(
-        sleep.pipe(filter((sleep) => !sleep)),
+        quietLaunch.pipe(filter((quietLaunch) => !quietLaunch)),
         fromTrigger(WhistTrigger.reactivated)
       )
     )

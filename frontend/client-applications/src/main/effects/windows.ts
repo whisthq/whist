@@ -118,7 +118,7 @@ withAppActivated(
 ).subscribe(() => {
   const { win } = createOmnibar()
   win?.on("blur", () => {
-    hideElectronWindow(WindowHashOmnibar)
+    // hideElectronWindow(WindowHashOmnibar)
   })
 })
 

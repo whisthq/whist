@@ -11,10 +11,13 @@ import { take, switchMap, filter } from "rxjs/operators"
 import { createTrigger } from "@app/main/utils/flows"
 import { WhistTrigger } from "@app/constants/triggers"
 import { storeEmitter } from "@app/main/utils/persist"
-import { sleep } from "@app/main/utils/state"
+import { quietLaunch } from "@app/main/utils/state"
 
 // Fires when Electron starts; this is the first event to fire
 createTrigger(WhistTrigger.appReady, fromEvent(app, "ready"))
+
+// Fires when the app is going to quit
+createTrigger(WhistTrigger.appWillQuit, fromEvent(app, "will-quit"))
 
 // Fires when all Electron windows have been closed
 createTrigger(
@@ -24,7 +27,7 @@ createTrigger(
 // Fires when all windows are closed and the user clicks the dock icon to re-open Whist
 createTrigger(
   WhistTrigger.reactivated,
-  sleep.pipe(
+  quietLaunch.pipe(
     filter((s) => s),
     switchMap(() => fromEvent(app, "activate").pipe(take(1)))
   )

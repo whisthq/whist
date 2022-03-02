@@ -118,7 +118,6 @@ const pipeNetworkInfo = (
 }
 
 const destroyProtocol = (childProcess: ChildProcess) => {
-  // We send SIGINT just in case
   pipeToProtocol(childProcess, "kill?0\n")
 }
 

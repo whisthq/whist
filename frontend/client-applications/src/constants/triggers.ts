@@ -7,6 +7,7 @@
 const WhistTrigger = {
   // App triggers
   appReady: "appReady",
+  appWillQuit: "appWillQuit",
   electronWindowsAllClosed: "electronWindowsAllClosed",
   networkUnstable: "networkUnstable",
   reactivated: "reactivated", // When all windows are closed and the user clicks the dock icon

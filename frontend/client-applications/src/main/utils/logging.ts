@@ -20,6 +20,7 @@ import config, {
   loggingFiles,
 } from "@app/config/environment"
 import { persistGet } from "@app/main/utils/persist"
+import { quietLaunch } from "@app/main/utils/state"
 import { sessionID } from "@app/constants/app"
 import { createLogger } from "logzio-nodejs"
 import { CACHED_USER_EMAIL } from "@app/constants/store"
@@ -29,13 +30,11 @@ app.setPath("userData", loggingBaseFilePath)
 const amplitude = Amplitude.init(config.keys.AMPLITUDE_KEY)
 export const electronLogPath = path.join(loggingBaseFilePath, "logs")
 
-const sleep = of(process.argv.includes("--sleep"))
-
 export const shouldStoreLogs = zip(
   fromEvent(app, "ready"),
   merge(
-    sleep.pipe(filter((sleep) => !sleep)),
-    sleep.pipe(
+    quietLaunch.pipe(filter((quietLaunch) => !quietLaunch)),
+    quietLaunch.pipe(
       filter((s) => s),
       switchMap(() => fromEvent(app, "activate").pipe(take(1)))
     )
