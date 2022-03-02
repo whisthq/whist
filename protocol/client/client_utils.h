@@ -88,18 +88,6 @@ int alloc_parsed_args(void);
 int free_parsed_args(void);
 
 /**
- * @brief                          Prepare for initial request to server by setting
- *                                 user email and time data
- *
- * @param wcmsg                     Discovery request message packet to be sent to the server
- *
- * @param email                    User email
- *
- * @returns                        Returns -1 on failure, 0 on success
- */
-int prepare_init_to_server(WhistDiscoveryRequestMessage* wcmsg, char* email);
-
-/**
  * @brief                          Update mouse location if the mouse state has
  *                                 updated since the last call to this function.
  *

@@ -74,10 +74,7 @@ extern char user_email[WHIST_ARGS_MAXLEN + 1];
 extern char icon_png_filename[WHIST_ARGS_MAXLEN + 1];
 extern bool using_stun;
 
-// given by server protocol during port discovery. tells client the ports to use
-// for UDP and TCP communications.
-extern int udp_port;
-extern int tcp_port;
+// given by server protocol during port discovery.
 extern int uid;
 
 // Keyboard state variables
@@ -382,16 +379,6 @@ int whist_client_main(int argc, char* argv[]) {
         WhistTimer handshake_time;
         start_timer(&handshake_time);  // start timer for measuring handshake time
         LOG_INFO("Begin measuring handshake");
-
-        if (discover_ports(&using_stun) != 0) {
-            LOG_WARNING("Failed to discover ports.");
-            continue;
-        }
-
-        // Log to METRIC for cross-session tracking and INFO for developer-facing logging
-        double discover_ports_time = get_timer(&handshake_time);
-        LOG_INFO("Time elasped after discover_ports() = %f", discover_ports_time);
-        LOG_METRIC("\"HANDSHAKE_DISCOVER_PORTS_TIME\" : %f", discover_ports_time);
 
         if (connect_to_server(using_stun) != 0) {
             LOG_WARNING("Failed to connect to server.");
