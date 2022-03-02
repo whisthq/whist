@@ -294,17 +294,6 @@ Public Function Implementations
 */
 
 int client_parse_args(int argc, char *argv[]) {
-    /*
-        Parse the arguments passed into the client application
-
-        Arguments:
-            argc (int): number of arguments
-            argv (char* []): array of arguments
-
-        Return:
-            (int): 0 on success and -1 on failure
-    */
-
     // TODO: replace `client` with argv[0]
     usage =
         "Usage: client [OPTION]... IP_ADDRESS\n"
@@ -413,19 +402,6 @@ int client_parse_args(int argc, char *argv[]) {
 }
 
 int read_piped_arguments(bool *keep_waiting, bool run_only_once) {
-    /*
-        Read arguments from the stdin pipe if `using_piped_arguments` is
-        set to `true`.
-
-        Can read IP as argument with name `ip`
-
-        Arguments:
-            keep_waiting (bool*): pointer to a boolean indicating whether to continue waiting
-
-        Returns:
-            (int): 0 on success, -1 on failure
-    */
-
     if (!using_piped_arguments) {
         return 0;
     }
@@ -448,7 +424,7 @@ int read_piped_arguments(bool *keep_waiting, bool run_only_once) {
     DWORD stdin_filetype = GetFileType(h_stdin);
     if (stdin_filetype != FILE_TYPE_PIPE) {
         LOG_ERROR("Stdin must be piped in on Windows");
-        return -1;
+        return -2;
     }
 #endif
     // Each argument will be passed via pipe from the client application
@@ -464,7 +440,7 @@ int read_piped_arguments(bool *keep_waiting, bool run_only_once) {
 #ifndef _WIN32
         if (ioctl(STDIN_FILENO, FIONREAD, &available_chars) < 0) {
             LOG_ERROR("ioctl error with piped arguments: %s", strerror(errno));
-            return -1;
+            return -2;
         } else if (available_chars == 0) {
             continue;
         }
@@ -531,6 +507,13 @@ int read_piped_arguments(bool *keep_waiting, bool run_only_once) {
             // Iterate through client_cmd_options to find the corresponding opt
             int opt_index = -1;
             for (int i = 0; client_cmd_options[i].name; i++) {
+                // Ignore help and version and read-pipe options here
+                if (client_cmd_options[i].val == WHIST_GETOPT_HELP_CHAR ||
+                    client_cmd_options[i].val == WHIST_GETOPT_VERSION_CHAR ||
+                    client_cmd_options[i].val == 'r') {
+                    continue;
+                }
+
                 if (strncmp(arg_name, client_cmd_options[i].name, strlen(arg_name))) continue;
 
                 if (strlen(client_cmd_options[i].name) == (unsigned)strlen(arg_name)) {
