@@ -28,7 +28,6 @@ func (db *mockDBClient) QueryInstancesByImage(scalingCtx context.Context, graphQ
 }
 
 func (db *mockDBClient) InsertInstances(scalingCtx context.Context, graphQLClient subscriptions.WhistGraphQLClient, insertParams []subscriptions.Instance) (int, error) {
-	testInstances = subscriptions.WhistInstances{}
 	for _, instance := range insertParams {
 		testInstances = append(testInstances, struct {
 			ID                graphql.String                 `graphql:"id"`
@@ -47,7 +46,9 @@ func (db *mockDBClient) InsertInstances(scalingCtx context.Context, graphQLClien
 			ID:                graphql.String(instance.ID),
 			Provider:          graphql.String(instance.Provider),
 			ImageID:           graphql.String(instance.ImageID),
+			Type:              graphql.String(instance.Type),
 			RemainingCapacity: graphql.Int(instance.RemainingCapacity),
+			Status:            graphql.String(instance.Status),
 		})
 	}
 
@@ -74,6 +75,7 @@ func (db *mockDBClient) UpdateInstance(scalingCtx context.Context, graphQLClient
 				ID:                updateParams["id"].(graphql.String),
 				Provider:          instance.Provider,
 				ImageID:           instance.ImageID,
+				Type:              instance.Type,
 				Status:            updateParams["status"].(graphql.String),
 				RemainingCapacity: instance.RemainingCapacity,
 			}
@@ -122,6 +124,8 @@ func (mh *mockHostHandler) SpinUpInstances(scalingCtx context.Context, numInstan
 			ID:       "test-scale-up-instance",
 			Provider: "AWS",
 			ImageID:  imageID,
+			Type:     "g4dn.2xlarge",
+			Status:   "PRE_CONNECTION",
 		})
 	}
 
@@ -194,9 +198,12 @@ func TestVerifyInstanceScaleDown(t *testing.T) {
 	// Check that an instance was scaled up after the test instance was removed
 	ok := reflect.DeepEqual(testInstances, subscriptions.WhistInstances{
 		{
-			ID:       "test-scale-up-instance",
-			Provider: "AWS",
-			ImageID:  "test-image-id",
+			ID:                "test-scale-up-instance",
+			Provider:          "AWS",
+			ImageID:           "test-image-id",
+			Status:            "PRE_CONNECTION",
+			Type:              "g4dn.2xlarge",
+			RemainingCapacity: 3,
 		},
 	})
 	if !ok {
@@ -225,15 +232,18 @@ func TestVerifyCapacity(t *testing.T) {
 	// the function properly starts instances.
 	err := testAlgorithm.VerifyCapacity(context, ScalingEvent{Region: "test-region"})
 	if err != nil {
-		t.Errorf("Failed while testing verify scale down action. Err: %v", err)
+		t.Errorf("Failed while testing verify capacity action. Err: %v", err)
 	}
 
 	// Check that an instance was scaled up
 	ok := reflect.DeepEqual(testInstances, subscriptions.WhistInstances{
 		{
-			ID:       "test-scale-up-instance",
-			Provider: "AWS",
-			ImageID:  "test-image-id",
+			ID:                "test-scale-up-instance",
+			Provider:          "AWS",
+			ImageID:           "test-image-id",
+			Status:            "PRE_CONNECTION",
+			Type:              "g4dn.2xlarge",
+			RemainingCapacity: 3,
 		},
 	})
 	if !ok {
@@ -264,6 +274,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			Provider:          "AWS",
 			ImageID:           "test-image-id",
 			Status:            "ACTIVE",
+			Type:              "g4dn.2xlarge",
 			RemainingCapacity: 3,
 		},
 		{
@@ -271,6 +282,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			Provider:          "AWS",
 			ImageID:           "test-image-id",
 			Status:            "ACTIVE",
+			Type:              "g4dn.2xlarge",
 			RemainingCapacity: 3,
 		},
 		{
@@ -278,6 +290,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			Provider:          "AWS",
 			ImageID:           "test-image-id",
 			Status:            "ACTIVE",
+			Type:              "g4dn.2xlarge",
 			RemainingCapacity: 3,
 		},
 	}
@@ -298,6 +311,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			Provider:          "AWS",
 			ImageID:           "test-image-id",
 			Status:            "DRAINING",
+			Type:              "g4dn.2xlarge",
 			RemainingCapacity: 3,
 		},
 		{
@@ -305,6 +319,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			Provider:          "AWS",
 			ImageID:           "test-image-id",
 			Status:            "DRAINING",
+			Type:              "g4dn.2xlarge",
 			RemainingCapacity: 3,
 		},
 		{
@@ -312,6 +327,7 @@ func TestScaleDownIfNecessary(t *testing.T) {
 			Provider:          "AWS",
 			ImageID:           "test-image-id",
 			Status:            "ACTIVE",
+			Type:              "g4dn.2xlarge",
 			RemainingCapacity: 3,
 		},
 	})
@@ -320,6 +336,119 @@ func TestScaleDownIfNecessary(t *testing.T) {
 	}
 }
 
-func TestScaleUpIfNecessary(t *testing.T) {}
+func TestScaleUpIfNecessary(t *testing.T) {
+	context, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-func TestUpgradeImage(t *testing.T) {}
+	// Create and initialize a test scaling algorithm
+	testAlgorithm := &DefaultScalingAlgorithm{
+		Region: "test-region",
+		Host:   &mockHostHandler{},
+	}
+	testDBClient := &mockDBClient{}
+	testGraphQLClient := &mockGraphQLClient{}
+
+	testInstances = subscriptions.WhistInstances{}
+	testInstancesToScale := 3
+
+	testAlgorithm.CreateGraphQLClient(testGraphQLClient)
+	testAlgorithm.CreateDBClient(testDBClient)
+
+	// For this test, try to scale up instances and check if they are
+	// successfully added to the database with the correct data.
+	err := testAlgorithm.ScaleUpIfNecessary(testInstancesToScale, context, ScalingEvent{Region: "test-region"}, "test-image-id-scale-up")
+	if err != nil {
+		t.Errorf("Failed while testing scale up action. Err: %v", err)
+	}
+
+	// Check that an instance was scaled up after the test instance was removed
+	ok := reflect.DeepEqual(testInstances, subscriptions.WhistInstances{
+		{
+			ID:                "test-scale-up-instance",
+			Provider:          "AWS",
+			ImageID:           "test-image-id-scale-up",
+			Status:            "PRE_CONNECTION",
+			Type:              "g4dn.2xlarge",
+			RemainingCapacity: 3,
+		},
+		{
+			ID:                "test-scale-up-instance",
+			Provider:          "AWS",
+			ImageID:           "test-image-id-scale-up",
+			Status:            "PRE_CONNECTION",
+			Type:              "g4dn.2xlarge",
+			RemainingCapacity: 3,
+		},
+		{
+			ID:                "test-scale-up-instance",
+			Provider:          "AWS",
+			ImageID:           "test-image-id-scale-up",
+			Status:            "PRE_CONNECTION",
+			Type:              "g4dn.2xlarge",
+			RemainingCapacity: 3,
+		},
+	})
+	if !ok {
+		t.Errorf("Did not scale up instances correctly while testing scale up action.")
+	}
+}
+
+func TestUpgradeImage(t *testing.T) {
+	context, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Create and initialize a test scaling algorithm
+	testAlgorithm := &DefaultScalingAlgorithm{
+		Region: "test-region",
+		Host:   &mockHostHandler{},
+	}
+	testDBClient := &mockDBClient{}
+	testGraphQLClient := &mockGraphQLClient{}
+
+	testAlgorithm.CreateGraphQLClient(testGraphQLClient)
+	testAlgorithm.CreateDBClient(testDBClient)
+
+	// Populate test instances that will be used when
+	// mocking database functions.
+	testInstances = subscriptions.WhistInstances{
+		{
+			ID:                "test-image-upgrade-instance",
+			Provider:          "AWS",
+			ImageID:           "test-image-id-old",
+			Status:            "ACTIVE",
+			Type:              "g4dn.2xlarge",
+			RemainingCapacity: 3,
+		},
+	}
+
+	// For this test, start an image upgrade, check that instances with the new image
+	// are created and that old instances are left untouched.
+	err := testAlgorithm.UpgradeImage(context, ScalingEvent{Region: "test-region"}, "test-image-id-new")
+	if err != nil {
+		t.Errorf("Failed while testing scale up action. Err: %v", err)
+	}
+
+	t.Logf("Ended up with isntaces %v", testInstances)
+	// Check that an instance was scaled up after the test instance was removed
+	ok := reflect.DeepEqual(testInstances, subscriptions.WhistInstances{
+		{
+			ID:                "test-image-upgrade-instance",
+			Provider:          "AWS",
+			ImageID:           "test-image-id-old",
+			Status:            "ACTIVE",
+			Type:              "g4dn.2xlarge",
+			RemainingCapacity: 3,
+		},
+		{
+			ID:                "test-scale-up-instance",
+			Provider:          "AWS",
+			ImageID:           "test-image-id-new",
+			Status:            "PRE_CONNECTION",
+			Type:              "g4dn.2xlarge",
+			RemainingCapacity: 3,
+		},
+	})
+	if !ok {
+		t.Errorf("Did not scale up instances correctly while testing scale up action.")
+	}
+}
