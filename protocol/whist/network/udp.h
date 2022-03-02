@@ -177,6 +177,16 @@ void udp_reset_duplicate_packet_counter(SocketContext* context, WhistPacketType 
  */
 int udp_get_num_indices(SocketContext* context, WhistPacketType type, int id);
 
+/**
+ * @brief                          Handle all pending nacks. This function could take a while, as
+ *                                 can wait in throttle.
+ *
+ * @param raw_context              The UDP Socket Context's internal raw context
+ *
+ * @returns                        Returns true if any nack requests were handled, otherwise false
+ */
+bool udp_handle_pending_nacks(void* raw_context);
+
 // TODO: Try to remove by making the client detect a nack buffer
 /**
  * @brief                          Registers a ring buffer to reconstruct WhistPackets

@@ -461,21 +461,28 @@ static int32_t multithreaded_send_video_packets(void* opaque) {
         log_double_statistic(VIDEO_SEND_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);
         int index = 0;
         udp_reset_duplicate_packet_counter(&state->client.udp_context, PACKET_VIDEO);
-        // If requested by the client, keep sending duplicate packets to saturate the network
-        // bandwidth, till a new frame is available.
-        while (state->client.is_active && !state->exiting && whist_semaphore_value(producer) == 0 &&
-               network_settings.saturate_bandwidth) {
+        // Till a new frame, send any nack or duplicate packets as required
+        while (state->client.is_active && !state->exiting && whist_semaphore_value(producer) == 0) {
             update_client_active_status(&state->client, &assuming_client_active);
             if (!assuming_client_active) {
                 break;
             }
-            // Re-send all indices of this video frame in a round-robin manner
-            udp_resend_packet(&state->client.udp_context, PACKET_VIDEO, id, index++);
-            int num_indices = udp_get_num_indices(&state->client.udp_context, PACKET_VIDEO, id);
-            if (num_indices < 0) {
-                break;
-            } else if (num_indices == index) {
-                index = 0;
+            // If there are nack packets to send, then don't send duplicate packets
+            if (udp_handle_pending_nacks(state->client.udp_context.context)) {
+                continue;
+            } else if (network_settings.saturate_bandwidth) {
+                // If requested by the client, keep sending duplicate packets to saturate the
+                // network bandwidth, till a new frame is available. Re-send all indices of this
+                // video frame in a round-robin manner
+                udp_resend_packet(&state->client.udp_context, PACKET_VIDEO, id, index++);
+                int num_indices = udp_get_num_indices(&state->client.udp_context, PACKET_VIDEO, id);
+                if (num_indices < 0) {
+                    break;
+                } else if (num_indices == index) {
+                    index = 0;
+                }
+            } else {
+                whist_usleep(100);  // Sleep for 0.1ms before checking again.
             }
         }
     }

@@ -50,6 +50,7 @@ extern "C" {
 #include <whist/utils/atomic.h>
 #include <whist/utils/fec.h>
 #include <whist/utils/linked_list.h>
+#include <whist/utils/queue.h>
 
 extern WhistMutex window_resize_mutex;
 extern volatile SDL_Window* window;
@@ -1351,6 +1352,44 @@ TEST_F(ProtocolTest, LinkedListTest) {
     EXPECT_EQ(linked_list_size(&list), 0);
     EXPECT_TRUE(linked_list_extract_head(&list) == NULL);
     EXPECT_TRUE(linked_list_extract_tail(&list) == NULL);
+}
+
+TEST_F(ProtocolTest, QueueTest) {
+    int item;
+    QueueContext* fifo_queue = fifo_queue_create(sizeof(int), 5);
+    EXPECT_TRUE(fifo_queue != NULL);
+    EXPECT_EQ(fifo_queue_dequeue_item(fifo_queue, &item), -1);
+    item = 1;
+    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item), 0);
+    item = 2;
+    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item), 0);
+    EXPECT_EQ(fifo_queue_dequeue_item(fifo_queue, &item), 0);
+    EXPECT_EQ(item, 1);
+    item = 3;
+    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item), 0);
+    item = 4;
+    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item), 0);
+    item = 5;
+    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item), 0);
+    item = 6;
+    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item), 0);
+    item = 7;
+    EXPECT_EQ(fifo_queue_enqueue_item(fifo_queue, &item), -1);
+    EXPECT_EQ(fifo_queue_dequeue_item(fifo_queue, &item), 0);
+    EXPECT_EQ(item, 2);
+    EXPECT_EQ(fifo_queue_dequeue_item(fifo_queue, &item), 0);
+    EXPECT_EQ(item, 3);
+    EXPECT_EQ(fifo_queue_dequeue_item(fifo_queue, &item), 0);
+    EXPECT_EQ(item, 4);
+    EXPECT_EQ(fifo_queue_dequeue_item(fifo_queue, &item), 0);
+    EXPECT_EQ(item, 5);
+    EXPECT_EQ(fifo_queue_dequeue_item(fifo_queue, &item), 0);
+    EXPECT_EQ(item, 6);
+    EXPECT_EQ(fifo_queue_dequeue_item(fifo_queue, &item), -1);
+    EXPECT_EQ(item, 6);
+    fifo_queue_destroy(fifo_queue);
+    EXPECT_EQ(fifo_queue_dequeue_item(NULL, &item), -1);
+    EXPECT_EQ(fifo_queue_enqueue_item(NULL, &item), -1);
 }
 
 // Test notification packager (from string to WhistNotification).
