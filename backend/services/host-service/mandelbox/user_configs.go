@@ -3,7 +3,6 @@ package mandelbox // import "github.com/whisthq/whist/backend/services/host-serv
 // This file provides functions that manage user configs, including fetching, uploading, and encrypting them.
 
 import (
-	"bytes"
 	"context"
 	"crypto/md5"
 	"encoding/base32"
@@ -108,7 +107,6 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 	if err != nil {
 		return utils.MakeError("Failed to encrypt configs for user %s for mandelbox %s with hashed token %s: %s", userID, mandelboxID, hash(configToken), err)
 	}
-	encryptedConfigBuffer := bytes.NewBuffer(encryptedConfig)
 
 	// Upload encrypted config to S3
 	s3Client, err := configutils.NewS3Client("us-east-1")
@@ -116,7 +114,7 @@ func (mandelbox *mandelboxData) BackupUserConfigs() error {
 		return utils.MakeError("Error backing up user configs for user %s for mandelbox %s: error creating s3 client: %s", userID, mandelboxID, err)
 	}
 
-	uploadResult, err := configutils.UploadFileToBucket(s3Client, UserConfigS3Bucket, mandelbox.getS3ConfigKey(hash(configToken)), encryptedConfigBuffer)
+	uploadResult, err := configutils.UploadFileToBucket(s3Client, UserConfigS3Bucket, mandelbox.getS3ConfigKey(hash(configToken)), encryptedConfig)
 	if err != nil {
 		return utils.MakeError("Error uploading encrypted config for user %s for mandelbox %s to s3: %s", userID, mandelboxID, err)
 	}

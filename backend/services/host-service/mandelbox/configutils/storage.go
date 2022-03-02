@@ -1,8 +1,10 @@
 package configutils // import "github.com/whisthq/whist/backend/services/host-service/mandelbox/configutils"
 
 import (
+	"bytes"
 	"context"
-	"io"
+	"crypto/md5"
+	"encoding/hex"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -43,12 +45,16 @@ func DownloadObjectToBuffer(client *s3.Client, bucket, key string, buffer *manag
 }
 
 // UploadFileToBucket uploads the given file to the given bucket and key.
-func UploadFileToBucket(client *s3.Client, bucket, key string, file io.Reader) (*manager.UploadOutput, error) {
+func UploadFileToBucket(client *s3.Client, bucket, key string, data []byte) (*manager.UploadOutput, error) {
 	uploader := manager.NewUploader(client)
+	dataBuffer := bytes.NewBuffer(data)
 	return uploader.Upload(context.Background(), &s3.PutObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
-		Body:   file,
+		Body:   dataBuffer,
+		Metadata: map[string]string{
+			"md5": GetMD5Hash(data),
+		},
 	})
 }
 
@@ -82,4 +88,10 @@ func GetMostRecentMatchingKey(client *s3.Client, bucket, prefix, suffix string) 
 	}
 
 	return curMatch, nil
+}
+
+// GetMd5Hash returns the MD5 hash of the given data as a hex string.
+func GetMD5Hash(data []byte) string {
+	hash := md5.Sum(data)
+	return hex.EncodeToString(hash[:])
 }
