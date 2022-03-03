@@ -30,7 +30,7 @@ function addSubscriptionStatusClaim(user, context, callback) {
           .sort((left, right) => left.created - right.created)
           .pop() ?? null
 
-        console.log("Chose subscription", JSON.stringify(subscription))
+        console.log(`Refreshing access token for user ${user?.email ?? "[None]"}`, JSON.stringify(subscription))
 
         context.accessToken[
           "https://api.fractal.co/subscription_status"
