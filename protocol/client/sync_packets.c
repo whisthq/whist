@@ -264,11 +264,12 @@ static int multithreaded_sync_tcp_packets(void* opaque) {
         FileData* file_chunk;
         FileMetadata* file_metadata;
         // Iterate through all file indexes and try to read next chunk to send
-        for (int file_index = 0; file_index < NUM_TRANSFERRING_FILES; file_index++) {
-            file_synchronizer_read_next_file_chunk(file_index, &file_chunk);
+        LinkedList* transferring_files = file_synchronizer_get_transferring_files();
+        linked_list_for_each(transferring_files, TransferringFile, transferring_file) {
+            file_synchronizer_read_next_file_chunk(transferring_file, &file_chunk);
             if (file_chunk == NULL) {
                 // If chunk cannot be read, then try opening the file
-                file_synchronizer_open_file_for_reading(file_index, &file_metadata);
+                file_synchronizer_open_file_for_reading(transferring_file, &file_metadata);
                 if (file_metadata == NULL) {
                     continue;
                 }
