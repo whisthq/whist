@@ -16,7 +16,6 @@ import (
 type ScalingAlgorithm interface {
 	ProcessEvents(context.Context, *sync.WaitGroup)
 	CreateEventChans()
-	CreateBuffer()
 	CreateGraphQLClient(subscriptions.WhistGraphQLClient)
 	CreateDBClient(dbclient.WhistDBClient)
 }
@@ -36,7 +35,6 @@ type DefaultScalingAlgorithm struct {
 	Host               hosts.HostHandler
 	GraphQLClient      subscriptions.WhistGraphQLClient
 	DBClient           dbclient.WhistDBClient
-	InstanceBuffer     *int32
 	Region             string
 	InstanceEventChan  chan ScalingEvent
 	ImageEventChan     chan ScalingEvent
@@ -56,12 +54,6 @@ func (s *DefaultScalingAlgorithm) CreateEventChans() {
 	if s.ScheduledEventChan == nil {
 		s.ScheduledEventChan = make(chan ScalingEvent, 100)
 	}
-}
-
-// CreateBuffer initializes the instance buffer.
-func (s *DefaultScalingAlgorithm) CreateBuffer() {
-	buff := int32(DEFAULT_INSTANCE_BUFFER)
-	s.InstanceBuffer = &buff
 }
 
 // CreateGraphQLClient sets the graphqlClient to be used by the DBClient for queries and mutations.

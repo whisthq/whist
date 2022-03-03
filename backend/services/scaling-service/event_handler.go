@@ -65,7 +65,6 @@ func main() {
 	// Instantiate scaling algorithms on allowed regions
 	algorithmByRegionMap.Range(func(key, value interface{}) bool {
 		scalingAlgorithm := value.(algos.ScalingAlgorithm)
-		scalingAlgorithm.CreateBuffer()
 		scalingAlgorithm.CreateEventChans()
 		scalingAlgorithm.CreateGraphQLClient(graphqlClient)
 		scalingAlgorithm.CreateDBClient(dbclient)
