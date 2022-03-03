@@ -1,9 +1,9 @@
 [project]
 name = "whist"
 version = "1.0.0"
-description = "Whist monorepository pyproject.toml"
+description = "Whist Browser"
 authors = [
-    "Whist Developers <developers@whist.com>"
+    "Whist Technologies, Inc. <support@whist.com>"
 ]
 license = "UNLICENSED"
 readme = "README.md"
@@ -20,16 +20,16 @@ classifiers = [
 
 # Requirements
 [dependencies]
-pylint = "^2.9.3"
+pylint = "^2.12.1"
 
 [dev-dependencies]
-black = { version = "21.6b0", python = "^3.9" }
+black = { version = "22.1.0", python = "^3.9" }
 
 # Configuration for Black.
 
 # NOTE: you have to use single-quoted strings in TOML for regular expressions.
-# It's the equivalent of r-strings in Python.  Multiline strings are treated as
-# verbose regular expressions by Black.  Use [ ] to denote a significant space
+# It's the equivalent of r-strings in Python. Multiline strings are treated as
+# verbose regular expressions by Black. Use [ ] to denote a significant space
 # character.
 
 [tool.black]
