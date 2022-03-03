@@ -137,7 +137,7 @@ jobs:
           job_dependencies[scaling-service-deploy]="scaling-service host-setup mandelboxes"
           job_dependencies[client-applications-publish-build-x64-s3]="protocol client-applications core-ts"
           job_dependencies[client-applications-publish-build-arm64-s3]="protocol client-applications core-ts"
-          job_dependencies[microservices-deploy-auth0-rules]="microservices"
+          job_dependencies[auth0-deploy-rules]="auth0"
           job_dependencies[terraform-deploy]="infrastructure"
 
           # The jobs `whist-publish-build-config`, `whist-build-monorepo-config`,
@@ -398,12 +398,12 @@ jobs:
   # Build and deploy the Auth0 rules to the Whist Auth0 Tenant platform, with
   # which our client-application interfaces with authenticating users through Auth0
   # Runs if config succeeds and branch is in ["prod", "staging", "dev"]
-  microservices-deploy-auth0-rules:
+  auth0-deploy-rules:
     name: "Deploy Auth0 Rules"
     runs-on: ubuntu-20.04
-    concurrency: microservices-deploy-auth0-rules-${{ github.ref }}
+    concurrency: auth0-deploy-rules-${{ github.ref }}
     needs: [whist-publish-build-config, whist-build-monorepo-config]
-    if: contains(needs.whist-publish-build-config.outputs.jobs, '|microservices-deploy-auth0-rules|')
+    if: contains(needs.whist-publish-build-config.outputs.jobs, '|auth0-deploy-rules|')
 
     steps:
       - name: Checkout Git Repository
@@ -419,11 +419,11 @@ jobs:
           node-version: "16"
 
       - name: Install Development Dependencies
-        working-directory: backend/microservices/auth0
+        working-directory: backend/auth0
         run: yarn install
 
       - name: Deploy Changes to the Auth0 Tenant
-        working-directory: backend/microservices/auth0
+        working-directory: backend/auth0
         env:
           AUTH0_CLIENT_SECRET: ${{ secrets[format('AUTH0_GHA_CLIENT_SECRET_{0}', needs.whist-publish-build-config.outputs.branch)] }}
           GOOGLE_OAUTH_SECRET: ${{ secrets.GOOGLE_OAUTH_SECRET }}
@@ -460,7 +460,7 @@ jobs:
             SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT_DEV }}"
 
           from notifications.slack_bot import slack_post
-          BODY = "@releases :rotating_light: Deployment failed: could not deploy Auth0 Rules in `microservices-deploy-auth0-rules` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
+          BODY = "@releases :rotating_light: Deployment failed: could not deploy Auth0 Rules in `auth0-deploy-rules` job, investigate immediately :rotating_light: (<https://github.com/whisthq/whist/actions/runs/${{ github.run_id }} | see logs>)"
           slack_post(slack_webhook=SLACK_WEBHOOK, body=BODY)
 
   #######################################################################################
@@ -959,7 +959,7 @@ jobs:
         whist-publish-build-config,
         whist-build-monorepo-config,
         scaling-service-deploy,
-        microservices-deploy-auth0-rules,
+        auth0-deploy-rules,
         terraform-deploy,
       ]
     outputs:
@@ -975,7 +975,7 @@ jobs:
       (contains(needs.whist-publish-build-config.outputs.jobs, '|client-applications-publish-build-arm64-s3|'))) &&
       (needs.scaling-service-deploy.result == 'success') &&
       (needs.webserver-deploy-heroku.result == 'success') &&
-      (needs.microservices-deploy-auth0-rules.result == 'success') &&
+      (needs.auth0-deploy-rules.result == 'success') &&
       (needs.mandelboxes-and-amis-publish-ghcr-and-aws.result == 'success')
 
     steps:
@@ -1454,7 +1454,7 @@ jobs:
         whist-build-monorepo-config,
         mandelboxes-and-amis-publish-ghcr-and-aws,
         webserver-deploy-heroku,
-        microservices-deploy-auth0-rules,
+        auth0-deploy-rules,
         terraform-deploy,
       ]
     if: contains(needs.whist-publish-build-config.outputs.jobs, '|scaling-service-deploy|')
@@ -1584,7 +1584,7 @@ jobs:
       [
         whist-publish-build-config,
         whist-build-monorepo-config,
-        microservices-deploy-auth0-rules,
+        auth0-deploy-rules,
         terraform-deploy,
         mandelboxes-and-amis-publish-ghcr-and-aws,
         webserver-deploy-heroku,

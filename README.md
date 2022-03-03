@@ -59,7 +59,6 @@ The Whist monorepository contains 8 Whist subrepositories:
 | host-service        | The Whist service which runs on EC2 instance hosts and orchestrates mandelbox management.           |
 | host-setup          | The scripts to setup an EC2 innstance into a Whist-optimized host ready to run Whist mandelboxes.   |
 | mandelboxes         | The Dockerfiles defining the mandelboxes and helper scripts for the applications we stream.         |
-| microservices       | Code we deploy to other platforms, like Auth0.                                                      |
 | protocol            | The streaming technology API, both client and server, for streaming applications to users.          |
 | webserver           | The REST API for managing our AWS infrastructure, supporting our front-end, and connecting the two. |
 | website             | The website hosted at `whist.com`.                                                                  |

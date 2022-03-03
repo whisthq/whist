@@ -8,17 +8,17 @@ name: "Microservices: Check PR"
 on:
   pull_request:
     paths:
-      - "microservices/**"
-      - "!microservices/README.md"
-      - "!microservices/**/README.md"
-      - ".github/workflows/microservices-check-pr.yml"
+      - "auth0/**"
+      - "!auth0/README.md"
+      - "!auth0/**/README.md"
+      - ".github/workflows/auth0-check-pr.yml"
       - ".github/actions/generate-auth0-token"
       - ".github/actions/set-environment/action.yml"
   workflow_dispatch:
 
 jobs:
   # Check that our Whist Authentication API authentication is valid for all our environments dev/staging/prod
-  microservices-auth0-verify-whist-api-auth:
+  auth0-auth0-verify-whist-api-auth:
     name: "Auth0: Verify Whist API Authentication for ${{ matrix.environment.name }}"
     runs-on: ubuntu-20.04
 
@@ -52,7 +52,7 @@ jobs:
           client-secret: ${{ secrets[steps.set-workflow-environment.outputs.auth0-client-secret-key] }}
 
   # Check that our Auth0 deployment setup works by attempting to retrieve the current upstream schema
-  microservices-auth0-verify-tenant-schema-retrieval:
+  auth0-auth0-verify-tenant-schema-retrieval:
     name: "Auth0: Verify Tenant Schema Retrieval for ${{ matrix.environment.name }}"
     runs-on: ubuntu-20.04
 
@@ -86,11 +86,11 @@ jobs:
           node-version: "16"
 
       - name: Install Dependencies
-        working-directory: backend/microservices/auth0
+        working-directory: backend/auth0
         run: yarn install
 
       - name: Dump the Upstream Auth0 Tenant
-        working-directory: backend/microservices/auth0
+        working-directory: backend/auth0
         env:
           AUTH0_CLIENT_SECRET: ${{ secrets[format('AUTH0_GHA_CLIENT_SECRET_{0}', matrix.environment.branch)] }}
           GOOGLE_OAUTH_SECRET: ${{ secrets.GOOGLE_OAUTH_SECRET }}

@@ -19,8 +19,8 @@
       groupName: "backend/webserver",
     },
     {
-      matchPaths: ["backend/microservices/auth0/"],
-      groupName: "backend/microservices/auth0",
+      matchPaths: ["backend/auth0/"],
+      groupName: "backend/auth0",
     },
     {
       matchPaths: ["mandelboxes/"],
