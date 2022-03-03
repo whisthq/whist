@@ -12,7 +12,7 @@ const padded = "pb-20 px-12 max-w-screen-2xl m-auto overflow-x-hidden"
 export default function Example() {
   return (
     <div id="top">
-      <div className={classNames(padded, "bg-blue-darkest")}>
+      <div className={classNames(padded, "bg-gray-900")}>
         <Header />
         <Hero />
         <Overview />

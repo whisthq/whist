@@ -21,7 +21,7 @@ const RootApp = () => {
             accessToken(string): Access token, if any
     */
   return (
-    <div className="bg-blue-darkest">
+    <div className="bg-gray-900">
       <Switch>
         <Route exact path={routes.DOWNLOAD} component={Download} />
         <Route exact path={routes.CONTACT} component={Contact} />

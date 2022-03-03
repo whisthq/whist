@@ -56,8 +56,8 @@ const Footer = () => {
         <div className="xl:grid xl:grid-cols-3 xl:gap-8">
           <div className="space-y-8 xl:col-span-1">
             <img
-              className="h-10 w-10 rounded"
-              src="https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2_borderless.png"
+              className="h-12 w-12 rounded relative right-3"
+              src="https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png"
               alt=""
             />
             <p className="text-gray-500 text-base">
@@ -69,7 +69,7 @@ const Footer = () => {
                 <a
                   key={item.name}
                   href={item.href}
-                  className="text-gray-400 hover:text-mint"
+                  className="text-gray-400 hover:text-blue-light"
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -90,7 +90,7 @@ const Footer = () => {
                     <li key={item.name}>
                       <a
                         href={item.href}
-                        className="text-base text-gray-500 hover:text-mint"
+                        className="text-base text-gray-500 hover:text-blue-light"
                       >
                         {item.name}
                       </a>
@@ -107,7 +107,7 @@ const Footer = () => {
                     <li key={item.name}>
                       <a
                         href={item.href}
-                        className="text-base text-gray-500 hover:text-mint"
+                        className="text-base text-gray-500 hover:text-blue-light"
                       >
                         {item.name}
                       </a>
@@ -126,7 +126,7 @@ const Footer = () => {
                     <li key={item.name}>
                       <a
                         href={item.href}
-                        className="text-base text-gray-500 hover:text-mint"
+                        className="text-base text-gray-500 hover:text-blue-light"
                       >
                         {item.name}
                       </a>
@@ -144,7 +144,7 @@ const Footer = () => {
                       <a
                         target="_blank"
                         href={item.href}
-                        className="text-base text-gray-500 hover:text-mint"
+                        className="text-base text-gray-500 hover:text-blue-light"
                         rel="noreferrer"
                       >
                         {item.name}
@@ -158,7 +158,7 @@ const Footer = () => {
         </div>
         <div className="w-full text-center mt-4">
           <a href="/download#top">
-            <button className="rounded bg-blue text-gray-300 px-12 py-3">
+            <button className="rounded bg-blue text-gray-900 px-12 py-3">
               Get Started
             </button>
           </a>

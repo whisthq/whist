@@ -1,9 +1,9 @@
 import React from "react"
 import {
   GlobeAltIcon,
-  BookmarkIcon,
-  ChartPieIcon,
   ChatAltIcon,
+  ChartPieIcon,
+  DesktopComputerIcon,
 } from "@heroicons/react/outline"
 
 const features = [
@@ -20,10 +20,10 @@ const features = [
     icon: ChartPieIcon,
   },
   {
-    name: "Productivity Workers",
+    name: "Old Macbook Owners",
     description:
-      "When you're the world record holder for the largest Google Slides presentation or Airtable workspace and your computer slows down.",
-    icon: BookmarkIcon,
+      "When your laptop slows down because it can't keep up with your workload.",
+    icon: DesktopComputerIcon,
   },
   {
     name: "Content Consumers",
@@ -47,7 +47,7 @@ const Users = () => {
             {features.map((feature) => (
               <div key={feature.name}>
                 <dt>
-                  <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue text-gray-300">
+                  <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue text-gray-900">
                     <feature.icon className="h-6 w-6" aria-hidden="true" />
                   </div>
                   <p className="mt-5 text-lg leading-6 font-medium text-gray-300">

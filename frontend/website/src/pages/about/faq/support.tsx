@@ -29,7 +29,7 @@ const Support = () => {
                 <a
                   href="https://discord.com/invite/HjPpDGvEeA"
                   target="_blank"
-                  className="text-gray-300 hover:text-mint"
+                  className="text-gray-300 hover:text-blue-light"
                   rel="noreferrer"
                 >
                   Discord

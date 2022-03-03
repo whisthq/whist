@@ -17,7 +17,7 @@ const Detailed = () => {
             of security to consider: security of your browsing stream and
             security of your browsing data.
           </p>
-          <p className="mt-8 text-xl text-mint leading-8 text-left">
+          <p className="mt-8 text-xl text-blue-light leading-8 text-left">
             How We Secure Your Browsing Stream
           </p>
           <p className="mt-8 text-gray-400 leading-8 text-left">
@@ -30,7 +30,7 @@ const Detailed = () => {
             their journey. We discard your keystrokes, audio, and video
             immediately after they are replayed.
           </p>
-          <p className="mt-8 text-xl text-mint leading-8 text-left">
+          <p className="mt-8 text-xl text-blue-light leading-8 text-left">
             How We Secure Your Browsing Data
           </p>
           <p className="mt-8 text-gray-400 leading-8 text-left">

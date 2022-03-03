@@ -16,7 +16,7 @@ export const About = () => {
         <Header />
         <Hero />
       </div>
-      <div className={classNames(padded, "bg-blue-darkest")}>
+      <div className={classNames(padded, "bg-gray-900")}>
         <Team />
         <Investors />
       </div>

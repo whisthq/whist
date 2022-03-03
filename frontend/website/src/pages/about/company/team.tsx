@@ -15,7 +15,7 @@ export const Team = () => {
             To join our team, click{" "}
             <a
               href="/contact#careers"
-              className="text-gray-300 hover:text-mint"
+              className="text-gray-300 hover:text-blue-light"
             >
               here
             </a>
@@ -27,7 +27,7 @@ export const Team = () => {
             (person: { name: string; imagePath: string; title: string }) => (
               <li
                 key={person.name}
-                className="py-10 px-6 bg-gray-900 text-center rounded-lg xl:px-10 xl:text-left"
+                className="py-10 px-6 bg-gray-800 text-center rounded-lg xl:px-10 xl:text-left"
               >
                 <div className="space-y-6 xl:space-y-10">
                   <div

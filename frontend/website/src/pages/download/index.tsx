@@ -19,7 +19,7 @@ const Download = () => {
 
   return (
     <>
-      <div className={classNames(padded, "bg-blue-darkest h-screen")} id="top">
+      <div className={classNames(padded, "bg-gray-900 h-screen")} id="top">
         <Header />
         <Hero
           allowDownloads={

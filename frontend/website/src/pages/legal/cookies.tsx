@@ -13,7 +13,7 @@ const Cookies = () => {
     <div
       className={classNames(
         "overflow-x-hidden",
-        dark ? "dark bg-blue-darkest" : "bg-white"
+        dark ? "dark bg-gray-900" : "bg-white"
       )}
       style={{ overflowX: "hidden" }}
       id="top"

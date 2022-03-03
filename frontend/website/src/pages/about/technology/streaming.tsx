@@ -58,7 +58,9 @@ const Streaming = () => (
           <div className="mt-24 grid grid-cols-1 gap-y-12 gap-x-6 sm:grid-cols-2 border-t border-gray-600 pt-8">
             {metrics.map((item) => (
               <p key={item.id}>
-                <span className="block text-2xl text-mint">{item.stat}</span>
+                <span className="block text-2xl text-blue-light">
+                  {item.stat}
+                </span>
                 <span className="mt-1 block text-base text-gray-300">
                   {item.text}
                 </span>
@@ -90,13 +92,15 @@ const Streaming = () => (
               <div className="relative rounded-full border-2 border-white sm:absolute sm:top-0 sm:transform sm:-translate-y-1/2">
                 <img
                   className="w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-indigo-300"
-                  src="https://media-exp1.licdn.com/dms/image/C5603AQE5ly63D-E7dA/profile-displayphoto-shrink_400_400/0/1615683999893?e=1632960000&v=beta&t=Z65X7UBzuYTgrLfucjTpTxy9gkqAD9Kr_jl1bY79UMk"
+                  src="https://media-exp1.licdn.com/dms/image/C5603AQE5ly63D-E7dA/profile-displayphoto-shrink_800_800/0/1615683999893?e=1651708800&v=beta&t=KG9w7Q597DfTOWuNL9JvW7na2NHDJgK-ncdMfX_Nhpc"
                   alt=""
                 />
               </div>
-              <span className="relative text-indigo-300 leading-6 sm:ml-24 sm:pl-1">
-                <p className="text-white sm:inline font-semibold">Jenny Wang</p>{" "}
-                <p className="sm:inline">Founder at re-inc</p>
+              <span className="relative leading-6 sm:ml-24 sm:pl-1">
+                <p className="text-gray-900 sm:inline font-semibold">
+                  Jenny Wang
+                </p>{" "}
+                <p className="sm:inline text-gray-800">Founder at re-inc</p>
               </span>
             </cite>
           </blockquote>

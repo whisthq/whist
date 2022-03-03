@@ -14,15 +14,13 @@ module.exports = {
         transparent: "transparent",
         current: "currentColor",
         blue: {
-          DEFAULT: "#4F35DE",
-          light: "#e3defa",
-          lightest: "#f6f9ff",
-          darker: "#151636",
-          darkest: "#0d0f21",
+          DEFAULT: "#0092FF",
+          light: "#71D9FF",
+          dark: "#0000CE",
         },
-        mint: {
-          DEFAULT: "#00FFA2",
-          light: "#c9ffeb",
+        gray: {
+          800: "#202124",
+          900: "#141517",
         },
         red: {
           DEFAULT: "#B91C1C",

@@ -36,7 +36,7 @@ const Emails = () => (
         <a
           href="https://discord.com/invite/HjPpDGvEeA"
           target="_blank"
-          className="text-gray-300 hover:text-mint"
+          className="text-gray-300 hover:text-blue-light"
           rel="noreferrer"
         >
           Discord
@@ -54,11 +54,11 @@ const Emails = () => (
         </h2>
         <div className="grid grid-cols-1 gap-y-20 lg:grid-cols-3 lg:gap-y-0 lg:gap-x-8">
           {supportLinks.map((link) => (
-            <div key={link.name} className="flex flex-col rounded bg-gray-900">
+            <div key={link.name} className="flex flex-col rounded bg-gray-800">
               <div className="flex-1 relative pt-16 px-6 pb-8 md:px-8">
                 <div className="top-0 p-3 inline-block bg-blue rounded transform -translate-y-1/2">
                   <link.icon
-                    className="h-6 w-6 text-white"
+                    className="h-6 w-6 text-gray-900"
                     aria-hidden="true"
                   />
                 </div>
@@ -72,7 +72,7 @@ const Emails = () => (
               <div className="p-6 bg-blue-gray-50 rounded-bl-2xl rounded-br-2xl md:px-8">
                 <a
                   href={`mailto: ${link.href}`}
-                  className="text-base font-medium text-gray-300 hover:text-mint"
+                  className="text-base font-medium text-gray-300 hover:text-blue-light"
                 >
                   Contact us
                   <span aria-hidden="true"> &rarr;</span>
