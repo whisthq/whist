@@ -25,7 +25,7 @@ pages:
     html: ./pages/login.html
 resourceServers:
   - name: Whist API
-    identifier: https://api.fractal.co
+    identifier: "##WHIST_AUTHENTICATION_API##"
     allow_offline_access: true
     enforce_policies: true
     scopes:
@@ -46,8 +46,7 @@ clients:
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
-    description: >-
-      A service that performs administrative operations on the Fractal
+    description: A service that performs administrative operations on the Fractal
       webserver(s) on behalf of Fractal developers
     grant_types:
       - client_credentials
@@ -90,8 +89,7 @@ clients:
       alg: RS256
       lifetime_in_seconds: 36000
       secret_encoded: false
-    logo_uri: >-
-      https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
+    logo_uri: https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
     native_social_login:
       apple:
         enabled: false
@@ -111,8 +109,7 @@ clients:
   - name: Whist
     allowed_clients: []
     app_type: native
-    callbacks:
-      - http://localhost/callback
+    callbacks: @@WHIST_ELECTRON_APP_CALLBACK@@
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
@@ -126,8 +123,7 @@ clients:
       alg: RS256
       lifetime_in_seconds: 36000
       secret_encoded: false
-    logo_uri: >-
-      https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
+    logo_uri: https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
     native_social_login:
       apple:
         enabled: false
@@ -157,12 +153,7 @@ connections:
       scope: name email
       team_id: 757Z8TDNJL
       client_id: com.whisttechnologies.whistauth
-      app_secret: >-
-        -----BEGIN PRIVATE KEY-----
-        MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQg1LBXjJkEr/la6+5T
-        WLhTs7uxRMbkLKSvwueU9oK5wIegCgYIKoZIzj0DAQehRANCAAStkaVSvOS90OS6
-        B/tGoi3EIMh22TY2eTujobk7fMxi9l9HKwrpEIMp1xZXKDbtLIEhLc0OzDKLWn3N
-        +D/skrVE -----END PRIVATE KEY-----
+      app_secret: "##APPLE_OAUTH_SECRET##"
   - name: google-oauth2
     strategy: google-oauth2
     enabled_clients:
@@ -191,14 +182,14 @@ connections:
       google_books: false
       google_drive: false
       spreadsheets: false
-      client_secret: GNQzUp-xTVNdoWx7H9brpBr-
+      client_secret: "##GOOGLE_OAUTH_SECRET##"
       document_list: false
       latitude_best: false
       latitude_city: false
       url_shortener: false
       webmaster_tools: false
       chrome_web_store: false
-      allowed_audiences: ''
+      allowed_audiences: ""
       adsense_management: false
       google_drive_files: false
       coordinate_readonly: false
@@ -206,8 +197,8 @@ connections:
       content_api_for_shopping: false
       google_affiliate_network: false
 tenant:
-  default_audience: ''
-  default_directory: ''
+  default_audience: ""
+  default_directory: ""
   enabled_locales:
     - bs
     - bg
@@ -255,26 +246,25 @@ tenant:
     revoke_refresh_token_grant: false
     disable_clickjack_protection_headers: false
   friendly_name: Whist Technologies, Inc.
-  picture_url: >-
-    https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
+  picture_url: https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
   support_email: support@whist.com
   support_url: https://whist.com/contact
   universal_login:
     colors:
-      page_background: '#ffffff'
-      primary: '#4f35de'
+      page_background: "#ffffff"
+      primary: "#4f35de"
 emailProvider:
   name: sendgrid
   credentials:
-    api_key: '##SENDGRID_API_KEY##'
+    api_key: "##SENDGRID_API_KEY##"
   default_from_address: Whist <support@whist.com>
   enabled: true
 emailTemplates:
   - template: verify_email
     body: ./emailTemplates/verify_email.html
     enabled: false
-    from: ''
-    subject: ''
+    from: ""
+    subject: ""
     syntax: liquid
     urlLifetimeInSeconds: 432000
   - template: welcome_email
@@ -285,7 +275,7 @@ emailTemplates:
     syntax: liquid
 clientGrants:
   - client_id: Webserver
-    audience: https://api.fractal.co
+    audience: "##WHIST_AUTHENTICATION_API##"
     scope:
       - backend
 guardianFactors:
@@ -318,13 +308,12 @@ roles:
     description: Whist developers
     permissions:
       - permission_name: admin
-        resource_server_identifier: https://api.fractal.co
+        resource_server_identifier: "##WHIST_AUTHENTICATION_API##"
 branding:
   colors:
-    page_background: '#ffffff'
-    primary: '#4f35de'
-  logo_url: >-
-    https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
+    page_background: "#ffffff"
+    primary: "#4f35de"
+  logo_url: https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
 prompts:
   universal_login_experience: new
   identifier_first: true

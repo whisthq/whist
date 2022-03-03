@@ -6,12 +6,16 @@ const clientIDs = {
 
 const getConfig = (env) => {
   // List of environment variables that must be defined in order for deploy to succeed.
-  const REQUIRED_ENV_VARS = ["SENDGRID_API_KEY, GOOGLE_OAUTH_SECRET", "APPLE_OAUTH_SECRET"]
+  const REQUIRED_ENV_VARS = [
+    "SENDGRID_API_KEY",
+    "GOOGLE_OAUTH_SECRET",
+    "APPLE_OAUTH_SECRET",
+  ]
 
   REQUIRED_ENV_VARS.forEach((v) => {
     if (!process.env[v]) {
-      console.log(`Environment variable "${v}" not defined`)
-      process.exit()
+      console.error(`Environment variable "${v}" not defined`)
+      process.exit(1)
     }
   })
 
@@ -35,5 +39,5 @@ const getConfig = (env) => {
 }
 
 module.exports = {
-  getConfig
+  getConfig,
 }
