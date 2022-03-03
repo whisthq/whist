@@ -30,7 +30,7 @@ This repository contains the bulk of the code for the Whist Browser, previously 
 
 The Whist monorepository contains 8 Whist subrepositories:
 
-| Subrepository                    | Description                                                                             | 
+| Subrepository                    | Description                                                                             |
 | -------------------------------- | --------------------------------------------------------------------------------------- |
 | backend/auth0                    | Auth0 is a third-party service which manages authentication and user accounts for us.   |
 | backend/services/host-service    | This service runs on EC2 instance hosts and orchestrates mandelbox management.          |
@@ -66,7 +66,7 @@ To avoid pushing code that does not follow our coding guidelines, we recommend y
 - `prod` -- This branch is for Releases only, do not push to it.
 - `staging` -- This branch is for Beta only, do not push to it. It gets promoted to `prod` periodically.
 - `dev` -- This is our main development branch, PRs should be made to this branch. It gets promoted to `staging` periodically.
-- All other branches are considered feature branches. They should be forked off of `dev` and PR-ed into `dev`. 
+- All other branches are considered feature branches. They should be forked off of `dev` and PR-ed into `dev`.
 
 **Feature branches are named as follows:**
 
@@ -75,9 +75,9 @@ To avoid pushing code that does not follow our coding guidelines, we recommend y
 
 Note that the last part of the branch name should almost always be an **action** instead of an object (i.e. `add-llama-theme` instead of `llama-theme`). This makes commit logs much easier to parse.
 
-You're free to modify your own branches in any way you want. However, do not attempt to rewrite history on our common branches unless you have a specific reason to do, and the team's approval. 
+You're free to modify your own branches in any way you want. However, do not attempt to rewrite history on our common branches unless you have a specific reason to do, and the team's approval.
 
-We explicitly disallow merge commits on this repository, and all branches should be either squash-merged or rebase-merged, to avoid messy git histories with lots of "Merged branch `dev` in ....`. The commands `git rebase` is your friend, and to avoid accidental merge commits when pulling, you can run `git config pull.ff only` in your local repository.
+We explicitly disallow merge commits on this repository, and all branches should be either squash-merged or rebase-merged, to avoid messy git histories with lots of "Merged branch `dev` in ....`. The commands `git rebase`is your friend, and to avoid accidental merge commits when pulling, you can run`git config pull.ff only` in your local repository.
 
 ### Commit Conventions
 
@@ -97,7 +97,7 @@ Eventually, but hopefully rarely, production will be on fire, and we will need t
 
 ### Promotions
 
-Once our `dev` branch is stable and we're ready to bring our new changes out into the world, we'll promote it to `dev`. This can be done by opening a promotion PR via the following URL: 
+Once our `dev` branch is stable and we're ready to bring our new changes out into the world, we'll promote it to `dev`. This can be done by opening a promotion PR via the following URL:
 
 ```
 https://github.com/whisthq/whist/compare/staging...dev?expand=1&template=promotion.md
