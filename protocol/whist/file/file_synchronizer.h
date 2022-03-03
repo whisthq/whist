@@ -36,6 +36,14 @@ Custom types
 
 #define NUM_TRANSFERRING_FILES 5
 
+/*
+============================
+Includes
+============================
+*/
+
+#include <whist/utils/linked_list.h>
+
 /**
  * @brief                          The type of the file chunk being sent
  */
@@ -50,6 +58,7 @@ typedef enum FileChunkType {
  *                                 the information of a file chunk
  */
 typedef struct FileData {
+    int global_file_index;
     int index;                 // The index of the file in the synchrony array
     size_t size;               // Number of bytes for the file chunk data
     FileChunkType chunk_type;  // Whether this is a first, middle or last chunk
@@ -80,6 +89,7 @@ typedef union FileEventInfo {
  * @brief                          A packet of data containing a file's metadata
  */
 typedef struct FileMetadata {
+    int global_file_index;           // The global index of the file for synchrony
     int index;                       // The index of the file in the synchrony array
     FileTransferType transfer_type;  // Type of file transfer
     FileEventInfo event_info;        // Extra information for the file transfer
@@ -102,6 +112,8 @@ typedef enum FileTransferDirection {
  *                                 a transferring file.
  */
 typedef struct TransferringFile {
+    LINKED_LIST_HEADER;
+    int global_file_index; // Unique identifier for client-server synchrony
     int id;             // Unique identifier (unique across ALL written files,
                         //     not just active ones, but can be -1 for read files)
     char* filename;     // The filename without the path (can be NULL for read-end files)
@@ -174,7 +186,7 @@ void file_synchronizer_set_file_reading_basic_metadata(const char* file_path,
  * @param file_metadata_ptr        Pointer to pointer for filled file metadata
  *
  */
-void file_synchronizer_open_file_for_reading(int file_index, FileMetadata** file_metadata_ptr);
+void file_synchronizer_open_file_for_reading(TransferringFile* active_file, FileMetadata** file_metadata_ptr);
 
 /**
  * @brief                          Read the next file chunk from a
@@ -185,7 +197,7 @@ void file_synchronizer_open_file_for_reading(int file_index, FileMetadata** file
  * @param file_chunk_ptr           Pointer to pointer for filled file chunk
  *
  */
-void file_synchronizer_read_next_file_chunk(int file_index, FileData** file_chunk_ptr);
+void file_synchronizer_read_next_file_chunk(TransferringFile* active_file, FileData** file_chunk_ptr);
 
 /**
  * @brief                          Reset all transferring files
@@ -203,5 +215,8 @@ void file_syncrhonizer_cancel_user_file_upload(void);
  * @brief                          Cleanup the file synchronizer
  */
 void destroy_file_synchronizer(void);
+
+LinkedList* file_synchronizer_get_transferring_files(void);
+
 
 #endif  // FILE_SYNCHRONIZER_H

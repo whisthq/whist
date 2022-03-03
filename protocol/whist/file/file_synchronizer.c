@@ -51,7 +51,9 @@ Defines
 ============================
 */
 
-static TransferringFile transferring_files[NUM_TRANSFERRING_FILES];
+//FIXME: MAKE THIS AN UNSINGED LONG!
+int global_file_index = 0;
+static LinkedList transferring_files;
 static WhistMutex file_synchrony_update_mutex;  // used to protect the global file synchrony
 static bool is_initialized = false;
 static FileTransferType enabled_actions = 0;
@@ -62,7 +64,7 @@ Private Functions
 ============================
 */
 
-static void reset_transferring_file(int file_index) {
+static void reset_transferring_file(TransferringFile* current_file) {
     /*
         Reset the transferring file info at index `index`
 
@@ -72,12 +74,15 @@ static void reset_transferring_file(int file_index) {
         NOTE: must be called with `file_synchrony_update_mutex` held
     */
 
-    if (file_index >= NUM_TRANSFERRING_FILES || file_index < 0) {
+    /*if (file_index >= NUM_TRANSFERRING_FILES || file_index < 0) {
         LOG_ERROR("Index %d not available in transferring files", file_index);
         return;
-    }
+    }*/
 
-    TransferringFile* current_file = &transferring_files[file_index];
+    //TransferringFile* current_file = &transferring_files[file_index];
+    linked_list_remove(&transferring_files, current_file);
+    free(current_file);
+    return;
 
     if (current_file->file_handle) {
         fclose(current_file->file_handle);
@@ -97,7 +102,7 @@ static void reset_transferring_file(int file_index) {
     current_file->direction = FILE_UNUSED;
 }
 
-static bool is_file_index_valid(int file_index) {
+//static bool is_file_index_valid(int file_index) {
     /*
         Check whether the file index falls in the range of
         indices for the `transferring_files` array.
@@ -111,10 +116,10 @@ static bool is_file_index_valid(int file_index) {
         NOTE: must be called with `file_synchrony_update_mutex` held
     */
 
-    return file_index >= 0 && file_index < NUM_TRANSFERRING_FILES;
-}
+//    return file_index >= 0 && file_index < NUM_TRANSFERRING_FILES;
+//}
 
-static int find_free_transferring_file_index(void) {
+//static int find_free_transferring_file_index(void) {
     /*
         Find an available transferring file array index.
 
@@ -124,15 +129,15 @@ static int find_free_transferring_file_index(void) {
         NOTE: must be called with `file_synchrony_update_mutex` held
     */
 
-    for (int file_index = 0; file_index < NUM_TRANSFERRING_FILES; file_index++) {
+    /*for (int file_index = 0; file_index < NUM_TRANSFERRING_FILES; file_index++) {
         if (transferring_files[file_index].file_handle == NULL &&
             transferring_files[file_index].direction == FILE_UNUSED) {
             return file_index;
         }
     }
 
-    return -1;
-}
+    return -1;*/
+//}
 
 static void confirm_user_file_upload(void) {
     /*
@@ -145,11 +150,28 @@ static void confirm_user_file_upload(void) {
     fclose(fptr);
 }
 
+static TransferringFile* get_write_file_with_global_index(int global_index) {
+    linked_list_for_each(&transferring_files, TransferringFile, transferring_file) {
+        if (transferring_file->global_file_index == global_index && transferring_file->direction == FILE_WRITE_END) {
+            return transferring_file;
+        }
+    }
+    return NULL;
+}
+
 /*
 ============================
 Public Function Implementations
 ============================
 */
+
+LinkedList* file_synchronizer_get_transferring_files(void) {
+    if (!is_initialized) {
+        LOG_ERROR("Error mcerrorface");
+        return NULL;
+    }
+    return &transferring_files;
+}
 
 void init_file_synchronizer(FileTransferType requested_actions) {
     /*
@@ -166,8 +188,8 @@ void init_file_synchronizer(FileTransferType requested_actions) {
         return;
     }
 
-    // Zero out all the currently transferring file infos
-    memset(transferring_files, 0, sizeof(TransferringFile) * NUM_TRANSFERRING_FILES);
+    // Initialize transferring files list
+    linked_list_init(&transferring_files);
     file_synchrony_update_mutex = whist_create_mutex();
     if ((requested_actions & FILE_TRANSFER_SERVER_DROP) && init_file_drop_handler()) {
         enabled_actions |= FILE_TRANSFER_SERVER_DROP;
@@ -178,6 +200,7 @@ void init_file_synchronizer(FileTransferType requested_actions) {
     if ((requested_actions & FILE_TRANSFER_SERVER_UPLOAD)) {
         enabled_actions |= FILE_TRANSFER_SERVER_UPLOAD;
     }
+
     is_initialized = true;
 }
 
@@ -200,18 +223,23 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
 
     static int unique_id = 0;
 
-    TransferringFile* active_file = &transferring_files[file_metadata->index];
-    if (active_file->file_handle) {
+    TransferringFile* active_file = (TransferringFile*) malloc(sizeof(TransferringFile));
+    memset(active_file, 0, sizeof(TransferringFile));
+    linked_list_add_head(&transferring_files, active_file);
+    
+
+    /*if (active_file->file_handle) {
         LOG_WARNING("Cannot open a new file at index %d when file handle is already open",
                     file_metadata->index);
 
         whist_unlock_mutex(file_synchrony_update_mutex);
         return;
-    }
+    }*/
 
-    LOG_INFO("Opening file index %d for writing", file_metadata->index);
+    LOG_INFO("Opening file index %d for writing", file_metadata->global_file_index);
 
     active_file->id = unique_id++;
+    active_file->global_file_index = file_metadata->global_file_index;
 
     // Set transferring file filename
     active_file->filename = strdup(file_metadata->filename);
@@ -286,14 +314,18 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
 
     whist_lock_mutex(file_synchrony_update_mutex);
 
-    if (!is_file_index_valid(file_chunk->index)) {
+    /*if (!is_file_index_valid(file_chunk->index)) {
         LOG_ERROR("Unallowed file chunk index %d", file_chunk->index);
 
         whist_unlock_mutex(file_synchrony_update_mutex);
         return false;
-    }
+    }*/
 
-    TransferringFile* active_file = &transferring_files[file_chunk->index];
+    TransferringFile* active_file = get_write_file_with_global_index(file_chunk->global_file_index);
+
+    if(!active_file) {
+        LOG_WARNING("Write file with global file index %d not found!", file_chunk->global_file_index);
+    }
 
     // If the file handle isn't being written locally or not ready for writing, then return false.
     if (active_file->direction != FILE_WRITE_END || active_file->file_handle == NULL) {
@@ -333,7 +365,7 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
             }
 
             // For end chunks, close the file handle and reset the slot in the array
-            reset_transferring_file(file_chunk->index);
+            reset_transferring_file(active_file);
             break;
         }
         default: {
@@ -364,16 +396,19 @@ void file_synchronizer_set_file_reading_basic_metadata(const char* file_path,
     whist_lock_mutex(file_synchrony_update_mutex);
 
     // Return without creating file if no free index exists
-    int file_index;
+    /*int file_index;
     if ((file_index = find_free_transferring_file_index()) == -1) {
         LOG_WARNING("No available index for new read file");
         whist_unlock_mutex(file_synchrony_update_mutex);
         return;
-    }
+    }*/
 
-    LOG_INFO("Setting file metadata for read file index %d", file_index);
+    LOG_INFO("Setting file metadata for read file index %d", global_file_index);
 
-    TransferringFile* active_file = &transferring_files[file_index];
+    TransferringFile* active_file = (TransferringFile*) malloc(sizeof(TransferringFile));
+    memset(active_file, 0, sizeof(TransferringFile));
+    linked_list_add_head(&transferring_files, active_file);
+    active_file->global_file_index = global_file_index++;
 
     // Set transferring file filepath
     size_t file_path_len = strlen(file_path);
@@ -398,7 +433,7 @@ void file_synchronizer_set_file_reading_basic_metadata(const char* file_path,
     whist_unlock_mutex(file_synchrony_update_mutex);
 }
 
-void file_synchronizer_open_file_for_reading(int file_index, FileMetadata** file_metadata_ptr) {
+void file_synchronizer_open_file_for_reading(TransferringFile* active_file, FileMetadata** file_metadata_ptr) {
     /*
         Open a file for reading and generate the FileMetadata
 
@@ -414,14 +449,14 @@ void file_synchronizer_open_file_for_reading(int file_index, FileMetadata** file
 
     whist_lock_mutex(file_synchrony_update_mutex);
 
-    if (!is_file_index_valid(file_index)) {
+    /*if (!is_file_index_valid(file_index)) {
         LOG_ERROR("Unallowed file chunk index %d", file_index);
         *file_metadata_ptr = NULL;
         whist_unlock_mutex(file_synchrony_update_mutex);
         return;
-    }
+    }*/
 
-    TransferringFile* active_file = &transferring_files[file_index];
+    //TransferringFile* active_file = &transferring_files[file_index];
 
     // If there is no file path set for reading or this file has already been opened,
     //     then just return
@@ -432,12 +467,12 @@ void file_synchronizer_open_file_for_reading(int file_index, FileMetadata** file
     }
 
     // Open read file and reset if open failed
-    LOG_INFO("Opening file index %d for reading", file_index);
+    LOG_INFO("Opening file index %d for reading", active_file->global_file_index);
     active_file->file_handle = fopen(active_file->file_path, "r");
     if (active_file->file_handle == NULL) {
-        LOG_ERROR("Could not open file index %d for reading", file_index);
+        LOG_ERROR("Could not open file index %d for reading", active_file->global_file_index);
         // If file cannot be opened, then just abort the file transfer
-        reset_transferring_file(file_index);
+        reset_transferring_file(active_file);
         *file_metadata_ptr = NULL;
         whist_unlock_mutex(file_synchrony_update_mutex);
         return;
@@ -456,7 +491,7 @@ void file_synchronizer_open_file_for_reading(int file_index, FileMetadata** file
     memset(file_metadata->filename, 0, filename_len + 1);
     memcpy(file_metadata->filename, temp_file_name, filename_len);
 
-    file_metadata->index = file_index;
+    file_metadata->global_file_index = active_file->global_file_index;
     file_metadata->filename_len = filename_len;
     file_metadata->transfer_type = active_file->transfer_type;
     file_metadata->event_info = active_file->event_info;
@@ -470,7 +505,7 @@ void file_synchronizer_open_file_for_reading(int file_index, FileMetadata** file
     whist_unlock_mutex(file_synchrony_update_mutex);
 }
 
-void file_synchronizer_read_next_file_chunk(int file_index, FileData** file_chunk_ptr) {
+void file_synchronizer_read_next_file_chunk(TransferringFile* active_file, FileData** file_chunk_ptr) {
     /*
         Read the next file chunk from an opened transferring file
 
@@ -493,15 +528,15 @@ void file_synchronizer_read_next_file_chunk(int file_index, FileData** file_chun
 
     whist_lock_mutex(file_synchrony_update_mutex);
 
-    if (!is_file_index_valid(file_index)) {
+    /*if (!is_file_index_valid(file_index)) {
         LOG_ERROR("Unallowed file chunk index %d", file_index);
 
         *file_chunk_ptr = NULL;
         whist_unlock_mutex(file_synchrony_update_mutex);
         return;
-    }
+    }*/
 
-    TransferringFile* active_file = &transferring_files[file_index];
+    //TransferringFile* active_file = &transferring_files[file_index];
 
     // If this file is not being read locally or is not ready to be read (no file handle), return
     if (active_file->direction != FILE_READ_END || active_file->file_handle == NULL) {
@@ -510,21 +545,21 @@ void file_synchronizer_read_next_file_chunk(int file_index, FileData** file_chun
         return;
     }
 
-    LOG_INFO("Reading a chunk from file index %d", file_index);
+    LOG_INFO("Reading a chunk from file index %d", active_file->global_file_index);
     FileData* file_chunk = allocate_region(sizeof(FileData) + CHUNK_SIZE);
     file_chunk->size = fread(file_chunk->data, 1, CHUNK_SIZE, active_file->file_handle);
 
     // reallocate file chunk to only use size of read chunk
     file_chunk = realloc_region(file_chunk, sizeof(FileData) + file_chunk->size);
 
-    file_chunk->index = file_index;
+    file_chunk->global_file_index = active_file->global_file_index;
 
     // if no more contents to be read from file, then set to final chunk, else set to body
     if (file_chunk->size == 0) {
-        LOG_INFO("Finished reading from file index %d", file_index);
+        LOG_INFO("Finished reading from file index %d", file_chunk->global_file_index);
         file_chunk->chunk_type = FILE_CLOSE;
         // If last chunk, then reset entry in synchrony array
-        reset_transferring_file(file_chunk->index);
+        reset_transferring_file(active_file);
     } else {
         file_chunk->chunk_type = FILE_BODY;
     }
@@ -539,9 +574,12 @@ void reset_all_transferring_files(void) {
         Reset all transferring files
     */
 
-    for (int file_index = 0; file_index < NUM_TRANSFERRING_FILES; file_index++) {
-        reset_transferring_file(file_index);
-    }
+    // FIXME: THIS IS AN OBVIOUS STOPGAP AND MEMORY LEAK
+    return;
+
+    //for (int file_index = 0; file_index < NUM_TRANSFERRING_FILES; file_index++) {
+        //reset_transferring_file(file_index);
+    //}
 }
 
 void file_syncrhonizer_cancel_user_file_upload(void) {
