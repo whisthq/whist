@@ -1001,11 +1001,9 @@ bool try_nacking(RingBuffer* ring_buffer, double latency, NetworkSettings* netwo
             }
         }
 
-        // If too much time has passed since the last packet received,
-        // we swap into *recovery mode*, since something is probably wrong with this packet
-        if ((id < ring_buffer->max_id || get_timer(&frame_data->last_nonnack_packet_timer) >
-                                             ESTIMATED_JITTER_LATENCY_RATIO * latency) &&
-            !frame_data->recovery_mode) {
+        // If packets from any future frame is received, then we swap into *recovery mode*, for
+        // this frame
+        if (id < ring_buffer->max_id && !frame_data->recovery_mode) {
 #if LOG_NACKING
             LOG_INFO("Too long since last non-nack packet from ID %d. Entering recovery mode...",
                      id);
