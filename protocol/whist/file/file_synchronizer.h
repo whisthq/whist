@@ -58,7 +58,7 @@ typedef enum FileChunkType {
  *                                 the information of a file chunk
  */
 typedef struct FileData {
-    int global_file_index;
+    int global_file_id;        // The global id of the file for synchrony
     int index;                 // The index of the file in the synchrony array
     size_t size;               // Number of bytes for the file chunk data
     FileChunkType chunk_type;  // Whether this is a first, middle or last chunk
@@ -89,7 +89,7 @@ typedef union FileEventInfo {
  * @brief                          A packet of data containing a file's metadata
  */
 typedef struct FileMetadata {
-    int global_file_index;           // The global index of the file for synchrony
+    int global_file_id;              // The global id of the file for synchrony
     int index;                       // The index of the file in the synchrony array
     FileTransferType transfer_type;  // Type of file transfer
     FileEventInfo event_info;        // Extra information for the file transfer
@@ -113,12 +113,12 @@ typedef enum FileTransferDirection {
  */
 typedef struct TransferringFile {
     LINKED_LIST_HEADER;
-    int global_file_index; // Unique identifier for client-server synchrony
-    int id;             // Unique identifier (unique across ALL written files,
-                        //     not just active ones, but can be -1 for read files)
-    char* filename;     // The filename without the path (can be NULL for read-end files)
-    char* file_path;    // The local file path
-    FILE* file_handle;  // The local file handle
+    int global_file_id;  // Unique identifier for client-server synchrony
+    int id;              // Unique identifier (unique across ALL written files,
+                         //     not just active ones, but can be -1 for read files)
+    char* filename;      // The filename without the path (can be NULL for read-end files)
+    char* file_path;     // The local file path
+    FILE* file_handle;   // The local file handle
     FileTransferType transfer_type;   // Type of file transfer
     FileEventInfo event_info;         // Extra information for the file transfer
     FileTransferDirection direction;  // FILE_READ_END if read end, FILE_WRITE_END if write end
@@ -136,6 +136,13 @@ Public Functions
  * @param requested_actions        The file transfer types to attempt to initialize
  */
 void init_file_synchronizer(FileTransferType requested_actions);
+
+/**
+ * @brief                          Get a list of the currently transferring files
+ *
+ * @returns                        A linked list of TransferringFile(s)
+ */
+LinkedList* file_synchronizer_get_transferring_files(void);
 
 /**
  * @brief                          Open a file for writing based on `file_metadata`
@@ -186,7 +193,8 @@ void file_synchronizer_set_file_reading_basic_metadata(const char* file_path,
  * @param file_metadata_ptr        Pointer to pointer for filled file metadata
  *
  */
-void file_synchronizer_open_file_for_reading(TransferringFile* active_file, FileMetadata** file_metadata_ptr);
+void file_synchronizer_open_file_for_reading(TransferringFile* active_file,
+                                             FileMetadata** file_metadata_ptr);
 
 /**
  * @brief                          Read the next file chunk from a
@@ -197,7 +205,8 @@ void file_synchronizer_open_file_for_reading(TransferringFile* active_file, File
  * @param file_chunk_ptr           Pointer to pointer for filled file chunk
  *
  */
-void file_synchronizer_read_next_file_chunk(TransferringFile* active_file, FileData** file_chunk_ptr);
+void file_synchronizer_read_next_file_chunk(TransferringFile* active_file,
+                                            FileData** file_chunk_ptr);
 
 /**
  * @brief                          Reset all transferring files
@@ -215,8 +224,5 @@ void file_syncrhonizer_cancel_user_file_upload(void);
  * @brief                          Cleanup the file synchronizer
  */
 void destroy_file_synchronizer(void);
-
-LinkedList* file_synchronizer_get_transferring_files(void);
-
 
 #endif  // FILE_SYNCHRONIZER_H
