@@ -42,7 +42,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set the workflow's environment parameters
         id: set-environment
@@ -85,10 +85,10 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Node.js 16
-        uses: actions/setup-node@v2.5.1
+        uses: actions/setup-node@v3.0.0
         with:
           node-version: "16"
 
@@ -134,12 +134,12 @@ jobs:
       # client app calls `git describe` in order to bake the
       # version number into the React frontend.
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
       - name: Install Node.js 16
-        uses: actions/setup-node@v2.5.1
+        uses: actions/setup-node@v3.0.0
         with:
           node-version: "16"
 

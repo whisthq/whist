@@ -34,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
         # We are testing this configuration against deployable branches dev/staging/prod only
       - name: Set Workflow Environment
@@ -71,7 +71,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
         # We are testing this configuration against deployable branches dev/staging/prod only
       - name: Set Workflow Environment
@@ -81,7 +81,7 @@ jobs:
           ref: ${{ matrix.environment.ref }}
 
       - name: Install Node.js 16
-        uses: actions/setup-node@v2.5.1
+        uses: actions/setup-node@v3.0.0
         with:
           node-version: "16"
 

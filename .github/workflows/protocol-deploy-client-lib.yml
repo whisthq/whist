@@ -48,7 +48,7 @@ jobs:
       ################################## CONFIG STEPS START ##############################
 
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup Python-based notifications
         working-directory: .github/workflows/helpers
@@ -118,7 +118,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup Python-based notifications
         working-directory: .github/workflows/helpers

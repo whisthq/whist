@@ -43,12 +43,12 @@ jobs:
       ################################# CONFIG STEPS ###############################
 
       - name: Checkout the whisthq/whist Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: whist
 
       - name: Checkout the whisthq/docs Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: whisthq/docs
           token: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
@@ -62,7 +62,7 @@ jobs:
       ########################### BACKEND SERVICES STEPS ###########################
 
       - name: Setup Go environment
-        uses: actions/setup-go@v2.2.0
+        uses: actions/setup-go@v3.0.0
         with:
           go-version: "1.17"
 
