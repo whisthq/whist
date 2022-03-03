@@ -113,7 +113,7 @@ export const authInfoParse = (res: {
     return {
       error: {
         message: `Error while decoding JWT: ${err as string}`,
-        data: res,
+        data: JSON.stringify(res),
       },
     }
   }
