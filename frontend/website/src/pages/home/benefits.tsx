@@ -120,7 +120,7 @@ export const Middle = () => {
                 <div className="mt-2 bg-gray-800 rounded py-4 text-gray-300 w-full">
                   Chrome:{" "}
                   <span className="text-red-400">
-                    {Math.round(numTabs * 0.5)} GB memory
+                    {Math.round(1 + numTabs * 0.2)} GB memory
                   </span>{" "}
                   RAM
                 </div>
