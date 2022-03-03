@@ -1,9 +1,10 @@
-import React from "react"
+import React, { useState } from "react"
 import { CheckIcon } from "@heroicons/react/outline"
+
+import Slider from "@app/shared/components/slider"
 
 import ChromeBackground from "@app/assets/graphics/speedTestBackground.svg"
 import SpeedTest from "@app/assets/gifs/speedTest.gif"
-import RAMUsage from "@app/assets/graphics/ramUsage.svg"
 
 const features = [
   {
@@ -74,16 +75,68 @@ export const Middle = () => {
 
         Arguments: none
     */
+  const [numTabs, setNumTabs] = useState(75)
+
   return (
     <div>
       <VerticalTemplate
         visible={true}
-        background
         title={
           <>
             <div className="text-base font-semibold text-gray-500 tracking-wide uppercase mb-2">
               Features
             </div>
+            <div className="text-gray-dark dark:text-gray-300">
+              Use <span className="text-blue-light">near-zero memory</span>
+            </div>
+          </>
+        }
+        text={
+          <div className="text-md text-gray-400">
+            Today, your computer runs out of memory and slows down when you open
+            too many tabs. By running in the cloud, Whist never consumes more
+            than 500MB (0.5GB) of memory.
+          </div>
+        }
+        image={
+          <div className="mt-8 inline-block rounded from-blue-light to-blue w-full">
+            <div className="mx-auto md:w-screen md:max-w-screen-sm bg-gray-900 md:p-8 md:py-16">
+              <div className="text-gray-500 text-left">
+                Number of tabs open:{" "}
+                <span className="text-blue-light font-semibold">{numTabs}</span>
+              </div>
+              <div className="mt-2">
+                <Slider
+                  min={1}
+                  max={100}
+                  step={1}
+                  start={numTabs}
+                  onChange={(x) => {
+                    setNumTabs(x)
+                  }}
+                />
+              </div>
+              <div className="md:flex md:justify-between md:space-x-4 mt-4">
+                <div className="mt-2 bg-gray-800 rounded py-4 text-gray-300 w-full">
+                  Chrome:{" "}
+                  <span className="text-red-400">
+                    {Math.round(1 + numTabs * 0.2)} GB memory
+                  </span>{" "}
+                  RAM
+                </div>
+                <div className="mt-2 bg-gray-800 rounded py-4 text-gray-300 w-full">
+                  Whist: <span className="text-blue-light">0.5GB RAM</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      />
+      <VerticalTemplate
+        visible={true}
+        background
+        title={
+          <>
             <div className="text-gray dark:text-gray-300">
               {" "}
               Load pages instantly
@@ -110,40 +163,8 @@ export const Middle = () => {
               alt=""
             />
             <img
-              className="absolute inline-block top-1/2 left-1/2 transform -translate-x-1/2 translate-y-20 md:-translate-y-4 w-1/2 max-w-xs"
+              className="absolute inline-block top-1/2 left-1/2 transform -translate-x-1/2 translate-y-10 md:translate-y-20 md:-translate-y-4 w-1/2 max-w-xs"
               src={SpeedTest}
-              alt=""
-            />
-          </div>
-        }
-      />
-      <VerticalTemplate
-        visible={true}
-        title={
-          <>
-            <div className="text-gray-dark dark:text-gray-300">
-              Use <span className="text-mint">10x less</span> memory
-            </div>
-          </>
-        }
-        text={
-          <div className="text-md text-gray-400">
-            Today, your computer runs out of memory and slows down when you open
-            too many tabs. By running in the cloud, Whist never consumes more
-            than 300MB of memory.
-          </div>
-        }
-        image={
-          <div
-            className="mt-8 inline-block rounded p-2"
-            style={{
-              background:
-                "linear-gradient(233.28deg, #F3B490 0%, #F38ECB 100%)",
-            }}
-          >
-            <img
-              className="relative top-0 left-0 w-full max-w-screen-sm m-auto shadow-xl"
-              src={RAMUsage}
               alt=""
             />
           </div>
@@ -170,7 +191,7 @@ export const Middle = () => {
                 <div key={feature.name} className="relative">
                   <dt>
                     <CheckIcon
-                      className="absolute h-6 w-6 text-green-500"
+                      className="absolute h-6 w-6 text-blue"
                       aria-hidden="true"
                     />
                     <p className="ml-9 text-lg leading-6 font-medium text-gray-300 text-left">
@@ -184,7 +205,7 @@ export const Middle = () => {
               ))}
             </dl>
             <a href="/security#top">
-              <button className="mt-12 text-mint py-2 px-8">
+              <button className="mt-12 text-blue-light py-2 px-8">
                 Read more about security
               </button>
             </a>

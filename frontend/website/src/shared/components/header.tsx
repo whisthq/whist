@@ -75,8 +75,8 @@ const Header = () => {
             <div className="flex justify-start lg:w-0 lg:flex-1">
               <a href="/">
                 <img
-                  className="h-9 w-9 relative md:bottom-1 rounded"
-                  src="https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2_borderless.png"
+                  className="h-14 w-14 relative rounded"
+                  src="https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png"
                   alt=""
                 />
               </a>
@@ -93,8 +93,8 @@ const Header = () => {
                   <>
                     <Popover.Button
                       className={classNames(
-                        open ? "text-mint" : "text-gray-300",
-                        "group rounded-md inline-flex items-center text-base font-medium hover:text-mint"
+                        open ? "text-blue-light" : "text-gray-300",
+                        "group rounded-md inline-flex items-center text-base font-medium hover:text-blue-light"
                       )}
                     >
                       <span>About</span>
@@ -116,21 +116,21 @@ const Header = () => {
                         className="absolute z-10 -ml-4 mt-3 transform w-screen max-w-md lg:max-w-2xl lg:ml-0 lg:left-1/2 lg:-translate-x-1/2"
                       >
                         <div className="rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 overflow-hidden">
-                          <div className="relative grid gap-6 bg-white px-5 py-6 sm:gap-8 sm:p-8 lg:grid-cols-2">
+                          <div className="relative grid gap-6 bg-gray-800 px-5 py-6 sm:gap-8 sm:p-8 lg:grid-cols-2">
                             {about.map((item) => (
                               <a
                                 key={item.name}
                                 href={item.href}
-                                className="-m-3 p-3 flex items-start rounded-lg hover:bg-gray-50"
+                                className="-m-3 p-3 flex items-start rounded-lg hover:bg-gray-900"
                               >
-                                <div className="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-md bg-indigo-500 text-white sm:h-12 sm:w-12">
+                                <div className="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-md bg-blue-light text-white sm:h-12 sm:w-12">
                                   <item.icon
-                                    className="h-6 w-6"
+                                    className="h-6 w-6 text-gray-800"
                                     aria-hidden="true"
                                   />
                                 </div>
                                 <div className="ml-4">
-                                  <p className="text-base font-medium text-gray-900">
+                                  <p className="text-base font-medium text-gray-300">
                                     {item.name}
                                   </p>
                                   <p className="-mt-2 text-sm text-gray-500">
@@ -151,8 +151,8 @@ const Header = () => {
                   <>
                     <Popover.Button
                       className={classNames(
-                        open ? "text-mint" : "text-gray-300",
-                        "group rounded-md inline-flex items-center text-base font-medium hover:text-mint focus:outline-none"
+                        open ? "text-blue-light" : "text-gray-300",
+                        "group rounded-md inline-flex items-center text-base font-medium hover:text-blue-light focus:outline-none"
                       )}
                     >
                       <span>Resources</span>
@@ -174,16 +174,16 @@ const Header = () => {
                         className="absolute z-10 left-1/2 transform -translate-x-1/2 mt-3 px-2 w-screen max-w-xs sm:px-0"
                       >
                         <div className="rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 overflow-hidden">
-                          <div className="relative grid gap-6 bg-white px-5 py-6 sm:gap-8 sm:p-8">
+                          <div className="relative grid gap-6 bg-gray-800 px-5 py-6 sm:gap-8 sm:p-8">
                             {resources.map((item) => (
                               <a
                                 key={item.name}
                                 href={item.href}
-                                className="-m-3 p-3 block rounded-md hover:bg-gray-50"
+                                className="-m-3 p-3 block rounded-md hover:bg-gray-900"
                                 target={item?.target ?? "_self"}
                                 rel="noreferrer"
                               >
-                                <p className="text-base font-medium text-gray-900">
+                                <p className="text-base font-medium text-gray-300">
                                   {item.name}
                                 </p>
                                 <p className="mt-1 text-sm text-gray-500">
@@ -199,7 +199,7 @@ const Header = () => {
                 )}
               </Popover>
               <a href="/download#top" className="hover:no-underline">
-                <span className="text-base font-medium text-gray-300 hover:text-mint no-underline cursor-pointer">
+                <span className="text-base font-medium text-gray-300 hover:text-blue-light no-underline cursor-pointer">
                   Download
                 </span>
               </a>
@@ -222,12 +222,12 @@ const Header = () => {
               static
               className="absolute top-0 inset-x-0 p-2 transition transform origin-top-right md:hidden"
             >
-              <div className="rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 bg-white divide-y-2 divide-gray-50">
+              <div className="rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 bg-gray-800 divide-y-2 divide-gray-50">
                 <div className="pt-5 pb-6 px-5">
                   <div className="flex items-center justify-between">
                     <div></div>
                     <div className="-mr-2">
-                      <Popover.Button className="bg-white rounded-md p-2 inline-flex items-center justify-center text-gray-600 focus:outline-none">
+                      <Popover.Button className="bg-gray-800 rounded-md p-2 inline-flex items-center justify-center text-gray-600 focus:outline-none">
                         <span className="sr-only">Close menu</span>
                         <XIcon className="h-6 w-6" aria-hidden="true" />
                       </Popover.Button>

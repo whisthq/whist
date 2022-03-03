@@ -3,7 +3,7 @@ import React from "react"
 const Careers = () => (
   <>
     <div
-      className="max-w-7xl mx-auto bg-blue lg:bg-transparent lg:px-8 mt-36 mb-36"
+      className="max-w-7xl mx-auto bg-blue lg:bg-transparent lg:px-8 mt-36 mb-36 pt-12 relative bottom-12"
       id="careers"
     >
       <div className="lg:grid lg:grid-cols-12">
@@ -21,10 +21,13 @@ const Careers = () => (
 
         <div className="relative bg-blue lg:col-start-3 lg:row-start-1 lg:col-span-10 lg:rounded-3xl lg:grid lg:grid-cols-10 lg:items-center">
           <div className="relative max-w-md mx-auto py-12 px-4 space-y-6 sm:max-w-3xl sm:py-16 sm:px-6 lg:max-w-none lg:p-0 lg:col-start-4 lg:col-span-6">
-            <h2 className="text-3xl text-gray-200" id="join-heading">
+            <h2
+              className="text-3xl text-gray-900 font-semibold"
+              id="join-heading"
+            >
               Join our team
             </h2>
-            <p className="text-lg text-gray-300">
+            <p className="text-lg text-gray-800">
               If working on a product that pushes the boundaries of networking,
               virtualization, or browser OSes excites you, you can apply to work
               with us!
@@ -34,12 +37,7 @@ const Careers = () => (
               target="_blank"
               rel="noreferrer"
             >
-              <button
-                className="mt-8 block w-full py-3 px-5 text-center rounded text-gray-100 sm:inline-block sm:w-auto"
-                style={{
-                  background: "rgba(255, 255, 255, 0.1)",
-                }}
-              >
+              <button className="mt-8 block w-full py-3 px-5 text-center rounded text-gray-900 sm:inline-block sm:w-auto bg-blue-light">
                 Explore open positions
               </button>
             </a>

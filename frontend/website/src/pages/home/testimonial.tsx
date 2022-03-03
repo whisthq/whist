@@ -6,9 +6,9 @@ const Testimonial = () => {
       <div className="max-w-7xl w-full mx-auto grid md:grid-cols-2 gap-y-6 lg:gap-y-0">
         <div className="bg-blue py-12 px-16 md:flex md:flex-col md:py-16 md:mr-3 rounded">
           <blockquote className="mt-6 md:flex-grow md:flex md:flex-col">
-            <div className="relative text-lg font-medium text-gray-300 md:flex-grow">
+            <div className="relative text-lg font-medium text-gray-900 md:flex-grow">
               <svg
-                className="absolute top-0 left-0 transform -translate-x-3 -translate-y-2 h-8 w-8 text-indigo-600"
+                className="absolute top-0 left-0 transform -translate-x-3 -translate-y-2 h-8 w-8 text-blue-light"
                 fill="currentColor"
                 viewBox="0 0 32 32"
                 aria-hidden="true"
@@ -24,10 +24,10 @@ const Testimonial = () => {
             <footer className="mt-6">
               <div className="flex items-start">
                 <div>
-                  <div className="text-base font-semibold text-white">
+                  <div className="text-base font-semibold text-gray-900">
                     Judith P.
                   </div>
-                  <div className="text-base font-medium text-indigo-200">
+                  <div className="text-base font-medium text-gray-800">
                     Software Developer
                   </div>
                 </div>
@@ -37,9 +37,9 @@ const Testimonial = () => {
         </div>
         <div className="bg-blue py-12 px-16 md:flex md:flex-col md:py-16 md:ml-3 rounded">
           <blockquote className="mt-6 md:flex-grow md:flex md:flex-col">
-            <div className="relative text-lg font-medium text-gray-300 md:flex-grow">
+            <div className="relative text-lg font-medium text-gray-900 md:flex-grow">
               <svg
-                className="absolute top-0 left-0 transform -translate-x-3 -translate-y-2 h-8 w-8 text-indigo-600"
+                className="absolute top-0 left-0 transform -translate-x-3 -translate-y-2 h-8 w-8 text-blue-light"
                 fill="currentColor"
                 viewBox="0 0 32 32"
               >
@@ -54,10 +54,10 @@ const Testimonial = () => {
             <footer className="mt-6">
               <div className="flex items-start">
                 <div>
-                  <div className="text-base font-semibold text-white">
+                  <div className="text-base font-semibold text-gray-900">
                     Jose L.
                   </div>
-                  <div className="text-base font-medium text-indigo-200">
+                  <div className="text-base font-medium text-gray-800">
                     Product Manager
                   </div>
                 </div>

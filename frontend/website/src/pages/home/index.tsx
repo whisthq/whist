@@ -20,7 +20,7 @@ export const Home = () => {
     */
   return (
     <>
-      <div className={classNames(padded, "bg-blue-darkest")}>
+      <div className={classNames(padded, "bg-gray-900")}>
         <Header />
         <Hero />
         <Features />
@@ -29,7 +29,7 @@ export const Home = () => {
       <div className={classNames(padded, "bg-blue-darker")}>
         <Users />
       </div>
-      <div className={classNames(padded, "bg-blue-darkest")}>
+      <div className={classNames(padded, "bg-gray-900")}>
         <Benefits />
       </div>
       <Footer />

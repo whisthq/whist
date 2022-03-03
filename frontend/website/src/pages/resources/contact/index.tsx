@@ -11,11 +11,11 @@ const padded = "pb-20 px-12 max-w-screen-2xl m-auto overflow-x-hidden"
 const Contact = () => {
   return (
     <>
-      <div className={classNames(padded, "bg-blue-darkest")}>
+      <div className={classNames(padded, "bg-gray-900")}>
         <Header />
         <Emails />
       </div>
-      <div className={classNames(padded, "bg-blue-darkest")}>
+      <div className={classNames(padded, "bg-gray-900")}>
         <Careers />
       </div>
       <Footer />

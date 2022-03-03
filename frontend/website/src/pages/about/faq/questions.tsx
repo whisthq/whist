@@ -9,7 +9,10 @@ const faqs = [
       <div>
         Whist is like remote desktop, but with a much greater emphasis on
         performance and user experience. You can read more about our technology{" "}
-        <a href="/technology#top" className="text-gray-300 hover:text-mint">
+        <a
+          href="/technology#top"
+          className="text-gray-300 hover:text-blue-light"
+        >
           here
         </a>
         .
@@ -24,7 +27,7 @@ const faqs = [
         We encrypt and protect every piece of data that you input through Whist
         so that not even our engineers can see your personal browsing data. You
         can read more about how we handle privacy and security{" "}
-        <a href="/security#top" className="text-gray-300 hover:text-mint">
+        <a href="/security#top" className="text-gray-300 hover:text-blue-light">
           here
         </a>
         .
@@ -54,7 +57,7 @@ const faqs = [
         Whist&lsquo;s download requirements{" "}
         <a
           href="/download#requirements"
-          className="text-gray-300 hover:text-mint"
+          className="text-gray-300 hover:text-blue-light"
         >
           here
         </a>
@@ -70,7 +73,7 @@ const faqs = [
         Yes! You can see our job postings{" "}
         <a
           href="https://whisthq.notion.site/Whist-Job-Board-a39b64712f094c7785f588053fc283a9"
-          className="text-gray-300 hover:text-mint"
+          className="text-gray-300 hover:text-blue-light"
           target="_blank"
           rel="noreferrer"
         >

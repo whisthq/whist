@@ -22,18 +22,18 @@ export const Hero = () => {
   const { width } = withContext()
   const hovering = false
 
-  const adjectives = ["faster", "lighter", "private"]
+  const adjectives = ["faster", "lighter"]
 
   return (
     <div>
-      <div className="text-white text-lg m-auto text-center py-8"></div>
+      <div className="text-white text-lg m-auto text-center py-4"></div>
       <div className="text-center">
         <div>
           <a
             href="/contact#careers"
-            className="inline-flex items-center text-gray-300 bg-gray-900 rounded-full p-1 pr-2 sm:text-base lg:text-sm xl:text-base hover:text-gray-200"
+            className="inline-flex items-center text-gray-300 bg-gray-800 rounded-full p-1 pr-2 sm:text-base lg:text-sm xl:text-base hover:text-gray-200"
           >
-            <span className="font-semibold px-4 py-1.5 text-gray-100 text-xs leading-5 tracking-wide bg-blue rounded-full">
+            <span className="font-semibold px-4 py-1.5 text-gray-900 text-xs leading-5 tracking-wide bg-blue rounded-full">
               We&lsquo;re hiring
             </span>
             <span className="ml-4 text-sm">Browse careers</span>
@@ -42,7 +42,7 @@ export const Hero = () => {
               aria-hidden="true"
             />
           </a>
-          <div className="text-5xl md:text-8xl dark:text-gray-300 mt-16">
+          <div className="text-5xl md:text-9xl dark:text-gray-300 mt-16">
             <div>
               Chrome,
               <div className="flex justify-center relative">
@@ -51,7 +51,7 @@ export const Hero = () => {
                   words={adjectives}
                   startAt={5}
                   classNameCursor="bg-gray-300"
-                  classNameText="py-2 text-mint relative"
+                  classNameText="py-2 text-blue relative"
                 />
               </div>
             </div>
@@ -59,8 +59,9 @@ export const Hero = () => {
         </div>
         <div className="mt-6 md:mt-8relative">
           <p className="text-md m-auto max-w-screen-sm dark:text-gray-400 tracking-wider">
-            Load pages instantly. Use 10x less memory. Enjoy complete privacy.
-            Whist is a supercharged version of Chrome that runs in the cloud.
+            Load pages instantly. Use near-zero memory. Silence your
+            computer&apos;s fans. Whist is a supercharged version of Chrome that
+            runs in the cloud.
           </p>
           <a href="/download#top">
             <WhistButton

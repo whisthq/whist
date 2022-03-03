@@ -21,14 +21,16 @@ const AllowDownloads = () => {
     <div className="mb-24 text-center pt-36">
       <div className="px-0 md:px-12">
         <div className="text-6xl md:text-7xl tracking-wide leading-snug text-gray dark:text-gray-300 mb-4">
-          Try the <span className="text-mint">alpha release</span>
+          Try the <span className="text-blue-light">alpha release</span>
         </div>
         <div className="text-md md:text-lg text-gray tracking-wide dark:text-gray-400 max-w-xl m-auto">
           Whist is early, but we&lsquo;re excited to see what you&lsquo;ll do
           with a lighter, faster Google Chrome. For optimal experience, please
           review the{" "}
           <Link to="requirements" spy={true} smooth={true}>
-            <span className="text-mint cursor-pointer">requirements below</span>
+            <span className="text-blue-light cursor-pointer">
+              requirements below
+            </span>
           </Link>
           .
         </div>
@@ -106,7 +108,7 @@ const DontAllowDownloads = () => {
       <div className="px-0 md:px-12">
         <Widget open={open} setOpen={setOpen} />
         <div className="text-6xl md:text-7xl tracking-wide leading-snug text-gray dark:text-gray-300 mb-4">
-          Try the <span className="text-mint">alpha release</span>
+          Try the <span className="text-blue-light">alpha release</span>
         </div>
         <div className="text-md md:text-lg text-gray tracking-wide dark:text-gray-400 max-w-xl m-auto">
           Please fill out the survey below to see if you meet the requirements
