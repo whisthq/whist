@@ -711,14 +711,17 @@ void sdl_handle_drag_event() {
     int x_window, y_window;
     int w_window, h_window;
     int x_mouse_global, y_mouse_global;
+
     SDL_GetWindowPosition((SDL_Window*)window, &x_window, &y_window);
     SDL_GetWindowSize((SDL_Window*)window, &w_window, &h_window);
     // Mouse is not active within window - so we must use the global mouse and manually transform
     SDL_GetGlobalMouseState(&x_mouse_global, &y_mouse_global);
+
     if (x_window < x_mouse_global && x_mouse_global < x_window + w_window &&
         y_window < y_mouse_global && y_mouse_global < y_window + h_window) {
-        file_drag_update_x = x_mouse_global - x_window;
-        file_drag_update_y = y_mouse_global - y_window;
+        // Scale relative global mouse offset to output window
+        file_drag_update_x = output_width * (x_mouse_global - x_window) / w_window;
+        file_drag_update_y = output_height * (y_mouse_global - y_window) / h_window;
         pending_file_drag_update = true;
     } else {
         // Stop the rendering of the file drag icon if event has left the window
@@ -1074,7 +1077,7 @@ static LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPAR
 }
 #endif
 
-#define DRAG_ICON_SIZE 50
+#define DRAG_ICON_SCALE 0.05
 static void sdl_render_file_drag_icon(int x, int y) {
     SDL_Surface* drop_icon_surface = sdl_surface_from_png_file("images/file_drag_icon.png");
     SDL_Texture* drop_icon_texture = SDL_CreateTextureFromSurface(sdl_renderer, drop_icon_surface);
@@ -1082,10 +1085,11 @@ static void sdl_render_file_drag_icon(int x, int y) {
     // Shift icon in direction away from closest out of bounds
     int horizontal_direction = (x < output_width / 2) ? 1 : -2;
     int vertical_direction = -1;
-    SDL_Rect drop_icon_rect = {.x = x + horizontal_direction * DRAG_ICON_SIZE,
-                               .y = y + vertical_direction * DRAG_ICON_SIZE / 2,
-                               .w = DRAG_ICON_SIZE,
-                               .h = DRAG_ICON_SIZE};
+    double icon_size = min(output_width, output_height) * DRAG_ICON_SCALE;
+    SDL_Rect drop_icon_rect = {.x = x + horizontal_direction * icon_size,
+                               .y = y + vertical_direction * icon_size / 2,
+                               .w = icon_size,
+                               .h = icon_size};
 
     SDL_RenderCopy(sdl_renderer, drop_icon_texture, NULL, &drop_icon_rect);
     SDL_DestroyTexture(drop_icon_texture);

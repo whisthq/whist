@@ -80,6 +80,7 @@ void initiate_out_of_window_drag_handlers(void) {
     [NSEvent addGlobalMonitorForEventsMatchingMask:NSEventMaskLeftMouseUp
                                            handler:^(NSEvent *event) {
                                              file_drag_mouse_down = false;
+                                             sdl_end_drag_event();
                                            }];
 }
 
