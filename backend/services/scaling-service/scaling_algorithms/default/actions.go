@@ -118,7 +118,7 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 			return err
 		}
 	} else {
-		logger.Infof("Mandelbox capacity in %v is enough to satisfy desired capacity of %v.", event.Region, mandelboxCapacity, DESIRED_FREE_MANDELBOXES)
+		logger.Infof("Mandelbox capacity %v in %v is enough to satisfy desired capacity of %v.", mandelboxCapacity, event.Region, DESIRED_FREE_MANDELBOXES)
 	}
 
 	return nil
