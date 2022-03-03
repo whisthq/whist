@@ -18,11 +18,11 @@ ignore-patterns=
 
 # Python code to execute, usually for sys.path manipulation such as
 # pygtk.require().
-#init-hook=
+# init-hook=
 
 # Use multiple processes to speed up Pylint. Specifying 0 will auto-detect the
 # number of processors available to use.
-jobs=1
+jobs=0
 
 # Control the amount of potential inferred values when inferring a single
 # object. This can help the performance when dealing with large functions or
@@ -62,8 +62,6 @@ confidence=
 # --disable=W".
 disable=bare-except,
 	broad-except,
-	cyclic-import,
-	duplicate-code,
 	fixme,
 	import-outside-toplevel,
 	inconsistent-return-statements,
@@ -81,7 +79,6 @@ disable=bare-except,
 	too-many-branches,
 	too-many-locals,
 	too-many-public-methods,
-	too-many-return-statements,
 	too-many-statements
 
 # Enable the message, report, category or checker with the given id(s). You can
@@ -102,7 +99,7 @@ evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / stateme
 
 # Template used to display messages. This is a python new-style format string
 # used to format the message information. See doc for all details.
-#msg-template=
+# msg-template=
 
 # Set the output format. Available formats are text, parseable, colorized, json
 # and msvs (visual studio). You can also give a reporter class, e.g.
@@ -141,7 +138,7 @@ indent-after-paren=4
 
 # String used as indentation unit. This is usually "    " (4 spaces) or "\t" (1
 # tab).
-indent-string='    '
+indent-string="    "
 
 # Maximum number of characters on a single line.
 max-line-length=100
@@ -245,11 +242,10 @@ logging-modules=logging,logs
 
 # List of note tags to take in consideration, separated by a comma.
 notes=FIXME,
-      XXX,
       TODO
 
 # Regular expression of note tags to take in consideration.
-#notes-rgx=
+notes-rgx=
 
 
 [SPELLING]
@@ -324,14 +320,14 @@ argument-naming-style=snake_case
 
 # Regular expression matching correct argument names. Overrides argument-
 # naming-style.
-#argument-rgx=
+# argument-rgx=
 
 # Naming style matching correct attribute names.
 attr-naming-style=snake_case
 
 # Regular expression matching correct attribute names. Overrides attr-naming-
 # style.
-#attr-rgx=
+# attr-rgx=
 
 # Bad variable names which should always be refused, separated by a comma.
 bad-names=foo,
@@ -350,21 +346,21 @@ class-attribute-naming-style=any
 
 # Regular expression matching correct class attribute names. Overrides class-
 # attribute-naming-style.
-#class-attribute-rgx=
+# class-attribute-rgx=
 
 # Naming style matching correct class names.
 class-naming-style=PascalCase
 
 # Regular expression matching correct class names. Overrides class-naming-
 # style.
-#class-rgx=
+# class-rgx=
 
 # Naming style matching correct constant names.
 const-naming-style=UPPER_CASE
 
 # Regular expression matching correct constant names. Overrides const-naming-
 # style.
-#const-rgx=
+# const-rgx=
 
 # Minimum line length for functions/classes that require docstrings, shorter
 # ones are exempt.
@@ -375,7 +371,7 @@ function-naming-style=snake_case
 
 # Regular expression matching correct function names. Overrides function-
 # naming-style.
-#function-rgx=
+# function-rgx=
 
 # Good variable names which should always be accepted, separated by a comma.
 good-names=i,
@@ -401,21 +397,21 @@ inlinevar-naming-style=any
 
 # Regular expression matching correct inline iteration names. Overrides
 # inlinevar-naming-style.
-#inlinevar-rgx=
+# inlinevar-rgx=
 
 # Naming style matching correct method names.
 method-naming-style=snake_case
 
 # Regular expression matching correct method names. Overrides method-naming-
 # style.
-#method-rgx=
+# method-rgx=
 
 # Naming style matching correct module names.
 module-naming-style=snake_case
 
 # Regular expression matching correct module names. Overrides module-naming-
 # style.
-#module-rgx=
+# module-rgx=
 
 # Colon-delimited sets of names that determine each other's naming style when
 # the name regexes allow several styles.
@@ -435,7 +431,7 @@ variable-naming-style=snake_case
 
 # Regular expression matching correct variable names. Overrides variable-
 # naming-style.
-#variable-rgx=
+# variable-rgx=
 
 
 [DESIGN]
