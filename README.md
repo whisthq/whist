@@ -46,8 +46,8 @@ The Whist monorepository contains many Whist subrepositories:
 
 For a more in-depth explanation of each subrepository, see that subrepository's README. Note that there is also additional documentation for some subrepos (and other Whist repos) at [docs.whist.com](https://docs.whist.com):
 
-- [docs.whist.com/backend-services](https://docs.whist.com/backend-services)
-- [docs.whist.com/backend-webserver](https://docs.whist.com/backend-webserver)
+- [docs.whist.com/backend/services](https://docs.whist.com/backend/services)
+- [docs.whist.com/webserver](https://docs.whist.com/backend/webserver)
 - [docs.whist.com/protocol](https://docs.whist.com/protocol)
 - [docs.whist.com/SDL](https://docs.whist.com/SDL)
 
