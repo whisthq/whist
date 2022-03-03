@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { CheckIcon } from "@heroicons/react/outline"
 
 import Slider from "@app/shared/components/slider"
@@ -76,6 +76,14 @@ export const Middle = () => {
         Arguments: none
     */
   const [numTabs, setNumTabs] = useState(75)
+
+  useEffect(() => {
+    fetch("https://ipinfo.io")
+      .then((res) => res.json())
+      .then((json) => {
+        console.log("curled", json)
+      })
+  }, [])
 
   return (
     <div>

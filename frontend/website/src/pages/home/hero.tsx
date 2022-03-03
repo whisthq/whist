@@ -33,7 +33,7 @@ export const Hero = () => {
             href="/contact#careers"
             className="inline-flex items-center text-gray-300 bg-gray-800 rounded-full p-1 pr-2 sm:text-base lg:text-sm xl:text-base hover:text-gray-200"
           >
-            <span className="font-semibold px-4 py-1.5 text-gray-100 text-xs leading-5 tracking-wide bg-blue rounded-full">
+            <span className="font-semibold px-4 py-1.5 text-gray-900 text-xs leading-5 tracking-wide bg-blue rounded-full">
               We&lsquo;re hiring
             </span>
             <span className="ml-4 text-sm">Browse careers</span>
