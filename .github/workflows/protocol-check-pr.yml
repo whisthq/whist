@@ -47,7 +47,7 @@ jobs:
       ################################## CONFIG STEPS START ##############################
 
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # Necessary for downloading protocol libs and base Dockerfile NVIDIA GRID drivers from AWS S3
       - name: Configure AWS S3 CLI
@@ -266,7 +266,7 @@ jobs:
       ################################## CONFIG STEPS START ##############################
 
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # Necessary for downloading protocol libs and base Dockerfile NVIDIA GRID drivers from AWS S3
       - name: Configure AWS S3 CLI

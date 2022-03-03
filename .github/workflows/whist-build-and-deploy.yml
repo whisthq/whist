@@ -52,7 +52,7 @@ jobs:
       auth0-client-secret-key: ${{ steps.set-deploy-environment.outputs.auth0-client-secret-key }}
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0 # Get the whole git history
 
@@ -182,7 +182,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Build Monorepo Configuration for macOS
         id: config-macos
@@ -241,7 +241,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Dependencies
         working-directory: frontend/website
@@ -305,14 +305,14 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup Python-based notifications
         working-directory: .github/workflows/helpers
         run: ./notifications/setup_notifications.sh
 
       - name: Install Node.js 16
-        uses: actions/setup-node@v2.5.1
+        uses: actions/setup-node@v3.0.0
         with:
           node-version: "16"
 
@@ -377,7 +377,7 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_GITHUB_ACTIONS_USER_SECRET_ACCESS_KEY }}
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup Python-based notifications
         working-directory: .github/workflows/helpers
@@ -456,7 +456,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Configure AWS CLI # To get and install GRID driver
         uses: aws-actions/configure-aws-credentials@v1
@@ -466,7 +466,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Set up Python 3.10.0
-        uses: actions/setup-python@v2.3.2
+        uses: actions/setup-python@v3.0.0
         with:
           python-version: "3.10.0"
 
@@ -521,7 +521,7 @@ jobs:
       ########################### Stage 2 - Build Backend Services #############################
 
       - name: Setup Go environment
-        uses: actions/setup-go@v2.2.0
+        uses: actions/setup-go@v3.0.0
         with:
           go-version: "1.17"
 
@@ -726,7 +726,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0 # need to get full history for splitsh-lite
 
@@ -874,7 +874,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Retrieve Desktop App Version from Config Database
         id: generate-release-version
@@ -1001,7 +1001,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           # Get the whole git history. We must do this because the
           # client app calls `git describe` in order to bake the
@@ -1009,7 +1009,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install Node.js 16
-        uses: actions/setup-node@v2.5.1
+        uses: actions/setup-node@v3.0.0
         with:
           node-version: "16"
 
@@ -1150,12 +1150,12 @@ jobs:
       # client app calls `git describe` in order to bake the
       # version number into the React frontend.
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
       - name: Install Node.js 16
-        uses: actions/setup-node@v2.5.1
+        uses: actions/setup-node@v3.0.0
         with:
           node-version: "16"
           architecture: "arm64"
@@ -1259,7 +1259,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup Python-based notifications
         working-directory: .github/workflows/helpers
@@ -1350,7 +1350,7 @@ jobs:
 
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0 # need to get full history for splitsh-lite
 
@@ -1370,7 +1370,7 @@ jobs:
           EOF
 
       - name: Setup Go environment
-        uses: actions/setup-go@v2.2.0
+        uses: actions/setup-go@v3.0.0
         with:
           go-version: "1.17"
 
@@ -1487,7 +1487,7 @@ jobs:
     if: needs.whist-publish-build-config.outputs.publish == 'true' && contains(fromJSON('["prod"]'), needs.whist-publish-build-config.outputs.branch)
     steps:
       - name: Checkout Git Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup Python-based notifications
         working-directory: .github/workflows/helpers
