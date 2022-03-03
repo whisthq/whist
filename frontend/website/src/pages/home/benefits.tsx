@@ -116,15 +116,15 @@ export const Middle = () => {
                   }}
                 />
               </div>
-              <div className="space-y-2 md:flex md:justify-between md:space-x-4 mt-4">
-                <div className="bg-gray-800 rounded py-4 text-gray-300 w-full">
+              <div className="md:flex md:justify-between md:space-x-4 mt-4">
+                <div className="mt-2 bg-gray-800 rounded py-4 text-gray-300 w-full">
                   Chrome:{" "}
                   <span className="text-red-400">
                     {Math.round(numTabs * 0.5)} GB memory
                   </span>{" "}
                   RAM
                 </div>
-                <div className="bg-gray-800 rounded py-4 text-gray-300 w-full">
+                <div className="mt-2 bg-gray-800 rounded py-4 text-gray-300 w-full">
                   Whist: <span className="text-blue-light">0.5GB RAM</span>
                 </div>
               </div>
