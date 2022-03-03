@@ -28,19 +28,13 @@ function addSubscriptionStatusClaim(user, context, callback) {
         // pop() will return undefined.
         const subscription = subscriptions.data
           .sort((left, right) => left.created - right.created)
-          .pop() ?? null
-
-        console.log(`Refreshing access token for user ${user?.email ?? "[None]"}`, JSON.stringify(subscription))
+          .pop()
 
         context.accessToken[
           "https://api.fractal.co/subscription_status"
-        ] = subscription
+        ] = subscription ? subscription.status : null
 
         return callback(null, user, context)
       }, callback)
-  } else {
-    console.error("Missing Stripe customer ID", JSON.stringify(user))
-
-    return callback(new Error("Missing Stripe customer ID"), user, context)
-  }
+  } else return callback(new Error("Missing Stripe customer ID"), user, context)
 }
