@@ -28,7 +28,7 @@ This repository contains the bulk of the code for the Whist Browser, previously 
 
 ## Repository Structure
 
-The Whist monorepository contains 8 Whist subrepositories:
+The Whist monorepository contains many Whist subrepositories:
 
 | Subrepository                    | Description                                                                             |
 | -------------------------------- | --------------------------------------------------------------------------------------- |
