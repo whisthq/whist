@@ -17,15 +17,6 @@ on:
       - ".github/workflows/README.md"
   workflow_dispatch:
     inputs:
-      job-name:
-        description: |
-          The name of the job to run or "all" to trigger all jobs,
-          "none" to run no jobs, or "filter" to run only those jobs
-          whose dependency files are different when comparing those
-          on the chosen branch to those on the branch that normally
-          corresponds to the target deployment environment.
-        required: true
-        default: "all" # Default to triggering all jobs, for a clean rebuild
       target:
         description: |
           The target deployment environment to which the chosen ref
@@ -53,7 +44,6 @@ jobs:
     runs-on: ubuntu-20.04
     outputs:
       branch: ${{ steps.set-deploy-environment.outputs.environment }}
-      jobs: ${{ steps.detect-jobs.outputs.jobs }}
       publish: ${{ steps.detect-publish.outputs.publish }}
       webserver_url: ${{ steps.set-backend-services-urls.outputs.webserver_url }}
       scaling_service_url: ${{ steps.set-backend-services-urls.outputs.scaling_service_url }}
@@ -101,97 +91,6 @@ jobs:
           echo "::set-output name=webserver_url::$WEBSERVER_URL"
           echo "scaling_service_url is set to: $SCALING_SERVICE_URL"
           echo "::set-output name=scaling_service_url::$SCALING_SERVICE_URL"
-
-      # This will create a "jobs" variable, containing the list of jobs to run (Each wrapped in a |)
-      - name: Detect Job(s)
-        id: detect-jobs
-        run: |
-          # Grab the name of the deployment environment from set-deploy-environment
-          BRANCH_NAME=${{ steps.set-deploy-environment.outputs.environment }}
-
-          if [[ "${{ github.event_name }}" == 'push' ]]; then
-            if [[ "$BRANCH_NAME" =~ "(staging|prod)" ]]; then
-            # On push to staging/prod, we want to run all jobs
-              JOB_NAME="all"
-            else
-            # TODO: On push to dev, we want to filter jobs
-              JOB_NAME="all"
-            fi
-            # Store the commit from before the push was made
-            # This is only used when filtering
-            COMPARISON_COMMIT="${{ github.event.before }}"
-          else
-            # If running from workflow_dispatch, We use the job-name given as the dispatch input
-            JOB_NAME="${{ github.event.inputs.job-name }}"
-            # If running from workflow_dispatch, we compare to the branch that we're simulating a build-and-deploy against
-            # This is only used when filtering
-            COMPARISON_COMMIT="origin/$BRANCH_NAME"
-          fi
-
-          # Store job dependency files
-          declare -A job_dependencies
-
-          # If "" is given, then the whole repo will be a dependency
-          job_dependencies[mandelboxes-and-amis-publish-ghcr-and-aws]="host-setup host-service protocol mandelboxes"
-          job_dependencies[webserver-deploy-heroku]="webserver"
-          job_dependencies[scaling-service-deploy]="scaling-service host-setup mandelboxes"
-          job_dependencies[client-applications-publish-build-x64-s3]="protocol client-applications core-ts"
-          job_dependencies[client-applications-publish-build-arm64-s3]="protocol client-applications core-ts"
-          job_dependencies[auth0-deploy-rules]="auth0"
-          job_dependencies[terraform-deploy]="infrastructure"
-
-          # The jobs `whist-publish-build-config`, `whist-build-monorepo-config`,
-          # `client-applications-retrieve-version-number`, `client-applications-update-version-number`,
-          # `client-applications-notify-slack`, and `whist-create-github-release-tag`
-          # are not set above as workflow_dispatch-able since they don't make when run on their own
-
-          # Files that all jobs depend on
-          universal_dependencies=".github/workflows/whist-build-and-deploy.yml"
-
-          if [[ "$JOB_NAME" == "all" ]]; then
-          # If JOB_NAME=all, then we do indeed run all of jobs in the list
-            JOB_LIST="${!job_dependencies[@]}"
-          # If JOB_NAME=filter, then we should filter the job list based on the job's dependencies
-          elif [[ "$JOB_NAME" == "filter" ]]; then
-            JOB_LIST=""
-            for i in "${!job_dependencies[@]}"
-            do
-              DEPS="${job_dependencies[$i]}"
-              # If there are universal_dependencies, include them in the space-separated list
-              if [[ -n "$universal_dependencies" ]]; then
-                DEPS="$DEPS $universal_dependencies"
-              fi
-              # Replace spaces with |'s, to be used as "OR" in a regex path checker
-              DEPS=$(echo "$DEPS" | tr ' ' '|')
-              echo "Checking $i against $DEPS"
-              # Check if any diff'ed file starts with any of the dependency paths
-              # || true to prevent set -e failure exit on this line, to silence grep's return code
-              # We instead, just want to store grep's result in a variable
-              MATCH=$(git diff --name-only "$COMPARISON_COMMIT" -- | grep -E "^($DEPS)" -m 1 || true)
-              if [[ -n "$MATCH" ]]; then
-                echo "Dependency \"$MATCH\" of job \"$i\" was changed since $COMPARISON_COMMIT"
-                JOB_LIST="$JOB_LIST $i"
-              else
-                echo "No dependency of job \"$i\" was changed"
-              fi
-              echo # Newline for easier readability
-            done
-          # If JOB_NAME=none, we run exactly no jobs
-          elif [[ "$JOB_NAME" == "none" ]]; then
-            JOB_LIST=""
-          # If we have the name of a job name, we run exactly that job
-          elif [[ -n "${job_dependencies[$JOB_NAME]}" ]]; then
-            JOB_LIST="$JOB_NAME"
-          # Otherwise, an invalid job name was given
-          else
-            echo "\"$JOB_NAME\" not a valid job name"
-            exit 1
-          fi
-
-          echo "Jobs that have been selected to run: $JOB_LIST"
-          # Wrap jobs with |, so that "|job|" matches only that exact job (Without substring problems)
-          JOB_LIST=$(echo "|$JOB_LIST|" | tr ' ' '|')
-          echo "::set-output name=jobs::$JOB_LIST"
 
       - name: Detect Whether to Publish the Job(s) or Not
         id: detect-publish
@@ -403,7 +302,6 @@ jobs:
     runs-on: ubuntu-20.04
     concurrency: auth0-deploy-rules-${{ github.ref }}
     needs: [whist-publish-build-config, whist-build-monorepo-config]
-    if: contains(needs.whist-publish-build-config.outputs.jobs, '|auth0-deploy-rules|')
 
     steps:
       - name: Checkout Git Repository
@@ -555,7 +453,6 @@ jobs:
       ]
     outputs:
       region_to_ami_map: ${{ steps.build-new-amis.outputs.region_to_ami_map }}
-    if: contains(needs.whist-publish-build-config.outputs.jobs, '|mandelboxes-and-amis-publish-ghcr-and-aws|')
 
     steps:
       - name: Checkout Git Repository
@@ -826,7 +723,6 @@ jobs:
         whist-build-monorepo-config,
         terraform-deploy,
       ]
-    if: contains(needs.whist-publish-build-config.outputs.jobs, '|webserver-deploy-heroku|')
 
     steps:
       - name: Checkout Git Repository
@@ -971,8 +867,6 @@ jobs:
     # Only run client-applications deployment if none of the previous steps failed
     if: |
       always() &&
-      ((contains(needs.whist-publish-build-config.outputs.jobs, '|client-applications-publish-build-x64-s3|')) ||
-      (contains(needs.whist-publish-build-config.outputs.jobs, '|client-applications-publish-build-arm64-s3|'))) &&
       (needs.scaling-service-deploy.result == 'success') &&
       (needs.webserver-deploy-heroku.result == 'success') &&
       (needs.auth0-deploy-rules.result == 'success') &&
@@ -1095,7 +989,6 @@ jobs:
     # Only run client-apps deployment if none of the previous steps failed
     if: |
       always() &&
-      (contains(needs.whist-publish-build-config.outputs.jobs, '|client-applications-publish-build-x64-s3|')) &&
       (needs.client-applications-retrieve-version-number.result == 'success')
 
     strategy:
@@ -1250,7 +1143,6 @@ jobs:
     # Only run client-apps deployment if none of the previous steps failed
     if: |
       always() &&
-      (contains(needs.whist-publish-build-config.outputs.jobs, '|client-applications-publish-build-arm64-s3|')) &&
       (needs.client-applications-retrieve-version-number.result == 'success')
 
     steps:
@@ -1363,8 +1255,6 @@ jobs:
     # Only run client-apps deployment if none of the previous steps failed
     if: |
       always() &&
-      ((contains(needs.whist-publish-build-config.outputs.jobs, '|client-applications-publish-build-x64-s3|')) ||
-      (contains(needs.whist-publish-build-config.outputs.jobs, '|client-applications-publish-build-arm64-s3|'))) &&
       (needs.client-applications-retrieve-version-number.result == 'success')
 
     steps:
@@ -1457,7 +1347,6 @@ jobs:
         auth0-deploy-rules,
         terraform-deploy,
       ]
-    if: contains(needs.whist-publish-build-config.outputs.jobs, '|scaling-service-deploy|')
 
     steps:
       - name: Checkout Git Repository
