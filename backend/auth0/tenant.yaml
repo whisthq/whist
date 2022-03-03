@@ -1,17 +1,204 @@
-# Auth0-Deploy-CLI Tenant YAML Configuration
-
+rules:
+  - name: add-customer-id-claim
+    script: ./rules/add-customer-id-claim.js
+    stage: login_success
+    enabled: true
+    order: 2
+  - name: add-subscription-status-claim
+    script: ./rules/add-subscription-status-claim.js
+    stage: login_success
+    enabled: true
+    order: 3
+  - name: create-customer
+    script: ./rules/create-customer.js
+    stage: login_success
+    enabled: true
+    order: 1
+rulesConfigs: []
+hooks: []
+pages:
+  - name: guardian_multifactor
+    enabled: false
+    html: ./pages/guardian_multifactor.html
+  - name: login
+    enabled: true
+    html: ./pages/login.html
+resourceServers:
+  - name: Whist API
+    identifier: "##WHIST_AUTHENTICATION_API##"
+    allow_offline_access: true
+    enforce_policies: true
+    scopes:
+      - value: admin
+        description: Whist administrative resource(s)
+      - value: backend
+        description: Granted to trusted Whist backend(s)
+    signing_alg: RS256
+    skip_consent_for_verifiable_first_party_clients: true
+    token_dialect: access_token
+    token_lifetime: 86400
+    token_lifetime_for_web: 7200
+clients:
+  - name: GitHub Actions
+    allowed_clients: []
+    app_type: non_interactive
+    callbacks: []
+    client_aliases: []
+    cross_origin_auth: false
+    custom_login_page_on: true
+    description: A service that performs administrative operations on the Fractal
+      webserver(s) on behalf of Fractal developers
+    grant_types:
+      - client_credentials
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    logo_uri: https://github.githubassets.com/images/modules/logos_page/Octocat.png
+    native_social_login:
+      apple:
+        enabled: false
+      facebook:
+        enabled: false
+    oidc_conformant: true
+    refresh_token:
+      expiration_type: non-expiring
+      leeway: 0
+      infinite_token_lifetime: true
+      infinite_idle_token_lifetime: true
+      token_lifetime: 31557600
+      idle_token_lifetime: 2592000
+      rotation_type: non-rotating
+    sso_disabled: false
+    token_endpoint_auth_method: client_secret_post
+  - name: Webserver
+    allowed_clients: []
+    app_type: non_interactive
+    callbacks: []
+    client_aliases: []
+    cross_origin_auth: false
+    custom_login_page_on: true
+    description: The Whist backend webserver(s)
+    grant_types:
+      - client_credentials
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    logo_uri: https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
+    native_social_login:
+      apple:
+        enabled: false
+      facebook:
+        enabled: false
+    oidc_conformant: true
+    refresh_token:
+      expiration_type: non-expiring
+      leeway: 0
+      infinite_token_lifetime: true
+      infinite_idle_token_lifetime: true
+      token_lifetime: 31557600
+      idle_token_lifetime: 2592000
+      rotation_type: non-rotating
+    sso_disabled: false
+    token_endpoint_auth_method: client_secret_post
+  - name: Whist
+    allowed_clients: []
+    app_type: native
+    callbacks: @@WHIST_ELECTRON_APP_CALLBACK@@
+    client_aliases: []
+    cross_origin_auth: false
+    custom_login_page_on: true
+    description: The Whist desktop application(s)
+    grant_types:
+      - authorization_code
+      - refresh_token
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    logo_uri: https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
+    native_social_login:
+      apple:
+        enabled: false
+      facebook:
+        enabled: false
+    oidc_conformant: true
+    refresh_token:
+      expiration_type: non-expiring
+      leeway: 0
+      infinite_token_lifetime: true
+      infinite_idle_token_lifetime: true
+      token_lifetime: 2592000
+      idle_token_lifetime: 1296000
+      rotation_type: non-rotating
+    sso_disabled: false
+    token_endpoint_auth_method: none
+databases: []
+connections:
+  - name: apple
+    strategy: apple
+    enabled_clients: []
+    is_domain_connection: false
+    options:
+      kid: D3T9SSLTY5
+      name: true
+      email: true
+      scope: name email
+      team_id: 757Z8TDNJL
+      client_id: com.whisttechnologies.whistauth
+      app_secret: "##APPLE_OAUTH_SECRET##"
+  - name: google-oauth2
+    strategy: google-oauth2
+    enabled_clients:
+      - Whist
+    is_domain_connection: false
+    options:
+      email: true
+      gmail: false
+      orkut: false
+      scope:
+        - email
+        - profile
+      sites: false
+      tasks: false
+      blogger: false
+      profile: true
+      youtube: false
+      calendar: false
+      contacts: false
+      analytics: false
+      client_id: 581514545734-4r65pae9m63dci2rq6isstvaapuqp85l.apps.googleusercontent.com
+      moderator: false
+      coordinate: false
+      picasa_web: false
+      google_plus: false
+      google_books: false
+      google_drive: false
+      spreadsheets: false
+      client_secret: "##GOOGLE_OAUTH_SECRET##"
+      document_list: false
+      latitude_best: false
+      latitude_city: false
+      url_shortener: false
+      webmaster_tools: false
+      chrome_web_store: false
+      allowed_audiences: ""
+      adsense_management: false
+      google_drive_files: false
+      coordinate_readonly: false
+      google_cloud_storage: false
+      content_api_for_shopping: false
+      google_affiliate_network: false
 tenant:
-  # Settings
-  friendly_name: "Whist Technologies, Inc."
-  picture_url: https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
-  support_email: support@whist.com
-  support_url: "https://whist.com/contact"
-
-  # API Authorization Settings
   default_audience: ""
   default_directory: ""
-
-  # Supported Languages
   enabled_locales:
     - bs
     - bg
@@ -25,7 +212,7 @@ tenant:
     - et
     - fi
     - fr-CA
-    - fr-FR
+    - fr
     - de
     - el
     - hi
@@ -52,350 +239,86 @@ tenant:
     - tr
     - uk
     - vi
-
-  # Login Page Flags
   flags:
     new_universal_login_experience_enabled: true
     universal_login: true
     dashboard_ui_next: true
     revoke_refresh_token_grant: false
     disable_clickjack_protection_headers: false
-
-  # Login Page
+  friendly_name: Whist Technologies, Inc.
+  picture_url: https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
+  support_email: support@whist.com
+  support_url: https://whist.com/contact
   universal_login:
     colors:
       page_background: "#ffffff"
       primary: "#4f35de"
-
-
-prompts:
-  # Enable Auth0 Universal Login
-  universal_login_experience: new
-  identifier_first: true
-
-
-branding:
-  # Whist Auth0 Branding
-  logo_url: https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
-  colors:
-    page_background: "#ffffff"
-    primary: "#4f35de"
-
-
-pages:
-  # Login Page
-  - name: login
-    enabled: true
-    html: ./pages/login.html
-
-  # Multifactor Authentication Page
-  - name: guardian_multifactor
-    enabled: false
-    html: ./pages/guardian_multifactor.html
-
-
-clients:
-  # Configuration for the Whist desktop application(s) (Electron) to interact with Auth0
-  - name: Whist
-    description: The Whist desktop application(s)
-    logo_uri: https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
-    app_type: native
-    allowed_clients: []
-    client_aliases: []
-    callbacks: @@WHIST_ELECTRON_APP_CALLBACK@@
-    cross_origin_auth: false
-    custom_login_page_on: true
-    grant_types:
-      - authorization_code
-      - refresh_token
-    is_first_party: true
-    is_token_endpoint_ip_header_trusted: false
-    oidc_conformant: true
-    native_social_login:
-      apple:
-        enabled: false
-    jwt_configuration:
-      alg: RS256
-      lifetime_in_seconds: 36000
-      secret_encoded: false
-    refresh_token:
-      expiration_type: non-expiring
-      leeway: 0
-      infinite_token_lifetime: true
-      infinite_idle_token_lifetime: true
-      token_lifetime: 2592000
-      idle_token_lifetime: 1296000
-      rotation_type: non-rotating
-    sso_disabled: false
-    token_endpoint_auth_method: none
-
-  # Configuration for the Whist GitHub Actions to interact with Auth0
-  - name: GitHub Actions
-    description: The Whist CI pipeline(s)
-    logo_uri: https://github.githubassets.com/images/modules/logos_page/Octocat.png
-    app_type: non_interactive
-    allowed_clients: []
-    client_aliases: []
-    callbacks: []
-    cross_origin_auth: false
-    custom_login_page_on: true
-    grant_types:
-      - client_credentials
-    is_first_party: true
-    is_token_endpoint_ip_header_trusted: false
-    oidc_conformant: true
-    native_social_login:
-      apple:
-        enabled: false
-    jwt_configuration:
-      alg: RS256
-      lifetime_in_seconds: 36000
-      secret_encoded: false
-    refresh_token:
-      expiration_type: non-expiring
-      leeway: 0
-      infinite_token_lifetime: true
-      infinite_idle_token_lifetime: true
-      token_lifetime: 31557600
-      idle_token_lifetime: 2592000
-      rotation_type: non-rotating
-    sso_disabled: false
-    token_endpoint_auth_method: client_secret_post
-
-  # Configuration for the Whist webserver(s) to interact with Auth0
-  - name: Webserver
-    description: The Whist backend webserver(s)
-    logo_uri: https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
-    app_type: non_interactive
-    allowed_clients: []
-    client_aliases: []
-    callbacks: []
-    cross_origin_auth: false
-    custom_login_page_on: true
-    grant_types:
-      - client_credentials
-    is_first_party: true
-    is_token_endpoint_ip_header_trusted: false
-    oidc_conformant: true
-    native_social_login:
-      apple:
-        enabled: false
-    jwt_configuration:
-      alg: RS256
-      lifetime_in_seconds: 36000
-      secret_encoded: false
-    refresh_token:
-      expiration_type: non-expiring
-      leeway: 0
-      infinite_token_lifetime: true
-      infinite_idle_token_lifetime: true
-      token_lifetime: 31557600
-      idle_token_lifetime: 2592000
-      rotation_type: non-rotating
-    sso_disabled: false
-    token_endpoint_auth_method: client_secret_post
-
-
-databases: []
-
-
-connections:
-  # Google Login
-  - name: google-oauth2
-    strategy: google-oauth2
-    is_domain_connection: false
-    enabled_clients:
-      - Whist
-    options:
-      scope:
-        - email
-        - profile
-      client_id: 581514545734-4r65pae9m63dci2rq6isstvaapuqp85l.apps.googleusercontent.com
-      client_secret: "##GOOGLE_OAUTH_SECRET##"
-      allowed_audiences: ""
-      email: true
-      gmail: false
-      profile: true
-      orkut: false
-      sites: false
-      tasks: false
-      blogger: false
-      youtube: false
-      calendar: false
-      contacts: false
-      analytics: false
-      moderator: false
-      coordinate: false
-      picasa_web: false
-      google_plus: false
-      google_books: false
-      google_drive: false
-      spreadsheets: false
-      document_list: false
-      latitude_best: false
-      latitude_city: false
-      url_shortener: false
-      webmaster_tools: false
-      chrome_web_store: false
-      adsense_management: false
-      google_drive_files: false
-      coordinate_readonly: false
-      google_cloud_storage: false
-      content_api_for_shopping: false
-      google_affiliate_network: false
-
-  # Apple Login
-  - name: apple
-    strategy: apple
-    is_domain_connection: false
-    enabled_clients: []
-    options:
-      scope: name email
-      client_id: com.whisttechnologies.whistauth
-      app_secret: "##APPLE_OAUTH_SECRET##"
-      team_id: 757Z8TDNJL
-      kid: D3T9SSLTY5
-      name: true
-      email: true
-
-
-rules:
-  # Auth0 script to create a new Whist user
-  # Order 1 signifies this is the first Auth0 rule that will be attempted
-  # to be run on event login_success
-  - name: create-customer
-    order: 1
-    enabled: true
-    stage: login_success
-    script: ./rules/create-customer.js
-
-  # Auth0 script to create a new Whist user's ID
-  # Order 2 signifies this is the second Auth0 rule that will be attempted
-  # to be run on event login_success, after the first rule
-  - name: add-customer-id-claim
-    order: 2
-    enabled: true
-    stage: login_success
-    script: ./rules/add-customer-id-claim.js
-
-  # Auth0 script to update a Whist user's subscription status
-  # Order 3 signifies this is the third Auth0 rule that will be attempted
-  # to be run on event login_success, after the first and second rules
-  - name: add-subscription-status-claim
-    order: 3
-    enabled: true
-    stage: login_success
-    script: ./rules/add-subscription-status-claim.js
-
-
-rulesConfigs: []
-
-
-hooks: []
-
-
-resourceServers:
-  # Whist API settings
-  - name: Whist API
-    identifier: "##WHIST_AUTHENTICATION_API##"
-    allow_offline_access: true
-    enforce_policies: true
-    signing_alg: RS256
-    skip_consent_for_verifiable_first_party_clients: true
-    token_dialect: access_token
-    token_lifetime: 86400
-    token_lifetime_for_web: 7200
-    scopes:
-      - value: admin
-        description: Whist administrative resource(s)
-      - value: backend
-        description: Granted to trusted Whist backend(s)
-    # Add other resource server settings (https://auth0.com/docs/api/management/v2#!/Resource_Servers/post_resource_servers)
-
-
 emailProvider:
-  # The Whist email provider
   name: sendgrid
-  enabled: true
-  default_from_address: Whist <support@whist.com>
   credentials:
     api_key: "##SENDGRID_API_KEY##"
-
-
+  default_from_address: Whist <support@whist.com>
+  enabled: true
 emailTemplates:
-  # Whist new user welcome email
-  - template: welcome_email
-    enabled: true
+  - template: verify_email
+    body: ./emailTemplates/verify_email.html
+    enabled: false
+    from: ""
+    subject: ""
     syntax: liquid
+    urlLifetimeInSeconds: 432000
+  - template: welcome_email
+    body: ./emailTemplates/welcome_email.html
+    enabled: true
     from: Whist <noreply@whist.com>
     subject: Welcome to Whist!
-    body: ./emailTemplates/welcome_email.html
-
-
+    syntax: liquid
 clientGrants:
-  # Used by the Whist webserver(s) to authenticate users
   - client_id: Webserver
     audience: "##WHIST_AUTHENTICATION_API##"
     scope:
       - backend
-
-
-###### Guardian Multifactor Authentication Settings ######
-
 guardianFactors:
-  - name: sms
-    enabled: false
-  - name: push-notification
-    enabled: false
-  - name: otp
+  - name: duo
     enabled: false
   - name: email
     enabled: false
-  - name: duo
+  - name: otp
+    enabled: false
+  - name: push-notification
     enabled: false
   - name: recovery-code
     enabled: true
+  - name: sms
+    enabled: false
   - name: webauthn-platform
     enabled: false
   - name: webauthn-roaming
     enabled: false
-
 guardianFactorProviders: []
-
-
 guardianFactorTemplates: []
-
-
-guardianPhoneFactorMessageTypes:
-  message_types: []
-
-
-guardianPhoneFactorSelectedProvider:
-  provider: auth0
-
-
 guardianPolicies:
   policies: []
-
-
+guardianPhoneFactorSelectedProvider:
+  provider: auth0
+guardianPhoneFactorMessageTypes:
+  message_types: []
 roles:
-  # Internal role for Whist developers to perform Auth0 administrative tasks
   - name: Developer
     description: Whist developers
     permissions:
       - permission_name: admin
         resource_server_identifier: "##WHIST_AUTHENTICATION_API##"
-
-
-###### Unused Settings ######
-
+branding:
+  colors:
+    page_background: "#ffffff"
+    primary: "#4f35de"
+  logo_url: https://fractal-brand-assets.s3.amazonaws.com/png/new+logo/FullColorShaded_blue.png
+prompts:
+  universal_login_experience: new
+  identifier_first: true
+migrations:
+  issue_opaque_access_tokens: false
 actions: []
-
-
-organizations: []
-
-
 triggers: {}
-
-
-migrations: {}
+organizations: []

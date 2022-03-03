@@ -93,6 +93,7 @@ jobs:
         working-directory: backend/auth0
         env:
           AUTH0_CLIENT_SECRET: ${{ secrets[format('AUTH0_GHA_CLIENT_SECRET_{0}', matrix.environment.branch)] }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
           GOOGLE_OAUTH_SECRET: ${{ secrets.GOOGLE_OAUTH_SECRET }}
           APPLE_OAUTH_SECRET: ${{ secrets.APPLE_OAUTH_SECRET }}
-        run: yarn run dump:${{ matrix.environment.branch }}
+        run: yarn dump:${{ matrix.environment.branch }}
