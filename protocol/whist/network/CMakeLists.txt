@@ -1,6 +1,6 @@
 add_library(whistNetwork STATIC
         network.c
-        udp.c
+        udp.cpp
         tcp.c
         throttle.c
         ringbuffer.c

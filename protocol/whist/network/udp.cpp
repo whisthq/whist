@@ -9,6 +9,7 @@ Includes
 ============================
 */
 
+extern "C" {
 #include "udp.h"
 #include <whist/utils/aes.h>
 #include <whist/utils/fec.h>
@@ -22,6 +23,11 @@ Includes
 #ifndef _WIN32
 #include <fcntl.h>
 #endif
+}
+
+#include <queue>
+using std::max;
+using std::min;
 
 /*
 ============================
@@ -123,10 +129,15 @@ typedef struct {
     int greatest_failed_id;
 } StreamResetData;
 
-typedef struct IncomingBitrate {
+typedef struct {
     uint64_t bucket_id;
     int num_bits;
 } IncomingBitrate;
+
+typedef struct {
+    int frame_id;
+    int packet_index;
+} NackInfo;
 
 // An instance of the UDP Context
 typedef struct {
@@ -187,6 +198,7 @@ typedef struct {
     int prev_group_id;
     int curr_group_id;
     IncomingBitrate incoming_bitrate_buckets[INCOMING_BITRATE_NUM_BUCKETS];
+    std::queue<NackInfo>* nack_queue;
 } UDPContext;
 
 // Define how many times to retry sending a UDP packet in case of Error 55 (buffer full). The
@@ -206,7 +218,7 @@ typedef struct {
 #define PING_LAMBDA 0.6
 
 // How often should the client send connection attempts
-#define CONNECTION_ATTEMPT_INTERVAL_MS 5
+#define CONNECTION_ATTEMPT_INTERVAL_MS 5.0
 // How many confirmation packets the server should respond with,
 // When it receives a valid client connection attempt
 #define NUM_CONFIRMATION_MESSAGES 10
@@ -220,8 +232,10 @@ Globals
 */
 
 // TODO: Remove bad globals
+extern "C" {
 extern unsigned short port_mappings[USHRT_MAX + 1];
 volatile double latency;
+}
 
 /*
 ============================
@@ -372,7 +386,7 @@ static void udp_nack_packet(SocketContext* socket_context, WhistPacketType type,
                             int index) {
     UDPContext* context = (UDPContext*)socket_context->context;
     // Nack for the given packet by sending a UDPPacket of type UDP_NACK
-    UDPPacket packet = {0};
+    UDPPacket packet = {};
     packet.type = UDP_NACK;
     packet.udp_nack_data.whist_type = type;
     packet.udp_nack_data.id = id;
@@ -384,7 +398,7 @@ static void udp_request_stream_reset(SocketContext* socket_context, WhistPacketT
                                      int greatest_failed_id) {
     UDPContext* context = (UDPContext*)socket_context->context;
     // Tell the server the client fell too far behind
-    UDPPacket packet = {0};
+    UDPPacket packet = {};
     packet.type = UDP_STREAM_RESET;
     packet.udp_stream_reset_data.whist_type = type;
     packet.udp_stream_reset_data.greatest_failed_id = greatest_failed_id;
@@ -559,6 +573,7 @@ static bool udp_update(void* raw_context) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
+// Don't call this function in hotpath for video packets, as it can wait in throttle.
 static int udp_send_packet(void* raw_context, WhistPacketType packet_type,
                            void* whist_packet_payload, int whist_packet_payload_size, int packet_id,
                            bool start_of_stream) {
@@ -595,7 +610,8 @@ static int udp_send_packet(void* raw_context, WhistPacketType packet_type,
     }
 
     // Construct the WhistPacket based on the parameters given
-    WhistPacket* whist_packet = allocate_region(PACKET_HEADER_SIZE + whist_packet_payload_size);
+    WhistPacket* whist_packet =
+        (WhistPacket*)allocate_region(PACKET_HEADER_SIZE + whist_packet_payload_size);
     whist_packet->id = packet_id;
     whist_packet->type = packet_type;
     whist_packet->payload_size = whist_packet_payload_size;
@@ -695,6 +711,12 @@ static int udp_send_packet(void* raw_context, WhistPacketType packet_type,
                      sizeof(packet->udp_whist_segment_data.segment_data));
         memcpy(packet->udp_whist_segment_data.segment_data, buffers[packet_index],
                buffer_sizes[packet_index]);
+
+        // Before sending the video packets for current frame, handle any nack requests for
+        // previous frames.
+        if (packet_type == PACKET_VIDEO) {
+            udp_handle_pending_nacks(raw_context);
+        }
 
         // Send the packet
         // We don't need to propagate the return code because it's lossy anyway,
@@ -863,6 +885,7 @@ static void udp_destroy_socket_context(void* raw_context) {
     if (context->network_throttler != NULL) {
         network_throttler_destroy(context->network_throttler);
     }
+    delete context->nack_queue;
     whist_destroy_mutex(context->mutex);
     free(context);
 }
@@ -888,7 +911,7 @@ bool create_udp_socket_context(SocketContext* network_context, char* destination
     network_context->destroy_socket_context = udp_destroy_socket_context;
 
     // Create the UDPContext, and set to zero
-    UDPContext* context = safe_malloc(sizeof(UDPContext));
+    UDPContext* context = (UDPContext*)safe_malloc(sizeof(UDPContext));
     memset(context, 0, sizeof(UDPContext));
     // Create the mutex
     context->timestamp_mutex = whist_create_mutex();
@@ -948,7 +971,7 @@ void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType typ
      * Create a nack buffer for the specified packet type which will resend packets to the client in
      * case of data loss.
      */
-    UDPContext* context = socket_context->context;
+    UDPContext* context = (UDPContext*)socket_context->context;
 
     int type_index = (int)type;
     FATAL_ASSERT(0 <= type_index && type_index < NUM_PACKET_TYPES);
@@ -965,8 +988,8 @@ void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType typ
     // Allocate buffers than can handle the above maximum sizes
     // Memory isn't an issue here, because we'll use our region allocator,
     // so unused memory never gets allocated by the kernel
-    context->nack_buffers[type_index] = malloc(sizeof(UDPPacket*) * num_buffers);
-    context->nack_buffer_valid[type_index] = malloc(sizeof(bool*) * num_buffers);
+    context->nack_buffers[type_index] = (UDPPacket**)safe_malloc(sizeof(UDPPacket*) * num_buffers);
+    context->nack_buffer_valid[type_index] = (bool**)safe_malloc(sizeof(bool*) * num_buffers);
     context->nack_mutex[type_index] = whist_create_mutex();
     context->nack_num_buffers[type_index] = num_buffers;
     // This is just used to sanitize the pre-FEC buffer that's passed into send_packet
@@ -976,10 +999,11 @@ void udp_register_nack_buffer(SocketContext* socket_context, WhistPacketType typ
     // Allocate each nack buffer, based on num_buffers
     for (int i = 0; i < num_buffers; i++) {
         // Allocate a buffer of max_num_ids WhistPacket's
-        context->nack_buffers[type_index][i] = allocate_region(sizeof(UDPPacket) * max_num_ids);
+        context->nack_buffers[type_index][i] =
+            (UDPPacket*)allocate_region(sizeof(UDPPacket) * max_num_ids);
         // Allocate nack buffer validity
         // We hold this separately, since writing anything to the region causes it to allocate
-        context->nack_buffer_valid[type_index][i] = malloc(sizeof(bool) * max_num_ids);
+        context->nack_buffer_valid[type_index][i] = (bool*)safe_malloc(sizeof(bool) * max_num_ids);
         for (int j = 0; j < max_num_ids; j++) {
             context->nack_buffer_valid[type_index][i][j] = false;
         }
@@ -1053,7 +1077,7 @@ int create_udp_listen_socket(SOCKET* sock, int port, int timeout_ms) {
 void udp_register_ring_buffer(SocketContext* socket_context, WhistPacketType type,
                               int max_frame_size, int num_buffers) {
     FATAL_ASSERT(socket_context != NULL);
-    UDPContext* context = socket_context->context;
+    UDPContext* context = (UDPContext*)socket_context->context;
     FATAL_ASSERT(context != NULL);
 
     int type_index = (int)type;
@@ -1128,6 +1152,17 @@ int udp_get_num_indices(SocketContext* socket_context, WhistPacketType type, int
     }
 }
 
+bool udp_handle_pending_nacks(void* raw_context) {
+    UDPContext* context = (UDPContext*)raw_context;
+    bool ret = false;
+    while (context->nack_queue->size() > 0) {
+        NackInfo nack_info = context->nack_queue->front();
+        context->nack_queue->pop();
+        udp_handle_nack(context, PACKET_VIDEO, nack_info.frame_id, nack_info.packet_index, false);
+        ret = true;
+    }
+    return ret;
+}
 /*
 ============================
 Private Function Implementation
@@ -1157,7 +1192,7 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
             // to prevent accidentally making a blocking -1 call
             set_timeout(
                 context->socket,
-                max(connection_timeout_ms - get_timer(&server_creation_timer) * MS_IN_SECOND, 0));
+                max(connection_timeout_ms - get_timer(&server_creation_timer) * MS_IN_SECOND, 0.0));
         }
         // Check to see if we received a UDP_CONNECTION_ATTEMPT
         UDPPacket client_packet;
@@ -1191,6 +1226,7 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
         confirmation_packet.type = UDP_CONNECTION_CONFIRMATION;
         udp_send_udp_packet(context, &confirmation_packet);
     }
+    context->nack_queue = new std::queue<NackInfo>();
 
     // Connection successful!
     LOG_INFO("Client received on %d from %s:%d over UDP!\n", port,
@@ -1245,7 +1281,7 @@ int create_udp_client_context(UDPContext* context, char* destination, int port,
             set_timeout(
                 context->socket,
                 min(max(connection_timeout_ms - get_timer(&client_creation_timer) * MS_IN_SECOND,
-                        0),
+                        0.0),
                     CONNECTION_ATTEMPT_INTERVAL_MS));
         }
         // Check to see if we received a UDP_CONNECTION_CONFIRMATION
@@ -1315,20 +1351,17 @@ int get_udp_packet_size(UDPPacket* udp_packet) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
+// Don't call this function in hotpath for video packets, as it can wait in throttle.
 int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
     FATAL_ASSERT(context != NULL);
     int udp_packet_size = get_udp_packet_size(udp_packet);
-    bool throttle = true;
+    bool throttle = false;
     if (udp_packet->type == UDP_WHIST_SEGMENT) {
         udp_packet->udp_whist_segment_data.departure_time = current_time_us();
-        // Don't throttle audio for the following reasons
-        // - Audio encoder runs on a reserved bandwidth for itself, unlike video encoder doesn't
-        //   exceed its reserved bitrate significantly.
-        // - Audio frame sizes are very small. At 128 Kbps, the average Audio frame size is only 160
-        //   bytes, much lesser than an average UDP packet size.
-        // - Audio frames at produced at a near constant interval of 10ms
-        if (udp_packet->udp_whist_segment_data.whist_type == PACKET_AUDIO) {
-            throttle = false;
+        // Throttle only video packet. Audio packets are very small and run on reserved bandwidth
+        // and ping/pong packets use negligible bandwidth.
+        if (udp_packet->udp_whist_segment_data.whist_type == PACKET_VIDEO) {
+            throttle = true;
         }
     }
 
@@ -1505,9 +1538,11 @@ UDP Message Handling
 void udp_handle_message(UDPContext* context, UDPPacket* packet) {
     switch (packet->type) {
         case UDP_NACK: {
-            // we received a nack from the client, respond
-            udp_handle_nack(context, packet->udp_nack_data.whist_type, packet->udp_nack_data.id,
-                            packet->udp_nack_data.index, false);
+            FATAL_ASSERT(packet->udp_nack_data.whist_type == PACKET_VIDEO);
+            NackInfo nack_info;
+            nack_info.frame_id = packet->udp_nack_data.id;
+            nack_info.packet_index = packet->udp_nack_data.index;
+            context->nack_queue->push(nack_info);
             break;
         }
         case UDP_BITARRAY_NACK: {
@@ -1518,11 +1553,14 @@ void udp_handle_message(UDPContext* context, UDPPacket* packet) {
             memcpy(bit_array_get_bits(bit_arr), packet->udp_bitarray_nack_data.ba_raw,
                    BITS_TO_CHARS(packet->udp_bitarray_nack_data.numBits));
 
+            FATAL_ASSERT(packet->udp_bitarray_nack_data.type == PACKET_VIDEO);
+            NackInfo nack_info;
+            nack_info.frame_id = packet->udp_bitarray_nack_data.id;
             for (int i = packet->udp_bitarray_nack_data.index;
                  i < packet->udp_bitarray_nack_data.numBits; i++) {
                 if (bit_array_test_bit(bit_arr, i)) {
-                    udp_handle_nack(context, packet->udp_bitarray_nack_data.type,
-                                    packet->udp_bitarray_nack_data.id, i, false);
+                    nack_info.packet_index = i;
+                    context->nack_queue->push(nack_info);
                 }
             }
             bit_array_free(bit_arr);
@@ -1599,7 +1637,7 @@ void udp_handle_nack(UDPContext* context, WhistPacketType type, int packet_id, i
             // Wrap in PACKET_VIDEO to prevent verbose audio.c logs
             // TODO: Fix this by making resend_packet not trigger nack logs
 #if LOG_NACKING
-            if (type == PACKET_VIDEO) {
+            if (type == PACKET_VIDEO && !is_duplicate) {
                 LOG_INFO("NACKed video packet ID %d Index %d found of length %d. Relaying!",
                          packet_id, packet_index, packet->udp_whist_segment_data.segment_size);
             }
@@ -1666,7 +1704,7 @@ void udp_update_ping(UDPContext* context) {
     // If we wanted to send a ping with some given ID,
     if (send_ping_id != -1) {
         // Send the ping with that ID
-        UDPPacket ping = {0};
+        UDPPacket ping = {};
         ping.type = UDP_PING;
         ping.udp_ping_data.id = send_ping_id;
         ping.udp_ping_data.send_timestamp = current_time_us();
@@ -1686,7 +1724,7 @@ void udp_handle_ping(UDPContext* context, int id, timestamp_us timestamp) {
     LOG_INFO("Ping Received - Ping ID %d", id);
 
     // Reply to the ping, with a pong
-    UDPPacket pong_packet = {0};
+    UDPPacket pong_packet = {};
     pong_packet.type = UDP_PONG;
     pong_packet.udp_pong_data.id = id;
     pong_packet.udp_pong_data.ping_send_timestamp = timestamp;

@@ -156,6 +156,7 @@ int udp_get_num_pending_frames(SocketContext* context, WhistPacketType type);
  */
 void udp_resend_packet(SocketContext* context, WhistPacketType type, int id, int index);
 
+// TODO: Remove, this is a weird function to expose
 /**
  * @brief                          Resets the duplicate packet counter for the specified frame type
  *
@@ -176,6 +177,17 @@ void udp_reset_duplicate_packet_counter(SocketContext* context, WhistPacketType 
  * @returns                        The number of indices(packets)
  */
 int udp_get_num_indices(SocketContext* context, WhistPacketType type, int id);
+
+// TODO: Remove by making udp_update handle nacking
+/**
+ * @brief                          Handle all pending nacks. This function could take a while, as
+ *                                 can wait in throttle.
+ *
+ * @param raw_context              The UDP Socket Context's internal raw context
+ *
+ * @returns                        Returns true if any nack requests were handled, otherwise false
+ */
+bool udp_handle_pending_nacks(void* raw_context);
 
 // TODO: Try to remove by making the client detect a nack buffer
 /**
