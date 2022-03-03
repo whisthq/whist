@@ -94,7 +94,7 @@ int handle_client_message(whist_server_state *state, WhistClientMessage *wcmsg) 
             return handle_file_chunk_message(wcmsg);
         case CMESSAGE_QUIT:
             return handle_quit_message(state, wcmsg);
-        case MESSAGE_DISCOVERY_REQUEST:
+        case CMESSAGE_INIT:
             return handle_init_message(state, wcmsg);
         case MESSAGE_OPEN_URL:
             return handle_open_url_message(state, wcmsg);
@@ -291,13 +291,12 @@ static int handle_init_message(whist_server_state *state, WhistClientMessage *cw
             (int): Returns -1 on failure, 0 on success
     */
 
-    LOG_INFO("Receiving a message time packet");
+    LOG_INFO("Received a ClientInitMessage packet.");
 
-    WhistDiscoveryRequestMessage wcmsg = cwcmsg->discoveryRequest;
+    ClientInitMessage init_msg = cwcmsg->init_message;
 
-    state->client_os = wcmsg.os;
-
-    whist_error_monitor_set_username(wcmsg.user_email);
+    state->client_os = init_msg.os;
+    whist_error_monitor_set_username(init_msg.user_email);
 
     return 0;
 }

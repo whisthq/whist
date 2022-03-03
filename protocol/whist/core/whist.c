@@ -313,7 +313,7 @@ int get_wcmsg_size(WhistClientMessage *wcmsg) {
             (int): The size of the Whist Client Message struct
     */
 
-    if (wcmsg->type == MESSAGE_KEYBOARD_STATE || wcmsg->type == MESSAGE_DISCOVERY_REQUEST) {
+    if (wcmsg->type == MESSAGE_KEYBOARD_STATE || wcmsg->type == CMESSAGE_INIT) {
         return sizeof(*wcmsg);
     } else if (wcmsg->type == CMESSAGE_CLIPBOARD) {
         return sizeof(*wcmsg) + wcmsg->clipboard.size;

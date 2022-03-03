@@ -98,35 +98,6 @@ int try_get_next_message_tcp(Client *client, WhistPacket **p_tcp_packet);
 int try_get_next_message_udp(Client *client, WhistClientMessage *wsmsg, size_t *wsmsg_size);
 
 /**
- * @brief                          Establishes UDP and TCP connection to client.
- *
- * details                         If no UDP message is available, *wsmsg is
- *                                 set to NULL and *wsmsg_size is set to 0.
- *                                 Otherwise, *wsmsg is populated with a pointer
- *                                 to the next available UDP message and
- *                                 *wsmsg_size is set to the size of that
- *                                 message. The message need not be freed.
- *                                 Failure here
- *
- * @param client				   The target client
- * @param using_stun               True if we are running a stun server
- * @param binary_aes_private_key   Key used to encrypt and decrypt communication
- *                                 with the client.
- *
- * @returns                        Returns -1 if either UDP or TCP connection
- *                                 fails or another error occurs, 0 on success.
- */
-int connect_client(Client *client, bool using_stun, char *binary_aes_private_key);
-
-/**
- * @brief                          Closes client's UDP and TCP sockets.
- *
- * @param client				   The target client
- * @returns                        Returns -1 on failure, 0 on success.
- */
-int disconnect_client(Client *client);
-
-/**
  * @brief                          Decides whether the server is using stun.
  *
  * @returns                        Returns true if server is using stun,

@@ -30,172 +30,45 @@ Includes
 #include "state.h"
 #include "handle_client_message.h"
 
-#define TCP_DISCOVERY_CONNECTION_WAIT 5000
-#define UDP_CONNECTION_WAIT 1000
+// UDP Waits for the first connection attempt,
+#define UDP_CONNECTION_WAIT 5000
+// After that we finish with TCP
 #define TCP_CONNECTION_WAIT 1000
 
 static int last_input_id = -1;
 
 /*
 ============================
-Private Functions
+Private Function Declarations
 ============================
 */
 
-int do_discovery_handshake(whist_server_state *state, SocketContext *context,
-                           WhistClientMessage *wcmsg);
-
-/*
-============================
-Private Function Implementations
-============================
-*/
-
-static int handle_discovery_port_message(whist_server_state *state, SocketContext *context,
-                                         bool *new_client) {
-    /*
-        Handle a message from the client over received over the discovery port.
-
-        Arguments:
-            context (SocketContext*): the socket context for the discovery port
-            new_client (bool*): pointer to indicate whether this message created a new client
-
-        Returns:
-            (int): 0 on success, -1 on failure
-    */
-
-    WhistPacket *tcp_packet;
-    WhistTimer timer;
-    start_timer(&timer);
-    do {
-        socket_update(context);
-        tcp_packet = get_packet(context, PACKET_MESSAGE);
-        whist_sleep(5);
-    } while (tcp_packet == NULL && get_timer(&timer) < CLIENT_PING_TIMEOUT_SEC);
-    // Exit on null tcp packet, otherwise analyze the resulting WhistClientMessage
-    if (tcp_packet == NULL) {
-        LOG_WARNING("Did not receive request over discovery port from client.");
-        return -1;
-    }
-
-    WhistClientMessage *wcmsg = (WhistClientMessage *)tcp_packet->data;
-    *new_client = false;
-
-    switch (wcmsg->type) {
-        case MESSAGE_DISCOVERY_REQUEST: {
-            int user_id = wcmsg->discoveryRequest.user_id;
-
-            if (!state->client.is_active) {
-                state->client.user_id = user_id;
-
-                if (do_discovery_handshake(state, context, wcmsg) != 0) {
-                    LOG_WARNING("Discovery handshake failed.");
-                }
-
-                free_packet(context, tcp_packet);
-                wcmsg = NULL;
-                tcp_packet = NULL;
-
-                *new_client = true;
-            }
-            break;
-        }
-        default: {
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-int do_discovery_handshake(whist_server_state *state, SocketContext *context,
-                           WhistClientMessage *wcmsg) {
-    /*
-        Perform a discovery handshake over the discovery port socket context
-
-        Arguments:
-            context (SocketContext*): the socket context for the discovery port
-            wcmsg (WhistClientMessage*): discovery message sent from client
-
-        Returns:
-            (int): 0 on success, -1 on failure
-    */
-
-    handle_client_message(state, wcmsg);
-
-    size_t wsmsg_size = sizeof(WhistServerMessage) + sizeof(WhistDiscoveryReplyMessage);
-
-    WhistServerMessage *wsmsg = safe_malloc(wsmsg_size);
-    memset(wsmsg, 0, sizeof(*wsmsg));
-    wsmsg->type = MESSAGE_DISCOVERY_REPLY;
-
-    WhistDiscoveryReplyMessage *reply_msg = (WhistDiscoveryReplyMessage *)wsmsg->discovery_reply;
-
-    reply_msg->udp_port = state->client.udp_port;
-    reply_msg->tcp_port = state->client.tcp_port;
-
-    // Set connection ID in error monitor.
-    whist_error_monitor_set_connection_id(state->connection_id);
-
-    // Send connection ID to client
-    reply_msg->connection_id = state->connection_id;
-
-    // Fill revision and feature information.
-    snprintf(reply_msg->git_revision, sizeof(reply_msg->git_revision), "%s", whist_git_revision());
-    reply_msg->feature_mask = whist_get_feature_mask();
-
-    LOG_INFO("Sending discovery packet");
-    LOG_INFO("wsmsg size is %d", (int)wsmsg_size);
-    if (send_packet(context, PACKET_MESSAGE, (uint8_t *)wsmsg, (int)wsmsg_size, -1, false) < 0) {
-        LOG_ERROR("Failed to send discovery reply message.");
-        free(wsmsg);
-        return -1;
-    }
-
-    free(wsmsg);
-
-    LOG_INFO("Discovery handshake succeeded.");
-    return 0;
-}
+/**
+ * @brief                          Establishes UDP and TCP connection to client.
+ *
+ * details                         If no UDP message is available, *wsmsg is
+ *                                 set to NULL and *wsmsg_size is set to 0.
+ *                                 Otherwise, *wsmsg is populated with a pointer
+ *                                 to the next available UDP message and
+ *                                 *wsmsg_size is set to the size of that
+ *                                 message. The message need not be freed.
+ *                                 Failure here
+ *
+ * @param state                    The global server state
+ * @param client				   The target client
+ * @param binary_aes_private_key   Key used to encrypt and decrypt communication
+ *                                 with the client.
+ *
+ * @returns                        Returns -1 if either UDP or TCP connection
+ *                                 fails or another error occurs, 0 on success.
+ */
+static int connect_client(whist_server_state *state, Client *client, char *binary_aes_private_key);
 
 /*
 ============================
 Public Function Implementations
 ============================
 */
-
-int connect_client(Client *client, bool using_stun, char *binary_aes_private_key_input) {
-    if (!create_udp_socket_context(&client->udp_context, NULL, client->udp_port, 1,
-                                   UDP_CONNECTION_WAIT, using_stun, binary_aes_private_key_input)) {
-        LOG_ERROR("Failed UDP connection with client");
-        return -1;
-    }
-    udp_register_nack_buffer(&client->udp_context, PACKET_VIDEO,
-                             PACKET_HEADER_SIZE + LARGEST_VIDEOFRAME_SIZE, VIDEO_NACKBUFFER_SIZE);
-    udp_register_nack_buffer(&client->udp_context, PACKET_AUDIO,
-                             PACKET_HEADER_SIZE + LARGEST_AUDIOFRAME_SIZE, AUDIO_NACKBUFFER_SIZE);
-
-    // NOTE: The server-side create_udp_socket_context call will finish immediately after the
-    // handshake, But the UDP Client will be waiting until it gets a response. Thus, this TCP socket
-    // will be open immediately (Before the TCP client tries to connect)
-    // TODO #5539:
-    //    The goal is, if we open the TCP server while the TCP client is trying to connect,
-    //    the connection still succeeds. This is stronger, but unlike UDP, we can't
-    //    easily control TCP's handshake. Can we compel TCP to send multiple SYN's?
-    if (!create_tcp_socket_context(&client->tcp_context, NULL, client->tcp_port, 1,
-                                   TCP_CONNECTION_WAIT, using_stun, binary_aes_private_key_input)) {
-        LOG_WARNING("Failed TCP connection with client");
-        destroy_socket_context(&client->udp_context);
-        return -1;
-    }
-    return 0;
-}
-
-int disconnect_client(Client *client) {
-    destroy_socket_context(&client->udp_context);
-    destroy_socket_context(&client->tcp_context);
-    return 0;
-}
 
 int broadcast_udp_packet(Client *client, WhistPacketType type, void *data, int len, int packet_id) {
     if (packet_id <= 0) {
@@ -298,9 +171,6 @@ int multithreaded_manage_client(void *opaque) {
     whist_server_state *state = (whist_server_state *)opaque;
     whist_server_config *config = state->config;
 
-    SocketContext discovery_context;
-    bool new_client;
-
     WhistTimer last_update_timer;
     start_timer(&last_update_timer);
 
@@ -345,34 +215,16 @@ int multithreaded_manage_client(void *opaque) {
             }
         }
 
-        // Even without multiclient, we need this for TCP recovery over the discovery port
-        if (!create_tcp_socket_context(&discovery_context, NULL, PORT_DISCOVERY, 1,
-                                       TCP_DISCOVERY_CONNECTION_WAIT, get_using_stun(),
-                                       config->binary_aes_private_key)) {
-            continue;
-        }
-
-        // This can either be a new client connecting, or an existing client asking for a TCP
-        //     connection to be recovered. We use the discovery port because it is always
-        //     accepting connections and is reliable for both discovery and recovery messages.
-        if (handle_discovery_port_message(state, &discovery_context, &new_client) != 0) {
-            LOG_WARNING("Discovery port message could not be handled.");
-            destroy_socket_context(&discovery_context);
-            continue;
-        }
-
-        // Destroy the ephemeral discovery context
-        destroy_socket_context(&discovery_context);
-
-        // If the handled message was not for a discovery handshake, then skip
-        //     over everything that is necessary for setting up a new client
-        if (!new_client) {
+        // If a client is already connected, nothing to do here
+        // TODO: Simply call this on startup and disconnect, instead of looping
+        if (state->client.is_active) {
+            whist_sleep(20);
             continue;
         }
 
         // Client is not in use so we don't need to worry about anyone else
         // touching it
-        if (connect_client(&state->client, get_using_stun(), config->binary_aes_private_key) != 0) {
+        if (connect_client(state, &state->client, config->binary_aes_private_key) != 0) {
             LOG_WARNING("Failed to establish connection with client.");
             continue;
         }
@@ -403,4 +255,70 @@ int multithreaded_manage_client(void *opaque) {
     }
 
     return 0;
+}
+
+/*
+============================
+Private Function Implementations
+============================
+*/
+
+int connect_client(whist_server_state *state, Client *client, char *binary_aes_private_key_input) {
+    if (!create_udp_socket_context(&client->udp_context, NULL, BASE_UDP_PORT, 1,
+                                   UDP_CONNECTION_WAIT, false, binary_aes_private_key_input)) {
+        LOG_ERROR("Failed UDP connection with client");
+        return -1;
+    }
+    udp_register_nack_buffer(&client->udp_context, PACKET_VIDEO,
+                             PACKET_HEADER_SIZE + LARGEST_VIDEOFRAME_SIZE, VIDEO_NACKBUFFER_SIZE);
+    udp_register_nack_buffer(&client->udp_context, PACKET_AUDIO,
+                             PACKET_HEADER_SIZE + LARGEST_AUDIOFRAME_SIZE, AUDIO_NACKBUFFER_SIZE);
+
+    // NOTE: The server-side create_udp_socket_context call will finish immediately after the
+    // handshake, But the UDP Client will be waiting until it gets a response. Thus, this TCP socket
+    // will be open immediately (Before the TCP client tries to connect)
+    // TODO #5539 (On Linux):
+    //    The goal is, if we open the TCP server while the TCP client is trying to connect,
+    //    the connection still succeeds. This is stronger, but unlike UDP, we can't
+    //    easily control TCP's handshake. Can we compel TCP to send multiple SYN's?
+    if (!create_tcp_socket_context(&client->tcp_context, NULL, BASE_TCP_PORT, 1,
+                                   TCP_CONNECTION_WAIT, false, binary_aes_private_key_input)) {
+        LOG_WARNING("Failed TCP connection with client");
+        destroy_socket_context(&client->udp_context);
+        return -1;
+    }
+
+    WhistTimer connection_timer;
+    start_timer(&connection_timer);
+    bool successful_handshake = false;
+
+    while (socket_update(&client->tcp_context) &&
+           get_timer(&connection_timer) < TCP_CONNECTION_WAIT) {
+        WhistPacket *tcp_packet = get_packet(&client->tcp_context, PACKET_MESSAGE);
+
+        // Check if we got an init message
+        if (tcp_packet) {
+            // Handle the init message
+            WhistClientMessage *wcmsg = (WhistClientMessage *)tcp_packet->data;
+            FATAL_ASSERT(wcmsg->type == CMESSAGE_INIT);
+            handle_client_message(state, wcmsg);
+            free_packet(&client->tcp_context, tcp_packet);
+
+            // Reply to the init message
+            WhistServerMessage reply = {0};
+            reply.type = SMESSAGE_INIT_REPLY;
+            whist_error_monitor_set_connection_id(state->connection_id);
+            reply.init_reply.connection_id = state->connection_id;
+            snprintf(reply.init_reply.git_revision, sizeof(reply.init_reply.git_revision), "%s",
+                     whist_git_revision());
+            reply.init_reply.feature_mask = whist_get_feature_mask();
+            send_packet(&client->tcp_context, PACKET_MESSAGE, &reply, sizeof(reply), -1, false);
+
+            // Done!
+            successful_handshake = true;
+            break;
+        }
+    }
+
+    return successful_handshake ? 0 : -1;
 }

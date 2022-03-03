@@ -42,8 +42,6 @@ int init_client(Client *client) {
     */
 
     client->is_active = false;
-    client->udp_port = BASE_UDP_PORT;
-    client->tcp_port = BASE_TCP_PORT;
     init_rw_lock(&client->tcp_rwlock);
 
     return 0;
@@ -99,10 +97,8 @@ int quit_client(Client *client) {
     reset_all_transferring_files();
 
     client->is_active = false;
-    if (disconnect_client(client) != 0) {
-        LOG_ERROR("Failed to disconnect client.");
-        return -1;
-    }
+    destroy_socket_context(&client->udp_context);
+    destroy_socket_context(&client->tcp_context);
     client->is_deactivating = false;
     return 0;
 }

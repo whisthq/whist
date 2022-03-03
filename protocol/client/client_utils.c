@@ -611,38 +611,6 @@ int free_parsed_args(void) {
     return 0;
 }
 
-int prepare_init_to_server(WhistDiscoveryRequestMessage *wcmsg, char *email) {
-    /*
-        Prepare for initial request to server by setting
-        user email and time data
-
-        Arguments:
-            wcmsg (WhistDiscoveryRequestMessage*): pointer to the discovery
-                request message packet to be sent to the server
-            email (char*): user email
-
-        Return:
-            (int): 0 on success, -1 on failure
-    */
-
-    // Copy email
-    if (!safe_strncpy(wcmsg->user_email, email, sizeof(wcmsg->user_email))) {
-        LOG_ERROR("User email is too long: %s.\n", email);
-        return -1;
-    }
-
-    // Let the server know what OS we are
-#ifdef _WIN32
-    wcmsg->os = WHIST_WINDOWS;
-#elif defined(__APPLE__)
-    wcmsg->os = WHIST_APPLE;
-#else
-    wcmsg->os = WHIST_LINUX;
-#endif
-
-    return 0;
-}
-
 int update_mouse_motion(void) {
     /*
         Update mouse location if the mouse state has updated since the last call

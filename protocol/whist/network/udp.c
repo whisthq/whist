@@ -1197,7 +1197,7 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
 
     // If a connection attempt wasn't received, cleanup and return -1
     if (!received_connection_attempt) {
-        LOG_WARNING("No UDP client was found within the first %d ms", connection_timeout_ms);
+        LOG_INFO("No UDP client was found within the first %d ms", connection_timeout_ms);
         closesocket(context->socket);
         return -1;
     }

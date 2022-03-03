@@ -78,7 +78,6 @@ Defines
 
 #define CAPTURE_SPECIAL_WINDOWS_KEYS false
 
-#define PORT_DISCOVERY 32262
 #define BASE_UDP_PORT 32263
 #define BASE_TCP_PORT 32273
 
@@ -533,22 +532,20 @@ typedef struct WhistMultigestureMessage {
 } WhistMultigestureMessage;
 
 /**
- * @brief   Discovery request message.
- * @details Discovery packet to be sent from client to server.
+ * @brief   Client init message.
+ * @details Init packet to be sent from client to server.
  */
-typedef struct WhistDiscoveryRequestMessage {
+typedef struct ClientInitMessage {
     int user_id;
     char user_email[WHIST_ARGS_MAXLEN + 1];
     WhistOSType os;
-} WhistDiscoveryRequestMessage;
+} ClientInitMessage;
 
 /**
- * @brief   Discovery reply message.
- * @details Message sent by server in response to a WhistDiscoveryRequestMessage.
+ * @brief   Init reply message.
+ * @details Message sent by server in response to a ClientInitMessage.
  */
-typedef struct WhistDiscoveryReplyMessage {
-    int udp_port;
-    int tcp_port;
+typedef struct ServerInitReplyMessage {
     int connection_id;
 
     /**
@@ -565,7 +562,7 @@ typedef struct WhistDiscoveryReplyMessage {
      * incompatible then the client will refuse to connect.
      */
     uint32_t feature_mask;
-} WhistDiscoveryReplyMessage;
+} ServerInitReplyMessage;
 
 /**
  * @brief   Client message type.
@@ -583,20 +580,15 @@ typedef enum WhistClientMessageType {
                                ///< valid in FractClientMessage.
     MESSAGE_MOUSE_MOTION = 5,  ///< `mouseMotion` WhistMouseMotionMessage is
 
-    MESSAGE_MULTIGESTURE = 6,        ///< Gesture Event
-    MESSAGE_RELEASE = 7,             ///< Message instructing the host to release all input
-                                     ///< that is currently pressed.
-    MESSAGE_STOP_STREAMING = 105,    ///< Message asking server to stop encoding/sending frames
-    MESSAGE_START_STREAMING = 106,   ///< Message asking server to resume encoding/sending frames
-    MESSAGE_NETWORK_SETTINGS = 107,  ///< `network_settings` struct is valid in FractClientMessage.
-    MESSAGE_TCP_PING = 109,
-    MESSAGE_DIMENSIONS = 110,  ///< `dimensions.width` int and `dimensions.height`
-                               ///< int is valid in FractClientMessage
-    MESSAGE_NACK = 111,
-    MESSAGE_BITARRAY_NACK = 112,
+    MESSAGE_MULTIGESTURE = 6,       ///< Gesture Event
+    MESSAGE_RELEASE = 7,            ///< Message instructing the host to release all input
+                                    ///< that is currently pressed.
+    MESSAGE_STOP_STREAMING = 105,   ///< Message asking server to stop encoding/sending frames
+    MESSAGE_START_STREAMING = 106,  ///< Message asking server to resume encoding/sending frames
+    MESSAGE_DIMENSIONS = 110,       ///< `dimensions.width` int and `dimensions.height`
+                                    ///< int is valid in FractClientMessage
     CMESSAGE_CLIPBOARD = 113,
-    MESSAGE_STREAM_RESET_REQUEST = 114,
-    MESSAGE_DISCOVERY_REQUEST = 115,
+    CMESSAGE_INIT = 115,
 
     MESSAGE_OPEN_URL = 117,
 
@@ -661,8 +653,8 @@ typedef struct WhistClientMessage {
     WhistClientMessageType type;  ///< Input message type.
     unsigned int id;
     union {
-        // MESSAGE_DISCOVERY_REQUEST
-        WhistDiscoveryRequestMessage discoveryRequest;
+        // MESSAGE_INIT
+        ClientInitMessage init_message;
 
         // MESSAGE_KEYBOARD
         WhistKeyboardMessage keyboard;
@@ -711,9 +703,9 @@ typedef enum WhistServerMessageType {
     SMESSAGE_NONE = 0,  ///< No Message
     MESSAGE_PONG = 1,
     MESSAGE_TCP_PONG = 2,
+    SMESSAGE_INIT_REPLY = 3,
     SMESSAGE_CLIPBOARD = 4,
     SMESSAGE_WINDOW_TITLE = 5,
-    MESSAGE_DISCOVERY_REPLY = 6,
     SMESSAGE_OPEN_URI = 7,
     SMESSAGE_FULLSCREEN = 8,
     SMESSAGE_FILE_METADATA = 9,
@@ -734,12 +726,11 @@ typedef struct WhistServerMessage {
         int fullscreen;
     };
     union {
+        ServerInitReplyMessage init_reply;
         ClipboardData clipboard;
         FileMetadata file_metadata;
         FileData file;
         char window_title[0];
-        char discovery_reply[0];
-        char init_msg[0];
         char requested_uri[0];
         WhistNotification notif;
     };
