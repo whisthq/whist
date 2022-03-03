@@ -186,6 +186,8 @@ int udp_get_num_indices(SocketContext* context, WhistPacketType type, int id);
  * @param raw_context              The UDP Socket Context's internal raw context
  *
  * @returns                        Returns true if any nack requests were handled, otherwise false
+ *
+ * @note                           This function is thread-safe
  */
 bool udp_handle_pending_nacks(void* raw_context);
 

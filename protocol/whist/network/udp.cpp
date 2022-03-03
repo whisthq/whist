@@ -25,6 +25,7 @@ extern "C" {
 #endif
 }
 
+#include <mutex>
 #include <queue>
 using std::max;
 using std::min;
@@ -198,6 +199,7 @@ typedef struct {
     int prev_group_id;
     int curr_group_id;
     IncomingBitrate incoming_bitrate_buckets[INCOMING_BITRATE_NUM_BUCKETS];
+    std::mutex* nack_queue_mutex;
     std::queue<NackInfo>* nack_queue;
 } UDPContext;
 
@@ -886,6 +888,7 @@ static void udp_destroy_socket_context(void* raw_context) {
         network_throttler_destroy(context->network_throttler);
     }
     delete context->nack_queue;
+    delete context->nack_queue_mutex;
     whist_destroy_mutex(context->mutex);
     free(context);
 }
@@ -1155,11 +1158,18 @@ int udp_get_num_indices(SocketContext* socket_context, WhistPacketType type, int
 bool udp_handle_pending_nacks(void* raw_context) {
     UDPContext* context = (UDPContext*)raw_context;
     bool ret = false;
-    while (context->nack_queue->size() > 0) {
-        NackInfo nack_info = context->nack_queue->front();
-        context->nack_queue->pop();
-        udp_handle_nack(context, PACKET_VIDEO, nack_info.frame_id, nack_info.packet_index, false);
-        ret = true;
+    while (true) {
+        context->nack_queue_mutex->lock();
+        if (context->nack_queue->size() > 0) {
+            NackInfo nack_info = context->nack_queue->front();
+            context->nack_queue->pop();
+            context->nack_queue_mutex->unlock();
+            udp_handle_nack(context, PACKET_VIDEO, nack_info.frame_id, nack_info.packet_index, false);
+            ret = true;
+        } else {
+            context->nack_queue_mutex->unlock();
+            break;
+        }
     }
     return ret;
 }
@@ -1226,6 +1236,7 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
         confirmation_packet.type = UDP_CONNECTION_CONFIRMATION;
         udp_send_udp_packet(context, &confirmation_packet);
     }
+    context->nack_queue_mutex = new std::mutex;
     context->nack_queue = new std::queue<NackInfo>();
 
     // Connection successful!
@@ -1542,7 +1553,9 @@ void udp_handle_message(UDPContext* context, UDPPacket* packet) {
             NackInfo nack_info;
             nack_info.frame_id = packet->udp_nack_data.id;
             nack_info.packet_index = packet->udp_nack_data.index;
+            context->nack_queue_mutex->lock();
             context->nack_queue->push(nack_info);
+            context->nack_queue_mutex->unlock();
             break;
         }
         case UDP_BITARRAY_NACK: {
@@ -1560,7 +1573,9 @@ void udp_handle_message(UDPContext* context, UDPPacket* packet) {
                  i < packet->udp_bitarray_nack_data.numBits; i++) {
                 if (bit_array_test_bit(bit_arr, i)) {
                     nack_info.packet_index = i;
+                    context->nack_queue_mutex->lock();
                     context->nack_queue->push(nack_info);
+                    context->nack_queue_mutex->unlock();
                 }
             }
             bit_array_free(bit_arr);
