@@ -220,7 +220,7 @@ def setup_network_conditions_client(
                 print("\t* Packet drop rate: {}".format(pkt_drop_pctg))
 
         # Install ifconfig
-        command = "sudo apt install net-tools"
+        command = "sudo apt install net-tools -y"
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
         # Get network interface names (excluding loopback)
@@ -297,10 +297,26 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
     print("Restoring network conditions to normal on client!")
     # Get network interface names (excluding loopback)
     command = "sudo ifconfig -a | sed 's/[ \t].*//;/^\(lo:\|\)$/d'"
+    # Cannot use wait_until_cmd_done because we need to handle clase where ifconfig is not installed
     pexpect_process.sendline(command)
-    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    result = pexpect_process.expect(
+        [pexpect_prompt, "sudo: ifconfig: command not found", pexpect.exceptions.TIMEOUT]
+    )
+    if result == 1:
+        if not running_in_ci:
+            pexpect_process.expect(pexpect_prompt)
+        # If ifconfig is not installed, it means that we could not have applied network degradation conditions before, so we are done.
+        print("ifconfig is not installed, so we don't need to restore normal network conditions.")
+        return
+    if result == 2:
+        print("Error, testing script hanged! Check the logs for troubleshooting.")
+        sys.exit(-1)
 
     ifconfig_output = pexpect_process.before.decode("utf-8").strip().split("\n")
+
+    if not running_in_ci:
+        pexpect_process.expect(pexpect_prompt)
+
     ifconfig_output = [
         x.replace("\r", "").replace(":", "")
         for x in ifconfig_output
