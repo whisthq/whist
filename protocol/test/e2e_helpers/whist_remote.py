@@ -369,22 +369,26 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
 
 def prune_containers_if_needed(pexpect_process, pexpect_prompt, running_in_ci):
     # Check if we are running out of space
-    pexpect_process.sendline("df -h | grep /dev/root")
+    pexpect_process.sendline("df -h | grep --colour=never /dev/root")
     # We need to pass running_in_ci=True no matter what because we need to read the stdout
     wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci=True)
     space_used_output = pexpect_process.before.decode("utf-8").strip().split("\n")
-    space_used_output = space_used_output[-1].replace("\n", "").replace("\r", "").split()
+    for line in reversed(space_used_output):
+        if "/dev/root" in line:
+            space_used_output = line.replace("\n", "").replace("\r", "").split()
+            break
     space_used_pctg = int(space_used_output[-2][:-1])
+
     if not running_in_ci:
         pexpect_process.expect(pexpect_prompt)
 
     # Clean up space on disk if needed
     if space_used_pctg >= 75:
-        print("Disk is {}% full, pruning the docker containers...")
+        print("Disk is {}% full, pruning the docker containers...".format(space_used_pctg))
         pexpect_process.sendline("docker system prune -af")
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
     else:
-        print("Disk is {}% full, no need to prune containers.")
+        print("Disk is {}% full, no need to prune containers.".format(space_used_pctg))
 
 
 def server_setup_process(args_dict):
