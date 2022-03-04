@@ -58,6 +58,22 @@ int get_num_fec_packets(int num_real_packets, double fec_packet_ratio);
 FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int max_buffer_size);
 
 /**
+ * @brief                          Calculate the num of real buffers needed, to hold the
+ *                                 (input) buffer
+ *
+ * @param buffer_size              The buffer size that is going to feed into
+ *                                 fec_encoder_register_buffer()
+ *
+ * @param real_buffer_size         The real_buffer_size allowed
+ *
+ * @note                           Think this as spliting a large buffer into smaller ones. Since
+ *                                 the exist of FEC padding, the calculate is non-trival.
+ *
+ * @returns                        The num of real buffers needed
+ */
+int fec_encoder_get_num_real_buffers(int buffer_size, int real_buffer_size);
+
+/**
  * @brief                          Registers a buffer into the encoder.
  *
  * @param fec_encoder              The FEC encoder to use
@@ -70,6 +86,7 @@ FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int ma
  * @note                           The data pointed to by the buffer being passed in, which
  *                                 must be held alive for as long as the fec_encoder is alive.
  */
+
 void fec_encoder_register_buffer(FECEncoder* fec_encoder, void* buffer, int buffer_size);
 
 /**

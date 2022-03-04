@@ -563,15 +563,6 @@ static bool udp_update(void* raw_context) {
     return true;
 }
 
-static int get_num_indices(int whist_packet_size, int segment_size) {
-    // Calculate number of packets needed to send the payload, rounding up.
-    int num_indices = whist_packet_size == 0
-                          ? 1
-                          : (int)(whist_packet_size / segment_size +
-                                  (whist_packet_size % segment_size == 0 ? 0 : 1));
-    return num_indices;
-}
-
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
@@ -620,9 +611,10 @@ static int udp_send_packet(void* raw_context, WhistPacketType packet_type,
     int whist_packet_size = get_packet_size(whist_packet);
 
     // Calculate number of packets needed to send the payload, rounding up.
-    int num_indices_if_no_fec = get_num_indices(whist_packet_size, MAX_PACKET_SEGMENT_SIZE);
+    int num_indices_if_no_fec =
+        (whist_packet_size == 0 ? 1 : int_div_roundup(whist_packet_size, MAX_PACKET_SEGMENT_SIZE));
     int num_indices_if_use_fec =
-        get_num_indices(whist_packet_size, MAX_PACKET_SEGMENT_SIZE - FEC_HEADER_SIZE);
+        fec_encoder_get_num_real_buffers(whist_packet_size, MAX_PACKET_SEGMENT_SIZE);
 
     // Calculate the number of FEC packets we'll be using, if any
     // A nack buffer is required to use FEC

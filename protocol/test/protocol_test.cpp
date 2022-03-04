@@ -22,6 +22,7 @@ Includes
 #include <algorithm>
 #include <iterator>
 #include <random>
+#include <vector>
 #include <string.h>
 
 #include <gtest/gtest.h>
@@ -1219,16 +1220,20 @@ TEST_F(ProtocolTest, Atomics) {
 }
 
 TEST_F(ProtocolTest, FECTest) {
-#define NUM_FEC_PACKETS 2
+#define NUM_FEC_PACKETS 4
 
-#define NUM_ORIGINAL_PACKETS 2
+#define NUM_ORIGINAL_PACKETS 4
 
 #define NUM_TOTAL_PACKETS (NUM_ORIGINAL_PACKETS + NUM_FEC_PACKETS)
 
-//make the last packet shorter than others
-#define TAIL_MISSING_SIZE 100
+// make the last packet shorter than others
+#define TAIL_SHORTER_SIZE 20
 
-#define BUFFER_SIZE (NUM_ORIGINAL_PACKETS * (MAX_PACKET_SIZE - FEC_HEADER_SIZE)-TAIL_MISSING_SIZE)
+#define BUFFER_SIZE (NUM_ORIGINAL_PACKETS * (MAX_PACKET_SIZE - FEC_HEADER_SIZE) - TAIL_SHORTER_SIZE)
+
+    // the indices remaining after some packets are considered lost
+    std::vector<int> remaining_indices = {1, 5};       // an insufficent subset for recovery
+    std::vector<int> more_remaining_indices = {7, 6};  // makes a sufficient subset with above
 
     // Initialize FEC
     init_fec();
@@ -1266,13 +1271,22 @@ TEST_F(ProtocolTest, FECTest) {
     FECDecoder* fec_decoder =
         create_fec_decoder(NUM_ORIGINAL_PACKETS, NUM_FEC_PACKETS, MAX_PACKET_SIZE);
 
-    // Register some sufficiently large subset of the encoded packets
-    fec_decoder_register_buffer(fec_decoder, 0, encoded_buffers[0], encoded_buffer_sizes[0]);
+    // Register a not sufficient large subset of the encoded packets
+    for (int i = 0; i < (int)remaining_indices.size(); i++) {
+        int idx = remaining_indices[i];
+        fec_decoder_register_buffer(fec_decoder, idx, encoded_buffers[idx],
+                                    encoded_buffer_sizes[idx]);
+    }
     // It's not possible to reconstruct 2 packets, only being given 1 FEC packet
     EXPECT_EQ(fec_get_decoded_buffer(fec_decoder, NULL), -1);
     // Given the FEC packets, it should be possible to reconstruct packet #2
-    fec_decoder_register_buffer(fec_decoder, 2, encoded_buffers[2], encoded_buffer_sizes[2]);
-    //fec_decoder_register_buffer(fec_decoder, 1, encoded_buffers[1], encoded_buffer_sizes[1]);
+
+    // feed more packets, so that we get a sufficent subset for decodeing
+    for (int i = 0; i < (int)more_remaining_indices.size(); i++) {
+        int idx = more_remaining_indices[i];
+        fec_decoder_register_buffer(fec_decoder, idx, encoded_buffers[idx],
+                                    encoded_buffer_sizes[idx]);
+    }
 
     // Decode the buffer using FEC
     char decoded_buffer[BUFFER_SIZE];
