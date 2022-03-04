@@ -226,6 +226,7 @@ void destroy_fec_encoder(FECEncoder* fec_encoder) {
     free(fec_encoder->buffers);
     free(fec_encoder->buffer_sizes);
     free(fec_encoder);
+
 }
 
 FECDecoder* create_fec_decoder(int num_real_buffers, int num_fec_buffers, int max_buffer_size) {

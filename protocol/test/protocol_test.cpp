@@ -1227,6 +1227,7 @@ TEST_F(ProtocolTest, FECTest) {
 
 #define BUFFER_SIZE (NUM_ORIGINAL_PACKETS * MAX_PACKET_SIZE)
 
+
     // Initialize FEC
     init_fec();
 
