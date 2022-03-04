@@ -59,7 +59,6 @@ typedef enum FileChunkType {
  */
 typedef struct FileData {
     int global_file_id;        // The global id of the file for synchrony
-    int index;                 // The index of the file in the synchrony array
     size_t size;               // Number of bytes for the file chunk data
     FileChunkType chunk_type;  // Whether this is a first, middle or last chunk
     char data[0];              // The file chunk byte contents
@@ -90,7 +89,6 @@ typedef union FileEventInfo {
  */
 typedef struct FileMetadata {
     int global_file_id;              // The global id of the file for synchrony
-    int index;                       // The index of the file in the synchrony array
     FileTransferType transfer_type;  // Type of file transfer
     FileEventInfo event_info;        // Extra information for the file transfer
     int file_size;                   // Total file size
@@ -188,7 +186,7 @@ void file_synchronizer_set_file_reading_basic_metadata(const char* file_path,
  * @brief                          Open a file and generate the Open a file
  *                                 for reading and generate the FileMetadata
  *
- * @param file_index               Index of file in file synchrony array
+ * @param active_file              The pointer to the transferring file
  *
  * @param file_metadata_ptr        Pointer to pointer for filled file metadata
  *
@@ -200,7 +198,7 @@ void file_synchronizer_open_file_for_reading(TransferringFile* active_file,
  * @brief                          Read the next file chunk from a
  *                                 transferring file.
  *
- * @param file_index               Index of transferring file
+ * @param active_file              The pointer to the transferring file
  *
  * @param file_chunk_ptr           Pointer to pointer for filled file chunk
  *
@@ -218,7 +216,7 @@ void reset_all_transferring_files(void);
  *                                 has canceled file selection by writing a trigger file
  *
  */
-void file_syncrhonizer_cancel_user_file_upload(void);
+void file_synchronizer_cancel_user_file_upload(void);
 
 /**
  * @brief                          Cleanup the file synchronizer

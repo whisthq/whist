@@ -14,7 +14,9 @@ FileChunk received_file_chunk;
 file_synchronizer_write_file_chunk(&received_file_chunk);
 
 FileChunk* our_chunk_to_send;
-file_synchronizer_read_next_file_chunk(0, &our_chunk_to_send);
+// Get transferring files - must be from this list
+LinkedList* files = file_synchronizer_get_transferring_files();
+file_synchronizer_read_next_file_chunk(linked_list_head(files), &our_chunk_to_send);
 
 if (our_chunk_to_send) {
   // We have a new file chunk, this should be sent to the server
@@ -65,14 +67,28 @@ Private Functions
 
 static void reset_transferring_file(TransferringFile* current_file) {
     /*
-        Reset the transferring file info at index `index`
+        Reset the transferring file info of the passed in file
 
         Arguments:
-            file_index (int): the index in `transferring_files` to reset
+            current_file (TransferringFile*): One of the files in our transferring files list
 
         NOTE: must be called with `file_synchrony_update_mutex` held
     */
 
+    // Close attached resources and handles
+    if (current_file->file_handle) {
+        fclose(current_file->file_handle);
+    }
+
+    if (current_file->filename) {
+        free(current_file->filename);
+    }
+
+    if (current_file->file_path) {
+        free(current_file->file_path);
+    }
+
+    // Remove from our currently tracked transferring files
     linked_list_remove(&transferring_files, current_file);
     free(current_file);
 }
@@ -88,19 +104,19 @@ static void confirm_user_file_upload(void) {
     fclose(fptr);
 }
 
-static TransferringFile* get_write_file_with_global_index(int global_id) {
+static TransferringFile* get_write_file_with_global_id(int global_id) {
     /*
         Find the corresponding write file by iterating through our transferring files
-        and finding a file global index that matches the passed in index AND is in the
+        and finding a file global id that matches the passed in id AND is in the
         FILE_WRITE_END direction. We need this second check because there might be
         read files with conflicting indices. The unique identity of a transferring
         file across both server and client is characterized by (global_file_id, direction)
 
         Arguments:
-            global_id (int): the global file index of the transferring file
+            global_id (int): the global file id of the transferring file
 
         Returns:
-            The transferring write file that matches the global index, NULL if not found
+            The transferring write file that matches the global id, NULL if not found
 
     */
 
@@ -183,7 +199,7 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
     memset(active_file, 0, sizeof(TransferringFile));
     linked_list_add_head(&transferring_files, active_file);
 
-    LOG_INFO("Opening global file index %d for writing", file_metadata->global_file_id);
+    LOG_INFO("Opening global file id %d for writing", file_metadata->global_file_id);
 
     // Set identifiers
     active_file->id = unique_id++;
@@ -263,10 +279,10 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
 
     whist_lock_mutex(file_synchrony_update_mutex);
 
-    TransferringFile* active_file = get_write_file_with_global_index(file_chunk->global_file_id);
+    TransferringFile* active_file = get_write_file_with_global_id(file_chunk->global_file_id);
 
     if (!active_file) {
-        LOG_WARNING("Write file with global file index %d not found!", file_chunk->global_file_id);
+        LOG_WARNING("Write file with global file id %d not found!", file_chunk->global_file_id);
         return false;
     }
 
@@ -278,7 +294,7 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
 
     switch (file_chunk->chunk_type) {
         case FILE_BODY: {
-            LOG_INFO("Writing chunk to file index %d size %zu", file_chunk->index,
+            LOG_INFO("Writing chunk to global file id %d size %zu", file_chunk->global_file_id,
                      file_chunk->size);
 
             // For body chunks, write the data to the file
@@ -286,7 +302,7 @@ bool file_synchronizer_write_file_chunk(FileData* file_chunk) {
             break;
         }
         case FILE_CLOSE: {
-            LOG_INFO("Finished writing to file index %d", file_chunk->index);
+            LOG_INFO("Finished writing to global file id %d", file_chunk->global_file_id);
 
             // If on the server, write the FUSE ready file when file writing is complete
             switch ((active_file->transfer_type & enabled_actions)) {
@@ -338,7 +354,7 @@ void file_synchronizer_set_file_reading_basic_metadata(const char* file_path,
 
     whist_lock_mutex(file_synchrony_update_mutex);
 
-    LOG_INFO("Setting file metadata for read file index %lu", global_file_id);
+    LOG_INFO("Setting file metadata for read file id %lu", global_file_id);
 
     // Create a new transferringg file entry and add it to our list
     TransferringFile* active_file = (TransferringFile*)malloc(sizeof(TransferringFile));
@@ -377,7 +393,7 @@ void file_synchronizer_open_file_for_reading(TransferringFile* active_file,
         Open a file for reading and generate the FileMetadata
 
         Arguments:
-            file_index (int): index of file in file synchrony array
+            active_file (TransferringFile*): One of our transferring files
             file_metadata_ptr (FileMetadata**): pointer to pointer for filled file metadata
 
         Returns:
@@ -397,11 +413,11 @@ void file_synchronizer_open_file_for_reading(TransferringFile* active_file,
     }
 
     // Open read file and reset if open failed
-    LOG_INFO("Opening global file index %d for reading", active_file->global_file_id);
+    LOG_INFO("Opening global file id %d for reading", active_file->global_file_id);
 
     active_file->file_handle = fopen(active_file->file_path, "r");
     if (active_file->file_handle == NULL) {
-        LOG_ERROR("Could not open file index %d for reading", active_file->global_file_id);
+        LOG_ERROR("Could not open global file id %d for reading", active_file->global_file_id);
         // If file cannot be opened, then just abort the file transfer
         reset_transferring_file(active_file);
         *file_metadata_ptr = NULL;
@@ -442,7 +458,7 @@ void file_synchronizer_read_next_file_chunk(TransferringFile* active_file,
         Read the next file chunk from an opened transferring file
 
         Arguments:
-            file_index (int): index of the file in `transferring_files`
+            active_file (TransferringFile*): One of our transferring files
             file_chunk_ptr (FileData**): pointer to pointer for filled file chunk
 
         Returns:
@@ -467,7 +483,7 @@ void file_synchronizer_read_next_file_chunk(TransferringFile* active_file,
         return;
     }
 
-    LOG_INFO("Reading a chunk from global file index %d", active_file->global_file_id);
+    LOG_INFO("Reading a chunk from global file id %d", active_file->global_file_id);
     FileData* file_chunk = allocate_region(sizeof(FileData) + CHUNK_SIZE);
     file_chunk->size = fread(file_chunk->data, 1, CHUNK_SIZE, active_file->file_handle);
 
@@ -478,7 +494,7 @@ void file_synchronizer_read_next_file_chunk(TransferringFile* active_file,
 
     // if no more contents to be read from file, then set to final chunk, else set to body
     if (file_chunk->size == 0) {
-        LOG_INFO("Finished reading from global file index %d", file_chunk->global_file_id);
+        LOG_INFO("Finished reading from global file id %d", file_chunk->global_file_id);
         file_chunk->chunk_type = FILE_CLOSE;
         // If last chunk, then reset entry in synchrony array
         reset_transferring_file(active_file);
@@ -501,7 +517,7 @@ void reset_all_transferring_files(void) {
     }
 }
 
-void file_syncrhonizer_cancel_user_file_upload(void) {
+void file_synchronizer_cancel_user_file_upload(void) {
     /*
         Our kde proxy waits for the uploaded-file-cancel or the uploaded-file-confirm
         trigger file to show up. Creates the one for cancellation.
