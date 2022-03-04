@@ -150,7 +150,10 @@ def start_instance(boto3client: botocore.client, instance_id: str, max_retries: 
                     retry + 1, max_retries, e
                 )
             )
-            if e.response["Error"]["Code"] == "IncorrectInstanceState" and retry < max_retries - 1:
+            if (
+                e.response["Error"]["Code"] == "IncorrectInstanceState"
+                or e.response["Error"]["Code"] == "IncorrectSpotRequestState"
+            ) and retry < max_retries - 1:
                 time.sleep(60)
                 continue
             else:
