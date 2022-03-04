@@ -31,14 +31,10 @@ func ComputeExpectedMandelboxCapacity(imageID string, activeInstances subscripti
 		expectedMandelboxCapacity int
 	)
 
-	// Loop over active instances (status ACTIVE), only consider the ones with the current image
-	for _, instance := range activeInstances {
-		if instance.ImageID == graphql.String(imageID) {
-			realMandelboxCapacity += int(instance.RemainingCapacity)
-		}
-	}
+	// Get the capacity from active instances
+	realMandelboxCapacity = ComputeRealMandelboxCapacity(imageID, activeInstances)
 
-	// Loop over starting instances (status PRE_CONNECTION, only consider the ones with the current image
+	// Loop over starting instances (status PRE_CONNECTION), only consider the ones with the current image
 	for _, instance := range startingInstances {
 		if instance.ImageID == graphql.String(imageID) {
 			expectedMandelboxCapacity += int(instance.RemainingCapacity)
