@@ -47,8 +47,6 @@ Defines
 
 #define RS_TABLE_SIZE 256  // size of row and column
 
-typedef unsigned short u16_t;  // NOLINT
-
 // This is the type for the rs_table we use for caching
 typedef RSCode* RSTable[RS_TABLE_SIZE][RS_TABLE_SIZE];
 
@@ -112,10 +110,10 @@ static RSCode* get_rs_code(int k, int n);
 static void free_rs_code_table(void* opaque);
 
 // write a 16bit uint into buffer
-void write_u16_to_buffer(char* p, u16_t w);
+void write_u16_to_buffer(char* p, uint16_t w);
 
 // read a 16bit uint from buffer
-u16_t read_u16_from_buffer(char* p);
+uint16_t read_u16_from_buffer(char* p);
 
 /*
 ============================
@@ -215,7 +213,7 @@ void fec_get_encoded_buffers(FECEncoder* fec_encoder, void** buffers, int* buffe
     FATAL_ASSERT(fec_encoder->num_accepted_buffers == fec_encoder->num_real_buffers);
     if (!fec_encoder->encode_performed) {
         // the size of actual data feed into fec_encoder
-        int fec_payload_size = sizeof(u16_t) + fec_encoder->max_packet_size;
+        int fec_payload_size = sizeof(uint16_t) + fec_encoder->max_packet_size;
 
         // rs encoder requires packets to have equal length, so we pad packets to max_buffer_size
         for (int i = 0; i < fec_encoder->num_real_buffers; i++) {
@@ -227,13 +225,13 @@ void fec_get_encoded_buffers(FECEncoder* fec_encoder, void** buffers, int* buffe
 
             // malloc buffers for feeding into the encoder
             fec_encoder->buffers[i] = safe_malloc(fec_payload_size);
-            fec_encoder->buffer_sizes[i] = sizeof(u16_t) + original_size;
+            fec_encoder->buffer_sizes[i] = sizeof(uint16_t) + original_size;
 
-            write_u16_to_buffer(fec_encoder->buffers[i], (u16_t)original_size);
+            write_u16_to_buffer(fec_encoder->buffers[i], (uint16_t)original_size);
 
             // write a small header infront of buffer, which is protected by FEC.
             // so that even if this buffer got loss, we can recover the buffer length.
-            memcpy((char*)fec_encoder->buffers[i] + sizeof(u16_t), original_buffer, original_size);
+            memcpy((char*)fec_encoder->buffers[i] + sizeof(uint16_t), original_buffer, original_size);
             memset((char*)fec_encoder->buffers[i] + fec_encoder->buffer_sizes[i], 0,
                    fec_payload_size - fec_encoder->buffer_sizes[i]);
             // TODO, protential optimization
@@ -362,7 +360,7 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer) {
     int running_size = 0;
     for (int i = 0; i < fec_decoder->num_real_buffers; i++) {
         int current_size = read_u16_from_buffer(fec_decoder->buffers[i]);
-        char* current_buf = (char*)fec_decoder->buffers[i] + sizeof(u16_t);
+        char* current_buf = (char*)fec_decoder->buffers[i] + sizeof(uint16_t);
 
         if (buffer != NULL) {
             memcpy((char*)buffer + running_size, current_buf, current_size);
@@ -436,10 +434,10 @@ static void free_rs_code_table(void* raw_rs_code_table) {
 // endian, and unaligned memory access are supported
 
 // write a 16bit int into buffer
-void write_u16_to_buffer(char* p, u16_t w) { *(u16_t*)p = w; }
+void write_u16_to_buffer(char* p, uint16_t w) { *(uint16_t*)p = w; }
 
 // reads a 16bit int from buffer
-u16_t read_u16_from_buffer(char* p) { return *(u16_t*)p; }
+uint16_t read_u16_from_buffer(char* p) { return *(uint16_t*)p; }
 
 // if we want to support big endian and unaligned memory access as well, consider using the below
 // implementations
