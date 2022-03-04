@@ -1759,7 +1759,7 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
     // double audio_fec_ratio = (double)network_settings.audio_fec_ratio;
     // double video_fec_ratio = (double)network_settings.video_fec_ratio;
 
-    // temp fix for FEC as the orignal parameter synchronization mechanism is broken by WCC
+    // temp fix as the FEC parameter synchronization mechanism is broken by WCC
     double audio_fec_ratio = AUDIO_FEC_RATIO;
     double video_fec_ratio = VIDEO_FEC_RATIO;
 
