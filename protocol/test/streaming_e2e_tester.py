@@ -426,6 +426,15 @@ if __name__ == "__main__":
         )
         client_restore_net_process.kill(0)
 
+    server_hang_detected = False
+    if shutdown_and_wait_server_exit(
+        server_pexpect_process, "Both whist-application and WhistServer have exited."
+    ):
+        print("Server has exited gracefully.")
+    else:
+        print("Server has not exited gracefully!")
+        server_hang_detected = True
+
     # Extract the client/server perf logs from the two docker containers
     print("Initiating LOG GRABBING ssh connection(s) with the AWS instance(s)...")
 
@@ -442,15 +451,6 @@ if __name__ == "__main__":
         )
         if not running_in_ci:
             log_grabber_client_process.expect(pexpect_prompt_client)
-
-    server_hang_detected = False
-    if shutdown_and_wait_server_exit(
-        server_pexpect_process, "Both whist-application and WhistServer have exited."
-    ):
-        print("Server has exited gracefully.")
-    else:
-        print("Server has not exited gracefully!")
-        server_hang_detected = True
 
     extract_server_logs_from_instance(
         log_grabber_server_process,
