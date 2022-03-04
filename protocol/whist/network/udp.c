@@ -1755,8 +1755,13 @@ void udp_handle_pong(UDPContext* context, int id, timestamp_us ping_send_timesta
 void udp_handle_network_settings(void* raw_context, NetworkSettings network_settings) {
     UDPContext* context = (UDPContext*)raw_context;
     int burst_bitrate = network_settings.burst_bitrate;
-    double audio_fec_ratio = (double)network_settings.audio_fec_ratio;
-    double video_fec_ratio = (double)network_settings.video_fec_ratio;
+
+    // double audio_fec_ratio = (double)network_settings.audio_fec_ratio;
+    // double video_fec_ratio = (double)network_settings.video_fec_ratio;
+
+    // temp fix for FEC as the orignal parameter synchronization mechanism is broken by WCC
+    double audio_fec_ratio = AUDIO_FEC_RATIO;
+    double video_fec_ratio = VIDEO_FEC_RATIO;
 
     // Check bounds
     FATAL_ASSERT(0.0 <= audio_fec_ratio && audio_fec_ratio <= MAX_FEC_RATIO);
