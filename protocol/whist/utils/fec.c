@@ -231,7 +231,8 @@ void fec_get_encoded_buffers(FECEncoder* fec_encoder, void** buffers, int* buffe
 
             // write a small header infront of buffer, which is protected by FEC.
             // so that even if this buffer got loss, we can recover the buffer length.
-            memcpy((char*)fec_encoder->buffers[i] + sizeof(uint16_t), original_buffer, original_size);
+            memcpy((char*)fec_encoder->buffers[i] + sizeof(uint16_t), original_buffer,
+                   original_size);
             memset((char*)fec_encoder->buffers[i] + fec_encoder->buffer_sizes[i], 0,
                    fec_payload_size - fec_encoder->buffer_sizes[i]);
             // TODO, protential optimization
