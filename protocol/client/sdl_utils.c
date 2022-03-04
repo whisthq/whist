@@ -28,6 +28,7 @@ Includes
 
 extern volatile int output_width;
 extern volatile int output_height;
+extern volatile bool insufficient_bandwidth;
 extern volatile SDL_Window* window;
 extern bool skip_taskbar;
 
@@ -47,6 +48,8 @@ static volatile bool pending_render = false;
 // Loading screen framebuffer update
 static volatile bool pending_loadingscreen = false;
 static int pending_loadingscreen_idx;
+
+static volatile bool prev_insufficient_bandwidth = false;
 
 // NV12 framebuffer update
 static volatile bool pending_nv12data = false;
@@ -112,6 +115,13 @@ static void sdl_present_pending_framebuffer(void);
  * @note                           Must be called on the main thread
  */
 static void sdl_render_loading_screen(void);
+
+/**
+ * @brief                          Renders out the insufficient bandwidth error message
+ *
+ * @note                           Must be called on the main thread
+ */
+static void sdl_render_insufficient_bandwidth(void);
 
 /**
  * @brief                          Renders out any pending nv12 data
@@ -678,6 +688,11 @@ static void sdl_present_pending_framebuffer(void) {
     // Render out the current framebuffer, if there's a pending render
     whist_lock_mutex(renderer_mutex);
 
+    // Render the error message immediately during state transition to insufficient bandwidth
+    if (prev_insufficient_bandwidth == false && insufficient_bandwidth == true) {
+        pending_render = true;
+    }
+
     // If there's no pending render, just do nothing,
     // Don't consume and discard any pending nv12 or loading screen.
     if (!pending_render) {
@@ -692,6 +707,11 @@ static void sdl_present_pending_framebuffer(void) {
     WhistTimer statistics_timer;
     start_timer(&statistics_timer);
 
+    // Ensure that a video frame is there as a background for insufficient bandwidth error message
+    if (insufficient_bandwidth) {
+        pending_nv12data = true;
+    }
+
     // Render the nv12data, if any exists
     if (pending_nv12data) {
         sdl_render_nv12data();
@@ -702,8 +722,12 @@ static void sdl_present_pending_framebuffer(void) {
         sdl_render_loading_screen();
     }
 
-    log_double_statistic(VIDEO_RENDER_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);
+    if (insufficient_bandwidth) {
+        sdl_render_insufficient_bandwidth();
+    }
+    prev_insufficient_bandwidth = insufficient_bandwidth;
 
+    log_double_statistic(VIDEO_RENDER_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);
     whist_unlock_mutex(renderer_mutex);
 
     // RenderPresent outside of the mutex, since RenderCopy made a copy anyway
@@ -722,12 +746,13 @@ static void sdl_render_loading_screen(void) {
 #if LOADING_SOLID_COLOR
     SDL_SetRenderDrawColor(sdl_renderer, background_color.red, background_color.green,
                            background_color.blue, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(sdl_renderer);
 #else
 #define NUMBER_LOADING_FRAMES 50
     int gif_frame_index = pending_loadingscreen_idx % NUMBER_LOADING_FRAMES;
 
     char frame_filename[256];
-    snprintf(frame_filename, sizeof(frame_filename), "loading/frame_%02d.png", gif_frame_index);
+    snprintf(frame_filename, sizeof(frame_filename), "images/frame_%02d.png", gif_frame_index);
 
     SDL_Surface* loading_screen = sdl_surface_from_png_file(frame_filename);
     if (loading_screen == NULL) {
@@ -762,6 +787,53 @@ static void sdl_render_loading_screen(void) {
 
     // The loading screen render is no longer pending
     pending_loadingscreen = false;
+}
+
+static void sdl_render_insufficient_bandwidth(void) {
+    const char* filenames[] = {"error_message_500x50.png", "error_message_750x75.png",
+                               "error_message_1000x100.png", "error_message_1500x150.png"};
+    // Width in pixels for the above files. Maintain the below list in ascending order.
+    const int file_widths[] = {500, 750, 1000, 1500};
+#define TARGET_WIDTH_IN_INCHES 5.0
+    int chosen_idx = 0;
+    int dpi = get_native_window_dpi((SDL_Window*)window);
+    // Choose an image closest to TARGET_WIDTH_IN_INCHES.
+    // And it should be at least TARGET_WIDTH_IN_INCHES.
+    for (int i = 0; i < (int)(sizeof(file_widths) / sizeof(*file_widths)); i++) {
+        double width_in_inches = (double)file_widths[i] / dpi;
+        if (width_in_inches > TARGET_WIDTH_IN_INCHES) {
+            chosen_idx = i;
+            break;
+        }
+    }
+
+    char frame_filename[256];
+    snprintf(frame_filename, sizeof(frame_filename), "images/%s", filenames[chosen_idx]);
+
+    SDL_Surface* error_message = sdl_surface_from_png_file(frame_filename);
+    if (error_message == NULL) {
+        LOG_ERROR("Insufficient Bandwidth image failed to load");
+    } else {
+        SDL_Texture* error_message_texture =
+            SDL_CreateTextureFromSurface(sdl_renderer, error_message);
+
+        // The surface can now be freed
+        sdl_free_png_file_rgb_surface(error_message);
+
+        // Position the rectangle such that the texture will be centered
+        int w, h;
+        SDL_QueryTexture(error_message_texture, NULL, NULL, &w, &h);
+        SDL_Rect centered_rect = {
+            .x = output_width / 2 - w / 2,
+            .y = output_height - h,
+            .w = w,
+            .h = h,
+        };
+        // Now, we write the texture out to the renderer
+        SDL_RenderCopy(sdl_renderer, error_message_texture, NULL, &centered_rect);
+
+        SDL_DestroyTexture(error_message_texture);
+    }
 }
 
 static void sdl_render_nv12data(void) {

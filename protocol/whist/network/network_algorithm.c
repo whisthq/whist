@@ -36,6 +36,7 @@ Globals
 
 volatile int output_width;
 volatile int output_height;
+volatile bool insufficient_bandwidth;
 
 /*
 ============================
@@ -540,7 +541,6 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
             network_settings->saturate_bandwidth = true;
             increase_percentage = INITIAL_INCREASE_PERCENTAGE;
         }
-
     } else if ((delay_controller_state == DELAY_CONTROLLER_DECREASE) &&
                get_timer(&last_decrease_timer) > NEW_BITRATE_DURATION_IN_SEC) {
         LOG_INFO("Decrease bitrate filtered_delay_variation = %.2f packet_loss_ratio = %.2f",
@@ -573,6 +573,13 @@ bool whist_congestion_controller(GroupStats *curr_group_stats, GroupStats *prev_
             LOG_WARNING("Requested bitrate %d bps is lesser than minimum acceptable bitrate %d bps",
                         new_bitrate, min_bitrate);
             new_bitrate = min_bitrate;
+            // If we have reached the min_bitrate for two consecutive times, then signal
+            // insufficient bandwidth
+            if (network_settings->bitrate == min_bitrate) {
+                insufficient_bandwidth = true;
+            }
+        } else {
+            insufficient_bandwidth = false;
         }
         if (new_bitrate > max_bitrate) {
             network_settings->saturate_bandwidth = false;

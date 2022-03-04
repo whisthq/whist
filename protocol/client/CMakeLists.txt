@@ -89,8 +89,8 @@ endif()
 # move necessary files into the build directory
 add_custom_command(TARGET WhistClient PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/client/loading
-        $<TARGET_FILE_DIR:WhistClient>/loading)
+        ${CMAKE_SOURCE_DIR}/client/images
+        $<TARGET_FILE_DIR:WhistClient>/images)
 
 # Print out compile flags in verbose mode of CMake
 message(VERBOSE "client C base flags: ${CMAKE_C_FLAGS}")
