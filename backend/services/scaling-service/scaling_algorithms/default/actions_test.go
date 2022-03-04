@@ -302,8 +302,6 @@ func TestScaleDownIfNecessary(t *testing.T) {
 		t.Errorf("Failed while testing scale down action. Err: %v", err)
 	}
 
-	t.Logf("Scale down exited with %v", testInstances)
-
 	// Check that free instances were scaled down
 	ok := reflect.DeepEqual(testInstances, subscriptions.WhistInstances{
 		{
@@ -428,7 +426,6 @@ func TestUpgradeImage(t *testing.T) {
 		t.Errorf("Failed while testing scale up action. Err: %v", err)
 	}
 
-	t.Logf("Ended up with isntaces %v", testInstances)
 	// Check that an instance was scaled up after the test instance was removed
 	ok := reflect.DeepEqual(testInstances, subscriptions.WhistInstances{
 		{

@@ -2,9 +2,16 @@ package scaling_algorithms
 
 import "time"
 
-// DEFAULT_INSTANCE_BUFFER is the number of instances that should always
-// be running on each region.
-const DEFAULT_INSTANCE_BUFFER = 1
+const (
+	// DEFAULT_INSTANCE_BUFFER is the number of instances with space to run
+	// mandelboxes. This value is used when deciding how many instances to
+	// scale up if we don't have enough capacity.
+	DEFAULT_INSTANCE_BUFFER = 1
+	// DESIRED_FREE_MANDELBOXES is the number of free mandelboxes we always
+	// want available in a region. TODO: Once we can connect to the hasura config server
+	// fill in this value with the one in the database.
+	DESIRED_FREE_MANDELBOXES = 2
+)
 
 // instanceCapacity is a mapping of the mandelbox capacity each type of instance has.
 var instanceCapacity = map[string]int{

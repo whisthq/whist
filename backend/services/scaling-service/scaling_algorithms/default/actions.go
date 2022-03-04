@@ -106,24 +106,19 @@ func (s *DefaultScalingAlgorithm) VerifyCapacity(scalingCtx context.Context, eve
 		return utils.MakeError("failed to query database for starting instances. Err: %v", err)
 	}
 
-	// The sum of active instances with space to run mandelboxes and starting instances
-	expectedInstances := helpers.GetExpectedInstances(latestImageID, allActive, allStarting)
+	mandelboxCapacity := helpers.ComputeExpectedMandelboxCapacity(latestImageID, allActive, allStarting)
 
-	// We consider the expected instances here (active instances + starting instances)
-	// so that we don't scale up unnecessary instances.
-	if expectedInstances < DEFAULT_INSTANCE_BUFFER {
-
-		logger.Infof("Current number of instances %v is less than desired %v. Scaling up to match with image %v.", expectedInstances, DEFAULT_INSTANCE_BUFFER, latestImageID)
-
-		// Start scale up action for desired number of instances
-		wantedInstances := DEFAULT_INSTANCE_BUFFER - expectedInstances
-		err = s.ScaleUpIfNecessary(wantedInstances, scalingCtx, event, latestImageID)
+	// We consider the expected mandelbox capacity (active instances + starting instances)
+	// to account for warmup time and so that we don't scale up unnecesary instances.
+	if mandelboxCapacity < DESIRED_FREE_MANDELBOXES {
+		logger.Infof("Current mandelbox capacity of %v is less than desired %v. Scaling up %v instances to satisfy minimum desired capacity.", mandelboxCapacity, DESIRED_FREE_MANDELBOXES, DEFAULT_INSTANCE_BUFFER)
+		err = s.ScaleUpIfNecessary(DEFAULT_INSTANCE_BUFFER, scalingCtx, event, latestImageID)
 		if err != nil {
 			// err is already wrapped here
 			return err
 		}
 	} else {
-		logger.Infof("Number of active instances in %v with image %v matches desired capacity of %v.", event.Region, latestImageID, DEFAULT_INSTANCE_BUFFER)
+		logger.Infof("Mandelbox capacity %v in %v is enough to satisfy minimum desired capacity of %v.", mandelboxCapacity, event.Region, DESIRED_FREE_MANDELBOXES)
 	}
 
 	return nil
@@ -169,15 +164,19 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 	}
 
 	// Active instances with space to run mandelboxes
-	availableInstances := helpers.GetAvailableInstances(latestImageID, allActive)
+	mandelboxCapacity := helpers.ComputeRealMandelboxCapacity(latestImageID, allActive)
+
+	// Extra capacity is considered once we have a full instance worth of capacity
+	// more than the desired free mandelboxes. TODO: Set the instance type once we
+	// have support for more instance types. For now default to `g4dn.2xlarge`.
+	extraCapacity := DESIRED_FREE_MANDELBOXES + (DEFAULT_INSTANCE_BUFFER * instanceCapacity["g4dn.2xlarge"])
 
 	// Create a list of instances that can be scaled down from the active instances list.
 	// For this, we have to consider the following conditions:
 	// 1. Does the instance have any running mandelboxes? If so, don't scale down.
 	// 2. Does the instance have the latest image, corresponding to the latest entry on the database?
-	// If so, check if we have more than the desired number of instances. In case we do, add the instance
-	// to the list that will be scaled down. This also checks if terminating the instance will leave us
-	// with insuficient capacity, and if it does we leave the instance running.
+	// If so, check if we have more than the desired number of mandelbox capacity. In case we do, add the instance
+	// to the list that will be scaled down.
 	// 3. If the instance does not have the latest image, and is not running any mandelboxes, add to the
 	// list that will be scaled down.
 	for _, instance := range allActive {
@@ -187,15 +186,13 @@ func (s *DefaultScalingAlgorithm) ScaleDownIfNecessary(scalingCtx context.Contex
 			logger.Infof("Not scaling down instance %v because it has %v mandelboxes running.", instance.ID, len(instance.Mandelboxes))
 			continue
 		}
-
 		if instance.ImageID == graphql.String(latestImageID) {
 			// Current instances
-			if availableInstances > DEFAULT_INSTANCE_BUFFER {
-				// Only scale down if there are more instances
-				// than necessary.
-				logger.Infof("Scaling down instance %v because we have more capacity of %v than desired %v.", instance.ID, availableInstances, DEFAULT_INSTANCE_BUFFER)
+			// If we have more than one instance worth of extra mandelbox capacity, scale down
+			if mandelboxCapacity >= extraCapacity {
+				logger.Infof("Scaling down instance %v because we have more mandelbox capacity of %v than desired %v.", instance.ID, mandelboxCapacity, extraCapacity)
 				freeInstances = append(freeInstances, instance)
-				availableInstances--
+				mandelboxCapacity -= int(instance.RemainingCapacity)
 			}
 		} else {
 			// Old instances

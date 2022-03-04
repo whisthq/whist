@@ -5,36 +5,42 @@ import (
 	"github.com/whisthq/whist/backend/services/subscriptions"
 )
 
-// GetAvailableInstances is a helper function to get the number of instances that are
-// active and have space to run mandelboxes.
-func GetAvailableInstances(imageID string, activeInstances subscriptions.WhistInstances) int {
-	var availableInstances int // The number of instances which are active and have space
+// ComputeRealMandelboxCapacity is a helper function to compute the real mandelbox capacity.
+// Real capcity is the number of free mandelboxes available on instances with active status.
+func ComputeRealMandelboxCapacity(imageID string, activeInstances subscriptions.WhistInstances) int {
+	var (
+		realMandelboxCapacity int
+	)
 
 	// Loop over active instances (status ACTIVE), only consider the ones with the current image
 	for _, instance := range activeInstances {
-		if instance.ImageID == graphql.String(imageID) &&
-			instance.RemainingCapacity > 0 {
-			availableInstances++
+		if instance.ImageID == graphql.String(imageID) {
+			realMandelboxCapacity += int(instance.RemainingCapacity)
 		}
 	}
 
-	return availableInstances
+	return realMandelboxCapacity
 }
 
-// GetExpectedInstances is a helper function to get the number of instances that are
-// active and have space to run mandelboxes, summed with the number of instances that
-// are on a starting state and will soon be active.
-func GetExpectedInstances(imageID string, activeInstances subscriptions.WhistInstances, startingInstances subscriptions.WhistInstances) int {
-	var expectedInstances int // The number of instances both in active and starting state
+// ComputeExpectedMandelboxCapacity is a helper function to compute the expected mandelbox capacity.
+// Expected capacity is the number of free mandelboxes available on instances with active status and
+// in starting instances.
+func ComputeExpectedMandelboxCapacity(imageID string, activeInstances subscriptions.WhistInstances, startingInstances subscriptions.WhistInstances) int {
+	var (
+		realMandelboxCapacity     int
+		expectedMandelboxCapacity int
+	)
 
-	availableInstances := GetAvailableInstances(imageID, activeInstances)
+	// Get the capacity from active instances
+	realMandelboxCapacity = ComputeRealMandelboxCapacity(imageID, activeInstances)
 
-	// Loop over starting instances (status PRE_CONNECTION, only consider the ones with the current image
+	// Loop over starting instances (status PRE_CONNECTION), only consider the ones with the current image
 	for _, instance := range startingInstances {
 		if instance.ImageID == graphql.String(imageID) {
-			expectedInstances++
+			expectedMandelboxCapacity += int(instance.RemainingCapacity)
 		}
 	}
 
-	return availableInstances + expectedInstances
+	expectedMandelboxCapacity += realMandelboxCapacity
+	return expectedMandelboxCapacity
 }
