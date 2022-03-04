@@ -382,7 +382,7 @@ def prune_containers_if_needed(pexpect_process, pexpect_prompt, running_in_ci):
     if not running_in_ci:
         pexpect_process.expect(pexpect_prompt)
 
-    # Clean up space on disk if needed
+    # Clean up space on the instance by pruning all Docker containers if the disk is 75% (or more) full
     if space_used_pctg >= 75:
         print("Disk is {}% full, pruning the docker containers...".format(space_used_pctg))
         pexpect_process.sendline("docker system prune -af")
