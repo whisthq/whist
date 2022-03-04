@@ -610,8 +610,7 @@ int32_t multithreaded_send_video(void* opaque) {
         network_settings = udp_get_network_settings(&state->client.udp_context);
 
         int video_bitrate =
-            (network_settings.bitrate - (NUM_PREV_AUDIO_FRAMES_RESEND + 1) * AUDIO_BITRATE) *
-            (1.0 - network_settings.video_fec_ratio);
+            network_settings.video_bitrate * (1.0 - network_settings.video_fec_ratio);
         FATAL_ASSERT(video_bitrate > 0);
         CodecType video_codec = network_settings.desired_codec;
         // TODO: Use video_fps instead of max_fps, also see update_video_encoder when doing this
@@ -627,7 +626,7 @@ int32_t multithreaded_send_video(void* opaque) {
         if (state->update_encoder) {
             start_timer(&statistics_timer);
             double burst_bitrate_ratio =
-                (double)network_settings.burst_bitrate / network_settings.bitrate;
+                (double)network_settings.burst_bitrate / network_settings.video_bitrate;
             int vbv_size =
                 (VBV_IN_SEC_BY_BURST_BITRATE_RATIO * video_bitrate * burst_bitrate_ratio);
             encoder = update_video_encoder(state, encoder, device, video_bitrate, video_codec,

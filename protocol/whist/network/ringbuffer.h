@@ -22,12 +22,18 @@ Includes
 #include <whist/core/whist.h>
 #include <whist/utils/fec.h>
 #include <whist/network/network_algorithm.h>
+#include "whist/utils/linked_list.h"
 
 /*
 ============================
 Defines
 ============================
 */
+
+#define PACKET_LOSS_DURATION 1
+// Using the twice the required size to account for any minor variations in FPS. Also we are
+// using video fps since we don't care about audio's packet loss.
+#define PACKET_COUNT_SIZE (PACKET_LOSS_DURATION * MAX_FPS * 2)
 
 /**
  * @brief FrameData struct containing content and metadata of encoded frames.
@@ -71,6 +77,17 @@ typedef struct FrameData {
     FECDecoder* fec_decoder;
 } FrameData;
 
+/**
+ * Type for storing total packets sent and received in previously reset frames.
+ * Used to calculate packet loss over a time duration.
+ */
+typedef struct {
+    LINKED_LIST_HEADER;
+    int num_packets_sent;
+    int num_packets_received;
+    WhistTimer frame_creation_timer;
+} PacketCountInfo;
+
 // Handler that gets called when the ring buffer wants to nack for a packet
 typedef void (*NackPacketFn)(SocketContext* socket_context, WhistPacketType frame_type, int id,
                              int index);
@@ -104,6 +121,9 @@ typedef struct RingBuffer {
     int num_packets_nacked;
     int num_packets_received;
     int num_frames_rendered;
+    PacketCountInfo packet_count_items[PACKET_COUNT_SIZE];
+    LinkedList packet_count_list;
+    WhistMutex packet_count_mutex;
     // *** END OF BITRATE STAT CALCULATIONS ***
 
     // Data ranges for frames

@@ -114,10 +114,15 @@ typedef struct {
 #define UDP_PING_INTERVAL_MS 500.0
 #define UDP_PONG_TIMEOUT 5000.0
 #define MAX_GROUP_STATS 8
-// Choose power-of-two only for an efficient computations
-#define INCOMING_BITRATE_WINDOW_MS 256
-#define INCOMING_BITRATE_NUM_BUCKETS 16
+// Incoming bitrate related constants. Choose power-of-two only for an efficient computations
+#define INCOMING_BITRATE_WINDOW_MS 1024
+#define INCOMING_BITRATE_NUM_BUCKETS 8
 #define DURATION_PER_BUCKET (INCOMING_BITRATE_WINDOW_MS / INCOMING_BITRATE_NUM_BUCKETS)
+// If video bitrate received over a timeperiod(100ms or more) is less than this value than it will
+// be considered as idle video. Actual video stream will consume much more than 500Kbps.
+#define IDLE_VIDEO_MAX_BITRATE 500000
+// Atleast 75% of the buckets should contain actual video data.
+#define MIN_VALID_BUCKETS ((INCOMING_BITRATE_NUM_BUCKETS * 3) / 4)
 
 typedef struct {
     bool pending_stream_reset;
@@ -252,15 +257,25 @@ static void add_incoming_bits(UDPContext* context, timestamp_us arrival_time, in
 static int get_incoming_bitrate(UDPContext* context) {
     uint64_t current_bucket_id = get_bucket_id(current_time_us());
     int total_bits = 0;
+    int num_buckets = 0;
     for (uint64_t i = current_bucket_id - INCOMING_BITRATE_NUM_BUCKETS + 1; i <= current_bucket_id;
          i++) {
         IncomingBitrate* bucket =
             &context->incoming_bitrate_buckets[i % INCOMING_BITRATE_NUM_BUCKETS];
         if (i == bucket->bucket_id) {
+            // If the bucket didn't have any encoded video packets, then ignore that bucket
+            if (bucket->num_bits < (IDLE_VIDEO_MAX_BITRATE * DURATION_PER_BUCKET) / MS_IN_SECOND) {
+                continue;
+            }
             total_bits += bucket->num_bits;
+            num_buckets++;
         }
     }
-    return (int)(((uint64_t)total_bits * MS_IN_SECOND) / INCOMING_BITRATE_WINDOW_MS);
+    // Atleast MIN_VALID_BUCKETS of the buckets should have actual video data
+    if (num_buckets >= MIN_VALID_BUCKETS)
+        return (int)(((uint64_t)total_bits * MS_IN_SECOND) / (num_buckets * DURATION_PER_BUCKET));
+    else
+        return -1;
 }
 
 /**
@@ -313,6 +328,9 @@ static int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet);
  * @param arrival_time           Writes the arrival time of this packet in the pointed location (if
  *                               non-NULL)
  *
+ * @param network_payload_size   Writes the payload size of the packet over the network (if
+ *                               non-NULL). Valid if the return value of this function is true
+ *
  * @returns                      True if a packet was received and written to,
  *                               False if no packet was received
  *
@@ -320,7 +338,7 @@ static int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet);
  *                               wait for as long as the socket's most recent set_timeout
  */
 static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
-                               timestamp_us* arrival_time);
+                               timestamp_us* arrival_time, int* network_payload_size);
 
 /**
  * @brief                        Returns the size, in bytes, of the relevant part of
@@ -406,9 +424,15 @@ UDP Implementation of Network.h Interface
 
 static void udp_congestion_control(UDPContext* context, timestamp_us departure_time,
                                    timestamp_us arrival_time, int group_id) {
-    // Initialize desired_network_settings if it is not done yet.
-    if (context->desired_network_settings.bitrate == 0) {
+    // Initialize desired_network_settings if it is not done yet. Also send that starting bitrate
+    // setting to server.
+    if (context->desired_network_settings.video_bitrate == 0) {
         context->desired_network_settings = get_starting_network_settings();
+        UDPPacket network_settings_packet;
+        network_settings_packet.type = UDP_NETWORK_SETTINGS;
+        network_settings_packet.udp_network_settings_data.network_settings =
+            context->desired_network_settings;
+        udp_send_udp_packet(context, &network_settings_packet);
     }
     bool send_network_settings = false;
 #if !USE_WHIST_CONGESTION_CONTROL
@@ -503,16 +527,17 @@ static bool udp_update(void* raw_context) {
 
     UDPPacket udp_packet;
     timestamp_us arrival_time;
-    bool received_packet = udp_get_udp_packet(context, &udp_packet, &arrival_time);
+    int network_payload_size;
+    bool received_packet =
+        udp_get_udp_packet(context, &udp_packet, &arrival_time, &network_payload_size);
 
     if (received_packet) {
-        add_incoming_bits(context, arrival_time,
-                          UDPNETWORKPACKET_HEADER_SIZE + get_udp_packet_size(&udp_packet));
         // if the packet is a whist_segment, store the data to give later via get_packet
         // Otherwise, pass it to udp_handle_message
         if (udp_packet.type == UDP_WHIST_SEGMENT) {
             WhistPacketType packet_type = udp_packet.udp_whist_segment_data.whist_type;
-
+            if (packet_type == PACKET_VIDEO)
+                add_incoming_bits(context, arrival_time, network_payload_size);
             if (packet_type == PACKET_VIDEO && udp_packet.group_id >= context->curr_group_id &&
                 !udp_packet.udp_whist_segment_data.is_a_nack &&
                 !udp_packet.udp_whist_segment_data.is_a_duplicate) {
@@ -1195,7 +1220,7 @@ int create_udp_server_context(UDPContext* context, int port, int connection_time
         }
         // Check to see if we received a UDP_CONNECTION_ATTEMPT
         UDPPacket client_packet;
-        if (udp_get_udp_packet(context, &client_packet, NULL)) {
+        if (udp_get_udp_packet(context, &client_packet, NULL, NULL)) {
             if (client_packet.type == UDP_CONNECTION_ATTEMPT) {
                 received_connection_attempt = true;
             }
@@ -1286,7 +1311,7 @@ int create_udp_client_context(UDPContext* context, char* destination, int port,
         }
         // Check to see if we received a UDP_CONNECTION_CONFIRMATION
         UDPPacket server_response;
-        if (udp_get_udp_packet(context, &server_response, NULL)) {
+        if (udp_get_udp_packet(context, &server_response, NULL, NULL)) {
             if (server_response.type == UDP_CONNECTION_CONFIRMATION) {
                 connection_succeeded = true;
             }
@@ -1434,7 +1459,7 @@ int udp_send_udp_packet(UDPContext* context, UDPPacket* udp_packet) {
 }
 
 static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
-                               timestamp_us* arrival_time) {
+                               timestamp_us* arrival_time, int* network_payload_size) {
     // Wait to receive a packet over UDP, until timing out
     UDPNetworkPacket udp_network_packet;
     socklen_t slen = sizeof(context->last_addr);
@@ -1495,6 +1520,10 @@ static bool udp_get_udp_packet(UDPContext* context, UDPPacket* udp_packet,
 #if LOG_NETWORKING
         LOG_INFO("Received a WhistPacket of size %d over UDP", decrypted_len);
 #endif
+        if (network_payload_size) {
+            *network_payload_size =
+                (UDPNETWORKPACKET_HEADER_SIZE + udp_network_packet.payload_size);
+        }
 
         // Verify the UDP Packet's size
         FATAL_ASSERT(decrypted_len == get_udp_packet_size(udp_packet));
@@ -1773,9 +1802,7 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
         LOG_ERROR("Tried to set the burst bitrate, but there's no network throttler!");
     } else {
         // Subtract audio bitrate from burst bitrate as audio is not throttled
-        network_throttler_set_burst_bitrate(
-            context->network_throttler,
-            burst_bitrate - (NUM_PREV_AUDIO_FRAMES_RESEND + 1) * AUDIO_BITRATE);
+        network_throttler_set_burst_bitrate(context->network_throttler, burst_bitrate);
     }
 
     // Set FEC Packet Ratios

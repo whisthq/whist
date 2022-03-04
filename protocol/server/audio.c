@@ -47,6 +47,12 @@ Includes
 #endif
 // Linux shouldn't have this
 
+// Number of audio previous frames that will be resent along with the current frame.
+// Resending of audio is done pro-actively as audio packet loss doesn't have enough time for client
+// to send nack and recover. Since audio bitrate is just 128Kbps, the extra bandwidth used for
+// resending audio packets is still acceptable.
+#define NUM_PREV_AUDIO_FRAMES_RESEND 1
+
 /*
 ============================
 Public Function Implementations
