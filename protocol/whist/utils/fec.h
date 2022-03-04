@@ -71,8 +71,8 @@ FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int ma
  *
  * @returns                        The num of real buffers needed
  */
-int fec_encoder_get_num_real_buffers(int buffer_size, int real_buffer_size);
 
+int fec_encoder_get_num_real_buffers(int buffer_size, int real_buffer_size);
 /**
  * @brief                          Registers a buffer into the encoder.
  *
