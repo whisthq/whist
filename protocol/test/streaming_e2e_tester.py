@@ -335,8 +335,8 @@ if __name__ == "__main__":
     with open(metadata_filename, "w") as metadata_file:
         json.dump(experiment_metadata, metadata_file)
 
-    server_log_filepath = os.path.join(perf_logs_folder_name, "server_monitoring_log.log")
-    client_log_filepath = os.path.join(perf_logs_folder_name, "client_monitoring_log.log")
+    server_log_filepath = os.path.join(perf_logs_folder_name, "server_monitoring.log")
+    client_log_filepath = os.path.join(perf_logs_folder_name, "client_monitoring.log")
 
     manager = multiprocessing.Manager()
     args_dict = manager.dict()
@@ -372,8 +372,8 @@ if __name__ == "__main__":
         p2.start()
         p2.join()
 
-    server_log = open("{}/server_monitoring_log.log".format(perf_logs_folder_name), "a")
-    client_log = open("{}/client_monitoring_log.log".format(perf_logs_folder_name), "a")
+    server_log = open("{}/server_monitoring.log".format(perf_logs_folder_name), "a")
+    client_log = open("{}/client_monitoring.log".format(perf_logs_folder_name), "a")
     server_cmd = "ssh {}@{} -i {}".format(username, server_hostname, ssh_key_path)
     client_cmd = "ssh {}@{} -i {}".format(username, client_hostname, ssh_key_path)
 
