@@ -88,3 +88,5 @@ require (
 	gotest.tools/v3 v3.1.0 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 )
+
+replace github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.7
