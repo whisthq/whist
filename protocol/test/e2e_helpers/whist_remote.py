@@ -367,6 +367,26 @@ def run_client_on_instance(pexpect_process, json_data, simulate_scrolling):
     return client_docker_id
 
 
+def prune_containers_if_needed(pexpect_process, pexpect_prompt, running_in_ci):
+    # Check if we are running out of space
+    pexpect_process.sendline("df -h | grep /dev/root")
+    # We need to pass running_in_ci=True no matter what because we need to read the stdout
+    wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci=True)
+    space_used_output = pexpect_process.before.decode("utf-8").strip().split("\n")
+    space_used_output = space_used_output[-1].replace("\n", "").replace("\r", "").split()
+    space_used_pctg = int(space_used_output[-2][:-1])
+    if not running_in_ci:
+        pexpect_process.expect(pexpect_prompt)
+
+    # Clean up space on disk if needed
+    if space_used_pctg >= 75:
+        print("Disk is {}% full, pruning the docker containers...")
+        pexpect_process.sendline("docker system prune -af")
+        wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
+    else:
+        print("Disk is {}% full, no need to prune containers.")
+
+
 def server_setup_process(args_dict):
     """
     Prepare a remote Ubuntu machine to host the Whist server. This entails:
@@ -413,17 +433,7 @@ def server_setup_process(args_dict):
         aws_credentials_filepath,
     )
 
-    # Check if we are running out of space
-    hs_process.sendline("df -h | grep /dev/root")
-    wait_until_cmd_done(hs_process, pexpect_prompt_server, running_in_ci)
-    space_used_output = hs_process.before.decode("utf-8").strip().split("\n")
-    space_used_output = space_used_output[-1].replace("\n", "").replace("\r", "").split()
-    space_used_pctg = int(space_used_output[-2][:-1])
-
-    # Clean up space
-    if space_used_pctg > 60:
-        hs_process.sendline("docker system prune -af")
-        wait_until_cmd_done(hs_process, pexpect_prompt_server, running_in_ci)
+    prune_containers_if_needed(hs_process, pexpect_prompt_server, running_in_ci)
 
     if skip_git_clone == "false":
         clone_whist_repository_on_instance(
@@ -517,17 +527,7 @@ def client_setup_process(args_dict):
             aws_credentials_filepath,
         )
 
-        # Check if we are running out of space
-        hs_process.sendline("df -h | grep /dev/root")
-        wait_until_cmd_done(hs_process, pexpect_prompt_client, running_in_ci)
-        space_used_output = hs_process.before.decode("utf-8").strip().split("\n")
-        space_used_output = space_used_output[-1].replace("\n", "").replace("\r", "").split()
-        space_used_pctg = int(space_used_output[-2][:-1])
-
-        # Clean up space
-        if space_used_pctg > 60:
-            hs_process.sendline("docker system prune -af")
-            wait_until_cmd_done(hs_process, pexpect_prompt_client, running_in_ci)
+        prune_containers_if_needed(hs_process, pexpect_prompt_client, running_in_ci)
 
         if skip_git_clone == "false":
             clone_whist_repository_on_instance(
