@@ -82,6 +82,13 @@ void initiate_out_of_window_drag_handlers(void) {
                                              file_drag_mouse_down = false;
                                              sdl_end_drag_event();
                                            }];
+
+    // Swip gesture event indicates that file is no longer being dragged
+    [NSEvent addGlobalMonitorForEventsMatchingMask:NSEventMaskSwipe
+                                           handler:^(NSEvent *event) {
+                                             file_drag_mouse_down = false;
+                                             sdl_end_drag_event();
+                                           }];
 }
 
 void hide_native_window_taskbar(void) {
