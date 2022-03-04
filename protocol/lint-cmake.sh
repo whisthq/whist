@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 set -Eeuo pipefail
 
 # Retrieve source directory of this script
