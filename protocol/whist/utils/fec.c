@@ -162,7 +162,7 @@ FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int ma
 }
 
 int fec_encoder_get_num_real_buffers(int buffer_size, int real_buffer_size) {
-    return buffer_size == 0 ? 1 : int_div_roundup(buffer_size, real_buffer_size);
+    return buffer_size == 0 ? 1 : int_div_roundup(buffer_size, real_buffer_size - FEC_HEADER_SIZE);
 }
 
 void fec_encoder_register_buffer(FECEncoder* fec_encoder, void* buffer, int buffer_size) {
