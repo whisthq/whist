@@ -160,7 +160,7 @@ Defines
 // Average duration of one video frame in microseconds
 #define AVG_FRAME_DURATION_IN_US (US_IN_SECOND / MIN_FPS)
 // Number of identical frames to send before turning the encoder off
-#define CONSECUTIVE_IDENTICAL_FRAMES 300
+#define CONSECUTIVE_IDENTICAL_FRAMES 60
 // FPS to send when the encoder is off
 #define DISABLED_ENCODER_FPS 10
 // Sometimes congestion control chooses a really low bitrate at which the visual quality is
@@ -192,12 +192,6 @@ Defines
 #define MAX_URL_LENGTH 2048
 
 #define AUDIO_FREQUENCY 48000
-
-// Number of audio previous frames that will be resent along with the current frame.
-// Resending of audio is done pro-actively as audio packet loss doesn't have enough time for client
-// to send nack and recover. Since audio bitrate is just 128Kbps, the extra bandwidth used for
-// resending audio packets is still acceptable.
-#define NUM_PREV_AUDIO_FRAMES_RESEND 1
 
 /**
  * Global constructor function.

@@ -165,6 +165,8 @@ RingBuffer* init_ring_buffer(WhistPacketType type, int max_frame_size, int ring_
     ring_buffer->num_frames_rendered = 0;
 
     start_timer(&ring_buffer->network_statistics_timer);
+    linked_list_init(&ring_buffer->packet_count_list);
+    ring_buffer->packet_count_mutex = whist_create_mutex();
 
     // Nack bandwidth tracking
     ring_buffer->burst_counter = 0;
@@ -386,9 +388,16 @@ FrameData* get_frame_at_id(RingBuffer* ring_buffer, int id) {
 double get_packet_loss_ratio(RingBuffer* ring_buffer) {
     int num_packets_received = 0;
     int num_packets_sent = 0;
+    // Count the packets for the frames reset already(due to rendering, I-frame etc.,)
+    whist_lock_mutex(ring_buffer->packet_count_mutex);
+    linked_list_for_each(&ring_buffer->packet_count_list, const PacketCountInfo, item) {
+        num_packets_received += item->num_packets_received;
+        num_packets_sent += item->num_packets_sent;
+    }
+    whist_unlock_mutex(ring_buffer->packet_count_mutex);
+    // Now count the packets for frames in ringbuffer.
     // Don't include max_id frame for computing packet loss as it could be in progress
-    // Using (MAX_FPS / 4) to limit our computation to last 250ms
-    for (int id = max(ring_buffer->max_id - (MAX_FPS / 4), 0); id < ring_buffer->max_id; id++) {
+    for (int id = ring_buffer->last_rendered_id + 1; id < ring_buffer->max_id; id++) {
         FrameData* frame = get_frame_at_id(ring_buffer, id);
         if (id != frame->id) {
             continue;
@@ -401,12 +410,9 @@ double get_packet_loss_ratio(RingBuffer* ring_buffer) {
         num_packets_sent += frame->num_fec_packets;
         num_packets_received += frame->original_packets_received;
         num_packets_received += frame->fec_packets_received;
-        num_packets_received += frame->duplicate_packets_received;
         FrameData* next_frame = get_frame_at_id(ring_buffer, id + 1);
-        if (id + 1 != next_frame->id) {
-            // This error means code/logic is wrong. If it occurs fix it asap.
-            LOG_ERROR("Could not find the count of duplicate packets sent for ID %d!", id);
-        } else {
+        if (id + 1 == next_frame->id) {
+            num_packets_received += frame->duplicate_packets_received;
             num_packets_sent += next_frame->prev_frame_num_duplicate_packets;
         }
     }
@@ -718,6 +724,7 @@ void destroy_ring_buffer(RingBuffer* ring_buffer) {
     free(ring_buffer->receiving_frames);
     // destroy the block allocator
     destroy_block_allocator(ring_buffer->packet_buffer_allocator);
+    whist_destroy_mutex(ring_buffer->packet_count_mutex);
     // free the ring_buffer
     free(ring_buffer);
 }
@@ -766,6 +773,23 @@ void init_frame(RingBuffer* ring_buffer, int id, int num_original_indices, int n
 
 void reset_frame(RingBuffer* ring_buffer, FrameData* frame_data) {
     FATAL_ASSERT(frame_data->id != -1);
+    // Save the Packet count information before reset, as this information is required for packet
+    // loss calculation.
+    whist_lock_mutex(ring_buffer->packet_count_mutex);
+    PacketCountInfo* head;
+    // Remove the items older than PACKET_LOSS_DURATION from the head of the list
+    while ((head = (PacketCountInfo*)linked_list_head(&ring_buffer->packet_count_list)) != NULL &&
+           get_timer(&head->frame_creation_timer) > PACKET_LOSS_DURATION) {
+        linked_list_remove(&ring_buffer->packet_count_list, head);
+    }
+    // Add this frame to the tail of the list
+    PacketCountInfo* tail = &ring_buffer->packet_count_items[frame_data->id % PACKET_COUNT_SIZE];
+    tail->num_packets_sent = frame_data->num_original_packets + frame_data->num_fec_packets;
+    tail->num_packets_received =
+        frame_data->original_packets_received + frame_data->fec_packets_received;
+    tail->frame_creation_timer = frame_data->frame_creation_timer;
+    linked_list_add_tail(&ring_buffer->packet_count_list, tail);
+    whist_unlock_mutex(ring_buffer->packet_count_mutex);
 
     // Free the frame's data
     free_block(ring_buffer->packet_buffer_allocator, frame_data->packet_buffer);
@@ -883,7 +907,7 @@ bool try_nacking(RingBuffer* ring_buffer, double latency, NetworkSettings* netwo
     // This throttles NACKing to this instantaneous bitrate
     int max_nack_burst_mbps = (int)(network_settings->burst_bitrate * MAX_NACK_BITRATE_RATIO);
     // This is the fundamental NACKing limit
-    int max_nack_avg_mbps = (int)(network_settings->bitrate * MAX_NACK_BITRATE_RATIO);
+    int max_nack_avg_mbps = (int)(network_settings->video_bitrate * MAX_NACK_BITRATE_RATIO);
 
     // MAX_MBPS * interval / MAX_PAYLOAD_SIZE is the amount of nack payloads allowed in each
     // interval The XYZ_counter is the amount of packets we've already sent in that interval We
