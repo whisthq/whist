@@ -77,9 +77,10 @@ resource "aws_iam_role" "EC2DeploymentRole" {
 }
 
 # Create an instance profile for the deployment role because 
-# Terraform doesn't create it by default.
+# Terraform doesn't create it by default. Use a different instance
+# profile for each environment.
 resource "aws_iam_instance_profile" "EC2DeploymentRoleInstanceProfile" {
-   name = "EC2DeploymentRoleInstanceProfile"
+   name = "EC2DeploymentRoleInstanceProfile${var.env}"
    role = aws_iam_role.EC2DeploymentRole.name
 }
 
