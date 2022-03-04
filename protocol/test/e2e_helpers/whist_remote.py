@@ -413,6 +413,18 @@ def server_setup_process(args_dict):
         aws_credentials_filepath,
     )
 
+    # Check if we are running out of space
+    hs_process.sendline("df -h | grep /dev/root")
+    wait_until_cmd_done(hs_process, pexpect_prompt_server, running_in_ci)
+    space_used_output = hs_process.before.decode("utf-8").strip().split("\n")
+    space_used_output = space_used_output[-1].replace("\n", "").replace("\r", "").split()
+    space_used_pctg = int(space_used_output[-2][:-1])
+
+    # Clean up space
+    if space_used_pctg > 60:
+        hs_process.sendline("docker system prune -af")
+        wait_until_cmd_done(hs_process, pexpect_prompt_server, running_in_ci)
+
     if skip_git_clone == "false":
         clone_whist_repository_on_instance(
             github_token, hs_process, pexpect_prompt_server, running_in_ci
@@ -504,6 +516,18 @@ def client_setup_process(args_dict):
             running_in_ci,
             aws_credentials_filepath,
         )
+
+        # Check if we are running out of space
+        hs_process.sendline("df -h | grep /dev/root")
+        wait_until_cmd_done(hs_process, pexpect_prompt_client, running_in_ci)
+        space_used_output = hs_process.before.decode("utf-8").strip().split("\n")
+        space_used_output = space_used_output[-1].replace("\n", "").replace("\r", "").split()
+        space_used_pctg = int(space_used_output[-2][:-1])
+
+        # Clean up space
+        if space_used_pctg > 60:
+            hs_process.sendline("docker system prune -af")
+            wait_until_cmd_done(hs_process, pexpect_prompt_client, running_in_ci)
 
         if skip_git_clone == "false":
             clone_whist_repository_on_instance(
