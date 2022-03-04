@@ -95,7 +95,7 @@ const refreshAfterPaying = authRefreshFlow(
       merge(
         loggedInAuth.success.pipe(pluck("refreshToken")),
         firstAuth.success.pipe(pluck("refreshToken"))
-      )
+      ).pipe(map((t) => ({ refreshToken: t })))
     ),
     map(([, r]) => r)
   )
