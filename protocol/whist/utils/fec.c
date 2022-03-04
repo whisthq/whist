@@ -432,17 +432,3 @@ void write_u16_to_buffer(char* p, uint16_t w) { *(uint16_t*)p = w; }
 
 // reads a 16bit int from buffer
 uint16_t read_u16_from_buffer(char* p) { return *(uint16_t*)p; }
-
-// if we want to support big endian and unaligned memory access as well, consider using the below
-// implementations
-/*
-void write_u16_to_buffer(char* p, u16_t w) {
-    *(unsigned char*)(p + 1) = (w & 0xff);
-    *(unsigned char*)(p + 0) = (w >> 8);
-}
-u16_t read_u16_from_buffer(char* p) {
-    u16_t res;
-    res = *(const unsigned char*)(p + 0);
-    res = *(const unsigned char*)(p + 1) + (res << 8);
-    return res;
-}*/
