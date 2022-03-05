@@ -11,30 +11,46 @@
    hours.
  */
 
-function addSubscriptionStatusClaim(user, context, callback) {
-  const app_metadata = user.app_metadata || {}
-  const stripe_customer_id = app_metadata.stripe_customer_id || null
-  const stripe = require("stripe@8.126.0")(configuration.STRIPE_API_KEY)
+async function addSubscriptionStatusClaim(user, context, callback) {
+  const app_metadata = user.app_metadata || {};
+  const stripe_customer_id = app_metadata.stripe_customer_id || null;
+  const stripe = require("stripe@8.126.0")(configuration.STRIPE_API_KEY);
 
   if (app_metadata.stripe_customer_id) {
-    stripe.subscriptions
+    const subscriptions = await stripe.subscriptions
       .list({
         customer: stripe_customer_id,
-      })
-      .then((subscriptions) => {
-        // Get the subscription that was created most recently by sorting the
-        // array of subscriptions in ascending order by creation date and then
-        // choosing the last element in the sorted array. If the list is empty,
-        // pop() will return undefined.
-        const subscription = subscriptions.data
-          .sort((left, right) => left.created - right.created)
-          .pop()
+      });
+    
+    const subscription = subscriptions.data
+    .sort((left, right) => left.created - right.created)
+    .pop();
+    
+    let status = subscription ? subscription.status : null;
+       
+   	if(subscription !== undefined) {
+      if(subscription.status !== "active" && subscription.status !== "trialing") {
+        try {          
+          await stripe.subscriptions.del(subscription.id);
+          
+          const invoices = await stripe.invoiceItems.list({
+            customer: stripe_customer_id
+          });
+                    
+          for (const invoice in invoices.data) {
+            await stripe.InvoiceItem.delete(invoice.id);
+          }    
+          // Because we deleted the subscription, the status needs to be manually set to null          
+          status = null;
+          
+        } catch(err) { console.error(err); }
+      }
+    }
+    
+    context.accessToken[
+      "https://api.fractal.co/subscription_status"
+    ] = status;
 
-        context.accessToken[
-          "https://api.fractal.co/subscription_status"
-        ] = subscription ? subscription.status : null
-
-        return callback(null, user, context)
-      }, callback)
-  } else return callback(new Error("Missing Stripe customer ID"), user, context)
+    return callback(null, user, context);
+  } else return callback(new Error("Missing Stripe customer ID"), user, context);
 }
