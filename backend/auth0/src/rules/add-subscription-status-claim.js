@@ -31,8 +31,10 @@ async function addSubscriptionStatusClaim(user, context, callback) {
    	if(subscription !== undefined) {
       if(subscription.status !== "active" && subscription.status !== "trialing") {
         try {          
+          // Delete their subscription so they will be prompted to enter their credit card
           await stripe.subscriptions.del(subscription.id);
-          
+          // Delete any pending invoices; if there are invoices remaining the user will be directed to
+          // a different Stripe checkout page
           const invoices = await stripe.invoiceItems.list({
             customer: stripe_customer_id
           });
