@@ -1,11 +1,11 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import classNames from "classnames"
 
 import Dropdown from "@app/components/dropdown"
 import { WhistButton, WhistButtonState } from "@app/components/button"
 
 const Importer = (props: {
-  browsers: string[]
+  browsers: string[] | undefined
   onSubmit: (browser: string | undefined) => void
   allowSkip: boolean
 }) => {
@@ -20,6 +20,12 @@ const Importer = (props: {
     setProcessing(true)
     props.onSubmit(b)
   }
+
+  useEffect(() => {
+    if (props.browsers !== undefined && props.browsers.length > 0) {
+      setBrowser(props.browsers[0])
+    }
+  }, [props.browsers])
 
   return (
     <div
@@ -39,14 +45,27 @@ const Importer = (props: {
           Chrome, Brave, and Opera.
         </div>
         <div className="mt-8 max-w-sm m-auto">
-          <Dropdown options={props.browsers} onSelect={onSelect} />
+          {props.browsers === undefined || props.browsers.length === 0 ? (
+            <>
+              <Dropdown
+                options={["No supported browsers found :("]}
+                onSelect={() => {}}
+              />
+            </>
+          ) : (
+            <>
+              <Dropdown options={props.browsers ?? []} onSelect={onSelect} />
+            </>
+          )}
         </div>
         <div>
           <WhistButton
             contents="Continue"
             className="mt-4 px-12 w-96 mx-auto py-2 text-gray-300 text-gray-900 bg-blue-light"
             state={
-              processing
+              props.browsers === undefined || props.browsers.length === 0
+                ? WhistButtonState.DISABLED
+                : processing
                 ? WhistButtonState.PROCESSING
                 : WhistButtonState.DEFAULT
             }
