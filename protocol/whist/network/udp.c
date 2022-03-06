@@ -611,17 +611,24 @@ static int udp_send_packet(void* raw_context, WhistPacketType packet_type,
     int whist_packet_size = get_packet_size(whist_packet);
 
     // Calculate number of packets needed to send the payload, rounding up.
-    int num_indices = whist_packet_size == 0
-                          ? 1
-                          : (int)(whist_packet_size / MAX_PACKET_SEGMENT_SIZE +
-                                  (whist_packet_size % MAX_PACKET_SEGMENT_SIZE == 0 ? 0 : 1));
+    int num_indices_if_no_fec =
+        (whist_packet_size == 0 ? 1 : int_div_roundup(whist_packet_size, MAX_PACKET_SEGMENT_SIZE));
+    int num_indices_if_use_fec =
+        fec_encoder_get_num_real_buffers(whist_packet_size, MAX_PACKET_SEGMENT_SIZE);
 
     // Calculate the number of FEC packets we'll be using, if any
     // A nack buffer is required to use FEC
     int num_fec_packets = 0;
     double fec_packet_ratio = context->fec_packet_ratios[packet_type];
     if (nack_buffer && fec_packet_ratio > 0.0) {
-        num_fec_packets = get_num_fec_packets(num_indices, fec_packet_ratio);
+        num_fec_packets = get_num_fec_packets(num_indices_if_use_fec, fec_packet_ratio);
+    }
+
+    int num_indices;
+    if (num_fec_packets == 0) {
+        num_indices = num_indices_if_no_fec;
+    } else {
+        num_indices = num_indices_if_use_fec;
     }
 
     int num_total_packets = num_indices + num_fec_packets;
@@ -1748,8 +1755,14 @@ void udp_handle_pong(UDPContext* context, int id, timestamp_us ping_send_timesta
 void udp_handle_network_settings(void* raw_context, NetworkSettings network_settings) {
     UDPContext* context = (UDPContext*)raw_context;
     int burst_bitrate = network_settings.burst_bitrate;
-    double audio_fec_ratio = (double)network_settings.audio_fec_ratio;
-    double video_fec_ratio = (double)network_settings.video_fec_ratio;
+
+    // double audio_fec_ratio = (double)network_settings.audio_fec_ratio;
+    // double video_fec_ratio = (double)network_settings.video_fec_ratio;
+
+    // temp fix as the FEC parameter synchronization mechanism is broken by WCC
+    // TODO: a better fix
+    double audio_fec_ratio = AUDIO_FEC_RATIO;
+    double video_fec_ratio = VIDEO_FEC_RATIO;
 
     // Check bounds
     FATAL_ASSERT(0.0 <= audio_fec_ratio && audio_fec_ratio <= MAX_FEC_RATIO);

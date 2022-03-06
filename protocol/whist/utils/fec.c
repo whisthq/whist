@@ -54,10 +54,11 @@ struct FECEncoder {
     int num_accepted_buffers;
     int num_buffers;
     int num_real_buffers;
-    int max_buffer_size;
+    int max_buffer_size;  // static, max allowed size
     int* buffer_sizes;
     void** buffers;
-    int max_packet_size;  // max (original) packet size feed into encoder so far
+    int max_packet_size;  // max (original) buffer size fed into encoder so far.
+                          // TODO: rename into max_accepted_buffer_size
     RSCode* rs_code;
     bool encode_performed;
 };
@@ -67,10 +68,11 @@ struct FECDecoder {
     int num_accepted_real_buffers;
     int num_buffers;
     int num_real_buffers;
-    int max_buffer_size;
+    int max_buffer_size;  // static, max allowed size
     int* buffer_sizes;
     void** buffers;
-    int max_packet_size;  // max packet size feed into decoder so far
+    int max_packet_size;  // max buffer size fed into decoder so far.
+                          // TODO: rename into max_accepted_buffer_size
     RSCode* rs_code;
     bool recovery_performed;
 };
@@ -107,6 +109,12 @@ static RSCode* get_rs_code(int k, int n);
  */
 static void free_rs_code_table(void* opaque);
 
+// write a 16bit uint into buffer
+void write_u16_to_buffer(char* p, uint16_t w);
+
+// read a 16bit uint from buffer
+uint16_t read_u16_from_buffer(char* p);
+
 /*
 ============================
 Public Function Implementations
@@ -131,6 +139,7 @@ int get_num_fec_packets(int num_real_packets, double fec_packet_ratio) {
 FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int max_buffer_size) {
     FATAL_ASSERT(num_real_buffers + num_fec_buffers <= MAX_RS_BUFFERS);
     FATAL_ASSERT(max_buffer_size <= MAX_BUFFER_SIZE);
+    FATAL_ASSERT(max_buffer_size >= FEC_HEADER_SIZE);
 
     FECEncoder* fec_encoder = safe_malloc(sizeof(*fec_encoder));
 
@@ -150,16 +159,31 @@ FECEncoder* create_fec_encoder(int num_real_buffers, int num_fec_buffers, int ma
     return fec_encoder;
 }
 
+int fec_encoder_get_num_real_buffers(int buffer_size, int real_buffer_size) {
+    return buffer_size == 0 ? 1 : int_div_roundup(buffer_size, real_buffer_size - FEC_HEADER_SIZE);
+}
+
 void fec_encoder_register_buffer(FECEncoder* fec_encoder, void* buffer, int buffer_size) {
     FATAL_ASSERT(buffer != NULL);
     FATAL_ASSERT(0 <= buffer_size);
 
     char* current_buffer_location = buffer;
     int remaining_buffer_size = buffer_size;
+
+    // handle special case of buffer_size is 0
+    if (buffer_size == 0) {
+        fec_encoder->buffers[0] = buffer;
+        fec_encoder->buffer_sizes[0] = 0;
+        fec_encoder->max_packet_size = 0;
+        fec_encoder->num_accepted_buffers = 1;
+        return;
+    }
+
     while (remaining_buffer_size > 0) {
         // If the buffer we were given is larger than max_buffer_size,
         // Then we split it up
-        int current_buffer_size = min(remaining_buffer_size, fec_encoder->max_buffer_size);
+        int current_buffer_size =
+            min(remaining_buffer_size, fec_encoder->max_buffer_size - FEC_HEADER_SIZE);
 
         // Check that we're not about to accept too many buffers,
         // and then pass the buffer segment into the list of buffer segments
@@ -173,22 +197,37 @@ void fec_encoder_register_buffer(FECEncoder* fec_encoder, void* buffer, int buff
         current_buffer_location += current_buffer_size;
         remaining_buffer_size -= current_buffer_size;
     }
+
+    FATAL_ASSERT(fec_encoder->num_accepted_buffers == fec_encoder->num_real_buffers);
+    FATAL_ASSERT(remaining_buffer_size == 0);
 }
 
 void fec_get_encoded_buffers(FECEncoder* fec_encoder, void** buffers, int* buffer_sizes) {
     FATAL_ASSERT(fec_encoder->num_accepted_buffers == fec_encoder->num_real_buffers);
     if (!fec_encoder->encode_performed) {
+        // the size of actual data feed into fec_encoder
+        int fec_payload_size = sizeof(uint16_t) + fec_encoder->max_packet_size;
+
         // rs encoder requires packets to have equal length, so we pad packets to max_buffer_size
         for (int i = 0; i < fec_encoder->num_real_buffers; i++) {
+            // save a copy of the original buffer pointer and size
             char* original_buffer = fec_encoder->buffers[i];
+            int original_size = fec_encoder->buffer_sizes[i];
 
             FATAL_ASSERT(fec_encoder->buffers[i] != NULL);
 
-            fec_encoder->buffers[i] = safe_malloc(fec_encoder->max_buffer_size);
+            // malloc buffers for feeding into the encoder
+            fec_encoder->buffers[i] = safe_malloc(fec_payload_size);
+            fec_encoder->buffer_sizes[i] = sizeof(uint16_t) + original_size;
 
-            memcpy((char*)fec_encoder->buffers[i], original_buffer, fec_encoder->buffer_sizes[i]);
+            write_u16_to_buffer(fec_encoder->buffers[i], (uint16_t)original_size);
+
+            // write a small header infront of buffer, which is protected by FEC.
+            // so that even if this buffer got loss, we can recover the buffer length.
+            memcpy((char*)fec_encoder->buffers[i] + sizeof(uint16_t), original_buffer,
+                   original_size);
             memset((char*)fec_encoder->buffers[i] + fec_encoder->buffer_sizes[i], 0,
-                   fec_encoder->max_buffer_size - fec_encoder->buffer_sizes[i]);
+                   fec_payload_size - fec_encoder->buffer_sizes[i]);
             // TODO, protential optimization
             // if it's the assumption that all packet has same length excpet the last one, and the
             // last one is shorter then only the last one needs padding
@@ -198,10 +237,10 @@ void fec_get_encoded_buffers(FECEncoder* fec_encoder, void** buffers, int* buffe
 
         // call rs encoder to generate new packets
         for (int i = fec_encoder->num_real_buffers; i < fec_encoder->num_buffers; i++) {
-            fec_encoder->buffers[i] = safe_malloc(fec_encoder->max_buffer_size);
+            fec_encoder->buffers[i] = safe_malloc(fec_payload_size);
             rs_encode(fec_encoder->rs_code, (void**)fec_encoder->buffers, fec_encoder->buffers[i],
-                      i, fec_encoder->max_buffer_size);
-            fec_encoder->buffer_sizes[i] = fec_encoder->max_buffer_size;
+                      i, fec_payload_size);
+            fec_encoder->buffer_sizes[i] = fec_payload_size;
         }
 
         fec_encoder->encode_performed = true;
@@ -314,16 +353,13 @@ int fec_get_decoded_buffer(FECDecoder* fec_decoder, void* buffer) {
     // Write into the provided buffer
     int running_size = 0;
     for (int i = 0; i < fec_decoder->num_real_buffers; i++) {
-        int buffer_size = fec_decoder->buffer_sizes[i];
-        // If we don't have a buffer_size, use the max_buffer_size
-        if (buffer_size == -1) {
-            buffer_size = fec_decoder->max_buffer_size;
-        }
+        int current_size = read_u16_from_buffer(fec_decoder->buffers[i]);
+        char* current_buf = (char*)fec_decoder->buffers[i] + sizeof(uint16_t);
 
         if (buffer != NULL) {
-            memcpy((char*)buffer + running_size, fec_decoder->buffers[i], buffer_size);
+            memcpy((char*)buffer + running_size, current_buf, current_size);
         }
-        running_size += buffer_size;
+        running_size += current_size;
     }
 
     return running_size;
@@ -387,3 +423,12 @@ static void free_rs_code_table(void* raw_rs_code_table) {
     // Now free the entire table
     free(rs_code_table);
 }
+
+// the below two functions works based on the fact that all our supported platforms are little
+// endian, and unaligned memory access are supported
+
+// write a 16bit int into buffer
+void write_u16_to_buffer(char* p, uint16_t w) { *(uint16_t*)p = w; }
+
+// reads a 16bit int from buffer
+uint16_t read_u16_from_buffer(char* p) { return *(uint16_t*)p; }

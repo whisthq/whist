@@ -950,6 +950,17 @@ void* bit_array_get_bits(const BitArray* const ba);
 int bit_array_test_bit(const BitArray* const ba, const unsigned int bit);
 
 /**
+ * @brief                          calculate a/b, roundup
+ *
+ * @param a                        The dividend
+ *
+ * @param b                        The divisor
+ *
+ * @returns                        a/b, roundup
+ */
+int int_div_roundup(int a, int b);
+
+/**
  * @brief                          Returns a short string representing the current git commit
  *                                 of whist at the time of compilation
  *
