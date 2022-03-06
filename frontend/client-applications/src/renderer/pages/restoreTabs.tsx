@@ -162,8 +162,7 @@ const Importer = (props: {
               </div>
               <div
                 className={classNames(
-                  "text-gray-300 text-xs font-bold px-4 py-2 m-auto max-w-max mt-4 rounded duration-100",
-                  selectedWindow === window.id ? "bg-indigo-500" : "bg-gray-700"
+                  "text-gray-300 text-xs font-bold px-4 py-2 m-auto max-w-max mt-4 rounded duration-100"
                 )}
               >
                 {window.urls.length} tab(s) open
