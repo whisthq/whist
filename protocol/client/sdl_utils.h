@@ -164,6 +164,8 @@ void sdl_set_fullscreen(bool is_fullscreen);
  */
 void sdl_update_pending_tasks(WhistFrontend* frontend);
 
+void sdl_show_window(void);
+
 /**
  * @brief                          Copies private variable values to the variables pointed by the
  * non-NULL pointers passed as parameters. Used for testing.

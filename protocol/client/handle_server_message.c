@@ -97,6 +97,8 @@ int handle_server_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
             return handle_notification_message(wsmsg, wsmsg_size);
         case SMESSAGE_INITIATE_UPLOAD:
             return handle_upload_message(wsmsg, wsmsg_size);
+        case SMESSAGE_CAPTURE_CREATED:
+            return handle_capture_created_message(wsmsg, wsmsg_size);
         default:
             LOG_WARNING("Unknown WhistServerMessage Received (type: %d)", wsmsg->type);
             return -1;
@@ -308,5 +310,10 @@ static int handle_upload_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
 
     upload_initiated = true;
     LOG_INFO("Received upload trigger from server");
+    return 0;
+}
+
+static int handle_capture_created_message(WhistServerMessage *wsmsg, size_t wsmsg_size) {
+    sdl_show_window();
     return 0;
 }

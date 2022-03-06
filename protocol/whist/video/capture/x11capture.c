@@ -32,6 +32,8 @@ Private Functions
 ============================
 */
 int handler(Display* d, XErrorEvent* a);
+char* get_window_name(Display* d, Window w);
+void log_tree(X11CaptureDevice* device, Window w);
 
 /*
 ============================
@@ -52,6 +54,41 @@ int handler(Display* d, XErrorEvent* a) {
 
     LOG_ERROR("X11 Error: %d", a->error_code);
     return 0;
+}
+
+char* get_window_name(Display* d, Window w) {
+    XTextProperty prop;
+    Status s = XGetWMName(d, w, &prop);
+    if (s) {
+        int count = 0;
+        char** list = NULL;
+        int result = XmbTextPropertyToTextList(d, &prop, &list, &count);
+        if (count && result == Success) {
+            return list[0];
+        } else {
+            return "";
+        }
+    } else {
+        return "";
+    }
+}
+        
+
+void log_tree(X11CaptureDevice* device, Window w) {
+    Window curr = w;
+    Window root;
+    Window parent;
+    Window* children;
+    unsigned int nchildren;
+
+    XQueryTree(device->display, curr, &root, &parent, &children, &nchildren);
+    LOG_INFO("Current window %s has %d children", get_window_name(device->display, curr), nchildren);
+    if (nchildren != 0) {
+        for (unsigned int i = 0; i < nchildren; i++) {
+            LOG_INFO("Child %d name is %s", i, get_window_name(device->display, children[i]));
+            log_tree(device, children[i]);
+        }
+    }
 }
 
 /*
@@ -82,7 +119,28 @@ X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uin
         LOG_ERROR("ERROR: create_x11_capture_device display did not open");
         return NULL;
     }
+    /*
+    // get the focused window
+    Window root = DefaultRootWindow(device->display);
+    Window focus;
+    int revert;
+    XGetInputFocus(device->display, &focus, &revert);
+    // if it's the same as the root window, then sleep and try again?
+    while (root == focus) {
+        LOG_INFO("Focused window is same as root");
+        whist_sleep(100);
+        XGetInputFocus(device->display, &focus, &revert);
+    }
+    LOG_INFO("Focused window different from root");
+    if (focus != PointerRoot) {
+        XWindowAttributes attr;
+        XGetWindowAttributes(device->display, focus, &attr);
+        LOG_INFO("Focus width/height: %d %d", attr.width, attr.height);
+    }
+    device->root = focus;
+    */
     device->root = DefaultRootWindow(device->display);
+    log_tree(device, device->root);
     device->width = width;
     device->height = height;
     int damage_event, damage_error;
@@ -170,6 +228,39 @@ int x11_capture_screen(X11CaptureDevice* device) {
             accumulated_frames++;
         }
     }
+
+    // check if the focused window has changed; if so, change damage
+    static bool first = true;
+    static Window curr_focus;
+    if (first) {
+        curr_focus = device->root;
+        first = false;
+    }
+    Window focus;
+    int revert;
+    XGetInputFocus(device->display, &focus, &revert);
+    if (focus != curr_focus && focus != PointerRoot) {
+        LOG_INFO("Focused window changed");
+        log_tree(device, focus);
+        XWindowAttributes attr;
+        XGetWindowAttributes(device->display, focus, &attr);
+        LOG_INFO("Focus width/height: %d %d", attr.width, attr.height);
+        curr_focus = focus;
+        /*
+        device->root = focus;
+        device->damage = XDamageCreate(device->display, device->root, XDamageReportRawRectangles);
+
+        XLockDisplay(device->display);
+        XMoveResizeWindow(device->display, device->root, 0, 0, device->width, device->height);
+        XRaiseWindow(device->display, device->root);
+        XWindowAttributes attr;
+        XGetWindowAttributes(device->display, device->root, &attr);
+        LOG_INFO("Focus width/height: %d %d", attr.width, attr.height);
+        XUnlockDisplay(device->display);
+        return 0;
+        */
+    }
+
     // Don't Lock and UnLock Display unneccesarily, if there are no frames to capture
     if (accumulated_frames == 0) return 0;
 
@@ -186,7 +277,7 @@ int x11_capture_screen(X11CaptureDevice* device) {
             accumulated_frames = -1;
         } else if (device->width != window_attributes.width ||
                    device->height != window_attributes.height) {
-            LOG_ERROR("Wrong width/height!");
+            LOG_ERROR("Wrong width/height! Expected %d %d but got %d %d", device->width, device->height, window_attributes.width, window_attributes.height);
             accumulated_frames = -1;
         } else {
             XErrorHandler prev_handler = XSetErrorHandler(handler);

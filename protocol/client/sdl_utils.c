@@ -324,6 +324,10 @@ void sdl_set_window_title(const char* requested_window_title) {
     should_update_window_title = true;
 }
 
+void sdl_show_window() {
+    SDL_ShowWindow((SDL_Window*)window);
+}
+
 void sdl_set_fullscreen(bool is_fullscreen) {
     fullscreen_trigger = true;
     fullscreen_value = is_fullscreen;
