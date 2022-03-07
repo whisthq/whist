@@ -58,10 +58,42 @@ class CaptureStdoutFixture : public ::testing::Test {
         safe_close(fd);
         std::ifstream file(filename.c_str());
 
-        for (::testing::Matcher<std::string> matcher : line_matchers) {
-            std::string line;
-            std::getline(file, line);
-            EXPECT_THAT(line, matcher);
+        size_t matcher_idx = 0;
+
+        std::string line;
+        while (std::getline(file, line)) {
+            bool async_matcher_hit = false;
+            for (size_t async_idx = 0; async_idx < async_line_matchers.size(); async_idx++) {
+                if (Matches(async_line_matchers[async_idx])(line)) {
+                    // One of our async matches succeeded, so remove it from the list
+                    async_line_matchers.erase(async_line_matchers.begin() + async_idx);
+                    async_matcher_hit = true;
+                    break;
+                }
+            }
+            if (async_matcher_hit) {
+                continue;
+            }
+
+            if (matcher_idx < line_matchers.size()) {
+                EXPECT_THAT(line, line_matchers[matcher_idx]);
+                ++matcher_idx;
+            }
+        }
+
+        // Expect that no sync matchers are left
+        while (matcher_idx < line_matchers.size()) {
+            std::ostringstream ss;
+            line_matchers[matcher_idx].DescribeTo(&ss);
+            ADD_FAILURE() << "Line matcher: no line " << ss.str();
+            ++matcher_idx;
+        }
+
+        // Expect that no async matchers are left
+        for (::testing::Matcher<std::string> async_matcher : async_line_matchers) {
+            std::ostringstream ss;
+            async_matcher.DescribeTo(&ss);
+            ADD_FAILURE() << "Async line matcher: no line " << ss.str();
         }
 
         file.close();
@@ -91,11 +123,55 @@ class CaptureStdoutFixture : public ::testing::Test {
         line_matchers.push_back(matcher);
     }
 
+    void expect_stdout_line(::testing::Matcher<std::string> matcher) {
+        /*
+            This function registers a matcher to be used to compare the output
+            of the current test to the expected output, as described in the
+            first paragraph of `check_stdout_line()`.
+
+            The difference here is that the matcher registered here will stick
+            around until it is satisfied, taking precedence over any matchers
+            registered with `check_stdout_line()`.
+
+            This is useful when a log is expected but the order of the logs is
+            potentially undefined. For example, if we expect to see the strings
+            "1", "2", "3" in that order, but the log "hello" at some
+            random point within that list, we would register.
+
+            expect_stdout_line(::testing::HasSubstr("hello"))
+            check_stdout_line(::testing::HasSubstr("1"))
+            check_stdout_line(::testing::HasSubstr("2"))
+            check_stdout_line(::testing::HasSubstr("3"))
+
+            On "1", "2", "hello", "3" in that order, we would first check
+            "hello" against "1" and see a failure. Then we would check "1"
+            against "1" and see a success. We repeat for "2". Finally, "hello"
+            matches and we remove it from the async checks list. We then check
+            "3" against "3" and see a success.
+        */
+        async_line_matchers.push_back(matcher);
+    }
+
+    void expect_thread_logs(std::string thread_name) {
+        /*
+            This function is a convenience function. When our code spins up threads, this can
+            generate logs that are potentially out-of-order relating to thread creation and
+            destruction. This function registers the appropriate matchers to catch these logs.
+        */
+        check_stdout_line(
+            ::testing::HasSubstr("Creating thread \"" + thread_name + "\" from thread"));
+        expect_stdout_line(
+            ::testing::HasSubstr("Waiting on thread \"" + thread_name + "\" from thread"));
+        expect_stdout_line(::testing::HasSubstr("Waited from thread"));
+        check_stdout_line(::testing::HasSubstr("Created from thread"));
+    }
+
     int old_stdout;
     int fd;
     std::string path;
     std::string filename;
     std::vector<::testing::Matcher<std::string>> line_matchers;
+    std::vector<::testing::Matcher<std::string>> async_line_matchers;
 };
 
 /*

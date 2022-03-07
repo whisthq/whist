@@ -571,6 +571,7 @@ TEST_F(ProtocolTest, LoggerTest) {
     destroy_logger();
 
     // Validate stdout, line-by-line
+    expect_thread_logs("Logger Thread");
     check_stdout_line(::testing::HasSubstr("Logging initialized!"));
     check_stdout_line(LOG_DEBUG_MATCHER);
     check_stdout_line(LOG_INFO_MATCHER);
@@ -607,6 +608,7 @@ TEST_F(ProtocolTest, LoggerOverflowTest) {
 
     destroy_logger();
 
+    expect_thread_logs("Logger Thread");
     check_stdout_line(::testing::HasSubstr("Logging initialized!"));
 
     // We should have the last LOGGER_QUEUE_SIZE messages along with the
@@ -632,6 +634,7 @@ TEST_F(ProtocolTest, LogStatistic) {
     whist_init_logger();
     whist_init_statistic_logger(3, NULL, 2);
     flush_logs();
+    expect_thread_logs("Logger Thread");
     check_stdout_line(::testing::HasSubstr("Logging initialized!"));
     check_stdout_line(::testing::HasSubstr("StatisticInfo is NULL"));
 

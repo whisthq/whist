@@ -11,23 +11,35 @@ void whist_init_multithreading(void) {
     SDL_SetHint(SDL_HINT_THREAD_FORCE_REALTIME_TIME_CRITICAL, "1");
 }
 
-WhistThread whist_create_thread(WhistThreadFunction thread_function, const char *thread_name,
-                                void *data) {
-    WhistThread ret = SDL_CreateThread(thread_function, thread_name, data);
-    if (ret == NULL) {
-        LOG_FATAL("Failure creating thread: %s", SDL_GetError());
-    }
-    return ret;
-}
-
 WhistThreadID whist_get_thread_id(WhistThread thread) {
     // `thread` == NULL returns the current thread ID
     return SDL_GetThreadID(thread);
 }
 
-void whist_detach_thread(WhistThread thread) { SDL_DetachThread(thread); }
+WhistThread whist_create_thread(WhistThreadFunction thread_function, const char *thread_name,
+                                void *data) {
+    LOG_INFO("Creating thread \"%s\" from thread %lx", thread_name, whist_get_thread_id(NULL));
+    WhistThread ret = SDL_CreateThread(thread_function, thread_name, data);
+    if (ret == NULL) {
+        LOG_FATAL("Failure creating thread: %s", SDL_GetError());
+    }
+    LOG_INFO("Created from thread %lx", whist_get_thread_id(NULL));
+    return ret;
+}
 
-void whist_wait_thread(WhistThread thread, int *ret) { SDL_WaitThread(thread, ret); }
+void whist_detach_thread(WhistThread thread) {
+    LOG_INFO("Detaching thread \"%s\" from thread %lx", SDL_GetThreadName(thread),
+             whist_get_thread_id(NULL));
+    SDL_DetachThread(thread);
+    LOG_INFO("Detached from thread %lx", whist_get_thread_id(NULL));
+}
+
+void whist_wait_thread(WhistThread thread, int *ret) {
+    LOG_INFO("Waiting on thread \"%s\" from thread %lx", SDL_GetThreadName(thread),
+             whist_get_thread_id(NULL));
+    SDL_WaitThread(thread, ret);
+    LOG_INFO("Waited from thread %lx", whist_get_thread_id(NULL));
+}
 
 void whist_set_thread_priority(WhistThreadPriority priority) {
     // Add in special case handling when trying to set specifically REALTIME on Linux,

@@ -237,10 +237,30 @@ message(STATUS "Downloading test assets from AWS S3 - Completed")
 
 # Run the tests
 add_custom_target(RunProtocolTests DEPENDS ${PROTOCOL_TEST_BINARY})
-add_custom_command(
-    TARGET RunProtocolTests POST_BUILD
-    COMMAND ./${PROTOCOL_TEST_BINARY}
-)
+
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    add_custom_command(
+            TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_SOURCE_DIR}/test/wtest
+            ${CMAKE_BINARY_DIR})
+    add_custom_command(
+            TARGET RunProtocolTests POST_BUILD
+            COMMAND ./wtest
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    add_custom_command(
+            TARGET ${PROTOCOL_TEST_BINARY} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_SOURCE_DIR}/test/wtest.bat
+            ${CMAKE_BINARY_DIR})
+
+    add_custom_command(
+            TARGET RunProtocolTests POST_BUILD
+            COMMAND wtest.bat
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+endif()
 
 # Generate code coverage
 if(GENERATE_COVERAGE)
