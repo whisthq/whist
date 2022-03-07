@@ -527,3 +527,7 @@ func (s *DefaultScalingAlgorithm) SwapOverImages(scalingCtx context.Context, eve
 
 	return nil
 }
+
+func (s *DefaultScalingAlgorithm) MandelboxAssign(scalingCtx context.Context, serverEvent ScalingEvent) error {
+	return nil
+}

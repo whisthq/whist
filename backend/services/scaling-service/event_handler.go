@@ -26,9 +26,6 @@ func main() {
 	// Start Sentry and Logzio
 	logger.InitScalingLogging()
 
-	// Start HTTP Server for assigning mandelboxes
-	StartHTTPServer()
-
 	// Start GraphQL client for queries/mutations
 	useConfigDB := false
 	graphqlClient := &subscriptions.GraphQLClient{}
@@ -44,6 +41,10 @@ func main() {
 	if err != nil {
 		logger.Errorf("Failed to start config GraphQL client. Error: %v", err)
 	}
+
+	// Start HTTP Server for assigning mandelboxes
+	serverEvents := make(chan algos.ScalingEvent, 100)
+	StartHTTPServer(serverEvents)
 
 	// Start database subscriptions
 	subscriptionEvents := make(chan subscriptions.SubscriptionEvent, 100)
@@ -88,7 +89,7 @@ func main() {
 	})
 
 	// Start main event loop
-	go eventLoop(globalCtx, globalCancel, subscriptionEvents, scheduledEvents, algorithmByRegionMap, configClient)
+	go eventLoop(globalCtx, globalCancel, serverEvents, subscriptionEvents, scheduledEvents, algorithmByRegionMap, configClient)
 
 	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
 	sigChan := make(chan os.Signal, 2)
@@ -216,7 +217,7 @@ func getScalingAlgorithm(algorithmByRegion *sync.Map, scalingEvent algos.Scaling
 
 // eventLoop is the main loop of the scaling service which will receive events from different sources
 // and send them to the appropiate channels.
-func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, subscriptionEvents <-chan subscriptions.SubscriptionEvent,
+func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, serverEvents <-chan algos.ScalingEvent, subscriptionEvents <-chan subscriptions.SubscriptionEvent,
 	scheduledEvents <-chan algos.ScalingEvent, algorithmByRegion *sync.Map, configClient *subscriptions.SubscriptionClient) {
 
 	for {
@@ -317,6 +318,9 @@ func eventLoop(globalCtx context.Context, globalCancel context.CancelFunc, subsc
 					algorithm.ScheduledEventChan <- scheduledEvent
 				}
 			}
+		case serverEvent := <-serverEvents:
+			logger.Infof("Received server event. %v", serverEvent)
+
 		case <-globalCtx.Done():
 			logger.Infof("Gloal context has been cancelled, exiting event loop...")
 			return

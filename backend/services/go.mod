@@ -33,6 +33,7 @@ require (
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	golang.org/x/crypto v0.0.0-20220307211146-efcb8507fb70
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
+	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324
 )
 
 require (
