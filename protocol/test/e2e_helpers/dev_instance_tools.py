@@ -97,7 +97,11 @@ def wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci):
     """
     Wait until the currently-running command on a remote machine finishes its execution on the shell monitored to by a pexpect process.
 
-    N.B: It is unsafe to call wait_until_cmd_done before parsing the stdout output with pexpect_process.before if running_in_ci=False
+    N.B: Whenever running_in_ci=False, it is unsafe to parse the pexpect process's stdout output (with pexpect_process.before) after
+        a call to wait_until_cmd_done. If this script is running outside of a CI environment (running_in_ci=False), all bash prompts
+        are likely to be printed two times. If we are looking to parse the stdout output, we need the stdout that comes before the
+        first prompt is printed. Getting the stdout after a call wait_until_cmd_done, however, will discard the output of the command
+        executed by the pexpect_process and only return the stdout (usually empty) between the first and the second prompt.
 
     Args:
         pexpect_process (pexpect.pty_spawn.spawn): The Pexpect process monitoring the execution of the process on the remote machine

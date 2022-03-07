@@ -311,3 +311,9 @@ if __name__ == "__main__":
 
                 if "extensions" in browser_data and len(browser_data["extensions"]) > 0:
                     create_extension_files(browser_data["extensions"])
+        else:
+            print(
+                "Can't import user browser data because browser data file {} does not exist or it is empty".format(
+                    browser_data_file
+                )
+            )
