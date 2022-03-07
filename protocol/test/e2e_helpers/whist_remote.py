@@ -224,7 +224,7 @@ def setup_network_conditions_client(
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
         # Get network interface names (excluding loopback)
-        command = "sudo ifconfig -a | sed 's/[ \t].*//;/^\(lo:\|\)$/d'"
+        command = "sudo ifconfig -a | sed 's/[ ].*//;/^\(lo:\|\)$/d'"
         pexpect_process.sendline(command)
         wait_until_cmd_done(pexpect_process, pexpect_prompt, running_in_ci)
 
@@ -264,7 +264,7 @@ def setup_network_conditions_client(
             )
 
             # Set outbound degradations
-            command = "sudo tc qdisc add dev {}root netem ".format(device)
+            command = "sudo tc qdisc add dev {} root netem ".format(device)
             command += degradation_command
             commands.append(command)
 
@@ -296,7 +296,7 @@ def restore_network_conditions_client(pexpect_process, pexpect_prompt, running_i
     """
     print("Restoring network conditions to normal on client!")
     # Get network interface names (excluding loopback)
-    command = "sudo ifconfig -a | sed 's/[ \t].*//;/^\(lo:\|\)$/d'"
+    command = "sudo ifconfig -a | sed 's/[ ].*//;/^\(lo:\|\)$/d'"
     # Cannot use wait_until_cmd_done because we need to handle clase where ifconfig is not installed
     pexpect_process.sendline(command)
     result = pexpect_process.expect(
