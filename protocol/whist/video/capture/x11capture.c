@@ -119,27 +119,19 @@ X11CaptureDevice* create_x11_capture_device(uint32_t width, uint32_t height, uin
         LOG_ERROR("ERROR: create_x11_capture_device display did not open");
         return NULL;
     }
-    /*
     // get the focused window
     Window root = DefaultRootWindow(device->display);
     Window focus;
     int revert;
     XGetInputFocus(device->display, &focus, &revert);
-    // if it's the same as the root window, then sleep and try again?
-    while (root == focus) {
-        LOG_INFO("Focused window is same as root");
-        whist_sleep(100);
-        XGetInputFocus(device->display, &focus, &revert);
-    }
-    LOG_INFO("Focused window different from root");
     if (focus != PointerRoot) {
         XWindowAttributes attr;
         XGetWindowAttributes(device->display, focus, &attr);
         LOG_INFO("Focus width/height: %d %d", attr.width, attr.height);
+        device->root = focus;
+    } else {
+        device->root = root;
     }
-    device->root = focus;
-    */
-    device->root = DefaultRootWindow(device->display);
     log_tree(device, device->root);
     device->width = width;
     device->height = height;
