@@ -59,6 +59,10 @@ Includes
 #include <whist/utils/mac_utils.h>
 #endif  // __APPLE__
 
+#ifdef _WIN32
+#define strdup _strdup
+#endif
+
 // N.B.: Please don't put globals here, since main.c won't be included when the testing suite is
 // used instead
 
@@ -145,8 +149,6 @@ COMMAND_LINE_CALLBACK_OPTION(set_new_tab_url, 'x', "new-tab-url", WHIST_OPTION_R
                              "URL to open in new tab.")
 COMMAND_LINE_STRING_OPTION(program_name, 'n', "name", SIZE_MAX,
                            "Set the window title.  Default: Whist.")
-COMMAND_LINE_STRING_OPTION(new_tab_url, 'x', "new-tab-url", MAX_URL_LENGTH,
-                           "URL to open in new tab.")
 
 static int sync_keyboard_state(void) {
     /*
