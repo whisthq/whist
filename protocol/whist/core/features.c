@@ -60,11 +60,9 @@ static const WhistFeatureDescriptor *match_feature_name(const char *str, size_t 
                 break;
             }
             // Find the next alphabetic character in each string.
-            do
-                ++s;
+            do ++s;
             while (s < len && str[s] && !isalpha(str[s]));
-            do
-                ++d;
+            do ++d;
             while (feature->name[d] && !isalpha(feature->name[d]));
         }
         if (match) {

@@ -99,7 +99,7 @@ extern volatile bool connected;
 extern volatile bool client_exiting;
 static int try_amount;
 
-static const char* new_tab_url;
+static char* new_tab_url;
 
 // Used to check if we need to call filepicker from main thread
 extern bool upload_initiated;
@@ -128,10 +128,21 @@ static bool set_png_icon(const WhistCommandLineOption* opt, const char* value) {
     return true;
 }
 
+static bool set_new_tab_url(const WhistCommandLineOption* opt, const char* value) {
+    if (strlen(value) > MAX_URL_LENGTH) {
+        return false;
+    }
+    free(new_tab_url);
+    new_tab_url = strdup(value);
+    return true;
+}
+
 COMMAND_LINE_CALLBACK_OPTION(set_user_email, 'u', "user", WHIST_OPTION_REQUIRED_ARGUMENT,
                              "Tell Whist the user's email.  Default: None.")
 COMMAND_LINE_CALLBACK_OPTION(set_png_icon, 'i', "icon", WHIST_OPTION_REQUIRED_ARGUMENT,
                              "Set the protocol window icon from a 64x64 pixel png file.")
+COMMAND_LINE_CALLBACK_OPTION(set_new_tab_url, 'x', "new-tab-url", WHIST_OPTION_REQUIRED_ARGUMENT,
+                             "URL to open in new tab.")
 COMMAND_LINE_STRING_OPTION(program_name, 'n', "name", SIZE_MAX,
                            "Set the window title.  Default: Whist.")
 COMMAND_LINE_STRING_OPTION(new_tab_url, 'x', "new-tab-url", MAX_URL_LENGTH,
@@ -312,7 +323,7 @@ static void send_new_tab_url_if_needed(void) {
         send_wcmsg(wcmsg);
         free(wcmsg);
 
-        free((char*)new_tab_url);
+        free(new_tab_url);
         new_tab_url = NULL;
 
         // Unmimimize the window if needed
