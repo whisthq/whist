@@ -68,6 +68,12 @@ int set_native_window_color(SDL_Window* window, WhistRGBColor color);
 int get_native_window_dpi(SDL_Window* window);
 
 /**
+ * @brief                          Set up callbacks for out of window drag events
+ *
+ */
+void initiate_out_of_window_drag_handlers(void);
+
+/**
  * @brief                          Declares that UserActivity has occured,
  *                                 resetting the timer for screensavers/sleepmode
  */

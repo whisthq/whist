@@ -204,4 +204,18 @@ void sdl_utils_check_private_vars(bool* pending_resize_message_ptr,
                                   bool* should_update_window_title_ptr,
                                   bool* fullscreen_trigger_ptr, bool* fullscreen_value_ptr);
 
+/**
+ * @brief                          Called when a drag event has been detected. Uses the
+ *                                 sdl global mouse and window state to initiate dragging
+ *                                 indication or emulation.
+ *
+ */
+void sdl_handle_drag_event(void);
+
+/**
+ * @brief                          Cancel or terminate drag indications/emulations
+ *
+ * @note                           This should be called when mouse exits the window or on mouseup
+ */
+void sdl_end_drag_event(void);
 #endif  // SDL_UTILS_H

@@ -80,6 +80,14 @@ static volatile bool should_update_window_title = false;
 static volatile bool fullscreen_trigger = false;
 static volatile bool fullscreen_value = false;
 
+// File Drag Icon Update
+static volatile bool pending_file_drag_update = false;
+static int file_drag_update_x = 0;
+static int file_drag_update_y = 0;
+
+// Overlay removals
+static volatile bool pending_overlay_removal = false;
+
 /*
 ============================
 Command-line options
@@ -139,6 +147,16 @@ static void sdl_render_insufficient_bandwidth(void);
  * @note                           Must be called on the main thread
  */
 static void sdl_render_nv12data(void);
+
+/**
+ * @brief                          Render a file drag indication icon
+ *
+ * @param x                        x position of the drag relative to the sdl window
+ *
+ * @param y                        y position of the drag relative to the sdl window
+ *
+ */
+static void sdl_render_file_drag_icon(int x, int y);
 
 /*
 ============================
@@ -688,6 +706,50 @@ void sdl_utils_check_private_vars(bool* pending_resize_message_ptr,
     }
 }
 
+void sdl_handle_drag_event() {
+    /*
+      Initiates the rendering of the drag icon by checking if the drag is occuring within
+      the sdl window and then setting the correct state variables for pending_file_drag_update
+      This will spam logs pretty badly when dragging is active - so avoiding that here.
+
+      exception of native_window_color_is_null_ptr, which has a slightly different purpose) with the
+      values held by the corresponding sdl_utils.c globals. If native_window_color_is_null_ptr is
+      not NULL, we set the value pointed to by it with a boolean indicating whether the
+      native_window_color global pointer is NULL.
+     */
+
+    int x_window, y_window;
+    int w_window, h_window;
+    int x_mouse_global, y_mouse_global;
+
+    SDL_GetWindowPosition((SDL_Window*)window, &x_window, &y_window);
+    SDL_GetWindowSize((SDL_Window*)window, &w_window, &h_window);
+    // Mouse is not active within window - so we must use the global mouse and manually transform
+    SDL_GetGlobalMouseState(&x_mouse_global, &y_mouse_global);
+
+    if (x_window < x_mouse_global && x_mouse_global < x_window + w_window &&
+        y_window < y_mouse_global && y_mouse_global < y_window + h_window) {
+        // Scale relative global mouse offset to output window
+        file_drag_update_x = output_width * (x_mouse_global - x_window) / w_window;
+        file_drag_update_y = output_height * (y_mouse_global - y_window) / h_window;
+        pending_file_drag_update = true;
+    } else {
+        // Stop the rendering of the file drag icon if event has left the window
+        sdl_end_drag_event();
+    }
+}
+
+void sdl_end_drag_event() {
+    /*
+        Setting pending_file_drag_update false will prevent
+        the file icon from being displayed in the next sdl step
+    */
+
+    pending_file_drag_update = false;
+    // Render the next frame to remove the file drag icon
+    pending_overlay_removal = true;
+}
+
 /*
 ============================
 Private Function Implementations
@@ -703,9 +765,9 @@ static void sdl_present_pending_framebuffer(void) {
         pending_render = true;
     }
 
-    // If there's no pending render, just do nothing,
+    // If there's no pending render or overlay visualizations, just do nothing,
     // Don't consume and discard any pending nv12 or loading screen.
-    if (!pending_render) {
+    if (!pending_render && !pending_file_drag_update && !pending_overlay_removal) {
         whist_unlock_mutex(renderer_mutex);
         return;
     }
@@ -717,8 +779,8 @@ static void sdl_present_pending_framebuffer(void) {
     WhistTimer statistics_timer;
     start_timer(&statistics_timer);
 
-    // Ensure that a video frame is there as a background for insufficient bandwidth error message
-    if (insufficient_bandwidth) {
+    // If any overlays need to be updated make sure a background is rendered
+    if (insufficient_bandwidth || pending_file_drag_update || pending_overlay_removal) {
         pending_nv12data = true;
     }
 
@@ -737,6 +799,11 @@ static void sdl_present_pending_framebuffer(void) {
     }
     prev_insufficient_bandwidth = insufficient_bandwidth;
 
+    // Render the drag icon if a drag update has been signaled
+    if (pending_file_drag_update) {
+        sdl_render_file_drag_icon(file_drag_update_x, file_drag_update_y);
+    }
+
     log_double_statistic(VIDEO_RENDER_TIME, get_timer(&statistics_timer) * MS_IN_SECOND);
     whist_unlock_mutex(renderer_mutex);
 
@@ -747,6 +814,7 @@ static void sdl_present_pending_framebuffer(void) {
 
     whist_lock_mutex(renderer_mutex);
     pending_render = false;
+    pending_overlay_removal = false;
     whist_unlock_mutex(renderer_mutex);
 }
 
@@ -1016,3 +1084,23 @@ static LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPAR
     return CallNextHookEx(mule, n_code, w_param, l_param);
 }
 #endif
+
+// 20th of the window - usually close to file icon sizes + doesn't become disruptive if window is
+// small
+#define DRAG_ICON_SCALE 0.05
+static void sdl_render_file_drag_icon(int x, int y) {
+    SDL_Surface* drop_icon_surface = sdl_surface_from_png_file("images/file_drag_icon.png");
+    SDL_Texture* drop_icon_texture = SDL_CreateTextureFromSurface(sdl_renderer, drop_icon_surface);
+    sdl_free_png_file_rgb_surface(drop_icon_surface);
+    // Shift icon in direction away from closest out of bounds
+    int horizontal_direction = (x < output_width / 2) ? 1 : -2;
+    int vertical_direction = -1;
+    double icon_size = min(output_width, output_height) * DRAG_ICON_SCALE;
+    SDL_Rect drop_icon_rect = {.x = x + horizontal_direction * icon_size,
+                               .y = y + vertical_direction * icon_size / 2,
+                               .w = icon_size,
+                               .h = icon_size};
+
+    SDL_RenderCopy(sdl_renderer, drop_icon_texture, NULL, &drop_icon_rect);
+    SDL_DestroyTexture(drop_icon_texture);
+}

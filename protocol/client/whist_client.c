@@ -502,6 +502,9 @@ int whist_client_main(int argc, char* argv[]) {
         // Pass the whist_renderer so that udp packets can be fed into it
         init_packet_synchronizers(whist_renderer);
 
+        // Add listeners for global file drag events
+        initiate_out_of_window_drag_handlers();
+
         start_timer(&window_resize_timer);
         window_resize_mutex = whist_create_mutex();
 
