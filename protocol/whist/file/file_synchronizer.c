@@ -68,6 +68,7 @@ Private Functions
 static void reset_transferring_file(TransferringFile* current_file) {
     /*
         Reset the transferring file info of the passed in file
+        This frees transferring files + their associated resources.
 
         Arguments:
             current_file (TransferringFile*): One of the files in our transferring files list
@@ -118,6 +119,7 @@ static TransferringFile* get_write_file_with_global_id(int global_id) {
         Returns:
             The transferring write file that matches the global id, NULL if not found
 
+        NOTE: must be called with `file_synchrony_update_mutex` held
     */
 
     linked_list_for_each(&transferring_files, TransferringFile, transferring_file) {
@@ -136,6 +138,13 @@ Public Function Implementations
 */
 
 LinkedList* file_synchronizer_get_transferring_files(void) {
+    /*
+        Return a pointer to our transferring files.
+
+        Returns:
+            A pointer to a linked list of (TransferringFiles*)
+    */
+
     if (!is_initialized) {
         LOG_ERROR("Tried to retrieve transferring files but file_synchronizer is not initialized!");
         return NULL;
@@ -194,7 +203,8 @@ void file_synchronizer_open_file_for_writing(FileMetadata* file_metadata) {
 
     static int unique_id = 0;
 
-    // Create a new entry for this transferring file and add it to our list
+    // Create a new transferring file entry and add it to our list - this is eventually freed in
+    // reset_transferring_file when either the last chunk is written or the files are all reset
     TransferringFile* active_file = (TransferringFile*)malloc(sizeof(TransferringFile));
     memset(active_file, 0, sizeof(TransferringFile));
     linked_list_add_head(&transferring_files, active_file);
@@ -356,7 +366,8 @@ void file_synchronizer_set_file_reading_basic_metadata(const char* file_path,
 
     LOG_INFO("Setting file metadata for read file id %lu", global_file_id);
 
-    // Create a new transferringg file entry and add it to our list
+    // Create a new transferring file entry and add it to our list - this is eventually freed in
+    // reset_transferring_file when either the last chunk is written or the files are all reset
     TransferringFile* active_file = (TransferringFile*)malloc(sizeof(TransferringFile));
     memset(active_file, 0, sizeof(TransferringFile));
     linked_list_add_head(&transferring_files, active_file);
