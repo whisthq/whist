@@ -15,6 +15,7 @@ set(WHIST_CLIENT_DEPENDS
         renderer.c
         frontend/frontend.c
         frontend/sdl.c
+        audio_path.cpp
 )
 
 if(CLIENT_SHARED_LIB)

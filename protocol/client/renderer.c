@@ -47,6 +47,15 @@ struct WhistRenderer {
     WhistThread audio_thread;
 };
 
+/*
+ temp solution variables for the new audio path
+ TODO: remove those static globals in a future PR
+*/
+// used for graceful quit
+static bool g_dedicated_audio_renderer_running = false;
+// used for not playing audio before video is rendered
+static bool g_video_has_rendered = false;
+
 #define LOG_RENDERER_THREAD_USAGE false
 
 /*
@@ -78,6 +87,15 @@ int32_t multithreaded_video_renderer(void* opaque);
  */
 int32_t multithreaded_audio_renderer(void* opaque);
 
+/**
+ * @brief                          a dedicated thread for audio render
+ *
+ * @returns                        always 0
+ *
+ * @note                           used by the new audio path implementation
+ */
+static int multi_threaded_dedicated_audio_renderer(void*);
+
 /*
 ============================
 Public Function Implementations
@@ -88,8 +106,13 @@ WhistRenderer* init_renderer(WhistFrontend* frontend, int initial_width, int ini
     WhistRenderer* whist_renderer = (WhistRenderer*)safe_malloc(sizeof(WhistRenderer));
     memset(whist_renderer, 0, sizeof(WhistRenderer));
 
-    // Initialize audio and video systems
-    whist_renderer->audio_context = init_audio(frontend);
+    if (USE_NEW_AUDIO_PATH) {
+        g_video_has_rendered = false;
+    } else {
+        // Initialize audio and video systems
+        whist_renderer->audio_context = init_audio(frontend);
+    }
+
     whist_renderer->video_context = init_video(initial_width, initial_height);
 
     if (SINGLE_THREAD_MODEL) {
@@ -116,8 +139,11 @@ WhistRenderer* init_renderer(WhistFrontend* frontend, int initial_width, int ini
         whist_renderer->run_renderer_threads = true;
         whist_renderer->video_thread = whist_create_thread(
             multithreaded_video_renderer, "multithreaded_video_renderer", whist_renderer);
-        whist_renderer->audio_thread = whist_create_thread(
-            multithreaded_audio_renderer, "multithreaded_audio_renderer", whist_renderer);
+
+        if (!USE_NEW_AUDIO_PATH) {
+            whist_renderer->audio_thread = whist_create_thread(
+                multithreaded_audio_renderer, "multithreaded_audio_renderer", whist_renderer);
+        }
     }
 
     // Return the struct
@@ -230,7 +256,12 @@ void renderer_try_render(WhistRenderer* whist_renderer) {
     if (has_video_rendered_yet(whist_renderer->video_context)) {
         // Only render audio, if the video has rendered something
         // This is because it feels weird when audio is played to the loading screen
-        render_audio(whist_renderer->audio_context);
+
+        if (USE_NEW_AUDIO_PATH) {
+            g_video_has_rendered = true;
+        } else {
+            render_audio(whist_renderer->audio_context);
+        }
     }
 
     // Mark as recently rendered, and unlock
@@ -254,7 +285,9 @@ void destroy_renderer(WhistRenderer* whist_renderer) {
     }
 
     // Destroy the audio/video context
-    destroy_audio(whist_renderer->audio_context);
+    if (!USE_NEW_AUDIO_PATH) {
+        destroy_audio(whist_renderer->audio_context);
+    }
     destroy_video(whist_renderer->video_context);
 
     // Free the whist renderer struct
@@ -264,6 +297,17 @@ void destroy_renderer(WhistRenderer* whist_renderer) {
     }
     free(whist_renderer);
 }
+
+WhistThread init_dedicated_audio_render_thread(WhistFrontend* frontend) {
+    g_dedicated_audio_renderer_running = true;
+    // create the dedicated thread for audio rendering
+    WhistThread whist_thread = whist_create_thread(multi_threaded_dedicated_audio_renderer,
+                                                   "MultiThreadedAudioRenderer", frontend);
+    FATAL_ASSERT(whist_thread != NULL);
+    return whist_thread;
+}
+
+void quit_dedicated_audio_render_thread(void) { g_dedicated_audio_renderer_running = false; }
 
 /*
 ============================
@@ -321,6 +365,10 @@ int32_t multithreaded_video_renderer(void* opaque) {
                     // Notify audio that video has rendered
                     whist_renderer->has_video_rendered_yet = true;
                     whist_post_semaphore(whist_renderer->audio_semaphore);
+
+                    if (USE_NEW_AUDIO_PATH) {
+                        g_video_has_rendered = true;
+                    }
                 }
             }
         }
@@ -355,6 +403,36 @@ int32_t multithreaded_audio_renderer(void* opaque) {
         // Render the audio
         render_audio(whist_renderer->audio_context);
     }
+
+    return 0;
+}
+
+static int multi_threaded_dedicated_audio_renderer(void* data) {
+    WhistFrontend* frontend = (WhistFrontend*)data;
+
+    // init AudioContext used for access audio device
+    AudioContext* audio_context = init_audio(frontend);
+    FATAL_ASSERT(audio_context != NULL);
+
+    while (g_dedicated_audio_renderer_running) {
+        if (!g_video_has_rendered) {
+            whist_sleep(3);
+            continue;
+        }
+
+        // Refresh the audio device, if a new audio device update is pending
+        if (sdl_pending_audio_device_update()) {
+            refresh_audio_device(audio_context);
+        }
+
+        // if nothing is rendered in the attemp sleep for 2ms
+        // otherwise keep trying
+        if (render_audio(audio_context) != 0) {
+            whist_sleep(3);
+        }
+    }
+
+    destroy_audio(audio_context);
 
     return 0;
 }

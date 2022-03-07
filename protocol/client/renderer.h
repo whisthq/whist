@@ -127,4 +127,22 @@ void renderer_try_render(WhistRenderer* renderer);
  */
 void destroy_renderer(WhistRenderer* renderer);
 
+/**
+ * @brief                          init the dedicated autio rendering thread
+ *
+ * @param frontend                 the frontend going to be used for audio
+ *
+ * @returns                        the handle of created thread
+ *
+ * @note                           used by the new audio path implementation
+ */
+WhistThread init_dedicated_audio_render_thread(WhistFrontend* frontend);
+
+/**
+ * @brief                          tell the dedicated autio rendering thread to quit
+ *
+ * @note                           used by the new audio path implementation
+ */
+void quit_dedicated_audio_render_thread(void);
+
 #endif

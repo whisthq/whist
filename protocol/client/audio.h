@@ -95,10 +95,13 @@ void update_audio(AudioContext* audio_context);
  *
  * @param audio_context            The audio context that potentially wants to render audio
  *
+ * @returns                        0 if something was rendered with this attempt, otherwise nothing
+ *                                 was rendered
+ *
  * @note                           This function is thread-safe, and may be called
  *                                 independently of the rest of the functions
  */
-void render_audio(AudioContext* audio_context);
+int render_audio(AudioContext* audio_context);
 
 /**
  * @brief                          Destroy the audio context
@@ -114,5 +117,23 @@ void destroy_audio(AudioContext* audio_context);
  * @param num_frames_buffered      The number of frames buffered and waiting to be given
  */
 bool audio_ready_for_frame(AudioContext* audio_context, int num_frames_buffered);
+
+/**
+ * @brief                          get the length of the device audio queue inside audio_context
+ *
+ * @param audio_context            The audio context that potentially wants to render audio
+ *
+ * @returns                        the lenght, unit: bytes
+ */
+int get_audio_device_queue_bytes(AudioContext* audio_context);
+
+/**
+ * @brief                          get num of bytes per frame
+ *
+ * @param audio_context            The audio context that potentially wants to render audio
+ *
+ * @returns                        the bytes per frame
+ */
+int get_decoded_bytes_per_frame(void);
 
 #endif  // CLIENT_AUDIO_H

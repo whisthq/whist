@@ -27,6 +27,7 @@ Includes
 #include "video.h"
 #include "sync_packets.h"
 #include "client_utils.h"
+#include "audio_path.h"
 
 // Updater variables
 extern SocketContext packet_udp_context;
@@ -38,6 +39,20 @@ extern volatile bool
 static WhistThread sync_udp_packets_thread;
 static WhistThread sync_tcp_packets_thread;
 static bool run_sync_packets_threads;
+
+/*
+============================
+Private Function Declarations
+============================
+*/
+
+/**
+ * @brief                          a very light wrapper of pop_from_audio_path(), so that it can be
+ * registered as a udp segment receive callback
+ * @param segment                  pointer to the WhistSegment structure
+ *
+ */
+void push_to_audio_path_udp_cb(WhistSegment* segment);
 
 /*
 ============================
@@ -71,6 +86,11 @@ static int multithreaded_sync_udp_packets(void* opaque) {
     // the connection is considered lost.
     udp_register_ring_buffer(udp_context, PACKET_VIDEO, LARGEST_VIDEOFRAME_SIZE, 256);
     udp_register_ring_buffer(udp_context, PACKET_AUDIO, LARGEST_AUDIOFRAME_SIZE, 256);
+
+    if (USE_NEW_AUDIO_PATH) {
+        udp_register_packet_receive_cb(udp_context->context, PACKET_AUDIO,
+                                       push_to_audio_path_udp_cb);
+    }
 
     WhistPacket* last_whist_packet[NUM_PACKET_TYPES] = {0};
 
@@ -116,6 +136,11 @@ static int multithreaded_sync_udp_packets(void* opaque) {
         static const WhistPacketType video_audio_types[2] = {PACKET_VIDEO, PACKET_AUDIO};
         for (int i = 0; i < 2; i++) {
             WhistPacketType packet_type = video_audio_types[i];
+
+            if (USE_NEW_AUDIO_PATH && packet_type == PACKET_AUDIO) {
+                continue;
+            }
+
             // If the renderer wants the frame of that type,
             // Knowing how many frames are pending a render...
             if (renderer_wants_frame(whist_renderer, packet_type,
@@ -332,4 +357,16 @@ void destroy_packet_synchronizers(void) {
     run_sync_packets_threads = false;
     whist_wait_thread(sync_tcp_packets_thread, NULL);
     whist_wait_thread(sync_udp_packets_thread, NULL);
+}
+
+/*
+============================
+Private Function Implementations
+============================
+*/
+
+void push_to_audio_path_udp_cb(WhistSegment* segment) {
+    FATAL_ASSERT(segment->num_indices == 1);
+    WhistPacket* whist_packet = (WhistPacket*)segment->segment_data;
+    push_to_audio_path(segment->id, (unsigned char*)whist_packet->data, whist_packet->payload_size);
 }

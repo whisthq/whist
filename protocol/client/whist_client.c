@@ -51,6 +51,7 @@ Includes
 #include "renderer.h"
 #include <whist/debug/debug_console.h>
 #include "whist/utils/command_line.h"
+#include "audio_path.h"
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
@@ -301,6 +302,17 @@ int whist_client_main(int argc, const char* argv[]) {
 
     whist_init_statistic_logger(STATISTICS_FREQUENCY_IN_SEC);
 
+    WhistFrontend* frontend = whist_frontend_create_sdl();
+
+    if (!frontend) {
+        LOG_FATAL("Failed whist_frontend_create_sdl()!");
+    }
+
+#if USE_NEW_AUDIO_PATH
+    audio_path_init(get_decoded_bytes_per_frame());
+    WhistThread dedicated_audio_render_thread = init_dedicated_audio_render_thread(frontend);
+#endif
+
     handle_single_icon_launch_client_app(argc, argv);
 
     srand(rand() * (unsigned int)time(NULL) + rand());
@@ -348,7 +360,6 @@ int whist_client_main(int argc, const char* argv[]) {
 
     // Try connection `MAX_INIT_CONNECTION_ATTEMPTS` times before
     //  closing and destroying the client.
-    WhistFrontend* frontend = NULL;
     for (try_amount = 0; try_amount < MAX_INIT_CONNECTION_ATTEMPTS && !client_exiting &&
                          exit_code == WHIST_EXIT_SUCCESS;
          try_amount++) {
@@ -363,7 +374,7 @@ int whist_client_main(int argc, const char* argv[]) {
         // Initialize the SDL window (and only do this once!)
         if (!window) {
             window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename,
-                              &frontend);
+                              frontend);
             if (!window) {
                 LOG_FATAL("Failed to initialize SDL");
             }
@@ -553,6 +564,11 @@ int whist_client_main(int argc, const char* argv[]) {
         // Mark as disconnected
         connected = false;
     }
+
+#if USE_NEW_AUDIO_PATH
+    quit_dedicated_audio_render_thread();
+    whist_wait_thread(dedicated_audio_render_thread, NULL);
+#endif
 
     if (exit_code != WHIST_EXIT_SUCCESS) {
         if (exit_code == WHIST_EXIT_FAILURE) {

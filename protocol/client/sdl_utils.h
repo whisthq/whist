@@ -52,14 +52,13 @@ bool get_skip_taskbar(void);
  * @param icon_filename            The filename of the window icon, pointing to a 64x64 png,
  *                                 or NULL to use the default icon.
  *
- * @param frontend                 (Temporary) A pointer to the frontend to be initialized and
- *                                 registered with the created SDL window.
+ * @param frontend                 A pointer to the frontend to be used to create the SDL window.
  *
  * @returns                        NULL if fails to create SDL window, else it
  *                                 returns the SDL window variable
  */
 SDL_Window* init_sdl(int output_width, int output_height, char* name, char* icon_filename,
-                     WhistFrontend** frontend);
+                     WhistFrontend* frontend);
 
 /**
  * @brief                          Destroys an SDL window and associated

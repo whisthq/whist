@@ -211,6 +211,10 @@ typedef struct {
     int curr_group_id;
     IncomingBitrate incoming_bitrate_buckets[INCOMING_BITRATE_NUM_BUCKETS];
     void* nack_queue;
+
+    // the callback functions for specific packet types
+    PacketReceiveCB packet_receive_cbs[NUM_PACKET_TYPES];
+
 } UDPContext;
 
 // Define how many times to retry sending a UDP packet in case of Error 55 (buffer full). The
@@ -605,8 +609,11 @@ static bool udp_update(void* raw_context) {
                     }
                 }
             }
+            if (context->packet_receive_cbs[packet_type] != NULL) {
+                context->packet_receive_cbs[packet_type](&udp_packet.udp_whist_segment_data);
+            }
             // If there's a ringbuffer, store in the ringbuffer to reconstruct the original packet
-            if (context->ring_buffers[packet_type] != NULL) {
+            else if (context->ring_buffers[packet_type] != NULL) {
                 if (!ring_buffer_receive_segment(context->ring_buffers[packet_type],
                                                  &udp_packet.udp_whist_segment_data)) {
                     // Log when the ringbuffer overflows
@@ -1966,3 +1973,11 @@ void udp_handle_network_settings(void* raw_context, NetworkSettings network_sett
 }
 
 size_t udp_packet_max_size(void) { return (sizeof(UDPNetworkPacket)); }
+
+void udp_register_packet_receive_cb(void* raw_context, WhistPacketType type, PacketReceiveCB cb) {
+    FATAL_ASSERT(type >= 0 && type < NUM_PACKET_TYPES);
+    UDPContext* context = (UDPContext*)raw_context;
+    FATAL_ASSERT(context->packet_receive_cbs[type] == NULL);
+    // save the callback
+    context->packet_receive_cbs[type] = (PacketReceiveCB)cb;
+}
