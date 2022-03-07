@@ -53,7 +53,6 @@ else()
         ../server/client.c
         ../server/video.c
         ../server/audio.c
-        ../server/parse_args.c
         ../server/handle_client_message.c
         ../server/network.c
         ../server/network.c

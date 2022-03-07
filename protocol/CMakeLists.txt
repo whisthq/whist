@@ -448,8 +448,8 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile 
         whistInput
         whistNetwork
         whistLogging
-        whistUtils
         whistTools
+        whistUtils
         ${STATIC_SDL2}
         ${LIB_SENTRY}
         ${LIBMFX}

@@ -101,10 +101,4 @@ int update_mouse_motion(void);
  */
 void send_message_dimensions(void);
 
-/**
- * @brief                          Sends message to server with new tab URL to open,
- *                                 if the global new_tab_url is non-NULL.
- */
-void send_new_tab_url_if_needed(void);
-
 #endif  // CLIENT_UTILS_H

@@ -244,6 +244,19 @@ void *linked_list_extract_head(LinkedList *list);
 void *linked_list_extract_tail(LinkedList *list);
 
 /**
+ * Sort a linked list.
+ *
+ * For short lists - uses a O(N^2) insertion sort.
+ *
+ * @param list  The list to sort.
+ * @param cmp   Comparator function.  It is given two arguments, and
+ *              should return a negative number, zero, or a positive
+ *              number if the first argument is less than, equal to, or
+ *              greater than, respectively, the second argument.
+ */
+void linked_list_sort(LinkedList *list, int (*cmp)(const void *first, const void *second));
+
+/**
  * Perform validity checks on a linked list.
  *
  * This ensures that all of the list pointers match up and that the item

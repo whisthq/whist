@@ -128,6 +128,8 @@ Defines
 #define safe_close(fd) close(fd)
 #endif
 
+#define ARRAY_LENGTH(array) (sizeof(array) / sizeof(array[0]))
+
 #define VSYNC_ON false
 
 // Milliseconds between sending resize events from client to server
@@ -196,6 +198,25 @@ Defines
 // to send nack and recover. Since audio bitrate is just 128Kbps, the extra bandwidth used for
 // resending audio packets is still acceptable.
 #define NUM_PREV_AUDIO_FRAMES_RESEND 1
+
+/**
+ * Global constructor function.
+ *
+ * This defines a function which will run before main() is called
+ * whenever the object containing it has been built into a program.
+ */
+#if defined(__GNUC__)
+#define CONSTRUCTOR(func) static void __attribute__((constructor)) func(void)
+#elif defined(_MSC_VER)
+#pragma section(".CRT$XCU", read)
+#define CONSTRUCTOR(func)                                                   \
+    static void func(void);                                                 \
+    __declspec(allocate(".CRT$XCU")) void (*construct_##func)(void) = func; \
+    static void func(void)
+#else
+// cppcheck-suppress preprocessorErrorDirective
+#error "No constructor function implementation for this compiler."
+#endif
 
 /*
 ============================
@@ -752,10 +773,6 @@ typedef struct BitArray {
     unsigned int numBits;  // number of bits in array
 } BitArray;
 
-typedef struct WhistSubsystemParams {
-    bool catch_segfaults;
-} WhistSubsystemParams;
-
 /*
 ============================
 Public Functions
@@ -765,14 +782,13 @@ Public Functions
 /**
  * @brief                          Initialize any and all static state
  *                                 that needs to be initialized
- * @param params                   subsystems parameters
  *
  * @note                           This must be called after parsing arguments
  *
  * @note                           TODO: Make this function take in parsed arguments as a struct,
  *                                 rather than having parse_arguments manipulate `extern` globals
  */
-void whist_init_subsystems(WhistSubsystemParams* params);
+void whist_init_subsystems(void);
 
 /**
  * @brief                          Print the memory trace of a process
@@ -807,7 +823,7 @@ int runcmd(const char* cmdline, char** response);
  * @returns                        True if hex_string was a 16-byte hexadecimal
  *                                 value, otherwise false
  */
-bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
+bool read_hexadecimal_private_key(const char* hex_string, char* binary_private_key,
                                   char* hex_private_key);
 
 /**
