@@ -26,6 +26,9 @@ func main() {
 	// Start Sentry and Logzio
 	logger.InitScalingLogging()
 
+	// Start HTTP Server for assigning mandelboxes
+	StartHTTPServer()
+
 	// Start GraphQL client for queries/mutations
 	useConfigDB := false
 	graphqlClient := &subscriptions.GraphQLClient{}
@@ -53,11 +56,11 @@ func main() {
 	scheduledEvents := make(chan algos.ScalingEvent, 100)
 
 	// Set to run every 10 minutes, starting 10 minutes from now
-	start := time.Duration(10 * time.Minute)
-	StartSchedulerEvents(scheduledEvents, 10, start)
+	// start := time.Duration(10 * time.Minute)
+	// StartSchedulerEvents(scheduledEvents, 10, start)
 
 	// Start the deploy events once since we are starting the scaling service.
-	StartDeploy(scheduledEvents)
+	// StartDeploy(scheduledEvents)
 
 	// algorithmByRegionMap holds all of the scaling algorithms mapped by region.
 	// Use a sync map since we only write the keys once but will be reading multiple

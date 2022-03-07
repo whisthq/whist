@@ -63,7 +63,7 @@ const configs = {
       LOGZ_KEY: "MoaZIzGkBxpsbbquDpwGlOTasLqKvtGJ",
     },
     url: {
-      WEBSERVER_URL: WhistWebservers.dev,
+      WEBSERVER_URL: WhistWebservers.local,
       FRONTEND_URL: "https://dev.whist.com",
     },
     auth0: {
@@ -89,7 +89,7 @@ const configs = {
       LOGZ_KEY: "WrlrWXFqDYqCNCXVwkmuOpQOvHNeqIiJ",
     },
     url: {
-      WEBSERVER_URL: WhistWebservers.staging,
+      WEBSERVER_URL: WhistWebservers.local,
       FRONTEND_URL: "https://staging.whist.com",
     },
     auth0: {
@@ -112,7 +112,7 @@ const configs = {
     protocolFolder,
     buildRoot,
     url: {
-      WEBSERVER_URL: WhistWebservers.production,
+      WEBSERVER_URL: WhistWebservers.local,
       FRONTEND_URL: "https://whist.com",
     },
     keys: {

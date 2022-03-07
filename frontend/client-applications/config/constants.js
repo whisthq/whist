@@ -17,7 +17,7 @@ const WhistNodeEnvironments = {
 
 // Webserver URLs
 const WhistWebservers = {
-  local: "https://dev-server.whist.com",
+  local: "http://0.0.0.0:8082",
   dev: "https://dev-server.whist.com",
   staging: "https://staging-server.whist.com",
   production: "https://prod-server.whist.com",
