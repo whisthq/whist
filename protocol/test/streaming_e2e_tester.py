@@ -536,15 +536,33 @@ if __name__ == "__main__":
     # No longer need the new_instances.txt file because the script has already terminated (if needed) the instances itself
     os.remove("instances_to_clean.txt")
 
+    exit_with_error = False
+    # Check if server.log and client.log exist and if there was a server hang
+    if not os.path.isfile(os.path.join(perf_logs_folder_name, "server", "server.log")):
+        print("Failed to run the WhistServer! Exiting with error. Check the logs for more details.")
+        # Update experiment metadata
+        experiment_metadata["server_failure"] = True
+        # Exit with error
+        exit_with_error = True
+    if not os.path.isfile(os.path.join(perf_logs_folder_name, "client", "client.log")):
+        print("Failed to run the WhistClient! Exiting with error. Check the logs for more details.")
+        # Update experiment metadata
+        experiment_metadata["client_failure"] = True
+        # Exit with error
+        exit_with_error = True
     if server_hang_detected:
-        print("Exiting with failure due to server hang!")
-
+        print("Server hang detected! Exiting with error. Check the logs for more details.")
         # Update experiment metadata
         experiment_metadata["server_hang_detected"] = server_hang_detected
+        # Exit with error
+        exit_with_error = True
+
+    if exit_with_error:
+        # Update metadata in JSON file
         with open(metadata_filename, "w") as metadata_file:
             json.dump(experiment_metadata, metadata_file)
 
-        # Exit with error
+        # Trigger ther error
         sys.exit(-1)
     else:
         print("Done")
